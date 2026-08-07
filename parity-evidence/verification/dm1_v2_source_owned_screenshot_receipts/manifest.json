@@ -1,6 +1,9 @@
 {
   "errors": [
-    "manifest.v22RealPack must match the presence of v22 receipt rows"
+    "direction 0 modes not pairwise distinct: v1=0x15996561, v20=0x15996561, v21=0xd7d3567b",
+    "direction 1 modes not pairwise distinct: v1=0xfddea8a9, v20=0xfddea8a9, v21=0x117f8cf3",
+    "direction 2 modes not pairwise distinct: v1=0x54e723c1, v20=0x54e723c1, v21=0x727d952b",
+    "direction 3 modes not pairwise distinct: v1=0xfddea8a9, v20=0xfddea8a9, v21=0x117f8cf3"
   ],
   "nonClaims": [
     "No DOSBox parity claim \u2014 receipts prove Firestaff-side determinism only.",
@@ -9,7 +12,7 @@
   ],
   "pass": "dm1_v2_source_owned_screenshot_receipts",
   "receipts": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/source_owned_screenshot_receipts.json",
-  "rowCount": 16,
+  "rowCount": 12,
   "rows": [
     {
       "actual_fnv1a": "0x15996561",
@@ -32,7 +35,7 @@
       }
     },
     {
-      "actual_fnv1a": "0xc3a60503",
+      "actual_fnv1a": "0x15996561",
       "actual_size": 192054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v20.bmp",
       "header": {
@@ -44,7 +47,7 @@
       },
       "row": {
         "direction": 0,
-        "fnv1a": "0xc3a60503",
+        "fnv1a": "0x15996561",
         "height": 200,
         "mode": "v20",
         "size": 192054,
@@ -52,7 +55,7 @@
       }
     },
     {
-      "actual_fnv1a": "0xb0e9c09f",
+      "actual_fnv1a": "0xd7d3567b",
       "actual_size": 768054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v21.bmp",
       "header": {
@@ -64,31 +67,11 @@
       },
       "row": {
         "direction": 0,
-        "fnv1a": "0xb0e9c09f",
+        "fnv1a": "0xd7d3567b",
         "height": 400,
         "mode": "v21",
         "size": 768054,
         "width": 640
-      }
-    },
-    {
-      "actual_fnv1a": "0x6a303359",
-      "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v22.bmp",
-      "header": {
-        "bit_count": 24,
-        "file_size": 192054,
-        "height": 200,
-        "valid": true,
-        "width": 320
-      },
-      "row": {
-        "direction": 0,
-        "fnv1a": "0x6a303359",
-        "height": 200,
-        "mode": "v22",
-        "size": 192054,
-        "width": 320
       }
     },
     {
@@ -112,7 +95,7 @@
       }
     },
     {
-      "actual_fnv1a": "0xf92be9bf",
+      "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v20.bmp",
       "header": {
@@ -124,7 +107,7 @@
       },
       "row": {
         "direction": 1,
-        "fnv1a": "0xf92be9bf",
+        "fnv1a": "0xfddea8a9",
         "height": 200,
         "mode": "v20",
         "size": 192054,
@@ -132,7 +115,7 @@
       }
     },
     {
-      "actual_fnv1a": "0xc96f73ab",
+      "actual_fnv1a": "0x117f8cf3",
       "actual_size": 768054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v21.bmp",
       "header": {
@@ -144,31 +127,11 @@
       },
       "row": {
         "direction": 1,
-        "fnv1a": "0xc96f73ab",
+        "fnv1a": "0x117f8cf3",
         "height": 400,
         "mode": "v21",
         "size": 768054,
         "width": 640
-      }
-    },
-    {
-      "actual_fnv1a": "0x7af16333",
-      "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v22.bmp",
-      "header": {
-        "bit_count": 24,
-        "file_size": 192054,
-        "height": 200,
-        "valid": true,
-        "width": 320
-      },
-      "row": {
-        "direction": 1,
-        "fnv1a": "0x7af16333",
-        "height": 200,
-        "mode": "v22",
-        "size": 192054,
-        "width": 320
       }
     },
     {
@@ -192,7 +155,7 @@
       }
     },
     {
-      "actual_fnv1a": "0x39bb461b",
+      "actual_fnv1a": "0x54e723c1",
       "actual_size": 192054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v20.bmp",
       "header": {
@@ -204,7 +167,7 @@
       },
       "row": {
         "direction": 2,
-        "fnv1a": "0x39bb461b",
+        "fnv1a": "0x54e723c1",
         "height": 200,
         "mode": "v20",
         "size": 192054,
@@ -212,7 +175,7 @@
       }
     },
     {
-      "actual_fnv1a": "0x3d528c1b",
+      "actual_fnv1a": "0x727d952b",
       "actual_size": 768054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v21.bmp",
       "header": {
@@ -224,31 +187,11 @@
       },
       "row": {
         "direction": 2,
-        "fnv1a": "0x3d528c1b",
+        "fnv1a": "0x727d952b",
         "height": 400,
         "mode": "v21",
         "size": 768054,
         "width": 640
-      }
-    },
-    {
-      "actual_fnv1a": "0x3ea567d9",
-      "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v22.bmp",
-      "header": {
-        "bit_count": 24,
-        "file_size": 192054,
-        "height": 200,
-        "valid": true,
-        "width": 320
-      },
-      "row": {
-        "direction": 2,
-        "fnv1a": "0x3ea567d9",
-        "height": 200,
-        "mode": "v22",
-        "size": 192054,
-        "width": 320
       }
     },
     {
@@ -272,7 +215,7 @@
       }
     },
     {
-      "actual_fnv1a": "0xf92be9bf",
+      "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v20.bmp",
       "header": {
@@ -284,7 +227,7 @@
       },
       "row": {
         "direction": 3,
-        "fnv1a": "0xf92be9bf",
+        "fnv1a": "0xfddea8a9",
         "height": 200,
         "mode": "v20",
         "size": 192054,
@@ -292,7 +235,7 @@
       }
     },
     {
-      "actual_fnv1a": "0xc96f73ab",
+      "actual_fnv1a": "0x117f8cf3",
       "actual_size": 768054,
       "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v21.bmp",
       "header": {
@@ -304,31 +247,11 @@
       },
       "row": {
         "direction": 3,
-        "fnv1a": "0xc96f73ab",
+        "fnv1a": "0x117f8cf3",
         "height": 400,
         "mode": "v21",
         "size": 768054,
         "width": 640
-      }
-    },
-    {
-      "actual_fnv1a": "0x7af16333",
-      "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v22.bmp",
-      "header": {
-        "bit_count": 24,
-        "file_size": 192054,
-        "height": 200,
-        "valid": true,
-        "width": 320
-      },
-      "row": {
-        "direction": 3,
-        "fnv1a": "0x7af16333",
-        "height": 200,
-        "mode": "v22",
-        "size": 192054,
-        "width": 320
       }
     }
   ],

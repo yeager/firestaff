@@ -3,20 +3,10 @@
     "contract_drift": [],
     "decision": "NO_README_PROMOTION_PERMITTED",
     "eligible_count": 0,
-    "ineligible_count": 3,
-    "skipped_count": 0,
+    "ineligible_count": 1,
+    "skipped_count": 2,
     "status": "NO_README_PROMOTION_PERMITTED",
-    "uniqueness_findings": [
-      {
-        "kind": "duplicate_source_sha256_across_rows",
-        "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
-        "rows": [
-          "canonical_pcengine_root",
-          "us_extras_track02_bin"
-        ],
-        "sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
-      }
-    ]
+    "uniqueness_findings": []
   },
   "bootstrapManifest": "parity-evidence/verification/theron_v1_runtime_screenshot_readiness/manifest.json",
   "bootstrapSource": "parity-evidence/verification/theron_v1_runtime_screenshot_readiness",
@@ -38,7 +28,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-08-05T10:03:51.203641+00:00",
+  "generated_at": "2026-08-07T15:09:52.948433+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -54,10 +44,10 @@
       "eligible": false,
       "label": "Theron canonical PC Engine root",
       "notes": [
-        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-        "sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 shared with rows ['canonical_pcengine_root', 'us_extras_track02_bin']; ineligible"
+        "readiness row status is 'FAIL', not PASS",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)"
       ],
-      "presented_sha256": "f34244164e175cb64e7507c87052e791db124a726a7f4c7567a8ff7b74b61c3b",
+      "presented_sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -65,44 +55,31 @@
         "party.mapIndex": 0,
         "sourceId": "theron"
       },
-      "source_sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
+      "source_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f"
     },
     {
       "case_id": "jp_extras_track02_bin",
-      "classification": "README_INELIGIBLE",
+      "classification": "SKIPPED_NO_DATA",
       "eligible": false,
       "label": "Theron JP extras Track 02",
       "notes": [
-        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)"
+        "data directory missing; row skipped, not promoted"
       ],
-      "presented_sha256": "469e6cf3c3ee2803bf4bff857a459efc1930a19a91c618f3228b4aa43731fba2",
-      "probe_summary": {
-        "gameTick": 0,
-        "lastOutcome": "THERON STARTUP",
-        "launchedEver": 1,
-        "party.mapIndex": 0,
-        "sourceId": "theron"
-      },
-      "source_sha256": "925d16899cce83c49abd7725858b3fa9fd81b040fad0340c2994d4d1dfa756a6"
+      "presented_sha256": null,
+      "probe_summary": null,
+      "source_sha256": null
     },
     {
       "case_id": "us_extras_track02_bin",
-      "classification": "README_INELIGIBLE",
+      "classification": "SKIPPED_NO_DATA",
       "eligible": false,
       "label": "Theron US extras Track 02",
       "notes": [
-        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-        "sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 shared with rows ['canonical_pcengine_root', 'us_extras_track02_bin']; ineligible"
+        "data directory missing; row skipped, not promoted"
       ],
-      "presented_sha256": "f34244164e175cb64e7507c87052e791db124a726a7f4c7567a8ff7b74b61c3b",
-      "probe_summary": {
-        "gameTick": 0,
-        "lastOutcome": "THERON STARTUP",
-        "launchedEver": 1,
-        "party.mapIndex": 0,
-        "sourceId": "theron"
-      },
-      "source_sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
+      "presented_sha256": null,
+      "probe_summary": null,
+      "source_sha256": null
     }
   ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_gate.v1",

@@ -1,307 +1,1028 @@
-# firestaff-startup-menu-tr catalog (auto-generated from startup-menu.pot).
-# Native translation pass 2026-07-19: msgstr entries reviewed and
-# translated from the English msgid source. Proper nouns/brand strings
-# intentionally keep the source spelling (same policy as sv/de/fr).
+# Firestaff — startup-menu domain, Turkish catalog.
+# Turkish translations for the startup menu / launcher domain.
+#
+# Domain: startup-menu
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: firestaff-startup-menu-tr\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-07-19+00:00\n"
-"Last-Translator: Firestaff localization pass\n"
+"Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-07 20:21+0200\n"
+"PO-Revision-Date: 2026-08-07 12:00+0200\n"
+"Last-Translator: Firestaff i18n\n"
 "Language-Team: Turkish\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-#. Launcher title / eyebrow
 
-msgid "FRONTEND PREVIEW"
-msgstr "FRONTEND ÖNİZLEME"
-#. Main menu heading
+#: src/ui/menu_startup_m12.c:217
+msgid "ACCESSIBILITY"
+msgstr "ERİŞİLEBİLİRLİK"
 
-msgid "SELECT A DESTINATION"
-msgstr "BİR HEDEF SEÇ"
-#. Settings panel title
+#: src/ui/menu_startup_m12.c:217
+msgid "AUDIO"
+msgstr "SES"
 
-msgid "SETTINGS"
-msgstr "AYARLAR"
-#. Status label
+#: src/ui/menu_startup_m12.c:217
+msgid "CONTROLS"
+msgstr "KONTROLLER"
 
-msgid "STATUS"
-msgstr "DURUM"
-#. Section heading for launcher entries
+#: src/ui/menu_startup_m12.c:217
+msgid "GAME"
+msgstr "OYUN"
 
-msgid "LAUNCHER DESTINATIONS"
-msgstr "BAŞLATICI HEDEFLERİ"
-#. Data directory label
+#: src/ui/menu_startup_m12.c:217
+msgid "GRAPHICS"
+msgstr "GRAFİKLER"
 
-msgid "DATA DIR"
-msgstr "VERİ DİZİNİ"
-#. Main menu footer / navigation hint
+#: src/ui/menu_startup_m12.c:218
+msgid "ONLINE"
+msgstr "ÇEVRİMİÇİ"
 
-msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "YUKARI/AŞAĞI HAREKET   ENTER AÇ   ESC ÇIK"
-#. Settings section heading
+#: src/ui/menu_startup_m12.c:231
+msgid "Graphics Mode"
+msgstr "Grafik Modu"
 
-msgid "PERSISTED OPTIONS"
-msgstr "KAYITLI SEÇENEKLER"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:231 src/ui/menu_startup_m12.c:245
+msgid "Original"
+msgstr "Orijinal"
 
-msgid "LANGUAGE"
-msgstr "DİL"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:232
+msgid "Game Version"
+msgstr "Oyun Sürümü"
 
-msgid "GRAPHICS MODE"
-msgstr "GRAFİK MODU"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:232
+msgid "V1"
+msgstr "V1"
 
-msgid "WINDOW MODE"
-msgstr "PENCERE MODU"
-#. Settings save confirmation
+#: src/ui/menu_startup_m12.c:233
+msgid "English"
+msgstr "İngilizce"
 
-msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "DEĞİŞİKLİKLER HEMEN YAPILANDIRMAYA KAYDEDİLİR"
-#. Settings footer / navigation hint
+#: src/ui/menu_startup_m12.c:233
+msgid "Language"
+msgstr "Dil"
 
-msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "SOL/SAĞ DEĞİŞTİR   ENTER İLERİ   ESC GERİ"
-#. Message view return hint
+#: src/ui/menu_startup_m12.c:234
+msgid "Game Speed"
+msgstr "Oyun Hızı"
 
-msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER VEYA ESC MENÜYE DÖNER"
-#. Launch confirmation
+#: src/ui/menu_startup_m12.c:234
+msgid "Normal"
+msgstr "Normal"
 
-msgid "READY TO LAUNCH"
-msgstr "BAŞLATMAYA HAZIR"
-#. Escape hint in messages
+#: src/ui/menu_startup_m12.c:235
+msgid "Classic"
+msgstr "Klasik"
 
-msgid "ESC RETURNS TO MENU"
-msgstr "ESC MENÜYE DÖNER"
-#. Missing hash-verified data message
+#: src/ui/menu_startup_m12.c:235
+msgid "Movement Mode"
+msgstr "Hareket Modu"
 
-msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "YALNIZCA DOĞRULAYICI İSKELETİ"
-#. Missing hash-verified data detail
+#: src/ui/menu_startup_m12.c:236
+msgid "Cheats"
+msgstr "Hileler"
 
-msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "DOĞRULANMIŞ PERAKENDE KARMA DEĞERLERİ EKLE"
-#. Missing game data message
+#: src/ui/menu_startup_m12.c:236
+msgid "Off"
+msgstr "Kapalı"
 
-msgid "GAME DATA NOT FOUND"
-msgstr "OYUN VERİSİ BULUNAMADI"
-#. Missing game data detail
+#: src/ui/menu_startup_m12.c:241
+msgid "Maximized"
+msgstr "Ekranı Kapla"
 
-msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "FIRESTAFF VERİ DİZİNİNİ KONTROL ET"
-#. Card art slot status
+#: src/ui/menu_startup_m12.c:241
+msgid "Window Mode"
+msgstr "Pencere Modu"
 
-msgid "ART SLOT READY"
-msgstr "GRAFİK YUVASI HAZIR"
-#. Card art slot status
+#: src/ui/menu_startup_m12.c:242
+msgid "16:9"
+msgstr "16:9"
 
-msgid "ART SLOT EMPTY"
-msgstr "GRAFİK YUVASI BOŞ"
-#. Card art slot instruction
+#: src/ui/menu_startup_m12.c:242
+msgid "Display Format"
+msgstr "Görüntü Biçimi"
 
-msgid "DROP ART INTO SLOT"
-msgstr "GRAFİĞİ YUVAYA BIRAK"
-#. Card art active label
+#: src/ui/menu_startup_m12.c:243 src/ui/menu_startup_m12.c:244
+msgid "On"
+msgstr "Açık"
 
-msgid "CARD ART ACTIVE"
-msgstr "KART GRAFİĞİ ETKİN"
-#. Card art slot label
+#: src/ui/menu_startup_m12.c:243
+msgid "VSync"
+msgstr "VSync"
 
-msgid "CARD ART SLOT"
-msgstr "KART GRAFİĞİ YUVASI"
-#. Game card label
+#: src/ui/menu_startup_m12.c:244
+msgid "Integer Scaling"
+msgstr "Tam Sayı Ölçekleme"
 
-msgid "Dungeon Master"
-msgstr "Dungeon Master"
-#. Game card label
+#: src/ui/menu_startup_m12.c:245
+msgid "Viewport Style"
+msgstr "Görünüm Stili"
 
-msgid "Chaos Strikes Back"
-msgstr "Chaos Strikes Back"
-#. Game card label
+#: src/ui/menu_startup_m12.c:246
+msgid "Original VGA"
+msgstr "Orijinal VGA"
 
-msgid "Dungeon Master II"
-msgstr "Dungeon Master II"
-#. Launcher title
+#: src/ui/menu_startup_m12.c:246
+msgid "Palette Mode"
+msgstr "Palet Modu"
 
-msgid "Firestaff"
-msgstr "Firestaff"
-#. Game options row label
-
-msgid "PATCH"
-msgstr "YAMA"
-#. Game options value: original version
-
+#: src/ui/menu_startup_m12.c:373 src/ui/menu_startup_m12.c:403
+#: src/ui/menu_startup_m12.c:434 src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:443
 msgid "ORIGINAL"
 msgstr "ORİJİNAL"
-#. Game options value: patched version
 
+#: src/ui/menu_startup_m12.c:403
 msgid "PATCHED"
 msgstr "YAMALI"
-#. Game options row label
 
-msgid "CHEATS"
-msgstr "HİLELER"
-#. Game options value: off
+#: src/ui/menu_startup_m12.c:415
+msgid "DE"
+msgstr "DE"
 
+#: src/ui/menu_startup_m12.c:415
+msgid "EN"
+msgstr "EN"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "FR"
+msgstr "FR"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "JA"
+msgstr "JA"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "SV"
+msgstr "SV"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "ZH"
+msgstr "ZH"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "CS"
+msgstr "CS"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "DA"
+msgstr "DA"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "ES"
+msgstr "ES"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "FI"
+msgstr "FI"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "HU"
+msgstr "HU"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "IT"
+msgstr "IT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "ID"
+msgstr "ID"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "KO"
+msgstr "KO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NL"
+msgstr "NL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NO"
+msgstr "NO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PL"
+msgstr "PL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PT"
+msgstr "PT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "RU"
+msgstr "RU"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "TR"
+msgstr "TR"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "DEUTSCH"
+msgstr "DEUTSCH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "SVENSKA"
+msgstr "SVENSKA"
+
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:439 src/ui/menu_startup_m12.c:440
 msgid "OFF"
 msgstr "KAPALI"
-#. Game options value: on
 
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
 msgid "ON"
 msgstr "AÇIK"
-#. Game options row label
 
-msgid "SPEED"
-msgstr "HIZ"
-#. Game options value: slower
-
-msgid "SLOWER"
-msgstr "DAHA YAVAŞ"
-#. Game options value: normal
-
-msgid "NORMAL"
-msgstr "NORMAL"
-#. Game options value: faster
-
+#: src/ui/menu_startup_m12.c:427
 msgid "FASTER"
 msgstr "DAHA HIZLI"
-#. Game options row label
 
-msgid "ASPECT RATIO"
-msgstr "EN BOY ORANI"
-#. Game options row label
+#: src/ui/menu_startup_m12.c:427
+msgid "NORMAL"
+msgstr "NORMAL"
 
-msgid "RESOLUTION"
-msgstr "ÇÖZÜNÜRLÜK"
-#. Game options action
+#: src/ui/menu_startup_m12.c:427
+msgid "SLOWER"
+msgstr "DAHA YAVAŞ"
 
-msgid "LAUNCH"
-msgstr "BAŞLAT"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:428
+msgid "FIT"
+msgstr "SIĞDIR"
 
-msgid "V1 ORIGINAL"
-msgstr "V1 ORİJİNAL"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:428
+msgid "STRETCH"
+msgstr "UZAT"
 
-msgid "V2 ENHANCED 2D"
-msgstr "V2 GELİŞMİŞ 2D"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:431
+msgid "LINEAR"
+msgstr "DOĞRUSAL"
 
-msgid "V3 MODERN/3D"
-msgstr "V3 MODERN/3D"
-#. V3 unavailable message
+#: src/ui/menu_startup_m12.c:431
+msgid "NEAREST"
+msgstr "EN YAKIN"
 
-msgid "COMING SOON"
-msgstr "ÇOK YAKINDA"
-#. Language names
-
-msgid "ENGLISH"
-msgstr "İNGİLİZCE"
-#. Language names
-
-msgid "SVENSKA"
-msgstr "İSVEÇÇE"
-#. Language names
-
-msgid "FRANCAIS"
-msgstr "FRANSIZCA"
-#. Language names
-
-msgid "DEUTSCH"
-msgstr "ALMANCA"
-#. Window mode values
-
-msgid "WINDOWED"
-msgstr "PENCERE"
-#. Window mode values
-
-msgid "FULLSCREEN"
-msgstr "TAM EKRAN"
-#. Renderer/settings label
-
-msgid "RENDERER BACKEND"
-msgstr "İŞLEYİCİ ARKA UCU"
-#. Renderer/settings label
-
-msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "İŞLEYİCİ ARKA UCU KULLANILAMAZ"
-#. Renderer/settings label
-
-msgid "RENDERER"
-msgstr "İŞLEYİCİ"
-#. Renderer/settings label
-
+#: src/ui/menu_startup_m12.c:432 src/ui/menu_startup_m12.c:435
 msgid "AUTO"
 msgstr "OTOMATİK"
-#. Renderer/settings label
 
-msgid "SOFTWARE"
-msgstr "YAZILIM"
-#. Renderer/settings label
-
-msgid "SDL"
-msgstr "SDL"
-#. Renderer/settings label
-
+#: src/ui/menu_startup_m12.c:432
 msgid "OPENGL"
 msgstr "OPENGL"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:432
+msgid "SDL"
+msgstr "SDL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SOFTWARE"
+msgstr "YAZILIM"
+
+#: src/ui/menu_startup_m12.c:432
 msgid "VULKAN"
 msgstr "VULKAN"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:433
 msgid "AVAILABLE"
 msgstr "KULLANILABİLİR"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:433
 msgid "UNAVAILABLE"
-msgstr "KULLANILAMAZ"
-#. Renderer/settings label
+msgstr "KULLANILAMIYOR"
 
-msgid "SCALE"
-msgstr "ÖLÇEK"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:434
+msgid "EXPANDED"
+msgstr "GENİŞLETİLMİŞ"
 
-msgid "PIXEL SNAP"
-msgstr "PİKSEL TUTUNMA"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:434
+msgid "WIDESCREEN"
+msgstr "GENİŞ EKRAN"
 
-msgid "FILTER"
-msgstr "FİLTRE"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:435
+msgid "GAMEPAD"
+msgstr "OYUN KOLU"
 
-msgid "VSYNC"
-msgstr "VSYNC"
+#: src/ui/menu_startup_m12.c:435
+msgid "KEYBOARD+MOUSE"
+msgstr "KLAVYE+FARE"
 
-#. Popup title when no game data files are found at startup
-msgid "NO GAME DATA FOUND"
-msgstr "OYUN VERİSİ BULUNAMADI"
+#: src/ui/menu_startup_m12.c:435
+msgid "TOUCH"
+msgstr "DOKUNMATİK"
 
-#. Desktop: instruction to copy game files
-msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
-msgstr "ORİJİNAL OYUN DOSYALARINI VERİ DİZİNİNE KOPYALAYIN"
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:439
+msgid "FULL"
+msgstr "TAM"
 
-#. Android: instruction to copy game files via file manager
-msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
-msgstr "OYUN DOSYALARINI Documents/Firestaff/data KLASÖRÜNE BİR DOSYA YÖNETİCİSİ İLE KOPYALAYIN"
+#: src/ui/menu_startup_m12.c:436
+msgid "LARGE"
+msgstr "BÜYÜK"
 
-#. iOS: instruction to copy game files via Files app
-msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
-msgstr "OYUN DOSYALARINI BU UYGULAMADA Firestaff/data KLASÖRÜNE KOPYALAMAK İÇİN DOSYALAR UYGULAMASINI KULLANIN"
+#: src/ui/menu_startup_m12.c:436
+msgid "MINIMAL"
+msgstr "MİNİMAL"
 
+#: src/ui/menu_startup_m12.c:437
+msgid "FAST"
+msgstr "HIZLI"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "SMOOTH"
+msgstr "YUMUŞAK"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "COORDS"
+msgstr "KOORDİNATLAR"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "DRAW ORDER"
+msgstr "ÇİZİM SIRASI"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "QUEUE"
+msgstr "SIRA"
+
+#: src/ui/menu_startup_m12.c:439
+msgid "QUICK"
+msgstr "HIZLI"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "DEUT"
+msgstr "DEUT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "PROT"
+msgstr "PROT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "TRIT"
+msgstr "TRIT"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "AMIGA"
+msgstr "AMIGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CGA"
+msgstr "CGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CLASSIC"
+msgstr "KLASİK"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "DARK"
+msgstr "KOYU"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "DUNGEON"
+msgstr "ZİNDAN"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STARS"
+msgstr "YILDIZLAR"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STATIC"
+msgstr "SABİT"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "TORCH"
+msgstr "MEŞALE"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "CUSTOM"
+msgstr "ÖZEL"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "REMASTERED"
+msgstr "YENİDEN DÜZENLENMİŞ"
+
+#: src/ui/menu_startup_m12.c:653 src/ui/menu_startup_m12.c:672
+#: src/ui/menu_startup_m12.c:8669 src/ui/menu_startup_m12.c:9113
+msgid "DUNGEON MASTER"
+msgstr "Dungeon Master"
+
+#: src/ui/menu_startup_m12.c:654 src/ui/menu_startup_m12.c:682
+#: src/ui/menu_startup_m12.c:8671 src/ui/menu_startup_m12.c:9127
+msgid "CHAOS STRIKES BACK"
+msgstr "Chaos Strikes Back"
+
+#: src/ui/menu_startup_m12.c:655 src/ui/menu_startup_m12.c:692
+msgid "DUNGEON MASTER II"
+msgstr "Dungeon Master II"
+
+#: src/ui/menu_startup_m12.c:656
+msgid "DUNGEON MASTER NEXUS"
+msgstr "DM Nexus"
+
+#: src/ui/menu_startup_m12.c:658
+msgid "THERON'S QUEST"
+msgstr "Theron's Quest"
+
+#: src/ui/menu_startup_m12.c:659 src/ui/menu_startup_m12.c:10042
+#: src/ui/menu_startup_m12.c:10045
+msgid "MUSEUM OF LORE"
+msgstr "TARİH MÜZESİ"
+
+#: src/ui/menu_startup_m12.c:660 src/ui/menu_startup_m12.c:7120
+#: src/ui/menu_startup_m12.c:7679 src/ui/menu_startup_m12.c:8865
+#: src/ui/menu_startup_m12.c:10077 src/ui/menu_startup_m12.c:10080
+#: src/ui/menu_startup_m12.c:10224
+msgid "SETTINGS"
+msgstr "AYARLAR"
+
+#: src/ui/menu_startup_m12.c:673
+msgid "THE ORIGINAL DUNGEON CRAWL"
+msgstr "ORİJİNAL ZİNDAN MACERASI"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "1987 FTL GAMES"
+msgstr "1987 FTL GAMES"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "CHAMPIONS ENTER THE DUNGEON"
+msgstr "KAHRAMANLAR ZİNDANA GİRİYOR"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "FOUR PORTRAITS BECOME A PARTY"
+msgstr "DÖRT PORTRE BİR TAKIM OLUYOR"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
+msgstr "GERÇEK ZAMANLI BASKI EFSANEYİ TANIMLAR"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
+msgstr "FIRESTAFF MERKEZİ KUTSAL EMANETTİR"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "KEY LORE THREADS"
+msgstr "ANA HİKAYE İPLİKLERİ"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "LORD CHAOS SHATTERS ORDER"
+msgstr "LORD CHAOS DÜZENİ PARÇALIYOR"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "RA RETURNS AS MASTER OF BALANCE"
+msgstr "RA, DENGE USTASI OLARAK GERİ DÖNÜYOR"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE DUNGEON IS BOTH TEST AND PRISON"
+msgstr "ZİNDAN HEM SINAV HEM HAPİSHANEDİR"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE GREY LORD IS DIVIDED"
+msgstr "GRİ LORD BÖLÜNMÜŞTÜR"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
+msgstr "FIRESTAFF TAHMİN DEĞİL KANIT KAYDEDER"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
+msgstr "GRAPHICS.DAT VE DUNGEON.DAT DOĞRULANMIŞTIR"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
+msgstr "KARMA DEĞERLİ ORİJİNAL VERİLER KULLANICI TARAFINDAN SAĞLANIR"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PC AND ATARI ST LINEAGE MATTERS"
+msgstr "PC VE ATARI ST SOYU ÖNEMLİDİR"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PRESERVATION NOTES"
+msgstr "KORUMA NOTLARI"
+
+#: src/ui/menu_startup_m12.c:683
+msgid "THE CHAMPIONS RETURN"
+msgstr "KAHRAMANLARIN DÖNÜŞÜ"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "CSB REWARDS MAP MEMORY AND NERVE"
+msgstr "CSB HARİTA HAFIZASINI VE SOĞUKKANLILIĞI ÖDÜLLENDİRİR"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
+msgstr "DUNGEON MASTER SİSTEMLERİ DAHA YOĞUNLAŞIYOR"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "EXPANSION AND SEQUEL DESIGN"
+msgstr "GENİŞLEME VE DEVAM OYUNU TASARIMI"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "FOUR PATHS TEST MASTERY"
+msgstr "DÖRT YOL USTALIĞI SINAR"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
+msgstr "CORBUM ARAYIŞI BASİT İNİŞİN YERİNİ ALIR"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "CHAOS HALA UZUN BİR GÖLGE DÜŞÜRÜYOR"
+
+#: src/ui/menu_startup_m12.c:686 src/ui/menu_startup_m12.c:696
+msgid "LORE SHAPE"
+msgstr "HİKAYE BİÇİMİ"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "GERİ DÖNEN KAHRAMANLAR DAHA ZOR BİR LABİRENTLE KARŞILAŞIR"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "OYUNCU CORBUM MALZEMESİNİ AVLAR"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "DÜNYA DAHA ESKİ VE DAHA GÜVENSİZ HİSSETTİRİYOR"
+
+#: src/ui/menu_startup_m12.c:687 src/ui/menu_startup_m12.c:697
+msgid "ARCHIVE STATUS"
+msgstr "ARŞİV DURUMU"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
+msgstr "CSBGRAPH.DAT VE CSB.DAT İZLENİYOR"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
+msgstr "BAŞLATICI YALNIZCA EŞLEŞTİĞİNDE HAZIR GÖSTERİR"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
+msgstr "MÜZE İÇERİĞİ SABİT VE SINIRLI KALIR"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "VERSION SLOTS USE HASH EVIDENCE"
+msgstr "SÜRÜM YUVALARI KARMA KANITI KULLANIR"
+
+#: src/ui/menu_startup_m12.c:693
+msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
+msgstr "İLK ZİNDANIN DIŞINDAKİ EFSANE"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
+msgstr "DM2 TAKIM HAYATTA KALMA ÇEKİRDEĞİNİ KORUR"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
+msgstr "UŞAKLAR VE HAVA DURUMU RİTMİ DEĞİŞTİRİR"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
+msgstr "AÇIK ALANLAR VE DÜKKANLAR BİÇİMİ GENİŞLETİR"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
+msgstr "SERİ ORİJİNAL LABİRENTİN ÖTESİNE GEÇİYOR"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SKULLKEEP ERA"
+msgstr "SKULLKEEP ÇAĞI"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
+msgstr "TEKNOLOJİ VE BÜYÜ SAHNEYİ PAYLAŞIYOR"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE PLAYER ASSEMBLES AND SURVIVES"
+msgstr "OYUNCU TOPLANIR VE HAYATTA KALIR"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
+msgstr "TON DAHA GARİP VE DAHA MEKANİKTİR"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
+msgstr "DÜNYA ANAIAS DAĞI'NDAN DAHA GENİŞTİR"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
+msgstr "İKİLİ VARLIKLAR BU AŞAMANIN DIŞINDA KALIR"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
+msgstr "BURADAKİ İÇERİK BİR VERİ DÖKÜMÜ DEĞİL, BİR REHBERDİR"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
+msgstr "DM2GRAPHICS.DAT VE DM2DUNGEON.DAT İZLENİYOR"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
+msgstr "DESTEKLENEN SÜRÜMLER ZAMANLA ARTABİLİR"
+
+#: src/ui/menu_startup_m12.c:702
+msgid "FIRESTAFF PROJECT"
+msgstr "FIRESTAFF PROJESİ"
+
+#: src/ui/menu_startup_m12.c:703
+msgid "ABOUT AND CREDITS"
+msgstr "HAKKINDA VE EMEĞİ GEÇENLER"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
+msgstr "DETERMİNİSTİK, MODÜLER, MÜZE KALİTESİNDE"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "OPEN DUNGEON MASTER ENGINE"
+msgstr "AÇIK DUNGEON MASTER MOTORU"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
+msgstr "ORİJİNAL VERİLER DOĞRULANIR, PAKETLE BİRLİKTE GELMEZ"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "PROJECT PURPOSE"
+msgstr "PROJE AMACI"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "V1 PRESERVES BASELINE BEHAVIOUR"
+msgstr "V1 TEMEL DAVRANIŞI KORUR"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
+msgstr "CHRISTOPHE FONTANEL HAYATİ TARİHİ BELGELEDİ"
+
+#: src/ui/menu_startup_m12.c:706 src/ui/menu_startup_m12.c:10059
+#: src/ui/menu_startup_m12.c:10062
+msgid "CREDITS"
+msgstr "EMEĞİ GEÇENLER"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
+msgstr "ORİJİNALLERİ FTL GAMES VE SOFTWARE HEAVEN YARATTI"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "NO CLAIM OF OFFICIAL AFFILIATION"
+msgstr "RESMİ BAĞLANTI İDDİASI YOKTUR"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "PROJECT BOUNDARIES"
+msgstr "PROJE SINIRLARI"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "REGRESSION PROBES GUARD MENU STABILITY"
+msgstr "REGRESYON TESTLERİ MENÜ KARARLILIĞINI KORUR"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
+msgstr "İZLENEN METİN DEPODA İNGİLİZCE KALIR"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
+msgstr "KULLANICI TARAFINDAN SAĞLANAN PERAKENDE VERİSİ GEREKLİDİR"
+
+#: src/ui/menu_startup_m12.c:712
+msgid "TECHNICAL ARCHIVE"
+msgstr "TEKNİK ARŞİV"
+
+#: src/ui/menu_startup_m12.c:713
+msgid "SOURCE EVIDENCE AND VERIFICATION"
+msgstr "KAYNAK KANITI VE DOĞRULAMA"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "EVIDENCE MODEL"
+msgstr "KANIT MODELİ"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "KNOWN FILES ARE MATCHED BY HASH"
+msgstr "BİLİNEN DOSYALAR KARMA İLE EŞLEŞTİRİLİR"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
+msgstr "BİLİNMEYEN ORİJİNALLERE SESSİZ GERİ DÖNÜŞ YOKTUR"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
+msgstr "ÇALIŞMA ZAMANI YOLLARI EKSİK VERİYİ GÜVENLE BİLDİRİR"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "VERSION MATRICES STAY EXPLICIT"
+msgstr "SÜRÜM MATRİSLERİ AÇIK KALIR"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "ESCAPE RETURNS BEFORE EXITING"
+msgstr "ESCAPE ÇIKMADAN ÖNCE GERİ DÖNER"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "KEYBOARD INPUT IS BOUNDED"
+msgstr "KLAVYE GİRİŞİ SINIRLANDIRILMIŞTIR"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
+msgstr "FARE TIKLAMALARI PAYLAŞILAN DURUM ÜZERİNDEN YÖNLENDİRİLİR"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "STARTUP MENU"
+msgstr "BAŞLANGIÇ MENÜSÜ"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "UNKNOWN KEYS ARE NO OPS"
+msgstr "BİLİNMEYEN TUŞLAR HİÇBİR İŞLEM YAPMAZ"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD INTERVIEW AND TIMELINE SOURCES"
+msgstr "RÖPORTAJ VE ZAMAN ÇİZELGESİ KAYNAKLARI EKLE"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD MANUAL EXCERPT REFERENCES"
+msgstr "KILAVUZ ALINTI REFERANSLARI EKLE"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD SMALL CURATED SCREEN PANELS"
+msgstr "KÜÇÜK, SEÇKİ EKRAN PANELLERİ EKLE"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "FUTURE MUSEUM WORK"
+msgstr "GELECEKTEKİ MÜZE ÇALIŞMASI"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
+msgstr "LİSANSLANANA KADAR BÜYÜK VARLIKLARI DIŞARIDA TUT"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "FULLSCREEN"
+msgstr "TAM EKRAN"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "MAXIMIZED"
+msgstr "EKRANI KAPLA"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "WINDOWED"
+msgstr "PENCERELİ"
+
+#: src/ui/menu_startup_m12.c:919
+msgid "FRONTEND PREVIEW"
+msgstr "ARAYÜZ ÖN İZLEME"
+
+#: src/ui/menu_startup_m12.c:920
+msgid "SELECT A DESTINATION"
+msgstr "BİR HEDEF SEÇİN"
+
+#: src/ui/menu_startup_m12.c:922
+msgid "STATUS"
+msgstr "DURUM"
+
+#: src/ui/menu_startup_m12.c:923
+msgid "LAUNCHER DESTINATIONS"
+msgstr "BAŞLATICI HEDEFLERİ"
+
+#: src/ui/menu_startup_m12.c:924
+msgid "DATA DIR"
+msgstr "VERİ DİZİNİ"
+
+#: src/ui/menu_startup_m12.c:925
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "YUKARI/AŞAĞI HAREKET   ENTER AÇ   ESC ÇIKIŞ"
+
+#: src/ui/menu_startup_m12.c:926
+msgid "PERSISTED OPTIONS"
+msgstr "KALICI SEÇENEKLER"
+
+#: src/ui/menu_startup_m12.c:927
+msgid "LANGUAGE"
+msgstr "DİL"
+
+#: src/ui/menu_startup_m12.c:928
+msgid "GRAPHICS MODE"
+msgstr "GRAFİK MODU"
+
+#: src/ui/menu_startup_m12.c:929
+msgid "RENDERER BACKEND"
+msgstr "İŞLEME ARKA UCU"
+
+#: src/ui/menu_startup_m12.c:930
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "İŞLEME ARKA UCU KULLANILAMIYOR"
+
+#: src/ui/menu_startup_m12.c:931
+msgid "WINDOW MODE"
+msgstr "PENCERE MODU"
+
+#: src/ui/menu_startup_m12.c:932
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "DEĞİŞİKLİKLER YAPILANDIRMAYA HEMEN KAYDEDİLİR"
+
+#: src/ui/menu_startup_m12.c:933
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "SOL/SAĞ GEÇİŞ   ENTER İLERLE   ESC GERİ"
+
+#: src/ui/menu_startup_m12.c:934
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER VEYA ESC MENÜYE DÖNER"
+
+#: src/ui/menu_startup_m12.c:935 src/ui/menu_startup_m12.c:7127
+msgid "READY TO LAUNCH"
+msgstr "BAŞLATMAYA HAZIR"
+
+#: src/ui/menu_startup_m12.c:936
+msgid "ESC RETURNS TO MENU"
+msgstr "ESC MENÜYE DÖNER"
+
+#: src/ui/menu_startup_m12.c:937
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "YALNIZCA DOĞRULAYICI İSKELETİ"
+
+#: src/ui/menu_startup_m12.c:938
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "DOĞRULANMIŞ PERAKENDE KARMALARI EKLEYİN"
+
+#: src/ui/menu_startup_m12.c:939
+msgid "GAME DATA NOT FOUND"
+msgstr "OYUN VERİLERİ BULUNAMADI"
+
+#: src/ui/menu_startup_m12.c:940
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "FIRESTAFF VERİ DİZİNİNİ KONTROL EDİN"
+
+#: src/ui/menu_startup_m12.c:941
+msgid "ORIGINAL FILES NOT FOUND"
+msgstr "ORİJİNAL DOSYALAR BULUNAMADI"
+
+#: src/ui/menu_startup_m12.c:942
+msgid "COPY YOUR RETAIL GAME FILES INTO:"
+msgstr "PERAKENDE OYUN DOSYALARINIZI ŞURAYA KOPYALAYIN:"
+
+#: src/ui/menu_startup_m12.c:943
+msgid "ART SLOT READY"
+msgstr "GÖRSEL YUVASI HAZIR"
+
+#: src/ui/menu_startup_m12.c:944
+msgid "ART SLOT EMPTY"
+msgstr "GÖRSEL YUVASI BOŞ"
+
+#: src/ui/menu_startup_m12.c:945
+msgid "DROP ART INTO SLOT"
+msgstr "GÖRSELİ YUVAYA BIRAKIN"
+
+#: src/ui/menu_startup_m12.c:946
+msgid "CARD ART ACTIVE"
+msgstr "KART GÖRSELİ ETKİN"
+
+#: src/ui/menu_startup_m12.c:947
+msgid "CARD ART SLOT"
+msgstr "KART GÖRSELİ YUVASI"
+
+#: src/ui/menu_startup_m12.c:948
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
-msgstr "OYUN VERİSİ ARŞİVİ BİR ARAÇ GEREKTİRİR"
+msgstr "OYUN VERİSİ ARŞİVİ İÇİN BİR ARAÇ GEREKİYOR"
 
+#: src/ui/menu_startup_m12.c:949
+#, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
-msgstr "ARŞIV: %s  YÜKLEYİN: %s"
+msgstr "ARŞİV: %s  YÜKLE: %s"
 
+#: src/ui/menu_startup_m12.c:950
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
-msgstr "YÜKLEYİN, ARDINDAN OYUN VERİLERİNİ YENİDEN TARAYIN"
+msgstr "YÜKLEYİN, ARDINDAN OYUN VERİSİNİ YENİDEN TARAYIN"
+
+#: src/ui/menu_startup_m12.c:6921 src/ui/menu_startup_m12.c:7124
+msgid "NO SOURCE"
+msgstr "KAYNAK YOK"
+
+#: src/ui/menu_startup_m12.c:7129
+msgid "MISSING OR MISMATCHED"
+msgstr "EKSİK VEYA UYUŞMUYOR"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "EXTRAS"
+msgstr "EKSTRALAR"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "PLAY"
+msgstr "OYNA"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "QUIT"
+msgstr "ÇIKIŞ"
+
+#: src/ui/menu_startup_m12.c:7683
+msgid "Start or continue a game"
+msgstr "Bir oyuna başlayın veya devam edin"
+
+#: src/ui/menu_startup_m12.c:7684
+msgid "Display, video, audio and controls"
+msgstr "Görüntü, video, ses ve kontroller"
+
+#: src/ui/menu_startup_m12.c:7685
+msgid "Museum, bestiary, spell reference and more"
+msgstr "Müze, canavar rehberi, büyü referansı ve daha fazlası"
+
+#: src/ui/menu_startup_m12.c:7686
+msgid "Exit Firestaff"
+msgstr "Firestaff'tan çık"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "DM Nexus"
+msgstr "DM Nexus"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Theron's Quest"
+msgstr "Theron's Quest"
+
+#: src/ui/menu_startup_m12.c:7700
+msgid "V1 / V2.0 / V2.1 / V2.2"
+msgstr "V1 / V2.0 / V2.1 / V2.2"
+
+#: src/ui/menu_startup_m12.c:7701 src/ui/menu_startup_m12.c:7702
+msgid "V1 / V2"
+msgstr "V1 / V2"
+
+#: src/ui/menu_startup_m12.c:7703
+msgid "V1 / SATURN CAPTURE GATED"
+msgstr "V1 / SATURN YAKALAMA KİLİTLİ"
+
+#: src/ui/menu_startup_m12.c:7704
+msgid "V1 Only (Phase 1)"
+msgstr "Yalnızca V1 (Aşama 1)"
+
+#: src/ui/menu_startup_m12.c:7707 src/ui/menu_startup_m12.c:7708
+#: src/ui/menu_startup_m12.c:7709 src/ui/menu_startup_m12.c:7710
+#: src/ui/menu_startup_m12.c:7711
+msgid "No data files"
+msgstr "Veri dosyası yok"
+
+#: src/ui/menu_startup_m12.c:8514
+msgid "New Game (Original)"
+msgstr "Yeni Oyun (Orijinal)"
+
+#: src/ui/menu_startup_m12.c:8515
+msgid "New Game (Original + Filters)"
+msgstr "Yeni Oyun (Orijinal + Filtreler)"
+
+#: src/ui/menu_startup_m12.c:8516
+msgid "New Game (Original 10x Upscale)"
+msgstr "Yeni Oyun (Orijinal 10x Ölçekleme)"
+
+#: src/ui/menu_startup_m12.c:8517
+msgid "Continue Saved Game"
+msgstr "Kayıtlı Oyuna Devam Et"
+
+#: src/ui/menu_startup_m12.c:8518
+msgid "New Game (Modern Graphics)"
+msgstr "Yeni Oyun (Modern Grafikler)"
+
+#: src/ui/menu_startup_m12.c:8526
+msgid "Museum of Lore"
+msgstr "Tarih Müzesi"
+
+#: src/ui/menu_startup_m12.c:8527
+msgid "Manual / Docs"
+msgstr "Kılavuz / Belgeler"
+
+#: src/ui/menu_startup_m12.c:8528
+msgid "Bestiary"
+msgstr "Canavar Rehberi"
+
+#: src/ui/menu_startup_m12.c:8529
+msgid "Spell Reference"
+msgstr "Büyü Referansı"
+
+#: src/ui/menu_startup_m12.c:8530
+msgid "Map Viewer"
+msgstr "Harita Görüntüleyici"
+
+#: src/ui/menu_startup_m12.c:8531
+msgid "Item Encyclopedia"
+msgstr "Eşya Ansiklopedisi"
+
+#: src/ui/menu_startup_m12.c:8532
+msgid "Changelog"
+msgstr "Değişiklik Günlüğü"
+
+#: src/ui/menu_startup_m12.c:8533
+msgid "Screenshot Gallery"
+msgstr "Ekran Görüntüsü Galerisi"

@@ -1,307 +1,1313 @@
-# firestaff-startup-menu-fi catalog (auto-generated from startup-menu.pot).
-# Native translation pass 2026-07-19: msgstr entries reviewed and
-# translated from the English msgid source. Proper nouns/brand strings
-# intentionally keep the source spelling (same policy as sv/de/fr).
+# Firestaff — startup-menu domain, Finnish catalog.
+# Finnish translations for the startup menu / launcher domain.
+#
+# Domain: startup-menu
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: firestaff-startup-menu-fi\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-07-19+00:00\n"
-"Last-Translator: Firestaff localization pass\n"
+"Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-07 20:21+0200\n"
+"PO-Revision-Date: 2026-08-07 12:00+0200\n"
+"Last-Translator: Firestaff i18n\n"
 "Language-Team: Finnish\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-#. Launcher title / eyebrow
 
-msgid "FRONTEND PREVIEW"
-msgstr "FRONTEND-ESIKATSELU"
-#. Main menu heading
+#: src/ui/menu_startup_m12.c:217
+msgid "ACCESSIBILITY"
+msgstr "ESTEETTÖMYYS"
 
-msgid "SELECT A DESTINATION"
-msgstr "VALITSE MÄÄRÄNPÄÄ"
-#. Settings panel title
+#: src/ui/menu_startup_m12.c:217
+msgid "AUDIO"
+msgstr "ÄÄNI"
 
-msgid "SETTINGS"
-msgstr "ASETUKSET"
-#. Status label
+#: src/ui/menu_startup_m12.c:217
+msgid "CONTROLS"
+msgstr "OHJAIMET"
 
-msgid "STATUS"
-msgstr "TILA"
-#. Section heading for launcher entries
+#: src/ui/menu_startup_m12.c:217
+msgid "GAME"
+msgstr "PELI"
 
-msgid "LAUNCHER DESTINATIONS"
-msgstr "KÄYNNISTIMEN MÄÄRÄNPÄÄT"
-#. Data directory label
+#: src/ui/menu_startup_m12.c:217
+msgid "GRAPHICS"
+msgstr "GRAFIIKKA"
 
-msgid "DATA DIR"
-msgstr "DATAHAKEMISTO"
-#. Main menu footer / navigation hint
+#: src/ui/menu_startup_m12.c:218
+msgid "ONLINE"
+msgstr "VERKOSSA"
 
-msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "YLÖS/ALAS LIIKU   ENTER AVAA   ESC POISTU"
-#. Settings section heading
+#: src/ui/menu_startup_m12.c:231
+msgid "Graphics Mode"
+msgstr "Grafiikkatila"
 
-msgid "PERSISTED OPTIONS"
-msgstr "TALLENNETUT ASETUKSET"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:231 src/ui/menu_startup_m12.c:245
+msgid "Original"
+msgstr "Alkuperäinen"
 
-msgid "LANGUAGE"
-msgstr "KIELI"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:232
+msgid "Game Version"
+msgstr "Peliversio"
 
-msgid "GRAPHICS MODE"
-msgstr "GRAAFIIKKATILA"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:232
+msgid "V1"
+msgstr "V1"
 
-msgid "WINDOW MODE"
-msgstr "IKKUNATILA"
-#. Settings save confirmation
+#: src/ui/menu_startup_m12.c:233
+msgid "English"
+msgstr "Englanti"
 
-msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "MUUTOKSET TALLENNETAAN HETI KONFIGIIN"
-#. Settings footer / navigation hint
+#: src/ui/menu_startup_m12.c:233
+msgid "Language"
+msgstr "Kieli"
 
-msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "VASEN/OIKEA SELAA   ENTER ETENE   ESC TAKAISIN"
-#. Message view return hint
+#: src/ui/menu_startup_m12.c:234
+msgid "Game Speed"
+msgstr "Pelinopeus"
 
-msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER TAI ESC PALAA VALIKKOON"
-#. Launch confirmation
+#: src/ui/menu_startup_m12.c:234
+msgid "Normal"
+msgstr "Normaali"
 
-msgid "READY TO LAUNCH"
-msgstr "VALMIS KÄYNNISTYKSEEN"
-#. Escape hint in messages
+#: src/ui/menu_startup_m12.c:235
+msgid "Classic"
+msgstr "Klassinen"
 
-msgid "ESC RETURNS TO MENU"
-msgstr "ESC PALAA VALIKKOON"
-#. Missing hash-verified data message
+#: src/ui/menu_startup_m12.c:235
+msgid "Movement Mode"
+msgstr "Liikkumistila"
 
-msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "VAIN VALIDOINTIRUNKO"
-#. Missing hash-verified data detail
+#: src/ui/menu_startup_m12.c:236
+msgid "Cheats"
+msgstr "Huijauskoodit"
 
-msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "LISÄÄ VARMENNETUT RETAIL-TIIVISTEET"
-#. Missing game data message
+#: src/ui/menu_startup_m12.c:236
+msgid "Off"
+msgstr "Pois"
 
-msgid "GAME DATA NOT FOUND"
-msgstr "PELIDATAA EI LÖYDY"
-#. Missing game data detail
+#: src/ui/menu_startup_m12.c:241
+msgid "Maximized"
+msgstr "Suurennettu"
 
-msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "TARKISTA FIRESTAFF-DATAHAKEMISTO"
-#. Card art slot status
+#: src/ui/menu_startup_m12.c:241
+msgid "Window Mode"
+msgstr "Ikkunatila"
 
-msgid "ART SLOT READY"
-msgstr "GRAAFIKKAPAIKKA VALMIS"
-#. Card art slot status
+#: src/ui/menu_startup_m12.c:242
+msgid "16:9"
+msgstr "16:9"
 
-msgid "ART SLOT EMPTY"
-msgstr "GRAAFIKKAPAIKKA TYHJÄ"
-#. Card art slot instruction
+#: src/ui/menu_startup_m12.c:242
+msgid "Display Format"
+msgstr "Näyttömuoto"
 
-msgid "DROP ART INTO SLOT"
-msgstr "PUDOTA GRAAFIIKKA PAIKKAAN"
-#. Card art active label
+#: src/ui/menu_startup_m12.c:243 src/ui/menu_startup_m12.c:244
+msgid "On"
+msgstr "Päällä"
 
-msgid "CARD ART ACTIVE"
-msgstr "KORTIN GRAAFIIKKA AKTIIVINEN"
-#. Card art slot label
+#: src/ui/menu_startup_m12.c:243
+msgid "VSync"
+msgstr "VSync"
 
-msgid "CARD ART SLOT"
-msgstr "KORTIN GRAAFIIKKAPAIKKA"
-#. Game card label
+#: src/ui/menu_startup_m12.c:244
+msgid "Integer Scaling"
+msgstr "Kokonaislukuskaalaus"
 
-msgid "Dungeon Master"
-msgstr "Dungeon Master"
-#. Game card label
+#: src/ui/menu_startup_m12.c:245
+msgid "Viewport Style"
+msgstr "Näkymän tyyli"
 
-msgid "Chaos Strikes Back"
-msgstr "Chaos Strikes Back"
-#. Game card label
+#: src/ui/menu_startup_m12.c:246
+msgid "Original VGA"
+msgstr "Alkuperäinen VGA"
 
-msgid "Dungeon Master II"
-msgstr "Dungeon Master II"
-#. Launcher title
+#: src/ui/menu_startup_m12.c:246
+msgid "Palette Mode"
+msgstr "Väripalettitila"
 
-msgid "Firestaff"
-msgstr "Firestaff"
-#. Game options row label
-
-msgid "PATCH"
-msgstr "PAIKKAUS"
-#. Game options value: original version
-
+#: src/ui/menu_startup_m12.c:373 src/ui/menu_startup_m12.c:403
+#: src/ui/menu_startup_m12.c:434 src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:443
 msgid "ORIGINAL"
 msgstr "ALKUPERÄINEN"
-#. Game options value: patched version
 
+#: src/ui/menu_startup_m12.c:403
 msgid "PATCHED"
-msgstr "PAIKATTU"
-#. Game options row label
+msgstr "PÄIVITETTY"
 
-msgid "CHEATS"
-msgstr "HUIJAUKSET"
-#. Game options value: off
+#: src/ui/menu_startup_m12.c:415
+msgid "DE"
+msgstr "DE"
 
+#: src/ui/menu_startup_m12.c:415
+msgid "EN"
+msgstr "EN"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "FR"
+msgstr "FR"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "JA"
+msgstr "JA"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "SV"
+msgstr "SV"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "ZH"
+msgstr "ZH"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "CS"
+msgstr "CS"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "DA"
+msgstr "DA"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "ES"
+msgstr "ES"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "FI"
+msgstr "FI"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "HU"
+msgstr "HU"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "IT"
+msgstr "IT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "ID"
+msgstr "ID"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "KO"
+msgstr "KO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NL"
+msgstr "NL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NO"
+msgstr "NO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PL"
+msgstr "PL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PT"
+msgstr "PT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "RU"
+msgstr "RU"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "TR"
+msgstr "TR"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "DEUTSCH"
+msgstr "DEUTSCH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "SVENSKA"
+msgstr "SVENSKA"
+
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:439 src/ui/menu_startup_m12.c:440
 msgid "OFF"
 msgstr "POIS"
-#. Game options value: on
 
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
 msgid "ON"
 msgstr "PÄÄLLÄ"
-#. Game options row label
 
-msgid "SPEED"
-msgstr "NOPEUS"
-#. Game options value: slower
-
-msgid "SLOWER"
-msgstr "HITAAAMPI"
-#. Game options value: normal
-
-msgid "NORMAL"
-msgstr "NORMAALI"
-#. Game options value: faster
-
+#: src/ui/menu_startup_m12.c:427
 msgid "FASTER"
 msgstr "NOPEAMPI"
-#. Game options row label
 
-msgid "ASPECT RATIO"
-msgstr "KUVASUHDE"
-#. Game options row label
+#: src/ui/menu_startup_m12.c:427
+msgid "NORMAL"
+msgstr "NORMAALI"
 
-msgid "RESOLUTION"
-msgstr "RESOLUUTIO"
-#. Game options action
+#: src/ui/menu_startup_m12.c:427
+msgid "SLOWER"
+msgstr "HITAAMPI"
 
-msgid "LAUNCH"
-msgstr "KÄYNNISTÄ"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:428
+msgid "FIT"
+msgstr "SOVITA"
 
-msgid "V1 ORIGINAL"
-msgstr "V1 ALKUPERÄINEN"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:428
+msgid "STRETCH"
+msgstr "VENYTÄ"
 
-msgid "V2 ENHANCED 2D"
-msgstr "V2 PARANNELTU 2D"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:431
+msgid "LINEAR"
+msgstr "LINEAARINEN"
 
-msgid "V3 MODERN/3D"
-msgstr "V3 MODERNI/3D"
-#. V3 unavailable message
+#: src/ui/menu_startup_m12.c:431
+msgid "NEAREST"
+msgstr "LÄHIN"
 
-msgid "COMING SOON"
-msgstr "TULOSSA PIAN"
-#. Language names
-
-msgid "ENGLISH"
-msgstr "ENGLANTI"
-#. Language names
-
-msgid "SVENSKA"
-msgstr "RUOTSI"
-#. Language names
-
-msgid "FRANCAIS"
-msgstr "RANSKA"
-#. Language names
-
-msgid "DEUTSCH"
-msgstr "SAKSA"
-#. Window mode values
-
-msgid "WINDOWED"
-msgstr "IKKUNA"
-#. Window mode values
-
-msgid "FULLSCREEN"
-msgstr "KOKO NÄYTTÖ"
-#. Renderer/settings label
-
-msgid "RENDERER BACKEND"
-msgstr "RENDERÖIJÄN BACKEND"
-#. Renderer/settings label
-
-msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "RENDERÖIJÄN BACKEND EI SAATAVILLA"
-#. Renderer/settings label
-
-msgid "RENDERER"
-msgstr "RENDERÖIJÄ"
-#. Renderer/settings label
-
+#: src/ui/menu_startup_m12.c:432 src/ui/menu_startup_m12.c:435
 msgid "AUTO"
 msgstr "AUTO"
-#. Renderer/settings label
 
-msgid "SOFTWARE"
-msgstr "OHJELMISTO"
-#. Renderer/settings label
-
-msgid "SDL"
-msgstr "SDL"
-#. Renderer/settings label
-
+#: src/ui/menu_startup_m12.c:432
 msgid "OPENGL"
 msgstr "OPENGL"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:432
+msgid "SDL"
+msgstr "SDL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SOFTWARE"
+msgstr "OHJELMISTO"
+
+#: src/ui/menu_startup_m12.c:432
 msgid "VULKAN"
 msgstr "VULKAN"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:433
 msgid "AVAILABLE"
 msgstr "SAATAVILLA"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:433
 msgid "UNAVAILABLE"
 msgstr "EI SAATAVILLA"
-#. Renderer/settings label
 
-msgid "SCALE"
-msgstr "SKAALAUS"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:434
+msgid "EXPANDED"
+msgstr "LAAJENNETTU"
 
-msgid "PIXEL SNAP"
-msgstr "PIKSELIKOHDISTUS"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:434
+msgid "WIDESCREEN"
+msgstr "LAAJAKUVA"
 
-msgid "FILTER"
-msgstr "SUODIN"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:435
+msgid "GAMEPAD"
+msgstr "PELIOHJAIN"
 
-msgid "VSYNC"
-msgstr "VSYNC"
+#: src/ui/menu_startup_m12.c:435
+msgid "KEYBOARD+MOUSE"
+msgstr "NÄPPÄIMISTÖ+HIIRI"
 
-#. Popup title when no game data files are found at startup
-msgid "NO GAME DATA FOUND"
-msgstr "PELITIETOJA EI LÖYTYNYT"
+#: src/ui/menu_startup_m12.c:435
+msgid "TOUCH"
+msgstr "KOSKETUS"
 
-#. Desktop: instruction to copy game files
-msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
-msgstr "KOPIOI ALKUPERÄISET PELITIEDOSTOT TIETOHAKEMISTOON"
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:439
+msgid "FULL"
+msgstr "TÄYSI"
 
-#. Android: instruction to copy game files via file manager
-msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
-msgstr "KOPIOI PELITIEDOSTOT KANSIOON Documents/Firestaff/data TIEDOSTONHALLINNAN AVULLA"
+#: src/ui/menu_startup_m12.c:436
+msgid "LARGE"
+msgstr "SUURI"
 
-#. iOS: instruction to copy game files via Files app
-msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
-msgstr "KÄYTÄ TIEDOSTOT-SOVELLUSTA KOPIOIDAKSESI PELITIEDOSTOT KANSIOON Firestaff/data TÄSSÄ SOVELLUKSESSA"
+#: src/ui/menu_startup_m12.c:436
+msgid "MINIMAL"
+msgstr "MINIMAALINEN"
 
+#: src/ui/menu_startup_m12.c:437
+msgid "FAST"
+msgstr "NOPEA"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "SMOOTH"
+msgstr "SULAVA"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "COORDS"
+msgstr "KOORDINAATIT"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "DRAW ORDER"
+msgstr "PIIRTOJÄRJESTYS"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "QUEUE"
+msgstr "JONO"
+
+#: src/ui/menu_startup_m12.c:439
+msgid "QUICK"
+msgstr "NOPEA"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "DEUT"
+msgstr "DEUTERANOPIA"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "PROT"
+msgstr "PROTANOPIA"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "TRIT"
+msgstr "TRITANOPIA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "AMIGA"
+msgstr "AMIGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CGA"
+msgstr "CGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CLASSIC"
+msgstr "KLASSINEN"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "DARK"
+msgstr "TUMMA"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "DUNGEON"
+msgstr "LUOLASTO"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STARS"
+msgstr "TÄHDET"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STATIC"
+msgstr "STAATTINEN"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "TORCH"
+msgstr "SOIHTU"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "CUSTOM"
+msgstr "MUKAUTETTU"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "REMASTERED"
+msgstr "UUDISTETTU"
+
+#: src/ui/menu_startup_m12.c:653 src/ui/menu_startup_m12.c:672
+#: src/ui/menu_startup_m12.c:8669 src/ui/menu_startup_m12.c:9113
+msgid "DUNGEON MASTER"
+msgstr "DUNGEON MASTER"
+
+#: src/ui/menu_startup_m12.c:654 src/ui/menu_startup_m12.c:682
+#: src/ui/menu_startup_m12.c:8671 src/ui/menu_startup_m12.c:9127
+msgid "CHAOS STRIKES BACK"
+msgstr "CHAOS STRIKES BACK"
+
+#: src/ui/menu_startup_m12.c:655 src/ui/menu_startup_m12.c:692
+msgid "DUNGEON MASTER II"
+msgstr "DUNGEON MASTER II"
+
+#: src/ui/menu_startup_m12.c:656
+msgid "DUNGEON MASTER NEXUS"
+msgstr "DUNGEON MASTER NEXUS"
+
+#: src/ui/menu_startup_m12.c:658
+msgid "THERON'S QUEST"
+msgstr "THERON'S QUEST"
+
+#: src/ui/menu_startup_m12.c:659 src/ui/menu_startup_m12.c:10042
+#: src/ui/menu_startup_m12.c:10045
+msgid "MUSEUM OF LORE"
+msgstr "LEGENDOJEN MUSEO"
+
+#: src/ui/menu_startup_m12.c:660 src/ui/menu_startup_m12.c:7120
+#: src/ui/menu_startup_m12.c:7679 src/ui/menu_startup_m12.c:8865
+#: src/ui/menu_startup_m12.c:10077 src/ui/menu_startup_m12.c:10080
+#: src/ui/menu_startup_m12.c:10224
+msgid "SETTINGS"
+msgstr "ASETUKSET"
+
+#: src/ui/menu_startup_m12.c:673
+msgid "THE ORIGINAL DUNGEON CRAWL"
+msgstr "ALKUPERÄINEN LUOLASTOSEIKKAILU"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "1987 FTL GAMES"
+msgstr "1987 FTL GAMES"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "CHAMPIONS ENTER THE DUNGEON"
+msgstr "SANKARIT ASTUVAT LUOLASTOON"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "FOUR PORTRAITS BECOME A PARTY"
+msgstr "NELJÄSTÄ MUOTOKUVASTA SYNTYY RYHMÄ"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
+msgstr "REAALIAIKAINEN PAINE MUOVAA LEGENDAN"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
+msgstr "FIRESTAFF ON KESKEINEN TALISMAANI"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "KEY LORE THREADS"
+msgstr "KESKEISET TARINALANGAT"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "LORD CHAOS SHATTERS ORDER"
+msgstr "LORD CHAOS MURSKAA JÄRJESTYKSEN"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "RA RETURNS AS MASTER OF BALANCE"
+msgstr "RA PALAA TASAPAINON MESTARINA"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE DUNGEON IS BOTH TEST AND PRISON"
+msgstr "LUOLASTO ON SEKÄ KOETTELEMUS ETTÄ VANKILA"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE GREY LORD IS DIVIDED"
+msgstr "HARMAA LORDI ON JAKAUTUNUT"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
+msgstr "FIRESTAFF TALLENTAA TODISTEITA, EI ARVAILUJA"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
+msgstr "GRAPHICS.DAT JA DUNGEON.DAT ON VARMENNETTU"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
+msgstr "TIIVISTETTY ALKUPERÄISDATA PYSYY KÄYTTÄJÄN TOIMITTAMANA"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PC AND ATARI ST LINEAGE MATTERS"
+msgstr "PC- JA ATARI ST -PERINTÖ ON TÄRKEÄ"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PRESERVATION NOTES"
+msgstr "SÄILYTYSMUISTIINPANOT"
+
+#: src/ui/menu_startup_m12.c:683
+msgid "THE CHAMPIONS RETURN"
+msgstr "SANKARIT PALAAVAT"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "CSB REWARDS MAP MEMORY AND NERVE"
+msgstr "CSB PALKITSEE KARTTAMUISTIN JA ROHKEUDEN"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
+msgstr "DUNGEON MASTERIN JÄRJESTELMÄT TIIVISTYVÄT"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "EXPANSION AND SEQUEL DESIGN"
+msgstr "LAAJENNUKSEN JA JATKO-OSAN SUUNNITTELU"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "FOUR PATHS TEST MASTERY"
+msgstr "NELJÄ POLKUA KOETTELEE MESTARUUTTA"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
+msgstr "CORBUM-TEHTÄVÄ KORVAA YKSINKERTAISEN LASKEUTUMISEN"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "CHAOS LUO YHÄ PITKÄN VARJON"
+
+#: src/ui/menu_startup_m12.c:686 src/ui/menu_startup_m12.c:696
+msgid "LORE SHAPE"
+msgstr "TARINAN MUOTO"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "PALAAVAT SANKARIT KOHTAAVAT VAIKEAMMAN LABYRINTIN"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "PELAAJA METSÄSTÄÄ CORBUM-AINETTA"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "MAAILMA TUNTUU VANHEMMALTA JA TURVATTOMAMMALTA"
+
+#: src/ui/menu_startup_m12.c:687 src/ui/menu_startup_m12.c:697
+msgid "ARCHIVE STATUS"
+msgstr "ARKISTON TILA"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
+msgstr "CSBGRAPH.DAT JA CSB.DAT SEURATAAN"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
+msgstr "KÄYNNISTIN NÄYTTÄÄ VALMIS VAIN KUN TIEDOT TÄSMÄÄVÄT"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
+msgstr "MUSEON SISÄLTÖ PYSYY STAATTISENA JA RAJATTUNA"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "VERSION SLOTS USE HASH EVIDENCE"
+msgstr "VERSIOPAIKAT KÄYTTÄVÄT TIIVISTETODISTEITA"
+
+#: src/ui/menu_startup_m12.c:693
+msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
+msgstr "LEGENDA ENSIMMÄISEN LUOLASTON ULKOPUOLELLA"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
+msgstr "DM2 SÄILYTTÄÄ RYHMÄN SELVIYTYMISEN YTIMEN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
+msgstr "APULAISET JA SÄÄ MUUTTAVAT RYTMIÄ"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
+msgstr "ULKOTILAT JA KAUPAT LAAJENTAVAT MUOTOA"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
+msgstr "SARJA SIIRTYY ALKUPERÄISEN LABYRINTIN TUOLLE PUOLEN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SKULLKEEP ERA"
+msgstr "SKULLKEEPIN AIKAKAUSI"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
+msgstr "TEKNIIKKA JA TAIKUUS JAKAVAT NÄYTTÄMÖN"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE PLAYER ASSEMBLES AND SURVIVES"
+msgstr "PELAAJA KOKOAA JOUKON JA SELVIYTYY"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
+msgstr "TUNNELMA ON OUDOMPI JA MEKAANISEMPI"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
+msgstr "MAAILMA ON LAAJEMPI KUIN MOUNT ANAIAS"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
+msgstr "BINÄÄRIRESURSSIT PYSYVÄT TÄMÄN VAIHEEN ULKOPUOLELLA"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
+msgstr "TÄMÄ SISÄLTÖ ON OPAS, EI TIETOKAATOPAIKKA"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
+msgstr "DM2GRAPHICS.DAT JA DM2DUNGEON.DAT SEURATAAN"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
+msgstr "TUETTUJEN VERSIOIDEN MÄÄRÄ VOI KASVAA AJAN MYÖTÄ"
+
+#: src/ui/menu_startup_m12.c:702
+msgid "FIRESTAFF PROJECT"
+msgstr "FIRESTAFF-PROJEKTI"
+
+#: src/ui/menu_startup_m12.c:703
+msgid "ABOUT AND CREDITS"
+msgstr "TIETOJA JA TEKIJÄT"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
+msgstr "DETERMINISTINEN, MODULAARINEN, MUSEOTASOINEN"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "OPEN DUNGEON MASTER ENGINE"
+msgstr "AVOIN DUNGEON MASTER -MOOTTORI"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
+msgstr "ALKUPERÄISDATA VARMENNETAAN, EI TOIMITETA MUKANA"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "PROJECT PURPOSE"
+msgstr "PROJEKTIN TARKOITUS"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "V1 PRESERVES BASELINE BEHAVIOUR"
+msgstr "V1 SÄILYTTÄÄ PERUSKÄYTTÄYTYMISEN"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
+msgstr "CHRISTOPHE FONTANEL DOKUMENTOI TÄRKEÄN HISTORIAN"
+
+#: src/ui/menu_startup_m12.c:706 src/ui/menu_startup_m12.c:10059
+#: src/ui/menu_startup_m12.c:10062
+msgid "CREDITS"
+msgstr "TEKIJÄT"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
+msgstr "FTL GAMES JA SOFTWARE HEAVEN LOIVAT ALKUPERÄISET PELIT"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "NO CLAIM OF OFFICIAL AFFILIATION"
+msgstr "EI VÄITETÄ VIRALLISTA YHTEYTTÄ"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "PROJECT BOUNDARIES"
+msgstr "PROJEKTIN RAJAT"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "REGRESSION PROBES GUARD MENU STABILITY"
+msgstr "REGRESSIOTESTIT VARTIOIVAT VALIKON VAKAUTTA"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
+msgstr "SEURATTU TEKSTI PYSYY ENGLANNIKSI KOODIVARASTOSSA"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
+msgstr "KÄYTTÄJÄN TOIMITTAMA VÄHITTÄISMYYNTIDATA VAADITAAN"
+
+#: src/ui/menu_startup_m12.c:712
+msgid "TECHNICAL ARCHIVE"
+msgstr "TEKNINEN ARKISTO"
+
+#: src/ui/menu_startup_m12.c:713
+msgid "SOURCE EVIDENCE AND VERIFICATION"
+msgstr "LÄHDETODISTEET JA VARMENNUS"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "EVIDENCE MODEL"
+msgstr "TODISTEMALLI"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "KNOWN FILES ARE MATCHED BY HASH"
+msgstr "TUNNETUT TIEDOSTOT TUNNISTETAAN TIIVISTEELLÄ"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
+msgstr "EI HILJAISTA VARAJÄRJESTELMÄÄ TUNTEMATTOMIIN ALKUPERÄISTIEDOSTOIHIN"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
+msgstr "SUORITUSAIKAISET POLUT ILMOITTAVAT PUUTTUVASTA DATASTA TURVALLISESTI"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "VERSION MATRICES STAY EXPLICIT"
+msgstr "VERSIOMATRIISIT PYSYVÄT YKSISELITTEISINÄ"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "ESCAPE RETURNS BEFORE EXITING"
+msgstr "ESC PALAA TAKAISIN ENNEN POISTUMISTA"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "KEYBOARD INPUT IS BOUNDED"
+msgstr "NÄPPÄIMISTÖSYÖTE ON RAJATTU"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
+msgstr "HIIREN OSUMAT REITITETÄÄN JAETUN TILAN KAUTTA"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "STARTUP MENU"
+msgstr "KÄYNNISTYSVALIKKO"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "UNKNOWN KEYS ARE NO OPS"
+msgstr "TUNTEMATTOMAT NÄPPÄIMET EIVÄT TEE MITÄÄN"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD INTERVIEW AND TIMELINE SOURCES"
+msgstr "LISÄÄ HAASTATTELU- JA AIKAJANALÄHTEITÄ"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD MANUAL EXCERPT REFERENCES"
+msgstr "LISÄÄ KÄSIKIRJAOTTEIDEN VIITTEITÄ"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD SMALL CURATED SCREEN PANELS"
+msgstr "LISÄÄ PIENIÄ VALIKOITUJA NÄYTTÖPANEELEITA"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "FUTURE MUSEUM WORK"
+msgstr "MUSEON TULEVA TYÖ"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
+msgstr "PIDÄ SUURET RESURSSIT POISSA ENNEN LISENSOINTIA"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "FULLSCREEN"
+msgstr "KOKO NÄYTTÖ"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "MAXIMIZED"
+msgstr "SUURENNETTU"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "WINDOWED"
+msgstr "IKKUNOITU"
+
+#: src/ui/menu_startup_m12.c:919
+msgid "FRONTEND PREVIEW"
+msgstr "KÄYTTÖLIITTYMÄN ESIKATSELU"
+
+#: src/ui/menu_startup_m12.c:920
+msgid "SELECT A DESTINATION"
+msgstr "VALITSE KOHDE"
+
+#: src/ui/menu_startup_m12.c:922
+msgid "STATUS"
+msgstr "TILA"
+
+#: src/ui/menu_startup_m12.c:923
+msgid "LAUNCHER DESTINATIONS"
+msgstr "KÄYNNISTIMEN KOHTEET"
+
+#: src/ui/menu_startup_m12.c:924
+msgid "DATA DIR"
+msgstr "DATAHAKEMISTO"
+
+#: src/ui/menu_startup_m12.c:925
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "YLÖS/ALAS SIIRRY   ENTER AVAA   ESC POISTU"
+
+#: src/ui/menu_startup_m12.c:926
+msgid "PERSISTED OPTIONS"
+msgstr "TALLENNETUT ASETUKSET"
+
+#: src/ui/menu_startup_m12.c:927
+msgid "LANGUAGE"
+msgstr "KIELI"
+
+#: src/ui/menu_startup_m12.c:928
+msgid "GRAPHICS MODE"
+msgstr "GRAFIIKKATILA"
+
+#: src/ui/menu_startup_m12.c:929
+msgid "RENDERER BACKEND"
+msgstr "RENDERÖINTIMOOTTORI"
+
+#: src/ui/menu_startup_m12.c:930
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "RENDERÖINTIMOOTTORI EI SAATAVILLA"
+
+#: src/ui/menu_startup_m12.c:931
+msgid "WINDOW MODE"
+msgstr "IKKUNATILA"
+
+#: src/ui/menu_startup_m12.c:932
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "MUUTOKSET TALLENTUVAT HETI ASETUKSIIN"
+
+#: src/ui/menu_startup_m12.c:933
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "VASEN/OIKEA VAIHDA   ENTER ETENE   ESC TAKAISIN"
+
+#: src/ui/menu_startup_m12.c:934
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER TAI ESC PALAA VALIKKOON"
+
+#: src/ui/menu_startup_m12.c:935 src/ui/menu_startup_m12.c:7127
+msgid "READY TO LAUNCH"
+msgstr "VALMIS KÄYNNISTYKSEEN"
+
+#: src/ui/menu_startup_m12.c:936
+msgid "ESC RETURNS TO MENU"
+msgstr "ESC PALAA VALIKKOON"
+
+#: src/ui/menu_startup_m12.c:937
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "VAIN VALIDOINTIRUNKO"
+
+#: src/ui/menu_startup_m12.c:938
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "LISÄÄ VARMENNETUT VÄHITTÄISMYYNTITARKISTEET"
+
+#: src/ui/menu_startup_m12.c:939
+msgid "GAME DATA NOT FOUND"
+msgstr "PELIDATAA EI LÖYTYNYT"
+
+#: src/ui/menu_startup_m12.c:940
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "TARKISTA FIRESTAFFIN DATAHAKEMISTO"
+
+#: src/ui/menu_startup_m12.c:941
+msgid "ORIGINAL FILES NOT FOUND"
+msgstr "ALKUPERÄISIÄ TIEDOSTOJA EI LÖYTYNYT"
+
+#: src/ui/menu_startup_m12.c:942
+msgid "COPY YOUR RETAIL GAME FILES INTO:"
+msgstr "KOPIOI VÄHITTÄISMYYNTIPELIN TIEDOSTOT KANSIOON:"
+
+#: src/ui/menu_startup_m12.c:943
+msgid "ART SLOT READY"
+msgstr "KUVAPAIKKA VALMIS"
+
+#: src/ui/menu_startup_m12.c:944
+msgid "ART SLOT EMPTY"
+msgstr "KUVAPAIKKA TYHJÄ"
+
+#: src/ui/menu_startup_m12.c:945
+msgid "DROP ART INTO SLOT"
+msgstr "PUDOTA KUVA PAIKKAAN"
+
+#: src/ui/menu_startup_m12.c:946
+msgid "CARD ART ACTIVE"
+msgstr "KORTTIKUVA AKTIIVINEN"
+
+#: src/ui/menu_startup_m12.c:947
+msgid "CARD ART SLOT"
+msgstr "KORTTIKUVAN PAIKKA"
+
+#: src/ui/menu_startup_m12.c:948
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "PELIDATA-ARKISTO TARVITSEE TYÖKALUN"
 
+#: src/ui/menu_startup_m12.c:949
+#, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr "ARKISTO: %s  ASENNA: %s"
 
+#: src/ui/menu_startup_m12.c:950
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "ASENNA SE JA SKANNAA PELIDATA UUDELLEEN"
+
+#: src/ui/menu_startup_m12.c:6921 src/ui/menu_startup_m12.c:7124
+msgid "NO SOURCE"
+msgstr "EI LÄHDETTÄ"
+
+#: src/ui/menu_startup_m12.c:7129
+msgid "MISSING OR MISMATCHED"
+msgstr "PUUTTUU TAI EI TÄSMÄÄ"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "EXTRAS"
+msgstr "LISÄSISÄLTÖ"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "PLAY"
+msgstr "PELAA"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "QUIT"
+msgstr "LOPETA"
+
+#: src/ui/menu_startup_m12.c:7683
+msgid "Start or continue a game"
+msgstr "Aloita tai jatka peliä"
+
+#: src/ui/menu_startup_m12.c:7684
+msgid "Display, video, audio and controls"
+msgstr "Näyttö, video, ääni ja ohjaimet"
+
+#: src/ui/menu_startup_m12.c:7685
+msgid "Museum, bestiary, spell reference and more"
+msgstr "Museo, hirviökirja, loitsuopas ja muuta"
+
+#: src/ui/menu_startup_m12.c:7686
+msgid "Exit Firestaff"
+msgstr "Poistu Firestaffista"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "DM Nexus"
+msgstr "DM Nexus"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Theron's Quest"
+msgstr "Theron's Quest"
+
+#: src/ui/menu_startup_m12.c:7700
+msgid "V1 / V2.0 / V2.1 / V2.2"
+msgstr "V1 / V2.0 / V2.1 / V2.2"
+
+#: src/ui/menu_startup_m12.c:7701 src/ui/menu_startup_m12.c:7702
+msgid "V1 / V2"
+msgstr "V1 / V2"
+
+#: src/ui/menu_startup_m12.c:7703
+msgid "V1 / SATURN CAPTURE GATED"
+msgstr "V1 / SATURN-KAAPPAUS LUKITTU"
+
+#: src/ui/menu_startup_m12.c:7704
+msgid "V1 Only (Phase 1)"
+msgstr "Vain V1 (vaihe 1)"
+
+#: src/ui/menu_startup_m12.c:7707 src/ui/menu_startup_m12.c:7708
+#: src/ui/menu_startup_m12.c:7709 src/ui/menu_startup_m12.c:7710
+#: src/ui/menu_startup_m12.c:7711
+msgid "No data files"
+msgstr "Ei datatiedostoja"
+
+#: src/ui/menu_startup_m12.c:8514
+msgid "New Game (Original)"
+msgstr "Uusi peli (alkuperäinen)"
+
+#: src/ui/menu_startup_m12.c:8515
+msgid "New Game (Original + Filters)"
+msgstr "Uusi peli (alkuperäinen + suodattimet)"
+
+#: src/ui/menu_startup_m12.c:8516
+msgid "New Game (Original 10x Upscale)"
+msgstr "Uusi peli (alkuperäinen 10x skaalaus)"
+
+#: src/ui/menu_startup_m12.c:8517
+msgid "Continue Saved Game"
+msgstr "Jatka tallennettua peliä"
+
+#: src/ui/menu_startup_m12.c:8518
+msgid "New Game (Modern Graphics)"
+msgstr "Uusi peli (moderni grafiikka)"
+
+#: src/ui/menu_startup_m12.c:8526
+msgid "Museum of Lore"
+msgstr "Legendojen museo"
+
+#: src/ui/menu_startup_m12.c:8527
+msgid "Manual / Docs"
+msgstr "Käyttöohje / dokumentaatio"
+
+#: src/ui/menu_startup_m12.c:8528
+msgid "Bestiary"
+msgstr "Hirviökirja"
+
+#: src/ui/menu_startup_m12.c:8529
+msgid "Spell Reference"
+msgstr "Loitsuopas"
+
+#: src/ui/menu_startup_m12.c:8530
+msgid "Map Viewer"
+msgstr "Kartannäytin"
+
+#: src/ui/menu_startup_m12.c:8531
+msgid "Item Encyclopedia"
+msgstr "Esineiden tietosanakirja"
+
+#: src/ui/menu_startup_m12.c:8532
+msgid "Changelog"
+msgstr "Muutosloki"
+
+#: src/ui/menu_startup_m12.c:8533
+msgid "Screenshot Gallery"
+msgstr "Kuvakaappausgalleria"
+
+#~ msgid "SCANNING GAME DATA"
+#~ msgstr "SKANNATAAN PELIDATAA"
+
+#~ msgid "Dungeon Master II: The Legend of Skullkeep"
+#~ msgstr "Dungeon Master II: The Legend of Skullkeep"
+
+#~ msgid "Dungeon Master Nexus"
+#~ msgstr "Dungeon Master Nexus"
+
+#~ msgid "Firestaff"
+#~ msgstr "Firestaff"
+
+#~ msgid "PATCH"
+#~ msgstr "PÄIVITYS"
+
+#~ msgid "CHEATS"
+#~ msgstr "HUIJAUSKOODIT"
+
+#~ msgid "SPEED"
+#~ msgstr "NOPEUS"
+
+#~ msgid "ASPECT RATIO"
+#~ msgstr "KUVASUHDE"
+
+#~ msgid "RESOLUTION"
+#~ msgstr "RESOLUUTIO"
+
+#~ msgid "LAUNCH"
+#~ msgstr "KÄYNNISTÄ"
+
+#~ msgid "V1 ORIGINAL"
+#~ msgstr "V1 ALKUPERÄINEN"
+
+#~ msgid "V2 ENHANCED 2D"
+#~ msgstr "V2 PARANNETTU 2D"
+
+#~ msgid "V3 MODERN/3D"
+#~ msgstr "V3 MODERNI/3D"
+
+#~ msgid "COMING SOON"
+#~ msgstr "TULOSSA PIAN"
+
+#~ msgid "FRANCAIS"
+#~ msgstr "FRANÇAIS"
+
+#~ msgid "GAME OPTIONS"
+#~ msgstr "PELIASETUKSET"
+
+#~ msgid "> LAUNCH"
+#~ msgstr "> KÄYNNISTÄ"
+
+#~ msgid "> COMING SOON"
+#~ msgstr "> TULOSSA PIAN"
+
+#~ msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
+#~ msgstr "ESC: TAKAISIN  NUOLET: SIIRRY  ENTER: VALITSE"
+
+#~ msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
+#~ msgstr "OTA HUIJAUSKOODIT KÄYTTÖÖN AVATAKSESI NOPEUDEN / PIKANÄPPÄIMET"
+
+#~ msgid "LOCKED BY V1 ORIGINAL MODE"
+#~ msgstr "LUKITTU V1 ALKUPERÄISTILAN TOIMESTA"
+
+#~ msgid "RENDERER"
+#~ msgstr "RENDERÖIJÄ"
+
+#~ msgid "SCALE"
+#~ msgstr "SKAALAUS"
+
+#~ msgid "PIXEL SNAP"
+#~ msgstr "PIKSELIKOHDISTUS"
+
+#~ msgid "VSYNC"
+#~ msgstr "VSYNC"
+
+#~ msgid "SELECT GAME"
+#~ msgstr "VALITSE PELI"
+
+#~ msgid "Up/Down Navigate  |  Enter Select"
+#~ msgstr "Ylös/Alas siirry  |  Enter valitse"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+#~ msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter valitse"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
+#~ msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter aloita"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
+#~ msgstr "Escape takaisin  |  Ylös/Alas siirry  |  Enter avaa"
+
+#~ msgid "< > Switch tab   Up/Down Navigate   Enter Change"
+#~ msgstr "< > vaihda välilehteä   Ylös/Alas siirry   Enter muuta"
+
+#~ msgid "Coming soon"
+#~ msgstr "Tulossa pian"
+
+#~ msgid "Auto-Save"
+#~ msgstr "Automaattitallennus"
+
+#~ msgid "Minimap"
+#~ msgstr "Pienoiskartta"
+
+#~ msgid "Journal"
+#~ msgstr "Päiväkirja"
+
+#~ msgid "CRT Filter"
+#~ msgstr "CRT-suodatin"
+
+#~ msgid "Palette Correction"
+#~ msgstr "Väripaletin korjaus"
+
+#~ msgid "Dither Cleanup"
+#~ msgstr "Ditheroinnin siistiminen"
+
+#~ msgid "Sharpening"
+#~ msgstr "Terävöinti"
+
+#~ msgid "Phosphor Persistence"
+#~ msgstr "Fosforijälkikuva"
+
+#~ msgid "Color Preset"
+#~ msgstr "Väriesiasetus"
+
+#~ msgid "Pixel Grid"
+#~ msgstr "Pikseliruudukko"
+
+#~ msgid "Motion Blur"
+#~ msgstr "Liike-epäterävyys"
+
+#~ msgid "AI Upscale (10x)"
+#~ msgstr "Tekoälyskaalaus (10x)"
+
+#~ msgid "Smooth Movement"
+#~ msgstr "Pehmeä liikkuminen"
+
+#~ msgid "Smooth Turning"
+#~ msgstr "Pehmeä kääntyminen"
+
+#~ msgid "Animation Interpolation"
+#~ msgstr "Animaation interpolointi"
+
+#~ msgid "Dynamic Lighting"
+#~ msgstr "Dynaaminen valaistus"
+
+#~ msgid "Particle Effects"
+#~ msgstr "Hiukkastehosteet"
+
+#~ msgid "Weather FX"
+#~ msgstr "Sääefektit"
+
+#~ msgid "Camera Easing"
+#~ msgstr "Kameran pehmennys"
+
+#~ msgid "Screen Transitions"
+#~ msgstr "Näytön siirtymät"
+
+#~ msgid "Control Scheme"
+#~ msgstr "Ohjainasettelu"
+
+#~ msgid "Input Mode"
+#~ msgstr "Syöttötila"
+
+#~ msgid "Touch Controls"
+#~ msgstr "Kosketusohjaimet"
+
+#~ msgid "Gamepad"
+#~ msgstr "Peliohjain"
+
+#~ msgid "Key Bindings"
+#~ msgstr "Näppäinasetukset"
+
+#~ msgid "Auto-Pause on Focus Loss"
+#~ msgstr "Automaattitauko fokuksen hävitessä"
+
+#~ msgid "Master Volume"
+#~ msgstr "Päääänenvoimakkuus"
+
+#~ msgid "Music Volume"
+#~ msgstr "Musiikin voimakkuus"
+
+#~ msgid "SFX Volume"
+#~ msgstr "Äänitehosteiden voimakkuus"
+
+#~ msgid "Muted"
+#~ msgstr "Mykistetty"
+
+#~ msgid "Audio Mixer"
+#~ msgstr "Äänimikseri"
+
+#~ msgid "Soundtrack"
+#~ msgstr "Ääniraita"
+
+#~ msgid "Ambient Sounds"
+#~ msgstr "Taustaäänet"
+
+#~ msgid "Ambient Volume"
+#~ msgstr "Taustaäänen voimakkuus"
+
+#~ msgid "Footstep Audio"
+#~ msgstr "Askelten äänet"
+
+#~ msgid "Creature Voices"
+#~ msgstr "Olentojen äänet"
+
+#~ msgid "PC Speaker Emulation"
+#~ msgstr "PC-kaiuttimen emulointi"
+
+#~ msgid "Font Scale"
+#~ msgstr "Fontin koko"
+
+#~ msgid "UI Scale"
+#~ msgstr "Käyttöliittymän skaalaus"
+
+#~ msgid "High Contrast"
+#~ msgstr "Korkea kontrasti"
+
+#~ msgid "Colorblind Mode"
+#~ msgstr "Värisokeustila"
+
+#~ msgid "Large Touch Targets"
+#~ msgstr "Suuret kosketuskohteet"
+
+#~ msgid "Damage Numbers"
+#~ msgstr "Vahinkoluvut"
+
+#~ msgid "Message Log"
+#~ msgstr "Viestiloki"
+
+#~ msgid "Tooltip"
+#~ msgstr "Työkaluvihje"
+
+#~ msgid "Achievements"
+#~ msgstr "Saavutukset"
+
+#~ msgid "Stat Tracker"
+#~ msgstr "Tilastoseuranta"
+
+#~ msgid "Pathfinding Overlay"
+#~ msgstr "Reitityksen peittokuva"
+
+#~ msgid "Inventory Sort"
+#~ msgstr "Inventaarion lajittelu"
+
+#~ msgid "Data Status"
+#~ msgstr "Datan tila"
+
+#~ msgid "Debug Overlay"
+#~ msgstr "Virheenkorjauksen peittokuva"
+
+#~ msgid "Developer Gates"
+#~ msgstr "Kehittäjärajoitteet"
+
+#~ msgid "Fade"
+#~ msgstr "Häivytys"
+
+#~ msgid "Keyboard"
+#~ msgstr "Näppäimistö"
+
+#~ msgid "Auto"
+#~ msgstr "Auto"
+
+#~ msgid "Auto-detect"
+#~ msgstr "Automaattitunnistus"
+
+#~ msgid "Default"
+#~ msgstr "Oletus"
+
+#~ msgid "No"
+#~ msgstr "Ei"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "NO GAME DATA FOUND"
+#~ msgstr "PELIDATAA EI LÖYTYNYT"
+
+#~ msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+#~ msgstr "KOPIOI PELITIEDOSTOT KANSIOON Documents/Firestaff/data TIEDOSTONHALLINNALLA"
+
+#~ msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+#~ msgstr "KÄYTÄ TIEDOSTOT-SOVELLUSTA KOPIOIDAKSESI PELITIEDOSTOT KANSIOON Firestaff/data TÄSSÄ SOVELLUKSESSA"

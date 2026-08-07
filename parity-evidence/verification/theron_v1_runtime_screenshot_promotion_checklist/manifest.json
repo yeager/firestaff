@@ -2,24 +2,14 @@
   "aggregate": {
     "contract_drift": [],
     "decision": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
-    "ineligible_count": 3,
+    "ineligible_count": 1,
     "machine_eligible_count": 0,
     "reviewer_promoted_count": 0,
     "reviewer_state_path": "/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json",
     "reviewer_state_present": false,
-    "skipped_count": 0,
+    "skipped_count": 2,
     "status": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
-    "uniqueness_findings": [
-      {
-        "kind": "duplicate_source_sha256_across_rows",
-        "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
-        "rows": [
-          "canonical_pcengine_root",
-          "us_extras_track02_bin"
-        ],
-        "sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
-      }
-    ]
+    "uniqueness_findings": []
   },
   "checklistItems": [
     {
@@ -61,7 +51,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-05T10:03:52.762404+00:00",
+  "generated_at": "2026-08-07T15:09:54.452264+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -105,8 +95,8 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 duplicated across rows",
-          "verdict": "FAIL"
+          "note": "source sha256 a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f unique",
+          "verdict": "PASS"
         },
         {
           "key": "presented_bmp_geometry",
@@ -124,7 +114,7 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron canonical PC Engine root",
       "machine_eligible": false,
-      "presented_sha256": "f34244164e175cb64e7507c87052e791db124a726a7f4c7567a8ff7b74b61c3b",
+      "presented_sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -134,129 +124,35 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
+      "source_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f"
     },
     {
       "case_id": "jp_extras_track02_bin",
-      "checklist": [
-        {
-          "key": "real_runtime_capture",
-          "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)",
-          "note": "probe.sourceId='theron', launchedEver=1",
-          "verdict": "PASS"
-        },
-        {
-          "key": "no_fallback_assets",
-          "label": "launch output does not contain 'deterministic fallback assets'",
-          "note": "no 'deterministic fallback assets' marker in row notes",
-          "verdict": "PASS"
-        },
-        {
-          "key": "tqr_level_load_marker",
-          "label": "launch output contains the 'TQR level load' boot marker",
-          "note": "'TQR level load' boot marker present in row notes",
-          "verdict": "PASS"
-        },
-        {
-          "key": "semantic_track02_evidence",
-          "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
-          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON STARTUP'",
-          "verdict": "PASS"
-        },
-        {
-          "key": "unique_source_bmp",
-          "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 925d16899cce83c49abd7725858b3fa9fd81b040fad0340c2994d4d1dfa756a6 unique",
-          "verdict": "PASS"
-        },
-        {
-          "key": "presented_bmp_geometry",
-          "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels",
-          "note": "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-          "verdict": "FAIL"
-        },
-        {
-          "key": "reviewer_signoff",
-          "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date",
-          "note": "no operator-local reviewer sign-off present for this row",
-          "verdict": "PENDING_REVIEWER"
-        }
-      ],
-      "classification": "REVIEW_CHECKLIST_INELIGIBLE",
+      "checklist": [],
+      "classification": "SKIPPED_NO_DATA",
       "label": "Theron JP extras Track 02",
       "machine_eligible": false,
-      "presented_sha256": "469e6cf3c3ee2803bf4bff857a459efc1930a19a91c618f3228b4aa43731fba2",
-      "probe_summary": {
-        "gameTick": 0,
-        "lastOutcome": "THERON STARTUP",
-        "launchedEver": 1,
-        "party.mapIndex": 0,
-        "sourceId": "theron"
-      },
+      "notes": [
+        "data directory missing; row skipped, not promoted"
+      ],
+      "presented_sha256": null,
+      "probe_summary": null,
       "reviewer_signed_off": false,
-      "reviewer_signoff_record": null,
-      "source_sha256": "925d16899cce83c49abd7725858b3fa9fd81b040fad0340c2994d4d1dfa756a6"
+      "source_sha256": null
     },
     {
       "case_id": "us_extras_track02_bin",
-      "checklist": [
-        {
-          "key": "real_runtime_capture",
-          "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)",
-          "note": "probe.sourceId='theron', launchedEver=1",
-          "verdict": "PASS"
-        },
-        {
-          "key": "no_fallback_assets",
-          "label": "launch output does not contain 'deterministic fallback assets'",
-          "note": "no 'deterministic fallback assets' marker in row notes",
-          "verdict": "PASS"
-        },
-        {
-          "key": "tqr_level_load_marker",
-          "label": "launch output contains the 'TQR level load' boot marker",
-          "note": "'TQR level load' boot marker present in row notes",
-          "verdict": "PASS"
-        },
-        {
-          "key": "semantic_track02_evidence",
-          "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
-          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON STARTUP'",
-          "verdict": "PASS"
-        },
-        {
-          "key": "unique_source_bmp",
-          "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 duplicated across rows",
-          "verdict": "FAIL"
-        },
-        {
-          "key": "presented_bmp_geometry",
-          "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels",
-          "note": "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-          "verdict": "FAIL"
-        },
-        {
-          "key": "reviewer_signoff",
-          "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date",
-          "note": "no operator-local reviewer sign-off present for this row",
-          "verdict": "PENDING_REVIEWER"
-        }
-      ],
-      "classification": "REVIEW_CHECKLIST_INELIGIBLE",
+      "checklist": [],
+      "classification": "SKIPPED_NO_DATA",
       "label": "Theron US extras Track 02",
       "machine_eligible": false,
-      "presented_sha256": "f34244164e175cb64e7507c87052e791db124a726a7f4c7567a8ff7b74b61c3b",
-      "probe_summary": {
-        "gameTick": 0,
-        "lastOutcome": "THERON STARTUP",
-        "launchedEver": 1,
-        "party.mapIndex": 0,
-        "sourceId": "theron"
-      },
+      "notes": [
+        "data directory missing; row skipped, not promoted"
+      ],
+      "presented_sha256": null,
+      "probe_summary": null,
       "reviewer_signed_off": false,
-      "reviewer_signoff_record": null,
-      "source_sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
+      "source_sha256": null
     }
   ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_checklist.v1",

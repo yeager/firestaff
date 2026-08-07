@@ -28,16 +28,16 @@ returned for rows whose data directory is missing on this host.
 
 | Case | Classification | Source sha256 | Probe summary | Notes |
 |---|---|---|---|---|
-| canonical_pcengine_root | `README_INELIGIBLE` | `eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 shared with rows ['canonical_pcengine_root', 'us_extras_track02_bin']; ineligible |
-| jp_extras_track02_bin | `README_INELIGIBLE` | `925d16899cce83c49abd7725858b3fa9fd81b040fad0340c2994d4d1dfa756a6` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels) |
-| us_extras_track02_bin | `README_INELIGIBLE` | `eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 shared with rows ['canonical_pcengine_root', 'us_extras_track02_bin']; ineligible |
+| canonical_pcengine_root | `README_INELIGIBLE` | `a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | readiness row status is 'FAIL', not PASS; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels) |
+| jp_extras_track02_bin | `SKIPPED_NO_DATA` | `—` | sourceId=None launchedEver=None gameTick=None mapIndex=None lastOutcome=None | data directory missing; row skipped, not promoted |
+| us_extras_track02_bin | `SKIPPED_NO_DATA` | `—` | sourceId=None launchedEver=None gameTick=None mapIndex=None lastOutcome=None | data directory missing; row skipped, not promoted |
 
 ## Aggregate
 
 - Eligible rows: **0**
-- Ineligible rows: **3**
-- Skipped rows (no data on this host): **0**
-- Unique-source-sha256 findings: **1**
+- Ineligible rows: **1**
+- Skipped rows (no data on this host): **2**
+- Unique-source-sha256 findings: **0**
 - Contract-drift findings: **0**
 
 ## Public Screenshot Boundary

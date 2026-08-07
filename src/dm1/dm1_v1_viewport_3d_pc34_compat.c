@@ -60,9 +60,11 @@
  * ──────────────────────────────────────────────────────────────────────── */
 
 /* Definition of g_dm1_wall_frame_bitmaps.
- * Production builds: filled by asset loader before first draw call.
- * Test builds: NULL so door frame draw calls are no-ops until assets wired.
- * TBT-XXX: production asset system wires this from GRAPHICS.DAT. */
+ * Legacy nibble-packed bitmap base for the direct viewport_3d draw path.
+ * M11's production viewport uses M11_AssetLoader_Load + zone blits instead;
+ * CSB's production viewport uses graphic_provider_callback.  This global
+ * remains for test and diagnostic paths that exercise the raw draw routines
+ * without an M11 or CSB asset pipeline. */
 const uint8_t *g_dm1_wall_frame_bitmaps = NULL;
 
 /* CSB back-wall / near-wall frame tables (4 CSB-specific positions).
@@ -1954,12 +1956,13 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      *   C726=ZONE_DOOR_FRAME_LEFT_D1C C727=ZONE_DOOR_FRAME_RIGHT_D1C
      *   C733=ZONE_DOOR_FRAME_TOP_D1C   C734=ZONE_DOOR_FRAME_TOP_D1R
      *
-     * Bitmap source: state->door_frame_bitmaps[g21xx] (asset system, TBT-XXX).
-     * Guard draw calls with bitmap != NULL until asset system is wired.
+     * Bitmap source: g_dm1_wall_frame_bitmaps (legacy nibble-packed path).
+     * M11 production draws door frames via M11_AssetLoader_Load zone blits.
+     * Guard draw calls with bitmap != NULL for diagnostic/test paths.
      * ------------------------------------------------------------------ */
 
-    /* Wall frame bitmap base pointer -- wired by asset system (TBT-XXX).
-     * NULL means assets not yet loaded; draw calls are no-ops until then.
+    /* Wall frame bitmap base pointer (legacy nibble-packed path).
+     * NULL means no legacy bitmaps wired; draw calls are no-ops.
      * Each bitmap is DM1_VIEWPORT_BYTE_WIDTH (224) bytes wide.
      * Indexed by G21xx ordinal (absolute value, 14..22 range). */
     extern const uint8_t *g_dm1_wall_frame_bitmaps;

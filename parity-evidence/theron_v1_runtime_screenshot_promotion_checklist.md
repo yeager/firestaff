@@ -36,18 +36,18 @@ contract are satisfied for at least one row.
 
 | Case | Classification | Machine | Reviewer | Items |
 |---|---|---|---|---|
-| canonical_pcengine_root | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
-| jp_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=PASS, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
-| us_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
+| canonical_pcengine_root | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=PASS, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
+| jp_extras_track02_bin | `SKIPPED_NO_DATA` | — | — |  |
+| us_extras_track02_bin | `SKIPPED_NO_DATA` | — | — |  |
 
 ## Aggregate
 
 - Decision: **REVIEW_CHECKLIST_NO_ROW_PROMOTED**
 - Machine-eligible rows (awaiting reviewer): **0**
 - Reviewer-promoted rows: **0**
-- Ineligible rows: **3**
-- Skipped rows (no data on this host): **0**
-- Unique-source-sha256 findings: **1**
+- Ineligible rows: **1**
+- Skipped rows (no data on this host): **2**
+- Unique-source-sha256 findings: **0**
 - Contract-drift findings: **0**
 - Reviewer sign-off file present: **False**
 

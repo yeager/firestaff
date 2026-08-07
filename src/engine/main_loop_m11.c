@@ -546,6 +546,11 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
         SDL_free((void*)basePath);
     }
     (void)M12_StartupIntro_LoadBackground("/usr/share/firestaff/firestaff-startup-intro.ppm");
+#ifdef FIRESTAFF_SOURCE_DIR
+    snprintf(resourcePath, sizeof(resourcePath),
+             FIRESTAFF_SOURCE_DIR "/assets/branding/firestaff-startup-intro.ppm");
+    (void)M12_StartupIntro_LoadBackground(resourcePath);
+#endif
 
     memset(&scanJob, 0, sizeof(scanJob));
     if (menuState && menuState->deferredScanPending) {
@@ -5602,10 +5607,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
      * Keep that path independent of filesystem-backed PO catalogs so a
      * headless DM1 entrance/HoC probe cannot be delayed by unrelated UI I/O. */
     if (!o->bootProbe) {
-        const char* langCodes[] = {"en", "sv", "fr"};
+        const char* langCodes[] = {
+            "en", "sv", "fr", "de", "ja", "zh",
+            "cs", "da", "es", "fi", "hu", "it",
+            "ko", "nl", "no", "pl", "pt", "ru", "tr", "id"
+        };
         const char* langCode = "en";
         int langIdx = M12_Config_GetAutoLanguageIndex();
-        if (langIdx >= 0 && langIdx < 3) langCode = langCodes[langIdx];
+        if (langIdx >= 0 && langIdx < 20) langCode = langCodes[langIdx];
         {
             char poPath[512];
             snprintf(poPath, sizeof(poPath), "%s/po/startup-menu.%s.po",
@@ -5613,7 +5622,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (fs_po_load(poPath) <= 0) {
                 char relPath[128];
                 snprintf(relPath, sizeof(relPath), "po/startup-menu.%s.po", langCode);
-                fs_po_load(relPath);
+                if (fs_po_load(relPath) <= 0) {
+#ifdef FIRESTAFF_SOURCE_DIR
+                    snprintf(poPath, sizeof(poPath),
+                             FIRESTAFF_SOURCE_DIR "/po/startup-menu.%s.po", langCode);
+                    fs_po_load(poPath);
+#endif
+                }
             }
         }
     }

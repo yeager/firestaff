@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-startup-menu\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-04-22 11:49+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-07 20:21+0200\n"
+"PO-Revision-Date: 2026-08-07 20:21+0200\n"
 "Last-Translator: OpenClaw\n"
 "Language-Team: Swedish\n"
 "Language: sv\n"
@@ -17,667 +17,1297 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#. Launcher title / eyebrow
-msgid "FRONTEND PREVIEW"
-msgstr "FRONTEND-FÖRHANDSVISNING"
-
-#. Main menu heading
-msgid "SELECT A DESTINATION"
-msgstr "VÄLJ EN DESTINATION"
-
-#. Settings panel title
-msgid "SETTINGS"
-msgstr "INSTÄLLNINGAR"
-
-#. Status label
-msgid "STATUS"
-msgstr "STATUS"
-
-#. Section heading for launcher entries
-msgid "LAUNCHER DESTINATIONS"
-msgstr "LAUNCHER-DESTINATIONER"
-
-#. Data directory label
-msgid "DATA DIR"
-msgstr "DATAKAT"
-
-#. First-run game-data scan heading
-msgid "SCANNING GAME DATA"
-msgstr "SÖKER EFTER SPELDATA"
-
-#. First-run game-data scan initial state
-msgid "STARTING"
-msgstr "STARTAR"
-
-#. Full launcher-visible title; internal scanner id is dm2.
-msgid "Dungeon Master II: The Legend of Skullkeep"
-msgstr "Dungeon Master II: The Legend of Skullkeep"
-
-#. Full launcher-visible title; internal scanner id is nexus.
-msgid "Dungeon Master Nexus"
-msgstr "Dungeon Master Nexus"
-
-#. Main menu footer / navigation hint
-msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "UPP/NER FLYTTA   ENTER ÖPPNA   ESC AVSLUTA"
-
-#. Settings section heading
-msgid "PERSISTED OPTIONS"
-msgstr "PERSISTERADE ALTERNATIV"
-
-#. Settings row label
-msgid "LANGUAGE"
-msgstr "SPRÅK"
-
-#. Settings row label
-msgid "GRAPHICS MODE"
-msgstr "GRAFIKLÄGE"
-
-#. Settings row label
-msgid "WINDOW MODE"
-msgstr "FÖNSTERLÄGE"
-
-#. Settings save confirmation
-msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "ÄNDRINGAR SPARAS DIREKT TILL KONFIG"
-
-#. Settings footer / navigation hint
-msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "VÄNSTER/HÖGER CYKEL   ENTER AVANCERA   ESC TILLBAKA"
-
-#. Message view return hint
-msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER ELLER ESC ÅTERGÅR TILL MENYN"
-
-#. Launch confirmation
-msgid "READY TO LAUNCH"
-msgstr "REDO ATT STARTA"
-
-#. Escape hint in messages
-msgid "ESC RETURNS TO MENU"
-msgstr "ESC ÅTERGÅR TILL MENYN"
-
-#. Missing hash-verified data message
-msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "ENDAST VALIDATOR-MALL"
-
-#. Missing hash-verified data detail
-msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "LÄGG TILL VERIFIERADE DETALJHANDEL-HASHAR"
-
-#. Missing game data message
-msgid "GAME DATA NOT FOUND"
-msgstr "SPELDATA HITTADES INTE"
-
-#. Missing game data detail
-msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "KONTROLLERA FIRESTAFF DATAKAT"
-
-#. Card art slot status
-msgid "ART SLOT READY"
-msgstr "KONSTSLOTS REDO"
-
-#. Card art slot status
-msgid "ART SLOT EMPTY"
-msgstr "KONSTSLOTS TOMT"
-
-#. Card art slot instruction
-msgid "DROP ART INTO SLOT"
-msgstr "SLÄPP KONST I SLOTSEN"
-
-#. Card art active label
-msgid "CARD ART ACTIVE"
-msgstr "KORTKONST AKTIV"
-
-#. Card art slot label
-msgid "CARD ART SLOT"
-msgstr "KORTKONST-SLOTS"
-
-#. Game card label
-msgid "Dungeon Master"
-msgstr "Dungeon Master"
-
-#. Game card label
-msgid "Chaos Strikes Back"
-msgstr "Chaos Strikes Back"
-
-#. Game card label
-msgid "Dungeon Master II"
-msgstr "Dungeon Master II"
-
-#. Launcher title
-msgid "Firestaff"
-msgstr "Firestaff"
-
-#. Game options row label
-msgid "PATCH"
-msgstr "PATCH"
-
-#. Game options value: original version
-msgid "ORIGINAL"
-msgstr "ORIGINAL"
-
-#. Game options value: patched version
-msgid "PATCHED"
-msgstr "PATCHAD"
-
-#. Game options row label
-msgid "CHEATS"
-msgstr "FUSK"
-
-#. Game options value: off
-msgid "OFF"
-msgstr "AV"
-
-#. Game options value: on
-msgid "ON"
-msgstr "PÅ"
-
-#. Game options row label
-msgid "SPEED"
-msgstr "HASTIGHET"
-
-#. Game options value: slower
-msgid "SLOWER"
-msgstr "LÅNGSAMMARE"
-
-#. Game options value: normal
-msgid "NORMAL"
-msgstr "NORMAL"
-
-#. Game options value: faster
-msgid "FASTER"
-msgstr "SNABBARE"
-
-#. Game options row label
-msgid "ASPECT RATIO"
-msgstr "BILDFÖRHÅLLANDE"
-
-#. Game options row label
-msgid "RESOLUTION"
-msgstr "UPPLÖSNING"
-
-#. Game options action
-msgid "LAUNCH"
-msgstr "STARTA"
-
-#. Presentation mode name
-msgid "V1 ORIGINAL"
-msgstr "V1 ORIGINAL"
-
-#. Presentation mode name
-msgid "V2 ENHANCED 2D"
-msgstr "V2 FÖRBÄTTRAD 2D"
-
-#. Presentation mode name
-msgid "V3 MODERN/3D"
-msgstr "V3 MODERN/3D"
-
-#. V3 unavailable message
-msgid "COMING SOON"
-msgstr "KOMMER SNART"
-
-#. Language names
-msgid "ENGLISH"
-msgstr "ENGLISH"
-
-#. Language names
-msgid "SVENSKA"
-msgstr "SVENSKA"
-
-#. Language names
-msgid "FRANCAIS"
-msgstr "FRANÇAIS"
-
-#. Language names
-msgid "DEUTSCH"
-msgstr "DEUTSCH"
-
-#. Window mode values
-msgid "WINDOWED"
-msgstr "FÖNSTER"
-
-#. Window mode values
-msgid "FULLSCREEN"
-msgstr "FULLSKÄRM"
-
-#. Game options panel title
-msgid "GAME OPTIONS"
-msgstr "SPELALTERNATIV"
-
-#. Launch row with leading pointer
-msgid "> LAUNCH"
-msgstr "> STARTA"
-
-#. Launch row when V3 is unavailable
-msgid "> COMING SOON"
-msgstr "> KOMMER SNART"
-
-#. Footer hint in the game-options panel
-msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
-msgstr "ESC: TILLBAKA  PILAR: NAVIGERA  ENTER: VÄLJ"
-
-#. Helper text when speed is dimmed
-msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
-msgstr "AKTIVERA FUSK FÖR ATT LÅSA UPP HASTIGHET / SNABBKNAPPAR"
-
-#. Helper text when V1 locks rows
-msgid "LOCKED BY V1 ORIGINAL MODE"
-msgstr "LÅST AV V1 ORIGINAL-LÄGET"
-
-#. Renderer/settings label
-msgid "RENDERER BACKEND"
-msgstr "RENDERINGS-BACKEND"
-
-#. Renderer/settings label
-msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "RENDERINGS-BACKEND OTILLGÄNGLIG"
-
-#. Renderer/settings label
-msgid "RENDERER"
-msgstr "RENDERING"
-
-#. Renderer/settings label
-msgid "AUTO"
-msgstr "AUTO"
-
-#. Renderer/settings label
-msgid "SOFTWARE"
-msgstr "MJUKVARA"
-
-#. Renderer/settings label
-msgid "SDL"
-msgstr "SDL"
-
-#. Renderer/settings label
-msgid "OPENGL"
-msgstr "OPENGL"
-
-#. Renderer/settings label
-msgid "VULKAN"
-msgstr "VULKAN"
-
-#. Renderer/settings label
-msgid "AVAILABLE"
-msgstr "TILLGÄNGLIG"
-
-#. Renderer/settings label
-msgid "UNAVAILABLE"
-msgstr "OTILLGÄNGLIG"
-
-#. Renderer/settings label
-msgid "SCALE"
-msgstr "SKALA"
-
-#. Renderer/settings label
-msgid "PIXEL SNAP"
-msgstr "PIXELSNÄPP"
-
-#. Renderer/settings label
-msgid "FILTER"
-msgstr "FILTER"
-
-#. Renderer/settings label
-msgid "VSYNC"
-msgstr "VSYNC"
-
-msgid "GRAPHICS MODE"
-msgstr "GRAFIKLÄGE"
-
-msgid "GRAPHICS"
-msgstr "GRAFIK"
-
-msgid "PLAY"
-msgstr "SPELA"
-
-msgid "EXTRAS"
-msgstr "EXTRA"
-
-msgid "QUIT"
-msgstr "AVSLUTA"
-
-msgid "SELECT GAME"
-msgstr "VÄLJ SPEL"
-
-msgid "Start or continue a game"
-msgstr "Starta eller fortsätt ett spel"
-
-msgid "Display, video, audio and controls"
-msgstr "Bild, video, ljud och kontroller"
-
-msgid "Museum, bestiary, spell reference and more"
-msgstr "Museum, bestiarium, trollformler och mer"
-
-msgid "Exit Firestaff"
-msgstr "Avsluta Firestaff"
-
-msgid "Up/Down Navigate  |  Enter Select"
-msgstr "Upp/ned navigerar  |  Enter väljer"
-
-msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
-msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter väljer"
-
-msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
-msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter startar"
-
-msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
-msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter öppnar"
-
-msgid "< > Switch tab   Up/Down Navigate   Enter Change"
-msgstr "< > byter flik   Upp/ned navigerar   Enter ändrar"
-
-msgid "DM Nexus"
-msgstr "DM Nexus"
-
-msgid "Theron's Quest"
-msgstr "Theron's Quest"
-
-msgid "V1 / V2.0 / V2.1 / V2.2"
-msgstr "V1 / V2.0 / V2.1 / V2.2"
-
-msgid "V1 / V2"
-msgstr "V1 / V2"
-
-msgid "V1 Only (Phase 1)"
-msgstr "Endast V1 (fas 1)"
-
-msgid "No data files"
-msgstr "Inga datafiler"
-
-msgid "New Game (Original)"
-msgstr "Nytt spel (original)"
-
-msgid "New Game (Original + Filters)"
-msgstr "Nytt spel (original + filter)"
-
-msgid "New Game (Original 10x Upscale)"
-msgstr "Nytt spel (original 10x uppskalning)"
-
-msgid "Continue Saved Game"
-msgstr "Fortsätt sparat spel"
-
-msgid "New Game (Modern Graphics)"
-msgstr "Nytt spel (modern grafik)"
-
-msgid "Coming soon"
-msgstr "Kommer snart"
-
-msgid "GAME"
-msgstr "SPEL"
-
-msgid "CONTROLS"
-msgstr "KONTROLLER"
-
-msgid "AUDIO"
-msgstr "LJUD"
-
+#: src/ui/menu_startup_m12.c:217
 msgid "ACCESSIBILITY"
 msgstr "TILLGÄNGLIGHET"
 
+#: src/ui/menu_startup_m12.c:217
+msgid "AUDIO"
+msgstr "LJUD"
+
+#: src/ui/menu_startup_m12.c:217
+msgid "CONTROLS"
+msgstr "KONTROLLER"
+
+#: src/ui/menu_startup_m12.c:217
+msgid "GAME"
+msgstr "SPEL"
+
+#: src/ui/menu_startup_m12.c:217
+msgid "GRAPHICS"
+msgstr "GRAFIK"
+
+#: src/ui/menu_startup_m12.c:218
+msgid "ONLINE"
+msgstr "ONLINE"
+
+#: src/ui/menu_startup_m12.c:231
 msgid "Graphics Mode"
 msgstr "Grafikläge"
 
-msgid "Game Version"
-msgstr "Spelversion"
-
-msgid "Language"
-msgstr "Språk"
-
-msgid "Game Speed"
-msgstr "Spelhastighet"
-
-msgid "Movement Mode"
-msgstr "Rörelseläge"
-
-msgid "Cheats"
-msgstr "Fusk"
-
-msgid "Auto-Save"
-msgstr "Autospara"
-
-msgid "Minimap"
-msgstr "Minikarta"
-
-msgid "Journal"
-msgstr "Journal"
-
-msgid "Window Mode"
-msgstr "Fönsterläge"
-
-msgid "Display Format"
-msgstr "Bildformat"
-
-msgid "VSync"
-msgstr "VSync"
-
-msgid "Integer Scaling"
-msgstr "Heltalsskalning"
-
-msgid "Viewport Style"
-msgstr "Vyformat"
-
-msgid "Palette Mode"
-msgstr "Palettläge"
-
-msgid "CRT Filter"
-msgstr "CRT-filter"
-
-msgid "Palette Correction"
-msgstr "Palettkorrigering"
-
-msgid "Dither Cleanup"
-msgstr "Dither-rensning"
-
-msgid "Sharpening"
-msgstr "Skärpa"
-
-msgid "Phosphor Persistence"
-msgstr "Fosforpersistens"
-
-msgid "Color Preset"
-msgstr "Färgförval"
-
-msgid "Pixel Grid"
-msgstr "Pixelrutnät"
-
-msgid "Motion Blur"
-msgstr "Rörelseoskärpa"
-
-msgid "AI Upscale (10x)"
-msgstr "AI-uppskalning (10x)"
-
-msgid "Smooth Movement"
-msgstr "Mjuk rörelse"
-
-msgid "Smooth Turning"
-msgstr "Mjuk sväng"
-
-msgid "Animation Interpolation"
-msgstr "Animationsinterpolering"
-
-msgid "Dynamic Lighting"
-msgstr "Dynamiskt ljus"
-
-msgid "Particle Effects"
-msgstr "Partikeleffekter"
-
-msgid "Weather FX"
-msgstr "Vädereffekter"
-
-msgid "Camera Easing"
-msgstr "Kamerautjämning"
-
-msgid "Screen Transitions"
-msgstr "Skärmövergångar"
-
-msgid "Control Scheme"
-msgstr "Kontrollschema"
-
-msgid "Input Mode"
-msgstr "Inmatningsläge"
-
-msgid "Touch Controls"
-msgstr "Pekkontroller"
-
-msgid "Gamepad"
-msgstr "Handkontroll"
-
-msgid "Key Bindings"
-msgstr "Tangentbindningar"
-
-msgid "Auto-Pause on Focus Loss"
-msgstr "Pausa när fokus förloras"
-
-msgid "Master Volume"
-msgstr "Huvudvolym"
-
-msgid "Music Volume"
-msgstr "Musikvolym"
-
-msgid "SFX Volume"
-msgstr "Effektvolym"
-
-msgid "Muted"
-msgstr "Tystat"
-
-msgid "Audio Mixer"
-msgstr "Ljudmixer"
-
-msgid "Soundtrack"
-msgstr "Ljudspår"
-
-msgid "Ambient Sounds"
-msgstr "Omgivningsljud"
-
-msgid "Ambient Volume"
-msgstr "Omgivningsvolym"
-
-msgid "Footstep Audio"
-msgstr "Stegljud"
-
-msgid "Creature Voices"
-msgstr "Varelseljud"
-
-msgid "PC Speaker Emulation"
-msgstr "PC speaker-emulering"
-
-msgid "Font Scale"
-msgstr "Textstorlek"
-
-msgid "UI Scale"
-msgstr "Gränssnittsskala"
-
-msgid "High Contrast"
-msgstr "Hög kontrast"
-
-msgid "Colorblind Mode"
-msgstr "Färgblindhetsläge"
-
-msgid "Large Touch Targets"
-msgstr "Stora pekytor"
-
-msgid "Damage Numbers"
-msgstr "Skadenummer"
-
-msgid "Screenshot Key"
-msgstr "Skärmbildstangent"
-
-msgid "Message Log"
-msgstr "Meddelandelogg"
-
-msgid "Tooltip"
-msgstr "Verktygstips"
-
-msgid "Achievements"
-msgstr "Prestationer"
-
-msgid "Stat Tracker"
-msgstr "Statistikspårning"
-
-msgid "Pathfinding Overlay"
-msgstr "Vägvisningslager"
-
-msgid "Inventory Sort"
-msgstr "Sortera inventarie"
-
-msgid "Data Status"
-msgstr "Datastatus"
-
-msgid "Debug Overlay"
-msgstr "Debuglager"
-
-msgid "Developer Gates"
-msgstr "Utvecklarspärrar"
-
+#: src/ui/menu_startup_m12.c:231 src/ui/menu_startup_m12.c:245
 msgid "Original"
 msgstr "Original"
 
+#: src/ui/menu_startup_m12.c:232
+msgid "Game Version"
+msgstr "Spelversion"
+
+#: src/ui/menu_startup_m12.c:232
+msgid "V1"
+msgstr "V1"
+
+#: src/ui/menu_startup_m12.c:233
 msgid "English"
 msgstr "Engelska"
 
+#: src/ui/menu_startup_m12.c:233
+msgid "Language"
+msgstr "Språk"
+
+#: src/ui/menu_startup_m12.c:234
+msgid "Game Speed"
+msgstr "Spelhastighet"
+
+#: src/ui/menu_startup_m12.c:234
 msgid "Normal"
 msgstr "Normal"
 
+#: src/ui/menu_startup_m12.c:235
 msgid "Classic"
 msgstr "Klassiskt"
 
+#: src/ui/menu_startup_m12.c:235
+msgid "Movement Mode"
+msgstr "Rörelseläge"
+
+#: src/ui/menu_startup_m12.c:236
+msgid "Cheats"
+msgstr "Fusk"
+
+#: src/ui/menu_startup_m12.c:236
 msgid "Off"
 msgstr "Av"
 
-msgid "On"
-msgstr "På"
-
+#: src/ui/menu_startup_m12.c:241
 msgid "Maximized"
 msgstr "Maximerat"
 
+#: src/ui/menu_startup_m12.c:241
+msgid "Window Mode"
+msgstr "Fönsterläge"
+
+#: src/ui/menu_startup_m12.c:242
+msgid "16:9"
+msgstr "16:9"
+
+#: src/ui/menu_startup_m12.c:242
+msgid "Display Format"
+msgstr "Bildformat"
+
+#: src/ui/menu_startup_m12.c:243 src/ui/menu_startup_m12.c:244
+msgid "On"
+msgstr "På"
+
+#: src/ui/menu_startup_m12.c:243
+msgid "VSync"
+msgstr "VSync"
+
+#: src/ui/menu_startup_m12.c:244
+msgid "Integer Scaling"
+msgstr "Heltalsskalning"
+
+#: src/ui/menu_startup_m12.c:245
+msgid "Viewport Style"
+msgstr "Vyformat"
+
+#: src/ui/menu_startup_m12.c:246
 msgid "Original VGA"
 msgstr "Original-VGA"
 
-msgid "Fade"
-msgstr "Toning"
+#: src/ui/menu_startup_m12.c:246
+msgid "Palette Mode"
+msgstr "Palettläge"
 
-msgid "Keyboard"
-msgstr "Tangentbord"
+#: src/ui/menu_startup_m12.c:373 src/ui/menu_startup_m12.c:403
+#: src/ui/menu_startup_m12.c:434 src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:443
+msgid "ORIGINAL"
+msgstr "ORIGINAL"
 
-msgid "Auto"
-msgstr "Auto"
+#: src/ui/menu_startup_m12.c:403
+msgid "PATCHED"
+msgstr "PATCHAD"
 
-msgid "Auto-detect"
-msgstr "Autodetektera"
+#: src/ui/menu_startup_m12.c:415
+msgid "DE"
+msgstr "DE"
 
-msgid "Default"
-msgstr "Standard"
+#: src/ui/menu_startup_m12.c:415
+msgid "EN"
+msgstr "EN"
 
-msgid "No"
-msgstr "Nej"
+#: src/ui/menu_startup_m12.c:415
+msgid "FR"
+msgstr "FR"
 
-msgid "Stereo"
-msgstr "Stereo"
+#: src/ui/menu_startup_m12.c:415
+msgid "JA"
+msgstr "JA"
 
-msgid "OK"
-msgstr "OK"
+#: src/ui/menu_startup_m12.c:415
+msgid "SV"
+msgstr "SV"
 
-#. Popup title when no game data files are found at startup
-msgid "NO GAME DATA FOUND"
-msgstr "INGEN SPELDATA HITTADES"
+#: src/ui/menu_startup_m12.c:415
+msgid "ZH"
+msgstr "ZH"
 
-#. Desktop: instruction to copy game files
-msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
-msgstr "KOPIERA ORIGINALSPELFILERNA TILL DATAKATALOGEN"
+#: src/ui/menu_startup_m12.c:416
+msgid "CS"
+msgstr "CS"
 
-#. Android: instruction to copy game files via file manager
-msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
-msgstr "KOPIERA SPELFILER TILL Documents/Firestaff/data MED EN FILHANTERARE"
+#: src/ui/menu_startup_m12.c:416
+msgid "DA"
+msgstr "DA"
 
-#. iOS: instruction to copy game files via Files app
-msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
-msgstr "ANVÄND APPEN FILER FÖR ATT KOPIERA SPELFILER TILL Firestaff/data I DENNA APP"
+#: src/ui/menu_startup_m12.c:416
+msgid "ES"
+msgstr "ES"
 
+#: src/ui/menu_startup_m12.c:416
+msgid "FI"
+msgstr "FI"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "HU"
+msgstr "HU"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "IT"
+msgstr "IT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "ID"
+msgstr "ID"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "KO"
+msgstr "KO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NL"
+msgstr "NL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NO"
+msgstr "NO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PL"
+msgstr "PL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PT"
+msgstr "PT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "RU"
+msgstr "RU"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "TR"
+msgstr "TR"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "DEUTSCH"
+msgstr "DEUTSCH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "SVENSKA"
+msgstr "SVENSKA"
+
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:439 src/ui/menu_startup_m12.c:440
+msgid "OFF"
+msgstr "AV"
+
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+msgid "ON"
+msgstr "PÅ"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "FASTER"
+msgstr "SNABBARE"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "NORMAL"
+msgstr "NORMAL"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "SLOWER"
+msgstr "LÅNGSAMMARE"
+
+#: src/ui/menu_startup_m12.c:428
+msgid "FIT"
+msgstr "ANPASSA"
+
+#: src/ui/menu_startup_m12.c:428
+msgid "STRETCH"
+msgstr "STRÄCK"
+
+#: src/ui/menu_startup_m12.c:431
+msgid "LINEAR"
+msgstr "LINJÄR"
+
+#: src/ui/menu_startup_m12.c:431
+msgid "NEAREST"
+msgstr "NÄRMASTE"
+
+#: src/ui/menu_startup_m12.c:432 src/ui/menu_startup_m12.c:435
+msgid "AUTO"
+msgstr "AUTO"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "OPENGL"
+msgstr "OPENGL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SDL"
+msgstr "SDL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SOFTWARE"
+msgstr "MJUKVARA"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "VULKAN"
+msgstr "VULKAN"
+
+#: src/ui/menu_startup_m12.c:433
+msgid "AVAILABLE"
+msgstr "TILLGÄNGLIG"
+
+#: src/ui/menu_startup_m12.c:433
+msgid "UNAVAILABLE"
+msgstr "OTILLGÄNGLIG"
+
+#: src/ui/menu_startup_m12.c:434
+msgid "EXPANDED"
+msgstr "UTÖKAD"
+
+#: src/ui/menu_startup_m12.c:434
+msgid "WIDESCREEN"
+msgstr "BREDBILD"
+
+#: src/ui/menu_startup_m12.c:435
+msgid "GAMEPAD"
+msgstr "HANDKONTROLL"
+
+#: src/ui/menu_startup_m12.c:435
+msgid "KEYBOARD+MOUSE"
+msgstr "TANGENTBORD+MUS"
+
+#: src/ui/menu_startup_m12.c:435
+msgid "TOUCH"
+msgstr "PEKSKÄRM"
+
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:439
+msgid "FULL"
+msgstr "FULL"
+
+#: src/ui/menu_startup_m12.c:436
+msgid "LARGE"
+msgstr "STOR"
+
+#: src/ui/menu_startup_m12.c:436
+msgid "MINIMAL"
+msgstr "MINIMAL"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "FAST"
+msgstr "SNABB"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "SMOOTH"
+msgstr "MJUK"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "COORDS"
+msgstr "KOORDINATER"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "DRAW ORDER"
+msgstr "RITORDNING"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "QUEUE"
+msgstr "KÖ"
+
+#: src/ui/menu_startup_m12.c:439
+msgid "QUICK"
+msgstr "SNABB"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "DEUT"
+msgstr "DEUT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "PROT"
+msgstr "PROT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "TRIT"
+msgstr "TRIT"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "AMIGA"
+msgstr "AMIGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CGA"
+msgstr "CGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CLASSIC"
+msgstr "KLASSISK"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "DARK"
+msgstr "MÖRK"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "DUNGEON"
+msgstr "FÄNGELSEHÅLA"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STARS"
+msgstr "STJÄRNOR"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STATIC"
+msgstr "BRUS"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "TORCH"
+msgstr "FACKLA"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "CUSTOM"
+msgstr "ANPASSAD"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "REMASTERED"
+msgstr "REMASTRAD"
+
+#: src/ui/menu_startup_m12.c:653 src/ui/menu_startup_m12.c:672
+#: src/ui/menu_startup_m12.c:8669 src/ui/menu_startup_m12.c:9113
+msgid "DUNGEON MASTER"
+msgstr "DUNGEON MASTER"
+
+#: src/ui/menu_startup_m12.c:654 src/ui/menu_startup_m12.c:682
+#: src/ui/menu_startup_m12.c:8671 src/ui/menu_startup_m12.c:9127
+msgid "CHAOS STRIKES BACK"
+msgstr "CHAOS STRIKES BACK"
+
+#: src/ui/menu_startup_m12.c:655 src/ui/menu_startup_m12.c:692
+msgid "DUNGEON MASTER II"
+msgstr "DUNGEON MASTER II"
+
+#: src/ui/menu_startup_m12.c:656
+msgid "DUNGEON MASTER NEXUS"
+msgstr "DUNGEON MASTER NEXUS"
+
+#: src/ui/menu_startup_m12.c:658
+msgid "THERON'S QUEST"
+msgstr "THERON'S QUEST"
+
+#: src/ui/menu_startup_m12.c:659 src/ui/menu_startup_m12.c:10042
+#: src/ui/menu_startup_m12.c:10045
+msgid "MUSEUM OF LORE"
+msgstr "HISTORIEMUSEUM"
+
+#: src/ui/menu_startup_m12.c:660 src/ui/menu_startup_m12.c:7120
+#: src/ui/menu_startup_m12.c:7679 src/ui/menu_startup_m12.c:8865
+#: src/ui/menu_startup_m12.c:10077 src/ui/menu_startup_m12.c:10080
+#: src/ui/menu_startup_m12.c:10224
+msgid "SETTINGS"
+msgstr "INSTÄLLNINGAR"
+
+#: src/ui/menu_startup_m12.c:673
+msgid "THE ORIGINAL DUNGEON CRAWL"
+msgstr "DEN URSPRUNGLIGA DUNGEON CRAWLEN"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "1987 FTL GAMES"
+msgstr "1987 FTL GAMES"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "CHAMPIONS ENTER THE DUNGEON"
+msgstr "KÄMPARNA TRÄDER IN I FÄNGELSEHÅLAN"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "FOUR PORTRAITS BECOME A PARTY"
+msgstr "FYRA PORTRÄTT BLIR EN GRUPP"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
+msgstr "REALTIDSPRESS FORMAR LEGENDEN"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
+msgstr "FIRESTAFF ÄR DEN CENTRALA RELIKEN"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "KEY LORE THREADS"
+msgstr "CENTRALA HANDLINGSTRÅDAR"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "LORD CHAOS SHATTERS ORDER"
+msgstr "LORD CHAOS KROSSAR ORDNINGEN"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "RA RETURNS AS MASTER OF BALANCE"
+msgstr "RA ÅTERVÄNDER SOM BALANSENS MÄSTARE"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE DUNGEON IS BOTH TEST AND PRISON"
+msgstr "FÄNGELSEHÅLAN ÄR BÅDE PRÖVNING OCH FÄNGELSE"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE GREY LORD IS DIVIDED"
+msgstr "DEN GRÅ HERREN ÄR KLUVEN"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
+msgstr "FIRESTAFF DOKUMENTERAR BEVIS, INTE GISSNINGAR"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
+msgstr "GRAPHICS.DAT OCH DUNGEON.DAT ÄR VERIFIERADE"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
+msgstr "HASHAD ORIGINALDATA TILLHANDAHÅLLS ALLTID AV ANVÄNDAREN"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PC AND ATARI ST LINEAGE MATTERS"
+msgstr "PC- OCH ATARI ST-ARVET SPELAR ROLL"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PRESERVATION NOTES"
+msgstr "BEVARANDEANTECKNINGAR"
+
+#: src/ui/menu_startup_m12.c:683
+msgid "THE CHAMPIONS RETURN"
+msgstr "KÄMPARNA ÅTERVÄNDER"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "CSB REWARDS MAP MEMORY AND NERVE"
+msgstr "CSB BELÖNAR KARTMINNE OCH MOD"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
+msgstr "DUNGEON MASTERS SYSTEM BLIR TÄTARE"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "EXPANSION AND SEQUEL DESIGN"
+msgstr "EXPANSIONS- OCH UPPFÖLJARDESIGN"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "FOUR PATHS TEST MASTERY"
+msgstr "FYRA VÄGAR PRÖVAR MÄSTERSKAP"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
+msgstr "JAKTEN PÅ CORBUM ERSÄTTER DEN ENKLA NEDSTIGNINGEN"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "CHAOS KASTAR FORTFARANDE EN LÅNG SKUGGA"
+
+#: src/ui/menu_startup_m12.c:686 src/ui/menu_startup_m12.c:696
+msgid "LORE SHAPE"
+msgstr "HANDLINGENS FORM"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "ÅTERVÄNDANDE KÄMPAR MÖTER EN SVÅRARE LABYRINT"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "SPELAREN JAGAR CORBUM-MATERIAL"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "VÄRLDEN KÄNNS ÄLDRE OCH MINDRE TRYGG"
+
+#: src/ui/menu_startup_m12.c:687 src/ui/menu_startup_m12.c:697
+msgid "ARCHIVE STATUS"
+msgstr "ARKIVSTATUS"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
+msgstr "CSBGRAPH.DAT OCH CSB.DAT SPÅRAS"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
+msgstr "LAUNCHERN VISAR REDO ENDAST VID MATCHNING"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
+msgstr "MUSEIINNEHÅLLET FÖRBLIR STATISKT OCH AVGRÄNSAT"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "VERSION SLOTS USE HASH EVIDENCE"
+msgstr "VERSIONSPLATSER ANVÄNDER HASH-BEVIS"
+
+#: src/ui/menu_startup_m12.c:693
+msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
+msgstr "LEGENDEN BORTOM DEN FÖRSTA FÄNGELSEHÅLAN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
+msgstr "DM2 BEHÅLLER KÄRNAN AV GRUPPÖVERLEVNAD"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
+msgstr "HANDLANGARE OCH VÄDER FÖRÄNDRAR RYTMEN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
+msgstr "UTOMHUSMILJÖER OCH BUTIKER UTVIDGAR FORMEN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
+msgstr "SERIEN GÅR BORTOM DEN URSPRUNGLIGA LABYRINTEN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SKULLKEEP ERA"
+msgstr "SKULLKEEP-ERAN"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
+msgstr "TEKNIK OCH MAGI DELAR SCENEN"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE PLAYER ASSEMBLES AND SURVIVES"
+msgstr "SPELAREN SAMLAR SIN GRUPP OCH ÖVERLEVER"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
+msgstr "TONEN ÄR FRÄMMANDE OCH MER MEKANISK"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
+msgstr "VÄRLDEN ÄR STÖRRE ÄN MOUNT ANAIAS"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
+msgstr "BINÄRA TILLGÅNGAR OMFATTAS INTE AV DENNA OMGÅNG"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
+msgstr "INNEHÅLLET HÄR ÄR EN GUIDE, INTE EN DATADUMP"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
+msgstr "DM2GRAPHICS.DAT OCH DM2DUNGEON.DAT SPÅRAS"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
+msgstr "ANTALET STÖDDA VERSIONER KAN VÄXA MED TIDEN"
+
+#: src/ui/menu_startup_m12.c:702
+msgid "FIRESTAFF PROJECT"
+msgstr "FIRESTAFF-PROJEKTET"
+
+#: src/ui/menu_startup_m12.c:703
+msgid "ABOUT AND CREDITS"
+msgstr "OM OCH MEDVERKANDE"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
+msgstr "DETERMINISTISK, MODULÄR, MUSEIKVALITET"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "OPEN DUNGEON MASTER ENGINE"
+msgstr "ÖPPEN DUNGEON MASTER-MOTOR"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
+msgstr "ORIGINALDATA VERIFIERAS, MEDFÖLJER INTE"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "PROJECT PURPOSE"
+msgstr "PROJEKTETS SYFTE"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "V1 PRESERVES BASELINE BEHAVIOUR"
+msgstr "V1 BEVARAR URSPRUNGLIGT BETEENDE"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
+msgstr "CHRISTOPHE FONTANEL DOKUMENTERADE VIKTIG HISTORIA"
+
+#: src/ui/menu_startup_m12.c:706 src/ui/menu_startup_m12.c:10059
+#: src/ui/menu_startup_m12.c:10062
+msgid "CREDITS"
+msgstr "MEDVERKANDE"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
+msgstr "FTL GAMES OCH SOFTWARE HEAVEN SKAPADE ORIGINALEN"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "NO CLAIM OF OFFICIAL AFFILIATION"
+msgstr "INGET ANSPRÅK PÅ OFFICIELL ANKNYTNING"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "PROJECT BOUNDARIES"
+msgstr "PROJEKTETS GRÄNSER"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "REGRESSION PROBES GUARD MENU STABILITY"
+msgstr "REGRESSIONSTESTER SKYDDAR MENYNS STABILITET"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
+msgstr "SPÅRAD TEXT FÖRBLIR ENGELSK I KODLAGRET"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
+msgstr "ANVÄNDARENS EGEN BUTIKSDATA KRÄVS"
+
+#: src/ui/menu_startup_m12.c:712
+msgid "TECHNICAL ARCHIVE"
+msgstr "TEKNISKT ARKIV"
+
+#: src/ui/menu_startup_m12.c:713
+msgid "SOURCE EVIDENCE AND VERIFICATION"
+msgstr "KÄLLBEVIS OCH VERIFIERING"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "EVIDENCE MODEL"
+msgstr "BEVISMODELL"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "KNOWN FILES ARE MATCHED BY HASH"
+msgstr "KÄNDA FILER MATCHAS MED HASH"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
+msgstr "INGEN TYST RESERVLÖSNING TILL OKÄNDA ORIGINAL"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
+msgstr "KÖRTIDSVÄGAR RAPPORTERAR SAKNAD DATA SÄKERT"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "VERSION MATRICES STAY EXPLICIT"
+msgstr "VERSIONSMATRISER FÖRBLIR EXPLICITA"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "ESCAPE RETURNS BEFORE EXITING"
+msgstr "ESC ÅTERGÅR INNAN AVSLUT"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "KEYBOARD INPUT IS BOUNDED"
+msgstr "TANGENTBORDSINMATNING ÄR BEGRÄNSAD"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
+msgstr "MUSKLICK ROUTAS GENOM DELAT TILLSTÅND"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "STARTUP MENU"
+msgstr "STARTMENY"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "UNKNOWN KEYS ARE NO OPS"
+msgstr "OKÄNDA TANGENTER GÖR INGET"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD INTERVIEW AND TIMELINE SOURCES"
+msgstr "LÄGG TILL INTERVJU- OCH TIDSLINJEKÄLLOR"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD MANUAL EXCERPT REFERENCES"
+msgstr "LÄGG TILL REFERENSER TILL MANUALUTDRAG"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD SMALL CURATED SCREEN PANELS"
+msgstr "LÄGG TILL SMÅ KURATERADE SKÄRMPANELER"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "FUTURE MUSEUM WORK"
+msgstr "FRAMTIDA MUSEIARBETE"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
+msgstr "HÅLL STORA TILLGÅNGAR UTE TILLS DE ÄR LICENSIERADE"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "FULLSCREEN"
+msgstr "FULLSKÄRM"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "MAXIMIZED"
+msgstr "MAXIMERAT"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "WINDOWED"
+msgstr "FÖNSTER"
+
+#: src/ui/menu_startup_m12.c:919
+msgid "FRONTEND PREVIEW"
+msgstr "FRONTEND-FÖRHANDSVISNING"
+
+#: src/ui/menu_startup_m12.c:920
+msgid "SELECT A DESTINATION"
+msgstr "VÄLJ EN DESTINATION"
+
+#: src/ui/menu_startup_m12.c:922
+msgid "STATUS"
+msgstr "STATUS"
+
+#: src/ui/menu_startup_m12.c:923
+msgid "LAUNCHER DESTINATIONS"
+msgstr "LAUNCHER-DESTINATIONER"
+
+#: src/ui/menu_startup_m12.c:924
+msgid "DATA DIR"
+msgstr "DATAKAT"
+
+#: src/ui/menu_startup_m12.c:925
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "UPP/NER FLYTTA   ENTER ÖPPNA   ESC AVSLUTA"
+
+#: src/ui/menu_startup_m12.c:926
+msgid "PERSISTED OPTIONS"
+msgstr "PERSISTERADE ALTERNATIV"
+
+#: src/ui/menu_startup_m12.c:927
+msgid "LANGUAGE"
+msgstr "SPRÅK"
+
+#: src/ui/menu_startup_m12.c:928
+msgid "GRAPHICS MODE"
+msgstr "GRAFIKLÄGE"
+
+#: src/ui/menu_startup_m12.c:929
+msgid "RENDERER BACKEND"
+msgstr "RENDERINGS-BACKEND"
+
+#: src/ui/menu_startup_m12.c:930
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "RENDERINGS-BACKEND OTILLGÄNGLIG"
+
+#: src/ui/menu_startup_m12.c:931
+msgid "WINDOW MODE"
+msgstr "FÖNSTERLÄGE"
+
+#: src/ui/menu_startup_m12.c:932
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "ÄNDRINGAR SPARAS DIREKT TILL KONFIG"
+
+#: src/ui/menu_startup_m12.c:933
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "VÄNSTER/HÖGER CYKEL   ENTER AVANCERA   ESC TILLBAKA"
+
+#: src/ui/menu_startup_m12.c:934
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER ELLER ESC ÅTERGÅR TILL MENYN"
+
+#: src/ui/menu_startup_m12.c:935 src/ui/menu_startup_m12.c:7127
+msgid "READY TO LAUNCH"
+msgstr "REDO ATT STARTA"
+
+#: src/ui/menu_startup_m12.c:936
+msgid "ESC RETURNS TO MENU"
+msgstr "ESC ÅTERGÅR TILL MENYN"
+
+#: src/ui/menu_startup_m12.c:937
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "ENDAST VALIDATOR-MALL"
+
+#: src/ui/menu_startup_m12.c:938
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "LÄGG TILL VERIFIERADE DETALJHANDEL-HASHAR"
+
+#: src/ui/menu_startup_m12.c:939
+msgid "GAME DATA NOT FOUND"
+msgstr "SPELDATA HITTADES INTE"
+
+#: src/ui/menu_startup_m12.c:940
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "KONTROLLERA FIRESTAFF DATAKAT"
+
+#: src/ui/menu_startup_m12.c:941
+msgid "ORIGINAL FILES NOT FOUND"
+msgstr "ORIGINALFILER HITTADES INTE"
+
+#: src/ui/menu_startup_m12.c:942
+msgid "COPY YOUR RETAIL GAME FILES INTO:"
+msgstr "KOPIERA DINA ORIGINALSPELFILER TILL:"
+
+#: src/ui/menu_startup_m12.c:943
+msgid "ART SLOT READY"
+msgstr "KONSTSLOTS REDO"
+
+#: src/ui/menu_startup_m12.c:944
+msgid "ART SLOT EMPTY"
+msgstr "KONSTSLOTS TOMT"
+
+#: src/ui/menu_startup_m12.c:945
+msgid "DROP ART INTO SLOT"
+msgstr "SLÄPP KONST I SLOTSEN"
+
+#: src/ui/menu_startup_m12.c:946
+msgid "CARD ART ACTIVE"
+msgstr "KORTKONST AKTIV"
+
+#: src/ui/menu_startup_m12.c:947
+msgid "CARD ART SLOT"
+msgstr "KORTKONST-SLOTS"
+
+#: src/ui/menu_startup_m12.c:948
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "SPELDATAARKIV KRÄVER ETT VERKTYG"
 
+#: src/ui/menu_startup_m12.c:949
+#, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr "ARKIV: %s  INSTALLERA: %s"
 
+#: src/ui/menu_startup_m12.c:950
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "INSTALLERA DET OCH SKANNA SEDAN OM SPELDATA"
+
+#: src/ui/menu_startup_m12.c:6921 src/ui/menu_startup_m12.c:7124
+msgid "NO SOURCE"
+msgstr "INGEN KÄLLA"
+
+#: src/ui/menu_startup_m12.c:7129
+msgid "MISSING OR MISMATCHED"
+msgstr "SAKNAS ELLER STÄMMER INTE"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "EXTRAS"
+msgstr "EXTRA"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "PLAY"
+msgstr "SPELA"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "QUIT"
+msgstr "AVSLUTA"
+
+#: src/ui/menu_startup_m12.c:7683
+msgid "Start or continue a game"
+msgstr "Starta eller fortsätt ett spel"
+
+#: src/ui/menu_startup_m12.c:7684
+msgid "Display, video, audio and controls"
+msgstr "Bild, video, ljud och kontroller"
+
+#: src/ui/menu_startup_m12.c:7685
+msgid "Museum, bestiary, spell reference and more"
+msgstr "Museum, bestiarium, trollformler och mer"
+
+#: src/ui/menu_startup_m12.c:7686
+msgid "Exit Firestaff"
+msgstr "Avsluta Firestaff"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "DM Nexus"
+msgstr "DM Nexus"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Theron's Quest"
+msgstr "Theron's Quest"
+
+#: src/ui/menu_startup_m12.c:7700
+msgid "V1 / V2.0 / V2.1 / V2.2"
+msgstr "V1 / V2.0 / V2.1 / V2.2"
+
+#: src/ui/menu_startup_m12.c:7701 src/ui/menu_startup_m12.c:7702
+msgid "V1 / V2"
+msgstr "V1 / V2"
+
+#: src/ui/menu_startup_m12.c:7703
+msgid "V1 / SATURN CAPTURE GATED"
+msgstr "V1 / SATURN-INSPELNING SPÄRRAD"
+
+#: src/ui/menu_startup_m12.c:7704
+msgid "V1 Only (Phase 1)"
+msgstr "Endast V1 (fas 1)"
+
+#: src/ui/menu_startup_m12.c:7707 src/ui/menu_startup_m12.c:7708
+#: src/ui/menu_startup_m12.c:7709 src/ui/menu_startup_m12.c:7710
+#: src/ui/menu_startup_m12.c:7711
+msgid "No data files"
+msgstr "Inga datafiler"
+
+#: src/ui/menu_startup_m12.c:8514
+msgid "New Game (Original)"
+msgstr "Nytt spel (original)"
+
+#: src/ui/menu_startup_m12.c:8515
+msgid "New Game (Original + Filters)"
+msgstr "Nytt spel (original + filter)"
+
+#: src/ui/menu_startup_m12.c:8516
+msgid "New Game (Original 10x Upscale)"
+msgstr "Nytt spel (original 10x uppskalning)"
+
+#: src/ui/menu_startup_m12.c:8517
+msgid "Continue Saved Game"
+msgstr "Fortsätt sparat spel"
+
+#: src/ui/menu_startup_m12.c:8518
+msgid "New Game (Modern Graphics)"
+msgstr "Nytt spel (modern grafik)"
+
+#: src/ui/menu_startup_m12.c:8526
+msgid "Museum of Lore"
+msgstr "Historiemuseum"
+
+#: src/ui/menu_startup_m12.c:8527
+msgid "Manual / Docs"
+msgstr "Manual/dokumentation"
+
+#: src/ui/menu_startup_m12.c:8528
+msgid "Bestiary"
+msgstr "Bestiarium"
+
+#: src/ui/menu_startup_m12.c:8529
+msgid "Spell Reference"
+msgstr "Trollformelsreferens"
+
+#: src/ui/menu_startup_m12.c:8530
+msgid "Map Viewer"
+msgstr "Kartvisare"
+
+#: src/ui/menu_startup_m12.c:8531
+msgid "Item Encyclopedia"
+msgstr "Föremålsencyklopedi"
+
+#: src/ui/menu_startup_m12.c:8532
+msgid "Changelog"
+msgstr "Ändringslogg"
+
+#: src/ui/menu_startup_m12.c:8533
+msgid "Screenshot Gallery"
+msgstr "Skärmbildsgalleri"
+
+#~ msgid "SCANNING GAME DATA"
+#~ msgstr "SÖKER EFTER SPELDATA"
+
+#~ msgid "Dungeon Master II: The Legend of Skullkeep"
+#~ msgstr "Dungeon Master II: The Legend of Skullkeep"
+
+#~ msgid "Dungeon Master Nexus"
+#~ msgstr "Dungeon Master Nexus"
+
+#~ msgid "Firestaff"
+#~ msgstr "Firestaff"
+
+#~ msgid "PATCH"
+#~ msgstr "PATCH"
+
+#~ msgid "CHEATS"
+#~ msgstr "FUSK"
+
+#~ msgid "SPEED"
+#~ msgstr "HASTIGHET"
+
+#~ msgid "ASPECT RATIO"
+#~ msgstr "BILDFÖRHÅLLANDE"
+
+#~ msgid "RESOLUTION"
+#~ msgstr "UPPLÖSNING"
+
+#~ msgid "LAUNCH"
+#~ msgstr "STARTA"
+
+#~ msgid "V1 ORIGINAL"
+#~ msgstr "V1 ORIGINAL"
+
+#~ msgid "V2 ENHANCED 2D"
+#~ msgstr "V2 FÖRBÄTTRAD 2D"
+
+#~ msgid "V3 MODERN/3D"
+#~ msgstr "V3 MODERN/3D"
+
+#~ msgid "COMING SOON"
+#~ msgstr "KOMMER SNART"
+
+#~ msgid "FRANCAIS"
+#~ msgstr "FRANÇAIS"
+
+#~ msgid "GAME OPTIONS"
+#~ msgstr "SPELALTERNATIV"
+
+#~ msgid "> LAUNCH"
+#~ msgstr "> STARTA"
+
+#~ msgid "> COMING SOON"
+#~ msgstr "> KOMMER SNART"
+
+#~ msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
+#~ msgstr "ESC: TILLBAKA  PILAR: NAVIGERA  ENTER: VÄLJ"
+
+#~ msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
+#~ msgstr "AKTIVERA FUSK FÖR ATT LÅSA UPP HASTIGHET / SNABBKNAPPAR"
+
+#~ msgid "LOCKED BY V1 ORIGINAL MODE"
+#~ msgstr "LÅST AV V1 ORIGINAL-LÄGET"
+
+#~ msgid "RENDERER"
+#~ msgstr "RENDERING"
+
+#~ msgid "SCALE"
+#~ msgstr "SKALA"
+
+#~ msgid "PIXEL SNAP"
+#~ msgstr "PIXELSNÄPP"
+
+#~ msgid "VSYNC"
+#~ msgstr "VSYNC"
+
+#~ msgid "SELECT GAME"
+#~ msgstr "VÄLJ SPEL"
+
+#~ msgid "Up/Down Navigate  |  Enter Select"
+#~ msgstr "Upp/ned navigerar  |  Enter väljer"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+#~ msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter väljer"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
+#~ msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter startar"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
+#~ msgstr "Escape tillbaka  |  Upp/ned navigerar  |  Enter öppnar"
+
+#~ msgid "< > Switch tab   Up/Down Navigate   Enter Change"
+#~ msgstr "< > byter flik   Upp/ned navigerar   Enter ändrar"
+
+#~ msgid "Coming soon"
+#~ msgstr "Kommer snart"
+
+#~ msgid "Auto-Save"
+#~ msgstr "Autospara"
+
+#~ msgid "Minimap"
+#~ msgstr "Minikarta"
+
+#~ msgid "Journal"
+#~ msgstr "Journal"
+
+#~ msgid "CRT Filter"
+#~ msgstr "CRT-filter"
+
+#~ msgid "Palette Correction"
+#~ msgstr "Palettkorrigering"
+
+#~ msgid "Dither Cleanup"
+#~ msgstr "Dither-rensning"
+
+#~ msgid "Sharpening"
+#~ msgstr "Skärpa"
+
+#~ msgid "Phosphor Persistence"
+#~ msgstr "Fosforpersistens"
+
+#~ msgid "Color Preset"
+#~ msgstr "Färgförval"
+
+#~ msgid "Pixel Grid"
+#~ msgstr "Pixelrutnät"
+
+#~ msgid "Motion Blur"
+#~ msgstr "Rörelseoskärpa"
+
+#~ msgid "AI Upscale (10x)"
+#~ msgstr "AI-uppskalning (10x)"
+
+#~ msgid "Smooth Movement"
+#~ msgstr "Mjuk rörelse"
+
+#~ msgid "Smooth Turning"
+#~ msgstr "Mjuk sväng"
+
+#~ msgid "Animation Interpolation"
+#~ msgstr "Animationsinterpolering"
+
+#~ msgid "Dynamic Lighting"
+#~ msgstr "Dynamiskt ljus"
+
+#~ msgid "Particle Effects"
+#~ msgstr "Partikeleffekter"
+
+#~ msgid "Weather FX"
+#~ msgstr "Vädereffekter"
+
+#~ msgid "Camera Easing"
+#~ msgstr "Kamerautjämning"
+
+#~ msgid "Screen Transitions"
+#~ msgstr "Skärmövergångar"
+
+#~ msgid "Control Scheme"
+#~ msgstr "Kontrollschema"
+
+#~ msgid "Input Mode"
+#~ msgstr "Inmatningsläge"
+
+#~ msgid "Touch Controls"
+#~ msgstr "Pekkontroller"
+
+#~ msgid "Gamepad"
+#~ msgstr "Handkontroll"
+
+#~ msgid "Key Bindings"
+#~ msgstr "Tangentbindningar"
+
+#~ msgid "Auto-Pause on Focus Loss"
+#~ msgstr "Pausa när fokus förloras"
+
+#~ msgid "Master Volume"
+#~ msgstr "Huvudvolym"
+
+#~ msgid "Music Volume"
+#~ msgstr "Musikvolym"
+
+#~ msgid "SFX Volume"
+#~ msgstr "Effektvolym"
+
+#~ msgid "Muted"
+#~ msgstr "Tystat"
+
+#~ msgid "Audio Mixer"
+#~ msgstr "Ljudmixer"
+
+#~ msgid "Soundtrack"
+#~ msgstr "Ljudspår"
+
+#~ msgid "Ambient Sounds"
+#~ msgstr "Omgivningsljud"
+
+#~ msgid "Ambient Volume"
+#~ msgstr "Omgivningsvolym"
+
+#~ msgid "Footstep Audio"
+#~ msgstr "Stegljud"
+
+#~ msgid "Creature Voices"
+#~ msgstr "Varelseljud"
+
+#~ msgid "PC Speaker Emulation"
+#~ msgstr "PC speaker-emulering"
+
+#~ msgid "Font Scale"
+#~ msgstr "Textstorlek"
+
+#~ msgid "UI Scale"
+#~ msgstr "Gränssnittsskala"
+
+#~ msgid "High Contrast"
+#~ msgstr "Hög kontrast"
+
+#~ msgid "Colorblind Mode"
+#~ msgstr "Färgblindhetsläge"
+
+#~ msgid "Large Touch Targets"
+#~ msgstr "Stora pekytor"
+
+#~ msgid "Damage Numbers"
+#~ msgstr "Skadenummer"
+
+#~ msgid "Message Log"
+#~ msgstr "Meddelandelogg"
+
+#~ msgid "Tooltip"
+#~ msgstr "Verktygstips"
+
+#~ msgid "Achievements"
+#~ msgstr "Prestationer"
+
+#~ msgid "Stat Tracker"
+#~ msgstr "Statistikspårning"
+
+#~ msgid "Pathfinding Overlay"
+#~ msgstr "Vägvisningslager"
+
+#~ msgid "Inventory Sort"
+#~ msgstr "Sortera inventarie"
+
+#~ msgid "Data Status"
+#~ msgstr "Datastatus"
+
+#~ msgid "Debug Overlay"
+#~ msgstr "Debuglager"
+
+#~ msgid "Developer Gates"
+#~ msgstr "Utvecklarspärrar"
+
+#~ msgid "Fade"
+#~ msgstr "Toning"
+
+#~ msgid "Keyboard"
+#~ msgstr "Tangentbord"
+
+#~ msgid "Auto"
+#~ msgstr "Auto"
+
+#~ msgid "Auto-detect"
+#~ msgstr "Autodetektera"
+
+#~ msgid "Default"
+#~ msgstr "Standard"
+
+#~ msgid "No"
+#~ msgstr "Nej"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "NO GAME DATA FOUND"
+#~ msgstr "INGEN SPELDATA HITTADES"
+
+#~ msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+#~ msgstr "KOPIERA SPELFILER TILL Documents/Firestaff/data MED EN FILHANTERARE"
+
+#~ msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+#~ msgstr "ANVÄND APPEN FILER FÖR ATT KOPIERA SPELFILER TILL Firestaff/data I DENNA APP"

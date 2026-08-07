@@ -1,307 +1,1313 @@
-# firestaff-startup-menu-cs catalog (auto-generated from startup-menu.pot).
-# Native translation pass 2026-07-19: msgstr entries reviewed and
-# translated from the English msgid source. Proper nouns/brand strings
-# intentionally keep the source spelling (same policy as sv/de/fr).
+# Firestaff — startup-menu domain, Czech catalog.
+# Czech translations for the startup menu / launcher domain.
+#
+# Domain: startup-menu
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: firestaff-startup-menu-cs\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-07-19+00:00\n"
-"Last-Translator: Firestaff localization pass\n"
+"Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-07 20:21+0200\n"
+"PO-Revision-Date: 2026-08-07 12:00+0200\n"
+"Last-Translator: Firestaff i18n\n"
 "Language-Team: Czech\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-#. Launcher title / eyebrow
 
-msgid "FRONTEND PREVIEW"
-msgstr "NÁHLED FRONTENDU"
-#. Main menu heading
+#: src/ui/menu_startup_m12.c:217
+msgid "ACCESSIBILITY"
+msgstr "PŘÍSTUPNOST"
 
-msgid "SELECT A DESTINATION"
-msgstr "VYBERTE CÍL"
-#. Settings panel title
+#: src/ui/menu_startup_m12.c:217
+msgid "AUDIO"
+msgstr "ZVUK"
 
-msgid "SETTINGS"
-msgstr "NASTAVENÍ"
-#. Status label
+#: src/ui/menu_startup_m12.c:217
+msgid "CONTROLS"
+msgstr "OVLÁDÁNÍ"
 
-msgid "STATUS"
-msgstr "STAV"
-#. Section heading for launcher entries
+#: src/ui/menu_startup_m12.c:217
+msgid "GAME"
+msgstr "HRA"
 
-msgid "LAUNCHER DESTINATIONS"
-msgstr "CÍLE LAUNCHERU"
-#. Data directory label
+#: src/ui/menu_startup_m12.c:217
+msgid "GRAPHICS"
+msgstr "GRAFIKA"
 
-msgid "DATA DIR"
-msgstr "DAT. ADRESÁŘ"
-#. Main menu footer / navigation hint
+#: src/ui/menu_startup_m12.c:218
+msgid "ONLINE"
+msgstr "ONLINE"
 
-msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "NAHORU/DOLŮ POHYB   ENTER OTEVŘÍT   ESC UKONČIT"
-#. Settings section heading
+#: src/ui/menu_startup_m12.c:231
+msgid "Graphics Mode"
+msgstr "Grafický režim"
 
-msgid "PERSISTED OPTIONS"
-msgstr "ULOŽENÉ VOLBY"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:231 src/ui/menu_startup_m12.c:245
+msgid "Original"
+msgstr "Originál"
 
-msgid "LANGUAGE"
-msgstr "JAZYK"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:232
+msgid "Game Version"
+msgstr "Verze hry"
 
-msgid "GRAPHICS MODE"
-msgstr "GRAFICKÝ REŽIM"
-#. Settings row label
+#: src/ui/menu_startup_m12.c:232
+msgid "V1"
+msgstr "V1"
 
-msgid "WINDOW MODE"
-msgstr "REŽIM OKNA"
-#. Settings save confirmation
+#: src/ui/menu_startup_m12.c:233
+msgid "English"
+msgstr "Angličtina"
 
-msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "ZMĚNY SE OKAMŽITĚ UKLÁDAJÍ DO KONFIGURACE"
-#. Settings footer / navigation hint
+#: src/ui/menu_startup_m12.c:233
+msgid "Language"
+msgstr "Jazyk"
 
-msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "VLEVO/VPRAVO PŘEPÍNAT   ENTER DÁL   ESC ZPĚT"
-#. Message view return hint
+#: src/ui/menu_startup_m12.c:234
+msgid "Game Speed"
+msgstr "Rychlost hry"
 
-msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER NEBO ESC VRÁTÍ DO NABÍDKY"
-#. Launch confirmation
+#: src/ui/menu_startup_m12.c:234
+msgid "Normal"
+msgstr "Normální"
 
-msgid "READY TO LAUNCH"
-msgstr "PŘIPRAVENO KE SPUŠTĚNÍ"
-#. Escape hint in messages
+#: src/ui/menu_startup_m12.c:235
+msgid "Classic"
+msgstr "Klasický"
 
-msgid "ESC RETURNS TO MENU"
-msgstr "ESC VRÁTÍ DO NABÍDKY"
-#. Missing hash-verified data message
+#: src/ui/menu_startup_m12.c:235
+msgid "Movement Mode"
+msgstr "Režim pohybu"
 
-msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "POUZE KOSTRA VALIDÁTORU"
-#. Missing hash-verified data detail
+#: src/ui/menu_startup_m12.c:236
+msgid "Cheats"
+msgstr "Podvádění"
 
-msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "PŘIDEJTE OVĚŘENÉ RETAILOVÉ HASHE"
-#. Missing game data message
+#: src/ui/menu_startup_m12.c:236
+msgid "Off"
+msgstr "Vypnuto"
 
-msgid "GAME DATA NOT FOUND"
-msgstr "HERNÍ DATA NENALEZENA"
-#. Missing game data detail
+#: src/ui/menu_startup_m12.c:241
+msgid "Maximized"
+msgstr "Maximalizováno"
 
-msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "ZKONTROLUJTE DATOVÝ ADRESÁŘ FIRESTAFF"
-#. Card art slot status
+#: src/ui/menu_startup_m12.c:241
+msgid "Window Mode"
+msgstr "Režim okna"
 
-msgid "ART SLOT READY"
-msgstr "SLOT GRAFIKY PŘIPRAVEN"
-#. Card art slot status
+#: src/ui/menu_startup_m12.c:242
+msgid "16:9"
+msgstr "16:9"
 
-msgid "ART SLOT EMPTY"
-msgstr "SLOT GRAFIKY PRÁZDNÝ"
-#. Card art slot instruction
+#: src/ui/menu_startup_m12.c:242
+msgid "Display Format"
+msgstr "Formát zobrazení"
 
-msgid "DROP ART INTO SLOT"
-msgstr "VLOŽTE GRAFIKU DO SLOTU"
-#. Card art active label
+#: src/ui/menu_startup_m12.c:243 src/ui/menu_startup_m12.c:244
+msgid "On"
+msgstr "Zapnuto"
 
-msgid "CARD ART ACTIVE"
-msgstr "GRAFIKA KARTY AKTIVNÍ"
-#. Card art slot label
+#: src/ui/menu_startup_m12.c:243
+msgid "VSync"
+msgstr "VSync"
 
-msgid "CARD ART SLOT"
-msgstr "SLOT GRAFIKY KARTY"
-#. Game card label
+#: src/ui/menu_startup_m12.c:244
+msgid "Integer Scaling"
+msgstr "Celočíselné škálování"
 
-msgid "Dungeon Master"
-msgstr "Dungeon Master"
-#. Game card label
+#: src/ui/menu_startup_m12.c:245
+msgid "Viewport Style"
+msgstr "Styl zobrazení"
 
-msgid "Chaos Strikes Back"
-msgstr "Chaos Strikes Back"
-#. Game card label
+#: src/ui/menu_startup_m12.c:246
+msgid "Original VGA"
+msgstr "Originální VGA"
 
-msgid "Dungeon Master II"
-msgstr "Dungeon Master II"
-#. Launcher title
+#: src/ui/menu_startup_m12.c:246
+msgid "Palette Mode"
+msgstr "Režim palety"
 
-msgid "Firestaff"
-msgstr "Firestaff"
-#. Game options row label
-
-msgid "PATCH"
-msgstr "PATCH"
-#. Game options value: original version
-
+#: src/ui/menu_startup_m12.c:373 src/ui/menu_startup_m12.c:403
+#: src/ui/menu_startup_m12.c:434 src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:443
 msgid "ORIGINAL"
 msgstr "ORIGINÁL"
-#. Game options value: patched version
 
+#: src/ui/menu_startup_m12.c:403
 msgid "PATCHED"
-msgstr "PATCHOVÁNO"
-#. Game options row label
+msgstr "OPRAVENO"
 
-msgid "CHEATS"
-msgstr "CHEATY"
-#. Game options value: off
+#: src/ui/menu_startup_m12.c:415
+msgid "DE"
+msgstr "DE"
 
-msgid "OFF"
-msgstr "VYP"
-#. Game options value: on
+#: src/ui/menu_startup_m12.c:415
+msgid "EN"
+msgstr "EN"
 
-msgid "ON"
-msgstr "ZAP"
-#. Game options row label
+#: src/ui/menu_startup_m12.c:415
+msgid "FR"
+msgstr "FR"
 
-msgid "SPEED"
-msgstr "RYCHLOST"
-#. Game options value: slower
+#: src/ui/menu_startup_m12.c:415
+msgid "JA"
+msgstr "JA"
 
-msgid "SLOWER"
-msgstr "POMALEJŠÍ"
-#. Game options value: normal
+#: src/ui/menu_startup_m12.c:415
+msgid "SV"
+msgstr "SV"
 
-msgid "NORMAL"
-msgstr "NORMÁLNÍ"
-#. Game options value: faster
+#: src/ui/menu_startup_m12.c:415
+msgid "ZH"
+msgstr "ZH"
 
-msgid "FASTER"
-msgstr "RYCHLEJŠÍ"
-#. Game options row label
+#: src/ui/menu_startup_m12.c:416
+msgid "CS"
+msgstr "CS"
 
-msgid "ASPECT RATIO"
-msgstr "POMĚR STRAN"
-#. Game options row label
+#: src/ui/menu_startup_m12.c:416
+msgid "DA"
+msgstr "DA"
 
-msgid "RESOLUTION"
-msgstr "ROZLIŠENÍ"
-#. Game options action
+#: src/ui/menu_startup_m12.c:416
+msgid "ES"
+msgstr "ES"
 
-msgid "LAUNCH"
-msgstr "SPUSTIT"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:416
+msgid "FI"
+msgstr "FI"
 
-msgid "V1 ORIGINAL"
-msgstr "V1 ORIGINÁL"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:416
+msgid "HU"
+msgstr "HU"
 
-msgid "V2 ENHANCED 2D"
-msgstr "V2 VYLEPŠENÉ 2D"
-#. Presentation mode name
+#: src/ui/menu_startup_m12.c:416
+msgid "IT"
+msgstr "IT"
 
-msgid "V3 MODERN/3D"
-msgstr "V3 MODERNÍ/3D"
-#. V3 unavailable message
+#: src/ui/menu_startup_m12.c:417
+msgid "ID"
+msgstr "ID"
 
-msgid "COMING SOON"
-msgstr "BRZY K DISPOZICI"
-#. Language names
+#: src/ui/menu_startup_m12.c:417
+msgid "KO"
+msgstr "KO"
 
-msgid "ENGLISH"
-msgstr "ANGLIČTINA"
-#. Language names
+#: src/ui/menu_startup_m12.c:417
+msgid "NL"
+msgstr "NL"
 
-msgid "SVENSKA"
-msgstr "ŠVÉDŠTINA"
-#. Language names
+#: src/ui/menu_startup_m12.c:417
+msgid "NO"
+msgstr "NO"
 
-msgid "FRANCAIS"
-msgstr "FRANCOUZŠTINA"
-#. Language names
+#: src/ui/menu_startup_m12.c:417
+msgid "PL"
+msgstr "PL"
 
+#: src/ui/menu_startup_m12.c:417
+msgid "PT"
+msgstr "PT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "RU"
+msgstr "RU"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "TR"
+msgstr "TR"
+
+#: src/ui/menu_startup_m12.c:420
 msgid "DEUTSCH"
-msgstr "NĚMČINA"
-#. Window mode values
+msgstr "DEUTSCH"
 
-msgid "WINDOWED"
-msgstr "V OKNĚ"
-#. Window mode values
+#: src/ui/menu_startup_m12.c:420
+msgid "ENGLISH"
+msgstr "ENGLISH"
 
-msgid "FULLSCREEN"
-msgstr "CELÁ OBRAZOVKA"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:420
+msgid "SVENSKA"
+msgstr "SVENSKA"
 
-msgid "RENDERER BACKEND"
-msgstr "BACKEND VYKRESLOVAČE"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:439 src/ui/menu_startup_m12.c:440
+msgid "OFF"
+msgstr "VYPNUTO"
 
-msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "BACKEND VYKRESLOVAČE NEDOSTUPNÝ"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+msgid "ON"
+msgstr "ZAPNUTO"
 
-msgid "RENDERER"
-msgstr "VYKRESLOVAČ"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:427
+msgid "FASTER"
+msgstr "RYCHLEJI"
 
+#: src/ui/menu_startup_m12.c:427
+msgid "NORMAL"
+msgstr "NORMÁLNĚ"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "SLOWER"
+msgstr "POMALEJI"
+
+#: src/ui/menu_startup_m12.c:428
+msgid "FIT"
+msgstr "PŘIZPŮSOBIT"
+
+#: src/ui/menu_startup_m12.c:428
+msgid "STRETCH"
+msgstr "ROZTÁHNOUT"
+
+#: src/ui/menu_startup_m12.c:431
+msgid "LINEAR"
+msgstr "LINEÁRNÍ"
+
+#: src/ui/menu_startup_m12.c:431
+msgid "NEAREST"
+msgstr "NEJBLIŽŠÍ SOUSED"
+
+#: src/ui/menu_startup_m12.c:432 src/ui/menu_startup_m12.c:435
 msgid "AUTO"
 msgstr "AUTO"
-#. Renderer/settings label
 
-msgid "SOFTWARE"
-msgstr "SOFTWAROVÝ"
-#. Renderer/settings label
-
-msgid "SDL"
-msgstr "SDL"
-#. Renderer/settings label
-
+#: src/ui/menu_startup_m12.c:432
 msgid "OPENGL"
 msgstr "OPENGL"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:432
+msgid "SDL"
+msgstr "SDL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SOFTWARE"
+msgstr "SOFTWAROVÉ"
+
+#: src/ui/menu_startup_m12.c:432
 msgid "VULKAN"
 msgstr "VULKAN"
-#. Renderer/settings label
 
+#: src/ui/menu_startup_m12.c:433
 msgid "AVAILABLE"
-msgstr "DOSTUPNÝ"
-#. Renderer/settings label
+msgstr "DOSTUPNÉ"
 
+#: src/ui/menu_startup_m12.c:433
 msgid "UNAVAILABLE"
-msgstr "NEDOSTUPNÝ"
-#. Renderer/settings label
+msgstr "NEDOSTUPNÉ"
 
-msgid "SCALE"
-msgstr "ŠKÁLOVÁNÍ"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:434
+msgid "EXPANDED"
+msgstr "ROZŠÍŘENO"
 
-msgid "PIXEL SNAP"
-msgstr "PŘICHYCENÍ PIXELŮ"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:434
+msgid "WIDESCREEN"
+msgstr "ŠIROKOÚHLÉ"
 
-msgid "FILTER"
-msgstr "FILTR"
-#. Renderer/settings label
+#: src/ui/menu_startup_m12.c:435
+msgid "GAMEPAD"
+msgstr "GAMEPAD"
 
-msgid "VSYNC"
-msgstr "VSYNC"
+#: src/ui/menu_startup_m12.c:435
+msgid "KEYBOARD+MOUSE"
+msgstr "KLÁVESNICE+MYŠ"
 
-#. Popup title when no game data files are found at startup
-msgid "NO GAME DATA FOUND"
-msgstr "NEBYLA NALEZENA ŽÁDNÁ HERNÍ DATA"
+#: src/ui/menu_startup_m12.c:435
+msgid "TOUCH"
+msgstr "DOTYK"
 
-#. Desktop: instruction to copy game files
-msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
-msgstr "ZKOPÍRUJTE PŮVODNÍ HERNÍ SOUBORY DO DATOVÉHO ADRESÁŘE"
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:439
+msgid "FULL"
+msgstr "PLNÝ"
 
-#. Android: instruction to copy game files via file manager
-msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
-msgstr "ZKOPÍRUJTE HERNÍ SOUBORY DO Documents/Firestaff/data POMOCÍ SPRÁVCE SOUBORŮ"
+#: src/ui/menu_startup_m12.c:436
+msgid "LARGE"
+msgstr "VELKÝ"
 
-#. iOS: instruction to copy game files via Files app
-msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
-msgstr "POUŽIJTE APLIKACI SOUBORY KE ZKOPÍROVÁNÍ HERNÍCH SOUBORŮ DO Firestaff/data V TÉTO APLIKACI"
+#: src/ui/menu_startup_m12.c:436
+msgid "MINIMAL"
+msgstr "MINIMÁLNÍ"
 
+#: src/ui/menu_startup_m12.c:437
+msgid "FAST"
+msgstr "RYCHLÝ"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "SMOOTH"
+msgstr "PLYNULÝ"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "COORDS"
+msgstr "SOUŘADNICE"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "DRAW ORDER"
+msgstr "POŘADÍ VYKRESLOVÁNÍ"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "QUEUE"
+msgstr "FRONTA"
+
+#: src/ui/menu_startup_m12.c:439
+msgid "QUICK"
+msgstr "RYCHLÝ"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "DEUT"
+msgstr "DEUT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "PROT"
+msgstr "PROT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "TRIT"
+msgstr "TRIT"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "AMIGA"
+msgstr "AMIGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CGA"
+msgstr "CGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CLASSIC"
+msgstr "KLASICKÝ"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "DARK"
+msgstr "TMAVÝ"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "DUNGEON"
+msgstr "KOBKA"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STARS"
+msgstr "HVĚZDY"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STATIC"
+msgstr "STATICKÝ"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "TORCH"
+msgstr "POCHODEŇ"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "CUSTOM"
+msgstr "VLASTNÍ"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "REMASTERED"
+msgstr "REMASTROVANÉ"
+
+#: src/ui/menu_startup_m12.c:653 src/ui/menu_startup_m12.c:672
+#: src/ui/menu_startup_m12.c:8669 src/ui/menu_startup_m12.c:9113
+msgid "DUNGEON MASTER"
+msgstr "DUNGEON MASTER"
+
+#: src/ui/menu_startup_m12.c:654 src/ui/menu_startup_m12.c:682
+#: src/ui/menu_startup_m12.c:8671 src/ui/menu_startup_m12.c:9127
+msgid "CHAOS STRIKES BACK"
+msgstr "CHAOS STRIKES BACK"
+
+#: src/ui/menu_startup_m12.c:655 src/ui/menu_startup_m12.c:692
+msgid "DUNGEON MASTER II"
+msgstr "DUNGEON MASTER II"
+
+#: src/ui/menu_startup_m12.c:656
+msgid "DUNGEON MASTER NEXUS"
+msgstr "DUNGEON MASTER NEXUS"
+
+#: src/ui/menu_startup_m12.c:658
+msgid "THERON'S QUEST"
+msgstr "THERON'S QUEST"
+
+#: src/ui/menu_startup_m12.c:659 src/ui/menu_startup_m12.c:10042
+#: src/ui/menu_startup_m12.c:10045
+msgid "MUSEUM OF LORE"
+msgstr "MUZEUM LEGEND"
+
+#: src/ui/menu_startup_m12.c:660 src/ui/menu_startup_m12.c:7120
+#: src/ui/menu_startup_m12.c:7679 src/ui/menu_startup_m12.c:8865
+#: src/ui/menu_startup_m12.c:10077 src/ui/menu_startup_m12.c:10080
+#: src/ui/menu_startup_m12.c:10224
+msgid "SETTINGS"
+msgstr "NASTAVENÍ"
+
+#: src/ui/menu_startup_m12.c:673
+msgid "THE ORIGINAL DUNGEON CRAWL"
+msgstr "PŮVODNÍ PRŮZKUM KOBKY"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "1987 FTL GAMES"
+msgstr "1987 FTL GAMES"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "CHAMPIONS ENTER THE DUNGEON"
+msgstr "ŠAMPIONI VSTUPUJÍ DO KOBKY"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "FOUR PORTRAITS BECOME A PARTY"
+msgstr "ČTYŘI PORTRÉTY SE STÁVAJÍ DRUŽINOU"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
+msgstr "TLAK REÁLNÉHO ČASU UTVÁŘÍ LEGENDU"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
+msgstr "FIRESTAFF JE ÚSTŘEDNÍ RELIKVIE"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "KEY LORE THREADS"
+msgstr "KLÍČOVÉ PŘÍBĚHOVÉ LINIE"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "LORD CHAOS SHATTERS ORDER"
+msgstr "LORD CHAOS ROZBÍJÍ ŘÁD"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "RA RETURNS AS MASTER OF BALANCE"
+msgstr "RA SE VRACÍ JAKO PÁN ROVNOVÁHY"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE DUNGEON IS BOTH TEST AND PRISON"
+msgstr "KOBKA JE ZKOUŠKOU I VĚZENÍM"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE GREY LORD IS DIVIDED"
+msgstr "ŠEDÝ PÁN JE ROZDĚLEN"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
+msgstr "FIRESTAFF ZAZNAMENÁVÁ DŮKAZY, NE DOMNĚNKY"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
+msgstr "GRAPHICS DAT A DUNGEON DAT JSOU OVĚŘENY"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
+msgstr "HASHOVANÁ ORIGINÁLNÍ DATA ZŮSTÁVAJÍ DODÁVANÁ UŽIVATELEM"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PC AND ATARI ST LINEAGE MATTERS"
+msgstr "PŮVOD Z PC A ATARI ST JE DŮLEŽITÝ"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PRESERVATION NOTES"
+msgstr "POZNÁMKY K ZACHOVÁNÍ"
+
+#: src/ui/menu_startup_m12.c:683
+msgid "THE CHAMPIONS RETURN"
+msgstr "ŠAMPIONI SE VRACEJÍ"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "CSB REWARDS MAP MEMORY AND NERVE"
+msgstr "CSB ODMĚŇUJE ZNALOST MAPY A ODVAHU"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
+msgstr "SYSTÉMY DUNGEON MASTER JSOU HUSTŠÍ"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "EXPANSION AND SEQUEL DESIGN"
+msgstr "DESIGN ROZŠÍŘENÍ A POKRAČOVÁNÍ"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "FOUR PATHS TEST MASTERY"
+msgstr "ČTYŘI CESTY PROVĚŘUJÍ MISTROVSTVÍ"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
+msgstr "HLEDÁNÍ CORBUMU NAHRAZUJE PROSTÝ SESTUP"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "CHAOS STÁLE VRHÁ DLOUHÝ STÍN"
+
+#: src/ui/menu_startup_m12.c:686 src/ui/menu_startup_m12.c:696
+msgid "LORE SHAPE"
+msgstr "PODOBA PŘÍBĚHU"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "VRACEJÍCÍ SE ŠAMPIONI ČELÍ TĚŽŠÍMU BLUDIŠTI"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "HRÁČ LOVÍ MATERIÁL CORBUM"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "SVĚT PŮSOBÍ STARŠÍ A MÉNĚ BEZPEČNÝ"
+
+#: src/ui/menu_startup_m12.c:687 src/ui/menu_startup_m12.c:697
+msgid "ARCHIVE STATUS"
+msgstr "STAV ARCHIVU"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
+msgstr "CSBGRAPH DAT A CSB DAT JSOU SLEDOVÁNY"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
+msgstr "SPOUŠTĚČ ZOBRAZÍ PŘIPRAVENO POUZE PŘI SHODĚ"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
+msgstr "OBSAH MUZEA ZŮSTÁVÁ STATICKÝ A OMEZENÝ"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "VERSION SLOTS USE HASH EVIDENCE"
+msgstr "SLOTY VERZÍ POUŽÍVAJÍ HASHOVÉ DŮKAZY"
+
+#: src/ui/menu_startup_m12.c:693
+msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
+msgstr "LEGENDA MIMO PRVNÍ KOBKU"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
+msgstr "DM2 ZACHOVÁVÁ JÁDRO PŘEŽITÍ DRUŽINY"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
+msgstr "PODŘÍZENÍ A POČASÍ MĚNÍ RYTMUS"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
+msgstr "VENKOVNÍ A OBCHODNÍ PROSTORY ROZŠIŘUJÍ FORMU"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
+msgstr "SÉRIE SE POSOUVÁ ZA HRANICE PŮVODNÍHO BLUDIŠTĚ"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SKULLKEEP ERA"
+msgstr "ÉRA SKULLKEEP"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
+msgstr "TECHNOLOGIE A MAGIE SDÍLEJÍ JEVIŠTĚ"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE PLAYER ASSEMBLES AND SURVIVES"
+msgstr "HRÁČ SESTAVUJE DRUŽINU A PŘEŽÍVÁ"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
+msgstr "TÓN JE PODIVNĚJŠÍ A MECHANIČTĚJŠÍ"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
+msgstr "SVĚT JE ŠIRŠÍ NEŽ HORA ANAIAS"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
+msgstr "BINÁRNÍ SOUBORY ZŮSTÁVAJÍ MIMO TENTO KROK"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
+msgstr "OBSAH ZDE JE PRŮVODCE, NE VÝPIS DAT"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
+msgstr "DM2GRAPHICS DAT A DM2DUNGEON DAT JSOU SLEDOVÁNY"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
+msgstr "PODPOROVANÉ VERZE SE MOHOU V ČASE ROZŠIŘOVAT"
+
+#: src/ui/menu_startup_m12.c:702
+msgid "FIRESTAFF PROJECT"
+msgstr "PROJEKT FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:703
+msgid "ABOUT AND CREDITS"
+msgstr "O PROJEKTU A TITULKY"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
+msgstr "DETERMINISTICKÉ, MODULÁRNÍ, MUZEJNÍ KVALITY"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "OPEN DUNGEON MASTER ENGINE"
+msgstr "OTEVŘENÝ ENGINE DUNGEON MASTER"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
+msgstr "ORIGINÁLNÍ DATA JSOU OVĚŘENA, NE PŘIBALENA"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "PROJECT PURPOSE"
+msgstr "ÚČEL PROJEKTU"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "V1 PRESERVES BASELINE BEHAVIOUR"
+msgstr "V1 ZACHOVÁVÁ ZÁKLADNÍ CHOVÁNÍ"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
+msgstr "CHRISTOPHE FONTANEL ZDOKUMENTOVAL DŮLEŽITOU HISTORII"
+
+#: src/ui/menu_startup_m12.c:706 src/ui/menu_startup_m12.c:10059
+#: src/ui/menu_startup_m12.c:10062
+msgid "CREDITS"
+msgstr "TITULKY"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
+msgstr "FTL GAMES A SOFTWARE HEAVEN VYTVOŘILI ORIGINÁLY"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "NO CLAIM OF OFFICIAL AFFILIATION"
+msgstr "ŽÁDNÝ NÁROK NA OFICIÁLNÍ SPOJITOST"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "PROJECT BOUNDARIES"
+msgstr "HRANICE PROJEKTU"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "REGRESSION PROBES GUARD MENU STABILITY"
+msgstr "REGRESNÍ TESTY CHRÁNÍ STABILITU MENU"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
+msgstr "SLEDOVANÝ TEXT ZŮSTÁVÁ V REPOZITÁŘI V ANGLIČTINĚ"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
+msgstr "JSOU VYŽADOVÁNA MALOOBCHODNÍ DATA DODANÁ UŽIVATELEM"
+
+#: src/ui/menu_startup_m12.c:712
+msgid "TECHNICAL ARCHIVE"
+msgstr "TECHNICKÝ ARCHIV"
+
+#: src/ui/menu_startup_m12.c:713
+msgid "SOURCE EVIDENCE AND VERIFICATION"
+msgstr "ZDROJOVÉ DŮKAZY A OVĚŘENÍ"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "EVIDENCE MODEL"
+msgstr "MODEL DŮKAZŮ"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "KNOWN FILES ARE MATCHED BY HASH"
+msgstr "ZNÁMÉ SOUBORY JSOU ROZPOZNÁVÁNY PODLE HASHE"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
+msgstr "ŽÁDNÝ TICHÝ NÁVRAT K NEZNÁMÝM ORIGINÁLŮM"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
+msgstr "BĚHOVÉ CESTY BEZPEČNĚ HLÁSÍ CHYBĚJÍCÍ DATA"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "VERSION MATRICES STAY EXPLICIT"
+msgstr "MATICE VERZÍ ZŮSTÁVAJÍ VÝSLOVNÉ"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "ESCAPE RETURNS BEFORE EXITING"
+msgstr "ESCAPE SE VRÁTÍ PŘED UKONČENÍM"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "KEYBOARD INPUT IS BOUNDED"
+msgstr "VSTUP Z KLÁVESNICE JE OMEZEN"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
+msgstr "KLIKNUTÍ MYŠÍ PROCHÁZEJÍ SDÍLENÝM STAVEM"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "STARTUP MENU"
+msgstr "STARTOVNÍ MENU"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "UNKNOWN KEYS ARE NO OPS"
+msgstr "NEZNÁMÉ KLÁVESY NEMAJÍ ÚČINEK"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD INTERVIEW AND TIMELINE SOURCES"
+msgstr "PŘIDAT ROZHOVORY A ČASOVÉ OSY JAKO ZDROJE"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD MANUAL EXCERPT REFERENCES"
+msgstr "PŘIDAT ODKAZY NA ÚRYVKY Z MANUÁLU"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD SMALL CURATED SCREEN PANELS"
+msgstr "PŘIDAT MALÉ VYBRANÉ OBRAZOVKOVÉ PANELY"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "FUTURE MUSEUM WORK"
+msgstr "BUDOUCÍ PRÁCE NA MUZEU"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
+msgstr "VELKÁ DATA NEZAŘAZOVAT, DOKUD NEBUDOU LICENCOVÁNA"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "FULLSCREEN"
+msgstr "CELÁ OBRAZOVKA"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "MAXIMIZED"
+msgstr "MAXIMALIZOVANÉ"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "WINDOWED"
+msgstr "OKNO"
+
+#: src/ui/menu_startup_m12.c:919
+msgid "FRONTEND PREVIEW"
+msgstr "NÁHLED ROZHRANÍ"
+
+#: src/ui/menu_startup_m12.c:920
+msgid "SELECT A DESTINATION"
+msgstr "VYBERTE CÍL"
+
+#: src/ui/menu_startup_m12.c:922
+msgid "STATUS"
+msgstr "STAV"
+
+#: src/ui/menu_startup_m12.c:923
+msgid "LAUNCHER DESTINATIONS"
+msgstr "CÍLE SPOUŠTĚČE"
+
+#: src/ui/menu_startup_m12.c:924
+msgid "DATA DIR"
+msgstr "ADRESÁŘ DAT"
+
+#: src/ui/menu_startup_m12.c:925
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "NAHORU/DOLŮ POHYB   ENTER OTEVŘÍT   ESC KONEC"
+
+#: src/ui/menu_startup_m12.c:926
+msgid "PERSISTED OPTIONS"
+msgstr "UKLÁDANÁ NASTAVENÍ"
+
+#: src/ui/menu_startup_m12.c:927
+msgid "LANGUAGE"
+msgstr "JAZYK"
+
+#: src/ui/menu_startup_m12.c:928
+msgid "GRAPHICS MODE"
+msgstr "GRAFICKÝ REŽIM"
+
+#: src/ui/menu_startup_m12.c:929
+msgid "RENDERER BACKEND"
+msgstr "JÁDRO VYKRESLOVÁNÍ"
+
+#: src/ui/menu_startup_m12.c:930
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "JÁDRO VYKRESLOVÁNÍ NEDOSTUPNÉ"
+
+#: src/ui/menu_startup_m12.c:931
+msgid "WINDOW MODE"
+msgstr "REŽIM OKNA"
+
+#: src/ui/menu_startup_m12.c:932
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "ZMĚNY SE OKAMŽITĚ UKLÁDAJÍ DO KONFIGURACE"
+
+#: src/ui/menu_startup_m12.c:933
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "VLEVO/VPRAVO PROCHÁZET   ENTER POKRAČOVAT   ESC ZPĚT"
+
+#: src/ui/menu_startup_m12.c:934
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER NEBO ESC SE VRÁTÍ DO MENU"
+
+#: src/ui/menu_startup_m12.c:935 src/ui/menu_startup_m12.c:7127
+msgid "READY TO LAUNCH"
+msgstr "PŘIPRAVENO KE SPUŠTĚNÍ"
+
+#: src/ui/menu_startup_m12.c:936
+msgid "ESC RETURNS TO MENU"
+msgstr "ESC SE VRÁTÍ DO MENU"
+
+#: src/ui/menu_startup_m12.c:937
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "POUZE ZÁKLAD VALIDÁTORU"
+
+#: src/ui/menu_startup_m12.c:938
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "PŘIDEJTE OVĚŘENÉ MALOOBCHODNÍ HASHE"
+
+#: src/ui/menu_startup_m12.c:939
+msgid "GAME DATA NOT FOUND"
+msgstr "HERNÍ DATA NENALEZENA"
+
+#: src/ui/menu_startup_m12.c:940
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "ZKONTROLUJTE ADRESÁŘ DAT FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:941
+msgid "ORIGINAL FILES NOT FOUND"
+msgstr "SOUBORY ORIGINÁLU NEBYLY NALEZENY"
+
+#: src/ui/menu_startup_m12.c:942
+msgid "COPY YOUR RETAIL GAME FILES INTO:"
+msgstr "ZKOPÍRUJTE SVÉ MALOOBCHODNÍ HERNÍ SOUBORY DO:"
+
+#: src/ui/menu_startup_m12.c:943
+msgid "ART SLOT READY"
+msgstr "SLOT GRAFIKY PŘIPRAVEN"
+
+#: src/ui/menu_startup_m12.c:944
+msgid "ART SLOT EMPTY"
+msgstr "SLOT GRAFIKY PRÁZDNÝ"
+
+#: src/ui/menu_startup_m12.c:945
+msgid "DROP ART INTO SLOT"
+msgstr "PŘETÁHNĚTE GRAFIKU DO SLOTU"
+
+#: src/ui/menu_startup_m12.c:946
+msgid "CARD ART ACTIVE"
+msgstr "GRAFIKA KARTY AKTIVNÍ"
+
+#: src/ui/menu_startup_m12.c:947
+msgid "CARD ART SLOT"
+msgstr "SLOT GRAFIKY KARTY"
+
+#: src/ui/menu_startup_m12.c:948
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
-msgstr "ARCHIV S HERNÍMI DATY VYŽADUJE NÁSTROJ"
+msgstr "ARCHIV HERNÍCH DAT VYŽADUJE NÁSTROJ"
 
+#: src/ui/menu_startup_m12.c:949
+#, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
-msgstr "ARCHIV: %s  NAINSTALUJTE: %s"
+msgstr "ARCHIV: %s  INSTALOVAT: %s"
 
+#: src/ui/menu_startup_m12.c:950
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
-msgstr "POTÉ HERNÍ DATA ZNOVU PROHLEDEJTE"
+msgstr "NAINSTALUJTE JEJ A POTÉ ZNOVU PROHLEDEJTE HERNÍ DATA"
+
+#: src/ui/menu_startup_m12.c:6921 src/ui/menu_startup_m12.c:7124
+msgid "NO SOURCE"
+msgstr "ŽÁDNÝ ZDROJ"
+
+#: src/ui/menu_startup_m12.c:7129
+msgid "MISSING OR MISMATCHED"
+msgstr "CHYBÍ NEBO NESOUHLASÍ"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "EXTRAS"
+msgstr "DOPLŇKY"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "PLAY"
+msgstr "HRÁT"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "QUIT"
+msgstr "KONEC"
+
+#: src/ui/menu_startup_m12.c:7683
+msgid "Start or continue a game"
+msgstr "Spustit nebo pokračovat ve hře"
+
+#: src/ui/menu_startup_m12.c:7684
+msgid "Display, video, audio and controls"
+msgstr "Zobrazení, video, zvuk a ovládání"
+
+#: src/ui/menu_startup_m12.c:7685
+msgid "Museum, bestiary, spell reference and more"
+msgstr "Muzeum, bestiář, přehled kouzel a další"
+
+#: src/ui/menu_startup_m12.c:7686
+msgid "Exit Firestaff"
+msgstr "Ukončit Firestaff"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "DM Nexus"
+msgstr "DM Nexus"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Theron's Quest"
+msgstr "Theron's Quest"
+
+#: src/ui/menu_startup_m12.c:7700
+msgid "V1 / V2.0 / V2.1 / V2.2"
+msgstr "V1 / V2.0 / V2.1 / V2.2"
+
+#: src/ui/menu_startup_m12.c:7701 src/ui/menu_startup_m12.c:7702
+msgid "V1 / V2"
+msgstr "V1 / V2"
+
+#: src/ui/menu_startup_m12.c:7703
+msgid "V1 / SATURN CAPTURE GATED"
+msgstr "V1 / ZÁZNAM SATURN UZAMČEN"
+
+#: src/ui/menu_startup_m12.c:7704
+msgid "V1 Only (Phase 1)"
+msgstr "Pouze V1 (fáze 1)"
+
+#: src/ui/menu_startup_m12.c:7707 src/ui/menu_startup_m12.c:7708
+#: src/ui/menu_startup_m12.c:7709 src/ui/menu_startup_m12.c:7710
+#: src/ui/menu_startup_m12.c:7711
+msgid "No data files"
+msgstr "Žádné datové soubory"
+
+#: src/ui/menu_startup_m12.c:8514
+msgid "New Game (Original)"
+msgstr "Nová hra (originál)"
+
+#: src/ui/menu_startup_m12.c:8515
+msgid "New Game (Original + Filters)"
+msgstr "Nová hra (originál + filtry)"
+
+#: src/ui/menu_startup_m12.c:8516
+msgid "New Game (Original 10x Upscale)"
+msgstr "Nová hra (originál 10x zvětšení)"
+
+#: src/ui/menu_startup_m12.c:8517
+msgid "Continue Saved Game"
+msgstr "Pokračovat v uložené hře"
+
+#: src/ui/menu_startup_m12.c:8518
+msgid "New Game (Modern Graphics)"
+msgstr "Nová hra (moderní grafika)"
+
+#: src/ui/menu_startup_m12.c:8526
+msgid "Museum of Lore"
+msgstr "Muzeum legend"
+
+#: src/ui/menu_startup_m12.c:8527
+msgid "Manual / Docs"
+msgstr "Manuál / Dokumentace"
+
+#: src/ui/menu_startup_m12.c:8528
+msgid "Bestiary"
+msgstr "Bestiář"
+
+#: src/ui/menu_startup_m12.c:8529
+msgid "Spell Reference"
+msgstr "Přehled kouzel"
+
+#: src/ui/menu_startup_m12.c:8530
+msgid "Map Viewer"
+msgstr "Prohlížeč map"
+
+#: src/ui/menu_startup_m12.c:8531
+msgid "Item Encyclopedia"
+msgstr "Encyklopedie předmětů"
+
+#: src/ui/menu_startup_m12.c:8532
+msgid "Changelog"
+msgstr "Seznam změn"
+
+#: src/ui/menu_startup_m12.c:8533
+msgid "Screenshot Gallery"
+msgstr "Galerie snímků obrazovky"
+
+#~ msgid "SCANNING GAME DATA"
+#~ msgstr "PROHLEDÁVÁNÍ HERNÍCH DAT"
+
+#~ msgid "Dungeon Master II: The Legend of Skullkeep"
+#~ msgstr "Dungeon Master II: The Legend of Skullkeep"
+
+#~ msgid "Dungeon Master Nexus"
+#~ msgstr "Dungeon Master Nexus"
+
+#~ msgid "Firestaff"
+#~ msgstr "Firestaff"
+
+#~ msgid "PATCH"
+#~ msgstr "OPRAVA"
+
+#~ msgid "CHEATS"
+#~ msgstr "PODVÁDĚNÍ"
+
+#~ msgid "SPEED"
+#~ msgstr "RYCHLOST"
+
+#~ msgid "ASPECT RATIO"
+#~ msgstr "POMĚR STRAN"
+
+#~ msgid "RESOLUTION"
+#~ msgstr "ROZLIŠENÍ"
+
+#~ msgid "LAUNCH"
+#~ msgstr "SPUSTIT"
+
+#~ msgid "V1 ORIGINAL"
+#~ msgstr "V1 ORIGINÁL"
+
+#~ msgid "V2 ENHANCED 2D"
+#~ msgstr "V2 VYLEPŠENÉ 2D"
+
+#~ msgid "V3 MODERN/3D"
+#~ msgstr "V3 MODERNÍ/3D"
+
+#~ msgid "COMING SOON"
+#~ msgstr "PŘIPRAVUJEME"
+
+#~ msgid "FRANCAIS"
+#~ msgstr "FRANÇAIS"
+
+#~ msgid "GAME OPTIONS"
+#~ msgstr "MOŽNOSTI HRY"
+
+#~ msgid "> LAUNCH"
+#~ msgstr "> SPUSTIT"
+
+#~ msgid "> COMING SOON"
+#~ msgstr "> PŘIPRAVUJEME"
+
+#~ msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
+#~ msgstr "ESC: ZPĚT  ŠIPKY: NAVIGACE  ENTER: VYBRAT"
+
+#~ msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
+#~ msgstr "AKTIVUJTE PODVÁDĚNÍ PRO ODEMČENÍ RYCHLOSTI / KLÁVESOVÝCH ZKRATEK"
+
+#~ msgid "LOCKED BY V1 ORIGINAL MODE"
+#~ msgstr "UZAMČENO REŽIMEM V1 ORIGINÁL"
+
+#~ msgid "RENDERER"
+#~ msgstr "VYKRESLOVÁNÍ"
+
+#~ msgid "SCALE"
+#~ msgstr "MĚŘÍTKO"
+
+#~ msgid "PIXEL SNAP"
+#~ msgstr "PŘICHYCENÍ PIXELŮ"
+
+#~ msgid "VSYNC"
+#~ msgstr "VSYNC"
+
+#~ msgid "SELECT GAME"
+#~ msgstr "VYBRAT HRU"
+
+#~ msgid "Up/Down Navigate  |  Enter Select"
+#~ msgstr "Nahoru/dolů navigace  |  Enter výběr"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+#~ msgstr "Escape zpět  |  Nahoru/dolů navigace  |  Enter výběr"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
+#~ msgstr "Escape zpět  |  Nahoru/dolů navigace  |  Enter start"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
+#~ msgstr "Escape zpět  |  Nahoru/dolů navigace  |  Enter otevřít"
+
+#~ msgid "< > Switch tab   Up/Down Navigate   Enter Change"
+#~ msgstr "< > přepnout kartu   Nahoru/dolů navigace   Enter změnit"
+
+#~ msgid "Coming soon"
+#~ msgstr "Připravujeme"
+
+#~ msgid "Auto-Save"
+#~ msgstr "Automatické ukládání"
+
+#~ msgid "Minimap"
+#~ msgstr "Minimapa"
+
+#~ msgid "Journal"
+#~ msgstr "Deník"
+
+#~ msgid "CRT Filter"
+#~ msgstr "CRT filtr"
+
+#~ msgid "Palette Correction"
+#~ msgstr "Korekce palety"
+
+#~ msgid "Dither Cleanup"
+#~ msgstr "Odstranění ditheringu"
+
+#~ msgid "Sharpening"
+#~ msgstr "Doostření"
+
+#~ msgid "Phosphor Persistence"
+#~ msgstr "Perzistence fosforu"
+
+#~ msgid "Color Preset"
+#~ msgstr "Přednastavení barev"
+
+#~ msgid "Pixel Grid"
+#~ msgstr "Pixelová mřížka"
+
+#~ msgid "Motion Blur"
+#~ msgstr "Rozmazání pohybu"
+
+#~ msgid "AI Upscale (10x)"
+#~ msgstr "AI zvětšení (10x)"
+
+#~ msgid "Smooth Movement"
+#~ msgstr "Plynulý pohyb"
+
+#~ msgid "Smooth Turning"
+#~ msgstr "Plynulé otáčení"
+
+#~ msgid "Animation Interpolation"
+#~ msgstr "Interpolace animace"
+
+#~ msgid "Dynamic Lighting"
+#~ msgstr "Dynamické osvětlení"
+
+#~ msgid "Particle Effects"
+#~ msgstr "Částicové efekty"
+
+#~ msgid "Weather FX"
+#~ msgstr "Efekty počasí"
+
+#~ msgid "Camera Easing"
+#~ msgstr "Vyhlazení kamery"
+
+#~ msgid "Screen Transitions"
+#~ msgstr "Přechody obrazovky"
+
+#~ msgid "Control Scheme"
+#~ msgstr "Schéma ovládání"
+
+#~ msgid "Input Mode"
+#~ msgstr "Režim vstupu"
+
+#~ msgid "Touch Controls"
+#~ msgstr "Dotykové ovládání"
+
+#~ msgid "Gamepad"
+#~ msgstr "Gamepad"
+
+#~ msgid "Key Bindings"
+#~ msgstr "Přiřazení kláves"
+
+#~ msgid "Auto-Pause on Focus Loss"
+#~ msgstr "Automatická pauza při ztrátě fokusu"
+
+#~ msgid "Master Volume"
+#~ msgstr "Celková hlasitost"
+
+#~ msgid "Music Volume"
+#~ msgstr "Hlasitost hudby"
+
+#~ msgid "SFX Volume"
+#~ msgstr "Hlasitost efektů"
+
+#~ msgid "Muted"
+#~ msgstr "Ztlumeno"
+
+#~ msgid "Audio Mixer"
+#~ msgstr "Zvukový mixér"
+
+#~ msgid "Soundtrack"
+#~ msgstr "Hudební doprovod"
+
+#~ msgid "Ambient Sounds"
+#~ msgstr "Okolní zvuky"
+
+#~ msgid "Ambient Volume"
+#~ msgstr "Hlasitost okolí"
+
+#~ msgid "Footstep Audio"
+#~ msgstr "Zvuky kroků"
+
+#~ msgid "Creature Voices"
+#~ msgstr "Zvuky stvoření"
+
+#~ msgid "PC Speaker Emulation"
+#~ msgstr "Emulace PC speakeru"
+
+#~ msgid "Font Scale"
+#~ msgstr "Velikost písma"
+
+#~ msgid "UI Scale"
+#~ msgstr "Velikost rozhraní"
+
+#~ msgid "High Contrast"
+#~ msgstr "Vysoký kontrast"
+
+#~ msgid "Colorblind Mode"
+#~ msgstr "Režim pro barvoslepé"
+
+#~ msgid "Large Touch Targets"
+#~ msgstr "Velké dotykové plochy"
+
+#~ msgid "Damage Numbers"
+#~ msgstr "Čísla poškození"
+
+#~ msgid "Message Log"
+#~ msgstr "Záznam zpráv"
+
+#~ msgid "Tooltip"
+#~ msgstr "Popisek"
+
+#~ msgid "Achievements"
+#~ msgstr "Úspěchy"
+
+#~ msgid "Stat Tracker"
+#~ msgstr "Sledování statistik"
+
+#~ msgid "Pathfinding Overlay"
+#~ msgstr "Vizualizace hledání cesty"
+
+#~ msgid "Inventory Sort"
+#~ msgstr "Řazení inventáře"
+
+#~ msgid "Data Status"
+#~ msgstr "Stav dat"
+
+#~ msgid "Debug Overlay"
+#~ msgstr "Ladicí vrstva"
+
+#~ msgid "Developer Gates"
+#~ msgstr "Vývojářské zámky"
+
+#~ msgid "Fade"
+#~ msgstr "Prolínání"
+
+#~ msgid "Keyboard"
+#~ msgstr "Klávesnice"
+
+#~ msgid "Auto"
+#~ msgstr "Auto"
+
+#~ msgid "Auto-detect"
+#~ msgstr "Automatická detekce"
+
+#~ msgid "Default"
+#~ msgstr "Výchozí"
+
+#~ msgid "No"
+#~ msgstr "Ne"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "NO GAME DATA FOUND"
+#~ msgstr "NEBYLA NALEZENA ŽÁDNÁ HERNÍ DATA"
+
+#~ msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+#~ msgstr "ZKOPÍRUJTE HERNÍ SOUBORY DO Documents/Firestaff/data POMOCÍ SPRÁVCE SOUBORŮ"
+
+#~ msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+#~ msgstr "POMOCÍ APLIKACE SOUBORY ZKOPÍRUJTE HERNÍ SOUBORY DO Firestaff/data V TÉTO APLIKACI"

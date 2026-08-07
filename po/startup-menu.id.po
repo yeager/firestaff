@@ -1,117 +1,1313 @@
-# Firestaff -- startup-menu domain, Indonesian catalog.
+# Firestaff — startup-menu domain, Indonesian catalog.
+# Indonesian translations for the startup menu / launcher domain.
+#
+# Domain: startup-menu
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-07 20:21+0200\n"
+"PO-Revision-Date: 2026-08-07 12:00+0200\n"
+"Last-Translator: Firestaff i18n\n"
+"Language-Team: Indonesian\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-msgid "SETTINGS"
-msgstr "PENGATURAN"
-
-msgid "LANGUAGE"
-msgstr "BAHASA"
-
-msgid "GAME"
-msgstr "PERMAINAN"
-
-msgid "GRAPHICS"
-msgstr "GRAFIK"
-
-msgid "CONTROLS"
-msgstr "KONTROL"
-
-msgid "AUDIO"
-msgstr "AUDIO"
-
+#: src/ui/menu_startup_m12.c:217
 msgid "ACCESSIBILITY"
 msgstr "AKSESIBILITAS"
 
+#: src/ui/menu_startup_m12.c:217
+msgid "AUDIO"
+msgstr "AUDIO"
+
+#: src/ui/menu_startup_m12.c:217
+msgid "CONTROLS"
+msgstr "KONTROL"
+
+#: src/ui/menu_startup_m12.c:217
+msgid "GAME"
+msgstr "GAME"
+
+#: src/ui/menu_startup_m12.c:217
+msgid "GRAPHICS"
+msgstr "GRAFIS"
+
+#: src/ui/menu_startup_m12.c:218
 msgid "ONLINE"
 msgstr "DARING"
 
-msgid "CHANGES ARE PERSISTED IMMEDIATELY"
-msgstr "PERUBAHAN DISIMPAN SEGERA"
+#: src/ui/menu_startup_m12.c:231
+msgid "Graphics Mode"
+msgstr "Mode Grafis"
 
+#: src/ui/menu_startup_m12.c:231 src/ui/menu_startup_m12.c:245
+msgid "Original"
+msgstr "Asli"
+
+#: src/ui/menu_startup_m12.c:232
+msgid "Game Version"
+msgstr "Versi Game"
+
+#: src/ui/menu_startup_m12.c:232
+msgid "V1"
+msgstr "V1"
+
+#: src/ui/menu_startup_m12.c:233
+msgid "English"
+msgstr "Inggris"
+
+#: src/ui/menu_startup_m12.c:233
+msgid "Language"
+msgstr "Bahasa"
+
+#: src/ui/menu_startup_m12.c:234
+msgid "Game Speed"
+msgstr "Kecepatan Game"
+
+#: src/ui/menu_startup_m12.c:234
+msgid "Normal"
+msgstr "Normal"
+
+#: src/ui/menu_startup_m12.c:235
+msgid "Classic"
+msgstr "Klasik"
+
+#: src/ui/menu_startup_m12.c:235
+msgid "Movement Mode"
+msgstr "Mode Gerakan"
+
+#: src/ui/menu_startup_m12.c:236
+msgid "Cheats"
+msgstr "Kecurangan"
+
+#: src/ui/menu_startup_m12.c:236
+msgid "Off"
+msgstr "Mati"
+
+#: src/ui/menu_startup_m12.c:241
+msgid "Maximized"
+msgstr "Dimaksimalkan"
+
+#: src/ui/menu_startup_m12.c:241
+msgid "Window Mode"
+msgstr "Mode Jendela"
+
+#: src/ui/menu_startup_m12.c:242
+msgid "16:9"
+msgstr "16:9"
+
+#: src/ui/menu_startup_m12.c:242
+msgid "Display Format"
+msgstr "Format Tampilan"
+
+#: src/ui/menu_startup_m12.c:243 src/ui/menu_startup_m12.c:244
+msgid "On"
+msgstr "Hidup"
+
+#: src/ui/menu_startup_m12.c:243
+msgid "VSync"
+msgstr "VSync"
+
+#: src/ui/menu_startup_m12.c:244
+msgid "Integer Scaling"
+msgstr "Penskalaan Integer"
+
+#: src/ui/menu_startup_m12.c:245
+msgid "Viewport Style"
+msgstr "Gaya Viewport"
+
+#: src/ui/menu_startup_m12.c:246
+msgid "Original VGA"
+msgstr "VGA Asli"
+
+#: src/ui/menu_startup_m12.c:246
+msgid "Palette Mode"
+msgstr "Mode Palet"
+
+#: src/ui/menu_startup_m12.c:373 src/ui/menu_startup_m12.c:403
+#: src/ui/menu_startup_m12.c:434 src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:443
+msgid "ORIGINAL"
+msgstr "ASLI"
+
+#: src/ui/menu_startup_m12.c:403
+msgid "PATCHED"
+msgstr "DITAMBAL"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "DE"
+msgstr "DE"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "EN"
+msgstr "EN"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "FR"
+msgstr "FR"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "JA"
+msgstr "JA"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "SV"
+msgstr "SV"
+
+#: src/ui/menu_startup_m12.c:415
+msgid "ZH"
+msgstr "ZH"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "CS"
+msgstr "CS"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "DA"
+msgstr "DA"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "ES"
+msgstr "ES"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "FI"
+msgstr "FI"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "HU"
+msgstr "HU"
+
+#: src/ui/menu_startup_m12.c:416
+msgid "IT"
+msgstr "IT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "ID"
+msgstr "ID"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "KO"
+msgstr "KO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NL"
+msgstr "NL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "NO"
+msgstr "NO"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PL"
+msgstr "PL"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "PT"
+msgstr "PT"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "RU"
+msgstr "RU"
+
+#: src/ui/menu_startup_m12.c:417
+msgid "TR"
+msgstr "TR"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "DEUTSCH"
+msgstr "DEUTSCH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "ENGLISH"
+msgstr "ENGLISH"
+
+#: src/ui/menu_startup_m12.c:420
+msgid "SVENSKA"
+msgstr "SVENSKA"
+
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:439 src/ui/menu_startup_m12.c:440
+msgid "OFF"
+msgstr "MATI"
+
+#: src/ui/menu_startup_m12.c:426 src/ui/menu_startup_m12.c:430
+msgid "ON"
+msgstr "HIDUP"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "FASTER"
+msgstr "LEBIH CEPAT"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "NORMAL"
+msgstr "NORMAL"
+
+#: src/ui/menu_startup_m12.c:427
+msgid "SLOWER"
+msgstr "LEBIH LAMBAT"
+
+#: src/ui/menu_startup_m12.c:428
+msgid "FIT"
+msgstr "SESUAIKAN"
+
+#: src/ui/menu_startup_m12.c:428
+msgid "STRETCH"
+msgstr "REGANGKAN"
+
+#: src/ui/menu_startup_m12.c:431
+msgid "LINEAR"
+msgstr "LINEAR"
+
+#: src/ui/menu_startup_m12.c:431
+msgid "NEAREST"
+msgstr "TERDEKAT"
+
+#: src/ui/menu_startup_m12.c:432 src/ui/menu_startup_m12.c:435
+msgid "AUTO"
+msgstr "OTOMATIS"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "OPENGL"
+msgstr "OPENGL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SDL"
+msgstr "SDL"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "SOFTWARE"
+msgstr "PERANGKAT LUNAK"
+
+#: src/ui/menu_startup_m12.c:432
+msgid "VULKAN"
+msgstr "VULKAN"
+
+#: src/ui/menu_startup_m12.c:433
+msgid "AVAILABLE"
+msgstr "TERSEDIA"
+
+#: src/ui/menu_startup_m12.c:433
+msgid "UNAVAILABLE"
+msgstr "TIDAK TERSEDIA"
+
+#: src/ui/menu_startup_m12.c:434
+msgid "EXPANDED"
+msgstr "DIPERLUAS"
+
+#: src/ui/menu_startup_m12.c:434
+msgid "WIDESCREEN"
+msgstr "LAYAR LEBAR"
+
+#: src/ui/menu_startup_m12.c:435
+msgid "GAMEPAD"
+msgstr "GAMEPAD"
+
+#: src/ui/menu_startup_m12.c:435
+msgid "KEYBOARD+MOUSE"
+msgstr "PAPAN KETIK+MOUSE"
+
+#: src/ui/menu_startup_m12.c:435
+msgid "TOUCH"
+msgstr "SENTUH"
+
+#: src/ui/menu_startup_m12.c:436 src/ui/menu_startup_m12.c:439
+msgid "FULL"
+msgstr "PENUH"
+
+#: src/ui/menu_startup_m12.c:436
+msgid "LARGE"
+msgstr "BESAR"
+
+#: src/ui/menu_startup_m12.c:436
+msgid "MINIMAL"
+msgstr "MINIMAL"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "FAST"
+msgstr "CEPAT"
+
+#: src/ui/menu_startup_m12.c:437
+msgid "SMOOTH"
+msgstr "HALUS"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "COORDS"
+msgstr "KOORDINAT"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "DRAW ORDER"
+msgstr "URUTAN GAMBAR"
+
+#: src/ui/menu_startup_m12.c:438
+msgid "QUEUE"
+msgstr "ANTREAN"
+
+#: src/ui/menu_startup_m12.c:439
+msgid "QUICK"
+msgstr "CEPAT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "DEUT"
+msgstr "DEUT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "PROT"
+msgstr "PROT"
+
+#: src/ui/menu_startup_m12.c:440
+msgid "TRIT"
+msgstr "TRIT"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "AMIGA"
+msgstr "AMIGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CGA"
+msgstr "CGA"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "CLASSIC"
+msgstr "KLASIK"
+
+#: src/ui/menu_startup_m12.c:441
+msgid "DARK"
+msgstr "GELAP"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "DUNGEON"
+msgstr "DUNGEON"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STARS"
+msgstr "BINTANG"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "STATIC"
+msgstr "STATIS"
+
+#: src/ui/menu_startup_m12.c:442
+msgid "TORCH"
+msgstr "OBOR"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "CUSTOM"
+msgstr "KUSTOM"
+
+#: src/ui/menu_startup_m12.c:443
+msgid "REMASTERED"
+msgstr "REMASTER"
+
+#: src/ui/menu_startup_m12.c:653 src/ui/menu_startup_m12.c:672
+#: src/ui/menu_startup_m12.c:8669 src/ui/menu_startup_m12.c:9113
+msgid "DUNGEON MASTER"
+msgstr "DUNGEON MASTER"
+
+#: src/ui/menu_startup_m12.c:654 src/ui/menu_startup_m12.c:682
+#: src/ui/menu_startup_m12.c:8671 src/ui/menu_startup_m12.c:9127
+msgid "CHAOS STRIKES BACK"
+msgstr "CHAOS STRIKES BACK"
+
+#: src/ui/menu_startup_m12.c:655 src/ui/menu_startup_m12.c:692
+msgid "DUNGEON MASTER II"
+msgstr "DUNGEON MASTER II"
+
+#: src/ui/menu_startup_m12.c:656
+msgid "DUNGEON MASTER NEXUS"
+msgstr "DUNGEON MASTER NEXUS"
+
+#: src/ui/menu_startup_m12.c:658
+msgid "THERON'S QUEST"
+msgstr "THERON'S QUEST"
+
+#: src/ui/menu_startup_m12.c:659 src/ui/menu_startup_m12.c:10042
+#: src/ui/menu_startup_m12.c:10045
+msgid "MUSEUM OF LORE"
+msgstr "MUSEUM LORE"
+
+#: src/ui/menu_startup_m12.c:660 src/ui/menu_startup_m12.c:7120
+#: src/ui/menu_startup_m12.c:7679 src/ui/menu_startup_m12.c:8865
+#: src/ui/menu_startup_m12.c:10077 src/ui/menu_startup_m12.c:10080
+#: src/ui/menu_startup_m12.c:10224
+msgid "SETTINGS"
+msgstr "PENGATURAN"
+
+#: src/ui/menu_startup_m12.c:673
+msgid "THE ORIGINAL DUNGEON CRAWL"
+msgstr "PETUALANGAN DUNGEON ASLI"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "1987 FTL GAMES"
+msgstr "1987 FTL GAMES"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "CHAMPIONS ENTER THE DUNGEON"
+msgstr "PARA CHAMPION MEMASUKI DUNGEON"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "FOUR PORTRAITS BECOME A PARTY"
+msgstr "EMPAT POTRET MENJADI SATU ROMBONGAN"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
+msgstr "TEKANAN WAKTU NYATA MEMBENTUK LEGENDA"
+
+#: src/ui/menu_startup_m12.c:675
+msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
+msgstr "FIRESTAFF ADALAH RELIK UTAMA"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "KEY LORE THREADS"
+msgstr "BENANG KISAH UTAMA"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "LORD CHAOS SHATTERS ORDER"
+msgstr "LORD CHAOS MENGHANCURKAN TATANAN"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "RA RETURNS AS MASTER OF BALANCE"
+msgstr "RA KEMBALI SEBAGAI PENGUASA KESEIMBANGAN"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE DUNGEON IS BOTH TEST AND PRISON"
+msgstr "DUNGEON ADALAH UJIAN SEKALIGUS PENJARA"
+
+#: src/ui/menu_startup_m12.c:676
+msgid "THE GREY LORD IS DIVIDED"
+msgstr "SANG GREY LORD TERPECAH"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
+msgstr "FIRESTAFF MENCATAT BUKTI BUKAN TEBAKAN"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
+msgstr "GRAPHICS.DAT DAN DUNGEON.DAT TELAH DIVERIFIKASI"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
+msgstr "DATA ASLI YANG DI-HASH TETAP DISEDIAKAN PENGGUNA"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PC AND ATARI ST LINEAGE MATTERS"
+msgstr "GARIS KETURUNAN PC DAN ATARI ST PENTING"
+
+#: src/ui/menu_startup_m12.c:677
+msgid "PRESERVATION NOTES"
+msgstr "CATATAN PELESTARIAN"
+
+#: src/ui/menu_startup_m12.c:683
+msgid "THE CHAMPIONS RETURN"
+msgstr "PARA CHAMPION KEMBALI"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "CSB REWARDS MAP MEMORY AND NERVE"
+msgstr "CSB MEMBALAS INGATAN PETA DAN KEBERANIAN"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
+msgstr "SISTEM DUNGEON MASTER MENJADI LEBIH PADAT"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "EXPANSION AND SEQUEL DESIGN"
+msgstr "DESAIN EKSPANSI DAN SEKUEL"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "FOUR PATHS TEST MASTERY"
+msgstr "EMPAT JALUR MENGUJI KEMAHIRAN"
+
+#: src/ui/menu_startup_m12.c:685
+msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
+msgstr "PENCARIAN CORBUM MENGGANTIKAN TURUN SEDERHANA"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "CHAOS STILL CASTS A LONG SHADOW"
+msgstr "CHAOS MASIH MEMBAYANGI DENGAN PANJANG"
+
+#: src/ui/menu_startup_m12.c:686 src/ui/menu_startup_m12.c:696
+msgid "LORE SHAPE"
+msgstr "BENTUK KISAH"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
+msgstr "CHAMPION YANG KEMBALI MENGHADAPI LABIRIN LEBIH SULIT"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE PLAYER HUNTS CORBUM MATERIAL"
+msgstr "PEMAIN MEMBURU MATERIAL CORBUM"
+
+#: src/ui/menu_startup_m12.c:686
+msgid "THE WORLD FEELS OLDER AND LESS SAFE"
+msgstr "DUNIA TERASA LEBIH TUA DAN KURANG AMAN"
+
+#: src/ui/menu_startup_m12.c:687 src/ui/menu_startup_m12.c:697
+msgid "ARCHIVE STATUS"
+msgstr "STATUS ARSIP"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
+msgstr "CSBGRAPH.DAT DAN CSB.DAT DILACAK"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
+msgstr "PELUNCUR MENAMPILKAN SIAP HANYA JIKA COCOK"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
+msgstr "KONTEN MUSEUM TETAP STATIS DAN TERBATAS"
+
+#: src/ui/menu_startup_m12.c:687
+msgid "VERSION SLOTS USE HASH EVIDENCE"
+msgstr "SLOT VERSI MENGGUNAKAN BUKTI HASH"
+
+#: src/ui/menu_startup_m12.c:693
+msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
+msgstr "LEGENDA DI LUAR DUNGEON PERTAMA"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
+msgstr "DM2 MEMPERTAHANKAN INTI KELANGSUNGAN HIDUP ROMBONGAN"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
+msgstr "ANTEK DAN CUACA MENGUBAH RITME"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
+msgstr "RUANG LUAR DAN TOKO MEMPERLUAS BENTUK"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
+msgstr "SERI INI MELAMPAUI LABIRIN ASLI"
+
+#: src/ui/menu_startup_m12.c:695
+msgid "THE SKULLKEEP ERA"
+msgstr "ERA SKULLKEEP"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
+msgstr "TEKNOLOGI DAN SIHIR BERBAGI PANGGUNG"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE PLAYER ASSEMBLES AND SURVIVES"
+msgstr "PEMAIN MERAKIT DAN BERTAHAN HIDUP"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
+msgstr "NUANSANYA LEBIH ANEH DAN LEBIH MEKANIS"
+
+#: src/ui/menu_startup_m12.c:696
+msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
+msgstr "DUNIA LEBIH LUAS DARIPADA MOUNT ANAIAS"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
+msgstr "ASET BINER TETAP DI LUAR TAHAP INI"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
+msgstr "KONTEN DI SINI ADALAH PANDUAN BUKAN TUMPUKAN DATA"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
+msgstr "DM2GRAPHICS.DAT DAN DM2DUNGEON.DAT DILACAK"
+
+#: src/ui/menu_startup_m12.c:697
+msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
+msgstr "VERSI YANG DIDUKUNG DAPAT BERTAMBAH SEIRING WAKTU"
+
+#: src/ui/menu_startup_m12.c:702
+msgid "FIRESTAFF PROJECT"
+msgstr "PROYEK FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:703
+msgid "ABOUT AND CREDITS"
+msgstr "TENTANG DAN KREDIT"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
+msgstr "DETERMINISTIK MODULAR SETARA MUSEUM"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "OPEN DUNGEON MASTER ENGINE"
+msgstr "MESIN DUNGEON MASTER TERBUKA"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
+msgstr "DATA ASLI DIVERIFIKASI BUKAN DISERTAKAN"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "PROJECT PURPOSE"
+msgstr "TUJUAN PROYEK"
+
+#: src/ui/menu_startup_m12.c:705
+msgid "V1 PRESERVES BASELINE BEHAVIOUR"
+msgstr "V1 MEMPERTAHANKAN PERILAKU DASAR"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
+msgstr "CHRISTOPHE FONTANEL MENDOKUMENTASIKAN SEJARAH PENTING"
+
+#: src/ui/menu_startup_m12.c:706 src/ui/menu_startup_m12.c:10059
+#: src/ui/menu_startup_m12.c:10062
+msgid "CREDITS"
+msgstr "KREDIT"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
+msgstr "FTL GAMES DAN SOFTWARE HEAVEN MENCIPTAKAN VERSI ASLI"
+
+#: src/ui/menu_startup_m12.c:706
+msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "NO CLAIM OF OFFICIAL AFFILIATION"
+msgstr "TIDAK MENGKLAIM AFILIASI RESMI"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "PROJECT BOUNDARIES"
+msgstr "BATASAN PROYEK"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "REGRESSION PROBES GUARD MENU STABILITY"
+msgstr "PROBE REGRESI MENJAGA STABILITAS MENU"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
+msgstr "TEKS YANG DILACAK TETAP DALAM BAHASA INGGRIS DI REPO"
+
+#: src/ui/menu_startup_m12.c:707
+msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
+msgstr "DATA RITEL YANG DISEDIAKAN PENGGUNA DIPERLUKAN"
+
+#: src/ui/menu_startup_m12.c:712
+msgid "TECHNICAL ARCHIVE"
+msgstr "ARSIP TEKNIS"
+
+#: src/ui/menu_startup_m12.c:713
+msgid "SOURCE EVIDENCE AND VERIFICATION"
+msgstr "BUKTI SUMBER DAN VERIFIKASI"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "EVIDENCE MODEL"
+msgstr "MODEL BUKTI"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "KNOWN FILES ARE MATCHED BY HASH"
+msgstr "BERKAS YANG DIKENAL DICOCOKKAN DENGAN HASH"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
+msgstr "TIDAK ADA CADANGAN DIAM-DIAM KE FILE ASLI TAK DIKENAL"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
+msgstr "JALUR RUNTIME MELAPORKAN DATA HILANG DENGAN AMAN"
+
+#: src/ui/menu_startup_m12.c:715
+msgid "VERSION MATRICES STAY EXPLICIT"
+msgstr "MATRIKS VERSI TETAP EKSPLISIT"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "ESCAPE RETURNS BEFORE EXITING"
+msgstr "ESC KEMBALI SEBELUM KELUAR"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "KEYBOARD INPUT IS BOUNDED"
+msgstr "INPUT KEYBOARD DIBATASI"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
+msgstr "KLIK MOUSE DIARAHKAN MELALUI STATUS BERSAMA"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "STARTUP MENU"
+msgstr "MENU AWAL"
+
+#: src/ui/menu_startup_m12.c:716
+msgid "UNKNOWN KEYS ARE NO OPS"
+msgstr "TOMBOL TAK DIKENAL TIDAK MELAKUKAN APA PUN"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD INTERVIEW AND TIMELINE SOURCES"
+msgstr "TAMBAHKAN SUMBER WAWANCARA DAN LINI MASA"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD MANUAL EXCERPT REFERENCES"
+msgstr "TAMBAHKAN REFERENSI KUTIPAN MANUAL"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "ADD SMALL CURATED SCREEN PANELS"
+msgstr "TAMBAHKAN PANEL LAYAR KURASI KECIL"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "FUTURE MUSEUM WORK"
+msgstr "PEKERJAAN MUSEUM MENDATANG"
+
+#: src/ui/menu_startup_m12.c:717
+msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
+msgstr "TAHAN ASET BESAR SAMPAI BERLISENSI"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "FULLSCREEN"
+msgstr "LAYAR PENUH"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "MAXIMIZED"
+msgstr "DIMAKSIMALKAN"
+
+#: src/ui/menu_startup_m12.c:789
+msgid "WINDOWED"
+msgstr "MODE JENDELA"
+
+#: src/ui/menu_startup_m12.c:919
+msgid "FRONTEND PREVIEW"
+msgstr "PRATINJAU ANTARMUKA"
+
+#: src/ui/menu_startup_m12.c:920
+msgid "SELECT A DESTINATION"
+msgstr "PILIH TUJUAN"
+
+#: src/ui/menu_startup_m12.c:922
+msgid "STATUS"
+msgstr "STATUS"
+
+#: src/ui/menu_startup_m12.c:923
+msgid "LAUNCHER DESTINATIONS"
+msgstr "TUJUAN PELUNCUR"
+
+#: src/ui/menu_startup_m12.c:924
+msgid "DATA DIR"
+msgstr "DIREKTORI DATA"
+
+#: src/ui/menu_startup_m12.c:925
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "ATAS/BAWAH GERAK   ENTER BUKA   ESC KELUAR"
+
+#: src/ui/menu_startup_m12.c:926
+msgid "PERSISTED OPTIONS"
+msgstr "OPSI TERSIMPAN"
+
+#: src/ui/menu_startup_m12.c:927
+msgid "LANGUAGE"
+msgstr "BAHASA"
+
+#: src/ui/menu_startup_m12.c:928
 msgid "GRAPHICS MODE"
-msgstr "MODE GRAFIK"
+msgstr "MODE GRAFIS"
 
+#: src/ui/menu_startup_m12.c:929
+msgid "RENDERER BACKEND"
+msgstr "BACKEND RENDERER"
+
+#: src/ui/menu_startup_m12.c:930
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "BACKEND RENDERER TIDAK TERSEDIA"
+
+#: src/ui/menu_startup_m12.c:931
 msgid "WINDOW MODE"
 msgstr "MODE JENDELA"
 
-msgid "DATA DIRECTORY"
-msgstr "DIREKTORI DATA"
+#: src/ui/menu_startup_m12.c:932
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "PERUBAHAN LANGSUNG TERSIMPAN KE KONFIGURASI"
 
-msgid "ORIGINAL DATA"
-msgstr "DATA ASLI"
+#: src/ui/menu_startup_m12.c:933
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "KIRI/KANAN PUTAR   ENTER LANJUT   ESC KEMBALI"
 
-msgid "RETROACHIEVEMENTS"
-msgstr "RETROACHIEVEMENTS"
+#: src/ui/menu_startup_m12.c:934
+msgid "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER ATAU ESC KEMBALI KE MENU"
 
-msgid "RETROACHIEVEMENTS USER"
-msgstr "PENGGUNA RETROACHIEVEMENTS"
+#: src/ui/menu_startup_m12.c:935 src/ui/menu_startup_m12.c:7127
+msgid "READY TO LAUNCH"
+msgstr "SIAP DILUNCURKAN"
 
-msgid "RETROACHIEVEMENTS API TOKEN"
-msgstr "TOKEN API RETROACHIEVEMENTS"
+#: src/ui/menu_startup_m12.c:936
+msgid "ESC RETURNS TO MENU"
+msgstr "ESC KEMBALI KE MENU"
 
-msgid "RETROACHIEVEMENTS SERVER"
-msgstr "SERVER RETROACHIEVEMENTS"
+#: src/ui/menu_startup_m12.c:937
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "HANYA KERANGKA VALIDATOR"
 
-msgid "ON"
-msgstr "AKTIF"
+#: src/ui/menu_startup_m12.c:938
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "TAMBAHKAN HASH RITEL TERVERIFIKASI"
 
-msgid "OFF"
-msgstr "NONAKTIF"
-
-msgid "NOT SET"
-msgstr "BELUM DIATUR"
-
-msgid "EDITING"
-msgstr "MENGUBAH"
-
-msgid "SCALE"
-msgstr "SKALA"
-
-msgid "FILTER"
-msgstr "FILTER"
-
-msgid "VSYNC"
-msgstr "VSYNC"
-
-msgid "SOUNDTRACK"
-msgstr "MUSIK LATAR"
-
-msgid "MASTER VOLUME"
-msgstr "VOLUME UTAMA"
-
-msgid "MUSIC VOLUME"
-msgstr "VOLUME MUSIK"
-
-msgid "SFX VOLUME"
-msgstr "VOLUME EFEK"
-
-#. Popup title when no game data files are found at startup
-msgid "NO GAME DATA FOUND"
+#: src/ui/menu_startup_m12.c:939
+msgid "GAME DATA NOT FOUND"
 msgstr "DATA GAME TIDAK DITEMUKAN"
 
-#. Desktop: instruction to copy game files
-msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
-msgstr "SALIN FILE GAME ASLI KE DIREKTORI DATA"
+#: src/ui/menu_startup_m12.c:940
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "PERIKSA DIREKTORI DATA FIRESTAFF"
 
-#. Android: instruction to copy game files via file manager
-msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
-msgstr "SALIN FILE GAME KE Documents/Firestaff/data MENGGUNAKAN PENGELOLA FILE"
+#: src/ui/menu_startup_m12.c:941
+msgid "ORIGINAL FILES NOT FOUND"
+msgstr "BERKAS ASLI TIDAK DITEMUKAN"
 
-#. iOS: instruction to copy game files via Files app
-msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
-msgstr "GUNAKAN APLIKASI FILE UNTUK MENYALIN FILE GAME KE Firestaff/data DI APLIKASI INI"
+#: src/ui/menu_startup_m12.c:942
+msgid "COPY YOUR RETAIL GAME FILES INTO:"
+msgstr "SALIN BERKAS GAME ASLI ANDA KE:"
 
+#: src/ui/menu_startup_m12.c:943
+msgid "ART SLOT READY"
+msgstr "SLOT SENI SIAP"
+
+#: src/ui/menu_startup_m12.c:944
+msgid "ART SLOT EMPTY"
+msgstr "SLOT SENI KOSONG"
+
+#: src/ui/menu_startup_m12.c:945
+msgid "DROP ART INTO SLOT"
+msgstr "LETAKKAN SENI KE DALAM SLOT"
+
+#: src/ui/menu_startup_m12.c:946
+msgid "CARD ART ACTIVE"
+msgstr "SENI KARTU AKTIF"
+
+#: src/ui/menu_startup_m12.c:947
+msgid "CARD ART SLOT"
+msgstr "SLOT SENI KARTU"
+
+#: src/ui/menu_startup_m12.c:948
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "ARSIP DATA GAME MEMERLUKAN ALAT"
 
+#: src/ui/menu_startup_m12.c:949
+#, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr "ARSIP: %s  INSTAL: %s"
 
+#: src/ui/menu_startup_m12.c:950
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
-msgstr "PASANG, LALU PINDAI ULANG DATA GAME"
+msgstr "INSTAL, LALU PINDAI ULANG DATA GAME"
+
+#: src/ui/menu_startup_m12.c:6921 src/ui/menu_startup_m12.c:7124
+msgid "NO SOURCE"
+msgstr "TIDAK ADA SUMBER"
+
+#: src/ui/menu_startup_m12.c:7129
+msgid "MISSING OR MISMATCHED"
+msgstr "HILANG ATAU TIDAK COCOK"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "EXTRAS"
+msgstr "EKSTRA"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "PLAY"
+msgstr "MAIN"
+
+#: src/ui/menu_startup_m12.c:7679
+msgid "QUIT"
+msgstr "KELUAR"
+
+#: src/ui/menu_startup_m12.c:7683
+msgid "Start or continue a game"
+msgstr "Mulai atau lanjutkan permainan"
+
+#: src/ui/menu_startup_m12.c:7684
+msgid "Display, video, audio and controls"
+msgstr "Tampilan, video, audio, dan kontrol"
+
+#: src/ui/menu_startup_m12.c:7685
+msgid "Museum, bestiary, spell reference and more"
+msgstr "Museum, bestiari, referensi mantra, dan lainnya"
+
+#: src/ui/menu_startup_m12.c:7686
+msgid "Exit Firestaff"
+msgstr "Keluar dari Firestaff"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Chaos Strikes Back"
+msgstr "Chaos Strikes Back"
+
+#: src/ui/menu_startup_m12.c:7690
+msgid "Dungeon Master"
+msgstr "Dungeon Master"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "DM Nexus"
+msgstr "DM Nexus"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Dungeon Master II"
+msgstr "Dungeon Master II"
+
+#: src/ui/menu_startup_m12.c:7691
+msgid "Theron's Quest"
+msgstr "Theron's Quest"
+
+#: src/ui/menu_startup_m12.c:7700
+msgid "V1 / V2.0 / V2.1 / V2.2"
+msgstr "V1 / V2.0 / V2.1 / V2.2"
+
+#: src/ui/menu_startup_m12.c:7701 src/ui/menu_startup_m12.c:7702
+msgid "V1 / V2"
+msgstr "V1 / V2"
+
+#: src/ui/menu_startup_m12.c:7703
+msgid "V1 / SATURN CAPTURE GATED"
+msgstr "V1 / PEREKAMAN SATURN DIKUNCI"
+
+#: src/ui/menu_startup_m12.c:7704
+msgid "V1 Only (Phase 1)"
+msgstr "Hanya V1 (Fase 1)"
+
+#: src/ui/menu_startup_m12.c:7707 src/ui/menu_startup_m12.c:7708
+#: src/ui/menu_startup_m12.c:7709 src/ui/menu_startup_m12.c:7710
+#: src/ui/menu_startup_m12.c:7711
+msgid "No data files"
+msgstr "Tidak ada berkas data"
+
+#: src/ui/menu_startup_m12.c:8514
+msgid "New Game (Original)"
+msgstr "Game Baru (Asli)"
+
+#: src/ui/menu_startup_m12.c:8515
+msgid "New Game (Original + Filters)"
+msgstr "Game Baru (Asli + Filter)"
+
+#: src/ui/menu_startup_m12.c:8516
+msgid "New Game (Original 10x Upscale)"
+msgstr "Game Baru (Asli Upscale 10x)"
+
+#: src/ui/menu_startup_m12.c:8517
+msgid "Continue Saved Game"
+msgstr "Lanjutkan Game Tersimpan"
+
+#: src/ui/menu_startup_m12.c:8518
+msgid "New Game (Modern Graphics)"
+msgstr "Game Baru (Grafis Modern)"
+
+#: src/ui/menu_startup_m12.c:8526
+msgid "Museum of Lore"
+msgstr "Museum Cerita Lama"
+
+#: src/ui/menu_startup_m12.c:8527
+msgid "Manual / Docs"
+msgstr "Manual / Dokumen"
+
+#: src/ui/menu_startup_m12.c:8528
+msgid "Bestiary"
+msgstr "Bestiarium"
+
+#: src/ui/menu_startup_m12.c:8529
+msgid "Spell Reference"
+msgstr "Referensi Mantra"
+
+#: src/ui/menu_startup_m12.c:8530
+msgid "Map Viewer"
+msgstr "Penampil Peta"
+
+#: src/ui/menu_startup_m12.c:8531
+msgid "Item Encyclopedia"
+msgstr "Ensiklopedia Item"
+
+#: src/ui/menu_startup_m12.c:8532
+msgid "Changelog"
+msgstr "Log Perubahan"
+
+#: src/ui/menu_startup_m12.c:8533
+msgid "Screenshot Gallery"
+msgstr "Galeri Tangkapan Layar"
+
+#~ msgid "SCANNING GAME DATA"
+#~ msgstr "MEMINDAI DATA GAME"
+
+#~ msgid "Dungeon Master II: The Legend of Skullkeep"
+#~ msgstr "Dungeon Master II: The Legend of Skullkeep"
+
+#~ msgid "Dungeon Master Nexus"
+#~ msgstr "Dungeon Master Nexus"
+
+#~ msgid "Firestaff"
+#~ msgstr "Firestaff"
+
+#~ msgid "PATCH"
+#~ msgstr "TAMBALAN"
+
+#~ msgid "CHEATS"
+#~ msgstr "KECURANGAN"
+
+#~ msgid "SPEED"
+#~ msgstr "KECEPATAN"
+
+#~ msgid "ASPECT RATIO"
+#~ msgstr "RASIO ASPEK"
+
+#~ msgid "RESOLUTION"
+#~ msgstr "RESOLUSI"
+
+#~ msgid "LAUNCH"
+#~ msgstr "LUNCURKAN"
+
+#~ msgid "V1 ORIGINAL"
+#~ msgstr "V1 ASLI"
+
+#~ msgid "V2 ENHANCED 2D"
+#~ msgstr "V2 2D DITINGKATKAN"
+
+#~ msgid "V3 MODERN/3D"
+#~ msgstr "V3 MODERN/3D"
+
+#~ msgid "COMING SOON"
+#~ msgstr "SEGERA HADIR"
+
+#~ msgid "FRANCAIS"
+#~ msgstr "FRANCAIS"
+
+#~ msgid "GAME OPTIONS"
+#~ msgstr "OPSI GAME"
+
+#~ msgid "> LAUNCH"
+#~ msgstr "> LUNCURKAN"
+
+#~ msgid "> COMING SOON"
+#~ msgstr "> SEGERA HADIR"
+
+#~ msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
+#~ msgstr "ESC: KEMBALI  PANAH: NAVIGASI  ENTER: PILIH"
+
+#~ msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
+#~ msgstr "AKTIFKAN KECURANGAN UNTUK MEMBUKA KECEPATAN / TOMBOL PINTAS"
+
+#~ msgid "LOCKED BY V1 ORIGINAL MODE"
+#~ msgstr "DIKUNCI OLEH MODE V1 ASLI"
+
+#~ msgid "RENDERER"
+#~ msgstr "RENDERER"
+
+#~ msgid "SCALE"
+#~ msgstr "SKALA"
+
+#~ msgid "PIXEL SNAP"
+#~ msgstr "SNAP PIKSEL"
+
+#~ msgid "VSYNC"
+#~ msgstr "VSYNC"
+
+#~ msgid "SELECT GAME"
+#~ msgstr "PILIH GAME"
+
+#~ msgid "Up/Down Navigate  |  Enter Select"
+#~ msgstr "Atas/Bawah navigasi  |  Enter pilih"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
+#~ msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter pilih"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
+#~ msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter mulai"
+
+#~ msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
+#~ msgstr "Escape kembali  |  Atas/Bawah navigasi  |  Enter buka"
+
+#~ msgid "< > Switch tab   Up/Down Navigate   Enter Change"
+#~ msgstr "< > ganti tab   Atas/Bawah navigasi   Enter ubah"
+
+#~ msgid "Coming soon"
+#~ msgstr "Segera hadir"
+
+#~ msgid "Auto-Save"
+#~ msgstr "Simpan Otomatis"
+
+#~ msgid "Minimap"
+#~ msgstr "Peta Mini"
+
+#~ msgid "Journal"
+#~ msgstr "Jurnal"
+
+#~ msgid "CRT Filter"
+#~ msgstr "Filter CRT"
+
+#~ msgid "Palette Correction"
+#~ msgstr "Koreksi Palet"
+
+#~ msgid "Dither Cleanup"
+#~ msgstr "Pembersihan Dither"
+
+#~ msgid "Sharpening"
+#~ msgstr "Penajaman"
+
+#~ msgid "Phosphor Persistence"
+#~ msgstr "Persistensi Fosfor"
+
+#~ msgid "Color Preset"
+#~ msgstr "Preset Warna"
+
+#~ msgid "Pixel Grid"
+#~ msgstr "Kisi Piksel"
+
+#~ msgid "Motion Blur"
+#~ msgstr "Blur Gerakan"
+
+#~ msgid "AI Upscale (10x)"
+#~ msgstr "Upscale AI (10x)"
+
+#~ msgid "Smooth Movement"
+#~ msgstr "Gerakan Halus"
+
+#~ msgid "Smooth Turning"
+#~ msgstr "Belokan Halus"
+
+#~ msgid "Animation Interpolation"
+#~ msgstr "Interpolasi Animasi"
+
+#~ msgid "Dynamic Lighting"
+#~ msgstr "Pencahayaan Dinamis"
+
+#~ msgid "Particle Effects"
+#~ msgstr "Efek Partikel"
+
+#~ msgid "Weather FX"
+#~ msgstr "Efek Cuaca"
+
+#~ msgid "Camera Easing"
+#~ msgstr "Peluncuran Kamera"
+
+#~ msgid "Screen Transitions"
+#~ msgstr "Transisi Layar"
+
+#~ msgid "Control Scheme"
+#~ msgstr "Skema Kontrol"
+
+#~ msgid "Input Mode"
+#~ msgstr "Mode Input"
+
+#~ msgid "Touch Controls"
+#~ msgstr "Kontrol Sentuh"
+
+#~ msgid "Gamepad"
+#~ msgstr "Gamepad"
+
+#~ msgid "Key Bindings"
+#~ msgstr "Pengikatan Tombol"
+
+#~ msgid "Auto-Pause on Focus Loss"
+#~ msgstr "Jeda Otomatis Saat Kehilangan Fokus"
+
+#~ msgid "Master Volume"
+#~ msgstr "Volume Utama"
+
+#~ msgid "Music Volume"
+#~ msgstr "Volume Musik"
+
+#~ msgid "SFX Volume"
+#~ msgstr "Volume Efek Suara"
+
+#~ msgid "Muted"
+#~ msgstr "Dibisukan"
+
+#~ msgid "Audio Mixer"
+#~ msgstr "Pencampur Audio"
+
+#~ msgid "Soundtrack"
+#~ msgstr "Soundtrack"
+
+#~ msgid "Ambient Sounds"
+#~ msgstr "Suara Ambien"
+
+#~ msgid "Ambient Volume"
+#~ msgstr "Volume Ambien"
+
+#~ msgid "Footstep Audio"
+#~ msgstr "Audio Langkah Kaki"
+
+#~ msgid "Creature Voices"
+#~ msgstr "Suara Makhluk"
+
+#~ msgid "PC Speaker Emulation"
+#~ msgstr "Emulasi Speaker PC"
+
+#~ msgid "Font Scale"
+#~ msgstr "Skala Font"
+
+#~ msgid "UI Scale"
+#~ msgstr "Skala Antarmuka"
+
+#~ msgid "High Contrast"
+#~ msgstr "Kontras Tinggi"
+
+#~ msgid "Colorblind Mode"
+#~ msgstr "Mode Buta Warna"
+
+#~ msgid "Large Touch Targets"
+#~ msgstr "Target Sentuh Besar"
+
+#~ msgid "Damage Numbers"
+#~ msgstr "Angka Kerusakan"
+
+#~ msgid "Message Log"
+#~ msgstr "Log Pesan"
+
+#~ msgid "Tooltip"
+#~ msgstr "Tooltip"
+
+#~ msgid "Achievements"
+#~ msgstr "Pencapaian"
+
+#~ msgid "Stat Tracker"
+#~ msgstr "Pelacak Statistik"
+
+#~ msgid "Pathfinding Overlay"
+#~ msgstr "Overlay Pencarian Jalur"
+
+#~ msgid "Inventory Sort"
+#~ msgstr "Urutan Inventaris"
+
+#~ msgid "Data Status"
+#~ msgstr "Status Data"
+
+#~ msgid "Debug Overlay"
+#~ msgstr "Overlay Debug"
+
+#~ msgid "Developer Gates"
+#~ msgstr "Gerbang Pengembang"
+
+#~ msgid "Fade"
+#~ msgstr "Memudar"
+
+#~ msgid "Keyboard"
+#~ msgstr "Papan Ketik"
+
+#~ msgid "Auto"
+#~ msgstr "Otomatis"
+
+#~ msgid "Auto-detect"
+#~ msgstr "Deteksi Otomatis"
+
+#~ msgid "Default"
+#~ msgstr "Bawaan"
+
+#~ msgid "No"
+#~ msgstr "Tidak"
+
+#~ msgid "Stereo"
+#~ msgstr "Stereo"
+
+#~ msgid "OK"
+#~ msgstr "OK"
+
+#~ msgid "NO GAME DATA FOUND"
+#~ msgstr "DATA GAME TIDAK DITEMUKAN"
+
+#~ msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+#~ msgstr "SALIN BERKAS GAME KE Documents/Firestaff/data MENGGUNAKAN PENGELOLA BERKAS"
+
+#~ msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+#~ msgstr "GUNAKAN APLIKASI FILES UNTUK MENYALIN BERKAS GAME KE Firestaff/data DI APLIKASI INI"
