@@ -25,6 +25,12 @@ typedef struct {
     void (*change_current_map)(void *ctx, int map_index);
     uint8_t (*get_tile)(void *ctx, int x, int y);
 
+    /* Store the tile after DM2_SUPPRESS_READER has restored its masked bits.
+     * SKProject passes the live t_tile address to the reader; omitting this
+     * callback would consume the stream into a temporary byte and silently
+     * lose authentic tile state. Required when a tile mask is nonzero. */
+    int (*set_tile)(void *ctx, int x, int y, uint8_t tile);
+
     /* Set tile record link head for a tile with objects (bit 4 set). */
     void (*set_tile_record_link)(void *ctx, int x, int y, uint16_t link);
 

@@ -19,12 +19,6 @@ static uint8_t tile_suppress_mask(int type)
     }
 }
 
-static int read_suppress(DM2_ReadRecordSession *s,
-    uint8_t *data, const uint8_t *mask, size_t count)
-{
-    return dm2_suppress_reader_read(&s->reader, mask, count, data, 0x00);
-}
-
 int dm2_v1_load_extra_dungeon_data(
     DM2_ReadRecordSession *session,
     const DM2_ReadRecordCallbacks *rec_cb,
@@ -77,8 +71,22 @@ int dm2_v1_load_extra_dungeon_data(
 
                 /* Read tile SUPPRESS data if mask is nonzero. */
                 if (mask_byte != 0) {
-                    uint8_t tile_data = 0;
-                    if (read_suppress(session, &tile_data, &mask_byte, 1)) {
+                    uint8_t tile_data = dung_cb->get_tile(
+                        dung_cb->ctx, x, y);
+                    /* SKProject sksvgame.cpp:1277 passes the live tile
+                     * address, not a zeroed scratch byte. Keep the
+                     * unmasked tile bits and publish the decoded byte before
+                     * its record chain is consumed. */
+                    if (!dung_cb->set_tile) {
+                        local.error = 1;
+                        goto done;
+                    }
+                    if (dm2_suppress_reader_read_preserve(
+                            &session->reader, &mask_byte, 1, &tile_data)) {
+                        local.error = 1;
+                        goto done;
+                    }
+                    if (dung_cb->set_tile(dung_cb->ctx, x, y, tile_data) != 0) {
                         local.error = 1;
                         goto done;
                     }

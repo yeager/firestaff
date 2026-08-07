@@ -10,6 +10,7 @@
 /* ---- Mock dungeon: 1 map, 2x2, all floors, no records ---- */
 
 static int mock_get_map_count(void *ctx) { (void)ctx; return 1; }
+static uint8_t g_tiles[2][2];
 static void mock_get_map_dims(void *ctx, int *w, int *h)
 {
     (void)ctx; *w = 2; *h = 2;
@@ -17,8 +18,14 @@ static void mock_get_map_dims(void *ctx, int *w, int *h)
 static void mock_change_map(void *ctx, int m) { (void)ctx; (void)m; }
 static uint8_t mock_get_tile(void *ctx, int x, int y)
 {
-    (void)ctx; (void)x; (void)y;
-    return 0x00;
+    (void)ctx;
+    return g_tiles[x][y];
+}
+static int mock_set_tile(void *ctx, int x, int y, uint8_t tile)
+{
+    (void)ctx;
+    g_tiles[x][y] = tile;
+    return 0;
 }
 static uint16_t mock_get_rec_link(void *ctx, int x, int y)
 {
@@ -99,6 +106,7 @@ static void test_empty_dungeon_round_trip(void)
     int creature_idx[4], container_idx[4];
 
     /* Write */
+    memset(g_tiles, 0, sizeof(g_tiles));
     DM2_WriteRecordSession wr;
     dm2_v1_write_record_session_init(&wr, buf, sizeof(buf),
         creature_idx, 4, container_idx, 4, NULL, 0);
@@ -151,6 +159,7 @@ static void test_empty_dungeon_round_trip(void)
     ldcb.get_map_dimensions = mock_get_map_dims;
     ldcb.change_current_map = mock_change_map;
     ldcb.get_tile = mock_get_tile;
+    ldcb.set_tile = mock_set_tile;
     ldcb.get_teleporter_detail = mock_get_tp;
 
     DM2_V1_LoadExtraDungeonReceipt receipt;
@@ -163,6 +172,67 @@ static void test_empty_dungeon_round_trip(void)
     assert(pool.alloc_count == 0);
 
     printf("  PASS: empty_dungeon_round_trip\n");
+}
+
+static void test_tile_mask_restores_live_tile(void)
+{
+    uint8_t buf[1024];
+    int creature_idx[4], container_idx[4];
+    DM2_WriteRecordSession wr;
+    DM2_WriteRecordCallbacks wcb;
+    DM2_StoreExtraDungeonCallbacks scb;
+    DM2_ReadRecordSession rd;
+    DM2_ReadRecordCallbacks rcb;
+    DM2_LoadExtraDungeonCallbacks lcb;
+    ReadPool pool;
+    DM2_V1_LoadExtraDungeonReceipt receipt;
+    size_t flushed;
+
+    memset(g_tiles, 0, sizeof(g_tiles));
+    g_tiles[0][0] = 0x48; /* type 2, masked bit 3 set */
+    dm2_v1_write_record_session_init(&wr, buf, sizeof(buf),
+        creature_idx, 4, container_idx, 4, NULL, 0);
+    memset(&wcb, 0, sizeof(wcb));
+    wcb.get_record = mock_get_record;
+    wcb.get_next_link = mock_get_next;
+    wcb.query_creature_ai_spec_flags = mock_ai_spec;
+    wcb.is_container_map = mock_is_map;
+    wcb.is_container_moneybox = mock_is_moneybox;
+    wcb.add_possession_index = mock_add_poss;
+    memset(&scb, 0, sizeof(scb));
+    scb.get_map_count = mock_get_map_count;
+    scb.get_map_dimensions = mock_get_map_dims;
+    scb.change_current_map = mock_change_map;
+    scb.get_tile = mock_get_tile;
+    scb.get_record_link = mock_get_rec_link;
+    scb.get_teleporter_detail = mock_get_tp;
+    scb.init_suppress = mock_init_suppress;
+    assert(dm2_v1_store_extra_dungeon_data(&wr, &wcb, &scb, 0) == 0);
+    assert(dm2_suppress_writer_flush(&wr.writer, buf + wr.out_written,
+        sizeof(buf) - wr.out_written, &flushed) == 0);
+    wr.out_written += flushed;
+
+    /* A real load starts from the map tile already present in the dungeon
+     * structure; only the stream-owned bit must change. */
+    g_tiles[0][0] = 0x40;
+    memset(&pool, 0, sizeof(pool));
+    dm2_v1_read_record_session_init(&rd, buf, wr.out_written);
+    memset(&rcb, 0, sizeof(rcb));
+    rcb.alloc_record = read_alloc;
+    rcb.set_data = read_set_data;
+    rcb.append_record = read_append;
+    rcb.child_owner = read_child_owner;
+    rcb.ctx = &pool;
+    memset(&lcb, 0, sizeof(lcb));
+    lcb.get_map_count = mock_get_map_count;
+    lcb.get_map_dimensions = mock_get_map_dims;
+    lcb.change_current_map = mock_change_map;
+    lcb.get_tile = mock_get_tile;
+    lcb.set_tile = mock_set_tile;
+    lcb.get_teleporter_detail = mock_get_tp;
+    assert(dm2_v1_load_extra_dungeon_data(&rd, &rcb, &lcb, 0, &receipt) == 0);
+    assert(receipt.valid && g_tiles[0][0] == 0x48);
+    printf("  PASS: tile_mask_restores_live_tile\n");
 }
 
 static void test_receipt_fields(void)
@@ -182,6 +252,7 @@ int main(void)
     printf("test_dm2_v1_save_load_extra_dungeon_data:\n");
     test_null_safety();
     test_empty_dungeon_round_trip();
+    test_tile_mask_restores_live_tile();
     test_receipt_fields();
     printf("All load_extra_dungeon_data tests passed.\n");
     return 0;

@@ -1,3 +1,14 @@
+# DM2 SKSAVE masked tile restoration (2026-08-07)
+
+- ✅ Corrected `DM2_READ_SKSAVE_DUNGEON` to decode masked tile bits into the
+  live tile value while preserving unmasked bits, matching SKProject
+  `sksvgame.cpp:1277`. Missing tile publication now fails closed instead of
+  silently consuming the stream into a zeroed temporary.
+- ✅ Added a round-trip regression for the source-format type-2 tile mask and ran the
+  focused load, record-checkcode, save-orchestrator and supplied real PC-DOS
+  SKSave tests (`127 passed, 0 failed`). Full record/object/timer restoration
+  and Continue admission remain gated; no release was made.
+
 # DM2 creature animation FD image selector (2026-08-13)
 
 - ✅ Added a source-owned FD lookup for `GET_CREATURE_ANIMATION_IMAGE_ID_V5`:

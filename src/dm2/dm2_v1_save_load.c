@@ -138,6 +138,31 @@ int dm2_suppress_reader_read(DM2_SuppressReader *reader,
     return 0;
 }
 
+int dm2_suppress_reader_read_preserve(DM2_SuppressReader *reader,
+                                      const uint8_t *mask, size_t count,
+                                      uint8_t *out)
+{
+    size_t i;
+    if (!reader || !mask || !out) return -1;
+    for (i = 0; i < count; ++i) {
+        int bit;
+        for (bit = 7; bit >= 0; --bit) {
+            uint8_t bit_mask = (uint8_t)(1u << bit);
+            if ((mask[i] & bit_mask) == 0u) continue;
+            if (reader->bits_remaining == 0u) {
+                if (!reader->data || reader->position >= reader->size) return -1;
+                reader->current_byte = reader->data[reader->position++];
+                reader->bits_remaining = 8;
+            }
+            if ((reader->current_byte & 0x80u) != 0u) out[i] |= bit_mask;
+            else out[i] &= (uint8_t)~bit_mask;
+            reader->current_byte <<= 1;
+            --reader->bits_remaining;
+        }
+    }
+    return 0;
+}
+
 int dm2_suppress_reader_read_bit(DM2_SuppressReader *reader, int *out_bit)
 {
     uint8_t data_byte = 0;

@@ -29629,6 +29629,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   and conditional contexts, with real PC-DOS GRAPHICS/DUNGEON name receipts
   still passing. This corrects the shared helper only; hero stat/light,
   weight, timer and `DM2_PROCESS_ITEM_BONUS` mutation owners remain gated.
+  **2026-08-07 tile-byte correction:** the loader now passes each masked tile
+  through a source-faithful preserve-read path and publishes it through an
+  authenticated `set_tile` callback. SKProject `sksvgame.cpp:1277` mutates
+  the live `t_tile`; the old temporary zero byte discarded unmasked tile bits.
+  The regression restores a real type-2 tile from a SUPPRESS stream while
+  retaining its source tile bits. The full record/object/timer restoration
+  transaction remains gated.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

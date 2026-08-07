@@ -66,6 +66,11 @@ int dm2_suppress_reader_read_bit(DM2_SuppressReader *reader, int *out_bit);
 int dm2_suppress_reader_read(DM2_SuppressReader *reader,
                              const uint8_t *mask, size_t count,
                              uint8_t *out, uint8_t fill);
+/* Source argflag=false variant: decode selected bits into an existing
+ * object, preserving all unmasked bits in the destination. */
+int dm2_suppress_reader_read_preserve(DM2_SuppressReader *reader,
+                                      const uint8_t *mask, size_t count,
+                                      uint8_t *out);
 
 /* Encode data+mask pairs into one self-contained compact byte stream.
  * Each set bit in mask[i] stores the matching data[i] bit. Returns output
