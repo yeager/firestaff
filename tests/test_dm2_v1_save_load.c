@@ -3459,6 +3459,8 @@ static int test_external_original_sksave_corpus_census(void)
               memcmp(raw_state.hero_hashes, entry->raw_hero_hashes,
                      sizeof(raw_state.hero_hashes)) != 0 ||
               raw_state.heroes_hash != entry->raw_heroes_hash ||
+              raw_state.savegame_buffer_hash !=
+                  entry->raw_savegame_buffer_hash ||
               raw_state.save_state_hash != entry->raw_save_state_hash ||
               raw_state.fixed_sections_hash != entry->raw_fixed_sections_hash ||
               raw_state.timers_hash != entry->raw_timers_hash ||

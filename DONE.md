@@ -58553,3 +58553,12 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Confirmed the real PC-English expansion is `(456,100,92,77)` for rect
   `0x5C`, versus a `92x25` NEED_FLASK image; this prevents routing the
   full-surface feedback through the 320x200 viewport framebuffer.
+
+# DM2 SKSave source-field inventory (2026-08-07)
+
+- ✅ Added a dedicated receipt and corpus hash for the complete 60-byte
+  source `s_savegamebuffer`, with ownership cited to SKProject
+  `sksvgame.cpp:47/1415` `DM2_GAME_LOAD`.
+- ✅ Kept session-only gold, reputation and gametime unpromoted: the source
+  save buffer has no scalar fields for them, and raw resume remains blocked
+  until coin-record and separate time-state ownership is complete.

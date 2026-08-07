@@ -1571,6 +1571,7 @@ bool dm2_v1_original_save_state_corpus_probe(
             memcpy(target->raw_hero_hashes, raw_state.hero_hashes,
                    sizeof(target->raw_hero_hashes));
             target->raw_heroes_hash = raw_state.heroes_hash;
+            target->raw_savegame_buffer_hash = raw_state.savegame_buffer_hash;
             target->raw_save_state_hash = raw_state.save_state_hash;
             target->raw_fixed_sections_hash = raw_state.fixed_sections_hash;
             target->raw_timers_hash = raw_state.timers_hash;
@@ -1653,6 +1654,8 @@ bool dm2_v1_original_save_state_corpus_probe(
         }
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->raw_heroes_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_savegame_buffer_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->raw_save_state_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(

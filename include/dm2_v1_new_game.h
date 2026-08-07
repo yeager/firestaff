@@ -185,6 +185,10 @@ typedef struct {
      * fixture while retaining only a matching aggregate hash. */
     uint32_t hero_hashes[4];
     uint32_t heroes_hash;
+    /* Exact 60-byte s_savegamebuffer identity. SKProject's
+     * sksvgame.cpp:47/1415 source buffer and DM2_GAME_LOAD own these bytes;
+     * this is deliberately not a Firestaff session-field projection. */
+    uint32_t savegame_buffer_hash;
     uint32_t save_state_hash;
     uint32_t timers_hash;
     uint32_t fixed_sections_hash;

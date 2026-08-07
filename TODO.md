@@ -4123,6 +4123,12 @@ level or consumer bindings.
   explicit `FIRESTAFF_DM2_SKSAVE_CORPUS` or `FIRESTAFF_DM2_DATA_DIR` root;
   a selected root without the complete lower-case DOS save set fails rather
   than borrowing a private HOME corpus or silently skipping.
+  **2026-08-07 source-field inventory:** the raw receipt now retains an
+  explicit hash of the complete 60-byte `s_savegamebuffer`, matching
+  SKProject `sksvgame.cpp:47/1415` `DM2_GAME_LOAD` contract. That source buffer
+  has no scalar gold or reputation field, and `gametime` is maintained
+  separately; coin records and the separate time state still need their
+  complete runtime owners before raw resume can be admitted.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

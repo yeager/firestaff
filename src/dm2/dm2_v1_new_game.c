@@ -934,6 +934,13 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     candidate.party_map = dm2_v1_read_u16_le_at(savegame_buffer, 16u);
     candidate.leader_index = dm2_v1_read_u16_le_at(savegame_buffer, 18u);
     candidate.timer_count = timer_count;
+    /* SKProject sksvgame.cpp:47/1415 DM2_GAME_LOAD reads this exact 0x3c-byte
+     * s_savegamebuffer. Keep its identity
+     * explicit: the buffer has no scalar gold/reputation field, while
+     * gametime is maintained separately from this save buffer. */
+    candidate.savegame_buffer_hash =
+        dm2_v1_raw_sksave_hash(savegame_buffer, sizeof(savegame_buffer));
+    if (candidate.savegame_buffer_hash == 0u) return 0;
     fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, savegame_buffer,
                                                 sizeof(savegame_buffer));
 
@@ -999,6 +1006,7 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     candidate.valid = candidate.v1e0104_hash != 0u &&
                       candidate.globalb_hash != 0u &&
                       candidate.globalw_hash != 0u &&
+                      candidate.savegame_buffer_hash != 0u &&
                       candidate.save_state_hash != 0u &&
                       candidate.fixed_sections_hash != 0u &&
                       candidate.record_link_bitstream_offset <= buf_size;

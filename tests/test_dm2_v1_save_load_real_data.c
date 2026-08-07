@@ -378,6 +378,7 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
               state_receipt.valid && state_receipt.dungeon.valid &&
               state_receipt.champion_count <= 4u &&
               state_receipt.party_map < state_receipt.dungeon.map_count &&
+              state_receipt.savegame_buffer_hash != 0u &&
               state_receipt.fixed_sections_hash != 0u &&
               state_receipt.timer_bitstream_offset >=
                   state_receipt.dungeon.suppress_state_offset &&
@@ -489,6 +490,7 @@ static void test_real_state_corpus(const char *root)
                   current->raw_globalb_hash != 0u &&
                   current->raw_globalw_hash != 0u &&
                   current->raw_heroes_hash != 0u &&
+                  current->raw_savegame_buffer_hash != 0u &&
                   current->raw_save_state_hash != 0u &&
                   current->raw_fixed_sections_hash != 0u &&
                   current->raw_timers_hash != 0u &&
