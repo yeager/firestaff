@@ -38827,6 +38827,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_csb_v1_utility_save_transaction_pc34_compat.c
         src/csb/csb_v1_utility_save_transaction_pc34_compat.c
         src/csb/csb_v1_save_export_import_pc34_compat.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
     )
     target_include_directories(test_csb_v1_utility_save_transaction_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -45759,6 +45760,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_second_l
     add_executable(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat
         tests/test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c
     )
     target_include_directories(test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
@@ -54039,7 +54041,9 @@ target_include_directories(test_csb_v1_monster_generator_gate_pc34_compat PRIVAT
 target_link_libraries(test_csb_v1_monster_generator_gate_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_monster_generator_gate_pc34_compat COMMAND test_csb_v1_monster_generator_gate_pc34_compat)
 
-add_executable(test_csb_v1_omfattande_stubs_pc34_compat tests/test_csb_v1_omfattande_stubs_pc34_compat.c)
+add_executable(test_csb_v1_omfattande_stubs_pc34_compat
+    tests/test_csb_v1_omfattande_stubs_pc34_compat.c
+    src/csb/csb_v1_save_import_path_pc34_compat.c)
 target_include_directories(test_csb_v1_omfattande_stubs_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_omfattande_stubs_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_omfattande_stubs_pc34_compat COMMAND test_csb_v1_omfattande_stubs_pc34_compat)
@@ -56301,6 +56305,11 @@ add_executable(test_dm1_v1_actuator_execution_pc34_compat tests/test_dm1_v1_actu
 target_include_directories(test_dm1_v1_actuator_execution_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_actuator_execution_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_actuator_execution_pc34_compat COMMAND test_dm1_v1_actuator_execution_pc34_compat)
+
+add_executable(test_f0710_sensor_execute_generator_pc34_compat tests/test_f0710_sensor_execute_generator_pc34_compat.c)
+target_include_directories(test_f0710_sensor_execute_generator_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_f0710_sensor_execute_generator_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_f0710_sensor_execute_generator_pc34_compat COMMAND test_f0710_sensor_execute_generator_pc34_compat)
 
 add_executable(test_dm1_v1_teleporter_pit_pc34_compat tests/test_dm1_v1_teleporter_pit_pc34_compat.c)
 target_include_directories(test_dm1_v1_teleporter_pit_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

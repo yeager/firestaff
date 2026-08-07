@@ -131,13 +131,16 @@ int F0710_SENSOR_Execute_Compat(
     }
     case 6: {
         /* DM1_SENSOR_FLOOR_GROUP_GENERATOR — spawn creature.
-         * Full implementation requires creature system integration.
-         * Emit UNSUPPORTED for now but with correct type marker. */
+         * ReDMCSB SENSOR.C: type 6 triggers creature generation on the
+         * sensor's square.  We emit SENSOR_EFFECT_GENERATOR so the
+         * orchestrator can route it to orch_handle_group_generator_trigger.
+         * textIndex carries the sensor thing index (things.sensors[]). */
         struct SensorEffect_Compat* e = &outList->effects[0];
-        e->kind = SENSOR_EFFECT_UNSUPPORTED;
+        e->kind = SENSOR_EXEC_EFFECT_GENERATOR;
         e->sensorType = sensor->sensorType;
         e->destMapX = sensor->targetMapX;
         e->destMapY = sensor->targetMapY;
+        e->textIndex = sensor->sensorIndex;
         outList->count = 1;
         return 1;
     }

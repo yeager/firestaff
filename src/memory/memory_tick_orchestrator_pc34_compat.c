@@ -12800,6 +12800,18 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         emit(result, EMIT_SENSOR_EFFECT,
                              ef->kind, ef->sensorType,
                              SENSOR_EVENT_WALK_ON, p3);
+                        if (ef->kind == SENSOR_EXEC_EFFECT_GENERATOR) {
+                            struct TimelineEvent_Compat genEv;
+                            memset(&genEv, 0, sizeof(genEv));
+                            genEv.kind = TIMELINE_EVENT_GROUP_GENERATOR;
+                            genEv.aux0 = GENERATOR_EVENT_AUX0_TRIGGER;
+                            genEv.aux4 = ef->textIndex + 1;
+                            genEv.mapIndex = world->party.mapIndex;
+                            genEv.mapX = world->party.mapX;
+                            genEv.mapY = world->party.mapY;
+                            (void)orch_handle_group_generator_trigger_runtime_compat(
+                                world, &genEv, result);
+                        }
                     }
                 }
             }

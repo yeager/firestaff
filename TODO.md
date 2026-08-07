@@ -6827,6 +6827,15 @@ that its exact runtime path is not already source-locked and tested.
    are now dispatched through the actuator (were missing). Teleporter
    toggle now routes through m11_apply_dm1_square_actuator instead of
    inline bit manipulation.
+   2026-08-07: Runtime generator ownership wired. F0710 sensor type 6
+   (DM1_SENSOR_FLOOR_GROUP_GENERATOR) now emits SENSOR_EXEC_EFFECT_GENERATOR
+   instead of UNSUPPORTED. The orchestrator's walk-on sensor processing
+   (Pass 37) creates a TIMELINE_EVENT_GROUP_GENERATOR trigger event and
+   dispatches it through orch_handle_group_generator_trigger_runtime_compat,
+   connecting the existing generator machinery (creature allocation, group
+   caps, re-enable scheduling) to the party walk-on sensor path. 9 tests
+   (effect emission, null safety, not-found). Remaining: broader C15/C25
+   corpus and spell-tick coverage.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
