@@ -4862,6 +4862,11 @@ list(REMOVE_ITEM M10_SOURCES
 # Its direct regression target retains the documented ReDMCSB bitfield audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c")
+# `dm1_v1_viewport_d3c_center_field_pc34_compat.c` is a source-lock contract
+# with no production caller or real-asset path. Its direct test retains the
+# documented ReDMCSB D3C dispatch audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_center_field_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
