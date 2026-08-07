@@ -1,3 +1,11 @@
+# DM2 weather text-owner exclusion audit (2026-08-07)
+- ✅ Classified the real PC-DOS set-5 `ENVIRONMENT` text rows: nine exact
+  weather-command payloads at `0x64..0x6c`, plus generic distant-element
+  rows at `0x01` and `0x63` from the broader SKProject scan.
+- ✅ Verified all four weather-name lookups remain `NULL`; neither command
+  payload nor generic environment text is promoted into synthetic labels.
+  No release was made.
+
 # DM2 spell-feedback panel-global receipt (2026-08-07)
 - ✅ Bound the source-level failure receipt to the exact SKProject
   `DM2_UPDATE_GLOB_VAR` target (0x45/0x46/0x44), add-one operation, and

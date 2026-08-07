@@ -98,6 +98,10 @@ int main(void)
     DM2_V1_WeatherOverlayPlan plan;
     uint32_t identity_hash;
     unsigned int weather_command_text_count = 0u;
+    uint32_t environment_text_field_mask = 0u;
+    unsigned int generic_environment_text_count = 0u;
+    int generic_environment_field_01 = 0;
+    int generic_environment_field_63 = 0;
     int failures = 0;
     int i;
 
@@ -120,15 +124,37 @@ int main(void)
     for (i = 0; i < (int)loader.entry_count; ++i) {
         if (loader.entries[i].cls1 == DM2_GDAT_CATEGORY_ENVIRONMENT &&
             loader.entries[i].cls2 == 5u &&
-            loader.entries[i].cls3 == DM2_GDAT_ENTRY_TYPE_TEXT &&
-            loader.entries[i].cls4 >= 0x64u &&
-            loader.entries[i].cls4 <= 0x6cu) {
-            ++weather_command_text_count;
+            loader.entries[i].cls3 == DM2_GDAT_ENTRY_TYPE_TEXT) {
+            if (loader.entries[i].cls4 >= 0x64u &&
+                loader.entries[i].cls4 <= 0x6cu) {
+                ++weather_command_text_count;
+                environment_text_field_mask |=
+                    1u << (loader.entries[i].cls4 - 0x64u);
+            } else {
+                ++generic_environment_text_count;
+                if (loader.entries[i].cls4 == 0x01u)
+                    generic_environment_field_01 = 1;
+                if (loader.entries[i].cls4 == 0x63u)
+                    generic_environment_field_63 = 1;
+            }
         }
     }
+    /* skproject/SKWINSPX/src/v5/skguivwp.cpp:6863-6901 scans the broader
+     * ENVIRONMENT text range 0..0x63 for distant-element records. Those two
+     * set-5 rows are not weather state names; c_weather.cpp's weather command
+     * owner is the separate exact 0x64..0x6c range. */
     failures += !check(
-        weather_command_text_count == 9u,
-        "real set 5 text rows are the nine source weather command payloads");
+        weather_command_text_count == 9u &&
+            environment_text_field_mask == 0x1ffu &&
+            generic_environment_text_count == 2u &&
+            generic_environment_field_01 && generic_environment_field_63,
+        "real set 5 separates nine weather commands from two generic environment rows");
+    failures += !check(
+        dm2_v1_weather_name(DM2_WEATHER_CLEAR) == NULL &&
+            dm2_v1_weather_name(DM2_WEATHER_RAIN) == NULL &&
+            dm2_v1_weather_name(DM2_WEATHER_FOG) == NULL &&
+            dm2_v1_weather_name(DM2_WEATHER_STORM) == NULL,
+        "real set 5 has no weather display-name text owner");
 
     identity_hash = summary_image_identity_hash();
     failures += !check(identity_hash != 0u,
