@@ -259,6 +259,11 @@ typedef struct {
     uint8_t info_slot;
     uint16_t animation_sequence;
     uint16_t animation_info;
+    uint8_t animation_0958_valid;
+    uint8_t animation_0958_frame_bit14;
+    uint8_t animation_0958_blocked_caii;
+    uint16_t animation_0958_query_index;
+    uint32_t animation_0958_blended_value;
     uint32_t raw_hash;
     uint32_t raw_byte_count;
     int image_width;

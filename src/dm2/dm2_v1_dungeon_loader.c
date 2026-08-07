@@ -5138,6 +5138,16 @@ int dm2_v1_g1_creature_map_chip_material_identity(
     hash = dm2_v1_g1_material_identity_step(hash,
                                              material->animation_sequence);
     hash = dm2_v1_g1_material_identity_step(hash, material->animation_info);
+    hash = dm2_v1_g1_material_identity_step(
+        hash, material->animation_0958_valid);
+    hash = dm2_v1_g1_material_identity_step(
+        hash, material->animation_0958_frame_bit14);
+    hash = dm2_v1_g1_material_identity_step(
+        hash, material->animation_0958_blocked_caii);
+    hash = dm2_v1_g1_material_identity_step(
+        hash, material->animation_0958_query_index);
+    hash = dm2_v1_g1_material_identity_step(
+        hash, material->animation_0958_blended_value);
     hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->x);
     hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->y);
     hash = dm2_v1_g1_material_identity_step(hash,

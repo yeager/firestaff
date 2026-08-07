@@ -59621,3 +59621,16 @@ companion.
   type-`0xE` links, plus the mounted PC-DOS SKSAVE corpus gate (135/135).
 - ✅ Continue remains fail-closed: this fixes a real record-link decode edge,
   but does not claim the missing record, possession and timer runtime owners.
+
+# DM2 creature 0958 animation-owner handoff (2026-08-13)
+
+- ✅ Extended the authenticated G1 DB4 creature material route to execute the
+  source `DM2_query_1c9a_02c3` → `DM2_query_4E26`/0xfc ownership query during
+  boot materialization. Static AI rows now retain the real bit-14 result,
+  query index and blended value; dynamic rows retain the explicit missing-CAII
+  block instead of receiving a guessed frame.
+- ✅ Carried that evidence through `DM2_CreatureSprite`, the viewport render
+  plan and the runtime creature-render receipt without enabling V5 promotion.
+- ✅ Real PC-DOS verification: G1 viewport 40/40, AI owner census 256 mapped /
+  255 remapped, DB4 cursor audit 20 static roots, dynamic FB/FC/FD material
+  and frame-terminal regressions pass.

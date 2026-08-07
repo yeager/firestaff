@@ -4396,6 +4396,16 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->source_info_slot = src->source_info_slot;
         row->source_animation_sequence = src->source_animation_sequence;
         row->source_animation_info = src->source_animation_info;
+        row->source_animation_0958_valid =
+            src->source_animation_0958_valid;
+        row->source_animation_0958_frame_bit14 =
+            src->source_animation_0958_frame_bit14;
+        row->source_animation_0958_blocked_caii =
+            src->source_animation_0958_blocked_caii;
+        row->source_animation_0958_query_index =
+            src->source_animation_0958_query_index;
+        row->source_animation_0958_blended_value =
+            src->source_animation_0958_blended_value;
         row->material_frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;

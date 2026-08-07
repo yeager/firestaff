@@ -29927,6 +29927,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   runtime render receipt. This prevents the source cursor from being
   discarded, while the live CAII owner and V5 frame publication remain
   explicitly unbound.
+  **2026-08-13 0958-owner progress:** the exact DB4 cursor now also performs
+  the source `DM2_query_1c9a_02c3`/`DM2_query_4E26` 0xfc read during boot
+  materialization. Static AI rows retain the real `frame_bit14`, query index
+  and blended value through the viewport/runtime receipts; dynamic rows retain
+  an explicit CAII block. No command-0 or `0xffff` frame is promoted.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

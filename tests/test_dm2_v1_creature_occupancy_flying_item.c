@@ -167,6 +167,10 @@ static void test_v5_render_route(void)
     s.creatures[0].source_v5_field = 1;
     s.creatures[0].source_material_proven = 1;
     s.creatures[0].gdat_image_field = 0x12;
+    s.creatures[0].source_animation_0958_valid = 1;
+    s.creatures[0].source_animation_0958_frame_bit14 = 1;
+    s.creatures[0].source_animation_0958_query_index = 3;
+    s.creatures[0].source_animation_0958_blended_value = 0x12345678u;
     s.creatures[0].object_id = 0x4401u;
     s.creatures[0].map_x = 10;
     s.creatures[0].map_y = 8;
@@ -175,6 +179,11 @@ static void test_v5_render_route(void)
           dm2_v1_viewport_build_creature_render_plan(&s, &plan) == 1 &&
           plan.creature_count == 1 &&
           plan.creatures[0].source_v5_field == 1 &&
+          plan.creatures[0].source_animation_0958_valid == 1 &&
+          plan.creatures[0].source_animation_0958_frame_bit14 == 1 &&
+          plan.creatures[0].source_animation_0958_query_index == 3 &&
+          plan.creatures[0].source_animation_0958_blended_value ==
+              0x12345678u &&
           plan.creatures[0].material_frame_index == 0 &&
           plan.creatures[0].gdat_index ==
               dm2_v1_viewport_creature_field_graphic_index(7, 0x12));

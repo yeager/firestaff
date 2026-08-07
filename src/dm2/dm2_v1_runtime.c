@@ -2633,6 +2633,15 @@ static void dm2_runtime_append_creature_sprite(
     dst->source_info_slot = material->info_slot;
     dst->source_animation_sequence = material->animation_sequence;
     dst->source_animation_info = material->animation_info;
+    dst->source_animation_0958_valid = material->animation_0958_valid;
+    dst->source_animation_0958_frame_bit14 =
+        material->animation_0958_frame_bit14;
+    dst->source_animation_0958_blocked_caii =
+        material->animation_0958_blocked_caii;
+    dst->source_animation_0958_query_index =
+        material->animation_0958_query_index;
+    dst->source_animation_0958_blended_value =
+        material->animation_0958_blended_value;
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
     dst->screen_y = (int16_t)screen_y;
@@ -2655,6 +2664,16 @@ static void dm2_runtime_append_creature_sprite(
         dst->source_animation_sequence;
     g_dm2_last_creature_render.source_animation_info =
         dst->source_animation_info;
+    g_dm2_last_creature_render.source_animation_0958_valid =
+        dst->source_animation_0958_valid;
+    g_dm2_last_creature_render.source_animation_0958_frame_bit14 =
+        dst->source_animation_0958_frame_bit14;
+    g_dm2_last_creature_render.source_animation_0958_blocked_caii =
+        dst->source_animation_0958_blocked_caii;
+    g_dm2_last_creature_render.source_animation_0958_query_index =
+        dst->source_animation_0958_query_index;
+    g_dm2_last_creature_render.source_animation_0958_blended_value =
+        dst->source_animation_0958_blended_value;
     g_dm2_last_creature_render.direction = dst->direction;
     g_dm2_last_creature_render.hp_pct = 100;
     g_dm2_last_creature_render.map_x = material->x;

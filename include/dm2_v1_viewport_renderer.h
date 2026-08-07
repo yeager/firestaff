@@ -1237,6 +1237,11 @@ typedef struct {
     uint8_t  source_info_slot;
     uint16_t source_animation_sequence;
     uint16_t source_animation_info;
+    uint8_t  source_animation_0958_valid;
+    uint8_t  source_animation_0958_frame_bit14;
+    uint8_t  source_animation_0958_blocked_caii;
+    uint16_t source_animation_0958_query_index;
+    uint32_t source_animation_0958_blended_value;
     uint32_t source_material_hash;
     uint16_t object_id;        /* G1 DB4 ObjectID; zero for non-dungeon sprites */
     int16_t  map_x;            /* source map coordinate for G1 material ownership */
@@ -1297,6 +1302,11 @@ typedef struct {
     uint8_t source_info_slot;
     uint16_t source_animation_sequence;
     uint16_t source_animation_info;
+    uint8_t source_animation_0958_valid;
+    uint8_t source_animation_0958_frame_bit14;
+    uint8_t source_animation_0958_blocked_caii;
+    uint16_t source_animation_0958_query_index;
+    uint32_t source_animation_0958_blended_value;
     /* _4976_5aa4 occupancy evidence: the creature's 5x5 position inside its
      * cell (QUERY_CREATURE_5x5_POS) and its index in the source
      * tlbDisplayOrder* walk (DRAW_STATIC_OBJECT).  -1 when unproven. */

@@ -503,6 +503,11 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int source_info_slot;
     int source_animation_sequence;
     int source_animation_info;
+    int source_animation_0958_valid;
+    int source_animation_0958_frame_bit14;
+    int source_animation_0958_blocked_caii;
+    int source_animation_0958_query_index;
+    uint32_t source_animation_0958_blended_value;
     int direction;
     int hp_pct;
     int ccm_primary_state;

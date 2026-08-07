@@ -7231,6 +7231,58 @@ int dm2_v1_boot_g1_actuator_wall_gfx_materials(
     return 1;
 }
 
+static int dm2_v1_boot_bind_g1_creature_animation_0958(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!profile || !profile->dungeon_data || !receipt || !receipt->valid) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    for (int i = 0; i < receipt->material_count; ++i) {
+        DM2_V1_G1CreatureMapChipMaterial *material = &receipt->materials[i];
+        const DM2_AIDefinition *ai;
+        const uint8_t *record;
+        DM2_V1_CreatureAnimation0958Receipt animation;
+        int record_size = 0;
+        int record_type = 0;
+        int record_index = 0;
+        int result;
+
+        record = dm2_v1_dungeon_get_thing_record(
+            dungeon, material->object_id, &record_type, &record_index,
+            &record_size);
+        (void)record_type;
+        (void)record_index;
+        ai = dm2_v1_creature_ai_spec(material->creature_type);
+        if (!record || record_size <= 0 || !ai) {
+            return 0;
+        }
+        memset(&animation, 0, sizeof(animation));
+        result = dm2_v1_creature_animation_gdat_query_0958_record(
+            &((DM2_V1_BootGraphicsDat *)profile->graphics_dat)->loader,
+            (uint8_t *)record, (size_t)record_size, ai, NULL, 0u, 0u,
+            &animation);
+        material->animation_0958_valid =
+            (uint8_t)(result && animation.valid);
+        material->animation_0958_frame_bit14 = animation.frame_bit14;
+        material->animation_0958_blocked_caii =
+            (uint8_t)(animation.blocked_caii_owner != 0);
+        material->animation_0958_query_index = animation.query_index;
+        material->animation_0958_blended_value = animation.blended_value;
+        /* Static AIDefinition rows own their cursor at DB4+8 and must prove
+         * the 0xfc read. Dynamic rows remain valid F9 material, but their
+         * missing CAII owner is retained as an explicit block. */
+        if ((ai->w0AIFlags & DM2_AIFLAG_STATIC) != 0u &&
+            (!result || !animation.valid || !animation.cursor_static_owner)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int dm2_v1_boot_g1_creature_map_chip_materials(
     DM2_V1_BootProfile *profile,
     int map,
@@ -7242,10 +7294,13 @@ int dm2_v1_boot_g1_creature_map_chip_materials(
     memset(out, 0, sizeof(*out));
     if (!profile || !profile->graphics_dat || !profile->dungeon_data) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
+    if (!dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
         (const DM2_V1_DungeonData *)profile->dungeon_data, map,
         dm2_v1_boot_g1_raw_read, dm2_v1_boot_g1_image_metadata_read,
-        dm2_v1_boot_g1_image_local_palette_read, gfx, out);
+        dm2_v1_boot_g1_image_local_palette_read, gfx, out)) {
+        return 0;
+    }
+    return dm2_v1_boot_bind_g1_creature_animation_0958(profile, out);
 }
 
 static uint32_t dm2_v1_boot_g1_indexed_pixel_hash(const uint8_t *pixels,

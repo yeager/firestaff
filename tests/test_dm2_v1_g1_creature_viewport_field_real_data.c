@@ -90,12 +90,19 @@ int main(void)
                     const uint8_t *raw_record =
                         dm2_v1_dungeon_get_thing_record(
                             dungeon, material->object_id, NULL, NULL, NULL);
+                    const DM2_AIDefinition *ai =
+                        dm2_v1_creature_ai_spec(material->creature_type);
 
                     CHECK("runtime F9 material retains the exact DB4 cursor",
                           raw_record &&
                           material->info_slot == raw_record[5] &&
                           material->animation_sequence == rd16(raw_record + 8) &&
                           material->animation_info == rd16(raw_record + 10));
+                    CHECK("runtime F9 material retains the source 0958 owner",
+                          ai && ((ai->w0AIFlags & DM2_AIFLAG_STATIC) != 0u
+                              ? material->animation_0958_valid &&
+                                !material->animation_0958_blocked_caii
+                              : material->animation_0958_blocked_caii));
                 }
             }
 

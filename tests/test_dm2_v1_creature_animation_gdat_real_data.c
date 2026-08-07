@@ -107,15 +107,16 @@ int main(void)
             }
         }
         /* The mounted PC-English profile is a fixed source corpus, not a
-         * generic fixture: its 74 CREATURES word@0x05 owners contain 73
-         * non-identity mappings. Types 54 and 127 have no source owner in
-         * this profile and must remain unavailable rather than falling back
-         * to type-as-row. */
+         * generic fixture: all 256 CREATURES keys are source-owned after
+         * SKProject's missing-field default to row zero, and 255 are
+         * non-identity mappings. Types 54 and 127 exercise that authenticated
+         * default; they must select row zero rather than type-as-row. */
         {
             uint16_t row = 0u;
-            if (mapped_types != 74 || remapped_types != 73 ||
-                dm2_v1_creature_ai_row(54, &row) != 0 ||
-                dm2_v1_creature_ai_row(127, &row) != 0) {
+            if (mapped_types != DM2_CREATURE_TYPE_COUNT ||
+                remapped_types != DM2_CREATURE_TYPE_COUNT - 1 ||
+                dm2_v1_creature_ai_row(54, &row) != 1 || row != 0u ||
+                dm2_v1_creature_ai_row(127, &row) != 1 || row != 0u) {
                 fprintf(stderr,
                         "FAIL: real PC-DOS AI owner census changed "
                         "(mapped=%d remapped=%d type54=%d type127=%d)\n",
