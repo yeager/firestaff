@@ -4366,6 +4366,11 @@ list(REMOVE_ITEM M10_SOURCES
 # adding an inert translation unit to M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1446_f1465_local_ownership_pc34_compat.c")
+# G0251--G0300 is an evidence-only map of source-owned dungeon globals and
+# fail-closed gaps.  It creates no runtime state; its direct audit keeps the
+# ReDMCSB ownership record out of the M10 production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0251_g0300_dungeon_state_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
