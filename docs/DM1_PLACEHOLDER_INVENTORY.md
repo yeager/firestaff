@@ -1,4 +1,4 @@
-# DM1 placeholder and synthetic-data inventory (2026-08-06)
+# DM1 placeholder and synthetic-data inventory (2026-08-07)
 
 Systematic scan of every DM1 source path (`src/dm1/`, `include/dm1_*`,
 `src/engine/*.c` uses of DM1 APIs) for placeholders, synthetic
@@ -43,6 +43,14 @@ is unavailable, authenticated DM1 leaves text undrawn instead of using the
 host 5x7 font. These are production-path checks, not conclusions drawn from
 the synthetic contract fixtures.
 
+2026-08-07 creature-timeline recheck: the historic M11 C04 map-scan
+simulator is now unreachable for an authenticated `sourceId == "dm1"`
+session. PC34 world loading enters the ReDMCSB `F0882 → F0195` route, which
+activates the decoded groups and schedules their C37 behavior events before
+M11 ticks. M10's F0190/F0209 dispatcher owns subsequent behavior. The old
+scan remains only for isolated diagnostic worlds, where it cannot manufacture
+movement or attacks in a real DM1 session.
+
 Every candidate that survived the scan is one of:
 
 - **Receipt/policy prose** — `suppressSyntheticFallback`,
@@ -79,6 +87,11 @@ Every candidate that survived the scan is one of:
   refuse to draw when it is missing. "host_render" here means
   "M11 host renderer for this feature", not "host-invented pixels".
 - **Diagnostic-only overlay** — see combat log below.
+- **Diagnostic-only creature simulation** — M11's old C04 map scan survives
+  for intentionally isolated probe worlds, but `m11_process_creature_ticks`
+  returns before bootstrap or movement processing for the authenticated DM1
+  source identity. The production route is the source-owned F0195/F0190/
+  F0209 timeline, not M11-created creature behavior.
 - **Comment-only mentions** — `wound_probability_index_to_mask
   _pc34_compat.c:202` reserves a bit "as a placeholder for future
   use" (a bitfield reservation, not a rendering placeholder);
