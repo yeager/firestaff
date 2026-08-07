@@ -29815,6 +29815,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   reported only after the complete source half-step gate admits
   `glbIsPlayerMoving`; a walk-delay value alone no longer claims that a delayed
   pose was requested. The live pose/countdown owner remains open.
+  **2026-08-07 global-state correction:** `DM2_CALC_PLAYER_WALK_DELAY` now
+  receives `savegames1.b_04` once from the execution request, matching the
+  SKProject global Aura-of-Speed owner; a per-hero compatibility byte can no
+  longer fabricate a party-wide speed state. Live c_hero/session binding and
+  countdown publication remain open.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an

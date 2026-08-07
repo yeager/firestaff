@@ -138,7 +138,9 @@ static void test_calc_party_walk_delay(void)
 
     heroes[0].bodyflag = 0;
     heroes[0].savegames1_b_04 = 1;
-    assert(dm2_v1_calc_party_walk_delay(heroes, 2) == 1);
+    assert(dm2_v1_calc_party_walk_delay(heroes, 2) == 2);
+    heroes[0].savegames1_b_04 = 0;
+    assert(dm2_v1_calc_party_walk_delay_with_aura(heroes, 2, 1) == 1);
 
     printf("  PASS: calc_party_walk_delay\n");
 }
@@ -241,6 +243,15 @@ static void test_perform_move_exec_accepted(void)
     assert(exec_receipt.delayed_pose_unbound == 0);
     assert(exec_receipt.half_step_entered == 0);
     assert(exec_receipt.half_step_countdown == 0);
+
+    /* SKProject's Aura-of-Speed flag is global savegames1 state; a stale
+     * per-hero compatibility byte must not control the source delay. */
+    req.savegames1_b_04 = 1;
+    r = dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &exec_receipt);
+    assert(r == 1);
+    assert(exec_receipt.walk_delay == 1);
+    assert(exec_receipt.half_step_entered == 0);
+    req.savegames1_b_04 = 0;
 
     /* The source only enters the delayed pose after the complete
      * skgame.cpp:2364-2372 gate. */

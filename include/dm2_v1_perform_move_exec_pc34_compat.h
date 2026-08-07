@@ -105,6 +105,8 @@ typedef struct {
     uint16_t player_weight;
     uint8_t bodyflag;
     int8_t walkspeed;
+    /* Retained for ABI/source-test compatibility only. The source owner is
+     * DM2_V1_PerformMoveExecRequest::savegames1_b_04 below. */
     uint8_t savegames1_b_04;
 } DM2_V1_HeroMoveState;
 
@@ -123,6 +125,10 @@ typedef struct {
     DM2_V1_PerformMoveReceipt plan;
     int hero_count;
     DM2_V1_HeroMoveState heroes[4];
+    /* SKProject stores this in the global savegames1 block, not in c_hero.
+     * DM2_CALC_PLAYER_WALK_DELAY returns 1 for every living hero while the
+     * source Aura-of-Speed flag is active. */
+    uint8_t savegames1_b_04;
     int is_creature_displacement;
     int outdoor;
     uint32_t game_tick;
@@ -185,6 +191,13 @@ int dm2_v1_perform_move_exec(
 int dm2_v1_calc_party_walk_delay(
     const DM2_V1_HeroMoveState *heroes,
     int hero_count);
+
+/* Same source loop with the global savegames1.b_04/Aura-of-Speed value
+ * supplied by the owning session rather than copied into each hero. */
+int dm2_v1_calc_party_walk_delay_with_aura(
+    const DM2_V1_HeroMoveState *heroes,
+    int hero_count,
+    uint8_t savegames1_b_04);
 
 /* Drain stamina from all living heroes proportional to
  * encumbrance.  Returns the number of heroes drained.

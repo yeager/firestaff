@@ -31,6 +31,14 @@ int dm2_v1_calc_party_walk_delay(
     const DM2_V1_HeroMoveState *heroes,
     int hero_count)
 {
+    return dm2_v1_calc_party_walk_delay_with_aura(heroes, hero_count, 0u);
+}
+
+int dm2_v1_calc_party_walk_delay_with_aura(
+    const DM2_V1_HeroMoveState *heroes,
+    int hero_count,
+    uint8_t savegames1_b_04)
+{
     int max_delay = 1;
 
     if (!heroes || hero_count <= 0) return 1;
@@ -41,12 +49,12 @@ int dm2_v1_calc_party_walk_delay(
         if (!heroes[i].alive) continue;
         /* SKProject c_querydb.cpp:2175 DM2_CALC_PLAYER_WALK_DELAY.
          * Keep this compatibility receipt on the single source-locked
-         * implementation; the old local approximation used the wrong load
-         * threshold and bodyflag bit. */
+         * implementation; savegames1.b_04 is supplied once by the caller as
+         * the global Aura-of-Speed state, not read from this hero snapshot. */
         if (dm2_v1_skproject_calc_player_walk_delay(
                 heroes[i].max_load, heroes[i].player_weight,
                 heroes[i].bodyflag, heroes[i].walkspeed,
-                heroes[i].savegames1_b_04, &delay, NULL) &&
+                savegames1_b_04, &delay, NULL) &&
             delay > max_delay) {
             max_delay = (int)delay;
         }
@@ -155,8 +163,8 @@ int dm2_v1_perform_move_exec(
 
     /* Walk delay: max across all living heroes.
      * skmove.cpp:245-263 */
-    int walk_delay = dm2_v1_calc_party_walk_delay(
-        request->heroes, request->hero_count);
+    int walk_delay = dm2_v1_calc_party_walk_delay_with_aura(
+        request->heroes, request->hero_count, request->savegames1_b_04);
     receipt->walk_delay = walk_delay;
 
     /* skgame.cpp:2364-2372 derives a half-step countdown from the source

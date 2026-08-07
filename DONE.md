@@ -62,6 +62,15 @@
   remain stable. Dynamic CAII ownership and live runtime publication remain
   intentionally open in `TODO.md`.
 
+# DM2 movement global Aura-of-Speed owner (2026-08-07)
+
+- ✅ `DM2_CALC_PLAYER_WALK_DELAY` now receives the source-global
+  `savegames1.b_04` through `DM2_V1_PerformMoveExecRequest`; it is no longer
+  read from each hero snapshot.
+- ✅ Regression coverage verifies the global flag forces delay `1` and cannot
+  be replaced by a stale per-hero compatibility byte. Live c_hero/session
+  binding and delayed-pose publication remain open in `TODO.md`.
+
 - ✅ M12 now materializes every explicitly selected CSB version into its own
   authenticated runtime cache, not only archive-backed selections. This keeps
   a directory-backed Atari ST, Amiga or PC choice from silently booting the
