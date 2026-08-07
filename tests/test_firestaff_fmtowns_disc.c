@@ -16,6 +16,7 @@ static int test_cue_parse(void) {
         "    INDEX 01 02:28:50\n";
 
     uint32_t starts[4] = {0};
+    char image_member[64];
     int count = fmtowns_cue_parse_track_starts(cue, strlen(cue), starts, 4);
     if (count < 3) {
         fprintf(stderr, "FAIL: expected 3 tracks, got %d\n", count);
@@ -35,6 +36,17 @@ static int test_cue_parse(void) {
         fprintf(stderr, "FAIL: track 3 should start at 11150, got %u\n", starts[3]);
         return 1;
     }
+    if (!fmtowns_cue_parse_image_member(cue, strlen(cue), image_member,
+                                        sizeof(image_member)) ||
+        strcmp(image_member, "test.bin") != 0) {
+        fprintf(stderr, "FAIL: CUE image member was not retained\n");
+        return 1;
+    }
+    if (fmtowns_cue_parse_image_member("FILE unquoted.bin BINARY\n", 25u,
+                                       image_member, sizeof(image_member))) {
+        fprintf(stderr, "FAIL: malformed CUE image member was accepted\n");
+        return 1;
+    }
     printf("OK: CUE parse\n");
     return 0;
 }
@@ -48,10 +60,18 @@ static int test_dm2_fmtowns_probe(void) {
 
     uint8_t *img = NULL;
     size_t img_size = 0;
-    if (firestaff_zip_extract_by_suffix(zip, ".img", &img, &img_size) != 0) {
-        fprintf(stderr, "FAIL: could not extract .img\n");
+    uint8_t *cue = NULL;
+    size_t cue_size = 0;
+    char image_member[512];
+    if (firestaff_zip_extract_by_suffix(zip, ".cue", &cue, &cue_size) != 0 ||
+        !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                        image_member, sizeof(image_member)) ||
+        firestaff_zip_extract_by_name(zip, image_member, &img, &img_size) != 0) {
+        fprintf(stderr, "FAIL: could not extract the CUE-selected image\n");
+        free(cue);
         return 1;
     }
+    free(cue);
 
     FmtownsDiscProbeResult result;
     if (fmtowns_disc_probe(img, img_size, FMTOWNS_SECTOR_2352, &result) != 0) {

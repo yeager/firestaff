@@ -2711,7 +2711,11 @@ level or consumer bindings.
   path to the existing RAM-only boot owners; DOS passes the directory holding
   its authenticated loose pair. The real-media regressions cover both direct
   archive and mixed-root scans. This is selection identity only, not a claim
-  of complete platform gameplay parity.
+  of complete platform gameplay parity. **2026-08-07 CUE ownership update:**
+  FM Towns scanning and DM2 boot now read the image member named by the
+  original CUE `FILE` declaration, rather than taking the first ZIP member
+  ending in `.img`; native P3 keyboard input, GAME_LOAD and save/resume remain
+  separate capture-gated work.
   **2026-08-06 lifetime update:** M11 shutdown now releases the selected
   FM Towns TITLE/SWOOSH RAM member before its boot profile releases the
   in-memory HME-242 image. Relaunch cannot retain a stale animation buffer;

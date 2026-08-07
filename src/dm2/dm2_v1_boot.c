@@ -1129,6 +1129,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
         "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip";
     char zip_path[512];
     char nested_zip_path[512];
+    char image_member[512];
     uint8_t *cue_data = NULL;
     size_t cue_size = 0;
     uint8_t *img_data = NULL;
@@ -1199,11 +1200,19 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     uint32_t track_starts[9] = {0};
     int track_count = fmtowns_cue_parse_track_starts(
         (const char *)cue_data, cue_size, track_starts, 9);
+    if (!fmtowns_cue_parse_image_member((const char *)cue_data, cue_size,
+                                        image_member, sizeof(image_member))) {
+        free(cue_data);
+        return;
+    }
     free(cue_data);
     if (track_count < 3) return;
 
-    if (firestaff_zip_extract_by_suffix(zip_path, ".img",
-                                        &img_data, &img_size) != 0)
+    /* The CUE sheet, rather than ZIP member order or a suffix, owns the
+     * selected MODE1/2352 image.  This keeps a multi-image archive from
+     * silently binding another disc while still retaining every byte in RAM. */
+    if (firestaff_zip_extract_by_name(zip_path, image_member,
+                                      &img_data, &img_size) != 0)
         return;
 
     strncpy(profile->fmtowns_zip_path, zip_path,

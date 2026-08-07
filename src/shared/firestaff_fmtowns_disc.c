@@ -240,3 +240,48 @@ int fmtowns_cue_parse_track_starts(const char *cue, size_t cue_size,
     }
     return count;
 }
+
+int fmtowns_cue_parse_image_member(const char *cue, size_t cue_size,
+                                   char *out_name, size_t out_name_size)
+{
+    const char *cursor = cue;
+    const char *end = cue ? cue + cue_size : NULL;
+
+    if (!out_name || out_name_size == 0u) return 0;
+    out_name[0] = '\0';
+    if (!cue || cue_size == 0u) return 0;
+
+    while (cursor < end) {
+        const char *line = cursor;
+        const char *token;
+        const char *name_begin;
+        const char *name_end;
+
+        while (cursor < end && *cursor != '\n' && *cursor != '\r') ++cursor;
+        while (line < cursor && (*line == ' ' || *line == '\t')) ++line;
+        if ((size_t)(cursor - line) < 6u ||
+            strncasecmp(line, "FILE", 4u) != 0 ||
+            (line[4] != ' ' && line[4] != '\t')) {
+            while (cursor < end && (*cursor == '\n' || *cursor == '\r')) ++cursor;
+            continue;
+        }
+        token = line + 4;
+        while (token < cursor && (*token == ' ' || *token == '\t')) ++token;
+        if (token >= cursor || *token != '"') return 0;
+        name_begin = ++token;
+        while (token < cursor && *token != '"') ++token;
+        if (token >= cursor || token == name_begin ||
+            (size_t)(token - name_begin) >= out_name_size) return 0;
+        name_end = token++;
+        while (token < cursor && (*token == ' ' || *token == '\t')) ++token;
+        if ((size_t)(cursor - token) < 6u ||
+            strncasecmp(token, "BINARY", 6u) != 0 ||
+            (token + 6u < cursor && token[6] != ' ' && token[6] != '\t')) {
+            return 0;
+        }
+        memcpy(out_name, name_begin, (size_t)(name_end - name_begin));
+        out_name[name_end - name_begin] = '\0';
+        return 1;
+    }
+    return 0;
+}

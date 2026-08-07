@@ -59514,3 +59514,13 @@ the launcher handoff passes 33 checks and the real save corpus passes 127.
   including seven direct-colour source banks, plus the DGN material raster and
   face/material retail corpus tests. Verification used the external Nexus data
   root with an isolated `HOME`; all focused tests passed.
+
+# ✅ 2026-08-07 DM2 FM Towns CUE-owned image selection
+
+The M12 FM Towns scanner and the DM2 boot reader now take the disc image from
+the original CUE sheet's quoted `FILE` member, not from the first ZIP entry
+whose name ends in `.img`. The selected HME-242 archive remains entirely
+RAM-owned. The shared CUE parser has unit coverage for valid and malformed
+member declarations; the real HME-242 probe plus M12 and M11 startup/animation
+tests pass against the selected Japanese disc and original PC-English
+companion.

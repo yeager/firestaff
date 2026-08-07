@@ -72,6 +72,13 @@ int fmtowns_cdda_extract(const uint8_t *image, size_t image_size,
 int fmtowns_cue_parse_track_starts(const char *cue, size_t cue_size,
                                    uint32_t *track_starts, int max_tracks);
 
+/* Return the first FILE member named by a CUE sheet.  The returned name is
+ * the original disc-image member, not a host-selected extension match.  This
+ * lets archive readers follow the source CUE when a ZIP has more than one
+ * .img or .bin member.  Returns 1 on success, 0 for malformed input. */
+int fmtowns_cue_parse_image_member(const char *cue, size_t cue_size,
+                                   char *out_name, size_t out_name_size);
+
 #ifdef __cplusplus
 }
 #endif

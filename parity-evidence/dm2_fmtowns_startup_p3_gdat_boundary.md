@@ -4,6 +4,11 @@ Source medium: the user-supplied HME-242 FM Towns disc, read through
 `Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip` directly into process memory.
 No member named below is unpacked or written to disk.
 
+The archive reader first reads the original CUE sheet and opens the exact
+quoted `FILE` member it names. It does not choose the first ZIP member by
+`.img` suffix, so a multi-image archive cannot silently substitute a sibling
+disc image.
+
 This records the evidence boundary used by the DM2 FM Towns startup path. It
 uses the same *method* as the DM1 FM Towns evidence files—authenticated media,
 bounded executable facts, original source coordinates, and a real-media

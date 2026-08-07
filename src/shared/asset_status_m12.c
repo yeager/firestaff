@@ -799,17 +799,24 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
         for (candidateIndex = 0U; candidateIndex < candidateCount; ++candidateIndex) {
             uint8_t* image = NULL;
             size_t imageSize = 0U;
+            uint8_t* cue = NULL;
+            size_t cueSize = 0U;
             uint8_t* graphics = NULL;
             size_t graphicsSize = 0U;
             uint8_t* dungeon = NULL;
             size_t dungeonSize = 0U;
+            char imageMember[512];
             char graphicsMd5[33];
             char dungeonMd5[33];
             DM2_V1_FmtownsDiscReceipt receipt;
             int accepted = 0;
 
-            if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".img",
-                                                &image, &imageSize) != 0 ||
+            if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".cue",
+                                                &cue, &cueSize) != 0 ||
+                !fmtowns_cue_parse_image_member((const char*)cue, cueSize,
+                                                imageMember, sizeof(imageMember)) ||
+                firestaff_zip_extract_by_name(candidate[candidateIndex], imageMember,
+                                               &image, &imageSize) != 0 ||
                 dm2_v1_fmtowns_disc_probe(image, imageSize, &receipt) != 0 ||
                 dm2_v1_fmtowns_disc_extract_alloc(image, imageSize,
                                                    &receipt.graphics_dat,
@@ -818,10 +825,12 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
                                                    &receipt.dungeon_dat,
                                                    &dungeon, &dungeonSize) != 0) {
                 free(image);
+                free(cue);
                 free(graphics);
                 free(dungeon);
                 continue;
             }
+            free(cue);
             m12_bytes_md5_hex(graphics, graphicsSize, graphicsMd5);
             m12_bytes_md5_hex(dungeon, dungeonSize, dungeonMd5);
             accepted = strcmp(graphicsMd5,
