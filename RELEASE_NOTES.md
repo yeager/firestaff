@@ -10,18 +10,18 @@
 
 ## Added
 
-- DM1 FM Towns end-to-end menu text pipeline: startup receipt loads asset 557 via M11_GameView_LoadDm1FmtownsMenuFontIfAvailable, then M11_GameView_RenderDm1FmtownsMenu composes region lookup + panel fill + label walk + glyph rasterisation into the action-menu path. English DYNAMENU labels paint byte-exact against EDM.EXP; Japanese sessions keep the blank-text policy pending a JDM-owned Shift-JIS font.
-- DM1 FM Towns menu font rasteriser round-trip verified against real EDM.EXP asset 557 (6 rows x 128 ASCII glyphs, MSB-first, CHAR_X_SIZE=5 body right-aligned in bits 4..0).
-- DM1 FM Towns region table block 1 (regions 1-17) exposed as byte-verified constants plus a generic lookup API; fails closed for the 22 blocks still to port.
-- DM1 FM Towns icon geometry constants recovered from EDM.EXP (ICON_SIZE=256, ICON_X_SIZE=16, ICON_Y_SIZE=16, SCR_X_SIZE=320) with real-data round-trip test.
-- DM1 FM Towns icon category threshold table (7 buckets x 32 slots = 224 icons) plus classify API mirroring LOAD_ICON's category-select loop exactly.
-- DM1 FM Towns OICON descriptor kind table (224 entries, 77 THING and 147 generic) driving DRAW_ICN_BUTTON dispatch decisions.
+- DM1 FM Towns end-to-end menu text pipeline: `M11_GameView_LoadDm1FmtownsMenuFontIfAvailable` loads asset 557 and `M11_GameView_RenderDm1FmtownsMenu` composes region lookup, panel fill, label walk and glyph rasterisation into the action-menu path. English DYNAMENU labels paint byte-exact against EDM.EXP; Japanese sessions keep the blank-text policy pending a JDM-owned Shift-JIS font.
+- DM1 FM Towns menu font rasteriser `dm1_v1_fmtowns_font_rasterise_string_pc34` round-trip verified against real EDM.EXP asset 557 (6 rows x 128 ASCII glyphs, MSB-first, CHAR_X_SIZE=5 body right-aligned).
+- DM1 FM Towns complete 23-block region registry (994 records) exposed as `dm1_v1_fmtowns_region_blocks` + `dm1_v1_fmtowns_region_records`; `dm1_v1_fmtowns_region_lookup_pc34` covers every source-verified region.
+- DM1 FM Towns icon geometry constants `DM1_V1_FMTOWNS_ICON_SIZE_BYTES` (=256), `ICON_X_SIZE` (=16), `ICON_Y_SIZE` (=16), `SCR_X_SIZE` (=320) recovered from EDM.EXP with real-data round-trip test.
+- DM1 FM Towns icon category threshold table `dm1_v1_fmtowns_icon_category_thresholds` (7 buckets x 32 slots = 224 icons) plus `dm1_v1_fmtowns_icon_classify_pc34` mirroring LOAD_ICON's category-select loop.
+- DM1 FM Towns complete 224 x 6 OICON descriptor table `dm1_v1_fmtowns_oicon_descriptor` (1344 bytes) driving `DRAW_ICN_BUTTON` dispatch decisions.
 
 ## Fixed
 
-- CI Windows `-Werror=unused-function` on external_archive_entry_may_match_md5(_list) - the helpers are only called from the POSIX-only external-archive scan block; guard the definitions with #ifndef _WIN32 too.
-- CI macOS undefined _DM1_V1_MirrorCandidateIconRefresh_* and _dm1_v1_mirror_candidate_close_button_* symbols in test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat - target now lists the icon_refresh and close_button sibling sources it calls.
-- CI Linux undefined csb_v1_build_csb_save_buffer in test_m12_quick_resume_gate - same fix as test_csb_v1_m11_startup_resume_gate (the builder is REMOVE_ITEM'd from firestaff_m10; add the source directly).
+- CI Windows `-Werror=unused-function` on `external_archive_entry_may_match_md5` (and `_list`) - the helpers are only called from the POSIX-only external-archive scan block; guard the definitions with `#ifndef _WIN32` too.
+- CI macOS undefined `_DM1_V1_MirrorCandidateIconRefresh_DrawChangedObjectIconsPc34Compat` symbol in `test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat` - target now lists the `icon_refresh` and `close_button` sibling sources it calls.
+- CI Linux undefined `csb_v1_build_csb_save_buffer` in `test_m12_quick_resume_gate` - same fix as `test_csb_v1_m11_startup_resume_gate` (the builder is REMOVE_ITEM'd from firestaff_m10; add the source directly).
 
 # Firestaff v3.0.293
 
