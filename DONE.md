@@ -58929,3 +58929,11 @@ possession or hero-stat mutation was enabled.
   writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
   HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production
   semantic admission therefore remains fail-closed.
+# DM2 half-step movement UseAltic parity (2026-08-07)
+
+Corrected `dm2_v1_source_half_step_should_enter` against SKProject
+`v4/skgame.cpp:2364-2372` with `UseAltic=1`: both forward and backward
+half-step branches now require `bEnableDoubleStepMove`, while the independent
+`glbTableToMove` branch remains admitted. Added regression coverage for the
+flag-disabled forward/backward cases, stairs, and table-to-move escape.
+The source-owned delayed pose is still not published to the live viewport.

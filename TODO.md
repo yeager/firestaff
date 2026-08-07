@@ -29699,6 +29699,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   stairs, or an active table-to-move. It records `walk_delay >> 1` only when
   those source inputs are explicitly supplied; it still does not create a
   viewport offset or publish a live delayed pose without the original owner.
+  **2026-08-07 UseAltic parity correction:** the half-step gate now requires
+  `bEnableDoubleStepMove` for both forward (`xx == 3`) and backward (`xx == 5`)
+  movement, while retaining the independent `glbTableToMove` escape. The
+  previous forward-unconditional branch could enter a delayed pose with the
+  source flag disabled; the live pose/countdown owner remains open.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an

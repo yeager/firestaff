@@ -67,9 +67,14 @@ int dm2_v1_source_half_step_should_enter(
      * only while no prior movement is active, and excludes backward stair
      * movement when double-step mode is disabled. */
     if (walk_delay <= 1 || glb_is_player_moving != 0) return 0;
-    if (move_command == 3 || table_to_move_present) return 1;
-    if (move_command == 5 &&
-        (double_step_enabled != 0 || current_tile_is_stairs == 0)) {
+    /* SKProject v4/skgame.cpp:2364-2367 (UseAltic=1) gates both the
+     * forward and backward half-step branches on bEnableDoubleStepMove.
+     * The table-to-move escape remains independent, exactly as in the
+     * source expression. */
+    if (table_to_move_present) return 1;
+    if (move_command == 3 && double_step_enabled != 0) return 1;
+    if (move_command == 5 && double_step_enabled != 0 &&
+        current_tile_is_stairs == 0) {
         return 1;
     }
     return 0;

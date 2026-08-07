@@ -146,11 +146,13 @@ static void test_calc_party_walk_delay(void)
 static void test_source_half_step_gate(void)
 {
     assert(dm2_v1_source_half_step_should_enter(1, 0, 3, 0, 0, 0) == 0);
-    assert(dm2_v1_source_half_step_should_enter(4, 0, 3, 0, 0, 0) == 1);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 3, 0, 0, 0) == 0);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 3, 1, 0, 0) == 1);
     assert(dm2_v1_source_half_step_should_enter(4, 1, 3, 0, 0, 0) == 0);
     assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 0, 1, 0) == 0);
-    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 1, 1, 0) == 1);
-    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 0, 0, 0) == 1);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 1, 1, 0) == 0);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 1, 0, 0) == 1);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 0, 0, 0) == 0);
     assert(dm2_v1_source_half_step_should_enter(4, 0, 0, 0, 1, 1) == 1);
     printf("  PASS: source_half_step_gate\n");
 }
