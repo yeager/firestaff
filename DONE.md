@@ -59015,7 +59015,9 @@ to `FINISHED_REAL`. PBR, AI and generic review labels remain blocked even with
 matching PNG dimensions. The local PBR/GPT manifest now evaluates to
 `SYNTHETIC_PLACEHOLDER` with zero real slots; focused material, receipt and
 runtime-admission tests cover both source-derived promotion and the PBR
-negative case.
+negative case. The mounted local-art regression now also opens the actual
+PBR/GPT manifest when present and asserts `SYNTHETIC_PLACEHOLDER`, zero real
+slots, and no V2.2 runtime admission instead of silently skipping it.
 
 # DM1 V2.2 PC34 source-art archive intake (2026-08-07)
 

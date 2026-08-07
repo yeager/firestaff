@@ -160,17 +160,47 @@ int main(void) {
         return 0;
     }
 
-    if (!file_exists(manifest_path) || !file_exists(cache_path)) {
-        puts("dm1_v22_real_asset_material_gate_pc34: SKIP original DM1 V2.2 "
-             "manifest/cache not installed");
+    if (!file_exists(manifest_path)) {
+        puts("dm1_v22_real_asset_material_gate_pc34: SKIP no DM1 V2.2 manifest");
         return 0;
     }
 
     memset(&runtime_gate, 0, sizeof(runtime_gate));
     if (!dm1_v22_real_art_runtime_gate_refresh_pc34(data_dir, &runtime_gate) ||
         !runtime_gate.admitted) {
-        puts("dm1_v22_real_asset_material_gate_pc34: SKIP manifest is not "
-             "operator-reviewed FINISHED_REAL original art");
+        int total = 0;
+        int real;
+        int slot;
+
+        manifest = read_text_file(manifest_path, &manifest_len);
+        if (!manifest || !strstr(manifest, "\"generator\": \"pbr_hero\"") ||
+            !strstr(manifest, "\"generator\": \"gpt-image-2\"")) {
+            free(manifest);
+            puts("dm1_v22_real_asset_material_gate_pc34: SKIP manifest is not "
+                 "a known local PBR/GPT pack");
+            return 0;
+        }
+
+        CHECK(runtime_gate.material_finished_real == 0);
+        CHECK(runtime_gate.receipt_promoted == 0);
+        CHECK(runtime_gate.admitted == 0);
+        CHECK(dm1_v22_famg_gate() == DM1_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER);
+        real = dm1_v22_famg_real_count(&total);
+        CHECK(real == 0);
+        CHECK(total == (int)DM1_V22_FAMG_MATERIAL_COUNT);
+        for (slot = 0; slot < DM1_V22_FAMG_MATERIAL_COUNT; ++slot) {
+            CHECK(dm1_v22_famg_classify_slot((DM1_V22_FamgSlot)slot) ==
+                  DM1_V22_FAMG_CLASS_PLACEHOLDER);
+        }
+        free(manifest);
+        if (failures) return 1;
+        puts("dm1_v22_real_asset_material_gate_pc34: PASS local PBR/GPT pack blocked");
+        return 0;
+    }
+
+    if (!file_exists(cache_path)) {
+        puts("dm1_v22_real_asset_material_gate_pc34: SKIP source-derived "
+             "manifest has no V2.2 cache");
         return 0;
     }
 
