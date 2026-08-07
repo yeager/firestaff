@@ -8,13 +8,10 @@
 static const char* pc34_dungeon_path(void)
 {
     static char path[2048];
-    const char* configured = getenv("DM1_PC34_DUNGEON_DAT");
-    const char* home;
+    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
 
-    if (configured && configured[0]) return configured;
-    home = getenv("HOME");
-    if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
+    if (!root || !root[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
     return path;
 }
 
@@ -27,20 +24,20 @@ int main(void)
     M11_GameViewState state;
     int mapIndex;
 
-    if (!path) return 0;
+    if (!path) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
+    }
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&things, 0, sizeof(things));
     memset(&world, 0, sizeof(world));
     if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &dungeon) ||
         !F0502_DUNGEON_LoadTileData_Compat(path, &dungeon) ||
         !F0504_DUNGEON_LoadThingData_Compat(path, &dungeon, &things)) {
-        if (getenv("DM1_PC34_DUNGEON_DAT")) {
-            fprintf(stderr, "configured PC34 DUNGEON.DAT failed to load\n");
-            return 1;
-        }
+        fprintf(stderr, "configured PC34 DUNGEON.DAT failed to load\n");
         F0504_DUNGEON_FreeThingData_Compat(&things);
         F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
-        return 0;
+        return 1;
     }
 
     world.dungeon = &dungeon;
