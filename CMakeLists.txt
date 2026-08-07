@@ -6273,6 +6273,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_fmtowns_cross_game_shared_ranges.c
     src/dm2/dm2_v1_fmtowns_graphics_dat_ext_walker.c
     src/shared/fmtowns_tsugaru_bridge.c
+    src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
     src/shared/graphics_dat_snd3_loader_v1.c
@@ -56380,6 +56381,13 @@ add_executable(test_dm2_v1_fmtowns_graphics_dat_ext_walker
 )
 target_include_directories(test_dm2_v1_fmtowns_graphics_dat_ext_walker PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_fmtowns_graphics_dat_ext_walker COMMAND test_dm2_v1_fmtowns_graphics_dat_ext_walker)
+
+add_executable(test_dm1_v1_dos_pc34_real_data_manifest
+    tests/test_dm1_v1_dos_pc34_real_data_manifest.c
+    src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
+)
+target_include_directories(test_dm1_v1_dos_pc34_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_dos_pc34_real_data_manifest COMMAND test_dm1_v1_dos_pc34_real_data_manifest)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
