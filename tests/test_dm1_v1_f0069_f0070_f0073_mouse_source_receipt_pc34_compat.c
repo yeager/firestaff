@@ -46,7 +46,8 @@ static int planar_c028_to_indexed(const DM1_V1_GFX_BitmapPc34 *bitmap,
 
 int main(void)
 {
-    const char *graphicsPath = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
+    const char *dataRoot = getenv("FIRESTAFF_DM1_DATA_DIR");
+    char graphicsPath[1024];
     DM1_V1_F0069F0070RuntimeInputPc34 input;
     DM1_V1_F0069F0070F0073ReceiptPc34 receipt;
     uint8_t indexed[DM1_V1_F0070_C028_WIDTH_PC34 * DM1_V1_F0070_C028_HEIGHT_PC34];
@@ -63,7 +64,11 @@ int main(void)
               receipt.suppressSyntheticUi && receipt.f0073SyntheticScreenAreaSuppressed,
           "missing authenticated C028 fails closed without synthetic UI");
 
-    if (graphicsPath && graphicsPath[0] != '\0') {
+    graphicsPath[0] = '\0';
+    if (dataRoot && dataRoot[0] != '\0') {
+        snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", dataRoot);
+    }
+    if (graphicsPath[0] != '\0') {
         DM1_V1_GFX_LoaderStatePc34 loader;
         DM1_V1_GFX_BitmapPc34 bitmap;
         DM1_V1_GFX_InitPc34Compat(&loader);
