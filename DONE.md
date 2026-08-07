@@ -59439,3 +59439,20 @@ or palette. The obsolete synthetic `D2RS` quick-resume fixture is removed;
 the focused `test_dm2_v1_save_load_real_data` gate remains the read-only owner
 of supplied `SKSave` evidence. Verified against the mounted PC-DOS corpus:
 the launcher handoff passes 33 checks and the real save corpus passes 127.
+
+# Nexus DMDF/MNS real TEXT material corpus (2026-08-07)
+
+- ✅ Extended `test_nexus_v1_mns` to consume the authenticated external Nexus
+  corpus through the production DMDF `TEXT` descriptor and BGR555 material-bank
+  route. All 30 retail MNS models retain matching descriptor counts; the corpus
+  decodes 815 source textures, with 23 indexed material banks and 587 BGR555
+  surfaces verified.
+- ✅ The two static Saturn material sources, `SN_FLOOR.MNS` and `SN_WALL.MNS`,
+  both decode completely. Seven creature banks remain explicit source-only
+  descriptor receipts because their colour cardinality exceeds the current
+  indexed host bank; no lossy palette or placeholder surface was introduced.
+- ✅ Verification used
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus` with
+  `HOME=/tmp/firestaff-nexus-no-home`; `test_nexus_v1_mns` passed, including
+  real OBAKE MOTN sampling and 75 transformed source vertices. VDP1/VDP2
+  placement and final viewport presentation remain capture-gated.

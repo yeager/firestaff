@@ -1,4 +1,5 @@
 #include "nexus_v1_mns.h"
+#include "nexus_v1_dmdf_model.h"
 #include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,6 +103,9 @@ static int test_all_mns(void) {
     const char *dirpath = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     char home_path[512];
     int decoded = 0, rendered = 0, fail = 0;
+    int text_material_models = 0, text_material_surfaces = 0;
+    int static_material_models = 0;
+    int text_material_blocked_models = 0;
     int scorpion_joints = 0, rockpile_joints = 0;
     int vexirk_textures = 0, d_gold_tables = 0;
 
@@ -119,6 +123,8 @@ static int test_all_mns(void) {
         uint8_t *data;
         int size = 0;
         Nexus_V1_MnsDecodeResult result;
+        Nexus_DMDFTextureSection text_section;
+        Nexus_DMDFMaterialBank text_bank;
 
         snprintf(path, sizeof(path), "%s/%s", dirpath, name);
         data = load_file(path, &size);
@@ -141,6 +147,50 @@ static int test_all_mns(void) {
             continue;
         }
 
+        /* The MNS decoder and the production DMDF TEXT-material route must
+         * agree on the same retail bytes. This exercises the real descriptor
+         * geometry and BGR555 material-bank consumer; it does not authorize
+         * VDP1 placement or host raster presentation. */
+        memset(&text_section, 0, sizeof(text_section));
+        memset(&text_bank, 0, sizeof(text_bank));
+        {
+            int text_parsed = nexus_v1_dmdf_parse_texture_section(
+                data, size, &text_section);
+            int text_decoded = text_parsed &&
+                nexus_v1_dmdf_decode_text_material_bank(data, size, &text_bank);
+            int static_material_source =
+                strcmp(name, "SN_FLOOR.MNS") == 0 ||
+                strcmp(name, "SN_WALL.MNS") == 0;
+
+            if (!text_parsed || !text_section.valid ||
+                text_section.descriptor_count != (uint32_t)result.texture_count) {
+                printf("  FAIL %s: real TEXT descriptor route rejected "
+                       "parse=%d descriptors=%u mns_textures=%d\n",
+                       name, text_parsed, text_section.descriptor_count,
+                       result.texture_count);
+                nexus_v1_dmdf_free_material_bank(&text_bank);
+                free(data);
+                ++fail;
+                continue;
+            }
+            if (text_decoded && text_bank.valid &&
+                text_bank.surface_count == (int)text_section.descriptor_count) {
+                ++text_material_models;
+                text_material_surfaces += text_bank.surface_count;
+                if (static_material_source) ++static_material_models;
+            } else {
+                ++text_material_blocked_models;
+                if (static_material_source) {
+                    printf("  FAIL %s: static material bank rejected "
+                           "decode=%d surfaces=%d\n", name, text_decoded,
+                           text_bank.surface_count);
+                    nexus_v1_dmdf_free_material_bank(&text_bank);
+                    free(data);
+                    ++fail;
+                    continue;
+                }
+            }
+        }
         printf("  PASS %-14s joints=%d verts=%d faces=%d tex=%d",
                name, result.joint_count, result.total_vertices,
                result.total_faces, result.texture_count);
@@ -170,12 +220,17 @@ static int test_all_mns(void) {
         if (strcmp(name, "ROCKPILE.MNS") == 0) rockpile_joints = result.joint_count;
         if (strcmp(name, "VEXIRK.MNS") == 0) vexirk_textures = result.texture_count;
         if (strcmp(name, "D_GOLD.MNS") == 0) d_gold_tables = result.motn.table_count;
+        nexus_v1_dmdf_free_material_bank(&text_bank);
         decoded++;
         free(data);
     }
 
     printf("  decoded %d MNS files, rendered %d source textures\n",
            decoded, rendered);
+    printf("  decoded %d real TEXT material banks, %d BGR555 surfaces\n",
+           text_material_models, text_material_surfaces);
+    printf("  retained %d real TEXT descriptor banks as source-only "
+           "(material promotion blocked)\n", text_material_blocked_models);
     if (decoded > 0) {
         if (scorpion_joints != 33) {
             printf("  FAIL SCORPION.MNS: joints=%d (expected retail 33)\n",
@@ -204,6 +259,18 @@ static int test_all_mns(void) {
             ++fail;
         } else {
             printf("  PASS D_GOLD.MNS: retained 11 retail MOTN tables\n");
+        }
+        if (static_material_models != 2 || text_material_surfaces <= 0) {
+            printf("  FAIL real TEXT static-material corpus: static=%d "
+                   "all=%d surfaces=%d blocked=%d\n", static_material_models,
+                   text_material_models, text_material_surfaces,
+                   text_material_blocked_models);
+            ++fail;
+        } else {
+            printf("  PASS real TEXT material corpus: %d static banks, "
+                   "%d total banks, %d surfaces, %d creature banks source-only\n",
+                   static_material_models, text_material_models, text_material_surfaces,
+                   text_material_blocked_models);
         }
     }
     if (decoded == 0) printf("  SKIP (no MNS files found)\n");
@@ -348,6 +415,7 @@ static int test_anim_transform(void) {
 }
 
 static int test_anim_real_mns(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
@@ -358,8 +426,14 @@ static int test_anim_real_mns(void) {
     Nexus_V1_MnsVertex verts[2048];
     int count, i;
 
-    if (!home) { printf("  SKIP anim_real (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/OBAKE.MNS", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/OBAKE.MNS", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/OBAKE.MNS", home);
+    } else {
+        printf("  SKIP anim_real (Nexus data root is unset)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP anim_real (no OBAKE.MNS)\n"); return 0; }
 
