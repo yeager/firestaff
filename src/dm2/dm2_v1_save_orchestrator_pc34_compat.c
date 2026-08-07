@@ -24,6 +24,34 @@
  * Source: dm2data.cpp:1154 — v1d6316 initialized to {0xFF, 0xFF, 0xFF, 0xFF}. */
 static const uint8_t s_full_mask[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
+/* DM2_GAME_SAVE_MENU has no source-owned optional section.  A missing
+ * callback is therefore an incomplete save graph, not an empty block.  Keep
+ * the transaction fail-closed before the first header byte is emitted.
+ * SKProject: SKWINSPX/src/v5/sksvgame.cpp:2181-2202, 2233-2282. */
+static int dm2_v1_save_orchestrator_callbacks_valid(
+    const DM2_SaveOrchestratorCallbacks *cb)
+{
+    return cb && cb->write_raw && cb->get_header && cb->get_sgwords &&
+           cb->get_raw_block && cb->get_record_array && cb->get_map_data &&
+           cb->fill_savegame_buffer && cb->get_globalb &&
+           cb->get_v1e0104 && cb->get_globalw && cb->get_hero_data &&
+           cb->get_hero_count && cb->get_save_state && cb->get_timer_array &&
+           cb->get_timer_entry_size && cb->get_hero_item_link &&
+           cb->get_wpc_link && cb->get_sgwords_field &&
+           cb->write_record_cb.get_record &&
+           cb->write_record_cb.get_next_link &&
+           cb->write_record_cb.query_creature_ai_spec_flags &&
+           cb->write_record_cb.is_container_map &&
+           cb->write_record_cb.is_container_moneybox &&
+           cb->write_record_cb.add_possession_index &&
+           cb->dungeon_cb.change_current_map && cb->dungeon_cb.get_tile &&
+           cb->dungeon_cb.get_record_link &&
+           cb->dungeon_cb.get_teleporter_detail &&
+           cb->dungeon_cb.get_map_count &&
+           cb->dungeon_cb.get_map_dimensions && cb->dungeon_cb.init_suppress &&
+           cb->possession_cb.resolve_possession_index;
+}
+
 int dm2_v1_save_orchestrate(
     const DM2_SaveOrchestratorCallbacks *cb,
     uint8_t *out_buf, size_t out_cap,
@@ -31,6 +59,11 @@ int dm2_v1_save_orchestrate(
 {
     if (!cb || !out_buf || !result) return -1;
     memset(result, 0, sizeof(*result));
+
+    if (out_cap == 0u || !dm2_v1_save_orchestrator_callbacks_valid(cb)) {
+        result->error = 100; /* source graph/output owner unavailable */
+        return -1;
+    }
 
     const uint8_t *record_sizes = dm2_v1_save_record_sizes();
     int rc;
@@ -61,7 +94,10 @@ int dm2_v1_save_orchestrate(
     for (int blk = 0; blk < 4; blk++) {
         size_t size = 0;
         const uint8_t *data = cb->get_raw_block(cb->ctx, blk, &size);
-        if (size > 0 && data) {
+        if (size > 0 && !data) {
+            result->error = 5; return -1;
+        }
+        if (size > 0) {
             if (cb->write_raw(cb->ctx, data, size) != 0) {
                 result->error = 5; return -1;
             }
@@ -74,7 +110,10 @@ int dm2_v1_save_orchestrate(
         size_t count = 0;
         const uint8_t *data = cb->get_record_array(cb->ctx, type, &count);
         size_t total = count * record_sizes[type];
-        if (total > 0 && data) {
+        if (total > 0 && !data) {
+            result->error = 6; return -1;
+        }
+        if (total > 0) {
             if (cb->write_raw(cb->ctx, data, total) != 0) {
                 result->error = 6; return -1;
             }
@@ -85,7 +124,10 @@ int dm2_v1_save_orchestrate(
     {
         size_t size = 0;
         const uint8_t *data = cb->get_map_data(cb->ctx, &size);
-        if (size > 0 && data) {
+        if (size > 0 && !data) {
+            result->error = 7; return -1;
+        }
+        if (size > 0) {
             if (cb->write_raw(cb->ctx, data, size) != 0) {
                 result->error = 7; return -1;
             }
@@ -127,27 +169,33 @@ int dm2_v1_save_orchestrate(
      * Source: sksvgame.cpp:2235. */
     {
         const uint8_t *data = cb->get_v1e0104(cb->ctx);
-        if (data) ORCH_SUPPRESS(data, s_full_mask, 1, 8);
+        if (!data) { result->error = 10; return -1; }
+        ORCH_SUPPRESS(data, s_full_mask, 1, 8);
     }
 
     /* 2c. globalb (1 byte × 0x40, all-ones mask).
      * Source: sksvgame.cpp:2237. */
     {
         const uint8_t *data = cb->get_globalb(cb->ctx);
-        if (data) ORCH_SUPPRESS(data, s_full_mask, 1, 0x40);
+        if (!data) { result->error = 10; return -1; }
+        ORCH_SUPPRESS(data, s_full_mask, 1, 0x40);
     }
 
     /* 2d. globalw (2 bytes × 0x40, all-ones mask).
      * Source: sksvgame.cpp:2239. */
     {
         const uint8_t *data = cb->get_globalw(cb->ctx);
-        if (data) ORCH_SUPPRESS(data, s_full_mask, 2, 0x40);
+        if (!data) { result->error = 10; return -1; }
+        ORCH_SUPPRESS(data, s_full_mask, 2, 0x40);
     }
 
     /* 2e. Heroes (263 bytes × hero_count, table1d6356 mask).
      * Source: sksvgame.cpp:2241. */
     {
         int hero_count = cb->get_hero_count(cb->ctx);
+        if (hero_count < 0 || hero_count > DM2_SAVE_MAX_HEROES) {
+            result->error = 9; return -1;
+        }
         const uint8_t *mask = dm2_v1_save_mask_hero();
         for (int h = 0; h < hero_count; h++) {
             const uint8_t *data = cb->get_hero_data(cb->ctx, h);
@@ -160,7 +208,8 @@ int dm2_v1_save_orchestrate(
      * Source: sksvgame.cpp:2243. */
     {
         const uint8_t *data = cb->get_save_state(cb->ctx);
-        if (data) {
+        if (!data) { result->error = 10; return -1; }
+        {
             const uint8_t *mask = dm2_v1_save_mask_save_state();
             ORCH_SUPPRESS(data, mask, 6, 1);
         }
@@ -171,8 +220,11 @@ int dm2_v1_save_orchestrate(
     {
         int timer_count = 0;
         const uint8_t *data = cb->get_timer_array(cb->ctx, &timer_count);
+        if (timer_count < 0) { result->error = 10; return -1; }
+        if (timer_count > 0 && !data) { result->error = 10; return -1; }
         if (data && timer_count > 0) {
             size_t entry_size = cb->get_timer_entry_size(cb->ctx);
+            if (entry_size == 0u) { result->error = 10; return -1; }
             const uint8_t *mask = dm2_v1_save_mask_timer();
             if (mask) ORCH_SUPPRESS(data, mask, entry_size, timer_count);
         }

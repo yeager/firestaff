@@ -148,6 +148,25 @@ static uint16_t mock_get_next(void *ctx, uint16_t link)
     (void)ctx; (void)link;
     return DM2_RECORD_LINK_END;
 }
+static int mock_query_ai_flags(void *ctx, uint16_t link)
+{
+    (void)ctx; (void)link;
+    return 0;
+}
+static int mock_is_container_map(void *ctx, uint16_t link)
+{
+    (void)ctx; (void)link;
+    return 0;
+}
+static int mock_is_container_moneybox(void *ctx, uint16_t link)
+{
+    (void)ctx; (void)link;
+    return 0;
+}
+static void mock_add_possession_index(void *ctx, uint16_t link)
+{
+    (void)ctx; (void)link;
+}
 
 /* Dungeon callbacks (minimal — 0 maps). */
 static int mock_get_map_count(void *ctx) { (void)ctx; return 0; }
@@ -207,6 +226,10 @@ static DM2_SaveOrchestratorCallbacks make_callbacks(void)
 
     cb.write_record_cb.get_record = mock_get_record;
     cb.write_record_cb.get_next_link = mock_get_next;
+    cb.write_record_cb.query_creature_ai_spec_flags = mock_query_ai_flags;
+    cb.write_record_cb.is_container_map = mock_is_container_map;
+    cb.write_record_cb.is_container_moneybox = mock_is_container_moneybox;
+    cb.write_record_cb.add_possession_index = mock_add_possession_index;
 
     cb.dungeon_cb.get_map_count = mock_get_map_count;
     cb.dungeon_cb.get_map_dimensions = mock_get_map_dims;
@@ -225,6 +248,22 @@ static void test_null_safety(void)
 {
     assert(dm2_v1_save_orchestrate(NULL, NULL, 0, NULL) == -1);
     printf("  PASS: null_safety\n");
+}
+
+static void test_incomplete_source_graph_rejected(void)
+{
+    uint8_t suppress_buf[64];
+    DM2_SaveOrchestratorCallbacks cb = make_callbacks();
+    DM2_SaveOrchestratorResult result;
+
+    g_raw_pos = 0;
+    cb.get_globalb = NULL;
+    assert(dm2_v1_save_orchestrate(&cb, suppress_buf, sizeof(suppress_buf),
+                                   &result) == -1);
+    assert(result.error == 100);
+    assert(g_raw_pos == 0);
+
+    printf("  PASS: incomplete_source_graph_rejected\n");
 }
 
 static void test_empty_save(void)
@@ -300,10 +339,11 @@ static void test_suppress_output_nonzero(void)
 
 int main(void) {
     test_null_safety();
+    test_incomplete_source_graph_rejected();
     test_empty_save();
     test_raw_header_contents();
     test_suppress_output_nonzero();
 
-    printf("PASS: dm2_v1_save_orchestrator (4 tests)\n");
+    printf("PASS: dm2_v1_save_orchestrator (5 tests)\n");
     return 0;
 }

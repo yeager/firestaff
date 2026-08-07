@@ -4300,6 +4300,14 @@ level or consumer bindings.
   now return `DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED` too. Test/browser
   fixtures no longer create D2RS saves; only source-format import material is
   admitted while the original writer remains incomplete.
+  **2026-08-13 source-graph update:** the isolated source-order save
+  orchestrator now rejects an incomplete callback graph before emitting the
+  0x2a header, and rejects missing raw record/map blocks, invalid hero/timer
+  counts and missing timer material instead of treating them as empty. This
+  tightens the test-only writer study against partial or synthetic saves; it
+  does not admit the orchestrator to M11/runtime, because the live DB pools,
+  timer queue, possession links and complete `DM2_GAME_SAVE` state owner are
+  still absent.
 
 ## Active DM1/CSB Symbol Queue
 

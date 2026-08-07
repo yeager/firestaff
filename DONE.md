@@ -1,3 +1,15 @@
+# DM2 original save writer source-graph gate (2026-08-13)
+- ✅ Hardened the isolated source-order `DM2_GAME_SAVE` orchestrator so it
+  requires every source callback before writing, rejects missing raw
+  record/map material, invalid hero/timer counts and absent timer payloads,
+  and cannot emit a partial save prefix. Added a regression proving an
+  incomplete source graph writes zero bytes.
+- ✅ Focused orchestrator test passes 5/5. Save/load regression set passes
+  21/21, the quicksave original-writer gate passes, and the explicit real
+  PC-DOS DM2 SKSave corpus test passes 126/126. The orchestrator remains
+  test-only; the complete original writer is not admitted to runtime and no
+  release was made.
+
 # DM2 GDAT structure ULP lifetime boundary (2026-08-07)
 
 - ✅ Kept the validated source ULP table alive in `DM2_V1_GdatFileState` after
