@@ -12,10 +12,28 @@ see the JDM section below.
 ### Cross-game context
 
 Before writing new FM Towns code, read
-[`docs/fmtowns/CROSS_GAME_INVENTORY.md`](../fmtowns/CROSS_GAME_INVENTORY.md)
-to see what DM2 and CSB have already shipped. Several patterns
-(font rasteriser, disc reader, region lookup, DYNA_BUTTONS pool)
-are game-agnostic and reusable across all three games.
+[`docs/fmtowns/CROSS_GAME_COVERAGE.md`](../fmtowns/CROSS_GAME_COVERAGE.md)
+for the complete cross-game byte-verified recovery tally. Several
+payloads are byte-identical across DM1/CSB/DM2 at per-game vaddrs:
+
+- **Menu font raster** (768 bytes, 3 games) — one implementation
+  covers all three via `dm1_v1_fmtowns_font_rasterise_string_pc34`.
+- **CHAR + ICON geometry** (14+8 bytes, 3 games) — same constants.
+- **SPELL_COSTS + SPELL_MULT** (40 bytes, 3 games).
+- **OICON descriptor** (1344 bytes, DM1+CSB).
+- **DYNA_BUTTONS pool** (500+ bytes English labels, DM1+CSB).
+- **PLAYER_COLOR + ICON_PAL** (14 bytes, DM1+CSB).
+- **Phar Lap 4-slot bridge** (fs:[0x20/0x40/0x48/0x80], all 11 binaries).
+- **Direct I/O port 0x04E9** (all 8 game/util binaries).
+
+CSB CDATA/GRAPHICS.DAT (ext_v1, sig 0x8001) parses via the DM1
+`dm1_v1_fmtowns_pic_library_open_pc34` with a 2-byte prefix skip —
+see `csb_v1_fmtowns_pic_library_open_ext_v1_pc34`. DM2's ext_v4
+format (sig 0x8004) has a different per-record layout and needs
+its own decoder.
+
+See also `docs/fmtowns/CROSS_GAME_INVENTORY.md` for the earlier
+inventory doc that this coverage tally supersedes.
 
 ### Font raster layout — round-trip verified
 
@@ -28,6 +46,47 @@ shipping Japanese Track 01 GRAPHICS.DAT and rendering ASCII
 0x20..0x7f. See `dm1_v1_fmtowns_font_rasteriser` for the ready
 consumer + `test_dm1_v1_fmtowns_font_rasteriser` for the round-trip
 test (skips cleanly without `FIRESTAFF_DM1_FMTOWNS_DATA_DIR`).
+
+The 768 bytes are byte-identical in CSB (@ file offset 0x50f1a in
+CDATA/GRAPHICS.DAT) and DM2 (@ 0x2f5a3 in DATA/GRAPHICS.DAT); one
+rasteriser covers all three games.
+
+### Complete FM Towns module list (as of 2026-08-07)
+
+Byte-verified with real-data round-trip tests:
+
+DM1-specific:
+- `dm1_v1_fmtowns_text_geometry` — CHAR/ICON macros
+- `dm1_v1_fmtowns_icon_geometry` — ICON constants
+- `dm1_v1_fmtowns_icon_category` — LOAD_ICON threshold table
+- `dm1_v1_fmtowns_oicon_descriptor` — 1344-byte OICON records
+- `dm1_v1_fmtowns_dyna_buttons` — English action label pool
+- `dm1_v1_fmtowns_font_asset` — asset 557 identity
+- `dm1_v1_fmtowns_font_rasteriser` — 6×128 raster decoder
+- `dm1_v1_fmtowns_menu_regions` — 23-block registry (994 records)
+- `dm1_v1_fmtowns_menu_bss` — 12 vaddrs + PLAYER schema
+- `dm1_v1_fmtowns_egb_rect` — region-tree walker
+- `dm1_v1_fmtowns_menu_render` — end-to-end composer
+- `dm1_v1_fmtowns_music_tables` — LEVEL_SONGS + SPELL_COSTS + DOOR_PAL etc.
+- `dm1_v1_fmtowns_edm_sym1` — 1174 named EDM.EXP symbols
+- `dm1_v1_fmtowns_snd_api` — 36 SND_* function vaddrs
+- `dm1_v1_fmtowns_tmenu_input` — TMENU event schema
+- `dm1_v1_fmtowns_tbios_id` — 8 TBIOS version fingerprints
+- `dm1_v1_fmtowns_pharlap_bridge` — 4-slot Phar Lap layout
+- `dm1_v1_fmtowns_direct_io` — 5 direct I/O ports
+
+CSB-specific (aliases for shared DM1 payloads + independent):
+- `csb_v1_fmtowns_oicon_descriptor` — aliases DM1 OICON via vaddr 0x27f77
+- `csb_v1_fmtowns_dyna_buttons` — aliases DM1 label pool via vaddr 0x29d50
+- `csb_v1_fmtowns_tmenu_sym1` — 1724 CSB launcher symbols
+- `csb_v1_fmtowns_pic_library` — ext_v1 wrapper over DM1 pic_library
+
+Shared cross-game infrastructure:
+- `fmtowns_pharlap_all_games` — 11 binary profiles + direct-I/O invariant
+- `fmtowns_graphics_dat_format` — legacy/ext_v1/ext_v4 classifier
+- `fmtowns_geometry_all_games` — per-game CHAR/ICON vaddrs
+- `fmtowns_shared_tables_all_games` — per-game SPELL/PLAYER/ICON vaddrs
+- `fmtowns_font_raster_all_games` — per-game font raster locations
 
 ### Companion parity-evidence files (deep-decode references)
 

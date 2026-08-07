@@ -6,8 +6,10 @@ Use this to find prior art before writing a new module — several
 patterns are already implemented for one game and directly reusable
 for another.
 
-Generated 2026-08-07 from `src/{dm1,dm2,csb,shared}/*fmtowns*` and
-`include/*fmtowns*`. Regenerate by walking the same globs.
+Last refreshed 2026-08-07 with 93+ session commits. For the
+authoritative byte-verified cross-game coverage matrix, see
+[`CROSS_GAME_COVERAGE.md`](CROSS_GAME_COVERAGE.md). This file
+provides a per-module inventory grouped by game.
 
 ## DM1 (19 headers, most complete)
 

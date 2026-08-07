@@ -5,6 +5,39 @@ both before changing CSB FM Towns startup, cache, media or runtime code. The
 games share Phar Lap and TownsOS conventions, but they do **not** share a
 title program, CD layout, save body or presentation owner.
 
+## Byte-verified DM1↔CSB shared payloads (as of 2026-08-07)
+
+Cross-fingerprint recovery revealed CSB CHTWE.EXP embeds several
+DM1 game data structures IDENTICALLY at per-game vaddrs:
+
+| Payload | Bytes | DM1 vaddr | CSB vaddr | Firestaff alias module |
+|---|---:|:---:|:---:|---|
+| OICON descriptor | 1344 | 0x224db | 0x27f77 | `csb_v1_fmtowns_oicon_descriptor` |
+| DYNA_BUTTONS pool | 500+ | 0x24194 | 0x29d50 | `csb_v1_fmtowns_dyna_buttons` |
+| SPELL_COSTS | 32 | 0x24388 | 0x29f64 | `fmtowns_shared_tables_all_games` |
+| SPELL_MULT | 8 | 0x243a0 | 0x29f7c | `fmtowns_shared_tables_all_games` |
+| PLAYER_COLOR | 8 | 0x291b8 | 0x2d164 | `fmtowns_shared_tables_all_games` |
+| ICON_PAL | 6 | 0x28f44 | 0x2cd8a | `fmtowns_shared_tables_all_games` |
+| CHAR geometry | 14 | 0x26c8a | 0x2c94c | `fmtowns_geometry_all_games` |
+| ICON geometry | 8 | 0x26c68 | 0x2c938 | `fmtowns_geometry_all_games` |
+| 768-byte font raster | 768 | (asset 557) | file@0x50f1a | `fmtowns_font_raster_all_games` |
+| Phar Lap 4-slot bridge | — | ✓ | ✓ | `fmtowns_pharlap_all_games` |
+| Direct I/O 0x04E9 | — | ✓ | ✓ | `fmtowns_pharlap_all_games` |
+
+CSB pic_library (`CDATA/GRAPHICS.DAT`, sig 0x8001) reuses DM1's
+parser via `csb_v1_fmtowns_pic_library_open_ext_v1_pc34`.
+
+CSB TMENU.EXP has its own SYM1 table (1724 entries) shipped via
+`csb_v1_fmtowns_tmenu_sym1`. CHTWE.EXP itself has no SYM1
+(stripped) — use the byte-fingerprint modules above.
+
+## CSB-specific (NOT shared with DM1)
+
+- CSB region table (independent menu layout)
+- CSB CDDA track table (own soundtrack)
+- CSB DOOR palette / animation-timings / STARTUP1 chain
+- CSB SWITCHTW.EXP switch page, ANIMTW.EXP, UTILE.EXP
+
 ## Retail media and cache
 
 The admitted CSB F31 disc contains both language trees:
