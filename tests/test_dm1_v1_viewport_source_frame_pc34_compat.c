@@ -88,8 +88,6 @@ static void source_from_slot(DM1_V1_FloorFeatureSourceMaterialPc34 *out,
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char *home;
-    char defaultData[1024];
     char nestedData[1200];
     char dungeonPath[1200];
     M11_GameViewState state;
@@ -108,16 +106,13 @@ int main(void)
     int ok = 0;
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) return 0;
-        snprintf(defaultData, sizeof(defaultData), "%s/.firestaff/data/dm1", home);
-        dataDir = defaultData;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     dataDir = resolve_pc34_data_dir(dataDir, nestedData, sizeof(nestedData));
     if (!dataDir) {
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) return 1;
-        puts("SKIP: PC34 DM1 data not installed");
-        return 0;
+        fputs("configured PC34 DM1 data is unavailable\n", stderr);
+        return 1;
     }
     snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", dataDir);
     dungeon = read_file(dungeonPath, &dungeonCount);
@@ -125,9 +120,8 @@ int main(void)
     if (!dungeon || !M11_GameView_StartDm1(&state, dataDir)) {
         free(dungeon);
         M11_GameView_Shutdown(&state);
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) return 1;
-        puts("SKIP: PC34 DM1 data not installed");
-        return 0;
+        fputs("configured PC34 DM1 data is unavailable\n", stderr);
+        return 1;
     }
     wall = M11_AssetLoader_Load(&state.assetLoader, 97);
     door = M11_AssetLoader_Load(&state.assetLoader, 246);
