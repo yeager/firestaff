@@ -59849,6 +59849,16 @@ companion.
 - ✅ Verified on all eight mounted PC-DOS primary/backup SKSAVE files through
   `test_dm2_v1_save_load_real_data` (143/143).
 
+# Nexus Saturn capture link-path repair (2026-08-07)
+
+- ✅ Closed the remaining Mednafen witness-chain link gap: the SH-2 source
+  trace now carries its own `FirestaffGetSH2PC()` declaration/definition and
+  its source-trace/PC helper hunks have valid insertion counts. A fresh tree
+  applies the complete Saturn capture chain, and the external producer links
+  successfully with the real VDP1/VDP2/CD hooks.
+- ✅ Kept this as producer evidence only. No runtime asset, menu, HUD or
+  viewport admission is changed by the link repair.
+
 # Nexus Saturn capture toolchain repair (2026-08-07)
 
 - ✅ Repaired the ordered Mednafen 1.32.1 Saturn witness patch chain: CD reads,
