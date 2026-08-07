@@ -2949,6 +2949,17 @@ static int lha_extract_entry_to_path(const char *lhaPath, const char *entryName,
     return 0;
 }
 
+/* Atari ST disk-image visitor typedef and forward declarations must
+ * be visible to every translation-unit path, including Windows,
+ * because the function body at atari_st_visit_files() and its many
+ * ADF callers below live outside the shell-out POSIX-only block. */
+typedef int (*AtariStFileVisitor)(const char *name, const uint8_t *bytes,
+                                  size_t byte_count, void *user_data);
+static uint8_t *atari_msa_decode_image(const uint8_t *source, size_t source_size,
+                                       size_t *out_size);
+static int atari_st_visit_files(const uint8_t *image, size_t image_size,
+                                AtariStFileVisitor visitor, void *user_data);
+
 #ifndef _WIN32
 static int shell_append_quoted(char *cmd, size_t cmdSize, const char *arg) {
     size_t len;
@@ -3480,13 +3491,6 @@ typedef struct {
     int found_count;
 } NestedDiskListMatch;
 
-typedef int (*AtariStFileVisitor)(const char *name, const uint8_t *bytes,
-                                  size_t byte_count, void *user_data);
-static uint8_t *atari_msa_decode_image(const uint8_t *source, size_t source_size,
-                                       size_t *out_size);
-static int atari_st_visit_files(const uint8_t *image, size_t image_size,
-                                AtariStFileVisitor visitor, void *user_data);
-
 static int nested_disk_find_list_visitor(const char *name, const uint8_t *bytes,
                                          size_t byte_count, void *user_data) {
     NestedDiskListMatch *matches = (NestedDiskListMatch *)user_data;
@@ -3983,6 +3987,24 @@ static int external_extract_entry_to_path(const char *archivePath,
     return 0;
 }
 
+#endif
+
+#ifdef _WIN32
+/* Windows fallback for the sole helper whose body lives inside the
+ * POSIX-only shell-out block above. The Atari ST/MSA visitor and
+ * MSA decoder bodies live outside that block and are compiled on
+ * every platform, so no Windows stub is needed for them. Returning
+ * zero matches keeps behaviour identical to the pre-refactor state
+ * where ZIP nested-disk scanning never ran on Windows anyway. */
+static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
+                                            const char *const *md5_list,
+                                            int md5_count,
+                                            char out_paths[][ASSET_PATH_MAX],
+                                            int matched[]) {
+    (void)zip_path; (void)md5_list; (void)md5_count;
+    (void)out_paths; (void)matched;
+    return 0;
+}
 #endif
 
 /* ── Missing-extractor diagnostics ───────────────────────────────
