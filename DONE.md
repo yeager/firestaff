@@ -182,6 +182,18 @@
 - ✅ This is static code-owner evidence only. It does not promote the runtime
   VDP1 draw command, source span, CLUT or startup asset into production.
 
+# Nexus SLEV SH-2 static owner receipt (2026-08-07)
+
+- ✅ Added `scripts/analyze_nexus_slev_sh2_owner.py`. It verifies all 16 real
+  `SLEV##.BIN` SHA-256 values and scans their big-endian SH-2 words. The
+  corpus is 111,776 bytes with shared entry word `0x2fe6`, 1,271 `RTS`, 2,220
+  `JSR`, 5,164 immediate, 948 branch and 3,536 PC-relative-load observations.
+- ✅ Eight exact PC-relative literal rows in `SLEV02`, `SLEV03`, `SLEV11` and
+  `SLEV15` reach the observed `0x25/0x26` address corridors; the tool prints
+  each instruction/literal offset and value. No event selector, callback ABI,
+  SDDRVS handoff or runtime dispatch is inferred; semantic admission stays
+  blocked.
+
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 
 - ✅ Realdatatestet för original-SKSave använder nu bara

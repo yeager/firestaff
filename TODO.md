@@ -640,6 +640,17 @@
   Saturn execution trace; keep host playback blocked until those observations
   are joined.
 
+- **NEXUS-SLEV-SH2-STATIC-OWNER:** The 16 hash-authenticated `SLEV##.BIN`
+  files now have a reproducible big-endian SH-2 static receipt. They share
+  the `0x2fe6` entry word and contain 1,271 `RTS`, 2,220 `JSR`, 5,164
+  immediate, 948 branch and 3,536 PC-relative-load observations across
+  111,776 bytes. Eight PC-relative literal rows land in the observed
+  `0x25000000/0x25010000/0x26000000/0x26010000` address corridors (SLEV02,
+  03, 11 and 15); see `scripts/analyze_nexus_slev_sh2_owner.py` for exact
+  file offsets. This is static owner evidence only: it does not prove the
+  event selector, callback ABI, SLEV dispatch order or SDDRVS playback, so
+  no runtime script route is enabled.
+
 - **NEXUS-SAL-HOST-PCM-BOUNDARY:** The production SAL path must remain a
   byte-level receipt path only.  PCM format/rate/looping, voice ownership and
   MAP→event handoff still require a Saturn SCSP/SDDRVS execution capture;

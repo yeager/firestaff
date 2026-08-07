@@ -59,6 +59,14 @@ register offsets) and VDP2 register space. This narrows code ownership, but a
 literal corridor is not an execution trace and does not join `TM.BIN` to any
 captured command or source span.
 
+`scripts/analyze_nexus_slev_sh2_owner.py` provides the corresponding static
+receipt for all 16 hash-authenticated `SLEV##.BIN` tasks. It scans the
+big-endian SH-2 word stream, binds the shared `0x2fe6` entry and reports the
+exact PC-relative literal rows that touch the observed `0x25/0x26` address
+corridors. The scan is source evidence only; the task body remains opaque and
+cannot authorize event dispatch, selector order, callback writes or sound
+playback.
+
 When a later frame contains a texture command, the same tool reports its
 bounded `SRCa`-derived VRAM byte span and SHA-256. That span is the join key
 for a future source-owned capture; it is not permission to reinterpret the
