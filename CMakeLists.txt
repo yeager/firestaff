@@ -5052,6 +5052,11 @@ list(REMOVE_ITEM M10_SOURCES
 # game data. Its direct DUNVIEW regression retains the source-lock evidence.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_stairs_pit_dispatch_pc34_compat.c")
+# The clock-tick attribute repaint helper uses deterministic scratch state
+# and is contract-only. Its direct CHAMPION regression keeps the source
+# evidence without placing the synthetic model in M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_clock_tick_stat_repaint_pc34_compat.c")
 # The mana-bar repaint model uses synthetic champion state and makes no
 # GRAPHICS.DAT/DUNGEON.DAT parity claim. Its direct test retains the
 # source-locked CHAMDRAW repaint contract.
