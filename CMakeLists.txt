@@ -4843,6 +4843,10 @@ list(REMOVE_ITEM M10_SOURCES
 # direct audit target compiles it until a real data owner is wired.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat.c")
+# `dm1_v1_f2026_f2065_source_ownership_pc34_compat.c` is a static hint/editor
+# ownership audit with no runtime route. Its direct audit target compiles it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f2026_f2065_source_ownership_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
