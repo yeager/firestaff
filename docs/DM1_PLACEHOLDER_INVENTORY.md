@@ -105,6 +105,14 @@ four-slot focus marker consumed by the V1 click-route bridge; its two render
 entries remain strict no-draw while CLIKCHAM, CHAMDRAW and PANEL own the live
 selection and pixels.
 
+The V2 screen-transition helper contained its own fade-to-black/fade-to-white,
+wipe and pixelation rules driven by local animation state. It had no caller
+and no PC34 media binding. ReDMCSB GAMELOOP passes the committed party tuple
+directly to F0128, and F0097 remains the source viewport-present entry point.
+The compatibility APIs now have no transition state: their apply functions
+copy the source framebuffer unchanged, and the V2.2 fade reports zero
+opacity. This preserves the source-owned viewport as the only pixel path.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

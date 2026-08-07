@@ -1,0 +1,50 @@
+{
+  "anchors": [
+    {
+      "end": 96,
+      "file": "GAMELOOP.C",
+      "meaning": "PC34 passes the committed party tuple directly to the dungeon-view composer",
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)"
+      ],
+      "start": 84
+    },
+    {
+      "end": 8332,
+      "file": "DUNVIEW.C",
+      "meaning": "F0128 is the source-owned dungeon-view composition entry point",
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF("
+      ],
+      "start": 8318
+    },
+    {
+      "end": 718,
+      "file": "DRAWVIEW.C",
+      "meaning": "F0097 is the source-owned viewport presentation entry point",
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport("
+      ],
+      "start": 709
+    }
+  ],
+  "errors": [],
+  "firestaffFiles": [
+    "include/dm1_v2_screen_transition_pc34.h",
+    "src/dm1v2/dm1_v2_screen_transition_pc34.c",
+    "tests/test_dm1_v2_screen_transition_pc34.c"
+  ],
+  "forbiddenSyntheticState": [
+    "V2_Anim",
+    "V2_EASE_IN_OUT_QUAD",
+    "case FADE_BLACK:",
+    "case FADE_WHITE:",
+    "case WIPE_LEFT:",
+    "case WIPE_DOWN:",
+    "g_trans",
+    "g_screen_fade"
+  ],
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "dm1_v2_screen_transition compatibility bridge",
+  "status": "passed"
+}

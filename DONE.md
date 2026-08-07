@@ -54,6 +54,16 @@
   för fyra statusrutor; båda render-API:erna är fortsatt no-op. Källåset
   förbjuder de rensade symbolerna och HUD-interaktionens CTester passerar.
 
+# DM1 V2 syntetiska skärmövergångar spärrade (2026-08-07)
+
+- ✅ Rensade V2-modulens egna tona-till-svart-, tona-till-vitt-, svep- och
+  pixeleringsregler. De saknade både anropare och PC34-källmaterial. ReDMCSB
+  skickar den redan fastställda partytupeln direkt från GAMELOOP till F0128,
+  och F0097 äger presentationen av den färdigkomponerade vyn. API:t är därför
+  nu en ren kopieringsbrygga utan animeringstillstånd; V2.2-faden rapporterar
+  noll opacitet. CTesten och källåset kontrollerar att framebufferinnehållet
+  lämnas oförändrat och att de syntetiska reglerna inte återkommer.
+
 # DM1 V2-föremålsmetadata källbunden (2026-08-07)
 
 - ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen
