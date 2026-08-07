@@ -5030,6 +5030,11 @@ list(REMOVE_ITEM M10_SOURCES
 # retain the ReDMCSB D2C door-frame evidence.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_door_frame_top_edge_pc34_compat.c")
+# dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c is an explicitly
+# contract-only, no-game-data F0111 trace model with no production caller.
+# Its direct regression target retains the D0L2/D0R2 source lock.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
@@ -55219,7 +55224,9 @@ add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_
 target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat)
-add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat tests/test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat
+    tests/test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat)
