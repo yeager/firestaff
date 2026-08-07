@@ -16,6 +16,7 @@ SHA256 checksums for known-good original game data files.
 | csb | GRAPHICS.DAT | `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942` | 435,076 |
 | csb | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
 | csb-atari-st-2x | GRAPHICS.DAT | `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af` | 319,080 |
+| csb-atari-st-20-21-en | GRAPHICS.DAT | `7cceef26a20acec6c5f9de659a6a0c57cdb24908687a2ca3a58e3c62cc6b0593` | 272,069 |
 | csb-atari-st-2x | DUNGEON.DAT | `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba` | 2,098 |
 | csb-atari-st-2x | HCSB.HTC | `1b2fbff81a11928afd153f46c117355cce1f9a93f482d14d58e35a115d9cde38` | 66,172 |
 | csb-extras/legacy-amiga-dms/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility | HCSBF.HTC | `79fd268631d3518462058c9e855b7b8a89c0ef8a0938adf9ed8ea17a55719ea7` | 75,424 |
@@ -68,6 +69,7 @@ identities when the canonical capture corpus is not the selected source.
 - `csb/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
 - `csb/GRAPHICS.DAT` (435,076 bytes): `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942`
 - `csb-atari-st-2x/GRAPHICS.DAT` (319,080 bytes): `33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af`
+- `csb-atari-st-20-21-en/GRAPHICS.DAT` (272,069 bytes): `7cceef26a20acec6c5f9de659a6a0c57cdb24908687a2ca3a58e3c62cc6b0593`
 - `csb-atari-st-2x/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
 - `csb-atari-st-2x/HCSB.HTC` (66,172 bytes): `1b2fbff81a11928afd153f46c117355cce1f9a93f482d14d58e35a115d9cde38`
 - `csb-extras/legacy-amiga-dms/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/FTL_CSB_Utility/HCSBF.HTC` (75,424 bytes): `79fd268631d3518462058c9e855b7b8a89c0ef8a0938adf9ed8ea17a55719ea7`

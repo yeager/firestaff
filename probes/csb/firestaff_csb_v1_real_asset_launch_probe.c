@@ -5,9 +5,9 @@
  *
  * What this probe verifies:
  *
- *   1. The Atari ST CSB GRAPHICS.DAT (sha256 =
- *      33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af
- *      per docs/VERIFIED_HASHES.md) can be opened with the new
+ *   1. A registered Atari ST CSB GRAPHICS.DAT source fingerprint (including
+ *      the scanner's original ST 2.0/2.1 English corpus) can be opened with
+ *      the new
  *      Atari ST DMCSB1 parser.
  *   2. The header parses to exactly 563 items with consistent
  *      compressed/decompressed size accounting.
@@ -248,9 +248,13 @@ static int run_atari_st(tally_t* t, const char* atari_dir)
     int rc = sha256_hex_of_file(graphics_path, sha);
     CHECK(t, rc == 0, "sha256 of GRAPHICS.DAT succeeds");
     if (rc == 0) {
-        char want[65] = "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af";
-        CHECK(t, strcmp(sha, want) == 0,
-              "sha256 of local GRAPHICS.DAT matches docs/VERIFIED_HASHES.md");
+        const char *fixture_sha =
+            "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af";
+        const char *st20_21_sha =
+            "7cceef26a20acec6c5f9de659a6a0c57cdb24908687a2ca3a58e3c62cc6b0593";
+        CHECK(t, strcmp(sha, fixture_sha) == 0 ||
+                     strcmp(sha, st20_21_sha) == 0,
+              "sha256 of local GRAPHICS.DAT matches a documented Atari ST source");
     }
     rc = sha256_hex_of_file(dungeon_path, sha);
     CHECK(t, rc == 0, "sha256 of DUNGEON.DAT succeeds");

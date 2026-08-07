@@ -10,6 +10,7 @@
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 #include "firestaff_x68k_media_receipt.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -362,11 +363,6 @@ done:
     return ok;
 }
 
-static uint16_t csb_v1_startup_read_be16_pc34(const unsigned char *bytes)
-{
-    return (uint16_t)(((uint16_t)bytes[0] << 8u) | bytes[1]);
-}
-
 int csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
     const char *path, unsigned int graphic_index, unsigned char **out_pixels,
     int *out_width, int *out_height,
@@ -375,9 +371,8 @@ int csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
     CSB_AtariStLoader loader;
     unsigned char *stream = NULL;
     unsigned char *pixels = NULL;
-    uint16_t width;
-    uint16_t height;
-    size_t pixel_count;
+    uint16_t width = 0u;
+    uint16_t height = 0u;
     int ok = 0;
 
     if (out_pixels) *out_pixels = NULL;
@@ -397,16 +392,42 @@ int csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
             &loader, (uint16_t)graphic_index, stream,
             loader.items[graphic_index].decompressed_size) !=
             (int)loader.items[graphic_index].decompressed_size) goto done;
-    width = csb_v1_startup_read_be16_pc34(stream);
-    height = csb_v1_startup_read_be16_pc34(stream + 2u);
-    if (width == 0u || height == 0u ||
-        height > SIZE_MAX / width ||
-        (pixel_count = (size_t)width * height) >
-            CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34) goto done;
-    pixels = (unsigned char *)malloc(pixel_count);
-    if (!pixels || !csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
-            stream, loader.items[graphic_index].decompressed_size, width, height,
-            pixels, pixel_count, out_decode_receipt)) goto done;
+    /* DMCSB1's LZW envelope releases an original big-endian IMAGE1 stream.
+     * It is not the PC3.4 IMG3 record consumed by CSBWin's later ports.
+     * ReDMCSB IMAGE2.C F0689 owns the nibble-RLE expansion; use the shared
+     * Atari decoder already proven by DM1 rather than reading the first four
+     * bytes as a PC width/height header and inventing a failed no-draw route. */
+    pixels = (unsigned char *)malloc(CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34);
+    if (!pixels) goto done;
+    if (!dm1_v1_legacy_graphics_decode_item(
+            stream, loader.items[graphic_index].decompressed_size, 1,
+            pixels, CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34, &width,
+            &height) || width == 0u || height == 0u) goto done;
+    {
+        const size_t pixel_count = (size_t)width * height;
+        unsigned char *trimmed = (unsigned char *)realloc(pixels, pixel_count);
+        if (trimmed) pixels = trimmed;
+    }
+    if (out_decode_receipt) {
+        const size_t pixel_count = (size_t)width * height;
+        memset(out_decode_receipt, 0, sizeof(*out_decode_receipt));
+        out_decode_receipt->valid = 1;
+        out_decode_receipt->width = width;
+        out_decode_receipt->height = height;
+        out_decode_receipt->stream_byte_count =
+            loader.items[graphic_index].decompressed_size;
+        out_decode_receipt->stream_bytes_consumed =
+            loader.items[graphic_index].decompressed_size;
+        out_decode_receipt->emitted_planar_pixels = pixel_count;
+        out_decode_receipt->physical_planar_pixels = pixel_count;
+        out_decode_receipt->stream_fnv1a =
+            csb_v1_startup_surface_pixel_hash_pc34(
+                stream, loader.items[graphic_index].decompressed_size);
+        out_decode_receipt->indexed_pixel_fnv1a =
+            csb_v1_startup_surface_pixel_hash_pc34(pixels, pixel_count);
+        out_decode_receipt->ended_at_record_boundary = 1;
+        out_decode_receipt->indexed_colors_are_4bit = 1;
+    }
     *out_pixels = pixels;
     *out_width = width;
     *out_height = height;

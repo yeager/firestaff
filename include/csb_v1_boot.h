@@ -1616,10 +1616,8 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
 int csb_v1_graphics_decode_raw_entry_pc34(
     const uint8_t *file_bytes, size_t file_size, unsigned int entry_index,
     uint8_t *out, size_t out_capacity, size_t *out_size);
-/* Decode an original Atari ST DMCSB1 GRAPHICS.DAT item through the same
- * CSBWin ExpandGraphic-compatible source decoder used for PC startup
- * records.  This is for standard CSBWin packages which retain the original
- * ST graphics/dungeon pair but do not ship ANIMATE.SCR/ANIMATE.DAT. */
+/* Decode an original Atari ST DMCSB1 GRAPHICS.DAT item. DMCSB1's LZW
+ * envelope releases a big-endian IMAGE1/IMAGE2 stream, not PC3.4 IMG3. */
 int csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
     const char *path, unsigned int graphic_index,
     unsigned char **out_pixels, int *out_width, int *out_height,

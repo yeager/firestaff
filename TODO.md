@@ -1,10 +1,5 @@
 # Firestaff TODO - Open Work
 
-- **CSB-ATARI-ST-RUNTIME-CAPTURE:** The selected Atari ST package now reaches
-  original `ANIMATE.SCR` and the FTLCODE boundary from a mixed archive root.
-  Bind the remaining C232/022e first HUD and viewport capture through the ST
-  graphic-record decoder; do not substitute PC3.4 chrome.
-
 - **NEXUS-VDP2-WRITER-CANDIDATE-OWNERSHIP:** The authentic 64-window VDP2
   code receipt now has a bounded partial-match analyzer. The primary writer
   at `0x06011924` reaches only four aligned words in `DM.BIN` and three in

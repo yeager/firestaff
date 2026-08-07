@@ -6,7 +6,7 @@
  */
 
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
-#include "dm1_v1_graphics_loader_pc34_compat.h"
+#include "csb_v1_graphics_lzw_pc34_compat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -123,13 +123,15 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
         return (int)item->decompressed_size;
     }
 
-    /* LZW-decompress using the existing DM1 V1 decoder. */
-    DM1_V1_GFX_LZWStatePc34 lzw;
-    memset(&lzw, 0, sizeof(lzw));
-    int rc = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw, comp_buf, item->compressed_size,
-                                     out_buf, item->decompressed_size);
+    /* CSB's Atari DMCSB1 records use the Graphics.cpp LZW stream, including
+     * its source RLE escape handling. The DM1 reader happens to accept many
+     * table shapes but produces a different byte stream for C001-C005. */
+    size_t written = 0u;
+    int rc = csb_v1_graphics_lzw_decode_pc34_compat(
+        comp_buf, item->compressed_size, out_buf, item->decompressed_size,
+        &written);
     free(comp_buf);
-    if (rc <= 0) return -1;
+    if (rc != 0 || written != item->decompressed_size) return -1;
 
     /* Return the actual decompressed byte count. */
     return (int)item->decompressed_size;

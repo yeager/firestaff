@@ -12,6 +12,23 @@
   Real `ANIMATE.SCR` reaches FTLCODE through direct `--platform atari-st`
   boot probe with the verified `ebf6…`/`6695…` pair.
 
+# CSB Atari ST original graphics runtime capture (2026-08-07)
+
+- ✅ Replaced the incorrect DM1 LZW reader in the Atari DMCSB1 item loader
+  with CSB's `Graphics.cpp`-compatible LZW/RLE decoder. The authentic stream
+  now reaches the big-endian IMAGE1/IMAGE2 decoder rather than the PC3.4
+  IMG3 path; C001–C005, C232 HUD and 022e viewport material therefore retain
+  original source ownership.
+- ✅ Bound the startup raster decoder to that source route and retained a
+  record receipt for each decoded surface. The selected Atari ST launcher
+  handoff now passes 1,498 checks, including `ANIMATE.SCR`, both SND1 streams,
+  FTLCODE VBlank handoff and the first HUD/viewport frame, with no PC chrome
+  fallback.
+- ✅ Registered the scanner-supported ST 2.0/2.1 English GRAPHICS.DAT SHA-256
+  (`7cceef26…`) alongside the older real-data fixture. The real-asset probe
+  accepts either documented original fingerprint and passes 54/54 checks on
+  the selected ST corpus.
+
 # DM2 selected SONGLIST corpus (2026-08-07)
 
 # DM1 V2 fri varelseanimation spärrad (2026-08-07)
