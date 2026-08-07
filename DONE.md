@@ -58631,3 +58631,13 @@ Extended the canonical G1 actuator regression to inventory every successfully
 materialized source DB3 root for shop-panel `0x3f` and shop-floor `0x30` types.
 The census is diagnostic evidence only; type bytes cannot activate a merchant
 without the source `WALL_GFX`/`dt08`/AI-33 transaction.
+# Nexus VDP1 writer code-window receipt (2026-08-07)
+
+- ✅ Added a reproducible Mednafen producer patch that captures the live SH-2
+  code window around the VDP1 writer PC, plus a strict validator.
+- ✅ Captured the authentic European runtime PC `0x06013098` with VRAM target
+  `0x47c00` and 48 code words. Little-endian SH-2 disassembly shows the live
+  branch at `0x06013098` to `0x06012f52`.
+- ✅ Kept source-file identity, VDP1 command/CLUT ownership and production
+  rendering blocked: the relocated code window is runtime evidence, not yet
+ a byte-for-byte DM.BIN/TM.BIN join.

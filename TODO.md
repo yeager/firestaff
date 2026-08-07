@@ -29820,3 +29820,10 @@ required before semantic promotion.
   PC3.4 PIT/marker route. The remaining Amiga work is source-captured
   audio.device voice allocation, left/right volume arbitration and overlap
   behavior; do not infer those from PC3.4's distance-volume model.
+- 2026-08-07: An authentic European Mednafen capture now records a 48-word
+  SH-2 code window around the VDP1 source writer at runtime PC `0x06013098`
+  while it writes `0x47c00`. The routine contains a real branch to
+  `0x06012f52`, but relocated/decompressed code is not yet joined to an
+  authenticated DM.BIN/TM.BIN source span. Keep VDP1/VDP2 composition and
+  production draw admission blocked until that identity and command/CLUT
+  contract are proven.
