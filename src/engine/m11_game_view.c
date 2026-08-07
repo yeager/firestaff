@@ -52408,7 +52408,8 @@ static int m11_draw_dm1_hoc_rename_pc34_text(
 
     if (!state || !framebuffer || !state->candidateMirrorRenameActive ||
         !state->originalFontAvailable ||
-        !M11_Font_IsLoaded(&state->originalFont)) {
+        !M11_Font_IsLoaded(&state->originalFont) ||
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) {
         return 0;
     }
 

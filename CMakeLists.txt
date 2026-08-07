@@ -34227,6 +34227,19 @@ if(NOT TARGET test_m11_dm1_hoc_no_fallback_panel)
         COMMAND test_m11_dm1_hoc_no_fallback_panel)
 endif()
 
+if(NOT TARGET test_m11_dm1_hoc_rename_font_source_gate)
+    add_executable(test_m11_dm1_hoc_rename_font_source_gate
+        tests/test_m11_dm1_hoc_rename_font_source_gate.c)
+    target_link_libraries(test_m11_dm1_hoc_rename_font_source_gate PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_hoc_rename_font_source_gate PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_dm1_hoc_rename_font_source_gate
+        COMMAND test_m11_dm1_hoc_rename_font_source_gate)
+endif()
+
 if(NOT TARGET test_dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat)
     # DM1 V1 chest-eye open-to-action-hand-switch runtime gate: while one
     # action-hand chest is open, C071 eye on a separate leader-hand chest
