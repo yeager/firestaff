@@ -25,6 +25,16 @@ dm1_v1_fmtowns_spell_costs[DM1_V1_FMTOWNS_SPELL_COSTS_COUNT] = {
     0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c, 0x00, 0x00
 };
 
+const uint8_t
+dm1_v1_fmtowns_player_color[DM1_V1_FMTOWNS_PLAYER_COLOR_COUNT] = {
+    0x07, 0x0b, 0x08, 0x0e, 0x05, 0x05, 0x04, 0x06
+};
+
+const uint8_t
+dm1_v1_fmtowns_spell_mult[DM1_V1_FMTOWNS_SPELL_MULT_COUNT] = {
+    0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c, 0x00, 0x00
+};
+
 uint16_t dm1_v1_fmtowns_level_song_for_level_pc34(unsigned int level) {
     if (level >= DM1_V1_FMTOWNS_LEVEL_SONG_COUNT) {
         return DM1_V1_FMTOWNS_LEVEL_SONG_END;

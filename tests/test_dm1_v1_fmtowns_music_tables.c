@@ -57,6 +57,15 @@ static void test_level_song_lookup(void) {
     assert(dm1_v1_fmtowns_level_song_for_level_pc34(9999) == 0xffff);
 }
 
+static void test_player_color_and_spell_mult(void) {
+    static const uint8_t pc[8] = {0x07, 0x0b, 0x08, 0x0e, 0x05, 0x05, 0x04, 0x06};
+    static const uint8_t sm[8] = {0x08, 0x0c, 0x10, 0x14, 0x18, 0x1c, 0x00, 0x00};
+    for (int i = 0; i < 8; ++i) {
+        assert(dm1_v1_fmtowns_player_color[i] == pc[i]);
+        assert(dm1_v1_fmtowns_spell_mult[i] == sm[i]);
+    }
+}
+
 static void test_real_data_round_trip(void) {
     const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_EDM_EXP");
     FILE *fp;
@@ -95,6 +104,20 @@ static void test_real_data_round_trip(void) {
         assert(buf[i] == dm1_v1_fmtowns_dm_music_defaults[i]);
     }
 
+    /* PLAYER_COLOR @ 0x291b8: 8 bytes. */
+    if (fseek(fp, 0x200 + 0x291b8, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
+    if (fread(buf, 1, 8, fp) != 8) { fclose(fp); puts("SKIP: read"); return; }
+    for (int i = 0; i < 8; ++i) {
+        assert(buf[i] == dm1_v1_fmtowns_player_color[i]);
+    }
+
+    /* SPELL_MULT @ 0x243a0: 8 bytes. */
+    if (fseek(fp, 0x200 + 0x243a0, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
+    if (fread(buf, 1, 8, fp) != 8) { fclose(fp); puts("SKIP: read"); return; }
+    for (int i = 0; i < 8; ++i) {
+        assert(buf[i] == dm1_v1_fmtowns_spell_mult[i]);
+    }
+
     fclose(fp);
     puts("PASS: real EDM.EXP music/spell tables match shipped constants");
 }
@@ -106,6 +129,7 @@ int main(void) {
     test_dm_music();
     test_spell_costs();
     test_level_song_lookup();
+    test_player_color_and_spell_mult();
     test_real_data_round_trip();
     puts("All dm1_v1_fmtowns_music_tables tests passed.");
     return 0;

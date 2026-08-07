@@ -68,6 +68,24 @@ extern const uint8_t
  * song index on success, LEVEL_SONG_END for out-of-range. */
 uint16_t dm1_v1_fmtowns_level_song_for_level_pc34(unsigned int level);
 
+/* PLAYER_COLOR @ 0x291b8: 8-word table. First 4 words are the
+ * per-champion palette indices used by DRAW_ICN_BUTTON to tint
+ * icon backgrounds when a champion is selected. Bytes at +8..
+ * are adjacent unrelated data.
+ * Byte-verified: 07 0b 08 0e 05 05 04 06 */
+#define DM1_V1_FMTOWNS_PLAYER_COLOR_COUNT  8U
+extern const uint8_t
+    dm1_v1_fmtowns_player_color[DM1_V1_FMTOWNS_PLAYER_COLOR_COUNT];
+
+/* SPELL_MULT @ 0x243a0: 8-byte per-spell-class multiplier that
+ * modifies the base SPELL_COSTS look-up. Byte-verified head:
+ * 08 0c 10 14 18 1c 00 00 (bytes 6-7 are 0 padding).
+ * Beyond +7 the table interleaves with SPELL_MSE_LIST-adjacent
+ * data; consumers must not read past index 7. */
+#define DM1_V1_FMTOWNS_SPELL_MULT_COUNT  8U
+extern const uint8_t
+    dm1_v1_fmtowns_spell_mult[DM1_V1_FMTOWNS_SPELL_MULT_COUNT];
+
 #ifdef __cplusplus
 }
 #endif
