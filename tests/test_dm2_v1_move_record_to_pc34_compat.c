@@ -238,9 +238,19 @@ static void test_perform_move_exec_accepted(void)
     assert(exec_receipt.stamina_cost[0] == 2);
     assert(exec_receipt.stamina_cost[1] == 0);
     assert(exec_receipt.walk_delay == 2);
-    assert(exec_receipt.delayed_pose_unbound == 1);
+    assert(exec_receipt.delayed_pose_unbound == 0);
     assert(exec_receipt.half_step_entered == 0);
     assert(exec_receipt.half_step_countdown == 0);
+
+    /* The source only enters the delayed pose after the complete
+     * skgame.cpp:2364-2372 gate. */
+    req.move_command = 3;
+    req.double_step_enabled = 1;
+    r = dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &exec_receipt);
+    assert(r == 1);
+    assert(exec_receipt.half_step_entered == 1);
+    assert(exec_receipt.delayed_pose_unbound == 1);
+    assert(exec_receipt.half_step_countdown == 1);
 
     printf("  PASS: perform_move_exec_accepted\n");
 }

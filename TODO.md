@@ -29766,6 +29766,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   movement, while retaining the independent `glbTableToMove` escape. The
   previous forward-unconditional branch could enter a delayed pose with the
   source flag disabled; the live pose/countdown owner remains open.
+  **2026-08-07 receipt-boundary correction:** `delayed_pose_unbound` is now
+  reported only after the complete source half-step gate admits
+  `glbIsPlayerMoving`; a walk-delay value alone no longer claims that a delayed
+  pose was requested. The live pose/countdown owner remains open.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an

@@ -59044,6 +59044,15 @@ possession transfer and session mutation remain fail-closed. Verification:
 `test_dm2_v1_dungeon_loader_first_map_gate`, and the real-data
 `test_dm2_v1_g1_champion_mirror_real_data` probe.
 
+# DM2 delayed-movement admission receipt correction (2026-08-07)
+
+Corrected the execution receipt to report `delayed_pose_unbound` only when the
+complete SKProject `skgame.cpp:2364-2372` half-step condition admits
+`glbIsPlayerMoving`. A walk-delay value on an immediate move or turn no longer
+claims a delayed pose was requested. The actual pose/countdown owner remains
+gated on live hero and viewport state. The focused movement regression now
+covers both paths.
+
 # DM2 half-step movement UseAltic parity (2026-08-07)
 
 Corrected `dm2_v1_source_half_step_should_enter` against SKProject

@@ -163,9 +163,6 @@ int dm2_v1_perform_move_exec(
      * delay. The gate is computed only from explicitly supplied source inputs;
      * the old party pose is still owned by live glbIsPlayerMoving state, so
      * no 700/701 viewport offset is synthesized here. */
-    if (walk_delay > 1) {
-        receipt->delayed_pose_unbound = 1;
-    }
     if (dm2_v1_source_half_step_should_enter(
             walk_delay,
             request->glb_is_player_moving,
@@ -173,6 +170,11 @@ int dm2_v1_perform_move_exec(
             request->double_step_enabled,
             request->current_tile_is_stairs,
             request->table_to_move_present)) {
+        /* skgame.cpp:2364-2372 only creates the delayed-pose obligation
+         * after the complete source gate passes. A walk delay by itself is
+         * not an interpolation request; e.g. turns and ordinary immediate
+         * moves keep glbIsPlayerMoving at zero. */
+        receipt->delayed_pose_unbound = 1;
         receipt->half_step_entered = 1;
         receipt->half_step_countdown = walk_delay >> 1;
     }
