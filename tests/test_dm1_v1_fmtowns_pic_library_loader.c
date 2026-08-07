@@ -5,7 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define test_mkdir(d) _mkdir(d)
+#else
 #include <unistd.h>
+#define test_mkdir(d) mkdir(d, 0700)
+#endif
 
 /* Build a bounded fixture picture-library file with `asset_count`
  * assets whose sizes are the caller-supplied list. The last asset is
@@ -53,7 +59,7 @@ static void write_fixture(const char *path, uint16_t asset_count,
 
 static void test_load_and_release(void) {
     const char *dir = "/tmp/test_fmtowns_loader";
-    (void)mkdir(dir, 0700);
+    (void)test_mkdir(dir);
     char path[512];
     snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", dir);
     uint16_t sizes[] = { 8, 16 };
@@ -114,7 +120,7 @@ static void test_font_size_mismatch(void) {
     /* Fixture with fewer than 558 assets returns _ERR_CONTAINER
      * (index out of range) via the underlying view API. */
     const char *dir = "/tmp/test_fmtowns_font_size";
-    (void)mkdir(dir, 0700);
+    (void)test_mkdir(dir);
     char path[512];
     snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", dir);
     uint16_t sizes[] = { 4, 4 };
@@ -142,7 +148,7 @@ static void test_load_menu_font_from_fixture(void) {
      * carries a 768-byte payload identical to the byte-verified font
      * allocation size. */
     const char *dir = "/tmp/test_fmtowns_font_load";
-    (void)mkdir(dir, 0700);
+    (void)test_mkdir(dir);
     char path[512];
     snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", dir);
     const uint16_t asset_count = 558;
