@@ -28477,6 +28477,7 @@ endif()
     )
     add_executable(test_dm1_v2_damage_numbers_pc34
         tests/test_dm1_v2_damage_numbers_pc34.c
+        src/dm1v2/dm1_v2_camera_shake_pc34.c
         src/dm1v2/dm1_v2_damage_numbers_pc34.c
         src/dm1v2/dm1_v2_settings_impl.c
     )

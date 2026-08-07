@@ -1,14 +1,11 @@
 
 #include "dm1_v2_settings_impl.h"
 #include <string.h>
-#include <math.h>
-#include <stdlib.h>
 
 void dm1_v2_settings_init(DM1_V2_SettingsState *s) {
     if (!s) return;
     memset(s, 0, sizeof(*s));
     s->footstep_interval = 0.4f;
-    s->bob_amplitude = 2.0f;
     s->torch_intensity = 1.0f;
 }
 
@@ -16,18 +13,14 @@ void dm1_v2_settings_tick(DM1_V2_SettingsState *s, float dt) {
     int i;
     if (!s) return;
 
-    /* Camera shake decay */
-    if (s->shake_intensity > 0.01f) {
-        s->shake_x = (float)(rand() % 100 - 50) / 50.0f * s->shake_intensity;
-        s->shake_y = (float)(rand() % 100 - 50) / 50.0f * s->shake_intensity;
-        s->shake_intensity *= (1.0f - s->shake_decay * dt);
-    } else {
-        s->shake_x = s->shake_y = 0;
-        s->shake_intensity = 0;
-    }
-
-    /* Camera bob */
-    s->bob_phase += dt * 8.0f;
+    /* PC34 has no authenticated V2 camera-shake, bob or global-flicker
+     * presentation path. Its source-owned torch light remains in F0337. */
+    s->shake_x = 0.0f;
+    s->shake_y = 0.0f;
+    s->shake_intensity = 0.0f;
+    s->bob_phase = 0.0f;
+    s->torch_phase = 0.0f;
+    s->torch_intensity = 1.0f;
 
     /* Footstep timer */
     s->footstep_timer += dt;
@@ -62,14 +55,11 @@ void dm1_v2_settings_tick(DM1_V2_SettingsState *s, float dt) {
         }
     }
 
-    /* Torch flicker */
-    s->torch_phase += dt * 10.0f;
-    s->torch_intensity = 0.85f + 0.15f * sinf(s->torch_phase) *
-        (0.9f + 0.1f * sinf(s->torch_phase * 3.7f));
 }
 
 void dm1_v2_camera_shake_trigger(DM1_V2_SettingsState *s, float intensity) {
-    if (s) { s->shake_intensity = intensity; s->shake_decay = 5.0f; }
+    (void)s;
+    (void)intensity;
 }
 
 void dm1_v2_damage_number_add(DM1_V2_SettingsState *s, int value, float x, float y, int is_heal) {
@@ -92,29 +82,11 @@ void dm1_v2_footstep_set_surface(DM1_V2_SettingsState *s, int surface) {
     if (s) s->footstep_surface = surface;
 }
 
-/* Apply camera shake as pixel offset */
 void dm1_v2_apply_camera_shake(uint32_t *rgba, int w, int h, const DM1_V2_SettingsState *s) {
-    int ox, oy, y;
-    uint32_t *tmp;
-    if (!rgba || !s || s->shake_intensity < 0.5f) return;
-    ox = (int)s->shake_x;
-    oy = (int)s->shake_y;
-    if (ox == 0 && oy == 0) return;
-    tmp = (uint32_t *)malloc(w * h * sizeof(uint32_t));
-    if (!tmp) return;
-    memcpy(tmp, rgba, w * h * sizeof(uint32_t));
-    memset(rgba, 0, w * h * sizeof(uint32_t));
-    for (y = 0; y < h; y++) {
-        int sy = y - oy;
-        if (sy >= 0 && sy < h) {
-            int src_start = (ox > 0) ? ox : 0;
-            int dst_start = (ox > 0) ? 0 : -ox;
-            int copy_w = w - abs(ox);
-            if (copy_w > 0)
-                memcpy(rgba + y*w + dst_start, tmp + sy*w + src_start, copy_w * sizeof(uint32_t));
-        }
-    }
-    free(tmp);
+    (void)rgba;
+    (void)w;
+    (void)h;
+    (void)s;
 }
 
 /* Render floating damage numbers */
@@ -140,14 +112,8 @@ void dm1_v2_apply_transition(uint32_t *rgba, int w, int h, float alpha) {
 }
 
 void dm1_v2_apply_torch_flicker(uint32_t *rgba, int w, int h, float intensity) {
-    int i, total;
-    if (!rgba || intensity >= 0.99f) return;
-    total = w * h;
-    for (i = 0; i < total; i++) {
-        uint32_t c = rgba[i];
-        int r = (int)(((c>>16)&0xFF) * intensity);
-        int g = (int)(((c>>8)&0xFF) * intensity);
-        int b = (int)((c&0xFF) * intensity);
-        rgba[i] = 0xFF000000 | (r<<16) | (g<<8) | b;
-    }
+    (void)rgba;
+    (void)w;
+    (void)h;
+    (void)intensity;
 }

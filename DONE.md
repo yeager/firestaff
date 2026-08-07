@@ -1,5 +1,15 @@
 # DM2 selected SONGLIST corpus (2026-08-07)
 
+# DM1 V2 syntetisk kameraskakning spärrad (2026-08-07)
+
+- ✅ Tog bort två källfria kameraskakningar från V2: en slumpbaserad
+  pixelförskjutning och en traumamodell hämtad från en GDC-presentation.
+  De saknar verifierad PC34-anropsväg och returnerar nu bara nollförskjutning.
+  Inställningshjälparen kan inte längre flytta eller mörka källägda pixlar.
+  F0337/F0338:s verkliga fackelljus och laddningsdränering lämnas i den
+  autentiserade V1-rutten. Den registrerade CTesten
+  `dm1_v2_damage_numbers_pc34` kontrollerar båda spärrarna och passerar.
+
 - ✅ Corrected the PC music-map reader from a fabricated 44-entry subset to
   SONGLIST.DAT's complete original 63-byte prefix. The selected DOS corpus
   proves valid selectors at slots 44 and 45, followed by the original

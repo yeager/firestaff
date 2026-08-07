@@ -50,6 +50,13 @@ colour-dot renderer. Neither has an authenticated PC34 caller or source
 surface, so both now retain no popup state and draw nothing. Source-owned
 combat feedback remains unchanged.
 
+The same source-unbound lane also contained two screen-shake implementations:
+one `rand()`-driven offset and one trauma model explicitly attributed to a GDC
+talk. Neither has a PC34 call route, so both now return zero displacement and
+the settings helper no longer shifts or darkens source pixels. This does not
+change real torch light: PC34 F0337/F0338 own palette selection and torch
+drain through the authenticated V1 light route.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564
