@@ -15,9 +15,9 @@ int main(void) {
     assert(dm2_v1_save_tile_suppress_size(6) == 4); /* fake wall */
     assert(dm2_v1_save_tile_suppress_size(7) == 0); /* open+trick */
 
-    /* Forward teleporter reference (target map > current map → skip) */
-    assert(dm2_v1_save_teleporter_is_forward_ref(3, 5) == 1); /* forward */
-    assert(dm2_v1_save_teleporter_is_forward_ref(5, 3) == 0); /* backward */
+    /* SKProject skips the record walk for a backward target-map reference. */
+    assert(dm2_v1_save_teleporter_is_forward_ref(5, 3) == 1); /* backward */
+    assert(dm2_v1_save_teleporter_is_forward_ref(3, 5) == 0); /* forward */
     assert(dm2_v1_save_teleporter_is_forward_ref(3, 3) == 0); /* same */
 
     printf("PASS: dm2_v1_save_dungeon_data\n");

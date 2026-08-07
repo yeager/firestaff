@@ -192,13 +192,13 @@ static void test_suppress_roundtrip(void) {
     printf("  PASS: suppress reader/writer round-trip\n");
 }
 
-/* ── Test 15: teleporter forward reference ───────────────────────────── */
+/* ── Test 15: teleporter target-map skip ──────────────────────────────── */
 static void test_teleporter_forward_ref(void) {
-    /* When target_map > current_map, forward ref returns 1. */
-    assert(dm2_v1_save_teleporter_is_forward_ref(3, 5) != 0);
-    /* When current_map > target_map, returns 0. */
-    assert(dm2_v1_save_teleporter_is_forward_ref(5, 3) == 0);
-    /* Equal maps: not a forward ref. */
+    /* SKProject skips when current_map > target_map. */
+    assert(dm2_v1_save_teleporter_is_forward_ref(5, 3) != 0);
+    /* A forward target is serialized normally. */
+    assert(dm2_v1_save_teleporter_is_forward_ref(3, 5) == 0);
+    /* Equal maps are serialized normally. */
     assert(dm2_v1_save_teleporter_is_forward_ref(3, 3) == 0);
     printf("  PASS: teleporter forward reference logic\n");
 }

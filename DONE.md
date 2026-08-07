@@ -59140,3 +59140,9 @@ buffer together with the ULP/allocator lifetime. Real PC-DOS data verifies
 11,854 raw entries, seven groups and stride 8; malformed/incomplete fixtures
 fail closed. Full BUILD_GDAT_ENTRY_DATA, underlay admission and secondary
 GRAPHIC2.DAT ownership remain intentionally gated.
+# DM2 SKSAVE teleporter target-map gate (2026-08-07)
+
+- ✅ Corrected the save-dungeon teleporter skip to match
+  `SKWINSPX/src/v5/sksvgame.cpp:2010-2017`: a target on an earlier map skips
+  the record walk, while a forward target is serialized normally. Runtime
+  save restoration remains gated on the complete dungeon/record owner.

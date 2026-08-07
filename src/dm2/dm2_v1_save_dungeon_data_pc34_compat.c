@@ -25,6 +25,10 @@ int dm2_v1_save_tile_suppress_size(uint8_t tile_type_3bit)
 
 int dm2_v1_save_teleporter_is_forward_ref(int current_map, int target_map)
 {
-    return (target_map >= 0 && current_map >= 0 && target_map < current_map)
-           ? 0 : (target_map > current_map ? 1 : 0);
+    /* SKProject sksvgame.cpp:2010-2017 sets vl_08 when the destination
+     * map is earlier than the map currently being serialized. Despite the
+     * historical helper name, this is the source's backward-reference skip,
+     * not a forward-reference test. */
+    return (target_map >= 0 && current_map >= 0 && current_map > target_map)
+           ? 1 : 0;
 }

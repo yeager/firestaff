@@ -19,16 +19,15 @@ extern "C" {
  * Type 2 (pit):        8 bytes
  * Type 3 (stairs):     0 bytes
  * Type 4 (door):       7 bytes
- * Type 5 (teleporter): 8 bytes (or 0 if forward reference)
+ * Type 5 (teleporter): 8 bytes (or 0 if the target is on an earlier map)
  * Type 6 (fake wall):  4 bytes
  * Type 7 (open+trick): 0 bytes */
 int dm2_v1_save_tile_suppress_size(uint8_t tile_type_3bit);
 
-/* Determine whether a teleporter tile's target map index creates a forward
- * reference (target map > current map). Forward references skip the tile
- * SUPPRESS write and the record-checkcode walk.
- * Source: sksvgame.cpp:2010-2017.
- * Returns 1 if forward reference (skip), 0 if normal (write). */
+/* Determine whether DM2_STORE_EXTRA_DUNGEON_DATA skips a teleporter's
+ * record-checkcode walk because its target map is earlier than the current
+ * map. Source: sksvgame.cpp:2010-2017 (`current_map > target_map`).
+ * Returns 1 if the source skips the record, 0 if it writes it. */
 int dm2_v1_save_teleporter_is_forward_ref(int current_map, int target_map);
 
 typedef struct {

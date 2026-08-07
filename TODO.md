@@ -29920,6 +29920,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   descriptors, and proves alternate descriptor order plus the mounted PC-DOS
   layout. The complete BUILD_GDAT_ENTRY_DATA transaction, underlay admission
   and secondary-file transaction remain gated.
+- **2026-08-07 save-dungeon parity correction:** the isolated
+  `DM2_STORE_EXTRA_DUNGEON_DATA` teleporter gate now matches SKProject's
+  `current_map > target_map` backward-reference skip; the complete raw-dungeon
+  record allocator and runtime restore owner remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the
