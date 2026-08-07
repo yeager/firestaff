@@ -133,6 +133,18 @@ int main(void)
                        "real G1 map style has scene, light, and weather GDAT");
     if (failures) goto done;
 
+    if (map_descriptor.dynamic_light) {
+        /* Dynamic maps need live v1e0974/savegame/party/weather state from
+         * the original runtime. Do not manufacture those values merely to
+         * make a receipt pass against mounted source media. */
+        memset(&c_light_source, 0, sizeof(c_light_source));
+        failures += !check(
+            !dm2_v1_c_light_m11_receipt_build_for_map(
+                &scene_light, &map_descriptor, &c_light_source, &c_light),
+            "real dynamic map stays blocked without runtime light state");
+        goto done;
+    }
+
     failures += !check(
         scene_plan.valid && scene_plan.command_hash != 0u &&
             scene_plan.commands[0].decoded_hash != 0u &&
@@ -144,9 +156,9 @@ int main(void)
         "real GRAPHICSSET scene-light receipt is built");
     memset(&c_light_source, 0, sizeof(c_light_source));
     c_light_source.valid = 1;
-    c_light_source.dynamic_map = map_descriptor.dynamic_light;
-    c_light_source.base_light = map_descriptor.dynamic_light ? 5u : 1u;
-    c_light_source.darkness_offset = map_descriptor.dynamic_light ? 1u : 0u;
+    c_light_source.dynamic_map = 0u;
+    c_light_source.base_light = 1u;
+    c_light_source.darkness_offset = 0u;
     c_light_source.source_state_hash =
         0x52434c54u ^ map_descriptor.descriptor_hash;
     failures += !check(

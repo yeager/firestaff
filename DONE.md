@@ -58420,3 +58420,13 @@ alcove runtime and archive-media tests passed (4/4).
   cannot be counted as a modern-art manifest or admit V2.2 pixels.
 - ✅ Kept the V2.2 path fail-closed (`NO_MANIFEST`, no slot material) until a
   complete provenance-checked art pack exists; no release was made.
+
+# DM2 dynamic-light source boundary audit (2026-08-13)
+
+- ✅ Removed synthetic dynamic-map light values from the mounted-data scene,
+  weather and light-chain regression. It uses the source-owned fixed-light
+  branch when available and explicitly rejects a real dynamic map without
+  runtime state.
+- ✅ Kept dynamic maps unavailable until the original runtime/save owners for
+  `v1e0974`, savegame light, party possessions, spells and weather state are
+  connected; no release was made.

@@ -3998,7 +3998,11 @@ level or consumer bindings.
   applied before the final clamp. The focused helper is no longer a synthetic
   map-only calculation; the live M11 runtime still requires the original
   party hand/inventory, spell, weather and save-state owner before it can
-  publish a dynamic c_light receipt.
+  publish a dynamic c_light receipt. **2026-08-13 real-data audit:** the
+  mounted-data scene/weather/light regression now uses the source-owned
+  fixed-light branch when available and explicitly rejects a real dynamic map
+  without runtime state; it no longer manufactures dynamic-map `base_light`
+  or darkness values.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
