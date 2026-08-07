@@ -2678,6 +2678,11 @@ level or consumer bindings.
   `heroflag` (0x4000), `ench_power`, `poisoned` and `poison`. They must not
   use the surrogate's unrelated byte flags, `body_flag`, poison value or
   detached counters.
+  **2026-08-07 real-corpus census:** all eight supplied PC-DOS
+  `sksave0..3.dat/.bak` files decode to zero source `c_tim` records with
+  `ttype == 0x0D` at the SKProject `c_timer.h` offset `0x04`. The census is
+  read-only evidence, not permission to synthesize a resurrection timer or
+  promote the test-only phase callbacks; the complete owner remains open.
 
 - **NEXUS-SATURN-PRESENTATION-HANDOFF:** Nexus production no longer contains
   the old inferred master palette or partial-texture fallback. Continue from

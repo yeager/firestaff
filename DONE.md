@@ -9,6 +9,18 @@
   `DM2_GAME_SAVE` live-state owner remains open, so no runtime writer or
   private replacement format was introduced.
 
+# DM2 resurrection timer ownership census (2026-08-07)
+- ✅ Added a source-shaped read-only census of the decoded 12-byte `c_tim`
+  records, using SKProject `c_timer.h`'s `ttype` byte at offset `0x04`.
+  All eight supplied PC-DOS `sksave0..3.dat/.bak` files contain zero
+  type-0x0D resurrection timers.
+- ✅ Real SKSave verification now passes 127/127; the source timer, dispatch,
+  champion-lifecycle and hero-operation regressions pass (22, 13, 10 and 13
+  tests respectively). Production resurrection remains fail-closed because
+  the corpus provides no live case and the complete 263-byte `c_hero`/record
+  chain/`CREATE_CLOUD` owner is not yet bound. No synthetic mutation or
+  release was added.
+
 # DM2 fixed spell/AI text-owner audit (2026-08-07)
 - ✅ Re-ran the real PC-English `GRAPHICS.DAT` corpus scan: it reports zero
   source `SPELL_DEF` rows, so the extended `dtText/0x18` route cannot supply

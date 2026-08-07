@@ -41,6 +41,8 @@ typedef struct {
     unsigned int decoded;
     unsigned int blocked_missing_ai_mapping;
     unsigned int malformed;
+    unsigned int resurrection_timers;
+    unsigned int files_with_resurrection_timers;
 } DirectRootStats;
 
 #define CHECK(condition, message) do { \
@@ -405,7 +407,32 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                   timer_receipt.end_offset ==
                       state_receipt.record_link_bitstream_offset &&
                   timer_receipt.raw_hash == state_receipt.timers_hash,
-              "real SKSave preserves source-sized c_tim records at the shared bitstream boundary");
+                  "real SKSave preserves source-sized c_tim records at the shared bitstream boundary");
+        if (timer_receipt.valid && timer_records) {
+            unsigned int file_resurrection_timers = 0u;
+            uint16_t timer_index;
+
+            /* SKProject c_timer.h:22-23: c_tim::ttype is byte 0x04 and
+             * c_tim::actor is byte 0x05.  Count only authenticated bytes
+             * from the real shared SUPPRESS stream; do not interpret the
+             * 261-byte session timer surrogate as a c_tim record. */
+            for (timer_index = 0u;
+                 timer_index < state_receipt.timer_count; ++timer_index) {
+                const uint8_t *record = timer_records +
+                    (size_t)timer_index * DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE;
+                if (record[0x04u] == 0x0du) {
+                    ++file_resurrection_timers;
+                }
+            }
+            if (direct_roots) {
+                direct_roots->resurrection_timers += file_resurrection_timers;
+                if (file_resurrection_timers != 0u) {
+                    ++direct_roots->files_with_resurrection_timers;
+                }
+            }
+            printf("  real c_tim census: resurrection type-0x0D=%u\n",
+                   file_resurrection_timers);
+        }
         free(timer_records);
     }
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
@@ -573,6 +600,9 @@ int main(void)
               direct_roots.blocked_missing_ai_mapping == 3u &&
               direct_roots.malformed == 0u,
           "five real direct-root streams decode and three stop at absent source AI owners");
+    CHECK(direct_roots.resurrection_timers == 0u &&
+              direct_roots.files_with_resurrection_timers == 0u,
+          "the supplied PC-DOS SKSave corpus has no source type-0x0D resurrection timers");
     CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
           "scanner preserves lower-case, single-digit original slots in the data root");
     CHECK(corpus.valid_slot_backup_count == 4u,
