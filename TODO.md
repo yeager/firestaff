@@ -29737,6 +29737,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now suppressed for `M11_GAME_SOURCE_DM2_BOOT`; save/load operations still
   return their structured result, but no host-authored action/save text is
   exposed until the original DM2 GUI producer is bound.
+  **2026-08-13 generic-loader correction:** `M11_GameView_QuickLoad` and its
+  shared path helper now reject the DM2 route before the generic DM1 envelope
+  reader can emit `SAVE HEADER INVALID`, `QUICKSAVE RESTORED`, or another
+  host status. DM2 BACK and front-cell action receipts also clear the generic
+  inspect/status channel; source-owned control receipts remain available.
 - [ ] DM2 GDAT structure loader: `DM2_READ_GRAPHICS_STRUCTURE` remains
   unavailable until the source's complete GRAPHICS.DAT transaction is ported:
   header validation, ULP offsets, ENT1, optional underlay data and image

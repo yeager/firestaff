@@ -21968,6 +21968,18 @@ fail:
     return 0;
 }
 
+static void m11_dm2_clear_unbound_feedback(M11_GameViewState *state)
+{
+    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
+        return;
+    }
+    /* DM2 c_gui_draw/c_dialog owns action/save text. Keep generic M11
+     * diagnostics out of the DM2 route until that producer is connected. */
+    m11_set_status(state, NULL, NULL);
+    state->inspectTitle[0] = '\0';
+    state->inspectDetail[0] = '\0';
+}
+
 int M11_GameView_QuickSave(M11_GameViewState* state) {
     /* Sensor state persistence: sensor effects that modify dungeon squares
      * (door open/close, pit toggle, teleporter toggle) are persisted through
@@ -22139,6 +22151,13 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     if (!state || !state->active || !path || path[0] == '\0') {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        /* GAME_LOAD is not yet connected to the complete source DB/
+         * possession/timer graph. Never let the generic DM1 envelope loader
+         * promote a DM2 file or expose its diagnostics as DM2 dialogue. */
+        m11_dm2_clear_unbound_feedback(state);
+        return 0;
+    }
 
     file = fopen(path, "rb");
     if (!file) {
@@ -22245,6 +22264,10 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     }
     if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        m11_dm2_clear_unbound_feedback(state);
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -25989,7 +26012,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_BACK) {
-            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            m11_dm2_clear_unbound_feedback(state);
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
         return M11_GAME_INPUT_IGNORED;
@@ -26367,11 +26390,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 m11_sync_dm2_state_from_runtime(state);
                 return M11_GAME_INPUT_REDRAW;
             }
-            if (receipt.status) {
-                m11_set_status(state, receipt.status_scope, receipt.status);
-            } else {
-                m11_set_status(state, NULL, NULL);
-            }
+            /* This receipt controls routing only; its status strings are not
+             * a source-owned GUI/dialogue surface. */
+            m11_dm2_clear_unbound_feedback(state);
             /* The source dialogue producer owns both strings.  Do not let
              * M11 manufacture a title when only one side of the receipt is
              * present; DM2_dialog_OPEN_DIALOG_PANEL and its GDAT text route

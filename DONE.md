@@ -58795,3 +58795,10 @@ Named the six-byte `c_wbbb`/`ddat.savegames1` section from SKProject
 `sksvgame.cpp::DM2_GAME_LOAD` and centralized its source size. The mounted
 real-save corpus keeps this section as a raw hash only; no unproven scalar
 gold, reputation, or time value is promoted into the Firestaff session.
+
+# DM2 generic save/action feedback boundary (2026-08-13)
+
+Blocked DM2 `QuickLoad` before the shared DM1 envelope reader and cleared
+generic status/inspect text on DM2 BACK and action receipts. This prevents
+host-authored save/action messages from appearing while the original
+`c_gui_draw`/`c_dialog` producer and complete `GAME_LOAD` graph remain open.
