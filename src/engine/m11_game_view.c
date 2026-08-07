@@ -21998,6 +21998,31 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     if (!state || !state->active) {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        DM2_V1_BootProfile *profile =
+            (DM2_V1_BootProfile *)state->dm2BootProfile;
+        DM2_V1_QuicksaveReceipt receipt;
+
+        /* DM2_dialog/c_savegame owns both the save transaction and its
+         * feedback. Reach that source boundary before even resolving the
+         * shared host path, so path errors cannot leak DM1 English text into
+         * a DM2 frame. SKProject source: v5/sksvgame.cpp::DM2_GAME_SAVE_MENU. */
+        if (!dm2_v1_runtime_quicksave_boot_profile_with_receipt(
+                profile, &receipt)) {
+            m11_dm2_clear_unbound_feedback(state);
+            return 0;
+        }
+        if (receipt.save_path[0]) {
+            M12_Config_SetLastSavePath(receipt.save_path);
+        }
+        if (receipt.session_valid) {
+            m11_dm2_mirror_session_party(state, &receipt.session);
+        }
+        m11_sync_dm2_state_from_runtime(state);
+        state->lastSaveTick = (uint32_t)state->dm2State.tick_count;
+        m11_dm2_clear_unbound_feedback(state);
+        return 1;
+    }
     if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "SAVE", "SAVE PATH TOO LONG");
         return 0;
@@ -22041,33 +22066,6 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         M12_Config_SetLastSavePath(path);
         return 1;
     }
-    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        DM2_V1_BootProfile *profile =
-            (DM2_V1_BootProfile *)state->dm2BootProfile;
-        DM2_V1_QuicksaveReceipt receipt;
-        if (!dm2_v1_runtime_quicksave_boot_profile_with_receipt(
-                profile,
-                &receipt)) {
-            /* SAVE status text belongs to DM2's dialog/GDAT owner.  The
-             * original writer is not live, so retain the receipt but publish
-             * no host-authored failure label. */
-            m11_set_status(state, NULL, NULL);
-            return 0;
-        }
-        if (receipt.save_path[0]) {
-            M12_Config_SetLastSavePath(receipt.save_path);
-        }
-        if (receipt.session_valid) {
-            m11_dm2_mirror_session_party(state, &receipt.session);
-        }
-        m11_sync_dm2_state_from_runtime(state);
-        state->lastSaveTick = (uint32_t)state->dm2State.tick_count;
-        m11_set_status(state, NULL, NULL);
-        state->inspectTitle[0] = '\0';
-        state->inspectDetail[0] = '\0';
-        return 1;
-    }
-
     /* ReDMCSB LOADSAVE.C:2721-2731 restores the party position and facing.
      * Firestaff keeps the explored-cell presentation state in a sidecar so
      * quick-resume can restore reveal progress alongside the source-locked
@@ -22255,6 +22253,12 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     if (!state || !state->active) {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        /* Keep the source GAME_LOAD gate ahead of the shared path resolver;
+         * c_savegame.cpp owns any visible failure/save-slot text. */
+        m11_dm2_clear_unbound_feedback(state);
+        return 0;
+    }
     if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
         /* ReDMCSB COMMAND.C F0380 keeps normal command surfaces out while
          * G0299_ui_CandidateChampionOrdinal owns the C040 panel.  QuickSave
@@ -22264,10 +22268,6 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     }
     if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
-        return 0;
-    }
-    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        m11_dm2_clear_unbound_feedback(state);
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {

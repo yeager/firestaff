@@ -58832,6 +58832,15 @@ viewport offset and c_hero/inventory ownership remain fail-closed.
   consumer admission closed until a trace joins a live writer/consumer to
   the authenticated retail bytes.
 
+# DM2 action/save pre-resolver feedback gate (2026-08-13)
+
+Moved the DM2 quick-save and quick-load source boundary ahead of the shared
+host path resolver in `src/engine/m11_game_view.c`. A DM2 attempt now reaches
+the original-writer/`GAME_LOAD` gate first, so path-length, directory and
+generic envelope errors cannot publish host-authored SAVE/LOAD text. The
+structured quicksave receipt and `DM2_GAME_SAVE_MENU` source ownership remain
+unchanged and the original writer/loader stays fail-closed.
+
 # DM2 FM Towns live text-owner census (2026-08-13)
 
 Audited the production M11 DM2 text consumers against SKProject

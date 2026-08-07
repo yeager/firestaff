@@ -29748,6 +29748,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   reader can emit `SAVE HEADER INVALID`, `QUICKSAVE RESTORED`, or another
   host status. DM2 BACK and front-cell action receipts also clear the generic
   inspect/status channel; source-owned control receipts remain available.
+  **2026-08-13 pre-resolver correction:** DM2 quick-save and quick-load now
+  enter the source-owned silent boundary before shared path resolution. This
+  prevents path-length, directory and other generic host errors from leaking
+  into the DM2 status channel. The original `DM2_GAME_SAVE_MENU`/GAME_LOAD
+  producer is still not connected, so the item remains open.
 - [ ] DM2 GDAT structure loader: `DM2_READ_GRAPHICS_STRUCTURE` remains
   unavailable until the source's complete GRAPHICS.DAT transaction is ported:
   header validation, ULP offsets, ENT1, optional underlay data and image
