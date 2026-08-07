@@ -4308,7 +4308,9 @@ level or consumer bindings.
   refusal: a V2.2 request resolves to V2.1 and no ordinary filesystem
   manifest can provide a `V2_MODERN` source. A future
   bridge must carry those exact original-data facts before enabling any V2.2
-  replacement.
+  replacement. **2026-08-13 audit:** mounted PC-DOS DM2 source data is now
+  covered by an opt-in real-data regression; GRAPHICS.DAT presence without a
+  modern-art manifest remains `NO_MANIFEST` and cannot promote V2.2 pixels.
 
 - **DM2-STEP-MISSILE-OWNER-HANDOFF:** Port the source-owned DB14/timer
   projectile handoff from `c_tim_proc.cpp::DM2_STEP_MISSILE` with its record

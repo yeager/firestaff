@@ -212,6 +212,29 @@ static void test_path_resolution_and_missing_manifest(void) {
           "missing explicit manifest validates as -1");
 }
 
+static void test_real_dm2_data_does_not_promote_v22(void) {
+    const char* dataDir = getenv("FIRESTAFF_DM2_DATA_DIR");
+    char graphics[FSP_PATH_MAX];
+    int total = -1;
+
+    /* Optional mounted-data audit. The retail DM2 directory contains the
+     * source GRAPHICS/DUNGEON/SKSAVE corpus, not a modern-art manifest. */
+    if (!dataDir || dataDir[0] == '\0') return;
+    FSP_JoinPath(graphics, sizeof(graphics), dataDir, "graphics.dat");
+    if (!FSP_FileExists(graphics)) return;
+
+    dm2_v22_famg_set_manifest_path(dataDir);
+    CHECK(dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_NO_MANIFEST,
+          "real DM2 source data has no V2.2 material manifest");
+    CHECK(dm2_v22_famg_real_count(&total) == 0 && total == 0,
+          "real DM2 source data cannot count as finished V2.2 art");
+    for (size_t i = 0; i < DM2_V22_FAMG_MATERIAL_COUNT; ++i) {
+        CHECK(dm2_v22_famg_classify_slot(k_slots[i].slot) ==
+              DM2_V22_FAMG_CLASS_MISSING,
+              "source GDAT files do not masquerade as modern-art slots");
+    }
+}
+
 static void test_empty_manifest(void) {
     const char* dataDir = "/tmp/scratch/dm2-v22-famg-test/data/dm2";
     char manifest[FSP_PATH_MAX];
@@ -437,6 +460,7 @@ int main(void) {
     printf("=== DM2 V2.2 finished-art material gate (synthetic) ===\n");
     test_unset_path_is_safe();
     test_path_resolution_and_missing_manifest();
+    test_real_dm2_data_does_not_promote_v22();
     test_empty_manifest();
     test_placeholder_manifest();
     test_local_files_never_promote_manifest();

@@ -58413,3 +58413,10 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Verified against the mounted PC-DOS corpus: 8,639,757 bytes, 1,861 GDAT
   text rows and 781 unique queryable text keys. No host-authored menu text or
   filename-based fallback is admitted.
+# DM2 V2.2 source-material boundary audit (2026-08-13)
+
+- ✅ Extended the V2.2 material-gate regression with an opt-in mounted-data
+  check. The real PC-DOS `GRAPHICS.DAT` corpus remains source V1 material and
+  cannot be counted as a modern-art manifest or admit V2.2 pixels.
+- ✅ Kept the V2.2 path fail-closed (`NO_MANIFEST`, no slot material) until a
+  complete provenance-checked art pack exists; no release was made.
