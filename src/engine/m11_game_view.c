@@ -38760,7 +38760,7 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
      * rejects candidate flow, the currently open inventory champion,
      * out-of-party/dead champions, then maps even/odd slot boxes through
      * DEFS.H line 1878 M070_HAND_SLOT_INDEX. */
-    if (state->candidateMirrorOrdinal || state->candidateMirrorPanelActive) {
+    if (state->candidateMirrorOrdinal >= 0 || state->candidateMirrorPanelActive) {
         return 0;
     }
     championIndex = slotBoxIndex >> 1;
@@ -48925,8 +48925,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * by later source panels, not pre-culled by a host visibility shortcut. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
                              1, 3, cells);
-    m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  3, cells);
     /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in source order before
      * the same-depth center square (D3L/D3R before D3C, D2L/D2R before D2C,
      * D1L/D1R before D1C).  Do not cap the primary side-wall pass at the
@@ -48938,6 +48936,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                 maxVisibleForward),
                             &visibility);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                  maxVisibleForward, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
@@ -51863,17 +51863,32 @@ static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
 
     dm1_v1_text_scroll_encode_line(line, encoded, sizeof(encoded));
     {
-        int width = M11_Font_MeasureString((const char*)encoded);
-        M11_Font_DrawString(g_activeOriginalFont,
-                            framebuffer,
-                            framebufferWidth,
-                            framebufferHeight,
-                            centerX - (width / 2),
-                            y,
-                            (const char*)encoded,
-                            (unsigned char)foreground,
-                            background,
-                            1);
+        int len = (int)strlen((const char*)encoded);
+        int width = len * 6;
+        int startX = centerX - (width / 2);
+        int ci;
+        for (ci = 0; ci < len; ++ci) {
+            unsigned char ch = encoded[ci];
+            int fontX = (int)ch * M11_FONT_CHAR_CELL_WIDTH + M11_FONT_X_OFFSET;
+            int row, col;
+            int dx = startX + ci * 6;
+            for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
+                for (col = 0; col < 5; ++col) {
+                    int px = dx + col;
+                    int py = y + row;
+                    if (px < 0 || px >= framebufferWidth ||
+                        py < 0 || py >= framebufferHeight) continue;
+                    if (M11_Font_GetPixel(g_activeOriginalFont,
+                                          fontX + col, row)) {
+                        framebuffer[py * framebufferWidth + px] =
+                            (unsigned char)foreground;
+                    } else if (background >= 0) {
+                        framebuffer[py * framebufferWidth + px] =
+                            (unsigned char)background;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -51919,7 +51934,7 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
     int framebufferHeight) {
     char decoded[DM1_V1_SCROLL_TEXT_MAX_LENGTH];
     DM1_V1_ScrollLayout layout;
-    int panelX = 0, panelY = 0, panelW = 0;
+    int panelX = 0, panelY = 0;
     int centerX;
     int drewPanel = 0;
     int i;
@@ -51937,7 +51952,6 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
         }
         panelX = panelRect.x;
         panelY = panelRect.y;
-        panelW = panelRect.w;
     }
 
     /* ReDMCSB PANEL.C F0347 chooses the action-hand scroll as panel
@@ -51974,7 +51988,7 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
     if (!drewPanel) return 0;
 
     dm1_v1_text_scroll_measure_layout(decoded, &layout);
-    centerX = M11_VIEWPORT_X + panelX + (panelW / 2);
+    centerX = M11_VIEWPORT_X + 162;
     for (i = 0; i < layout.storedLineCount; ++i) {
         m11_draw_v1_scroll_text_line(framebuffer,
                                      framebufferWidth,
