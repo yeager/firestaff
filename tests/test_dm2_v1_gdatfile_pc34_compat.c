@@ -40,6 +40,45 @@ typedef struct MockCtx {
     uint8_t alloc_buf[1024];
 } MockCtx;
 
+typedef struct {
+    int16_t *hibig;
+} SourceBuildMemory;
+
+static int16_t *source_build_alloc_hibig(void *context, int32_t size)
+{
+    SourceBuildMemory *memory = (SourceBuildMemory *)context;
+    if (!memory || size <= 0) return NULL;
+    memory->hibig = (int16_t *)calloc(1u, (size_t)size);
+    return memory->hibig;
+}
+
+static void source_build_dealloc_hibig(void *context, int32_t size)
+{
+    SourceBuildMemory *memory = (SourceBuildMemory *)context;
+    (void)size;
+    if (!memory) return;
+    free(memory->hibig);
+    memory->hibig = NULL;
+}
+
+static int16_t *source_build_alloc_w(void *context, int32_t size)
+{
+    (void)context;
+    return size > 0 ? (int16_t *)calloc(1u, (size_t)size) : NULL;
+}
+
+static DM2_V1_GdatBBW *source_build_alloc_bbw(void *context, int32_t size)
+{
+    (void)context;
+    return size > 0 ? (DM2_V1_GdatBBW *)calloc(1u, (size_t)size) : NULL;
+}
+
+static void source_build_zero(void *context, void *destination, int32_t size)
+{
+    (void)context;
+    if (destination && size > 0) memset(destination, 0, (size_t)size);
+}
+
 static int16_t mock_file_open(void *ctx, const char *name)
 {
     MockCtx *m = (MockCtx *)ctx;
@@ -773,6 +812,39 @@ static int test_read_graphics_structure_real_dm2_data(void)
             rows[1].data_index == 0x0006u;
         free(rows);
         if (!rows_ok) return 0;
+    }
+    {
+        SourceBuildMemory memory;
+        DM2_V1_GdatBuildCallbacks build_callbacks;
+        DM2_V1_GdatSourceBuildReceipt build_receipt;
+        DM2_V1_GdatTable table;
+        int build_ok;
+
+        memset(&memory, 0, sizeof(memory));
+        memset(&build_callbacks, 0, sizeof(build_callbacks));
+        build_callbacks.alloc_hibigpool = source_build_alloc_hibig;
+        build_callbacks.dealloc_hibigpool = source_build_dealloc_hibig;
+        build_callbacks.alloc_freepool_w = source_build_alloc_w;
+        build_callbacks.alloc_freepool_bbw = source_build_alloc_bbw;
+        build_callbacks.zero_memory = source_build_zero;
+        memset(&table, 0, sizeof(table));
+        build_ok = dm2_v1_gdat_build_source_entry_data(
+            &state, &build_callbacks, &memory, &table, &build_receipt);
+        if (!build_ok || !build_receipt.valid ||
+            build_receipt.source_entry_count != receipt.ent1_entry_count ||
+            build_receipt.table_entry_count != 11854 ||
+            build_receipt.table_max_category != 26 ||
+            build_receipt.table_subcategory_slots != 247 ||
+            build_receipt.source_rows_hash != 0x123c65ceu ||
+            !table.w_table1 || !table.w_table2 || !table.u31p_08) {
+            free(table.w_table1);
+            free(table.w_table2);
+            free(table.u31p_08);
+            return 0;
+        }
+        free(table.w_table1);
+        free(table.w_table2);
+        free(table.u31p_08);
     }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
            state.ulp_table == NULL && state.allocator_table == NULL &&

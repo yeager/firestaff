@@ -59745,3 +59745,14 @@ companion.
   checks the first source rows and a complete-row receipt hash, and keeps the
   later category/index allocator and raw-image stages gated.
 - ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.
+
+# DM2 GDAT source entry-table build (2026-08-07)
+
+- ✅ Connected the authenticated ENT1 rows to the source
+  `BUILD_GDAT_ENTRY_DATA` category/subcategory pass with a context-safe
+  adapter that preserves the caller's allocator ownership.
+- ✅ Real PC-DOS `GRAPHICS.DAT` builds all 11,854 entries, maximum category 26
+  and 247 source subcategory slots; the complete row receipt hash is checked.
+- ✅ The built tables remain explicit caller-owned source state. No decoded
+  image, underlay or runtime cache admission was introduced.
+- ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.

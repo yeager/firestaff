@@ -6,6 +6,7 @@
  */
 
 #include "dm2_v1_gdatfile_pc34_compat.h"
+#include <stdlib.h>
 #include <string.h>
 
 /* skproject filename constants (c_gdatfile.cpp:21-27) */
@@ -758,6 +759,169 @@ int dm2_v1_gdat_build_entry_data(DM2_V1_GdatTable *table,
     }
 
     cb->dealloc_hibigpool(ctx, 0x3A0);
+    return 1;
+}
+
+typedef struct {
+    const DM2_V1_GdatEnt1Row *rows;
+    uint16_t count;
+    void *build_context;
+    const DM2_V1_GdatBuildCallbacks *build_callbacks;
+} DM2_V1_GdatSourceRowsContext;
+
+static bool dm2_v1_gdat_source_row_valid(void *context, int16_t index)
+{
+    const DM2_V1_GdatSourceRowsContext *source =
+        (const DM2_V1_GdatSourceRowsContext *)context;
+    return source && index >= 0 && (uint16_t)index < source->count;
+}
+
+static int32_t dm2_v1_gdat_source_row_value(void *context,
+                                            int16_t index,
+                                            int16_t field)
+{
+    const DM2_V1_GdatSourceRowsContext *source =
+        (const DM2_V1_GdatSourceRowsContext *)context;
+    const DM2_V1_GdatEnt1Row *row;
+
+    if (!source || !source->rows || index < 0 ||
+        (uint16_t)index >= source->count) return 0;
+    row = &source->rows[index];
+    switch (field) {
+        case 0: return row->cls1;
+        case 1: return row->cls2;
+        case 2: return row->cls3;
+        case 3: return row->cls4;
+        case 4: return row->data_index;
+        case 5: return row->cls5;
+        case 6: return row->cls6;
+        default: return 0;
+    }
+}
+
+static int16_t *dm2_v1_gdat_source_alloc_hibig(void *context, int32_t size)
+{
+    DM2_V1_GdatSourceRowsContext *source =
+        (DM2_V1_GdatSourceRowsContext *)context;
+    return source && source->build_callbacks &&
+        source->build_callbacks->alloc_hibigpool ?
+        source->build_callbacks->alloc_hibigpool(source->build_context, size) :
+        NULL;
+}
+
+static void dm2_v1_gdat_source_dealloc_hibig(void *context, int32_t size)
+{
+    DM2_V1_GdatSourceRowsContext *source =
+        (DM2_V1_GdatSourceRowsContext *)context;
+    if (source && source->build_callbacks &&
+        source->build_callbacks->dealloc_hibigpool) {
+        source->build_callbacks->dealloc_hibigpool(source->build_context, size);
+    }
+}
+
+static int16_t *dm2_v1_gdat_source_alloc_w(void *context, int32_t size)
+{
+    DM2_V1_GdatSourceRowsContext *source =
+        (DM2_V1_GdatSourceRowsContext *)context;
+    return source && source->build_callbacks &&
+        source->build_callbacks->alloc_freepool_w ?
+        source->build_callbacks->alloc_freepool_w(source->build_context, size) :
+        NULL;
+}
+
+static DM2_V1_GdatBBW *dm2_v1_gdat_source_alloc_bbw(void *context,
+                                                     int32_t size)
+{
+    DM2_V1_GdatSourceRowsContext *source =
+        (DM2_V1_GdatSourceRowsContext *)context;
+    return source && source->build_callbacks &&
+        source->build_callbacks->alloc_freepool_bbw ?
+        source->build_callbacks->alloc_freepool_bbw(source->build_context,
+                                                    size) : NULL;
+}
+
+static void dm2_v1_gdat_source_zero(void *context, void *destination,
+                                    int32_t size)
+{
+    DM2_V1_GdatSourceRowsContext *source =
+        (DM2_V1_GdatSourceRowsContext *)context;
+    if (source && source->build_callbacks &&
+        source->build_callbacks->zero_memory) {
+        source->build_callbacks->zero_memory(source->build_context,
+                                             destination, size);
+    }
+}
+
+int dm2_v1_gdat_build_source_entry_data(
+    const DM2_V1_GdatFileState *state,
+    const DM2_V1_GdatBuildCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatTable *table,
+    DM2_V1_GdatSourceBuildReceipt *out)
+{
+    DM2_V1_GdatEnt1Row *rows = NULL;
+    DM2_V1_GdatEnt1RowsReceipt unused_rows_receipt;
+    DM2_V1_GdatSourceRowsContext source;
+    DM2_V1_GdatBuildCallbacks source_cb;
+    int8_t field_sizes[7];
+    int8_t extra_fields[7];
+    uint8_t field;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !cb || !table || !cb->alloc_hibigpool ||
+        !cb->dealloc_hibigpool || !cb->alloc_freepool_w ||
+        !cb->alloc_freepool_bbw || !cb->zero_memory ||
+        state->ent1_entry_count == 0u) {
+        return 0;
+    }
+    rows = (DM2_V1_GdatEnt1Row *)calloc(
+        state->ent1_entry_count, sizeof(*rows));
+    if (!rows) return 0;
+    memset(&unused_rows_receipt, 0, sizeof(unused_rows_receipt));
+    if (!dm2_v1_gdat_materialize_ent1_rows(
+            state, rows, state->ent1_entry_count, &unused_rows_receipt)) {
+        free(rows);
+        return 0;
+    }
+    for (field = 0u; field < 7u; ++field) {
+        if (state->ent1_field_size[field] == 0u ||
+            state->ent1_field_size[field] > INT8_MAX) {
+            free(rows);
+            return 0;
+        }
+        field_sizes[field] = (int8_t)state->ent1_field_size[field];
+        extra_fields[field] = field_sizes[field];
+    }
+    source.rows = rows;
+    source.count = state->ent1_entry_count;
+    source.build_context = ctx;
+    source.build_callbacks = cb;
+    source_cb = *cb;
+    source_cb.total_entries = (int16_t)source.count;
+    source_cb.is_valid_entry = dm2_v1_gdat_source_row_valid;
+    source_cb.query_entry_value = dm2_v1_gdat_source_row_value;
+    source_cb.alloc_hibigpool = dm2_v1_gdat_source_alloc_hibig;
+    source_cb.dealloc_hibigpool = dm2_v1_gdat_source_dealloc_hibig;
+    source_cb.alloc_freepool_w = dm2_v1_gdat_source_alloc_w;
+    source_cb.alloc_freepool_bbw = dm2_v1_gdat_source_alloc_bbw;
+    source_cb.zero_memory = dm2_v1_gdat_source_zero;
+    source_cb.field_sizes = field_sizes;
+    source_cb.field_count = 7;
+    memset(table, 0, sizeof(*table));
+    if (!dm2_v1_gdat_build_entry_data(table, extra_fields, &source_cb,
+                                      &source)) {
+        free(rows);
+        return 0;
+    }
+    if (out) {
+        out->valid = true;
+        out->source_entry_count = source.count;
+        out->table_max_category = table->entries;
+        out->table_entry_count = table->w_10;
+        out->table_subcategory_slots = table->w_0e;
+        out->source_rows_hash = unused_rows_receipt.rows_hash;
+    }
+    free(rows);
     return 1;
 }
 

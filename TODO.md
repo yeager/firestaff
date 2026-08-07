@@ -30069,6 +30069,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   GRAPHICS.DAT verifies all 11,854 rows and their nonzero receipt hash.
   BUILD_GDAT_ENTRY_DATA category/index allocation, decoded raw images,
   underlay admission and the optional GRAPHIC2.DAT transaction remain gated.
+  **2026-08-07 source-table progress:** the verified ENT1 rows now feed the
+  source `BUILD_GDAT_ENTRY_DATA` pass through a context-safe adapter. The real
+  PC-DOS table builds 11,854 entries, maximum category 26 and 247 source
+  subcategory slots with a stable row receipt hash. The returned category
+  tables remain caller-owned diagnostic/source state; runtime graphics-cache,
+  raw-image and underlay admission are not implied.
 - **2026-08-07 save-dungeon parity correction:** the isolated
   `DM2_STORE_EXTRA_DUNGEON_DATA` teleporter gate now matches SKProject's
   `current_map > target_map` backward-reference skip; the complete raw-dungeon

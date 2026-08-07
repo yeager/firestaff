@@ -414,6 +414,26 @@ int dm2_v1_gdat_build_entry_data(DM2_V1_GdatTable *table,
                                   const DM2_V1_GdatBuildCallbacks *cb,
                                   void *ctx);
 
+typedef struct {
+    bool     valid;
+    uint16_t source_entry_count;
+    int16_t  table_max_category;
+    int16_t  table_entry_count;
+    int16_t  table_subcategory_slots;
+    uint32_t source_rows_hash;
+} DM2_V1_GdatSourceBuildReceipt;
+
+/* Connect the authenticated ENT1 rows to the source BUILD_GDAT_ENTRY_DATA
+ * pass. The caller owns the returned table allocations through the supplied
+ * build callbacks; this function does not decode images or admit a runtime
+ * graphics cache. */
+int dm2_v1_gdat_build_source_entry_data(
+    const DM2_V1_GdatFileState *state,
+    const DM2_V1_GdatBuildCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatTable *table,
+    DM2_V1_GdatSourceBuildReceipt *out);
+
 /* ========================================================================
  * Sound sample XOR decode — skproject c_gdatfile.cpp:850
  * DM2_47eb_00a4
