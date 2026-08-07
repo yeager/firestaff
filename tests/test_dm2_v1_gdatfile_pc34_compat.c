@@ -580,7 +580,7 @@ static int test_read_graphics_structure_binds_header_and_ulp(void)
     memset(&mctx, 0, sizeof(mctx));
 
     dm2_v1_gdat_file_init(&state, NULL);
-    /* version=5|0x8000, entries=2, source offset=4, ULP offsets={0,1}. */
+    /* version=5|0x8000, entries=2, first ENT1 size=4, ULP offsets={0,1}. */
     mctx.file_data[0] = 0x05;
     mctx.file_data[1] = 0x80;
     mctx.file_data[2] = 0x02;
@@ -598,8 +598,9 @@ static int test_read_graphics_structure_binds_header_and_ulp(void)
     int r = dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out);
     if (!(r == 1 && out.valid && out.header_validated && out.ulp_validated &&
            out.entries == 2 && out.versionlo == 5 && out.ulp_length == 4 &&
-           out.ulp_table_end == 10 && out.source_data_offset == 4 &&
-           out.first_raw_offset == 15 &&
+           out.ulp_table_end == 10 && out.first_entry_size == 4 &&
+           out.source_data_offset == 10 && out.first_raw_offset == 10 &&
+           out.raw_data_end == 15 &&
            mctx.close_count == 1 && state.ulp_table != NULL &&
            state.ulp_count == 2 && state.ulp_length == 4)) return 0;
     if (!dm2_v1_gdat_release_graphics_structure(&state, &cb, &mctx) ||
@@ -635,8 +636,9 @@ static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
         return 0;
     }
     if (!(out.valid && out.endian_swapped && out.entries == 2u &&
-           out.versionlo == 5 && out.source_data_offset == 4u &&
-           out.first_raw_offset == 15u && mctx.close_count == 1)) {
+           out.versionlo == 5 && out.first_entry_size == 4u &&
+           out.source_data_offset == 10u && out.first_raw_offset == 10u &&
+           out.raw_data_end == 15u && mctx.close_count == 1)) {
         return 0;
     }
     if (!state.ulp_table || state.ulp_count != 2u ||
@@ -652,11 +654,21 @@ static int test_read_graphics_structure_real_dm2_data(void)
     DM2_V1_GdatFileCallbacks cb;
     DM2_V1_GdatFileState state;
     DM2_V1_GdatReadStructureReceipt receipt;
+    FILE *probe;
 
     if (!root || !root[0]) return 1;
     memset(&real, 0, sizeof(real));
     if (snprintf(real.path, sizeof(real.path), "%s/GRAPHICS.DAT", root) >=
             (int)sizeof(real.path)) return 0;
+    probe = fopen(real.path, "rb");
+    if (!probe) {
+        /* The supplied DOS extraction uses the original lowercase filename;
+         * keep this real-data regression valid on case-sensitive hosts. */
+        if (snprintf(real.path, sizeof(real.path), "%s/graphics.dat", root) >=
+                (int)sizeof(real.path)) return 0;
+    } else {
+        fclose(probe);
+    }
     memset(&cb, 0, sizeof(cb));
     cb.file_open = real_gdat_open;
     cb.file_close = real_gdat_close;
@@ -671,8 +683,11 @@ static int test_read_graphics_structure_real_dm2_data(void)
         return 0;
     }
     if (!(receipt.valid && receipt.header_validated && receipt.ulp_validated &&
-           receipt.entries > 100u && receipt.versionlo >= 2 &&
-           receipt.first_raw_offset > receipt.ulp_table_end &&
+           receipt.entries == 0x15f8u && receipt.versionlo == 5 &&
+           receipt.first_entry_size == 0x17284u &&
+           receipt.ulp_table_end == 11254u &&
+           receipt.first_raw_offset == 11254u &&
+           receipt.raw_data_end == 8639757u &&
            state.ulp_table != NULL && state.ulp_count == receipt.entries)) {
         return 0;
     }

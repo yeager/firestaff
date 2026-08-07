@@ -58944,3 +58944,14 @@ half-step branches now require `bEnableDoubleStepMove`, while the independent
 `glbTableToMove` branch remains admitted. Added regression coverage for the
 flag-disabled forward/backward cases, stairs, and table-to-move escape.
 The source-owned delayed pose is still not published to the live viewport.
+
+# DM2 GDAT structure source-layout correction (2026-08-07)
+
+Corrected `dm2_v1_gdat_read_graphics_structure` to match SKProject
+`v4/skcore.cpp:15043-15103` and `v5/bgdat.cpp:1067-1095`. GDAT v4/v5 now read
+the first ENT1 size from the four-byte field at offset 4, read only the
+remaining ULP words, and create ULP[0] as the source zero entry; the v2 layout
+remains supported. The real PC-DOS `graphics.dat` passes with 5,624 entries,
+first ENT1 size `0x17284`, raw range `11254..8639757`, and the GDAT/ENT1/image
+regressions pass (24/24 structure tests, 122/122 query tests, real image census
+green). No allocator or secondary-file runtime admission was invented.

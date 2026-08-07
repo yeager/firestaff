@@ -907,12 +907,13 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     uint8_t header[8];
     uint8_t *ulp = NULL;
     uint32_t ulp_length;
+    uint32_t first_entry_size;
     uint32_t source_data_offset;
     uint32_t table_end;
     uint16_t entries;
     uint16_t version;
     bool big_endian;
-    uint32_t offset;
+    uint32_t raw_end;
     uint16_t i;
     int opened = 0;
 
@@ -959,41 +960,56 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         out->endian_swapped = big_endian;
     }
 
-    /* bgdat.cpp reads a four-byte source-data offset, then entries-1 words;
-     * the first ULP word is the zero origin and is supplied by the loader. */
-    source_data_offset = big_endian ? dm2_gdat_be32(header + 4) :
-                                      dm2_gdat_le32(header + 4);
     ulp_length = (uint32_t)entries * 2u;
-    table_end = 8u + ulp_length - 2u;
-    if (source_data_offset > (uint32_t)state->filesize ||
-        ulp_length < 2u ||
-        table_end > (uint32_t)state->filesize ||
-        ulp_length + 6u > (uint32_t)state->filesize ||
-        source_data_offset > (uint32_t)state->filesize - (ulp_length + 6u)) {
+    if (ulp_length < 2u) {
         goto fail;
     }
     ulp = cb->alloc_memory(ctx, (int32_t)ulp_length, 0);
     if (!ulp) {
         goto fail;
     }
-    memset(ulp, 0, 2u);
-    if (!dm2_v1_gdat_graphics_data_read(state, 8, (int32_t)ulp_length - 2,
-                                         ulp + 2, cb, ctx, NULL)) {
+    /* SKProject v4/skcore.cpp:15043-15103 and v5/bgdat.cpp:1067-1095:
+     * for GDAT v3+, bytes 4..7 are the size of the first ENT1 raw entry,
+     * followed by entries-1 two-byte sizes. GDAT v2 stores all sizes as
+     * two-byte words beginning at offset 4. In both cases ULP[0] is
+     * source-created zero, not a file word. */
+    if ((version & 0x7fffu) >= 3u) {
+        first_entry_size = big_endian ? dm2_gdat_be32(header + 4) :
+                                        dm2_gdat_le32(header + 4);
+        table_end = 8u + ulp_length - 2u;
+        source_data_offset = table_end;
+        memset(ulp, 0, 2u);
+        if (!dm2_v1_gdat_graphics_data_read(
+                state, 8, (int32_t)ulp_length - 2, ulp + 2, cb, ctx, NULL)) {
+            goto fail;
+        }
+    } else {
+        table_end = 4u + ulp_length;
+        source_data_offset = table_end;
+        if (!dm2_v1_gdat_graphics_data_read(
+                state, 4, (int32_t)ulp_length, ulp, cb, ctx, NULL)) {
+            goto fail;
+        }
+        first_entry_size = big_endian ? dm2_gdat_be16(ulp) :
+                                        dm2_gdat_le16(ulp);
+        memset(ulp, 0, 2u);
+    }
+    if (first_entry_size == 0u ||
+        table_end > (uint32_t)state->filesize ||
+        source_data_offset > (uint32_t)state->filesize - first_entry_size) {
         goto fail;
     }
-    offset = 0u;
+    raw_end = source_data_offset + first_entry_size;
     for (i = 0u; i < entries; ++i) {
         uint16_t word = big_endian ?
             dm2_gdat_be16(ulp + (size_t)i * 2u) :
             dm2_gdat_le16(ulp + (size_t)i * 2u);
-        if (i == 0u && word != 0u) goto fail;
-        if (i != 0u) {
-            offset += word;
-            if (offset > (uint32_t)state->filesize -
-                             (source_data_offset + ulp_length + 6u)) {
-                goto fail;
-            }
+        if (i == 0u) {
+            if (word != 0u) goto fail;
+            continue;
         }
+        if (word > (uint32_t)state->filesize - raw_end) goto fail;
+        raw_end += word;
     }
     /* Retain the source ULP words for the following LOAD_ENT1/raw-data
      * transaction. The words stay in file byte order, as they do in the
@@ -1001,13 +1017,18 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     state->ulp_table = ulp;
     state->ulp_length = ulp_length;
     state->ulp_count = entries;
+    state->first_entry_size = first_entry_size;
+    state->first_raw_offset = source_data_offset;
+    state->raw_data_end = raw_end;
     if (out) {
         out->valid = true;
         out->ulp_validated = true;
         out->ulp_length = ulp_length;
         out->ulp_table_end = table_end;
+        out->first_entry_size = first_entry_size;
         out->source_data_offset = source_data_offset;
-        out->first_raw_offset = source_data_offset + ulp_length + 6u + offset;
+        out->first_raw_offset = source_data_offset;
+        out->raw_data_end = raw_end;
     }
     ulp = NULL;
     dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
@@ -1021,6 +1042,9 @@ fail:
     }
     state->ulp_count = 0u;
     state->ulp_length = 0u;
+    state->first_entry_size = 0u;
+    state->first_raw_offset = 0u;
+    state->raw_data_end = 0u;
     if (opened && state->fileopencounter > 0)
         dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     if (out) memset(out, 0, sizeof(*out));
@@ -1039,6 +1063,9 @@ int dm2_v1_gdat_release_graphics_structure(
         state->ulp_table = NULL;
         state->ulp_count = 0u;
         state->ulp_length = 0u;
+        state->first_entry_size = 0u;
+        state->first_raw_offset = 0u;
+        state->raw_data_end = 0u;
     }
     return 1;
 }

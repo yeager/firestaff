@@ -29817,6 +29817,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   release, matching the source table lifetime. A second structure transaction
   cannot orphan the first table. ENT1 admission and the secondary-file
   transaction remain gated.
+  **2026-08-07 source-layout correction:** the callback now follows
+  SKProject `v4/skcore.cpp:15043-15103`/`v5/bgdat.cpp:1067-1095`: v4/v5 read
+  the four-byte first ENT1 size at offset 4, load only entries-1 ULP words,
+  and create ULP[0] as zero; v2 retains the all-word table variant. The real
+  PC-DOS file now verifies as 5/5624 entries, first ENT1 size `0x17284`, raw
+  base/end `11254/8639757`. ENT1 materialization, allocator lifetime and the
+  secondary-file transaction remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

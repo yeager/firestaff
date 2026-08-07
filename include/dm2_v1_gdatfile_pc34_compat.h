@@ -112,6 +112,9 @@ typedef struct DM2_V1_GdatFileState {
     uint8_t     *ulp_table;
     uint16_t     ulp_count;
     uint32_t     ulp_length;
+    uint32_t     first_entry_size;
+    uint32_t     first_raw_offset;
+    uint32_t     raw_data_end;
 } DM2_V1_GdatFileState;
 
 /* ========================================================================
@@ -203,8 +206,10 @@ typedef struct DM2_V1_GdatReadStructureReceipt {
     /* Source bgdat.cpp:1027-1100 facts retained before LOAD_ENT1. */
     uint32_t ulp_length;
     uint32_t ulp_table_end;
+    uint32_t first_entry_size;
     uint32_t source_data_offset;
     uint32_t first_raw_offset;
+    uint32_t raw_data_end;
     bool     header_validated;
     bool     ulp_validated;
     bool     endian_swapped;
