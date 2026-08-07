@@ -29917,3 +29917,11 @@ required before semantic promotion.
   no `DM.BIN`/`TM.BIN`/other retail member has been joined yet. Continue with
   a capture route that reaches the authenticated game startup window; do not
   promote the BIOS sector receipt to SLEV/SAL or VDP1 source evidence.
+- 2026-08-07: The corrected input ordering now reaches the authenticated
+  French Nexus startup window. A 50,000-read CDB trace joins `DM.BIN`,
+  `TM.BIN`, `ITEM.IBS`, `MENU.BPK`, `SLEV00.BIN`, `SDDRVS.TSK`, DGN and SAL
+  spans to the retail ISO; the new analyzer reports this as LBA provenance
+  only. The same run records 3,080 runtime-loader writes and one raw frame,
+  but no VDP1 writer trace. Keep PRS3 pixel consumers, VDP1/VDP2 composition,
+  HUD/viewport, SLEV/SAL/SDDRVS semantics and SFX playback blocked pending a
+  live producer/consumer join to those authenticated bytes.

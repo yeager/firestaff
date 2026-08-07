@@ -58810,3 +58810,24 @@ SKProject `v4/skgame.cpp:2364-2372`, including forward/backward,
 double-step/stairs and table-to-move branches. The receipt records the exact
 `walk_delay >> 1` countdown only for explicit source inputs; live pose,
 viewport offset and c_hero/inventory ownership remain fail-closed.
+# Nexus Saturn retail CDB join receipt (2026-08-07)
+
+- ✅ Re-ran the European-BIOS/French-media startup through the corrected
+  SMPC input hook, which now runs after Mednafen's virtual-port update. The
+  bounded CDB trace contains 50,000 authentic data-sector reads over LBA
+  `0..59951`; ISO9660 joining resolves all six required members and reports
+  `DM.BIN` (8,212 reads), `TM.BIN` (173), `ITEM.IBS` (72), `MENU.BPK` (44),
+  `SLEV00.BIN` (61), and `SDDRVS.TSK` (14), with `LEV00.DGN` and
+  `SNDLEV01.SAL` also observed.
+- ✅ Added `scripts/analyze_nexus_cdb_read_trace.py` as a reproducible,
+  read-only ISO9660/LBA join gate. It emits `retail_lba_join=verified` but
+  deliberately ends with `semantic_admission=blocked`.
+- ✅ The same session retained 3,080 high-RAM writes in
+  `0x06013000..0x06013fff` from runtime loader PC `0x2368` and one authentic
+  Saturn runtime frame. This strengthens the temporal capture receipt only;
+  it does not identify the bytes' producer or prove VDP1/VDP2 draw order,
+  CLUT ownership, HUD composition, SLEV/SAL dispatch, or SFX playback.
+- ⛔ No VDP1 writer trace was emitted in this combined bounded run. Keep
+  production face/mesh/texture, HUD/viewport, SLEV/SAL/SDDRVS and PRS3
+  consumer admission closed until a trace joins a live writer/consumer to
+  the authenticated retail bytes.
