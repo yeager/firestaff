@@ -25,6 +25,13 @@ static int32_t mock_query_gdat_dbspec_word_value(void *ctx __attribute__((unused
 
 static uint8_t mock_cls1_return = 0;
 
+static uint8_t mock_actuator_record[8];
+static void *mock_get_address_of_record(void *ctx __attribute__((unused)),
+    uint16_t record __attribute__((unused)))
+{
+    return mock_actuator_record;
+}
+
 static uint8_t mock_query_cls1_from_record(void *ctx __attribute__((unused)),
     int32_t record __attribute__((unused)))
 {
@@ -350,6 +357,33 @@ static void test_query_gdat_text(void)
 }
 
 /* ================================================================ */
+/* Test 12: source-shaped actuator type query                       */
+/* ================================================================ */
+static void test_query_actuator_type_from_record(void)
+{
+    DM2_V1_QueryDbCallbacks cb = null_callbacks();
+
+    cb.query_cls1_from_record = mock_query_cls1_from_record;
+    cb.get_address_of_record = mock_get_address_of_record;
+    memset(mock_actuator_record, 0, sizeof(mock_actuator_record));
+    mock_actuator_record[2] = 0x3f; /* shop-panel type */
+    mock_actuator_record[3] = 0x80; /* high bits are actuator data */
+    mock_cls1_return = 3;          /* dbActuator */
+    assert(dm2_v1_query_actuator_type_from_record(0x1234, &cb, NULL) == 0x3f);
+
+    /* Non-actuator records and source sentinel ObjectIDs are not actuators. */
+    mock_cls1_return = 2;
+    assert(dm2_v1_query_actuator_type_from_record(0x1234, &cb, NULL) == 0);
+    mock_cls1_return = 3;
+    assert(dm2_v1_query_actuator_type_from_record(0xfffe, &cb, NULL) == 0);
+    assert(dm2_v1_query_actuator_type_from_record(0xffff, &cb, NULL) == 0);
+    assert(dm2_v1_query_actuator_type_from_record(0x10000, &cb, NULL) == 0);
+    assert(dm2_v1_query_actuator_type_from_record(0x1234, NULL, NULL) == 0);
+
+    printf("  PASS: test_query_actuator_type_from_record\n");
+}
+
+/* ================================================================ */
 /* Main                                                              */
 /* ================================================================ */
 int main(void)
@@ -365,6 +399,7 @@ int main(void)
     test_door_strength();
     test_get_creature_weight();
     test_query_gdat_text();
+    test_query_actuator_type_from_record();
 
     printf("All dm2_v1_querydb tests passed.\n");
     return 0;

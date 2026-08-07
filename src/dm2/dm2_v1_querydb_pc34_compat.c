@@ -911,9 +911,28 @@ int32_t dm2_v1_query_missile_damage(int32_t record,
 int32_t dm2_v1_query_actuator_type_from_record(int32_t record,
                                                const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:3400 */
-    (void)record; (void)cb; (void)ctx;
-    return 0;
+    const uint8_t *raw;
+    uint16_t w2;
+
+    /* ReDMCSB/SKProject: an ObjectID is rejected unless its DB class is
+     * dbActuator (3), then GET_ADDRESS_OF_RECORD(...)->ActuatorType()
+     * reads the low seven bits of the word at offset 2.  This is the
+     * source layout used by SKWINSPX/SKWIN/DME.h and by the loader's
+     * ActuatorType()/ActuatorData() accessors.  Keep the query read-only:
+     * actuator activation belongs to the event/actuator dispatcher. */
+    if (!cb || !cb->query_cls1_from_record || !cb->get_address_of_record ||
+        record < 0 || record > 0xffff || record == 0xfffe || record == 0xffff) {
+        return 0;
+    }
+    if (cb->query_cls1_from_record(ctx, record) != 3) {
+        return 0;
+    }
+    raw = (const uint8_t *)cb->get_address_of_record(ctx, (uint16_t)record);
+    if (!raw) {
+        return 0;
+    }
+    w2 = (uint16_t)raw[2] | (uint16_t)((uint16_t)raw[3] << 8);
+    return (int32_t)(w2 & 0x007fu);
 }
 
 int32_t dm2_v1_query_sensor_effect(int32_t sensor_type,

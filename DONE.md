@@ -58724,3 +58724,10 @@ owner transaction remains unbound.
 - ✅ Kept source-file identity, VDP1 command/CLUT ownership and production
   rendering blocked: the relocated code window is runtime evidence, not yet
  a byte-for-byte DM.BIN/TM.BIN join.
+# DM2 source actuator-type query handoff (2026-08-13)
+
+Replaced the querydb actuator-type stub with a bounded, read-only source-layout
+query. It admits only DB3 records, reads `w2` with the original low-seven-bit
+`ActuatorType()` mask, rejects ObjectID sentinels/missing records, and adds
+focused coverage for source-shaped records. Activation, DB14 and timer
+transactions remain fail-closed.

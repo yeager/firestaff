@@ -289,6 +289,13 @@ int32_t dm2_v1_is_item_hand_activable(int32_t hero, int32_t item, int32_t hand,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 /* -------------------------------------------------------------------------- */
+/* Actuator / sensor queries                                                  */
+/* -------------------------------------------------------------------------- */
+
+int32_t dm2_v1_query_actuator_type_from_record(int32_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+/* -------------------------------------------------------------------------- */
 /* Creature queries (13)                                                      */
 /* -------------------------------------------------------------------------- */
 

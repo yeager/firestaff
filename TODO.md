@@ -4351,6 +4351,11 @@ level or consumer bindings.
   It exposes the exact source actuator fields without invoking, following
   `GenericRecord::w0`, mutating DB14, or scheduling a timer; generic actuator
   actions remain unavailable until that complete transaction is owned.
+  **2026-08-13 querydb handoff:** the standalone actuator-type query now reads
+  the source DB3 record's `w2` low-seven-bit `ActuatorType()` field through the
+  authenticated record callback. It rejects non-actuator classes, ObjectID
+  sentinels and missing records; activation, payload and timer ownership are
+  intentionally still open.
 
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into
