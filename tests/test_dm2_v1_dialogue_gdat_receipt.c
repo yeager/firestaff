@@ -15,6 +15,18 @@ static void check(int condition, const char *name)
     }
 }
 
+static const uint8_t *english_overlay(void *userdata, int category,
+                                      int index, int field, size_t *out_size)
+{
+    static const uint8_t text[] = "ENGLISH\0";
+    (void)userdata;
+    (void)category;
+    (void)index;
+    (void)field;
+    if (out_size) *out_size = sizeof(text);
+    return text;
+}
+
 int main(void)
 {
     uint8_t raw[240];
@@ -122,11 +134,26 @@ int main(void)
                   open_panel.primary_button_rect_index == 466u &&
                   open_panel.secondary_button_rect_index == 467u &&
                   open_panel.save_list_rect_index == 451u &&
+                  open_panel.source_text_hash[0] != 0u &&
+                  open_panel.source_text_hash[1] != 0u &&
                   open_panel.version_palette_slot == 12u &&
                   open_panel.button_palette_slot == 11u &&
                   open_panel.save_slot_count == 10u &&
                   open_panel.fade_when_dialog2 && open_panel.receipt_hash != 0u,
               "open panel binds original GDAT labels, palette slots, and raw4 rect IDs");
+        {
+            uint8_t saved_type0 = entries[3].cls3;
+            uint8_t saved_type1 = entries[4].cls3;
+            entries[3].cls3 = 0u;
+            entries[4].cls3 = 0u;
+            check(!dm2_v1_dialogue_open_panel_receipt_with_text_override(
+                      &loader, english_overlay, NULL, &open_panel),
+                  "locale overlay cannot replace missing source GDAT text records");
+            entries[3].cls3 = saved_type0;
+            entries[4].cls3 = saved_type1;
+            check(dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel),
+                  "source panel receipt can be rebuilt after rejected overlay");
+        }
         check(dm2_v1_dialogue_save_input_init(&open_panel, 2,
                                               (const uint8_t *)"save", 4u,
                                               &input_state) &&

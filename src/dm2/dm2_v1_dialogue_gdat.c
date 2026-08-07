@@ -24,7 +24,7 @@ static uint32_t dm2_dialogue_hash_bytes(uint32_t hash, const uint8_t *data,
 static int dm2_dialogue_open_panel_text_decode(
     const DM2_V1_AssetLoader *loader, int index, uint8_t field,
     uint8_t out_text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY],
-    size_t *out_size)
+    size_t *out_size, uint32_t *out_raw_hash)
 {
     const uint8_t *raw;
     size_t raw_size = 0u;
@@ -33,6 +33,7 @@ static int dm2_dialogue_open_panel_text_decode(
     size_t terminator = DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY;
 
     if (out_size) *out_size = 0u;
+    if (out_raw_hash) *out_raw_hash = 0u;
     if (!loader || !out_text || !out_size) {
         return 0;
     }
@@ -48,6 +49,10 @@ static int dm2_dialogue_open_panel_text_decode(
                                         index, field, &raw_size);
     if (!raw || raw_size == 0u ||
         raw_size > DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY) return 0;
+    if (out_raw_hash) {
+        *out_raw_hash = dm2_dialogue_hash_bytes(2166136261u, raw, raw_size);
+        if (*out_raw_hash == 0u) return 0;
+    }
     encrypted = (gdat_flags & 0x08u) != 0u;
     for (size_t i = 0u; i < raw_size; ++i) {
         uint8_t value = raw[i];
@@ -216,6 +221,20 @@ int dm2_v1_dialogue_open_panel_receipt_with_text_override(
      * lines 352-415. QUERY_GDAT_TEXT(0x1a, 0x81, 0/1) supplies the two
      * button labels before the source panel is blitted at rect 4. */
     for (i = 0; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i) {
+        uint8_t source_text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY];
+        size_t source_text_size = 0u;
+        uint32_t source_text_hash = 0u;
+
+        /* c_dialog.cpp always obtains both source texts before drawing.
+         * An overlay may change the displayed language, but it cannot make
+         * a missing source GDAT record look authenticated. */
+        if (!dm2_dialogue_open_panel_text_decode(
+                loader, DM2_V1_DIALOGUE_BOX_INDEX, (uint8_t)i,
+                source_text, &source_text_size, &source_text_hash)) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->source_text_hash[i] = source_text_hash;
         const uint8_t *override_text = text_override
             ? text_override(text_override_userdata,
                             DM2_GDAT_CATEGORY_DIALOG_BOXES,
@@ -231,11 +250,10 @@ int dm2_v1_dialogue_open_panel_receipt_with_text_override(
                 return 0;
             }
             memcpy(out->decoded_text[i], override_text, out->text_size[i]);
-        } else if (!dm2_dialogue_open_panel_text_decode(
-                       loader, DM2_V1_DIALOGUE_BOX_INDEX, (uint8_t)i,
-                       out->decoded_text[i], &out->text_size[i])) {
-            memset(out, 0, sizeof(*out));
-            return 0;
+        } else {
+            /* Keep the exact source decode already validated above. */
+            memcpy(out->decoded_text[i], source_text, source_text_size);
+            out->text_size[i] = source_text_size;
         }
         out->text[i] = out->decoded_text[i];
         out->text_hash[i] = dm2_dialogue_hash_bytes(
@@ -256,6 +274,8 @@ int dm2_v1_dialogue_open_panel_receipt_with_text_override(
     hash = dm2_dialogue_hash_step(hash, out->version_text_hash);
     for (i = 0; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i)
         hash = dm2_dialogue_hash_step(hash, out->text_hash[i]);
+    for (i = 0; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i)
+        hash = dm2_dialogue_hash_step(hash, out->source_text_hash[i]);
     hash = dm2_dialogue_hash_step(hash, out->panel_rect_index);
     hash = dm2_dialogue_hash_step(hash, out->version_rect_index);
     hash = dm2_dialogue_hash_step(hash, out->primary_button_rect_index);

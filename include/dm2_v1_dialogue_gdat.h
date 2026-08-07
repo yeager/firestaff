@@ -95,6 +95,9 @@ typedef struct {
     const uint8_t *text[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
     size_t text_size[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
     uint32_t text_hash[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
+    /* Raw source-text receipts remain present even when an authenticated
+     * locale overlay supplies the displayed bytes. */
+    uint32_t source_text_hash[DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT];
     uint16_t panel_rect_index;
     uint16_t version_rect_index;
     uint16_t primary_button_rect_index;

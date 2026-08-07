@@ -1,3 +1,13 @@
+# DM2 dialogue text source-owner gate (2026-08-13)
+- ✅ Open-panel dialogue now authenticates both original `DIALOG_BOXES/0x81/dtText`
+  records and the source `GDAT 0/0/dtWordValue/0` transform before accepting a
+  locale overlay; receipts retain raw source-text hashes alongside displayed
+  text hashes.
+- ✅ A locale overlay can no longer become a standalone text owner: focused
+  dialogue tests, the explicit real PC-DOS viewport test, the `dm2_v1_0aaf`
+  test, and the production-placeholder boundary all pass. The `c_0aaf` menu /
+  rectangle bridge remains test-only; no release was made.
+
 # DM2 original save writer source-graph gate (2026-08-13)
 - ✅ Hardened the isolated source-order `DM2_GAME_SAVE` orchestrator so it
   requires every source callback before writing, rejects missing raw

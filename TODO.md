@@ -4253,6 +4253,13 @@ level or consumer bindings.
   routine: SkProject `skgame.cpp:2575-2579` defines
   `_476d_04ed_DOES_NOTHING` as an unconditional zero return. The compatibility
   branch now documents that source no-op and does not invent auto-selection.
+  **2026-08-13 source-text update:** the open-panel handoff now validates both
+  original `DIALOG_BOXES/0x81/dtText/0` and `/1` records, including the source
+  `QUERY_GDAT_TEXT` transform, before accepting any locale overlay. The
+  receipt retains raw source-text hashes alongside displayed-text hashes; an
+  overlay cannot become a standalone host-text owner. The callback `c_0aaf`
+  menu/rectangle audit remains test-only until its complete live M11 bridge is
+  imported.
 
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material
