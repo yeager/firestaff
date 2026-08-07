@@ -155,6 +155,16 @@ int main(int argc, char **argv)
            item_generator_count, shooter_counts[0], shooter_counts[1],
            shooter_counts[2], shooter_counts[3], shooter_counts[4],
            shooter_counts[5]);
+    if (shop_panel_count != 0 || shop_floor_count != 0) {
+        /* The selected PC-English G1 corpus has no source shop actuator.
+         * Do not turn a future count change into permission to open the
+         * fixed-coordinate catalog: SHOP_GLASS still needs the live
+         * WALL_GFX/dt08/AI-33 transaction from SKProject. */
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: canonical G1 unexpectedly contains an unowned shop actuator\n",
+              stderr);
+        return 1;
+    }
     for (int index = 0; index < dungeon.thing_type_counts[14]; ++index) {
         DM2_V1_G1DirectMissileReceipt missile;
         uint16_t object_id = (uint16_t)((14u << 10) | (unsigned)index);

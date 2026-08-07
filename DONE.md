@@ -9,6 +9,16 @@
   `DM2_GAME_SAVE` live-state owner remains open, so no runtime writer or
   private replacement format was introduced.
 
+# DM2 SHOP_GLASS real-data census (2026-08-07)
+- ✅ Strengthened the canonical PC-English G1 actuator regression to require
+  zero source shop-panel (`0x3f`) and shop-floor (`0x30`) roots across the
+  authenticated dungeon. The real census reports
+  `shop-panel=0x3f:0 shop-floor=0x30:0` and passes.
+- ✅ Kept the shop module and runtime entry fail-closed: the absent G1 case
+  does not authorize a fixed-coordinate catalog, stock, prices, NPC text or
+  party mutation. The source `SHOP_GLASS` `WALL_GFX`/`dt08`/AI-33 transaction
+  remains open; no synthetic shop data or release was added.
+
 # DM2 resurrection timer ownership census (2026-08-07)
 - ✅ Added a source-shaped read-only census of the decoded 12-byte `c_tim`
   records, using SKProject `c_timer.h`'s `ttype` byte at offset `0x04`.

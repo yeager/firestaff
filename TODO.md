@@ -4372,6 +4372,11 @@ level or consumer bindings.
   inventories all source DB3 roots for shop-panel `0x3f` and shop-floor `0x30`
   types before any merchant work; these type bytes remain census evidence only
   and cannot authorize a shop without the source WALL_GFX/dt08/AI-33 chain.
+  **2026-08-07 real-data gate:** the canonical PC-English G1 regression now
+  requires both shop counts to remain zero across the authenticated dungeon.
+  It reports `shop-panel=0x3f:0 shop-floor=0x30:0`; the absence is evidence
+  that this corpus has no live SHOP_GLASS case, not a reason to retain the
+  fixed-coordinate catalog.
   **2026-07-31 follow-up:** the last host-panel rectangle, English footer and
   empty-pack fallback are now no-draw as well. The exposed render contract
   clears its receipt and returns unavailable until the source-owned
