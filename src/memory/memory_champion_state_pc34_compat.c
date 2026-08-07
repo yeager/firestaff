@@ -1159,7 +1159,10 @@ int F0676_CHAMPION_MirrorCatalogGetOrdinalForTextStringIndex_Compat(
  *   [173..188] mirrorSkillsText[16]
  *   [189..220] mirrorInventoryText[32]
  *   [221..232] attributeMaximums[6] maximum row (u16 LE each)
- *   [233..255] reserved (zero)
+ *   [233..234] food (i16 LE, extended)
+ *   [235..236] water (i16 LE, extended)
+ *   [237]      0xFD = extended food/water present
+ *   [238..255] reserved (zero)
  *
  * Champion v2 adds ReDMCSB external portrait payload preservation:
  *   [256..719]  portraitBitmap[464], matching DEFS.H
@@ -1183,9 +1186,13 @@ int F0602_CHAMPION_Serialize_Compat(
     buf[1] = (unsigned char)(champ->portraitIndex & 0xFF);
     memcpy(&buf[2], champ->name, CHAMPION_NAME_LENGTH);
     buf[10] = champ->direction;
-    buf[11] = champ->food;
-    buf[12] = champ->water;
+    buf[11] = (unsigned char)(champ->food & 0xFF);
+    buf[12] = (unsigned char)(champ->water & 0xFF);
     buf[13] = champ->cell;
+    /* Extended food/water as i16 in reserved area [233..237] */
+    write_u16_le(&buf[233], (uint16_t)champ->food);
+    write_u16_le(&buf[235], (uint16_t)champ->water);
+    buf[237] = 0xFD;
 
     off = 14;
     for (i = 0; i < CHAMPION_ATTR_COUNT; i++) {
@@ -1265,8 +1272,12 @@ int F0603_CHAMPION_Deserialize_Compat(
     champ->portraitIndex = (signed char)buf[1];
     memcpy(champ->name, &buf[2], CHAMPION_NAME_LENGTH);
     champ->direction = buf[10];
-    champ->food = buf[11];
-    champ->water = buf[12];
+    champ->food = (int16_t)(int8_t)buf[11];
+    champ->water = (int16_t)(int8_t)buf[12];
+    if (buf[237] == 0xFD) {
+        champ->food = (int16_t)read_u16_le(&buf[233]);
+        champ->water = (int16_t)read_u16_le(&buf[235]);
+    }
     champ->cell = (unsigned char)(buf[13] & 3);
 
     off = 14;

@@ -15023,13 +15023,16 @@ static void m11_apply_champion_time_effects(M11_GameViewState* state) {
     if (!state || !state->active) {
         return;
     }
-    /* GAMELOOP.C:124-138 increments G0313 first, then invokes F0331.
-     * F0331 runs every source tick; sub-effects (mana regen, HP heal)
-     * use their own internal time_criteria gate. */
+    /* ReDMCSB MAIN.C:143 — F0331 runs every 64th tick (GameTime & 63),
+     * or every 16th tick when sleeping.  NOT every tick. */
     /* ReDMCSB CHAMPION.C F0331:2305-2509 owns scent, mana/stamina,
      * temporary XP, needs/stamina, health, statistic recovery, and panel
      * refresh in this order. */
     if (state->world.party.championCount <= 0) return;
+    {
+        int mask = state->resting ? 15 : 63;
+        if ((int)state->world.gameTick & mask) return;
+    }
     DM1_V1_Needs_DecayScentsPc34Compat(&state->championScents);
     for (i = 0; i < state->world.party.championCount; ++i) {
         struct ChampionState_Compat* champ = &state->world.party.champions[i];
@@ -23415,9 +23418,9 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
         m11_audio_emit_source_sound(state, 13, M11_AUDIO_MARKER_COMBAT);
     }
 
-    /* Apply survival mechanics */
-    m11_apply_champion_time_effects(state);
-
+    /* ReDMCSB MAIN.C:143 — F0331 runs once per game loop iteration,
+     * gated by gameTick & 63.  The idle tick path owns this call;
+     * the attack/command path must not duplicate it. */
 
     /* Creature AI: movement and autonomous damage */
     m11_process_creature_ticks(state);
