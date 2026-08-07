@@ -29,6 +29,14 @@ static int expect_dispatch(int x,
     return 1;
 }
 
+static int framebuffer_is_zero(const uint8_t* fb, size_t len) {
+    size_t i;
+    for (i = 0; i < len; ++i) {
+        if (fb[i] != 0u) return 0;
+    }
+    return 1;
+}
+
 int main(void) {
     M11_V2_HudTouchResult result;
     uint8_t fb[320 * 200];
@@ -46,7 +54,10 @@ int main(void) {
     v2_hud_set_direction(2);
     v2_hud_set_level(3, 10);
     v2_hud_render(fb, 320, 200);
-    if (fb[8 * 320 + 8] == 0 || fb[184 * 320 + 8] == 0) ok = 0;
+    if (!framebuffer_is_zero(fb, sizeof(fb))) ok = 0;
+    v2_champion_select_render_fb(fb, 320, 200);
+    if (!framebuffer_is_zero(fb, sizeof(fb))) ok = 0;
+    if (v2_champion_select_source_lock_ok() != 0u) ok = 0;
 
     if (!v2_hud_interaction_source_lock_ok()) ok = 0;
     if (!expect_dispatch(25, 9, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT,

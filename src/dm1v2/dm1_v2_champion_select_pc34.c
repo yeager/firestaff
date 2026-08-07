@@ -4,7 +4,8 @@
  * set-leader / slot paths; COMMAND.C:484-497 owns champion name/ready/action
  * hand subroutes.  The V2 select follows that same touch routing but
  * does not replay commands — it only tracks which champion has focus so
- * the HUD overlay can draw the correct portrait/status panel.
+ * the HUD overlay can retain the correct focus.  It does not own champion
+ * records or pixels: the source-owned V1 CHAMDRAW/PANEL route does that.
  *
  * Source-lock markers (no new command semantics, no inventory transactions):
  * - v2_champion_select_source_lock_ok: consumes CLIKCHAM/CHAMPION matrix
@@ -23,16 +24,6 @@ void v2_champion_select_init(void) {
     memset(g_champions, 0, sizeof(g_champions));
     g_current_index = 0;
     g_initialized = true;
-
-    const char* default_names[] = {"Warrior", "Mage", "Merlin", "Ranger", "Rogue", "Cleric"};
-    for (int i = 0; i < 6; ++i) {
-        g_champions[i].cls = (enum M11_V2_ChampionClass)i;
-        strncpy(g_champions[i].name, default_names[i], 31);
-        g_champions[i].name[31] = '\0';
-        g_champions[i].selected = false;
-        g_champions[i].tile_x = (i % 4) * 10;
-        g_champions[i].tile_y = (i / 4) * 10;
-    }
 }
 
 /* V2 champion select panel renderer — pure presentation, V1 PC34 coordinates.
@@ -288,26 +279,12 @@ void v2_champion_select_render(void) {
  * the framebuffer.  Pure presentation; does not mutate game state.
  * ReDMCSB: CLIKCHAM.C:24-35; COMMAND.C:484-497; CHAMDRAW.C ~180. */
 void v2_champion_select_render_fb(uint8_t* fb, int w, int h) {
-    if (!g_initialized || !fb || w <= 0 || h <= 0) return;
-
-    uint8_t alpha = 200;
-    uint8_t base_val = alpha / 2;
-    uint8_t high_val = alpha;
-
-    int slot_w = V2_PANEL_SLOT_W;
-    int slot_h = V2_PANEL_SLOT_H;
-    (void)slot_h;
-    int sx = g_current_index * slot_w;
-    int sy = V2_PANEL_Y;
-
-    /* Draw the focused champion slot with default stats for now.
-     * Real HP/Stamina/Mana come from the game state; this renders
-     * the slot structure as a presentation polish pass.
-     * ReDMCSB: PANEL.C F0395-F0404 slot layout. */
-    panel_render_slot(fb, w, h, sx, sy,
-                      &g_champions[g_current_index],
-                      75, 80, 60,
-                      base_val, high_val);
+    (void)fb;
+    (void)w;
+    (void)h;
+    /* No source-owned champion record, portrait, stats or panel surface has
+     * crossed this API.  Do not recreate the retired Warrior/Mage/etc.
+     * fixture with host names, fixed bars, geometry or font pixels. */
 }
 
 void v2_champion_select_cycle_forward(void) {
@@ -354,17 +331,16 @@ int v2_champion_select_count(void) {
  * matrix is still coherent.  No gameplay-side effects; only a read-only
  * structural check against the CLIKCHAM/CHAMPION C016..C027 zone table. */
 unsigned int v2_champion_select_source_lock_ok(void) {
-    /* Placeholder: full gate depends on dm1_v2_champion_select_pc34 having
-     * a companion touch-zone invariant check.  Current check is:
-     * - g_initialized flag indicates init was called
-     * - champion index range 0..3 matches V1 party size */
-    return g_initialized ? 1u : 0u;
+    /* CLIKCHAM establishes focus geometry, but not champion data.  A source
+     * lock may not claim parity until the selected live V1 champion record
+     * and CHAMDRAW/PANEL material are supplied together. */
+    return 0u;
 }
 
 const char* v2_champion_select_get_source_evidence(void) {
     return
         "CLIKCHAM.C:24-35 F0367 click dispatch to set-leader/slot paths\n"
         "COMMAND.C:484-497 champion name/ready/action hand subroutes\n"
-        "CHAMDRAW.C champion portrait/name rendering\n"
-        "V2 select consumes V1 touch matrix; no command replay, no inventory tx\n";
+        "CHAMDRAW.C/PANEL.C own champion records, portraits and status pixels\n"
+        "V2 select retains focus only; it draws no substitute panel or text\n";
 }

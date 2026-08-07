@@ -1,7 +1,7 @@
 # DM1 placeholder and synthetic-data inventory (2026-08-07)
 
-Systematic scan of every DM1 source path (`src/dm1/`, `include/dm1_*`,
-`src/engine/*.c` uses of DM1 APIs) for placeholders, synthetic
+Systematic scan of every DM1 source path (`src/dm1/`, `src/dm1v2/`,
+`include/dm1_*`, `src/engine/*.c` uses of DM1 APIs) for placeholders, synthetic
 substitutes, host-invented pixels/fonts/palettes/strings, and
 capture-gated stubs. Scope excludes tests, contract-only receipts, and
 cross-game code. Every remaining candidate is classified below; the
@@ -26,6 +26,18 @@ etc.), or (d) a diagnostic-only path already gated out of authenticated
 runtimes.
 
 ## DM1 slice status
+
+### 0. DM1 V2 compatibility helpers (`src/dm1v2/`)
+
+**Verdict: source-unbound presentation helpers must not draw.** The scan found
+an inactive champion-select helper that had six host-invented class names,
+grid positions and fixed HP/stamina/mana values. It had no caller in the
+authenticated M11 render path, but could have recreated a panel from those
+values if called later. The helper now retains focus only, initializes no
+invented champion records and writes no framebuffer pixels. Its source-lock
+predicate is deliberately false until a live V1 champion record and the
+CHAMDRAW/PANEL source surfaces are bound together. This leaves the existing
+source-owned V1 HUD as the only pixel owner.
 
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 

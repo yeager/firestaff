@@ -11,6 +11,17 @@
 
 # Scanner provenance after cache materialization (2026-08-07)
 
+# DM1 V2 champion-select synthetic-data removal (2026-08-07)
+
+- ✅ Utökade DM1-inventeringen till `src/dm1v2/` och tog bort den vilande
+  champion-select-hjälparens sex påhittade klasser, namn, positioner och
+  fasta statusvärden. Hjälparen behåller endast fokus från CLIKCHAM-rutten,
+  ritar inga hostskapade panelpixlar och kan inte längre rapportera
+  källparitet utan en sammanhängande V1 CHAMDRAW/PANEL-bindning. Den
+  källägda V1-panelen är därmed ensam pixelägare. Verifiering:
+  `dm1_v2_hud_interaction_pc34` bygger och passerar med kontroll av orörd
+  framebuffer efter både HUD- och champion-select-anrop.
+
 # DM1 V2.2 source-derived hero slots (2026-08-07)
 
 - ✅ `scripts/build_dm1_v22_source_fsart.py --hero-slots` now creates the
