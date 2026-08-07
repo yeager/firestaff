@@ -4959,6 +4959,11 @@ list(REMOVE_ITEM M10_SOURCES
 # it directly and retains the fail-closed platform-I/O evidence.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1826_f1865_source_ownership_pc34_compat.c")
+# `dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c` is a
+# standalone real-material admission contract with no runtime caller. Its
+# direct test preserves the C001--C004 and palette fail-closed checks.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
