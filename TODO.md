@@ -29643,6 +29643,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The regression restores a real type-2 tile from a SUPPRESS stream while
   retaining its source tile bits. The full record/object/timer restoration
   transaction remains gated.
+  **2026-08-07 timer-link progress:** `DM2_READ_RECORD_CHECKCODE` now exposes
+  source-owned DB14 `w_06 → c_tim::setA` and DB15 timer-match
+  `index → c_tim::setB` through an explicit callback, matching
+  `sksvgame.cpp:963-973` and `989-996`. The callback is optional for corpus
+  readers and no timer array or index is fabricated; live timer-owner binding
+  and complete GAME_LOAD admission remain gated.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

@@ -1,3 +1,14 @@
+# DM2 SKSAVE timer-link receipts (2026-08-07)
+
+- ✅ Added source-owned timer-link callbacks to `DM2_READ_RECORD_CHECKCODE`:
+  DB14 records bind their decoded `w_06` index through `setA`, and DB15
+  records bind the source 10-bit match index through `setB`, matching
+  SKProject `sksvgame.cpp:963-973` and `989-996`.
+- ✅ Added round-trip regressions for both timer-link slots. The callback is
+  optional for diagnostic corpus readers and does not invent a timer array;
+  complete live timer ownership and GAME_LOAD admission remain gated. No
+  release was made.
+
 # DM2 SKSAVE masked tile restoration (2026-08-07)
 
 - ✅ Corrected `DM2_READ_SKSAVE_DUNGEON` to decode masked tile bits into the

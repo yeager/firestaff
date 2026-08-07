@@ -73,6 +73,13 @@ typedef int (*DM2_ReadRecordCreatureAiFlagsFn)(void *ctx,
                                                uint8_t creature_type,
                                                uint16_t *out_flags);
 
+/* Source: sksvgame.cpp:963-973 and 989-996. Bind a decoded timer record to
+ * c_timerdata::timerarray[].setA (slot 0) or setB (slot 1). */
+typedef int (*DM2_ReadRecordBindTimerFn)(void *ctx,
+                                         uint16_t record_link,
+                                         uint16_t timer_index,
+                                         uint8_t slot);
+
 typedef struct {
     DM2_ReadRecordAllocFn alloc_record;
     DM2_ReadRecordSetDataFn set_data;
@@ -81,6 +88,7 @@ typedef struct {
     DM2_ReadRecordAddPossessionIndexFn add_possession_index;
     DM2_ReadRecordIsMoneyboxFn is_container_moneybox;
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags;
+    DM2_ReadRecordBindTimerFn bind_timer_record;
     void *ctx;
 } DM2_ReadRecordCallbacks;
 

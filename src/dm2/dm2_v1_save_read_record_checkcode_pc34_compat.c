@@ -325,6 +325,19 @@ int dm2_v1_read_record_checkcode(
                 }
                 session->possessions_read++;
             } else {
+                /* SKProject stores this non-nested DB14 record in the
+                 * timer slot named by c_record::w_06 before reading its
+                 * child chain. Keep the binding optional for diagnostic
+                 * readers, but never invent a timer owner. */
+                if (cb->bind_timer_record) {
+                    uint16_t timer_index = (uint16_t)(rec_data[6] |
+                        ((uint16_t)rec_data[7] << 8));
+                    if (cb->bind_timer_record(cb->ctx, record_link,
+                                               timer_index, 0u) != 0) {
+                        session->error = 1;
+                        return -1;
+                    }
+                }
                 int saved = session->nested_type_0e;
                 uint16_t *child_owner = NULL;
                 if (!cb->child_owner ||
@@ -341,11 +354,20 @@ int dm2_v1_read_record_checkcode(
             /* Type 0xF: read timer match bit. */
             int found = 0;
             if (read_bit(session, &found)) return 1;
-            if (found) {
-                uint8_t idx_bytes[2] = {0, 0};
-                uint8_t idx_mask[2] = {0xff, 0x03};
-                if (read_suppress(session, idx_bytes, idx_mask, 2)) return 1;
-            }
+                if (found) {
+                    uint8_t idx_bytes[2] = {0, 0};
+                    uint8_t idx_mask[2] = {0xff, 0x03};
+                    if (read_suppress(session, idx_bytes, idx_mask, 2)) return 1;
+                    if (cb->bind_timer_record) {
+                        uint16_t timer_index = (uint16_t)(idx_bytes[0] |
+                            ((uint16_t)idx_bytes[1] << 8));
+                        if (cb->bind_timer_record(cb->ctx, record_link,
+                                                   timer_index, 1u) != 0) {
+                            session->error = 1;
+                            return -1;
+                        }
+                    }
+                }
         }
 
         if (!follow_chain) break;

@@ -173,6 +173,14 @@ typedef struct {
     uint16_t continuations[4];
 } ContinuationMock;
 
+typedef struct {
+    int count;
+    uint16_t record_link[4];
+    uint16_t timer_index[4];
+    uint8_t slot[4];
+} TimerBindingMock;
+static TimerBindingMock *g_timer_binding_target;
+
 static int read_set_continuation(void *ctx, uint16_t record_link,
                                  uint16_t continuation)
 {
@@ -180,6 +188,19 @@ static int read_set_continuation(void *ctx, uint16_t record_link,
     if (!mock || mock->count >= 4) return -1;
     mock->links[mock->count] = record_link;
     mock->continuations[mock->count] = continuation;
+    mock->count++;
+    return 0;
+}
+
+static int read_bind_timer(void *ctx, uint16_t record_link,
+                           uint16_t timer_index, uint8_t slot)
+{
+    TimerBindingMock *mock = g_timer_binding_target;
+    (void)ctx;
+    if (!mock || mock->count >= 4) return -1;
+    mock->record_link[mock->count] = record_link;
+    mock->timer_index[mock->count] = timer_index;
+    mock->slot[mock->count] = slot;
     mock->count++;
     return 0;
 }
@@ -249,6 +270,25 @@ static size_t write_and_flush(int type, int rec_idx, int follow_chain,
     session.out_written += flush_w;
 
     return session.out_written;
+}
+
+static size_t write_timer_record(uint8_t *buf, size_t cap,
+                                 uint16_t record_link)
+{
+    DM2_WriteRecordTimer timer = {0x19u, record_link};
+    DM2_WriteRecordSession session;
+    DM2_WriteRecordCallbacks cb = make_writer_cb();
+    int creature_idx[4], container_idx[4];
+    size_t flushed;
+
+    dm2_v1_write_record_session_init(&session, buf, cap,
+        creature_idx, 4, container_idx, 4, &timer, 1);
+    assert(dm2_v1_write_record_checkcode(&session, &cb,
+        record_link, 0, 1) == 0);
+    assert(dm2_suppress_writer_flush(&session.writer,
+        buf + session.out_written, cap - session.out_written,
+        &flushed) == 0);
+    return session.out_written + flushed;
 }
 
 /* ---- Tests ---- */
@@ -634,6 +674,46 @@ static void test_possession_continuations_underflow(void)
     printf("  PASS: possession_continuations_underflow_is_closed\n");
 }
 
+static void test_timer_record_bindings(void)
+{
+    uint8_t buf[256];
+    DM2_ReadRecordSession rd;
+    DM2_ReadRecordCallbacks cb;
+    ReadPool pool;
+    TimerBindingMock bindings;
+    size_t written;
+
+    mock_init();
+    g_mock_records[0][6] = 3u;
+    g_mock_records[0][7] = 0u;
+    written = write_and_flush(0x0e, 0, 1, buf, sizeof(buf));
+    memset(&pool, 0, sizeof(pool));
+    memset(&bindings, 0, sizeof(bindings));
+    dm2_v1_read_record_session_init(&rd, buf, written);
+    cb = make_reader_cb(&pool);
+    cb.bind_timer_record = read_bind_timer;
+    g_timer_binding_target = &bindings;
+    assert(read_from_root(&rd, &cb, NULL, 0, 1) == 0);
+    assert(bindings.count == 1 &&
+           bindings.record_link[0] == mock_make_link(0, 0x0e) &&
+           bindings.timer_index[0] == 3u && bindings.slot[0] == 0u);
+
+    mock_init();
+    written = write_timer_record(buf, sizeof(buf), mock_make_link(0, 0x0f));
+    memset(&pool, 0, sizeof(pool));
+    memset(&bindings, 0, sizeof(bindings));
+    dm2_v1_read_record_session_init(&rd, buf, written);
+    cb = make_reader_cb(&pool);
+    cb.bind_timer_record = read_bind_timer;
+    g_timer_binding_target = &bindings;
+    assert(read_from_root(&rd, &cb, NULL, 0, 1) == 0);
+    assert(bindings.count == 1 &&
+           bindings.record_link[0] == mock_make_link(0, 0x0f) &&
+           bindings.timer_index[0] == 0u && bindings.slot[0] == 1u);
+    g_timer_binding_target = NULL;
+    printf("  PASS: timer_record_bindings_source_slots\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_save_read_record_checkcode:\n");
@@ -651,6 +731,7 @@ int main(void)
     test_session_counters();
     test_possession_continuations();
     test_possession_continuations_underflow();
+    test_timer_record_bindings();
     printf("All read_record_checkcode tests passed.\n");
     return 0;
 }
