@@ -154,6 +154,45 @@ static void test_take_object(void)
     printf("  PASS: take_object\n");
 }
 
+/* ---- RETRIEVE_ITEM_BONUS ---- */
+static int16_t g_bonus_value;
+
+static int16_t mock_bonus_gdat(void *ctx, uint16_t rw, uint8_t idx)
+{
+    (void)ctx;
+    (void)rw;
+    (void)idx;
+    return g_bonus_value;
+}
+
+static void test_retrieve_item_bonus_source_filter(void)
+{
+    DM2_V1_ItemBonusCallbacks cb = { mock_bonus_gdat };
+
+    /* bitem.cpp:31-44 retains only the original high-byte sign bit for an
+     * unequipped non-conditional item.  Bit 8 must not accidentally pass. */
+    g_bonus_value = (int16_t)0x0101;
+    assert(dm2_v1_retrieve_item_bonus(0x1400u, 0x14u, 0, 0,
+                                      &cb, NULL) == 0);
+    g_bonus_value = (int16_t)0x8101;
+    assert(dm2_v1_retrieve_item_bonus(0x1400u, 0x14u, 0, 0,
+                                      &cb, NULL) == 1);
+
+    /* Equipped items bypass that non-equipped filter and return the signed
+     * low byte, while a conditional word requires the source contexts. */
+    g_bonus_value = (int16_t)0x0081;
+    assert(dm2_v1_retrieve_item_bonus(0x1400u, 0x14u, 1, 0,
+                                      &cb, NULL) == -127);
+    g_bonus_value = (int16_t)0x4081;
+    assert(dm2_v1_retrieve_item_bonus(0x1400u, 0x14u, 1, 0,
+                                      &cb, NULL) == 0);
+    assert(dm2_v1_retrieve_item_bonus(0x1400u, 0x14u, 1, 2,
+                                      &cb, NULL) == -127);
+    assert(dm2_v1_retrieve_item_bonus(0x1400u, 0x14u, 1, (int16_t)0xfffe,
+                                      &cb, NULL) == 127);
+    printf("  PASS: retrieve_item_bonus_source_filter\n");
+}
+
 static int read_graphics_from_env(uint8_t **out_bytes, size_t *out_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
@@ -283,6 +322,7 @@ int main(void)
     test_f958();
     test_drink_water();
     test_take_object();
+    test_retrieve_item_bonus_source_filter();
     test_source_item_name_receipt_real_gdat();
     test_source_item_name_receipt_real_record();
     printf("All item_ops tests passed.\n");

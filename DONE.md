@@ -1,3 +1,16 @@
+# DM2 SKSAVE item-bonus source filter (2026-08-07)
+
+- ✅ Corrected `dm2_v1_retrieve_item_bonus()` to follow SKProject
+  `bitem.cpp:22-44`: an unequipped non-conditional item now passes only when
+  the original queried DB/GDAT word retains its high-byte sign bit; the old
+  shifted signed-int test could admit unrelated bit patterns. Conditional
+  contexts and sign handling are covered by focused regressions.
+- ✅ Built and ran the focused item-operation test against the supplied real
+  PC-DOS `GRAPHICS.DAT`/`DUNGEON.DAT`, plus the save/load regressions. The real
+  SKSave corpus remains diagnostic-only: complete hero-stat/light/weight,
+  timer and `DM2_PROCESS_ITEM_BONUS` mutation owners are still not promoted.
+  No release was made.
+
 # DM1 source-owned creature timeline gate (2026-08-07)
 
 - ✅ Stock DM1 no longer falls through to M11's historical C04 map-scan

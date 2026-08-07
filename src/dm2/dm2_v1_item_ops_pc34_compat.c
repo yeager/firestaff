@@ -18,12 +18,14 @@ int16_t dm2_v1_retrieve_item_bonus(
     int16_t val = cb->query_gdat_dbspec_word(ctx, record_word, bonus_idx);
     if (val == 0) return 0;
     if ((val & 0x4000) == 0) {
-        /* Non-conditional bonus */
-        if (equipped == 0) {
-            /* Check if upper bits match (non-equipped filter) */
-            if (((val >> 7) & 0xFF80) == 0)
-                return 0;
-        }
+        /* Non-conditional bonus.  SKProject bitem.cpp:31-44 copies the
+         * queried word to RG4, clears RG4's low byte by XORing it with
+         * RG1Blo, then retains only RG4Bhi's sign bit when the item is not
+         * equipped.  The resulting admission test is therefore bit 15 of
+         * the original DB/GDAT word; shifting a signed int16 (the former
+         * implementation) tests unrelated bits for values such as 0x0100. */
+        if (equipped == 0 && (((uint16_t)val & 0x8000u) == 0u))
+            return 0;
     } else {
         /* Conditional bonus: only applies in context 0xFFFE, 2, or 3 */
         if (context != (int16_t)0xFFFE && context != 2 && context != 3)

@@ -29616,6 +29616,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `skgdtqdb.cpp:822`. A synthetic chain regression and the supplied real
   PC-DOS SKSave corpus pass; the c_record runtime graph, timer links,
   `DM2_2066_062b` possession continuation and item-bonus pass remain open.
+  **2026-08-07 item-bonus sub-audit:** `DM2_RETRIEVE_ITEM_BONUS` now matches
+  SKProject `bitem.cpp:22-44` for the non-equipped high-byte sign-bit filter
+  and conditional contexts, with real PC-DOS GRAPHICS/DUNGEON name receipts
+  still passing. This corrects the shared helper only; hero stat/light,
+  weight, timer and `DM2_PROCESS_ITEM_BONUS` mutation owners remain gated.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw
