@@ -55,6 +55,26 @@ int dm2_v1_calc_party_walk_delay(
     return max_delay;
 }
 
+int dm2_v1_source_half_step_should_enter(
+    int walk_delay,
+    int glb_is_player_moving,
+    int move_command,
+    int double_step_enabled,
+    int current_tile_is_stairs,
+    int table_to_move_present)
+{
+    /* SKProject v4/skgame.cpp:2364-2372. The source enters the delayed pose
+     * only while no prior movement is active, and excludes backward stair
+     * movement when double-step mode is disabled. */
+    if (walk_delay <= 1 || glb_is_player_moving != 0) return 0;
+    if (move_command == 3 || table_to_move_present) return 1;
+    if (move_command == 5 &&
+        (double_step_enabled != 0 || current_tile_is_stairs == 0)) {
+        return 1;
+    }
+    return 0;
+}
+
 int dm2_v1_drain_party_stamina(
     const DM2_V1_HeroMoveState *heroes,
     int hero_count)
@@ -134,14 +154,22 @@ int dm2_v1_perform_move_exec(
         request->heroes, request->hero_count);
     receipt->walk_delay = walk_delay;
 
-    /* skmove.cpp:264-303 derives a half-step countdown from the source
-     * delay, but the old party pose is owned by the live glbIsPlayerMoving
-     * state and its hero/inventory inputs. This execution boundary has no
-     * such owner yet. Do not claim that interpolation started, and do not
-     * synthesize the 700/701 viewport offset; retain an explicit unresolved
-     * receipt until that source state is imported. */
+    /* skgame.cpp:2364-2372 derives a half-step countdown from the source
+     * delay. The gate is computed only from explicitly supplied source inputs;
+     * the old party pose is still owned by live glbIsPlayerMoving state, so
+     * no 700/701 viewport offset is synthesized here. */
     if (walk_delay > 1) {
         receipt->delayed_pose_unbound = 1;
+    }
+    if (dm2_v1_source_half_step_should_enter(
+            walk_delay,
+            request->glb_is_player_moving,
+            request->move_command,
+            request->double_step_enabled,
+            request->current_tile_is_stairs,
+            request->table_to_move_present)) {
+        receipt->half_step_entered = 1;
+        receipt->half_step_countdown = walk_delay >> 1;
     }
 
     /* Stamina drain: weight-proportional per hero.

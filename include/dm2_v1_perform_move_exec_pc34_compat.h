@@ -68,6 +68,7 @@ typedef struct {
      * This is deliberately not an interpolation/viewport activation flag. */
     int delayed_pose_unbound;
     int half_step_entered;
+    int half_step_countdown;
 
     DM2_V1_MoveClassification classification;
     int creature_handle;
@@ -107,6 +108,17 @@ typedef struct {
     uint8_t savegames1_b_04;
 } DM2_V1_HeroMoveState;
 
+/* Exact half-step admission from SKProject v4/skgame.cpp:2364-2372.
+ * This decides only whether the source would enter glbIsPlayerMoving; it
+ * does not create a pose or viewport offset. */
+int dm2_v1_source_half_step_should_enter(
+    int walk_delay,
+    int glb_is_player_moving,
+    int move_command,
+    int double_step_enabled,
+    int current_tile_is_stairs,
+    int table_to_move_present);
+
 typedef struct {
     DM2_V1_PerformMoveReceipt plan;
     int hero_count;
@@ -127,6 +139,14 @@ typedef struct {
     int door_rebirth_altar;
     uint16_t door_timer_delay;
     uint16_t party_attack_power;
+
+    /* Source inputs for the half-step gate. Zero/false means unavailable,
+     * not a host permission to invent interpolation. */
+    int glb_is_player_moving;
+    int move_command;             /* source xx: 3 forward, 5 backward */
+    int double_step_enabled;
+    int current_tile_is_stairs;
+    int table_to_move_present;
 
     /* Creature encounter context (skmove.cpp:477-543).
      * Caller resolves these from the creature on the target tile. */

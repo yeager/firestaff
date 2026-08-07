@@ -58802,3 +58802,11 @@ Blocked DM2 `QuickLoad` before the shared DM1 envelope reader and cleared
 generic status/inspect text on DM2 BACK and action receipts. This prevents
 host-authored save/action messages from appearing while the original
 `c_gui_draw`/`c_dialog` producer and complete `GAME_LOAD` graph remain open.
+
+# DM2 source half-step movement gate (2026-08-13)
+
+Added the source-locked `glbIsPlayerMoving` half-step admission from
+SKProject `v4/skgame.cpp:2364-2372`, including forward/backward,
+double-step/stairs and table-to-move branches. The receipt records the exact
+`walk_delay >> 1` countdown only for explicit source inputs; live pose,
+viewport offset and c_hero/inventory ownership remain fail-closed.

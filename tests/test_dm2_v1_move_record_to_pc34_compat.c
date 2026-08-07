@@ -143,6 +143,18 @@ static void test_calc_party_walk_delay(void)
     printf("  PASS: calc_party_walk_delay\n");
 }
 
+static void test_source_half_step_gate(void)
+{
+    assert(dm2_v1_source_half_step_should_enter(1, 0, 3, 0, 0, 0) == 0);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 3, 0, 0, 0) == 1);
+    assert(dm2_v1_source_half_step_should_enter(4, 1, 3, 0, 0, 0) == 0);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 0, 1, 0) == 0);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 1, 1, 0) == 1);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 5, 0, 0, 0) == 1);
+    assert(dm2_v1_source_half_step_should_enter(4, 0, 0, 0, 1, 1) == 1);
+    printf("  PASS: source_half_step_gate\n");
+}
+
 static void test_drain_party_stamina(void)
 {
     int d = dm2_v1_drain_party_stamina(NULL, 0);
@@ -226,6 +238,7 @@ static void test_perform_move_exec_accepted(void)
     assert(exec_receipt.walk_delay == 2);
     assert(exec_receipt.delayed_pose_unbound == 1);
     assert(exec_receipt.half_step_entered == 0);
+    assert(exec_receipt.half_step_countdown == 0);
 
     printf("  PASS: perform_move_exec_accepted\n");
 }
@@ -391,6 +404,7 @@ int main(void)
     test_move_record_to_creature();
     test_move_record_to_from_nowhere();
     test_calc_party_walk_delay();
+    test_source_half_step_gate();
     test_drain_party_stamina();
     test_perform_move_exec_null();
     test_perform_move_exec_accepted();

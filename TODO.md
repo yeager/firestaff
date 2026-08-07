@@ -29680,6 +29680,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   receipt instead of being discarded. It remains a receipt only; applying the
   writeback and publishing `glbIsPlayerMoving` still require the live c_hero,
   possession and tick owners.
+  **2026-08-13 source-gate progress:** the execution receipt now implements
+  SKProject `v4/skgame.cpp:2364-2372`'s exact half-step admission: no active
+  prior movement, forward movement, backward movement subject to double-step/
+  stairs, or an active table-to-move. It records `walk_delay >> 1` only when
+  those source inputs are explicitly supplied; it still does not create a
+  viewport offset or publish a live delayed pose without the original owner.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an
