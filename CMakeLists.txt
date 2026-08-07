@@ -22043,6 +22043,7 @@ endif()
         src/dm2/dm2_v1_fmtowns_cdda_music.c
         src/dm2/dm2_v1_fmtowns_disc.c
         src/memory/memory_timeline_pc34_compat.c
+        src/dm2/dm2_v1_champion_hud_helpers.c
     )
     target_include_directories(probe_dm2_v1_world_state PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
