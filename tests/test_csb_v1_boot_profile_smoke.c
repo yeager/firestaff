@@ -310,6 +310,7 @@ static void test_fmtowns_media_registry(void)
 static void test_amiga31_media_registry(void)
 {
     const CSB_V1_VariantInfo *amiga31;
+    const CSB_V1_VariantInfo *amiga31_multi;
     char reason[256];
 
     amiga31 = csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_AMIGA31_EN);
@@ -327,6 +328,18 @@ static void test_amiga31_media_registry(void)
               amiga31->md5_gfx, amiga31->md5_dungeon,
               reason, sizeof(reason)) == 1,
           "M11 gate accepts the authenticated Amiga 3.1 English pair");
+    amiga31_multi = csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_AMIGA31_MULTI);
+    CHECK(amiga31_multi && strcmp(amiga31_multi->name,
+                                  "Amiga 3.1 Multilanguage") == 0 &&
+          strcmp(amiga31_multi->media_ref, "MEDIA38:A31M") == 0 &&
+          strcmp(amiga31_multi->md5_gfx,
+                 "61fbfd56887c94adc26888a9491c6611") == 0 &&
+          strcmp(amiga31_multi->md5_dungeon,
+                 "6695d2acebce49f95db1d8f3a5c733de") == 0,
+          "Amiga 3.1 EN/FR/DE profile preserves the original A31M hashes");
+    CHECK(csb_v1_runtime_variant_from_hint("amiga31_multi") ==
+              CSB_V1_VARIANT_AMIGA31_MULTI,
+          "Amiga 3.1 multilanguage launcher hint selects the A31M runtime profile");
 }
 
 /* The launcher materializes the selected Atari ST package before M11 opens

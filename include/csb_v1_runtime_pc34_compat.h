@@ -472,6 +472,8 @@ typedef enum {
     /* ReDMCSB COMPILE.H:199-243 selects the original A31E program/media
      * family.  Keep this distinct from the later A35E title/runtime path. */
     CSB_V1_VARIANT_AMIGA31_EN         = 11,  /* Amiga 3.1 English       MEDIA37 A31E */
+    /* ReDMCSB COMPILE.H:246-269: A31M's APPB is C08_LANG and KAOS is C03_GAME. */
+    CSB_V1_VARIANT_AMIGA31_MULTI      = 12,  /* Amiga 3.1 EN/FR/DE      MEDIA38 A31M */
     CSB_V1_VARIANT_COUNT
 } CSB_V1_VariantId;
 

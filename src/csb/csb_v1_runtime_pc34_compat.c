@@ -918,10 +918,19 @@ static const CSB_V1_VariantInfo g_csb_variants[CSB_V1_VARIANT_COUNT] = {
         "21197b1d4994fd835c403d5a33dcac2b",
         "21197b1d4994fd835c403d5a33dcac2b",
         "6695d2acebce49f95db1d8f3a5c733de"
+    },
+    [CSB_V1_VARIANT_AMIGA31_MULTI] = {
+        CSB_V1_VARIANT_AMIGA31_MULTI,
+        "Amiga 3.1 Multilanguage",
+        /* ReDMCSB COMPILE.H:246-269: A31M is media 38. */
+        "MEDIA38:A31M",
+        "61fbfd56887c94adc26888a9491c6611",
+        "61fbfd56887c94adc26888a9491c6611",
+        "6695d2acebce49f95db1d8f3a5c733de"
     }
 };
 
-_Static_assert(CSB_V1_VARIANT_AMIGA31_EN == CSB_V1_VARIANT_COUNT - 1,
+_Static_assert(CSB_V1_VARIANT_AMIGA31_MULTI == CSB_V1_VARIANT_COUNT - 1,
                "CSB_V1_VARIANT_COUNT must match last enum value");
 
 /* ── Platform-specific save dir ────────────────────────────────────── */
@@ -1190,6 +1199,7 @@ CSB_V1_VariantId csb_v1_runtime_variant_from_hint(const char *version_hint)
         { "amiga35_en",   CSB_V1_VARIANT_AMIGA35_EN },
         { "amiga35_multi", CSB_V1_VARIANT_AMIGA35_MULTI },
         { "amiga31_en",   CSB_V1_VARIANT_AMIGA31_EN },
+        { "amiga31_multi", CSB_V1_VARIANT_AMIGA31_MULTI },
         { "st_f20j",      CSB_V1_VARIANT_ST_F20J },
         { "st_f20e",      CSB_V1_VARIANT_ST_F20E }
     };

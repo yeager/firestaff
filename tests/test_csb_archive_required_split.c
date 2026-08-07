@@ -895,13 +895,13 @@ static void check_csb_amiga31_real_archive_when_available(const char* root) {
                                 sourceTitlePath, (int)sizeof(sourceTitlePath), 32),
               "real Amiga 3.1 ADF exposes its authenticated TITL.DAT hash");
     M12_AssetStatus_ScanGame(&status, root, "csb");
-    index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
     amiga = index >= 0 ? M12_AssetStatus_GetVersion(&status, "csb", (size_t)index) : NULL;
     check_int(amiga && amiga->matched &&
                   strcmp(amiga->matchedMd5, "61fbfd56887c94adc26888a9491c6611") == 0,
               "real Amiga 3.1 ADF should be admitted by its paired TITL.DAT identity");
     check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
-                  &status, "amiga31-en", runtimeRoot, sizeof(runtimeRoot)) &&
+                  &status, "amiga31-multi", runtimeRoot, sizeof(runtimeRoot)) &&
                   FSP_JoinPath(graphicsPath, sizeof(graphicsPath), runtimeRoot, "GRAPHICS.DAT") &&
                   FSP_JoinPath(dungeonPath, sizeof(dungeonPath), runtimeRoot, "DUNGEON.DAT") &&
                   FSP_JoinPath(titlePath, sizeof(titlePath), runtimeRoot, "TITL.DAT") &&

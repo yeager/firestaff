@@ -2881,11 +2881,22 @@
   separate PC package only when its provenance is distinct.
 - ✅ The selected CSB archive now always crosses M12→M11 through a
   version-private runtime cache, even when it was the scanner's first match.
-  The real A31E archive handoff retains `CSB_V1_VARIANT_AMIGA31_EN` and the
-  `csb-amiga31-en` cache root rather than silently booting generic PC34 bytes.
+  The real A31M archive handoff retains `CSB_V1_VARIANT_AMIGA31_MULTI` and
+  the `csb-amiga31-multi` cache root rather than silently booting generic
+  PC34 bytes.
 - ✅ The shared CSB launcher regression now treats an unavailable PC-only V2
   corpus as a skip, rather than failing an independent real A31E handoff
   because a materialized PC receipt happened to exist elsewhere on disk.
+
+# CSB Amiga 3.1 multilingual program receipt (2026-08-07)
+
+- ✅ Corrected the original EN/FR/DE ADF identity from A31E to A31M. ReDMCSB
+  `COMPILE.H` maps A31M's `APPB.FTL` to the language selector and `KAOS.FTL`
+  to the game executable, matching the verified Greatstone package.
+- ✅ M12 now materializes `ANIM`, `APPA`, `APPB`, `BJELoad_R`, `CNFG`, `GRF1`,
+  `MEM1`, `USIO` and `VDEO` only after their original ADF MD5 identities
+  match. The real 7z → ADF handoff regression checks all nine members, the
+  graphics/dungeon pair, and M11's fail-closed platform boundary.
 
 - ✅ TQTR containers with an extended declared VRAM segment now advance to the
   declared VCE offset before loading the palette snapshot. The previous path
@@ -58927,8 +58938,8 @@ alcove runtime and archive-media tests passed (4/4).
   archive-scanner builds no longer issue that unused-variable warning.
 
 - ✅ Kept a verified PC34 GRAPHICS.DAT/DUNGEON.DAT pair as PC34 when a shared
-  cache also contains an A31E `TITL.DAT`. The sidecar now promotes A31E only
-  from M12's selected `csb-amiga31-en` cache package, which preserves the
+  cache also contains an A31M `TITL.DAT`. The sidecar now promotes A31M only
+  from M12's selected `csb-amiga31-multi` cache package, which preserves the
   original package provenance instead of using a nearby file as a variant
   override.
 

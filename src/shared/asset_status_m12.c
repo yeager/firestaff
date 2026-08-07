@@ -334,6 +334,11 @@ static const M12_VersionSpec g_csbVersions[] = {
      * media family.  Its GRAPHICS.DAT identity is also recorded by the
      * Amiga decoder and data validator; scanner and M11 must admit it. */
     {"csb", "amiga31-en", "Amiga 3.1 English", "Amiga 3.1 EN", g_csbGraphicsNames, "21197b1d4994fd835c403d5a33dcac2b", M12_ARCH_AMIGA},
+    /* Greatstone's original EN/FR/GE ADF and ReDMCSB COMPILE.H:246-269
+     * identify this as A31M: APPB.FTL is the language selector and KAOS.FTL
+     * is the game program.  It shares the PC34 graphics payload, so TITL.DAT
+     * is the package discriminator in m12_admit_csb_amiga31_title_package(). */
+    {"csb", "amiga31-multi", "Amiga 3.1 Multilanguage", "Amiga 3.1 ML", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_AMIGA},
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
     {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},
@@ -2075,6 +2080,18 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* label) {
     if (strcmp(label, "ENDA.DAT") == 0) return "9f2b73ff73ad0032810d79021c900ca9";
     if (strcmp(label, "KAOS.FTL") == 0) return "dbb79832c9cc3db82886ba8d3f72748a";
     if (strcmp(label, "SWSH.FTL") == 0) return "ff3872baaed8ee4e83ee3c0684b2eeec";
+    /* Original A31M program receipt, read from the same ADF as TITL.DAT.
+     * ReDMCSB COMPILE.H:246-269 maps APPB to C08_LANG and KAOS to C03_GAME;
+     * APPA.C:51-68 owns the APPA -> ANIM -> APPB handoff. */
+    if (strcmp(label, "ANIM.FTL") == 0) return "60ffbbe31830f2fe262cb8dee862b7fc";
+    if (strcmp(label, "APPA.FTL") == 0) return "8d68df400f71672df4d0339c806c6a25";
+    if (strcmp(label, "APPB.FTL") == 0) return "35987d3f0278c6036fcc24786d4a75d7";
+    if (strcmp(label, "BJELoad_R") == 0) return "758e8549f2280e44ebeae2ae4790d644";
+    if (strcmp(label, "CNFG.FTL") == 0) return "00dae1fcfe37b5bcb3ef1c59c9c0afca";
+    if (strcmp(label, "GRF1.FTL") == 0) return "03d188f89640683b76f4b502415c7dee";
+    if (strcmp(label, "MEM1.FTL") == 0) return "383bd296e025a1eb2ee941cf5eb6ee29";
+    if (strcmp(label, "USIO.FTL") == 0) return "65a18a7d553186df1206241abbd1560e";
+    if (strcmp(label, "VDEO.FTL") == 0) return "a237ff4ba7523f9a02cb992d60056fc8";
     return NULL;
 }
 
@@ -2190,6 +2207,16 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * GRAPHICS.DAT so a later Amiga presenter cannot fall back to the
          * incompatible PC title assets. */
         "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL",
+        /* ReDMCSB COMPILE.H:199-243 and APPA.C:51-68 describe the native
+         * A31 application handoff.  These are the original executable and
+         * library members that own the Amiga title route; retain them from
+         * the same verified ADF receipt for byte inventory and a future
+         * native handoff.  They are deliberately not executable fallbacks:
+         * M11 still refuses the route until every member is fingerprinted
+         * and its program contract is implemented. */
+        "ANIM.FTL", "APPA.FTL", "APPB.FTL", "BJELoad_R", "CNFG.FTL",
+        "GRAPH21.BIN", "GRAPH676.BIN", "GRF1.FTL", "MEM1.FTL",
+        "USIO.FTL", "VDEO.FTL",
         /* The Victor FM Towns CD keeps its presentation media at the ISO
          * root, beside CDATA/CJDATA rather than beside GRAPHICS.DAT.  Keep
          * the original ANM streams in the materialized package so the FM
@@ -3346,7 +3373,7 @@ static void m12_admit_csb_amiga31_title_package(
     size_t rootIndex;
     if (!status || gameIndex < 0 ||
         strcmp(g_games[gameIndex].gameId, "csb") != 0) return;
-    versionIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    versionIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
     if (versionIndex < 0) return;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
         enum { M12_AMIGA31_TITLE_CANDIDATE_LIMIT = 8 };
@@ -3511,7 +3538,7 @@ static void m12_separate_csb_pc34_from_amiga31_package(
         return;
     }
     pcIndex = M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
-    amigaIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    amigaIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
     if (pcIndex < 0 || amigaIndex < 0) {
         return;
     }
@@ -4382,7 +4409,7 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         m12_materialize_csb_startup_optional_cache(
             optionalSeedPath, gameCacheDir,
             selectedVersion && selectedVersion->versionId &&
-            strcmp(selectedVersion->versionId, "amiga31-en") == 0,
+            strcmp(selectedVersion->versionId, "amiga31-multi") == 0,
             selectedVersion && selectedVersion->versionId &&
             strncmp(selectedVersion->versionId, "st20-21-", 8) == 0);
     }
@@ -5687,7 +5714,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
      * materialized from the same ADF receipt.  Selecting the first matching
      * required-file row could otherwise cross-bind a different CSB package.
      * ReDMCSB COMPILE.H:199-243 keeps those media families distinct. */
-    if (strcmp(versionId, "amiga31-en") == 0) {
+    if (strcmp(versionId, "amiga31-multi") == 0) {
         static const char* const dungeonNames[] = {
             "Dungeon.DAT", "dungeon.dat", NULL
         };

@@ -1867,6 +1867,21 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
  * COMPILE.H 199-243. */
 static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    static const char *const program_names[] = {
+        "ANIM.FTL", "APPA.FTL", "APPB.FTL", "BJELoad_R", "CNFG.FTL",
+        "GRF1.FTL", "MEM1.FTL", "USIO.FTL", "VDEO.FTL"
+    };
+    static const char *const program_md5[] = {
+        "60ffbbe31830f2fe262cb8dee862b7fc",
+        "8d68df400f71672df4d0339c806c6a25",
+        "35987d3f0278c6036fcc24786d4a75d7",
+        "758e8549f2280e44ebeae2ae4790d644",
+        "00dae1fcfe37b5bcb3ef1c59c9c0afca",
+        "03d188f89640683b76f4b502415c7dee",
+        "383bd296e025a1eb2ee941cf5eb6ee29",
+        "65a18a7d553186df1206241abbd1560e",
+        "a237ff4ba7523f9a02cb992d60056fc8"
+    };
     char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char graphics_path[M12_ASSET_DATA_DIR_CAPACITY];
     char dungeon_path[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1877,6 +1892,7 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
     int version_index;
+    size_t program_index;
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("FIRESTAFF_CSB_AMIGA31_DATA_DIR not set");
@@ -1885,7 +1901,7 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     init_menu_without_gallery(&menu, data_dir, "csb");
     dismiss_initial_message(&menu);
     entry = M12_StartupMenu_GetEntry(&menu, 1);
-    version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
     amiga_version = version_index >= 0
         ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
                                      (size_t)version_index)
@@ -1901,16 +1917,16 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
     menu.gameOptions[1].versionIndex = version_index;
-    /* The selected A31E path is archive.7z -> ADF -> graphics.dat.  Test
+    /* The selected A31M path is archive.7z -> ADF -> graphics.dat.  Test
      * the real materialization transaction separately from M11's native
      * startup boundary: a bare fail return could otherwise conceal a missing
      * selected-package core and make the title-family regression vacuous.
      * ReDMCSB APPA.C:51-53 owns this package's SWSH/ANIM application chain. */
     memset(runtime_dir, 0, sizeof(runtime_dir));
     expect_true(M12_AssetStatus_MaterializeCSBRuntimeVersion(
-                    &menu.assetStatus, "amiga31-en", runtime_dir,
+                    &menu.assetStatus, "amiga31-multi", runtime_dir,
                     sizeof(runtime_dir)) == 1,
-                "M12 materializes the selected A31E archive/ADF package");
+                "M12 materializes the selected A31M archive/ADF package");
     expect_true(runtime_dir[0] != '\0' &&
                     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT",
                              runtime_dir) > 0 &&
@@ -1920,7 +1936,17 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                     strcmp(md5, amiga_version->matchedMd5) == 0 &&
                     asset_file_md5_hex(dungeon_path, md5) &&
                     strcmp(md5, "6695d2acebce49f95db1d8f3a5c733de") == 0,
-                "A31E materialization retains its real graphics and dungeon pair");
+                "A31M materialization retains its real graphics and dungeon pair");
+    for (program_index = 0U;
+         program_index < sizeof(program_names) / sizeof(program_names[0]);
+         ++program_index) {
+        char program_path[M12_ASSET_DATA_DIR_CAPACITY];
+        expect_true(snprintf(program_path, sizeof(program_path), "%s/%s",
+                             runtime_dir, program_names[program_index]) > 0 &&
+                        asset_file_md5_hex(program_path, md5) &&
+                        strcmp(md5, program_md5[program_index]) == 0,
+                    "A31M cache retains an authenticated native handoff member");
+    }
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 0,
                 "M11 rejects Amiga 3.1 before the PC34 startup fallback");

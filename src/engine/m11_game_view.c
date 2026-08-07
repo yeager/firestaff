@@ -9934,6 +9934,7 @@ static void m11_audio_emit_source_sound_with_volume(
         memset(&amigaPayload, 0, sizeof(amigaPayload));
         if (csbProfile && csbProfile->graphics_path[0] != '\0' &&
             (csbProfile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+             csbProfile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
              csbProfile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
              csbProfile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) &&
             csb_v1_audio_runtime_load_amiga_sound_payload(
@@ -18454,6 +18455,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         if (runtime_receipt.profile &&
             (runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+             runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
              runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
              runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI)) {
             /* A31/A35 owns its title through APPA.C -> ANIM.C, not the
