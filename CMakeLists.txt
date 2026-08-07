@@ -6269,6 +6269,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/shared/fmtowns_bios_host.c
     src/shared/fmtowns_tbios_shim.c
+    src/csb/csb_v1_fmtowns_dm1_shared_ranges.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
     src/shared/graphics_dat_snd3_loader_v1.c
@@ -56347,6 +56348,13 @@ add_executable(test_fmtowns_tbios_shim
 )
 target_include_directories(test_fmtowns_tbios_shim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_fmtowns_tbios_shim COMMAND test_fmtowns_tbios_shim)
+
+add_executable(test_csb_v1_fmtowns_dm1_shared_ranges
+    tests/test_csb_v1_fmtowns_dm1_shared_ranges.c
+    src/csb/csb_v1_fmtowns_dm1_shared_ranges.c
+)
+target_include_directories(test_csb_v1_fmtowns_dm1_shared_ranges PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_csb_v1_fmtowns_dm1_shared_ranges COMMAND test_csb_v1_fmtowns_dm1_shared_ranges)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
