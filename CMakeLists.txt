@@ -4779,6 +4779,10 @@ list(REMOVE_ITEM M10_SOURCES
 # contract fixture. Its direct regression target already compiles the source.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_close_with_full_leader_hand_pc34_compat.c")
+# `dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat.c` is a
+# local sentinel runtime model. Its direct regression target compiles it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
@@ -54346,7 +54350,9 @@ add_executable(test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_op
 target_include_directories(test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat COMMAND test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat)
-add_executable(test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat tests/test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat.c)
+add_executable(test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat
+    tests/test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat.c
+    src/dm1/dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat COMMAND test_dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat)
