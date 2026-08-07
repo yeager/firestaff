@@ -247,10 +247,8 @@ static int verify_selected_wall_does_not_scan_neighbor_text(void)
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    char defaultDir[1024];
     char dungeonPath[1200];
     char graphicsPath[1200];
-    const char* home;
     struct DungeonDatState_Compat dungeon;
     struct DungeonThings_Compat things;
     DM1_V1_InscriptionHostMaterialReceiptPc34 receipt;
@@ -271,21 +269,14 @@ int main(void)
     }
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) {
-            return 0;
-        }
-        snprintf(defaultDir, sizeof(defaultDir), "%s/.firestaff/data/dm1", home);
-        dataDir = defaultDir;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", dataDir);
     snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", dataDir);
     if (!regular_file_has_bytes(dungeonPath) || !regular_file_has_bytes(graphicsPath)) {
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            fprintf(stderr, "configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n");
-            return 1;
-        }
-        return 0;
+        fprintf(stderr, "configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n");
+        return 1;
     }
 
     memset(&dungeon, 0, sizeof(dungeon));
