@@ -7254,7 +7254,14 @@ that its exact runtime path is not already source-locked and tested.
     and wired into orch_get_dm1_creature_info. Defense and baseHealth
     also now populated from profile. 113 tests verify poison resistance
     range, archenemy immunity, and profile field coverage. Bytes 20-21
-    were already decoded as animationTicks.
+    were already decoded as animationTicks. 2026-08-07: CRITICAL FIX —
+    s_aspects[].graphicInfo contained Attributes values (G0243 bytes 2-3),
+    not GraphicInfo (bytes 4-5). Fixed with correct ReDMCSB DUNGEON.C
+    reference values. Also corrected 6 wrong Attributes entries (C02, C08,
+    C19, C23, C25, C26 had spurious bit 14). Added
+    s_dm1_i34_creature_graphicInfo[27], s_dm1_i34_creature_aspect_index[27],
+    s_dm1_i34_creature_attack_sound[27] tables. All G0243 fields now wired
+    into orch_get_dm1_creature_info. 61+132 tests verify against ReDMCSB.
 16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
     drop interaction from original data records. 2026-08-06: a real PC3.4

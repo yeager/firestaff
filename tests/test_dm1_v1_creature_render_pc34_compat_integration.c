@@ -58,7 +58,7 @@ static void test_aspect_table(void) {
     /* Swamp Slime (type 1) */
     ASSERT_EQ(a[1].firstNativeBitmapRelativeIndex, 4,
               "SwampSlime firstNative");
-    ASSERT_EQ(a[1].graphicInfo, 0x0480,
+    ASSERT_EQ(a[1].graphicInfo, 0xA625,
               "SwampSlime graphicInfo");
 
     /* Mummy (type 10) — ReDMCSB line 1637 */
@@ -68,7 +68,7 @@ static void test_aspect_table(void) {
     /* Red Dragon (type 24) — ReDMCSB line 1651 */
     ASSERT_EQ(a[24].firstNativeBitmapRelativeIndex, 81,
               "RedDragon firstNative");
-    ASSERT_EQ(a[24].graphicInfo, 0x068A,
+    ASSERT_EQ(a[24].graphicInfo, 0x97BD,
               "RedDragon graphicInfo");
 
     /* Grey Lord (type 26) — last entry */
@@ -98,67 +98,20 @@ static void test_native_bitmap_index(void) {
     ASSERT_EQ(dm1_creature_native_bitmap_index(0, DM1_CREATURE_POSE_FRONT),
               584, "GiantScorpion front gfx");
 
-    /* Giggler (type 2): firstNative=6, has BACK (0x0010), no SIDE
-     * FRONT=584+6=590, BACK=590+1=591 */
+    /* Giggler (type 2): firstNative=6, GI=0x6198 → has SIDE and BACK
+     * FRONT=584+6=590, SIDE=591, BACK=592 */
     ASSERT_EQ(dm1_creature_native_bitmap_index(2, DM1_CREATURE_POSE_FRONT),
               590, "Giggler front gfx");
     ASSERT_EQ(dm1_creature_native_bitmap_index(2, DM1_CREATURE_POSE_BACK),
-              591, "Giggler back gfx");
+              592, "Giggler back gfx");
 
-    /* Pain Rat (type 4): firstNative=12, GI=0x0701
-     * Has SIDE(0x0008)? NO — 0x0701 & 0x0008 = 0
-     * Actually 0x0701 = ...0111 0000 0001 — let me check
-     * 0x0701 = 0000 0111 0000 0001
-     * ADDITIONAL=0x01, FLIP_NON_ATTACK=0 (bit2=0), SIDE=0 (bit3=0)
-     * BACK=0 (bit4=0), ATTACK=0 (bit5=0)
-     * Wait, that's the m11_game_view.c version... let me check more carefully.
-     * Type 4 is mapped to m11 type 4 (Ruster in header ordering).
-     *
-     * Wait — there's a mismatch in type ordering between the header and
-     * m11_game_view.c. Let me verify against the ReDMCSB G0219 comment:
-     * ReDMCSB line 1627: Creature #00 Giant Scorpion → firstNative=0
-     * ReDMCSB line 1628: Creature #01 Swamp Slime → firstNative=4
-     * ReDMCSB line 1629: Creature #02 Giggler → firstNative=6
-     * ReDMCSB line 1630: Creature #03 Wizard Eye → firstNative=10
-     * ReDMCSB line 1631: Creature #04 Pain Rat → firstNative=12
-     *
-     * Pain Rat: firstNative=12, in s_aspects[4]: GI=0x0701
-     * 0x0701 bits: 0000 0111 0000 0001
-     *   ADDITIONAL = 1 (bits 0-1)
-     *   no FLIP_NON_ATTACK (bit 2 = 0)
-     *   no SIDE (bit 3 = 0)
-     *   no BACK (bit 4 = 0)
-     *   no ATTACK (bit 5 = 0)
-     *
-     * Hmm — but the m11_game_view.c type 4 comment says "Ruster" which
-     * matches the HEADER enum DM1_CREATURE_RUSTER=5. The creature types
-     * in the aspects table follow the G0219 order which IS the creature
-     * type index from G0243.
-     *
-     * Actually looking back: the header enum has:
-     *   DM1_CREATURE_PAIN_RAT = 4
-     *   DM1_CREATURE_RUSTER = 5
-     * But G0219 line 1631: Creature #04 Pain Rat = firstNative 12
-     * And G0219 line 1632: Creature #05 Ruster = firstNative 16
-     * And s_aspects[4] = {12, 543, 0x14, 0x34, 0x0701}
-     *
-     * So s_aspects[4] maps to DM1_CREATURE_PAIN_RAT. GI=0x0701:
-     * FRONT = 584+12 = 596
-     */
+    /* Pain Rat (type 4): firstNative=12, GI=0xA3B8
+     * SIDE=1, BACK=1, ATTACK=1 → FRONT = 584+12 = 596 */
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_PAIN_RAT,
               DM1_CREATURE_POSE_FRONT), 596, "PainRat front gfx");
 
-    /* Vexirk (type 14): firstNative=43, GI=0x05B8
-     * 0x05B8 = 0000 0101 1011 1000
-     *   ADDITIONAL=0 (bits 0-1)
-     *   no FLIP_NON_ATTACK (bit 2 = 0... wait 0x8=1000, bit3=1)
-     *   SIDE=1 (bit 3), BACK=1 (bit 4), ATTACK=1 (bit 5)
-     * Sequence: FRONT(0), SIDE(+1), BACK(+2), ATTACK(+3)
-     * FRONT = 584+43 = 627
-     * SIDE  = 628
-     * BACK  = 629
-     * ATTACK = 630
-     */
+    /* Vexirk (type 14): firstNative=43, GI=0x1638 → SIDE+BACK+ATTACK
+     * FRONT=627, SIDE=628, BACK=629, ATTACK=630 */
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_VEXIRK,
               DM1_CREATURE_POSE_FRONT), 627, "Vexirk front gfx");
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_VEXIRK,
@@ -191,8 +144,8 @@ static void test_direction_delta(void) {
 
 /* ── Test 4: Pose selection ── */
 static void test_pose_selection(void) {
-    /* Vexirk GI=0x05B8: has SIDE, BACK, ATTACK */
-    uint16_t vexirkGI = 0x05B8;
+    /* Test with a GI that has SIDE, BACK, ATTACK (like Vexirk 0x1638) */
+    uint16_t vexirkGI = 0x1638;
 
     /* delta=2 (facing party), not attacking → front */
     ASSERT_EQ(dm1_creature_pose_from_delta(2, 0, vexirkGI),
@@ -218,9 +171,7 @@ static void test_pose_selection(void) {
     ASSERT_EQ(dm1_creature_pose_from_delta(0, 1, vexirkGI),
               DM1_CREATURE_POSE_BACK, "back overrides attack");
 
-    /* Creature without SIDE (e.g., Swamp Slime GI=0x0480):
-     * 0x0480 = 0000 0100 1000 0000: no SIDE, no BACK, no ATTACK
-     * delta=1 → falls to front */
+    /* GI with no SIDE, no BACK, no ATTACK → delta=1 falls to front */
     ASSERT_EQ(dm1_creature_pose_from_delta(1, 0, 0x0480),
               DM1_CREATURE_POSE_FRONT, "no SIDE → front on delta1");
 
@@ -335,8 +286,8 @@ static void test_legacy_api(void) {
     ASSERT_EQ(gfx, 584, "legacy get_graphic scorpion front=584");
 
     gfx = DM1_V1_CreatureRender_GetGraphicPc34Compat(0, 1, 0);
-    /* Scorpion GI=0x0482: ATTACK=0 (bit5=0), so attack falls to front */
-    ASSERT_EQ(gfx, 584, "legacy get_graphic scorpion attack→front=584");
+    /* Scorpion GI=0x623D: ATTACK set (bit5), SIDE+BACK too → offset=3 */
+    ASSERT_EQ(gfx, 587, "legacy get_graphic scorpion attack=587");
 
     ASSERT_STR_EQ(DM1_V1_CreatureRender_TypeNamePc34Compat(22), "Demon", "legacy name demon");
 }
@@ -346,7 +297,7 @@ static void test_legacy_api(void) {
  * M10 module MUST produce the same native bitmap indices and coordinate
  * sets. This test spot-checks known critical creatures. */
 static void test_m11_cross_check(void) {
-    /* Skeleton (type 12): firstNative=35, GI includes no SIDE, no ATTACK
+    /* Skeleton (type 12): firstNative=35, GI=0x6038 → SIDE+BACK+ATTACK
      * FRONT = 584+35 = 619 */
     ASSERT_EQ(dm1_creature_native_bitmap_index(12, DM1_CREATURE_POSE_FRONT),
               619, "Skeleton front = 619");
@@ -356,9 +307,8 @@ static void test_m11_cross_check(void) {
     ASSERT_EQ(dm1_creature_native_bitmap_index(23, DM1_CREATURE_POSE_FRONT),
               661, "LordChaos front = 661");
 
-    /* Demon (type 22): firstNative=73, GI=0x1480
-     * 0x1480: ADDITIONAL=0, no FLIP_NON_ATTACK, no SIDE, no BACK, no ATTACK
-     * Just FRONT → 584+73 = 657 */
+    /* Demon (type 22): firstNative=73, GI=0x53BD → SIDE+BACK+ATTACK
+     * FRONT = 584+73 = 657 */
     ASSERT_EQ(dm1_creature_native_bitmap_index(22, DM1_CREATURE_POSE_FRONT),
               657, "Demon front = 657");
 }
@@ -373,7 +323,7 @@ static void test_m11_query_surface(void) {
               "query depth scorpion native front");
     ASSERT_EQ(dm1_creature_sprite_for_depth(0, 1), 496,
               "query depth scorpion derived D2 front");
-    ASSERT_EQ(dm1_creature_sprite_for_view(3, 0, 0, 0, 0, &mirror), 596,
+    ASSERT_EQ(dm1_creature_sprite_for_view(3, 0, 0, 0, 0, &mirror), 594,
               "query view WizardEye back keeps M11 native offset");
     ASSERT_EQ(mirror, 0, "query view back mirror off");
     ASSERT_EQ(dm1_creature_sprite_for_view(14, 0, 1, 0, 0, &mirror), 628,
@@ -382,7 +332,7 @@ static void test_m11_query_surface(void) {
     ASSERT_EQ(dm1_creature_sprite_for_view(14, 0, 2, 0, 1, &mirror), 630,
               "query view Vexirk attack native");
 
-    ASSERT_EQ(dm1_creature_graphic_info(14), 0x05B8,
+    ASSERT_EQ(dm1_creature_graphic_info(14), 0x1638,
               "query graphic info Vexirk");
     ASSERT_EQ(dm1_creature_native_bitmap_count(14), 4,
               "query native bitmap count Vexirk");
@@ -394,8 +344,8 @@ static void test_m11_query_surface(void) {
               "query has back Vexirk");
     ASSERT_EQ(dm1_creature_has_attack_bitmap(14), 1,
               "query has attack Vexirk");
-    ASSERT_EQ(dm1_creature_has_flip_during_attack(3), 1,
-              "query has flip attack WizardEye");
+    ASSERT_EQ(dm1_creature_has_flip_during_attack(3), 0,
+              "query WizardEye no flip during attack");
     ASSERT_EQ(dm1_creature_replacement_colors(0, &repl9, &repl10), 1,
               "query replacement colors scorpion");
     ASSERT_EQ(repl9, 4, "query replacement color9 scorpion");
@@ -466,7 +416,7 @@ static void test_aspect_frame_cycling(void) {
     ASSERT_EQ(dm1_creature_next_aspect_update_delay(0x0A50, 1, 0),
               10, "attack aspect delay");
 
-    /* Ghost has FLIP_NON_ATTACK (0x5864), so non-attack update chooses
+    /* Ghost has FLIP_NON_ATTACK (GI=0x5225), so non-attack update chooses
      * the FLIP_BITMAP frame bit from M005_RANDOM(2). */
     ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_GHOST, 0x00, 0, 1),
               DM1_CREATURE_ASPECT_FLIP_BITMAP,
@@ -474,19 +424,22 @@ static void test_aspect_frame_cycling(void) {
     ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_GHOST, 0xC0, 0, 0),
               0, "ghost non-attack random=0 clears attack and flip");
 
-    /* Giant Scorpion lacks FLIP_NON_ATTACK, so idle cycling clears the
-     * flip frame regardless of previous state. */
+    /* Giant Scorpion has FLIP_NON_ATTACK (GI=0x623D), so idle cycling
+     * with random=1 sets the flip frame bit. */
     ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_GIANT_SCORPION,
               DM1_CREATURE_ASPECT_FLIP_BITMAP, 0, 1),
-              0, "non-flipping creature clears idle flip frame");
+              DM1_CREATURE_ASPECT_FLIP_BITMAP,
+              "scorpion idle random=1 sets flip frame");
 
-    /* Pain Rat has FLIP_ATTACK and FLIP_DURING_ATTACK (0x0701). The first
-     * attack update chooses a flip bit; a later attack update preserves it. */
+    /* Pain Rat has FLIP_ATTACK but not FLIP_DURING_ATTACK (GI=0xA3B8).
+     * First attack with random=1 sets flip; subsequent attack with random=0
+     * clears flip since FLIP_DURING_ATTACK is not set. */
     ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_PAIN_RAT, 0x00, 1, 1),
               DM1_CREATURE_ASPECT_IS_ATTACKING | DM1_CREATURE_ASPECT_FLIP_BITMAP,
               "pain rat first attack update sets attack and flip");
     ASSERT_EQ(dm1_creature_cycle_aspect_frame(DM1_CREATURE_PAIN_RAT, 0xC0, 1, 0),
-              0xC0, "pain rat flip persists during attack");
+              DM1_CREATURE_ASPECT_IS_ATTACKING,
+              "pain rat no FLIP_DURING_ATTACK clears flip on random=0");
 
     /* Animated Armour/Deth Knight toggles the attack flip bit when already
      * attacking, matching GROUP.C lines 239-242. */

@@ -1439,11 +1439,34 @@ int F0880b_WORLD_Clone_Compat(
  * party-direction change. Returns movement-action or -1 if not a
  * movement command. */
 
+/* ReDMCSB DUNGEON.C G0243 Attributes word (field 2, PC 3.4 / MEDIA385). */
 static const unsigned short s_dm1_i34_creature_attributes[27] = {
-    0x0482, 0x0480, 0x4510, 0x04B4, 0x0701, 0x0581, 0x070C,
-    0x0300, 0x5864, 0x0282, 0x1480, 0x18C6, 0x1280, 0x14A2,
-    0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x4060, 0x10DE,
-    0x0082, 0x1480, 0x78AA, 0x068A, 0x78AA, 0x78AA
+    0x0482, 0x0480, 0x0510, 0x04B4, 0x0701, 0x0581, 0x070C,
+    0x0300, 0x1864, 0x0282, 0x1480, 0x18C6, 0x1280, 0x14A2,
+    0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x0060, 0x10DE,
+    0x0082, 0x1480, 0x38AA, 0x068A, 0x38AA, 0x38AA
+};
+
+/* ReDMCSB DUNGEON.C G0243 GraphicInfo word (field 3, PC 3.4 / MEDIA385).
+ * Used by F0179 for creature aspect update timing (maxHorizontal/maxVertical
+ * from bits 12-15) and by DUNVIEW.C for flip/side/back/attack bitmap selection. */
+static const unsigned short s_dm1_i34_creature_graphicInfo[27] = {
+    0x623D, 0xA625, 0x6198, 0xB225, 0xA3B8, 0x539D, 0x0020,
+    0x0220, 0x5225, 0x71B8, 0x11B8, 0x0225, 0x6038, 0xB23D,
+    0x1638, 0x523D, 0xA038, 0xF23D, 0xA3BD, 0xE23D, 0x0225,
+    0xA3BD, 0x53BD, 0x0038, 0x97BD, 0x0000, 0x0000
+};
+
+/* ReDMCSB DUNGEON.C G0243 CreatureAspectIndex (field 0, PC 3.4 / MEDIA385). */
+static const unsigned char s_dm1_i34_creature_aspect_index[27] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26
+};
+
+/* ReDMCSB DUNGEON.C G0243 AttackSoundOrdinal (field 1, PC 3.4 / MEDIA385). */
+static const unsigned char s_dm1_i34_creature_attack_sound[27] = {
+    4, 0, 6, 0, 1, 0, 3, 0, 2, 7, 2, 0, 8, 0,
+    0, 5, 7, 0, 8, 0, 0, 3, 0, 0, 1, 0, 0
 };
 
 /* ReDMCSB DUNGEON.C G0243_as_Graphic559_CreatureInfo (PC 3.4 rows).
@@ -1484,7 +1507,10 @@ static int orch_get_dm1_creature_info_pc34_compat(
     profile = CREATURE_GetProfile_Compat(creatureType);
     if (!profile) return 0;
     memset(out, 0, sizeof(*out));
+    out->creatureAspectIndex = s_dm1_i34_creature_aspect_index[creatureType];
+    out->attackSoundOrdinal = s_dm1_i34_creature_attack_sound[creatureType];
     out->attributes = s_dm1_i34_creature_attributes[creatureType];
+    out->graphicInfo = s_dm1_i34_creature_graphicInfo[creatureType];
     out->movementTicks = profile->movementTicks;
     out->attackTicks = profile->attackTicks;
     out->attack = profile->baseAttack;
