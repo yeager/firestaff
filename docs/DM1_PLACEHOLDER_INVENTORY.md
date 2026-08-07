@@ -118,10 +118,15 @@ the V2.2 path or contributing to a parity claim.
 placeholder pixels when real data is available or expected — this is
 the policy statement, not a violation.
 
-**Action:** construct a complete source-derived slot mapping before
-promoting V2.2. The local `pbr_hero`/`gpt-image-2` manifest remains
-installed but is now `SYNTHETIC_PLACEHOLDER` (`0/7` real slots), so
-the normal route stays on source-owned V1/V2.1 material.
+**Source mapping available:** `scripts/build_dm1_v22_source_fsart.py
+--hero-slots` emits all seven required V2.2 route IDs from the supplied PC34
+archive: D3 wall 107, floor 78, pit edge 57, Demon front 657,
+champion-portrait atlas 26, door frame 86 and teleporter field 76. Each
+manifest entry retains the source record index and SHA-256 plus a rationale.
+The command does not install or promote the pack. The local
+`pbr_hero`/`gpt-image-2` manifest remains installed but is
+`SYNTHETIC_PLACEHOLDER` (`0/7` real slots), so the normal route stays on
+source-owned V1/V2.1 material.
 
 ### 3. DM1 FM Towns
 

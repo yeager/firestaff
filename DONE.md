@@ -11,6 +11,18 @@
 
 # Scanner provenance after cache materialization (2026-08-07)
 
+# DM1 V2.2 source-derived hero slots (2026-08-07)
+
+- ✅ `scripts/build_dm1_v22_source_fsart.py --hero-slots` now creates the
+  complete seven-slot V2.2 pack only from the supplied PC34
+  `GRAPHICS.DAT` archive. The source-locked records are D3 wall `107`, floor
+  `78`, closest pit edge `57`, Demon front `657` (`M618 + G0219 relative 73`),
+  champion-portrait atlas `26`, D0 door frame `86` and teleporter field `76`.
+  The generated manifest records each source index, record SHA-256 and source
+  rationale. It neither installs nor promotes the pack. Verification against
+  the supplied archive: the generator wrote all 7/7 expected slots with
+  source provenance and decodable PNG members.
+
 - ✅ `--scan-data` now retains and reports each required file's verified
   source path after runtime-cache materialization. Archive members therefore
   stay visible as `archive::member` instead of being misreported as loose

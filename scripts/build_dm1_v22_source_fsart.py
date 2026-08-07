@@ -22,6 +22,37 @@ from pathlib import Path
 from PIL import Image, ImageEnhance, ImageFilter
 
 
+# Each tuple is (manifest category, V2.2 slot id, PC34 GRAPHICS.DAT record,
+# source rationale).  These are deliberately the records used by the DM1
+# renderer rather than a visually similar record picked from the atlas:
+#
+# - DUNVIEW.C / DEFS.H supplies the floor, teleporter, door-frame and D3 wall
+#   records consumed by dm1_v22_shapes.c.
+# - F0108's closest pit edge is record 57.
+# - C026 is the champion-portrait atlas at record 26.
+# - G0219's Demon entry has relative native index 73, so M618 + 73 = 657.
+#
+# The portrait slot intentionally retains the complete source atlas.  Selecting
+# a single 32x29 portrait would require an additional source-locked crop
+# coordinate; this builder must not invent one.
+HERO_SLOTS = (
+    ("wall_shapes", "wall_d3_carved_hero_01", 107,
+     "DUNVIEW.C D3 centre wall; dm1_v22_shapes DM1_GFX_WALL_D3C"),
+    ("floor_shapes", "floor_plain_hero_01", 78,
+     "DUNVIEW.C floor set 0; dm1_v22_shapes DM1_GFX_FLOOR_SET0"),
+    ("floor_shapes", "floor_pit_hero_01", 57,
+     "F0108 closest pit edge"),
+    ("creature_shapes", "creature_demon_hero_01", 657,
+     "DUNVIEW.C G0219 Demon native front: M618 (584) + relative 73"),
+    ("champion_portraits", "champion_warrior_hero_01", 26,
+     "C026 champion-portrait atlas"),
+    ("door_shapes", "door_hero_01", 86,
+     "DUNVIEW.C door frame D0; dm1_v22_shapes DM1_GFX_DOOR_FRAME_D0"),
+    ("field_shapes", "field_teleporter_hero_01", 76,
+     "F0113 teleporter field; dm1_v22_shapes DM1_GFX_FIELD_TELEPORTER"),
+)
+
+
 def load_studio(repo_root: Path):
     source = repo_root / "scripts" / "firestaff_artpack_studio.py"
     spec = importlib.util.spec_from_file_location("firestaff_artpack_studio", source)
@@ -107,6 +138,9 @@ def main() -> int:
                         help="largest original bitmap height to admit")
     parser.add_argument("--limit", type=int, default=0,
                         help="write at most this many decodable records (for smoke testing)")
+    parser.add_argument("--hero-slots", action="store_true",
+                        help=("write the seven V2.2 hero slots from their "
+                              "source-locked PC34 records"))
     args = parser.parse_args()
     if args.scale < 2 or args.scale > 10:
         raise SystemExit("--scale must be between 2 and 10")
@@ -144,14 +178,27 @@ def main() -> int:
         },
         "warnings": warnings,
         "skippedAssets": [],
+        "routeProvenance": [],
     }
     for category in studio.categories_for_game("dm1"):
         manifest[category] = []
 
+    by_index = {asset.index: asset for asset in assets}
+    if args.hero_slots:
+        selected = [
+            (category, asset_id, by_index[index], rationale)
+            for category, asset_id, index, rationale in HERO_SLOTS
+        ]
+    else:
+        selected = [
+            (asset.category, asset.asset_id, asset, None)
+            for asset in assets
+        ]
+
     written = 0
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED,
                          compresslevel=6, allowZip64=True) as archive:
-        for asset in assets:
+        for category, asset_id, asset, rationale in selected:
             if args.limit and written >= args.limit:
                 break
             if asset.width <= 0 or asset.height <= 0:
@@ -181,20 +228,31 @@ def main() -> int:
                 manifest["skippedAssets"].append({"id": asset.asset_id,
                                                   "reason": str(exc)})
                 continue
-            filename = f"{asset.asset_id}_10x.png"
-            member = f"{asset.category}/{filename}"
+            filename = f"{asset_id}_10x.png"
+            member = f"{category}/{filename}"
             png = io.BytesIO()
             restored.save(png, format="PNG", optimize=False, compress_level=6)
             archive.writestr(member, png.getvalue())
-            manifest[asset.category].append({
-                "id": asset.asset_id,
+            manifest[category].append({
+                "id": asset_id,
                 "source_file": filename,
                 "width": restored.width,
                 "height": restored.height,
                 "generator": "original_graphics_dat_10x_palette_expansion",
                 "source_graphic_index": asset.index,
                 "source_sha256": asset.sha256,
+                "source_record_sha256": asset.sha256,
             })
+            if rationale:
+                manifest["routeProvenance"].append({
+                    "id": asset_id,
+                    "category": category,
+                    "sourceGraphicIndex": asset.index,
+                    "sourceDimensions": [asset.width, asset.height],
+                    "sourceRecordSha256": asset.sha256,
+                    "outputDimensions": [restored.width, restored.height],
+                    "rationale": rationale,
+                })
             written += 1
             if written % 25 == 0:
                 print(f"wrote {written}/{len(assets)} source records", flush=True)
