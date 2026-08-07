@@ -1463,6 +1463,17 @@ static const unsigned short s_dm1_i34_creature_animation_ticks[27] = {
     0x0224, 0x0124, 0x0564, 0x0445, 0x0564, 0x0564
 };
 
+/* ReDMCSB DUNGEON.C G0243 Resistances word (bytes 18-19, PC 3.4).
+ * High nibble = poison resistance (M061_POISON_RESISTANCE in DEFS.H:1664).
+ * Remaining bits encode fire, magic, and sharp/blunt resistances per the
+ * packed G0243 layout. Values from F0192 combat source-lock comments. */
+static const unsigned short s_dm1_i34_creature_resistances[27] = {
+    0x299B, 0x33A9, 0x710A, 0x96AA, 0x58FF, 0x4338, 0x10F1,
+    0x25C4, 0x4664, 0x3BFF, 0x5497, 0x55A5, 0x6596, 0x5734,
+    0xD952, 0x15AB, 0x2148, 0x19FD, 0x7AFF, 0xAC77, 0x7679,
+    0x696A, 0xBDF9, 0xFF37, 0xBF7C, 0xFF37, 0xFF37
+};
+
 static int orch_get_dm1_creature_info_pc34_compat(
     int creatureType,
     struct DM1CreatureInfo_Compat* out)
@@ -1477,10 +1488,13 @@ static int orch_get_dm1_creature_info_pc34_compat(
     out->movementTicks = profile->movementTicks;
     out->attackTicks = profile->attackTicks;
     out->attack = profile->baseAttack;
+    out->defense = profile->baseDefense;
+    out->baseHealth = profile->baseHealth;
     out->poisonAttack = profile->poisonAttack;
     out->dexterity = profile->dexterity;
     out->ranges = s_dm1_i34_creature_ranges[creatureType];
     out->properties = profile->properties;
+    out->resistances = s_dm1_i34_creature_resistances[creatureType];
     out->animationTicks = s_dm1_i34_creature_animation_ticks[creatureType];
     out->woundProbabilities = profile->woundProbabilities;
     out->attackType = profile->attackType;

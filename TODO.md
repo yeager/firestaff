@@ -7247,8 +7247,14 @@ that its exact runtime path is not already source-locked and tested.
     table G0243 corrected from PC 3.4 binary — 87 combat stats and 16
     attributes fields now match FIRES.EXE. v3.0.277: full 26-byte struct
     decoded — sightRange, smellRange, attackType, woundProbabilities, and
-    properties all corrected (67 more fields). Remaining: bytes 18-21
-    (4 unknown bytes per creature).
+    properties all corrected (67 more fields). 2026-08-07: bytes 18-19
+    decoded as Resistances (16-bit packed: high nibble = poison resistance
+    per DEFS.H M061_POISON_RESISTANCE, lower bits = fire/magic/sharp/blunt
+    resistances). Static table s_dm1_i34_creature_resistances[27] added
+    and wired into orch_get_dm1_creature_info. Defense and baseHealth
+    also now populated from profile. 113 tests verify poison resistance
+    range, archenemy immunity, and profile field coverage. Bytes 20-21
+    were already decoded as animationTicks.
 16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
     drop interaction from original data records. 2026-08-06: a real PC3.4
