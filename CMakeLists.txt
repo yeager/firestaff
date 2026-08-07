@@ -4783,6 +4783,10 @@ list(REMOVE_ITEM M10_SOURCES
 # local sentinel runtime model. Its direct regression target compiles it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_drop_onto_open_chest_slot_pc34_compat.c")
+# `dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat.c` is a
+# local no-game-data runtime fixture. Its direct regression target owns it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_c545_non_leader_hand_to_mid_cast_leader_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
