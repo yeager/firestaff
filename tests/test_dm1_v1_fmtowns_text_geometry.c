@@ -1,6 +1,7 @@
 #include "dm1_v1_fmtowns_text_geometry.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static void test_glyph_constants(void) {
     /* Byte-verified reads of EDM.EXP initialised data. */
@@ -57,12 +58,47 @@ static void test_vaddr_lookup(void) {
     assert(dm1_v1_fmtowns_text_geometry_vaddr_pc34(NULL) == 0u);
 }
 
+static void test_real_data_edm(void) {
+    /* Verify every CHAR_* constant reads back byte-exact from EDM.EXP
+     * at the SYM1-recorded vaddrs. Skipped without env var. */
+    const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_EDM_EXP");
+    FILE *fp;
+    uint8_t w[2];
+    if (!path || !path[0]) { puts("SKIP: no EDM.EXP"); return; }
+    fp = fopen(path, "rb");
+    if (!fp) { puts("SKIP: cannot open"); return; }
+    const struct {
+        const char *name;
+        long vaddr;
+        int expected;
+    } cases[] = {
+        { "CHAR_X_SIZE",    0x26c8a, DM1_V1_FMTOWNS_CHAR_X_SIZE },
+        { "CHAR_Y_SIZE",    0x26c8c, DM1_V1_FMTOWNS_CHAR_Y_SIZE },
+        { "CHAR_X_SPC",     0x26c8e, DM1_V1_FMTOWNS_CHAR_X_SPC },
+        { "CHAR_Y_SPC",     0x26c90, DM1_V1_FMTOWNS_CHAR_Y_SPC },
+        { "CHAR_DESCENDER", 0x26c92, DM1_V1_FMTOWNS_CHAR_DESCENDER },
+        { "CHAR_X_WID",     0x26c94, DM1_V1_FMTOWNS_CHAR_X_WID },
+        { "CHAR_Y_HYT",     0x26c96, DM1_V1_FMTOWNS_CHAR_Y_HYT }
+    };
+    for (unsigned i = 0; i < sizeof(cases)/sizeof(cases[0]); ++i) {
+        if (fseek(fp, 0x200 + cases[i].vaddr, SEEK_SET) != 0) {
+            fclose(fp); puts("SKIP: seek"); return;
+        }
+        if (fread(w, 1, 2, fp) != 2) { fclose(fp); puts("SKIP: read"); return; }
+        int got = (int)(w[0] | (w[1] << 8));
+        assert(got == cases[i].expected);
+    }
+    fclose(fp);
+    puts("PASS: real EDM.EXP CHAR_* constants match shipped values");
+}
+
 int main(void) {
     test_glyph_constants();
     test_screen_and_icon_constants();
     test_pixel_width();
     test_pixel_height();
     test_vaddr_lookup();
+    test_real_data_edm();
     printf("All dm1_v1_fmtowns_text_geometry tests passed.\n");
     return 0;
 }
