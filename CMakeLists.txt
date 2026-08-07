@@ -4890,6 +4890,11 @@ list(REMOVE_ITEM M10_SOURCES
 # Its direct tests retain the ReDMCSB ordering contract.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0115_square_material_scheduler_pc34_compat.c")
+# `dm1_v1_action_spell_m11_capture_lifecycle_pc34_compat.c` is a receipt
+# lifecycle model with no production caller and depends on the isolated
+# source-frame chain. Its direct regression target retains the contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_m11_capture_lifecycle_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
