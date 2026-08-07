@@ -1247,6 +1247,14 @@
   disc can enter the startup route. Recover the native P3/TBIOS menu code,
   its input loop and the handoff back to M11 before showing any SKULL menu.
 
+- **NEXUS-VDP1-COMMAND-SOURCE-JOIN:** The authentic eight-frame witness now
+  provides a strict command-to-VRAM join: `COPR=0x00000c` gives system
+  records `0x09`/`0x0a`, one type-2 bitmap draw and END; frame 7 uses
+  `PMOD=0x0028`, `SRCa=0x8f80`, `SIZE=0x28b4`, mapping to byte offset
+  `0x47c00`, which matches writer PC `0x06013098`. The 33,280-byte source
+  span still lacks a decoded MENU/DGN/ITEM owner and VDP2 CLUT/tile join, so
+  menu/HUD/viewport production drawing remains blocked.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by

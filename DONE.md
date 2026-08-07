@@ -58925,6 +58925,13 @@ possession or hero-stat mutation was enabled.
 - ✅ The same bounded run joins 50,000 CDB reads to all required retail
   members, including `DM.BIN` (8,212), `TM.BIN` (173), `ITEM.IBS` (72),
   `MENU.BPK` (44), `SLEV00.BIN` (61), and `SDDRVS.TSK` (14).
+- ✅ The eight-frame raw witness was decoded with
+  `scripts/analyze_nexus_vdp1_command_window.py`: `COPR=0x00000c` exposes the
+  four-record Saturn chain (system `0x09`, system `0x0a`, type-2 bitmap draw,
+  END). Frame 7 carries `PMOD=0x0028`, `SRCa=0x8f80`, `SIZE=0x28b4`; its
+  encoded source address is VDP1 byte offset `0x47c00`, matching the live
+  writer corridor at PC `0x06013098`. The observed source span is 33,280
+  bytes through `0x4fe00`.
 - ⛔ This proves retail byte provenance and a live VDP1 writer, not the
   writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
   HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production

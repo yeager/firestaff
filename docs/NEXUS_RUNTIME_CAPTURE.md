@@ -87,6 +87,17 @@ range. This is a positive runtime writer corridor, not yet a DM.BIN/TM.BIN
 source join or a proof that the bytes are `DMV`, TITLE, MENU, HUD or DGN
 material, so semantic admission remains blocked.
 
+The authenticated eight-frame E-BIOS/French startup run now also joins the
+bounded command window to this writer corridor. `COPR=0x00000c` exposes four
+records at `0x00000`, `0x00020`, `0x00040` and `0x00060`: system records
+`0x09`/`0x0a`, one type-2 bitmap command, and END. In frame 7 the draw command
+is `PMOD=0x0028`, `SRCa=0x8f80`, `SIZE=0x28b4`; the Saturn encoding maps
+`SRCa` to VDP1 byte offset `0x47c00`, the same destination selected by the
+runtime writer PC `0x06013098`. The captured source span is
+`0x47c00..0x4fe00` (33,280 bytes). This is a real command-to-VRAM join, but
+the source span is still not joined to a decoded MENU/DGN/ITEM record or a
+VDP2 CLUT/tile owner, so production menu/HUD/viewport drawing remains gated.
+
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at
