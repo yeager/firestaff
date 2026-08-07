@@ -271,6 +271,7 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_ViewportState viewport;
     uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    unsigned int door_text_count = 0u;
     int ok = 0;
 
     if (!root || !root[0]) {
@@ -286,6 +287,18 @@ int main(void)
     memset(&loader, 0, sizeof(loader));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
         fputs("FAIL: could not load canonical graphics.dat\n", stderr);
+        goto cleanup;
+    }
+    for (size_t i = 0u; i < loader.entry_count; ++i) {
+        if (loader.entries[i].cls1 == DM2_GDAT_CATEGORY_DOORS &&
+            loader.entries[i].cls3 == DM2_GDAT_ENTRY_TYPE_TEXT) {
+            ++door_text_count;
+        }
+    }
+    if (door_text_count != 0u) {
+        fprintf(stderr,
+                "FAIL: selected DOORS category contains %u text rows\n",
+                door_text_count);
         goto cleanup;
     }
 

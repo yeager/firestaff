@@ -1171,6 +1171,9 @@
   recovered for `OPEN`, `CLOSED`, `WOODEN`, or similar labels. The compatibility
   label APIs return `NULL`; bind an authenticated player-facing text route
   before showing a door description.
+  **2026-08-07 real-data audit:** the selected PC-DOS `DOORS` category has no
+  typed text rows. The real door-panel regression now asserts that fact while
+  continuing to verify the actual RAW4/GDAT door material route.
 
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an

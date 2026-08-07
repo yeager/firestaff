@@ -58467,3 +58467,10 @@ alcove runtime and archive-media tests passed (4/4).
   command payloads consumed by `RETRIEVE_ENVIRONMENT_CMD_CD_FW`, not display
   names. The real IMG9 regression now asserts that exact source shape; weather
   names remain unavailable rather than synthetic.
+
+# DM2 door text-source audit (2026-08-07)
+
+- ✅ Extended the selected real-data door-panel regression to assert that the
+  `DOORS` GDAT category contains no typed text rows. Door status/type labels
+  therefore remain unavailable, while the real RAW4/GDAT panel and button
+  placement still passes.
