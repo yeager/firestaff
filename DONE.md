@@ -58578,3 +58578,9 @@ alcove runtime and archive-media tests passed (4/4).
   mounted `DUNGEON.DAT` c_light scan. Real dynamic-map descriptors now prove
   only the branch selector and must remain blocked without recovered runtime
   state; fixed maps use their authenticated descriptor identity.
+
+# DM2 actuator shooter boundary (2026-08-07)
+
+- ✅ Extended the fail-closed shooter regression across all six source
+  shooter types (`0x07..0x0a`, `0x0e..0x0f`); none allocates DB14 or queues
+  `SHOOT_ITEM` before the record/timer owner is available.

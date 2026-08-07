@@ -4215,6 +4215,10 @@ level or consumer bindings.
   ownership or invent a `SHOOT_ITEM` timer. **2026-08-06 cleanup:** removed
   the disabled reduced-state source study too. The actual owner handoff
   remains open.
+  **2026-08-07 regression tightening:** the focused boundary now exercises
+  all six source shooter classes (`0x07..0x0a`, `0x0e..0x0f`) and confirms
+  each retains source launch facts while allocating no DB14 record or
+  `SHOOT_ITEM` timer.
 
 - **DM2-ACTUATOR-GENERATOR-OWNER-HANDOFF:** Creature and item generator
   defaults are closed. Port the DB14/DB-record allocation, payload and timer

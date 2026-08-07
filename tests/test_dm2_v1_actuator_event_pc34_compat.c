@@ -255,6 +255,37 @@ static void test_shooter_fails_closed_without_db14_owner(void)
     assert(receipt.launch_direction_randomized == 0);
     assert(queue.count == 0);
 
+    /* The source dispatch has six shooter classes. Exercise every one at
+     * the production boundary: source launch facts may be receipted, but
+     * none may allocate DB14 or enqueue SHOOT_ITEM before the shared
+     * record/timer owner is imported. */
+    {
+        static const uint8_t shooter_types[] = {
+            DM2_ACTU_SOME_SHOOTER, DM2_ACTU_MISSILE_SHOOTER,
+            DM2_ACTU_WEAPON_SHOOTER, DM2_ACTU_MISSILE_SHOOTER_2,
+            DM2_ACTU_ITEM_SHOOTER, DM2_ACTU_ITEM_SHOOTER_X2
+        };
+        for (size_t i = 0u; i < sizeof(shooter_types); ++i) {
+            memset(&receipt, 0, sizeof(receipt));
+            memset(&queue, 0, sizeof(queue));
+            dm2_v1_source_timer_queue_init(&queue);
+            memset(actu, 0, sizeof(actu));
+            actu[2] = shooter_types[i];
+            dm2_actu_set_data(actu, 0x12u);
+            actu[6] = 0x32u;
+            actu[7] = 0xA5u;
+            assert(dm2_v1_activate_shooter(
+                       &pools, &dungeon, &queue, actu,
+                       6, 14, 1, 5, 100u, &receipt) == 0);
+            assert(receipt.valid == 1 && receipt.fail_closed == 1 &&
+                   receipt.source_fields_decoded == 1 &&
+                   receipt.actuator_type == shooter_types[i] &&
+                   receipt.projectile_energy == 100 &&
+                   receipt.items_allocated == 0 &&
+                   receipt.projectiles_queued == 0 && queue.count == 0);
+        }
+    }
+
     printf("  PASS: shooter_fails_closed_without_db14_owner\n");
 }
 
