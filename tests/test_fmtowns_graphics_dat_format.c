@@ -31,7 +31,9 @@ static void test_ext_v1_csb(void) {
     assert(fmtowns_graphics_dat_identify_pc34(buf, 4, &id) == 1);
     assert(id.format == FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1);
     assert(id.asset_count == 728);
-    assert(id.record_size_bytes == 4);
+    /* CSB ext_v1 uses DM1 legacy layout under a sig prefix: 2-byte
+     * per size-table entry, twin primary+secondary tables. */
+    assert(id.record_size_bytes == 2);
     assert(id.header_size_bytes == 4 + 728 * 4);
 }
 

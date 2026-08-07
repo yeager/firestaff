@@ -20,14 +20,28 @@ int fmtowns_graphics_dat_identify_pc34(
     }
     /* Extended format: word0 = 0x80xx sig, word1 = count. */
     out->asset_count = w1;
-    out->record_size_bytes = 4;   /* 4-byte record per asset */
-    out->header_size_bytes = 4 + (uint32_t)w1 * 4;
     if (w0 == 0x8001u) {
+        /* CSB ext_v1: identical to legacy DM1 (two-table format) but
+         * with a 2-byte signature prefix. Payload = 2 * count u16
+         * sizes (primary + secondary tables, byte-identical), then
+         * consecutive asset bytes summing to primary_sum. Verified
+         * against real CSB CDATA/GRAPHICS.DAT: primary sum equals
+         * secondary sum, header + payload fits file. */
         out->format = FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1;
+        out->record_size_bytes = 2;   /* per size-table entry */
+        out->header_size_bytes = 4 + (uint32_t)w1 * 4;
         return 1;
     }
     if (w0 == 0x8004u) {
+        /* DM2 ext_v4: different per-record layout — {u16 size,
+         * u16 flags/aux} per asset. Sum of primary sizes does NOT
+         * balance the file directly; per-record decode still open.
+         * Format classifier reports the 4-byte record stride so
+         * consumers can walk records but MUST NOT assume the
+         * sum-check that works for legacy/v1. */
         out->format = FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V4;
+        out->record_size_bytes = 4;
+        out->header_size_bytes = 4 + (uint32_t)w1 * 4;
         return 1;
     }
     out->format = FMTOWNS_GRAPHICS_DAT_FORMAT_UNKNOWN;
