@@ -21,12 +21,21 @@ int fmtowns_graphics_dat_identify_pc34(
     /* Extended format: word0 = 0x80xx sig, word1 = count. */
     out->asset_count = w1;
     if (w0 == 0x8001u) {
-        /* CSB ext_v1: identical to legacy DM1 (two-table format) but
-         * with a 2-byte signature prefix. Payload = 2 * count u16
-         * sizes (primary + secondary tables, byte-identical), then
-         * consecutive asset bytes summing to primary_sum. Verified
-         * against real CSB CDATA/GRAPHICS.DAT: primary sum equals
-         * secondary sum, header + payload fits file. */
+        /* ext_v1: two-table format with a 2-byte signature prefix.
+         * Payload = 2 * count u16 sizes (primary + secondary tables,
+         * byte-identical), then a 4-byte-per-record descriptor
+         * followed by asset bytes summing to primary_sum.
+         *
+         * Total file layout (byte-verified 2026-08-07 against both
+         * CSB FM Towns CDATA/GRAPHICS.DAT and DM1 DOS 3.4
+         * DATA/GRAPHICS.DAT):
+         *   4                  header (sig + count)
+         *   count * 4          size tables (primary u16[], secondary u16[])
+         *   count * 4          per-record descriptor prefixes
+         *   sum(primary_sizes) asset payload bytes
+         *
+         * CSB FM Towns: 728 assets, DM1 DOS 3.4: 713 assets. Both
+         * balance exactly:  header + count*4 + sum(primary) == file size. */
         out->format = FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1;
         out->record_size_bytes = 2;   /* per size-table entry */
         out->header_size_bytes = 4 + (uint32_t)w1 * 4;
@@ -62,7 +71,7 @@ uint16_t fmtowns_graphics_dat_expected_asset_count_pc34(
         fmtowns_graphics_dat_format_t format) {
     switch (format) {
         case FMTOWNS_GRAPHICS_DAT_FORMAT_LEGACY: return 575;  /* DM1 */
-        case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1: return 728;  /* CSB */
+        case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1: return 728;  /* CSB FM Towns (DM1 DOS 3.4 uses same format with 713 assets) */
         case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V4: return 3407; /* DM2 FM Towns */
         case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V5: return 5624; /* DM2 DOS */
         default: return 0;
