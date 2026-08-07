@@ -133,6 +133,15 @@ checks = {
         "spell.cast",
         "spell.recant",
     ],
+    "src/dm1v2/dm1_v2_champion_select_pc34.c": [
+        "CLIKCHAM.C F0367",
+        "V2 retains focus only and draws nothing",
+        "g_focus_index",
+    ],
+    "include/dm1_v2_champion_select_pc34.h": [
+        "PC34 focus marker only",
+        "v2_champion_select_focus_index_pc34",
+    ],
 }
 
 forbidden_transactions = [
@@ -183,6 +192,19 @@ for forbidden in forbidden_transactions:
     if forbidden in hud_text:
         errors.append(f"V2 HUD interaction must not call V1 transaction owner directly: {forbidden}")
 
+champion_select_text = (root / "src/dm1v2/dm1_v2_champion_select_pc34.c").read_text(encoding="utf-8")
+forbidden_champion_select = [
+    "k_panel_font",
+    "panel_draw_glyph",
+    "panel_render_slot",
+    "CLASS_WARRIOR",
+    "V2_CHAMPION_SELECT_MAX",
+    "M11_V2_ChampionEntry",
+]
+for forbidden in forbidden_champion_select:
+    if forbidden in champion_select_text:
+        errors.append(f"V2 champion select must not retain synthetic panel data: {forbidden}")
+
 for rel in [
     "src/dm1/dm1_v1_click_routing_pc34_compat.c",
     "src/shared/touch_click_zone_matrix_pc34_compat.c",
@@ -200,6 +222,7 @@ result = {
     "anchors": anchors,
     "firestaffFiles": sorted(checks),
     "forbiddenDirectTransactions": forbidden_transactions,
+    "forbiddenChampionSelectData": forbidden_champion_select,
     "errors": errors,
 }
 evidence_path.parent.mkdir(parents=True, exist_ok=True)

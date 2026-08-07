@@ -28,6 +28,15 @@
   FIRES-symbolbindning som skulle kunna styrka en alternativ animeringsrutt.
   Åtta berörda DM1/CSB CTester kontrollerar den diskreta vägen.
 
+# DM1 V2 champion-select-data borttagen (2026-08-07)
+
+- ✅ Rensade champion-select-hjälparens döda 5×5-font, lokala panelritare,
+  sex påhittade klasser och 24-poster stora roster. ReDMCSB:s CLIKCHAM F0367
+  lämnar fokus och kommando till V1, medan CHAMDRAW/PANEL äger levande
+  championdata och pixlar. V2 behåller därför bara en begränsad fokusmarkör
+  för fyra statusrutor; båda render-API:erna är fortsatt no-op. Källåset
+  förbjuder de rensade symbolerna och HUD-interaktionens CTester passerar.
+
 # DM1 V2-föremålsmetadata källbunden (2026-08-07)
 
 - ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen

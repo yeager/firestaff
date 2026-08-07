@@ -98,6 +98,13 @@ separate camera material or verified interpolation route. The V2 controller
 now mirrors the accepted tuple immediately, reports zero offsets and cannot
 schedule completion callbacks or V2 HUD signals.
 
+The champion-select compatibility file still retained a dead 5×5 font,
+host-drawn panel geometry, six invented classes and a 24-entry local roster.
+None was connected to a PC34 champion record. The file now contains only the
+four-slot focus marker consumed by the V1 click-route bridge; its two render
+entries remain strict no-draw while CLIKCHAM, CHAMDRAW and PANEL own the live
+selection and pixels.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

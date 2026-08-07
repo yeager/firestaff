@@ -82,9 +82,19 @@
   ],
   "errors": [],
   "firestaffFiles": [
+    "include/dm1_v2_champion_select_pc34.h",
     "include/dm1_v2_hud_interaction_pc34.h",
+    "src/dm1v2/dm1_v2_champion_select_pc34.c",
     "src/dm1v2/dm1_v2_hud_interaction_pc34.c",
     "tests/test_dm1_v2_hud_interaction_pc34.c"
+  ],
+  "forbiddenChampionSelectData": [
+    "k_panel_font",
+    "panel_draw_glyph",
+    "panel_render_slot",
+    "CLASS_WARRIOR",
+    "V2_CHAMPION_SELECT_MAX",
+    "M11_V2_ChampionEntry"
   ],
   "forbiddenDirectTransactions": [
     "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
