@@ -16,19 +16,12 @@ static int failures;
 
 static const char* graphics_dat_path(void)
 {
-    const char* configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char* home = getenv("HOME");
-    static char homePath[1024];
-    FILE* file;
+    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    static char path[1024];
 
-    if (configured && configured[0] != '\0') return configured;
-    if (!home || home[0] == '\0') return NULL;
-    snprintf(homePath, sizeof(homePath),
-             "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    file = fopen(homePath, "rb");
-    if (!file) return NULL;
-    fclose(file);
-    return homePath;
+    if (!root || root[0] == '\0') return NULL;
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    return path;
 }
 
 static void seed_damage_state(M11_GameViewState* state)
@@ -103,8 +96,11 @@ int main(void)
         DM1_V1_ChampionStatusRectPc34 rect;
 
         seed_damage_state(&state);
-        CHECK(M11_AssetLoader_Init(&state.assetLoader, graphicsPath),
-              "configured PC34 GRAPHICS.DAT loads");
+        if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
+            fprintf(stderr, "configured PC34 GRAPHICS.DAT failed to load\n");
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
         state.assetsAvailable = 1;
         M11_Font_Init(&state.originalFont);
         CHECK(M11_Font_LoadFromGraphicsDat(&state.originalFont,
