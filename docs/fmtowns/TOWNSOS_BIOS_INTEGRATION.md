@@ -111,11 +111,44 @@ BIOS integration:
 - `dm1_v1_fmtowns_menu_render` — panel geometry from region table;
   glyphs from font raster. Needs no BIOS.
 - `dm1_v1_fmtowns_tmenu_input` — schema only; BIOS runs the poll.
+- `dm1_v1_fmtowns_jdm_font` — ASCII rendering complete via shared
+  raster (byte-verified 2026-08-07 as identical to English disc);
+  Shift-JIS pairs are the primary BIOS-integration beneficiary,
+  since TownsOS TBIOS `fs:[0x20]` glyph-fetch is the ONLY authorised
+  kanji glyph source. The render API already exposes a
+  `sjis_glyph_draw` callback slot that a Tsugaru-backed shim can
+  fill without any change to callers.
 - Menu-BSS symbols — layout only; BIOS + Phar Lap runtime own the
   actual reads/writes.
 
 The menu paint pipeline in Firestaff today is display-only. Input
 requires option A or B above.
+
+## Host contract (implemented 2026-08-07)
+
+The C host ABI a Tsugaru bridge or in-process shim implements is
+now defined in `include/fmtowns_bios_host.h`:
+
+- Four canonical slots: `FMTOWNS_BIOS_SLOT_TBIOS`, `..._SECONDARY`,
+  `..._TIMING`, `..._HARDWARE_INIT`.
+- Register bundle `fmtowns_bios_regs_t` carries eax/ebx/ecx/edx +
+  esi/edi/ebp + ds/es/fs/flags across the far-call boundary.
+- I/O port r/w for 0x04E9 SOUND_INT_REASON + 4 CMOS/RS232C ports.
+- Direct `tbios_fetch_sjis_glyph` entry — the specific subfunction
+  the JDM font module consumes. The JDM font render API's
+  `sjis_glyph_draw` callback can trampoline straight into this
+  entry with no game-code changes.
+
+Default binding is fail-closed: every dispatcher returns
+`FMTOWNS_BIOS_HOST_UNBOUND` until a caller registers a real host
+via `fmtowns_bios_host_bind_pc34()`. Tests cover fail-closed,
+partial-host (unsupported slot), bad-slot, bad-args, and bound-
+dispatch paths.
+
+An adapter still needs to be written (Tsugaru's C++ ABI wrapped
+behind an `extern "C"` shim built as an optional shared library,
+or the Option-B minimal in-process TBIOS shim). The C-side plumbing
+consumers dispatch through is now in place and tested.
 
 ## References
 

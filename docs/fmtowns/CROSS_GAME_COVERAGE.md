@@ -117,5 +117,13 @@ Every module below is source-locked with a real-data round-trip test:
   decoding requires more RE work per game.
 - **TownsOS BIOS runtime execution**. Requires Tsugaru integration
   or hosted TBIOS shim (see integration doc).
-- **JDM.EXP Shift-JIS glyph table**. Out of scope per user directive.
+- **JDM Shift-JIS glyph bitmaps**. Byte-verified 2026-08-07: the
+  Japanese Rev 1 disc contains NO game-owned Shift-JIS bitmap.
+  JDATA/GRAPHICS.DAT asset 557 (768 bytes) is byte-identical to
+  the English DATA/GRAPHICS.DAT asset 557 — the Japanese release
+  reuses the same ASCII font raster for Latin characters and
+  delegates all kanji glyphs to TownsOS TBIOS at runtime. See
+  `dm1_v1_fmtowns_jdm_font.{h,c}` for the source-locked resolution
+  contract: ASCII via the shared rasteriser, Shift-JIS pairs via a
+  caller-supplied TBIOS callback (fail-closed if none).
 - **Atari ST and Amiga variants**. Out of scope per user directive.
