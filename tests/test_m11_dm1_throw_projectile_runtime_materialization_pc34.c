@@ -32,29 +32,10 @@ static const char* resolve_data_dir(void)
 {
     static char path[2048];
     const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* root;
-    const char* home;
 
     if (data_dir_has_pc34(env)) return env;
     if (env && env[0]) {
         snprintf(path, sizeof(path), "%s/DATA", env);
-        if (data_dir_has_pc34(path)) return path;
-    }
-    root = getenv("FIRESTAFF_DATA");
-    if (data_dir_has_pc34(root)) return root;
-    if (root && root[0]) {
-        snprintf(path, sizeof(path), "%s/dm1", root);
-        if (data_dir_has_pc34(path)) return path;
-        snprintf(path, sizeof(path), "%s/DATA", root);
-        if (data_dir_has_pc34(path)) return path;
-    }
-    home = getenv("HOME");
-    if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1", home);
-        if (data_dir_has_pc34(path)) return path;
-        snprintf(path, sizeof(path), "%s/.firestaff/data", home);
-        if (data_dir_has_pc34(path)) return path;
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DATA", home);
         if (data_dir_has_pc34(path)) return path;
     }
     return NULL;
@@ -210,8 +191,12 @@ int main(void)
     unsigned char* rawWeapon;
 
     if (!dataDir) {
-        puts("skip: local DM1 PC34 DUNGEON.DAT/GRAPHICS.DAT not available");
-        return 0;
+        if (!getenv("FIRESTAFF_DM1_DATA_DIR")) {
+            puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+            return 0;
+        }
+        fputs("configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
 
     memset(&state, 0, sizeof(state));
