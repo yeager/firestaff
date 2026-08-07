@@ -4970,6 +4970,11 @@ list(REMOVE_ITEM M10_SOURCES
 # direct regression target owns this fail-closed contract.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_main_lowlevel_boundary_pc34_compat.c")
+# `dm1_v1_action_spell_source_frame_evidence_pc34_compat.c` only produces a
+# local receipt consumed by the separately tested M11 bridge; no production
+# route invokes it. Its direct regression target retains that evidence model.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_source_frame_evidence_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
