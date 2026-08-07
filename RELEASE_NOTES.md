@@ -2,11 +2,11 @@
 
 ## Added
 
-- `dm1_dos_real_data_manifest`: byte-verified real-data manifest for DM1 PC 3.4 English disc.
-- `dm2_dos_real_data_manifest`: byte-verified real-data manifest for DM2 Skullkeep DOS English.
-- `dm1_dos_animation_container`: byte-verified "AN" animation container header + tag scan.
-- FM Towns: cross-game shared-range maps (DM1/CSB/DM2), Phar Lap profiles, SYM1 symbol tables, OICON/DYNA_BUTTONS byte-identity proofs, SND API surface recovery, TBIOS shim, JDM font contract.
-- Parity evidence: ~75 new or updated evidence documents.
+- `dm1_dos_real_data_manifest`: add byte-verified real-data manifest for DM1 PC 3.4 English disc.
+- `dm2_dos_real_data_manifest`: add byte-verified real-data manifest for DM2 Skullkeep DOS English.
+- `dm1_dos_animation_container`: add byte-verified "AN" animation container header + tag scan.
+- `fmtowns_cross_game`: add cross-game shared-range maps (DM1/CSB/DM2), Phar Lap profiles, SYM1 symbol tables, OICON/DYNA_BUTTONS byte-identity proofs, SND API surface recovery, TBIOS shim, JDM font contract.
+- `parity-evidence`: add ~75 new or updated evidence documents.
 
 ## Changed
 
@@ -16,7 +16,7 @@
 - `G0219 firstDerivedBitmapIndex`: fix to use M539=762 (MEDIA721/I34E), not 495.
 - `F0731/F0732 combat RNG`: fix to match CEDT002.C F0027 (real PC 3.4 LCG constants).
 - `F0027 RNG`: fix to use real PC 3.4 LCG constants (was using wrong multiplier/increment).
-- FM Towns: ext_v1 payload accounting refinements, ext_v4/v5 GRAPHICS.DAT per-record walker.
+- `fmtowns_ext_v1`: fix ext_v1 payload accounting; add ext_v4/v5 GRAPHICS.DAT per-record walker.
 
 ## Removed
 
