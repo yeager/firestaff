@@ -7,6 +7,9 @@
 - ✅ Verified against the supplied CSB archive corpus: GRAPHICS.DAT and
   DUNGEON.DAT report their authenticated archive members while launch still
   uses the ordinary cache files internally.
+- ✅ Optional title, credits, palette and logo files now retain the same
+  nested archive/ADF provenance in the scanner report instead of appearing
+  to originate in the cache.
 
 # DM2 selected Amiga installer corpus (2026-08-07)
 

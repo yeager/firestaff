@@ -106,18 +106,38 @@ static int parse_party_triplet(const char* text,
  * second recursive archive traversal merely to print this report. */
 static int find_csb_optional_media(const M12_AssetStatus* status,
                                    const char* label,
-                                   char outPath[512]) {
+                                   char outPath[512],
+                                   char outSourcePath[512]) {
     const char* runtimeRoot;
     const char* dataRoot;
     const M12_AssetRequiredFileStatus* graphics;
     char csbDir[512];
     char parent[512];
     char grandparent[512];
-    if (!status || !label || !outPath) return 0;
+    if (!status || !label || !outPath || !outSourcePath) return 0;
     outPath[0] = '\0';
+    outSourcePath[0] = '\0';
     runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, "csb");
     if (runtimeRoot && FSP_JoinPath(csbDir, sizeof(csbDir), runtimeRoot, "csb") &&
-        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) return 1;
+        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) {
+        graphics = M12_AssetStatus_GetRequiredFile(status, "csb", 0U);
+        if (graphics && graphics->sourcePath[0] != '\0') {
+            const char* leaf = NULL;
+            const char* scan = graphics->sourcePath;
+            while ((scan = strstr(scan, "::")) != NULL) {
+                leaf = scan;
+                scan += 2;
+            }
+            if (leaf) {
+                const size_t prefix = (size_t)(leaf - graphics->sourcePath) + 2U;
+                if (prefix + strlen(label) < 512U) {
+                    memcpy(outSourcePath, graphics->sourcePath, prefix);
+                    snprintf(outSourcePath + prefix, 512U - prefix, "%s", label);
+                }
+            }
+        }
+        return 1;
+    }
     dataRoot = M12_AssetStatus_GetDataDir(status);
     if (dataRoot && FSP_JoinPath(outPath, 512U, dataRoot, label) && FSP_FileExists(outPath)) return 1;
     if (dataRoot && FSP_JoinPath(csbDir, sizeof(csbDir), dataRoot, "csb") &&
@@ -158,16 +178,19 @@ static void print_csb_verified_source_media(const M12_AssetStatus* status) {
     if (!status) return;
     for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
         char path[512];
+        char sourcePath[512];
         char md5[33];
         FirestaffGameDataClassifyResult classified;
-        if (!find_csb_optional_media(status, labels[i], path) || !asset_file_md5_hex(path, md5)) continue;
+        if (!find_csb_optional_media(status, labels[i], path, sourcePath) ||
+            !asset_file_md5_hex(path, md5)) continue;
         classified = firestaff_game_data_classify_hex(md5);
         if (!classified.valid || !classified.entry || classified.entry->game != FIRESTAFF_GAME_CSB) continue;
         if (!heading_printed) {
             printf("  Verified CSB source media (does not block start):\n");
             heading_printed = 1;
         }
-        printf("    %-26s FOUND  %s\n", classified.entry->description, path);
+        printf("    %-26s FOUND  %s\n", classified.entry->description,
+               sourcePath[0] != '\0' ? sourcePath : path);
     }
 }
 
