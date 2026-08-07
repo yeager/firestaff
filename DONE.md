@@ -58550,3 +58550,6 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Rebuilt and passed the mounted PC-English DM2 M11 startup/profile gate;
   transparent-static-pic drawing and C068--C070 panel ownership remain
   deliberately no-draw, and no release was made.
+- ✅ Confirmed the real PC-English expansion is `(456,100,92,77)` for rect
+  `0x5C`, versus a `92x25` NEED_FLASK image; this prevents routing the
+  full-surface feedback through the 320x200 viewport framebuffer.

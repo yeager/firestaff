@@ -1754,6 +1754,11 @@
   table, retaining its expanded coordinates and table hash beside the real
   NEED_FLASK material. The receipt remains no-draw until transparent-static-pic
   surface ownership and the C068--C070 global owner are complete.
+  **2026-08-07 coordinate audit:** the mounted PC-English corpus expands `0x5C`
+  to `(456,100,92,77)`, while NEED_FLASK decodes to `92x25`. These coordinates
+  are outside the 320x200 dungeon viewport and therefore prove that this route
+  belongs to the larger M11 game surface, not the viewport framebuffer; do not
+  blit it through the viewport consumer.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

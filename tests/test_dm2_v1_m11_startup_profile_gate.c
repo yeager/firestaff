@@ -3259,6 +3259,11 @@ int main(void) {
                         spell_gdat.destination_height > 0u &&
                         spell_gdat.destination_x >= 0 &&
                         spell_gdat.destination_y >= 0 &&
+                        spell_gdat.destination_x == 456 &&
+                        spell_gdat.destination_y == 100 &&
+                        spell_gdat.destination_width == 92u &&
+                        spell_gdat.destination_height == 77u &&
+                        spell_gdat.width == 92u && spell_gdat.height == 25u &&
                         spell_gdat.decoded_pixels_hash != 0u &&
                         spell_gdat.palette_hash != 0u &&
                         spell_gdat.destination_table_hash != 0u &&
