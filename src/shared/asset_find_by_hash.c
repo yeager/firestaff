@@ -566,6 +566,7 @@ static int is_atari_msa_path(const char *path) {
  * game file: an Amiga set can contain hundreds of them beside an already
  * usable .adf.  This deliberately applies only to archive members; a plain
  * top-level .raw keeps the existing ISO/BIN image path. */
+#ifndef _WIN32
 static int is_kryoflux_raw_track_path(const char *path) {
     size_t length;
     size_t side_begin;
@@ -587,6 +588,7 @@ static int is_kryoflux_raw_track_path(const char *path) {
     }
     return track_begin < side_begin - 1U;
 }
+#endif /* !_WIN32 */
 
 static int is_external_archive_path(const char *path) {
     return is_external_tar_archive_path(path) ||
@@ -777,6 +779,7 @@ static int md5_list_contains_large_whole_file_hash(const char *const *md5List,
  * This is intentionally narrower than a generic .bin rejection.  Renamed
  * loose payloads and non-track archive members remain hash-first.
  */
+#ifndef _WIN32
 static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
     const char *track;
     const char *digits;
@@ -807,6 +810,7 @@ static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
     }
     return 0;
 }
+#endif /* !_WIN32 */
 
 /* These helpers are only called from the POSIX-only external-archive
  * scan paths (#ifndef _WIN32 block around line 2963). Guard the
