@@ -29778,6 +29778,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   CREATURES word `0x05` for types 54 and 127, so both now use authenticated
   source row zero. All eight supplied direct-root streams decode; this only
   removes an incorrect corpus blocker and does not admit CCM or Continue.
+  **2026-08-07 real possession-continuation gate:** the corpus regression now
+  passes every genuinely decoded direct-root link, in source order, into the
+  bounded `DM2_2066_062b` 10-bit continuation reader. The 135/135 real
+  PC-DOS checks therefore cover both record-body consumption and the
+  subsequent type-9/type-0xE continuation boundary. The receipt remains
+  read-only; live record-pool, possession-index, timer and GAME_LOAD owners
+  are still not connected.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

@@ -59681,3 +59681,14 @@ companion.
   receipt remains fail-closed and does not create a host interpolation offset.
 - ✅ `test_dm2_v1_move_record_to_pc34_compat` passes all movement, gate and
   execution checks.
+
+# DM2 SKSAVE real possession-continuation gate (2026-08-07)
+
+- ✅ Connected every real PC-DOS direct-root link decoded by
+  `DM2_READ_RECORD_CHECKCODE` to the bounded `DM2_2066_062b` continuation
+  reader, preserving source order and its type-9/type-0xE-only bit consumption.
+- ✅ The receipt hashes only source-decoded record and continuation facts; it
+  does not fabricate a c_record pool, possession index, timer array or live
+  session. Continue and slot admission remain fail-closed.
+- ✅ `test_dm2_v1_save_load_real_data` passes 135/135 against the supplied
+  PC-DOS SKSave corpus.

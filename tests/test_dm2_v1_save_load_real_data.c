@@ -31,8 +31,12 @@ typedef struct {
     uint16_t next_index[16];
     uint16_t next_link[16][256];
     uint16_t child_link[16][256];
+    uint16_t record_links[4096];
+    uint16_t continuation_links[4096];
     unsigned int record_count;
+    unsigned int continuation_count;
     uint32_t record_hash;
+    uint32_t continuation_hash;
     int creature_ai_unavailable;
     uint8_t unavailable_creature_type;
 } RecordChainInventory;
@@ -82,7 +86,38 @@ static int inventory_set_record(void *context, uint16_t record_link,
     inventory->record_hash = hash_bytes(inventory->record_hash,
                                         &record_type, sizeof(record_type));
     inventory->record_hash = hash_bytes(inventory->record_hash, data, size);
+    if (inventory->record_count >=
+        sizeof(inventory->record_links) / sizeof(inventory->record_links[0])) {
+        return -1;
+    }
+    inventory->record_links[inventory->record_count] = record_link;
     ++inventory->record_count;
+    return 0;
+}
+
+static int inventory_set_continuation(void *context, uint16_t record_link,
+                                      uint16_t continuation)
+{
+    RecordChainInventory *inventory = (RecordChainInventory *)context;
+    unsigned int i;
+
+    if (!inventory || inventory->continuation_count >=
+        sizeof(inventory->continuation_links) /
+            sizeof(inventory->continuation_links[0])) {
+        return -1;
+    }
+    for (i = 0u; i < inventory->record_count; ++i) {
+        if (inventory->record_links[i] == record_link) break;
+    }
+    if (i == inventory->record_count) return -1;
+    inventory->continuation_links[inventory->continuation_count++] =
+        continuation;
+    inventory->continuation_hash = hash_bytes(
+        inventory->continuation_hash, (const uint8_t *)&record_link,
+        sizeof(record_link));
+    inventory->continuation_hash = hash_bytes(
+        inventory->continuation_hash, (const uint8_t *)&continuation,
+        sizeof(continuation));
     return 0;
 }
 
@@ -177,6 +212,7 @@ static int verify_real_direct_record_roots(
     }
     memset(&inventory, 0, sizeof(inventory));
     inventory.record_hash = 2166136261u;
+    inventory.continuation_hash = 2166136261u;
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.alloc_record = inventory_alloc_record;
     callbacks.set_data = inventory_set_record;
@@ -198,10 +234,29 @@ static int verify_real_direct_record_roots(
             return inventory.creature_ai_unavailable ? 2 : 0;
         }
     }
-    /* A no-record chain is valid. The hash captures its source consumption
-     * only when a record body is genuinely present. */
+    /* SKProject sksvgame.cpp:1003-1040 consumes the following savegamep3
+     * stream after READ_RECORD_CHECKCODE. Only DB9 and DB14 links consume
+     * ten bits; passing every decoded source link preserves that ordering
+     * and prevents a type-5/other link from shifting the next continuation. */
+    {
+        DM2_ReadPossessionContinuationCallbacks continuation_callbacks;
+        memset(&continuation_callbacks, 0, sizeof(continuation_callbacks));
+        continuation_callbacks.set_continuation = inventory_set_continuation;
+        continuation_callbacks.ctx = &inventory;
+        if (dm2_v1_read_possession_continuations(
+                &reader.reader, inventory.record_links,
+                inventory.record_count, &continuation_callbacks) != 0) {
+            return 0;
+        }
+        printf("  direct-root receipt: records=%u possession-continuations=%u\n",
+               inventory.record_count, inventory.continuation_count);
+    }
+    /* A no-record chain is valid. The hashes capture only source bytes that
+     * were genuinely decoded; neither receipt fabricates a live record pool. */
     return reader.reader.position <= payload_size &&
-           inventory.record_hash != 0u ? 1 : 0;
+           inventory.record_hash != 0u &&
+           (inventory.continuation_count == 0u ||
+            inventory.continuation_hash != 0u) ? 1 : 0;
 }
 
 static int resolve_corpus_root(char *out, size_t out_size)
