@@ -393,9 +393,10 @@ int nexus_ui_dgt2_pp_palette_rgba(const Nexus_UI_Dgt2PpView *view,
     }
     for (i = 0U; i < 256U; ++i) {
         uint16_t bgr555 = nexus_ui_read_be16(view->clut_bgr555_be + i * 2U);
-        uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
+        /* ST-124 section 6: B4..B0, G4..G0, R4..R0, high to low. */
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
         uint8_t green = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 5) & 0x1fU));
-        uint8_t blue = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
         out_palette[i] = 0xff000000U | ((uint32_t)red << 16) |
                          ((uint32_t)green << 8) | (uint32_t)blue;
     }
@@ -813,9 +814,10 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     surface->source_bytes_size = (uint32_t)data_size;
     for (i = 0U; i < 256U; ++i) {
         uint16_t bgr555 = palette_le[i];
-        uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
+        /* ST-124 section 6: B4..B0, G4..G0, R4..R0, high to low. */
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
         uint8_t green = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 5) & 0x1fU));
-        uint8_t blue = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
         surface->source_palette_bgr555[i] = bgr555;
         surface->source_palette_rgba[i] = 0xff000000U |
             ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
@@ -856,9 +858,10 @@ int nexus_ui_load_logobg(Nexus_UI_Manager *mgr,
     surface = &mgr->surfaces[NEXUS_SURFACE_LOGOBG];
     for (i = 0U; i < 256U; ++i) {
         uint16_t bgr555 = nexus_ui_read_be16(data + 6U + i * 2U);
-        uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
+        /* ST-124 section 6: B4..B0, G4..G0, R4..R0, high to low. */
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
         uint8_t green = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 5) & 0x1fU));
-        uint8_t blue = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
         surface->source_palette_bgr555[i] = bgr555;
         surface->source_palette_rgba[i] = 0xff000000U |
             ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;

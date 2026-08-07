@@ -408,7 +408,7 @@ int nexus_movement_step(Nexus_MovementState *ms,
 
 void nexus_movement_turn(Nexus_MovementState *ms, int turn_right,
                           Nexus_MoveResultData *out_result) {
-    if (!ms) return;
+    if (!ms || !out_result) return;
     memset(out_result, 0, sizeof(*out_result));
 
     nexus_turn(&ms->party_dir, turn_right);

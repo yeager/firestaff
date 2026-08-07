@@ -192,7 +192,6 @@ int nexus_v1_creatures_load_cret_bytes(Nexus_V1_CreatureManager *mgr,
 #define NEXUS_CRET_OFF_DAMAGE     11
 #define NEXUS_CRET_OFF_ARMOR      12
 #define NEXUS_CRET_OFF_POISON     13
-#define NEXUS_CRET_OFF_INDEX      15
 #define NEXUS_CRET_OFF_DETECTION  14
 #define NEXUS_CRET_OFF_INDEX      15
 #define NEXUS_CRET_OFF_ANIM_FRAMES 16

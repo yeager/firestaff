@@ -189,6 +189,8 @@ int nexus_square_is_stairs(int sq);
 int nexus_square_is_pit(int sq);
 int nexus_square_is_teleporter(int sq);
 int nexus_square_is_door(int sq);
+int nexus_square_is_water(int sq);
+int nexus_square_is_fire(int sq);
 int nexus_square_is_passable(int sq);
 
 /* ═══════════════════════════════════════════════════════════════════

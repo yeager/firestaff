@@ -112,7 +112,7 @@ int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
         sec_offset = read_be32(data + desc_off);
         sec_size = read_be32(data + desc_off + 4);
         if (sec_offset == 0 && sec_size == 0) break;
-        if ((int)(sec_offset + sec_size) > data_size) break;
+        if ((uint64_t)sec_offset + sec_size > (uint64_t)data_size) break;
 
         out->sections[i].offset = sec_offset;
         out->sections[i].size = sec_size;
@@ -160,7 +160,9 @@ int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
         uint32_t map_data_size = out->sections[1].size - 16;
 
         out->tilemap_width = (int)read_be16(data + map_off);
-        out->tilemap_height = (int)(map_data_size / (2 * (uint32_t)out->tilemap_width));
+        out->tilemap_height = out->tilemap_width > 0
+            ? (int)(map_data_size / (2 * (uint32_t)out->tilemap_width))
+            : 0;
 
         /* Count unique tile indices */
         {

@@ -155,13 +155,18 @@ void nexus_v1_party_place(Nexus_V1_World *world,
 /* ReDMCSB: DUNGEON.C F0103 — object placement and collision.
  * Source-lock note: Nexus objects are placed from LEV*.DGN thing list
  * (offset 2048 + geometry_size, per nexus_dungeon.h). */
+static int next_object_id = 1;
+
 int nexus_v1_object_place(Nexus_V1_World *world, const Nexus_V1_Object *obj) {
     if (!world || !obj) return -1;
     if (world->object_count >= NEXUS_MAX_OBJECTS) return -1;
 
     Nexus_V1_Object *dst = &world->objects[world->object_count++];
     *dst = *obj;
-    dst->id = world->object_count;   /* 1-based unique ID */
+    /* Deriving the id from object_count collides with a surviving object's
+     * id after nexus_v1_object_remove() swaps the last slot down. Use a
+     * monotonically increasing counter instead, matching next_timer_id. */
+    dst->id = next_object_id++;
     return dst->id;
 }
 
@@ -663,6 +668,13 @@ int nexus_v1_world_deserialize(Nexus_V1_World *world,
         }
         /* Clear remainder slots */
         for (; i < NEXUS_MAX_TIMERS; i++) world->timers[i].flags &= ~NEXUS_TIMER_F_ACTIVE;
+        {
+            int max_id = 0, j;
+            for (j = 0; j < tc; j++) {
+                if (world->timers[j].id > max_id) max_id = world->timers[j].id;
+            }
+            if (max_id >= next_timer_id) next_timer_id = max_id + 1;
+        }
     }
     REQUIRE_WORLD_BYTES(8+4+4+4+4+8);
     p = rd64(p, &world->world_tick);

@@ -33,6 +33,7 @@ int nexus_v1_hunger_tick(Nexus_HungerState *state,
         drain = nexus_food_drain_amount(state->tick_counter, state->encumbrance);
         for (i = 0; i < pool->party_count; i++) {
             ci = pool->party[i];
+            if (ci < 0 || ci >= pool->champion_count) continue;
             if (!pool->champions[ci].alive) continue;
             if (pool->champions[ci].food > drain)
                 pool->champions[ci].food -= drain;
@@ -53,6 +54,7 @@ int nexus_v1_hunger_tick(Nexus_HungerState *state,
         state->water_accumulator -= NEXUS_HUNGER_ACCUM_THRESH;
         for (i = 0; i < pool->party_count; i++) {
             ci = pool->party[i];
+            if (ci < 0 || ci >= pool->champion_count) continue;
             if (!pool->champions[ci].alive) continue;
             if (pool->champions[ci].water >= NEXUS_WATER_THRESHOLD)
                 pool->champions[ci].water -= NEXUS_WATER_THRESHOLD;

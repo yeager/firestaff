@@ -124,6 +124,7 @@ int nexus_mechanics_party_alive(const Nexus_MechanicsState *st, Nexus_V1_Engine 
 
 void nexus_mechanics_get_party_pos(const Nexus_MechanicsState *st,
                                      int *out_x, int *out_y, int *out_dir) {
+    if (!st) return;
     if (out_x) *out_x = st->party_x;
     if (out_y) *out_y = st->party_y;
     if (out_dir) *out_dir = st->party_dir;
@@ -439,7 +440,7 @@ static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
      * Rings (RING1=8, RING2=9) sometimes give defense if equipped.
      * Source: DM1 ring slot defense. */
     for (i = 8; i <= 9; i++) {
-        item_id = leader->slots[i];
+        item_id = leader->slots[i - 1];
         if (item_id < 0) continue;
         def = nexus_itemdef_get(item_id);
         if (def && def->defense > 0) {
@@ -797,7 +798,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             int slot = st->set_leader_slot;
             if (slot >= 0 && slot < engine->champions.party_count) {
                 int idx = engine->champions.party[slot];
-                if (idx >= 0 && idx < 4 &&
+                if (idx >= 0 && idx < engine->champions.champion_count &&
                     engine->champions.champions[idx].alive) {
                     engine->champions.leader_index = slot;
                     needs_redraw = 1;
@@ -1285,7 +1286,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 Nexus_V1_Champion *c = &engine->champions.champions[ci];
                 if (!c->alive) continue;
                 if (c->food > 0) c->food--;
-                if (c->food == 0) c->stamina -= 2;
+                if (c->food == 0) {
+                    c->stamina = (c->stamina > 2) ? c->stamina - 2 : 0;
+                }
             }
         }
         if (st->water_drain_timer <= 0) {
@@ -1296,7 +1299,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 Nexus_V1_Champion *c = &engine->champions.champions[ci];
                 if (!c->alive) continue;
                 if (c->water > 0) c->water--;
-                if (c->water == 0) c->stamina -= 2;
+                if (c->water == 0) {
+                    c->stamina = (c->stamina > 2) ? c->stamina - 2 : 0;
+                }
             }
         }
     }
