@@ -4337,6 +4337,11 @@ list(REMOVE_ITEM M10_SOURCES
 # retain it only in its direct ReDMCSB audit target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1226_f1245_anim_audio_source_audit_pc34_compat.c")
+# F0646--F0665 is an evidence-only ownership map for already separate text,
+# timeline, bitmap, and click routes.  Its direct audit owns the table; do
+# not link this source receipt into the production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0646_f0665_text_bitmap_palette_click_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
