@@ -6265,6 +6265,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_fmtowns_dyna_buttons.c
     src/shared/fmtowns_font_raster_all_games.c
     src/csb/csb_v1_fmtowns_pic_library.c
+    src/dm1/dm1_v1_fmtowns_jdm_font.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56320,6 +56321,15 @@ add_executable(test_csb_v1_fmtowns_pic_library
 )
 target_include_directories(test_csb_v1_fmtowns_pic_library PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_csb_v1_fmtowns_pic_library COMMAND test_csb_v1_fmtowns_pic_library)
+
+add_executable(test_dm1_v1_fmtowns_jdm_font
+    tests/test_dm1_v1_fmtowns_jdm_font.c
+    src/dm1/dm1_v1_fmtowns_jdm_font.c
+    src/dm1/dm1_v1_fmtowns_font_rasteriser.c
+    src/dm1/dm1_v1_fmtowns_text_geometry.c
+)
+target_include_directories(test_dm1_v1_fmtowns_jdm_font PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_jdm_font COMMAND test_dm1_v1_fmtowns_jdm_font)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c

@@ -83,10 +83,12 @@ int dm1_v1_fmtowns_tbios_identify_pc34(
 
 dm1_v1_fmtowns_tbios_version_t
 dm1_v1_fmtowns_tbios_required_for_dm1_hma240_pc34(void) {
-    /* DM1 HMA-240 is a 1992 disc; the earliest TBIOS that ships every
-     * subfunction it uses is V31L31_92. Later versions retain the
-     * same ABI at these subfunction slots per Tsugaru's audits. */
-    return DM1_V1_FMTOWNS_TBIOS_V31L31_92;
+    /* DM1 HMA-240 disc actually ships with V31L22A TBIOS embedded
+     * in TBIOS.BIN on the disc itself (byte-verified 2026-08-07:
+     * TBIOS.BIN offset 0x00 contains "V31L22A\0"). This is the
+     * exact version DM1 was authored against; requiring a newer
+     * TBIOS would refuse the shipping disc's own BIOS. */
+    return DM1_V1_FMTOWNS_TBIOS_V31L22A;
 }
 
 int dm1_v1_fmtowns_tbios_meets_pc34(
