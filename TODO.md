@@ -30083,6 +30083,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   subcategory slots with a stable row receipt hash. The returned category
   tables remain caller-owned diagnostic/source state; runtime graphics-cache,
   raw-image and underlay admission are not implied.
+  **2026-08-07 raw-entry progress:** the retained source ULP table now drives
+  a bounded raw-entry reader. It resolves index 0 from the authenticated
+  first-ENT1 length and later indices from source ULP continuation lengths,
+  checks the cumulative raw boundary and returns a source payload hash. The
+  real PC-DOS regression reads raw entries 0 and 1; image decoding, allocator
+  cache lifetime, underlay and GRAPHIC2.DAT admission remain gated.
 - **2026-08-07 save-dungeon parity correction:** the isolated
   `DM2_STORE_EXTRA_DUNGEON_DATA` teleporter gate now matches SKProject's
   `current_map > target_map` backward-reference skip; the complete raw-dungeon

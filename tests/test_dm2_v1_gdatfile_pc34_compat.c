@@ -846,6 +846,30 @@ static int test_read_graphics_structure_real_dm2_data(void)
         free(table.w_table2);
         free(table.u31p_08);
     }
+    {
+        uint8_t *raw0 = (uint8_t *)calloc(receipt.first_entry_size, 1u);
+        uint8_t *raw1 = (uint8_t *)calloc(65535u, 1u);
+        DM2_V1_GdatSourceRawEntryReceipt raw0_receipt;
+        DM2_V1_GdatSourceRawEntryReceipt raw1_receipt;
+        int raw_ok = raw0 && raw1 &&
+            dm2_v1_gdat_load_source_raw_entry(
+                &state, 0u, raw0, receipt.first_entry_size,
+                &cb, &real, &raw0_receipt) &&
+            raw0_receipt.valid && raw0_receipt.raw_index == 0u &&
+            raw0_receipt.file_offset == receipt.first_raw_offset &&
+            raw0_receipt.byte_length == receipt.first_entry_size &&
+            raw0_receipt.payload_hash != 0u && raw0[0] == 0x80u &&
+            raw0[1] == 0x01u &&
+            dm2_v1_gdat_load_source_raw_entry(
+                &state, 1u, raw1, 65535u, &cb, &real, &raw1_receipt) &&
+            raw1_receipt.valid && raw1_receipt.raw_index == 1u &&
+            raw1_receipt.file_offset > raw0_receipt.file_offset &&
+            raw1_receipt.byte_length > 0u &&
+            raw1_receipt.payload_hash != 0u;
+        free(raw0);
+        free(raw1);
+        if (!raw_ok) return 0;
+    }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
            state.ulp_table == NULL && state.allocator_table == NULL &&
            state.ent1_data == NULL;

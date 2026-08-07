@@ -1476,3 +1476,66 @@ int dm2_v1_gdat_materialize_ent1_rows(
     }
     return 1;
 }
+
+static uint16_t dm2_v1_gdat_source_ulp_length(
+    const DM2_V1_GdatFileState *state, uint16_t raw_index)
+{
+    const uint8_t *word;
+    if (!state || !state->ulp_table || raw_index == 0u) return 0u;
+    word = state->ulp_table + (size_t)raw_index * 2u;
+    return state->big_endian ? dm2_gdat_be16(word) : dm2_gdat_le16(word);
+}
+
+int dm2_v1_gdat_load_source_raw_entry(
+    DM2_V1_GdatFileState *state,
+    uint16_t raw_index,
+    uint8_t *destination,
+    uint32_t destination_capacity,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatSourceRawEntryReceipt *out)
+{
+    uint64_t file_offset;
+    uint32_t byte_length;
+    uint16_t index;
+    DM2_V1_GdatLoadRawDataReceipt load_receipt;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !state->ulp_table || !cb || !destination ||
+        raw_index >= state->ulp_count || state->raw_data_end == 0u) {
+        return 0;
+    }
+    byte_length = raw_index == 0u ? state->first_entry_size :
+        (uint32_t)dm2_v1_gdat_source_ulp_length(state, raw_index);
+    file_offset = state->first_raw_offset;
+    if (raw_index != 0u) {
+        file_offset += state->first_entry_size;
+        for (index = 1u; index < raw_index; ++index)
+            file_offset += dm2_v1_gdat_source_ulp_length(state, index);
+    }
+    if (file_offset > UINT32_MAX || byte_length == 0u ||
+        byte_length > destination_capacity ||
+        file_offset > state->raw_data_end ||
+        byte_length > state->raw_data_end - (uint32_t)file_offset ||
+        byte_length > INT32_MAX || file_offset > INT32_MAX) {
+        return 0;
+    }
+    memset(&load_receipt, 0, sizeof(load_receipt));
+    if (!dm2_v1_gdat_load_raw_data(
+            state, (int16_t)raw_index, destination, (int32_t)byte_length,
+            (int32_t)file_offset, cb, ctx, &load_receipt) ||
+        !load_receipt.success ||
+        (uint32_t)load_receipt.bytes_loaded != byte_length) {
+        return 0;
+    }
+    if (out) {
+        out->valid = true;
+        out->raw_index = raw_index;
+        out->file_offset = (uint32_t)file_offset;
+        out->byte_length = byte_length;
+        out->payload_hash = dm2_gdat_ent1_hash_bytes(
+            2166136261u, destination, byte_length);
+        if (out->payload_hash == 0u) out->payload_hash = 1u;
+    }
+    return 1;
+}

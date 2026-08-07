@@ -387,6 +387,26 @@ int dm2_v1_gdat_materialize_ent1_rows(
     uint16_t row_capacity,
     DM2_V1_GdatEnt1RowsReceipt *out);
 
+typedef struct {
+    bool     valid;
+    uint16_t raw_index;
+    uint32_t file_offset;
+    uint32_t byte_length;
+    uint32_t payload_hash;
+} DM2_V1_GdatSourceRawEntryReceipt;
+
+/* Resolve and read one source raw GDAT entry from the retained ULP table.
+ * Index zero uses the source first-ENT1 length; later indices use the
+ * source ULP continuation lengths. The caller owns `destination`. */
+int dm2_v1_gdat_load_source_raw_entry(
+    DM2_V1_GdatFileState *state,
+    uint16_t raw_index,
+    uint8_t *destination,
+    uint32_t destination_capacity,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatSourceRawEntryReceipt *out);
+
 /* ========================================================================
  * GDAT entry data builder — skproject c_gdatfile.cpp:674
  * DM2_BUILD_GDAT_ENTRY_DATA

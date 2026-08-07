@@ -59769,3 +59769,13 @@ companion.
 - ✅ Verified against all eight mounted PC-DOS primary/backup SKSAVE files:
   `test_dm2_v1_save_load_real_data` 143/143 and
   `test_dm2_v1_record_pool_pc34_compat` pass.
+
+# DM2 GDAT source raw-entry reader (2026-08-07)
+
+- ✅ Added a bounded ULP-driven raw-entry reader that preserves the source
+  first-ENT1 length for raw index 0 and walks continuation ULP lengths for
+  later entries, with cumulative boundary checks and payload hashes.
+- ✅ Real PC-DOS verification reads entries 0 and 1 from the mounted
+  `GRAPHICS.DAT`, checks the source ENT1 signature/offset and nonzero payload
+  receipts, and leaves decoded-image/cache ownership gated.
+- ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.
