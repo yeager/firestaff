@@ -4815,6 +4815,11 @@ list(REMOVE_ITEM M10_SOURCES
 # and no M11/runtime path calls it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1206_f1225_source_ownership_pc34_compat.c")
+# `dm1_v1_early_object_text_f0029_f0047_pc34_compat.c` is a receipt-only
+# object/text material model exercised with synthetic bytes. Its direct audit
+# target compiles it until a real GRAPHICS.DAT/TEXT owner is wired.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_early_object_text_f0029_f0047_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
