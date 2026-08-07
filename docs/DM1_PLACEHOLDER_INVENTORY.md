@@ -35,6 +35,14 @@ runtimes.
 … -026` inventory: "source sessions either consume an authenticated
 decoded surface or fail closed/no-draw."
 
+2026-08-07 production recheck: M11's ordinary teleporter route uses the
+F0113 source plan with C076 and C070..C075 masks. The old cyan/white
+rectangle exists only in the non-DM1/CSB debug route. The active text route
+accepts M653 only at the source-owned 695 or 557 indices; when that material
+is unavailable, authenticated DM1 leaves text undrawn instead of using the
+host 5x7 font. These are production-path checks, not conclusions drawn from
+the synthetic contract fixtures.
+
 Every candidate that survived the scan is one of:
 
 - **Receipt/policy prose** — `suppressSyntheticFallback`,
