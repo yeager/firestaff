@@ -1,3 +1,14 @@
+# DM1 source-owned creature timeline gate (2026-08-07)
+
+- ✅ Stock DM1 no longer falls through to M11's historical C04 map-scan
+  simulator, which could manufacture creature movement or attacks. The PC34
+  loader's `F0882 → F0195` route now remains the sole owner of initial active
+  groups and their C37 behavior events; M10's `F0190/F0209` dispatch owns
+  subsequent behavior.
+- ✅ Kept the legacy scan for isolated diagnostic worlds only. The focused M11
+  source-name tests pass against the local PC34 data, and the source F0195
+  group-activation regression passes. No release was made.
+
 # DM1 PC34 local-data capture harness (2026-08-07)
 
 - ✅ Updated `scripts/dosbox_dm1_capture.sh` to discover the real local

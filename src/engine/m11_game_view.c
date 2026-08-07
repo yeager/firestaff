@@ -16407,6 +16407,18 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     if (!state->world.dungeon || !state->world.things ||
         !state->world.things->squareFirstThings) return;
 
+    /* F0882's PC34 world loader enters NEWMAP.C F0003, whose F0195 pass
+     * activates the loaded C04 groups and schedules their source C37
+     * behavior events before M11 can tick.  Do not let the historical M11
+     * map-scan simulator manufacture movement or attacks if that source
+     * timeline is absent or later rejected: a stock DM1 session must remain
+     * owned by M10's F0190/F0209 dispatch.  The legacy scan below survives
+     * only for isolated diagnostic worlds that do not identify as dm1. */
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        strcmp(state->sourceId, "dm1") == 0) {
+        return;
+    }
+
     if (!state->creatureBehaviorBootstrapped &&
         state->world.things->groupCount > 0) {
         DM1_V1_CreatureBehaviorBootstrapResultPc34 bootstrapResult;
