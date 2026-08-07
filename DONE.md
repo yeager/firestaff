@@ -85,6 +85,18 @@
   CTesten kontrollerar en oförändrad framebuffer och källåset binder vägen
   till ReDMCSB:s F0150/F0128-rutiner.
 
+# DM1 V2:s meddelandelogg och totalsiffror spärrade (2026-08-07)
+
+- ✅ Rensade V2:s lokala meddelandelogg med egen 4×5-font, bakgrundsremsa,
+  kategorifärger och 256 textposter. Samtidigt spärrades den fristående
+  räknaren för steg, dödar, föremål, skada och speltid. ReDMCSB skriver i
+  stället riktiga nivåmeddelanden till meddelandeytan och äger statistik i
+  varje championpost, vilket också stämmer med DMWebs beskrivning av spelets
+  färdigheter och statistik. V2 kan nu varken behålla eller rita en egen logg,
+  och ackumulering samt serialisering av globala totalsiffror avvisas.
+  CTesten och källåset kontrollerar den orörda framebufferbilden och de
+  källägda ReDMCSB-vägarna.
+
 # DM1 V2-föremålsmetadata källbunden (2026-08-07)
 
 - ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen

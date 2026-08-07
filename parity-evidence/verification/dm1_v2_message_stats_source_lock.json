@@ -1,0 +1,60 @@
+{
+  "anchors": [
+    {
+      "end": 904,
+      "file": "CHAMPION.C",
+      "meaning": "source experience and statistics remain owned by the live champion record",
+      "needles": [
+        "F0303_CHAMPION_GetSkillLevel",
+        "L0918_ps_Skill->Experience += P0638_ui_Experience"
+      ],
+      "start": 882
+    },
+    {
+      "end": 1983,
+      "file": "PANEL.C",
+      "meaning": "source panel reads statistics from the selected champion rather than global totals",
+      "needles": [
+        "F0351_INVENTORY_DrawChampionSkillsAndStatistics",
+        "L1094_ps_Champion"
+      ],
+      "start": 1965
+    },
+    {
+      "end": 1004,
+      "file": "CHAMPION.C",
+      "meaning": "source level messages enter the V1 message-area route",
+      "needles": [
+        "F0047_TEXT_MESSAGEAREA_PrintMessage",
+        "G0417_apc_BaseSkillNames"
+      ],
+      "start": 979
+    }
+  ],
+  "dmwebReference": "reference/dmweb-community-docs/html/community/documentation/dungeon-master-and-chaos-strikes-back/skills-and-statistics.html",
+  "errors": [],
+  "firestaffFiles": [
+    "include/dm1_v2_message_log_pc34.h",
+    "include/dm1_v2_stat_tracker_pc34.h",
+    "src/dm1v2/dm1_v2_message_log_pc34.c",
+    "src/dm1v2/dm1_v2_stat_tracker_pc34.c",
+    "tests/test_dm1_v2_message_stats_pc34.c"
+  ],
+  "forbiddenSyntheticState": {
+    "src/dm1v2/dm1_v2_message_log_pc34.c": [
+      "k_log_font",
+      "log_draw_glyph",
+      "log_entries",
+      "bg_val",
+      "cat_color"
+    ],
+    "src/dm1v2/dm1_v2_stat_tracker_pc34.c": [
+      "g_stats",
+      "total_kills +=",
+      "memcpy(buf,"
+    ]
+  },
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "dm1_v2 message-log and global-stat compatibility bridges",
+  "status": "passed"
+}

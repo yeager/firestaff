@@ -129,6 +129,14 @@ counts. ReDMCSB instead updates map coordinates through F0150 and draws the
 committed party tuple through F0128. Both V2 APIs now retain no transition
 state, render no overlay and report no synthetic duration.
 
+The V2 message log kept a 256-entry text cache, a locally encoded 4×5 font,
+category dots and a background strip. Its companion stat tracker accumulated
+global step, kill, item and play-time totals that do not exist as a PC34
+record. ReDMCSB routes level messages through the message area and reads
+skills/statistics from each champion; DMWeb describes those champion-bound
+values. The V2 compatibility APIs now retain no log text, draw no pixels and
+reject global-total persistence.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564
