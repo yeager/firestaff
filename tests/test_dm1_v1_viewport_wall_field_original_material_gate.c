@@ -10,7 +10,9 @@
 
 enum { kMaterialCount = 4 };
 
-static const int kGraphics[kMaterialCount] = { 106, 262, 76, 70 };
+/* D3L wall C106; global ornament 1 / G0205 view row 2 is C261
+ * (C259 + 1 * 2 + native offset 0); F0113 field C076 and mask C070. */
+static const int kGraphics[kMaterialCount] = { 106, 261, 76, 70 };
 
 static const char* data_path(const char* filename, char buffer[1024])
 {
