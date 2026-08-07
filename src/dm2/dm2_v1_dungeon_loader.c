@@ -3376,6 +3376,33 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     return 1;
 }
 
+int dm2_v1_g1_runtime_map_actuator_at(
+    const DM2_V1_G1RuntimeMapActuatorReceipt *receipt,
+    int x,
+    int y,
+    const DM2_V1_G1DirectActuatorRoot **out_actuator)
+{
+    /* SKProject c_querydb.cpp::DM2_FIND_TILE_ACTUATOR selects a DB3 root
+     * from the source tile chain. The G1 receipt has already proven the
+     * direct root and its w2/w4/w6 fields; keep this accessor lookup-only
+     * until DM2_INVOKE_ACTUATOR owns the complete DB3/DB14 transaction. */
+    if (out_actuator) *out_actuator = NULL;
+    if (!receipt || !out_actuator || !receipt->committed ||
+        !receipt->incomplete_world || receipt->actuator_root_count < 0 ||
+        receipt->actuator_root_count > DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS) {
+        return 0;
+    }
+    for (int i = 0; i < receipt->actuator_root_count; ++i) {
+        const DM2_V1_G1DirectActuatorRoot *actuator =
+            &receipt->actuators[i];
+        if (actuator->x == x && actuator->y == y) {
+            *out_actuator = actuator;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_dungeon_collect_g1_champion_mirrors(
     const DM2_V1_DungeonData *d,
     DM2_V1_G1ChampionMirrorReceipt *out)

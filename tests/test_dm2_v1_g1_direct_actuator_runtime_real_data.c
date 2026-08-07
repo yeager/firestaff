@@ -50,6 +50,7 @@ int main(int argc, char **argv)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RuntimeMapActuatorReceipt actuators;
     DM2_V1_G1RuntimeMapActuatorReceipt sentinel;
+    const DM2_V1_G1DirectActuatorRoot *found_actuator = NULL;
     int shop_panel_count = 0;
     int shop_floor_count = 0;
 
@@ -94,6 +95,18 @@ int main(int argc, char **argv)
         actuators.actuators[15].index != 130) {
         dm2_v1_dungeon_free(&dungeon);
         fputs("FAIL: direct DB3 Actuator receipt changed canonical source fields\n",
+              stderr);
+        return 1;
+    }
+    if (!dm2_v1_g1_runtime_map_actuator_at(
+            &actuators, 6, 14, &found_actuator) || !found_actuator ||
+        found_actuator->object_id != 0x4c04 ||
+        found_actuator->actuator_type != 80 ||
+        found_actuator->actuator_data != 65 ||
+        dm2_v1_g1_runtime_map_actuator_at(
+            &actuators, 0, 0, &found_actuator) != 0 || found_actuator != NULL) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: source DB3 actuator lookup changed canonical fields\n",
               stderr);
         return 1;
     }

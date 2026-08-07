@@ -1577,6 +1577,14 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapActuatorReceipt *out);
+/* Finds one previously materialized direct DB3 root by source map
+ * coordinate. This is a lookup-only handoff: it does not invoke the
+ * actuator, follow GenericRecord::w0, or mutate a record/timer. */
+int dm2_v1_g1_runtime_map_actuator_at(
+    const DM2_V1_G1RuntimeMapActuatorReceipt *receipt,
+    int x,
+    int y,
+    const DM2_V1_G1DirectActuatorRoot **out_actuator);
 /* Enumerate only real G1 champion-mirror marker roots (DB3 Actuator type
  * 0x7e).  c_hero.cpp::DM2_SELECT_CHAMPION reads the same w2 fields after locating
  * the tile record.  The receipt remains fail-closed if c_map cannot resolve

@@ -4325,6 +4325,11 @@ level or consumer bindings.
   likewise unbound in production: their raw record addresses are authentic
   bytes but not proof that the original `GAME_LOAD` timer queue, actuator
   lifetime and write transaction have been restored.
+  **2026-08-13 source-root handoff:** the authenticated G1 DB3 receipt now has
+  a coordinate lookup matching the source `DM2_FIND_TILE_ACTUATOR` selection.
+  It exposes the exact source actuator fields without invoking, following
+  `GenericRecord::w0`, mutating DB14, or scheduling a timer; generic actuator
+  actions remain unavailable until that complete transaction is owned.
 
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into

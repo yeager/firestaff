@@ -58631,6 +58631,14 @@ Extended the canonical G1 actuator regression to inventory every successfully
 materialized source DB3 root for shop-panel `0x3f` and shop-floor `0x30` types.
 The census is diagnostic evidence only; type bytes cannot activate a merchant
 without the source `WALL_GFX`/`dt08`/AI-33 transaction.
+
+# DM2 source DB3 actuator lookup handoff (2026-08-13)
+
+Added a lookup-only accessor over the authenticated G1 DB3 actuator receipt.
+It selects the source actuator by map coordinate and preserves the exact
+`w2`/`w4`/`w6` fields without following `GenericRecord::w0`, mutating DB14, or
+creating a timer. Real PC-English map 5 coverage verifies the source root and
+an absent coordinate; generic actuator mutation remains fail-closed.
 # Nexus VDP1 writer code-window receipt (2026-08-07)
 
 - ✅ Added a reproducible Mednafen producer patch that captures the live SH-2
