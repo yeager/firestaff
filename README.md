@@ -28,35 +28,11 @@ Nexus are development targets and are not presented as finished games.
 
 ## Screenshots
 
-Only real DM1 v1 runtime captures appear here. The images below were captured
-from Firestaff using PC DOS 3.4 data and original save files. No generated,
-placeholder or fallback image is presented as game evidence.
-
-### Dungeon Master v1
-
-Fresh captures below are real Firestaff runtime frames from 6 August 2026,
-using the original PC DOS 3.4 `GRAPHICS.DAT`, `DUNGEON.DAT` and a real
-`DMSAVE.DAT`. They show the current playable DM1 v1 path, including movement
-and the in-game HUD.
-
-| Dungeon viewport | Movement / floor object | HUD / party |
-|------------------|-------------------------|-------------|
-| ![DM1 v1 real dungeon runtime capture](docs/screenshots/dm1-v1-readme-dungeon-real-20260806.png) | ![DM1 v1 real movement runtime capture](docs/screenshots/dm1-v1-readme-movement-real-20260806.png) | ![DM1 v1 real HUD runtime capture](docs/screenshots/dm1-v1-readme-hud-real-20260806.png) |
-
-Additional DM1 v1 in-game captures from the verified save/runtime routes:
-
-| Save HUD | Save movement | Runtime viewport |
-|----------|---------------|-----------------|
-| ![DM1 v1 save HUD](docs/screenshots/dm1-v1-runtime-save-hud-20260806.png) | ![DM1 v1 save movement](docs/screenshots/dm1-v1-runtime-save-movement-20260806.png) | ![DM1 v1 runtime viewport](docs/screenshots/dm1-v1-runtime-save-dungeon-20260806.png) |
-
-HUD, inventory and spell surfaces:
-
-| Party HUD | Inventory | Spells / actions |
-|-----------|-----------|------------------|
-| ![DM1 v1 party HUD](docs/screenshots/dm1-v1-runtime-party-hud-latest.png) | ![DM1 v1 inventory](docs/screenshots/dm1-v1-runtime-inventory-latest.png) | ![DM1 v1 spells and actions](docs/screenshots/dm1-v1-runtime-spells-latest.png) |
-
-Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
-**Coming soon** because those game versions are not currently available.
+**Coming soon.** Prior README captures were removed pending re-capture
+from a verified source-locked runtime on hash-checked original data. No
+generated, placeholder or synthetic render is presented as game evidence.
+Real runtime captures for DM1 v1, CSB, DM2, Theron's Quest and DM Nexus
+will be added as each game's runtime path clears source-lock verification.
 
 ## Why Firestaff?
 
