@@ -4954,6 +4954,11 @@ list(REMOVE_ITEM M10_SOURCES
 # Its standalone test retains the ReDMCSB platform-boundary audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c")
+# `dm1_v1_f1826_f1865_source_ownership_pc34_compat.c` is a static ReDMCSB
+# ownership inventory with no PC34 runtime route. Its inventory test compiles
+# it directly and retains the fail-closed platform-I/O evidence.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1826_f1865_source_ownership_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
