@@ -280,6 +280,23 @@ typedef struct {
     int items_allocated;      /* items allocated (weapon/missile shooter) */
     int projectiles_queued;   /* SHOOT_ITEM timer(s) enqueued */
     int fail_closed;
+    /* Source-owned launch facts decoded before the DB14 transaction gate.
+     * These are observations, not ownership: no item or timer is implied
+     * until DM2_ALLOC_NEW_DBITEM/DM2_SHOOT_ITEM is bound to live state. */
+    int source_fields_decoded;
+    int actuator_type;
+    int actuator_data;
+    int timer_x;
+    int timer_y;
+    int timer_direction;
+    int launch_x;
+    int launch_y;
+    int launch_direction;
+    int second_launch_direction;
+    int payload_low;
+    int payload_high;
+    int projectile_energy;
+    int launch_direction_randomized;
 } DM2_V1_ShooterReceipt;
 
 /* ── Item teleport receipt ────────────────────────────────────────── */

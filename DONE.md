@@ -1,3 +1,14 @@
+# DM2 shooter source launch receipt (2026-08-13)
+- ✅ Aligned the fail-closed shooter receipt with SKProject
+  `src/v5/sktimprc.cpp:1611-1800` and `src/v4/skevent.cpp:1536-1631`:
+  actuator type/data, timer and one-tile launch coordinates, launch
+  directions, payload bytes and projectile energy 100 are decoded from the
+  actual record/timer inputs.
+- ✅ The DB14 item-owner and `SHOOT_ITEM` timer transaction remains closed;
+  no item allocation, record cut or timer mutation is fabricated. Focused
+  actuator tests and the production-placeholder boundary pass. No release
+  was made.
+
 # DM2 c_light source formula correction (2026-08-13)
 - ✅ Corrected `dm2_v1_recalc_light_level_pc34()` against SKProject
   `src/v5/sklight.cpp:24-198`: tile high-nibble branching, leader-hand

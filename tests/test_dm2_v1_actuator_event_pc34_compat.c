@@ -215,7 +215,8 @@ static void test_creature_generator_fails_closed(void)
 
 /* A structurally valid shooter actuator is not enough to authorize the
  * source DB14/DB-item + DM2_STEP_MISSILE transaction.  The runtime must leave
- * both the source timer queue and projectile receipt untouched. */
+ * ownership untouched, while retaining the source launch facts for the
+ * eventual owner handoff. */
 static void test_shooter_fails_closed_without_db14_owner(void)
 {
     DM2_V1_RecordPoolSet pools;
@@ -230,6 +231,8 @@ static void test_shooter_fails_closed_without_db14_owner(void)
     memset(actu, 0, sizeof(actu));
     actu[2] = DM2_ACTU_WEAPON_SHOOTER;
     dm2_actu_set_data(actu, 0x12u);
+    actu[6] = 0x32u;
+    actu[7] = 0xA5u;
     dm2_v1_source_timer_queue_init(&queue);
 
     assert(dm2_v1_activate_shooter(&pools, &dungeon, &queue, actu,
@@ -238,6 +241,18 @@ static void test_shooter_fails_closed_without_db14_owner(void)
     assert(receipt.fail_closed == 1);
     assert(receipt.items_allocated == 0);
     assert(receipt.projectiles_queued == 0);
+    assert(receipt.source_fields_decoded == 1);
+    assert(receipt.actuator_type == DM2_ACTU_WEAPON_SHOOTER);
+    assert(receipt.actuator_data == 0x12);
+    assert(receipt.timer_x == 6 && receipt.timer_y == 14);
+    assert(receipt.timer_direction == 1);
+    assert(receipt.launch_x == 7 && receipt.launch_y == 14);
+    assert(receipt.launch_direction == 3);
+    assert(receipt.second_launch_direction == 0);
+    assert(receipt.payload_low == 0x53 && receipt.payload_high == 0x0A);
+    assert(receipt.projectile_energy == 100);
+    assert(receipt.single_projectile == 0);
+    assert(receipt.launch_direction_randomized == 0);
     assert(queue.count == 0);
 
     printf("  PASS: shooter_fails_closed_without_db14_owner\n");

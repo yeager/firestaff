@@ -317,14 +317,15 @@ int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
 
 /* ── ACTIVATE_SHOOTER ─────────────────────────────────────────────── */
 
-/* Source: skevent.cpp:1536-1631.
+/* Source: skevent.cpp:1536-1631; sktimprc.cpp:1611-1800.
  * Shooter types 0x07/0x08/0x0E fire a single projectile;
  * 0x09/0x0A/0x0F fire dual projectiles.
  * Item shooters (0x0E/0x0F) pick items from the source tile.
  * Others allocate via ALLOC_NEW_DBITEM or use missile records.
  *
- * Projectile launch is modeled as a tty07 timer (SHOOT_ITEM equivalent)
- * queued at game_tick+1. */
+ * The source launch facts are decoded below, but the DB14 item ownership and
+ * SHOOT_ITEM timer transaction remains closed until its live owner is bound.
+ * Do not replace that gate with a synthetic tty07 timer. */
 
 int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
                             DM2_V1_DungeonData *dungeon,
@@ -340,6 +341,35 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
     memset(&local, 0, sizeof(local));
     if (receipt == NULL) receipt = &local;
 
+    if (actu_record != NULL) {
+        const int type = (int)dm2_actu_type(actu_record);
+        const int data = (int)dm2_actu_data(actu_record);
+        const int direction = timer_direction & 3;
+        const int launch_direction = (direction + 2) & 3;
+
+        /* sktimprc.cpp derives vb_20/vb_30 from word_at(actuator, 6)
+         * after shifting by four; DM2_SHOOT_ITEM receives these as the
+         * source payload bytes.  Its first target is one tile along the
+         * timer direction, while projectile facing starts two quadrants
+         * away.  Single shooters then add RAND01; record that fact without
+         * inventing a random result while the owner transaction is closed. */
+        receipt->source_fields_decoded = 1;
+        receipt->actuator_type = type;
+        receipt->actuator_data = data;
+        receipt->timer_x = timer_x;
+        receipt->timer_y = timer_y;
+        receipt->timer_direction = direction;
+        receipt->launch_x = timer_x + dm2_x_delta(direction);
+        receipt->launch_y = timer_y + dm2_y_delta(direction);
+        receipt->launch_direction = launch_direction;
+        receipt->second_launch_direction = (launch_direction + 1) & 3;
+        receipt->payload_low = (int)((dm2_actu_w6(actu_record) >> 4) & 0xffu);
+        receipt->payload_high = (int)((dm2_actu_w6(actu_record) >> 12) & 0xffu);
+        receipt->projectile_energy = 100;
+        receipt->single_projectile = DM2_SHOOTER_SINGLE_TYPES(type) ? 1 : 0;
+        receipt->launch_direction_randomized = receipt->single_projectile;
+    }
+
     /* SKProject c_tim_proc.cpp::DM2_INVOKE_ACTUATOR and
      * ::DM2_STEP_MISSILE own more than the actuator's eight bytes: the
      * source DB14/DB item record, projectile energy/attack/facing and the
@@ -351,7 +381,6 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
     (void)pool_set;
     (void)dungeon;
     (void)queue;
-    (void)actu_record;
     (void)timer_x;
     (void)timer_y;
     (void)timer_direction;
