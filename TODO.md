@@ -2465,7 +2465,15 @@ level or consumer bindings.
   EGB clear/panel sequence. It remains blank: the recovered Shift-JIS label
   pool establishes layout ownership only and is not permission to synthesize
   text, icons or input.
-  complete native menu parity.
+  2026-08-07 English text closed: `dm1_v1_fmtowns_font_rasteriser` (round-
+  trip verified against real EDM.EXP asset 557 — 6 rows x 128 ASCII glyphs,
+  right-aligned 5-bit body, MSB first), `dm1_v1_fmtowns_menu_render`
+  harness with `dm1_v1_fmtowns_menu_default_glyph_draw_pc34`, and
+  `M11_GameView_RenderDm1FmtownsMenu` compose the full pipeline. The
+  M11 action-menu path now paints DYNAMENU text into the source-owned
+  EGB backdrop for English sessions. Japanese Shift-JIS glyphs remain
+  blank pending a JDM-owned font decode; native icon bitmap decode and
+  mouse/input capture also remain open.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

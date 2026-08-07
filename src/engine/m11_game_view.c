@@ -39265,9 +39265,26 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
         }
         dynamenu[DM1_V1_FMTOWNS_DYNAMENU_OFFSET_BUTTON0 + slot] = action;
     }
-    return dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
-               framebuffer, framebufferWidth, framebufferHeight,
-               framebufferWidth, dynamenu, 1) != 0u;
+    /* Backdrop first (source-owned FILL_CSCREEN + SPC_BLOT). */
+    if (dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
+            framebuffer, framebufferWidth, framebufferHeight,
+            framebufferWidth, dynamenu, 1) == 0u) {
+        return 0;
+    }
+    /* Overlay text: consume the round-trip-verified font raster
+     * asset 557 through the M11 game view's default glyph consumer.
+     * English labels render byte-exact into the panel; Japanese
+     * labels fail closed inside the consumer because asset 557 is
+     * ASCII-only. When the font is not yet loaded the composer
+     * returns 0 and the backdrop above stays visible without text
+     * — never a synthetic replacement. */
+    if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+        (void)M11_GameView_RenderDm1FmtownsMenu(
+            (M11_GameViewState *)state, dynamenu, 0,
+            framebuffer, framebufferWidth, framebufferHeight,
+            framebufferWidth, 4, 0);
+    }
+    return 1;
 }
 
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
