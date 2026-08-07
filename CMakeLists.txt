@@ -4875,6 +4875,11 @@ list(REMOVE_ITEM M10_SOURCES
 # contract tests compile the fixture until an authenticated asset path exists.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c")
+# `dm1_v1_champion_panel_all_states_pc34_compat.c` is a contract-only F0293
+# dispatch model with no production caller or authenticated asset path. Its
+# direct regression target retains the documented ReDMCSB order audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_all_states_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
