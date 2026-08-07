@@ -57,6 +57,12 @@ the settings helper no longer shifts or darkens source pixels. This does not
 change real torch light: PC34 F0337/F0338 own palette selection and torch
 drain through the authenticated V1 light route.
 
+The V2 weather helper was another source-unbound pixel producer: it made rain,
+fog, dust and drips from an LCG and fixed palette values. PC34 has no weather
+route in the ReDMCSB source inventory, while its real field effects are owned
+by the projectile and explosion draw chain. The helper therefore resets to
+`NONE` and cannot alter the source framebuffer.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

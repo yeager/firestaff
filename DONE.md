@@ -1,5 +1,14 @@
 # DM2 selected SONGLIST corpus (2026-08-07)
 
+# DM1 V2 syntetiska vädereffekter spärrade (2026-08-07)
+
+- ✅ Spärrade V2-hjälparens källfria regn, dimma, damm och droppar. Den
+  skapade partiklar med en egen slumptalsgenerator och blandade fasta
+  palettvärden över dungeonbilden, men saknar både PC34-anrop och motsvarighet
+  i ReDMCSB-inventeringen. API:t återställs nu till `NONE` och skriver inga
+  pixlar. Den registrerade CTesten `dm1_v2_weather_fx_pc34` kontrollerar både
+  tillståndet och en orörd framebuffer.
+
 # DM1 V2 syntetisk kameraskakning spärrad (2026-08-07)
 
 - ✅ Tog bort två källfria kameraskakningar från V2: en slumpbaserad
