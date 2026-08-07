@@ -1,21 +1,40 @@
 # Firestaff v3.0.296
 
-## Fixed
+## Added
 
-- M11 teleporter sensor toggle was using bit 0 instead of bit 3 (MASK0x0008) for the teleporter open/closed state, causing sensors targeting teleporter squares to flip the wrong bit. Now uses the correct bit 3, matching ReDMCSB DEFS.H and the actuator dispatch path.
-- M11 SENSOR_EFFECT_TOGGLE_REMOTE now handles WALL and CORRIDOR target elements through the actuator dispatch. Previously sensors targeting wall or corridor squares were silently ignored.
-- M11 CORRIDOR target handling now supports all three effect types (SET/CLEAR/TOGGLE), not just CLEAR.
-- M11 teleporter toggle now routes through m11_apply_dm1_square_actuator instead of inline bit manipulation, consistent with PIT, FAKEWALL, WALL and CORRIDOR.
+- `dm1_v1_fmtowns_tmenu_input`: introduce byte-verified TMENU.EXP input schema module exposing 12 vaddrs (INIT_EIP 0x9408, POLL_MAIN 0xc8e0, EVENT_DISPATCH 0xbfac, TBIOS_POLL 0xa130) and 4 data layouts (event queue @ 0x5890, records stride 8 @ 0x575c, handler table @ 0x5510 stride 4, TBIOS status packet @ 0x2dbc) with real-data round-trip test against shipping TMENU.EXP.
+- `dm1_v1_fmtowns_egb_rect`: introduce region rectangle resolver walking parent chain for GET_COORD anchor types 1, 2, 3, 4, 9 that the FM Towns menu/HUD/viewport paints exercise.
+- `dm1_v1_fmtowns_menu_bss`: register menu subsystem BSS symbol layer (MENU_OWNER, DYNAMENU, PLAYER records stride 319, presence and OICON offsets) as source-lifted layout constants.
+- `dm1_v1_fmtowns_oicon_descriptor`: introduce complete 224 x 6 OICON descriptor table (1344 bytes) driving DRAW_ICN_BUTTON dispatch decisions.
+- `dm1_v1_fmtowns_region_blocks`: introduce complete 23-block region registry (994 records) covering every region ID the FM Towns runtime references.
+- `dm1_v1_fmtowns_icon_geometry`: introduce icon geometry constants (16x16, 256 bytes, SCR_X=320) recovered from EDM.EXP.
+- `dm1_v1_fmtowns_icon_category`: introduce LOAD_ICON 7-bucket threshold table (0/32/64/96/128/160/192) with classify API.
+- `docs/dm1/fmtowns_real_data_hashes.json`: register SHA-256 hash manifest for every FM Towns disc file used as reference (EDM.EXP, JDM.EXP, TMENU.EXP, GRAPHICS.DAT, DUNGEON.DAT).
 
----
+## Changed
+
+- `m11_apply_dm1_square_actuator`: fix M11 teleporter sensor toggle to use bit 3 (MASK0x0008) instead of bit 0 for teleporter open/closed state, matching ReDMCSB DEFS.H and the actuator dispatch path.
+- `M11 SENSOR_EFFECT_TOGGLE_REMOTE`: change dispatch to handle WALL and CORRIDOR target elements; previously sensors targeting wall or corridor squares were silently ignored.
+- `M11 CORRIDOR target handling`: change to support all three effect types (SET/CLEAR/TOGGLE), not just CLEAR.
+- `M11 teleporter toggle`: change to route through `m11_apply_dm1_square_actuator` instead of inline bit manipulation, consistent with PIT, FAKEWALL, WALL and CORRIDOR.
+
+## Removed
+
+- None.
 
 # Firestaff v3.0.295
 
-## Fixed
+## Added
 
-- DM1 actuator dispatch now handles all six ReDMCSB target square types: DOOR, PIT, FAKEWALL (existing), plus WALL (wall↔corridor element toggle via bits 7:5), TELEPORTER (bit 3 open/closed toggle), and CORRIDOR (corridor↔fakewall, same logic as FAKEWALL from corridor side). Previously sensors targeting wall, teleporter, or corridor squares silently returned 0, breaking any dungeon puzzles that used those actuator effects. 26 tests pass (was 18).
+- None.
 
----
+## Changed
+
+- `dm1_actuator_dispatch`: change to handle all six ReDMCSB target square types (DOOR, PIT, FAKEWALL, WALL, TELEPORTER, CORRIDOR); previously WALL, TELEPORTER and CORRIDOR targets silently returned 0. 26 tests pass (was 18).
+
+## Removed
+
+- None.
 
 # Firestaff v3.0.294
 
