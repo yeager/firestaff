@@ -5083,6 +5083,10 @@ list(REMOVE_ITEM M10_SOURCES
 # direct test and probe retain the DUNVIEW source-lock coverage.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_d2c_door_frame_top_edge_pc34_compat.c")
+# The D0C partly-open door boundary is an asset-free F0111 contract probe.
+# Its direct viewport-contract test retains the ReDMCSB coverage.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
