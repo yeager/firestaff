@@ -55,6 +55,15 @@ elif [[ "$(cat "$cd_read_marker" 2>/dev/null)" != "$cd_read_patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown CDB-read patch" >&2
   exit 2
 fi
+source_trace_marker="$source_dir/.firestaff-nexus-sh2-source-trace-patched"
+source_trace_patch_id='FIRESTAFF_NEXUS_SH2_SOURCE_TRACE_V1'
+if [[ ! -f "$source_trace_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_source_trace.patch"
+  printf '%s\n' "$source_trace_patch_id" > "$source_trace_marker"
+elif [[ "$(cat "$source_trace_marker" 2>/dev/null)" != "$source_trace_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown SH-2 source-trace patch" >&2
+  exit 2
+fi
 profile_marker="$source_dir/.firestaff-nexus-saturn-only"
 profile_id='FIRESTAFF_NEXUS_MEDNAFEN_PROFILE_V2_SATURN_ONLY'
 if [[ ! -f "$profile_marker" || "$(cat "$profile_marker" 2>/dev/null)" != "$profile_id" ]]; then

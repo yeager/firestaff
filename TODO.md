@@ -29967,3 +29967,10 @@ required before semantic promotion.
   but no VDP1 writer trace. Keep PRS3 pixel consumers, VDP1/VDP2 composition,
   HUD/viewport, SLEV/SAL/SDDRVS semantics and SFX playback blocked pending a
   live producer/consumer join to those authenticated bytes.
+- 2026-08-07: The source-read/source-write witness now joins complete 4 KiB
+  runtime code chunks to `TM.BIN` (`0x74f3000`) and `DM.BIN` (`0x5e000`) in
+  the retail ISO, while the same bounded startup capture observes VDP1
+  writer PC `0x06013098` writing `0x47c00` and eight active raw frames. Keep
+  face/mesh/texture decode, VDP2 tilemap/CLUT placement, HUD/viewport
+  composition and SLEV/SAL/SDDRVS playback blocked until the live writer and
+  consumer contract itself is decoded and source-owned.

@@ -58909,3 +58909,23 @@ possession or hero-stat mutation was enabled.
 - ⛔ Kept playable champion activation closed because the real corpus has no
   static `CHAMPIONS/255` row; `REVIVE_PLAYER`, possession transfer and session
   mutation still need their source-owned runtime state.
+# Nexus Saturn runtime source-to-VDP1 provenance receipt (2026-08-07)
+
+- ✅ Corrected the capture invocation to use the actual VDP1 trace variables
+  (`FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MIN/MAX`). The authentic E-BIOS/French
+  run now records 39,936 VDP1 VRAM-write rows and a writer code window at
+  runtime PC `0x06013098` targeting `0x47c00`; eight raw frames pass the
+  transport validator with non-idle VDP1 activity.
+- ✅ Added the external-only SH-2 source-read/source-write witness and its
+  strict `scripts/analyze_nexus_sh2_source_trace.py` ISO join. In the same
+  `skip3000`/frame-1000 startup window, complete contiguous 4 KiB runtime
+  chunks match `TM.BIN` at ISO offset `0x74f3000` and `DM.BIN` at
+  `0x5e000`; `0DMSTRT.BIN` and `SWTCHR.BIN` also match exactly. Partial
+  prefixes and inferred addresses are rejected.
+- ✅ The same bounded run joins 50,000 CDB reads to all required retail
+  members, including `DM.BIN` (8,212), `TM.BIN` (173), `ITEM.IBS` (72),
+  `MENU.BPK` (44), `SLEV00.BIN` (61), and `SDDRVS.TSK` (14).
+- ⛔ This proves retail byte provenance and a live VDP1 writer, not the
+  writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
+  HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production
+  semantic admission therefore remains fail-closed.

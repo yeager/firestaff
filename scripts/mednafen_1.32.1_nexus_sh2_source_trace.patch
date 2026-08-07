@@ -1,0 +1,66 @@
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -127,0 +128,2 @@
++ void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
++ void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value);
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -361,0 +362,2 @@
++ if(!IsWrite && sizeof(T) == 4)
++  FirestaffTraceSH2SourceRead(A, DB);
+@@ -375,0 +378,2 @@
++ if(IsWrite && sizeof(T) == 4)
++  FirestaffTraceSH2RAMSourceWrite(A, DB);
+@@ -548,0 +551,52 @@
++static uint32 FirestaffLastSH2ReadAddress;
++static uint32 FirestaffLastSH2ReadValue;
++static bool FirestaffLastSH2ReadValid;
++
++void FirestaffTraceSH2SourceRead(uint32 address, uint32 value)
++{
++ if(address >= 0x05800000 && address < 0x05900000)
++ {
++  FirestaffLastSH2ReadAddress = address;
++  FirestaffLastSH2ReadValue = value;
++  FirestaffLastSH2ReadValid = true;
++ }
++}
++
++void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value)
++{
++ static FILE *file;
++ static unsigned count;
++ static unsigned limit = 100000;
++ static bool configured;
++ static uint32 minimum;
++ static uint32 maximum;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITES");
++ const char *limit_text;
++ if(!configured)
++ {
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MIN");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MAX");
++  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
++  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
++  configured = true;
++ }
++ if(!path || !*path || !FirestaffLastSH2ReadValid ||
++    address < 0x06000000 || address >= 0x08000000 ||
++    (maximum > minimum && (address < minimum || address >= maximum)) ||
++    count >= limit)
++  return;
++ limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT");
++ if(count == 0 && limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V1\n", file);
++ }
++ fprintf(file, "addr=0x%08x value=0x%08x source=0x%08x source_value=0x%08x pc0=0x%08x pc1=0x%08x\n",
++  (unsigned)address, (unsigned)value,
++  (unsigned)FirestaffLastSH2ReadAddress, (unsigned)FirestaffLastSH2ReadValue,
++  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
++ count++;
++ if((count & 0x3ffU) == 0) fflush(file);
++}

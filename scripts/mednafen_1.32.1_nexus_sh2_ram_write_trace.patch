@@ -83,3 +83,21 @@
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
+--- src/ss/sh7095.inc
++++ src/ss/sh7095.inc
+@@ -563,0 +564,2 @@
++ FirestaffTraceSH2RAMDMAWrite(dar & 0x07ffffff, sizeof(buffer), buffer,
++  sar & 0x07ffffff, 0);
+@@ -576,0 +579,2 @@
++ FirestaffTraceSH2RAMDMAWrite(dar & 0x07fffffe, sizeof(buffer), buffer,
++  sar & 0x07fffffe, 0);
+@@ -597,0 +602,2 @@
++ FirestaffTraceSH2RAMDMAWrite(dar & 0x07fffffc, sizeof(buffer), buffer,
++  sar & 0x07fffffc, 0);
+@@ -634,0 +641,2 @@
++  FirestaffTraceSH2RAMDMAWrite(dar & 0x07fffffc, sizeof(buffer[i]), buffer[i],
++   (sar - 0x10 + (i << 2)) & 0x07fffffc, 0);
+--- src/ss/scu.inc
++++ src/ss/scu.inc
+@@ -1603,0 +1604,1 @@
++ FirestaffTraceSH2RAMDMAWrite(A, sizeof(T), DB, d->CurReadBase, WriteBus);
