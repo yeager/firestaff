@@ -6250,6 +6250,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_menu_bss.c
     src/dm1/dm1_v1_fmtowns_egb_rect.c
     src/dm1/dm1_v1_fmtowns_tmenu_input.c
+    src/dm1/dm1_v1_fmtowns_tbios_id.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56198,6 +56199,13 @@ add_executable(test_dm1_v1_fmtowns_tmenu_input
 target_include_directories(test_dm1_v1_fmtowns_tmenu_input PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_tmenu_input COMMAND test_dm1_v1_fmtowns_tmenu_input)
 
+add_executable(test_dm1_v1_fmtowns_tbios_id
+    tests/test_dm1_v1_fmtowns_tbios_id.c
+    src/dm1/dm1_v1_fmtowns_tbios_id.c
+)
+target_include_directories(test_dm1_v1_fmtowns_tbios_id PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_tbios_id COMMAND test_dm1_v1_fmtowns_tbios_id)
+
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
     src/dm1/dm1_v1_fmtowns_dynamenu.c
@@ -56323,6 +56331,11 @@ add_executable(test_dm1_v1_creature_info_resistances_pc34_compat tests/test_dm1_
 target_include_directories(test_dm1_v1_creature_info_resistances_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_creature_info_resistances_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_creature_info_resistances_pc34_compat COMMAND test_dm1_v1_creature_info_resistances_pc34_compat)
+
+add_executable(test_dm1_v1_g0243_creature_info_pc34_compat tests/test_dm1_v1_g0243_creature_info_pc34_compat.c)
+target_include_directories(test_dm1_v1_g0243_creature_info_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_g0243_creature_info_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_g0243_creature_info_pc34_compat COMMAND test_dm1_v1_g0243_creature_info_pc34_compat)
 
 add_executable(test_dm1_v1_teleporter_pit_pc34_compat tests/test_dm1_v1_teleporter_pit_pc34_compat.c)
 target_include_directories(test_dm1_v1_teleporter_pit_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
