@@ -1,3 +1,11 @@
+# DM2 door text-owner audit (2026-08-07)
+- ✅ Real PC-DOS door-panel coverage now verifies the complete `DOORS`
+  category has zero typed text rows and that every state/type label accessor
+  remains `NULL`.
+- ✅ Cross-checked against SKProject `skguivwp.cpp`:
+  `DRAW_DOOR`/`DRAW_DOOR_FRAMES` resolve DOORS words and images, not labels.
+  Real RAW4/GDAT panel placement remains covered; no release was made.
+
 # DM2 weather text-owner exclusion audit (2026-08-07)
 - ✅ Classified the real PC-DOS set-5 `ENVIRONMENT` text rows: nine exact
   weather-command payloads at `0x64..0x6c`, plus generic distant-element

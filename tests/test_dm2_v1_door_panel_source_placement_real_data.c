@@ -1,4 +1,5 @@
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_viewport_renderer.h"
 
@@ -300,6 +301,22 @@ int main(void)
                 "FAIL: selected DOORS category contains %u text rows\n",
                 door_text_count);
         goto cleanup;
+    }
+    for (int state = DM2_DOOR_STATE_OPEN;
+         state <= DM2_DOOR_STATE_DESTROYED; ++state) {
+        if (dm2_door_state_label(state) != NULL) {
+            fputs("FAIL: DOORS mechanics exposed synthetic state text\n",
+                  stderr);
+            goto cleanup;
+        }
+    }
+    for (int type = DM2_DOOR_TYPE_PORTCULLIS;
+         type <= DM2_DOOR_TYPE_RA; ++type) {
+        if (dm2_door_type_label(type) != NULL) {
+            fputs("FAIL: DOORS mechanics exposed synthetic type text\n",
+                  stderr);
+            goto cleanup;
+        }
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

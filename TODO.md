@@ -1188,7 +1188,10 @@
   before showing a door description.
   **2026-08-07 real-data audit:** the selected PC-DOS `DOORS` category has no
   typed text rows. The real door-panel regression now asserts that fact while
-  continuing to verify the actual RAW4/GDAT door material route.
+  continuing to verify the actual RAW4/GDAT door material route, and also
+  checks every state/type label accessor remains unavailable. SKProject's
+  `DRAW_DOOR`/`DRAW_DOOR_FRAMES` path is image/word-data based, not a text
+  producer.
 
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an
