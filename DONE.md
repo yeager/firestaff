@@ -59303,3 +59303,14 @@ GRAPHIC2.DAT ownership remain intentionally gated.
   `SKWINSPX/src/v5/sksvgame.cpp:2010-2017`: a target on an earlier map skips
   the record walk, while a forward target is serialized normally. Runtime
   save restoration remains gated on the complete dungeon/record owner.
+
+# Nexus MENU.BPK external-root regression (2026-08-13)
+
+- ✅ Corrected `test_nexus_v1_bppk` so its primary MENU.BPK decode uses
+  `FIRESTAFF_NEXUS_DATA_DIR`; the HOME-relative path remains only as the
+  documented default when no root is configured. With the external real Nexus
+  corpus, the test verifies 164 archive entries, 162 PRS3 surfaces and 162/162
+  successful indexed-surface decodes.
+- ✅ Re-ran with `HOME=/tmp/firestaff-nexus-no-home` and the external data root;
+  the same real-data result passes, proving the test does not read a stale
+  HOME-local or synthetic MENU.BPK copy.

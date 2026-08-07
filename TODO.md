@@ -29432,6 +29432,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   save/champion fill- and outline-rectangles. Bind `MENU.BPK`/`STABG.BIN`
   surfaces, text glyphs, palette and VDP1 placement from one authenticated
   Saturn capture before restoring any menu chrome or selection frame.
+- 🔧 Nexus MENU.BPK regression root: `test_nexus_v1_bppk` now prefers the
+  configured `FIRESTAFF_NEXUS_DATA_DIR` over `$HOME/.firestaff/data/nexus`,
+  so the real external corpus is exercised even when HOME points elsewhere.
+  Apply the same root contract to the remaining legacy Nexus probes before
+  treating a local skip as evidence of a missing asset.
 - 🔧 Nexus startup title pixels: the M11 `BOOT_TITLE_FRAME` executor is now
   capture-gated like the title-background route. Bind the real `TITLE.CG` /
   `TITLE.BIN` composition and VDP1/VDP2 placement from an authenticated Saturn

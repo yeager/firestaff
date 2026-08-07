@@ -23,14 +23,29 @@ static uint8_t *load_file(const char *path, int *out_size) {
 }
 
 static int test_menu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
     int size = 0;
     Nexus_V1_BppkDecodeResult r;
 
-    if (!home) { printf("  SKIP (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK", home);
+    if (data_dir && data_dir[0]) {
+        if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) >=
+            (int)sizeof(path)) {
+            printf("  SKIP MENU.BPK (configured path is too long)\n");
+            return 0;
+        }
+    } else if (home && home[0]) {
+        if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
+                     home) >= (int)sizeof(path)) {
+            printf("  SKIP MENU.BPK (default path is too long)\n");
+            return 0;
+        }
+    } else {
+        printf("  SKIP (Nexus data root is unset)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP MENU.BPK (not found)\n"); return 0; }
 
