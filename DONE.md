@@ -1,3 +1,14 @@
+# DM2 original save-writer corpus audit (2026-08-07)
+- ✅ Revalidated all eight supplied original DOS save files
+  (`sksave0..3.dat/.bak`, 51,521–51,574 bytes) against the source-ordered
+  loader boundary. The real-data suite passes 126/126 and confirms the raw
+  dungeon prefix, fixed SUPPRESS sections, timer stream and DB-pool receipts.
+- ✅ The isolated source-order writer study passes 5/5 and rejects an
+  incomplete callback graph before emitting bytes; the quicksave gate still
+  preserves the mounted original file byte-for-byte. The complete
+  `DM2_GAME_SAVE` live-state owner remains open, so no runtime writer or
+  private replacement format was introduced.
+
 # DM2 fixed spell/AI text-owner audit (2026-08-07)
 - ✅ Re-ran the real PC-English `GRAPHICS.DAT` corpus scan: it reports zero
   source `SPELL_DEF` rows, so the extended `dtText/0x18` route cannot supply

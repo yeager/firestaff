@@ -4507,6 +4507,12 @@ level or consumer bindings.
   `dm2_v1_world_state.c` projection and its null writer are now excluded from
   the production DM2 archive; save/minimap tests retain the explicit seam
   until the complete `DM2_GAME_SAVE` graph is ported.
+  **2026-08-07 corpus audit:** the supplied DOS data root contains eight
+  original `sksave0..3.dat/.bak` files (51,521–51,574 bytes). The real-data
+  suite passes 126/126 and confirms the source raw prefix, fixed SUPPRESS
+  order, timer boundary, DB-pool receipts and fail-closed runtime handoff;
+  the focused source-order orchestrator passes 5/5. These are diagnostic
+  proofs only: no live writer owner exists yet for the complete graph.
 
 ## Active DM1/CSB Symbol Queue
 
