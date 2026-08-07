@@ -6272,6 +6272,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_fmtowns_dm1_shared_ranges.c
     src/dm2/dm2_v1_fmtowns_cross_game_shared_ranges.c
     src/dm2/dm2_v1_fmtowns_graphics_dat_ext_walker.c
+    src/dm2/dm2_v1_dos_real_data_manifest.c
     src/shared/fmtowns_tsugaru_bridge.c
     src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
     src/dm1/dm1_v1_dos_pc34_an_container.c
@@ -56396,6 +56397,13 @@ add_executable(test_dm1_v1_dos_pc34_an_container
 )
 target_include_directories(test_dm1_v1_dos_pc34_an_container PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_dos_pc34_an_container COMMAND test_dm1_v1_dos_pc34_an_container)
+
+add_executable(test_dm2_v1_dos_real_data_manifest
+    tests/test_dm2_v1_dos_real_data_manifest.c
+    src/dm2/dm2_v1_dos_real_data_manifest.c
+)
+target_include_directories(test_dm2_v1_dos_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_dos_real_data_manifest COMMAND test_dm2_v1_dos_real_data_manifest)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
