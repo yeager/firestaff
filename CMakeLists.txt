@@ -5052,6 +5052,11 @@ list(REMOVE_ITEM M10_SOURCES
 # game data. Its direct DUNVIEW regression retains the source-lock evidence.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_stairs_pit_dispatch_pc34_compat.c")
+# This D0L2/D0R2 F0107 model has a fixed synthetic seed, reads no game data,
+# and makes no pixel-parity claim. The direct regression keeps its DUNVIEW
+# source-lock evidence compiled.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
@@ -55250,7 +55255,9 @@ add_executable(test_dm1_v1_title_palette_rgb_upload tests/test_dm1_v1_title_pale
 target_include_directories(test_dm1_v1_title_palette_rgb_upload PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_title_palette_rgb_upload PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_title_palette_rgb_upload COMMAND test_dm1_v1_title_palette_rgb_upload)
-add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat tests/test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
+    tests/test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat)
