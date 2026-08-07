@@ -6259,6 +6259,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_fmtowns_tmenu_sym1.c
     src/shared/fmtowns_graphics_dat_format.c
     src/dm1/dm1_v1_fmtowns_snd_api.c
+    src/shared/fmtowns_geometry_all_games.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56269,6 +56270,13 @@ add_executable(test_dm1_v1_fmtowns_snd_api
 )
 target_include_directories(test_dm1_v1_fmtowns_snd_api PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_snd_api COMMAND test_dm1_v1_fmtowns_snd_api)
+
+add_executable(test_fmtowns_geometry_all_games
+    tests/test_fmtowns_geometry_all_games.c
+    src/shared/fmtowns_geometry_all_games.c
+)
+target_include_directories(test_fmtowns_geometry_all_games PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_fmtowns_geometry_all_games COMMAND test_fmtowns_geometry_all_games)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
