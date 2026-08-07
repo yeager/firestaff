@@ -239,6 +239,11 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState->messageLine1 = "";
         menuState->messageLine2 = "";
         menuState->messageLine3 = "";
+        /* There is no source-owned failure dialogue on this generic M11
+         * callback. Do not leave the launcher displaying its empty MESSAGE
+         * panel; the next frame belongs to the M12 main view until a real
+         * DM2 dialogue producer is bound. */
+        menuState->view = M12_MENU_VIEW_MAIN;
         return;
     } else if (gameId && strcmp(gameId, "csb") == 0) {
         menuState->messageLine1 = "CSB LOAD FAILED";

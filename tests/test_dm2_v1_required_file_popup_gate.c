@@ -152,7 +152,8 @@ static void check_dm2_missing_required_popup(int graphicsMatched,
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, kDm2GameId) == 0);
-    CHECK(state.messageLine1 && strstr(state.messageLine1, "DM2") != NULL);
+    CHECK(state.messageLine1 &&
+          strstr(state.messageLine1, "Dungeon Master II") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedMissing) != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedAbsent) == NULL);
     CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
@@ -178,7 +179,8 @@ static void check_dm2_all_required_missing_popup(void) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, kDm2GameId) == 0);
-    CHECK(state.messageLine1 && strstr(state.messageLine1, "DM2") != NULL);
+    CHECK(state.messageLine1 &&
+          strstr(state.messageLine1, "Dungeon Master II") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
 
@@ -208,11 +210,12 @@ static void check_dm2_required_complete_launches_without_optional_marker(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.launchRequested == 1);
     CHECK(state.quickResumeLaunchRequested == 0);
-    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.view == M12_MENU_VIEW_MAIN);
     CHECK(state.messageIsMissingGameData == 0);
     CHECK(state.messageGameId[0] == '\0');
-    CHECK(state.messageLine1 && strcmp(state.messageLine1, "READY TO LAUNCH") == 0);
-    CHECK(state.messageLine2 && strcmp(state.messageLine2, kDm2Title) == 0);
+    CHECK(state.messageLine1 && strcmp(state.messageLine1, "") == 0);
+    CHECK(state.messageLine2 && strcmp(state.messageLine2, "") == 0);
+    CHECK(state.messageLine3 && strcmp(state.messageLine3, "") == 0);
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 1);

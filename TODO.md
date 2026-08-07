@@ -29811,6 +29811,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   index and record stride. The real champion-mirror regression resolves all
   16 marker roots through that owner; hero creation, possession transfer and
   session mutation remain open.
+  **2026-08-13 source-bound transaction progress:** the lifecycle seam now
+  exposes a source-bound `SELECT_CHAMPION` transaction that requires the
+  authenticated marker identity and every live mutation owner before it can
+  commit. Its callback order follows `c_hero.cpp:1052-1200` (creation-map
+  switch, signed `REVIVE_PLAYER`, first-party leader, tile possession
+  transfer, champion-strip refresh, map restore, weight recompute). The
+  mounted PC mirror receipt now drives a positive callback-order regression;
+  production GAME_LOAD/session wiring and source hero-stat ownership remain
+  open, so this does not yet claim playable champion selection.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown
@@ -29920,6 +29929,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   synthetic `RESUMING SAVE`, title, `READY TO LAUNCH` or escape text. The
   launch intent remains intact, while the real DM2 bitmap load dialogue
   (`skguidrw.cpp:80-94`) remains the only permitted visible status owner.
+  **2026-08-13 empty-panel removal:** successful DM2 launch/resume and the
+  generic DM2 launch-failure callback now return M12 to its ordinary main
+  view instead of displaying a blank host message panel. The launch intent
+  and structured failure receipt remain intact; M11 can therefore hand the
+  next visible frame directly to the source-owned `SHOW_MENU_SCREEN` or
+  dialogue path. The actual source failure dialogue producer is still open.
 - [ ] DM2 runtime action/save text ownership: action, shop, movement and save
   receipts are structurally silent until their matching original GUI/dialogue
   producer is connected. Bind that source-owned producer before rendering any

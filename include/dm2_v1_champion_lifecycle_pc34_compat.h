@@ -53,6 +53,18 @@ typedef struct {
     const DM2_V1_G1ChampionMirrorReceipt *source_mirrors;
 } DM2_V1_SelectChampionRequest;
 
+/* The source mutates the live session only after the addressed DB3 marker
+ * has been found.  Keep those mutations callback-owned: this compatibility
+ * seam must never manufacture a hero record or possession list. */
+typedef struct {
+    void (*change_current_map)(void *ctx, int map_id);
+    void (*revive_player)(void *ctx, int8_t hero_type, int8_t direction);
+    void (*select_leader)(void *ctx, int hero_index);
+    void (*scavenge_creation_tile_items)(void *ctx, int hero_index);
+    void (*refresh_champion_strip)(void *ctx);
+    void (*recompute_player_weight)(void *ctx, int hero_index);
+} DM2_V1_SelectChampionLiveCallbacks;
+
 /* SELECT_CHAMPION receipt. A valid request is not a selected champion:
  * selection remains fail-closed until the live DB3 mirror and hero records
  * are supplied by the GAME_LOAD runtime. */
@@ -93,6 +105,16 @@ typedef struct {
 
 int dm2_v1_select_champion(
     const DM2_V1_SelectChampionRequest *request,
+    DM2_V1_SelectChampionReceipt *receipt);
+
+/* Source-bound SELECT_CHAMPION transaction.  Returns success only when the
+ * canonical marker identity and every live mutation owner are present. */
+int dm2_v1_select_champion_source_bound(
+    const DM2_V1_SelectChampionRequest *request,
+    int creation_map_id,
+    int previous_map_id,
+    const DM2_V1_SelectChampionLiveCallbacks *callbacks,
+    void *ctx,
     DM2_V1_SelectChampionReceipt *receipt);
 
 int dm2_v1_bring_champion_to_life(

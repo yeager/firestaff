@@ -4,6 +4,28 @@
 
 #include "dm2_v1_champion_lifecycle_pc34_compat.h"
 
+typedef struct {
+    int events[8];
+    int count;
+} LiveTrace;
+
+static void trace_event(LiveTrace *trace, int event)
+{
+    assert(trace->count < (int)(sizeof(trace->events) / sizeof(trace->events[0])));
+    trace->events[trace->count++] = event;
+}
+
+static void trace_map(void *ctx, int map) { (void)map; trace_event(ctx, 1); }
+static void trace_revive(void *ctx, int8_t type, int8_t direction)
+{
+    assert(type == -1 && direction == 2);
+    trace_event(ctx, 2);
+}
+static void trace_leader(void *ctx, int index) { assert(index == 0); trace_event(ctx, 3); }
+static void trace_scavenge(void *ctx, int index) { assert(index == 0); trace_event(ctx, 4); }
+static void trace_refresh(void *ctx) { trace_event(ctx, 5); }
+static void trace_weight(void *ctx, int index) { assert(index == 0); trace_event(ctx, 6); }
+
 static void test_select_null_safety(void)
 {
     DM2_V1_SelectChampionReceipt receipt;
@@ -117,6 +139,59 @@ static void test_select_requires_exact_source_marker_identity(void)
     printf("  PASS: select_requires_exact_source_marker_identity\n");
 }
 
+static void test_source_bound_select_commits_only_with_live_owners(void)
+{
+    DM2_V1_SelectChampionReceipt receipt;
+    DM2_V1_SelectChampionRequest req;
+    DM2_V1_G1ChampionMirrorReceipt mirrors;
+    DM2_V1_SelectChampionLiveCallbacks callbacks;
+    LiveTrace trace;
+
+    memset(&mirrors, 0, sizeof(mirrors));
+    mirrors.committed = 1;
+    mirrors.mirror_count = 1;
+    mirrors.mirrors[0].map = 0;
+    mirrors.mirrors[0].x = 5;
+    mirrors.mirrors[0].y = 10;
+    mirrors.mirrors[0].direction = 2;
+    mirrors.mirrors[0].actuator_data = 0x1ffu;
+    mirrors.mirrors[0].dynamic_hero_type = 0xffu;
+    mirrors.mirrors[0].dynamic_load_id = DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID;
+    memset(&req, 0, sizeof(req));
+    req.tile_x = 5;
+    req.tile_y = 10;
+    req.direction = 2;
+    req.map_level = 0;
+    req.heroes_in_party = 0;
+    req.source_mirrors = &mirrors;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.change_current_map = trace_map;
+    callbacks.revive_player = trace_revive;
+    callbacks.select_leader = trace_leader;
+    callbacks.scavenge_creation_tile_items = trace_scavenge;
+    callbacks.refresh_champion_strip = trace_refresh;
+    callbacks.recompute_player_weight = trace_weight;
+    memset(&trace, 0, sizeof(trace));
+
+    assert(dm2_v1_select_champion_source_bound(
+               &req, 7, 0, &callbacks, &trace, &receipt) == 1);
+    assert(receipt.champion_selected == 1);
+    assert(receipt.hero_type == -1);
+    assert(receipt.source_dynamic_load_id ==
+           DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID);
+    assert(trace.count == 7);
+    assert(trace.events[0] == 1 && trace.events[1] == 2 &&
+           trace.events[2] == 3 && trace.events[3] == 4 &&
+           trace.events[4] == 5 && trace.events[5] == 1 &&
+           trace.events[6] == 6);
+
+    callbacks.recompute_player_weight = NULL;
+    assert(dm2_v1_select_champion_source_bound(
+               &req, 7, 0, &callbacks, &trace, &receipt) == 0);
+    assert(receipt.champion_selected == 0 && receipt.fail_closed == 1);
+    printf("  PASS: source_bound_select_commits_only_with_live_owners\n");
+}
+
 static void test_revive_null_safety(void)
 {
     DM2_V1_BringChampionToLifeReceipt receipt;
@@ -194,6 +269,7 @@ int main(void)
     test_select_without_source_record_fails_closed();
     test_select_second_hero();
     test_select_requires_exact_source_marker_identity();
+    test_source_bound_select_commits_only_with_live_owners();
     test_revive_null_safety();
     test_revive_invalid_index();
     test_revive_hp_penalty();

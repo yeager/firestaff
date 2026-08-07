@@ -101,6 +101,52 @@ int dm2_v1_select_champion(
     return 0;
 }
 
+int dm2_v1_select_champion_source_bound(
+    const DM2_V1_SelectChampionRequest *request,
+    int creation_map_id,
+    int previous_map_id,
+    const DM2_V1_SelectChampionLiveCallbacks *callbacks,
+    void *ctx,
+    DM2_V1_SelectChampionReceipt *receipt)
+{
+    if (!receipt) {
+        return 0;
+    }
+    (void)dm2_v1_select_champion(request, receipt);
+    if (!request ||
+        !callbacks || !callbacks->change_current_map ||
+        !callbacks->revive_player || !callbacks->select_leader ||
+        !callbacks->scavenge_creation_tile_items ||
+        !callbacks->refresh_champion_strip ||
+        !callbacks->recompute_player_weight ||
+        !receipt->source_mirror_bound) {
+        if (receipt) {
+            receipt->fail_closed = 1;
+            receipt->champion_selected = 0;
+        }
+        return 0;
+    }
+
+    /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION (1052-1200) changes to the
+     * creation map, calls REVIVE_PLAYER with the marker's signed i8 type and
+     * facing, selects the first hero as leader, scavenges the tile, refreshes
+     * the champion strip, restores the old map, then recomputes weight. */
+    callbacks->change_current_map(ctx, creation_map_id);
+    callbacks->revive_player(ctx, (int8_t)receipt->hero_type,
+                             (int8_t)request->direction);
+    if (receipt->hero_index == 0)
+        callbacks->select_leader(ctx, 0);
+    callbacks->scavenge_creation_tile_items(ctx, receipt->hero_index);
+    callbacks->refresh_champion_strip(ctx);
+    callbacks->change_current_map(ctx, previous_map_id);
+    callbacks->recompute_player_weight(ctx, receipt->hero_index);
+
+    receipt->champion_selected = 1;
+    receipt->fail_closed = 0;
+    receipt->hero_position = receipt->hero_index;
+    return 1;
+}
+
 int dm2_v1_bring_champion_to_life(
     const DM2_V1_BringChampionToLifeRequest *request,
     DM2_V1_BringChampionToLifeReceipt *receipt)

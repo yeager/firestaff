@@ -59410,6 +59410,31 @@ local data.
   `test_dm2_v1_g1_scene_creature_gdat_real_data` that the cursor survives
   into the viewport render. The canonical F9 material and the independent
   `test_dm2_v1_creature_something_real_data` animation reader both pass.
+
+# DM2 launcher source-panel boundary (2026-08-13)
+
+- ✅ Removed the empty M12 host message panel from successful DM2 launch and
+  quick-resume handoff. The launch intent remains active while M11 proceeds
+  directly to the source-owned `SHOW_MENU_SCREEN`/dialogue surface.
+- ✅ Applied the same no-panel boundary to generic DM2 launch failure; the
+  structured failure receipt remains available, but no host-authored English
+  replacement is shown without a source dialogue producer.
+- ✅ Updated the real launcher text assertion to use the source-facing
+  `Dungeon Master II` title rather than the internal `DM2` identifier.
+  `test_dm2_v1_required_file_popup_gate` and
+  `test_dm2_v1_m11_launcher_handoff_boundary` (33/33) pass.
+
+# DM2 source-bound champion activation (2026-08-13)
+
+- ✅ Added a source-bound `SELECT_CHAMPION` transaction that refuses to
+  commit without the authenticated DB3 mirror and all live mutation callbacks.
+- ✅ Preserved signed PC hero type `0xff -> -1`, source direction, and the
+  SKProject callback order for map switch, `REVIVE_PLAYER`, leader selection,
+  possession transfer, strip refresh, map restore, and weight recompute.
+- ✅ `test_dm2_v1_champion_lifecycle_pc34_compat` passes the positive callback
+  trace and missing-owner fail-closed case.
+- ✅ Real PC-DOS `test_dm2_v1_boot_profile_smoke` passes 106/106 with 0
+  failures; launcher popup and handoff regressions also pass.
 # ✅ 2026-08-07 DM2 SDL sound regression explicit corpus selection
 
 `test_dm2_v1_sound_playback_sdl` now reads audio entries only from an explicit

@@ -5088,6 +5088,12 @@ static void m12_clear_dm2_source_status(M12_StartupMenuState* state,
     state->messageLine1 = "";
     state->messageLine2 = "";
     state->messageLine3 = "";
+    /* SKProject SHOW_MENU_SCREEN/GAME_LOAD owns the next visible surface.
+     * Leaving M12 in MESSAGE would display a host-owned empty panel for one
+     * frame before M11 reaches that source producer. Keep the launch intent,
+     * but return the launcher to its ordinary frame until M11 takes over. */
+    state->view = M12_MENU_VIEW_MAIN;
+    state->messageReturnView = M12_MENU_VIEW_MAIN;
 }
 
 static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
