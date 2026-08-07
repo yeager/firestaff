@@ -7,13 +7,10 @@
 static const char* pc34_graphics_path(void)
 {
     static char path[2048];
-    const char* configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char* home;
+    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
 
-    if (configured && configured[0]) return configured;
-    home = getenv("HOME");
-    if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
+    if (!root || !root[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
     return path;
 }
 
@@ -35,11 +32,15 @@ int main(void)
     };
     size_t index;
 
-    if (!graphicsPath) return 0;
+    if (!graphicsPath) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
+    }
     M11_GameView_Init(&state);
     if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
         M11_GameView_Shutdown(&state);
-        return getenv("FIRESTAFF_DM1_GRAPHICS_DAT") ? 1 : 0;
+        fputs("configured PC34 GRAPHICS.DAT failed to load\n", stderr);
+        return 1;
     }
     state.assetsAvailable = 1;
     state.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
