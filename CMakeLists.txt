@@ -4995,6 +4995,11 @@ list(REMOVE_ITEM M10_SOURCES
 # test preserves the viewport, input, and platform-boundary mapping.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g1000_g1050_viewport_input_source_audit_pc34_compat.c")
+# `dm1_v1_f0341_f0360_render_action_source_receipt_pc34_compat.c` is a
+# generated raw-source receipt with no production caller. Its inventory test
+# retains the disjoint panel and input ownership mapping.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0341_f0360_render_action_source_receipt_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
