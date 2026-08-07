@@ -40,11 +40,14 @@ int main(void) {
     v2_creature_anim_init();
     v2_creature_anim_define(CANIM_WALK, frames, 18, true);
     v2_creature_anim_play(42, CANIM_WALK);
-    require(v2_creature_anim_is_playing(42), "walk animation starts");
-    require(v2_creature_anim_get_sprite(42) == 1000, "first frame selected");
+    require(!v2_creature_anim_is_playing(42), "unbound V2 animation is blocked");
+    require(v2_creature_anim_get_sprite(42) == -1, "no synthetic sprite index");
     v2_creature_anim_update(1.7f);
-    require(v2_creature_anim_is_playing(42), "looping clamped 16-frame animation remains active");
-    require(v2_creature_anim_get_sprite(42) == 1001, "define clamps to 16 frames and wraps safely");
+    require(!v2_creature_anim_is_playing(42), "update cannot start an unbound animation");
+    require(v2_creature_anim_get_sprite(42) == -1, "update cannot select a synthetic frame");
+
+    require(file_contains("src/dm1/dm1_v1_creature_render_pc34_compat.c", "G0219"), "V1 creature aspects remain source-locked");
+    require(file_contains("src/dm1/dm1_v1_group_active_state_pc34_compat.c", "F0179"), "V1 aspect timing remains source-locked");
 
     require(file_contains("assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json", "fs.v2.creature.demon.front-near"), "creature manifest still exposes demon front-near id");
     require(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.starter.empty-hand"), "item starter manifest contains empty-hand id");

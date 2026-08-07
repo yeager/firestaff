@@ -77,6 +77,11 @@ with an unbound RGB light engine: local sources, random/hash flicker and
 values `{99, 75, 50, 25, 1, 0}` from DATA.C/PANEL.C. All local-light APIs are
 inert, so F0337/F0338 and the V1 palette route remain the only light owners.
 
+The V2 creature-animation helper accepted arbitrary sprite indices and
+floating-point durations without a PC34 record. It is now inert. Creature
+aspect timing remains with GROUP.C F0179, and F0115 consumes the decoded
+G0219/DUNVIEW.C bitmap route.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

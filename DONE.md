@@ -1,5 +1,13 @@
 # DM2 selected SONGLIST corpus (2026-08-07)
 
+# DM1 V2 fri varelseanimation spärrad (2026-08-07)
+
+- ✅ Spärrade V2-hjälparen som tog emot godtyckliga spriteindex och
+  flyttalslängder utan någon PC34-källa. Den kan nu varken behålla animation-
+  stillstånd eller välja en alternativ sprite. Den verkliga vägen är fortsatt
+  GROUP.C F0179 för aspektaktualisering och DUNVIEW.C F0115 med G0219-bundna,
+  avkodade ytor. CTesten kontrollerar både spärren och V1-källägarskapet.
+
 # DM1 V2 syntetisk dynamisk belysning spärrad (2026-08-07)
 
 - ✅ Delade upp V2-belysningen i dess två faktiska delar. Palettbryggan
