@@ -16,6 +16,17 @@
 
 # DM1 V2 fri varelseanimation spärrad (2026-08-07)
 
+# DM1 V2-föremålsmetadata källbunden (2026-08-07)
+
+- ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen
+  `C201_ICON_ACTION_ICON_EMPTY_HAND`: `GRAPHICS.DAT` post 48, ikon 201 och
+  rektangel `(144, 0, 16×16)`. Den lokala PC34-arkivkontrollen bekräftar den
+  kanoniska `GRAPHICS.DAT`-hashen och postens 256×32-atlas. En generisk
+  golvföremålsyta saknar däremot en egen källa, eftersom F0115 väljer material
+  per levande Thing. V2 returnerar därför ingen golvbindning och lämnar
+  pixelägandet till den befintliga källbundna V1-vägen. CTesten jämför V2:s
+  metadata med V1:s ikonresolver och förhindrar att `fs.v2.item.*` återinförs.
+
 - ✅ Spärrade V2-hjälparen som tog emot godtyckliga spriteindex och
   flyttalslängder utan någon PC34-källa. Den kan nu varken behålla animation-
   stillstånd eller välja en alternativ sprite. Den verkliga vägen är fortsatt

@@ -28603,6 +28603,7 @@ endif()
         tests/test_dm1_v2_item_render_pc34.c
         src/dm1v2/dm1_v2_item_render_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm1/dm1_v1_graphic_ids_pc34_compat.c
     )
     target_compile_definitions(test_dm1_v2_item_render_pc34 PRIVATE FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(test_dm1_v2_settings_pc34

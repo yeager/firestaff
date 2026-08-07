@@ -1,4 +1,5 @@
 #include "dm1_v2_item_render_pc34.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,25 +48,35 @@ static void test_source_locked_cell_layer_order(void) {
 static void test_item_surface_bindings(void) {
     const DM1_V2_ItemRenderBinding* hand = dm1_v2_item_render_empty_hand_binding();
     const DM1_V2_ItemRenderBinding* floor = dm1_v2_item_render_floor_item_binding();
+    DM1_V1_ObjectIconSourceZonePc34 sourceZone;
 
     CHECK(hand != NULL);
-    CHECK(floor != NULL);
-    CHECK(strcmp(hand->assetId, "fs.v2.item.starter.empty-hand") == 0);
+    CHECK(strcmp(hand->assetId, "C201_ICON_ACTION_ICON_EMPTY_HAND") == 0);
     CHECK(hand->surface == DM1_V2_ITEM_SURFACE_ACTION_HAND);
     CHECK(hand->supportsSubcellOffset == 0);
+    CHECK(hand->sourceGraphicIndex == 48);
+    CHECK(hand->sourceIconIndex == 201);
+    CHECK(hand->sourceX == 144);
+    CHECK(hand->sourceY == 0);
+    CHECK(hand->sourceWidth == 16);
+    CHECK(hand->sourceHeight == 16);
+    CHECK(dm1_v1_object_icon_source_zone_pc34(hand->sourceIconIndex, &sourceZone));
+    CHECK(sourceZone.graphic_index == hand->sourceGraphicIndex);
+    CHECK(sourceZone.x == hand->sourceX);
+    CHECK(sourceZone.y == hand->sourceY);
+    CHECK(sourceZone.w == hand->sourceWidth);
+    CHECK(sourceZone.h == hand->sourceHeight);
 
-    CHECK(strcmp(floor->assetId, "fs.v2.item.source-contract.floor-item") == 0);
-    CHECK(floor->surface == DM1_V2_ITEM_SURFACE_FLOOR);
-    CHECK(floor->drawLayer == DM1_V2_CELL_LAYER_FLOOR_ITEM);
-    CHECK(floor->sourceCellOrdinal == 1);
-    CHECK(floor->supportsSubcellOffset == 1);
+    CHECK(floor == NULL);
 }
 
 static void test_manifest_and_source_evidence(void) {
     CHECK(strstr(dm1_v2_item_render_source_evidence(), "DUNVIEW.C") != NULL);
     CHECK(strstr(dm1_v2_item_render_source_evidence(), "F0115") != NULL);
-    CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.starter.empty-hand"));
-    CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.source-contract.floor-item"));
+    CHECK(strstr(dm1_v2_item_render_source_evidence(), "OBJECT.C F0033") != NULL);
+    CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "C201_ICON_ACTION_ICON_EMPTY_HAND"));
+    CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"));
+    CHECK(!file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item."));
     CHECK(file_contains("assets-v2/items/wave1/specs/starter-icons.md", "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"));
     CHECK(file_contains("assets-v2/items/wave1/specs/starter-icons.md", "G0219"));
 }

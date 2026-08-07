@@ -1,6 +1,18 @@
 {
   "anchors": [
     {
+      "file": "DATA.C",
+      "line": 253,
+      "needle": "G0026_ai_Graphic562_IconGraphicFirstIconIndex",
+      "text": "int16_t G0026_ai_Graphic562_IconGraphicFirstIconIndex[7] = {"
+    },
+    {
+      "file": "OBJECT.C",
+      "line": 147,
+      "needle": "F0033_OBJECT_GetIconIndex",
+      "text": "int16_t F0033_OBJECT_GetIconIndex("
+    },
+    {
       "file": "DUNVIEW.C",
       "line": 4547,
       "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",

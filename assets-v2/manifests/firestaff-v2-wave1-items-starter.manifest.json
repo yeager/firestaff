@@ -1,78 +1,27 @@
 {
   "manifestVersion": "1.0.0",
   "packId": "firestaff-v2-wave1-items-starter",
-  "description": "Bounded V2 starter item/icon manifest for action-hand and inventory readability gates.",
-  "targetPolicy": {
-    "masterResolution": "4k-first",
-    "derivedResolutions": [
-      "1080p"
-    ],
-    "layoutSkeleton": "dm1-object-aspect-icon"
-  },
+  "description": "PC34 source inventory for the only V2 item binding admitted without a live F0115 Thing route.",
   "assets": [
     {
-      "id": "fs.v2.item.starter.empty-hand",
-      "family": "starter_item_icons",
-      "role": "empty hand/action hand baseline icon",
-      "productionClass": "redraw-native",
+      "id": "C201_ICON_ACTION_ICON_EMPTY_HAND",
+      "family": "pc34_object_icons",
+      "role": "empty action-hand icon",
+      "productionClass": "source-graphics-dat",
       "sourceReference": {
-        "origin": "ReDMCSB DUNVIEW.C object aspect and grabbable-zone rendering audit",
-        "originalSize": {
-          "width": 16,
-          "height": 16
-        }
+        "origin": "ReDMCSB OBJECT.C F0033 and DATA.C G0026",
+        "graphicsDatSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "graphicIndex": 48,
+        "iconIndex": 201,
+        "sourceRect": { "x": 144, "y": 0, "width": 16, "height": 16 }
       },
-      "sizes": {
-        "master4k": {
-          "width": 1024,
-          "height": 1024
-        },
-        "derived1080p": {
-          "width": 512,
-          "height": 512
-        }
-      },
-      "paths": {
-        "masterDir": "assets-v2/items/wave1/starter-icons/masters/4k",
-        "derivedDir": "assets-v2/items/wave1/starter-icons/exports/1080p",
-        "spec": "assets-v2/items/wave1/specs/starter-icons.md"
-      },
-      "status": "planned",
+      "status": "source-bound",
       "notes": [
-        "Manifest-only gate; no V1 object/render behavior changes."
-      ]
-    },
-    {
-      "id": "fs.v2.item.source-contract.floor-item",
-      "family": "starter_item_icons",
-      "role": "floor item/object aspect source contract",
-      "productionClass": "source-contract-only",
-      "sourceReference": {
-        "origin": "ReDMCSB DUNVIEW.C F0115 object pass and G0219 floor-object coordinate sets",
-        "originalSize": {
-          "width": 16,
-          "height": 16
-        }
-      },
-      "sizes": {
-        "master4k": {
-          "width": 1024,
-          "height": 1024
-        },
-        "derived1080p": {
-          "width": 512,
-          "height": 512
-        }
-      },
-      "paths": {
-        "masterDir": "assets-v2/items/wave1/starter-icons/masters/4k",
-        "derivedDir": "assets-v2/items/wave1/starter-icons/exports/1080p",
-        "spec": "assets-v2/items/wave1/specs/starter-icons.md"
-      },
-      "status": "planned",
-      "notes": [
-        "No drawable fallback is admitted. Until an authenticated original source binding or a user-selected artpack asset is available, the runtime retains its existing source-backed V2.1 -> V2.0 -> V1 chain."
+        "No generated or redrawn material is admitted."
       ]
     }
+  ],
+  "blockedBindings": [
+    "Generic floor items remain in the V1 F0115 Thing-to-G0209/G0219 renderer until each live Thing resolves an authenticated source graphic."
   ]
 }

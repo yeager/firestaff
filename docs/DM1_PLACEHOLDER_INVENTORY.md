@@ -82,6 +82,14 @@ floating-point durations without a PC34 record. It is now inert. Creature
 aspect timing remains with GROUP.C F0179, and F0115 consumes the decoded
 G0219/DUNVIEW.C bitmap route.
 
+The V2 item-render metadata formerly exposed two invented `fs.v2.item.*`
+identifiers. The empty action hand is now bound to the real PC34
+`C201_ICON_ACTION_ICON_EMPTY_HAND` at `GRAPHICS.DAT` record 48, rectangle
+`(144, 0, 16×16)`, under the canonical source hash. A generic floor item has
+no corresponding record: F0115 resolves the live Thing's own G0209/G0219
+aspect. That V2 binding now returns no material, leaving the authenticated V1
+object pass as the only floor-item pixel owner.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

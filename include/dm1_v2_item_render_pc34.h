@@ -26,6 +26,14 @@ typedef struct {
     int drawLayer;
     int sourceCellOrdinal;
     int supportsSubcellOffset;
+    /* PC34 GRAPHICS.DAT provenance. A negative record means that the V2
+     * helper has no authenticated drawable material and must not render. */
+    int sourceGraphicIndex;
+    int sourceIconIndex;
+    int sourceX;
+    int sourceY;
+    int sourceWidth;
+    int sourceHeight;
 } DM1_V2_ItemRenderBinding;
 
 const DM1_V2_ItemRenderBinding* dm1_v2_item_render_empty_hand_binding(void);

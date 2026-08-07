@@ -10,6 +10,8 @@ SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210
 EVIDENCE = ROOT / "parity-evidence/verification/dm1_v2_item_render_source_lock.json"
 
 REQUIRED_SOURCE = [
+    (SOURCE / "DATA.C", "G0026_ai_Graphic562_IconGraphicFirstIconIndex", 253),
+    (SOURCE / "OBJECT.C", "F0033_OBJECT_GetIconIndex", 147),
     (SOURCE / "DUNVIEW.C", "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF", 4547),
     (SOURCE / "DUNVIEW.C", "L0135_B_DrawAlcoveObjects = !(L0130_ul_RemainingViewCellOrdinalsToProcess = P0146_ui_OrderedViewCellOrdinals)", 4800),
     (SOURCE / "DUNVIEW.C", "/* Draw objects */", 4820),
@@ -21,12 +23,17 @@ REQUIRED_SOURCE = [
 
 REQUIRED_FIRESTAFF = [
     (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"),
-    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "draws open-square objects before the"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "C201_ICON_ACTION_ICON_EMPTY_HAND"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"),
+    (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "returns no V2 floor binding"),
     (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "include/dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"),
     (ROOT / "src/dm1v2/dm1_v2_item_render_pc34.c", "dm1_v2_hud_interaction_pc34 bridge"),
     (ROOT / "tests/test_dm1_v2_item_render_pc34.c", "test_source_locked_cell_layer_order"),
-    (ROOT / "tests/test_dm1_v2_item_render_pc34.c", "firestaff-v2-wave1-items-starter.manifest.json"),
+    (ROOT / "tests/test_dm1_v2_item_render_pc34.c", "dm1_v1_object_icon_source_zone_pc34"),
+    (ROOT / "assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "C201_ICON_ACTION_ICON_EMPTY_HAND"),
+    (ROOT / "assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"),
     (ROOT / "assets-v2/items/wave1/specs/starter-icons.md", "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"),
+    (ROOT / "assets-v2/items/wave1/specs/starter-icons.md", "C201_ICON_ACTION_ICON_EMPTY_HAND"),
     (ROOT / "assets-v2/items/wave1/specs/starter-icons.md", "G0219"),
     (ROOT / "CMakeLists.txt", "NAME dm1_v2_item_render_pc34"),
     (ROOT / "CMakeLists.txt", "NAME dm1_v2_item_render_source_lock"),
