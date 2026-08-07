@@ -5522,18 +5522,12 @@ static int load_local_dm1_dungeon_for_door_event(
     struct DungeonDatState_Compat *dungeon,
     struct DungeonThings_Compat *things)
 {
-    const char *root = getenv("FIRESTAFF_DM1_DATA");
-    const char *home;
+    const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
     char path[2048];
 
     if (!dungeon || !things) return 0;
-    if (!root || root[0] == '\0') {
-        home = getenv("HOME");
-        if (!home || home[0] == '\0') return 0;
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
-    } else {
-        snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
-    }
+    if (!root || root[0] == '\0') return 0;
+    snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
     return F0500_DUNGEON_LoadDatHeader_Compat(path, dungeon) &&
            F0502_DUNGEON_LoadTileData_Compat(path, dungeon) &&
            F0504_DUNGEON_LoadThingData_Compat(path, dungeon, things);
