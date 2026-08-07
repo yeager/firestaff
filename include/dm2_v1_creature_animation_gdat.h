@@ -71,6 +71,17 @@ int dm2_v1_creature_animation_gdat_query_0958_record(
     uint32_t game_tick,
     DM2_V1_CreatureAnimation0958Receipt *out_receipt);
 
+/* Resolve the source-owned FD image selector after the cursor pair has been
+ * updated.  SKProject v4/skcrture.cpp:1967-1978 indexes the real
+ * CREATURES/type/dtRaw7/0xfd table by iAnimInfo and selects one of its four
+ * image bytes with iFaceDirImg.  Missing or out-of-range rows fail closed. */
+int dm2_v1_creature_animation_gdat_image_field(
+    const DM2_V1_AssetLoader *loader,
+    int creature_type,
+    uint16_t animation_info,
+    uint8_t face_dir_img,
+    uint8_t *out_image_field);
+
 /* Returns zero unless the complete V5 table triad is present and the caller
  * supplies mutable state for a non-static creature. `previous_frame` is the
  * source-owned iAnimInfo value; 0xffff starts the sequence. */

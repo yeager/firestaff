@@ -1,3 +1,14 @@
+# DM2 creature animation FD image selector (2026-08-13)
+
+- ✅ Added a source-owned FD lookup for `GET_CREATURE_ANIMATION_IMAGE_ID_V5`:
+  the real `CREATURES/type/dtRaw7/0xfd` table is indexed by the authenticated
+  cursor `iAnimInfo` and selects the source face-direction byte. Missing,
+  malformed and out-of-range rows fail closed.
+- ✅ The real PC-DOS GRAPHICS/DUNGEON regression passes the FB/FC/FD route and
+  the DB4 cursor-owner audit. Dynamic CAII allocation and the final runtime
+  image-field publication remain open, so no synthetic or release path was
+  added.
+
 # DM2 creature animation cursor owner (2026-08-07)
 
 - ✅ Bound the `DM2_1c9a_0958` GDAT reader to SKProject's real

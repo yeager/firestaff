@@ -47,6 +47,7 @@ int main(void)
     DM2_V1_DungeonData dungeon;
     int found = 0;
     int found_0958 = 0;
+    int found_fd = 0;
     memset(&dungeon, 0, sizeof(dungeon));
 
     if (!root || !root[0]) {
@@ -172,6 +173,19 @@ int main(void)
                         free(graphics);
                         return 1;
                     }
+                    {
+                        uint8_t image_field = 0u;
+                        if (!dm2_v1_creature_animation_gdat_image_field(
+                                &loader, creature, frame_receipt.cursor_w2, 2u,
+                                &image_field) || image_field == 0xffu) {
+                            fputs("FAIL: real FD image selector was not source-bound\n",
+                                  stderr);
+                            dm2_v1_asset_loader_free(&loader);
+                            free(graphics);
+                            return 1;
+                        }
+                        found_fd = 1;
+                    }
                     found_0958 = 1;
                 }
                 found = 1;
@@ -181,7 +195,7 @@ int main(void)
     }
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
-    if (!found || !found_0958) {
+    if (!found || !found_0958 || !found_fd) {
         fputs("FAIL: selected GRAPHICS.DAT has no admitted dynamic V5 animation route\n",
               stderr);
         return 1;

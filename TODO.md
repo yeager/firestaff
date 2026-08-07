@@ -29719,6 +29719,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   DUNGEON/GRAPHICS corpus proves 10 source DB4 roots through the static
   owner; no caller-filled animation base is admitted. Live CAII allocation,
   command/frame mutation and runtime animation publication remain open.
+  **2026-08-13 FD-route progress:** the source-owned FD selector is now
+  bounded to the real `CREATURES/type/dtRaw7/0xfd` rows and indexes the
+  authenticated cursor `iAnimInfo` with the source four-way face byte, as in
+  `v4/skcrture.cpp:1967-1978`. The mounted PC-DOS FB/FC/FD corpus passes this
+  selector. A positive dynamic CAII runtime consumer and image-field
+  publication are still open; no static DB4 map-chip row is promoted into a
+  fabricated live animation.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

@@ -158,6 +158,36 @@ int dm2_v1_creature_animation_gdat_query_0958_record(
     return 1;
 }
 
+int dm2_v1_creature_animation_gdat_image_field(
+    const DM2_V1_AssetLoader *loader,
+    int creature_type,
+    uint16_t animation_info,
+    uint8_t face_dir_img,
+    uint8_t *out_image_field)
+{
+    const uint8_t *table;
+    size_t table_size = 0u;
+    size_t row;
+
+    if (out_image_field) *out_image_field = 0u;
+    if (!loader || !out_image_field || creature_type < 0 ||
+        creature_type > 0xff || face_dir_img > 3u) {
+        return 0;
+    }
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+        DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE,
+        &table_size);
+    /* v4/skcrture.cpp:1969-1978 — FD rows contain four direction bytes
+     * followed by the source offset/metadata byte span. */
+    if (!table || table_size < 8u || (table_size % 8u) != 0u) return 0;
+    /* skcrture.cpp:1974 normalizes the source's unset animation info. */
+    row = animation_info == 0xffffu ? 0u : (size_t)animation_info;
+    if (row >= table_size / 8u) return 0;
+    *out_image_field = table[row * 8u + face_dir_img];
+    return *out_image_field != 0xffu;
+}
+
 int dm2_v1_creature_animation_gdat_select_dynamic_v5(
     const DM2_V1_AssetLoader *loader,
     int creature_type,
