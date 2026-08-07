@@ -1,3 +1,14 @@
+# Nexus VDP2 writer candidate receipt (2026-08-07)
+
+- ✅ Added `scripts/analyze_nexus_vdp2_writer_candidates.py` for the
+  authenticated Mednafen VDP2 code-window trace. It verifies the trace header,
+  the hash-verified `TM.BIN`/`DM.BIN` inputs, and reports aligned longest
+  partial matches without promoting a speculative source owner.
+- ✅ The primary runtime writer window remains evidence-only: four words in
+  `DM.BIN` and three in `TM.BIN`; the longest ten-word candidate is shared by
+  both files at another PC. Tilemap/CLUT ownership and menu/HUD/viewport
+  composition remain blocked.
+
 # DM2 GDAT source allocator table lifetime (2026-08-07)
 
 - ✅ Extended the bounded `DM2_READ_GRAPHICS_STRUCTURE` transaction with the

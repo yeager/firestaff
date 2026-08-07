@@ -115,7 +115,12 @@ window at `PC=0x06011924` contains the runtime words
 48-word windows do not occur verbatim in the hash-verified `TM.BIN` or
 `DM.BIN` files, so the current result is an execution/code receipt with
 source identity still unbound; no decompression or relocation interpretation
-is promoted to production semantics.
+is promoted to production semantics. `scripts/analyze_nexus_vdp2_writer_candidates.py`
+also reports the longest aligned partial matches: the primary window reaches
+only four words in `DM.BIN` and three in `TM.BIN`; the longest observed
+ten-word match belongs to another runtime PC and is shared by both retail
+files. These are review leads only, not source ownership or tilemap/CLUT
+consumer proof.
 
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed

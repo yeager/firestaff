@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-VDP2-WRITER-CANDIDATE-OWNERSHIP:** The authentic 64-window VDP2
+  code receipt now has a bounded partial-match analyzer. The primary writer
+  at `0x06011924` reaches only four aligned words in `DM.BIN` and three in
+  `TM.BIN`; a ten-word match at another runtime PC is shared by both files.
+  Keep these as review leads only. The source owner, relocation/decompression
+  path, tilemap/CLUT consumer and menu/HUD/viewport meaning remain unbound.
+
 - **NEXUS-SCSP-READ-CORRIDOR:** The external European gameplay producer now
   supports bounded sound-CPU SCSP-read tracing with optional 68K-PC filtering.
   A 100-record authenticated window reached `SDDRVS.TSK` setup/shared-RAM
