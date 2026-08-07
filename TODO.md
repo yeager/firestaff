@@ -4088,7 +4088,10 @@ level or consumer bindings.
   mounted-data scene/weather/light regression now uses the source-owned
   fixed-light branch when available and explicitly rejects a real dynamic map
   without runtime state; it no longer manufactures dynamic-map `base_light`
-  or darkness values.
+  or darkness values. **2026-08-13 regression correction:** that mounted
+  regression now builds the authenticated real `GRAPHICSSET` scene-light
+  receipt before testing either map branch, so dynamic rejection cannot depend
+  on an uninitialized scene record.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

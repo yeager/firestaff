@@ -58612,3 +58612,10 @@ requirement in SKProject `skcrture.cpp:5368-5444,5697-5700`.
   runtime PC `0x06013098` into `0x47c00..0x49ffe`; known framebuffer/colour
   writers remain separately classified. The runtime writer is not promoted
   to a named retail asset or production draw route without source identity.
+
+# DM2 real c_light regression initialization (2026-08-13)
+
+The mounted `GRAPHICS.DAT`/`DUNGEON.DAT` scene-weather-light regression now
+constructs its source-owned `GRAPHICSSET` scene-light receipt before selecting
+the fixed or dynamic map branch. Dynamic-map rejection is therefore checked
+against authenticated real scene state instead of an uninitialized test value.

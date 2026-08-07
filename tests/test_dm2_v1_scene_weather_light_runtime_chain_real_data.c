@@ -133,6 +133,16 @@ int main(void)
                        "real G1 map style has scene, light, and weather GDAT");
     if (failures) goto done;
 
+    /* Build the source-owned scene receipt before branching on the map's
+     * dynamic-light flag. Dynamic maps must be rejected against this real
+     * GRAPHICSSET transaction; an uninitialised scene receipt would make the
+     * provenance gate depend on stack contents. */
+    failures += !check(
+        dm2_v1_gdat_scene_light_m11_receipt(&scene_plan, &scene_light) &&
+            scene_light.valid && scene_light.graphicsset == selected_style,
+        "real GRAPHICSSET scene-light receipt is built before c_light admission");
+    if (failures) goto done;
+
     if (map_descriptor.dynamic_light) {
         /* Dynamic maps need live v1e0974/savegame/party/weather state from
          * the original runtime. Do not manufacture those values merely to
@@ -150,10 +160,6 @@ int main(void)
             scene_plan.commands[0].decoded_hash != 0u &&
             scene_plan.commands[1].decoded_hash != 0u,
         "real GRAPHICSSET floor/ceiling material is decoded");
-    failures += !check(
-        dm2_v1_gdat_scene_light_m11_receipt(&scene_plan, &scene_light) &&
-            scene_light.valid && scene_light.graphicsset == selected_style,
-        "real GRAPHICSSET scene-light receipt is built");
     memset(&c_light_source, 0, sizeof(c_light_source));
     c_light_source.valid = 1;
     c_light_source.dynamic_map = 0u;
