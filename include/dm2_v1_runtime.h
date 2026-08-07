@@ -497,6 +497,12 @@ typedef struct DM2_V1_RuntimeCreatureRenderReceipt {
     int source_kind;       /* 1=live CCM instance, 2=DB4 dungeon record */
     int creature_type;
     int frame_index;
+    /* DB4 Creature::b5/w8/w10 copied from the source record.  These fields
+     * document the cursor owner; they are not a claim that the unbound live
+     * CAII animation loop has been published. */
+    int source_info_slot;
+    int source_animation_sequence;
+    int source_animation_info;
     int direction;
     int hp_pct;
     int ccm_primary_state;

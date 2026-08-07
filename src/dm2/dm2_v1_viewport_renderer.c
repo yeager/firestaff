@@ -4393,6 +4393,9 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->source_kind = src->source_kind;
         row->object_id = src->object_id;
         row->frame_index = src->frame_index;
+        row->source_info_slot = src->source_info_slot;
+        row->source_animation_sequence = src->source_animation_sequence;
+        row->source_animation_info = src->source_animation_info;
         row->material_frame_index = src->frame_index;
         row->direction = src->direction;
         row->depth = src->depth;

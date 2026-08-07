@@ -349,6 +349,12 @@ int main(void)
     viewport.creature_count = 1;
     viewport.creatures[0].creature_type = (uint8_t)trace.creature_type;
     viewport.creatures[0].source_kind = 2;
+    viewport.creatures[0].source_info_slot =
+        material_receipt.materials[0].info_slot;
+    viewport.creatures[0].source_animation_sequence =
+        material_receipt.materials[0].animation_sequence;
+    viewport.creatures[0].source_animation_info =
+        material_receipt.materials[0].animation_info;
     viewport.creatures[0].object_id = (uint16_t)root_object_id;
     viewport.creatures[0].map_x = (int16_t)creature_x;
     viewport.creatures[0].map_y = (int16_t)creature_y;
@@ -364,6 +370,17 @@ int main(void)
         !viewport.last_creature_asset_blit_valid || trace.fetch_calls != 1 ||
         trace.palette_calls != 1) {
         fputs("FAIL: canonical DB4 owner did not consume its F9 material draw\n",
+              stderr);
+        failures = 1;
+        goto done;
+    }
+    if (viewport.last_creature_render.source_info_slot !=
+            material_receipt.materials[0].info_slot ||
+        viewport.last_creature_render.source_animation_sequence !=
+            material_receipt.materials[0].animation_sequence ||
+        viewport.last_creature_render.source_animation_info !=
+            material_receipt.materials[0].animation_info) {
+        fputs("FAIL: DB4 animation cursor was lost before viewport render\n",
               stderr);
         failures = 1;
         goto done;

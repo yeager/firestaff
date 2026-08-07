@@ -29874,6 +29874,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now calls the selector again from the admitted frame and requires the
   source terminal state to remain stable. Live CAII ownership and runtime
   publication remain open.
+  **2026-08-13 cursor publication:** the production DB4→F9 handoff now
+  carries the source record's `b5/w8/w10` cursor (`info_slot`, `iAnimSeq`,
+  `iAnimInfo`) through `DM2_CreatureSprite`, the viewport render plan and the
+  runtime render receipt. This prevents the source cursor from being
+  discarded, while the live CAII owner and V5 frame publication remain
+  explicitly unbound.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

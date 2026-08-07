@@ -2630,6 +2630,9 @@ static void dm2_runtime_append_creature_sprite(
     dst->map_x = (int16_t)material->x;
     dst->map_y = (int16_t)material->y;
     dst->frame_index = 0;
+    dst->source_info_slot = material->info_slot;
+    dst->source_animation_sequence = material->animation_sequence;
+    dst->source_animation_info = material->animation_info;
     dst->depth = (int16_t)depth;
     dst->screen_x = (int16_t)screen_x;
     dst->screen_y = (int16_t)screen_y;
@@ -2647,6 +2650,11 @@ static void dm2_runtime_append_creature_sprite(
     g_dm2_last_creature_render.source_kind = 2;
     g_dm2_last_creature_render.creature_type = dst->creature_type;
     g_dm2_last_creature_render.frame_index = dst->frame_index;
+    g_dm2_last_creature_render.source_info_slot = dst->source_info_slot;
+    g_dm2_last_creature_render.source_animation_sequence =
+        dst->source_animation_sequence;
+    g_dm2_last_creature_render.source_animation_info =
+        dst->source_animation_info;
     g_dm2_last_creature_render.direction = dst->direction;
     g_dm2_last_creature_render.hp_pct = 100;
     g_dm2_last_creature_render.map_x = material->x;

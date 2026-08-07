@@ -1231,6 +1231,12 @@ typedef struct {
      * V5 animation chain (SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST's live
      * non-static route) rather than the DB4 map-chip F9 route. */
     uint8_t  source_v5_field;
+    /* DB4 Creature::w8/w10 (sk1c9a02c3 iAnimSeq/iAnimInfo).  These are
+     * source-owned cursor words even on the F9 map-chip route; a live CAII
+     * owner is still required before they may select a V5 frame. */
+    uint8_t  source_info_slot;
+    uint16_t source_animation_sequence;
+    uint16_t source_animation_info;
     uint32_t source_material_hash;
     uint16_t object_id;        /* G1 DB4 ObjectID; zero for non-dungeon sprites */
     int16_t  map_x;            /* source map coordinate for G1 material ownership */
@@ -1288,6 +1294,9 @@ typedef struct {
      * from the real animation chain, so the row draws CREATURES/type/field
      * and never the F9 map chip. */
     int source_v5_field;
+    uint8_t source_info_slot;
+    uint16_t source_animation_sequence;
+    uint16_t source_animation_info;
     /* _4976_5aa4 occupancy evidence: the creature's 5x5 position inside its
      * cell (QUERY_CREATURE_5x5_POS) and its index in the source
      * tlbDisplayOrder* walk (DRAW_STATIC_OBJECT).  -1 when unproven. */

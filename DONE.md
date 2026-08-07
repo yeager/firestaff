@@ -59370,3 +59370,14 @@ of its explicit DM2 corpus variables. It no longer falls back to a
 handoff. An unset selection skips the optional real-media path and an invalid
 selection fails, so the menu/viewport admission test cannot pass on unrelated
 local data.
+# DM2 DB4 creature animation cursor handoff (2026-08-13)
+
+- ✅ Preserved the canonical PC G1 DB4 creature `b5/w8/w10` values
+  (`info_slot`, `iAnimSeq`, `iAnimInfo`) from the real dungeon material
+  receipt through `DM2_CreatureSprite`, the viewport render plan and the
+  runtime render receipt. This is provenance publication only; it does not
+  claim a live CAII owner or fabricate a V5 frame.
+- ✅ Added a real-data assertion to
+  `test_dm2_v1_g1_scene_creature_gdat_real_data` that the cursor survives
+  into the viewport render. The canonical F9 material and the independent
+  `test_dm2_v1_creature_something_real_data` animation reader both pass.
