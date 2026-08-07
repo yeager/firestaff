@@ -4376,6 +4376,10 @@ list(REMOVE_ITEM M10_SOURCES
 # rendering, so retain it only in its focused regression.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0461_f0480_core_render_source_receipt_pc34_compat.c")
+# G0501--G0550 is an evidence-only Graphic560/save ownership table.  It has
+# no runtime caller; preserve the direct audit without linking it into M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0501_g0550_graphic560_save_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
