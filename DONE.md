@@ -58596,3 +58596,11 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Tightened the mounted PC-DOS save/load dialogue regression so both
   displayed labels (`SAVE`, `CANCEL`) also require their independent raw
   GDAT source-text hashes.
+# DM2 merchant synthetic-route regression cleanup (2026-08-13)
+
+The M11 startup/profile gate no longer contains a hidden coordinate-only NPC
+expectation that invented a friendly merchant, reputation increments, and
+dialogue progression. Its real-data regression now calls the runtime boundary
+directly and verifies that an unowned square leaves NPC, dialogue, reputation,
+and host text unavailable. This matches the source-owned AI-33 creature/DB/CCM
+requirement in SKProject `skcrture.cpp:5368-5444,5697-5700`.

@@ -2283,61 +2283,42 @@ int main(void) {
         dm2_v1_runtime_set_outdoor(0);
     }
     if (world) {
-        int found_npc_square = 0;
+        int found_unowned_square = 0;
         int target_x = 0;
         int target_y = 0;
-        for (int y = 0; y < 31 && !found_npc_square; ++y) {
-            for (int x = 0; x < 32 && !found_npc_square; ++x) {
-                int is_shop = 0;
-                if (dm2_v1_runtime_get_square_type(0, x, y) < 0) {
-                    continue;
-                }
-                for (int sid = 1; sid <= DM2_NUM_BUILTIN_SHOPS; ++sid) {
-                    const DM2_V1_ShopDescriptor *shop =
-                        dm2_v1_shop_get_builtin(sid);
-                    if (shop && shop->map_level == 0 &&
-                        shop->map_x == x && shop->map_y == y) {
-                        is_shop = 1;
-                        break;
-                    }
-                }
-                if (!is_shop) {
-                    found_npc_square = 1;
+        for (int y = 0; y < 31 && !found_unowned_square; ++y) {
+            for (int x = 0; x < 32 && !found_unowned_square; ++x) {
+                if (dm2_v1_runtime_get_square_type(0, x, y) >= 0) {
+                    found_unowned_square = 1;
                     target_x = x;
                     target_y = y;
                 }
             }
         }
-        expect_true(found_npc_square,
-                    "found a bounded non-shop DM2 square for NPC interaction");
-        if (found_npc_square) {
+        expect_true(found_unowned_square,
+                    "found a bounded real-data square without a proven NPC owner");
+        if (found_unowned_square) {
             int reputation_before = world->reputation;
+            /* SKProject SKWINSPX/src/v4/skcrture.cpp:5368-5444 and
+             * 5697-5700 require a live AI-33 creature, its DB record and
+             * CCM merchandise state. A map coordinate is not an NPC. */
+            expect_true(dm2_v1_runtime_npc_interact(0, target_x, target_y) < 0,
+                        "DM2 NPC interaction rejects a coordinate without live creature ownership");
+            expect_true(world->reputation == reputation_before &&
+                            dm2_v1_runtime_get_last_npc_id() == -1 &&
+                            dm2_v1_runtime_get_last_npc_dialog_line() == -1,
+                        "rejected DM2 NPC interaction cannot synthesize reputation or dialogue state");
             dm2_v1_runtime_set_position(0, target_x, target_y + 1, 0);
             dm2_v1_runtime_set_outdoor(1);
             expect_true(M11_GameView_HandleInput(&view,
                                                  M12_MENU_INPUT_ACTION) ==
                             M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 action drives bounded NPC interaction");
-            expect_true(view.lastOutcome[0] == '\0',
-                        "M11 DM2 NPC interaction keeps host text unbound");
-            expect_true(world->reputation == reputation_before + 1,
-                        "M11 DM2 NPC interaction mutates reputation");
-            expect_true(view.inspectTitle[0] == '\0' &&
-                        view.inspectDetail[0] == '\0',
-                        "M11 DM2 NPC text remains unbound without source dialogue");
-            expect_true(M11_GameView_HandleInput(&view,
-                                                 M12_MENU_INPUT_ACTION) ==
-                            M11_GAME_INPUT_REDRAW,
-                        "M11 DM2 repeated NPC action redraws");
-            expect_true(world->reputation == reputation_before + 2,
-                        "M11 DM2 repeated NPC interaction mutates reputation again");
-            expect_true(dm2_v1_runtime_get_last_npc_id() ==
-                            DM2_NPC_MERCHANT_FRIENDLY,
-                        "DM2 runtime records last NPC id for M11 readout");
-            expect_true(dm2_v1_runtime_get_last_npc_dialog_line() == 1,
-                        "DM2 runtime advances repeated same-square NPC dialog line");
-            expect_true(view.inspectDetail[0] == '\0',
-                        "M11 DM2 repeated NPC text remains unbound");
+                        "M11 DM2 action leaves an unowned real-data square unavailable");
+            expect_true(world->reputation == reputation_before &&
+                            view.lastOutcome[0] == '\0' &&
+                            view.inspectTitle[0] == '\0' &&
+                            view.inspectDetail[0] == '\0',
+                        "M11 DM2 unavailable NPC route leaves world and host text unchanged");
             dm2_v1_runtime_set_position(0, 15, 15, 0);
             dm2_v1_runtime_set_outdoor(0);
         }

@@ -4011,7 +4011,10 @@ level or consumer bindings.
   `GRAPHICS.DAT` was admitted through the same production field-probe gate;
   no source-owned CCM byteprogram field was found. Merchant enablement still
   requires the live DB4 creature, its b_1a/b_17 record operands, and the
-  source merchandise/text owner.
+  source merchandise/text owner. **2026-08-13 regression audit:** the M11
+  startup gate now rejects arbitrary real-data squares as NPCs and verifies
+  that reputation/dialogue state remains untouched until that owner chain is
+  connected.
 
 - **DM2-DYNAMIC-CLIGHT-OWNER-HANDOFF:** The map-only dynamic-light fallback
   is closed. Port the complete `DM2_RECALC_LIGHT_LEVEL` inputs: leader and

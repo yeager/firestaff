@@ -6186,6 +6186,11 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gfx_decode_receipt.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
+    # Shop/NPC compatibility modules remain explicit focused-test fixtures.
+    # They have no source-owned SHOP_GLASS/AI-33 transaction owner and must
+    # not be linked into the production DM2 archive.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop_npc_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_combat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_tech_magic.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_record_name_helper.c"
@@ -6226,8 +6231,6 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_bootstrap.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop_npc_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_tim_proc_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_ops_pc34_compat.c"
@@ -21294,6 +21297,8 @@ endif()
     # ── DM2: shop/NPC merchant classifier ──
     add_executable(test_dm2_v1_shop_npc_pc34_compat
         tests/test_dm2_v1_shop_npc_pc34_compat.c
+        # Focused source-ownership classifier contract; not production code.
+        src/dm2/dm2_v1_shop_npc_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_shop_npc_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
