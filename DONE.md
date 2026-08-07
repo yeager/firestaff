@@ -1,3 +1,12 @@
+# DM2 combat hit-roll source width (2026-08-07)
+
+- ✅ Corrected the diagnostic `DM2_CALC_PLAYER_ATTACK_DAMAGE` hit roll from
+  four to five RNG bits (`rand_hit & 0x1f`), matching
+  `SKWINSPX/src/v5/skhero.cpp`.
+- ✅ Added a boundary regression proving `0x10` differs from `0x0f` at the
+  source threshold. The live champion/CMDSTR/target/RNG/writeback chain and
+  production combat admission remain gated; no release was made.
+
 # DM2 SKSAVE timer-link receipts (2026-08-07)
 
 - ✅ Added source-owned timer-link callbacks to `DM2_READ_RECORD_CHECKCODE`:

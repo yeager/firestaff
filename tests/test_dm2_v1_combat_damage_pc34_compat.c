@@ -105,6 +105,39 @@ static void test_calc_damage_miss_by_defense(void)
     printf("  PASS: calc_damage_miss_by_defense\n");
 }
 
+static void test_calc_damage_source_hit_roll_uses_five_bits(void)
+{
+    DM2_V1_CalcAttackDamageReceipt receipt;
+    DM2_V1_CalcAttackDamageRequest req;
+    memset(&req, 0, sizeof(req));
+    req.hero_hp = 100;
+    req.hero_dexterity = 0;
+    req.creature_record = 0x1000;
+    req.creature_defense = 28;
+    req.party_level = 10;
+    req.hero_ability = 40;
+    req.hero_max_load = 200;
+    req.item_weight = 20;
+    req.stamina_adj = 60;
+    req.power_base = 64;
+
+    /* def_val is 16: source rand 0x10 must cross the hit boundary. */
+    req.rand_hit = 0x10;
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.hit == 1);
+    assert(receipt.miss == 0);
+
+    /* The adjacent four-bit value remains a miss at the same boundary. */
+    req.rand_hit = 0x0F;
+    r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.hit == 0);
+    assert(receipt.miss == 1);
+
+    printf("  PASS: calc_damage_source_hit_roll_uses_five_bits\n");
+}
+
 static void test_calc_damage_poison(void)
 {
     DM2_V1_CalcAttackDamageReceipt receipt;
@@ -319,6 +352,7 @@ int main(void)
     test_attack_party_zero_damage();
     test_attack_party_valid();
     test_calc_damage_miss_by_defense();
+    test_calc_damage_source_hit_roll_uses_five_bits();
     test_calc_damage_poison();
     test_calc_damage_skill_exp();
     printf("All combat damage tests passed.\n");

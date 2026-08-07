@@ -29862,6 +29862,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   that condition. This
   does not close the item: the live champion/CMDSTR/target/RNG/writeback owner
   chain is still absent.
+  **2026-08-07 source-roll correction:** the diagnostic hit-check seam now
+  consumes five RNG bits (`rand_hit & 0x1f`), matching SKProject's
+  `DM2_CALC_PLAYER_ATTACK_DAMAGE` source contract. A `0x0f`/`0x10` boundary
+  regression is green; this does not admit the helper or any damage, kill or
+  combat-feedback publication into the production runtime.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
   RAM. The companion now admits both a direct user file and a selected

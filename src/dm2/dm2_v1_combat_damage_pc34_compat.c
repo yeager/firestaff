@@ -63,8 +63,13 @@ int dm2_v1_calc_player_attack_damage_receipt(
     }
 
     {
+        /*
+         * SKProject: SKWINSPX/src/v5/skhero.cpp, the
+         * DM2_CALC_PLAYER_ATTACK_DAMAGE hit check uses DM2_RAND() & 0x1f
+         * (five bits), before comparing against the defense value.
+         */
         int32_t hit_val = (int32_t)request->hero_dexterity +
-                          (int32_t)(request->rand_hit & 0x0F);
+                          (int32_t)(request->rand_hit & 0x1F);
         int32_t def_val = ((int32_t)request->creature_defense +
                            (int32_t)(request->rand_defense % 32) +
                            2 * (int32_t)request->party_level - 16) / 2;
