@@ -6256,6 +6256,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_edm_sym1.c
     src/dm1/dm1_v1_fmtowns_music_tables.c
     src/shared/fmtowns_pharlap_all_games.c
+    src/csb/csb_v1_fmtowns_tmenu_sym1.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56245,6 +56246,13 @@ add_executable(test_fmtowns_pharlap_all_games
 )
 target_include_directories(test_fmtowns_pharlap_all_games PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_fmtowns_pharlap_all_games COMMAND test_fmtowns_pharlap_all_games)
+
+add_executable(test_csb_v1_fmtowns_tmenu_sym1
+    tests/test_csb_v1_fmtowns_tmenu_sym1.c
+    src/csb/csb_v1_fmtowns_tmenu_sym1.c
+)
+target_include_directories(test_csb_v1_fmtowns_tmenu_sym1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_csb_v1_fmtowns_tmenu_sym1 COMMAND test_csb_v1_fmtowns_tmenu_sym1)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
