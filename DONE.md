@@ -58438,3 +58438,11 @@ alcove runtime and archive-media tests passed (4/4).
   the missing original GDAT text keeps the result unnamed.
 - ✅ Confirmed that M11 cannot turn a missing source text record into a fixture
   or diagnostic item label; no release was made.
+
+# DM2 original writer corpus guard (2026-08-07)
+
+- ✅ Extended the writer-gate test to attempt quicksave against a mounted
+  original `sksave0.dat`. The call is rejected before writing and the source
+  file remains byte-fingerprint identical.
+- ✅ Revalidated the mounted SKSave census: 8 original files, with no private
+  export admitted; no release was made.

@@ -4358,7 +4358,11 @@ level or consumer bindings.
   tightens the test-only writer study against partial or synthetic saves; it
   does not admit the orchestrator to M11/runtime, because the live DB pools,
   timer queue, possession links and complete `DM2_GAME_SAVE` state owner are
-  still absent.
+  still absent. **2026-08-07 real-corpus audit:** with
+  `FIRESTAFF_DM2_SKSAVE_CORPUS` set, the writer-gate regression now attempts a
+  quicksave against mounted `sksave0.dat`; it must return
+  `ORIGINAL_WRITER_REQUIRED` before writing and preserve the source
+  fingerprint.
 
 ## Active DM1/CSB Symbol Queue
 
