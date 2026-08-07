@@ -7,9 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
 
 typedef struct {
     int16_t* samples;
@@ -27,6 +24,8 @@ typedef struct {
     uint32_t sample_rate;
 } M11_V2_AudioMixer;
 
+/* Compatibility-only. Source-owned PC34 SOUND.C controls audio; no host mixer
+ * can retain samples or produce synthetic PCM. */
 void v2_audio_init(uint32_t sample_rate);
 void v2_audio_play(int ch, int16_t* samples, uint32_t len, uint8_t vol, bool loop);
 void v2_audio_stop(int ch);
@@ -34,6 +33,7 @@ void v2_audio_mix_output(int16_t* buf, int num_samples);
 void v2_audio_set_volume(int ch, uint8_t vol);
 void v2_audio_set_master(uint8_t vol);
 void v2_audio_stop_all(void);
+const char *v21_audio_source_evidence(void);
 
 #ifdef __cplusplus
 }

@@ -1,3 +1,9 @@
+# DM1 V2:s syntetiska ljudmixer spärrad (2026-08-07)
+
+- ✅ Tog bort V2:s host-samplebuffertar, åtta kanaler, panorering och PCM-mixning.
+  ReDMCSB:s SOUND.C F0064 äger PC34:s ljudbegäran. CTesten och källåset
+  kontrollerar att V2 inte längre kan producera egna ljudprover.
+
 # DM1 V2:s syntetiska prestationer spärrade (2026-08-07)
 
 - ✅ Tog bort V2:s prestationslistor, notifieringsköer, sparfiler och gul banner.
