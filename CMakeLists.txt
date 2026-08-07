@@ -4805,6 +4805,11 @@ list(REMOVE_ITEM M10_SOURCES
 # compiles it, and no M11/runtime path calls it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1326_f1345_source_boundaries_pc34_compat.c")
+# `dm1_v1_release_capture_manifest_pc34_compat.c` is a release-only receipt
+# model seeded by synthetic capture metadata. Its direct audit target compiles
+# it, and it has no M11/runtime caller.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_release_capture_manifest_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
