@@ -1016,9 +1016,8 @@ static void check_incomplete_required_files_block_m11(const char* label,
     remove_temp_dm2_root(root, dm2_dir);
 }
 
-static const char* dm2_data_dir(char fallback[512]) {
+static const char* dm2_data_dir(void) {
     const char* data_dir = getenv("FIRESTAFF_DM2_V1_DATA_DIR");
-    const char* home;
     if (!data_dir || !data_dir[0]) {
         data_dir = getenv("FIRESTAFF_DM2_CANONICAL_DIR");
     }
@@ -1031,16 +1030,7 @@ static const char* dm2_data_dir(char fallback[512]) {
     if (data_dir && data_dir[0]) {
         return data_dir;
     }
-    home = getenv("HOME");
-    if (!home || !home[0]) {
-        return NULL;
-    }
-    /* Keep the fallback bounded to the mounted PC-DOS owner directory.
-     * Scanning every installed game's assets makes this real-data gate
-     * needlessly slow, and passing its parent would defeat the M12-to-M11
-     * asset-owner identity assertion below. */
-    snprintf(fallback, 512, "%s/.firestaff/data/dm2/data", home);
-    return fallback;
+    return NULL;
 }
 
 static int dm2_data_dir_is_explicit(void) {
@@ -1202,8 +1192,7 @@ int main(void) {
     signal(SIGALRM, alarm_handler);
     alarm(20);
 #endif
-    char fallback[512];
-    const char* data_dir = dm2_data_dir(fallback);
+    const char* data_dir = dm2_data_dir();
     DM2_V1_BootProfile preflight;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;

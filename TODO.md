@@ -2616,6 +2616,10 @@ level or consumer bindings.
   `FIRESTAFF_DM2_DATA_DIR`. They skip only when it is unset; an explicitly
   selected root without the original pair is a test failure rather than a
   hidden `HOME`-directory fallback.
+  The M11 startup-profile gate now has the same rule across its explicit
+  `FIRESTAFF_DM2_V1_DATA_DIR`, `FIRESTAFF_DM2_CANONICAL_DIR` and public
+  `FIRESTAFF_DM2_DATA_DIR` inputs. It cannot borrow a separate installation
+  from `HOME` before checking M12-to-M11 ownership.
   **2026-08-07 G1 material update:** DB4 scene/viewport and DB5/DB9 map-chip
   regressions now use only an explicit or selected corpus. Missing exact F9
   material remains fail-closed; do not substitute a neighbouring GDAT row.

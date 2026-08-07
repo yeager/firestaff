@@ -59362,3 +59362,11 @@ The rename probe obtains its source pair from the boot hash-admission receipt,
 so case or filename spelling cannot substitute a private fixture. Verification:
 the focused real-data tests run against the mounted PC-DOS corpus, and an
 explicitly nonexistent root fails.
+# ✅ 2026-08-07 DM2 M11 startup gate explicit corpus selection
+
+`test_dm2_v1_m11_startup_profile_gate` now accepts real data only through one
+of its explicit DM2 corpus variables. It no longer falls back to a
+`HOME`-relative installation before checking the M12-to-M11 asset-owner
+handoff. An unset selection skips the optional real-media path and an invalid
+selection fails, so the menu/viewport admission test cannot pass on unrelated
+local data.
