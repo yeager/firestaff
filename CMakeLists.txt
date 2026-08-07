@@ -5043,6 +5043,11 @@ list(REMOVE_ITEM M10_SOURCES
 # Its direct test keeps the ReDMCSB DUNVIEW frame contract compiled.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l_d3r_wall_pc34_compat.c")
+# This D3L2/D3R2 stairs/pit dispatch model is explicitly synthetic and
+# makes no game-data or main-loop claim. Its direct test retains the
+# ReDMCSB DUNVIEW route coverage.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat.c")
 # The mana-bar repaint model uses synthetic champion state and makes no
 # GRAPHICS.DAT/DUNGEON.DAT parity claim. Its direct test retains the
 # source-locked CHAMDRAW repaint contract.
@@ -55502,7 +55507,9 @@ add_executable(test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat 
 target_include_directories(test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat COMMAND test_dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat)
-add_executable(test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat tests/test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat
+    tests/test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat COMMAND test_dm1_v1_viewport_d3l2_d3r2_stairs_pit_dispatch_pc34_compat)
