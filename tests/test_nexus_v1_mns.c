@@ -104,6 +104,7 @@ static int test_all_mns(void) {
     char home_path[512];
     int decoded = 0, rendered = 0, fail = 0;
     int text_material_models = 0, text_material_surfaces = 0;
+    int text_material_direct_models = 0, text_material_direct_surfaces = 0;
     int static_material_models = 0;
     int text_material_blocked_models = 0;
     int scorpion_joints = 0, rockpile_joints = 0;
@@ -178,6 +179,34 @@ static int test_all_mns(void) {
                 ++text_material_models;
                 text_material_surfaces += text_bank.surface_count;
                 if (static_material_source) ++static_material_models;
+                {
+                    int direct_surfaces = 0;
+                    uint32_t descriptor_index;
+                    for (descriptor_index = 0;
+                         descriptor_index < text_section.descriptor_count;
+                         ++descriptor_index) {
+                        const Nexus_DMDFTextureDescriptor *descriptor =
+                            &text_section.descriptors[descriptor_index];
+                        const Nexus_DMDFTextureSurface *surface =
+                            &text_bank.surfaces[descriptor->material_id];
+                        if (surface->direct_color) {
+                            if (!surface->direct_pixels ||
+                                surface->direct_pixel_count !=
+                                    (size_t)surface->width * surface->height ||
+                                surface->pixels) {
+                                printf("  FAIL %s: invalid direct-colour receipt "
+                                       "material=%u\n", name,
+                                       descriptor->material_id);
+                                ++fail;
+                            }
+                            ++direct_surfaces;
+                        }
+                    }
+                    if (direct_surfaces > 0) {
+                        ++text_material_direct_models;
+                        text_material_direct_surfaces += direct_surfaces;
+                    }
+                }
             } else {
                 ++text_material_blocked_models;
                 if (static_material_source) {
@@ -229,6 +258,9 @@ static int test_all_mns(void) {
            decoded, rendered);
     printf("  decoded %d real TEXT material banks, %d BGR555 surfaces\n",
            text_material_models, text_material_surfaces);
+    printf("  retained %d direct-colour source banks, %d exact BGR555 surfaces "
+           "outside indexed promotion\n", text_material_direct_models,
+           text_material_direct_surfaces);
     printf("  retained %d real TEXT descriptor banks as source-only "
            "(material promotion blocked)\n", text_material_blocked_models);
     if (decoded > 0) {
@@ -268,9 +300,10 @@ static int test_all_mns(void) {
             ++fail;
         } else {
             printf("  PASS real TEXT material corpus: %d static banks, "
-                   "%d total banks, %d surfaces, %d creature banks source-only\n",
+                   "%d total banks, %d surfaces, %d direct-colour banks kept "
+                   "source-only\n",
                    static_material_models, text_material_models, text_material_surfaces,
-                   text_material_blocked_models);
+                   text_material_direct_models);
         }
     }
     if (decoded == 0) printf("  SKIP (no MNS files found)\n");

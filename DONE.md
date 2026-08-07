@@ -59499,3 +59499,18 @@ the launcher handoff passes 33 checks and the real save corpus passes 127.
   `HOME=/tmp/firestaff-nexus-no-home`; `test_nexus_v1_mns` passed, including
   real OBAKE MOTN sampling and 75 transformed source vertices. VDP1/VDP2
   placement and final viewport presentation remain capture-gated.
+
+# Nexus MNS exact direct-colour source lane (2026-08-07)
+
+- ✅ Updated the production DMDF `TEXT` material-bank decoder so real textures
+  with more than 256 unique BGR555 colours are retained losslessly as exact
+  `uint16_t` source pixels. The decoder no longer rejects those seven creature
+  banks and never invents a quantized palette.
+- ✅ Kept indexed and direct-colour ownership separate: direct-colour surfaces
+  have no indexed `pixels` buffer, so the existing viewport admission gate
+  cannot mistake them for render-ready VDP1 materials. The two static banks
+  remain indexed and fully decoded.
+- ✅ Retail regression now verifies 30 complete TEXT banks and 815 surfaces,
+  including seven direct-colour source banks, plus the DGN material raster and
+  face/material retail corpus tests. Verification used the external Nexus data
+  root with an isolated `HOME`; all focused tests passed.

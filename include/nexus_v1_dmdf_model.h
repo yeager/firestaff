@@ -169,12 +169,18 @@ typedef struct {
 
 /* Runtime-ready indexed surface decoded from a bounded BITM/PLTB pair.
  * `pixels` is owned by the surface and already contains global palette
- * indices, so it can be passed directly to the V1 software rasterizer. */
+ * indices, so it can be passed directly to the V1 software rasterizer.
+ * A retail MNS TEXT texture can instead be source-valid but exceed the
+ * host bank's 256 indexed colours. `direct_pixels` preserves its exact
+ * Saturn BGR555 words without authorizing an indexed VDP1 render route. */
 typedef struct {
     uint8_t *pixels;
+    uint16_t *direct_pixels; /* exact source BGR555; source-only lane */
+    size_t direct_pixel_count;
     int width;
     int height;
     uint32_t palette[256];
+    int direct_color;
     /* Set only after the complete BPK upload/decode route has committed
      * this surface into the bank. This lets the DGN host prove it rasterized
      * real FLOORS/WALLS archive pixels rather than a DMDF-only substitute. */
