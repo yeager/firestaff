@@ -29883,6 +29883,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `DM2 LOAD FAILED` or data-path instructions into the message popup; it keeps
   the structured launch-failure transition and clears all three visible
   lines. The incomplete source-owned status producer remains open.
+  **2026-08-07 M12 boundary correction:** DM2 quick-resume and successful
+  launch handoff no longer populate the shared launcher message view with
+  synthetic `RESUMING SAVE`, title, `READY TO LAUNCH` or escape text. The
+  launch intent remains intact, while the real DM2 bitmap load dialogue
+  (`skguidrw.cpp:80-94`) remains the only permitted visible status owner.
 - [ ] DM2 runtime action/save text ownership: action, shop, movement and save
   receipts are structurally silent until their matching original GUI/dialogue
   producer is connected. Bind that source-owned producer before rendering any

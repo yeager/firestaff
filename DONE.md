@@ -94,6 +94,16 @@
   be replaced by a stale per-hero compatibility byte. Live c_hero/session
   binding and delayed-pose publication remain open in `TODO.md`.
 
+# DM2 startup bitmap-dialogue status boundary (2026-08-07)
+
+- ✅ M12 no longer substitutes shared English resume/launch status lines for
+  DM2. Successful DM2 resume and launch intent still cross the same structured
+  handoff, but visible message lines remain empty until the source-owned
+  `GAME_LOAD` bitmap dialogue is connected.
+- ✅ DM2's real dungeon-data launch blocker remains unchanged and passes its
+  existing gate regression; missing-data guidance is launcher gate feedback,
+  not a fabricated in-game DM2 status panel.
+
 - ✅ M12 now materializes every explicitly selected CSB version into its own
   authenticated runtime cache, not only archive-backed selections. This keeps
   a directory-backed Atari ST, Amiga or PC choice from silently booting the

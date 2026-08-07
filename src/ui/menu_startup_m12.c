@@ -5075,6 +5075,21 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     }
 }
 
+/* DM2's original GAME_LOAD/RESUME path owns a bitmap dialogue surface
+ * (SKProject skguidrw.cpp:80-94 and sksvgame.cpp:1415+).  The shared M12
+ * launcher cannot substitute English status lines for that surface.  Keep
+ * the launch intent and structured gate intact, but leave the visible lines
+ * empty until M11 binds the real DM2 dialogue producer. */
+static void m12_clear_dm2_source_status(M12_StartupMenuState* state,
+                                        const char* gameId) {
+    if (!state || !gameId || strcmp(gameId, "dm2") != 0) {
+        return;
+    }
+    state->messageLine1 = "";
+    state->messageLine2 = "";
+    state->messageLine3 = "";
+}
+
 static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
     if (!state) {
         return;
@@ -5102,6 +5117,7 @@ static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
                 state->messageLine1 = "RESUMING SAVE";
                 state->messageLine2 = state->entries[qrSlot].title;
                 state->messageLine3 = "ESC RETURNS TO MENU";
+                m12_clear_dm2_source_status(state, state->quickResumeGameId);
             }
         } else {
             m12_show_missing_game_data_popup(state, state->quickResumeGameId);
@@ -5916,6 +5932,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                                   ? state->entries[state->activatedIndex].title
                                                   : "";
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                        if (launchEntry && launchEntry->gameId) {
+                            m12_clear_dm2_source_status(state,
+                                                        launchEntry->gameId);
+                        }
                     }
                 } else {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
