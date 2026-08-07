@@ -11898,30 +11898,36 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                                        ? "WALL REVEALED" : "WALL HIDDEN");
                     m11_refresh_hash(state);
                 }
-            } else if (targetElement == DUNGEON_ELEMENT_CORRIDOR &&
-                       e->textIndex == 1) {
+            } else if (targetElement == DUNGEON_ELEMENT_CORRIDOR) {
                 struct Dm1V1ActuatorResult result;
                 if (m11_apply_dm1_square_actuator(
-                        state, e, targetElement, DM1_ACTUATOR_KIND_FAKEWALL,
+                        state, e, targetElement, DM1_ACTUATOR_KIND_CORRIDOR,
                         &result)) {
-                    m11_set_status(state, "SENSOR", "WALL HIDDEN");
+                    m11_set_status(state, "SENSOR",
+                                   result.newState == DUNGEON_ELEMENT_CORRIDOR
+                                       ? "CORRIDOR OPENED" : "CORRIDOR CLOSED");
+                    m11_refresh_hash(state);
+                }
+            } else if (targetElement == DUNGEON_ELEMENT_WALL) {
+                struct Dm1V1ActuatorResult result;
+                if (m11_apply_dm1_square_actuator(
+                        state, e, targetElement, DM1_ACTUATOR_KIND_WALL,
+                        &result)) {
+                    m11_set_status(state, "SENSOR",
+                                   result.newState == DUNGEON_ELEMENT_CORRIDOR
+                                       ? "WALL REMOVED" : "WALL CREATED");
                     m11_refresh_hash(state);
                 }
             } else if (targetElement == DUNGEON_ELEMENT_TELEPORTER) {
-                /* Toggle teleporter active/inactive */
-                int telBit = targetSquare & 0x01;
-                if (e->textIndex == 2) telBit = !telBit;
-                else if (e->textIndex == 0) telBit = 1;
-                else if (e->textIndex == 1) telBit = 0;
-                {
-                    unsigned char newSq = (targetSquare & ~0x01) | (telBit ? 0x01 : 0x00);
-                    m11_set_square_byte(&state->world,
-                                        state->world.party.mapIndex,
-                                        e->destMapX, e->destMapY, newSq);
+                struct Dm1V1ActuatorResult result;
+                if (m11_apply_dm1_square_actuator(
+                        state, e, targetElement, DM1_ACTUATOR_KIND_TELEPORTER,
+                        &result)) {
+                    m11_set_status(state, "SENSOR",
+                                   result.newState ? "TELEPORTER ACTIVATED"
+                                                   : "TELEPORTER DEACTIVATED");
+                    m11_refresh_hash(state);
                 }
-                m11_set_status(state, "SENSOR",
-                               telBit ? "TELEPORTER ACTIVATED" : "TELEPORTER DEACTIVATED");
-                m11_refresh_hash(state);
             }
             break;
         }

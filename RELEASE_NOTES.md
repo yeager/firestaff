@@ -1,3 +1,14 @@
+# Firestaff v3.0.296
+
+## Fixed
+
+- M11 teleporter sensor toggle was using bit 0 instead of bit 3 (MASK0x0008) for the teleporter open/closed state, causing sensors targeting teleporter squares to flip the wrong bit. Now uses the correct bit 3, matching ReDMCSB DEFS.H and the actuator dispatch path.
+- M11 SENSOR_EFFECT_TOGGLE_REMOTE now handles WALL and CORRIDOR target elements through the actuator dispatch. Previously sensors targeting wall or corridor squares were silently ignored.
+- M11 CORRIDOR target handling now supports all three effect types (SET/CLEAR/TOGGLE), not just CLEAR.
+- M11 teleporter toggle now routes through m11_apply_dm1_square_actuator instead of inline bit manipulation, consistent with PIT, FAKEWALL, WALL and CORRIDOR.
+
+---
+
 # Firestaff v3.0.295
 
 ## Fixed

@@ -6821,6 +6821,12 @@ that its exact runtime path is not already source-locked and tested.
    element toggle), TELEPORTER (bit 3 open/closed), and CORRIDOR (corridor↔
    fakewall, same logic as FAKEWALL from corridor side) were silently dropped.
    26 tests pass (was 18). Remaining: runtime generator ownership.
+   2026-08-07: M11 SENSOR_EFFECT_TOGGLE_REMOTE handler fixed: teleporter
+   state was using bit 0 instead of bit 3 (MASK0x0008), matching the
+   actuator dispatch and ReDMCSB DEFS.H. WALL and CORRIDOR target elements
+   are now dispatched through the actuator (were missing). Teleporter
+   toggle now routes through m11_apply_dm1_square_actuator instead of
+   inline bit manipulation.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
