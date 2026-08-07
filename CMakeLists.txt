@@ -28475,6 +28475,11 @@ endif()
         tests/test_dm1_v2_footstep_audio_pc34.c
         src/dm1v2/dm1_v2_footstep_audio_pc34.c
     )
+    add_executable(test_dm1_v2_damage_numbers_pc34
+        tests/test_dm1_v2_damage_numbers_pc34.c
+        src/dm1v2/dm1_v2_damage_numbers_pc34.c
+        src/dm1v2/dm1_v2_settings_impl.c
+    )
     add_executable(test_dm1_v2_hud_interaction_pc34
         tests/test_dm1_v2_hud_interaction_pc34.c
     )
@@ -29239,6 +29244,7 @@ endif()
         target_compile_options(test_dm1_v2_launch_smoke_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_footstep_audio_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_damage_numbers_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_interaction_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_selected_resolution_input_mapping_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_4k_input_zone_mapping_pc34 PRIVATE -Wall -Wextra -O2)
@@ -29413,6 +29419,10 @@ endif()
     add_test(
         NAME dm1_v2_footstep_audio_pc34
         COMMAND test_dm1_v2_footstep_audio_pc34
+    )
+    add_test(
+        NAME dm1_v2_damage_numbers_pc34
+        COMMAND test_dm1_v2_damage_numbers_pc34
     )
     add_test(
         NAME dm1_v2_hud_interaction_pc34

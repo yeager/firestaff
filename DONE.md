@@ -22,6 +22,14 @@
 
 # Scanner provenance after cache materialization (2026-08-07)
 
+# DM1 V2 syntetiska skadenummer borttagna (2026-08-07)
+
+- ✅ Tog bort den hostskapade 3×5-sifferfonten och den alternativa
+  röd/gröna punktmålaren för flytande skadenummer. Ingen autentisk PC34-rutt
+  eller yta har påträffats, så V2-hjälparna behåller ingen popup-data och
+  skriver inga pixlar ovanpå källägda stridsbilder. Den registrerade CTesten
+  `dm1_v2_damage_numbers_pc34` passerar för båda API:erna.
+
 # DM1 V2 syntetiskt fotstegsljud borttaget (2026-08-07)
 
 - ✅ Tog bort V2-hjälparens brusgenerator för partifotsteg. ReDMCSB- och

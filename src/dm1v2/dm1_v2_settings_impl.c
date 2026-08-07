@@ -73,13 +73,11 @@ void dm1_v2_camera_shake_trigger(DM1_V2_SettingsState *s, float intensity) {
 }
 
 void dm1_v2_damage_number_add(DM1_V2_SettingsState *s, int value, float x, float y, int is_heal) {
-    if (!s || s->damage_num_count >= 8) return;
-    s->damage_nums[s->damage_num_count].value = value;
-    s->damage_nums[s->damage_num_count].x = x;
-    s->damage_nums[s->damage_num_count].y = y;
-    s->damage_nums[s->damage_num_count].life = 1.5f;
-    s->damage_nums[s->damage_num_count].is_heal = is_heal;
-    s->damage_num_count++;
+    (void)s;
+    (void)value;
+    (void)x;
+    (void)y;
+    (void)is_heal;
 }
 
 void dm1_v2_transition_start(DM1_V2_SettingsState *s, int fade_out) {
@@ -121,24 +119,11 @@ void dm1_v2_apply_camera_shake(uint32_t *rgba, int w, int h, const DM1_V2_Settin
 
 /* Render floating damage numbers */
 void dm1_v2_render_damage_numbers(uint32_t *rgba, int w, int h, const DM1_V2_SettingsState *s) {
-    int i;
-    if (!rgba || !s) return;
-    for (i = 0; i < s->damage_num_count; i++) {
-        int sx = (int)s->damage_nums[i].x;
-        int sy = (int)s->damage_nums[i].y;
-        float alpha = s->damage_nums[i].life / 1.5f;
-        uint32_t color = s->damage_nums[i].is_heal ? 0xFF00FF00 : 0xFFFF4444;
-        /* Draw a small colored dot (actual digit rendering needs font) */
-        if (sx >= 0 && sx < w && sy >= 0 && sy < h && alpha > 0.1f) {
-            int dx, dy2;
-            for (dy2 = -1; dy2 <= 1; dy2++)
-                for (dx = -1; dx <= 1; dx++) {
-                    int px = sx + dx, py = sy + dy2;
-                    if (px >= 0 && px < w && py >= 0 && py < h)
-                        rgba[py * w + px] = color;
-                }
-        }
-    }
+    (void)rgba;
+    (void)w;
+    (void)h;
+    (void)s;
+    /* Do not draw modern damage indicators over source-owned combat pixels. */
 }
 
 void dm1_v2_apply_transition(uint32_t *rgba, int w, int h, float alpha) {
@@ -166,4 +151,3 @@ void dm1_v2_apply_torch_flicker(uint32_t *rgba, int w, int h, float intensity) {
         rgba[i] = 0xFF000000 | (r<<16) | (g<<8) | b;
     }
 }
-

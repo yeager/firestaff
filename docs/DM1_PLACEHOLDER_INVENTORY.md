@@ -45,6 +45,11 @@ sound request. It now returns no sample and does not alter the caller's audio
 buffer. Actual sound remains limited to the authenticated `GRAPHICS.DAT`
 SND3 event path.
 
+The V2 damage-number helpers likewise contained a host 3×5 digit font and
+colour-dot renderer. Neither has an authenticated PC34 caller or source
+surface, so both now retain no popup state and draw nothing. Source-owned
+combat feedback remains unchanged.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564
