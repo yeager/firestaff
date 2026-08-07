@@ -68,6 +68,27 @@ int dm1_v1_fmtowns_region_menu_panel_pc34(DM1_V1_FmtownsRegionRecord *out);
 /* Look up region 11 (menu clear-area anchor). Same contract. */
 int dm1_v1_fmtowns_region_menu_clear_area_pc34(DM1_V1_FmtownsRegionRecord *out);
 
+/* Byte-verified block 1 of the region registry (head pointer
+ * 0x28e78) — 17 records covering IDs 1..17. Every field is the
+ * exact 8-byte record from EDM.EXP; see
+ * parity-evidence/dm1_fmtowns_region_table.md for the disassembly
+ * source and interpretation. */
+#define DM1_V1_FMTOWNS_REGION_BLOCK_1_ID_MIN   1
+#define DM1_V1_FMTOWNS_REGION_BLOCK_1_ID_MAX  17
+#define DM1_V1_FMTOWNS_REGION_BLOCK_1_COUNT   17
+
+extern const DM1_V1_FmtownsRegionRecord
+    dm1_v1_fmtowns_region_block_1[DM1_V1_FMTOWNS_REGION_BLOCK_1_COUNT];
+
+/* Generic lookup by region ID. Returns 1 and fills *out on success,
+ * 0 if the ID is outside the currently-decoded blocks (only block 1
+ * IDs 1..17 return records; the other 22 blocks totalling 977
+ * records are not yet ported and this function fails closed for
+ * them so callers can gate downstream rendering behind decoded
+ * availability instead of guessing). */
+int dm1_v1_fmtowns_region_lookup_pc34(
+    uint16_t region_id, DM1_V1_FmtownsRegionRecord *out);
+
 /* Compute GET_SCL_COORD's exact scale conversion:
  *     result = (int)((int32_t)source * scale / 10000)
  * with the same signed 32-bit intermediate the original EDM.EXP

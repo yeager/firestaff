@@ -63,12 +63,56 @@ static void test_parent_inheritance(void) {
            DM1_V1_FMTOWNS_REGION_MENU_PANEL_HEIGHT_PX);
 }
 
+static void test_block_1_full_table(void) {
+    /* Byte-exact transcription from parity-evidence disassembly.
+     * If a record drifts, this test catches it before any consumer. */
+    static const DM1_V1_FmtownsRegionRecord expected[17] = {
+        { 9,  0, 320, 200 }, { 1,  1,   0,   0 }, { 9,  0, 224, 136 },
+        { 1,  3,   0,   0 }, { 10, 2,   0,   0 }, { 10, 4,   0,   0 },
+        { 1,  3,   0,  33 }, { 9,  2,  87,  45 }, { 3,  8, 319, 168 },
+        { 9,  2,  87,  45 }, { 2, 10, 319,  77 }, { 9,  2,  87,  33 },
+        { 3, 12, 319,  74 }, { 9,  2, 320,  31 }, { 4, 14,   0, 199 },
+        { 9,  2,  87,   6 }, { 1, 16, 233,  33 },
+    };
+    for (int i = 0; i < 17; ++i) {
+        const DM1_V1_FmtownsRegionRecord *got =
+            &dm1_v1_fmtowns_region_block_1[i];
+        assert(got->type   == expected[i].type);
+        assert(got->parent == expected[i].parent);
+        assert(got->a      == expected[i].a);
+        assert(got->b      == expected[i].b);
+    }
+}
+
+static void test_lookup_generic(void) {
+    DM1_V1_FmtownsRegionRecord r;
+    /* Every ID 1..17 must resolve to the byte-exact record. */
+    for (uint16_t id = 1; id <= 17; ++id) {
+        assert(dm1_v1_fmtowns_region_lookup_pc34(id, &r) == 1);
+    }
+    /* Region 10 must match the dedicated helper. */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(10, &r) == 1);
+    assert(r.type == 9 && r.parent == 2 && r.a == 87 && r.b == 45);
+    /* Region 11 too. */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(11, &r) == 1);
+    assert(r.type == 2 && r.parent == 10 && r.a == 319 && r.b == 77);
+    /* Out-of-range IDs fail closed (blocks 2..23 not yet ported). */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(0, &r) == 0);
+    assert(dm1_v1_fmtowns_region_lookup_pc34(18, &r) == 0);
+    assert(dm1_v1_fmtowns_region_lookup_pc34(400, &r) == 0);
+    assert(dm1_v1_fmtowns_region_lookup_pc34(999, &r) == 0);
+    /* NULL out gate. */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(10, NULL) == 0);
+}
+
 int main(void) {
     test_menu_panel_region();
     test_menu_clear_area_region();
     test_scale_coord_identity();
     test_scale_coord_arithmetic();
     test_parent_inheritance();
+    test_block_1_full_table();
+    test_lookup_generic();
     printf("All dm1_v1_fmtowns_menu_regions tests passed.\n");
     return 0;
 }
