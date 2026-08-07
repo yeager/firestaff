@@ -352,9 +352,13 @@
   operator-selected emulated frame, with an explicit mask for START (`0x10`),
   A (`0x20`) or both (`0x30`). Initial E-region tests at frame 1000, 4500,
   6500 and 8000 did not yet reach a menu; the captured framebuffer remains
-  authentic intro imagery. Do not infer the correct skip control or admit menu
-  state until a post-input screen transition and source-owned menu consumer
-  are both observed.
+  authentic intro imagery. A further E-region run with START+A at frame 100,
+  60 frames held, and capture beginning at runtime frame 6000 produced eight
+  active VDP1 frames (`ce800662…` raw SHA-256); VDP2 registers/VRAM/CRAM stayed
+  unchanged and the framebuffer remained intro/dungeon imagery. This is a
+  negative input-timing receipt, not a menu observation. Do not infer the
+  correct skip control or admit menu state until a post-input screen transition
+  and source-owned menu consumer are both observed.
 - **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be

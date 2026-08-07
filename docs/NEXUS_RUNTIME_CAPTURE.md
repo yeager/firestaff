@@ -32,6 +32,11 @@ VDP memory, host pixels, or a guessed menu. A resulting menu/HUD/viewport claim
 still requires the corresponding source identity and VDP1/VDP2 consumer
 artifact.
 
+For long operator-only scans, the capture patch also accepts the inherited
+`FIRESTAFF_NEXUS_NO_WAITING=1` environment flag. It requests Mednafen's
+no-wait scheduler path only; it does not alter the Saturn input, VDP or SCSP
+capture payload.
+
 The raw witness can be inspected with
 `scripts/analyze_nexus_saturn_runtime_capture.py`. It reports SHA-256 values
 for each captured VDP1/VDP2 region and can require a region to differ between
@@ -55,6 +60,14 @@ draw-buffer selector and VDP1 VRAM/framebuffer payload change between frames,
 which proves a real gameplay redraw. The command source is not yet joined to
 an authenticated DGN/ITEM/MNS source span, so no menu, HUD, CLUT, source-asset
 or production viewport binding is admitted from it yet.
+
+An additional negative startup-input run is retained outside the repository at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-french-start100x60-skip6000-next/runtime-vdp12.raw`.
+It uses the authenticated E-BIOS/French media, drives START+A for frames
+100–159, then captures eight active VDP1 frames beginning at runtime frame
+6000 (`ce800662…`). VDP2 registers, VRAM and CRAM remain byte-stable and the
+observed framebuffer is still intro/dungeon imagery. This narrows neither the
+menu transition nor its consumer; semantic admission remains blocked.
 
 An operator-only VDP1 write trace was also run against the same European image
 with an SH-2 PC attached to each VRAM write. The first bounded source probe was

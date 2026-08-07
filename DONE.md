@@ -58,6 +58,12 @@
   `SDDRVS.TSK` image at load base `0x1000`. SLEV/MAP/SAL meaning and host
   playback remain explicitly blocked.
 
+# 2026-08-07 Nexus capture scan scheduling
+- ✅ Added the operator-only `FIRESTAFF_NEXUS_NO_WAITING=1` Mednafen producer
+  flag and launcher propagation. The external build compiles and installs with
+  the flag; it changes scheduler waiting only and never promotes raw VDP/SCSP
+  bytes to production presentation or playback.
+
 # DM2 DB-record to GDAT object-name receipt (2026-08-13)
 - ✅ Added `dm2_v1_query_source_item_name_receipt()`, which authenticates the
   complete source chain: validated DB5..DB10 record ownership, SKProject

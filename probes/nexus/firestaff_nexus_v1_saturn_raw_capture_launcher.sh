@@ -77,6 +77,7 @@ printf 'command=%q -filesys.untrusted_fip_check 0 -ss.bios_na_eu %q %q\n' "$medn
 ((operator_only)) || exit 1
 
 FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
+FIRESTAFF_NEXUS_NO_WAITING="${FIRESTAFF_NEXUS_NO_WAITING:-}" \
 FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
 FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT="$frame_limit" \
 FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
