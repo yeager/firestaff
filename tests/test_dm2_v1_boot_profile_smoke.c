@@ -103,7 +103,6 @@ static int test_dm2_v2_render_fallback_callback(int party_dir,
 static int resolve_real_dm2_data_root(char *out, size_t out_size)
 {
     const char *direct = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
 
     if (!out || out_size == 0u) return 0;
     out[0] = '\0';
@@ -114,9 +113,7 @@ static int resolve_real_dm2_data_root(char *out, size_t out_size)
         snprintf(out, out_size, "%s", direct);
         return 1;
     }
-    if (!home || !home[0]) return 0;
-    snprintf(out, out_size, "%s/.firestaff/data/dm2", home);
-    return 1;
+    return 0;
 }
 
 static void test_defaults(void)
@@ -239,35 +236,30 @@ static void test_scan_nested_data_dir(void)
 static void test_scan_real_assets_by_hash_when_renamed(void)
 {
     DM2_V1_BootProfile p;
+    DM2_V1_BootProfile source;
     char root[256];
     char graphics_src[512];
     char dungeon_src[512];
     char graphics_dst[340];
     char dungeon_dst[340];
     const char *tmp = getenv("TMPDIR");
-    const char *home = getenv("HOME");
 
     if (!tmp || !tmp[0]) tmp = getenv("TEMP");
     if (!tmp || !tmp[0]) tmp = ".";
-    if (!home || !home[0]) {
-        printf("  SKIP: HOME not set for optional real DM2 hash scan\n");
+    if (!resolve_real_dm2_data_root(root, sizeof(root))) {
+        printf("  SKIP: FIRESTAFF_DM2_DATA_DIR not set for optional real DM2 hash scan\n");
         return;
     }
-
-    snprintf(graphics_src, sizeof(graphics_src), "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
-    snprintf(dungeon_src, sizeof(dungeon_src), "%s/.firestaff/data/dm2/DUNGEON.DAT", home);
-    {
-        FILE *g = fopen(graphics_src, "rb");
-        FILE *d = fopen(dungeon_src, "rb");
-        if (!g || !d) {
-            if (g) fclose(g);
-            if (d) fclose(d);
-            printf("  SKIP: optional real DM2 files not present\n");
-            return;
-        }
-        fclose(g);
-        fclose(d);
+    dm2_v1_boot_profile_init(&source);
+    if (dm2_v1_boot_scan_assets(&source, root) != 0 ||
+        !source.assets_verified || source.graphics_path[0] == '\0' ||
+        source.dungeon_path[0] == '\0') {
+        CHECK(0, "selected real DM2 root admits source files before rename scan");
+        dm2_v1_boot_cleanup(&source);
+        return;
     }
+    snprintf(graphics_src, sizeof(graphics_src), "%s", source.graphics_path);
+    snprintf(dungeon_src, sizeof(dungeon_src), "%s", source.dungeon_path);
 
     snprintf(root, sizeof(root), "%s%sfirestaff-dm2-hash-rename-%ld",
              tmp, TEST_PATH_SEP, (long)TEST_GETPID());
@@ -298,6 +290,7 @@ static void test_scan_real_assets_by_hash_when_renamed(void)
     remove(graphics_dst);
     remove(dungeon_dst);
     (void)TEST_RMDIR(root);
+    dm2_v1_boot_cleanup(&source);
 }
 
 static void test_songlist_real_data_routing(void)
@@ -545,28 +538,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     uint32_t typed_bytes = 0u;
     int v2_callback_count = 0;
     char root[512];
-    FILE *g;
-    FILE *d;
     if (!resolve_real_dm2_data_root(root, sizeof(root))) {
-        printf("  SKIP: no direct or default DM2 data root for optional startup launch\n");
+        printf("  SKIP: FIRESTAFF_DM2_DATA_DIR not set for optional startup launch\n");
         return;
     }
-    {
-        char graphics[600];
-        char dungeon[600];
-        snprintf(graphics, sizeof(graphics), "%s/GRAPHICS.DAT", root);
-        snprintf(dungeon, sizeof(dungeon), "%s/DUNGEON.DAT", root);
-        g = fopen(graphics, "rb");
-        d = fopen(dungeon, "rb");
-    }
-    if (!g || !d) {
-        if (g) fclose(g);
-        if (d) fclose(d);
-        printf("  SKIP: optional real DM2 files not present\n");
-        return;
-    }
-    fclose(g);
-    fclose(d);
     memset(&launch, 0, sizeof(launch));
     CHECK(dm2_v1_boot_startup_launch_alloc(root, &launch) == 1,
           "startup launch allocates with real verified DM2 assets");

@@ -58,8 +58,6 @@ static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 char *boot_root, size_t boot_root_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char fallback[1024];
     char graphics_path[1100];
     char dungeon_path[1100];
 
@@ -67,14 +65,8 @@ static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
         snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
         snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
         snprintf(boot_root, boot_root_size, "%s/..", root);
-    } else if (home && home[0]) {
-        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data", home);
-        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat",
-                 fallback);
-        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", fallback);
-        snprintf(boot_root, boot_root_size, "%s/.firestaff/data/dm2", home);
     } else {
-        return 0;
+        return -1;
     }
     return read_file(graphics_path, graphics, graphics_size) &&
         read_file(dungeon_path, dungeon, dungeon_size);
@@ -162,15 +154,22 @@ int main(void)
     DM2_V1_DistantEnvironmentReceipt slots[3];
     unsigned int slot_count;
     int weather_level;
+    int load_result;
 
     passed = 0;
     failed = 0;
 
-    if (!load_canonical_files(&graphics, &graphics_size,
-                              &dungeon_bytes, &dungeon_size,
-                              boot_root, sizeof(boot_root))) {
-        puts("SKIP: no local canonical DM2 data");
+    load_result = load_canonical_files(&graphics, &graphics_size,
+                                       &dungeon_bytes, &dungeon_size,
+                                       boot_root, sizeof(boot_root));
+    if (load_result < 0) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
         return 0;
+    }
+    if (load_result == 0) {
+        fputs("FAIL: selected DM2 data root does not contain readable original files\n",
+              stderr);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     dungeon = (DM2_V1_DungeonData *)calloc(1u, sizeof(*dungeon));

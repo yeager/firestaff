@@ -59330,7 +59330,6 @@ GRAPHIC2.DAT ownership remain intentionally gated.
   `SKWINSPX/src/v5/sksvgame.cpp:2010-2017`: a target on an earlier map skips
   the record walk, while a forward target is serialized normally. Runtime
   save restoration remains gated on the complete dungeon/record owner.
-
 # Nexus MENU.BPK external-root regression (2026-08-13)
 
 - ✅ Corrected `test_nexus_v1_bppk` so its primary MENU.BPK decode uses
@@ -59352,3 +59351,14 @@ GRAPHIC2.DAT ownership remain intentionally gated.
   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus` and
   `HOME=/tmp/firestaff-nexus-no-home`: real FONT256, 20 authenticated FACE
   portraits, TITLE/RES archives and STABG all pass.
+
+# ✅ 2026-08-07 DM2 explicit real-corpus test selection
+
+The PC-DOS boot-profile rename regression and the live weather-frame
+regression no longer discover `~/.firestaff/data/dm2` through `HOME`.
+Both read only the explicitly selected `FIRESTAFF_DM2_DATA_DIR`; no selection
+skips the optional real-data portion, while an unreadable selected root fails.
+The rename probe obtains its source pair from the boot hash-admission receipt,
+so case or filename spelling cannot substitute a private fixture. Verification:
+the focused real-data tests run against the mounted PC-DOS corpus, and an
+explicitly nonexistent root fails.

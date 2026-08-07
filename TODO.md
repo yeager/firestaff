@@ -2611,6 +2611,11 @@ level or consumer bindings.
   **2026-08-07 GDAT verification update:** the broad creature-animation,
   visual-census, GRAPHICSSET, scene-plan and wall-plan probes now likewise
   require the selected corpus and fail an unreadable explicit selection.
+  **2026-08-07 corpus-selection follow-up:** the boot-profile hash-renaming
+  and live weather-frame regressions now also take real PC-DOS data only from
+  `FIRESTAFF_DM2_DATA_DIR`. They skip only when it is unset; an explicitly
+  selected root without the original pair is a test failure rather than a
+  hidden `HOME`-directory fallback.
   **2026-08-07 G1 material update:** DB4 scene/viewport and DB5/DB9 map-chip
   regressions now use only an explicit or selected corpus. Missing exact F9
   material remains fail-closed; do not substitute a neighbouring GDAT row.
