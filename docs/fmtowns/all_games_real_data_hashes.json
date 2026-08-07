@@ -1,0 +1,60 @@
+{
+    "version": 1,
+    "description": "Cross-game FM Towns hash manifest — DM1, CSB, DM2. Byte-verified reference for every source-locked module across the three Dungeon Master games on FM Towns.",
+    "provenance": "Extracted 2026-08-07 from local FM Towns disc archives under ~/.firestaff/data/{dm1,csb,dm2}. Track 01 MODE1/2352 CD image, stripped to ISO 9660 via 288-byte-per-sector header removal.",
+    "games": {
+        "dm1": {
+            "disc": "Dungeon Master (Japan) (En,Ja) (Rev 1).7z",
+            "publisher": "HMA-240 (Fujitsu)",
+            "year": 1992,
+            "files": [
+                { "path": "EDM.EXP",         "size": 310518, "sha256": "c888470d39aa449eac85438b598158492d2c981008cc6b427c52f2c73001ecb6" },
+                { "path": "JDM.EXP",         "size": 290221, "sha256": "1db4f049def0eef52a20a4758a1ce3e204f9f5a9ec04a57eef1245fdeede0bae" },
+                { "path": "TMENU.EXP",       "size": 235476, "sha256": "0ab2833cc47651dfe40b85bbd0881a433b22f75819a4df5bbb13fdd80aba7dc1" },
+                { "path": "DATA/GRAPHICS.DAT", "size": 396970, "sha256": "d08049d026d8810cfcf9e6a898968bc74df98a3255de1402cc3884e245e03487" },
+                { "path": "DATA/DUNGEON.DAT",  "size":  33423, "sha256": "3c744aa501211fc202586e8ccbed2a02783fd52453ce49c9951bfafc4d4bcc58" }
+            ]
+        },
+        "csb": {
+            "disc": "Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip",
+            "publisher": "Victor Entertainment",
+            "year": 1990,
+            "files": [
+                { "path": "CHTWE.EXP",        "size": 283936, "sha256": "7edbdd6f088eaa7a82afd8a78c5ae32c0b3be7e023d261419277ea588c183e0d" },
+                { "path": "CHTWJ.EXP",        "size": 284416, "sha256": "c2add7b7c152e1b7be50b407828807b7005bbd36e2b4b96dbc1dd51703d86da6" },
+                { "path": "SWITCHTW.EXP",     "size":  90456, "sha256": "8aee9553ce6827a97b972b1e8c6df373f1f36cf34d4fde280390d9d1fae6b020" },
+                { "path": "ANIMTW.EXP",       "size": 124161, "sha256": "92635f3d5d98df79aba14761ee0e5761d696ef31e8c5de0a263df4641d077388" },
+                { "path": "TMENU.EXP",        "size": 243212, "sha256": "902576b5ee48dba82ad62103079631e901bf11a5e588d615ae36c627d6cd7b7a" },
+                { "path": "UTILE.EXP",        "size": 152387, "sha256": "ca1d68453981f22e72f16247e2a097525350a8eda1c04224fe859d5fded1c073" },
+                { "path": "CDATA/GRAPHICS.DAT", "size": 402274, "sha256": "08cceb0c7003da3f286dc5805748f7e391a65f2ad85099c3d9adb49afc4cc723" },
+                { "path": "CDATA/DUNGEON.DAT",  "size":   2098, "sha256": "b9dbada2954a343edba05f5c0c1a58682db49261d7fb5da79d80f720271748ad" },
+                { "path": "CDATA/MINI.DAT",     "size":  42776, "sha256": "37dc4397408d59b58b573f250b6da997a387f9e15966c1993ca5ada87641fb43" }
+            ]
+        },
+        "dm2": {
+            "disc": "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip",
+            "publisher": "Victor Entertainment",
+            "year": 1993,
+            "files": [
+                { "path": "SKULL.EXP",        "size": 374416, "sha256": "068218bb31a7ed3700974394cbf11cb51c9a9da694511e748114b5dd7ee07671" },
+                { "path": "TWANIM.EXP",       "size":  72184, "sha256": "f82e5332694b25764c6f904b800e737dcba9bece6b851dbc90c80b0a6934e9cd" },
+                { "path": "DATA/GRAPHICS.DAT", "size": 2783791, "sha256": "634e70044d7ee8e845221b444c04061f0d9ff7c1493feb0f0426303f23733624" },
+                { "path": "DATA/DUNGEON.DAT",  "size":   37954, "sha256": "d1d608a1d59aaba683a381f52613fa42af5a4be61d287f56fa3a4cdd4d8234b4" },
+                { "path": "DATA/CD.DAT",       "size":      40, "sha256": "8352b17349219aa14f6bfb9dce8c459b5d602c7b71cb2c18a41dea088fa46783" }
+            ]
+        }
+    },
+    "usage_notes": {
+        "note": "Every byte-verified module across DM1, CSB, and DM2 source-locks against these hashes. Consumers export FIRESTAFF_{DM1,CSB,DM2}_FMTOWNS_DATA_DIR to run the real-data round-trip tests; without env vars set, those tests skip cleanly.",
+        "env_vars": {
+            "DM1 EDM": "FIRESTAFF_DM1_FMTOWNS_EDM_EXP",
+            "DM1 TMENU": "FIRESTAFF_DM1_FMTOWNS_TMENU_EXP",
+            "DM1 DATA/": "FIRESTAFF_DM1_FMTOWNS_DATA_DIR",
+            "CSB CHTWE": "FIRESTAFF_CSB_FMTOWNS_CHTWE_EXP",
+            "CSB TMENU": "FIRESTAFF_CSB_FMTOWNS_TMENU_EXP",
+            "CSB CDATA/": "FIRESTAFF_CSB_FMTOWNS_CDATA_DIR",
+            "DM2 SKULL": "FIRESTAFF_DM2_FMTOWNS_SKULL_EXP",
+            "DM2 DATA/": "FIRESTAFF_DM2_FMTOWNS_DATA_DIR"
+        }
+    }
+}
