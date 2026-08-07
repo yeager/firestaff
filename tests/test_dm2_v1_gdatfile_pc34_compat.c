@@ -688,11 +688,16 @@ static int test_read_graphics_structure_real_dm2_data(void)
            receipt.ulp_table_end == 11254u &&
            receipt.first_raw_offset == 11254u &&
            receipt.raw_data_end == 8639757u &&
+           receipt.allocator_table_length == (uint32_t)receipt.entries * 2u &&
+           receipt.allocator_table_initialized &&
+           state.allocator_table != NULL &&
+           state.allocator_table[0] == 0xffu &&
+           state.allocator_table[state.allocator_table_length - 1u] == 0xffu &&
            state.ulp_table != NULL && state.ulp_count == receipt.entries)) {
         return 0;
     }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
-           state.ulp_table == NULL;
+           state.ulp_table == NULL && state.allocator_table == NULL;
 }
 
 static int test_struct_sizes(void)

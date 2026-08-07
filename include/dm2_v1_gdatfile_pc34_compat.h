@@ -112,6 +112,11 @@ typedef struct DM2_V1_GdatFileState {
     uint8_t     *ulp_table;
     uint16_t     ulp_count;
     uint32_t     ulp_length;
+    /* Source bgdat.cpp:1063-1065 w_table2, initialized to NODATA before
+     * LOAD_ENT1 and retained by this bounded transaction. */
+    uint8_t     *allocator_table;
+    uint32_t     allocator_table_length;
+    uint32_t     allocation_length;
     uint32_t     first_entry_size;
     uint32_t     first_raw_offset;
     uint32_t     raw_data_end;
@@ -210,8 +215,10 @@ typedef struct DM2_V1_GdatReadStructureReceipt {
     uint32_t source_data_offset;
     uint32_t first_raw_offset;
     uint32_t raw_data_end;
+    uint32_t allocator_table_length;
     bool     header_validated;
     bool     ulp_validated;
+    bool     allocator_table_initialized;
     bool     endian_swapped;
 } DM2_V1_GdatReadStructureReceipt;
 

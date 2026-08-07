@@ -1,3 +1,14 @@
+# DM2 GDAT source allocator table lifetime (2026-08-07)
+
+- ✅ Extended the bounded `DM2_READ_GRAPHICS_STRUCTURE` transaction with the
+  source-initialized `w_table2` equivalent from `bgdat.cpp:1063-1065`.
+  It allocates `entries * 2` bytes, initializes every entry to `0xffff`,
+  retains it with ULP and releases the combined transaction atomically.
+- ✅ The PC-DOS GRAPHICS.DAT regression verifies all `5624 * 2` allocator
+  bytes and the existing 24-test GDAT suite remains green. ENT1 population,
+  decoded table consumers and the secondary-file transaction remain gated;
+  no release was made.
+
 # DM2 combat party minimum wound (2026-08-07)
 
 - ✅ Corrected the diagnostic `DM2_ATTACK_PARTY` seam to preserve the source

@@ -29852,6 +29852,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   PC-DOS file now verifies as 5/5624 entries, first ENT1 size `0x17284`, raw
   base/end `11254/8639757`. ENT1 materialization, allocator lifetime and the
   secondary-file transaction remain gated.
+  **2026-08-07 allocator-table progress:** the structure transaction now
+  retains the source-initialized `w_table2`-equivalent table (`entries * 2`
+  bytes, every word `0xffff`) alongside ULP and releases both together. The
+  real PC-DOS GRAPHICS.DAT receipt verifies the full `5624 * 2` table. The
+  later `LOAD_ENT1` population, decoded allocator tables and secondary-file
+  transaction remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

@@ -907,6 +907,8 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     uint8_t header[8];
     uint8_t *ulp = NULL;
     uint32_t ulp_length;
+    uint32_t allocator_table_length;
+    uint32_t allocation_length;
     uint32_t first_entry_size;
     uint32_t source_data_offset;
     uint32_t table_end;
@@ -961,10 +963,14 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     }
 
     ulp_length = (uint32_t)entries * 2u;
-    if (ulp_length < 2u) {
+    allocator_table_length = (uint32_t)entries * 2u;
+    if (ulp_length < 2u ||
+        allocator_table_length > UINT32_MAX - ulp_length ||
+        ulp_length + allocator_table_length > 0x7fffffffu) {
         goto fail;
     }
-    ulp = cb->alloc_memory(ctx, (int32_t)ulp_length, 0);
+    allocation_length = ulp_length + allocator_table_length;
+    ulp = cb->alloc_memory(ctx, (int32_t)allocation_length, 0);
     if (!ulp) {
         goto fail;
     }
@@ -1011,12 +1017,19 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         if (word > (uint32_t)state->filesize - raw_end) goto fail;
         raw_end += word;
     }
+    /* SKProject bgdat.cpp:1063-1065 allocates w_table2 and fills it with
+     * NODATA (0xffff) before LOAD_ENT1. Keep that source initialization in
+     * the same bounded allocation transaction as the ULP table. */
+    memset(ulp + ulp_length, 0xff, allocator_table_length);
     /* Retain the source ULP words for the following LOAD_ENT1/raw-data
      * transaction. The words stay in file byte order, as they do in the
      * source's dm2_ulp table; `big_endian` records how later users decode. */
     state->ulp_table = ulp;
     state->ulp_length = ulp_length;
     state->ulp_count = entries;
+    state->allocator_table = ulp + ulp_length;
+    state->allocator_table_length = allocator_table_length;
+    state->allocation_length = allocation_length;
     state->first_entry_size = first_entry_size;
     state->first_raw_offset = source_data_offset;
     state->raw_data_end = raw_end;
@@ -1029,17 +1042,24 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         out->source_data_offset = source_data_offset;
         out->first_raw_offset = source_data_offset;
         out->raw_data_end = raw_end;
+        out->allocator_table_length = allocator_table_length;
+        out->allocator_table_initialized = true;
     }
     ulp = NULL;
     dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     return 1;
 
 fail:
-    if (ulp) cb->dealloc_memory(ctx, (int32_t)ulp_length);
+    if (ulp) cb->dealloc_memory(ctx, (int32_t)allocation_length);
     if (state->ulp_table) {
-        cb->dealloc_memory(ctx, (int32_t)state->ulp_length);
+        cb->dealloc_memory(ctx, (int32_t)(state->allocation_length != 0u
+                                          ? state->allocation_length
+                                          : state->ulp_length));
         state->ulp_table = NULL;
     }
+    state->allocator_table = NULL;
+    state->allocator_table_length = 0u;
+    state->allocation_length = 0u;
     state->ulp_count = 0u;
     state->ulp_length = 0u;
     state->first_entry_size = 0u;
@@ -1059,8 +1079,13 @@ int dm2_v1_gdat_release_graphics_structure(
     if (!state) return 0;
     if (state->ulp_table) {
         if (!cb || !cb->dealloc_memory) return 0;
-        cb->dealloc_memory(ctx, (int32_t)state->ulp_length);
+        cb->dealloc_memory(ctx, (int32_t)(state->allocation_length != 0u
+                                          ? state->allocation_length
+                                          : state->ulp_length));
         state->ulp_table = NULL;
+        state->allocator_table = NULL;
+        state->allocator_table_length = 0u;
+        state->allocation_length = 0u;
         state->ulp_count = 0u;
         state->ulp_length = 0u;
         state->first_entry_size = 0u;
