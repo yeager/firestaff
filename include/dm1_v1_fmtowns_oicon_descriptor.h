@@ -30,9 +30,24 @@ extern "C" {
  */
 
 #define DM1_V1_FMTOWNS_OICON_KIND_COUNT   224
+#define DM1_V1_FMTOWNS_OICON_RECORD_BYTES   6
 
 extern const uint8_t
     dm1_v1_fmtowns_oicon_kind[DM1_V1_FMTOWNS_OICON_KIND_COUNT];
+
+/* Full 6-byte descriptor records at [0x224db..0x2500b] in EDM.EXP.
+ * Byte 0 is the KIND field (mirrored in dm1_v1_fmtowns_oicon_kind).
+ * Bytes 1..5 are the source-lifted classifier/atlas fields that
+ * DRAW_ICN_BUTTON, THING_ICON and LOAD_ICON reference at various
+ * offsets — this array preserves them byte-exact so downstream
+ * consumers can access any field without further disassembly. */
+extern const uint8_t dm1_v1_fmtowns_oicon_descriptor
+    [DM1_V1_FMTOWNS_OICON_KIND_COUNT][DM1_V1_FMTOWNS_OICON_RECORD_BYTES];
+
+/* Return a pointer to the 6-byte descriptor for `oicon_index`, or
+ * NULL if the index is out of range. Read-only view of the shipped
+ * table above. */
+const uint8_t *dm1_v1_fmtowns_oicon_descriptor_at_pc34(uint16_t oicon_index);
 
 /* Return the descriptor kind byte for `oicon_index`, or 0xff if the
  * index is out of range. The distinction between 0 (generic) and
