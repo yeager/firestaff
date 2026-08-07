@@ -25456,6 +25456,7 @@ endif()
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
         tests/csbwin_resume_fixture.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
     )
     target_link_libraries(test_m12_quick_resume_gate PRIVATE firestaff_m12)
     if(NOT MSVC)
@@ -27336,6 +27337,8 @@ endif()
     add_executable(test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat
         tests/test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat.c
         src/dm1/dm1_v1_mirror_candidate_double_open_close_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_icon_refresh_pc34_compat.c
+        src/dm1/dm1_v1_mirror_candidate_close_button_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)

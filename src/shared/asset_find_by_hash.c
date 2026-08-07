@@ -808,6 +808,10 @@ static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
     return 0;
 }
 
+/* These helpers are only called from the POSIX-only external-archive
+ * scan paths (#ifndef _WIN32 block around line 2963). Guard the
+ * definitions too so Windows -Werror=unused-function does not fire. */
+#ifndef _WIN32
 static int external_archive_entry_may_match_md5(const char *entryName,
                                                 const char *expectedMd5) {
     int track;
@@ -831,6 +835,7 @@ static int external_archive_entry_may_match_md5_list(
     return track == 2 && md5_list_contains_large_whole_file_hash(md5List,
                                                                    md5Count);
 }
+#endif
 
 static int md5_list_match_index(const char *hex, const char *const *md5List,
                                 const int *matched, int md5Count) {
