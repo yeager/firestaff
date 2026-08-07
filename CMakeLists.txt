@@ -4885,6 +4885,11 @@ list(REMOVE_ITEM M10_SOURCES
 # the fixture until the D0 wall path is connected to authenticated material.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat.c")
+# `dm1_v1_f0115_square_material_scheduler_pc34_compat.c` schedules caller
+# supplied material only and has no live M11 or authenticated-data owner.
+# Its direct tests retain the ReDMCSB ordering contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0115_square_material_scheduler_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
