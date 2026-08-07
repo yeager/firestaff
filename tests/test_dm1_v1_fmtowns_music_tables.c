@@ -66,6 +66,16 @@ static void test_player_color_and_spell_mult(void) {
     }
 }
 
+static void test_door_tables(void) {
+    static const uint16_t dp[8] = {0x07, 0x06, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e};
+    for (int i = 0; i < 8; ++i) assert(dm1_v1_fmtowns_door_pal[i] == dp[i]);
+    assert(dm1_v1_fmtowns_opnd_ldoor[0] == 0x00);
+    assert(dm1_v1_fmtowns_opnd_ldoor[1] == 100);
+    assert(dm1_v1_fmtowns_opnd_ldoor[3] == 160);
+    assert(dm1_v1_fmtowns_opnd_rdoor[0] == 109);
+    assert(dm1_v1_fmtowns_opnd_rdoor[1] == 231);
+}
+
 static void test_real_data_round_trip(void) {
     const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_EDM_EXP");
     FILE *fp;
@@ -130,6 +140,7 @@ int main(void) {
     test_spell_costs();
     test_level_song_lookup();
     test_player_color_and_spell_mult();
+    test_door_tables();
     test_real_data_round_trip();
     puts("All dm1_v1_fmtowns_music_tables tests passed.");
     return 0;

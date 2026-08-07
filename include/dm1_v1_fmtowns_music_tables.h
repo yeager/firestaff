@@ -77,6 +77,21 @@ uint16_t dm1_v1_fmtowns_level_song_for_level_pc34(unsigned int level);
 extern const uint8_t
     dm1_v1_fmtowns_player_color[DM1_V1_FMTOWNS_PLAYER_COLOR_COUNT];
 
+/* DOOR_PAL @ 0x28f40: 8 words = door palette indices used by the
+ * viewport door renderer.
+ * Byte-verified: 07 00 06 00 09 00 0a 00 0b 00 0c 00 0d 00 0e 00 */
+#define DM1_V1_FMTOWNS_DOOR_PAL_COUNT  8U
+extern const uint16_t
+    dm1_v1_fmtowns_door_pal[DM1_V1_FMTOWNS_DOOR_PAL_COUNT];
+
+/* OPND_LDOOR @ 0x28f70: 4 words = { 0, 100, 0, 160 } — left-door
+ * opened-position coordinates. */
+extern const uint16_t dm1_v1_fmtowns_opnd_ldoor[4];
+
+/* OPND_RDOOR @ 0x28f78: 4 words = { 109, 231, 0, 160 } — right-door
+ * opened-position coordinates. */
+extern const uint16_t dm1_v1_fmtowns_opnd_rdoor[4];
+
 /* SPELL_MULT @ 0x243a0: 8-byte per-spell-class multiplier that
  * modifies the base SPELL_COSTS look-up. Byte-verified head:
  * 08 0c 10 14 18 1c 00 00 (bytes 6-7 are 0 padding).
