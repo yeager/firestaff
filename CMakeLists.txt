@@ -6107,7 +6107,6 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_orchestrator_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_load_extra_dungeon_data_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_read_record_checkcode_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c")
 # The broad `c_gui_draw` callback transcription has no M11 caller and still
 # substitutes dimensions, coin placement and glyph/UI decisions for the

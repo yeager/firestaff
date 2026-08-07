@@ -59879,3 +59879,18 @@ companion.
   the unimplemented complete `DM2_READ_SKSAVE_DUNGEON` transaction.
 - ✅ Verified in place against all eight PC-DOS primary/backup saves:
   `test_dm2_v1_save_load_real_data` 151/151.
+# DM2 SKSAVE direct-root c_record pool owner (2026-08-13)
+
+- ✅ Added a source-owned direct-root transaction after the authenticated raw
+  DB baseline and `DM2_READ_SKSAVE_DUNGEON` DB-clear phase. The decoder now
+  allocates only from cleared DB4–DB15 pools, writes exact decoded record
+  bytes, follows source list/child-owner links, consumes the real possession
+  continuation stream, and emits root/count/hash receipt data.
+- ✅ The transaction passes the authenticated `CREATURES[type]` AI callback
+  through to the shared SUPPRESS decoder and restores the cleared baseline on
+  any decode/continuation failure. It does not claim champion, hand, tile or
+  runtime-session ownership yet.
+- ✅ The real-data SKSAVE test now exercises this pool owner when a corpus is
+  mounted and requires fail-closed behavior when the source AI mapping blocks;
+  the current workspace has no raw SKSAVE files, so the corpus test reports a
+  documented skip. Build and focused test target pass.

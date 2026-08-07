@@ -30317,3 +30317,12 @@ required before semantic promotion.
   face/mesh/texture decode, VDP2 tilemap/CLUT placement, HUD/viewport
   composition and SLEV/SAL/SDDRVS playback blocked until the live writer and
   consumer contract itself is decoded and source-owned.
+- **DM2 SKSAVE direct-root pool ownership:** The raw DB baseline and DB4–DB15
+  clear phase are now followed by source `READ_RECORD_CHECKCODE` allocation
+  into the authenticated c_record pools, including source list links,
+  child-owner fields, type-9/type-0xE continuation writes, and a hash/count
+  receipt. Remaining work is attaching the returned roots to champion/hand,
+  possession-index and tile-chain owners; failed decode restores the cleared
+  baseline and never publishes a session. The mounted workspace has no raw
+  SKSAVE corpus, so this positive path remains compile/test-gated until one is
+  supplied.

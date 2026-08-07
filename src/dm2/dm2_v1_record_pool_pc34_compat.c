@@ -42,6 +42,199 @@ static void dm2_v1_wr16(uint8_t *p, int16_t v)
     p[1] = (uint8_t)((u >> 8) & 0xffu);
 }
 
+/* The record-pool owner is also compiled by narrow G1 audit targets that do
+ * not link the optional SKSAVE decoder. Keep those targets linkable while a
+ * decoder-linked target resolves these weak fail-closed fallbacks with the
+ * source implementation. */
+__attribute__((weak)) void dm2_v1_read_record_session_init(
+    DM2_ReadRecordSession *session, const uint8_t *in_buf, size_t in_size)
+{
+    if (!session) return;
+    memset(session, 0, sizeof(*session));
+    session->in_buf = in_buf;
+    session->in_size = in_size;
+}
+
+__attribute__((weak)) int dm2_v1_read_record_checkcode(
+    DM2_ReadRecordSession *session, const DM2_ReadRecordCallbacks *cb,
+    uint16_t *owner_link, int map_x, int map_y, int read_sub_chain_info,
+    int follow_chain)
+{
+    (void)session; (void)cb; (void)owner_link; (void)map_x; (void)map_y;
+    (void)read_sub_chain_info; (void)follow_chain;
+    return -1;
+}
+
+__attribute__((weak)) int dm2_v1_read_possession_continuations(
+    DM2_SuppressReader *reader, const uint16_t *record_links,
+    size_t record_link_count,
+    const DM2_ReadPossessionContinuationCallbacks *cb)
+{
+    (void)reader; (void)record_links; (void)record_link_count; (void)cb;
+    return -1;
+}
+
+typedef struct {
+    DM2_V1_RecordPoolSet *set;
+    uint32_t record_hash;
+    uint32_t continuation_hash;
+    uint32_t record_count;
+    uint32_t continuation_count;
+    uint16_t record_links[4096];
+    DM2_ReadRecordCreatureAiFlagsFn ai_fn;
+    void *ai_ctx;
+} DM2_V1_SksavePoolRestoreContext;
+
+static uint32_t dm2_v1_sksave_hash_bytes(uint32_t hash,
+                                         const uint8_t *bytes, size_t size)
+{
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    DM2_V1_RecordPool *pool;
+    int index;
+
+    if (!ctx || !ctx->set || record_type < 4 || record_type >= 16) {
+        return 0xfffeu;
+    }
+    pool = &ctx->set->pools[record_type];
+    if (pool->record_size <= 0 || !pool->bytes) return 0xfffeu;
+    for (index = 0; index < pool->record_count; ++index) {
+        uint8_t *record = pool->bytes +
+            (size_t)index * (size_t)pool->record_size;
+        if (dm2_v1_rd16(record) == DM2_V1_RECORD_HANDLE_NULL) {
+            return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)index);
+        }
+    }
+    return 0xfffeu;
+}
+
+static int dm2_v1_sksave_pool_set_data(void *context, uint16_t record_link,
+                                       const uint8_t *data, size_t size)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    DM2_V1_RecordPool *pool;
+    uint8_t *record;
+    int type = dm2_v1_record_handle_pool((int16_t)record_link);
+    int index = dm2_v1_record_handle_index((int16_t)record_link);
+
+    if (!ctx || !ctx->set || !data || type < 4 || type >= 16) return -1;
+    pool = &ctx->set->pools[type];
+    if (index < 0 || index >= pool->record_count ||
+        size != (size_t)pool->record_size) return -1;
+    record = pool->bytes + (size_t)index * (size_t)pool->record_size;
+    memcpy(record, data, size);
+    if (ctx->record_count >= sizeof(ctx->record_links) /
+        sizeof(ctx->record_links[0])) return -1;
+    ctx->record_hash = dm2_v1_sksave_hash_bytes(
+        ctx->record_hash, (const uint8_t *)&record_link, sizeof(record_link));
+    ctx->record_hash = dm2_v1_sksave_hash_bytes(ctx->record_hash, data, size);
+    ctx->record_links[ctx->record_count] = record_link;
+    ++ctx->record_count;
+    return 0;
+}
+
+static int dm2_v1_sksave_pool_append(void *context, uint16_t new_link,
+                                     uint16_t *owner_link, int map_x, int map_y)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    uint16_t cursor;
+    unsigned int guard = 0u;
+
+    if (!ctx || !ctx->set || !owner_link || map_x != -1 || map_y != 0) {
+        return -1;
+    }
+    dm2_v1_wr16((uint8_t *)dm2_v1_record_pool_address_mut(
+                    ctx->set, (int16_t)new_link), DM2_V1_RECORD_HANDLE_END);
+    cursor = *owner_link;
+    if (cursor == (uint16_t)DM2_V1_RECORD_HANDLE_END) {
+        *owner_link = new_link;
+        return 0;
+    }
+    while (cursor != (uint16_t)DM2_V1_RECORD_HANDLE_END && guard++ < 1024u) {
+        uint8_t *record = dm2_v1_record_pool_address_mut(
+            ctx->set, (int16_t)cursor);
+        uint16_t next;
+        if (!record) return -1;
+        next = (uint16_t)dm2_v1_rd16(record);
+        if (next == (uint16_t)DM2_V1_RECORD_HANDLE_NULL) return -1;
+        if (next == (uint16_t)DM2_V1_RECORD_HANDLE_END) {
+            dm2_v1_wr16(record, (int16_t)new_link);
+            return 0;
+        }
+        cursor = next;
+    }
+    return -1;
+}
+
+static int dm2_v1_sksave_pool_child_owner(void *context, uint16_t record_link,
+                                          uint16_t **out_owner_link)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    uint8_t *record;
+    int type = dm2_v1_record_handle_pool((int16_t)record_link);
+
+    if (!ctx || !ctx->set || !out_owner_link || type < 4 || type >= 16) {
+        return -1;
+    }
+    record = dm2_v1_record_pool_address_mut(ctx->set, (int16_t)record_link);
+    if (!record || ctx->set->pools[type].record_size < 4) return -1;
+    *out_owner_link = (uint16_t *)(void *)(record + 2);
+    return 0;
+}
+
+static void dm2_v1_sksave_pool_add_possession(void *context,
+                                              uint16_t record_link)
+{
+    (void)context;
+    (void)record_link;
+}
+
+static int dm2_v1_sksave_pool_query_ai(void *context, uint16_t record_link,
+                                       uint8_t creature_type,
+                                       uint16_t *out_flags)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    if (!ctx || !ctx->ai_fn) return -1;
+    return ctx->ai_fn(ctx->ai_ctx, record_link, creature_type, out_flags);
+}
+
+static int dm2_v1_sksave_pool_set_continuation(void *context,
+                                               uint16_t record_link,
+                                               uint16_t continuation)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    uint8_t *record;
+
+    if (!ctx || !ctx->set) return -1;
+    record = dm2_v1_record_pool_address_mut(ctx->set, (int16_t)record_link);
+    if (!record || ctx->set->pools[dm2_v1_record_handle_pool(
+                       (int16_t)record_link)].record_size < 4) return -1;
+    dm2_v1_wr16(record + 2, (int16_t)continuation);
+    ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
+        ctx->continuation_hash, (const uint8_t *)&record_link,
+        sizeof(record_link));
+    ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
+        ctx->continuation_hash, (const uint8_t *)&continuation,
+        sizeof(continuation));
+    ++ctx->continuation_count;
+    return 0;
+}
+
 int dm2_v1_record_pool_record_size(int pool)
 {
     if (pool < 0 || pool >= DM2_V1_RECORD_POOL_COUNT) {
@@ -471,6 +664,104 @@ int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
             dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_NULL);
         }
     }
+    return 1;
+}
+
+int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+    DM2_V1_RecordPoolSet *set,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveDirectRootReceipt *out_receipt)
+{
+    DM2_V1_SksavePoolRestoreContext context;
+    DM2_ReadRecordCallbacks callbacks;
+    DM2_ReadRecordSession session;
+    DM2_ReadPossessionContinuationCallbacks continuation_callbacks;
+    uint16_t roots[DM2_V1_SKSAVE_DIRECT_ROOT_MAX];
+    size_t root_count;
+    size_t root;
+
+#define DM2_V1_SKSAVE_ROOT_ABORT() do { \
+        dm2_v1_record_pool_set_free(set); \
+        (void)dm2_v1_record_pool_set_init_from_raw_sksave( \
+            set, raw_body, raw_body_size, &state_receipt->dungeon); \
+        (void)dm2_v1_record_pool_clear_raw_sksave_dynamic_records( \
+            set, &state_receipt->dungeon); \
+    } while (0)
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!set || !set->valid || set->record_graph_complete != 0 ||
+        !raw_body || !state_receipt || !state_receipt->valid ||
+        !query_creature_ai_flags ||
+        state_receipt->record_link_bitstream_offset > raw_body_size ||
+        state_receipt->record_link_bitstream_bits_remaining > 7u) {
+        return 0;
+    }
+    root_count = (size_t)state_receipt->champion_count * 30u + 1u;
+    if (root_count == 0u || root_count > DM2_V1_SKSAVE_DIRECT_ROOT_MAX) {
+        return 0;
+    }
+
+    memset(&context, 0, sizeof(context));
+    context.set = set;
+    context.record_hash = 2166136261u;
+    context.continuation_hash = 2166136261u;
+    context.ai_fn = query_creature_ai_flags;
+    context.ai_ctx = query_creature_ai_flags_ctx;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.alloc_record = dm2_v1_sksave_pool_alloc;
+    callbacks.set_data = dm2_v1_sksave_pool_set_data;
+    callbacks.append_record = dm2_v1_sksave_pool_append;
+    callbacks.child_owner = dm2_v1_sksave_pool_child_owner;
+    callbacks.add_possession_index = dm2_v1_sksave_pool_add_possession;
+    callbacks.query_creature_ai_flags = dm2_v1_sksave_pool_query_ai;
+    callbacks.ctx = &context;
+
+    memset(&session, 0, sizeof(session));
+    dm2_v1_read_record_session_init(&session, raw_body, raw_body_size);
+    session.reader.position = state_receipt->record_link_bitstream_offset;
+    session.reader.bits_remaining =
+        state_receipt->record_link_bitstream_bits_remaining;
+    if (session.reader.bits_remaining != 0u) {
+        if (session.reader.position == 0u) { DM2_V1_SKSAVE_ROOT_ABORT(); return 0; }
+        session.reader.current_byte = (uint8_t)(
+            raw_body[session.reader.position - 1u] <<
+            (8u - session.reader.bits_remaining));
+    }
+    for (root = 0u; root < root_count; ++root) {
+        roots[root] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+        if (dm2_v1_read_record_checkcode(&session, &callbacks, &roots[root],
+                                         -1, 0, 0, 0) != 0 || session.error) {
+            DM2_V1_SKSAVE_ROOT_ABORT();
+            return 0;
+        }
+    }
+
+    memset(&continuation_callbacks, 0, sizeof(continuation_callbacks));
+    continuation_callbacks.set_continuation =
+        dm2_v1_sksave_pool_set_continuation;
+    continuation_callbacks.ctx = &context;
+    if (dm2_v1_read_possession_continuations(
+            &session.reader, context.record_links, context.record_count,
+            &continuation_callbacks) != 0) {
+        DM2_V1_SKSAVE_ROOT_ABORT();
+        return 0;
+    }
+
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->root_count = (uint16_t)root_count;
+        memcpy(out_receipt->roots, roots, root_count * sizeof(roots[0]));
+        out_receipt->record_count = context.record_count;
+        out_receipt->possession_continuation_count =
+            context.continuation_count;
+        out_receipt->record_hash = context.record_hash;
+        out_receipt->continuation_hash = context.continuation_hash;
+    }
+#undef DM2_V1_SKSAVE_ROOT_ABORT
     return 1;
 }
 

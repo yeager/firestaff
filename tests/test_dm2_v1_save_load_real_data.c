@@ -571,6 +571,36 @@ static int verify_real_raw_pool_baseline(
     return 1;
 }
 
+static int verify_real_pool_direct_roots(
+    const uint8_t *payload, size_t payload_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveDirectRootReceipt receipt;
+    int ok;
+
+    if (!payload || !state || !state->valid) return 0;
+    memset(&pools, 0, sizeof(pools));
+    if (!dm2_v1_record_pool_set_init_from_raw_sksave(
+            &pools, payload, payload_size, &state->dungeon) ||
+        !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+            &pools, &state->dungeon)) {
+        dm2_v1_record_pool_set_free(&pools);
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    ok = dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+        &pools, payload, payload_size, state,
+        inventory_query_creature_ai_flags, NULL, &receipt);
+    if (ok) {
+        ok = receipt.valid && receipt.root_count ==
+            (uint16_t)(state->champion_count * 30u + 1u) &&
+            receipt.record_hash != 0u;
+    }
+    dm2_v1_record_pool_set_free(&pools);
+    return ok;
+}
+
 /* A real raw SKSAVE can be decoded for diagnostics, but it must never publish
  * a partial GAME_LOAD state.  The sentinels are host control values only; the
  * candidate passed to the runtime is the unmodified original DOS payload. */
@@ -726,6 +756,14 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
         }
         CHECK(direct_root_result == 1,
               "real SKSave direct roots decode through source-owned AI rows");
+        CHECK(direct_root_result == 1 ?
+                  verify_real_pool_direct_roots(bytes + 42u,
+                                                byte_count - 42u,
+                                                &state_receipt) :
+                  !verify_real_pool_direct_roots(bytes + 42u,
+                                                 byte_count - 42u,
+                                                 &state_receipt),
+              "real SKSave direct roots use the authenticated c_record pool owner");
     }
     CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
           "real SKSave cannot publish a partial GAME_LOAD runtime state");

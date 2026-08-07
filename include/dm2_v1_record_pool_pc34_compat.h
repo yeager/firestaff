@@ -33,6 +33,7 @@
 
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +59,20 @@ typedef struct DM2_V1_RecordPoolSet {
     int valid;                  /* 1 only after a validated G1 population */
     int record_graph_complete;  /* mirrors the loader's graph state */
 } DM2_V1_RecordPoolSet;
+
+/* Receipt for the source-owned direct-root phase of READ_SKSAVE_DUNGEON.
+ * Root links are retained for the later champion/hand owner, while the
+ * record bytes and list links are written into the authenticated pools. */
+#define DM2_V1_SKSAVE_DIRECT_ROOT_MAX 121u
+typedef struct {
+    int valid;
+    uint16_t root_count;
+    uint16_t roots[DM2_V1_SKSAVE_DIRECT_ROOT_MAX];
+    uint32_t record_count;
+    uint32_t possession_continuation_count;
+    uint32_t record_hash;
+    uint32_t continuation_hash;
+} DM2_V1_SksaveDirectRootReceipt;
 
 /* Exact skproject table_recordsizes entry (bytes).  Returns 0 for the
  * unallocated DB11/DB12/DB13 pools and for out-of-range pool ids. */
@@ -172,6 +187,20 @@ int dm2_v1_record_pool_set_init_from_raw_sksave(
 int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
     DM2_V1_RecordPoolSet *set,
     const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt);
+
+/* Decode the source direct-root stream after the authenticated DB-clear
+ * phase. This is the production pool owner for SKProject's
+ * READ_RECORD_CHECKCODE roots; it does not attach tile roots or publish a
+ * playable session. `query_creature_ai_flags` must resolve the authenticated
+ * CREATURES[type] -> v1d296c source row, or the whole transaction fails. */
+int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+    DM2_V1_RecordPoolSet *set,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveDirectRootReceipt *out_receipt);
 
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set);
 
