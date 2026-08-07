@@ -4807,6 +4807,10 @@ list(REMOVE_ITEM M10_SOURCES
 # contract model. Its direct regression target compiles the source explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_empty_party_group_cleanup_pc34_compat.c")
+# `dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat.c` is a synthetic
+# contract fixture. Its direct regression target compiles the source.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
@@ -54663,7 +54667,9 @@ add_executable(test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_c
 target_include_directories(test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat COMMAND test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat)
-add_executable(test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat tests/test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat.c)
+add_executable(test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat
+    tests/test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat.c
+    src/dm1/dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat.c)
 target_include_directories(test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat COMMAND test_dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat)
