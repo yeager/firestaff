@@ -6254,6 +6254,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_pharlap_bridge.c
     src/dm1/dm1_v1_fmtowns_direct_io.c
     src/dm1/dm1_v1_fmtowns_edm_sym1.c
+    src/dm1/dm1_v1_fmtowns_music_tables.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56229,6 +56230,13 @@ add_executable(test_dm1_v1_fmtowns_edm_sym1
 )
 target_include_directories(test_dm1_v1_fmtowns_edm_sym1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_edm_sym1 COMMAND test_dm1_v1_fmtowns_edm_sym1)
+
+add_executable(test_dm1_v1_fmtowns_music_tables
+    tests/test_dm1_v1_fmtowns_music_tables.c
+    src/dm1/dm1_v1_fmtowns_music_tables.c
+)
+target_include_directories(test_dm1_v1_fmtowns_music_tables PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_music_tables COMMAND test_dm1_v1_fmtowns_music_tables)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
