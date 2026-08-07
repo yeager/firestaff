@@ -55,6 +55,23 @@ static int framebuffer_has_source_pixel(const unsigned char* framebuffer,
     return 0;
 }
 
+static int rect_is_color(const unsigned char* framebuffer,
+                         const DM1_V1_ChampionStatusRectPc34* rect,
+                         unsigned char color)
+{
+    int x;
+    int y;
+    if (!framebuffer || !rect) return 0;
+    for (y = 0; y < rect->h; ++y) {
+        for (x = 0; x < rect->w; ++x) {
+            if (framebuffer[(rect->y + y) * 320 + rect->x + x] != color) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 int main(void)
 {
     M11_GameViewState state;
@@ -79,7 +96,9 @@ int main(void)
         const M11_AssetSlot* poison;
         DM1_V1_ChampionStatusRectPc34 statusRect;
         DM1_V1_ChampionStatusRectPc34 poisonRect;
+        DM1_V1_ChampionStatusRectPc34 nameRect;
         int shieldGraphics[3] = {0, 0, 0};
+        unsigned char foreignFont[M11_FONT_BITMAP_BYTES];
 
         seed_status_state(&state);
         if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
@@ -88,6 +107,8 @@ int main(void)
             return 1;
         }
         state.assetsAvailable = 1;
+        snprintf(state.world.party.champions[0].name,
+                 sizeof(state.world.party.champions[0].name), "HISS");
         memset(baseline, 0, sizeof(baseline));
         M11_GameView_Draw(&state, baseline, 320, 200);
         state.world.magic.fireShieldDefense = 1;
@@ -121,6 +142,35 @@ int main(void)
         CHECK(framebuffer_has_source_pixel(augmented, poison,
                                            poisonRect.x, poisonRect.y),
               "F0292 presents C032 source pixels at C502");
+
+        /* F0292's C159 name strip and its F0053 glyphs have one M653 owner.
+         * A 768-byte payload with a foreign graphic identity must leave the
+         * already-cleared strip intact instead of rendering substitute text. */
+        M11_Font_Init(&state.originalFont);
+        CHECK(M11_Font_LoadFromGraphicsDat(&state.originalFont,
+                                           state.assetLoader.fileState,
+                                           state.assetLoader.runtimeState),
+              "PC34 M653 source font loads for status name");
+        state.originalFontAvailable = 1;
+        memset(baseline, 0, sizeof(baseline));
+        M11_GameView_Draw(&state, baseline, 320, 200);
+        CHECK(dm1_v1_champion_status_name_rect_pc34(0, &nameRect),
+              "F0292 resolves C159 status-name rectangle");
+        CHECK(!rect_is_color(baseline, &nameRect,
+                             (unsigned char)
+                                 dm1_v1_champion_status_name_clear_color_pc34()),
+              "M653 draws the source champion name");
+        memcpy(foreignFont, state.originalFont.bitmap, sizeof(foreignFont));
+        CHECK(M11_Font_LoadFromRawBitmap(&state.originalFont, 694,
+                                         foreignFont, sizeof(foreignFont)),
+              "foreign 768-byte status-font fixture loads");
+        state.originalFontAvailable = 1;
+        memset(augmented, 0, sizeof(augmented));
+        M11_GameView_Draw(&state, augmented, 320, 200);
+        CHECK(rect_is_color(augmented, &nameRect,
+                            (unsigned char)
+                                dm1_v1_champion_status_name_clear_color_pc34()),
+              "foreign font cannot draw the F0292 source name strip");
         M11_GameView_Shutdown(&state);
     }
 

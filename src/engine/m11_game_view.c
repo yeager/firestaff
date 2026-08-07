@@ -6049,7 +6049,9 @@ static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
     int charCount = 0;
     int drawX;
     if (!framebuffer || !g_activeOriginalFont ||
-        !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        !M11_Font_IsLoaded(g_activeOriginalFont) ||
+        (g_drawState && m11_is_dm1_source_kind(g_drawState->sourceKind) &&
+         !m11_dm1_pc34_hud_font_is_source_bound(g_drawState))) {
         return;
     }
     /* CHAMDRAW.C F0292 delegates the C159..C162 name strips to F0650,
