@@ -4103,6 +4103,11 @@ level or consumer bindings.
   regression now builds the authenticated real `GRAPHICSSET` scene-light
   receipt before testing either map branch, so dynamic rejection cannot depend
   on an uninitialized scene record.
+  **2026-08-13 formula correction:** the light helper now preserves
+  SKProject's `v1e0978 > 0x0c ? 1 : v1e0978` normalization before the final
+  clamp. A large caller value can no longer become an artificial light-level
+  delta; the complete live party/save/weather owner is still required for
+  dynamic-map admission.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

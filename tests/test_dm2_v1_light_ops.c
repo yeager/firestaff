@@ -76,6 +76,13 @@ static void test_recalc_light_level_source_branches(void)
     cb.v1e0978 = 2;
     dm2_v1_recalc_light_level_pc34(&cb, NULL);
     assert(g_light_level == 0);
+
+    /* SKProject sklight.cpp:186-190 normalizes a modifier above 0x0c to 1;
+     * it must not be subtracted as an arbitrary host-sized delta. */
+    g_map_tile_byte = 0x40;
+    cb.v1e0978 = 0x0d;
+    dm2_v1_recalc_light_level_pc34(&cb, NULL);
+    assert(g_light_level == 2);
     printf("  PASS: recalc_light_level follows source tile branches\n");
 }
 
