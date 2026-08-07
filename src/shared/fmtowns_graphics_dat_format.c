@@ -32,6 +32,16 @@ int fmtowns_graphics_dat_identify_pc34(
         out->header_size_bytes = 4 + (uint32_t)w1 * 4;
         return 1;
     }
+    if (w0 == 0x8005u) {
+        /* DM2 DOS ext_v5: byte-verified 2026-08-07 against the
+         * shipping DOS DM2 GRAPHICS.DAT (8 639 757 bytes, count
+         * 5624). Same 4-byte record stride as v4; per-record
+         * decode still open. */
+        out->format = FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V5;
+        out->record_size_bytes = 4;
+        out->header_size_bytes = 4 + (uint32_t)w1 * 4;
+        return 1;
+    }
     if (w0 == 0x8004u) {
         /* DM2 ext_v4: different per-record layout — {u16 size,
          * u16 flags/aux} per asset. Sum of primary sizes does NOT
@@ -53,7 +63,8 @@ uint16_t fmtowns_graphics_dat_expected_asset_count_pc34(
     switch (format) {
         case FMTOWNS_GRAPHICS_DAT_FORMAT_LEGACY: return 575;  /* DM1 */
         case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1: return 728;  /* CSB */
-        case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V4: return 3407; /* DM2 */
+        case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V4: return 3407; /* DM2 FM Towns */
+        case FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V5: return 5624; /* DM2 DOS */
         default: return 0;
     }
 }

@@ -43,7 +43,8 @@ typedef enum {
     FMTOWNS_GRAPHICS_DAT_FORMAT_UNKNOWN  = 0,
     FMTOWNS_GRAPHICS_DAT_FORMAT_LEGACY   = 1,   /* DM1 */
     FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V1   = 2,   /* CSB */
-    FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V4   = 3    /* DM2 */
+    FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V4   = 3,   /* DM2 FM Towns */
+    FMTOWNS_GRAPHICS_DAT_FORMAT_EXT_V5   = 4    /* DM2 DOS */
 } fmtowns_graphics_dat_format_t;
 
 typedef struct {
