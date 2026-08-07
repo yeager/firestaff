@@ -29,16 +29,10 @@ static void capture_play(void* context, int track,
 
 static const char* song_path(char* path, size_t pathSize)
 {
-    const char* explicitPath = getenv("FIRESTAFF_SONG_DAT");
-    const char* home = getenv("HOME");
-    FILE* file;
+    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
 
-    if (explicitPath && explicitPath[0]) return explicitPath;
-    if (!home || !home[0]) return NULL;
-    snprintf(path, pathSize, "%s/.firestaff/data/dm1/SONG.DAT", home);
-    file = fopen(path, "rb");
-    if (!file) return NULL;
-    fclose(file);
+    if (!root || !root[0]) return NULL;
+    snprintf(path, pathSize, "%s/SONG.DAT", root);
     return path;
 }
 
@@ -61,13 +55,12 @@ int main(void)
     if (dm1_v1_f0740_f0743_bind_song_dat_pc34(NULL, &source)) return 1;
     path = song_path(localPath, sizeof(localPath));
     if (!path) {
-        puts("SKIP: authenticated PC34 SONG.DAT not installed");
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
     }
     if (!dm1_v1_f0740_f0743_bind_song_dat_pc34(path, &source)) {
-        if (getenv("FIRESTAFF_SONG_DAT")) return 1;
-        puts("SKIP: local SONG.DAT is not the authenticated PC34 corpus");
-        return 0;
+        fputs("configured PC34 SONG.DAT is unavailable\n", stderr);
+        return 1;
     }
     dm1_v1_f0740_f0743_music_state_init_pc34(&state);
     if (!dm1_v1_f0742_set_map_track_pc34(&source, &state, 0, &receipt) ||
