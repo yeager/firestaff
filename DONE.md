@@ -59016,6 +59016,17 @@ matching PNG dimensions. The local PBR/GPT manifest now evaluates to
 `SYNTHETIC_PLACEHOLDER` with zero real slots; focused material, receipt and
 runtime-admission tests cover both source-derived promotion and the PBR
 negative case.
+
+# DM1 V2.2 PC34 source-art archive intake (2026-08-07)
+
+`build_dm1_v22_source_fsart.py` now reads `DATA/GRAPHICS.DAT` directly from
+the supplied `Dungeon-Master_DOS_EN_Version-34.zip` when no loose file is
+present. It keeps the original bytes in memory, records both archive and
+member SHA-256 values in the `.fsart` manifest, and handles the archive's
+historical slash-versus-backslash ZIP header mismatch while retaining CRC
+verification. A real five-record smoke build produced only
+`original_graphics_dat_10x_palette_expansion` entries from the canonical
+PC34 GRAPHICS.DAT hash.
 # Nexus relocated-code loader receipt (2026-08-07)
 
 - ✅ Added a bounded Mednafen SH-2 high-RAM write producer and validator.
