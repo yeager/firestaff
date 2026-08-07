@@ -2,7 +2,9 @@
 #define FIRESTAFF_DM2_V1_CREATURE_ANIMATION_GDAT_H
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_creature.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* SKProject's V5 GET_CREATURE_ANIMATION_FRAME path selects a command row
@@ -36,6 +38,13 @@ typedef struct {
     uint16_t query_index;
     uint32_t blended_value;
     uint8_t frame_bit14;
+    int cursor_owner_bound;
+    int cursor_static_owner;
+    int blocked_record_owner;
+    int blocked_caii_owner;
+    uint8_t caii_slot;
+    uint16_t cursor_w0;
+    uint16_t cursor_w2;
 } DM2_V1_CreatureAnimation0958Receipt;
 
 int dm2_v1_creature_animation_gdat_query_0958(
@@ -43,6 +52,22 @@ int dm2_v1_creature_animation_gdat_query_0958(
     int creature_type,
     uint16_t animation_base,
     uint16_t *io_timer_word,
+    uint32_t game_tick,
+    DM2_V1_CreatureAnimation0958Receipt *out_receipt);
+
+/* Source-owned DB4/CAII bridge for DM2_1c9a_0958.  This performs the
+ * SKProject `DM2_query_1c9a_02c3(record, aidef)` owner selection from
+ * c_querydb.cpp:2978-2990 before entering the bounded 0xfc reader above:
+ * static AIDefinition rows use DB4 +8, while live creatures use the
+ * authenticated CAII slot selected by DB4 byte@5, then +8.  Missing owner
+ * state is rejected rather than replaced with caller-filled cursor words. */
+int dm2_v1_creature_animation_gdat_query_0958_record(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t *creature_record,
+    size_t creature_record_size,
+    const DM2_AIDefinition *ai_spec,
+    uint8_t *caii_slots,
+    size_t caii_capacity,
     uint32_t game_tick,
     DM2_V1_CreatureAnimation0958Receipt *out_receipt);
 

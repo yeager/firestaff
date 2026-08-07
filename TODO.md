@@ -29712,6 +29712,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   rejects missing/out-of-range rows. The real PC-DOS `GRAPHICS.DAT` FB/FC/FD
   probe passes; the record/CAII owner is still required before runtime
   promotion.
+  **2026-08-07 cursor-owner progress:** the bounded `DM2_1c9a_0958` GDAT
+  query now binds `DM2_query_1c9a_02c3` to the actual DB4 `+8` cursor for
+  static AI rows and rejects live DB4 rows until their real CAII slot
+  (`record byte@5`, 34-byte stride, `+8`) is supplied. The mounted G1
+  DUNGEON/GRAPHICS corpus proves 10 source DB4 roots through the static
+  owner; no caller-filled animation base is admitted. Live CAII allocation,
+  command/frame mutation and runtime animation publication remain open.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

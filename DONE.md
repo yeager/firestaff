@@ -1,3 +1,16 @@
+# DM2 creature animation cursor owner (2026-08-07)
+
+- ✅ Bound the `DM2_1c9a_0958` GDAT reader to SKProject's real
+  `DM2_query_1c9a_02c3` owner selection: static AI rows read the DB4 record's
+  `+8` cursor, while live rows require the DB4-selected 34-byte CAII slot and
+  read its `+8` cursor. Missing CAII state fails closed instead of accepting
+  caller-filled animation bases.
+- ✅ The real PC-DOS G1 DUNGEON/GRAPHICS regression proves 10 DB4 creature
+  roots through the static cursor owner and the existing real FB/FC/FD route.
+  The runtime still does not publish live animation state until CAII
+  allocation, command/frame mutation and the complete runtime consumer are
+  connected. No release was made.
+
 # DM2 SKSAVE item-bonus source filter (2026-08-07)
 
 - ✅ Corrected `dm2_v1_retrieve_item_bonus()` to follow SKProject

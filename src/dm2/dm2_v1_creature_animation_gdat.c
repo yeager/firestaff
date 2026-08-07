@@ -83,6 +83,81 @@ int dm2_v1_creature_animation_gdat_query_0958(
     return 1;
 }
 
+int dm2_v1_creature_animation_gdat_query_0958_record(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t *creature_record,
+    size_t creature_record_size,
+    const DM2_AIDefinition *ai_spec,
+    uint8_t *caii_slots,
+    size_t caii_capacity,
+    uint32_t game_tick,
+    DM2_V1_CreatureAnimation0958Receipt *out_receipt)
+{
+    DM2_V1_CreatureAnimation0958Receipt receipt;
+    uint8_t *cursor;
+    uint8_t creature_type;
+    uint8_t slot_index = 0xffu;
+    uint16_t timer_word;
+    DM2_V1_CreatureAnimation0958Receipt gdat_receipt;
+    int is_static;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!creature_record || creature_record_size < 12u || !ai_spec) {
+        receipt.blocked_record_owner = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    creature_type = creature_record[4];
+    is_static = (ai_spec->w0AIFlags & DM2_AIFLAG_STATIC) != 0u;
+    if (is_static) {
+        /* c_querydb.cpp:2981-2983 — static AI points at the DB4 record. */
+        cursor = creature_record + 8u;
+        receipt.cursor_static_owner = 1;
+    } else {
+        /* c_querydb.cpp:2984-2990 — live creature AI points at
+         * creatures[record byte@5], whose stride is c_creature 0x22. */
+        slot_index = creature_record[5];
+        if (slot_index == 0xffu || !caii_slots ||
+            (size_t)slot_index >= caii_capacity) {
+            receipt.blocked_caii_owner = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        cursor = caii_slots + (size_t)slot_index * 34u + 8u;
+    }
+    receipt.cursor_owner_bound = 1;
+    receipt.caii_slot = slot_index;
+    receipt.cursor_w0 = (uint16_t)cursor[0] | ((uint16_t)cursor[1] << 8);
+    timer_word = (uint16_t)cursor[2] | ((uint16_t)cursor[3] << 8);
+    receipt.cursor_w2 = timer_word;
+    if (!dm2_v1_creature_animation_gdat_query_0958(
+            loader, creature_type, receipt.cursor_w0,
+            &timer_word, game_tick, &gdat_receipt)) {
+        gdat_receipt.cursor_owner_bound = receipt.cursor_owner_bound;
+        gdat_receipt.cursor_static_owner = receipt.cursor_static_owner;
+        gdat_receipt.blocked_record_owner = receipt.blocked_record_owner;
+        gdat_receipt.blocked_caii_owner = receipt.blocked_caii_owner;
+        gdat_receipt.caii_slot = receipt.caii_slot;
+        gdat_receipt.cursor_w0 = receipt.cursor_w0;
+        gdat_receipt.cursor_w2 = timer_word;
+        if (out_receipt) *out_receipt = gdat_receipt;
+        return 0;
+    }
+    cursor[2] = (uint8_t)(timer_word & 0xffu);
+    cursor[3] = (uint8_t)(timer_word >> 8);
+    gdat_receipt.cursor_owner_bound = receipt.cursor_owner_bound;
+    gdat_receipt.cursor_static_owner = receipt.cursor_static_owner;
+    gdat_receipt.blocked_record_owner = receipt.blocked_record_owner;
+    gdat_receipt.blocked_caii_owner = receipt.blocked_caii_owner;
+    gdat_receipt.caii_slot = receipt.caii_slot;
+    gdat_receipt.cursor_w0 = receipt.cursor_w0;
+    gdat_receipt.cursor_w2 = timer_word;
+    if (out_receipt) {
+        *out_receipt = gdat_receipt;
+    }
+    return 1;
+}
+
 int dm2_v1_creature_animation_gdat_select_dynamic_v5(
     const DM2_V1_AssetLoader *loader,
     int creature_type,

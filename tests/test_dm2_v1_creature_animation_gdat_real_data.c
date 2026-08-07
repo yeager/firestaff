@@ -3,6 +3,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_creature_animation_gdat.h"
+#include "dm2_v1_dungeon_loader.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,9 +41,13 @@ int main(void)
     char path[1100];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
+    uint8_t *dungeon_bytes = NULL;
+    size_t dungeon_size = 0u;
     DM2_V1_AssetLoader loader;
+    DM2_V1_DungeonData dungeon;
     int found = 0;
     int found_0958 = 0;
+    memset(&dungeon, 0, sizeof(dungeon));
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
@@ -181,6 +186,86 @@ int main(void)
               stderr);
         return 1;
     }
+
+    /* Bind DM2_query_1c9a_02c3 to real G1 DB4 roots.  Dynamic roots must
+     * stop at the absent CAII owner; they may not borrow the test's earlier
+     * caller-supplied animation_base.  Static roots, when present, use the
+     * DB4 +8 cursor directly. */
+    {
+        const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+        char dungeon_path[1100];
+        int roots = 0;
+        int dynamic_blocked = 0;
+        int static_bound = 0;
+        if (!root || !root[0]) {
+            fputs("FAIL: real-data root disappeared before DB4 cursor audit\n",
+                  stderr);
+            dm2_v1_asset_loader_free(&loader);
+            free(graphics);
+            return 1;
+        }
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+        if (!read_file(dungeon_path, &dungeon_bytes, &dungeon_size) ||
+            dm2_v1_dungeon_load(&dungeon, dungeon_bytes,
+                                (int)dungeon_size) != 0) {
+            fputs("FAIL: real DUNGEON.DAT was not accepted for DB4 cursor audit\n",
+                  stderr);
+            dm2_v1_asset_loader_free(&loader);
+            free(graphics);
+            free(dungeon_bytes);
+            return 1;
+        }
+        for (int map = 0; map < dungeon.level_count; ++map) {
+            for (int x = 0; x < dungeon.level_widths[map]; ++x) {
+                for (int y = 0; y < dungeon.level_heights[map]; ++y) {
+                    DM2_V1_G1DungeonSceneClassificationReceipt scene;
+                    const DM2_V1_G1DirectChainNode *node;
+                    uint8_t *record;
+                    const DM2_AIDefinition *ai;
+                    DM2_V1_CreatureAnimation0958Receipt receipt;
+                    int result;
+                    memset(&scene, 0, sizeof(scene));
+                    if (!dm2_v1_dungeon_classify_g1_direct_root_scene(
+                            &dungeon, map, x, y, &scene) ||
+                        scene.root_class != DM2_V1_G1_SCENE_ROOT_CREATURE ||
+                        scene.chain.node_count < 1) continue;
+                    node = &scene.chain.nodes[0];
+                    if (node->type != 4 || node->record_offset < 0 ||
+                        node->record_size < 12 ||
+                        node->record_offset + node->record_size >
+                            dungeon.raw_size) continue;
+                    record = dungeon.raw_data + node->record_offset;
+                    ai = dm2_v1_creature_ai_spec(record[4]);
+                    if (!ai) continue;
+                    ++roots;
+                    result = dm2_v1_creature_animation_gdat_query_0958_record(
+                        &loader, record, (size_t)node->record_size, ai,
+                        NULL, 0u, 0u, &receipt);
+                    if ((ai->w0AIFlags & DM2_AIFLAG_STATIC) != 0u) {
+                        if (receipt.cursor_owner_bound &&
+                            receipt.cursor_static_owner) ++static_bound;
+                    } else if (!result && receipt.blocked_caii_owner) {
+                        ++dynamic_blocked;
+                    }
+                }
+            }
+        }
+        if (roots == 0 || (dynamic_blocked == 0 && static_bound == 0)) {
+            fprintf(stderr,
+                    "FAIL: real DB4 cursor owner audit had no source-bound outcome "
+                    "(roots=%d dynamic_blocked=%d static_bound=%d)\n",
+                    roots, dynamic_blocked, static_bound);
+            dm2_v1_dungeon_free(&dungeon);
+            dm2_v1_asset_loader_free(&loader);
+            free(graphics);
+            free(dungeon_bytes);
+            return 1;
+        }
+        printf("PASS: real DB4 cursor owner audit (%d roots, %d CAII-gated, %d static)\n",
+               roots, dynamic_blocked, static_bound);
+        dm2_v1_dungeon_free(&dungeon);
+    }
+    free(dungeon_bytes);
     puts("PASS: canonical dynamic creature command resolves only through real FB/FC/FD GDAT tables");
     return 0;
 }
