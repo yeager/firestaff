@@ -55,11 +55,23 @@
       "text": "int16_t G0234_ai_Graphic559_DirectionToStepNorthCount[4] = {"
     }
   ],
-  "errors": [],
+  "errors": [
+    "missing Firestaff HUD source-lock text presentation-only in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text TIMELINE.C:F0260 in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text PANEL.C:F0354 in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text CHAMDRAW.C champion status boxes in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text COMMAND.C:461-482 in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text does not mutate dungeon, champion, or command runtime state in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text direction is a 0..3 logical value in dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text north compass needle in test_dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text clamp high to east in test_dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text active action flash strip in test_dm1_v2_hud_overlay_pc34.c",
+    "missing Firestaff HUD source-lock text cast-ready control in test_dm1_v2_hud_overlay_pc34.c"
+  ],
   "evidenceImpact": {
     "completionMatrixGap": "Phase 4 HUD/champion/action/rune presentation-state pixels are source-locked and CTest-gated; this does not prove finished art, live V1 transactions, or full Phase 4 parity.",
     "verifiedCompletionPercent": null
   },
   "scope": "dm1_v2_hud_overlay_pc34 presentation-only source-lock",
-  "status": "passed"
+  "status": "failed"
 }

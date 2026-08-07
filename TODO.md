@@ -7262,6 +7262,11 @@ that its exact runtime path is not already source-locked and tested.
     s_dm1_i34_creature_graphicInfo[27], s_dm1_i34_creature_aspect_index[27],
     s_dm1_i34_creature_attack_sound[27] tables. All G0243 fields now wired
     into orch_get_dm1_creature_info. 61+132 tests verify against ReDMCSB.
+    2026-08-07: G0219 firstDerivedBitmapIndex fixed — was using constant
+    stride 12 from base 495 (MEDIA007/ST). PC 3.4 (I34E/MEDIA721) uses
+    M539=762 and variable stride per creature (2 + 2*SIDE + 2*BACK +
+    2*ATTACK, from STARTUP2.C). Also removed ADDITIONAL*3 from derived
+    count (MEDIA548 excludes I34E). 90 tests verify against ReDMCSB.
 16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
     drop interaction from original data records. 2026-08-06: a real PC3.4
@@ -12345,4 +12350,5 @@ as line/circle coordinates or promote them into movement geometry.
     marker. This machine has Mednafen 1.32.1 but no local `sega_101.bin` or
     verified Nexus media, so no authentic trace or format-derived decoder was
     produced here.
+
 

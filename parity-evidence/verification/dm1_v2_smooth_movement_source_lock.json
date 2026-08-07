@@ -94,7 +94,14 @@
       ]
     }
   ],
-  "errors": [],
+  "errors": [
+    "missing Firestaff smooth-movement source-lock anchor 'test_camera_ticks_are_presentation_only' in tests/test_dm1_v2_movement_camera_pc34.c",
+    "missing Firestaff smooth-movement source-lock anchor 'COMMAND.C:2095-2100' in tests/test_dm1_v2_movement_camera_pc34.c",
+    "missing Firestaff smooth-movement source-lock anchor 'CLIKMENU.C:278-329' in tests/test_dm1_v2_movement_camera_pc34.c",
+    "missing Firestaff smooth-movement source-lock anchor 'MOVESENS.C:799-819' in tests/test_dm1_v2_movement_camera_pc34.c",
+    "missing Firestaff smooth-movement source-lock anchor 'GAMELOOP.C:69,90,124,150-155,215-219' in tests/test_dm1_v2_movement_camera_pc34.c",
+    "missing Firestaff smooth-movement source-lock anchor 'presentation-only' in src/dm1v2/dm1_v2_camera_controller_pc34.c"
+  ],
   "firestaffContract": {
     "cameraController": "interpolates copied logical/presentation state only",
     "movementAdapter": "starts camera interpolation after accepted runtime/source-style command mutation",
@@ -109,5 +116,5 @@
   "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.dm1_v2_smooth_movement_source_lock.v1",
   "scope": "DM1 V2 Phase 5 smooth movement presentation source-lock gate",
-  "status": "passed"
+  "status": "failed"
 }

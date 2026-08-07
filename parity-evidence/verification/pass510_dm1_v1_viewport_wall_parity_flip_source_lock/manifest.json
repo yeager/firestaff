@@ -9,27 +9,27 @@
     {
       "hits": [
         {
-          "line": 30089,
+          "line": 32476,
           "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
         },
         {
-          "line": 30099,
+          "line": 32486,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 30101,
+          "line": 32488,
           "needle": "return dm1_viewport_3d_use_flipped_walls_pc34("
         },
         {
-          "line": 30102,
+          "line": 32489,
           "needle": "state->world.party.mapX,"
         },
         {
-          "line": 30103,
+          "line": 32490,
           "needle": "state->world.party.mapY,"
         },
         {
-          "line": 30104,
+          "line": 32491,
           "needle": "state->world.party.direction);"
         }
       ],
@@ -38,7 +38,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "2297641127e412c33736e6ac93d92614c2f889a4e26104d54fc5369bd19f42cd",
+      "sha256": "1f7279ca9890666588632d50517e1b771a21d52bdab028e7056a32aa3b678c22",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
@@ -65,23 +65,23 @@
     {
       "hits": [
         {
-          "line": 30095,
+          "line": 32482,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 30097,
+          "line": 32484,
           "needle": "static int m11_current_map_wall_set(const M11_GameViewState* state,"
         },
         {
-          "line": 30175,
+          "line": 32562,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
         },
         {
-          "line": 30176,
+          "line": 32563,
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         },
         {
-          "line": 33665,
+          "line": 36174,
           "needle": "(int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         }
       ],
@@ -90,38 +90,38 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "2297641127e412c33736e6ac93d92614c2f889a4e26104d54fc5369bd19f42cd",
+      "sha256": "1f7279ca9890666588632d50517e1b771a21d52bdab028e7056a32aa3b678c22",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 30880,
+          "line": 33321,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 30885,
+          "line": 33326,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 30887,
+          "line": 33328,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 30893,
+          "line": 33334,
           "needle": "the native center-wall graphic flipped horizontally."
         },
         {
-          "line": 30894,
+          "line": 33335,
           "needle": "drawn = m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 30898,
+          "line": 33339,
           "needle": "} else {"
         },
         {
-          "line": 30899,
+          "line": 33340,
           "needle": "drawn = m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
@@ -130,7 +130,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "2297641127e412c33736e6ac93d92614c2f889a4e26104d54fc5369bd19f42cd",
+      "sha256": "1f7279ca9890666588632d50517e1b771a21d52bdab028e7056a32aa3b678c22",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
@@ -177,19 +177,19 @@
     {
       "hits": [
         {
-          "line": 32328,
+          "line": 34816,
           "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
         },
         {
-          "line": 32343,
+          "line": 34831,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 32380,
+          "line": 34868,
           "needle": "dm1_viewport_3d_build_side_wall_host_receipt_pc34("
         },
         {
-          "line": 32386,
+          "line": 34874,
           "needle": "(void)m11_draw_dm1_side_wall_host_receipt(state,"
         }
       ],
@@ -198,7 +198,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "2297641127e412c33736e6ac93d92614c2f889a4e26104d54fc5369bd19f42cd",
+      "sha256": "1f7279ca9890666588632d50517e1b771a21d52bdab028e7056a32aa3b678c22",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }

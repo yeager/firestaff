@@ -70,7 +70,7 @@
     },
     {
       "claim": "empty-party exception and group block seam.",
-      "source": "src/memory/memory_movement_pc34_compat.c:848"
+      "source": "src/memory/memory_movement_pc34_compat.c:849"
     },
     {
       "claim": "stamina/stairs/group/input-discard/timing command seam.",
@@ -82,7 +82,7 @@
     },
     {
       "claim": "source-ordered enter/leave sensor walking.",
-      "source": "src/memory/memory_sensor_execution_pc34_compat.c:426"
+      "source": "src/memory/memory_sensor_execution_pc34_compat.c:430"
     },
     {
       "claim": "covers queue gates, tile blockers, pits, and empty-party group bug.",
@@ -93,7 +93,7 @@
       "source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"
     }
   ],
-  "generatedAt": "2026-08-05T09:57:39.515101+00:00",
+  "generatedAt": "2026-08-07T13:41:36.055882+00:00",
   "lane": "Lane A movement/stairs/group-collision/timing only; no viewport/pass435 dependency",
   "redmcsbEvidence": [
     {

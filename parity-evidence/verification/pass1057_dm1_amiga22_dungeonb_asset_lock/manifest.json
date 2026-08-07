@@ -1,20 +1,18 @@
 {
   "coverage": {
-    "dm1_ready": 0,
+    "dm1_ready": 12,
     "ok": false,
     "returncode": 0,
     "row": {
       "game": "dm1",
-      "have_files": 0,
-      "in_registry": 0,
+      "have_files": 2,
+      "in_registry": 2,
       "need_files": 3,
       "notes": [
-        "missing GRAPHICS.DAT",
-        "missing DUNGEON.DAT",
-        "missing DUNGEONB.DAT"
+        "DUNGEONB.DAT -> raw extract needed (TBIOS.BIN)"
       ],
       "platform": "Amiga",
-      "status": "MISSING",
+      "status": "ARCHIVED",
       "variant": "2.2 English (kid)"
     },
     "stderr": ""
@@ -23,7 +21,7 @@
     "checklist_marks_amiga22_ready": true,
     "variants_bonus_mentions_amiga22_candidate": true
   },
-  "generated_at": "2026-08-05T15:37:53.416451+00:00",
+  "generated_at": "2026-08-07T13:40:20.289436+00:00",
   "local_asset": {
     "path": "/Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
     "reason": "missing /Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",

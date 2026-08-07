@@ -23,7 +23,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/build-dm1-wound-audit/test_dm1_v1_wound_probability_index_to_mask_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_wound_probability_index_to_mask_pc34_compat`: rc=0
 
 ## TODO
 
