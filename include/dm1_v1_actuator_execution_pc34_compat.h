@@ -21,8 +21,12 @@
  *   - PIT: toggle bit 3 (MASK0x0008_PIT_OPEN) of the square byte.
  *   - FAKEWALL: toggle between DUNGEON_ELEMENT_FAKEWALL and
  *     DUNGEON_ELEMENT_CORRIDOR by rewriting bits 7:5 of the square byte.
- *   - TELEPORTER: no square-byte mutation needed; teleporter activation
- *     is handled by movement pipeline on entry.
+ *   - WALL: toggle between DUNGEON_ELEMENT_WALL and DUNGEON_ELEMENT_CORRIDOR
+ *     by rewriting bits 7:5 of the square byte.
+ *   - TELEPORTER: toggle bit 3 (MASK0x0008) open/closed state, same bit
+ *     layout as PIT_OPEN.
+ *   - CORRIDOR: toggle between DUNGEON_ELEMENT_CORRIDOR and
+ *     DUNGEON_ELEMENT_FAKEWALL (same logic as FAKEWALL, from corridor side).
  */
 
 #include <stdint.h>

@@ -1,3 +1,11 @@
+# Firestaff v3.0.295
+
+## Fixed
+
+- DM1 actuator dispatch now handles all six ReDMCSB target square types: DOOR, PIT, FAKEWALL (existing), plus WALL (wall↔corridor element toggle via bits 7:5), TELEPORTER (bit 3 open/closed toggle), and CORRIDOR (corridor↔fakewall, same logic as FAKEWALL from corridor side). Previously sensors targeting wall, teleporter, or corridor squares silently returned 0, breaking any dungeon puzzles that used those actuator effects. 26 tests pass (was 18).
+
+---
+
 # Firestaff v3.0.294
 
 ## Added

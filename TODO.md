@@ -6816,6 +6816,11 @@ that its exact runtime path is not already source-locked and tested.
    common-word SET/CLEAR/TOGGLE/HOLD field (HOLD resolves to SET on walk-on)
    instead of forcing a synthetic TOGGLE. Runtime generator and broader
    actuator ownership remain open.
+   2026-08-07: Actuator dispatch now handles all six target square types.
+   Previously only DOOR, PIT, FAKEWALL were dispatched; WALL (wall↔corridor
+   element toggle), TELEPORTER (bit 3 open/closed), and CORRIDOR (corridor↔
+   fakewall, same logic as FAKEWALL from corridor side) were silently dropped.
+   26 tests pass (was 18). Remaining: runtime generator ownership.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported

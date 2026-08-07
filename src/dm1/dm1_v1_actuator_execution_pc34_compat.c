@@ -6,7 +6,8 @@
  *
  * Consumes SensorActuatorDispatch_Compat from the sensor trigger chain
  * and mutates dungeon square bytes to open/close doors, toggle pits,
- * and flip fakewalls.
+ * flip fakewalls, toggle walls, activate/deactivate teleporters,
+ * and mutate corridors.
  */
 
 #include "dm1_v1_actuator_execution_pc34_compat.h"
@@ -122,6 +123,77 @@ static int execute_fakewall(
     return 1;
 }
 
+/* ReDMCSB MOVESENS.C F0268: wall squares toggle between WALL and CORRIDOR
+ * element types via bits 7:5 of the square byte. */
+static int execute_wall(
+    const struct SensorActuatorDispatch_Compat* dispatch,
+    struct DungeonMapTiles_Compat* tiles,
+    int idx,
+    struct Dm1V1ActuatorResult* out)
+{
+    unsigned char sq = tiles->squareData[idx];
+    int oldElement = dm1_v1_actuator_read_element(sq);
+    int newElement = oldElement;
+
+    switch (dispatch->action) {
+    case DM1_ACTUATOR_ACTION_OPEN:
+        newElement = DUNGEON_ELEMENT_CORRIDOR;
+        break;
+    case DM1_ACTUATOR_ACTION_CLOSE:
+        newElement = DUNGEON_ELEMENT_WALL;
+        break;
+    case DM1_ACTUATOR_ACTION_TOGGLE:
+        newElement = (oldElement == DUNGEON_ELEMENT_WALL)
+            ? DUNGEON_ELEMENT_CORRIDOR : DUNGEON_ELEMENT_WALL;
+        break;
+    default:
+        return 0;
+    }
+
+    tiles->squareData[idx] = dm1_v1_actuator_write_element(sq, newElement);
+
+    out->applied = 1;
+    out->previousState = oldElement;
+    out->newState = newElement;
+    out->animationNeeded = 0;
+    return 1;
+}
+
+/* ReDMCSB MOVESENS.C F0268: teleporter squares use bit 3 (same as
+ * MASK0x0008_PIT_OPEN) to toggle open/closed state. */
+static int execute_teleporter(
+    const struct SensorActuatorDispatch_Compat* dispatch,
+    struct DungeonMapTiles_Compat* tiles,
+    int idx,
+    struct Dm1V1ActuatorResult* out)
+{
+    unsigned char sq = tiles->squareData[idx];
+    int oldOpen = dm1_v1_actuator_read_pit_open(sq);
+    int newOpen = oldOpen;
+
+    switch (dispatch->action) {
+    case DM1_ACTUATOR_ACTION_OPEN:
+        newOpen = 1;
+        break;
+    case DM1_ACTUATOR_ACTION_CLOSE:
+        newOpen = 0;
+        break;
+    case DM1_ACTUATOR_ACTION_TOGGLE:
+        newOpen = !oldOpen;
+        break;
+    default:
+        return 0;
+    }
+
+    tiles->squareData[idx] = dm1_v1_actuator_write_pit_open(sq, newOpen);
+
+    out->applied = 1;
+    out->previousState = oldOpen;
+    out->newState = newOpen;
+    out->animationNeeded = 0;
+    return 1;
+}
+
 int dm1_v1_actuator_execute_dispatch_pc34(
     const struct SensorActuatorDispatch_Compat* dispatch,
     struct DungeonMapTiles_Compat* tiles,
@@ -156,6 +228,15 @@ int dm1_v1_actuator_execute_dispatch_pc34(
         return execute_pit(dispatch, tiles, idx, outResult);
 
     if (dispatch->actuatorKindMask & DM1_ACTUATOR_KIND_FAKEWALL)
+        return execute_fakewall(dispatch, tiles, idx, outResult);
+
+    if (dispatch->actuatorKindMask & DM1_ACTUATOR_KIND_WALL)
+        return execute_wall(dispatch, tiles, idx, outResult);
+
+    if (dispatch->actuatorKindMask & DM1_ACTUATOR_KIND_TELEPORTER)
+        return execute_teleporter(dispatch, tiles, idx, outResult);
+
+    if (dispatch->actuatorKindMask & DM1_ACTUATOR_KIND_CORRIDOR)
         return execute_fakewall(dispatch, tiles, idx, outResult);
 
     return 0;
@@ -204,5 +285,9 @@ const char* dm1_v1_actuator_execution_source_evidence_pc34(void)
            "(bits 2:0), MASK0x0008_PIT_OPEN (bit 3), M034_SQUARE_TYPE "
            "(bits 7:5). Actuator dispatch consumes "
            "SensorActuatorDispatch_Compat from sensor trigger chain and "
-           "mutates dungeon square bytes.";
+           "mutates dungeon square bytes. All six target square types "
+           "handled: DOOR (state bits 2:0), PIT (bit 3), FAKEWALL "
+           "(element bits 7:5), WALL (element bits 7:5 wall<->corridor), "
+           "TELEPORTER (bit 3 open/closed), CORRIDOR (element bits 7:5 "
+           "corridor<->fakewall).";
 }

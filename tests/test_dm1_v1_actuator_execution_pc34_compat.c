@@ -2,7 +2,8 @@
  * Tests for DM1 V1 Actuator Execution — pc34 compat layer.
  *
  * Verifies that SensorActuatorDispatch_Compat is correctly consumed to
- * mutate dungeon square bytes for doors, pits, and fakewalls.
+ * mutate dungeon square bytes for doors, pits, fakewalls, walls,
+ * teleporters, and corridors.
  */
 
 #include "dm1_v1_actuator_execution_pc34_compat.h"
@@ -294,6 +295,167 @@ static void test_fakewall_toggle(void)
     printf("  PASS test_fakewall_toggle\n");
 }
 
+/* ---- Wall actuator tests ---- */
+
+static void test_wall_open(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char wallSquare = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    setup_tiles(&tiles, data, 4, 4, 1, 1, wallSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(1, 1, DM1_ACTUATOR_KIND_WALL, DM1_ACTUATOR_ACTION_OPEN);
+
+    struct Dm1V1ActuatorResult result;
+    int ok = dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+
+    assert(ok == 1);
+    assert(result.applied == 1);
+    assert(result.previousState == DUNGEON_ELEMENT_WALL);
+    assert(result.newState == DUNGEON_ELEMENT_CORRIDOR);
+    assert(dm1_v1_actuator_read_element(data[1 * 4 + 1]) == DUNGEON_ELEMENT_CORRIDOR);
+    printf("  PASS test_wall_open\n");
+}
+
+static void test_wall_close(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char corrSquare = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    setup_tiles(&tiles, data, 4, 4, 1, 1, corrSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(1, 1, DM1_ACTUATOR_KIND_WALL, DM1_ACTUATOR_ACTION_CLOSE);
+
+    struct Dm1V1ActuatorResult result;
+    int ok = dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+
+    assert(ok == 1);
+    assert(result.newState == DUNGEON_ELEMENT_WALL);
+    assert(dm1_v1_actuator_read_element(data[1 * 4 + 1]) == DUNGEON_ELEMENT_WALL);
+    printf("  PASS test_wall_close\n");
+}
+
+static void test_wall_toggle(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char wallSquare = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    setup_tiles(&tiles, data, 4, 4, 0, 0, wallSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(0, 0, DM1_ACTUATOR_KIND_WALL, DM1_ACTUATOR_ACTION_TOGGLE);
+
+    struct Dm1V1ActuatorResult result;
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+    assert(result.newState == DUNGEON_ELEMENT_CORRIDOR);
+
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+    assert(result.newState == DUNGEON_ELEMENT_WALL);
+    printf("  PASS test_wall_toggle\n");
+}
+
+/* ---- Teleporter actuator tests ---- */
+
+static void test_teleporter_open(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char teleSquare = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    setup_tiles(&tiles, data, 4, 4, 2, 0, teleSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(2, 0, DM1_ACTUATOR_KIND_TELEPORTER, DM1_ACTUATOR_ACTION_OPEN);
+
+    struct Dm1V1ActuatorResult result;
+    int ok = dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+
+    assert(ok == 1);
+    assert(result.applied == 1);
+    assert(result.previousState == 0);
+    assert(result.newState == 1);
+    assert(dm1_v1_actuator_read_pit_open(data[2 * 4 + 0]) == 1);
+    printf("  PASS test_teleporter_open\n");
+}
+
+static void test_teleporter_close(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char teleSquare = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x08);
+    setup_tiles(&tiles, data, 4, 4, 2, 0, teleSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(2, 0, DM1_ACTUATOR_KIND_TELEPORTER, DM1_ACTUATOR_ACTION_CLOSE);
+
+    struct Dm1V1ActuatorResult result;
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+
+    assert(result.previousState == 1);
+    assert(result.newState == 0);
+    printf("  PASS test_teleporter_close\n");
+}
+
+static void test_teleporter_toggle(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char teleSquare = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    setup_tiles(&tiles, data, 4, 4, 0, 0, teleSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(0, 0, DM1_ACTUATOR_KIND_TELEPORTER, DM1_ACTUATOR_ACTION_TOGGLE);
+
+    struct Dm1V1ActuatorResult result;
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+    assert(result.newState == 1);
+
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+    assert(result.newState == 0);
+    printf("  PASS test_teleporter_toggle\n");
+}
+
+/* ---- Corridor actuator tests ---- */
+
+static void test_corridor_close(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char corrSquare = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    setup_tiles(&tiles, data, 4, 4, 1, 1, corrSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(1, 1, DM1_ACTUATOR_KIND_CORRIDOR, DM1_ACTUATOR_ACTION_CLOSE);
+
+    struct Dm1V1ActuatorResult result;
+    int ok = dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+
+    assert(ok == 1);
+    assert(result.newState == DUNGEON_ELEMENT_FAKEWALL);
+    assert(dm1_v1_actuator_read_element(data[1 * 4 + 1]) == DUNGEON_ELEMENT_FAKEWALL);
+    printf("  PASS test_corridor_close\n");
+}
+
+static void test_corridor_toggle(void)
+{
+    unsigned char data[16];
+    struct DungeonMapTiles_Compat tiles;
+    unsigned char corrSquare = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    setup_tiles(&tiles, data, 4, 4, 0, 0, corrSquare);
+
+    struct SensorActuatorDispatch_Compat dispatch =
+        make_dispatch(0, 0, DM1_ACTUATOR_KIND_CORRIDOR, DM1_ACTUATOR_ACTION_TOGGLE);
+
+    struct Dm1V1ActuatorResult result;
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+    assert(result.newState == DUNGEON_ELEMENT_FAKEWALL);
+
+    dm1_v1_actuator_execute_dispatch_pc34(&dispatch, &tiles, 4, 4, &result);
+    assert(result.newState == DUNGEON_ELEMENT_CORRIDOR);
+    printf("  PASS test_corridor_toggle\n");
+}
+
 /* ---- Safety tests ---- */
 
 static void test_null_args(void)
@@ -388,12 +550,20 @@ int main(void)
     test_pit_toggle();
     test_fakewall_open();
     test_fakewall_toggle();
+    test_wall_open();
+    test_wall_close();
+    test_wall_toggle();
+    test_teleporter_open();
+    test_teleporter_close();
+    test_teleporter_toggle();
+    test_corridor_close();
+    test_corridor_toggle();
     test_null_args();
     test_invalid_dispatch();
     test_out_of_bounds();
     test_preserves_other_bits();
     test_source_evidence();
 
-    printf("All 18 actuator execution tests passed.\n");
+    printf("All 26 actuator execution tests passed.\n");
     return 0;
 }
