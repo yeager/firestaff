@@ -4394,6 +4394,9 @@ level or consumer bindings.
   overlay cannot become a standalone host-text owner. The callback `c_0aaf`
   menu/rectangle audit remains test-only until its complete live M11 bridge is
   imported.
+  **2026-08-07 real-data tightening:** the mounted PC-DOS viewport regression
+  now requires both non-zero raw source-text hashes in addition to the
+  displayed `SAVE`/`CANCEL` labels.
 
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material

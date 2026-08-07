@@ -58590,3 +58590,9 @@ alcove runtime and archive-media tests passed (4/4).
   100-row receipt contains real shared-RAM/driver reads, but no mailbox read
   at `0x100400..0x100401` and no `0x3224`-filtered read; SLEV/SAL semantics
   and host playback therefore remain fail-closed.
+
+# DM2 dialogue raw-text provenance (2026-08-07)
+
+- ✅ Tightened the mounted PC-DOS save/load dialogue regression so both
+  displayed labels (`SAVE`, `CANCEL`) also require their independent raw
+  GDAT source-text hashes.

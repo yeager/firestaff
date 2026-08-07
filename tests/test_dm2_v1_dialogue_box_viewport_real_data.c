@@ -176,6 +176,8 @@ int main(void)
         strcmp((const char *)open_panel.draw.version_text, "V1.0") != 0 ||
         strcmp((const char *)open_panel.draw.text[0], "SAVE") != 0 ||
         strcmp((const char *)open_panel.draw.text[1], "CANCEL") != 0 ||
+        open_panel.draw.source_text_hash[0] == 0u ||
+        open_panel.draw.source_text_hash[1] == 0u ||
         open_panel.version_text_rect.w <= 0 ||
         open_panel.primary_text_rect.w <= 0 ||
         open_panel.secondary_text_rect.w <= 0 ||
