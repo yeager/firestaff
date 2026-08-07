@@ -18842,8 +18842,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                  * first-match cache would then make the boot detector see
                  * PC34 bytes rather than the selected Amiga package.
                  * ReDMCSB COMPILE.H 199-243 separates these media families. */
-                if (version->versionId &&
-                    strstr(version->matchedPath, "::") != NULL) {
+                if (version->versionId) {
                     if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                             &menuState->assetStatus, version->versionId,
                             selectedCsbRuntimeDataDir,

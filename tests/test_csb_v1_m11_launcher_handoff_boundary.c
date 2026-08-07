@@ -1679,11 +1679,21 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         M12_PRESENTATION_V22_MODERN
     };
     const char *data_dir = getenv("FIRESTAFF_CSB_ATARI_ST_ROOT");
+    const char *mode_text = getenv("FIRESTAFF_CSB_ATARI_ST_PRESENTATION_MODE");
+    int requested_only = -1;
     size_t mode_index;
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("FIRESTAFF_CSB_ATARI_ST_ROOT is unset; no Atari ST package");
         return;
+    }
+    if (mode_text && mode_text[0]) {
+        requested_only = atoi(mode_text);
+        if (requested_only < M12_PRESENTATION_V1_ORIGINAL ||
+            requested_only > M12_PRESENTATION_V22_MODERN) {
+            expect_skip("FIRESTAFF_CSB_ATARI_ST_PRESENTATION_MODE is invalid");
+            return;
+        }
     }
     for (mode_index = 0u;
          mode_index < sizeof(requested_modes) / sizeof(requested_modes[0]);
@@ -1699,6 +1709,8 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         int runtime_hud_pixels_visible = 0;
         int runtime_viewport_pixels_visible = 0;
 
+        if (requested_only >= 0 && requested != requested_only) continue;
+
         init_menu_without_gallery(&menu, data_dir, "csb");
         dismiss_initial_message(&menu);
         if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "csb")) {
@@ -1709,6 +1721,17 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         menu.selectedIndex = 1;
         menu.activatedIndex = 1;
         menu.launchRequested = 1;
+        {
+            const int atari_version = M12_AssetStatus_FindVersionIndex(
+                "csb", "st20-21-en");
+            expect_true(atari_version >= 0,
+                        "M12 exposes the Atari ST 2.0/2.1 version picker entry");
+            if (atari_version < 0) {
+                M12_StartupMenu_Destroy(&menu);
+                continue;
+            }
+            menu.gameOptions[1].versionIndex = atari_version;
+        }
         menu.settings.graphicsIndex = requested;
         menu.gameOptions[1].presentationModeIndex = requested;
         csb_v2_presentation_mode_set_m12(requested);
@@ -1725,6 +1748,16 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         M11_GameView_Init(&view);
         expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                     "M11 opens the Atari ST CSB package through M12");
+        {
+            const CSB_V1_BootProfile *profile =
+                (const CSB_V1_BootProfile *)view.csbBootProfile;
+            expect_true(profile != NULL &&
+                            (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                             profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+                            strstr(profile->graphics_path,
+                                   "csb-st20-21-en/GRAPHICS.DAT") != NULL,
+                        "M11 uses the M12-selected Atari ST package cache");
+        }
         for (tick = 0; tick < 800 && view.csbState.startup_title_active;
              ++tick) {
             const unsigned int expected_vbl =

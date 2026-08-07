@@ -1,3 +1,13 @@
+# CSB selected-package cache handoff (2026-08-07)
+
+- ✅ M12 now materializes every explicitly selected CSB version into its own
+  authenticated runtime cache, not only archive-backed selections. This keeps
+  a directory-backed Atari ST, Amiga or PC choice from silently booting the
+  scanner's generic first-match cache.
+- ✅ The Atari launcher regression now selects `st20-21-en` explicitly and
+  verifies that M11 receives its private `csb-st20-21-en/GRAPHICS.DAT` path.
+  Verification: the default M12→M11 handoff boundary passes with dummy audio.
+
 # DM2 GDAT LOAD_ENT1 field layout (2026-08-07)
 
 - ✅ Retained the source-derived byte offset and size for every ENT1
@@ -923,7 +933,6 @@
 - ✅ Removed the fabricated C160/C161 party/champion fixture from M10 and made
   its direct regression compile the source explicitly. It loads no original
   DM1 data and has no M11/runtime caller.
-
 # DM1 mirror keyboard-rotation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only command-queue fixture from M10 and made its
