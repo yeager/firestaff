@@ -101,9 +101,8 @@ static const unsigned char AttackSize_ToExplosionAttack[3] = {
 /* ==========================================================
  *  Group A — RNG (F0730–F0732).
  *
- *  Pure 32-bit LCG. See PHASE13_PLAN.md §4.6 + Risk R7: we do not
- *  claim bit-for-bit agreement with Borland rand(); determinism
- *  relative to our own seed is the contract.
+ *  DM1 PC 3.4 LCG matching ReDMCSB CEDT002.C F0027 / BASE.C.
+ *  Multiplier 0xBB40E62D, increment 11, extract (seed>>8)&0xFFFF.
  * ========================================================== */
 
 int F0730_COMBAT_RngInit_Compat(
@@ -119,7 +118,7 @@ uint32_t F0731_COMBAT_RngNextRaw_Compat(
     struct RngState_Compat* rng)
 {
     if (rng == 0) return 0;
-    rng->seed = rng->seed * 1103515245u + 12345u;
+    rng->seed = rng->seed * UINT32_C(0xBB40E62D) + UINT32_C(11);
     return rng->seed;
 }
 
@@ -132,7 +131,7 @@ int F0732_COMBAT_RngRandom_Compat(
     if (rng == 0) return 0;
     if (modulus <= 0) return 0;          /* NOTE: does not advance state (Invariant 16). */
     raw = F0731_COMBAT_RngNextRaw_Compat(rng);
-    shifted = (raw >> 16) & 0x7FFF;
+    shifted = (raw >> 8) & 0xFFFF;
     return (int)(shifted % (uint32_t)modulus);
 }
 

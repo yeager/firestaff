@@ -1,12 +1,10 @@
 /*
  * test_dm1_v1_combat_f0730_f0731_f0732_rng_primitives_pc34_compat.c
  *
- * Source-locked to ReDMCSB COMBAT.C F0730_COMBAT_RngInit +
- * F0731_COMBAT_RngNextRaw + F0732_COMBAT_RngRandom.
- *
- * These are the combat-RNG primitives.  F0731 is a linear
- * congruential generator (LCG): seed = seed * 1103515245 + 12345.
- * F0732 advances the LCG and returns (raw >> 16) & 0x7FFF mod n.
+ * Source-locked to ReDMCSB CEDT002.C F0027 / BASE.C — DM1 PC 3.4 LCG.
+ * F0731 is a linear congruential generator:
+ *   seed = seed * 0xBB40E62D + 11
+ * F0732 advances the LCG and returns (raw >> 8) & 0xFFFF mod n.
  *
  * Pins the F0730/F0731/F0732 contract:
  *  T1  F0730 NULL rng returns 0
@@ -14,16 +12,16 @@
  *  T3  F0730 init returns 1
  *  T4  F0731 NULL rng returns 0
  *  T5  F0731 first call after init with seed=1: returns
- *      1 * 1103515245 + 12345 = 1103527590
+ *      1 * 0xBB40E62D + 11 = 0xBB40E638 = 3141592632
  *  T6  F0731 second call: returns
- *      1103527590 * 1103515245 + 12345 mod 2^32
+ *      0xBB40E638 * 0xBB40E62D + 11 mod 2^32
  *  T7  F0731 is deterministic: same seed, same sequence
  *  T8  F0732 NULL rng returns 0
  *  T9  F0732 modulus <= 0 returns 0 (does not advance state)
  *  T10 F0732 first call after init with seed=1, mod 16:
- *      raw = 1103527590
- *      shifted = (1103527590 >> 16) & 0x7FFF = 16841
- *      result = 16841 % 16 = 9
+ *      raw = 0xBB40E638
+ *      shifted = (0xBB40E638 >> 8) & 0xFFFF = 0x40E6 = 16614
+ *      result = 16614 % 16 = 6
  *  T11 F0732 advances state (raw seed changes after call)
  *  T12 F0732 with mod 1 always returns 0
  *  T13 F0732 with mod 256 returns 0..255
@@ -31,7 +29,7 @@
  *  T15 Multiple F0732 calls produce a range of values
  *  T16 F0732 with modulus 0 does NOT advance state (Invariant 16)
  *
- * Source-locked to ReDMCSB COMBAT.C F0730..F0732.
+ * Source-locked to ReDMCSB CEDT002.C F0027 / BASE.C.
  */
 
 #include "memory_combat_pc34_compat.h"
@@ -63,15 +61,16 @@ int main(void) {
     CHECK(F0731_COMBAT_RngNextRaw_Compat(NULL) == 0,
           "T4: F0731 NULL rng returns 0");
 
-    /* T5: F0731 with seed=1 -> 1*1103515245+12345 = 1103527590. */
+    /* T5: F0731 with seed=1 -> 1*0xBB40E62D+11 = 0xBB40E638. */
     rng.seed = 1u;
     raw1 = F0731_COMBAT_RngNextRaw_Compat(&rng);
-    CHECK(raw1 == 1103527590u, "T5: seed=1 -> 1103527590");
+    CHECK(raw1 == UINT32_C(0xBB40E638), "T5: seed=1 -> 0xBB40E638");
 
     /* T6: Second call advances state. */
     raw2 = F0731_COMBAT_RngNextRaw_Compat(&rng);
     {
-        uint32_t expected = 1103527590u * 1103515245u + 12345u;
+        uint32_t expected = UINT32_C(0xBB40E638) * UINT32_C(0xBB40E62D)
+                          + UINT32_C(11);
         CHECK(raw2 == expected,
               "T6: second call follows LCG formula");
     }
@@ -104,10 +103,10 @@ int main(void) {
     F0730_COMBAT_RngInit_Compat(&rng, 1u);
     {
         int r = F0732_COMBAT_RngRandom_Compat(&rng, 16);
-        /* raw = 1 * 1103515245 + 12345 = 1103527590 = 0x41C67EA6
-         * shifted = (0x41C67EA6 >> 16) & 0x7FFF = 0x41C6 & 0x7FFF = 16838
-         * 16838 % 16 = 6 */
-        CHECK(r == 6, "T10: seed=1 mod 16 == 6 (shifted 16838 % 16)");
+        /* raw = 1 * 0xBB40E62D + 11 = 0xBB40E638
+         * shifted = (0xBB40E638 >> 8) & 0xFFFF = 0x40E6 = 16614
+         * 16614 % 16 = 6 */
+        CHECK(r == 6, "T10: seed=1 mod 16 == 6 (shifted 16614 % 16)");
     }
 
     /* T11: F0732 advances state. */
@@ -115,8 +114,7 @@ int main(void) {
     uint32_t seedBefore = rng.seed;
     F0732_COMBAT_RngRandom_Compat(&rng, 16);
     CHECK(rng.seed != seedBefore, "T11: F0732 advances state");
-    /* After F0732, the seed should equal the LCG-advanced value. */
-    CHECK(rng.seed == 1103527590u, "T11: seed advanced to 1103527590");
+    CHECK(rng.seed == UINT32_C(0xBB40E638), "T11: seed advanced to 0xBB40E638");
 
     /* T12: F0732 mod 1 always returns 0. */
     F0730_COMBAT_RngInit_Compat(&rng, 42u);
