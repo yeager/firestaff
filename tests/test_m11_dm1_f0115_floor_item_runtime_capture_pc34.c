@@ -31,38 +31,12 @@ static int data_dir_has_pc34(const char* dir)
 
 static const char* resolve_data_dir(void)
 {
-    static char path[2048];
     static char data_path[2048];
     const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* root = getenv("FIRESTAFF_DATA");
-    const char* home = getenv("HOME");
 
     if (data_dir_has_pc34(env)) {
         snprintf(data_path, sizeof(data_path), "%s/DATA", env);
         return data_dir_has_pc34(data_path) ? data_path : env;
-    }
-    if (data_dir_has_pc34(root)) {
-        snprintf(data_path, sizeof(data_path), "%s/DATA", root);
-        return data_dir_has_pc34(data_path) ? data_path : root;
-    }
-    if (root && root[0]) {
-        snprintf(path, sizeof(path), "%s/dm1", root);
-        if (data_dir_has_pc34(path)) {
-            snprintf(data_path, sizeof(data_path), "%s/DATA", path);
-            return data_dir_has_pc34(data_path) ? data_path : path;
-        }
-    }
-    if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1", home);
-        if (data_dir_has_pc34(path)) {
-            snprintf(data_path, sizeof(data_path), "%s/DATA", path);
-            return data_dir_has_pc34(data_path) ? data_path : path;
-        }
-        snprintf(path, sizeof(path), "%s/.firestaff/data", home);
-        if (data_dir_has_pc34(path)) {
-            snprintf(data_path, sizeof(data_path), "%s/DATA", path);
-            return data_dir_has_pc34(data_path) ? data_path : path;
-        }
     }
     return NULL;
 }
@@ -137,14 +111,18 @@ int main(void)
     unsigned char framebuffer[320 * 200];
 
     if (!dataDir) {
-        puts("skip: local DM1 PC34 DUNGEON.DAT/GRAPHICS.DAT not available");
-        return 0;
+        if (!getenv("FIRESTAFF_DM1_DATA_DIR")) {
+            puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+            return 0;
+        }
+        fputs("configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir) || !state.assetsAvailable) {
         M11_GameView_Shutdown(&state);
-        puts("skip: local PC34 corpus could not start");
-        return 0;
+        fputs("configured PC34 corpus could not start\n", stderr);
+        return 1;
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     if (!find_real_floor_item_pose(&state, 0, 0, framebuffer)) {
