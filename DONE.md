@@ -19,6 +19,17 @@
   `MPOFN` are not treated as active tilemap selectors for this frame. The
   retail bitmap/CLUT consumer and host composition remain blocked.
 
+# Nexus NBG1 bitmap source join (2026-08-07)
+
+- ✅ Added `scripts/analyze_nexus_vdp2_bitmap_source.py`. It verifies the
+  authentic capture and retail hashes, decodes DMWeb PRS3 output, extracts the
+  real FONT256 character-generator tiles, and compares them in the active
+  NBG1 bitmap byte domain.
+- ✅ Both real samples report a 131072-byte span at VRAM `0x000000`, 162
+  decoded MENU.BPK surfaces plus 242 FONT256 tiles examined, and zero
+  non-zero exact matches. The result remains source-unbound and no-draw;
+  title/STABG/dungeon bitmap and CLUT joins remain open.
+
 # DM2 GDAT source allocator table lifetime (2026-08-07)
 
 - ✅ Extended the bounded `DM2_READ_GRAPHICS_STRUCTURE` transaction with the

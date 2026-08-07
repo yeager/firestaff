@@ -134,6 +134,14 @@ this bitmap-mode frame. The remaining observed values are
 observation, not a retail asset join: the bitmap VRAM source, CLUT owner and
 text/menu/HUD meaning remain blocked.
 
+`scripts/analyze_nexus_vdp2_bitmap_source.py` binds that geometry to the
+hash-verified local corpus and compares the 131072-byte NBG1 span against 162
+decoded `MENU.BPK` PRS3 surfaces and 242 real `FONT256.S2D` character-generator
+tiles. The one-frame and frame-7 eight-frame samples both produce zero
+non-zero exact matches. This is a bounded negative MENU/FONT join for the
+captured gameplay/intro state; it does not identify the still-unchecked title,
+STABG, dungeon bitmap or CLUT source.
+
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at
