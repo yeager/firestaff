@@ -1947,6 +1947,7 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0432_format_disk_menu_pc34_compat.c")
     add_executable(test_dm1_v1_f0432_format_disk_menu_pc34_compat
         tests/test_dm1_v1_f0432_format_disk_menu_pc34_compat.c
+        src/dm1/dm1_v1_f0432_format_disk_menu_pc34_compat.c
     )
     target_include_directories(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -4820,6 +4821,11 @@ list(REMOVE_ITEM M10_SOURCES
 # target compiles it until a real GRAPHICS.DAT/TEXT owner is wired.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_early_object_text_f0029_f0047_pc34_compat.c")
+# `dm1_v1_f0432_format_disk_menu_pc34_compat.c` is a receipt-only platform
+# dialog model exercised with synthetic text and pixels. Its direct audit
+# target compiles it, and it has no formatter backend or M11/runtime caller.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0432_format_disk_menu_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
