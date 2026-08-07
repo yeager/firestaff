@@ -1,3 +1,11 @@
+# DM2 selected Amiga installer corpus (2026-08-07)
+
+- ✅ The Amiga six-disk LZX regression now accepts only an explicit
+  `FIRESTAFF_DM2_AMIGA_ARCHIVE`. The supplied original archive verifies all
+  six ADF parts and decodes `GRAPHICS.DAT`, `DUNGEON.DAT` and `CD.DAT` in RAM.
+- ✅ A selected unreadable archive now fails instead of being replaced by a
+  private HOME-path lookup. No game data is unpacked to disk.
+
 # DM2 selected G1 map corpus (2026-08-07)
 
 - ✅ The G1 scene-handoff, runtime-map validation and static-object visibility

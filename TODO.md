@@ -2614,6 +2614,11 @@ level or consumer bindings.
   **2026-08-07 G1 material update:** DB4 scene/viewport and DB5/DB9 map-chip
   regressions now use only an explicit or selected corpus. Missing exact F9
   material remains fail-closed; do not substitute a neighbouring GDAT row.
+  **2026-08-07 Amiga corpus update:** the six-disk LZX regression now accepts
+  only an explicit `FIRESTAFF_DM2_AMIGA_ARCHIVE`. The supplied original archive
+  verifies all six ADF parts and decodes the original GRAPHICS, DUNGEON and
+  CD data entirely in RAM. A selected unreadable archive fails; no HOME-path
+  discovery is retained.
   **2026-08-06 update:** the generic DM2 boot reader also now rejects every
   virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
   continue through their already authenticated in-memory buffers. PC archive

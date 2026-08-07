@@ -93,13 +93,8 @@ static int load_original_part(const char *archive, unsigned int disk,
 
 static const char *amiga_archive_path(void) {
     const char *configured = getenv("FIRESTAFF_DM2_AMIGA_ARCHIVE");
-    const char *home = getenv("HOME");
-    static char default_path[1024];
     if (configured && configured[0] != '\0') return configured;
-    if (!home) return NULL;
-    snprintf(default_path, sizeof(default_path),
-             "%s/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip", home);
-    return default_path;
+    return NULL;
 }
 
 static void test_original_installer_media(void) {
@@ -116,9 +111,14 @@ static void test_original_installer_media(void) {
     size_t joined_size = 0u;
     unsigned int i;
     FILE *file;
-    if (!archive_path || !(file = fopen(archive_path, "rb"))) {
-        printf("  SKIP: original Amiga archive not available\n");
+    if (!archive_path) {
+        printf("  SKIP: no selected original Amiga archive\n");
         return;
+    }
+    if (!(file = fopen(archive_path, "rb"))) {
+        fprintf(stderr, "FAIL: selected original Amiga archive is unreadable: %s\n",
+                archive_path);
+        exit(EXIT_FAILURE);
     }
     fclose(file);
     for (i = 0u; i < DM2_V1_AMIGA_LZX_PART_COUNT; ++i) {
