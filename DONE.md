@@ -58943,6 +58943,12 @@ possession or hero-stat mutation was enabled.
   encoded source address is VDP1 byte offset `0x47c00`, matching the live
   writer corridor at PC `0x06013098`. The observed source span is 33,280
   bytes through `0x4fe00`.
+- ✅ Added the external-only VDP2 write witness and analyzer. The same
+  authenticated run records 15,365 VDP2 register writes, 183,355 VRAM writes
+  and 1,280 CRAM writes; the trace covers the three hardware lanes and passes
+  `scripts/analyze_nexus_vdp2_write_trace.py`. The hook intentionally has no
+  SH-2 PC binding yet, so tilemap/CLUT ownership and production presentation
+  remain blocked.
 - ⛔ This proves retail byte provenance and a live VDP1 writer, not the
   writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
   HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production

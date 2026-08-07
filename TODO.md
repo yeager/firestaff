@@ -1255,6 +1255,13 @@
   span still lacks a decoded MENU/DGN/ITEM owner and VDP2 CLUT/tile join, so
   menu/HUD/viewport production drawing remains blocked.
 
+- **NEXUS-VDP2-WRITE-OWNER:** The authentic startup producer now emits a
+  strict VDP2 write witness covering registers (`0x180000..0x18011e`), VRAM
+  (`0x000000..0x0743fe`) and CRAM (`0x100000..0x1007fe`). The current
+  external hook intentionally has no SH-2 PC binding, so this proves activity
+  only; recover the PC/source owner and map/tile/CLUT consumer before
+  promoting startup menu, HUD or viewport presentation.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by
