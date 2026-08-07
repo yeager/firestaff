@@ -5010,6 +5010,11 @@ list(REMOVE_ITEM M10_SOURCES
 # direct regression target retains the champion-switch and chest-close model.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_inventory_champion_switch_hand_carry_pc34_compat.c")
+# `dm1_v1_f0732_f0735_fill_material_pc34_compat.c` is a standalone C009/C017
+# material gate without a production caller. Its dedicated tests retain the
+# real-surface and palette admission checks.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0732_f0735_fill_material_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
@@ -56138,7 +56143,9 @@ target_include_directories(test_dm1_v1_f0663_smoke_material_pc34_compat PRIVATE 
 target_link_libraries(test_dm1_v1_f0663_smoke_material_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_f0663_smoke_material_pc34_compat COMMAND test_dm1_v1_f0663_smoke_material_pc34_compat)
 
-add_executable(test_dm1_v1_f0732_f0735_fill_material_pc34_compat tests/test_dm1_v1_f0732_f0735_fill_material_pc34_compat.c)
+add_executable(test_dm1_v1_f0732_f0735_fill_material_pc34_compat
+    tests/test_dm1_v1_f0732_f0735_fill_material_pc34_compat.c
+    src/dm1/dm1_v1_f0732_f0735_fill_material_pc34_compat.c)
 target_include_directories(test_dm1_v1_f0732_f0735_fill_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_f0732_f0735_fill_material_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_f0732_f0735_fill_material_pc34_compat COMMAND test_dm1_v1_f0732_f0735_fill_material_pc34_compat)
