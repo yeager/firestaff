@@ -29688,7 +29688,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   but still stops at the `DM2_READ_SKSAVE_DUNGEON` record-link boundary. Keep
   Continue and slot admission disabled until that complete source-owned
   record/object/possession restoration path is live; do not substitute D2RS
-  fixtures or inferred session state. **2026-08-06 audit:** the existing
+  fixtures, a test-session fixture, or inferred session state. The M12/M11
+  handoff regression now deliberately
+  has no synthetic quick-resume branch; the supplied PC-DOS SKSave corpus is
+  covered only by its read-only real-data gate.
+  **2026-08-06 audit:** the existing
   callback-only `DM2_READ_RECORD_CHECKCODE` transcript cannot be promoted as
   a raw-save reader: SKProject `sksvgame.cpp:880-881` selects the DB4 record
   SUPPRESS mask through `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` (the authenticated

@@ -59418,3 +59418,14 @@ entries through the source-backed sound backend.
   16 DGN decodes, LOGOBG 320x224 source geometry, raw-binary receipts and all
   real SAL/MAP metadata profiles. SAL playback, SDDRVS dispatch and VDP1/VDP2
   presentation remain capture-gated.
+
+# ✅ 2026-08-07 DM2 launcher handoff and real-save corpus boundary
+
+`test_dm2_v1_m11_launcher_handoff_boundary` now accepts a PC-DOS corpus only
+through an explicit DM2 corpus variable and rejects an invalid selection. It
+no longer probes a private `HOME` installation, exits nonzero on a watchdog
+timeout, and verifies that a DOS launch cannot borrow an FM Towns title frame
+or palette. The obsolete synthetic `D2RS` quick-resume fixture is removed;
+the focused `test_dm2_v1_save_load_real_data` gate remains the read-only owner
+of supplied `SKSave` evidence. Verified against the mounted PC-DOS corpus:
+the launcher handoff passes 33 checks and the real save corpus passes 127.
