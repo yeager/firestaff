@@ -80,9 +80,20 @@ static void test_music_system_routing(void) {
     assert(track == 3);
 
     profile.platform = DM2_PLATFORM_MEGACD_JA;
+    profile.cdda_cd_dat_verified = 1;
+    profile.cdda_cd_dat_size = 40;
+    profile.cdda_cd_dat_data[0] = 5;
+    profile.cdda_cd_dat_data[1] = 3;
+    profile.cdda_cd_dat_data[2] = 2;
+    profile.cdda_cd_dat_data[3] = 7;
+    assert(dm2_v1_boot_music_track_for_level(&profile, 2, 5, 3, &track) == 0);
+    assert(track == -1);
+    profile.platform = DM2_PLATFORM_PC9821_JA;
+    assert(dm2_v1_boot_music_track_for_level(&profile, 2, 5, 3, &track) == 0);
+    assert(track == -1);
     assert(dm2_v1_boot_music_track_for_level(&profile, 1, 0, 0, &track) == 0);
 
-    printf("  PASS: routing changes with platform\n");
+    printf("  PASS: CDDA routing stays silent without native disc owner\n");
 }
 
 int main(void) {

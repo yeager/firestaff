@@ -1174,6 +1174,10 @@
   party X/Y after a committed move, rather than the former invented `(0,0)`
   coordinate. Continue validating the complete native music-dispatch timing
   against executable capture before claiming full audio parity.
+  **2026-08-13 transport gate:** the shared CD.DAT dispatcher now refuses to
+  expose a track for Mega CD or PC-9821, even when their table bytes are
+  present; only FM Towns currently has a selected original-disc transport.
+  Keep those platforms silent until their native medium readers are recovered.
   SKULL.EXP now also has a bounded original P3 header receipt before the
   disc can enter the startup route. Recover the native P3/TBIOS menu code,
   its input loop and the handoff back to M11 before showing any SKULL menu.

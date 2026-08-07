@@ -1,3 +1,10 @@
+# DM2 CDDA native-transport gate (2026-08-13)
+- ✅ Restricted coordinate-trigger CD.DAT dispatch to the platform with a
+  verified selected original-disc reader: FM Towns. Mega CD and PC-9821 now
+  remain silent rather than publishing a track that the runtime cannot load.
+- ✅ Added regressions with authenticated-looking CD.DAT bytes for both
+  unsupported platforms; FM Towns dispatch still passes. No release was made.
+
 # DM2 DB-record to GDAT object-name receipt (2026-08-13)
 - ✅ Added `dm2_v1_query_source_item_name_receipt()`, which authenticates the
   complete source chain: validated DB5..DB10 record ownership, SKProject

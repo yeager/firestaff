@@ -1926,6 +1926,13 @@ int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
         return 0;
 
     case DM2_MUSIC_SYSTEM_CDDA_COORD:
+        /* CD.DAT is shared by FM Towns, Mega CD and PC-9821, but the
+         * selected-medium CDDA transport is currently source-proven only
+         * for the FM Towns SKULL.EXP/disc-image route below. Do not expose a
+         * coordinate-table track to a caller that cannot load that
+         * platform's original disc; the other platforms remain silent until
+         * their native transport owner is recovered. */
+        if (profile->platform != DM2_PLATFORM_FMTOWNS_JA) return 0;
         if (profile->cdda_cd_dat_verified) {
             DM2_V1_CddaCdDat cd;
             if (dm2_v1_cdda_cd_dat_parse(&cd, profile->cdda_cd_dat_data,
