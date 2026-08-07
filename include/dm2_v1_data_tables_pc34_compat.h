@@ -161,7 +161,8 @@ extern const int8_t dm2_v1_table_1d7108[128];
 extern const int8_t dm2_v1_table_1d6802[272];
 extern const dm2_s_ww2 dm2_v1_table_1d39bc[121];
 extern const dm2_s_www dm2_v1_table_1d338c[264];
-extern const int8_t dm2_v1_table_1d296c[63][36];
+#define DM2_V1_SOURCE_AI_TABLE_SIZE 63
+extern const int8_t dm2_v1_table_1d296c[DM2_V1_SOURCE_AI_TABLE_SIZE][36];
 extern const dm2_s_wbbbbw dm2_v1_table_1d653c[55];
 
 /* GDAT command-string type prefixes (table1d6912) */

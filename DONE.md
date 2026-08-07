@@ -1,3 +1,13 @@
+# DM2 creature AI row handoff (2026-08-07)
+- ✅ Replaced the runtime's stale 62-row duplicate AI baseline with the
+  authenticated 63×36-byte `table1d296c` byte table retained from the
+  SKProject `src/v5/dm2data.cpp` load contract. Real row 62 is now available
+  instead of being rejected as an unowned creature.
+- ✅ Added a read-only `CREATURES[type].word(0x05)` row receipt and a real
+  PC-DOS regression proving 74 mapped types, 73 non-identity mappings, and
+  the corresponding AIDefinition owner. Data-table, dynamic-material,
+  creature-drop, and eight-save corpus tests pass. No release was made.
+
 # DM2 explicit real-data gate (2026-08-07)
 - ✅ The M11 startup corpus gate now fails when any explicit DM2 data-directory
   environment variable points to an unverified or synthetic root. Only the

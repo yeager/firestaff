@@ -73,6 +73,44 @@ int main(void)
         return 1;
     }
 
+    /* SKProject's QUERY_CREATURE_AI_SPEC_FROM_TYPE is deliberately a
+     * two-stage lookup: CREATURES[type].word(0x05) selects the AI row before
+     * any AIDefinition fields are consumed.  The real PC-DOS corpus must
+     * prove a non-identity mapping here; otherwise a direct type-as-row
+     * fallback could masquerade as source parity. */
+    {
+        int mapped_types = 0;
+        int remapped_types = 0;
+        for (int creature = 0; creature < DM2_CREATURE_TYPE_COUNT; ++creature) {
+            uint16_t row = 0u;
+            const DM2_AIDefinition *def = NULL;
+            int has_row = dm2_v1_creature_ai_row(creature, &row);
+            int has_def = dm2_v1_creature_ai_spec_def(creature, &def);
+            if (has_row != has_def || (has_row && (!def || row >= DM2_AI_TABLE_SIZE))) {
+                fprintf(stderr,
+                        "FAIL: real CREATURES/type AI-row receipt lost its two-stage owner "
+                        "(type=%d row=%u has_row=%d has_def=%d def=%p)\n",
+                        creature, row, has_row, has_def, (const void *)def);
+                dm2_v1_asset_loader_free(&loader);
+                free(graphics);
+                return 1;
+            }
+            if (has_row) {
+                ++mapped_types;
+                if (row != (uint16_t)creature) ++remapped_types;
+            }
+        }
+        if (mapped_types == 0 || remapped_types == 0) {
+            fputs("FAIL: real PC-DOS corpus did not prove a non-identity AI-row mapping\n",
+                  stderr);
+            dm2_v1_asset_loader_free(&loader);
+            free(graphics);
+            return 1;
+        }
+        printf("PASS: real CREATURES/type AI-row mapping (%d mapped, %d remapped)\n",
+               mapped_types, remapped_types);
+    }
+
     for (int creature = 0; creature < DM2_AI_TABLE_SIZE && !found; ++creature) {
         const DM2_AIDefinition *ai = dm2_v1_creature_ai_spec(creature);
         if (!ai || (ai->w0AIFlags & DM2_AIFLAG_STATIC) != 0u) continue;

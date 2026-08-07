@@ -201,6 +201,10 @@ int  dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags);
  */
 int  dm2_v1_creature_ai_spec_def(int creature_type,
                                  const DM2_AIDefinition **out_def);
+/* Read-only receipt for the first leg of the source lookup:
+ * CREATURES[type].word(0x05) -> AIDefinition row.  Returns 1 only when the
+ * current GDAT session supplied that type's row binding, and 0 otherwise. */
+int  dm2_v1_creature_ai_row(int creature_type, uint16_t *out_row);
 /*
  * Data-backed AIDefinition BaseHP (word@4) accessor — same provenance
  * chain as dm2_v1_creature_ai_spec_flags.  Signature matches the CAII

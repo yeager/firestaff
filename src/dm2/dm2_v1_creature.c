@@ -12,7 +12,7 @@
  */
 
 #include "dm2_v1_creature.h"
-#include "dm2_v1_creature_tables.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_ccm.h"
 #include "dm2_v1_drops.h"
 #include "dm2_v1_sound.h"
@@ -20,9 +20,11 @@
 
 #define DM2_CREATURE_DOOR_ATTR_CREATURES_CAN_SEE_THROUGH 0x0001u
 
-/* ── dAITableGenuine — 62-entry AI definition table (hardcoded) ───────────
- * Source: skproject/SKWIN/SkWinCore.cpp:741-810 (getAIName)
- * Extended mode override: EXTENDED_LOAD_AI_DEFINITION() at SkWinCore.cpp:233-400
+/* ── table1d296c — 63-row source AI table ──────────────────────────────────
+ * Source: SKProject src/v5/dm2data.cpp:1041-1045 loads 0x3f*0x24 bytes
+ * from v1d296c.dat; the authenticated PC-DOS byte table is retained in
+ * dm2_v1_data_tables_pc34_compat.c.  Extended mode override:
+ * EXTENDED_LOAD_AI_DEFINITION() at SkWinCore.cpp:233-400.
  *
  * Per-entry fields: w0AIFlags, ArmorClass, b3, BaseHP, AttackStrength,
  *                   PoisonDamage, Defense, b9x, w10, w12, AttacksSpells,
@@ -37,9 +39,9 @@
  * Boss indices: 30 (Lord Dragoth), 55 (Vexirk King), 51 (Amplifier).
  */
 
-/* AIDefinition table — pre-populated from dAITableGenuine[62],
- * then overridden from GDAT via EXTENDED_LOAD_AI_DEFINITION().
- * Source: skproject/SKWIN/_4976_03a2.h + xcoreenh.cpp:61-217. */
+/* AIDefinition table — pre-populated from the authenticated 63×36-byte
+ * table1d296c bytes, then overridden from GDAT via
+ * EXTENDED_LOAD_AI_DEFINITION(). */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
 static uint8_t g_creature_ai_row[DM2_CREATURE_TYPE_COUNT];
@@ -142,6 +144,19 @@ int dm2_v1_creature_ai_spec_def(int creature_type,
     return 1;
 }
 
+int dm2_v1_creature_ai_row(int creature_type, uint16_t *out_row) {
+    if (out_row == NULL) {
+        return 0;
+    }
+    *out_row = 0u;
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT ||
+        !g_creature_ai_row_loaded[creature_type]) {
+        return 0;
+    }
+    *out_row = g_creature_ai_row[creature_type];
+    return *out_row < DM2_AI_TABLE_SIZE;
+}
+
 int dm2_v1_creature_ai_base_hp(int creature_type, uint16_t *out_hp) {
     /* AIDefinition word@4 over the same provenance chain
      * (c_record.cpp:1351-1354); hookable adapter for the CAII module's
@@ -203,15 +218,15 @@ void dm2_v1_creature_reset_ai_table(void) {
     memset(g_creature_gdat_word1, 0, sizeof(g_creature_gdat_word1));
     memset(g_creature_gdat_word1_loaded, 0,
            sizeof(g_creature_gdat_word1_loaded));
-    /* SKProject SKULLWIN/c_dm2data::init() reads the original executable's
+    /* SKProject SKULLWIN/c_dm2data::init() reads the original
      * `v1d296c.dat` table (63 × 36 bytes) before any GRAPHICS.DAT lookup.
      * EXTENDED_LOAD_AI_DEFINITION may override rows later, but an ordinary
      * PC-DOS GRAPHICS.DAT without a CREATURE_AI override category must retain
-     * this authenticated base table.  Leaving `g_ai_table_loaded` clear here
-     * discarded real source data and made every mapped DB4 creature appear
-     * unprovable. */
-    for (i = 0; i < DM2_AI_TABLE_GENUINE_SIZE && i < DM2_AI_TABLE_SIZE; ++i) {
-        g_ai_table[i] = dm2_v1_ai_table_genuine[i];
+     * these authenticated source bytes.  Leaving the final source row out
+     * makes real type→row mappings such as row 62 look falsely unowned. */
+    for (i = 0; i < DM2_V1_SOURCE_AI_TABLE_SIZE && i < DM2_AI_TABLE_SIZE; ++i) {
+        memcpy(&g_ai_table[i], dm2_v1_table_1d296c[i],
+               sizeof(g_ai_table[i]));
         g_ai_table_loaded[i] = 1u;
     }
 }
@@ -332,7 +347,7 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
              * proof and must not revive creature/CCM behavior. */
             continue;
         }
-        if (ai_row >= DM2_AI_TABLE_SIZE) {
+        if (ai_row >= DM2_V1_SOURCE_AI_TABLE_SIZE) {
             continue;
         }
         /* `table1d296c` is the normal, source-owned table.  GDAT category

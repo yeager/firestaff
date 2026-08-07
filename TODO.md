@@ -4128,6 +4128,11 @@ level or consumer bindings.
   **2026-08-07 corpus update:** the dynamic V5 material and animation
   real-data probes now require the explicit selected corpus and fail when it
   cannot supply an accepted boot profile, AI classification or FB/FC/FD route.
+  **2026-08-07 row-owner update:** the live baseline now imports the
+  authenticated 63×36-byte `table1d296c` byte table already retained from
+  `SKProject/src/v5/dm2data.cpp`, including row 62. A real PC-DOS receipt
+  proves 74 `CREATURES[type].word(0x05)` bindings and 73 non-identity type→row
+  mappings; the old 62-row duplicate could falsely reject row 62 as unowned.
   **2026-08-06 callback audit follow-up:** `DM2_1c9a_09b9` is no longer a
   zero-return placeholder. It now performs SKProject's exact DB4 record
   word-`+8` comparison through the record-owner callback. This isolated
