@@ -4944,6 +4944,11 @@ list(REMOVE_ITEM M10_SOURCES
 # retains the ReDMCSB ownership audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0931_f0934_prim_checksum_hex_source_audit_pc34_compat.c")
+# `dm1_v1_action_spell_final_capture_m11_gate_pc34_compat.c` is a
+# receipt-only M11 gate with no production caller and depends on the isolated
+# capture lifecycle. Its direct regression target retains the contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_final_capture_m11_gate_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
