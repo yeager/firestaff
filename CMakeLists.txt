@@ -5062,6 +5062,11 @@ list(REMOVE_ITEM M10_SOURCES
 # compiled only by the direct regression target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_inventory_panel_hand_status_box_route_pc34_compat.c")
+# The door-bash stamina-feedback chain is a source-lock model; M11 owns the
+# live audio and timeline calls. Its direct regression tests retain the
+# contract without including the fixture in M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_door_bash_stamina_feedback_chain_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
@@ -55939,7 +55944,9 @@ target_include_directories(test_dm1_v1_game_over_pc34_compat PRIVATE ${CMAKE_CUR
 target_link_libraries(test_dm1_v1_game_over_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_game_over_pc34_compat COMMAND test_dm1_v1_game_over_pc34_compat)
 
-add_executable(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat tests/test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat.c)
+add_executable(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat
+    tests/test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat.c
+    src/dm1/dm1_v1_door_bash_stamina_feedback_chain_pc34_compat.c)
 target_include_directories(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat COMMAND test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat)
