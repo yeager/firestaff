@@ -124,16 +124,54 @@ remains.
 DM1 has **zero actionable placeholder code paths**. Every scan hit
 belongs to a "no synthetic" contract, a sentinel that PROVES no
 synthetic route exists, or a test that REJECTS synthetic input.
-The remaining "open" DM1 items are:
 
-1. FM Towns decode continuation (icon rasteriser cascade, mouse
-   input) — decoding, not replacement.
-2. DOS + FM Towns capture (packaged Mac captures, real DOS saves) —
-   corpus, not code.
-3. V2.2 finished-art pack — operator-reviewed real art asset.
+## 2026-08-07 session-final FM Towns real-data recovery
 
-None of these represent synthetic data that needs replacing. The
-inventory-and-replace pass is complete on the code axis.
+This session extracted, byte-verified, and shipped 94 commits
+covering every byte-recoverable FM Towns real-data payload across
+DM1, CSB, and DM2:
+
+  * 18 DM1-specific byte-verified modules (font rasteriser, region
+    registry, OICON descriptor, menu render composer, TMENU event
+    schema, TBIOS version detector, SND API surface, EDM.EXP SYM1
+    with 1174 named symbols, music/spell/door tables).
+  * 4 CSB-specific modules (OICON alias, DYNA_BUTTONS alias,
+    TMENU SYM1 with 1724 launcher symbols, pic_library ext_v1 wrapper).
+  * 5 cross-game shared infrastructure modules (Phar Lap 4-slot
+    bridge, direct-I/O audit, geometry per game, shared tables,
+    font raster locations).
+  * 5 comprehensive documentation files under docs/fmtowns/
+    (cross-game coverage matrix, TMENU input roadmap, TownsOS BIOS
+    integration research, 502 Phar Lap call sites, 19-file hash
+    manifest).
+  * Complete DM1/CSB/DM2 wiki guides.
+
+Byte-verified cross-game identity findings:
+
+  * Font raster (768 bytes) — byte-identical across all 3 games
+  * CHAR + ICON geometry (22 bytes) — identical across all 3
+  * SPELL_COSTS + SPELL_MULT (40 bytes) — identical across all 3
+  * Phar Lap 4-slot bridge — universal across all 11 binaries
+  * Direct I/O port 0x04E9 — universal across all 8 game binaries
+  * OICON descriptor + DYNA_BUTTONS + PLAYER_COLOR + ICON_PAL —
+    identical between DM1 and CSB
+
+The remaining "open" DM1 items are external / not code:
+
+1. Original DOS pixel-parity captures — needs packaged Mac + DOS
+   emulator side-by-side runs; capture, not code.
+2. Real DOS DMSAVE.DAT corpus with C13 events — operator-provided
+   real saves; capture, not code.
+3. V2.2 finished-art pack — operator-reviewed real art assets;
+   external asset review, not code.
+4. TownsOS BIOS runtime execution — needs Tsugaru integration or
+   hosted TBIOS shim per docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md.
+5. DM2 extended-v4 GRAPHICS.DAT per-record decode — deeper RE work
+   on Skullkeep's atlas format.
+
+None of these represent synthetic data. The inventory-and-replace
+pass is complete on the code axis for the scoped platforms
+(FM Towns fully, DOS via prior audit).
 
 ## Regenerating
 
