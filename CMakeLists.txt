@@ -4895,6 +4895,11 @@ list(REMOVE_ITEM M10_SOURCES
 # source-frame chain. Its direct regression target retains the contract.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_m11_capture_lifecycle_pc34_compat.c")
+# `dm1_v1_champion_panel_pc34_compat.c` is a contract-only status-hand
+# rotation model with no production caller or game-data path. Its direct
+# regression target retains the ReDMCSB slot-order audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
@@ -54257,7 +54262,9 @@ add_executable(test_dm1_v1_champion_panel_mouth_eye_release_pc34_compat tests/te
 target_include_directories(test_dm1_v1_champion_panel_mouth_eye_release_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_mouth_eye_release_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_mouth_eye_release_pc34_compat COMMAND test_dm1_v1_champion_panel_mouth_eye_release_pc34_compat)
-add_executable(test_dm1_v1_champion_panel_pc34_compat tests/test_dm1_v1_champion_panel_pc34_compat.c)
+add_executable(test_dm1_v1_champion_panel_pc34_compat
+    tests/test_dm1_v1_champion_panel_pc34_compat.c
+    src/dm1/dm1_v1_champion_panel_pc34_compat.c)
 target_include_directories(test_dm1_v1_champion_panel_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_pc34_compat COMMAND test_dm1_v1_champion_panel_pc34_compat)
