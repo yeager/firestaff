@@ -29674,6 +29674,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the canonical PC G1 DB3 actuator value `0x1ff`, not merely its derived
   `0x16ffffff` selector. A mismatched raw marker with the right selector is
   rejected; party mutation and possession transfer remain open.
+  **2026-08-07 real-data recheck:** the external worktree reproduced the full
+  PC-DOS chain: 16/16 mirror roots, 96 DYN4 blocks, 149,670 selected bytes,
+  payload hash `0xa0af7eca`, receipt hash `0x8ae00cc1`, and the M11 boot
+  receipt. No static or synthetic champion row was admitted.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown

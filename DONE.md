@@ -58898,3 +58898,14 @@ actuator data `0x1ff` as well as the derived `0x16ffffff` DYN4 selector and
 source direction. Added a regression proving that a mismatched raw marker is
 rejected even when its dynamic selector is forged to match. No party,
 possession or hero-stat mutation was enabled.
+
+# DM2 champion mirror real-data recheck (2026-08-07)
+
+- ✅ Re-ran the canonical PC-DOS chain from the external worktree: all 16 G1
+  mirror roots bind to `0x16ffffff`; the selected DYN4 materializes 96 source
+  blocks / 149,670 bytes with payload hash `0xa0af7eca` and receipt hash
+  `0x8ae00cc1`.
+- ✅ Re-ran the M11 startup/profile gate and the champion lifecycle suite.
+- ⛔ Kept playable champion activation closed because the real corpus has no
+  static `CHAMPIONS/255` row; `REVIVE_PLAYER`, possession transfer and session
+  mutation still need their source-owned runtime state.
