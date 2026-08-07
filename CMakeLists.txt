@@ -5067,6 +5067,10 @@ list(REMOVE_ITEM M10_SOURCES
 # contract without including the fixture in M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_door_bash_stamina_feedback_chain_pc34_compat.c")
+# F0098 D2L/D2R is an asset-free floor/ceiling source-lock model. Its
+# direct regression compiles the fixture from its local DM1 header.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
@@ -55267,6 +55271,14 @@ add_executable(test_dm1_v1_title_palette_rgb_upload tests/test_dm1_v1_title_pale
 target_include_directories(test_dm1_v1_title_palette_rgb_upload PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_title_palette_rgb_upload PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_title_palette_rgb_upload COMMAND test_dm1_v1_title_palette_rgb_upload)
+add_executable(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat
+    tests/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c)
+target_include_directories(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
+target_link_libraries(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat COMMAND test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat)
 add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
     tests/test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c
     src/dm1/dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c)
