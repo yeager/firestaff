@@ -1,5 +1,15 @@
 # DM2 selected SONGLIST corpus (2026-08-07)
 
+# DM1 V2 generiska partiklar spärrade (2026-08-07)
+
+- ✅ Spärrade hela V2-kedjan för generiska emitterpartiklar. Den kunde skapa
+  egna banor, färger och indexerade pixlar ovanpå dungeonbilden utan en PC34-
+  källa. ReDMCSB äger i stället explosionerna genom `PROJEXPL.C` och deras
+  bitmap/aspektkomposition i `DUNVIEW.C`. Emitter-, direktpartikel- och
+  blit-API:erna behåller därför inget tillstånd och avvisar varje begäran.
+  De berörda testerna kontrollerar nu den källspärrade policyn i stället för
+  den tidigare syntetiska ritningen.
+
 # DM1 V2 syntetiska vädereffekter spärrade (2026-08-07)
 
 - ✅ Spärrade V2-hjälparens källfria regn, dimma, damm och droppar. Den

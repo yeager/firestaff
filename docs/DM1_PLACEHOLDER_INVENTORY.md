@@ -63,6 +63,14 @@ route in the ReDMCSB source inventory, while its real field effects are owned
 by the projectile and explosion draw chain. The helper therefore resets to
 `NONE` and cannot alter the source framebuffer.
 
+The generic V2 particle core was likewise able to invent emitter parameters,
+LCG trajectories, RGBA values and indexed framebuffer pixels. ReDMCSB instead
+uses `PROJEXPL.C` explosion things and `DUNVIEW.C` bitmap/aspect composition;
+no generic post-process particle route was found. All emitter, direct-particle
+and blit APIs now fail closed without storing or drawing a particle. The VFX
+metadata bridge may still recognise source explosion things, but cannot turn
+them into a V2 overlay.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

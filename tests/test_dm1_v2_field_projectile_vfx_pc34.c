@@ -19,17 +19,16 @@ static void reset_vfx_state(void) {
     v2_particle_init();
 }
 
-static void check_explosion_trigger(int16_t thing, M11_V2_SpellVFX expected) {
+static void check_explosion_trigger(int16_t thing) {
     M11_V2_SpellOverlay snap;
 
     reset_vfx_state();
     CHECK(dm1_v2_vfx_trigger_explosion_thing(thing, 12, 7) == 1);
 
     snap = v2_spell_overlay_snapshot();
-    CHECK(snap.active);
-    CHECK(snap.type == expected);
+    CHECK(!snap.active);
     CHECK(snap.progress == 0.0f);
-    CHECK(snap.speed == 1.0f);
+    CHECK(snap.speed == 0.0f);
 }
 
 int main(void) {
@@ -44,16 +43,16 @@ int main(void) {
      * after source object/creature/projectile routes, and PANEL.C:367-428 owns
      * the canonical source palette selection that V2 mirrors here.
      */
-    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_FIREBALL) >= 0);
-    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_LIGHTNING) >= 0);
-    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_POISON) >= 0);
-    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_FLUXCAGE_FIELD) >= 0);
+    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_FIREBALL) == -1);
+    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_LIGHTNING) == -1);
+    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_POISON) == -1);
+    CHECK(dm1_v2_vfx_family_to_emitter_preset(DM1_V2_EFFECT_FAMILY_FLUXCAGE_FIELD) == -1);
     CHECK(dm1_v2_vfx_family_to_emitter_preset((DM1_V2_FieldProjectileEffectFamily)99) == -1);
 
-    check_explosion_trigger((int16_t)0xFF80, VFX_FIREBALL_BURST);
-    check_explosion_trigger((int16_t)0xFF82, VFX_LIGHTNING_BOLT);
-    check_explosion_trigger((int16_t)0xFF86, VFX_POISON_CLOUD);
-    check_explosion_trigger((int16_t)0xFF87, VFX_POISON_CLOUD);
+    check_explosion_trigger((int16_t)0xFF80);
+    check_explosion_trigger((int16_t)0xFF82);
+    check_explosion_trigger((int16_t)0xFF86);
+    check_explosion_trigger((int16_t)0xFF87);
 
     reset_vfx_state();
     CHECK(dm1_v2_vfx_trigger_explosion_thing((int16_t)0x1234, 12, 7) == 0);
@@ -67,7 +66,7 @@ int main(void) {
 
     reset_vfx_state();
     emitter = dm1_v2_vfx_trigger_field(4, 5, DM1_V2_EFFECT_FAMILY_FLUXCAGE_FIELD);
-    CHECK(emitter >= 0);
+    CHECK(emitter == -1);
     CHECK(dm1_v2_vfx_trigger_field(4, 5, (DM1_V2_FieldProjectileEffectFamily)99) == -1);
 
     lighting = dm1_v2_vfx_compute_lighting(0, true);
