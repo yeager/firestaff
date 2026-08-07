@@ -44,13 +44,17 @@ requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer
 payload. It is only an active-engine observation. It does not prove which
 `MENU.BPK`, DGN, ITEM, HUD or viewport record owns the bytes.
 
-The first external European active-VDP1 witness is retained at
-`/Volumes/Extern-disk/nexus-saturn-capture/run-french-a-start17000x120-skip18000-fast2/runtime-vdp12.raw`.
+The first external European gameplay witness is retained at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-french-gameplay-skip18000-2/runtime-vdp12.raw`.
 It has SHA-256
-`c1ec48ac1b55c05ef573225b2820e3051fa2735968d286ea3b58ec9984da2712`, with
-`PTMR=02`, `EDSR=03`, `COPR=00000c`, and one non-idle frame. Its VDP1
-framebuffer decodes as an authentic dungeon viewport observation, but no menu,
-HUD, CLUT, source-asset or command-owner binding is admitted from it yet.
+`549e03856163899381d4b6a03f65ef989fadbeccb338579eb87876e00f30e362`, with
+two non-idle frames at `PTMR=02`, `EDSR=03`, `COPR=00000c`. The VDP1 command
+window is stable across both frames: system clip, local coordinate, one type-2
+textured command (`PMOD=0x0028`, `SRCa=0xc7c0`, `SIZE=0x28b4`) and END. The
+draw-buffer selector and VDP1 VRAM/framebuffer payload change between frames,
+which proves a real gameplay redraw. The command source is not yet joined to
+an authenticated DGN/ITEM/MNS source span, so no menu, HUD, CLUT, source-asset
+or production viewport binding is admitted from it yet.
 
 The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
 explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the

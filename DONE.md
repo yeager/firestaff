@@ -50,6 +50,12 @@
   non-idle VDP1 state plus nonzero captured VRAM/framebuffer payload; it keeps
   PRS3, menu, HUD, viewport-owner, CLUT, DGN and SLEV/SAL semantic admission
   blocked. The external framebuffer witness is retained on the external disk.
+- ✅ Extended the external witness to two gameplay frames. Both contain the
+  same real VDP1 systemclip/local-coordinate/type-2 textured command/END
+  window (`PMOD=0x0028`, `SRCa=0xc7c0`, `SIZE=0x28b4`), while VDP1 VRAM,
+  framebuffer 1 and the draw-buffer selector change. The raw artifact is
+  `549e03856163899381d4b6a03f65ef989fadbeccb338579eb87876e00f30e362`;
+  the command source still lacks an authenticated DGN/ITEM/MNS join.
 
 # DM2 original save writer source-graph gate (2026-08-13)
 - ✅ Hardened the isolated source-order `DM2_GAME_SAVE` orchestrator so it

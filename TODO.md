@@ -1,12 +1,14 @@
 # Firestaff TODO - Open Work
 
 - **NEXUS-SATURN-ACTIVE-VDP1-WITNESS-JOIN:** An external European Mednafen
-  V2 capture now proves one non-idle VDP1 engine observation at
-  `PTMR=02`, `EDSR=03`, `COPR=00000c`; the raw artifact is kept outside the
-  repository and is hash-bound in `docs/NEXUS_RUNTIME_CAPTURE.md`. The
-  captured framebuffer is visibly a dungeon scene, but it is not yet a
-  source-owned DGN/mesh/texture, HUD, menu, CLUT or command-order join. Keep
-  production presentation gated until those identities are bound.
+  V2 gameplay capture now proves two non-idle VDP1 frames at `PTMR=02`,
+  `EDSR=03`, `COPR=00000c`, with a stable systemclip/local-coordinate/type-2
+  textured-command/END window and changing draw-buffer/VRAM state. The raw
+  artifact is kept outside the repository and is hash-bound in
+  `docs/NEXUS_RUNTIME_CAPTURE.md`. The captured framebuffer is visibly a
+  dungeon scene, but the command source is not yet joined to a source-owned
+  DGN/mesh/texture, HUD, menu or CLUT record. Keep production presentation
+  gated until those identities are bound.
 
 - **DM1-MIRROR-RESURRECT-CHEST-CLOSE-ORDER-SYNTHETIC-AUDIT:** This
   C040/chest/queue fixture fabricates party, Thing and slot state. It loads
