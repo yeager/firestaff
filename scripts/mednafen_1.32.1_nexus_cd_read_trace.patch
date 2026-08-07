@@ -28,5 +28,5 @@
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
-@@ -2367,0 +2393,1 @@
+@@ -2370,0 +2370,1 @@
 + FirestaffTraceNexusCDRead(CurSector - 150);

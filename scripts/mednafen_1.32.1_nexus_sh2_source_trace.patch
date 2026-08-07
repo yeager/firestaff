@@ -11,7 +11,9 @@
 @@ -375,0 +378,2 @@
 + if(IsWrite && sizeof(T) == 4)
 +  FirestaffTraceSH2RAMSourceWrite(A, DB);
-@@ -548,0 +551,52 @@
+@@
+  next_event_ts = events[SS_EVENT__SYNFIRST].next->event_time;
+ }
 +static uint32 FirestaffLastSH2ReadAddress;
 +static uint32 FirestaffLastSH2ReadValue;
 +static bool FirestaffLastSH2ReadValid;

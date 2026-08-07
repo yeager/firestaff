@@ -1,6 +1,6 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -103,0 +104,40 @@
+@@ -103,0 +104,42 @@
 +static FILE *FirestaffVdp2WriteTraceFile;
 +static unsigned FirestaffVdp2WriteTraceCount;
 +static unsigned FirestaffVdp2WriteTraceLimit = 200000;

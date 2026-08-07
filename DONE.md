@@ -59790,3 +59790,12 @@ companion.
   complete or bypass the missing tile-chain owner.
 - ✅ Verified on all eight mounted PC-DOS primary/backup SKSAVE files through
   `test_dm2_v1_save_load_real_data` (143/143).
+
+# Nexus Saturn capture toolchain repair (2026-08-07)
+
+- ✅ Repaired the ordered Mednafen 1.32.1 Saturn witness patch chain: CD reads,
+  SH-2 source/memory peeks and VDP2 VRAM/CRAM/register writes now apply cleanly
+  to a fresh upstream tree without placing hooks in unrelated read paths.
+- ✅ Verified the clean chain against the external Mednafen source and compiled
+  the affected `vdp2.o`, `cdb.o` and `ss.o` objects. This proves the producer
+  toolchain is buildable; it does not claim a new authenticated runtime capture.
