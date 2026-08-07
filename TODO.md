@@ -4253,6 +4253,12 @@ level or consumer bindings.
   item generator's generic DB allocation can mutate the live record pools.
   The production runtime now consumes those incomplete generator records
   without inventing a creature, item, placement or timer.
+  **2026-08-13 real-data census:** the canonical G1 actuator regression now
+  inventories generator roots as well as shops. The mounted PC-English
+  `DUNGEON.DAT` contains no direct creature-generator `0x2e` or item-generator
+  `0x3c` roots; this absence is recorded as source evidence, not filled with
+  host defaults. The DB14/DB-record/timer owner handoff remains required for
+  any profile that supplies those actuator classes.
 
 - **DM2-ACTUATOR-RECORD-HANDOFF:** Generic type/coordinate/flag entry and
   square-local DB3 traversal are closed. Port `DM2_INVOKE_ACTUATOR` with the

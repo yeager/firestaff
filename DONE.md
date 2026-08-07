@@ -58639,6 +58639,14 @@ It selects the source actuator by map coordinate and preserves the exact
 `w2`/`w4`/`w6` fields without following `GenericRecord::w0`, mutating DB14, or
 creating a timer. Real PC-English map 5 coverage verifies the source root and
 an absent coordinate; generic actuator mutation remains fail-closed.
+
+# DM2 generator actuator source census (2026-08-13)
+
+Extended the canonical G1 actuator regression to count creature-generator
+`0x2e` and item-generator `0x3c` roots across every real map. The mounted
+PC-English dungeon contains neither class; no host-authored generator default
+is promoted in their place, and profiles with those classes still require the
+source DB14/DB-record/timer owner.
 # Nexus VDP1 writer code-window receipt (2026-08-07)
 
 - ✅ Added a reproducible Mednafen producer patch that captures the live SH-2

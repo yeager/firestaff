@@ -53,6 +53,8 @@ int main(int argc, char **argv)
     const DM2_V1_G1DirectActuatorRoot *found_actuator = NULL;
     int shop_panel_count = 0;
     int shop_floor_count = 0;
+    int creature_generator_count = 0;
+    int item_generator_count = 0;
 
     if (!path) {
         puts("SKIP: no local canonical DM2 data");
@@ -130,10 +132,14 @@ int main(int argc, char **argv)
             uint8_t type = map_actuators.actuators[i].actuator_type;
             if (type == 0x3fu) ++shop_panel_count;
             if (type == 0x30u) ++shop_floor_count;
+            if (type == 0x2eu) ++creature_generator_count;
+            if (type == 0x3cu) ++item_generator_count;
         }
     }
-    printf("source DB3 shop census: panel=0x3f:%d floor=0x30:%d\n",
-           shop_panel_count, shop_floor_count);
+    printf("source DB3 census: shop-panel=0x3f:%d shop-floor=0x30:%d "
+           "creature-generator=0x2e:%d item-generator=0x3c:%d\n",
+           shop_panel_count, shop_floor_count, creature_generator_count,
+           item_generator_count);
     dm2_v1_dungeon_free(&dungeon);
     puts("PASS: direct DB3 Actuator roots use only source-proven payload fields");
     return 0;
