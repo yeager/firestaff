@@ -53303,7 +53303,10 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
      * deliberately stays blank until its decoded TEXT.C state is connected. */
     if (m11_is_dm1_source_kind(state->sourceKind)) {
         int sourceRow;
-        if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+        /* TEXT.C's C015 rows and F0053 glyphs are one M653-owned source
+         * operation.  A loaded 768-byte payload with another graphic
+         * identity must leave the cleared message area untouched. */
+        if (!m11_dm1_pc34_hud_font_is_source_bound(state)) {
             return;
         }
         for (sourceRow = 0;

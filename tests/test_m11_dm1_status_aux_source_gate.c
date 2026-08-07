@@ -72,6 +72,21 @@ static int rect_is_color(const unsigned char* framebuffer,
     return 1;
 }
 
+static int message_area_is_color(const unsigned char* framebuffer,
+                                 unsigned char color)
+{
+    int x;
+    int y;
+
+    if (!framebuffer) return 0;
+    for (y = 173; y < 200; ++y) {
+        for (x = 0; x < 320; ++x) {
+            if (framebuffer[y * 320 + x] != color) return 0;
+        }
+    }
+    return 1;
+}
+
 int main(void)
 {
     M11_GameViewState state;
@@ -171,6 +186,33 @@ int main(void)
                             (unsigned char)
                                 dm1_v1_champion_status_name_clear_color_pc34()),
               "foreign font cannot draw the F0292 source name strip");
+
+        /* TEXT.C's C015 message rows also use F0053/M653.  Preserve the
+         * authenticated row state, but reject a lookalike bitmap whose
+         * GRAPHICS.DAT identity is not M653. */
+        M11_Font_Init(&state.originalFont);
+        CHECK(M11_Font_LoadFromGraphicsDat(&state.originalFont,
+                                           state.assetLoader.fileState,
+                                           state.assetLoader.runtimeState),
+              "PC34 M653 source font reloads for TEXT.C");
+        state.originalFontAvailable = 1;
+        dm1_v1_text_set_game_time(&state.dm1V1TextMessage,
+                                  (long)state.world.gameTick);
+        dm1_v1_text_print_message(&state.dm1V1TextMessage,
+                                  DM1_V1_COLOR_WHITE, "SOURCE MESSAGE");
+        memset(baseline, 0, sizeof(baseline));
+        M11_GameView_Draw(&state, baseline, 320, 200);
+        CHECK(!message_area_is_color(baseline, 0u),
+              "M653 draws decoded TEXT.C source rows");
+        memcpy(foreignFont, state.originalFont.bitmap, sizeof(foreignFont));
+        CHECK(M11_Font_LoadFromRawBitmap(&state.originalFont, 694,
+                                         foreignFont, sizeof(foreignFont)),
+              "foreign 768-byte TEXT.C font fixture loads");
+        state.originalFontAvailable = 1;
+        memset(augmented, 0, sizeof(augmented));
+        M11_GameView_Draw(&state, augmented, 320, 200);
+        CHECK(message_area_is_color(augmented, 0u),
+              "foreign font cannot draw TEXT.C source rows");
         M11_GameView_Shutdown(&state);
     }
 
