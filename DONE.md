@@ -58562,3 +58562,12 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Kept session-only gold, reputation and gametime unpromoted: the source
   save buffer has no scalar fields for them, and raw resume remains blocked
   until coin-record and separate time-state ownership is complete.
+
+# DM2 creature AI row-owner census (2026-08-07)
+
+- ✅ Tightened the mounted PC-English real-data regression to exactly 74
+  authenticated `CREATURES[type].word(0x05)` bindings and 73 non-identity
+  type-to-row mappings.
+- ✅ Asserted source-unowned types 54 and 127 remain unavailable instead of
+  falling back to `creature_type == ai_row`; DB4/CAII/CCM runtime ownership
+  remains fail-closed.

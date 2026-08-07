@@ -4170,6 +4170,10 @@ level or consumer bindings.
   `SKProject/src/v5/dm2data.cpp`, including row 62. A real PC-DOS receipt
   proves 74 `CREATURES[type].word(0x05)` bindings and 73 non-identity type→row
   mappings; the old 62-row duplicate could falsely reject row 62 as unowned.
+  **2026-08-07 regression tightening:** the selected PC-English corpus test
+  now locks that census to exactly 74/73 and asserts types 54 and 127 remain
+  unowned. This proves the two-stage row boundary without promoting either
+  type into creature behavior; DB4/CAII/CCM ownership remains open.
   **2026-08-06 callback audit follow-up:** `DM2_1c9a_09b9` is no longer a
   zero-return placeholder. It now performs SKProject's exact DB4 record
   word-`+8` comparison through the record-owner callback. This isolated

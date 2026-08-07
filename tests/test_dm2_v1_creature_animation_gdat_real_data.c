@@ -100,6 +100,27 @@ int main(void)
                 if (row != (uint16_t)creature) ++remapped_types;
             }
         }
+        /* The mounted PC-English profile is a fixed source corpus, not a
+         * generic fixture: its 74 CREATURES word@0x05 owners contain 73
+         * non-identity mappings. Types 54 and 127 have no source owner in
+         * this profile and must remain unavailable rather than falling back
+         * to type-as-row. */
+        {
+            uint16_t row = 0u;
+            if (mapped_types != 74 || remapped_types != 73 ||
+                dm2_v1_creature_ai_row(54, &row) != 0 ||
+                dm2_v1_creature_ai_row(127, &row) != 0) {
+                fprintf(stderr,
+                        "FAIL: real PC-DOS AI owner census changed "
+                        "(mapped=%d remapped=%d type54=%d type127=%d)\n",
+                        mapped_types, remapped_types,
+                        dm2_v1_creature_ai_row(54, &row),
+                        dm2_v1_creature_ai_row(127, &row));
+                dm2_v1_asset_loader_free(&loader);
+                free(graphics);
+                return 1;
+            }
+        }
         if (mapped_types == 0 || remapped_types == 0) {
             fputs("FAIL: real PC-DOS corpus did not prove a non-identity AI-row mapping\n",
                   stderr);
