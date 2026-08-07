@@ -101,10 +101,12 @@ VDP2 CLUT/tile owner, so production menu/HUD/viewport drawing remains gated.
 The same producer run also emitted a bounded VDP2 write witness. The trace
 contains 15,365 register writes in `0x180000..0x18011e`, 183,355 VRAM writes
 in `0x000000..0x0743fe`, and 1,280 CRAM writes in `0x100000..0x1007fe`.
-This confirms that the retail runtime writes all three VDP2 lanes during the
-authenticated startup window. The current hook deliberately records no SH-2
-PC (`pc_binding=unavailable`), so this is not yet a source-owner or
-tilemap/CLUT placement proof; semantic admission remains blocked.
+Nonzero SH-2 PCs are now captured with the writes; the dominant VRAM writers
+are `0x06011924` (65,538), `0x060118fc` (40,448) and `0x06002fc4` (22,914),
+and the dominant register writer is `0x0600231c` (14,400). This binds the
+VDP2 activity to executing Saturn code, but not yet to a decoded tilemap,
+CLUT bank, menu asset or final layer placement; semantic admission remains
+blocked.
 
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed

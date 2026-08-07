@@ -64,10 +64,22 @@ elif [[ "$(cat "$source_trace_marker" 2>/dev/null)" != "$source_trace_patch_id" 
   echo "ERROR: external Mednafen source has an older or unknown SH-2 source-trace patch" >&2
   exit 2
 fi
+sh2_register_trace_marker="$source_dir/.firestaff-nexus-sh2-register-trace-support-patched"
+sh2_register_trace_patch_id='FIRESTAFF_NEXUS_SH2_REGISTER_TRACE_SUPPORT_V1'
+if [[ ! -f "$sh2_register_trace_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_register_trace_support.patch"
+  printf '%s\n' "$sh2_register_trace_patch_id" > "$sh2_register_trace_marker"
+elif [[ "$(cat "$sh2_register_trace_marker" 2>/dev/null)" != "$sh2_register_trace_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown SH-2 register support patch; use a fresh build directory" >&2
+  exit 2
+fi
 vdp2_trace_marker="$source_dir/.firestaff-nexus-vdp2-write-trace-patched"
-vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V1'
+vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V2_PC'
 if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_vram_write_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_cram_write_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_regs_write_trace.patch"
   printf '%s\n' "$vdp2_trace_patch_id" > "$vdp2_trace_marker"
 elif [[ "$(cat "$vdp2_trace_marker" 2>/dev/null)" != "$vdp2_trace_patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown VDP2-write trace patch; use a fresh build directory" >&2

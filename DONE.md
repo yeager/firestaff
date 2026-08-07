@@ -58966,9 +58966,11 @@ possession or hero-stat mutation was enabled.
 - ✅ Added the external-only VDP2 write witness and analyzer. The same
   authenticated run records 15,365 VDP2 register writes, 183,355 VRAM writes
   and 1,280 CRAM writes; the trace covers the three hardware lanes and passes
-  `scripts/analyze_nexus_vdp2_write_trace.py`. The hook intentionally has no
-  SH-2 PC binding yet, so tilemap/CLUT ownership and production presentation
-  remain blocked.
+  `scripts/analyze_nexus_vdp2_write_trace.py`. The strengthened hook now
+  records nonzero SH-2 PCs: dominant VRAM writers are `0x06011924` (65,538),
+  `0x060118fc` (40,448) and `0x06002fc4` (22,914), while register writes are
+  dominated by `0x0600231c` (14,400). This is executing-code ownership, not
+  yet a decoded tilemap/CLUT or production presentation proof.
 - ⛔ This proves retail byte provenance and a live VDP1 writer, not the
   writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
   HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production

@@ -27,6 +27,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace", type=Path)
     parser.add_argument("--require-area", action="append", choices=("vram", "cram", "regs"))
+    parser.add_argument("--require-pc", type=lambda value: int(value, 0))
     parser.add_argument("--require-minimum", type=int, default=1)
     args = parser.parse_args()
     try:
@@ -41,6 +42,7 @@ def main() -> int:
     counts: collections.Counter[str] = collections.Counter()
     ranges: dict[str, list[int]] = collections.defaultdict(list)
     pages: collections.Counter[tuple[str, int]] = collections.Counter()
+    pcs: collections.Counter[tuple[str, int]] = collections.Counter()
     rows = 0
     for line_number, line in enumerate(lines[1:], 2):
         match = LINE.fullmatch(line)
@@ -56,6 +58,7 @@ def main() -> int:
         counts[area] += 1
         ranges[area].append(address)
         pages[(area, address // 0x1000)] += 1
+        pcs[(area, int(match["pc0"], 16))] += 1
         rows += 1
 
     print(f"records={rows}")
@@ -72,12 +75,23 @@ def main() -> int:
             for (area, page), count in pages.most_common(12)
         )
     )
-    print("pc_binding=unavailable")
+    observed_pcs = [(area, pc, count) for (area, pc), count in pcs.items() if pc]
+    print(
+        "top_pcs="
+        + ",".join(
+            f"{area}:0x{pc:08x}:{count}"
+            for area, pc, count in sorted(observed_pcs, key=lambda row: row[2], reverse=True)[:12]
+        )
+    )
+    print("pc_binding=observed" if observed_pcs else "pc_binding=unavailable")
     print("semantic_admission=blocked")
     required = set(args.require_area or ())
     missing = sorted(area for area in required if counts[area] < args.require_minimum)
     if missing:
         print("required_areas_missing=" + ",".join(missing))
+        return 1
+    if args.require_pc is not None and not any(pc == args.require_pc for _, pc, _ in observed_pcs):
+        print(f"required_pc_missing=0x{args.require_pc:08x}")
         return 1
     return 0
 

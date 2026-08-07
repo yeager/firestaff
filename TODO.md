@@ -1258,9 +1258,11 @@
 - **NEXUS-VDP2-WRITE-OWNER:** The authentic startup producer now emits a
   strict VDP2 write witness covering registers (`0x180000..0x18011e`), VRAM
   (`0x000000..0x0743fe`) and CRAM (`0x100000..0x1007fe`). The current
-  external hook intentionally has no SH-2 PC binding, so this proves activity
-  only; recover the PC/source owner and map/tile/CLUT consumer before
-  promoting startup menu, HUD or viewport presentation.
+  external hook now records nonzero SH-2 PCs; primary VRAM writers are
+  `0x06011924`, `0x060118fc` and `0x06002fc4`, with register writes dominated
+  by `0x0600231c`. This proves executing-code ownership of the writes, but
+  the decoded tilemap/CLUT bank and final layer placement are still missing;
+  recover those before promoting startup menu, HUD or viewport presentation.
 
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
