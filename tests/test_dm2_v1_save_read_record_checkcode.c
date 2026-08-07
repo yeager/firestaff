@@ -340,6 +340,47 @@ static void test_empty_chain(void)
     printf("  PASS: empty_chain\n");
 }
 
+static void test_special_timer_record_chains(void)
+{
+    uint8_t stream[128];
+    DM2_V1_SaveTimerRecord timer;
+    DM2_ReadRecordSession session;
+    DM2_ReadRecordCallbacks cb;
+    ReadPool pool;
+    uint16_t decoded = 0u;
+    size_t stream_size;
+
+    mock_init();
+    memset(&pool, 0, sizeof(pool));
+    cb = make_reader_cb(&pool);
+    stream_size = write_and_flush(5, 0, 0, stream, sizeof(stream));
+    dm2_v1_read_record_session_init(&session, stream, stream_size);
+    memset(&timer, 0, sizeof(timer));
+    timer.bytes[4] = 0x3cu;
+    dm2_v1_save_timer_set_b(&timer, 0x1400);
+
+    assert(dm2_v1_read_special_timer_record_chains(
+               &session, &cb, &timer, 1u, 1u, &decoded) == 0);
+    assert(decoded == 1u);
+    assert(dm2_v1_save_timer_get_b(&timer) == 0x1400);
+    assert(pool.count == 1 && pool.records[0].type == 5);
+
+    /* Source DM2_2066_197c rejects the whole phase when savegamew7 is zero. */
+    dm2_v1_read_record_session_init(&session, stream, stream_size);
+    dm2_v1_save_timer_set_b(&timer, 0x1400);
+    assert(dm2_v1_read_special_timer_record_chains(
+               &session, &cb, &timer, 1u, 0u, &decoded) != 0);
+    assert(dm2_v1_save_timer_get_b(&timer) == 0x1400);
+
+    /* A truncated chain must not publish the temporary end marker. */
+    dm2_v1_read_record_session_init(&session, stream, 1u);
+    assert(dm2_v1_read_special_timer_record_chains(
+               &session, &cb, &timer, 1u, 1u, &decoded) != 0);
+    assert(dm2_v1_save_timer_get_b(&timer) == 0x1400);
+
+    printf("  PASS: special_timer_record_chains_source_owner\n");
+}
+
 static void test_round_trip_type5(void)
 {
     mock_init();
@@ -720,6 +761,7 @@ int main(void)
     test_null_safety();
     test_init();
     test_empty_chain();
+    test_special_timer_record_chains();
     test_round_trip_type5();
     test_round_trip_type6();
     test_round_trip_chain();

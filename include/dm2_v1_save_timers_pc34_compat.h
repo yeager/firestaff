@@ -79,6 +79,7 @@ int16_t dm2_v1_save_timer_get_b(const DM2_V1_SaveTimerRecord *t);
 int dm2_v1_save_timer_is_no_type(const DM2_V1_SaveTimerRecord *t);
 void dm2_v1_save_timer_clr_type(DM2_V1_SaveTimerRecord *t);
 void dm2_v1_save_timer_set_dataw(DM2_V1_SaveTimerRecord *t, int16_t n);
+void dm2_v1_save_timer_set_b(DM2_V1_SaveTimerRecord *t, int16_t n);
 
 /* DM2_cmp_timers, c_timer.cpp:31-48.  The source's pointer tiebreak is the
  * record-array address; array indices are the identical order for

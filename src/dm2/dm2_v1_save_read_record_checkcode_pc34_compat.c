@@ -108,6 +108,45 @@ int dm2_v1_read_possession_continuations(
     return 0;
 }
 
+int dm2_v1_read_special_timer_record_chains(
+    DM2_ReadRecordSession *session,
+    const DM2_ReadRecordCallbacks *cb,
+    DM2_V1_SaveTimerRecord *timers,
+    uint16_t timer_count,
+    uint16_t savegamew7,
+    uint16_t *out_chains_read)
+{
+    uint16_t i;
+    uint16_t chains_read = 0u;
+
+    /* SKProject: sksvgame.cpp:978-1001 (DM2_2066_197c). */
+    if (out_chains_read) *out_chains_read = 0u;
+    if (!session || !cb || !timers || !savegamew7) return -1;
+
+    for (i = 0u; i < timer_count; ++i) {
+        const uint8_t type = dm2_v1_save_timer_get_type(&timers[i]);
+        const int16_t old_b = dm2_v1_save_timer_get_b(&timers[i]);
+        uint16_t owner = 0xfffeu; /* OBJECT_END_MARKER */
+
+        if (type != 0x3cu && type != 0x3du) continue;
+
+        /* Source writes OBJECT_END_MARKER before handing wvalueB to the
+         * recursive reader. Publish the timer field only after the bounded
+         * callback read succeeds, so an underflow cannot leak partial state. */
+        dm2_v1_save_timer_set_b(&timers[i], (int16_t)0xfffeu);
+        if (dm2_v1_read_record_checkcode(session, cb, &owner,
+                                         -1, 0, 0, 0) != 0) {
+            dm2_v1_save_timer_set_b(&timers[i], old_b);
+            return -1;
+        }
+        dm2_v1_save_timer_set_b(&timers[i], (int16_t)owner);
+        ++chains_read;
+    }
+
+    if (out_chains_read) *out_chains_read = chains_read;
+    return 0;
+}
+
 int dm2_v1_read_record_checkcode(
     DM2_ReadRecordSession *session,
     const DM2_ReadRecordCallbacks *cb,

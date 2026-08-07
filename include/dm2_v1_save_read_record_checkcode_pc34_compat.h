@@ -10,6 +10,7 @@
 
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_save_record_masks_pc34_compat.h"
+#include "dm2_v1_save_timers_pc34_compat.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -131,6 +132,19 @@ int dm2_v1_read_possession_continuations(
     const uint16_t *record_links,
     size_t record_link_count,
     const DM2_ReadPossessionContinuationCallbacks *cb);
+
+/* Restore the source-owned record chains referenced by timer types 0x3c/0x3d.
+ * SKProject sksvgame.cpp::DM2_2066_197c sets each timer's wvalueB to
+ * OBJECT_END_MARKER, reads one non-following record chain into that field,
+ * and rejects the load when savegamew7 is zero.  This is callback-only: the
+ * caller still owns the timer array, record pool and GAME_LOAD transaction. */
+int dm2_v1_read_special_timer_record_chains(
+    DM2_ReadRecordSession *session,
+    const DM2_ReadRecordCallbacks *cb,
+    DM2_V1_SaveTimerRecord *timers,
+    uint16_t timer_count,
+    uint16_t savegamew7,
+    uint16_t *out_chains_read);
 
 void dm2_v1_read_record_session_init(
     DM2_ReadRecordSession *session,

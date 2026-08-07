@@ -1,3 +1,14 @@
+# DM2 SKSAVE special timer record chains (2026-08-07)
+
+- ✅ Added a bounded callback seam for SKProject `DM2_2066_197c`
+  (`sksvgame.cpp:1003-1040`): timer types `0x3c`/`0x3d` restore one
+  non-following record chain through `wvalueB`, beginning at the source
+  `OBJECT_END_MARKER` and publishing only after a successful read.
+- ✅ Added regressions for the source `savegamew7` admission gate, timer-link
+  ownership and record allocation. This remains diagnostic until the live
+  timer array, record pool and complete GAME_LOAD transaction are connected;
+  no release was made.
+
 # DM2 combat hit-roll source width (2026-08-07)
 
 - ✅ Corrected the diagnostic `DM2_CALC_PLAYER_ATTACK_DAMAGE` hit roll from

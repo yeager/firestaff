@@ -108,6 +108,13 @@ void dm2_v1_save_timer_set_dataw(DM2_V1_SaveTimerRecord *t, int16_t n)
     t->bytes[1] = (uint8_t)(((uint16_t)n >> 8) & 0xffu);
 }
 
+void dm2_v1_save_timer_set_b(DM2_V1_SaveTimerRecord *t, int16_t n)
+{
+    if (!t) return;
+    t->bytes[8] = (uint8_t)((uint16_t)n & 0xffu);
+    t->bytes[9] = (uint8_t)(((uint16_t)n >> 8) & 0xffu);
+}
+
 int dm2_v1_save_timer_cmp(const DM2_V1_SaveTimerRecord *a, int a_index,
                           const DM2_V1_SaveTimerRecord *b, int b_index)
 {

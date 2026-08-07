@@ -29651,6 +29651,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `sksvgame.cpp:963-973` and `989-996`. The callback is optional for corpus
   readers and no timer array or index is fabricated; live timer-owner binding
   and complete GAME_LOAD admission remain gated.
+  **2026-08-07 special-timer progress:** the bounded reader now mirrors
+  `DM2_2066_197c` for timer types `0x3c`/`0x3d`: it requires the source
+  `savegamew7` gate, reads one non-following record chain with `wvalueB`
+  initialized to `OBJECT_END_MARKER`, and publishes that link only after the
+  callback read succeeds. The timer array, record pool and GAME_LOAD owner
+  are still external, so Continue admission remains gated.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw
