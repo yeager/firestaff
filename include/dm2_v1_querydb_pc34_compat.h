@@ -9,9 +9,12 @@
  * Reference: skproject c_querydb.cpp
  * Architecture: Firestaff callback-based (single shared callback struct)
  *
- * 5 pure-computation functions (no callbacks):
+ * 10 pure-computation functions (no callbacks):
  *   dm2_v1_query_098d_000f, dm2_v1_is_cls1_critical_for_load,
- *   dm2_v1_is_tile_blocked, dm2_v1_dir_from_5x5_pos,
+ *   dm2_v1_is_tile_blocked, dm2_v1_query_tile_type,
+ *   dm2_v1_query_tile_flags, dm2_v1_query_tile_is_pit,
+ *   dm2_v1_query_tile_is_stairs, dm2_v1_query_tile_is_teleporter,
+ *   dm2_v1_dir_from_5x5_pos,
  *   dm2_v1_query_creature_blit_recti
  *
  * 77 callback-dependent functions grouped by category.
@@ -124,6 +127,21 @@ bool dm2_v1_is_cls1_critical_for_load(int8_t cls1);
 
 /* Check if tile blocks movement */
 int32_t dm2_v1_is_tile_blocked(int32_t tile_value);
+
+int32_t dm2_v1_query_tile_type(int32_t tile_value,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_tile_flags(int32_t tile_value,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_tile_is_pit(int32_t tile_value,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_tile_is_stairs(int32_t tile_value,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_tile_is_teleporter(int32_t tile_value,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 /* -------------------------------------------------------------------------- */
 /* GDAT / graphics database queries (13)                                      */

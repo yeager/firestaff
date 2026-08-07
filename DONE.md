@@ -58757,3 +58757,12 @@ admission tests; dynamic-map runtime ownership remains fail-closed.
   runtime loader PC `0x00002368` in the European startup window.
 - ✅ Kept the retail source member unbound: BIOS/runtime-loader ownership does
   not prove DM.BIN, TM.BIN, a video asset, or any VDP1/VDP2 consumer contract.
+
+# DM2 square element query parity (2026-08-07)
+
+Corrected the bounded DM2 tile queries to use the authenticated low-byte
+square encoding: `M034_SQUARE_TYPE` extracts the element, while ReDMCSB's
+source constants identify pit `0x02`, stairs `0x03`, and teleporter `0x05`.
+The former stairs/teleporter values were host-side misclassifications. Added
+public declarations and regression coverage; actuator DB3/DB14/timer
+mutation remains fail-closed.

@@ -96,15 +96,18 @@ int32_t dm2_v1_is_tile_blocked(int32_t tile_value)
 int32_t dm2_v1_query_tile_type(int32_t tile_value,
                                const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:636 */
+    /* ReDMCSB: DEFS.H M034_SQUARE_TYPE (line 1001) extracts the square
+     * element from the low byte; the same byte encoding is consumed by
+     * SKProject/SKWINSPX/src/v5/skgdtqdb.cpp:647-679. */
     (void)cb; (void)ctx;
-    return (tile_value >> 5) & 7;
+    return ((tile_value & 0xff) >> 5) & 7;
 }
 
 int32_t dm2_v1_query_tile_flags(int32_t tile_value,
                                 const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:640 */
+    /* ReDMCSB: DEFS.H M034_SQUARE_TYPE/M035_SQUARE (lines 1001-1002)
+     * reserve the low five bits for the square mask. */
     (void)cb; (void)ctx;
     return tile_value & 0x1f;
 }
@@ -112,25 +115,25 @@ int32_t dm2_v1_query_tile_flags(int32_t tile_value,
 int32_t dm2_v1_query_tile_is_pit(int32_t tile_value,
                                  const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:684 */
+    /* ReDMCSB: DEFS.H C02_ELEMENT_PIT (line 1009). */
     (void)cb; (void)ctx;
-    return ((tile_value >> 5) & 7) == 3 ? 1 : 0;
+    return dm2_v1_query_tile_type(tile_value, NULL, NULL) == 2 ? 1 : 0;
 }
 
 int32_t dm2_v1_query_tile_is_stairs(int32_t tile_value,
                                     const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:690 */
+    /* ReDMCSB: DEFS.H C03_ELEMENT_STAIRS (line 1010). */
     (void)cb; (void)ctx;
-    return ((tile_value >> 5) & 7) == 5 ? 1 : 0;
+    return dm2_v1_query_tile_type(tile_value, NULL, NULL) == 3 ? 1 : 0;
 }
 
 int32_t dm2_v1_query_tile_is_teleporter(int32_t tile_value,
                                         const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:696 */
+    /* ReDMCSB: DEFS.H C05_ELEMENT_TELEPORTER (line 1012). */
     (void)cb; (void)ctx;
-    return ((tile_value >> 5) & 7) == 7 ? 1 : 0;
+    return dm2_v1_query_tile_type(tile_value, NULL, NULL) == 5 ? 1 : 0;
 }
 
 /* ── Section 3: Door queries ──────────────────────────────────────── */

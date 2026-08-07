@@ -4341,6 +4341,12 @@ level or consumer bindings.
   Its uncalled floor-mecha target is removed too: a partial record walk and
   CAII activation cannot stand in for the complete original DB3/DB4/CAII/CCM
   transaction.
+  **2026-08-07 tile-query parity update:** the bounded square helpers now use
+  the source low-byte encoding (`M034_SQUARE_TYPE`) and the original DM2
+  element values: pit `0x02`, stairs `0x03`, teleporter `0x05`. This fixes
+  the former host-side stairs/teleporter classifications without opening any
+  actuator mutation; the DB3/DB14 target, payload and timer handoff remains
+  required.
   The class-6 trickwall study is removed as well: it changed G1 wall bits,
   queried inferred creature state and requeued timers without the original
   DB3/DB4/CCM transaction.

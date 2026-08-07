@@ -154,6 +154,25 @@ static void test_is_tile_blocked(void)
     printf("  PASS: test_is_tile_blocked\n");
 }
 
+static void test_query_tile_encoding(void)
+{
+    /* ReDMCSB DEFS.H: M034_SQUARE_TYPE/M035_SQUARE and C02/C03/C05
+     * element constants (lines 1001-1012). */
+    assert(dm2_v1_query_tile_type(0x65, NULL, NULL) == 3);
+    assert(dm2_v1_query_tile_flags(0x65, NULL, NULL) == 5);
+    assert(dm2_v1_query_tile_type(0x1e5, NULL, NULL) == 7);
+    assert(dm2_v1_query_tile_flags(0x1e5, NULL, NULL) == 5);
+
+    assert(dm2_v1_query_tile_is_pit(0x40, NULL, NULL) == 1);
+    assert(dm2_v1_query_tile_is_stairs(0x60, NULL, NULL) == 1);
+    assert(dm2_v1_query_tile_is_teleporter(0xa0, NULL, NULL) == 1);
+    assert(dm2_v1_query_tile_is_pit(0x60, NULL, NULL) == 0);
+    assert(dm2_v1_query_tile_is_stairs(0xa0, NULL, NULL) == 0);
+    assert(dm2_v1_query_tile_is_teleporter(0xe0, NULL, NULL) == 0);
+
+    printf("  PASS: test_query_tile_encoding\n");
+}
+
 /* ================================================================ */
 /* Test 4: dm2_v1_dir_from_5x5_pos                                  */
 /* ================================================================ */
@@ -391,6 +410,7 @@ int main(void)
     test_query_098d_000f();
     test_is_cls1_critical_for_load();
     test_is_tile_blocked();
+    test_query_tile_encoding();
     test_dir_from_5x5_pos();
     test_creature_blit_recti();
     test_door_damage_resist();
