@@ -46370,7 +46370,8 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
      * geometry.  A generic host font changes the name's advance and makes
      * this narrow HUD lane overlap the action surface, so absent PC34 font
      * data deliberately leaves the original black clear intact. */
-    if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) {
         return;
     }
     if (DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(

@@ -4,6 +4,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int rect_is_color(const unsigned char *framebuffer,
+                         int x0, int y0, int width, int height,
+                         unsigned char color)
+{
+    int x;
+    int y;
+
+    if (!framebuffer) return 0;
+    for (y = y0; y < y0 + height; ++y) {
+        for (x = x0; x < x0 + width; ++x) {
+            if (framebuffer[y * 320 + x] != color) return 0;
+        }
+    }
+    return 1;
+}
+
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -11,6 +27,7 @@ int main(void)
     unsigned short thing;
     char name[64];
     unsigned char framebuffer[320 * 200];
+    unsigned char foreign_font[M11_FONT_BITMAP_BYTES];
     size_t cursorPixels = 0u;
     int y;
 
@@ -60,6 +77,40 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+
+    /* OBJECT.C F0034 writes the M564-selected name into C017 with M653.
+     * A byte-identical 768-byte raster from another GRAPHICS.DAT identity
+     * must not appear as a plausible source-owned object label. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    if (rect_is_color(framebuffer, 233, 33, 87, 6, 0u)) {
+        fprintf(stderr, "real F0034 M653 leader-hand name did not draw\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    memcpy(foreign_font, state.originalFont.bitmap, sizeof(foreign_font));
+    if (!M11_Font_LoadFromRawBitmap(&state.originalFont, 694,
+                                    foreign_font, sizeof(foreign_font))) {
+        fprintf(stderr, "foreign F0034 M653 fixture did not load\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    state.originalFontAvailable = 1;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    if (!rect_is_color(framebuffer, 233, 33, 87, 6, 0u)) {
+        fprintf(stderr, "foreign font drew the F0034 source name\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!M11_Font_LoadFromGraphicsDat(&state.originalFont,
+                                      state.assetLoader.fileState,
+                                      state.assetLoader.runtimeState)) {
+        fprintf(stderr, "PC34 M653 font could not be restored\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    state.originalFontAvailable = 1;
 
     /* ReDMCSB IO.C F0702 replaces the host arrow with the held source
      * object. Verify the final indexed framebuffer, not merely the transient
