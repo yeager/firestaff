@@ -96,10 +96,12 @@ static void test_real_dungeon_c_light_receipts(
     size_t size = 0u;
     char path[1024];
     DM2_V1_DungeonData real_dungeon;
+    int descriptors_seen = 0;
     int evaluated = 0;
     int dynamic_maps = 0;
     int fixed_maps = 0;
     int map_bound = 1;
+    int dynamic_blocked = 1;
 
     if (!load_dungeon(&data, &size, path, sizeof(path))) {
         printf("SKIP: real DM2 DUNGEON.DAT not found for c_light scan\n");
@@ -119,20 +121,30 @@ static void test_real_dungeon_c_light_receipts(
                     &real_dungeon, level, &map)) {
                 continue;
             }
+            ++descriptors_seen;
             memset(&real_source, 0, sizeof(real_source));
-            real_source.valid = 1;
             real_source.dynamic_map = map.dynamic_light;
-            real_source.base_light = map.dynamic_light ? 5u : 0u;
-            real_source.darkness_offset = map.dynamic_light ? 2u : 0u;
-            real_source.source_state_hash = 0x52434c54u ^ map.descriptor_hash;
+            if (map.dynamic_light) {
+                /* A real DUNGEON.DAT descriptor proves only the dynamic
+                 * branch selector. It does not contain v1e0974, party-hand
+                 * charges, spell effects, rain globals, or v1e0978. Never
+                 * manufacture those values in a real-data regression. */
+                if (dm2_v1_c_light_m11_receipt_build_for_map(
+                        scene, &map, &real_source, &real_receipt)) {
+                    dynamic_blocked = 0;
+                }
+                ++dynamic_maps;
+                continue;
+            }
+            real_source.valid = 1;
+            real_source.source_state_hash = map.descriptor_hash;
             if (!dm2_v1_c_light_m11_receipt_build_for_map(
                     scene, &map, &real_source, &real_receipt)) {
                 map_bound = 0;
                 continue;
             }
             ++evaluated;
-            if (map.dynamic_light) ++dynamic_maps;
-            else ++fixed_maps;
+            ++fixed_maps;
             first_hash = real_receipt.receipt_hash;
             ++map.descriptor_hash;
             if (dm2_v1_c_light_m11_receipt_build_for_map(
@@ -142,11 +154,14 @@ static void test_real_dungeon_c_light_receipts(
             }
         }
     }
-    CHECK("real DUNGEON.DAT exposes c_light map descriptors", evaluated > 0);
+    CHECK("real DUNGEON.DAT exposes c_light map descriptors",
+          descriptors_seen > 0);
     CHECK("real c_light receipts are bound to descriptor hashes", map_bound);
     CHECK("real DUNGEON.DAT exposes dynamic c_light branch", dynamic_maps > 0);
+    CHECK("real dynamic c_light branch stays blocked without source state",
+          dynamic_blocked);
     CHECK("real DUNGEON.DAT exposes fixed or bounded c_light branch",
-          fixed_maps > 0 || dynamic_maps == evaluated);
+          fixed_maps > 0 || (dynamic_maps > 0 && evaluated == 0));
     dm2_v1_dungeon_free(&real_dungeon);
     free(data);
 }

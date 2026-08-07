@@ -58571,3 +58571,10 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Asserted source-unowned types 54 and 127 remain unavailable instead of
   falling back to `creature_type == ai_row`; DB4/CAII/CCM runtime ownership
   remains fail-closed.
+
+# DM2 dynamic c_light real-data boundary (2026-08-07)
+
+- ✅ Removed synthetic `base_light`, darkness and state-hash inputs from the
+  mounted `DUNGEON.DAT` c_light scan. Real dynamic-map descriptors now prove
+  only the branch selector and must remain blocked without recovered runtime
+  state; fixed maps use their authenticated descriptor identity.
