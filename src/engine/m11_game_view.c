@@ -18452,6 +18452,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
+        if (runtime_receipt.profile &&
+            (runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+             runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+             runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI)) {
+            /* A31/A35 owns its title through APPA.C -> ANIM.C, not the
+             * PC3.4 TITLE.C/ENTRANCE.C C001--C005 session.  TITL.DAT's
+             * final DL command reads beyond the item into Amiga allocation
+             * state (ANIM.C F1205 / EXPAND.C F0466), and no source-owned
+             * application handoff has been captured yet.  Never make the
+             * selected Amiga package appear to run by substituting the PC34
+             * title, entrance, HUD or viewport path. */
+            csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+            return 0;
+        }
         if (!m11_csb_apply_boot_runtime_receipt(state, spec, &runtime_receipt)) {
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;

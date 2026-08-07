@@ -3,9 +3,10 @@
 - **CSB-PLATFORM-NATIVE-STARTUP-OWNERS:** The PC34 launcher-handoff regression
   now pins its PC34 package instead of inheriting a persisted platform choice;
   it therefore cannot mistake Atari, Amiga or FM Towns startup for TITLE.C
-  F0437/ENTRANCE.C F0806. Continue replacing the remaining generic Amiga
-  title path with its native `TITL.DAT`/application owner; do not reuse the
-  PC34 title receipt for that platform.
+  F0437/ENTRANCE.C F0806. The Amiga A31/A35 route is now fail-closed rather
+  than replaying that PC34 session. Continue with a native `TITL.DAT`/APPA.C
+  application handoff; do not reuse PC34 title, entrance, HUD or viewport
+  receipts for that platform.
 
 - **NEXUS-VDP2-WRITER-CANDIDATE-OWNERSHIP:** The authentic 64-window VDP2
   code receipt now has a bounded partial-match analyzer. The primary writer

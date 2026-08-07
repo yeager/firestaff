@@ -17,6 +17,13 @@
   inventarieslotar. CTesten och källåset kontrollerar att inga värdar kan
   behålla eller serialisera parallellt tillstånd.
 
+# CSB Amiga startup fallback removed (2026-08-07)
+
+- ✅ Selected A31/A35 packages no longer enter the unrelated PC3.4
+  `TITLE.C`/`ENTRANCE.C` startup session. The native `TITL.DAT`/APPA.C chain
+  is left fail-closed until its application handoff is source-bound, so M11
+  cannot present PC title, entrance, HUD or viewport pixels as Amiga output.
+
 # CSB PC34 launcher regression isolation (2026-08-07)
 
 - ✅ The real-media M12→M11 PC34 startup and V2 handoff probes now select the

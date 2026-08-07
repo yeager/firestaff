@@ -1860,11 +1860,11 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
     }
 }
 
-/* A31E has the PC34 GRAPHICS.DAT digest, but its paired TITL.DAT is a
- * different source package.  Exercise the normal M12->M11 selection route
- * against one supplied archive: because it is the only match, it also proves
- * that first-match selection never falls back to the shared generic cache.
- * ReDMCSB COMPILE.H 199-243 selects the A31E media/program family. */
+/* A31E has the PC34 GRAPHICS.DAT digest, but its paired TITL.DAT and APPA.C
+ * program family are different source owners.  Until their native M11
+ * handoff is recovered, the selected package must fail closed rather than
+ * entering PC3.4 TITLE.C/ENTRANCE.C.  ReDMCSB APPA.C:51-68, ANIM.C F1205 and
+ * COMPILE.H 199-243. */
 static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
     M12_StartupMenuState menu;
@@ -1894,13 +1894,12 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     menu.launchRequested = 1;
     menu.gameOptions[1].versionIndex = version_index;
     M11_GameView_Init(&view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
-                "M11 opens the selected Amiga 3.1 CSB archive through M12");
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 0,
+                "M11 rejects Amiga 3.1 before the PC34 startup fallback");
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
-    expect_true(profile && profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN,
-                "M11 preserves the selected Amiga 3.1 CSB profile identity");
-    expect_true(profile && strstr(profile->asset_root, "csb-amiga31-en") != NULL,
-                "M11 starts Amiga 3.1 from its version-private runtime cache");
+    expect_true(view.active == 0 && profile == NULL &&
+                view.csbStartupRuntimeAssetSession == NULL,
+                "M11 does not publish a mixed-platform Amiga startup session");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
