@@ -877,6 +877,16 @@ int M11_Audio_Init(M11_AudioState* state) {
             return 1;
         }
 
+#ifdef __APPLE__
+        /* macOS CoreAudio workaround: pump the Cocoa event loop once before
+         * opening an audio device so that HALC_ShellObjectMap's dispatch_once
+         * initialiser runs on the main thread.  Without this, the audio
+         * device thread and CFRunLoop can race on the same dispatch_once
+         * block, dereferencing an uninitialised proxy object (SIGSEGV in
+         * HALC_ProxyObjectMap::_GetProxyForObject). */
+        SDL_PumpEvents();
+#endif
+
         spec.format   = SDL_AUDIO_F32;
         spec.channels = 1;
         spec.freq     = M11_AUDIO_SAMPLE_RATE;
