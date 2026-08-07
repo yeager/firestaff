@@ -7,7 +7,7 @@
 +++ src/ss/vdp1.cpp
 @@ -41,0 +42 @@
 +#include <stdio.h>
-@@ -1637,0 +1639,11 @@
+@@ -1637,0 +1639,15 @@
 +}
 +
 +void FirestaffCaptureRaw(void *opaque)

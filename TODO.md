@@ -10,6 +10,13 @@
   DGN/mesh/texture, HUD, menu or CLUT record. Keep production presentation
   gated until those identities are bound.
 
+- **NEXUS-SATURN-VDP1-PC-SOURCE-JOIN:** The external producer now supports an
+  operator-only VDP1 VRAM-write trace with SH-2 PC values. The first bounded
+  source probe reached the live VRAM window but was dominated by colour/
+  framebuffer fills at `0x06026260`/`0x06026270`; it did not identify the
+  captured type-2 DGN texture source. Keep the negative receipt and semantic
+  admission blocked; repeat only with a source-span-specific execution window.
+
 - **DM1-MIRROR-RESURRECT-CHEST-CLOSE-ORDER-SYNTHETIC-AUDIT:** This
   C040/chest/queue fixture fabricates party, Thing and slot state. It loads
   no original DM1 data and has no M11/runtime caller; retain it only as

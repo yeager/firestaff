@@ -4,6 +4,12 @@
   remain silent rather than publishing a track that the runtime cannot load.
 - ✅ Added regressions with authenticated-looking CD.DAT bytes for both
   unsupported platforms; FM Towns dispatch still passes. No release was made.
+# 2026-08-07 Nexus VDP1 PC trace negative receipt
+- ✅ Added a reproducible operator-only Mednafen patch and analyzer for
+  SH-2-PC-addressed VDP1 VRAM writes. The European source-span probe reached
+  the live window but resolved only colour/framebuffer fills at
+  `0x06026260`/`0x06026270`; no DGN texture owner was admitted. Production
+  menu/HUD/viewport composition remains capture-gated.
 
 # DM2 DB-record to GDAT object-name receipt (2026-08-13)
 - ✅ Added `dm2_v1_query_source_item_name_receipt()`, which authenticates the

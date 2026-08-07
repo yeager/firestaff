@@ -1,0 +1,69 @@
+--- src/ss/vdp1.cpp
++++ src/ss/vdp1.cpp
+@@ -42,0 +43,2 @@
++#include <stdlib.h>
++#include <stdint.h>
+@@ -54,0 +57 @@
++#include "sh7095.h"
+@@ -1241,0 +1245,42 @@
++static FILE *FirestaffVramWriteTraceFile;
++static uint32 FirestaffVramWriteTraceMin;
++static uint32 FirestaffVramWriteTraceMax;
++static unsigned FirestaffVramWriteTraceLimit = 100000;
++static unsigned FirestaffVramWriteTraceCount;
++static bool FirestaffVramWriteTraceConfigured;
++
++static void FirestaffTraceVramWrite(uint32 address, unsigned size, uint16 value)
++{
++ const char *path;
++ if(!FirestaffVramWriteTraceConfigured)
++ {
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MIN");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MAX");
++  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_LIMIT");
++  if(min_text && *min_text) FirestaffVramWriteTraceMin = strtoul(min_text, NULL, 0);
++  if(max_text && *max_text) FirestaffVramWriteTraceMax = strtoul(max_text, NULL, 0);
++  if(limit_text && *limit_text) FirestaffVramWriteTraceLimit = strtoul(limit_text, NULL, 10);
++  FirestaffVramWriteTraceConfigured = true;
++ }
++ if(FirestaffVramWriteTraceMax <= FirestaffVramWriteTraceMin ||
++    value == 0 ||
++    address < FirestaffVramWriteTraceMin ||
++    address + size > FirestaffVramWriteTraceMax ||
++    FirestaffVramWriteTraceCount >= FirestaffVramWriteTraceLimit)
++  return;
++ path = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITES");
++ if(!path || !*path) return;
++ if(!FirestaffVramWriteTraceFile)
++ {
++  FirestaffVramWriteTraceFile = fopen(path, "wb");
++  if(!FirestaffVramWriteTraceFile) return;
++  fputs("FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V1\n", FirestaffVramWriteTraceFile);
++ }
++ fprintf(FirestaffVramWriteTraceFile,
++  "addr=0x%05x size=%u value=0x%04x pc0=0x%08x pc1=0x%08x\n",
++  (unsigned)address, size, (unsigned)value,
++  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
++ FirestaffVramWriteTraceCount++;
++ if((FirestaffVramWriteTraceCount & 0x3ffU) == 0) fflush(FirestaffVramWriteTraceFile);
++}
++
+@@ -1247,0 +1293 @@
++  FirestaffTraceVramWrite(A, 1, (uint16)(DB >> (((A & 1) ^ 1) << 3)));
+@@ -1276,0 +1323 @@
++  FirestaffTraceVramWrite(A, 2, DB);
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -121,0 +122,2 @@
++ uint32 FirestaffGetSH2PC(unsigned which);
++
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -462,0 +463,5 @@
++
++uint32 FirestaffGetSH2PC(unsigned which)
++{
++ return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
++}
+@@ -2595 +2599,0 @@
+-

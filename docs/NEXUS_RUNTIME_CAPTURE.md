@@ -56,6 +56,15 @@ which proves a real gameplay redraw. The command source is not yet joined to
 an authenticated DGN/ITEM/MNS source span, so no menu, HUD, CLUT, source-asset
 or production viewport binding is admitted from it yet.
 
+An operator-only VDP1 write trace was also run against the same European image
+with an SH-2 PC attached to each VRAM write. The first bounded source probe was
+dominated by framebuffer/colour fills at `PC0=0x06026260`/`0x06026270`; this is
+not a DGN texture-owner join. `scripts/analyze_nexus_vdp1_write_trace.py`
+records that negative result and remains fail-closed. The reproducible
+Mednafen instrumentation is kept in
+`scripts/mednafen_1.32.1_nexus_saturn_vdp1_pc_trace.patch`; it is diagnostic
+only and does not authorize production drawing.
+
 The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
 explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the
 return pointer and framebuffer selector) before the unchanged raw VRAM/FB
