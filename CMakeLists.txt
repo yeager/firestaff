@@ -5075,6 +5075,10 @@ list(REMOVE_ITEM M10_SOURCES
 # data-free. Its direct test retains the PANEL.C source-lock behavior.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c")
+# The F0297-F0302 status-hand rotation model is contract-only and is
+# already compiled by its direct regression with the slot-priority fixture.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_status_hand_rotation_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
