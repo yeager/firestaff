@@ -157,6 +157,22 @@ int dm2_v1_record_pool_set_init_from_raw_sksave(
     size_t raw_body_size,
     const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt);
 
+/* Execute the DB4..DB15 clearing phase of
+ * DM2_READ_SKSAVE_DUNGEON after the caller has removed every dynamic record
+ * from its source-owned map chains.  SKProject leaves DB0..DB3 in place,
+ * then writes OBJECT_NULL to the first word of every DB4..DB15 record before
+ * READ_RECORD_CHECKCODE reallocates hero, party and tile chains.
+ *
+ * `dungeon_receipt` must be the same authenticated raw baseline used to
+ * create `set`; mismatched counts, unallocated DBs, absent spans, a complete
+ * graph, or invalid ownership reject without modifying the set.  This helper
+ * does not itself detach tile links and therefore cannot publish a restored
+ * game. Source: SKWINSPX/src/v5/sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON
+ * lines 1128-1176. */
+int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+    DM2_V1_RecordPoolSet *set,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt);
+
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set);
 
 const char *dm2_v1_record_pool_source_evidence(void);

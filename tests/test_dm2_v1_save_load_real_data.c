@@ -450,6 +450,61 @@ static int verify_real_raw_pool_baseline(
         }
     }
 
+    /* DM2_READ_SKSAVE_DUNGEON first leaves DB0..DB3 resident, then clears
+     * the first word of every dynamic DB record before it decodes any saved
+     * hero or tile root. Verify that exact source phase against the mounted
+     * corpus, including preservation of all non-link bytes. */
+    if (!dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+            &pools, dungeon)) {
+        dm2_v1_record_pool_set_free(&pools);
+        return 0;
+    }
+    for (pool = 0; pool < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++pool) {
+        const int record_size = dm2_v1_record_pool_record_size(pool);
+        const uint16_t count = dungeon->db_record_counts[pool];
+        const DM2_V1_RecordPool *source = &pools.pools[pool];
+        uint16_t index;
+
+        if (record_size == 0 || count == 0u) continue;
+        for (index = 0u; index < count; ++index) {
+            const uint8_t *record = source->bytes +
+                (size_t)index * (size_t)record_size;
+            const uint8_t *original = payload + dungeon->db_pool_offsets[pool] +
+                (size_t)index * (size_t)record_size;
+            if ((pool < 4 && memcmp(record, original,
+                                    (size_t)record_size) != 0) ||
+                (pool >= 4 &&
+                 (record[0] != 0xffu || record[1] != 0xffu ||
+                  (record_size > 2 && memcmp(record + 2u, original + 2u,
+                                              (size_t)record_size - 2u) != 0)))) {
+                dm2_v1_record_pool_set_free(&pools);
+                return 0;
+            }
+        }
+    }
+    {
+        DM2_V1_OriginalRawDungeonReceipt mismatched = *dungeon;
+        uint8_t before[2];
+        int probe_pool = 0;
+        while (probe_pool < 4 &&
+               dungeon->db_record_counts[probe_pool] == 0u) {
+            ++probe_pool;
+        }
+        if (probe_pool >= 4) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        memcpy(before, pools.pools[probe_pool].bytes, sizeof(before));
+        ++mismatched.db_record_counts[probe_pool];
+        if (dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+                &pools, &mismatched) != 0 ||
+            memcmp(before, pools.pools[probe_pool].bytes,
+                   sizeof(before)) != 0) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+    }
+
     /* The body must be bound to the receipt hashes before allocation.  Flip
      * a byte in a copied real body only to prove the negative admission
      * boundary; production still receives the untouched original file. */

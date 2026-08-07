@@ -59779,3 +59779,14 @@ companion.
   `GRAPHICS.DAT`, checks the source ENT1 signature/offset and nonzero payload
   receipts, and leaves decoded-image/cache ownership gated.
 - ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.
+
+# DM2 SKSAVE source DB-clear phase (2026-08-13)
+
+- ✅ Added SKProject `DM2_READ_SKSAVE_DUNGEON`'s DB4–DB15 clear phase to the
+  authenticated raw-SKSAVE pool owner. DB0–DB3 remain byte-identical while
+  each dynamic record receives only `OBJECT_NULL` in its first word.
+- ✅ The operation validates the entire source baseline before modifying any
+  record, rejects mismatched receipts atomically and cannot mark a graph
+  complete or bypass the missing tile-chain owner.
+- ✅ Verified on all eight mounted PC-DOS primary/backup SKSAVE files through
+  `test_dm2_v1_save_load_real_data` (143/143).

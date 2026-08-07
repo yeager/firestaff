@@ -422,6 +422,58 @@ int dm2_v1_record_pool_set_init_from_raw_sksave(
     return 1;
 }
 
+int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+    DM2_V1_RecordPoolSet *set,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt)
+{
+    int pool;
+
+    if (set == NULL || dungeon_receipt == NULL || !set->valid ||
+        set->record_graph_complete != 0 || !dungeon_receipt->valid) {
+        return 0;
+    }
+
+    /* Validate the full baseline first.  The source loop is destructive, so
+     * a contradictory receipt must not partially clear a caller's pool set. */
+    for (pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        const DM2_V1_RecordPool *source = &set->pools[pool];
+        const int record_size = (int)s_table_recordsizes[pool];
+        const uint16_t count = dungeon_receipt->db_record_counts[pool];
+
+        if (source->record_size != record_size ||
+            source->record_count != (int)count ||
+            source->extension_bytes != NULL || source->extension_count != 0 ||
+            source->extension_base != -1) {
+            return 0;
+        }
+        if (record_size == 0) {
+            if (count != 0u || source->bytes != NULL) return 0;
+        } else if (count == 0u) {
+            if (source->bytes != NULL) return 0;
+        } else if (source->bytes == NULL) {
+            return 0;
+        }
+    }
+
+    /* SKProject sksvgame.cpp:1151-1164.  DB0..DB3 remain resident because
+     * their tile-chain ownership was retained during the preceding map walk.
+     * The dynamic pools are made available to c_record::ALLOC_NEW_RECORD by
+     * writing only GenericRecord::w0 = OBJECT_NULL; the rest of each source
+     * record is intentionally left alone until the source SUPPRESS masks
+     * overwrite it during READ_RECORD_CHECKCODE. */
+    for (pool = 4; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        DM2_V1_RecordPool *target = &set->pools[pool];
+        int index;
+
+        for (index = 0; index < target->record_count; ++index) {
+            uint8_t *record = target->bytes +
+                (size_t)index * (size_t)target->record_size;
+            dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_NULL);
+        }
+    }
+    return 1;
+}
+
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set)
 {
     if (set == NULL) {
