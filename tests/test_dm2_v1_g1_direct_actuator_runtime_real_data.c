@@ -55,6 +55,7 @@ int main(int argc, char **argv)
     int shop_floor_count = 0;
     int creature_generator_count = 0;
     int item_generator_count = 0;
+    int shooter_counts[6] = {0, 0, 0, 0, 0, 0};
 
     if (!path) {
         puts("SKIP: no local canonical DM2 data");
@@ -134,12 +135,24 @@ int main(int argc, char **argv)
             if (type == 0x30u) ++shop_floor_count;
             if (type == 0x2eu) ++creature_generator_count;
             if (type == 0x3cu) ++item_generator_count;
+            switch (type) {
+            case 0x07u: ++shooter_counts[0]; break;
+            case 0x08u: ++shooter_counts[1]; break;
+            case 0x09u: ++shooter_counts[2]; break;
+            case 0x0au: ++shooter_counts[3]; break;
+            case 0x0eu: ++shooter_counts[4]; break;
+            case 0x0fu: ++shooter_counts[5]; break;
+            default: break;
+            }
         }
     }
     printf("source DB3 census: shop-panel=0x3f:%d shop-floor=0x30:%d "
-           "creature-generator=0x2e:%d item-generator=0x3c:%d\n",
+           "creature-generator=0x2e:%d item-generator=0x3c:%d "
+           "shooters=[0x07:%d,0x08:%d,0x09:%d,0x0a:%d,0x0e:%d,0x0f:%d]\n",
            shop_panel_count, shop_floor_count, creature_generator_count,
-           item_generator_count);
+           item_generator_count, shooter_counts[0], shooter_counts[1],
+           shooter_counts[2], shooter_counts[3], shooter_counts[4],
+           shooter_counts[5]);
     dm2_v1_dungeon_free(&dungeon);
     puts("PASS: direct DB3 Actuator roots use only source-proven payload fields");
     return 0;

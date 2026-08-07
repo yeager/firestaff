@@ -58654,6 +58654,14 @@ The canonical PC-English wall-plan regression now round-trips every emitted
 wall command through the live `GRAPHICSSET/<MapGraphicsStyle>` address and
 exact viewport field before M11 consumes it. The real wall frame remains
 source-owned with zero fallback draws; mismatched material is rejected.
+
+# DM2 source shooter actuator census (2026-08-13)
+
+Extended the canonical G1 actuator regression to inventory all six source
+shooter classes (`0x07..0x0a`, `0x0e..0x0f`) across every real map. The mounted
+PC-English corpus contains four `0x08` roots and zero roots for the other five
+classes. The test retains those counts as source-presence evidence only; it
+does not allocate a DB14 record, create a projectile, or schedule `SHOOT_ITEM`.
 # Nexus VDP1 writer code-window receipt (2026-08-07)
 
 - ✅ Added a reproducible Mednafen producer patch that captures the live SH-2

@@ -4243,6 +4243,10 @@ level or consumer bindings.
   all six source shooter classes (`0x07..0x0a`, `0x0e..0x0f`) and confirms
   each retains source launch facts while allocating no DB14 record or
   `SHOOT_ITEM` timer.
+  **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains
+  four class-`0x08` shooter roots and zero roots for `0x07`, `0x09`, `0x0a`,
+  `0x0e` or `0x0f` across all maps. These are source-presence facts only and
+  do not authorize DB14/projectile mutation.
 
 - **DM2-ACTUATOR-GENERATOR-OWNER-HANDOFF:** Creature and item generator
   defaults are closed. Port the DB14/DB-record allocation, payload and timer
