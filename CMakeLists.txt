@@ -56626,3 +56626,14 @@ foreach(_nexus_fixture_target IN ITEMS
             firestaff_nexus_test_fixtures)
     endif()
 endforeach()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_mirror_directional_pc34_material_gate.c")
+    add_executable(test_dm1_v1_hoc_mirror_directional_pc34_material_gate
+        tests/test_dm1_v1_hoc_mirror_directional_pc34_material_gate.c)
+    target_include_directories(test_dm1_v1_hoc_mirror_directional_pc34_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_hoc_mirror_directional_pc34_material_gate PRIVATE
+        firestaff_m10)
+    add_test(NAME dm1_v1_hoc_mirror_directional_pc34_material_gate
+        COMMAND test_dm1_v1_hoc_mirror_directional_pc34_material_gate)
+endif()

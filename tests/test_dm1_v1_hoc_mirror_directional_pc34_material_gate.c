@@ -74,7 +74,7 @@ static int verify_directional_gate(const HocMirrorSensorPc34 *sensor)
                 &front) ||
             !DM1_V1_ChampionMirror_BuildViewportRenderReceiptPc34(
                 1, &front, &render) ||
-            !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            !DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
                 &render, 0, 1, &host)) {
             fprintf(stderr, "FAIL C127 receipt failed for visible cell %d\n",
                     visibleCell);
@@ -96,8 +96,13 @@ static int verify_directional_gate(const HocMirrorSensorPc34 *sensor)
                 host.drawMirrorBackingFallbackRect ||
                 host.drawInvariantBackingRect || !host.suppressHostFallbackVisuals) {
                 fprintf(stderr,
-                        "FAIL C127 cell %d did not retain C346 -> C026 PC34 material\n",
-                        visibleCell);
+                        "FAIL C127 cell %d material front=%d render=%d backing=%d "
+                        "portrait=%d graphic=%d host=%d asset=%d invariant=%d\n",
+                        visibleCell, front.isFrontMirror, render.valid,
+                        render.drawMirrorBacking, render.drawChampionPortrait,
+                        render.backingGraphicIndex, host.valid,
+                        host.drawMirrorBackingAsset,
+                        host.drawInvariantBackingRect);
                 return 0;
             }
         } else if (front.isFrontMirror || !render.valid ||
@@ -185,10 +190,7 @@ static int verify_all_hoc_c127_sensors(
 
 int main(void)
 {
-    const char *explicitDirectory = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char *home = getenv("HOME");
-    char defaultDirectory[512];
-    const char *directory = explicitDirectory;
+    const char *directory = getenv("FIRESTAFF_DM1_DATA_DIR");
     char dungeonPath[1024];
     char graphicsPath[1024];
     struct DungeonDatState_Compat dungeon;
@@ -198,26 +200,17 @@ int main(void)
     int distinctPortraitCount = 0;
     int result = 1;
 
-    if (!directory && home) {
-        if (snprintf(defaultDirectory, sizeof(defaultDirectory),
-                     "%s/.firestaff/data/dm1", home) > 0) {
-            directory = defaultDirectory;
-        }
-    }
     if (!directory || !data_path(dungeonPath, sizeof(dungeonPath), directory,
                                  "DUNGEON.DAT") ||
         !data_path(graphicsPath, sizeof(graphicsPath), directory,
                    "GRAPHICS.DAT")) {
-        return explicitDirectory ? 1 : 0;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     if (!regular_file_has_bytes(dungeonPath) ||
         !regular_file_has_bytes(graphicsPath)) {
-        if (explicitDirectory) {
-            fprintf(stderr, "FAIL missing real PC34 data under %s\n", directory);
-            return 1;
-        }
-        printf("SKIP real PC34 DM1 corpus unavailable\n");
-        return 0;
+        fprintf(stderr, "FAIL missing real PC34 data under %s\n", directory);
+        return 1;
     }
 
     memset(&dungeon, 0, sizeof(dungeon));
