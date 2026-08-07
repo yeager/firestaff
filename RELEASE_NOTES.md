@@ -1,37 +1,49 @@
 # Firestaff v3.0.293
 
-## DM1
+## Added
 
-- FM Towns menu font rasteriser shipped with round-trip verification
+- **DM1 FM Towns menu font rasteriser** with round-trip verification
   against real EDM.EXP asset 557 from the shipping Japanese Track 01
   GRAPHICS.DAT. Layout: 6 rows × 128 ASCII glyphs, MSB-first,
   CHAR_X_SIZE (=5) body pixels right-aligned in bits 4..0.
   `dm1_v1_fmtowns_font_rasterise_glyph_pc34` and
   `..._rasterise_string_pc34` blit into an M11 8bpp framebuffer with
   fg/bg palette indices and optional bg-write.
-- FM Towns menu-render harness (previous release's shipped modules)
-  now has a concrete glyph consumer.
+- **DM1 FM Towns menu-render pipeline**: default glyph consumer +
+  `M11_GameView_RenderDm1FmtownsMenu` compose region lookup, panel
+  fill, label walk and glyph rasterisation into one M11-level call.
+  The M11 action-menu path now paints English DYNAMENU text into
+  the source-owned EGB backdrop byte-exact against EDM.EXP.
+- **Docs**: new `docs/fmtowns/CROSS_GAME_INVENTORY.md` inventories
+  every FM Towns module across DM1/DM2/CSB and flags reuse
+  opportunities.
 
-## Cross-cutting
+## Changed
 
-- CI: fixed cross-platform build failures — 18 test/probe targets
-  gained the missing `theron_v1_track02_dungeon_text.c` source,
-  Windows `mkdir()` signature guarded, and Ubuntu GCC 14
-  `-Werror=use-after-free` suppressed file-scope in a DM2 test.
-- Docs: TODO.md and DONE.md split into per-game files
+- **Docs**: TODO.md and DONE.md split into per-game files
   (`TODO-dm1.md`, `TODO-csb.md`, `TODO-dm2.md`, `TODO-nexus.md`,
   `TODO-theron.md` and DONE equivalents). 990 misclassified H1
   items relocated to correct game bucket, 1 exact duplicate
   removed.
-- Docs: 30 stray root markdown files reorganised into
+- **Docs**: 30 stray root markdown files reorganised into
   `docs/releases/`, `docs/qa/`, `docs/reviews/`, `docs/plans/`.
-- Docs: new `docs/fmtowns/CROSS_GAME_INVENTORY.md` inventories
-  every FM Towns module across DM1/DM2/CSB and flags reuse
-  opportunities.
-- Repo: removed synthetic README screenshots pending re-capture
-  from source-locked runtime output.
-- Releases: pruned to the 10 most recent tags; kept releases were
-  rewritten with per-game changelog grouping.
+- **Releases**: pruned to the 10 most recent tags; kept releases
+  were rewritten with per-game changelog grouping.
+
+## Fixed
+
+- **CI**: cross-platform build failures — 18 test/probe targets
+  gained the missing `theron_v1_track02_dungeon_text.c` source,
+  Windows `mkdir()` signature guarded, and Ubuntu GCC 14
+  `-Werror=use-after-free` suppressed file-scope in a DM2 test.
+- **Windows CI**: `AtariStFileVisitor` typedef and
+  `scan_zip_nested_disk_by_md5_list` guard mismatches in
+  `asset_find_by_hash.c` that blocked every Windows build.
+
+## Removed
+
+- **Synthetic README screenshots** pending re-capture from source-
+  locked runtime output.
 
 # Firestaff v3.0.292
 
