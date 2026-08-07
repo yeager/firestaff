@@ -4322,6 +4322,11 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
+# This is a source-locked, synthetic statusbox plan with no runtime caller
+# and no authenticated graphics-data binding.  Its direct regression owns
+# the fixture; production rendering stays with the data-backed M11 route.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
@@ -56789,4 +56794,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_mirror_pc34_materia
         firestaff_m10)
     add_test(NAME dm1_v1_hoc_mirror_pc34_material_gate
         COMMAND test_dm1_v1_hoc_mirror_pc34_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c")
+    add_executable(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat
+        tests/test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c)
+    target_include_directories(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
+    target_link_libraries(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat PRIVATE
+        firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic)
+    endif()
+    add_test(NAME dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat
+        COMMAND test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat)
 endif()
