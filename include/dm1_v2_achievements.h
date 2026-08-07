@@ -2,8 +2,9 @@
 #ifndef DM1_V2_ACHIEVEMENTS_H
 #define DM1_V2_ACHIEVEMENTS_H
 
-/* Achievement system — milestones for each game.
- * Tracks across sessions via save file. */
+#include <stdint.h>
+
+/* Compatibility declarations only. PC34 has no achievement ledger or banner. */
 
 #define ACH_MAX 64
 
@@ -41,4 +42,3 @@ void dm1_v2_achievements_render_notification(DM1_V2_Achievements *ach,
     uint32_t *rgba, int w, int h, float dt);
 
 #endif
-

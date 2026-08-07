@@ -1,3 +1,9 @@
+# DM1 V2:s syntetiska prestationer spärrade (2026-08-07)
+
+- ✅ Tog bort V2:s prestationslistor, notifieringsköer, sparfiler och gul banner.
+  ReDMCSB:s F0444-slutsekvens, originalgrafik och meddelandeyta äger i stället
+  synliga resultat. CTesten och källåset kontrollerar spärren.
+
 # DM1 V2:s lokala kontroll- och lagringstillstånd spärrat (2026-08-07)
 
 - ✅ Spärrade V2:s egna tangenttabell, roterande autosaves och kopierade

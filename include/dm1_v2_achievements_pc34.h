@@ -7,9 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
 
 typedef struct {
     int id;
@@ -20,6 +17,7 @@ typedef struct {
     int icon_idx;
 } M11_V2_Achievement;
 
+/* Compatibility-only. PC34 retains no host achievement data or notifications. */
 void v2_achievement_init(void);
 void v2_achievement_define(int id, const char* name, const char* desc, int icon);
 void v2_achievement_unlock(int id);
