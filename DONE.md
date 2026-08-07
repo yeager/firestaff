@@ -72,6 +72,12 @@
   the flag; it changes scheduler waiting only and never promotes raw VDP/SCSP
   bytes to production presentation or playback.
 
+# 2026-08-07 Nexus SDDRVS handler join
+- ✅ Added a source-window receipt for the authentic SCSP trace PC `0x3224`.
+  It verifies the corresponding `SDDRVS.TSK` command-byte/driver-state/SCSP
+  register-family handler at `+0x2220`; SLEV selector, MAP/SAL identity and
+  host playback remain explicitly blocked.
+
 # DM2 DB-record to GDAT object-name receipt (2026-08-13)
 - ✅ Added `dm2_v1_query_source_item_name_receipt()`, which authenticates the
   complete source chain: validated DB5..DB10 record ownership, SKProject

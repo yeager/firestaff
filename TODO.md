@@ -671,6 +671,14 @@
   SAL sample identity or playback ABI. Keep host audio blocked until those
   joins are captured.
 
+- **NEXUS-SCSP-DRIVER-HANDLER-JOIN:** The observed nonzero 68K PC `0x3224` now
+  binds to the authenticated `SDDRVS.TSK` handler at file offset `0x2220`
+  (`SHA-256 68890ee4…`). The verified instruction window reads an incoming
+  command byte, rejects values at/above `0x12`, updates driver state, shifts a
+  channel index and writes the SCSP per-channel register family at offset
+  `$17` from `a5=0x100000`. This is a source-owned command-to-driver corridor,
+  not the SLEV event selector, MAP row or SAL sample; playback remains blocked.
+
 - **NEXUS-SLEV-SH2-STATIC-OWNER:** The 16 hash-authenticated `SLEV##.BIN`
   files now have a reproducible big-endian SH-2 static receipt. They share
   the `0x2fe6` entry word and contain 1,271 `RTS`, 2,220 `JSR`, 5,164

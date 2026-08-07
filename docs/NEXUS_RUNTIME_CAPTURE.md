@@ -87,6 +87,14 @@ driver SHA-256 (`68890ee4…`). This is an authentic runtime handoff corridor,
 but it does not identify the SLEV event selector, MAP row, SAL sample, or
 SCSP voice ABI, so semantic admission and host playback remain blocked.
 
+The observed 68K PC `0x3224` is now checked by
+`scripts/analyze_nexus_scsp_driver_owner.py` against the authenticated driver
+window at `SDDRVS.TSK+0x2220`. The source bytes read a command byte, limit it
+against `0x12`, update driver state and write the SCSP per-channel register
+family at offset `$17` from `a5=0x100000`. This proves a runtime
+command-to-driver corridor, but does not bind the SLEV selector, MAP row or SAL
+sample; playback remains blocked.
+
 The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
 explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the
 return pointer and framebuffer selector) before the unchanged raw VRAM/FB
