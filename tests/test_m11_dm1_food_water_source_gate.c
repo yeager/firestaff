@@ -19,19 +19,12 @@ static int failures;
 
 static const char *graphics_dat_path(void)
 {
-    const char *configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char *home = getenv("HOME");
-    static char home_path[1024];
-    FILE *file;
+    const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    static char path[1024];
 
-    if (configured && configured[0] != '\0') return configured;
-    if (!home || home[0] == '\0') return NULL;
-    snprintf(home_path, sizeof(home_path),
-             "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    file = fopen(home_path, "rb");
-    if (!file) return NULL;
-    fclose(file);
-    return home_path;
+    if (!root || root[0] == '\0') return NULL;
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    return path;
 }
 
 static void seed_food_water_state(M11_GameViewState *state)
