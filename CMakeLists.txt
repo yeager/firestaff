@@ -6252,6 +6252,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_tmenu_input.c
     src/dm1/dm1_v1_fmtowns_tbios_id.c
     src/dm1/dm1_v1_fmtowns_pharlap_bridge.c
+    src/dm1/dm1_v1_fmtowns_direct_io.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56213,6 +56214,13 @@ add_executable(test_dm1_v1_fmtowns_pharlap_bridge
 )
 target_include_directories(test_dm1_v1_fmtowns_pharlap_bridge PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_pharlap_bridge COMMAND test_dm1_v1_fmtowns_pharlap_bridge)
+
+add_executable(test_dm1_v1_fmtowns_direct_io
+    tests/test_dm1_v1_fmtowns_direct_io.c
+    src/dm1/dm1_v1_fmtowns_direct_io.c
+)
+target_include_directories(test_dm1_v1_fmtowns_direct_io PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_direct_io COMMAND test_dm1_v1_fmtowns_direct_io)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
