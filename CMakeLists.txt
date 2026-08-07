@@ -4949,6 +4949,11 @@ list(REMOVE_ITEM M10_SOURCES
 # capture lifecycle. Its direct regression target retains the contract.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_final_capture_m11_gate_pc34_compat.c")
+# `dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c` models Atari ST-only
+# copy-protection and memory setup, both explicitly fail-closed for PC34.
+# Its standalone test retains the ReDMCSB platform-boundary audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0447_f0448_platform_boundary_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
