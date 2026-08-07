@@ -58619,3 +58619,9 @@ The mounted `GRAPHICS.DAT`/`DUNGEON.DAT` scene-weather-light regression now
 constructs its source-owned `GRAPHICSSET` scene-light receipt before selecting
 the fixed or dynamic map branch. Dynamic-map rejection is therefore checked
 against authenticated real scene state instead of an uninitialized test value.
+# DM2 diagnostic world-state archive boundary (2026-08-13)
+
+Removed `dm2_v1_world_state.c` from the production DM2 archive. Its bounded
+save projection and deliberately unavailable writer remain available only to
+focused save/minimap tests, so the production library cannot advertise that
+projection as an original `SKSave.dat` runtime.

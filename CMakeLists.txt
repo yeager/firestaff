@@ -6205,6 +6205,10 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gfx_decode_receipt.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
+    # The bounded world-state projection has no source-owned GAME_SAVE/DB
+    # graph and its writer is deliberately unavailable. Keep it in focused
+    # save/minimap tests, not in the production DM2 archive.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_state.c"
     # Shop/NPC compatibility modules remain explicit focused-test fixtures.
     # They have no source-owned SHOP_GLASS/AI-33 transaction owner and must
     # not be linked into the production DM2 archive.

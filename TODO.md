@@ -4473,7 +4473,10 @@ level or consumer bindings.
   `FIRESTAFF_DM2_SKSAVE_CORPUS` set, the writer-gate regression now attempts a
   quicksave against mounted `sksave0.dat`; it must return
   `ORIGINAL_WRITER_REQUIRED` before writing and preserve the source
-  fingerprint.
+  fingerprint. **2026-08-13 production-boundary audit:** the bounded
+  `dm2_v1_world_state.c` projection and its null writer are now excluded from
+  the production DM2 archive; save/minimap tests retain the explicit seam
+  until the complete `DM2_GAME_SAVE` graph is ported.
 
 ## Active DM1/CSB Symbol Queue
 
