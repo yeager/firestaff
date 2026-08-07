@@ -50,8 +50,6 @@ static void bind_scene_control(DM2_V1_ViewportState *viewport)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char default_root[1024];
     char path[2048];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
@@ -73,13 +71,14 @@ int main(void)
     int fallback_fetches = 0;
 
     if (!root || !root[0]) {
-        if (!home || !home[0]) { puts("SKIP: no local canonical DM2 data"); return 0; }
-        snprintf(default_root, sizeof(default_root), "%s/.firestaff/data/dm2/data", home);
-        root = default_root;
+        puts("SKIP: no selected canonical DM2 data corpus");
+        return 0;
     }
     snprintf(path, sizeof(path), "%s/graphics.dat", root);
     if (!read_file(path, &graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 data"); return 0;
+        fprintf(stderr, "FAIL: selected DM2 data corpus has no readable graphics.dat: %s\n",
+                path);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     memset(&material_plan, 0, sizeof(material_plan));
@@ -111,7 +110,9 @@ int main(void)
     door_plan.doors[0].ornament_index = ornate;
     door_plan.doors[0].door_ornate_gfx_index = ornate;
     door_plan.doors[0].ornate_gdat_index = dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
-    door_plan.doors[0].panel_gdat_index = dm2_v1_viewport_door_panel_graphic_index_for_square(DM2_SQ_D0C);
+    door_plan.doors[0].panel_gdat_index =
+        dm2_v1_viewport_door_panel_graphic_index_for_record(
+            DM2_SQ_D0C, 0, 1);
     door_plan.doors[0].frame_gdat_index = dm2_v1_viewport_door_frame_graphic_index_for_square(DM2_SQ_D0C);
     door_plan.doors[0].graphicsset_index =
         DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET;
@@ -472,6 +473,9 @@ int main(void)
         (viewport.blocked_material_mask & DM2_V1_VIEWPORT_BLOCKED_MATERIAL_DOOR) == 0u) goto fail;
     dm2_v1_gdat_door_overlay_m11_command_plan_free(&d3_plan);
     door_plan.doors[0].view_square = DM2_SQ_D0C;
+    door_plan.doors[0].panel_gdat_index =
+        dm2_v1_viewport_door_panel_graphic_index_for_record(
+            DM2_SQ_D0C, 0, 1);
     door_plan.doors[0].ornate_gdat_index =
         dm2_v1_viewport_door_ornate_graphic_index(ornate, DM2_SQ_D0C);
     door_plan.doors[0].frame_gdat_index =

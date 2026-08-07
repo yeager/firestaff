@@ -7,6 +7,15 @@
 - ✅ The Atari launcher regression now selects `st20-21-en` explicitly and
   verifies that M11 receives its private `csb-st20-21-en/GRAPHICS.DAT` path.
   Verification: the default M12→M11 handoff boundary passes with dummy audio.
+# DM2 direct G1 door-overlay receipt (2026-08-07)
+
+- ✅ Corrected the D0C real-data door regression to use the direct G1 DB0
+  `DoorType`/`OpeningDir` panel route that M11 consumes, rather than a
+  generic square-panel route. The PC-DOS GDAT plan now reaches M11 through
+  all four source-owned panel, ornament, frame and button commands.
+- ✅ The regression reads only the selected `FIRESTAFF_DM2_DATA_DIR` corpus.
+  A missing selected `graphics.dat` fails instead of using a private HOME
+  directory or silently skipping.
 
 # DM2 GDAT LOAD_ENT1 field layout (2026-08-07)
 

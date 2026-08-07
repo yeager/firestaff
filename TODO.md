@@ -15405,6 +15405,12 @@ lane is carried forward in the sections below.
     **2026-08-07 corpus update:** this probe now requires the explicit
     `FIRESTAFF_DM2_DATA_DIR/graphics.dat` corpus and fails an unreadable
     selection rather than borrowing a private HOME installation.
+    **2026-08-07 direct-root update:** the D0C overlay regression now builds
+    its panel from the same direct G1 DB0 `DoorType`/`OpeningDir` route that
+    M11 consumes. It no longer constructs a generic square-panel plan and
+    then expects the source renderer to accept it. The mounted PC-DOS corpus
+    reaches M11 through all four authenticated panel, ornament, frame and
+    button commands without a fallback fetch.
     Remaining: distance stretch/light-palette execution, `DRAW_DOOR_FRAMES`,
     D3/custom WALL_GFX buttons, door opening transforms, and verified GDAT
     material.
