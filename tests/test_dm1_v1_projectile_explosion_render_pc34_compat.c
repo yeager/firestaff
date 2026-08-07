@@ -643,13 +643,10 @@ static void test_f0115_runtime_summary_from_world(void) {
 
 static const char* dm1_pc34_dungeon_dat_path(void) {
     static char path[2048];
-    const char* configured = getenv("DM1_PC34_DUNGEON_DAT");
-    const char* home;
+    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
 
-    if (configured && configured[0]) return configured;
-    home = getenv("HOME");
-    if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DUNGEON.DAT", home);
+    if (!root || !root[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/DUNGEON.DAT", root);
     return path;
 }
 
@@ -663,18 +660,18 @@ static void test_f0115_world_candidates_real_pc34_data(void) {
     int mapIndex;
 
     printf("  F0115 world candidates with PC34 corpus...\n");
-    if (!path) return;
+    if (!path) {
+        puts("  SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return;
+    }
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&things, 0, sizeof(things));
     memset(&world, 0, sizeof(world));
     if (!F0500_DUNGEON_LoadDatHeader_Compat(path, &dungeon) ||
         !F0502_DUNGEON_LoadTileData_Compat(path, &dungeon) ||
         !F0504_DUNGEON_LoadThingData_Compat(path, &dungeon, &things)) {
-        /* This test is optional in data-free CI; a configured local corpus
-         * must be loadable rather than silently receiving a fixture. */
-        if (getenv("DM1_PC34_DUNGEON_DAT")) {
-            ASSERT_EQ(0, 1, "configured PC34 corpus loads");
-        }
+        fputs("configured PC34 DUNGEON.DAT is unavailable\n", stderr);
+        ASSERT_EQ(0, 1, "configured PC34 corpus loads");
         F0504_DUNGEON_FreeThingData_Compat(&things);
         F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
         return;
