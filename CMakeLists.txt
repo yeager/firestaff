@@ -4774,6 +4774,11 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller, so compile it only in its explicit regression target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_wall_pc34_compat.c")
+# `dm1_v1_f1266_f1285_source_ownership_pc34_compat.c` is a static ownership
+# audit with every route denied. Its direct audit target already compiles it,
+# and no M11/runtime path calls it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1266_f1285_source_ownership_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
