@@ -1,3 +1,14 @@
+# DM2 fixed spell/AI text-owner audit (2026-08-07)
+- ✅ Re-ran the real PC-English `GRAPHICS.DAT` corpus scan: it reports zero
+  source `SPELL_DEF` rows, so the extended `dtText/0x18` route cannot supply
+  fixed-mode spell names. SKProject's fixed spell names remain comments, and
+  `getAIName()` remains a debug helper rather than retail text.
+- ✅ Verified `dm2_v1_spell_name()` and `dm2_v1_creature_ai_name()` stay
+  unavailable, with `test_dm2_v1_extended_spells_definition_real_data`,
+  `test_dm2_v1_source_name_helpers`, and
+  `test_dm2_v1_spell_rune_lookup_pc34_compat` passing. No synthetic names or
+  release were added.
+
 # DM2 door text-owner audit (2026-08-07)
 - ✅ Real PC-DOS door-panel coverage now verifies the complete `DOORS`
   category has zero typed text rows and that every state/type label accessor

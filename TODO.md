@@ -1191,6 +1191,12 @@
   fixed-mode fallback. `dm2_v1_spell_name()` and `dm2_v1_creature_ai_name()`
   therefore return `NULL`. Bind a real selected-profile text consumer before
   showing spell or AI names.
+  2026-08-07 audit: `test_dm2_v1_extended_spells_definition_real_data` against
+  `/Users/bosse/.firestaff/data/dm2/dos_extract/data` reports zero source
+  `SPELL_DEF` rows; `test_dm2_v1_source_name_helpers` and
+  `test_dm2_v1_spell_rune_lookup_pc34_compat` also pass. No retail text owner
+  was found, so the open consumer remains fail-closed rather than receiving
+  guessed names.
 
 - **DM2-INVENTORY-TEXT-CONSUMER:** `defines.h`'s inventory-slot constants are
   internal indices, not display strings. SKProject `DRAW_ITEM_SURVEY` renders
