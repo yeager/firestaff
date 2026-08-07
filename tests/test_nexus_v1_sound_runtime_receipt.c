@@ -499,12 +499,14 @@ static void test_engine_raw_map_window_handoff_stays_opaque(void) {
 }
 
 static void test_optional_real_sal_corpus_profile(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     int seen = 0;
     int profiled = 0;
     int level;
 
-    if (!home || home[0] == '\0') return;
+    if ((!data_dir || data_dir[0] == '\0') &&
+        (!home || home[0] == '\0')) return;
     for (level = 0; level < 16; ++level) {
         char sal_path[512];
         char map_path[512];
@@ -517,10 +519,17 @@ static void test_optional_real_sal_corpus_profile(void) {
         Nexus_SoundEngine eng;
         Nexus_SfxRuntimeReceipt receipt;
 
-        snprintf(sal_path, sizeof(sal_path),
-                 "%s/.firestaff/data/nexus/SNDLEV%02d.SAL", home, level);
-        snprintf(map_path, sizeof(map_path),
-                 "%s/.firestaff/data/nexus/SNDLEV%02d.MAP", home, level);
+        if (data_dir && data_dir[0]) {
+            snprintf(sal_path, sizeof(sal_path),
+                     "%s/SNDLEV%02d.SAL", data_dir, level);
+            snprintf(map_path, sizeof(map_path),
+                     "%s/SNDLEV%02d.MAP", data_dir, level);
+        } else {
+            snprintf(sal_path, sizeof(sal_path),
+                     "%s/.firestaff/data/nexus/SNDLEV%02d.SAL", home, level);
+            snprintf(map_path, sizeof(map_path),
+                     "%s/.firestaff/data/nexus/SNDLEV%02d.MAP", home, level);
+        }
         sal_fp = fopen(sal_path, "rb");
         map_fp = fopen(map_path, "rb");
         if (!sal_fp || !map_fp) {
@@ -642,6 +651,7 @@ static void test_optional_real_sal_corpus_profile(void) {
 }
 
 static void test_optional_real_sal_layout_provenance(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     unsigned char *base = NULL;
     size_t base_size = 0;
@@ -653,9 +663,14 @@ static void test_optional_real_sal_layout_provenance(void) {
     char dm_path[512];
     FILE *fp;
 
-    if (!home || home[0] == '\0') return;
-    snprintf(base_path, sizeof(base_path),
-             "%s/.firestaff/data/nexus/SNDLEV00.SAL", home);
+    if ((!data_dir || data_dir[0] == '\0') &&
+        (!home || home[0] == '\0')) return;
+    if (data_dir && data_dir[0]) {
+        snprintf(base_path, sizeof(base_path), "%s/SNDLEV00.SAL", data_dir);
+    } else {
+        snprintf(base_path, sizeof(base_path),
+                 "%s/.firestaff/data/nexus/SNDLEV00.SAL", home);
+    }
     fp = fopen(base_path, "rb");
     if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
         (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
@@ -679,8 +694,13 @@ static void test_optional_real_sal_layout_provenance(void) {
         size_t limit;
         size_t offset;
 
-        snprintf(sal_path, sizeof(sal_path),
-                 "%s/.firestaff/data/nexus/SNDLEV%02d.SAL", home, level);
+        if (data_dir && data_dir[0]) {
+            snprintf(sal_path, sizeof(sal_path),
+                     "%s/SNDLEV%02d.SAL", data_dir, level);
+        } else {
+            snprintf(sal_path, sizeof(sal_path),
+                     "%s/.firestaff/data/nexus/SNDLEV%02d.SAL", home, level);
+        }
         fp = fopen(sal_path, "rb");
         if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
             (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
@@ -713,7 +733,11 @@ static void test_optional_real_sal_layout_provenance(void) {
      * Each big-endian pointer names SNDLEV01 through SNDLEV15 in the image's
      * 0x06010000 address space. This proves the level-bank lookup provenance,
      * not any sample frame or codec field. */
-    snprintf(dm_path, sizeof(dm_path), "%s/.firestaff/data/nexus/DM.BIN", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(dm_path, sizeof(dm_path), "%s/DM.BIN", data_dir);
+    } else {
+        snprintf(dm_path, sizeof(dm_path), "%s/.firestaff/data/nexus/DM.BIN", home);
+    }
     fp = fopen(dm_path, "rb");
     if (!fp || fseek(fp, NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET, SEEK_SET) != 0) {
         if (fp) fclose(fp);

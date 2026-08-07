@@ -32,19 +32,27 @@ static int test_synthetic(void) {
 }
 
 static int test_all_levels(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     int level, fail = 0, decoded = 0;
 
-    if (!home) { printf("  SKIP (no HOME)\n"); return 0; }
+    if ((!data_dir || !data_dir[0]) && (!home || !home[0])) {
+        printf("  SKIP (Nexus data root is unset)\n");
+        return 0;
+    }
 
     for (level = 0; level <= 15; ++level) {
         uint8_t *data;
         int size = 0;
         Nexus_V1_DgnDecodeResult r;
 
-        snprintf(path, sizeof(path),
-                 "%s/.firestaff/data/nexus/LEV%02d.DGN", home, level);
+        if (data_dir && data_dir[0]) {
+            snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level);
+        } else {
+            snprintf(path, sizeof(path),
+                     "%s/.firestaff/data/nexus/LEV%02d.DGN", home, level);
+        }
         data = load_file(path, &size);
         if (!data) {
             printf("  SKIP LEV%02d.DGN (not found)\n", level);

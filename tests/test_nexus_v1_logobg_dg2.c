@@ -33,14 +33,21 @@ static int test_reject_invalid(void) {
 }
 
 static int test_logobg(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
     int size = 0;
     Nexus_V1_LogobgDg2DecodeResult r;
 
-    if (!home) { printf("  SKIP (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/LOGOBG.DG2", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/LOGOBG.DG2", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/LOGOBG.DG2", home);
+    } else {
+        printf("  SKIP (Nexus data root is unset)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP LOGOBG.DG2 (not found)\n"); return 0; }
 

@@ -32,14 +32,21 @@ static const char *type_name(int t) {
 }
 
 static int test_file(const char *name) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
     int size = 0;
     Nexus_V1_RawBinDecodeResult r;
 
-    if (!home) { printf("  SKIP %s (no HOME)\n", name); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/%s", home, name);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/%s", data_dir, name);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/%s", home, name);
+    } else {
+        printf("  SKIP %s (Nexus data root is unset)\n", name);
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP %s (not found)\n", name); return 0; }
 
@@ -64,6 +71,7 @@ static int test_file(const char *name) {
 
 static int test_stone_pp(void)
 {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
@@ -73,8 +81,14 @@ static int test_stone_pp(void)
     Nexus_StonePpReceipt receipt;
     Nexus_StonePpRecordReceipt record;
 
-    if (!home) { printf("  SKIP STONE pp (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/STONE.BIN", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/STONE.BIN", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/STONE.BIN", home);
+    } else {
+        printf("  SKIP STONE pp (Nexus data root is unset)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP STONE pp (not found)\n"); return 0; }
     if (!nexus_palette_stone_pp_receipt(data, size, &receipt) ||

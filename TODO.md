@@ -29450,7 +29450,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The same root contract now covers the legacy startup/menu probes for
   `FONT256.S2D`, `FACE.BIN`, `TITLE.CG`/RES* and `STABG.BIN`; continue applying
   it to remaining probes before treating a local skip as evidence of a missing
-  asset.
+  asset. The legacy DGN/LOGOBG/raw-binary and SAL/MAP corpus probes now use the
+  same external-root-first contract as well; their decoded facts remain
+  diagnostics and do not authorize guessed pixels, sound playback or event
+  semantics.
 - 🔧 Nexus startup title pixels: the M11 `BOOT_TITLE_FRAME` executor is now
   capture-gated like the title-background route. Bind the real `TITLE.CG` /
   `TITLE.BIN` composition and VDP1/VDP2 placement from an authenticated Saturn

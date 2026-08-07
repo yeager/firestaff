@@ -59381,7 +59381,6 @@ local data.
   `test_dm2_v1_g1_scene_creature_gdat_real_data` that the cursor survives
   into the viewport render. The canonical F9 material and the independent
   `test_dm2_v1_creature_something_real_data` animation reader both pass.
-
 # ✅ 2026-08-07 DM2 SDL sound regression explicit corpus selection
 
 `test_dm2_v1_sound_playback_sdl` now reads audio entries only from an explicit
@@ -59389,3 +59388,14 @@ local data.
 unreadable selected `graphics.dat`; the old private `HOME` fallback is gone.
 The SDL dummy-device regression still decodes and plays original GDAT PCM
 entries through the source-backed sound backend.
+
+# Nexus viewport/audio corpus external-root regression (2026-08-07)
+
+- ✅ Extended the external-root-first contract to the legacy real-data probes
+  for all 16 `LEVxx.DGN` levels, `LOGOBG.DG2`, raw Saturn binaries including
+  `DM.BIN`/`SDDRVS.TSK`, and all 16 `SNDLEVxx.SAL`/`.MAP` pairs. HOME remains a
+  compatibility fallback only when the explicit root is absent.
+- ✅ With `HOME=/tmp/firestaff-nexus-no-home`, the external corpus verified all
+  16 DGN decodes, LOGOBG 320x224 source geometry, raw-binary receipts and all
+  real SAL/MAP metadata profiles. SAL playback, SDDRVS dispatch and VDP1/VDP2
+  presentation remain capture-gated.
