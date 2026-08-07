@@ -57,15 +57,11 @@ static const char *resolve_dm2_data_root(int argc, char **argv,
                                          char *buf, size_t buf_size)
 {
     const char *root;
-    const char *home;
+    (void)buf;
+    (void)buf_size;
     if (argc >= 2) return argv[1];
     root = getenv("FIRESTAFF_DM2_DATA_DIR");
     if (root && root[0]) return root;
-    home = getenv("HOME");
-    if (home && home[0]) {
-        snprintf(buf, buf_size, "%s/.firestaff/data/dm2/data", home);
-        return buf;
-    }
     return NULL;
 }
 
@@ -241,23 +237,24 @@ int main(int argc, char **argv)
     int i;
 
     if (!root) {
-        puts("SKIP: no local canonical DM2 data");
+        puts("SKIP: no selected canonical DM2 data corpus");
         return 0;
     }
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
     if (!read_file(dungeon_path, &dungeon_bytes, &dungeon_size)) {
-        puts("SKIP: no local canonical DM2 data");
+        fprintf(stderr, "FAIL: selected DM2 data corpus has no readable dungeon.dat: %s\n",
+                dungeon_path);
         free(dungeon_bytes);
-        return 0;
+        return 1;
     }
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&weapons, 0, sizeof(weapons));
     memset(&containers, 0, sizeof(containers));
     if (dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)dungeon_size) != 0 ||
         dungeon_bytes[2] != 0x47u || dungeon_bytes[3] != 0x31u) {
-        puts("SKIP: no local canonical DM2 data");
+        fputs("FAIL: selected DM2 data corpus is not canonical PC G1\n", stderr);
         free(dungeon_bytes);
-        return 0;
+        return 1;
     }
     CHECK("canonical G1 map 17 weapon roots materialize",
           dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
@@ -290,11 +287,13 @@ int main(int argc, char **argv)
 
         snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
         if (!read_file(graphics_path, &graphics, &graphics_size)) {
-            puts("SKIP: no local canonical DM2 graphics.dat");
+            fprintf(stderr,
+                    "FAIL: selected DM2 data corpus has no readable graphics.dat: %s\n",
+                    graphics_path);
             dm2_v1_dungeon_free(&dungeon);
             free(dungeon_bytes);
             free(graphics);
-            return g_passed == g_checks ? 0 : 1;
+            return 1;
         }
         memset(&loader, 0, sizeof(loader));
         CHECK("canonical GRAPHICS.DAT loads",

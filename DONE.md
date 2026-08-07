@@ -1,3 +1,11 @@
+# DM2 selected G1 map corpus (2026-08-07)
+
+- ✅ The G1 scene-handoff, runtime-map validation and static-object visibility
+  regressions now read only the selected `FIRESTAFF_DM2_DATA_DIR` corpus.
+  The mounted PC-DOS media verifies the real map, material and item receipts.
+- ✅ An unreadable selected `dungeon.dat` or `graphics.dat` is now a failure,
+  not a private HOME fallback or a silent skip.
+
 # CSB selected-package cache handoff (2026-08-07)
 
 - ✅ M12 now materializes every explicitly selected CSB version into its own

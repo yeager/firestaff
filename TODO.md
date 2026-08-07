@@ -2921,6 +2921,11 @@ level or consumer bindings.
   dungeon hash in one scan. Its post-admission diagnostic now also reports
   the real G1 seed and map count instead of the intentionally unavailable
   pre-load zeroes; this does not admit an incomplete save session.
+  **2026-08-07 G1 corpus update:** the scene-handoff, runtime-map validation
+  and static-object visibility regressions now consume only an explicit
+  `FIRESTAFF_DM2_DATA_DIR` corpus. The selected PC-DOS media proves the G1
+  map and item receipts; a missing selected `dungeon.dat` or `graphics.dat`
+  fails rather than borrowing a private HOME corpus or silently skipping.
   2026-08-06: the live move and turn entry points now use the same verified
   boot-owned GRAPHICS/DUNGEON/GDAT provider boundary as frame rendering.
   A fixture-only dungeon or a headless profile cannot create a walkable floor
