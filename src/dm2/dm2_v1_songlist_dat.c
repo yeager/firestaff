@@ -14,7 +14,15 @@ int dm2_v1_songlist_dat_parse(DM2_V1_SonglistDat *out,
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
 
-    if (!data || size < DM2_SONGLIST_FILE_SIZE) return 0;
+    if (!data || size != DM2_SONGLIST_FILE_SIZE) return 0;
+
+    /* SKProject's tblMusicsMap receives the original 63-byte file prefix.
+     * Keep every selector, but reject values that cannot address the PC
+     * GRAPHICS.DAT HMP catalogue. */
+    for (size_t index = 0u; index < DM2_SONGLIST_MAP_COUNT; ++index) {
+        if (data[index] != DM2_SONGLIST_INVALID_TRACK && data[index] >= 29u)
+            return 0;
+    }
 
     memcpy(out->map_to_track, data, DM2_SONGLIST_MAP_COUNT);
     out->valid = 1;

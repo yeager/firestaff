@@ -337,9 +337,15 @@ static void test_songlist_real_data_routing(void)
     CHECK(dm2_v1_boot_songlist_track_for_map(&p, 39, &track) == 1 &&
               track == 22,
           "SONGLIST.DAT maps dungeon map 39 to original music track 16");
-    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 44, &track) == 0 &&
+    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 44, &track) == 1 &&
+              track == 17,
+          "SONGLIST.DAT retains the original selector at slot 44");
+    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 45, &track) == 1 &&
+              track == 2,
+          "SONGLIST.DAT retains the original selector at slot 45");
+    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 46, &track) == 0 &&
               track == -1,
-          "maps outside the source-owned 44-entry routing table reject");
+          "SONGLIST.DAT's first no-music selector rejects");
     CHECK(dm2_v1_boot_enter_game(&p) == 0,
           "real PC assets enter before source music-map dispatch");
     dm2_v1_runtime_init(&p);

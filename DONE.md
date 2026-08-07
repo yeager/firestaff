@@ -1,3 +1,14 @@
+# DM2 selected SONGLIST corpus (2026-08-07)
+
+- ✅ Corrected the PC music-map reader from a fabricated 44-entry subset to
+  SONGLIST.DAT's complete original 63-byte prefix. The selected DOS corpus
+  proves valid selectors at slots 44 and 45, followed by the original
+  `0xff` no-music tail.
+- ✅ `test_dm2_v1_songlist_dat_real_data` reads only an explicit
+  `FIRESTAFF_DM2_DATA_DIR` and fails for an unreadable selected file. The
+  ordinary parser test is now explicitly a fixture test, never evidence of
+  original media.
+
 # Scanner provenance after cache materialization (2026-08-07)
 
 - ✅ `--scan-data` now retains and reports each required file's verified

@@ -204,7 +204,7 @@ typedef struct {
     char    dungeon_md5[33];
     char    songlist_md5[33];
     size_t  songlist_size;
-    uint8_t songlist_map[44]; /* original PC map 0..43 music selectors */
+    uint8_t songlist_map[63]; /* original PC SONGLIST.DAT selector prefix */
     int     songlist_verified;
 
     /* ── Music map (Mac/Amiga 176-byte CD.DAT/md.dat) ──────── */

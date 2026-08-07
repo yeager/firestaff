@@ -7817,8 +7817,9 @@ that its exact runtime path is not already source-locked and tested.
     from successful verified playback. Cue ownership now reads directly from
     PC `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0`; loose `.hmp.mid` files
     are rejected. The boot profile now discovers the authentic 63-byte PC
-    `SONGLIST.DAT` by hash, exposes only its source-owned map 0--43 selectors,
-    and rejects absent, altered, sentinel and out-of-range routes. Runtime
+    `SONGLIST.DAT` by hash and retains its complete 63-byte source-owned
+    selector prefix. In particular, slots 44 and 45 are original selectors,
+    not padding; `0xff` remains the only no-music value. Runtime
     map-context refresh now dispatches that verified selector and exposes a
     receipt that remains `playback_started = 0` until real decoding succeeds.
     **2026-08-05 inventory update:** removed the unused invented per-track

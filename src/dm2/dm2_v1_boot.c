@@ -1769,9 +1769,12 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     }
 
     /* PC music routing is an optional extra for launch, but it must never
-     * borrow a filename-matched or generated table.  c_sound.cpp consumes
-     * SONGLIST.DAT's first 44 map selectors; leave routing unavailable when
-     * the authentic 63-byte file is absent or cannot be hash-admitted. */
+     * borrow a filename-matched or generated table. SKProject's
+     * `SKWINSPX/src/v5/sfxsnd.cpp:493` consumes
+     * SONGLIST.DAT's complete 63-byte selector prefix; leave routing
+     * unavailable when the authentic file is absent or cannot be
+     * hash-admitted.  SKProject's tblMusicsMap is 64 bytes, but its DOS
+     * loader receives this exact 63-byte file prefix. */
     if (profile->assets_verified &&
         asset_find_by_md5(profile->asset_root, g_dm2_songlist_hashes[0],
                           profile->songlist_path,

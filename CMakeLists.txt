@@ -55746,6 +55746,15 @@ add_executable(test_dm2_v1_songlist_dat
 target_include_directories(test_dm2_v1_songlist_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_songlist_dat COMMAND test_dm2_v1_songlist_dat)
 
+add_executable(test_dm2_v1_songlist_dat_real_data
+    tests/test_dm2_v1_songlist_dat_real_data.c
+    src/dm2/dm2_v1_songlist_dat.c
+)
+target_include_directories(test_dm2_v1_songlist_dat_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_songlist_dat_real_data COMMAND test_dm2_v1_songlist_dat_real_data)
+set_tests_properties(test_dm2_v1_songlist_dat_real_data PROPERTIES
+    LABELS "dm2;real_data;sound;skip_safe")
+
 add_executable(test_dm2_v1_amiga_cd_dat
     tests/test_dm2_v1_amiga_cd_dat.c
     src/dm2/dm2_v1_amiga_cd_dat.c
