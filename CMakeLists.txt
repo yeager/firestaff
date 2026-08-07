@@ -16470,6 +16470,7 @@ endif()
     add_executable(test_csb_v1_m11_startup_resume_gate
         tests/test_csb_v1_m11_startup_resume_gate.c
         tests/csbwin_resume_fixture.c
+        src/csb/csb_v1_save_import_path_pc34_compat.c
     )
     target_include_directories(test_csb_v1_m11_startup_resume_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -24670,6 +24671,7 @@ endif()
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
     )
@@ -24716,6 +24718,7 @@ endif()
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
     )
@@ -24758,6 +24761,7 @@ endif()
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
     )
