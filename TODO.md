@@ -2743,6 +2743,12 @@ level or consumer bindings.
   TITLE/0/4's menu palette. The real-CD M11 regression compares all active
   indexed RGB6 rows with that original palette. This remains presentation
   only: credits neither opens gameplay nor grants a save/resume path.
+  **2026-08-13 palette-index correction:** the TITLE/0/1 local `dtPalIRGB`
+  rows are now installed at the image's own `dtPalette16` physical indices,
+  matching `DM2_DRAW_PICST` before `R_C470` selects the palette. The former
+  raw-nibble placement produced incorrect FM Towns credit colours whenever
+  the source image remapped a nibble. The real HME-242 M11 regression now
+  verifies the complete physical RGB6 palette map.
   **2026-08-06 FM Towns GDAT gate update:** the bounded format classifier now
   also requires HME-242's actual 3,407-entry raw catalogue. A made-up
   0x8004 header and plausible buffer size therefore cannot enter even the

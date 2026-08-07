@@ -188,6 +188,7 @@ int main(void)
                 dm2_v1_boot_asset_loader(
                     (DM2_V1_BootProfile *)view.dm2BootProfile);
             const uint8_t *palette_raw;
+            DM2_V1_QueryGdatSummaryImageReceipt credits_image;
             uint8_t expected_palette[256][3];
             uint8_t presented_palette[256][3];
             size_t palette_size = 0u;
@@ -195,21 +196,30 @@ int main(void)
 
             memset(expected_palette, 0, sizeof(expected_palette));
             memset(presented_palette, 0, sizeof(presented_palette));
+            memset(&credits_image, 0, sizeof(credits_image));
             palette_raw = dm2_v1_asset_load_typed_sized(
                 loader, DM2_GDAT_CATEGORY_TITLE, 0,
                 DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 1, &palette_size);
+            expect(palette_raw && palette_size == 16u * 4u &&
+                       dm2_v1_query_gdat_summary_image_receipt(
+                           loader, DM2_GDAT_CATEGORY_TITLE, 0, 1,
+                           &credits_image) && credits_image.accepted &&
+                       credits_image.metadata.bits_per_pixel == 4u,
+                   "FM Towns credits exposes TITLE field-1's real local palette");
             for (color = 0; palette_raw && color < 16; ++color) {
                 expect(palette_raw[(size_t)color * 4u] == (uint8_t)color,
                        "FM Towns credits palette keeps its source index rows");
-                expected_palette[color][0] =
+                /* DRAW_PICST writes a 4-bit pixel through this image's
+                 * dtPalette16 row before the screen palette is selected.
+                 * The local TITLE palette must therefore live at that
+                 * physical index, rather than at the unconverted nibble. */
+                expected_palette[credits_image.palette16[color]][0] =
                     (uint8_t)(palette_raw[(size_t)color * 4u + 1u] >> 2u);
-                expected_palette[color][1] =
+                expected_palette[credits_image.palette16[color]][1] =
                     (uint8_t)(palette_raw[(size_t)color * 4u + 2u] >> 2u);
-                expected_palette[color][2] =
+                expected_palette[credits_image.palette16[color]][2] =
                     (uint8_t)(palette_raw[(size_t)color * 4u + 3u] >> 2u);
             }
-            expect(palette_raw && palette_size == 16u * 4u,
-                   "FM Towns credits exposes TITLE field-1's real local palette");
             expect(palette_raw && palette_size == 16u * 4u &&
                        M11_Render_CopyIndexedPaletteRgb6(presented_palette) &&
                        memcmp(expected_palette, presented_palette,

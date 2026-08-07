@@ -46793,9 +46793,17 @@ static int m11_draw_dm2_startup_credits(const M11_GameViewState *state,
                 dm2_v1_boot_gdat_image_asset_free(pixels);
                 return 0;
             }
-            rgb6[color][0] = (uint8_t)(row[1] >> 2u);
-            rgb6[color][1] = (uint8_t)(row[2] >> 2u);
-            rgb6[color][2] = (uint8_t)(row[3] >> 2u);
+            /* DRAW_PICST expands the 4-bit source nibble through this
+             * picture's dtPalette16 row before R_C470 selects the local
+             * dtPalIRGB values. The palette consequently belongs to the
+             * translated physical index, not necessarily to `color`.
+             * Keeping it at the raw nibble index makes FM Towns TITLE/0/1
+             * credits use a visibly wrong palette when the mapping differs.
+             * Source: SKWINSPX/src/v5/startend.cpp::DM2_SHOW_CREDITS,
+             *         c_gfx_str.cpp::DM2_DRAW_PICST. */
+            rgb6[image.palette16[color]][0] = (uint8_t)(row[1] >> 2u);
+            rgb6[image.palette16[color]][1] = (uint8_t)(row[2] >> 2u);
+            rgb6[image.palette16[color]][2] = (uint8_t)(row[3] >> 2u);
         }
         if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) {
             dm2_v1_boot_gdat_image_asset_free(pixels);

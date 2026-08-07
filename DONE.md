@@ -59634,3 +59634,13 @@ companion.
 - ✅ Real PC-DOS verification: G1 viewport 40/40, AI owner census 256 mapped /
   255 remapped, DB4 cursor audit 20 static roots, dynamic FB/FC/FD material
   and frame-terminal regressions pass.
+
+# DM2 FM Towns credits palette-index parity (2026-08-13)
+
+- ✅ Fixed the HME-242 TITLE/0/1 credits palette transaction. Its local
+  `dtPalIRGB` colours are now assigned to the image's original `dtPalette16`
+  physical palette indices, as `DM2_DRAW_PICST` does before `R_C470`.
+- ✅ The real-media M11 regression verifies the complete translated RGB6 map,
+  so a non-identity nibble mapping cannot silently produce the wrong colours.
+- ✅ Verified with the selected FM Towns disc in RAM and the PC-English
+  companion; the ordinary PC-DOS M11 startup regression also passes.
