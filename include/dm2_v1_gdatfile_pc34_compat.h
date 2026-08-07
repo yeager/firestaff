@@ -120,6 +120,12 @@ typedef struct DM2_V1_GdatFileState {
     uint32_t     first_entry_size;
     uint32_t     first_raw_offset;
     uint32_t     raw_data_end;
+    /* Source LOAD_ENT1 owns raw entry 0 until BUILD_GDAT_ENTRY_DATA. */
+    uint8_t     *ent1_data;
+    uint32_t     ent1_length;
+    uint16_t     ent1_entry_count;
+    uint8_t      ent1_group_count;
+    uint8_t      ent1_stride;
 } DM2_V1_GdatFileState;
 
 /* ========================================================================
@@ -219,6 +225,10 @@ typedef struct DM2_V1_GdatReadStructureReceipt {
     bool     header_validated;
     bool     ulp_validated;
     bool     allocator_table_initialized;
+    bool     ent1_validated;
+    uint16_t ent1_entry_count;
+    uint8_t  ent1_group_count;
+    uint8_t  ent1_stride;
     bool     endian_swapped;
 } DM2_V1_GdatReadStructureReceipt;
 

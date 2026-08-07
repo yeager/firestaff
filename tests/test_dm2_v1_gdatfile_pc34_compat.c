@@ -580,29 +580,42 @@ static int test_read_graphics_structure_binds_header_and_ulp(void)
     memset(&mctx, 0, sizeof(mctx));
 
     dm2_v1_gdat_file_init(&state, NULL);
-    /* version=5|0x8000, entries=2, first ENT1 size=4, ULP offsets={0,1}. */
+    /* version=5|0x8000, entries=2, first ENT1 size=28, ULP offsets={0,0}. */
     mctx.file_data[0] = 0x05;
     mctx.file_data[1] = 0x80;
     mctx.file_data[2] = 0x02;
     mctx.file_data[3] = 0x00;
-    mctx.file_data[4] = 0x04;
+    mctx.file_data[4] = 0x1c;
     mctx.file_data[5] = 0x00;
     mctx.file_data[6] = 0x00;
     mctx.file_data[7] = 0x00;
-    mctx.file_data[8] = 0x01;
+    mctx.file_data[8] = 0x00;
     mctx.file_data[9] = 0x00;
-    mctx.file_data[14] = 0xA5;
-    mctx.file_data_len = 15;
+    mctx.file_data[10] = 0x01; mctx.file_data[11] = 0x80;
+    mctx.file_data[12] = 0x01; mctx.file_data[13] = 0x00;
+    mctx.file_data[14] = 0x07; mctx.file_data[15] = 0x00;
+    mctx.file_data[16] = 'T'; mctx.file_data[17] = 1;
+    mctx.file_data[18] = 'I'; mctx.file_data[19] = 1;
+    mctx.file_data[20] = 'D'; mctx.file_data[21] = 1;
+    mctx.file_data[22] = 'S'; mctx.file_data[23] = 1;
+    mctx.file_data[24] = 'F'; mctx.file_data[25] = 1;
+    mctx.file_data[26] = 'G'; mctx.file_data[27] = 1;
+    mctx.file_data[28] = 'P'; mctx.file_data[29] = 2;
+    mctx.file_data_len = 38;
 
     DM2_V1_GdatReadStructureReceipt out;
     int r = dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out);
     if (!(r == 1 && out.valid && out.header_validated && out.ulp_validated &&
            out.entries == 2 && out.versionlo == 5 && out.ulp_length == 4 &&
-           out.ulp_table_end == 10 && out.first_entry_size == 4 &&
+           out.ulp_table_end == 10 && out.first_entry_size == 28 &&
            out.source_data_offset == 10 && out.first_raw_offset == 10 &&
-           out.raw_data_end == 15 &&
+           out.raw_data_end == 38 && out.ent1_validated &&
+           out.ent1_entry_count == 1 && out.ent1_group_count == 7 &&
+           out.ent1_stride == 8 &&
            mctx.close_count == 1 && state.ulp_table != NULL &&
-           state.ulp_count == 2 && state.ulp_length == 4)) return 0;
+           state.ulp_count == 2 && state.ulp_length == 4)) {
+        return 0;
+    }
     if (!dm2_v1_gdat_release_graphics_structure(&state, &cb, &mctx) ||
         state.ulp_table != NULL) return 0;
     return 1;
@@ -617,8 +630,8 @@ static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
 
     memset(&mctx, 0, sizeof(mctx));
     dm2_v1_gdat_file_init(&state, NULL);
-    /* 68k order: version=5|0x8000, entries=2, first ENT1 size=4,
-     * ULP offsets={0,1}. Keep the same source boundary as the LE fixture. */
+    /* 68k order: version=5|0x8000, entries=2, first ENT1 size=28,
+     * ULP offsets={0,0}. Keep the same source boundary as the LE fixture. */
     mctx.file_data[0] = 0x80;
     mctx.file_data[1] = 0x05;
     mctx.file_data[2] = 0x00;
@@ -626,19 +639,30 @@ static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
     mctx.file_data[4] = 0x00;
     mctx.file_data[5] = 0x00;
     mctx.file_data[6] = 0x00;
-    mctx.file_data[7] = 0x04;
+    mctx.file_data[7] = 0x1c;
     mctx.file_data[8] = 0x00;
-    mctx.file_data[9] = 0x01;
-    mctx.file_data[14] = 0xA5;
-    mctx.file_data_len = 15;
+    mctx.file_data[9] = 0x00;
+    mctx.file_data[10] = 0x80; mctx.file_data[11] = 0x01;
+    mctx.file_data[12] = 0x00; mctx.file_data[13] = 0x01;
+    mctx.file_data[14] = 0x00; mctx.file_data[15] = 0x07;
+    mctx.file_data[16] = 'T'; mctx.file_data[17] = 1;
+    mctx.file_data[18] = 'I'; mctx.file_data[19] = 1;
+    mctx.file_data[20] = 'D'; mctx.file_data[21] = 1;
+    mctx.file_data[22] = 'S'; mctx.file_data[23] = 1;
+    mctx.file_data[24] = 'F'; mctx.file_data[25] = 1;
+    mctx.file_data[26] = 'G'; mctx.file_data[27] = 1;
+    mctx.file_data[28] = 'P'; mctx.file_data[29] = 2;
+    mctx.file_data_len = 38;
 
     if (!dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out)) {
         return 0;
     }
     if (!(out.valid && out.endian_swapped && out.entries == 2u &&
-           out.versionlo == 5 && out.first_entry_size == 4u &&
+           out.versionlo == 5 && out.first_entry_size == 28u &&
            out.source_data_offset == 10u && out.first_raw_offset == 10u &&
-           out.raw_data_end == 15u && mctx.close_count == 1)) {
+           out.raw_data_end == 38u && out.ent1_validated &&
+           out.ent1_entry_count == 1u && out.ent1_group_count == 7u &&
+           out.ent1_stride == 8u && mctx.close_count == 1)) {
         return 0;
     }
     if (!state.ulp_table || state.ulp_count != 2u ||
@@ -690,14 +714,21 @@ static int test_read_graphics_structure_real_dm2_data(void)
            receipt.raw_data_end == 8639757u &&
            receipt.allocator_table_length == (uint32_t)receipt.entries * 2u &&
            receipt.allocator_table_initialized &&
+           receipt.ent1_validated && receipt.ent1_entry_count == 0x2e4eu &&
+           receipt.ent1_group_count == 7u && receipt.ent1_stride == 8u &&
            state.allocator_table != NULL &&
            state.allocator_table[0] == 0xffu &&
            state.allocator_table[state.allocator_table_length - 1u] == 0xffu &&
-           state.ulp_table != NULL && state.ulp_count == receipt.entries)) {
+           state.ulp_table != NULL && state.ulp_count == receipt.entries &&
+           state.ent1_data != NULL && state.ent1_length == receipt.first_entry_size &&
+           state.ent1_entry_count == receipt.ent1_entry_count &&
+           state.ent1_group_count == receipt.ent1_group_count &&
+           state.ent1_stride == receipt.ent1_stride)) {
         return 0;
     }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
-           state.ulp_table == NULL && state.allocator_table == NULL;
+           state.ulp_table == NULL && state.allocator_table == NULL &&
+           state.ent1_data == NULL;
 }
 
 static int test_struct_sizes(void)

@@ -29850,6 +29850,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   release, matching the source table lifetime. A second structure transaction
   cannot orphan the first table. ENT1 admission and the secondary-file
   transaction remain gated.
+  **2026-08-07 LOAD_ENT1 progress:** raw entry 0 is now retained from the
+  mounted GRAPHICS.DAT transaction and checked against SKProject's `0x8001`
+  signature, independent raw-entry byte order, and T/I/D/S/F/G/P descriptors.
+  The authenticated PC-DOS file proves 11,854 raw entries, seven groups and
+  packed stride 8; the raw entry is released with the ULP/allocator lifetime.
+  BUILD_GDAT_ENTRY_DATA, underlay admission and optional GRAPHIC2.DAT remain
+  gated.
   **2026-08-07 source-layout correction:** the callback now follows
   SKProject `v4/skcore.cpp:15043-15103`/`v5/bgdat.cpp:1067-1095`: v4/v5 read
   the four-byte first ENT1 size at offset 4, load only entries-1 ULP words,

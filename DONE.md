@@ -59030,3 +59030,14 @@ remains supported. The real PC-DOS `graphics.dat` passes with 5,624 entries,
 first ENT1 size `0x17284`, raw range `11254..8639757`, and the GDAT/ENT1/image
 regressions pass (24/24 structure tests, 122/122 query tests, real image census
 green). No allocator or secondary-file runtime admission was invented.
+# DM2 GDAT LOAD_ENT1 raw-entry boundary (2026-08-07)
+
+Extended `dm2_v1_gdat_read_graphics_structure()` with the source-owned
+`LOAD_ENT1` boundary from SKProject `SKWINSPX/src/v4/skcore.cpp:14804-14840`.
+The real GRAPHICS.DAT transaction now retains raw entry 0, validates its
+`0x8001` signature, detects its independent endian order, checks all seven
+T/I/D/S/F/G/P descriptors and the packed record stride, and releases the
+buffer together with the ULP/allocator lifetime. Real PC-DOS data verifies
+11,854 raw entries, seven groups and stride 8; malformed/incomplete fixtures
+fail closed. Full BUILD_GDAT_ENTRY_DATA, underlay admission and secondary
+GRAPHIC2.DAT ownership remain intentionally gated.

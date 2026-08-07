@@ -899,6 +899,21 @@ static uint32_t dm2_gdat_be32(const uint8_t *p)
            (uint32_t)p[3];
 }
 
+static int dm2_gdat_ent1_tag_index(uint8_t tag)
+{
+    /* SKProject v4/skcore.cpp::LOAD_ENT1 uses _4976_4813: T/I/D/S/F/G/P. */
+    switch (tag) {
+        case 'T': return 0;
+        case 'I': return 1;
+        case 'D': return 2;
+        case 'S': return 3;
+        case 'F': return 4;
+        case 'G': return 5;
+        case 'P': return 6;
+        default: return -1;
+    }
+}
+
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                                          const DM2_V1_GdatFileCallbacks *cb,
                                          void *ctx,
@@ -916,6 +931,12 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     uint16_t version;
     bool big_endian;
     uint32_t raw_end;
+    uint8_t *ent1 = NULL;
+    uint16_t ent1_entry_count = 0u;
+    uint8_t ent1_group_count = 0u;
+    uint8_t ent1_stride = 0u;
+    uint8_t ent1_seen = 0u;
+    bool ent1_big_endian = false;
     uint16_t i;
     int opened = 0;
 
@@ -1017,6 +1038,47 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         if (word > (uint32_t)state->filesize - raw_end) goto fail;
         raw_end += word;
     }
+    /* SKProject v4/skcore.cpp::LOAD_ENT1 loads raw entry 0, verifies its
+     * 0x8001 signature, then derives the packed entry stride from the
+     * T/I/D/S/F/G/P field descriptors before BUILD_GDAT_ENTRY_DATA. */
+    if (first_entry_size > 0x7fffffffu) goto fail;
+    ent1 = cb->alloc_memory(ctx, (int32_t)first_entry_size, 0);
+    if (!ent1 || !dm2_v1_gdat_graphics_data_read(
+            state, source_data_offset, (int32_t)first_entry_size,
+            ent1, cb, ctx, NULL) || first_entry_size < 6u) {
+        goto fail;
+    }
+    {
+        uint16_t magic_le = dm2_gdat_le16(ent1);
+        uint16_t magic_be = dm2_gdat_be16(ent1);
+        uint16_t magic;
+        ent1_big_endian = magic_le != 0x8001u && magic_be == 0x8001u;
+        magic = ent1_big_endian ? magic_be : magic_le;
+        ent1_entry_count = ent1_big_endian ? dm2_gdat_be16(ent1 + 2) :
+                                             dm2_gdat_le16(ent1 + 2);
+        ent1_group_count = (uint8_t)(ent1_big_endian ? dm2_gdat_be16(ent1 + 4) :
+                                                              dm2_gdat_le16(ent1 + 4));
+        if (magic != 0x8001u || ent1_entry_count == 0u ||
+            ent1_group_count == 0u || ent1_group_count > 7u ||
+            6u + (uint32_t)ent1_group_count * 2u > first_entry_size) {
+            goto fail;
+        }
+        for (i = 0u; i < ent1_group_count; ++i) {
+            const uint8_t *descriptor = ent1 + 6u + (size_t)i * 2u;
+            if (dm2_gdat_ent1_tag_index(descriptor[0]) < 0 ||
+                descriptor[1] == 0u ||
+                (uint16_t)ent1_stride + descriptor[1] > 0xffu) {
+                goto fail;
+            }
+            ent1_stride = (uint8_t)(ent1_stride + descriptor[1]);
+            ent1_seen |= (uint8_t)(1u << dm2_gdat_ent1_tag_index(descriptor[0]));
+        }
+        if ((ent1_seen & 0x7fu) != 0x7fu || ent1_stride == 0u ||
+            6u + (uint32_t)ent1_group_count * 2u +
+                (uint32_t)ent1_entry_count * ent1_stride > first_entry_size) {
+            goto fail;
+        }
+    }
     /* SKProject bgdat.cpp:1063-1065 allocates w_table2 and fills it with
      * NODATA (0xffff) before LOAD_ENT1. Keep that source initialization in
      * the same bounded allocation transaction as the ULP table. */
@@ -1044,12 +1106,23 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         out->raw_data_end = raw_end;
         out->allocator_table_length = allocator_table_length;
         out->allocator_table_initialized = true;
+        out->ent1_validated = true;
+        out->ent1_entry_count = ent1_entry_count;
+        out->ent1_group_count = ent1_group_count;
+        out->ent1_stride = ent1_stride;
     }
+    state->ent1_data = ent1;
+    state->ent1_length = first_entry_size;
+    state->ent1_entry_count = ent1_entry_count;
+    state->ent1_group_count = ent1_group_count;
+    state->ent1_stride = ent1_stride;
+    ent1 = NULL;
     ulp = NULL;
     dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     return 1;
 
 fail:
+    if (ent1) cb->dealloc_memory(ctx, (int32_t)first_entry_size);
     if (ulp) cb->dealloc_memory(ctx, (int32_t)allocation_length);
     if (state->ulp_table) {
         cb->dealloc_memory(ctx, (int32_t)(state->allocation_length != 0u
@@ -1065,6 +1138,11 @@ fail:
     state->first_entry_size = 0u;
     state->first_raw_offset = 0u;
     state->raw_data_end = 0u;
+    state->ent1_data = NULL;
+    state->ent1_length = 0u;
+    state->ent1_entry_count = 0u;
+    state->ent1_group_count = 0u;
+    state->ent1_stride = 0u;
     if (opened && state->fileopencounter > 0)
         dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     if (out) memset(out, 0, sizeof(*out));
@@ -1091,6 +1169,15 @@ int dm2_v1_gdat_release_graphics_structure(
         state->first_entry_size = 0u;
         state->first_raw_offset = 0u;
         state->raw_data_end = 0u;
+    }
+    if (state->ent1_data) {
+        if (!cb || !cb->dealloc_memory) return 0;
+        cb->dealloc_memory(ctx, (int32_t)state->ent1_length);
+        state->ent1_data = NULL;
+        state->ent1_length = 0u;
+        state->ent1_entry_count = 0u;
+        state->ent1_group_count = 0u;
+        state->ent1_stride = 0u;
     }
     return 1;
 }
