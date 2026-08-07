@@ -1,6 +1,7 @@
 #include "dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat.h"
 
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 /* ReDMCSB source-lock anchors for this contract_only=1 runtime regression:

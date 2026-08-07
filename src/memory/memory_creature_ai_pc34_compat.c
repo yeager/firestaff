@@ -251,7 +251,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * spell-caster, sight 5, attack range > 1, MOV=5 (very fast).
      * DUNGEON.C G0243[19]: MovementTicks=5, AttackTicks=18, Defense=15,
      * BaseHealth=33, Attack=61, PoisonAttack=0, Dexterity=65.
-     * Attributes=0x0060: LEVITATION=1, NON_MATERIAL=1.
+     * Attributes=0x4060 (I34E): LEVITATION=1, NON_MATERIAL=1.
      * AttackType=5 (MAGIC). In v1 the materializer advances to ATTACK
      * when the party is in sight and the F0804 §(5b) block marks
      * emittedSpellRequest so the caller can dispatch a poison-cloud /
@@ -296,7 +296,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * (F0823 case DM1_CREATURE_TYPE_LORD_CHAOS).
      * DUNGEON.C G0243[23]: MovementTicks=12, AttackTicks=22, Defense=255,
      * BaseHealth=180, Attack=210, PoisonAttack=0, Dexterity=130.
-     * Attributes 0x38AA: SIZE=2 full, ATTACK_ANY_CHAMPION=1,
+     * Attributes 0x78AA (I34E): SIZE=2 full, ATTACK_ANY_CHAMPION=1,
      * LEVITATION=1, NON_MATERIAL=0, ARCHENEMY=1.
      * AttackType=5 (MAGIC). In v1 the F0804 §(5b) block triggers a
      * double-move command (warp) when adjacent attack range closes,

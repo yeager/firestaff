@@ -1441,10 +1441,10 @@ int F0880b_WORLD_Clone_Compat(
 
 /* ReDMCSB DUNGEON.C G0243 Attributes word (field 2, PC 3.4 / MEDIA385). */
 static const unsigned short s_dm1_i34_creature_attributes[27] = {
-    0x0482, 0x0480, 0x0510, 0x04B4, 0x0701, 0x0581, 0x070C,
-    0x0300, 0x1864, 0x0282, 0x1480, 0x18C6, 0x1280, 0x14A2,
-    0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x0060, 0x10DE,
-    0x0082, 0x1480, 0x38AA, 0x068A, 0x38AA, 0x38AA
+    0x0482, 0x0480, 0x4510, 0x04B4, 0x0701, 0x0581, 0x070C,
+    0x0300, 0x5864, 0x0282, 0x1480, 0x18C6, 0x1280, 0x14A2,
+    0x05B8, 0x0381, 0x0680, 0x04A0, 0x0280, 0x4060, 0x10DE,
+    0x0082, 0x1480, 0x78AA, 0x068A, 0x78AA, 0x78AA
 };
 
 /* ReDMCSB DUNGEON.C G0243 GraphicInfo word (field 3, PC 3.4 / MEDIA385).
@@ -1465,8 +1465,8 @@ static const unsigned char s_dm1_i34_creature_aspect_index[27] = {
 
 /* ReDMCSB DUNGEON.C G0243 AttackSoundOrdinal (field 1, PC 3.4 / MEDIA385). */
 static const unsigned char s_dm1_i34_creature_attack_sound[27] = {
-    4, 0, 6, 0, 1, 0, 3, 0, 2, 7, 2, 0, 8, 0,
-    0, 5, 7, 0, 8, 0, 0, 3, 0, 0, 1, 0, 0
+    4, 14, 6, 0, 18, 17, 3, 7, 2, 10, 13, 0, 11, 9,
+    16, 5, 10, 15, 12, 0, 8, 3, 16, 0, 1, 0, 0
 };
 
 /* ReDMCSB DUNGEON.C G0243_as_Graphic559_CreatureInfo (PC 3.4 rows).
@@ -1486,15 +1486,23 @@ static const unsigned short s_dm1_i34_creature_animation_ticks[27] = {
     0x0224, 0x0124, 0x0564, 0x0445, 0x0564, 0x0564
 };
 
-/* ReDMCSB DUNGEON.C G0243 Resistances word (bytes 18-19, PC 3.4).
- * High nibble = poison resistance (M061_POISON_RESISTANCE in DEFS.H:1664).
- * Remaining bits encode fire, magic, and sharp/blunt resistances per the
- * packed G0243 layout. Values from F0192 combat source-lock comments. */
+/* ReDMCSB DUNGEON.C G0243 Properties word (field 13, PC 3.4 I34E).
+ * Encodes M062_FIRE_RESISTANCE (bits 15-12), M060_LEVEL (bits 3-0),
+ * and other packed creature properties. */
+static const unsigned short s_dm1_i34_creature_properties[27] = {
+    0x29AB, 0x33A9, 0x710A, 0x96AA, 0x58FF, 0x4338, 0x10F1,
+    0x25C4, 0x4684, 0x3BFF, 0x5497, 0x55A5, 0x6596, 0x5745,
+    0xD952, 0x15AB, 0x2148, 0x19FD, 0x7AFF, 0xAC97, 0x7699,
+    0x696A, 0xBDF9, 0xFFA7, 0xBFBC, 0xFFBC, 0xFFF0
+};
+
+/* ReDMCSB DUNGEON.C G0243 Resistances word (field 14, PC 3.4 I34E).
+ * Encodes poison resistance (bits 7-4) and other resistance flags. */
 static const unsigned short s_dm1_i34_creature_resistances[27] = {
-    0x299B, 0x33A9, 0x710A, 0x96AA, 0x58FF, 0x4338, 0x10F1,
-    0x25C4, 0x4664, 0x3BFF, 0x5497, 0x55A5, 0x6596, 0x5734,
-    0xD952, 0x15AB, 0x2148, 0x19FD, 0x7AFF, 0xAC77, 0x7679,
-    0x696A, 0xBDF9, 0xFF37, 0xBF7C, 0xFF37, 0xFF37
+    0x0876, 0x0E42, 0x0235, 0x0B3C, 0x0A34, 0x0583, 0x0764,
+    0x06E3, 0x0FC8, 0x0FF7, 0x0F15, 0x0FF9, 0x0F63, 0x0638,
+    0x035B, 0x0B93, 0x0321, 0x0004, 0x0FFA, 0x0F56, 0x0EA7,
+    0x0859, 0x0A5D, 0x0FBF, 0x06CD, 0x0FBF, 0x0FBF
 };
 
 static int orch_get_dm1_creature_info_pc34_compat(
@@ -1519,7 +1527,7 @@ static int orch_get_dm1_creature_info_pc34_compat(
     out->poisonAttack = profile->poisonAttack;
     out->dexterity = profile->dexterity;
     out->ranges = s_dm1_i34_creature_ranges[creatureType];
-    out->properties = profile->properties;
+    out->properties = s_dm1_i34_creature_properties[creatureType];
     out->resistances = s_dm1_i34_creature_resistances[creatureType];
     out->animationTicks = s_dm1_i34_creature_animation_ticks[creatureType];
     out->woundProbabilities = profile->woundProbabilities;

@@ -454,13 +454,13 @@ static void test_creature_poison_gate_and_vitality_adjust(void) {
     dm1_combat_init_champion(&s.champions[0]);
     s.champions[0].vitality = 42;
 
-    dm1_combat_seed_rng(1); /* first random(2) == 0: poison gate fails */
+    dm1_combat_seed_rng(1); /* first random(2) == 0: poison gate fails (DM1 LCG) */
     CHECK(dm1_creature_poison_attack_pc34(&s, 0, 96) == 0,
           "failed 50% gate should not start poison");
     CHECK(s.pendingDamage[0] == 0, "failed gate should leave pending damage unchanged");
     CHECK(s.pendingPoison[0].active == 0, "failed gate should not schedule poison");
 
-    dm1_combat_seed_rng(3); /* first random(2) == 1: poison gate passes */
+    dm1_combat_seed_rng(6); /* first random(2) == 1: poison gate passes (DM1 LCG) */
     CHECK(dm1_creature_poison_attack_pc34(&s, 0, 96) == 1,
           "passed gate should start F0322 with Vitality-adjusted attack");
     CHECK(s.pendingDamage[0] == 1, "adjusted attack 96 should add one immediate poison damage");
@@ -598,8 +598,8 @@ static void test_creature_melee_attack(void) {
      * and the CHAMPION.C F0321 armor/shield handoff for a sharp attack.
      */
     int dmg = dm1_creature_attack_champion(&s, &g, 0, 0);
-    CHECK(dmg == 57, "sharp creature attack fixture should resolve to 57 damage");
-    CHECK(s.pendingDamage[0] == 57, "creature damage should be queued as pending champion damage");
+    CHECK(dmg == 37, "sharp creature attack fixture should resolve to 37 damage");
+    CHECK(s.pendingDamage[0] == 37, "creature damage should be queued as pending champion damage");
     CHECK(s.pendingWounds[0] == 0, "fixture should not add a wound after F0321 vitality check");
     CHECK(s.champions[0].currentHealth == 500, "pending damage should not be applied immediately");
 
