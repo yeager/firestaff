@@ -8,7 +8,6 @@
 
 int main(void)
 {
-    const char* home = getenv("HOME");
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const unsigned char bogusPalette[16] = {0};
     char path[2048];
@@ -19,13 +18,14 @@ int main(void)
     DM1_V1_F0661GlyphSourcePc34 glyph;
     DM1_V1_F0661DamageMaterialReceiptPc34 receipt;
 
-    if (root && root[0]) snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    else if (home && home[0]) snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    else return 0;
-    if (!M11_AssetLoader_Init(&loader, path)) {
-        if (root && root[0]) return 1;
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
+    if (!root || !root[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
+    }
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    if (!M11_AssetLoader_Init(&loader, path)) {
+        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
     damage = M11_AssetLoader_Load(&loader, DM1_V1_F0661_C014_DAMAGE_TO_CREATURE_PC34);
     if (!damage || !damage->loaded || !damage->pixels ||
