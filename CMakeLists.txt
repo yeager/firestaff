@@ -4410,6 +4410,22 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m051_m100_source_audit_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m251_m300_source_audit_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m401_m450_source_audit_pc34_compat.c")
+# These graphics/action/save and platform audit receipts are static source
+# inventories only.  They have dedicated direct tests but no M10 consumer,
+# so keep their disconnected ownership data out of the production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0361_f0380_core_action_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0401_f0420_render_core_source_receipt_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0441_f0460_save_endgame_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0541_f0560_platform_boundary_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0686_f0705_runtime_graphics_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0726_f0745_source_ownership_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1386_f1405_local_ownership_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1746_f1785_debug_error_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0401_g0450_movement_panel_input_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0451_g0500_graphic560_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m451_m500_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_p0866_p0885_parameter_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
