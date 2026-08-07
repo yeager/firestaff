@@ -470,6 +470,7 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_BootProbeReceipt probe;
     CSB_V1_StartupRealReceipt real_package;
     const M12_MenuEntry* entry;
+    const M12_AssetVersionStatus* pc34_version;
     char real_dir[512];
     const char* data_dir = default_data_root(real_dir);
     unsigned char framebuffer[320 * 200];
@@ -510,6 +511,26 @@ static void run_real_launcher_handoff_if_available(void) {
         !M12_AssetStatus_GameAvailable(&menu.assetStatus, "csb")) {
         expect_skip("no launchable CSB data under default data root");
         return;
+    }
+
+    /* This probe proves the PC34 TITLE.C -> ENTRANCE.C route.  A persisted
+     * launcher selection is user state and may legitimately name Atari,
+     * Amiga, or FM Towns instead; never let it silently change this
+     * PC34-specific assertion set.  ReDMCSB TITLE.C F0437 and ENTRANCE.C
+     * F0806 are not the owner of those platform-native startup programs. */
+    {
+        const int pc34_index =
+            M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
+        pc34_version = pc34_index >= 0
+            ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                         (size_t)pc34_index)
+            : NULL;
+        if (!pc34_version || !pc34_version->matched) {
+            expect_skip("no M12-launchable PC34 CSB package at requested data root");
+            M12_StartupMenu_Destroy(&menu);
+            return;
+        }
+        menu.gameOptions[1].versionIndex = pc34_index;
     }
 
     menu.selectedIndex = 1;
@@ -563,8 +584,13 @@ static void run_real_launcher_handoff_if_available(void) {
     }
 
     M11_GameView_Init(&view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
-                "M11 opens CSB through M12 selected-menu entry");
+    if (!M11_GameView_OpenSelectedMenuEntry(&view, &menu)) {
+        expect_true(0, "M11 opens the selected PC34 CSB menu entry");
+        M11_GameView_Shutdown(&view);
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+    expect_true(1, "M11 opens the selected PC34 CSB menu entry");
     expect_true(view.startedFromLauncher == 1,
                 "M11 marks CSB startup as launcher-started");
     expect_true(view.active == 1,
@@ -1466,6 +1492,7 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
     char real_dir[512];
     const char *data_dir = default_data_root(real_dir);
     CSB_V1_StartupRealReceipt real_package;
+    int pc34_index;
     size_t i;
 
     if (!data_dir || !data_dir[0]) {
@@ -1475,7 +1502,9 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
     csb_v1_startup_real_receipt_init(&real_package);
     if (csb_v1_startup_real_scan_and_receipt(data_dir, 4, &real_package) !=
             CSB_V1_STARTUP_REAL_OK ||
-        !real_package.matched || !real_package.assets_verified) {
+        !real_package.matched || !real_package.assets_verified ||
+        real_package.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        real_package.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS) {
         expect_skip("no hash-verified PC34 CSB package for V2 launcher handoff");
         return;
     }
@@ -1502,9 +1531,18 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
             M12_StartupMenu_Destroy(&menu);
             return;
         }
+        pc34_index = M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
+        if (pc34_index < 0 ||
+            !M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                        (size_t)pc34_index)->matched) {
+            expect_skip("no M12-launchable PC34 CSB package for V2 launcher handoff");
+            M12_StartupMenu_Destroy(&menu);
+            return;
+        }
         menu.selectedIndex = 1;
         menu.activatedIndex = 1;
         menu.launchRequested = 1;
+        menu.gameOptions[1].versionIndex = pc34_index;
         menu.settings.graphicsIndex = requested;
         menu.gameOptions[1].presentationModeIndex = requested;
         /* Exercise the same admission decision M11 will consume. */

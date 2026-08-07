@@ -1,3 +1,11 @@
+# CSB PC34 launcher regression isolation (2026-08-07)
+
+- ✅ The real-media M12→M11 PC34 startup and V2 handoff probes now select the
+  hash-verified `pc34-en` row explicitly. A persisted user preference for
+  Atari ST, Amiga or FM Towns can no longer redirect the PC34 TITLE.C F0437 /
+  ENTRANCE.C F0806 assertions or cause a null-session crash. Native-platform
+  probes keep their own explicit selections.
+
 # CSB Atari ST selected-package startup repair (2026-08-07)
 
 - ✅ Fixed the mixed-root direct-launch regression: a selected Atari ST
