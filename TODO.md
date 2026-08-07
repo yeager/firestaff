@@ -29845,6 +29845,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   selector. A positive dynamic CAII runtime consumer and image-field
   publication are still open; no static DB4 map-chip row is promoted into a
   fabricated live animation.
+  **2026-08-07 V5 step parity:** `CREATURE_STEP_ANIMATION_V5` starts from
+  the source-owned `iAnimInfo` and advances only while FC `seqnext` is not
+  `0x0f`; the selector no longer pre-increments the frame and therefore does
+  not skip the real terminal frame. The mounted PC-DOS FB/FC/FD regression
+  now calls the selector again from the admitted frame and requires the
+  source terminal state to remain stable. Live CAII ownership and runtime
+  publication remain open.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

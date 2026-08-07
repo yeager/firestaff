@@ -157,6 +157,22 @@ int main(void)
                     return 1;
                 }
                 {
+                    DM2_V1_CreatureAnimationGdatReceipt held;
+                    if (!dm2_v1_creature_animation_gdat_select_dynamic_v5(
+                                &loader, creature, command,
+                                receipt.selected_frame, ai->w0AIFlags, 2,
+                                &held) ||
+                        held.selected_frame != receipt.selected_frame ||
+                        held.previous_frame != receipt.selected_frame ||
+                        held.image_id != receipt.image_id) {
+                        fputs("FAIL: V5 animation step did not hold at the real FC terminator\n",
+                              stderr);
+                        dm2_v1_asset_loader_free(&loader);
+                        free(graphics);
+                        return 1;
+                    }
+                }
+                {
                     DM2_V1_CreatureAnimation0958Receipt frame_receipt;
                     uint16_t timer_word = 0u;
                     if (dm2_v1_creature_animation_gdat_query_0958(

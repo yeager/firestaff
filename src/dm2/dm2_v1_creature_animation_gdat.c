@@ -251,7 +251,11 @@ int dm2_v1_creature_animation_gdat_select_dynamic_v5(
 
     sequence_offset = dm2_v1_read_le16(attribution + command_row * 4u + 2u);
     if (sequence_offset >= info_count) return 0;
-    selected_frame = previous_frame == 0xffffu ? 0u : (uint16_t)(previous_frame + 1u);
+    /* v4/skcrture.cpp:CREATURE_STEP_ANIMATION_V5 starts at the caller's
+     * iAnimInfo and only advances while the current FC.seqnext is not the
+     * terminal marker.  Do not pre-increment the source-owned frame: doing
+     * so skips a terminal frame and can walk into the next sequence. */
+    selected_frame = previous_frame == 0xffffu ? 0u : previous_frame;
     if ((size_t)sequence_offset + selected_frame >= info_count) return 0;
 
     /* CREATURE_STEP_ANIMATION_V5 advances until FC.seqnext is the source

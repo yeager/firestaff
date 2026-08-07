@@ -36,8 +36,20 @@
   unopened transaction is rejected instead of underflowing its counter.
 - ✅ `test_dm2_v1_gdatfile_pc34_compat` covers both failure paths and still
   passes the real PC-DOS `GRAPHICS.DAT` structure regression (`26/26`). This
+
   hardens the source transaction boundary only; `BUILD_GDAT_ENTRY_DATA`,
   underlay admission and full secondary-file loading remain open in TODO.
+
+# DM2 V5 creature animation terminal-frame parity (2026-08-07)
+
+- ✅ The FB/FC/FD selector now follows SKProject's
+  `CREATURE_STEP_ANIMATION_V5`: it starts at the source-owned `iAnimInfo` and
+  advances only until FC `seqnext == 0x0f`, without a pre-increment that could
+  skip the terminal frame.
+- ✅ The real PC-DOS animation regression re-enters the selector from the
+  admitted frame and verifies that the source terminal state and FD image
+  remain stable. Dynamic CAII ownership and live runtime publication remain
+  intentionally open in `TODO.md`.
 
 - ✅ M12 now materializes every explicitly selected CSB version into its own
   authenticated runtime cache, not only archive-backed selections. This keeps
