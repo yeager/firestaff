@@ -28,8 +28,13 @@ int main(void) {
         puts("SKIP: THERON_VRAM_SNAPSHOT and THERON_VCE_SNAPSHOT are not set");
         return 77;
     }
+#ifdef _WIN32
+    _putenv_s("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path);
+    _putenv_s("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path);
+#else
     setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path, 1);
     setenv("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path, 1);
+#endif
     memset(&viewport, 0, sizeof(viewport));
     if (!theron_vp_init(&viewport) || !viewport.vram_trace_loaded ||
         !viewport.vram_trace_data || !viewport.vce_trace_data) {
