@@ -1,3 +1,22 @@
+# Firestaff v3.0.297
+
+## Added
+
+- None.
+
+## Changed
+
+- `asset_find_by_hash.c`: change `is_kryoflux_raw_track_path` and `numbered_cd_track_payload_number` to `#ifndef _WIN32` guarded definitions; both are only called from POSIX-only external-archive helpers so Windows -Werror=unused-function no longer flags them.
+- `test_csb_v1_utility_save_transaction_pc34_compat`: fix link error by adding `csb_v1_save_import_path_pc34_compat.c` to the target sources so `csb_v1_build_csb_save_buffer` and `csb_v1_import_csb_save_buffer` link.
+- `test_csb_v1_omfattande_stubs_pc34_compat`: fix link error by adding `csb_v1_save_import_path_pc34_compat.c` so `csb_v1_detect_save_variant` links.
+- `test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat`: fix link error by adding `dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c` so `_default_input` and `_resolve` resolve.
+- `test_dm1_v1_f0099_in_place_row_flip_pc34_compat`: fix link error by adding d0l2/d0r2 and d1l2/d1r2 `f0108_floor_ceiling_ornament` sibling sources so the flip-row helpers resolve.
+- `test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat`: fix link error by adding `viewport_f0107_wall_ornament_alcove_pc34_compat.c` so `_alcove_cases_pc34` resolves; same fix for the `_d2l_d2r_` variant.
+
+## Removed
+
+- None.
+
 # Firestaff v3.0.296
 
 ## Added
