@@ -4975,6 +4975,11 @@ list(REMOVE_ITEM M10_SOURCES
 # route invokes it. Its direct regression target retains that evidence model.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_source_frame_evidence_pc34_compat.c")
+# `dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c` is a standalone
+# raw-source hash receipt; production uses the separately owned group and
+# projectile paths. Its direct test retains the source-evidence contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
