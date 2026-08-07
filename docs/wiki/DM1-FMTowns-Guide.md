@@ -9,6 +9,26 @@ disc; the Japanese disc uses the same layout but a different
 executable (`JDM.EXP`) whose structural map is recorded separately —
 see the JDM section below.
 
+### Cross-game context
+
+Before writing new FM Towns code, read
+[`docs/fmtowns/CROSS_GAME_INVENTORY.md`](../fmtowns/CROSS_GAME_INVENTORY.md)
+to see what DM2 and CSB have already shipped. Several patterns
+(font rasteriser, disc reader, region lookup, DYNA_BUTTONS pool)
+are game-agnostic and reusable across all three games.
+
+### Font raster layout — round-trip verified
+
+The 768-byte menu font raster loaded by
+`dm1_v1_fmtowns_pic_library_load_menu_font_pc34` (asset 557) is
+laid out as **6 rows × 128 ASCII glyphs**, each byte MSB-first with
+the CHAR_X_SIZE (=5) body pixels **right-aligned** in bits 4..0.
+Bits 7..5 are always zero. Verified 2026-08-07 by decoding the
+shipping Japanese Track 01 GRAPHICS.DAT and rendering ASCII
+0x20..0x7f. See `dm1_v1_fmtowns_font_rasteriser` for the ready
+consumer + `test_dm1_v1_fmtowns_font_rasteriser` for the round-trip
+test (skips cleanly without `FIRESTAFF_DM1_FMTOWNS_DATA_DIR`).
+
 ### Companion parity-evidence files (deep-decode references)
 
 - [`dm1_fmtowns_menu_p3_disassembly.md`](../../parity-evidence/dm1_fmtowns_menu_p3_disassembly.md) — DRAW_DMENU, DRAW_ICN_BUTTON,
