@@ -64,6 +64,17 @@
   noll opacitet. CTesten och källåset kontrollerar att framebufferinnehållet
   lämnas oförändrat och att de syntetiska reglerna inte återkommer.
 
+# DM1 V2:s efterbehandlingsfilter spärrade (2026-08-07)
+
+- ✅ Rensade hela V2.0-kedjan från egen CRT-raddämpning, 3×3-ditherrensning,
+  påhittad ljusinterpolering och oskarp mask. De hade anrop i SDL-vägen men
+  saknar PC34-motsvarighet. Palettbyggaren behåller i stället exakt den
+  autentiserade sexnivåtabellen `G9010`, även om gamla kompatibilitetsanrop
+  skickar gamma-, ljus- eller kontrastvärden. ReDMCSB:s palettexport kopierar
+  källägda värden direkt före viewportpresentation. CTesten bevisar att både
+  indexerade och RGBA-buffertar lämnas orörda och att LUT:en är identisk med
+  originaltabellen; källåset förbjuder de tidigare filteralgoritmerna.
+
 # DM1 V2-föremålsmetadata källbunden (2026-08-07)
 
 - ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen

@@ -113,6 +113,15 @@ The compatibility APIs now have no transition state: their apply functions
 copy the source framebuffer unchanged, and the V2.2 fade reports zero
 opacity. This preserves the source-owned viewport as the only pixel path.
 
+The V2.0 post-process chain also contained five host transformations: CRT-row
+dimming, a 3×3 indexed dither mode filter, invented intermediate brightness
+levels, an RGBA unsharp mask and gamma/brightness/contrast compensation.
+These had active SDL callers, but no PC34 ownership. ReDMCSB transfers its
+owned palette entries directly and then presents the viewport. The four pixel
+filters now accept valid compatibility calls without changing a buffer, while
+the LUT builder copies the authenticated `G9010` VGA table exactly regardless
+of its host adjustment arguments.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

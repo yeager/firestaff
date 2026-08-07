@@ -1,0 +1,62 @@
+{
+  "anchors": [
+    {
+      "end": 60,
+      "file": "PALETTE.C",
+      "meaning": "source palette transfer copies owned palette entries directly",
+      "needles": [
+        "void F1122_",
+        "*L2630_pi_++ = *P2812_pi_ColorPalette++;"
+      ],
+      "start": 46
+    },
+    {
+      "end": 46,
+      "file": "VIEWPORT.C",
+      "meaning": "source viewport path sets its palette then presents the viewport",
+      "needles": [
+        "void F0565_VIEWPORT_SetPalette",
+        "F0566_VIEWPORT_BlitToScreen();"
+      ],
+      "start": 30
+    }
+  ],
+  "errors": [],
+  "firestaffFiles": [
+    "src/dm1v2/dm1_v2_filter_crt_scanlines_pc34.c",
+    "src/dm1v2/dm1_v2_filter_dither_cleanup_pc34.c",
+    "src/dm1v2/dm1_v2_filter_palette_correct_pc34.c",
+    "src/dm1v2/dm1_v2_filter_palette_interpolate_pc34.c",
+    "src/dm1v2/dm1_v2_filter_sharpen_pc34.c",
+    "tests/test_dm1_v2_filter_chain_pc34.c"
+  ],
+  "forbiddenSyntheticRules": {
+    "src/dm1v2/dm1_v2_filter_crt_scanlines_pc34.c": [
+      "gain_num",
+      "row[x * 4"
+    ],
+    "src/dm1v2/dm1_v2_filter_dither_cleanup_pc34.c": [
+      "scratch[",
+      "counts[16]",
+      "mode_count"
+    ],
+    "src/dm1v2/dm1_v2_filter_palette_correct_pc34.c": [
+      "pow(",
+      "gamma curve",
+      "contrast around"
+    ],
+    "src/dm1v2/dm1_v2_filter_palette_interpolate_pc34.c": [
+      "scratch[",
+      "s_canon_midpoint",
+      "blended4"
+    ],
+    "src/dm1v2/dm1_v2_filter_sharpen_pc34.c": [
+      "scratch[",
+      "clamp_byte",
+      "orig - blur"
+    ]
+  },
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "dm1_v2 V2.0 post-process filter chain",
+  "status": "passed"
+}
