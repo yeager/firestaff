@@ -98,6 +98,7 @@ typedef struct DM2_V1_GdatFileState {
     int16_t      versionlo;
     uint16_t     entries;
     bool         big_endian;
+    bool         ent1_big_endian;
     bool         filetype1;
     bool         filetype2;
     const char  *filename1;  /* .Z020GRAPHICS.DAT */
@@ -130,6 +131,20 @@ typedef struct DM2_V1_GdatFileState {
     uint8_t      ent1_field_offset[7];
     uint8_t      ent1_field_size[7];
 } DM2_V1_GdatFileState;
+
+/* One row from the source LOAD_ENT1 table.  The field order is the
+ * source's T/I/D/S/F/G/P descriptor order, not a host-authored category
+ * projection.  P is the 16-bit raw-data index; the other fields are the
+ * source's one-byte class values in the supplied PC-DOS corpus. */
+typedef struct {
+    uint8_t  cls1;
+    uint8_t  cls2;
+    uint8_t  cls3;
+    uint8_t  cls4;
+    uint8_t  cls5;
+    uint8_t  cls6;
+    uint16_t data_index;
+} DM2_V1_GdatEnt1Row;
 
 /* ========================================================================
  * Callback struct — external dependencies
@@ -234,6 +249,14 @@ typedef struct DM2_V1_GdatReadStructureReceipt {
     uint8_t  ent1_stride;
     bool     endian_swapped;
 } DM2_V1_GdatReadStructureReceipt;
+
+typedef struct {
+    bool     valid;
+    uint16_t entry_count;
+    uint8_t  row_stride;
+    uint32_t rows_hash;
+    bool     endian_swapped;
+} DM2_V1_GdatEnt1RowsReceipt;
 
 /* ========================================================================
  * Public functions
@@ -354,6 +377,15 @@ int dm2_v1_gdat_release_graphics_structure(
     DM2_V1_GdatFileState *state,
     const DM2_V1_GdatFileCallbacks *cb,
     void *ctx);
+
+/* Materialize the already authenticated source ENT1 rows.  This mirrors
+ * SKProject LOAD_ENT1's descriptor-driven row walk and does not allocate
+ * BUILD_GDAT_ENTRY_DATA's category/index tables or decode raw images. */
+int dm2_v1_gdat_materialize_ent1_rows(
+    const DM2_V1_GdatFileState *state,
+    DM2_V1_GdatEnt1Row *rows,
+    uint16_t row_capacity,
+    DM2_V1_GdatEnt1RowsReceipt *out);
 
 /* ========================================================================
  * GDAT entry data builder — skproject c_gdatfile.cpp:674

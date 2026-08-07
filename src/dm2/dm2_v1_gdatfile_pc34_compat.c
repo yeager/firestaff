@@ -916,6 +916,36 @@ static uint32_t dm2_gdat_be32(const uint8_t *p)
            (uint32_t)p[3];
 }
 
+static uint32_t dm2_gdat_ent1_hash_bytes(uint32_t hash,
+                                          const uint8_t *bytes,
+                                          size_t count)
+{
+    size_t i;
+    for (i = 0u; i < count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t dm2_gdat_ent1_read_value(const uint8_t *row,
+                                          uint8_t offset,
+                                          uint8_t size,
+                                          bool big_endian)
+{
+    uint32_t value = 0u;
+    uint8_t i;
+
+    if (big_endian) {
+        for (i = 0u; i < size; ++i)
+            value = (value << 8) | row[(size_t)offset + i];
+    } else {
+        for (i = 0u; i < size; ++i)
+            value |= (uint32_t)row[(size_t)offset + i] << (8u * i);
+    }
+    return value;
+}
+
 static int dm2_gdat_ent1_tag_index(uint8_t tag)
 {
     /* SKProject v4/skcore.cpp::LOAD_ENT1 uses _4976_4813: T/I/D/S/F/G/P. */
@@ -1100,6 +1130,7 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                 (uint32_t)ent1_entry_count * ent1_stride > first_entry_size) {
             goto fail;
         }
+        state->ent1_big_endian = ent1_big_endian;
     }
     /* SKProject bgdat.cpp:1063-1065 allocates w_table2 and fills it with
      * NODATA (0xffff) before LOAD_ENT1. Keep that source initialization in
@@ -1169,6 +1200,7 @@ fail:
     state->ent1_entry_count = 0u;
     state->ent1_group_count = 0u;
     state->ent1_stride = 0u;
+    state->ent1_big_endian = false;
     memset(state->ent1_field_offset, 0, sizeof(state->ent1_field_offset));
     memset(state->ent1_field_size, 0, sizeof(state->ent1_field_size));
     if (opened && state->fileopencounter > 0)
@@ -1208,6 +1240,75 @@ int dm2_v1_gdat_release_graphics_structure(
         state->ent1_stride = 0u;
         memset(state->ent1_field_offset, 0, sizeof(state->ent1_field_offset));
         memset(state->ent1_field_size, 0, sizeof(state->ent1_field_size));
+    }
+    return 1;
+}
+
+int dm2_v1_gdat_materialize_ent1_rows(
+    const DM2_V1_GdatFileState *state,
+    DM2_V1_GdatEnt1Row *rows,
+    uint16_t row_capacity,
+    DM2_V1_GdatEnt1RowsReceipt *out)
+{
+    const size_t descriptor_end = 6u +
+        (size_t)(state ? state->ent1_group_count : 0u) * 2u;
+    const size_t row_bytes = (size_t)(state ? state->ent1_entry_count : 0u) *
+        (size_t)(state ? state->ent1_stride : 0u);
+    uint16_t row_index;
+    uint32_t hash = 2166136261u;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !state->ent1_data || !rows ||
+        state->ent1_entry_count == 0u ||
+        state->ent1_entry_count > row_capacity ||
+        state->ent1_group_count != 7u || state->ent1_stride == 0u ||
+        descriptor_end > state->ent1_length ||
+        row_bytes > state->ent1_length - descriptor_end) {
+        return 0;
+    }
+    for (row_index = 0u; row_index < state->ent1_entry_count; ++row_index) {
+        const uint8_t *row_data = state->ent1_data + descriptor_end +
+            (size_t)row_index * state->ent1_stride;
+        DM2_V1_GdatEnt1Row row;
+        uint32_t value;
+        uint8_t field;
+
+        memset(&row, 0, sizeof(row));
+        for (field = 0u; field < 7u; ++field) {
+            const uint8_t offset = state->ent1_field_offset[field];
+            const uint8_t size = state->ent1_field_size[field];
+            if (size == 0u || size > 4u ||
+                (uint16_t)offset + size > state->ent1_stride) {
+                return 0;
+            }
+            /* SKProject's LOAD_ENT1/QUERY_GDAT_ENTRY_VALUE consumes the
+             * descriptor payload as a big-endian field value even when the
+             * surrounding DOS GDAT header/ULP words are little-endian. */
+            value = dm2_gdat_ent1_read_value(row_data, offset, size, true);
+            if (field == 6u) {
+                if (size > 2u || value > 0xffffu) return 0;
+                row.data_index = (uint16_t)value;
+            } else {
+                if (size != 1u || value > 0xffu) return 0;
+                ((uint8_t *)&row)[field] = (uint8_t)value;
+            }
+        }
+        rows[row_index] = row;
+        hash = dm2_gdat_ent1_hash_bytes(hash, &row.cls1, 6u);
+        {
+            const uint8_t data_bytes[2] = {
+                (uint8_t)(row.data_index >> 8),
+                (uint8_t)(row.data_index & 0xffu)
+            };
+            hash = dm2_gdat_ent1_hash_bytes(hash, data_bytes, 2u);
+        }
+    }
+    if (out) {
+        out->valid = true;
+        out->entry_count = state->ent1_entry_count;
+        out->row_stride = state->ent1_stride;
+        out->rows_hash = hash ? hash : 1u;
+        out->endian_swapped = state->ent1_big_endian;
     }
     return 1;
 }

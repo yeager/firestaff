@@ -30062,6 +30062,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   after an I/O error without admitting any synthetic GDAT state. The complete
   BUILD_GDAT_ENTRY_DATA transaction, underlay admission and secondary-file
   transaction remain gated.
+  **2026-08-07 ENT1 materialization progress:** the authenticated raw ENT1
+  payload can now be materialized into source-shaped `T/I/D/S/F/G/P` rows,
+  using SKProject's descriptor offsets and big-endian field-value semantics
+  even for the little-endian DOS container header. The mounted PC-DOS
+  GRAPHICS.DAT verifies all 11,854 rows and their nonzero receipt hash.
+  BUILD_GDAT_ENTRY_DATA category/index allocation, decoded raw images,
+  underlay admission and the optional GRAPHIC2.DAT transaction remain gated.
 - **2026-08-07 save-dungeon parity correction:** the isolated
   `DM2_STORE_EXTRA_DUNGEON_DATA` teleporter gate now matches SKProject's
   `current_map > target_map` backward-reference skip; the complete raw-dungeon

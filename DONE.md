@@ -59713,3 +59713,13 @@ companion.
   session. Continue and slot admission remain fail-closed.
 - ✅ `test_dm2_v1_save_load_real_data` passes 135/135 against the supplied
   PC-DOS SKSave corpus.
+
+# DM2 GDAT source ENT1 row materialization (2026-08-07)
+
+- ✅ Added a descriptor-driven materializer for the authenticated raw ENT1
+  transaction. It preserves source `T/I/D/S/F/G/P` fields, including the
+  source big-endian field-value rule for the 16-bit `P` raw-data index.
+- ✅ The real PC-DOS `GRAPHICS.DAT` regression materializes all 11,854 rows,
+  checks the first source rows and a complete-row receipt hash, and keeps the
+  later category/index allocator and raw-image stages gated.
+- ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.

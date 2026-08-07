@@ -754,6 +754,26 @@ static int test_read_graphics_structure_real_dm2_data(void)
            state.ent1_field_size[6] == 2u)) {
         return 0;
     }
+    {
+        DM2_V1_GdatEnt1Row *rows = (DM2_V1_GdatEnt1Row *)calloc(
+            receipt.ent1_entry_count, sizeof(*rows));
+        DM2_V1_GdatEnt1RowsReceipt rows_receipt;
+        int rows_ok = rows != NULL &&
+            dm2_v1_gdat_materialize_ent1_rows(
+                &state, rows, receipt.ent1_entry_count, &rows_receipt) &&
+            rows_receipt.valid &&
+            rows_receipt.entry_count == receipt.ent1_entry_count &&
+            rows_receipt.row_stride == receipt.ent1_stride &&
+            rows_receipt.rows_hash != 0u &&
+            rows[0].cls1 == 0u && rows[0].cls2 == 0u &&
+            rows[0].cls3 == 0x0bu && rows[0].cls4 == 0u &&
+            rows[0].cls5 == 0u && rows[0].cls6 == 0u &&
+            rows[0].data_index == 0x007bu &&
+            rows[1].cls3 == 0x0bu && rows[1].cls4 == 1u &&
+            rows[1].data_index == 0x0006u;
+        free(rows);
+        if (!rows_ok) return 0;
+    }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
            state.ulp_table == NULL && state.allocator_table == NULL &&
            state.ent1_data == NULL;
