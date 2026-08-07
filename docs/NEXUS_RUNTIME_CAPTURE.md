@@ -39,6 +39,19 @@ adjacent frames. This proves observed runtime change in the producer without
 identifying a menu, HUD, viewport, CLUT, or consumer; the tool always keeps
 semantic admission blocked.
 
+The validator also accepts `--require-vdp1-activity` for a V2 witness. This
+requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer
+payload. It is only an active-engine observation. It does not prove which
+`MENU.BPK`, DGN, ITEM, HUD or viewport record owns the bytes.
+
+The first external European active-VDP1 witness is retained at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-french-a-start17000x120-skip18000-fast2/runtime-vdp12.raw`.
+It has SHA-256
+`c1ec48ac1b55c05ef573225b2820e3051fa2735968d286ea3b58ec9984da2712`, with
+`PTMR=02`, `EDSR=03`, `COPR=00000c`, and one non-idle frame. Its VDP1
+framebuffer decodes as an authentic dungeon viewport observation, but no menu,
+HUD, CLUT, source-asset or command-owner binding is admitted from it yet.
+
 The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
 explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the
 return pointer and framebuffer selector) before the unchanged raw VRAM/FB

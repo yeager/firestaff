@@ -18,6 +18,17 @@
   dialogue tests, the explicit real PC-DOS viewport test, the `dm2_v1_0aaf`
   test, and the production-placeholder boundary all pass. The `c_0aaf` menu /
   rectangle bridge remains test-only; no release was made.
+# 2026-08-07 Nexus active VDP1 raw witness
+
+- ✅ Captured the European retail Nexus image with the instrumented external
+  Mednafen producer at the late startup window, using the source-confirmed
+  active-low `A+START` mask (`0x30`). The one-frame raw artifact is
+  `c1ec48ac1b55c05ef573225b2820e3051fa2735968d286ea3b58ec9984da2712` and
+  validates at 1,577,645 bytes with `PTMR=02`, `EDSR=03`, `COPR=00000c`.
+- ✅ Added `--require-vdp1-activity` to the raw validator. It proves only a
+  non-idle VDP1 state plus nonzero captured VRAM/framebuffer payload; it keeps
+  PRS3, menu, HUD, viewport-owner, CLUT, DGN and SLEV/SAL semantic admission
+  blocked. The external framebuffer witness is retained on the external disk.
 
 # DM2 original save writer source-graph gate (2026-08-13)
 - ✅ Hardened the isolated source-order `DM2_GAME_SAVE` orchestrator so it
