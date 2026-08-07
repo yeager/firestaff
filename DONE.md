@@ -58662,6 +58662,14 @@ shooter classes (`0x07..0x0a`, `0x0e..0x0f`) across every real map. The mounted
 PC-English corpus contains four `0x08` roots and zero roots for the other five
 classes. The test retains those counts as source-presence evidence only; it
 does not allocate a DB14 record, create a projectile, or schedule `SHOOT_ITEM`.
+
+# DM2 source DB14 missile census (2026-08-13)
+
+Extended the real G1 regression to enumerate only authenticated DB14 missile
+records and retain their source timer-index presence. The mounted PC-English
+corpus contains zero such records. The census is read-only: it does not step,
+allocate, delete, or render a projectile while the complete `DM2_STEP_MISSILE`
+owner transaction remains unbound.
 # Nexus VDP1 writer code-window receipt (2026-08-07)
 
 - ✅ Added a reproducible Mednafen producer patch that captures the live SH-2

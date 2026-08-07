@@ -4465,6 +4465,11 @@ level or consumer bindings.
   `dm2_v1_tim_proc_pc34_compat.c`, `dm2_v1_timer_ops_pc34_compat.c` and
   timer-dispatch wiring are now explicit-test-only; no live runtime caller
   supplies their source DB14/c_tim/dungeon transaction.
+  **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains
+  zero direct DB14 missile records and therefore zero stored missile timer
+  indices. This records source absence without stepping, allocating, deleting
+  or turning a DB14 record into a viewport projectile; other profiles still
+  require the complete `DM2_STEP_MISSILE` owner handoff.
 
 - **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
   deliberately fail-closed. Port SK-projects

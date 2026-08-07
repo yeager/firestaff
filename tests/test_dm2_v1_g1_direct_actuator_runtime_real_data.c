@@ -56,6 +56,8 @@ int main(int argc, char **argv)
     int creature_generator_count = 0;
     int item_generator_count = 0;
     int shooter_counts[6] = {0, 0, 0, 0, 0, 0};
+    int direct_missile_count = 0;
+    int direct_missile_timer_count = 0;
 
     if (!path) {
         puts("SKIP: no local canonical DM2 data");
@@ -153,6 +155,17 @@ int main(int argc, char **argv)
            item_generator_count, shooter_counts[0], shooter_counts[1],
            shooter_counts[2], shooter_counts[3], shooter_counts[4],
            shooter_counts[5]);
+    for (int index = 0; index < dungeon.thing_type_counts[14]; ++index) {
+        DM2_V1_G1DirectMissileReceipt missile;
+        uint16_t object_id = (uint16_t)((14u << 10) | (unsigned)index);
+        if (!dm2_v1_g1_direct_missile_receipt(&dungeon, object_id, &missile)) {
+            continue;
+        }
+        ++direct_missile_count;
+        if (missile.timer_index != 0xffffu) ++direct_missile_timer_count;
+    }
+    printf("source DB14 census: direct-missiles=%d with-timer-index=%d\n",
+           direct_missile_count, direct_missile_timer_count);
     dm2_v1_dungeon_free(&dungeon);
     puts("PASS: direct DB3 Actuator roots use only source-proven payload fields");
     return 0;
