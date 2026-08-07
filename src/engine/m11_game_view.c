@@ -112,6 +112,7 @@
 #include "dm1_v1_fmtowns_jdm_bss.h"
 #include "dm1_v1_fmtowns_jdm_symbols.h"
 #include "dm1_v1_fmtowns_pic_library_loader.h"
+#include "dm1_v1_fmtowns_menu_render.h"
 #include "firestaff_fmtowns_disc.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
@@ -22594,6 +22595,32 @@ void M11_GameView_PlayFmtownsCdda(M11_GameViewState* state, int track_number) {
 
 void M11_GameView_StopFmtownsCdda(M11_GameViewState* state) {
     m11_dm1_stop_fmtowns_cdda(state);
+}
+
+int M11_GameView_RenderDm1FmtownsMenu(
+    M11_GameViewState *state,
+    const uint8_t     *dynamenu_record,
+    int                language,
+    uint8_t           *fb,
+    int                fb_width,
+    int                fb_height,
+    int                fb_stride,
+    uint8_t            label_fg,
+    uint8_t            label_bg) {
+    dm1_v1_fmtowns_menu_render_config_t cfg;
+    if (!state || !dynamenu_record || !fb) return 0;
+    if (!state->dm1FmtownsMenuFontLoaded) return 0;
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.language        = language ? DM1_V1_FMTOWNS_MENU_LANG_JA
+                                    : DM1_V1_FMTOWNS_MENU_LANG_EN;
+    cfg.dynamenu_record = dynamenu_record;
+    cfg.menu_font_raster = state->dm1FmtownsMenuFont;
+    cfg.glyph_draw       = dm1_v1_fmtowns_menu_default_glyph_draw_pc34;
+    cfg.glyph_draw_user  = state->dm1FmtownsMenuFont;
+    cfg.label_fg         = label_fg;
+    cfg.label_bg         = label_bg;
+    return dm1_v1_fmtowns_menu_render_pc34(
+        fb, fb_width, fb_height, fb_stride, &cfg, NULL);
 }
 
 int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state) {

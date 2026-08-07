@@ -56118,6 +56118,7 @@ add_executable(test_dm1_v1_fmtowns_menu_render
     src/dm1/dm1_v1_fmtowns_dyna_buttons_ja.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_egb_shim.c
+    src/dm1/dm1_v1_fmtowns_font_rasteriser.c
 )
 target_include_directories(test_dm1_v1_fmtowns_menu_render PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_menu_render COMMAND test_dm1_v1_fmtowns_menu_render)

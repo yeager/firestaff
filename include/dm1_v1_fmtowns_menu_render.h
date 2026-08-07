@@ -73,6 +73,24 @@ typedef struct {
     int      label_slot_returns[3];
 } dm1_v1_fmtowns_menu_render_result_t;
 
+/* Concrete glyph-draw callback that consumes the shipping 768-byte
+ * menu font raster (asset 557) via dm1_v1_fmtowns_font_rasteriser.
+ * Only English (ASCII) labels render; Japanese Shift-JIS labels
+ * return 0 without touching the framebuffer (the font asset covers
+ * only ASCII 0x00..0x7f — a separate Shift-JIS decoder is required
+ * for JDM labels). `user` must point at the 768-byte raster.
+ *
+ * Signature matches dm1_v1_fmtowns_menu_glyph_draw_fn. Callers
+ * install this in a config with:
+ *   cfg.glyph_draw      = dm1_v1_fmtowns_menu_default_glyph_draw_pc34;
+ *   cfg.glyph_draw_user = state->dm1FmtownsMenuFont;
+ */
+int dm1_v1_fmtowns_menu_default_glyph_draw_pc34(
+    void *user, uint8_t *fb, int fb_width, int fb_height, int fb_stride,
+    int dst_x, int dst_y, uint8_t fg, uint8_t bg,
+    dm1_v1_fmtowns_menu_lang_t lang, unsigned int slot,
+    const char *label_bytes);
+
 /* Paint the FM Towns dynamic menu into `fb` (an 8bpp indexed
  * framebuffer of size fb_width x fb_height, row stride fb_stride).
  * Uses byte-verified region and colour constants; per-glyph

@@ -1938,6 +1938,25 @@ void M11_GameView_StopFmtownsCdda(M11_GameViewState* state);
  * receipt is not admitted. Returns 1 on success or already-loaded,
  * 0 if the load could not be performed. Idempotent. */
 int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state);
+
+/* End-to-end DM1 FM Towns menu render: composes region + panel
+ * colour + label walk + font rasteriser and paints the DYNAMENU
+ * into the supplied framebuffer. Uses the state's loaded menu
+ * font (M11_GameView_LoadDm1FmtownsMenuFontIfAvailable must have
+ * run at least once). English labels rasterise to real glyphs;
+ * Japanese labels skip drawing (font asset covers ASCII only).
+ * `language` selects the label pool (0 = English, 1 = Japanese).
+ * Returns 1 if the panel was filled, 0 if any precondition failed. */
+int M11_GameView_RenderDm1FmtownsMenu(
+    M11_GameViewState *state,
+    const uint8_t     *dynamenu_record,
+    int                language,
+    uint8_t           *fb,
+    int                fb_width,
+    int                fb_height,
+    int                fb_stride,
+    uint8_t            label_fg,
+    uint8_t            label_bg);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);

@@ -167,6 +167,58 @@ static void test_disabled_slot_skips_draw(void) {
     assert(rr.label_slots_drawn == 2);
 }
 
+static void test_default_glyph_draw_renders_english_labels(void) {
+    /* Slots 0/1/2 => label indices 1/20/43 => BLOCK/FIREBALL/FUSE. */
+    static const uint8_t rec[8] = {0, 1, 20, 43, 0, 0, 0, 0};
+    uint8_t raster[768];
+    dm1_v1_fmtowns_menu_render_config_t c = {0};
+    dm1_v1_fmtowns_menu_render_result_t r;
+    memset(g_fb, 0, sizeof(g_fb));
+    /* Populate raster so 'B' (0x42) row 2 crossbar is set (all 5 body
+     * bits). If the default callback works, at least one pixel inside
+     * the panel will be colour 4 after render. */
+    memset(raster, 0, sizeof(raster));
+    raster[2 * 128 + 'B'] = 0x1f; /* B crossbar row */
+    raster[2 * 128 + 'F'] = 0x1f;
+    c.language = DM1_V1_FMTOWNS_MENU_LANG_EN;
+    c.dynamenu_record = rec;
+    c.menu_font_raster = raster;
+    c.glyph_draw = dm1_v1_fmtowns_menu_default_glyph_draw_pc34;
+    c.glyph_draw_user = raster;
+    c.label_fg = 4; c.label_bg = 0;
+    assert(dm1_v1_fmtowns_menu_render_pc34(g_fb, FB_W, FB_H, FB_W, &c, &r) == 1);
+    assert(r.panel_filled == 1);
+    assert(r.label_slots_visited == 3);
+    /* BLOCK / FIREBALL / FUSE all start with letters that have the
+     * crossbar bit set (B row 2 = 0x1f, F row 2 = 0x1f), so at least
+     * three slots draw glyphs. */
+    assert(r.label_slots_drawn == 3);
+    /* Scan for at least one fg pixel inside the panel rect. */
+    int found_fg = 0;
+    for (int y = 77; y <= 121 && !found_fg; ++y)
+        for (int x = 232; x <= 318 && !found_fg; ++x)
+            if (g_fb[y * FB_W + x] == 4) found_fg = 1;
+    assert(found_fg);
+}
+
+static void test_default_glyph_draw_skips_japanese(void) {
+    static const uint8_t rec[8] = {0, 1, 20, 33, 0, 0, 0, 0};
+    uint8_t raster[768] = {0};
+    raster[2 * 128 + 'A'] = 0x1f;
+    dm1_v1_fmtowns_menu_render_config_t c = {0};
+    dm1_v1_fmtowns_menu_render_result_t r;
+    memset(g_fb, 0, sizeof(g_fb));
+    c.language = DM1_V1_FMTOWNS_MENU_LANG_JA;
+    c.dynamenu_record = rec;
+    c.menu_font_raster = raster;
+    c.glyph_draw = dm1_v1_fmtowns_menu_default_glyph_draw_pc34;
+    c.glyph_draw_user = raster;
+    assert(dm1_v1_fmtowns_menu_render_pc34(g_fb, FB_W, FB_H, FB_W, &c, &r) == 1);
+    /* Japanese labels visited but not drawn (font asset is ASCII-only). */
+    assert(r.label_slots_visited == 3);
+    assert(r.label_slots_drawn == 0);
+}
+
 static void test_no_glyph_draw_still_fills_panel(void) {
     /* Rendering without a glyph_draw callback still paints the panel
      * background — it just doesn't render labels. This mirrors the
@@ -193,6 +245,8 @@ int main(void) {
     test_label_walk_japanese();
     test_disabled_slot_skips_draw();
     test_no_glyph_draw_still_fills_panel();
+    test_default_glyph_draw_renders_english_labels();
+    test_default_glyph_draw_skips_japanese();
     printf("All dm1_v1_fmtowns_menu_render tests passed.\n");
     return 0;
 }
