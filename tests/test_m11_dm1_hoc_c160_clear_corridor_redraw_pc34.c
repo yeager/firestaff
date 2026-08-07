@@ -154,8 +154,6 @@ static int find_mirror_pose(const M11_GameViewState *state, HocPosePc34 *out)
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char *home;
-    char defaultDataDir[1024];
     M11_GameViewState state;
     HocPosePc34 text, clearCorridor, mirror;
     M11_Dm1InscriptionHostPresentationReceipt primary;
@@ -167,15 +165,14 @@ int main(void)
     int candidateIndex;
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) return 0;
-        snprintf(defaultDataDir, sizeof(defaultDataDir), "%s/.firestaff/data/dm1", home);
-        dataDir = defaultDataDir;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir)) {
         M11_GameView_Shutdown(&state);
-        return getenv("FIRESTAFF_DM1_DATA_DIR") ? 1 : 0;
+        fputs("configured PC34 corpus could not start\n", stderr);
+        return 1;
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.championCount = 0;
