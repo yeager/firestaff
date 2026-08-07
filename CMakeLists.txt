@@ -5030,6 +5030,11 @@ list(REMOVE_ITEM M10_SOURCES
 # retain the ReDMCSB D2C door-frame evidence.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_door_frame_top_edge_pc34_compat.c")
+# The D3C/D2 floor-ornament model is an explicitly contract-only, asset-free
+# F0108 occlusion trace. It has no runtime caller and its direct contract
+# test retains the ReDMCSB DUNVIEW evidence.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_d2_f0108_floor_ornament_occlusion_pc34_compat.c")
 # dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c is an explicitly
 # contract-only, no-game-data F0111 trace model with no production caller.
 # Its direct regression target retains the D0L2/D0R2 source lock.
