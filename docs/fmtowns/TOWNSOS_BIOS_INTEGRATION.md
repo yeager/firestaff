@@ -175,11 +175,42 @@ ANK path, SJIS path with planted glyph bytes, out-of-range trail,
 buffer-too-small, unload, and end-to-end dispatch through
 `fmtowns_bios_host_fetch_sjis_glyph_pc34()`.
 
-A Tsugaru `extern "C"` bridge is still open for the remaining
-three slots (call_tbios / call_timing / call_hardware_init) and
-I/O ports, but the JDM text-render surface — the specific gap the
-Japanese release depends on — is now closable with a ROM dump and
-one `bind` call at startup.
+## Tsugaru bridge contract (implemented 2026-08-07)
+
+`include/fmtowns_tsugaru_bridge.h` + `src/shared/fmtowns_tsugaru_bridge.c`
+define the optional-adapter path for the remaining slots. The bridge
+is a pure-C ABI that a separately built Tsugaru wrapper populates:
+
+- `fmtowns_tsugaru_bridge_vtable_v1_t`: init + shutdown + one entry
+  per canonical slot + I/O port r/w. Required entries: `init`,
+  `shutdown`, `call_tbios`. Optional (dispatcher returns UNSUPPORTED
+  if NULL): `call_secondary`, `call_timing`, `call_hardware_init`,
+  `io_port_read_u8`, `io_port_write_u8`.
+- `fmtowns_tsugaru_bridge_register_pc34(vt, bios_rom_path)` copies the
+  vtable, runs `init(bios_rom_path)`, and — on success — exposes a
+  `fmtowns_bios_host_t*` via `fmtowns_tsugaru_bridge_host_pc34()`
+  that the caller binds through `fmtowns_bios_host_bind_pc34()`.
+  Init failure rolls back cleanly; shutdown is NOT called for a
+  failed init.
+- The bridge deliberately leaves `tbios_fetch_sjis_glyph = NULL`.
+  That surface is served by the Option-B shim (font-ROM table
+  lookup); a full-emulator Tsugaru call is overkill for a single
+  glyph fetch, and calling both means the shim wins.
+- Version discipline: the vtable symbol is version-suffixed
+  (`fmtowns_tsugaru_bridge_vtable_v1`). Any ABI break bumps the
+  suffix so old bridges refuse to bind rather than mismatch silently.
+
+Tests cover NULL vtable, missing required entry, init-failure
+rollback, successful registration with a partial vtable (UNSUPPORTED
+for NULL entries), bound dispatch through the global host, re-register
+(triggers shutdown of the prior binding), and double-unregister.
+
+The bridge itself is expected to live in a separate
+`libfirestaff_tsugaru_bridge.{dylib,so,dll}` built from Tsugaru with
+an `extern "C"` shim. Users who never build the bridge get:
+
+  * JDM text render: works via Option-B shim
+  * Every other BIOS entry: UNBOUND (fail-closed, no fabrication)
 
 ## References
 
