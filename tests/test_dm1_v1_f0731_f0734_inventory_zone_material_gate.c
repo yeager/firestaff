@@ -41,12 +41,9 @@ static void fill_box(void* context, int left, int right, int top, int bottom,
 static int load_graphics(M11_AssetLoader* loader, char* path, size_t pathSize)
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home = getenv("HOME");
 
-    if (root && root[0]) snprintf(path, pathSize, "%s/GRAPHICS.DAT", root);
-    else if (home && home[0]) {
-        snprintf(path, pathSize, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    } else return 0;
+    if (!root || !root[0]) return 0;
+    snprintf(path, pathSize, "%s/GRAPHICS.DAT", root);
     return M11_AssetLoader_Init(loader, path);
 }
 
@@ -79,8 +76,11 @@ int main(void)
 
     memset(&loader, 0, sizeof(loader));
     if (!load_graphics(&loader, path, sizeof(path))) {
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) return 1;
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
+        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
+            fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+            return 1;
+        }
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
     }
     spell = M11_AssetLoader_Load(&loader, 9);
