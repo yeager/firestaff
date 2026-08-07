@@ -472,8 +472,8 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                 ++direct_roots->malformed;
             }
         }
-        CHECK(direct_root_result == 1 || direct_root_result == 2,
-              "real SKSave direct roots decode or stop at an unavailable source AI owner");
+        CHECK(direct_root_result == 1,
+              "real SKSave direct roots decode through source-owned AI rows");
     }
     CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
           "real SKSave cannot publish a partial GAME_LOAD runtime state");
@@ -589,9 +589,15 @@ int main(void)
           "real CREATURES rows bind the original v1d296c AI table before SKSave decode");
     CHECK(type54_absent && type127_absent,
           "mounted PC-DOS GRAPHICS.DAT omits row 5 for types 54 and 127");
-    CHECK(dm2_v1_creature_ai_spec(54) == NULL &&
-              dm2_v1_creature_ai_spec(127) == NULL,
-          "types 54 and 127 remain unavailable without a source-owned AI row");
+    {
+        uint16_t type54_row = 0xffffu;
+        uint16_t type127_row = 0xffffu;
+        CHECK(dm2_v1_creature_ai_row(54, &type54_row) && type54_row == 0u &&
+                  dm2_v1_creature_ai_row(127, &type127_row) &&
+                  type127_row == 0u && dm2_v1_creature_ai_spec(54) != NULL &&
+                  dm2_v1_creature_ai_spec(127) != NULL,
+              "missing AI word uses SKProject's source row-zero result");
+    }
 
     memset(&corpus, 0, sizeof(corpus));
     CHECK(dm2_v1_sksave_corpus_scan(root, &corpus),
@@ -618,10 +624,10 @@ int main(void)
     }
     CHECK(found == 8u,
           "the supplied PC-DOS corpus retains all four primary/backup saves");
-    CHECK(direct_roots.decoded == 5u &&
-              direct_roots.blocked_missing_ai_mapping == 3u &&
+    CHECK(direct_roots.decoded == 8u &&
+              direct_roots.blocked_missing_ai_mapping == 0u &&
               direct_roots.malformed == 0u,
-          "five real direct-root streams decode and three stop at absent source AI owners");
+          "all real direct-root streams use their source-owned AI rows");
     CHECK(direct_roots.resurrection_timers == 0u &&
               direct_roots.files_with_resurrection_timers == 0u,
           "the supplied PC-DOS SKSave corpus has no source type-0x0D resurrection timers");

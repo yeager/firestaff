@@ -29765,6 +29765,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `READ_SKSAVE_DUNGEON` owner source geometry without reconstructing a map
   from DUNGEON.DAT or inventing tile/object links. Complete record-graph,
   possession, timer and runtime-session admission remain open.
+  **2026-08-13 AI-row correction:** `QUERY_GDAT_ENTRY_DATA_INDEX` returns
+  zero for a missing `dtWordValue`; `QUERY_CREATURE_AI_SPEC_FROM_TYPE` uses
+  that value as the real `table1d296c` index. The mounted PC-DOS corpus omits
+  CREATURES word `0x05` for types 54 and 127, so both now use authenticated
+  source row zero. All eight supplied direct-root streams decode; this only
+  removes an incorrect corpus blocker and does not admit CCM or Continue.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

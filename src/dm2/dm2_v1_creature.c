@@ -339,13 +339,22 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_CREATURES, creature_type, 0x05,
                 &ai_row)) {
-            /* SKProject c_record.cpp:1351-1354 consumes the CREATURES
-             * word@0x05 as the first leg of the live owner chain.  The
-             * mounted PC-DOS profile has no such field for types 54 and 127;
-             * keep those records unavailable until their original owner is
-             * imported.  A scalar-zero query default is not an ownership
-             * proof and must not revive creature/CCM behavior. */
-            continue;
+            /* This is an original query result, not a host fallback.
+             * SKProject SKWINSPX/src/v4/skcore.cpp:7856-7875 returns zero
+             * for a missing dtWordValue entry, and skcrture.cpp:28-36 uses
+             * that result directly as the dAITable/table1d296c index.  The
+             * retail PC-DOS GRAPHICS.DAT omits field 0x05 for creature
+             * types 54 and 127, so both select the authenticated row zero.
+             * The source table was installed by reset_ai_table() above;
+             * do not replace it with a synthetic record or use this fact to
+             * admit the separately unowned CCM stream. A callback fixture
+             * has no parsed GDAT container/version and therefore cannot
+             * claim this missing-entry semantics for arbitrary rows. */
+            if (loader->gdat_version != 2u && loader->gdat_version != 4u &&
+                loader->gdat_version != 5u) {
+                continue;
+            }
+            ai_row = 0u;
         }
         if (ai_row >= DM2_V1_SOURCE_AI_TABLE_SIZE) {
             continue;

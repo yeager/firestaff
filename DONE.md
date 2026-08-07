@@ -59486,6 +59486,16 @@ unreadable selected `graphics.dat`; the old private `HOME` fallback is gone.
 The SDL dummy-device regression still decodes and plays original GDAT PCM
 entries through the source-backed sound backend.
 
+# DM2 SKSAVE missing creature-AI word semantics (2026-08-13)
+
+- ✅ Corrected the real PC-DOS creature AI-row lookup to match
+  `SKWINSPX/src/v4/skcore.cpp:7856-7875` and `skcrture.cpp:28-36`: a missing
+  `dtWordValue` returns zero and selects the original `table1d296c` row zero.
+- ✅ The mounted corpus lacks CREATURES word `0x05` for types 54 and 127;
+  both now retain that source-owned row rather than being fabricated as
+  unavailable. All eight SKSave direct-root streams decode. CCM and partial
+  GAME_LOAD admission remain fail-closed.
+
 # DM2 SKSAVE source map spans (2026-08-13)
 
 - ✅ Extended the raw SKSAVE dungeon receipt with source-authored per-map
