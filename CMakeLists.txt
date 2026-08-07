@@ -4985,6 +4985,11 @@ list(REMOVE_ITEM M10_SOURCES
 # compiles it directly; production inventory handling does not call it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_occupied_slot_swap_pc34_compat.c")
+# `dm1_v1_f0693_f0699_video_material_pc34_compat.c` is a standalone
+# provenance gate with no production caller. Its dedicated material tests
+# retain the real-raster and VBlank admission contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0693_f0699_video_material_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
@@ -56179,7 +56184,9 @@ target_include_directories(test_dm1_v1_dungeon_stairs_pc34_compat PRIVATE ${CMAK
 target_link_libraries(test_dm1_v1_dungeon_stairs_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_dungeon_stairs_pc34_compat COMMAND test_dm1_v1_dungeon_stairs_pc34_compat)
 
-add_executable(test_dm1_v1_f0693_f0699_video_material_pc34_compat tests/test_dm1_v1_f0693_f0699_video_material_pc34_compat.c)
+add_executable(test_dm1_v1_f0693_f0699_video_material_pc34_compat
+    tests/test_dm1_v1_f0693_f0699_video_material_pc34_compat.c
+    src/dm1/dm1_v1_f0693_f0699_video_material_pc34_compat.c)
 target_include_directories(test_dm1_v1_f0693_f0699_video_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_f0693_f0699_video_material_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_f0693_f0699_video_material_pc34_compat COMMAND test_dm1_v1_f0693_f0699_video_material_pc34_compat)
