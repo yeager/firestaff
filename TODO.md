@@ -29879,3 +29879,8 @@ required before semantic promotion.
   authenticated DM.BIN/TM.BIN source span. Keep VDP1/VDP2 composition and
   production draw admission blocked until that identity and command/CLUT
   contract are proven.
+- 2026-08-07: The authentic high-RAM load trace shows 3,080 writes into the
+  `0x06013000..0x06013fff` code corridor from runtime loader PC `0x2368`.
+  This is a BIOS/runtime-loader receipt only; the trace does not yet expose
+  the CD source read or identify the retail member that supplied the bytes.
+  Keep the VDP1 source join and production composition blocked.

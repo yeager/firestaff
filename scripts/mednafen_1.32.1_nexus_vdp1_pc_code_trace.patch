@@ -1,30 +1,18 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -120,5 +120,6 @@
- MDFN_HIDE extern SH7095 CPU[2];	// for smpc.cpp
- uint32 FirestaffGetSH2PC(unsigned which);
+@@ -123,0 +123,1 @@
 + uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
- MDFN_HIDE extern int32 SH7095_mem_timestamp;
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -464,5 +464,11 @@
- uint32 FirestaffGetSH2PC(unsigned which)
- {
-  return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
-+}
-+
+@@ -468,0 +468,5 @@
 +uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
 +{
 + (void)which;
 + return ne16_rbo_be<uint16>(SH7095_FastMap[address >> SH7095_EXT_MAP_GRAN_BITS], address);
- }
- //
++}
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1248,4 +1248,29 @@
- static unsigned FirestaffVramWriteTraceLimit = 100000;
- static unsigned FirestaffVramWriteTraceCount;
- static bool FirestaffVramWriteTraceConfigured;
+@@ -1251,0 +1251,25 @@
 +static FILE *FirestaffVramCodeTraceFile;
 +static bool FirestaffVramCodeTraceWritten;
 +
@@ -38,7 +26,7 @@
 + {
 +  FirestaffVramCodeTraceFile = fopen(path, "wb");
 +  if(!FirestaffVramCodeTraceFile) return;
-+  fputs("FIRESTAFF_NEXUS_VDP1_WRITER_CODE_TRACE_V1\n", FirestaffVramCodeTraceFile);
++  fputs("FIRESTAFF_NEXUS_VDP1_WRITER_CODE_TRACE_V1\\n", FirestaffVramCodeTraceFile);
 + }
 + fprintf(FirestaffVramCodeTraceFile, "pc=0x%08x vram_addr=0x%05x code_start=0x%08x words=%u code=",
 +  (unsigned)pc, (unsigned)address, (unsigned)(pc - 0x40), 48U);
@@ -46,14 +34,9 @@
 +  fprintf(FirestaffVramCodeTraceFile, "%04x%s",
 +   (unsigned)FirestaffPeekSH2Memory(0, pc - 0x40 + offset * 2U),
 +   offset + 1U == 48U ? "" : ",");
-+ fputc('\n', FirestaffVramCodeTraceFile);
++ fputc('\\n', FirestaffVramCodeTraceFile);
 + fflush(FirestaffVramCodeTraceFile);
 + FirestaffVramCodeTraceWritten = true;
 +}
- static void FirestaffTraceVramWrite(uint32 address, unsigned size, uint16 value)
-@@ -1282,6 +1307,7 @@
-  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
-  FirestaffVramWriteTraceCount++;
-  if((FirestaffVramWriteTraceCount & 0x3ffU) == 0) fflush(FirestaffVramWriteTraceFile);
-+ FirestaffTraceVramWriterCode(address);
- }
++@@ -1285,0 +1285,1 @@
+++ FirestaffTraceVramWriterCode(address);

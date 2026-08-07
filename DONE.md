@@ -58723,7 +58723,7 @@ owner transaction remains unbound.
   branch at `0x06013098` to `0x06012f52`.
 - ✅ Kept source-file identity, VDP1 command/CLUT ownership and production
   rendering blocked: the relocated code window is runtime evidence, not yet
- a byte-for-byte DM.BIN/TM.BIN join.
+  a byte-for-byte DM.BIN/TM.BIN join.
 # DM2 source actuator-type query handoff (2026-08-13)
 
 Replaced the querydb actuator-type stub with a bounded, read-only source-layout
@@ -58731,3 +58731,10 @@ query. It admits only DB3 records, reads `w2` with the original low-seven-bit
 `ActuatorType()` mask, rejects ObjectID sentinels/missing records, and adds
 focused coverage for source-shaped records. Activation, DB14 and timer
 transactions remain fail-closed.
+# Nexus relocated-code loader receipt (2026-08-07)
+
+- ✅ Added a bounded Mednafen SH-2 high-RAM write producer and validator.
+- ✅ Verified 3,080 authentic writes into `0x06013000..0x06013fff` from the
+  runtime loader PC `0x00002368` in the European startup window.
+- ✅ Kept the retail source member unbound: BIOS/runtime-loader ownership does
+  not prove DM.BIN, TM.BIN, a video asset, or any VDP1/VDP2 consumer contract.
