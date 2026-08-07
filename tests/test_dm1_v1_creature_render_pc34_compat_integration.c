@@ -321,7 +321,7 @@ static void test_m11_query_surface(void) {
 
     ASSERT_EQ(dm1_creature_sprite_for_depth(0, 0), 584,
               "query depth scorpion native front");
-    ASSERT_EQ(dm1_creature_sprite_for_depth(0, 1), 496,
+    ASSERT_EQ(dm1_creature_sprite_for_depth(0, 1), 763,
               "query depth scorpion derived D2 front");
     ASSERT_EQ(dm1_creature_sprite_for_view(3, 0, 0, 0, 0, &mirror), 594,
               "query view WizardEye back keeps M11 native offset");

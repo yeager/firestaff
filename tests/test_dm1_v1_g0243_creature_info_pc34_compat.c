@@ -68,11 +68,36 @@ static void test_lord_order_grey_lord_no_graphics(void) {
         "C26 Grey Lord: graphicInfo=0 (no bitmaps)");
 }
 
+static void test_derived_bitmap_indices(void) {
+    const DM1_CreatureAspect* aspects = dm1_creature_aspects();
+    int i;
+    int idx;
+    if (!aspects) return;
+    CHECK(aspects[0].firstDerivedBitmapIndex == 762,
+        "C00: firstDerivedBitmapIndex == M539 (762)");
+    idx = 762;
+    for (i = 0; i < 27; i++) {
+        char msg[128];
+        unsigned gi = (unsigned)aspects[i].graphicInfo;
+        int count = 2;
+        if (gi & 0x0008) count += 2;
+        if (gi & 0x0010) count += 2;
+        if (gi & 0x0020) count += 2;
+        snprintf(msg, sizeof(msg),
+            "C%02d: firstDerivedBitmapIndex %d == computed %d",
+            i, (int)aspects[i].firstDerivedBitmapIndex, idx);
+        CHECK(aspects[i].firstDerivedBitmapIndex == idx, msg);
+        idx += count;
+    }
+    CHECK(idx == 934, "total derived range 762..933 = 172 entries");
+}
+
 int main(void) {
     test_aspect_graphicInfo();
     test_graphicInfo_f0179_bits();
     test_screamer_immobile_aspect();
     test_lord_order_grey_lord_no_graphics();
+    test_derived_bitmap_indices();
     printf("test_dm1_v1_g0243_creature_info: %d passed, %d failed\n",
            g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

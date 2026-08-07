@@ -66,35 +66,39 @@
  * itself (G0219) provides byteDimensions (widthFront/heightFront etc)
  * that are not needed for sprite index selection but would be needed
  * for the derived bitmap cache sizing; we omit them here.
+ *
+ * firstDerivedBitmapIndex: computed at startup by STARTUP2.C from
+ * M539_DERIVED_BITMAP_FIRST_CREATURE (762 for I34E/MEDIA721) plus
+ * accumulated per-creature counts: 2 + 2*SIDE + 2*BACK + 2*ATTACK.
  * ═══════════════════════════════════════════════════════════════════════ */
 static const DM1_CreatureAspect s_aspects[27] = {
-    /*  0: Giant Scorpion  */  {  0, 495, 0x1D, 0x01, 0x623D },
-    /*  1: Swamp Slime     */  {  4, 507, 0x0B, 0x20, 0xA625 },
-    /*  2: Giggler          */  {  6, 519, 0x0B, 0x00, 0x6198 },
-    /*  3: Wizard Eye       */  { 10, 531, 0x24, 0x31, 0xB225 },
-    /*  4: Pain Rat         */  { 12, 543, 0x14, 0x34, 0xA3B8 },
-    /*  5: Ruster           */  { 16, 555, 0x18, 0x34, 0x539D },
-    /*  6: Screamer         */  { 19, 567, 0x0D, 0x00, 0x0020 },
-    /*  7: Rockpile         */  { 21, 579, 0x04, 0x00, 0x0220 },
-    /*  8: Ghost            */  { 23, 591, 0x04, 0x00, 0x5225 },
-    /*  9: Stone Golem      */  { 25, 603, 0x14, 0x00, 0x71B8 },
-    /* 10: Mummy            */  { 29, 615, 0x04, 0x00, 0x11B8 },
-    /* 11: Black Flame      */  { 33, 627, 0x14, 0x00, 0x0225 },
-    /* 12: Skeleton         */  { 35, 639, 0x04, 0x00, 0x6038 },
-    /* 13: Couatl           */  { 39, 651, 0x1D, 0x20, 0xB23D },
-    /* 14: Vexirk           */  { 43, 663, 0x04, 0x30, 0x1638 },
-    /* 15: Magenta Worm     */  { 47, 675, 0x14, 0x78, 0x523D },
-    /* 16: Trolin           */  { 51, 687, 0x04, 0x65, 0xA038 },
-    /* 17: Giant Wasp       */  { 55, 699, 0x24, 0x00, 0xF23D },
-    /* 18: Animated Armour  */  { 59, 711, 0x04, 0x00, 0xA3BD },
-    /* 19: Materializer     */  { 63, 723, 0x0D, 0xA9, 0xE23D },
-    /* 20: Water Elemental  */  { 67, 735, 0x14, 0x65, 0x0225 },
-    /* 21: Oitu             */  { 69, 747, 0x14, 0xA9, 0xA3BD },
-    /* 22: Demon            */  { 73, 759, 0x04, 0xCB, 0x53BD },
-    /* 23: Lord Chaos       */  { 77, 771, 0x14, 0x00, 0x0038 },
-    /* 24: Red Dragon       */  { 81, 783, 0x14, 0xCB, 0x97BD },
-    /* 25: Lord Order       */  { 85, 795, 0x14, 0xCB, 0x0000 },
-    /* 26: Grey Lord        */  { 86, 807, 0x14, 0xCB, 0x0000 }
+    /*  0: Giant Scorpion  */  {  0, 762, 0x1D, 0x01, 0x623D },
+    /*  1: Swamp Slime     */  {  4, 770, 0x0B, 0x20, 0xA625 },
+    /*  2: Giggler          */  {  6, 774, 0x0B, 0x00, 0x6198 },
+    /*  3: Wizard Eye       */  { 10, 780, 0x24, 0x31, 0xB225 },
+    /*  4: Pain Rat         */  { 12, 784, 0x14, 0x34, 0xA3B8 },
+    /*  5: Ruster           */  { 16, 792, 0x18, 0x34, 0x539D },
+    /*  6: Screamer         */  { 19, 798, 0x0D, 0x00, 0x0020 },
+    /*  7: Rockpile         */  { 21, 802, 0x04, 0x00, 0x0220 },
+    /*  8: Ghost            */  { 23, 806, 0x04, 0x00, 0x5225 },
+    /*  9: Stone Golem      */  { 25, 810, 0x14, 0x00, 0x71B8 },
+    /* 10: Mummy            */  { 29, 818, 0x04, 0x00, 0x11B8 },
+    /* 11: Black Flame      */  { 33, 826, 0x14, 0x00, 0x0225 },
+    /* 12: Skeleton         */  { 35, 830, 0x04, 0x00, 0x6038 },
+    /* 13: Couatl           */  { 39, 838, 0x1D, 0x20, 0xB23D },
+    /* 14: Vexirk           */  { 43, 846, 0x04, 0x30, 0x1638 },
+    /* 15: Magenta Worm     */  { 47, 854, 0x14, 0x78, 0x523D },
+    /* 16: Trolin           */  { 51, 862, 0x04, 0x65, 0xA038 },
+    /* 17: Giant Wasp       */  { 55, 870, 0x24, 0x00, 0xF23D },
+    /* 18: Animated Armour  */  { 59, 878, 0x04, 0x00, 0xA3BD },
+    /* 19: Materializer     */  { 63, 886, 0x0D, 0xA9, 0xE23D },
+    /* 20: Water Elemental  */  { 67, 894, 0x14, 0x65, 0x0225 },
+    /* 21: Oitu             */  { 69, 898, 0x14, 0xA9, 0xA3BD },
+    /* 22: Demon            */  { 73, 906, 0x04, 0xCB, 0x53BD },
+    /* 23: Lord Chaos       */  { 77, 914, 0x14, 0x00, 0x0038 },
+    /* 24: Red Dragon       */  { 81, 922, 0x14, 0xCB, 0x97BD },
+    /* 25: Lord Order       */  { 85, 930, 0x14, 0xCB, 0x0000 },
+    /* 26: Grey Lord        */  { 86, 932, 0x14, 0xCB, 0x0000 }
 };
 
 /* ReDMCSB DUNVIEW.C line 1821 (I34E):
@@ -158,11 +162,9 @@ static int dm1_creature_native_bitmap_count_from_gi(unsigned int gi) {
 
 static int dm1_creature_derived_bitmap_count_from_gi(unsigned int gi) {
     int count = 2;
-    int additional = (int)(gi & DM1_GI_MASK_ADDITIONAL);
     if (gi & DM1_GI_MASK_SIDE) count += 2;
     if (gi & DM1_GI_MASK_BACK) count += 2;
     if (gi & DM1_GI_MASK_ATTACK) count += 2;
-    count += additional * 3;
     return count;
 }
 
