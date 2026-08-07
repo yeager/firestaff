@@ -6,10 +6,10 @@
  * without matching EDM.EXP evidence. */
 static const char *const k_dm1_fmtowns_dyna_button_labels_pc34[
         DM1_V1_FMTOWNS_DYNA_BUTTONS_COUNT] = {
-    /*  0 */ "N",           /* placeholder / empty-slot glyph      */
+    /*  0 */ "N",           /* source empty-slot control glyph     */
     /*  1 */ "BLOCK",
     /*  2 */ "CHOP",
-    /*  3 */ "X",           /* placeholder / disabled-slot glyph   */
+    /*  3 */ "X",           /* source disabled-slot control glyph  */
     /*  4 */ "BLOW HORN",
     /*  5 */ "FLIP",
     /*  6 */ "PUNCH",
