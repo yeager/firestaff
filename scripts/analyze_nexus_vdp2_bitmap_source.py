@@ -3,8 +3,9 @@
 
 The VDP2 register receipt identifies the active bitmap geometry, while this
 tool performs only bounded byte-domain joins against authenticated retail
-`MENU.BPK` PRS3 output and `FONT256.S2D` character-generator bytes. A partial
-or absent match is evidence, never permission to render or assign ownership.
+`MENU.BPK` PRS3 output, `FONT256.S2D` character-generator bytes, and the five
+DMWeb TITLE.BIN MAPD/TIBG maps expanded through TITLE.CG. A partial or absent
+match is evidence, never permission to render or assign ownership.
 """
 
 from __future__ import annotations
@@ -19,6 +20,8 @@ from analyze_nexus_saturn_runtime_capture import frame_regions
 ASSET_HASHES = {
     "MENU.BPK": "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
     "FONT256.S2D": "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb",
+    "TITLE.BIN": "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44",
+    "TITLE.CG": "fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580",
 }
 
 
@@ -100,6 +103,37 @@ def font_tiles(data: bytes) -> list[tuple[str, bytes]]:
             for i in range(len(payload) // 64)]
 
 
+def title_maps(title_bin: bytes, title_cg: bytes) -> tuple[list[tuple[str, bytes]], bytes]:
+    record = title_bin[0xE278:]
+    if len(record) < 0x8C74 or record[:4] != b"MAPD" or record[8:12] != b"TIBG":
+        raise ValueError("TITLE.BIN MAPD/TIBG record missing")
+    if len(title_cg) % 32 != 0:
+        raise ValueError("TITLE.CG tile payload is not 4bpp aligned")
+    maps: list[tuple[str, bytes]] = []
+    for map_index in range(5):
+        base = 0x40 + map_index * 0x1C04
+        if int.from_bytes(record[base:base + 2], "big") != 0x40:
+            raise ValueError("TITLE.BIN map width is not 64 cells")
+        if int.from_bytes(record[base + 2:base + 4], "big") != 0x1C:
+            raise ValueError("TITLE.BIN map height is not 28 cells")
+        pixels = bytearray(512 * 224)
+        for cell in range(64 * 28):
+            cell_offset = base + 4 + cell * 4
+            tile = (int.from_bytes(record[cell_offset + 2:cell_offset + 4], "big") & 0x7FFF) - 4608
+            tile_offset = tile * 32
+            if tile < 0 or tile_offset + 32 > len(title_cg):
+                raise ValueError(f"TITLE.CG tile {tile} outside corpus")
+            for y in range(8):
+                for x in range(4):
+                    packed = title_cg[tile_offset + y * 4 + x]
+                    pixel = (cell // 64 * 8 + y) * 512 + cell % 64 * 8 + x * 2
+                    pixels[pixel] = packed >> 4
+                    pixels[pixel + 1] = packed & 0x0F
+        maps.append((f"TITLE.BIN[map={map_index}]", bytes(pixels)))
+    palette_offset = 0x40 + 5 * 0x1C04
+    return maps, record[palette_offset:palette_offset + 32]
+
+
 def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
     best = (0, 0, 0)
     if len(source) < 32:
@@ -134,7 +168,10 @@ def main() -> int:
         frames, _ = frame_regions(args.capture.read_bytes(), args.frame + 1)
         menu = read_asset(args.data_dir, "MENU.BPK")
         font = read_asset(args.data_dir, "FONT256.S2D")
-        sources = menu_surfaces(menu) + font_tiles(font)
+        title_bin = read_asset(args.data_dir, "TITLE.BIN")
+        title_cg = read_asset(args.data_dir, "TITLE.CG")
+        title, title_palette = title_maps(title_bin, title_cg)
+        sources = menu_surfaces(menu) + font_tiles(font) + title
     except (OSError, ValueError) as error:
         print(f"NEXUS_VDP2_BITMAP_SOURCE_INVALID: {error}")
         return 1
@@ -172,6 +209,11 @@ def main() -> int:
             ranked.append((run, name, source_offset, target_offset))
     for run, name, source_offset, target_offset in sorted(ranked, reverse=True)[:8]:
         print(f"partial_match={name} bytes={run} source_offset=0x{source_offset:x} bitmap_offset=0x{target_offset:x}")
+    cram = frame["vdp2-cram"]
+    palette_swap = b"".join(title_palette[offset:offset + 2][::-1]
+                             for offset in range(0, len(title_palette), 2))
+    print(f"title_palette_cram_match={cram.find(title_palette)}")
+    print(f"title_palette_cram_word_swap_match={cram.find(palette_swap)}")
     print(f"decoded_sources={len(sources)}")
     print(f"exact_source_matches={exact}")
     print("source_join=verified" if exact else "source_join=unbound")

@@ -136,11 +136,13 @@ text/menu/HUD meaning remain blocked.
 
 `scripts/analyze_nexus_vdp2_bitmap_source.py` binds that geometry to the
 hash-verified local corpus and compares the 131072-byte NBG1 span against 162
-decoded `MENU.BPK` PRS3 surfaces and 242 real `FONT256.S2D` character-generator
-tiles. The one-frame and frame-7 eight-frame samples both produce zero
-non-zero exact matches. This is a bounded negative MENU/FONT join for the
-captured gameplay/intro state; it does not identify the still-unchecked title,
-STABG, dungeon bitmap or CLUT source.
+decoded `MENU.BPK` PRS3 surfaces, 242 real `FONT256.S2D` character-generator
+tiles, and five authentic `TITLE.BIN` MAPD/TIBG maps expanded through
+`TITLE.CG`. The one-frame and frame-7 eight-frame samples both produce zero
+non-zero exact matches; the title palette also has no exact byte or word-swapped
+position in captured VDP2 CRAM. This is bounded negative evidence for the
+captured gameplay/intro state, not proof of another source owner. STABG, dungeon
+bitmap and CLUT joins remain open.
 
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed

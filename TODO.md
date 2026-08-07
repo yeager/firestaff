@@ -19,10 +19,11 @@
 - **NEXUS-VDP2-BITMAP-SOURCE-JOIN:** The bounded real-data comparator now
   derives the active 131072-byte NBG1 bitmap span at VRAM `0x000000` and
   compares it with 162 decoded retail MENU.BPK PRS3 surfaces plus 242
-  authenticated FONT256 character-generator tiles. The one-frame and
-  frame-7 eight-frame captures have zero non-zero exact matches. Keep the
-  result negative and continue with title/STABG/dungeon bitmap and CLUT
-  producer joins; do not promote a guessed source.
+  authenticated FONT256 character-generator tiles and five DMWeb
+  TITLE.BIN/TITLE.CG MAPD/TIBG maps. The one-frame and frame-7 eight-frame
+  captures have zero non-zero exact matches, and the title palette has no exact
+  byte or word-swapped CRAM match. Keep the result negative and continue with
+  STABG/dungeon bitmap and CLUT producer joins; do not promote a guessed source.
 
 - **NEXUS-SCSP-READ-CORRIDOR:** The external European gameplay producer now
   supports bounded sound-CPU SCSP-read tracing with optional 68K-PC filtering.

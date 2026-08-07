@@ -30,6 +30,17 @@
   non-zero exact matches. The result remains source-unbound and no-draw;
   title/STABG/dungeon bitmap and CLUT joins remain open.
 
+# Nexus title bitmap/CRAM negative join (2026-08-07)
+
+- ✅ Extended the authentic NBG1 comparator with hash-verified DMWeb
+  `TITLE.BIN` MAPD/TIBG records, all five 64×28 title maps, and the real
+  `TITLE.CG` 4bpp character generator. The title palette is compared against
+  captured VDP2 CRAM in both byte orders.
+- ✅ The one-frame and frame-7 eight-frame European captures examine 409
+  bounded retail sources, report zero non-zero exact bitmap matches, and report
+  no title-palette CRAM match. This is negative source-join evidence only;
+  STABG/dungeon/CLUT ownership and host composition remain blocked.
+
 # DM2 GDAT source allocator table lifetime (2026-08-07)
 
 - ✅ Extended the bounded `DM2_READ_GRAPHICS_STRUCTURE` transaction with the
