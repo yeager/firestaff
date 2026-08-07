@@ -4934,6 +4934,11 @@ list(REMOVE_ITEM M10_SOURCES
 # Its direct regression target retains the host-output contract.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_runtime_host_m11_bridge_pc34_compat.c")
+# `dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c` is a
+# contract-only source lock with no production caller or game-data path. Its
+# direct test retains the documented ReDMCSB partly-open door audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
