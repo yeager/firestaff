@@ -6263,6 +6263,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_fmtowns_oicon_descriptor.c
     src/shared/fmtowns_shared_tables_all_games.c
     src/csb/csb_v1_fmtowns_dyna_buttons.c
+    src/shared/fmtowns_font_raster_all_games.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56303,6 +56304,13 @@ add_executable(test_csb_v1_fmtowns_dyna_buttons
 )
 target_include_directories(test_csb_v1_fmtowns_dyna_buttons PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_csb_v1_fmtowns_dyna_buttons COMMAND test_csb_v1_fmtowns_dyna_buttons)
+
+add_executable(test_fmtowns_font_raster_all_games
+    tests/test_fmtowns_font_raster_all_games.c
+    src/shared/fmtowns_font_raster_all_games.c
+)
+target_include_directories(test_fmtowns_font_raster_all_games PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_fmtowns_font_raster_all_games COMMAND test_fmtowns_font_raster_all_games)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
