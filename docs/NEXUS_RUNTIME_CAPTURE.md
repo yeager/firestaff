@@ -65,6 +65,15 @@ Mednafen instrumentation is kept in
 `scripts/mednafen_1.32.1_nexus_saturn_vdp1_pc_trace.patch`; it is diagnostic
 only and does not authorize production drawing.
 
+The same producer has an independent SCSP trace patch for the audio lane.
+Against the European gameplay window, the authenticated 68K task observed
+nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at
+`0x1000`; the main SH-2 trace observed `0x06001652 -> 0x100400 = 0x02`.
+`scripts/analyze_nexus_scsp_write_trace.py` verifies the trace envelope and
+driver SHA-256 (`68890ee4…`). This is an authentic runtime handoff corridor,
+but it does not identify the SLEV event selector, MAP row, SAL sample, or
+SCSP voice ABI, so semantic admission and host playback remain blocked.
+
 The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
 explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the
 return pointer and framebuffer selector) before the unchanged raw VRAM/FB

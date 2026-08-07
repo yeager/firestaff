@@ -1,0 +1,84 @@
+--- src/ss/sound.cpp
++++ src/ss/sound.cpp
+@@ -30,0 +31,2 @@
++#include <stdio.h>
++#include <stdlib.h>
+@@ -50,0 +53,72 @@
++static FILE *FirestaffScspTraceFile;
++static uint32 FirestaffScspTraceMin = 0x100000;
++static uint32 FirestaffScspTraceMax = 0x102000;
++static unsigned FirestaffScspTraceCount;
++static unsigned FirestaffScspTraceLimit = 100000;
++static bool FirestaffScspTraceConfigured;
++static FILE *FirestaffMainScspTraceFile;
++static uint32 FirestaffMainScspTraceMin = 0;
++static uint32 FirestaffMainScspTraceMax = 0x200000;
++static unsigned FirestaffMainScspTraceCount;
++static bool FirestaffMainScspTraceConfigured;
++
++static void FirestaffTraceMainScspWrite(uint32 address, unsigned size, uint32 value)
++{
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITES");
++ if(!FirestaffMainScspTraceConfigured)
++ {
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITE_MIN");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITE_MAX");
++  if(min_text && *min_text) FirestaffMainScspTraceMin = strtoul(min_text, NULL, 0);
++  if(max_text && *max_text) FirestaffMainScspTraceMax = strtoul(max_text, NULL, 0);
++  FirestaffMainScspTraceConfigured = true;
++ }
++ if(!path || !*path || address < FirestaffMainScspTraceMin ||
++    address >= FirestaffMainScspTraceMax ||
++    FirestaffMainScspTraceCount >= FirestaffScspTraceLimit)
++  return;
++ if(!FirestaffMainScspTraceFile)
++ {
++  FirestaffMainScspTraceFile = fopen(path, "wb");
++  if(!FirestaffMainScspTraceFile) return;
++  fputs("FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1\n", FirestaffMainScspTraceFile);
++ }
++ fprintf(FirestaffMainScspTraceFile,
++  "addr=0x%08x size=%u value=0x%08x pc0=0x%08x pc1=0x%08x\n",
++  (unsigned)address, size, (unsigned)value,
++  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
++ FirestaffMainScspTraceCount++;
++ if((FirestaffMainScspTraceCount & 0x3ffU) == 0) fflush(FirestaffMainScspTraceFile);
++}
++
++static void FirestaffTraceScspWrite(uint32 address, unsigned size, uint32 value)
++{
++ const char *path;
++ if(!FirestaffScspTraceConfigured)
++ {
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_WRITE_MIN");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_WRITE_MAX");
++  const char *limit = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_WRITE_LIMIT");
++  if(min_text && *min_text) FirestaffScspTraceMin = strtoul(min_text, NULL, 0);
++  if(max_text && *max_text) FirestaffScspTraceMax = strtoul(max_text, NULL, 0);
++  if(limit && *limit) FirestaffScspTraceLimit = strtoul(limit, NULL, 10);
++  FirestaffScspTraceConfigured = true;
++ }
++ if(address < FirestaffScspTraceMin || address >= FirestaffScspTraceMax ||
++    FirestaffScspTraceCount >= FirestaffScspTraceLimit)
++  return;
++ path = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_WRITES");
++ if(!path || !*path) return;
++ if(!FirestaffScspTraceFile)
++ {
++  FirestaffScspTraceFile = fopen(path, "wb");
++  if(!FirestaffScspTraceFile) return;
++  fputs("FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1\n", FirestaffScspTraceFile);
++ }
++ fprintf(FirestaffScspTraceFile,
++  "addr=0x%06x size=%u value=0x%08x pc=0x%08x\n",
++  (unsigned)(address & 0x1fffffU), size, (unsigned)value,
++  (unsigned)SoundCPU.PC);
++ FirestaffScspTraceCount++;
++ if((FirestaffScspTraceCount & 0x3ffU) == 0) fflush(FirestaffScspTraceFile);
++}
+@@ -248,0 +323 @@
++ FirestaffTraceMainScspWrite(A, 1, V);
+@@ -253,0 +329 @@
++ FirestaffTraceMainScspWrite(A, 2, V);
+@@ -520,0 +597 @@
++ FirestaffTraceScspWrite(A, sizeof(T), (uint32)V);

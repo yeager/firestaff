@@ -657,6 +657,16 @@
   Saturn execution trace; keep host playback blocked until those observations
   are joined.
 
+- **NEXUS-SCSP-RUNTIME-PC-TRACE:** An external Mednafen sound trace now records
+  a real European gameplay mailbox write: main SH-2 PC `0x06001652` writes
+  value `0x02` to SCSP address `0x100400`. The 68K sound task then writes the
+  same mailbox family from PCs `0x3224`, `0x3258`, `0x1090`, `0x2824`,
+  `0x16c6`, `0x34aa`, `0x34cc`, `0x108e` and `0x1b2e`; with the authenticated
+  load base `0x1000`, those PCs resolve inside the real `SDDRVS.TSK` hash.
+  This proves a live SCSP/68K handoff corridor, not the SLEV event selector,
+  SAL sample identity or playback ABI. Keep host audio blocked until those
+  joins are captured.
+
 - **NEXUS-SLEV-SH2-STATIC-OWNER:** The 16 hash-authenticated `SLEV##.BIN`
   files now have a reproducible big-endian SH-2 static receipt. They share
   the `0x2fe6` entry word and contain 1,271 `RTS`, 2,220 `JSR`, 5,164

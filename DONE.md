@@ -22,6 +22,13 @@
   `0x06026260`/`0x06026270`; no DGN texture owner was admitted. Production
   menu/HUD/viewport composition remains capture-gated.
 
+# 2026-08-07 Nexus SCSP/68K runtime corridor receipt
+- ✅ Added external SCSP mailbox tracing with main SH-2 and sound-CPU 68K PCs.
+  The real European gameplay run records `0x06001652 -> 0x100400 = 0x02`,
+  followed by nonzero 68K writes from PCs that resolve inside the authenticated
+  `SDDRVS.TSK` image at load base `0x1000`. SLEV/MAP/SAL meaning and host
+  playback remain explicitly blocked.
+
 # DM2 DB-record to GDAT object-name receipt (2026-08-13)
 - ✅ Added `dm2_v1_query_source_item_name_receipt()`, which authenticates the
   complete source chain: validated DB5..DB10 record ownership, SKProject
