@@ -262,6 +262,9 @@ static void test_perform_move_exec_accepted(void)
     assert(exec_receipt.half_step_entered == 1);
     assert(exec_receipt.delayed_pose_unbound == 1);
     assert(exec_receipt.half_step_countdown == 1);
+    assert(exec_receipt.delayed_pose_missing_source_mask ==
+           DM2_V1_DELAYED_POSE_MISSING_ALL);
+    assert(exec_receipt.delayed_pose_proven_source_mask == 0u);
 
     printf("  PASS: perform_move_exec_accepted\n");
 }

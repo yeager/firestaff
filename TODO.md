@@ -29884,6 +29884,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   SKProject global Aura-of-Speed owner; a per-hero compatibility byte can no
   longer fabricate a party-wide speed state. Live c_hero/session binding and
   countdown publication remain open.
+  **2026-08-13 delayed-owner audit:** when the exact half-step gate admits,
+  the execution receipt now exposes six missing live-owner bits (hero load,
+  wounds, walk speed, Aura-of-Speed, current pose and tick/countdown). The
+  proven mask remains zero for caller-supplied compatibility snapshots; no
+  interpolation or viewport offset is enabled.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an

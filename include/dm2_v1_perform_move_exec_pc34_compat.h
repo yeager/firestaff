@@ -55,6 +55,19 @@ typedef enum {
     DM2_MOVE_CLASS_STAIR_DOWN   = 6
 } DM2_V1_MoveClassification;
 
+/* Missing owners from SKProject v4/skgame.cpp:2364-2372 and
+ * v5/skmove.cpp:245-263. These bits describe the delayed-pose boundary;
+ * they never authorize a host interpolation path. */
+enum {
+    DM2_V1_DELAYED_POSE_MISSING_HERO_LOADS = 1u << 0,
+    DM2_V1_DELAYED_POSE_MISSING_HERO_WOUNDS = 1u << 1,
+    DM2_V1_DELAYED_POSE_MISSING_WALK_SPEED = 1u << 2,
+    DM2_V1_DELAYED_POSE_MISSING_AURA_OF_SPEED = 1u << 3,
+    DM2_V1_DELAYED_POSE_MISSING_CURRENT_POSE = 1u << 4,
+    DM2_V1_DELAYED_POSE_MISSING_TICK_OWNER = 1u << 5,
+    DM2_V1_DELAYED_POSE_MISSING_ALL = (1u << 6) - 1u
+};
+
 typedef struct {
     int valid;
     int fail_closed;
@@ -69,6 +82,8 @@ typedef struct {
     int delayed_pose_unbound;
     int half_step_entered;
     int half_step_countdown;
+    uint32_t delayed_pose_missing_source_mask;
+    uint32_t delayed_pose_proven_source_mask;
 
     DM2_V1_MoveClassification classification;
     int creature_handle;

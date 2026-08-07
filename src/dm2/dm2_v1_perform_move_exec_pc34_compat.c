@@ -185,6 +185,12 @@ int dm2_v1_perform_move_exec(
         receipt->delayed_pose_unbound = 1;
         receipt->half_step_entered = 1;
         receipt->half_step_countdown = walk_delay >> 1;
+        receipt->delayed_pose_missing_source_mask =
+            DM2_V1_DELAYED_POSE_MISSING_ALL;
+        /* The execution request is caller-supplied compatibility state, not
+         * an authenticated c_hero/session snapshot. No live owner is proven
+         * merely because the source-shaped gate admitted the branch. */
+        receipt->delayed_pose_proven_source_mask = 0u;
     }
 
     /* Stamina drain: weight-proportional per hero.

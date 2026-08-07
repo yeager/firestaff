@@ -59661,3 +59661,13 @@ companion.
   so a non-identity nibble mapping cannot silently produce the wrong colours.
 - ✅ Verified with the selected FM Towns disc in RAM and the PC-English
   companion; the ordinary PC-DOS M11 startup regression also passes.
+
+# DM2 delayed-movement source-owner audit (2026-08-13)
+
+- ✅ Added an explicit six-bit missing-owner mask to the source half-step
+  receipt: hero load, wounds, walk speed, Aura-of-Speed, current pose, and
+  tick/countdown ownership.
+- ✅ Caller-supplied compatibility snapshots never count as live proof; the
+  receipt remains fail-closed and does not create a host interpolation offset.
+- ✅ `test_dm2_v1_move_record_to_pc34_compat` passes all movement, gate and
+  execution checks.
