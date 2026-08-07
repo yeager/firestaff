@@ -4400,6 +4400,16 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1666_f1685_int1_usio_source_audit_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat.c")
+# These message, USIO, video-switch, and special-handler audit tables have
+# no M10 consumer.  Their direct regressions retain source evidence while
+# production stays limited to data-backed runtime implementations.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_c001_c004_ers_special_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1646_f1665_switch_video_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1706_f1725_source_ownership_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m051_m100_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m251_m300_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m401_m450_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
