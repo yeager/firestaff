@@ -6439,6 +6439,7 @@ set(M11_SOURCES
     src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
     src/dm1/dm1_v1_viewport_source_frame_pc34_compat.c
+    src/dm1/dm1_v1_action_spell_source_frame_m11_lifecycle_pc34_compat.c
     src/dm1/dm1_v1_viewport_plane_material_matrix_pc34_compat.c
     src/dm1/dm1_v1_c14_c15_graphics_catalog_pc34_compat.c
     src/dm1/dm1_v1_f0115_source_material_handoff_pc34_compat.c

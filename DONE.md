@@ -1,3 +1,14 @@
+# DM2 explicit real-data gate (2026-08-07)
+- ✅ The M11 startup corpus gate now fails when any explicit DM2 data-directory
+  environment variable points to an unverified or synthetic root. Only the
+  automatic per-user fallback remains skip-safe when no corpus is installed,
+  preventing a mistyped real-data path from producing a false-green test.
+- ✅ Verified with the mounted PC-DOS corpus, an unset environment, and an
+  explicitly invalid directory. No release was made.
+- ✅ Restored the M11 archive's link ownership for the source-frame lifecycle
+  implementation used by `m11_game_view.c`, so this real-data gate links and
+  builds cleanly after the source audit split.
+
 # DM2 CDDA native-transport gate (2026-08-13)
 - ✅ Restricted coordinate-trigger CD.DAT dispatch to the platform with a
   verified selected original-disc reader: FM Towns. Mega CD and PC-9821 now

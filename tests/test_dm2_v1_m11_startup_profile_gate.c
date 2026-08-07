@@ -1043,6 +1043,23 @@ static const char* dm2_data_dir(char fallback[512]) {
     return fallback;
 }
 
+static int dm2_data_dir_is_explicit(void) {
+    static const char* const names[] = {
+        "FIRESTAFF_DM2_V1_DATA_DIR",
+        "FIRESTAFF_DM2_CANONICAL_DIR",
+        "FIRESTAFF_DM2_DATA_DIR"
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i) {
+        const char* value = getenv(names[i]);
+        if (value && value[0] != '\0') {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* The launcher scanner may be pointed at a DOS install root while the
  * authenticated pair lives in its original DATA/ subdirectory.  Keep this
  * as a real-data-only boundary test: M12 must hand M11 that owning directory,
@@ -1244,6 +1261,13 @@ int main(void) {
     dm2_v1_boot_profile_init(&preflight);
     if (dm2_v1_boot_scan_assets(&preflight, data_dir) != 0 ||
         !preflight.assets_verified) {
+        dm2_v1_boot_cleanup(&preflight);
+        if (dm2_data_dir_is_explicit()) {
+            fprintf(stderr,
+                    "FAIL: explicit DM2 data directory is not a hash-verified V1 corpus: %s\n",
+                    data_dir);
+            return 1;
+        }
         printf("skip: no hash-verified DM2 V1 profile at %s\n", data_dir);
         return g_failures == 0 ? 0 : 1;
     }

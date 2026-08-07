@@ -2834,6 +2834,10 @@ level or consumer bindings.
   record widths from SKProject `SKWIN/DME.h`. This proves the raw records
   remain bounded by the real dungeon prefix, but it does not yet restore the
   source-owned record-link, possession or live-allocation graph.
+  2026-08-07: the M11 real-data gate now treats an explicitly configured but
+  unverified DM2 directory as a hard failure instead of a skip. The automatic
+  per-user fallback remains skip-safe when no user corpus is installed, so a
+  green result cannot conceal a mistyped or synthetic explicit data root.
   2026-08-06: corpus classification and receipted rereads now retain a raw
   SKSave when both its authenticated header and source-owned dungeon prefix
   validate, without routing it through the deliberately fail-closed session
