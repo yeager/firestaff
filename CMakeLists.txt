@@ -4800,6 +4800,11 @@ list(REMOVE_ITEM M10_SOURCES
 # audit target compiles it until a real GRAPHICS.DAT owner is wired.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c")
+# `dm1_v1_f1326_f1345_source_boundaries_pc34_compat.c` is a static FIO1
+# boundary catalog with all routes denied. Its direct audit target already
+# compiles it, and no M11/runtime path calls it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1326_f1345_source_boundaries_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
