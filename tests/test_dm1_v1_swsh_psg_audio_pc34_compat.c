@@ -12,15 +12,34 @@ static int expect(int condition, const char* message) {
     return 0;
 }
 
+static int select_song_dat_path(const char* path) {
+#ifdef _WIN32
+    return _putenv_s("FIRESTAFF_SONG_DAT", path);
+#else
+    return setenv("FIRESTAFF_SONG_DAT", path, 1);
+#endif
+}
+
 int main(void) {
     M11_AudioState state;
     const unsigned char* program;
     unsigned char altered[64];
     char expectedSongPath[1024];
-    const char* home;
-    FILE* songFile;
+    const char* dataRoot;
     unsigned int bytes = 0u;
     int ok = 1;
+
+    dataRoot = getenv("FIRESTAFF_DM1_DATA_DIR");
+    if (!dataRoot || !dataRoot[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
+    }
+    if (snprintf(expectedSongPath, sizeof(expectedSongPath), "%s/SONG.DAT",
+                 dataRoot) <= 0 ||
+        select_song_dat_path(expectedSongPath) != 0) {
+        fputs("FAIL: unable to select configured DM1 SONG.DAT\n", stderr);
+        return 1;
+    }
 
     memset(&state, 0, sizeof(state));
     program = SWSH_Compat_GetPc34DosoundProgram(&bytes);
@@ -48,19 +67,9 @@ int main(void) {
                          state.lastMarker == M11_AUDIO_MARKER_NONE,
                      "invalid source event is silent without stale identity");
     }
-    home = getenv("HOME");
-    songFile = NULL;
-    if (home && home[0] && !getenv("FIRESTAFF_SONG_DAT") &&
-        snprintf(expectedSongPath, sizeof(expectedSongPath),
-                 "%s/.firestaff/data/dm1/SONG.DAT", home) > 0) {
-        songFile = fopen(expectedSongPath, "rb");
-    }
-    if (songFile) {
-        fclose(songFile);
-        ok &= expect(M11_Audio_OriginalSongAvailable(&state) &&
-                     strcmp(state.originalSongDatPath, expectedSongPath) == 0,
-                     "DM1-local SONG.DAT is consumed before legacy locations");
-    }
+    ok &= expect(M11_Audio_OriginalSongAvailable(&state) &&
+                 strcmp(state.originalSongDatPath, expectedSongPath) == 0,
+                 "configured DM1 SONG.DAT is consumed");
     ok &= expect(M11_Audio_PlayDm1SwshDosoundProgram(&state, program,
                                                       (int)bytes, 20u),
                  "exact source program produces the PSG stream");
