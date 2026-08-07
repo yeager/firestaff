@@ -5,6 +5,17 @@
   Atari ST, Amiga or FM Towns can no longer redirect the PC34 TITLE.C F0437 /
   ENTRANCE.C F0806 assertions or cause a null-session crash. Native-platform
   probes keep their own explicit selections.
+# DM1 V2:s syntetiska UI-överlägg spärrade (2026-08-07)
+
+- ✅ Tog bort V2-journalernas textarkiv och sparfiler, minimapernas egna
+  kartcachar, markörer och pixelöverlägg samt tooltipens 4×5-typsnitt och
+  tidsstyrda ruta. ReDMCSB lämnar den riktiga dungeonritningen på
+  `F0128/F0097` och meddelanden på `F0047`; DMWebs grafikpost 562 beskriver
+  i stället originalets textmasker och rektanglar. Greatstones PC34-register
+  innehåller endast `GRAPHICS.DAT`-material, inte sådana UI-data. De sex
+  kompatibilitetsmodulerna behåller nu inget tillstånd och skriver inga pixlar.
+  CTesten och källåset kontrollerar den oförändrade framebuffern, PC34-arkivet
+  och ReDMCSB-rutterna.
 
 # CSB Atari ST selected-package startup repair (2026-08-07)
 

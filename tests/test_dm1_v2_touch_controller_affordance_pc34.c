@@ -174,6 +174,7 @@ static void test_v1_off_rejects_v2_only_affordances(void) {
 static void test_pinch_zoom_is_v2_only_without_movement_command(void) {
     size_t i;
     M11_V2_Minimap minimap;
+    M11_V2_Minimap before;
 
     /* Pinch-to-zoom V2 UI guard: ReDMCSB GAMELOOP.C:164-219 waits on
      * source command records only. SDL3 finger events can label the V2
@@ -199,15 +200,16 @@ static void test_pinch_zoom_is_v2_only_without_movement_command(void) {
     }
 
     v2_minimap_init(&minimap);
-    CHECK(minimap.zoom == 1.0f);
+    memset(&minimap, 0xA5, sizeof(minimap));
+    memcpy(&before, &minimap, sizeof(before));
     v2_minimap_zoom(&minimap, true);
-    CHECK(minimap.zoom == 1.25f);
+    CHECK(memcmp(&minimap, &before, sizeof(minimap)) == 0);
     v2_minimap_zoom(&minimap, false);
-    CHECK(minimap.zoom == 1.0f);
-    for (i = 0; i < 8; ++i) v2_minimap_zoom(&minimap, false);
-    CHECK(minimap.zoom == 0.5f);
-    for (i = 0; i < 8; ++i) v2_minimap_zoom(&minimap, true);
-    CHECK(minimap.zoom == 2.0f);
+    CHECK(memcmp(&minimap, &before, sizeof(minimap)) == 0);
+    /* Pinch remains a V2-only input label, but no longer creates or scales a
+     * synthetic PC34 map overlay. */
+    for (i = 0; i < sizeof(minimap); ++i)
+        CHECK(((const unsigned char *)&minimap)[i] == 0xA5);
 }
 
 static void test_invalid_affordance_is_not_a_command(void) {

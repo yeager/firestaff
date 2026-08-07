@@ -1,0 +1,41 @@
+{
+  "dmwebReference": "reference/dmweb-community-docs/html/community/documentation/dungeon-master-and-chaos-strikes-back/graphics.dat-item-562.html",
+  "errors": [],
+  "forbiddenSyntheticState": {
+    "src/dm1v2/dm1_v2_journal.c": [
+      "memmove(",
+      "type_color",
+      "Semi-transparent overlay"
+    ],
+    "src/dm1v2/dm1_v2_journal_pc34.c": [
+      "g_v2_journal",
+      "fopen(",
+      "fwrite("
+    ],
+    "src/dm1v2/dm1_v2_minimap.c": [
+      "Alpha blend",
+      "0xFF00FF00",
+      "cell_size ="
+    ],
+    "src/dm1v2/dm1_v2_minimap_pc34.c": [
+      "M11_V2_MINIMAP_COLORS",
+      "v2_minimap_plot_pixel",
+      "arrow_color"
+    ],
+    "src/dm1v2/dm1_v2_tooltip_pc34.c": [
+      "FONT_4x5",
+      "g_tooltip",
+      "fade_alpha"
+    ]
+  },
+  "greatstoneReference": "tests/fixtures/greatstone_db_data_paths/index.json: verified dm_pc_34 GRAPHICS.DAT mapfile record; no journal/minimap/tooltip material record",
+  "pc34Archive": "/Users/bosse/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 journal, minimap and tooltip compatibility surfaces",
+  "sourceOwnedRoutes": [
+    "GAMELOOP.C:F0128_DUNGEONVIEW_Draw_CPSF",
+    "DUNVIEW.C:F0128_DUNGEONVIEW_Draw_CPSF/F0097_DUNGEONVIEW_DrawViewport",
+    "CHAMPION.C:F0047_TEXT_MESSAGEAREA_PrintMessage"
+  ],
+  "status": "passed"
+}

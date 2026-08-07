@@ -2,9 +2,10 @@
 #ifndef DM1_V2_JOURNAL_H
 #define DM1_V2_JOURNAL_H
 
-/* Auto-journal: records game events for player reference.
- * Events: level changes, champion deaths/resurrections,
- * boss encounters, key items found, doors opened. */
+#include <stdint.h>
+
+/* Compatibility declarations only.  PC34 does not keep an automatic journal;
+ * source messages and source-owned panels remain authoritative. */
 
 #define JOURNAL_MAX_ENTRIES 256
 #define JOURNAL_MAX_TEXT 128
@@ -28,4 +29,3 @@ void dm1_v2_journal_add(DM1_V2_Journal *j, int tick, int level, int type, const 
 void dm1_v2_journal_render(const DM1_V2_Journal *j, uint32_t *rgba, int w, int h);
 
 #endif
-

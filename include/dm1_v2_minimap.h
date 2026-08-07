@@ -3,8 +3,8 @@
 #define DM1_V2_MINIMAP_H
 #include <stdint.h>
 
-/* Translucent corner minimap showing explored areas.
- * Rendered as overlay on the game viewport. */
+/* Compatibility declarations only.  PC34 has no translucent corner minimap
+ * or host-maintained explored-area overlay. */
 
 #define MINIMAP_SIZE 96       /* pixels */
 #define MINIMAP_MAX_MAP 32
@@ -23,4 +23,3 @@ void dm1_v2_minimap_reveal(DM1_V2_Minimap *mm, int x, int y);
 void dm1_v2_minimap_render(const DM1_V2_Minimap *mm, uint32_t *rgba, int screen_w, int screen_h);
 
 #endif
-

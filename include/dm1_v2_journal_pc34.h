@@ -29,6 +29,8 @@ typedef struct {
     int entries_per_page;
 } M11_V2_Journal;
 
+/* Compatibility-only.  PC34 has no journal record; source messages remain in
+ * the original message area.  The API retains no text and persistence fails. */
 void v2_journal_init(void);
 void v2_journal_add(M11_V2_JournalCategory category, const char* text, int level, uint32_t tick);
 M11_V2_JournalEntry* v2_journal_get_page(int page);

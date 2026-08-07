@@ -209,6 +209,23 @@ Every candidate that survived the scan is one of:
   :222` refers to the original game's own C201 empty-hand icon as
   its "placeholder" glyph (real game data).
 
+### V2-journal, minimap och verktygstips
+
+De båda V2-journalerna innehöll separata textarkiv och sparfiler. De båda
+minimapvarianterna byggde utforskade 32×32-rutnät, egna partimarkörer och
+genomskinliga pixelöverlägg. Verktygstipset lade dessutom ett eget 4×5-typsnitt
+och en tidsstyrd bakgrund ovanpå bilden. Ingen av dessa datauppsättningar eller
+ritvägar finns i PC34-materialet.
+
+ReDMCSB för direkt den aktuella dungeonbilden från `GAMELOOP.C` till
+`F0128_DUNGEONVIEW_Draw_CPSF`, vidare till `F0097_DUNGEONVIEW_DrawViewport`.
+Textmeddelanden går genom `F0047_TEXT_MESSAGEAREA_PrintMessage`. DMWebs
+beskrivning av grafikpost 562 dokumenterar i stället originalets textmasker
+och rektangeln för namnet på det hållna föremålet. Greatstones PC34-register
+är ett `GRAPHICS.DAT`-mapfile och har ingen separat post för journal, automap
+eller tooltip. API:erna är därför kompatibilitetsytor utan sparning, kartcache,
+typsnitt, timer eller pixelritning.
+
 ### 2. DM1 V2.2 — modern-presentation lane (`include/dm1_v22_*`)
 
 **Verdict: optional modern art remains blocked unless it is derived from

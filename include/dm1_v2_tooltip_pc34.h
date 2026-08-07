@@ -7,7 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 typedef struct {
     char text[128];
@@ -25,7 +24,8 @@ void v2_tooltip_update(float dt);
 void v2_tooltip_render(uint8_t* fb, int w, int h);
 bool v2_tooltip_is_visible(void);
 
-/* Source-lock gate: tooltip is pure framebuffer overlay, no game state touches. */
+/* Compatibility-only.  PC34 source text owns its glyphs and placement; this
+ * API retains no host tooltip, timer, font or framebuffer overlay. */
 unsigned int v2_tooltip_source_lock_ok(void);
 const char* v2_tooltip_get_source_evidence(void);
 

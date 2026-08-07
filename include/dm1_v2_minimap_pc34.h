@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +32,8 @@ typedef struct {
     bool visible;
 } M11_V2_Minimap;
 
+/* Compatibility-only.  PC34 owns dungeon pixels through F0128/F0097, not a
+ * persistent explored-tile overlay.  Calls retain no map or draw no pixels. */
 void v2_minimap_init(M11_V2_Minimap* map);
 void v2_minimap_reveal_tile(M11_V2_Minimap* map, int16_t x, int16_t y, M11_V2_MinimapTileType type);
 void v2_minimap_set_party(M11_V2_Minimap* map, int16_t x, int16_t y, int8_t facing);
