@@ -5071,6 +5071,10 @@ list(REMOVE_ITEM M10_SOURCES
 # direct regression compiles the fixture from its local DM1 header.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.c")
+# This F0355 inventory/spell-area model is explicitly contract-only and
+# data-free. Its direct test retains the PANEL.C source-lock behavior.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
@@ -54465,7 +54469,9 @@ add_executable(test_dm1_v1_champion_panel_pc34_compat
 target_include_directories(test_dm1_v1_champion_panel_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_pc34_compat COMMAND test_dm1_v1_champion_panel_pc34_compat)
-add_executable(test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat tests/test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c)
+add_executable(test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat
+    tests/test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c
+    src/dm1/dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat.c)
 target_include_directories(test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat COMMAND test_dm1_v1_champion_panel_spell_area_clear_on_inventory_pc34_compat)
