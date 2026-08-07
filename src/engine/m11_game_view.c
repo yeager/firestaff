@@ -8621,6 +8621,16 @@ static int m11_csb_apply_boot_runtime_receipt(
             }
         }
     }
+    if (!state->assetsAvailable &&
+        (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+         receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+        M11_AssetLoader_InitDecodedOnly(&state->assetLoader,
+                                        receipt->graphics_path)) {
+        /* Atari ST GRAPHICS.DAT is not the PC reader's container.  ANIM.C
+         * hands off to CSBWin's C232/022e consumers, which install only
+         * pixels decoded by the verified ST source reader. */
+        state->assetsAvailable = 1;
+    }
     state->csbBootProfile = receipt->profile;
     state->csbStartupAssetGateReceipt = receipt->startup_asset_gate;
     if (receipt->load_original_font_from_graphics) {

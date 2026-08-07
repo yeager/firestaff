@@ -1987,6 +1987,16 @@ static int m12_materialize_optional_for_cache_seed(const char* seedPath,
         if (!entry || entry[0] == '\0') {
             return 0;
         }
+        /* A nested disk image is represented as
+         * archive.7z::disk.msa::GRAPHICS.DAT.  The outer segments already
+         * remain in m12_materialize_optional_virtual_sibling(); derive the
+         * sibling directory from only the final disk member.  Keeping the
+         * complete tail here would form archive.7z::disk.msa::disk.msa::
+         * DUNGEON.DAT and silently make a selected Atari package lose its
+         * paired dungeon after an otherwise successful broad-root scan. */
+        while ((sep = strstr(entry, "::")) != NULL) {
+            entry = sep + 2;
+        }
         m12_copy_string(entryDir, sizeof(entryDir), entry);
         slash = strrchr(entryDir, '/');
         if (!slash) {
@@ -5711,8 +5721,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         outPath[0] = '\0';
         return 0;
     }
-    if (!dungeon ||
-        !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), outPath,
+    if (!FSP_JoinPath(graphicsPath, sizeof(graphicsPath), outPath,
                       "GRAPHICS.DAT") ||
         !FSP_JoinPath(dungeonPath, sizeof(dungeonPath), outPath,
                       "DUNGEON.DAT") ||
@@ -5721,8 +5730,28 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         return 0;
     }
     if (!m12_file_md5_hex(graphicsPath, copiedMd5) ||
-        strcmp(copiedMd5, version->matchedMd5) != 0 ||
-        !m12_materialize_required_file(dungeon, dungeonPath) ||
+        strcmp(copiedMd5, version->matchedMd5) != 0) {
+        (void)remove(graphicsPath);
+        (void)remove(dungeonPath);
+        outPath[0] = '\0';
+        return 0;
+    }
+    /* Bind the dungeon to the selected edition first.  M12's generic launch
+     * cache is allowed to reflect another verified edition in a broad root
+     * (for example FM Towns), so its required-file row is provenance, not an
+     * authority for an Atari/Amiga/PC version picker.  ReDMCSB COMPILE.H
+     * 199-243 keeps those executable-media families separate. */
+    if (m12_materialize_optional_for_cache_seed(version->matchedPath,
+                                                "DUNGEON.DAT", dungeonPath) &&
+        m12_file_md5_hex(dungeonPath, copiedMd5) &&
+        strcmp(copiedMd5, expectedDungeonMd5) == 0) {
+        m12_materialize_csb_startup_optional_cache(
+            version->matchedPath, outPath, 0,
+            strncmp(versionId, "st20-21-", 8) == 0);
+        return 1;
+    }
+    (void)remove(dungeonPath);
+    if (!dungeon || !m12_materialize_required_file(dungeon, dungeonPath) ||
         !m12_file_md5_hex(dungeonPath, copiedMd5) ||
         strcmp(copiedMd5, expectedDungeonMd5) != 0) {
         (void)remove(graphicsPath);

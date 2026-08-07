@@ -329,6 +329,47 @@ static void test_amiga31_media_registry(void)
           "M11 gate accepts the authenticated Amiga 3.1 English pair");
 }
 
+/* The launcher materializes the selected Atari ST package before M11 opens
+ * it.  Keep this opt-in real-media check beside the existing FM Towns and
+ * Amiga receipts: a valid ST GRAPHICS.DAT/DUNGEON.DAT pair must reach the
+ * runtime handoff, not merely appear as an available M12 catalogue row.
+ * ReDMCSB COMPILE.H:199-243 separates the Atari program family from the
+ * PC and Amiga packages even though the dungeon payload is shared. */
+static void test_atari_st_materialized_runtime_handoff(void)
+{
+    const char *data_dir = getenv("FIRESTAFF_CSB_ATARI_RUNTIME_DIR");
+    CSB_V1_BootProfile profile;
+    CSB_V1_BootStartupLaunch_PC34 launch;
+    CSB_V1_BootStartupRuntimeReceipt_PC34 runtime_receipt;
+
+    if (!data_dir || !data_dir[0]) {
+        printf("  SKIP: FIRESTAFF_CSB_ATARI_RUNTIME_DIR not set\n");
+        return;
+    }
+    csb_v1_boot_profile_init(&profile);
+    CHECK(csb_v1_boot_scan_assets(&profile, data_dir) == 0 &&
+              profile.variant_id == CSB_V1_VARIANT_ST21_EN &&
+              profile.graphics_verified && profile.dungeon_verified,
+          "materialized Atari ST package retains its verified MEDIA332 pair");
+    CHECK(csb_v1_boot_enter_game(&profile) == 0 &&
+              profile.state == CSB_V1_BOOT_STATE_RUNTIME_READY &&
+              profile.runtime.dungeon_handle != NULL,
+          "materialized Atari ST package enters the source dungeon runtime");
+    csb_v1_boot_cleanup(&profile);
+
+    memset(&launch, 0, sizeof(launch));
+    memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+    CHECK(csb_v1_boot_startup_launch_alloc_pc34(data_dir, NULL, NULL, NULL,
+                                                 &launch) == 1,
+          "materialized Atari ST package builds the M11 startup transaction");
+    CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(&launch,
+                                                          &runtime_receipt) == 1 &&
+              runtime_receipt.profile != NULL &&
+              runtime_receipt.startup_asset_gate_valid,
+          "materialized Atari ST package detaches a source-owned M11 receipt");
+    csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+}
+
 static void test_fmtowns_startup_surface_decode(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_FMTOWNS_GRAPHICS");
@@ -576,6 +617,7 @@ int main(void)
     test_source_evidence();
     test_fmtowns_media_registry();
     test_amiga31_media_registry();
+    test_atari_st_materialized_runtime_handoff();
     test_fmtowns_startup_surface_decode();
     test_fmtowns_authenticated_startup_session();
     test_fmtowns_game_program_handoff();

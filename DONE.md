@@ -1,3 +1,17 @@
+# CSB Atari ST selected-package startup repair (2026-08-07)
+
+- ✅ Fixed the mixed-root direct-launch regression: a selected Atari ST
+  package now materializes `GRAPHICS.DAT` and its paired `DUNGEON.DAT` from
+  the same original disk image, rather than inheriting the generic cache's
+  FM Towns dungeon receipt.
+- ✅ Nested archive-disk sibling resolution now preserves the outer archive
+  path exactly, so `archive.7z::disk.msa::GRAPHICS.DAT` resolves its sibling
+  as `archive.7z::disk.msa::DUNGEON.DAT`.
+- ✅ The M11 Atari path has a decoded-only source cache for authenticated ST
+  graphics. It cannot invoke the incompatible PC `GRAPHICS.DAT` parser.
+  Real `ANIMATE.SCR` reaches FTLCODE through direct `--platform atari-st`
+  boot probe with the verified `ebf6…`/`6695…` pair.
+
 # DM2 selected SONGLIST corpus (2026-08-07)
 
 # DM1 V2 fri varelseanimation spärrad (2026-08-07)

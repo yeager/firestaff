@@ -73,6 +73,18 @@ int M11_AssetLoader_Init(M11_AssetLoader* loader, const char* graphicsDatPath) {
     return 1;
 }
 
+int M11_AssetLoader_InitDecodedOnly(M11_AssetLoader* loader,
+                                    const char* sourcePath) {
+    if (!loader || !sourcePath || sourcePath[0] == '\0') {
+        return 0;
+    }
+    memset(loader, 0, sizeof(*loader));
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath), "%s",
+             sourcePath);
+    loader->initialized = 1;
+    return 1;
+}
+
 int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
                                    const unsigned char *data, long size) {
     struct MemoryGraphicsDatState_Compat* fileState;

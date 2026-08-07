@@ -69,6 +69,12 @@ typedef struct {
    Returns 1 on success, 0 on failure. */
 int M11_AssetLoader_Init(M11_AssetLoader* loader, const char* graphicsDatPath);
 
+/* Initialize an empty cache for a format-specific source decoder.  Callers
+ * may install only authenticated decoded pixels; M11_AssetLoader_Load must
+ * not be used to parse uncached records through the PC GRAPHICS.DAT reader. */
+int M11_AssetLoader_InitDecodedOnly(M11_AssetLoader* loader,
+                                    const char* sourcePath);
+
 /* Initialize the loader from an in-memory GRAPHICS.DAT buffer.
    The buffer must remain valid for the loader's lifetime.
    Returns 1 on success, 0 on failure. */
