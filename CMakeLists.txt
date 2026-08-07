@@ -4347,6 +4347,10 @@ list(REMOVE_ITEM M10_SOURCES
 # is exercised directly, never as production M10 runtime code.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0986_f1005_graphics_platform_source_audit_pc34_compat.c")
+# F1406--F1425 has no symbols in the audited ReDMCSB corpus.  The direct
+# test owns this fail-closed evidence table; it is not production runtime.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1406_f1425_unmapped_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
