@@ -1519,26 +1519,26 @@ static void test_ordered_cells_to_attack_priority(void) {
 static void test_f0192_per_creature_resistance(void) {
     TEST(f0192_per_creature_resistance);
 
-    /* All 27 entries match the DUNGEON.C G0243 upper nibble. */
+    /* M061_POISON_RESISTANCE: (Resistances >> 8) & 0xF per I34E G0243. */
     static const int kExpected[27] = {
-        2,  3,  7,  9,  5,  4,  1,  2,  4,  3,  5,  5,  6,  5,  9,
-        1,  2,  1,  7, 10,  7,  6, 11, 15, 11, 15, 15
+        8, 14,  2, 11, 10,  5,  7,  6, 15, 15, 15, 15, 15,  6,  3,
+       11,  3,  0, 15, 15, 14,  8, 10, 15,  6, 15, 15
     };
     for (int t = 0; t < 27; t++) {
         int r = F0192_GROUP_GetPoisonResistance_Compat(t);
         CHECK(r == kExpected[t],
-              "creature type resistance must match DUNGEON.C G0243 upper nibble");
+              "creature type resistance must match M061(Resistances) per I34E");
     }
 
     /* Out-of-range → -1. */
     CHECK(F0192_GROUP_GetPoisonResistance_Compat(-1) == -1, "negative → -1");
     CHECK(F0192_GROUP_GetPoisonResistance_Compat(27) == -1, ">= count → -1");
 
-    /* Immune creatures (C23 Lord Chaos, C25 Lord Order, C26 Grey Lord). */
+    /* Immune creatures: all with M061 resistance == 15. */
     struct RngState_Compat rng;
     F0730_COMBAT_RngInit_Compat(&rng, 0xC0FFEEu);
     {
-        const int kImmune[] = {23, 25, 26};
+        const int kImmune[] = {8, 9, 10, 11, 12, 18, 19, 23, 25, 26};
         for (size_t i = 0; i < sizeof(kImmune) / sizeof(kImmune[0]); i++) {
             int t = kImmune[i];
             int adj = 0x7FFFFFFFu;  /* sentinel */
@@ -1560,30 +1560,25 @@ static void test_f0192_per_creature_resistance(void) {
     CHECK(rng.seed == before, "no poison: must not advance RNG");
 
     /* Formula: ((attack + rng(4)) << 3) / (resistance + 1).
-     * C0 (Giant Scorpion) has resistance = 2, so denominator = 3.
-     * The rng() bump is in [0..3], so adjusted = (attack * 8 + bump * 8) / 3
-     * ranges over a small band. We don't depend on the exact rng() bump
-     * because the M10 F0732 RNG and the C++ dm1_combat_random use
-     * different state machines — the only contract is the closed-form
-     * range, not bit-equality. Verify the result is in that range. */
+     * C0 (Giant Scorpion) has resistance = 8, so denominator = 9.
+     * adjusted = (attack + bump) * 8 / 9, bump in [0..3]. */
     F0730_COMBAT_RngInit_Compat(&rng, 0xABACAB1u);
     int adjCompat = -1;
     F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
         0 /* C0 */, 50, &rng, &adjCompat);
-    CHECK(adjCompat >= ((50 + 0) * 8) / 3 &&
-          adjCompat <= ((50 + 3) * 8) / 3,
-          "C0 resistance 2 attack 50: result must be in [(400/3), (424/3)]");
+    CHECK(adjCompat >= ((50 + 0) * 8) / 9 &&
+          adjCompat <= ((50 + 3) * 8) / 9,
+          "C0 resistance 8 attack 50: result must be in [44, 47]");
 
-    /* C15 Magenta Worm (resistance 1, denominator 2): the small
-     * denominator means a healthy bite. With attack=100, minimum
-     * bump gives (100 + 0) * 8 / 2 = 400; maximum bump gives
-     * (100 + 3) * 8 / 2 = 412. Verify the result is in that range. */
+    /* C15 Magenta Worm (resistance 11, denominator 12). With attack=100,
+     * minimum bump gives (100 + 0) * 8 / 12 = 66; maximum bump gives
+     * (100 + 3) * 8 / 12 = 68. */
     F0730_COMBAT_RngInit_Compat(&rng, 42);
     int adj15 = -1;
     F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(
         15, 100, &rng, &adj15);
-    CHECK(adj15 >= 400 && adj15 <= 412,
-          "C15 (resistance 1): scaled attack must be in [400, 412]");
+    CHECK(adj15 >= 66 && adj15 <= 68,
+          "C15 (resistance 11): scaled attack must be in [66, 68]");
 
     /* C23 Lord Chaos (immune, r=15): always 0 regardless of attack. */
     F0730_COMBAT_RngInit_Compat(&rng, 1);
@@ -1616,7 +1611,7 @@ static void test_f0192_per_creature_resistance(void) {
      * term. Deterministic callers (test harnesses, projection paths)
      * rely on this so the result is reproducible. */
     CHECK(rcNull2 == 1, "NULL rng is accepted (random bump = 0)");
-    CHECK(adjNull2 == (50 * 8) / (2 + 1),
+    CHECK(adjNull2 == (50 * 8) / (8 + 1),
           "NULL rng: result must be (attack * 8) / (resistance + 1)");
 
     PASS();

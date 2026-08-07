@@ -1221,37 +1221,38 @@ int F0738_COMBAT_ApplyDamageToGroup_Compat(
 
 #define FIRESTAFF_POISON_IMMUNE 15
 
-/* DUNGEON.C G0243_as_Graphic559_CreatureInfo Resistances upper nibble.
+/* ReDMCSB DEFS.H M061_POISON_RESISTANCE: (Resistances >> 8) & 0xF.
+ * Source: G0243 CreatureInfo[].Resistances field (PC 3.4 I34E).
  * 27 entries; indexed by creature type C00..C26.
- * 0xFF means resistance = 15 = immune. */
+ * 15 = C15_IMMUNE_TO_POISON. */
 static const unsigned char g_poisonResistance[CREATURE_TYPE_COUNT] = {
-    /* C00 Giant Scorpion  */  2,  /* G0243[0]  Resistances 0x299B → 0x2 */
-    /* C01 Swamp Slime     */  3,  /* G0243[1]  0x33A9 → 0x3 */
-    /* C02 Giggler         */  7,  /* G0243[2]  0x710A → 0x7 */
-    /* C03 Wizard Eye      */  9,  /* G0243[3]  0x96AA → 0x9 */
-    /* C04 Pain Rat        */  5,  /* G0243[4]  0x58FF → 0x5 */
-    /* C05 Ruster          */  4,  /* G0243[5]  0x4338 → 0x4 */
-    /* C06 Screamer        */  1,  /* G0243[6]  0x10F1 → 0x1 */
-    /* C07 Rockpile        */  2,  /* G0243[7]  0x25C4 → 0x2 */
-    /* C08 Ghost           */  4,  /* G0243[8]  0x4664 → 0x4 */
-    /* C09 Stone Golem     */  3,  /* G0243[9]  0x3BFF → 0x3 */
-    /* C10 Mummy           */  5,  /* G0243[10] 0x5497 → 0x5 */
-    /* C11 Black Flame     */  5,  /* G0243[11] 0x55A5 → 0x5 */
-    /* C12 Skeleton        */  6,  /* G0243[12] 0x6596 → 0x6 */
-    /* C13 Couatl          */  5,  /* G0243[13] 0x5734 → 0x5 */
-    /* C14 Vexirk          */  9,  /* G0243[14] 0xD952 → 0x9 */
-    /* C15 Magenta Worm    */  1,  /* G0243[15] 0x15AB → 0x1 */
-    /* C16 Trolin          */  2,  /* G0243[16] 0x2148 → 0x2 */
-    /* C17 Giant Wasp      */  1,  /* G0243[17] 0x19FD → 0x1 */
-    /* C18 Animated Armour */  7,  /* G0243[18] 0x7AFF → 0x7 */
-    /* C19 Materializer    */ 10,  /* G0243[19] 0xAC77 → 0xA */
-    /* C20 Water Elemental */  7,  /* G0243[20] 0x7679 → 0x7 */
-    /* C21 Oitu            */  6,  /* G0243[21] 0x696A → 0x6 */
-    /* C22 Demon           */ 11,  /* G0243[22] 0xBDF9 → 0xB */
-    /* C23 Lord Chaos      */ 15,  /* G0243[23] 0xFF37 → 0xF (IMMUNE) */
-    /* C24 Red Dragon      */ 11,  /* G0243[24] 0xBF7C → 0xB */
-    /* C25 Lord Order      */ 15,  /* G0243[25] 0xFF37 → 0xF (IMMUNE) */
-    /* C26 Grey Lord       */ 15,  /* G0243[26] 0xFF37 → 0xF (IMMUNE) */
+    /* C00 Giant Scorpion  */  8,  /* Resistances 0x0876 → (>>8)&F = 0x8 */
+    /* C01 Swamp Slime     */ 14,  /* 0x0E42 → 0xE */
+    /* C02 Giggler         */  2,  /* 0x0235 → 0x2 */
+    /* C03 Wizard Eye      */ 11,  /* 0x0B3C → 0xB */
+    /* C04 Pain Rat        */ 10,  /* 0x0A34 → 0xA */
+    /* C05 Ruster          */  5,  /* 0x0583 → 0x5 */
+    /* C06 Screamer        */  7,  /* 0x0764 → 0x7 */
+    /* C07 Rockpile        */  6,  /* 0x06E3 → 0x6 */
+    /* C08 Ghost           */ 15,  /* 0x0FC8 → 0xF (IMMUNE) */
+    /* C09 Stone Golem     */ 15,  /* 0x0FF7 → 0xF (IMMUNE) */
+    /* C10 Mummy           */ 15,  /* 0x0F15 → 0xF (IMMUNE) */
+    /* C11 Black Flame     */ 15,  /* 0x0FF9 → 0xF (IMMUNE) */
+    /* C12 Skeleton        */ 15,  /* 0x0F63 → 0xF (IMMUNE) */
+    /* C13 Couatl          */  6,  /* 0x0638 → 0x6 */
+    /* C14 Vexirk          */  3,  /* 0x035B → 0x3 */
+    /* C15 Magenta Worm    */ 11,  /* 0x0B93 → 0xB */
+    /* C16 Trolin          */  3,  /* 0x0321 → 0x3 */
+    /* C17 Giant Wasp      */  0,  /* 0x0004 → 0x0 */
+    /* C18 Animated Armour */ 15,  /* 0x0FFA → 0xF (IMMUNE) */
+    /* C19 Materializer    */ 15,  /* 0x0F56 → 0xF (IMMUNE) */
+    /* C20 Water Elemental */ 14,  /* 0x0EA7 → 0xE */
+    /* C21 Oitu            */  8,  /* 0x0859 → 0x8 */
+    /* C22 Demon           */ 10,  /* 0x0A5D → 0xA */
+    /* C23 Lord Chaos      */ 15,  /* 0x0FBF → 0xF (IMMUNE) */
+    /* C24 Red Dragon      */  6,  /* 0x06CD → 0x6 */
+    /* C25 Lord Order      */ 15,  /* 0x0FBF → 0xF (IMMUNE) */
+    /* C26 Grey Lord       */ 15,  /* 0x0FBF → 0xF (IMMUNE) */
 };
 
 /* Public lookup. Returns -1 on out-of-range. */

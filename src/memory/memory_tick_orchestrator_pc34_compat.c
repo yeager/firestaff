@@ -1479,6 +1479,7 @@ static const unsigned short s_dm1_i34_creature_ranges[27] = {
     0x1592, 0x4344, 0x6369, 0x3645, 0x6369, 0x6369
 };
 
+/* ReDMCSB DUNGEON.C G0243 AnimationTicks word (field 15, PC 3.4 I34E). */
 static const unsigned short s_dm1_i34_creature_animation_ticks[27] = {
     0x0254, 0x0384, 0x0222, 0x0113, 0x0143, 0x0265, 0x02F2,
     0x01F4, 0x0116, 0x04F3, 0x0483, 0x0114, 0x0132, 0x0112,

@@ -556,7 +556,7 @@ const char *dm1_ranged_shoot_source_evidence_pc34(void)
  * ReDMCSB uses these factors in F0313.
  */
 static const int g_woundDefenseFactor[DM1_WOUND_IDX_COUNT] = {
-    5, 5, 4, 6, 3, 2
+    5, 5, 4, 6, 3, 1
 };
 
 /*
