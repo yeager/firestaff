@@ -29435,8 +29435,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus MENU.BPK regression root: `test_nexus_v1_bppk` now prefers the
   configured `FIRESTAFF_NEXUS_DATA_DIR` over `$HOME/.firestaff/data/nexus`,
   so the real external corpus is exercised even when HOME points elsewhere.
-  Apply the same root contract to the remaining legacy Nexus probes before
-  treating a local skip as evidence of a missing asset.
+  The same root contract now covers the legacy startup/menu probes for
+  `FONT256.S2D`, `FACE.BIN`, `TITLE.CG`/RES* and `STABG.BIN`; continue applying
+  it to remaining probes before treating a local skip as evidence of a missing
+  asset.
 - 🔧 Nexus startup title pixels: the M11 `BOOT_TITLE_FRAME` executor is now
   capture-gated like the title-background route. Bind the real `TITLE.CG` /
   `TITLE.BIN` composition and VDP1/VDP2 placement from an authenticated Saturn

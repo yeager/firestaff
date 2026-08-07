@@ -24,14 +24,21 @@ static uint8_t *load_file(const char *path, int *out_size) {
 }
 
 static int test_title_cg(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
     int size = 0;
     Nexus_V1_TitleCgDecodeResult r;
 
-    if (!home) { printf("  SKIP title_cg (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/TITLE.CG", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/TITLE.CG", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/TITLE.CG", home);
+    } else {
+        printf("  SKIP title_cg (Nexus data root is unset)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP title_cg (no file)\n"); return 0; }
 
@@ -55,14 +62,20 @@ static int test_title_cg(void) {
 }
 
 static int test_res_file(const char *name) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
     int size = 0, i;
     Nexus_V1_ResDecodeResult r;
 
-    if (!home) return 0;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/%s", home, name);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/%s", data_dir, name);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/%s", home, name);
+    } else {
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP %s (not found)\n", name); return 0; }
 
@@ -101,6 +114,7 @@ static int test_res_file(const char *name) {
 }
 
 static int test_font012_headers(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
@@ -114,8 +128,13 @@ static int test_font012_headers(void) {
     const uint32_t offsets[] = {0xC0U, 0x1C2CU, 0x3F78U};
     int i;
 
-    if (!home) return 0;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/RLOWFIX.BIN", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/RLOWFIX.BIN", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/RLOWFIX.BIN", home);
+    } else {
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP FONT012 (no file)\n"); return 0; }
     if (!nexus_v1_res_decode(data, size, &res)) { free(data); return 1; }

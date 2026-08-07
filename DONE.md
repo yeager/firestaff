@@ -59333,3 +59333,14 @@ GRAPHIC2.DAT ownership remain intentionally gated.
 - ✅ Re-ran with `HOME=/tmp/firestaff-nexus-no-home` and the external data root;
   the same real-data result passes, proving the test does not read a stale
   HOME-local or synthetic MENU.BPK copy.
+
+# Nexus startup/menu external-root regression (2026-08-07)
+
+- ✅ Updated the real-data `FONT256.S2D`, `FACE.BIN`, `TITLE.CG`/RES* and
+  `STABG.BIN` probes to prefer `FIRESTAFF_NEXUS_DATA_DIR`, retaining the HOME
+  path only as a compatibility fallback. This keeps startup/menu provenance
+  on the mounted external corpus and does not enable any capture-gated pixels.
+- ✅ Verified all four probes with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus` and
+  `HOME=/tmp/firestaff-nexus-no-home`: real FONT256, 20 authenticated FACE
+  portraits, TITLE/RES archives and STABG all pass.
