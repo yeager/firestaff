@@ -5079,6 +5079,10 @@ list(REMOVE_ITEM M10_SOURCES
 # already compiled by its direct regression with the slot-priority fixture.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_status_hand_rotation_pc34_compat.c")
+# The D1C/D2C door-frame edge model is contract-only and asset-free. Its
+# direct test and probe retain the DUNVIEW source-lock coverage.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_d2c_door_frame_top_edge_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
