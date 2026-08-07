@@ -29758,6 +29758,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   initialized to `OBJECT_END_MARKER`, and publishes that link only after the
   callback read succeeds. The timer array, record pool and GAME_LOAD owner
   are still external, so Continue admission remains gated.
+  **2026-08-13 map-span progress:** the original raw-dungeon receipt now
+  retains every source map's width, height, relative tile offset and
+  authenticated raw tile-span hash. A new per-map receipt revalidates the
+  exact span against the mounted `SKSave0-3` bytes, giving the future
+  `READ_SKSAVE_DUNGEON` owner source geometry without reconstructing a map
+  from DUNGEON.DAT or inventing tile/object links. Complete record-graph,
+  possession, timer and runtime-session admission remain open.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

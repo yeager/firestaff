@@ -791,6 +791,9 @@ static int dm2_v1_parse_raw_sksave_dungeon_prefix(
         if (end > minimum_map_data_bytes) minimum_map_data_bytes = end;
         total_columns += width;
         if (total_columns > 4096u) return 0;
+        candidate.map_widths[i] = (uint8_t)width;
+        candidate.map_heights[i] = (uint8_t)height;
+        candidate.map_data_relative_offsets[i] = (uint16_t)rel;
     }
     if (minimum_map_data_bytes == 0u) return 0;
 
@@ -835,8 +838,18 @@ static int dm2_v1_parse_raw_sksave_dungeon_prefix(
     }
     if (map_data_bytes > buf_size - cursor) return 0;
     candidate.map_data_offset = cursor;
+    candidate.map_data_base = (uint32_t)cursor;
     candidate.map_data_hash = dm2_v1_raw_sksave_hash(buf + cursor,
                                                      map_data_bytes);
+    for (int i = 0; i < map_count; ++i) {
+        const size_t offset = (size_t)candidate.map_data_relative_offsets[i];
+        const size_t bytes = (size_t)candidate.map_widths[i] *
+                             (size_t)candidate.map_heights[i];
+        if (offset > map_data_bytes || bytes > map_data_bytes - offset)
+            return 0;
+        candidate.map_data_raw_hashes[i] = dm2_v1_raw_sksave_hash(
+            buf + cursor + offset, bytes);
+    }
     cursor += map_data_bytes;
     /* A receipt consumer may deliberately retain only the exact dungeon
      * prefix.  Full raw-SKSave ingestion still requires the following
@@ -860,6 +873,44 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
 {
     return dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
                                                    out_receipt);
+}
+
+int dm2_v1_original_raw_sksave_map_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon,
+    int map,
+    DM2_V1_OriginalRawMapReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawMapReceipt candidate;
+    size_t offset;
+    size_t byte_count;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!buf || !dungeon || !dungeon->valid || !out_receipt ||
+        map < 0 || map >= (int)dungeon->map_count ||
+        map >= DM2_RAW_SKSAVE_MAX_MAPS) {
+        return 0;
+    }
+    offset = (size_t)dungeon->map_data_base +
+             (size_t)dungeon->map_data_relative_offsets[map];
+    byte_count = (size_t)dungeon->map_widths[map] *
+                 (size_t)dungeon->map_heights[map];
+    if (offset > buf_size || byte_count > buf_size - offset ||
+        byte_count == 0u ||
+        dm2_v1_raw_sksave_hash(buf + offset, byte_count) !=
+            dungeon->map_data_raw_hashes[map]) {
+        return 0;
+    }
+    candidate.valid = 1;
+    candidate.map = (uint8_t)map;
+    candidate.width = dungeon->map_widths[map];
+    candidate.height = dungeon->map_heights[map];
+    candidate.raw_offset = (uint32_t)offset;
+    candidate.byte_count = (uint32_t)byte_count;
+    candidate.raw_hash = dungeon->map_data_raw_hashes[map];
+    *out_receipt = candidate;
+    return 1;
 }
 
 int dm2_v1_original_raw_sksave_fixed_state_receipt(

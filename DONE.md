@@ -59475,6 +59475,15 @@ unreadable selected `graphics.dat`; the old private `HOME` fallback is gone.
 The SDL dummy-device regression still decodes and plays original GDAT PCM
 entries through the source-backed sound backend.
 
+# DM2 SKSAVE source map spans (2026-08-13)
+
+- ✅ Extended the raw SKSAVE dungeon receipt with source-authored per-map
+  geometry and relative tile offsets.
+- ✅ Added a bounds- and hash-checked per-map receipt; it does not infer
+  square types or object links and therefore cannot borrow DUNGEON.DAT data.
+- ✅ Mounted PC-DOS `SKSave0-3.dat/bak` verification now covers every saved
+  map span; `test_dm2_v1_save_load_real_data` passes 135/135 with 0 failures.
+
 # Nexus viewport/audio corpus external-root regression (2026-08-07)
 
 - ✅ Extended the external-root-first contract to the legacy real-data probes

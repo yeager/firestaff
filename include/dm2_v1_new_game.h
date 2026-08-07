@@ -144,6 +144,7 @@ typedef enum DM2_V1_SaveCandidateKind {
  * records or record links; it preserves only source-owned boundaries and
  * byte identities for an admitted original save. */
 #define DM2_RAW_SKSAVE_DB_POOL_COUNT 16
+#define DM2_RAW_SKSAVE_MAX_MAPS 64
 typedef struct {
     int valid;
     uint8_t map_count;
@@ -151,6 +152,14 @@ typedef struct {
     uint16_t column_index_count;
     uint16_t ground_stack_count;
     uint16_t text_word_count;
+    /* Source c_map geometry, retained per map instead of being discarded
+     * after the prefix hash is calculated. Offsets are relative to the
+     * authenticated map-data span. */
+    uint8_t map_widths[DM2_RAW_SKSAVE_MAX_MAPS];
+    uint8_t map_heights[DM2_RAW_SKSAVE_MAX_MAPS];
+    uint16_t map_data_relative_offsets[DM2_RAW_SKSAVE_MAX_MAPS];
+    uint32_t map_data_base;
+    uint32_t map_data_raw_hashes[DM2_RAW_SKSAVE_MAX_MAPS];
     uint16_t db_record_counts[DM2_RAW_SKSAVE_DB_POOL_COUNT];
     size_t db_pool_offsets[DM2_RAW_SKSAVE_DB_POOL_COUNT];
     size_t map_data_offset;
@@ -163,6 +172,16 @@ typedef struct {
     uint32_t prefix_hash;
     size_t suppress_state_offset;
 } DM2_V1_OriginalRawDungeonReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t map;
+    uint8_t width;
+    uint8_t height;
+    uint32_t raw_offset;
+    uint32_t byte_count;
+    uint32_t raw_hash;
+} DM2_V1_OriginalRawMapReceipt;
 
 /* Read-only receipt for the source-owned fixed SUPPRESS sections directly
  * after an original raw SKSave dungeon structure. SKProject
@@ -380,6 +399,16 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
     const uint8_t *buf,
     size_t buf_size,
     DM2_V1_OriginalRawDungeonReceipt *out_receipt);
+
+/* Expose one authenticated saved-map tile span. The returned hash covers
+ * exactly the source byte-square span; no square type or object link is
+ * inferred here. */
+int dm2_v1_original_raw_sksave_map_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon,
+    int map,
+    DM2_V1_OriginalRawMapReceipt *out_receipt);
 
 /* Decode exactly s_savegamebuffer, v1e0104, globalb, globalw, c_hero,
  * c_wbbb and c_tim from the one shared SUPPRESS stream. Source: SKProject

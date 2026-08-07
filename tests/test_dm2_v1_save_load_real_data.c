@@ -374,6 +374,28 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
               receipt.map_count > 0u && receipt.map_data_hash != 0u &&
               receipt.prefix_hash != 0u && receipt.suppress_state_offset > 0u,
           "real SKSave payload exposes only a source-owned raw-dungeon prefix");
+    {
+        int maps_ok = 1;
+        uint32_t map_hash = 2166136261u;
+        int map;
+        for (map = 0; map < (int)receipt.map_count; ++map) {
+            DM2_V1_OriginalRawMapReceipt map_receipt;
+            if (!dm2_v1_original_raw_sksave_map_receipt(
+                    bytes + 42u, byte_count - 42u, &receipt, map,
+                    &map_receipt) || !map_receipt.valid ||
+                map_receipt.width == 0u || map_receipt.height == 0u ||
+                map_receipt.byte_count !=
+                    (uint32_t)map_receipt.width * map_receipt.height ||
+                map_receipt.raw_hash == 0u) {
+                maps_ok = 0;
+                break;
+            }
+            map_hash ^= map_receipt.raw_hash;
+            map_hash *= 16777619u;
+        }
+        CHECK(maps_ok && map_hash != 0u,
+              "real SKSave retains every source map geometry and tile span");
+    }
     memset(&state_receipt, 0, sizeof(state_receipt));
     CHECK(dm2_v1_original_raw_sksave_fixed_state_receipt(
               bytes + 42u, byte_count - 42u, &state_receipt) &&
