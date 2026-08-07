@@ -4810,6 +4810,11 @@ list(REMOVE_ITEM M10_SOURCES
 # it, and it has no M11/runtime caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_release_capture_manifest_pc34_compat.c")
+# `dm1_v1_f1206_f1225_source_ownership_pc34_compat.c` is a static ownership
+# audit with every route denied. Its direct audit target already compiles it,
+# and no M11/runtime path calls it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1206_f1225_source_ownership_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
