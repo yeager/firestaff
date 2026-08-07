@@ -6249,6 +6249,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_oicon_descriptor.c
     src/dm1/dm1_v1_fmtowns_menu_bss.c
     src/dm1/dm1_v1_fmtowns_egb_rect.c
+    src/dm1/dm1_v1_fmtowns_tmenu_input.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -56177,6 +56178,13 @@ add_executable(test_dm1_v1_fmtowns_egb_rect
 )
 target_include_directories(test_dm1_v1_fmtowns_egb_rect PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_egb_rect COMMAND test_dm1_v1_fmtowns_egb_rect)
+
+add_executable(test_dm1_v1_fmtowns_tmenu_input
+    tests/test_dm1_v1_fmtowns_tmenu_input.c
+    src/dm1/dm1_v1_fmtowns_tmenu_input.c
+)
+target_include_directories(test_dm1_v1_fmtowns_tmenu_input PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_tmenu_input COMMAND test_dm1_v1_fmtowns_tmenu_input)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c

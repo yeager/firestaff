@@ -1,0 +1,87 @@
+{
+    "version": 1,
+    "description": "Hash-locked manifest of the real DM1 FM Towns disc payload used as reference for every byte-verified module shipped in Firestaff.",
+    "provenance": "Extracted 2026-08-07 from 'Dungeon Master (Japan) (En,Ja) (Rev 1)' 7z archive, Track 01 MODE1/2352 CD image, stripped to ISO 9660 via 288-byte-per-sector header removal.",
+    "disc": {
+        "archive_file": "Dungeon Master (Japan) (En,Ja) (Rev 1).7z",
+        "track01_bin_size_bytes": 5056800,
+        "track01_bin_sector_count": 2150,
+        "track01_iso_size_bytes": 4403200
+    },
+    "files": [
+        {
+            "path": "EDM.EXP",
+            "size_bytes": 310518,
+            "sha256": "c888470d39aa449eac85438b598158492d2c981008cc6b427c52f2c73001ecb6",
+            "format": "Phar Lap P3 level-1 (32-bit protected mode)",
+            "role": "English DM1 game executable",
+            "used_by_modules": [
+                "dm1_v1_fmtowns_font_asset",
+                "dm1_v1_fmtowns_font_rasteriser",
+                "dm1_v1_fmtowns_menu_regions",
+                "dm1_v1_fmtowns_dynamenu",
+                "dm1_v1_fmtowns_dyna_buttons",
+                "dm1_v1_fmtowns_text_geometry",
+                "dm1_v1_fmtowns_icon_geometry",
+                "dm1_v1_fmtowns_icon_category",
+                "dm1_v1_fmtowns_oicon_descriptor",
+                "dm1_v1_fmtowns_menu_bss",
+                "dm1_v1_fmtowns_egb_rect",
+                "dm1_v1_fmtowns_startup"
+            ]
+        },
+        {
+            "path": "JDM.EXP",
+            "size_bytes": 290221,
+            "sha256": "1db4f049def0eef52a20a4758a1ce3e204f9f5a9ec04a57eef1245fdeede0bae",
+            "format": "Phar Lap P3 level-1 (32-bit protected mode)",
+            "role": "Japanese DM1 game executable",
+            "used_by_modules": [
+                "dm1_v1_fmtowns_jdm_symbols",
+                "dm1_v1_fmtowns_jdm_bss",
+                "dm1_v1_fmtowns_dyna_buttons_ja"
+            ]
+        },
+        {
+            "path": "TMENU.EXP",
+            "size_bytes": 235476,
+            "sha256": "0ab2833cc47651dfe40b85bbd0881a433b22f75819a4df5bbb13fdd80aba7dc1",
+            "format": "Phar Lap P3 level-1 (32-bit protected mode)",
+            "role": "TownsOS launcher (dispatches to EDM.EXP or JDM.EXP)",
+            "used_by_modules": [
+                "dm1_v1_fmtowns_tmenu_input"
+            ]
+        },
+        {
+            "path": "DATA/GRAPHICS.DAT",
+            "size_bytes": 396970,
+            "sha256": "d08049d026d8810cfcf9e6a898968bc74df98a3255de1402cc3884e245e03487",
+            "format": "FM Towns DM1 picture library (2 + 575 * 4 header + payload)",
+            "role": "English DM1 shared graphics/font asset container",
+            "used_by_modules": [
+                "dm1_v1_fmtowns_pic_library",
+                "dm1_v1_fmtowns_pic_library_loader",
+                "dm1_v1_fmtowns_font_rasteriser"
+            ]
+        },
+        {
+            "path": "DATA/DUNGEON.DAT",
+            "size_bytes": 33423,
+            "sha256": "3c744aa501211fc202586e8ccbed2a02783fd52453ce49c9951bfafc4d4bcc58",
+            "format": "FM Towns DM1 dungeon (identical layout to PC 3.4 DUNGEON.DAT)",
+            "role": "English DM1 dungeon data",
+            "used_by_modules": [
+                "dm1_v1_fmtowns_dungeon_dat"
+            ]
+        }
+    ],
+    "verification": {
+        "note": "Every byte-verified constant shipped in the modules listed above is round-trip tested against these hashes when the corresponding FIRESTAFF_DM1_FMTOWNS_* env var points at the extracted file. Tests skip cleanly when the file is absent so CI without the disc is not blocked.",
+        "env_vars": {
+            "EDM.EXP": "FIRESTAFF_DM1_FMTOWNS_EDM_EXP",
+            "JDM.EXP": "FIRESTAFF_DM1_FMTOWNS_JDM_EXP",
+            "TMENU.EXP": "FIRESTAFF_DM1_FMTOWNS_TMENU_EXP",
+            "DATA/": "FIRESTAFF_DM1_FMTOWNS_DATA_DIR"
+        }
+    }
+}
