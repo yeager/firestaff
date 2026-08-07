@@ -4852,9 +4852,8 @@ list(REMOVE_ITEM M10_SOURCES
 # compiles it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1626_f1645_source_ownership_pc34_compat.c")
-# `dm1_v1_action_spell_source_frame_m11_lifecycle_pc34_compat.c` is a
-# receipt-only lifecycle model with no production caller. Its direct audit
-# target compiles it until a live M11 source-frame owner is wired.
+# `m11_game_view.c` consumes this source-frame lifecycle to authenticate the
+# live action/spell handoff before publishing a runtime capture.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_source_frame_m11_lifecycle_pc34_compat.c")
 # `dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c` is a
@@ -6479,6 +6478,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_g0187_pc34_compat.c
     src/dm1/dm1_v1_sound_pc34_compat.c
     src/dm1/dm1_v1_click_routing_pc34_compat.c
+    src/dm1/dm1_v1_action_spell_source_frame_m11_lifecycle_pc34_compat.c
     src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
     src/engine/firestaff_touch.c
