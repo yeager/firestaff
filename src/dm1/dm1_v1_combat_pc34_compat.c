@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ── RNG (simple LCG, seedable for deterministic tests) ───────────── */
+/* ── RNG (DM1 PC 3.4 LCG from ReDMCSB BASE.C F0027) ─────────────── */
 static uint32_t g_rng_state = 12345;
 
 void dm1_combat_seed_rng(uint32_t seed) {
@@ -31,8 +31,8 @@ void dm1_combat_seed_rng(uint32_t seed) {
 
 int dm1_combat_random(int modulus) {
     if (modulus <= 0) return 0;
-    g_rng_state = g_rng_state * 1103515245u + 12345u;
-    return (int)((g_rng_state >> 16) & 0x7FFF) % modulus;
+    g_rng_state = g_rng_state * UINT32_C(0xBB40E62D) + UINT32_C(11);
+    return (int)((g_rng_state >> 8) & 0xFFFF) % modulus;
 }
 
 /* ── Helpers ──────────────────────────────────────────────────────── */

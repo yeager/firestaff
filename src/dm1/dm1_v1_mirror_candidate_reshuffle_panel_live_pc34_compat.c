@@ -120,7 +120,7 @@ static void expect_int_eq(int actual, int expected)
 
 static unsigned int next_u32(unsigned int *seed)
 {
-    *seed = (*seed * 1103515245u) + 12345u;
+    *seed = (*seed * UINT32_C(0xBB40E62D)) + UINT32_C(11);
     return *seed;
 }
 

@@ -13,8 +13,8 @@ static int f0179_random_pc34(struct RngState_Compat *rng, int modulus)
     uint32_t raw;
 
     if (!rng || modulus <= 0) return 0;
-    rng->seed = rng->seed * 1103515245u + 12345u;
-    raw = (rng->seed >> 16) & 0x7fffu;
+    rng->seed = rng->seed * UINT32_C(0xBB40E62D) + UINT32_C(11);
+    raw = (rng->seed >> 8) & 0xffffu;
     return (int)(raw % (uint32_t)modulus);
 }
 
