@@ -10,9 +10,10 @@
 #
 # What this script DOES
 # ---------------------
-# - Stages DM1 PC 3.4 from the tracked archive
-#   ``original-games/Game,Dungeon_Master,DOS,Software.7z`` into a scratch
-#   directory under ``$OUT_DIR``.
+# - Stages DM1 PC 3.4 from either the legacy tracked archive or the local
+#   real-data archive in ``~/.firestaff/data/dm1`` into a scratch directory
+#   under ``$OUT_DIR``. Both the legacy nested archive layout and the flat
+#   PC 3.4 ZIP layout are accepted.
 # - Generates a deterministic, fixed-cycles, core-normal dosbox.conf
 #   that disables dynamic cycles, fixes the machine to VGA, captures
 #   screenshots to a known directory, and autoboots DM.EXE.
@@ -49,6 +50,7 @@
 #   scripts/dosbox_dm1_capture.sh                 # stage + show commands
 #   scripts/dosbox_dm1_capture.sh --run           # stage + launch DOSBox
 #   scripts/dosbox_dm1_capture.sh --out /tmp/dm1  # override $OUT_DIR
+#   scripts/dosbox_dm1_capture.sh --archive /path/to/pc34.zip
 #   scripts/dosbox_dm1_capture.sh --multilingual  # use PC 3.4 Multilingual tree instead of the US-English tree
 #
 # Honesty
@@ -62,14 +64,26 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${REPO}/verification-screens/dm1-dosbox-capture"
-ARCHIVE="${REPO}/original-games/Game,Dungeon_Master,DOS,Software.7z"
+ARCHIVE="${FIRESTAFF_DM1_PC34_ARCHIVE:-}"
 GAME_SUBDIR="DungeonMasterPC34"
 DO_RUN=0
+
+if [[ -z "$ARCHIVE" ]]; then
+    for candidate in \
+        "${REPO}/original-games/Game,Dungeon_Master,DOS,Software.7z" \
+        "${HOME}/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"; do
+        if [[ -f "$candidate" ]]; then
+            ARCHIVE="$candidate"
+            break
+        fi
+    done
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --run) DO_RUN=1 ; shift ;;
         --out) OUT_DIR="$2"; shift 2 ;;
+        --archive) ARCHIVE="$2"; shift 2 ;;
         --multilingual) GAME_SUBDIR="DungeonMasterPC34Multilingual"; shift ;;
         -h|--help)
             sed -n '1,60p' "$0"
@@ -86,8 +100,9 @@ if [[ -z "$SEVENZ" ]]; then
     exit 3
 fi
 
-if [[ ! -f "$ARCHIVE" ]]; then
-    echo "ERROR: DM1 archive missing: $ARCHIVE" >&2
+if [[ -z "$ARCHIVE" || ! -f "$ARCHIVE" ]]; then
+    echo "ERROR: DM1 PC 3.4 archive missing." >&2
+    echo "Set FIRESTAFF_DM1_PC34_ARCHIVE or pass --archive /path/to/archive." >&2
     exit 4
 fi
 
@@ -106,9 +121,15 @@ CONF_PATH="$OUT_DIR/dosbox.conf"
 
 if [[ ! -f "$STAGE_DIR/DM.EXE" ]]; then
     echo "[pass-47] staging $GAME_SUBDIR into $STAGE_DIR"
-    mkdir -p "$OUT_DIR"
-    # Extract just the one directory we want, preserving path.
-    ( cd "$OUT_DIR" && "$SEVENZ" x -y "$ARCHIVE" "$GAME_SUBDIR/*" >/dev/null )
+    if "$SEVENZ" l -ba "$ARCHIVE" | grep -Fq "$GAME_SUBDIR/DM.EXE"; then
+        # Legacy archive: retain its directory prefix while extracting.
+        mkdir -p "$OUT_DIR"
+        ( cd "$OUT_DIR" && "$SEVENZ" x -y "$ARCHIVE" "$GAME_SUBDIR/*" >/dev/null )
+    else
+        # Current real-data archive: PC34 files live at its root.
+        mkdir -p "$STAGE_DIR"
+        ( cd "$STAGE_DIR" && "$SEVENZ" x -y "$ARCHIVE" >/dev/null )
+    fi
 else
     echo "[pass-47] $STAGE_DIR already staged"
 fi
@@ -165,6 +186,7 @@ echo Screenshots land in $CAPTURE_DIR
 EOF
 
 echo "[pass-47] wrote $CONF_PATH"
+echo "[pass-47] source archive: $ARCHIVE"
 echo "[pass-47] capture dir:  $CAPTURE_DIR"
 
 if [[ -z "$DOSBIN" ]]; then

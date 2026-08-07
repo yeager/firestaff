@@ -1,3 +1,15 @@
+# DM1 PC34 local-data capture harness (2026-08-07)
+
+- ✅ Updated `scripts/dosbox_dm1_capture.sh` to discover the real local
+  PC34 archive at `~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip`
+  when the historical `original-games` archive is absent. The harness accepts
+  both that archive's flat file layout and the legacy nested layout, without
+  copying game data into the repository.
+- ✅ Verified staging from the real ZIP in a temporary external directory:
+  `DM.EXE`, `DATA/DUNGEON.DAT` and `DATA/GRAPHICS.DAT` are present and the
+  generated DOSBox configuration mounts that exact staged tree and writes
+  captures to its isolated capture directory. No release was made.
+
 # DM2 original save-writer corpus audit (2026-08-07)
 - ✅ Revalidated all eight supplied original DOS save files
   (`sksave0..3.dat/.bak`, 51,521–51,574 bytes) against the source-ordered
