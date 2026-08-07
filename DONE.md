@@ -58541,7 +58541,6 @@ alcove runtime and archive-media tests passed (4/4).
   `DOORS` GDAT category contains no typed text rows. Door status/type labels
   therefore remain unavailable, while the real RAW4/GDAT panel and button
   placement still passes.
-
 # DM2 spell-feedback destination provenance (2026-08-07)
 
 - ✅ Bound the class-0x30 NEED_FLASK receipt to the source `0x5C` rectangle
@@ -58578,9 +58577,16 @@ alcove runtime and archive-media tests passed (4/4).
   mounted `DUNGEON.DAT` c_light scan. Real dynamic-map descriptors now prove
   only the branch selector and must remain blocked without recovered runtime
   state; fixed maps use their authenticated descriptor identity.
-
 # DM2 actuator shooter boundary (2026-08-07)
 
 - ✅ Extended the fail-closed shooter regression across all six source
   shooter types (`0x07..0x0a`, `0x0e..0x0f`); none allocates DB14 or queues
   `SHOOT_ITEM` before the record/timer owner is available.
+# Nexus SCSP read-trace boundary (2026-08-07)
+
+- ✅ Added a reproducible Mednafen sound-CPU SCSP-read producer with bounded
+  address/PC filters and a strict trace analyzer.
+- ✅ Ran it against the authenticated European French gameplay window. The
+  100-row receipt contains real shared-RAM/driver reads, but no mailbox read
+  at `0x100400..0x100401` and no `0x3224`-filtered read; SLEV/SAL semantics
+  and host playback therefore remain fail-closed.

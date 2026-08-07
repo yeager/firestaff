@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-SCSP-READ-CORRIDOR:** The external European gameplay producer now
+  supports bounded sound-CPU SCSP-read tracing with optional 68K-PC filtering.
+  A 100-record authenticated window reached `SDDRVS.TSK` setup/shared-RAM
+  reads, but contained no reads in the `0x100400..0x100401` SCSP mailbox
+  range and no `0x3224`-filtered row. This is a negative observation, not a
+  SLEV/SAL playback proof; retain semantic admission and host playback as
+  blocked until a trace joins a real event command to the driver consumer.
+
 - **NEXUS-SATURN-ACTIVE-VDP1-WITNESS-JOIN:** An external European Mednafen
   V2 gameplay capture now proves two non-idle VDP1 frames at `PTMR=02`,
   `EDSR=03`, `COPR=00000c`, with a stable systemclip/local-coordinate/type-2

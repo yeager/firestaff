@@ -1,0 +1,27 @@
+--- src/ss/sound.cpp
++++ src/ss/sound.cpp
+@@ -62,6 +62,7 @@
+ static unsigned FirestaffScspReadTraceCount;
+ static unsigned FirestaffScspReadTraceLimit = 100000;
+ static bool FirestaffScspReadTraceConfigured;
++static uint32 FirestaffScspReadPC;
+ static FILE *FirestaffMainScspTraceFile;
+ static uint32 FirestaffMainScspTraceMin = 0;
+ static uint32 FirestaffMainScspTraceMax = 0x200000;
+@@ -137,12 +138,15 @@
+   const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_READ_MIN");
+   const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_READ_MAX");
+   const char *limit = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_READ_LIMIT");
++  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_READ_PC");
+   if(min_text && *min_text) FirestaffScspReadTraceMin = strtoul(min_text, NULL, 0);
+   if(max_text && *max_text) FirestaffScspReadTraceMax = strtoul(max_text, NULL, 0);
+   if(limit && *limit) FirestaffScspReadTraceLimit = strtoul(limit, NULL, 10);
++  if(pc_text && *pc_text) FirestaffScspReadPC = strtoul(pc_text, NULL, 0);
+   FirestaffScspReadTraceConfigured = true;
+  }
+- if(address < FirestaffScspReadTraceMin || address >= FirestaffScspReadTraceMax ||
++ if((FirestaffScspReadPC && SoundCPU.PC != FirestaffScspReadPC) ||
++    address < FirestaffScspReadTraceMin || address >= FirestaffScspReadTraceMax ||
+     FirestaffScspReadTraceCount >= FirestaffScspReadTraceLimit)
+   return;
+  path = getenv("FIRESTAFF_NEXUS_TRACE_SCSP_READS");

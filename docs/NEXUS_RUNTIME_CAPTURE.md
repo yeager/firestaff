@@ -95,6 +95,13 @@ family at offset `$17` from `a5=0x100000`. This proves a runtime
 command-to-driver corridor, but does not bind the SLEV selector, MAP row or SAL
 sample; playback remains blocked.
 
+The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
+filter. In the retained 100-record European gameplay window, reads were
+observed from shared sound RAM and driver setup tables, but none from the
+`0x100400..0x100401` mailbox range and none while filtered to `0x3224`.
+`scripts/analyze_nexus_scsp_read_trace.py` records this negative result. It
+does not authorize an inferred event, selector, sample or playback route.
+
 The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
 explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the
 return pointer and framebuffer selector) before the unchanged raw VRAM/FB
