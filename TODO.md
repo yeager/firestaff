@@ -4342,6 +4342,10 @@ level or consumer bindings.
   and inventory now retain no caller-supplied values either. A zero-catalog
   shop module cannot be used as a synthetic session sidecar while the original
   `SHOP_GLASS` record transaction remains unbound.
+  **2026-08-13 source-data census:** the canonical G1 actuator regression now
+  inventories all source DB3 roots for shop-panel `0x3f` and shop-floor `0x30`
+  types before any merchant work; these type bytes remain census evidence only
+  and cannot authorize a shop without the source WALL_GFX/dt08/AI-33 chain.
   **2026-07-31 follow-up:** the last host-panel rectangle, English footer and
   empty-pack fallback are now no-draw as well. The exposed render contract
   clears its receipt and returns unavailable until the source-owned

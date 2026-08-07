@@ -58625,3 +58625,9 @@ Removed `dm2_v1_world_state.c` from the production DM2 archive. Its bounded
 save projection and deliberately unavailable writer remain available only to
 focused save/minimap tests, so the production library cannot advertise that
 projection as an original `SKSave.dat` runtime.
+# DM2 source DB3 shop census (2026-08-13)
+
+Extended the canonical G1 actuator regression to inventory every successfully
+materialized source DB3 root for shop-panel `0x3f` and shop-floor `0x30` types.
+The census is diagnostic evidence only; type bytes cannot activate a merchant
+without the source `WALL_GFX`/`dt08`/AI-33 transaction.

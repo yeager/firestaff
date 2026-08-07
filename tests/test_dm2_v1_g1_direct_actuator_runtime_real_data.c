@@ -50,6 +50,8 @@ int main(int argc, char **argv)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1RuntimeMapActuatorReceipt actuators;
     DM2_V1_G1RuntimeMapActuatorReceipt sentinel;
+    int shop_panel_count = 0;
+    int shop_floor_count = 0;
 
     if (!path) {
         puts("SKIP: no local canonical DM2 data");
@@ -102,6 +104,23 @@ int main(int argc, char **argv)
         fputs("FAIL: invalid map mutated Actuator receipt\n", stderr);
         return 1;
     }
+    /* Inventory every source-owned DB3 root before any shop route is
+     * considered. A type byte is only a census fact: it does not establish
+     * the live WALL_GFX/dt08/AI-33 transaction required by SKProject. */
+    for (int map = 0; map < dungeon.level_count; ++map) {
+        DM2_V1_G1RuntimeMapActuatorReceipt map_actuators;
+        if (!dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
+                &dungeon, map, &map_actuators)) {
+            continue;
+        }
+        for (int i = 0; i < map_actuators.actuator_root_count; ++i) {
+            uint8_t type = map_actuators.actuators[i].actuator_type;
+            if (type == 0x3fu) ++shop_panel_count;
+            if (type == 0x30u) ++shop_floor_count;
+        }
+    }
+    printf("source DB3 shop census: panel=0x3f:%d floor=0x30:%d\n",
+           shop_panel_count, shop_floor_count);
     dm2_v1_dungeon_free(&dungeon);
     puts("PASS: direct DB3 Actuator roots use only source-proven payload fields");
     return 0;
