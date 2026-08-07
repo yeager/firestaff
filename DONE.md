@@ -58,6 +58,14 @@
   either byte order. The result remains source-unbound and no-draw; dungeon
   bitmap, CLUT ownership and final HUD composition remain open.
 
+# Nexus MENU palette/CRAM negative join (2026-08-07)
+
+- ✅ Added the authenticated 256-entry `MENU.BPK` PALT payload to the same
+  VDP2 CRAM comparison, preserving its raw BE16 bytes and a word-swapped
+  comparison form.
+- ✅ The real one-frame sample reports no MENU palette match in either byte
+  order; the NBG1 source join remains unbound and semantic admission blocked.
+
 # DM2 GDAT source allocator table lifetime (2026-08-07)
 
 - ✅ Extended the bounded `DM2_READ_GRAPHICS_STRUCTURE` transaction with the

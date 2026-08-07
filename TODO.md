@@ -21,10 +21,11 @@
   compares it with 162 decoded retail MENU.BPK PRS3 surfaces plus 242
   authenticated FONT256 character-generator tiles and five DMWeb
   TITLE.BIN/TITLE.CG MAPD/TIBG maps plus the first authentic STABG.BIN map.
-  The one-frame and frame-7 eight-frame captures have zero non-zero exact
-  matches, and neither title nor STABG palette has an exact byte or word-swapped
-  CRAM match. Keep the result negative and continue with dungeon bitmap and
-  CLUT producer joins; do not promote a guessed source.
+  The authenticated 256-entry MENU.BPK PALT record is also checked. The
+  one-frame and frame-7 eight-frame captures have zero non-zero exact matches,
+  and MENU, title and STABG palettes have no exact byte or word-swapped CRAM
+  match. Keep the result negative and continue with dungeon bitmap and CLUT
+  producer joins; do not promote a guessed source.
 
 - **NEXUS-SCSP-READ-CORRIDOR:** The external European gameplay producer now
   supports bounded sound-CPU SCSP-read tracing with optional 68K-PC filtering.

@@ -70,7 +70,7 @@ def decode_prs3(stream: bytes, target: int) -> bytes | None:
     return bytes(output) if len(output) == target else None
 
 
-def menu_surfaces(data: bytes) -> list[tuple[str, bytes]]:
+def menu_surfaces(data: bytes) -> tuple[list[tuple[str, bytes]], bytes]:
     count = int.from_bytes(data[20:24], "big")
     offsets = [int.from_bytes(data[24 + i * 4:28 + i * 4], "big") for i in range(count)]
     trailer = len(data) - 524
@@ -91,7 +91,7 @@ def menu_surfaces(data: bytes) -> list[tuple[str, bytes]]:
         if pixels is None:
             raise ValueError(f"MENU.BPK PRS3 entry {index} failed decode")
         surfaces.append((f"MENU.BPK[{index}]", pixels))
-    return surfaces
+    return surfaces, data[trailer + 12:trailer + 524]
 
 
 def font_tiles(data: bytes) -> list[tuple[str, bytes]]:
@@ -220,7 +220,8 @@ def main() -> int:
         title, title_palette = title_maps(title_bin, title_cg)
         stabg = read_asset(args.data_dir, "STABG.BIN")
         stabg_pixels, stabg_palette = stabg_first_map(stabg)
-        sources = menu_surfaces(menu) + font_tiles(font) + title
+        menu_sources, menu_palette = menu_surfaces(menu)
+        sources = menu_sources + font_tiles(font) + title
         sources.append(("STABG.BIN[map=0]", stabg_pixels))
     except (OSError, ValueError) as error:
         print(f"NEXUS_VDP2_BITMAP_SOURCE_INVALID: {error}")
@@ -264,6 +265,10 @@ def main() -> int:
                              for offset in range(0, len(title_palette), 2))
     print(f"title_palette_cram_match={cram.find(title_palette)}")
     print(f"title_palette_cram_word_swap_match={cram.find(palette_swap)}")
+    menu_palette_swap = b"".join(menu_palette[offset:offset + 2][::-1]
+                                  for offset in range(0, len(menu_palette), 2))
+    print(f"menu_palette_cram_match={cram.find(menu_palette)}")
+    print(f"menu_palette_cram_word_swap_match={cram.find(menu_palette_swap)}")
     stabg_palette_swap = b"".join(stabg_palette[offset:offset + 2][::-1]
                                    for offset in range(0, len(stabg_palette), 2))
     print(f"stabg_palette_cram_match={cram.find(stabg_palette)}")
