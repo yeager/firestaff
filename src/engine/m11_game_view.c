@@ -51209,7 +51209,13 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                      state->inventoryPanelActive &&
                      slot == state->world.party.activeChampionIndex);
                 int drewDamageSurface = 0;
-                if (state->assetsAvailable) {
+                /* F0623 presents C015/C016 and its F0053 number as one
+                 * source-owned operation.  A loaded but non-M653 768-byte
+                 * record must not leave the real backing surface behind
+                 * with foreign glyphs over it. */
+                if (state->assetsAvailable &&
+                    (!m11_is_dm1_source_kind(state->sourceKind) ||
+                     m11_dm1_pc34_hud_font_is_source_bound(state))) {
                     const int damageGraphic = useBigDamage
                         ? dm1_v1_graphic_champion_damage_big_pc34()
                         : dm1_v1_graphic_champion_damage_small_pc34();

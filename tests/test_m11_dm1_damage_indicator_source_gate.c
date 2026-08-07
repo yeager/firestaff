@@ -94,6 +94,7 @@ int main(void)
     if (graphicsPath) {
         const M11_AssetSlot* damage;
         DM1_V1_ChampionStatusRectPc34 rect;
+        unsigned char foreignFont[M11_FONT_BITMAP_BYTES];
 
         seed_damage_state(&state);
         if (!M11_AssetLoader_Init(&state.assetLoader, graphicsPath)) {
@@ -127,6 +128,24 @@ int main(void)
               "C015 and M653 make pending damage visible");
         CHECK(framebuffer_has_source_pixel(damaged, damage, rect.x, rect.y),
               "F0623 presents C015 source pixels at C167");
+
+        /* C015 and F0053 form one source-owned F0623 operation.  A record
+         * with the right byte length but a foreign graphic identity is not
+         * M653 and must not leave a genuine red backing surface mixed with
+         * substitute glyph pixels. */
+        memcpy(foreignFont, state.originalFont.bitmap, sizeof(foreignFont));
+        CHECK(M11_Font_LoadFromRawBitmap(&state.originalFont, 694,
+                                         foreignFont, sizeof(foreignFont)),
+              "foreign 768-byte font fixture loads");
+        state.originalFontAvailable = 1;
+        state.championDamageTimer[0] = 0;
+        memset(baseline, 0, sizeof(baseline));
+        M11_GameView_Draw(&state, baseline, 320, 200);
+        state.championDamageTimer[0] = 3;
+        memset(damaged, 0, sizeof(damaged));
+        M11_GameView_Draw(&state, damaged, 320, 200);
+        CHECK(memcmp(baseline, damaged, sizeof(baseline)) == 0,
+              "foreign 768-byte font cannot admit C015 damage surface");
         M11_GameView_Shutdown(&state);
     }
 
