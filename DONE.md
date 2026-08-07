@@ -59579,3 +59579,14 @@ companion.
   zero. The source-shaped host formula remains unwired.
 - ✅ `test_dm2_v1_combat_pc34_compat`: 56/56; real PC-DOS GDAT regression:
   PASS.
+
+# DM2 FM Towns text owner census (2026-08-13)
+
+- ✅ Hardened `verify_dm2_production_placeholder_boundary.py` with an explicit
+  production census: exactly one M11 boot-panel text call, and exactly one
+  save-dialogue definition plus render call.
+- ✅ This keeps the authenticated PC-English companion callback as the only
+  live M11 text route while rejecting accidental direct `0AAF`, QueryDB or
+  GfxStr consumers. The remaining native event/dialogue owners are still
+  clearly open rather than being replaced with host text.
+- ✅ The DM2 production placeholder boundary verifier passes.

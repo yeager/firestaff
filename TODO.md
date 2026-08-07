@@ -30121,6 +30121,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   This is an ownership audit, not completion of native event/dialogue routing;
   keep the item open until those source consumers are genuinely live and use
   the companion callback.
+  **2026-08-13 owner-census hardening:** the production verifier now requires
+  exactly one M11 boot-panel text call (the save-dialogue consumer), plus one
+  definition and one render call for that consumer. Any new GUI/text route
+  must be source-bound before it can enter the product tree; the native
+  `c_dialog`/`c_gfx_str` event owners are still absent.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

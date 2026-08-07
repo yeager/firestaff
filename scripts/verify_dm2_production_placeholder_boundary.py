@@ -183,6 +183,22 @@ def verify(repo: Path) -> list[str]:
     # call site that bypasses the authenticated companion boundary.
     if "dm2_v1_boot_dialogue_open_panel_host_command(" not in m11:
         errors.append("M11 DM2 dialogue owner no longer uses the boot text boundary")
+    # Keep the live-owner census explicit.  At this stage only the save
+    # dialogue panel has a source-owned M11 route; admitting a second text
+    # consumer without binding its c_dialog/c_gfx_str owner would reintroduce
+    # host-authored or caller-authored text by accident.
+    dialogue_owner_calls = m11.count(
+        "dm2_v1_boot_dialogue_open_panel_host_command(")
+    if dialogue_owner_calls != 1:
+        errors.append(
+            "M11 DM2 dialogue owner census changed: expected one boot-panel "
+            f"call, found {dialogue_owner_calls}")
+    if "m11_draw_dm2_save_dialogue_panel(" not in m11:
+        errors.append("M11 DM2 save-dialogue consumer is missing")
+    if m11.count("m11_draw_dm2_save_dialogue_panel(") != 2:
+        errors.append(
+            "M11 DM2 save-dialogue census changed: expected one definition "
+            "and one render call")
     boot_path = repo / "src/dm2/dm2_v1_boot.c"
     if boot_path.exists():
         boot = boot_path.read_text(encoding="utf-8")
