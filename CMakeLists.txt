@@ -4939,6 +4939,11 @@ list(REMOVE_ITEM M10_SOURCES
 # direct test retains the documented ReDMCSB partly-open door audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0111_partly_open_door_pc34_compat.c")
+# `dm1_v1_f0931_f0934_prim_checksum_hex_source_audit_pc34_compat.c` is a
+# static owner inventory with no runtime route. Its generated direct test
+# retains the ReDMCSB ownership audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0931_f0934_prim_checksum_hex_source_audit_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
