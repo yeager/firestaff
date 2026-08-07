@@ -4905,6 +4905,11 @@ list(REMOVE_ITEM M10_SOURCES
 # Its direct regression target retains the documented ReDMCSB route audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_mouth_eye_release_pc34_compat.c")
+# `dm1_v1_viewport_d0r2_wall_pc34_compat.c` is a synthetic D0R wall pixel
+# probe with no live data or production owner. Its direct test compiles the
+# fixture until authenticated D0R wall material is wired.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0r2_wall_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
@@ -55139,7 +55144,9 @@ add_executable(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat tests/test_dm1_v1_v
 target_include_directories(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat COMMAND test_dm1_v1_viewport_d0l_d0r_wall_pc34_compat)
-add_executable(test_dm1_v1_viewport_d0r2_wall_pc34_compat tests/test_dm1_v1_viewport_d0r2_wall_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d0r2_wall_pc34_compat
+    tests/test_dm1_v1_viewport_d0r2_wall_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0r2_wall_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d0r2_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0r2_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0r2_wall_pc34_compat COMMAND test_dm1_v1_viewport_d0r2_wall_pc34_compat)
