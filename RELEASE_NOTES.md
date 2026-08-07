@@ -1,3 +1,27 @@
+# Firestaff v3.0.298
+
+## Added
+
+- `dm1_dos_real_data_manifest`: byte-verified real-data manifest for DM1 PC 3.4 English disc.
+- `dm2_dos_real_data_manifest`: byte-verified real-data manifest for DM2 Skullkeep DOS English.
+- `dm1_dos_animation_container`: byte-verified "AN" animation container header + tag scan.
+- FM Towns: cross-game shared-range maps (DM1/CSB/DM2), Phar Lap profiles, SYM1 symbol tables, OICON/DYNA_BUTTONS byte-identity proofs, SND API surface recovery, TBIOS shim, JDM font contract.
+- Parity evidence: ~75 new or updated evidence documents.
+
+## Changed
+
+- `g_poisonResistance[27]`: fix to derive from M061 `(Resistances >> 8) & 0xF` (I34E DUNGEON.C) instead of Properties[15:12]; 24 of 27 values were wrong — undead and constructs (Ghost, Skeleton, Stone Golem, Mummy, Animated Armour, Materializer, Black Flame) now correctly poison-immune (resistance 15).
+- `g_woundDefenseFactor`: fix feet slot from 2 to 1, source-locked to ReDMCSB DATA.C:427.
+- `G0243 CreatureInfo`: fix GraphicInfo/Attributes field confusion — correct all 27 creature entries to match I34E platform values.
+- `G0219 firstDerivedBitmapIndex`: fix to use M539=762 (MEDIA721/I34E), not 495.
+- `F0731/F0732 combat RNG`: fix to match CEDT002.C F0027 (real PC 3.4 LCG constants).
+- `F0027 RNG`: fix to use real PC 3.4 LCG constants (was using wrong multiplier/increment).
+- FM Towns: ext_v1 payload accounting refinements, ext_v4/v5 GRAPHICS.DAT per-record walker.
+
+## Removed
+
+- None.
+
 # Firestaff v3.0.297
 
 ## Added
