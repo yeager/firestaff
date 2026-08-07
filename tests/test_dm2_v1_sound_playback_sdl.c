@@ -4,8 +4,8 @@
  * decoded from verified GRAPHICS.DAT audio raw entries, behind the fail-closed
  * contract: nothing plays unless the sample decodes from a verified GDAT
  * entry and the SDL backend reports ready.  Runs headless with
- * SDL_AUDIODRIVER=dummy (set by the ctest environment); skips cleanly when no
- * local canonical DM2 data is present.
+ * SDL_AUDIODRIVER=dummy (set by the ctest environment); skips only when no
+ * explicit DM2 corpus is selected.
  *
  * Source: skproject/SKWIN/SkwinSDL.cpp (OpenAudio 6000 Hz, MAX_SB = 16,
  * sdlAudMix), SKULLWIN/c_sound.cpp:256-308 (R_928 metric).
@@ -56,15 +56,10 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
 static int load_graphics_dat(uint8_t **graphics, size_t *graphics_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char default_root[1024];
     char graphics_path[1100];
 
     if (!root || !root[0]) {
-        if (!home || !home[0]) return 0;
-        snprintf(default_root, sizeof(default_root),
-                 "%s/.firestaff/data/dm2/data", home);
-        root = default_root;
+        return -1;
     }
     snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
     return read_file(graphics_path, graphics, graphics_size);
@@ -133,10 +128,17 @@ int main(void)
     unsigned i;
     int failures = 0;
     int raw_id;
+    int load_result;
 
-    if (!load_graphics_dat(&graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 data");
+    load_result = load_graphics_dat(&graphics, &graphics_size);
+    if (load_result < 0) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
         return 0;
+    }
+    if (load_result == 0) {
+        fputs("FAIL: selected DM2 data root does not contain readable original GRAPHICS.DAT\n",
+              stderr);
+        return 1;
     }
 
     memset(&loader, 0, sizeof(loader));

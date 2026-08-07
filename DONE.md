@@ -59381,3 +59381,11 @@ local data.
   `test_dm2_v1_g1_scene_creature_gdat_real_data` that the cursor survives
   into the viewport render. The canonical F9 material and the independent
   `test_dm2_v1_creature_something_real_data` animation reader both pass.
+
+# ✅ 2026-08-07 DM2 SDL sound regression explicit corpus selection
+
+`test_dm2_v1_sound_playback_sdl` now reads audio entries only from an explicit
+`FIRESTAFF_DM2_DATA_DIR`. It skips when no corpus is selected and fails for an
+unreadable selected `graphics.dat`; the old private `HOME` fallback is gone.
+The SDL dummy-device regression still decodes and plays original GDAT PCM
+entries through the source-backed sound backend.

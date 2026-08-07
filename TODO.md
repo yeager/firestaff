@@ -2620,6 +2620,9 @@ level or consumer bindings.
   `FIRESTAFF_DM2_V1_DATA_DIR`, `FIRESTAFF_DM2_CANONICAL_DIR` and public
   `FIRESTAFF_DM2_DATA_DIR` inputs. It cannot borrow a separate installation
   from `HOME` before checking M12-to-M11 ownership.
+  The real SDL sound-playback regression also requires
+  `FIRESTAFF_DM2_DATA_DIR`; it decodes source GDAT audio only from the chosen
+  `graphics.dat`, and reports an invalid selection rather than probing HOME.
   **2026-08-07 G1 material update:** DB4 scene/viewport and DB5/DB9 map-chip
   regressions now use only an explicit or selected corpus. Missing exact F9
   material remains fail-closed; do not substitute a neighbouring GDAT row.
