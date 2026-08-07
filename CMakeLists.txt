@@ -4811,6 +4811,10 @@ list(REMOVE_ITEM M10_SOURCES
 # contract fixture. Its direct regression target compiles the source.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_inventory_pouch_quiver_backpack_swap_pc34_compat.c")
+# `dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c` is a synthetic
+# timeline/UI model. Its direct regression target compiles the source.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
@@ -13113,6 +13117,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_damage_f
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c")
     add_executable(test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat
         tests/test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c
+        src/dm1/dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c
         src/dm1/dm1_v1_champion_panel_damage_flash_decay_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_champion_panel_damage_flash_decay_pc34_compat PRIVATE firestaff_m10)
