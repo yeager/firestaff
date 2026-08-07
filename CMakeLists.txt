@@ -4924,6 +4924,11 @@ list(REMOVE_ITEM M10_SOURCES
 # target retain the documented ReDMCSB door-edge audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_door_edge_ornament_pc34_compat.c")
+# `dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c` is a synthetic
+# F0320 recorder with no production caller or asset path. Its direct test
+# retains the documented ReDMCSB mutation audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
