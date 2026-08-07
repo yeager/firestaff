@@ -3041,6 +3041,14 @@ level or consumer bindings.
   through this contract. This is still diagnostic-only: no production G1 DB
   allocator, tile-chain owner, possession-index owner, timer record owner, or
   `DM2_GAME_LOAD` publication exists, so no source save can resume yet.
+  2026-08-13 raw-pool baseline update: the production c_record owner can now
+  materialize the exact DB0..DB15 spans from an authenticated raw SKSave
+  dungeon receipt in RAM. It verifies every source pool hash and boundary,
+  copies no G1 extension, and keeps `record_graph_complete` false. The
+  mounted eight-file PC-DOS corpus proves both the complete baseline and a
+  one-byte tamper rejection. This is only the state after
+  `READ_DUNGEON_STRUCTURE`: port the source remove/clear/reallocate order,
+  tile roots, possessions and timer links before connecting it to Continue.
   2026-08-06 AI-mask correction: the reader no longer silently treats an
   unavailable `QUERY_CREATURE_AI_SPEC_FLAGS` lookup as zero. It requires the
   original `CREATURES[type] → v1d296c` selection before choosing DB4's

@@ -12,6 +12,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
@@ -380,6 +381,107 @@ static int verify_real_db_pool_receipts(const uint8_t *payload,
     return ok;
 }
 
+/* READ_DUNGEON_STRUCTURE owns the raw DB baseline before GAME_LOAD begins
+ * its shared SUPPRESS stream.  Verify the production pool owner against
+ * every actual DOS SKSave body, not a hand-built record fixture.  This stays
+ * deliberately before READ_SKSAVE_DUNGEON: a copied baseline is not a
+ * resumed record graph. */
+static int verify_real_raw_pool_baseline(
+    const uint8_t *payload,
+    size_t payload_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_RecordPoolSet rejected;
+    uint8_t *corrupt = NULL;
+    int pool;
+
+    if (!payload || !dungeon || !dungeon->valid) return 0;
+    memset(&pools, 0, sizeof(pools));
+    if (!dm2_v1_record_pool_set_init_from_raw_sksave(
+            &pools, payload, payload_size, dungeon) || !pools.valid ||
+        pools.record_graph_complete != 0) {
+        dm2_v1_record_pool_set_free(&pools);
+        return 0;
+    }
+
+    for (pool = 0; pool < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++pool) {
+        const int record_size = dm2_v1_record_pool_record_size(pool);
+        const uint16_t count = dungeon->db_record_counts[pool];
+        const DM2_V1_RecordPool *source = &pools.pools[pool];
+        const uint8_t *first;
+        const uint8_t *last;
+        const size_t bytes = (size_t)count * (size_t)record_size;
+
+        if (source->record_size != record_size ||
+            source->record_count != (int)count ||
+            source->extension_bytes != NULL || source->extension_count != 0 ||
+            source->extension_base != -1) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        if (record_size == 0) {
+            if (count != 0u || source->bytes != NULL) {
+                dm2_v1_record_pool_set_free(&pools);
+                return 0;
+            }
+            continue;
+        }
+        if (count == 0u) {
+            if (source->bytes != NULL || source->source_base != -1) {
+                dm2_v1_record_pool_set_free(&pools);
+                return 0;
+            }
+            continue;
+        }
+        first = dm2_v1_record_pool_address(
+            &pools, (int16_t)((uint16_t)pool << 10));
+        last = dm2_v1_record_pool_address(
+            &pools, (int16_t)(((uint16_t)pool << 10) | (count - 1u)));
+        if (source->source_base != (int)dungeon->db_pool_offsets[pool] ||
+            !first || !last ||
+            memcmp(first, payload + dungeon->db_pool_offsets[pool],
+                   (size_t)record_size) != 0 ||
+            memcmp(last, payload + dungeon->db_pool_offsets[pool] +
+                   bytes - (size_t)record_size,
+                   (size_t)record_size) != 0) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+    }
+
+    /* The body must be bound to the receipt hashes before allocation.  Flip
+     * a byte in a copied real body only to prove the negative admission
+     * boundary; production still receives the untouched original file. */
+    for (pool = 0; pool < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++pool) {
+        if (dungeon->db_record_counts[pool] != 0u) break;
+    }
+    if (pool == DM2_RAW_SKSAVE_DB_POOL_COUNT) {
+        dm2_v1_record_pool_set_free(&pools);
+        return 0;
+    }
+    corrupt = (uint8_t *)malloc(payload_size);
+    if (!corrupt) {
+        dm2_v1_record_pool_set_free(&pools);
+        return 0;
+    }
+    memcpy(corrupt, payload, payload_size);
+    corrupt[dungeon->db_pool_offsets[pool]] ^= 0x80u;
+    memset(&rejected, 0xa5, sizeof(rejected));
+    if (dm2_v1_record_pool_set_init_from_raw_sksave(
+            &rejected, corrupt, payload_size, dungeon) != 0 ||
+        rejected.valid != 0 || rejected.record_graph_complete != 0 ||
+        rejected.pools[pool].bytes != NULL) {
+        free(corrupt);
+        dm2_v1_record_pool_set_free(&pools);
+        dm2_v1_record_pool_set_free(&rejected);
+        return 0;
+    }
+    free(corrupt);
+    dm2_v1_record_pool_set_free(&pools);
+    return 1;
+}
+
 /* A real raw SKSAVE can be decoded for diagnostics, but it must never publish
  * a partial GAME_LOAD state.  The sentinels are host control values only; the
  * candidate passed to the runtime is the unmodified original DOS payload. */
@@ -515,6 +617,9 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
                                        &receipt),
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
+    CHECK(verify_real_raw_pool_baseline(bytes + 42u, byte_count - 42u,
+                                        &receipt),
+          "real SKSave DB baseline is owned in RAM before source record-link restoration");
     {
         const int direct_root_result = verify_real_direct_record_roots(
             bytes + 42u, byte_count - 42u, &state_receipt);

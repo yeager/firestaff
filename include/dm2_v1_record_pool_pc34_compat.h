@@ -32,6 +32,7 @@
 #include <stddef.h>
 
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_new_game.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,6 +132,30 @@ int dm2_v1_record_pool_set_init_from_world(DM2_V1_RecordPoolSet *set,
 int dm2_v1_record_pool_set_init_from_dungeon(
     DM2_V1_RecordPoolSet *set,
     const DM2_V1_DungeonData *dungeon);
+
+/* Materialize the DB0..DB15 pool image that SKProject has just installed by
+ * READ_DUNGEON_STRUCTURE while loading an original raw SKSave body.  The
+ * caller supplies the body after its 42-byte c_hex2a header and the receipt
+ * issued by dm2_v1_original_raw_sksave_dungeon_receipt().
+ *
+ * This is intentionally the pre-DM2_READ_SKSAVE_DUNGEON state: it copies
+ * the exact source pool spans and their declared capacities, but does not
+ * claim that record links, tile chains, hero possessions or timers have been
+ * restored.  In particular record_graph_complete remains zero.  The next
+ * GAME_LOAD stage must perform SKProject's remove/clear/reallocate order
+ * before a save can become playable.
+ *
+ * Source: SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD (1482-1526),
+ *         ::DM2_READ_SKSAVE_DUNGEON (1108-1400), and
+ *         c_record.cpp::DM2_GET_ADDRESS_OF_RECORD (44-57).
+ * Returns 1 only when every declared non-empty DB span is authenticated and
+ * copied.  On failure `set` is cleared; no caller-provided bytes are used as
+ * a fallback. */
+int dm2_v1_record_pool_set_init_from_raw_sksave(
+    DM2_V1_RecordPoolSet *set,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt);
 
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set);
 

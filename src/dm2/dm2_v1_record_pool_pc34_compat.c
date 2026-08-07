@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 /* skproject/SKULLWIN/c_record.cpp:28-31 — table_recordsizes[16], bytes per
  * record for DB0..DB15.  Zero entries (DB11..DB13) have no allocated pool in
@@ -331,6 +332,93 @@ int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
     }
     set->valid = 1;
     set->record_graph_complete = d->record_graph_complete;
+    return 1;
+}
+
+int dm2_v1_record_pool_set_init_from_raw_sksave(
+    DM2_V1_RecordPoolSet *set,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt)
+{
+    int pool;
+
+    if (set == NULL) {
+        return 0;
+    }
+    memset(set, 0, sizeof(*set));
+    if (raw_body == NULL || dungeon_receipt == NULL ||
+        !dungeon_receipt->valid ||
+        dungeon_receipt->suppress_state_offset == 0u ||
+        dungeon_receipt->suppress_state_offset > raw_body_size) {
+        return 0;
+    }
+
+    /* READ_DUNGEON_STRUCTURE has already laid out every DB pool before
+     * DM2_GAME_LOAD starts the one shared SUPPRESS stream.  Do not derive
+     * offsets from a convenient local cursor: the raw-dungeon receipt owns
+     * each original pool boundary and its hash. */
+    for (pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        DM2_V1_RecordPool *target = &set->pools[pool];
+        const int record_size = (int)s_table_recordsizes[pool];
+        const size_t count = dungeon_receipt->db_record_counts[pool];
+        const size_t offset = dungeon_receipt->db_pool_offsets[pool];
+        const size_t bytes = count * (size_t)record_size;
+
+        target->record_size = record_size;
+        target->source_base = -1;
+        target->extension_base = -1;
+
+        /* DB11..DB13 are unallocated by c_record.cpp.  A source receipt
+         * naming records in one of those pools is contradictory, not an
+         * invitation to invent a storage width. */
+        if (record_size == 0) {
+            if (count != 0u) {
+                dm2_v1_record_pool_set_free(set);
+                return 0;
+            }
+            continue;
+        }
+        if (count == 0u) {
+            continue;
+        }
+        if (count > SIZE_MAX / (size_t)record_size ||
+            offset > (size_t)INT_MAX ||
+            offset > dungeon_receipt->suppress_state_offset ||
+            bytes > dungeon_receipt->suppress_state_offset - offset ||
+            offset > raw_body_size || bytes > raw_body_size - offset) {
+            dm2_v1_record_pool_set_free(set);
+            return 0;
+        }
+        /* The receipt's pool identity prevents a structurally plausible
+         * truncated body from being materialized as a live DB baseline. */
+        {
+            uint32_t hash = 2166136261u;
+            size_t i;
+            for (i = 0u; i < bytes; ++i) {
+                hash ^= raw_body[offset + i];
+                hash *= 16777619u;
+            }
+            if (hash != dungeon_receipt->db_pool_hashes[pool]) {
+                dm2_v1_record_pool_set_free(set);
+                return 0;
+            }
+        }
+        target->bytes = (uint8_t *)malloc(bytes);
+        if (target->bytes == NULL) {
+            dm2_v1_record_pool_set_free(set);
+            return 0;
+        }
+        memcpy(target->bytes, raw_body + offset, bytes);
+        target->record_count = (int)count;
+        target->source_base = (int)offset;
+    }
+
+    set->valid = 1;
+    /* The raw prefix is only the exact DB baseline.  GAME_LOAD still calls
+     * DM2_READ_SKSAVE_DUNGEON to clear/rebuild dynamic records and attach
+     * every saved link, so this must never pass a complete-graph gate. */
+    set->record_graph_complete = 0;
     return 1;
 }
 

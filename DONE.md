@@ -59756,3 +59756,16 @@ companion.
 - ✅ The built tables remain explicit caller-owned source state. No decoded
   image, underlay or runtime cache admission was introduced.
 - ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.
+
+# DM2 SKSAVE raw DB-pool baseline (2026-08-13)
+
+- ✅ Added the production c_record owner for the raw `READ_DUNGEON_STRUCTURE`
+  DB0..DB15 baseline. It copies the original PC-DOS SKSAVE pool spans only
+  after the existing raw-dungeon receipt has verified every offset, size and
+  FNV identity.
+- ✅ The owner stays deliberately pre-`READ_SKSAVE_DUNGEON`: it does not add
+  a G1 continuation, invent record links or mark the graph complete. A
+  changed original byte rejects atomically and leaves no pool admitted.
+- ✅ Verified against all eight mounted PC-DOS primary/backup SKSAVE files:
+  `test_dm2_v1_save_load_real_data` 143/143 and
+  `test_dm2_v1_record_pool_pc34_compat` pass.
