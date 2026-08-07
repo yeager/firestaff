@@ -72,7 +72,8 @@ int dm1_v1_fmtowns_region_menu_clear_area_pc34(DM1_V1_FmtownsRegionRecord *out);
  * 0x28e78) — 17 records covering IDs 1..17. Every field is the
  * exact 8-byte record from EDM.EXP; see
  * parity-evidence/dm1_fmtowns_region_table.md for the disassembly
- * source and interpretation. */
+ * source and interpretation. Retained for backward compatibility;
+ * new consumers should use dm1_v1_fmtowns_region_lookup_pc34. */
 #define DM1_V1_FMTOWNS_REGION_BLOCK_1_ID_MIN   1
 #define DM1_V1_FMTOWNS_REGION_BLOCK_1_ID_MAX  17
 #define DM1_V1_FMTOWNS_REGION_BLOCK_1_COUNT   17
@@ -80,12 +81,34 @@ int dm1_v1_fmtowns_region_menu_clear_area_pc34(DM1_V1_FmtownsRegionRecord *out);
 extern const DM1_V1_FmtownsRegionRecord
     dm1_v1_fmtowns_region_block_1[DM1_V1_FMTOWNS_REGION_BLOCK_1_COUNT];
 
+/* Byte-verified index into the complete 23-block chain walked live
+ * from EDM.EXP head pointer 0x28f08. Fields mirror the on-disk
+ * header layout (u32 self_vaddr, u32 next_vaddr, u16 id_min,
+ * u16 id_max, u16 count, u16 record_base) with the added
+ * record_base offset for direct indexing into the concatenated
+ * dm1_v1_fmtowns_region_records array. */
+typedef struct {
+    uint32_t self_vaddr;
+    uint32_t next_vaddr;
+    uint16_t id_min;
+    uint16_t id_max;
+    uint16_t count;
+    uint16_t record_base;
+} DM1_V1_FmtownsRegionBlock;
+
+#define DM1_V1_FMTOWNS_REGION_BLOCK_COUNT     23
+#define DM1_V1_FMTOWNS_REGION_TOTAL_RECORDS  994
+
+extern const DM1_V1_FmtownsRegionBlock
+    dm1_v1_fmtowns_region_blocks[DM1_V1_FMTOWNS_REGION_BLOCK_COUNT];
+
+extern const DM1_V1_FmtownsRegionRecord
+    dm1_v1_fmtowns_region_records[DM1_V1_FMTOWNS_REGION_TOTAL_RECORDS];
+
 /* Generic lookup by region ID. Returns 1 and fills *out on success,
- * 0 if the ID is outside the currently-decoded blocks (only block 1
- * IDs 1..17 return records; the other 22 blocks totalling 977
- * records are not yet ported and this function fails closed for
- * them so callers can gate downstream rendering behind decoded
- * availability instead of guessing). */
+ * 0 if the ID is not found in any of the 23 decoded blocks. All
+ * blocks are now source-verified against EDM.EXP so this function
+ * covers the complete registry (994 records across 23 blocks). */
 int dm1_v1_fmtowns_region_lookup_pc34(
     uint16_t region_id, DM1_V1_FmtownsRegionRecord *out);
 

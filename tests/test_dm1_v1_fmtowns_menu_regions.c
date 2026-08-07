@@ -96,13 +96,33 @@ static void test_lookup_generic(void) {
     /* Region 11 too. */
     assert(dm1_v1_fmtowns_region_lookup_pc34(11, &r) == 1);
     assert(r.type == 2 && r.parent == 10 && r.a == 319 && r.b == 77);
-    /* Out-of-range IDs fail closed (blocks 2..23 not yet ported). */
+    /* IDs outside every block's range fail closed. Block 1 covers
+     * 400..419 so 399 must fail; block 22 (the tail) covers 110..116.
+     * Total decoded coverage: 994 records across 23 disjoint ranges. */
     assert(dm1_v1_fmtowns_region_lookup_pc34(0, &r) == 0);
-    assert(dm1_v1_fmtowns_region_lookup_pc34(18, &r) == 0);
-    assert(dm1_v1_fmtowns_region_lookup_pc34(400, &r) == 0);
-    assert(dm1_v1_fmtowns_region_lookup_pc34(999, &r) == 0);
+    assert(dm1_v1_fmtowns_region_lookup_pc34(18, &r) == 0);   /* gap after block 0 */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(399, &r) == 0);  /* just below block 1 */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(9999, &r) == 0);
+    /* 400 is now a valid ID (block 1). */
+    assert(dm1_v1_fmtowns_region_lookup_pc34(400, &r) == 1);
     /* NULL out gate. */
     assert(dm1_v1_fmtowns_region_lookup_pc34(10, NULL) == 0);
+}
+
+static void test_all_blocks_decoded(void) {
+    /* Sanity: every block header's range should resolve every id inside it. */
+    DM1_V1_FmtownsRegionRecord r;
+    unsigned int total_hits = 0;
+    for (unsigned int b = 0; b < DM1_V1_FMTOWNS_REGION_BLOCK_COUNT; ++b) {
+        const DM1_V1_FmtownsRegionBlock *blk =
+            &dm1_v1_fmtowns_region_blocks[b];
+        for (uint16_t id = blk->id_min; id <= blk->id_max; ++id) {
+            assert(dm1_v1_fmtowns_region_lookup_pc34(id, &r) == 1);
+            ++total_hits;
+        }
+    }
+    assert(total_hits == DM1_V1_FMTOWNS_REGION_TOTAL_RECORDS);
+    assert(total_hits == 994);
 }
 
 int main(void) {
@@ -113,6 +133,7 @@ int main(void) {
     test_parent_inheritance();
     test_block_1_full_table();
     test_lookup_generic();
+    test_all_blocks_decoded();
     printf("All dm1_v1_fmtowns_menu_regions tests passed.\n");
     return 0;
 }
