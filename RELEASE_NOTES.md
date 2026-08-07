@@ -1,3 +1,50 @@
+# Firestaff v3.0.301
+
+## Fixed
+
+- `nexus_v1_mechanics.c`: NULL deref guard on status pointer, ring slot off-by-one
+  (read RING2+AMULET instead of RING1+RING2), hardcoded champion count cap (was 4),
+  stamina underflow on food/water depletion.
+- `nexus_v1_hunger.c`: bounds check on champion index in food and water drain loops.
+- `nexus_v1_world.c`: monotonic object ID counter prevents ID collision after
+  `nexus_v1_object_remove()` swap-and-shrink; timer ID counter reset after deserialize.
+- `nexus_v1_ui_surfaces.c`: BGR555→RGB channel swap in three palette decode sites
+  (dgt2_pp, stabg, logobg) — red/blue were swapped vs ST-124 section-6 layout.
+- `nexus_v1_font_s2d.c`: uint64_t overflow guard on section bounds, div-by-zero
+  guard when tilemap width is zero.
+- `nexus_v1_movement.c`: NULL check on `out_result` in `nexus_movement_turn()`.
+- `nexus_v1_creatures.h`: remove duplicate `NEXUS_CRET_OFF_INDEX` macro definition.
+- `nexus_v1_movement.h`: add `nexus_square_is_water()` and `nexus_square_is_fire()`
+  predicate declarations.
+
+# Firestaff v3.0.300
+
+## Fixed
+
+- `nexus_v1_dungeon.c`: fix structure1f item material binding combined-index bounds
+  check (was ignoring special floor palette count); fix off-by-one 4bpp VDP1 texel
+  decode for odd pixel counts.
+- `nexus_v1_engine.c`: fix party-slot vs champion-index confusion in death handler
+  and status tick.
+- `nexus_v1_combat.c`: fix wound penalty to use separate body and limb tables with
+  proper clamping (DM.BIN 0x036AF0/0x036AF6 reference).
+- `nexus_v1_dmdf_model.c`: add material_id bounds check in descriptor validation.
+- `nexus_v1_mns.c`: uint64_t byte_count to prevent overflow on large pixel counts.
+- `nexus_v1_save_load.c`: fseek past unread champion data to prevent stream misalignment.
+
+# Firestaff v3.0.299
+
+## Fixed
+
+- `nexus_v1_dgn.c`: uint64_t overflow guard on s1e_offset door bounds check.
+- `nexus_v1_stmp.c`: uint64_t bounds checks to prevent signed wrap bypass.
+- `nexus_v1_boot_profile.c`: fix dead diagnostic bounds guard (size_t < 0 always false).
+- `nexus_v1_title_cg.c`: uint64_t overflow guard on tile bounds.
+- `nexus_v1_item_ibs.c`: uint32_t pixel count to prevent signed overflow.
+- `nexus_v1_dgn_scene_runtime_plan.c`: handle zero normals without false OOM.
+- `nexus_v1_iso_reader.c`: memset sector buffer + int64_t offset for large ISOs.
+- `nexus_v1_champions.c`: validate buffer size before deserializing champion data.
+
 # Firestaff v3.0.298
 
 ## Added
