@@ -4826,6 +4826,10 @@ list(REMOVE_ITEM M10_SOURCES
 # target compiles it, and it has no formatter backend or M11/runtime caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0432_format_disk_menu_pc34_compat.c")
+# `dm1_v1_m101_m150_source_audit_pc34_compat.c` is a static symbol audit with
+# no runtime route. Its direct audit target already compiles it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m101_m150_source_audit_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
