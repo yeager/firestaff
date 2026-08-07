@@ -1,0 +1,12 @@
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -130,0 +131,1 @@
++ uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -467,0 +468,5 @@
++uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
++{
++ (void)which;
++ return ne16_rbo_be<uint16>(SH7095_FastMap[address >> SH7095_EXT_MAP_GRAN_BITS], address);
++}

@@ -1263,6 +1263,11 @@
   by `0x0600231c`. This proves executing-code ownership of the writes, but
   the decoded tilemap/CLUT bank and final layer placement are still missing;
   recover those before promoting startup menu, HUD or viewport presentation.
+  The new code-window witness captures 64 unique writer PCs; primary
+  `0x06011924` exposes `25fe 0000 25fe 007c ...`, while `0x06001416` exposes
+  the VDP-register setup literals. Exact windows do not match the current
+  hash-verified `TM.BIN`/`DM.BIN` byte ranges, so determine the retail
+  relocation/decompression owner before interpreting the runtime words.
 
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`

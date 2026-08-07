@@ -108,6 +108,15 @@ VDP2 activity to executing Saturn code, but not yet to a decoded tilemap,
 CLUT bank, menu asset or final layer placement; semantic admission remains
 blocked.
 
+The producer also records 64 unique VDP2 writer code windows. The primary
+window at `PC=0x06011924` contains the runtime words
+`25fe 0000 25fe 007c ...`, while the initial register setup at
+`PC=0x06001416` contains the expected VDP-register literal pairs. The exact
+48-word windows do not occur verbatim in the hash-verified `TM.BIN` or
+`DM.BIN` files, so the current result is an execution/code receipt with
+source identity still unbound; no decompression or relocation interpretation
+is promoted to production semantics.
+
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at

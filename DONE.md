@@ -59001,6 +59001,12 @@ possession or hero-stat mutation was enabled.
   `0x060118fc` (40,448) and `0x06002fc4` (22,914), while register writes are
   dominated by `0x0600231c` (14,400). This is executing-code ownership, not
   yet a decoded tilemap/CLUT or production presentation proof.
+- ✅ Added the VDP2 writer code-window witness and strict retail comparison.
+  The authenticated run records 64 unique SH-2 windows; the primary
+  `0x06011924` window contains `25fe 0000 25fe 007c ...`, and the setup
+  window at `0x06001416` contains the VDP-register literal pairs. The exact
+  48-word windows do not occur verbatim in hash-verified `TM.BIN`/`DM.BIN`,
+  so the analyzer keeps source identity and semantic promotion blocked.
 - ⛔ This proves retail byte provenance and a live VDP1 writer, not the
   writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
   HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production

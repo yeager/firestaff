@@ -1,0 +1,36 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -109,3 +109,33 @@
+ static uint32 FirestaffVdp2WriteTraceMax;
+ static bool FirestaffVdp2WriteTraceConfigured;
++
++static FILE *FirestaffVdp2WriterCodeTraceFile;
++static uint32 FirestaffVdp2WriterCodeTracePCs[64];
++static unsigned FirestaffVdp2WriterCodeTraceCount;
++
++static void FirestaffTraceVdp2WriterCode(uint32 pc)
++{
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_CODE");
++ unsigned i;
++ uint32 code_start;
++ if(!path || !*path || !pc || pc < 0x40) return;
++ for(i = 0; i < FirestaffVdp2WriterCodeTraceCount; i++)
++  if(FirestaffVdp2WriterCodeTracePCs[i] == pc) return;
++ if(FirestaffVdp2WriterCodeTraceCount >= 64) return;
++ FirestaffVdp2WriterCodeTracePCs[FirestaffVdp2WriterCodeTraceCount++] = pc;
++ if(!FirestaffVdp2WriterCodeTraceFile)
++ {
++  FirestaffVdp2WriterCodeTraceFile = fopen(path, "wb");
++  if(!FirestaffVdp2WriterCodeTraceFile) return;
++  fputs("FIRESTAFF_NEXUS_VDP2_WRITER_CODE_TRACE_V1\n", FirestaffVdp2WriterCodeTraceFile);
++ }
++ code_start = pc - 0x40;
++ fprintf(FirestaffVdp2WriterCodeTraceFile,
++  "pc=0x%08x code_start=0x%08x words=48 code=", (unsigned)pc, (unsigned)code_start);
++ for(i = 0; i < 48; i++)
++  fprintf(FirestaffVdp2WriterCodeTraceFile, "%04x%s",
++   (unsigned)FirestaffPeekSH2Memory(0, code_start + i * 2U), i == 47 ? "" : ",");
++ fputc('\n', FirestaffVdp2WriterCodeTraceFile);
++ fflush(FirestaffVdp2WriterCodeTraceFile);
++}
+ static void FirestaffTraceVdp2Write(const char *area, uint32 address,

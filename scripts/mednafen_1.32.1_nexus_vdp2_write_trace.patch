@@ -12,6 +12,8 @@
 + unsigned size, uint16 value)
 +{
 + const char *path;
++ uint32 pc0 = CPU[0].GetRegister(SH7095::GSREG_RPC, NULL, 0);
++ FirestaffTraceVdp2WriterCode(pc0);
 + if(!FirestaffVdp2WriteTraceConfigured)
 + {
 +  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_MIN");
