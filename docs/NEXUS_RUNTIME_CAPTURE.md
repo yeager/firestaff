@@ -78,6 +78,15 @@ Mednafen instrumentation is kept in
 `scripts/mednafen_1.32.1_nexus_saturn_vdp1_pc_trace.patch`; it is diagnostic
 only and does not authorize production drawing.
 
+A second source-span-specific run captured 4,601 writes from runtime PC
+`0x06013098` into the beginning of the type-2 command's source window
+`0x47c00..0x49ffe`; the same bounded trace separately identifies the colour/
+framebuffer writers at `0x06026260`, `0x06026270`, `0x060262c4` and
+`0x060262d4`. The enhanced analyzer can require both a PC and an address
+range. This is a positive runtime writer corridor, not yet a DM.BIN/TM.BIN
+source join or a proof that the bytes are `DMV`, TITLE, MENU, HUD or DGN
+material, so semantic admission remains blocked.
+
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at

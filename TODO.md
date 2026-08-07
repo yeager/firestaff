@@ -25,6 +25,16 @@
   captured type-2 DGN texture source. Keep the negative receipt and semantic
   admission blocked; repeat only with a source-span-specific execution window.
 
+- **NEXUS-SATURN-VDP1-SOURCE-WRITER-CORRIDOR:** A source-span-specific
+  European startup run observed 4,601 writes from runtime PC `0x06013098`
+  into the beginning of the captured type-2 source window
+  (`0x47c00..0x49ffe`). The same trace separately records the known
+  framebuffer/colour writers at `0x06026260`, `0x06026270`, `0x060262c4` and
+  `0x060262d4`. This is the first positive writer corridor for that frame,
+  but the runtime PC has not yet been joined to a verified DM.BIN/TM.BIN
+  source span or a named `DMV`/TITLE/MENU consumer. Keep DGN/PRS3/menu/HUD
+  promotion blocked.
+
 - **DM1-MIRROR-RESURRECT-CHEST-CLOSE-ORDER-SYNTHETIC-AUDIT:** This
   C040/chest/queue fixture fabricates party, Thing and slot state. It loads
   no original DM1 data and has no M11/runtime caller; retain it only as

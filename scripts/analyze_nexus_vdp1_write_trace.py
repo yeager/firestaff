@@ -25,7 +25,10 @@ LINE = re.compile(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace", type=Path)
-    parser.add_argument("--require-pc", action="store_true")
+    parser.add_argument("--require-pc", type=lambda value: int(value, 0))
+    parser.add_argument("--require-address", type=lambda value: int(value, 0))
+    parser.add_argument("--require-address-min", type=lambda value: int(value, 0))
+    parser.add_argument("--require-address-max", type=lambda value: int(value, 0))
     args = parser.parse_args()
     try:
         lines = args.trace.read_text(encoding="ascii").splitlines()
@@ -39,6 +42,7 @@ def main() -> int:
     pcs: collections.Counter[str] = collections.Counter()
     addresses: collections.Counter[int] = collections.Counter()
     values: collections.Counter[int] = collections.Counter()
+    rows: list[tuple[int, int, int, int, int]] = []
     records = 0
     for line_number, line in enumerate(lines[1:], 2):
         match = LINE.fullmatch(line)
@@ -50,6 +54,7 @@ def main() -> int:
         value = int(match["value"], 16)
         pc0 = int(match["pc0"], 16)
         pc1 = int(match["pc1"], 16)
+        rows.append((address, int(match["size"], 10), value, pc0, pc1))
         addresses[address] += 1
         values[value] += 1
         pcs[f"0x{pc0:08x}"] += 1
@@ -60,9 +65,29 @@ def main() -> int:
     print("pc0_counts=" + ",".join(f"{pc}:{count}" for pc, count in pcs.most_common()))
     print(f"address_range=0x{min(addresses):05x}-0x{max(addresses):05x}" if addresses else "address_range=empty")
     print("top_values=" + ",".join(f"0x{value:04x}:{count}" for value, count in values.most_common(8)))
+    required = rows
+    if args.require_pc is not None:
+        required = [row for row in required if args.require_pc in row[3:5]]
+        print(f"required_pc=0x{args.require_pc:08x}")
+    if args.require_address is not None:
+        required = [row for row in required if row[0] == args.require_address]
+        print(f"required_address=0x{args.require_address:05x}")
+    if args.require_address_min is not None:
+        required = [row for row in required if row[0] >= args.require_address_min]
+        print(f"required_address_min=0x{args.require_address_min:05x}")
+    if args.require_address_max is not None:
+        required = [row for row in required if row[0] < args.require_address_max]
+        print(f"required_address_max=0x{args.require_address_max:05x}")
+    if args.require_pc is not None or args.require_address is not None or \
+            args.require_address_min is not None or args.require_address_max is not None:
+        print(f"required_matches={len(required)}")
+        for address, size, value, pc0, pc1 in required[:16]:
+            print(f"match addr=0x{address:05x} size={size} value=0x{value:04x} "
+                  f"pc0=0x{pc0:08x} pc1=0x{pc1:08x}")
     print("semantic_admission=blocked")
-    if args.require_pc and not pcs:
-        print("required_pc=missing")
+    if (args.require_pc is not None or args.require_address is not None or
+            args.require_address_min is not None or args.require_address_max is not None) and not required:
+        print("required_match=missing")
         return 1
     return 0
 

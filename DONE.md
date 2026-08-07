@@ -58604,3 +58604,11 @@ dialogue progression. Its real-data regression now calls the runtime boundary
 directly and verifies that an unowned square leaves NPC, dialogue, reputation,
 and host text unavailable. This matches the source-owned AI-33 creature/DB/CCM
 requirement in SKProject `skcrture.cpp:5368-5444,5697-5700`.
+# Nexus VDP1 source-writer corridor (2026-08-07)
+
+- ✅ Extended the VDP1 write-trace analyzer with exact PC and address-range
+  requirements.
+- ✅ Verified an authentic European startup window with 4,601 writes from
+  runtime PC `0x06013098` into `0x47c00..0x49ffe`; known framebuffer/colour
+  writers remain separately classified. The runtime writer is not promoted
+  to a named retail asset or production draw route without source identity.
