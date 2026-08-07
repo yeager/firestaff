@@ -5025,6 +5025,11 @@ list(REMOVE_ITEM M10_SOURCES
 # admission audit for the separately owned champion and revive paths.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0281_f0300_champion_source_receipt_pc34_compat.c")
+# `dm1_v1_viewport_d2c_door_frame_top_edge_pc34_compat.c` is an asset-free
+# source-lock fixture without a production caller. Its direct test and probe
+# retain the ReDMCSB D2C door-frame evidence.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_door_frame_top_edge_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
