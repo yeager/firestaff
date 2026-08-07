@@ -4,9 +4,10 @@
  * (DM2_GET_CREATURE_ANIMATION_FRAME + DM2_4FCC, the standalone
  * dm2_v1_creature_anim_4fcc export, and
  * DM2_CREATURE_SOMETHING_1c9a_0a48) consumed through the REAL GDAT
- * asset loader.  No game data is fabricated: the file is read from
- * FIRESTAFF_DM2_DATA_DIR/graphics.dat (or the canonical
- * ~/.firestaff/data/dm2/data fallback); without it the test SKIPs.
+ * asset loader.  No game data is fabricated: the file is read only from
+ * FIRESTAFF_DM2_DATA_DIR/graphics.dat.  Without an explicitly selected
+ * corpus the test SKIPs; a selected corpus that cannot provide the original
+ * file is an error.
  * The record pool, CAII slot and timer payload are synthetic RUNTIME
  * state — never fixture art.
  *
@@ -57,9 +58,7 @@ static void wr16(uint8_t *p, uint16_t v)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
     char path[1100];
-    char fallback[1024];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
@@ -73,17 +72,15 @@ int main(void)
     int failures = 0;
 
     if (!root || !root[0]) {
-        if (!home || !home[0]) {
-            puts("SKIP: no local canonical DM2 data");
-            return 0;
-        }
-        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data", home);
-        root = fallback;
+        puts("SKIP: no selected canonical DM2 data corpus");
+        return 0;
     }
     snprintf(path, sizeof(path), "%s/graphics.dat", root);
     if (!read_file(path, &graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 data");
-        return 0;
+        fprintf(stderr,
+                "FAIL: selected DM2 data corpus has no readable "
+                "graphics.dat: %s\n", path);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {

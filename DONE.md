@@ -4,6 +4,16 @@
   T/I/D/S/F/G/P field, rejected duplicate descriptors, and verified alternate
   descriptor order plus the real PC-DOS GRAPHICS.DAT layout. The complete
   `BUILD_GDAT_ENTRY_DATA` transaction and `GRAPHIC2.DAT` remain gated.
+# DM2 selected creature-animation corpus (2026-08-07)
+
+- ✅ `test_dm2_v1_creature_something_real_data` now reads only an explicitly
+  selected `FIRESTAFF_DM2_DATA_DIR` corpus. The mounted PC-DOS
+  `GRAPHICS.DAT` proves 57 authentic creature-animation table routes and a
+  real GAF/4FCC/`1c9a_0a48` receipt.
+- ✅ A selected root without `graphics.dat` now fails instead of borrowing a
+  private HOME directory or silently skipping. The DB4/CAII runtime state in
+  this isolated regression remains diagnostic; it does not admit creature
+  behavior into production.
 
 # Nexus VDP2 writer candidate receipt (2026-08-07)
 

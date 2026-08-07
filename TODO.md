@@ -4263,6 +4263,12 @@ level or consumer bindings.
   **2026-08-07 corpus update:** the dynamic V5 material and animation
   real-data probes now require the explicit selected corpus and fail when it
   cannot supply an accepted boot profile, AI classification or FB/FC/FD route.
+  **2026-08-07 animation-corpus update:** the remaining `1c9a_0a48`
+  animation-reader regression now likewise reads only the selected
+  `FIRESTAFF_DM2_DATA_DIR` corpus. Its mounted PC-DOS GRAPHICS.DAT receipt
+  proves 57 authentic animation-table routes; a selected root without a
+  readable original `graphics.dat` fails instead of borrowing a private HOME
+  corpus or silently skipping.
   **2026-08-07 row-owner update:** the live baseline now imports the
   authenticated 63×36-byte `table1d296c` byte table already retained from
   `SKProject/src/v5/dm2data.cpp`, including row 62. A real PC-DOS receipt
