@@ -58852,3 +58852,12 @@ draw modules have no M11 call site and remain excluded from product archives.
 Extended `verify_dm2_production_placeholder_boundary.py` to reject a future
 direct M11 call to those unbound owners. Native event/dialogue routing remains
 open; no host text or synthetic companion data was introduced.
+
+# DM2 champion mirror raw-marker gate (2026-08-13)
+
+Tightened `dm2_v1_select_champion` against SKProject `c_loadlevel.cpp:604-611`
+and `c_hero.cpp:1052-1098`: the canonical PC G1 DB3 mirror must retain raw
+actuator data `0x1ff` as well as the derived `0x16ffffff` DYN4 selector and
+source direction. Added a regression proving that a mismatched raw marker is
+rejected even when its dynamic selector is forged to match. No party,
+possession or hero-stat mutation was enabled.

@@ -96,6 +96,15 @@ static void test_select_requires_exact_source_marker_identity(void)
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 0);
 
+    /* The selector key alone is insufficient: c_loadlevel.cpp derives
+     * 0x16ffffff from the canonical raw DB3 value 0x1ff, so a mismatched
+     * actuator word must remain fail-closed. */
+    req.direction = 2;
+    mirrors.mirrors[0].actuator_data = 0x1feu;
+    assert(dm2_v1_select_champion(&req, &receipt) == 0);
+    assert(receipt.source_mirror_bound == 0);
+    mirrors.mirrors[0].actuator_data = 0x1ffu;
+
     /* Other source-authored hero types retain their own derived selector;
      * the lifecycle seam must not overfit the PC G1 type-0xff case. */
     mirrors.mirrors[0].dynamic_hero_type = 2u;

@@ -68,12 +68,15 @@ int dm2_v1_select_champion(
             /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION reads the marker
              * from the addressed tile and passes that tile's facing into
              * REVIVE_PLAYER.  c_loadlevel.cpp derives the selector from the
-             * marker's low byte; a caller-owned receipt with another selector
-             * or a mismatched facing is not a champion source. */
+             * marker's low byte; the canonical PC G1 marker is the raw
+             * 0x1ff actuator value before that truncation. A caller-owned
+             * receipt with another raw marker, selector or facing is not a
+             * champion source. */
             if (mirror->map != request->map_level ||
                 mirror->x != request->tile_x ||
                 mirror->y != request->tile_y ||
                 mirror->direction != (uint8_t)request->direction ||
+                mirror->actuator_data != 0x1ffu ||
                 mirror->dynamic_load_id !=
                     (0x1600ffffu +
                      ((uint32_t)mirror->dynamic_hero_type << 16))) {

@@ -29665,6 +29665,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   requires the addressed marker's source direction and source-derived dynamic
   selector before reporting a mirror binding. It still does not mutate a party
   or call `REVIVE_PLAYER` without the live GDAT hero-stat owner.
+  **2026-08-13 raw-marker correction:** selection now independently requires
+  the canonical PC G1 DB3 actuator value `0x1ff`, not merely its derived
+  `0x16ffffff` selector. A mismatched raw marker with the right selector is
+  rejected; party mutation and possession transfer remain open.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown
