@@ -10,7 +10,7 @@ Test files: 39 test_dm1_v1*.c
 ## Probe Tests (NOT BUILT)
 
 dm1_v1_viewport_draw_order_probe - exists in probes/dm1/ but not built
-dm1_v1_game_loop_redraw_cadence_probe - exists in probes/dm1/ but not built  
+dm1_v1_game_loop_redraw_cadence_probe - exists in probes/dm1/ but not built
 dm1_v1_viewport_palette_as_before_probe - exists in probes/dm1/ but not built
 
 CTest entries for these fail with Could not find executable.

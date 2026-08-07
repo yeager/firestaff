@@ -12,7 +12,7 @@
  * bit-identical to the original.
  *
  * Source: no ReDMCSB equivalent — color grading is a Firestaff V2.0
- * presentation extra. See DM1_V2_PLAN.md (visual extras).
+ * presentation extra. See docs/plans/DM1_V2_PLAN.md (visual extras).
  */
 
 #include <stddef.h>

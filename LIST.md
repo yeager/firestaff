@@ -35,7 +35,7 @@
 ### 11. Plan för att integrera CSB stöd i Firestaff
 **Priority:** P1
 **Status:** ✅ DONE — commit b604d20c
-**Output:** `CSB_INTEGRATION_PLAN.md` (361 lines)
+**Output:** `docs/plans/CSB_INTEGRATION_PLAN.md` (361 lines)
 
 ---
 
@@ -76,7 +76,7 @@
 ## CSB V1 Status
 
 **Started:** 2026-05-26 21:31 GMT+2
-**Plan:** See `CSB_INTEGRATION_PLAN.md`
+**Plan:** See `docs/plans/CSB_INTEGRATION_PLAN.md`
 **Existing code:** 13 header + 13 source files in `src/csb/` and `include/csb*`
 **Key existing modules:**
 - `csb_v1_character_pc34_compat.c/h` — champion system (4 champions imported from DM1)

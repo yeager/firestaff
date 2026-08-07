@@ -9,7 +9,7 @@ Creature AI, combat, spells, inventory, needs, doors, sensors, save/load all hav
 3. **Inscriptions hard to read** — font scaling at wall depth, contrast
 4. **Swoosh animation** — TITLE.DAT path resolution for boot sequence
 
-## Phase 2: Combat & Creature Parity  
+## Phase 2: Combat & Creature Parity
 5. **Creature damage formula** — replace simplified baseDmg/3 with ReDMCSB F0230 armor/defense/random
 6. **Party attack damage** — verify orchestrator EMIT_DAMAGE_DEALT matches F0231
 7. **Creature projectiles** — ranged creatures (vexirk, etc.) create spell projectiles
