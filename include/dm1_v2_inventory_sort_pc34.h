@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 typedef enum {
     SORT_BY_NAME,
@@ -38,6 +37,8 @@ typedef struct {
     bool filter_active;
 } M11_V2_InventoryView;
 
+/* Compatibility-only. PC34 inventory remains in source-owned carry slots;
+ * these calls neither duplicate items nor reorder them. */
 void v2_inv_init(void);
 bool v2_inv_add_item(const char* name, int weight, int value, M11_V2_ItemCategory cat);
 void v2_inv_sort(M11_V2_SortMode mode);

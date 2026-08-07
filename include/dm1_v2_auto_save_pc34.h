@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +16,8 @@ typedef struct {
     uint32_t last_save_tick;
 } M11_V2_AutoSaveConfig;
 
+/* Compatibility-only. PC34 owns explicit save/load commands; all automatic
+ * slots, timers and serialized V2 configuration fail closed. */
 void v2_autosave_init(int max_slots, uint32_t interval);
 bool v2_autosave_check(uint32_t current_tick);
 void v2_autosave_get_path(char *buf, int bufsize);

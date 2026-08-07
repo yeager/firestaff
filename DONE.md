@@ -1,3 +1,10 @@
+# DM1 V2:s lokala kontroll- och lagringstillstånd spärrat (2026-08-07)
+
+- ✅ Spärrade V2:s egna tangenttabell, roterande autosaves och kopierade
+  inventarieposter. ReDMCSB äger kommandon, F0433/F0435-sparning och
+  inventarieslotar. CTesten och källåset kontrollerar att inga värdar kan
+  behålla eller serialisera parallellt tillstånd.
+
 # CSB PC34 launcher regression isolation (2026-08-07)
 
 - ✅ The real-media M12→M11 PC34 startup and V2 handoff probes now select the

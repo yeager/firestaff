@@ -36,6 +36,8 @@ typedef struct {
     int gamepad_button;
 } M11_V2_KeyBinding;
 
+/* Compatibility-only. PC34 command records own controls; no V2 binding table
+ * or host persistence is retained. */
 void v2_input_init_defaults(void);
 void v2_input_remap(M11_V2_GameAction action, int key);
 int v2_input_get_action(int scancode);

@@ -28559,6 +28559,12 @@ endif()
         src/dm1v2/dm1_v2_minimap_pc34.c
         src/dm1v2/dm1_v2_tooltip_pc34.c
     )
+    add_executable(test_dm1_v2_host_state_extensions_pc34
+        tests/test_dm1_v2_host_state_extensions_pc34.c
+        src/dm1v2/dm1_v2_input_remap_pc34.c
+        src/dm1v2/dm1_v2_auto_save_pc34.c
+        src/dm1v2/dm1_v2_inventory_sort_pc34.c
+    )
     add_executable(test_dm1_v2_screen_transition_pc34
         tests/test_dm1_v2_screen_transition_pc34.c
         src/dm1v2/dm1_v2_screen_transition_pc34.c
@@ -29334,6 +29340,7 @@ endif()
         target_compile_options(test_dm1_v2_level_transition_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_message_stats_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_synthetic_ui_overlays_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_host_state_extensions_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_screen_transition_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_interaction_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_selected_resolution_input_mapping_pc34 PRIVATE -Wall -Wextra -O2)
@@ -29546,6 +29553,8 @@ endif()
         NAME dm1_v2_synthetic_ui_overlays_pc34
         COMMAND test_dm1_v2_synthetic_ui_overlays_pc34
     )
+    add_test(NAME dm1_v2_host_state_extensions_pc34 COMMAND test_dm1_v2_host_state_extensions_pc34)
+    add_test(NAME dm1_v2_host_state_extensions_source_lock COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_host_state_extensions_source_lock.py)
     add_test(
         NAME dm1_v2_synthetic_ui_overlays_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_synthetic_ui_overlays_source_lock.py

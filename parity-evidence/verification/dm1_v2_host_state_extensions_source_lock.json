@@ -1,0 +1,20 @@
+{
+  "anchors": {
+    "COMMAND.C": [
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "C140_COMMAND_SAVE_GAME",
+      "F0355_INVENTORY_Toggle_CPSE"
+    ],
+    "LOADSAVE.C": [
+      "F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF",
+      "F0435_STARTEND_LoadGame"
+    ],
+    "PANEL.C": [
+      "F0355_INVENTORY_Toggle_CPSE"
+    ]
+  },
+  "errors": [],
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 host-owned input, autosave and inventory state",
+  "status": "passed"
+}
