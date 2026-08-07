@@ -390,6 +390,7 @@ int dm2_v1_combat_resolve_attack_on_creature(
     memset(&receipt, 0, sizeof(receipt));
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     receipt.creature_type = creature_type;
+    receipt.missing_source_mask = DM2_V1_COMBAT_MISSING_ALL;
 
     (void)weapon;
     (void)attacker_strength;
@@ -410,6 +411,7 @@ int dm2_v1_combat_resolve_attack_on_creature(
             /* c_record.cpp:1351-1354 returns the source AIDefinition byte
              * @8. Retain it only as evidence; no damage is derived here. */
             receipt.defense = (int)defense;
+            receipt.proven_source_mask = DM2_V1_COMBAT_PROVEN_TARGET_DEFENSE;
         }
     }
     if (out_receipt) *out_receipt = receipt;

@@ -465,6 +465,8 @@ static int test_creature_route_rejects_incomplete_source_contract(void) {
                                                       0, 0, &r);
     return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
            r.rejected_no_defense_provider &&
+           r.missing_source_mask == DM2_V1_COMBAT_MISSING_ALL &&
+           r.proven_source_mask == 0u &&
            r.damage == 0 && r.kills == 0;
 }
 
@@ -478,6 +480,8 @@ static int test_creature_route_rejects_provider_only_contract(void) {
     dm2_v1_combat_bind_creature_defense_fn(NULL);
     return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
            r.rejected_defense_unproven &&
+           r.missing_source_mask == DM2_V1_COMBAT_MISSING_ALL &&
+           r.proven_source_mask == 0u &&
            r.damage == 0;
 }
 
@@ -491,7 +495,10 @@ static int test_creature_route_rejects_proven_defense_alone(void) {
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
     return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
-           r.defense == 5 && r.damage == 0 && r.kills == 0 &&
+           r.defense == 5 &&
+           r.missing_source_mask == DM2_V1_COMBAT_MISSING_ALL &&
+           r.proven_source_mask == DM2_V1_COMBAT_PROVEN_TARGET_DEFENSE &&
+           r.damage == 0 && r.kills == 0 &&
            r.creature_type == 24;
 }
 

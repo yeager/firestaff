@@ -30054,6 +30054,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   that condition. This
   does not close the item: the live champion/CMDSTR/target/RNG/writeback owner
   chain is still absent.
+  **2026-08-13 source-owner audit progress:** the receipt now reports all
+  seven missing source owners separately from the one proven target-Defense
+  byte; the real PC-DOS GDAT regression asserts this split, while damage and
+  kills remain zero and the host formula remains unwired.
   **2026-08-07 source-roll correction:** the diagnostic hit-check seam now
   consumes five RNG bits (`rand_hit & 0x1f`), matching SKProject's
   `DM2_CALC_PLAYER_ATTACK_DAMAGE` source contract. A `0x0f`/`0x10` boundary

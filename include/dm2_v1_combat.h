@@ -105,6 +105,24 @@ typedef int (*DM2_V1_CombatCreatureDefenseFn)(int creature_type,
                                               uint16_t *out_defense);
 void dm2_v1_combat_bind_creature_defense_fn(DM2_V1_CombatCreatureDefenseFn fn);
 
+/* Missing owners from skproject/SKWINSPX/src/v5/skhero.cpp:234-468.
+ * These bits are an audit receipt, not permission to use the compatibility
+ * damage formula. */
+enum {
+    DM2_V1_COMBAT_MISSING_CHAMPION_HAND = 1u << 0,
+    DM2_V1_COMBAT_MISSING_CMDSTR_ACTION = 1u << 1,
+    DM2_V1_COMBAT_MISSING_TARGET_RECORD = 1u << 2,
+    DM2_V1_COMBAT_MISSING_DIFFICULTY_LIGHT = 1u << 3,
+    DM2_V1_COMBAT_MISSING_ITEM_WORDS = 1u << 4,
+    DM2_V1_COMBAT_MISSING_SOURCE_RNG = 1u << 5,
+    DM2_V1_COMBAT_MISSING_WRITEBACK = 1u << 6,
+    DM2_V1_COMBAT_MISSING_ALL = (1u << 7) - 1u
+};
+
+enum {
+    DM2_V1_COMBAT_PROVEN_TARGET_DEFENSE = 1u << 0
+};
+
 typedef struct {
     uint8_t valid;
     uint8_t rejected_incomplete_source_contract;
@@ -115,6 +133,8 @@ typedef struct {
     int defense;    /* data-backed AIDefinition Defense byte @8 */
     int damage;     /* remains zero until the complete source owner is bound */
     int kills;      /* remains zero until damage is source-resolved */
+    uint32_t missing_source_mask;
+    uint32_t proven_source_mask;
 } DM2_V1_CombatCreatureReceipt;
 
 /* This bridge remains fail-closed until DM2_ENGAGE_COMMAND's complete source

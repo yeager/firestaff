@@ -59558,3 +59558,14 @@ RAM-owned. The shared CUE parser has unit coverage for valid and malformed
 member declarations; the real HME-242 probe plus M12 and M11 startup/animation
 tests pass against the selected Japanese disc and original PC-English
 companion.
+
+# DM2 combat source-owner audit (2026-08-13)
+
+- ✅ Extended the fail-closed creature-combat receipt with an explicit mask for
+  the seven still-missing source owners: champion hand, CMDSTR action, target
+  record, difficulty/light, item words, source RNG, and player-stat writeback.
+- ✅ Kept the proven real-GDAT target Defense byte in a separate proof mask;
+  the PC-DOS GLOP regression now asserts that split and that damage/kills stay
+  zero. The source-shaped host formula remains unwired.
+- ✅ `test_dm2_v1_combat_pc34_compat`: 56/56; real PC-DOS GDAT regression:
+  PASS.

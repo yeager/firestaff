@@ -259,7 +259,9 @@ int main(void)
               "partial combat remains disabled despite proven source defense");
         CHECK(cr.valid && cr.rejected_incomplete_source_contract &&
                   !cr.rejected_defense_unproven && cr.defense == 5 &&
-                  cr.damage == 0,
+                  cr.damage == 0 && cr.kills == 0 &&
+                  cr.missing_source_mask == DM2_V1_COMBAT_MISSING_ALL &&
+                  cr.proven_source_mask == DM2_V1_COMBAT_PROVEN_TARGET_DEFENSE,
               "combat receipt retains real defense but preserves the complete-contract gate");
         dm2_v1_combat_bind_creature_defense_fn(NULL);
     }
