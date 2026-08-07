@@ -8,12 +8,13 @@
   path, tilemap/CLUT consumer and menu/HUD/viewport meaning remain unbound.
 
 - **NEXUS-VDP2-LAYER-CONSUMER:** The authentic European raw witness now decodes
-  `TVMD=0x0080`, `BGON=0x0002` (only `NBG1` enabled), `CHCTLA=0x1211`,
-  `PNCN1=0x00c0`, `MPOFN=0x3000`, `CRAOFA=0x1000` and `PRINA=0x0503`.
-  These values prove the captured Saturn layer configuration, not the retail
-  file or runtime producer that populated its map/character data. Join NBG1
-  VRAM/CRAM ranges to `FONT256`, `MENU.BPK`, title, HUD or viewport source
-  bytes before enabling host composition.
+  `TVMD=0x0080`, `BGON=0x0002` (only `NBG1` enabled), and `CHCTLA=0x1211`
+  selects NBG1 bitmap mode, colour code `1`, bitmap-size code `0`, and
+  `BMPNA=0x0000` bitmap palette `0`. `PNCN1=0x00c0`, `MPOFN=0x3000`,
+  `CRAOFA=0x1000` and `PRINA=0x0503` are also observed, but the map registers
+  are not the active NBG1 source in this bitmap-mode frame. Join the bitmap
+  VRAM span and CLUT to a retail source record before assigning it to title,
+  menu, HUD or viewport composition.
 
 - **NEXUS-SCSP-READ-CORRIDOR:** The external European gameplay producer now
   supports bounded sound-CPU SCSP-read tracing with optional 68K-PC filtering.

@@ -55,6 +55,23 @@ def enabled_layers(bgon: int) -> list[str]:
     return [name for bit, name in enumerate(names) if bgon & (1 << bit)]
 
 
+def nbg_mode(chctla: int, layer: int) -> tuple[str, int, int, int]:
+    """Return (mode, colour_code, bitmap_size_code, bitmap_palette)."""
+    shift = layer * 8
+    bitmap = (chctla >> (1 + shift)) & 1
+    if layer == 0:
+        colour_code = (chctla >> 4) & 7
+        palette = None
+    else:
+        colour_code = (chctla >> 12) & 3
+        palette = 0
+    if not bitmap:
+        return "character", colour_code, 0, -1
+    # BMPNA bits 8..10 are NBG1's bitmap palette selector; the caller
+    # supplies the register value separately for the active layer.
+    return "bitmap", colour_code, (chctla >> (2 + shift)) & 3, palette or 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -78,9 +95,15 @@ def main() -> int:
     }
     bgon = values["BGON"]
     layers = enabled_layers(bgon)
+    nbg1_mode, nbg1_colour, nbg1_size, _ = nbg_mode(values["CHCTLA"], 1)
+    nbg1_palette = (values["BMPNA"] >> 8) & 7
     print(f"frame={args.frame}")
     print("registers=" + ",".join(f"{name}=0x{value:04x}" for name, value in values.items()))
     print("enabled_layers=" + (",".join(layers) if layers else "none"))
+    print(
+        f"NBG1_mode={nbg1_mode} colour_code={nbg1_colour} "
+        f"bitmap_size_code={nbg1_size} bitmap_palette={nbg1_palette}"
+    )
     print(
         "nbg_map_offsets="
         + ",".join(f"NBG{index}=0x{(values['MPOFN'] >> (index * 4)) & 7:x}" for index in range(4))
@@ -95,6 +118,7 @@ def main() -> int:
         + ",".join(f"NBG{index}={(values['CRAOFA'] >> (index * 4)) & 7}" for index in range(4))
     )
     print("register_semantics=authentic_frame_observation")
+    print("NBG1_map_registers_consumed=no_bitmap_mode")
     print("asset_consumer_identity=unbound")
     print("host_composition_admission=blocked")
     missing = sorted(set(args.require_layer) - set(layers))

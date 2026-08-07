@@ -14,9 +14,10 @@
 - ✅ Added `scripts/analyze_nexus_vdp2_composition.py`, using the raw
   authenticated Saturn witness rather than synthetic register fixtures.
 - ✅ The European one- and eight-frame captures independently report display
-  enabled, only `NBG1` enabled, and the same `CHCTLA`, `PNCN1`, `MPOFN`,
-  `CRAOFA` and priority values. This is a real layer configuration receipt;
-  the retail asset consumer and host composition remain deliberately blocked.
+  enabled and only `NBG1` enabled. The decoded `CHCTLA` proves bitmap mode,
+  colour code `1`, bitmap-size code `0` and bitmap palette `0`; `PNCN1` and
+  `MPOFN` are not treated as active tilemap selectors for this frame. The
+  retail bitmap/CLUT consumer and host composition remain blocked.
 
 # DM2 GDAT source allocator table lifetime (2026-08-07)
 

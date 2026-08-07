@@ -125,12 +125,14 @@ consumer proof.
 The authentic raw witness can now be decoded at the VDP2 register-field level
 with `scripts/analyze_nexus_vdp2_composition.py`. In both the one-frame and
 eight-frame European samples, `TVMD=0x0080` and `BGON=0x0002` show display
-enabled with only `NBG1` enabled; the captured values are `CHCTLA=0x1211`,
-`PNCN1=0x00c0`, `MPOFN=0x3000`, `CRAOFA=0x1000`, and `PRINA=0x0503`.
-This is the first bounded layer/map/priority/CRAM-offset observation from the
-real frame. It still does not identify which retail asset filled the NBG1
-map/character data, so the text/menu/HUD consumer and host composition remain
-blocked.
+enabled with only `NBG1` enabled. `CHCTLA=0x1211` selects NBG1 bitmap mode,
+colour code `1` (the 256-colour mode in Mednafen's VDP2 renderer), bitmap-size
+code `0`, and `BMPNA=0x0000` selects bitmap palette `0`; `PNCN1=0x00c0` and
+`MPOFN=0x3000` are present but are not consumed as NBG1 tilemap selectors in
+this bitmap-mode frame. The remaining observed values are
+`CRAOFA=0x1000` and `PRINA=0x0503`. This is a bounded hardware composition
+observation, not a retail asset join: the bitmap VRAM source, CLUT owner and
+text/menu/HUD meaning remain blocked.
 
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
