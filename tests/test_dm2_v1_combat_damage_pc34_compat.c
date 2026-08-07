@@ -335,6 +335,26 @@ static void test_attack_party_valid(void)
     printf("  PASS: attack_party_valid\n");
 }
 
+static void test_attack_party_source_minimum_wound(void)
+{
+    DM2_V1_AttackPartyReceipt receipt;
+    DM2_V1_AttackPartyRequest req;
+    memset(&req, 0, sizeof(req));
+    req.base_damage = 1;
+    req.damage_type = DM2_DMG_PHYSICAL;
+    req.heroes_in_party = 1;
+    req.hero_wound[0].hero_hp = 10;
+    req.random_values[0] = 0;
+
+    /* c_hero.cpp:3383-3385 clamps the wound passed to WOUND_PLAYER to 1. */
+    assert(dm2_v1_attack_party(&req, &receipt) == 1);
+    assert(receipt.per_hero_damage[0] == 1);
+    assert(receipt.hero_results[0].damage_dealt == 1);
+    assert(receipt.heroes_wounded == 1);
+
+    printf("  PASS: attack_party_source_minimum_wound\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_combat_damage_pc34_compat:\n");
@@ -351,6 +371,7 @@ int main(void)
     test_attack_party_null_safety();
     test_attack_party_zero_damage();
     test_attack_party_valid();
+    test_attack_party_source_minimum_wound();
     test_calc_damage_miss_by_defense();
     test_calc_damage_source_hit_roll_uses_five_bits();
     test_calc_damage_poison();

@@ -29875,6 +29875,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `DM2_CALC_PLAYER_ATTACK_DAMAGE` source contract. A `0x0f`/`0x10` boundary
   regression is green; this does not admit the helper or any damage, kill or
   combat-feedback publication into the production runtime.
+  **2026-08-07 party-wound correction:** the diagnostic `DM2_ATTACK_PARTY`
+  seam now applies the source `DM2_MAX(1, per_hero_damage)` clamp before
+  `WOUND_PLAYER`, matching `skhero.cpp:3365-3392`; a `base_damage=1` regression
+  is green. The live champion/target/RNG/writeback chain remains absent.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
   RAM. The companion now admits both a direct user file and a selected

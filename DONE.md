@@ -1,3 +1,11 @@
+# DM2 combat party minimum wound (2026-08-07)
+
+- ✅ Corrected the diagnostic `DM2_ATTACK_PARTY` seam to preserve the source
+  `DM2_MAX(1, per_hero_damage)` behavior before `WOUND_PLAYER`, matching
+  `SKWINSPX/src/v5/skhero.cpp:3365-3392`.
+- ✅ Added a `base_damage=1` regression. This remains a direct source seam;
+  production combat, kills and feedback are not admitted. No release was made.
+
 # DM2 SKSAVE special timer record chains (2026-08-07)
 
 - ✅ Added a bounded callback seam for SKProject `DM2_2066_197c`
