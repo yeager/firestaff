@@ -549,6 +549,24 @@ int main(void)
                                   resumed_view.csbState.party_dir ==
                                       resumed_profile->runtime.party_dir,
                               "touch swipe reaches C002 through the real Atari GAMEBLOCK command queue");
+                        CHECK(M11_GameView_HandleTouchEvent(
+                                  &resumed_view, M11_TOUCH_EVENT_DOWN,
+                                  234, 43, 2000u) ==
+                                  M11_GAME_INPUT_IGNORED &&
+                                  M11_GameView_HandleTouchEvent(
+                                      &resumed_view, M11_TOUCH_EVENT_CANCEL,
+                                      234, 43, 2010u) ==
+                                      M11_GAME_INPUT_IGNORED &&
+                                  M11_GameView_HandleTouchEvent(
+                                      &resumed_view, M11_TOUCH_EVENT_DOWN,
+                                      234, 43, 3000u) ==
+                                      M11_GAME_INPUT_IGNORED &&
+                                  M11_GameView_HandleTouchEvent(
+                                      &resumed_view, M11_TOUCH_EVENT_UP,
+                                      234, 43, 3100u) ==
+                                      M11_GAME_INPUT_REDRAW &&
+                                  resumed_view.spellPanelOpen,
+                              "touch cancel cannot leak into the real Atari C100 HUD tap route");
                     }
                     M11_GameView_Shutdown(&resumed_view);
                     remove(quicksave_path);

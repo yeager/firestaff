@@ -1994,7 +1994,8 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
 typedef enum M11_TouchEventKind {
     M11_TOUCH_EVENT_DOWN = 1,
     M11_TOUCH_EVENT_MOVE = 2,
-    M11_TOUCH_EVENT_UP = 3
+    M11_TOUCH_EVENT_UP = 3,
+    M11_TOUCH_EVENT_CANCEL = 4
 } M11_TouchEventKind;
 
 M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,

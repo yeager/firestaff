@@ -4671,12 +4671,15 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         }
         if ((ev.type == SDL_EVENT_FINGER_DOWN ||
              ev.type == SDL_EVENT_FINGER_MOTION ||
-             ev.type == SDL_EVENT_FINGER_UP) &&
+             ev.type == SDL_EVENT_FINGER_UP ||
+             ev.type == SDL_EVENT_FINGER_CANCELED) &&
             gameView && gameView->active) {
             M11_TouchEventKind kind = ev.type == SDL_EVENT_FINGER_DOWN
                 ? M11_TOUCH_EVENT_DOWN
                 : (ev.type == SDL_EVENT_FINGER_MOTION
-                   ? M11_TOUCH_EVENT_MOVE : M11_TOUCH_EVENT_UP);
+                   ? M11_TOUCH_EVENT_MOVE
+                   : (ev.type == SDL_EVENT_FINGER_UP
+                      ? M11_TOUCH_EVENT_UP : M11_TOUCH_EVENT_CANCEL));
             if (gameViewResult &&
                 m11_map_normalized_touch_to_game_source(gameView,
                                                         ev.tfinger.x,

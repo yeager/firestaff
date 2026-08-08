@@ -27448,6 +27448,14 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
         !fs_gesture_gate_is_enabled(fs_gesture_gate_active_game())) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (kind == M11_TOUCH_EVENT_CANCEL) {
+        /* SDL can cancel a contact when the window loses the gesture (for
+         * example a system gesture or app deactivation).  Never let that
+         * incomplete contact become the first half of a later source click
+         * or double-tap. */
+        fs_gesture_recognizer_reset();
+        return M11_GAME_INPUT_IGNORED;
+    }
     switch (kind) {
     case M11_TOUCH_EVENT_DOWN: event.kind = FS_GG_FEED_DOWN; break;
     case M11_TOUCH_EVENT_MOVE: event.kind = FS_GG_FEED_MOVE; break;

@@ -105,6 +105,12 @@
   genom kall resume och bevisar att en högerswipe når C002 och ändrar den
   autentiska GAMEBLOCK-riktningen; ingen separat touch-partydata används.
 
+- ✅ En avbruten SDL3-fingerkontakt återställer nu gestigenkännaren i stället
+  för att kunna bli första halvan av nästa touch. Samma Atari-kallresume
+  verifierar sedan en ny, stationär touch mot C100 och att den öppnar den
+  källägda spellpanelen. Detta täcker både C002-swipe och HUD-tap utan
+  testparty eller ersatt touchmodell.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan
