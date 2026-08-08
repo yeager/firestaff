@@ -2193,6 +2193,10 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
+    DM2_V1_StartupMenuPointerLayout layout;
+    DM2_V1_StartupExecution execution;
+    DM2_V1_StartupHostActionReceipt action_receipt;
+
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -2202,17 +2206,33 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     if (state->dm2State.startup_credits_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    /* SHOW_MENU_SCREEN consumes DM2's own MessageLoop events.  Its menu
-     * actions are the source UI events 0xD7/0xD9, selected by the mounted
-     * GDAT RAW4 click matrix.  M12's UP/DOWN/ACCEPT tokens have no imported
-     * DM2 keyboard-to-event translation, so treating its host row model as a
-     * menu action could select a synthetic save/new-game route.  Keep those
-     * tokens inert until c_0aaf/c_input's original translation is ported.
-     * Source: SKWIN SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55220),
-     * HANDLE_UI_EVENT (32001-32021); SKULLWIN startend.cpp::DM2_SHOW_MENU_SCREEN.
-     */
-    (void)input;
-    return M11_GAME_INPUT_IGNORED;
+    /* The title-menu keyboard table is original data, not M12 row logic.
+     * SKProject's SKULLWIN/v1d39bc.dat begins with { 0x80d7, 0x001c }:
+     * translated Enter (0x1c) resolves to UI event 215 / raw event 0xd7.
+     * DM2_HANDLE_UI_EVENT then takes exactly the same LOAD_NEW_GAME branch
+     * as the verified NEW GAME rectangle (uiinput.cpp:500-510). Reuse the
+     * admitted source rectangle only to retain the existing 0xd7 action
+     * receipt; it is never a host-selected menu row and still stops at the
+     * GAME_LOAD gate without inventing a party.
+     *
+     * Arrow, action and back tokens remain inert: no source title-menu
+     * keyboard binding for them has been imported. */
+    if (input != M12_MENU_INPUT_ACCEPT || !state->dm2BootProfile) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    memset(&layout, 0, sizeof(layout));
+    if (!dm2_v1_boot_startup_menu_pointer_layout(
+            (DM2_V1_BootProfile *)state->dm2BootProfile, &layout) ||
+        !layout.valid || layout.new_game.w <= 0 || layout.new_game.h <= 0 ||
+        !m11_dm2_boot_runtime_startup_pointer(
+            state,
+            layout.new_game.x + layout.new_game.w / 2,
+            layout.new_game.y + layout.new_game.h / 2,
+            &execution,
+            &action_receipt)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
 }
 
 static int m11_csb_mapped_inventory_slot(int csb_slot)

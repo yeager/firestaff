@@ -1,3 +1,13 @@
+# DM2 FM Towns source Enter-menu route (2026-08-08)
+
+- ✅ Added only the original title-menu Enter binding: `v1d39bc.dat` maps
+  translated `0x001c` to UI event 215/raw event `0xD7`, which follows the
+  existing GAME_LOAD gate. It cannot invent a party or select a synthetic
+  save row. Arrow, action and back remain inert.
+- ✅ Verified against the selected HME-242 media and PC-English companion:
+  TITLE hands off to the original SKULL page, Enter reaches `0xD7`, and the
+  party remains absent until the original GAME_LOAD owner exists.
+
 # DM2 record-pool focused-test linkage repair (2026-08-08)
 
 - ✅ Focused DM2 executables that compile the record-pool owner directly now

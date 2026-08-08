@@ -2800,6 +2800,11 @@ level or consumer bindings.
   raw-nibble placement produced incorrect FM Towns credit colours whenever
   the source image remapped a nibble. The real HME-242 M11 regression now
   verifies the complete physical RGB6 palette map.
+  **2026-08-08 keyboard update:** Enter is now admitted only through
+  `SKULLWIN/v1d39bc.dat`'s first title-menu binding (`0x001c` → UI event 215 /
+  raw event `0xD7`). It reaches the existing GAME_LOAD boundary without a
+  synthetic party. Arrow, action and back tokens remain blocked until their
+  corresponding source title-menu bindings and event ownership are ported.
   **2026-08-06 FM Towns GDAT gate update:** the bounded format classifier now
   also requires HME-242's actual 3,407-entry raw catalogue. A made-up
   0x8004 header and plausible buffer size therefore cannot enter even the

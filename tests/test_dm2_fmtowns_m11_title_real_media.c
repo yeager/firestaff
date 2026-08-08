@@ -146,6 +146,12 @@ int main(void)
                    layout.new_game.h > 0 && layout.resume_game.w > 0 &&
                    layout.resume_game.h > 0,
                "HME-242 GDAT provides the source NEW GAME and RESUME hit rectangles");
+        expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                   M11_GAME_INPUT_REDRAW &&
+                   view.dm2State.startup_menu_active &&
+                   view.world.party.championCount == 0 &&
+                   view.world.party.activeChampionIndex == -1,
+               "HME-242 Enter follows original 0xD7 NEW GAME without a fake party");
         x = layout.new_game.x + layout.new_game.w / 2;
         y = layout.new_game.y + layout.new_game.h / 2;
         pointer_result = M11_GameView_HandlePointerButton(
