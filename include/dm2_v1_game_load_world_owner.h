@@ -178,6 +178,31 @@ typedef struct {
     uint32_t private_text_visibility_hash;
 } DM2_V1_GameLoadActuateReceipt;
 
+/* Private result of one real 0x01 DM2_STEP_DOOR timer.  A step remains
+ * private until the GAME_LOAD transaction owns party damage, creature
+ * collision and the audible GDAT/SND delivery path.  Therefore this atom
+ * accepts only an authenticated DB0-first door square without the party or a
+ * DB4 creature in its local chain.  It still preserves the original timer's
+ * DB0 handle and source direction, and requeues the next real 0x01 record
+ * only while an animation frame remains. */
+typedef struct {
+    int valid;
+    int source_noop_destroyed;
+    int door_state_mutated;
+    int requeued;
+    int blocked_party_collision;
+    int blocked_creature_collision;
+    int blocked_incomplete_chain;
+    int map;
+    uint8_t x;
+    uint8_t y;
+    uint8_t direction;
+    int16_t door_record_link;
+    uint8_t state_before;
+    uint8_t state_after;
+    uint32_t private_animation_hash;
+} DM2_V1_GameLoadDoorStepReceipt;
+
 /* Build a source-owned, pre-selection world from one currently mounted,
  * hash-verified PC File_header/GDAT pair and exact mirror clicks.  It rejects
  * partial record graphs and never modifies profile-owned raw media. */
@@ -236,6 +261,16 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_TimerEntry *timer,
     DM2_V1_GameLoadActuateReceipt *out_receipt);
+
+/* Consume one private type-0x01 DM2_STEP_DOOR timer.  The timer must carry
+ * the direct DB0 door handle in wvalueB, an original direction in actor, and
+ * its actual File_header coordinate/map.  No coordinate-only door is ever
+ * accepted.  Source: SKProject SKULLWIN/c_tim_proc.cpp::DM2_STEP_DOOR
+ * (line 127+) and ::DM2_ACTUATE_DOOR (line 3744). */
+int dm2_v1_game_load_world_owner_process_door_step_timer(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadDoorStepReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

@@ -120,9 +120,13 @@
   privat mot GDAT. Hela championrosterens DYN4-
   råblock är materialiserade i samma privata ägare. 0x04-konsumenten läser nu
   verkliga File_header-rutor och genomför originalets klass-3-no-op. En
-  hel DB2-textkedja på FLOOR kan nu ändra synlighetsbit privat, men blandade
-  FLOOR-kedjor, partyhints, WALL, PIT, DOOR, TELEPORTER och TRICKWALL avvisas
-  utan mutation tills deras kompletta följdkedjor har samma ägare.
+  hel DB2-textkedja på FLOOR kan nu ändra synlighetsbit privat. En säker
+  0x01-dörranimation kan också ta ett verkligt steg och lägga nästa riktiga
+  timer i den privata kön, men bara när File_header-rutans direkta DB0-post
+  saknar party och DB4-varelse. Blandade FLOOR-kedjor, partyhints, WALL, PIT,
+  TELEPORTER och TRICKWALL avvisas utan mutation tills deras kompletta
+  följdkedjor har samma ägare. Dörrens kollision, skada och ljudväg är fortsatt
+  spärrade tills de kan publiceras tillsammans med den färdiga sessionen.
   `DM2_move_2fcf_0b8b` läser nu också File_header-teleportörer privat efter
   generatorpasset, men den beräknade displayposen är inte en viewport och får
   inte publicera karta eller party.

@@ -245,6 +245,23 @@
   karta 5 växlar bara målpostens bit 13. Ingen timer, dörranimation, UI- eller
   ljudhändelse skapas av atomen.
 
+# DM2 privat DB0-dörrtimer vid GAME_LOAD-gränsen (2026-08-08)
+
+- ✅ `DM2_V1_GameLoadWorldOwner` kan nu konsumera en källkodad 0x01
+  `DM2_STEP_DOOR` från sin egen dynamiska c_tim-kö. Timerns `wvalueB` måste
+  vara den direkta DB0-roten på samma autentiska klass-4-ruta, och `actor`
+  måste innehålla den godkända öppna- eller stängriktningen. Ingen ruta eller
+  dörrpost skapas av Firestaff.
+- ✅ Steget följer den befintliga källåsta dörrstatusmaskinen och lägger bara
+  nästa 0x01-post när en mellanbild återstår. Party på rutan och DB4-varelser
+  i samma recordkedja avvisas före både kart- och kömutation, eftersom skada,
+  CAII och ljud ännu inte har en gemensam sessionsägare. Förstörd dörr är
+  originalets no-op.
+- ✅ `test_dm2_v1_m11_startup_profile_gate` hittar en verklig säker DB0-dörr i
+  den hashverifierade PC-DOS File_header-korpusen och verifierar ett steg,
+  samma DB0-handle samt nästa privata timer. Testet använder ingen testkarta,
+  testdörr eller syntetisk speldata.
+
 # Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
 
 - ✅ `SDDRVS.TSK`-kvittot validerar nu hela den retail-hashbundna 16-entry

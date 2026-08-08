@@ -2,6 +2,7 @@
 
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
+#include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_skproject_core.h"
 
 #include <limits.h>
@@ -1266,4 +1267,134 @@ floor_done:
     receipt.blocked_incomplete_chain = 1;
     if (out_receipt) *out_receipt = receipt;
     return 0;
+}
+
+int dm2_v1_game_load_world_owner_process_door_step_timer(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadDoorStepReceipt *out_receipt)
+{
+    DM2_V1_GameLoadDoorStepReceipt receipt;
+    const int map = timer ? dm2_v1_timer_get_map(timer) : -1;
+    const int x = timer ? (int)(uint8_t)timer->xA : -1;
+    const int y = timer ? (int)(uint8_t)timer->yA : -1;
+    const int16_t link = timer ? timer->wvalueB : DM2_V1_RECORD_HANDLE_NULL;
+    const int direction = timer ? (int)timer->actor : -1;
+    const uint8_t *door;
+    int raw_tile;
+    int16_t chain_link;
+    int chain_limit = 0;
+    int chain_count = 0;
+    int db;
+    int old_state;
+    int new_state;
+    int16_t queued_slot = -1;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) || !timer ||
+        timer->ttype != 0x01u || map < 0 ||
+        map >= owner->dungeon.level_count || direction < 0 || direction > 1 ||
+        link == DM2_V1_RECORD_HANDLE_NULL || link == DM2_V1_RECORD_HANDLE_END ||
+        dm2_v1_record_handle_pool(link) != 0) {
+        return 0;
+    }
+    raw_tile = dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y);
+    if (raw_tile < 0 || ((unsigned int)raw_tile >> 5) != 4u ||
+        dm2_v1_dungeon_get_first_thing(&owner->dungeon, map, x, y) != link ||
+        !(door = dm2_v1_record_pool_address(&owner->record_pools, link))) {
+        return 0;
+    }
+    /* All source state accessed below is local to the cloned File_header
+     * owner.  Validate the complete tile chain first: a creature caught by a
+     * closing door needs CAII/damage/timer ownership, so it must stop this
+     * atom before either its map byte or queue is touched. */
+    for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count) {
+            return 0;
+        }
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return 0;
+    chain_link = link;
+    while (chain_link != DM2_V1_RECORD_HANDLE_END) {
+        int16_t next;
+        if (chain_link == DM2_V1_RECORD_HANDLE_NULL ||
+            chain_count >= chain_limit ||
+            !dm2_v1_record_pool_address(&owner->record_pools, chain_link) ||
+            !dm2_v1_record_pool_next_link(&owner->record_pools, chain_link,
+                                           &next)) {
+            receipt.blocked_incomplete_chain = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if (dm2_v1_record_handle_pool(chain_link) == 4) {
+            receipt.blocked_creature_collision = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        ++chain_count;
+        chain_link = next;
+    }
+    if (map == owner->source_party_map && x == (int)owner->source_party_x &&
+        y == (int)owner->source_party_y) {
+        receipt.blocked_party_collision = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.map = map;
+    receipt.x = (uint8_t)x;
+    receipt.y = (uint8_t)y;
+    receipt.direction = (uint8_t)direction;
+    receipt.door_record_link = link;
+    old_state = dm2_door_get_state((uint16_t)raw_tile);
+    receipt.state_before = (uint8_t)old_state;
+    if (old_state == DM2_DOOR_STATE_DESTROYED) {
+        receipt.state_after = (uint8_t)old_state;
+        receipt.source_noop_destroyed = 1;
+        receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+            0x44535450u, (uint16_t)link); /* "DSTP" */
+        receipt.valid = receipt.private_animation_hash != 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return receipt.valid;
+    }
+    new_state = dm2_door_apply_toggle_step(old_state, direction);
+    if (new_state < DM2_DOOR_STATE_OPEN || new_state > DM2_DOOR_STATE_CLOSED)
+        return 0;
+    receipt.state_after = (uint8_t)new_state;
+    if (new_state != old_state &&
+        !dm2_v1_record_pool_address_mut(&owner->record_pools, link)) {
+        receipt.blocked_incomplete_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if ((direction == 0 && new_state != DM2_DOOR_STATE_OPEN) ||
+        (direction == 1 && new_state != DM2_DOOR_STATE_CLOSED)) {
+        DM2_V1_TimerEntry next = *timer;
+        next.l_00 += 1; /* DM2_STEP_DOOR queues its next source tick. */
+        if ((queued_slot = dm2_v1_timer_queue(&owner->timer_queue, &next)) < 0)
+            return 0;
+        receipt.requeued = 1;
+    }
+    if (new_state != old_state && dm2_v1_dungeon_set_tile_raw(
+            &owner->dungeon, map, x, y,
+            dm2_door_set_state((uint16_t)raw_tile, new_state)) != 0) {
+        if (queued_slot >= 0) dm2_v1_timer_delete(&owner->timer_queue, queued_slot);
+        return 0;
+    }
+    receipt.door_state_mutated = new_state != old_state;
+    receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+        0x44535450u, (uint16_t)link); /* "DSTP" */
+    receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+        receipt.private_animation_hash, (uint32_t)old_state);
+    receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+        receipt.private_animation_hash, (uint32_t)new_state);
+    receipt.private_animation_hash = dm2_v1_game_load_owner_hash_step(
+        receipt.private_animation_hash, (uint32_t)timer->l_00);
+    receipt.valid = receipt.private_animation_hash != 0u;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
 }

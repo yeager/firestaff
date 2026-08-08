@@ -16,6 +16,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_new_game.h"
@@ -182,6 +183,82 @@ static int dm2_test_find_private_db2_floor(
                     *out_y = y;
                     *out_link = (int16_t)dm2_v1_dungeon_get_first_thing(
                         &owner->dungeon, map, x, y);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/* Select an actual File_header door which can take one private animation
+ * step without requiring the still-unowned party/CAII collision paths.  The
+ * timer below carries this exact DB0 root; it is only a test transport, not
+ * a replacement door or queue record. */
+static int dm2_test_find_private_door_step(
+    const DM2_V1_GameLoadWorldOwner *owner,
+    int *out_map, int *out_x, int *out_y, int16_t *out_link,
+    uint8_t *out_direction)
+{
+    int map;
+    int chain_limit = 0;
+    int db;
+
+    if (!owner || !out_map || !out_x || !out_y || !out_link ||
+        !out_direction) return 0;
+    for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0) return 0;
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return 0;
+    for (map = 0; map < owner->dungeon.level_count; ++map) {
+        int x;
+        for (x = 0; x < owner->dungeon.level_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < owner->dungeon.level_heights[map]; ++y) {
+                const int raw = dm2_v1_dungeon_get_tile_raw(
+                    &owner->dungeon, map, x, y);
+                int16_t link;
+                int count = 0;
+                int has_creature = 0;
+                int16_t next;
+                if (raw < 0 || ((raw >> 5) & 7) != 4 ||
+                    (raw & 7) < 1 || (raw & 7) > 4 ||
+                    (map == owner->source_party_map &&
+                     x == (int)owner->source_party_x &&
+                     y == (int)owner->source_party_y)) continue;
+                link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &owner->dungeon, map, x, y);
+                if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                    link == DM2_V1_RECORD_HANDLE_END ||
+                    dm2_v1_record_handle_pool(link) != 0) continue;
+                do {
+                    if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                        count >= chain_limit ||
+                        !dm2_v1_record_pool_next_link(&owner->record_pools,
+                                                      link, &next)) {
+                        has_creature = 1;
+                        break;
+                    }
+                    if (dm2_v1_record_handle_pool(link) == 4) {
+                        has_creature = 1;
+                        break;
+                    }
+                    ++count;
+                    link = next;
+                } while (link != DM2_V1_RECORD_HANDLE_END);
+                if (!has_creature && count > 0 &&
+                    link == DM2_V1_RECORD_HANDLE_END) {
+                    *out_map = map;
+                    *out_x = x;
+                    *out_y = y;
+                    *out_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                        &owner->dungeon, map, x, y);
+                    /* The source OPEN direction turns a closed File_header
+                     * door through state 3, so it proves that the private
+                     * atom emits a follow-up timer without rewriting data. */
+                    *out_direction = 0u;
                     return 1;
                 }
             }
@@ -1339,6 +1416,8 @@ int main(void) {
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
     DM2_V1_TimerEntry new_game_actuate_timer;
+    DM2_V1_GameLoadDoorStepReceipt new_game_door_step;
+    DM2_V1_TimerEntry new_game_door_step_timer;
     int new_game_generators_result;
     int new_game_owner_initialized;
     int new_game_noop_map = -1;
@@ -1351,6 +1430,12 @@ int main(void) {
     int new_game_db2_floor_x = -1;
     int new_game_db2_floor_y = -1;
     int16_t new_game_db2_floor_link = DM2_V1_RECORD_HANDLE_NULL;
+    int new_game_door_map = -1;
+    int new_game_door_x = -1;
+    int new_game_door_y = -1;
+    int16_t new_game_door_link = DM2_V1_RECORD_HANDLE_NULL;
+    uint8_t new_game_door_direction = 0u;
+    int new_game_door_found = 0;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -1981,6 +2066,48 @@ int main(void) {
                         !new_game_actuate.blocked_hint_delivery &&
                         !profile->source_game_load_session_ready,
                     "M11 toggles an all-DB2 FLOOR chain from real File_header data only in the private owner");
+    }
+    /* A type-0x01 door timer is valid only when it names the actual first DB0
+     * record of an actual class-4 File_header square.  The real corpus does
+     * not guarantee a safe in-between door, so keep this positive assertion
+     * conditional rather than manufacturing a door, creature or party. */
+    new_game_door_found = profile && dm2_test_find_private_door_step(
+        &new_game_world_owner, &new_game_door_map, &new_game_door_x,
+        &new_game_door_y, &new_game_door_link, &new_game_door_direction);
+    expect_true(new_game_door_found,
+                "M11 finds a safe real File_header DB0 door for the private 0x01 atom");
+    if (new_game_door_found) {
+        const int before = dm2_v1_dungeon_get_tile_raw(
+            &new_game_world_owner.dungeon, new_game_door_map,
+            new_game_door_x, new_game_door_y) & 7;
+        const int expected = dm2_door_apply_toggle_step(
+            before, new_game_door_direction);
+        memset(&new_game_door_step, 0, sizeof(new_game_door_step));
+        dm2_v1_timer_entry_init(&new_game_door_step_timer);
+        expect_true((dm2_v1_timer_set_mticks(&new_game_door_step_timer,
+                            (int16_t)new_game_door_map,
+                            new_game_world_owner.timer_queue.gametick), 1) &&
+                    ((new_game_door_step_timer.ttype = 0x01u), 1) &&
+                    ((new_game_door_step_timer.actor = new_game_door_direction), 1) &&
+                    ((new_game_door_step_timer.xA = (int8_t)new_game_door_x), 1) &&
+                    ((new_game_door_step_timer.yA = (int8_t)new_game_door_y), 1) &&
+                    ((new_game_door_step_timer.wvalueB = new_game_door_link), 1) &&
+                    dm2_v1_game_load_world_owner_process_door_step_timer(
+                        &new_game_world_owner, &new_game_door_step_timer,
+                        &new_game_door_step) && new_game_door_step.valid &&
+                    new_game_door_step.door_record_link == new_game_door_link &&
+                    new_game_door_step.state_before == (uint8_t)before &&
+                    new_game_door_step.state_after == (uint8_t)expected &&
+                    new_game_door_step.door_state_mutated &&
+                    new_game_door_step.requeued &&
+                    new_game_door_step.private_animation_hash != 0u &&
+                    (dm2_v1_dungeon_get_tile_raw(&new_game_world_owner.dungeon,
+                        new_game_door_map, new_game_door_x,
+                        new_game_door_y) & 7) == expected &&
+                    !new_game_door_step.blocked_party_collision &&
+                    !new_game_door_step.blocked_creature_collision &&
+                    !profile->source_game_load_session_ready,
+                    "M11 steps and requeues a real File_header DB0 door timer only in the private owner");
     }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];
