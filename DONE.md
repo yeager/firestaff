@@ -1,3 +1,14 @@
+# CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
+
+- ✅ F31:s fyra C06-porträtt läses nu som sina exakta, planära 464-byteblock
+  mellan F0435:s checksumverifierade sparblock och F7063:s dungeon-tail.
+  De knyts till den redan hashverifierade, språkvalda `MINI.DAT`-filen.
+- ✅ ReDMCSB `CEDT019.C`/`CEDT006.C` anger den native konverterings- och
+  ritordningen. Firestaff bevarar därför rådata här och fabricerar varken
+  färdigavkodade pixlar eller ersättningsporträtt.
+- ✅ Verifierat mot den verkliga engelska F31-skivan i M11-handofftestet och
+  mot CSB:s källåsningskontroll.
+
 # CSB FM Towns C06-grafik bindning till originalprogram (2026-08-08)
 
 - ✅ F31:s spegelram och filväljarpilar läses nu direkt ur det valda,

@@ -60,6 +60,7 @@ int main(void)
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
     CSB_V1_PartyState mini_party;
+    CSB_V1_FmtownsStartupPortraitReceipt mini_portraits;
     CSB_V1_FmtownsStartupState mini_state;
     CSB_V1_DungeonData mini_dungeon;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
@@ -279,6 +280,19 @@ int main(void)
               mini_party.Champions[0].Name[0] != '\0' &&
               mini_party.Champions[0].CurrentHealth > 0,
           "F31 MINI.DAT supplies its checksum-verified champion record without a fixture");
+    memset(&mini_portraits, 0, sizeof(mini_portraits));
+    CHECK(csb_v1_fmtowns_game_load_startup_portraits(
+              &direct_handoff, &mini_portraits) && mini_portraits.valid &&
+              mini_portraits.source_size ==
+                  CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT *
+                      CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES &&
+              mini_portraits.source_file_offset ==
+                  direct_handoff.startup_mini_dungeon_tail_offset -
+                      mini_portraits.source_size &&
+              mini_portraits.source_fnv1a ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x748ce10fu :
+                                                           0x4facab0bu),
+          "F31 MINI.DAT preserves the four original C06 portrait payloads");
     memset(&mini_state, 0, sizeof(mini_state));
     CHECK(csb_v1_fmtowns_game_load_startup_state(&direct_handoff, &mini_state) &&
               mini_state.valid && mini_state.game_time ==

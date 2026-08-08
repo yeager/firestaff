@@ -16,8 +16,9 @@
   tidslinje- och aktivgruppsdata och har en realdataverifierad HUD-musväg.
   C06:s interfacefont är nu också bunden direkt till det valda
   UTILE/UTILJ-originalprogrammet, liksom spegel- och
-  filväljarbilddata. Den värdritade Utility-sidan är fortsatt spärrad tills
-  hela EGB-ytan och filtransaktionsägaren är verifierade.
+  filväljarbilddata. MINI.DAT:s fyra planära originalporträtt har också en
+  receiptsbunden råinläsning. Den värdritade Utility-sidan är fortsatt spärrad
+  tills hela EGB-ytan och filtransaktionsägaren är verifierade.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,
   bytekorrekt FM Towns-sparning/återupptagning (F0433/F0435:s obfuskerade
   femdelarsformat med porträtt), full action/spell/item- och cursorsemantik

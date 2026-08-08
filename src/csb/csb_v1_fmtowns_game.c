@@ -441,6 +441,44 @@ int csb_v1_fmtowns_game_load_startup_party(
     return 1;
 }
 
+int csb_v1_fmtowns_game_load_startup_portraits(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_FmtownsStartupPortraitReceipt *out_receipt)
+{
+    uint32_t source_offset;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!receipt || !receipt->valid || !receipt->startup_mini_verified ||
+        !receipt->startup_mini_header_verified ||
+        !receipt->startup_mini_save_parts_verified ||
+        !receipt->startup_mini_dungeon_tail_verified ||
+        receipt->startup_mini_verified_save_body_offset > UINT32_MAX -
+            sizeof(out_receipt->source_bytes)) return 0;
+    source_offset = receipt->startup_mini_verified_save_body_offset;
+    /* ReDMCSB CEDT019.C F2124 reads the four external portraits between
+     * F0435's five save parts and F7063's dungeon tail. Keep that original
+     * planar form: decoding or a fallback portrait belongs to no host model. */
+    if (source_offset + sizeof(out_receipt->source_bytes) !=
+            receipt->startup_mini_dungeon_tail_offset ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        source_offset,
+                                        (unsigned char *)out_receipt->source_bytes,
+                                        sizeof(out_receipt->source_bytes))) return 0;
+    out_receipt->valid = 1;
+    out_receipt->language = receipt->language;
+    out_receipt->variant_id = receipt->variant_id;
+    out_receipt->source_file_offset = source_offset;
+    out_receipt->source_size = sizeof(out_receipt->source_bytes);
+    out_receipt->source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(
+        (const unsigned char *)out_receipt->source_bytes,
+        sizeof(out_receipt->source_bytes));
+    out_receipt->source_evidence =
+        "ReDMCSB LOADSAVE.C F0435; CEDT019.C F2124 lines 85-109; "
+        "CEDT006.C F7033/F7040 lines 372-395/512-620";
+    return 1;
+}
+
 int csb_v1_fmtowns_game_load_startup_dungeon(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     CSB_V1_DungeonData *out_dungeon)

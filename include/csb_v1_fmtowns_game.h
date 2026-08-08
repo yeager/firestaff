@@ -28,6 +28,8 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES 247u
 #define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES 324u
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
+#define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT 4u
+#define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES 464u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
 typedef enum CSB_V1_FmtownsUtilityMenuAction {
@@ -151,6 +153,21 @@ typedef struct CSB_V1_FmtownsStartupState {
     CSB_V1_DungeonData dungeon;
 } CSB_V1_FmtownsStartupState;
 
+/* Four raw external F31 portraits immediately follow F0435's five verified
+ * MINI.DAT save parts.  CEDT019.C F2124 converts these original planar bytes
+ * before CEDT006.C draws them; no party-model portrait is a substitute. */
+typedef struct CSB_V1_FmtownsStartupPortraitReceipt {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t source_file_offset;
+    uint32_t source_size;
+    uint32_t source_fnv1a;
+    uint8_t source_bytes[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT]
+                        [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
+    const char *source_evidence;
+} CSB_V1_FmtownsStartupPortraitReceipt;
+
 /* AUTOEXEC.BAT exit 2/5 enters a different C06_CEDT program. This receipt
  * admits that program only; it does not pretend its editor UI is C03_GAME. */
 typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
@@ -249,6 +266,13 @@ int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
 int csb_v1_fmtowns_game_load_startup_party(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     CSB_V1_PartyState *out_party);
+
+/* Preserve the F31 source portraits as their exact on-disk planar payload.
+ * Presentation code must apply the recovered native conversion path itself;
+ * this admission API never invents decoded pixels. */
+int csb_v1_fmtowns_game_load_startup_portraits(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_FmtownsStartupPortraitReceipt *out_receipt);
 
 /* Materialize the authenticated F7063-checked dungeon tail as an original
  * CSB dungeon.  The caller owns the returned allocation through
