@@ -9511,6 +9511,10 @@
 - ✅ Samma materialisering är nu ett obligatoriskt led i den temporära
   kart-/recordpool-/possession-/timertransaktionen. Saknas eller avviker en
   heropost stoppas strömmen innan den kan tolkas som en senare spelsektion.
+- ✅ Efter den källsorterade timerkön kör den tillfälliga ägaren även
+  originalets `DM2_3a15_020f`: heroernas `timeridx` nollställs/återställs och
+  typ-`0x1d`/`0x1e` skriver sin timerbacklänk i den autentiska recordpoolen.
+  En record som saknar den källägda åttabyteslayouten avbryter transaktionen.
 - ✅ PC-DOS-korpusen verifierar alla åtta riktiga sparfiler; bygg,
   party-layouttest och produktionsgrind passerar.
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)

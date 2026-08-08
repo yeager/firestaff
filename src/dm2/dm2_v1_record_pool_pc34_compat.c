@@ -1297,6 +1297,50 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     return 1;
 }
 
+typedef struct {
+    DM2_V1_Hero *heroes;
+    uint16_t hero_count;
+    DM2_V1_RecordPoolSet *pools;
+    int invalid;
+} DM2_V1_SksaveTimerRebuildContext;
+
+static void dm2_v1_sksave_rebuild_set_hero_timeridx(
+    void *ctx, int hero_index, int16_t timer_index)
+{
+    DM2_V1_SksaveTimerRebuildContext *context =
+        (DM2_V1_SksaveTimerRebuildContext *)ctx;
+    if (!context || !context->heroes || hero_index < 0 ||
+        hero_index >= (int)context->hero_count) {
+        if (context) context->invalid = 1;
+        return;
+    }
+    context->heroes[hero_index].timeridx = timer_index;
+}
+
+static void dm2_v1_sksave_rebuild_set_record_timer_backlink(
+    void *ctx, uint16_t link, int16_t timer_index)
+{
+    DM2_V1_SksaveTimerRebuildContext *context =
+        (DM2_V1_SksaveTimerRebuildContext *)ctx;
+    const int pool = dm2_v1_record_handle_pool((int16_t)link);
+    uint8_t *record;
+
+    if (!context || !context->pools || pool < 0 ||
+        pool >= DM2_V1_RECORD_POOL_COUNT ||
+        context->pools->pools[pool].record_size < 8) {
+        if (context) context->invalid = 1;
+        return;
+    }
+    record = dm2_v1_record_pool_address_mut(context->pools, (int16_t)link);
+    if (!record) {
+        context->invalid = 1;
+        return;
+    }
+    /* SKProject sksvgame.cpp::DM2_3a15_020f stores the timer index in
+     * the c_record word at offset 6 for tty1d/tty1e. */
+    dm2_v1_wr16(record + 6u, timer_index);
+}
+
 int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     const uint8_t *raw_body,
     size_t raw_body_size,
@@ -1312,6 +1356,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_V1_Hero heroes[DM2_MAX_HEROES];
     DM2_V1_SaveTimerRecord timers[DM2_V1_SAVE_TIMER_MAX];
     int16_t timer_indices[DM2_V1_SAVE_TIMER_MAX];
+    DM2_V1_SksaveTimerRebuildContext rebuild_context;
+    DM2_V1_TimerRebuildCallbacks rebuild_callbacks;
+    DM2_V1_TimerRebuildReceipt rebuild_receipt;
     DM2_V1_OriginalRawTimerStreamReceipt timer_stream;
     DM2_V1_SksavePoolRestoreContext context;
     DM2_V1_SksaveMapRestoreContext map_context;
@@ -1332,6 +1379,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     memset(&roots, 0, sizeof(roots));
     memset(heroes, 0, sizeof(heroes));
     memset(&timer_stream, 0, sizeof(timer_stream));
+    memset(&rebuild_context, 0, sizeof(rebuild_context));
+    memset(&rebuild_callbacks, 0, sizeof(rebuild_callbacks));
+    memset(&rebuild_receipt, 0, sizeof(rebuild_receipt));
     memset(&context, 0, sizeof(context));
     memset(&map_context, 0, sizeof(map_context));
     memset(&callbacks, 0, sizeof(callbacks));
@@ -1442,6 +1492,24 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     dm2_v1_save_timer_sort(timers, state_receipt->timer_count, timer_indices);
     dm2_v1_save_timer_rearrange(timers, DM2_V1_SAVE_TIMER_MAX,
                                 &timer_queue_count, &timer_free_head);
+    /* sksvgame.cpp::DM2_3a15_020f runs after the restored timer list owns
+     * c_hero and c_record. Rebuild those links in this same temporary
+     * transaction; any unavailable original record aborts the preflight. */
+    rebuild_context.heroes = heroes;
+    rebuild_context.hero_count = state_receipt->champion_count;
+    rebuild_context.pools = &pools;
+    rebuild_callbacks.ctx = &rebuild_context;
+    rebuild_callbacks.set_hero_timeridx =
+        dm2_v1_sksave_rebuild_set_hero_timeridx;
+    rebuild_callbacks.set_record_timer_backlink =
+        dm2_v1_sksave_rebuild_set_record_timer_backlink;
+    if (dm2_v1_post_load_timer_rebuild(
+            (const uint8_t *)timers, state_receipt->timer_count,
+            state_receipt->champion_count, &rebuild_callbacks,
+            &rebuild_receipt) != 0 || !rebuild_receipt.valid ||
+        rebuild_context.invalid) {
+        goto done;
+    }
     timer_queue_hash = dm2_v1_sksave_hash_bytes(
         timer_queue_hash, (const uint8_t *)timer_indices,
         (size_t)state_receipt->timer_count * sizeof(timer_indices[0]));
@@ -1467,6 +1535,12 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             context.possession_continuation_count;
         out_receipt->timer_queue_count = timer_queue_count;
         out_receipt->timer_free_head = timer_free_head;
+        out_receipt->hero_timeridx_cleared =
+            (uint16_t)rebuild_receipt.hero_timeridx_cleared;
+        out_receipt->hero_timeridx_set =
+            (uint16_t)rebuild_receipt.hero_timeridx_set;
+        out_receipt->ornate_timer_backlinks_set =
+            (uint16_t)rebuild_receipt.ornate_backlinks_set;
         out_receipt->continuation_hash = context.continuation_hash;
         out_receipt->timer_hash = timer_stream.raw_hash;
         out_receipt->heroes_hash = state_receipt->heroes_hash;

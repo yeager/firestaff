@@ -977,6 +977,8 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                special_timers.timer_free_head >= -1 &&
                special_timers.timer_free_head <
                    (int16_t)DM2_V1_SAVE_TIMER_MAX &&
+               special_timers.hero_timeridx_cleared ==
+                   state_receipt.champion_count &&
                special_timers.timer_queue_hash != 0u &&
                special_timers.next_stream_offset >=
                    state_receipt.record_link_bitstream_offset &&

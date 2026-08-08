@@ -36,6 +36,7 @@
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load_extra_dungeon_data_pc34_compat.h"
 #include "dm2_v1_save_timers_pc34_compat.h"
+#include "dm2_v1_save_post_load_timer_rebuild_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -341,6 +342,9 @@ typedef struct {
     uint32_t possession_continuation_count;
     int16_t timer_queue_count;
     int16_t timer_free_head;
+    uint16_t hero_timeridx_cleared;
+    uint16_t hero_timeridx_set;
+    uint16_t ornate_timer_backlinks_set;
     uint32_t timer_hash;
     uint32_t heroes_hash;
     uint32_t timer_queue_hash;
@@ -356,7 +360,8 @@ typedef struct {
  * restores direct hero/cursor roots, consumes timer types 0x3c and 0x3d,
  * then walks every map through READ_SKSAVE_DUNGEON and restores the final
  * DM2_2066_062b possession continuations into those temporary record owners,
- * then reconstructs the source timer heap and free list. The temporary owner
+ * then reconstructs the source timer heap/free list and applies the proven
+ * DM2_3a15_020f timer back-links. The temporary owner
  * is always discarded, never a partial Resume session. */
 int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     const uint8_t *raw_body,

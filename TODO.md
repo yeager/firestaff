@@ -149,8 +149,9 @@
   `c_hero` materialiseras nu byte för byte från samma autentiserade,
   kontinuerliga SUPPRESS-ström och varje post hashverifieras mot kvittot.
   Preflighten för kart-, possession- och timerkedjor vägrar fortsätta utan
-  dessa poster. Den temporära arrayen är ännu inte en live party-ägare; knyt
-  den först till den färdiga actuator- och post-load-transaktionen.
+  dessa poster och återställer `DM2_3a15_020f`:s timerindex/backlänkar i den
+  tillfälliga ägaren. Den är ännu inte en live party-ägare; knyt den först
+  till actuator- och post-load-effekttransaktionen.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem
