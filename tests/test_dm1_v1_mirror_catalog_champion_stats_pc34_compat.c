@@ -45,6 +45,25 @@ int main(void)
             "HALK|THE BRAVE||M|AAGEAAHIAABJAAAA|AABOCACCCECGCIAAAA|AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
             &parsed));
 
+    F0600_CHAMPION_InitEmpty_Compat(&parsed);
+    expect_nonzero(
+        "parse source two-line mirror title",
+        F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+            "HALK\nTHE \nBRAVE\nM\nAAGEAAHIAABJ\nAABOCACCCECGCI\nAAAAAAAAAAAAAAAA",
+            &parsed));
+    expect_nonzero("source two-line mirror fields are F0634 encoded",
+                   F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(&parsed));
+    (void)F0629_CHAMPION_UnpackTitle_Compat(&parsed, title, sizeof(title));
+    expect_int("source two-line title joins at F0280 boundary",
+               strcmp(title, "THE BRAVE") == 0, 1);
+
+    F0600_CHAMPION_InitEmpty_Compat(&parsed);
+    expect_nonzero(
+        "parse pipe mirror identity",
+        F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
+            "HALK|THE BRAVE||M|AAGEAAHIAABJAAAA|AABOCACCCECGCIAAAA|AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            &parsed));
+
     memset(&catalog, 0, sizeof(catalog));
     catalog.count = 1;
     catalog.records[0].textStringIndex = 7;

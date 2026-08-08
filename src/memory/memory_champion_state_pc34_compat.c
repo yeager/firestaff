@@ -58,6 +58,26 @@ static void pack_text_field(unsigned char* dst, int dstLen,
     }
 }
 
+static void pack_two_text_fields(unsigned char* dst, int dstLen,
+                                 const char* first, int firstLen,
+                                 const char* second, int secondLen) {
+    int i;
+    int dstIndex = 0;
+
+    if (!dst || dstLen <= 0) return;
+    for (i = 0; i < dstLen; ++i) {
+        dst[i] = ' ';
+    }
+    for (i = 0; i < firstLen && dstIndex < dstLen; ++i) {
+        unsigned char ch = (unsigned char)first[i];
+        dst[dstIndex++] = (ch >= 0x20 && ch <= 0x7e) ? ch : ' ';
+    }
+    for (i = 0; i < secondLen && dstIndex < dstLen; ++i) {
+        unsigned char ch = (unsigned char)second[i];
+        dst[dstIndex++] = (ch >= 0x20 && ch <= 0x7e) ? ch : ' ';
+    }
+}
+
 static int mirror_text_is_separator(char ch) {
     return ch == '|' || ch == '\n';
 }
@@ -193,40 +213,42 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
     titleEnd = mirror_text_find_separator(titleStart);
     if (!titleEnd) return 0;
 
+    /* ReDMCSB REVIVE.C F0280 reads the title through two newline-terminated
+     * pieces: the first newline joins the second title fragment, while the
+     * second newline ends the title.  A title without a second fragment is
+     * encoded as two adjacent separators.  Do not mistake the first title
+     * separator for the sex field: original Atari/Amiga records then lose
+     * every F0634-encoded candidate before the native runtime sees it. */
+    sexStart = mirror_text_find_separator(titleEnd + 1);
+    if (!sexStart) return 0;
+
     pack_text_field(champ->name, CHAMPION_NAME_LENGTH,
                     nameStart, (int)(nameEnd - nameStart));
-    pack_text_field(champ->title, CHAMPION_TITLE_LENGTH,
-                    titleStart, (int)(titleEnd - titleStart));
+    pack_two_text_fields(champ->title, CHAMPION_TITLE_LENGTH,
+                         titleStart, (int)(titleEnd - titleStart),
+                         titleEnd + 1, (int)(sexStart - (titleEnd + 1)));
 
-    sexStart = titleEnd;
-    if (mirror_text_is_separator(sexStart[0]) && mirror_text_is_separator(sexStart[1])) {
-        sexStart += 2;
-        if (sexStart[0] != 'M' && sexStart[0] != 'F') return 0;
-        champ->sex = (unsigned char)sexStart[0];
-        statStart = mirror_text_find_separator(sexStart);
-        if (statStart) {
-            ++statStart;
-            statEnd = mirror_text_find_separator(statStart);
-            if (statEnd) {
-                pack_text_field(champ->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
-                                statStart, (int)(statEnd - statStart));
-                skillStart = statEnd + 1;
-                skillEnd = mirror_text_find_separator(skillStart);
-                if (!skillEnd) skillEnd = skillStart + strlen(skillStart);
-                pack_text_field(champ->mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH,
-                                skillStart, (int)(skillEnd - skillStart));
-                inventoryStart = mirror_text_is_separator(*skillEnd) ? skillEnd + 1 : skillEnd;
-                inventoryEnd = mirror_text_find_separator(inventoryStart);
-                if (!inventoryEnd) inventoryEnd = inventoryStart + strlen(inventoryStart);
-                pack_text_field(champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH,
-                                inventoryStart, (int)(inventoryEnd - inventoryStart));
-                apply_mirror_candidate_values(champ);
-            }
-        }
-    } else {
-        champ->sex = 0;
-        return 0;
-    }
+    ++sexStart;
+    if (sexStart[0] != 'M' && sexStart[0] != 'F') return 0;
+    champ->sex = (unsigned char)sexStart[0];
+    statStart = mirror_text_find_separator(sexStart);
+    if (!statStart) return 0;
+    ++statStart;
+    statEnd = mirror_text_find_separator(statStart);
+    if (!statEnd) return 0;
+    pack_text_field(champ->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
+                    statStart, (int)(statEnd - statStart));
+    skillStart = statEnd + 1;
+    skillEnd = mirror_text_find_separator(skillStart);
+    if (!skillEnd) skillEnd = skillStart + strlen(skillStart);
+    pack_text_field(champ->mirrorSkillsText, CHAMPION_MIRROR_FIELD_LENGTH,
+                    skillStart, (int)(skillEnd - skillStart));
+    inventoryStart = mirror_text_is_separator(*skillEnd) ? skillEnd + 1 : skillEnd;
+    inventoryEnd = mirror_text_find_separator(inventoryStart);
+    if (!inventoryEnd) inventoryEnd = inventoryStart + strlen(inventoryStart);
+    pack_text_field(champ->mirrorInventoryText, CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH,
+                    inventoryStart, (int)(inventoryEnd - inventoryStart));
+    apply_mirror_candidate_values(champ);
     return 1;
 }
 
