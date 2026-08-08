@@ -1,4 +1,5 @@
 #include "theron_v1_track02_dungeon_map.h"
+#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_thing_data.h"
 #include <assert.h>
 #include <stdio.h>
@@ -230,6 +231,11 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
         "SHADODAN", "THIEVES", "DEMON"
     };
+
+    assert(theron_v1_track02_item_properties_match_source(
+        ud, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN));
+    printf("  %s Track 02 item property table matches source bytes OK\n",
+           label);
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;

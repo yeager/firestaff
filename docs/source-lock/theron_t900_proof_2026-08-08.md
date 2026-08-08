@@ -18,6 +18,13 @@ bevismaterialet.
 | Runtime object-consumer | Samma verifiering rapporterar `ram_consumer_2600=not_present` för US och JP | T900-konsument saknas i beviset |
 | Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
 
+Den lokala real-data-körningen `test_theron_v1_track02_thing_data` passerar
+dessutom mot `TQUS02.bin` och `TQJP02.bin`: båda varianterna matchar den
+source-bound 66×6-byte propertytabellen, och alla sju dungeonblock laddar sina
+riktiga ground refs, object counts och kategori-4 monsterrecords. Detta
+bevisar att T900:s råa object-/propertyunderlag når Firestaffs data-lager; det
+bevisar inte att originalets T900-rutiner konsumerar eller muterar state.
+
 ## Vad T900-bevis skulle behöva innehålla
 
 En godkänd capture måste samtidigt visa:
@@ -46,6 +53,7 @@ test_theron_v1_bank1f_consumer_receipt          PASS
 firestaff_theron_v1_track19_inventory_probe    PASS
 theron_v1_track02_provenance_runtime_consumer  PASS
 theron_v1_track02_level_object_trace_preparation PASS
+test_theron_v1_track02_thing_data (US + JP real BIN) PASS
 ```
 
 Detta är ett bevis på den nuvarande gränsen, inte ett påstående om färdig

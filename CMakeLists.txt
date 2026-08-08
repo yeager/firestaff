@@ -49529,6 +49529,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_thing_data.c
         tests/test_theron_v1_track02_thing_data.c
         src/theron/theron_v1_track02_thing_data.c
         src/theron/theron_v1_track02_dungeon_map.c
+        src/theron/theron_v1_track02_item_properties.c
     )
     target_include_directories(test_theron_v1_track02_thing_data PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
