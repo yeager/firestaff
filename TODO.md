@@ -15,9 +15,10 @@
   complete original tile/actuator/sensor resource queue before calling DYN4.
 
 - **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
-  ground-stack/`w0` chains are now source-validated. Bind the same owner to
-  the map-local graphics lists, DB payload decoders, actuator/sensor paths
-  and full `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
+  ground-stack/`w0` chains are now source-validated and all 44 canonical maps
+  have one bounded callback walk. Bind that owner to the map-local graphics
+  lists, DB payload decoders, actuator/sensor paths and full
+  `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
 
 - **DM2-FILE-HEADER-DOOR-RUNTIME:** The canonical map-0 DB0 door roots are
   now source-decoded. Bind their original animation, lock/key, sound, button

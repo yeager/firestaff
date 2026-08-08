@@ -36,6 +36,27 @@ static uint8_t *load_file(const char *path, int *out_size) {
     return buf;
 }
 
+typedef struct {
+    int count;
+} FileHeaderWalkTrace;
+
+static int count_file_header_record(void *user, uint16_t thing, int type,
+                                    int index, const uint8_t *record,
+                                    int record_size, int level, int x, int y)
+{
+    FileHeaderWalkTrace *trace = (FileHeaderWalkTrace *)user;
+    (void)thing;
+    (void)index;
+    (void)record;
+    (void)record_size;
+    (void)level;
+    (void)x;
+    (void)y;
+    if (!trace || type < 0 || type >= 16) return -1;
+    ++trace->count;
+    return 0;
+}
+
 int main(void) {
     const char *paths[] = {
         NULL,
@@ -51,6 +72,7 @@ int main(void) {
     DM2_V1_G1RuntimeMapDoorReceipt doors;
     DM2_V1_G1RuntimeMapActuatorReceipt actuators;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
+    FileHeaderWalkTrace map0_walk;
 
     paths[0] = env;
 
@@ -98,6 +120,31 @@ int main(void) {
         map0.link_word_reads != map0.record_count) {
         printf("FAIL: File_header map-0 record owner was not retained\n");
         ++failures;
+    }
+    memset(&map0_walk, 0, sizeof(map0_walk));
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            &d, 0, count_file_header_record, &map0_walk) !=
+            map0.record_count ||
+        map0_walk.count != map0.record_count) {
+        printf("FAIL: File_header map-0 complete record walk was not retained\n");
+        ++failures;
+    }
+    for (int map = 0; map < d.level_count; ++map) {
+        DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
+        FileHeaderWalkTrace map_walk;
+
+        memset(&map_receipt, 0, sizeof(map_receipt));
+        memset(&map_walk, 0, sizeof(map_walk));
+        if (!dm2_v1_dungeon_validate_file_header_runtime_map(
+                &d, map, &map_receipt) || !map_receipt.committed ||
+            dm2_v1_dungeon_walk_file_header_runtime_map(
+                &d, map, count_file_header_record, &map_walk) !=
+                map_receipt.record_count ||
+            map_walk.count != map_receipt.record_count) {
+            printf("FAIL: File_header map-%d complete record walk was not retained\n",
+                   map);
+            ++failures;
+        }
     }
     memset(&doors, 0, sizeof(doors));
     if (!dm2_v1_dungeon_materialize_file_header_runtime_map_doors(

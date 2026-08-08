@@ -1562,6 +1562,15 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
 int dm2_v1_dungeon_validate_file_header_runtime_map(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out);
+/* Walk every source-owned record in one already validated canonical
+ * File_header map.  This is the only map-wide record callback route for the
+ * PC-DOS local-level consumers: it starts from c_map ground-stack roots and
+ * follows c_record GenericRecord::w0 with the validator's exact bound.
+ * Legacy G1-extension maps, incomplete graphs and malformed callbacks fail
+ * closed.  The return value is the number of callback records, or -1. */
+int dm2_v1_dungeon_walk_file_header_runtime_map(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_DungeonThingVisitor visitor, void *user);
 /* Resolve a selected tile through c_map.cpp's ground-stack lookup to a
  * declared direct DB0..DB5/DB9 record address. Other types, extensions, and
  * tiles without a root fail closed without mutating out. */

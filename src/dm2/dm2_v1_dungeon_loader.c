@@ -3080,6 +3080,41 @@ int dm2_v1_dungeon_validate_file_header_runtime_map(
     return 1;
 }
 
+int dm2_v1_dungeon_walk_file_header_runtime_map(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_DungeonThingVisitor visitor, void *user)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt validation;
+    int record_count = 0;
+
+    /* SKProject c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN:518-626 makes one
+     * c_map root lookup per marked square, then follows
+     * c_record.cpp::DM2_GET_NEXT_RECORD_LINK until OBJECT_END_MARKER.  Keep
+     * that map-wide route behind the canonical File_header validator; callers
+     * must not create a parallel w0 reader from a partial map adapter. */
+    if (!d || !visitor ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, map, &validation) || !validation.committed ||
+        validation.record_count <= 0) {
+        return -1;
+    }
+    for (int x = 0; x < validation.width; ++x) {
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int walked;
+
+            if (raw < 0) return -1;
+            if ((raw & 0x10) == 0) continue;
+            walked = dm2_v1_dungeon_walk_square_things(
+                d, map, x, y, validation.record_count, visitor, user);
+            if (walked < 0 || walked > validation.record_count - record_count)
+                return -1;
+            record_count += walked;
+        }
+    }
+    return record_count == validation.record_count ? record_count : -1;
+}
+
 int dm2_v1_dungeon_resolve_g1_direct_root_record(
     const DM2_V1_DungeonData *d,
     int level,

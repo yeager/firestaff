@@ -138,6 +138,16 @@
   Resultatet är fortsatt ofullständigt och materialiserar inte party, DYN4
   eller spelmekanik.
 
+# DM2 File_header local-level record walk (2026-08-08)
+
+- ✅ Lade till en gemensam, fail-closed callbackväg för hela den validerade
+  File_header-kartans recordkedjor. Den följer `c_map`-rötterna och
+  `GenericRecord::w0` med samma begränsning som originalets
+  `DM2_LOAD_LOCALLEVEL_DYN`.
+- ✅ Verifierat på samtliga 44 kartor i den riktiga PC-DOS-filen. Vägen läser
+  endast originaldata och kan ännu inte materialisera DYN4, party eller
+  spelmekanik.
+
 # DM2 File_header boot handoff (2026-08-08)
 
 - ✅ M11/bootprofilen lämnar nu karta 0:s verifierade File_header-recipient
