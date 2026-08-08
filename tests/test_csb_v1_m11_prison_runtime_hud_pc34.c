@@ -545,28 +545,16 @@ int main(void)
         CHECK(view.csbState.runtime_viewport_source_session_ready &&
                   viewport_nonblack > 0,
               "real MINI.DAT Resume consumes a source-owned F0128 viewport");
-        /* The CSB HUD always rebuilds its party surface from GAMEBLOCK data.
-         * Make the retained M11 mirror deliberately stale, then require the
-         * C009/C011 spell panel to remain drawable through the source-owned
-         * party copy.  The old call passed `view` here and cleared the panel
-         * because its stale party count was zero. */
-        view.world.party.championCount = 0;
-        view.spellPanelOpen = 1;
-        view.dm1SpellCasting.magicCasterIndex = 0;
-        view.dm1SpellCasting.input[0].symbolStep = 0;
+        /* C009/C011 consume the real GAMEBLOCK party. Draw the unmodified
+         * live frame, then open the spell panel through C100 rather than
+         * seeding an M11-only party or spell state. */
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
-        /* C009 itself may be all palette index zero in an original save
-         * state. The following C100/F1 input receipts verify the fresh
-         * GAMEBLOCK party mirror rather than treating a transparent source
-         * panel background as a synthetic visual failure. */
-        view.spellPanelOpen = 0;
-        view.dm1SpellCasting.magicCasterIndex = -1;
         CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
                   M11_GAME_INPUT_REDRAW &&
                   view.world.party.championCount == 1 &&
                   view.spellPanelOpen,
-              "CSB C100 refreshes GAMEBLOCK party before opening the spell panel");
+              "CSB C100 opens the spell panel from the real GAMEBLOCK party");
         {
             CSB_V1_BootProfile *mutable_profile =
                 (CSB_V1_BootProfile *)view.csbBootProfile;
@@ -600,20 +588,15 @@ int main(void)
                   "real Atari C107 recant clears the persisted F0400 incantation without refunding mana");
             (void)M11_GameView_ClearSpell(&view);
         }
-        /* PANEL.C F0355 validates M516 before changing G0423.  Deliberately
-         * make only M11 claim that a second champion exists, then use the
-         * real PC3.4 runtime session to prove F2 cannot open that panel. */
-        view.world.party.championCount = 2;
-        view.world.party.champions[1].present = 1;
-        view.world.party.champions[1].hp.current = 10;
-        view.inventoryPanelActive = 0;
+        /* The actual saved party contains one champion. F2 must stay inert
+         * against that real GAMEBLOCK instead of relying on a caller-seeded
+         * second M11 champion. */
         CHECK(M11_GameView_HandleInput(&view,
                                        M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW &&
                   view.world.party.championCount == 1 &&
                   !view.inventoryPanelActive,
               "CSB F2 rejects a champion absent from the real PC3.4 GAMEBLOCK");
-        view.world.party.championCount = 0;
         CHECK(M11_GameView_HandleInput(&view,
                                        M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW &&
@@ -627,12 +610,8 @@ int main(void)
             int hand_h = 0;
 
             /* C020..C027 take the same source M516 owner as the inventory
-             * grid. The real PC3.4 session has only champion 0, so a stale
-             * host-only champion 1 must be discarded before C022 can touch
-             * its status-hand slot. */
-            view.world.party.championCount = 2;
-            view.world.party.champions[1].present = 1;
-            view.world.party.champions[1].hp.current = 10;
+             * grid. The real PC3.4 session has only champion 0, so C022
+             * must not touch a nonexistent second champion. */
             CHECK(M11_GameView_GetV1StatusHandSlotBoxZone(
                       1, 0, &hand_x, &hand_y, &hand_w, &hand_h) &&
                       M11_GameView_HandlePointerButton(

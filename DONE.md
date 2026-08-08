@@ -1,5 +1,10 @@
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ Realdataregressionen för CSB:s HUD använder inte längre testskapade
+  party-, inventory- eller spellpanelstillstånd för C100, F1, F2 eller C022.
+  Den verifierar den riktiga enhjältepartyns positiva och negativa kommandon
+  direkt mot GAMEBLOCK/M516-ägaren.
+
 - ✅ Atari ST:s riktiga `MINI.DAT`-regression testar nu F1-inventory som en
   faktisk öppna/stäng-transaktion från live GAMEBLOCK i stället för att
   först skapa en avsiktligt föråldrad M11-party- eller inventoryspegel.
