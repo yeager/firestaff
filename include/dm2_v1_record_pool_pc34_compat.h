@@ -72,6 +72,12 @@ typedef struct {
     uint32_t possession_continuation_count;
     uint32_t record_hash;
     uint32_t continuation_hash;
+    /* Exact shared-SUPPRESS position immediately after the hero/cursor root
+     * phase.  The next owner must consume special timer chains, then map
+     * chains, before it may read possession continuations. */
+    size_t next_stream_offset;
+    uint8_t next_stream_bits_remaining;
+    uint8_t next_stream_current_byte;
 } DM2_V1_SksaveDirectRootReceipt;
 
 /* Exact skproject table_recordsizes entry (bytes).  Returns 0 for the

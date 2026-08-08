@@ -555,7 +555,10 @@ static int verify_real_pool_direct_roots(
             (uint16_t)(state->champion_count * 30u + 1u) &&
             receipt.record_hash != 0u &&
             receipt.possession_continuation_count == 0u &&
-            receipt.continuation_hash == 0u;
+            receipt.continuation_hash == 0u &&
+            receipt.next_stream_offset >= state->record_link_bitstream_offset &&
+            receipt.next_stream_offset <= payload_size &&
+            receipt.next_stream_bits_remaining <= 7u;
     }
     dm2_v1_record_pool_set_free(&pools);
     return ok;

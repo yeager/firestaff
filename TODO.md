@@ -4171,6 +4171,8 @@ level or consumer bindings.
   at their authentic boundary. The remaining importer must restore special
   timer chains, map chains and only then possession continuations, exactly as
   `DM2_READ_SKSAVE_DUNGEON` orders them.
+  The direct-root receipt now carries the exact bit position at that boundary;
+  use it for the next phase rather than deriving a byte-aligned substitute.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

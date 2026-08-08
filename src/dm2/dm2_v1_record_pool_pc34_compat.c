@@ -717,6 +717,9 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
         out_receipt->possession_continuation_count = 0u;
         out_receipt->record_hash = context.record_hash;
         out_receipt->continuation_hash = 0u;
+        out_receipt->next_stream_offset = session.reader.position;
+        out_receipt->next_stream_bits_remaining = session.reader.bits_remaining;
+        out_receipt->next_stream_current_byte = session.reader.current_byte;
     }
 #undef DM2_V1_SKSAVE_ROOT_ABORT
     return 1;

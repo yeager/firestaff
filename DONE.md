@@ -8,6 +8,9 @@
   real-data corpus suite. The revised pool receipt proves that this phase has
   consumed zero continuation records rather than misclassifying later source
   bytes.
+- ✅ The direct-root receipt now carries the exact post-root byte, carry byte
+  and remaining-bit count. This gives the special-timer importer the original
+  shared-stream position without assuming byte alignment.
 
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 
