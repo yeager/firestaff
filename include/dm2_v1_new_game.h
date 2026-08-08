@@ -256,6 +256,11 @@ typedef struct {
     DM2_V1_OriginalRawDungeonReceipt dungeon;
     DM2_V1_OriginalRawSaveStateReceipt fixed_state;
     DM2_V1_OriginalRawTimerStreamReceipt timers;
+    /* c_savegame.cpp calls DM2_SORT_TIMERS after c_tim has been restored.
+     * These are the source-comparator heap indices, retained only as an
+     * immutable receipt for the later queue owner. */
+    int timer_queue_sorted;
+    uint32_t timer_queue_index_hash;
     int party_pose_in_map_bounds;
     int party_tile_root_resolved;
     uint16_t party_tile_root;

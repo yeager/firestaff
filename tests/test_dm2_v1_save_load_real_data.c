@@ -811,6 +811,8 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                   game_load_prefix.fixed_state.fixed_sections_hash ==
                       state_receipt.fixed_sections_hash &&
                   game_load_prefix.timers.raw_hash == state_receipt.timers_hash &&
+                  game_load_prefix.timer_queue_sorted &&
+                  game_load_prefix.timer_queue_index_hash != 0u &&
                   game_load_prefix.transaction_hash != 0u,
               "real SKSave joins dungeon, SUPPRESS state and c_tim under one pre-link GAME_LOAD receipt");
     }

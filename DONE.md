@@ -176,7 +176,9 @@
   kontinuerliga SUPPRESS-flöde och källstorleksriktiga `c_tim`-kö som
   SKProjects `DM2_GAME_LOAD` läser före `DM2_READ_SKSAVE_DUNGEON`.
   Icke-serialiserade SUPPRESS-bitar nollställs före avkodning så att inget
-  stackinnehåll kan påverka källkvittots hash.
+  stackinnehåll kan påverka källkvittots hash. Kvittot behåller även
+  `DM2_SORT_TIMERS` exakta heapindexering med c_timer-komparatorn, men
+  publicerar inte någon spelbar timerkö.
 - ✅ Verifierat mot alla åtta riktiga PC-DOS-SKSave-filer. Det installerar
   ingen session och lämnar Resume spärrad tills originalens länkade records,
   possessions, aktuatorkö och efterladdningssteg har en komplett ägare.

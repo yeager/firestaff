@@ -28,6 +28,7 @@
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_save_record_masks_pc34_compat.h"
 #include "dm2_v1_save_suppress_masks_pc34_compat.h"
+#include "dm2_v1_save_timers_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include <string.h>
@@ -1227,7 +1228,8 @@ int dm2_v1_original_raw_sksave_game_load_prefix_receipt(
     DM2_V1_OriginalRawGameLoadPrefixReceipt *out_receipt)
 {
     DM2_V1_OriginalRawGameLoadPrefixReceipt candidate;
-    uint8_t *timer_records = NULL;
+    DM2_V1_SaveTimerRecord *timer_records = NULL;
+    int16_t *timer_indices = NULL;
     size_t timer_bytes;
     uint16_t party_root = 0xfffeu;
 
@@ -1248,11 +1250,17 @@ int dm2_v1_original_raw_sksave_game_load_prefix_receipt(
     timer_bytes = (size_t)candidate.fixed_state.timer_count *
         DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE;
     if (timer_bytes != 0u) {
-        timer_records = (uint8_t *)malloc(timer_bytes);
-        if (!timer_records) return 0;
+        timer_records = (DM2_V1_SaveTimerRecord *)malloc(timer_bytes);
+        timer_indices = (int16_t *)malloc(
+            (size_t)candidate.fixed_state.timer_count * sizeof(*timer_indices));
+        if (!timer_records || !timer_indices) {
+            free(timer_indices);
+            free(timer_records);
+            return 0;
+        }
     }
     if (!dm2_v1_original_raw_sksave_decode_timer_stream(
-            buf, buf_size, &candidate.fixed_state, timer_records,
+            buf, buf_size, &candidate.fixed_state, (uint8_t *)timer_records,
             candidate.fixed_state.timer_count, &candidate.timers) ||
         !candidate.timers.valid ||
         candidate.timers.raw_hash != candidate.fixed_state.timers_hash ||
@@ -1260,9 +1268,27 @@ int dm2_v1_original_raw_sksave_game_load_prefix_receipt(
             candidate.fixed_state.record_link_bitstream_offset ||
         candidate.timers.end_bits_remaining !=
             candidate.fixed_state.record_link_bitstream_bits_remaining) {
+        free(timer_indices);
         free(timer_records);
         return 0;
     }
+    /* SKProject c_savegame.cpp:1517-1525 restores c_tim then invokes
+     * DM2_SORT_TIMERS.  Keep the original c_timer.cpp comparator and heap
+     * order beside this read-only receipt, but do not publish it as a live
+     * queue before READ_SKSAVE_DUNGEON has supplied record ownership. */
+    dm2_v1_save_timer_sort(timer_records, candidate.fixed_state.timer_count,
+                           timer_indices);
+    candidate.timer_queue_index_hash = 2166136261u;
+    for (uint16_t i = 0u; i < candidate.fixed_state.timer_count; ++i) {
+        uint8_t encoded_index[2];
+        encoded_index[0] = (uint8_t)((uint16_t)timer_indices[i] & 0xffu);
+        encoded_index[1] = (uint8_t)((uint16_t)timer_indices[i] >> 8);
+        candidate.timer_queue_index_hash = dm2_v1_raw_sksave_hash_extend(
+            candidate.timer_queue_index_hash, encoded_index,
+            sizeof(encoded_index));
+    }
+    candidate.timer_queue_sorted = 1;
+    free(timer_indices);
     free(timer_records);
 
     if (candidate.fixed_state.party_map < candidate.dungeon.map_count) {
@@ -1292,7 +1318,9 @@ int dm2_v1_original_raw_sksave_game_load_prefix_receipt(
      * DM2_READ_SKSAVE_DUNGEON.  The latter is the source owner that decides
      * whether that pose can enter a live map; do not pre-empt it with a
      * Firestaff coordinate admission rule. */
-    candidate.valid = candidate.transaction_hash != 0u;
+    candidate.valid = candidate.timer_queue_sorted &&
+        candidate.timer_queue_index_hash != 0u &&
+        candidate.transaction_hash != 0u;
     if (!candidate.valid) return 0;
     *out_receipt = candidate;
     return 1;
