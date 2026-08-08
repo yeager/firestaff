@@ -385,6 +385,7 @@ static int verify_real_raw_pool_baseline(
 {
     DM2_V1_RecordPoolSet pools;
     DM2_V1_SksaveMapOwner map_owner;
+    DM2_V1_SksaveMapRestoreContext map_context;
     DM2_V1_RecordPoolSet rejected;
     uint8_t *corrupt = NULL;
     int pool;
@@ -392,6 +393,7 @@ static int verify_real_raw_pool_baseline(
     if (!payload || !dungeon || !dungeon->valid) return 0;
     memset(&pools, 0, sizeof(pools));
     memset(&map_owner, 0, sizeof(map_owner));
+    memset(&map_context, 0, sizeof(map_context));
     if (!dm2_v1_record_pool_set_init_from_raw_sksave(
             &pools, payload, payload_size, dungeon) || !pools.valid ||
         pools.record_graph_complete != 0) {
@@ -450,6 +452,10 @@ static int verify_real_raw_pool_baseline(
      * fabricated tile owner. */
     if (!dm2_v1_sksave_map_owner_init(
             &map_owner, payload, payload_size, dungeon) ||
+        !dm2_v1_sksave_map_restore_context_init(
+            &map_context, &map_owner, &pools) ||
+        dm2_v1_sksave_map_restore_get_map_count(&map_context) !=
+            (int)dungeon->map_count ||
         dm2_v1_sksave_map_owner_get_map_count(&map_owner) !=
             (int)dungeon->map_count ||
         dm2_v1_sksave_map_owner_get_tile(&map_owner, 0, 0) !=

@@ -236,6 +236,101 @@ uint16_t dm2_v1_sksave_map_owner_get_tile_record_link_current(
     return link;
 }
 
+int dm2_v1_sksave_map_restore_context_init(
+    DM2_V1_SksaveMapRestoreContext *context,
+    DM2_V1_SksaveMapOwner *map_owner,
+    DM2_V1_RecordPoolSet *record_pools)
+{
+    if (context) memset(context, 0, sizeof(*context));
+    if (!context || !map_owner || !map_owner->valid || !record_pools ||
+        !record_pools->valid || record_pools->record_graph_complete != 0)
+        return 0;
+    context->map_owner = map_owner;
+    context->record_pools = record_pools;
+    return 1;
+}
+
+static DM2_V1_SksaveMapRestoreContext *dm2_v1_sksave_map_restore_ctx(void *ctx)
+{
+    DM2_V1_SksaveMapRestoreContext *context =
+        (DM2_V1_SksaveMapRestoreContext *)ctx;
+    if (!context || !context->map_owner || !context->map_owner->valid ||
+        !context->record_pools || !context->record_pools->valid) return NULL;
+    return context;
+}
+
+int dm2_v1_sksave_map_restore_get_map_count(void *ctx)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    return context ? dm2_v1_sksave_map_owner_get_map_count(context->map_owner) : 0;
+}
+
+void dm2_v1_sksave_map_restore_get_map_dimensions(void *ctx,
+                                                   int *width, int *height)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    if (!context) {
+        if (width) *width = 0;
+        if (height) *height = 0;
+        return;
+    }
+    dm2_v1_sksave_map_owner_get_map_dimensions(context->map_owner, width, height);
+}
+
+void dm2_v1_sksave_map_restore_change_current_map(void *ctx, int map)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    if (context) dm2_v1_sksave_map_owner_change_current_map(context->map_owner, map);
+}
+
+uint8_t dm2_v1_sksave_map_restore_get_tile(void *ctx, int x, int y)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    return context ? dm2_v1_sksave_map_owner_get_tile(context->map_owner, x, y) : 0u;
+}
+
+int dm2_v1_sksave_map_restore_set_tile(void *ctx, int x, int y, uint8_t tile)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    return context ? dm2_v1_sksave_map_owner_set_tile(context->map_owner, x, y, tile) : -1;
+}
+
+uint16_t dm2_v1_sksave_map_restore_get_tile_record_link(void *ctx, int x, int y)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    return context ? dm2_v1_sksave_map_owner_get_tile_record_link_current(
+        context->map_owner, x, y) : 0xfffeu;
+}
+
+void dm2_v1_sksave_map_restore_set_tile_record_link(void *ctx,
+                                                      int x, int y,
+                                                      uint16_t link)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    size_t index;
+    if (!context || link == 0xffffu ||
+        dm2_v1_sksave_map_owner_ground_index(context->map_owner,
+            context->map_owner->current_map, x, y, &index) != 1) return;
+    context->map_owner->ground_stack_links[index] = link;
+}
+
+int dm2_v1_sksave_map_restore_existing_tile_record_chain(
+    void *ctx, DM2_ReadRecordSession *session, uint16_t root_link,
+    int x, int y)
+{
+    DM2_V1_SksaveMapRestoreContext *context = dm2_v1_sksave_map_restore_ctx(ctx);
+    uint16_t actual_root;
+    (void)x;
+    (void)y;
+    if (!context || root_link == 0xfffeu) return -1;
+    actual_root = dm2_v1_sksave_map_owner_get_tile_record_link_current(
+        context->map_owner, x, y);
+    if (actual_root != root_link)
+        return -1;
+    return dm2_v1_record_pool_restore_raw_sksave_resident_chain(
+        context->record_pools, session, root_link) ? 0 : -1;
+}
+
 int dm2_v1_sksave_map_owner_tile_record_link(
     const DM2_V1_SksaveMapOwner *owner, int map, int x, int y,
     uint16_t *out_link)

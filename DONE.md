@@ -62,6 +62,11 @@
   needed by `DM2_LoadExtraDungeonCallbacks`. The original save body stays
   immutable; the real corpus verifies both copied tile identity and that a
   temporary RAM tile change cannot alter its source byte.
+- ✅ Added the map half of the single SKSAVE GAME_LOAD transaction. One
+  callback context now owns both the authentic mutable c_map state and its
+  matching c_record pools, including resident-chain restoration and tile-root
+  publication. The context is covered by the focused dungeon checks and the
+  176-check original PC-DOS corpus.
 
 - ✅ Corrected the direct-root reader to stop after the source hero and
   cursor chains. It no longer reads possession continuations from the wrong

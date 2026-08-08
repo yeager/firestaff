@@ -3108,6 +3108,12 @@ level or consumer bindings.
   it into the single GAME_LOAD transaction with live map/tile callbacks,
   dynamic empty-tile allocation, possessions and timers; it remains
   deliberately unavailable as a standalone Resume path.
+  2026-08-08 transaction-map-context update: a single callback context now
+  binds exactly one real map owner to exactly one raw record-pool owner. It
+  supplies all `DM2_LoadExtraDungeonCallbacks` map operations, including
+  resident-chain restoration and empty-tile root storage. Connect it next to
+  the source `READ_RECORD_CHECKCODE` allocation and possession list rather
+  than routing either through a parallel dungeon structure.
   2026-08-08 tile-owner update: the map owner now has a writable RAM copy of
   every authenticated map tile span and implements the native
   `DM2_LoadExtraDungeonCallbacks` map, geometry, tile and ground-link

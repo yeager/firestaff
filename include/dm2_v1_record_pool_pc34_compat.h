@@ -80,6 +80,14 @@ typedef struct {
     int dynamic_records_detached;
 } DM2_V1_SksaveMapOwner;
 
+/* The map-facing portion of the eventual single GAME_LOAD transaction. It
+ * binds exactly one mutable c_map owner to exactly one c_record pool set;
+ * callers must not substitute either member after stream consumption begins. */
+typedef struct {
+    DM2_V1_SksaveMapOwner *map_owner;
+    DM2_V1_RecordPoolSet *record_pools;
+} DM2_V1_SksaveMapRestoreContext;
+
 /* Construct the sole mutable owner of the authenticated ground-stack links.
  * `raw_body` is never copied or modified. */
 int dm2_v1_sksave_map_owner_init(
@@ -106,6 +114,29 @@ uint8_t dm2_v1_sksave_map_owner_get_tile(void *ctx, int x, int y);
 int dm2_v1_sksave_map_owner_set_tile(void *ctx, int x, int y, uint8_t tile);
 uint16_t dm2_v1_sksave_map_owner_get_tile_record_link_current(
     void *ctx, int x, int y);
+
+int dm2_v1_sksave_map_restore_context_init(
+    DM2_V1_SksaveMapRestoreContext *context,
+    DM2_V1_SksaveMapOwner *map_owner,
+    DM2_V1_RecordPoolSet *record_pools);
+
+/* Complete adapters for DM2_LoadExtraDungeonCallbacks. `ctx` is a
+ * DM2_V1_SksaveMapRestoreContext, not a bare map owner, so the resident-chain
+ * callback cannot accidentally decode against another pool. */
+int dm2_v1_sksave_map_restore_get_map_count(void *ctx);
+void dm2_v1_sksave_map_restore_get_map_dimensions(void *ctx,
+                                                   int *width, int *height);
+void dm2_v1_sksave_map_restore_change_current_map(void *ctx, int map);
+uint8_t dm2_v1_sksave_map_restore_get_tile(void *ctx, int x, int y);
+int dm2_v1_sksave_map_restore_set_tile(void *ctx, int x, int y, uint8_t tile);
+uint16_t dm2_v1_sksave_map_restore_get_tile_record_link(void *ctx,
+                                                          int x, int y);
+void dm2_v1_sksave_map_restore_set_tile_record_link(void *ctx,
+                                                      int x, int y,
+                                                      uint16_t link);
+int dm2_v1_sksave_map_restore_existing_tile_record_chain(
+    void *ctx, DM2_ReadRecordSession *session, uint16_t root_link,
+    int x, int y);
 
 /* First destructive phase of sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON:
  * unlink every DB4..DB15 record from actual tile chains, preserving DB0..DB3
