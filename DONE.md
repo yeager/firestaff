@@ -111,6 +111,10 @@
 
 # DM2 New Game championval i privat GAME_LOAD-ägare (2026-08-08)
 
+- ✅ `DM2_LOAD_NEW_DUNGEON`-reseten är nu en privat, realdatabunden del av
+  samma ägare. Den bevarar originalets partyantal `0`, ledarhandtag `0xffff`
+  och sparströmsposition `0` före `DM2_READ_DUNGEON_STRUCTURE(1)`. Den öppnar
+  inga filer, skapar ingen tom party och kan inte publicera en session.
 - ✅ `DM2_V1_GameLoadWorldOwner` följer nu `DM2_GAME_LOAD`-ordningen:
   först File_header-värld och privat aktuatorkö, sedan championvalet. De
   click-ordnade `c_hero`-bytesen och inventories kommer uteslutande från den
@@ -201,6 +205,16 @@
   partyhints avbryts atomärt, eftersom deras följdhanterare ännu saknar samma
   ägare. WALL, PIT, DOOR, TELEPORTER och TRICKWALL avvisas fortsatt utan
   mutation; de kräver bland annat DB0, CAII, följdtimers och UI-/ljudvägar.
+
+# DM2 PushButtonSwitch direkt DB0-atom (2026-08-08)
+
+- ✅ `PUSH_BUTTON_SWITCH` följer nu `skevent.cpp:2010–2028`: den använder
+  den aktiva kartan och `GET_ADDRESS_OF_TILE_RECORD` på målrutan, inte en
+  kedjesökning eller en hårdkodad karta 0. Endast den direkta autentiska
+  DB0-dörrpostens bit 13 ändras.
+- ✅ Verifierat mot den hashbundna PC-DOS-korpusen: en verklig aktuator på
+  karta 5 växlar bara målpostens bit 13. Ingen timer, dörranimation, UI- eller
+  ljudhändelse skapas av atomen.
 
 # Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
 

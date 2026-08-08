@@ -47,6 +47,19 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GameLoadSoundOwner;
 
+/* Private result of the three writes in DM2_LOAD_NEW_DUNGEON immediately
+ * before DM2_READ_DUNGEON_STRUCTURE(1). The selected medium itself remains
+ * owned by BootProfile; this is deliberately not a host file-open shim.
+ * Source: SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON
+ * (616-640). */
+typedef struct {
+    int valid;
+    int16_t party_count;
+    int16_t leader_hand_record;
+    uint32_t save_stream_bytes_consumed;
+    uint32_t receipt_hash;
+} DM2_V1_GameLoadNewDungeonResetReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -66,6 +79,10 @@ typedef struct {
     DM2_V1_TimerQueue timer_queue;
     uint16_t timer_capacity;
     int fresh_game_mode;
+    /* The private LOAD_NEW_DUNGEON reset is an explicit predecessor of every
+     * selected champion. It records source values only and cannot publish a
+     * party or a save stream to M11. */
+    DM2_V1_GameLoadNewDungeonResetReceipt load_new_dungeon_reset;
     int actuator_generators_processed;
     /* DM2_move_2fcf_0b8b / CHANGE_CURRENT_MAP_TO source state.  This stays
      * private until the later all-owner session commit. */

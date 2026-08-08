@@ -74,6 +74,12 @@
   ingen värdgenererad tillväxt får kringgå originalets c_map-kapacitet.
 
 - 🔧 DM2 New Game GAME_LOAD: den isolerade File_header-/DB-poolägaren har nu
+  originalets privata `DM2_LOAD_NEW_DUNGEON`-förstadium: partyantalet är
+  noll, ledarhandtaget är `0xffff` och sparströmmen har ännu inte lästs.
+  Detta är en intern reset-receipt, inte en tom spelparty eller en filöppning.
+  Den kompletta sessionscommitten saknar fortfarande c_map-, possession-,
+  timer-, UI- och ljudägare.
+  Ägaren har dessutom
   originalets källberäknade c_tim-kapacitet och kör den färska
   `DM2_PROCESS_ACTUATOR_TICK_GENERATOR`-fasen privat, med `savegamew8`-läge,
   DB3 byte+4-mutationer och rollback vid köfel. Den privata 0x56-fortsättningen
@@ -330,7 +336,11 @@
 - **DM2-FILE-HEADER-DOOR-RUNTIME:** Canonical DB0 door records are now
   retained across all 44 File_header chains. Bind their original animation,
   lock/key, sound, button and sensor consumers before publishing door
-  transitions to gameplay.
+  transitions to gameplay. **2026-08-08:** den avgränsade
+  `PUSH_BUTTON_SWITCH`-atomen använder nu rätt aktuell karta och den direkta
+  DB0-roten, precis som `GET_ADDRESS_OF_TILE_RECORD`; dörrsteg, lås/nycklar,
+  ljud och alla övriga sensorvägar kräver fortfarande den gemensamma
+  sessionägaren.
 
 - **DM2-FILE-HEADER-ACTUATOR-RUNTIME:** Canonical DB3 records now decode
   their source target/delay/effect fields across every File_header chain;

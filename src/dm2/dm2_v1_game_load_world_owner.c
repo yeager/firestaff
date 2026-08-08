@@ -136,6 +136,41 @@ static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash, uint32_t value)
     return hash;
 }
 
+/* DM2_LOAD_NEW_DUNGEON clears party.heros_in_party, stores -1 in
+ * savegamewpc.w_00 and resets savegamel1 before it reads File_header data.
+ * Keep those exact values under the same private owner that later clones the
+ * authenticated dungeon. No call here opens media, writes a save, or
+ * manufactures an empty runtime party. */
+static int dm2_v1_game_load_owner_materialize_new_dungeon_reset(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadNewDungeonResetReceipt candidate;
+
+    if (!owner || !owner->transaction.valid ||
+        !owner->transaction.incomplete_game_load ||
+        !owner->dungeon.raw_data || owner->dungeon.raw_size <= 0 ||
+        !owner->record_pools.valid || !owner->record_pools.record_graph_complete) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.party_count = 0;
+    candidate.leader_hand_record = DM2_V1_RECORD_HANDLE_NULL;
+    candidate.save_stream_bytes_consumed = 0u;
+    candidate.receipt_hash = 0x4c4e4452u; /* "LNDR" */
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, owner->transaction.transaction_hash);
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, (uint16_t)candidate.party_count);
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, (uint16_t)candidate.leader_hand_record);
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, candidate.save_stream_bytes_consumed);
+    candidate.valid = candidate.receipt_hash != 0u;
+    if (!candidate.valid) return 0;
+    owner->load_new_dungeon_reset = candidate;
+    return 1;
+}
+
 static int dm2_v1_game_load_owner_materialize_dyn4(
     DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -621,7 +656,8 @@ int dm2_v1_game_load_world_owner_init_new_game(
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
         candidate.source_transaction_hash == 0u ||
         !dm2_v1_game_load_owner_validate_possessions(&candidate) ||
-        !dm2_v1_game_load_owner_validate_world_maps(&candidate)) {
+        !dm2_v1_game_load_owner_validate_world_maps(&candidate) ||
+        !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
@@ -646,7 +682,12 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         owner->champion_selection_materialized || !owner->fresh_game_mode ||
-        !owner->source_map_context_materialized || owner->committed) return 0;
+        !owner->source_map_context_materialized || owner->committed ||
+        !owner->load_new_dungeon_reset.valid ||
+        owner->load_new_dungeon_reset.party_count != 0 ||
+        owner->load_new_dungeon_reset.leader_hand_record !=
+            DM2_V1_RECORD_HANDLE_NULL ||
+        owner->load_new_dungeon_reset.save_stream_bytes_consumed != 0u) return 0;
 
     /* Mirror events call SELECT_CHAMPION after DM2_GAME_LOAD has returned.
      * This private transaction materialises their already authenticated click

@@ -1763,6 +1763,12 @@ int main(void) {
                     dm2_v1_game_load_world_owner_is_prepared(
                         &new_game_world_owner) &&
                     !new_game_world_owner.committed &&
+                    new_game_world_owner.load_new_dungeon_reset.valid &&
+                    new_game_world_owner.load_new_dungeon_reset.party_count == 0 &&
+                    new_game_world_owner.load_new_dungeon_reset.leader_hand_record ==
+                        DM2_V1_RECORD_HANDLE_NULL &&
+                    new_game_world_owner.load_new_dungeon_reset.save_stream_bytes_consumed == 0u &&
+                    new_game_world_owner.load_new_dungeon_reset.receipt_hash != 0u &&
                     new_game_world_owner.current_map == 0 &&
                     new_game_world_owner.source_transaction_hash ==
                         source_transaction.transaction_hash &&
