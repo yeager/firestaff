@@ -5393,6 +5393,33 @@ static void test_runtime_boot_rejects_unmaterialized_media(void)
     csb_v1_runtime_cleanup(&runtime);
 }
 
+/* ReDMCSB REVIVE.C F0280 copies title bytes through the second newline.  A
+ * bare second newline is consequently a legitimate empty champion title,
+ * as in A31's original C127 NECRO record.  It must not reject the otherwise
+ * source-complete candidate merely because the text unpacker returns zero
+ * copied title bytes. */
+static void test_runtime_mirror_accepts_empty_source_title(void)
+{
+    static const char a31_necro[] =
+        "NECRO\n\n\nM\nABHIAGHCAAIA\nDBCGDEDOCAEADM\nEFFGFGGHGEFEIFIE";
+    struct ChampionState_Compat mirror;
+    CSB_V1_RuntimeProfile runtime;
+
+    F0600_CHAMPION_InitEmpty_Compat(&mirror);
+    csb_v1_runtime_init(&runtime, NULL);
+    CHECK(F0606_CHAMPION_ParseMirrorTextIdentity_Compat(a31_necro, &mirror) &&
+              mirror.sex == 'M' &&
+              F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(&mirror),
+          "A31 NECRO C127 text keeps empty title and encoded F0280 fields");
+    CHECK(csb_v1_runtime_append_mirror_candidate_source_compat(
+              &runtime, &mirror) == 0 && runtime.party_state_valid &&
+              runtime.party_state.ChampionCount == 1 &&
+              strcmp(runtime.party_state.Champions[0].Name, "NECRO") == 0 &&
+              runtime.party_state.Champions[0].Title[0] == '\0',
+          "F0280 runtime appends original A31 empty-title candidate");
+    csb_v1_runtime_cleanup(&runtime);
+}
+
 int main(void)
 {
     const char *focus_dsa_save_handoff =
@@ -5417,6 +5444,7 @@ int main(void)
     test_startup_full_runtime_receipt_requires_complete_real_session();
     test_runtime_variant_hint_identity();
     test_runtime_boot_rejects_unmaterialized_media();
+    test_runtime_mirror_accepts_empty_source_title();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_rejects_legacy_fixture_dungeon();

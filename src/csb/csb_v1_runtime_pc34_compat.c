@@ -19957,13 +19957,18 @@ int csb_v1_runtime_append_mirror_candidate_source_compat(
      * lines byte-for-byte; do not derive values from M11's six-stat HUD. */
     if (!F0628_CHAMPION_UnpackName_Compat(source_record, champion->Name,
                                           sizeof(champion->Name)) ||
-        !F0629_CHAMPION_UnpackTitle_Compat(source_record, champion->Title,
-                                           sizeof(champion->Title)) ||
         !csb_v1_runtime_decode_mirror_value_pc34(
             source_record->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
             0, 4, &value)) {
         return -1;
     }
+    /* ReDMCSB REVIVE.C F0280 reads title bytes until its second newline.
+     * A source record may therefore have an empty title (the verified A31
+     * C127 ordinal 14, NECRO, is exactly Name + LF + LF + M).  The text
+     * unpacker reports the copied byte count, so zero is a successful empty
+     * title here, not a malformed source record. */
+    (void)F0629_CHAMPION_UnpackTitle_Compat(source_record, champion->Title,
+                                             sizeof(champion->Title));
     champion->CurrentHealth = champion->MaximumHealth = (int16_t)value;
     if (!csb_v1_runtime_decode_mirror_value_pc34(
             source_record->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,

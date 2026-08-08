@@ -32,6 +32,7 @@
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
@@ -503,6 +504,145 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     free(inventory);
     free(portraits);
     free(bytes);
+}
+
+/* The CSB Hall's C127 mirrors are real dungeon poses, not test fixtures.  The
+ * native Amiga startup cases above used to stop after proving that C013/C017
+ * and the C026/C040 pixels were drawable.  That left a material gap: a
+ * PC34-only party could still have been substituted after APPB/KAOS handed
+ * control to the game.  ReDMCSB DUNGEON.C F0172 publishes the C127 owner,
+ * REVIVE.C F0280/F0282 move it into M516_CHAMPIONS and COMMAND.C F0361 then
+ * consumes C002 from that same GAMEBLOCK.  Exercise those three source
+ * boundaries with the selected ADF data before accepting a native handoff. */
+static unsigned short amiga_handoff_next_thing(
+    const struct DungeonThings_Compat *things, unsigned short thing)
+{
+    const unsigned char *raw;
+    int type;
+    int index;
+
+    if (!things || thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return THING_ENDOFLIST;
+    }
+    type = (int)THING_GET_TYPE(thing);
+    index = (int)THING_GET_INDEX(thing);
+    if (type < 0 || type >= DUNGEON_THING_TYPE_COUNT || index < 0 ||
+        index >= things->thingCounts[type] || !things->rawThingData[type] ||
+        s_thingDataByteCount[type] < 2) {
+        return THING_ENDOFLIST;
+    }
+    raw = things->rawThingData[type] +
+        index * (int)s_thingDataByteCount[type];
+    return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+}
+
+static int amiga_handoff_find_live_c127_pose(M11_GameViewState *view,
+                                             int *out_ordinal)
+{
+    const struct DungeonMapDesc_Compat *map;
+    int x;
+    int y;
+
+    if (out_ordinal) *out_ordinal = -1;
+    if (!view || !view->world.dungeon || !view->world.things ||
+        view->world.dungeon->header.mapCount < 1 ||
+        !view->world.things->sensors) {
+        return 0;
+    }
+    map = &view->world.dungeon->maps[0];
+    for (x = 0; x < (int)map->width; ++x) {
+        for (y = 0; y < (int)map->height; ++y) {
+            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                view->world.dungeon, view->world.things, 0, x, y);
+            int safety = 0;
+
+            while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                   safety++ < 64) {
+                if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                    const int sensor_index = (int)THING_GET_INDEX(thing);
+                    const int wall_cell = (int)THING_GET_CELL(thing);
+                    const int direction = (wall_cell + 2) & 3;
+                    static const int step_x[4] = { 0, 1, 0, -1 };
+                    static const int step_y[4] = { -1, 0, 1, 0 };
+                    const int party_x = x - step_x[direction];
+                    const int party_y = y - step_y[direction];
+
+                    if (sensor_index >= 0 &&
+                        sensor_index < view->world.things->sensorCount &&
+                        view->world.things->sensors[sensor_index].sensorType == 127 &&
+                        party_x >= 0 && party_x < (int)map->width &&
+                        party_y >= 0 && party_y < (int)map->height) {
+                        view->world.party.mapIndex = 0;
+                        view->world.party.mapX = party_x;
+                        view->world.party.mapY = party_y;
+                        view->world.party.direction = direction;
+                        if (out_ordinal) {
+                            *out_ordinal =
+                                (int)view->world.things->sensors[sensor_index].sensorData;
+                        }
+                        return 1;
+                    }
+                }
+                thing = amiga_handoff_next_thing(view->world.things, thing);
+            }
+        }
+    }
+    return 0;
+}
+
+static void expect_amiga_live_mirror_and_command_handoff(
+    M11_GameViewState *view, const char *label)
+{
+    CSB_V1_BootProfile *profile;
+    int mirror_ordinal;
+    int initial_direction;
+    int found_pose;
+    int front_ordinal;
+    int selection_result;
+
+    if (!view || !(profile = (CSB_V1_BootProfile *)view->csbBootProfile)) {
+        expect_true(0, label);
+        return;
+    }
+    mirror_ordinal = -1;
+    found_pose = amiga_handoff_find_live_c127_pose(view, &mirror_ordinal);
+    front_ordinal = found_pose ? M11_GameView_GetFrontMirrorOrdinal(view) : -1;
+    selection_result = front_ordinal == mirror_ordinal
+        ? M11_GameView_SelectFrontMirrorCandidate(view) : 0;
+    expect_true(profile->runtime.dungeon_handle != NULL &&
+                    profile->runtime.state == CSB_STATE_GAME &&
+                    found_pose &&
+                    mirror_ordinal >= 0 &&
+                    front_ordinal == mirror_ordinal &&
+                    selection_result == 1 &&
+                    view->candidateMirrorPanelActive &&
+                    view->candidateMirrorOrdinal == mirror_ordinal &&
+                    view->candidateMirrorPartyIndex == 0 &&
+                    view->world.party.championCount == 1 &&
+                    profile->runtime.party_state_valid &&
+                    profile->runtime.party_state.ChampionCount == 1 &&
+                    profile->runtime.party_state.Champions[0].Name[0] != '\0',
+                label);
+    if (!view->candidateMirrorPanelActive ||
+        view->candidateMirrorPartyIndex != 0 ||
+        view->world.party.championCount != 1 ||
+        !profile->runtime.party_state_valid ||
+        profile->runtime.party_state.ChampionCount != 1) {
+        return;
+    }
+    initial_direction = profile->runtime.party_dir;
+    expect_true(M11_GameView_ConfirmMirrorCandidate(view, 0) == 1 &&
+                    !view->candidateMirrorPanelActive &&
+                    view->world.party.championCount == 1 &&
+                    view->world.party.activeChampionIndex == 0 &&
+                    profile->runtime.party_state.ChampionCount == 1 &&
+                    profile->runtime.party_state.LeaderIndex == 0 &&
+                    M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    profile->runtime.party_dir ==
+                        ((initial_direction + 1) & 3) &&
+                    view->csbState.party_dir == profile->runtime.party_dir,
+                "Amiga C127/C160 candidate and C002 turn stay in the native GAMEBLOCK");
 }
 
 static int frame_matches_source_rect(const unsigned char* frame,
@@ -2265,6 +2405,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
         &view, "A31M inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
         &view, "A31M candidate route presents original Amiga C026 without a PC34 portrait");
+    expect_amiga_live_mirror_and_command_handoff(
+        &view, "A31M APPB handoff reaches a live native C127 mirror");
     M11_GameView_Shutdown(&view);
     {
         static const struct {
@@ -2372,6 +2514,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
         &view, "A35M inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
         &view, "A35M candidate route presents original Amiga C026 without a PC34 portrait");
+    expect_amiga_live_mirror_and_command_handoff(
+        &view, "A35M APPB handoff reaches a live native C127 mirror");
     M11_GameView_Shutdown(&view);
     {
         static const struct {
@@ -2477,6 +2621,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
         &view, "A35E inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
         &view, "A35E candidate route presents original Amiga C026 without a PC34 portrait");
+    expect_amiga_live_mirror_and_command_handoff(
+        &view, "A35E direct APPB handoff reaches a live native C127 mirror");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
