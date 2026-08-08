@@ -7,6 +7,19 @@
   bounds check.
 - Version: v3.0.304
 
+# Theron portable T900 object/timer save records (2026-08-08)
+
+- ✅ Bumped the world snapshot writer to version 2 and replaced host-layout
+  `Theron_V1_Object`/`Theron_V1_Timer` memcpy blocks with explicit little-endian
+  records. Pointer-bearing timer `userdata` is never serialized.
+- ✅ Kept a version-1 reader for existing snapshots, including the prior raw
+  object/timer layout and source-inventory tail formats.
+- ✅ Added round-trip coverage for object provenance, raw bytes, properties,
+  generator-relevant timer fields and corrupt-count rejection.
+- Verification: `test_theron_v1_world_serialize_purchase_state`,
+  `test_theron_v1_combat_mechanics` (106/106), and real US/JP Track 02 dungeon
+  loader regression all pass.
+
 # Nexus audit iterations 2-3 — inventory bounds, hunger comment (2026-08-08)
 
 - ✅ Added weapon_slot bounds check in nexus_inventory_equip.

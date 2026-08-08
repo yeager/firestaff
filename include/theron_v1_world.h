@@ -779,7 +779,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Binary serialization ─────────────────────────────────────────── */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 1
+#define THERON_WORLD_SAVE_VERSION 2
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

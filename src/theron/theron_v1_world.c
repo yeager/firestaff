@@ -85,6 +85,113 @@ static void ww64(uint8_t *p, uint64_t value) {
 }
 
 #define THERON_INVENTORY_SOURCE_WIRE_BYTES 31u
+#define THERON_OBJECT_WIRE_BYTES 86u
+#define THERON_TIMER_WIRE_BYTES 24u
+
+static size_t theron_object_wire_size(void) {
+    return THERON_OBJECT_WIRE_BYTES;
+}
+
+static uint8_t *theron_object_write(uint8_t *out,
+                                    const Theron_V1_Object *object) {
+    ww32(out, (uint32_t)object->id); out += 4;
+    *out++ = object->type;
+    *out++ = object->state;
+    ww32(out, (uint32_t)object->x); out += 4;
+    ww32(out, (uint32_t)object->y); out += 4;
+    ww32(out, (uint32_t)object->level); out += 4;
+    ww32(out, (uint32_t)object->dungeon_id); out += 4;
+    ww32(out, (uint32_t)object->quantity); out += 4;
+    ww32(out, (uint32_t)object->item_index); out += 4;
+    ww32(out, (uint32_t)object->linked_id); out += 4;
+    ww32(out, object->flags); out += 4;
+    ww16(out, object->source_ref); out += 2;
+    ww16(out, object->source_next_ref); out += 2;
+    ww16(out, object->source_index); out += 2;
+    *out++ = object->source_category;
+    *out++ = object->source_position;
+    *out++ = object->source_raw_size;
+    memcpy(out, object->source_raw, sizeof(object->source_raw)); out += 16;
+    *out++ = object->source_item_type;
+    *out++ = object->source_keep;
+    *out++ = object->source_cursed;
+    *out++ = object->source_broken;
+    *out++ = object->source_poisoned;
+    *out++ = object->source_closed;
+    *out++ = object->source_dump;
+    *out++ = object->source_power;
+    *out++ = object->source_capacity;
+    ww16(out, object->source_text_ref); out += 2;
+    ww16(out, (uint16_t)object->source_chested); out += 2;
+    ww16(out, object->source_data1); out += 2;
+    *out++ = object->source_item_category;
+    *out++ = object->source_property_valid;
+    memcpy(out, object->source_property, sizeof(object->source_property));
+    return out + sizeof(object->source_property);
+}
+
+static const uint8_t *theron_object_read(
+    const uint8_t *in, Theron_V1_Object *object) {
+    memset(object, 0, sizeof(*object));
+    object->id = (int32_t)rw32(in); in += 4;
+    object->type = *in++;
+    object->state = *in++;
+    object->x = (int32_t)rw32(in); in += 4;
+    object->y = (int32_t)rw32(in); in += 4;
+    object->level = (int32_t)rw32(in); in += 4;
+    object->dungeon_id = (int32_t)rw32(in); in += 4;
+    object->quantity = (int32_t)rw32(in); in += 4;
+    object->item_index = (int32_t)rw32(in); in += 4;
+    object->linked_id = (int32_t)rw32(in); in += 4;
+    object->flags = rw32(in); in += 4;
+    object->source_ref = rw16(in); in += 2;
+    object->source_next_ref = rw16(in); in += 2;
+    object->source_index = rw16(in); in += 2;
+    object->source_category = *in++;
+    object->source_position = *in++;
+    object->source_raw_size = *in++;
+    memcpy(object->source_raw, in, sizeof(object->source_raw)); in += 16;
+    object->source_item_type = *in++;
+    object->source_keep = *in++;
+    object->source_cursed = *in++;
+    object->source_broken = *in++;
+    object->source_poisoned = *in++;
+    object->source_closed = *in++;
+    object->source_dump = *in++;
+    object->source_power = *in++;
+    object->source_capacity = *in++;
+    object->source_text_ref = rw16(in); in += 2;
+    object->source_chested = (int16_t)rw16(in); in += 2;
+    object->source_data1 = rw16(in); in += 2;
+    object->source_item_category = *in++;
+    object->source_property_valid = *in++;
+    memcpy(object->source_property, in, sizeof(object->source_property));
+    return in + sizeof(object->source_property);
+}
+
+static uint8_t *theron_timer_write(uint8_t *out,
+                                   const Theron_V1_Timer *timer) {
+    ww32(out, (uint32_t)timer->id); out += 4;
+    ww32(out, (uint32_t)timer->kind); out += 4;
+    ww32(out, (uint32_t)timer->level); out += 4;
+    ww32(out, (uint32_t)timer->remaining_ticks); out += 4;
+    ww32(out, (uint32_t)timer->interval_ticks); out += 4;
+    ww32(out, timer->flags); out += 4;
+    return out;
+}
+
+static const uint8_t *theron_timer_read(const uint8_t *in,
+                                         Theron_V1_Timer *timer) {
+    memset(timer, 0, sizeof(*timer));
+    timer->id = (int32_t)rw32(in); in += 4;
+    timer->kind = (Theron_TimerKind)rw32(in); in += 4;
+    timer->level = (int32_t)rw32(in); in += 4;
+    timer->remaining_ticks = (int32_t)rw32(in); in += 4;
+    timer->interval_ticks = (int32_t)rw32(in); in += 4;
+    timer->flags = rw32(in); in += 4;
+    timer->userdata = NULL;
+    return in;
+}
 
 static size_t theron_inventory_source_wire_size(void) {
     return (size_t)THERON_MAX_CHAMPIONS * THERON_INVENTORY_SLOTS *
@@ -1603,9 +1710,9 @@ static size_t serialize_size(const Theron_V1_World *world) {
     n += sizeof(Theron_DungeonProgression);
     n += _tqw_party_pack_size();
     n += sizeof(uint32_t); /* object_count */
-    n += (size_t)world->object_count * sizeof(Theron_V1_Object);
+    n += (size_t)world->object_count * theron_object_wire_size();
     n += sizeof(uint32_t); /* timer_count */
-    n += (size_t)world->timer_count * sizeof(Theron_V1_Timer);
+    n += (size_t)world->timer_count * THERON_TIMER_WIRE_BYTES;
     n += sizeof(uint64_t); /* world_tick */
     n += sizeof(uint64_t); /* state_hash */
     /* T900 inventory provenance: source object/category/property fields have
@@ -1644,19 +1751,15 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
 
     ww32(out, (uint32_t)world->object_count);
     out += sizeof(uint32_t);
-    size_t objsz = (size_t)world->object_count * sizeof(Theron_V1_Object);
-    memcpy(out, world->objects, objsz);
-    out += objsz;
+    for (int i = 0; i < world->object_count; ++i) {
+        out = theron_object_write(out, &world->objects[i]);
+    }
 
     ww32(out, (uint32_t)world->timer_count);
     out += sizeof(uint32_t);
-    size_t tmsz = (size_t)world->timer_count * sizeof(Theron_V1_Timer);
-    /* Zero userdata pointers before serializing */
-    Theron_V1_Timer tms[THERON_MAX_TIMERS];
-    memcpy(tms, world->timers, tmsz);
-    for (int i = 0; i < world->timer_count; i++) tms[i].userdata = NULL;
-    memcpy(out, tms, tmsz);
-    out += tmsz;
+    for (int i = 0; i < world->timer_count; ++i) {
+        out = theron_timer_write(out, &world->timers[i]);
+    }
 
     ww64(out, world->world_tick);
     out += sizeof(uint64_t);
@@ -1692,7 +1795,8 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     in += sizeof(uint32_t);
 
     uint16_t ver = rw16(in);
-    if (ver != THERON_WORLD_SAVE_VERSION) return -3;
+    if (ver != 1u && ver != THERON_WORLD_SAVE_VERSION) return -3;
+    const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
 
     world->current_dungeon          = *in++;
@@ -1714,23 +1818,37 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     in += sizeof(uint32_t);
     if (oc > THERON_MAX_OBJECTS) return -1;
     world->object_count = (int)oc;
-    size_t objsz = (size_t)oc * sizeof(Theron_V1_Object);
+    size_t objsz = (size_t)oc * (legacy_host_records ?
+        sizeof(Theron_V1_Object) : theron_object_wire_size());
     if (objsz > bufsize - (size_t)(in - (const uint8_t *)buf)) return -1;
-    memcpy(world->objects, in, objsz);
-    in += objsz;
+    if (legacy_host_records) {
+        memcpy(world->objects, in, objsz);
+        in += objsz;
+    } else {
+        for (uint32_t i = 0; i < oc; ++i) {
+            in = theron_object_read(in, &world->objects[i]);
+        }
+    }
 
     if ((size_t)(in - (const uint8_t *)buf) > bufsize - sizeof(uint32_t)) return -1;
     uint32_t tc = rw32(in);
     in += sizeof(uint32_t);
     if (tc > THERON_MAX_TIMERS) return -1;
     world->timer_count = (int)tc;
-    size_t tmsz = (size_t)tc * sizeof(Theron_V1_Timer);
+    size_t tmsz = (size_t)tc * (legacy_host_records ?
+        sizeof(Theron_V1_Timer) : THERON_TIMER_WIRE_BYTES);
     if (tmsz > bufsize - (size_t)(in - (const uint8_t *)buf) ||
         bufsize - (size_t)(in - (const uint8_t *)buf) - tmsz < sizeof(uint64_t) * 2) {
         return -1;
     }
-    memcpy(world->timers, in, tmsz);
-    in += tmsz;
+    if (legacy_host_records) {
+        memcpy(world->timers, in, tmsz);
+        in += tmsz;
+    } else {
+        for (uint32_t i = 0; i < tc; ++i) {
+            in = theron_timer_read(in, &world->timers[i]);
+        }
+    }
 
     world->world_tick = rw64(in);
     in += sizeof(uint64_t);

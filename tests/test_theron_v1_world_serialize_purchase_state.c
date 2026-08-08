@@ -83,6 +83,33 @@ static void seed_world(Theron_V1_World *world) {
     world->inventory_source[0][0].property_valid = 1;
     world->inventory_source[0][0].property[0] = 0x20;
     world->inventory_source[0][0].property[5] = 0x0a;
+    world->object_count = 1;
+    world->objects[0].id = 0x10203040;
+    world->objects[0].type = THERON_OBJTYPE_WEAPON;
+    world->objects[0].state = 3;
+    world->objects[0].x = 7;
+    world->objects[0].y = 9;
+    world->objects[0].level = 2;
+    world->objects[0].dungeon_id = THERON_DUNGEON_3_FORMIC;
+    world->objects[0].quantity = 4;
+    world->objects[0].item_index = 12;
+    world->objects[0].linked_id = 0x55667788;
+    world->objects[0].flags = 0xa5a5a5a5U;
+    world->objects[0].source_ref = 0x2345;
+    world->objects[0].source_category = THERON_CAT_POTION;
+    world->objects[0].source_raw_size = 6;
+    world->objects[0].source_raw[0] = 0xde;
+    world->objects[0].source_raw[5] = 0xad;
+    world->objects[0].source_text_ref = 0x0088;
+    world->objects[0].source_property_valid = 1;
+    world->objects[0].source_property[2] = 0x44;
+    world->timer_count = 1;
+    world->timers[0].id = 19;
+    world->timers[0].kind = THERON_TIMER_REPEAT;
+    world->timers[0].level = 2;
+    world->timers[0].remaining_ticks = 37;
+    world->timers[0].interval_ticks = 120;
+    world->timers[0].flags = 0x01020304U;
     theron_v1_party_recalculate_loads(&world->party);
 }
 
@@ -153,6 +180,23 @@ static void test_round_trip_keeps_purchase_state(void) {
                 "quest item bitmask survives round-trip");
     expect_true(restored.dungeon_complete == original.dungeon_complete,
                 "dungeon completion flag survives round-trip");
+    expect_true(restored.object_count == 1 &&
+                restored.objects[0].id == 0x10203040 &&
+                restored.objects[0].type == THERON_OBJTYPE_WEAPON &&
+                restored.objects[0].x == 7 && restored.objects[0].y == 9 &&
+                restored.objects[0].flags == 0xa5a5a5a5U &&
+                restored.objects[0].source_ref == 0x2345 &&
+                restored.objects[0].source_raw[0] == 0xde &&
+                restored.objects[0].source_raw[5] == 0xad &&
+                restored.objects[0].source_property[2] == 0x44,
+                "portable object record survives round-trip");
+    expect_true(restored.timer_count == 1 && restored.timers[0].id == 19 &&
+                restored.timers[0].kind == THERON_TIMER_REPEAT &&
+                restored.timers[0].remaining_ticks == 37 &&
+                restored.timers[0].interval_ticks == 120 &&
+                restored.timers[0].flags == 0x01020304U &&
+                restored.timers[0].userdata == NULL,
+                "portable timer record survives round-trip");
 
     free(buffer);
 

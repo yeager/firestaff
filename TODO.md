@@ -18,8 +18,8 @@
   BIN offset `$9c4c4`; recover its `$C96B`/`$CC4C` consumers and dynamic state
   before promoting the original random-spawn path into live gameplay.
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
-- Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
-- Theron: source inventory provenance now has a field-by-field wire layout; replace the remaining raw object/timer snapshot structs with the same layout before claiming portable T900 save parity.
+- Theron: world snapshots now have endian-stable scalar envelopes, portable object/timer records and bounds checks; progression/champion packing still needs a source-owned wire layout before claiming complete cross-host save parity.
+- Theron: source inventory, object and timer provenance now use explicit field-by-field wire layouts; retain the version-1 host-record reader only as migration support.
 - Theron: source-level pickup now rejects unbound/generic object fallback; bind source-authenticated use/equip/consume consumers before allowing those transitions on real levels.
 
 - **DM2-PC-DOS-LEGACY-G1-RECEIPTS:** The verified PC-DOS `DUNGEON.DAT` takes
