@@ -1208,6 +1208,7 @@ int main(void) {
     DM2_V1_BootChampionDyn4RosterReceipt champion_dyn4_roster;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
+    DM2_V1_BootNewGameChampionAdmissionReceipt champion_admission;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
@@ -1413,6 +1414,23 @@ int main(void) {
                     champion_candidate.source_item_count <= 30 &&
                     champion_candidate.identity_hash != 0u,
                 "M11 joins each source mirror to its authentic champion template and source tile items");
+    memset(&champion_admission, 0, sizeof(champion_admission));
+    expect_true(profile && champion_mirrors.mirror_count > 0 &&
+                    dm2_v1_boot_new_game_champion_admission_receipt(
+                        profile, champion_mirrors.mirrors[0].map,
+                        champion_mirrors.mirrors[0].x,
+                        champion_mirrors.mirrors[0].y,
+                        champion_mirrors.mirrors[0].direction,
+                        &champion_admission) &&
+                    champion_admission.valid &&
+                    champion_admission.incomplete_game_load &&
+                    champion_admission.entrance.valid &&
+                    champion_admission.selection.valid &&
+                    champion_admission.selection.mirror.object_id ==
+                        champion_mirrors.mirrors[0].object_id &&
+                    champion_admission.dyn4.raw_loadable_entry_count > 0u &&
+                    champion_admission.receipt_hash != 0u,
+                "M11 joins New Game entrance, selected mirror, source items and DYN4 without creating a party");
     memset(&champion_census, 0, sizeof(champion_census));
     expect_true(profile &&
                     dm2_v1_boot_champion_selection_census(

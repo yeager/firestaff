@@ -864,6 +864,55 @@ int dm2_v1_boot_champion_selection_candidate(
     return 0;
 }
 
+int dm2_v1_boot_new_game_champion_admission_receipt(
+    const DM2_V1_BootProfile *profile,
+    int map, int x, int y, int direction,
+    DM2_V1_BootNewGameChampionAdmissionReceipt *out_receipt)
+{
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_BootNewGameChampionAdmissionReceipt candidate;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !(loader = dm2_v1_boot_asset_loader(profile)) ||
+        !dm2_v1_boot_new_game_entrance_receipt(profile, &candidate.entrance) ||
+        !candidate.entrance.valid ||
+        !candidate.entrance.incomplete_game_load ||
+        !dm2_v1_boot_champion_selection_candidate(
+            profile, map, x, y, direction, &candidate.selection) ||
+        !candidate.selection.valid ||
+        !candidate.selection.incomplete_game_load ||
+        !dm2_v1_gdat_dyn4_selection_receipt(
+            loader, candidate.selection.mirror.dynamic_load_id,
+            &candidate.dyn4) ||
+        candidate.dyn4.rejected_raw_count != 0u ||
+        candidate.dyn4.raw_loadable_entry_count == 0u ||
+        candidate.dyn4.receipt_hash == 0u) {
+        return 0;
+    }
+
+    /* SKProject skhero.cpp::DM2_SELECT_CHAMPION lines 1054-1156 gets the
+     * DB3 subtype-0x7e hero type, calls REVIVE_PLAYER, then transfers the
+     * direction-filtered tile ObjectIDs. sklodlvl.cpp::604-611 independently
+     * marks the same 0x16<hero-type>ffff DYN4 selector before LOAD_DYN4.
+     * Preserve those prerequisites together, but leave every mutation to the
+     * future source-owned GAME_LOAD transaction. */
+    candidate.receipt_hash = 0x4e474341u; /* "NGCA" receipt domain. */
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.entrance.receipt_hash);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.selection.identity_hash);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.selection.mirror.dynamic_load_id);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.dyn4.receipt_hash);
+    if (candidate.receipt_hash == 0u) return 0;
+    candidate.incomplete_game_load = 1;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_champion_selection_census(
     const DM2_V1_BootProfile *profile,
     DM2_V1_BootChampionSelectionCensus *out_census)

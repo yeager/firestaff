@@ -222,6 +222,16 @@
   startup/profile-grind. Kvittot är läsande: det skapar inte party, DYN4,
   timers, HUD eller viewport.
 
+# DM2 New Game-champion-admission (2026-08-08)
+
+- ✅ Ett faktiskt championval måste nu samtidigt binda den verifierade
+  entrén, DB3-mirrorposten, CHAMPIONS Raw8/text, riktningens ursprungliga
+  startobjekt och motsvarande `0x16<hero-type>ffff`-DYN4-urval.
+- ✅ Verifierat mot hashverifierad PC-DOS-media via M11:s
+  startup/profile-grind. Receiptet är fortfarande läsande och anropar inte
+  `REVIVE_PLAYER`, `ADD_ITEM_TO_PLAYER`, `LOAD_DYN4` eller någon party-/HUD-
+  mutation.
+
 # DM2 championmirror-DYN4-roster (2026-08-08)
 
 - ✅ Alla sexton källägda DB3 subtype-`0x7e` championmirror-markörer binds

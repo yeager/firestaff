@@ -184,6 +184,25 @@ typedef struct {
         DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
 } DM2_V1_BootChampionDyn4RosterReceipt;
 
+/* Read-only start of the New Game GAME_LOAD transaction. The original
+ * File_header::w8 pose is only useful when it belongs to the same canonical
+ * map-0 ground-stack and GenericRecord::w0 chain that c_map/c_record expose.
+ * This receipt never publishes a party, DYN4 queue, timer queue, or viewport.
+ */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int map;
+    int x;
+    int y;
+    int direction;
+    uint8_t tile_byte;
+    uint16_t first_object_id;
+    int entrance_record_count;
+    uint32_t map_data_hash;
+    uint32_t receipt_hash;
+} DM2_V1_BootNewGameEntranceReceipt;
+
 /* One original champion-selection root joined to its exact CHAMPIONS Raw8
  * and text template. This is an observational receipt for the
  * c_hero.cpp::DM2_SELECT_CHAMPION precondition; it neither revives a hero nor
@@ -202,6 +221,18 @@ typedef struct {
     uint16_t source_item_object_ids[30];
     uint32_t identity_hash;
 } DM2_V1_BootChampionSelectionCandidate;
+
+/* One source-selected mirror joined to the original New Game entrance and
+ * its exact first-pass DYN4 rows.  This is the last read-only boundary before
+ * c_hero.cpp mutates a party, possession chains, HUD and timers. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    DM2_V1_BootNewGameEntranceReceipt entrance;
+    DM2_V1_BootChampionSelectionCandidate selection;
+    DM2_V1_GdatDyn4SelectionReceipt dyn4;
+    uint32_t receipt_hash;
+} DM2_V1_BootNewGameChampionAdmissionReceipt;
 
 /* Complete source roster for the mirror-selection screen. The order is the
  * canonical File_header chain order, not a host-authored portrait order. */
@@ -411,25 +442,6 @@ typedef struct {
     uint32_t raw_byte_count;
     uint32_t raw_hash;
 } DM2_V1_BootNewDungeonReceipt;
-
-/* Read-only start of the New Game GAME_LOAD transaction.  The original
- * File_header::w8 pose is only useful when it belongs to the same canonical
- * map-0 ground-stack and GenericRecord::w0 chain that c_map/c_record expose.
- * This receipt never publishes a party, DYN4 queue, timer queue, or viewport.
- */
-typedef struct {
-    int valid;
-    int incomplete_game_load;
-    int map;
-    int x;
-    int y;
-    int direction;
-    uint8_t tile_byte;
-    uint16_t first_object_id;
-    int entrance_record_count;
-    uint32_t map_data_hash;
-    uint32_t receipt_hash;
-} DM2_V1_BootNewGameEntranceReceipt;
 
 typedef enum {
     DM2_V1_BOOT_ACTION_NO_TARGET = 0,
@@ -1526,6 +1538,13 @@ int dm2_v1_boot_champion_selection_candidate(
     const DM2_V1_BootProfile *profile,
     int map, int x, int y, int direction,
     DM2_V1_BootChampionSelectionCandidate *out_candidate);
+
+/* Source-only join for one selected champion mirror. It does not call
+ * REVIVE_PLAYER, ADD_ITEM_TO_PLAYER, SELECT_CHAMPION_LEADER or LOAD_DYN4. */
+int dm2_v1_boot_new_game_champion_admission_receipt(
+    const DM2_V1_BootProfile *profile,
+    int map, int x, int y, int direction,
+    DM2_V1_BootNewGameChampionAdmissionReceipt *out_receipt);
 
 /* Enumerate every authentic DB3 subtype-0x7e selection candidate. Duplicate
  * hero types or a candidate that cannot be joined to exact GDAT and tile data
