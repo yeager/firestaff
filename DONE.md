@@ -7170,3 +7170,11 @@
   layout is also accepted for migration.
 - ✅ Verified category, source refs, poison/charges, text ref and property bytes
   survive serialize/deserialize in the focused purchase-state regression.
+# Theron source-level pickup gate (2026-08-08)
+
+- ✅ Real Track 02 levels now reject a pickup when the object has no bound
+  source reference or is outside the four decoded carryable categories
+  (weapon, clothing, scroll, potion). This closes the generic host-item
+  fallback at the T900 ownership boundary.
+- ✅ Fixture worlds without a verified source level retain their existing
+  behavior; the focused 104-case mechanics suite remains green.

@@ -20,6 +20,7 @@
 #include "theron_v1_mechanics.h"
 #include "theron_v1_combat.h"
 #include "theron_v1_world.h"
+#include "theron_v1_track02_thing_data.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -68,6 +69,29 @@ static int object_item_id(const Theron_V1_Object *object) {
     }
 }
 
+static int theron_v1_source_level_requires_item_provenance(
+    const Theron_V1_World *world) {
+    if (!world || world->current_dungeon < 1 ||
+        world->current_dungeon > THERON_DUNGEON_COUNT ||
+        world->current_level < 0 ||
+        world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return 0;
+    }
+    return world->level_loaded[world->current_dungeon - 1]
+                              [world->current_level] &&
+           world->levels[world->current_dungeon - 1]
+                        [world->current_level].source_header_verified;
+}
+
+static int theron_v1_source_item_category_is_carryable(uint8_t category) {
+    /* T900 inventory ownership is defined for the decoded carried-object
+     * categories. Monster, actuator and raw-only categories are not items. */
+    return category == THERON_CAT_WEAPON ||
+           category == THERON_CAT_CLOTHING ||
+           category == THERON_CAT_SCROLL ||
+           category == THERON_CAT_POTION;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Command / click routing
  * ══════════════════════════════════════════════════════════════════════ */
@@ -113,6 +137,15 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         int inventory_slot = -1;
         if (!o || (o->flags & THERON_OBJ_F_PICKED_UP)) return -1;
         if (o->type == THERON_OBJTYPE_CHEST) return 0;
+        if (theron_v1_source_level_requires_item_provenance(world) &&
+            (o->source_ref == 0u ||
+             !theron_v1_source_item_category_is_carryable(
+                 o->source_category))) {
+            /* ReDMCSB THQUEST T900 owns the object/category transition. A
+             * real Track 02 level must never turn an unbound host object into
+             * a carried item merely because its compact ID looks usable. */
+            return -1;
+        }
         item_id = object_item_id(o);
         if (item_id == THERON_ITEM_NONE) return -1;
         champion = theron_v1_party_getChampion(&world->party,
@@ -126,7 +159,8 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         }
         if (inventory_slot < 0) return -1;
         champion->inventory[inventory_slot] = (uint8_t)item_id;
-        if (o->source_ref != 0u && o->source_category != 0u) {
+        if (o->source_ref != 0u &&
+            theron_v1_source_item_category_is_carryable(o->source_category)) {
             Theron_V1_InventorySourceRecord *carried =
                 &world->inventory_source[world->party.active_slot]
                                            [inventory_slot];

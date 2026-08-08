@@ -680,9 +680,24 @@ static void test_source_item_pickup_provenance(void) {
     printf("[test:source_item_pickup_provenance]\n");
     Theron_V1_World w;
     Theron_V1_Object object;
+    Theron_V1_Object unbound;
     const Theron_V1_InventorySourceRecord *carried;
 
     make_world(&w);
+    w.current_dungeon = 1;
+    w.current_level = 0;
+    w.level_loaded[0][0] = 1;
+    w.levels[0][0].source_header_verified = 1;
+    memset(&unbound, 0, sizeof(unbound));
+    unbound.type = THERON_OBJTYPE_WEAPON;
+    unbound.item_index = 6;
+    unbound.level = 0;
+    unbound.x = 1;
+    unbound.y = 1;
+    CHECK_INT("unbound real-level weapon placed",
+              theron_v1_object_place(&w, &unbound), 0);
+    CHECK_INT("real-level generic weapon pickup rejected",
+              theron_v1_click_route(&w, 1, 1, THERON_CMD_TAKE), -1);
     memset(&object, 0, sizeof(object));
     object.type = THERON_OBJTYPE_WEAPON;
     object.item_index = 6;
