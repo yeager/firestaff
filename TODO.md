@@ -2,6 +2,12 @@
 
 - 🔧 Theron authentic runtime capture now has a verified real SDL2/Quartz-capable Mednafen build. It still needs the verified US System Card 3.0 and original media capture; RNG return values, spawn timing, AI, T700/T900 consumers, media bindings and gameplay semantics remain fail-closed until that capture is obtained.
 
+- 🔧 Theron `.spawn-registers` sidecars now have a strict parser tied to the
+  authentic `$4644`, `$4667`, `$C96B-$CA69` and `$CC4C-$CD13` disassembly
+  windows. The parser records CPU/RAM provenance only; it still must not
+  publish RNG, creature, AI, loot or generator semantics without the original
+  System Card-backed capture.
+
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
   sixteen source File_header champion-mirror records across their real
   `w0`-kedjor, but must not materialise them independently. Recover the

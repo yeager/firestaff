@@ -40,4 +40,42 @@ typedef struct {
 int theron_v1_mednafen_spawn_consumer_trace_parse_file(
     const char *path, Theron_V1SpawnConsumerTraceReceipt *out);
 
+/* Strict register-sidecar provenance for the same disassembly windows.  The
+ * register values are retained for later dynamic analysis, but this receipt
+ * never turns them into an RNG result, creature record, or spawn action. */
+typedef struct {
+    Theron_V1SpawnConsumerTraceStatus status;
+    int source_header_verified;
+    int sequence_verified;
+    int bank_coordinates_verified;
+    int boundary_flags_verified;
+    int c96b_window_seen;
+    int cc4c_window_seen;
+    int preconsumer_4644_seen;
+    int helper_4667_seen;
+    int semantic_publication_allowed;
+    uint32_t sample_count;
+    uint32_t first_pc;
+    uint32_t last_pc;
+    uint32_t first_physical_pc;
+    uint32_t last_physical_pc;
+    uint8_t last_a;
+    uint8_t last_x;
+    uint8_t last_y;
+    uint8_t last_sp;
+    uint8_t last_p;
+    uint8_t last_mpr0;
+    uint8_t last_b3;
+    uint8_t last_b4;
+    uint8_t last_b5;
+    uint8_t last_b6;
+    uint8_t last_b8;
+    uint8_t last_ba;
+    uint8_t last_bb;
+    char source_trace_path[THERON_V1_SPAWN_CONSUMER_TRACE_PATH_CAPACITY];
+} Theron_V1SpawnRegisterTraceReceipt;
+
+int theron_v1_mednafen_spawn_register_trace_parse_file(
+    const char *path, Theron_V1SpawnRegisterTraceReceipt *out);
+
 #endif

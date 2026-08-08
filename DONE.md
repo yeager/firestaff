@@ -1,5 +1,17 @@
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
+# 2026-08-08 Theron disassembly-bound spawn register receipts
+
+- ✅ Added a strict parser for the Mednafen `.spawn-registers` sidecar. It
+  verifies the exact source header, contiguous sample sequence, HuC6280
+  physical RAM range, register widths and boundary flags for US `$4644`,
+  `$4667`, `$C96B-$CA69` and `$CC4C-$CD13`.
+- ✅ The receipt retains the last CPU and `$B3-$BB` register values for later
+  dynamic analysis but keeps semantic publication disabled, so no guessed RNG,
+  creature, AI, loot or generator behavior can leak into production gameplay.
+- ✅ Focused parser, authentic US/JP disassembly, Track 02 loader/object-data,
+  production combat-gate and live-capture prerequisite tests pass.
+
 - ✅ Built SDL2 2.30.9 in an isolated `/tmp` prefix and rebuilt the complete instrumented Mednafen 1.32.1 patch chain against that real SDL2 library.
 - ✅ `verify_theron_mednafen_sdl2_runtime.sh` now passes with the direct SDL2 linkage; the previous `sdl2-compat` blocker is removed.
 - ⚠️ Dynamic Theron capture was not promoted: the required original System Card 3.0 is not present locally, so RNG return values, spawn timing and later consumers remain unproven.
