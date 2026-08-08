@@ -54,7 +54,7 @@ for exclusion in (
     r"nexus_v1_warning_dgt2_resource_corpus\\.c$",
     r"nexus_v1_mns\\.c$",
     r"nexus_v1_magic_runtime_noop\\.c$",
-    r"nexus_v1_combat_runtime_noop\\.c$",
+    r"nexus_v1_combat\\.c$",
     r"nexus_v1_experience_runtime_noop\\.c$",
     r"nexus_v1_rest_status_runtime_noop\\.c$",
     r"nexus_v1_action_world_runtime_noop\\.c$",

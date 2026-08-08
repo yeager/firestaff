@@ -9486,3 +9486,8 @@
 
 - ✅ `nexus_v1_game_apply_dungeon_start()` nekar nu även en `READY`-receipt med okänd riktning, så en giltig DGN-cell inte kan kringgå Saturn-startpose-grinden och nå viewporten med syntetisk riktning.
 - ✅ Dungeon-start-provenance och realdata-SMAP-regression passerar.
+# Nexus inferred combat study removed from production archive (2026-08-08)
+
+- ✅ `nexus_v1_combat.c` innehåller DM.BIN-formel-/RNG-studien men saknar autentiserad Saturn-dispatch, RNG-state, damage/wound-writeback, XP- och SLEV/SFX-kedja.
+- ✅ Produktionsbiblioteket länkar nu `nexus_v1_combat_runtime_noop.c`; formelstudien länkas endast av `nexus_v1_combat`-testet.
+- ✅ Creature, combat, production-boundary, dungeon-start och SMAP-tester passerar.

@@ -68,7 +68,8 @@ set_tests_properties(nexus_v1_inventory_gameplay PROPERTIES
     LABELS "nexus;inventory;real-media;tier4")
 
 add_executable(test_nexus_v1_combat
-    tests/test_nexus_v1_combat.c)
+    tests/test_nexus_v1_combat.c
+    src/nexus/nexus_v1_combat.c)
 target_include_directories(test_nexus_v1_combat PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_combat PRIVATE firestaff_nexus)
@@ -6571,7 +6572,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
 # Keep the production ABI fail-closed until the corresponding runtime capture
 # is admitted.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic_runtime_noop\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat_runtime_noop\\.c$")
+# The DM.BIN combat formula/RNG is an inferred study. Production keeps the
+# ABI's state-preserving boundary; the formula study is linked only by its
+# explicit diagnostic test.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest_status_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$")
