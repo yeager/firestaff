@@ -107,7 +107,10 @@ for required_noop in (
 ):
     if not (ROOT / 'src' / 'nexus' / required_noop).is_file():
         fail(f"capture-gated gameplay adapter missing from production archive: {required_noop}")
-    if required_noop in body and f'EXCLUDE REGEX "{required_noop}' in body:
+    if re.search(
+        rf'EXCLUDE REGEX "{re.escape(required_noop)}',
+        body,
+    ):
         fail(f"capture-gated gameplay adapter excluded from production archive: {required_noop}")
 for forbidden in (
     "src/nexus/nexus_v1_rasterizer.c",

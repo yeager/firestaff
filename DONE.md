@@ -9558,3 +9558,7 @@
 
 - ✅ Produktionsgränsverifieraren kräver nu att `rest_status`, combat, magic och experience har sina fail-closed runtime-adaptrar kvar i `firestaff_nexus` samtidigt som de infererade studieimplementationerna hålls ute.
 - ✅ Detta täcker en tidigare blind fläck där källgränsen kunde passera trots att en adapter saknades eller exkluderades.
+# Nexus source-boundary adapter exclusion audit hardened (2026-08-08)
+
+- ✅ Produktionsverifieraren upptäcker nu korrekt även om en capture-gated gameplay-adapter skulle exkluderas via CMake-regex; kontrollen validerades mot den riktiga Nexus-korpusen.
+- ✅ Real-data SAL/MAP, sound-runtime receipt och FONT256.S2D corpus-tester passerar fortsatt; SFX playback och Saturn text/VDP2-konsument förblir spärrade utan autentisk runtime-bindning.
