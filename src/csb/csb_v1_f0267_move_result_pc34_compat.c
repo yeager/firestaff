@@ -25,12 +25,14 @@ static int csb_v1_f0267_square_contains_thing(
     int map_x,
     int map_y)
 {
-    int thing;
+    uint16_t thing;
     int guard;
+    int first;
 
-    thing = csb_v1_dungeon_get_first_thing(
+    first = csb_v1_dungeon_get_first_thing(
         dungeon, map_index, map_x, map_y);
-    if (thing < 0) return 0;
+    if (first < 0) return 0;
+    thing = (uint16_t)first;
     for (guard = 0;
          guard < 128 && thing != CSB_V1_F0267_THING_NONE &&
              thing != CSB_V1_F0267_THING_END;
@@ -39,10 +41,10 @@ static int csb_v1_f0267_square_contains_thing(
         int size = 0;
 
         record = csb_v1_dungeon_get_thing_record(
-            dungeon, (uint16_t)thing, NULL, NULL, &size);
+            dungeon, thing, NULL, NULL, &size);
         if (!record || size < 2) return 0;
-        if ((uint16_t)thing == wanted) return 1;
-        thing = (int)((uint16_t)record[0] | ((uint16_t)record[1] << 8));
+        if (thing == wanted) return 1;
+        thing = (uint16_t)(record[0] | ((uint16_t)record[1] << 8));
     }
     return 0;
 }

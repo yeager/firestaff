@@ -46,8 +46,8 @@ int csb_v1_movement_command_step_runtime_apply_pc34_compat(
 int csb_v1_movement_command_step_runtime_process_queue_pc34_compat(
     CSB_V1_RuntimeProfile *profile,
     struct Dm1V1InputCommandQueuePc34Compat *queue,
-    int disabled_movement_ticks,
-    int projectile_disabled_movement_ticks,
+    uint16_t disabled_movement_ticks,
+    uint16_t projectile_disabled_movement_ticks,
     int last_projectile_disabled_movement_direction,
     CSB_V1_MovementStepWallProbePc34Compat wall_probe,
     void *wall_probe_context,
