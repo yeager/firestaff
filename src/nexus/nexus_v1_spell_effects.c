@@ -89,8 +89,7 @@ Nexus_SpellEffectResult nexus_v1_spell_effect_party(
         if (status) {
             int i;
             for (i = 0; i < NEXUS_STATUS_COUNT; i++) {
-                if (i == NEXUS_STATUS_POISON)
-                    nexus_v1_status_remove(status, i);
+                nexus_v1_status_remove(status, i);
             }
             r.status_applied = 1;
         }

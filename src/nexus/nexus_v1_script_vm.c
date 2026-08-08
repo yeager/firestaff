@@ -23,11 +23,11 @@ static int nexus_read_u16_be(const uint8_t *p) {
     return p ? (int)(((uint16_t)p[0] << 8) | (uint16_t)p[1]) : 0;
 }
 
-static int nexus_read_u32_be(const uint8_t *p) {
-    return p ? (int)(((uint32_t)p[0] << 24) |
-                     ((uint32_t)p[1] << 16) |
-                     ((uint32_t)p[2] << 8) |
-                     (uint32_t)p[3]) : 0;
+static uint32_t nexus_read_u32_be(const uint8_t *p) {
+    return p ? (((uint32_t)p[0] << 24) |
+                ((uint32_t)p[1] << 16) |
+                ((uint32_t)p[2] << 8) |
+                (uint32_t)p[3]) : 0;
 }
 
 static uint64_t nexus_slev_fnv1a64(const uint8_t *data, int size) {
@@ -156,8 +156,8 @@ static void nexus_script_profile_real_slev_task(Nexus_ScriptVM *vm,
             pc_relative_load_count++;
         }
         if (i + 3 < size) {
-            int ptr = nexus_read_u32_be(data + i);
-            if ((ptr & 0xffff0000) == 0x00200000) {
+            uint32_t ptr = nexus_read_u32_be(data + i);
+            if ((ptr & 0xffff0000U) == 0x00200000U) {
                 if (literal_pointer_count == 0) {
                     first_literal_offset = i;
                     first_literal_address = ptr;

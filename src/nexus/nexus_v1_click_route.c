@@ -92,7 +92,7 @@ static Nexus_ClickResult click_route_inventory(Nexus_MechanicsState *st,
         for (i = 0; i < NEXUS_INVENTORY_SLOTS; i++) {
             if (champ->inventory[i] == 0xFFU) {
                 champ->inventory[i] = (uint8_t)item_id;
-                champ->slots[equip_slot] = (uint8_t)-1;
+                champ->slots[equip_slot] = -1;
                 nexus_champion_recalc_load(champ);
                 return NEXUS_CLICK_RESULT_OK;
             }

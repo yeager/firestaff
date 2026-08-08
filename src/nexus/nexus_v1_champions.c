@@ -10,14 +10,10 @@
  * Stamina scaling via subroutine at 0x029F38. */
 
 static int get_stamina_adjusted_value(int value, int current_stamina, int max_stamina) {
-    if (current_stamina < (max_stamina >> 1)) {
-        /* DM.BIN 0x029F38: stamina scaling subroutine. */
-        int half_max = max_stamina >> 1;
-        if (half_max > 0) {
-            return (value >> 1) + ((long)value * current_stamina / half_max);
-        }
-    }
-    return value;
+    if (max_stamina <= 0) return value;
+    if (current_stamina >= max_stamina) return value;
+    /* DM.BIN 0x029F38: linear stamina scaling — value * current / max. */
+    return (int)((long)value * current_stamina / max_stamina);
 }
 
 int nexus_champion_get_maximum_load(const Nexus_V1_Champion *c) {

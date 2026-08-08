@@ -22,7 +22,7 @@ int nexus_v1_spawner_add(Nexus_SpawnerManager *mgr,
             mgr->spawners[i].level = level;
             mgr->spawners[i].creature_type = creature_type;
             mgr->spawners[i].respawn_delay = respawn_delay > 0 ? respawn_delay : NEXUS_SPAWNER_DEFAULT_DELAY;
-            mgr->spawners[i].timer = 0;
+            mgr->spawners[i].timer = respawn_delay > 0 ? respawn_delay : NEXUS_SPAWNER_DEFAULT_DELAY;
             mgr->spawners[i].spawned_creature = -1;
             mgr->spawners[i].max_spawns = max_spawns;
             mgr->spawners[i].spawn_count = 0;

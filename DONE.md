@@ -1,3 +1,14 @@
+# Nexus audit iteration 1 — gameplay bug fixes (2026-08-08)
+
+- ✅ Fixed 3 slot off-by-one errors in mechanics (defense, ring, weapon lookups).
+- ✅ Fixed backwards wound penalty in creature melee attacks.
+- ✅ Fixed DISPEL to remove all statuses, not only poison.
+- ✅ Fixed stamina scaling to linear formula (DM.BIN 0x029F38 reference).
+- ✅ Fixed click_route slot clearing sign mismatch.
+- ✅ Fixed script_vm uint32_t return type for SH-2 address space.
+- ✅ Fixed spawner timer init to use respawn_delay.
+- Version: v3.0.302
+
 # DM2 champion lifecycle production isolation (2026-08-08)
 
 - ✅ Removed the callback-only champion lifecycle compatibility module from

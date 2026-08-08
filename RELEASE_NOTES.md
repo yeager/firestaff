@@ -1,3 +1,21 @@
+# Firestaff v3.0.302
+
+## Fixed
+
+- `nexus_v1_mechanics.c`: fix 3 slot off-by-one errors — defense, ring, and weapon
+  lookups used `slots[slot - 1]` instead of `slots[slot]` (NEXUS_SLOT enum is 0-indexed).
+- `nexus_v1_combat.c`: remove backwards wound penalty on creature melee attacks —
+  attacker's damage was reduced by the target's wounds (should be raw attack value).
+- `nexus_v1_spell_effects.c`: DISPEL now removes all statuses, not only POISON.
+- `nexus_v1_champions.c`: fix stamina scaling to linear `value * current / max`
+  (DM.BIN 0x029F38) — old formula over-penalized low stamina.
+- `nexus_v1_click_route.c`: clear equipment slot with `-1` (signed) not `(uint8_t)-1`
+  (255) to match slot emptiness checks against negative values.
+- `nexus_v1_script_vm.c`: fix `nexus_read_u32_be` return type from `int` to `uint32_t`
+  — prevents sign-extension of addresses with bit 31 set (SH-2 high RAM).
+- `nexus_v1_spawner.c`: initialize spawner timer to `respawn_delay` instead of 0
+  so newly added spawners don't fire on the very first tick.
+
 # Firestaff v3.0.301
 
 ## Fixed

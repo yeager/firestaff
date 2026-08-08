@@ -428,7 +428,7 @@ static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
              * Source: DM1 combat — defense only from armor slots. */
             continue;
         }
-        item_id = leader->slots[leader_slot - 1];
+        item_id = leader->slots[leader_slot];
         if (item_id < 0) continue;
         def = nexus_itemdef_get(item_id);
         if (def && def->defense > 0) {
@@ -440,7 +440,7 @@ static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
      * Rings (RING1=8, RING2=9) sometimes give defense if equipped.
      * Source: DM1 ring slot defense. */
     for (i = 8; i <= 9; i++) {
-        item_id = leader->slots[i - 1];
+        item_id = leader->slots[i];
         if (item_id < 0) continue;
         def = nexus_itemdef_get(item_id);
         if (def && def->defense > 0) {
@@ -533,7 +533,7 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
     if (target_idx < 0) return 0;
 
     /* Equipped weapon contributes its attack value. */
-    weapon_item_id = leader->slots[NEXUS_SLOT_WEAPON - 1];
+    weapon_item_id = leader->slots[NEXUS_SLOT_WEAPON];
     if (weapon_item_id >= 0) {
         const Nexus_ItemDef *wdef = nexus_itemdef_get(weapon_item_id);
         if (wdef && wdef->attack > 0) weapon_power = wdef->attack;

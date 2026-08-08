@@ -151,7 +151,6 @@ Nexus_CombatResult nexus_v1_creature_melee_attack(
     r.wound_zone = select_wound_zone();
 
     atk = attacker->attack;
-    atk = apply_wound_penalty(atk, target->wounds);
     r.damage = combat_max(1, atk);
     r.experience_gained = r.damage;
     return r;
