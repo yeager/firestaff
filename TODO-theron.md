@@ -4,6 +4,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-08 — nästa T900-bevis
 
+- 🔧 Inputtransporten är nu verifierad med riktiga PCE-wiremasker och lokal
+  macOS-profil: Button I `,`, Button II `.`. Fortsätt fånga den saknade
+  spelägda CD-läsningen efter de 161 autentiska Track 02-sektorerna innan
+  någon RNG-, AI-, T700- eller T900-semantik aktiveras.
+
 - 🔧 Använd den sparade source-spawnkategorin när den autentiserade RNG-
   konsumenten fångas. Kategorin är nu provenance i live-poolen, men får inte
   driva HP, AI, attack eller generatorer innan `$4667`/`$5D64`/`$5D6A` är
@@ -1376,4 +1381,3 @@ required before semantic promotion.
   baseline and never publishes a session. The mounted workspace has no raw
   SKSAVE corpus, so this positive path remains compile/test-gated until one is
   supplied.
-

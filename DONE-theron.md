@@ -4,6 +4,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Theron's Quest
 
+### 2026-08-08 — PCE Button I/II keyboard binding
+
+- ✅ Mednafen's PCE replay masks now follow the real `PCE_GamepadIDII` wire
+  vector order. Button I is `0x0001`, Button II `0x0002`, and Run `0x0008`;
+  the old `ConfigOrder` values no longer leak into runtime input.
+- ✅ The macOS capture profile maps comma/period to Button I/II and the local
+  `mednafen.cfg` uses SDL scancodes `54/55`. A clean instrumented Mednafen
+  build and patch dry-run pass; authentic US Track 02 reaches 161 raw sectors.
+- 🔒 The capture still has no non-System-Card game-owned CD read, so it does
+  not promote the RNG, AI, T700, T900, or later-level semantics.
+
 ### 2026-08-08 — source-bound creature spawn category provenance
 
 - ✅ Live creatures created from authentic Track 02 monster groups now retain

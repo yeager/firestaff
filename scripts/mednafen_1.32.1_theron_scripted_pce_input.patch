@@ -4,20 +4,23 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
-@@ -95,0 +99,16 @@
+@@ -95,0 +99,19 @@
 +static bool theron_script_boot_applied = false;
 +static uint16 theron_script_boot_original_port0 = 0;
 +
 +static uint16 theron_script_key_mask(const char *key, size_t key_length)
 +{
-+ if(key_length == 1 && key[0] == 'i') return 0x1000;
-+ if(key_length == 2 && !strncmp(key, "ii", 2)) return 0x0800;
-+ if(key_length == 6 && !strncmp(key, "select", 6)) return 0x0010;
-+ if(key_length == 3 && !strncmp(key, "run", 3)) return 0x0020;
-+ if(key_length == 2 && !strncmp(key, "up", 2)) return 0x0001;
-+ if(key_length == 4 && !strncmp(key, "down", 4)) return 0x0002;
-+ if(key_length == 4 && !strncmp(key, "left", 4)) return 0x0004;
-+ if(key_length == 5 && !strncmp(key, "right", 5)) return 0x0008;
++ /* Mednafen's PCE_GamepadIDII vector order is the wire-state layout:
++  * I, II, SELECT, RUN, UP, RIGHT, DOWN, LEFT.  The constructor's numeric
++  * arguments are ConfigOrder values, not bit offsets. */
++ if(key_length == 1 && key[0] == 'i') return 0x0001;
++ if(key_length == 2 && !strncmp(key, "ii", 2)) return 0x0002;
++ if(key_length == 6 && !strncmp(key, "select", 6)) return 0x0004;
++ if(key_length == 3 && !strncmp(key, "run", 3)) return 0x0008;
++ if(key_length == 2 && !strncmp(key, "up", 2)) return 0x0010;
++ if(key_length == 5 && !strncmp(key, "right", 5)) return 0x0020;
++ if(key_length == 4 && !strncmp(key, "down", 4)) return 0x0040;
++ if(key_length == 4 && !strncmp(key, "left", 4)) return 0x0080;
 + return 0;
 +}
 +
@@ -190,12 +193,12 @@
 +  }
 + }
 + theron_script_run_frame = 0;
-@@ -72,0 +96,5 @@
+@@ -72,0 +96,8 @@
 + if(theron_script_run_hold &&
 +    ((theron_script_run_frame >= theron_script_run_start) ||
 +     (theron_script_run_start > 0 &&
 +      theron_script_run_frame + 1u >= theron_script_run_start)) &&
 +    theron_script_run_frame < theron_script_run_end)
-+  buttons |= 0x0020;
++  buttons |= 0x0008;
 + if(theron_script_run_hold)
 +  theron_script_run_frame++;

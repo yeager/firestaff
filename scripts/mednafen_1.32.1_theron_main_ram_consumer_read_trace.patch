@@ -57,7 +57,7 @@
 +static unsigned TheronPCECDSpawnConsumerTraceCount;
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
-@@ -140,2 +141,101 @@
+@@ -140,2 +141,103 @@
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc)

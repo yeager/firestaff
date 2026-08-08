@@ -42,6 +42,18 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons).
 - F5 = quick save, F9 = quick load, F12 = screenshot (engine-global).
+
+## Mednafen macOS capture profile
+
+The authenticated external capture profile currently assigns PCE Button I to
+keypad 3 and Button II to keypad 2. Comma and period are valid SDL scancodes
+only when the active `mednafen.cfg` explicitly assigns them to `gamepad.i` and
+`gamepad.ii`; they are not universal aliases. The Firestaff capture helper
+resolves the host key from that profile instead of assuming a character key.
+
+The PCE wire-state masks used by the replay helper follow Mednafen's device
+vector order (`I`, `II`, `SELECT`, `RUN`, `UP`, `RIGHT`, `DOWN`, `LEFT`), not
+the numeric `ConfigOrder` values shown in Mednafen's source.
 # Firestaff runtime panel
 
 Theron's Quest supports the shared **F10** graphics and cheats panel during

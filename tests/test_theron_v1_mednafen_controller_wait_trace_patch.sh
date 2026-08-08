@@ -96,6 +96,19 @@ if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file
     printf 'FAIL: scripted PCE input patch no longer retains explicit replay provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq "key[0] == 'i') return 0x0001" "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "ii", 2)) return 0x0002' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "select", 6)) return 0x0004' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "run", 3)) return 0x0008' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "up", 2)) return 0x0010' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "right", 5)) return 0x0020' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "down", 4)) return 0x0040' "$scripted_input_patch_file" ||
+   ! grep -Fq 'strncmp(key, "left", 4)) return 0x0080' "$scripted_input_patch_file" ||
+   ! grep -Fq 'buttons |= 0x0008' "$scripted_input_patch_file" ||
+   grep -Fq "key[0] == 'i') return 0x1000" "$scripted_input_patch_file"; then
+    printf 'FAIL: scripted PCE input masks must follow Mednafen PCE_GamepadIDII vector order\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
    ! grep -Fq 'pce_input_write cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
     printf 'FAIL: Mednafen input-state patch no longer retains raw port transaction evidence\n' >&2
