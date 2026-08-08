@@ -1,5 +1,14 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# CI: DM2 duplicate bar-colour symbols isolated (2026-08-09)
+
+- ✅ Linux production linking no longer pulls the focused
+  `dm2_v1_predicate_helpers.c` study into `firestaff_dm2` alongside the
+  source-owned champion-HUD implementation, which exported the same two
+  `QUERY_*_BAR_COLOR` names with incompatible signatures.
+- ✅ The predicate helper remains covered by its standalone test while the
+  production `firestaff` executable links cleanly on Linux.
+
 # DM2 FM Towns engelsk speltext oberoende av startmenyns språk (2026-08-09)
 
 - ✅ M12 väljer nu den hashverifierade PC-engelska `GRAPHICS.DAT`-kompanjonen

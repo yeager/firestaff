@@ -6508,7 +6508,12 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_tim_proc_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_ops_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c"
+    # QUERY_*_BAR_COLOR is also implemented by the source-owned champion-HUD
+    # helper below, with a different receipt/signature.  This older predicate
+    # study has no DM2 runtime caller; keep its focused executable isolated so
+    # the product archive cannot export duplicate symbols.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_predicate_helpers.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
         # The original Amiga installer is an OFS ADF chain.  DM2 boot owns
