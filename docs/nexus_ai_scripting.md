@@ -27,15 +27,15 @@ The older "5,448-byte `SDDRVS.TSK`" claim was a file mix-up with
 `RHIFIX.BIN`, which is the 5,448-byte file in the verified hash catalog.
 
 ## 2. Nexus V1 Scripting Reality
-Firestaff currently has Nexus trigger scaffolding, not a source-locked trigger
-VM:
+Firestaff currently has bounded Nexus trigger-source profiling, not a
+source-locked trigger VM:
 
-- `src/nexus/nexus_v1_script_vm.c` is explicitly a stub and does not parse real
-  Nexus bytecode.
+- `src/nexus/nexus_v1_script_vm.c` profiles authenticated SLEV headers and
+  bounded task corridors; it does not assign opcode or event semantics.
 - `LEV*.DGN` grid parsing exists, but deeper 3D geometry and trigger/event
   ownership remain open.
-- `SLEV*.BIN` files are verified real Nexus files and are plausible event or
-  level-state data, but remain unparsed.
+- `SLEV*.BIN` files are verified real Nexus files with a 16-bank corpus
+  receipt; task-body and event semantics remain unparsed.
 - No current probe proves a real Nexus door, trap, teleporter, stair, or
   level-completion event through a decoded script model.
 

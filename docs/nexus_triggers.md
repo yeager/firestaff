@@ -83,7 +83,8 @@ Current evidence:
   `SDDRVS.TSK`.
 - `SLEV00.BIN` through `SLEV15.BIN` are real per-level supplementary files and
   remain plausible trigger/event data, but their format is not parsed.
-- Firestaff's `nexus_v1_script_vm` module is stub scaffolding only.
+- Firestaff's `nexus_v1_script_vm` module provides bounded authenticated
+  SLEV source profiling, but no source-locked event dispatch.
 
 The following shape is therefore only a possible future model, not source-lock:
 

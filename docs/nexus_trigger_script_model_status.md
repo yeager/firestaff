@@ -25,9 +25,9 @@ matches `RHIFIX.BIN`, not `SDDRVS.TSK`.
   26,610 bytes.
 - Source-lock docs and audio docs identify it as a Saturn sound driver task
   used around `SNDLEV*.SAL`, `SNDLEV*.MAP`, CD-DA, or related sound playback.
-- Firestaff has `nexus_v1_script_vm` scaffolding, but it is a stub. It does
-  not parse real `SDDRVS.TSK` bytes, does not decode real opcodes, and should
-  not be cited as runtime parity evidence.
+- Firestaff has `nexus_v1_script_vm` source-profiling code. It does not parse
+  real `SDDRVS.TSK` sound-driver opcodes or assign SLEV event semantics, and
+  it must not be cited as runtime parity evidence.
 - `SLEV00.BIN` through `SLEV15.BIN` are real per-level supplementary files.
   The retail corpus test now authenticates and profiles all 16 files. Their
   common 36-byte SH-2 entry spine and two bounded PC-relative literals are
