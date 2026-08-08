@@ -3786,6 +3786,30 @@ int main(void) {
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
                     !profile->source_game_load_session_ready,
                 "M11 NEW GAME retains the real post-GAME_LOAD pre-mirror owner without choosing a champion");
+    if (profile && source_transaction.party.admissions[0].valid) {
+        const DM2_V1_BootChampionSelectionCandidate *source_selection =
+            &source_transaction.party.admissions[0].selection;
+        DM2_V1_BootNewGamePartySelection mirror_click;
+
+        memset(&mirror_click, 0, sizeof(mirror_click));
+        mirror_click.map = source_selection->mirror.map;
+        mirror_click.x = source_selection->mirror.x;
+        mirror_click.y = source_selection->mirror.y;
+        mirror_click.direction = source_selection->selection_direction;
+        mirror_click.mirror_object_id = source_selection->mirror.object_id;
+        expect_true(dm2_v1_boot_select_new_game_champion(profile,
+                        &mirror_click) &&
+                    (profile_new_game_owner =
+                        (const DM2_V1_GameLoadWorldOwner *)
+                            dm2_v1_boot_new_game_world_readonly(profile)) != NULL &&
+                    profile_new_game_owner->selected_mirror_count == 1u &&
+                    profile_new_game_owner->selected_party.heros_in_party == 1 &&
+                    profile_new_game_owner->champion_selection_materialized &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0 &&
+                    view.dm2State.leader_hand_object == 0u,
+                    "DM2 routes a real first mirror click through the profile-owned GAME_LOAD world only");
+    }
     /* The following runtime/save assertions exercise resume separately. A
      * New Game may not create the former fixture party merely to enter this
      * block; GAME_LOAD owns that source transition. */

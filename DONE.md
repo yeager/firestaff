@@ -12,6 +12,9 @@
   Varje steg återskapar den autentiska champ-/inventorytransaktionen och
   avvisar dubbletter. Realdatatestet täcker både två verkliga klick och
   titelmenyns pre-mirror-övergång.
+- ✅ BootProfile äger nu även den enda publika vägen för ett mirror-klick.
+  Det hålls i den privata GAME_LOAD-världen och lämnar M11:s party, HUD och
+  session tomma tills den fullständiga handoffen finns.
 
 - ✅ Linux production linking no longer pulls the focused
   `dm2_v1_predicate_helpers.c` study into `firestaff_dm2` alongside the
