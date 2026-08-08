@@ -8153,3 +8153,10 @@
   user-data image before publishing property bytes. Both variants pass the
   full seven-dungeon loader regression; T900 field meanings and consumers
   remain explicitly unpromoted.
+
+# 2026-08-08 Theron production inventory provenance gate
+
+- ✅ Removed DMWeb-derived starting equipment from the production Theron
+  party initializer. Fixture probes retain the table for deterministic tests,
+  while production now starts with empty inventory until the real Track 02
+  start-object/T900 consumer is recovered.

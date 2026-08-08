@@ -103,7 +103,11 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     memset(c->inventory, 0, sizeof(c->inventory));
     for (int i = 0; i < THERON_EQUIP_SLOT_COUNT; i++) c->slots[i] = -1;
 
-    /* Starting equipment from DMWeb roster */
+    /* Starting equipment from the DMWeb roster is useful for fixture probes,
+     * but it is not a Track 02 object-record/T900 binding. Production must
+     * not publish it as real inventory while the original start-object
+     * consumer is unavailable. */
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     int inv_next = 0;
     for (int i = 0; i < (int)rec->start_equip_count && i < 12; i++) {
         int8_t item = rec->start_equip_item[i];
@@ -118,6 +122,9 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     }
 
     c->load     = (int16_t)inv_next;
+#else
+    c->load     = 0;
+#endif
     {
         int ml = ((int)rec->strength * 625 + 12500) / 1000;
         c->max_load = (int16_t)(ml > 6 ? ml : 6);

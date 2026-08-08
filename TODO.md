@@ -12785,6 +12785,10 @@ as line/circle coordinates or promote them into movement geometry.
   now byte-verified in both US and JP Track 02 user-data images. The raw
   property payload is carried into object provenance; field meanings,
   equip/use/stack rules and the executing T900 consumer remain open.
+- 🔧 2026-08-08 Theron production start inventory: DMWeb-derived starting
+  equipment is excluded from production because it is not yet bound to a real
+  Track 02 start-object/T900 consumer. Recover the original inventory path
+  before publishing live item state.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.
