@@ -123,9 +123,12 @@
   hel DB2-textkedja på FLOOR kan nu ändra synlighetsbit privat. En säker
   0x01-dörranimation kan också ta ett verkligt steg och lägga nästa riktiga
   timer i den privata kön, men bara när File_header-rutans direkta DB0-post
-  saknar party och DB4-varelse. Blandade FLOOR-kedjor, partyhints, WALL, PIT,
-  TELEPORTER och TRICKWALL avvisas utan mutation tills deras kompletta
-  följdkedjor har samma ägare. Dörrens kollision, skada och ljudväg är fortsatt
+  saknar party och DB4-varelse. En PIT eller TELEPORTER med en hel DB2-kedja
+  kan också stängas privat före samma FLOOR-hantering. Öppning avvisas före
+  mutation eftersom originalet då kör `DM2_ADVANCE_TILES_TIME` och kan flytta
+  party eller DB4-varelser. Blandade FLOOR-kedjor, partyhints, WALL och
+  TRICKWALL avvisas utan mutation tills deras kompletta följdkedjor har samma
+  ägare. Dörrens kollision, skada och ljudväg är fortsatt
   spärrade tills de kan publiceras tillsammans med den färdiga sessionen.
   `DM2_move_2fcf_0b8b` läser nu också File_header-teleportörer privat efter
   generatorpasset, men den beräknade displayposen är inte en viewport och får

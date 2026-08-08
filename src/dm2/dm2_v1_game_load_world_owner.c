@@ -1091,6 +1091,8 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     const uint8_t direction = (uint8_t)(payload & 0xffu);
     const uint8_t action = (uint8_t)(payload >> 8);
     int raw_tile;
+    int deferred_pit_tele_close = 0;
+    uint16_t deferred_tile_raw = 0u;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
@@ -1123,7 +1125,34 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
         return 1;
     }
 
-    if (receipt.tile_class == 1u) {
+    /* sktimprc.cpp::DM2_ACTUATE_PITFALL (3708-3742) and
+     * ::DM2_ACTUATE_TELEPORTER (3833-3873) change bit 3, then both enter
+     * DM2_ACTUATE_FLOOR_MECHA.  Their open path calls
+     * DM2_ADVANCE_TILES_TIME, which can move the party marker and creatures.
+     * That movement has no complete owner at GAME_LOAD, so it must fail
+     * before either the tile or a DB2 text record is touched.  Closing does
+     * not call ADVANCE_TILES_TIME and can therefore share the already-owned
+     * all-DB2 FLOOR atom below. */
+    if (receipt.tile_class == 2u || receipt.tile_class == 5u) {
+        const uint8_t current_open = (uint8_t)(((unsigned int)raw_tile >> 3) & 1u);
+        uint8_t requested_action = action;
+
+        receipt.tile_state_before = current_open;
+        if (requested_action == 2u) requested_action = current_open;
+        if (requested_action == 0u) {
+            receipt.blocked_unowned_tile_advance = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        /* Requested action 1 is the exact source close operation.  It is
+         * deliberately retained even when bit 3 was already clear: source
+         * still dispatches FLOOR_MECHA in that case. */
+        deferred_tile_raw = (uint16_t)((unsigned int)raw_tile & ~0x08u);
+        deferred_pit_tele_close = 1;
+        receipt.tile_state_after = 0u;
+    }
+
+    if (receipt.tile_class == 1u || deferred_pit_tele_close) {
         const int16_t root = (int16_t)dm2_v1_dungeon_get_first_thing(
             &owner->dungeon, map, x, y);
         int16_t link = root;
@@ -1232,6 +1261,15 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
                 goto floor_done;
             }
         }
+        /* The source changes the PIT/TELE tile before FLOOR_MECHA.  All DB2
+         * links have now been authenticated and made mutable, so this is the
+         * first possible mutation in this private transaction. */
+        if (deferred_pit_tele_close &&
+            dm2_v1_dungeon_set_tile_raw(&owner->dungeon, map, x, y,
+                                        deferred_tile_raw) != 0) {
+            receipt.blocked_incomplete_chain = 1;
+            goto floor_done;
+        }
         for (int i = 0; i < link_count; ++i) {
             uint8_t *record = dm2_v1_record_pool_address_mut(
                 &owner->record_pools, links[i]);
@@ -1245,7 +1283,12 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
             }
         }
         receipt.text_records_seen = link_count;
+        receipt.pit_tele_tile_mutated = deferred_pit_tele_close &&
+            (((unsigned int)raw_tile & 0x08u) != 0u);
         receipt.private_text_visibility_hash = hash;
+        if (deferred_pit_tele_close)
+            receipt.private_text_visibility_hash = dm2_v1_game_load_owner_hash_step(
+                receipt.private_text_visibility_hash, deferred_tile_raw);
         receipt.valid = hash != 0u;
         success = receipt.valid;
 

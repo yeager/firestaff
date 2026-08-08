@@ -155,8 +155,10 @@ typedef struct {
 /* Result of consuming a private 0x04 message produced by the tick-generator
  * continuation above.  Tile class 3 is the only complete source case that
  * needs no further owner: c_tim_proc.cpp falls through without a handler.
- * Every mutating class remains blocked until one source-owned FLOOR/WALL
- * chain, including its follow-up timers, can be committed as a unit. */
+ * PIT/TELEPORTER may enter the owned DB2-only FLOOR subset only for a close
+ * transition. Opening invokes DM2_ADVANCE_TILES_TIME, whose party/creature
+ * moves remain outside this owner. Every other mutating class remains blocked
+ * until its complete source chain and follow-up timers share one owner. */
 typedef struct {
     int valid;
     int source_noop;
@@ -175,6 +177,10 @@ typedef struct {
     int text_records_toggled;
     int blocked_non_text_chain;
     int blocked_hint_delivery;
+    int blocked_unowned_tile_advance;
+    int pit_tele_tile_mutated;
+    uint8_t tile_state_before;
+    uint8_t tile_state_after;
     uint32_t private_text_visibility_hash;
 } DM2_V1_GameLoadActuateReceipt;
 
@@ -253,9 +259,10 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
  * and the fully-owned DB2-only FLOOR subset.  The latter implements the
  * exact Text::TextVisibility update from ACTUATE_FLOOR_MECHA, but rejects a
  * mixed record chain and a newly-visible party-square hint until the message
- * delivery owner exists. Classes 0, 2, 4, 5 and 6 remain rejected without
- * mutation rather than applying an incomplete wall/door/pit/teleporter/
- * trick-wall fragment.
+ * delivery owner exists. Classes 2 and 5 can also close their source tile
+ * before that same DB2 atom; their opening path stays blocked because it
+ * requires DM2_ADVANCE_TILES_TIME. Classes 0, 4 and 6 remain rejected without
+ * mutation rather than applying an incomplete wall/door/trick-wall fragment.
  */
 int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     DM2_V1_GameLoadWorldOwner *owner,

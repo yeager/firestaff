@@ -232,8 +232,14 @@
 - ✅ En FLOOR-kedja som enbart innehåller autentiska DB2-textposter kan nu
   ändra originalets TextVisibility-bit privat. Blandade FLOOR-kedjor och nya
   partyhints avbryts atomärt, eftersom deras följdhanterare ännu saknar samma
-  ägare. WALL, PIT, DOOR, TELEPORTER och TRICKWALL avvisas fortsatt utan
-  mutation; de kräver bland annat DB0, CAII, följdtimers och UI-/ljudvägar.
+  ägare.
+- ✅ En PIT eller TELEPORTER kan nu stängas i den privata ägaren när samma
+  autentiska ruta har en komplett DB2-kedja. Det följer
+  `DM2_ACTUATE_PITFALL` och `DM2_ACTUATE_TELEPORTER`: bit 3 ändras före
+  `DM2_ACTUATE_FLOOR_MECHA`. Öppning blockeras före första skrivningen,
+  eftersom originalets `DM2_ADVANCE_TILES_TIME` kan flytta party och DB4-
+  varelser. WALL, DOOR och TRICKWALL avvisas fortsatt utan mutation; de kräver
+  bland annat DB0, CAII, följdtimers och UI-/ljudvägar.
 
 # DM2 PushButtonSwitch direkt DB0-atom (2026-08-08)
 

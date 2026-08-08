@@ -117,11 +117,13 @@ static int dm2_test_find_file_header_tile_class(const DM2_V1_DungeonData *d,
  * deliberately narrow private FLOOR atom rather than inventing a test map. */
 static int dm2_test_find_private_db2_floor(
     const DM2_V1_GameLoadWorldOwner *owner,
+    int tile_class,
     int *out_map, int *out_x, int *out_y, int16_t *out_link)
 {
     int map;
 
-    if (!owner || !out_map || !out_x || !out_y || !out_link) return 0;
+    if (!owner || tile_class < 1 || tile_class > 5 || !out_map || !out_x ||
+        !out_y || !out_link) return 0;
     for (map = 0; map < owner->dungeon.level_count; ++map) {
         int x;
         for (x = 0; x < owner->dungeon.level_widths[map]; ++x) {
@@ -133,7 +135,7 @@ static int dm2_test_find_private_db2_floor(
                 int acceptable = 1;
                 int has_mutable_text = 0;
                 if (dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) < 0 ||
-                    ((dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) >> 5) & 7) != 1)
+                    ((dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) >> 5) & 7) != tile_class)
                     continue;
                 link = (int16_t)dm2_v1_dungeon_get_first_thing(
                     &owner->dungeon, map, x, y);
@@ -1426,10 +1428,22 @@ int main(void) {
     int new_game_floor_map = -1;
     int new_game_floor_x = -1;
     int new_game_floor_y = -1;
+    int new_game_pit_map = -1;
+    int new_game_pit_x = -1;
+    int new_game_pit_y = -1;
+    int new_game_pit_raw_before = -1;
+    int new_game_tele_map = -1;
+    int new_game_tele_x = -1;
+    int new_game_tele_y = -1;
+    int new_game_tele_raw_before = -1;
     int new_game_db2_floor_map = -1;
     int new_game_db2_floor_x = -1;
     int new_game_db2_floor_y = -1;
     int16_t new_game_db2_floor_link = DM2_V1_RECORD_HANDLE_NULL;
+    int new_game_db2_pit_map = -1;
+    int new_game_db2_pit_x = -1;
+    int new_game_db2_pit_y = -1;
+    int16_t new_game_db2_pit_link = DM2_V1_RECORD_HANDLE_NULL;
     int new_game_door_map = -1;
     int new_game_door_x = -1;
     int new_game_door_y = -1;
@@ -2033,11 +2047,66 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 refuses a real FLOOR ACTUATE message until its complete source chain has one owner");
+    /* Source action 0 opens a PIT and immediately enters
+     * ADVANCE_TILES_TIME. It may move source party/creature records, so the
+     * private GAME_LOAD owner must reject it before its real tile byte moves. */
+    memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+    dm2_v1_timer_entry_init(&new_game_actuate_timer);
+    expect_true(profile &&
+                    dm2_test_find_file_header_tile_class(
+                        &new_game_world_owner.dungeon, 2,
+                        &new_game_pit_map, &new_game_pit_x, &new_game_pit_y) &&
+                    ((new_game_pit_raw_before = dm2_v1_dungeon_get_tile_raw(
+                        &new_game_world_owner.dungeon, new_game_pit_map,
+                        new_game_pit_x, new_game_pit_y)) >= 0) &&
+                    (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                        (int16_t)new_game_pit_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 1u), 1) &&
+                    ((new_game_actuate_timer.xA = (int8_t)new_game_pit_x), 1) &&
+                    ((new_game_actuate_timer.yA = (int8_t)new_game_pit_y), 1) &&
+                    !dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) &&
+                    !new_game_actuate.valid &&
+                    new_game_actuate.tile_class == 2u &&
+                    new_game_actuate.blocked_unowned_tile_advance &&
+                    dm2_v1_dungeon_get_tile_raw(&new_game_world_owner.dungeon,
+                        new_game_pit_map, new_game_pit_x, new_game_pit_y) ==
+                        new_game_pit_raw_before &&
+                    !profile->source_game_load_session_ready,
+                "M11 rejects an opening PIT ACTUATE before unowned tile-time movement");
+    memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+    dm2_v1_timer_entry_init(&new_game_actuate_timer);
+    expect_true(profile &&
+                    dm2_test_find_file_header_tile_class(
+                        &new_game_world_owner.dungeon, 5,
+                        &new_game_tele_map, &new_game_tele_x, &new_game_tele_y) &&
+                    ((new_game_tele_raw_before = dm2_v1_dungeon_get_tile_raw(
+                        &new_game_world_owner.dungeon, new_game_tele_map,
+                        new_game_tele_x, new_game_tele_y)) >= 0) &&
+                    (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                        (int16_t)new_game_tele_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 1u), 1) &&
+                    ((new_game_actuate_timer.xA = (int8_t)new_game_tele_x), 1) &&
+                    ((new_game_actuate_timer.yA = (int8_t)new_game_tele_y), 1) &&
+                    !dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) &&
+                    !new_game_actuate.valid &&
+                    new_game_actuate.tile_class == 5u &&
+                    new_game_actuate.blocked_unowned_tile_advance &&
+                    dm2_v1_dungeon_get_tile_raw(&new_game_world_owner.dungeon,
+                        new_game_tele_map, new_game_tele_x, new_game_tele_y) ==
+                        new_game_tele_raw_before &&
+                    !profile->source_game_load_session_ready,
+                "M11 rejects an opening TELEPORTER ACTUATE before unowned tile-time movement");
     /* The DOS File_header corpus does not promise that a map contains an
      * all-DB2 floor chain.  When it does, prove the private 0x04 atom against
      * that authentic coordinate and source record rather than a fixture. */
     if (profile && dm2_test_find_private_db2_floor(
-            &new_game_world_owner, &new_game_db2_floor_map,
+            &new_game_world_owner, 1, &new_game_db2_floor_map,
             &new_game_db2_floor_x, &new_game_db2_floor_y,
             &new_game_db2_floor_link)) {
         const uint8_t *before = dm2_v1_record_pool_address(
@@ -2066,6 +2135,42 @@ int main(void) {
                         !new_game_actuate.blocked_hint_delivery &&
                         !profile->source_game_load_session_ready,
                     "M11 toggles an all-DB2 FLOOR chain from real File_header data only in the private owner");
+    }
+    /* Do not manufacture a pit or its record chain.  The retail corpus may
+     * omit an all-DB2 PIT chain, so prove the close-only atom only when that
+     * exact source graph exists.  The source open path remains deliberately
+     * blocked because it would call ADVANCE_TILES_TIME. */
+    if (profile && dm2_test_find_private_db2_floor(
+            &new_game_world_owner, 2, &new_game_db2_pit_map,
+            &new_game_db2_pit_x, &new_game_db2_pit_y,
+            &new_game_db2_pit_link)) {
+        const int before = dm2_v1_dungeon_get_tile_raw(
+            &new_game_world_owner.dungeon, new_game_db2_pit_map,
+            new_game_db2_pit_x, new_game_db2_pit_y);
+        memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+        dm2_v1_timer_entry_init(&new_game_actuate_timer);
+        expect_true((dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                            (int16_t)new_game_db2_pit_map, 0), 1) &&
+                        ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                        ((new_game_actuate_timer.actor = 3u), 1) &&
+                        ((new_game_actuate_timer.xA =
+                            (int8_t)new_game_db2_pit_x), 1) &&
+                        ((new_game_actuate_timer.yA =
+                            (int8_t)new_game_db2_pit_y), 1) &&
+                        ((new_game_actuate_timer.wvalueB = 1 << 8), 1) &&
+                        dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                            &new_game_world_owner, &new_game_actuate_timer,
+                            &new_game_actuate) && new_game_actuate.valid &&
+                        new_game_actuate.tile_class == 2u &&
+                        new_game_actuate.tile_state_before ==
+                            (uint8_t)((before >> 3) & 1) &&
+                        new_game_actuate.tile_state_after == 0u &&
+                        (dm2_v1_dungeon_get_tile_raw(&new_game_world_owner.dungeon,
+                            new_game_db2_pit_map, new_game_db2_pit_x,
+                            new_game_db2_pit_y) & 0x08) == 0 &&
+                        !new_game_actuate.blocked_unowned_tile_advance &&
+                        !profile->source_game_load_session_ready,
+                    "M11 closes an all-DB2 PIT chain from real File_header data before its private FLOOR atom");
     }
     /* A type-0x01 door timer is valid only when it names the actual first DB0
      * record of an actual class-4 File_header square.  The real corpus does
