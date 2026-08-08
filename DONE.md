@@ -1,3 +1,12 @@
+# Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
+
+- ✅ `SDDRVS.TSK`-kvittot validerar nu hela den retail-hashbundna 16-entry
+  68k-jumptabellen vid `0x1c2a`, inte bara den första `JMP`-signaturen.
+- ✅ En muterad jump-table-entry avvisas av regressionsprovet; event-dispatch,
+  SAL-semantik och host playback förblir uttryckligen spärrade.
+- ✅ Riktiga Nexus `SDDRVS.TSK`-data passerar SLEV/SAL-korpus- och
+  sound-runtime-testerna.
+
 # DM2 New Game c_tim- och aktuatorgeneratorägare (2026-08-08)
 
 - ✅ Den privata File_header-världsägaren beräknar nu originalets
