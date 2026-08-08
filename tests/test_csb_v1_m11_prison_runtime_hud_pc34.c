@@ -10,6 +10,7 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 
 #include <stdio.h>
@@ -36,6 +37,30 @@ static const char *csb_data_dir(char *fallback, size_t fallback_size)
     if (!home || !home[0] || !fallback || fallback_size == 0u) return NULL;
     snprintf(fallback, fallback_size, "%s/.firestaff/data/csb", home);
     return fallback;
+}
+
+static int is_original_atari_save_file(const char *path)
+{
+    FILE *file;
+    long length;
+    unsigned char *bytes = NULL;
+    CSB_V1_AtariSaveInfo info;
+    int valid;
+
+    if (!path || !(file = fopen(path, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (unsigned char *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    valid = csb_v1_atari_save_decode_pc34_compat(bytes, (size_t)length,
+                                                   &info) == CSB_V1_ATARI_SAVE_OK;
+    free(bytes);
+    return valid;
 }
 
 /* CSBWin's C232 record owns the Atari ST HUD page.  Compare every source
@@ -350,6 +375,49 @@ int main(void)
                       profile->runtime.party_state.Champions[0]
                           .SymbolStep == 0u,
                   "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
+            if (quicksave_path && quicksave_path[0]) {
+                uint32_t saved_game_time = profile->runtime.game_time;
+                int save_path_bound = configured_quicksave_path &&
+                    strcmp(configured_quicksave_path, quicksave_path) == 0;
+
+                CHECK(save_path_bound &&
+                          csb_v1_runtime_original_atari_save_source_current(
+                              &profile->runtime),
+                      "real Atari save starts from an authenticated MINI.DAT template");
+                if (save_path_bound) {
+                    remove(quicksave_path);
+                    CHECK(M11_GameView_HandleInput(&view,
+                                                   M12_MENU_INPUT_DISK_MENU) ==
+                              M11_GAME_INPUT_REDRAW &&
+                              view.csbDiskMenuActive &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_DOWN) ==
+                                  M11_GAME_INPUT_REDRAW &&
+                              view.csbDiskMenuSelectedChoice == 2 &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_ACCEPT) ==
+                                  M11_GAME_INPUT_REDRAW,
+                          "real Atari Ctrl-S Save and Play reaches F0433");
+                    CHECK(is_original_atari_save_file(quicksave_path),
+                          "real Atari Ctrl-S writes an authenticated original save, not FSSB");
+                    for (tick = 0; tick < 5; ++tick) {
+                        (void)M11_GameView_AdvanceIdleTick(&view);
+                    }
+                    CHECK(M11_GameView_HandleInput(&view,
+                                                   M12_MENU_INPUT_DISK_MENU) ==
+                              M11_GAME_INPUT_REDRAW &&
+                              view.csbDiskMenuSelectedChoice == 1 &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_ACCEPT) ==
+                                  M11_GAME_INPUT_REDRAW,
+                          "real Atari Ctrl-S Load Saved Game reaches F0435");
+                    profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+                    CHECK(profile && profile->runtime.game_time == saved_game_time &&
+                              view.loadGameTick == saved_game_time,
+                          "F0435 restores the original Atari quicksave clock into M11");
+                    remove(quicksave_path);
+                }
+            }
             M11_GameView_Shutdown(&view);
             if (failures) return 1;
             puts("PASS: real Atari MINI.DAT reaches live Atari ST M11 runtime");

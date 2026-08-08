@@ -789,6 +789,11 @@ typedef struct {
     const char             *dungeon_path;
     const char             *graphics_path;
     char                    bonus_dungeon_path[ASSET_PATH_MAX];
+    /* A native Atari/Amiga MINI.DAT resume retains its authenticated source
+     * artifact so F0433 can write a same-format user copy.  This is runtime
+     * provenance only: Firestaff never overwrites the selected original. */
+    char                    original_atari_save_source_path[ASSET_PATH_MAX];
+    uint32_t                original_atari_save_source_fnv1a;
 
     /* ── Dungeon data (owned) ─────────────────────── */
     /* Heap-allocated dungeon loaded by csb_v1_runtime_boot().
@@ -2763,6 +2768,13 @@ int csb_v1_runtime_write_original_atari_save_to_path(
     const CSB_V1_RuntimeProfile *profile,
     const char *source_path,
     const char *destination_path);
+/* The source path is published only after a native Atari/Amiga save has
+ * passed the complete decoder and reached the runtime.  `current` re-reads
+ * it and rejects any later drift before a write can use it as a template. */
+const char *csb_v1_runtime_original_atari_save_source_path(
+    const CSB_V1_RuntimeProfile *profile);
+int csb_v1_runtime_original_atari_save_source_current(
+    const CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_can_load_resume_path(const char *path);
 int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                          const char *path,

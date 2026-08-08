@@ -7438,8 +7438,15 @@ that its exact runtime path is not already source-locked and tested.
    their relation to the CEDT file picker are still unclassified, so this does
    not yet expose a new Resume candidate.
    generated party or HUD art participates in that route.
-   This does not yet establish user-created
-   `CSBGAME.DAT` extended-object/timer round-trip support.
+   2026-08-08: a verified Atari/Amiga `MINI.DAT` resume now retains its
+   authenticated template identity through M11. Ctrl-S Save and Play writes
+   a same-format private user copy, and Load Saved Game decodes that copy
+   through the original F0435 handoff; a source drift check prevents a later
+   write from using changed template bytes. The focused real-data test proves
+   the output itself decodes as an original Atari save, rather than merely as
+   an FSSB snapshot. This preserves documented GAMEBLOCK2/party state and
+   leaves the selected game-data artifact untouched. User-created
+   `CSBGAME.DAT` extended-object/timer round-trip support remains open.
 6. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
    creature, and static-object rendering through the live M11 dungeon path.

@@ -192,6 +192,17 @@ static int csb_v1_runtime_try_load_original_atari_save_file(
         result = csb_v1_atari_save_handoff_runtime_pc34_compat(
                      profile, bytes, size, NULL) == CSB_V1_ATARI_RUNTIME_OK
             ? CSB_V1_LOAD_OK : CSB_V1_LOAD_ERR_UNREADABLE;
+        if (result == CSB_V1_LOAD_OK) {
+            /* ReDMCSB LOADSAVE.C F0435:2721-2728 restores GLOBAL_DATA only
+             * after the selected save bytes verify.  Retain that exact
+             * source template for F0433, rather than substituting an FSSB
+             * container when the player later saves. */
+            snprintf(profile->original_atari_save_source_path,
+                     sizeof(profile->original_atari_save_source_path),
+                     "%s", path);
+            profile->original_atari_save_source_fnv1a =
+                csb_v1_runtime_fnv1a32(bytes, size);
+        }
     }
     free(bytes);
     return result;
@@ -318,6 +329,37 @@ int csb_v1_runtime_write_original_atari_save_to_path(
     free(output);
     free(source);
     return result;
+}
+
+const char *csb_v1_runtime_original_atari_save_source_path(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile || !profile->original_atari_save_source_path[0] ||
+        profile->original_atari_save_source_fnv1a == 0u) {
+        return NULL;
+    }
+    return profile->original_atari_save_source_path;
+}
+
+int csb_v1_runtime_original_atari_save_source_current(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    const char *path = csb_v1_runtime_original_atari_save_source_path(profile);
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    CSB_V1_AtariSaveInfo info;
+    int current = 0;
+
+    if (!path || !csb_v1_runtime_read_original_atari_save_file(path, &bytes,
+                                                                &size)) {
+        return 0;
+    }
+    current = csb_v1_runtime_fnv1a32(bytes, size) ==
+                  profile->original_atari_save_source_fnv1a &&
+              csb_v1_atari_save_decode_pc34_compat(bytes, size, &info) ==
+                  CSB_V1_ATARI_SAVE_OK;
+    free(bytes);
+    return current;
 }
 
 static int csb_v1_runtime_is_original_atari_save_file(const char *path)
@@ -2054,7 +2096,14 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
                                                               backup_path) ==
                 CSB_V1_LOAD_OK) {
             (void)remove(path);
-            (void)rename(backup_path, path);
+            if (rename(backup_path, path) == 0) {
+                /* The successful recovery is now the selected source. Keep
+                 * F0433's later template check pointed at that restored
+                 * filename, rather than the name that was just renamed. */
+                snprintf(profile->original_atari_save_source_path,
+                         sizeof(profile->original_atari_save_source_path),
+                         "%s", path);
+            }
             return CSB_V1_LOAD_OK;
         }
         return result;

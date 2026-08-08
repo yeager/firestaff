@@ -7662,3 +7662,18 @@
   regression, and rebuilt the live real-asset Atari ST `MINI.DAT` M11 route.
   Source references: ReDMCSB `DEFS.H:779–809`, `DATA.C:442–466`, and
   `PANEL.C` F0354.
+
+# CSB native Atari/Amiga resumed-save continuity (2026-08-08)
+
+- ✅ A verified `MINI.DAT` handoff now retains its source-template path and
+  content fingerprint. M11 Ctrl-S writes a same-format private user save
+  through the original GAMEBLOCK patcher instead of substituting FSSB, while
+  refusing a changed template and never overwriting the selected game-data
+  file.
+- ✅ Load Saved Game accepts that emitted original save through the normal
+  F0435 route. The real Atari ST M11 regression drives Save and Play then
+  Load Saved Game, verifies the output decodes as native Atari data and
+  checks that the restored game clock matches the saved state.
+- ✅ Backup recovery now updates this provenance after restoring a canonical
+  `CSBGAME*.DAT` name. Source references: ReDMCSB `LOADSAVE.C` F0433 and
+  F0435, including the verified-save restore sequence around lines 2721–2728.

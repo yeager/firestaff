@@ -22193,6 +22193,8 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;
+        CSB_V1_BootProfile *profile;
+        const char *original_atari_source;
 
         if (!state->csbBootProfile) {
             m11_set_status(state, "SAVE", "CSB PROFILE MISSING");
@@ -22202,18 +22204,35 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             m11_set_status(state, "LOAD", "CSB NATIVE SAVE STALE");
             return 0;
         }
-        /* ReDMCSB LOADSAVE.C F0433 writes CSB GLOBAL_DATA, party state,
-         * event queues, and timeline so F0435 can resume the live game.
-         * Firestaff's CSB runtime snapshot is the current bounded owner of
-         * that state; asset paths and loaded DUNGEON.DAT stay in the boot
-         * profile and are reconstructed before load. */
-        if (csb_v1_boot_runtime_save_game_to_path_pc34(
-                state->csbBootProfile,
-                path,
-                &game_time) != CSB_V1_SAVE_OK) {
+        profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+        original_atari_source =
+            csb_v1_runtime_original_atari_save_source_path(&profile->runtime);
+        if (original_atari_source) {
+            /* ReDMCSB LOADSAVE.C F0433/F0435 use one original save format
+             * across this resumed Atari/Amiga route.  Preserve unowned timer
+             * and dungeon bytes by patching a verified original template into
+             * the private user save path; never write back into the selected
+             * game-data artifact. */
+            if (!csb_v1_runtime_original_atari_save_source_current(
+                    &profile->runtime) ||
+                csb_v1_runtime_write_original_atari_save_to_path(
+                    &profile->runtime, original_atari_source, path) != 0) {
+                m11_set_status(state, "SAVE", "CSB ORIGINAL WRITE FAILED");
+                return 0;
+            }
+            game_time = profile->runtime.game_time;
+        } else if (csb_v1_boot_runtime_save_game_to_path_pc34(
+                       state->csbBootProfile,
+                       path,
+                       &game_time) != CSB_V1_SAVE_OK) {
             m11_set_status(state, "SAVE", "CSB WRITE FAILED");
             return 0;
         }
+        /* ReDMCSB LOADSAVE.C F0433 writes CSB GLOBAL_DATA, party state,
+         * event queues, and timeline so F0435 can resume the live game.
+         * An authenticated Atari/Amiga resume retains that native container;
+         * other CSB sessions use Firestaff's bounded runtime snapshot. Asset
+         * paths and loaded DUNGEON.DAT remain in the boot profile. */
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         state->lastSaveTick = game_time;
         m11_set_status(state, "SAVE", "CSB QUICKSAVE WRITTEN");

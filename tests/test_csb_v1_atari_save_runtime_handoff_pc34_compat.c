@@ -77,6 +77,9 @@ int main(void)
             runtime.game_time != info.game_time ||
             runtime.party_state.ChampionCount != info.champion_count ||
             csb_v1_dungeon_get_current() != runtime.dungeon_handle ||
+            strcmp(csb_v1_runtime_original_atari_save_source_path(&runtime),
+                   corpus_path) != 0 ||
+            !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
             csb_v1_atari_save_handoff_runtime_pc34_compat(&runtime, bytes, size,
                                                            NULL) != 0) {
             free(bytes);
@@ -143,6 +146,9 @@ int main(void)
             !csb_v1_runtime_can_load_resume_path(written_path) ||
             csb_v1_runtime_load_game_from_path(&runtime, written_path) !=
                 CSB_V1_LOAD_OK ||
+            strcmp(csb_v1_runtime_original_atari_save_source_path(&runtime),
+                   written_path) != 0 ||
+            !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
             !read_file(written_path, &written, &written_size) ||
             written_size != backup_size ||
             memcmp(written, backup, backup_size) != 0) {
@@ -172,6 +178,8 @@ int main(void)
         runtime.party_state.ChampionCount != 1 ||
         strcmp(runtime.party_state.Champions[0].Name, "HALK") != 0 ||
         csb_v1_dungeon_get_current() != runtime.dungeon_handle ||
+        strcmp(csb_v1_runtime_original_atari_save_source_path(&runtime), path) != 0 ||
+        !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
         csb_v1_atari_save_handoff_runtime_pc34_compat(&runtime, bytes, size, &info) != 0) {
         free(bytes); csb_v1_runtime_cleanup(&runtime); return 1;
     }
