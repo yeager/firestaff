@@ -29,6 +29,8 @@ int main(void)
     char *hitTestEnd;
     char *clickRoute;
     char *clickRouteEnd;
+    char *csbClickRoute;
+    char *csbClickRouteEnd;
     long size;
     int ok;
 
@@ -48,8 +50,13 @@ int main(void)
     clickRoute = strstr(source, "static M11_GameInputResult m11_process_v1_c080_click(");
     clickRouteEnd = clickRoute ? strstr(clickRoute,
         "static int m11_front_cell_mirror_ordinal(") : NULL;
+    csbClickRoute = strstr(source,
+        "static M11_GameInputResult m11_process_csb_v1_c080_click(");
+    csbClickRouteEnd = csbClickRoute ? strstr(csbClickRoute,
+        "static M11_GameInputResult m11_process_v1_c080_click(") : NULL;
     ok = hitTest && hitTestEnd && hitTestEnd > hitTest && clickRoute && clickRouteEnd &&
          clickRouteEnd > clickRoute &&
+         csbClickRoute && csbClickRouteEnd && csbClickRouteEnd > csbClickRoute &&
          has_between(hitTest, hitTestEnd,
              "m11_build_dm1_front_champion_portrait_receipt(") &&
          has_between(hitTest, hitTestEnd,
@@ -62,6 +69,10 @@ int main(void)
              "m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal)") &&
          has_between(clickRoute, clickRouteEnd,
              "m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)") &&
+         has_between(csbClickRoute, csbClickRouteEnd,
+             "m11_front_mirror_hit_test(state, localX, localY, &mirror_ordinal)") &&
+         has_between(csbClickRoute, csbClickRouteEnd,
+             "m11_select_mirror_candidate_by_ordinal(state,") &&
          !has_between(clickRoute, clickRouteEnd,
              "localX >= 96 && localX <= 127") &&
          strstr(source,

@@ -32120,6 +32120,27 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         m11_refresh_hash(state);
         return M11_GAME_INPUT_REDRAW;
     }
+
+    /* ReDMCSB CLIKVIEW.C F0377 reaches MOVESENS.C F0275 after the
+     * leader-hand throw lane.  F0275's C127 branch (MOVESENS.C:1501-1503)
+     * calls REVIVE.C F0280 directly; unlike ordinary wall-ornament sensors,
+     * it is admitted even while the party has no leader (F0275:1392-1393).
+     *
+     * The CSB runtime already owns the original C127 record and the C040
+     * candidate handoff.  Use the same F0172/C026 render receipt as the
+     * drawn portrait to prove that this is the visible source candidate,
+     * rather than treating the broad C05 ornament rectangle as a synthetic
+     * mirror target. */
+    {
+        int mirror_ordinal = -1;
+        if (m11_front_mirror_hit_test(state, localX, localY, &mirror_ordinal)) {
+            return m11_select_mirror_candidate_by_ordinal(state,
+                                                            mirror_ordinal)
+                ? M11_GAME_INPUT_REDRAW
+                : M11_GAME_INPUT_IGNORED;
+        }
+    }
+
     if (!m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
         return M11_GAME_INPUT_IGNORED;
     }
