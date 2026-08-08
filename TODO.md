@@ -2718,6 +2718,13 @@ level or consumer bindings.
   EGB backdrop for English sessions. Japanese Shift-JIS glyphs remain
   blank pending a JDM-owned font decode; native icon bitmap decode
   remains open.
+  2026-08-08: FM Towns icon bitmap decode closed. The FM Towns action
+  menu path now draws champion weapon icon cells after the EGB backdrop
+  via `m11_draw_dm_action_icon_cells`, using the same PC34 icon source
+  zones (GRAPHICS.DAT records 42-48, 16×16 at x=233+slot*22, y=95).
+  The FM Towns GRAPHICS.DAT is already decoded via the shared IMG2
+  nibble RLE path so no new decoder was needed — the gap was purely
+  that the FM Towns early-return skipped the icon drawing loop.
   2026-08-08: FM Towns action menu click handling closed. The M11 input
   handler now hit-tests clicks against the source-locked 87×45 panel at
   (232,77)–(318,121) with three 7-pixel-tall rows (CHAR_Y_HYT=7),

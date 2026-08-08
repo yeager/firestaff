@@ -46151,6 +46151,11 @@ static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int framebufferWidth,
+                                         int framebufferHeight);
+
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -46212,8 +46217,15 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     if (state->dm1FmtownsStartupReceiptValid &&
         (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN ||
          state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP)) {
-        return m11_draw_dm1_fmtowns_dmenu_backdrop(
-            state, actions, framebuffer, framebufferWidth, framebufferHeight);
+        if (!m11_draw_dm1_fmtowns_dmenu_backdrop(
+                state, actions, framebuffer, framebufferWidth,
+                framebufferHeight)) {
+            return 0;
+        }
+        (void)m11_draw_dm_action_icon_cells(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
+        return 1;
     }
 
     /* F0387 always fills the full action area with black before
