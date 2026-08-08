@@ -269,6 +269,7 @@ int dm2_v1_startup_menu_count_rows(int resume_available,
 int dm2_v1_startup_menu_scan_saves(DM2_V1_StartupMenu *menu)
 {
     DM2_SKSaveCorpusReceipt corpus;
+    char discovered_root[sizeof(menu->save_root)];
 
     if (!menu) {
         return 0;
@@ -279,6 +280,22 @@ int dm2_v1_startup_menu_scan_saves(DM2_V1_StartupMenu *menu)
      * title-cased output names Firestaff itself would write. */
     if (!dm2_v1_sksave_corpus_scan(menu->save_root, &corpus)) {
         return 0;
+    }
+    /* A configured data root may contain an unmodified DOS DATA directory
+     * below it.  The corpus scanner records that directory only after a
+     * source-spelled SKSave file has passed the original header gate.  Rescan
+     * there so the menu's direct-slot order and subsequent action root are
+     * identical.  Do not use a recursively found arbitrary file as a save
+     * root, and do not attempt a raw-session import here. */
+    if (!corpus.has_last_session && corpus.valid_slot_mask == 0u &&
+        corpus.discovered_source_root[0] != '\0') {
+        snprintf(discovered_root, sizeof(discovered_root), "%s",
+                 corpus.discovered_source_root);
+        if (!dm2_v1_sksave_corpus_scan(discovered_root, &corpus)) {
+            return 0;
+        }
+        snprintf(menu->save_root, sizeof(menu->save_root), "%s",
+                 discovered_root);
     }
     return dm2_v1_startup_menu_refresh(
         menu,

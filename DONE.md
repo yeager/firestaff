@@ -10,6 +10,20 @@
 
 # DM2 GAME_LOAD load-flow gate (2026-08-08)
 
+# DM2 SKSave-korpusinventering (2026-08-08)
+
+- ✅ Startmenyn följer nu en verifierad, originalstavad `SKSave`-fil från en
+  vald datarot till dess verkliga katalog och gör en ny direkt skanning där.
+  Därmed syns den medföljande PC-DOS-korpusen även när användaren väljer
+  `.firestaff/data/dm2` i stället för den djupare `DATA`-katalogen.
+- ✅ Endast en fil som både har SKSave-namnform och passerar den autentiska
+  42-bytesheadern får ange denna katalog. Andra filer, även med en
+  headerliknande början, kan inte styra menyn.
+- ✅ Detta är en läsande inventering. Resume förblir spärrad eftersom den
+  kompletta `DM2_GAME_LOAD`-transaktionen för karta, recordpooler, heroes,
+  possessions och timers saknas. Ingen syntetisk session eller ny sparfil
+  skapas.
+
 - ✅ Den publika Resume-vägen har samma källgrind som Nytt spel. Saknad
   bootprofil, overifierade tillgångar och varje ofullständig `GAME_LOAD`-
   ägare avvisas utan att ändra sessionens bytes.

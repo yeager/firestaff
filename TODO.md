@@ -52,6 +52,12 @@
   still stops before `DM2_GAME_LOAD` creates the missing party/record/timer
   graph.
 
+- **DM2-SKSAVE-CORPUS-INVENTORY:** Startmenyn kan nu hitta en verklig,
+  källstavad SKSave-katalog under den hashskannade dataroten och skannar den
+  därefter i originalets direkta slotordning. Detta är bara inventering:
+  Resume är fortsatt spärrad tills den kompletta `GAME_LOAD`-ägaren finns,
+  och ingen rå SKSAVE importeras eller skrivs.
+
 - **DM2-FILE-HEADER-LOCALLEVEL-OWNER:** The callback-shaped
   `DM2_LOAD_LOCALLEVEL_DYN` translation is now explicitly blocked unless a
   single live owner proves File_header maps, record pools and links. Replace

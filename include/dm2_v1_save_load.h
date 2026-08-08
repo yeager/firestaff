@@ -206,6 +206,10 @@ typedef struct {
     DM2_SKSaveCandidateReceipt candidate_receipts[DM2_SK_CORPUS_RECEIPT_MAX];
     char     first_valid_path[256];
     char     first_importable_path[256];
+    /* A nested source-spelled SKSave candidate is inventory evidence only
+     * until its own directory has been scanned in the original direct-load
+     * order.  This is never inferred from an arbitrary header-shaped file. */
+    char     discovered_source_root[256];
 } DM2_SKSaveCorpusReceipt;
 
 /* Skip-safe provenance gate for the still-unmapped live weather timer area.

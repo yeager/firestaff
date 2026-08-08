@@ -891,6 +891,31 @@ static int dm2_sksave_is_dot_dir(const char *name)
     return name && (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
 }
 
+static void dm2_sksave_corpus_set_discovered_source_root(
+    DM2_SKSaveCorpusReceipt *receipt,
+    const char *path,
+    const char *basename)
+{
+    const char *slash;
+    size_t root_size;
+
+    if (!receipt || receipt->discovered_source_root[0] != '\0' ||
+        !path || !basename ||
+        !dm2_sksave_basename_matches_variant(basename, NULL, NULL, NULL)) {
+        return;
+    }
+    slash = strrchr(path, '/');
+    if (!slash || slash == path) {
+        return;
+    }
+    root_size = (size_t)(slash - path);
+    if (root_size >= sizeof(receipt->discovered_source_root)) {
+        return;
+    }
+    memcpy(receipt->discovered_source_root, path, root_size);
+    receipt->discovered_source_root[root_size] = '\0';
+}
+
 static void dm2_sksave_corpus_scan_recursive_impl(
     const char *root,
     const char *dir,
@@ -963,6 +988,17 @@ static void dm2_sksave_corpus_scan_recursive_impl(
         }
         alternate_name = !dm2_sksave_basename_is_canonical_direct(ent->d_name);
         (*candidate_count)++;
+        /* This path has passed the same 42-byte header gate as GAME_LOAD and
+         * has the original SKSave spelling.  Record only its parent so the
+         * startup menu can rescan it with SKProject's direct slot order;
+         * header-shaped files with unrelated names can never redirect a menu
+         * or create a session. */
+        if (named_candidate &&
+            dm2_sksave_probe_path(path, &payload_size) ==
+                DM2_SK_CORPUS_VALID) {
+            dm2_sksave_corpus_set_discovered_source_root(receipt, path,
+                                                          ent->d_name);
+        }
         dm2_sksave_corpus_probe_candidate(receipt, path, ent->d_name,
                                           1, alternate_name);
     }

@@ -771,6 +771,7 @@ int main(void)
         check(dm2_v1_startup_menu_scan_saves(&raw_corpus_menu) &&
                   (raw_corpus_menu.resume_available ||
                    raw_corpus_menu.slot_mask != 0u) &&
+                  raw_corpus_menu.save_root[0] != '\0' &&
                   raw_corpus_menu.row_count > 1,
               "real raw SKSave corpus is inventoried without fabricating a session");
         memset(&action, 0, sizeof(action));
