@@ -2620,6 +2620,11 @@ struct Nexus_V1_Engine {
      * retail startup remains zero until an external title capture admits all
      * of those facts. */
     int startup_title_vdp_capture_verified;
+    /* Test/capture seams only: decoded WARNING.BIN/GAMEOVER.BIN bytes are
+     * source receipts, never presentation captures. Keep these independent
+     * so art loading cannot silently promote capture readiness. */
+    int startup_warning_vdp_capture_verified;
+    int startup_gameover_vdp_capture_verified;
 
     /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
      * dispatch remains blocked until a source-locked parser exists. */

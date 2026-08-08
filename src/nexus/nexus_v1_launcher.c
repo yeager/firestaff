@@ -6481,12 +6481,14 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
     out_receipt->gameover_art_loaded =
         assets.gameover_surface_loaded ? 1 : 0;
     out_receipt->warning_capture_surface_ready =
-        out_receipt->warning_art_loaded;
+        out_receipt->warning_art_loaded &&
+        state->engine->startup_warning_vdp_capture_verified;
     out_receipt->title_capture_surface_ready =
         out_receipt->title_art_loaded && assets.title_route_ready &&
         state->engine->startup_title_vdp_capture_verified;
     out_receipt->gameover_capture_surface_ready =
-        out_receipt->gameover_art_loaded;
+        out_receipt->gameover_art_loaded &&
+        state->engine->startup_gameover_vdp_capture_verified;
     out_receipt->warning_status_ready = out_receipt->warning_art_loaded;
     out_receipt->title_status_ready =
         out_receipt->title_art_loaded && assets.title_route_ready;

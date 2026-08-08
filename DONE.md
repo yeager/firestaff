@@ -1,5 +1,16 @@
 # Nexus retail-format inventory refresh (2026-08-08)
 
+# Nexus startup capture admission hardening (2026-08-08)
+
+- ✅ WARNING.BIN/GAMEOVER.BIN source-byte loading no longer self-admits
+  Saturn presentation capture readiness; both now require independent,
+  explicit capture witnesses, matching the existing TITLE.CG seam.
+- ✅ Added a regression proving decoded art remains distinct from capture
+  evidence, and made the real-data launcher check accept the source-faithful
+  LEV00 level-error boundary when no Saturn start pose is admitted.
+- ✅ Startup/menu, launcher, title, and FONT256 checks pass 23/23 against
+  `/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ Phase-2- och triggerdokumentationen beskriver nu verifierade bounded
   receipts för DGN Structure1B/2/3, FACE.BIN, ITEM.IBS, MENU.BPK, STONE.BIN,
   POTEFT.BIN, STABG.BIN, FONT256.S2D och SLEV/SAL/MAP i stället för gamla

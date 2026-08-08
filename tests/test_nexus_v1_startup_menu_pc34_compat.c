@@ -979,6 +979,11 @@ int main(void)
     /* This fixture explicitly models the separate Saturn title capture
      * witness. Retail TITLE.CG alone must leave this zero. */
     synthetic_engine.startup_title_vdp_capture_verified = 1;
+    /* WARNING/GAMEOVER art bytes are separate source receipts; keep their
+     * positive capture assertions explicit rather than deriving them from
+     * decoded pixels. */
+    synthetic_engine.startup_warning_vdp_capture_verified = 1;
+    synthetic_engine.startup_gameover_vdp_capture_verified = 1;
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -1124,6 +1129,25 @@ int main(void)
                full_start_receipt.fallback_visuals_permitted == 0 &&
                strcmp(full_start_receipt.startup_ui_blocker, "none") == 0,
            "Nexus full-start receipt gates warning title menus audio and graphics");
+    {
+        int old_warning_capture =
+            synthetic_engine.startup_warning_vdp_capture_verified;
+        int old_gameover_capture =
+            synthetic_engine.startup_gameover_vdp_capture_verified;
+        synthetic_engine.startup_warning_vdp_capture_verified = 0;
+        synthetic_engine.startup_gameover_vdp_capture_verified = 0;
+        expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+                   &synthetic_runtime_receipt,
+                   &runtime_state,
+                   &full_start_receipt) &&
+                   full_start_receipt.warning_art_loaded == 1 &&
+                   full_start_receipt.gameover_art_loaded == 1 &&
+                   full_start_receipt.warning_capture_surface_ready == 0 &&
+                   full_start_receipt.gameover_capture_surface_ready == 0,
+               "Nexus decoded WARNING/GAMEOVER art cannot self-admit capture readiness");
+        synthetic_engine.startup_warning_vdp_capture_verified = old_warning_capture;
+        synthetic_engine.startup_gameover_vdp_capture_verified = old_gameover_capture;
+    }
     {
         int old_faces_loaded = synthetic_engine.ui_faces_loaded;
         int old_faces_fallback = synthetic_engine.ui_faces_fallback;
@@ -4425,16 +4449,27 @@ int main(void)
             if (!local_file_exists(dm_bin) || !local_file_exists(lev00)) {
                 puts("SKIP: local Nexus DM.BIN/LEV00.DGN not present for launcher asset receipt");
             } else {
+                int boot_ok;
                 memset(&title_screen, 0, sizeof(title_screen));
                 nexus_v1_launcher_runtime_receipt_clear(&runtime_receipt);
-                expect(nexus_v1_launcher_boot_level0_runtime_startup(
-                           nexus_dir,
-                           &title_screen,
-                           &runtime_receipt),
-                       "Nexus launcher starts the decoded title while menu media stays gated");
-	                expect(title_screen.loaded ||
-	                           runtime_receipt.startup_assets.title_route_ready == 1,
-	                       "Nexus launcher accepts TITLE.CG but blocks the original menu route");
+                boot_ok = nexus_v1_launcher_boot_level0_runtime_startup(
+                    nexus_dir, &title_screen, &runtime_receipt);
+                if (boot_ok) {
+                    expect(1,
+                           "Nexus launcher starts the decoded title while menu media stays gated");
+                    expect(title_screen.loaded ||
+                               runtime_receipt.startup_assets.title_route_ready == 1,
+                           "Nexus launcher accepts TITLE.CG but blocks the original menu route");
+                } else {
+                    /* Retail LEV00 is present, but a Saturn start pose is not
+                     * admitted from the available source evidence. Keep this
+                     * local-data check fail-closed instead of treating a
+                     * blocked level boot as a title/capture failure. */
+                    expect(runtime_receipt.startup_receipt.host_receipt.status &&
+                               strcmp(runtime_receipt.startup_receipt.host_receipt.status,
+                                      "NEXUS LEVEL ERROR") == 0,
+                           "Nexus launcher reports an unbound retail start pose as a level error");
+                }
                 if (runtime_receipt.startup_assets.menu_bpk_upload_receipt_valid) {
                     if (runtime_receipt.startup_assets.menu_bpk_upload_route ==
                             NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3) {
