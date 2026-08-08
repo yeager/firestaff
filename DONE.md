@@ -1,3 +1,14 @@
+# Nexus Saturn-capture manifest hashbindning (2026-08-08)
+
+- ✅ Den operatorstyrda råcapture-launchern skriver nu `raw_sha256` och
+  `raw_bytes` i manifestet efter att den faktiska tracefilen har passerat
+  validatorn. Därmed kan ett framtida startup-/meny-/HUD-/viewportbevis
+  bindas till exakt producerad råframe i stället för bara BIOS, disc och
+  parametrar.
+- ✅ Launcher-testet täcker både planläge och en lyckad instrumenterad
+  testkörning; `bash tests/test_nexus_v1_saturn_raw_capture_launcher.sh`
+  passerar.
+
 # Nexus production source-boundary skydd för syntetiska moduler (2026-08-08)
 
 - ✅ Verifieraren kräver nu att den syntetiska BPX0/BPX3-parsern, WARNING-/MNS-/ITEM-/TITLE-hostvägarna och alla capture-gated runtime-/no-op-moduler hålls utanför `firestaff_nexus` enligt CMake-listan.

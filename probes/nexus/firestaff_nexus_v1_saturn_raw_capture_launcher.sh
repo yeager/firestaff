@@ -118,3 +118,5 @@ else
 fi
 [[ -s "$trace" ]] || exit 1
 run_validator "$trace" --require-frames "$frame_limit"
+raw_bytes=$(wc -c < "$trace" | tr -d '[:space:]')
+printf 'raw_sha256=%s\nraw_bytes=%s\n' "$(lower "$(hash_file "$trace")")" "$raw_bytes" >> "$manifest"

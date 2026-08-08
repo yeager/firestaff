@@ -41,6 +41,26 @@ grep -Fq 'no_waiting=1' "$tmp_dir/manifest-home.txt"
 grep -Fq 'press_start_frame=1000' "$tmp_dir/manifest-custom.txt"
 grep -Fq 'press_start_length=60' "$tmp_dir/manifest-custom.txt"
 grep -Fq 'press_button_mask=0x30' "$tmp_dir/manifest-custom.txt"
+
+python3 - "$tmp_dir/fake-mednafen" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+"$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-real.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-real.txt" >/dev/null
+grep -Fq 'raw_sha256=' "$tmp_dir/manifest-real.txt"
+grep -Fq 'raw_bytes=24' "$tmp_dir/manifest-real.txt"
 if "$launcher" --operator-only --launch --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
