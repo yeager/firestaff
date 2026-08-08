@@ -16,3 +16,8 @@ The output is written beside the live trace as `.spawn-consumer` and is
 included in the transition receipt as `spawn_consumer_reads`. A zero count is
 valid evidence that the capture did not reach the disassembly-owned consumer;
 host-generated data must not replace it.
+
+`theron_v1_mednafen_spawn_consumer_trace_parse_file()` is the admission gate
+for this sidecar. It rejects malformed headers, non-contiguous sequences,
+non-bank coordinates, mismatched boundary flags and unrelated reads. Even a
+ready receipt has `semantic_publication_allowed == 0`.

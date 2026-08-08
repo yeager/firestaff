@@ -1,3 +1,9 @@
+# Theron spawn-consumer receipt admission (2026-08-08)
+
+- ✅ Added a strict C11 parser for the Mednafen `spawn_consumer_read` sidecar.
+- ✅ It verifies the authenticated trace header, contiguous sequence, HuC6280 main-RAM bank coordinates, and the `$5D64/$5D6A` plus `$C96B/$CC4C` boundary flags.
+- ✅ Negative fixtures reject mutated flags; semantic publication remains permanently blocked by this receipt.
+
 # Theron disassembly-bound spawn consumer capture (2026-08-08)
 
 - ✅ Added a separate Mednafen receipt for `$5D64/$5D6A` reads and instruction fetches in the authenticated `$C96B-$CA69` and `$CC4C-$CD13` US Track 02 consumer bodies.

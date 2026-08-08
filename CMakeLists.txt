@@ -49778,6 +49778,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_main_ram_co
         SKIP_RETURN_CODE 77)
 endif()
 
+# Theron disassembly-bound spawn-consumer sidecar receipt. It validates only
+# CPU execution provenance and deliberately publishes no spawn semantics.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_spawn_consumer_trace.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_mednafen_spawn_consumer_trace.c")
+    add_executable(test_theron_v1_mednafen_spawn_consumer_trace
+        tests/test_theron_v1_mednafen_spawn_consumer_trace.c
+        src/theron/theron_v1_mednafen_spawn_consumer_trace.c)
+    target_link_libraries(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE firestaff_m12)
+    target_include_directories(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_mednafen_spawn_consumer_trace
+        COMMAND test_theron_v1_mednafen_spawn_consumer_trace)
+    set_tests_properties(theron_v1_mednafen_spawn_consumer_trace PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;capture;real_data;opaque")
+endif()
+
 # Theron Mednafen CD-state sidecar receipt. This consumes the real app-capture
 # transport grammar only; it never admits level/object or visual semantics.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_cd_state_trace.c"
