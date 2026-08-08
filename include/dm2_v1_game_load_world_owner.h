@@ -30,6 +30,23 @@ typedef struct {
     uint32_t source_payload_hash;
 } DM2_V1_GameLoadSoundSampleBinding;
 
+/* Immutable transition receipt for the actual mirror clicks.  The final hero
+ * count alone cannot prove that an eventual input owner preserved the click
+ * order.  This remains private until complete GAME_LOAD ownership exists.
+ * Source: SKProject c_hero.cpp::DM2_SELECT_CHAMPION (1119-1168),
+ *         ::DM2_SELECT_CHAMPION_LEADER (2325-2354). */
+typedef struct {
+    int valid;
+    uint8_t click_count;
+    uint8_t leader_select_count;
+    int16_t initial_event_hero_index;
+    int16_t final_event_hero_index;
+    int16_t next_champion_number_after_click[DM2_MAX_HEROES];
+    uint16_t mirror_object_id[DM2_MAX_HEROES];
+    int8_t party_position[DM2_MAX_HEROES];
+    uint32_t transition_hash;
+} DM2_V1_GameLoadChampionSelectionReceipt;
+
 /* The original start path first sizes xsndptr2 from every type-2 GDAT row,
  * then DM2_LOAD_DYN4 adds only marked triples and DM2_482b_0684 binds their
  * already materialised raw samples.  This is a durable private equivalent.
@@ -126,6 +143,7 @@ typedef struct {
      * because the UI/event queue is not yet a session owner. */
     int16_t source_next_champion_number;
     int16_t source_event_hero_index;
+    DM2_V1_GameLoadChampionSelectionReceipt champion_selection_receipt;
     DM2_V1_SksaveItemBonusReceipt champion_item_bonus;
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;

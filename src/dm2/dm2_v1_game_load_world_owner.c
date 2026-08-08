@@ -711,6 +711,8 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
     DM2_V1_GameLoadWorldOwner *owner)
 {
     DM2_V1_Party candidate;
+    DM2_V1_GameLoadChampionSelectionReceipt selection_receipt;
+    int hero_index;
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         owner->champion_selection_materialized || !owner->fresh_game_mode ||
@@ -742,6 +744,61 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
         candidate.hero[0].curHP == 0) {
         return 0;
     }
+
+    /* Preserve the individual SELECT_CHAMPION transitions, rather than
+     * collapsing their click order into the final party count.  These bytes
+     * are all already authenticated by BootNewGamePartyReceipt: no UI event
+     * is fabricated here.  The original first click alone selects leader 0;
+     * subsequent clicks advance ddat.v1e0288 but leave event_heroidx intact.
+     * Source: SKProject SKULLWIN/c_hero.cpp::DM2_SELECT_CHAMPION
+     * (1119-1168), ::DM2_SELECT_CHAMPION_LEADER (2325-2354). */
+    memset(&selection_receipt, 0, sizeof(selection_receipt));
+    selection_receipt.click_count = (uint8_t)candidate.heros_in_party;
+    selection_receipt.leader_select_count = 1u;
+    selection_receipt.initial_event_hero_index = DM2_HERO_NONE;
+    selection_receipt.final_event_hero_index = 0;
+    selection_receipt.transition_hash = 0x43534c54u; /* "CSLT" */
+    selection_receipt.transition_hash = dm2_v1_game_load_owner_hash_step(
+        selection_receipt.transition_hash,
+        (uint32_t)(uint16_t)selection_receipt.initial_event_hero_index);
+    for (hero_index = 0; hero_index < candidate.heros_in_party; ++hero_index) {
+        const DM2_V1_BootNewGameChampionAdmissionReceipt *admission =
+            &owner->transaction.party.admissions[hero_index];
+        uint16_t mirror_object_id;
+        int previous;
+
+        if (!admission->valid || !admission->incomplete_game_load ||
+            admission->selection.mirror.object_id == 0u ||
+            candidate.hero[hero_index].herotype !=
+                (int8_t)admission->selection.revive_data.hero_type ||
+            candidate.hero[hero_index].partypos < 0 ||
+            candidate.hero[hero_index].partypos > 3) {
+            return 0;
+        }
+        mirror_object_id = admission->selection.mirror.object_id;
+        for (previous = 0; previous < hero_index; ++previous) {
+            if (selection_receipt.mirror_object_id[previous] == mirror_object_id)
+                return 0;
+        }
+        selection_receipt.next_champion_number_after_click[hero_index] =
+            (int16_t)(hero_index + 1);
+        selection_receipt.mirror_object_id[hero_index] = mirror_object_id;
+        selection_receipt.party_position[hero_index] =
+            candidate.hero[hero_index].partypos;
+        selection_receipt.transition_hash = dm2_v1_game_load_owner_hash_step(
+            selection_receipt.transition_hash, mirror_object_id);
+        selection_receipt.transition_hash = dm2_v1_game_load_owner_hash_step(
+            selection_receipt.transition_hash,
+            (uint32_t)(hero_index + 1));
+        selection_receipt.transition_hash = dm2_v1_game_load_owner_hash_step(
+            selection_receipt.transition_hash,
+            (uint32_t)(uint8_t)candidate.hero[hero_index].partypos);
+    }
+    selection_receipt.transition_hash = dm2_v1_game_load_owner_hash_step(
+        selection_receipt.transition_hash,
+        (uint32_t)(uint16_t)selection_receipt.final_event_hero_index);
+    if (selection_receipt.transition_hash == 0u) return 0;
+    selection_receipt.valid = 1;
     /* The source invokes SELECT_CHAMPION_LEADER only for RG5W == 0, after
      * setting v1e0288 to one.  Replaying it with the final party count would
      * incorrectly set bit 0x1400 on hero 0. */
@@ -756,6 +813,7 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
     owner->selected_party = candidate;
     owner->source_next_champion_number = candidate.heros_in_party;
     owner->source_event_hero_index = 0;
+    owner->champion_selection_receipt = selection_receipt;
     owner->champion_selection_materialized = 1;
     return 1;
 }

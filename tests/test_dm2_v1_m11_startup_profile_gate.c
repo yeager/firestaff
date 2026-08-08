@@ -1997,12 +1997,29 @@ int main(void) {
                         0x1000) != 0 &&
                     new_game_world_owner.source_next_champion_number == 2 &&
                     new_game_world_owner.source_event_hero_index == 0 &&
+                    new_game_world_owner.champion_selection_receipt.valid &&
+                    new_game_world_owner.champion_selection_receipt.click_count == 2u &&
+                    new_game_world_owner.champion_selection_receipt.leader_select_count == 1u &&
+                    new_game_world_owner.champion_selection_receipt.initial_event_hero_index ==
+                        DM2_HERO_NONE &&
+                    new_game_world_owner.champion_selection_receipt.final_event_hero_index == 0 &&
+                    new_game_world_owner.champion_selection_receipt
+                        .next_champion_number_after_click[0] == 1 &&
+                    new_game_world_owner.champion_selection_receipt
+                        .next_champion_number_after_click[1] == 2 &&
+                    new_game_world_owner.champion_selection_receipt
+                        .mirror_object_id[0] ==
+                        source_transaction.party.admissions[0].selection.mirror.object_id &&
+                    new_game_world_owner.champion_selection_receipt
+                        .mirror_object_id[1] ==
+                        source_transaction.party.admissions[1].selection.mirror.object_id &&
+                    new_game_world_owner.champion_selection_receipt.transition_hash != 0u &&
                     new_game_world_owner.selected_party.curactevhero == 0 &&
                     new_game_world_owner.selected_party.absdir ==
                         new_game_world_owner.source_party_absdir &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "M11 retains the source-selected leader, hero count and possessions without publishing a session");
+                "M11 retains the source mirror-click order, leader, hero count and possessions without publishing a session");
     expect_true(profile &&
                     !dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner),
@@ -2035,6 +2052,25 @@ int main(void) {
         }
         dm2_v1_game_load_world_owner_free(&tampered_new_game_world_owner);
     }
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_init_new_game(
+                        &tampered_new_game_world_owner, profile,
+                        party_selections, 2) &&
+                    dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+                        &tampered_new_game_world_owner, NULL) &&
+                    dm2_v1_game_load_world_owner_materialize_source_map_context(
+                        &tampered_new_game_world_owner),
+                "M11 prepares a separate source owner for mirror-order validation");
+    if (profile && tampered_new_game_world_owner.prepared) {
+        tampered_new_game_world_owner.transaction.party.admissions[1]
+            .selection.mirror.object_id =
+            tampered_new_game_world_owner.transaction.party.admissions[0]
+                .selection.mirror.object_id;
+        expect_true(!dm2_v1_game_load_world_owner_materialize_champion_selection(
+                        &tampered_new_game_world_owner),
+                    "M11 rejects a private New Game selection ledger with duplicate mirror roots");
+    }
+    dm2_v1_game_load_world_owner_free(&tampered_new_game_world_owner);
     memset(&new_game_actuate, 0, sizeof(new_game_actuate));
     dm2_v1_timer_entry_init(&new_game_actuate_timer);
     expect_true(profile &&
