@@ -12,6 +12,8 @@
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
+#include "gamepad_config_m12.h"
+#include "main_loop_m11.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -513,6 +515,20 @@ int main(void)
                                   resumed_view.csbState.party_dir ==
                                       resumed_profile->runtime.party_dir,
                               "cold Atari resume routes C002 through the live command queue");
+                        resumed_direction = resumed_profile->runtime.party_dir;
+                        CHECK(M11_GamepadActionToMenuInput(
+                                  M12_ACTION_TURN_RIGHT, 1) ==
+                                  M12_MENU_INPUT_TURN_RIGHT &&
+                                  M11_GameView_HandleInput(
+                                      &resumed_view,
+                                      M11_GamepadActionToMenuInput(
+                                          M12_ACTION_TURN_RIGHT, 1)) ==
+                                      M11_GAME_INPUT_REDRAW &&
+                                  resumed_profile->runtime.party_dir ==
+                                      ((resumed_direction + 1) & 3) &&
+                                  resumed_view.csbState.party_dir ==
+                                      resumed_profile->runtime.party_dir,
+                              "controller TURN_RIGHT reaches the real Atari GAMEBLOCK command queue");
                     }
                     M11_GameView_Shutdown(&resumed_view);
                     remove(quicksave_path);

@@ -93,6 +93,11 @@
   mallen. Detta bevisas efter en verklig backupåterställning och skrivning
   till den återställda temporära sloten.
 
+- ✅ Controllerbron är nu täckt i den verkliga Atari-kallresumen:
+  `M12_ACTION_TURN_RIGHT` översätts till samma C002-kommandotoken som
+  tangentbordet och ändrar den autentiskt återställda GAMEBLOCK-partyns
+  riktning. Ingen controller-specifik party- eller rörelsemodell används.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan
