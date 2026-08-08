@@ -9,7 +9,9 @@
  * original record pools.
  */
 
+#include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,6 +75,95 @@ static int receipt_record(const DM2_V1_DungeonData *d, uint16_t object_id,
     return record && type == expected_type && index == (object_id & 0x03ffu);
 }
 
+/* Exercise the one source-complete sensor atom only with an actuator and
+ * target door that both come from the mounted retail File_header image.
+ * A PushButtonSwitch uses GET_ADDRESS_OF_TILE_RECORD on its target, so the
+ * DB0 door must be the first record on that particular map square. */
+static int verify_real_push_button_switch(DM2_V1_DungeonData *d)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_ActuatorEventReceipt receipt;
+    const uint8_t *actuator = NULL;
+    int candidate_map = -1;
+    int candidate_action = -1;
+    int16_t target_link = DM2_V1_RECORD_HANDLE_NULL;
+
+    if (!d || !dm2_v1_record_pool_set_init_from_dungeon(&pools, d)) {
+        return 0;
+    }
+    for (int prefer_nonzero = 1; prefer_nonzero >= 0 && !actuator;
+         --prefer_nonzero) {
+        for (int map = 0; map < d->level_count && !actuator; ++map) {
+            if ((prefer_nonzero != 0) != (map != 0)) continue;
+            for (int x = 0; x < d->level_widths[map] && !actuator; ++x) {
+                for (int y = 0; y < d->level_heights[map] && !actuator; ++y) {
+                    int link = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+                    int budget = 0;
+                    while (link >= 0 && link != (int)DM2_THING_END_MARKER &&
+                           budget++ < 4096) {
+                        int type = -1;
+                        const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                            d, (uint16_t)link, &type, NULL, NULL);
+                        if (!record) break;
+                        if (type == 3 && (record[2] & 0x7fu) ==
+                                             DM2_ACTU_PUSH_BUTTON_SWITCH) {
+                            const int tx = (int)dm2_actu_xcoord(record);
+                            const int ty = (int)dm2_actu_ycoord(record);
+                            const int root = dm2_v1_dungeon_get_first_thing(
+                                d, map, tx, ty);
+                            int root_type = -1;
+                            if (root >= 0 &&
+                                dm2_v1_dungeon_get_thing_record(
+                                    d, (uint16_t)root, &root_type, NULL,
+                                    NULL) != NULL && root_type == 0) {
+                                actuator = record;
+                                candidate_map = map;
+                                candidate_action = 2;
+                                target_link = (int16_t)root;
+                                break;
+                            }
+                        }
+                        link = dm2_v1_dungeon_get_next_thing(d,
+                                                              (uint16_t)link);
+                    }
+                }
+            }
+        }
+    }
+    if (!actuator) {
+        /* The corpus may simply not contain this optional actuator type. */
+        dm2_v1_record_pool_set_free(&pools);
+        printf("INFO: retail corpus has no direct PUSH_BUTTON_SWITCH target\n");
+        return 1;
+    }
+    {
+        uint8_t *door = dm2_v1_record_pool_address_mut(&pools, target_link);
+        uint16_t before;
+        uint16_t after;
+        memset(&receipt, 0, sizeof(receipt));
+        if (!door) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        before = (uint16_t)door[2] | ((uint16_t)door[3] << 8);
+        if (!dm2_v1_push_button_switch(&pools, d, actuator, candidate_map,
+                                       candidate_action, &receipt)) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        after = (uint16_t)door[2] | ((uint16_t)door[3] << 8);
+        if (((before ^ after) != 0x2000u) ||
+            receipt.door_bit13_toggled != 1) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+    }
+    printf("PASS: real PUSH_BUTTON_SWITCH uses source map %d and direct DB0\n",
+           candidate_map);
+    dm2_v1_record_pool_set_free(&pools);
+    return 1;
+}
+
 int main(void) {
     const char *paths[] = {
         NULL,
@@ -112,6 +203,11 @@ int main(void) {
         printf("FAIL: dm2_v1_dungeon_load rejected data\n");
         free(dat);
         return 1;
+    }
+
+    if (!verify_real_push_button_switch(&d)) {
+        printf("FAIL: real PUSH_BUTTON_SWITCH direct-door atom was rejected\n");
+        ++failures;
     }
 
     printf("G1 record graph: levels=%d, records=%d, graph_complete=%d\n",

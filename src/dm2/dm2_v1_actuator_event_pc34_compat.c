@@ -229,61 +229,52 @@ int dm2_v1_activate_tick_generator(DM2_V1_SourceTimerQueue *queue,
  * sets/clears/toggles bit 13 of its w2 word based on action_type.
  * Bit 13 controls whether the door is sealed (cannot be bashed open). */
 
-typedef struct {
-    DM2_V1_RecordPoolSet *pool_set;
-    int action_type;
-    int found;
-} PushButtonCtx;
-
-static int push_button_door_visitor(void *context,
-                                    int16_t handle,
-                                    const uint8_t *record_unused)
-{
-    PushButtonCtx *ctx = (PushButtonCtx *)context;
-    int db_type = dm2_v1_record_handle_pool(handle);
-    uint8_t *record_mut;
-    (void)record_unused;
-
-    if (db_type != DM2_DB_DOOR) return 0;
-
-    record_mut = dm2_v1_record_pool_address_mut(ctx->pool_set, handle);
-    if (record_mut == NULL) return 0;
-
-    switch (ctx->action_type) {
-        case 0: dm2_door_set_bit13(record_mut, 1); break;
-        case 1: dm2_door_set_bit13(record_mut, 0); break;
-        case 2: dm2_door_set_bit13(record_mut,
-                    (uint8_t)(dm2_door_bit13(record_mut) ^ 1u)); break;
-    }
-    ctx->found = 1;
-    return 1;
-}
-
 int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               const uint8_t *actu_record,
+                              int map,
                               int action_type,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
-    PushButtonCtx ctx;
-    DM2_V1_TileRecordWalkReceipt walk_receipt;
+    int16_t direct_link;
+    uint8_t *door;
     int target_x, target_y;
 
-    if (pool_set == NULL || dungeon == NULL || actu_record == NULL) return 0;
+    if (pool_set == NULL || !pool_set->valid || dungeon == NULL ||
+        actu_record == NULL || map < 0 || map >= dungeon->level_count ||
+        action_type < DM2_ACTMSG_OPEN_SET || action_type > DM2_ACTMSG_TOGGLE) {
+        return 0;
+    }
 
     target_x = (int)dm2_actu_xcoord(actu_record);
     target_y = (int)dm2_actu_ycoord(actu_record);
+    if (target_x < 0 || target_y < 0 ||
+        target_x >= dungeon->level_widths[map] ||
+        target_y >= dungeon->level_heights[map]) {
+        return 0;
+    }
 
-    ctx.pool_set = pool_set;
-    ctx.action_type = action_type;
-    ctx.found = 0;
+    /* skevent.cpp:2015 takes GET_ADDRESS_OF_TILE_RECORD directly.  A
+     * complete chained walk would be a different operation: it could mutate
+     * a later DB0 item even though the source would cast the first record. */
+    direct_link = dm2_v1_tile_record_link(dungeon, map, target_x, target_y);
+    if (direct_link == DM2_V1_RECORD_HANDLE_NULL ||
+        direct_link == DM2_V1_RECORD_HANDLE_END ||
+        dm2_v1_record_handle_pool(direct_link) != DM2_DB_DOOR ||
+        !(door = dm2_v1_record_pool_address_mut(pool_set, direct_link))) {
+        return 0;
+    }
 
-    memset(&walk_receipt, 0, sizeof(walk_receipt));
-    dm2_v1_tile_record_walk(pool_set, dungeon, 0, target_x, target_y,
-                            push_button_door_visitor, &ctx, &walk_receipt);
-
-    if (ctx.found && receipt) receipt->door_bit13_toggled++;
-    return ctx.found;
+    switch (action_type) {
+        case DM2_ACTMSG_OPEN_SET: dm2_door_set_bit13(door, 1); break;
+        case DM2_ACTMSG_CLOSE_CLEAR: dm2_door_set_bit13(door, 0); break;
+        case DM2_ACTMSG_TOGGLE:
+            dm2_door_set_bit13(door, (uint8_t)(dm2_door_bit13(door) ^ 1u));
+            break;
+        default: return 0;
+    }
+    if (receipt) receipt->door_bit13_toggled++;
+    return 1;
 }
 
 /* ── CREATURE_GENERATOR ───────────────────────────────────────────── */
@@ -977,7 +968,7 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_PUSH_BUTTON_SWITCH:
         r->push_button_invoked++;
         dm2_v1_push_button_switch(ctx->pool_set, ctx->dungeon,
-                                   record, ctx->action_type, r);
+                                   record, ctx->map, ctx->action_type, r);
         break;
 
     default:

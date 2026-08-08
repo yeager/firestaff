@@ -426,11 +426,15 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
                                   int map, uint32_t game_tick,
                                   DM2_V1_ItemTeleportReceipt *receipt);
 
-/* PUSH_BUTTON_SWITCH — set/clear/toggle door bit 13.
+/* PUSH_BUTTON_SWITCH — set/clear/toggle the directly addressed Door bit 13.
+ * `map` is the active source map of the actuator message.  The original uses
+ * GET_ADDRESS_OF_TILE_RECORD(Xcoord, Ycoord), which resolves the first record
+ * on that map; it does not search a later DB0 record in the chain.
  * Source: skevent.cpp:2010-2028 */
 int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               const uint8_t *actu_record,
+                              int map,
                               int action_type,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
