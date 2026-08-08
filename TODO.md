@@ -22,8 +22,10 @@
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
   sixteen source File_header champion-mirror records across their real
   `w0`-kedjor and can join an exact mirror to its matching `CHAMPIONS` Raw8
-  and text template. It must not materialise a hero independently. Recover
-  the complete `DM2_LOAD_LOCALLEVEL_DYN` queue
+  and text template, plus the source ObjectIDs that `DM2_SELECT_CHAMPION`
+  would hand to inventory from that same tile chain. It must not materialise
+  a hero or move an item independently. Recover the complete
+  `DM2_LOAD_LOCALLEVEL_DYN` queue
   owner, including its conditional `0x16ffffff` marker, party-dependent
   selectors and `DM2_LOAD_DYN4` transaction before DYN4 bytes, hero state or
   a New Game party can be admitted.

@@ -1,3 +1,18 @@
+# DM2 källbunden championinventering (2026-08-08)
+
+- ✅ Championkandidaten behåller nu startföremålens riktiga ObjectID:n i den
+  ordning de förekommer på spegelrutan. Urvalet följer
+  `c_hero.cpp::DM2_SELECT_CHAMPION`: endast posttyper över 3 med orienteringen
+  `(valriktning + 2) & 3` tas med.
+- ✅ Hela File_header-kedjan för den aktuella rutan valideras innan receipt
+  skapas. En trasig karta, kedja eller överfull 30-platslista avvisas i
+  stället för att ersättas med inventarieinnehåll.
+- ✅ Receiptet ändrar inte kartan, recordpoolen eller en hero. Den verkliga
+  `DM2_ADD_ITEM_TO_PLAYER`-transaktionen förblir spärrad tills `GAME_LOAD`
+  äger party, recordpool och inventory samtidigt.
+- ✅ Verifierat med hashverifierad PC-DOS-data i M11:s startprofilgrind och
+  bootprofilens realdatatest, 106/106 kontroller.
+
 # DM2 källbunden championkandidat (2026-08-08)
 
 - ✅ Bootprofilen kan nu slå upp en enskild PC-DOS-spegel med exakt karta,

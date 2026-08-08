@@ -178,6 +178,12 @@ typedef struct {
     int incomplete_game_load;
     DM2_V1_G1ChampionMirrorRoot mirror;
     DM2_V1_ChampionReviveDataReceipt revive_data;
+    /* c_hero.cpp::DM2_SELECT_CHAMPION walks the same tile chain after the
+     * mirror and passes only records of type > 3 whose orientation is
+     * (selection direction + 2) & 3 to DM2_ADD_ITEM_TO_PLAYER. These are
+     * source ObjectIDs, not an inventory projection. */
+    int source_item_count;
+    uint16_t source_item_object_ids[30];
     uint32_t identity_hash;
 } DM2_V1_BootChampionSelectionCandidate;
 

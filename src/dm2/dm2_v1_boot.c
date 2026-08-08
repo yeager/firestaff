@@ -740,6 +740,39 @@ int dm2_v1_boot_champion_mirror_receipt(
     return 1;
 }
 
+typedef struct {
+    int selection_direction;
+    int item_count;
+    uint16_t object_ids[30];
+} DM2_V1_BootChampionTileItems;
+
+static int dm2_v1_boot_collect_champion_tile_item(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_BootChampionTileItems *items =
+        (DM2_V1_BootChampionTileItems *)user;
+    int record_direction;
+
+    if (!items || !record || record_size < 2 || type < 0 || index < 0 ||
+        level < 0 || x < 0 || y < 0) {
+        return -1;
+    }
+    record_direction = ((unsigned int)thing >> 14) & 3;
+    /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION:1148-1155 tests the DB
+     * type and record orientation before DM2_ADD_ITEM_TO_PLAYER. Retain the
+     * original ObjectID in source chain order. No item is decoded, moved or
+     * equipped by this receipt. */
+    if (type > 3 && record_direction == items->selection_direction) {
+        if (items->item_count >= (int)(sizeof(items->object_ids) /
+                                       sizeof(items->object_ids[0]))) {
+            return -1;
+        }
+        items->object_ids[items->item_count++] = thing;
+    }
+    return 0;
+}
+
 int dm2_v1_boot_champion_selection_candidate(
     const DM2_V1_BootProfile *profile,
     int map, int x, int y, int direction,
@@ -747,11 +780,13 @@ int dm2_v1_boot_champion_selection_candidate(
 {
     DM2_V1_G1ChampionMirrorReceipt mirrors;
     const DM2_V1_AssetLoader *loader;
+    const DM2_V1_DungeonData *dungeon;
     int i;
 
     if (!out_candidate) return 0;
     memset(out_candidate, 0, sizeof(*out_candidate));
-    if (!profile || !profile->assets_verified ||
+    if (!profile || !profile->assets_verified || direction < 0 ||
+        direction > 3 || !profile->dungeon_data ||
         !dm2_v1_boot_champion_mirror_receipt(profile, &mirrors) ||
         !mirrors.committed || !mirrors.incomplete_world ||
         mirrors.mirror_count <= 0 ||
@@ -761,6 +796,8 @@ int dm2_v1_boot_champion_selection_candidate(
 
     for (i = 0; i < mirrors.mirror_count; ++i) {
         const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
+        DM2_V1_BootChampionTileItems items;
+        DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
         uint32_t identity_hash = 0x43484d50u; /* "CHMP" receipt domain. */
 
         if (mirror->map != map || mirror->x != x || mirror->y != y ||
@@ -775,6 +812,23 @@ int dm2_v1_boot_champion_selection_candidate(
         if (!dm2_v1_asset_champion_revive_data(
                 loader, mirror->dynamic_hero_type,
                 &out_candidate->revive_data)) {
+            memset(out_candidate, 0, sizeof(*out_candidate));
+            return 0;
+        }
+        dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+        memset(&items, 0, sizeof(items));
+        memset(&map_receipt, 0, sizeof(map_receipt));
+        items.selection_direction = (direction + 2) & 3;
+        if (!dm2_v1_dungeon_validate_file_header_runtime_map(
+                dungeon, mirror->map, &map_receipt) ||
+            !map_receipt.committed || map_receipt.record_count <= 0) {
+            memset(out_candidate, 0, sizeof(*out_candidate));
+            return 0;
+        }
+        if (dm2_v1_dungeon_walk_square_things(
+                dungeon, mirror->map, mirror->x, mirror->y,
+                map_receipt.record_count,
+                dm2_v1_boot_collect_champion_tile_item, &items) < 0) {
             memset(out_candidate, 0, sizeof(*out_candidate));
             return 0;
         }
@@ -794,7 +848,14 @@ int dm2_v1_boot_champion_selection_candidate(
             identity_hash, out_candidate->revive_data.raw8_hash);
         identity_hash = dm2_v1_boot_packaged_capture_hash_step(
             identity_hash, out_candidate->revive_data.name_hash);
+        for (int item = 0; item < items.item_count; ++item) {
+            identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+                identity_hash, items.object_ids[item]);
+            out_candidate->source_item_object_ids[item] =
+                items.object_ids[item];
+        }
         out_candidate->mirror = *mirror;
+        out_candidate->source_item_count = items.item_count;
         out_candidate->identity_hash = identity_hash;
         out_candidate->incomplete_game_load = 1;
         out_candidate->valid = 1;

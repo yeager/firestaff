@@ -1394,8 +1394,10 @@ int main(void) {
                     champion_candidate.revive_data.hero_type ==
                         champion_mirrors.mirrors[0].dynamic_hero_type &&
                     champion_candidate.revive_data.name1[0] != '\0' &&
+                    champion_candidate.source_item_count >= 0 &&
+                    champion_candidate.source_item_count <= 30 &&
                     champion_candidate.identity_hash != 0u,
-                "M11 joins each source mirror only to its matching authentic champion template");
+                "M11 joins each source mirror to its authentic champion template and source tile items");
     memset(&champion_candidate, 0x7f, sizeof(champion_candidate));
     expect_true(profile &&
                     !dm2_v1_boot_champion_selection_candidate(
