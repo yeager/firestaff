@@ -28,6 +28,11 @@ int dm2_v1_load_extra_dungeon_data(
 {
     DM2_V1_LoadExtraDungeonReceipt local;
     memset(&local, 0, sizeof(local));
+    local.failed_map = -1;
+    local.failed_x = -1;
+    local.failed_y = -1;
+    local.failed_root_link = 0xfffeu;
+    local.failed_record_type = -1;
     if (receipt) memset(receipt, 0, sizeof(*receipt));
 
     if (!session || !rec_cb || !dung_cb) {
@@ -79,15 +84,18 @@ int dm2_v1_load_extra_dungeon_data(
                      * its record chain is consumed. */
                     if (!dung_cb->set_tile) {
                         local.error = 1;
+                        local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
                         goto done;
                     }
                     if (dm2_suppress_reader_read_preserve(
                             &session->reader, &mask_byte, 1, &tile_data)) {
                         local.error = 1;
+                        local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
                         goto done;
                     }
                     if (dung_cb->set_tile(dung_cb->ctx, x, y, tile_data) != 0) {
                         local.error = 1;
+                        local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
                         goto done;
                     }
                 }
@@ -104,22 +112,26 @@ int dm2_v1_load_extra_dungeon_data(
                     uint16_t root_link;
                     if (!dung_cb->get_tile_record_link) {
                         local.error = 1;
+                        local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
                         goto done;
                     }
                     root_link = dung_cb->get_tile_record_link(
                         dung_cb->ctx, x, y);
                     if (root_link == 0xfffeu) {
+                        /* SKProject c_savegame.cpp:1289 passes NULL for the
+                         * tile-root owner.  DM2_APPEND_RECORD_TO then owns
+                         * the c_map ground-stack insertion at (x,y); a
+                         * private temporary root pointer would select the
+                         * wrong append path. */
                         int rc = dm2_v1_read_record_checkcode(
-                            session, rec_cb, &root_link, x, y, 1, 1);
-                        if (rc != 0 || session->error ||
-                            (root_link != 0xfffeu &&
-                             !dung_cb->set_tile_record_link)) {
+                            session, rec_cb, NULL, x, y, 1, 1);
+                        if (rc != 0 || session->error) {
                             local.error = 1;
+                            local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
+                            local.failed_root_link = root_link;
+                            local.failed_record_type = session->last_record_type;
+                            local.failed_record_reason = session->failure_reason;
                             goto done;
-                        }
-                        if (root_link != 0xfffeu) {
-                            dung_cb->set_tile_record_link(
-                                dung_cb->ctx, x, y, root_link);
                         }
                     } else if (!dung_cb->restore_existing_tile_record_chain ||
                                dung_cb->restore_existing_tile_record_chain(
@@ -129,6 +141,8 @@ int dm2_v1_load_extra_dungeon_data(
                          * records as dynamic ones.  Fail closed until the
                          * GAME_LOAD transaction supplies this owner. */
                         local.error = 1;
+                        local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
+                        local.failed_root_link = root_link;
                         goto done;
                     }
                     local.record_chains_loaded++;

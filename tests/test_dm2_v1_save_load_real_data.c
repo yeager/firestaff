@@ -956,6 +956,16 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                 bytes + 42u, byte_count - 42u, &state_receipt,
                 savegamew7, inventory_query_creature_ai_flags, NULL,
                 &special_timers);
+        if (!special_ok) {
+            printf("  SKSave preflight halted at source phase %d (map %d, %d,%d root %04x record %d reason %d)\n",
+                   (int)special_timers.failure_stage,
+                   (int)special_timers.map_failure_map,
+                   (int)special_timers.map_failure_x,
+                   (int)special_timers.map_failure_y,
+                   (unsigned int)special_timers.map_failure_root_link,
+                   (int)special_timers.map_failure_record_type,
+                   (int)special_timers.map_failure_record_reason);
+        }
         CHECK((special_ok && special_timers.valid &&
                special_timers.hero_count == state_receipt.champion_count &&
                special_timers.heroes_hash == state_receipt.heroes_hash &&
@@ -984,10 +994,12 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                    state_receipt.record_link_bitstream_offset &&
                special_timers.next_stream_offset <= byte_count - 42u &&
                special_timers.next_stream_bits_remaining <= 7u) ||
-              (!special_ok && !special_timers.valid),
+              (!special_ok && !special_timers.valid &&
+               special_timers.failure_stage !=
+                   DM2_V1_SKSAVE_PREFLIGHT_FAILURE_NONE),
               special_ok
                   ? "real SKSave reaches the source special-timer boundary before map chains"
-                  : "real SKSave keeps special timers blocked with an incomplete local record pool owner");
+                  : "real SKSave records the original phase that blocks its incomplete local owner");
     }
     {
         const int direct_root_result = verify_real_direct_record_roots(

@@ -576,7 +576,14 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
     DM2_V1_RecordPool *pool;
     int index;
 
-    if (!ctx || !ctx->set || record_type < 4 || record_type >= 16) {
+    /* SKProject c_record::ALLOC_NEW_RECORD is selected by the record link's
+     * four-bit DB number.  READ_SKSAVE_DUNGEON can therefore restore a
+     * mutable DB0..DB3 record into an existing OBJECT_NULL slot even though
+     * the resident DB0..DB3 chains were not globally cleared beforehand.
+     * Do not invent a side pool: allocate only an authenticated vacant
+     * source slot.  A full pool must remain a load failure until the
+     * source-owned world recycler and its complete map owner are present. */
+    if (!ctx || !ctx->set || record_type < 0 || record_type >= 16) {
         return 0xfffeu;
     }
     pool = &ctx->set->pools[record_type];
@@ -601,7 +608,7 @@ static int dm2_v1_sksave_pool_set_data(void *context, uint16_t record_link,
     int type = dm2_v1_record_handle_pool((int16_t)record_link);
     int index = dm2_v1_record_handle_index((int16_t)record_link);
 
-    if (!ctx || !ctx->set || !data || type < 4 || type >= 16) return -1;
+    if (!ctx || !ctx->set || !data || type < 0 || type >= 16) return -1;
     pool = &ctx->set->pools[type];
     if (index < 0 || index >= pool->record_count ||
         size != (size_t)pool->record_size) return -1;
@@ -667,7 +674,7 @@ static int dm2_v1_sksave_pool_child_owner(void *context, uint16_t record_link,
     uint8_t *record;
     int type = dm2_v1_record_handle_pool((int16_t)record_link);
 
-    if (!ctx || !ctx->set || !out_owner_link || type < 4 || type >= 16) {
+    if (!ctx || !ctx->set || !out_owner_link || type < 0 || type >= 16) {
         return -1;
     }
     record = dm2_v1_record_pool_address_mut(ctx->set, (int16_t)record_link);
@@ -1371,9 +1378,17 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     int16_t timer_queue_count = -1;
     int16_t timer_free_head = -1;
     uint32_t timer_queue_hash = 2166136261u;
+    DM2_V1_SksavePreflightFailureStage failure_stage =
+        DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE;
     int ok = 0;
 
-    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->map_failure_map = -1;
+        out_receipt->map_failure_x = -1;
+        out_receipt->map_failure_y = -1;
+        out_receipt->map_failure_record_type = -1;
+    }
     memset(&pools, 0, sizeof(pools));
     memset(&map_owner, 0, sizeof(map_owner));
     memset(&roots, 0, sizeof(roots));
@@ -1469,12 +1484,24 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             &session, &callbacks, timers, state_receipt->timer_count,
             savegamew7, &chains_read) != 0 || session.error ||
         context.possession_link_overflow) {
+        failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_SPECIAL_TIMERS;
         goto done;
     }
     if (dm2_v1_load_extra_dungeon_data(
             &session, &callbacks, &dungeon_callbacks, map_owner.current_map,
             &dungeon_receipt) != 0 || !dungeon_receipt.valid ||
         session.error || context.possession_link_overflow) {
+        if (out_receipt) {
+            out_receipt->map_failure_map = (int16_t)dungeon_receipt.failed_map;
+            out_receipt->map_failure_x = (int16_t)dungeon_receipt.failed_x;
+            out_receipt->map_failure_y = (int16_t)dungeon_receipt.failed_y;
+            out_receipt->map_failure_root_link = dungeon_receipt.failed_root_link;
+            out_receipt->map_failure_record_type =
+                (int16_t)dungeon_receipt.failed_record_type;
+            out_receipt->map_failure_record_reason =
+                (int16_t)dungeon_receipt.failed_record_reason;
+        }
+        failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS;
         goto done;
     }
     possession_callbacks.set_continuation =
@@ -1484,6 +1511,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             &session.reader, context.possession_links,
             context.possession_link_count, &possession_callbacks) != 0 ||
         context.possession_link_overflow) {
+        failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_POSSESSIONS;
         goto done;
     }
     /* sksvgame.cpp::DM2_GAME_LOAD calls DM2_SORT_TIMERS only after every
@@ -1508,6 +1536,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             state_receipt->champion_count, &rebuild_callbacks,
             &rebuild_receipt) != 0 || !rebuild_receipt.valid ||
         rebuild_context.invalid) {
+        failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_TIMER_REBUILD;
         goto done;
     }
     timer_queue_hash = dm2_v1_sksave_hash_bytes(
@@ -1530,6 +1559,14 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             (uint32_t)dungeon_receipt.record_chains_loaded;
         out_receipt->teleporter_forward_refs_skipped =
             (uint32_t)dungeon_receipt.teleporter_forward_refs_skipped;
+        out_receipt->map_failure_map = (int16_t)dungeon_receipt.failed_map;
+        out_receipt->map_failure_x = (int16_t)dungeon_receipt.failed_x;
+        out_receipt->map_failure_y = (int16_t)dungeon_receipt.failed_y;
+        out_receipt->map_failure_root_link = dungeon_receipt.failed_root_link;
+        out_receipt->map_failure_record_type =
+            (int16_t)dungeon_receipt.failed_record_type;
+        out_receipt->map_failure_record_reason =
+            (int16_t)dungeon_receipt.failed_record_reason;
         out_receipt->possession_link_count = context.possession_link_count;
         out_receipt->possession_continuation_count =
             context.possession_continuation_count;
@@ -1554,7 +1591,22 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
 done:
     dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
-    if (!ok && out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!ok && out_receipt) {
+        const int16_t failed_map = out_receipt->map_failure_map;
+        const int16_t failed_x = out_receipt->map_failure_x;
+        const int16_t failed_y = out_receipt->map_failure_y;
+        const uint16_t failed_root_link = out_receipt->map_failure_root_link;
+        const int16_t failed_record_type = out_receipt->map_failure_record_type;
+        const int16_t failed_record_reason = out_receipt->map_failure_record_reason;
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->failure_stage = failure_stage;
+        out_receipt->map_failure_map = failed_map;
+        out_receipt->map_failure_x = failed_x;
+        out_receipt->map_failure_y = failed_y;
+        out_receipt->map_failure_root_link = failed_root_link;
+        out_receipt->map_failure_record_type = failed_record_type;
+        out_receipt->map_failure_record_reason = failed_record_reason;
+    }
     return ok;
 }
 

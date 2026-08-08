@@ -154,7 +154,14 @@
   Preflighten för kart-, possession- och timerkedjor vägrar fortsätta utan
   dessa poster och återställer `DM2_3a15_020f`:s timerindex/backlänkar i den
   tillfälliga ägaren. Den är ännu inte en live party-ägare; knyt den först
-  till actuator- och post-load-effekttransaktionen.
+  till actuator- och post-load-effekttransaktionen. 2026-08-08: den verkliga
+  PC-DOS-korpusen når `READ_SKSAVE_DUNGEON` på fyra filer och bevisar att
+  `DM2_APPEND_RECORD_TO` måste få en null tile-rot, precis som
+  `c_savegame.cpp:1289`. Två kedjor behöver därefter originalets
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` för en full DB0/DB15-pool. Implementera
+  den bara tillsammans med dess kompletta c_map/record-ägare; skapa inte en
+  ersättningspool, återanvänd inte en godtycklig record och publicera inte
+  Resume förrän den atomära transaktionen är komplett.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem

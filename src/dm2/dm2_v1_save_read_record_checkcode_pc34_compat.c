@@ -17,6 +17,7 @@ void dm2_v1_read_record_session_init(
     dm2_suppress_reader_init(&session->reader, in_buf, in_size);
     session->in_buf = in_buf;
     session->in_size = in_size;
+    session->last_record_type = -1;
 }
 
 static int read_bit(DM2_ReadRecordSession *s, int *out)
@@ -172,7 +173,10 @@ int dm2_v1_read_record_checkcode(
         int is_map_or_nested = 0;
 
         /* Read continuation bit. 0 = end of chain. */
-        if (read_bit(session, &bit)) return 1;
+        if (read_bit(session, &bit)) {
+            session->failure_reason = DM2_READ_RECORD_FAILURE_INPUT;
+            return 1;
+        }
         if (bit == 0) return 0;
 
         /* Read 4-bit record type.
@@ -180,8 +184,12 @@ int dm2_v1_read_record_checkcode(
         {
             uint8_t type_byte = 0;
             uint8_t type_mask = 0x0f;
-            if (read_suppress(session, &type_byte, &type_mask, 1)) return 1;
+            if (read_suppress(session, &type_byte, &type_mask, 1)) {
+                session->failure_reason = DM2_READ_RECORD_FAILURE_INPUT;
+                return 1;
+            }
             record_type = type_byte & 0x0f;
+            session->last_record_type = record_type;
         }
 
         /* Source: sksvgame.cpp:839-851 */
@@ -228,6 +236,7 @@ int dm2_v1_read_record_checkcode(
         record_link = cb->alloc_record(cb->ctx, record_type);
         if (record_link == 0xFFFE) {
             session->error = 1;
+            session->failure_reason = DM2_READ_RECORD_FAILURE_ALLOC;
             return -1;
         }
         record_link = (uint16_t)((record_link & 0x3fffu) | sub_chain_bits);
@@ -239,6 +248,7 @@ int dm2_v1_read_record_checkcode(
         if (cb->append_record(cb->ctx, record_link, owner_link,
                               map_x, map_y) != 0) {
             session->error = 1;
+            session->failure_reason = DM2_READ_RECORD_FAILURE_APPEND;
             return -1;
         }
 
@@ -268,6 +278,7 @@ int dm2_v1_read_record_checkcode(
                 cb->query_creature_ai_flags(cb->ctx, record_link, b04,
                                             &ai_flags) != 0) {
                 session->error = 1;
+                session->failure_reason = DM2_READ_RECORD_FAILURE_CREATURE_AI;
                 return -1;
             }
             if ((ai_flags & 0x0001u) != 0u) {
@@ -311,6 +322,7 @@ int dm2_v1_read_record_checkcode(
             if (cb->set_data(cb->ctx, record_link,
                              rec_data, sizes[record_type]) != 0) {
                 session->error = 1;
+                session->failure_reason = DM2_READ_RECORD_FAILURE_SET_DATA;
                 return -1;
             }
         }
@@ -325,7 +337,10 @@ int dm2_v1_read_record_checkcode(
             uint16_t *child_owner = NULL;
             if (!cb->child_owner ||
                 cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
-                !child_owner) return -1;
+                !child_owner) {
+                session->failure_reason = DM2_READ_RECORD_FAILURE_CHILD_OWNER;
+                return -1;
+            }
             *child_owner = 0xfffeu;
             session->nested_creature = 1;
             int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
@@ -343,7 +358,10 @@ int dm2_v1_read_record_checkcode(
                 uint16_t *child_owner = NULL;
                 if (!cb->child_owner ||
                     cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
-                    !child_owner) return -1;
+                    !child_owner) {
+                    session->failure_reason = DM2_READ_RECORD_FAILURE_CHILD_OWNER;
+                    return -1;
+                }
                 *child_owner = 0xfffeu;
                 int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
                                                        -1, 0, 0, 1);
@@ -377,6 +395,7 @@ int dm2_v1_read_record_checkcode(
                     if (cb->bind_timer_record(cb->ctx, record_link,
                                                timer_index, 0u) != 0) {
                         session->error = 1;
+                        session->failure_reason = DM2_READ_RECORD_FAILURE_TIMER_BIND;
                         return -1;
                     }
                 }
@@ -384,7 +403,10 @@ int dm2_v1_read_record_checkcode(
                 uint16_t *child_owner = NULL;
                 if (!cb->child_owner ||
                     cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
-                    !child_owner) return -1;
+                    !child_owner) {
+                    session->failure_reason = DM2_READ_RECORD_FAILURE_CHILD_OWNER;
+                    return -1;
+                }
                 *child_owner = 0xfffeu;
                 session->nested_type_0e = 1;
                 int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
@@ -406,6 +428,7 @@ int dm2_v1_read_record_checkcode(
                         if (cb->bind_timer_record(cb->ctx, record_link,
                                                    timer_index, 1u) != 0) {
                             session->error = 1;
+                            session->failure_reason = DM2_READ_RECORD_FAILURE_TIMER_BIND;
                             return -1;
                         }
                     }

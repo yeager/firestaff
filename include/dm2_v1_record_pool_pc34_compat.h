@@ -325,12 +325,22 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     void *query_creature_ai_flags_ctx,
     DM2_V1_SksaveDirectRootReceipt *out_receipt);
 
+typedef enum {
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_NONE = 0,
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE,
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_SPECIAL_TIMERS,
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS,
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_POSSESSIONS,
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_TIMER_REBUILD
+} DM2_V1_SksavePreflightFailureStage;
+
 /* Source-order preflight through DM2_2066_197c.  It owns a temporary raw
  * c_record pool and therefore never publishes a partial runtime session.
  * The caller supplies c_hex2a.w_00 (`savegamew7`) from the same verified
  * 42-byte SKSAVE header that owns `raw_body`. */
 typedef struct {
     int valid;
+    DM2_V1_SksavePreflightFailureStage failure_stage;
     uint16_t hero_count;
     uint16_t timer_count;
     uint16_t special_chain_count;
@@ -338,6 +348,12 @@ typedef struct {
     uint32_t tiles_loaded;
     uint32_t map_record_chains_loaded;
     uint32_t teleporter_forward_refs_skipped;
+    int16_t map_failure_map;
+    int16_t map_failure_x;
+    int16_t map_failure_y;
+    uint16_t map_failure_root_link;
+    int16_t map_failure_record_type;
+    int16_t map_failure_record_reason;
     uint32_t possession_link_count;
     uint32_t possession_continuation_count;
     int16_t timer_queue_count;

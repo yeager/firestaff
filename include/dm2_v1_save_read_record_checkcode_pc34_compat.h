@@ -107,7 +107,21 @@ typedef struct {
     int nested_type_0e;
     int moneybox_chain_active;
     int error;
+    /* Transient failure provenance for the one original SUPPRESS stream. */
+    int failure_reason;
+    int last_record_type;
 } DM2_ReadRecordSession;
+
+typedef enum {
+    DM2_READ_RECORD_FAILURE_NONE = 0,
+    DM2_READ_RECORD_FAILURE_INPUT,
+    DM2_READ_RECORD_FAILURE_ALLOC,
+    DM2_READ_RECORD_FAILURE_APPEND,
+    DM2_READ_RECORD_FAILURE_CREATURE_AI,
+    DM2_READ_RECORD_FAILURE_SET_DATA,
+    DM2_READ_RECORD_FAILURE_CHILD_OWNER,
+    DM2_READ_RECORD_FAILURE_TIMER_BIND
+} DM2_ReadRecordFailureReason;
 
 /* Restore the continuation links collected by
  * SKProject::DM2_2066_062b (sksvgame.cpp:1003-1040). The source walks

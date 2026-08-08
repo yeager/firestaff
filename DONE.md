@@ -9512,6 +9512,19 @@
   spelbar Resume-session. Bygge, kartläsartest, recordpooltest och
   realdataregressionen passerar (192/192).
 
+# DM2 SKSAVE tile-root owner (2026-08-08)
+
+- ✅ `READ_SKSAVE_DUNGEON` skickar nu en tom tile-rot som `NULL` till
+  `DM2_READ_RECORD_CHECKCODE`, vilket låter den källägda
+  `DM2_APPEND_RECORD_TO`-vägen uppdatera c_map på rätt `(x,y)` i stället för
+  att använda en Firestaff-temporär länk. Importkvittot anger dessutom fas,
+  karta, ruta, recordtyp och läsorsak när en verklig corpusfil måste stoppas.
+- ✅ Verifierat med `test_dm2_v1_record_pool_pc34_compat`,
+  `test_dm2_v1_save_read_record_checkcode`, den åttafils PC-DOS-korpusen
+  (200/200) och produktionsgrinden. Fulla DB-pooler är fortfarande fail-closed
+  tills originalets world-recycler kan ägas atomärt; inga extra records eller
+  syntetiska pooler skapas.
+
 # DM2 SKSAVE-possessioner i källordning (2026-08-08)
 
 - ✅ Den tillfälliga source-ägda importtransaktionen avslutar nu en godkänd

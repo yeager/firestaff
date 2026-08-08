@@ -65,6 +65,12 @@ typedef struct {
     int record_chains_loaded;
     int teleporter_forward_refs_skipped;
     int error;
+    int failed_map;
+    int failed_x;
+    int failed_y;
+    uint16_t failed_root_link;
+    int failed_record_type;
+    int failed_record_reason;
 } DM2_V1_LoadExtraDungeonReceipt;
 
 /* Load dungeon data from a SUPPRESS stream.
