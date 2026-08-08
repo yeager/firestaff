@@ -11,6 +11,7 @@
 #include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_fmtowns_anim_stream.h"
 #include "dm2_v1_dos_startup_media.h"
+#include "dm2_v1_dos_intro_mve_owner.h"
 #include "dm2_v1_party.h"
 #include <stddef.h>
 
@@ -525,6 +526,9 @@ typedef struct {
      * launch the static title but must not claim the retail intro exists. */
     DM2_V1_DosStartupMediaReceipt dos_startup_media;
     int      dos_startup_media_verified;
+    /* Opaque, RAM-only INTRO owner.  Consumers must use the explicit
+     * read-only seam below; no raw pointer is published in the profile. */
+    DM2_V1_DosIntroMveOwner *dos_intro_mve_owner;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;
@@ -539,6 +543,13 @@ typedef struct {
      * until party, record pools, possessions and timers share one owner. */
     int     source_game_load_session_ready;
 } DM2_V1_BootProfile;
+
+/* Returns the original hash-verified DOS INTRO executable retained by this
+ * profile, or zero when the selected media is absent, invalid or not PC
+ * English.  The returned bytes are profile-owned and read-only to callers. */
+int dm2_v1_boot_dos_intro_mve_readonly(
+    const DM2_V1_BootProfile *profile, const uint8_t **out_bytes,
+    size_t *out_byte_count);
 
 /* Returns only the verified source material and source draw semantics for
  * skproject's save/load dialogue. The host must expand RECT_453 before it

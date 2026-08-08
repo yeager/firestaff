@@ -1,6 +1,7 @@
 /* Source-owned File_header world materialisation for DM2 New Game. */
 
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_skproject_core.h"
@@ -1167,6 +1168,128 @@ fail:
     return 0;
 }
 
+/*
+ * Source-complete WALL/FLOOR_MECHA atom for PUSH_BUTTON_SWITCH.
+ *
+ * skevent.cpp::ACTUATE_WALL_MECHA and ::ACTUATE_FLOOR_MECHA walk each record
+ * in source order, and their 0x46 arm calls PUSH_BUTTON_SWITCH. That arm reads only the actuator
+ * payload and the *first* target-tile record (GET_ADDRESS_OF_TILE_RECORD),
+ * then changes Door::w2 bit 13.  It neither moves a record nor needs a
+ * party, CAII slot, sound delivery or a follow-up timer.  Thus it is safe to
+ * retain inside the cloned File_header owner only when the entire originating
+ * chain consists of real DB3 0x46 records and every target is a real direct
+ * DB0 door.  All targets are validated before the first write so a broken
+ * later target cannot leave a partial source dispatch behind.
+ *
+ * Source: SKProject SKULLWIN/skevent.cpp::ACTUATE_FLOOR_MECHA (2080-2145),
+ * ::PUSH_BUTTON_SWITCH (2010-2028); SKWIN/c_map.cpp::
+ * GET_ADDRESS_OF_TILE_RECORD; SKWIN/DME.h::Door.
+ *
+ * Return 1 for a committed atom, 0 when this is not an all-push-button
+ * chain, and -1 for a candidate chain whose complete owner is contradictory.
+ */
+static int dm2_v1_game_load_owner_dispatch_push_button_floor(
+    DM2_V1_GameLoadWorldOwner *owner, int map, int x, int y,
+    uint8_t action, DM2_V1_GameLoadActuateReceipt *receipt)
+{
+    int chain_limit = 0;
+    int16_t link;
+    int16_t *targets = NULL;
+    uint8_t *next_bits = NULL;
+    int count = 0;
+    uint32_t hash = 0x50425357u; /* "PBSW" */
+    int result = 0;
+
+    if (!owner || !receipt || !owner->source_map_context_materialized ||
+        action > 2u) return -1;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&owner->dungeon,
+                                                    map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    targets = (int16_t *)calloc((size_t)chain_limit, sizeof(*targets));
+    next_bits = (uint8_t *)calloc((size_t)chain_limit, sizeof(*next_bits));
+    if (!targets || !next_bits) goto done;
+
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *actuator;
+        const uint8_t *door;
+        int16_t next;
+        int16_t target;
+        int target_x, target_y;
+        uint8_t old_bit;
+        int prior;
+
+        if (link == DM2_V1_RECORD_HANDLE_NULL || count >= chain_limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(actuator = dm2_v1_record_pool_address(&owner->record_pools,
+                                                     link)) ||
+            dm2_actu_type(actuator) != DM2_ACTU_PUSH_BUTTON_SWITCH ||
+            !dm2_v1_record_pool_next_link(&owner->record_pools, link, &next)) {
+            result = count == 0 ? 0 : -1;
+            goto done;
+        }
+        target_x = (int)dm2_actu_xcoord(actuator);
+        target_y = (int)dm2_actu_ycoord(actuator);
+        if (target_x < 0 || target_y < 0 ||
+            target_x >= owner->dungeon.level_widths[map] ||
+            target_y >= owner->dungeon.level_heights[map]) {
+            result = -1;
+            goto done;
+        }
+        target = (int16_t)dm2_v1_dungeon_get_first_thing(&owner->dungeon,
+                                                           map, target_x, target_y);
+        if (target == DM2_V1_RECORD_HANDLE_NULL ||
+            target == DM2_V1_RECORD_HANDLE_END ||
+            dm2_v1_record_handle_pool(target) != DM2_DB_DOOR ||
+            !(door = dm2_v1_record_pool_address(&owner->record_pools, target)) ||
+            !dm2_v1_record_pool_address_mut(&owner->record_pools, target)) {
+            result = -1;
+            goto done;
+        }
+        old_bit = dm2_door_bit13(door);
+        /* Source-order duplicate targets observe the preceding 0x46 write. */
+        for (prior = 0; prior < count; ++prior) {
+            if (targets[prior] == target) old_bit = next_bits[prior];
+        }
+        targets[count] = target;
+        next_bits[count] = action == DM2_ACTMSG_TOGGLE ?
+            (uint8_t)!old_bit : (action == DM2_ACTMSG_OPEN_SET ? 1u : 0u);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)target);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                (uint32_t)next_bits[count]);
+        ++count;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto done;
+    for (int i = 0; i < count; ++i) {
+        uint8_t *door = dm2_v1_record_pool_address_mut(&owner->record_pools,
+                                                        targets[i]);
+        if (!door) { result = -1; goto done; }
+        if (dm2_door_bit13(door) != next_bits[i]) {
+            dm2_door_set_bit13(door, next_bits[i]);
+            ++receipt->push_button_doors_mutated;
+        }
+    }
+    receipt->push_button_actuators_seen = count;
+    receipt->private_push_button_hash = hash;
+    receipt->valid = 1;
+    result = 1;
+
+done:
+    free(next_bits);
+    free(targets);
+    return result;
+}
+
 int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_TimerEntry *timer,
@@ -1212,6 +1335,20 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
         receipt.source_noop = 1;
         if (out_receipt) *out_receipt = receipt;
         return 1;
+    }
+
+    if (receipt.tile_class == 0u || receipt.tile_class == 1u) {
+        const int push_button = dm2_v1_game_load_owner_dispatch_push_button_floor(
+            owner, map, x, y, action, &receipt);
+        if (push_button > 0) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (push_button < 0) {
+            receipt.blocked_incomplete_chain = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
     }
 
     /* sktimprc.cpp::DM2_ACTUATE_PITFALL (3708-3742) and

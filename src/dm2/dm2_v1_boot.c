@@ -44,6 +44,7 @@
 #include "dm2_v1_amiga_lzx.h"
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_fmtowns_cdda_music.h"
+#include "dm2_v1_dos_intro_mve_owner.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
 #include "firestaff_fmtowns_disc.h"
@@ -3086,6 +3087,10 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     const char *base = data_dir ? data_dir : ".";
 
     if (!profile) return -1;
+    /* A rescan selects a new user-owned medium.  The old MVE executable must
+     * not survive that ownership change, even if the next scan fails. */
+    dm2_v1_dos_intro_mve_owner_destroy(profile->dos_intro_mve_owner);
+    profile->dos_intro_mve_owner = NULL;
     profile->graphics_path[0] = '\0';
     profile->dungeon_path[0] = '\0';
     profile->songlist_path[0] = '\0';
@@ -3232,6 +3237,11 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         profile->dos_startup_media_verified =
             dm2_v1_dos_startup_media_probe(dos_install_root,
                                             &profile->dos_startup_media);
+        if (profile->dos_startup_media_verified) {
+            profile->dos_intro_mve_owner =
+                dm2_v1_dos_intro_mve_owner_create(
+                    dos_install_root, &profile->dos_startup_media);
+        }
     }
 
     /* PC music routing is an optional extra for launch, but it must never
@@ -3349,6 +3359,20 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         return 0;  /* success */
     }
     return -1;  /* missing assets */
+}
+
+int dm2_v1_boot_dos_intro_mve_readonly(
+    const DM2_V1_BootProfile *profile, const uint8_t **out_bytes,
+    size_t *out_byte_count)
+{
+    if (out_bytes) *out_bytes = NULL;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (!profile || profile->platform != DM2_PLATFORM_PC_EN ||
+        !profile->dos_startup_media_verified ||
+        !profile->dos_startup_media.valid || !profile->dos_intro_mve_owner)
+        return 0;
+    return dm2_v1_dos_intro_mve_owner_readonly(profile->dos_intro_mve_owner,
+                                                out_bytes, out_byte_count);
 }
 
 int dm2_v1_boot_songlist_track_for_map(const DM2_V1_BootProfile *profile,
@@ -13529,6 +13553,8 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     /* The sound singleton borrows the loader stored in graphics_dat. */
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
     dm2_v1_sound_bind_runtime_queue(NULL);
+    dm2_v1_dos_intro_mve_owner_destroy(profile->dos_intro_mve_owner);
+    profile->dos_intro_mve_owner = NULL;
     if (profile->graphics_dat) {
         dm2_v1_boot_graphics_free(
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat);

@@ -15,6 +15,7 @@
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
+#include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_game.h"
@@ -261,6 +262,75 @@ static int dm2_test_find_private_door_step(
                      * door through state 3, so it proves that the private
                      * atom emits a follow-up timer without rewriting data. */
                     *out_direction = 0u;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/* Find a source-complete 0x04/WALL-or-FLOOR PUSH_BUTTON_SWITCH chain. The private
+ * owner admits it only when every member is a DB3 0x46 actuator and every
+ * target is the source's direct DB0 door.  No fixture tile, record or door
+ * is manufactured merely to make this atom testable. */
+static int dm2_test_find_private_push_button_floor(
+    const DM2_V1_GameLoadWorldOwner *owner,
+    int *out_map, int *out_x, int *out_y)
+{
+    int chain_limit = 0;
+
+    if (!owner || !out_map || !out_x || !out_y) return 0;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0) return 0;
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return 0;
+    for (int map = 0; map < owner->dungeon.level_count; ++map) {
+        for (int x = 0; x < owner->dungeon.level_widths[map]; ++x) {
+            for (int y = 0; y < owner->dungeon.level_heights[map]; ++y) {
+                int16_t link;
+                int count = 0;
+                int valid = 1;
+
+                const int tile_class =
+                    dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) >> 5;
+                if (tile_class != 0 && tile_class != 1)
+                    continue;
+                link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &owner->dungeon, map, x, y);
+                while (link != DM2_V1_RECORD_HANDLE_END && valid) {
+                    const uint8_t *record;
+                    int16_t next;
+                    int tx, ty;
+                    int target;
+
+                    if (link == DM2_V1_RECORD_HANDLE_NULL || count >= chain_limit ||
+                        dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+                        !(record = dm2_v1_record_pool_address(
+                            &owner->record_pools, link)) ||
+                        dm2_actu_type(record) != DM2_ACTU_PUSH_BUTTON_SWITCH ||
+                        !dm2_v1_record_pool_next_link(&owner->record_pools,
+                                                       link, &next)) {
+                        valid = 0;
+                        break;
+                    }
+                    tx = (int)dm2_actu_xcoord(record);
+                    ty = (int)dm2_actu_ycoord(record);
+                    target = dm2_v1_dungeon_get_first_thing(
+                        &owner->dungeon, map, tx, ty);
+                    if (tx >= owner->dungeon.level_widths[map] ||
+                        ty >= owner->dungeon.level_heights[map] || target < 0 ||
+                        dm2_v1_record_handle_pool((int16_t)target) != DM2_DB_DOOR) {
+                        valid = 0;
+                        break;
+                    }
+                    ++count;
+                    link = next;
+                }
+                if (valid && count > 0 && link == DM2_V1_RECORD_HANDLE_END) {
+                    *out_map = map; *out_x = x; *out_y = y;
                     return 1;
                 }
             }
@@ -1451,6 +1521,10 @@ int main(void) {
     int16_t new_game_door_link = DM2_V1_RECORD_HANDLE_NULL;
     uint8_t new_game_door_direction = 0u;
     int new_game_door_found = 0;
+    int new_game_push_button_map = -1;
+    int new_game_push_button_x = -1;
+    int new_game_push_button_y = -1;
+    int new_game_push_button_found = 0;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -2280,6 +2354,38 @@ int main(void) {
                     !new_game_door_step.blocked_creature_collision &&
                     !profile->source_game_load_session_ready,
                     "M11 steps and requeues a real File_header DB0 door timer only in the private owner");
+    }
+    /* A complete source 0x46 chain is rare but it needs no fabricated
+     * command or target: the real 0x04 packet is the only transport below.
+     * Keep absence explicit rather than converting a nearby fixture into a
+     * pressure plate. */
+    new_game_push_button_found = profile &&
+        dm2_test_find_private_push_button_floor(&new_game_world_owner,
+            &new_game_push_button_map, &new_game_push_button_x,
+            &new_game_push_button_y);
+    expect_true(new_game_push_button_found,
+                "M11 finds a complete real File_header PUSH_BUTTON_SWITCH wall/floor chain");
+    if (new_game_push_button_found) {
+        memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+        dm2_v1_timer_entry_init(&new_game_actuate_timer);
+        expect_true((dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                            (int16_t)new_game_push_button_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 2u), 1) &&
+                    ((new_game_actuate_timer.xA =
+                        (int8_t)new_game_push_button_x), 1) &&
+                    ((new_game_actuate_timer.yA =
+                        (int8_t)new_game_push_button_y), 1) &&
+                    ((new_game_actuate_timer.wvalueB = 2 << 8), 1) &&
+                    dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) && new_game_actuate.valid &&
+                    new_game_actuate.push_button_actuators_seen > 0 &&
+                    new_game_actuate.push_button_doors_mutated > 0 &&
+                    new_game_actuate.private_push_button_hash != 0u &&
+                    !new_game_actuate.blocked_incomplete_chain &&
+                    !profile->source_game_load_session_ready,
+                    "M11 toggles only the source-addressed DB0 doors of a real PUSH_BUTTON_SWITCH chain");
     }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];

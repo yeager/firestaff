@@ -1,6 +1,7 @@
 #include "dm2_v1_dos_startup_media.h"
 
 #include "dm2_v1_dos_real_data_manifest.h"
+#include "dm2_v1_mve_stream.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -193,6 +194,10 @@ static int dm2_v1_dos_startup_read_verified(const char *root,
     return 1;
 }
 
+static int dm2_v1_dos_startup_load_verified_member(
+    const char *install_root, const char *name, uint8_t **out_bytes,
+    size_t *out_byte_count);
+
 static int dm2_v1_dos_startup_contains(const uint8_t *bytes, size_t size,
                                         const char *needle, uint32_t *offset)
 {
@@ -262,11 +267,35 @@ int dm2_v1_dos_startup_media_probe(
      * stubs.  The first 128 KiB is enough to establish that fact without
      * keeping the movie in memory after verification. */
     out->intro_has_interplay_mve = out->intro_verified &&
-        dm2_v1_dos_startup_contains(intro, sizeof(intro), mve_magic,
-                                     &out->intro_mve_header_offset);
+        dm2_v1_dos_startup_contains(intro, sizeof(intro), mve_magic, NULL);
     out->end_has_interplay_mve = out->end_verified &&
-        dm2_v1_dos_startup_contains(end, sizeof(end), mve_magic,
-                                     &out->end_mve_header_offset);
+        dm2_v1_dos_startup_contains(end, sizeof(end), mve_magic, NULL);
+    if (out->intro_has_interplay_mve || out->end_has_interplay_mve) {
+        static const char *const names[] = { "intro", "end" };
+        uint32_t *const offsets[] = { &out->intro_mve_header_offset,
+                                      &out->end_mve_header_offset };
+        int *const valid[] = { &out->intro_has_interplay_mve,
+                               &out->end_has_interplay_mve };
+        size_t i;
+        for (i = 0u; i < sizeof(names) / sizeof(names[0]); ++i) {
+            uint8_t *movie = NULL;
+            size_t movie_size = 0u;
+            DM2_V1_MveStreamReceipt stream;
+            if (!*valid[i] || !dm2_v1_dos_startup_load_verified_member(
+                                  install_root, names[i], &movie, &movie_size) ||
+                !dm2_v1_mve_stream_parse(movie, movie_size, &stream) ||
+                !stream.valid || stream.mve_offset == 0u) {
+                *valid[i] = 0;
+                *offsets[i] = 0u;
+            } else {
+                *offsets[i] = stream.mve_offset;
+            }
+            if (movie) {
+                memset(movie, 0, movie_size);
+                free(movie);
+            }
+        }
+    }
     out->complete = out->batch_dispatches_ibmiop && out->ibmiop_verified &&
         out->splash_verified && out->ftl_verified && out->intro_verified &&
         out->end_verified && out->intrplay_pcx_verified &&
@@ -282,4 +311,79 @@ int dm2_v1_dos_startup_media_probe(
     out->receipt_hash = hash;
     out->valid = out->complete && out->receipt_hash != 0u;
     return out->valid;
+}
+
+static int dm2_v1_dos_startup_load_verified_member(
+    const char *install_root, const char *name, uint8_t **out_bytes,
+    size_t *out_byte_count)
+{
+    const dm2_v1_dos_file_fp_t *expected;
+    DM2_V1_DosSha256 sha;
+    uint8_t digest[32];
+    uint8_t *bytes = NULL;
+    char path[1024];
+    FILE *stream = NULL;
+    size_t read_total = 0u;
+
+    if (out_bytes) *out_bytes = NULL;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (!out_bytes || !out_byte_count || !install_root || !install_root[0] ||
+        !name || !name[0] ||
+        !(expected = dm2_v1_dos_file_fp_lookup_pc34(name)) ||
+        snprintf(path, sizeof(path), "%s/%s", install_root, name) <= 0 ||
+        strlen(path) >= sizeof(path) ||
+        !(bytes = (uint8_t *)malloc(expected->size_bytes))) {
+        return 0;
+    }
+    stream = fopen(path, "rb");
+    if (!stream) goto reject;
+    while (read_total < expected->size_bytes) {
+        const size_t got = fread(bytes + read_total, 1u,
+                                 expected->size_bytes - read_total, stream);
+        if (got == 0u) break;
+        read_total += got;
+    }
+    if (ferror(stream) || read_total != expected->size_bytes ||
+        fgetc(stream) != EOF) {
+        fclose(stream);
+        stream = NULL;
+        goto reject;
+    }
+    if (fclose(stream) != 0) {
+        stream = NULL;
+        goto reject;
+    }
+    stream = NULL;
+    dm2_v1_dos_sha256_init(&sha);
+    dm2_v1_dos_sha256_update(&sha, bytes, expected->size_bytes);
+    dm2_v1_dos_sha256_final(&sha, digest);
+    if (!dm2_v1_dos_file_fp_matches_pc34(name, expected->size_bytes,
+                                           digest)) {
+        goto reject;
+    }
+    *out_bytes = bytes;
+    *out_byte_count = expected->size_bytes;
+    return 1;
+
+reject:
+    if (stream) fclose(stream);
+    if (bytes) {
+        memset(bytes, 0, expected ? expected->size_bytes : 0u);
+        free(bytes);
+    }
+    return 0;
+}
+
+int dm2_v1_dos_startup_media_load_intro_verified(
+    const char *install_root, const DM2_V1_DosStartupMediaReceipt *receipt,
+    uint8_t **out_bytes, size_t *out_byte_count)
+{
+    if (out_bytes) *out_bytes = NULL;
+    if (out_byte_count) *out_byte_count = 0u;
+    if (!receipt || !receipt->valid || !receipt->complete ||
+        !receipt->intro_verified || !receipt->intro_has_interplay_mve ||
+        receipt->intro_mve_header_offset == 0u)
+        return 0;
+    return dm2_v1_dos_startup_load_verified_member(install_root, "intro",
+                                                    out_bytes, out_byte_count);
 }

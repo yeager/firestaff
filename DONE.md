@@ -31,6 +31,16 @@
   monotont felaktig värdklocka. Ingen film skrivs till disk och inget
   stillbilds- eller tystnadsalternativ kan ersätta en misslyckad källa.
 
+# DM2 DOS-MVE BootProfile-ägare (2026-08-09)
+
+- ✅ PC-DOS BootProfile läser nu INTRO direkt från den valda IBMIOP-
+  installationen till RAM och kontrollerar återigen dess retail-SHA-256 innan
+  den publiceras. Ingen fil packas upp eller skapas på disk.
+- ✅ Startup-kvittensen använder den strikta MVE-läsaren för verklig
+  streamoffset, inte den första textträffen i DOS-stubben. Den enda läsbara
+  sömmen lämnar ut profilägd källbyte och frigör dem vid omskanning eller
+  cleanup.
+
 - ✅ Added an explicit non-serialized compatibility-fixture marker to the
   champion pool. Startup host labels, colors, and blink timing now require
   that marker; stale ASCII fields from retail saves cannot impersonate the

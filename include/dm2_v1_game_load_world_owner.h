@@ -197,6 +197,13 @@ typedef struct {
     int blocked_hint_delivery;
     int blocked_unowned_tile_advance;
     int pit_tele_tile_mutated;
+    /* A complete all-DB3 PUSH_BUTTON_SWITCH wall/floor chain can change only the
+     * bit-13 state of source-addressed direct DB0 target doors.  It is kept
+     * separate from the generic FLOOR counters so callers cannot mistake an
+     * unowned actuator family for this narrowly complete mutation. */
+    int push_button_actuators_seen;
+    int push_button_doors_mutated;
+    uint32_t private_push_button_hash;
     uint8_t tile_state_before;
     uint8_t tile_state_after;
     uint32_t private_text_visibility_hash;

@@ -11,8 +11,9 @@
   första bilden, ett paket ligger före varje följande bild fram till de elva
   sista tysta bilderna. M11 har nu en privat presentatörssöm som matar den
   råa SDL-kön före varje källbild och ger PAL8-sidan till en M11-mottagare
-  enligt MVE-klockan. Återstår: IBMIOP-startflödet måste ge sömmen den
-  hashverifierade INTRO-bufferten och använda mottagaren för verklig
+  enligt MVE-klockan. BootProfile äger nu en hashverifierad INTRO-buffert i
+  RAM från den valda IBMIOP-installationen och exponerar den endast genom en
+  läsbar söm. Återstår: IBMIOP-startflödet måste använda mottagaren för verklig
   `M11_Render_SetIndexedPaletteRgb6`/`M11_Render_PresentIndexed`-presentation.
   Ljudtid får inte härledas ur paketlängd eller värdlatens.
 

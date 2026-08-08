@@ -6320,6 +6320,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_fmtowns_graphics_dat_ext_walker.c
     src/dm2/dm2_v1_dos_real_data_manifest.c
     src/dm2/dm2_v1_dos_startup_media.c
+    src/dm2/dm2_v1_dos_intro_mve_owner.c
     src/dm2/dm2_v1_mve_stream.c
     src/dm2/dm2_v1_mve_timeline.c
     src/dm2/dm2_v1_mve_video.c
@@ -56586,6 +56587,20 @@ add_executable(test_dm2_v1_mve_presentation_owner
 )
 target_include_directories(test_dm2_v1_mve_presentation_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_mve_presentation_owner COMMAND test_dm2_v1_mve_presentation_owner)
+
+add_executable(test_dm2_v1_dos_intro_mve_boot_owner
+    tests/test_dm2_v1_dos_intro_mve_boot_owner.c
+)
+target_include_directories(test_dm2_v1_dos_intro_mve_boot_owner PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_dos_intro_mve_boot_owner PRIVATE
+    firestaff_dm2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_dos_intro_mve_boot_owner PRIVATE
+        -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_dos_intro_mve_boot_owner
+    COMMAND test_dm2_v1_dos_intro_mve_boot_owner)
 
 add_executable(test_dm2_v1_mve_timeline
     tests/test_dm2_v1_mve_timeline.c
