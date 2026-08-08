@@ -9578,3 +9578,7 @@
 
 - ✅ Produktionsverifieraren kontrollerar nu att TITLE/WARNING/GAMEOVER/STABG/LOGOBG:s host-blit- och renderhelpers förblir explicita no-draw-vägar.
 - ✅ Äkta UI-bytes får fortsatt behållas som provenance, men ingen host-framebuffer får fyllas utan autentisk Saturn VDP1/VDP2-destination, CLUT och command-order.
+# Nexus real-media corpus sweep (2026-08-08)
+
+- ✅ Den aktuella externa Nexus-katalogen kör nu igenom hela `real-media`-svepet: 8/8 Nexus-testmål passerar för inventory/champion-panel, DGN face/material/mesh, SMAP och material-prober.
+- ✅ Sweep-resultatet öppnar inte någon presentation; VDP1/VDP2, FONT256-textplacering, HUD och SLEV/SAL-playback förblir capture-gated enligt de negativa runtime-receipten.
