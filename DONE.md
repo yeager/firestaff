@@ -9377,6 +9377,7 @@
 - ✅ Sekvensen är kopplad till de hashverifierade SLEV/SAL/MAP/SDDRVS-filerna
   endast som observation; event-ID, MAP-rad, SAL-codec och playback förblir
   uttryckligen obundna.
+<<<<<<< HEAD
 
 # DM2 SKSAVE possessionlänkar från direktrotter (2026-08-08)
 
@@ -9390,3 +9391,11 @@
 - ✅ Verifierat med samtliga åtta lokala PC-DOS SKSaveN.dat/.bak och
   test_dm2_v1_record_pool_pc34_compat; GAME_LOAD/Resume är fortsatt
   fail-closed tills den kompletta kedjan finns.
+=======
+# Nexus capture-timeout och child-cleanup (2026-08-08)
+
+- ✅ Saturn-launchern stöder nu `--timeout-seconds` och avslutar ett hängande
+  instrumenterat Mednafen-child fail-closed.
+- ✅ Timeout-/avbrottstestet verifierar att processen stängs och att ingen
+  ofullständig `runtime-vdp12.raw` lämnas som evidens.
+>>>>>>> 50508b2af (nexus: bound saturn capture runtime)

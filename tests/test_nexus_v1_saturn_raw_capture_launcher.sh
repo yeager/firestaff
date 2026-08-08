@@ -128,4 +128,24 @@ else:
     raise SystemExit("capture launcher left Mednafen child alive after TERM")
 PY
 
+set +e
+timeout_cmd=(
+  "$launcher" --operator-only --launch --mednafen "$tmp_dir/hanging-mednafen"
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha"
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha"
+  --trace "$tmp_dir/trace-timeout.raw" --validator /usr/bin/true
+  --manifest "$tmp_dir/manifest-timeout.txt" --timeout-seconds 1
+)
+"${timeout_cmd[@]}" >/dev/null 2>&1
+timeout_status=$?
+set -e
+if [[ "$timeout_status" -eq 0 ]]; then
+  echo "expected capture timeout" >&2
+  exit 1
+fi
+if [[ -e "$tmp_dir/trace-timeout.raw" ]]; then
+  echo "timed-out capture must not leave a raw witness" >&2
+  exit 1
+fi
+
 echo "nexus Saturn raw capture launcher: PASS"
