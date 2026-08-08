@@ -1,5 +1,11 @@
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ En obunden CSB-runtime startar nu med noll champions, precis som
+  ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
+  championval. Det tidigare modellvärdet tre kunde få en runtime utan
+  ursprunglig partydata att framstå som spelbar; bootprofilprovet låser
+  därför både count, party-validering och `ChampionCount` till noll.
+
 - ✅ Realdataregressionen för CSB:s HUD använder inte längre testskapade
   party-, inventory- eller spellpanelstillstånd för C100, F1, F2 eller C022.
   Den verifierar den riktiga enhjältepartyns positiva och negativa kommandon

@@ -19232,7 +19232,11 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->current_world = 0;
     profile->level_count   = 1;
     profile->world_count   = 1;
-    profile->champion_count = 3;
+    /* G0305_ui_PartyChampionCount is zero-initialized in BASE.C and only
+     * receives a party count through F0435 save restore or the CEDT/HoC
+     * champion transaction. A default of three describes no source party
+     * and can make an unbound runtime look playable. */
+    profile->champion_count = 0;
     profile->leader_index = -1;
     profile->magic_caster_index = -1;
     profile->party_state_valid = 0;

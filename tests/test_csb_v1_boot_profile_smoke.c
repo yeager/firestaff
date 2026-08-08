@@ -46,6 +46,10 @@ static void test_defaults(void)
     CHECK(p.default_party_x == CSB_V1_START_PARTY_X, "default party x follows CSB runtime profile");
     CHECK(p.default_party_y == CSB_V1_START_PARTY_Y, "default party y follows CSB runtime profile");
     CHECK(p.default_party_dir == CSB_V1_START_PARTY_DIR, "default party dir follows CSB runtime profile");
+    CHECK(p.runtime.champion_count == 0 &&
+          !p.runtime.party_state_valid &&
+          p.runtime.party_state.ChampionCount == 0,
+          "unbound CSB runtime has no model champion party");
     CHECK(p.csbgraphics_skin_def_loaded == 0 &&
           p.csbgraphics_skin_def_word_count == 0u,
           "CSBgraphics skin-def ownership starts empty");
