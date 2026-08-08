@@ -11,6 +11,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -64,6 +65,7 @@ int main(void)
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    DM1_V1_ChampionStatusRectPc34 champion_name_rect;
     uint8_t music_track;
     unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
@@ -438,12 +440,32 @@ int main(void)
                   live_profile->runtime.last_input_dispatch.dequeued &&
                   live_profile->runtime.last_input_dispatch.dispatchedMove,
               "F31 live viewport routes C003 through the dungeon command queue");
-        CHECK(M11_GameView_HandleInput(&view,
-                                       M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
-                  M11_GAME_INPUT_REDRAW &&
-                  view.inventoryPanelActive,
-              "F31 live HUD opens its real MINI.DAT champion inventory");
-        view.inventoryPanelActive = 0;
+        /* ReDMCSB COMMAND.C G0447/C007 and CHAMDRAW.C F0292 own this
+         * named status strip.  Use its decoded source rectangle rather than
+         * an enum shortcut or a host-invented coordinate, then click it a
+         * second time to close through the same live pointer route. */
+        memset(&champion_name_rect, 0, sizeof(champion_name_rect));
+        CHECK(dm1_v1_champion_status_name_rect_pc34(0,
+                                                     &champion_name_rect) &&
+                  champion_name_rect.w > 0 && champion_name_rect.h > 0 &&
+                  M11_GameView_HandlePointerButton(
+                      &view,
+                      champion_name_rect.x + champion_name_rect.w / 2,
+                      champion_name_rect.y + champion_name_rect.h / 2,
+                      DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                  view.inventoryPanelActive && view.pointerPositionKnown &&
+                  view.pointerX == champion_name_rect.x +
+                                       champion_name_rect.w / 2 &&
+                  view.pointerY == champion_name_rect.y +
+                                       champion_name_rect.h / 2,
+              "F31 live pointer opens the real MINI.DAT champion inventory");
+        CHECK(M11_GameView_HandlePointerButton(
+                  &view,
+                  champion_name_rect.x + champion_name_rect.w / 2,
+                  champion_name_rect.y + champion_name_rect.h / 2,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                  !view.inventoryPanelActive,
+              "F31 live pointer closes that inventory through C007");
     }
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
      * The atomic F31 resume owns map 4 and its saved pose, so query the

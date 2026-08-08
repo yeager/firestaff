@@ -1,5 +1,11 @@
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ FM Towns F31 Prison-resumen testas nu via den ritade, källkoordinerade
+  CHAMDRAW.C F0292-namnrutan och COMMAND.C G0447/C007: ett verkligt
+  MINI.DAT-party öppnar och stänger inventory med samma musväg som användaren
+  använder. Testet använder inget modellparty, inga hårdkodade hitkoordinater
+  och ingen direkt mutation av HUD-tillståndet.
+
 - ✅ Prison/HUD-provet binder nu den disponibla F0433/F0435-sökvägen först
   efter den källägda title- och Prison-kedjan. En gammal global F5/F9-
   miljövariabel kan därmed inte ändra vad som räknas som en lyckad kallstart.
