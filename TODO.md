@@ -4,6 +4,10 @@
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder
   T900:s equip/use/stack/loot-regler; gissade mutationer ska fortsatt nekas.
 
+- 🔧 Theron: CDDA-handoff är verifierad mot den lokala original-RAR-korpusen.
+  Nästa ljudkrav är source-bound SFX/ADPCM-eventägare; CDDA-tillgänglighet får
+  inte tolkas som bevis för gameplay-ljud.
+
 - 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT-party-, dungeon-,
   tidslinje- och aktivgruppsdata och har en realdataverifierad HUD-musväg.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,

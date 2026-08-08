@@ -13,6 +13,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔧 Bind den bevarade US-textcodonströmmen till originalets HuC6280
   textkonsument och kontrollkodtabell. Loadern får inte göra en hoststräng av
   `{...}`-värden innan den kedjan är fångad.
+- 🔧 CDDA-intag och stream-handoff är verifierade mot den lokala original-RAR-
+  korpusen. Bind fortfarande originalets spelhändelser till rätt CDDA/ADPCM-
+  eller SFX-konsument innan ljud triggas från creature-, actuator- eller
+  menylogik.
 
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 

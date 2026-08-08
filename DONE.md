@@ -22,6 +22,14 @@
 - 🔒 Detta är provenance, inte återfunnen T900-gameplay. `$2600`-konsumenten,
   equip/use/stack/loot och T700-mutationer är fortsatt fail-closed.
 
+# Theron real CDDA handoff (2026-08-08)
+
+- ✅ Den lokala original-RAR-korpusen med CUE, OGG-CDDA och Track 02/19-data
+  passerar `test_theron_v1_track01_cdda_handoff` genom den source-bundna
+  Track 01-handoffvägen.
+- 🔒 Detta bevisar inte originalets SFX/ADPCM-eventägare eller deras relation
+  till creature/actuator/gameplay.
+
 # DM2 File_header-receipt mot originalposter (2026-08-08)
 
 - ✅ `test_dm2_v1_g1_record_graph_diagnostic` jämför nu alla lästa DB0-dörrar,

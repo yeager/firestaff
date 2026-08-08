@@ -20,6 +20,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - ✅ Dungeon-loadern behåller nu också hela den autentiska US-textcodonströmmen
   i `Theron_DungeonLoadResult`; JP:s verifierade zero-textblock förblir noll.
   Olösta HuC6280-kontrollkoder exponeras inte som UI-text.
+- ✅ Den lokala original-RAR-korpusen verifierar CDDA-handoffens riktiga CUE,
+  OGG-trackfiler och Track 02/19-data: `test_theron_v1_track01_cdda_handoff`
+  passerar med `FIRESTAFF_THERON_CUE` mot arkivets US-filer. Detta är en
+  source-bound CDDA/stream-receipt; SFX/ADPCM-händelseägare är inte därmed
+  bevisade.
 
 ### Theron V1
 
