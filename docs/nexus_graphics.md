@@ -61,9 +61,10 @@ The admitted pipeline is instead:
 3. Stop before an inferred transform, palette upload or VDP1 command is
    promoted to the Nexus viewport.
 
-Wall geometry in DGN files: Pre-baked wall polygons per grid square per direction.
-Each wall face has vertex list plus texture ID plus normal.
-No procedural geometry — geometry loaded from file.
+Wall geometry in DGN files is retained as bounded pre-baked polygon/material
+candidates per grid square and direction. Each candidate may contain a vertex
+list, texture selector and normal, but its Saturn consumer is not yet bound.
+Do not turn this source record into a host-rendered wall by assumption.
 
 Floor/ceiling i DGN är source-data-/geometrykandidater. `nexus_viewport.c`
 får inte marknadsföras som Saturnens presenterade floor/ceiling; projection,

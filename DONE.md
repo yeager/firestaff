@@ -8974,3 +8974,6 @@
 - ✅ Removed the blank script filename/VM placeholder from `docs/nexus_dungeon.md`
   and corrected `docs/nexus_data.md`'s stale DM1 32×32 wording; both now name
   the real 16-file SLEV corpus and the 64×64 Structure1B boundary.
+- ✅ Removed the remaining menu/graphics wording that could be read as a
+  retail animated title, options menu or host polygon parity claim; the
+  stale-claim audit now records those routes as unbound.

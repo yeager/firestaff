@@ -19,6 +19,7 @@ implementerad eller källbunden.
 | `nexus_audio_format.md`, `nexus_music.md`, `nexus_sound.md`, `nexus_sfx.md` | CD-DA/SAL/MAP kan spelas genom hostantaganden eller att nivåpar automatiskt väljer spår | CDDA-spår 2–9 och SAL/MAP är metadata; nivå→CDDA, SLEV/SDDRVS event→selector och playback är capture-gated |
 | `nexus_input.md`, `nexus_sensors.md`, `nexus_squares.md` | DM1-lik input-, sensor- och square-semantik gäller Nexus | Endast bounded source records är upptagna; Saturn dispatch och state writes är obevisade |
 | `nexus_dungeon.md`, `nexus_content.md`, `nexus_math.md` | Nexus använder en 32×32-grid eller att DGN-geometri är helt oparsad | Retail DGN har 64×64 Structure1B-celler; Structure1B/2/3 intake finns, medan transform/material/VDP1-consumer fortfarande är capture-gated |
+| `nexus_menus.md`, `nexus_graphics.md` | Animerad Saturn-titel, options/in-game-menu eller hostens polygonväg är retail parity | Host state/input och bounded geometry finns som receipts; title/menu composition, VDP1/VDP2 ownership and menu sequence remain unbound |
 | `nexus_phase2_data_formats_H2321.md`, `nexus_test_coverage.md` | Historiska test-/stubmatriser beskriver dagens produktion | Äldre plan-/coverage-dokument överstyr inte aktuell CMake-exkludering och no-draw-gates |
 
 ## Produktionsregeln

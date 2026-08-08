@@ -38,7 +38,8 @@ decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
 
 ### Menu State Machine
 A Nexus menu system needs states for:
-- Title/Start: 3D animated logo, New Game / Continue / Options
+- Title/Start: retail title/menu consumer unproven; host New Game/Continue
+  state route exists, while Options and title animation remain unbound
 - Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
@@ -60,7 +61,7 @@ Champion selection state/input exists; Saturn presentation remains blocked.
 
 ## What Exists vs Whats Missing
 
-Implemented:
+Present as bounded host/source diagnostics:
 - Engine initialization with font loading (nexus_v1_init)
 - Level loading from LEV*.DGN files
 - 3D viewport source/material plan and fail-closed renderer route
@@ -81,13 +82,13 @@ Still blocked or incomplete:
 | Feature | DM1 | Nexus V1 |
 |---------|-----|----------|
 | Title screen | 2D bitmap logo | Real source decode; Saturn placement blocked |
-| Start menu options | New Game / Continue | Host state/input route implemented |
+| Start menu options | New Game / Continue | Host state/input route only; Saturn composition blocked |
 | Champion roster | Western names (24) | 20 PLRD records |
 | Champion select UI | Sprite-based | State/input route; Saturn presentation blocked |
-| In-game menu | ESC key, 2D panel | Not impl |
+| In-game menu | ESC key, 2D panel | No source-bound Nexus route |
 | Save/load | Binary slot files | Saturn SRAM |
 | Credits | Static bitmap | AVI cutscenes |
-| Menu rendering | SDL blit | VDP1/VDP2 (not impl) |
+| Menu rendering | SDL blit | VDP1/VDP2 consumer unbound |
 
 ## Next Steps
 1. Authenticate Saturn menu command/palette/placement capture

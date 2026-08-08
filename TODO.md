@@ -10414,3 +10414,8 @@ as line/circle coordinates or promote them into movement geometry.
   blank 5,448-byte script/VM route. Keep the actual 16-file `SLEV00.BIN`–
   `SLEV15.BIN` corpus and its opaque dispatch status synchronized with the
   authenticated SLEV receipts.
+- **NEXUS-DOC-MENU-GRAPHICS-CLAIMS:** Keep `docs/nexus_menus.md` and
+  `docs/nexus_graphics.md` explicit that host state/input and bounded mesh
+  records are not retail Saturn title/menu/VDP1 parity. Do not reintroduce
+  “3D animated logo”, options or host polygon rendering as implemented until
+  the consumer capture is source-joined.
