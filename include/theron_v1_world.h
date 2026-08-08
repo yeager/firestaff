@@ -597,6 +597,14 @@ Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world, int level, int x, 
 Theron_V1_Object *theron_v1_object_by_id(Theron_V1_World *world, int id);
 const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
     const Theron_V1_World *world, int champion_slot, int inventory_slot);
+/* Source-backed inventory roundtrip.  This is deliberately an explicit
+ * provenance API, not an assertion of the original T900 drop command. */
+int theron_v1_drop_inventory_source_item(
+    Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    int x,
+    int y);
 int theron_v1_object_set_state(Theron_V1_World *world, int id, uint8_t new_state);
 int theron_v1_object_set_flag(Theron_V1_World *world, int id, uint32_t flag);
 int theron_v1_object_clear_flag(Theron_V1_World *world, int id, uint32_t flag);

@@ -12462,3 +12462,9 @@ as line/circle coordinates or promote them into movement geometry.
   Track 02 object now retains its exact decoded payload in a parallel
   inventory-source slot. T900 ownership, equip/use, stack, save persistence,
   and item-specific consumption rules still require the original consumer.
+- 🔧 2026-08-08 Theron source-backed inventory roundtrip: a proven carried
+  weapon, clothing, scroll, potion, or chest record can now be placed back on
+  the ground while retaining its source references, decoded payload, charges,
+  and matched property bytes. This is an explicit provenance roundtrip API;
+  the original T900 drop command, slot translation, and save semantics remain
+  unproven and are intentionally not wired to the legacy drop command.

@@ -20,6 +20,7 @@
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_level_data_blocks.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_text_decode.h"
 #include <string.h>
 #include <stdio.h>
@@ -417,6 +418,69 @@ const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
         inventory_slot < 0 || inventory_slot >= THERON_INVENTORY_SLOTS)
         return NULL;
     return &world->inventory_source[champion_slot][inventory_slot];
+}
+
+int theron_v1_drop_inventory_source_item(
+    Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    int x,
+    int y) {
+    const Theron_V1_InventorySourceRecord *carried;
+    Theron_V1_Object object;
+
+    if (!world || champion_slot < 0 || champion_slot >= THERON_MAX_CHAMPIONS ||
+        inventory_slot < 0 || inventory_slot >= THERON_INVENTORY_SLOTS ||
+        world->party.champions[champion_slot].inventory[inventory_slot] ==
+            THERON_ITEM_NONE)
+        return -1;
+    carried = &world->inventory_source[champion_slot][inventory_slot];
+    if (!carried->valid || carried->source_ref == 0u)
+        return -1;
+
+    memset(&object, 0, sizeof(object));
+    switch (carried->category) {
+    case THERON_CAT_WEAPON:   object.type = THERON_OBJTYPE_WEAPON; break;
+    case THERON_CAT_CLOTHING: object.type = THERON_OBJTYPE_ARMOR; break;
+    case THERON_CAT_SCROLL:   object.type = THERON_OBJTYPE_SCROLL; break;
+    case THERON_CAT_POTION:   object.type = THERON_OBJTYPE_POTION; break;
+    case THERON_CAT_CHEST:    object.type = THERON_OBJTYPE_CHEST; break;
+    default: return -1;
+    }
+    object.item_index = carried->item_type;
+    object.quantity = carried->charges;
+    object.level = world->current_level;
+    object.dungeon_id = world->current_dungeon;
+    object.x = x;
+    object.y = y;
+    object.source_ref = carried->source_ref;
+    object.source_next_ref = carried->source_next_ref;
+    object.source_index = carried->source_index;
+    object.source_category = carried->category;
+    object.source_item_type = carried->item_type;
+    object.source_keep = carried->keep;
+    object.source_cursed = carried->cursed;
+    object.source_broken = carried->broken;
+    object.source_poisoned = carried->poisoned;
+    object.source_closed = carried->closed;
+    object.source_dump = carried->dump;
+    object.source_power = carried->power;
+    object.source_text_ref = carried->text_ref;
+    object.source_chested = carried->chested;
+    object.source_data1 = carried->data1;
+    object.source_item_category = carried->item_category;
+    object.source_property_valid = carried->property_valid;
+    memcpy(object.source_property, carried->property,
+           sizeof(object.source_property));
+    if (theron_v1_object_place(world, &object) != 0)
+        return -1;
+
+    world->party.champions[champion_slot].inventory[inventory_slot] =
+        THERON_ITEM_NONE;
+    memset(&world->inventory_source[champion_slot][inventory_slot], 0,
+           sizeof(world->inventory_source[champion_slot][inventory_slot]));
+    theron_v1_party_recalculate_loads(&world->party);
+    return object.id;
 }
 
 Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world,

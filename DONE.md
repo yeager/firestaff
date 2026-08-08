@@ -6990,3 +6990,16 @@
 - ✅ The legacy 30-slot item-ID array remains unchanged for compatibility;
   this is source provenance, not an unsupported claim about T900 equip/use,
   stacking, save serialization, or consumption behavior.
+# 2026-08-08 Theron source-backed inventory roundtrip
+
+- ✅ Added an explicit source-backed roundtrip API for carried weapon,
+  clothing, scroll, potion, and chest records. Dropping reconstructs a ground
+  object with the original category/type, source references, decoded flags,
+  charges, text/chest fields, and matched property bytes.
+- ✅ Added regression coverage proving the legacy inventory slot and its
+  parallel provenance record are cleared after a successful roundtrip.
+- ✅ Verified `test_theron_v1_combat_mechanics` (104/104) and the real US Track
+  02 dungeon loader (all seven dungeons).
+- This is not yet the original T900 drop/equip/use/stack/save consumer; the
+  legacy `THERON_CMD_DROP` path remains fail-closed until that consumer is
+  source-authenticated.

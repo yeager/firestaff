@@ -714,6 +714,18 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("inventory source charges", carried->charges, 3);
     CHECK_INT("inventory source curse", carried->cursed, 1);
     CHECK_INT("inventory source property", carried->property[1], 0x2f);
+    CHECK(theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4) > 0,
+          "source item drop succeeds");
+    CHECK_INT("dropped source item id", w.objects[w.object_count - 1].item_index,
+              6);
+    CHECK_INT("dropped source item charges",
+              w.objects[w.object_count - 1].quantity, 3);
+    CHECK_INT("dropped source item ref",
+              w.objects[w.object_count - 1].source_ref, 0x1234);
+    CHECK_INT("dropped source clears inventory",
+              w.party.champions[0].inventory[0], THERON_ITEM_NONE);
+    CHECK(!theron_v1_inventory_source_at(&w, 0, 0)->valid,
+          "dropped source clears provenance slot");
 }
 
 int main(void) {
