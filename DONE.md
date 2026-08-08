@@ -1,5 +1,15 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 New Game privat mirrorsvalsordning (2026-08-09)
+
+- ✅ Den privata GAME_LOAD-ägaren behåller nu varje autentiserat
+  `DM2_SELECT_CHAMPION`-steg: spegelrecord, resultatets partyposition,
+  följande championnummer och den enda första ledarväxlingen. Kvittensen
+  avvisar avvikande eller upprepade spegelrötter och publicerar varken
+  eventkö, input, HUD eller session.
+- ✅ Realdataregressionen kontrollerar två riktiga mirrorsval från DOS-data
+  och att den privata ägaren fortfarande lämnar M11:s sessionsgrind stängd.
+
 # DM2 DOS-MVE PCM/display-tidslinje (2026-08-08)
 
 - ✅ Tillagd minnesbaserad, verifierad join mellan varje original opcode-0x08
@@ -8,6 +18,18 @@
   ljudklocka. Realdataregressionen verifierar INTRO och END: 12 paket före
   första displayen, ett per display till de sista 11 tysta bilderna samt
   exakt antal byte och sample frames.
+
+# DM2 DOS-MVE M11-presentatörssöm (2026-08-09)
+
+- ✅ En privat M11-söm äger nu den verifierade MVE-presentationägaren,
+  display/PCM-tidslinjen och den exklusiva SDL U8-stereo-22 050 Hz-kön.
+  Den köar varje källpaket före sin efterföljande PAL8-bild och lämnar
+  bilden tillsammans med dess RGB6-palett till en explicit M11-mottagare.
+  Tidpunkterna kommer enbart från MVE:s 10416×8-mikrosekunders klocka.
+- ✅ Realdatatestet går hela `INTRO` med 217 bilder och 217 PCM-paket genom
+  sömmen, kontrollerar de tidiga och exakta bildgränserna samt avvisar en
+  monotont felaktig värdklocka. Ingen film skrivs till disk och inget
+  stillbilds- eller tystnadsalternativ kan ersätta en misslyckad källa.
 
 - ✅ Added an explicit non-serialized compatibility-fixture marker to the
   champion pool. Startup host labels, colors, and blink timing now require
@@ -231,6 +253,10 @@
   originalets ordning efter den källordnade dungeonläsningen. Den utför
   0x46-ljus, 0x47-räknare, 0x48-förtrollningskraft och 0x4b-förgiftning mot
   de verkliga `c_tim`- och `c_hero`-posterna.
+- ✅ `DM2_3a15_020f`-motsvarigheten återställer nu hero- och ornate-
+  timerbacklänkar först efter den privata global-effektfasen. Det följer
+  `c_savegame.cpp:1525-1528`; preflighten validerar samma länkar utan att
+  göra dem till en session. Ett fel frigör fortfarande hela kandidatägaren.
 - ✅ En 0x0e-post saknar ännu sin kompletta spelvärldshanterare och avbryter
   därför transaktionen atomärt. Viktberäkning är lika tydligt spärrad tills
   aktiv hand, container och party ägs tillsammans med världen. Resume och

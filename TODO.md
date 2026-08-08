@@ -1,11 +1,20 @@
 # Firestaff TODO - Open Work
 
+- 🔧 DM2 New Game: den privata GAME_LOAD-ägaren behåller nu den riktiga
+  mirrorsvalsordningen, varje spegelrecord, partyposition och den enda
+  ledarövergången. Den får fortfarande inte kopplas till M11-input eller HUD:
+  originalets fullständiga sessionägare måste först äga c_eventqueue,
+  handcontainer, timerkö och alla fortlöpande map-/recordmutationer atomärt.
+
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår
   första bilden, ett paket ligger före varje följande bild fram till de elva
-  sista tysta bilderna. Detta är inte en värdschemaläggning. M11 måste ännu
-  binda samma råa kö till en SDL-ström och bildklockan utan att härleda ljudtid
-  ur paketlängd eller värdlatens.
+  sista tysta bilderna. M11 har nu en privat presentatörssöm som matar den
+  råa SDL-kön före varje källbild och ger PAL8-sidan till en M11-mottagare
+  enligt MVE-klockan. Återstår: IBMIOP-startflödet måste ge sömmen den
+  hashverifierade INTRO-bufferten och använda mottagaren för verklig
+  `M11_Render_SetIndexedPaletteRgb6`/`M11_Render_PresentIndexed`-presentation.
+  Ljudtid får inte härledas ur paketlängd eller värdlatens.
 
 - 🔧 Nexus uncaptured text/audio receipt boundary (2026-08-08): script
   `DISPLAY_MESSAGE` no longer copies raw TEXT4/TABL bytes into a host C
@@ -159,8 +168,12 @@
   en komplett sessionscommit med viktberäkning, 0x0e-hantering och
   timerdispatch mot samma c_party- och världsägarobjekt. Den privata
   postload-fasen utför redan originalets 0x46/0x47/0x48/0x4b-effekter och
-  återställer atomärt vid 0x0e, men får inte bli en påhittad save- eller
-  resumeväg.
+  återställer atomärt vid 0x0e. `DM2_3a15_020f` körs nu först efter denna
+  postload-fas i den behållna ägaren, som i originalets
+  `c_savegame.cpp:1525-1528`; preflighten validerar fortfarande samma
+  länkar utan att publicera dem. Nästa steg är fortsatt 0x0e-hantering,
+  viktberäkning och timerdispatch mot en och samma c_party- och
+  världsägarinstans. Ingen del får bli en påhittad save- eller resumeväg.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. New Games privata

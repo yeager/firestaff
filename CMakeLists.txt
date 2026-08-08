@@ -6326,6 +6326,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_mve_pcm.c
     src/dm2/dm2_v1_mve_presentation_owner.c
     src/dm2/dm2_v1_mve_audio_sdl_owner.c
+    src/engine/m11_dm2_mve_presenter.c
     src/shared/fmtowns_tsugaru_bridge.c
     src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
     src/dm1/dm1_v1_dos_pc34_an_container.c
@@ -56614,6 +56615,23 @@ target_include_directories(test_dm2_v1_mve_audio_sdl_owner PRIVATE ${CMAKE_CURRE
 target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3)
 add_test(NAME test_dm2_v1_mve_audio_sdl_owner COMMAND test_dm2_v1_mve_audio_sdl_owner)
 set_tests_properties(test_dm2_v1_mve_audio_sdl_owner PROPERTIES
+    ENVIRONMENT "SDL_AUDIODRIVER=dummy")
+
+add_executable(test_m11_dm2_mve_presenter
+    tests/test_m11_dm2_mve_presenter.c
+    src/dm2/dm2_v1_dos_real_data_manifest.c
+    src/dm2/dm2_v1_mve_stream.c
+    src/dm2/dm2_v1_mve_timeline.c
+    src/dm2/dm2_v1_mve_video.c
+    src/dm2/dm2_v1_mve_pcm.c
+    src/dm2/dm2_v1_mve_presentation_owner.c
+    src/dm2/dm2_v1_mve_audio_sdl_owner.c
+    src/engine/m11_dm2_mve_presenter.c
+)
+target_include_directories(test_m11_dm2_mve_presenter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_m11_dm2_mve_presenter PRIVATE SDL3::SDL3)
+add_test(NAME test_m11_dm2_mve_presenter COMMAND test_m11_dm2_mve_presenter)
+set_tests_properties(test_m11_dm2_mve_presenter PROPERTIES
     ENVIRONMENT "SDL_AUDIODRIVER=dummy")
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
