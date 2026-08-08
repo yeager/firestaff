@@ -665,10 +665,26 @@ static int m11_sdl_queue_samples(M11_AudioState* state,
 static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
     const char* envPath = getenv("FIRESTAFF_SONG_DAT");
     const char* legacyEnvPath = getenv("SONG_DAT_PATH");
+    const char* dm1DataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* dataRoot = getenv("FIRESTAFF_DATA");
     const char* home;
     if (m11_file_exists(envPath)) return envPath;
     if (m11_file_exists(legacyEnvPath)) return legacyEnvPath;
     if (m11_file_exists("SONG.DAT")) return "SONG.DAT";
+    if (dm1DataDir && homeBuf && homeBufBytes > 0) {
+        int n = snprintf(homeBuf, homeBufBytes, "%s/DATA/SONG.DAT", dm1DataDir);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/SONG.DAT", dm1DataDir);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/fmtowns_iso/DATA/SONG.DAT", dm1DataDir);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+    }
+    if (dataRoot && homeBuf && homeBufBytes > 0) {
+        int n = snprintf(homeBuf, homeBufBytes, "%s/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/SONG.DAT", dataRoot);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/dm1/fmtowns_iso/DATA/SONG.DAT", dataRoot);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+    }
     home = getenv("HOME");
     if (home && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1/SONG.DAT", home);
@@ -690,9 +706,25 @@ static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
 
 static const char* m11_find_graphics_dat_path(char* homeBuf, size_t homeBufBytes) {
     const char* envPath = getenv("FIRESTAFF_GRAPHICS_DAT");
+    const char* dm1DataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* dataRoot = getenv("FIRESTAFF_DATA");
     const char* home;
     if (m11_file_exists(envPath)) return envPath;
     if (m11_file_exists("GRAPHICS.DAT")) return "GRAPHICS.DAT";
+    if (dm1DataDir && homeBuf && homeBufBytes > 0) {
+        int n = snprintf(homeBuf, homeBufBytes, "%s/DATA/GRAPHICS.DAT", dm1DataDir);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/GRAPHICS.DAT", dm1DataDir);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/fmtowns_iso/DATA/GRAPHICS.DAT", dm1DataDir);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+    }
+    if (dataRoot && homeBuf && homeBufBytes > 0) {
+        int n = snprintf(homeBuf, homeBufBytes, "%s/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/GRAPHICS.DAT", dataRoot);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        n = snprintf(homeBuf, homeBufBytes, "%s/dm1/fmtowns_iso/DATA/GRAPHICS.DAT", dataRoot);
+        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+    }
     home = getenv("HOME");
     if (home && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
@@ -1283,7 +1315,9 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
     }
     emitted = M11_Audio_EmitSoundIndex(state, soundIndex,
                                        M11_AUDIO_MARKER_NONE);
-    state->lastMarker = M11_AUDIO_MARKER_NONE;
+    /* Source-owned playback does not emit a procedural marker.  Keep the
+     * marker field as the last marker event; callers use it to distinguish
+     * marker history from the independent source sound index. */
     return emitted;
 }
 
