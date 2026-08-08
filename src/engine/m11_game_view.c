@@ -1953,8 +1953,14 @@ static int m11_dm2_apply_boot_runtime_receipt(
              receipt->dungeon_path);
     state->dm2BootProfile = receipt->profile;
     state->dm2World = receipt->dm2_state;
-    state->dm2State.level_loaded = 1;
-    m11_sync_dm2_state_from_runtime(state);
+    /* READ_DUNGEON_STRUCTURE has mounted verified source data at this point,
+     * but SHOW_MENU_SCREEN runs before GAME_LOAD has created or restored a
+     * source party.  Do not publish the File_header start word as a live
+     * level/party merely because the parser retained it: callers use
+     * level_loaded to decide whether gameplay input, HUD state and saves are
+     * admissible.  SKProject SKWINSPX SkWinCore.cpp::GAME_LOAD reaches
+     * SELECT_CHAMPION only after this startup-menu boundary. */
+    state->dm2State.level_loaded = 0;
     if (m11_dm2_is_fmtowns_profile(receipt->profile) &&
         !m11_dm2_bind_fmtowns_swoosh(state)) {
         /* HME-242 must not fall through into the PC static title if its

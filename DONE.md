@@ -184,6 +184,18 @@
   speglarna och deras DYN4-nycklar är oförändrade. Ingen DYN4-laddning,
   hero- eller partyinitiering tillåts ännu.
 
+# DM2 GAME_LOAD-spärr i M11 (2026-08-08)
+
+- ✅ M11 skiljer nu den hashverifierade, parsade `DUNGEON.DAT`-strukturen från
+  en levande DM2-session. Före originalets `GAME_LOAD` och championval är
+  `level_loaded` avstängd och ingen File_header-position läcker som en
+  spelbar partyposition till M11 eller boot-proben.
+- ✅ Startmenyn kan fortsatt använda samma verkliga PC-DOS-data, men saknar
+  därmed en möjlig väg till HUD, input eller sparning med en tom eller
+  syntetisk party.
+- ✅ Verifierat med den lokala, hashverifierade PC-DOS-kopian samt
+  startmeny- och M12/M11-handoff-regressionerna.
+
 # DM2 File_header-teleporterbitfält (2026-08-08)
 
 - ✅ Rättade PC-DOS DB1-avkodningen så att räckvidd, ljud och rotation läses

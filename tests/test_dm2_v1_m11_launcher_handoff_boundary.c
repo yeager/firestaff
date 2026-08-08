@@ -394,8 +394,8 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                 "real DM2 M12 handoff owns a DM2 boot profile");
     expect_true(view.dm2World != NULL,
                 "real DM2 M12 handoff owns a DM2 world pointer");
-    expect_true(view.dm2State.level_loaded == 1,
-                "real DM2 M12 handoff loads the first DM2 level");
+    expect_true(view.dm2State.level_loaded == 0,
+                "real DM2 M12 handoff mounts source data but does not claim a live level before GAME_LOAD");
     expect_true(view.dm2State.startup_menu_active == 1,
                 "real DM2 M12 handoff stops at the DM2 startup menu");
     expect_true(view.dm2FmtownsTitleBound == 0 &&

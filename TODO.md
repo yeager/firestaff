@@ -32,6 +32,8 @@
   single live owner proves File_header maps, record pools and links. Replace
   its test-only map bridge with that real runtime owner, then recover the
   complete original tile/actuator/sensor resource queue before calling DYN4.
+  The M11 boundary now keeps a parsed File_header world out of
+  `level_loaded` and party publication until that GAME_LOAD owner exists.
 
 - **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
   ground-stack/`w0` chains are now source-validated and all 44 canonical maps

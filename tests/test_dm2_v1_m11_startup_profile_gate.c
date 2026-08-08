@@ -1285,24 +1285,22 @@ int main(void) {
                 "M11 stores a DM2 boot profile");
     expect_true(view.dm2World != NULL,
                 "M11 stores the DM2 V1 world pointer");
-    expect_true(view.dm2State.level_loaded == 1,
-                "M11 DM2 mirror state reports level loaded");
+    expect_true(view.dm2State.level_loaded == 0,
+                "M11 DM2 keeps parsed File_header data out of live gameplay before GAME_LOAD");
     expect_true(dm2_v1_sound_playback_backend_bound(),
                 "M11 DM2 binds playback only after the verified boot profile");
     /* File_header::w8 is 0x0101, directly yielding the map-0 (1,8,0)
      * pose. Do not retain the former +10 fixture word as an entrance.
      * SKProject SkWinCore.cpp:39936-39943. */
-    expect_true(view.dm2State.party_x == 1 && view.dm2State.party_y == 8 &&
-                view.dm2State.party_dir == 0,
-                "M11 DM2 mirror state reports the File_header boot pose");
-    expect_true(view.dm2State.tick_count == 0,
-                "M11 DM2 mirror state starts at tick zero");
+    expect_true(view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
+                view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0,
+                "M11 DM2 does not expose a source pose as a live party before GAME_LOAD");
     expect_true(dm2_v1_runtime_has_dungeon_data() == 1,
                 "DM2 V1 runtime singleton has the boot profile");
     expect_true(dm2_v1_runtime_get_party_x() == 1 &&
                 dm2_v1_runtime_get_party_y() == 8 &&
                 dm2_v1_runtime_get_party_dir() == 0,
-                "DM2 V1 runtime accessors report the File_header boot pose");
+                "DM2 V1 parser retains the File_header pose without publishing a live M11 party");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
     expect_true(view.dm2State.startup_menu_active == 1,
