@@ -56493,7 +56493,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                  * DM2_SHOW_CREDITS. */
                 startup_menu_drawn = m11_draw_dm2_startup_credits(
                     state, framebuffer, framebufferWidth, framebufferHeight);
-            } else if (state->dm2FmtownsTitleFinished) {
+            } else if (m11_dm2_is_fmtowns_profile(
+                           (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+                       state->dm2FmtownsTitleFinished) {
                 startup_menu_drawn = m11_dm2_present_fmtowns_skull_menu(
                     state, framebuffer, framebufferWidth, framebufferHeight);
             } else {

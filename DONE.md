@@ -1625,6 +1625,12 @@
   alla tre källströmmarna och Phase A passerar. Amiga `SD`/`SO`-ljud är
   medvetet kvar som nästa riktiga mixeruppgift.
 
+- ✅ Amiga TITL:s sista bild lämnar nu M11:s FM Towns-exklusiva
+  `SKULL.EXP`-spärr. Den verkliga Amiga-menyn kan ta emot originalets New
+  Game-händelse först efter SWSH:s 19 och TITL:s 225 källbildsteg, utan att
+  skapa en syntetisk party. Opt-in-provet använder endast användarens
+  ZIP → ADF → LZX-media i RAM.
+
 # DM2 M11:s party- och miljögräns (2026-08-08)
 
 - ✅ Produktionsverifieraren avvisar nu varje M11-anrop till de

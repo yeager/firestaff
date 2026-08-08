@@ -8931,6 +8931,16 @@ static uint16_t dm2_v1_boot_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+static uint16_t dm2_v1_boot_be16(const uint8_t *p)
+{
+    return ((uint16_t)p[0] << 8) | (uint16_t)p[1];
+}
+
+static uint16_t dm2_v1_boot_rect16(const uint8_t *p, int big_endian)
+{
+    return big_endian ? dm2_v1_boot_be16(p) : dm2_v1_boot_le16(p);
+}
+
 static int dm2_v1_boot_rect_raw(const uint8_t *raw, size_t raw_size,
                                 uint16_t rect_id, DM2_V1_InterfaceRect *out)
 {
@@ -9003,15 +9013,28 @@ static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw, size_t raw_size
 {
     uint16_t groups;
     size_t pos;
+    int big_endian;
 
-    if (!raw || !out || raw_size < 4u || dm2_v1_boot_le16(raw) != 0xfc0du ||
-        rect_id == 0u) return 0;
-    groups = dm2_v1_boot_le16(raw + 2u);
+    if (!raw || !out || raw_size < 4u || rect_id == 0u) return 0;
+    /* c_xrect.cpp consumes c_rinfo words in the selected GDAT byte order.
+     * Amiga GRAPHICS.DAT carries the very same RAW4 rectangle graph in
+     * 68000 order.  Detect its source header here rather than treating the
+     * record as a PC-only little-endian table or installing host geometry. */
+    if (dm2_v1_boot_le16(raw) == 0xfc0du) {
+        big_endian = 0;
+    } else if (dm2_v1_boot_be16(raw) == 0xfc0du) {
+        big_endian = 1;
+    } else {
+        return 0;
+    }
+    groups = dm2_v1_boot_rect16(raw + 2u, big_endian);
     if (groups == 0u || 4u + (size_t)groups * 4u > raw_size) return 0;
     pos = 4u + (size_t)groups * 4u;
     for (uint16_t group = 0; group < groups; ++group) {
-        uint16_t first = dm2_v1_boot_le16(raw + 4u + (size_t)group * 4u);
-        uint16_t last = dm2_v1_boot_le16(raw + 6u + (size_t)group * 4u);
+        uint16_t first = dm2_v1_boot_rect16(
+            raw + 4u + (size_t)group * 4u, big_endian);
+        uint16_t last = dm2_v1_boot_rect16(
+            raw + 6u + (size_t)group * 4u, big_endian);
         size_t count;
         uint8_t mask = 0x1fu;
         uint16_t x0;
@@ -9025,15 +9048,15 @@ static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw, size_t raw_size
             pos += count * 8u;
             continue;
         }
-        x0 = dm2_v1_boot_le16(raw + pos);
-        y0 = dm2_v1_boot_le16(raw + pos + 2u);
+        x0 = dm2_v1_boot_rect16(raw + pos, big_endian);
+        y0 = dm2_v1_boot_rect16(raw + pos + 2u, big_endian);
         for (size_t i = 0u; i < count; ++i) {
             const uint8_t *candidate = raw + pos + i * 8u;
-            int16_t width = (int16_t)dm2_v1_boot_le16(candidate + 4u);
-            int16_t height = (int16_t)dm2_v1_boot_le16(candidate + 6u);
-            if (dm2_v1_boot_le16(candidate) != x0) mask &= (uint8_t)~0x02u;
-            if (dm2_v1_boot_le16(candidate + 2u) != y0) mask &= (uint8_t)~0x01u;
-            if (dm2_v1_boot_le16(candidate + 2u) > 0xffu) mask &= (uint8_t)~0x04u;
+            int16_t width = (int16_t)dm2_v1_boot_rect16(candidate + 4u, big_endian);
+            int16_t height = (int16_t)dm2_v1_boot_rect16(candidate + 6u, big_endian);
+            if (dm2_v1_boot_rect16(candidate, big_endian) != x0) mask &= (uint8_t)~0x02u;
+            if (dm2_v1_boot_rect16(candidate + 2u, big_endian) != y0) mask &= (uint8_t)~0x01u;
+            if (dm2_v1_boot_rect16(candidate + 2u, big_endian) > 0xffu) mask &= (uint8_t)~0x04u;
             if (width < 0 || width > 0xff || height < 0 || height > 0xff)
                 mask &= (uint8_t)~0x10u;
             if (width < -128 || width > 127 || height < -128 || height > 127)
@@ -9043,10 +9066,10 @@ static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw, size_t raw_size
         row = raw + pos + (size_t)(rect_id - first) * 8u;
         out->x = (mask & 0x04u) ? (int)row[0] :
                  ((mask & 0x02u) ? (int)(uint8_t)x0 :
-                  (int)(int16_t)dm2_v1_boot_le16(row));
+                  (int)(int16_t)dm2_v1_boot_rect16(row, big_endian));
         out->y = (mask & 0x04u) ? (int)row[2] :
                  ((mask & 0x01u) ? (int)(int16_t)y0 :
-                  (int)(int16_t)dm2_v1_boot_le16(row + 2u));
+                  (int)(int16_t)dm2_v1_boot_rect16(row + 2u, big_endian));
         if (mask & 0x08u) {
             out->w = (int)(int8_t)row[4];
             out->h = (int)(int8_t)row[6];
@@ -9054,8 +9077,8 @@ static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw, size_t raw_size
             out->w = (int)row[4];
             out->h = (int)row[6];
         } else {
-            out->w = (int)(int16_t)dm2_v1_boot_le16(row + 4u);
-            out->h = (int)(int16_t)dm2_v1_boot_le16(row + 6u);
+            out->w = (int)(int16_t)dm2_v1_boot_rect16(row + 4u, big_endian);
+            out->h = (int)(int16_t)dm2_v1_boot_rect16(row + 6u, big_endian);
         }
         return 1;
     }

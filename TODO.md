@@ -13,9 +13,15 @@
   råa SDL-kön före varje källbild och ger PAL8-sidan till en M11-mottagare
   enligt MVE-klockan. BootProfile äger nu en hashverifierad INTRO-buffert i
   RAM från den valda IBMIOP-installationen och exponerar den endast genom en
-  läsbar söm. Återstår: IBMIOP-startflödet måste använda mottagaren för verklig
-  `M11_Render_SetIndexedPaletteRgb6`/`M11_Render_PresentIndexed`-presentation.
-  Ljudtid får inte härledas ur paketlängd eller värdlatens.
+  läsbar söm. DOS-startflödet matar nu den verkliga indexed-ytan och spärrar
+  GDAT tills sista MVE-bilden har presenterats och M11 har stängt sin kö.
+  Återstår: originalets fullständiga IBMIOP-avbrotts- och avbrytningsvägar;
+  ljudtid får inte härledas ur paketlängd eller värdlatens.
+
+- 🔧 DM2 Amiga-start: den äkta SWSH → TITL-bildkedjan går nu vidare till
+  Amiga-GDAT-menyn efter sista TITL-bilden. FM Towns särskilda SKULL.EXP-grind
+  får inte längre fånga Amiga-input. Källägda ENDA och Amiga SD/SO-ljud väntar
+  fortfarande på den fullständiga avsluts- respektive mixerkedjan.
 
 - 🔧 Nexus uncaptured text/audio receipt boundary (2026-08-08): script
   `DISPLAY_MESSAGE` no longer copies raw TEXT4/TABL bytes into a host C
