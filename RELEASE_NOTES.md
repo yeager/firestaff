@@ -1,12 +1,22 @@
 # Firestaff v3.0.305
 
+## Current Nexus provenance clarification
+
+Äldre releaseposter nedan beskriver stängda byteformat-, tabell- eller
+ABI-receipts. De ska inte läsas som att Saturns runtime-konsumenter är
+verifierade: ITEM-loot/use, MENU/TEXT/PRS3-presentation, VDP1/VDP2
+komposition och SLEV/MAP/SAL→SDDRVS-event/playback är fortfarande
+capture-gated enligt `TODO.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
+
 ## Changed
 
-- Promote Nexus gameplay modules to production: combat, magic, experience,
-  rest/status, action timers/doors/traps/projectiles, light, and spell effects
-  are now real implementations linked into `firestaff_nexus` (replacing noop
-  adapters). Remaining noops: rasterizer, saturn font, HUD, lighting,
-  smooth movement, touch (need VDP1/Saturn evidence).
+- Promote source-backed Nexus gameplay lookup/algorithm modules to the
+  production ABI: combat, magic, experience, rest/status, action timers,
+  doors/traps/projectiles, light, and spell effects are available for their
+  verified data and contract surfaces. This does not claim Saturn runtime
+  parity: the event/action owners, SLEV/SDDRVS side effects and VDP1/VDP2
+  consumers remain capture-gated. Remaining presentation no-ops include the
+  rasterizer, Saturn font, HUD, lighting, smooth movement and touch paths.
 - Update production boundary tests to verify real behavior instead of noop
   assertions.
 - Fix `nexus_v1_availability_profile_gate` hash count from 2 to 4 (English

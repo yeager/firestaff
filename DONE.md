@@ -1,3 +1,19 @@
+# Nexus historiska releaseclaims korrigerade (2026-08-08)
+
+- ✅ `RELEASE_NOTES.md` skiljer nu uttryckligen äldre format-/ABI-receipts
+  från dagens Saturn-runtime-gates. ITEM-use/loot, MENU/TEXT/PRS3, VDP1/VDP2
+  och SLEV/MAP/SAL→SDDRVS-playback kan inte längre misstolkas som färdig
+  runtime-parity.
+
+# Nexus public status claim audit (2026-08-08)
+
+- ✅ Korrigerade den aktuella releaseformuleringen så source-backed
+  combat/magic/experience/light- och actionmoduler inte framställs som
+  Saturn-runtime-parity. Den anger nu uttryckligen att event-/SLEV-/SDDRVS-
+  side effects samt VDP1/VDP2-konsumenter är capture-gated.
+- ✅ README:s befintliga status kvarstår: DM Nexus är inte en färdig spelbar
+  release.
+
 # Nexus DM/TM VDP-literal disassembly (2026-08-08)
 
 - ✅ `analyze_nexus_tm_bin_vdp_owner.py` accepterar nu båda hashverifierade
