@@ -1309,6 +1309,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_V1_RecordPoolSet pools;
     DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_SksaveDirectRootReceipt roots;
+    DM2_V1_Hero heroes[DM2_MAX_HEROES];
     DM2_V1_SaveTimerRecord timers[DM2_V1_SAVE_TIMER_MAX];
     int16_t timer_indices[DM2_V1_SAVE_TIMER_MAX];
     DM2_V1_OriginalRawTimerStreamReceipt timer_stream;
@@ -1329,6 +1330,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     memset(&pools, 0, sizeof(pools));
     memset(&map_owner, 0, sizeof(map_owner));
     memset(&roots, 0, sizeof(roots));
+    memset(heroes, 0, sizeof(heroes));
     memset(&timer_stream, 0, sizeof(timer_stream));
     memset(&context, 0, sizeof(context));
     memset(&map_context, 0, sizeof(map_context));
@@ -1345,6 +1347,8 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     if (!raw_body || !state_receipt || !state_receipt->valid || !savegamew7 ||
         !query_creature_ai_flags ||
         state_receipt->timer_count > DM2_V1_SAVE_TIMER_MAX ||
+        !dm2_v1_original_raw_sksave_materialize_heroes(
+            raw_body, raw_body_size, state_receipt, heroes, DM2_MAX_HEROES) ||
         !dm2_v1_record_pool_set_init_from_raw_sksave(
             &pools, raw_body, raw_body_size, &state_receipt->dungeon) ||
         !dm2_v1_sksave_map_owner_init(
@@ -1449,6 +1453,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         sizeof(timer_free_head));
     if (out_receipt) {
         out_receipt->valid = 1;
+        out_receipt->hero_count = state_receipt->champion_count;
         out_receipt->timer_count = state_receipt->timer_count;
         out_receipt->special_chain_count = chains_read;
         out_receipt->maps_loaded = (uint16_t)dungeon_receipt.maps_loaded;
@@ -1464,6 +1469,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         out_receipt->timer_free_head = timer_free_head;
         out_receipt->continuation_hash = context.continuation_hash;
         out_receipt->timer_hash = timer_stream.raw_hash;
+        out_receipt->heroes_hash = state_receipt->heroes_hash;
         out_receipt->timer_queue_hash = timer_queue_hash;
         out_receipt->record_hash = context.record_hash;
         out_receipt->next_stream_offset = session.reader.position;

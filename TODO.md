@@ -148,8 +148,9 @@
   A boolean or a parsed save receipt alone must never make a game playable.
   `c_hero` materialiseras nu byte för byte från samma autentiserade,
   kontinuerliga SUPPRESS-ström och varje post hashverifieras mot kvittot.
-  Den temporära arrayen är ännu inte en live party-ägare; knyt den först till
-  den färdiga kart-, possession-, timer- och actuatortransaktionen.
+  Preflighten för kart-, possession- och timerkedjor vägrar fortsätta utan
+  dessa poster. Den temporära arrayen är ännu inte en live party-ägare; knyt
+  den först till den färdiga actuator- och post-load-transaktionen.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem

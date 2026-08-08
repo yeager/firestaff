@@ -957,6 +957,8 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                 savegamew7, inventory_query_creature_ai_flags, NULL,
                 &special_timers);
         CHECK((special_ok && special_timers.valid &&
+               special_timers.hero_count == state_receipt.champion_count &&
+               special_timers.heroes_hash == state_receipt.heroes_hash &&
                special_timers.timer_count == state_receipt.timer_count &&
                special_timers.timer_hash != 0u &&
                special_timers.maps_loaded == receipt.map_count &&

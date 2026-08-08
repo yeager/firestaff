@@ -330,6 +330,7 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
  * 42-byte SKSAVE header that owns `raw_body`. */
 typedef struct {
     int valid;
+    uint16_t hero_count;
     uint16_t timer_count;
     uint16_t special_chain_count;
     uint16_t maps_loaded;
@@ -341,6 +342,7 @@ typedef struct {
     int16_t timer_queue_count;
     int16_t timer_free_head;
     uint32_t timer_hash;
+    uint32_t heroes_hash;
     uint32_t timer_queue_hash;
     uint32_t record_hash;
     uint32_t continuation_hash;

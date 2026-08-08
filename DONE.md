@@ -9503,6 +9503,9 @@
 - ✅ Arrayen är uttryckligen temporär och kan inte publicera Resume. Den
   kopplas först när kartor, recordpooler, possessioner, timerkö och
   actuator-generator delar en komplett originalägare.
+- ✅ Samma materialisering är nu ett obligatoriskt led i den temporära
+  kart-/recordpool-/possession-/timertransaktionen. Saknas eller avviker en
+  heropost stoppas strömmen innan den kan tolkas som en senare spelsektion.
 - ✅ PC-DOS-korpusen verifierar alla åtta riktiga sparfiler; bygg,
   party-layouttest och produktionsgrind passerar.
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)
