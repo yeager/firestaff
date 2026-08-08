@@ -2684,6 +2684,10 @@ level or consumer bindings.
   virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
   continue through their already authenticated in-memory buffers. PC archive
   media remains non-launchable until it has the same in-memory owner.
+  **2026-08-08 selection repair:** a loose matching FM Towns GDAT no longer
+  masks the original HME-242 ZIP when both are in one data root. The archive
+  is selected because it is the only source owner for the CUE/IMG, animation
+  streams and CDDA; no member may be materialized as a workaround.
   The callback-only `dm2_v1_anim_bootstrap` file-reader is now test-only: no
   M11/DM2 runtime consumer has authenticated an original animation stream.
   **2026-08-06 update:** HME-242's root boot corpus is now also required at

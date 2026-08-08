@@ -23,6 +23,17 @@
   `DUNGEON.DAT`. Champion activation remains correctly unavailable until the
   File_header record graph has a complete owner.
 
+# DM2 FM Towns original-media selection repair (2026-08-08)
+
+- ✅ When the data root contains both a loose FM Towns `DATA/GRAPHICS.DAT`
+  match and the original HME-242 ZIP, M12 now keeps the ZIP's CUE/IMG as the
+  selected runtime owner. The archive remains in place and is read in memory;
+  no game member is materialized to disk.
+- ✅ Verification: the real-media M12 test now passes from the shared DM2
+  data directory with the authenticated PC-English text companion. It reaches
+  the original SWOOSH, TITLE, SKULL and END startup route, native animation
+  palettes, sound events and the Japanese-to-English GDAT overlay.
+
 # CSB real-data test-path admission (2026-08-08)
 
 - ✅ Removed two developer-machine-only `/Users/bosse/...` fallbacks from the

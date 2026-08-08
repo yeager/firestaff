@@ -784,7 +784,15 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
          ++versionIndex) {
         if (strcmp(g_games[gameIndex].versions[versionIndex].versionId,
                    "fmtowns-ja") == 0 &&
-            status->versions[gameIndex][versionIndex].matched) {
+            status->versions[gameIndex][versionIndex].matched &&
+            strstr(status->versions[gameIndex][versionIndex].matchedPath,
+                   "::") != NULL) {
+            /* A previous generic hash match may name loose DATA/GRAPHICS.DAT
+             * bytes that came from an extracted HME-242 disc.  That proves
+             * the GDAT identity but does not preserve the CUE/IMG owner that
+             * supplies AUTOEXEC, the native animation streams and CDDA.
+             * Retain an already-admitted virtual archive, but continue to
+             * select the original ZIP when the only prior match is loose. */
             return 1;
         }
     }
