@@ -51,7 +51,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +   fprintf(TheronIrq2TraceRngConsumer,
 +           "rng_consumer_window sequence=%u step=%u pc=%04x physical_pc=%08x entry=%s a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x\n",
 +           TheronIrq2TraceRngWindowSequence,
-+           TheronIrq2TraceRngWindowStep++, logical_pc, PC,
++           TheronIrq2TraceRngWindowStep++, logical_pc, trace_physical_pc,
 +           logical_pc == 0x5d64 ? "5d64" :
 +           (logical_pc == 0x5d6a ? "5d6a" : "window"),
 +           reg_a, reg_x, reg_y, reg_sp, reg_p, reg_mpr0,

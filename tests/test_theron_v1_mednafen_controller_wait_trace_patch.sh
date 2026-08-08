@@ -41,6 +41,7 @@ origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generatio
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 capture_script=$repo/scripts/capture_theron_mednafen_live_trace.sh
+rng_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch
 
 if ! grep -Fq 'i:29) printf' "$capture_script" ||
    ! grep -Fq 'ii:27) printf' "$capture_script" ||
@@ -70,8 +71,11 @@ if grep -Fq '\\n' "$patch_file"; then
     exit 1
 fi
 
-if ! grep -Fq 'game_main_ram_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x target=e009 a=%02x x=%02x y=%02x' "$patch_file" ||
-   ! grep -Fq 'PC >= 0x1f0000 && PC < 0x1f8000' "$patch_file" ||
+if ! grep -Fq 'trace_regs->Regs[6 + (logical_pc >> 13)]' "$patch_file" ||
+   ! grep -Fq 'const uint32 trace_physical_pc = (trace_mpr << 13) | (logical_pc & 0x1fff)' "$patch_file" ||
+   ! grep -Fq 'game_main_ram_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x target=e009 a=%02x x=%02x y=%02x' "$patch_file" ||
+   ! grep -Fq 'trace_physical_pc >= 0x1f0000 && trace_physical_pc < 0x1f8000' "$patch_file" ||
+   grep -Fq 'if(PC >= 0x1f0000 && PC < 0x1f8000' "$patch_file" ||
    ! grep -Fq 'TheronIrq2TraceGameMainRamE009DispatchCount < 32' "$patch_file" ||
    ! grep -Fq 'MemPeek(logical_pc + 2, 1, true, true) & 0xff) == 0xe0' "$patch_file"; then
     printf 'FAIL: Mednafen patch no longer retains bounded game-main-RAM E009 control-edge evidence\n' >&2
@@ -90,6 +94,11 @@ if ! grep -Fq 'source=mednafen-pce-instrumented-input' "$input_patch_file" ||
    ! grep -Fq 'pce_input_port0 raw=%04x' "$input_patch_file" ||
    ! grep -Fq 'MDFN_de16lsb(data_ptr[0])' "$input_patch_file"; then
     printf 'FAIL: Mednafen input patch no longer retains raw port-0 evidence\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'TheronIrq2TraceRngWindowStep++, logical_pc, trace_physical_pc' "$rng_consumer_patch_file" ||
+   grep -Fq 'TheronIrq2TraceRngWindowStep++, logical_pc, PC' "$rng_consumer_patch_file"; then
+    printf 'FAIL: RNG consumer trace must use the MPR-derived physical HuC6280 PC\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file" ||

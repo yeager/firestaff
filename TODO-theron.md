@@ -7,7 +7,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔧 Inputtransporten är nu verifierad med riktiga PCE-wiremasker och lokal
   macOS-profil: Button I `Z`, Button II `X` (layout-stabila SDL-bindningar).
   Komma/punkt får bara användas när de uttryckligen finns i `mednafen.cfg`.
-  Fortsätt fånga den saknade
+  IRQ2-tracen har nu korrekt MPR-baserad fysisk PC-proveniens. Fortsätt fånga den saknade
   spelägda CD-läsningen efter de 161 autentiska Track 02-sektorerna innan
   någon RNG-, AI-, T700- eller T900-semantik aktiveras.
 

@@ -4,6 +4,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Theron's Quest
 
+### 2026-08-08 — HuC6280 runtime physical-PC provenance correction
+
+- ✅ The Mednafen IRQ2 evidence path now reconstructs the physical HuC6280
+  address from the debugger's `MPR0..MPR7` register group and the logical
+  8 KiB page. The same correction is used by the RNG-consumer trace and the
+  game-main-RAM admission gate.
+- ✅ A fresh replay capture proves the distinction on authentic media:
+  `$4644/$4667` executes at physical `0x104644/0x104667`, while copied game
+  loader code executes in `0x1fxxxx`. This is provenance only; it does not
+  promote RNG, AI, T700, T900, or later-level semantics.
+
 ### 2026-08-08 — PCE Button I/II keyboard binding
 
 - ✅ Mednafen's PCE replay masks now follow the real `PCE_GamepadIDII` wire
