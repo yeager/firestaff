@@ -9582,3 +9582,8 @@
 
 - ✅ Den aktuella externa Nexus-katalogen kör nu igenom hela `real-media`-svepet: 8/8 Nexus-testmål passerar för inventory/champion-panel, DGN face/material/mesh, SMAP och material-prober.
 - ✅ Sweep-resultatet öppnar inte någon presentation; VDP1/VDP2, FONT256-textplacering, HUD och SLEV/SAL-playback förblir capture-gated enligt de negativa runtime-receipten.
+# Nexus BPK indexed palette fallback removed (2026-08-08)
+
+- ✅ `nexus_v1_dmdf_import_bpk_material_bank()` lånar inte längre paletten från första giltiga materialyta för indexed BPK/PRS3-data.
+- ✅ Indexed ytor utan egen, källbunden CLUT förblir nu opaque/capture-gated; truecolor stored-material och riktiga BPK receipt-tester passerar.
+- ✅ Detta eliminerar en konkret syntetisk palettväg utan att öppna VDP1-upload eller rendering.

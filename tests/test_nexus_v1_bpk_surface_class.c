@@ -295,8 +295,8 @@ static void test_prs3_material_import(void) {
     make_synthetic_prs3_literal_bpk(data, sizeof(data));
     imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
                                                        &bank);
-    expect(imported >= 1 && bank.surfaces[1].valid,
-           "PRS3 decoded surface fills a DGN material slot");
+    expect(imported == 0 && !bank.surfaces[1].valid,
+           "indexed BPK surface without its own CLUT stays unpromoted");
 }
 
 static void test_truecolor_material_import(void) {
@@ -330,8 +330,8 @@ static void test_truecolor_material_import(void) {
     make_synthetic_prs3_rgb565_bpk(data, sizeof(data));
     imported = nexus_v1_dmdf_import_bpk_material_bank(data, sizeof(data),
                                                        &bank);
-    expect(imported >= 1 && bank.surfaces[1].valid,
-           "PRS3 decoded RGB565 fixture imports into material bank");
+    expect(imported == 0 && !bank.surfaces[1].valid,
+           "indexed PRS3 RGB565-tag fixture stays capture-gated");
 }
 
 static void test_material_host_route_and_category_coverage(void) {

@@ -1035,25 +1035,13 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
         }
         bpp = surface.layout.bpp;
         if (bpp == 1U) {
-            int palette_source = -1;
-            int candidate;
-            /* BPK 8bpp indices need a real CLUT already supplied by DMDF.
-             * Do not synthesize colours for an otherwise opaque Saturn surface. */
-            for (candidate = 0; candidate < NEXUS_DMDF_MATERIAL_COUNT; ++candidate) {
-                if (out->surfaces[candidate].valid) {
-                    palette_source = candidate;
-                    break;
-                }
-            }
-            if (palette_source < 0) { free(pixels); continue; }
-            memcpy(out->surfaces[index].palette,
-                   out->surfaces[palette_source].palette,
-                   sizeof(out->surfaces[index].palette));
-            out->surfaces[index].pixels = pixels;
-            out->surfaces[index].width = (int)surface.width;
-            out->surfaces[index].height = (int)surface.height;
-            out->surfaces[index].from_bpk = 1;
-            out->surfaces[index].valid = 1;
+            /* BPK indexed bytes carry indices, not an authenticated Saturn
+             * CLUT binding.  Borrowing the first valid palette from another
+             * material was a host-only fallback and could color a real
+             * surface with unrelated source data.  Keep the surface opaque
+             * until DMDF/VDP1 capture supplies its exact palette owner. */
+            free(pixels);
+            continue;
         } else if (!bpk_material_surface_from_truecolor(
                        pixels, &surface, &out->surfaces[index])) {
             free(pixels);
