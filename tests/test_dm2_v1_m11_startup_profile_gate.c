@@ -1544,6 +1544,16 @@ int main(void) {
                         source_transaction.entrance.map &&
                     source_transaction.entrance_map.map_data_hash ==
                         source_transaction.entrance.map_data_hash &&
+                    source_transaction.entrance_scene.committed &&
+                    source_transaction.entrance_scene.record_count ==
+                        source_transaction.entrance_map.record_count &&
+                    source_transaction.entrance_tiles.committed &&
+                    source_transaction.entrance_tiles.tile_count ==
+                        source_transaction.entrance_map.width *
+                        source_transaction.entrance_map.height &&
+                    source_transaction.entrance_objects.committed &&
+                    source_transaction.entrance_objects.object_record_reads ==
+                        source_transaction.entrance_objects.object_record_count &&
                     source_transaction.dyn4_roster.valid &&
                     source_transaction.dyn4_roster.selector_count ==
                         champion_mirrors.mirror_count &&

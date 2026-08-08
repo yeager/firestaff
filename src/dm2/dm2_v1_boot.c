@@ -1410,6 +1410,24 @@ int dm2_v1_boot_new_game_transaction_receipt(
         candidate.entrance_map.map_data_hash != candidate.entrance.map_data_hash ||
         candidate.entrance_map.record_count <
             candidate.entrance.entrance_record_count ||
+        !dm2_v1_boot_file_header_map_scene_census(
+            profile, candidate.entrance.map, &candidate.entrance_scene) ||
+        !candidate.entrance_scene.committed ||
+        !candidate.entrance_scene.incomplete_world ||
+        candidate.entrance_scene.record_count !=
+            candidate.entrance_map.record_count ||
+        !dm2_v1_boot_file_header_map_tile_census(
+            profile, candidate.entrance.map, &candidate.entrance_tiles) ||
+        !candidate.entrance_tiles.committed ||
+        !candidate.entrance_tiles.incomplete_world ||
+        candidate.entrance_tiles.tile_count !=
+            candidate.entrance_map.width * candidate.entrance_map.height ||
+        !dm2_v1_boot_file_header_map_objects_receipt(
+            profile, candidate.entrance.map, &candidate.entrance_objects) ||
+        !candidate.entrance_objects.committed ||
+        !candidate.entrance_objects.incomplete_world ||
+        candidate.entrance_objects.object_record_reads !=
+            candidate.entrance_objects.object_record_count ||
         !dm2_v1_boot_champion_dyn4_roster_receipt(
             profile, &candidate.dyn4_roster) ||
         !candidate.dyn4_roster.valid ||
@@ -1444,6 +1462,29 @@ int dm2_v1_boot_new_game_transaction_receipt(
         candidate.transaction_hash, (uint32_t)candidate.entrance_map.root_count);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, (uint32_t)candidate.entrance_map.record_count);
+    for (int type = 0; type < 16; ++type) {
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash,
+            (uint32_t)candidate.entrance_scene.type_count[type]);
+    }
+    for (int type = 0; type < 8; ++type) {
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash,
+            (uint32_t)candidate.entrance_tiles.tile_type_count[type]);
+    }
+    for (int object = 0;
+         object < candidate.entrance_objects.object_record_count; ++object) {
+        const DM2_V1_FileHeaderObjectRecord *source =
+            &candidate.entrance_objects.objects[object];
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->object_id);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->type);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, (uint32_t)source->record_offset);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, (uint32_t)source->record_size);
+    }
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, candidate.dyn4_roster.selector_roster_hash);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -1722,6 +1763,20 @@ int dm2_v1_boot_file_header_map_tile_census(
         return 0;
     dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
     return dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
+        dungeon, map, out_receipt);
+}
+
+int dm2_v1_boot_file_header_map_objects_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeObjectReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    return dm2_v1_dungeon_collect_file_header_runtime_map_objects(
         dungeon, map, out_receipt);
 }
 

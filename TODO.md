@@ -8,11 +8,12 @@
   utan att uppfinna inventory; klickad formationsruta hålls separat från
   DB3-spegelns orientering enligt originalets inventoryfilter. `SELECT_CHAMPION`
   behåller originalets recordreferens och gör inte `CUT_RECORD_FROM`.
-  Entréens File_header-karta, hela champion-DYN4-rosterkön, den klickordnade
-  partyreceipten och possessions är nu ett gemensamt, läsande transaktionskvitto
-  från samma hashverifierade medium. Nästa atomära ägare måste därför bevara
-  den delade recordägaren genom bonus- och handcontainertransaktionen, timerkö
-  och aktuatorgenerator, och först därefter publicera party, HUD och viewport.
+  Entréens File_header-karta, scenrekord, tilecensus, DB5–DB15-objekt,
+  hela champion-DYN4-rosterkön, den klickordnade partyreceipten och possessions
+  är nu ett gemensamt, läsande transaktionskvitto från samma hashverifierade
+  medium. Nästa atomära ägare måste därför bevara den delade recordägaren genom
+  bonus- och handcontainertransaktionen, timerkö och aktuatorgenerator, och
+  först därefter publicera party, HUD och viewport.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

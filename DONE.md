@@ -13,10 +13,10 @@
 # DM2 New Game transaktionsgrund (2026-08-08)
 
 - ✅ Ett gemensamt, läsande GAME_LOAD-kvitto binder nu den verifierade
-  File_header-entrén, hela `DM2_LOAD_LOCALLEVEL_DYN`-championrosterkön,
-  användarens autentiska spegelval, c_hero-projektionen och de
-  File_header-ägda startobjekten. Alla komponenter måste komma från samma
-  hashverifierade GRAPHICS.DAT/DUNGEON.DAT-par.
+  File_header-entrén med dess scenrekord, tilecensus och DB5–DB15-objekt,
+  hela `DM2_LOAD_LOCALLEVEL_DYN`-championrosterkön, användarens autentiska
+  spegelval, c_hero-projektionen och de File_header-ägda startobjekten. Alla
+  komponenter måste komma från samma hashverifierade GRAPHICS.DAT/DUNGEON.DAT-par.
 - ✅ Kvittoflödet är verifierat mot den verkliga PC-DOS-korpusen och lämnar
   både tickräknaren och `source_game_load_session_ready` avstängda. Det kan
   alltså inte starta ett syntetiskt spel; timerkö, handcontainrar,

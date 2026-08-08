@@ -337,9 +337,10 @@ typedef struct {
 /* One read-only, all-or-nothing projection of the New Game branch of
  * DM2_GAME_LOAD.  It deliberately combines only facts that originate from
  * the same hash-admitted File_header/GDAT pair: the map-0 entrance chain,
- * LOAD_LOCALLEVEL_DYN's complete champion selector roster, the clicked
- * mirror order, revived c_hero bytes and the still File_header-owned item
- * chains.  It is not a live session: record moves, item bonuses, hand
+ * its complete scene/tile/object census, LOAD_LOCALLEVEL_DYN's complete
+ * champion selector roster, the clicked mirror order, revived c_hero bytes
+ * and the still File_header-owned item chains. It is not a live session:
+ * record moves, item bonuses, hand
  * containers, timers and the actuator generator must be committed by the
  * later source-shaped owner in one mutation transaction. */
 typedef struct {
@@ -347,6 +348,9 @@ typedef struct {
     int incomplete_game_load;
     int hero_count;
     DM2_V1_FileHeaderRuntimeMapReceipt entrance_map;
+    DM2_V1_FileHeaderRuntimeSceneCensus entrance_scene;
+    DM2_V1_FileHeaderRuntimeTileCensus entrance_tiles;
+    DM2_V1_FileHeaderRuntimeObjectReceipt entrance_objects;
     DM2_V1_BootNewGameEntranceReceipt entrance;
     DM2_V1_BootChampionDyn4RosterReceipt dyn4_roster;
     DM2_V1_BootNewGamePartyReceipt party;
@@ -1734,6 +1738,9 @@ int dm2_v1_boot_file_header_map_scene_census(
 int dm2_v1_boot_file_header_map_tile_census(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeTileCensus *out_receipt);
+int dm2_v1_boot_file_header_map_objects_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeObjectReceipt *out_receipt);
 
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps
