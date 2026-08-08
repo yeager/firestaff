@@ -1227,6 +1227,35 @@ int main(void) {
         csb_v1_boot_cleanup(&preflight);
         return g_failures == 0 ? 0 : 1;
     }
+    /* This gate exercises the PC 3.4 M11 entrance contract.  The shared
+     * CSB data directory may contain a verified FM-Towns pair, but that
+     * variant has different startup media and must not be presented as a
+     * PC34 source.  Leave the real-data gate open until a matching PC34
+     * package is installed instead of producing hundreds of misleading
+     * parity failures against the wrong port. */
+    if (preflight.variant_id != CSB_V1_VARIANT_PC34_EN) {
+        printf("skip: verified CSB profile is variant %d, not PC34\n",
+               (int)preflight.variant_id);
+        csb_v1_boot_cleanup(&preflight);
+        return g_failures == 0 ? 0 : 1;
+    }
+    {
+        char direct_graphics[560];
+        char direct_dungeon[560];
+        struct stat graphics_stat;
+        struct stat dungeon_stat;
+        snprintf(direct_graphics, sizeof(direct_graphics), "%s%sGRAPHICS.DAT",
+                 data_dir, TEST_PATH_SEP);
+        snprintf(direct_dungeon, sizeof(direct_dungeon), "%s%sDUNGEON.DAT",
+                 data_dir, TEST_PATH_SEP);
+        if (stat(direct_graphics, &graphics_stat) != 0 ||
+            stat(direct_dungeon, &dungeon_stat) != 0) {
+            printf("skip: PC34 gate needs a loose GRAPHICS.DAT/DUNGEON.DAT pair at %s\n",
+                   data_dir);
+            csb_v1_boot_cleanup(&preflight);
+            return g_failures == 0 ? 0 : 1;
+        }
+    }
     csb_v1_boot_cleanup(&preflight);
 
 #ifdef _WIN32

@@ -97,7 +97,7 @@ int fs_bitmap_proof_run(const char *data_dir, const char *output_path) {
 int main(int argc, char **argv) {
     if (argc < 3) {
         printf("Usage: %s DATA_DIR OUTPUT.ppm\n", argv[0]);
-        printf("Example: %s ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA wall_proof.ppm\n", argv[0]);
+        printf("Example: %s ~/.firestaff/data/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA wall_proof.ppm\n", argv[0]);
         return 1;
     }
     return fs_bitmap_proof_run(argv[1], argv[2]);

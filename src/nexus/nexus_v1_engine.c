@@ -4522,7 +4522,6 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     uint8_t *map_data;
     const char *canonical_md5;
     int loaded_bytes_canonical;
-    Nexus_V1_DungeonStartReceipt dungeon_start;
 
     if (!engine || level < 0 || level >= NEXUS_MAX_LEVELS) return -1;
     /* A reload may replace the same numeric level with fresh source bytes.

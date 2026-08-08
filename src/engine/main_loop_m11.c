@@ -2246,7 +2246,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* dm1MediaReceipt) {
     const M11_AssetSlot* titleGraphic;
     unsigned char* framebuffer;
-    V1_TitleFrontendSourceTiming timing;
     M11_AudioState titleAudio;
     int titleAudioInitialized = 0;
     int titlePalette = -1;
@@ -2258,7 +2257,6 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     DM1_V1_StartupTitlePresentationCommand_PC34 command;
     char titleDatPath[FSP_PATH_MAX];
     const char* titleDatProvenancePath = NULL;
-    int hasDm1Media;
 
     if (outPlayedAnyFrame) {
         *outPlayedAnyFrame = 0;
@@ -2293,16 +2291,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     if (!framebuffer) {
         return 0;
     }
-    timing = V1_TitleFrontend_GetSourceTimingEvidence();
     memset(&dm1Media, 0, sizeof(dm1Media));
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
-        hasDm1Media = 1;
     } else {
-        hasDm1Media =
-            dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
-                "dm1",
-                &dm1Media);
+        (void)dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+            "dm1", &dm1Media);
     }
 
     memset(&titleAudio, 0, sizeof(titleAudio));
@@ -2514,8 +2508,8 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
         fprintf(stderr,
                 "Firestaff V1 original TITLE intro skipped: no TITLE animation file "
                 "or GRAPHICS.DAT C001 title graphic found; set FIRESTAFF_TITLE_DAT or install "
-                "the canonical original-data anchor at "
-                "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
+                "the original TITLE file under FIRESTAFF_DM1_DATA_DIR or "
+                "$HOME/.firestaff/data/dm1.\n");
         return;
     }
     packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);

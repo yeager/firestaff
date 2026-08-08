@@ -63,7 +63,6 @@ void fs_cli_print_help(const char *prog) {
     printf("Examples:\n");
     printf("  %s dm1 --v21 --fullscreen --lang sv\n", prog);
     printf("  %s csb --v1 --scale 4\n", prog);
-    printf("  %s csb --v1 --scale 4\n", prog);
     printf("  %s dm2 --v22 --load 3\n", prog);
     printf("  %s --list-saves\n", prog);
 }
@@ -74,7 +73,7 @@ static int match_game(const char *arg) {
     if (strcmp(arg, "csb") == 0 || strcmp(arg, "chaos") == 0) return FS_GAME_CSB;
     if (strcmp(arg, "dm2") == 0 || strcmp(arg, "skullkeep") == 0) return FS_GAME_DM2;
     if (strcmp(arg, "nexus") == 0) return FS_GAME_NEXUS;
-    if (strcmp(arg, "theron") == 0 || strcmp(arg, "therons-quest") == 0) return 5; /* FS_GAME_THERON - placeholder */
+    if (strcmp(arg, "theron") == 0 || strcmp(arg, "therons-quest") == 0) return FS_GAME_THERON;
     return -1;
 }
 
