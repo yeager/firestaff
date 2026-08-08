@@ -217,6 +217,12 @@ typedef struct {
     int counter_records_mutated;
     int counter_messages_queued;
     uint32_t private_counter_hash;
+    /* RELAY_1/RELAY_3 have no independent game-state mutation: their source
+     * effect is a delayed 0x04 message.  The message stays in this owner's
+     * dynamic c_tim heap until a fully-owned target family can consume it. */
+    int relay_actuators_seen;
+    int relay_messages_queued;
+    uint32_t private_relay_hash;
     uint8_t tile_state_before;
     uint8_t tile_state_after;
     uint32_t private_text_visibility_hash;
@@ -316,7 +322,9 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
  * before that same DB2 atom; their opening path stays blocked because it
  * requires DM2_ADVANCE_TILES_TIME. A complete direction-matching DB3 COUNTER
  * chain on class 0 or 1 can also update its source Data word and queue its
- * exact private 0x04 continuation. Other class 0, 4 and 6 families remain
+ * exact private 0x04 continuation. A complete RELAY_1/RELAY_3 chain can
+ * likewise retain its source-gated delayed 0x04 continuation. Other class
+ * 0, 4 and 6 families remain
  * rejected without mutation rather than applying an incomplete
  * wall/door/trick-wall fragment.
  */

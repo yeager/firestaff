@@ -378,6 +378,15 @@
   felaktigt COUNTER-blockerade och ingen sensor-, ljud- eller partyeffekt
   publiceras från den privata ägaren.
 
+# DM2 privata RELAY_1/RELAY_3 vid GAME_LOAD-gränsen (2026-08-09)
+
+- ✅ `ACTIVATE_RELAY1` är nu källbunden i den privata File_header-ägaren.
+  Den bevarar RELAY_1:s additiva respektive RELAY_3:s skiftade fördröjning,
+  once/revert-grinden, riktning och action i en riktig 0x04-post.
+- ✅ DOS-realdatatestet hittar en autentisk, komplett reläkedja och kontrollerar
+  antal aktuatorer, exakta privata följdposter och att ingen session publiceras.
+  Målens effekter förblir spärrade tills de har komplett tile-/recordägarskap.
+
 # DM2 PushButtonSwitch direkt DB0-atom (2026-08-08)
 
 - ✅ `PUSH_BUTTON_SWITCH` följer nu `skevent.cpp:2010–2028`: den använder

@@ -182,6 +182,9 @@
   Kedjor med en annan recordfamilj eller aktuator avbryts före första
   mutation. Den här privata vägen ersätter varken sensorernas följdeffekt,
   ljud eller partykollision.
+  `RELAY_1` och `RELAY_3` behåller nu på samma sätt sina verkliga, fördröjda
+  0x04-poster inklusive originalets once/revert-grind. En köad post körs
+  dock inte förrän dess målkonsument ingår i den gemensamma sessionägaren.
   DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.
