@@ -9333,3 +9333,11 @@
   videopresentationer.
 - ✅ Detta är en källsäker avkodargrund, inte en falsk videopresentation.
   MVE:s bildblock och ljudexpansion är fortfarande öppna arbete.
+# Nexus europeisk VDP1/VDP2-korrelation (2026-08-08)
+
+- ✅ Inventeringen är uppdaterad till 38 externa `runtime-vdp12.raw`-filer.
+- ✅ Den nya åttaframers E-BIOS/French-fångsten är validerad med åtta aktiva
+  VDP1-state frames och reproducerbar NBG1 bitmap-observation.
+- ✅ VDP1 source-span och VDP2 palette/source-joins körs fail-closed och
+  dokumenteras som negativ evidens; ingen meny, HUD eller viewport binds utan
+  retail asset/consumer-identitet.

@@ -65,10 +65,21 @@ eller syntetisk renderer.
 
 ## Runtime-captureläge
 
-Den externa katalogen innehåller 37 validerade `runtime-vdp12.raw`-filer.
-Inventeringen räknar 11 reset/no-layer-, 14 RBG0-, 100 NBG1- och 14 övriga
-aktiva VDP2-frames. Alla har `asset_consumer_identity=unbound` och
+Den externa katalogen innehåller nu 38 validerade `runtime-vdp12.raw`-filer.
+Inventeringen räknar 12 reset/no-layer-, 14 RBG0-, 100 NBG1- och 14 övriga
+aktiva VDP2-frames. Den nya åttaframers europeiska fångsten
+`run-french-hold-starta-skip18000` har åtta aktiva VDP1-state frames och
+`NBG1` som enda aktiva VDP2-lager. Alla har fortfarande
+`asset_consumer_identity=unbound` och
 `startup_menu_hud_viewport_identity=unbound`.
+
+Den nya fångsten ger en starkare europeisk runtime-observation, men inte en
+assetbindning: VDP1:s type-2 source-span `0x63e00..0x6bf80` (33 280 bytes)
+matchar varken verifierade MNS-ytor, DGN Structure2-ytor eller retailfilens
+råbytesdomän. VDP2 visar bitmapläge NBG1 med `CHCTLA=0x1211`, men ingen exakt
+TITLE/MENU/STABG/DGN-palette-match. Den är därför användbar som negativ
+source-join-evidens, inte som tillståndsbevis för uppstart, meny, HUD eller
+viewport.
 
 De autentiska aktiva VDP1-witnesses bevisar Saturn-hårdvarustate och
 command-to-VRAM-korridorer, men deras source-span har ännu ingen exakt
