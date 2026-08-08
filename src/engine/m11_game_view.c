@@ -4313,6 +4313,7 @@ static int m11_csb_complete_amiga_appb_english_handoff(M11_GameViewState *state)
     /* APPA.C:71-74 maps ENGL to KAOS with language parameter zero. The
      * selected package already owns the A31M dungeon/runtime allocation, so
      * cross that same C03_GAME boundary without a PC34 entrance session. */
+    profile->amiga_language_index = 0u;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;
     state->csbState.startup_entrance_active = 0;

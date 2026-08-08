@@ -102,6 +102,10 @@ typedef struct CSB_V1_BootProfile {
     uint32_t default_party_x;
     uint32_t default_party_y;
     uint32_t default_party_dir;
+    /* ReDMCSB APPA.C forwards APPB's ENGL/FNCH/GRMN result to KAOS as
+     * 0/1/2. Keep that selected Amiga language with the boot-owned runtime
+     * session rather than losing it at the M11 handoff. */
+    uint8_t amiga_language_index;
     int imported_party_ready;
     int cmp_import_attempted;
     int cmp_import_succeeded;

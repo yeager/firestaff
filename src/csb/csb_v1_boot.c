@@ -1352,6 +1352,7 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->default_party_x = CSB_V1_START_PARTY_X;
     profile->default_party_y = CSB_V1_START_PARTY_Y;
     profile->default_party_dir = CSB_V1_START_PARTY_DIR;
+    profile->amiga_language_index = 0u;
     profile->imported_party_ready = 0;
     profile->cmp_import_attempted = 0;
     profile->cmp_import_succeeded = 0;

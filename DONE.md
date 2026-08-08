@@ -147,6 +147,9 @@
 - ✅ Det verkliga A31M-handofftestet täcker TITL → APPB → engelsk release →
   KAOS/C03_GAME. Fransk och tysk zon lämnas fail-closed eftersom den valda
   originalkorpusen inte bevisar deras egna dungeon- och runtimevägar.
+- ✅ APPB:s språkparameter är nu ett bootprofilsfält med samma 0/1/2-värden
+  som `APPA.C` skickar till KAOS. Den engelska realdatavägen låser värdet 0
+  genom hela M11-handoffet i stället för att tappa det efter klicket.
 
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
   dimensions, cell counts and maximum tile indices instead of keeping only

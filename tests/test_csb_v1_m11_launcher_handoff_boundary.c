@@ -2000,6 +2000,7 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                     M11_GAME_INPUT_REDRAW &&
                 !view.csbState.startup_title_active &&
                 !view.csbAmigaAppbSelectionActive &&
+                profile->amiga_language_index == 0u &&
                 profile->runtime.state == CSB_STATE_GAME,
                 "A31M English APPB release hands off through KAOS.FTL to C03_GAME");
     M11_GameView_Shutdown(&view);
