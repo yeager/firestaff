@@ -44,6 +44,13 @@ VDP1-/VDP2-placering, CLUT, HUD, viewport, ljud eller gameplay-semantik.
 - `nexus_v1_sound.c` dekodar inte SAL till host-PCM. SLEV-dispatch,
   MAP-event, SAL-format, SDDRVS-handoff och playback kräver en gemensam
   Saturn/SCSP/68K-exekveringscapture.
+- Den senaste autentiska SCSP-korridoren verifierar 16 SLEV-, 16 MAP-, 16
+  SAL-filer och SDDRVS mot retailhashar. Den innehåller fyra ljud-CPU-
+  mailboxskrivningar med råvärdet `0x02` och fem main-CPU-poster
+  (`0x0200:3`, `0x0002:2`). PC `0x3224` är byte-exakt bunden till SDDRVS
+  offset `0x2220` och dess command-byte→driver-state/SCSP-registerhandler.
+  Eventselector, MAP-rad, SAL-sample, codec och playback är fortfarande
+  `unproven`/`blocked`; övriga observerade PCs tilldelas ingen semantik.
 - DGN Structure3, ITEM/VDP1-texturer, CLUT, HUD/viewport-komposition och
   startup/menu-presentering förblir no-draw eller capture-gated.
 

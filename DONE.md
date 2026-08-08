@@ -1,3 +1,13 @@
+# Nexus SLEV/SAL/SDDRVS-korridor återverifierad (2026-08-08)
+
+- ✅ Den autentiska SCSP/68K-receipten reproducerar 16/16 SLEV, MAP och SAL
+  samt hashverifierad SDDRVS. Fyra mailboxskrivningar har råvärdet `0x02`
+  och fem main-CPU-poster (`0x0200:3`, `0x0002:2`).
+- ✅ PC `0x3224` binds byte-exakt till SDDRVS offset `0x2220` och
+  command-byte→driver-state/SCSP-registerhandlern.
+- ✅ Eventselector, SAL-codec, MAP→sample-koppling och host playback förblir
+  uttryckligen spärrade; ingen semantik har gissats från dessa bytes.
+
 # Nexus capture-inventory råhashkontroll (2026-08-08)
 
 - ✅ `analyze_nexus_capture_inventory.py` kontrollerar nu manifestets
