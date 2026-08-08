@@ -4251,6 +4251,13 @@ level or consumer bindings.
   champion identity. The bounded selection seam accepts only those matching
   source fields, but remains non-mutating until the original c_hero,
   possessions and timer transaction is one owner.
+  **2026-08-08 c_hero-input update:** the PC-DOS `CHAMPIONS/type/dtRaw8/0`
+  reader now admits only the exact 52-byte source record used by
+  `DM2_REVIVE_PLAYER`: three vital bases, seven ability bases and sixteen
+  skill levels. It retains the raw-byte identity and does not decode names,
+  invent food/water rolls or write a hero record. The remaining owner must
+  join the original text decoder, RNG, party position, possessions and timer
+  initialization before New Game can leave the entrance flow.
   **2026-08-08 status-gate correction:** the complete-support receipt now
   distinguishes a parsed raw-SKSAVE census from a completed live GAME_LOAD
   owner. It cannot report complete support until the chosen original stream

@@ -862,6 +862,28 @@ const uint8_t *dm2_v1_asset_load_text_sized(
     int field,
     size_t *out_size);
 
+/* Source inputs used by c_hero.cpp::DM2_REVIVE_PLAYER. The retail PC-DOS
+ * CHAMPIONS/HeroType/dtRaw8/0 record is exactly 26 little-endian words:
+ * HP, stamina, mana, seven abilities and sixteen sub-skill levels. Names
+ * stay in their original GDAT text encoding and are deliberately not decoded
+ * here. This receipt does not create a c_hero or a party. */
+typedef struct {
+    int valid;
+    uint8_t hero_type;
+    uint16_t hit_points_base;
+    uint16_t stamina_base;
+    uint16_t mana_base;
+    uint8_t ability_base[7];
+    uint8_t skill_level[16];
+    uint32_t raw8_hash;
+    uint32_t raw8_byte_count;
+} DM2_V1_ChampionReviveDataReceipt;
+
+int dm2_v1_asset_champion_revive_data(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t hero_type,
+    DM2_V1_ChampionReviveDataReceipt *out_receipt);
+
 /* skproject c_gdatfile.cpp/c_querydb.cpp raw GDAT entry queries. These are
  * bounded receipts over the parsed ENT1/raw table only; scalar dtWordValue and
  * dtImageOffset entries expose their data index but are not loadable buffers. */

@@ -56,6 +56,7 @@ int main(int argc, char **argv)
     int height = 0;
     DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
     uint8_t *pixels;
+    int raw8_count = 0;
 
     if (!path) {
         puts("SKIP: provide GRAPHICS.DAT or set FIRESTAFF_DM2_DATA_DIR");
@@ -70,6 +71,33 @@ int main(int argc, char **argv)
         free(graphics);
         fputs("FAIL: canonical GRAPHICS.DAT was not accepted\n", stderr);
         return 1;
+    }
+    for (uint16_t hero_type = 0; hero_type < 16u; ++hero_type) {
+        size_t raw8_size = 0u;
+        const uint8_t *raw8 = dm2_v1_asset_load_typed_sized(
+            &loader, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type,
+            DM2_GDAT_ENTRY_TYPE_RAW8, 0, &raw8_size);
+        if (raw8 && raw8_size > 0u) {
+            DM2_V1_ChampionReviveDataReceipt revive;
+            ++raw8_count;
+            if (!dm2_v1_asset_champion_revive_data(&loader, hero_type,
+                                                   &revive) ||
+                !revive.valid || revive.raw8_byte_count != raw8_size) {
+                dm2_v1_asset_loader_free(&loader);
+                free(graphics);
+                fputs("FAIL: original champion revive data was not bounded\n",
+                      stderr);
+                return 1;
+            }
+            if (revive.hit_points_base == 0u ||
+                revive.stamina_base == 0u || revive.raw8_hash == 0u) {
+                dm2_v1_asset_loader_free(&loader);
+                free(graphics);
+                fputs("FAIL: original champion revive values are incomplete\n",
+                      stderr);
+                return 1;
+            }
+        }
     }
     for (uint16_t i = 0; i < loader.entry_count; ++i) {
         const DM2_V1_GdatEntry *entry = &loader.entries[i];
@@ -94,6 +122,11 @@ int main(int argc, char **argv)
     free(graphics);
     if (direct_count != 0) {
         fputs("FAIL: CHAMPIONS/255 unexpectedly bypassed the source fallback\n",
+              stderr);
+        return 1;
+    }
+    if (raw8_count != 16) {
+        fputs("FAIL: complete original champion RAW8 roster is unavailable\n",
               stderr);
         return 1;
     }

@@ -19,6 +19,24 @@
   runtime counters. This persists state only; the original T700 generator
   consumer and reactivation timing remain capture-gated.
 
+# Game-data admission requirements (2026-08-08)
+
+- ✅ Confirmed that the launch scanner requires both `GRAPHICS.DAT` and
+  `DUNGEON.DAT` for Dungeon Master, Chaos Strikes Back and Dungeon Master II:
+  Skullkeep. A verified graphics file alone can identify an edition but cannot
+  enable Play.
+- ✅ `docs/DATA_SETUP.md` lists the required and optional original media for
+  all supported games and identifies the currently hash-catalogued editions.
+
+# DM2 champion revive-data intake (2026-08-08)
+
+- ✅ Added a source-bound reader for the exact 52-byte PC-DOS
+  `CHAMPIONS/type/dtRaw8/0` records consumed by `DM2_REVIVE_PLAYER`.
+- ✅ The reader retains original HP, stamina, mana, ability and skill inputs
+  for all 16 real mirror types without creating a hero or a party.
+- ✅ Verified with real PC-DOS `GRAPHICS.DAT`, the mirror census and M11
+  startup gate.
+
 # Theron live-creature save persistence (2026-08-08)
 
 - ✅ World snapshot version 3 now appends an explicit 87-byte wire record for

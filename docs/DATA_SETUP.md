@@ -18,15 +18,16 @@ catalogued original edition.
 
 | Game | Required source data | Accepted editions and containers |
 |---|---|---|
-| Dungeon Master | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | Supported DOS, Atari ST, Amiga and FM Towns editions; loose files or supported original-media containers |
-| Chaos Strikes Back | `GRAPHICS.DAT` (or the edition's `CSBGRAPH.DAT`) and `DUNGEON.DAT` from the same edition | Supported DOS, Atari ST, Amiga and FM Towns editions; loose files or supported original-media containers |
-| Dungeon Master II: Skullkeep | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | Supported PC, PC-98, FM Towns and Amiga media. On FM Towns, the pair lives in `DATA/` or `JDATA/` on the original CD; the Amiga installer archive is read from the original media family. |
+| Dungeon Master | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | The catalog currently includes PC 3.4, Atari ST, FM Towns and Amiga editions; loose files or supported original-media containers |
+| Chaos Strikes Back | `GRAPHICS.DAT` or `CSBGRAPH.DAT`, plus `DUNGEON.DAT` from the same edition | The catalog currently includes PC 3.4, Atari ST, FM Towns and Amiga editions; loose files or supported original-media containers |
+| Dungeon Master II: Skullkeep | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | PC English/French/JewelCase, PC-9801 demo, PC-9821 Japanese, FM Towns Japanese and Amiga AGA English. FM Towns uses `DATA/` on the original CD; the Amiga installer archive is read as original media. |
 | DM Nexus | The original Saturn `DM.BIN` marker plus the associated original Saturn data source | Keep a complete CUE/BIN disc image. Firestaff can also identify an already-extracted, verified Saturn data set, but extraction is not a setup requirement. |
 | Theron's Quest | One hash-recognised Track 02 data image | US or Japanese Track 02 in its original BIN or ISO form. Keep the matching CUE with BIN media when it is available. |
 
-For the three DAT-based games, do not mix `GRAPHICS.DAT` from one release with
-`DUNGEON.DAT` from another. The launcher rejects an incomplete or mismatched
-pair instead of guessing a compatible version.
+For the three DAT-based games, both files are mandatory. Do not mix
+`GRAPHICS.DAT` from one release with `DUNGEON.DAT` from another. The launcher
+rejects an incomplete or mismatched pair instead of guessing a compatible
+version.
 
 ## Optional original media
 

@@ -1065,6 +1065,57 @@ const uint8_t *dm2_v1_asset_load_text_sized(
                                          out_size);
 }
 
+int dm2_v1_asset_champion_revive_data(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t hero_type,
+    DM2_V1_ChampionReviveDataReceipt *out_receipt)
+{
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    DM2_V1_ChampionReviveDataReceipt candidate;
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* c_hero.cpp::DM2_REVIVE_PLAYER queries exactly 26 i16s through
+     * QUERY_GDAT_ENTRY_DATA_PTR(CHAMPIONS, htype, dtRaw8, 0). The direct
+     * PC-DOS roster is types 0..15; a dynamic or fallback portrait index is
+     * not a hero template. */
+    if (!loader || hero_type > 15u) return 0;
+    raw = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type,
+        DM2_GDAT_ENTRY_TYPE_RAW8, 0, &raw_size);
+    if (!raw || raw_size != 52u) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.hero_type = hero_type;
+    candidate.hit_points_base = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+    candidate.stamina_base = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+    candidate.mana_base = (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
+    for (i = 0; i < 7; ++i) {
+        uint16_t value = (uint16_t)raw[(3 + i) * 2] |
+                         ((uint16_t)raw[(3 + i) * 2 + 1] << 8);
+        /* c_hero.cpp applies DM2_MAX in word precision and then CUTX8. */
+        candidate.ability_base[i] = (uint8_t)(value < 30u ? 30u : value);
+    }
+    for (i = 0; i < 16; ++i) {
+        uint16_t value = (uint16_t)raw[(10 + i) * 2] |
+                         ((uint16_t)raw[(10 + i) * 2 + 1] << 8);
+        /* The source shifts by CUTX8(value); retain only the same byte that
+         * can influence the resulting c_hero skill word. */
+        candidate.skill_level[i] = (uint8_t)value;
+    }
+    candidate.raw8_byte_count = (uint32_t)raw_size;
+    candidate.raw8_hash = dm2_fnv1a_bytes(raw, raw_size);
+    if (candidate.hit_points_base == 0u || candidate.stamina_base == 0u ||
+        candidate.raw8_hash == 0u) {
+        return 0;
+    }
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 static int dm2_gdat_raw_bounds(const DM2_V1_AssetLoader *loader,
                                uint16_t raw_index,
                                uint32_t *out_offset,
