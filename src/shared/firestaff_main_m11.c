@@ -240,7 +240,13 @@ static void print_scan_game(const M12_AssetStatus* status,
     if (strcmp(gameId, "theron") == 0) {
         const FirestaffTheronMediaStatus* media =
             M12_AssetStatus_GetTheronMediaStatus(status);
-        if (media && media->layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
+        /* A non-Theron CUE/BIN can be present beside otherwise valid game
+         * data (for example the FM Towns CSB disc).  The broad filesystem
+         * classifier intentionally records its layout for later Theron
+         * discovery, but --scan-data must not present that unrelated disc as
+         * a failed Theron's Quest Track 02. */
+        if (media && media->layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN &&
+            media->launch_candidate) {
             printf("  %-28s %s", "Media layout",
                    FirestaffTheronMedia_LayoutLabel(media->layout));
             printf("  %s",
