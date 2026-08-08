@@ -327,6 +327,20 @@ static size_t theron_inventory_source_wire_size(void) {
            THERON_INVENTORY_SOURCE_WIRE_BYTES;
 }
 
+static int theron_v1_world_source_level_verified(
+    const Theron_V1_World *world) {
+    if (!world || world->current_dungeon < 1 ||
+        world->current_dungeon > THERON_DUNGEON_COUNT ||
+        world->current_level < 0 ||
+        world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return 0;
+    }
+    return world->level_loaded[world->current_dungeon - 1]
+                              [world->current_level] &&
+           world->levels[world->current_dungeon - 1]
+                        [world->current_level].source_header_verified;
+}
+
 static uint8_t *theron_inventory_source_write(
     uint8_t *out, const Theron_V1_InventorySourceRecord *record) {
     *out++ = record->valid;
@@ -735,6 +749,19 @@ int theron_v1_drop_inventory_source_item(
     carried = &world->inventory_source[champion_slot][inventory_slot];
     if (!carried->valid || carried->source_ref == 0u)
         return -1;
+    if (theron_v1_world_source_level_verified(world) &&
+        (!carried->property_valid ||
+         (carried->category != THERON_CAT_WEAPON &&
+          carried->category != THERON_CAT_CLOTHING &&
+          carried->category != THERON_CAT_SCROLL &&
+          carried->category != THERON_CAT_POTION) ||
+         carried->item_type !=
+             world->party.champions[champion_slot].inventory[inventory_slot])) {
+        /* Mirror the source pickup gate: a real T900 drop cannot recreate
+         * an object whose authenticated property/category/type payload is
+         * incomplete. */
+        return -1;
+    }
 
     memset(&object, 0, sizeof(object));
     switch (carried->category) {

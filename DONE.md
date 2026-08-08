@@ -45,6 +45,13 @@
   remain unresolved. The fixture-only max-stamina recovery and 500-gold/
   half-HP resurrection rules can no longer leak into real source data.
 
+# 2026-08-08 Theron source inventory drop symmetry
+
+- ✅ Source-backed inventory drops now require the same authenticated
+  carryable category, item type and property row as source-backed pickups.
+  An incomplete carried record cannot be recreated as a level object or
+  removed from inventory on a verified Track 02 level.
+
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
 # 2026-08-08 Theron source-property pickup gate

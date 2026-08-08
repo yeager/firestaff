@@ -1,6 +1,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -82,6 +83,16 @@ int main(void) {
     CHECK(theron_v1_altar_of_vi_resurrect(&world, 3, 3) == -1 &&
               world.party.gold == 1000 && !world.party.champions[0].alive,
           "source altar cannot apply fixture T900 resurrection");
+    world.party.champions[0].inventory[0] = 4;
+    world.inventory_source[0][0].valid = 1;
+    world.inventory_source[0][0].category = THERON_CAT_WEAPON;
+    world.inventory_source[0][0].item_type = 4;
+    world.inventory_source[0][0].source_ref = 0x1202u;
+    world.inventory_source[0][0].property_valid = 0;
+    CHECK(theron_v1_drop_inventory_source_item(&world, 0, 0, 3, 3) == -1 &&
+              world.object_count == 1 &&
+              world.party.champions[0].inventory[0] == 4,
+          "source drop cannot recreate an item without property payload");
     memset(&world, 0, sizeof(world));
     world.current_dungeon = 1;
     world.current_level = 2;
