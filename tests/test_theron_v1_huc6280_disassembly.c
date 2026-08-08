@@ -54,8 +54,14 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.spawn_rng_helper_bytes == 25u);
         assert(receipt.spawn_rng_helper_file_offset == 0x9c4e7u);
         assert(receipt.spawn_rng_helper_fnv1a == 0xb9075b31u);
+        assert(receipt.spawn_rng_preconsumer_verified);
+        assert(receipt.spawn_rng_preconsumer_address == 0x4644u);
+        assert(receipt.spawn_rng_preconsumer_bytes == 27u);
+        assert(receipt.spawn_rng_preconsumer_file_offset == 0x9c4c4u);
+        assert(receipt.spawn_rng_preconsumer_fnv1a == 0xa3c3f7ebu);
     } else {
         assert(!receipt.spawn_rng_helper_verified);
+        assert(!receipt.spawn_rng_preconsumer_verified);
     }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);

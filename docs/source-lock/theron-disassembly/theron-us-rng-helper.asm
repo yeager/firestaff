@@ -10,6 +10,10 @@
 ; consumes $B3, dispatches the special $B3&7 == 4 path through $5D6A and
 ; $5D64, and returns.  The $5D6A/$5D64 bodies are RAM-loaded/overlay-owned
 ; consumers and their runtime state still require a dynamic capture.
+;
+; Adjacent preconsumer L4644 is locked separately at raw file offset $9c4c4,
+; 27 bytes, FNV-1a $a3c3f7eb. It prepares the arguments and calls the
+; consumers at $C96B/$CC4C; those bodies remain unresolved.
 
         .setcpu "huc6280"
         .org    $4667

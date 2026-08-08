@@ -7109,3 +7109,11 @@
   bit meanings.
 - ✅ Verified all seven real US Track 02 dungeon loads and the production
   regular-spawn admission test.
+# Theron `$4644` preconsumer contract (2026-08-08)
+
+- ✅ Added the exact 27-byte US raw-BIN `$4644` preconsumer at file offset
+  `$9c4c4` with FNV-1a `$a3c3f7eb`. It preserves the source argument setup
+  and calls to `$C96B`/`$CC4C` without treating unresolved consumers as a
+  host RNG implementation.
+- ✅ The focused HuC6280 receipt test passes against the authentic US Track 02
+  BIN; JP and ISO receipts remain correctly unmarked for this US-only span.

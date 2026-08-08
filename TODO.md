@@ -10,6 +10,9 @@
 - Theron: the static US `$4667` helper contract is now byte-verified at raw
   BIN offset `$9c4e7`; recover its RAM-loaded `$5d6a/$5d64` bodies and dynamic
   RNG state before promoting it into live spawn logic.
+- Theron: the adjacent US `$4644` preconsumer is now byte-verified at raw
+  BIN offset `$9c4c4`; recover its `$C96B`/`$CC4C` consumers and dynamic state
+  before promoting the original random-spawn path into live gameplay.
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
 

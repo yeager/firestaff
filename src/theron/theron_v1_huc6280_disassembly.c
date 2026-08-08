@@ -43,6 +43,10 @@
 #define THERON_SPAWN_RNG_HELPER_ADDRESS 0x4667u
 #define THERON_SPAWN_RNG_HELPER_BYTES 25u
 #define THERON_SPAWN_RNG_HELPER_FNV1A 0xb9075b31u
+#define THERON_US_SPAWN_RNG_PRECONSUMER_FILE_OFFSET 0x9c4c4u
+#define THERON_SPAWN_RNG_PRECONSUMER_ADDRESS 0x4644u
+#define THERON_SPAWN_RNG_PRECONSUMER_BYTES 27u
+#define THERON_SPAWN_RNG_PRECONSUMER_FNV1A 0xa3c3f7ebu
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -78,6 +82,15 @@ static const uint8_t g_spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES] = {
     0xa5, 0xb3, 0x29, 0x07, 0xc9, 0x04, 0xd0, 0x11, 0x20, 0x6a,
     0x5d, 0xa9, 0x02, 0x85, 0x8a, 0xa9, 0x04, 0xa6, 0x40, 0xa4,
     0x41, 0x20, 0x64, 0x5d, 0x60
+};
+
+/* This entry prepares the source arguments and calls the unresolved
+ * consumers at $C96B/$CC4C; it is not a host-side RNG implementation. */
+static const uint8_t g_spawn_rng_preconsumer[
+    THERON_SPAWN_RNG_PRECONSUMER_BYTES] = {
+    0x85, 0xad, 0xa5, 0xa9, 0x85, 0x8a, 0xa5, 0xad, 0x85,
+    0x8b, 0xa5, 0xab, 0xa4, 0xac, 0x20, 0x6b, 0xc9, 0xd0,
+    0x02, 0x46, 0xb4, 0xa6, 0xbb, 0x20, 0x4c, 0xcc, 0x60
 };
 
 static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
@@ -139,6 +152,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
     uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
     uint8_t spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES];
+    uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
     int raw_bin_variant;
     uint32_t expected_size;
     uint32_t bank_file_offset;
@@ -189,7 +203,10 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          (fseek(file, THERON_US_SPAWN_RNG_HELPER_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_rng_helper, 1u, sizeof(spawn_rng_helper), file) !=
-              sizeof(spawn_rng_helper))) ||
+              sizeof(spawn_rng_helper) ||
+          fseek(file, THERON_US_SPAWN_RNG_PRECONSUMER_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_rng_preconsumer, 1u, sizeof(spawn_rng_preconsumer), file) !=
+              sizeof(spawn_rng_preconsumer))) ||
         (raw_bin_variant &&
          (fseek(file, (long)(bank_file_offset +
                              THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET),
@@ -218,6 +235,9 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          memcmp(spawn_rng_helper, g_spawn_rng_helper,
                 sizeof(spawn_rng_helper)) != 0) ||
+        (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+         memcmp(spawn_rng_preconsumer, g_spawn_rng_preconsumer,
+                sizeof(spawn_rng_preconsumer)) != 0) ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -245,6 +265,15 @@ int theron_v1_huc6280_disassembly_read_file(
             THERON_US_SPAWN_RNG_HELPER_FILE_OFFSET;
         receipt.spawn_rng_helper_fnv1a = fnv1a(
             spawn_rng_helper, sizeof(spawn_rng_helper));
+        receipt.spawn_rng_preconsumer_verified = 1;
+        receipt.spawn_rng_preconsumer_address =
+            THERON_SPAWN_RNG_PRECONSUMER_ADDRESS;
+        receipt.spawn_rng_preconsumer_bytes =
+            THERON_SPAWN_RNG_PRECONSUMER_BYTES;
+        receipt.spawn_rng_preconsumer_file_offset =
+            THERON_US_SPAWN_RNG_PRECONSUMER_FILE_OFFSET;
+        receipt.spawn_rng_preconsumer_fnv1a = fnv1a(
+            spawn_rng_preconsumer, sizeof(spawn_rng_preconsumer));
     }
     receipt.semantic_publication_allowed = 0;
     receipt.source_file_size = expected_size;

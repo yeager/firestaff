@@ -36,6 +36,11 @@ typedef struct {
     uint16_t spawn_rng_helper_bytes;
     uint32_t spawn_rng_helper_file_offset;
     uint32_t spawn_rng_helper_fnv1a;
+    int spawn_rng_preconsumer_verified;
+    uint16_t spawn_rng_preconsumer_address;
+    uint16_t spawn_rng_preconsumer_bytes;
+    uint32_t spawn_rng_preconsumer_file_offset;
+    uint32_t spawn_rng_preconsumer_fnv1a;
     /* Static palette consumer from the retail HuC6280 bank. The routine
      * proves the VCE write contract only; its dynamic $27c4/$27c5 source
      * pointer is not a Track 02 palette binding by itself. */
