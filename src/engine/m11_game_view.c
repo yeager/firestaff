@@ -8230,6 +8230,8 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
                                       CSB_V1_FmtownsSwitchLanguage language)
 {
     CSB_V1_FmtownsGameHandoffReceipt handoff;
+    CSB_V1_PartyState startup_party;
+    CSB_V1_BootProfile *profile;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 gate;
 
@@ -8240,6 +8242,24 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
         !csb_v1_fmtowns_game_handoff_open(
             (const CSB_V1_BootProfile *)state->csbBootProfile, language,
             &handoff)) return 0;
+
+    /* F31 CHTWE/CHTWJ reaches STARTUP1.C's F0435 load before ENTRANCE.C.
+     * Bind the authenticated little-endian MINI.DAT party at that same
+     * boundary.  This is not an Atari/Amiga GAMEBLOCK fallback: F0435 copies
+     * the F7057-validated 4*319-byte M516_CHAMPIONS array directly, then
+     * ENTRANCE.C F0806/F0807 opens the Prison doors around that live state. */
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    memset(&startup_party, 0, sizeof(startup_party));
+    if (!csb_v1_fmtowns_game_load_startup_party(&handoff, &startup_party) ||
+        csb_v1_runtime_set_party_state(&profile->runtime, &startup_party) != 0) {
+        return 0;
+    }
+    /* MINI.DAT's dungeon tail is independently authenticated but has not yet
+     * been installed as the runtime's complete event/timeline graph. Keep the
+     * already-opened F31 DUNGEON.DAT map pose until that atomic tail handoff
+     * exists: publishing the MINI pose against another dungeon body would be
+     * a false resume. The champion records, in contrast, are self-contained
+     * F0435 input and can safely drive HUD/inventory immediately. */
 
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)calloc(1u,
         sizeof(*session));

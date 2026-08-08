@@ -8045,6 +8045,17 @@
   språkpaket. Testet fortsätter inte längre till en oöppnad handoff och kan
   därför inte krascha. Den vanliga M12-vägen materialiserar fortfarande det
   hash-verifierade, valda språkpaketet privat före M11.
+
+# CSB FM Towns autentisk MINI-parti-handoff (2026-08-08)
+
+- Band den valda F31E/F31J `MINI.DAT`-filens checksum- och F7057-verifierade
+  1 404-byte champion/party-del till C03 Game-runtimens HUD och inventory.
+  Dekodern använder endast den riktiga little-endian-strukturen från
+  ReDMCSB `LOADSAVE.C F0435`: fyra 319-byte `M516_CHAMPIONS`-poster, aldrig
+  Atari/Amiga-GAMEBLOCK eller konstruerade championdata.
+- Den verkliga English- och Japanese-regressionen verifierar championdata,
+  Prison → HUD, rörelse, inventory, CDDA-val och `ENDING.ANM`. MINI:s
+  dungeon-/event-/timeline-del överförs ännu inte som en falsk delresume.
 # 2026-08-08 Theron inferred spawn-stat boundary
 
 - ✅ Removed the old host-seeded HP/attack/defense arithmetic from the

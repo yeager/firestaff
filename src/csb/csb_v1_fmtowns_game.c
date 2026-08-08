@@ -73,6 +73,19 @@ static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
 static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes);
 
+static void csb_v1_fmtowns_game_copy_text(char *dst, size_t dst_size,
+                                           const unsigned char *src,
+                                           size_t src_size)
+{
+    size_t count = 0u;
+    if (!dst || dst_size == 0u || !src) return;
+    while (count + 1u < dst_size && count < src_size && src[count] != '\0') {
+        dst[count] = (char)src[count];
+        ++count;
+    }
+    dst[count] = '\0';
+}
+
 static const uint8_t k_csb_v1_fmtowns_thing_data_bytes[16] = {
     4u, 6u, 4u, 8u, 16u, 4u, 4u, 4u,
     4u, 8u, 4u, 0u, 0u, 0u, 8u, 4u
@@ -223,6 +236,134 @@ int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
     return csb_v1_fmtowns_game_read_span(
         receipt->startup_mini_path, receipt->startup_mini_dungeon_tail_offset,
         out_bytes, out_size);
+}
+
+int csb_v1_fmtowns_game_load_startup_party(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_PartyState *out_party)
+{
+    enum {
+        champion_bytes = 319u,
+        champion_count = 4u,
+        party_offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES +
+            CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES,
+        champion_part_offset = party_offset +
+            CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES * 60u,
+        name_offset = 0u,
+        name_bytes = 8u,
+        title_offset = 8u,
+        title_bytes = 16u,
+        cell_offset = 28u,
+        direction_offset = 29u,
+        action_offset = 32u,
+        incantation_offset = 34u,
+        facing_offset = 40u,
+        poison_event_count_offset = 42u,
+        enable_action_event_offset = 44u,
+        hide_damage_event_offset = 46u,
+        attributes_offset = 48u,
+        wounds_offset = 50u,
+        health_offset = 52u,
+        food_offset = 66u,
+        statistics_offset = 70u,
+        skill_offset = 92u,
+        slots_offset = 212u,
+        load_offset = 272u,
+        shield_offset = 274u
+    };
+    unsigned char bytes[CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES];
+    unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
+    uint32_t champion_index;
+    uint16_t key;
+    uint16_t checksum;
+    int stat;
+    static const int k_source_stat_to_firestaff[CSB_V1_STAT_COUNT] =
+        { 6, 0, 1, 2, 3, 4, 5 };
+
+    if (!receipt || !out_party || !receipt->valid ||
+        !receipt->startup_mini_verified ||
+        !receipt->startup_mini_header_verified ||
+        !receipt->startup_mini_save_parts_verified ||
+        receipt->startup_mini_party_champion_count == 0u ||
+        receipt->startup_mini_party_champion_count > CSB_V1_MAX_CHAMPIONS ||
+        receipt->startup_mini_active_group_capacity != 60u ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path, 0u,
+                                        header, sizeof(header)) ||
+        !redmcsb_f7061_is_read_save_header_successful_pc34(
+            header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX) ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        champion_part_offset, bytes,
+                                        sizeof(bytes))) {
+        return 0;
+    }
+    key = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + 4u);
+    checksum = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET + 4u);
+    if (!redmcsb_f7057_read_save_part_with_checksum_pc34(
+            bytes, sizeof(bytes), key, checksum)) return 0;
+
+    memset(out_party, 0, sizeof(*out_party));
+    out_party->ChampionCount = receipt->startup_mini_party_champion_count;
+    out_party->PartyDirection = receipt->startup_mini_party_direction & 3;
+    out_party->PartyMapX = receipt->startup_mini_party_map_x;
+    out_party->PartyMapY = receipt->startup_mini_party_map_y;
+    out_party->LeaderIndex = -1;
+    out_party->MagicCasterIndex = -1;
+    for (champion_index = 0u; champion_index < champion_count;
+         ++champion_index) {
+        const unsigned char *source = bytes + champion_index * champion_bytes;
+        CSB_V1_Champion *champion = &out_party->Champions[champion_index];
+
+        csb_v1_champion_init(champion);
+        csb_v1_fmtowns_game_copy_text(champion->Name, sizeof(champion->Name),
+                                       source + name_offset, name_bytes);
+        csb_v1_fmtowns_game_copy_text(champion->Title, sizeof(champion->Title),
+                                       source + title_offset, title_bytes);
+        champion->Cell = source[cell_offset] & 3u;
+        champion->Direction = source[direction_offset] & 3u;
+        champion->ActionIndex = source[action_offset];
+        memcpy(champion->Incantation, source + incantation_offset,
+               sizeof(champion->Incantation));
+        champion->CsbWinFacing3 = source[facing_offset] & 3u;
+        champion->PoisonEventCount = source[poison_event_count_offset];
+        champion->EnableActionEventIndex = (int16_t)csb_v1_fmtowns_game_read_le16(
+            source + enable_action_event_offset);
+        champion->HideDamageReceivedEventIndex = (int16_t)csb_v1_fmtowns_game_read_le16(
+            source + hide_damage_event_offset);
+        champion->Attributes = csb_v1_fmtowns_game_read_le16(source + attributes_offset);
+        champion->Wounds = csb_v1_fmtowns_game_read_le16(source + wounds_offset);
+        champion->CurrentHealth = (int16_t)csb_v1_fmtowns_game_read_le16(source + health_offset);
+        champion->MaximumHealth = (int16_t)csb_v1_fmtowns_game_read_le16(source + health_offset + 2u);
+        champion->CurrentStamina = (int16_t)csb_v1_fmtowns_game_read_le16(source + health_offset + 4u);
+        champion->MaximumStamina = (int16_t)csb_v1_fmtowns_game_read_le16(source + health_offset + 6u);
+        champion->CurrentMana = (int16_t)csb_v1_fmtowns_game_read_le16(source + health_offset + 8u);
+        champion->MaximumMana = (int16_t)csb_v1_fmtowns_game_read_le16(source + health_offset + 10u);
+        champion->Food = (int16_t)csb_v1_fmtowns_game_read_le16(source + food_offset);
+        champion->Water = (int16_t)csb_v1_fmtowns_game_read_le16(source + food_offset + 2u);
+        for (stat = 0; stat < CSB_V1_STAT_COUNT; ++stat) {
+            const int target = k_source_stat_to_firestaff[stat];
+            champion->Statistics[target][CSB_V1_STAT_MAX] = source[statistics_offset + (uint32_t)stat * 3u];
+            champion->Statistics[target][CSB_V1_STAT_CUR] = source[statistics_offset + (uint32_t)stat * 3u + 1u];
+            champion->Statistics[target][CSB_V1_STAT_MIN] = source[statistics_offset + (uint32_t)stat * 3u + 2u];
+        }
+        for (stat = 0; stat < CSB_V1_FULL_SKILL_COUNT; ++stat) {
+            const uint32_t offset = skill_offset + (uint32_t)stat * 6u;
+            const uint16_t level = csb_v1_fmtowns_game_read_le16(source + offset);
+            champion->SkillExperience[stat] =
+                (uint32_t)csb_v1_fmtowns_game_read_le16(source + offset + 2u) |
+                ((uint32_t)csb_v1_fmtowns_game_read_le16(source + offset + 4u) << 16);
+            if (stat < CSB_V1_SKILL_COUNT)
+                champion->Skills[stat] = (uint8_t)(level > 255u ? 255u : level);
+        }
+        champion->SkillExperienceValid = 1u;
+        for (stat = 0; stat < CSB_V1_SLOT_COUNT; ++stat)
+            champion->Slots[stat] = csb_v1_fmtowns_game_read_le16(
+                source + slots_offset + (uint32_t)stat * 2u);
+        champion->Load = csb_v1_fmtowns_game_read_le16(source + load_offset);
+        champion->ShieldStrength = csb_v1_fmtowns_game_read_le16(source + shield_offset);
+    }
+    return 1;
 }
 
 static int csb_v1_fmtowns_game_startup_mini_save_parts_open(

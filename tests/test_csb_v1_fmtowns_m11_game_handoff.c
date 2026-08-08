@@ -56,6 +56,7 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
+    CSB_V1_PartyState mini_party;
     CSB_V1_DungeonData mini_dungeon;
     uint8_t *mini_dungeon_bytes = NULL;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
@@ -221,6 +222,14 @@ int main(void)
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
+    memset(&mini_party, 0, sizeof(mini_party));
+    CHECK(csb_v1_fmtowns_game_load_startup_party(&direct_handoff, &mini_party) &&
+              mini_party.ChampionCount == 1 &&
+              mini_party.PartyDirection == 2 &&
+              mini_party.PartyMapX == 22 && mini_party.PartyMapY == 18 &&
+              mini_party.Champions[0].Name[0] != '\0' &&
+              mini_party.Champions[0].CurrentHealth > 0,
+          "F31 MINI.DAT supplies its checksum-verified champion record without a fixture");
     memset(&mini_dungeon, 0, sizeof(mini_dungeon));
     mini_dungeon_bytes = (uint8_t *)malloc(
         direct_handoff.startup_mini_dungeon_tail_size);
@@ -374,6 +383,38 @@ int main(void)
     }
     CHECK(live_frame_nonblack,
           "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
+    {
+        const CSB_V1_BootProfile *live_profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        int prior_direction = live_profile ? live_profile->runtime.party_dir : -1;
+
+        /* CHTWE/CHTWJ has now returned through STARTUP1.C into the ordinary
+         * live command loop.  Require that its real MINI.DAT party drives
+         * both the native runtime and the rendered M11 mirror; the F31
+         * title/switch programs must not leave an inert PC34-style page
+         * behind.  ReDMCSB COMMAND.C F0358/F0359 dispatches C002/C003 after
+         * the F0435/ENTRANCE.C handoff. */
+        CHECK(live_profile &&
+                  M11_GameView_HandleInput(&view,
+                                           M12_MENU_INPUT_TURN_RIGHT) ==
+                      M11_GAME_INPUT_REDRAW &&
+                  live_profile->runtime.party_dir ==
+                      ((prior_direction + 1) & 3) &&
+                  view.csbState.party_dir == live_profile->runtime.party_dir,
+              "F31 live HUD routes C002 into the original runtime party state");
+        CHECK(live_profile &&
+                  M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                      M11_GAME_INPUT_REDRAW &&
+                  live_profile->runtime.last_input_dispatch.dequeued &&
+                  live_profile->runtime.last_input_dispatch.dispatchedMove,
+              "F31 live viewport routes C003 through the dungeon command queue");
+        CHECK(M11_GameView_HandleInput(&view,
+                                       M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  view.inventoryPanelActive,
+              "F31 live HUD opens its real MINI.DAT champion inventory");
+        view.inventoryPanelActive = 0;
+    }
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
      * The real Prison handoff reaches map 0, (9,0), whose retail selector is
      * 2. Do not overwrite the boot-owned party state with a test coordinate. */

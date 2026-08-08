@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "csb_v1_boot.h"
+#include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_fmtowns_switch.h"
 
 #ifdef __cplusplus
@@ -174,6 +175,16 @@ int csb_v1_fmtowns_game_handoff_open(
 int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     uint8_t *out_bytes, size_t out_size);
+
+/* Decode the authenticated F31 MINI.DAT champion/party save part into the
+ * live CSB representation.  This is intentionally limited to the original
+ * 4*319-byte CHAMPION array and the source-owned global party pose; callers
+ * must not treat it as a general CSBWin or Atari save decoder.  ReDMCSB
+ * LOADSAVE.C F0435 copies this exact part into M516_CHAMPIONS/G0407 after
+ * F7057 has validated its checksum and deobfuscated it. */
+int csb_v1_fmtowns_game_load_startup_party(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_PartyState *out_party);
 
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
