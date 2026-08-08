@@ -2,6 +2,17 @@
 
 # CI: DM2 duplicate bar-colour symbols isolated (2026-08-09)
 
+# DM2 New Game före mirrorval (2026-08-09)
+
+- ✅ NEW GAME behåller nu först en privat, hashverifierad GAME_LOAD-värld med
+  File_header-kartor, samtliga recordpooler, DYN4-ljudallokering, dynamisk
+  c_tim-kapacitet, aktuatortick-generator och originalets kartkontext.
+  Ingen party, HUD eller runtime-session publiceras.
+- ✅ Mirror-klick kan därefter läggas till ett i taget i samma källordning.
+  Varje steg återskapar den autentiska champ-/inventorytransaktionen och
+  avvisar dubbletter. Realdatatestet täcker både två verkliga klick och
+  titelmenyns pre-mirror-övergång.
+
 - ✅ Linux production linking no longer pulls the focused
   `dm2_v1_predicate_helpers.c` study into `firestaff_dm2` alongside the
   source-owned champion-HUD implementation, which exported the same two

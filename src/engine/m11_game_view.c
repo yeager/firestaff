@@ -1430,10 +1430,13 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 new_dungeon.source_party_reset_applied &&
                 new_dungeon.source_leader_hand_reset_applied &&
                 !new_dungeon.synthetic_party_created &&
+                dm2_v1_boot_prepare_new_game_world(profile) &&
+                dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
                 m11_dm2_clear_new_game_party_state(state)) {
                 /* Both the boot cache and M11's presentation cache are now
-                 * empty.  Keep the menu active until original GAME_LOAD
-                 * publishes the mirror-selection transaction. */
+                 * empty, but the real File_header world, tick generators and
+                 * map context have one private owner. Keep the menu active
+                 * until the source mirror-selection UI can deliver clicks. */
             }
             state->dm2State.startup_menu_active = 1;
             if (route->status) {

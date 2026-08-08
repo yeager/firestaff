@@ -83,6 +83,11 @@ typedef struct {
      * transaction can publish every owner atomically. */
     int prepared;
     int committed;
+    /* The original GAME_LOAD has completed its New Dungeon side before the
+     * player clicks a mirror.  Keep that selection-free boundary explicit:
+     * a nonzero value means this owner has authenticated map/DYN/timer
+     * prerequisites but still has no c_party or inventory publication. */
+    int source_preselection_ready;
     int current_map;
     uint32_t source_transaction_hash;
     DM2_V1_DungeonData dungeon;
@@ -133,7 +138,18 @@ typedef struct {
     DM2_V1_GdatDyn4MaterializedSelection dyn4_selections[
         DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
     DM2_V1_GameLoadSoundOwner sound_owner;
+    /* Source facts available before DM2_SELECT_CHAMPION.  They deliberately
+     * live outside `transaction`, whose validity still means that one or
+     * more real mirror clicks have been admitted. */
+    DM2_V1_FileHeaderWorldInteractionReceipt preselection_world_interactions;
+    DM2_V1_FileHeaderActuatorGeneratorReceipt preselection_actuator_generators;
+    DM2_V1_FileHeaderRuntimeMapReceipt preselection_entrance_map;
+    DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
+    DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
+    uint32_t preselection_hash;
     DM2_V1_BootNewGameTransactionReceipt transaction;
+    DM2_V1_BootNewGamePartySelection selected_mirrors[DM2_MAX_HEROES];
+    uint8_t selected_mirror_count;
     /* This remains zeroed until the source-ordered champion step.  It is
      * never installed in M11 or the runtime party state. */
     int champion_selection_materialized;
@@ -147,6 +163,20 @@ typedef struct {
     DM2_V1_SksaveItemBonusReceipt champion_item_bonus;
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
+
+/* Build the source-owned GAME_LOAD predecessor without selecting a champion.
+ * It clones only the authenticated File_header, DB pools, DYN4 and timer
+ * capacity. Call the generator and map-context functions in source order
+ * before delivering any mirror click. */
+int dm2_v1_game_load_world_owner_prepare_new_game(
+    DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_BootProfile *profile);
+
+/* Add an already source-resolved mirror click to a prepared owner.  The
+ * function rebuilds the whole click-ordered receipt from the original data
+ * and publishes nothing to M11 or the runtime. */
+int dm2_v1_game_load_world_owner_select_champion(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_BootNewGamePartySelection *selection);
 
 typedef struct {
     int valid;

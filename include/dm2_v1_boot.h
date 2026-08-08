@@ -555,8 +555,17 @@ typedef struct {
 int dm2_v1_boot_retain_new_game_world(DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selections, int selection_count);
 
+/* Retain the selection-free part of GAME_LOAD.  The caller must still route
+ * real mirror clicks through the source selector; this function never picks
+ * a champion or publishes a session. */
+int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile);
+
 /* Read-only access for a later atomic runtime handoff. */
 const void *dm2_v1_boot_new_game_world_readonly(const DM2_V1_BootProfile *profile);
+
+/* Read-only access to the post-GAME_LOAD, pre-mirror owner. */
+const void *dm2_v1_boot_prepared_new_game_world_readonly(
+    const DM2_V1_BootProfile *profile);
 
 /* Returns the original hash-verified DOS INTRO executable retained by this
  * profile, or zero when the selected media is absent, invalid or not PC

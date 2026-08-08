@@ -13613,6 +13613,34 @@ int dm2_v1_boot_retain_new_game_world(
     return 1;
 }
 
+int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
+{
+    DM2_V1_GameLoadWorldOwner *candidate;
+    DM2_V1_GameLoadWorldOwner *previous;
+
+    if (!profile || !profile->assets_verified || !profile->dungeon_data ||
+        profile->source_game_load_session_ready) return 0;
+    candidate = (DM2_V1_GameLoadWorldOwner *)calloc(1, sizeof(*candidate));
+    if (!candidate || !dm2_v1_game_load_world_owner_prepare_new_game(
+            candidate, profile) ||
+        !dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+            candidate, NULL) ||
+        !dm2_v1_game_load_world_owner_materialize_source_map_context(candidate)) {
+        if (candidate) {
+            dm2_v1_game_load_world_owner_free(candidate);
+            free(candidate);
+        }
+        return 0;
+    }
+    previous = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
+    profile->game_load_world_owner = candidate;
+    if (previous) {
+        dm2_v1_game_load_world_owner_free(previous);
+        free(previous);
+    }
+    return 1;
+}
+
 const void *dm2_v1_boot_new_game_world_readonly(
     const DM2_V1_BootProfile *profile)
 {
@@ -13622,6 +13650,19 @@ const void *dm2_v1_boot_new_game_world_readonly(
     owner = (const DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
     return dm2_v1_game_load_world_owner_is_prepared(owner) &&
            owner->champion_selection_materialized ? owner : NULL;
+}
+
+const void *dm2_v1_boot_prepared_new_game_world_readonly(
+    const DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_GameLoadWorldOwner *owner;
+    if (!profile || !profile->game_load_world_owner ||
+        profile->source_game_load_session_ready) return NULL;
+    owner = (const DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
+    return dm2_v1_game_load_world_owner_is_prepared(owner) &&
+           owner->source_preselection_ready &&
+           owner->actuator_generators_processed &&
+           owner->source_map_context_materialized ? owner : NULL;
 }
 
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {

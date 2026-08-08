@@ -5,11 +5,12 @@
   rörelsehändelserna. Den ska anslutas till `c_input` först när en fullständig
   `GAME_LOAD`-session äger eventkö, party och HUD; ingen DM1-rutt får användas.
 
-- 🔧 DM2 New Game: den privata GAME_LOAD-ägaren behåller nu den riktiga
-  mirrorsvalsordningen, varje spegelrecord, partyposition och den enda
-  ledarövergången. Den får fortfarande inte kopplas till M11-input eller HUD:
-  originalets fullständiga sessionägare måste först äga c_eventqueue,
-  handcontainer, timerkö och alla fortlöpande map-/recordmutationer atomärt.
+- 🔧 DM2 New Game: ett NEW GAME-val bygger nu först den verkliga, tomma
+  File_header-/recordpool-/DYN4-/timerägaren och originalets
+  aktuatortick-/kartkontext i RAM. Varje efterföljande mirror-klick kan
+  materialiseras i källordning utan automatiskt championval. M11 saknar ännu
+  den riktiga mirrorskärmen och den kompletta sessionscommitten för
+  c_eventqueue, handcontainer, timerkö och fortlöpande map-/recordmutationer.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår

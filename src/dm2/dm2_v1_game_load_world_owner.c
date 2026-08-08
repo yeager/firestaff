@@ -179,8 +179,9 @@ static int dm2_v1_game_load_owner_materialize_new_dungeon_reset(
 {
     DM2_V1_GameLoadNewDungeonResetReceipt candidate;
 
-    if (!owner || !owner->transaction.valid ||
-        !owner->transaction.incomplete_game_load ||
+    if (!owner ||
+        (!owner->source_preselection_ready &&
+         (!owner->transaction.valid || !owner->transaction.incomplete_game_load)) ||
         !owner->dungeon.raw_data || owner->dungeon.raw_size <= 0 ||
         !owner->record_pools.valid || !owner->record_pools.record_graph_complete) {
         return 0;
@@ -191,7 +192,8 @@ static int dm2_v1_game_load_owner_materialize_new_dungeon_reset(
     candidate.save_stream_bytes_consumed = 0u;
     candidate.receipt_hash = 0x4c4e4452u; /* "LNDR" */
     candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
-        candidate.receipt_hash, owner->transaction.transaction_hash);
+        candidate.receipt_hash, owner->source_preselection_ready
+            ? owner->preselection_hash : owner->transaction.transaction_hash);
     candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
         candidate.receipt_hash, (uint16_t)candidate.party_count);
     candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
@@ -207,26 +209,28 @@ static int dm2_v1_game_load_owner_materialize_new_dungeon_reset(
 static int dm2_v1_game_load_owner_materialize_dyn4(
     DM2_V1_GameLoadWorldOwner *owner)
 {
+    const DM2_V1_BootChampionDyn4RosterReceipt *roster;
     DM2_V1_BootChampionSelectionCensus census;
     DM2_V1_GdatDyn4SoundState sound_state;
     uint32_t hash = 2166136261u;
     int i;
 
-    if (!owner || !owner->asset_loader || !owner->transaction.dyn4_roster.valid ||
-        !owner->transaction.dyn4_roster.incomplete_champion_activation ||
-        owner->transaction.dyn4_roster.selector_count <= 0 ||
-        owner->transaction.dyn4_roster.selector_count >
+    if (!owner || !owner->asset_loader) return 0;
+    roster = owner->source_preselection_ready
+        ? &owner->preselection_dyn4_roster : &owner->transaction.dyn4_roster;
+    if (!roster->valid || !roster->incomplete_champion_activation ||
+        roster->selector_count <= 0 || roster->selector_count >
             DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) return 0;
     memset(&census, 0, sizeof(census));
     if (!dm2_v1_boot_champion_selection_census(
             owner->boot_profile, &census) || !census.valid ||
-        census.candidate_count != owner->transaction.dyn4_roster.selector_count) {
+        census.candidate_count != roster->selector_count) {
         return 0;
     }
     dm2_v1_gdat_dyn4_sound_state_init(&sound_state);
-    for (i = 0; i < owner->transaction.dyn4_roster.selector_count; ++i) {
+    for (i = 0; i < roster->selector_count; ++i) {
         const DM2_V1_GdatDyn4SelectionReceipt *source =
-            &owner->transaction.dyn4_roster.selections[i];
+            &roster->selections[i];
         DM2_V1_GdatDyn4SelectionReceipt recounted;
         DM2_V1_GdatDyn4MaterializedSelection *selection =
             &owner->dyn4_selections[i];
@@ -246,7 +250,7 @@ static int dm2_v1_game_load_owner_materialize_dyn4(
         hash = dm2_v1_game_load_owner_hash_step(hash, selection->receipt_hash);
         owner->dyn4_selector_ids[i] = resource_id;
     }
-    owner->dyn4_selector_count = (uint16_t)owner->transaction.dyn4_roster.selector_count;
+    owner->dyn4_selector_count = (uint16_t)roster->selector_count;
     owner->dyn4_materialized_hash = hash;
     owner->dyn4_materialized = hash != 0u;
     return owner->dyn4_materialized;
@@ -456,14 +460,17 @@ fail:
 static int dm2_v1_game_load_owner_validate_world_maps(
     DM2_V1_GameLoadWorldOwner *owner)
 {
+    const DM2_V1_FileHeaderWorldInteractionReceipt *world;
     uint32_t hash = 2166136261u;
     int total_records = 0;
     int map;
 
-    if (!owner || !owner->transaction.world_interactions.valid ||
-        !owner->transaction.world_interactions.incomplete_world ||
-        owner->dungeon.level_count != owner->transaction.world_interactions.map_count)
-        return 0;
+    if (!owner) return 0;
+    world = owner->source_preselection_ready
+        ? &owner->preselection_world_interactions
+        : &owner->transaction.world_interactions;
+    if (!world->valid || !world->incomplete_world ||
+        owner->dungeon.level_count != world->map_count) return 0;
     for (map = 0; map < owner->dungeon.level_count; ++map) {
         DM2_V1_FileHeaderRuntimeMapReceipt receipt;
         memset(&receipt, 0, sizeof(receipt));
@@ -478,7 +485,7 @@ static int dm2_v1_game_load_owner_validate_world_maps(
         hash = dm2_v1_game_load_owner_hash_step(hash, receipt.map_data_hash);
         hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)receipt.record_count);
     }
-    if (total_records != owner->transaction.world_interactions.total_records)
+    if (total_records != world->total_records)
         return 0;
     owner->validated_map_count = (uint16_t)owner->dungeon.level_count;
     owner->validated_world_hash = hash;
@@ -637,42 +644,59 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     memset(owner, 0, sizeof(*owner));
 }
 
-int dm2_v1_game_load_world_owner_init_new_game(
-    DM2_V1_GameLoadWorldOwner *owner,
-    const DM2_V1_BootProfile *profile,
-    const DM2_V1_BootNewGamePartySelection *selections,
-    int selection_count)
+/* Build the source-owned half of GAME_LOAD that precedes the mirror event
+ * loop.  The receipts here are deliberately selection-free: a title click
+ * must never turn the first roster entry into an invented party choice.
+ * Source: SKProject SKULLWIN/c_savegame.cpp::DM2_GAME_LOAD (1415-1565),
+ * skhero.cpp::DM2_SELECT_CHAMPION (1054-1168). */
+int dm2_v1_game_load_world_owner_prepare_new_game(
+    DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_BootProfile *profile)
 {
     const DM2_V1_DungeonData *source;
     DM2_V1_GameLoadWorldOwner candidate;
+    uint32_t hash = 0x4e475052u; /* "NGPR": New Game preparation. */
 
     if (!owner) return 0;
-    /* Constructor callers pass a fresh/zeroed owner.  Do not inspect a
-     * possibly uninitialised caller buffer here; reinitialising an existing
-     * owner is explicitly free-then-init so no source RAM owner leaks. */
     memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
-    if (!profile || !profile->assets_verified || !profile->dungeon_data ||
-        !selections || selection_count <= 0 ||
-        selection_count > DM2_MAX_HEROES ||
-        !dm2_v1_boot_new_game_transaction_receipt(
-            profile, selections, selection_count, &candidate.transaction) ||
-        !candidate.transaction.valid ||
-        !candidate.transaction.incomplete_game_load) {
-        return 0;
-    }
-    source = (const DM2_V1_DungeonData *)profile->dungeon_data;
-    if (!source->raw_data || source->raw_size <= 0 ||
+    if (!profile || !profile->assets_verified ||
+        !(source = (const DM2_V1_DungeonData *)profile->dungeon_data) ||
+        !source->raw_data || source->raw_size <= 0 ||
         !source->record_graph_complete ||
-        candidate.transaction.entrance.map < 0 ||
-        candidate.transaction.entrance.map >= source->level_count ||
+        !dm2_v1_boot_new_game_entrance_receipt(
+            profile, &candidate.preselection_entrance) ||
+        !candidate.preselection_entrance.valid ||
+        !candidate.preselection_entrance.incomplete_game_load ||
+        !dm2_v1_boot_file_header_world_interaction_receipt(
+            profile, &candidate.preselection_world_interactions) ||
+        !candidate.preselection_world_interactions.valid ||
+        !candidate.preselection_world_interactions.incomplete_world ||
+        !dm2_v1_boot_file_header_actuator_generator_receipt(
+            profile, &candidate.preselection_actuator_generators) ||
+        !candidate.preselection_actuator_generators.valid ||
+        !candidate.preselection_actuator_generators.incomplete_game_load ||
+        !dm2_v1_boot_file_header_runtime_map_receipt(
+            profile, candidate.preselection_entrance.map,
+            &candidate.preselection_entrance_map) ||
+        !candidate.preselection_entrance_map.committed ||
+        !candidate.preselection_entrance_map.incomplete_world ||
+        !dm2_v1_boot_champion_dyn4_roster_receipt(
+            profile, &candidate.preselection_dyn4_roster) ||
+        !candidate.preselection_dyn4_roster.valid ||
+        !candidate.preselection_dyn4_roster.incomplete_champion_activation ||
+        candidate.preselection_entrance.map < 0 ||
+        candidate.preselection_entrance.map >= source->level_count ||
+        candidate.preselection_world_interactions.map_count != source->level_count ||
+        candidate.preselection_actuator_generators.map_count != source->level_count ||
+        candidate.preselection_entrance_map.map !=
+            candidate.preselection_entrance.map ||
         dm2_v1_dungeon_load(&candidate.dungeon, source->raw_data,
                             source->raw_size) != 0 ||
         !candidate.dungeon.record_graph_complete ||
         !candidate.dungeon.initial_party_pose_valid ||
-        candidate.dungeon.initial_party_x != candidate.transaction.entrance.x ||
-        candidate.dungeon.initial_party_y != candidate.transaction.entrance.y ||
-        candidate.dungeon.initial_party_dir != candidate.transaction.entrance.direction ||
+        candidate.dungeon.initial_party_x != candidate.preselection_entrance.x ||
+        candidate.dungeon.initial_party_y != candidate.preselection_entrance.y ||
+        candidate.dungeon.initial_party_dir != candidate.preselection_entrance.direction ||
         !dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools,
                                                    &candidate.dungeon) ||
         !candidate.record_pools.valid ||
@@ -682,29 +706,147 @@ int dm2_v1_game_load_world_owner_init_new_game(
         return 0;
     }
 
-    candidate.current_map = candidate.transaction.entrance.map;
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, candidate.preselection_entrance.receipt_hash);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, candidate.preselection_world_interactions.interaction_hash);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, candidate.preselection_actuator_generators.candidate_hash);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, candidate.preselection_entrance_map.map_data_hash);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, candidate.preselection_dyn4_roster.selector_roster_hash);
+    if (hash == 0u) {
+        dm2_v1_game_load_world_owner_free(&candidate);
+        return 0;
+    }
+    candidate.current_map = candidate.preselection_entrance.map;
     candidate.boot_profile = profile;
     candidate.asset_loader = dm2_v1_boot_asset_loader(profile);
-    candidate.source_transaction_hash = candidate.transaction.transaction_hash;
+    candidate.preselection_hash = hash;
+    candidate.source_transaction_hash = hash;
+    candidate.source_preselection_ready = 1;
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
-        candidate.source_transaction_hash == 0u ||
-        !dm2_v1_game_load_owner_validate_possessions(&candidate) ||
         !dm2_v1_game_load_owner_validate_world_maps(&candidate) ||
-        !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate)) {
-        dm2_v1_game_load_world_owner_free(&candidate);
-        return 0;
-    }
-    if (!dm2_v1_game_load_owner_materialize_dyn4(&candidate)) {
-        dm2_v1_game_load_world_owner_free(&candidate);
-        return 0;
-    }
-    if (!dm2_v1_game_load_owner_materialize_sound(&candidate)) {
+        !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate) ||
+        !dm2_v1_game_load_owner_materialize_dyn4(&candidate) ||
+        !dm2_v1_game_load_owner_materialize_sound(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
     candidate.prepared = 1;
     candidate.committed = 0;
     *owner = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_init_new_game(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartySelection *selections,
+    int selection_count)
+{
+    DM2_V1_GameLoadWorldOwner candidate;
+
+    if (!owner) return 0;
+    /* Constructor callers pass a fresh/zeroed owner.  Do not inspect a
+     * possibly uninitialised caller buffer here; reinitialising an existing
+     * owner is explicitly free-then-init so no source RAM owner leaks. */
+    memset(&candidate, 0, sizeof(candidate));
+    if (!selections || selection_count <= 0 ||
+        selection_count > DM2_MAX_HEROES ||
+        !dm2_v1_game_load_world_owner_prepare_new_game(&candidate, profile) ||
+        !dm2_v1_boot_new_game_transaction_receipt(
+            profile, selections, selection_count, &candidate.transaction) ||
+        !candidate.transaction.valid ||
+        !candidate.transaction.incomplete_game_load ||
+        candidate.transaction.entrance.receipt_hash !=
+            candidate.preselection_entrance.receipt_hash ||
+        candidate.transaction.world_interactions.interaction_hash !=
+            candidate.preselection_world_interactions.interaction_hash ||
+        candidate.transaction.dyn4_roster.selector_roster_hash !=
+            candidate.preselection_dyn4_roster.selector_roster_hash ||
+        !dm2_v1_game_load_owner_validate_possessions(&candidate)) {
+        dm2_v1_game_load_world_owner_free(&candidate);
+        return 0;
+    }
+    /* The source transaction identity becomes more specific only after real
+     * mirror clicks have been admitted.  The selection-free preparation hash
+     * remains retained separately for the title-to-entrance boundary. */
+    candidate.source_transaction_hash = candidate.transaction.transaction_hash;
+    memset(owner, 0, sizeof(*owner));
+    *owner = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_select_champion(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_BootNewGamePartySelection *selection)
+{
+    DM2_V1_BootNewGameTransactionReceipt transaction;
+    DM2_V1_BootNewGameTransactionReceipt old_transaction;
+    DM2_V1_BootNewGamePartySelection next[DM2_MAX_HEROES];
+    DM2_V1_BootNewGamePartySelection old_selected[DM2_MAX_HEROES];
+    DM2_V1_Party old_party;
+    DM2_V1_SksaveItemBonusReceipt old_bonus;
+    DM2_V1_GameLoadChampionSelectionReceipt old_receipt;
+    int16_t old_next_number;
+    int16_t old_event_hero;
+    uint8_t old_count;
+    int old_materialized;
+    uint8_t count;
+    int i;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) || !selection ||
+        !owner->source_preselection_ready || !owner->boot_profile ||
+        !owner->source_map_context_materialized || owner->committed ||
+        owner->selected_mirror_count >= DM2_MAX_HEROES) return 0;
+    count = owner->selected_mirror_count;
+    for (i = 0; i < count; ++i) {
+        if (owner->selected_mirrors[i].mirror_object_id ==
+            selection->mirror_object_id) return 0;
+        next[i] = owner->selected_mirrors[i];
+    }
+    next[count] = *selection;
+    memset(&transaction, 0, sizeof(transaction));
+    if (!dm2_v1_boot_new_game_transaction_receipt(owner->boot_profile, next,
+            (int)count + 1, &transaction) || !transaction.valid ||
+        !transaction.incomplete_game_load ||
+        transaction.entrance.receipt_hash !=
+            owner->preselection_entrance.receipt_hash ||
+        transaction.world_interactions.interaction_hash !=
+            owner->preselection_world_interactions.interaction_hash ||
+        transaction.actuator_generators.candidate_hash !=
+            owner->preselection_actuator_generators.candidate_hash ||
+        transaction.dyn4_roster.selector_roster_hash !=
+            owner->preselection_dyn4_roster.selector_roster_hash) return 0;
+
+    old_transaction = owner->transaction;
+    memcpy(old_selected, owner->selected_mirrors, sizeof(old_selected));
+    old_count = owner->selected_mirror_count;
+    old_party = owner->selected_party;
+    old_bonus = owner->champion_item_bonus;
+    old_receipt = owner->champion_selection_receipt;
+    old_next_number = owner->source_next_champion_number;
+    old_event_hero = owner->source_event_hero_index;
+    old_materialized = owner->champion_selection_materialized;
+    owner->transaction = transaction;
+    memcpy(owner->selected_mirrors, next, sizeof(next));
+    owner->selected_mirror_count = (uint8_t)(count + 1u);
+    owner->champion_selection_materialized = 0;
+    if (!dm2_v1_game_load_owner_validate_possessions(owner) ||
+        !dm2_v1_game_load_world_owner_materialize_champion_selection(owner)) {
+        owner->transaction = old_transaction;
+        memcpy(owner->selected_mirrors, old_selected, sizeof(old_selected));
+        owner->selected_mirror_count = old_count;
+        owner->selected_party = old_party;
+        owner->champion_item_bonus = old_bonus;
+        owner->champion_selection_receipt = old_receipt;
+        owner->source_next_champion_number = old_next_number;
+        owner->source_event_hero_index = old_event_hero;
+        owner->champion_selection_materialized = old_materialized;
+        return 0;
+    }
     return 1;
 }
 
@@ -822,16 +964,19 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
 int dm2_v1_game_load_world_owner_materialize_source_map_context(
     DM2_V1_GameLoadWorldOwner *owner)
 {
-    const int map = owner ? owner->transaction.entrance.map : -1;
+    const DM2_V1_BootNewGameEntranceReceipt *entrance = owner &&
+        owner->source_preselection_ready ? &owner->preselection_entrance :
+        (owner ? &owner->transaction.entrance : NULL);
+    const int map = entrance ? entrance->map : -1;
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->fresh_game_mode || !owner->actuator_generators_processed ||
         owner->source_map_context_materialized || owner->committed ||
         map < 0 || map >= owner->dungeon.level_count ||
         !owner->dungeon.initial_party_pose_valid ||
-        owner->dungeon.initial_party_x != owner->transaction.entrance.x ||
-        owner->dungeon.initial_party_y != owner->transaction.entrance.y ||
-        owner->dungeon.initial_party_dir != owner->transaction.entrance.direction) {
+        owner->dungeon.initial_party_x != entrance->x ||
+        owner->dungeon.initial_party_y != entrance->y ||
+        owner->dungeon.initial_party_dir != entrance->direction) {
         return 0;
     }
 

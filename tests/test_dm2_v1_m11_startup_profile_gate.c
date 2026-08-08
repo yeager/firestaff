@@ -1761,6 +1761,7 @@ int main(void) {
     DM2_V1_BootNewGamePossessionReceipt source_possessions;
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
+    DM2_V1_GameLoadWorldOwner incremental_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
@@ -2223,6 +2224,8 @@ int main(void) {
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 joins entrance interactions, raw actuator-generator inputs, map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
     memset(&new_game_world_owner, 0, sizeof(new_game_world_owner));
+    memset(&incremental_new_game_world_owner, 0,
+           sizeof(incremental_new_game_world_owner));
     memset(&tampered_new_game_world_owner, 0,
            sizeof(tampered_new_game_world_owner));
     memset(&timer_process_world_owner, 0, sizeof(timer_process_world_owner));
@@ -2234,6 +2237,31 @@ int main(void) {
         source_dungeon_hash_before_owner = dm2_test_fnv1a(
             source_dungeon->raw_data, (size_t)source_dungeon->raw_size);
     }
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_prepare_new_game(
+                        &incremental_new_game_world_owner, profile) &&
+                    dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+                        &incremental_new_game_world_owner, NULL) &&
+                    dm2_v1_game_load_world_owner_materialize_source_map_context(
+                        &incremental_new_game_world_owner) &&
+                    dm2_v1_game_load_world_owner_select_champion(
+                        &incremental_new_game_world_owner,
+                        &party_selections[0]) &&
+                    incremental_new_game_world_owner.selected_mirror_count == 1u &&
+                    incremental_new_game_world_owner.selected_party.heros_in_party == 1 &&
+                    incremental_new_game_world_owner.champion_selection_materialized &&
+                    dm2_v1_game_load_world_owner_select_champion(
+                        &incremental_new_game_world_owner,
+                        &party_selections[1]) &&
+                    incremental_new_game_world_owner.selected_mirror_count == 2u &&
+                    incremental_new_game_world_owner.selected_party.heros_in_party == 2 &&
+                    incremental_new_game_world_owner.source_next_champion_number == 2 &&
+                    !dm2_v1_game_load_world_owner_select_champion(
+                        &incremental_new_game_world_owner,
+                        &party_selections[1]) &&
+                    !incremental_new_game_world_owner.committed &&
+                    !profile->source_game_load_session_ready,
+                "DM2 keeps the original mirror click order in a private GAME_LOAD owner");
     new_game_owner_initialized = profile &&
         dm2_v1_game_load_world_owner_init_new_game(
             &new_game_world_owner, profile, party_selections, 2);
@@ -2908,6 +2936,7 @@ int main(void) {
                     "M11 decrements and queues only a real deterministic FINITE_RELAY chain privately");
     }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
+    dm2_v1_game_load_world_owner_free(&incremental_new_game_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,
@@ -3744,6 +3773,19 @@ int main(void) {
                     dm2_v1_runtime_get_champion_inventory_object(
                         0, CHAMPION_SLOT_HEAD) == 0u,
                 "M11 DM2 new game clears stale save party ownership before source mirror selection");
+    profile = (DM2_V1_BootProfile *)view.dm2BootProfile;
+    expect_true(profile &&
+                    (profile_new_game_owner =
+                        (const DM2_V1_GameLoadWorldOwner *)
+                            dm2_v1_boot_prepared_new_game_world_readonly(
+                                profile)) != NULL &&
+                    profile_new_game_owner->source_preselection_ready &&
+                    profile_new_game_owner->actuator_generators_processed &&
+                    profile_new_game_owner->source_map_context_materialized &&
+                    !profile_new_game_owner->champion_selection_materialized &&
+                    profile_new_game_owner->selected_party.heros_in_party == 0 &&
+                    !profile->source_game_load_session_ready,
+                "M11 NEW GAME retains the real post-GAME_LOAD pre-mirror owner without choosing a champion");
     /* The following runtime/save assertions exercise resume separately. A
      * New Game may not create the former fixture party merely to enter this
      * block; GAME_LOAD owns that source transition. */
