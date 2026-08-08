@@ -12778,10 +12778,10 @@ as line/circle coordinates or promote them into movement geometry.
   now verified from the ordered 5-bit little-endian codon stream in real
   `TQUS02.bin` and reach the startup media receipt. Title/control fields and
   the general text consumer remain open; no title text is synthesized.
-- 🔧 2026-08-08 Theron JP item-property provenance: the loader must not apply
-  the authenticated US 66-entry property table to JP Track 02. JP ground
-  records remain real and decoded, but JP property binding and its T900
-  consumer stay blocked until the JP table offset and semantics are proven.
+- 🔧 2026-08-08 Theron item-property consumer: the complete 66-entry table is
+  now byte-verified in both US and JP Track 02 user-data images. The raw
+  property payload is carried into object provenance; field meanings,
+  equip/use/stack rules and the executing T900 consumer remain open.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.

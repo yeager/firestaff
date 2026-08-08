@@ -382,7 +382,7 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.levels_loaded > 0);
         assert(result.source_records_decoded > 0);
         assert(result.raw_only_item_refs == 0);
-        assert(result.source_item_properties_bound == 0);
+        assert(result.source_item_properties_bound > 0);
         assert(result.source_object_count ==
                (unsigned int)result.source_occurrences_decoded);
         assert_source_category_census(&result);

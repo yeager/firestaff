@@ -1,5 +1,7 @@
 #include "theron_v1_track02_item_properties.h"
 
+#include <string.h>
+
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
  * 66 item property records from UD 0x099825, 6 bytes each.
  * Cross-referenced with item names (UD 0x21A08E) and categories (UD 0x21A046). */
@@ -80,4 +82,28 @@ const Theron_ItemPropertyRecord *theron_v1_track02_item_property(unsigned int in
 
 size_t theron_v1_track02_item_property_count(void) {
     return THERON_TRACK02_ITEM_PROPERTY_COUNT;
+}
+
+int theron_v1_track02_item_properties_match_source(
+    const uint8_t *ud_data, size_t ud_size, int jp_bin) {
+    static const size_t us_offsets[] = { 0x099825u };
+    static const size_t jp_offsets[] = {
+        0x0990a2u, 0x119d4du, 0x15955du, 0x1d91d9u, 0x219b13u
+    };
+    const size_t *offsets = jp_bin ? jp_offsets : us_offsets;
+    size_t offset_count = jp_bin
+        ? sizeof(jp_offsets) / sizeof(jp_offsets[0])
+        : sizeof(us_offsets) / sizeof(us_offsets[0]);
+    const uint8_t *source = (const uint8_t *)g_properties;
+    const size_t source_bytes = sizeof(g_properties);
+
+    if (!ud_data || ud_size == 0u) return 0;
+    for (size_t i = 0u; i < offset_count; ++i) {
+        size_t offset = offsets[i];
+        if (offset <= ud_size && source_bytes <= ud_size - offset &&
+            memcmp(ud_data + offset, source, source_bytes) == 0) {
+            return 1;
+        }
+    }
+    return 0;
 }

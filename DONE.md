@@ -8124,3 +8124,13 @@
   unproven property binding is withheld. US property binding remains covered
   by the real US dungeon-loader regression, while JP now asserts zero property
   publications until its own source table is recovered.
+# 2026-08-08 Theron JP property-table recovery
+
+- ✅ Rechecked the real JP Track 02 BIN instead of treating the differing
+  same-offset bytes as a missing table. The complete 396-byte property table
+  occurs in the JP banked image at verified user-data offsets including
+  `0x0990A2`; it is byte-identical to the authenticated US table.
+- ✅ The loader now verifies the complete table in the selected real US/JP
+  user-data image before publishing property bytes. Both variants pass the
+  full seven-dungeon loader regression; T900 field meanings and consumers
+  remain explicitly unpromoted.

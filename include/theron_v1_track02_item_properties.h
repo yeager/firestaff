@@ -28,6 +28,13 @@ typedef struct {
 const Theron_ItemPropertyRecord *theron_v1_track02_item_property(unsigned int index);
 size_t theron_v1_track02_item_property_count(void);
 
+/* Verify that the complete source property table is present in the supplied
+ * normalized Track 02 user-data image.  The table is repeated in banked
+ * copies; the variant-specific offsets below are source observations, not a
+ * generated fallback.  jp_bin selects the JP raw-BIN bank layout. */
+int theron_v1_track02_item_properties_match_source(
+    const uint8_t *ud_data, size_t ud_size, int jp_bin);
+
 #ifdef __cplusplus
 }
 #endif
