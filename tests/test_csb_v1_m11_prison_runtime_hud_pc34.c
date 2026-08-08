@@ -555,7 +555,7 @@ int main(void)
                                   M11_GAME_INPUT_IGNORED &&
                                   M11_GameView_HandleTouchEvent(
                                       &resumed_view, M11_TOUCH_EVENT_CANCEL,
-                                      234, 43, 2010u) ==
+                                      -1, 999, 2010u) ==
                                       M11_GAME_INPUT_IGNORED &&
                                   M11_GameView_HandleTouchEvent(
                                       &resumed_view, M11_TOUCH_EVENT_DOWN,

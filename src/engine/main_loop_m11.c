@@ -4680,6 +4680,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                    ? M11_TOUCH_EVENT_MOVE
                    : (ev.type == SDL_EVENT_FINGER_UP
                       ? M11_TOUCH_EVENT_UP : M11_TOUCH_EVENT_CANCEL));
+            /* A cancel has no source-space meaning. It must still clear the
+             * recognizer if the host reports it in a letterbox margin, where
+             * window-to-game mapping correctly rejects the coordinate. */
+            if (kind == M11_TOUCH_EVENT_CANCEL && gameViewResult) {
+                *gameViewResult = M11_GameView_HandleTouchEvent(
+                    gameView, kind, 0, 0, (uint32_t)SDL_GetTicks());
+                continue;
+            }
             if (gameViewResult &&
                 m11_map_normalized_touch_to_game_source(gameView,
                                                         ev.tfinger.x,

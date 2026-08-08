@@ -111,6 +111,11 @@
   källägda spellpanelen. Detta täcker både C002-swipe och HUD-tap utan
   testparty eller ersatt touchmodell.
 
+- ✅ `SDL_EVENT_FINGER_CANCELED` nollställer nu samma kontakt även om den
+  kommer från en letterbox-marginal som saknar spelkoordinat. En koordinat
+  utanför källbilden är alltså aldrig skäl att behålla ett halvfärdigt
+  touch-tillstånd inför nästa CSB-kommando.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan
