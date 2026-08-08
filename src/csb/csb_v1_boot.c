@@ -5008,6 +5008,32 @@ static void csb_v1_boot_startup_visual_base_snapshot_pc34(
     snapshot->resume_path = NULL;
 }
 
+/* ReDMCSB CEDTINC7.C/CEDTINCI.C only draw an imported-party Utility
+ * transaction after the source import has supplied the roster.  A profile
+ * with no committed import must not manufacture a two-champion preview or a
+ * host prompt merely to make the startup capture sequence pass. */
+static int csb_v1_boot_startup_visual_utility_snapshot_pc34(
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 *snapshot,
+    const CSB_V1_BootProfile *boot_profile)
+{
+    int champion_count;
+
+    if (!snapshot || !boot_profile || !boot_profile->imported_party_ready) {
+        return 0;
+    }
+    champion_count = boot_profile->imported_party.ChampionCount;
+    if (champion_count <= 0 || champion_count > CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    csb_v1_boot_startup_visual_base_snapshot_pc34(snapshot, boot_profile);
+    snapshot->utility_overlay_active = 1;
+    snapshot->utility_selected_action_index = 0;
+    snapshot->utility_imported_champion_count = champion_count;
+    snapshot->utility_preview_active = 0;
+    snapshot->utility_prompt = NULL;
+    return 1;
+}
+
 static int csb_v1_boot_startup_visual_title_sample_pc34(
     const CSB_V1_BootProfile *boot_profile,
     int frame,
@@ -5148,21 +5174,19 @@ int csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
                 proof.draw_closed_doors &&
                 !proof.draw_fallback_text;
 
-    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
-    snapshot.utility_overlay_active = 1;
-    snapshot.utility_selected_action_index = 0;
-    snapshot.utility_imported_champion_count = 2;
-    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
-    out_receipt->utility_hud_capture_ready =
-        csb_v1_boot_startup_visual_packaged_snapshot_pc34(
-            &snapshot,
-            &proof,
-            &out_receipt->utility_hud_hash) &&
-                proof.utility_menu_route &&
-                proof.hud_menu_capture_ready &&
-                proof.hud_menu_draw_available &&
-                proof.draw_utility_panel &&
-                !proof.draw_fallback_text;
+    if (csb_v1_boot_startup_visual_utility_snapshot_pc34(
+            &snapshot, boot_profile)) {
+        out_receipt->utility_hud_capture_ready =
+            csb_v1_boot_startup_visual_packaged_snapshot_pc34(
+                &snapshot,
+                &proof,
+                &out_receipt->utility_hud_hash) &&
+                    proof.utility_menu_route &&
+                    proof.hud_menu_capture_ready &&
+                    proof.hud_menu_draw_available &&
+                    proof.draw_utility_panel &&
+                    !proof.draw_fallback_text;
+    }
 
     csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
     snapshot.opening_active = 1;
@@ -5442,12 +5466,9 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
             ownership.host_draw.fallback_callbacks_stripped;
     }
 
-    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
-    snapshot.utility_overlay_active = 1;
-    snapshot.utility_selected_action_index = 0;
-    snapshot.utility_imported_champion_count = 2;
-    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
-    if (csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
+    if (csb_v1_boot_startup_visual_utility_snapshot_pc34(
+            &snapshot, boot_profile) &&
+        csb_v1_boot_startup_runtime_visual_consume_snapshot_pc34(
             &snapshot,
             executor,
             &ownership,
@@ -5875,12 +5896,9 @@ int csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
         &out_receipt->closed_door_host_input_consumes_receipt_only,
         &out_receipt->closed_door_packaged_capture_hash);
 
-    csb_v1_boot_startup_visual_base_snapshot_pc34(&snapshot, boot_profile);
-    snapshot.utility_overlay_active = 1;
-    snapshot.utility_selected_action_index = 0;
-    snapshot.utility_imported_champion_count = 2;
-    snapshot.utility_prompt = "CHAOS STRIKES BACK READY";
-    if (!csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
+    if (!csb_v1_boot_startup_visual_utility_snapshot_pc34(
+            &snapshot, boot_profile) ||
+        !csb_v1_boot_startup_runtime_host_gate_snapshot_pc34(
             &snapshot,
             executor,
             &out_receipt->runtime_visual.visual_sequence,

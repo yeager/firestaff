@@ -22,6 +22,13 @@
   autentisk CSB-sparfil är sådan generering inte ett sparformatstest och kan
   inte längre byggas eller köras.
 
+- ✅ PC 3.4:s startup-capture kan inte längre skapa en Utility-HUD med ett
+  hårdkodat tvåchampionsparty eller prompten `CHAOS STRIKES BACK READY`.
+  ReDMCSB CEDTINC7.C/CEDTINCI.C kräver en committed importtransaktion; utan
+  sådan partydata spärras Utility-delen av capturekedjan. När en import är
+  committed kommer championantalet i stället direkt från den party som
+  handoffen äger.
+
 - ✅ Realdataregressionen för CSB:s HUD använder inte längre testskapade
   party-, inventory- eller spellpanelstillstånd för C100, F1, F2 eller C022.
   Den verifierar den riktiga enhjältepartyns positiva och negativa kommandon

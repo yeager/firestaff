@@ -2837,7 +2837,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
     CSB_V1_BootStartupHostInputDispatchReceipt_PC34 host_input_dispatch;
     CSB_V1_BootStartupHostOwnershipReceipt_PC34 host_ownership;
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+    CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 no_party_sequence;
     CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 runtime_host_gate;
+    CSB_V1_PartyState utility_party;
     CSB_V1_StartupRuntimeAssetSession_PC34 full_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 full_runtime;
     CSB_V1_StartupCompleteSupportReceipt_PC34 complete_support;
@@ -2873,6 +2875,21 @@ static void test_runtime_utility_startup_receipt_facades(void)
     boot.dungeon_verified = 1;
     boot.variant_id = CSB_V1_VARIANT_PC34_EN;
     boot.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    CHECK(!csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
+              &boot, &no_party_sequence) &&
+              !no_party_sequence.valid &&
+              !no_party_sequence.utility_hud_capture_ready &&
+              no_party_sequence.utility_hud_hash == 0u,
+          "boot startup capture refuses a Utility preview without committed party data");
+    /* Contract-only fixture: production reaches this setter only after the
+     * source DM import transaction.  It proves the capture takes its count
+     * from committed party state instead of the former hard-coded value. */
+    csb_v1_character_init_default(&utility_party);
+    utility_party.ChampionCount = 1;
+    utility_party.ImportedFromDM1 = 1;
+    utility_party.ImportSource = 2;
+    CHECK(csb_v1_boot_set_imported_party(&boot, &utility_party) == 0,
+          "boot startup capture accepts a committed Utility party fixture");
     visual_sequence_ok =
         csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
             &boot, &visual_sequence);

@@ -6894,6 +6894,11 @@ that its exact runtime path is not already source-locked and tested.
 24. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
     native import/export/backup/resume compatibility, EXPOOL/DB11 ownership,
     and byte-level failure handling.
+    2026-08-08: PC 3.4:s startup-/capturekedja accepterar inte längre en
+    modellbyggd Utility-preview. Den kräver en committed importerad party och
+    använder då endast dess verkliga championantal. Återstår: koppla detta
+    till den autentiska CEDT/Utility-medie- och filtransaktionen, inte till
+    ett testsparformat eller en värdprompt.
     2026-08-08: a former probe that derived a Firestaff save header, party
     pose and state prefix from `DUNGEON.DAT` was removed. A dungeon package is
     not a saved game and must never be used to manufacture one; this item now
