@@ -1,4 +1,5 @@
 #include "theron_v1_combat.h"
+#include "theron_v1_mechanics.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_world.h"
 
@@ -56,6 +57,31 @@ int main(void) {
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_DEMON,
                                    1, 0, 2, 1) == -1,
           "scripted Demon remains blocked without a spawn record");
+    world.current_dungeon = 1;
+    world.current_level = 0;
+    world.party.champions[0].alive = 1;
+    world.party.champions[0].food = 7;
+    world.party.champions[0].water = 8;
+    world.party.champions[0].stamina = 9;
+    world.party.champions[0].max_stamina = 20;
+    world.object_count = 1;
+    world.objects[0].type = THERON_OBJTYPE_POOL;
+    world.objects[0].x = 3;
+    world.objects[0].y = 3;
+    world.objects[0].level = 0;
+    CHECK(theron_v1_pool_use(&world, 3, 3) == -1 &&
+              world.party.champions[0].food == 7 &&
+              world.party.champions[0].water == 8 &&
+              world.party.champions[0].stamina == 9 &&
+              world.objects[0].state != THERON_OBJ_F_USED,
+          "source pool cannot apply fixture T700 recovery");
+    world.objects[0].type = THERON_OBJTYPE_ALTAR_VI;
+    world.party.champions[0].alive = 0;
+    world.party.champions[0].health = 0;
+    world.party.gold = 1000;
+    CHECK(theron_v1_altar_of_vi_resurrect(&world, 3, 3) == -1 &&
+              world.party.gold == 1000 && !world.party.champions[0].alive,
+          "source altar cannot apply fixture T900 resurrection");
     memset(&world, 0, sizeof(world));
     world.current_dungeon = 1;
     world.current_level = 2;

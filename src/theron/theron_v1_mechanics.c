@@ -83,6 +83,12 @@ static int theron_v1_source_level_requires_item_provenance(
                         [world->current_level].source_header_verified;
 }
 
+/* Declared here because T900 altar handling appears before the T700 helper
+ * body below.  A verified Track 02 level may only use this path for the
+ * common tick dispatch until the real field consumer is captured. */
+static int theron_v1_source_level_needs_stat_consumer(
+    const Theron_V1_World *world);
+
 static int theron_v1_source_item_category_is_carryable(uint8_t category) {
     /* T900 inventory ownership is defined for the decoded carried-object
      * categories. Monster, actuator and raw-only categories are not items. */
@@ -628,6 +634,11 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
 int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
                                      int altar_x, int altar_y) {
     if (!world) return -1;
+    if (theron_v1_source_level_needs_stat_consumer(world)) {
+        /* The cost/HP/wound mutation below is a legacy fixture rule until
+         * the source T900 altar consumer is joined to the real object row. */
+        return -1;
+    }
     Theron_V1_Object *altar = theron_v1_object_at(world,
                                      world->current_level, altar_x, altar_y);
     if (!altar || altar->type != THERON_OBJTYPE_ALTAR_VI) return -1;
@@ -801,6 +812,11 @@ void theron_v1_apply_post_move_effects(Theron_V1_World *world) {
 
 int theron_v1_pool_use(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
+    if (theron_v1_source_level_needs_stat_consumer(world)) {
+        /* Pool recovery mutates the same T700 fields as hunger and poison;
+         * do not let the fixture's max-stamina shortcut run on real data. */
+        return -1;
+    }
     Theron_V1_Object *p = theron_v1_object_at(world, world->current_level, x, y);
     if (!p || p->type != THERON_OBJTYPE_POOL) return -1;
 

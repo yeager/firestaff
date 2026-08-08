@@ -23,6 +23,13 @@
   world time. A regression confirms the clock advances while fixture stat
   drains remain disabled.
 
+# 2026-08-08 Theron source special-object gates
+
+- ✅ Pool recovery and altar-of-vi resurrection now refuse to mutate a
+  verified Track 02 level while their original T700/T900 object consumers
+  remain unresolved. The fixture-only max-stamina recovery and 500-gold/
+  half-HP resurrection rules can no longer leak into real source data.
+
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
 # 2026-08-08 Theron source-property pickup gate
