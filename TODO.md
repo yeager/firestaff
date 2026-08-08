@@ -12468,3 +12468,8 @@ as line/circle coordinates or promote them into movement geometry.
   and matched property bytes. This is an explicit provenance roundtrip API;
   the original T900 drop command, slot translation, and save semantics remain
   unproven and are intentionally not wired to the legacy drop command.
+- 🔧 2026-08-08 Theron live creature cell binding: static category-4 records
+  now publish each live group member's exact two-bit cell ordinal from the
+  packed source `position`/cells byte. Group coordinates, current HP, source
+  refs, and member slots are retained, but the original AI, attack, RNG,
+  generator, and T900 consumers remain open.

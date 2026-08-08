@@ -7003,3 +7003,13 @@
 - This is not yet the original T900 drop/equip/use/stack/save consumer; the
   legacy `THERON_CMD_DROP` path remains fail-closed until that consumer is
   source-authenticated.
+# 2026-08-08 Theron live creature packed-cell binding
+
+- ✅ Static Track 02 monster groups now copy the exact per-member two-bit cell
+  ordinal from the source packed cells byte into each live creature.
+- ✅ Added a real US/JP loader invariant proving the member ordinal is derived
+  from the authenticated source group byte, not a host coordinate seed.
+- ✅ Verified all seven US Track 02 dungeon loads and the production regular-
+  spawn/combat admission test.
+- The original RNG consumer, creature AI/attack/drop owners, and generator
+  timing are still fail-closed; this change binds record identity only.

@@ -923,6 +923,8 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             creature->source_ref = record->source_ref;
             creature->source_index = record->source_index;
             creature->source_position = record->position;
+            creature->source_cell =
+                (uint8_t)((record->position >> (slot * 2u)) & 0x03u);
             creature->source_slot = (uint8_t)slot;
             creature->source_group_count = (uint8_t)members;
             creature->source_direction_flags = record->direction_flags;

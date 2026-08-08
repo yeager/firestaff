@@ -243,6 +243,9 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             const Theron_V1_Creature *creature = &world->creatures[ci];
             assert(creature->flags & THERON_CF_ACTIVE);
             assert(creature->source_ref != 0u);
+            assert(creature->source_cell ==
+                   (uint8_t)((creature->source_position >>
+                              (creature->source_slot * 2u)) & 0x03u));
             assert(creature->hp == creature->max_hp);
             assert(creature->primary_attack == THERON_ATTACK_NONE);
             assert(creature->secondary_attack == THERON_ATTACK_NONE);

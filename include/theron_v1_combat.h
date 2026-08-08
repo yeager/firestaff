@@ -150,6 +150,10 @@ typedef struct {
     uint16_t   source_ref;
     uint16_t   source_index;
     uint8_t    source_position;
+    /* The source group stores four two-bit creature-cell ordinals in
+     * source_position. Keep the member's exact packed ordinal alongside the
+     * group byte for rendering/collision consumers. */
+    uint8_t    source_cell;
     uint8_t    source_slot;
     uint8_t    source_group_count;
     uint8_t    source_direction_flags;
