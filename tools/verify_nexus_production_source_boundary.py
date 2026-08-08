@@ -13,6 +13,10 @@ text = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
 launcher_renderer = (ROOT / "src/ui/menu_startup_render_modern_m12.c").read_text(
     encoding="utf-8"
 )
+launcher = (ROOT / "src/nexus/nexus_v1_launcher.c").read_text(encoding="utf-8")
+m11_game_view = (ROOT / "src/engine/m11_game_view.c").read_text(
+    encoding="utf-8"
+)
 
 
 def fail(message: str) -> None:
@@ -99,6 +103,45 @@ if "else if (slotIdx == 3)" not in launcher_renderer:
     fail("Nexus launcher card does not have an explicit capture-locked branch")
 if '"CAPTURE LOCKED"' not in launcher_renderer:
     fail("Nexus launcher card does not expose its capture-locked status")
+
+# The source loaders may retain authenticated retail bytes for later capture
+# analysis, but the production startup handoff must not turn planner metadata
+# into host pixels. Keep this check next to the CMake boundary: a future merge
+# can otherwise restore a visually plausible menu without adding a Saturn
+# VDP1/VDP2 consumer receipt.
+for required in (
+    "if (out_commands[read_index].kind != NEXUS_V1_STARTUP_DRAW_TEXT)",
+    "out_receipt->hud_ready = 0;",
+    "status = \"blocked-dgn-capture-required\"",
+):
+    if required not in launcher:
+        fail(f"startup runtime handoff lost capture gate: {required}")
+
+# These executors deliberately consume command metadata without writing the
+# M11 framebuffer. The boot-title executor is the sole exception, and it must
+# retain the complete authenticated transition receipt predicate.
+noop_executors = (
+    "m11_nexus_startup_exec_title_background",
+    "m11_nexus_startup_exec_warning_background",
+    "m11_nexus_startup_exec_fill_rect",
+    "m11_nexus_startup_exec_outline_rect",
+    "m11_nexus_startup_exec_text",
+    "m11_nexus_startup_exec_portrait",
+)
+for function_name in noop_executors:
+    function = re.search(
+        rf"static void {function_name}\(.*?\n\}}",
+        m11_game_view,
+        re.DOTALL,
+    )
+    if not function:
+        fail(f"M11 Nexus startup executor missing: {function_name}")
+    body_text = function.group(0)
+    if "(void)command;" not in body_text:
+        fail(f"M11 startup executor is no longer explicit no-draw: {function_name}")
+
+if "m11_nexus_startup_title_receipt_ready(context, command)" not in m11_game_view:
+    fail("boot-title executor lost its authenticated transition-capture gate")
 
 print(
     "nexus_production_source_boundary: PASS "

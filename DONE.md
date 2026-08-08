@@ -1,3 +1,17 @@
+# Nexus startup/meny-produktionsgrind förstärkt (2026-08-08)
+
+- ✅ Produktionsverifieraren kontrollerar nu inte bara CMake-listan och
+  launcher-kortet, utan även att M11:s startup-exekutorer för titel, varning,
+  rektanglar, text och porträtt förblir explicita no-draw-vägar.
+- ✅ Den verifierar dessutom att runtime-handoff fortfarande filtrerar
+  syntetiska textkommandon, håller `hud_ready` avstängt och kräver
+  `blocked-dgn-capture-required` innan en DGN-vy kan presenteras.
+- ✅ Mot den riktiga `/Users/bosse/.firestaff/data/nexus`-korpusen passerar
+  boot/hash-scan, alla 16 SLEV-task-receipt, alla 16 SAL/MAP-par, 16 DGN
+  face/mesh/material-regressioner samt startup-media och startup-meny.
+  Ingen hostpixel, HUD- eller viewport-konsument har därmed promoverats utan
+  autentiserad Saturn-capture.
+
 # DM2 File_header-receipt mot originalposter (2026-08-08)
 
 - ✅ `test_dm2_v1_g1_record_graph_diagnostic` jämför nu alla lästa DB0-dörrar,
