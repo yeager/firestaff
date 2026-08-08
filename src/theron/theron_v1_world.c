@@ -23,6 +23,7 @@
 #include "theron_v1_track02_level_data_blocks.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_actuator.h"
+#include "theron_v1_track02_creature_spawn.h"
 #include "theron_v1_track02_text_decode.h"
 #include <string.h>
 
@@ -92,12 +93,18 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_INVENTORY_SOURCE_WIRE_BYTES_V7 48u
 #define THERON_OBJECT_WIRE_BYTES 86u
 #define THERON_TIMER_WIRE_BYTES 24u
-#define THERON_CREATURE_WIRE_BYTES 87u
+#define THERON_CREATURE_WIRE_BYTES_V7 87u
+#define THERON_CREATURE_WIRE_BYTES_V8 88u
 #define THERON_GENERATOR_WIRE_BYTES 32u
 #define THERON_GENERATOR_WIRE_BYTES_V6 36u
 
 static size_t theron_generator_wire_size(void) {
     return THERON_GENERATOR_WIRE_BYTES_V6;
+}
+
+static size_t theron_creature_wire_size_for_version(uint16_t version) {
+    return version >= 8u ? THERON_CREATURE_WIRE_BYTES_V8
+                         : THERON_CREATURE_WIRE_BYTES_V7;
 }
 
 static size_t theron_generator_wire_size_for_version(uint16_t version) {
@@ -302,11 +309,12 @@ static uint8_t *theron_creature_write(uint8_t *out,
     *out++ = creature->source_direction_flags;
     ww16(out, creature->source_flags_word); out += 2;
     ww16(out, creature->source_unknown_word); out += 2;
+    *out++ = creature->source_spawn_category;
     return out;
 }
 
 static const uint8_t *theron_creature_read(
-    const uint8_t *in, Theron_V1_Creature *creature) {
+    const uint8_t *in, Theron_V1_Creature *creature, uint16_t version) {
     memset(creature, 0, sizeof(*creature));
     creature->id = (int32_t)rw32(in); in += 4;
     creature->type = *in++;
@@ -338,6 +346,7 @@ static const uint8_t *theron_creature_read(
     creature->source_direction_flags = *in++;
     creature->source_flags_word = rw16(in); in += 2;
     creature->source_unknown_word = rw16(in); in += 2;
+    creature->source_spawn_category = version >= 8u ? *in++ : 0xffu;
     return in;
 }
 
@@ -1299,6 +1308,11 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             creature->source_direction_flags = record->direction_flags;
             creature->source_flags_word = record->flags_word;
             creature->source_unknown_word = record->unknown_word;
+            {
+                const Theron_SpawnZoneDesc *zone =
+                    theron_v1_track02_spawn_zone(record->type);
+                creature->source_spawn_category = zone ? zone->category : 0xffu;
+            }
         }
     }
     return 0;
@@ -1944,7 +1958,8 @@ static size_t serialize_size(const Theron_V1_World *world) {
      * no pointers and can be appended without changing existing offsets. */
     n += theron_inventory_source_wire_size();
     n += sizeof(uint32_t); /* live creature_count */
-    n += (size_t)world->creature_count * THERON_CREATURE_WIRE_BYTES;
+    n += (size_t)world->creature_count *
+         theron_creature_wire_size_for_version(THERON_WORLD_SAVE_VERSION);
     n += sizeof(uint32_t); /* source generator count */
     n += (size_t)world->source_generator_count * theron_generator_wire_size();
     n += sizeof(world->generator_spawn_count);
@@ -2051,7 +2066,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
 
     uint16_t ver = rw16(in);
     if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
-        ver != 6u &&
+        ver != 6u && ver != 7u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
@@ -2151,16 +2166,18 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                 uint32_t creature_count = rw32(in);
                 in += sizeof(uint32_t);
                 remaining -= sizeof(uint32_t);
+                const size_t creature_wire =
+                    theron_creature_wire_size_for_version(ver);
                 if (creature_count > THERON_MAX_CREATURES_PER_LEVEL ||
-                    ((size_t)creature_count * THERON_CREATURE_WIRE_BYTES !=
-                         remaining && ver == 3u)) return -1;
-                if ((size_t)creature_count * THERON_CREATURE_WIRE_BYTES >
+                    ((size_t)creature_count * creature_wire != remaining &&
+                     ver == 3u)) return -1;
+                if ((size_t)creature_count * creature_wire >
                     remaining) return -1;
                 world->creature_count = (int)creature_count;
                 for (uint32_t i = 0; i < creature_count; ++i) {
-                    in = theron_creature_read(in, &world->creatures[i]);
+                    in = theron_creature_read(in, &world->creatures[i], ver);
                 }
-                remaining -= (size_t)creature_count * THERON_CREATURE_WIRE_BYTES;
+                remaining -= (size_t)creature_count * creature_wire;
                 if (ver >= 4u) {
                     const size_t runtime_slots = (ver == 4u) ?
                         THERON_LEGACY_GENERATOR_RUNTIME_SLOTS :

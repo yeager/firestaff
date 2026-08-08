@@ -25,12 +25,23 @@
 # Theron lossless item provenance (2026-08-08)
 
 - ✅ Riktiga Track 02-itemrecords bevaras nu fullständigt genom pickup, drop
-  och save/load; save-version 7 läser även äldre version 6-tail.
+  och save/load; save-version 8 läser även äldre version 6/7-tail och
+  creature-records.
 - ✅ Rårecord-roundtrip är verifierad av
   `test_theron_v1_world_serialize_purchase_state`, och US/JP dungeon-loadern
   passerar fortsatt mot `/Users/bosse/.firestaff/data/theron`.
 - 🔒 Detta är provenance, inte återfunnen T900-gameplay. `$2600`-konsumenten,
   equip/use/stack/loot och T700-mutationer är fortsatt fail-closed.
+
+# Theron source-bound creature category provenance (2026-08-08)
+
+- ✅ Levande creatures från riktiga Track 02-monstergrupper behåller nu sin
+  autentiserade regular-spawn-kategori genom live-pool och save/load.
+  THIEF/DEMON saknar retail-spawnzon och behåller därför explicit `0xff`.
+- ✅ Save-version 8 skriver kategorin; version 7 läses med kategorin
+  uttryckligen obunden. US/JP loader-, creature- och save-regressionerna
+  passerar.
+- 🔒 Kategorin aktiverar inte RNG, AI, attack, loot eller generatorlogik.
 
 # Theron real CDDA handoff (2026-08-08)
 

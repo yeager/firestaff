@@ -4,12 +4,24 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Theron's Quest
 
+### 2026-08-08 — source-bound creature spawn category provenance
+
+- ✅ Live creatures created from authentic Track 02 monster groups now retain
+  the source regular-spawn category from the retail descriptor. Scripted
+  THIEF/DEMON records retain `0xff` as explicitly unbound; no AI, attack or
+  RNG meaning is inferred from that value.
+- ✅ The field survives the portable world save format. Save version 8 writes
+  it, while version 7 loads with the field explicitly unbound for backwards
+  compatibility.
+- ✅ Real US/JP dungeon-loader, creature-pool and world-save regressions pass.
+
 ### 2026-08-08 — lossless T900 item-provenance
 
 - ✅ `Theron_V1_InventorySourceRecord` bevarar nu hela den riktiga Track 02-
   itemrecorden (recordstorlek och upp till 16 råbytes) genom pickup, drop och
-  save/load. Save-formatet är version 7; version 6:s 31-byte provenance-tail
-  kan fortfarande läsas utan att hitta på nya fält.
+  save/load. Save-formatet är version 8; version 6:s 31-byte provenance-tail
+  och version 7:s creature-wire-format kan fortfarande läsas utan att hitta
+  på nya fält.
 - ✅ `test_theron_v1_world_serialize_purchase_state` verifierar rårecordens
   bytepositioner efter roundtrip. Riktiga US/JP
   `test_theron_v1_track02_dungeon_loader` passerar fortsatt med source-bound

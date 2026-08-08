@@ -4,6 +4,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-08 — nästa T900-bevis
 
+- 🔧 Använd den sparade source-spawnkategorin när den autentiserade RNG-
+  konsumenten fångas. Kategorin är nu provenance i live-poolen, men får inte
+  driva HP, AI, attack eller generatorer innan `$4667`/`$5D64`/`$5D6A` är
+  runtimebundna.
 - 🔧 Råa itemrecords följer nu inventory genom pickup, drop och save/load.
   Bind den ursprungliga T900-konsumenten för equip/use/stack och validera
   dess state-skrivningar mot samma bytes innan någon regel aktiveras.

@@ -159,6 +159,10 @@ typedef struct {
     uint8_t    source_direction_flags;
     uint16_t   source_flags_word;
     uint16_t   source_unknown_word;
+    /* Track 02 regular-spawn category from the authenticated creature
+     * descriptor.  0xff means the source has no regular-spawn descriptor
+     * (currently scripted THIEF/DEMON); it is not a gameplay default. */
+    uint8_t    source_spawn_category;
 } Theron_V1_Creature;
 
 /* ── Combat result ──────────────────────────────────────────────── */

@@ -4,6 +4,10 @@
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder
   T900:s equip/use/stack/loot-regler; gissade mutationer ska fortsatt nekas.
 
+- 🔧 Theron: source-spawnkategorin följer nu autentiska live creatures och
+  save/load. När `$4667`/`$5D64`/`$5D6A` fångas ska den kopplas till originalets
+  RNG-resultat, utan att kategorin i sig används som gissad gameplaystatistik.
+
 - 🔧 Theron: CDDA-handoff är verifierad mot den lokala original-RAR-korpusen.
   Nästa ljudkrav är source-bound SFX/ADPCM-eventägare; CDDA-tillgänglighet får
   inte tolkas som bevis för gameplay-ljud.
