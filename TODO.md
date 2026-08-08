@@ -1,9 +1,12 @@
 # Firestaff TODO - Open Work
 
 - 🔧 DM2:s återstående byte-tillstånd får endast aktiveras genom den atomära,
-  originalägda \`GAME_LOAD\`-kedjan. Produktionsgrinden verifierar nu också att
+  originalägda GAME_LOAD-kedjan. Produktionsgrinden verifierar nu också att
   den historiska word-square-fixturen kompileras exklusivt i sitt enskilda
   regressionstest; den får aldrig återinföras i en produktionsarkivväg.
+  Direktrotternas source-ordnade possessionlänkar är nu bevarade, men den
+  gemensamma ägaren måste först lägga till specialtimer- och kartkedjornas
+  länkar innan DM2_2066_062b får läsa några continuation-värden.
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   ground-stack-/recordkedjan, valda championmirrors till exakt GDAT-,

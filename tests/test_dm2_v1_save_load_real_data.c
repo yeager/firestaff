@@ -624,14 +624,43 @@ static int verify_real_pool_direct_roots(
         &pools, payload, payload_size, state,
         inventory_query_creature_ai_flags, NULL, &receipt);
     if (ok) {
+        uint32_t possession_hash = 2166136261u;
+        uint32_t possession_index;
         ok = receipt.valid && receipt.root_count ==
             (uint16_t)(state->champion_count * 30u + 1u) &&
             receipt.record_hash != 0u &&
+            receipt.possession_link_count <=
+                DM2_V1_SKSAVE_POSSESSION_LINK_MAX &&
+            ((receipt.possession_link_count == 0u &&
+              receipt.possession_link_hash == 0u) ||
+             (receipt.possession_link_count > 0u &&
+              receipt.possession_link_hash != 0u)) &&
             receipt.possession_continuation_count == 0u &&
             receipt.continuation_hash == 0u &&
             receipt.next_stream_offset >= state->record_link_bitstream_offset &&
             receipt.next_stream_offset <= payload_size &&
             receipt.next_stream_bits_remaining <= 7u;
+        /* DM2_2066_062b has not consumed values yet, but each retained
+         * source link must be one of the only two continuation-owning DB
+         * types and must resolve in the just-restored pool image. */
+        for (possession_index = 0u;
+             ok && possession_index < receipt.possession_link_count;
+             ++possession_index) {
+            const uint16_t link = receipt.possession_links[possession_index];
+            const unsigned type = (unsigned)((link >> 10) & 0x0fu);
+            if ((type != 9u && type != 0x0eu) ||
+                !dm2_v1_record_pool_address(&pools, (int16_t)link)) {
+                ok = 0;
+                break;
+            }
+            possession_hash = hash_bytes(possession_hash,
+                                         (const uint8_t *)&link,
+                                         sizeof(link));
+        }
+        if (ok && receipt.possession_link_count != 0u &&
+            possession_hash != receipt.possession_link_hash) {
+            ok = 0;
+        }
     }
     dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);

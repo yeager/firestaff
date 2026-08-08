@@ -9353,10 +9353,10 @@
 - ✅ Inventerade DM2:s produktionsarkiv och bekräftade att V1-, V2- och
   V2.2-vägarna inte kan rita eller ladda lokalt skapade ersättningspixlar.
   Saknat GDAT-material är fortsatt no-draw och blockerar ramen.
-- ✅ Härdade \`verify_dm2_production_placeholder_boundary.py\`: den gamla
+- ✅ Härdade verify_dm2_production_placeholder_boundary.py: den gamla
   word-square-läsaren får nu ha testmakrot exakt en gång och endast på
-  \`test_dm2_v1_dungeon_loader_first_map_gate\`. Ett framtida produktionsmål
-  kan alltså inte tyst få \`FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES\`.
+  test_dm2_v1_dungeon_loader_first_map_gate. Ett framtida produktionsmål
+  kan alltså inte tyst få FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES.
 - ✅ Verifierat med produktionsgrinden samt testparen för att produktbygget
   avvisar den syntetiska dungeonformen och att det isolerade historiska
   regressionstestet fortfarande fungerar.
@@ -9374,3 +9374,16 @@
 - ✅ Sekvensen är kopplad till de hashverifierade SLEV/SAL/MAP/SDDRVS-filerna
   endast som observation; event-ID, MAP-rad, SAL-codec och playback förblir
   uttryckligen obundna.
+
+# DM2 SKSAVE possessionlänkar från direktrotter (2026-08-08)
+
+- ✅ Den källägda direct-root-fasen behåller nu varje
+  DM2_ADD_INDEX_TO_POSSESSION_INDICES-länk i exakt avkodningsordning i sitt
+  receipt i stället för att kasta den. Varje länk är boundskontrollerad mot
+  den återställda DB-poolen och får bara vara källtyperna DB9 eller DB14.
+- ✅ Ingen continuation läses för tidigt. Originalets DM2_2066_062b kör först
+  efter specialtimer- och kartkedjorna, så receiptet publicerar endast länkar
+  och deras hash — aldrig påhittade possessions eller en spelbar session.
+- ✅ Verifierat med samtliga åtta lokala PC-DOS SKSaveN.dat/.bak och
+  test_dm2_v1_record_pool_pc34_compat; GAME_LOAD/Resume är fortsatt
+  fail-closed tills den kompletta kedjan finns.

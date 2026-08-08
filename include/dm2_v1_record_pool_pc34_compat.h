@@ -161,13 +161,22 @@ int dm2_v1_record_pool_restore_raw_sksave_resident_chain(
  * Root links are retained for the later champion/hand owner, while the
  * record bytes and list links are written into the authenticated pools. */
 #define DM2_V1_SKSAVE_DIRECT_ROOT_MAX 121u
+/* DM2_2066_062b reads continuation values only after timer and map chains.
+ * Retain the source links here, in discovery order, so later GAME_LOAD
+ * phases can extend the same list instead of re-walking a reconstructed
+ * inventory. This is a bounded receipt, never a possession store or runtime
+ * inventory. */
+#define DM2_V1_SKSAVE_POSSESSION_LINK_MAX 4096u
 typedef struct {
     int valid;
     uint16_t root_count;
     uint16_t roots[DM2_V1_SKSAVE_DIRECT_ROOT_MAX];
     uint32_t record_count;
+    uint32_t possession_link_count;
+    uint16_t possession_links[DM2_V1_SKSAVE_POSSESSION_LINK_MAX];
     uint32_t possession_continuation_count;
     uint32_t record_hash;
+    uint32_t possession_link_hash;
     uint32_t continuation_hash;
     /* Exact shared-SUPPRESS position immediately after the hero/cursor root
      * phase.  The next owner must consume special timer chains, then map

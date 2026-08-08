@@ -497,6 +497,9 @@ typedef struct {
     uint32_t record_hash;
     uint32_t record_count;
     uint16_t record_links[4096];
+    uint32_t possession_link_count;
+    uint16_t possession_links[DM2_V1_SKSAVE_POSSESSION_LINK_MAX];
+    int possession_link_overflow;
     DM2_ReadRecordCreatureAiFlagsFn ai_fn;
     void *ai_ctx;
 } DM2_V1_SksavePoolRestoreContext;
@@ -614,8 +617,19 @@ static int dm2_v1_sksave_pool_child_owner(void *context, uint16_t record_link,
 static void dm2_v1_sksave_pool_add_possession(void *context,
                                               uint16_t record_link)
 {
-    (void)context;
-    (void)record_link;
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+
+    if (!ctx) return;
+    if (ctx->possession_link_count >=
+        DM2_V1_SKSAVE_POSSESSION_LINK_MAX) {
+        /* The callback has no error return, so retain the overflow fact and
+         * make the enclosing record transaction fail atomically afterwards.
+         * Do not silently truncate a source possession list. */
+        ctx->possession_link_overflow = 1;
+        return;
+    }
+    ctx->possession_links[ctx->possession_link_count++] = record_link;
 }
 
 static int dm2_v1_sksave_pool_query_ai(void *context, uint16_t record_link,
@@ -1151,7 +1165,8 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     for (root = 0u; root < root_count; ++root) {
         roots[root] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
         if (dm2_v1_read_record_checkcode(&session, &callbacks, &roots[root],
-                                         -1, 0, 0, 0) != 0 || session.error) {
+                                         -1, 0, 0, 0) != 0 || session.error ||
+            context.possession_link_overflow) {
             DM2_V1_SKSAVE_ROOT_ABORT();
             return 0;
         }
@@ -1167,6 +1182,20 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
          * DM2_2066_062b consumes possession continuations only afterwards
          * (SKProject sksvgame.cpp:1178-1400).  Reading them here used map
          * bits as fake continuations and corrupted the shared stream. */
+        out_receipt->possession_link_count = context.possession_link_count;
+        if (context.possession_link_count != 0u) {
+            memcpy(out_receipt->possession_links, context.possession_links,
+                   (size_t)context.possession_link_count *
+                   sizeof(context.possession_links[0]));
+            out_receipt->possession_link_hash = dm2_v1_sksave_hash_bytes(
+                2166136261u,
+                (const uint8_t *)context.possession_links,
+                (size_t)context.possession_link_count *
+                sizeof(context.possession_links[0]));
+        }
+        /* Values are deliberately not read here: the source consumes them
+         * only after special-timer and map chains have appended their own
+         * possession links to this ordered list. */
         out_receipt->possession_continuation_count = 0u;
         out_receipt->record_hash = context.record_hash;
         out_receipt->continuation_hash = 0u;
