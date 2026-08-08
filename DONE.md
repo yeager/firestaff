@@ -953,6 +953,20 @@
   Ett sparat PC-versionindex kan därmed inte maskera en senare verifierad
   FM Towns-installation; ett uttryckligt plattformsval ändras aldrig.
 
+# DM2 Amiga originaluppstart i RAM (2026-08-08)
+
+- ✅ `SWSH.DAT`, `TITL.DAT` och `ENDA.DAT` extraheras nu endast från den
+  autentiserade sexdelade ZIP → ADF → LZX-kedjan till bootprofilens
+  minnesägda buffertar. Deras kända MD5-identiteter och hela AN/PL/EN/DL-
+  strukturen måste verifieras innan Amiga-sessionen får fortsätta.
+- ✅ M11 spelar SWSH och TITL med originalens bildsteg och 50 Hz VBlank-takt;
+  originalets ENDA-ström används på avslutsvägen. Ingen PC-GDAT-bild,
+  värdvideo eller syntetisk övergång kan ersätta ett felande Amiga-steg.
+- ✅ Verifierat direkt mot användarens Amiga English-arkiv: samtliga 19
+  SWSH-, 225 TITL- och 442 ENDA-bildsteg avkodas ur RAM, bootprovet behåller
+  alla tre källströmmarna och Phase A passerar. Amiga `SD`/`SO`-ljud är
+  medvetet kvar som nästa riktiga mixeruppgift.
+
 # DM2 M11:s party- och miljögräns (2026-08-08)
 
 - ✅ Produktionsverifieraren avvisar nu varje M11-anrop till de

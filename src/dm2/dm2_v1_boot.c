@@ -2856,6 +2856,36 @@ static int dm2_v1_boot_capture_amiga_part(const char *name,
  * whole transport chain private to boot and retain only the two authenticated
  * runtime buffers.  This is deliberately the same nested-media order used by
  * the real-media LZX receipt, not a filename-shaped fallback. */
+static int dm2_v1_boot_extract_amiga_animation(
+    const DM2_V1_AmigaLzxArchive *archive, const uint8_t *joined,
+    const char *name, const char *expected_md5, uint8_t **out_bytes,
+    size_t *out_size, char out_md5[33], DM2_V1_FmtownsAnimStreamReceipt *out_stream)
+{
+    const DM2_V1_AmigaLzxEntry *entry;
+
+    if (!archive || !joined || !name || !expected_md5 || !out_bytes ||
+        !out_size || !out_md5 || !out_stream) return 0;
+    *out_bytes = NULL;
+    *out_size = 0u;
+    memset(out_md5, 0, 33u);
+    memset(out_stream, 0, sizeof(*out_stream));
+    entry = dm2_v1_amiga_lzx_find(archive, name);
+    if (!entry || !dm2_v1_amiga_lzx_extract_entry(archive, joined, entry,
+                                                    out_bytes, out_size) ||
+        *out_size != entry->uncompressed_size) return 0;
+    dm2_md5_bytes_hex(*out_bytes, *out_size, out_md5);
+    if (!md5_matches(out_md5, expected_md5) ||
+        !dm2_v1_fmtowns_anim_stream_parse(*out_bytes, *out_size, out_stream)) {
+        dm2_v1_amiga_lzx_free(*out_bytes);
+        *out_bytes = NULL;
+        *out_size = 0u;
+        memset(out_md5, 0, 33u);
+        memset(out_stream, 0, sizeof(*out_stream));
+        return 0;
+    }
+    return 1;
+}
+
 static int dm2_v1_boot_load_amiga_installer_from_zip(
     DM2_V1_BootProfile *profile, const char *data_dir)
 {
@@ -2894,6 +2924,18 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
         size_t dungeon_size = 0u;
         uint8_t *music = NULL;
         size_t music_size = 0u;
+        uint8_t *swsh = NULL;
+        uint8_t *titl = NULL;
+        uint8_t *enda = NULL;
+        size_t swsh_size = 0u;
+        size_t titl_size = 0u;
+        size_t enda_size = 0u;
+        char swsh_md5[33];
+        char titl_md5[33];
+        char enda_md5[33];
+        DM2_V1_FmtownsAnimStreamReceipt swsh_stream;
+        DM2_V1_FmtownsAnimStreamReceipt titl_stream;
+        DM2_V1_FmtownsAnimStreamReceipt enda_stream;
         unsigned int disk;
         int accepted = 0;
 
@@ -2977,6 +3019,19 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
                                  candidates[candidate_index]);
                     }
                 }
+                accepted = accepted &&
+                    dm2_v1_boot_extract_amiga_animation(
+                        &archive, joined, "SWSH.DAT",
+                        "abca5430912a5c2d3d35dd8142740c72", &swsh, &swsh_size,
+                        swsh_md5, &swsh_stream) &&
+                    dm2_v1_boot_extract_amiga_animation(
+                        &archive, joined, "TITL.DAT",
+                        "f023fd370ab1594eeca5b139a244b063", &titl, &titl_size,
+                        titl_md5, &titl_stream) &&
+                    dm2_v1_boot_extract_amiga_animation(
+                        &archive, joined, "ENDA.DAT",
+                        "7f7fc31c4a1f41b8b2afa81953823ff1", &enda, &enda_size,
+                        enda_md5, &enda_stream);
             }
         }
         dm2_v1_amiga_lzx_free(joined);
@@ -2987,12 +3042,28 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
         if (!accepted) {
             dm2_v1_amiga_lzx_free(graphics);
             dm2_v1_amiga_lzx_free(dungeon);
+            dm2_v1_amiga_lzx_free(swsh);
+            dm2_v1_amiga_lzx_free(titl);
+            dm2_v1_amiga_lzx_free(enda);
             continue;
         }
         profile->graphics_mem = graphics;
         profile->graphics_mem_size = graphics_size;
         profile->dungeon_mem = dungeon;
         profile->dungeon_mem_size = dungeon_size;
+        profile->amiga_swsh_bytes = swsh;
+        profile->amiga_swsh_byte_count = swsh_size;
+        profile->amiga_titl_bytes = titl;
+        profile->amiga_titl_byte_count = titl_size;
+        profile->amiga_enda_bytes = enda;
+        profile->amiga_enda_byte_count = enda_size;
+        snprintf(profile->amiga_swsh_md5, sizeof(profile->amiga_swsh_md5), "%s", swsh_md5);
+        snprintf(profile->amiga_titl_md5, sizeof(profile->amiga_titl_md5), "%s", titl_md5);
+        snprintf(profile->amiga_enda_md5, sizeof(profile->amiga_enda_md5), "%s", enda_md5);
+        profile->amiga_swsh_stream = swsh_stream;
+        profile->amiga_titl_stream = titl_stream;
+        profile->amiga_enda_stream = enda_stream;
+        profile->amiga_animation_media_verified = 1;
         profile->graphics_size = graphics_size;
         profile->dungeon_size = dungeon_size;
         dm2_md5_bytes_hex(graphics, graphics_size, profile->graphics_md5);
@@ -13479,6 +13550,16 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     free(profile->dungeon_mem);
     profile->dungeon_mem = NULL;
     profile->dungeon_mem_size = 0u;
+    dm2_v1_amiga_lzx_free(profile->amiga_swsh_bytes);
+    dm2_v1_amiga_lzx_free(profile->amiga_titl_bytes);
+    dm2_v1_amiga_lzx_free(profile->amiga_enda_bytes);
+    profile->amiga_swsh_bytes = NULL;
+    profile->amiga_titl_bytes = NULL;
+    profile->amiga_enda_bytes = NULL;
+    profile->amiga_swsh_byte_count = 0u;
+    profile->amiga_titl_byte_count = 0u;
+    profile->amiga_enda_byte_count = 0u;
+    profile->amiga_animation_media_verified = 0;
     free(profile->fmtowns_disc_image);
     profile->fmtowns_disc_image = NULL;
     profile->fmtowns_disc_image_size = 0u;

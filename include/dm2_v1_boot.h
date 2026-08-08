@@ -502,6 +502,23 @@ typedef struct {
     DM2_V1_FmtownsAnimStreamReceipt fmtowns_end_stream;
     int      fmtowns_animation_streams_verified;
 
+    /* Amiga 1.0 owns its pre-SKULL presentation in the same LZX installer
+     * archive.  These are decoded only from authenticated in-memory entries;
+     * no DAT file is unpacked to the host filesystem. */
+    uint8_t *amiga_swsh_bytes;
+    size_t   amiga_swsh_byte_count;
+    uint8_t *amiga_titl_bytes;
+    size_t   amiga_titl_byte_count;
+    uint8_t *amiga_enda_bytes;
+    size_t   amiga_enda_byte_count;
+    char     amiga_swsh_md5[33];
+    char     amiga_titl_md5[33];
+    char     amiga_enda_md5[33];
+    DM2_V1_FmtownsAnimStreamReceipt amiga_swsh_stream;
+    DM2_V1_FmtownsAnimStreamReceipt amiga_titl_stream;
+    DM2_V1_FmtownsAnimStreamReceipt amiga_enda_stream;
+    int      amiga_animation_media_verified;
+
     /* The PC DOS release has an outer IBMIOP/MVE presentation route before
      * SKULL.EXE enters its GDAT title screen.  This receipt is intentionally
      * independent of the graphics/dungeon pair: a data-only install may

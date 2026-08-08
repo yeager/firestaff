@@ -3056,7 +3056,11 @@ level or consumer bindings.
   **2026-08-08 selection update:** Auto now prefers a verified FM Towns
   corpus for DM1, CSB and DM2, while `--amiga` is an explicit, authenticated
   DM2 Amiga English CLI/start-menu choice. This changes only source selection;
-  full GAME_LOAD/runtime ownership remains separately gated.
+  full GAME_LOAD/runtime ownership remains separately gated. **2026-08-08
+  Amiga presentation update:** the original SWSH → TITL visual route is now
+  decoded from the admitted LZX entries in RAM at 50 Hz, and ENDA is bound to
+  the original quit route. The 1+2+14 SD records and their SO scheduling are
+  retained in the source streams, but no Amiga mixer is connected yet.
 
 - **DM2-DOS-MVE-PLAYBACK:** The selected PC English install now produces a
   SHA-256-verified RAM-only receipt for its outer `DM2.BAT` → `IBMIOP` route:

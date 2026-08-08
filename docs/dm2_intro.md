@@ -28,9 +28,13 @@ Greatstone visar bland annat `swsh.dat`, `titl.dat` och `enda.dat` för
 Amiga-, MegaCD- och Sega CD-utgåvor, `swoosh`/`title`/`end` för flera japanska
 datorutgåvor samt QuickTime-baserade `.moov`-filer på Macintosh. De formaten
 är egna plattformsmedia och får inte behandlas som PC-data eller kopieras in i
-en annan sessions kedja. Firestaff har en verifierad, aktiv FM Towns-spelare
-för `SWOOSH` → `TITLE` → `SKULL`; PC-DOS MVE och Amiga-animationerna är ännu
-inte avkodade och presenteras därför inte som färdiga.
+en annan sessions kedja. Firestaff spelar nu Amiga Englishs hashverifierade
+`SWSH.DAT` → `TITL.DAT`-bildsekvenser med deras ursprungliga 50 Hz-VBlank- och
+bildstegstider. `ENDA.DAT` används på originalets avslutsväg. Alla tre läses
+från den sexdelade ZIP → ADF → LZX-kedjan direkt i minnet. Amiga-ljudposterna
+är ännu inte kopplade till en mixer och presenteras därför inte som färdiga.
+PC-DOS MVE är fortfarande spärrad tills dess bild-, ljud- och IBMIOP-tidsväg
+har en riktig avkodare.
 
 ## Källor
 

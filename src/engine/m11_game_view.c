@@ -1487,10 +1487,16 @@ static M11_GameInputResult m11_dm2_startup_apply_launch_receipt(
 }
 
 #define M11_DM2_FMTOWNS_TIMER_A_TICK_US (18u * (1024u - 100u))
+#define M11_DM2_AMIGA_VBL_TICK_US 20000u
 
 static int m11_dm2_is_fmtowns_profile(const DM2_V1_BootProfile *profile)
 {
     return profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
+}
+
+static int m11_dm2_is_amiga_profile(const DM2_V1_BootProfile *profile)
+{
+    return profile && profile->platform == DM2_PLATFORM_AMIGA_EN;
 }
 
 /* TWANIM emits one displayable canvas for each EN or DL record.  Keep the
@@ -1664,6 +1670,61 @@ static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsTitleBound = 0;
     state->dm2FmtownsTitleFinished = 0;
     state->dm2FmtownsTitleRejected = 0;
+}
+
+/* The Amiga installer keeps SWSH/TITL/ENDA inside its LZX archive.  Boot has
+ * already authenticated and decoded those entries in RAM; M11 copies only
+ * the selected original stream into its presentation lifetime.  DMWeb's AN
+ * framing and SKWIN's ANIM_DECODE_IMG1 define the shared image semantics.
+ * The Amiga timing is 50 Hz VBlank, unlike the Towns Timer-A route. */
+static int m11_dm2_bind_amiga_stream(M11_GameViewState *state, int kind)
+{
+    DM2_V1_BootProfile *profile;
+    const uint8_t *source;
+    size_t source_size;
+    const DM2_V1_FmtownsAnimStreamReceipt *stream;
+    uint32_t frame_count;
+
+    if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_amiga_profile(profile) ||
+        !profile->amiga_animation_media_verified) return 0;
+    if (kind == 0) {
+        source = profile->amiga_swsh_bytes;
+        source_size = profile->amiga_swsh_byte_count;
+        stream = &profile->amiga_swsh_stream;
+    } else if (kind == 1) {
+        source = profile->amiga_titl_bytes;
+        source_size = profile->amiga_titl_byte_count;
+        stream = &profile->amiga_titl_stream;
+    } else {
+        source = profile->amiga_enda_bytes;
+        source_size = profile->amiga_enda_byte_count;
+        stream = &profile->amiga_enda_stream;
+    }
+    if (!source || source_size == 0u || !m11_dm2_fmtowns_stream_frame_count(
+            stream, &frame_count)) return 0;
+    m11_dm2_release_fmtowns_title(state);
+    state->dm2FmtownsTitleBytes = (uint8_t *)malloc(source_size);
+    if (!state->dm2FmtownsTitleBytes) return 0;
+    memcpy(state->dm2FmtownsTitleBytes, source, source_size);
+    state->dm2FmtownsTitleByteCount = source_size;
+    if (!dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
+            &state->dm2FmtownsTitlePalette) ||
+        !dm2_v1_fmtowns_anim_stream_decode_frame(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
+            state->dm2FmtownsTitlePixels, sizeof(state->dm2FmtownsTitlePixels),
+            &state->dm2FmtownsTitleFrameReceipt)) {
+        m11_dm2_release_fmtowns_title(state);
+        return 0;
+    }
+    state->dm2FmtownsFrameTimerARemaining =
+        state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsFrameCount = frame_count;
+    state->dm2FmtownsSwooshActive = kind == 0;
+    state->dm2FmtownsEndActive = kind == 2;
+    state->dm2FmtownsTitleBound = 1;
+    return 1;
 }
 
 static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
@@ -1871,11 +1932,15 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
                                            uint32_t elapsed_us)
 {
     uint64_t accumulator;
+    uint32_t tick_us;
     if (!state || !state->dm2FmtownsTitleBound) return;
+    tick_us = m11_dm2_is_amiga_profile(
+        (const DM2_V1_BootProfile *)state->dm2BootProfile)
+        ? M11_DM2_AMIGA_VBL_TICK_US : M11_DM2_FMTOWNS_TIMER_A_TICK_US;
     accumulator = (uint64_t)state->dm2FmtownsTimerAAccumulatorUs + elapsed_us;
-    while (accumulator >= M11_DM2_FMTOWNS_TIMER_A_TICK_US &&
+    while (accumulator >= tick_us &&
            state->dm2FmtownsTitleBound) {
-        accumulator -= M11_DM2_FMTOWNS_TIMER_A_TICK_US;
+        accumulator -= tick_us;
         if (state->dm2FmtownsFrameTimerARemaining > 0u)
             --state->dm2FmtownsFrameTimerARemaining;
         if (state->dm2FmtownsFrameTimerARemaining != 0u) continue;
@@ -1896,7 +1961,12 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
                 /* AUTOEXEC.BAT orders TWANIM SWOOSH before TWANIM TITLE.
                  * Bind TITLE only after the final SWOOSH frame has elapsed;
                  * no PC GDAT title or host-made transition may fill this gap. */
-                if (!m11_dm2_bind_fmtowns_title(state)) {
+                if ((m11_dm2_is_amiga_profile(
+                         (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+                     !m11_dm2_bind_amiga_stream(state, 1)) ||
+                    (!m11_dm2_is_amiga_profile(
+                         (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+                     !m11_dm2_bind_fmtowns_title(state))) {
                     state->dm2FmtownsTitleRejected = 1;
                 }
             } else {
@@ -1914,7 +1984,8 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
             }
             break;
         }
-        if (state->dm2FmtownsEndActive &&
+        if ((state->dm2FmtownsEndActive || m11_dm2_is_amiga_profile(
+                 (const DM2_V1_BootProfile *)state->dm2BootProfile)) &&
             !dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
                 state->dm2FmtownsTitleBytes,
                 state->dm2FmtownsTitleByteCount,
@@ -1977,8 +2048,10 @@ static int m11_dm2_apply_boot_runtime_receipt(
      * admissible.  SKProject SKWINSPX SkWinCore.cpp::GAME_LOAD reaches
      * SELECT_CHAMPION only after this startup-menu boundary. */
     state->dm2State.level_loaded = 0;
-    if (m11_dm2_is_fmtowns_profile(receipt->profile) &&
-        !m11_dm2_bind_fmtowns_swoosh(state)) {
+    if ((m11_dm2_is_fmtowns_profile(receipt->profile) &&
+         !m11_dm2_bind_fmtowns_swoosh(state)) ||
+        (m11_dm2_is_amiga_profile(receipt->profile) &&
+         !m11_dm2_bind_amiga_stream(state, 0))) {
         /* HME-242 must not fall through into the PC static title if its
          * separately authenticated TWANIM media cannot be replayed. */
         state->dm2FmtownsTitleRejected = 1;
@@ -28121,6 +28194,11 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
             if (m11_dm2_is_fmtowns_profile(
                     (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
                 return m11_dm2_bind_fmtowns_end(state)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            }
+            if (m11_dm2_is_amiga_profile(
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+                return m11_dm2_bind_amiga_stream(state, 2)
                     ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
             }
             return M11_GAME_INPUT_RETURN_TO_MENU;

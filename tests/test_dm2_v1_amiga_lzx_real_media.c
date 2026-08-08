@@ -7,6 +7,7 @@
 
 #include "dm2_v1_amiga_lzx.h"
 #include "dm2_v1_amiga_cd_dat.h"
+#include "dm2_v1_fmtowns_anim_stream.h"
 #include "firestaff_zip_extract.h"
 #include "firestaff_amiga_adf.h"
 
@@ -97,6 +98,48 @@ static const char *amiga_archive_path(void) {
     return NULL;
 }
 
+/* DMWeb's animation inventory identifies the retail Amiga 1.0 streams as
+ * AN/PL/EN/DL containers.  The player operates on the source-owned bytes in
+ * RAM, so this proof must not materialise SWSH, TITL or ENDA on the host. */
+static void verify_original_animation(const DM2_V1_AmigaLzxArchive *archive,
+                                      const uint8_t *joined,
+                                      const char *name,
+                                      uint32_t expected_frames,
+                                      uint32_t expected_sd,
+                                      uint32_t expected_so)
+{
+    const DM2_V1_AmigaLzxEntry *entry;
+    DM2_V1_FmtownsAnimStreamReceipt stream;
+    DM2_V1_FmtownsAnimFrameReceipt frame;
+    DM2_V1_FmtownsAnimPaletteReceipt palette;
+    uint8_t pixels[320u * 200u / 2u];
+    uint8_t *decoded = NULL;
+    size_t decoded_size = 0u;
+
+    assert(archive && joined && name);
+    entry = dm2_v1_amiga_lzx_find(archive, name);
+    assert(entry);
+    assert(dm2_v1_amiga_lzx_extract_entry(archive, joined, entry,
+                                          &decoded, &decoded_size) == 1);
+    assert(decoded_size == entry->uncompressed_size);
+    assert(dm2_v1_fmtowns_anim_stream_parse(decoded, decoded_size,
+                                             &stream) == 1);
+    assert(stream.valid && stream.width == 320u && stream.height == 200u &&
+           stream.bit_depth == 4u && stream.en_count + stream.dl_count ==
+           expected_frames && stream.sd_count == expected_sd &&
+           stream.so_count == expected_so && stream.do_count == 1u);
+    assert(dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+               decoded, decoded_size, 0u, &palette) == 1 && palette.valid);
+    assert(dm2_v1_fmtowns_anim_stream_decode_frame(
+               decoded, decoded_size, 0u, pixels, sizeof(pixels), &frame) == 1 &&
+           frame.valid && frame.width == 320u && frame.height == 200u);
+    assert(dm2_v1_fmtowns_anim_stream_decode_frame(
+               decoded, decoded_size, expected_frames - 1u, pixels,
+               sizeof(pixels), &frame) == 1 && frame.valid &&
+           frame.decoded_frame_count == expected_frames);
+    dm2_v1_amiga_lzx_free(decoded);
+}
+
 static void test_original_installer_media(void) {
     const char *archive_path = amiga_archive_path();
     DM2_V1_AmigaLzxPart parts[DM2_V1_AMIGA_LZX_PART_COUNT] = {{0}};
@@ -132,6 +175,9 @@ static void test_original_installer_media(void) {
     assert(archive.valid == 1);
     assert(archive.entry_count == 35u);
     assert(dm2_v1_amiga_lzx_has_install_payload(&archive) == 1);
+    verify_original_animation(&archive, joined, "SWSH.DAT", 19u, 1u, 1u);
+    verify_original_animation(&archive, joined, "TITL.DAT", 225u, 2u, 5u);
+    verify_original_animation(&archive, joined, "ENDA.DAT", 442u, 14u, 57u);
     graphics = dm2_v1_amiga_lzx_find(&archive, "GRAPHICS.DAT");
     dungeon = dm2_v1_amiga_lzx_find(&archive, "DUNGEON.DAT");
     cd_dat = dm2_v1_amiga_lzx_find(&archive, "CD.DAT");

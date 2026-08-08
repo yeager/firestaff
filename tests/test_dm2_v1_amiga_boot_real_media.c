@@ -40,6 +40,13 @@ int main(void)
            "boot retains authenticated GRAPHICS.DAT and DUNGEON.DAT in RAM");
     expect(profile.music_map_verified && profile.music_map_size == 176u,
            "boot admits the original Amiga CD.DAT map in RAM");
+    expect(profile.amiga_animation_media_verified &&
+               profile.amiga_swsh_bytes && profile.amiga_swsh_byte_count == 28364u &&
+               profile.amiga_titl_bytes && profile.amiga_titl_byte_count == 590134u &&
+               profile.amiga_enda_bytes && profile.amiga_enda_byte_count == 650116u &&
+               profile.amiga_swsh_stream.valid &&
+               profile.amiga_titl_stream.valid && profile.amiga_enda_stream.valid,
+           "boot retains the authenticated Amiga startup animations in RAM");
     expect(strstr(profile.graphics_path, "::DM2_archive.LZX/GRAPHICS.DAT") != NULL &&
                strstr(profile.dungeon_path, "::DM2_archive.LZX/DUNGEON.DAT") != NULL,
            "boot records nested media provenance instead of a cache path");
