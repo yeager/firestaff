@@ -89,6 +89,9 @@ Suggested layout:
   theron/
 ```
 
+See [game-data setup](docs/DATA_SETUP.md) for the exact required and optional
+original files for every game, including disc-image and archive media.
+
 ## In-game runtime panel
 
 Press **F10** in any game to open the compact runtime graphics and cheats

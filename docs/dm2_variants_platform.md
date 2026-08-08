@@ -46,6 +46,6 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 ## Conclusion
 DOS, FM Towns and Amiga are separate original DM2 media/runtime families.
 Firestaff currently admits verified DOS installs and the verified FM Towns CD
-in memory. The Amiga installer corpus is identified but remains deliberately
-non-launchable until its original in-memory LZX install stream yields a
-hash-verified matching data pair. No PlayStation release is documented.
+in memory. The Amiga installer corpus now reaches the same hash-verified
+in-memory boot-profile boundary; full Amiga gameplay runtime remains separate
+work. No PlayStation release is documented.

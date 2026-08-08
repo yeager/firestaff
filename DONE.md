@@ -7,6 +7,15 @@
   encumbrance, projectiles, automap, squares, shop. No additional runtime bugs found.
 - Version: v3.0.303
 
+# Cross-game game-data guide (2026-08-08)
+
+- ✅ Replaced contradictory setup instructions with one user-facing guide for
+  Dungeon Master, Chaos Strikes Back, Dungeon Master II: Skullkeep, DM Nexus
+  and Theron's Quest. It distinguishes hash-gated start data from optional
+  presentation, language, music and resume media, and keeps archive/disc
+  inputs intact rather than asking users to unpack their collection.
+- ✅ Linked the README and wiki page to the maintained guide.
+
 # Nexus audit iteration 1 — gameplay bug fixes (2026-08-08)
 
 - ✅ Fixed 3 slot off-by-one errors in mechanics (defense, ring, weapon lookups).

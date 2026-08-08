@@ -1,97 +1,104 @@
-# Firestaff — Game Data Setup
+# Firestaff game-data setup
 
-Firestaff requires original game data files that you own. The engine does not include any copyrighted game assets.
+Firestaff contains no game assets. Supply media from copies you own and point
+the launcher at the folder that contains them. The scanner identifies content
+by hash, so filenames and the surrounding folder layout are only suggestions.
 
-## Directory Structure
+Keep original archives and disc images intact. Firestaff can scan supported
+loose files, ZIP archives and disc-image containers directly; do not unpack
+your game collection just to make it visible to the launcher. A recognised
+file is a launch-data check, not a claim that every game is already playable.
+See the [project status](PROJECT_STATUS.md) for that boundary.
 
-Place your game data in `~/.firestaff/data/` (or use `--data-dir DIR`):
+## Start requirements
+
+These are the source-data roles that must be present before the launcher can
+admit a game. A matching name alone is never enough: the bytes must match a
+catalogued original edition.
+
+| Game | Required source data | Accepted editions and containers |
+|---|---|---|
+| Dungeon Master | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | Supported DOS, Atari ST, Amiga and FM Towns editions; loose files or supported original-media containers |
+| Chaos Strikes Back | `GRAPHICS.DAT` (or the edition's `CSBGRAPH.DAT`) and `DUNGEON.DAT` from the same edition | Supported DOS, Atari ST, Amiga and FM Towns editions; loose files or supported original-media containers |
+| Dungeon Master II: Skullkeep | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | Supported PC, PC-98, FM Towns and Amiga media. On FM Towns, the pair lives in `DATA/` or `JDATA/` on the original CD; the Amiga installer archive is read from the original media family. |
+| DM Nexus | The original Saturn `DM.BIN` marker plus the associated original Saturn data source | Keep a complete CUE/BIN disc image. Firestaff can also identify an already-extracted, verified Saturn data set, but extraction is not a setup requirement. |
+| Theron's Quest | One hash-recognised Track 02 data image | US or Japanese Track 02 in its original BIN or ISO form. Keep the matching CUE with BIN media when it is available. |
+
+For the three DAT-based games, do not mix `GRAPHICS.DAT` from one release with
+`DUNGEON.DAT` from another. The launcher rejects an incomplete or mismatched
+pair instead of guessing a compatible version.
+
+## Optional original media
+
+Optional means that the file is not needed to identify the basic launch data.
+It can still improve a presentation path, enable a language or make an
+original save available. Keep it with the matching edition when you have it.
+
+### Dungeon Master
+
+`TITLE`/`TITLE.DAT` and `SWOOSH`/`SWOOSH.DAT` contain original startup and FTL
+presentation media. `SONG.DAT` supplies the original music where that edition
+includes it. The PC multilingual release can additionally provide
+`DUNGEONF.DAT` and `DUNGEONG.DAT` for French and German dungeon text; the
+English `DUNGEON.DAT` remains the base file.
+
+### Chaos Strikes Back
+
+Original title, animation and utility media are optional to the data gate.
+Their names differ by platform and include `SWOOSH`, `TITL.DAT`, `ENDA.DAT`,
+`HCSB.HTC`, `HCSB.DAT`, `ANIMATE.DAT`, `ANIMATE.SCR`, `ANIMATE.FTL`,
+`CHAOS.FTL` and `SWITCH.DAT`. Keep campaign and utility saves such as
+`MINI.DAT`, `MINIF.DAT`, `MINIG.DAT` and `CSBGAME.DAT` only if you want to
+resume a source-supported save. They are never a substitute for the required
+graphics and dungeon pair.
+
+### Dungeon Master II: Skullkeep
+
+PC music is stored in the original GDAT data. FM Towns presentation media,
+including its animation streams and the original Japanese text, belongs with
+the CD and is optional to the core pair. To use Firestaff's English FM Towns
+text route, also provide a verified PC English `GRAPHICS.DAT`; it is an
+English companion, not a replacement for the Japanese FM Towns disc.
+
+The Amiga edition's `CD.DAT` and `SK00.MOD` through `SK09.MOD` are its
+original map-music data. Keep them with the six-disk installer archive for
+the Amiga music route. SKSAVE files are optional resume media; they are not
+required for a new game and do not relax the source-data gate.
+
+### DM Nexus
+
+The original Saturn disc also contains level, model, menu and sound resources,
+including `LEV*.DGN`, `*.MNS`, `MENU.BPK`, `FACE.BIN`, `STABG.BIN`, `SLEV*.BIN`
+and `SNDLEV*.SAL`/`SNDLEV*.MAP`. Keep the complete data track rather than
+collecting individual files. Audio CD tracks are preserved with the original
+disc image but are not part of the current data-admission check.
+
+### Theron's Quest
+
+Track 02 is the required game-data track. Other tracks, including Track 19
+metadata/audio media, are optional to admission. Preserve the complete CUE/BIN
+set when you have it so original track layout and future media routes remain
+available.
+
+## Suggested layout
+
+The launcher searches recursively, so this layout is only for convenience:
 
 ```
 ~/.firestaff/data/
   dm1/
-    GRAPHICS.DAT
-    DUNGEON.DAT
-  dm1-multilingual/        (optional, for French/German text)
-    GRAPHICS.DAT
-    DUNGEON.DAT             (English)
-    DUNGEONF.DAT            (French)
-    DUNGEONG.DAT            (German)
   csb/
-    GRAPHICS.DAT
-    DUNGEON.DAT
   dm2/
-    GRAPHICS.DAT
-    DUNGEON.DAT
   nexus/
-    (extracted Saturn files or a supported Saturn disc image)
   theron/
-    TQUS-mednafen.cue
-    TQUS02.bin
-    TQUS19.iso
 ```
 
-## Required Files Per Game
-
-### Dungeon Master (dm1)
-| File | Size | Description |
-|---|---|---|
-| `GRAPHICS.DAT` | ~355 KB | All graphics (walls, creatures, items, UI) |
-| `DUNGEON.DAT` | ~33 KB | Dungeon layout, items, creatures, text |
-
-Source: Dungeon Master PC DOS version (PC-34 or PC-34 Multilingual).
-
-### Chaos Strikes Back (csb)
-| File | Size | Description |
-|---|---|---|
-| `GRAPHICS.DAT` | ~400 KB | CSB graphics |
-| `DUNGEON.DAT` | ~40 KB | CSB dungeon data |
-
-Source: Chaos Strikes Back PC DOS, Amiga, or Atari ST version.
-
-### Dungeon Master II: Skullkeep (dm2)
-| File | Size | Description |
-|---|---|---|
-| `GRAPHICS.DAT` | varies | DM2 graphics |
-| `DUNGEON.DAT` | varies | DM2 dungeon data |
-
-Source: Dungeon Master II PC DOS version.
-
-### DM Nexus (nexus)
-Requires extracted files from the Sega Saturn disc image.
-See `docs/NEXUS_PLAN.md` for extraction instructions.
-Use `tools/extract_nexus_iso.py` to extract from your disc image.
-
-### Theron's Quest (PC Engine CD)
-
-Theron is record-based PC Engine CD media, not a normal ISO filesystem. Keep
-the original CUE and its referenced BIN files together when possible. An ISO
-may be useful for inspection, but it does not replace Track 02 for the
-authenticated loader path. The scanner accepts supported BIN/CUE/ISO
-containers and reports virtual paths; launch remains fail-closed until the
-required Track 02 identity is verified.
-
-For the current Track 02 capture and handoff boundary, see
-[`THERON_CAPTURE_READINESS.md`](THERON_CAPTURE_READINESS.md).
-
-## Validation
-
-Run the built-in validator to check your data setup:
+Use the launcher setting or `--data-dir DIR` to choose another root. Check
+what Firestaff recognises without launching a game:
 
 ```bash
-firestaff --validate
-firestaff --validate --data-dir /path/to/data
+firestaff --scan-data
+firestaff --data-dir /path/to/your/games --scan-data
 ```
 
-## Multi-Language Support
-
-For French and German dungeon text, use the PC-34 Multilingual version:
-- `DUNGEON.DAT` — English
-- `DUNGEONF.DAT` — French
-- `DUNGEONG.DAT` — German
-
-Place these in `dm1-multilingual/`. Firestaff auto-selects based on language setting.
-
-## Where To Get Game Data
-
-Firestaff does not distribute game data. You need legitimately owned copies.
-The original games are available from various legal sources for retro games.
+Do not commit game data, saves or disc images to the Firestaff repository.

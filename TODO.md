@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
+  launch roles or optional original-media routes. Do not turn optional media
+  into a filename-only fallback or require users to unpack their archives.
+
 - Theron: static Track 02 category-4 monster groups now enter the live
   creature pool with source type/position/count/HP. Bind the original random
   wave consumer, creature AI/combat/drop ownership and generator timing before
