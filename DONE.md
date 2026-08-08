@@ -1,3 +1,11 @@
+# Nexus 3D-admissionsflagga förtydligad (2026-08-08)
+
+- ✅ Dokumenterade att `NEXUS_V1_RF_NO_3D_ENGINE` och
+  `NX_UNSUPPFEAT_3D_RASTERIZER` är Firestaffs capture-gate, inte ett påstående
+  om att retail-Nexus saknar 3D-geometri. Structure1A/1F/2/3 förblir
+  retailverifierade men no-draw tills transform, culling, VDP1-command,
+  texture och CLUT binds av samma autentiska Saturn-capture.
+
 # Nexus verifieringsmiljö återställd (2026-08-08)
 
 - ✅ Regenererade den externa Debug-builden och byggde det tidigare saknade

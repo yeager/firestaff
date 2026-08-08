@@ -35,6 +35,15 @@ VDP1-/VDP2-placering, CLUT, HUD, viewport, ljud eller gameplay-semantik.
 
 ## Spärrade no-op-/fallbackgränser
 
+`NEXUS_V1_RF_NO_3D_ENGINE` och `NX_UNSUPPFEAT_3D_RASTERIZER` i
+standardprofilen betyder en Firestaff-admissionsgrind, inte att retail-Nexus
+är ett 2D-spel eller att DGN saknar 3D-geometri. Den autentiserade DGN-korpusen
+innehåller Structure1A/1F/2/3-geometri; Firestaff får först aktivera en
+3D-rasterväg när samma Saturn-capture binder transform, culling, VDP1-command,
+texture och CLUT till en konkret face. Fram till dess är standardprofilens
+no-3D-status den källtroget säkra vägen och får inte ersättas med en host-
+eller syntetisk renderer.
+
 - `nexus_v1_drops.c` fabricerar ingen DM1-formad loot- eller guldtabell.
 - `nexus_v1_item_use.c` ändrar inte inventory eller champion-state; ITEM.IBS
   bevisar deklarationer/ikoner/material men inte Saturns action-dispatch.
