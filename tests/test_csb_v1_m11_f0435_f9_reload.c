@@ -119,8 +119,9 @@ int main(void)
     const char *data_dir = getenv("FIRESTAFF_CSB_DATA_DIR");
     char save_template[] = "/tmp/firestaff-csb-f0435-f9-XXXXXX";
     const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
-    const char *recovery_path = "/tmp/CSBGAME2.DAT";
-    const char *recovery_backup_path = "/tmp/CSBGAME2.BAK";
+    char recovery_dir[] = "/tmp/firestaff-csb-f0435-recovery-XXXXXX";
+    char recovery_path[160];
+    char recovery_backup_path[160];
     char *save_path;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -129,6 +130,17 @@ int main(void)
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_CSB_DATA_DIR is not set");
         return 0;
+    }
+    /* Archive-backed Atari recovery is deliberately run beside the full CSB
+     * suite.  F0435 recognises the source CSBGAME2.DAT/.BAK slot family, so
+     * isolate its parent directory rather than changing either basename. */
+    if (!mkdtemp(recovery_dir) ||
+        snprintf(recovery_path, sizeof(recovery_path), "%s/CSBGAME2.DAT",
+                 recovery_dir) < 0 ||
+        snprintf(recovery_backup_path, sizeof(recovery_backup_path),
+                 "%s/CSBGAME2.BAK", recovery_dir) < 0) {
+        fputs("FAIL: unable to allocate isolated Atari recovery paths\n", stderr);
+        return 1;
     }
     save_fd = mkstemp(save_template);
     save_path = save_fd >= 0 ? save_template : NULL;
@@ -204,6 +216,7 @@ int main(void)
 done:
     (void)unsetenv("FIRESTAFF_QUICKSAVE_PATH");
     (void)remove(save_template);
+    (void)rmdir(recovery_dir);
     if (failures) {
         fprintf(stderr, "FAIL: csb_v1_m11_f0435_f9_reload (%d failures)\n", failures);
         return 1;
