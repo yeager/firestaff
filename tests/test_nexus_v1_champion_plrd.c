@@ -136,6 +136,13 @@ int main(void) {
                 command->source_text_glyph_count == 4 &&
                 command->source_text_glyphs[0] == 0x00c1U &&
                 command->source_text_glyphs[3] == 0x00d8U) {
+                if (command->source_row != 0 || command->source_slot != -1 ||
+                    command->source_rect.x != row.rect.x ||
+                    command->source_rect.y != row.rect.y ||
+                    command->source_rect.w != row.rect.w ||
+                    command->source_rect.h != row.rect.h ||
+                    command->source_text_x != row.text_x ||
+                    command->source_text_y != row.text_y) return 1;
                 source_token_found = 1;
                 break;
             }

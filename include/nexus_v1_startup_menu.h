@@ -339,6 +339,14 @@ typedef struct {
     uint16_t source_text_glyphs[6];
     int source_text_glyph_count;
     int source_text_glyphs_valid;
+    /* Source row identity and geometry retained for a future Saturn text
+     * consumer.  DRAW_NONE remains non-rendering until VDP2 capture binds
+     * the placement and tilemap owner. */
+    int source_row;
+    int source_slot;
+    Nexus_V1_StartupRect source_rect;
+    int source_text_x;
+    int source_text_y;
     char label[NEXUS_V1_STARTUP_DRAW_LABEL_CAPACITY];
 } Nexus_V1_StartupDrawCommand;
 

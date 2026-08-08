@@ -1,5 +1,8 @@
 # Nexus startup PLRD glyph token retention (2026-08-08)
 
+- ✅ Samma no-draw-kvitto bevarar nu också PLRD-radens källrad, portrait-/radrektangel
+  och textposition. Det gör att en framtida VDP2-konsument kan ansluta till
+  retailens placering utan att återskapa den från en värdlabel.
 - ✅ Autentiserade PLRD/TABL/FONT256-namn följer nu med i startup-menyns
   `DRAW_NONE`-källkvittorad i stället för att tappas bort bakom en tom
   placeholder. Glypherna är fortfarande no-draw och öppnar ingen VDP2-text.

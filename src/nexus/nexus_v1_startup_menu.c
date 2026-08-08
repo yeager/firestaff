@@ -363,6 +363,8 @@ static void nexus_v1_startup_draw_clear(
     }
     memset(command, 0, sizeof(*command));
     command->portrait_index = -1;
+    command->source_row = -1;
+    command->source_slot = -1;
     command->text_style = NEXUS_V1_STARTUP_TEXT_SMALL;
 }
 
@@ -2929,6 +2931,11 @@ int nexus_v1_startup_presentation_build_save(
              * accounting without emitting a fabricated text primitive. */
             nexus_v1_startup_draw_clear(&opaque_row);
             opaque_row.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+            opaque_row.source_row = render_row->row;
+            opaque_row.source_slot = render_row->slot;
+            opaque_row.source_rect = render_row->rect;
+            opaque_row.source_text_x = render_row->text_x;
+            opaque_row.source_text_y = render_row->text_y;
             if (!nexus_v1_startup_push_draw(out_commands, max_commands,
                                             &count, &opaque_row)) {
                 return count;
@@ -3119,6 +3126,11 @@ int nexus_v1_startup_presentation_build_champion(
              * to reconstruct it from a host label. */
             nexus_v1_startup_draw_clear(&opaque_row);
             opaque_row.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+            opaque_row.source_row = render_row->row;
+            opaque_row.source_slot = -1;
+            opaque_row.source_rect = render_row->rect;
+            opaque_row.source_text_x = render_row->text_x;
+            opaque_row.source_text_y = render_row->text_y;
             opaque_row.source_text_glyph_count =
                 render_row->source_name_glyph_count;
             opaque_row.source_text_glyphs_valid =
