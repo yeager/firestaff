@@ -27,6 +27,22 @@ static int failures;
         } \
     } while (0)
 
+/* The disposable path is deliberately published only after the real PC3.4
+ * title/Prison boot has completed.  `FIRESTAFF_QUICKSAVE_PATH` is consumed
+ * by the F0433/F0435 menu route, not by the original TITLE.C/ENTRANCE.C
+ * launch transaction.  Keeping it out of the process environment during
+ * boot prevents an old user override from changing this real-data ingress
+ * proof. */
+static int set_test_quicksave_path(const char *path)
+{
+    if (!path || !path[0]) return 0;
+#ifdef _WIN32
+    return _putenv_s("FIRESTAFF_QUICKSAVE_PATH", path) == 0;
+#else
+    return setenv("FIRESTAFF_QUICKSAVE_PATH", path, 1) == 0;
+#endif
+}
+
 static const char *csb_data_dir(char *fallback, size_t fallback_size)
 {
     const char *path = getenv("FIRESTAFF_CSB_DATA_DIR");
@@ -134,7 +150,6 @@ int main(void)
     const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
     const char *csbwin_graphics = getenv("FIRESTAFF_CSBWIN_GRAPHICS");
     const char *quicksave_path = getenv("FIRESTAFF_CSB_TEST_QUICKSAVE_PATH");
-    const char *configured_quicksave_path = getenv("FIRESTAFF_QUICKSAVE_PATH");
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     unsigned char framebuffer[320 * 200];
@@ -383,13 +398,12 @@ int main(void)
                   "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
             if (quicksave_path && quicksave_path[0]) {
                 uint32_t saved_game_time = profile->runtime.game_time;
-                int save_path_bound = configured_quicksave_path &&
-                    strcmp(configured_quicksave_path, quicksave_path) == 0;
+                int save_path_bound = set_test_quicksave_path(quicksave_path);
 
                 CHECK(save_path_bound &&
                           csb_v1_runtime_original_atari_save_source_current(
                               &profile->runtime),
-                      "real Atari save starts from an authenticated MINI.DAT template");
+                      "real Atari save binds its disposable path to an authenticated MINI.DAT template");
                 if (save_path_bound) {
                     remove(quicksave_path);
                     CHECK(M11_GameView_HandleInput(&view,
@@ -654,7 +668,7 @@ int main(void)
         const CSB_V1_BootProfile *profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
         uint32_t saved_game_time;
-        int save_path_bound;
+        int save_path_bound = 0;
         FILE *save_file;
 
         /* This is intentionally opt-in: a real-media probe must never
@@ -664,10 +678,9 @@ int main(void)
          * invokes LOADSAVE.C F0433/F0435.  Exercise that complete route
          * after the real Prison handoff rather than calling the save helpers
          * directly. */
-        save_path_bound = configured_quicksave_path &&
-            strcmp(configured_quicksave_path, quicksave_path) == 0;
+        save_path_bound = set_test_quicksave_path(quicksave_path);
         CHECK(save_path_bound,
-              "real-data save probe uses its explicit disposable save path");
+              "real-data save probe binds its explicit disposable save path after boot");
         if (save_path_bound) {
             saved_game_time = profile ? profile->runtime.game_time : 0u;
             CHECK(profile &&

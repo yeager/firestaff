@@ -1,3 +1,16 @@
+# CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
+
+- ✅ Prison/HUD-provet binder nu den disponibla F0433/F0435-sökvägen först
+  efter den källägda title- och Prison-kedjan. En gammal global F5/F9-
+  miljövariabel kan därmed inte ändra vad som räknas som en lyckad kallstart.
+- ✅ Den riktiga Atari ST-hårddiskens `MINI.DAT` har verifierats genom
+  ANIM.C/FTLCODE, HUD, inventory och spellinmatning, följt av Save and Play,
+  Load Saved Game och Save and Quit. Den privata sparfilen tas bort efter
+  testet; originalmedian ändras aldrig.
+- ✅ PC 3.4-cachen återskapas inte från Amiga 3.1-data som bara delar
+  `GRAPHICS.DAT`-hash. Amiga- och PC-startvägar förblir separata enligt
+  ReDMCSB `COMPILE.H` och `APPA.C`.
+
 # CSB Atari ST effective-version launcher receipt (2026-08-08)
 
 - ✅ Atari ST:s riktiga hårddiskutgåva väljs nu och kontrolleras som den
