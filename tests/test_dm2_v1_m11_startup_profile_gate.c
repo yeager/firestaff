@@ -1207,6 +1207,7 @@ int main(void) {
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
+    DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_G1RuntimeMapDoorReceipt file_header_doors;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt file_header_teleporters;
@@ -1398,6 +1399,19 @@ int main(void) {
                     champion_candidate.source_item_count <= 30 &&
                     champion_candidate.identity_hash != 0u,
                 "M11 joins each source mirror to its authentic champion template and source tile items");
+    memset(&champion_census, 0, sizeof(champion_census));
+    expect_true(profile &&
+                    dm2_v1_boot_champion_selection_census(
+                        profile, &champion_census) &&
+                    champion_census.valid &&
+                    champion_census.incomplete_game_load &&
+                    champion_census.candidate_count ==
+                        champion_mirrors.mirror_count &&
+                    champion_census.candidates[0].mirror.object_id ==
+                        champion_mirrors.mirrors[0].object_id &&
+                    champion_census.candidates[0].revive_data.name1[0] != '\0' &&
+                    champion_census.roster_hash != 0u,
+                "M11 exposes the entire original champion roster without creating a party");
     memset(&champion_candidate, 0x7f, sizeof(champion_candidate));
     expect_true(profile &&
                     !dm2_v1_boot_champion_selection_candidate(

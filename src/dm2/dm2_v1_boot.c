@@ -864,6 +864,50 @@ int dm2_v1_boot_champion_selection_candidate(
     return 0;
 }
 
+int dm2_v1_boot_champion_selection_census(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionSelectionCensus *out_census)
+{
+    DM2_V1_G1ChampionMirrorReceipt mirrors;
+    uint32_t roster_hash = 0x43524f53u; /* "CROS" receipt domain. */
+    uint32_t hero_type_mask = 0u;
+    int i;
+
+    if (!out_census) return 0;
+    memset(out_census, 0, sizeof(*out_census));
+    if (!profile || !dm2_v1_boot_champion_mirror_receipt(profile, &mirrors) ||
+        !mirrors.committed || !mirrors.incomplete_world ||
+        mirrors.mirror_count <= 0 ||
+        mirrors.mirror_count > DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) {
+        return 0;
+    }
+    for (i = 0; i < mirrors.mirror_count; ++i) {
+        DM2_V1_BootChampionSelectionCandidate *candidate =
+            &out_census->candidates[i];
+        uint8_t hero_type = mirrors.mirrors[i].dynamic_hero_type;
+
+        if (hero_type > 15u || (hero_type_mask & (1u << hero_type)) ||
+            !dm2_v1_boot_champion_selection_candidate(
+                profile, mirrors.mirrors[i].map, mirrors.mirrors[i].x,
+                mirrors.mirrors[i].y, mirrors.mirrors[i].direction,
+                candidate) || !candidate->valid ||
+            !candidate->incomplete_game_load ||
+            candidate->revive_data.hero_type != hero_type ||
+            candidate->identity_hash == 0u) {
+            memset(out_census, 0, sizeof(*out_census));
+            return 0;
+        }
+        hero_type_mask |= 1u << hero_type;
+        roster_hash = dm2_v1_boot_packaged_capture_hash_step(
+            roster_hash, candidate->identity_hash);
+    }
+    out_census->candidate_count = mirrors.mirror_count;
+    out_census->roster_hash = roster_hash;
+    out_census->incomplete_game_load = 1;
+    out_census->valid = 1;
+    return 1;
+}
+
 int dm2_v1_boot_file_header_runtime_map_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt)

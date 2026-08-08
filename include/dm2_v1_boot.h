@@ -187,6 +187,19 @@ typedef struct {
     uint32_t identity_hash;
 } DM2_V1_BootChampionSelectionCandidate;
 
+#define DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES 16
+
+/* Complete source roster for the mirror-selection screen. The order is the
+ * canonical File_header chain order, not a host-authored portrait order. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int candidate_count;
+    uint32_t roster_hash;
+    DM2_V1_BootChampionSelectionCandidate candidates[
+        DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
+} DM2_V1_BootChampionSelectionCensus;
+
 /* DM2 boot profile — collected at startup before game loop begins.
  * All fields are set once and read-only during gameplay. */
 typedef struct {
@@ -1473,6 +1486,13 @@ int dm2_v1_boot_champion_selection_candidate(
     const DM2_V1_BootProfile *profile,
     int map, int x, int y, int direction,
     DM2_V1_BootChampionSelectionCandidate *out_candidate);
+
+/* Enumerate every authentic DB3 subtype-0x7e selection candidate. Duplicate
+ * hero types or a candidate that cannot be joined to exact GDAT and tile data
+ * reject the entire roster. This is menu/source evidence only, never a party. */
+int dm2_v1_boot_champion_selection_census(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionSelectionCensus *out_census);
 
 /* Resolves a map receipt from the File_header-owned dungeon already mounted
  * in this boot session.  It is the only map provenance a later local-level

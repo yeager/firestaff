@@ -1,3 +1,17 @@
+# DM2 källbunden championroster (2026-08-08)
+
+- ✅ Bootprofilen exponerar nu alla 16 verkliga PC-DOS-champions i samma
+  File_header-kedjeordning som originalets speglar. Varje rad kräver en unik
+  hero-typ, matchande GDAT-namn och grundvärden samt den verifierade
+  startföremålskedjan.
+- ✅ En ofullständig rad, dubblett hero-typ eller saknad GDAT- eller
+  dungeonkoppling gör att hela rosterlistan nekas. Det finns ingen reservrad
+  med namn, porträtt eller statistik från Firestaff.
+- ✅ Rosterlistan är menyunderlag och inte en party. `GAME_LOAD` förblir
+  ansvarig för hero, inventory, timers och aktivering av spelvärlden.
+- ✅ Verifierat med hashverifierad PC-DOS-data i M11:s startprofilgrind och
+  bootprofilens realdatatest, 106/106 kontroller.
+
 # DM2 källbunden championinventering (2026-08-08)
 
 - ✅ Championkandidaten behåller nu startföremålens riktiga ObjectID:n i den
