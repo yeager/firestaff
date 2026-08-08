@@ -1,0 +1,6086 @@
+# Arkiverade TODO-poster (2026-08-08)
+
+- ✅ Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
+- ✅ Theron: world snapshots now have endian-stable scalar envelopes, portable object/timer/creature records and bounds checks; progression/champion packing still needs a source-owned wire layout before claiming complete cross-host save parity.
+- ✅ Theron: source pool and altar objects are now fail-closed against fixture recovery/resurrection rules; bind their T700/T900 object consumers before enabling real mutations.
+- ✅ Theron: source inventory drops now mirror the pickup property/category/type gate; bind the original T900 stack/placement consumer before enabling complete item transitions.
+- ✅ Theron: the loader now retains complete source occurrences for categories 0..10, 14 and 15; bind those control records to their original disassembly consumers without conflating the occurrence census with executable world-object ownership.
+- ✅ **THERON-V1-MAIN-RAM-CONSUMER-TRACE:** the current Mednafen 1.32.1
+- ✅ **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
+- ✅ **THERON-CUE-FULL-PAYLOAD-VALIDATION:** Closed 2026-07-31. The USA and JP
+- ✅ **THERON-CHAPTER-MARKER-REAL-PROGRESSION:** Closed v3.0.223. All 7 dungeon
+- ✅ **THERON-FORCEFIELD-MENU:** *(Open — visual capture handoff)*
+- ✅ **THERON-SHOP-REAL-DATA:** *(Closed v3.0.242)* No shop/vendor mechanic
+- ✅ 2026-07-31: F1066–F1085 is a fail-closed Amiga inventory with no CSB
+- ✅ 2026-07-31: F1126–F1145 is a fail-closed mixed source inventory, not an
+- ✅ 2026-07-31: F1526–F1565 is a fail-closed workstation/AES inventory and
+- ✅ 2026-07-31: F1646–F1685 is a fail-closed platform inventory. It is
+- ✅ 2026-07-31: F1766–F1805 is a fail-closed media ownership inventory. It is
+- ✅ 2026-07-31: F1966–F2005 is a fail-closed hint/debug inventory. It is
+- ✅ 2026-07-31: File-backed CSB dungeon loading now rejects the retired
+- ✅ **DM1-PC34-SAVE-CORPUS-FINGERPRINT:** Closed 2026-07-30. The successful
+- ✅ **DM1-V1-SAVED-PORTRAIT-INVENTORY-ORDER:** Closed 2026-07-30. The normal
+- ✅ **DM1-PC34-M516-SLOT-ROUNDTRIP:** Closed 2026-07-31. F0433 now writes
+- ✅ **DM1-PC34-A6FA-F0337-NATIVE-PALETTE:** Closed 2026-07-31. The externally owned PC3.4 save
+- ✅ **LAUNCHER-FULL-WINDOW-PRESENTATION:** Closed 2026-07-30. The start menu
+- ✅ **DM1-V1-ENTRANCE-CREDITS-PALETTE:** Closed 2026-07-30. F0442 now blits
+- ✅ **DM1-DIRECT-LAUNCH-OPTION-INITIALIZATION:** Closed 2026-07-30. The
+- ✅ **DM1-V1-STAIRS-C10-COMPOSITION:** Closed 2026-07-30. M11's live F0104/
+- ✅ **DM1-V1-STARTUP-VISUAL-CADENCE:** Closed 2026-07-30. The C001 PRESENTS
+- ✅ **DM1-V1-HUD-SOURCE-GATE-REFRESH:** Closed 2026-07-30. The action/spell,
+- ✅ **DM1-V1-F0128-SIDE-F0115-DISPATCH:** Closed 2026-07-30. The late M11
+- ✅ **DM1-V1-F0209-REAL-C04-TEST-FIXTURES:** Closed 2026-07-30. The affected
+- ✅ **CSB-V2X-CURRENT-MAIN-VERIFICATION:** Closed 2026-07-30. Ninja-built
+- ✅ **CSB-V1-ENTRANCE-PREOPEN-REAL-COMPOSITION:** Closed 2026-07-30. The
+- ✅ **CSB-V1-CSBWIN-TAG0088B2-PROJECTION-RECTANGLES:** Closed 2026-07-30.
+- ✅ **CSB-V1-CSBWIN-TAG0088B2-WALL-PLAN:** Closed 2026-07-30. Firestaff now
+- ✅ **CSB-V1-CSBWIN-TAG0088B2-PACKED-BLIT:** Closed 2026-07-30. The restored
+- ✅ **CSB-V1-PROJECTILE-MARKER-LEAK:** Closed 2026-07-30. The live PC3.4
+- ✅ **CSB-V1-VARIANT-IDENTITY-DISCOVERY:** Closed 2026-07-30. A recognised
+- ✅ **CSB-V22-ARTPACK-PROVENANCE-HARDENING:** Closed 2026-07-30. CSB V2.2
+- ✅ **DM1-ORIGINAL-REPLACE-003:** Closed 2026-07-30. Normal DM1 V1 inventory
+- ✅ **DM1-ORIGINAL-REPLACE-004:** Closed 2026-07-31. Removed the unused V2.2
+- ✅ **DM1-ORIGINAL-REPLACE-005:** Closed 2026-07-31. The diagnostic HUD no
+- ✅ **DM1-ORIGINAL-REPLACE-006:** Closed 2026-07-31. The production audio
+- ✅ **DM1-ORIGINAL-REPLACE-007:** Closed 2026-07-31. The source-owned V1
+- ✅ **DM1-ORIGINAL-REPLACE-008:** Closed 2026-07-31. Removed the generic
+- ✅ **DM1-ORIGINAL-REPLACE-009:** Closed 2026-07-31. Retired the unused V2
+- ✅ **DM1-ORIGINAL-REPLACE-010:** Closed 2026-07-31. Restored ReDMCSB
+- ✅ **DM1-CREATURE-VIEWPORT-REAL-DATA:** Closed 2026-08-06. The legacy
+- ✅ **DM1-ORIGINAL-REPLACE-011:** Closed 2026-08-05. Removed the remaining
+- ✅ **DM1-ORIGINAL-REPLACE-012:** Closed 2026-08-05. Normal DM1 source sessions
+- ✅ **DM1-ORIGINAL-REPLACE-013:** Closed 2026-08-05. Bound the live M11
+- ✅ **DM1-ORIGINAL-REPLACE-014:** Closed 2026-08-05. Removed generated DM1
+- ✅ **DM1-ORIGINAL-REPLACE-015:** Closed 2026-08-05. Replaced the DM1 V2.2
+- ✅ **DM1-ORIGINAL-REPLACE-016:** Closed 2026-08-06. Retired the legacy M11
+- ✅ **DM1-ORIGINAL-REPLACE-017:** Closed 2026-08-06. Retired the separate DM1
+- ✅ **DM1-ORIGINAL-REPLACE-018:** Closed 2026-08-06. Removed the DM1 V2.2
+- ✅ **DM1-ORIGINAL-REPLACE-019:** Closed 2026-08-06. Bound the DM1 V2.2 modern
+- ✅ **DM1-ORIGINAL-REPLACE-020:** Closed 2026-08-06. Removed the remaining
+- ✅ **DM1-ORIGINAL-REPLACE-021:** Closed 2026-08-06. Replaced the DM1 V2.1
+- ✅ **DM1-ORIGINAL-REPLACE-022:** Closed 2026-08-06. Removed M11's duplicate
+- ✅ **DM1-ORIGINAL-REPLACE-023:** Closed 2026-08-06. Fixed the production DM1
+- ✅ **DM1-ORIGINAL-REPLACE-024:** Closed 2026-08-06. Removed the M11 font
+- ✅ **DM1-ORIGINAL-REPLACE-025:** Closed 2026-08-06. Removed the last
+- ✅ **DM1-ORIGINAL-REPLACE-026:** Closed 2026-08-06. The legacy wall-face
+- ✅ ✅ **NEXUS-ORIGINAL-REPLACE-001:** Closed 2026-08-01 v3.0.213. SH-2
+- ✅ ✅ **NEXUS-ORIGINAL-REPLACE-002:** Closed 2026-08-01 v3.0.213. VDP1
+- ✅ ✅ **NEXUS-STARTUP-TEXT-REAL-DATA:** Closed 2026-08-01 v3.0.213. FONT012
+- ✅ ✅ **NEXUS-SAL-SFX-REAL-DATA:** Closed 2026-08-01 v3.0.214. SDDRVS.TSK
+- ✅ ✅ **NEXUS-ITEM-MECHANICS-PROVENANCE:** Closed 2026-08-01 v3.0.214. All
+- ✅ **Q-DM1-01 PC34 save corpus and round trip:** Complete 2026-07-28. A real
+- ✅ **Q-DM1-02 HoC presented-frame consumer:** finish source-backed mirrors,
+- ✅ **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
+- ✅ **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
+- ✅ **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
+- ✅ **Q-DM1-06 Inventory interaction matrix:** C05-C13 placement, chest,
+- ✅ **Q-DM1-07 Action and spell HUD:** C010/C011 typography, cursor, hit
+- ✅ **Q-DM1-08 Startup audio and cadence:** SWSH/title/Entrance palette,
+- ✅ **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
+- ✅ **Q-DM1-10 New-game and release evidence:** F0803/F0433 ownership plus
+- ✅ **Q-CSB-01 DSA opcode core:** remaining CSBWin stack/control families,
+- ✅ **Q-CSB-02 DSA monster/world execution:** timers, filters, monsters,
+- ✅ **Q-CSB-03 Startup presentation chain:** C001-C005 FTL/PRESENTS/CHAOS/
+- ✅ **Q-CSB-04 Entrance and credits handoff:** opening door, credits, prompts,
+- ✅ **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
+- ✅ **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
+- ✅ **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,
+- ✅ **Q-CSB-09 Original saves and Utility Disk:** save corpus interop and
+- ✅ **Q-CSB-10 Media, input and expansion packages:** sound/music,
+- ✅ **Q-DM2-01 GDAT core renderer:** ✅ v3.0.155 — 58 GDAT source files,
+- ✅ **Q-DM2-02 GDAT material families:** ✅ v3.0.155 — wall tiles, door
+- ✅ **Q-DM2-03 Creature renderer:** ✅ v3.0.155 — 22 creature tests pass.
+- ✅ **Q-DM2-04 G1 map and c_record runtime:** ✅ v3.0.155 — 19 G1 tests
+- ✅ **Q-DM2-05 SKSAVE interop:** ✅ v3.0.155 — 4 save tests pass.
+- ✅ **Q-DM2-06 Menu, title and audio:** ✅ v3.0.155 — 5 startup + 2 menu
+- ✅ **Q-DM2-07 Party, inventory and spells:** ✅ v3.0.155 — 5 spell + 1
+- ✅ **Q-DM2-08 Creature AI and combat:** ✅ v3.0.155 — 3 combat + 7
+- ✅ **Q-DM2-09 CCM and world scripts:** ✅ v3.0.155 — 5 CCM tests pass.
+- ✅ **Q-DM2-10 Outdoor scenes and end-to-end play:** ✅ v3.0.155 — 3
+- ✅ **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
+- ✅ **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
+- ✅ **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
+- ✅ **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
+- ✅ **DM2-G1-SAVE-RUNTIME:** Complete real G1 `c_record` addressing, map/scene
+- ✅ **DM2-STARTUP-INPUT-AUDIO:** Complete skproject-style title/menu animation,
+- ✅ **DM2-CREATURE-WEATHER-SCENE:** Complete skproject creature/AI, CCM opcode,
+- ✅ **DM1-ORIGINAL-NEWGAME-SAVE:** Complete PC34 F0803/F0433 new-game and
+- ✅ **DM1-ACTION-SPELL-HUD:** Complete original C010/C011 action and spell
+- ✅ **DM1-VIEWPORT-WALLS-DOORS:** Complete F0107-F0115 wall, door, floor,
+- ✅ **DM1-DOOR-SENSOR-LIVE:** Complete source-owned door animations, buttons,
+- ✅ **DM1-CREATURE-COMBAT-AI:** Complete remaining original group movement,
+- ✅ **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
+- ✅ **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
+- ✅ **DM1-INPUT-NAVIGATION:** Complete source-owned keyboard, mouse, touch,
+- ✅ **DM1-MAC-RELEASE-CAPTURE:** Complete packaged macOS/window capture and
+- ✅ **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
+- ✅ **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
+- ✅ **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
+- ✅ **CSB-HUD-INVENTORY-ACTIONS:** Complete C017/C040 HUD and in-game panel,
+- ✅ **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
+- ✅ **CSB-SENSOR-THING-RUNTIME:** Complete real Thing chains, generic object
+- ✅ **CSB-COMBAT-MOVEMENT-RUNTIME:** Complete source movement, group AI,
+- ✅ **CSB-SOUND-MUSIC-MEDIA:** Complete source audio/music media admission,
+- ✅ **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
+- ✅ **CSB-INPUT-CONTROLLER-ACCESSIBILITY:** Complete mouse, keyboard,
+- ✅ **CSB-EXPANSION-AND-CUSTOM-DUNGEONS:** Complete safe original-data handling
+- ✅ **DM2-GDAT-HUD-INTERFACE:** Complete skproject-derived interface panels,
+- ✅ **DM2-GDAT-DUNGEON-MATERIALS:** Complete real GDAT wall/door/floor/ceiling,
+- ✅ **DM2-GDAT-CREATURE-MATERIALS:** Complete creature animation, orientation,
+- ✅ **DM2-G1-MAP-RECORDS:** Complete G1/c_record addressing, map records,
+- ✅ **DM2-SKSAVE-ORIGINAL-INTEROP:** Complete original SKSAVE corpus loading,
+- ✅ **DM2-MENU-STARTUP-COMPLETE:** Complete skproject title/menu state machine,
+- ✅ **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
+- ✅ **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
+- ✅ **DM2-CCM-SCRIPTS-ACTUATORS:** Complete source-backed CCM opcode, script,
+- ✅ **DM2-LIGHT-WEATHER-OUTDOORS:** Complete real lighting, darkness, rain,
+- ✅ **DM2-DOOR-TABLES-INTERACTION:** Complete original door/button/table,
+- ✅ **DM2-SOUND-MUSIC-CUTSCENES:** Complete real SND/music/cutscene startup,
+- ✅ **DM2-INPUT-CONTROLLER-TOUCH:** Complete mouse, keyboard, controller,
+- ✅ **DM2-MAC-RELEASE-CAPTURE:** Complete packaged macOS/app captures and
+- ✅ **DM1 original PC3.4 save corpus:** Closed 2026-07-30. The DOSBox-created
+- ✅ 2026-07-14 update: the complete static HUD family now follows the same
+- ✅ 2026-07-15 update: an engine-owned admission gate now accepts only a complete Mednafen-debugger trace matching the active SLEV target's level, MD5, source size, and entry opcode. Admission retains opaque execution locations but deliberately does not assign a task-body meaning or permit dispatch; a trace plus original code analysis is still required for each semantic promotion.
+- ✅ 🔧 2026-07-13 Nexus PRS3 original-frame follow-up: hash-verified retail `DM.BIN` and `MENU.BPK` now share a bounded V1 outer-frame receipt (one complete DM.BIN V1 record and 162 complete MENU.BPK V1 streams). This proves only magic/version/declared-output/first-frame-word framing. A captured original SH-2 PRS3 execution is still required to establish command grammar, bit order, termination, decoded pixels, and any menu graphics handoff; all of those routes remain fail-closed with no fallback visual.
+- ✅ 2026-07-14 update: the capture schema now rejects partial evidence and requires a single original trace to bind one exact BPK stream, SH-2 input/read range, complete output-write range and fingerprint, then a later VDP1 command using that exact output range. No such local capture exists yet; a valid future receipt remains evidence-only and cannot promote a generic PRS3 decoder or fallback menu rendering.
+- ✅ 🔧 2026-06-25 S2D Saturn-font section-table evidence: `firestaff_nexus_v1_saturn_font_scr_sections_probe` (see DONE.md 2026-06-25 entry) now walks the 32-entry SEGA SATURN SCR section table of `FONT256.S2D` via `nexus_v1_font_load_sections()` and confirms the four-populated real-on-disk layout (indices 0/2/4/6, contiguous chain at 0x0120+0x2010 / 0x2130+0x3c90 / 0x5dc0+0x0210 / 0x5fd0+0x01e4, 24,976 bytes of section data inside the 25,012-byte asset). **2026-06-28 section→glyph-range map + bounded runtime text-layout cursor landed:** new `nexus_v1_s2d_text_layout` module (`include/nexus_v1_s2d_text_layout.h`, `src/nexus/nexus_v1_s2d_text_layout.c`) builds a `Nexus_V1_S2D_SectionGlyphMap` from the parsed sections, routes glyph indices to the matching range, and exposes a layout cursor that walks ASCII strings via the existing `nexus_v1_font_draw_glyph_indexed()` (per-glyph advance by `char_width + letter_spacing_x`, `'\n'` breaks, `'\t'` steps, `max_chars` cap, `chars_skipped` for out-of-coverage). CTest `nexus_v1_s2d_runtime_text_layout` covered the synthetic SCR map invariants + layout cursor + real-asset `FONT256.S2D` skip-safe path that drives `"NEXUS"` through the real parser→map→layout chain 3 times and asserts bit-identical FNV-1a framebuffer hash. **2026-06-29 runtime framebuffer binding landed:** `Nexus_V1_ScreenTextRuntime` in `nexus_v1_text` now consumes the parsed sections + loaded font, builds the same section map once, draws ASCII through the S2D layout into `Nexus_Framebuffer.color_buffer`, and emits deterministic receipt/hash counters; the same CTest now covers stable framebuffer bytes across repeated draws. **2026-07-17 strict FONT256 admission landed:** `nexus_v1_font256_s2d_admit()` requires the canonical 25,012-byte SHA-256-attested file, exact SCR header facts, the four observed bounded spans, and raw FNV witnesses for the table and each section. It records no glyph layout, bit order, character map, pixels, or drawing permission. Remaining work is real glyph payload/encoding proof, Shift-JIS mapping and advance semantics, and independent Saturn screen evidence before any original-font rendering claim.
+- ✅ ✅ 2026-07-19 (Jobb F3, w5) Extractor diagnostic landed: external archives skipped because no supported extractor (7zz/7z/bsdtar) is installed now record a bounded, deduplicated `asset_scan_missing_extractor_*` diagnostic in asset_find_by_hash; the launcher scan logs each skipped archive plus tool list and `--scan-data` prints an "External archives skipped (no extractor installed)" section. Remaining: surface the same diagnostic as a localized launcher popup row (requires new po msgids across all 20 locales).
+- ✅ 2026-07-15 copy/backreference boundary: the complete linear zero-side
+- ✅ 🔧 2026-06-28 Nexus BPX/BPK surface-class + BPX3 directory-trailer boundary (pass1083) follow-up: `nexus_v1_bpk_archive` adds `nexus_v1_bpk_mode_to_surface_class()` (UNKNOWN / INDEXED_8BPP / RGB565 / RGB888 / RGBA8888 / DIRECTORY_TRAILER) and `nexus_v1_bpk_mode_to_bpp()` (1/2/3/4 for the four pixel-mode tags, 0 for the trailer / unknown) lookup APIs plus `nexus_v1_bpk_archive_surface_estimate()` which walks every entry whose 20-byte prefix is complete and reports (entry_index, mode, width, height, pixel_count, surface layout: bpp / rowstride / surface_bytes / surface_class) per PRS3-bearing entry, skipping the directory trailer and unknown modes. `nexus_v1_bpx_bpk` extends the synthetic BPX3 contract to recognize a directory-trailer entry (mode tag 10, zero width/height/payload_offset, no PRS3 magic) and tag it with `NEXUS_V1_BPX_BPK_METHOD_DIRECTORY_TRAILER`. New CTest `nexus_v1_bpk_surface_class` (38 PASS) covers the lookup APIs, a 4-entry synthetic BPK with one trailer + one of each pixel mode (16 / 64 / 18 = 98 unpacked bytes total), the BPX3 trailer-entry shape and rejection cases (nonzero width / nonzero reserved bytes), and an optional local MENU.BPK receipt that cross-checks 14 indexed / 62 RGB565 / 39 RGB888 / 47 RGBA8888 entries with every rowstride == width * bpp and every surface_bytes == width * height * bpp. New skip-safe CTest `nexus_v1_bpk_surface_class_probe` (525 PASS after the 2026-06-29 span checks) exercises the same contract through the probe path. **2026-06-29 PRS3 packed-span synthetic contract tightened:** `nexus_v1_bpx_prs3_parse()` now requires an explicit packed payload size for every synthetic PRS3-bearing entry, rejects zero/out-of-bounds/overlapping spans in table order, and reports bpp-derived `unpacked_size` (mode 6/14/22/30 -> 1/2/3/4 bytes per pixel) instead of multiplying by the raw mode tag. Local MENU.BPK byte scan for this pass confirmed 162 bounded PRS3 compressed payload spans (min 16 / max 9,980 / total 83,000 bytes) but still did not identify the bitstream algorithm. PRS3 decompression still intentionally unsupported: the surface estimate reports what shape each entry WOULD decode to once a real PRS3 implementation lands. The directory-trailer receipt now reaches launcher metadata. Remaining work: identify the PRS3 compression algorithm from real MENU.BPK bytes / executable disassembly and hand the decoded payloads into a renderable Nexus menu graphics pipeline (atmospheric HUD/textures + first Nexus screen capture with the real MENU.BPK).
+- ✅ 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
+- ✅ 🔧 High-contrast presentation hardening: launcher and M11 chrome/viewport-fence gates are verified in DONE.md. Remaining work is real assistive/visual smoke evidence across packaged app overlays.
+- ✅ 🔧 Configurable font sizing hardening: launcher `fontScale` affects M12 text rendering, and the M11 data-free `firestaff_dm1_v1_dialog_choice_font_scale_fit_probe` now covers the DM1 dialog choice source zones, the V1 message-log scale fence, and the Firestaff-specific session-timer reminder banner fit/viewport-ownership path at fontScale 1..3. The sibling `firestaff_dm1_v1_forced_pause_font_scale_fit_probe` now covers the forced-pause dialog layout/render containment at fontScale 1..3 as well (see DONE.md 2026-06-29 entries). The plain ESC return-to-menu confirmation modal now has its own scale-aware layout/draw/hit-test gate (`firestaff_dm1_v1_return_confirm_font_scale_fit_probe`); the source-owned unsaved-game quit guard remains on the DM dialog-choice path. Remaining work is broader in-game overlay/UI-fit coverage for other M11 surfaces such as rest/death overlays, inventory/map/debug panels, source-dialog unsaved-guard visual receipts, and any real-asset screenshot evidence.
+- ✅ 🔧 2026-07-09 CSB follow-up: host-view title/HUD/opening draw now consumes `render_draw`. 2026-07-11 update: release/app capture now also rejects any title, closed-door HUD, utility HUD, or door-opening route whose host consumer is not receipt-owned. 2026-07-11 update: CSB startup no longer exports raw request structs, request/render-state helper adapters, or the direct render-plan builder used only by inspection tests; those adapters are private to `csb_v1_startup_sequence_pc34_compat.c`, and tests use the CSB facts/receipt surface. 2026-07-11 update: full-runtime and complete-support receipts now prove one verified CSB session reaches PRESENTS/CHAOS/STRIKES, entrance/door, and HUD with a deterministic playback route hash. 2026-07-11 update: release/app capture now also aggregates closed-door HUD, utility HUD, and door-opening into one HUD/door capture hash and same-route gate. 2026-07-11 update: release/app capture now has a separate title-sequence capture gate/hash for PRESENTS, CHAOS zoom/hold, and STRIKES BACK, rejecting collapsed phase hashes and missing title packages. 2026-07-11 update: presented Mac/app capture now consumes both title-sequence and HUD/door aggregate receipts before accepting a captured real-asset frame. 2026-07-11 update: presented Mac/app capture now also requires release/app startup-wrapper cleanup readiness and a deterministic cleanup hash before accepting the real frame. 2026-07-11 update: presented Mac/app capture now rejects incomplete PRESENTS/CHAOS/STRIKES phase masks and HUD/door hashes collapsed into the title route. 2026-07-11 update: presented Mac/app capture now also requires the entrance credits route and rejects credits hashes collapsed into title/HUD/release routes. Remaining cleanup is adding manual Mac/app capture evidence.
+- ✅ 2026-07-14 update: the same real-package M12-to-M11 route now records its actual 320x200 indexed presentation boundary for C001 PRESENTS, CHAOS, STRIKES BACK, the closed and first-opening C002/C003 door frames, and terminal C017 HUD. The production receipt admits every phase from one fully verified C001-C005/C017/C040 session, rather than incorrectly waiting for terminal HUD state before title or door capture. Each capture retains the post-draw framebuffer FNV receipt, with no synthetic surface route. Remaining work is still manual Mac/app evidence and original-capture comparison.
+- ✅ 2026-07-17 update: M11 release capture now derives its four title-phase witnesses from the active verified C001 session at PRESENTS frame 0, CHAOS zoom frame 60, CHAOS hold frame 79, and STRIKES frame 80. The prior route-derived phase-hash wrapper is retired; missing, duplicate, legacy, non-title, palette-drift, or raster-drift witnesses reject before release presentation. Remaining work is manual Mac/app evidence and broader original-presentation comparison.
+- ✅ 2026-07-31 cleanup: the unregistered title-to-HUD probe was retired. It
+- ✅ ✅ 2026-07-28 CSB F0115 native object composition closure: chests, scrolls,
+- ✅ 2026-07-14 update: descriptor-`0008` expansion now accepts only an atomic capture binding that matches complete ITEM.IBS bytes, the selected descriptor, exact packed texture span, 16-colour palette bytes, VDP1 state/command fingerprints, texture-source extent, and ordered observation sequence. No retail capture packet is supplied, so canonical ITEM.IBS remains blocked and no DGN material is promoted or drawn. Remaining work is a genuine original-Saturn VDP1 packet, including the real command's colour-mode interpretation and DGN placement.
+- ✅ 2026-07-15 runtime safety follow-up: a complete hash-bound Structure3
+- ✅ 2026-07-15 PRS3 V5 decoder-review update: one complete stream can now
+- ✅ 2026-07-15 zero-side corridor update: the complete 64-byte SH-2 corridor
+- ✅ 2026-07-16 update: Structure2 descriptor admission now fails closed before
+- ✅ 🔧 2026-07-15 Nexus complete material source gate: the complete DGN receipt
+- ✅ 🔧 2026-08-08 Theron item-property consumer: the complete 66-entry table is
+- ✅ **DM1-HOC-C040-TIME-EFFECTS:** Closed 2026-07-31. The live M11 idle
+- ✅ **DM1-ENDGAME-NO-FALLBACK-TEST-CONTRACT:** Closed 2026-07-31. F0444 tests
+- ✅ Complete the M11 HoC consumer for source-bound candidate click and selection
+- ✅ 2026-07-21 Nexus round-19 remainder (job/w4; fixes landed in DONE.md
+- ✅ 2026-07-17 update: an opaque SRM launch receipt now requires exactly one
+- ✅ 2026-07-17 update: direct Track 02 launch intent validation now retains
+- ✅ 2026-07-17 update: capture-currentness can now also require the current
+- ✅ 2026-07-17 update: a closed HuC6280 capture-event log can now supply the
+- ✅ 2026-07-17 update: a closed SRM corpus manifest now declares explicit
+- ✅ 2026-07-16 CSB/ReDMCSB F0807 update:
+- ✅ 2026-07-16 Theron render-asset admission update: the runtime admission
+- ✅ 2026-07-16 Theron palette-window fail-closed update: explicit HuC6260 4bpp
+- ✅ 2026-07-16 update: stale audit row `F0185` is now closed against the
+- ✅ 2026-07-16 update: stale audit row `F0224` is now closed against the
+- ✅ 2026-07-16 update: the CSBWin DSA runtime-admission receipt now binds
+- ✅ 2026-07-23 update: `DSACMD_CASE` now admits CSBWin's complete source
+- ✅ 2026-07-16 update: the same route now has fail-closed coverage for DGN
+- ✅ 2026-07-15 fail-closed receipt update: malformed F0172 selected-wall and
+- ✅ 2026-07-19 update (Jobb E part 1, first slice): the complete per-square
+- ✅ 2026-07-15 DM2 DRAW_DOOR remaining: closed D0-D3 panels consume their
+- ✅ 2026-07-17 update: D2C's default button now consumes only the source
+- ✅ 2026-07-17 update: D0's default button now consumes only source scale
+- ✅ 2026-07-14 Nexus Structure3 runtime-capture follow-up: a complete external
+- ✅ 2026-07-15 update: the complete door-plan command count now crosses the
+- ✅ DONE 2026-07-14: F0435 now materializes saved C05/C06/C08/C09/C10
+- ✅ DONE 2026-07-14: F0435 C07 fakewall materialization and the M10 runtime
+- ✅ DONE 2026-07-14: F0435 C02 door-destruction materialization now requires
+- ✅ DONE 2026-07-14: immutable original-save imports now use the same F0435
+- ✅ The complete 20-frame PRS3 corpus now has source/header/stream witnesses
+- ✅ The nonzero side now has a complete static post-store corridor: after its
+- ✅ 2026-07-15 direct texture-link corpus update: the complete canonical
+- ✅ 🔧 2026-07-11 CSB packaged-startup/runtime follow-up: the verified C001/C002/C003/C004/C005 session now has a CSB-owned 320x200 indexed raster boundary for title, closed entrance, and opening doors, and door completion publishes the live dungeon pose to the verified HUD session only after the ReDMCSB/CSBWin entrance boundary is complete. The skip-safe PC real-asset launch probe exercises C001 PRESENTS/CHAOS/STRIKES and C004 plus closed C002/C003 before the C017/C040 HUD handoff. DM1 utility import now stages all champion records in a candidate party and commits only after the full source is valid, so a late malformed or truncated record cannot replace the live party. Open CSB deviations are enumerated below.
+- ✅ DONE 2026-07-14 CSB package-presentation receipt: the terminal real-package receipt now folds decoded C002/C003 door strips and C004/C005 entrance/credits surfaces into the same FNV receipt as C001 and C017/C040. It rejects absent, non-package, or wrong-geometry C004/C005 surfaces before publication and proves title-to-entrance ownership is the same session. The focused opt-in package presentation probe consumes only the hash-verified PC 3.4 package; it now presents `C005` through the source credits phase before closed/open-door and HUD handoff coverage. It never supplies a synthetic title, entrance, or HUD fallback. ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0806/F0438/F0807` define the original sequence, while CSBWin `Graphics.cpp::ReadGraphic` remains the independent indexed-archive read boundary.
+- ✅ 2026-07-11 update: native CSB bounded save loads stage the requested state prefix and header before committing either one, so EOF/truncated payloads leave live runtime state intact; `.backup` restoration atomically replaces the active save only after the full backup is written. CSBWin resumes likewise stage GAMEBLOCK2, CHARDESC, ITEM16, timers, a validated plain Extended Features prefix, and the optional EXPOOL DSA tracing bitmap in one candidate profile, rejecting malformed DSA records, game-info/index tails, or tracing records without changing the live profile or shared dungeon level. The committed extension owns checksum-authenticated DSA actions, game-info bytes, source 64x32 level-index data, and the source eight-word trace bitmap. Runtime-owned actions may use only the source `LOAD`/`STORE`, local 100-cell `VARIABLEFETCH`/`VARIABLESTORE`, caller-owned source-sized `GLOBALFETCH`/`GLOBALSTORE`, pure `DSACMD_AMPERSAND` stack/arithmetic/control forms, and value-only `DSACMD_JUMP`/`DSACMD_GOSUB` state/column dispatch receipts. Parameters and globals publish together only after complete action validation; dispatch selection uses the first file-order exact `(state,column)` action and leaves filters, the world, and caller surfaces untouched. `GOSUB` reports its outer continuation, target, and one-frame depth increment but never enters `Execute`. `AMPERSAND2`, filter/world path, malformed extension, stack fault, out-of-bank variable/global, source-illegal `LOAD_ABS32`, and all other continuations reject before commit. No general filter dispatcher, world mutation opcode, Firestaff debug mode, or substitute execution is enabled. Simple encryption remains non-inspectable. The remaining save deviation is CSB-007.
+- ✅ 2026-07-11 DSA continuation update: the prior dispatch-only `JUMP`/`GOSUB` scope is superseded by a bounded, receipt-only CSBWin `Execute` transfer subset. It preserves first-file-order exact `(state,column)` selection, same-frame JUMP transfer, GOSUB's ignored child return and one-frame depth increment, and missing-program termination, with fixed depth and transfer ceilings. Only complete authenticated transfer actions are admitted; malformed, unsupported, or limit-rejected routes leave the receipt untouched. Filter, world, parameter, global, and all other opcode surfaces remain disabled.
+- ✅ 2026-07-23 update: the C004/C002/C003 consumer now admits each opening
+- ✅ 2026-07-11 continuation refinement: complete authenticated JUMP/GOSUB actions now run through a bounded, value-only `Execute` transfer path. It covers only state/column continuation and subroutine-frame behavior; it does not enable `ProcessDSAFilter`, world mutation, parameters/globals, or any previously rejected opcode family.
+- ✅ 2026-07-12 runtime runner: `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` is now the source-shaped callback for the admitted pure stack subset and complete transfer-only `JUMP`/`GOSUB` chains. It requires pointer identity with the checksum-authenticated `(dsa,state,ordinal)` record, stages its parameter words and owned global bank, and publishes only a fully consumed action/transfer receipt. Forged actions and world-mutating stack subcodes reject without mutating parameters, globals, or the receipt. It deliberately does not interpret pre-move flags, persist a DSA master object, or widen opcode support; those full `ProcessDSAFilter` requirements remain open.
+- ✅ 2026-07-13 attack-filter save handoff: a resolved type-47 binding can now atomically install the authenticated adapter into the concrete live attack-filter runtime. Its admitted `GLOBALSTORE` updates the existing save-owned EXPOOL global record only after the complete callback succeeds; rejected installation leaves no partially live filter. This remains limited to the existing pure-stack/transfer subset and does not add a general `ProcessDSAFilter` dispatcher, movement filter, or new opcode semantics.
+- ✅ CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. `EDBT_DisableSaves` blocks both native saves and CSBWin core export before bytes or a path are emitted; core export and every runtime EXPOOL lookup reject a marked-truncated tail or one whose stored FNV receipt no longer matches its bytes, rather than re-emitting or consuming incomplete/altered source data. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. `SETSKIN` now follows CSBWin's actual `EXPOOL::Read`/`Write` contract against a complete FNV-authenticated tail: it deletes all-zero columns and consumes an original exact-size DB11 free node for a resized column, but refuses to call `EXPOOL::enlarge` or invent new tail blocks. Every DB11 node is now structurally proven to begin at `block + 1 + n * size` before it can be read, freed, or reused, so a corrupted saved free-list cannot redirect a DSA write into a DB11 header. Other EXPOOL record restore/writeback paths remain open.
+- ✅ 2026-07-14 update: CSBWin `Mouse.cpp::GetObjectWeight` now reaches the live F0140 container-weight path through `EDBT_ObjectWeights`. A present DB11 record is accepted only from the complete current FNV-authenticated EXPOOL tail; absent source data keeps CSBWin's base-50 default, while a short, truncated, altered, or out-of-range record blocks the container weight rather than silently substituting the default. The focused runtime regression uses the original CSBWin key/hash/node layout and verifies live chest contents still add only after the authenticated base is admitted. Remaining EXPOOL work is broader record families and an authentic checksum-valid CSBWin save corpus.
+- ✅ CSB-009 — ReDMCSB `MENU.C`, `CLIKMENU.C`, `CHAMDRAW.C`, `CHEST.C`, and `REVIVE.C` define the full Utility Disk and in-game champion/inventory interaction surface. Firestaff `src/csb/csb_v1_utility_flow_pc34.c`, `src/csb/csb_v1_runtime_champion_inventory_handoff_pc34_compat.c`, and M11 cover the bounded import, preview, slot, chest, and action routes, but not the complete original Utility Disk content, confirmations, and real-save interaction corpus.
+- ✅ 2026-07-15 champion-icon ownership update: CSB C113..C116 now require the complete real C028 four-frame strip (76x14). Missing, malformed, or detached C028 clears the icon zones instead of retaining a host-generated color-only party marker. Further CSB HUD work still needs authenticated dynamic status/name/bar state.
+- ✅ 2026-07-11 update: Save Disk startup now preserves the first gzip-recognized slot as manifest evidence but selects the first later slot whose bounded body decode completes, in ascending disk-slot order. Every successfully inflated SRM now also requires a matching gzip CRC32/ISIZE trailer before its neutral payload fingerprint is recorded, and the import boundary accepts exactly one complete gzip member with valid optional-header CRC when present. Unknown real bodies remain unsupported and cannot be selected for Continue. Remaining SRM work is correlating those authenticated fingerprints with real Sphenx/Greatstone body-layout evidence, not guessed field mappings.
+- ✅ 2026-07-11 update: M11 now stops after a completed Track 02 startup-atlas draw in every startup phase, so the synthetic render-plan border and text cannot overlay title, stage select, Soul Room, or forcefield graphics. Launch now rejects incomplete authoritative media and returns to the launcher with an explicit Track02-atlas status. Remaining work is identifying verified Track 02 palette payload offsets and promoting matching real windows beyond the startup level, including multi-level object rows and Mac/app capture.
+- ✅ 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.
+- ✅ DM1-003 — ReDMCSB GROUP.C F0207_GROUP_ProcessEvent and F0209_GROUP_ProcessEvents29to41: M10 now reconstructs the PC 3.4 `CREATURE_INFO` range/animation fields and routes timeline C29–C41, including F0180's initial C37, through the existing F0209 decision/scheduling path. `ACTIVE_GROUP::Aspect[4]` now persists across C38/C33 handoff in M10. C38-C41 now apply F0207's resolved creature attack: creature-owned F0212 projectiles receive their first movement event, while melee selects a source cell/champion, resolves F0230/F0321 through the shared combat path, and emits a bounded attack receipt. M10 C37 now supplies the actual F0200/F0197/F0199 visibility path over loaded DM1 tiles: F0227 directional cones, F0199 fixed-point diagonal traversal and two-corner blocking, PC34 invisibility/SEE_INVISIBLE and palette-darkness gates, sight range, walls, closed fakewalls, opaque three-quarter/closed doors, and the Portcullis/Ra see-through exception. Its resolved move/flee action now enters the M10 F0267 source-unlink/destination-link/projectile/retry receipt path rather than stopping at behavior scheduling. The live active-group bridge now persists ReDMCSB F0205/F0206 packed Directions through C29-C41; C38 turns a visible non-side-attacker before its attack retry, keeps GROUP.C's opposite-free-cell assignment when its direct quarter-square melee cell is occupied, and preserves the PC 3.4 `MEDIA720_I34E/I34M` range-greater-than-one diagonal-shot gate before the ordinary attack roll. Raw C04 `GROUP.Direction` remains its low-slot F0184 view. Still missing: broader C38 projectile-impact behavior and retirement of the remaining M11 scan-era creature adapter once its non-C37 behavior surface is covered.
+- ✅ DM1-007 — ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawThing and DRAWVIEW.C creature traversal: the unused `DM1_V1_CreatureRender_CollectPc34Compat()` stub has been retired; it accepted an untyped dungeon pointer yet had no production caller and could not truthfully collect M11's private world records. `dm1_creature_center_draw_plan()` and `dm1_creature_side_draw_plan()` remain the DM1-owned typed F0115 render-list receipts. M11 now consumes `summary_from_world` and the source-backed `world_candidates` receipt: compact SFT lookup and bounded next links use M10 F0511/F0512, typed C04 groups and floor items are decoded in DM1/M10, and HoC map-0 mirror payload filtering remains in the DM1 receipt. Creature and projectile host blits now publish their selected PC34 material only after the real path succeeds: C584+ plus G0221/G0222 for creatures, M613 or F0142 G0209/M612 for C2900 projectiles. F0111 center doors now likewise carry their source-owned frame/panel receipt through M11 and fail closed when a real PC34 blit fails. Remaining: wider real pixel/capture coverage, especially packaged Mac/release evidence.
+- ✅ 2026-07-13 update: `summary_from_world` owns the complete F0115 summary boundary for a map square, joining ReDMCSB DUNGEON.C F0160/F0161 static SFT traversal to the F0115 live projectile/explosion passes. `world_candidates` now provides the corresponding bounded C04 group and typed floor-item candidates to M11, with a regression over the installed PC34 `DUNGEON.DAT`; no synthetic dungeon fixture is used. The host regressions also load installed PC34 `GRAPHICS.DAT` and exercise Mummy D2 G0219/G0221/G0222, M613 graphic 454, and the F0142 weapon-0 G0209/M612 graphic-537 route. D0C now consumes the distinct original M636 explosion-pattern family (489..497) before the normal F0114 D1+ sprite route; Fluxcage remains on its source field path. Remaining DM1 renderer work is broader source pixel/capture evidence, not another M11 list adapter.
+- ✅ 2026-07-11 update: DM1 C001 TITLE zoom now follows F0437's actual bitmap direction: the complete `320x80` DUNGEON MASTER source is scaled down into each centred `48x12` through `320x80` destination box. It no longer crops a tiny source rectangle and magnifies it full-screen. The title handoff probe now consumes this production blit plan after an RGBA SWSH-like present and verifies palette-index-to-RGB readback. Remaining title work is real packaged Mac/release capture breadth and any source-proven presentation defect, not synthetic title replacement.
+- ✅ 2026-07-11 update: the local DM1 capture blockers in pass610 viewport crop capture, pass623 input capture readiness, original-capture live-row determinism, and capture runbook consistency are green after the capture-determinism repair in DONE.md. Remaining DM1 capture work is real packaged Mac/release/app capture promotion and any later active runtime ownership cleanup outside this verified gate cluster.
+- ✅ 2026-07-11 update: public `M11_Entrance_*` runtime wrappers and `M11_ENTRANCE_RUNTIME_*` constants are retired; tests and CSB startup gates now consume `ENTRANCE_Compat_*` directly. Remaining cleanup is active runtime APIs only.
+- ✅ 2026-07-15 update: active V1 F0345 mouth-panel presentation now requires the complete authentic C020/C030/C031 set and conditional C032 before any panel/blit is presented. Missing or malformed `GRAPHICS.DAT` material consumes the route without the former gray host panel or partial labels. Remaining work is broader original-data capture, not a visual fallback.
+- ✅ 2026-07-15 update: F0343/F0344 C103/C104 bars now consume the source contract's C05/C14 normal and C08/C11 warning palette only. A missing source contract leaves bars absent instead of selecting generic M11 colours. Remaining work is real packaged capture of the complete F0343/F0344/F0345 panel.
+- ✅ 2026-07-11 update: the public M11 V1 object-icon source-zone wrapper is retired; inventory render tests now consume `dm1_v1_object_icon_source_zone_pc34()` directly. Remaining cleanup is older diagnostic/probe wrapper debt only.
+- ✅ 2026-07-11 update: the public M11 action-icon palette/hatch/backdrop wrappers are retired after active drawing moved to DM1 helpers. Remaining cleanup is older diagnostic/probe wrapper debt only.
+- ✅ 2026-07-11 update: the public M11 movement-arrow wrapper exports are retired; M11 mouse routing, arrow drawing, and overlay feedback tests now consume DM1/ReDMCSB movement-arrow APIs directly. Remaining cleanup is older diagnostic/probe wrapper debt only.
+- ✅ 2026-07-11 update: public M11 status-hand/poison/damage layout exports are retired; M11 drawing and action-area regression now consume DM1/ReDMCSB champion-status layout and graphic APIs directly. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+- ✅ 2026-07-11 update: public M11 generic DM1 layout-zone exports are retired for screen, dialog, explosion, viewport text, message area, viewport, and leader-hand object-name geometry; M11 and tests now consume `dm1_v1_layout_zones_pc34_compat` directly. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+- ✅ 2026-07-11 update: public M11 champion-icon layout/graphic/source-index/remap exports are retired; M11 drawing, mouse routing, and action-area regression now consume DM1 layout/graphic APIs directly, with runtime palette remap kept internal to M11. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+- ✅ 2026-07-11 update: public M11 action-menu/action-icon/spell-rune layout exports are retired; tests and selected probes now consume DM1/ReDMCSB action/spell contracts directly. The broad M11 game-view probe now builds and passes through probe-local adapters over the DM1/ReDMCSB APIs. Remaining cleanup is active runtime APIs plus larger full-graphics proof only.
+- ✅ 2026-07-11 update: remaining public M11 action-area/spell-area zone, strip, graphic-id, result/pass, and caster-tab exports are retired; M11 fallback drawing keeps only an internal strip helper. Remaining cleanup is inventory/chest public wrappers plus broad legacy diagnostic probes.
+- ✅ 2026-07-11 update: public M11 inventory source-slotbox/champion-slot mapping exports are retired; M11 inventory/full-panel and DM2 startup boundary tests now consume the DM1/ReDMCSB inventory slot-placement API directly. Remaining cleanup is inventory/chest zone/graphic wrappers and broad legacy diagnostic probes.
+- ✅ 2026-07-11 update: public M11 inventory source-slotbox graphic plus equipment/backpack zone exports are retired; probe/test callers now consume the DM1/ReDMCSB inventory slot-placement and graphic-id APIs directly. Remaining cleanup is source-slotbox/chest zone wrapper retirement plus broad legacy diagnostic probes.
+- ✅ 2026-07-11 update: public M11 inventory source-slotbox and chest slotbox zone exports are retired; tests/probes now consume DM1/ReDMCSB slot-placement xywh helpers directly. Remaining cleanup is broad legacy diagnostic probes and non-inventory active runtime APIs.
+- ✅ 2026-07-11 update: public M11 V1 viewport base-graphic and source composition-order exports are retired; probes now consume the DM1/ReDMCSB viewport module directly. Remaining cleanup is broad legacy diagnostic probes and active runtime APIs that still need owner modules.
+- ✅ 2026-07-11 update: public M11 champion-portrait graphic-id export is retired; runtime and HoC probes now consume `dm1_v1_graphic_champion_portraits_pc34()` directly. Remaining cleanup is broad legacy diagnostic probes and active runtime APIs that still need owner modules.
+- ✅ 2026-07-11 update: the follow-up HoC/champion-mirror probe sweep moved the remaining direct M11 C026 portrait-atlas probe loads to the shared DM1/ReDMCSB helper and retired stale `M11_GFX_CHAMPION_PORTRAITS` wording. Remaining cleanup is production runtime/API ownership plus real Mac capture, not probe atlas loader duplication.
+- ✅ 2026-07-11 update: public M11 V1 leader-hand/open-chest helper names are retired; runtime/tests/probes consume `DM1_V1_M11Runtime_*Pc34Compat` for G4055/G0426/F0333/F0334/F0297/F0298 paths. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+- ✅ 🔧 2026-07-10 Theron real-asset promotion follow-up: boot/full-start/runtime receipt propagation is verified in DONE.md. Remaining work is real Mac/app screenshot promotion and wider non-startup Track02 object-table/dungeon-record decoding when new real-media evidence exists.
+- ✅ 2026-07-11 update: Theron startup state receipts now expose helper contracts for complete Track02 bitmap routes and no-fallback runtime route readiness, so UI/M11 callers can consume a Theron-owned predicate instead of rebuilding route checks. Remaining blocker is still true non-startup object-table/dungeon-record decode from real Track02 media and Mac/app capture.
+- ✅ 2026-07-11 update: Theron boot render-route, host-view, full-start, and UI-caller receipts now consume those state helper predicates directly, and UI readiness requires the complete Track02 bitmap/no-fallback runtime-route proof. Remaining blocker is still broader real object-table/non-startup dungeon-record decode and Mac/app capture.
+- ✅ 2026-07-10 verification note: later DONE entries supersede the older 2026-07-09 "final M11/UI consumer" wording below; treat those bullets as historical route receipts, not current host-wiring blockers.
+- ✅ 2026-07-11 update: blocked verified-Track02 runtime-entry failures now preserve complete startup bitmap route receipts through result/apply/host receipts, including route mask, checksum, and raw/MODE1 spans, instead of collapsing to text-only fallback-block status. Remaining blocker is still real-media identification of object-table and additional non-startup dungeon records, plus Mac/app bitmap capture.
+- ✅ 🔧 2026-07-10 DM2 runtime/render follow-up: complete-support and full GDAT HUD/dungeon runtime gates are verified in DONE.md. The interface palette is now strictly decoded and carried into runtime scene/frame receipts; remaining work is applying that palette at the M11 display target, broader Mac packaged capture, broader typed GDAT data/image parser coverage beyond the verified interface `dt09`, `dtPalette16`, `dt07/0x00`, `dt07/0x02`, `dt06` no-alias gate, remaining advanced interface placement/semantics, remaining advanced CCM opcodes, and broader real save corpus import.
+- ✅ 2026-07-11 update: CCM walk writeback now honors an explicitly loaded AI row before the data-free probe rule, so a known non-attacking creature cannot be converted into a synthetic adjacency attack before the DM2-owned door/passability route writes its live position. Focused CCM and broad runtime handoff regressions cover closed and passable door writeback. Remaining CCM work is later advanced side effects and real-data startup/audio routing.
+- ✅ 2026-07-11 update: direct-graph promotion now validates every declared source-ordered c_record `w0`, not only map-reachable chains; an unreachable malformed direct link keeps PC G1 non-traversable. The real-data probe pins the complete direct-shape rejection census at 1,069 roots and 1,029 pool links. Remaining work is source/corpus correlation for those non-direct IDs; do not infer an alternate traversal.
+- ✅ 2026-07-11 update: canonical PC G1 loading now commits a transactional incomplete map-boot receipt for exactly 878 source-proven roots: 676 direct, 174 DB3, and 28 DB4. It records the five DB8/DB10 roots as blocked coordinates and does not read any blocked record's `GenericRecord::w0`. Remaining work is original loader/layout proof for those five DB8/DB10 addresses and then separately bounded link semantics; do not synthesize a graph, traverse a blocked root, or widen the tail.
+- ✅ 2026-07-11 update: the runtime now consumes a map-0-only receipt from that transactional boot. It replays only the source-proven `c_map.cpp` ground-stack root lookup, carries each direct/DB3/DB4 root identifier plus coordinate and aggregate counts into DM2 runtime and viewport state, and explicitly reports an incomplete world with zero materialized objects and zero blocked-record reads. The five DB8/DB10 roots remain unavailable outside map 0; do not use this receipt to decode records, follow `GenericRecord::w0`, or fabricate objects. Remaining work is still original loader/layout proof for those five addresses, then separately bounded link semantics.
+- ✅ 2026-07-16 update: object-model consumers now walk source-shaped square chains only through `dm2_v1_dungeon_walk_square_things()`, the loader-owned `GET_TILE_RECORD_LINK`/`GET_NEXT_RECORD_LINK` route. This removes the local object-model `w0` loop and proves incomplete PC G1 graphs still fail closed through the loader guard. Remaining work is still the non-direct PC G1 ID source/corpus correlation and field-level record-family semantics; do not use the new walker to promote unresolved DB8/DB10 roots or the untyped G1 extension.
+- ✅ 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
+- ✅ 2026-07-11 update: `firestaff_dm1_v1_inventory_damage_indicator_zone_probe`, `firestaff_m11_dm1_v2_effects_framepath_probe`, and `firestaff_m11_game_view_probe` are fixed against retired M11 wrapper/probe APIs and pass targeted verification. Remaining build work is the next full-build blocker, if any.
+- ✅ 2026-07-11 update: DM1 champion-panel bar/status-box runtime probes no longer call retired public M11 status wrappers; they consume DM1/ReDMCSB status-layout/HUD APIs directly and pass targeted local DM1 verification. Remaining build work is the next full-build blocker, if any.
+- ✅ 2026-07-14 update: the V5 dynamic-table decoder now reads one complete real `CREATURES/type` `FB` command row, `FC` terminal sequence walk, and `FD` directional image id only after a source-owned AI definition classifies the type as non-static. Retail PC-DOS resolves that definition through `CREATURES[type].word(5)` and the executable `v1d296c.dat` baseline; `CREATURE_AI` is only an optional extended override. Its focused canonical-media test uses the SKProject initial `iAnimInfo=0xffff` sentinel and records no pixels or generated state; it skips when the supplied variant has no admitted source AI classification. Remaining work is binding authentic mutable `iAnimInfo` and command state from a live original creature context; the static DB4 route remains frame-zero-only and cannot borrow this dynamic receipt.
+- ✅ 🔧 2026-07-10 CSB startup route follow-up: full startup runtime, title phase, host-capture, HUD, opening-door gates, and no-wrapper host-route retirement are verified in DONE.md. Remaining work is real Mac/app release capture against local CSB data.
+- ✅ 2026-07-11 update: the strict C001-C005 session now also materializes original C017/C040 HUD pixels into the CSB-owned indexed frame route, and full-runtime proof rejects metadata-only HUD bindings. The obsolete snapshot materializer is retired. Remaining CSB startup work is still real Mac/app release capture against local CSB data, including presented-frame evidence for these indexed surfaces.
+- ✅ 2026-07-11 update: the public M11 CSB runtime overlay draw-stats probe is retired; M11 tests now inspect the propagated draw counters locally, while CSB viewport runtime draw-count behavior stays verified in the CSB viewport receipt test. Remaining CSB work is real Mac/app release capture and any final non-caller diagnostic exports.
+- ✅ 2026-07-11 update: the public M11 CSB startup host-view draw consumer probe is retired; startup title/HUD/door proof stays in CSB boot/runtime receipts and `test_csb_v1_boot_runtime_handoff`. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+- ✅ 2026-07-11 update: public CSB runtime asset-gate helper export is retired; verified C001-C005/HUD startup asset ownership stays private behind runtime launch detach and host-capture receipts. Remaining CSB work is real Mac/app screenshot capture against local CSB data when local CSB DAT files are available.
+- ✅ 2026-07-11 update: public CSB runtime presentation snapshot wrapper is retired; startup presentation remains behind the launch detach, host-capture, and full runtime receipt path. Remaining CSB work is real Mac/app screenshot capture against local CSB data when local CSB DAT files are available.
+- ✅ 2026-07-11 update: public runtime startup host-facts wrappers for utility render/input and entrance input are retired; boot snapshots now own the M11-facing CSB startup input boundary. Remaining CSB work is real Mac/app release capture against local CSB data.
+- ✅ 2026-07-11 update: public CSB startup action-level HUD/menu draw and host-decision helper exports are retired; host-input dispatch/input-render receipts now own title-block, utility redraw, entrance redraw, and launcher-return checks. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+- ✅ 2026-07-11 update: public CSB capture-level runtime route-hardening helper export is retired; title, utility HUD, door-opening, credits, no-fallback, and no-wrapper checks now stay behind the runtime host-capture gate. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+- ✅ 2026-07-11 update: public CSB runtime-visual capture helper export is retired; title/PRESENTS/CHAOS/STRIKES, HUD, credits, door-opening, no-fallback, and receipt-only draw/input checks now stay behind the runtime host-capture gate. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+- ✅ 2026-07-10 update: public primitive/asset/closed-door/title-fallback/opening-composite startup helper exports are retired after M11 moved to host-view draw receipts. Remaining CSB startup work is real Mac/app release capture against local CSB data.
+- ✅ 2026-07-10 verification note: DONE now carries complete-support and host-capture receipt proof for the startup/render route; older "move final UI callers" bullets below are retained as history unless a current caller is found.
+- ✅ 2026-07-10 update: complete CSB startup runtime sessions now require PRESENTS, CHAOS, STRIKES BACK, entrance, HUD bindings, and opening-door surfaces from the same verified data owner, and the older materialize adapter routes through that session. Remaining CSB work is real Mac/app capture against local CSB data and deleting any final inspection-only wrappers after callers move to the full runtime receipt.
+- ✅ 2026-07-10 update: loose public render-plan adapter exports for request/facts/host-facts startup callers are retired; tests now verify the same title and closed-door menu render data through `csb_v1_startup_presentation_receipt_from_host_facts_pc34()`. Remaining CSB work is real Mac/app release capture and any final non-caller helper exports found by later cleanup.
+- ✅ 2026-07-10 update: M11 CSB startup rendering no longer calls the public startup primitive/asset/opening helper exports directly; it consumes host-view render-draw readiness for title, HUD/closed doors, and door-opening before executing callbacks. Remaining CSB work is real Mac/app release capture and deleting those public helper exports after non-engine callers are gone.
+- ✅ 2026-07-09 update: snapshot capture render execution API is retired; snapshot tests now prove the same title, utility, closed-door, and door-opening routes through host-view receipts. Remaining CSB work is retiring the next capture-level HUD/render compatibility helper.
+- ✅ 2026-07-09 update: capture-level HUD/menu draw executor is retired; utility and closed-door HUD tests now execute host-view HUD draw receipts with readiness receipts directly. Remaining CSB work is retiring the next capture-level render-plan compatibility helper.
+- ✅ 2026-07-09 update: capture-level render executor is retired; title, utility, closed-door, and door-opening execution proof now stays on host-view render receipts. Remaining CSB work is retiring public capture render-plan accessors that are no longer caller-facing.
+- ✅ 2026-07-09 update: public capture render-plan accessors are retired; tests now consume host-view/package receipts for title, utility, closed-door, and door-opening render proof. Remaining CSB work is deleting any later non-caller-facing startup compatibility exports after M11 consumers move over.
+- ✅ 2026-07-15 update: F0115 no longer invokes the legacy proportional floor-ornament renderer for DM1 after the real F0108 layout-696 zone pass. That duplicate host overlay obscured source pit/stairs/object material. Remaining F0115 work is the complete caller-owned door-pass scheduler and real packaged capture.
+- ✅ 2026-07-15 update: F0128 square material now retains D3..D1 pits, floor ornaments, front stairs, and teleporter fields even when a nearer side-content lane is closed. ReDMCSB calls F0104/F0108/F0113 from every F0116..F0124 route and relies on later source panels for occlusion; M11 no longer pre-culls this material. Remaining ordering work is real capture/pixel comparison and any route that needs a full per-square F0115 scheduler.
+- ✅ 2026-07-15 update: `ACTIDRAW.C F0387` action strings now use TEXT2 native cells only and fail closed to the source cell background when the authentic font is unavailable. `MENUDRAW.C F0397/F0398` now always repaints the six offered runes and all four selected-rune cells using the PC34 geometry, including source-space tail clearing. Remaining DM1 HUD work is real packaged capture across assets and macOS, not a substitute host font path.
+- ✅ 2026-07-11 update: the public M11 floor-item count diagnostic probe is retired; HoC floor-object coverage now consumes the DM1/ReDMCSB startup render-consumer and F0115 thing-route receipts directly. Remaining DM1 startup/render work is real Mac/release capture promotion and any remaining host-only diagnostic probe cleanup.
+- ✅ 2026-07-11 update: the public M11 viewport artifact diagnostic probe is retired; static fireball suppression, live projectile/explosion visibility, and post-FUSE fluxcage hiding now consume DM1 runtime materialization decisions directly. Remaining DM1 render cleanup is lower-level host-only helper retirement plus real Mac/release capture promotion.
+- ✅ 2026-07-11 update: the public M11 F0352 potion-eye diagnostic probe is retired; M11 skill-query coverage now feeds the DM1/ReDMCSB inventory formatter directly. Remaining DM1 render/chrome cleanup is residual host-only adapter retirement plus real Mac/release capture promotion.
+- ✅ 2026-07-13 update: DM1 F0407 INVOKE projectile planning now accepts only the source `M003_RANDOM(128)` energy and `M002_RANDOM(6)` family domains from `MENU.C F0407:1480-1493`; malformed command facts fail closed rather than creating a non-source projectile. Remaining action work is other special-action preconditions and broader runtime proof.
+- ✅ 2026-07-13 update: DM1 F0401 fright plus F0407 WINDOW/FLIP plans now accept only their source `M002_RANDOM(...)`/`M005_RANDOM(2)` domains from `MENU.C F0401:969-976` and `F0407:1398-1440,1536-1541`; malformed runtime draws fail closed rather than wrapping into a resistance, Thieves Eye, or coin-flip outcome. Remaining action work is other special-action preconditions and broader runtime proof.
+- ✅ 2026-07-09 update: M11 DM1 entrance transition now consumes receipt-built render/audio commands for fade, closed doors, opening door frames, palette present, rattle marker, and delay. Remaining startup work is packaged full-graphics capture proof and HoC overlay consumption.
+- ✅ 2026-07-13 update: DM1 F0190 killed-all afterplay now has a fail-closed PC34 receipt binding F0188/F0189 completion to the original C040 smoke create input. M10 consumes it after final-group mutation in both projectile and melee routes; malformed smoke attacks are rejected rather than replaced with a host effect. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+- ✅ 2026-07-11 update: the old public M11 V1 dialog layout wrappers are retired; render/input call sites and tests consume the DM1/ReDMCSB dialog layout module directly. Remaining runtime work is residual dialog apply/input state and full-graphics proof.
+- ✅ 2026-07-11 update: the old public M11 V1 endgame layout wrappers are retired; draw/input/a11y call sites consume the DM1/ReDMCSB endgame layout and graphic-id modules directly. Remaining runtime work is full-graphics proof and non-layout endgame state.
+- ✅ 2026-07-15 update: the adjacent ReDMCSB spell-HUD draw symbol gap for F0396/F0397/F0398 is closed by the champion-panel spell-area overlay contract and strict C11 regression. This does not close F0407 action-family work, F0394 caster routing, rune input mutation, cast-result semantics, or original-pixel parity.
+- ✅ 2026-07-13 update: DM1 F0402 now admits only a complete PC34 F0407
+- ✅ 2026-07-08 update: CSB boot runtime detach receipt now carries the complete startup launch receipts as well as profile/identity paths. M11 applies the detached runtime receipt instead of reading `launch.receipts` after ownership transfer. Remaining CSB boot coding work is pushing more M11 apply/adaptation code behind CSB startup receipt helpers.
+- ✅ 2026-07-09 update: Theron boot can now build the complete startup title/menu view model from runtime state, including save and level-route facts. Remaining Theron menu work is wiring final callers to this wrapper and removing ad-hoc snapshot assembly.
+- ✅ 2026-07-07 update: CSB startup render plans now also publish fallback text as row commands for title, credits, closed entrance, runtime start detail, utility overlay suppression, and prompt blink state. Remaining CSB startup work is fuller original utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+- ✅ 2026-07-11 update: M11 now consumes that Nexus DGN viewport host-route receipt before presenting cached startup/runtime DGN commands, and stores the package/host-route/material/raster proof on Nexus runtime state. Cached DGN drawing is blocked when the viewport receipt is missing, blocked, or still material-incomplete. Remaining Nexus runtime work is full material decode/package readiness so real `LEV00.DGN` can become `ready-rendered-mesh`, plus final release-app capture.
+- ✅ 2026-07-07 update: CSB viewport now owns the complete runtime object/group thing-overlay pass: it collects the runtime profile's thing overlays, runs object/group asset callbacks, draws object/group marker fallbacks, and owns object/group counters. M11 now only provides asset-backed object, icon, and creature blitters. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+- ✅ 2026-07-16 update: the DM1 selected-entry direct CLI hang is closed for
+- ✅ 🔧 2026-07-06 DM1 V1/V2.x follow-up: DM1 V2.2 now has a launcher-intent and M12-to-M11 handoff gate alongside V1/V2.0/V2.1, and M11 action-menu background geometry is now locked to ReDMCSB G0001/G0499/G0500/G0501 while retaining source action-row/icon-cell positions. DM1 V1 wall inscriptions now keep ReDMCSB M648 escape-symbol glyph routing for lowercase/digit symbol bytes instead of remapping them to A-Z. DM1 V1 primary side-wall rendering now walks the full D1/D2/D3 envelope before center-wall overpaint, matching ReDMCSB F0128 source order for D2 side walls behind center blockers. D1C thieves-eye masks now follow the current opening door-panel source/destination rectangle instead of drawing as a full closed panel. M11 center doors now also use G0186/G0183/G0180 LeftHorizontal/RightHorizontal halves for horizontal partly-open D1C/D2C/D3C doors, D1/D2/D3 side doors now use the matching G0185/G0187/G0182/G0184/G0179/G0181 panel frames, wall-ornament flip routing now matches ReDMCSB F0107 for D3R2/D2R/D1R side projections without flipping D3R/D2R front projections, and M11 now has an explicit ReDMCSB F0128 D4L/D4R/D4C far-projectile pre-pass before D3 wall overpaint. Remaining DM1 work is still the user-reported visual/runtime polish: MacBook title-palette timing/capture, broader HoC wall-inscription sharpness and route proof, champion-mirror visibility in packaged builds, wall/corridor occlusion parity beyond the fixed primary side-wall and D4 far-projectile passes, broader wall-ornament pixel proof, spell/action presentation beyond the action-area box geometry, and survival/runtime regressions such as HoC champion death.
+- ✅ 2026-07-07 update: DM2 V1 door rendering now consumes `door_open_pct` in the render plan: visible panel rectangles are clipped from the top, fully open doors skip panel blit while keeping frame/button routing, and runtime raw door states now map `4` closed to 0% open and `0` open to 100% open. Creature drawing also now exposes `DM2_V1_CreatureRenderPlan` for map-chip identity, fallback rectangle/color, health-bar rectangles, and offscreen filtering before asset fetch. Remaining render work is exact skproject door source clipping/opening tables, richer creature animation/placement parity, and broader real-asset pixel evidence.
+- ✅ 2026-07-07 update: CSB startup special-palette selection now lives in `CSB_V1_StartupRenderPlan_PC34` as `special_palette` for title, entrance blackout, closed entrance, credits, pre-open delay, and opening frames. M11 now consumes that CSB-owned palette result instead of branching on CSB startup surfaces. Remaining CSB startup work is exact title/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining draw-composition details out of M11 where source-owned APIs can express them.
+- ✅ 2026-07-06 update: Nexus title boot reveal timing and scan-window math now live in `nexus_v1_title_sequence`, and the existing title renderer delegates minimum boot frames, reveal rectangle, edge color, and reveal-complete gating to that Nexus-owned sequence model. Remaining Nexus startup work is still replacing the bounded TITLE.CG reveal with exact Saturn VDP1/VDP2 title camera/text timing, exact save/champion menu art/timing, and broader original memory-card support.
+- ✅ **2026-08-06 superseded:** the former claims that a raw `SKSave` body, a `D2RS` envelope, champion inventories, leader hand, or minion tails were imported into a playable startup session are withdrawn. `D2RS` is diagnostic-only and rejected by slot, corpus, and runtime-resume admission. The original PC-DOS corpus is decoded only far enough to receipt the source-owned prefix/fixed `GAME_LOAD` facts and 263-byte champion SUPPRESS records. It never publishes a source session or live object state. `c_hero::item[30]` and the leader possession root are 16-bit record links; their ownership requires SKProject's `DM2_READ_RECORD_CHECKCODE` allocation/append path, which is not yet ported. Continue/load and inventory interaction remain disabled until that complete source-owned record/object/possession restoration path exists.
+- ✅ 2026-07-22 update (Lane B, cycle 6): DM2 shop/NPC gold transactions now write back to `DM2_V1_GameState` instead of being stranded in the shop module. Added `dm2_v1_shop_commit_gold_to_game_state()` and runtime wrappers `dm2_v1_runtime_buy_from_shop()`, `dm2_v1_runtime_sell_to_shop()`, and `dm2_v1_runtime_leave_shop()` that commit on success/leave. `test_dm2_v1_runtime_shop_pc34_compat` verifies enter syncs `gs->gold`, buy/sell commit immediately, leave persists final gold, and failed buys leave `gs->gold` untouched. Also fixed a pre-existing compile error in `tests/test_dm2_v1_runtime_weather_frame_slot.c` (`&(make_storm_state())` is not valid C) so the full parallel build can complete.
+- ✅ 🔧 2026-07-05 Theron startup Track 02 follow-up: launcher/runtime selection now prefers the raw Track 02 BIN layout under `theron-extras/{japan,usa}` over the hash-valid Rev1 ISO files under `theron/` when the user points at the broad data root, and raw JP/US Track 02 startup now promotes the bounded 32x27 initial-level candidate with a verified interior start pose instead of the deterministic 8x8 fallback room. That candidate is now found through a hash-gated Track 02 startup-candidate scan, the scan catalog can now bind candidate-to-descriptor deltas, handoff additionally requires the descriptor-anchor-relative startup offset relation before runtime load, and the real-asset startup receipt now records the same bounded initial-candidate offset/size/header/start/delta/anchor-match fields for raw Track 02. A bounded stage-select/Soul Room/forcefield startup model now gates selected stage, Theron presence, up to three resurrected mirror heroes, manual/dmweb hero names/classes for Hakar/Mara/Tiran/Linos/Dotan/Hexa/Pental, stable mirror metadata/portrait-index handoff, resurrect-order-preserving party slots, duplicate mirror rejection, mirror deselection with order compaction before forcefield, party handoff, first-dungeon middle-stage unlock and final-stage lock until the first six dungeons are complete. M11 direct launch now shows a playable stage-select and Soul Room startup screen, evaluates the bounded startup save/resume gate through the boot profile without auto-resuming, exposes a focused Continue row for verified `.tqsv` slots or SRM slots with decoded Firestaff readiness envelopes, loads the active `.tqsv` progression/champion receipt or decoded SRM progression only after explicit input, waits to load the dungeon until forcefield entry, materializes selected mirror companions through the same startup gate, preserves loaded Theron slot-0 state across forcefield entry, resets per-dungeon object/timer/runtime state on forcefield entry, returns to stage select after completed dungeon exit with companions cleared, keeps non-dungeon-1 stage starts on the selected dungeon instead of falling back to dungeon 1, writes any still-needed fallback room into the selected dungeon's runtime level slot, and now exposes a machine-readable startup layout for title/continue/stage/mirror/forcefield elements plus 320x200 render-space rectangles and pointer routing so future decoded Track 02 menu art and touch/mouse controls do not have to parse fallback text rows. Remaining startup work is replacing the bounded text/rect startup screen and remaining fallback portrait labels with decoded real Track 02 menu/champion art and text, connecting richer M12 startup affordances if needed, real Sphenx/Greatstone SRM body import beyond the current Firestaff-only readiness envelope, full Track 02 dungeon-record decoding beyond the one initial candidate, all levels, object tables, transitions, text/palette payloads, route proof and README-eligible real runtime captures.
+- ✅ 2026-07-14 Track 02 later-loader coalesced-sector receipt: a positive later `$e009` handoff now requires one provenance-marked original Mednafen transcript with the authenticated Stage 2 loader row, one later dispatch, one complete raw-sector fingerprint, and the matching return in order. The fingerprint must match the selector-resolved sector in hash-verified JP/US Track 02 media. This is loader/media provenance only; the next blocker remains a repeated original capture that supplies enough observed records to infer a record format without inventing maps, objects, graphics, palettes, or transitions.
+- ✅ 2026-07-05 update: M11 startup now captures the decoded JP raw Track 02 roster-name catalog into Theron startup state, includes roster status/count in the startup inspect readout, and renders the proven JP name row in stage-select when available. Remaining roster work is still US-name decoding, title decoding, exact mirror order/binding, and replacing fallback Soul Room mirror labels only after the real Track 02 binding is complete.
+- ✅ 2026-07-03 update: current `main` now also blocks CSB movement into real-format closed doors and closed fake walls using the ReDMCSB `F0366` door-state/fakewall masks, exposes door/fakewall block causes in the runtime result, and applies a bounded open-pit fall to the adjacent lower level for real-format `C02_ELEMENT_PIT` squares with `MASK0x0008_PIT_OPEN` and without `MASK0x0001_PIT_IMAGINARY`. Current local work now also applies bounded F0324 party fall damage after each pit fall with attack 20 and legs/feet wound eligibility, and resolves party pit falls through ReDMCSB `DUNGEON.C F0154` map-offset metadata. Remaining work is still source-global fall-damage RNG exactness, stamina/rope/sound/view timing, sensors, teleporters, wider route timing, broader interactions, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+- ✅ 2026-07-23 verified F0247/F0217/F0215 destination list ownership: C49 now uses ReDMCSB `GROUP1.C F0175` to locate C04 through the complete real Thing chain, rather than assuming C04 is its first entry. The focused two-map C05-chain regression proves a target C03 followed by C04 retains its associated arrow exactly once on the authoritative destination chain; remaining retention work is broader live impact consequences and corpus coverage.
+- ✅ 2026-07-02 update: M10 F0816 now also mirrors the PC34 `PROJEXPL.C F0217` key exception: associated key icons C176..C191 cannot pass through a closed projectile-passable door, and the orchestrator resolves the associated object's decoded icon before F0811. Continue broader F0328/F0811 thrown-object render/materialization parity and original-DOS evidence separately.
+- ✅ 2026-07-02 update: M10 F0816 now also mirrors the rest of the ReDMCSB `PROJEXPL.C F0217` kinetic projectile-passable door predicate: active DoorInfo `MASK0x0002`, `Projectile->Attack > RANDOM(128)`, and associated ObjectInfo `AllowedSlots & MASK0x0100` are all required before a thrown object passes a closed portcullis-style door. Continue broader F0328/F0811 thrown-object render/materialization parity, projectile rendering evidence, and packaged MacBook Pro HoC capture separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now removes live C50 Fluxcage instances from both the party square and Lord Chaos square before the Grey Lord/game-won handoff, matching the PC34 endgame cleanup. Continue residual special-action and endgame audit beyond this bounded F0446 cleanup case.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now also writes the Grey Lord group-state handoff from source: health 10000, centered cell `0xFF`, direction opposite the party, and matching active-AI mirrors. Continue residual endgame animation/credit/pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now creates the opening fireball burst at attacks 55..255 step 40 on the Lord Chaos square, and skips the normal same-dispatch ACTION tick after game-won so the burst is not immediately consumed and Grey Lord health remains at the source final value. Continue later Lord Order/Harm Non Material cycle, buzz audio, credits, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now also creates the HNM burst, final Fireball+HNM attack-255 pair, and F0446 buzz sound request while preserving final Grey Lord state. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now applies the source party defense setup at endgame start: magical light 200 plus FireShieldDefense, SpellShieldDefense, and ShieldDefense/partyShieldDefense all set to 100. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now also sets the source `G0077_B_DoNotDrawFluxcagesDuringEndgame` equivalent and hides surviving C50 Fluxcages from viewport artifact sampling while leaving their live runtime entries intact. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now deletes other groups on the current map after the Grey Lord handoff, mirroring the F0446 `F0189_GROUP_Delete` cleanup while preserving the Grey Lord group and compacting matching active-AI state. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now collects the current-map `(0,0)` TextString chain, decodes invisible message text, orders entries by the hidden leading A/B/... sort key, clears the message area, and prints the final ordered endgame text message through the M11 message log. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, per-message delay/display cadence, game-won music, final endgame screen handoff, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now records the final F0446 endgame handoff parameters: C2 game-won music request, 600-tick final delay, restart-disallowed state, and `F0444_STARTEND_Endgame(C1_TRUE)`. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, per-message delay/display cadence, actual music playback asset route, final endgame screen rendering, and pixel proof separately.
+- ✅ 2026-07-01 update: M11 F0407/F0446 complete FUSE now runs and records the source nested Chaos/Order morph cycle: 12 Lord Chaos/Lord Order type switches, 24 accumulated F0445 update ticks, and 13 total buzz requests including the initial Lord Order handoff. Continue actual timed frame pacing, per-frame presentation, per-message delay/display cadence, actual music playback asset route, final endgame screen rendering, and pixel proof separately.
+- ✅ 2026-07-02 update: M11 F0407/F0446 complete FUSE now records the full F0445 update cadence across the non-blocking source sequence: 43 fixed F0446 update calls plus one per printed endgame text message, while preserving the existing nested Chaos/Order count of 24. Continue actual timed F0445 frame replay, final endgame screen rendering, music playback asset route, and pixel proof separately.
+- ✅ 2026-07-02 update: M11 F0407/F0446 complete FUSE now also records the source `Delay(780)` after each printed endgame text message; the current two-message fixture proves 1,560 ticks before the final 600-tick victory handoff. Continue actual timed F0445 frame replay, final endgame screen rendering, music playback asset route, and pixel proof separately.
+- ✅ 2026-07-02 update: M11 F0407/F0446 complete FUSE now also records the aggregate non-blocking F0446 delay budget: text-message delays plus the final 600-tick handoff delay. The current fixture proves 2,160 total delay ticks while preserving the separate counters. Continue actual timed F0445 frame replay, final endgame screen rendering, music playback asset route, and pixel proof separately.
+- ✅ 2026-07-02 update: M11 F0407/F0446 complete FUSE now arms and drains that aggregate delay budget through `M11_GameView_AdvanceIdleTick()` while `gameWon` is active, without advancing source `world.gameTick` or ordinary gameplay systems. Continue per-F0445 frame rendering, final endgame screen art, music playback asset route, and pixel proof separately.
+- ✅ 2026-07-02 update: M11 F0407/F0446 complete FUSE now marks the final `F0444_STARTEND_Endgame(C1_TRUE)` handoff ready only after the non-blocking F0446 delay budget reaches zero, instead of treating registered ending parameters as presentation-ready immediately. Continue final screen rendering, per-F0445 frame rendering, music playback asset route, and pixel proof separately.
+- ✅ 2026-07-19 update: the non-action C040 audit is complete across the public M11 V1 helper/command surface; the final two bypasses — direct `M11_GameView_LoadDm1SavePath` and `M11_GameView_LoadDm1OriginalPc34SaveBytes` — now refuse to replace the world behind a live candidate panel, locked by `m11_quick_resume_roundtrip`. No unguarded non-action C040 panel paths remain; original-DOS/pixel evidence stays tracked under the parity rows.
+- ✅ 🔧 2026-06-28 DM1 V1 resurrection rename UI follow-up: data-free source-lock coverage exists for the F0281 rename-panel boundary (`dm1_v1_resurrection_rename_ui_gate_pc34_compat`, see DONE.md 2026-06-28), and the live M11 C161 path now opens a non-blocking F0281 rename state with C027 panel rendering, source-coordinate panel clicks, a public ASCII input bridge, SDL text-input forwarding, and source-locked duplicate-name rejection before OK finalizes reincarnation. Remaining work is real DM1 PC34 GRAPHICS.DAT screenshot evidence for the C027 panel path and paired Firestaff/original pixel evidence. No original DOS pixel parity claim yet.
+- ✅ 🔧 2026-06-25 DM2 V2 HUD widget bitmap gap follow-up: `dm2_v2_hud_widget_assets` placeholder-vs-real manifest + gate is now CTest-backed (`dm2_v2_hud_widget_assets` 115/115 + `firestaff_dm2_v2_hud_widget_assets_probe` 54/54, see DONE.md 2026-06-25 entry). The gate reports `NO_MANIFEST` by default and keeps the procedural rectangle/letter fallback in `src/dm2/dm2_v2_hud_overlay.c` until an operator-installed manifest exists. **2026-06-27 runtime hook landed:** `dm2_v2_hud_runtime_render_with_assets()` consults `dm2_v2_hud_widget_assets_classify_slot()` for each of the 7 slots, records the per-slot path mode (`DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP` vs `PROCEDURAL_FALLBACK`) and gate classification into module state, and stamps a single-pixel marker at each REAL slot's anchor after the procedural overlay draws. `firestaff_dm2_v2_hud_widget_runtime_hook_probe` 100/100 PASS covers no-manifest baseline, empty manifest, placeholder manifest, synthetic PARTIAL/COMPLETE, per-slot path-mode stability, V2-off invariants, out-of-range safety, and source-evidence citations. **2026-06-28 synthetic example gate landed:** `examples/dm2_hud_widget_synthetic/` now provides a non-placeholder `generator="synthetic_test"` manifest plus seven 1x1 procedural PNG fixtures, and `firestaff_dm2_v2_hud_widget_synthetic_promotion_probe` proves scratch-only PARTIAL (1 copied fixture) and COMPLETE (7 copied fixtures) promotion without copyrighted or finished art. **2026-06-28 synthetic-example integrity + generator-agnostic strengthening landed:** the same probe now also (a) verifies every fixture's first 8 bytes match the PNG signature `89 50 4E 47 0D 0A 1A 0A` so a future fixture that silently rots into arbitrary text cannot pass the `synthetic-test-fixture` substring check alone, (b) verifies every COMPLETE slot reports `width > 0 && height > 0` so a corrupt manifest without declared dimensions cannot promote the gate, and (c) installs the manifest after rewriting every `generator` entry from `"synthetic_test"` to `"pbr_hero"`, installs all seven fixtures, and verifies the gate still promotes to COMPLETE — proving the gate's classification logic is generator-string-agnostic for any non-placeholder marker and guarding against a future refactor that accidentally introduces per-generator allowlisting. The probe grew from 51/51 to 81/81 PASS; see DONE.md 2026-06-28 entry for the per-check breakdown. **2026-06-29 single-slot real-size receipt landed:** `firestaff_dm2_v2_hud_widget_real_slot_receipt_probe` now generates a scratch-only 32x32 RGBA PNG for the `hud_chrome` `compass_rose` slot with `generator="pbr_hero_receipt"`, proves `compass_rose -> REAL` while the other six slots remain placeholders, and keeps the aggregate gate at PARTIAL (`real_count=1`, `total=7`) without using the checked-in synthetic 1x1 fixtures. Remaining work: (a) authoring real bitmap art for the 7 slots (2 Phase 3 primary in `hud_widgets/`: inventory quick-view + action prompt; 5 chrome supporting in `hud_chrome/`: compass rose + depth indicator + gold counter + champion bar frame + action strip frame), (b) replacing the 1-pixel anchor stamp with the actual real-bitmap blit when operator-installed art lands, and (c) visual verification for a real pack whose generator is neither `placeholder` nor `synthetic_test`. No original DOS pixel parity claim; this is runtime / procedural-fallback-vs-bitmap-asset classification.
+- ✅ 🔧 2026-06-24 DM1 V1 Hall of Champions ordinal-2 palette_match_rect portrait_rect_position probe follow-up: see DONE.md 2026-06-24 entry for the `firestaff_dm1_v1_hoc_champion_portrait_02_palette_match_rect_runtime_probe` slice, DONE.md 2026-06-25 entry for the `firestaff_dm1_v1_hoc_champion_portrait_02_after_party_shuffle_portrait_rect_position_runtime_probe` sibling, DONE.md 2026-06-27 entry for the new `firestaff_dm1_v1_hoc_ordinal_2_future_route_readiness_gate_probe`, and DONE.md 2026-06-28 entry for the ordinal-2 `west_negative` promotion audit. The readiness gate confirms the live PC 3.4 DUNGEON.DAT still exposes zero real ordinal-2 corridor-sensor poses, so per-route visual capture remains dormant until a future data/layout change surfaces one. It now audits 10 known ordinal-2 sibling source files as source-present and CTest-wired, including the repaired `west_negative` negative-route probe and the `cancel_reopen` sibling. Remaining work is any per-route ordinal-2 visual capture if a future build surfaces ordinal 2 on a real corridor sensor; there is no longer a known source-present ordinal-2 sibling probe waiting to be repaired or retired.
+- ✅ 🔧 2026-06-22 CSB V1 save runtime boundary follow-up: data-free `csb_v1_save_runtime_boundary_pc34_compat` gate is now wired into CTest (see DONE.md 2026-06-22 entry). **2026-06-28 audio runtime/save boundary landed:** `csb_v1_audio_runtime_pc34_compat` now source-locks the ReDMCSB pending-sound request/flush path and proves `LastCreatureAttackTime` is save-restored while transient pending audio is not serialized. Remaining CSB save/audio work is real save compatibility artifacts (binary DUNGEON.DAT + party state round-tripped through the live F0435 STARTEND_LoadGame flow), real CSB sound payload playback/mixing, and broader end-to-end playability.
+- ✅ 🔧 2026-06-22 Launcher session timer follow-up: M12 now persists and verifies the launcher-owned Session Timer setting, but in-game reminder overlay / forced-pause behavior remains deliberately out of scope until a separate runtime UX pass defines it. **2026-06-28 in-game reminder + forced-pause overlay landed:** new `session_timer_runtime` module + `include/session_timer_runtime.h` (data-free deterministic state machine) + `M11_GameView_InitFromMenuSessionTimer` / `TickSessionTimer` / `AcknowledgeSessionTimerReminder` / `ClearSessionTimerForcedPause` + `M11_GameView_Draw` reminder banner + forced-pause confirm dialog + `M11_GameView_HandleInput` gating + `src/engine/main_loop_m11.c` per-second tick. New CTest targets `session_timer_runtime` (data-free unit) + `session_timer_runtime_probe` (M11/M12 hand-off smoke) both PASS. See DONE.md 2026-06-28 entry for full source / invariant / verification surface. Remaining work is the original-capture / README-eligible screenshot evidence that the overlay paints against real assets (outside the handoff boundary).
+- ✅ 🔧 2026-06-22 Save export/import follow-up: M12 now has a CTest-gated launcher save-manifest export/import action for the quick-resume path/context only. **2026-06-29 DM1 LSV-02 per-game versioned manifest gate landed** (see DONE.md 2026-06-29 entry): the existing `memory_savegame_pc34_native_export_pc34_compat` LSV-01 byte-stable PC 3.4 save exporter/importer now stamps a 16-byte `LSV01RDM` / version / gameCode / dungeonCode / flags manifest into `AdditionalData[0..15]` (a region the original ReDMCSB engine never inspects, so vanilla DM 3.4 PC interop is preserved), and exposes the F0799 peek / F0800 strict per-game gate / F0801 gameCode name helper / F0796 import refusal on a non-DM1 manifest. **2026-06-28 DM1 original-save header classifier/readiness gate landed:** `dm1_v1_original_save_classifier_pc34` and `dm1_v1_original_save_classifier_probe` classify user-staged `DMSAVE`/`DMGAME` candidates as ReDMCSB-shaped original headers without importing them. **2026-06-30 PC34 classifier tightening landed:** the classifier now distinguishes ReDMCSB `FormatID=5` + `Platform=9` + `DungeonID=10` as `ORIGINAL_DM1_PC34` and marks it as a bounded `pc34_importer_candidate`. **2026-06-30 PC34 original-save handoff landed:** `dm1_v1_original_save_pc34_handoff` now consumes a ReDMCSB-shaped PC34 save buffer or file, deobfuscates the real `DM_SAVE_HEADER`/five save parts with the F0417 byte contract, records expected/actual part checksums, imports `GLOBAL_DATA` party position/count/leader plus bounded `CHAMPION_EXCLUDING_PORTRAIT` runtime fields (name/title, direction, vitals, food/water, wounds, stats, base-skill experience, F0303-derived base-skill levels, inventory slots, load) into caller-owned `SaveGame_Compat`, decodes bounded ReDMCSB `ACTIVE_GROUP` records, applies live active groups into `GameWorld_Compat.creatureAI[]`, resolves `GroupThingIndex` through Firestaff `DungeonThings_Compat.groups[]` when available, decodes original `EVENT` plus timeline index parts into `DM1_EventQueue_V1` with `GameTime`, `EventCount`, `FirstUnusedEventIndex`, event slots, and live timeline heap indices, exposes a file-to-`GameWorld_Compat` loader that re-anchors party map indices and ticks, and is now linked into M10 so the M12 savebrowser can use it for DM1 original PC34 metadata and load-handoff eligibility. It rejects non-PC34, missing/unreadable files, truncated-part, active-group length mismatch, malformed active-group/event-queue reports, out-of-range timeline indices, and corrupt-checksum inputs. **2026-06-30 M11 DM1 save-load fallback landed:** the M11 `savePath` quick-resume loader and the main-loop F9/entrance-RESUME code now route through `M11_GameView_LoadDm1SavePath()`, which falls back from invalid `M11QSAV1` header to `DM1_LoadGameWithBackup` and retains loaded DUNGEON.DAT ownership for Firestaff-native and original PC34 saves. **2026-06-30 PC34 native-export writer tightening landed:** `memory_savegame_pc34_native_export_pc34_compat` now writes the real `DM_SAVE_HEADER` offsets/checksum, byte-based F0417 obfuscation, a consistent zero-group/zero-event/zero-timeline v1 envelope, and four 319-byte champion records that the original-PC34 handoff reader can import. **2026-06-29 per-game save-byte manifest gate landed:** `save_byte_manifest_m12` validates Firestaff-native DM1 `FSDM1SV1` header/version, payload byte count, whole-file CRC, no-overwrite import, and corrupt-payload rejection. **2026-07-01 live F0303 skill query landed:** `dm1_skill_get_level_ex()` now covers resting, temporary-experience flags, PC34 Firestaff/Complete Firestaff modifiers, and neck/action-hand skill objects. Remaining work: real user-staged original PC34 saves through manual live M11/F9/RESUME evidence, Firestaff runtime -> PC34 write-back with real corpus/original-engine proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation, broader event side-effect/runtime route proof beyond queue import, CSB/DM2/Nexus/Theron per-game versioned and save-byte manifest variants, real community-dungeon-save import evidence, real per-game-version (Atari ST 1.x / Amiga 3.5 / Mac 1.2) byte-layout receipts, and a single cross-game save-browser that hands each save to the right runtime.
+- ✅ 🔧 2026-06-25 CSB Hint Oracle HTC follow-up: HCSB.HTC format-contract parsing and data-free LZW/page-slice verification remain covered by `csb_hint_oracle_htc_unit`; real Utility Disk `HCSB.HTC` scan/cache handoff is now covered by `csb_hint_oracle_htc_real_scan` + `firestaff_csb_v1_hint_oracle_real_htc_scan_probe` (CTest `csb_v1_hint_oracle_real_htc_scan`, see DONE.md 2026-06-25 entry); runtime-adjacent UI/binding gate is now covered by `csb_hint_oracle_ui_runtime_binding` (data-free) + `firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe` (real-asset, CTest `csb_v1_hint_oracle_ui_runtime_binding`, see DONE.md 2026-06-26 entry) so a decoded HCSB.HTC page or page-slice can reach a Firestaff-facing oracle/hint surface (multi-line diagnostic/oracle report + per-hint text formatter + (level, x, y) → hint resolver, all backed by the existing parser + scan/cache). Remaining work is parsing additional Utility Disk release variants (English R1/R2/R3, French R1, German R1/R2), drawing the actual Hint Oracle graphical overlay, and real page/screen verification against a verified HCSB.HTC.
+- ✅ 🔧 2026-06-22 Theron runtime screenshot readiness: new `theron_v1_runtime_screenshot_readiness` CTest launches real Firestaff Theron paths when Track 02 data is present and records runtime-probe/BMP hash receipts only. The direct `--game theron --data-dir <root>` root-start case now has a focused fast path and launch proof (see DONE.md 2026-06-26 Theron V1 direct root startup fast path). 2026-07-05 update: M11 now promotes the verified raw Track 02 initial-level candidate on JP/US raw BIN startup before falling back to deterministic launch-room data. 2026-07-23 update (Lane E, cycle 11): the new `theron_v1_mechanics_playability` CTest adds a headless real-data movement/turning/blocking pass against the authentic JP/US Track 02 Hall-of-Records grid, providing the first runtime playability proof on original media. Remaining work is reviewed public screenshot promotion, full Track 02 dungeon-loader parity beyond the one initial candidate, real `.srm` / Track 02 save-import evidence, and broader runtime playability proof for doors/pits/teleporters/altar/combat/drops/sounds.
+- ✅ 🔧 2026-06-25 Theron V1 SRM real-artifact decode: `theron_v1_srm_classifier` (see DONE.md 2026-06-25 entry) is the bounded 5-slot Save Disk manifest that recognizes the gzipped-deflate body dmweb's `community/documentation/miscellaneous.html` and greatstone page reference for Theron savegames, reports a clean `present_count=0, recognized_count=0` ABSENT manifest on the current host (no real `.srm` file is staged), and accepts a real `.srm` when one is placed under `$HOME/.firestaff/data/theron/save/slot0.srm` ... `slot4.srm` or the `FIRESTAFF_THERON_SRM_DIR` override. 2026-06-27 adds a bounded gzip-payload probe that inflates a synthetic recognized `.srm` stream when zlib is present, and reports `ZLIB_UNAVAILABLE` honestly when it is not. 2026-06-27 also adds a Firestaff-only progression-envelope readiness import from inflated payload bytes into `Theron_DungeonProgression`, validating the T080/T800 between-dungeon completed-prefix sequence and preserving unknown real Sphenx/Greatstone custom bodies as `UNSUPPORTED_BODY`. 2026-06-28 adds a Firestaff-only party-envelope readiness import into `Theron_V1_Party` body fields (names/classes, alive/dead, HP/stamina/mana, base stats, levels, wounds/flags, food/water, shared gold) while deliberately leaving inventory/equipment empty and unknown real bodies unsupported. 2026-06-28 also adds a bounded recognized-slot gzip body gate that reads synthetic `.srm` slot bytes, inflates the body, and decodes one progression/champion block through the party importer. 2026-07-17 now binds an already opaque admitted SRM only to the exact direct Track 02 MD5/variant, campaign-layout epoch, and final replay record/sector; missing facts or SRM MD5/size/FNV, media, epoch, or replay drift reject before M11 route readiness. This is provenance only and does not decode, restore, or interpret the save body. Remaining work: real Sphenx TQ-RTC `.srm` body decode, real champion/body byte mapping, real `.srm` -> progression/party promotion evidence, inventory/equipment semantics, and a runnable Round-Trip CTest that pairs a real `.srm` against a written `.tqsv` export from the synthetic save path.
+- ✅ ✅ 2026-07-22 Theron V1 synthetic-render-block runtime binding (Lane E, cycle 6): `theron_v1_boot_runtime_render_frame` now consults `TrAssetBundle.synthetic_rendering_blocked` and refuses to draw verified Track 02 media unless a decoded tile bank is present; M11 clears the framebuffer when the runtime refuses, so verified media no longer leaves a zero-pixel page. `tr_asset_generated_v1_rendering_allowed` treats a bound Track 03 tile bank as authoritative original data and overrides the synthetic block. The asset bundle's decoded palette/tile bank is shallow-copied into the viewport before rendering, wiring real tiles through the existing viewport blit path. 2026-07-22 update (Lane E, cycle 5): the render gate now also requires `TrAssetBundle.palette_route_verified` before it considers V1 rendering allowed; a decoded tile bank alone is no longer sufficient, closing the synthetic-default palette path. 2026-07-22 update (Lane E, cycle 6): the startup render-plan executor is now fail-closed for synthetic title/stage/Soul Room/forcefield shape commands; `Theron_StartupRenderPlan` carries an explicit `synthetic_graphics_allowed` permit that is clear by default, and the boot-level no-media fallback path is the only production route that sets it. The M11 startup screen already suppresses synthetic render-plan border/text when Track 02 atlas graphics execute, and the fallback-room path remains blocked whenever a verified Track 02 request is present. Regression coverage added in `test_theron_rendering` (`test_startup_render_plan_blocks_synthetic_shapes_without_permit`, 25/25 PASS). Remaining work: README-eligible capture proof once the real Track 02 decoder/capture pipeline supplies positive level/object/bitmap/palette evidence.
+- ✅ 🔧 2026-06-16 V2 presentation-mode pass: dm1_v2_presentation_mode_pc34 + csb_v2_presentation_mode_pc34 modules wired to M11_GameView_Start (spec->presentationMode is now pushed into the per-game V2 runtime for gameId=dm1 and gameId=csb). v2_settings_apply_v20_defaults (V2.0 filtered), v2_settings_apply_v22_defaults (V2.2 modern) added alongside the existing v2_settings_apply_v21_defaults. dm1_v22_shapes.c now explicitly included in the firestaff_v2 lib so the V22 entry branch resolves m11_v22_shapes_init. New CTEST targets: test_dm1_v2_presentation_mode_pc34 (50/50), test_csb_v2_presentation_mode_pc34 (36/36). New headless CI probes: firestaff_dm1_v2_presentation_mode_probe (30/30), firestaff_csb_v2_presentation_mode_probe (27/27). 23/23 Phase A invariants still pass. The 166/166 green set confirms the M12_PRESENTATION_V1_ORIGINAL / V20_FILTERED / V21_UPSCALED / V22_MODERN enum now reaches the per-game V2 runtime; remaining work is the actual CSB V2.1 upscale + CSB V2.2 modern asset pack authoring (the selection API is ready, the per-mode V2 modules are still TODO for CSB). Phase 8 m11_v22_shape_for_cell() runtime use from the V22 active branch is also now done (see the Phase 8 entry below for the per-frame V22 shape cache details).
+- ✅ Collision: pass1055 now has original DM1 PC 3.4 closed-door stasis evidence and CTest-gated Firestaff-side semantic pairs. Original `door_before`, `after_viewport_click`, and `after_kp5` are byte-identical at both raw-frame and 224x136 viewport-crop level; Firestaff replays the same movement sequence to `map=0 x=6 y=9 dir=3`, sees closed door square `0x94`, and blocks the next forward command without moving. The extended Firestaff-side collision probe now broadens that same target route across repeated closed-door stasis plus wall, door, fakewall, pit, and teleporter element substitution. Remaining work: pixel-pair this view and broaden to original party-occupied/diagonal blocked rows plus a full wall/door/fakewall transcript.
+- ✅ Creature-chain: pass1058 locks the corrected original DOSBox keypad mapping for the next route attempt (`F=kp8`, `B=kp2`, `TR=kp4`, `TL=kp6`; `kp5` also moves forward from the tested start pose). The exact corrected route-token sequence is now preserved as redacted text in the pass1058 CTest manifest, but the first selected target remains behind an inert closed door: enter, space, two clicks, and forward all leave the raw frame unchanged. 2026-06-29 tail-frame hardening now machine-checks the two raw-only low-click/forward rows against the same stable inert-door hash. Remaining work: choose a level-1 group with open line of sight, or use a controlled save/debug route, then promote a paired original creature screenshot. Creature render remains source-locked until that paired original capture exists.
+- ✅ ✅ 2026-07-23 DM1 F0320 inventory pending-damage receipt: the live F0293/F0320 handoff now carries the positive pending-damage amount with its exact C015/C016 GRAPHICS.DAT source surface. M11 rejects the entire source top-row lane when the receipt amount, loaded C015/C016 pixels, or original M653 glyph plane is absent, and draws the F0320 1/2/3-digit value only at the original C179 inventory origins 21/18/15, Y=16. The real HoC runtime probe recruits four C127 records from hash-verified DUNGEON.DAT and verifies C016 plus M653 digits for 7, 37, and 137 on the live framebuffer. This supersedes the older inventory-live-bitmap subtask below; only an original-vs-Firestaff capture pair remains.
+- ✅ REDMCSB-SYMBOL-GAP-001 — **The complete numbered-symbol inventory is not a
+- ✅ REDMCSB-CSB-GAP-012 — **ReDMCSB has no complete PC-CSB boot-media
+- ✅ 🔧 Runtime handoff: the old M12/M11 CSB launch-readiness blocker is retired. Hash-matched CSB assets now produce a valid launch intent, M11 hands CSB to `FS_GAME_CSB`, and `csb_v1_pc_real_asset_launch` proves canonical PC CSB `GRAPHICS.DAT`/`DUNGEON.DAT` scan, `csb_v1_boot_enter_game()`, dungeon ownership, source-locked start pose, Chaos magic init, one tick, and cleanup. The CTest runtime set also covers command chains, input-queue turn binding, queued movement, collision/no-step handling, movement-disabled gating, turn-between-step ordering, utility/import handoff, and runtime load/attribute formulas. **2026-06-28 PC 3.4 quickplay dungeon-handle probe landed:** new `firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe` (CTest `csb_v1_pc34_quickplay_dungeon_handle`, labels `tier1;csb;quickplay;boot_handoff;dungeon_handle;rescan;skip_safe`) pins the handle-survival invariants (H1-H4: runtime owns the verified DUNGEON.DAT handle after enter_game, global singleton equals the runtime handle, current level is map 0, runtime starts at TITLE) plus the rescan-clearing invariants (H5-H7: failed rescan clears the runtime handle + global singleton + profile fields + blocks re-launch) and the re-launch invariants (H8: successful rescan into verified dir releases the previous handle before enter_game re-establishes a fresh one). Probe is skip-safe — when `FIRESTAFF_CSB_PC_DATA` (or `~/.firestaff/data/csb`) carries the canonical PC 3.4 EN pair it exercises the real-asset path end-to-end; on hosts without user-supplied CSB data it falls back to a synthetic-fixture path (1 level, 2x2 legacy-format dungeon) that still drives the production `csb_v1_boot_enter_game()` / `csb_v1_boot_scan_assets()` code paths so CI stays deterministic. **Bug found and fixed:** the previous `csb_v1_boot_scan_assets()` only cleared profile metadata on rescan, NOT the runtime-owned `dungeon_handle` or the `csb_v1_dungeon_get_current()` singleton — so a follow-up rescan that lost the CSB assets could leave the runtime still pointing at the previous heap-allocated dungeon. The rescan path now releases the handle and resets the singleton before the rescan-driven profile fields are populated, matching the same release contract as `csb_v1_boot_cleanup()`. Remaining work is richer CSB-specific viewport/HUD evidence, gameplay/save/audio parity, original capture/pixel parity, and end-to-end playability verification.
+- ✅ **Lane A — DM2 SkWinCore symbol audit batch 16 (cycle 16):** Done — see
+- ✅ **Lane A — DM2 SkWinCore symbol audit batch 17 (cycle 16):** Done — see
+- ✅ **Lane A — DM2 SkWinCore symbol audit batch 18:** Done (v3.0.182). Ported
+- ✅ **DM2 legacy SKProject sound-model reachability audit (2026-08-07):** Done.
+- ✅ **DM2 selected-corpus i18n verification (2026-08-07):** Done. The real-data
+- ✅ 2026-07-27 update: **Record graph complete.** [v3.0.180] Diagnostic proved that G1 byte-square format stores game data in w0 (not next-links). Validator now validates ground-stack → record resolution (including G1 extension pools for DB3/DB4). `get_thing_record` resolves extension records. `get_next_thing` returns END_MARKER for G1 (no w0 chains in file). `record_graph_complete=1` on real 39,437-byte DUNGEON.DAT. Fixed 3 pre-existing test failures (arrange_dungeon_receipt, first_map_real_data_probe, object_model_probe).
+- ✅ DM2-005 — `skproject/SKULLWIN/c_creature.cpp` `DM2_PROCEED_CCM`, `DM2_CREATURE_ATTACKS_PARTY`, and `DM2_CREATURE_CAST_SPELL`: `src/dm2/dm2_v1_ccm.c` implements a small opcode subset and returns `UNKNOWN_OPCODE` for the remaining program. `EXTENDED_LOAD_AI_DEFINITION` proves only `CREATURE_AI` `dtWordValue` fields 0–35 as AIDefinition data; it does not prove any adjacent CCM bytecode field, so boot field probing is fail-closed and no decoded candidate can reach runtime. Decode and execute the complete CCM instruction/data contract only after its original stream owner/grammar is proven, including control flow, creature state, spells, and summon branches.
+- ✅ DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: **cycle 16 (Lane B) update:** voice allocation, PCM decode, and a real SDL3 playback backend are now implemented behind the fail-closed contract — `dm2_v1_sound_decode_gdat_pcm()` decodes verified GDAT sound raw entries (payload ^ 0x80, 6000 Hz U8 mono per SKWIN/SkwinSDL.cpp), 16 MAX_SB voices allocate/free without stealing, `src/dm2/dm2_v1_sound_sdl_backend.c` mixes them through a real SDL3 stream, and attenuation is the source R_928 metric only. Playback is audible only when the sample decodes from a verified GDAT entry and the backend reports ready; the title music cue stays fail-closed because no verified music asset root is proven locally. Remaining: a verified music asset root and proven wall-occlusion/facing routing for positional cues.
+- ✅ 2026-07-23 update: **cycle 14 (Lane B):** the source-locked paths now live in `src/dm2/dm2_v1_sound.c` — a verified GDAT loader binds via `dm2_v1_sound_bind_gdat_loader()`, `DM2_SOUND9` populates the `dm2sound.xsndptr2` seven-byte runtime queue with GDAT-resolved sample bindings, and `DM2_QUERY_SND_ENTRY_INDEX` keeps the original 1-based scan with a GDAT fallback in original queue/query order.  Unavailable audio is explicit (no synthesized attenuation or playback).  Remaining: voice allocation, decoding, and a proven SDL playback backend plus verified music asset root before audible playback leaves the fail-closed state.
+- ✅ DM2-009 — `skproject/SKULLWIN/c_savegame.cpp` `DM2_SELECT_LOAD_GAME` and restore flow: source save candidates must not enter world state until complete original payload restoration and post-load rebuild are implemented. `D2RS` is diagnostic-only and rejected by all player-facing admission paths. The hash-revalidated original-save corpus census receipts only decoded `GAME_LOAD` facts (tick, RNG, party pose/map, champion/timer counts, rain intensity, and the source 263-byte champion records); it is not restore input and assigns no DB, timer-payload, possession, or inventory semantics. The raw prefix validates and receipts source-owned descriptor, column-index, ground-stack, text, DB-pool, and map-data spans; map-data length is `savegamep4->warr_00[1]` exactly, never a derived descriptor size. Remaining: SKProject-equivalent record allocation/ownership, full DB and timer materialisation, original read/write, map state, and post-load rebuild order.
+- ✅ DM2-010 — `skproject/SKULLWIN/c_gui_vp.cpp` `DM2_DRAW_WALL`, `DM2_DRAW_DOOR`, `DM2_DRAW_DOOR_FRAMES`, and `DM2_DRAW_DUNGEON_TILES`, plus `c_gfx_blit.cpp`/`c_gfx_stretch.cpp`: `src/dm2/dm2_v1_viewport_renderer.c` still permits fallback rectangles/colours. Door panel, frame, button, ornament, destroyed-mask, dynamic champion HUD pixels, walls, planes, and map chips now consume the exact 16-byte IMG3 local palette returned by `QUERY_GDAT_IMAGE_LOCALPAL`; a source-owned runtime image is blocked when that palette cannot be proven. Original `dt07/0x0A` Rect14 metadata reaches the host receipt and gates runtime viewport consumption. Champion names consume boot-owned `INTERFACE_GENERAL dt07/0`, while portraits and three status bars consume expanded original `dt04/0` IDs 173–176, 165–168, and 185–204. Direct G1 DB5/DB9 F9 map-chip receipts are retained only as authenticated `DRAW_MAP_CHIP` evidence; the viewport rejects them as static-object pixels until the separate `DRAW_ITEM` F0/F4 geometry and raw receipts are complete. D0C and all side/deep routes are unavailable instead of using Firestaff's old generic projection. `SUMMARIZE_STONE_ROOM` calls the original random-decoration helper before it populates ornament details; Firestaff has no proven decoration table/seed contract, so that stage remains unavailable rather than randomized. Remaining: complete source cell ordering, `DRAW_ITEM` clipping/placement, door states beyond source-locked closed-panel/button placement, object/creature/cloud passes, scale/flip rules, and verified GDAT material.
+- ✅ 2026-07-17 update: a complete DB14 timer/GDAT receipt can now be joined
+- ✅ 2026-07-15 update: the complete M11 wall-material receipt now hashes each decoded `GRAPHICSSET` panel, not only raw bytes and its local palette. Canonical-data coverage explicitly requires D3L/D3R/D2L/D2R to retain the skproject viewport field, decoded pixels, and palette before the renderer may consume the plan. A missing side panel blocks the source frame.
+- ✅ 2026-07-15 update: the source-bound terminal `c_light.cpp::DM2_RECALC_LIGHT_LEVEL` receipt is now implemented: dynamic maps consume an authenticated pre-darkness `v1e0974` value, non-dynamic maps use the original base level one, then the receipt subtracts authenticated `v1e0978` and clamps to 0..5. It refuses a missing raw-state hash and does not derive brightness from GRAPHICSSET. The authenticated result now has a fail-closed M11 dungeon-square metadata consumer, the source `DISPLAY_VIEWPORT` `light_level * 10` palette parameter, a source-frame identity binding, and a raw `Map_definitions::Difficulty()` receipt that rejects the wrong fixed/dynamic state branch. Remaining: bind the inventory/record accumulator and darkness state from a real PC runtime/save before live M11 can publish or remap a palette.
+- ✅ DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_UPDATE_WEATHER`, `c_light.cpp`, and `c_cloud.cpp`: `DM2_SET_TIMER_WEATHER` and `DM2_weather_3df7_0037` are now mapped as source receipts for outdoor 182-tick scheduling and reseed/weather transition. The runtime forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. `DM2_UPDATE_WEATHER(0)` is now executed by the runtime tick, its selected cloud/rain/bolt commands are converted into live ten-byte `DistantEnvironment` slots, and the slots are bound to the renderer after validation against the current `MapGraphicsStyle`/GDAT weather receipt. Real-data outdoor frame capture now passes: `tests/test_dm2_v1_outdoor_weather_frame_capture` proves the renderer consumes the bound live slots and M11 accepts the frame. This closes DM2-011; see DONE.md for details. Do not add a procedural visual substitute.
+- ✅ 2026-07-15 update: DM2's M11 inventory-toggle route now fails closed rather
+- ✅ DM2-013 — `skproject/SKWIN/SkWinCore.cpp` startup/render orchestration and `skproject/SKULLWIN/c_gui_draw.cpp`: M11 now rejects incomplete DM2 boot before clearing or drawing its viewport, keeping the launcher frame and publishing `DM2 ORIGINAL DATA REQUIRED` instead of the former red/brown ceiling/floor substitute. Startup presentation also stops if the source-owned `TITLE/0 dt07/4` draw fails. The complete-support receipt accepts only the source's static title/menu surfaces: a hash-verified raw menu screen or a decoded original image field, both with the existing no-synthetic-overlay composite proof. `src/dm2/dm2_v2_*.c` still contains procedural HUD/asset fallbacks and placeholder stamps. Block those remaining paths until verified original data is available; no synthetic DM2 screen may stand in for an original surface.
+- ✅ DM2-014 — `skproject/SKULLWIN/c_savegame.cpp`, `c_loadlevel.cpp`, `c_gui_vp.cpp`, `c_sound.cpp`, `c_events.cpp`, and `c_creature.cpp` integration order: `tests/`, `probes/`, and the DM2 receipt chain lack a real-PC-corpus end-to-end proof from hash-verified assets through level load, source timers, material-complete rendering, resolved audio, and original save round-trip. Add skip-safe corpus gates before claiming playable parity.
+- ✅ 🔧 Phase 4 - Mechanics parity: movement, interactions, shops/NPCs, doors, pressure plates, triggers, combat, magic, and timeline. **2026-06-16 combat parity landed:** `dm2_v1_combat.c` expanded from 30-line stub to full Phase 5 source-locked resolver. CTEST 49/49 + probe 13/13. **2026-06-17 spell + tech/magic parity landed:** `dm2_v1_spell.c` expanded with Phase 4 spell casting mechanics — `validate_runes()`, `mana_cost()`, `compute_chance()`, `can_cast()`, `cast_attempt()` returning full `DM2_SpellCastResult { success, mana_used, cooldown_ticks, skill_decay, effective_difficulty, effective_chance }`. Spell table updated with realistic `mana_per_rune` values (POTION=2-3, MISSILE=4-6, SUMMON=8, GENERAL=1-4) so the per-rune mana deduction contract matches DM2's SKULL.ASM behavior. `dm2_v1_tech_magic.c` expanded with `lookup()` (known-item catalog: crossbow/pistol/rifle/bomb/lantern/magic_battery/flame_orb/potions), `consume_charge()` (decrements available charges, supports unlimited -1), `hybrid_power()` (tech*25 + magic*25 capped at 100, returns 0 for non-hybrid items). Source-locked against skproject/SKWIN/SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER), 18159-18174 (ADD_RUNE_TO_TAIL), SkGlobal.cpp:966-1011 (dSpellsTable), SkGlobal.h:37-55 (MAXSPELL_ORIGINAL=34), SkWinCore.cpp:27038-27096 (spell→OBJECT_EFFECT), SKULL.ASM tech/magic item routines. CTEST `test_dm2_v1_spell_pc34_compat` 38/38 (spell table integrity, rune validation, mana cost formula, cast chance formula, cast attempt success/fail with cooldown + skill_decay, can_cast pre-check, OBJECT_EFFECT resolution, DM2-only spells, source evidence; tech/magic lookup, can_use respects tech/magic levels, hybrid requires BOTH, power cost manual/battery/mana/hybrid/empty, charge consumption including unlimited, hybrid power formula + cap). **2026-06-22 door/button toggle boundary landed:** new `dm2_door_apply_toggle_step(state, direction)` in `src/dm2/dm2_v1_door_mechanics.c` source-locked to ReDMCSB TIMELINE.C:803-806 (already-at-target early-out + single-tick ±1 step rule) + TIMELINE.C:750 (DESTROYED sticky) + DEFS.H:1039-1046 (door state C0..C5). Direction constants `DM2_DOOR_TOGGLE_DIR_OPEN` (0 ↔ C00_EFFECT_SET) and `DM2_DOOR_TOGGLE_DIR_CLOSE` (1 ↔ C01_EFFECT_CLEAR) match the EFFECT_* convention. New data-free CTest `test_dm2_v1_door_button_toggle_pc34_compat` 12/12 (4 single-direction advances to ±1 boundary, 2 sticky boundaries at OPEN and CLOSED, 2 DESTROYED-sticky cases, mid-state ±1 from CLOSED_1/2 in each direction, 8-step alternating round-trip CLOSED→CLOSED, pressure-plate DOOR_TOGGLE post-fire state 0..4, source-evidence citation). Companion DM2 V1 pressure-plate (`test_dm2_v1_pressure_plate_pc34_compat` 40/40) and trigger (`test_dm2_v1_trigger_pc34_compat` 32/32) tests still pass. **2026-07-22 DM2 V1 door-step timer wiring landed:** `DM2_V1_TIMER_STEP_DOOR` (0x01) now dispatches through the runtime source-order timer queue to a DM2-owned handler that mutates the dungeon square one state per tick and re-queues the next step until OPEN/CLOSED. Runtime counters (`door_step_timers`, `door_step_mutations`, `door_step_requeues`) and a public `DM2_V1_RuntimeDoorStepReceipt` expose the boundary. Smoke coverage in `test_dm2_v1_runtime_handoff_smoke` proves a CLOSED door steps 4→3→2→1→0 and stops. Source: skproject/SKULLWIN/c_tim_proc.cpp:4041 (0x01 dispatch), c_tim_proc.cpp:127+ (DM2_STEP_DOOR), ReDMCSB TIMELINE.C:750-810. **2026-07-23 DM2 V1 0x04 actuator tile subdispatch landed (Lane B, cycle 8):** added `DM2_V1_RuntimeActuatorTileReceipt`/`dm2_v1_runtime_actuator_tile_receipt()` and DM2-owned handlers for 0x04 classes 0 (wall mecha), 2 (pitfall), 4 (door), 5 (teleporter), and 6 (trickwall); class 1 stays on the existing CAII chain-walk path. Classes 0/2/4/5/6 bind at boot; class 1 stays gated on `think_binding_ready`. Pitfall toggles `FLOOR`↔`PIT` square type; door uses `dm2_door_apply_toggle_step` one step per tick; wall mecha/teleporter/trickwall are consumed, fail-closed counters. CTest `test_dm2_v1_proceed_timers_pc34_compat` and `test_dm2_v1_runtime_handoff_smoke` both pass (176/176 smoke). Remaining Phase 4 work: broader timeline timer matrix (remaining timer types), shops/NPCs.
+- ✅ DM2-015 — `skproject/SKULLWIN/c_gfx_pal.cpp`, `c_gfx_blit.cpp`, `c_gui_vp.cpp`, and `c_gui_draw.cpp`: `src/dm2/dm2_v2_*.c` and `dm2_v22_*.c` use enhanced/procedural or externally authored presentation assets without a complete verified-original V1 material input. Keep V2 modes gated behind the V1 original-data route, replace placeholder/stamp fallbacks with explicit unavailable states, and prove every displayed source-derived surface and palette handoff.
+- ✅ Verified Track 02 startup receipts now fail closed when an object-table anchor
+- ✅ Update 2026-07-20: the boot chain's complete static record footprint is
+- ✅ ✅ 2026-07-27 Theron CDDA host-consumer correction: M11 had the title-phase
+- ✅ 2026-08-06 update: the same real-media discovery now covers text codon, actuator and creature regressions; all seven US dungeon regions pass. Text output remains an authenticated decode candidate, not parity-approved presentation text. The full runtime dungeon-loader test correctly remains legacy-only because real ground chains still contain unbound item categories; its fail-closed `-1` result must not be replaced by synthetic object kinds.
+- ✅ ✅ 2026-07-22: Theron boot now owns the runtime input/idle facade (`theron_v1_boot_runtime_handle_m12_input` / `theron_v1_boot_runtime_handle_idle_tick`); M11 Track 02 runtime path no longer calls `theron_v1_boot_runtime_tick_world`, `theron_v1_boot_runtime_turn_party`, or `theron_v1_boot_runtime_move_party` directly. Regression test `test_theron_v1_boot_runtime_input` passes 12/12; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `m11_phase_a`) pass.
+- ✅ ✅ 2026-07-23: Theron boot now owns the startup host-receipt apply facade (`theron_v1_boot_apply_startup_host_receipt`); M11 no longer maps `Theron_StartupHostReceipt` fields to `m11_set_status`, `m11_set_inspect_readout`, `m11_log_event`, or input-result actions directly. M11 provides a small callback table (`set_status` / `set_inspect` / `log_event`) and the facade owns the decision order and semantics. This closes the chapter-inspect wiring and startup host-receipt apply items from the 2026-07-22 remaining work. Regression test `test_theron_v1_boot_host_receipt` passes 14/14; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `theron_v1_m11_launcher_handoff_boundary`, `m11_phase_a`) pass.
+- ✅ ✅ 2026-07-23: Theron boot now owns the startup action/state-receipt apply facade (`theron_v1_boot_apply_startup_action_host_receipt`); M11 no longer applies `Theron_StartupStateReceipt` field updates or drives the Track 01 CDDA lifecycle update directly after a startup action. M11 provides a callback table that adds `apply_state_receipt` and `update_track01_cdda_lifecycle` hooks to the existing status/inspect/log hooks; the facade owns the apply order (state receipt first, then host receipt, then CDDA lifecycle). This closes the remaining M11 decoupling gap from the 2026-07-23 host-receipt work. Regression test `test_theron_v1_boot_host_receipt` expanded to 20/20; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `theron_v1_m11_launcher_handoff_boundary`, `m11_phase_a`) pass.
+- ✅ 2026-08-06 update: per-dungeon Track 02 world state now also retains the real
+- ✅ Nexus cross-domain Saturn capture import remains evidence-only: one complete
+- ✅ 2026-07-17 DM2 `TRIM_BLIT_RECT` wall-clip admission: `SKULLWIN/c_gui_vp.cpp:570-573,611-658` now has a DM2-owned no-draw receipt that binds the selected D1/D2 GRAPHICSSET trim word, recomputed authenticated wall material identity and current viewport-surface snapshot to the exact `(x,y,right,bottom)` clip margins. Missing trim rows, material/palette drift and invalid surface bounds reject. Applying this clip to a wall blit remains closed pending a source-owned live caller hand-off.
+- ✅ 2026-07-17 DRAW_PICST masked-consume update: the exact source++ / masked
+- ✅ 2026-07-17 DRAW_WALL B073 raw intake update: the wall route now carries
+- ✅ 🔧 CSB startup follow-up: M11's retired synthetic startup receipt probe is
+- ✅ 2026-08-06 update: the remaining CSB Atari planar viewport path now also
+- ✅ 2026-08-07: The source-read/source-write witness now joins complete 4 KiB
+
+# DM1/CSB arkiverade poster (2026-08-08)
+
+- ✅ **DM1-ENDGAME-NO-FALLBACK-TEST-CONTRACT:** Closed 2026-07-31. F0444 tests
+- ✅ Consume the source-owned inventory redraw policy and HoC confirmation/apply
+- ✅ Complete the M11 HoC consumer for source-bound candidate click and selection
+- ✅ 2026-07-21 DM2/DM1 round-22 cross-cutting (job/w3) — consolidated
+- ✅ `dm2_v1_lighting_palette_runtime_gate` (ctest name; binary
+- ✅ Same net, still open from earlier rounds (all verified pre-existing
+- ✅ 2026-07-21 Nexus round-19 remainder (job/w4; fixes landed in DONE.md
+- ✅ Unchanged baseline, still open: the remaining prs3 placement/VDP1
+- ✅ 2026-07-17 Theron post-G7/G8 `0x73a` loader-envelope blocker rechecked:
+- ✅ 2026-07-17 update: M11 now binds the sidecar to the exact already
+- ✅ 2026-07-17 update: an opaque SRM launch receipt now requires exactly one
+- ✅ 2026-07-17 update: direct Track 02 launch intent validation now retains
+- ✅ 2026-07-17 update: each M12 direct-media scan now advances a launch-intent
+- ✅ 2026-07-17 update: capture-currentness can now also require the current
+- ✅ 2026-07-17 update: CSB boot now projects its accepted first-live-dungeon
+- ✅ 2026-07-17 update: each admitted restored timer outcome now retains the
+- ✅ 2026-07-17 update: the already source-proven `DSACMD_MESSAGE`,
+- ✅ 2026-07-17 update: `DSACMD_COPYTELEPORTER` and `COPYTELEPORTER32` now
+- ✅ 2026-07-17 update: `STKOP_StoreExCellFlg` now requires the existing
+- ✅ 2026-07-17 update: a `StoreExCellFlg` receipt can now reach the existing
+- ✅ 2026-07-17 update: low-bit `STKOP_TalentsStore` now returns the completed
+- ✅ 2026-07-17 update: the existing `SetCurse`/`SetBroken`/`SetCharges`/
+- ✅ 2026-07-17 update: `STKOP_Random` now carries the exact authenticated
+- ✅ 2026-07-17 update: `STKOP_ModifyMessage` now publishes its clamped
+- ✅ 2026-07-17 update: queued `LocalState=0` now persists only CSBWin
+- ✅ 2026-07-17 update: the existing compact `LocalState=2` `PutState`
+- ✅ 2026-07-17 update: direct files and operator-supplied virtual-container
+- ✅ 2026-07-16 CSB startup follow-up: the real PC34 startup path now reaches
+- ✅ 2026-07-16 Theron Track 02 multilevel M11 follow-up: Soul Room level 0 and
+- ✅ 2026-07-16 update: source-owned runtime media now requires title, stage,
+- ✅ 2026-07-17 update: a closed HuC6280 capture-event log can now supply the
+- ✅ 2026-07-17 update: only a fully accepted converted-trace handoff now
+- ✅ 2026-07-17 update: source trace MD5 is now rechecked after every closed
+- ✅ 2026-07-17 update: the HuC6280 event-log parser now accepts only regular
+- ✅ 2026-07-17 update: a local capture-evidence `--bind` probe now combines
+- ✅ 2026-07-17 update: a local `--convert` Mednafen probe now exposes only
+- ✅ 2026-07-17 update: a strict three-target capture planner now binds the
+- ✅ 2026-07-17 update: a closed SRM corpus manifest now declares explicit
+- ✅ 2026-07-17 update: an external `--attest` probe now canonicalizes direct
+- ✅ 2026-07-16 DM2 p130 movement continuation update:
+- ✅ 2026-07-16 DM2 scene/light/weather runtime-chain update:
+- ✅ 2026-07-16 DM1/CSB F7017/F7018/F7019 update:
+- ✅ 2026-07-16 DM1/CSB F7032/F7033/F7038/F7040 update:
+- ✅ 2026-07-16 DM1/CSB F7034/F7035/F7036/F7037 update:
+- ✅ 2026-07-16 DM1/CSB F2122/F2123/F2124 update:
+- ✅ 2026-07-16 DM1/CSB F1128/F2008-F2048 update:
+- ✅ 2026-07-16 CSB/ReDMCSB F0436 update:
+- ✅ 2026-07-16 CSB/ReDMCSB F0797 update:
+- ✅ 2026-07-16 CSB/ReDMCSB F0904 update:
+- ✅ 2026-07-16 CSB/ReDMCSB F0807 update:
+- ✅ 2026-07-16 DM2 cursor macro update: `WRITE_BYTE`, `WRITE_WORD`,
+- ✅ 2026-07-16 Theron update: original Track 02 trace-text facts can now be
+- ✅ 2026-07-16 CSB update: the standalone CSB item from that generated queue
+- ✅ 2026-07-16 Theron update: original Track 02 data-gap evidence can now be
+- ✅ 2026-07-20 Nexus DGN retail face/material corpus re-base (round 15,
+- ✅ 2026-07-16 DM2 sound update: skproject `c_sound.cpp` runtime queue rows
+- ✅ 2026-07-16 Theron staged-media blocker confirmation: the local staged
+- ✅ 2026-07-16 DM1 prioritized ReDMCSB symbol backlog follow-up:
+- ✅ 2026-07-16 update: `F0173` and `F0174` now have DM1-owned current-map
+- ✅ 2026-07-16 update: `F0139` now has a DM1-owned source-named helper over
+- ✅ 2026-07-16 update: `F0186`-`F0189` now have DM1-owned source-named
+- ✅ 2026-07-16 update: stale audit rows for `F0190`-`F0192` are now closed
+- ✅ 2026-07-16 update: `F0193` now has a DM1-owned Giggler steal/flee source
+- ✅ 2026-07-16 update: stale audit row `F0185` is now closed against the
+- ✅ 2026-07-16 update: stale timeline primitive rows `F0233`-`F0239` are
+- ✅ 2026-07-17 F0435 provenance update: the native-save receipt now binds the
+- ✅ 2026-07-17 first-runtime HUD lifecycle update: PANEL.C's C017/C040 blit
+- ✅ 2026-07-16 update: the CSBWin DSA runtime-admission receipt now binds
+- ✅ 2026-07-23 update: publication of the DSA save-to-runtime receipt now
+- ✅ 2026-07-16 update: CSBWin DSA bytecode execution now has a production
+- ✅ 2026-07-23 update: dynamic JumpGear/GosubGear transfers are now carried
+- ✅ 2026-07-15 DM1 F0104/F0105 follow-up: the native and flipped C10 bitmap
+- ✅ 2026-07-15 CSB timer owner: verified decoded TIMER and queue raw spans now
+- ✅ 2026-07-15 CSBWin TT_1 party-door damage/sound remains fail-closed: the
+- ✅ 2026-07-15 CSBgraphics runtime inventory: verified local ownership chain is
+- ✅ 2026-07-15 CSBWin `STKOP_Overlay`/`STKOP_Palette` blocker: source chain is
+- ✅ 2026-07-15 CSBWin DSA `STKOP_ExperiencePlus` now reaches the loaded
+- ✅ 2026-07-15 follow-up: the same loaded 20-row `CHARDESC::skills92`
+- ✅ 2026-07-15 follow-up: `STKOP_PartyFetch` now consumes the complete
+- ✅ 2026-07-17 update: D2C's default button now consumes only the source
+- ✅ 2026-07-17 update: D0's default button now consumes only source scale
+- ✅ 2026-07-15 DM2 DRAW_DOOR follow-up: the closed-panel RAW4 path is source
+- ✅ 2026-07-15 DM1 F0098 follow-up: bind the packaged M11 DM1 asset loader to
+- ✅ 2026-07-15 DM1/CSB ReDMCSB IMG2 boundary: F0685-F0689 are verified only
+- ✅ DONE 2026-07-14: F0435 C07 fakewall materialization and the M10 runtime
+- ✅ Scope: active DM1 M11 renderer, launch, and menu code only. Generic
+- ✅ 2026-07-11 DM2 startup follow-up: cue 0 now validates the original
+- ✅ 2026-07-15 Nexus FACE.BIN: portraits remain unavailable until authenticated
+- ✅ 2026-07-15 VDP1 capture-prerequisite update: the launcher host route now
+- ✅ 🔧 2026-07-11 Nexus real-media material coverage update: the opt-in LEV00–LEV15 corpus receipt reads every DGN through the existing Structure1B decoder and measures 65,536 floor, 65,536 ceiling, and 262,144 wall selectors against the same banks used by the viewport, without changing the active level or making coverage a launch gate. The verified Track 1 ISO parses all 16 mesh-ready levels but its `FILE_LISTING.txt` names `MENU.BPK`, not `FLOORS.*` or `WALLS.*`. Runtime now records only an exact-name BPK container observation and format receipt; the material resolver bypasses hash fallback and family scans, so no named, un-hashed `FLOORS.BPK`/`WALLS.BPK` is imported, and the DGN viewport blocks without fallback unless both categories later have verified identities and completed host routes. `MENU.BPK` is never searched or substituted.
+- ✅ 2026-07-22 update (Lane D): the actual source containers are the Track 1 `SN_FLOOR.MNS` and `SN_WALL.MNS` files. Their canonical MD5 identities (`85c517e8e0bd84e00da58295dca5b409` and `ae67ca9fa8d09481e1849a42aaaa2eb6`) are now enforced by `Nexus_V1_BootProfile_ValidateAssets`, which replaces the stale `WALLS.DMDF`/`FLOORS.DMDF` checks with hash-first validation of the real Saturn material files. The boot-profile diagnostics now emit `NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL` / `NEXUS_V1_DIAG_MISSING_WALL_MATERIAL` instead of the misleading `MISSING_DMDF_ARCHIVE` code. Remaining DGN host work is still the capture-blocked material raster decode; no decoder/import route may run without the verified container identities.
+- ✅ 2026-07-23 update: the C004/C002/C003 consumer now admits each opening
+- ✅ 2026-07-23 update: M11 can now consume a decoder-bound, original-data
+- ✅ 2026-07-22 update: the F0275 C013 front-wall bridge now rejects before
+- ✅ 2026-07-17 verified C011 wall-click route: ReDMCSB `MOVESENS.C F0275`
+- ✅ 2026-07-17 verified C012 generator route: the same `MOVESENS.C F0275`
+- ✅ 2026-07-15 party-fetch update: authenticated `STKOP_PartyFetch` now
+- ✅ 2026-07-15 character-fetch update: authenticated `STKOP_CharFetch`
+- ✅ 2026-07-15 character-store update: authenticated `STKOP_CharStore`
+- ✅ 2026-07-15 character-swap update: authenticated `STKOP_SwapCharacter`
+- ✅ 2026-07-15 poison update: authenticated `STKOP_CausePoison` now stages
+- ✅ 2026-07-17 CausePoison runtime update: the imported single-target
+- ✅ 2026-07-15 party-query update: source `STKOP_TalentsFetch` now reads a
+- ✅ 2026-07-15 movement-arrow ownership update: CSB now consumes the verified C013 panel unchanged. M11's hatch/cyan keyboard feedback has no ReDMCSB/CSBWin framebuffer proof and is suppressed for CSB. A genuine source-owned pressed-arrow state is required before any CSB overlay may alter C013.
+- ✅ 2026-07-12 update: every attempted verified Track 02 level/object route
+- ✅ 2026-07-11 update: the sole source-adjacent consensus overlap is now
+- ✅ 2026-07-11 update: anchor 2 / region 5's exact first-user-data fragment
+- ✅ 2026-07-11 evidence review: the staged hash-verified JP/US raw BINs and
+- ✅ 2026-07-11 update: the same hash-verified JP/US real-asset probe now compares opaque post-descriptor non-startup level-candidate samples across all shared descriptor anchors. It records only entry order, byte count, descriptor delta, and candidate byte hash. The local JP/US media yields `comparable=0x7`, `matching=0x0`, and `mismatch=0x7`; that mismatch is evidence against treating these candidates as a shared multi-level route and leaves level binding, object semantics, runtime, Continue, menus, and palettes blocked. The comparison accepts no ISO, same-region, incomplete, or fallback-capable receipt.
+- ✅ 2026-07-23 update (Lane C, cycle 6): live `DistantEnvironment` slot production
+- ✅ 2026-07-11 DM2 real-data fallback audit (mounted PC English `~/.firestaff/data/dm2/data/graphics.dat`, 8,639,757 bytes; source container verified by `probe_dm2_v1_asset_loader`): only the following live fallback draws have a demonstrated original replacement and must be removed or fail the real-data frame, rather than paint a substitute.
+- ✅ 2026-07-11 update: DM1 startup entrance render/audio commands now carry the source-resolved `C02_SOUND_DOOR_RATTLE` index and volume 145 for F0438 opening steps 1, 4, and onward. M11 only submits that request to the audio backend, rather than deriving a generic door marker. Remaining DM1 startup work is real packaged Mac/release capture and other lower-level host renderer/audio adapters, not the completed F0337 light route, viewport, save, or Hall of Champions paths.
+- ✅ 2026-07-10 verification note: later DONE entries supersede the older 2026-07-09 "final M11/UI consumer" wording below; treat those bullets as historical route receipts, not current host-wiring blockers.
+- ✅ 2026-07-31 verification: a current-source M11/SDL presented-frame capture
+- ✅ 2026-07-11 follow-up: the hash-verified G1 probe now checks every one of the 16 `READ_DUNGEON_STRUCTURE` pool bases against the header count/`glbItemSizePerDB` progression from the text boundary through `[6942,23826)`. This strengthens ownership proof only; it does not assign semantics to invalid direct-shaped links or the later extension.
+- ✅ 2026-07-11 follow-up: skproject fixes the remaining candidate record strides at DB8=4 and DB10=4 (`table_recordsizes` / `DM2_GET_ADDRESS_OF_RECORD`). The hash-verified PC G1 corpus fixes the five roots as DB10 indices 24, 20, 138, and 93 plus DB8 index 55, at maps 16, 23, and 26; they are distinct source-dispatched addresses. The final `[31658,31667)` bytes are `00 e0 00 00 30 00 00 10 20`, only two whole 4-byte slots plus one byte. Keep all five roots blocked: this is byte proof that the tail cannot be their c_record continuation, not evidence for another transform.
+- ✅ 2026-07-11 update: runtime HUD/dungeon capture now parses skproject `LOAD_GDAT_INTERFACE_00_02` (`INTERFACE_GENERAL` `dt07/0x02`) as group counts plus `pv1`/`pv5` variable blocks and trailing command-table bytes. Remaining interface work is deeper placement/render use beyond this verified action-table receipt.
+- ✅ 2026-07-16 DM2 skproject update: `DIRECT_QUERY_GDAT_ENTRY_DATA_BUFF`
+- ✅ 2026-07-16 DM2 skproject update:
+- ✅ 2026-07-10 verification note: DONE now carries complete-support and host-capture receipt proof for the startup/render route; older "move final UI callers" bullets below are retained as history unless a current caller is found.
+- ✅ 2026-07-10 verification note: the DM1 complete-support receipt and M11 aggregate gate are verified in DONE; older HoC "final call-site wiring" bullets below are historical unless they name diagnostic-only helper deletion or real Mac/release capture promotion.
+- ✅ 2026-07-16 update: F0190 killed-all afterplay now has a combined
+- ✅ 2026-07-15 update: the adjacent ReDMCSB spell-HUD draw symbol gap for F0396/F0397/F0398 is closed by the champion-panel spell-area overlay contract and strict C11 regression. This does not close F0407 action-family work, F0394 caster routing, rune input mutation, cast-result semantics, or original-pixel parity.
+- ✅ 2026-07-08 update: DM2 boot startup allocation now also owns binding the verified boot profile into the V1 runtime singleton and reports bind failure as a boot prepare result. M11 no longer calls the runtime bind path during direct launch.
+- ✅ 2026-07-09 update: Theron Track02 semantic startup route is now proved through direct runtime/host/state receipts with a raw-US-shaped synthetic fixture and named route inspect text. Remaining Theron boot coding work is replacing the remaining non-startup fallback visuals with verified Track02 data routes.
+- ✅ 2026-07-09 update: Theron runtime apply receipts now carry structured route fields matching result/state receipts. Remaining Theron boot coding work is replacing remaining non-startup fallback visuals with verified Track02 data routes.
+- ✅ 2026-07-09 update: Theron Continue apply receipts now carry structured TQSV/SRM/no-source route fields and SRM progression/party data. Remaining Theron boot coding work is using those receipts to remove remaining non-startup fallback visuals behind verified Track02/.srm runtime routes.
+- ✅ 2026-07-22 update (Lane B, cycle 6): DM2 shop/NPC gold transactions now write back to `DM2_V1_GameState` instead of being stranded in the shop module. Added `dm2_v1_shop_commit_gold_to_game_state()` and runtime wrappers `dm2_v1_runtime_buy_from_shop()`, `dm2_v1_runtime_sell_to_shop()`, and `dm2_v1_runtime_leave_shop()` that commit on success/leave. `test_dm2_v1_runtime_shop_pc34_compat` verifies enter syncs `gs->gold`, buy/sell commit immediately, leave persists final gold, and failed buys leave `gs->gold` untouched. Also fixed a pre-existing compile error in `tests/test_dm2_v1_runtime_weather_frame_slot.c` (`&(make_storm_state())` is not valid C) so the full parallel build can complete.
+- ✅ 2026-07-05 update: M11 startup now captures the decoded JP raw Track 02 roster-name catalog into Theron startup state, includes roster status/count in the startup inspect readout, and renders the proven JP name row in stage-select when available. Remaining roster work is still US-name decoding, title decoding, exact mirror order/binding, and replacing fallback Soul Room mirror labels only after the real Track 02 binding is complete.
+- ✅ 2026-07-30 correction: the PC34/I34E branch at `SWSH.C:3037` uses
+- ✅ 2026-07-04 update: current local work now also handles bounded C013 wall single-object storage clicks from M11 with the actual leader-hand thing, including pickup, deposit, same-cell sensor rotation, object relinking, and remote square-event queueing. Current local work now also covers bounded C011 removed-object rotation, C012 object generation into the leader hand, C016 wall object exchange, and C017 removed-object sensor unlinking through the same CSB wall-click path. Current local work now also handles C008 floor party-possession sensors for imported CSB champion equipment slots, including positive/negative raw-object checks and queued square-event dispatch after movement. Remaining wall-click/sensor work is still full leader-cursor/closed-container possession fallback, object/group sensors, generic object movement sensors, original CSBGAME/CSBWin save-byte coverage, source-zone sprite binding, audio, and wider real-data route proof.
+- ✅ 2026-07-02 update: M10 F0816 now also mirrors the PC34 `PROJEXPL.C F0217` key exception: associated key icons C176..C191 cannot pass through a closed projectile-passable door, and the orchestrator resolves the associated object's decoded icon before F0811. Continue broader F0328/F0811 thrown-object render/materialization parity and original-DOS evidence separately.
+- ✅ 2026-07-02 update: M10 F0816 now also mirrors the rest of the ReDMCSB `PROJEXPL.C F0217` kinetic projectile-passable door predicate: active DoorInfo `MASK0x0002`, `Projectile->Attack > RANDOM(128)`, and associated ObjectInfo `AllowedSlots & MASK0x0100` are all required before a thrown object passes a closed portcullis-style door. Continue broader F0328/F0811 thrown-object render/materialization parity, projectile rendering evidence, and packaged MacBook Pro HoC capture separately.
+- ✅ 2026-07-02 update: M10 F0811/F0820 now also locks the ReDMCSB `PROJEXPL.C F0219/F0217` attack ordering for door impacts: projectile attack is decremented before closed-door pass-through/impact checks, and F0217's door-destruction event uses impact attack plus one. Continue broader F0328/F0811 thrown-object render/materialization parity, projectile rendering evidence, and packaged MacBook Pro HoC capture separately.
+- ✅ 2026-07-02 update: M11 action-row melee now carries F0407's champion-facing target direction into the M10 live `CMD_ATTACK` bridge, and M10 applies it to auto-group lookup, F0177/F0229 creature selection, reach-block checks, closed-door checks, F0190 smoke/drops/fear cleanup, group unlink, and F0231 reaction scheduling. Continue residual F0231 damage/render/original-pixel evidence separately.
+- ✅ 2026-07-02 update: M11 action-row melee now also treats the F0407 closed-door branch as an action performed when the live `CMD_ATTACK` bridge schedules new F0232 door-destruction or C04 wooden-thud timeline work. A party-east/champion-south SWING regression proves the champion-facing south door is targeted, schedules the F0232/C04 effects, and dispatches destruction without rewriting party or champion direction. Continue residual F0231 damage/render/original-pixel evidence separately.
+- ✅ 2026-07-02 update: F0735/F0231 now also sends the weak-damage zero recovery roll and material-creature Vorpal zero-half branch to the ReDMCSB `T0231015` miss tail instead of reporting a landed zero-damage hit. Continue residual F0231 damage writeback/render evidence and original-pixel proof separately.
+- ✅ 2026-07-01 update: the M10 live `CMD_ATTACK` closed-door regression now pins the exact F0407 closed-door action whitelist (`CHOP`, `KICK`, `SWING`, `HACK`, `BERZERK`, `BASH`) and verifies neighbouring melee actions fall through without closed-door thud/destruction side effects when no F0402 target exists. Continue deeper F0402/F0231 damage-side-effect work separately.
+- ✅ 2026-07-01 update: M10 `CMD_ATTACK` now uses the shared `DM1_ACTION_*` identifiers for DISRUPT material handling, Vorpal/DISRUPT hit-probability flagging, and the F0407 closed-door action whitelist instead of local/magic numeric action ids. Continue deeper F0402/F0231 damage-side-effect work separately.
+- ✅ 🔧 2026-07-15 Theron later Track 02 raw-sector boundary: an authentic 45-second US CUE/System Card capture now maps 39 full raw-sector hashes uniquely back into the known US Track 02. The physical-to-raw coordinate is stable at `raw_record = LBA - 3009`; it reconfirms Stage 3 record `0x4e0` and adds a later source-backed range `0x72e..0x739`. None of those twelve later records resolves through the executed Stage-3 descriptor table, and there is still no game-owned CD caller/destination receipt. Their mixed raw bytes therefore have no admitted level, object, bitmap, palette, or transition meaning. Next blocker: capture an original game-loader control edge or independently decode the later record grammar from a verified loader path; do not infer semantics from byte shape.
+- ✅ **2026-07-22 update (Lane E, cycle 4): TQR-SYN-02 resolved** — `src/theron/theron_v1_world.c:theron_v1_startup_fallback_room_synthesize()` no longer creates seven invented stage-specific rooms. It now produces the single source-locked 32×27 Hall-of-Records startup candidate (width 32, height 27, seed `0x0108e938`, level index `0x0026`, start pose `(2,1,EAST)`), matching the hash-verified JP/US raw Track 02 payload, and is still used only on the no-media fallback path. `src/theron/theron_v1_startup_runtime_entry.c` buffer and `probes/firestaff_theron_v1_first_room_runtime_probe.c` expectations updated.
+- ✅ **2026-07-22 update (Lane E, cycle 5): TQR-SYN-PALETTE resolved** — `TrAssetBundle` now carries `palette_route_verified`, `tr_asset_generated_v1_rendering_allowed()` requires both a decoded tile bank and that verified HuC6260 palette-route flag, and `tr_asset_mark_palette_route_verified()` is the only production setter. The default deterministic stone palette in `tqr_palette_init_defaults` no longer satisfies the original-media render gate on its own. Regression coverage added in `tests/test_theron_rendering.c` (`test_runtime_render_frame_blocks_tile_bank_without_palette_route`).
+- ✅ **TQR-SYN-04 remains open:** `src/theron/theron_v22_shape_cache_pc34.c` has placeholder V22 rectangles, but V22 is an explicitly modern presentation surface with no verified original Track 02 counterpart; do not claim an original-data replacement or remove it under this audit.
+- ✅ 🔧 2026-06-16 V2 presentation-mode pass: dm1_v2_presentation_mode_pc34 + csb_v2_presentation_mode_pc34 modules wired to M11_GameView_Start (spec->presentationMode is now pushed into the per-game V2 runtime for gameId=dm1 and gameId=csb). v2_settings_apply_v20_defaults (V2.0 filtered), v2_settings_apply_v22_defaults (V2.2 modern) added alongside the existing v2_settings_apply_v21_defaults. dm1_v22_shapes.c now explicitly included in the firestaff_v2 lib so the V22 entry branch resolves m11_v22_shapes_init. New CTEST targets: test_dm1_v2_presentation_mode_pc34 (50/50), test_csb_v2_presentation_mode_pc34 (36/36). New headless CI probes: firestaff_dm1_v2_presentation_mode_probe (30/30), firestaff_csb_v2_presentation_mode_probe (27/27). 23/23 Phase A invariants still pass. The 166/166 green set confirms the M12_PRESENTATION_V1_ORIGINAL / V20_FILTERED / V21_UPSCALED / V22_MODERN enum now reaches the per-game V2 runtime; remaining work is the actual CSB V2.1 upscale + CSB V2.2 modern asset pack authoring (the selection API is ready, the per-mode V2 modules are still TODO for CSB). Phase 8 m11_v22_shape_for_cell() runtime use from the V22 active branch is also now done (see the Phase 8 entry below for the per-frame V22 shape cache details).
+- ✅ 2026-07-22 M11 update: the production viewport now consumes that full
+- ✅ 2026-07-28 D0C C15 order repair: the materialization receipt retains
+- ✅ 2026-07-31 rawshot recheck: the newer runbook driver completed the real
+- ✅ 2026-07-31 local recheck: the two operator-owned `Downloads/DMSAVE*.DAT`
+- ✅ REDMCSB-SYMBOL-GAP-005 — **C/G semantic ownership is not verified.**
+- ✅ 2026-07-14 update: F0664 now owns the bounded source wall-click
+- ✅ 2026-07-15 update: CSB startup surfaces now consume the real
+- ✅ REDMCSB-CSB-GAP-012 — **ReDMCSB has no complete PC-CSB boot-media
+
+
+# DM1 arkiverade sektioner (2026-08-08)
+
+## DM1 PC 3.4 Real-Data Fallback Inventory (2026-07-11)
+
+  - The complete 20-frame PRS3 corpus now has source/header/stream witnesses
+    and declared-output totals. Token grammar, bit order, prefix palette,
+    decoded pixels, and portrait presentation remain unproven and blocked.
+
+- 2026-07-15 Nexus DGT2 UI palette: WARNING.BIN and GAMEOVER.BIN now carry
+  their documented BGR555 CLUTs into UI/title state. TITLE.CG, MENU.BPK,
+  FACE.BIN, STABG.BIN, and DGN materials remain unavailable until their own
+  original palette/decode routes are proven; do not borrow DGT2 palettes.
+
+  - Canonical MENU.BPK PALT now has a source-only correlation to WARNING.BIN
+    resource 0: 224 of 256 indexed BE16 words match its documented DGT2
+    BGR555 CLUT at the same indices. The other 32 PALT words remain raw
+    source values. This proves no PRS3 entry ownership, palette application,
+    pixel decoding, or draw route; those still require Saturn evidence.
+    Under the documented DGT2 low-15-bit BGR555 reader, 31 of those raw
+    differences are bit-15-only and 255 of 256 indexed colours correlate;
+    one real colour-word mismatch remains at index 130. This is still not a
+    declaration that PALT is DGT2 or a license to use it for PRS3.
+
+  - The retail DM.BIN PRS3 V1 code now proves the bounded nonzero control-bit
+    path: `SHLR R11`, mask-1 `TST`, a `BT` into the zero side, then a guarded
+    `@R12+` input byte through the existing byte store. It proves neither the
+    zero-side grammar nor output ownership/termination, so MENU.BPK remains
+    unavailable for decode or drawing until an authenticated execution trace.
+
+  - The zero-side now has a source-proven static termination condition:
+    `CMP/EQ R1,R10; ADD #1,R10; BF/S` loops only while those registers differ.
+    This does not establish which value is a run length, nor a backreference,
+    token, output, palette, or pixel contract. A real ordered capture is still
+    required before using either PRS3 side to decode MENU.BPK.
+
+  - The zero-side's next bounded source fact is two adjacent `@R12+` reads
+    before the merge, so it consumes exactly two sequential stream bytes on
+    that path. Their field layout and history/output meaning remain unproved;
+    this does not authorize a PRS3 decoder or rendered surface.
+
+  - The exact source merge is now locked to the real SH-2 route:
+    `byte0 | ((byte1 << 4) & 0x0f00)`, with both source bytes zero-extended.
+    This proves raw byte ordering only. It does not identify a PRS3 field,
+    history-copy distance, run length, output ownership, or a pixel format;
+    an authenticated Saturn execution trace remains required.
+
+  - The post-merge route now proves one exact `CMP/GT; BT` control edge back
+    to the PRS3 control re-entry after R7 is masked, incremented by two, and
+    added to merged R4. It is not yet a token rejection or termination rule:
+    original execution evidence must establish the register roles first.
+
+  - Source-counter exhaustion is now bounded to one shared DM.BIN epilogue:
+    three guard branches converge, the routine writes `R0 = 0`, then returns.
+    This is a failure-shaped static path, not evidence of a PRS3 end token or
+    external decoder status. A genuine ordered Saturn trace must still bind
+    any terminal path to a specific MENU.BPK stream.
+
+  - The branch-local source debit is now source-proven: nonzero control uses
+    `ADD #-1,R14` before one direct byte read, while zero control uses
+    `ADD #-2,R14` before its two adjacent reads. This proves only the bounded
+    source-consumption difference. It does not identify tokens, fields,
+    output/history ownership, palette use, pixels, or a decoder rule.
+
+  - The zero-side's indexed source/control operand flow is now bounded:
+    `MOV.B @(R0,R13),R1` reaches the later `CMP/EQ R1,R3` and
+    `CMP/EQ R1,R10` sequence that precedes the repeat decision. This is not
+    proof that R13 is history, R1 is output, or R10 is a length; authenticated
+    execution remains required for any PRS3 grammar or decoder promotion.
+
+  - The nonzero side now has a complete static post-store corridor: after its
+    guarded `R2 -> @(R13,R0)` byte store, the source increments and masks R6,
+    then branches back to shared control. This does not prove literal-token,
+    output-buffer, byte-order, or pixel semantics; a real execution trace
+    must still bind the dynamic operands and complete stream behavior.
+
+  - Capture schema V6 now requires one observed before/after R14 debit and
+    R12 source-cursor movement for each low-bit branch, with ordered dynamic
+    events bound to the two retail decrement PCs. This is still untrusted
+    capture evidence until original-Saturn provenance is authenticated, and
+    it defines no token, byte, output, palette, or raster semantics.
+
+  - Capture schema V7 now requires one real-data nonzero witness: a bounded
+    MENU.BPK byte, the retail output-store PC, an ordered observed output byte,
+    and its bounded output address. The route proves one source-bound direct
+    transfer candidate only, not a complete literal rule or decoder.
+
+  - Capture schema V8 now carries the two adjacent real MENU.BPK source bytes
+    for one zero-side route, their locked SH-2 read PCs, and exact raw merge.
+    The source corridor has no proven direct output store, so no output pair
+    is claimed. A real trace must still establish the merged value's role.
+
+  - 2026-07-15 update: the separate nonzero transfer binder now rejects the
+    stale zero-branch delay-slot PC and requires the source-proven nonzero
+    R14 debit PC before it accepts an opaque byte-transfer candidate. This
+    closes an admission gap only; original-Saturn execution, opcode grammar,
+    output ownership, palette, pixel, and MENU.BPK draw semantics remain open.
+
+- 2026-07-15 Nexus DGN materials: absent or unproven texture bytes are now
+  no-draw. Remaining work is original Saturn pixel/palette/VDP1 evidence, not
+  a substitute flat-material path.
+
+- 2026-07-15 Nexus direct Structure1F mesh geometry: the hash-verified
+  LEV00-LEV15 corpus now reaches exact Structure3 face, vertex, and normal
+  rows through the existing owner/model/face-ordinal relation. This is only
+  geometry ownership: owner placement, transforms, face culling, material
+  selection, palette, VDP1 commands, and rasterization remain blocked until
+  original Saturn execution evidence exists.
+
+  - The engine now emits a source-only transform capture target that keeps the
+    selected mesh beside the exact raw Structure1A rotation-selector corpus.
+    It does not assign that byte a rotation unit, matrix, camera convention,
+    or draw behavior; a real Saturn trace remains required.
+
+  - The target now also carries the complete, byte-locked 24-byte Structure1A
+    table and an independent selector-column fingerprint from the active
+    canonical LEV. This proves table identity and parsed-row agreement only;
+    transform-table grammar, units, matrix order, camera use, culling, and
+    drawing still require an original Saturn trace.
+
+  - A future transform trace is now admitted only when its raw execution lane
+    and transform-state snapshot match one direct owner, exact Structure1A
+    table bytes, selector-column fingerprint, Structure3 model/face, and raw
+    owner selector. No authenticated transform trace is present locally, so
+    matrix, coordinate, culling, and draw semantics remain blocked.
+
+  - The trace route now requires five distinct files: the direct-face package
+    target, debugger manifest, raw execution lane, transform-state snapshot,
+    and independent attestation. The launcher independently rechecks the
+    active canonical LEV before accepting the target into its host receipt.
+    No local trace carries the external Saturn attestation needed to promote
+    it beyond opaque no-draw evidence, and an admitted trace still has no
+    matrix, camera, culling, material, palette, pixel, or draw semantics.
+
+  - 2026-07-15 direct texture-link corpus update: the complete canonical
+    LEV00--15 corpus yields zero direct Structure1F-to-Structure2 static
+    material targets through the verified owner/model/face route. The apparent
+    texture selector therefore remains unbound; do not promote it from a
+    shared image id. A real Saturn capture must establish the face-material
+    relation before any texture or VDP1 command can join this host route.
+
+- 2026-07-15 Nexus Structure1C geometry binding: every bounded collision
+  record now carries exact Structure1B occurrence and cell-extents provenance.
+  The four record bytes remain opaque and no-draw; collision semantics,
+  transforms, material selection, and Saturn rasterization still require
+  independent original evidence.
+
+  - Active cell lookup now consumes the same canonical source receipt and can
+    expose only the exact referenced record. It remains blocked for empty,
+    invalid, stale, or unverified cells and assigns no collision meaning.
+
+- 2026-07-15 Nexus Structure1F mesh-source lookup: active canonical rows can
+  now be selected by exact source index through the full family receipt. This
+  exposes only typed raw ownership and direct-coordinate provenance; model
+  placement, transforms, face selection, materials, and drawing remain blocked
+  until original Saturn evidence proves them.
+
+- 2026-07-15 Nexus STABG.BIN: source bytes are discovered but its Saturn
+  surface framing remains unproven. It is intentionally unavailable; derive a
+  decoder only from original capture/code evidence.
+
+- 🔧 2026-07-13 Nexus Structure1G follow-up: every validated original
+  Structure1G image instruction now reaches a bounded local Structure2
+  descriptor receipt. Missing local descriptors remain explicitly blocked;
+  this numeric relation does not prove payload offsets, pixel decoding,
+  palette semantics, animation stepping, or a Saturn draw route.
+
+- 🔧 2026-07-13 Nexus Structure1F follow-up: visible direct items,
+  floor-decoration, and floor-sensor records now fail closed through the DGN
+  render plan, viewport, and host receipt; prefix references also require a
+  verified post-grid record target before mesh readiness, with a distinct
+  `blocked-structure1f-reference` receipt for opaque-tail or out-of-prefix
+  addresses. Direct item coordinate, `attribute1/attribute2`, and
+  `location/item_id` pairs
+  plus floor-decoration signed offset pairs and raw control/extent tuples reach
+  the host receipt, render plan, and LEV00-15 corpus aggregate as provenance
+  only; the same is true of raw direct descriptor pairs plus Structure1A-bound
+  wall and alcove descriptor tuples. Remaining work is a documented Saturn
+  Structure1F
+  draw/trigger binding, never a synthetic overlay or omission of a visible
+  original record.
+
+- 🔧 2026-07-13 Nexus startup host-route follow-up: title/save/champion
+  presentation remains blocked until the full original startup package and
+  host receipt are valid; remaining work is Saturn presentation parity, not
+  fallback capture commands.
+
+- 🔧 2026-07-13 Nexus PRS3 capture follow-up: external SH-2 traces now bind
+  their complete observation to the exact original `MENU.BPK` PRS3 stream
+  window and whole `DM.BIN` bytes before they count as asset-bound evidence.
+  The SH-2-to-VDP1 schema additionally requires a fingerprint of the exact
+  claimed `MENU.BPK` stream span and rejects a whole-file-valid trace when
+  that captured payload window differs. This proves source-byte identity for
+  one observed input range only; it does not establish PRS3 commands, output
+  pixels, palette semantics, or a render route. Its V2 receipt can additionally
+  retain an observed VDP1 texture-read interval only when that interval exactly
+  covers and fingerprints the captured decoder-output range after the VDP1
+  command; no authentic V2 capture is staged yet. This is source/output-byte
+  consumption evidence only, not VDP1 command-field semantics, opcode grammar,
+  palette semantics, output pixels, or a renderer. The next admissible step is
+  an original Saturn capture with the raw VDP1 command bytes and ordering needed
+  to prove one command-field interpretation, never a synthetic decode.
+
+- 🔧 2026-07-13 Nexus SFX follow-up: level-0/CD-track provenance alone does
+  not promote audio. The verified `dsp01.EXB` preamble establishes only an
+  opaque byte-8 SAL payload boundary. All 16 local banks share bytes
+  `0x000000..0x045bb4` before level variation. The canonical 26,610-byte
+  `SDDRVS.TSK` now has a separate size/SHA-256 identity receipt in every SFX
+  runtime receipt, while the engine's independent hash gate remains the only
+  source-ownership authority. This is not a driver ABI, sample-frame, codec,
+  or playback claim; remaining work is original `SDDRVS.TSK`/SH-2 codec,
+  frame, and playback proof.
+
+  - 2026-07-15 active-byte binding update: SAL capture targets now retain
+    FNV-1a64 identities for the exact loaded SAL and MAP buffers. Missing or
+    changed active bytes block capture acquisition before a driver trace can
+    be requested. Codec, event, and playback semantics remain unproved.
+
+  - 2026-07-15 driver-trace admission update: an externally captured
+    SDDRVS trace must now match the active source-bound SAL/MAP target,
+    driver identity, selector/window, and three observed PCs. Admission stays
+    opaque and playback-blocked; the remaining work is authentic trace data
+    plus separately proven driver and codec semantics.
+
+  - 2026-07-15 host-route update: an admitted driver trace now reaches an
+    engine-owned opaque host receipt only while the active SAL/MAP target
+    still matches. Any changed bank identity withdraws the route. No trace
+    field is executed or translated into audio playback.
+
+  - 2026-07-15 source-route update: the raw SAL/MAP window route also rejects
+    a missing `SDDRVS.TSK` identity before publishing an opaque window.
+
+  - 2026-07-15 raw-capture update: a SAL manifest alone cannot reach the host.
+    The producer must bind its exact raw Mednafen bytes by FNV before the
+    opaque host receipt is available. This still proves neither driver ABI,
+    selector semantics, sample codec, nor playback.
+
+  - 2026-07-15 observation update: the bound raw trace must also contain the
+    requested selector-dispatch, SAL-read, and driver-output observations in
+    order before host intake. This is occurrence evidence only, not a driver
+    dispatch, selector interpretation, sample decode, or playback claim.
+
+- 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
+  runtime route. Manual condition/action fixtures are now inert even when
+  callers mutate their public fields; remaining work is an original,
+  hash-bound SH-2 task dispatcher and host callback ABI, not a receipt-only
+  promotion.
+
+  - 2026-07-15 loaded-byte binding update: the active task FNV now travels
+    through the capture target, trace admission, and host revalidation. A
+    trace cannot be reused after the retained SLEV byte receipt changes.
+    This still grants neither opcode semantics nor dispatch permission.
+
+- 🔧 2026-07-13 Nexus runtime-host follow-up: a blocked SLEV dispatcher now
+  prevents runtime-route consumption; remaining work is original dispatch
+  semantics, not a receipt-only promotion.
+
+- 🔧 2026-07-11 Nexus FACE.BIN codec follow-up: canonical `FACE.BIN`
+  through a second raw literal-fed `JSR @R3` (with `R5=70` delay slot), and
+  both paths converge at `R11=0`. Neither raw pointer is mapped to a callee;
+  this adds no ABI, payload, decoder, completion, or rendering claim.
+  bit reader, completion condition, and prefix palette semantics remain
+
+- 🔧 2026-07-11 Nexus startup/title real-media follow-up: `WARNING.BIN` has a
+  different framing/opcode grammar or termination rule. M12 availability now
+  remains a canonical-data gate and cannot claim startup capture readiness;
+  only the runtime full-start package may promote that receipt.
+  bytes, expanded as a 328x1024 indexed atlas. Other shapes remain blocked;
+
+  - 2026-07-15 package-tail update: canonical `MENU.BPK` has one strict EOF
+    `PALT` record (524 bytes: a 256-entry raw BE16 table). Firestaff now
+    retains that bounded source framing and entry-byte fingerprint, but does
+    not infer BGR555/CLUT semantics, ownership by a PRS3 surface, colour
+    expansion, or a menu draw route. Those still require original Saturn
+    VDP1/palette evidence. The BPK upload/render receipts carry this opaque
+    tail framing for the active package, but it remains non-surface data and
+    cannot relax the `blocked-prs3` route. The engine/launcher handoff exposes
+    it only after canonical MENU.BPK source verification, still with no colour
+    or renderer semantics.
+
+- 🔧 2026-07-11 Nexus PRS3 loader-media follow-up: the MD5-verified Japanese
+  opcodes, completion, or output format. Next work is a descriptor/payload
+  bridge plus the remaining grammar and completion evidence; no guessed
+  grammar, raw-prefix route, or synthetic fallback is permitted.
+  truncation and never promotes an opcode decoder. Remaining work is proving
+
+- 🔧 2026-07-11 Nexus DGN/material follow-up: level-0 new game validates the source-locked `(11,29,N)` pose against decoded Structure1B before mechanics or DGN rendering consume it. The DGN raster/host receipt retains the bounded PRS3 surface path for a future verified material container, but runtime import is now disabled until canonical FLOORS/WALLS identities exist; a corrupt, renamed, partial, or absent archive cannot leak a prefix into DGN or masquerade as DMDF-only rendering. The LEV00–LEV15 corpus now proves and bounds the counted four-byte Structure1C collision-record table immediately after Structure1B, the 128-byte all-zero 0x24 span, and the 0x30 span as a 0x34-bounded 16-byte-row prefix with a six-bit row ordinal plus an observed high flag bit, followed by one opaque tail row. The row-order flag's per-level count and first/last ordinal now flow through DGN geometry, renderer handoff and render-plan receipts as read-only provenance. Structure1F now has a separately verified counted-family parser and host receipt boundary; the optional Structure1G animated-texture table now has a bounded descriptor/terminated-sequence parser and blocks host promotion when declared bytes are invalid. Both copied typed record families reach the host handoff and corpus receipt without animation playback or raw-grid fallback. The copied host render plan now projects the already typed Structure1B floor and derived ceiling corner heights for floor, ceiling and wall quads, matching the material viewport instead of flattening DGN commands. Structure1B packed 12-bit `post_grid_0x30_ref` values are retained as values, not claimed as row indexes. Remaining Nexus data work is real LEV00–LEV15 confirmation of the Structure1G declaration corpus and byte-level correlation of other typed-prefix row bytes, followed separately by verified material coverage; it is not unchecked start geometry, direct BPK imports, partial archive consumption, provenance-free render promotion, guessed animation playback, parity/capture work, or combat.
+
+- 🔧 2026-07-11 CSB packaged-startup/runtime follow-up: the verified C001/C002/C003/C004/C005 session now has a CSB-owned 320x200 indexed raster boundary for title, closed entrance, and opening doors, and door completion publishes the live dungeon pose to the verified HUD session only after the ReDMCSB/CSBWin entrance boundary is complete. The skip-safe PC real-asset launch probe exercises C001 PRESENTS/CHAOS/STRIKES and C004 plus closed C002/C003 before the C017/C040 HUD handoff. DM1 utility import now stages all champion records in a candidate party and commits only after the full source is valid, so a late malformed or truncated record cannot replace the live party. Open CSB deviations are enumerated below.
+
+  - 2026-07-23 C07/C08/C09 update: F0242/F0250/F0251 square-state events
+    now require a loaded, matching original `DUNGEON.DAT` square before any
+    mutation. F0242 defers a fakewall CLEAR by one source tick while the party
+    or a material C04 group owns the source square; F0250/F0251 commit an OPEN
+    bit before the existing real F0267 party consequence chain. Missing,
+    malformed, or mismatched source data is no-mutation. Wider F0249 resident
+    group/object/projectile relocation remains separate work.
+
+  - DONE 2026-07-14 CSB package-presentation receipt: the terminal real-package receipt now folds decoded C002/C003 door strips and C004/C005 entrance/credits surfaces into the same FNV receipt as C001 and C017/C040. It rejects absent, non-package, or wrong-geometry C004/C005 surfaces before publication and proves title-to-entrance ownership is the same session. The focused opt-in package presentation probe consumes only the hash-verified PC 3.4 package; it now presents `C005` through the source credits phase before closed/open-door and HUD handoff coverage. It never supplies a synthetic title, entrance, or HUD fallback. ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0806/F0438/F0807` define the original sequence, while CSBWin `Graphics.cpp::ReadGraphic` remains the independent indexed-archive read boundary.
+
+  - 2026-07-11 update: native CSB bounded save loads stage the requested state prefix and header before committing either one, so EOF/truncated payloads leave live runtime state intact; `.backup` restoration atomically replaces the active save only after the full backup is written. CSBWin resumes likewise stage GAMEBLOCK2, CHARDESC, ITEM16, timers, a validated plain Extended Features prefix, and the optional EXPOOL DSA tracing bitmap in one candidate profile, rejecting malformed DSA records, game-info/index tails, or tracing records without changing the live profile or shared dungeon level. The committed extension owns checksum-authenticated DSA actions, game-info bytes, source 64x32 level-index data, and the source eight-word trace bitmap. Runtime-owned actions may use only the source `LOAD`/`STORE`, local 100-cell `VARIABLEFETCH`/`VARIABLESTORE`, caller-owned source-sized `GLOBALFETCH`/`GLOBALSTORE`, pure `DSACMD_AMPERSAND` stack/arithmetic/control forms, and value-only `DSACMD_JUMP`/`DSACMD_GOSUB` state/column dispatch receipts. Parameters and globals publish together only after complete action validation; dispatch selection uses the first file-order exact `(state,column)` action and leaves filters, the world, and caller surfaces untouched. `GOSUB` reports its outer continuation, target, and one-frame depth increment but never enters `Execute`. `AMPERSAND2`, filter/world path, malformed extension, stack fault, out-of-bank variable/global, source-illegal `LOAD_ABS32`, and all other continuations reject before commit. No general filter dispatcher, world mutation opcode, Firestaff debug mode, or substitute execution is enabled. Simple encryption remains non-inspectable. The remaining save deviation is CSB-007.
+
+  - 2026-07-11 DSA continuation update: the prior dispatch-only `JUMP`/`GOSUB` scope is superseded by a bounded, receipt-only CSBWin `Execute` transfer subset. It preserves first-file-order exact `(state,column)` selection, same-frame JUMP transfer, GOSUB's ignored child return and one-frame depth increment, and missing-program termination, with fixed depth and transfer ceilings. Only complete authenticated transfer actions are admitted; malformed, unsupported, or limit-rejected routes leave the receipt untouched. Filter, world, parameter, global, and all other opcode surfaces remain disabled.
+
+  - 2026-07-15 title/entrance decoder correction: C001 PRESENTS, CHAOS
+    the renderer's populated RGBA buffer and an exact nearest-scaled
+    source-index/palette comparison before a macOS-window receipt may be
+    set. The remaining CSB-010 work is an actual bundled macOS window capture
+
+  - 2026-07-22 correction: real PC34 presentation still shows corrupt C001
+    `PRESENTS` pixels, so the existing receipt/hash checks are not visual
+    proof. CSBWin `Graphics.cpp::LZWExpand` also has a byte-level `0x90`
+    repeat stage and ends at source exhaustion rather than a standard LZW end
+    code; Firestaff now follows those rules for compressed C002-C005/C017/C040
+    startup records. C001 remains an uncompressed `ExpandGraphic` investigation:
+    do not mark title or Entrance visually complete until a real capture is
+    legible and matches the CSBWin/PC source behavior.
+    across the complete sequence, not alternate decoding or a fallback visual.
+
+  - 2026-07-23 CSB Entrance composition gap (source-reviewed): the admitted
+    C002/C003/C004 records now prove their CSBWin `ExpandGraphic` record
+    boundaries, but the production opening raster still composites C004 with
+    the two door strips alone. ReDMCSB `ENTRANCE.C F0439` lines 1376-1388 and
+    CSBWin `CSBCode.cpp::_TAG01f5ea` lines 9685-9728 first build the C255 5x5
+    micro-dungeon, invoke `F0128`/`DrawViewport(2,2,0)`, and capture that
+    resulting real viewport into the entrance page. ReDMCSB `F0438` then
+    copies the live viewport into each opening frame before C002/C003 are
+    overlaid. Wire a source-owned F0128 viewport raster and its real graphics
+    provider into this C004 capture path; do not use the generic viewport,
+    generated pixels, a static C004 substitute, or a palette fallback.
+    The F0438 31-frame package capture is now observational and no longer
+    advances the live Entrance session; the remaining gap is the real F0128
+    interior raster itself, not a capture/session-state substitute.
+
+    - 2026-07-23 update: the production provider now advances the verified
+      PC34 session to M11's source tick and supplies the decoder-bound C004
+      `(0,33,224,136)` bytes directly to that binding. The real-`GRAPHICS.DAT`
+      regression verifies the copied pixels, M11-owned storage, and the
+      four-surface C004/C002/C003 consumer. This closes the test-only caller
+      gap, not the pending F0439 5x5 micro-dungeon material proof.
+
+    - 2026-07-23 correction: the F0128 producer may publish directly into
+      M11's retained receipt fields. The setter now snapshots those source
+      receipts before clearing and replacing owned state, preserving the real
+      C004/F0128 handoff for later C002/C003 composition. Remaining work is
+      still broader real viewport material and app capture.
+
+    - 2026-07-23 update: C005 credits publication now requires the active
+      Entrance session, the expanded GRAPHICS.DAT C005 decoder-boundary
+      surface, the source credits palette, and exactly one source surface.
+      The real-data sequence regression also proves the following C004/C002/
+      C003 return plan drops the credits palette. No text or panel fallback
+      participates in either route.
+
+    - 2026-07-23 update: M11 now additionally admits an opening page only
+      when the active F0438 plan, Entrance palette, C002/C003 decoder-boundary
+      records, source step, transparency, and composed raster source count
+       agree. Remaining work is the real F0128 interior-material breadth and
+        external app capture, not a synthetic door or palette fallback.
+
+    - 2026-07-23 update: M11 now admits a title presentation only when the
+      live C001 frame carries its decoder-bound source surface, exactly one
+      raster source, matching source step, and the already-consumed
+      PRESENTS/CHAOS/STRIKES phase bit. Generic or synthetic title text cannot
+      cross this host boundary.
+
+    - 2026-07-23 update: the real GRAPHICS.DAT sequence gate now retains four
+      distinct C001 raster hashes for PRESENTS, CHAOS zoom, CHAOS hold, and
+      STRIKES BACK in the `0x0f` source phase order.
+
+    - 2026-07-23 update: the same real session now proves M11's immediate
+      post-STRIKES receipt selects C004 plus C002/C003, with no fallback text.
+
+  - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
+    phase now travels with the owned runtime frame and is folded into the
+    host-receipt hash. The C004/C002/C003 opening receipt likewise requires
+    the ENTRANCE palette and its canonical indexed raster hash. The local PC
+    3.4 probe verifies all four handoffs; remaining CSB-010 work is still
+    real Mac/app capture, not a fallback decoder or palette substitute.
+
+  - 2026-07-15 live HUD handoff update: M11 no longer composes C017/C040 by
+    reading CSB startup surfaces directly. The CSB-owned PANEL.C F0347/F0346
+    adapter validates the terminal session, composites the exact indexed
+    C017/C040 region, and returns a receipt with both original hashes before
+    M11 writes the panel over its source-backed viewport. The real PC3.4
+    probe compares every panel pixel against the production raster. Remaining
+    CSB-010 work is Mac/app capture, not a host HUD wrapper.
+
+  - CSB-001 — ReDMCSB `CLIKMENU.C F0366_COMMAND_ProcessTypes3To6_MoveParty` (lines 180-351) calls `MOVESENS.C F0267_MOVE_GetMoveResult_CPSCE` before committing party movement and checks destination groups. The CSB runtime now blocks movement without a loaded original dungeon and rejects a live C04 group before coordinate commit, queuing the source C31 party-adjacent reaction after one tick. C04 group relocation now enters the live M10 F0267 chain primitive for same-map and cross-level pit/teleporter moves, preserving the F0163 tail-link rule and restoring current-map context. The common M10 route accepts only placed Things from loaded original chains, handles object/projectile teleporter, pit, and stairs chains, evaluates F0276 before ordinary-object source unlink and destination append, and routes supported remote results through F0272/F0268 in source order. C14 remains levitating and every changed `Generic.Next` word persists to decoded raw Thing data. Its opt-in regression opens only `FIRESTAFF_CSB_DUNGEON_DAT`; absent real media is neutral. Remaining work is broader generic-object sensor/side-effect coverage and real-data route proof. C04 remains on its dedicated path.
+
+    - 2026-07-22 update: the public F0267 ordinary-object entry now admits
+      only a linked record from a loaded PC34 `Dungeon.dat`, performs F0276
+      removal/addition around raw `Generic.Next` mutation, then follows the
+      existing teleporter/pit/stairs consequence chain. Its corpus test is
+      skip-safe without a real CSB `Dungeon.dat`; positive local capture is
+      still required.
+
+    - 2026-07-22 update: one real PC34 corpus regression now proves C002
+      wall-object admission and rejects C002/C007 floor arrivals from the
+      same size- and FNV-checked `Dungeon.dat`. It introduces no fixture or
+      production fallback; remaining work is wider source sensor coverage.
+
+    - 2026-07-22 update: a real C005 party-on-stairs route now proves F0276
+      sensor admission before F0364 changes level. It scans only the supplied
+      original `Dungeon.dat`; remaining work is broader sensor-family coverage.
+
+    - 2026-07-22 update: a real C003 floor-party route now proves F0276 through
+      F0272/F0268 after a normal party move. It is corpus-only and adds no
+      fabricated event; remaining work is broader sensor-family coverage.
+
+    - 2026-07-22 update: a real C001 floor route now proves F0276 through
+      F0272/F0268 after normal party movement. It is corpus-only and keeps
+      object/group and DSA paths separate; broader sensor-family coverage remains.
+
+    - 2026-07-12 verified F0276 remote-event route: after a source-ordered ordinary-object move, each supported remote floor result now resolves its target square through F0272 and queues the corresponding F0268 `SQUARE_STATE` event (fakewall, teleporter, pit, door) for the existing timeline dispatcher. The original map context, target cell, resolved SET/CLEAR/TOGGLE effect, and source zero-delay one-tick rule are retained. Local effects, corridor/wall targets, and broader sensor families remain outside this branch.
+
+    - 2026-07-12 verified runtime object-chain ordering: CSB C49 associated-object materialization now runs the C004 F0276 add pass after link and the source C004 removal pass after its teleporter unlink. The common helper applies the source `AddThing ^ RevertEffect` rule, so HOLD becomes SET on materialization and CLEAR on removal; the existing timeline queue coalesces that ordered pair to the pending CLEAR event. Pit and stairs object hops use the same post-unlink removal pass. Broader object sensor families, audio, and real-data route proof remain open.
+
+    - 2026-07-12 verified C001 object-chain coverage: the same real-format F0276 pass now evaluates C001 floor pressure plates for ordinary objects, C04 group arrivals, and party movement. It excludes the just-linked Thing for the source pre-link occupancy test, preserves source party/object/group suppression, distinguishes real party movement from a same-square F0284 turn, and applies `AddThing ^ RevertEffect` before HOLD resolution. A C49 associated object crossing an object-scope C05 now proves C001 add SET followed by source-unlink CLEAR; dedicated C04 and party moves prove C001 -> F0268 fakewall SET. Non-C04 C007 paths and real-data proof remain open.
+
+    - 2026-07-12 verified C004 audible route: a triggered Audible C004 object sensor now requests the source prioritized `SOUND_SWITCH` through CSB's audio runtime while retaining its F0272/F0268 remote event. The dedicated live C49 materialization fixture proves the pending sound index, volume, priority, request count, and fakewall SET event. C002/C007 object-adjacent cases and real-data proof remain open.
+
+    - 2026-07-12 verified C004 OnceOnly writeback: triggered C004 object sensors now follow F0272's pre-effect disable writeback, clearing their low sensor-type bits while preserving source data. The dedicated C49 fixture proves that the first fakewall SET is still queued and the sensor is disabled before a later route can retrigger it. C002/C007 object-adjacent cases and real-data proof remain open.
+
+    - 2026-07-12 verified C004 Value timing: the C004 object route now passes Remote.Value to F0272/F0268 scheduling, adding the source 4-bit delay to game time instead of always firing on the current tick. The dedicated C49 fixture locks `Value=3` at trigger time one to a fakewall event at time four. C002/C007 object-adjacent cases and real-data proof remain open.
+
+    - 2026-07-12 verified C004 target-cell semantics: F0272 now retains Remote.TargetCell only for wall targets and normalizes all other target squares to source `CELL_NORTHWEST`. The dedicated C49 C004 fixture encodes cell three for a fakewall target and proves the queued F0268 event carries cell zero. C002/C007 object-adjacent cases and real-data proof remain open.
+
+    - 2026-07-12 verified C004 Revert ordering: the existing `AddThing ^ RevertEffect` behavior is now locked through a live C49 associated-object → C05 chain. A non-HOLD Revert C004 ignores source materialization/addition and emits its SET only after source unlink for the teleporter move. C002/C007 object-adjacent cases and real-data proof remain open.
+
+    - 2026-07-12 verified C004 LocalEffect: F0276 now routes local C004 effects through F0270/F0271 semantics. The final `CLEAR`/`TOGGLE` effect after a sensor pass rotates the full source sensor run, while no F0268 remote event is queued. The dedicated C49 fixture proves a two-sensor run rotates only after object materialization completes. Other local effects beyond C10 steal-skill XP remain open.
+
+    - 2026-07-17 verified C004 F0267/F0276 completion: the live ordinary-object
+      path now invokes the removal observation before each source unlink and
+      evaluates `AddThing ^ RevertEffect` for both sides of the move. A
+      matching C004 record performs its source Audible, OnceOnly, LocalEffect,
+      Remote.Value scheduling, and F0272 target-cell normalization through the
+      existing F0268 timeline consumer. The focused C49 regressions cover
+      audio, OnceOnly, delay, fakewall target-cell, Revert removal, and local
+      full-cell-run rotation. Broader C002/C007 object-adjacent families and
+      real-corpus route proof remain open.
+
+    - 2026-07-17 verified C005 stairs route: a party entering a loaded C03
+      stairs square now runs the source F0276 addition pass before F0364
+      changes map. The shared F0272 path retains OnceOnly raw writeback,
+      Remote.Value timing, Audible dispatch, local sensor rotation, and F0268
+      target normalization. A two-level raw-Dungeon fixture proves C005's
+      fakewall event remains on the source map at `gameTime + Value`; the same
+      C03 record on a corridor field rejects without raw, audio, or timeline
+      mutation. Broader C001/C002 party ownership and real-corpus route proof
+      remain separate work.
+
+    - 2026-07-17 verified C008 possession route: the existing F0276 C008
+      branch now completes ReDMCSB `MOVESENS.C F0274` ownership by scanning
+      the source-owned `LeaderHandThing` after live champion slots and, only
+      for a C144 container, its bounded original `CONTAINER.Slot` chain.
+      Missing or stale hand identities cannot publish F0272/F0268 effects or
+      mutate Dungeon bytes. The remaining party-sensor work is C001/C002
+      ownership breadth and real-corpus route proof, not an inventory wrapper.
+
+    - 2026-07-17 verified C009 PC34 version route: the party addition path
+      now uses one private F0276 source gate for the exact `Data <= 34`
+      ReDMCSB comparison before the existing F0272/F0268 path. The focused
+      regression proves `34` reaches F0261 and mutates the loaded fakewall
+      byte, while `35` emits no event and leaves raw Dungeon data unchanged.
+      2026-07-23 update: C009 also requires its loaded timeline clock to
+      equal the current runtime `game_time`; a stale restored queue cannot
+      publish the F0272/F0268 successor.
+      2026-07-17 C010 is also closed on its separate F0248/F0247 path: only
+      a loaded C03 at the matching C06 cell may publish its two C15 lightning
+      projectiles and C49 records, and the existing native runtime-save image
+      is the sole save consumer. A changed cell identity rejects before either
+      raw OnceOnly writeback or projectile publication. Remaining
+      wall-launcher work starts with the other F0248 families.
+
+    - C013 blocker (2026-07-17): the production owner is the existing
+      `MOVESENS.C F0275` runtime-hand path, but its isolated C05 pickup still
+      depends on undisclosed process state beyond the public current-dungeon
+      singleton and current-level accessors. A standalone fixture that binds
+      both public accessors remains fail-closed while the established combined
+      CSB runtime test passes. Expose that remaining load-context fact from
+      production before claiming a separate C013 save route; do not replace it
+      with a synthetic dungeon or click queue.
+
+    - 2026-07-12 verified C007 group route: live C04 movement now runs F0276 source/destination passes and recognizes C007 floor-creature sensors after a group is relinked. The bounded regression proves the source C04 -> destination C007 -> F0268 fakewall SET chain. Non-C04 C007 paths and real-data route proof remain open.
+
+    - 2026-07-12 verified C002 party route: live `MOVE_FORWARD` now evaluates a C002 floor Theron/party/creature sensor after the party enters its destination square, requires a living party and no C04 group, then emits the normal F0272/F0268 event. The bounded regression proves C002 -> fakewall SET. Real-data route proof remains open.
+
+    - 2026-07-12 verified C002 group route: the same F0276 branch now has a dedicated live C04 group-move regression. It proves C002 -> F0268 fakewall SET after relinking. Real-data route proof remains open.
+
+    - 2026-07-15 verified generic wall-object C002 gate: the F0276/F0272/F0268
+      side-effect route now accepts only an original PC3.4 wall square and its
+      loaded C03 chain. The C002 object-type match queues its real fakewall
+      event; corridor/floor chains fail closed. Remaining CSB-001 work is
+      broader generic-object sensor families and real-data route proof.
+
+    - 2026-07-15 verified generic wall-object C003 move route: the live C49
+      associated-object F0267 path now dispatches the source C001..C003
+      wall-cell pass from the loaded PC3.4 Thing chain, rather than borrowing
+      the ornament-click entry point. C003 preserves its unusual source
+      inequality predicate before Revert/HOLD, then reaches F0272/F0268 with
+      the target's non-wall cell normalization. Missing wall bytes, C03
+      records, or a mismatched C003 object fail closed. Remaining CSB-001 work
+      is broader object sensor families and real-data route proof.
+
+    - 2026-07-15 verified generic wall-object C001 move route: the same C49
+      F0267 arrival now proves C001's object-add side effect against a loaded
+      wall C03 record. The wall helper independently rechecks the original
+      PC3.4 square type, so an incomplete or non-wall chain cannot reach its
+      remote event. Remaining CSB-001 work is broader object sensor families
+      and real-data route proof.
+
+    - 2026-07-15 verified generic wall-object C000 gate: a loaded C000 C03
+      record exits the F0276 wall pass before occupancy, Revert/HOLD, audio,
+      or F0272/F0268. The C49 PC3.4 regression keeps the disabled type bytes
+      intact and queues no substitute event. Remaining CSB-001 work is broader
+      object sensor families and real-data route proof.
+
+    - 2026-07-15 verified generic wall-object C001 audible side effect: the
+      real C49/F0267 arrival preserves F0276's `F0064` prioritized switch
+      request (index, volume, priority, and one request) while still queuing
+      the loaded C03 remote event. C000 proves the inverse: no audio request.
+      Remaining CSB-001 work is broader object sensor families and real-data
+      route proof.
+
+    - 2026-07-15 verified generic wall-object C002 OnceOnly writeback: a
+      matching C49/F0267 arrival clears only C002's low sensor-type bits in
+      its loaded C03 word before F0272/F0268 publishes the fakewall effect;
+      the original object data remains intact. Remaining CSB-001 work is
+      broader object sensor families and real-data route proof.
+
+    - 2026-07-15 verified generic wall-object C003 lifecycle: a matching
+      C49/F0267 arrival now proves F0272 clears C003 OnceOnly data before it
+      schedules the exact `gameTime + Remote.Value` F0268 event. The PC3.4
+      C03 fixture locks Value three at map time four and retains packed sensor
+      data. Remaining CSB-001 work is broader object sensor families and
+      real-data route proof.
+
+    - 2026-07-15 verified generic wall-object C001 Revert/HOLD lifecycle:
+      the live C49/F0267 arrival applies F0276's `AddThing ^ RevertEffect`
+      before translating HOLD, so the loaded C03 route emits a fakewall CLEAR
+      instead of SET. Remaining CSB-001 work is broader object sensor families
+      and real-data route proof.
+
+    - 2026-07-15 verified party F0276 TextString route: a party entering a
+      sole visible original PC3.4 C02 record now stages its F0168 message
+      receipt for C015 instead of silently skipping it. Invisible, malformed,
+      or multi-text lists remain fail-closed because Firestaff has no complete
+      original QuePrintLines owner. Remaining CSB-001 work is broader object
+      sensor families and real-data route proof.
+
+  - CSB-005 — CSBWin `DSA.cpp` interpreter and `Monster.cpp` attack/movement filter routes execute loaded DSA programs with level-context restoration. `csb_v1_chaos_import_extended_save_dsas()` owns checksum-authenticated CSBWin `DSA::Read`/`DSAAction::Read` action words. The runtime source-decodes `DSACMD_LOAD` (A..Z, INTEGER, ABS, DOLLAR, INTEGER32), `DSACMD_STORE`, local `DSACMD_VARIABLEFETCH`/`VARIABLESTORE`, caller-owned source-sized `GLOBALFETCH`/`GLOBALSTORE`, and the source `AMPERSAND` pure stack/arithmetic/control subcodes through a fully consumed authenticated action on a source-sized scratch stack. It additionally resolves authenticated `JUMP` and `GOSUB` actions by the source first exact `(state,column)` action selection. `JUMP` reports its relative continuation and explicit target state/column; `GOSUB` additionally reports its one-frame nested `Execute` increment, but neither executes a transfer. Local access uses a fresh 100-cell `DSAVARS` bank per action; parameters and global-bank writes commit together only on success. `LOAD_ABS32`, unsupported `AMPERSAND2` forms, filter/world subcodes, out-of-bank variables/globals, stack faults, malformed extensions, non-owned actions, and all other continuations reject without mutation. The live callback boundary now preserves all 20 source `ATTACK_PARAMETERES` words (and the seven movement arguments), mutable movement flags, and restoration of the previously loaded level. The dungeon loader now source-decodes `EDT_SpecialLocations` attack and per-level/global movement records, including the packed CSBWin location, movement gate/distance, and first type-47 actuator selection. No general `ProcessDSAFilter` dispatcher or broader opcode engine is installed, and legacy no-context hooks remain no-ops, so real loaded DSAs cannot yet alter live monster decisions.
+
+    - 2026-07-13 update: authenticated `AMPERSAND2` now consumes CSBWin
+      `STKOP_GetSkin`/`STKOP_SetSkin` (Data.h:1843-1844; DSA.cpp:3107-3135)
+      through the current level's verified `EDT_Skins` EXPOOL/DB11 route.
+      The full action uses a profile candidate: an absent/cross-level/invalid
+      skin source or any later bytecode failure publishes neither parameters
+      nor a tail edit. Existing records only retain CSBWin's source trim
+      contract; allocation, deletion, resizing, and all other world opcodes
+      remain blocked.
+
+    - 2026-07-11 continuation refinement: complete authenticated JUMP/GOSUB actions now run through a bounded, value-only `Execute` transfer path. It covers only state/column continuation and subroutine-frame behavior; it does not enable `ProcessDSAFilter`, world mutation, parameters/globals, or any previously rejected opcode family.
+
+    - 2026-07-12 verified ABI correction: `Monster.cpp:916-938,1164-1167` copies all 20 words of `ATTACK_PARAMETERES`, not the former Firestaff nine-word subset. The live filter boundary now uses that exact order, including `monsterIndex`, source position/origin, distance, launch/steal flags, sound, `disableTime`, and signed `supressPoison`; focused Phase 7 coverage mutates fields across the entire array and proves level restoration. Full source DSA dispatch remains open.
+
+    - 2026-07-12 runtime runner: `csb_v1_csbwin_dsa_run_authenticated_filter_stack_action()` is now the source-shaped callback for the admitted pure stack subset and complete transfer-only `JUMP`/`GOSUB` chains. It requires pointer identity with the checksum-authenticated `(dsa,state,ordinal)` record, stages its parameter words and owned global bank, and publishes only a fully consumed action/transfer receipt. Forged actions and world-mutating stack subcodes reject without mutating parameters, globals, or the receipt. It deliberately does not interpret pre-move flags, persist a DSA master object, or widen opcode support; those full `ProcessDSAFilter` requirements remain open.
+
+    - 2026-07-14 runner hardening: an imported zero-word DSAAction now rejects before opcode dispatch, even when pointer identity proves it came from the checksum-authenticated save stream. Parameters, globals, execution counters, and prior stack/transfer receipts remain untouched. This closes an invalid imported-action boundary only; it does not admit any new DSA opcode, fallback, or world/filter behavior.
+
+    - 2026-07-15 pure-control opcode update: authenticated `DSACMD_NOOP`
+      and `DSACMD_EQUAL` now follow the exact signed 10-bit `NextState` /
+      raw `MAXSTATE` extension contract from CSBWin `Data.h`, while `EQUAL`
+      uses only the source stack and pushes its boolean result. They do not
+      access filters, timers, dungeon records, or world state. All remaining
+      `QUESTION`/`CASE` routing and world-command families remain blocked
+      until their complete source-owned runtime inputs exist.
+
+    - 2026-07-15 `DSACMD_QUESTION` update: the authenticated pure-control
+      path now consumes the exact signed four-bit `NextState`, raw `-2`
+      extension, condition stack word, and all declared branch operands from
+      CSBWin `DSAquestionCmd`. A selected JUMP/GOSUB branch still rejects
+      rather than inventing an action-chain handoff; `CASE`, random, and all
+      world-command families remain blocked.
+
+    - 2026-07-16 control-flow VM update: authenticated JUMP/GOSUB chains now
+      execute with explicit nested call-frame accounting. GOSUB pushes the
+      source continuation frame, missing `Program(state,column)` entries are
+      counted as CSBWin RETURNs, frames must pop back to balance, and the
+      runtime execution receipt publishes those counts only after transactional
+      commit. This does not admit any unproved action form, synthetic DSA
+      script, or broader filter/world opcode family.
+
+    - 2026-07-15 pure AMPERSAND update: source `STKOP_Loc2AbsCoord` and
+      `STKOP_BitCount` now execute on the already authenticated 100-cell
+      stack. They preserve CSBWin's packed location field order and bitcount
+      result without reading a dungeon record, timer, filter, or substitute
+      runtime. `CASE` transfer routing and every world-owned AMPERSAND form
+      remain blocked until their complete original owners are present.
+
+    - 2026-07-15 parameter/DSAVARS update: authenticated `STKOP_ParamFetch`,
+      `STKOP_ParamStore`, and `STKOP_VSET` now preserve CSBWin's 100-cell
+      DSAVARS order and `DVT_NonParameter` protection on the caller-owned
+      parameter surface. All writes remain staged until the complete action
+      succeeds; bad variable spans reject without publication. No filter,
+      dungeon, timer, or fabricated parameter list is introduced.
+
+    - 2026-07-15 party-query update: source `STKOP_PartyDistance` now reads
+      only the live profile's authenticated party level/X/Y through the DSA
+      runner. It returns CSBWin's same-level Manhattan distance or negative
+      level distance and rejects when a profile has no valid party pose. It
+      does not inspect or mutate dungeon, timer, filter, or save state.
+
+    - 2026-07-15 party-location update: source `STKOP_GlobalFetch` selector
+      one now returns the profile-owned CSBWin `LOCATIONREL::Integer()` party
+      pose, including direction. Unrecognized selectors retain source zero;
+      selector one rejects without a party pose rather than manufacturing a
+      location. It reads no dungeon, timer, filter, or substitute world state.
+
+    - 2026-07-15 mastery update: authenticated `STKOP_Mastery` now preserves
+      CSBWin's character, skill, and flag stack order through an explicit
+      CHARDESC mastery owner, including source zero for invalid character or
+      skill. The live bridge owns source hand-character resolution,
+      `PartySleeping`, temporary-XP flags, and hidden-skill averaging from the
+      loaded CHARDESC rows. Original possession name-index bonuses remain
+      unavailable: unflagged callers reject instead of inferring an item from
+      Firestaff metadata.
+
+    - 2026-07-17 CharStore/SwapCharacter source blocker: the local
+      `csb_v1_csbwin_512_xor_pad_classify` owner proves the complete 800-byte
+      CHARDESC layout, while the authenticated tail owner proves exactly eight
+      100-byte `EDT_Character` Wings records. It does not retain the CSBWin
+      `DSA.cpp:4426-4529` 59-DSAVAR-to-CHARDESC field map, nor
+      `Character.cpp::SwapCharacter`'s outgoing-Wings record selection and
+      return-status table. Without both rules, a CharStore write or a swap
+      could overwrite the wrong full CHARDESC/Wings record despite having
+      valid bytes. The runtime callbacks therefore remain unbound and reject;
+      no synthetic roster, champion, portrait, or UI route is authorized.
+
+    - 2026-07-15 experience update: authenticated `STKOP_ExperiencePlus`
+      now retains CSBWin's `(character,skill,experience)` stack order and
+      stages a source-owned `AddToSkill` candidate until full bytecode
+      acceptance. The live owner now supplies selected/base-skill XP,
+      experience limits, and non-level-up mastery checks; full `LevelUp`
+      random/stat/UI side effects remain unavailable as one transaction.
+
+    - 2026-07-15 text-discard update: authenticated `STKOP_DiscardText` now
+      stages the source scrolling-text discard until bytecode acceptance. Text
+      fetch/name/import and the original DSA text bank remain separate open
+      work; no generated text or local fallback is introduced.
+
+    - 2026-07-15 LocalState-2 read update: `DB3::MakeBig` moves raw DB3
+      `word6` bits 14..15 to expanded `word8` bits 6..7, then masks the
+      compact `ParameterB` state to fourteen bits. Timer dispatch now mirrors
+      that read exactly. Writes that require expanded `word8` bits 2..3 stay
+      unavailable rather than creating a widened Firestaff record.
+
+    - 2026-07-15 EXPOOL cell-flags update: source `STKOP_FetchExCellFlg`
+      now reads only the current FNV-authenticated CSBWin
+      `EDT_ExtendedCellFlags` record. It folds the selected Y bit from the
+      eight original little-endian words in DSA.cpp order; absent or short
+      records retain source zero, while a missing or altered tail rejects.
+      `StoreExCellFlg` now stages its eight-bit value until the action is
+      fully consumed, then uses the existing authenticated DB11 free-list
+      replacement transaction for all eight words. A missing exact free node
+      rejects rather than enlarging or fabricating a save tail; positive
+      original DSA-bearing save-corpus capture remains required.
+
+    - 2026-07-15 generator-delay update: source `STKOP_GeneratorDelayFetch`
+      follows CSBWin `FindFirstMonsterGenerator` over the loaded original DB3
+      chain and returns that first type-six generator's `disableTime`.
+      `STKOP_GeneratorDelayStore` now follows DSA.cpp's first-type-six,
+      otherwise-first-type-zero rule and writes the original unsigned
+      `disableTime` byte only after a fully accepted authenticated action.
+      A same-action fetch observes a queued type-six write; stone, empty, and
+      generator-free locations retain the source no-op/`-1` behavior, while
+      malformed chains reject. Positive original DSA-bearing save-corpus
+      capture remains required.
+
+    - 2026-07-15 monster-query update: source `STKOP_MonsterFetch` now reads
+      only a loaded original DB4 group through the decoded Thing handle and
+      copies CSBWin's eight result words into the authenticated action-local
+      DSAVARS bank: group count, type, four hit points, feature-gated flags,
+      and alternate graphic. The invisible/size-four/unique/poison bits use
+      the authenticated Extended Features flags exactly as CSBWin `DB4` does.
+      Invalid/non-DB4 Thing handles retain the original zero/`-1` result;
+      invalid DSAVARS spans are source no-ops. `MonsterStore` now stages only
+      the original DB4 hit-point, four feature-bit, and alternate-graphic
+      fields, commits after complete authenticated bytecode consumption, and
+      exposes the queued result to a later same-action `MonsterFetch`.
+      It does not allocate, delete, relink, or create a monster. Positive
+      original DSA-bearing save-corpus capture remains required.
+
+    - 2026-07-15 cell-query update: source `STKOP_CellFetch` now reads only
+      the loaded original byte-map `CELLFLAG` and, where required, its first
+      validated DB0 door or DB1 teleporter record. It preserves CSBWin's
+      five-word room/flag/door/teleporter result layout and first clears the
+      requested authenticated DSAVARS range. Invalid locations retain that
+      cleared source result; legacy synthetic square layouts, missing records,
+      and unowned dungeon data remain unavailable.
+
+    - 2026-07-15 cell-store update: source `STKOP_CellStore` now stages writes
+      against that same loaded original byte-map. It changes only an existing
+      `CELLFLAG` byte and the existing first DB0 door or DB1 teleporter record
+      required by the source room type, then commits after authenticated
+      bytecode consumption. A later same-action `CellFetch` sees the staged
+      source-shaped five-word result. It cannot allocate cells, things, or
+      links; missing/malformed records and unsupported source words reject the
+      transaction without mutation. Positive original DSA-bearing save-corpus
+      proof remains required.
+
+    - 2026-07-15 object-property update: source `STKOP_Get/SetCurse`,
+      `Get/SetBroken`, `Get/SetPoisoned`, `Get/SetCharges`, and
+      `Get/SetSubType` now consume only a validated loaded DB5 weapon, DB6
+      armour, DB8 potion, or DB10 junk `word2`. Their original bit widths are
+      retained (including DB5/DB6 four-bit charges, DB8 eight-bit strength,
+      and DB10 two-bit value/five-bit subtype fields). Writes are queued through the
+      authenticated action and a later same-action getter sees the source
+      masked value. Invalid Thing/type combinations retain CSBWin's zero or
+      no-op behavior; missing raw dungeon ownership rejects rather than using
+      object metadata or a substitute layout. Positive original DSA-bearing
+      save-corpus proof remains required.
+
+    - 2026-07-15 possession-query update: source `STKOP_ChPoss` now reads
+      only the persisted `CHARDESC` 30-slot array after its original selector
+      normalization, including selector four through the loaded
+      `GAMEBLOCK2.handChar`; a negative selector reads the restored
+      `GAMEBLOCK2.objectInHand`. `STKOP_MonPoss` starts exclusively at raw
+      loaded `DB4.possession2` and follows the original `DBCOMMON.next`
+      Thing links, retaining `RNeof` as `-1`. Invalid Things retain the
+      source empty result; absent or malformed dungeon ownership rejects,
+      rather than deriving a possession list from metadata or a fallback.
+      Positive original DSA-bearing save-corpus proof remains required.
+
+    - 2026-07-15 cell-inspection update: source `STKOP_ThisCell` and
+      `STKOP_Neighbors` now execute CSBWin `ExamineCell` only through the
+      loaded original byte-map, DB1 teleporter chain, DB4 group chain, and
+      live party pose. The original room, door-state, pit, stair,
+      false-wall, teleporter-open/type, party/group/empty criteria bits and
+      low/high criteria-mask conjunction are retained. Missing, cyclic, or
+      malformed chains reject; no room, monster, teleporter, or occupancy
+      surrogate is constructed. Positive original DSA-bearing save-corpus
+      proof remains required.
+
+    - 2026-07-15 object-type update: source `STKOP_Type` now maps a validated
+      loaded DB0–DB10 Thing directly to CSBWin's `dbType * 10000 + id`
+      result, retaining door/teleporter/actuator bit packing, DB4 monster,
+      DB5/DB6/DB8/DB10 subtype fields, DB9's raw contents-chain count, and
+      the zero-id DB11–DB14 result. Invalid handles return source `-1`.
+      Firestaff's type-15 DSA record is deliberately unavailable until its
+      relationship to CSBWin DB15 cloud bytes is proven. Missing, short, or
+      cyclic raw records reject rather than consulting Firestaff object
+      metadata or inventing a container chain. Positive original DSA-bearing
+      save-corpus proof remains required.
+
+    - 2026-07-15 parameter-count update: `STKOP_NumParam` now returns only
+      the authenticated caller's CSBWin parameter count. It has no inferred
+      argument vector, filter state, or world route.
+
+    - 2026-07-15 carried-query update: `STKOP_IsCarried` now follows only
+      loaded champion slots, cursor hand, and recursive DB9 child/next links.
+      Exact Thing searches retain source slot/cursor result encoding; negative
+      basic-type searches retain source counts. Short or cyclic chains reject.
+
+    - 2026-07-15 level-multiplier update: `STKOP_MultiplierFetch` now reads
+      only loaded original `LEVELDESC.word12` bits 12..15 through CSB's real
+      16-byte map descriptor. Out-of-range levels retain CSBWin's value `1`;
+      legacy fixture-format maps and missing raw media reject rather than
+      deriving a difficulty preference or multiplier. Positive original
+      DSA-bearing save-corpus proof remains required.
+
+    - 2026-07-15 random update: `STKOP_Random` now advances only the
+      checksum-verified CSBWin `GAMEBLOCK2.RandomNumber` state with the exact
+      `STRandom` multiplier/addend and Atari-compatible low-word modulus.
+      The seed is staged until the entire authenticated action succeeds;
+      missing original GAMEBLOCK2 ownership rejects rather than using a host
+      RNG or a generated seed. Positive original DSA-bearing save-corpus
+      proof remains required.
+
+    - 2026-07-15 false-pit update: `STKOP_FalsePit` now changes only bit zero
+      of a loaded original `roomPIT` CELLFLAG through the transaction-owned
+      `Cell!` byte-map path. Invalid/non-pit locations retain the source
+      no-op; missing raw dungeon ownership rejects. No pit layout, target,
+      or cell data is constructed. Positive original DSA-bearing save-corpus
+      proof remains required.
+
+    - 2026-07-17 receipt update: an imported `STKOP_FalsePit` action now
+      publishes a separate runtime receipt only for one exact roomPIT DB1
+      CELLFLAG bit-zero transition. The candidate must retain the complete
+      five-word cell image before/after, one write mask, and one location;
+      mixed CellStore writes, room-type drift, or post-publication DB1 drift
+      invalidate it before save/timer handoff. No pit, timer, queue, or
+      rendering behavior is synthesized.
+
+    - 2026-07-15 missile-query update: `STKOP_MissileInfoFetch` now reads
+      only a loaded DB14's flying Thing, range, damage, and its owning saved
+      TIMER word8 direction. Invalid Things retain the four source `-1`
+      values; short DB14 records, incomplete timer summaries, or missing raw
+      dungeon/save ownership reject. `MISSILEINFO!` now stages DB14 range/
+      damage and TIMER word8 direction, then publishes both alongside the
+      already materialized timer event only after full action acceptance.
+      The runtime action clones the raw dungeon bytes before execution, so a
+      later save/DSA persistence failure cannot publish a partial DB14 edit.
+      Broken timer-queue/event ownership rejects. Positive original
+      DSA-bearing save-corpus proof remains required.
+
+    - 2026-07-15 runtime-query update: source `STKOP_TimeFetch` reads the
+      profile-owned CSBWin game clock, while `STKOP_ThisDSAId` exposes the
+      slave Thing integer only from a resolved, verified type-47 binding.
+      Unverified/manual bindings fail closed for the latter; neither opcode
+      opens object lookup, random, filter, or world mutation behavior.
+
+    - 2026-07-15 local-stack update: source `STKOP_Fetch` and `STKOP_Store`
+      now consume the same transaction-local 100-cell DSAVARS state as the
+      already admitted parameter helpers. Undefined fetches retain the source
+      zero behavior; out-of-bank indices reject before any caller parameter
+      publication. They add no persistent variable or world route.
+
+    - 2026-07-15 party-query update: authenticated `STKOP_WhoHasTalent` and
+      `STKOP_CountInjury` now consume only profile-owned CSBWin champion
+      talent, wound, health, and count data copied into the runner. They retain
+      the source talent-mask and living-champion wound-count results; absent or
+      invalid party state rejects without any mutation or dungeon route.
+
+    - 2026-07-15 party-location update: source `STKOP_WhereIsChar` now scans
+      the profile-owned champion fingerprints in CSBWin order, retaining the
+      final matching party index, then reads the original first 25-word
+      `EDT_Character|fingerprint` EXPOOL record for the source wing status
+      five. The lookup is FNV-authenticated and read-only; absent records
+      retain source status four, while unavailable tails reject. `SwapCharacter`
+      and every wing mutation remain outside the admitted runtime.
+
+    - 2026-07-15 save-policy update: authenticated `STKOP_DisableSaves` now
+      stages CSBWin's `disableSaves = k != 0` against the existing
+      profile-owned SaveGame gate. The value commits only after the complete
+      action succeeds, then controls native and CSBWin core save export. Its
+      source persistence remains SaveGame's existing `EDBT_DisableSaves`
+      record on a subsequent original save; no new DB11 record is created.
+
+    - 2026-07-12 runtime binding: a resolved type-47 filter actuator now reads its CSBWin `DB3::DSAselector` bits 7..11 and maps that slot through the authenticated save's `DSALevelIndex[level][selector]` before a pure-stack runner can be prepared. The binding rejects mismatched actuator types, missing level-index entries, undefined DSA IDs, and actions absent from the staged extension. It does not infer a master DSA state or execute world/filter commands; those `ProcessDSATimer6` responsibilities remain open.
+
+    - 2026-07-13 runtime callback binding: the prepared profile-owned stack runner can now occupy the real CSBWin `Monster.cpp` `ProcessDSAFilter` callback slot. The adapter preserves the 20-word attack ABI and loaded-level restoration while routing only an exact authenticated action through the save-owned global bank; it adds no opcode, filter flag, master-state, or world mutation support.
+
+    - 2026-07-13 attack-filter save handoff: a resolved type-47 binding can now atomically install the authenticated adapter into the concrete live attack-filter runtime. Its admitted `GLOBALSTORE` updates the existing save-owned EXPOOL global record only after the complete callback succeeds; rejected installation leaves no partially live filter. This remains limited to the existing pure-stack/transfer subset and does not add a general `ProcessDSAFilter` dispatcher, movement filter, or new opcode semantics.
+
+    - 2026-07-13 movement-filter save handoff: a resolved type-47 movement binding can now atomically install the same authenticated adapter in its exact `Monster.cpp` level slot. The source seven-word callback restores loaded level and may publish only the existing admitted `GLOBALSTORE` bank transaction. All other levels are explicitly unbound rather than defaulting to DSA zero; no distance/party gate inference, movement flag semantics, master-state persistence, generic dispatcher, or new opcode is added.
+
+    - 2026-07-14 CharDeathFilter handoff: `Character.cpp::KillCharacter`
+      now resolves only original `EDT_SpecialLocations|ESL_CHARDEATHFILTER`
+      through the CSBWin DB11 hash chain, selects the first type-47 actuator,
+      maps its saved DSA selector, and runs the existing FNV-authenticated
+      pure-stack receipt with exactly `{ 1, championIndex }` before the
+      champion changes state. Missing, altered, unsupported, or non-owned
+      data remains a no-op; DamageChar/PUT/GET filters, world opcodes,
+      and arbitrary `ProcessDSAFilter` behavior remain open.
+
+    - 2026-07-14 EquipFilter handoff: the CSB boot/runtime inventory-slot
+      owner now mirrors `CHARDESC::SetPossession`: it dispatches the existing
+      FNV-authenticated pure-stack runner with `{ 4, champion, slot, oldRN,
+      0 }` through column 1, then `{ 4, champion, slot, newRN, 0 }` through
+      column 0, before committing the original slot write. Missing, altered,
+      unsupported, or non-owned filter data receives no replacement; the
+      established non-DSA slot write remains intact. DamageChar/PUT/GET and
+      the broader DSA world-opcode surface remain open.
+
+    - 2026-07-13 multi-level movement callback: independently resolved movement filters can now share one runtime callback across distinct source levels. Every selected action retains exact imported-action identity; duplicate levels or duplicate action ownership reject before replacing the live runtime. It remains the same admitted stack/transfer subset only, with no inferred movement gates/flags, master state, world opcodes, or fallback dispatch.
+
+    - 2026-07-13 saved timer receipt: CSBWin `Timer.cpp::ProcessTT_STONEROOM`
+      function-6 save timers now prove their original target level/x/y,
+      position, and SET/CLEAR/TOGGLE message before selecting the existing
+      authenticated `ProcessDSATimer6` action. `TT_ParameterMessage`, invalid
+      actions/positions, and mismatched targets remain blocked because their
+      parameter payload or source target is not yet proven. This is a dispatch
+      receipt, not a general timer executor.
+
+    - 2026-07-13 saved timer runner: a valid `TT_STONEROOM` receipt can now
+      prepare the existing exact-action pure-stack runner, retaining pointer
+      identity with the selected `(dsa,state,column)` source action. It does
+      not persist master state or run world/filter opcodes; `LocalState=2/3`
+      still reject before any runner is exposed.
+
+  - CSB-007 — CSBWin `SaveGame.cpp` global-variable records, `EDBT_DisableSaves`, and `DSAINDEX::ReadTracing` now restore transactionally into the CSB runtime. `EDBT_DisableSaves` blocks both native saves and CSBWin core export before bytes or a path are emitted; core export and every runtime EXPOOL lookup reject a marked-truncated tail or one whose stored FNV receipt no longer matches its bytes, rather than re-emitting or consuming incomplete/altered source data. Authenticated DSA runners rehydrate from and publish successful `GLOBALSTORE` writes to the bounded save-owned bank and its original records. A core-only resume now clears all prior Extended Features/DSA metadata, game-info ownership, and level-index bytes before commit; the CSBWin `SKIN_CACHE` consumer likewise invalidates its cached EDT_Skins columns whenever the verified appended EXPOOL tail receipt changes, so a resumed save cannot retain stale custom-background HUD bytes. `SETSKIN` now follows CSBWin's actual `EXPOOL::Read`/`Write` contract against a complete FNV-authenticated tail: it deletes all-zero columns and consumes an original exact-size DB11 free node for a resized column, but refuses to call `EXPOOL::enlarge` or invent new tail blocks. Every DB11 node is now structurally proven to begin at `block + 1 + n * size` before it can be read, freed, or reused, so a corrupted saved free-list cannot redirect a DSA write into a DB11 header. Other EXPOOL record restore/writeback paths remain open.
+
+    - 2026-07-15 wing-character restore: `Character.cpp`
+      `CHARDESC::GetFromWings` is now admitted for the read-only DSA
+      `TALENTS@` route. It assembles only the complete original eight-record
+      `EDT_Character` bundle, verifies the saved fingerprint, and exposes
+      only the source `talents` word. Wing mutation, swapping, revival, and
+      all other CHARDESC fields remain outside this bounded handoff.
+
+    - 2026-07-15 wing-location restore: DSA `STKOP_WhereIsChar` now consumes
+      the source `EXPOOL::Locate((EDT_Character << 24) | fingerprint)`
+      contract for its `4`/`5` status result. It checks only the source first
+      25-word record, unlike `GetFromWings` which requires all eight records;
+      both remain tied to the current authenticated save tail.
+
+    - 2026-07-15 talent-store update: source `STKOP_TalentsStore` now stages
+      party talent words through the profile-owned DSA runner and follows
+      `CHARDESC::SaveToWings` for high-bit wing identifiers: all eight
+      existing 25-word `EDT_Character` records are read then rewritten in
+      source order, with no EXPOOL enlargement. Missing wings retain the
+      source no-op; malformed or unavailable tails reject. Character swaps,
+      skill experience, and other CHARDESC mutation remain open.
+
+    - 2026-07-15 DSA-info update: `STKOP_DSAInfoFetch` now reads selector,
+      state, ParameterA, and ParameterB only from a loaded compact DB3
+      type-47 record through the profile-owned dungeon. Invalid/non-DSA
+      things retain CSBWin's four `-1` result words. This is introspection
+      only: it neither resolves a master nor opens DSA execution.
+
+    - 2026-07-15 message-remap update: authenticated `STKOP_ModifyMessage`
+      now owns CSBWin's current three-entry timer SET/CLEAR/TOGGLE remap in
+      the DSA transaction. It preserves `DSA.cpp`'s pop order and clamps
+      every value above `MSG_TOGGLE` to three; a malformed later word leaves
+      all three caller-owned values unchanged. The broader timer-handler
+      consumer matrix remains separate source work.
+
+    - 2026-07-15 jitter update: authenticated `STKOP_Jitter` now stages
+      CSBWin's four caller-owned graphic/overlay offsets and raises the
+      redraw latch only when one differs. It retains the source pop order;
+      malformed later words publish neither offsets nor latch. Host-surface
+      consumption remains with the existing CSB renderer owner.
+
+    - 2026-07-15 DSA text lifecycle update: `STKOP_DiscardText` now clears
+      only the runtime-owned TT_OPENROOM DB2/F0168 receipt, transactionally
+      after its authenticated DSA program succeeds. A rejected later opcode
+      retains the existing source text; host logs and queues are untouched.
+      `TEXT@`, `TEXTSAY`, `CHARNAME@`, and `GLOBALTEXT!` remain closed pending
+      the complete per-execution `DSADBANK` text owner (exactly ten slots plus
+      DB2 decode and UI presentation). `MONL&D` remains closed pending the
+      original live monster-move filter parameters and activation lifetime.
+
+    - 2026-07-14 update: CSBWin `SaveGame.cpp`'s `GAMEBLOCK2.objectInHand`
+      restore now reaches the exact `ESL_CURSORFILTER` `ReadGame` callback
+      before the existing live leader-hand publication. Only the original
+      six-word notification packet and one FNV-authenticated pure-stack
+      action are admitted; ReadGame cannot cancel or replace the restored
+      thing. The following `CSBCode.cpp::TAG0138ec` resume stage now also
+      sends `ResumeSavedGame` before the same live hand is published; it is
+      likewise notification-only and FNV-authenticated. Pick/drop/throw/
+      character-slot cursor events, packet mutation, and broader cursor
+      world operations remain open.
+
+    - 2026-07-14 update: CSBWin `Mouse.cpp::GetObjectWeight` now reaches the live F0140 container-weight path through `EDBT_ObjectWeights`. A present DB11 record is accepted only from the complete current FNV-authenticated EXPOOL tail; absent source data keeps CSBWin's base-50 default, while a short, truncated, altered, or out-of-range record blocks the container weight rather than silently substituting the default. The focused runtime regression uses the original CSBWin key/hash/node layout and verifies live chest contents still add only after the authenticated base is admitted. Remaining EXPOOL work is broader record families and an authentic checksum-valid CSBWin save corpus.
+
+    - 2026-07-14 update: CSBWin `Timer.cpp::ProcessTT_ViAltar` state-1 now consumes a verified one-word `EDT_ChampionBones` record through the saved DB11/EXPOOL tail, matches its low-16 fingerprint to the imported dead party champion, removes that exact bones Thing, and retains the source C13 successor timer. The runtime uses the existing FNV-authenticated `EXPOOL::Read`-shaped delete, so the consumed record cannot survive a later core export; old saves still use the existing DB10-value branch only when no tail is present. Wing-resident champion revival and ChampionBones creation remain open.
+
+    - 2026-07-13 palette restore: all 24 CSBWin `EDT_Palette` records now
+      stage atomically from the FNV-authenticated EXPOOL tail and become
+      available only through the current-receipt runtime accessor. Other
+      EXPOOL record restore/writeback paths remain open.
+
+    - 2026-07-13 palette writeback: the same 24 `EDT_Palette` records now
+      persist only as an all-or-nothing existing-record bundle, following
+      CSBWin `SaveGame.cpp:1213-1224`. Firestaff refuses short, stale, or
+      incomplete EXPOOL/DB11 records rather than invoking `EXPOOL::Write`
+      expansion or inventing palette storage. Other EXPOOL records remain
+      open.
+
+  - 2026-07-11 original-data boundary audit: local `SKWIN/data_csb` bytes do
+    not match any supported CSB graphics or dungeon hash and therefore remain
+    unusable for rendering, menus, or runtime state. The locally staged Amiga,
+    FM-Towns, and X68000 source-media ZIPs contain ADF/IMG/nested-disk media,
+    not a supported hash-addressable CSB asset pair or CSBWin save. Existing
+    CSB startup routes already reject fallback text/door/wrapper draws once a
+    verified session is active; no production synthetic route was removed on
+    this pass because no authoritative bytes are presently materializable.
+    Synthetic CSBWin buffers remain test-only malformed-input fixtures. The
+    next change here requires a hash-verified asset extraction or original
+    CSBWin save, then a positive real-data probe before any promotion.
+
+  - CSB-009 — ReDMCSB `MENU.C`, `CLIKMENU.C`, `CHAMDRAW.C`, `CHEST.C`, and `REVIVE.C` define the full Utility Disk and in-game champion/inventory interaction surface. Firestaff `src/csb/csb_v1_utility_flow_pc34.c`, `src/csb/csb_v1_runtime_champion_inventory_handoff_pc34_compat.c`, and M11 cover the bounded import, preview, slot, chest, and action routes, but not the complete original Utility Disk content, confirmations, and real-save interaction corpus.
+
+    - 2026-07-15 update: ReDMCSB `PRIM1.C F0925_CheckUtilityDiskInDrive`
+      now has a bounded CSB PC34 adapter for the utility-disk sector-7
+      signature gate. It preserves the source order, calls the host
+      media-change/read callbacks, compares only the two C strings at offsets
+      0 and 128, and refreshes the remembered signature only on a nonzero
+      first-loop flag. Malformed or unterminated host sector strings reject
+      before state refresh. The remaining CSB-009 work is still the Utility
+      Disk UI/content/confirmation corpus and live interaction routes, not a
+      synthetic floppy or loader loop.
+
+  - CSB-010 — ReDMCSB `TITLE.C F0437` and `ENTRANCE.C F0438/F0806` now have source-locked, hash-verified local-CSB raster regressions. M11 owns one verified `CSB_V1_StartupRuntimeAssetSession_PC34` for C001-C005/C017/C040, advances skipped TITLE ticks through the same session before entrance, releases its first live HUD only after the source door-finish receipt, and blocks live viewport/HUD dispatch without that terminal C017/C040 session. C040 now preserves PANEL.C's transparent index 6 rather than inheriting C017's opaque contract. The first live C017 consumer additionally requires byte identity between M11's decoded asset slot and the terminal session surface, rejecting divergent material before it can draw; an opened live CSB inventory now consumes that terminal C017 bitmap at the original viewport geometry rather than a generic panel route, and candidate ownership composes the same terminal C040 over it at C101 with C06 transparency. C040 clear then requires the exact source tick/generation that presented it before restoring neutral live HUD, rejecting a stale session before pixels are written; the first post-clear CSB movement command preflights the same session before the source command bridge may mutate runtime. M11 now records the actual successfully presented 320x200 indexed CSB frame only when that terminal session is valid, retaining its FNV receipt and macOS app/window facts in the CSB boot receipt; no generated frame, title substitute, or HUD wrapper can satisfy this collection step. Original-save resume has its own verified `LOADSAVE.C F0435` F0128/HUD path and does not claim a title/entrance terminal receipt.
+
+    - 2026-07-30 local macOS SDL capture: the production binary, launched
+      against the hash-verified PC3.4 package with
+      `FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR`, emitted four actual presented
+      RGBA frames for C001 PRESENTS and the distinct CHAOS/STRIKES/Entrance
+      palette phases. The same capture path now admits one normal-palette
+      runtime page only after the current source package/session and completed
+      F0128 receipt agree; later source-owned object passes are allowed to
+      alter the final aperture. Remaining work is packaged `.app` capture and
+      broader original-presentation comparison.
+
+    - 2026-07-31 current-app capture: a temporary local `.app` assembled from
+      the verified v3.0.197 binary passed the real-package title/Entrance
+      contract and produced the four presented source phases. Its deterministic
+      SDL route also saved the first F0807 opening-door frame. The direct
+      visible-window click was not delivered by macOS event injection, so it
+      records only the closed-door state; keep a physically interactive
+      app-window opening capture and the wider original comparison open.
+
+    - 2026-07-15 HUD text ownership update: CSBWin `Timer.cpp::ProcessTT_OPENROOM` now admits its one source-defined party-square DB2 path. It records only a newly visible, sole `DUNGEON.DAT` TextString through ReDMCSB `DUNGEON.C F0168`; M11 clears C015 with `TEXT.C F0049` then draws that receipt with the loaded original font. Generic `messageLog`, cached host mirrors, wrapping, and missing/malformed source data remain no-draw. Remaining work is the wider authenticated QuePrintLines queue, multi-line/scroll ownership, and real CSB capture.
+
+    - 2026-07-15 champion-icon ownership update: CSB C113..C116 now require the complete real C028 four-frame strip (76x14). Missing, malformed, or detached C028 clears the icon zones instead of retaining a host-generated color-only party marker. Further CSB HUD work still needs authenticated dynamic status/name/bar state.
+
+     - 2026-07-15 status-hand ownership update: CSB C211..C218 now require the selected package's exact C033/C034/C035 18x18 hand-box surface before a C020 object icon may be drawn. Missing or malformed source leaves the F0292 C12 status clear untouched; no generic M11 gray frame or empty-hand substitute remains. Authentic status/name/bar state is still required for broader HUD completion.
+
+      - 2026-07-15 damage-text ownership update: CSB C015/C016 damage feedback now uses CHAMDRAW.C F0623's F0288(…,width=3) and F0053 original-font route with C15/C08 colors. Missing C015 or source font leaves the native status clear unchanged; M11's small host font is excluded. Broader authenticated status/name/bar state remains open.
+
+      - 2026-07-15 party-HUD ownership update: C113..C116 and C150..C218
+        are now rebuilt from a fresh CSBWin GAMEBLOCK/CHARDESC mirror receipt
+        for every M11 frame. A missing receipt clears those source rectangles;
+        it cannot reuse a stale or caller-seeded M11 party for names, bars,
+        hands, or position icons. Authentic runtime message ownership and
+        broader original-capture evidence remain separate work.
+
+    - 2026-07-14 package-presentation probe: `csb_v1_pc_package_presentation` is an opt-in real-data route over the canonical hash-verified PC34 package only. It drives the production session through C001 PRESENTS/CHAOS/STRIKES, closed/open C004+C002+C003 entrance doors, F0807 completion, and C017/C040 HUD presentation, rejecting any unverified package, generated raster/palette, legacy wrapper, or fallback route. It complements, but does not replace, the still-required real Mac/app window capture.
+
+    - 2026-07-13 update: the PC34 real-asset probe now binds the hash-verified
+      package receipt to the actual decoded C001 title surface and its
+      PRESENTS/CHAOS/STRIKES regions, plus C017/C040 HUD pixels, after the
+      source-owned title and entrance completion sequence. The consumption
+      receipt includes the verified package hash and a byte hash of all six
+      consumed surfaces; absent assets, wrappers, fallback routes, stale
+      sessions, or a nonterminal entrance fail closed. The remaining work is
+      still a real Mac/app presented-frame capture, not synthetic frames.
+
+    - 2026-07-13 verified runtime-surface update: the same PC34 session now
+      issues a CSB-owned host decision for C004+C002+C003 door opening or the
+      original C017/C040 HUD pair. The opening decision requires exactly the
+      three decoded source surfaces; the HUD decision retains C040 index-6
+      transparency and deliberately has no substitute 320x200 raster. The
+      local real-asset probe passes 47/47. Remaining work is still the Mac/app
+      presented-frame capture, not another wrapper or synthetic surface.
+
+    - 2026-07-13 verified runtime-bridge update: the opening and terminal HUD
+      input/runtime decisions now carry the same PC34 package receipt as the
+      C001/C004/C002/C003/C017/C040 host surface. The bridge rejects a changed
+      session generation, missing source hash, wrapper/fallback route, or an
+      input/runtime state that does not match the opening or post-entrance
+      transition. The local real-asset probe passes 50/50. Remaining work is
+      still a Mac/app presented-frame capture.
+
+    - 2026-07-13 verified title-package handoff update: C001
+      PRESENTS/CHAOS/STRIKES BACK now remain bound to the terminal C017/C040
+      session and to the same PC34 package and decoded-surface hashes consumed
+      by the runtime transition. A generation mismatch, altered hash, wrapper,
+      fallback route, or changed C001 crop fails closed. The local real-asset
+      probe passes 52/52. Remaining work is still Mac/app presented-frame
+      capture, not a synthetic title or HUD route.
+
+- 🔧 2026-07-11 Theron Track02 real-media handoff follow-up: entries 6 and 8 are disproven as object-table/level candidates by the hash-verified JP/US raw-BIN receipts. Descriptor-local and startup-plus-guessed-object route constructors now reject, so the hash/anchor-gated startup candidate is the only supported Track 02 level decoder route. Remaining work is genuine non-startup loader/layout correlation from original media, followed only by a separately supported decoder and atomic route handoff; no synthetic fallback, arbitrary descriptor scan, or compact-row semantic promotion. Palette offsets and Mac/app capture remain separate real-media work.
+
+  - 2026-07-13 update: the old hand-authored loader-row import has been
+    retired. A loader receipt now accepts only the provenance-marked original
+    Mednafen `CD_READ`/IRQ2 transaction for its matching JP/US Track 02 MD5,
+    followed by observed HuC6260 stores in the same trace. This proves event
+    order only, not which Track 02 byte reached VCE: byte provenance,
+    HuC6260 index/data assembly, palette-table offset, and bitmap binding all
+    remain required and rendering stays blocked until then.
+
+  - 2026-07-13 update: the same receipt now retains Mednafen's completed
+    HuC6260 colour-table words, in strict trace order and separately from
+    pre-execution CPU store rows. This proves only that the authenticated
+    original execution reached VCE with those 9-bit words after the dynamic
+    `CD_READ`; it does not taint a word back to Track 02 RAM/media or identify
+    a palette table, bitmap, menu, object, or level. A future handoff must
+    capture that source-byte transfer before RGB presentation can open.
+
+  - 2026-07-14 update: loader-trace import now rejects reordered or coalesced
+    evidence. The accepted original capture must preserve the observed
+    `CD_READ` transaction, `$3800` destination span, IRQ2 controller state,
+    and only then HuC6260 rows. This strengthens one bounded transport chain;
+    it still does not identify a later dungeon record, map, object, palette
+    source byte, or bitmap decoder.
+
+  - 2026-07-14 update: positive loader preflight now requires a V2 manifest
+    binding the rehashed raw Track 02, exact System Card 3.0, and ordered
+    Mednafen trace before the existing `$3800` media-span/Stage 3 receipt can
+    be accepted. This provenance gate does not identify a payload format,
+    dungeon, object, bitmap, palette source byte, or decoder.
+
+  - 2026-07-13 update: the old generated stone palette and unverified-media
+    V1 render allowance are removed. Remaining palette work is an original
+    HuC6260 table binding from authenticated Track 02 execution/media; a
+    missing table must stay unpopulated and render-blocked.
+
+  - 2026-07-13 update: the supplied authenticated US CUE declares tracks
+    03-18 as AUDIO. The former `THG3`/`THS4` scan is disabled; remaining
+    graphics work must bind a real Track 02 loader read to HuC6260 palette
+    and tile destinations rather than treating CD-audio files as assets.
+
+  - 2026-07-11 update: IPL stage two is now source-locked as `CD_EXEC`
+    record `0x0003e7` (17 sectors) into `$4000`, followed by a literal
+    one-sector local `CD_READ` to `$3800` with dynamic/unbound record
+    registers. No fixed bootstrap/stage-two request uses a VRAM destination.
+    Remaining graphics work requires a later original code path that fixes a
+    `DH=$fe/$ff` transfer together with source record and byte-count evidence.
+
+  - 2026-07-12 update: authenticated stage-two instructions now expose the
+    `$4090` read as an explicit dynamic boundary: the literal setup fixes
+    `AL=1`, `DH=1`, and `BX=$3800`, while `CL/DL/CH` remain live and are
+    recorded only as a complete record-register mask. No record value,
+    successor loader context, payload boundary, media role, or presentation
+    route is inferred. The next admissible continuation still needs original
+    code or a table that fixes those live registers.
+
+  - 2026-07-11 update: the three repeated 2048-byte MODE1 user-data blocks
+    now retain their immediately preceding/following sector geometry in a
+    paired JP/US receipt. The only validated relationship is physical: JP
+    anchor sectors 1262/2000/3152 and US 1263/2001/3153 preserve gaps
+    738/1152 and a +1 JP-to-US sector displacement; all twelve variant-local
+    adjacent sectors are present and none duplicates its repeated block. Their hashes remain
+    opaque metadata. This proves no sector directory, count, offset table,
+    record boundary, loader, payload, or runtime role; any adjacent duplicate
+    or disturbed geometry rejects rather than promoting a candidate.
+
+  - 2026-07-11 update: the paired JP/US raw-BIN sector scan now retains 11
+    repeatable nonzero MODE1 user-data regions outside the six indexed empty
+    containers. Each locator carries both variants' sector/raw bounds, byte
+    count, nonzero count, and matching hash; all unmatched runs are retained
+    only as negative evidence. This catalog is opaque and promotion-blocked:
+    the next step remains original loader/disassembly correlation for one
+    known-MD5 byte address, not a decoder, renderer, fallback, or role guess.
+
+  - 2026-07-11 update: structural clustering of that exact 11-region
+    consensus now records 32-byte prefix/suffix and first/last-sector
+    signatures, every pair's exact shared prefix/suffix and whole-sector
+    correlation, and zero-to-nonzero sector boundaries. It rejects any
+    non-JP/US pair, incomplete raw-sector image, non-identical regional run,
+    missing zero boundary, or corpus size other than 11. These are transport
+    facts only: repeated bytes are not promoted to header, record, graphics,
+    gameplay, palette, or audio semantics. The next step remains independent
+    original loader/disassembly evidence for one known-MD5 address.
+
+  - 2026-07-11 update: the 11-region receipt now cross-references existing
+    source-locked Track 02 anchors at their actual JP/US raw offsets. Only the
+    third opaque post-boundary span (JP `0x711f10`, US `0x712840`) lies in
+    consensus region 5; all bounded startup-candidate addresses are outside
+    the consensus. This is a negative boot-linkage result and a strict locator
+    for future original loader/disassembly addresses, not a loader table, boot
+    role, decoder, semantic binding, or presentation route.
+
+  - 2026-07-11 update: an exact/near-repeat scan rooted at that 44-byte
+    fragment now locks only byte-level correlation. In each verified raw BIN,
+    the first four fragment bytes occur exactly three times, at the existing
+    post-boundary offsets; all three locations share exactly 2048 bytes from
+    MODE1 user-data byte zero and differ at byte `+0x800`. The shared
+    FNV-1a is `0xa58bead7`; anchor 2 alone is in consensus region 5, while
+    anchors 0 and 1 remain outside it. This does not identify a boundary,
+    record, loader, codec, or payload. The next admissible work remains
+    independent original loader/disassembly correlation for a known-MD5 byte
+    address, never semantic inference from this repetition.
+
+  - 2026-07-11 update: the repeat receipt now splits those three exact
+    2048-byte MODE1 user-data blocks into two 1024-byte halves. All three
+    JP pairs and all three US pairs match in both halves and across the full
+    block; each pair first differs only at the following byte, `+0x800`.
+    Every block starts at user-data byte zero and fits within one MODE1
+    user-data sector. Same-variant input, incomplete sectors, JP/US block
+    mismatch, pairwise half/full mismatch, or paired second-half drift reject.
+    These remain opaque, promotion-blocked transport facts with no assigned
+    loader, record, codec, graphics, palette, audio, or runtime role.
+
+  - 2026-07-11 six-container sector analysis: all indexed non-startup windows
+    are now typed as MODE1 user-data/sector-tail spans. This establishes a
+    decoder prerequisite only: every JP/US counterpart has the same physical
+    span profile, but none has a source-evidenced compression, table, or game
+    payload role. The next admissible decoder must consume only these typed
+    user-data spans and still requires original loader evidence for semantics.
+
+  - 2026-07-11 reassembly-boundary update: the six hash-gated logical
+    user-data reassemblies are all zero-filled in both staged JP and US raw
+    BINs. Their repeat-region and cross-variant shape is verified, including
+    the one 752-byte entry-6 tail-aligned reassembly; the remaining five are
+    720 bytes. Any nonzero logical byte, unordered segment, incomplete
+    segment accounting, unknown variant, or non-MODE1 index now rejects the
+    validation-only prerequisite. This proves no header, payload offset,
+    record count, stride, compression, or game role. The next admissible
+    parser still requires original loader evidence for a distinct, non-empty
+    record boundary; no object/level/bitmap route may consume these windows.
+
+  - 2026-07-11 verified container-index update: the JP/US raw-BIN index now
+    locates only the six byte-validated opaque post-descriptor containers
+    (entries 6 and 8 at each of three replicated anchors), including exact raw
+    offsets, descriptor-relative offsets, raw/user-data hashes, and MODE1
+    user-data segment boundaries. Entry 7 is verified zero-fill on real media
+    and causes index rejection when nonzero, so later object/level/bitmap work
+    cannot scan or fall back across entries. Roles remain unassigned pending
+    original HuC6280 loader/disassembly evidence paired with a known-MD5 byte
+    address; this index alone must not enable decoding or presentation.
+
+  - 2026-07-11 update: JP and US raw Track 02 BINs are staged under the
+    operator data root and the real-media receipt now proves that verified,
+    unbound Track 02 cannot reach generated V1 tile/UI presentation: the
+    runtime render facade returns blocked and leaves a sentinel framebuffer
+    byte-for-byte unchanged. The remaining task is still independent original
+    loader/disassembly evidence for a non-startup graphics bank, object table,
+    or level record; the descriptor receipts alone do not authorize one.
+
+  - 2026-07-11 update: the hash/anchor-gated JP/US raw-BIN comparison now proves descriptor-relative geometry for every observed post-descriptor window (entry, 0x400-byte span, relative offset, and MODE1 container shape), while all three raw-byte fingerprints differ by region. This is a shared opaque-container observation, not a common payload: it binds no bitmap, palette, level, object, text, or runtime route. No bytes are exported and promotion remains blocked pending original loader/layout evidence.
+
+  - 2026-07-11 update: independent HuC6260 CTW/CTR documentation corrects the
+    controller receipt. Capture a complete authentic run, then bind only a
+    complete recognised index/low/high receipt to a raw bitmap route. Indirect
+    and block-transfer palette paths remain fail-closed.
+    remains semantically unbound and promotion-blocked. The raw Track 02
+
+  - 2026-07-11 update: the local evidence stores and the checked source-lock
+    material contain no original Theron's Quest loader/disassembly trace, and
+    no newly staged hash-verified Track 02 corpus was available to correlate
+    against the JP/US receipts. The existing semantic probe continues to lock
+    an explicitly supplied, syntactically valid palette window as unbound and
+    non-promotable. Non-startup palette and record bindings therefore remain
+    blocked; do not add a decoder, route, or synthetic fallback until an
+    original loader trace identifies a load address or record boundary.
+
+  - 2026-07-11 update: verified Theron launch/receipt paths now accept a strict CUE mount as a real-media handoff. The resolver accepts only one declared `TRACK 02 MODE1/2352` backed by its immediately declared `FILE "..." BINARY`, then routes that payload through the pre-existing known-MD5 gate before any Track02 decoder runs. Audio tracks, MODE1/2048 entries, duplicate Track 02 declarations, missing payloads, and all filename guessing reject. This widens media access only; it assigns no non-startup level, object, bitmap, or palette semantics. Remaining decode work is independent original loader/layout correlation.
+
+  - 2026-07-11 update: the skip-safe real-asset receipt now captures the hash-verified US ISO's single post-descriptor layout anchor alongside the raw JP/US evidence. Its entries remain opaque and explicitly blocked from non-startup decode or runtime handoff. The next level step still requires independent original loader/layout correlation that identifies a record boundary and field meanings; do not infer a route from descriptor position, ISO extraction, or compact rows.
+
+  - 2026-07-11 update: Save Disk startup now preserves the first gzip-recognized slot as manifest evidence but selects the first later slot whose bounded body decode completes, in ascending disk-slot order. Every successfully inflated SRM now also requires a matching gzip CRC32/ISIZE trailer before its neutral payload fingerprint is recorded, and the import boundary accepts exactly one complete gzip member with valid optional-header CRC when present. Unknown real bodies remain unsupported and cannot be selected for Continue. Remaining SRM work is correlating those authenticated fingerprints with real Sphenx/Greatstone body-layout evidence, not guessed field mappings.
+
+  - 2026-07-11 update: startup now collects every authenticated one-member SRM body into opaque fingerprint groups across the five Save Disk slots. Group membership uses only the existing whole/prefix/suffix body fingerprints and verified gzip trailer fields; it neither assigns body bytes to save fields nor alters the first fully decoded Continue slot. Remaining SRM work is still real Sphenx/Greatstone layout correlation, not field guesses or promotion of an unsupported body.
+
+  - 2026-07-11 update: a second operator-staged Save Disk root can now be compared slot-for-slot through `FIRESTAFF_THERON_SRM_COMPARE_DIR`. Only authenticated bodies in the same disk slot are comparable; the receipt reports opaque exact fingerprint matches and mismatches, while missing, malformed, duplicate, and unsupported receipts remain outside the comparison. This is corpus evidence only and cannot affect body decoding, object/runtime/Continue, palette, or route promotion. Remaining SRM work is still real Sphenx/Greatstone layout correlation, not guessed field mappings.
+
+  - 2026-07-11 update: authenticated one-member gzip Save Disk files can now take a bounded opaque transfer route that atomically preserves the exact original container bytes and verifies the copied receipt. Unknown bodies remain `UNSUPPORTED` and the transfer cannot select Continue, mutate runtime state, or relax the Track 02 no-generated-presentation block. No authentic `.srm` body is staged locally, so real body-field decoding remains blocked on Sphenx/Greatstone layout evidence.
+
+  - 2026-07-11 update: the opaque original-SRM transaction now writes to an
+    exclusive private staging file, verifies the staged bytes before an atomic
+    no-replace publish, and leaves conflicts or corrupt inputs without a
+    changed destination. Authenticated unknown bodies remain archival-only;
+    Continue refuses them before world mutation. Remaining SRM work is still
+    original Sphenx/Greatstone body-layout evidence, not field guesses.
+
+  - 2026-07-11 update: the optional two-root SRM receipt now also emits a position-bound opaque delta for every comparable authenticated slot: inflated-body sizes, non-overlapping shared prefix/suffix lengths, differing-byte count, and a receipt checksum. The comparison first rechecks each supplied body against its existing trailer-authenticated whole/prefix/suffix fingerprints. It assigns no byte a field meaning and remains outside decoder, object/runtime, Continue, palette, route, and synthetic-content paths. Remaining SRM work is real Sphenx/Greatstone layout correlation, not field guesses.
+
+  - 2026-07-11 update: the authenticated two-root SRM delta now also retains a bounded topology of differing byte runs: each retained start offset and length, total run count, longest run, truncation state, and a topology-bound checksum. It only profiles bodies that revalidate against their existing authenticated evidence. This remains corpus observation, not a byte-to-field mapping, and cannot affect decoder, object/runtime, Continue, palette, route, or synthetic-content paths. Remaining SRM work is real Sphenx/Greatstone layout correlation, not field guesses.
+
+  - 2026-07-11 update: accepted compact Track02 object-row candidates now retain a level-byte coverage mask, per-level row counts, and per-level FNV-1a row hashes in the descriptor receipt. This is read-only evidence for later real-media comparison; it does not identify object semantics, alter route readiness, or promote a candidate into runtime. Remaining Track02 object work is still real multi-level row-layout evidence and a separately justified semantic binding.
+
+  - 2026-07-11 update: object-table route receipts now also compare accepted compact rows across every descriptor anchor per existing level byte. A consensus mask, matching-anchor masks, row counts, and row hashes record exact agreement or a bounded mismatch without changing decode readiness, routes, Continue, or runtime promotion. Remaining object work is real-media row-layout correlation and a separately justified semantic binding.
+
+  - 2026-07-11 update: per-level compact-row consensus now also retains the first/last table ordinals and a position-bound FNV-1a hash. Reordered but otherwise identical accepted rows therefore lose consensus across anchors. This is layout evidence only; it does not assign field meanings, change route readiness, or promote objects, runtime, Continue, synthetic menus, or palettes.
+
+  - 2026-07-11 update: the skip-safe hash-verified Track 02 real-asset receipt probe now publishes compact-object layout evidence for every staged variant: descriptor anchors, per-level matching-anchor mask, row count, raw-row hash, first/last ordinal, and position-bound hash. It remains an observation surface only; no result changes object semantics, runtime, Continue, synthetic menus, or palette promotion.
+
+  - 2026-07-11 update: when both hash-verified raw JP and US Track 02 BINs are staged, the real-asset probe now compares only their already accepted per-level compact-row layout receipts. The cross-variant receipt retains shared coverage, count, raw-row hash, and ordinal-bound hash, and reports bounded mismatches; it rejects ISO, same-region, incomplete, and fallback-capable receipts. Missing original media is a skip, never a constructed comparison input. This remains observation-only and cannot promote object semantics, routes, runtime, Continue, menus, or palettes.
+
+  - 2026-07-11 update: the hash-verified JP/US raw-BIN probe now locks both post-descriptor windows per anchor (entries 6 and 8): raw/MODE1 provenance, 1024-byte spans, nonzero counts, byte hashes, raw BE header words, and bounded compact-row results. The media proves no compact object-table promotion: entry 6 is zero-count at anchors 0/1 and declared-overflow (`52528`) at anchor 2, while entry 8 is zero-count throughout. The six JP/US windows differ by raw hash, so they remain opaque non-startup candidates rather than a shared route. Runtime, Continue, object semantics, and dungeon-record decoding remain blocked pending independent loader/layout evidence.
+
+  - 2026-07-11 update: explicit palette-window inspection is now hash-gated and records MODE1/user-data provenance, a payload checksum, and strict HuC6270 syntax without scanning for or assigning palette offsets. Every inspected window remains semantically unbound and promotion-blocked until real Track 02 loader evidence ties it to title, stage, Soul Room, or forcefield.
+
+  - 2026-07-16 Theron real Track02 capture-producer update: runtime admission
+    can now construct a fail-closed producer from real Track02 bytes/MD5. It
+    builds the startup bitmap atlas, inspects a supplied palette window, and
+    routes level/object/bitmap/palette evidence into render-asset proof
+    construction. The staged US Track02 corpus is still rejected even when a
+    palette-shaped window is supplied, because non-startup level decode,
+    object-table decode, and source-locked palette binding are still missing.
+    Remaining work: bind loader/capture evidence to the palette offset and
+    promote non-startup level/object-table records from original Track02.
+
+  - 2026-07-11 update: M11 now stops after a completed Track 02 startup-atlas draw in every startup phase, so the synthetic render-plan border and text cannot overlay title, stage select, Soul Room, or forcefield graphics. Launch now rejects incomplete authoritative media and returns to the launcher with an explicit Track02-atlas status. Remaining work is identifying verified Track 02 palette payload offsets and promoting matching real windows beyond the startup level, including multi-level object rows and Mac/app capture.
+
+- 🔧 2026-07-11 DM2 GDAT render follow-up: the verified `dtPalIRGB`/`dtPalette16` chain now reaches the M11 title/menu presentation, HUD, indexed floor/ceiling, walls, door frames, real GDAT map-chip/HUD sprites, and the live outdoor sky/ground planes via the active map `GRAPHICSSET` records. Indoor wall plans carry `MapGraphicsStyle` into the GDAT address and cache key, matching the `iMapGfx` wall query in skproject; a style switch cannot reuse a different set's decoded wall bitmap. Live scene light plus rain/mist/thunder/darkness words are carried to the runtime receipt; an outdoor frame is not accepted unless both real material planes and HUD reach the host route with no fallback draws. The title/menu regression now follows skproject `SHOW_MENU_SCREEN`: it consumes `TITLE/0 dt07/4` when present and otherwise verifies the decoded image fallback. The real `INTERFACE_GENERAL/0 dt07/0x0A` Rect14 placement table is now consumed by the runtime frame ownership receipt and the M11 acceptance gate (table hash, placement hash, and row count are required to match when the table is present). Remaining work is wiring the per-row image fields and placement hashes into the DM2 V1 item, projectile, and static-object render plans so those draws are gated by the real Rect14 records, plus real GDAT weather-overlay assets and additional dungeon material classes. Do not promote palette metadata or synthetic HUD colours as real-data consumption.
+
+  - 2026-07-14 update: `CHECK_RECOMPUTE_LIGHT`'s admitted active
+    `GRAPHICSSET` inputs (`highest_light_level` and `ambient_darkness`) now
+    have a separate source receipt bound to the selected scene control plan.
+    Runtime and boot carry that hash to M11, which rejects a frame whose
+    light receipt differs. The canonical `GRAPHICS.DAT` CTest proves the
+    receipt from a real style and rejects its alteration. This does not infer
+    a dynamic source, timer state, or weather overlay: weather remains
+    no-draw until original `DistantEnvironment` slots are available.
+
+  - 2026-07-14 update: the active `GRAPHICSSET` floor, ceiling, and indoor
+    `WALL_GFX` command identities now travel in the runtime receipt and must
+    match M11's boot receipt exactly. The canonical `GRAPHICS.DAT` regression
+    selects an admitted style and proves that M11 rejects altered floor or wall
+    hashes. This is material provenance only: weather remains no-draw until
+    original timer-owned `DistantEnvironment` slots identify a decoded GDAT
+    overlay and source rectangle table.
+
+  - 2026-07-13 update: source `ENVIRONMENT_DRAW_DISTANT_ELEMENT` now has a
+    verified, fail-closed destination/mirror/scale plan for each weather
+    command. The remaining weather step is to make M11 consume this exact
+    receipt with the original decoded GDAT pixels and rectangle table, not a
+    generated overlay or substitute placement. Live `DistantEnvironment`
+    ten-byte slots are now retained only when their selected ENVIRONMENT
+    command has a verified material receipt; corpus evidence for the original
+    timer-owned live slot bytes is still absent, so no runtime promotion or
+    pixel blit is permitted.
+
+  - 2026-07-14 update: a complete, source-owned `DistantEnvironment` renderer
+    receipt now reaches the outdoor viewport's real `ENVIRONMENT` image/local
+    palette consumer. It preflights the full cloud/rain transaction and its
+    source dt04 clips before the first pixel, so a missing later layer blocks
+    the whole weather pass rather than leaving a partial draw or creating a
+    procedural substitute. Runtime binding remains intentionally blocked
+    until the original save/timer corpus supplies the live ten-byte slots.
+
+  - 2026-07-13 update: the exact skproject save/load dialogue now binds its
+    separate `DIALOG_BOXES/0x81/dtImage/0` IMG3/local palette to the real
+    `INTERFACE_GENERAL/0/raw4` expansion of `RECT_453`; the live runtime
+    carries the complete source-owned host command. M11 now consumes the
+    verified panel image and its local palette only after the DM2 save route
+    opens that command, and blocks a missing command rather than substituting
+    a generic panel. Remaining work is original glyph decode and input/button
+    semantics; do not render replacement labels or controls.
+
+  - 2026-07-13 update: `DM2_dialog_OPEN_DIALOG_PANEL` is now retained as one
+    fail-closed host command: its original `DIALOG_BOXES/0x81` image/local
+    palette, fields 0/1 GDAT labels, palette slots, and raw4 rects
+    `4/450/466/467/451` must all exist together. M11 consumes the panel only
+    when active. `DM2_dialog_2066_33e7` now has its verified event/input core
+    (source events 0/1/2/3, ten slots plus sentinel, 31-byte uppercase edit)
+    behind the original GDAT panel receipt. Remaining work is the actual
+    RECT_451 pointer decoder, keyboard-scancode route, original glyph draw,
+    and save-header corpus. It must not infer labels, positions, colours, or
+    a fallback panel.
+
+  - 2026-07-22 update (Lane C, cycle 3): DM2 V1 static-object render plans now
+    bind a real INTERFACE_GENERAL dt07/0x0A Rect14 row when the table is
+    present. `dm2_v1_viewport_enrich_static_object_source_plan_with_rect14`
+    matches the row whose 5x5 anchor equals the source plan's view-relative
+    position, copies the per-direction image field, CALC_STRETCHED_SIZE source,
+    lateral offset and mirror flag, and folds row/placement hashes into the
+    M11 delivery plan identity. The runtime calls this enrichment while
+    materializing G1 weapon/container static objects. When the table is absent
+    (the current local DM2 data variant) the plan keeps its existing
+    source-geometry state and does not synthesize placement data.
+    `tests/test_dm2_v1_static_object_m11_delivery_plan` verifies matching and
+    non-matching synthetic Rect14 rows.
+
+  - 2026-07-22 update (Lane C, cycle 4): DM2 V1 item and projectile render plans
+    static-object items and out-of-range frame indices do not synthesize
+    placement data. Remaining in this lane: real GDAT weather-overlay assets and
+    additional dungeon material classes.
+
+  - 2026-07-22 update (Lane C, cycle 5): implemented DM2 V1 wall ornaments as an
+    additional source-owned dungeon material class. Added
+    `DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT` (0x2000),
+    `wall_ornate_gfx_index` on `DM2_ViewSquare`, required/consumed masks, and
+    `dm2_v1_render_wall_ornaments()` fail-closed between walls and doors. Added
+    `tests/test_dm2_v1_wall_ornament_material_gate` verifying missing-plan block,
+    missing-asset block, and successful source-material consumption. Remaining in
+    this lane: real-data outdoor frame capture proving the renderer consumes the
+    live `DistantEnvironment` slots produced by the runtime weather tick.
+
+- 🔧 2026-07-11 local build verifier follow-up: former stuck compile paths for CSB input/startup surfaces, CSB keyboard, DM1 input queue, V1 TITLE/SWSH pathfinders, memory frontend/cache frontend, selector, bitmap, image expand, and Theron/miniz SRM startup now pass targeted checks. `firestaff_dm2`, `firestaff_m10`, Nexus startup, Theron startup save/resume, and CSB runtime handoff build/pass locally. Remaining work is broader full-app/test-target verification after subagent edits settle.
+
+- 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.
+
+  - DM1-003 — ReDMCSB GROUP.C F0207_GROUP_ProcessEvent and F0209_GROUP_ProcessEvents29to41: M10 now reconstructs the PC 3.4 `CREATURE_INFO` range/animation fields and routes timeline C29–C41, including F0180's initial C37, through the existing F0209 decision/scheduling path. `ACTIVE_GROUP::Aspect[4]` now persists across C38/C33 handoff in M10. C38-C41 now apply F0207's resolved creature attack: creature-owned F0212 projectiles receive their first movement event, while melee selects a source cell/champion, resolves F0230/F0321 through the shared combat path, and emits a bounded attack receipt. M10 C37 now supplies the actual F0200/F0197/F0199 visibility path over loaded DM1 tiles: F0227 directional cones, F0199 fixed-point diagonal traversal and two-corner blocking, PC34 invisibility/SEE_INVISIBLE and palette-darkness gates, sight range, walls, closed fakewalls, opaque three-quarter/closed doors, and the Portcullis/Ra see-through exception. Its resolved move/flee action now enters the M10 F0267 source-unlink/destination-link/projectile/retry receipt path rather than stopping at behavior scheduling. The live active-group bridge now persists ReDMCSB F0205/F0206 packed Directions through C29-C41; C38 turns a visible non-side-attacker before its attack retry, keeps GROUP.C's opposite-free-cell assignment when its direct quarter-square melee cell is occupied, and preserves the PC 3.4 `MEDIA720_I34E/I34M` range-greater-than-one diagonal-shot gate before the ordinary attack roll. Raw C04 `GROUP.Direction` remains its low-slot F0184 view. Still missing: broader C38 projectile-impact behavior and retirement of the remaining M11 scan-era creature adapter once its non-C37 behavior surface is covered.
+
+  - 2026-07-13 update: deferred C38 cell changes now run the F0218 pending-projectile scan against the original packed C04 cells before writeback, preserving F0190 compaction/removal. Remaining work is broader C38 projectile-impact behavior and M11 adapter retirement.
+
+  - 2026-07-13 update: the shared F0218 path now consumes its full
+    PROJEXPL.C F0217 -> GROUP.C F0190 aftermath for C38 and F0266 callers:
+    killed creatures receive source possession/event/fear/unlink handling,
+    surviving hits schedule C30 through F0209, and raw C04 state is written
+    back before any caller can relink a dead group. Remaining work is wider
+    real-data C38 projectile-family coverage and retirement of the M11
+    scan-era creature adapter.
+
+  - 2026-07-13 update: C29-C36/C38-C41 ordinary reaction moves now pass their
+    source-selected F0202 direction and destination through the live M10
+    F0267 unlink/link/projectile-precheck route. C37 retains its existing
+    retry owner. The unrelated Thieves' Eye timeline-count failure remains
+    present before and after this change; it is not part of F0209.
+
+  - 2026-07-13 update: both the C37 and C29-C36/C38-C41 F0209 -> F0267
+    record-mutation routes now retain the original source predecessor and
+    successor before unlinking C04. If a real destination thing-list entry
+    cannot be written, they restore the exact raw source chain and leave raw
+    direction plus active-group coordinates uncommitted. The focused
+    `dm1_v1_group_los_move_rollback_pc34_compat` regression covers a valid
+    F0202 east LoS step whose destination flag has no decoded record slot.
+    Remaining work is broader C38 projectile-impact behavior and retirement
+    of the M11 scan-era creature adapter.
+
+  - 2026-07-13 update: original PC34 C48/C49 save events now bind their
+    ReDMCSB `EVENT.B.Slot` C14 Thing and packed `EVENT.C.Projectile` motion
+    fields to the matching live projectile record before M10 dispatch. A
+    mismatched event index, Thing type, capacity, or map rejects the import;
+    remaining save work is broader real corpus round-trip coverage rather
+    than a substitute projectile event.
+
+  - 2026-07-23 update: authenticated original C3/C4 runtime worlds now carry
+    a transient per-slot F0219 dispatch receipt from M10 to M11. A C48/C49
+    slot consumed by M10 in the current presentation frame is no longer
+    advanced a second time by M11's legacy F0811 scan path. Synthetic and
+    direct-probe worlds retain their explicit legacy route until their source
+    handoff is authenticated. The focused M11 regression proves that the
+    projectile position, cell, and M10 timeline owner remain unchanged.
+    Remaining work is broader real-data C38 projectile-family coverage and
+    complete retirement of the legacy adapter once all consumers use this
+    authenticated handoff.
+
+  - 2026-07-23 update: the C38/F0218 authenticated C14 precheck now retires
+    the matching M10 projectile slot at the same source F0214/F0217 boundary
+    that clears raw C14 `Next` and C49 `EventIndex`. This prevents a later
+    dispatcher from resolving the same group impact a second time. The
+    focused C38 regression proves raw C14, C49, and the live M10 slot retire
+    together. Remaining work is the next real-data C38 projectile families,
+    especially source-corpus coverage beyond the current group-cell fixture.
+
+  - 2026-07-23 update: M10 now retires the C14 `EventIndex` after an already
+    dispatched C48/C49 wall impact, before F0215 clears or materializes the
+    associated Thing. The source-shaped regression queues the C48 at its real
+    C14 physical index, drains earlier records through F0887, and proves raw
+    C14 next/index bytes, the live slot, and the timeline all retire together.
+    Remaining work is real corpus coverage for door and teleporter impact
+    families, not M11 presentation ownership.
+
+  - 2026-07-23 update: the C38/F0217 door-impact tail now validates and
+    publishes its source C02 door record before C14/C49 retirement. The
+    isolated physical-index regression proves the C02 follow-up remains while
+    raw/decoded C14, C49, and the M10 projectile slot retire together. The
+    remaining DM1-003 impact work is real corpus coverage for teleporter and
+    other non-wall families.
+
+  - 2026-07-23 update: F0249/F0267 relocation now updates the matching live
+    M10 C14 projection together with its C48/C49 coordinates. The next F0217
+    dispatch therefore damages the destination champion once, then retires
+    C14/C49; it cannot resolve again at the former square. The isolated
+    regression covers that ordering. Remaining work is broader original-save
+    corpus coverage for teleporter-routed projectile families.
+
+  - 2026-07-23 update: the loaded C04 object-scope teleporter route now runs
+    MOVESENS.C F0263 through the shared packed direction/cell helper for C14.
+    Its authenticated M10 projection receives the same rotated direction and
+    packed cell as raw C14, while F0249 keeps exactly its C48/C49 owner at the
+    target. The isolated regression covers a relative rotation; remaining
+    work is original-save corpus coverage for chained and absolute C04 routes.
+
+  - 2026-07-23 update: the same F0249/F0267 C14 route is now regression-proven
+    across two loaded C04 object-scope hops. Each F0263 relative hop accumulates
+    raw packed cell and active M10 direction/cell state, while F0249 relocates
+    the sole physical C48 owner only once to the terminal square. Remaining
+    work is original-save corpus coverage, including absolute and longer chains.
+
+  - 2026-07-23 update: M10 now carries a live C14 through a loaded open C02
+    door and the following object-scope C04 target using MOVESENS.C F0267/F0263.
+    The fixed 100-byte digest encodes the source-backed rotated direction/cell
+    in its existing teleporter receipt; no host projectile state is invented.
+    F0219 preserves C14 Slot material plus kinetic/attack momentum and requeues
+    exactly its physical C48 at the target. Remaining work is original-save
+    corpus coverage for absolute rotation and longer mixed door/C04 chains.
+
+  - 2026-07-11 update: the authoritative local DM1 PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair is scanner-verified. When the M11 DM1 viewport has original graphics loaded, its floor/ceiling path now accepts only the current map's exact floor-set bitmaps; it no longer substitutes set-0 art or procedural fills after a source-asset miss. Asset-free/headless rendering retains its explicit fallback only when no authoritative graphics session exists. Remaining real-data presentation work is broader exact bitmap coverage and runtime capture, not synthetic replacement art.
+
+  - DM1-005 — ReDMCSB TIMELINE.C F0261_TIMELINE_Process_CPSEF, especially F0245/F0248/F0250/F0251/F0244: `TIMELINE_EVENT_SQUARE_STATE` now routes source C10 generic-door effects through F0244/F0241 and applies bounded C07 fakewall plus C08/C09 teleporter/pit bit-state SET/CLEAR/TOGGLE handlers. Opening C08/C09 now re-resolves party through the existing F0267 environment route before it snapshots and routes resident C04 plus ordinary C05..C15 Things through the live F0267 chain, so party, groups, and objects reach real teleporter/pit effects rather than waiting for a later move. F0249 moves C04 first and retains F0266's party-map projectile preflight before its existing C60/C61 destination/retry owner runs. Every admitted C04 teleporter hop now also applies F0262's original packed direction/cell rotation to the raw group and active-group state before the destination is linked. F0242 now defers C07 CLEAR for party or material-group occupancy without moving the group, then retries the same event. Moved C14 projectiles relocate only their C48/C49 runtime event and moved C15 explosions relocate only their C25 advance event; the original C24 Fluxcage omission is preserved. F0245 consumes every corridor TextString plus each live C006 generator in M10 list order, and a hidden-to-visible text on the party square enters M11 through the source F0168 message decode and message area. F0248 consumes same-cell wall TextStrings plus C005/C006 data/remote dispatch, C007/C009 F0167 materialized-object, C008/C010 explosion, and C014/C015 live-object launchers through real F0810/C25 projectile state, unfiltered C018 `gameWon`, C10 local Steal XP through F0269/F0270/F0304-shaped lifecycle mutation, and performs one source-ordered local sensor rotation after the batch. C10 door animation now requires its raw PC34 C00 record, C11 F0259 moves a quiver weapon only from a byte-matching raw C05 record, C13 verifies its raw C10 bones row, and C24 retains plus verifies the raw C15 fingerprint before unlinking. Remaining: source-backed `TIMELINE_EVENT_SPELL_TICK` ownership and real-data C04 teleporter runtime-capture breadth.
+
+  - 2026-07-13 update: legacy `TIMELINE_EVENT_SPELL_TICK` now accepts only F0412/F0763's typed status receipts or a fully shaped native PC34 C71/C73/C74/C77/C78/C79 record, then enters the existing F0261 expiry branch. Unknown payloads remain no-ops; no generic host spell effect is synthesized. `dm1_v1_spell_tick_source_ownership` now covers all six source forms through both the legacy compatibility kind and native status-timeout owner. Remaining: real-data C04 teleporter runtime-capture breadth.
+
+  - 2026-08-06 M11 live square-state consumer: pit and fakewall SET/CLEAR/TOGGLE effects now cross the DM1 `SensorActuatorDispatch_Compat` and `dm1_v1_actuator_execute_dispatch_pc34()` boundary before mutating authenticated map bytes. HOLD remains a no-op, door animation remains owned by the F0713/F0714 timeline path, and teleporter state remains on its existing source route. The actuator, pit/teleporter and game-loop integration regressions pass; remaining work is real-data capture breadth.
+
+  - 2026-07-17 update: F0249's F0267 runtime consumer now appends a moved C15
+    only through the loaded square chain, writes both decoded and raw C15
+    `Next`, and relocates its matching C25 event while retaining C24 unchanged.
+    The focused regression also pins a pre-existing destination tail. Remaining:
+    real-data C04 teleporter runtime-capture breadth.
+
+  - DM1-007 — ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawThing and DRAWVIEW.C creature traversal: the unused `DM1_V1_CreatureRender_CollectPc34Compat()` stub has been retired; it accepted an untyped dungeon pointer yet had no production caller and could not truthfully collect M11's private world records. `dm1_creature_center_draw_plan()` and `dm1_creature_side_draw_plan()` remain the DM1-owned typed F0115 render-list receipts. M11 now consumes `summary_from_world` and the source-backed `world_candidates` receipt: compact SFT lookup and bounded next links use M10 F0511/F0512, typed C04 groups and floor items are decoded in DM1/M10, and HoC map-0 mirror payload filtering remains in the DM1 receipt. Creature and projectile host blits now publish their selected PC34 material only after the real path succeeds: C584+ plus G0221/G0222 for creatures, M613 or F0142 G0209/M612 for C2900 projectiles. F0111 center doors now likewise carry their source-owned frame/panel receipt through M11 and fail closed when a real PC34 blit fails. Remaining: wider real pixel/capture coverage, especially packaged Mac/release evidence.
+
+  - 2026-07-23 update: HoC C127 mirror execution now validates the exact
+    source-owned C346 backing and C026 atlas selection against the decoded
+    `GRAPHICS.DAT` slots before M11 draws either layer. The F0115 floor lane
+    likewise publishes only a DM1-validated C2500/C2548 material receipt:
+    M11 pointer selection now consumes that same rendered C026 destination and
+    requires matching C127/C346/C026/C040 runtime admission, so no static
+    placeholder hit rectangle remains. Remaining HoC work here is packaged
+    Mac/release capture breadth, not another mirror click route.
+
+  - 2026-07-23 update: the real map-0 C127 sweep now derives every party
+    pose from the source wall-cell geometry and verifies all 24 catalog
+    portraits through `GetFrontMirrorOrdinal` and the production candidate
+    selection route. Turning each pose away from its front C127 wall clears
+    that ordinal, so side/depth presentation cannot retain a stale selectable
+    mirror. The remaining HoC mirror task is packaged Mac/release capture,
+    not an untested catalog, geometry, or selection route.
+
+  - 2026-07-23 update: M11 now publishes a frame-local C127 viewport
+    material receipt while it consumes the real F0107/F0115 path: D1C records
+    the admitted C346/C026 pair, D1L/D1R select the dedicated C346 backing
+    instead of the map-local ordinary-ornament slot, and D2+ records a
+    clear-only source decision. The real map-0 regression sweeps every party
+    tuple, proves all 24 front portraits plus side and distant outcomes, and
+    proves a following no-mirror frame cannot retain prior material. Remaining
+    HoC work is packaged Mac/release capture breadth.
+    selected object graphic must match the ReDMCSB aspect, with C10 and
+    F0791 required. Substituted frames, portraits, or object graphics fail
+    closed. Remaining work is real Mac/release capture, not material fallback.
+
+  - 2026-07-22 update: M11 creature ticking now consumes the typed F0115 C04
+    candidate receipt instead of directly scanning compact or dense
+    `squareFirstThings` chains. The real-PC34 regression compares the consumed
+    candidate with the same source receipt; HoC remains outside this path.
+
+  - 2026-07-22 update: the actual non-HoC F0115 floor-item blit now reaches
+    final M11 capture only after its loaded GRAPHICS.DAT material matches the
+    current frame. Missing or stale material clears the route; HoC, projectile,
+    and HUD consumers remain separate. Wider packaged capture is still open.
+
+  - 2026-07-22 update: F0115's separate ordinary C15 deferred-explosion pass
+    now consumes only current F0114/M636 material into M11 final capture.
+    Missing or stale PC34 graphics are clear-only; HoC and non-C15 effects do
+    not borrow this receipt.
+
+  - 2026-07-22 update: F0115's live C2900 projectile lane now consumes only
+    current M613 or F0142/G0209/M612 material into final M11 capture. A stale
+    weapon record or missing bitmap clears this route; other F0115 lanes remain
+    independent.
+
+  - 2026-07-22 update: `G0377_ui_CurrentActiveGroupCount` now has a focused
+    lifecycle regression across F0196 initialization, F0195 admission, and
+    original PC34 save/handoff. The source count is `uint16_t`; Firestaff's
+    capacity-checked live prefix remains intentionally `int32_t`.
+
+  - 2026-07-13 update: `summary_from_world` owns the complete F0115 summary boundary for a map square, joining ReDMCSB DUNGEON.C F0160/F0161 static SFT traversal to the F0115 live projectile/explosion passes. `world_candidates` now provides the corresponding bounded C04 group and typed floor-item candidates to M11, with a regression over the installed PC34 `DUNGEON.DAT`; no synthetic dungeon fixture is used. The host regressions also load installed PC34 `GRAPHICS.DAT` and exercise Mummy D2 G0219/G0221/G0222, M613 graphic 454, and the F0142 weapon-0 G0209/M612 graphic-537 route. D0C now consumes the distinct original M636 explosion-pattern family (489..497) before the normal F0114 D1+ sprite route; Fluxcage remains on its source field path. Remaining DM1 renderer work is broader source pixel/capture evidence, not another M11 list adapter.
+
+  - 2026-07-13 update: the F0107 side-wall ornament route now carries its G0194/G0205-selected PC34 material receipt through M11, including original graphic, C10 transparency, D2/D3 palette, and source flip. The real-asset regression draws the D3R-left alcove graphic 261. Remaining wall/HoC renderer work is broader real capture coverage, not a replacement ornament, font, or mirror path.
+
+  - 2026-07-14 update: the live HoC C127 host route now consumes C346 from
+    the DM1 receipt's source origin and applies ReDMCSB F0791 native-bitmap
+    scaling into G0205 before C026 is overlaid. An absent or out-of-bounds
+    original source region is a no-draw; M11 supplies no substitute backing.
+    The focused real-PC34 HoC regression compares an emitted C346-only
+    framebuffer pixel against the installed source bitmap's scaled mapping.
+    Remaining renderer work is broader packaged capture coverage.
+
+  - 2026-07-13 update: readable D1C inscriptions now carry a DM1/M10 F0168/F0107 receipt from the selected original TextString through the M648 host blit. It retains raw glyph bytes, source line positions, C10 transparency, and graphic 258; M11 supplies no text, font, or patch substitute. The real PC34 capture covers all 56 visible inscription poses, and the dedicated non-HoC regression proves a map-1 TextString's legal facing/cell, final line placement, exact M648 pixels, and C10 preservation. The separate side/depth path now consumes the same original TextString only to select ReDMCSB's unreadable original-ornament box height; it never draws a host font. F0128 now performs one final current-tuple D1C repaint after the host palette pass and invalidates the side/depth receipt before every new tuple; real-data turns prove neither readable nor unreadable prior TextStrings remain. The same real-data route now also clears the final M648 receipt when its current TextString `Visible` bit becomes false, rather than retaining prior glyphs or substituting host text. The final repaint now consumes a DM1-owned clear-first viewport receipt: C127 mirrors, non-front walls, hidden text, and missing source data are clear-only, while only the current readable D1C TextString supplies M648/C10 material. Remaining work is packaged capture breadth, not glyph decoding, non-HoC materialization, side/depth text substitution, redraw ownership, or a replacement font.
+
+  - 2026-07-17 update: the F0168/F0107 DM1 receipt now also preserves the
+    selected packed PC34 TextString span as word offset, bounded word count,
+    and FNV-1a, alongside the decoded glyph-byte FNV-1a. M11 publishes D1C
+    only when that span and the authentic M648 8x8 font pixels both match;
+    the receipt records native 1:1 scale and no host palette remap. D3/D2/D1
+    side/depth plaques retain the same authenticated text span while using
+    the original F0107 ornament material, C10 transparency, palette, flip,
+    and G0204 height table. The visual real-PC34 regressions cover every
+    D1C palette transition plus the readable and unreadable source receipts;
+    malformed or absent material remains a no-draw. Remaining work is only
+    broader packaged capture, not a replacement font, texture, palette, or
+    scale path.
+
+  - 2026-07-11 update: generic M10 tick-emission audio classification now enters through a DM1-owned plan. M11 only maps the selected DM1 presentation route to its SDL marker or submits the preserved source sound index, so movement, door, spell, and source-sound decisions no longer live in the game view. Remaining DM1 audio work is backend/capture ownership, not endgame replay, combat behavior, save/load, viewport geometry, or Hall of Champions duplication.
+
+  - 2026-07-11 update: M11 now consumes the source-owned F0337 dungeon-view-light receipt for both its exposed light amount and viewport palette, and no longer keeps a second 0-255 light model or an every-tick torch-fuel cache. Live `ChargeCount`, the weighted five-torch rule, negative F0257 darkness amounts, 512-tick F0338 decay, and raw-thing writes remain in the DM1/M10 runtime route. Remaining DM1 renderer work is broader active runtime ownership and real packaged Mac/release capture, not light-model duplication, combat, projectiles, save/load, corpus, viewport geometry, or Hall of Champions duplication.
+
+  - 2026-07-13 update: the first visible entrance frame and every source-step
+    command now require the DM1-owned PC34 G0020 palette-table count and
+    fingerprint alongside the existing F0438/F0441 VBlank schedule. M11
+    consumes the receipt's palette ordinal instead of choosing an entrance
+    palette locally. Remaining work is packaged Mac/app capture, not synthetic
+    startup frames or palettes.
+
+  - 2026-07-13 update: M11 now admits the DM1 C001 title route only after the
+    decoded hash-verified PC34 graphic proves non-black source pixels for the
+    `DUNGEON`, `MASTER/STRIKES BACK`, and `PRESENTS` regions used by F0437.
+    The receipt is DM1-only and retains the existing C12 then C13/C14 palette
+    and VBlank timing contract. Remaining work is packaged capture, not a
+    TITLE.DAT or CSB fallback for the DM1 route.
+
+  - 2026-07-13 update: M11 now consumes a DM1-owned F0437 presentation command
+    for every C001 source event. The command carries only the source-proven
+    visible-frame decision, C12 PRESENTS versus C13/C14 title palette, and
+    pre/post VBlank timing; it rejects CSB palette substitution and never
+    supplies a synthetic frame. The C001 decoded-asset receipt remains a
+    mandatory input. Remaining work is packaged Mac/app capture, not a shared
+    CSB title path or replacement art.
+
+  - 2026-07-13 update: the DM1 entrance C005 credits phase now requires the
+    decoded original 320x200 C005 raster. M11 consumes a DM1-owned F0442
+    receipt for the G0019 PC34 credits palette and its 1800-VBlank input wait;
+    it no longer draws a host-made credits replacement and rejects CSB palette
+    substitution. Remaining startup work is packaged Mac/app capture, not
+    fallback credits art or a shared CSB phase.
+
+  - 2026-07-13 update: returning from DM1 C005 credits now follows the
+    ReDMCSB F0441 outer loop: the prior F0442 receipt is consumed, real
+    C004/C002/C003 redraw under the DM1 entrance palette is required, stale
+    credits-dismissal input is discarded, and M11 waits for a fresh entrance
+    command. It no longer replays title/fade/micro-dungeon steps after credits.
+    Remaining startup work is packaged Mac/app capture only.
+
+  - 2026-07-13 update: the production DM1 PC34 title path is now fail-closed
+    on decoded C001. `TITLE.DAT` remains inspectable by its own tooling but
+    cannot present an alternate runtime title sequence when C001 is missing or
+    malformed. The C12 then C13/C14 palette/timing path remains C001-only.
+    Remaining startup work is packaged Mac/app capture only.
+
+  - 2026-07-13 update: the first opened HoC frame now reaches M12's presented
+    capture consumer through the same M11 game-frame presentation route as
+    later PC34 materialized frames. V1 palette/nearest scaling and V2 targets
+    are therefore applied before the capture receipt is published; M11 no
+    longer uses the bare presentation path for this one frame. No synthetic
+    text or debug overlay is added. Remaining work is packaged Mac/app proof.
+
+  - 2026-07-13 update: first and later materialized HoC frames now share one
+    M11->M12 present-and-capture edge. M12 capture is published only after
+    M11 successfully applies the game presentation target/palette contract,
+    preventing a later redraw from retaining a stale first-frame receipt.
+    Remaining work is packaged Mac/app proof.
+
+  - 2026-07-13 update: DM1 SWSH now consumes a DM1-owned command receipt for
+    every original `SWSH.C` event: logo load, sound start, each palette word,
+    each VBlank wait, and the terminal `START.PRG` handoff. M11 fails closed
+    when the PC34 media receipt or any event identity/timing disagrees; it
+    cannot borrow generic V1 timing or palette commands for DM1. Remaining
+    startup work is packaged Mac/app capture, not a synthetic swoosh path.
+
+  - 2026-07-13 update: the FTL sound-start command now hands the exact
+    `SWSH.C V0901005` XBIOS `Dosound()` PSG program to the M11 audio boundary.
+    Its 17 register writes, 20 VBlank waits, and terminator are validated;
+    M11 cannot replace it with SND3 or a procedural marker. Remaining audio
+    work is backend capture/PSG playback proof on a packaged app.
+
+  - 2026-07-13 update: DM1 entrance F0438 door-rattle now requires the
+    decoded original PC34 SND3 entry at the active source sound index. M11
+    rejects a missing source buffer instead of falling back to a procedural
+    door marker. Remaining startup audio work is the independent packaged
+    Mac capture/PSG waveform proof, not a substitute entrance effect.
+
+  - 2026-07-11 update: DM1 C001 TITLE zoom now follows F0437's actual bitmap direction: the complete `320x80` DUNGEON MASTER source is scaled down into each centred `48x12` through `320x80` destination box. It no longer crops a tiny source rectangle and magnifies it full-screen. The title handoff probe now consumes this production blit plan after an RGBA SWSH-like present and verifies palette-index-to-RGB readback. Remaining title work is real packaged Mac/release capture breadth and any source-proven presentation defect, not synthetic title replacement.
+
+  - 2026-07-11 update: the local DM1 capture blockers in pass610 viewport crop capture, pass623 input capture readiness, original-capture live-row determinism, and capture runbook consistency are green after the capture-determinism repair in DONE.md. Remaining DM1 capture work is real packaged Mac/release/app capture promotion and any later active runtime ownership cleanup outside this verified gate cluster.
+
+  - 2026-07-11 update: M12 DM1 HoC presented-capture receipt import now goes through `dm1_v1_startup_hoc_presented_capture_m12_import_receipt_pc34`, so M12 no longer owns the consumer-mask/chain-hash validation for app/Mac presented capture. Remaining DM1 work is real packaged Mac/release/app capture promotion and broader runtime/API ownership outside this active M12 import path.
+
+  - 2026-07-11 update: DM1 HoC presented-capture host export now lives behind a DM1 receipt consumed by M11 before publishing to M12; M11 no longer consumes the lower-level publish receipt directly. Remaining work is full target/test verification once local stuck compiler processes clear, plus broader real Mac/release capture promotion.
+
+  - 2026-07-11 update: DM1 HoC boot probe packaging now lives behind `dm1_v1_startup_hoc_boot_probe_summary_from_host_facts_pc34`; M11 only gathers host pixels/assets plus complete-support facts. Remaining cleanup is broader startup/render/save host capture and full target verification once the shared CSB/M10 compiler queue is unstuck.
+
+  - 2026-07-11 update: DM1 HoC boot-probe complete-support and release-app failure diagnostics now come from a DM1 expectation receipt, and the release-app gate now requires real Mac/window/presented capture evidence instead of only a host route. Remaining work is full target verification after the shared dependency build stops being killed, plus broader real Mac/release capture promotion.
+
+  - 2026-07-11 update: DM1 HoC boot-probe READY log fields now come from a DM1/ReDMCSB log receipt instead of M11 formatting the HoC/capture/save fields directly. Remaining work is real packaged Mac/release capture promotion and broader full target verification after unrelated shared dependency target builds stop terminating.
+
+  - 2026-07-11 update: DM1 HoC boot-probe legacy host fields now come from `dm1_v1_startup_hoc_boot_probe_host_fields_pc34`; M11 keeps compatibility fields but no longer maps HoC/capture/save summary fields directly. Remaining work is real packaged Mac/release capture promotion and any later removal of legacy host fields after callers move to the DM1 summary/export receipts.
+
+  - 2026-07-11 update: M12 DM1 HoC startup capture readiness now consumes `dm1_v1_startup_hoc_m12_capture_fields_pc34` instead of rebuilding release/app ownership readiness in the menu layer. Remaining work is real packaged Mac/release capture promotion and further retirement of legacy flat host fields once callers consume DM1 receipts directly.
+
+  - 2026-07-11 update: the M12 all-games boot-readiness regression no longer scans screenshot media during init, and the focused DM1 startup state-machine target now builds/runs locally. Remaining DM1 work is real packaged Mac/release/app capture promotion and broader app-level capture evidence.
+
+  - 2026-07-11 update: unused public M11 wrappers for DM1 D4 far projectile boxes and F0108 floor-ornament source zones are removed; callers should use the DM1 viewport/projectile APIs directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: DM1 F0115 object/projectile coordinate wrappers are removed from the public M11 surface; tests now use the DM1/ReDMCSB viewport APIs directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: public M11 D1C/general wall-ornament zone wrappers are removed; HiDPI/mirror-zone coverage now consumes `dm1_v1_wall_ornament_zone_pc34` directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: unused public CSB F0282 champion-panel gate wrapper is removed; active HoC/CSB panel routing remains behind the DM1/CSB receipt paths. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: public `M11_Entrance_*` runtime wrappers and `M11_ENTRANCE_RUNTIME_*` constants are retired; tests and CSB startup gates now consume `ENTRANCE_Compat_*` directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: DM1/CSB V1 `TITLE` and `SWSH/SWOOSH` intro pathfinders now live under V1-owned API names and frontend source paths; M11 only calls the V1 runtime handoff. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: V1 turning presentation now lives in DM1-owned header/source/test paths and no longer exports public `M11_V1_TURNING_*` or `m11_v1_turning_*` aliases. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: chest auto-close/drop-to-floor public aliases no longer expose `m11_inventory_chest*` names; full-leader-hand drop-to-floor is now a DM1-owned CTest target. Remaining cleanup is active runtime APIs only, not old removed wrappers.
+
+  - 2026-07-11 update: DM1 chest open/close full-leader-hand item contract fields no longer expose old `m11Item*` names; tests consume DM1-owned item fields. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: public M11 V1 dialog layout exports are removed; M11 render/input now consumes `dm1_v1_dialog_layout_pc34_compat` directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: public M11 V1 endgame layout exports are removed; endgame draw/input/a11y now consume DM1/ReDMCSB layout and graphic-id modules directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: the M11 action-area geometry regression now consumes DM1/ReDMCSB champion-status layout and graphic-id APIs directly for status/HUD zones. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: inventory/full-panel/DM2 startup regressions now consume DM1/ReDMCSB status-box and slot/poison graphic APIs directly instead of pure public M11 wrappers. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: public M11 normal-slot and poison-label graphic-id wrappers are removed; active inventory/status drawing now consumes DM1/ReDMCSB graphic-id APIs directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: active M11 status-HUD drawing now consumes DM1/ReDMCSB hand-slot, shield-border, and champion-damage graphic/layout APIs directly. Remaining cleanup is public wrapper retirement after external callers move.
+
+  - 2026-07-11 update: public M11 wounded/acting slotbox, status-hand-slot, shield-border, and champion damage graphic wrappers are removed after consumers moved to DM1/ReDMCSB APIs. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: remaining public M11 status box/name/bar/shield/creature-damage wrappers are removed; runtime mouse routing and drawing now consume DM1/ReDMCSB layout and graphic-id APIs directly. Remaining cleanup is active runtime APIs only.
+
+  - 2026-07-11 update: active M11 inventory panel/object-description rendering now consumes DM1/ReDMCSB panel, scroll, object-circle, arrow/eye, and food/water label layout/graphic APIs directly. Remaining cleanup is inventory slot/chest/a11y/test callers and food/water bar wrapper retirement.
+
+  - 2026-07-11 update: inventory a11y plus inventory mouse/scroll/full-panel/action geometry tests now consume DM1/ReDMCSB layout and graphic-id APIs directly, a11y no longer uses public M11 inventory/chest zone wrappers or hardcoded backpack coordinates, and M11 inventory rendering/mouse-route lookup now gets source-slotbox mapping from the DM1 slot-placement module. Remaining cleanup is public wrapper retirement after probe/test callers move, plus any residual food/water wrapper debt.
+
+  - 2026-07-11 update: active M11 food/water bar drawing now consumes the DM1/ReDMCSB F0344/F0345 food-water status-box contract and bar-zone helpers. Remaining cleanup is public wrapper retirement after probe callers move.
+
+  - 2026-07-15 update: active V1 F0345 mouth-panel presentation now requires the complete authentic C020/C030/C031 set and conditional C032 before any panel/blit is presented. Missing or malformed `GRAPHICS.DAT` material consumes the route without the former gray host panel or partial labels. Remaining work is broader original-data capture, not a visual fallback.
+
+  - 2026-07-15 update: F0343/F0344 C103/C104 bars now consume the source contract's C05/C14 normal and C08/C11 warning palette only. A missing source contract leaves bars absent instead of selecting generic M11 colours. Remaining work is real packaged capture of the complete F0343/F0344/F0345 panel.
+
+  - 2026-07-11 update: public M11 inventory/object-description/arrow-eye/food-water graphic and layout wrapper exports are removed; probes now consume DM1/ReDMCSB layout, graphic-id, and food-water contracts directly. Remaining cleanup is older non-inventory HoC/game-view probe wrapper debt.
+
+  - 2026-07-11 update: active M11 action/spell draw and hit-test paths now consume DM1/ReDMCSB box action/spell APIs directly for spell label blits, action row/icon hit-tests, right-column frame drawing, and mouse-route zone 11. Remaining cleanup is older diagnostic/probe wrapper debt only.
+
+  - 2026-07-11 update: DM1 object-icon source atlas selection now lives in the DM1 graphic-id module and M11 object-icon blits consume that helper directly. Remaining cleanup is older diagnostic/probe wrapper debt only.
+
+  - 2026-07-11 update: DM1 action-icon global hatch, action-palette remap, and cell backdrop color now live in the DM1 disabled-icon/action-icon contract; M11 drawing consumes those helpers directly. Remaining cleanup is older diagnostic/probe wrapper debt only.
+
+  - 2026-07-11 update: the public M11 V1 object-icon source-zone wrapper is retired; inventory render tests now consume `dm1_v1_object_icon_source_zone_pc34()` directly. Remaining cleanup is older diagnostic/probe wrapper debt only.
+
+  - 2026-07-11 update: the public M11 action-icon palette/hatch/backdrop wrappers are retired after active drawing moved to DM1 helpers. Remaining cleanup is older diagnostic/probe wrapper debt only.
+
+  - 2026-07-11 update: the public M11 movement-arrow wrapper exports are retired; M11 mouse routing, arrow drawing, and overlay feedback tests now consume DM1/ReDMCSB movement-arrow APIs directly. Remaining cleanup is older diagnostic/probe wrapper debt only.
+
+  - 2026-07-11 update: DM1 resurrection rename host text/key routing now lives in the DM1/ReDMCSB rename gate; M11 maps SDL keys and applies the returned route only. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+
+  - 2026-07-11 update: public M11 status-hand/poison/damage layout exports are retired; M11 drawing and action-area regression now consume DM1/ReDMCSB champion-status layout and graphic APIs directly. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+
+  - 2026-07-11 update: public M11 generic DM1 layout-zone exports are retired for screen, dialog, explosion, viewport text, message area, viewport, and leader-hand object-name geometry; M11 and tests now consume `dm1_v1_layout_zones_pc34_compat` directly. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+
+  - 2026-07-11 update: public M11 champion-icon layout/graphic/source-index/remap exports are retired; M11 drawing, mouse routing, and action-area regression now consume DM1 layout/graphic APIs directly, with runtime palette remap kept internal to M11. Remaining cleanup is older diagnostic/probe wrapper debt plus larger full-graphics proof.
+
+  - 2026-07-11 update: public M11 action-menu/action-icon/spell-rune layout exports are retired; tests and selected probes now consume DM1/ReDMCSB action/spell contracts directly. The broad M11 game-view probe now builds and passes through probe-local adapters over the DM1/ReDMCSB APIs. Remaining cleanup is active runtime APIs plus larger full-graphics proof only.
+
+  - 2026-07-11 update: remaining public M11 action-area/spell-area zone, strip, graphic-id, result/pass, and caster-tab exports are retired; M11 fallback drawing keeps only an internal strip helper. Remaining cleanup is inventory/chest public wrappers plus broad legacy diagnostic probes.
+
+  - 2026-07-11 update: public M11 inventory source-slotbox/champion-slot mapping exports are retired; M11 inventory/full-panel and DM2 startup boundary tests now consume the DM1/ReDMCSB inventory slot-placement API directly. Remaining cleanup is inventory/chest zone/graphic wrappers and broad legacy diagnostic probes.
+
+  - 2026-07-11 update: public M11 inventory source-slotbox graphic plus equipment/backpack zone exports are retired; probe/test callers now consume the DM1/ReDMCSB inventory slot-placement and graphic-id APIs directly. Remaining cleanup is source-slotbox/chest zone wrapper retirement plus broad legacy diagnostic probes.
+
+  - 2026-07-11 update: public M11 inventory source-slotbox and chest slotbox zone exports are retired; tests/probes now consume DM1/ReDMCSB slot-placement xywh helpers directly. Remaining cleanup is broad legacy diagnostic probes and non-inventory active runtime APIs.
+
+  - 2026-07-11 update: public M11 V1 viewport base-graphic and source composition-order exports are retired; probes now consume the DM1/ReDMCSB viewport module directly. Remaining cleanup is broad legacy diagnostic probes and active runtime APIs that still need owner modules.
+
+  - 2026-07-11 update: public M11 champion-portrait graphic-id export is retired; runtime and HoC probes now consume `dm1_v1_graphic_champion_portraits_pc34()` directly. Remaining cleanup is broad legacy diagnostic probes and active runtime APIs that still need owner modules.
+
+  - 2026-07-11 update: HoC wall-ornament probe callers now consume DM1/ReDMCSB wall-ornament xywh helpers directly instead of stale M11 helper names. Remaining cleanup is broad legacy diagnostic probes and active runtime APIs that still need owner modules.
+
+  - 2026-07-11 update: the next DM1 champion-panel/HoC full-build probe batch now consumes DM1/ReDMCSB status-layout, graphic-id, viewport, and dungeon APIs directly, and full local build completes. Remaining cleanup is runtime/API ownership work, not these stale diagnostic wrappers.
+
+  - 2026-07-11 update: 33 HoC/champion-mirror portrait probes now load the C026 champion portrait atlas through a shared DM1/ReDMCSB graphic-id helper instead of duplicating the old public-M11-helper path. Remaining cleanup is production runtime/API ownership plus real Mac capture, not this probe atlas loader duplication.
+
+  - 2026-07-11 update: the follow-up HoC/champion-mirror probe sweep moved the remaining direct M11 C026 portrait-atlas probe loads to the shared DM1/ReDMCSB helper and retired stale `M11_GFX_CHAMPION_PORTRAITS` wording. Remaining cleanup is production runtime/API ownership plus real Mac capture, not probe atlas loader duplication.
+
+  - 2026-07-11 update: recruited champion portrait packing and its save/load regression now consume the DM1/ReDMCSB C026 graphic-id contract instead of hardcoded M11 id 26. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: M11 no longer exposes the V1 mouse-route resolver or `M11_DM1_MOUSE_*` constants; runtime/tests/probes consume the DM1/ReDMCSB `DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat()` API. Remaining cleanup is deeper runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: public M11 V1 leader-hand/open-chest helper names are retired; runtime/tests/probes consume `DM1_V1_M11Runtime_*Pc34Compat` for G4055/G0426/F0333/F0334/F0297/F0298 paths. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: quicksave `.v1runtime` byte format/parsing is now DM1-owned in `dm1_v1_runtime_sidecar_pc34_compat`; M11 only maps host fields to the DM1 sidecar contract. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 canonical loose `DUNGEON.DAT` is now hash-verified before virtual archive path selection, and original PC34 M11 resume keeps live dungeon ownership after handoff. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 original-PC34 runtime handoff now stages party, event queue, report, and optional dungeon tail in a candidate world and commits them atomically only after the full ReDMCSB F0435-shaped load succeeds. `DM1_LoadGameWithBackup()` now applies the same candidate-world transaction to native and PC34 resume sources, promoting a `.bak` only after a fully valid candidate and preserving the live world/header when a present primary is rejected. The DM1-owned corpus verifier now runs every classifier-qualified PC34 file through transient F0435 -> F0433 -> F0435 import/export/reload proof without writing beside user saves. Remaining save work is launcher/UI consumption of the corpus receipt and real user-save corpus evidence.
+
+  - 2026-07-15 update: corpus discovery continues to exclude a Firestaff
+    `LSV01RDM` manifest when selecting external originals, but F0435 accepts
+    an explicitly selected valid PC34 stream. This keeps source parser errors
+    and live C01 door/timeline state intact instead of adding a second,
+    weaker provenance parser before materialization. Remaining work is real
+    original save corpus and launcher evidence.
+
+  - 2026-07-11 update: DM1 HoC boot-probe complete-support and release-app readiness gates now live on the DM1 boot-summary API; M11 only asks the DM1 helper. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 full-graphics startup media receipt source lookup now lives in the DM1 startup API; M11 SWSH/TITLE callers consume the DM1 handled-source helper instead of owning source filtering. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 wall-set graphic id mapping now lives in the DM1/ReDMCSB graphic-id API; M11 side/front wall drawing consumes that mapping instead of owning a local wallset base helper. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 materialized wallset graphic selection and map doorSet/depth panel graphic selection now live in DM1/ReDMCSB APIs; M11 only supplies current map facts and consumes the selected asset id. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 door-ornament ordinal-to-global resolution now lives in the DM1/ReDMCSB door-ornament API; M11 only supplies the current map cache and consumes the resolved ornament info. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 visible wall-inscription raw glyph selection now lives in the DM1/ReDMCSB inscription contract; M11 supplies current text facts and next-thing traversal only. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+  - 2026-07-11 update: DM1 current-map door panel graphic selection now lives in the DM1/ReDMCSB center-door API; M11 no longer owns mapIndex/mapCount/doorSet validation for panel graphic selection. Remaining cleanup is broader runtime/API ownership and real Mac capture.
+
+- 🔧 2026-07-10 Theron real-asset promotion follow-up: boot/full-start/runtime receipt propagation is verified in DONE.md. Remaining work is real Mac/app screenshot promotion and wider non-startup Track02 object-table/dungeon-record decoding when new real-media evidence exists.
+
+  - 2026-07-14 loader-runtime boundary update: the authenticated raw JP/US
+    Track 02 startup grid can now be delivered atomically to a caller-owned
+    runtime consumer only after the full BIN is rehashed and its literal
+    envelope/grid receipt is rebuilt. A rejecting consumer produces no route,
+    so verified media cannot reopen a generated level/object/visual fallback.
+    This proves original-byte delivery, not cell, object, tile, palette, or
+    non-startup dungeon-record semantics. Remaining work is binding the
+    consumer to a positively traced original dungeon decoder and wider
+    object-table/level evidence.
+
+  - 2026-07-11 update: Track02 bitmap route receipts now preserve the actual last MODE1 user-data tile offset from the atlas route instead of assuming linear 4bpp tile spacing across raw-sector gaps. Remaining blocker is still real object-table/non-startup dungeon-record semantics and Mac/app capture.
+
+  - 2026-07-11 update: Track02 object-table and level-route receipts now carry per-anchor descriptor/object binding status plus startup level raw/user-data/header evidence, so no-fallback blockers are inspectable per verified Track02 anchor instead of only as aggregate masks. Remaining blocker is still binding true non-startup object-table and dungeon-record semantics from real media, plus Mac/app capture.
+
+  - 2026-07-11 update: descriptor entry 6 remains a bounded opaque
+    post-descriptor observation only. Hash-verified JP/US receipts disprove
+    its compact-row object-table promotion, so its per-anchor status must stay
+    `NOT_BOUND` while the existing no-fallback receipt remains active.
+    Remaining work is genuine real-media object-row/layout correlation and
+    broader non-startup dungeon records, plus Mac/app capture.
+
+  - 2026-07-11 update: Theron runtime/all-dungeon/apply receipts now propagate the Track02 per-anchor object-table and startup-level evidence, so host startup/runtime routes can block fallback from carried receipts instead of reopening low-level Track02 route receipts. Remaining blocker is still real object-table/non-startup dungeon-record semantics and Mac/app capture.
+
+  - 2026-07-11 update: Theron host/state receipts now also carry the Track02 per-anchor object-table and startup-level no-fallback evidence through Soul Room/forcefield runtime handoff. Remaining blocker is still true non-startup object-table/dungeon-record decode from real Track02 media and Mac/app capture.
+
+  - 2026-07-11 update: Theron runtime state receipts now also retain Track02 bitmap route mask, checksum, and raw/MODE1 spans for title, stage, Soul Room, and forcefield during Soul Room/forcefield handoff. Remaining blocker is still true non-startup object-table/dungeon-record decode from real Track02 media and Mac/app capture.
+
+  - 2026-07-11 update: Theron startup state receipts now expose helper contracts for complete Track02 bitmap routes and no-fallback runtime route readiness, so UI/M11 callers can consume a Theron-owned predicate instead of rebuilding route checks. Remaining blocker is still true non-startup object-table/dungeon-record decode from real Track02 media and Mac/app capture.
+
+  - 2026-07-11 update: Theron boot render-route, host-view, full-start, and UI-caller receipts now consume those state helper predicates directly, and UI readiness requires the complete Track02 bitmap/no-fallback runtime-route proof. Remaining blocker is still broader real object-table/non-startup dungeon-record decode and Mac/app capture.
+
+  - 2026-07-11 update: Track02 object-table and non-startup level-route receipts now expose descriptor-window candidate evidence for post-descriptor data windows, while keeping decode-ready false until real object/dungeon semantics are identified. Remaining blocker is still promoting those candidates from real Track02 media and Mac/app capture.
+
+  - 2026-07-11 update: Track02 post-descriptor object-table and non-startup level candidate receipts now also carry per-anchor raw/MODE1 user-data offsets, descriptor deltas, entry roles, and window kinds. Remaining blocker is still identifying a real object-table entry and additional dungeon records from real Track02 media, plus Mac/app capture.
+
+  - 2026-07-11 update: Track02 post-descriptor candidates now also carry actual nonzero byte counts, candidate hashes, and BE header-shape fields for object-table and non-startup level-route receipts. The receipts still reject startup-header-shaped promotion and keep object/non-startup decode blocked until real Track02 media identifies true semantics; remaining work is real object-table/additional dungeon-record binding plus Mac/app capture.
+
+  - 2026-07-10 update: M11 now holds the Track02 title gate for an 8-frame startup animation, blocks accept/pointer until it is ready, and suppresses synthetic title text/rect overlay when Track02 bitmap graphics are executed. Remaining Theron startup work is real Mac/app screenshot promotion and broader non-startup Track02 dungeon/object decode.
+
+  - 2026-07-10 update: Track02 bitmap completeness now requires wide 96px+/12-tile coverage for title, stage, Soul Room, and forcefield, runtime media can retain 256px route atlases, and semantic startup loading is no longer hard-gated to dungeon 1. Remaining Theron work is real-data Mac capture across all seven dungeon selections and exact non-startup dungeon-record/object semantics.
+
+  - 2026-07-10 update: Track02 runtime routing now has an all-seven-dungeon capture receipt and selected-dungeon semantic loading uses the chosen dungeon id instead of hard-wiring dungeon 1. Remaining Theron work is Mac/app capture with user-supplied real Track02 media and any later non-startup object-table decoder widening beyond the current exact empty-object startup candidate semantics.
+
+  - 2026-07-10 update: all-seven-dungeon capture, exact level semantics, and exact object semantics now propagate through Theron boot view-model, render-route, host-view, full-start, and UI-caller receipts with a separate complete-runtime-support flag. Remaining Theron work is real Mac/app screenshot promotion and later wider object-table decoding when new real Track02 object evidence is available.
+
+  - 2026-07-10 update: all-dungeon Track02 startup object routes now expose per-dungeon object counts, object capture mask, total, and hash instead of a bool-only exact-object flag. Remaining Theron work is still broader non-startup object-table/dungeon-record decoding when new real Track02 object evidence is available.
+
+  - 2026-07-12 update: hash-verified local JP and US raw Track 02 BINs are
+    available and the real-media probes pass. Their six post-descriptor
+    non-startup windows disagree across regions and fail the bounded
+    level/object shapes, so they are evidence against promotion rather than
+    an object-table or additional dungeon route. Remaining work requires
+    original loader/disassembly correlation for another record boundary; do
+    not infer it from these rejected windows or enable a fallback route.
+
+  - 2026-07-10 update: descriptor-table entry 5 now binds as a real semantic descriptor-table route across verified Track02 anchors and flows into the object-table no-fallback receipt. Remaining blocker is still identifying a real object-table semantic entry from Track02 media evidence, not descriptor-table binding itself.
+
+  - 2026-07-10 update: Track02 level-route receipts now promote the source-locked startup level handoff and block non-startup level fallback visuals when no broader dungeon-record evidence is identified. Remaining blocker is real-media identification of additional non-startup level/object records.
+
+  - 2026-07-10 update: Track02 runtime media now retains all four verified startup bitmap routes (title, stage, Soul Room, and forcefield) across startup and Continue handoff. Remaining bitmap work is real Mac/app capture and wider non-startup object/dungeon record binding from real media.
+
+  - 2026-07-11 update: Track02 startup bitmap media/startup receipts now carry per-route raw and MODE1 user-data spans for title, stage, Soul Room, and forcefield, and the startup receipt hash includes those spans for no-fallback host proof. Remaining bitmap work is real Mac/app capture and broader non-startup object/dungeon record binding from real media.
+
+  - 2026-07-11 update: Track02 runtime-entry and Continue apply receipts now carry the same per-route bitmap raw/MODE1 spans for title, stage, Soul Room, and forcefield, so host/runtime no-fallback consumers do not need to reopen media receipts. Remaining blocker is still real-media identification of object-table and additional non-startup dungeon records, plus Mac/app bitmap capture.
+
+  - 2026-07-11 update: blocked verified-Track02 runtime-entry failures now preserve complete startup bitmap route receipts through result/apply/host receipts, including route mask, checksum, and raw/MODE1 spans, instead of collapsing to text-only fallback-block status. Remaining blocker is still real-media identification of object-table and additional non-startup dungeon records, plus Mac/app bitmap capture.
+
+  - 2026-07-10 update: Track02 object/level no-fallback receipts now carry semantic role masks plus blocked anchor masks, proving seed/descriptor routes are present while object-table and non-startup level-grid roles remain unbound. Remaining blocker is real-media identification of those object/level-grid semantic entries.
+
+  - 2026-07-10 update: Track02 level-route receipts now consume the hash/anchor-gated startup payload as the first real level-grid/dungeon-record route, including raw and MODE1 user-data offsets in the receipt hash. Remaining blocker is still real-media identification of object-table and additional non-startup dungeon records.
+
+  - 2026-07-10 update: Theron runtime/apply receipts now propagate the Track02 object-table and non-startup level no-fallback masks/hashes from all-dungeon capture, so host startup code can block those fallback visuals without reopening low-level Track02 receipts. Remaining blocker is still real-media identification of object-table and later dungeon-record semantics.
+
+  - 2026-07-10 update: Theron boot/view-model/render/host-view/full-start/UI receipts now carry the Track02 object-table and non-startup level no-fallback masks/hashes, and UI complete-runtime support requires those proofs. Remaining blocker is real-media identification of object-table and later dungeon-record semantics.
+
+  - 2026-07-10 update: Track02 startup bitmap atlas can now promote wider real 4bpp tile runs per title/stage/Soul Room/forcefield route. Remaining work is broader semantic dungeon-window coverage beyond the initial startup level.
+
+  - 2026-07-09 update: render-route receipts now carry Track02 title/menu readiness, runtime/HUD readiness, title-menu-to-runtime handoff readiness, and explicit no-fallback-visuals policy. Remaining work is final UI/M11 render consumption and broader semantic Track02 level routes.
+
+  - 2026-07-09 update: boot layout/render/pointer consumers can now operate from the startup view model directly. Remaining work is replacing final host UI call sites that still pass raw prompt/roster/state fields instead of the view model.
+
+  - 2026-07-09 update: boot keyboard/save-start routing can now consume the startup view model for title, Continue, stage focus, Soul Room mirror, and Back actions. Remaining work is wiring final UI host paths to this view-model route.
+
+  - 2026-07-09 update: startup view models now retain enough route state to emit action/input host receipts for Continue failure, mirror toggle, and Back-to-stage routing. Remaining work is final host/UI replacement of raw session rebuilds with these view-model host receipts.
+
+  - 2026-07-09 update: boot pointer host receipts and graphics execution can now consume the startup view model directly. Remaining work is replacing final UI render/click callers that still rebuild layout/session state outside the view model.
+
+  - 2026-07-09 update: snapshot render/input/pointer callers can now pass Track 02 media receipts and route through the startup view model. Remaining work is final UI/M11 hook replacement where callers still use raw prompt/roster arrays.
+
+  - 2026-07-09 update: host-view receipts now mirror structured runtime handoff and no-fallback flags from the render-route receipt, so final UI callers can consume one receipt without status-string fallback parsing. Remaining work is broader real Track 02 semantic level coverage.
+
+  - 2026-07-09 update: graphics execution now has a Theron-owned route receipt and blocks Track02-blocked startup visuals before executing any fallback graphics. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: snapshot+media graphics execution now consumes the same Theron-owned route receipt, so UI callers can block Track02 fallback visuals without rebuilding a view model locally. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: Continue/SRM state receipts now mark save-resume runtime handoff as a structured route, so host code no longer needs SRM status text to know runtime owns the level. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: SAVE_RESUME startup render/graphics receipts now hand off to runtime and suppress fallback startup draw, matching Track02 semantic no-fallback behavior. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: host-view and graphics-route receipts now expose explicit runtime-graphics handoff flags for Track02 semantic and save/resume routes. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: boot full-start receipts now join title, stage, Soul Room, save/resume, startup graphics, and forcefield runtime handoff readiness behind one Theron-owned contract. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: full-start receipts now own input/pointer routing for startup menus, so UI callers can route title/stage/Soul Room actions without rebuilding session/layout state. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: full-start receipt input/pointer wrappers now expose missing-receipt failures as Theron startup host receipts. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: full-start receipts now provide copy-only layout, render rows, render plan, and host-view consumers for title/stage/Soul Room UI callers. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: runtime-state full-start receipts can now consume Track 02 media receipts directly without raw prompt/roster arrays. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: runtime-state input/pointer wrappers now route through full-start media receipts, so callers no longer need raw prompt/roster arrays for those host actions. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: runtime-state layout, render rows, render plan, and host-view wrappers now consume full-start Track 02 media receipts, removing the remaining raw prompt/roster render rebuild path from Theron boot helpers. Remaining work is broader real Track 02 semantic level coverage and real bitmap replacement.
+
+  - 2026-07-09 update: full-start graphics receipts now expose Track 02 real-media readiness, bitmap-route readiness, no-fallback proof, and fallback-executor usage for M11/UI consumption. Remaining work is replacing final host consumers and real bitmap decode breadth.
+
+  - 2026-07-09 update: graphics/full-start receipts now expose per-route title, stage, Soul Room, and forcefield bitmap readiness flags so host callers do not need to inspect raw render-plan commands. Remaining work is final M11 consumer replacement and real bitmap decode breadth.
+
+  - 2026-07-09 update: M11 Theron startup graphics now consumes full-start bitmap-route receipts instead of executing raw render-plan graphic commands directly; receipts also carry route masks/counts for title, stage, Soul Room, and forcefield. Remaining work is replacing any compatibility render-plan exports after callers move to receipts.
+
+  - 2026-07-09 update: host-render receipts now package layout, rows, render plan, render route, bitmap-route mask/count, and no-fallback flags from full-start receipts without raw prompt/roster arrays. Remaining work is deleting older compatibility render exports after host callers move over.
+
+  - 2026-07-09 update: old Track 02 media layout/row/render-plan compatibility exports are removed; tests now consume full-start host-render receipts for the same data. Remaining work is real bitmap decode breadth and any final non-media legacy render exports.
+
+  - 2026-07-09 update: old non-media runtime/snapshot layout, row, and render-plan exports are removed; tests now use full-start host-render receipts for those render consumers. Remaining work is real bitmap decode breadth and any remaining input-only compatibility paths.
+
+  - 2026-07-09 update: executed startup graphics now carry a Track02 startup graphic receipt through graphics/full-start/host-render receipts and no longer report real-media bitmap draws as fallback execution. Remaining work is broader real bitmap decode breadth and replacing remaining input-only compatibility paths.
+
+  - 2026-07-09 update: runtime-state host-render receipts can now consume a graphics executor through the full-start receipt and return executed/blocked graphics proof. Remaining work is broader real bitmap decode breadth and replacing remaining input-only compatibility paths.
+
+  - 2026-07-09 update: snapshot host-render receipts can now consume Track02 media plus a graphics executor directly, without rebuilding runtime field lists. Remaining work is broader real bitmap decode breadth and replacing remaining input-only compatibility paths.
+
+  - 2026-07-09 update: menu/runtime handoff receipts now package Track02 media, host render, optional input/pointer routes, real-graphics handoff, and no-fallback flags. Remaining work is wiring final UI callers to this package and widening real bitmap decode.
+
+  - 2026-07-09 update: UI caller receipts now package host-render, menu/runtime handoff, Track02 prompt/roster, bitmap-route breadth, semantic level coverage, and no-fallback policy. Remaining work is replacing final M11 call sites with this receipt.
+
+  - 2026-07-09 update: startup media receipts now expose per-route Track02 bitmap decode proof for title, stage, Soul Room, and forcefield samples. Remaining work is replacing final M11 call sites and broadening real bitmap decode beyond sampled startup tiles.
+
+- 🔧 2026-07-10 DM2 runtime/render follow-up: complete-support and full GDAT HUD/dungeon runtime gates are verified in DONE.md. The interface palette is now strictly decoded and carried into runtime scene/frame receipts; remaining work is applying that palette at the M11 display target, broader Mac packaged capture, broader typed GDAT data/image parser coverage beyond the verified interface `dt09`, `dtPalette16`, `dt07/0x00`, `dt07/0x02`, `dt06` no-alias gate, remaining advanced interface placement/semantics, remaining advanced CCM opcodes, and broader real save corpus import.
+
+  - 2026-07-15 update: creature, possession, floor-item, leader-hand, and
+    projectile/cloud viewport draws now require their source GDAT map-chip
+    bitmap. On a source-material route, missing material is recorded as blocked
+    and produces no pixels;
+    generated creature, item, hand-item, and projectile fallback shapes are
+    removed. Remaining creature work is source-owned dynamic AI/record
+    ownership and actual GDAT material breadth.
+
+  - 2026-07-14 update: map-header `UseDoor0/1` plus `DoorType0/1` now
+    admits only the active source `DOORS/type/F9` chips and their exact local
+    palettes into a separate M11 plan, matching skproject
+    `LOAD_LOCALLEVEL_DYN`. A disabled type nibble is not preloaded; an active
+    type without an actual F9 image remains absent, while a present F9 chip
+    requires its real palette and cannot use a generic door. Exact
+    per-distance door image selection remains owned by `DRAW_DOOR`.
+
+  - 2026-07-13 update: a selected original SKSave corpus candidate is now
+    loaded only through its full-file and payload hash receipt, then handed to
+    the existing atomic runtime save restore. Original raw/envelope candidates
+    remain fail-closed when their active dungeon/session binding is invalid.
+    Remaining save work is a hash-verified external original-save corpus with
+    real version coverage; no local original SKSave corpus is promoted here.
+
+  - 2026-07-13 update: bounded recursive discovery now admits a renamed save
+    only after its actual 42-byte SKSave header, parser result, and full-file
+    hash receipt agree. The explicit save root has depth/candidate/file caps
+    and marks truncation; filename guesses and arbitrary bytes never import.
+    Remaining work is real original-save corpus breadth across supported DM2
+    releases, not a synthetic format or a filename-only path.
+
+  - 2026-07-14 update: raw original export now requires a parser-verified
+    original body as its template and retains its dungeon prefix byte-for-byte
+    while re-encoding only modeled SUPPRESS state. A changed party, timer, or
+    minion shape is rejected, and output must re-import before it is released.
+    Remaining work is verified real-corpus coverage and the unmodeled DB/post-
+    load rebuild fields, not invented raw dungeon data.
+
+  - 2026-07-14 update: runtime now accepts an explicitly scanner-selected
+    SKSave candidate receipt, matching skproject `DM2_SELECT_LOAD_GAME` before
+    `DM2_GAME_LOAD` opens the stream. Its full-file hash is retained in the
+    runtime receipt and revalidated before any payload read or state mutation;
+    a changed selected file cannot fall through to another candidate. Remaining
+    save work is still external original-save corpus/version coverage and the
+    source-owned full-record/timer/map post-load rebuild, not synthetic routing.
+
+  - 2026-07-14 update: the read-only original-corpus receipt now retains
+    separate hashes for the exact decoded global flags, bytes, words, and
+    spell-effect SUPPRESS sections that `GAME_LOAD` restores before timer
+    sorting and `READ_SKSAVE_DUNGEON`. Timer ordering, dungeon DB rebuilding,
+    and post-load mutation remain blocked pending their own byte-level source
+    contracts and real corpus coverage.
+
+  - 2026-07-11 update: CCM walk writeback now honors an explicitly loaded AI row before the data-free probe rule, so a known non-attacking creature cannot be converted into a synthetic adjacency attack before the DM2-owned door/passability route writes its live position. Focused CCM and broad runtime handoff regressions cover closed and passable door writeback. Remaining CCM work is later advanced side effects and real-data startup/audio routing.
+
+  - 2026-07-11 update: PC G1 c_record addresses now follow skproject `READ_DUNGEON_STRUCTURE`: after the proven c_map column, ground-stack, and text tables, all 16 pools are addressed consecutively by `glbItemSizePerDB[type] * nRecords[type]` in the exact non-tail `[6942,23826)` span. The real G1 corpus rejects graph promotion: 1,069 ground-stack words and 1,029 pool first links fall outside the declared direct ObjectID shapes, so `GenericRecord::w0` traversal remains blocked for G1 while direct bounded pool lookup stays diagnostic. The later `[23826,31667)` G1 extension remains untyped. Remaining work is source/corpus correlation for those non-direct IDs, followed by field-level c_record semantics and any GRAPHICS-backed cross-reference; do not broaden traversal into untyped bytes.
+
+  - 2026-07-11 update: direct-graph promotion now validates every declared source-ordered c_record `w0`, not only map-reachable chains; an unreachable malformed direct link keeps PC G1 non-traversable. The real-data probe pins the complete direct-shape rejection census at 1,069 roots and 1,029 pool links. Remaining work is source/corpus correlation for those non-direct IDs; do not infer an alternate traversal.
+
+  - 2026-07-11 DM2-001 update: map boot now validates the source-owned G1 c_record pool transform independently of `GenericRecord::w0` traversal. The boot gate accepts only the `READ_DUNGEON_STRUCTURE` text-adjacent 16-pool progression and the proven `[23826,31667)` untyped extension boundary; it does not enable a link walk. Remaining work is still source/corpus correlation for the non-direct roots/links before any graph or field semantics are promoted.
+
+  - 2026-07-11 DM2 G1 traversal update: `GenericRecord::w0` now follows skproject only from map-owned roots through the verified text-adjacent 16-pool transform, with ObjectID type/index, record bounds, and per-chain cycle checks. The hash-verified G1 corpus still blocks promotion because a map-reachable link fails that validation; unused pool slots and unused ground-stack capacity are not inferred as graph edges. Remaining work is to identify the source/corpus rule for that reachable non-ObjectID value before enabling any real G1 chain consumer.
+
+  - 2026-07-11 update: the G1 receipt now separates `c_map.cpp`-reachable ground-stack roots from the full allocated stack table. The verified PC DOS corpus has 883 map roots: 676 fit the declared `c_record.cpp` type/index transform, while a proven G1 continuation resolves 202 more as DB3 (174) and DB4 (28) records. The exact continuation is `[23826,29626)` as DB3 indices `299..1023` at 8 bytes each, then `[29626,31658)` as DB4 indices `173..299` at 16 bytes each; the final 9 bytes remain untyped. Five map roots remain unresolved: DB8 (1) and DB10 (4), clustered only on maps 16, 23, and 26. The larger table's 523 `OBJECT_NULL` words are unused capacity, not map roots. Do not derive a DB8/DB10 transform or enable `GenericRecord::w0` traversal until source plus corpus evidence proves it.
+
+  - 2026-07-11 update: canonical PC G1 loading now commits a transactional incomplete map-boot receipt for exactly 878 source-proven roots: 676 direct, 174 DB3, and 28 DB4. It records the five DB8/DB10 roots as blocked coordinates and does not read any blocked record's `GenericRecord::w0`. Remaining work is original loader/layout proof for those five DB8/DB10 addresses and then separately bounded link semantics; do not synthesize a graph, traverse a blocked root, or widen the tail.
+
+  - 2026-07-11 update: the runtime now consumes a map-0-only receipt from that transactional boot. It replays only the source-proven `c_map.cpp` ground-stack root lookup, carries each direct/DB3/DB4 root identifier plus coordinate and aggregate counts into DM2 runtime and viewport state, and explicitly reports an incomplete world with zero materialized objects and zero blocked-record reads. The five DB8/DB10 roots remain unavailable outside map 0; do not use this receipt to decode records, follow `GenericRecord::w0`, or fabricate objects. Remaining work is still original loader/layout proof for those five addresses, then separately bounded link semantics.
+
+  - 2026-07-11 update: the first safe map-0 record family is now direct DB1 teleporters only. `c_record.cpp` fixes their six-byte base/index transform and `DME.h::Teleporter` fixes destination X/Y/map, scope, sound, and rotation fields; the receipt reads those fields for the 22 canonical map-0 roots without touching `w0`. DB3 and DB4 remain classification-only despite their proven addresses, and DB8/DB10 remain blocked. Remaining work is source-plus-corpus proof for the next family and bounded semantics for each field; do not turn the receipt into a chain walk.
+
+  - 2026-07-11 update: the map-0 DB1 receipt now applies the source-defined
+    party gate only when the whole record graph is complete: the source must be
+    an enabled teleporter tile, `Teleporter::Scope() & 2` must allow the party,
+    and destination map/coordinates must be bounded. `c_moverec.cpp` passes
+    `DestinationMap()` directly to `c_map.cpp::CHANGE_CURRENT_MAP_TO`; because
+    that routine has no `0xff` sentinel branch or bounds check, Firestaff
+    rejects `0xff` before mutation. On a valid future full world it applies
+    source-defined sound and absolute/relative rotation; canonical G1 remains
+    a strict no-transition receipt because its record graph is incomplete.
+    No `GenericRecord::w0`, DB3/DB4, or DB8/DB10 data is read. Remaining work
+    is full graph/materialisation proof and the next record family.
+
+  - 2026-07-12 update: skproject `SkWinCore.cpp::_2fcf_0434` fixes an earlier
+    transition prerequisite precisely: a DB1 payload is dispatched only when
+    its source byte-square is `ttTeleporter` (type 5) with bit `0x08` enabled,
+    not merely because the root has DB1 type. The hash-verified canonical map
+    0 contains exactly 22 direct DB1 roots, and all 22 sit on non-teleporter
+    tiles. The runtime therefore retains them as bounded payload evidence but
+    cannot promote any to a map transition; the real-corpus probe pins that
+    exclusion. No `GenericRecord::w0`, DB3/DB4, or blocked DB8/DB10 root is
+    read. Remaining work is a separately proven non-DB1 record family or
+    full-world materialisation, never a synthetic map transition.
+
+  - 2026-07-13 update: the next safe family is canonical map 5's seven direct
+    unavailable rather than receiving synthetic text. Remaining work is a
+    proven formatter and final interaction presentation, never a guessed
+    phrase table or chain walk.
+    fallback. Map 5 DB1/DB3/DB4 roots remain unconsumed, as do all blocked
+
+  - 2026-07-13 update: `dm2_world_from_mem()` now retains the loader-owned,
+    source-verified PC G1 map/c_record address receipt for later DM2 world
+    consumers. The accessor requires both the exact source-order pool gate
+    and the incomplete 878-root map-boot receipt; it cannot expose a generic
+    `w0` chain. Remaining work is still source-plus-corpus proof for the five
+    blocked DB8/DB10 roots and separately bounded link semantics before any
+    graph consumer is enabled.
+
+  - 2026-07-13 update: selected G1 runtime maps now receive a loader-owned
+    `c_map.cpp` admission receipt that rechecks the raw map span, source-order
+    pool gate, and direct/DB3/DB4/blocked root classes for that one map. It
+    reads no record payload or `GenericRecord::w0`; map 16 remains explicitly
+    incomplete with its three blocked roots. Remaining work is still original
+    loader/layout proof for DB8/DB10 and separately source-bounded record
+    semantics, not a guessed chain walk.
+
+  - 2026-07-13 update: runtime-admitted maps can now consume direct DB0
+    `Door::w2` payloads from `DME.h` as read-only receipts. Button, type,
+    state, opening direction, ornament, fireball, and chopping bits are
+    source-locked; no route reads `w0` or follows a record link. Remaining
+    work is another independently proven root family and the DB8/DB10 layout,
+    never a promoted chain based on these direct records.
+
+  - 2026-07-13 update: direct DB4 `Creature` roots on runtime-admitted map 17
+    now expose only `DME.h` `CreatureType` (`b4`) and `HP1` (`w6`). Their
+    `w0` next links, `w2` possession ObjectIDs, DB4 extension records, and all
+    DB8/DB10 roots remain unread; this is not a creature-chain or GDAT route.
+
+  - 2026-07-13 update: direct DB5 `Weapon` roots on runtime-admitted map 17
+    now expose only `DME.h` `ItemType`, `Important`, and `Charges` from `w2`.
+    `w0`, every other item family, and all object traversal remain unavailable.
+
+  - 2026-07-15 update: the direct DB5 `Weapon::ItemType()` ->
+    `WEAPONS/item/F9` material route is now explicitly admitted through a
+    G1/GDAT receipt. The local canonical G1's two `item=126` roots reach the
+    exact query, but its paired `GRAPHICS.DAT` has no `WEAPONS/126/F9` image.
+    The receipt therefore fails before metadata/palette lookup and runtime
+    retains no weapon map-chip material. Keep this as no-draw until a corpus
+    supplies the exact original image; never borrow another item's art.
+
+  - 2026-07-13 update: direct DB9 `Container` roots on runtime-admitted map 9
+    now expose only `DME.h` `IsOpened` and `ContainerType` bits from `b4`.
+    `w0`, the `w2` contained-object ObjectID, and all container traversal stay
+    unavailable.
+
+  - 2026-07-13 update: the canonical G1 direct-root census ends at DB9:
+    DB6/DB7/DB8 and DB10..DB15 have zero direct roots. Their record payloads
+    remain unavailable without a separately proven non-direct route; no
+    extension or `w0` traversal may fill that gap.
+
+  - 2026-07-13 update: selected level/tile coordinates can now resolve only
+    direct DB0..DB5/DB9 roots through the exact `c_map.cpp` ground-stack and
+    `c_record.cpp` base-plus-stride transform. DB6..DB8/DB10..DB15, extensions,
+    `w0`, and possession routes still reject before any record payload read.
+
+  - 2026-07-16 update: object-model consumers now walk source-shaped square chains only through `dm2_v1_dungeon_walk_square_things()`, the loader-owned `GET_TILE_RECORD_LINK`/`GET_NEXT_RECORD_LINK` route. This removes the local object-model `w0` loop and proves incomplete PC G1 graphs still fail closed through the loader guard. Remaining work is still the non-direct PC G1 ID source/corpus correlation and field-level record-family semantics; do not use the new walker to promote unresolved DB8/DB10 roots or the untyped G1 extension.
+
+  - 2026-07-11 update: the local full-build DM2 link blocker from direct save-load test targets is fixed; weather/timer save round-trip and inventory/item panel gate now link against `firestaff_dm2` and pass. Remaining DM2 work is real render/data breadth, not this build wiring.
+
+  - 2026-07-11 update: the next local full-build blocker, `firestaff_dm1_v1_chest_empty_pointer_integrity_probe` using retired M11 inventory names, is fixed by moving the probe to the DM1/ReDMCSB inventory API. Remaining DM1 chest work is runtime/asset proof, not this stale probe wiring.
+
+  - 2026-07-11 update: `firestaff_dm1_v1_champion_mouse_leader_switch_probe` now uses the current DM1/ReDMCSB champion-leader API names and passes. Remaining leader/status work is runtime capture breadth, not stale API suffix cleanup.
+
+  - 2026-07-11 update: `firestaff_dm1_v1_movement_core_probe` now consumes the DM1/ReDMCSB turning-presentation header/evidence instead of the removed M11 turning header. Remaining movement work is runtime proof breadth, not stale include cleanup.
+
+  - 2026-07-11 update: original fakewall/collision overlay probes now consume `dm1_v1_viewport_fakewall_pc34_compat` instead of removed M11 viewport fakewall names. Remaining viewport work is real capture breadth, not these stale wrapper calls.
+
+  - 2026-07-11 update: `firestaff_v1_ftl_swoosh_palette_regression_probe` no longer includes the removed M11 SWSH pathfinder header and builds against the frontend SWSH contract only. Remaining startup work is runtime/app capture, not this stale include.
+
+  - 2026-07-11 update: CSB F0282 live champion-panel probe no longer calls the removed public M11 gate wrapper; it checks the CSB/ReDMCSB candidate-panel state locally and passes data-free sanity. Remaining CSB work is real CSBGAME save/capture breadth.
+
+  - 2026-07-11 update: `firestaff_dm1_v1_inventory_damage_indicator_zone_probe`, `firestaff_m11_dm1_v2_effects_framepath_probe`, and `firestaff_m11_game_view_probe` are fixed against retired M11 wrapper/probe APIs and pass targeted verification. Remaining build work is the next full-build blocker, if any.
+
+  - 2026-07-11 update: DM1 champion-panel bar/status-box runtime probes no longer call retired public M11 status wrappers; they consume DM1/ReDMCSB status-layout/HUD APIs directly and pass targeted local DM1 verification. Remaining build work is the next full-build blocker, if any.
+
+  - 2026-07-10 verification note: complete-support and packaged startup/render receipts supersede older "final host consumption" wording in the 2026-07-09 detail bullets; current DM2 startup/render gaps are real packaged capture and asset/decode breadth, not re-opening host receipt wiring.
+
+  - 2026-07-10 update: SKSave corpus scanning now classifies importable Firestaff-session and original-envelope candidates through the runtime resume parser and reports rejected valid-header payloads separately. Remaining save work is raw original SKSave corpus promotion beyond the direct raw-import test, plus broader real save corpus import.
+
+  - 2026-07-10 update: M11 now uses tick-aware DM2 startup receipts and suppresses synthetic startup overlay drawing when verified GDAT title/menu assets are available. Remaining startup work is real Mac packaged capture and any exact skproject timing adjustment after host capture, not restoring the old synthetic menu.
+
+  - 2026-07-11 update: DM2 real-visual startup capture now follows skproject `SHOW_MENU_SCREEN`: `TITLE` `dt07/4` raw 64000-byte menu screen is consumed before image-field fallback, and fallback is marked only when raw is absent. Remaining startup work is final Mac packaged capture and any exact timing adjustment from host evidence.
+
+  - 2026-07-11 update: DM2 startup composite capture now consumes the skproject `TITLE` `dt07/4` raw menu screen directly and suppresses the old synthetic panel/text overlay when that real screen is present. Remaining startup work is final Mac/app packaged capture and timing evidence, not synthetic menu drawing.
+
+  - 2026-07-10 update: CCM opcode breadth now includes 0x07/0x08 special-state phases and 0x18 door-attack state in the bounded byteprogram decoder/runner, and stale evidence no longer lists already implemented 0x03/0x04/0x06/0x0B/0x0C as stubbed. Remaining DM2 work is broader Mac packaged capture, exact interface decode breadth, creature sprite atlas parity, still more CCM opcodes, and broader real save corpus import.
+
+  - 2026-07-10 update: DM2 boot now exposes one complete-support receipt that joins skproject GDAT startup title/menu queries, HUD handoff, four-direction runtime HUD/dungeon capture, raw/decoded GDAT hashes, and no-fallback runtime visual gates. Remaining DM2 work is broader Mac packaged capture, exact interface decode breadth, creature sprite atlas parity, more CCM opcodes, and real save corpus import.
+
+  - 2026-07-16 update: real-profile boot now consumes the G1
+    File_header start pose admitted by the dungeon loader (`3,5,S` for the
+    local canonical PC corpus) instead of the old synthetic `15,15,N`
+    default. The four-direction runtime HUD probe restores that exact source
+    pose after sampling. `dm2_v1_boot_profile_smoke`,
+    `dm2_v1_save_load`, and `dm2_v1_runtime_handoff_smoke` pass. Remaining
+    DM2 work is still broader Mac packaged capture, deeper interface/render
+    semantics, creature animation state, more CCM opcodes, and real save
+    corpus import, not this boot-pose/runtime-smoke gate.
+
+  - 2026-07-10 update: DM2 runtime frame ownership now requires full GDAT-backed HUD plus dungeon base rendering (floor/ceiling, walls, HUD core/portraits, and any visible door/object/creature/projectile overlays) with zero fallback draws before the frame is accepted as a full GDAT render. Remaining DM2 work is broader real packaged capture on Mac, exact interface decode breadth, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
+
+  - 2026-07-10 update: DM2 save/load now exposes a real SKSave corpus scan receipt for SKSave.dat, SKSave.bak, and SKSave%02u.dat candidates, including slot mask, backup selection, payload totals, and invalid-save counts before full session import. Remaining DM2 work is real GDAT capture, exact interface decode breadth, creature sprite atlas parity, and broader real save corpus import.
+
+  - 2026-07-15 update: a valid `SKSave.dat` now owns last-session corpus
+    accounting and its `.bak` remains recovery-only, matching SKProject's
+    primary-before-backup behaviour. The receipt therefore excludes a valid
+    backup from importable totals; real corpus breadth remains open.
+
+  - 2026-07-13 update: each parsed corpus candidate now retains an FNV-1a
+    receipt over the complete original SKSave file, including its 42-byte
+    header. The new receipted loader rechecks that file identity, payload size,
+    payload hash, and parsed candidate kind before it releases bytes for a
+    later runtime import. The local roots currently contain no original
+    SKSave corpus, so original runtime promotion remains blocked rather than
+    falling back to Firestaff session data.
+
+  - 2026-07-10 update: DM2 HUD chrome now has skproject-shaped GDAT core material keys for top bar, action strip, gold box, action icons, portrait panel, and portraits, and runtime ownership counts core HUD plus portraits as one GDAT HUD path. Remaining DM2 work is broader real GDAT capture, exact interface placement/semantics, creature sprite atlas parity, and real save corpus handoff.
+
+  - 2026-07-10 update: DM2 boot now materializes a bounded skproject creature map-chip atlas receipt from real GDAT category 0x0f/field 0xf9 and complete-support requires it. The receipt also verifies the skproject view-relative frame-selection matrix for sampled real creature atlases. Remaining creature work is deeper animation-table decode beyond the current atlas/frame-selection proof.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now materializes skproject `DRAW_MAP_CHIP` base/overlay map-chip routes for `GRAPHICSSET`, `WALL_GFX`, `FLOOR_GFX`, plus the existing teleporter route from real `GRAPHICS.DAT`. Remaining DM2 render work is broader Mac packaged capture, exact interface placement/semantics, more CCM opcodes, and broader real save corpus import.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now carries separate raw/decoded readiness and hashes for `GRAPHICSSET`, `WALL_GFX`, and `FLOOR_GFX` map-chip categories, and complete-support requires all three. Remaining DM2 render work is broader Mac packaged capture and deeper interface placement/semantics.
+
+  - 2026-07-11 update: CCM opcode breadth now promotes skproject `PROCEED_CCM` passive/deferred states 0x10/0x11/0x12/0x14 plus 0x16 rotate-target and 0x19/0x1A put/take item aliases from unknown to bounded runtime receipts. Remaining CCM work is later advanced side effects for the still-stubbed high opcodes.
+
+  - 2026-07-11 update: source-backed transform control flow now covers `DM2_PROCEED_CCM` 0x3B/0x3C with persisted `b_1f` phase state and the fourth-pass 0x3B -> 0x3C transition. The adjacent `0x3D..0x40` explode/summon family now carries `b_20` mode and identical source mode-2 control flow (`b_1a=0x11`, `b_1f=0`) through the live runtime; modes 0/1 remain bounded observable requests only, with no cloud, timer-kill, or minion claims. Wall activation and ladder/hole remain separate unimplemented families.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now validates skproject `LOAD_GDAT_INTERFACE_00_0A` (`INTERFACE_GENERAL` `dt07/0x0A`) rect14 placement proof when present; the current local DM2 data variant does not carry that entry. Remaining interface work is broader runtime placement/render semantics and Mac packaged capture.
+
+  - 2026-07-11 update: optional `dt07/0x0A` rect14 placement receipts now also surface the skproject stretch-size fields `[6..9]` used by `CALC_STRETCHED_SIZE`, and complete-support requires nonzero stretch coverage when that table is present. Remaining interface work is live render consumption beyond receipt proof and Mac packaged capture.
+
+  - 2026-07-11 update: the V1 viewport renderer now owns skproject rect14 placement helpers for `ROTATE_5x5_POS`, `QUERY_CREATURE_BLIT_RECTI`, and `CALC_STRETCHED_SIZE`; boot/runtime HUD capture folds a derived rect14 placement-plan hash into complete-support when `dt07/0x0A` exists. Remaining interface work is broader live creature/item placement consumption with real packaged Mac capture.
+
+  - 2026-07-14 update: the current source-classified G1 DB4 scene owner now reaches and consumes the matching viewport `CREATURES/type/F9` material draw with its exact map coordinate, ObjectID, GDAT address, decoded dimensions, stride, and local-palette hash. The focused canonical-media test proves one real asset blit and rejects fallback, blocked material, or borrowed ownership. Remaining scene work is source-owned handoff for other `c_record` families and visible-square selection beyond this bounded DB4 route.
+
+  - 2026-07-15 update: the selected DB4 G1/GDAT F9 image and its local
+    palette are now retained in the runtime handoff and consumed directly by
+    the M10 frame's matching viewport draw. M10 performs no second GDAT
+    callback lookup for that source-owned material; absent or mismatched
+    ownership remains a blocked no-draw. Remaining scene work is other
+    `c_record` families and visible-square selection beyond the bounded DB4
+    route.
+
+  - 2026-07-15 update: M10 now consumes G1-selected `GRAPHICSSET` floor,
+    ceiling, and wall plans directly. `DRAW_DUNGEON_GRAPHIC` keeps the
+    source-owned 700/701 plane transaction, while `DM2_DRAW_WALL` accepts
+    only a complete wall command plan bound to the same live
+    `UPDATE_GFXSET`/`MapGraphicsStyle` control hash. A changed control
+    transaction detaches both plans; missing, stale, or incomplete plans are
+    blocked before an asset callback can resolve a replacement. Remaining
+    render work is source-owned plans for the other dungeon material families
+    and broader real save/runtime coverage.
+
+  - 2026-07-15 update: live wall consumption is now depth- and
+    direction-specific. The complete boot-owned `GRAPHICSSET` wall catalog
+    remains the only material authority, but M10 rebuilds its panel selection
+    from the G1-projected `DM2_ViewSquare` wall facts for the current party
+    direction. Empty cells produce no generic wall, and a callback-complete
+    asset provider cannot replace a missing source plan. Remaining work is
+    source-owned geometry/material routes for doors, ornaments, objects, and
+    other non-wall dungeon families.
+
+  - 2026-07-15 update: every G1 record-to-GDAT receipt is now rebuilt from
+    the currently loaded raw dungeon bytes after boot, session application,
+    position changes, and transactional live-save restoration. This includes
+    the bounded first-map, DB2 text/WALL_GFX, DB3 actuator/WALL_GFX, and
+    current-level DB4/DB5/DB9 material routes. A changed or unavailable raw
+    source clears the old receipt instead of allowing a previous dungeon
+    frame to lend it pixels. Remaining work is source-proven live semantics
+    and geometry for those record families, not reuse of stale material.
+
+  - 2026-07-15 update: level-changing trigger and direct G1 teleporter routes
+    now rebuild map door lists, bounded G1 c_record material receipts, and the
+    exact active `GRAPHICSSET` scene/light/weather transaction together. The
+    destination map's source level type selects outdoor mode; a missing or
+    invalid destination has no retained prior-map GDAT plan. Remaining work
+    is still exact live light-source and weather-object semantics, not a
+    borrowed scene or generated image during map handoff.
+
+  - 2026-07-14 update: creature-atlas admission now requires the SKProject `GET_CREATURE_ANIMATION_FRAME` raw-table triad (`dtRaw8/FB`, `dtRaw7/FC`, `dtRaw7/FD`) to coexist for one real `CREATURES` index. The receipt retains the complete-index mask and hash; isolated table sightings cannot promote animation readiness. Remaining creature work is decoding the selected command/sequence semantics into the live frame choice. In particular, the dynamic route still needs the source-owned mutable sequence state, random branch, and AI/static classification; the bounded direct-DB4 route may not fabricate any of those fields.
+
+  - 2026-07-14 update: the V5 dynamic-table decoder now reads one complete real `CREATURES/type` `FB` command row, `FC` terminal sequence walk, and `FD` directional image id only after a source-owned AI definition classifies the type as non-static. Retail PC-DOS resolves that definition through `CREATURES[type].word(5)` and the executable `v1d296c.dat` baseline; `CREATURE_AI` is only an optional extended override. Its focused canonical-media test uses the SKProject initial `iAnimInfo=0xffff` sentinel and records no pixels or generated state; it skips when the supplied variant has no admitted source AI classification. Remaining work is binding authentic mutable `iAnimInfo` and command state from a live original creature context; the static DB4 route remains frame-zero-only and cannot borrow this dynamic receipt.
+
+  - 2026-07-14 update: runtime now carries an admitted live V5 receipt from
+    `FB/FC/FD` through the direct `CREATURES/type/dtImage/FD-image` viewport
+    key and M11 material plan, with the mutable sequence pair stored on the
+    creature instance. `F9` remains exclusive to the direct DB4 map-chip
+    route. The local PC corpus has complete table triads plus source-backed
+    `CREATURES[type].dtWordValue(5) -> v1d296c` bindings; it still lacks the
+    complete live DB4/sequence-state owner, so no live creature can promote
+    this path yet. It remains no-draw rather than borrowing a type-index image
+    or a generated visual.
+
+  - 2026-07-11 update: runtime HUD/dungeon complete-support now includes item and carried-item fallback counters from the V1 viewport renderer. Remaining render work is broader real item/object asset coverage and Mac packaged capture.
+
+  - 2026-07-11 update: runtime frame ownership now resolves raw/decoded GDAT evidence for HUD core, HUD portraits, item/object map chips, projectiles, wall buttons, door buttons, and door frames through the same viewport asset-address path used by rendering. Remaining render work is Mac packaged capture plus broader live object/save corpus scenarios.
+
+  - 2026-07-11 update: HUD-core runtime rendering now resolves Firestaff HUD keys to real skproject `INTERFACE_GENERAL` image subcategories for top bar, action strip, gold box, portrait panel, and action icons, so the boot-profile smoke is fully green on local real DM2 data. Remaining startup work is Mac packaged capture plus broader real save corpus import.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now parses skproject `_3929_0e16`/`QUERY_FONT` font-table semantics from real `INTERFACE_GENERAL` `dt07/0x00`, including the 0x300-byte, 6x128 table and printable-character coverage. Remaining interface work is deeper live placement/render consumption plus broader Mac packaged capture.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now consumes skproject `INTERFACE_GENERAL` `dtPalIRGB/0xFE` and `dtPalette16/0xFE` palette records as an explicit palette receipt required by complete-support. Remaining interface work is deeper placement/render semantics beyond palette/font/action-table receipts plus broader Mac packaged capture.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now reads skproject `GRAPHICSSET` `dtWordValue` scene/light/void/trim fields (`0x64..0x6D`, `0x70`, `0x71`) into a real-data receipt required by dungeon/map-chip completion. Remaining typed-data work is broader live use of those values in final render placement and packaged Mac capture.
+
+  - 2026-07-11 update: runtime frame rendering now consumes the current map's skproject `MapGraphicsStyle()` to read live `GRAPHICSSET` scene-control `dtWordValue` fields, uses the real GDAT scene colorkey for wall asset blits, and reports that scene-control consumption in the runtime frame ownership receipt. Remaining typed-data work is deeper live use of the other scene/light/void fields in placement, lighting, weather, and packaged Mac capture.
+
+  - 2026-07-11 update: runtime HUD/dungeon capture now reads skproject `WALL_GFX` `dtImageOffset` placement fields (`0xF0/0xF1/0xF2/0xFD`) from ENT1 data indices and requires that receipt for dungeon/map-chip/interface placement completion. Remaining startup work is Mac packaged capture and broader real save corpus import.
+
+  - 2026-07-11 update: complete-support now carries a boot-owned SKSave corpus scan summary and hash from the existing `dm2_v1_sksave_corpus_scan` path. Remaining save work is real corpus import promotion beyond scan/readiness proof.
+
+  - 2026-07-11 update: typed GDAT coverage now reads skproject `dtWordValue` (`0x0B`) directly from ENT1 data indices and proves item metadata fields across real weapon/clothes/scroll/potion/container/misc categories. Remaining typed-data work is deeper live consumption of those values in render/save import paths.
+
+  - 2026-07-16 DM2 skproject update: `DM2_QUERY_GDAT_DBSPEC_WORD_VALUE`
+    now shares the existing bounded `QUERY_GDAT_DBSPEC_WORD_VALUE` receipt;
+    the same symbol disposition also covers the matching SKWIN rows. The
+    helper admits only caller-provided source-shaped DBSPEC word tables,
+    preserves the `OBJECT_NULL` zero route, and marks absent rows blocked
+    instead of inventing scalar data. Remaining adjacent `SkWinCore2.cpp`
+    potion/water/door query helpers stay open until their exact field
+    selectors are source-proven.
+
+  - 2026-07-16 DM2 skproject update: `ORIGINAL__GRAPHICS_DATA_OPEN`
+    now shares the bounded GRAPHICS.DAT file-open receipt for first-open
+    primary/secondary handles, nested open-counter increments, and source
+    sys-error codes `0x29`/`0x1f`. Remaining adjacent work is live GDAT
+    HUD/dungeon material and DYN/direct querydb helpers, not synthetic menu
+    or graphics data.
+
+  - 2026-07-16 DM2 skproject update: the querydb IMG3/U4 receipt path now
+    accepts the real signed-Y-offset `-32` header variant by reading its 4bpp
+    marker from the adjacent source header word. The broad GDAT querydb
+    receipt test is green again; remaining adjacent work is new live
+    GDAT/HUD/dungeon consumption, not replacement pixels or fabricated image
+    payloads.
+
+  - 2026-07-16 DM2 skproject update: `FIND_LADDER_AROUND` is now
+    disposed through the DM2-owned dungeon receipt and the G1/header repair
+    needed to build standalone dungeon-loader consumers. The receipt scans
+    only loaded `DUNGEON.DAT` square facts and records bounded
+    stairs-up/stairs-down candidates; absent candidates remain explicit
+    not-found results. Remaining vertical movement work is full source
+    ladder/hole transport and chained `c_move.cpp` effects.
+
+  - 2026-07-10 update: DM2 door render/runtime receipts now carry the skproject DB0 material chain for door type, door set, opening dir, ornament, destroyed mask, frame, and button draw consumption. Remaining DM2 work is deeper creature animation-table decode, more CCM opcodes, real save corpus handoff, and broader real GDAT capture.
+
+  - 2026-07-09 update: M11 DM2 startup drawing now gates command execution on the boot render-ownership receipt, including final caller, exact title timing, GDAT title breadth, menu/HUD breadth, and no fallback-title proof. Remaining boot/start work is real packaged visual capture with local DM2 data.
+
+  - 2026-07-09 update: M11 DM2 startup drawing now also requires the packaged real-visual capture receipt before publishing startup status, tying GDAT title pixels, menu composite counts, HUD suppression, and no-fallback proof to the visible host draw boundary. Remaining boot/start work is expanding packaged receipt use in later UI/status consumers.
+
+  - 2026-07-09 update: DM2 boot now exposes a render-ownership receipt above host-frame receipts, consuming startup GDAT title commands, menu draw commands, HUD suppression, and next-title-tick scheduling as one boot-owned contract. Remaining boot/start work is wiring final M11 draw callers to this ownership receipt.
+
+  - 2026-07-09 update: DM2 boot now exposes a host-frame receipt above the packaged consumer receipt, so host callers can consume startup title/menu drawing, HUD suppression, runtime input, first-HUD presentation, and next-title-tick scheduling as one DM2-owned decision. Remaining boot/start work is wiring any final UI callers to consume this frame receipt directly.
+
+  - 2026-07-09 update: DM2 packaged consumer receipts now explicitly consume title timing and first-HUD handoff from the packaged full-start receipt, so M11-facing startup proof no longer needs to pair those loose fields manually. Remaining boot/start work is replacing any later UI status consumers that still read older host-view fields directly.
+
+  - 2026-07-09 update: DM2 host/startup tests now consume packaged full-start receipts only, and the old separate full-start/capture snapshot/runtime wrappers are gone from the public boot API. Remaining boot/start work is any later real UI consumer simplification around the same package.
+
+  - 2026-07-09 update: DM2 boot now exposes a packaged full-start receipt that joins full-start timing/assets with packaged capture proof for host consumers. Remaining boot/start work is deleting compatibility helpers once no callers need separate full-start/capture queries.
+
+  - 2026-07-09 update: M11 DM2 boot-probe and startup draw gates now consume the packaged startup capture proof for title frame, menu capture, HUD handoff, and draw command count. Remaining boot/start work is any final older host helpers still exposed for compatibility.
+
+  - 2026-07-09 update: DM2 boot now packages exact title timing, GDAT title capture, menu render counts, HUD suppression, and M11 readiness into one startup capture proof. Remaining boot/start work is wiring any last host call sites to consume the packaged proof directly.
+
+  - 2026-07-09 update: DM2 boot receipts now expose exact title frame start/next/elapsed/remaining/cycle ticks, including nonzero tick proof through real GDAT title/menu receipts. Remaining boot/start work is packaged capture proof and any remaining M11 startup consumers still reading loose fields.
+
+  - 2026-07-09 update: DM2 boot view models now prove the real GDAT title bitmap dimensions from the boot-owned GRAPHICS.DAT cache for full-start graphics. Remaining boot/start work is exact original title timing and broader menu asset receipts.
+
+  - 2026-07-09 update: DM2 boot view models now explicitly hand off from title/startup menu to first runtime HUD state, with no startup draw commands once runtime owns the screen. Remaining boot/start work is exact original title timing and broader real title asset proof.
+
+  - 2026-07-09 update: DM2 boot now owns the startup view-model wrapper consumed by M11, including draw commands, presentation receipt, phase, animation, and title readiness. Remaining boot/start work is exact title timing and broader real title asset proof.
+
+  - 2026-07-09 update: M11 boot-probe/status now reads DM2 startup phase, animation, title readiness, and active state from the startup view receipt handoff. Remaining boot/start work is re-running M11-focused verification after the unrelated DM1 startup header compile break is resolved.
+
+  - 2026-07-09 update: DM2 boot startup view models now carry the presentation view receipt, and M11 consumes the receipt render count/HUD suppression instead of inferring from loose command counts. Remaining boot/start work is exact title timing and broader real title asset receipt proof.
+
+  - 2026-07-09 update: startup presentation now emits one view receipt joining GDAT title commands, menu-state copy, render proof, and HUD/runtime handoff. Remaining boot/start work is exact title timing, real title asset receipt breadth, and final host consumption.
+
+  - 2026-07-09 update: M11 DM2 startup input now consumes the DM2 host route receipt directly for redraw, close-menu, return-to-launcher, status, and selected row. Remaining boot/start work is exact title timing and real title asset receipt breadth.
+
+  - 2026-07-09 update: M11/M12 startup host route receipts now expose consume/redraw/close/return/apply-session/rescan flags and post-action selected row. Remaining boot/start work is wiring host callers to consume this directly, exact title timing, and real title asset receipt breadth.
+
+  - 2026-07-09 update: startup HUD/menu input-route receipts now expose Firestaff keyboard input or pointer coordinates, translated DM2 startup input, before/after selected row, and action row/slot. Remaining boot/start work is exact title timing, real title asset receipt breadth, and tighter M11 consumption.
+
+  - 2026-07-09 update: startup save-menu handoff receipts now expose action, plan, execution, save root, rescan policy, session-ready state, launcher-return flag, and post-action row. Remaining boot/start work is exact title timing, real title asset receipt breadth, and tighter M11 consumption.
+
+  - 2026-07-09 update: startup title/menu/HUD render receipts now expose GDAT title, panel, selected row, text counts, and HUD overlay suppression. Remaining boot/start work is exact title timing, real title asset receipt breadth, and tighter M11 consumption.
+
+  - 2026-07-09 update: DM2 startup launch receipts now carry menu animation/title readiness and V2/HUD/touch runtime handoff flags. Remaining boot/start work is exact title timing, real title asset receipt breadth, and tighter M11 consumption.
+
+  - 2026-07-09 update: DB0 door ornate and destroyed-mask overlays now have runtime/render receipt paths and boot asset fetch ranges. Remaining DM2 work is real GDAT mask field parity, door ornate list decoding, creature sprite atlas parity, more CCM opcodes, and real save corpus handoff.
+
+  - 2026-07-09 update: DB4 creature records now feed runtime creature sprite rendering through the GDAT map-chip path with receipts. Remaining DM2 work is creature animation/AI frame writeback, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
+
+  - 2026-07-09 update: active CCM creature instances now project into the V1 viewport and use GDAT creature map-chip rendering with live frame/direction/health receipts. Remaining DM2 work is exact GDAT animation-table decoding, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
+
+  - 2026-07-09 update: active creature render receipts now expose instance id, GDAT type, frame, direction, HP percent, map position, projected viewport position, and depth. Remaining DM2 work is exact GDAT animation-table decoding, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
+
+  - 2026-07-09 update: DB0 door render receipts now expose the chosen render-plan row with panel, ornate, destroyed-mask, frame, and button GDAT indices. Remaining DM2 work is exact GDAT animation-table decoding, more CCM opcodes, real save corpus handoff, and exact GDAT mask/list parity.
+
+- 🔧 2026-07-10 CSB startup route follow-up: full startup runtime, title phase, host-capture, HUD, opening-door gates, and no-wrapper host-route retirement are verified in DONE.md. Remaining work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-14 verified opening-door capture: the real staged-data M12-to-M11
+    boundary now captures first-visible F0438/F0807 PC34 door step one and
+    compares the C002 `[0..100]` and C003 `[4..126]` strips byte-for-byte at
+    their source `y=30` destinations. ReDMCSB owns the step/crop geometry and
+    CSBWin `Graphics.cpp::ReadGraphic` remains the archive-read boundary. The
+    local hash-verified launcher test passes 327/327; remaining work is still
+    Mac/app presented-frame evidence, not synthetic startup art.
+
+  - 2026-07-11 update: the strict C001-C005 session now also materializes original C017/C040 HUD pixels into the CSB-owned indexed frame route, and full-runtime proof rejects metadata-only HUD bindings. The obsolete snapshot materializer is retired. Remaining CSB startup work is still real Mac/app release capture against local CSB data, including presented-frame evidence for these indexed surfaces.
+
+  - 2026-07-11 update: CSB host-view and M11 presentation receipts now expose receipt-packaged draw readiness, and the host-view executor requires that package before startup callbacks run. Verified with Ninja `test_csb_v1_boot_runtime_handoff` (445/445), `test_csb_v1_m11_launcher_handoff_boundary` (262/262), and `test_csb_v1_runtime_route_first_frame_movement_utility_gate` (105/105). Remaining CSB startup cleanup from this pass: fix the M11 startup/resume pointer Quit-row regression (Back-key quit still passes) and update the stale title/import UI gate that still calls the now-private runtime asset-gate helper.
+
+  - 2026-07-11 update: the stale title/import UI gate now builds against the public runtime asset-gate receipt, and the CSB startup pointer path no longer lets the utility panel steal the normal entrance Quit row. `test_csb_v1_boot_title_import_ui_gate_pc34_compat` passes 118/118. Remaining CSB startup work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-11 update: `csb_v1_m11_runtime_capture_boundary` now verifies the larger runtime capture boundary and release/app capture wiring, including a stricter presented-app receipt that blocks promotion until a macOS app bundle, Mac window capture, presented 320×200 indexed frame, and real CSB pixels are present. Remaining CSB work is the actual local real Mac/app screenshot promotion when CSB DAT files are available.
+
+  - 2026-07-11 update: CSBgraphics decoded-bitmap binding/readiness and startup/runtime plan APIs no longer use `csbgraphics_m11_*` names; files, tests, CMake targets, and boot/profile callers now use `csbgraphics_runtime_*`. Remaining CSB work is real Mac/app release capture and any final non-caller diagnostic exports.
+
+  - 2026-07-11 update: D2C center-field route helpers no longer export public `M11_GameView_ViewportD2CCenterField*` names; the ReDMCSB-locked CSB-owned test is now wired into CTest. Remaining CSB work is real Mac/app release capture and any final non-caller diagnostic exports.
+
+  - 2026-07-11 update: D2L2/D2R2 F0115 projectile/object/creature/explosion route helpers no longer export public `M11_GameView_*` names; the ReDMCSB-locked CSB-owned test is now wired into CTest. Remaining CSB work is real Mac/app release capture and any final non-caller diagnostic exports.
+
+  - 2026-07-11 update: the public M11 CSB runtime overlay draw-stats probe is retired; M11 tests now inspect the propagated draw counters locally, while CSB viewport runtime draw-count behavior stays verified in the CSB viewport receipt test. Remaining CSB work is real Mac/app release capture and any final non-caller diagnostic exports.
+
+  - 2026-07-11 update: the public M11 CSB startup host-view draw consumer probe is retired; startup title/HUD/door proof stays in CSB boot/runtime receipts and `test_csb_v1_boot_runtime_handoff`. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: CSB runtime asset frames now carry full-start, no-wrapper, title-phase-mask, and route-hash proof directly from the verified ReDMCSB/CSBWin startup session. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: release/app capture now has a complete-support consumer receipt requiring title, closed-door HUD, utility HUD, and door-opening packaged hashes plus receipt-only draw/input routes. Remaining CSB work is real Mac screenshot evidence against the release app and local CSB data.
+
+  - 2026-07-11 update: CSB runtime host gate now treats ENTRANCE.C credits as its own host-owned startup surface route with route hardening, draw/input receipt-only consumers, and packaged capture hash. Remaining CSB work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-11 update: CSB complete-support and release/app capture now require credits host ownership, receipt-only draw/input, and packaged credits hash too; release capture rejects missing credits package or credits wrapper fallback. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: CSB complete-support and release/app capture now preserve four distinct ReDMCSB TITLE.C F0437 phase hashes for PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES BACK, and reject collapsed phase proof. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: CSB release/app capture now carries explicit real-asset app-capture readiness from both full runtime and host runtime visual capture, plus a dedicated real-asset capture hash; non-real full/host capture is rejected. Remaining CSB work is real Mac/app screenshot capture against local CSB data when local CSB DAT files are available.
+
+  - 2026-07-11 update: public CSB runtime asset-gate helper export is retired; verified C001-C005/HUD startup asset ownership stays private behind runtime launch detach and host-capture receipts. Remaining CSB work is real Mac/app screenshot capture against local CSB data when local CSB DAT files are available.
+
+  - 2026-07-11 update: public CSB runtime presentation snapshot wrapper is retired; startup presentation remains behind the launch detach, host-capture, and full runtime receipt path. Remaining CSB work is real Mac/app screenshot capture against local CSB data when local CSB DAT files are available.
+
+  - 2026-07-11 update: public runtime startup host-facts wrappers for utility render/input and entrance input are retired; boot snapshots now own the M11-facing CSB startup input boundary. Remaining CSB work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-11 update: public CSB startup action-level HUD/menu draw and host-decision helper exports are retired; host-input dispatch/input-render receipts now own title-block, utility redraw, entrance redraw, and launcher-return checks. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: public CSB capture-level runtime route-hardening helper export is retired; title, utility HUD, door-opening, credits, no-fallback, and no-wrapper checks now stay behind the runtime host-capture gate. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: public CSB runtime-visual capture helper export is retired; title/PRESENTS/CHAOS/STRIKES, HUD, credits, door-opening, no-fallback, and receipt-only draw/input checks now stay behind the runtime host-capture gate. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-11 update: public CSB boot no longer exports the lower-level utility and entrance snapshot helper wrappers; the regression now consumes the combined startup action/host receipt facade while the lower-level helpers stay private inside `csb_v1_boot.c`. Remaining CSB work is real Mac/app release capture against local CSB data and any final non-caller startup diagnostic exports.
+
+  - 2026-07-10 update: public primitive/asset/closed-door/title-fallback/opening-composite startup helper exports are retired after M11 moved to host-view draw receipts. Remaining CSB startup work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-10 update: M11 production startup drawing now suppresses legacy CSB door/text fallback callbacks instead of rendering them over receipt-owned title/HUD/opening frames. Remaining CSB work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-10 update: CSB now exposes a complete-support receipt that joins the full startup runtime session with host-capture route hardening for PRESENTS, CHAOS zoom/hold, STRIKES BACK, entrance/credits, closed-door HUD, utility HUD, opening door, receipt-only draw/input, and no-wrapper/no-fallback policy. Remaining CSB work is real Mac/app release capture against local CSB data.
+
+  - 2026-07-09 update: M11 title drawing now consumes a CSB-built title plan from the render-view receipt, including stale-plan protection for post-FTL PRESENTS/CHAOS/STRIKES routes. Remaining CSB work is packaged capture proof and moving the next HUD/menu draw path behind receipt-only input.
+
+  - 2026-07-09 update: closed-door HUD/menu render plans can now be rebuilt from CSB render-view receipts, including selected command, resume gate, prompt, and command counts. Remaining CSB work is wiring the next host HUD/menu consumer to this receipt helper and capture proof.
+
+  - 2026-07-09 update: utility HUD/menu render plans can now be rebuilt from CSB render-view receipts, including selected row, preview state, prompt, and row count. Remaining CSB work is wiring M11 utility drawing to this receipt helper and capture proof.
+
+  - 2026-07-09 update: aggregate CSB startup capture receipts now execute full-start title, utility, closed-door, and door-opening render plans through one CSB-owned helper. Remaining CSB work is replacing the last M11 startup render branches with this receipt executor.
+
+  - 2026-07-09 update: M11 startup drawing now enters through CSB's snapshot capture render executor for title, utility, closed-door, and door-opening routes. Remaining CSB work is moving any leftover startup input/HUD decisions to the same receipt boundary.
+
+  - 2026-07-09 update: M11 startup keyboard/pointer dispatch now consumes a CSB input gate receipt for title blocking, readiness, dispatch, and post-input HUD/render decisions. Remaining CSB work is final cleanup of any older startup helper wrappers and broader packaged visual capture.
+
+  - 2026-07-09 update: startup host decision receipts now flatten title-block, utility redraw, entrance redraw, launcher-return, status, route, and selected-row decisions. Remaining CSB work is wiring M11 startup input to consume this decision receipt directly and capture proof.
+
+  - 2026-07-09 update: CSB startup readiness receipts now join post-FTL title-not-ready, entrance input readiness, utility HUD, and closed-door HUD gates, and M11 boot probes consume them. Remaining CSB work is packaged render capture proof and direct HUD draw consumption.
+
+  - 2026-07-10 update: complete CSB startup runtime sessions now require PRESENTS, CHAOS, STRIKES BACK, entrance, HUD bindings, and opening-door surfaces from the same verified data owner, and the older materialize adapter routes through that session. Remaining CSB work is real Mac/app capture against local CSB data and deleting any final inspection-only wrappers after callers move to the full runtime receipt.
+
+  - 2026-07-10 update: runtime host-capture gates now require explicit PRESENTS, CHAOS zoom, CHAOS hold, STRIKES BACK phase bits, and verified startup asset bindings for C001-C005 plus HUD before title/HUD startup is considered captured. Remaining CSB work is broader real package capture.
+
+  - 2026-07-10 update: M11 startup host-capture readiness now requires the CSB runtime host gate plus the verified real-data startup asset-binding hash before reporting the PRESENTS/CHAOS/STRIKES/HUD/door host route as ready. Remaining CSB work is broader real package capture and any final old helper exports no caller needs.
+
+  - 2026-07-10 update: loose public render-plan adapter exports for request/facts/host-facts startup callers are retired; tests now verify the same title and closed-door menu render data through `csb_v1_startup_presentation_receipt_from_host_facts_pc34()`. Remaining CSB work is real Mac/app release capture and any final non-caller helper exports found by later cleanup.
+
+  - 2026-07-10 update: the whole-plan startup render executor is no longer exported through the public startup-sequence header or tested as a direct caller path; boot keeps the remaining internal bridge so host-view receipts stay the M11 boundary for title/HUD/opening draw execution. Remaining CSB work is real Mac/app release capture and any final public startup helper exports found by later cleanup.
+
+  - 2026-07-10 update: host-view draw receipts now expose primitive-command, title asset-command, closed-door asset-command, and opening-frame command consumption for title, HUD/menu, and door-opening startup routes. Remaining CSB work is moving the final M11 startup primitive/asset helper callers to those receipt fields once engine edits are available, plus real Mac/app release capture.
+
+  - 2026-07-10 update: utility keyboard/pointer startup helpers are no longer public non-action wrappers; CSB keeps them internal behind action receipts that chain entrance/runtime consumption. Remaining CSB work is moving the final M11 startup primitive/asset helper callers to host-view receipt fields once engine edits are available, plus real Mac/app release capture.
+
+  - 2026-07-10 update: host-view draw receipts now carry exact ReDMCSB source evidence for TITLE.C F0437 and ENTRANCE.C F0441/F0580/F0581 through render-draw and executed draw receipts. Remaining CSB work is still the engine-side primitive/asset helper caller removal plus real Mac/app release capture.
+
+  - 2026-07-10 update: M11 CSB startup rendering no longer calls the public startup primitive/asset/opening helper exports directly; it consumes host-view render-draw readiness for title, HUD/closed doors, and door-opening before executing callbacks. Remaining CSB work is real Mac/app release capture and deleting those public helper exports after non-engine callers are gone.
+
+  - 2026-07-09 update: packaged startup host-view and host-input dispatch receipts now carry title/PRESENTS/CHAOS/STRIKES, utility, closed-door, door-opening, boot-probe, and keyboard/pointer dispatch consumer fields. Remaining CSB work is removing older duplicate helper wrappers once M11 call sites no longer need compatibility fallbacks.
+
+  - 2026-07-09 update: M11 now consumes CSB host-view receipts directly for special palette, title/PRESENTS/CHAOS/STRIKES, utility, closed-door, and door-opening render execution. Remaining CSB work is deleting older capture-level compatibility APIs after tests no longer need them.
+
+  - 2026-07-09 update: snapshot capture render execution API is retired; snapshot tests now prove the same title, utility, closed-door, and door-opening routes through host-view receipts. Remaining CSB work is retiring the next capture-level HUD/render compatibility helper.
+
+  - 2026-07-09 update: CSB host ownership receipts now package visual capture, host-view draw, and startup input dispatch for title/PRESENTS, closed-door HUD/menu, utility HUD/menu, and door opening. Remaining CSB work is moving any final UI callers off older loose render-plan helpers.
+
+  - 2026-07-09 update: capture-level HUD/menu draw executor is retired; utility and closed-door HUD tests now execute host-view HUD draw receipts with readiness receipts directly. Remaining CSB work is retiring the next capture-level render-plan compatibility helper.
+
+  - 2026-07-09 update: M11 CSB startup draw now consumes the full host-view draw receipt for title, utility, closed-door HUD/menu, and door-opening routes. Remaining CSB work is packaged visual capture proof and removing stale compatibility helpers.
+
+  - 2026-07-09 update: the old snapshot render-plan facade is removed from the public CSB boot API; focused tests now compare closed-door startup draw through host-view packaged render receipts. Remaining CSB work is packaged visual capture breadth and any final loose runtime-state helper cleanup.
+
+  - 2026-07-09 update: capture-level render executor is retired; title, utility, closed-door, and door-opening execution proof now stays on host-view render receipts. Remaining CSB work is retiring public capture render-plan accessors that are no longer caller-facing.
+
+  - 2026-07-09 update: public capture render-plan accessors are retired; tests now consume host-view/package receipts for title, utility, closed-door, and door-opening render proof. Remaining CSB work is deleting any later non-caller-facing startup compatibility exports after M11 consumers move over.
+
+  - 2026-07-09 update: host-view receipts now carry readiness and expose one draw receipt that consumes title render, utility HUD, and closed-door HUD/menu without separate readiness/render-plan calls. Remaining CSB work is removing older direct render-plan helper exports after all callers use the host-view draw receipt.
+
+  - 2026-07-10 update: runtime host-capture gates now carry per-route host-ownership summaries, packaged capture hashes, and real startup asset-binding hashes for title, closed-door HUD/menu, utility HUD/menu, and door opening; M11 consumes those hashes in its readiness probe. Remaining CSB work is broader real runtime capture in the release app and any final old helper exports that no M11 path needs.
+
+  - 2026-07-11 update: host-view draw execution now rejects title/HUD/door startup draws unless render-draw, readiness, and packaged capture receipts are all present. Remaining CSB work is broader real runtime capture in the release app and any final old helper exports that no M11 path needs.
+
+  - 2026-07-11 update: complete-support and release-app capture now propagate CSB title phase mask/hash from the runtime host gate, so PRESENTS/CHAOS zoom/hold/STRIKES cannot be collapsed into a bool-only title-ready route. Remaining CSB work is real Mac/app release capture.
+
+  - 2026-07-11 update: CSB runtime host gate now carries four explicit title phase hashes for PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES BACK, and requires all four hashes to be unique before startup host capture is valid. Remaining CSB work is real Mac/app release capture and any later caller-facing cleanup found under real data.
+
+- 🔧 2026-07-08 DM1 startup ownership follow-up: continue moving host-only M11 startup apply/adaptation code behind DM1 V1 receipts. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-15 update: F0115 no longer invokes the legacy proportional floor-ornament renderer for DM1 after the real F0108 layout-696 zone pass. That duplicate host overlay obscured source pit/stairs/object material. Remaining F0115 work is the complete caller-owned door-pass scheduler and real packaged capture.
+
+  - 2026-07-15 update: F0111 center-door material is now composed D3C->D2C->D1C for panels, ornaments, destroyed masks, and buttons. M11 formerly selected only the nearest center door, unlike F0128's full source dispatch. Remaining door work is the caller-owned F0115 door-pass object scheduler and packaged pixel capture.
+
+  - 2026-07-15 update: F0128 square material now retains D3..D1 pits, floor ornaments, front stairs, and teleporter fields even when a nearer side-content lane is closed. ReDMCSB calls F0104/F0108/F0113 from every F0116..F0124 route and relies on later source panels for occlusion; M11 no longer pre-culls this material. Remaining ordering work is real capture/pixel comparison and any route that needs a full per-square F0115 scheduler.
+
+  - 2026-07-15 update: F0128 live center-cell F0115 content now follows the original D3->D2->D1 progression, rather than letting far center objects overpaint near cells after the side pass. The M11 composition gate also confirms F0107 defers C127 to the single D1C front-mirror owner after contents/effects. Remaining work is real Mac/app capture and broader original pixel comparison.
+
+  - 2026-08-06 update: the exact F0104/F0105 D3..D1 stairs blits now run after the final F0128 center-wall occlusion replay, preventing that repair pass from covering valid stairs material. Remaining work is real Mac/app capture and broader original pixel comparison; the source geometry/material binding itself is covered by the 19-plan PC34 test and real HoC runtime probe.
+
+  - 2026-07-15 update: M648 front-wall inscription output now has one owner: the post-palette D1C presentation pass. Earlier ornament-batch duplicates are removed, preventing a pre-palette glyph layer from mixing with the real C10-transparent font cells. Audit also confirms ACTIDRAW remains original-font-only, TITLE.C retains its 53x55ms source cadence, and C127 mirrors remain D1C/front-cell-only. Remaining work is real Mac packaged capture, not a synthetic scale/font/timing workaround.
+
+  - 2026-07-15 update: the live F0292 champion status-name strip now uses the ReDMCSB `Name[8]` TEXT2 route: C159+n clears the 43x7 field, C163+n writes at x+1/y=5, and the renderer clips to seven native 6px glyphs. Portraits remain inventory-only through F0354; status bars, hand slots, action cells, and spell cells retain the source-ordered runtime composition. Remaining HUD work is real packaged capture with authentic assets.
+
+  - 2026-07-15 update: `ACTIDRAW.C F0387` action strings now use TEXT2 native cells only and fail closed to the source cell background when the authentic font is unavailable. `MENUDRAW.C F0397/F0398` now always repaints the six offered runes and all four selected-rune cells using the PC34 geometry, including source-space tail clearing. Remaining DM1 HUD work is real packaged capture across assets and macOS, not a substitute host font path.
+
+  - 2026-07-23 update: the live F0387/F0394 render-command admission now
+    rejects blank C009/C010/C011 decoded surfaces and any non-M653 font
+    surface before a command reaches the renderer. Local PC34
+    `GRAPHICS.DAT` header verification pins C009=87x25, C010=87x45, and
+    C011=14x39. This removes the zero-filled/synthetic material path but
+    does not claim the still-required Mac/app capture.
+
+  - 2026-07-15 update: the live F0128/F0107 wall-material dispatch now keeps D3L/D3R and D2L/D2R outside the side-lane content occlusion filter. This fixes the reported missing diagonal D2 wall and its real ornament material when a nearer same-side lane is closed; C026 remains D1C-only and M648 remains front-wall-only. Remaining wall work is real packaged-app capture and broader bitmap/palette proof, not geometry suppression.
+
+  - 2026-07-11 update: endgame final-presentation readiness, restart/quit control visibility, Back-key exit, and restart/quit hit routing now enter through the DM1-owned F0444/F0446 presentation decision. M11 supplies runtime facts and applies the selected action; layout remains in the existing DM1 endgame-layout contract. F0446's 43 fixed mutation/replay cadence points now also come from a DM1-owned plan: M11 applies only the requested world/audio operations, while DM1 fixes the setup, 55..255 barrages, 24 Chaos/Order replay updates, final mutations, and F0444 handoff parameters. Remaining endgame work is full-graphics proof.
+
+  - 2026-07-11 update: D3L/D3R now own their F0116/F0117 element switch in the DM1 viewport: door frames are no longer unconditional, and wall, front-stairs, pit, F0108 floor-ornament fallthrough, door-side/stairs-side, front-door frame placement, and teleporter-field routes enter through the source-ordered DM1 path. The outer M11 F0115 host boundary now also preserves the nearest closed-center depth and F0096 wallset-variant materialization markers required by `dm1_v1_viewport_3d_source_lock`. Remaining renderer work is to consume the D3L/D3R F0115 receipt at that existing host boundary plus real Mac/release pixels.
+
+  - 2026-07-13 update: M11 now consumes a DM1-owned D3L/D3R host handoff for F0116/F0117 wall material: selected wallset, C705/C706 geometry, C10 transparency, and parity flip no longer originate in the host loop. The handoff also preserves the source wall-return versus front-alcove F0115 fallthrough fact. Remaining renderer work is real Mac/release pixels and other lower-level host helpers.
+
+  - 2026-07-13 update: the same DM1 D3 host handoff now covers the adjacent D3L2/D3R2 F0676/F0677 material routes, so M11 consumes selected C702/C703 wallset material, C10 transparency, destination geometry, and parity flip rather than rebuilding those fields. Remaining renderer work is real Mac/release pixels and other lower-level host helpers.
+
+  - 2026-07-13 update: M11 now consumes the DM1-owned F0110 center-door-button plan for D2C/D3C. The source view index, G0208 frame, D2/D3 palette remap, and C10 transparency no longer originate in the host draw loop. Remaining renderer work is real Mac/release pixels and other lower-level host helpers.
+
+  - 2026-07-11 update: DM1-owned D3L2/D3R2 F0676/F0677 runtime now consumes F0172-derived M555/M554 inputs for front stairs and pits, selects C00/C07 stairs assets, flips D3R2 through the source direction, draws C049 only for visible pits, and retains the original F0108/F0115 fallthrough. Remaining renderer work is host ownership for other lower-level helpers plus real Mac/release pixel promotion.
+
+  - 2026-07-11 update: champion-mirror public header no longer exports old `Dm1V1ChampionMirror*Compat` aliases or `*Pc34Compat` function macros; HoC mirror callers use the DM1/ReDMCSB receipt API directly. Remaining startup/render work is real Mac/release capture promotion and any deeper host-only diagnostic cleanup.
+
+  - 2026-07-11 update: M11 entrance full-graphics transition now requires the DM1/ReDMCSB full-start host-ready receipt and stops instead of drawing fallback closed/opening doors when GRAPHICS.DAT-backed entrance assets are required. Remaining startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: DM1 TITLE step palette mapping now has a ReDMCSB TITLE.C/VIDEODRV.C regression test wired into CTest; PRESENTS stays on C12_PRESENTS while DUNGEON/MASTER/STRIKES stays on C13+C14. Remaining startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: DM1 TITLE runtime-source selection now has a ReDMCSB-owned startup receipt and M11 consumes that receipt before using GRAPHICS.DAT C001. TITLE.DAT remains a visible last-resort fallback only. Remaining startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: the F0128 viewport-crop readiness helper now lives under DM1-owned source/header paths with no public `m11_dm1_v1_f0128_*` compatibility macros. Remaining startup/render work is real Mac/release capture promotion and any remaining host-only diagnostic probe cleanup.
+
+  - 2026-07-11 update: the public M11 floor-item count diagnostic probe is retired; HoC floor-object coverage now consumes the DM1/ReDMCSB startup render-consumer and F0115 thing-route receipts directly. Remaining DM1 startup/render work is real Mac/release capture promotion and any remaining host-only diagnostic probe cleanup.
+
+  - 2026-07-11 update: the public M11 viewport artifact diagnostic probe is retired; static fireball suppression, live projectile/explosion visibility, and post-FUSE fluxcage hiding now consume DM1 runtime materialization decisions directly. Remaining DM1 render cleanup is lower-level host-only helper retirement plus real Mac/release capture promotion.
+
+  - 2026-07-11 update: the public M11 F0352 potion-eye diagnostic probe is retired; M11 skill-query coverage now feeds the DM1/ReDMCSB inventory formatter directly. Remaining DM1 render/chrome cleanup is residual host-only adapter retirement plus real Mac/release capture promotion.
+
+  - 2026-07-11 update: D1C front-wall inscription text/patch coordinates now come from a DM1/ReDMCSB front-wall line draw plan; M11 only loads assets and blits the DM1 plan. Remaining inscription work is real Mac/release visual capture breadth, not generic-font replacement.
+
+  - 2026-07-10 update: M12 HoC startup capture packaging now derives host-render, M11 boot-probe, and M12 startup consumers from the DM1 presented-capture mask instead of hardcoded booleans. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: entrance opening render/audio commands now carry ReDMCSB door-step geometry and M11 consumes that payload instead of fetching door animation geometry directly. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: D3L2/D3R2 far back-wall runtime now exposes a DM1-owned ReDMCSB receipt for F0115 cell order, door-front split passes, F0111 door slot, and teleporter field-after-things sequencing. The receipt now binds the state-owned floor-ornament and D3 door-front bitmap asset indices for those pass slots. Remaining renderer work is concrete bitmap blitting for those bound assets plus real Mac/release pixel promotion.
+
+  - 2026-07-10 update: D3L2/D3R2 F0111 door-front routes now expose a ReDMCSB-shaped G0693/C3700/C3710 material plan, runtime DOOR_FRONT consumption, expanded-pixel provider consumption, packed 4bpp GRAPHICS.DAT/G0693 source rows copied into the F0111 temporary door bitmap, and M11 production asset-loader consumption. Remaining renderer work is real Mac/release capture proof and broader pixel promotion.
+
+  - 2026-07-11 update: D3L2/D3R2 floor ornaments now consume expanded GRAPHICS.DAT provider pixels through the DM1 F0108/G0206 source zone and record provider/fallback status in the D3 back-wall receipt. Remaining renderer work is real Mac/release pixel capture promotion and broader HoC host capture.
+
+  - 2026-07-11 update: DM1 original-save corpus classification now scans arbitrary real save filenames recursively under bounded user save roots and promotes user corpus evidence only when the ReDMCSB F7057 five-part save envelope is proven. Remaining save/startup work is broader launcher/UI import/export consumption of that corpus, real Mac/release capture promotion, and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: M12 save-browser now consumes recursive DM1 corpus directories with arbitrary original-save filenames after the ReDMCSB F7057 envelope gate. Remaining save/startup work is whole-corpus import/export actions, real Mac/release capture promotion, and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: M12 save-browser now bulk-exports all load-ready DM1 corpus entries as PC34 saves through the same ReDMCSB F0430/F7057 roundtrip gate used by selected export. Remaining save/startup work is bulk import actions, real Mac/release capture promotion, and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: M12 save-browser now bulk-imports arbitrary DM1 PC34 corpus directories into `saves/dm1` only after the ReDMCSB F0429/F7057 save-browser gate. Remaining save/startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: M12 save-browser now exposes DM1 PC34 corpus import/export receipts with F0429/F7057/roundtrip gates, counts, hashes, and source evidence. Remaining save/startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: M12 startup menu now consumes the DM1 PC34 corpus import/export receipt wrappers directly, preserving the ReDMCSB F0429/F0430/F7057 gates at the launcher boundary. Remaining save/startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: M11 DM1 `TITLE` fallback discovery no longer walks hardcoded `TITLE`/`TITLE.DAT` suffix lists after the data-dir scan; normal discovery now uses the canonical MD5 route for data roots, M12-matched asset parents, archive entries, and known user-data roots before accepting a runtime file. Remaining startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-11 update: the legacy asset pipeline no longer lets known DM1/CSB/DM2 launch data fall through to `GRAPHICS.DAT`/`DUNGEON.DAT` filename loading after hash scan failure; only custom/unknown development subdirs keep the filename fallback. DM1 multilingual loading is also hash-only. Remaining startup work is real Mac/release capture promotion and deleting old inspection-only adapters.
+
+  - 2026-07-10 update: DM1 boot summaries now build the M12 HoC presented-capture publish receipt directly; `main_loop_m11` no longer reconstructs DM1 presented-capture publish facts from boot-probe fields. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: M11 no longer prefilters HoC presented-capture publish on loose boot-probe fields; after source validation the DM1 publish receipt alone decides if M12 receives the capture. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: DM1 now builds HoC complete-support/save-resume receipt chains from host facts, so M11 no longer constructs the ENTER/RESUME handoff, HoC save-readiness, or original-save capture receipts locally. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: DM1 boot full-graphics receipt now exports a DM1-owned boot-probe summary for HoC fields, complete-support fields, capture routes, and no-fallback gates; M11 copies the summary instead of interpreting nested HoC receipts. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: M11 direct-launch boot probes now snapshot one receipt per probe run before checking selected-source, runtime, title, and DM1 complete-support gates. Remaining DM1 startup work is real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: HoC presented capture fact population, consumer mask, and chain hash now live in the DM1 startup receipt layer for host-probe and capture receipts. Remaining DM1 startup work is real Mac/release capture promotion and deleting any older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: HoC presented-capture publish now requires the exact three named production consumers (host-render, M11 boot-probe, and M12 startup capture) before it can go ready. Remaining DM1 startup work is still real Mac/release capture promotion and deleting older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: HoC presented RGBA hashing/byte-count validation now lives in the DM1 startup receipt layer and M11 only supplies host pixels. Remaining DM1 startup work is real Mac/release capture promotion and deleting any older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: DM1 now exposes a boot full-graphics receipt that joins HoC host probe, runtime apply, production consumer, release/app capture ownership, save readiness, and complete-support readiness. Remaining DM1 startup work is real Mac/release capture promotion and deleting any older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: M11 boot probes now consume the DM1 complete-support receipt for source-visible startup, entrance-to-HoC, HoC render, host/app capture, save corpus, and original-save roundtrip readiness. Remaining DM1 startup work is real Mac/release capture promotion and deleting any older inspection-only helper routes once no caller depends on them.
+
+  - 2026-07-10 update: `main_loop_m11` now gates DM1 full-HoC and release/app boot-probe success on the aggregate complete-support receipt, leaving loose HoC fields as diagnostics only. Remaining DM1 startup work is deleting old diagnostic-only adapters and promoting real Mac/release capture evidence.
+
+  - 2026-07-10 update: duplicate full-HoC/release-app condition lists in `main_loop_m11` now go through aggregate complete-support helpers. Remaining DM1 startup work is deleting older diagnostic-only helper exports and promoting real Mac/release capture evidence.
+
+  - 2026-07-09 update: DM1 champion mirror receipt now separates ReDMCSB's 1-based G0289 source ordinal from the 0-based C026 render index, and M11 has a HoC front-wall probe. Remaining viewport coding work is replacing the last mirror fallback scans with DM1-owned route receipts.
+
+  - 2026-07-09 update: DM1 F0115 item-route receipt now owns HoC mirror-payload suppression for viewport floor-item routing. Remaining viewport coding work is finishing champion mirror portrait/frame routing and moving more M11 wall-mirror cases behind DM1 receipts.
+
+  - 2026-07-09 update: M11 DM1 projectile/explosion sprite selection now uses runtime projectile/explosion lists rather than stale static dungeon C14/C15 refs when rendering HoC/effect squares. Remaining viewport coding work is extending the same receipt ownership to champion mirror/materialized item render routes.
+
+  - 2026-07-09 update: DM1 F0115 thing-layer receipt now separates real floor items from stale C14/C15 projectile/explosion refs. Remaining viewport coding work is wiring the receipt into the HoC runtime render path and replacing residual M11 thing-list filtering.
+
+  - 2026-07-09 update: DM1 champion mirror thing-layer boundary receipts now keep C026 portraits in the wall-overlay path while suppressing mirror payloads as floor items/projectiles/spell effects. Remaining viewport coding work is replacing any final M11 mirror/floor-item fallback checks with this receipt.
+
+  - 2026-07-11 update: M11 front-mirror selection now consumes the same DM1-owned C127/C026 render receipt as HoC wall-overlay drawing instead of accepting a loose cached portrait ordinal. Remaining viewport work is real Mac/app HoC capture and broader host-capture proof for all Hall mirror positions.
+
+  - 2026-07-09 update: DM1 champion mirror thing-layer consumer receipts now combine C026 wall-overlay boundary with F0115 runtime thing receipts, proving real floor objects/projectiles render while mirror payloads stay out of floor/projectile/spell-effect layers. Remaining viewport work is swapping final M11 call sites to this consumer.
+
+  - 2026-07-09 update: DM1 HoC render production consumer now combines first-frame render commands with mirror thing-layer receipts and returns wall-overlay plus real floor/projectile/spell-suppression decisions without M11 fallback scan. Remaining viewport work is wiring the final M11 call sites to this API.
+
+  - 2026-07-09 update: DM1 champion mirror render receipts now own the C346 mirror-backing material as well as C026 portrait geometry, and M11 front-mirror drawing consumes that receipt instead of building a separate front-mirror plan. Remaining viewport work is replacing the last broad HoC draw-call fallbacks with the startup production consumer.
+
+  - 2026-07-09 update: M11 now exposes a HoC startup render consumer probe built from DM1 first-frame and thing-layer receipts, proving opened entrance, stale-panel clear, Hall mirror overlay, real floor object allowance, and no M11 fallback scan at the host boundary. Remaining viewport work is replacing the final draw execution branch with this consumer.
+
+  - 2026-07-09 update: M11 D1C HoC champion-mirror drawing now gates runtime wall-overlay execution through the DM1 HoC render consumer receipt. Remaining viewport work is packaging the same receipt into broader full-graphics capture proof.
+
+  - 2026-07-10 update: M11 D1C HoC champion-mirror drawing now builds the actual host draw command through `dm1_v1_startup_hoc_owned_host_draw_receipt_pc34` after the DM1 ownership receipt, so missing C346 backing assets stop the draw instead of reusing the older runtime host-draw adapter. Remaining viewport work is broader real Mac/app capture promotion and deleting diagnostic-only helpers when no tests need them.
+
+  - 2026-07-11 update: the last direct M11 host-only C026 front-portrait blit helper and its public M11 diagnostic probe were removed; C026 drawing now enters through the DM1 HoC owned-host-draw receipt, and the test consumes the DM1 C127/C026 render receipt directly. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions.
+
+  - 2026-07-11 update: the public M11 HoC startup-render-consumer diagnostic probe was removed; the M11 regression now builds the DM1 first-frame, C127/C026 viewport-render, F0115 thing-layer, and HoC render-consumer receipts directly. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
+
+  - 2026-07-11 update: the public M11 HoC full-graphics ownership diagnostic probe and its duplicate M11 regression were removed; full-graphics HoC ownership stays covered by the DM1 startup receipt tests instead of a host-only adapter. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
+
+  - 2026-07-13 update: M11's actual F0115 floor-object draw path now publishes the HoC host receipt only from the explicit floor lane, carrying the ReDMCSB C10/F0791 material decision and final geometry. F0121/F0124 alcove objects now use a DM1-owned G2029/C2548 material receipt, including the source chest alcove bitmap variant, and refuse the unrelated C2500 placement path.
+
+  - 2026-07-14 update: the live F0121/F0124 alcove lane now binds the three PC34 Graphic 558 C2548 coordinate sets and their seven G2029 rows, carries the authenticated viewport clip through the DM1 material plan, and sends its C10/F0791 blit through M11's production item renderer. Invalid C2548 rows still fail closed; C2500 cannot service an alcove route. Remaining viewport work is real Mac/app capture proof for all Hall mirror positions and any final diagnostic-only exports.
+
+  - 2026-07-14 update: the production C2548 alcove blit now shares M11's
+    DM1-owned F0115/C127 admission gate with ordinary floor-object blits.
+    A resumed original save may resolve a legal alcove placement, but its
+    visible C127 payload cannot bypass wall-overlay suppression through the
+    separate C2548 route. Independent F0115 objects still require their
+    explicit runtime receipt.
+
+  - 2026-07-11 update: public M11 DM1 door-panel, side-door, primary-side-wall, and wall-ornament diagnostic probes were removed; M11 action/runtime tests now consume the DM1 ReDMCSB-locked viewport/door/ornament APIs directly. Remaining viewport work is broader real Mac/app capture proof and any final diagnostic-only exports.
+
+  - 2026-07-11 update: public M11 DM1 center-lane blocker/content-mask probes and the unused V2 live-effect seed probe were removed; the overlay regression now samples cells through M11 but computes blocker and visibility masks through DM1 ReDMCSB-locked viewport APIs. Remaining viewport work is broader real Mac/app capture proof and any final diagnostic-only exports.
+
+  - 2026-07-11 update: public M11 DM1 viewport-cell, side-wall eligibility, and side-wall runtime-blit diagnostic exports were removed; M11 tests now use local harness sampling plus DM1 viewport/fakewall/wall-spec APIs. Remaining viewport work is broader real Mac/app capture proof and any final diagnostic-only exports.
+
+  - 2026-07-11 update: public M11 creature-count and render-metadata viewport diagnostic exports were removed; HoC mirror tests now consume DM1 champion-mirror receipts directly while M11 remains only the runtime front-mirror consumer. Remaining viewport work is broader real Mac/app capture proof and the artifact/floor-item runtime sampling probes that still cover M11 runtime state.
+
+  - 2026-07-11 update: unused legacy M11 aliases were removed from DM1 wall-ornament, door-bash stamina/feedback-chain, chest reopen/swap, chest teleport-survival, and chest reopen-cross-champion headers. Remaining viewport/runtime cleanup is broader real Mac/app capture proof and any active adapter names still used by production callers.
+
+  - 2026-07-11 update: a wider unused M11 alias batch was removed from DM1 chest, inventory, champion-stats, viewport side-wall, entrance, title, and food/water headers; remaining M11 names in this area are active runtime APIs, test names, or historical changelog text. Remaining startup/render work is still broader real Mac/app capture proof and deeper host-helper retirement only where production callers have moved to DM1 receipts.
+
+  - 2026-07-09 update: M11 D1C HoC champion-mirror drawing now requires the DM1 HoC full-graphics fallback ownership receipt before blitting C346/C026 output. Remaining viewport work is broader real Mac/app capture proof for all Hall mirror positions.
+
+  - 2026-07-09 update: DM1 F0412 runtime receipts now own spell-created projectile thing ids, kinetic/step energy, champion rotation, light/status event facts, XP, and action-disable ticks, and M10 consumes the receipt for projectile/OTHER effects. Remaining spell coding work is potion/magic-map receipt consumption plus broader runtime proof.
+
+  - 2026-07-13 update: M10 now consumes F0412 `NEEDS_MORE_PRACTICE` partial XP through the live F0304 lifecycle bridge before failure return, matching `MENU.C F0412:1835-1841`; the failure remains projectile/status/action-disable free. Remaining spell work is other per-family runtime effects and broader proof.
+
+  - 2026-07-13 update: DM1 F0412 potion table receipts now require the source power-symbol ordinal `1..6` and the exact `M003_RANDOM(16)` potion-power domain before publishing a successful flask-mutation handoff. Rejected inner table receipts are copied atomically to callers, so a stale success cannot authorize a potion mutation. Remaining spell work is other per-family runtime effects and broader proof.
+
+  - 2026-07-16 update: the live F0407/F0231/F0412 action/spell result chain now
+    publishes a DM1-owned HUD presentation receipt from the existing
+    tick-addressed live-effect state. Damage, action-lock, projectile/effect/
+    potion spell kinds, and F0412 failure-feedback text flags are validated
+    against source-shaped state before M11 may draw them; unsupported spell
+    kinds and invalid champion/action data fail closed without synthetic HUD
+    text, events, or fallback surfaces. Remaining action/spell work is broader
+    real-route capture and consuming more special action families through the
+    same receipt boundary.
+
+  - 2026-07-16 update: M11 now consumes that boundary on the production V1
+    HUD path: F0231 creature-hit feedback requires the live damage receipt,
+    GRAPHICS.DAT C014 and the source-bound M653 font before drawing, and F0412
+    spell failures use the receipt's original clear-symbol/redraw flags rather
+    than wiping all rune input. Remaining action/spell runtime work is broader
+    real combat/cast capture and migrating any remaining diagnostic-only
+    status text out of the source-owned HUD lane.
+
+  - 2026-07-13 update: DM1 HoC F0282 reincarnation now accepts only the twelve source `M002_RANDOM(7)` statistic draws from `REVIVE.C:832-835`. Invalid or absent draws publish a non-mutating plan, preventing a malformed runtime byte from being remapped into another champion stat increase. Remaining HoC work is broader runtime proof and source-owned rename/panel behavior.
+
+  - 2026-07-13 update: M11 HoC resurrection/reincarnation now consumes only original C040/C027 panels. A missing panel leaves the C017-backed viewport no-draw; the old green/orange host panel and host-labelled buttons are removed. Dynamic rename text is likewise gated on the real C027 panel. Remaining HoC work is broader real PC34/Mac capture proof, not a substitute panel.
+
+  - 2026-07-13 update: the C027 rename consumer now uses the loaded PC34
+    M653 interface bitmap through ReDMCSB `TEXT2.C F0644`'s six-pixel
+    advance/baseline rule, rather than M11's eight-pixel inscription/host-font
+    route. Missing M653 leaves the real C027 panel text-free; remaining HoC
+    work is broader original-PC/Mac capture proof, not synthetic text.
+
+  - 2026-07-13 update: C040's host C160/C161/C162 click and keyboard route
+    now requires the loaded PC34 panel at its source C101 geometry. M10
+    model APIs remain independent for save/runtime proof, but a missing C040
+    cannot accept an invisible host action. Remaining HoC work is real
+    original-PC/Mac capture breadth.
+
+  - 2026-07-13 update: visible C127 front-mirror pointer and inspect input
+    now require the exact real PC34 C026 atlas cell and C346 backing selected
+    by the shared F0172/DUNVIEW receipt. Missing or undersized original
+    material leaves the host route inert; direct M10/save model selection
+    remains independent. Remaining HoC work is real original-PC/Mac capture
+    breadth, not an input or render substitute.
+
+  - 2026-07-13 update: the C161 host transition into F0281 rename now
+    requires real PC34 C027 panel geometry and the loaded M653 interface
+    font. C027 keyboard and pointer edits use the same gate; missing material
+    leaves C040 active without accepting an invisible rename interaction.
+    Direct model APIs remain available for save/runtime proof. Remaining HoC
+    work is real original-PC/Mac capture breadth, not a substitute panel or
+    host-font input path.
+
+  - 2026-07-13 update: C040 host C160/C161/C162 dispatch now also requires
+    the real 224x136 PC34 C017 inventory backdrop that `PANEL.C F0347`
+    installs before F0346 overlays C040. An isolated C040 bitmap is not a
+    visible source command surface, so host mutation remains blocked until
+    both layers load. Remaining HoC work is real original-PC/Mac capture
+    breadth, not a partial panel fallback.
+
+  - 2026-07-13 update: host C160 and the C027-confirm path now require a
+    bounded, valid original front-square sensor chain before F0282 can commit.
+    The completion mutation follows `REVIVE.C F0282` exactly: it disables the
+    first SENSOR, including documented BUG0_87 custom-dungeon behavior, and
+    does not substitute a matching C127/TextString scan. Missing, malformed,
+    or sensor-free chains leave the visible PC34 panel inert. Direct model APIs
+    remain available to save/runtime proof. Remaining HoC work is real
+    original-PC/Mac capture breadth, not a synthetic mirror disable route.
+
+  - 2026-07-13 update: DM1 F0407 INVOKE projectile planning now accepts only the source `M003_RANDOM(128)` energy and `M002_RANDOM(6)` family domains from `MENU.C F0407:1480-1493`; malformed command facts fail closed rather than creating a non-source projectile. Remaining action work is other special-action preconditions and broader runtime proof.
+
+  - 2026-07-13 update: DM1 F0401 fright plus F0407 WINDOW/FLIP plans now accept only their source `M002_RANDOM(...)`/`M005_RANDOM(2)` domains from `MENU.C F0401:969-976` and `F0407:1398-1440,1536-1541`; malformed runtime draws fail closed rather than wrapping into a resistance, Thieves Eye, or coin-flip outcome. Remaining action work is other special-action preconditions and broader runtime proof.
+
+  - 2026-07-09 update: DM1 F0412/F0327 spell projectile launch receipts now convert spell casts into the shared F0810 create-input path with F0327 weak-projectile adjustment, and the old M11 Open Door fallback launch has been removed. Remaining spell/render work is broader projectile-family receipt proof.
+
+  - 2026-07-13 update: the strict Open Door F0412 C11 gate now also proves
+    the real delayed aftereffect: F0330's ordinal-zero receipt reaches F0253,
+    clears only the spell lock, and cannot enter F0259 or move a quiver weapon.
+    Remaining spell work is broader projectile-family receipt proof.
+
+  - 2026-07-13 Open Door C11 timeline-order boundary: the authentic F0412
+    receipts are non-simultaneous (`F0327` projectile move before F0330 C11),
+    now covered by the focused gate. Exact PC34 same-tick C11 ordering remains
+    blocked outside this route: ReDMCSB `TIMELINE.C F0234` compares time, then
+    packed Type/Priority, then native EVENT address, while Firestaff's shared
+    `F0721_TIMELINE_Schedule_Compat` retains only time ordering and has no
+    imported EVENT-slot identity. Do not inject a synthetic same-tick receipt
+    or add an Open Door-specific ordering fallback; resolve only with a
+    source-backed generic native-event queue representation.
+
+  - 2026-07-09 update: DM1 entrance full-start render receipts now own the ReDMCSB F0797 5x5 micro-dungeon, C255 entrance map, door frame index, rattle cadence, and entrance music request. Remaining startup work is wiring M11 full-graphics startup renderers to consume that receipt.
+
+  - 2026-07-09 update: DM1 post-launch startup plans now carry title/menu eligibility plus the entrance full-start receipt to the M11/M12 handoff boundary. Remaining startup work is consuming those plan fields in the production full-graphics title/HoC render path.
+
+  - 2026-07-09 update: DM1 HoC champion menu route receipts now own hall/live/dead/party-full/enter-dungeon routing for champion mirrors. Remaining startup/menu work is wiring M11/M12 HoC render/input adapters to consume this receipt directly.
+
+  - 2026-07-09 update: M11 HoC keyboard/pointer/object routes now consume the DM1 champion menu route receipt for live C040 panel ownership. Remaining startup/menu work is moving the final render overlay decisions behind the same receipt.
+
+  - 2026-07-09 update: DM1 full-graphics startup media receipts now carry SWSH hold/palette waits, TITLE PRESENTS/zoom/guard timing, palette phases, menu boundary, and entrance handoff. Remaining startup work is wiring M11/M12 render loops to consume that receipt directly.
+
+  - 2026-07-09 update: M11 DM1 SWSH/TITLE production rendering now consumes the DM1 media receipt for waits, palettes, frame timing, and guard/pad delays. Remaining startup work is entrance/HoC render overlay consumption and packaged full-graphics capture proof.
+
+  - 2026-07-09 update: DM1 prelude/post-launch plans now carry the full-graphics media receipt into M11 callbacks for SWSH/TITLE rendering. Remaining startup work is consuming entrance/HUD overlay receipts in the same active-plan path.
+
+  - 2026-07-09 update: M11 DM1 entrance callback now validates the active post-launch C255/5x5/south-facing receipt before running the entrance transition. Remaining startup work is turning more entrance draw/audio steps into receipt-consumed render commands.
+
+  - 2026-07-09 update: DM1 startup media receipts now carry entrance source-step count, door-step count, vblank timing, and pre-open delay into M11 validation. Remaining startup work is replacing direct entrance transition delay/render queries with receipt-built commands.
+
+  - 2026-07-09 update: M11 DM1 entrance transition delays now come through the active startup media receipt helper, and probes reject too-fast vblank/pre-open receipts. Remaining startup work is moving entrance draw/audio command selection behind receipt-built render commands.
+
+  - 2026-07-09 update: M11 DM1 entrance transition now consumes receipt-built render/audio commands for fade, closed doors, opening door frames, palette present, rattle marker, and delay. Remaining startup work is packaged full-graphics capture proof and HoC overlay consumption.
+
+  - 2026-07-09 update: DM1 selected launch now emits a full-graphics runtime handoff receipt from SWSH/PRESENTS/TITLE/entrance to HoC/runtime draw. Remaining startup work is moving final HoC overlay/render decisions behind DM1 receipts and packaged capture proof.
+
+  - 2026-07-09 update: DM1 runtime handoff receipts now expose HoC first-frame readiness separately from resume readiness, and M11 consumes that receipt after selected launch. Remaining startup work is final HoC overlay/render receipt consumption plus packaged capture proof.
+
+  - 2026-07-09 update: DM1 HoC full-graphics suppression receipts now prove Hall mirror overlay while rejecting false floor-item, projectile, spell-effect, and mirror-as-thing payloads before HoC walk/capture. Remaining startup work is wiring final production callers to consume the suppression/apply receipts directly.
+
+  - 2026-07-09 update: DM1 HoC production consumer receipts now combine runtime apply and suppression proof into one caller-facing render contract. Remaining startup work is swapping final M11/M12 HoC draw call sites to consume this contract directly.
+
+  - 2026-07-09 update: HoC first-frame readiness now requires a DM1-built Hall champion-mirror menu-route receipt. Remaining startup work is consuming final HoC overlay/render details behind the same DM1 receipt path plus packaged capture proof.
+
+  - 2026-07-09 update: DM1 packaged HoC full-graphics capture proof now feeds a DM1-owned runtime apply receipt for opened entrance, stale-panel clear, Hall mirrors, and fallback suppression. Remaining startup work is wiring the final M11/M12 HoC render callers to consume this apply receipt directly.
+
+  - 2026-07-09 update: DM1 HoC mirror-start receipts now prove clean Hall input state: no selected mirror/C040 panel and enter blocked until a champion is chosen. Remaining startup work is final HoC overlay/render receipt consumption plus packaged capture proof.
+
+  - 2026-07-09 update: DM1 HoC first-frame receipts now emit an ordered render command plan for opened entrance frame, stale champion-panel clear, and hall mirror overlay. Remaining startup work is wiring final host render consumers and packaged capture proof.
+
+  - 2026-07-09 update: DM1 HoC render command plan is now tested as first-frame ordering. Remaining startup work is final production consumer wiring plus packaged capture proof.
+
+  - 2026-07-10 update: DM1 now owns the presented HoC capture publish receipt for the shared host-render + M11 boot-probe + M12 startup capture chain. Remaining startup work is broader real Mac/app capture coverage and deleting older host-only adapters once tests move.
+
+  - 2026-07-10 update: DM1 HoC release/app capture ownership now packages host-render, M11 boot-probe, M12 startup, presented capture chain, and route hash into one DM1-owned receipt consumed by M11/M12. Remaining startup work is broader real Mac/app capture coverage and deleting older host-only adapters once tests move.
+
+  - 2026-07-10 update: DM1 HoC release/app capture ownership now requires all named production host consumers (host-render, M11 boot-probe, and M12 startup capture) before publishing the packaged route. Remaining startup work is broader real Mac/app capture coverage and deleting older host-only adapters once tests move.
+
+  - 2026-07-09 update: DM1 F0231 side-effect plans now carry XP call context toward M10 writeback. Remaining melee coding work is reducing the last M10 assembly/apply fragments around F0407/F0231 and broad runtime proof.
+
+  - 2026-07-13 update: DM1 F0231 kill-notify receipts no longer publish the old base-health “kill XP” bonus. ReDMCSB `PROJEXPL.C F0231:1531-1539` awards only damage-derived F0304 skill XP before its F0190 outcome path; M11 retains the defeat notification but cannot double-award XP. Remaining melee work is deeper runtime aftermath proof, not synthetic kill rewards.
+
+  - 2026-07-13 update: the remaining compact F0231 combat entry now takes
+    the original `CreatureInfo.Dexterity == 255` early return before its first
+    hit RNG roll. This matches `PROJEXPL.C F0231:1454-1456` and prevents an
+    impossible high-dexterity hit or a changed RNG/Luck sequence. Remaining
+    melee work is broader runtime aftermath proof, not a fallback combat path.
+
+  - 2026-07-13 update: the compact F0231 path now also keeps the original
+    action-hand icon ordering: Diamond Edge and Hardcleave reduce only the
+    rolled defense, then Vorpal Blade halves only final damage against material
+    creatures. The remaining work is broader runtime aftermath proof, not a
+    generic weapon modifier or a replacement melee formula.
+
+  - 2026-07-13 update: the compact F0231 aftermath now keeps the original
+    T0231015 miss stamina draw, landed stamina draw, and late Swing-skill
+    critical order. It does not reuse or replace F0407's separate G0494 action
+    stamina cost. Remaining work is broader runtime aftermath proof.
+
+  - 2026-07-13 update: the live F0407 completion path now retains its
+    G0494/M005 stamina receipt until after F0402/F0231. This preserves the
+    pre-action F0312 strength state required by `MENU.C F0407:1613-1628` and
+    `PROJEXPL.C F0231`; focused runtime coverage compares equal deterministic
+    damage at 50 and 64 pre-action stamina. Remaining melee work is broader
+    real-route aftermath proof, not a replacement combat model.
+
+  - 2026-07-09 update: DM1 F0231 runtime-result plans now carry group-damage apply facts. Remaining melee coding work is reducing the last M10 aftermath/emission fragments around F0407/F0231 and broad runtime proof.
+
+  - 2026-07-13 update: the live F0231/F0190 aftermath now carries the
+    pre-compaction `GROUP.Count` only after F0190 returns its actual outcome.
+    This keeps F0190's killed-some fear threshold source-owned; no provisional
+    aftermath is allowed to introduce an unset count. Remaining melee work is
+    still the residual M10 apply surface and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 runtime-result plans now also carry damage-emission facts. Remaining melee coding work is reducing residual aftermath/mutation application around F0190/F0231 and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 aftermath plans now carry kill-notify facts. Remaining melee coding work is reducing residual reaction/mutation application around F0190/F0231 and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 aftermath plans now carry reaction scheduling facts. Remaining melee coding work is reducing residual mutation application around F0190/F0231 and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 aftermath plans now carry death-smoke create input. Remaining melee coding work is reducing residual mutation application around F0190/F0231 and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 aftermath plans now carry mutation-dispatch facts. Remaining melee coding work is reducing residual F0190 mutation apply helpers and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 now owns the aftermath-to-F0190 dispatch-plan transport consumed by M10. Remaining melee coding work is reducing residual F0190 fear/timeline materializers and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0190 mutation dispatch now owns fear-roll/apply receipts consumed by M10. Remaining melee coding work is reducing residual F0190 timeline/materializer loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0190 now owns timeline cleanup batch compaction for killed-some event deletion/shifts consumed by M10. Remaining melee coding work is reducing residual F0190 materializer loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0190 now owns ordered possession-drop apply receipts for group fixed cells, group slot drops, and killed-creature fixed drops consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 now owns raw group writeback receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0190 killed-all state now owns unlink/next-clear/active-state apply receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-13 update: DM1 F0190 killed-all afterplay now has a fail-closed PC34 receipt binding F0188/F0189 completion to the original C040 smoke create input. M10 consumes it after final-group mutation in both projectile and melee routes; malformed smoke attacks are rejected rather than replaced with a host effect. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-13 update: F0190 C040's current M10-to-M11 integration is
+    regression-audited: the afterplay receipt enters the live explosion list,
+    then the existing F0115 materialization receipt carries its type/frame/
+    attack to M11. The source-locked 110/190/255 attack domain is now covered
+    through this route and all other byte values are rejected. Same-square
+    effects retain order across C040 expiry and source-backed rematerialization,
+    including after a complete F0738 mutation. Remaining work is real
+    multi-effect capture, not a cue or replacement renderer.
+
+  - 2026-07-17 update: M11's direct killed-all consumer now additionally
+    admits only an exact raw C04/live-group match whose supplied source square
+    owns the same raw Thing-chain entry. Raw drift, unknown creature types,
+    and wrong LoS square ownership fail closed before F0188/F0189, event
+    deletion, ACTIVE_GROUP removal, or C040. Remaining F0190 work remains
+    real multi-effect capture, not a substitute combat or status path.
+
+  - 2026-07-13 update: F0190's moving killed-all branch now has a separate
+    source-coordinate C040 receipt. It requires both source and destination
+    facts, puts smoke only on the source square, and leaves F0188/F0189
+    cleanup explicitly deferred to F0267 at destination. Remaining work is
+    live moving-route consumption and real capture, not inferred coordinates.
+
+  - 2026-07-13 update: the generic F0822 explosion group-death route now
+    materializes the existing source C040 plan only after its F0188 drops and
+    F0189 cleanup/writeback complete. Projectile F0231 retains its prior
+    afterplay receipt and explicitly does not create a second smoke record.
+    Remaining work is real multi-effect capture, not a cue or replacement
+    renderer.
+
+  - 2026-07-13 update: the normal M11 projectile route now likewise defers a
+    killed-all C040 until F0188/F0189 have dropped, unlinked, and deleted
+    source group events. A full timeline queue with one deletable C29-C41
+    event now retains a scheduled C040 rather than an unscheduled live entry.
+    Remaining work is real multi-effect capture, not a cue or replacement
+    renderer.
+
+  - 2026-07-09 update: DM1 F0190 killed-some state now owns cleanup/fear apply receipts consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0190 mutation dispatch now owns the combined possession/killed-some/killed-all apply receipt consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 runtime result now owns post-resolve apply receipts for luck, side effects, group damage, and damage emission consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 F0231 aftermath now owns a combined apply receipt for death smoke, mutation dispatch, raw group writeback, kill notify, and reaction scheduling consumed by M10. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: M10 now applies F0190 mutation dispatch from the DM1 F0231 aftermath apply receipt instead of rebuilding the dispatch plan locally. Remaining melee coding work is reducing residual low-level materializer allocation/link loops and broad runtime proof.
+
+  - 2026-07-09 update: DM1 original-save handoff now has a runtime reload roundtrip helper for original PC34 bytes -> Firestaff world -> PC34 export -> Firestaff world. Remaining save coding work is real user-save corpus coverage and broader launcher/UI import/export wiring.
+
+  - 2026-07-10 update: DM1 save validation now accepts a PC34 original save only after the same bounded ReDMCSB header/save-part handoff that `DM1_LoadGame()` uses, returning reconstructed DM1 metadata for import/export callers.
+
+  - 2026-07-10 update: DM1 launcher save-browser now consumes the original PC34 roundtrip receipt for original-save scan metadata and PC34 export validation. Remaining save coding work is running it over a real user-save corpus.
+
+  - 2026-07-11 update: DM1 startup complete-support receipts now propagate real user-save corpus rejected/truncated counts plus the first PC34 save-part-envelope path from the original-save scanner into save, complete-support, and boot-summary evidence; M12 save-browser original-PC34 entries now require the same F7057 envelope proof before marking launcher roundtrip readiness and keep header-only PC34 files diagnostic-only. Remaining save coding work is broader launcher/UI import/export consumption of real user corpus directories, not just selected original save files.
+
+  - 2026-07-09 update: DM1 champion status layout now owns status box, hand, name, bar, shield, poison, and damage geometry/graphic decisions behind DM1 API names; M11 wrappers delegate to that module. Remaining runtime coding work is reducing residual champion HUD state/apply code and full-graphics proof.
+
+  - 2026-07-11 update: unused legacy M11 aliases were removed from DM1 fakewall, chest reopen order, D0L2/D0R2 floor ornament, legacy text, portrait panel, and draw primitive headers; consumers now use DM1-owned names only. Remaining runtime cleanup is residual active M11 adapter call sites and full-graphics proof.
+
+  - 2026-07-09 update: DM1 dialog layout now owns V1 version text, choice patch, message, choice text, and choice hit-zone geometry; M11 wrappers delegate to the DM1 dialog layout module. Remaining runtime coding work is reducing residual dialog apply/input state and full-graphics proof.
+
+  - 2026-07-11 update: the old public M11 V1 dialog layout wrappers are retired; render/input call sites and tests consume the DM1/ReDMCSB dialog layout module directly. Remaining runtime work is residual dialog apply/input state and full-graphics proof.
+
+  - 2026-07-09 update: DM1 endgame layout now owns THE END, champion mirror/portrait/name/skill, restart, and quit geometry; M11 wrappers delegate to the DM1 endgame layout module. Remaining runtime coding work is reducing residual endgame apply/render state and full-graphics proof.
+
+  - 2026-07-11 update: the old public M11 V1 endgame layout wrappers are retired; draw/input/a11y call sites consume the DM1/ReDMCSB endgame layout and graphic-id modules directly. Remaining runtime work is full-graphics proof and non-layout endgame state.
+
+  - 2026-07-11 update: action-area geometry coverage now uses the DM1 champion-status layout module directly for status box, bars, hand slots, names, poison, and damage geometry. Remaining champion-status work is moving production draw callers where state ownership allows.
+
+  - 2026-07-09 update: DM1 graphic-id catalog now owns common C006/C014..C020/C023/C026/C028..C039/C346 wrapper constants; M11 delegates V1 graphic-id accessors. Remaining runtime coding work is reducing residual viewport/render graphic ownership and full-graphics proof.
+
+  - 2026-07-09 update: DM1 layout-zones now owns screen, viewport, message, dialog, champion-icon, inventory-panel, and object-description C002/C004/C005/C006/C007/C015/C017/C101/C113..C116/C503..C506/C556 geometry; M11 wrappers only expose legacy API. Remaining runtime coding work is reducing residual render state mutation and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mouse-route code now owns G0447/G0448/G0449/G0456 route tables and hit-test iteration; M11 supplies only zone rectangles and viewport origin. Remaining runtime coding work is reducing residual route side effects and full-graphics proof.
+
+  - 2026-07-09 update: DM1 inventory slot placement now owns C507..C536 inventory/equipment/backpack and C537..C544 chest slotbox zone tables; M11 wrapper functions delegate to the DM1 contract. Remaining runtime coding work is moving more mouse-route dispatch out of M11 and full-graphics proof.
+
+  - 2026-07-09 update: DM1 champion needs now owns food/water panel bar width, color threshold, shadow, and fill render-command construction; M11 only paints the returned rects. Remaining runtime coding work is reducing residual inventory/chrome render adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 V1 message-area render planning now owns tick-prefix stripping, player-facing filtering, four-row selection, and row metrics; M11 only draws the returned plan. Remaining runtime coding work is reducing residual chrome/render adapters and full-graphics proof.
+
+  - 2026-07-11 update: DM1 V1 turning presentation no longer keeps old M11 public aliases; remaining input/presentation work is full-graphics proof and unrelated active runtime APIs.
+
+  - 2026-07-09 update: DM1 F0128 viewport readiness API and local chest inventory item converters now expose/use DM1-owned names; old F0128 M11 names remain aliases. Remaining runtime coding work is reducing residual viewport/chest adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 door-bash feedback resolver/action/source-lock helpers now expose DM1-owned API names and DM1 call sites use them; old M11 names remain aliases. Remaining runtime coding work is reducing residual action/viewport adapter names and full-graphics proof.
+
+  - 2026-07-11 update: DM1 chest auto-close-on-leader-death and full-leader-hand drop-to-floor probes no longer keep old M11 public aliases; the remaining work is full-graphics proof and unrelated active runtime APIs.
+
+  - 2026-07-09 update: DM1 chest C545 occupied-drop and pickup-at-capacity APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual chest/inventory adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 champion mirror, mirror-click-closed, and champion leader APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual champion/mirror adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 C040 lower-arrow state and chest cancel/reopen pickup APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror/chest adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate inventory-exit panel redraw and HUD restore APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate C045 food/water close, C045 close-after-non-candidate transition, click-cancel-with-rotation, and scroll-pickup party-rotation APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate C045 accept guards, C040 resurrect rotation save/load, and reopen-after-save-load APIs now expose DM1-owned type/function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate first interaction, C040 cancel/reopen, eye-slot-swap, and C061 drop-pending APIs now expose DM1-owned function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate resurrect/chest close-order and party-shuffle close-order APIs now expose DM1-owned type and function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate resurrect pending/inventory interrupt APIs for close-while-pending pickup and confirm-inventory-interrupt now expose DM1-owned type and function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate rotation/resurrect APIs for C160 close-while-rotation, C545 accept-during-rotation, and C040 panel browse pickup/rotate race now expose DM1-owned type and function names; old names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate resurrect cross-candidate-clear and champion-switch-reopen APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate click-cancel, C159 click rotation combo, keyboard rotation combo, keyrot inventory-click combo, and inventory-click-during-rotation APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate reincarnate rearm, resurrect double-candidate race, and no-pending-resurrect APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate resurrect/reincarnate skills, full C30 chain, resurrect rearm, and resurrect-reselect inventory pickup APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate open-then-reselect, chest-close-pending-panel, runtime spell-rune, and close-button APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate icon refresh, occupied-hand panel, left-click rotation, and double-open-close guard APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate keyboard browse, inventory portrait click, and chest-open-during-pending APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate rotation-interaction scroll-pickup and click-cancel APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate C045 food/water close and close-after-non-candidate transition APIs now expose DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate inventory-toggle route/input/evidence/output API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate pickup-right-click row/evidence/state/result API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate pending-hand-queue evidence/entry/state/result API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate party-swap evidence/state/result API now exposes DM1-owned type names; old Dm1V1 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 mirror-candidate chest-close leader-hand pickup case/evidence/context/log/result API now exposes DM1-owned names; old Dm1V1/M11 names remain aliases. Remaining runtime coding work is reducing residual mirror-candidate/chest adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 chest reopen contents-order and chest teleport-survival struct families now expose DM1-owned type names; old M11 type names remain aliases. Remaining runtime coding work is reducing residual chest/inventory adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0209/C31 reaction dispatch now owns behavior writeback and next-event apply planning consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0209 now owns projectile-hit reaction schedule fields for both M10 and M11 C30 insertion paths. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M11 projectile killed-some fear now consumes the same DM1 F0190 state/fear apply plan as M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M11 projectile death smoke now consumes DM1 F0190 smoke attack/create-input planning. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M11 projectile killed-some event cleanup now consumes DM1 F0190 timeline cleanup planning. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M11 projectile killed-some fixed possession drops now consume DM1 F0190 possession-drop planning. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M11 killed-all group unlink/clear/active-state cleanup now consumes DM1 F0190 killed-all state planning. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M11 killed-all fixed/slot possession drop gates and fixed-drop cell order now consume DM1 F0190 receipts shared with M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M10 player movement command route/gate now consumes a DM1 movement route plan for absolute command mapping, turn bypass, and projectile cooldown gating. Remaining runtime coding work is reducing residual movement apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: M10 player movement cooldown set/decrement now consumes DM1 movement timing helpers instead of local tick math. Remaining runtime coding work is reducing residual movement apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: M10 and M11 party turn direction now share the source-locked F0284 Cell/Direction rotation helper. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 movement command core no longer depends on M11 turn presentation for F0365/F0284 turns and now emits its own DM1 turn receipt while using the shared F0284 helper. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 movement command core now applies pre-step stamina through the shared F0325 stamina plan, including HP underflow damage, damage flash, and dirty-mask receipts. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 movement command core now consumes a blocked-resolution plan for wall/door self-damage, group-adjacent reaction, input discard, and blocked-VBlank wait. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 movement command core now consumes a stairs apply plan for F0364 turn/backward/target-stairs transitions. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 movement command core now consumes a successful-step apply plan for normal F0366 position/writeback/redraw/input receipts. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 movement command core now consumes a pre-step stamina apply plan for F0366 living-champion stamina/HP writeback receipts. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267 group-move apply, group-teleporter destination, and generated-group placement plans now expose DM1-owned names; old M11 names remain aliases for compatibility. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 champion-stats/load/movement stat helpers now expose DM1-owned API names; old M11 stats names remain aliases for compatibility. Remaining runtime coding work is reducing residual champion inventory/apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 click-routing state, zone, hit-test, dungeon-zone, and inventory-zone helpers now expose DM1-owned API names; old M11 click-routing names remain aliases for compatibility. Remaining runtime coding work is reducing residual champion/inventory UI adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 blit/fill primitives and creature-render compatibility façade now expose DM1-owned API names; old M11 blit/creature-render names remain aliases for compatibility. Remaining runtime coding work is reducing residual render/UI adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 entrance/champion-select context, mirror slots, door animation, recruit/resurrect/reincarnate/finalize helpers now expose DM1-owned API names and have a dedicated CTest gate. Remaining runtime coding work is reducing residual entrance/main-loop adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 teleporter/pit F0262/F0267 helpers, group move removal/route/pit/chaos plans, and M10 call sites now expose DM1-owned names; old M11 names remain aliases for compatibility. Remaining runtime coding work is reducing residual movement/champion apply adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 game-loop state/tick/vblank/pause/budget helpers now expose DM1-owned API names and have a dedicated CTest gate. Remaining runtime coding work is reducing residual engine-loop/dialog adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 inventory/chest item/state/load/slot/chest-panel helpers and related DM1 chest call sites now expose DM1-owned API names; old M11 inventory names remain aliases. Remaining runtime coding work is reducing residual inventory special-case adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 save/load state/header/slot helpers and object interaction state/object/floor helpers now expose DM1-owned API names; old M11 save/object names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 central dungeon-data party/champion/state/map/time/event helpers and DM1 engine call sites now expose DM1-owned API names; old central m11_dd names remain aliases. Remaining runtime coding work is reducing residual dungeon-loader/decompressor, renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 dungeon loader and decompressor state/header/tile/creature/load/query helpers now expose DM1-owned API names; old m11_dl/m11_dd names remain compatibility aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 object-world object/weapon/armour/creature/door metadata and object-name/query helpers now expose DM1-owned API names; old m11_ow names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 food/water state, decay constants, eat/drink/query/starvation helpers, and fountain drink handoff now expose DM1-owned API names; old m11_fw names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 creature viewport types, sprite info, visible-entry state, visibility/animation/damage helpers, and mummy viewport proof now expose DM1-owned API names; old m11_cr names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 dialog-scroll state/message/bar helpers and fade/transition palette/overlay/swoosh helpers now expose DM1-owned API names; old m11_dg/m11_fade names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 input poll, screen framebuffer, and loop-integration state/callback/timing helpers now expose DM1-owned API names; old m11_input/m11_screen/m11_gl names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 game-state identifiers, transition results, callbacks, state machine, and transition/query helpers now expose DM1-owned API names; old m11_game_state names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 viewport-click zones, view cells, grabbable state, resolver results, hit-test/setup helpers, and grabbable pile-top helpers now expose DM1-owned API names; old m11_click/m11_viewport names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 teleporter/pit constants, direction/cell packing helpers, source-evidence helpers, and group route test call sites now expose DM1-owned names; old M11 constants/evidence names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 inventory chest-load source evidence, open-chest visible/container weight, and close-with-weight-snapshot helpers now expose DM1-owned API names; old m11_inventory_pc34 chest-load names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 draw primitive bitmap/rect/blit/fill/flip/darken helpers now expose DM1-owned API names; old m11_draw names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 spell-effect render state/constants/control/symbol helpers now expose DM1-owned API names; old m11_spell_render names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 chest reopen-after-leader-rotation and cross-champion-hand-swap probes/actions now expose DM1-owned API names; old M11 chest names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 stairs level state/defs/level info and stairs add/check/use/tick helpers now expose DM1-owned API names; old m11_stairs names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 graphics loader bitmap/header/LZW/loader state and GRAPHICS.DAT/LZW helpers now expose DM1-owned API names; old M11_GFX/m11_gfx names remain aliases. Remaining runtime coding work is reducing residual renderer/text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 game-over/title, engine aggregate, menu render, field teleporter, palette/font, combat log, and custom dungeon helpers now expose DM1-owned API names; old M11 names remain aliases. Remaining runtime coding work is reducing residual text/startup adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 title helper, portrait panel, wall ornament, legacy light, and legacy text helper APIs now expose DM1-owned names; old M11 names remain aliases. Remaining runtime coding work is reducing residual startup/view helper adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 door-bash stamina/feedback-chain, inventory hand-swap-with-chest, and champion-panel action-hand slot-priority helpers now expose DM1-owned API names; old M11 names remain aliases. Remaining runtime coding work is reducing residual viewport/inventory adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 D0/D1 side-wall, fakewall, automap, and minimap helpers now expose DM1-owned API names; old M11/DM1 names remain aliases. Remaining runtime coding work is reducing residual viewport/inventory adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 D1L/D1R stairs/pit dispatch and D0L2/D0R2 floor-ornament helpers now expose DM1-owned API names; old M11 names remain aliases. Remaining runtime coding work is reducing residual viewport/inventory adapter names and full-graphics proof.
+
+  - 2026-07-09 update: DM1 chest/inventory runtime probes and leader-swap food/water helper entrypoints now expose DM1-owned API names; old M11/m11 names remain aliases. Remaining runtime coding work is reducing residual chest struct aliases, viewport/inventory adapter names, and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0183/F0180 now owns generated group active-state and C37 wander-event placement planning consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267 route planning is now shared by generated group materialization and deferred group insertion for remove/retry/insert decisions. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267 now owns C37 ordinary group move apply planning for source unlink, destination link, active-state writeback, projectile-kill removal, and event requeue fields consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267 now owns ordinary creature tick move planning for direction, blocked retry, projectile-kill removal route, and next-tick scheduling consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267 now owns group teleporter destination planning for open/scope/target/buzz/self-target chain stops consumed by M10. Remaining runtime coding work is reducing residual live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267/F0252 now owns open-pit fall gating and Lord Chaos adjacent retry candidate/accept planning consumed by M10. Remaining runtime coding work is deeper F0267 teleporter state receipts and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0267 now owns deferred group-move route decisions for removal, retry, Lord Chaos adjacent insert, buzz, and normal insert; M10 consumes the route/removal receipts. Remaining runtime coding work is deeper F0267 pit/teleporter state receipts and full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0190/F0187 now owns fixed-possession drop cell order for group-death and movement-rejection paths. Remaining runtime coding work is reducing residual F0190/F0267 live mutation adapters and full-graphics proof.
+
+  - 2026-07-09 update: M10/M11 ordinary Projectile.Slot square materialization now consumes a DM1 F0215/DUNGEON.C F0163 attach receipt for empty square heads and append-after-tail links. Remaining runtime coding work is end-to-end full-graphics proof and any residual thing-link writes outside projectile materialization.
+
+  - 2026-07-09 update: M10 projectile move events now consume a DM1 F0219 flight relink receipt for source unlink, destination link, live projectile writeback, and next C48/C49 scheduling. Remaining runtime coding work is end-to-end full-graphics proof and any residual non-projectile thing-link writes.
+
+  - 2026-07-08 update: DM1 runtime-ready startup now combines dungeon-load success, runtime-start state, and sibling `GRAPHICS.DAT` bind decisions into one DM1-owned receipt consumed by M11. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 selected-launch routing now uses a DM1-owned route receipt, so M11 asks DM1 whether to run the source-visible SWSH/TITLE/ENTRANCE transaction or generic launch. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 selected-entry boot-probe validation now uses a DM1-owned receipt for active/source/launcher/intro-bypass checks. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 V1 input now owns active-source and immediate-turn token classification consumed by M11 held-input/VBlank pending gates. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: entrance compat now owns framebuffer pointer dispatch, command-path mapping, and normalized touch clamping used by the DM1 entrance wait loop. Remaining startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 resurrection rename UI now owns active-panel gating, text-byte filtering, and host keydown decisions consumed by M11. Remaining startup/runtime coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 input now owns the pending motion FIFO used while VBlank/source-tick gating waits. Remaining runtime coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 startup now owns the selected boot-probe source-kind check for built-in catalog starts. Remaining startup/runtime coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 viewport now owns combined center/side lane visibility receipts consumed by M11 wall/content gates. Remaining runtime coding work is deeper renderer ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 inscription font now owns decoded line-count and raw glyph/font support checks consumed by M11 wall inscription rendering. Remaining runtime coding work is deeper renderer ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 viewport lane-visibility receipts now also carry center visible-depth masks and center-line clear checks used by M11 side content/explosion gates. Remaining runtime coding work is deeper renderer ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now owns F0305/F0140/F0328/F0407 pure math for throw weights, stamina, XP, launch cells, potion projectile subtype, shoot ammo matching, step energy, and attack clamps. Remaining runtime coding work is stateful projectile/materialisation ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns the M11-facing F0212/F0810 projectile create-input model for action projectiles, including launch direction/cell fallback, poison attack source, associated thing, step clamp, owner, and first-move grace flag. Remaining runtime coding work is stateful impact/materialisation ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns pure projectile-impact presentation/materialisation decisions for impact log names, source sound selection, silent spent magic projectiles, and sharp thrown weapon types kept by creatures. Remaining runtime coding work is stateful impact/materialisation ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns the associated-thing disposition model for thrown potion consumption and Projectile.Slot materialisation. Remaining runtime coding work is moving more stateful impact/link mutation behind DM1 receipts plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns group target-cell selection and the Black Flame fireball-heal decision/cap used by projectile impacts. Remaining runtime coding work is moving more stateful impact/link mutation behind DM1 receipts plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns creature-impact apply/aftermath receipts for target slot, killed cell, non-material gate, reaction, fixed drops, death smoke, and sharp-weapon keep decisions. Remaining runtime coding work is moving champion-impact and lower-level link mutations behind DM1 receipts plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns champion-impact receipts for resolved impact position, target champion, F0321 damage inputs, F0322 poison plan, and party-death check. Remaining runtime coding work is moving lower-level link mutations and broader action/combat receipts behind DM1 ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 throw/shoot compat now also owns Projectile.Slot materialization plans, including thrown-potion consumption, ordinary source-square drops, and resolved champion-impact drops. Remaining runtime coding work is broader action/combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 projectile materialization now has a combined F0215 receipt for consume/materialize routing plus square-chain append decisions. Remaining runtime coding work is wiring M10 projectile-delete/materialize code to consume this receipt directly.
+
+  - 2026-07-09 update: M10 projectile despawn now consumes the DM1 F0215 delete/materialize receipt for Projectile.Next clearing plus optional square-chain writeback instead of owning the delete/apply decision locally. Remaining runtime coding work is broader action/combat receipts and packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now owns F0407 action-tail receipts for G0492 contact gating, G0494 stamina base/cost, party-shield action classification, and F0327 failure XP-halving. Remaining runtime coding work is broader action/combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns F0407 common-tail adjustment for G0491 disabled ticks plus melee failure, shield failure, projectile failure, no-ammunition SHOOT, and failed CLIMB DOWN routes. Remaining runtime coding work is broader action/combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns F0405 action-hand charge-decrement plans and F0407 FREEZE LIFE magical-box/freeze-tick plans. Remaining runtime coding work is broader action effect receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 HEAL HP/mana/XP plan for PC34/I34E cycle healing. Remaining runtime coding work is broader action effect receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 LIGHT and WINDOW event/charge plans. Remaining runtime coding work is broader action effect receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns F0403 SPELLSHIELD/FIRESHIELD mana, defense, event, and charge-success planning. Remaining runtime coding work is fright/action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns F0401 fright-action planning for WAR CRY, BLOW HORN, CALM, BRANDISH, and CONFUSE. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns F0407/F0327 projectile-spell planning for FIREBALL, DISPELL, LIGHTNING, SPIT, and INVOKE. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: M11 SHOOT now consumes the DM1 ranged-shoot resolver for ammo gate, launch cell/direction, kinetic energy, attack, and step energy. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 CLIMB DOWN action plan for no-pit, group-over-pit, move-attempt, move-success, and BUG0_79 disabled-tail cancellation. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns grouped F0407 FLIP and direction/target plans for FLUXCAGE, FUSE, and THROW. Remaining runtime coding work is deeper action-combat receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 action-XP compat now also owns the F0407 closed-door melee branch plan for BASH/HACK/BERZERK/KICK/SWING/CHOP, including observed F0232/thud branch success and the source 6-tick action-disable override. Remaining runtime coding work is deeper F0402/F0231 receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 throw/shoot compat now owns projectile impact explosion-create input and generic impact-log classification. Remaining runtime coding work is deeper F0402/F0231 receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0402 melee compat now owns the M11-facing CMD_ATTACK tick plan for melee-contact actions, including action-index and acting-champion target-direction transport. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-13 update: DM1 F0402 now admits only a complete PC34 F0407
+    melee receipt: a contact action accepted by G0492/G0493/G0496, explicit
+    champion-facing target direction, and the source front-square automatic
+    group/creature lookup. Invalid directions, direct target/creature fields,
+    missing action/direction fields, and the legacy marker fail closed; a
+    missing resolved target is the source no-op. Remaining work is M10's
+    broader runtime consumption/real-data evidence, not a host default path.
+
+  - 2026-07-13 update: F0402 outcome now derives its base cooldown from
+    G0491 and the closed-door override from the source literal 6, rather than
+    host-supplied values. Its F0231 profile admits only the same contact
+    action's G0492/G0493 values and exact G0496 skill route; invalid or
+    mismatched action/skill input fails closed. Remaining work is broader
+    M10 runtime consumption evidence, not fallback action/profile behavior.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now owns damage-emission performed/feedback decisions for zero-damage, positive-damage, and invalid-outcome melee emissions. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns F0407 action-defense apply/remove and final disable-slot/refill plans. Remaining runtime coding work is deeper F0231 combat result receipts and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns the combined runtime outcome receipt for attack damage, closed-door branch success, PARRY empty-front failure, failure-tail selection, feedback, and disabled-tick override. Remaining runtime coding work is deeper F0231 damage math ownership and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now also owns kill-notify presentation/legacy kill-XP receipt construction. Remaining runtime coding work is deeper F0231 damage math ownership and reducing M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns the combined FREEZE LIFE object mutation plan for magical-box consume vs F0405 charge decrement. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns the F0407 THROW plan for direction sync, side selection, no-object gate, post-spawn hand clear, and action-hand enable-slot preservation. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns the common F0407 prelude for action XP, disabled ticks, stamina cost, and melee-contact routing consumed by both M11 action entry paths. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 THROW enable-slot receipt now preserves the Firestaff internal action-hand slot, and DM1 center-door rendering owns the D1C vertical half-open mask y-shift. Remaining runtime coding work is deeper F0231 damage math ownership and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns the common F0407 completion plan for tail XP/tick adjustment, action-disable state, action-hand slot ordinal, and immediate SHOOT refill. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns the F0325 stamina decrement/apply plan for action costs, including stamina clamp, underflow damage, and load/statistics dirty mask. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns F0407 XP-award route planning and direct-helper dispatch gating for non-melee/PARRY regression paths. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 action-XP compat now owns the combined F0407 begin-action plan for G0495 defense/action-index, G0496/G0497/G0491/G0494 prelude, and F0325 stamina application. Remaining runtime coding work is deeper F0231 combat result receipts and reducing remaining M11 mutation adapters plus packaged full-graphics proof.
+
+  - 2026-07-09 update: DM1 throw/shoot compat now owns the F0312/F0328 accepted-throw projectile plan for stamina, throw XP, strength, kinetic energy, attack, step energy, combat sound, and internal disable ticks. Remaining runtime coding work is lower-level throw object-chain ownership plus deeper F0231 combat result receipts.
+
+  - 2026-07-09 update: DM1 throw/shoot compat now also owns accepted-throw launch direction, projectile movement-disable receipt, and thrown-potion subtype/power transport. Remaining runtime coding work is lower-level throw object-chain ownership plus deeper F0231 combat result receipts.
+
+  - 2026-07-09 update: DM1 F0402 melee compat now owns the pre-F0231 reach and DISRUPT/material gates used by M10. Remaining runtime coding work is deeper F0231 damage math ownership and reducing remaining mutation adapters.
+
+  - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns weapon-profile construction from G0492/G0493, including Vorpal/DISRUPT non-material hit flagging. Remaining runtime coding work is deeper F0231 side-effect ownership and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now owns hit/miss side-effect planning for damage XP, stamina random ranges, stamina cost, and stamina-underflow HP damage. Remaining runtime coding work is deeper F0231 damage/group aftermath ownership and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now owns group aftermath routing for death smoke, possession drops, killed-some/killed-all mutation gates, raw-group writeback, kill notify, and reaction scheduling. Remaining runtime coding work is deeper F0231 damage math ownership and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now owns the champion-to-creature damage resolver entrypoint consumed by M10, while shared M10 combat still carries the source-locked arithmetic used by DM1/CSB. Remaining runtime coding work is moving more F0231 damage math internals behind DM1-owned receipts without breaking CSB reuse.
+
+  - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns weapon availability and preflight routing for empty-hand live actions, live no-target no-ops, reach/DISRUPT invalid emissions, candidate-panel no-action, snapshot readiness, and legacy-marker fallback. Remaining runtime coding work is moving more F0231 damage internals and state mutation adapters behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0402/F0231 melee compat now owns F0312 action-hand strength planning for random strength, held-object load pressure, weapon strength, skill bonus, stamina adjustment, wound halving, and final clamp. Remaining runtime coding work is moving more champion snapshot and F0231 damage internals behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now owns champion combat snapshot construction for F0231, including fallback action skill normalization and the F0231-facing champion fields. Remaining runtime coding work is moving more creature snapshot and F0231 damage internals behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now also owns creature combat snapshot construction for F0231, including live group health, G0243 profile fields, map difficulty, and candidate-panel invulnerability. Remaining runtime coding work is moving more F0231 damage internals and state mutation adapters behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now also owns the group-damage entrypoint and physical reaction-event plan after F0231. Remaining runtime coding work is moving lower-level F0190 group mutation side effects and F0231 damage internals behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now also owns the post-F0308 Luck writeback gate and byte clamp consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and residual live mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now also owns champion state writeback routing for post-melee stamina/HP side effects consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and residual live mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now also owns XP award champion routing in the post-melee side-effect receipt consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and residual live mutation adapters.
+
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now owns death-smoke explosion-create input for killed creatures. Remaining runtime coding work is moving possession drops, group unlink/writeback policy, and deeper F0231 damage internals behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-all/killed-some possession drop branch policy. Remaining runtime coding work is moving group unlink/writeback policy, event cleanup/fear side effects, and deeper F0231 damage internals behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-some event-cleanup and fear-apply policy. Remaining runtime coding work is moving group unlink/writeback policy and deeper F0231 damage internals behind DM1-owned receipts.
+
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns killed-all unlink/active-state/raw-write policy. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns the timeline C33-C36/C38-C41 event cleanup rule for killed-some group compaction. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0190 melee aftermath compat now also owns the combined mutation dispatch receipt for possession drops, killed-some cleanup/fear, and killed-all unlink/active-state cleanup consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and residual non-melee mutation adapters.
+
+  - 2026-07-09 update: DM1 F0402 melee compat now also owns CMD_ATTACK reserved2 decode for action index, target direction, legacy marker, and G0496 action-skill routing. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: M10 closed-door melee now consumes the existing DM1 F0407 closed-door branch plan instead of duplicating the BASH/HACK/BERZERK/KICK/SWING/CHOP action switch and F0232 delay. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0402 melee command decode now also owns auto/direct target mode, auto-creature marker decode, direct group/creature indexes, and target-square calculation for CMD_ATTACK. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0190 melee apply receipt now owns the F0231->F0190 damage-apply gate, original group count, killed cell, damage amount, and returned outcome consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0232 closed-door destruction plan now owns the closed-state, melee-destructible, attack-vs-defense, delay, and destroyed-state scheduling decision used by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0177 target-creature plan now owns single-centered groups, first-living fallback, ordered attack-cell scan, and half-square F0176 occupancy for CMD_ATTACK. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 runtime result plan now owns NO_ACTION handling, luck/side-effect gates, positive-damage group-apply gate, and damage-emission gate consumed by M10. Remaining runtime coding work is deeper F0231 damage internals and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 damage-gate plan now owns invalid/dead champion, candidate-panel no-action, dexterity-255 miss, and non-material-without-MASK0x8000 miss before the shared damage arithmetic. Remaining runtime coding work is deeper F0231 damage arithmetic receipts and reducing remaining M10 mutation adapters.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now owns the local dex/random/luck hit gate, F0308 luck mutation, damage RNG, weak branch, Vorpal halving, skill critical, and final damage outcome instead of delegating the whole resolver to shared F0735. Remaining runtime coding work is reducing remaining M10 group/timeline mutation adapters around the now-local DM1 resolver.
+
+  - 2026-07-09 update: DM1 F0176/F0177 compact targeting now rejects dead/empty creature slots before cell occupancy, so cleared `0xFF` slots no longer become false single-centered targets. Remaining runtime coding work is reducing remaining M10 group/timeline mutation adapters around F0231/F0190.
+
+  - 2026-07-09 update: DM1 F0231 melee compat now exposes a combined resolve-runtime entrypoint for damage plus NO_ACTION/luck/side-effect/group-apply/emission gates, reducing M10 stitching around the local resolver. Remaining runtime coding work is reducing remaining F0190 group/timeline mutation adapters.
+
+  - 2026-07-09 update: DM1 F0190 killed-some fear apply now consumes an existing state receipt, removing duplicate M10 killed-some input construction in melee and projectile paths. Remaining runtime coding work is reducing remaining F0190 possession/smoke/unlink live mutation adapters.
+
+  - 2026-07-09 update: DM1 projectile creature-kill aftermath now uses the same F0190 possession-drop, death-smoke, killed-some, and killed-all receipt application path as melee. Remaining runtime coding work is reducing lower-level thing-link allocation/materialization adapters.
+
+  - 2026-07-09 update: DM1 projectile keep-thrown-sharp-weapon group-slot materialization is now a DM1-owned F0217/F0215 receipt consumed by M10. Remaining runtime coding work is reducing lower-level thing-link allocation/materialization adapters.
+
+  - 2026-07-09 update: DM1 projectile F0215 group-slot attach now owns the empty-head vs append-after-tail write plan consumed by M10. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters.
+
+  - 2026-07-09 update: M10 ordinary projectile associated-thing materialization now consumes the existing DM1 F0215 materialization plan instead of duplicating potion/explosion/Thing guards and cell packing. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters.
+
+  - 2026-07-09 update: M10 champion projectile poison now consumes the existing DM1 F0217/F0322 poison receipt instead of duplicating damage, dose, and C75 schedule math. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters and explosion/champion receipts.
+
+  - 2026-07-09 update: M10 party-square explosion damage now consumes DM1 F0324 fanout/champion attack plans for attack window, live-champion gate, and randomized attack. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters and deeper explosion/champion receipts.
+
+  - 2026-07-09 update: M10 CMD_ATTACK now feeds live candidate-panel invulnerability into the first DM1 F0402 preflight pass, so panel-owned candidates return before F0312/F0231 RNG or stamina side effects. Remaining runtime coding work is reducing lower-level map-square thing-link materialization adapters and deeper explosion/champion receipts.
+
+  - 2026-07-09 update: M10 F0266 moving-group projectile prechecks now consume a DM1 F0217/F0190 precheck damage receipt for Black Flame heal, non-material gate, defense scaling, killed-cell, and group compaction. Remaining runtime coding work is reducing lower-level thing-link adapters and deeper explosion/champion receipts.
+
+  - 2026-07-09 update: DM1 F0407 projectile-spell descriptors now own skill route, verb kind, invoke-roll requirement, and poison attack transport for FIREBALL/DISPELL/LIGHTNING/SPIT/INVOKE. Remaining runtime coding work is reducing lower-level thing-link adapters and deeper explosion/champion receipts.
+
+  - 2026-07-09 update: DM1 throw/shoot compat now owns creature projectile thing-to-subtype, attack type, poison attack, and F0810 create-input construction for ranged group attacks. Remaining runtime coding work is reducing lower-level thing-link adapters and deeper explosion/champion receipts.
+
+  - 2026-07-09 update: M10 projectile group hits now consume a DM1 F0217 action plan for target slot, Black Flame heal, non-material block, killed cell, and damage payload. Remaining runtime coding work is reducing lower-level thing-link adapters and deeper explosion/champion receipts.
+
+  - 2026-07-09 update: M10 projectile explosion materialization now consumes the DM1 F0217/F0213 explosion-create input helper, and M11 projectile creature-hit damage consumes the same DM1 group action plan as M10. Remaining runtime coding work is reducing lower-level thing-link adapters and champion/explosion receipts.
+
+  - 2026-07-09 update: M10 projectile champion hits now consume a DM1 F0217 action plan for target champion, impact square, attack, raw damage, and wound mask. Remaining runtime coding work is reducing lower-level champion mutation/event adapters and thing-link adapters.
+
+  - 2026-07-09 update: M10 and M11 projectile champion hits now share a DM1 F0217/F0321 damage-apply helper for attack scaling, wound selection, HP mutation, and killed flag. Remaining runtime coding work is reducing poison/event scheduling adapters and thing-link adapters.
+
+  - 2026-07-09 update: M10 and M11 projectile champion poison now share a DM1 F0217/F0322 apply helper for immediate poison HP/dose mutation and C75 event payload. Remaining runtime coding work is reducing final event/count adapters and thing-link adapters.
+
+  - 2026-07-09 update: M10 explosion party damage now consumes a DM1 F0324/F0321 per-champion apply helper for attack scaling, wound selection, HP mutation, and killed flag. Remaining runtime coding work is reducing group explosion side-effect adapters and thing-link adapters.
+
+  - 2026-07-09 update: M10 explosion group damage now consumes a DM1 F0220/F0190 apply helper for live-slot iteration and F0738 mutation. Remaining runtime coding work is reducing post-kill group side-effect adapters and thing-link adapters.
+
+  - 2026-07-09 update: M10 projectile group damage now consumes a DM1 F0217/F0190 apply helper for F0738 mutation and outcome payload. Remaining runtime coding work is reducing post-kill group side-effect adapters, reaction scheduling adapters, and thing-link adapters.
+
+  - 2026-07-09 update: M10 projectile group hits now consume a DM1 F0217 aftermath receipt for reaction scheduling and sharp thrown weapon keep decisions. Remaining runtime coding work is reducing post-kill group side-effect adapters and lower-level thing-link writes.
+
+  - 2026-07-09 update: M10 F0266 moving-group projectile prechecks now consume a DM1 F0217 aftermath receipt before GROUP.Slot sharp-weapon linking. Remaining runtime coding work is reducing post-kill group side-effect adapters and lower-level thing-link writes.
+
+  - 2026-07-09 update: M11 projectile creature hits now consume the same DM1 F0217/F0190 action apply and aftermath receipts as M10. Remaining runtime coding work is reducing explosion group apply duplication and lower-level thing-link writes.
+
+  - 2026-07-09 update: M11 explosion group ticks now consume the DM1 F0220/F0190 group apply helper instead of local first-living F0738 damage. Remaining runtime coding work is reducing lower-level thing-link writes and end-to-end full-graphics proof.
+
+  - 2026-07-09 update: M11 kept sharp thrown weapons now consume the DM1 F0215 group-slot attach plan for empty heads and append-after-tail links. Remaining runtime coding work is reducing ordinary square materialization link writes and end-to-end full-graphics proof.
+
+  - 2026-07-09 update: DM1 throw/shoot compat now owns the full F0215 square attach receipt for empty square vs append-after-tail from an M10-provided chain snapshot. Remaining runtime coding work is reducing non-projectile thing-link adapters and end-to-end full-graphics proof.
+
+- 🔧 2026-07-08 DM1 HoC verification follow-up: capture a packaged Mac release HoC walk-through after the front-mirror C127/G0289 source-route fix, confirming all source-visible champion mirrors render/click and that HoC floor cells do not show false item/projectile payloads.
+
+  - 2026-07-14 update: M11's live generic F0115 object/projectile and deferred C15 effect boundaries now consume the DM1 C127 mirror decision. The real C346/C026 draw now also executes in the F0107 wall-ornament phase, before nearer wall/door occlusion replay; independently admitted F0115 objects/projectiles remain drawable. Remaining work is packaged Mac/release capture proof.
+
+  - 2026-07-17 update: M11 now consumes the DM1-owned F0111 temporary
+    door-panel ornament receipt for center and side doors, retaining source
+    panel coordinates and independent per-depth visibility. Remaining HoC
+    wall/mirror work is packaged Mac/release pixel capture, not a missing
+    source-backed material consumer.
+
+  - 2026-07-17 update: D1L/D1R C127 routes now have an M11 receipt test for
+    the real C346 F0107 backing, correct right-side flip, and C026 exclusion;
+    D1C remains the only C346-to-C026 portrait route. Remaining HoC
+    mirror work is genuine packaged Mac/release pixel capture.
+
+  - 2026-07-10 update: DM1 startup now owns a ReDMCSB-shaped save/resume capture receipt for M566 RESUME, loaded runtime handoff, five save parts, four PC34 portraits, dungeon payload, and required asset hashes. Remaining DM1 work is real Mac/app HoC capture plus broader original-save corpus verification.
+
+- 🔧 2026-07-08 boot-data discovery follow-up: Continue replacing optional boot/intro filename assumptions with hash/signature scans beyond SWSH, DM1 TITLE, Nexus boot surfaces, the CLI data validator, legacy asset pipeline, DM2 V1 boot scan, and Theron Track 02 boot scan.
+
+  - 2026-07-08 update: shared hash scanner now scans ZIP-compatible archives (`.zip`, `.cbz`, `.pk3`, `.pk4`, `.jar`, `.apk`, `.ipa`, `.xpi`, `.whl`, `.wsz`, `.kmz`, `.nupkg`), ISO/BIN/IMG/CDR/TOAST/RAW/MDF, CUE, TAR, TGZ, GZ, and stored LHA/LZH/LZS entries. ZIP/ISO/TAR/GZ/LHA are also detected by file signature when renamed. Remaining archive work is compressed LHA methods and true 7z/RAR/CHD support via a portable decoder.
+
+  - 2026-07-08 update: shared hash scanner now also recognizes 7z/RAR/ARJ/ARC/CAB suffixes plus 7z/RAR signatures and can hash-scan/materialize their entries through local 7zz/7z when available. Remaining archive work is compressed LHA methods, CHD, and replacing the external-tool fallback with a portable decoder.
+
+  - 2026-07-08 update: shared hash scanner now recognizes broader common archive/media containers including `.zipx`, compressed tar variants (`.tbz2`, `.tar.bz2`, `.txz`, `.tar.xz`, `.tzst`, `.tar.zst`), `.cpio`, `.ar`, `.deb`, `.rpm`, `.xar`, `.bz2`, `.xz`, `.zst`, and matching bzip2/xz/zstd/ar/cpio signatures. Remaining archive work is compressed LHA methods, CHD, and replacing external-tool fallbacks with portable decoders.
+
+  - 2026-07-08 update: shared hash scanner now recognizes CHD CD images by suffix/signature and can scan/materialize their extracted data track through `chdman` when installed. `asset_find_by_md5_list()` now also uses the shared multi-hash scan path instead of rescanning archives once per MD5. Remaining archive work is compressed LHA methods and portable in-process decoders for external formats.
+
+  - 2026-07-08 update: shared hash scanner now also routes common game disk/archive images (`.adf`, `.adz`, `.st`, `.stx`, `.msa`, `.ipf`, `.hfe`, `.hdm`, `.dsk`, `.ima`) through the external archive backend when 7zz/7z/bsdtar can list them, and LHA/LZH/LZS falls back to that backend after the internal stored-entry parser. Remaining archive work is portable in-process decoders for these external formats.
+
+  - 2026-07-08 update: shared hash scanner now also recognizes broader archive/disc suffixes (`.dmg`, `.hqx`, `.sea`, `.lbr`, `.lz`, `.z`, `.rz`, `.nrg`, `.cdi`, `.ccd`, `.sub`) plus LZIP/LRZIP/Unix-compress signatures. Remaining archive work is portable in-process decoders for external formats and launcher diagnostics when an extractor is missing.
+
+  - 2026-07-08 update: container detection now lets strong file signatures override misleading suffixes, so ZIP/TAR/ISO/LHA/CHD data is scanned by content even if the user named it `.bin`, `.zip`, or another wrong extension. Extra external suffix/signature coverage now includes CSO/ISZ/ECM/MDS/MDX/B5T/B6T/BWT/PDI/GDI/TOC, HA/UC2/ZPAQ/PAK, CAB/XAR/RZIP/ECM/CISO/ZPAQ/ARJ signatures. Remaining archive work is portable in-process decoders for external formats and launcher diagnostics when an extractor is missing.
+
+- 🔧 2026-07-07 RetroAchievements follow-up: Firestaff now has a shared RetroAchievements runtime/config/event adapter, CLI activation flags, and persisted launcher settings for enable, hardcore mode, username, and API-token status. Remaining work is the real `rcheevos rc_client` backend, HTTP request bridge, login validation, badge/overlay rendering, and per-game achievement memory/event mapping.
+
+  - 2026-07-07 update: the modern start-menu settings panel now lets users edit RA username and API token directly, with token masking in visible UI. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-07 update: the visible RetroAchievements row now reports launcher-side RA status (`OFF`, `NEEDS LOGIN`, or backend pending) and the token row shows only a redacted suffix. Remaining RA work is still the real backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: legacy and modern settings grouping now treats RetroAchievements enable, hardcore, username, and token rows as one ONLINE section with visible username/token labels. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: the start-menu public settings-row contract now exposes RetroAchievements enable, hardcore, username, and token rows, and modern hit-testing/tests consume that contract instead of private row numbers. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: modern settings keyboard navigation now skips hidden rows and reaches the visible RetroAchievements block directly from Original Data. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: modern RA settings rendering now uses the public settings-row contract for username/token edit state, and the settings hit-test gate covers token long-paste clamping plus cancel-without-persist. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: generic and legacy/tabbed start-menu settings now reuse the same RA status/token state as the modern settings panel, so RetroAchievements shows `OFF`, `NEEDS LOGIN`, `BACKEND PENDING`, or `READY` and masks saved tokens consistently. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: the start-menu accessibility/state manifest now exposes RetroAchievements status, hardcore, username, and redacted token rows, and the probe locks that raw API tokens are never emitted. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: visible and accessibility settings labels now spell out the RetroAchievements username, API-token, and hardcore rows instead of using short `RA` labels. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: the modern start-menu renderer now consumes public RetroAchievements status/token getters instead of duplicating RA status logic, and the modern menu probe pins backend-pending status plus token redaction. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: the tabbed start-menu settings contract now has a dedicated ONLINE tab for RetroAchievements enable, hardcore, username, and API-token rows. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: the modern start-menu settings screen now visibly renders the ONLINE tab and scopes mouse/keyboard navigation so RetroAchievements settings live there. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: the start menu now also exposes a persisted RetroAchievements server/endpoint row in the ONLINE tab, including modern rendering, hit-testing, accessibility state, config save/load/import/export, and runtime handoff. Remaining RA work is still backend/login/overlay/per-game achievement mapping.
+
+  - 2026-07-08 update: RetroAchievements now has a DuckStation-style event-to-notification overlay model, login/session status fields, pending-unlock/offline events, M11 in-game overlay rendering, and focused unit coverage. Remaining RA work is real `rcheevos rc_client` or HTTP login/game-data backend plus per-game achievement memory/event mapping.
+
+- 🔧 2026-07-07 release follow-up: v3.0.69 packages the current boot/startup work. Remaining release work is next manual release validation only; Windows installer packaging has been moved from NSIS to Inno Setup.
+
+- 🔧 2026-07-07 all-game title/startup follow-up: M11 boot receipts now expose per-game startup animation identity, active state, title frame, title-frame boundary, and readiness for DM1, CSB, DM2, Nexus, and Theron's Quest, with the direct-launch all-games gate covering all five paths. Remaining title/startup work is still exact bitmap/audio/timing presentation breadth per game and packaged capture proof, not the headless receipt/status contract.
+
+  - 2026-07-08 update: CSB boot now owns M11-facing save, load, and V1 tick runtime wrappers, so M11 no longer calls those CSB runtime lifecycle adapters directly. Remaining CSB boot work is reducing deeper inventory/action runtime leakage plus packaged startup capture proof.
+
+  - 2026-07-08 update: CSB boot now also owns M11-facing object metadata, container slots, thing-chain mutation, inventory slot writes, leader-hand writes, and champion-vitals writes. Remaining CSB boot work is the combat/action-specific runtime leakage plus packaged startup capture proof.
+
+  - 2026-07-08 update: CSB boot now also owns the M11 mirror sync receipt and front-wall ornament sensor-click facade. Remaining CSB boot work is combat/action-specific runtime leakage plus packaged startup capture proof.
+
+  - 2026-07-08 update: Theron boot now also owns startup presentation receipt and dungeon-exit return-to-stage-select host receipt wrappers; DM2 boot now owns startup presentation receipt wrappers. M11 no longer calls those Theron/DM2 startup helpers directly.
+
+  - 2026-07-08 update: CSB, Theron, and DM2 boot layers now own their startup render-executor forwarders, so M11 no longer calls those startup render executors directly. Remaining boot coding work is broader Nexus host-facts/render wrapping and deeper packaged startup capture proof.
+
+  - 2026-07-08 update: Nexus launcher now owns runtime-state wrappers for host-facts construction, idle, title/save/champion input and pointer routing, save/champion presentation build, and presentation execute. M11 no longer constructs `Nexus_V1_StartupHostFacts` directly. Remaining Nexus boot coding work is launch/profile ownership cleanup and packaged startup capture proof.
+
+  - 2026-07-08 update: CSB boot now owns primitive render command execution, asset command execution, closed-door assets, title-empty fallback detection, and opening-composite execution wrappers. M11 no longer calls those CSB startup render helpers directly. Remaining CSB boot coding work is reducing the long runtime-state argument lists and packaged startup capture proof.
+
+  - 2026-07-08 update: DM2 boot now owns direct save-path resume execution, CSB boot owns default startup render-plan construction, and Nexus launcher owns startup presentation/status receipt wrappers. Remaining coding work is reducing remaining M11 startup type leakage and proving full packaged startup captures.
+
+  - 2026-07-08 update: DM1 V2 now has a boot startup adapter that sets V22 asset/receipt roots before presentation-mode resolve and owns V22 in-place cache startup. Remaining DM1 V2 boot work is packaged full-graphics capture proof across V2.0/V2.1/V2.2.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now owns M11-ready boot-probe presentation receipt fields for phase, animation identity, title frame, and title-ready state. Remaining DM1 startup coding work is any deeper SWSH/TITLE/entrance runtime state still owned by M11 plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now also owns the source-visible handoff policy used by main loop for DM1 SWSH/TITLE/ENTRANCE and selected-entry boot-probe validation. Remaining DM1 startup coding work is moving the actual SWSH/TITLE/ENTRANCE execution wrappers out of main loop where practical.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now emits the M11-consumed prelude/post-launch handoff plan for SWSH, texture discard, TITLE, ENTRANCE, and entrance timeout. Remaining DM1 startup coding work is moving actual renderer/audio execution wrappers out of main loop where practical plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now also owns the M11 callback executor for SWSH -> texture discard -> TITLE -> ENTRANCE ordering, with required callback validation. Remaining DM1 startup coding work is moving lower-level renderer/audio helpers out of main loop where practical plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now owns post-entrance handoff outcome mapping for enter/resume/quit/nonfatal-skip, so M11 consumes DM1 actions instead of interpreting entrance command values. Remaining DM1 startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now also owns host application of post-entrance actions via callbacks, including quit, resume path resolve/load/logging, and nonfatal entrance-skip logging. Remaining DM1 startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: DM1 V1 startup-sequence now combines selected-launch prelude, game open, post-launch TITLE/ENTRANCE, host action application, and final draw in one M11-facing transaction. M11 also treats DM1 transaction failure as fatal instead of falling back to generic game launch. DM1 launch-path and boot-probe facts now flow through DM1-owned receipts before M11 copies the fields. Remaining DM1 startup coding work is lower-level renderer/audio helper ownership plus packaged full-graphics proof.
+
+  - 2026-07-08 update: Nexus startup now owns resume host status receipts for save-load failure, invalid level/direction, level-load failure, lost engine, and resumed state. M11 no longer sets those Nexus resume status strings directly.
+
+  - 2026-07-08 update: DM2 startup now owns direct resume host status receipts for invalid save path, load/apply failure, and resumed state. M11 no longer sets `DM2 RESUME PATH INVALID`, `DM2 RESUME FAILED`, or `DM2 RESUMED` directly.
+
+  - 2026-07-08 update: Nexus launcher now owns level-0 boot bootstrap receipt construction for engine pointer, startup state, title-load status, dungeon path, and missing-data boot status. M11 applies that receipt instead of running Nexus new-game reset/startup launch logic inline. Remaining Nexus boot work is deeper save-resume ownership and full packaged startup capture proof.
+
+  - 2026-07-09 update: Nexus launcher boot/runtime receipts now carry startup asset/audio route facts for title/warning/gameover/STABG, FACE portraits, MENU.BPK upload blockers, and level-0 SFX/CD handoff. Remaining Nexus boot work is exact Saturn VDP1/VDP2 title/menu timing and broader packaged startup capture proof.
+
+  - 2026-07-09 update: Nexus save-select now has a combined route receipt for keyboard/pointer handoff, including render command count, selected save row/slot, host result, mode updates, and pointer-miss state preservation. Remaining Nexus startup work is exact Saturn VDP1/VDP2 title/menu timing and broader packaged startup capture proof.
+
+  - 2026-07-09 update: Nexus title/startup input and pointer paths now emit a combined route receipt for hold, save-select, champion-select, and return-to-launcher handoff, including title draw-command count, host result, mode updates, and status text. Remaining Nexus startup work is exact Saturn VDP1/VDP2 title/menu timing and broader packaged startup capture proof.
+
+  - 2026-07-09 update: Nexus launcher now exposes startup save-route and title-route receipts directly from runtime-state and snapshot paths, covering save-slot, pointer-miss, title-return, and hold handoff. Remaining Nexus startup work is exact Saturn VDP1/VDP2 title/menu timing and broader packaged startup capture proof.
+
+  - 2026-07-09 update: Nexus startup asset gating now reports title readiness separately from real save/champion menu surface readiness and blocks menu routes on MENU.BPK PRS3/truncated/no-surface states without permitting fallback visuals. Remaining Nexus startup work is exact Saturn VDP1/VDP2 title/menu timing and broader packaged startup capture proof.
+
+  - 2026-07-09 update: Nexus title/save direct execute paths now consume real-asset gates, blocking MENU.BPK/face failures with ASSETS host receipts before mode updates, fallback visuals, or save loads. Remaining Nexus startup work is exact Saturn VDP1/VDP2 title/menu timing and broader packaged startup capture proof.
+
+  - 2026-07-11 update: Nexus host-caller DGN execution now requires the copied command buffer to contain the full material-validated DGN render plan before M11 caches or draws it, and truncated host buffers stay blocked without fallback visuals. Remaining Nexus runtime work is broader real DGN/model/render breadth and exact Saturn presentation, not partial-plan leakage.
+
+  - 2026-07-11 update: Nexus host-caller receipts now consume the DGN viewport host-route receipt directly, so championstart-to-runtime and complete-support require `ready-rendered-mesh`, package/host-route consumption, no runtime blocker, and full material/raster proof. Remaining Nexus work is broader real DGN/model coverage and exact Saturn capture beyond the current host-route gate.
+
+  - 2026-07-11 update: Nexus runtime-handoff and runtime-route receipts now also carry the DGN viewport host-route status, package/host-route consumption, and blocker state for both successful championstart and blocked material paths. Remaining Nexus work is broader real DGN/model coverage and exact Saturn capture beyond this no-fallback runtime gate.
+
+  - 2026-07-11 update: Nexus complete-support receipts now expose the DGN viewport host-route status and reject runtime support when the route is blocked or not `ready-rendered-mesh`. Remaining Nexus work is broader real DGN/model coverage and exact Saturn capture beyond this complete-support gate.
+
+  - 2026-07-11 update: Nexus startup route-proof receipts now carry the DGN viewport host-route status and only mark first/full runtime startup ready when the package/host-route is consumed, unblocked, and `ready-rendered-mesh`. Remaining Nexus work is broader real DGN/model coverage and exact Saturn capture beyond this route-proof gate.
+
+  - 2026-07-11 update: Nexus real DGN viewport rendering now emits a stable captured-frame hash and capture-ready flag through render, host-route, runtime-handoff, runtime-route, ownership, host-caller, complete-support, and route-proof receipts. Remaining Nexus work is broader real DGN/model coverage and exact Saturn capture comparison beyond this packaged frame-capture identity.
+
+  - 2026-07-08 update: DM2 startup host receipts now also carry boot inspect/log details for start-menu and resume handoff. M11 applies those receipts instead of setting the final DM2 boot readout locally.
+
+  - 2026-07-08 update: DM2 startup now owns direct save-path resume execution through session apply and host receipt generation. M11 no longer interprets DM2 resume execution/status strings or emits a separate resumed receipt.
+
+  - 2026-07-08 update: DM2 boot startup launch now also owns runtime ownership detach through an M11-ready runtime receipt for profile, live dm2_state pointer, dungeon path, and graphics MD5. M11 no longer reads `launch.profile` fields or nulls launch ownership pointers in the DM2 start path. Remaining DM2 boot coding work is richer title/startup presentation and fewer startup state adapters.
+
+  - 2026-07-08 update: DM2 M11 direct-start now applies the detached boot runtime receipt through one handoff helper, covering V2/HUD/touch init, source identity, profile/world handoff, and first runtime sync. Remaining DM2 boot coding work is richer title/startup presentation and fewer startup state adapters.
+
+  - 2026-07-08 update: DM2 boot now also owns startup launch receipt construction from runtime state and runtime-init/title/source handoff flags in the detached runtime receipt. M11 no longer builds DM2 startup host facts locally during direct start and only executes the boot-owned init plan. Remaining DM2 boot coding work is richer title/startup presentation and fewer startup state adapters.
+
+  - 2026-07-08 update: DM2 boot now also owns prepare-failure host receipts plus launch-owned snapshot start/resume wrappers, so M11 no longer reads `launch.profile`, `failure_status_scope`, or `failure_status` during DM2 direct start. Remaining DM2 boot coding work is richer title/startup presentation and fewer startup state adapters.
+
+  - 2026-07-08 update: DM2 boot now also owns runtime-state wrappers for startup idle, keyboard input, pointer input, and startup presentation command building. M11 no longer has a local DM2 startup host-facts adapter.
+
+  - 2026-07-08 update: DM2 boot now exposes one combined startup view-model facade for draw commands plus presentation receipt fields. M11 consumes that model for boot probe receipts and startup rendering instead of calling separate DM2 presentation helpers.
+
+  - 2026-07-08 update: DM2 broad-root boot scans now fast-path `dm2/` and `data/` hash matches and resolve GRAPHICS/DUNGEON in one traversal before falling back to the selected root. Remaining DM2 boot work is richer title/startup presentation and fewer runtime/presentation adapters.
+
+  - 2026-07-08 update: CSB boot runtime detach receipt now carries the complete startup launch receipts as well as profile/identity paths. M11 applies the detached runtime receipt instead of reading `launch.receipts` after ownership transfer. Remaining CSB boot coding work is pushing more M11 apply/adaptation code behind CSB startup receipt helpers.
+
+  - 2026-07-08 update: Theron V2 HUD launch-mode startup now has a Theron-owned M11 adapter for phase-gate/default resolution. M11 no longer builds `THERON_V2_PhaseGateConfig` during launch. Remaining Theron boot coding work is richer real-media startup handoff and fewer presentation adapters.
+
+  - 2026-07-08 update: Theron startup-media receipts now carry Track 02 variant, MD5, byte size, and media-ready state through boot detach into M11, and the boot-owned forcefield/dungeon handoff path now passes the broad M11 direct-launch gate. Remaining Theron boot coding work is deeper real-media presentation and packaged startup capture proof.
+
+  - 2026-07-08 update: DM2 boot now owns the initial direct-start startup launch receipt without requiring an M11-built empty startup snapshot. Remaining DM2 boot coding work is richer title/startup presentation and fewer runtime/presentation adapters.
+
+  - 2026-07-08 update: Nexus launcher now owns save-resume load/validation/level-load/engine-state application through a resume receipt. M11 no longer loads FNXS saves or mutates Nexus engine mechanics directly during resume.
+
+  - 2026-07-08 update: CSB M11 direct-start now applies the detached boot runtime receipt through one handoff helper, covering active/source identity, graphics/font bind, startup state receipts, session-state receipt, and launch host receipt. Remaining CSB boot coding work is smaller profile/menu cleanup and packaged capture proof.
+
+  - 2026-07-08 update: CSB boot runtime detach now also carries M11-ready title and source-id. M11 no longer decides CSB launch identity strings locally after detach. Remaining CSB boot coding work is pushing more M11 apply/adaptation code behind CSB startup receipt helpers.
+
+  - 2026-07-08 update: CSB boot runtime detach now also carries graphics/font bind decisions for the shared M11 asset loader. M11 no longer decides that CSB graphics path should be bound locally after detach. Remaining CSB boot coding work is pushing more M11 apply/adaptation code behind CSB startup receipt helpers.
+
+  - 2026-07-08 update: CSB boot startup launch receipts now also carry the M11-ready launch host status (`CSB ENTRANCE` / `CSB RESUMED`). M11 applies that receipt instead of deciding final CSB launch status from save-path presence.
+
+  - 2026-07-08 update: CSB boot startup host receipts now also own launch/failure log text and color. M11 applies the CSB receipt for startup failure instead of building the failure status/log locally.
+
+  - 2026-07-08 update: CSB boot now owns startup launch allocation, asset scan, enter-game, and launch failure host receipts. M11 no longer allocates/scans/enters CSB profiles inline. Remaining CSB boot coding work is smaller startup/profile cleanup where ownership still leaks into M11.
+
+  - 2026-07-08 update: CSB boot now also owns snapshot-based startup render-plan, idle-advance, and presentation-receipt wrappers. M11 no longer calls the long runtime-state CSB startup wrappers directly. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB boot startup launch now also owns runtime ownership detach through an M11-ready runtime receipt for profile plus graphics/dungeon/MD5 identity. M11 no longer reads `launch.profile` fields or nulls launch ownership pointers in the CSB start path. Remaining CSB boot coding work is smaller startup/profile cleanup where found.
+
+  - 2026-07-08 update: Theron boot startup launch now also owns prepare-failure host receipts for missing/invalid Track 02, asset load, and startup-state failures. M11 no longer switches on Theron prepare result enums during launch failure.
+
+  - 2026-07-08 update: Theron boot startup launch now emits the M11-ready launch host receipt for boot status, startup inspect detail, chapter marker, and launch log. M11 no longer builds Theron launch inspect/status strings after adopting boot-owned startup state. Remaining Theron boot coding work is richer real-media presentation and any remaining lifetime/render adapters still found.
+
+  - 2026-07-08 update: Theron boot startup launch now also owns runtime ownership detach through an M11-ready runtime receipt for profile/world/viewport/assets plus title/source/path identity. M11 no longer reads `launch.profile` fields or nulls launch ownership pointers during `StartTheron`. Remaining Theron boot coding work is richer real-media presentation and render/session adapters still found.
+
+  - 2026-07-08 update: CSB boot now owns a combined startup action facade for utility/entrance keyboard and pointer routing. M11 applies one receipt instead of choosing utility vs entrance locally. Remaining CSB boot work is smaller profile/menu cleanup plus packaged startup capture proof.
+
+  - 2026-07-08 update: CSB title tick state now keeps the source animation step aligned with the frame just drawn, preserving the PRESENTS -> CHAOS timing boundary. M11 also routes CSB startup presentation/idle through local boot facades and leaves input accept/reject decisions to the CSB boot action facade. Remaining CSB work is packaged startup capture proof and any smaller launch/profile cleanup still found.
+
+  - 2026-07-09 update: CSB closed-door startup HUD/menu receipts now carry resume option visibility, selected state, availability, and save path. Remaining CSB work is packaged startup capture proof and any smaller launch/profile cleanup still found.
+
+  - 2026-07-09 update: CSB boot now emits a render-view receipt covering post-FTL title, closed-door menu/HUD, utility fallback suppression, and door-opening routes, plus a render-plan facade for M11 adapter cleanup. Remaining CSB work is wiring that facade into dirty M11 call sites once concurrent engine edits settle, then packaged startup capture proof.
+
+  - 2026-07-09 update: CSB boot now exposes that render-view receipt directly from runtime-state fields, and the legacy render-plan adapter routes through it. Remaining CSB work is swapping the dirty M11 startup render call sites to this receipt once concurrent engine edits settle, then packaged startup capture proof.
+
+  - 2026-07-09 update: CSB startup render-view receipts now expose ReDMCSB title stage, source step, frame max, and PRESENTS/CHAOS/STRIKES BACK visibility bits. Remaining CSB work is swapping M11 title/door render call sites to these receipts once concurrent engine edits settle, then packaged startup capture proof.
+
+  - 2026-07-09 update: CSB startup action receipts now also carry post-input render-view routes for utility HUD/menu movement and entrance door-opening delay/frame handoff. Remaining CSB work is wiring M11 startup input/render call sites to consume these post-input receipts directly, then packaged capture proof.
+
+  - 2026-07-09 update: CSB startup action receipts now carry full pre-input render-view proof for title/PRESENTS, utility HUD/menu, closed-door entrance, and Back/launcher-return paths. Remaining CSB work is replacing M11 startup input/render adapters with these pre/post action receipts, then packaged capture proof.
+
+  - 2026-07-09 update: CSB startup action receipts now carry source input routing facts: Firestaff input code, CSB startup input, resolved entrance command id, title-block flag, and utility/entrance route flags. Remaining CSB work is moving M11 action application to consume this receipt directly, then packaged capture proof.
+
+  - 2026-07-09 update: CSB startup action receipts now carry pointer coordinates, source left-button mask, pointer route identity, and command ids for utility and entrance pointer paths. Remaining CSB work is moving M11 mouse startup handling to consume this receipt directly, then packaged capture proof.
+
+  - 2026-07-09 update: CSB startup action receipts now flatten host action result/status, import-preview clear, and bonus-request flags for keyboard and pointer startup routes. Remaining CSB work is moving M11 host status/application code to consume this receipt directly, then packaged capture proof.
+
+  - 2026-07-08 update: Theron boot runtime detach now carries initial title, save/resume, startup-media, and launch-host receipts. M11 no longer reads those `launch` receipts after ownership transfer. Remaining Theron boot coding work is richer real-media presentation and render/session adapters still found.
+
+  - 2026-07-08 update: Theron M11 direct-start now applies the detached boot runtime receipt through one handoff helper, covering source identity, profile/world/viewport/assets, title-gate state, save/resume state, startup-media, and launch host receipt. Remaining Theron boot coding work is richer real-media presentation and any smaller render/session adapters still found.
+
+  - 2026-07-08 update: Theron boot now owns a combined startup view-model for layout, render rows, render plan, and presentation receipt. M11 consumes that single boot-owned model for startup layout queries and fallback startup rendering instead of calling separate Theron layout/render helpers. Remaining Theron boot work is richer real-media presentation and packaged capture proof.
+
+  - 2026-07-08 update: Theron boot startup view-model now also carries runtime level and champion count for boot probe receipts. M11 no longer rebuilds a Theron startup snapshot or casts the Theron world just to report startup probe fields.
+
+  - 2026-07-08 update: Theron startup-flow now owns runtime session-facts construction from M11 state, including Track 02 ROM extraction from boot assets. M11 no longer casts Theron assets while building startup session facts.
+
+  - 2026-07-08 update: Theron boot now owns the public runtime-state-to-startup-session-facts adapter. M11 no longer calls the startup-flow session constructor directly.
+
+  - 2026-07-08 update: Theron boot now owns runtime-state wrappers for startup keyboard input, pointer input, layout inspection, render rows, and render-plan construction. M11 no longer builds a local Theron startup session before those paths. Remaining Theron boot coding work is richer real-media startup presentation breadth and any smaller render executor cleanup still found.
+
+  - 2026-07-08 update: DM2 boot now also owns snapshot-based startup launch, idle, input, pointer, presentation-build, and presentation-receipt wrappers; Theron boot also owns presentation receipts from its startup snapshot. M11 no longer calls Theron/DM2 long runtime-state startup wrappers directly.
+
+  - 2026-07-08 update: Nexus launcher now owns snapshot wrappers for startup host facts, idle, title/save/champion input and pointer routing, save/champion presentation build, and presentation receipt. M11 no longer calls Nexus runtime-state startup wrappers directly. Remaining coding work is richer real-media presentation paths and any smaller launch/profile adapters still found.
+
+  - 2026-07-08 update: Nexus launcher now also owns a level-0 runtime receipt for M11 identity, engine handoff, title fallback status/log, dungeon path, and startup launch receipt. M11 no longer reads the raw boot receipt fields during Nexus start. Remaining Nexus boot work is deeper save-resume ownership and full packaged startup capture proof.
+
+  - 2026-07-08 update: Nexus M11 direct-start now applies the launcher runtime receipt through one handoff helper, covering engine/source identity, light runtime, party pose, title-screen ownership, startup receipt, and boot status/log. Remaining Nexus boot work is deeper save-resume ownership and full packaged startup capture proof.
+
+  - 2026-07-08 update: CSB launcher handoff now plays the FTL/SWSH prelude before CSB title/entrance and searches CSB SWOOSH locations first. Remaining CSB startup work is exact captured presentation proof on packaged builds.
+
+  - 2026-07-08 update: CSB SWOOSH lookup now has a data-free regression test locking `csb/SWOOSH` precedence over the DM1 legacy wrapper.
+
+  - 2026-07-08 update: SWSH lookup now also scans the data root recursively for a valid SWSH logo payload by bytes, so renamed/misplaced intro files are not missed after hash/signature validation. Remaining work is applying the same no-filename-dependency rule to any optional intro/title assets still using narrow path guesses.
+
+  - 2026-07-08 update: CSB title cadence/render plan now follows the ReDMCSB `TITLE.C F0437` CSB path: 60-vblank PRESENTS hold, 20 reverse-order CHAOS zoom frames, 20-frame CHAOS hold, STRIKES BACK, and 2-frame final delay. Remaining CSB startup work is visual/package capture proof and any palette/audio deltas still found.
+
+  - 2026-07-09 update: CSB closed-door route receipts now gate utility-panel rendering on an active CSB-owned utility render plan, so plain entrance HUD no longer falls through to M11 host utility-panel rendering. Remaining CSB startup work is packaged capture proof and any smaller HUD/menu ownership leaks still found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now maps keyboard and pointer entrance input from startup host facts into host-action receipts. M11 no longer calls CSB input-to-command helpers for entrance startup input.
+
+  - 2026-07-08 update: CSB startup-sequence now owns startup host-facts construction from runtime state, including entrance door-step count. M11 no longer manually fills every CSB startup host-facts field.
+
+  - 2026-07-08 update: CSB boot now owns the public runtime-state-to-startup-host-facts adapter. M11 no longer calls the startup-sequence host-facts constructor directly.
+
+  - 2026-07-08 update: CSB boot now owns runtime-state wrappers for startup render-plan construction, idle advancement, entrance input-wait gating, and presentation receipts. M11 no longer builds host facts for those startup paths. Remaining CSB boot coding work is utility/entrance action wrappers and any smaller render-executor cleanup still found.
+
+  - 2026-07-08 update: CSB boot now also owns runtime-state wrappers for utility render, utility pointer/keyboard, and entrance pointer/keyboard host-action receipts. M11 no longer constructs CSB startup host facts anywhere in `m11_game_view.c`. Remaining CSB boot coding work is smaller render-executor cleanup and visual capture proof.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now combines utility input/pointer state receipts with any resulting entrance-command host receipt. M11 no longer re-enters a separate CSB entrance-command path from utility `APPLY_ENTRANCE_COMMAND`. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-07 update: Theron startup-flow now owns layout-state construction from raw fixed Track 02 roster facts, Continue availability facts, mirror order, and prompt text. M11 no longer clamps/copies roster pointers before layout/render-row/startup-screen generation. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup-flow now owns direct flow rebuild from raw snapshot requests, so M11 no longer builds an intermediate flow snapshot before rebuilding menu/forcefield state. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup-flow now also exposes direct flow rebuild from raw startup facts, so M11 no longer constructs `Theron_StartupFlowSnapshotRequest` for menu/forcefield rebuilds. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now owns startup pointer hit/action routing from layout state. M11 no longer builds Theron layout elements or hit objects before mouse/touch startup routing. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now owns keyboard/menu action routing from layout state. M11 no longer reads Continue availability or progression directly before Theron startup keyboard routing. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup runtime-entry and Continue paths now consume opaque boot-profile adapters for graphics MD5 and save root. M11 no longer reads those boot-profile fields for forcefield entry or Continue. Remaining Theron boot coding work is the larger initial launch/profile setup and render/session adapters still found.
+
+  - 2026-07-08 update: Theron startup save/resume now emits an M11-ready startup state receipt, so initial launch no longer manually copies verdict, claim, slots, SRM import, focus, and SRM root fields in M11. Remaining Theron boot coding work is initial launch/profile allocation/load ownership and render/session adapters still found.
+
+  - 2026-07-08 update: Nexus startup now exposes a host-facts adapter for save scanning, save menu input/pointer, champion input/pointer, and startup presentation. M11 no longer passes repeated raw Nexus startup save/champion facts across those boot/menu/render paths. Remaining all-game startup work is deeper bitmap/audio/timing presentation breadth and any remaining non-Nexus mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now exposes session-based wrappers for flow rebuild, chapter inspect, and flow-plan host receipts; CSB startup-sequence now exposes a host-facts presentation receipt wrapper. M11 no longer calls those startup `from_facts` helpers directly. Remaining startup work is deeper bitmap/audio/timing presentation breadth and any smaller boot-profile cleanup still found.
+
+  - 2026-07-08 update: Theron boot now owns startup profile preparation from verified path or data-dir scan, save-root derivation from explicit save paths, save/resume evaluation, and Track 02 asset loading. M11 no longer performs those launch steps inline. Remaining Theron boot coding work is allocation/lifetime ownership and render/session adapters still found.
+
+  - 2026-07-08 update: Theron boot now owns startup launch allocation and cleanup for boot profile, world, viewport, assets, save/resume snapshot, and viewport initialization. M11 no longer allocates or tears down those startup objects during `StartTheron`. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining session/render adapters still found.
+
+  - 2026-07-08 update: Theron boot now also owns the initial title-gate and save/resume startup-state receipts inside the startup launch bundle. M11 no longer builds those receipts during `StartTheron`. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining session/render adapters still found.
+
+  - 2026-07-08 update: Theron boot now also owns the Track 02 startup-media receipt for roster names/titles and prompt text inside the startup launch bundle. M11 no longer reads Track 02 asset bytes directly during `StartTheron`. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining session/render adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now builds startup render plans directly from raw runtime facts. M11 no longer builds Theron layout elements before drawing the startup screen. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-09 update: Theron runtime-entry failure now emits host/apply receipts when verified Track 02 blocks fallback visuals. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron Continue failure now emits host/apply receipts for no-source and missing boot-profile paths. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron verified Track02 runtime startup now loads only the semantic startup handoff; older non-semantic initial-candidate/descriptor-window runtime scans are blocked and surface through the no-fallback host receipt path. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron raw Continue request execution now emits host/state receipts directly for success and host receipts for no-source failure. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron external `.srm` path Continue now emits host/state receipts for success and host receipts for missing-path failure. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron external `.srm` Continue now has a direct apply/state receipt helper with structured SRM source, path-only slot, import, dungeon, quest, party, and gold fields. Remaining Theron work is wiring final runtime consumers to those receipts.
+
+  - 2026-07-09 update: Theron regular `slotN.srm` Continue now has a direct apply/state receipt helper with structured SRM source, slot, import, dungeon, quest, party, gold, and runtime-reset fields. Remaining Theron work is wiring final runtime consumers to these direct receipts.
+
+  - 2026-07-09 update: Theron boot/startup-menu runtime level-load now has direct apply/state receipts for fallback-room and verified Track02 blocked routes. Remaining Theron boot work is wiring final menu/runtime consumers to the direct receipt path and replacing remaining host-text interpretation.
+
+  - 2026-07-09 update: Theron boot startup view models now expose menu continue/save facts plus runtime level-route fields. Remaining Theron boot/menu work is wiring final title/menu consumers to that single view model and removing duplicate receipt/world reads.
+
+  - 2026-07-09 update: Theron boot can now build the complete startup title/menu view model from runtime state, including save and level-route facts. Remaining Theron menu work is wiring final callers to this wrapper and removing ad-hoc snapshot assembly.
+
+  - 2026-07-09 update: Theron boot startup view models can now carry Track 02 title/menu media receipts. Remaining Theron menu work is wiring final title/menu callers to consume the media receipt from the view model and deleting duplicate Track02 media reads.
+
+  - 2026-07-09 update: legacy Theron runtime-state and snapshot layout/render/input/pointer host wrappers now consume the startup view model internally. Remaining Theron boot/menu work is final UI/M11 call-site cleanup and broader real Track 02 semantic runtime routes.
+
+  - 2026-07-09 update: Theron boot now exposes one host-view receipt with view model, render route, state, presentation, Track 02 media consumption, and no-raw-rebuild flags. Remaining work is replacing final UI/M11 call sites with this single receipt where edit ownership allows.
+
+  - 2026-07-09 update: runtime-entry route receipts now classify fallback, Track 02 semantic, and Track 02 blocked routes from structured request state instead of receipt text. Remaining work is broader real Track 02 semantic level coverage beyond the startup handoff.
+
+  - 2026-07-09 update: structured-vs-text route flags now propagate through runtime-entry state receipts, boot startup view models, and boot render-route receipts. Remaining work is broader real Track 02 semantic level coverage beyond the startup handoff.
+
+  - 2026-07-09 update: Theron external `.tqsv` path Continue now loads directly and emits host/state receipts for success and host receipts for missing-path failure. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron direct `.tqsv` slot Continue now emits host/state receipts for success and host receipts for empty-slot failure. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron `.srm` slot Continue now emits host/state receipts for success and host receipts for unsupported/empty slot failure. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron direct runtime level-load now emits host/state receipts and blocks verified Track 02 fallback visuals with an inspectable reason when semantic handoff is missing. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron verified Track02 no-fallback receipts now keep the semantic/bank-signal failure detail in loader and host receipts. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron SRM Continue runtime receipts now carry source slot, import status, progression, quest mask, party restored/count, and gold from the actual restored world state. Remaining Theron boot coding work is broader real-media startup/runtime handoff and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron forcefield/runtime entry state receipts now carry explicit fallback-room, semantic Track02, or Track02-blocked route state. Remaining Theron boot coding work is real Track02 semantic handoff beyond the first startup level and remaining fallback-render removal.
+
+  - 2026-07-09 update: Theron explicit `slotN.srm` imports now preserve envelope, payload, progression, quest, and party body receipt fields. Remaining Theron boot coding work is wiring remaining runtime routes to consume these real save receipts instead of fallback visuals/state.
+
+  - 2026-07-09 update: Theron explicit external `.srm` paths now import into save-resume snapshots with path-only slot `-1` while preserving envelope/progression/party receipts. Remaining Theron work is consuming those receipts deeper in runtime routes and replacing remaining fallback visuals.
+
+  - 2026-07-08 update: Theron startup-flow now routes startup keyboard and pointer input directly from raw runtime facts. M11 no longer builds Theron layout state before startup input routing. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now builds startup render rows directly from raw runtime facts. M11 no longer builds Theron layout elements before startup render-row inspection. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now emits a keyboard input receipt from raw runtime facts. M11 no longer derives startup input failure status locally. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now also emits pointer input receipts from raw runtime facts. M11 no longer interprets pointer hit result/status locally before applying startup actions. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: CSB utility pointer and keyboard input now share one M11 receipt-application boundary for CSB-owned utility state/apply receipts. Remaining CSB boot coding work is further collapsing entrance/runtime command-result adapters behind CSB-owned receipts.
+
+  - 2026-07-08 update: CSB runtime now owns the combined startup-sequence runtime-plan execution and startup command-state/apply receipt generation. M11 no longer manually chains those two CSB layers for entrance runtime commands. Remaining CSB boot coding work is further collapsing pure entrance-command adapters behind CSB-owned receipts.
+
+  - 2026-07-08 update: CSB startup-sequence now owns pure entrance apply-result to input-result mapping. M11 no longer switches directly on CSB pure-apply enum values for non-runtime entrance commands.
+
+  - 2026-07-08 update: DM2 startup menu now emits host receipts from apply receipts, so M11 no longer reads DM2 apply-receipt mode/status/result/rescan fields directly. Remaining DM2 boot coding work is richer title/startup presentation and fewer M11-owned startup state adapters.
+
+  - 2026-07-08 update: DM2 startup menu now emits M11-ready host receipts directly from combined action execution/session-apply, so M11 no longer converts DM2 apply receipts locally. Remaining DM2 boot coding work is richer title/startup presentation and fewer M11-owned startup state adapters.
+
+  - 2026-07-08 update: DM2 startup menu now owns host-facts action execution plus failed-load rescan state receipts, so M11 no longer decides when to rescan saves after startup actions. Remaining DM2 boot coding work is richer title/startup presentation and fewer M11-owned startup state adapters.
+
+  - 2026-07-08 update: DM2 startup menu now owns combined keyboard/pointer routing through action execution and M11-ready host receipts. M11 no longer chains DM2 menu input/pointer receipt generation into a separate action execution call. Remaining DM2 boot coding work is richer title/startup presentation and fewer M11-owned startup state adapters.
+
+  - 2026-07-08 update: DM2 startup presentation now owns the boot-receipt summary for startup phase, animation id, animation-active flag, title frame, title max, and title-ready state. M11 no longer derives those DM2 boot receipt fields locally. Remaining DM2 boot coding work is richer original title/menu timing and any remaining startup state adapters still found.
+
+  - 2026-07-08 update: DM2 startup menu now owns idle menu redraw/no-redraw receipts. M11 no longer special-cases DM2 startup-menu idle policy before runtime ticks.
+
+  - 2026-07-08 update: DM2 startup menu now owns the initial launch receipt for startup session creation, save scan, active-menu mode, and boot status. Remaining DM2 boot coding work is richer original title/menu timing and any remaining startup state adapters still found.
+
+  - 2026-07-08 update: DM2 startup launch receipts now also carry startup-menu failure host status, so M11 applies the DM2-owned receipt instead of setting `DM2 START MENU FAILED` locally.
+
+  - 2026-07-08 update: DM2 boot now owns startup launch allocation, asset scan, save-root setup, and verified `enter_game` preparation through `dm2_v1_boot_startup_launch_alloc`. M11 no longer allocates/scans/enters DM2 profiles inline. Remaining DM2 boot coding work is richer original title/menu timing and any remaining startup state adapters still found.
+
+  - 2026-07-08 update: DM2 boot startup launch now also owns prepare-failure status for missing/unverified assets, OOM, bad input, and enter-game failure. M11 no longer maps DM2 prepare enums to boot status locally.
+
+  - 2026-07-08 update: DM2 runtime now owns boot-profile binding through `dm2_v1_runtime_bind_boot_profile`, including runtime init and boot-owned viewport asset provider handoff. M11 no longer performs those DM2 runtime binding steps inline. Remaining DM2 boot coding work is richer original title/menu timing and any remaining startup state adapters still found.
+
+  - 2026-07-08 update: DM2 runtime boot-profile binding now also has an M11-ready host receipt wrapper for bind success/failure, so M11 no longer sets `DM2 RUNTIME BIND FAILED` locally.
+
+  - 2026-07-08 update: DM2 boot now owns startup host-facts construction from the boot profile plus M11's startup-menu snapshot, including save-root fallback and scan roots. M11 no longer unpacks the DM2 boot profile when building startup facts.
+
+  - 2026-07-08 update: DM2 runtime now owns quicksave export, save-root creation, SKSave.dat last-session write, and M11-ready quicksave receipts. M11 no longer writes DM2 SKSave files directly.
+
+  - 2026-07-08 update: Theron startup-flow now owns full startup action dispatch from session facts, including return-to-launcher, Continue, forcefield entry, and flow actions. M11 now only gathers session facts and applies returned state/host receipts. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining launch/lifetime adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now owns dungeon-exit return-to-stage-select state receipt construction. M11 no longer creates a local `Theron_StartupFlow` or interprets Theron startup result codes after dungeon exit. Remaining Theron boot coding work is richer real-media startup presentation breadth and remaining launch/lifetime adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now owns dungeon-exit host receipts as well as state receipts. M11 no longer builds local exit status/inspect handling when movement exits a Theron dungeon.
+
+  - 2026-07-08 update: Theron startup-flow now owns combined keyboard/pointer routing through action execution and M11-ready action-host receipts. M11 no longer chains Theron input receipts into separate action execution.
+
+  - 2026-07-08 update: Theron startup-flow now owns the boot-probe presentation summary for phase, animation id, animation-active flag, title frame, title max, and title-ready state. M11 no longer derives those Theron startup fields locally. Remaining Theron boot coding work is richer real-media startup presentation breadth and remaining launch/lifetime adapters still found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now executes entrance commands from host facts and returns one M11-ready host-action receipt for pure entrance commands and runtime handoff plans. M11 no longer chains CSB command, runtime-plan, state, and host receipts locally.
+
+  - 2026-07-08 update: CSB startup-sequence now owns combined idle tick plus door-finish receipts for entrance startup. M11 no longer interprets tick-result flags or runs door-finish as a separate startup step.
+
+  - 2026-07-08 update: Nexus startup menu now emits host receipts from title/save/champion apply receipts, so M11 no longer reads Nexus apply-result enum values directly. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now emits M11-ready host receipts directly from save/title/champion action execution, so M11 no longer converts Nexus apply receipts locally. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now owns the boot-receipt presentation summary for startup phase, animation id, animation-active flag, title frame, title max, and title-ready state. M11 no longer derives those Nexus startup fields locally. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now owns combined save-menu and champion-select keyboard/pointer routing through action execution and M11-ready host-action receipts. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now owns idle-frame advancement for title and champion-select startup states. M11 no longer increments Nexus startup animation/cursor frames directly.
+
+  - 2026-07-08 update: Nexus startup menu now also owns title-screen keyboard/pointer routing through action execution and M11-ready host-action receipts. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now owns initial launch title activation/frame reset and save-menu scan receipts. M11 no longer runs a separate Nexus save scan helper during `StartNexus`. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup launch receipts now also carry startup-failure host status, so M11 applies the Nexus-owned receipt instead of setting `NEXUS STARTUP FAILED` locally.
+
+  - 2026-07-08 update: Nexus startup now also owns boot host-status receipts for data error, level error, title loaded, and title fallback. M11 applies those receipts instead of setting the boot status strings locally.
+
+  - 2026-07-08 update: Theron startup now emits host receipts for normal flow actions, Continue, and forcefield runtime entry, so M11 no longer applies three different Theron apply receipt shapes directly. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: CSB startup-sequence now emits host receipts for pure entrance and runtime apply paths, so M11 no longer reads CSB apply-result/runtime receipt status/result/preview/bonus fields directly. Remaining CSB boot coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB runtime now emits one combined M11 mirror receipt for scalar view state plus party/champion mirror data, so M11 no longer asks the runtime for separate view-state and party receipts during boot/resume sync. Remaining CSB boot coding work is smaller leader-hand/profile sync cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB runtime's combined M11 mirror receipt now also carries transient leader-hand/object-in-hand fields, icon index, and object name. M11 no longer has a separate CSBWin leader-hand sync helper. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB startup-sequence now exposes a request-based entrance input gate, and M11 no longer passes the long raw startup-field list for that gate. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now routes utility keyboard/pointer input directly from startup host facts. M11 no longer passes separate utility action/champion/overlay fields for that path.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now also builds utility render plans directly from startup host facts. M11 no longer passes separate utility prompt/action/champion/preview fields for rendering.
+
+  - 2026-07-08 update: CSB boot now exposes one runtime startup snapshot wrapper for utility render/input, entrance input, and input-wait checks. M11 no longer repeats the same long CSB startup field list across those calls.
+
+  - 2026-07-08 update: M11 now applies CSB runtime startup-session state receipts through one helper instead of copying resume/import utility fields inline during StartCSB. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB startup-sequence now owns the host render-plan profile adapter, including runtime start coordinates/direction from the boot profile. M11 no longer unpacks the CSB boot profile before startup presentation planning. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB startup-sequence now owns the boot-receipt presentation summary for startup phase, animation id, animation-active flag, title frame, title-frame max, and title-ready state. M11 no longer derives those CSB startup presentation fields locally. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now owns the boot-profile-to-runtime adapter for entrance runtime plans. M11 no longer reaches into `CSB_V1_BootProfile.runtime` before applying startup dungeon-entry/resume plans. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now also owns the opaque boot-profile-to-M11 mirror adapter. M11 no longer reaches through `CSB_V1_BootProfile.runtime` to mirror CSB view, party, or leader-hand state after startup/runtime sync points. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now owns opaque boot-profile adapters for startup utility render, pointer input, and keyboard input. M11 no longer unpacks the CSB boot profile to reach the runtime profile for the startup utility overlay. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now owns opaque boot-profile adapters for CSB quicksave, quickload, and idle runtime ticks. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for those booted runtime paths. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB input-command bridge now owns an opaque boot-profile keyboard adapter. M11 no longer reaches through `CSB_V1_BootProfile.runtime` to process post-boot CSB keyboard movement/turn input. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now owns opaque boot-profile adapters for object icon/action/allowed-slot/name and container read/write queries. M11 no longer reaches through `CSB_V1_BootProfile.runtime` for those object/container helper paths. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB boot now owns the viewport render-frame adapter from boot profile to viewport config, runtime overlays, custom backgrounds, CSBGRAPHICS post-pass, party pose, and draw counts. M11 now supplies only framebuffer plus sprite callbacks. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB runtime/startup bridge now owns boot-profile adapters for inventory slot writes, leader-hand state, leader-hand throws, throw/shoot/melee/projectile actions, SHOOT ready-hand refill, thing-next writes, champion vitals, and front-wall ornament clicks. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB boot now owns startup-handoff and startup-session receipt wrappers, so M11 launch no longer passes `&profile->runtime` for direct resume or DM1 import startup setup. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: CSB boot now emits one combined startup-launch receipt covering handoff, startup init state, and startup session state. M11 no longer assembles those launch receipts through separate CSB startup/runtime calls during `StartCSB`. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: Theron startup-media now emits an M11-ready state receipt for Track 02 roster names/titles and prompt text. M11 no longer copies raw media-capture fields directly during Theron boot. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now owns Continue availability derivation for startup keyboard and pointer routing. M11 no longer computes TQSV/SRM Continue flags before dispatching Theron startup input. Remaining Theron boot coding work is richer real-media startup presentation breadth and render/layout session adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now owns Continue availability derivation for startup layout elements, render rows, and render plans. M11 no longer computes TQSV/SRM Continue flags for Theron startup presentation. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: M11 now applies CSB startup init receipts and host receipts through shared helpers, removing duplicated StartCSB init field copies and entrance-result switch blocks. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: M11 now applies CSB startup tick receipts through one helper instead of setting the entrance frame and command-state receipt separately during idle startup animation ticks. Remaining CSB boot coding work is smaller profile/menu cleanup where found.
+
+  - 2026-07-08 update: Theron startup-flow now builds startup layout elements directly from raw runtime facts. M11 no longer builds Theron layout state before public startup-layout inspection. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now rebuilds flow and emits the matching state receipt from one raw-facts helper. M11 no longer owns the rebuild-to-receipt split for startup flow refresh. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: M11's Theron startup rebuild helper now consumes the Theron-owned rebuild state receipt directly and the unused local snapshot sync adapter is gone. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now executes normal flow action plans directly from raw M11 startup facts and returns apply/state receipts. M11 no longer special-cases stage-select init versus flow rebuild before stage/cursor/mirror actions. Remaining Theron boot coding work is richer real-media startup presentation breadth and remaining Continue/forcefield adapter cleanup.
+
+  - 2026-07-08 update: Theron startup-flow now emits host receipts directly from normal flow action execution facts. M11 no longer converts flow apply receipts locally for stage/cursor/Soul Room actions. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron Continue startup now lets the Theron-owned apply receipt drive M11 status and inspect output directly. M11 no longer keeps a separate Continue result/fallback inspect branch after a successful Continue receipt. Remaining Theron boot coding work is richer real-media startup presentation breadth and forcefield adapter cleanup.
+
+  - 2026-07-08 update: Theron Continue and forcefield paths now emit host receipts directly from the Theron save/resume and runtime-entry modules, so M11 no longer converts those apply receipts locally. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now emits the full return-to-stage-select state receipt after dungeon exit. M11 no longer resets Theron startup phase, cursor, continue focus, level-loaded flag, party pose, or tick count manually on this path. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron startup-flow now emits the initial title-state receipt for fresh Track 02 boot. M11 no longer seeds selected dungeon, level-loaded flag, startup cursor, Continue focus, party pose, or tick count manually during StartTheron. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Theron save/resume now owns explicit `slotN.tqsv` and `slotN.srm` quick-resume path application. M11 sets the save root, then consumes the Theron-owned save-resume snapshot instead of parsing slots and mutating resume claims locally. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-08 update: Nexus startup menu now owns Firestaff save-select input handling from raw M11 facts, including slot-mask and selected-row normalization before returning updated snapshot/action. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now also owns save-select and champion-select pointer handling from raw M11 facts. M11 no longer builds Nexus startup snapshots or hit objects before pointer routing. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now owns champion-select Firestaff keyboard input from raw champion facts. M11 no longer builds a Nexus champion snapshot before keyboard/menu input. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup presentation now builds save-select and champion-select draw commands directly from raw M11 facts. M11 no longer builds Nexus save/champion snapshots before startup rendering. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-08 update: Nexus startup menu now owns title, save, and champion action execution+apply receipts as combined helpers. M11 no longer builds Nexus apply receipts after startup action execution. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-07 update: Nexus startup save/champion snapshot construction and save scanning now live in `nexus_v1_startup_menu` from raw M11 facts. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and broader memory-card behavior.
+
+  - 2026-07-07 update: DM2 startup menu snapshot construction and save scanning now live in `dm2_v1_startup_menu` from raw startup facts. Remaining DM2 startup work is broader real save/menu corpus proof and exact original menu widget/timing breadth.
+
+  - 2026-07-08 update: DM2 startup menu now owns Firestaff input handling from raw startup facts, including fallback save root and selected-row normalization before returning the updated snapshot/action. Remaining DM2 startup work is broader real save/menu corpus proof and exact original menu widget/timing breadth.
+
+  - 2026-07-08 update: DM2 startup menu now also owns pointer handling from raw startup facts, including fallback save root, row normalization, hit-test, and returned action. M11 no longer builds a DM2 startup snapshot before pointer routing. Remaining DM2 startup work is broader real save/menu corpus proof and exact original menu widget/timing breadth.
+
+  - 2026-07-08 update: DM2 startup menu now emits M11-ready startup state receipts for save scans, keyboard input, and pointer input. M11 applies the receipt instead of copying startup snapshots. Remaining DM2 startup work is broader real save/menu corpus proof and exact original menu widget/timing breadth.
+
+  - 2026-07-08 update: DM2 startup presentation now builds draw commands directly from raw runtime facts. M11 no longer builds a DM2 startup snapshot before menu rendering. Remaining DM2 startup work is broader real save/menu corpus proof and exact original menu widget/timing breadth.
+
+  - 2026-07-08 update: CSB utility-flow now builds startup utility panel state directly from selected action, imported champion count, and runtime-profile facts. M11 no longer copies imported party state before utility panel render/input. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB utility-flow now builds utility render plans and input/pointer receipts directly from runtime-profile facts. M11 no longer constructs a CSB utility flow context before startup utility panel rendering or input routing. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB startup sequence now owns entrance command-state receipts and input-wait facts helpers. M11 applies CSB-owned receipts instead of mirroring the command-state struct directly for entrance boot state updates. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB startup sequence now owns door-opening finish from raw entrance facts and returns the command-state receipt for M11 to apply. M11 no longer rebuilds a mutable CSB command-state just to finish the entrance door animation. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB startup sequence now owns entrance command and runtime-plan apply from raw facts, returning command-state receipts for M11. M11 no longer constructs CSB command-state for entrance command routing. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB startup sequence now owns init receipts and startup phase receipts from raw facts. M11 no longer constructs CSB command-state for selected-entry init or boot receipt reporting. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB startup sequence now owns entrance animation tick receipts from raw facts. M11 no longer constructs or unpacks `CSB_V1_StartupTickState_PC34` manually during title/entrance/credits/door-opening ticks. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB utility-flow now emits M11-ready selected-action/preview state receipts for keyboard and pointer utility input. M11 no longer reads those mutable fields from the generic apply receipt. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB runtime now emits M11-ready startup session state receipts from startup handoff/session options. M11 no longer copies raw session-option fields after StartCSB handoff. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-08 update: CSB startup sequence now emits an init-state receipt covering command state plus neutral entrance frame/last-command/bonus-requested fields. M11 no longer seeds those StartCSB fields manually. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-07 update: CSB runtime now owns the party mirror receipt consumed by M11 after startup/resume handoff, including imported champion names, stats, hand slots, pose, active leader, and compatible portrait bytes. Remaining CSB startup coding work is smaller runtime/profile UI state cleanup where found.
+
+  - 2026-07-07 update: CSB runtime now owns the scalar view-state receipt consumed by M11 after startup/resume handoff, CSB utility panel background/preview clicks are consumed by CSB-owned utility receipts, and the real-data CSB M11 startup/resume gate now avoids broad gallery/data-root scans. Remaining CSB startup coding work is final party/profile UI mirror cleanup where it improves ownership.
+
+  - 2026-07-07 update: Theron startup save/resume now owns the Continue apply+inspect receipt wrapper, including chapter marker enrichment before M11 applies status/inspect output. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup save/resume now also owns Continue request and inspect-request construction from raw M11 facts, so M11 no longer builds `Theron_V1StartupContinueRequest` for the Continue path. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup runtime-entry now owns forcefield-entry request construction from raw M11 facts, including fixed Track 02 roster-name pointer adaptation. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup-flow now exposes direct chapter-inspect facts receipts, so M11 no longer builds `Theron_StartupChapterInspectRequest` for startup inspect readouts. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup-flow now owns chapter-marker inspect receipts and M11 no longer formats chapter inspect strings directly; the same pass also fixed M11's invalid `char[8][N]` to `char**` roster adapter. Remaining Theron coding work is richer real-media startup presentation breadth and any broader mode-transition adapters still found.
+
+  - 2026-07-07 update: CSB runtime now builds startup session options from startup handoff, imported party runtime state, and entrance resume path validation. M11 no longer assembles that import/resume options input locally. Remaining CSB startup coding work is any final UI state mirroring where it improves ownership.
+
+  - 2026-07-07 update: CSB startup sequence now builds render plans directly from a CSB-owned startup render-plan request, so M11 no longer constructs intermediate CSB render-state for title/entrance drawing. Remaining CSB startup coding work is any final UI state mirroring where it improves ownership.
+
+  - 2026-07-07 update: CSB startup sequence now owns command-state construction from raw M11 startup facts, including boolean normalization before entrance input, receipts, and render-plan derivation. Remaining CSB startup coding work is any final UI state mirroring where it improves ownership.
+
+  - 2026-07-07 update: CSB startup sequence now also exposes direct raw-facts helpers for command-state and render-plan construction, so M11 no longer builds CSB request structs for startup entrance rendering/input. Remaining CSB startup coding work is any final UI state mirroring where it improves ownership.
+
+  - 2026-07-07 update: CSB startup sequence now owns entrance-command receipt classification for pure UI commands versus runtime handoff plans. M11 consumes the CSB receipt and only executes runtime when the receipt requests it. Remaining CSB startup coding work is any final UI state mirroring where it improves ownership.
+
+  - 2026-07-07 update: Nexus engine startup now preloads the full original startup UI surface set (`TITLE.CG`, `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN`) and the title loader reuses that cache before falling back to direct reads. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and packaged capture proof.
+
+  - 2026-07-07 update: Nexus launcher now allows V2.0/V2.1/V2.2 presentation choices to start through the full original WARNING.BIN/TITLE.CG startup graphics fallback. Remaining Nexus startup work is exact Saturn VDP1/VDP2 timing/camera/text and packaged capture proof.
+
+  - 2026-07-07 update: Theron Continue and forcefield entry now expose combined execution/apply/state receipt wrappers, and M11 uses those wrappers instead of assembling apply/state receipts itself. Remaining Theron boot coding work is richer real-media startup presentation breadth and any broader mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup-flow now owns layout-state construction from raw startup facts, including dungeon clamp, chapter label, roster copy, Continue slots, and mirror order bounds. Remaining Theron boot coding work is richer real-media startup presentation breadth and any broader mode-transition adapters still found.
+
+  - 2026-07-07 update: Theron startup-flow now also owns flow-snapshot construction from raw startup facts, including companion-count clamp and mirror-order bounds before rebuild. Remaining Theron boot coding work is richer real-media startup presentation breadth and any broader mode-transition adapters still found.
+
+  - 2026-07-07 update: DM2 startup now owns combined action execution, optional session-apply callback, and final apply receipt construction. M11 now supplies only the runtime session callback and applies the returned receipt. Remaining DM2 startup work is broader real save/menu corpus proof and exact original menu widget/timing breadth.
+
+  - 2026-07-07 update: Nexus full start now renders loaded WARNING.BIN through the Nexus title renderplan and passes TITLE.CG reveal using the full boot-frame timeline. Remaining Nexus work is exact Saturn VDP1/VDP2 timing/camera/text and packaged capture proof.
+
+  - 2026-07-07 update: Nexus boot presentation now splits WARNING.BIN and TITLE.CG as separate startup draw commands, so full start can render the warning phase before title reveal through Nexus-owned presentation contracts. Remaining Nexus startup work is exact Saturn VDP1/VDP2 program timing/camera/text and packaged capture proof.
+
+  - 2026-07-07 update: CSB runtime now owns the adapter from startup-sequence runtime plans into runtime execution plans, so M11 no longer casts/copies CSB startup runtime-plan fields before applying dungeon/bonus/resume handoff. Remaining CSB startup coding work is moving any final UI state mirroring where it improves ownership.
+
+  - 2026-07-07 update: Theron startup-flow now owns the combined flow-plan execution/apply/state-receipt chain for stage select, cursor moves, stage choice, and mirror toggles. M11 now rebuilds the flow and applies returned receipts only. Remaining Theron boot coding work is richer real-media startup presentation breadth and remaining Continue/forcefield adapter cleanup.
+
+  - 2026-07-07 update: Theron save/resume now owns Continue availability summary for TQSV/SRM slots. M11 consumes one Theron-owned availability contract for startup input, pointer routing, and layout rendering. Remaining Theron boot coding work is richer real-media startup presentation breadth and remaining mode-transition adapters.
+
+  - 2026-07-07 update: CSB utility flow now returns apply receipts directly from Firestaff keyboard/pointer input when the startup utility overlay is active. M11 applies the CSB-owned receipt and no longer duplicates input-result conversion for utility input. Remaining CSB startup coding work is moving remaining runtime profile/import adapters where it improves ownership.
+
+  - 2026-07-07 update: Nexus full boot title drawing now goes through Nexus startup presentation commands, including WARNING.BIN and TITLE.CG frames. Remaining Nexus startup work is exact Saturn VDP1/VDP2 title program timing/camera/text, exact save/champion menu art/timing, and broader memory-card support.
+
+  - 2026-07-07 update: Theron startup-flow now owns state receipts for flow actions, including flow snapshot, startup cursor, and Continue focus. Remaining Theron boot coding work is richer real-media startup presentation breadth and remaining mode-transition adapters.
+
+  - 2026-07-07 update: Nexus save/champion startup presentation now owns draw-command dispatch with loaded `TITLE.CG` art as menu background and `FACE.BIN` portrait commands. Remaining Nexus startup work is exact Saturn save/champion menu art/timing, VDP1/VDP2 title program proof, and broader original memory-card support.
+
+  - 2026-07-07 update: Theron startup-flow now also owns execution of its startup graphic plan through fill/rect/pixel callbacks, leaving M11 as a framebuffer adapter only. Remaining Theron full-start work is replacing bounded command art with decoded original Track 02/Track 03 bitmap surfaces.
+
+  - 2026-07-07 update: DM2 startup presentation now owns draw-command dispatch through GDAT/fill/outline/text callbacks. M11 only adapts those commands to boot-profile assets, palette colors, text styles, and the framebuffer. Remaining DM2 startup work is reducing remaining session/state adapter surface and broader real menu/save corpus proof.
+
+  - 2026-07-07 update: CSB startup sequence now owns render-state derivation from command-state plus runtime-start facts. M11 no longer fills CSB render-state field-by-field before building the title/entrance plan. Remaining CSB startup coding work is moving remaining runtime profile/import adapters where it improves ownership.
+
+  - 2026-07-07 update: CSB utility flow now owns utility context construction from runtime facts, so M11 no longer assembles `CSB_V1_UtilRuntimeSnapshot` before drawing or routing the startup utility panel. Remaining CSB startup coding work is moving remaining runtime profile/import execution adapters where it improves ownership.
+
+  - 2026-07-07 update: Theron startup-flow now emits graphic render commands for title, stage select, Soul Room mirrors, and forcefield, and M11 only executes that Theron-owned plan before drawing text. Remaining Theron full-start work is replacing the bounded command art with decoded original Track 02/Track 03 bitmap surfaces when the title/menu graphics format is fully locked.
+
+  - 2026-07-07 update: CSB startup now owns runtime-apply receipts for normal dungeon, bonus dungeon, and resume entrance commands, including redraw result, import-preview clear, and bonus-requested state. M11 still performs profile-backed load/set calls, then applies the CSB-owned receipt. Remaining CSB startup coding work is moving any remaining profile/import adapters where it improves ownership.
+
+  - 2026-07-07 update: CSB runtime now owns startup runtime-plan execution for normal dungeon, bonus dungeon, and entrance resume, including source bonus flag, sibling bonus dungeon load, resume load, and sync receipts. M11 now only adapts startup-plan fields into the runtime contract and mirrors returned state.
+
+  - 2026-07-07 update: CSB utility flow now owns apply receipts for pointer/keyboard input results and utility action plans, including selected row, preview-active state, status text, redraw, ignore, and entrance-command handoff. M11 now applies the CSB-owned receipt instead of switching on utility result/plan kinds.
+
+  - 2026-07-07 update: CSB runtime now owns startup launch handoff selection for direct resume versus DM1 import, returning a receipt with direct-resume state, import result, champion count, utility state, prompt, and status text. M11 no longer branches directly between CSB resume and DM1 import execution during selected-entry startup. Remaining CSB startup coding work is moving any remaining profile/session option adapters where it improves ownership.
+
+  - 2026-07-07 update: Theron startup save/resume and runtime-entry now own apply receipts for Continue and forcefield entry, including redraw result, status scope/text, inspect text, and runtime-entry log policy. M11 still copies view-state fields from Theron-owned execution results. Remaining Theron boot coding work is broader mode-transition adapters and richer real-media startup presentation breadth.
+
+  - 2026-07-07 update: Theron startup save/resume and runtime-entry now also own state receipts for Continue and forcefield runtime-entry handoff, including flow snapshot, level-loaded state, startup cursor, continue focus, party pose, and tick count. M11 applies those field contracts instead of copying each result struct locally. Remaining Theron boot coding work is richer real-media startup presentation breadth and any remaining mode-transition adapters.
+
+  - 2026-07-07 update: Theron startup runtime-entry now owns combined forcefield execution, roster-name application, runtime level-load callback routing, and post-entry view-state outputs. M11 now supplies raw Track 02/profile facts and applies the returned state. Remaining Theron boot coding work is broader mode-transition adapters and richer real-media startup presentation breadth.
+
+  - 2026-07-07 update: Theron startup-flow now owns flow-action apply receipts for stage-select display, cursor movement, stage choice, Soul Room cursor movement, and mirror toggle status/view-state deltas. Continue and forcefield now have matching Theron-owned apply receipts in their owning modules.
+
+  - 2026-07-07 update: DM1 zip/archive-backed startup now materializes optional `TITLE`, `TITLE.DAT`, `SWOOSH`, and `SWOOSH.DAT` siblings into `asset-cache/dm1/` when required DM1 files need cache materialization. Remaining DM1 startup work is packaged real-asset capture proof for released builds.
+
+  - 2026-07-07 update: Theron startup save/resume now owns the combined Continue execution request for TQSV and bounded SRM sources, including source validation, save application, world reset, and post-continue view-state outputs. M11 now supplies saved source facts and applies the returned state. Remaining Theron boot coding work is broader mode-transition adapters.
+
+  - 2026-07-07 update: Theron startup-flow now owns a combined flow-action execution contract for stage-select display, stage cursor movement, stage choice, Soul Room cursor movement, and mirror toggle/deselect. M11 now rebuilds/syncs the flow and applies only view-state/status copies. Remaining Theron boot coding work is moving Continue save adapters and final forcefield runtime callbacks further behind Theron-owned execution contracts.
+
+  - 2026-07-07 update: CSB startup now owns session-option initialization for imported DM1 parties and entrance resume saves, including direct-resume suppression, bounded path copies, utility state/prompt, available flags, and default cursor/preview state. M11 now supplies runtime validation facts and copies the CSB-owned options into view state. Remaining CSB startup coding work is moving boot profile/import execution adapters out of M11 where it improves ownership.
+
+  - 2026-07-07 update: CSB startup now owns the runtime entrance handoff plan for normal dungeon, bonus dungeon, and resume commands, including bonus flag intent, resume-load requirement, door-opening eligibility, and status outcome. M11 still executes the actual CSB runtime load/set calls and syncs view state. Remaining CSB startup coding work is moving more boot profile/save/import adapters out of M11 where it improves ownership.
+
+  - 2026-07-07 update: Theron startup-flow now owns the dungeon-exit return-to-stage-select handoff, including progression advance, party companion reset, level-loaded reset, selected-stage flow, and receipt text. M11 now only syncs the returned flow/world fields into view state. Remaining Theron boot work is moving continue-save view-state adapters and startup action application branches out of M11.
+
+  - 2026-07-07 update: Theron startup media capture now lives in `theron_v1_startup_media`, including US prompt and JP roster/title extraction from raw Track 02. M11 now only copies the Theron-owned media snapshot into view state. Remaining Theron boot work is moving remaining startup action side effects and mode-state adapters out of M11.
+
+  - 2026-07-07 update: Theron runtime-entry level load now lives in `theron_v1_startup_runtime_entry`, including Track 02 initial-level attempts and deterministic fallback-room load/receipt. M11 now passes only raw Track 02 bytes into the Theron-owned loader. Remaining Theron boot work is moving remaining action side effects out of M11.
+
+  - 2026-07-07 update: Theron startup-flow now owns runtime-entry orchestration after forcefield via a level-load callback contract, including world-entry, level-load failure handling, and runtime receipt assembly. M11 supplies only the Theron-owned Track 02 runtime-entry callback input and view-state sync. Remaining Theron boot work is moving remaining action side effects out of M11.
+
+  - 2026-07-07 update: Theron startup-flow now owns post-forcefield dungeon-entry/world-reset handoff and clears the selected dungeon's loaded-level row before M11 loads Track 02 level data. M11 still owns asset-backed initial level load and view-state sync. Remaining Theron boot work is moving level-load execution and receipt assembly behind Theron-owned runtime-entry contracts.
+
+  - 2026-07-07 update: Theron startup-flow now owns forcefield party construction with Track 02 roster-name override and persisted-Theron preservation. M11 still owns level-load orchestration after the forcefield succeeds. Remaining Theron boot work is moving dungeon-entry/world-reset/level-load execution behind Theron-owned startup runtime-entry contracts.
+
+  - 2026-07-07 update: Theron startup-flow now owns stage-select flow reset and Soul Room mirror toggle selection/deselection policy. M11 no longer hand-builds those startup states and only syncs the resulting flow into view state. Remaining Theron boot work is moving forcefield/runtime-entry and remaining action side effects behind Theron-owned execution contracts.
+
+  - 2026-07-07 update: Theron startup save/resume now owns explicit Continue application for `.tqsv` and bounded SRM progression envelopes, including world reset. M11 still owns status/UI side effects. Remaining Theron boot work is moving more startup action application and mode transitions out of M11.
+
+  - 2026-07-07 update: Theron startup-flow now owns snapshot capture/rebuild for stage selection and Soul Room mirror order; M11 only copies fields into/out of its state and applies runtime side effects. Remaining Theron boot work is moving continue-save application and more menu-mode transitions out of M11.
+
+  - 2026-07-07 update: DM1 optional boot assets `TITLE`, `TITLE.DAT`, `SWOOSH`, and `SWOOSH.DAT` are now scanned as original-file candidates so a data root containing only startup files no longer looks empty. They remain optional and do not satisfy the DM1 launch gate. Remaining scanner work is richer optional-asset status in the UI and packaged real-asset capture proof.
+
+  - 2026-07-07 update: CSB entrance pointer module now owns pointer-to-command dispatch, including credits-dismiss handling; M11 no longer maps pointer action enums to command ids. Remaining CSB startup work is broader packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB startup now owns Firestaff keyboard dispatch into entrance command ids, including credits-dismiss handling; M11 only asks CSB whether a startup input should execute. Remaining CSB startup work is pointer command dispatch cleanup plus packaged real-asset title/entrance/utility capture proof.
+
+  - 2026-07-07 update: CSB utility flow now also owns pointer hit dispatch plus overlay gating for startup utility input; M11 only supplies pointer coordinates and applies the CSB-owned result. Remaining CSB startup work is packaged real-asset title/entrance/utility capture proof and exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB utility flow now owns Firestaff keyboard dispatch plus the startup utility overlay gate; M11 builds the runtime snapshot and applies the CSB-owned result only. Remaining CSB startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB startup now owns the entrance input outcome contract for redraw/return-to-launcher plus resume unavailable/failed/loaded status text, so M11 no longer branches locally for those title/entrance command results. Remaining title/startup work is exact bitmap/audio/timing presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: Tier 1 strict boot-probe now runs an explicit DM1 title/startup handoff receipt before the normal DM1 runtime receipt, matching the CSB, DM2, Nexus, and Theron startup coverage. Remaining title/startup work is exact bitmap/audio/timing presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: DM1 title timing constants now live in `dm1_v1_startup_sequence_pc34_compat` and the V1 title frontend consumes that DM1-owned contract for zoom count, PRESENTS hold, VBlank tick, post-zoom waits, and final guard. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: DM1 title frontend now owns the GRAPHICS.DAT C001 blit plan for PRESENTS, zoom, and MASTER/STRIKES BACK. M11 consumes that plan instead of carrying TITLE.C source/destination rectangles locally. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: DM1 title frontend now also owns TITLE.DAT 4bpp-to-indexed unpacking, so M11 no longer carries title framebuffer layout knowledge. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: CSB startup now owns pure entrance command application for dismiss credits, begin credits, ignored commands, and quit-to-launcher. M11 now keeps only runtime side effects for dungeon entry, bonus dungeon, and resume loading. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: CSB startup now owns render-command execution order and routing through a callback executor: title stop, surface fallback, door-opening early exit, closed-door/fallback selection, and utility-panel wait gating. M11 now supplies only draw callbacks. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: CSB startup now owns the PRESENTS title-empty fallback policy after asset blits. M11 consumes that CSB-owned decision instead of counting title-region pixels locally. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: DM1 entrance runtime command policy now lives in `entrance_frontend_pc34_compat`: key dispatch, command-path mapping, credits wait ticks, vblank delay, headless timeout, and resume save path. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-07 update: DM1 entrance fallback rendering now also lives in `entrance_frontend_pc34_compat`: closed-door blit specs plus no-asset closed/opening door panel drawing. Remaining title/startup work is exact bitmap/audio presentation breadth per game and packaged capture proof.
+
+  - 2026-07-08 update: CSB now reports its source title-frame boundary from `csb_v1_startup_title_total_ticks_pc34()` after the ReDMCSB PRESENTS hold correction, and keeps `titleReady=0` until the CSB title prelude ends. Remaining title/startup work is exact bitmap/audio/timing breadth and packaged capture proof.
+
+  - 2026-07-07 update: boot-probe expectation options now cover startup animation identity, animation-active state, title frame, title-frame boundary, and title-ready state. Remaining title/startup work is still real presentation parity and packaged capture proof.
+
+  - 2026-07-07 update: the Tier 1 strict boot-probe now sends those animation/title expectations through the actual `firestaff` CLI for every present DM1, CSB, DM2, Nexus, and Theron data path. Remaining title/startup work is still real presentation parity and packaged capture proof.
+
+  - 2026-07-07 update: CSB startup render plans now also publish fallback text as row commands for title, credits, closed entrance, runtime start detail, utility overlay suppression, and prompt blink state. Remaining CSB startup work is fuller original utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: Tier 1 strict boot-probe now also runs explicit pre-runtime startup receipts for every present CSB, DM2, Nexus, and Theron path before the runtime handoff check. Remaining title/startup work is real presentation parity and packaged capture proof.
+
+  - 2026-07-07 update: CSB startup render plans now also publish primitive draw commands for startup clear, fallback frame, and fallback door panels. M11 consumes those commands instead of choosing those no-asset primitives locally. Remaining CSB startup work is fuller original utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup sequence now also executes its primitive render commands directly against the 8-bit startup framebuffer, so M11 no longer implements fallback clear/frame/door-panel pixel drawing for CSB entrance boot. Remaining CSB startup work is fuller original utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup sequence now also owns asset-command iteration, command-kind filtering, visible/geometry validation, and closed-door pair success policy through callback executors. M11 only loads and blits the requested assets. Remaining CSB startup work is fuller original utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup sequence now also owns execution of the opening-door composite command for C004/C002/C003, including animation step, door boxes, and source offsets. M11 only supplies the asset-loading entrance-compositor callback. Remaining CSB startup work is fuller original utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup render plans now also publish the entrance/title draw command order for clear, title, surface, fallback, opening-frame, closed-door, and utility-panel passes. Remaining CSB startup work is original utility/entrance art breadth, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup render plans now also publish asset blit commands for title strips, entrance/credits full surfaces, and C002/C003 closed-door panels. M11 consumes those commands instead of deriving those asset branches locally. Remaining CSB startup work is original opening-door composite ownership, fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup render plans now own the opening-door composite contract: C004/C002/C003 asset ids plus the F0438/F0807 door-step boxes/source offsets consumed by M11. Remaining CSB startup work is fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup and utility text material now lives in `csb_v1_text_material_pc34_compat`, so M11 only adapts the CSB-owned scale/palette/shadow contract. Remaining CSB startup work is fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup now owns input-to-source-command resolution for entrance commands; M11 only adapts M12 input and executes the returned CSB command. Remaining CSB startup work is fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup sequence now also owns Firestaff menu input-code mapping for entrance commands through `csb_v1_startup_input_from_firestaff_menu_code_pc34()`. Remaining CSB startup work is fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB utility now owns Firestaff menu input-code mapping for utility keyboard input; M11 no longer carries a local CSB utility input switch. Remaining CSB startup work is fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB startup entrance now owns input outcome policy for ignored/redraw/return-to-launcher results and resume status text; M11 applies that CSB-owned outcome after executing the required runtime side effects. Remaining CSB startup work is fuller utility/entrance presentation art, exact title/audio proof, and broader real save corpus proof.
+
+  - 2026-07-07 update: DM2 startup now owns SKSave resume-path parsing for `SKSave.dat`, `SKSave.bak`, and `SKSaveNN.dat`, so M11 no longer carries private DM2 basename/slot parsing. Remaining DM2 startup work is reducing the remaining action/session adapter surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup now also owns Firestaff menu input-code mapping to DM2 startup inputs; M11 no longer carries a local DM2 input switch. Remaining DM2 startup work is reducing the remaining action/session adapter surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup now also owns action-to-execution orchestration through `dm2_v1_startup_execute_action()`, so M11 no longer runs the intermediate startup plan step. Remaining DM2 startup work is reducing the remaining session-apply/state-copy surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup now also owns direct `SKSave*` resume-path execution through `dm2_v1_startup_execute_save_path()`, including invalid-path and parsed-but-missing-save statuses. Remaining DM2 startup work is reducing the remaining session-apply/state-copy surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup execution now also owns the startup-menu close mode update for `SESSION_READY`, so M11 applies a DM2-owned update after successful session handoff instead of closing the menu itself. Remaining DM2 startup work is reducing any remaining session/state-copy adapter surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup execution now also owns the Firestaff-agnostic input outcome policy for redraw, return-to-launcher, rescan, status scope/text, and session-apply failure status. Remaining DM2 startup work is reducing the remaining state-copy adapter surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup snapshots now own Firestaff input-code dispatch and pointer hit-test-to-action routing through DM2 helpers. M11 only snapshots state and applies the returned action. Remaining DM2 startup work is reducing the remaining state-copy/session-apply adapter surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup now owns the combined apply receipt that gates startup-menu close, redraw/return outcome, rescan, and session-apply failure status after execution. M11 still applies the runtime session and mirrors state. Remaining DM2 startup work is reducing the remaining state-copy/runtime-apply adapter surface and broad real save/menu corpus proof.
+
+  - 2026-07-07 update: DM2 startup presentation now includes the original GDAT title backdrop (`TITLE`, category 0x05, field 0x01) and archive-backed DM2 launches materialize HMP music plus alternate `DUNGEON_*.dat` sidecars into `asset-cache/dm2/`. Remaining DM2 startup work is exact original menu widget behavior, credits/title animation breadth, and broader real save/menu corpus proof.
+
+  - 2026-07-07 update: Nexus startup now owns Firestaff menu input-code mapping for title, save-select, and champion-select startup input; M11 no longer carries a local Nexus startup input switch. Remaining Nexus startup work is exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: Theron startup now owns Firestaff menu input-code mapping through `theron_v1_startup_input_from_firestaff_menu_code()`. Remaining Theron startup work is fuller Track 02 title/menu presentation, forcefield startup art, and broader real-media runtime handoff proof.
+
+- 🔧 2026-07-07 DM1 V1 side-lane field follow-up: the legacy CSB/DM1 viewport side-lane teleporter fill now uses the shared ReDMCSB F0113 relative render-plan lookup for D3L2/D3R2 and D2L2/D2R2 instead of hard-coded wall-frame rectangles. Remaining work is exact source bitmap byte-for-byte material proof for the field swirl and broader packaged HoC/CSB capture proof for every side-lane teleporter orientation.
+
+  - 2026-07-07 update: DM1 viewport now owns the F0128 primary side-wall max-forward contract and side-lane clear/occlusion decision consumed by M11 runtime/probe code. Remaining DM1 viewport work is moving the remaining M11-local HoC wall, ornament, door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 viewport now owns side-wall spec lookup by relative cell and parity bitmap selection. M11 keeps only asset-id adaptation and draw execution. Remaining DM1 viewport work is moving the remaining M11-local HoC wall, ornament, door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: M11 now consumes DM1 wall-ornament alcove and horizontal-flip decisions directly from `dm1_v1_wall_ornament_pc34_compat` instead of carrying local wrapper predicates. Remaining DM1 viewport work is moving the remaining M11-local HoC door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 viewport now also owns the F0128 center-line clear, nearest blocker/door blocker, max-visible, and center visible-depth mask contracts consumed by M11 content/explosion/door-decoration passes. Remaining DM1 viewport work is moving the remaining M11-local HoC wall, ornament, door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 viewport now also owns helper construction of open-depth and center-lane masks from per-depth valid/open/door cell flags, keeping F0128 lane-mask derivation inside `dm1_v1_viewport_3d_pc34_compat`. Remaining DM1 viewport work is moving the remaining M11-local HoC door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: M11 now funnels all DM1 center-lane blocker/door-blocker callers through one adapter to the DM1-owned center-lane mask contract instead of rebuilding separate mask paths. Remaining DM1 viewport work is moving the remaining M11-local HoC door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: M11 center-content visibility and center-line clear checks now also consume the shared DM1 center-lane mask adapter, so the late content/explosion passes no longer rebuild their own valid/open masks. Remaining DM1 viewport work is moving the remaining M11-local HoC door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 stairs rendering now owns the stairs orientation/front-facing decision from square bit `0x08` and party direction, plus square-aware render-plan selection. Remaining DM1 viewport work is moving the remaining M11-local HoC door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 viewport now owns the F0128 party-tuple wall/footprint parity predicate consumed by M11 wall rendering. Remaining DM1 viewport work is moving the remaining M11-local HoC door, item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 center-door render now owns the F0095 doorSet/depth panel graphic selection consumed by M11 center and side door drawing. Remaining DM1 viewport work is moving item, projectile, and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 floor/item compat now owns F0115 floor-item type classification plus the HoC map-0 mirror payload control predicate consumed by M11 item scanning. Remaining DM1 viewport work is moving projectile and creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-08 update: DM1 floor/item compat now also owns the C127 front-mirror ordinal gate from ReDMCSB DUNGEON.C F0172 / MOVESENS.C / REVIVE.C. M11 consumes that DM1-owned rule for HoC front mirror selection instead of carrying the cell/sensor predicate locally.
+
+  - 2026-07-07 update: DM1 projectile/explosion compat now owns projectile renderability and V2 projectile effect particle color/size decisions consumed by M11. Remaining DM1 viewport work is moving creature ordering decisions into DM1-owned source-locked APIs with real-asset capture proof.
+
+  - 2026-07-07 update: DM1 creature render compat now owns center/side group and duplicate draw-plan expansion consumed by M11. Remaining DM1 viewport work is exact bitmap/material capture proof for creature rendering and broader packaged HoC/CSB capture proof.
+
+  - 2026-07-07 update: DM1 field compat now owns the F0113 field-pixel material decision used by M11 plus the GRAPHICS.DAT field/mask asset route for C076 and C070..C075 masks. Remaining DM1 field work is broader packaged HoC/CSB capture proof for every side-lane teleporter orientation and any byte-level provenance notes still needed for public docs.
+
+  - 2026-07-07 update: DM1 field asset binding now also exposes mask-required, mask index/flip, and transparent-color metadata for M11. Remaining DM1 field work is packaged HoC/CSB capture proof for every side-lane teleporter orientation.
+
+- 🔧 2026-07-07 Nexus startup portrait follow-up: FACE.BIN startup loading now uses the canonical variable-frame descriptor and refuses every unproven PRS3 frame. Remaining Nexus startup rendering work is source-evidenced PRS3/prefix-palette decoding, Saturn champion-menu layout/palette/timing, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-11 update: Nexus DGN viewport rendering now emits a packaged host-route receipt that joins current-level DGN handoff, real viewport render attempt, material-surface coverage, palette sync, rasterized command count, written pixels, and no-fallback policy. Local real `LEV00.DGN` now proves the DGN handoff is consumed and blocks specifically on undecoded material surfaces instead of falling through to synthetic visuals. Remaining Nexus runtime work is decoding the real material surface families/package route fully enough for a ready rendered DGN frame, then wiring the final launcher/M11 consumer to require this receipt.
+
+  - 2026-07-11 update: M11 now consumes that Nexus DGN viewport host-route receipt before presenting cached startup/runtime DGN commands, and stores the package/host-route/material/raster proof on Nexus runtime state. Cached DGN drawing is blocked when the viewport receipt is missing, blocked, or still material-incomplete. Remaining Nexus runtime work is full material decode/package readiness so real `LEV00.DGN` can become `ready-rendered-mesh`, plus final release-app capture.
+
+  - 2026-07-07 update: Nexus champion-select render/hit layout now pages the 24-champion FACE roster around the active cursor, so the second roster half is renderable and pointer-selectable instead of the startup view being locked to rows 0-11. Remaining Nexus startup rendering work is decoding the compact FACE pixel subformat exactly, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: Nexus champion-select render rows now carry frame-dependent cursor highlight/blink fields plus palette indices for selected text, shadows, portrait borders, and party markers; M11 now ticks a champion-select startup frame and consumes those Nexus-owned render fields. Remaining Nexus startup rendering work is decoding the compact FACE pixel subformat exactly, Saturn menu art layout, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: Nexus save-select startup input, pointer hits, row lookup, and save-row rendering now run through `Nexus_V1_StartupMenuSnapshot` instead of M11 rebuilding temporary menus. Remaining Nexus startup work is champion-select snapshot ownership, exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: Nexus champion-select input, pointer hits, cursor/frame state, and frame-aware render rows now run through `Nexus_V1_StartupChampionSnapshot`. Remaining Nexus startup work is exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: the unused M11-local Nexus startup save-row lookup bridge is gone; tests now prove row lookup directly through the Nexus snapshot API. Remaining Nexus startup work is exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: Nexus champion-select, title, and save-select execution now own startup mode-update fields consumed by M11. Remaining Nexus startup work is exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-07 update: Nexus startup now owns combined apply receipts for title, save-select, and champion-select actions, including redraw/return result, mode update, status text, and failed save-load status. M11 still performs the actual FNXS resume load before applying the Nexus-owned receipt. Remaining Nexus startup work is exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+  - 2026-07-08 update: Nexus startup now emits M11-ready save/champion state receipts for save scan, keyboard input, and pointer input. M11 applies those receipts instead of copying startup snapshot state. Remaining Nexus startup work is exact FACE pixel decoding, Saturn palette/timing/menu art, broader hidden/extra portrait mapping, and full original animated title/menu presentation.
+
+- 🔧 2026-07-07 CSB V1 rendering follow-up: runtime floor-object, creature-group, projectile, and explosion overlay placement plus D3L2/D3R2 F0115 object/projectile/creature/explosion zone binding now live in `csb_v1_viewport_pc34_compat` and the source-locked F0115 route tables. Runtime projectiles and explosions now both have M11 sprite handoff hooks with marker fallback counters, M11 now scans D3L2/D3R2 for runtime floor-object and creature-group overlays, the scan width is owned by the CSB viewport contract, M11 object/group drawing now runs inside the viewport's F0115 pre-projectile slot, multiple floor objects in one square chain are drawn with per-object ReDMCSB pile shifts instead of stopping at the first object or reusing pile index 0, and multi-creature runtime groups now draw per visible GROUP.Count slot through CSB-owned C3200 placement using the packed ReDMCSB GROUP.Cells view cell for each creature. Remaining CSB V1 rendering work is broader real-asset dungeon proof for D3L2/D3R2 thing passes, exact sprite/material parity for object piles, creature groups, projectiles, and explosions, and packaged capture evidence for startup/title/entrance rendering.
+
+  - 2026-07-07 update: M11 now consumes CSB-owned runtime object sprite material through an explicit item-sprite material path: the full F0115/C2500 `source_zone` derives the effective object row, including `MASK0x8000_SHIFT_OBJECTS_AND_CREATURES`, and CSB's F0791/C10 transparent color is used for the asset blit. Remaining CSB V1 rendering work is exact bitmap scaling/list-order parity and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: M11 now consumes the CSB-owned runtime creature-group `transparent_color` field when drawing group sprites. The DM1 creature renderer keeps its DM1-table default through a wrapper, while CSB uses the explicit material path. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: M11 now also consumes CSB-owned `transparent_color` fields for runtime projectile and explosion sprite blits through explicit M11 helper variants, while DM1 callers keep the existing DM1 plan default. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for projectile/explosion scaling, list order, and source assets.
+
+  - 2026-07-07 update: M11 now also honors the CSB-owned `uses_f0791_blit` flag before applying C10 material transparency to projectile and explosion sprite blits, so the CSB F0115 path gets explicit F0791 material while non-F0791/DM1 paths keep their native plan key. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for projectile/explosion scaling, list order, and source assets.
+
+  - 2026-07-07 update: CSB runtime object sprite blit records now also carry the full F0115/C2500 source-zone value, including the `MASK0x8000_SHIFT_OBJECTS_AND_CREATURES` bit on D3L2/D3R2 routes, not just the derived source row. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime projectiles now try an asset-backed material-icon blit for thrown/material-bound objects before falling back to the diagnostic marker, with M11 only supplying the existing icon drawer. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for projectile scaling/list order, object piles, creature groups, and explosions.
+
+  - 2026-07-07 update: CSB runtime creature-group sprite blit records now carry the F0115/C3200 material contract: coordinate set, source zone, shift mask, C10 transparency, and F0791 usage. D3L2/D3R2 creature route lookup now accepts both DM1 alias squares and ReDMCSB view-square indices. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime object, projectile, and explosion sprite blit records now carry the F0115 material contract from the CSB viewport specs: C10 transparency, F0791 usage, and projectile derived-bitmap slot where applicable. M11 callbacks receive these CSB-owned fields instead of relying on implicit table knowledge. Remaining CSB V1 rendering work is broader real-asset dungeon proof and exact bitmap/material parity for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns the runtime overlay map-projection helper that converts party pose plus F0115 forward/side lanes into dungeon coordinates, and M11 consumes that API for floor-object and creature-group overlay scans instead of carrying private CSB view geometry. Remaining CSB V1 rendering work is broader real-asset dungeon proof for D3L2/D3R2 thing passes, exact sprite/material parity for object piles, creature groups, projectiles, and explosions, and packaged capture evidence for startup/title/entrance rendering.
+
+  - 2026-07-07 update: CSB runtime now owns the render-overlay thing-chain helpers for Next links, floor-object classification, and C04 GROUP direction/count/cell decoding; M11 consumes those APIs when drawing CSB runtime floor-object and group overlays instead of privately decoding CSB dungeon records. Remaining CSB V1 rendering work is exact sprite/material parity and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now also owns the F0115 runtime overlay scan plan: far-to-near D3/D2/D1 visible cells, relative party projection, passable-square filtering, and square first-thing lookup are exposed as `CSB_V1_ViewportRuntimeOverlayCell` rows consumed by M11. Remaining CSB V1 rendering work is exact sprite/material parity and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime now also owns the floor-object subtype lookup used by the current item sprite bridge, including container Type decoding separate from contained Slot chains, so M11 no longer carries private CSB object-subtype byte parsing for runtime overlays. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime now also owns C04 GROUP creature-type decoding for runtime creature overlay sprite routing, so M11 no longer reads the creature type directly from raw GROUP byte 4. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime now builds `CSB_V1_RuntimeGroupOverlayInfo` from C04 GROUP thing records, including Type, Direction, visible Count, and packed Cells. M11 consumes that runtime render-info object for creature overlays instead of calling the CSB dungeon record accessor directly. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime now also builds `CSB_V1_RuntimeObjectOverlayInfo` for WEAPON..JUNK floor-object things, including thing type, party-relative cell, icon index, and object subtype. M11 consumes that render-info object for floor-object overlays instead of decoding THING type/cell and object icon/subtype routing locally. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns the ReDMCSB F0115/G0217/G0223 object pile-shift plan for runtime floor-object overlays. `csb_v1_viewport_runtime_object_overlay_pile_placement()` returns pile index, source scale bucket, shift set, shift indices, and pixel shifts, so M11 only applies CSB-owned offsets while drawing bridge sprites/icons/markers. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now also returns final runtime floor-object marker/icon screen positions and creature-group sprite/marker rectangles, including source pile shift plus relative-cell overlay offsets for object piles and depth-sized sprite bounds for groups. M11 no longer rebuilds those fallback/icon/sprite offsets locally; it only consumes the CSB-owned placement contracts while drawing the current bridge sprite/icon/marker paths. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns primitive runtime object/group fallback marker drawing too. M11 no longer writes those CSB overlay pixels directly; it delegates object and group marker drawing to `csb_v1_viewport_draw_runtime_object_marker()` / `csb_v1_viewport_draw_runtime_group_marker()` after sprite/icon attempts. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now also owns runtime creature coordinate-set lookup for group overlays. M11 passes the CSB runtime creature type into `csb_v1_viewport_runtime_group_overlay_creature_placement()`, and the viewport resolves the ReDMCSB `G0219` coordinate set before C3200 placement. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime projectile sprite callbacks now consume the source-locked `dm1_v1_projectile_explosion_render_pc34_compat` projectile aspect, graphic-index, flip, and scale helpers instead of M11's private duplicate projectile tables. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns runtime projectile and explosion sprite-rectangle planning. `csb_v1_viewport_runtime_projectile_sprite_rect()` and `csb_v1_viewport_runtime_explosion_sprite_rect()` return source-zone rows, depth clamps, and sprite pane rectangles, so M11 no longer reconstructs those CSB overlay geometry rules inside the asset callback. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns the ordered runtime F0115 thing-overlay plan for visible floor objects and creature-group slots. `csb_v1_viewport_runtime_collect_thing_overlays()` performs the CSB cell scan, thing-chain traversal, object pile placement, and group slot placement in object-before-group order; M11 now consumes those rows and only performs asset-backed sprite/icon/marker draw attempts. Remaining CSB V1 rendering work is exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime creature-group fallback markers now derive their diagnostic palette color from C04 `GROUP.Type` instead of using one fixed color for every missing-sprite group, while preserving the existing type-6 marker color used by the M11 fallback gate. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime floor-object overlay placement now also carries the M11 sprite viewport rectangle and depth index from the CSB F0115 placement contract, so M11 no longer hard-codes CSB object sprite pane geometry while drawing runtime object overlays. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime floor-object overlay placement now also carries the icon top-left draw origin derived from the CSB F0115 object center, so M11 no longer applies the object-icon `-8,-8` origin conversion itself. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime creature-group overlay placement now carries sprite creature type, group direction, and relative side from the CSB runtime/viewport overlay plan, so M11 no longer pulls those draw parameters separately from C04 GROUP state while drawing group sprites. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime floor-object overlay placement now carries object draw binding fields (thing type, subtype, relative cell, pile index, and icon index) from the CSB runtime object-info row, so M11 no longer pulls those draw parameters from `object_info` while rendering runtime object overlays. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now exposes final object-sprite, object-icon, and group-sprite blit records for runtime overlays. M11's CSB callbacks now consume those blit records and only execute the asset copy, instead of directly interpreting CSB placement fields for geometry, icon origin, transparent color, creature direction, or group-side routing. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB object-sprite, object-icon, and group-sprite callbacks now receive those final blit records directly, so M11 no longer sees object/group overlay placements in the asset callback path. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now also exposes final projectile-sprite and explosion-sprite blit records for runtime overlays. M11's CSB callbacks consume those records for sprite rectangles, source rows, projectile relative direction/cell, flip flags, explosion aspect, frame, attack, smoke flag, and depth instead of reading placement fields directly. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB projectile/explosion sprite callbacks now receive those final blit records directly, so M11 no longer sees raw projectile/explosion runtime records or overlay placements in the asset callback path. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime projectile and explosion sprite callbacks now receive the CSB-owned overlay placement structs directly, including source zone, sprite rectangle, source row, and depth, so M11 no longer rebuilds projectile/explosion sprite pane geometry from loose callback arguments. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime projectile overlay placement now carries projectile aspect, relative direction/cell, graphic index, and flip flags from the CSB viewport binding path, so M11 no longer recalculates projectile sprite routing from subtype, party direction, and map position while drawing CSB overlays. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB runtime explosion overlay placement now carries explosion aspect, GRAPHICS.DAT graphic index, smoke remap flag, frame, max-frame, and attack values from the CSB viewport binding path, so M11 no longer recalculates explosion bitmap routing in the CSB overlay callback. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB startup render plans now own fallback status/detail visibility while the utility import overlay is active, so M11 no longer decides when to hide those entrance rows. Remaining CSB V1 startup work is packaged real-asset title/entrance capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB utility startup render plans now also carry panel fill and border material, so M11 executes the CSB-owned overlay panel command before drawing rows instead of leaving panel material implicit. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB utility input results now carry the close-preview status scope/text, so M11 no longer hard-codes the import-ready status when Back dismisses the imported-party preview. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB utility flow now owns the startup utility overlay input gate for import-ready, credits, and door-opening phases; M11 asks that contract before routing pointer/keyboard input. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: M11 now consumes the CSB startup entrance command plan's status scope/text when beginning the source door-opening phase instead of hard-coding `CSB DOORS`. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB utility flow now owns the forced Import action acceptance used by startup DM1 party import handoff; M11 no longer inspects the utility menu layout to choose the Import row. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: M11 no longer carries a duplicate CSB resume-load helper; startup resume, launch save-path resume, and F9 quickload all call `csb_v1_runtime_load_game_from_path()`, which owns native CSB, CSBWin, and roster-import fallback handling. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB runtime now also owns resume-path availability validation through `csb_v1_runtime_can_load_resume_path()`, covering native CSB saves, verified CSBWin bodies, and raw CSBGAME roster imports before M11 exposes the entrance Resume button. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: archive-backed CSB launches now materialize startup/utility siblings (`DUNGEONB.DAT`, `HCSB.HTC`, `CSBGAME.DAT`, aliases) into `asset-cache/csb/` with required files, so full title/entrance/bonus/utility startup keeps ordinary runtime paths after ZIP/ISO scan. Remaining CSB V1 startup work is packaged real-asset capture proof and exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB runtime now also owns the startup DM1 party import handoff through `csb_v1_runtime_import_dm1_party_path()`, including utility-flow driving and runtime party commit. Remaining CSB V1 startup work is packaged real-asset title/entrance/utility capture proof and any exact bitmap/palette deltas found there.
+
+  - 2026-07-07 update: CSB runtime explosion overlay placement now also carries explosion frame, max-frame count, and attack strength for the CSB pre-bound explosion blitter path, so M11 no longer reads those runtime explosion animation-state fields while drawing CSB overlays. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns the complete runtime object/group thing-overlay pass: it collects the runtime profile's thing overlays, runs object/group asset callbacks, draws object/group marker fallbacks, and owns object/group counters. M11 now only provides asset-backed object, icon, and creature blitters. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now also resolves projectile fallback material identity from the runtime profile and projectile thing handle, so M11 no longer supplies a CSB projectile-material resolver. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB projectile fallback material binding is now carried on `CSB_V1_ViewportRuntimeProjectileOverlayPlacement` as material thing plus icon index, and the public viewport config no longer exposes a projectile-material resolver callback. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: the legacy synthetic `runtime_thing_pass_drawer` config hook is removed. Runtime object/group drawing now has one production path through the CSB runtime profile and viewport-owned thing-overlay pass. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB projectile and explosion sprite callbacks now also consume CSB-owned blit records for final bitmap geometry, aspect/graphic identity, flip flags, source rows, frames, and attack values. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now also owns runtime dungeon-grid materialization from the CSB dungeon handle and level, and M11/legacy render-loop callers no longer inspect CSB map descriptors or square layout to prepare the F0128 viewport grid. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB viewport now owns the F0115/C2500 object source-zone-row material helper consumed by M11, including the `MASK0x8000_SHIFT_OBJECTS_AND_CREATURES` strip before row derivation. Remaining CSB V1 rendering work is still exact source bitmap/material execution and broader real-asset proof for object piles, creature groups, projectiles, and explosions.
+
+  - 2026-07-07 update: CSB startup render plans now carry title blit kind, transparency, and empty-region fallback text for the source PRESENTS/CHAOS/STRIKES BACK title surfaces, so M11 executes the CSB-owned blit plan instead of deriving title-stage bitmap behavior locally. Remaining CSB startup presentation work is still fuller original credits/save utility behavior and packaged real-asset entrance/title capture evidence.
+
+  - 2026-07-07 update: CSB startup render plans now also carry the C002/C003 entrance door asset ids used by closed-door and opening-door composition. M11 no longer hard-codes those CSB door slots while drawing the startup entrance. Remaining CSB startup presentation work is still fuller original credits/save utility behavior and packaged real-asset entrance/title capture evidence.
+
+  - 2026-07-07 update: CSB startup render plans now also carry full-surface destination, dimensions, and transparency for C004/C005 entrance/credits surfaces, so M11 no longer hard-codes the 320x200 at 0,0 blit contract. Remaining CSB startup presentation work is still fuller original credits/save utility behavior and packaged real-asset entrance/title capture evidence.
+
+  - 2026-07-07 update: CSB startup render plans now also carry the no-asset closed-door fallback panel colors for C002/C003 entrance doors, including fill and beveled edge palette indices. M11 now executes those CSB-owned panel commands instead of choosing fallback door colors itself. Remaining CSB startup presentation work is still fuller original credits/save utility behavior and packaged real-asset entrance/title capture evidence.
+
+  - 2026-07-07 update: CSB startup render plans now also own the no-asset entrance frame rectangle/color and formatted runtime start-pose detail row. M11 only copies runtime pose into the render-state adapter and draws the CSB-owned fallback commands. Remaining CSB startup presentation work is fuller original credits/save utility behavior and decoded real-asset entrance/title capture evidence.
+
+- 🔧 2026-07-07 DM2 V1 render-plan follow-up: floor items, carried leader-hand items, creature-possession items, projectiles, clouds, creatures, doors, wall panels, floor/ceiling, and HUD chrome now have explicit renderer-owned plan contracts before asset fetch/blit. Remaining DM2 V1 rendering work is real-asset capture proof across shops/outdoor/weather/creature-heavy scenes, exact GDAT sprite material parity, and replacing any remaining diagnostic fallback surfaces with source-backed assets.
+
+  - 2026-07-07 update: DM2 startup menu persistence now has a `DM2_V1_StartupMenuSnapshot` contract for save root, resume availability, slot mask, row count, and selected row. M11 consumes that snapshot instead of rebuilding/clamping the menu state itself. Remaining DM2 boot work is broader real save/menu corpus proof and moving any remaining startup input/draw adapters out of M11 where practical.
+
+  - 2026-07-07 update: DM2 startup input, pointer hits, and presentation draw-command building now run directly against `DM2_V1_StartupMenuSnapshot`, so M11 no longer rebuilds a temporary DM2 menu for those startup paths. Remaining DM2 boot work is broader real save/menu corpus proof and reducing the remaining M11 action/session adapter surface.
+
+  - 2026-07-07 update: DM2 startup now owns SKSave resume-path parsing for direct launch and save-browser handoff paths. M11 consumes `dm2_v1_startup_save_path_to_root_slot()` before applying the loaded session. Remaining DM2 boot work is moving more resume/session application policy into the DM2 startup layer and proving it against broader real save corpora.
+
+  - 2026-07-07 update: DM2 startup now also owns direct resume-session loading from parsed `SKSave.dat` / `SKSave.bak` / `SKSaveNN.dat` paths. M11 applies the returned session but no longer chooses last-session vs slot load. Remaining DM2 boot work is broader real save/menu corpus proof and any remaining M11 startup state adapter cleanup.
+
+  - 2026-07-07 update: the unused M11-local DM2 startup row lookup bridge is gone; tests now prove row lookup directly through the DM2 snapshot API. Remaining DM2 boot work is broader real save/menu corpus proof and any remaining state-copy adapter cleanup.
+
+  - 2026-07-07 update: DM2 startup now also returns a direct resume execution object for `SKSave*` paths, including status and ready session, so M11 no longer branches on DM2 save-path loader result codes. Remaining DM2 boot work is broader real save/menu corpus proof and reducing session-apply/state-copy coupling.
+
+  - 2026-07-07 update: DM2 V1 weather overlays now also build explicit renderer-owned commands for rain streaks, fog blending, and storm lightning before the pixel pass. Remaining DM2 V1 weather work is broader real outdoor/weather asset-backed capture proof and exact skproject outdoor presentation breadth.
+
+  - 2026-07-07 update: DM2 V1 door asset drawing now has explicit `DM2_V1_DoorAssetBlit` contracts for panel, frame, and button assets. `dm2_v1_render_doors()` now fetches the asset and executes the resolved panel/frame/button blit instead of rebuilding source clipping, stride, material, and destination details inline. Remaining DM2 V1 door work is exact skproject door clipping/opening tables, flipped-wall interactions, and broader real-asset proof.
+
+  - 2026-07-07 update: DM2 V1 creature asset drawing now has an explicit `DM2_V1_CreatureAssetBlit` contract for GDAT id, directional source frame, scaled destination, stride, transparent color, and render frame. `dm2_v1_render_creatures()` now fetches the asset and executes the resolved blit instead of rebuilding creature map-chip frame/destination geometry inline. Remaining DM2 V1 viewport work is broader real-asset proof for creature-heavy scenes and exact skproject placement/material parity.
+
+  - 2026-07-07 update: DM2 V1 item asset drawing now has an explicit `DM2_V1_ItemAssetBlit` contract for GDAT id, source frame, scaled destination, stride, transparent color, mirror flag, and render frame. Floor items, creature-possession items, and carried leader-hand items now fetch assets and execute that resolved blit instead of rebuilding map-chip frame/destination geometry inline. Remaining DM2 V1 viewport work is broader asset-backed proof for shops/outdoor/creature-heavy scenes and replacing diagnostic item fallbacks where real assets exist.
+
+  - 2026-07-07 update: DM2 V1 projectile asset drawing now has an explicit `DM2_V1_ProjectileAssetBlit` contract for GDAT id, source frame, scaled destination, stride, transparent color, mirror flag, and cloud frame selection. `dm2_v1_render_projectiles()` now only fetches the asset and executes the resolved blit. Remaining DM2 V1 viewport work is broader asset-backed proof for clouds/outdoor/shop scenes and removing the bounded diagnostic streak fallback where real assets exist.
+
+- 🔧 2026-07-07 DM1 V1 action/projectile runtime follow-up: the source/right-column action/spell zones and the F0391/F0407 M11 action/projection fixture gates are now green through `INV_GV_321/325/328/334..340`, including delayed SHOOT quiver refill after source disabled ticks and no-ammunition failure leaving quiver ammo untouched. The broad M11 game-view probe is now green at `636/636`, including XP/impact verifier rows, map-0 creature AI guards, and debug feedback-strip rendering. Remaining DM1 V1 follow-up is broader live HoC packaged capture checks and original-pixel evidence for the already-green runtime paths.
+
+  - 2026-07-23 update: the admitted M11 action/spell receipt now carries the
+    original physical clear rectangle through host consumption. `ACTIDRAW.C`
+    F0387 action repaint clears `DATA.C` G0001 `{224,77,96x45}` before the
+    real `GRAPHICS.DAT` C010 `{233,77,87x45}` blit, rather than retaining the
+    left gutter from an earlier icon/action frame. The same receipt proves
+    `CASTER.C` F0394's G0000 `{224,42,96x33}` clear for C009. Remaining:
+    packaged HoC visual capture and original-pixel comparison, not another
+    synthetic or host-font fallback.
+
+  - 2026-07-23 update: a DM1-owned M11 blit plan now owns F0387/F0394
+    `GRAPHICS.DAT` source and destination zones: C010 uses the 1/2/3-row
+    zones 79/77/11, while C009 uses zone 13 and C011 uses source rows 13/26
+    for zones 245/261. M11 only executes the plan against loaded original
+    assets and consumes its G0001/G0000 clear boxes. Remaining work is
+    packaged HoC visual capture and original-pixel comparison.
+
+  - 2026-07-08 update: DM1 V1 spell-action display now renders C009 on the full ReDMCSB G0000 spell box `{224,319,42,74}` and prints runes at MENUDRAW.C F0397/F0398 absolute X/Y positions instead of the narrower click-zone origin. Remaining DM1 spell UI work is packaged HoC visual capture proof.
+
+  - 2026-07-08 update: DM1/CSB shared entrance door opening now uses the ReDMCSB PC/I34 closed-door y=30 origin and G0009 232x161 opening frame, with the frontend schedule test wired into CMake. Remaining entrance work is packaged real-asset capture proof.
+
+  - 2026-07-07 update: DM1 V1 movement now owns Firestaff menu input-code mapping to source movement commands; M11 no longer carries a local DM1 pipeline command switch. Remaining DM1 V1 follow-up is broader live HoC packaged capture checks and original-pixel evidence for the already-green runtime paths.
+
+  - 2026-07-07 update: V1 original now keeps V2/V22 presentation overlays out of the GRAPHICS.DAT viewport path, and the D1C HoC champion-mirror route draws after deferred viewport effect/explosion passes; `INV_GV_407E` is green again in the broad M11 probe. Remaining DM1 HoC render work is packaged-app visual capture for mirrors/inscriptions/items on MacBook Pro plus original-pixel evidence for any still-visible artifact class.
+
+  - 2026-07-07 update: DM1 floor-ornament compat now owns the G0195/G0206 source-zone lookup, render extents, flip flags, regular/footprints graphic-index mapping, and indexed render-plan iteration consumed by M11. Remaining DM1 floor/ornament render work is exact source bitmap/material execution proof across live HoC and non-HoC maps plus broader packaged capture evidence.
+
+  - 2026-07-07 update: DM1 floor-pit compat now owns the F0108 visible/invisible pit render-plan table and open/invisible square-bit decisions consumed by M11. Remaining DM1 floor render work is exact source bitmap/material execution proof across live maps plus broader packaged capture evidence.
+
+  - 2026-07-07 update: DM1 wall-ornament compat now owns the G0194/G0205 coordinate-set and zone lookups plus F0107 flip/alcove decisions consumed by M11. DM1 D1C wall inscriptions now render from a raw source-glyph stream into M648 instead of using ASCII strings as the render contract. Remaining DM1 wall/inscription render work is broader packaged capture evidence and any original-pixel proof still needed for non-HoC maps.
+
+  - 2026-07-07 update: old unused M11 ASCII inscription/font and wall-ornament shim routes have been removed; the source-glyph M648 inscription path remains covered by the inscription font probe. Remaining DM1 wall/inscription work is broader packaged capture evidence and original-pixel proof for non-HoC maps.
+
+  - 2026-07-07 update: DM1 door-button rendering now consumes the G0208/F0110 frame contract and D2/D3 palette remaps from `dm1_v1_viewport_3d_pc34_compat`; M11 no longer carries private center/D3R door-button geometry or remap tables. The F0111 door-panel/frame/ornament consumer is now receipt-owned; remaining DM1 door render work is packaged entrance/dungeon capture evidence.
+
+  - 2026-07-07 update: DM1 stairs rendering now consumes `dm1_v1_stairs_render_pc34_compat` for D0/D1/D2/D3 front and side blit plans plus the source stairs-up square bit; M11 no longer carries a private stairs table. Remaining DM1 stairs work is broader live-map capture evidence for all visible stair orientations.
+
+  - 2026-07-07 update: DM1 teleporter-field rendering now consumes `dm1_v1_field_teleporter_effect_pc34_compat` for all 16 F0113 field-zone render plans plus the visible/open square-bit gate; M11 no longer carries a private field table or local teleporter bit checks. Remaining field work is broader live-map capture evidence for all visible teleporter orientations and exact source bitmap/material proof.
+
+  - 2026-07-07 update: DM1 projectile/explosion compat now also owns the viewport explosion sprite blit plan consumed by M11: explosion graphic identity, C0 transparency, frame bloom/fade scale, poison/smoke attack scale, centered pane placement, and G0212 smoke recolor routing. Remaining DM1 projectile/explosion render work is exact source bitmap/material execution for the wider F0115 pass plus broader HoC capture proof.
+
+  - 2026-07-07 update: DM1 projectile/explosion compat now owns the viewport projectile sprite blit plan consumed by M11: projectile graphic validation, C10 transparent key, flip flags, G0215 scale, C2900/raw-row placement, fallback quadrant placement, viewport clipping, and pane clipping. Remaining DM1 projectile/render work is exact source bitmap/material execution for the wider F0115 projectile pass plus broader HoC capture proof.
+
+  - 2026-07-07 update: DM1 floor/items compat now owns the viewport item sprite blit plan consumed by M11: object graphic identity, aspect, right-cell mirror, C10 transparency, scale, pile shift, C2500/raw-row placement, fallback pane placement, and clipping. Remaining DM1 object/render work is exact source bitmap/material execution for the wider F0115 object pass plus broader HoC capture proof.
+
+  - 2026-08-06 verification update: the real PC34 `firestaff_dm1_v1_hoc_no_false_projectile_artifacts_probe` now samples 2,172 open HoC cells and reports 320 legitimate quiet D1C fire-blob samples, but zero compact projectile chains, zero explosion chains, zero viewport leaks, zero stale first fields, zero debug-marker leaks and zero fire/explosion blob leaks. The former 30-sample false-positive note is closed; remaining DM1 projectile/render work is broader packaged Mac/app capture, not a synthetic HoC fireball replacement.
+
+  - 2026-07-07 update: the HoC false-artifact probe now filters D1C hot-color samples through M11 viewport render metadata, so source-backed wall ornaments, champion portraits, inscriptions, and floor ornaments are not counted as projectile/explosion leaks. Remaining HoC artifact work is packaged visual capture around the user-reported floating-fireball views, not the previous overbroad hot-color heuristic.
+
+  - 2026-07-07 update: M11 now exposes a DM1 nearest-blocking-center runtime probe and synthetic coverage for D1C/D2C/D3C walls blocking deeper center corridors, addressing the reported "corridor through a front wall" class at the runtime sampling contract. Remaining DM1 wall-render work is packaged real-data visual capture and broader pixel evidence around wall/corridor occlusion, not the synthetic center-blocker invariant.
+
+  - 2026-07-07 update: the same DM1 center-wall coverage now also gates the center-content visible-depth mask, so center contents draw only through the open D1/D2/D3 corridor prefix and stop before the first wall-like center square. Remaining DM1 wall-render work is packaged real-data visual capture and broader pixel evidence around wall/corridor occlusion.
+
+  - 2026-07-07 update: DM1 projectile/explosion render compat now owns the F0128 D4 far-projectile box geometry consumed by M11 before D3 overpaint. Remaining DM1 projectile/render work is exact source bitmap/material execution and broader HoC capture proof.
+
+  - 2026-07-07 update: DM1 viewport compat now owns F0115 object scale, pile-shift, shift-set, and C2500 zone-point data that M11 uses for object rendering. Remaining DM1 object/render work is exact source bitmap/material execution and broader HoC capture proof.
+
+  - 2026-07-07 update: DM1 viewport compat now also owns F0115 C3200 creature center/side anchor tables and visible-creature point selection consumed by M11. Remaining DM1 creature/render work is exact source bitmap/material execution and broader HoC capture proof.
+
+  - 2026-07-07 update: DM1 viewport compat now also owns F0115 C2900 projectile source-scale and raw source-row zone tables consumed by M11. Remaining DM1 projectile/render work is exact source bitmap/material execution and broader HoC capture proof.
+
+  - 2026-07-07 update: DM1 creature render compat now owns creature sprite selection by depth/view, GraphicInfo flag queries, bitmap counts, max offsets, replacement-color routing, and source-zone draw placement helpers consumed by M11/module tests. Remaining DM1 creature/render work is exact source bitmap/material execution and broader HoC capture proof.
+
+- 🔧 2026-07-06 flat-DAT startup follow-up: direct file data-dir requests for DM1/CSB/DM2 now bypass the legacy generic explicit-file candidate path and continue into hash scanning plus launch-cache materialization, including renamed raw files, `.zip`/`.iso`/`.bin` containers, suffixless CUE payloads, split CUE-referenced data images, and mixed-case CUE data-track descriptors. Remaining archive/media startup work is broader real-user archive corpus proof and continuing to keep missing-data popups precise as new media layouts are added.
+
+  - 2026-07-06 update: the start menu asset scanner now promotes a saved game-leaf data directory such as `~/.firestaff/data/nexus` back to the parent Firestaff data root when that parent contains recognizable game-data candidates, so launcher availability matches `firestaff --scan-data` after a child folder was saved. Remaining archive/media startup work is still broader real-user archive corpus proof and precise missing-data popups for new media layouts.
+
+  - 2026-07-06 update: the start menu now also heals a stale saved `data_dir` when that saved root finds no games but the normal Firestaff data root used by `--scan-data` does find game data. Remaining work is still broader real-user archive/media corpus proof and precise missing-data popups for new layouts.
+
+  - 2026-07-06 update: `firestaff --boot-probe --game <id>` now gives startup/CI a deterministic selected-entry boot handoff that exits after M11 has opened the game, rather than relying on timeout-only smoke loops. Remaining work is still broader real-user archive/media corpus proof and precise missing-data popups for new layouts.
+
+  - 2026-07-06 update: explicit broad data roots such as `~/.firestaff/data` now stay on the all-game hash scan even when they contain Nexus media, so a saved start-menu data root no longer collapses into a Nexus-only status while `firestaff --scan-data` reports every game. Remaining work is still broader real-user archive/media corpus proof and precise missing-data popups for new layouts.
+
+  - 2026-07-06 update: `--boot-probe-frames <n>` now advances the selected-entry M11 startup path by deterministic idle frames and reports a machine-readable boot receipt for all five games. Remaining archive/media startup work is still broader real-user corpus proof, precise missing-data popups for new layouts, and replacing bounded startup phases with fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot probes now also apply the existing `--script` input stream between deterministic frame windows. Local real-data evidence can drive DM2 and CSB to runtime receipts, Nexus to champion select, and Theron to later startup phases. Remaining startup work is fuller scripted receipts through Nexus champion start and Theron forcefield entry, plus broader media corpus proof and original-presentation replacement where still noted per game.
+
+  - 2026-07-06 update: boot-probe scripts now support `waitN` / `wait:N` frame waits and `--boot-probe-expect-phase <name>`, and local real-data evidence now drives CSB, DM2, Nexus, and Theron all the way to runtime receipts through their selected-entry startup flows. Remaining startup work is broader media/save-layout corpus proof, precise missing-data popups for new layouts, and replacing bounded presentation phases with fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: DM1 selected-entry boot receipts now report exact `dm1-runtime` once HoC is loaded, so all five games can be checked with strict boot-probe phase expectations. Remaining startup work is broader real-user media/save-layout corpus proof, precise missing-data popups for new layouts, and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: the start menu asset scanner now promotes a saved game-leaf data directory such as `~/.firestaff/data/nexus` back to the parent Firestaff data root without requiring recognizable filenames, so renamed hash-matched files keep launcher availability aligned with `firestaff --scan-data` after a child folder was saved. Remaining archive/media startup work is still broader real-user archive corpus proof and precise missing-data popups for new media layouts.
+
+  - 2026-07-07 update: direct Nexus file requests are now hash-first too: a selected/explicit renamed Saturn data image is MD5-verified directly before falling back to parent candidate-name scanning, and the required-file row reports the selected file while runtime launches from its parent directory. Remaining archive/media startup work is still broader real-user archive corpus proof and precise missing-data popups for new layouts.
+
+  - 2026-07-06 update: Theron's missing Track 02 popup and required-file metadata now describe the actual accepted JP/US BIN/ISO media set instead of the old JP-primary wording. Remaining archive/media startup work is still broader real-user archive corpus proof and keeping new media-layout popups precise as additional layouts are added.
+
+  - 2026-07-06 update: boot-probe scripts are now strict: unknown input/event/wait tokens are rejected before renderer startup or data scanning, and the all-games selected-entry gate proves the invalid-token path data-free plus all five local real-data startup scripts to runtime. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe now has an explicit runtime-handoff expectation that fails unless startup is inactive and a level is loaded; the all-games selected-entry gate now requires that for DM1, CSB, DM2, Nexus, and Theron. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: every `--boot-probe --game <id>` now always requires an active boot receipt whose `sourceId` matches the requested game, even when no optional phase/runtime expectation flags are passed. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: the same default boot-probe source gate now also requires the expected source kind for each game (`dm1` catalog, `csb` boot, `dm2` boot, Nexus DGN, Theron Track 02), so a plain `--boot-probe --game <id>` cannot pass through the wrong engine path. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe `key:`, `click:`, and `move:` script tokens now apply directly to the active M11 game view instead of being pushed into an SDL queue that boot-probe mode never pumps. The all-games selected-entry gate now drives DM2, CSB, Nexus, and Theron to runtime using `key:` tokens. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe now supports `--boot-probe-expect-party x,y,dir`, and the all-games selected-entry gate requires the verified runtime party receipt for DM1, CSB, DM2, Nexus, and Theron. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe receipts now print and require the selected-entry launcher handoff flag by default, and DM1 boot probes also reject the explicit direct-game-view intro-bypass path. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe receipts now include champion/party count plus `--boot-probe-expect-champions <n>`, and the all-games selected-entry gate requires the verified runtime champion counts for DM1, CSB, DM2, Nexus, and Theron. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe receipts now carry the verified boot asset MD5 and support `--boot-probe-expect-asset-md5 <md5>`; the all-games selected-entry gate proves the md5 identity that M12 selected for DM1, CSB, DM2, Nexus, and Theron. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe receipts now include map/level index plus `--boot-probe-expect-map <n>`, and the all-games selected-entry gate proves the selected-entry startup map for DM1, CSB, DM2, Nexus, and Theron. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe now supports `--boot-probe-expect-runtime-tick-min <n>`, and the all-games selected-entry gate proves each selected-entry runtime advances at least one tick after handoff for DM1, CSB, DM2, Nexus, and Theron. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe receipts now print `startupFrame` and support `--boot-probe-expect-startup-frame-min <n>`; the all-games gate now includes a CSB title-prelude check before runtime handoff, proving startup-frame progress while runtime ticks remain frozen. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe now also supports `--boot-probe-expect-startup-active <0|1>` and `--boot-probe-expect-runtime-tick-max <n>`; the CSB title-prelude gate now proves startup is still active and runtime ticks are still frozen before Enter/runtime handoff. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe now supports `--boot-probe-expect-level-loaded <0|1>`; the all-games gate now proves CSB/Nexus startup title phases gate a loaded level while runtime is frozen, and Theron's initial startup phase has not yet materialized the runtime level. Nexus new selected-entry boots also reset reused singleton game time, mechanics state, and party roster before the title phase. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: boot-probe now supports `--boot-probe-expect-startup-frame-max <n>`; the all-games gate now proves DM2 reaches `dm2-startup-menu` at `startupFrame=0`, with level loaded, party/champion state prepared, and runtime ticks still frozen before Enter. Remaining startup work is broader real-user media/save-layout corpus proof, any non-DM1 direct CLI hang investigation for selected boot probes, and fuller original presentation where still noted per game.
+
+  - 2026-07-16 update: the DM1 selected-entry direct CLI hang is closed for
+    the process-terminal boot-probe path. The real local
+    `firestaff --game dm1 --boot-probe --boot-probe-frames 90 --duration 0`
+    now returns exit 0 after the `dm1-runtime` READY receipt, and the
+    regression script requires timeout-bounded completion without the old
+    selected-entry source failure. Remaining startup work is broader
+    real-user media/save-layout corpus proof and fuller original presentation
+    where still noted per game.
+
+  - 2026-07-06 update: direct `firestaff --boot-probe` no longer scans the screenshot gallery before selected-entry startup, so headless CLI receipts are not blocked by dataless or very large `verification-screens` trees. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: the five M12->M11 launcher handoff tests now use the screenshot-gallery-free init path, and CSB launcher handoff now proves both a visible source-title first frame and a nonblank entrance wait-loop frame. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-23 update (Lane C, cycle 9): DM2 V1 M12/M11 launcher handoff boundary test now accepts the production `DM2 ASSETS UNVERIFIED` status returned by `dm2_v1_boot_startup_launch_alloc` for synthetic unverified assets, matching the current boot-status enum in `src/dm2/dm2_v1_boot.c`. `test_dm2_v1_m11_launcher_handoff_boundary` is green. Remaining M12/M11 handoff work is broader real-user media/save-layout corpus proof and fuller original presentation per game.
+
+  - 2026-07-06 update: CSB and DM2 fallback boot paths now resolve the default data root through `FSP_ResolveDataDir()` instead of passing literal `~/.firestaff/data` strings to boot scanners. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+
+  - 2026-07-06 update: ordinary start-menu scans now match `firestaff --scan-data` when a saved data directory points at a game leaf, while direct explicit game launches can still preserve a launchable leaf such as `dm1-multilingual`; the folder picker also returns to the right menu after cancelled scans. Remaining archive/media startup work is broader real-user archive corpus proof and precise missing-data popups for new media layouts.
+
+  - 2026-07-06 update: explicit data roots now stay explicit, so `--data-dir` / `FIRESTAFF_DATA` / the data-dir picker can point at a launchable game leaf such as `dm1-multilingual` without being promoted back to the parent root. Remaining archive/media startup work is still broader real-user archive corpus proof and precise missing-data popups for new media layouts.
+
+  - 2026-07-06 update: the CSB Atari ST 2.x hard-disk leaf `~/.firestaff/data/csb-atari-st-2x` is now recognized by hash and boots through the same start-menu/boot-probe path as `--scan-data`. Remaining archive/media startup work is still broader real-user CSB variant corpus proof and precise missing-data popups for new media layouts.
+
+  - 2026-07-06 update: missing-data popups now bind their visual context to the requested game id, so legacy, sparse, modern, quick-resume, and import-triggered missing-data paths can all render the intended game card/art context while still listing missing files and the searched data directory. Remaining archive/media startup work is still ADF/HDM/container import for unsupported real-user layouts and precise missing-data guidance as those layouts are added.
+
+- 🔧 2026-07-06 DM1 V1/V2.x follow-up: DM1 V2.2 now has a launcher-intent and M12-to-M11 handoff gate alongside V1/V2.0/V2.1, and M11 action-menu background geometry is now locked to ReDMCSB G0001/G0499/G0500/G0501 while retaining source action-row/icon-cell positions. DM1 V1 wall inscriptions now keep ReDMCSB M648 escape-symbol glyph routing for lowercase/digit symbol bytes instead of remapping them to A-Z. DM1 V1 primary side-wall rendering now walks the full D1/D2/D3 envelope before center-wall overpaint, matching ReDMCSB F0128 source order for D2 side walls behind center blockers. D1C thieves-eye masks now follow the current opening door-panel source/destination rectangle instead of drawing as a full closed panel. M11 center doors now also use G0186/G0183/G0180 LeftHorizontal/RightHorizontal halves for horizontal partly-open D1C/D2C/D3C doors, D1/D2/D3 side doors now use the matching G0185/G0187/G0182/G0184/G0179/G0181 panel frames, wall-ornament flip routing now matches ReDMCSB F0107 for D3R2/D2R/D1R side projections without flipping D3R/D2R front projections, and M11 now has an explicit ReDMCSB F0128 D4L/D4R/D4C far-projectile pre-pass before D3 wall overpaint. Remaining DM1 work is still the user-reported visual/runtime polish: MacBook title-palette timing/capture, broader HoC wall-inscription sharpness and route proof, champion-mirror visibility in packaged builds, wall/corridor occlusion parity beyond the fixed primary side-wall and D4 far-projectile passes, broader wall-ornament pixel proof, spell/action presentation beyond the action-area box geometry, and survival/runtime regressions such as HoC champion death.
+
+  - 2026-07-15 update: ReDMCSB `DATA.C` G0001/C010 owns the full
+    224..319 action bitmap, while C113..C115 remain the narrower 85-pixel
+    click/text rows. Restoring that parent rectangle stops source graphic 10
+    from being cropped to the child-zone width. `ACTIDRAW.C` F0387/TEXT2.C
+    action labels now always use their native 6x7 cells, so `WAR CRY` cannot
+    inherit Firestaff's host accessibility scale and overflow the source row.
+    Source audit also confirms that M648 inscriptions remain real-glyph-only,
+    C127 portraits are correctly restricted to the visible D1C wall face, and
+    the title path already uses its intentional 55 ms VBlank cadence. Remaining:
+    same-state packaged macOS capture for the reported inscription/mirror/title
+    symptoms; do not add non-source side-mirror, host-font, or timing fallbacks.
+
+  - 2026-07-15 M648 correction: the active HoC route had confused ReDMCSB's
+    mandatory preload slot 120 with M648's actual PC3.4 GRAPHICS.DAT bitmap.
+    DUNVIEW.C F0107 consumes entry 258, a 288x8 glyph sheet; the M11 loader
+    now receives 258 and preserves its C10 transparent blit. Non-D1C distances remain
+    the original unreadable-plaque route from `DUNVIEW.C` F0107, rather than a
+    scaled host font. Title timing audit: the existing event-pumped 55 ms V1
+    tick waits once per TITLE.C VBlank and has no macOS display-refresh path.
+    A host timing audit found and corrected the C001 hold budget: source event
+    count included two non-wait blits, shortening the visual run by 110 ms;
+    PRESENTS now owns the two missing VBlank ticks. No refresh-rate multiplier
+    is used.
+
+  - 2026-07-07 update: `box_action_area_pc34_compat` now owns the F0387 action-area render contract consumed by M11: full 224..319 screen clear rect, 1/2/3-row menu graphic rects, header/action text origins, row colors, and F0386 action icon cell/inner icon rectangles. Remaining action/spell work is the actual spell/action presentation polish beyond this geometry ownership, plus live HoC route proof.
+
+  - 2026-07-07 update: `box_spell_area_pc34_compat` now also owns the visible C009 spell-area rect, C013 click rect, C011/C009 graphic ids, caster-panel/tab zones, and available/champion symbol zone ids consumed by M11. Remaining action/spell work is the actual spell/action presentation polish beyond geometry/id ownership, plus live HoC route proof.
+
+  - 2026-07-07 update: DM1 viewport modules now own item sprite/aspect metadata and F0115 visible-square to G2028 C2500/C2900 row mapping used by M11 object/projectile rendering. Remaining render work is broader real-asset source-zone proof and packaged HoC visual checks.
+
+  - 2026-07-07 update: focused M11 artifact coverage now proves active runtime D1C fireball, D1C lightning, and D1L fireball explosion slots render and clip inside the DM1 viewport. Remaining projectile/effect work is now exact source-zone placement, D4/full C2900 coverage, and real HoC route evidence for thrown objects/spells rather than the inactive-slot verifier gap.
+
+  - 2026-07-07 update: M11 viewport thing-chain lookup now uses the compact ReDMCSB SquareFirstThings path on every map with `MASK0x0010_THING_LIST`, preventing later-map object/creature/sensor/effect cells from binding unrelated dense indices. Remaining item/creature rendering work is focused source-zone placement and real-asset pixel proof, plus keeping HoC floor payload data hidden from normal floor rendering.
+
+  - 2026-07-07 update: focused D1C floor-object proof now runs on a non-HoC compact synthetic map, and dagger / G0209 native-gap object / multi-object pile artifact invariants pass while HoC payload hiding remains intact. Focused D1C and D1L Trolin proof now resolves through compact `SquareFirstThings`, and D1L side creatures use the ReDMCSB `G0224` D1/D2/D3 side coordinate rows instead of offscreen D0-style coordinates. The same focused matrix now proves source-bound floor ornaments, special footprints, source-bound wall ornaments, and the public C3200 side-zone sample helper against the corrected ReDMCSB row samples. HoC champion-mirror selection now has compact TextString/C127 route gates plus a D1C portrait pixel gate for two source-backed mirror ordinals. Remaining item/creature/ornament work is broader real-asset source-zone pixel proof outside this focused matrix, packaged-build HoC mirror visibility capture, and broader wall/corridor parity rather than weakening HoC filters.
+
+  - 2026-07-07 update: HoC champion mirror routing now accepts the source TextString catalog carrier after the C127 route, disables that compact front-cell TextString route after C160 resurrect, and the real-data mirror portrait gate now discovers C127 carrier poses instead of relying on stale hard-coded coordinates. Remaining HoC mirror work is packaged-app smoke if a release artifact still misses visible/selectable champions.
+
+  - 2026-07-07 update: the old synthetic side-door accent gate now checks the source-bound D1R side-door panel blit (`dst=192,17,32x86`) plus a still-visible forward corridor window instead of obsolete procedural red accent pixels. Remaining side-door work is broader real-asset route proof for all side-door states/variants, not the D1R source-panel binding.
+
+  - 2026-07-07 update: M11 now consumes DM1-owned side-wall runtime blit rectangles from `dm1_v1_viewport_3d_pc34_compat`, DM1-owned side-door panel/frame/opening blits from `dm1_v1_side_door_render_pc34_compat`, and DM1-owned center-door frame/panel/horizontal split-door blits from `dm1_v1_center_door_render_pc34_compat`. Remaining DM1 render work is broader real-asset route proof for all door states/variants, wall/corridor occlusion parity, and packaged HoC visual checks.
+
+  - 2026-07-08 update: DM1 spell-area symbols now render in the original right-column spell area using ReDMCSB `F0397/F0398` pre-incremented symbol coordinates, and the spell-area overlay contract test is wired into CMake. Remaining action/spell work is broader live HoC/package capture and exact tab/control pixel proof.
+
+- 🔧 2026-07-06 DM2 V1 rendering follow-up: viewport creatures, floor items, and runtime-drained projectiles now use the boot-owned GRAPHICS.DAT asset-provider path for skproject map-chip sprites before falling back to bounded placeholders. Remaining DM2 V1 rendering work is original sprite-frame selection, per-depth placement parity, cloud-specific close-view effects, and broader real-asset pixel evidence.
+
+  - 2026-07-06 update: DM2 V1 map-chip sprite rendering now slices GDAT `IMG_MAP_CHIP` atlases per selected frame before depth scaling, matching skproject's `DRAW_CHIP_OF_MAGIC_MAP` frame-offset model instead of scaling the whole atlas as one sprite. Remaining DM2 V1 rendering work is original frame selection/routing for creature direction, missiles, clouds and carried items, per-depth placement parity, cloud-specific close-view effects, and broader real-asset pixel evidence.
+
+  - 2026-07-06 update: DM2 V1 projectile sprites now carry runtime direction into rendering, and missile atlases with more than three frames choose a view-relative directional frame before atlas slicing while short atlases keep animated frame selection. Remaining DM2 V1 rendering work is original frame/routing for creature direction, clouds, carried items and exact missile special cases, per-depth placement parity, cloud-specific close-view effects, and broader real-asset pixel evidence.
+
+  - 2026-07-06 update: DM2 V1 creature sprites now carry a render direction and map-chip atlases with four or more frames choose the skproject-style view-relative parity frame before slicing, while one-to-three-frame atlases keep the existing animation-frame behavior. Remaining DM2 V1 rendering work is still original frame/routing for clouds, carried items, exact missile/creature special cases, per-depth placement parity, cloud-specific close-view effects, and broader real-asset pixel evidence.
+
+  - 2026-07-06 update: DM2 V1 poison-cloud projectiles now carry an explicit cloud render kind from the runtime drain cache and use skproject's tick-alternating cloud frame path instead of the directional missile frame path. Remaining DM2 V1 rendering work is still carried-item viewport binding, exact missile/cloud flip special cases, per-depth placement parity, cloud close-view effects beyond frame choice, and broader real-asset pixel evidence.
+
+  - 2026-07-06 update: DM2 V1 missile map-chip rendering now applies skproject's `_4976_3fa4` flipMirror table for view-relative missile direction, including horizontal/vertical flip support in the scaled map-chip region blitter. Remaining DM2 V1 rendering work is still richer `_48ae_011a` source-asset classification from live GDAT loadability, per-depth placement parity, cloud close-view effects beyond frame choice, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 runtime-drained projectiles now project drained map coordinates into bounded first-person depth rows before sprite scaling, with runtime asset/fallback counters exported for projectile draws. Remaining DM2 V1 rendering work is exact skproject placement parity across all visible cells, cloud close-view effects beyond frame/flip choice, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 now has a renderer-owned creature-possession item overlay pass after creatures and before projectiles, using the item map-chip asset path and skproject `_4976_3fa4` object-direction flip table. Remaining DM2 V1 rendering work is runtime extraction of real creature possession chains into that pass, exact skproject placement parity across all visible cells, cloud close-view effects beyond frame/flip choice, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 runtime rendering now scans visible square-first DB4 creature records, follows each creature's skproject `Creature::possession` ObjectID chain, and feeds dbWeapon..dbMiscellaneous_item records into the creature-possession overlay pass with runtime asset/fallback counters. Remaining DM2 V1 rendering work is exact skproject placement parity across all visible cells, broader live creature-chain proof on real PC English data, cloud close-view effects beyond frame/flip choice, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 shop panel title, stock rows, pack rows, prices, highlight rectangles, empty-pack row, and footer are now built by `dm2_v1_shop_build_panel_render()` and consumed by M11 as a DM2-owned render plan. Remaining shop render work is original asset-backed shop art/widgets and exact skproject placement beyond this bounded readable panel contract.
+
+  - 2026-07-07 update: DM2 V1 viewport rendering now owns the shared runtime sprite placement helper for map-coordinate overlays, and runtime projectiles plus creature-possession items both consume that contract instead of carrying local first-person placement tables. Remaining sprite render work is exact skproject placement parity across all visible cells, cloud close-view effects beyond frame/flip choice, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 wall rendering now uses the legacy whole-viewport placeholder only when no viewport asset provider exists; with a provider installed, each visible wall panel is fetched/blitted independently and only missing panels get local fallback rectangles. Remaining wall render work is exact skproject placement/source clipping across all visible cells and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 wall rendering now also exposes an explicit `DM2_V1_WallPanelRenderPlan` for viewport-cell order, skproject cell id, GRAPHICS.DAT asset id, source rectangle, destination rectangle, and fallback color. `dm2_v1_render_walls()` consumes that plan instead of privately rebuilding panel routing in the draw loop. Remaining wall render work is exact source clipping from decoded real wall bitmaps, wall parity/flipped-set selection, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 door rendering now exposes `DM2_V1_DoorRenderPlan` for visible center-door rows, carrying skproject cell id, door-panel asset id/rect, door-frame asset id/rect, default/custom button asset id/rect, and fallback color. `dm2_v1_render_doors()` consumes that plan instead of deriving panel/frame/button routing directly in the draw loop. Remaining door render work is exact source clipping/open-percent animation, wall parity/flipped-set interactions, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 door rendering now consumes `door_open_pct` in the render plan: visible panel rectangles are clipped from the top, fully open doors skip panel blit while keeping frame/button routing, and runtime raw door states now map `4` closed to 0% open and `0` open to 100% open. Creature drawing also now exposes `DM2_V1_CreatureRenderPlan` for map-chip identity, fallback rectangle/color, health-bar rectangles, and offscreen filtering before asset fetch. Remaining render work is exact skproject door source clipping/opening tables, richer creature animation/placement parity, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 floor-item and projectile/cloud drawing now expose renderer-owned render plans for map-chip identity, fallback routing, projectile flip, and cloud seeded-flip metadata before asset fetch/blit. Remaining sprite work is exact skproject item/projectile placement across all visible cells, richer source-asset classification, close-view cloud effects, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 carried leader-hand overlays and creature-possession overlays now expose renderer-owned render plans for map-chip identity, frame-0 possession routing, object-direction flip, offscreen filtering, fallback geometry, and fallback colors before asset fetch/blit. Remaining sprite work is exact skproject placement/source clipping across all visible cells, richer source-asset classification, close-view cloud effects, and broader real-asset pixel evidence.
+
+  - 2026-07-07 update: DM2 V1 viewport rendering now owns HUD chrome geometry for the status bar, action strip, gold indicator, action icons, and indoor champion-panel regions through `dm2_v1_viewport_build_hud_chrome_plan()`. All visible HUD pixels require the original asset route; missing material remains no-draw. Remaining HUD render work is original asset-backed widgets, portrait art/state binding, and exact skproject placement beyond this bounded chrome contract.
+
+  - 2026-07-07 update: DM2 V1 runtime now feeds session-backed champion HUD state into the viewport (`DM2_V1_HudPartyState`), and `dm2_v1_viewport_build_hud_chrome_plan_for_party()` returns leader marker plus HP/stamina/mana/name-marker geometry consumed by `dm2_v1_render_ui_chrome()`. Remaining HUD render work is real portrait ordinal/art binding, original asset-backed widgets, and exact skproject placement beyond the bounded bar/status contract.
+
+  - 2026-07-07 update: DM2 V1 new-game/session records now carry portrait ordinals in the unused 261-byte champion-record tail, and the viewport HUD plan/render path tries boot-profile GRAPHICS.DAT charsheet portrait assets. Missing portrait material is no-draw; no deterministic fill is retained. Remaining HUD render work is exact original portrait category/field validation on real PC English data, original asset-backed widgets, and exact skproject placement beyond the bounded ordinal/status contract.
+
+- 🔧 2026-07-06 DM1 V1 startup follow-up: current local work now promotes the DM1 startup ordering contract into production code (`dm1_v1_startup_sequence_pc34_compat`), makes M11 consult it before the SWSH/TITLE/entrance handoff, and marks generic direct `M11_GameView_Start(gameId="dm1")` as the explicit direct-game-view intro bypass while launcher/CLI handoffs keep reporting no source-visible intro bypass. Remaining startup work is still real same-state release capture for the MacBook title-palette report, fuller original boot presentation smoke on packaged apps, and any newly discovered direct launch/menu bypass gaps that still skip source-visible startup phases.
+
+  - 2026-07-06 update: `test_dm1_v1_m11_launcher_handoff_boundary` now proves the normal production M12 selected-menu path reaches M11 DM1 with real local data, keeps `dm1StartupIntroBypassed` false for launcher starts, opens GRAPHICS.DAT/DUNGEON.DAT, builds the HoC mirror catalog, and contrasts that with the explicit direct M11 game-view intro-bypass path. Remaining startup work is real same-state packaged-app capture for title-palette reports and any newly discovered launcher/menu bypass gaps outside this M12-to-M11 boundary.
+
+  - 2026-07-06 update: DM1 boot-probe receipt phase strings now come from `dm1_v1_startup_sequence_pc34_compat`, so `dm1-loading`, `dm1-runtime`, and `dm1-runtime-direct` are classified by the DM1 startup model rather than private M11 branching. Remaining startup work is still real same-state packaged-app capture for title-palette reports and any newly discovered launcher/menu bypass gaps outside this M12-to-M11 boundary.
+
+- 🔧 2026-07-06 CSB utility startup follow-up: current local work now routes M11 CSB DM1 startup import through the CSB utility-flow state machine, preserves the full imported party body in that flow, lets M11 drive the source-visible INIT/INSERT_DISK/VERIFY_DISK/DISK_OK/SELECT_ACTION path using a launcher-verified utility-disk boundary instead of manually jumping into action selection, exposes source-style utility prompts for the disk/menu/import states through a tested API, carries the final prompt into M11 startup state for direct and launcher-driven imports, renders the import readiness/count plus utility prompt on the bounded fallback entrance screen without covering real entrance art, keeps pointer input inside the visible utility prompt/menu/preview area owned by the utility panel instead of falling through to entrance commands, limits utility-panel pointer actions to the primary/left-button mask while reserving the C201 bonus-dungeon mask for the source-locked entrance route, lets Back close the imported-party VIEW preview without quitting the entrance, closes that preview when keyboard cursor movement leaves the VIEW row, routes utility LOAD GAME through the CSB runtime loader instead of a header-only check, and exposes utility-flow cancel/retry transitions back to SELECT_ACTION after pending actions or verified-disk errors. Remaining startup work is fuller original utility presentation layout/input and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: `test_csb_v1_m11_launcher_handoff_boundary` now proves the normal production M12 selected-menu path reaches M11 CSB entrance with real local data, blocks runtime tick aging while the entrance is active, and only enters the dungeon after explicit Accept. Current local work also routes CSB enter/bonus/resume/import-start through the ReDMCSB-shaped 20-tick pre-open delay plus 31-step door-opening phase before runtime handoff. Remaining CSB startup work is fuller original utility presentation layout/input, exact intro/palette/audio presentation proof, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: M11 CSB startup now tracks the `ENTRANCE.C F0441` pre-wait source steps before the interactive entrance loop, blocks keyboard/pointer/utility commands until the wait step, and keeps runtime ticks frozen through that prelude. Remaining CSB startup work is fuller original utility presentation layout/input, exact palette/audio/music presentation proof, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: M11 CSB startup now also runs a source-shaped `TITLE.C F0437` title prelude before the entrance loop, tracking PRESENTS/CHAOS/STRIKES BACK source steps and drawing the C001 PRESENTS strip, CHAOS zoom frames, and STRIKES BACK strip when CSB GRAPHICS.DAT assets are available. Remaining CSB startup work is exact title palette/audio proof, fuller original utility presentation layout/input, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB startup title/entrance timing constants and stage ordering now live in `csb_v1_startup_sequence_pc34_compat`, and M11/tests consume that production model instead of keeping local magic numbers. Remaining CSB startup work is exact title palette/audio proof, fuller original utility presentation layout/input, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB entrance keyboard startup decisions now also live in `csb_v1_startup_sequence_pc34_compat`: Accept/Action, Disk Menu, Back, and credits-dismiss inputs resolve to CSB-owned entrance actions before M11 executes the runtime command. Remaining CSB startup work is exact title palette/audio proof, fuller original utility presentation layout/input, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB utility startup panel geometry and import status/preview render rows now live with `csb_v1_utility_flow`: M11 seeds the CSB utility context from the runtime party, then draws the returned import status, menu, and champion preview rows instead of formatting those rows locally. Remaining CSB startup work is exact title palette/audio proof, fuller original utility presentation layout/input, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB utility startup keyboard decisions now live with `csb_v1_utility_flow`: Up/Down, Accept/Action, Back preview-close, and cursor-movement preview dismissal resolve to CSB-owned input results before M11 executes import/load/new/view. Remaining CSB startup work is exact title palette/audio proof, fuller original utility presentation art beyond the bounded panel, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB utility startup pointer decisions now return the same CSB-owned input result structure as keyboard decisions: row hits activate Import/Load/New/View, panel whitespace is consumed, and outside hits are ignored before M11 executes any startup action. Remaining CSB startup work is exact title palette/audio proof, fuller original utility presentation art beyond the bounded panel, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB entrance startup pointer decisions now have a CSB-owned adapter above the source entrance mouse-route table: Enter, Bonus Dungeon, Resume, Credits, Quit, credits-dismiss, and outside-hit behavior resolve to CSB startup pointer actions before M11 executes the runtime command. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-06 update: CSB utility startup render rows now also live in `csb_v1_utility_flow`: Import/Load/New/View row labels, selected marker, highlight geometry, and text positions are returned as `CSB_V1_UtilRenderRow` values. M11 utility-panel drawing consumes those rows instead of reconstructing utility-menu presentation locally. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, and broader real DM1/CSB/CSBWin save corpus proof.
+
+  - 2026-07-07 update: CSB utility startup render rows now also carry selected-highlight color, row text style, panel prompt text style, and an explicit prompt render row. M11 no longer chooses those material/style details or prompt coordinates while drawing the CSB utility overlay. Remaining CSB startup work is exact title/audio proof, fuller original utility/entrance presentation art, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB utility startup rendering now has a single CSB-owned `CSB_V1_UtilRenderPlan` for panel layout, status, prompt, menu rows, and imported-party preview rows. M11 now only executes that plan. Remaining CSB startup work is exact title/audio proof, fuller original utility/entrance presentation art, and broader real save corpus proof.
+
+  - 2026-07-07 update: CSB utility startup action planning now collapses Import and View into one CSB-owned status/redraw plan kind while retaining the old enum names as aliases. M11 no longer carries separate Import-ready and View-ready action branches. Remaining CSB startup work is exact title/audio proof, fuller original utility/entrance presentation art, and broader real save corpus proof.
+
+  - 2026-07-06 update: CSB startup idle tick progression now lives in `csb_v1_startup_sequence_pc34_compat`: title handoff, entrance prelude, credits timeout, pre-open delay, and door-opening progression return a CSB-owned tick result that M11 applies. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and eventually moving final draw-composition details out of M11 where source-owned APIs can express them.
+
+  - 2026-07-07 update: CSB utility startup context building now lives in `csb_v1_utility_flow`: M11 only captures a runtime snapshot with selected row and imported-party state, while CSB normalizes cursor/action and imported champion preview data. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving final draw-composition details out of M11 where source-owned APIs can express them.
+
+  - 2026-07-07 update: CSB closed-entrance fallback composition now lives in `csb_v1_startup_sequence_pc34_compat`: title/subtitle/status/detail/prompt positions and text styles are returned in `CSB_V1_StartupRenderPlan_PC34`, and M11 draws those plan rows instead of hard-coding the no-asset entrance screen. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining draw-composition details out of M11 where source-owned APIs can express them.
+
+  - 2026-07-07 update: CSB startup special-palette selection now lives in `CSB_V1_StartupRenderPlan_PC34` as `special_palette` for title, entrance blackout, closed entrance, credits, pre-open delay, and opening frames. M11 now consumes that CSB-owned palette result instead of branching on CSB startup surfaces. Remaining CSB startup work is exact title/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining draw-composition details out of M11 where source-owned APIs can express them.
+
+  - 2026-07-07 update: CSB title no-asset fallback rows now also live in `csb_v1_startup_sequence_pc34_compat`: `FTL PRESENTS`, `CHAOS`, and `STRIKES BACK` positions/styles are returned in the title render plan, and M11 draws those plan rows if C001 title art is unavailable. Remaining CSB startup work is exact title/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining draw-composition details out of M11 where source-owned APIs can express them.
+
+  - 2026-07-07 update: CSB runtime object/group overlay placement now lives in `csb_v1_viewport_pc34_compat`: M11 asks CSB viewport for C2500/C3200-based screen anchors, view-square metadata, and source zones before drawing bridge sprites/markers. Remaining CSB runtime rendering work is fuller F0115 bitmap execution for objects/groups beyond the current bridge draw path, exact title/audio proof, fuller utility/entrance presentation art, and broader real DM1/CSB/CSBWin corpus proof.
+
+  - 2026-07-06 update: CSB startup render planning now also lives in `csb_v1_startup_sequence_pc34_compat`: title/blackout/closed-entrance/credits/pre-open/opening-frame surface selection, wait-loop readiness, prompt blink, title source step, and credits duration are returned as a CSB-owned render plan before M11 draws pixels. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and later moving asset-independent door/title composition metadata out of M11 where useful.
+
+  - 2026-07-06 update: CSB startup render plans now also expose the exact ReDMCSB `TITLE.C F0437` title stage (`PRESENTS`, `CHAOS_ZOOM`, `STRIKES_BACK`), the C001 source/destination boxes, the source-locked special palette for PRESENTS versus CHAOS/STRIKES BACK, the ReDMCSB `ENTRANCE.C F0806/F0438/F0807` closed/opening door boxes, startup asset ids, and credits fallback text rows; M11 consumes those CSB-owned boxes for title, entrance-door, and credits drawing. Remaining CSB startup work is exact title audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB startup command-state mutations now also live in `csb_v1_startup_sequence_pc34_compat`: begin door opening, finish door opening, begin/dismiss credits, and quit-to-launcher reset are CSB-owned state transitions, while M11 only mirrors fields and performs runtime side effects. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB boot-probe receipt phase strings now also come from `csb_v1_startup_sequence_pc34_compat`, so `csb-title-N`, `csb-entrance-opening-N`, `csb-credits`, `csb-entrance-N`, startup-active, startup-frame, and `csb-runtime` are classified by the CSB startup model rather than private M11 branching. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB startup initial command-state construction now also lives in `csb_v1_startup_sequence_pc34_compat`: new-game launches initialize title plus entrance state, while explicit resume launches initialize directly to dismissed runtime state, and M11 only mirrors those fields before applying resume/import affordances. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB entrance input acceptance now also lives in `csb_v1_startup_sequence_pc34_compat`: title, pre-wait, and door-opening phases reject input, the wait-loop phase accepts startup commands, and credits accepts dismissal. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB entrance source command ids and startup action-to-command mapping now live in `csb_v1_startup_sequence_pc34_compat`, and Utility NEW/LOAD command resolution now lives in `csb_v1_utility_flow`. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB entrance command dispatch readiness now lives in `csb_v1_startup_sequence_pc34_compat`: credits dismissal, title/pre-wait/opening rejection, Enter, Bonus Dungeon, Resume, Credits, Quit, and empty-command ignore resolve to a CSB-owned decision before M11 performs runtime side effects. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining asset-independent startup composition metadata out of M11 where it improves ownership.
+
+  - 2026-07-06 update: CSB utility action execution now also lives in `csb_v1_utility_flow`: Load/New produce entrance-command executions, Import/View produce status plus preview redraw executions, and Exit is ignored before M11 applies side effects. Remaining CSB startup work is exact title palette/audio proof, fuller original utility/entrance presentation art, broader real DM1/CSB/CSBWin save corpus proof, and moving any remaining utility-side command execution metadata out of M11 where it improves ownership.
+
+- 🔧 2026-07-05 Nexus startup/title follow-up: current local work now gives M11 a bounded Nexus title phase before LEV00 dungeon rendering, using real `TITLE.CG` when available and a deterministic fallback when missing, with input dismissal and FNXS resume skipping the title. Remaining Nexus startup work is the full Saturn 3D animated title/camera/text parity, richer title palette/timing proof, and broader in-game action/UI startup flow beyond the bounded movement-command handoff.
+
+  - 2026-07-05 update: current local work now also inserts a bounded champion-selection phase after the title and before dungeon entry, using the existing Nexus roster/recruit path so normal startup no longer enters the dungeon with an empty party. Remaining Nexus startup presentation work is real Saturn menu art/portrait layout/input affordances and full original title animation parity.
+
+  - 2026-07-05 update: current local work now also gives that champion-selection phase pointer/touch row routing, pointer footer start, duplicate-skipping cursor movement, and post-recruit auto-advance. Remaining Nexus startup work is real FACE.BIN-backed portrait/menu layout and the full original animated title/menu presentation.
+
+  - 2026-07-05 update: current local work now also loads FACE.BIN into the Nexus engine startup UI surface manager and draws scaled real portrait pixels on the champion-selection rows. Remaining Nexus startup work is the exact Saturn champion-menu layout/palette/timing, broader hidden/extra portrait mapping beyond the current roster, and the full original animated title/menu presentation.
+
+  - 2026-07-06 update: current local work now also proves the default-save startup menu can load an existing FNXS slot and can deliberately choose NEW GAME from the same menu to reach champion selection with an empty party. Remaining Nexus startup work is the exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: M11 Nexus save-select pointer routing now consumes clicks inside the visible save-select panel even when they do not hit a row, so panel whitespace cannot fall through to the dungeon/startup runtime before Load/New Game selection. Remaining Nexus startup work is still exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: M11 Nexus idle ticks are now blocked while the startup save-select menu is active, so Load/New Game selection cannot age the runtime in the background. Remaining Nexus startup work is still exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: M11 Nexus champion-select pointer routing now also consumes clicks inside the visible champion panel when they do not hit a champion row or footer, so header/panel whitespace cannot accidentally bypass the startup choice. Remaining Nexus startup work is still exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: M11 Nexus Back handling is now startup-local across the title, save-select, and champion-select phases: Back from save-select returns to the title, Back from empty champion-select returns to the save menu or title, and Back after recruiting removes the last selected champion instead of quitting to the launcher. Remaining Nexus startup work is still exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: M11 Nexus title input now advances only on explicit Accept/Action/primary pointer start while Back still returns to the launcher; movement tokens no longer skip straight into save-select or champion-select during the title phase. Remaining Nexus startup work is still exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: M11 startup pointer dispatch now only routes primary/left-button clicks into the Theron, Nexus, and DM2 startup panels, so secondary/right pointer input cannot activate startup actions before the game has entered runtime. Remaining Nexus startup work is still exact Saturn save/champion menu presentation and full original animated title/menu timing.
+
+  - 2026-07-06 update: `probes/nexus_v1_launch_smoke_probe.c` is no longer an orphaned source file; it is restored as the `nexus_v1_launch_smoke` CTest gate and has local real-data evidence for `nexus_v1_init()` → `LEV00.DGN` load → five ticks → shutdown. `test_nexus_v1_m11_launcher_handoff_boundary` now also proves the real M12 selected-menu path reaches M11 Nexus title/startup with `TITLE.CG` loaded. Remaining Nexus startup work is exact Saturn title/save/champion timing/art and broader menu presentation, not the direct engine or launcher handoff.
+
+  - 2026-07-06 update: direct Nexus file data-dir requests now go through a hash-verified launchable media gate without requiring `.cue`, `.bin`, or `.iso` extensions; local real-data handoff now starts from a merged ISO file and still loads level 0/title. Remaining Nexus startup work is exact Saturn title/save/champion timing/art and broader menu presentation, not direct media discovery.
+
+  - 2026-07-06 update: M12 Nexus save import now validates `nexus_save_NN.dat` through the FNXS loader before copy, rejects malformed FNXS-named bytes, and accepts valid FNXS saves that rescan as loadable Nexus entries. Remaining Nexus save/startup work is original Saturn memory-card format support and exact Saturn title/save/champion presentation, not this launcher import gate.
+
+  - 2026-07-06 update: M11 Nexus TITLE.CG rendering is now frame-dependent during the boot title phase: real title art is revealed through a bounded animated scan window while idle title frames advance without ticking runtime, and launcher/direct startup gates prove the visible framebuffer changes across title frames. Remaining Nexus startup work is still exact Saturn VDP1/VDP2 title program timing/camera/text, exact save/champion menu presentation, and broader original memory-card support.
+
+  - 2026-07-06 update: M11 Nexus title startup now owns a minimum boot-reveal gate in the title module, so Accept/Action/primary pointer cannot skip into save/champion startup until the reveal frame threshold is reached, while Back still returns to the launcher and secondary/right pointer input is ignored during title boot. Remaining Nexus startup work is still exact Saturn VDP1/VDP2 title program timing/camera/text, exact save/champion menu presentation, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus save-select and champion-select startup geometry now lives in `nexus_v1_startup_layout`, and M11 consumes that single Nexus-owned layout for both drawing rows/footers and pointer hit-testing. Remaining Nexus startup work is still replacing the bounded text layout with exact Saturn save/champion menu art/timing, exact title program timing/camera/text, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus champion-selection startup cursor/recruit helpers now live in `nexus_v1_champions`, including in-party checks, duplicate-skipping cursor movement, and recruit-plus-auto-advance. Remaining Nexus startup work is still replacing the bounded text layout with exact Saturn save/champion menu art/timing, exact title program timing/camera/text, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus title boot reveal timing and scan-window math now live in `nexus_v1_title_sequence`, and the existing title renderer delegates minimum boot frames, reveal rectangle, edge color, and reveal-complete gating to that Nexus-owned sequence model. Remaining Nexus startup work is still replacing the bounded TITLE.CG reveal with exact Saturn VDP1/VDP2 title camera/text timing, exact save/champion menu art/timing, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus save-select startup movement and activation decisions now live in `nexus_v1_startup_menu`, including selected-row clamping and explicit LOAD SLOT vs NEW GAME action results with slot/path metadata. M11 now consumes those Nexus-owned decisions instead of carrying private save-menu navigation/activation logic. Remaining Nexus startup work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title camera/text timing, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus save-select startup row refresh now also lives in `nexus_v1_startup_menu`: M11 row lookup and state-to-menu mirroring call `nexus_v1_startup_menu_refresh()` so slot masks, row counts, and selected-row clamping cannot drift across FNXS save scans. Remaining Nexus startup work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title camera/text timing, FACE.BIN subformat proof for final short rows, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus champion-select keyboard decisions now also live in `nexus_v1_startup_menu`: cursor movement, recruit, remove, start-dungeon, need-champion, and back-to-save/title routing are exposed as Nexus-owned actions before M11 executes them. Remaining Nexus startup work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title camera/text timing, and broader original memory-card support.
+
+  - 2026-07-06 update: Nexus title startup now separates full-title reveal from start readiness: the sequence model exposes a 30-frame reveal gate plus a 54-frame start-ready hold, renders a bounded blinking prompt after reveal, and M11 will not enter save/champion startup until the hold completes. Remaining Nexus boot work is still the exact Saturn VDP1/VDP2 title/camera/text program, original save/champion menu art/timing, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus title/save-select startup input decisions now also live in `nexus_v1_startup_menu`: title Back/hold/save/champion routing and save-menu Up/Down/Accept/Action/Back are exposed as Nexus-owned actions, while M11 only executes the resulting launcher return, resume, new-game, or panel transition. Remaining Nexus boot work is still exact Saturn VDP1/VDP2 title/camera/text program, original save/champion menu art/timing, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus champion-select startup now also exposes a full 24-row roster and routes champion Up/Down/Accept/Action/Back through `nexus_v1_startup_menu`, while FACE.BIN startup surfaces cover all visible rows and report real-vs-fallback portrait counts. Remaining Nexus boot work is exact FACE.BIN portrait subformat/stride proof for the final short rows in the current raw interpretation, exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title/camera/text program, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus save-select and champion-select pointer hit actions now also live in `nexus_v1_startup_menu`; M11 consumes Nexus-owned save-row, save-panel, champion-row, champion-footer, and champion-panel results directly instead of routing pointer clicks back through generic keyboard input. Remaining Nexus boot work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title/camera/text program, FACE.BIN subformat proof for final short rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus title boot now exposes explicit BOOT_REVEAL/HOLD/START_READY phase metadata from `nexus_v1_title_sequence`, and startup title input gates on that phase contract directly. Remaining Nexus boot work is still replacing the bounded TITLE.CG reveal with the exact Saturn VDP1/VDP2 title/camera/text program, exact Saturn save/champion menu art/timing, FACE.BIN subformat proof for final short rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus full boot now inserts real `WARNING.BIN` as the first startup phase before the bounded `TITLE.CG` reveal, and M11 input uses a boot-aware warning-plus-title start-ready gate. Remaining Nexus boot work is still exact Saturn VDP1/VDP2 title/camera/text timing beyond the bounded reveal, exact Saturn save/champion menu art/timing, FACE.BIN subformat proof for final short rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus title startup pointer decisions now also live in `nexus_v1_startup_menu`: primary title clicks resolve through `nexus_v1_startup_title_handle_hit()` and obey the same hold/start-ready/save/champion routing as keyboard input instead of recursively entering the generic M11 input dispatcher. Remaining Nexus boot work is still exact Saturn VDP1/VDP2 title/camera/text program, exact Saturn save/champion menu art/timing, FACE.BIN subformat proof for final short rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus save-select render rows now also live in `nexus_v1_startup_menu`: Load Slot/New Game labels, selected marker, slot metadata, row rectangles, highlight rectangles, and text positions are returned as `Nexus_V1_StartupSaveRenderRow` values. M11 startup drawing consumes those rows instead of reconstructing save-menu presentation locally. Remaining Nexus boot work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title/camera/text program, FACE.BIN subformat proof for final short rows, and Saturn memory-card format support.
+
+  - 2026-07-07 update: Nexus champion-select render rows and footer now also live in `nexus_v1_startup_menu`: selected/in-party markers, FACE.BIN portrait index/rect, text positions, HP/MP labels, and party-count footer are returned as Nexus-owned render metadata. M11 startup drawing consumes that plan and only blits portrait pixels/text. Remaining Nexus boot work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title/camera/text program, FACE.BIN proof for final portrait rows, and Saturn memory-card format support.
+
+  - 2026-07-07 update: Nexus save-select/champion-select chrome render metadata now also lives in `nexus_v1_startup_menu`: title, subtitle, save footer text, and their positions are returned as `Nexus_V1_StartupChromeRender`. M11 now consumes Nexus-owned chrome plus save/champion render-row data instead of hard-coding startup menu title/subtitle/footer strings in the shared game view. Remaining Nexus boot work is still exact Saturn save/champion menu art/timing, exact Saturn VDP1/VDP2 title/camera/text program, FACE.BIN proof for final portrait rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus boot-probe receipt phase strings now also come from `nexus_v1_startup_menu`, so `nexus-title`, `nexus-save-select`, `nexus-champion-select`, startup-active, startup-frame, and `nexus-runtime` are classified by the Nexus startup model rather than private M11 branching. Remaining Nexus boot work is still exact Saturn VDP1/VDP2 title/camera/text program, exact save/champion menu art/timing, FACE.BIN proof for final portrait rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus startup save scanning now uses `nexus_v1_startup_menu_scan_or_new_game()`, so save-scan failure and empty save directories are normalized by the Nexus startup menu model into a valid New Game row before M11 mirrors state. Remaining Nexus boot work is still exact Saturn VDP1/VDP2 title/camera/text program, exact save/champion menu art/timing, FACE.BIN proof for final portrait rows, and Saturn memory-card format support.
+
+  - 2026-07-06 update: Nexus champion-select action execution now also lives in `nexus_v1_startup_menu`: cursor/recruit/skip/remove/need-champion/start/back-to-save/back-to-title actions resolve to Nexus-owned execution plans before M11 applies engine-state side effects. Remaining Nexus boot work is still exact Saturn VDP1/VDP2 title/camera/text program, exact save/champion menu art/timing, FACE.BIN proof for final portrait rows, Saturn memory-card format support, and moving remaining title-panel action application out of private M11 branching where it improves ownership.
+
+- 🔧 2026-07-05 DM2 M11 startup follow-up: current local work now lets verified DM2 V1 launches through M11 accept turn, forward, backstep, strafe, bounded front-square action input, catalog-backed shop entry, selectable stock-row buys, selectable inventory-row sells, visible bounded shop panel with stock/inventory rows and prices, bounded front-door action, bounded NPC interaction with runtime-owned NPC id and repeated same-square six-line catalog dialog readout, movement-fed square-entered trigger and pressure-plate evaluation with bounded door/teleport target execution, and shop leave through the DM2 runtime instead of ignoring everything except ESC, presents the DM2 V1/V2 runtime framebuffer instead of the old text placeholder, resumes M11 from a selected `SKSaveNN.dat` slot or last-session `SKSave.dat`/`.bak` root by loading Firestaff's bounded DM2 session body or the bounded SUPPRESS resume payload path for documented game-state plus champion records, applies party pose/tick/level/outdoor/weather into runtime state, and lets M12 save browser list/load both bounded DM2 save forms from root or `saves/dm2` with map-level/champion metadata. The DM2 V1 renderer now has an explicit asset-provider boundary and per-frame asset/fallback counters for the G2109 ceiling, G2108 floor, first bounded wall pass, and centerline door-panel and door-frame pass, M11/runtime rendering now delegates to that shared V1 renderer instead of the older local runtime placeholder while publishing the last-frame floor/ceiling, wall, door-panel, and door-frame asset/fallback counts from the runtime path, and verified DM2 boot now owns a GRAPHICS.DAT asset-loader handle with skproject-style GDAT raw-size table, ENT1 entry parse, category counts, raw category/index/field lookup, uncompressed U4/U8 image realization, compressed C4 IMG3 underlay decode, compressed C8/IMG9 decode, decoded GRAPHICSSET viewport-cell wall images, and decoded DOORS D0C/D1C/D2C door-panel images and GRAPHICSSET D0C/D1C/D2C door-frame images bound through the boot-owned provider for the first PC English startup wall/door pass. Remaining startup/playability work is broader original `SKSAVE` payload import beyond the bounded game-state/champion resume slice, original asset-backed shop panel art/widgets beyond the bounded readable M11 panel, richer NPC identity/conversation routing beyond the bounded friendly-merchant catalog cycle, wider actuator/trigger target execution for item/message/creature/timeline target families beyond current shop/door/NPC/entered-square/plate boundaries, then replacing the bounded cell scaling/backdrop with exact skproject wall and door-panel placement, door buttons, sprites, HUD, shop and outdoor GDAT placement.
+
+  - 2026-07-06 update: `test_dm2_v1_m11_launcher_handoff_boundary` now also proves the explicit M12 quick-resume path with real local DM2 data: the launcher carries an exact `SKSaveNN.dat` path into M11, M11 skips the DM2 startup menu only for that explicit resume, and the saved party pose/tick reach the live runtime boundary. Remaining DM2 startup work is still broader original `SKSAVE` corpus import, original shop/menu art widgets, fuller NPC/actuator target families, exact skproject wall/door/sprite/HUD placement, and wider real-route proof.
+
+  - 2026-07-06 update: DM2 startup keyboard decisions now live in `dm2_v1_startup_menu`: Up/Down navigation, Accept/Action activation, and Back-to-launcher are exposed as DM2-owned actions while M11 only executes Continue, Load Slot, New Game, or launcher return. Remaining DM2 startup work is still broader original `SKSAVE` corpus import, original shop/menu art widgets, fuller NPC/actuator target families, exact skproject wall/door/sprite/HUD placement, and wider real-route proof.
+
+  - 2026-07-06 update: DM2 startup pointer decisions now also live in `dm2_v1_startup_menu`: panel whitespace and row hits resolve to DM2-owned action results before M11 loads saves, starts a new game, or returns to the launcher. Remaining DM2 startup work is still broader original `SKSAVE` corpus import, exact original menu art/widgets, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 startup menu row refresh now also lives in `dm2_v1_startup_menu`: M11 save scanning and state-to-menu mirroring call `dm2_v1_startup_menu_refresh()` so Continue availability, loadable slot masks, row counts, and selected-row clamping cannot drift across boot scans. Remaining DM2 startup work is still broader original `SKSAVE` corpus import, exact original menu art/widgets, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: M11 DM2 startup keyboard routing now applies the DM2-owned action returned by `dm2_v1_startup_menu_handle_input()` directly instead of recomputing activation from the selected row, matching the pointer path and removing the last duplicate keyboard activation step from generic M11. Remaining DM2 startup work is still broader original `SKSAVE` corpus import, exact original menu art/widgets, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 startup render rows now also live in `dm2_v1_startup_menu`: Continue/Load Slot/New Game labels, selected-row state, slot metadata, row rectangles, highlight rectangles, and text positions are returned as `DM2_V1_StartupRenderRow` values. M11 startup drawing consumes those rows instead of reconstructing menu presentation locally. Remaining DM2 startup work is still exact original menu art/widgets, broader original `SKSAVE` corpus import, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 startup save scanning now also lives in `dm2_v1_startup_menu`: validated last-session Continue availability, valid slot mask construction, row-count refresh, and selected-row clamping are produced through `dm2_v1_startup_menu_scan_saves()` before M11 mirrors state. Remaining DM2 startup work is still exact original menu art/widgets, broader original `SKSAVE` corpus import, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-05 update: current local work now also renders raw C4 closed-door cells through the same D0C/D1C/D2C panel/frame asset-provider path used by the render-seeded door cells. Remaining door work is square-first door-record decoding for door type/button/opening direction, exact skproject placement and real-map custom button metadata/rendering.
+
+  - 2026-07-05 update: current local work now also binds skproject default door-button fields (`GDAT_CATEGORY_DOOR_BUTTONS`, index 0, fields 0 and 5) through the DM2 startup asset provider and viewport renderer when a decoded viewport square requests a button. Remaining door work is still fuller real square-first door-record proof for `door->Button()`, `ButtonState()`, door type and opening direction, exact panel/rect pixel placement, and custom wall-button records.
+
+  - 2026-07-05 update: current local work now also has a skproject-compatible byte-square dungeon-layout path with column object indexes, square-first thing links, text/DB pool bases, DB0 door-record resolution, and runtime metadata handoff for `door->Button()`, `ButtonState()`, `DoorType()`, and `OpeningDir()` on decoded visible center doors. Current local work now also switches verified PC English `G1` DUNGEON.DAT startup/runtime map reads to byte-sized column-major squares from the trailing map-data block with `Map_definitions.w8` dimensions, while keeping the older 16-bit path only for legacy synthetic fixtures. Boot now projects the source 5/5/2 start word through map-0's source origin and admits it only inside real map bounds, which supplies first-frame wall material without a fixed pose. The canonical corpus' startup champion text is high-bit MBCS while its GDAT has no category-0x1c font entries; HUD follows skproject's no-glyph MBCS outcome and does not substitute the ASCII dt07/0 font. Remaining door/startup work is exact PC English square-first thing/DB pool base proof beyond map bytes, exact panel/rect pixel placement, custom wall-button records, and broader real-map route proof.
+
+  - 2026-07-05 update: current local work now also routes `dm2_world_from_mem()` through the verified DM2 dungeon loader first, so world-state and object-model consumers inherit the corrected PC English `G1` trailing map-data byte-square layout instead of the older 16-bit parser. Current local work now also makes `dm2_v1_object_model_load()` prefer the shared loader's skproject `GET_TILE_RECORD_LINK`/`GET_NEXT_RECORD_LINK` model for source-shaped object chains instead of recomputing pool offsets locally. The PC English real-data loader now exposes the shifted skproject-style text word count, ground-stack list size, and DB record counts while deliberately keeping unresolved DB bases disabled, and the object-model probe now prevents those counts from activating the old bogus fallback parser. Remaining world/startup work is still exact PC English column-index, ground-stack, text, DB-pool, and extra pre-map block proof, then enabling real-asset object chains, exact panel/rect pixel placement, custom wall-button records, and broader real-map route proof.
+
+  - 2026-07-05 update: current local work now also exposes the bounded D0C/D1C/D2C door-panel and default door-button rectangles through tested renderer APIs, and the runtime render loop consumes those APIs instead of keeping hidden inline coordinate math. 2026-07-23 update: those bounded rectangles are now replaced by source RAW4 rectangles from `INTERFACE_GENERAL/0/RAW4/0` (`tlbRectnoDoorPosition` for panels and `tlbRectnoDoorButton` for default buttons) when source materials are required; hard-coded rectangles remain the fallback path. Remaining door placement work is real-map custom wall-button records and broader real-map route proof.
+
+  - 2026-07-06 update: current local work now also source-locks the DM2 default-door-button viewport-cell boundary to skproject: Firestaff D0C/D1C/D2C map explicitly to skproject cells 0/3/6, `tlbRectnoDoorButton` is represented as a production table, D0C/D1C/D2C resolve to rectnos 4/3/2, and the original clickable gate is exposed for rectnos 4 and 3 only. 2026-07-23 update: panel and default-button RAW4 placement is now source-locked for D0C/D1C/D2C/D3C panels and D0C/D1C/D2C buttons. Remaining door work is real-map custom wall-button records and broader real-map route proof.
+
+  - 2026-07-06 update: current local work now also gives the DM2 V1 renderer a skproject-shaped custom wall-button path for `door->Button()==0` plus `tblCellTilesRoom[cell].w6[2]`: the view square carries a custom wall-gfx button index/field, the renderer packs those into a WALL_GFX asset request, the button uses the same rectno path as default door buttons, and the boot-owned GRAPHICS.DAT viewport asset fetcher can cache bounded WALL_GFX custom button images. Remaining work is exposing real `w6[2]` metadata from the PC English loader/runtime and broader real-map custom-button proof.
+
+  - **2026-08-06 superseded:** the former claims that a raw `SKSave` body, a `D2RS` envelope, champion inventories, leader hand, or minion tails were imported into a playable startup session are withdrawn. `D2RS` is diagnostic-only and rejected by slot, corpus, and runtime-resume admission. The original PC-DOS corpus is decoded only far enough to receipt the source-owned prefix/fixed `GAME_LOAD` facts and 263-byte champion SUPPRESS records. It never publishes a source session or live object state. `c_hero::item[30]` and the leader possession root are 16-bit record links; their ownership requires SKProject's `DM2_READ_RECORD_CHECKCODE` allocation/append path, which is not yet ported. Continue/load and inventory interaction remain disabled until that complete source-owned record/object/possession restoration path exists.
+
+  - 2026-07-06 update: M11 DM2 startup-menu pointer routing now consumes clicks inside the visible start-menu panel even when they do not hit a row, so panel whitespace cannot fall through to the live runtime before Continue/slot/New Game is chosen. Remaining menu/startup work is still broader original save byte-corpus proof, exact original menu art/widgets, and fuller original byte roundtrip.
+
+  - 2026-07-06 update: M11 DM2 normal boots now always stop at the DM2 startup menu, even with no saves, so `NEW GAME` is an explicit startup choice instead of an automatic fall-through into runtime. Remaining menu/startup work is still broader original save byte-corpus proof, exact original menu art/widgets, and fuller original byte roundtrip.
+
+  - 2026-07-06 update: M11 DM2 idle ticks are now also blocked while that startup menu is active, so the world cannot age behind the no-save `NEW GAME` screen. Remaining menu/startup work is still broader original save byte-corpus proof, exact original menu art/widgets, and fuller original byte roundtrip.
+
+  - 2026-07-06 update: `test_dm2_v1_m11_launcher_handoff_boundary` now also proves the real production M12 selected-menu path with local hash-verified DM2 data under `~/.firestaff/data`: launch intent is valid, M11 enters `M11_GAME_SOURCE_DM2_BOOT`, owns the DM2 boot profile/world, stops at the DM2 startup menu, blocks idle tick aging behind that menu, and draws a nonblank first startup frame. Remaining menu/startup work is still broader original save byte-corpus proof, exact original menu art/widgets, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 startup menu geometry now lives in `dm2_v1_startup_layout`, and M11 consumes that DM2-owned layout for panel/row/highlight drawing plus pointer hit-testing. Remaining menu/startup work is still exact original menu art/widgets, broader original save byte-corpus proof, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 startup menu row counting, row resolution, clamped cursor movement, and selected action results now live in `dm2_v1_startup_menu`, with explicit CONTINUE / LOAD SLOT / NEW GAME action kinds. M11 now mirrors startup menu state through that DM2-owned API instead of carrying private menu ordering and activation logic. Remaining menu/startup work is still exact original menu art/widgets, broader original save byte-corpus proof, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 startup presentation now also lives in `dm2_v1_startup_presentation`: title/subtitle/footer, row labels, panel fill/border, selected-row highlight, and draw-command ordering are produced by DM2 code, while M11 only adapts those commands to Firestaff framebuffer primitives. Remaining menu/startup work is still replacing the bounded command stream with exact original menu art/widgets, broader original save byte-corpus proof, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: DM2 boot-probe receipt phase strings now come from `dm2_v1_startup_menu`, so `dm2-startup-menu`, startup-active, and `dm2-runtime` are classified by the DM2 startup model rather than private M11 branching. Remaining menu/startup work is still exact original menu art/widgets, broader original save byte-corpus proof, fuller original byte roundtrip, and skproject-exact runtime placement beyond the startup gate.
+
+  - 2026-07-06 update: M12 DM2 save import now validates `SKSaveNN.dat`, `SKSave.dat`, and `SKSave.bak` candidates through the DM2 session loader before copy, rejects malformed SKSave-named bytes, and accepts valid slot payloads that rescan as DM2 with map-level metadata. Remaining save/startup work is broader real original `SKSave` byte-corpus proof, fuller original byte roundtrip, and exact original menu art/widgets, not this launcher import gate.
+
+  - **2026-08-06 superseded:** these former resume/inventory UI claims used a fabricated flat 32-bit ObjectID cache rather than the original record-link graph. They are no longer live: source-session application clears the leader-hand and inventory cache; the flat save read/write helpers reject; M11 cannot reinject a carried object; and inventory swaps report unavailable. Directly mapped GDAT art may be rendered only for original, currently owned runtime objects. No fabricated item, item name, icon, cache, or quick-save state is allowed to make an unproven source save playable.
+
+  - 2026-07-05 update: current local work now also proves the same DM2 M11 quick-save path from a fresh verified direct start, writing `SKSave.dat` into a real save root and restarting M11 from it with starter party count, boot pose, tick, empty leader hand, and champion data intact. Remaining quick-save work is broader live runtime fields beyond the current bounded startup/session model and original byte-for-byte savegame roundtrip.
+
+  - 2026-07-05 update: current local work now also proves live direct-start quick-save after bounded DM2 NPC/shop runtime mutations: `SKSave.dat` carries mutated gold, reputation, pose, level, outdoor mode, and advanced tick, and M11 restores those fields on restart. Remaining quick-save work is still broader dungeon DB/timer/object live-state breadth and original byte-for-byte savegame roundtrip.
+
+  - 2026-07-23 update (Lane B, cycle 7): DM2 shop inventory stack/container restrictions and broader live runtime field writeback beyond gold are now implemented. `DM2_V1_ShopState` owns a per-session mutable stock copy (`active_stock_*`) populated from the catalog on enter; `dm2_v1_shop_buy()` decrements finite stock, `dm2_v1_shop_sell()` creates a buy-back stack, and `dm2_v1_shop_get_active_stock_remaining()` exposes the live counts. Item stacking is bounded by a source-faithful per-type table (potions/flasks 12, food/light 20, ammo 12, equipment 1; unknown items default to unstackable per docs/dm2_inventory.md §11). Non-empty containers are rejected from sale (`DM2_SHOP_RESULT_CONTAINER_NOT_EMPTY`) per docs/dm2_inventory.md §5. Runtime wrappers now load the leader champion inventory into the shop on entry (`dm2_v1_shop_load_inventory_from_runtime()`) and commit the shop-local inventory back to the leader champion slots after every transaction and on leave (`dm2_v1_shop_commit_inventory_to_runtime()`). `test_dm2_v1_shop_pc34_compat` grows to 65 checks covering mutable stock, buy-back, per-slot stack limits, container restriction, and split-stack allocation. `test_dm2_v1_runtime_shop_pc34_compat` grows to 22 checks covering runtime inventory load and writeback. Full parallel build clean; dm2_v1_shop_pc34_compat, dm2_v1_runtime_shop_pc34_compat, dm2_v1_shop_economy_determinism_probe, and dm2_v1_skproject_core PASS. Remaining shop/NPC work is exact original UI art/widgets and real actuator/ornament/GDAT source image binding before enabling shop pixels.
+
+- 🔧 2026-07-05 Theron startup Track 02 follow-up: launcher/runtime selection now prefers the raw Track 02 BIN layout under `theron-extras/{japan,usa}` over the hash-valid Rev1 ISO files under `theron/` when the user points at the broad data root, and raw JP/US Track 02 startup now promotes the bounded 32x27 initial-level candidate with a verified interior start pose instead of the deterministic 8x8 fallback room. That candidate is now found through a hash-gated Track 02 startup-candidate scan, the scan catalog can now bind candidate-to-descriptor deltas, handoff additionally requires the descriptor-anchor-relative startup offset relation before runtime load, and the real-asset startup receipt now records the same bounded initial-candidate offset/size/header/start/delta/anchor-match fields for raw Track 02. A bounded stage-select/Soul Room/forcefield startup model now gates selected stage, Theron presence, up to three resurrected mirror heroes, manual/dmweb hero names/classes for Hakar/Mara/Tiran/Linos/Dotan/Hexa/Pental, stable mirror metadata/portrait-index handoff, resurrect-order-preserving party slots, duplicate mirror rejection, mirror deselection with order compaction before forcefield, party handoff, first-dungeon middle-stage unlock and final-stage lock until the first six dungeons are complete. M11 direct launch now shows a playable stage-select and Soul Room startup screen, evaluates the bounded startup save/resume gate through the boot profile without auto-resuming, exposes a focused Continue row for verified `.tqsv` slots or SRM slots with decoded Firestaff readiness envelopes, loads the active `.tqsv` progression/champion receipt or decoded SRM progression only after explicit input, waits to load the dungeon until forcefield entry, materializes selected mirror companions through the same startup gate, preserves loaded Theron slot-0 state across forcefield entry, resets per-dungeon object/timer/runtime state on forcefield entry, returns to stage select after completed dungeon exit with companions cleared, keeps non-dungeon-1 stage starts on the selected dungeon instead of falling back to dungeon 1, writes any still-needed fallback room into the selected dungeon's runtime level slot, and now exposes a machine-readable startup layout for title/continue/stage/mirror/forcefield elements plus 320x200 render-space rectangles and pointer routing so future decoded Track 02 menu art and touch/mouse controls do not have to parse fallback text rows. Remaining startup work is replacing the bounded text/rect startup screen and remaining fallback portrait labels with decoded real Track 02 menu/champion art and text, connecting richer M12 startup affordances if needed, real Sphenx/Greatstone SRM body import beyond the current Firestaff-only readiness envelope, full Track 02 dungeon-record decoding beyond the one initial candidate, all levels, object tables, transitions, text/palette payloads, route proof and README-eligible real runtime captures.
+
+  - 2026-07-14 Track 02 later-loader coalesced-sector receipt: a positive later `$e009` handoff now requires one provenance-marked original Mednafen transcript with the authenticated Stage 2 loader row, one later dispatch, one complete raw-sector fingerprint, and the matching return in order. The fingerprint must match the selector-resolved sector in hash-verified JP/US Track 02 media. This is loader/media provenance only; the next blocker remains a repeated original capture that supplies enough observed records to infer a record format without inventing maps, objects, graphics, palettes, or transitions.
+
+  - 2026-07-07 update: Theron startup layout enrichment now lives in `theron_v1_startup_flow`: chapter labels and decoded Track 02 mirror names/titles are carried through `Theron_StartupLayoutState` and returned on `Theron_StartupLayoutElement`, so M11 no longer patches chapter/mirror labels or recomputes mirror-to-roster mappings after layout build. Remaining startup work is still replacing the bounded text/rect startup screen with decoded real Track 02 menu/champion art, text, palettes, audio, and broader dungeon records.
+
+  - 2026-07-07 update: Theron startup render-row assembly now also lives in `theron_v1_startup_flow`: title/stage/Soul Room/forcefield rows, Continue rows, decoded roster summary, decoded title summary, resurrected-order labels, and the byte-backed startup prompt are built from `Theron_StartupLayoutState` plus `Theron_StartupLayoutElement` rows. M11 now only translates its runtime state into the Theron-owned layout state and copies the resulting rows to the public M11 inspection surface. Remaining startup work is still replacing those bounded text rows with decoded real Track 02 menu/champion art, text/font rendering, palettes, audio, and broader dungeon records.
+
+  - 2026-07-05 update: startup receipts now explicitly report mirror-art readiness as `mirror_fallback_labels=7` and `mirror_decoded_art=0` for both placeholder and real JP/US raw Track 02 receipts. Remaining art work is still the real Track 02 menu/champion-art decoder that can drive `mirror_decoded_art` above zero and retire fallback labels.
+
+  - 2026-07-05 update: `theron_v1_track02` now has a tested raw-BIN MODE1/2352 -> 2048-byte user-data bridge for JP/US Track 02. Future Track 02 menu/champion-art, text/palette, and broader dungeon-record decoders should bind against that logical user-data stream where applicable, while keeping raw-sector metadata such as audio-bank ids on the raw-offset path.
+
+  - 2026-07-05 update: the initial level candidate catalog now carries logical user-data offsets as well as raw offsets; JP/US startup candidates are locked at user-data `0x619914` / `0x619114`. Remaining decoder work should consume those catalog offsets instead of rescanning raw Track 02 bytes ad hoc.
+
+  - 2026-07-05 update: startup receipts now publish the same initial-candidate user-data offset fields, so launcher/debug output can cite the logical MODE1/2048 address directly. Remaining work is still decoding additional menu/champion-art/text/palette payloads from that user-data stream.
+
+  - 2026-07-05 update: the initial-candidate runtime handoff now carries the same logical user-data offset consumed by startup receipts and M11 diagnostics. Remaining decoder work can use the handoff directly instead of recomputing raw-sector math.
+
+  - 2026-07-05 update: the initial startup candidate can now be copied through a sector-validated logical user-data window, and real JP/US Track 02 probes prove the copied bytes match the raw startup payload. Remaining Track 02 decoders should build on that logical-window path, then extend it from the one startup candidate to menu/champion art, text, palettes, object tables, and all dungeon records.
+
+  - 2026-07-05 update: raw Track 02 logical user-data range copying is now a shared helper that handles sector-boundary skips and rejects non-user-data starts. Remaining decoders no longer need private MODE1/2352 arithmetic; next work should locate and classify real menu/champion-art/text/palette payload offsets on top of this helper.
+
+  - 2026-07-05 update: a role-tagged logical user-data window catalog now exposes the known raw JP/US bank descriptor tables, post-boundary spans, and initial-level candidate as verified byte ranges. Remaining decoder work should add new roles only when real payload evidence is available, starting with menu/champion-art/text/palette candidates.
+
+  - 2026-07-05 update: startup receipts now publish the logical user-data window catalog counts, so launcher/runtime diagnostics can consume the verified Track 02 window surface without rescanning raw sectors. Remaining work is still adding new real payload roles and wiring decoded menu/champion-art/text/palette data into startup presentation.
+
+  - 2026-07-05 update: M11's Track 02 initial-level status now also reports the user-data window catalog counts. Remaining startup presentation work is no longer blocked on raw-sector visibility; the next material blocker is locating and decoding real Track 02 menu/champion-art/text/palette payloads.
+
+  - 2026-07-05 update: Track 02 decoders can now copy verified logical user-data windows by role and occurrence through `theron_v1_track02_copy_user_data_window_by_role()`, with real JP/US proof for descriptor, post-boundary span, and initial-level candidate roles. Remaining decoder work should add menu/champion-art/text/palette roles only after byte-level evidence is found.
+
+  - 2026-07-05 update: Track 02 startup text marker scanning now finds seven raw US resurrect-THERON prompt occurrences and seven raw JP champion-roster marker clusters with logical user-data offsets. Remaining text work is turning those marker footholds into a real string table/font mapping and finding the US champion-roster equivalent if it is encoded rather than plain ASCII.
+
+  - 2026-07-05 update: startup receipts now expose those Track 02 text marker counts in receipt structs, deterministic session ticks, and one-line diagnostics. Remaining startup work is wiring decoded text/font content into the visible M11/M12 startup presentation once the byte format is proven.
+
+  - 2026-07-05 update: M11's Track 02 initial-level status now mirrors the startup text marker counts too. Remaining presentation work is actual decoded startup text/font rendering, not more hidden diagnostics.
+
+  - 2026-07-05 update: M11 direct Theron startup now captures the byte-backed US raw Track 02 `GO AWAY AND RESURRECT THERON` prompt through the startup text marker catalog and shows it in Soul Room render rows/framebuffer when present. Remaining text work is still proper font/string-table rendering, JP text presentation beyond roster names, and decoding the US champion roster if it is encoded rather than plain ASCII.
+
+  - 2026-07-05 update: the first JP raw Track 02 startup roster cluster now decodes into eight byte-backed ASCII names with raw/user-data offsets: Theron plus the seven mirror-hero candidates, including raw `PENTAI` for the existing bounded Pental fallback label. Remaining roster work is US-name decoding, title decoding, exact mirror order/binding, and wiring proven decoded names into visible startup presentation without relying on fallback labels.
+
+  - 2026-07-06 update: the orphaned Track 02 descriptor-entry semantic probe is now a real CTest target and has been rewritten against the current descriptor-entry role plus dungeon-seed semantic API, so startup receipts no longer depend on an uncompiled stale source file. Remaining Theron startup work is still decoded real Track 02 menu/champion art, proper font/string-table rendering, US roster/title decoding, exact mirror order/binding, and broader dungeon-record decoding beyond the initial candidate.
+
+  - 2026-07-05 update: the JP raw Track 02 startup roster decoder now also carries raw title strings and title raw/user-data offsets for the first roster cluster, and M11 stores those title strings plus exposes a compact render-row proof for title handoff. Remaining roster work is US-name/title decoding, exact mirror order/binding, and replacing fallback Soul Room mirror labels only after the Track 02 mirror binding is proven.
+
+  - 2026-07-05 update: M11's machine-readable Theron Soul Room mirror layout now carries decoded JP roster name/title fields through an explicit mirror-index to Track 02 roster-index bridge (`Hakar->HAKAR`, `Mara->MARA`, `Tiran->TIRAN`, `Linos->LINOS`, `Dotan->DOTAN`, `Hexa->HEXA`, `Pental->PENTAI`) and render rows expose the decoded raw name when it differs from the fallback label. Remaining work is still US-name/title decoding, art-backed mirror placement, and retiring fallback labels only after the full Track 02 mirror binding is proven.
+
+  - 2026-07-05 update: M11 Soul Room now promotes decoded JP Track 02 roster names to the primary visible mirror labels when that roster is available, so `HAKAR/MARA/TIRAN/LINOS/DOTAN/HEXA/PENTAI` replace the bounded fallback spellings in startup render rows and machine-readable layout while preserving fallback labels for no-roster paths. Remaining roster/presentation work is US-name/title decoding, decoded text/font rendering, and art-backed mirror placement; decoded JP name presentation is no longer open.
+
+  - 2026-07-05 update: M11 forcefield handoff now also rewrites selected companion party names from the decoded JP Track 02 roster after the generic startup flow materializes the party, preserving resurrection order while replacing fallback `Pental/Hakar/Tiran/...` names with byte-backed `PENTAI/HAKAR/TIRAN/...` when available. Remaining roster/runtime work is US-name/title decoding, richer title/class/stat import, decoded text/font rendering, and art-backed mirror placement.
+
+  - 2026-07-05 update: startup real-asset receipts now publish decoded Track 02 roster readiness counts (`startup_roster_names`, `startup_roster_titles`, overflow) and prove JP raw Track 02 has 8 decoded names plus 7 decoded titles while US raw Track 02 remains at 0 until its encoding is decoded. Remaining roster work is actual US-name/title decoding and wiring any future decoded US roster into M11 through the same surfaces.
+
+  - 2026-07-05 update: M12 quick Resume/save browser now recognizes and validates Theron `slotN.tqsv` saves plus decoded readiness-envelope `slotN.srm` saves, and M11 honors the exact selected save path/root as the active Continue slot. Remaining save/startup work is real Sphenx/Greatstone SRM body import beyond the Firestaff readiness envelope and broader real-art startup presentation.
+
+  - 2026-07-06 update: M11 direct Theron startup now also proves that a selected `.tqsv` save does not auto-resume when the player accepts the stage row first; the Soul Room path stays new-stage state until Continue is explicitly focused and accepted. Remaining save/startup work is real Sphenx/Greatstone SRM body import beyond the Firestaff readiness envelope and broader real-art startup presentation.
+
+  - 2026-07-06 update: M11 Theron startup pointer routing now consumes clicks on non-action startup layout elements and inside the visible startup panel, so title/chapter/panel whitespace cannot fall through to runtime before a stage, Continue, mirror, or forcefield action is selected. Remaining startup work is real Sphenx/Greatstone SRM body import beyond the Firestaff readiness envelope and broader real-art startup presentation.
+
+  - 2026-07-06 update: M11 fresh Theron Track 02 boots now seed the visible stage-select phase instead of remaining in title state, and `test_theron_v1_m11_launcher_handoff_boundary` proves the production M12 selected-menu path reaches M11 Theron stage-select with real local data before explicit Accept advances to Soul Room. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, and README-eligible captures.
+
+  - 2026-07-06 update: M12 Theron save import now validates `slotN.tqsv` through the between-dungeon save loader and `slotN.srm` through the bounded SRM envelope decoder before copy, rejects malformed Theron save-named bytes, and accepts valid TQSV/SRM saves that rescan as loadable Theron entries. Remaining save/startup work is real Sphenx/Greatstone SRM body import beyond the Firestaff readiness envelope and real Track 02 art/text presentation, not this launcher import gate.
+
+  - 2026-07-06 update: direct `M12_AssetStatus_ScanGame(..., "theron")` startup now accepts a hash-matched Track 02 file from an arbitrary renamed directory/file and derives the runtime root from that match. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, and README-eligible captures.
+
+  - 2026-07-06 update: Theron startup keyboard/controller decisions now live in `theron_v1_startup_flow` as a tested input/action API for title -> stage select, stage cursor/Continue, Soul Room cursor movement, mirror toggle, forcefield entry, and Back behavior. M11 now maps launcher input tokens into that Theron-owned action model and only executes the resulting save/dungeon handoff. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, and README-eligible captures.
+
+  - 2026-07-06 update: Theron startup pointer decisions now also live in `theron_v1_startup_flow`: title, panel whitespace, Continue, stage rows, Soul Room mirrors, and forcefield hits resolve to Theron-owned action results before M11 applies save/dungeon handoff state. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, and README-eligible captures.
+
+  - 2026-07-06 update: Theron stage-select keyboard/controller, pointer navigation, and row availability now consult dungeon progression in `theron_v1_startup_flow`, and M11 uses those progress-aware APIs during boot so locked/completed stage rows cannot become the active cursor through Up/Down, produce a pointer CHOOSE_STAGE action, or drift from the same enabled-state contract used by input. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, README-eligible captures, and a full M11 rebuild once the local build directory is regenerated cleanly.
+
+  - 2026-07-06 update: Theron startup layout ownership has moved into `theron_v1_startup_flow`: title/chapter/Continue/stage/mirror/forcefield row geometry, enabled state, selected mirror order, save-slot metadata, and pointer hit classification now come from a Theron-owned `Theron_StartupLayoutState` contract. M11 adapts that layout for rendering and adds decoded Track 02 roster/chapter text only. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, README-eligible captures, and a full M11 target rebuild when the local build is not spending minutes rebuilding unrelated M10 objects.
+
+  - 2026-07-06 update: Theron boot-probe receipt phase strings now come from `theron_v1_startup_flow`, so `theron-startup-N`, startup-active, and `theron-runtime` are classified by the Theron startup model rather than private M11 branching. Remaining startup work is still decoded real Track 02 menu/champion art, richer text/font presentation, real SRM body import, full dungeon-record decoding, all levels, object tables, transitions, palettes, route proof, and README-eligible captures.
+
+  - 2026-07-14 update: the positive raw-CD Hall of Records level-0 handoff now retains the source loader's first-floor/default-North pose across its candidate and loader-route entry points. The former local passable-neighbor/East preference was not loader evidence and has been removed. The older seed-table semantic handoff remains independently blocked on the authentic images, so it is not composed into this positive route. This does not establish an original IPL spawn override, object layout, transition, palette, or visual route; a Mednafen capture is still required before promoting any different startup pose.
+
+- 🔧 2026-07-05 CSB M11 action execution follow-up: current local work now gives CSB runtime-owned action-hand `THROW`, ready-hand `SHOOT`, delayed post-cooldown SHOOT ready-hand refill from source quiver slots, leader-hand C080 viewport `THROW`, melee-contact rows, and FIREBALL/DISPELL/LIGHTNING/SPIT/INVOKE champion projectile-spell rows from M11 without DM1 `world.things` or DM1 `world.projectiles`. The real-asset M11 CSB startup/resume gate now also proves direct F0407 `THROW` after verified startup allocates a CSB runtime projectile, clears runtime/M11 action hand, and survives Firestaff-native quicksave reload. THROW now resolves object weight including live `CONTAINER.Slot` contents, throwable weapon kinetic energy, Ven/Ful potion projectile subtype/power, and F0312/F0328-style strength/attack/step energy from CSB runtime records before clearing runtime/M11 action hand or leader hand; SHOOT resolves bow/sling and ammo from CSB dungeon records, clears runtime/M11 ready hand, and refills compatible quiver ammunition only after CSB-mapped input ages the source action cooldown; STAB/SLASH-style melee rows record the selected action on the CSB champion snapshot and apply bounded F0402/F0231 damage to real-format C04 group HP in the square in front of the party; BASH/HACK/BERZERK/KICK/SWING/CHOP now run the closed-door F0407/F0232 branch against real-format CSB door records and schedule C02 destruction events; projectile spells create champion-owned CSB runtime projectiles while M11 keeps UI stamina/disable timing local; runtime projectile overlays can now resolve CSB runtime object icon/material identity, the M11 CSB draw path now attempts a GRAPHICS.DAT-backed projectile sprite callback before falling back to material-colored markers, and bounded group plus floor-object markers now scan CSB runtime square thing chains instead of DM1 `world.things` while skipping blocking wall, closed-door, and closed-fakewall squares. The M11 marker/sprite placement now uses the same F0115 C2500 object and C3200 creature source-zone helpers as the DM1 viewport bridge, CSB floor-object rendering now tries the existing GRAPHICS.DAT item-sprite path before falling back to icons/markers, and M11 exposes per-frame CSB overlay draw stats for projectile/object/group sprite/icon/material/marker routes. Remaining CSB action/render work is full original-RNG/XP/stamina exactness, broader SHOOT variants/proof, exact F0791 scaled projectile/object/creature bitmap parity beyond the bounded callback/marker bridges, active-group aftermath breadth for melee kills, door-damage party/group side effects beyond C02 state mutation, and wider real-save/runtime proof.
+
+  - 2026-07-05 update: M11 CSB new-game startup now has a source-locked entrance screen state before dungeon input, backed by the already-loaded CSB runtime, with idle runtime ticks blocked until Enter/Action confirms and resume paths skipping the entrance. Remaining startup presentation work is fuller original entrance art/timing/credits behavior and any CSB utility import affordances beyond the current M11 gate.
+
+  - 2026-07-05 update: current local work now also stops drawing the synthetic Firestaff debug frame/text over real CSB GRAPHICS.DAT entrance art; the fallback panel is used only when real entrance art is missing. Remaining startup presentation work is original credits/save utility affordances and fuller timing/input proof beyond the real-art entrance gate.
+
+  - 2026-07-05 update: current local work now also routes the CSB entrance credits, resume, enter-dungeon, bonus-dungeon, and quit buttons through the shared ReDMCSB source-locked pointer command table, including the C201 bonus-dungeon button mask instead of forcing all entrance clicks to left-click. The entrance Resume button now loads a same-game quick-resume path through the CSB runtime only after M11 has side-effect-free validated that path through CSB native header load, CSBWin body verification, or CSBGAME roster import, and reports `CSB RESUME UNAVAILABLE` while staying on the entrance when no validated path exists. The credits subphase now waits through the ReDMCSB 1800-tick window before returning to the entrance without ticking runtime. Quit now clears the active entrance/credits state before returning to the launcher. C201 now also reaches a CSB runtime-owned `G1147_B_LoadBonusDungeon`-style flag, and runtime now attempts known bonus dungeon filenames before falling back to the normal loaded dungeon. Remaining startup presentation work is original CSB save utility UI behavior beyond quick-resume loading, fuller original credits palette/content proof, real-data bonus dungeon hash/catalog proof beyond synthetic `DUNGEONB.DAT`, and package/runtime proof beyond the source-locked entrance command surface.
+
+  - 2026-07-05 update: current local work now also proves the entrance Resume availability gate for native Firestaff CSB saves, verified CSBWin save bodies, and raw CSBGAME roster imports without applying party pose before the player presses Resume; the CSBWin entrance Resume click then applies the verified GAMEBLOCK2 pose. Remaining startup/save work is still broader original CSB save utility UI behavior and wider real-save/package proof, not these entrance-availability variants.
+
+  - 2026-07-05 update: current local work now also lets M11 CSB startup accept a DM1 save import candidate, import that party into the CSB runtime before the entrance, expose startup import readiness/count, mirror imported champion names through M11, and preserve the imported party after the entrance Enter command. Remaining utility-startup work is visible launcher/entrance affordances for selecting/importing DM1 saves and broader original utility UI behavior, not the runtime handoff.
+
+  - 2026-07-05 update: current local work now also wires that import path through M12 save browser ACTION on valid DM1 saves, with a dedicated `csbImportDm1SavePath` launch-intent field and M11 menu-entry forwarding. ACCEPT still loads/resumes the selected save's own game. Remaining utility-startup work is richer original CSB utility-menu presentation/confirmation, not the public M12-to-M11 import path.
+
+  - 2026-07-05 update: current local work now also puts an explicit confirmation step in front of that M12 save-browser DM1-to-CSB import path; BACK cancels without launch and ACCEPT/ACTION on the confirmation creates the import launch intent. Remaining utility-startup work is now the fuller original CSB utility-menu presentation/content, not accidental-import prevention.
+
+  - 2026-07-05 update: current local work now also proves the confirmed M12 CSB import intent through `M11_GameView_OpenSelectedMenuEntry()` into the real CSB startup runtime, including imported champion mirror names and entrance handoff survival. Remaining utility-startup work is original CSB utility-menu presentation/content and wider real-save proof, not the launcher-to-runtime bridge.
+
+  - 2026-07-05 update: current local work now also gives the CSB main-menu card an ACTION shortcut into the DM1-import save-browser path, preselects a valid DM1 save candidate, and returns Back to the main menu while leaving ACCEPT/RIGHT as the normal CSB options path. Remaining utility-startup work is fuller original CSB utility-menu presentation/content and wider real-save proof, not discoverability of the current import path.
+
+  - 2026-07-05 update: current local work now also blocks the CSB ACTION utility shortcut cleanly when saves exist but no valid DM1 import candidates exist, returning ESC/BACK to the main menu without arming launch/import state. Remaining utility-startup work is the fuller original CSB utility-menu presentation/content and wider real-save proof, not this missing-DM1 edge case.
+
+  - 2026-07-06 update: current local work now also makes the M12 save-browser footer context-aware for CSB import: selected DM1 saves advertise the ACTION import path to CSB plus PC34 export, while CSB/other saves no longer display misleading DM1-only footer actions. Remaining utility-startup work is still fuller original CSB utility-menu presentation/content and wider real-save proof, not the public launcher affordance.
+
+  - 2026-07-06 update: M12 original-name CSB save import now byte-gates `CSBGAME`/`DMSAVE` candidates through the CSBWin loader-boundary classifier before copy, rejects malformed files and DM1 raw `RDMCSB15` bytes under CSB basenames, and accepts bounded valid CSBWin/CSBGAME resume fixtures into the save browser. Remaining utility-startup work is broader real save corpus/original-utility proof and fuller original CSB utility-menu presentation/content, not this launcher import gate.
+
+- 🔧 2026-07-05 CSB M11 CSBgraphics custom-background follow-up: current local work now has an M11 startup/resume regression that injects compressed synthetic CSBgraphics.dat skin-def/bitmap/mask entries, selects runtime skin-cache cells, and proves the CSB viewport path applies runtime-selected masked custom backgrounds through the same pack/unpack bridge used by real CSB rendering. Remaining CSBgraphics work is broader source-zone sprite/material binding for objects/monsters/projectiles and wider real-asset capture proof, not the M11 custom-background handoff boundary.
+
+- 🔧 2026-07-05 CSB M11 party/HUD mirror follow-up: current local work now mirrors CSB runtime party/champion state into M11's generic `world.party` view for startup/resume, input sync, quickload, and idle paths, so shared V1 HUD/inventory/action code can see imported champions, leader, pose, vitals, stats, skills, compatible storage slots, DM1/CMP-compatible 464-byte portrait bitmaps, compacted wide-buffer CSB portrait fallbacks, CSB runtime-resolved inventory icon indices, CSB runtime-resolved object names for leader-hand eye/inspect panels, CSB runtime-resolved action-set rows, CSB runtime `AllowedSlots`, click-pick/place writeback for mapped CSB champion inventory slots plus leader hand, and open-chest panel read/write through CSB runtime container records without falling back to DM1 state. Remaining CSB UI work is broader object sprite/material binding, action execution breadth, and wider real-save route proof.
+
+- 🔧 2026-07-05 CSB C25/F0209 active-group follow-up: current local work now applies the ReDMCSB `GROUP.C F0190` fear test after partial C25 group kills, writes surviving attacking groups to C5 flee behavior when the bounded RNG branch triggers, mirrors `DelayFleeingFromTarget` into any CSBWin ITEM16 active-monster record that has claimed the live C04 group, and preserves native active-group delay/cells/directions/prior/home/last-move/aspect/target state through C05 materialization, C37/C60 movement, C37 visible-target facing, C37 blocked-geometry approach direction, C38 attack-facing writeback, C33/C38 attack-aspect handoff, C25 creature-slot compaction, and Firestaff-native save/load. Current local work now also packs native active-group `Cells`, per-creature `Directions`, and `Aspect` when C25/F0190 removes one creature from a surviving group, C38 attack events update only the acting creature direction slot instead of overwriting every native direction slot, C38/C33 aspect handoff now applies the shared ReDMCSB `F0179` attack/non-attack aspect bit update for flip and offset state, C38 attacks request the ReDMCSB `F0207`/`G2003` prioritized attack sound through the CSB pending-sound runtime, successful C37/C60 group moves now request the ReDMCSB `MOVESENS.C F0514`/`G2003` prioritized movement sound through the same runtime, blocked C7 approach attempts apply a bounded ReDMCSB `F0206` group-direction update plus `F0205` opposite-turn clamp before requeueing C37 on the source square, including shared-direction mirroring and same-tick debounce for two half-square creatures, visible C37 attack-entry transitions now turn native active-group directions per creature through the F0209/F0205 one-step path instead of rewriting every slot, ordinary non-teleporter C7 move commits now use the same F0209/F0206/F0205 per-creature direction writeback after relink, C7 approach can continue toward stored `TargetMapX/Y` when the party is no longer visible in a row/column, and archenemy C7 double-moves now request the source M560 buzz at the two-square landing point. Remaining C25/group aftermath work is broader F0209 decision/pathfinding breadth beyond the bounded C37/C38 direction and target/aspect/sound slices, source-zone sprite binding, and wider real-data route proof.
+
+- 🔧 2026-07-05 CSB C25 final-group event cleanup follow-up: current local work now mirrors ReDMCSB `GROUP.C F0181` for final-creature C25 group kills by deleting stale C29..C41 group reaction/aspect/behavior events on the removed group's square. Remaining C25/group aftermath work is full active-group decision breadth beyond the bounded C37/C38 direction writeback, audio/sound mode, source-zone sprite binding, and wider real-data route proof.
+
+- 🔧 2026-07-05 CSB native save-header current-level follow-up: current local work now writes Firestaff-native CSB save-header `PartyMapZ` from runtime `current_level` instead of stale `party_z`, while preserving the payload's separate legacy `party_z` field. Remaining native-save work is broader original CSBGAME byte compatibility, real save corpus/original-engine proof, and wider gameplay state beyond the current runtime snapshot.
+
+- 🔧 2026-07-05 CSBWin export current-level follow-up: current local work now writes CSBWin GAMEBLOCK2/core-save `party_level` from CSB runtime `current_level` instead of stale `party_z`, so CSBWin export after stairs/pits/teleporters carries the active map level. Remaining CSBWin writeback work is still broader live body-state writeback beyond bounded champion/timer/ITEM16/leader-hand fields, plus original CSBWin byte roundtrip.
+
+- 🔧 2026-07-05 CSB save/resume current-level follow-up: current local work now also publishes raw `CSBGAME` roster-import and CSBWin GAMEBLOCK2/resume `party_level` handoffs into the dungeon-layer current-level singleton, not only the runtime profile. Remaining CSB save/resume level work is broader real-route proof with imported CSBGAME/CSBWin saves that cross stairs/pits/teleporters, plus original-byte roundtrip coverage.
+
+- 🔧 2026-07-05 CSB M11 current-level mirror follow-up: current local work now mirrors CSB runtime `current_level` through M11 startup/resume, input bridge sync, quicksave, quickload, idle ticks, and the runtime save-image restore path, so level-changing CSB movement/load state does not leave M11's public CSB state or dungeon singleton at an old map. Remaining CSB level-state work is broader real-route proof with stairs/pits/teleporters under package/runtime play, plus original CSBGAME/CSBWin byte-roundtrip coverage.
+
+- 🔧 2026-07-05 DM1/CSB startup data-scan follow-up: current local work now fast-paths the recommended hash-verified layout (`data/dm1`, `data/csb`, `data/dm2`, `data/nexus`, `data/theron`) before the expensive recursive scanner, including a symlinked requested data root such as `~/.firestaff/data -> /Volumes/...`. Current local work now also gives the M12 asset scanner a cooperative progress/cancel contract (`M12_AssetStatus_ScanWithOptions`, progress snapshots, cancel publication), routes launcher data-directory scans through that contract, runs UI-initiated rescans (folder-dialog selection plus default-data-dir reset) on a background SDL thread so the launcher can repaint progress and accept cancel during long archive walks, lets the M12 save browser discover saves in per-game `saves/{dm1,csb,dm2,nexus,theron}` roots beside or below the selected data root, and makes direct CLI slot save/list/load respect `--saves DIR`. Remaining work is package-level launcher smoke only if a user still reports slow, silent, or uncancellable startup on a much larger archive-heavy data tree.
+
+- 🔧 2026-07-04 CSB V1 CSBWin runtime import/export follow-up: current local work now wires the file-backed CSBWin resume helper into startup: M12 Continue accepts verified CSBWin save bodies for CSB, M11 `gameId="csb"` `savePath` applies them after hash-verified boot, CSB F9 uses the same fallback after native/CSBGAME load rejection, and M12 save browser now marks CSB runtime/raw-CSBGAME/verified-CSBWin saves as loadable through that same CSB-owned loader path instead of the DM1 save parser. Current local work also preserves verified GAMEBLOCK2 `object_in_hand` into M11's V1 leader-hand/cursor state, resolves its icon and bounded display name through the CSB runtime's own DUNGEON.DAT object records, and avoids DM1 object icon/name fallback when the CSB binding is absent. It stores the same cursor object in CSB runtime party state, lets CSB wall-ornament storage/generator/exchanger clicks mutate that runtime-owned hand state, lets decoded ITEM16 active-monster records claim live C37 AI ownership when their C04 group thing is present in the loaded dungeon, preserves CSBWin CHARDESC full 20-skill XP/temp state into runtime F0303 skill-level queries, imports CHARDESC portrait/action/body metadata into the native CSB runtime snapshot, can export the active runtime party back to bounded CSBWin CHARDESC/GAMEBLOCK2 champion summaries, emits scrambled/checksummed CSBWin GAMEBLOCK2/CHARDESC/ITEM16/TIMER/timer-queue sections, can build a CSBWin-valid GAMEBLOCK1 header for those section checksums, can assemble those pieces into a bounded CSBWin core save prefix through the timer queue while preserving imported GAMEBLOCK1 `byte22808[132]` tail bytes, preserves small appended post-core CSBWin save tails byte-for-byte through runtime/native save/export, can classify appended 256-byte DB11/Expool candidate blocks, can locate records through the CSBWin hash/bucket algorithm at both verifier and runtime-profile level, lets resumed save-tail Expool skin records override static dungeon DB11 skin records in the CSB custom-background skin-grid path, and can export that bounded core save from a runtime profile to memory or disk using the live runtime hand object for GAMEBLOCK2 `object_in_hand`. Remaining CSBWin import/export work is still broader CSB object sprite binding beyond leader-hand icon/name resolution, broader live body-state writeback beyond imported CHARDESC plus the bounded leader-hand field, applying broader appended DSA/global/Expool records to live runtime state/writeback, original CSBWin save byte roundtrip, and wider real-save runtime proof.
+
+  - 2026-07-05 update: current local work now decodes the PC ReDMCSB `OBJECT.C F0031` `M564_GRAPHIC_OBJECT_NAMES` stream into a CSB runtime-owned C199 icon-indexed object-name table and makes leader-hand object names prefer that table after F0033 icon resolution. Remaining CSB object UI work is broader object sprite binding and real-data proof beyond the verified startup/runtime M564 table handoff; M564 byte decoding and boot wiring are no longer open.
+
+  - 2026-07-05 update: current local work now also routes M11's generic object-icon accessor through the CSB runtime dungeon handle when `sourceKind == M11_GAME_SOURCE_CSB_BOOT`, so CSB leader-hand/panel/viewport paths that already call `m11_object_icon_index_for_thing()` no longer reinterpret CSB things through DM1 `world.things`. Remaining CSB object UI work is broader source-zone sprite/material binding and wider runtime proof, not the M11 accessor boundary.
+
+  - 2026-07-05 update: current local work now also lets M11's shared GRAPHICS.DAT assetloader open verified CSB PC34 big-endian new-format graphics headers and binds `M11_GameView_Start(gameId="csb")` to the CSB boot-profile graphics path when compatible. Remaining CSB render work is broader source-zone sprite/material binding, non-PC variant asset paths, and wider runtime proof, not the PC34 M11 assetloader header/binding boundary.
+
+- 🔧 2026-07-02 DM1 V1 F0412 spell parity follow-up: current `main` now removes M11's incorrect pre-emission Swing/Fighter XP from successful spell casts, routes committed `EMIT_SPELL_EFFECT` XP through the ReDMCSB `G0487` `Spell.SkillIndex`, applies the `L1273_ui_Experience` formula/RNG draw for successful casts, awards shifted XP on failed `NEEDS_MORE_PRACTICE` checks, fixes M11 power ordinals for higher power runes, applies `M069_SPELL_DISABLED_TICKS` after successful casts, pins all 25 `G0487` rows against both Firestaff spell-table consumers, applies the Footprints first/last scent-window side effect, and fixes Party Shield/FireShield high-defense scaling plus FireShield raw F0403 timeout. Remaining work is original/runtime effect evidence across all spell families and any other missing per-effect side effects; do not treat the bounded XP/disable/table/footprints/shield work as full spell-casting parity.
+
+  - 2026-07-08 update: the G0487 source-lock gate now also drives every DM1 spell row through the matching M10 F0412 effect producer: 10 potion rows, 6 projectile rows, and 9 other-effect rows. Remaining spell work is original/pixel evidence and any missing per-effect side effects beyond the runtime producer contract.
+
+  - 2026-07-02 update: current `main` now also expires F0412/F0763 spell status events that carry `TIMELINE_AUX_*` tags instead of lifecycle status ids, and PC34 native save export/import now maps those tags back to source EVENT C71/C73/C74/C77/C78/C79 with shield defense in `B.Defense`. Remaining work is broader original/runtime effect evidence across spell families, not the aux-tag timeout/save mapping.
+
+  - 2026-07-02 update: current `main` now also mirrors F0412 C71/C73/C79 spell-status start counters into the lifecycle status state used by M11 rendering/expiry while keeping the existing MagicState spell counters, and proves Invisibility start/expiry plus C73 Thieves Eye expiry through the M10 orchestrator. Remaining work is broader original/runtime effect evidence across spell families, not the status-counter mirror.
+
+  - 2026-07-02 update: current `main` now also mirrors F0412 shield-defense start deltas into lifecycle status for C74/C78-style expiry, and proves a live Party Shield cast/expiry keeps MagicState and LifecycleState in sync. Remaining work is broader original/runtime effect evidence across spell families, not the shield-defense mirror.
+
+  - 2026-07-02 update: current `main` now also maps F0763's C78 FireShield defense payload from the FireShield delta slot on expiry and proves a live Ful Bro Neta cast/expiry keeps MagicState and LifecycleState fire-shield defense in sync. Remaining work is broader original/runtime effect evidence across spell families, not C78 defense expiry.
+
+  - 2026-07-02 update: current `main` now also mirrors ReDMCSB `TIMELINE.C F0257` C70 light-decay addition without clamping negative Darkness intermediate light values, and proves live Darkness plus Magic Torch casts decay back to zero through their weaker-light follow-up chains. Remaining work is broader original/runtime effect evidence across spell families, not the C70 Darkness/Magic Torch decay arithmetic.
+
+  - 2026-07-02 update: current `main` now also removes the old F0757 Thieves Eye legacy/zero-duration envelope and follows ReDMCSB `MENU.C F0412` aliases for status durations: C2 Thieves Eye squares shifted spellPower, C3 Invisibility uses the shifted value directly, and C4/C6 square spellPower through `T0412032`. Remaining work is broader original/runtime effect evidence across spell families, not these C2/C3/C4/C6 timeout formulas.
+
+  - 2026-07-04 update: current local work now also implements the shared MEDIA629 `C4_SPELL_KIND_MAGIC_MAP` runtime effect path behind source validation, including `PANEL.C F0802` action-hand scroll text detection (`MAGICMAP`), `MENU.C F0412` C80..C83 duration formulas, and tick-orchestrator dispatch. DM1 V1's 25-row `G0487` table remains source-locked and unchanged because ReDMCSB marks these magic-map champion fields as CSB-only, not Dungeon Master. Remaining work is broader original/runtime effect evidence across the actual DM1 spell families and any still-missing per-effect side effects.
+
+- 🔧 2026-07-02 DM1 V1 F0231 residual parity follow-up: current `main` now suppresses M11's duplicate synthetic positive-damage Swing XP from `EMIT_DAMAGE_DEALT`, after M10 applies the source F0231 damage XP and F0407 applies the separate action-tail XP; it also proves a live F0407/F0231 positive melee action writes group HP, emits the same positive damage value, and reaches M11's damage log plus C014 hit overlay. Remaining work is original-DOS/pixel proof for the damage presentation, not the bounded M11 damage-emission XP/writeback/render path.
+
+- 🔧 2026-07-02 DM1 V1 MacBook Pro HoC inscription blur follow-up: current `main` now keeps the real HoC front-wall inscription path on the ReDMCSB M648 glyph renderer and extends the nearest CPU-present guard to `M11_Render_PresentIndexedToResolution()`, so explicit-resolution nearest paths no longer let SDL stretch small wall-text glyphs. Remaining work is same-state packaged-app capture on the MacBook Pro if the public package still shows blurry HoC wall inscriptions, especially to identify whether the report is V1 original, V2 filtered/upscaled with linear smoothing enabled, or package drift.
+
+  - 2026-07-03 update: current `main` now removes the generic M11 text fallback from DM1 V1 front-wall inscriptions and decodes visible wall text through the ReDMCSB inscription path (`C0_TEXT_TYPE_INSCRIPTION`) before drawing only GRAPHICS.DAT M648 glyph cells. Remaining work is packaged-app visual smoke only if a MacBook Pro artifact still shows blurred or substituted HoC inscription text.
+
+  - 2026-07-03 update: current local work now also removes Firestaff's synthetic black/dark-gray per-line inscription box and restores source D1C wall pixels under the M648 glyph rows before drawing the glyphs. Remaining work is same-state packaged-app visual smoke only if a released macOS artifact still shows unclear inscriptions.
+
+  - 2026-07-03 update: current local work now also extends the Retina/non-integer CPU-nearest presentation guard to the V2.0 scaled path and keeps the guard active when V2 palette/dither/post filters are enabled. The old V2 display-resolution/block-text inscription overlay is inert, so wall text stays on the ReDMCSB M648 source-glyph path. Remaining work is packaged-app visual smoke on the MacBook Pro report machine; if it is still unclear, capture the exact presentation mode/filter settings and same-state framebuffer.
+
+  - 2026-07-05 update: current local work now also forces V2.0 filtered presentation to resolve LINEAR scale-filter requests to NEAREST because the 2x path still contains source-locked M648 wall-glyph pixels. V2.1/V2.2 still honor the user filter. Remaining inscription work is packaged MacBook Pro smoke only if a release built from this commit still shows blur.
+
+  - 2026-07-06 update: current local work now also selects HoC wall text and wall sensors by the ReDMCSB visible wall `CELL` before decoding the D1C M648 inscription, and the runtime readability probe now checks all five front-readable HoC inscriptions including `YOU MUST PAY / FOR YOUR / ENTRANCE.` Remaining work is packaged MacBook Pro smoke only if a build from this commit still shows unclear inscriptions.
+
+- 🔧 2026-07-05 DM1 V1 HoC champion mirror packaged-app follow-up: current local work now makes M11 HoC front-mirror selection, mirror-disable, and viewport portrait detection use the source compact SquareFirstThings lookup for both floor and wall carrier squares, and the new real-data regression proves all 24 C127 mirror ordinals are front-visible/selectable through M11 from `~/.firestaff/data/dm1`. Remaining work is packaged MacBook Pro smoke to confirm the release artifact picks up the same fix, plus cleanup of older mirror probes whose no-floating assertions assume a side turn cannot reveal another valid source mirror.
+
+- 🔧 2026-07-03 DM1 V1 keyboard navigation visual feedback package follow-up: current `main` now echoes arrows/WASD/Home/End/Q/E on the on-screen V1 movement-arrow zones and proves the framebuffer feedback path locally. Remaining work is same-state packaged-app smoke only if a public macOS artifact still fails to show the pressed arrow cue; the M11 runtime/render path itself is covered by `m11_overlay_command_queue_block`.
+
+- 🔧 2026-07-03 DM1 V1 MacBook Pro post-resurrection CPU follow-up: current local work now gates active M11 game presentation on dirty frames, so a static resurrected-champion HUD no longer forces full redraw/present every 16 ms between source ticks. Remaining work is package-level Activity Monitor smoke on the MacBook Pro/M5 report machine; if CPU is still high, profile audio/session-timer/SDL driver wakeups separately from M11 frame presentation.
+
+- 🔧 2026-07-03 DM1 V1 startup animation packaged-app follow-up: current local work now fixes the too-fast FTL swoosh and DM title startup paths by using source vblank timing for `SWSH.C` delays, and moves the short C001 title runtime pad onto the visible PRESENTS phase instead of hiding it after the final guard. Remaining work is same-state packaged-app smoke on MacBook Pro only if the public macOS artifact still plays startup too quickly or flashes PRESENTS too briefly; the focused runtime timing gates are green locally.
+
+  - 2026-07-30 C001 receipt correction: completed boot metadata now reports
+    TITLE.C's 23 source events, not the unrelated 53-frame `TITLE.DAT` bank.
+    Remaining work is still packaged macOS visual capture, not another title
+    decoder or timing fallback.
+
+  - 2026-07-05 update: current local work now also restores the ReDMCSB PC/F20 entrance keyboard path so fresh Return and keypad Enter activate `C001_MODE_LOAD_DUNGEON` during the entrance wait loop, while Space remains inert and mouse/touch button routes stay source-locked. Remaining entrance/startup work is packaged-app smoke for visible entrance/title behavior on MacBook Pro and any still-missing original credits/save-button affordance proof, not the Return/KP Enter command route.
+
+  - 2026-07-05 update: current local work now also makes the entrance credits command show GRAPHICS.DAT C005 with the PC34 credits palette and wait through the ReDMCSB 1800-tick input window before returning to entrance. Remaining entrance/startup work is packaged-app smoke and broader original save/resume button behavior proof, not the credits-button handoff.
+
+  - 2026-07-05 update: current local work now also routes entrance RESUME through the launcher's validated DM1 quick-resume path before falling back to the older local source-id filename, while rejecting foreign-game quick-resume paths. Remaining DM1 entrance work is broader live saved-game proof from packaged app/original-save corpora, not the launcher-to-entrance path selection.
+
+  - 2026-07-03 update: current local work now also corrects the DM title/PRESENTS special palette constants against ReDMCSB PC34 VGA `VIDEODRV.C C25_VGA`: PRESENTS is white-on-black, DUNGEON+MASTER keeps 0x0F white, and MASTER red is on 0x0C. Remaining startup work is packaged-app MacBook Pro smoke only if a released artifact still shows wrong title colors or timing.
+
+- 🔧 2026-07-03 DM1 V1 entrance packaged-app follow-up: current `main` now fixes the source-locked entrance door-opening composite so opening frames use C004 + only the dungeon viewport + moving C002/C003 door strips, not the full M11 dungeon/HUD framebuffer. Mouse/touch entrance button hit boxes remain source-locked and covered; keyboard Return/Space activation remains intentionally disabled by the current click-only policy. Remaining work is same-state packaged-app smoke on MacBook Pro only if a released artifact still shows incorrect entrance/door opening visuals.
+
+- 🔧 2026-07-02 CSB V1 runtime/playability route follow-up: current `main` now extends the CSB Utility `NEW_GAME` runtime route beyond the old single-step proof. The focused route gate imports a DM1 party through Utility, boots CSB runtime, renders first/post/final viewport frames, applies repeated queued movement, proves a wall-blocked forward step preserves party position, returns to the start cell, and round-trips a bounded CSB save prefix from the final route state. Remaining work is the next real playability step: drive a wider CSB-specific route with real-data adventuring state, interactions beyond movement, CSBGAME.DAT save/reload artifacts, original/Firestaff capture anchors, and audio/timing evidence. Do not count this synthetic route as full CSB runtime, full save compatibility, original overlay parity, or pixel parity.
+
+  - 2026-07-02 update: current `main` now replaces the route gate's private save-prefix check with a real `csb_v1_runtime_save_game_to_path()` / `csb_v1_runtime_load_game_from_path()` runtime snapshot path over the existing CSB save header. The route now saves final position, direction, leader, caster, party snapshot, game time, play time, timeline/input queues, and chaos state, reloads into a fresh booted CSB runtime profile, and renders the reloaded viewport. Remaining CSB startup/playability work is broader real-data adventuring, interactions beyond movement, original CSBGAME.DAT compatibility, CSBgraphics.dat bitmap binding, and real package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also makes `M11_GameView_Start(gameId="csb")` own a verified CSB boot profile, load optional `savePath` through `csb_v1_runtime_load_game_from_path()`, mirror resumed pose/tick state into M11, tick CSB through the CSB runtime boundary, and clean up the owned boot profile on shutdown. Remaining CSB work is broader real-data adventuring, interactions beyond movement, original CSBGAME.DAT byte compatibility, CSB graphics/viewport binding, and package/runtime proof; do not count this as full CSB playability.
+
+  - 2026-07-03 update: current `main` now also lets M12 detect `firestaff-csb-quicksave.sav` as a quick-resume candidate only when the bytes pass the same CSB runtime save loader used by M11, so Continue can carry a CSB `savePath` from launcher to runtime without accepting DM1-shaped quicksave bytes. Remaining CSB work is still broader real-data adventuring, interactions beyond movement, original CSBGAME.DAT byte compatibility, CSB graphics/viewport binding, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also writes CSB F5/M11 quicksaves through `csb_v1_runtime_save_game_to_path()` when `sourceKind == M11_GAME_SOURCE_CSB_BOOT`, updates last-save config for M12 quick-resume, and proves the written file reloads through the CSB runtime loader. Remaining CSB save work is still original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and broader gameplay state beyond the current runtime snapshot.
+
+  - 2026-07-03 update: current `main` now also restores CSB F9/M11 quickloads in place through `csb_v1_runtime_load_game_from_path()` when `sourceKind == M11_GAME_SOURCE_CSB_BOOT`, without falling into the DM1 quicksave/world loader. Remaining CSB save work is still original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and broader gameplay state beyond the current runtime snapshot.
+
+  - 2026-07-03 update: current `main` now also routes `M11_GameView_Draw()` for `M11_GAME_SOURCE_CSB_BOOT` through the CSB V1 viewport adapter instead of the old handoff text screen. The regression compares the M11 framebuffer's viewport rectangle to a direct `csb_v1_viewport_render_frame()` call with the same runtime pose and live dungeon grid. Remaining CSB startup/playability work is broader real-data adventuring, interactions beyond movement, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also routes M11 CSB turn/movement inputs through `CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat()` after CSB-specific freeze/disk/inventory keys. C001/C002 turns update the owned CSB runtime pose and M11 mirror state; C003..C006 movement reaches the source command queue but remains bounded by the current runtime bridge. Remaining CSB startup/playability work is dungeon-aware movement application, broader interactions beyond movement, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also applies C003..C006 movement through the bounded CSB one-cell runtime step with a live dungeon wall probe when the M11 bridge drains the source command queue. Remaining CSB startup/playability work is movement consequences beyond the coordinate step: sensors, stairs, teleporters, doors, timing/cooldown persistence across wider routes, broader interactions beyond movement, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also hardens the movement wall probe for both real CSB byte-map dungeons and legacy synthetic fixtures, and exposes handled/attempted/applied/blocked/destination/cooldown fields in `CSB_V1_InputCommandRuntimeResult`. Remaining work is still the next real movement-consequence layer: sensors, stairs, teleporters, doors, wider route timing, broader interactions, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also applies a bounded CSB stair level-index transition after successful C003..C006 movement when the destination raw square is `C03_ELEMENT_STAIRS`, including the real-format `0x04` stairs-up bit and result fields for raw square, square type, stair direction, and old/new level. Current local work now resolves party stairs through ReDMCSB `DUNGEON.C F0154` map-offset metadata and applies the `F0155` exit direction. Remaining work is still stair timing, sensors, teleporters, doors, wider route timing, broader interactions, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also blocks CSB movement into real-format closed doors and closed fake walls using the ReDMCSB `F0366` door-state/fakewall masks, exposes door/fakewall block causes in the runtime result, and applies a bounded open-pit fall to the adjacent lower level for real-format `C02_ELEMENT_PIT` squares with `MASK0x0008_PIT_OPEN` and without `MASK0x0001_PIT_IMAGINARY`. Current local work now also applies bounded F0324 party fall damage after each pit fall with attack 20 and legs/feet wound eligibility, and resolves party pit falls through ReDMCSB `DUNGEON.C F0154` map-offset metadata. Remaining work is still source-global fall-damage RNG exactness, stamina/rope/sound/view timing, sensors, teleporters, wider route timing, broader interactions, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also records real-format CSB thing-data bases/counts in the dungeon loader, exposes a read-only `csb_v1_dungeon_get_thing_record()` accessor, and applies one open C05 teleporter party transition from real square-first-thing data through the existing F0267/F0284 teleporter rotation helper. Remaining work is still chained teleporters/pits, full object/group/projectile teleporter movement, teleporter sound/view timing, sensors, wider route timing, broader interactions, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also follows the ReDMCSB `MOVESENS.C F0267` PC34 100-step chained movement cap for party teleporter/pit consequences after a successful CSB C003..C006 step. The runtime can now follow teleporter-to-teleporter routes and multi-level open-pit falls for the party, with result counters for total chained moves, teleporter count, pit count, and limit hits. Current local work now also aggregates F0324 party fall damage across chained pits and resolves chained party pit/stair level changes through `DUNGEON.C F0154` map-offset metadata. Remaining work is still object/group/projectile teleporter/pit movement, teleporter buzz/audio, source-global fall-damage RNG exactness, stamina/rope/view timing, sensors, wider real-data routes, CSBgraphics.dat bitmap binding breadth, original CSBGAME.DAT byte compatibility, CSBWin save import/export breadth, and package/runtime proof.
+
+  - 2026-07-03 update: current local work now also runs a bounded party floor-sensor pass after successful CSB C003..C006 movement, following ReDMCSB `MOVESENS.C F0267` -> `F0276` for source removal and same-map destination addition. It walks real-format C03 sensor thing lists, handles C003 floor-party, C005 party-on-stairs, and PC34 C009 version-checker sensors, resolves HOLD to SET/CLEAR, preserves audible counts, and queues F0268-style square events into the runtime timeline. Remaining sensor work is still wall-click sensors, object/possession/group sensors, object/group/projectile movement sensors, local rotation effects, launcher/generator side effects, DSA breadth, and wider real-data route proof.
+
+  - 2026-07-05 update: current local work now also exposes ReDMCSB `MOVESENS.C F0267` `G0327_i_NewPartyMapIndex` handoff semantics from CSB C003..C006 runtime movement. Same-level movement leaves the flag clear; stairs, pits, teleporters, and chained pit/teleporter routes publish the final deferred map index in `CSB_V1_InputCommandRuntimeResult` while Firestaff keeps its existing direct runtime map update. Remaining movement handoff work is still the broader object/group/projectile movement path, audio/timing, active group side state, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also applies bounded CSB runtime side effects for dispatched square timeline events on real-format byte maps: C10/C01 door events step door state and requeue animation follow-ups, C02 destruction marks destroyed doors, and C07/C08/C09 fakewall/teleporter/pit events set/clear/toggle the source square flags. Remaining square-event work is wall/corridor event handlers, object/group/projectile teleporter/pit movement, launcher/generator side effects, sounds/damage, DSA breadth, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also covers bounded C65/C06 CSB timeline sensor state: C65 re-enables the first disabled C03 sensor on a square as a C006 floor group generator, and C06 wall C005 AND/OR gates plus C006 countdown sensors mutate real-format sensor data and queue matching remote square effects. Remaining square-event work is still C05 corridor text/group-generator spawn semantics, C06 projectile launchers/rotation effects, object/group/projectile teleporter/pit movement, sounds/damage, DSA breadth, and wider real-data route proof.
+
+    - 2026-07-23 update: C005 no longer duplicates its bit-mask and remote
+      dispatch in the CSB runtime. It now obtains the live target-square type
+      from `DUNGEON.DAT` and consumes `F0730`'s source result, including
+      `Remote.Value` delay, once-only state, local-effect route, and audible
+      switch request. Invalid target data fails closed. Remaining F0248 work
+      is the broader unimplemented sensor families and real-data route breadth.
+
+    - 2026-07-23 update: C018 now consumes its `F0731` receipt through the
+      existing source-locked `ENDGAME.C` route, including curtain, 60 Hz
+      delay, restart-disable, F0666 handoff, and F0444 request. A valid live
+      runtime transitions to `CSB_STATE_VICTORY`; it does not synthesize an
+      endgame frame. Remaining work is actual endgame presentation/audio and
+      real-data route capture.
+
+    - 2026-07-23 update: C005/C006 LocalEffect now follows `SENSOR.C`
+      F0270/F0271 instead of rotating during the scan. A C10 local effect
+      grants the source 300 Steal XP with the concrete wall-cell leader-only
+      rule, while only the final non-XP local effect is considered for one
+      post-list CLEAR/TOGGLE rotation. Remaining F0248 work is still broader
+      wall-sensor and real-data route breadth.
+
+    - 2026-07-23 update: F0245 now admits only a loaded C01 corridor and
+      orders C006 as F0185 materialization, optional C17 buzz, then source
+      disable/C65 scheduling. F0248 likewise admits only a loaded C00 wall,
+      so a mismatched event cannot mutate sensor bytes. Positive coverage
+      against a local hash-verified CSB `DUNGEON.DAT` remains open.
+
+    - 2026-07-23 update: F0248 C014/C015 now keeps source-object ownership
+      fail-closed: malformed live Thing chains or an unloaded F0247 launch
+      destination leave the sensor and source list unchanged. C25 additionally
+      requires its active explosion slot, map/square/cell, type, and scheduled
+      tick to agree before F0220 can advance it. This is runtime-only; actual
+      projectile pixels still require a loaded source `GRAPHICS.DAT` route.
+      Positive capture against a hash-verified CSB package remains open.
+
+  - 2026-07-03 update: current local work now also handles bounded C05 corridor text visibility plus group-generator cooldown state. C05 C02 textstrings set/clear/toggle the source Visible bit, and C05 C006 generators disable once-only sensors or disable-and-schedule delayed C65 re-enable from M046 ticks. Remaining C05 work is actual `GROUP.C F0185` group materialization/count randomization/health/direction/audio binding against CSB runtime group slots, plus C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, DSA breadth, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also binds C05 C006 generator materialization into CSB real-format C04 group slots. The runtime uses the existing source-locked M10 `F0860_RUNTIME_HandleGroupGenerator_Compat()` for count/random/health/cell fields, finds the first unused group record (`Next == 0xFFFF`), writes the 16-byte group payload, and links the group at the square head while preserving the previous thing chain. Remaining generator work is active-group AI/event scheduling, blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also starts generated C05 groups through the source timeline by scheduling C37 `UPDATE_BEHAVIOR_GROUP` at `game_time + 1` with `255 - MovementTicks` priority after materialization. Remaining generator/AI work is full C37 behavior execution, active-group side state, blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also applies the first bounded C37 behavior execution slice for generated groups. A visible wandering C04 group on the party map mutates its real-format behavior bits to C6 attack when adjacent or C7 approach when in the same row/column farther away, following ReDMCSB `GROUP.C F0209`. Remaining generator/AI work is active-group target side state, recurring C37 scheduling, per-creature attack events, movement/blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also requeues the next C37 tick when that bounded visible-party branch switches a generated group to C7 approach, matching ReDMCSB `GROUP.C F0209`'s `Map_Time++`/`SetEvent37` path. Remaining generator/AI work is active-group target side state, actual approach movement, blocked-destination retry, per-creature attack events for C6, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also performs the first bounded C7 approach movement for generated C04 groups by relinking the group thing from its source square to a passable next square, creating the destination square-first thing-list entry when a reserved `THING_NONE` slot is available, then scheduling the following C37 on the moved coordinates. Current local work now also applies same-map creature-scope C05 teleporter chains after that bounded C7 move, including the PC34 100-step cap and repeated F0262 group cell/direction rotation. Current local work now also schedules bounded C60/C61 retries when a C7 group move is blocked by party/group occupancy. Remaining generator/AI work is full F0202 occupancy breadth beyond party/group retry, active-group target/prior/last-move state, per-creature C6 attack events, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, source-global fall-damage RNG/ActiveGroup side state, object teleporter movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also carries generated C7 group teleporter movement across C05 `TargetMapIndex` boundaries: raw C04 relink accepts source/destination maps, target blocking checks use the teleporter target map, and the next C37 event is requeued on the target map. Current local work now also carries generated C7 groups through open non-imaginary pits with F0154 target-map resolution and requeues the next C37 on the lower map. Current local work now also applies bounded F0191 attack-20 fall damage after pit-fall, including final-kill F0190 pack/drop/death-smoke cleanup and no C37 requeue for killed groups. Remaining generator/AI movement work is source-global RNG exactness, empty-destination insertion/full F0202 occupancy, ActiveGroup side state, audio, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also handles the adjacent C7 approach boundary: when the moved generated group reaches the party-adjacent row/column square, its next C37 switches the group behavior to C6 attack and does not relink the group onto the party square. Remaining generator/AI work is per-creature C38 attack event expansion, champion damage/evasion side effects, full F0202 occupancy breadth beyond empty-destination insertion and party/group retry, active-group target/prior/last-move state, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also expands bounded C6 attack entry into C38..C41 per-creature attack events using the real C04 group count bits and the same `255 - MovementTicks` priority. Remaining generator/AI work is the C38 attack body itself: champion targeting/evasion/damage, attack cooldown/aspect timing, active-group side state, full F0202 occupancy breadth beyond current empty-destination insertion and party/group retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
+
+  - 2026-07-03 update: current local work now also gives generated-group C38 a bounded live-party effect by applying deterministic HP loss to the first living imported champion when the attacking C04 group is in C6. Remaining C38 work is source attack resolution: champion cell targeting, evasion/defense, damage rolls, attack/aspect cooldown scheduling, projectile and Giggler steal branches, active-group side state, full audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also routes lethal bounded generated-group C38 damage through the CSB champion death flag and transfers party leadership to the next living champion. Remaining C38 work is still source attack resolution and aftermath breadth: target cell selection, evasion/defense, damage rolls, attack/aspect cooldown scheduling, projectile/Giggler branches, full party-death/game-over handling, active-group side state, full audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also marks the CSB runtime `game_over` when lethal bounded generated-group C38 damage leaves no living champion, matching the ReDMCSB `CHAMPION.C F0319` party-dead boundary. Remaining C38 work is source attack resolution and presentation breadth: target cell selection, evasion/defense, damage rolls, attack/aspect cooldown scheduling, projectile/Giggler branches, game-over screen/presentation, active-group side state, full audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also requeues bounded generated-group C38 attacks after a live-party effect using the source `CreatureInfo.AttackTicks` base and existing `255 - MovementTicks` priority, so generated attackers no longer strike only once. Remaining C38 work is source attack resolution and timing breadth: RNG jitter, aspect-update events, target cell selection, evasion/defense, damage rolls, projectile/Giggler branches, game-over screen/presentation, active-group side state, full audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also routes bounded generated-group C38 damage through ReDMCSB-style ordered champion-cell targeting for adjacent attacks, falling back to first living champion only when the bounded CSB cell model cannot resolve a target. Remaining C38 work is source attack resolution breadth: full creature-cell state, attack-any/prefer-back-row branches, evasion/defense, damage rolls, RNG jitter, aspect-update events, projectile/Giggler branches, game-over screen/presentation, active-group side state, full audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also removes the synthetic fixed `1 + creatureType % 4` generated-group C38 damage path and routes bounded C38 melee damage through the shared M10 `F0736_COMBAT_ResolveCreatureMelee_Compat()` creature-to-champion resolver, using ReDMCSB `G0243` creature profiles plus CSB imported champion statistic snapshots. Remaining C38 work is runtime RNG state instead of the deterministic bridge seed, full armor/wound/rest/shield/skill snapshots, poison side effects, full creature-cell/attack-any/prefer-back-row branches, projectile/Giggler branches, aspect-update events, game-over presentation, active-group side state, full audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also feeds CSB's compact imported 16-byte skill row into the C38 defender snapshot for `C07_SKILL_PARRY`, clamped to the F0303 level range, so generated creature melee applies the `F0303(PARRY) << 1` defense term instead of always using zero parry. Remaining C38 defender work is still full CSB/DM1 skill-XP reconstruction, object modifiers, armor/wound/rest/shield/action-defense snapshots, poison side effects, runtime RNG state, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also adds CSB champion `Wounds` state, feeds existing wounds into bounded C38 defender snapshots, ORs shared `F0736` `woundMaskAdded` results back into target champions, clears wounds on resurrect/reincarnate, and lets F0309/F0310 load/movement read wounds. Remaining C38/aftereffect work is still pending-damage/wound staging and panel redraw, full armor/wound-defense snapshots, shield/rest/action-defense snapshots, poison timeline side effects, runtime RNG state, original save byte coverage for wounds, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also applies bounded C38 poison side effects when the shared resolver returns `poisonAttackPending`: immediate F0322-style poison damage, CSB poison dose/count state, 36-tick C75 scheduling with Attack-1, C75 count decrement before reschedule, and poison-death leader/game-over handling. Remaining poison work is still full source RNG state, F0307 vitality-adjusted poison attack before F0322, panel/status presentation, antivenin/unpoison integration, original CSBGAME byte coverage, audio, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also mirrors the bounded ReDMCSB `GROUP.C F0209`/`F0208` C38 follow-up split by queuing an earlier C33..C36 aspect event after a live generated-group attack. The C33 event carries the remaining attack delay in `C.Ticks`/`c_effect` and expands into the next C38..C41 attack event when dispatched, preserving source event ordering before the later attack cadence fires. Remaining C38 timing work is still source RNG jitter, live ActiveGroup aspect sprite mutation, projectile/Giggler branches, full armor/rest/shield/action-defense snapshots, audio, game-over presentation, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also handles the bounded C38 Giggler branch for adjacent C6 attacks. The runtime resolves steal/flee through the shared ReDMCSB `GROUP.C F0193` slot table, removes stolen ready/action-hand objects from CSB champion slots, links them into the C04 group's `Slot` chain while preserving BUG0_12 first-object `Next` behavior, avoids normal melee damage, and schedules flee or the next C38 cadence. Remaining C38 work is still source RNG state instead of the deterministic bridge seed, live ActiveGroup side state, projectile-special attack branches, full armor/rest/shield/action-defense snapshots, audio, game-over presentation, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also handles bounded C06 wall TextString visibility for same-cell wall text, following ReDMCSB `TIMELINE.C F0248`: SET marks the visible bit, CLEAR hides it, TOGGLE flips it, and events for other wall cells leave the text unchanged. Remaining C06 work is projectile launchers, rotation side effects, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also handles bounded C06 wall C018 endgame sensors through the shared ReDMCSB `TIMELINE.C F0248` helper: C018 marks CSB runtime victory from real-format sensor bytes and the existing victory gate blocks later V1 ticks. Remaining C06 work is projectile launchers, rotation side effects, and presentation/audio breadth for the full endgame route.
+
+  - 2026-07-03 update: current local work now also gives CSB runtime a bounded projectile list and handles C06 C008/C010 explosion launchers through the shared ReDMCSB `TIMELINE.C F0248` / `F0730` launcher helper plus `F0810_PROJECTILE_Create_Compat()`. Remaining C06 projectile work is new-object/square-object launcher creation, projectile movement/render/save breadth, rotation side effects, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also schedules C49 movement events for CSB C008/C010 launcher projectiles and dispatches the first bounded open-square flight step through M10 `F0811_PROJECTILE_Advance_Compat()`, including immediate-impact launcher semantics, kinetic/attack decrement, parity cell step, and live requeue. Remaining projectile work is impact side effects, explosion materialisation/render binding, save/load persistence, object launcher creation, teleporter/rotation breadth, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also handles bounded C06 C014/C015 square-object launchers by collecting same/next-cell objects from the real-format square thing-list, unlinking them without sensor side effects, and creating kinetic launcher projectiles from the associated things. Remaining C06 projectile launcher work is C007/C009 new-object launchers, object-projectile impact/materialisation breadth after flight, teleporter/rotation breadth, source-zone sprite binding, audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also handles bounded C06 C007/C009 new-object launchers for the F0167 launcher-object subset: torch, dagger, arrow, slayer, rock, poison dart, throwing star, and boulder. It allocates unused real-format object records, writes source item types, creates kinetic launcher projectiles, disables once-only sensors, and queues C49 movement. Current local work now also materializes bounded C49 non-explosion associated objects back to source/destination squares, creates square-first-thing entries on previously empty squares when the original-style preallocated table has a free tail slot, consumes C49 creature-hit group actions with `KEEP_THROWN_SHARP_WEAPONS` group-slot ownership for surviving sharp weapons, applies bounded C49 projectile teleporter chains with cumulative direction/cell rotation, rejects creature-only C05 teleporters for projectiles, applies same-map creature-scope C05 teleporter chains for generated C7 groups, moves projectile-associated objects through one same-map object-scope C05 chain while preserving the CM2 no-cell-rotation exception, and moves F0186/F0188 killed-creature fixed/Slot drops through same-map object-scope C05 chains, adjacent-level open pits, and bounded stairs-down exit routing after materialization. Current local work now also dispatches bounded C004 floor object sensors after C49 associated-object materialization and after F0186/F0188 object drops, using the ReDMCSB same-type guard and remote square-event queue. Remaining launcher/projectile/movement work is the full object-info table beyond that subset, full projectile reaction/fear/audio side effects, broader generic object movement sensors beyond C004, source-global group fall-damage RNG/ActiveGroup side state, source-zone sprite binding, overflow/BUG0_08 proof policy, and wider real-data route proof.
+
+  - 2026-07-23 verified F0247/F0219 cross-map projectile impact: after a C05 projectile teleporter chain, C49 now reads champions, C04 groups, and other C14s from the resolved destination map rather than the launcher map. The focused two-map PC34-shaped regression proves a kinetic C14 crosses an open C05 and damages the destination C04; remaining projectile work is broader real-CSB route capture and impact side effects.
+
+  - 2026-07-23 verified F0247/F0217/F0215 destination list ownership: C49 now uses ReDMCSB `GROUP1.C F0175` to locate C04 through the complete real Thing chain, rather than assuming C04 is its first entry. The focused two-map C05-chain regression proves a target C03 followed by C04 retains its associated arrow exactly once on the authoritative destination chain; remaining retention work is broader live impact consequences and corpus coverage.
+
+  - 2026-07-23 verified F0247/F0219 post-teleport C14 material handoff: the
+    F0115 viewport boundary now admits an impact presentation receipt only
+    when the exact C14 remains linked in the resolved destination square's
+    real F0161/F0159 Thing chain. It carries the actual `PROJECTILE.Slot`,
+    energy and attack bytes plus source F0142/F0115 metadata; source-square
+    and detached records fail closed without synthetic markers. The live
+    F0115 route now consumes that receipt through its real bitmap drawer and
+    stays no-draw when no source drawer is bound. Remaining work is broader
+    real-CSB capture and fully live C49 receipt publication.
+
+  - 2026-07-23 update: the source-owned C14 receipt is now admitted by the
+    live CSB boot profile and consumed by its normal F0128 frame through the
+    existing F0115/F0791 consumer. Missing list ownership or a real drawer is
+    no-draw, never a synthetic marker. Remaining work is wider C49 real-data
+    publication and corpus capture.
+
+  - 2026-07-23 update: M11 now sends source-admitted C14 impacts to that
+    boot-profile route, so the actual M11 F0128 invocation consumes the same
+    F0219/F0115 material queue. No marker or host fallback is reachable.
+
+  - 2026-07-23 verified F0247/F0219 live runtime-to-boot C14 publication:
+    the C49/F0219 runtime now publishes only a committed C05-chain receipt
+    (slot, resolved map/square/cell, tick). Before every F0128 frame the boot
+    route validates that exact live slot and its real C14 F0161/F0159 link,
+    derives viewer geometry from the current runtime pose, and sends the
+    source F0115/F0791 bitmap to M11. Missing, stale, detached, or unsupported
+    aspect rows are no-draw; the older generic overlay marker is unreachable
+    on this path. The focused regression is
+    `m11_csb_f0247_boot_projectile_frame_pc34_compat`. Remaining work is
+    broader real-CSB corpus capture for all F0142 aspect rows.
+
+  - 2026-07-23 verified F0247/F0212 projectile-pool exhaustion: C007/C009/C014/C015 now consume CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`. A full C14 pool routes the selected real object through the normal object-materialization path at the exact launch square and cell, while C15 explosion pseudo-things remain excluded. The focused C007 full-pool regression proves raw weapon, square-list, and once-only sensor bytes; remaining launcher work is real-CSB corpus and broader projectile consequences.
+
+  - 2026-07-05 update: current local work now also routes C06 wall C005/C006 triggered LocalEffect sensors through the ReDMCSB `MOVESENS.C F0272` local rotation boundary instead of queuing remote square events, disables once-only C005/C006 sensors only when they actually trigger, and fixes the CSB wall-cell rotation helper to use source thing-cell bits. Remaining C06 work is broader local effects beyond rotation, audio/sound mode, source-zone sprite binding, projectile/render/save breadth, and wider real-data route proof.
+
+  - 2026-07-05 update: current local work now also routes TURN_LEFT/TURN_RIGHT and MOVE_BACKWARD on a current stairs square through ReDMCSB `CLIKMENU.C F0364` stairs handling instead of ordinary rotation/back-step movement, makes party floor-sensor dispatch level-aware for the source/removal side of map-changing movement, and runs ordinary TURN_LEFT/TURN_RIGHT C003 floor sensors as removal-before-rotation plus addition-after-rotation. Remaining movement work is broader current-stairs sensor/arrival proof on real CSB routes, object/group sensor breadth, source-zone sprite binding, audio, original save-byte coverage, and wider real-data adventuring proof.
+
+  - 2026-07-03 update: current local work now also records CSB MAP source-level and OffsetMapX/Y metadata from DUNGEON.DAT and resolves materialized object pit/stairs level changes with the ReDMCSB `DUNGEON.C F0154` global-coordinate model. A focused three-map regression proves object pit drops choose the target source-level map by matching global coordinates, not by `map_index + 1`. Current local work now also lets materialized non-projectile object drops follow C05 object/party-scope teleporters across `TargetMapIndex`, with a focused C25 killed-group drop proving a carried weapon moves from map 0 to map 1. Remaining object-movement work is still full C001/C002/C007 floor sensor breadth beyond bounded C004, full stairs-up breadth, source-global group fall-damage RNG/ActiveGroup side state, source-zone sprite binding, audio, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also gives CSB runtime a bounded explosion list and materialises F0811 launcher-projectile impact explosions through M10 `F0821_EXPLOSION_Create_Compat()`, scheduling C25 explosion advance events after C49 wall impacts. Remaining explosion/projectile work is C25 advance side effects, explosion render binding, champion/group/door impact side effects, save/load persistence, object/square-object launchers, teleporter/rotation breadth, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also consumes bounded C25 one-shot launcher impact explosions through M10 `F0822_EXPLOSION_Advance_Compat()` and `F0824_EXPLOSION_Despawn_Compat()`, so C49 lightning/fireball wall impacts no longer leave stale explosion records after their first advance. Remaining C25 work is persistent cloud/smoke/rebirth reschedule breadth, champion/group/door side-effect writeback, render binding, save/load persistence, object/square-object launchers, teleporter/rotation breadth, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also persists bounded CSB projectile and explosion lists in Firestaff's native CSB runtime-save format v2, while retaining v1 native-save loading with empty runtime lists. A focused save/load roundtrip proves one live projectile, one live smoke explosion, and the queued C25 event survive `csb_v1_runtime_save_game_to_path()` / `csb_v1_runtime_load_game_from_path()`. Remaining projectile/explosion work is render binding, champion/group/door side-effect writeback, poison/rebirth breadth, object/square-object launchers, teleporter/rotation breadth, original CSBGAME/CSBWin save byte compatibility, and wider real-data route proof.
+
+  - 2026-07-03 update: current local work now also gives CSB V1 viewport config optional live runtime projectile/explosion lists and wires M11 CSB boot rendering to pass those lists into the viewport. The bounded overlay marks visible live projectiles and draws live explosions afterward, matching F0115 layer order until the full CSBgraphics/F0791 sprite path is wired. The D3L2/D3R2 live projectile overlay now also uses the ReDMCSB F0115 C2900 source-zone placement rows and source front-cell suppression instead of the old approximate marker position. Remaining render work is bitmap-backed source-zone sprite binding, asset-backed bitmap selection, proper clipping/scale/flip, champion/group/door side-effect writeback, poison/rebirth breadth, object/square-object launchers, teleporter/rotation breadth, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also applies bounded C25 explosion combat writeback after M10 `F0822_EXPLOSION_Advance_Compat()`: party-square fireball/lightning/poison actions fan out through F0324-style champion damage/death/leader handling, and group-square actions mutate real-format `GROUP.Health[4]`, compact surviving creature slots, and unlink/mark unused a final killed group. It also proves a C25 fireball queues C02 and the existing C02 handler mutates real-format door state to C5 destroyed. Remaining C25 work is full group aftermath (fixed possession drops, active-group cleanup, event rewrites, fear/reaction events), poison/rebirth breadth, source RNG state, source-zone sprite binding, object/square-object launchers, teleporter/rotation breadth, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also applies the ReDMCSB `GROUP.C F0190` queued-event cleanup for bounded CSB C25 multi-creature group kills in C6 attack state: killed-slot C33..C36/C38..C41 events are deleted, survivor events with higher creature indexes are decremented, and the V1 timeline heap is repaired after type changes. Remaining C25 group aftermath is fixed possession drops, active-group side cleanup beyond queued events, fear/reaction events, audio, poison/rebirth breadth, source RNG state, source-zone sprite binding, object/square-object launchers, teleporter/rotation breadth, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also creates and schedules ReDMCSB `GROUP.C F0190` C040 death smoke when bounded CSB C25 group damage kills a creature, using the source 110/190/255 attack by creature size and the killed creature cell. Remaining C25 group aftermath is fixed possession drops, active-group side cleanup beyond queued events, fear/reaction events, audio/sound mode, poison/rebirth breadth, source RNG state, source-zone sprite binding, object/square-object launchers, teleporter/rotation breadth, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also drops a killed final group's existing real-format `GROUP.Slot` carried thing chain onto the source square before marking the C04 record unused, following ReDMCSB `GROUP.C F0188`/`F0190` slot-chain handling. Remaining C25 group aftermath is fixed possession generation/allocation, active-group side cleanup beyond queued events, fear/reaction events, audio/sound mode, source RNG state, source-zone sprite binding, object/square-object launchers, teleporter/rotation breadth, and wider real-data proof.
+
+  - 2026-07-03 update: current local work now also materializes fixed creature possessions for bounded CSB C25/F0190 group kills through the existing ReDMCSB `F0824` resolver, allocating unused raw C05/C06/C10 records, storing item type/cursed bits, assigning source floor cells, and appending the dropped things to the square list. Remaining C25 group aftermath is active-group side cleanup beyond queued events, fear/reaction events, audio/sound mode, source RNG state, source-zone sprite binding, object/square-object launchers, teleporter/rotation breadth, and wider real-data proof.
+
+  - 2026-07-03 update: current `main` now also lets the CSB runtime import a raw v2.0/v2.1 `CSBGAME\0` roster file through `csb_v1_runtime_import_csbgame_roster_from_path()`, and `csb_v1_runtime_load_game_from_path()` falls back to that roster import when the Firestaff runtime-save header path rejects the bytes. The import preserves the already booted runtime pose and promotes only champion roster/leader/caster/difficulty state. Remaining save work is still full original CSBGAME.DAT dungeon/global-state byte compatibility, CSBWin save breadth, original artifact round-trip proof, and broader gameplay state beyond roster handoff.
+
+  - 2026-07-03 update: current `main` now also proves that the raw `CSBGAME\0` roster fallback is reachable through startup, not only through the runtime unit. M12 quick-resume accepts a raw CSBGAME roster save as a CSB `savePath`, and M11 `gameId="csb"` startup imports the roster while preserving the verified boot pose. Remaining save work is still full original CSBGAME.DAT dungeon/global-state byte compatibility, CSBWin save breadth, original artifact round-trip proof, and broader gameplay state beyond roster handoff.
+
+  - 2026-07-03 update: current local work now also feeds the existing CSBWin 512-byte GAMEBLOCK1 XOR-pad decoder into the CSBWin save discovery boundary. Startup/import discovery can distinguish a valid CSBWin header from ordinary bad magic, expose the read-only CSB/DM key verdict and public header fields, and still reject the file for import until the CSBWin body decoder exists. Remaining save work is still full CSBWin body import/export, original CSBGAME.DAT dungeon/global-state byte compatibility, original artifact round-trip proof, and broader gameplay-state save coverage.
+
+  - 2026-07-03 update: current local work now also moves user-staged CSBWin save file loading into `csb_v1_csbwin_save_loader_boundary_classify_file()`, so probes/startup-facing code can classify real `csbgame.dat` / `csbgame.bak` / `dmsave.dat` / `dmsave.bak` files through the same bounded byte path as the synthetic tests. Remaining save work is still full CSBWin body import/export, original CSBGAME.DAT dungeon/global-state byte compatibility, original artifact round-trip proof, and broader gameplay-state save coverage.
+
+  - 2026-07-04 update: current local work now also exposes CSBWin GAMEBLOCK1 body hashes/checksums from the decoded 512-byte header and adds a bounded `UnscrambleStream`-compatible section decoder for block2, ITEM16, character, timer, and timer-queue bodies. Remaining CSBWin save work is wiring those decoded sections into real runtime import/export, original artifact byte proof, startup resume through real user saves, and broader gameplay-state coverage.
+
+  - 2026-07-04 update: current local work now also verifies a full CSBWin 512-byte save body in source order: GAMEBLOCK2, ITEM16, characters, timers, and timer queue. Startup-facing staged-file classification can now distinguish a valid header-only CSBWin save from one whose body boundaries/checksums also validate, while still rejecting it as import-pending. Remaining work is parsing the decoded sections into CSB runtime state, importing/exporting real CSBWin saves, and proving original byte round-trips.
+
+  - 2026-07-04 update: current local work now also promotes decoded CSBWin GAMEBLOCK2 into a bounded startup/resume summary: time, RNG seed, object-in-hand, champion count, party pose, hand/caster, timer queue metadata, ITEM16 capacity, last action timestamps, and move-disable timer. Remaining work is still the stateful importer that applies this summary plus decoded champion/item/timer bodies to `CSB_V1_RuntimeProfile` and proves real CSBWin save resume.
+
+  - 2026-07-04 update: current local work now also applies that CSBWin GAMEBLOCK2 summary to a booted `CSB_V1_RuntimeProfile`, updating game time, timeline tick, party pose/current level, champion count, leader/caster metadata, and retaining RNG/cursor/timer/ITEM16/action-timestamp fields for the later body import. Remaining work is full decoded champion body import, ITEM16/timer queue materialization, cursor object ownership, and real CSBWin save resume proof.
+
+  - 2026-07-04 update: current local work now also parses the four CSBWin `CHARDESC` records from the verified character body and applies a bounded champion handoff to `CSB_V1_RuntimeProfile`: identity, vitals, attributes, possession RN slots, pose/action timers, wounds/poison/food/water/load. Remaining CSBWin save work is still portrait bytes, full 20-skill XP model preservation, ITEM16/timer queue materialization, cursor object ownership, real CSBWin save resume, and export/round-trip proof.
+
+  - 2026-07-04 update: current local work now also parses and preserves bounded CSBWin character-tail spell/footprint state, ITEM16 active-monster records, timer records, and timer queue order after checksum verification, and copies those summaries into `CSB_V1_RuntimeProfile`. Remaining CSBWin save work is actual ITEM16/timer materialization into live CSB runtime systems, cursor object ownership, portrait/full skill-XP import, real CSBWin save resume, export, and byte round-trip proof.
+
+  - 2026-07-03 update: current `main` now also gives the CSBgraphics.dat M11 binding contract an actual framebuffer apply helper for trusted decoded indexed bitmap overrides, a selected-entry LZW decode/apply bridge, a startup-facing runtime plan, live `CSB_V1_BootProfile` ownership of the skip-safe CSBgraphics cache/plan state, and a per-frame M11 CSB draw hook that applies ready planned entries after the source viewport render. Remaining CSBgraphics work is real-data breadth: registering a real user-staged CSBgraphics.dat hash, proving the runtime hook against that file, custom background binding, broader HUD/viewport override routes, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also lets a user-staged CSBWin `CSBgraphics.dat` participate in startup discovery through a data-root `csbgraphics.hashes` manifest (`<md5> <size> <label>`), while preserving hash-only recursive discovery and size-gating before classification. Remaining CSBgraphics work is real-data breadth after an actual user-staged file exists: proving the runtime hook against that file, custom background binding, broader HUD/viewport override routes, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also maps CSB CustomBackgrounds skin-def bitmap/mask pairs into the CSBgraphics M11 runtime plan as deferred masked-composite dependencies, using the existing CSB-lineage room-slot/skin-def contract. The old per-frame CSBgraphics rectangle-copy hook skips those deferred rows so it cannot draw an unmasked backdrop incorrectly. Remaining custom-background work is the actual masked viewport composite path, real CSBgraphics.dat proof, broader HUD/viewport override routes, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also adds a CSBgraphics custom-background aligned-mask apply adapter: planned bitmap/mask entries can be LZW-decoded, converted to the existing CSBWin-style word buffers, and applied through `csb_v1_viewport_custom_background_apply_aligned_mask_pc34()`. Remaining custom-background work is wiring this adapter into the live room-slot viewport draw path for real CSBgraphics.dat skin selections, adding unaligned-mask/ApplyBackground3 handling if required by real data, and package/runtime proof.
+
+  - 2026-07-03 update: current `main` now also exposes a CSBgraphics custom-background room/layer apply API that resolves CSBWin `pSkinDef` bitmap/mask ids through the source-locked room-slot contract, honors the `roomNum < 5` near-layer gate, finds the matching planned bitmap/mask pair, and reuses the aligned-mask composite path. Current local work now also gives `csb_v1_viewport_render_frame()` an explicit configured CustomBackgrounds hook, corrects CSBgraphics entry-1 decoding to follow CSBWin's indexed skin-def format (`word[0]` skin count, `word[skin+1]` byte offset), decodes CSBWin `BACKGROUND_MASK` room offsets from mask entries when no synthetic mask geometry is supplied, selects configured cell/default skins through the existing room-slot selector, fixes M11 CSB boot ordering so plan/cache/skin-def state is available before the viewport frame render, iterates all 16 CSBWin room slots when auto-room mode has a cell/default skin source, adds a source-locked CSBWin skinCache C layer, lets the CSB real-format dungeon loader account for 256-byte DB11 Expool blocks plus locate CSBWin hash records for skin-cache payloads, and feeds live M11 CSB rendering with a runtime-owned Expool-backed skin grid/default skin from the loaded dungeon. Current local work now also inserts CustomBackgrounds through a DM1 viewport pre-square callback for CSBWin room draw points 0..15, while retaining a duplicate-safe post-frame fallback for configured slots, and ports the CSBWin ApplyBackground3 unaligned-mask branches that CSBWin itself implements. Remaining custom-background work is the CSBWin `SMR<8 && SSR>=8` branch that is commented/NotImplemented in CSBWin, plus package/runtime proof with a user-staged CSBgraphics.dat.
+
+  - 2026-07-14 update: the production M12-to-M11 title/door/HUD integration gate now begins from `csb_v1_startup_real_scan_and_receipt()` and accepts only its hash-verified PC34 `GRAPHICS.DAT` plus `DUNGEON.DAT` pair. The existing real package captures remain opt-in and skip cleanly without that pair; a merely launchable directory cannot satisfy them through a fallback surface. Remaining package work is a user-staged CSBgraphics.dat proof and broader CSBWin save/runtime corpus coverage.
+
+- 🔧 2026-07-01 DM1 V1 MacBook Pro release-smoke follow-up: main now keeps Q/E/Home/End/keypad turn taps out of the delayed DM1 V1 vblank pending queue, matching the ReDMCSB turn path that breaks the input wait immediately while only movement C003..C006 remains gated by cooldown/readiness. Real-data HoC/title probes are green on current main (`hoc_no_false_projectile_artifacts`, `hoc_floor_runtime_no_false_items`, `dm_title_swoosh_handoff_palette`). Remaining work is same-state packaged-app capture if the latest public release still shows the wrong DM1 intro palette or HoC artifacts on MacBook Pro, to separate already-fixed-main behavior from release-package/tag drift.
+
+  - 2026-07-01 update: user smoke-tested latest GitHub release `v3.0.14` on MacBook Pro and still reproduced the DM1 intro wrong-palette symptom, slow/retried Q/E turning, and false HoC floating/floor object artifacts. Current `main` is post-release and its matching probes pass locally, so remaining work is to cut or capture a same-state package from current `main` and verify the packaged app, not to assume the `v3.0.14` binary contains the later fixes.
+
+  - 2026-07-01 update: remote `v3.0.15` already points at the older release-prep commit before the immediate-turn and late DM1 projectile/combat fixes, so do not retag it. Cut `v3.0.16` from current `main` and use that package for the next MacBook Pro smoke test.
+
+  - 2026-07-01 update: public GitHub `v3.0.16` assets are present and target commit `b9d8eea0`, while current `main` is `80a27821`. The released macOS arm64 zip hash matches GitHub's asset digest, reports `Firestaff v3.0.16`, scans `~/.firestaff/data/dm1` as DM1 READY, and reaches `LOADING DUNGEON` from the packaged `.app` binary. Current-main CTest coverage for the reported areas is green (`hoc_no_false_projectile_artifacts`, `hoc_floor_runtime_no_false_items`, `m11_overlay_command_queue_block`, `dm1_v1_turn_step_timing_gate_pc34_compat`, `dm_title_palette_regression`, `dm_title_palette_silicon`, `dm_title_swoosh_handoff_palette`, `m11_input_queue_pc34_compat`). Remaining work is a same-state packaged-app pixel/input capture on MacBook Pro if `v3.0.16` still visually reproduces the intro-palette or HoC artifact symptoms.
+
+  - 2026-07-01 update: current `main` now also routes DM1 party-square fireball/lightning/poison-cloud explosion damage through the ReDMCSB F0324/F0321 champion path instead of raw per-party HP subtraction. This closes one M10 false-effect/combat-adjacency risk near the HoC artifact report, but the remaining release-smoke work is still packaged-app pixel/input capture on the MacBook Pro if the public package reproduces visually.
+
+  - 2026-07-02 update: current `main` now also syncs decoded and raw DUNGEON.DAT Thing-list next pointers when the M10 F0215 projectile impact path materializes a thrown associated Thing back onto an existing square chain. This closes the low-level raw/decoded stale-tail risk behind thrown-object HoC artifact hypotheses, but remaining release-smoke work is still packaged-app pixel/input capture for the MacBook Pro intro-palette and HoC visual symptoms.
+
+  - 2026-07-02 update: current `main` now also rewrites the raw weapon/armour/junk object records when M10 F0190 fixed-possession drops allocate reused free slots, so stale raw item type/cursed bits cannot survive behind decoded Animated Armour-style drops. Remaining release-smoke work is still packaged-app pixel/input capture for the MacBook Pro intro-palette and HoC visual symptoms.
+
+  - 2026-07-02 update: current `main` now also rewrites the raw group record after M10 F0190 projectile/melee group damage, including HP, cells, count, slot, and next pointer. This closes another raw/decoded stale-state risk near killed-some/all monster mutations, but remaining release-smoke work is still packaged-app pixel/input capture for the MacBook Pro intro-palette and HoC visual symptoms.
+
+  - 2026-07-02 update: current `main` now also routes direct M11 F0811 projectile hits on champions through the ReDMCSB F0321/F0313 damage scale with champion shields, armour, vitality, wounds, and poison gating, instead of raw HP subtraction. Remaining release-smoke work is still packaged-app pixel/input capture for the MacBook Pro intro-palette and HoC visual symptoms.
+
+  - 2026-07-02 update: current `main` now also has a cross-platform SDL dummy-renderer readback gate for `M11_Render_PresentIndexedWithSpecialPalette` across TITLE PRESENTS, TITLE DUNGEON+MASTER, ENTRANCE, and CREDITS special palettes. This closes the test-coverage gap where the Apple-Silicon palette probe could skip on non-Apple-Silicon CI, but remaining release-smoke work is still packaged-app pixel/input capture on the MacBook Pro if a public package reproduces visually.
+
+  - 2026-07-02 update: current `main` now also routes M11 dungeon palette-index selection through the shared M10 ReDMCSB F0337 light query instead of a private M11 duplicate, after the F0338 torch-decay handoff. Remaining release-smoke work is still same-state packaged-app pixel/input capture and any renderer refresh-timing proof if a public package reproduces the intro-palette or HoC visual symptoms.
+
+  - 2026-07-02 update: current `main` now also exposes an M11 F0337 palette-index probe API and locks the LIGHT action/F0257 decay path at palette 4 -> 4 -> 5 through `test_m11_action_stamina_runtime_pc34_compat`. Remaining release-smoke work is still packaged-app pixel capture and original-render timing/cadence proof, not the live M11 light-to-palette query.
+
+  - 2026-07-02 update: same-state current-main verification on `/Volumes/Extern-disk/firestaff-builds/build-dm1-mbp-smoke-current-main` passed the reported MacBook Pro symptom gates: `hoc_no_false_projectile_artifacts`, `hoc_floor_runtime_no_false_items`, `m11_overlay_command_queue_block`, `dm1_v1_turn_step_timing_gate_pc34_compat`, `dm_title_swoosh_handoff_palette`, `m11_input_queue_pc34_compat`, and `m11_phase_a`. Since public `v3.0.16` is an ancestor of `main`, the remaining work is to publish or capture a package built from current `main` and compare that exact package on MacBook Pro if wrong intro palette, slow Q/E turning, or HoC false objects still reproduce.
+
+  - 2026-07-02 update: the data-free M11 overlay/runtime regression now also proves static DUNGEON.DAT explosion Things do not count as visible viewport effects, matching the already-covered static projectile case while preserving runtime projectile/explosion visibility. Remaining release-smoke work is still same-state packaged-app MacBook Pro pixel/input capture.
+
+  - 2026-07-02 update: release-prep for `v3.0.17` is now in progress from current `main` because the focused symptom gates pass locally while public `v3.0.16` is 82 commits behind. Remaining work after tag/build is MacBook Pro package smoke on the new `v3.0.17` artifact if the symptoms still reproduce.
+
+  - 2026-07-02 update: current `main` now also prioritizes DM1 V1 Q/E/Home/End/KP4/KP6 turn scancodes before persisted M11 keymaps in both keydown and held-key polling, so stale pre-v2.8 user keybinding files cannot route Q/E into cooldown-gated strafe commands. Remaining release-smoke work is still same-state macOS package pixel/input capture for the reported intro-palette and HoC visual symptoms if they reproduce in the public artifact.
+
+  - 2026-07-02 update: `v3.0.18` release-prep packages the post-`v3.0.17` Q/E keymap-priority guard after local focused gates and pass617 CI were green. Remaining work after tag/build is MacBook Pro package smoke on the `v3.0.18` artifact if the reported intro-palette, Q/E, or HoC visual symptoms still reproduce.
+
+  - 2026-07-02 update: user report is treated as still release-facing: latest public release before this prep is `v3.0.18` at `2b54dcd`, while current `main` is `04ee482c` with 12 more commits and the focused symptom gates green locally. `v3.0.19` release-prep now packages current `main`; remaining work after GitHub release assets build is MacBook Pro package smoke on the `v3.0.19` artifact.
+
+  - 2026-07-02 update: after the user reproduced the same three symptoms on latest release `v3.0.19`, current `main` now also suppresses viewport projectile/explosion draw paths unless `m11_sample_viewport_cell()` resolves drawable effect metadata (`firstProjectileGfxIndex` / `firstExplosionType`). This closes a remaining stale/invalid runtime-effect fallback path that could render cue art in HoC even when the real static DUNGEON.DAT projectile/explosion chains were already filtered. Focused HoC, intro-palette, Q/E/input, overlay, action-stamina, and Phase A gates pass locally; remaining work is a new macOS package/tag and same-state MacBook Pro smoke if the intro palette or Q/E symptoms still reproduce.
+
+  - 2026-07-02 update: the user photo's HoC fireball-looking object is now reproduced as a floor-ornament render leak, not as a projectile/explosion count leak. Current `main` suppresses random and sensor-derived HoC map-0 floor ornament ordinals for quiet non-wall cells and extends `hoc_no_false_projectile_artifacts` with a framebuffer hot-color blob guard; direct and CTest HoC probes pass with zero blob leaks. Remaining release-smoke work is still a new macOS package/tag and same-state MacBook Pro smoke for the intro palette/Q/E/HoC symptoms.
+
+  - 2026-07-31 correction: ReDMCSB `DUNGEON.C F0172` applies the random
+    floor-ornament calculation on map zero too. Firestaff no longer
+    suppresses HoC's real random ornament stream; the map seed and metadata,
+    plus explicit sensor overrides, are the sole authority. The old
+    fireball-artifact diagnosis remains historical and must not justify
+    suppressing original floor plates or grates.
+
+  - 2026-07-02 update: current `main` now also fixes PC34 extra side-wall cell classification for the D3L2/D3R2 and D2L2/D2R2 viewport helpers: raw DUNGEON.DAT wall bytes with `MASK0x0010_THING_LIST_PRESENT` are walls, and raw corridor bytes no longer alias through the old `& 0x1F` mask. This targets the reported "two steps forward and one left/right" wall-missing/rendering bug. Remaining release-smoke work is still packaged MacBook Pro HoC capture after a new build/tag if visual symptoms reproduce.
+
+  - 2026-07-02 update: current `main` now also pins the actual M11 runtime viewport sampler for the same side-wall class: synthetic M11 coverage proves D2L/D2R plus D2L2/D2R2/D3L2/D3R2 raw wall bytes resolve to wall-like non-open cells at the ReDMCSB F0128 relative coordinates, and D3L2/D3R2 now map to their F0115 view-square rows. Remaining work is still same-state packaged MacBook Pro capture if a public artifact shows the wall missing visually.
+
+  - 2026-07-02 update: current `main` now also fixes the M11 DM1 V1 side-wall draw pass itself: D2L/D2R/D3L2/D3R2 wall panels are no longer suppressed by the old near-side lane guard, matching ReDMCSB `DUNVIEW.C F0128` far-to-near wall rendering where nearer side walls overpaint farther panels. Remaining work is still packaged MacBook Pro capture after the next public artifact if the visual wall-missing symptom reproduces.
+
+  - 2026-07-02 update: current `main` now also removes the center-lane max-visible-depth filter from the M11 DM1 V1 side-wall pass. ReDMCSB `DUNVIEW.C F0128` dispatches D2/D3 side squares before nearer center squares overpaint them, so D2L/D2R and D3L/D3R side panels must still be eligible when D1C/D2C is blocked. Remaining work is packaged MacBook Pro visual smoke only if a public build still shows the missing side-wall symptom.
+
+  - 2026-07-03 update: local `main` now also drains queued DM1 V1 movement commands from `M11_GameView_AdvanceIdleTick()` after ReDMCSB-style G0310/G0311 cooldown aging, so a movement key accepted during cooldown no longer requires another physical key press before the queued move materializes. This targets the MacBook Pro symptom cluster where live HoC navigation could leave the player effectively stuck around the Sonja view even though the all-mirror renderer/click route was correct. Remaining work is packaged MacBook Pro smoke from this commit or later if the public artifact still shows only Sonja.
+
+  - 2026-07-02 update: current `main` now also pins the live M11 D2L/D2R wall blit rectangles to the ReDMCSB `DUNVIEW.C F0119/F0120` G0163 source frames (`C710/C711`) instead of the older approximate D2 side-wall rectangles. Remaining work for the wall report is same-state packaged MacBook Pro visual capture if a public artifact still shows the side wall missing.
+
+  - 2026-07-02 update: M10 and M11 projectile digests now treat other-projectile collisions as cell-specific, matching ReDMCSB `PROJEXPL.C F0219/F0217` `M011_CELL` handling. A runtime regression proves two projectiles can share one dungeon square in different cells without false despawn. Continue residual F0328/F0811 render parity, projectile-projectile side-effect coverage, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: current `main` now also routes the normal center and debug side projectile draw paths through the raw ReDMCSB layout-696 C2900 rows selected by `DUNVIEW.C F0115` / `G2028`, instead of falling back to the older five-row projectile placement for D1C/D2C front cells. The remaining F0328/F0811 work is original/pixel evidence, broader multi-projectile list-order rendering proof, and packaged MacBook Pro HoC capture if a public artifact still reproduces false objects.
+
+  - 2026-07-02 update: M10 orchestrator and direct M11 runtime now also consume the peer projectile on Firestaff Phase17 v1 `HIT_OTHER_PROJECTILE`, and M10 deletes the peer projectile's future C49 move event. Continue original Fontanel list-order review and pixel/render proof separately from this order-independent v1 side-effect contract.
+
+  - 2026-07-02 update: direct F0820 and live M10 projectile-move dispatch now run the ReDMCSB `PROJEXPL.C F0218/F0217` common impact tail for projectile-vs-projectile hits, including spell explosion materialization, mundane thud requests, current-square coordinates for source-cell collisions, peer-projectile side effects, and peer C49 deletion. Continue residual F0328/F0811 thrown-object render/materialization parity, original projectile list-order evidence, pixel proof, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: direct M10 F0820 creature-impact results now also mirror the ReDMCSB Fireball-versus-Black-Flame branch: the heal amount is carried without emitting the normal Fireball impact explosion or fallback sound. Continue broader F0328/F0811 thrown-object render/materialization parity, projectile rendering evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-03 update: after the user reproduced "only Sonja" in the latest release, current `main` now preserves HoC C127 `SENSOR_EFFECT_CHAMPION` results through the C080 wall-click route and proves all 24 seeded champion ordinals open the candidate panel from the D1C portrait center. Remaining release-smoke work is still a new/package-same-state MacBook Pro capture if a public artifact cannot select other HoC champions.
+
+  - 2026-07-03 update: current `main` now also proves a player-route HoC mirror sweep without clearing the framebuffer between steps: all 19 source-visible wall mirrors paint/click their own champion, and the five open/non-wall C127 placements clear/reject without stale portrait pixels. Remaining work is packaged-app drift/smoke only unless a new release built from this commit still shows "only Sonja".
+
+  - 2026-07-02 update: live M10 projectile-move dispatch now also applies that Fireball-versus-Black-Flame branch in the orchestrator instead of generic group damage, including no C30 reaction and no impact explosion. Continue broader F0328/F0811 thrown-object render/materialization parity, projectile rendering evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: direct M11 Fireball-versus-Black-Flame healing now also rewrites the raw DUNGEON.DAT group record after updating decoded HP, matching the M10 raw-sync guard for the same ReDMCSB `PROJEXPL.C F0217` branch. Continue broader thrown-object render/materialization parity, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: direct M11 F0811/F0217 normal creature projectile damage now also rewrites the raw DUNGEON.DAT group record after F0190-style mutations, including HP, cells, count, slot, and next pointer. Continue broader thrown-object render/materialization parity, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: direct M11 projectile advancement now skips inactive zeroed projectile slots (`reserved3 == 0`) in addition to negative slot indices, preventing phantom projectile/Thing 0 processing after live impacts. Cross-cell champion impact now materializes thrown associated Things on the resolved F0811 impact square with decoded/raw next cleared. Continue broader F0328/F0811 render parity, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: current `main` now also routes M11 render/sampler/projectile-collision scans through the same active projectile-slot guard (`reserved3 != 0`) as the advance loop, so zeroed inactive slots with `slotIndex == 0` cannot become visible projectiles or collision peers. Continue broader F0328/F0811 render parity, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-02 update: current `main` now also routes the M10 live projectile digest and collision-peer scans through the same active runtime-slot guard (`slotIndex >= 0 && reserved3 != 0`), matching ReDMCSB F0218/F0219 linked-Thing iteration. Continue broader F0328/F0811 render/materialization parity, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+  - 2026-07-04 update: current local work now also moves the active-slot guard inside public `F0811_PROJECTILE_Advance_Compat()` itself, so a direct/bounded caller cannot advance a zeroed compact projectile slot into a phantom HoC artifact even if it misses the outer scan guard. Continue broader F0328/F0811 original/pixel evidence and package capture separately.
+
+  - 2026-07-02 update: current `main` now also routes M11 runtime explosion summary/sampling through an active explosion-slot guard (`slotIndex >= 0 && reserved0 != 0`), matching ReDMCSB's linked explosion-Thing creation boundary for F0213/F0224. Continue broader F0328/F0811 render/materialization parity, original/pixel evidence, and packaged MacBook Pro HoC capture separately.
+
+- 🔧 2026-07-01 DM1 V1 F0407 special-action follow-up after FREEZE LIFE boxes: continue the remaining F0407/F0231 action precondition and special non-melee audit beyond the now-covered FREEZE LIFE common branch plus blue/green magical-box consume branches, LIGHT amount/decay/charge handling, HEAL hidden-skill query plus case-local XP/no-effect ActionPerformed semantics, WINDOW Thieves Eye scheduling/counter/charge handling, direct M11 non-melee `G0497` XP-tail handling including direct SHOOT no-ammunition XP clearing, FLUXCAGE +100 remove-event scheduling plus third-cage Lord Chaos C29 danger reaction, FUSE incomplete-Fluxcage Lord Chaos escape relink plus complete-Fluxcage M11 game-won gate, projectile-action charge/failure-XP tails, INVOKE no-action-time-audio routing, F0406 champion-direction sync for SHOOT/projectile/INVOKE/THROW/FLUXCAGE/FUSE actions, and the listed F0328/F0811 projectile handoffs. Keep original-DOS pixel/audio evidence separate from this coding slice.
+
+  - 2026-07-01 update: DM1 action-XP routing now reads shared PC34 EN G0496/G0497 accessors instead of private duplicate tables, correcting I34E G0497 values for BLOW HORN/HEAL/CALM/BRANDISH; M11 HEAL now distinguishes successful healing-loop XP override from no-effect common G0497 HEAL=5 XP. Continue residual F0407/F0231 audit work beyond these now-covered table-route and HEAL-tail semantics.
+
+  - 2026-07-01 update: M11 F0407 Air projectile actions now have explicit F0406/F0327 runtime coverage for DISPELL and LIGHTNING: both spend Air-skill mana through G0496, decrement action-hand charges through F0405, mirror champion direction to party direction, launch from the champion cell, and create the source Harm Non Material / Lightning Bolt projectile with fixed F0327 attack and step energy. Continue residual special-action audit work beyond these covered projectile rows.
+
+  - 2026-07-01 update: the same M11 Air projectile rows now also cover the F0327 full-projectile-list failure tail for DISPELL and LIGHTNING: failed create returns false, still spends Air mana, decrements charges, mirrors F0406 direction, keeps full G0491 disabled ticks, and halves G0497 XP before F0304 award. Continue residual special-action audit work beyond these covered failure paths.
+
+  - 2026-07-01 update: M11 F0407 FIREBALL now has explicit underpowered-cast coverage for the `CurrentMana < RequiredMana` branch: kinetic energy scales by current mana over required mana, mana cost is capped to available mana, F0405/F0406 still run, and F0327 still launches the weakened projectile. Continue residual projectile-action audit beyond this bounded low-mana case.
+
+  - 2026-07-01 update: M11 F0407 DISPELL and LIGHTNING now also have explicit underpowered-cast coverage for the Air `CurrentMana < RequiredMana` branch: kinetic energy scales by current mana over required mana, mana cost is capped to available mana, F0405/F0406 still run, and F0327 still launches the weakened Harm Non Material / Lightning Bolt projectile. Continue residual projectile-action audit beyond these bounded low-mana cases.
+
+  - 2026-07-01 update: M11 F0407 INVOKE now has matching underpowered-cast coverage for the randomized Wizard projectile branch: `RANDOM(128)+100` kinetic energy is bounded to the scaled low-mana range, mana cost is capped to available mana, F0405/F0406 still run, and F0327 still launches one of the source randomized projectile families. Continue residual projectile-action audit beyond this bounded low-mana case.
+
+  - 2026-07-01 update: M11 F0407 INVOKE now also preserves the source RNG order: `RANDOM(128)+100` kinetic energy is drawn before the `RANDOM(6)` projectile-family switch, and the low-mana branch now proves exact scaled energy from that source draw. Continue residual projectile impact/render work separately.
+
+  - 2026-07-01 update: the Pass55 M11 direct-audio audit now treats INVOKE as source-silent at action time, matching ReDMCSB `MENU.C F0407` randomized projectile routing without `F0064_SOUND_RequestPlay_CPSD`; the only remaining direct-marker bucket is the generic non-`EMIT_SOUND_REQUEST` tick-emission fallback. Continue original runtime audio cadence/overlap evidence separately.
+
+  - 2026-07-01 update: M11 direct THROW now matches the F0407/F0328 empty-action-hand failure order: F0406 direction sync runs before F0328 returns false, no projectile or F0328 movement lockout is created, and the common G0491/G0494/G0497 tail still follows the source table. Continue residual projectile-action audit beyond this bounded failure case.
+
+  - 2026-07-01 update: successful M11 THROW now records the ReDMCSB enable-action C01 action-hand slot ordinal when F0328 accepts the thrown object; empty-hand failure leaves it unset. Continue residual F0328/F0811 thrown-object impact, render, and world-mutation parity separately.
+
+  - 2026-07-01 update: M11 now routes the F0328 M563 combat sound from the shared thrown-object helper, so both action-hand THROW and leader-hand C080 `F0329 -> F0328` throws request the source sound once. Continue residual thrown-object impact/render parity separately.
+
+  - 2026-07-01 update: accepted M11 throws now award F0328 Throw XP before querying `F0303(THROW)` for same-projectile kinetic/attack/step calculations, so a threshold-crossing throw immediately uses the raised Throw level. Continue residual thrown-object impact/render parity separately.
+
+  - 2026-07-01 update: accepted M11 throws now preserve F0328/F0330's four-tick champion action-disable when F0407's G0491 common tail is zero; action-row THROW still receives the F0407 C01 action-hand slot ordinal, and leader-hand `F0329 -> F0328` keeps F0330's zero slot ordinal. Continue residual thrown-object impact/render parity separately.
+
+  - 2026-07-01 update: M11 THROW now treats Firestaff's PJE-05 full-projectile-list cap as an accepted F0328 throw after the source side effects have run, clearing the action hand while preserving F0328 stamina, sound, Throw XP, and action-disable without allocating past the cap. Continue residual thrown-object impact/render parity separately.
+
+  - 2026-07-01 update: the leader-hand C080 `F0329 -> F0328` route now has matching full-projectile-list coverage: the leader hand is cleared, the pre-existing action hand is restored, and F0328 stamina, sound, Throw XP, and action-disable are preserved while PJE-05 refuses a new projectile slot. Continue residual thrown-object impact/render parity separately.
+
+  - 2026-07-02 update: accepted M11 leader-hand C080 `F0329 -> F0328` throws now also consume the PC34 stop-wait source tick from ReDMCSB `CLIKVIEW.C F0375` `CHANGE8_11_FIX`, so the first C48/C49 projectile move and F0328 movement/action-disable cooldowns age immediately after the click. Continue residual thrown-object impact/render parity, original-DOS evidence, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407 SPIT now has explicit low-mana and full-projectile-list failure-tail coverage: the Fire-skill projectile branch scales kinetic energy from base 250 before F0327, caps mana spend to available mana, still runs F0405/F0406, and halves G0497 XP when F0327 cannot create a projectile. Continue residual projectile-action audit beyond these bounded SPIT cases.
+
+  - 2026-07-02 update: M11 F0407 FIRESHIELD now has explicit low-mana failure-tail coverage matching the existing SPELLSHIELD branch: F0403 consumes the remaining mana, schedules C78 at half duration with half defense, leaves charges unchanged on failure, then F0407 halves disabled ticks and quarters G0497 XP. Continue residual F0407/F0231 audit beyond this bounded shield case.
+
+  - 2026-07-01 update: M11 F0407 FLIP now proves the ReDMCSB heads/tails message branch and the common action tail; successful THROW now also pins F0328's F0305 object-weight stamina cost plus the common F0407 jitter tail when G0494's base stamina table entry is zero. Continue residual special-action audit beyond these bounded zero-base stamina cases.
+
+  - 2026-07-01 update: M11 F0407 FUSE now preserves `ActionPerformed=TRUE` when F0225 finds no Lord Chaos in the target square, matching the source no-Chaos branch after the Harm Non Material fuse effect is attempted; the direct helper regression pins the F0406 direction sync, common G0491 disabled tail, and no-endgame result. Continue residual special-action audit beyond this bounded FUSE no-target case.
+
+  - 2026-07-01 update: M11 F0407 FUSE now also matches the PC34 F0225 boundary guard: when the party faces outside the map, no Harm Non Material explosion or Chaos/endgame handling is created, but the action still reports performed and reaches the common F0407 tail. Continue residual special-action audit beyond this bounded FUSE map-boundary case.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now removes live C50 Fluxcage instances from both the party square and Lord Chaos square before the Grey Lord/game-won handoff, matching the PC34 endgame cleanup. Continue residual special-action and endgame audit beyond this bounded F0446 cleanup case.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now also writes the Grey Lord group-state handoff from source: health 10000, centered cell `0xFF`, direction opposite the party, and matching active-AI mirrors. Continue residual endgame animation/credit/pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now creates the opening fireball burst at attacks 55..255 step 40 on the Lord Chaos square, and skips the normal same-dispatch ACTION tick after game-won so the burst is not immediately consumed and Grey Lord health remains at the source final value. Continue later Lord Order/Harm Non Material cycle, buzz audio, credits, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now also creates the HNM burst, final Fireball+HNM attack-255 pair, and F0446 buzz sound request while preserving final Grey Lord state. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now applies the source party defense setup at endgame start: magical light 200 plus FireShieldDefense, SpellShieldDefense, and ShieldDefense/partyShieldDefense all set to 100. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now also sets the source `G0077_B_DoNotDrawFluxcagesDuringEndgame` equivalent and hides surviving C50 Fluxcages from viewport artifact sampling while leaving their live runtime entries intact. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now deletes other groups on the current map after the Grey Lord handoff, mirroring the F0446 `F0189_GROUP_Delete` cleanup while preserving the Grey Lord group and compacting matching active-AI state. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, credits timing, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now collects the current-map `(0,0)` TextString chain, decodes invisible message text, orders entries by the hidden leading A/B/... sort key, clears the message area, and prints the final ordered endgame text message through the M11 message log. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, per-message delay/display cadence, game-won music, final endgame screen handoff, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now records the final F0446 endgame handoff parameters: C2 game-won music request, 600-tick final delay, restart-disallowed state, and `F0444_STARTEND_Endgame(C1_TRUE)`. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, per-message delay/display cadence, actual music playback asset route, final endgame screen rendering, and pixel proof separately.
+
+  - 2026-07-02 update: M11 audio now routes F0446 `C2_MUSIC_GAME_WON` requests through the existing decoded SONG.DAT/title-music playback path when source music is available, while keeping headless/no-backend runs as request-only. Continue real timed F0445 frame pacing, repeated Chaos/Order visual toggles, per-message delay/display cadence, final endgame screen rendering, and pixel proof separately.
+
+  - 2026-07-01 update: M11 F0407/F0446 complete FUSE now runs and records the source nested Chaos/Order morph cycle: 12 Lord Chaos/Lord Order type switches, 24 accumulated F0445 update ticks, and 13 total buzz requests including the initial Lord Order handoff. Continue actual timed frame pacing, per-frame presentation, per-message delay/display cadence, actual music playback asset route, final endgame screen rendering, and pixel proof separately.
+
+  - 2026-07-02 update: M11 F0407/F0224 FLUXCAGE now handles wall/stairs targets as a source no-op while still reporting the action performed and preserving the common F0407 direction-sync, disabled-action, stamina, and G0497 XP tail. Continue residual special-action audit beyond this bounded FLUXCAGE no-op case.
+
+  - 2026-07-02 update: M11 F0407 FLUXCAGE now preserves the pre-F0406 champion-facing target square, matching the source `L1251/L1252` lifetime; FUSE remains party-facing because ReDMCSB recomputes its target after F0406. Continue residual special-action audit beyond this bounded FLUXCAGE target-order case.
+
+  - 2026-07-02 update: M11 F0407/F0401 frighten actions now also use the precomputed champion-facing `L1251/L1252` target for WAR CRY, BLOW HORN, CALM, BRANDISH, and CONFUSE instead of Firestaff's party-facing helper. Continue residual special-action audit beyond this bounded F0401 target-order case.
+
+  - 2026-07-02 update: M11 action-row PARRY now has explicit F0402/F0231 regression coverage with ActionSet 13 (`SWING/PARRY/CHOP`) against a live front-square group. The gate proves PARRY routes through the live melee bridge, emits F0231 damage, keeps full G0491 disabled ticks, records the PARRY disabled action, and awards at least full G0497 Parry/Fighter XP instead of falling onto the direct-helper empty-front failure tail. Continue residual F0231 damage/render/original-pixel evidence separately.
+
+  - 2026-07-02 update: F0735/F0231 now preserves ReDMCSB's left-to-right hit-gate RNG order for clean dexterity hits, skipping the random-4 fallback and F0308 luck branch when the dexterity duel succeeds. Continue residual F0231 weak-damage edge cases, damage writeback/render evidence, and original-pixel proof separately.
+
+  - 2026-07-02 update: M11 now treats zero-damage F0231 emissions as action-performed timing/reaction results, not visible hits: no `DAMAGE 0 DEALT` log, no synthetic damage XP, no C014 creature-hit overlay, and no red feedback strip for payload damage 0. Continue residual F0231 positive-damage render/writeback evidence and original-pixel proof separately.
+
+  - 2026-07-02 update: M11 F0407/F0446 complete FUSE now records the full F0445 update cadence across the non-blocking source sequence: 43 fixed F0446 update calls plus one per printed endgame text message, while preserving the existing nested Chaos/Order count of 24. Continue actual timed F0445 frame replay, final endgame screen rendering, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 F0407/F0446 complete FUSE now also records the source `Delay(780)` after each printed endgame text message; the current two-message fixture proves 1,560 ticks before the final 600-tick victory handoff. Continue actual timed F0445 frame replay, final endgame screen rendering, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 F0407/F0446 complete FUSE now also records the aggregate non-blocking F0446 delay budget: text-message delays plus the final 600-tick handoff delay. The current fixture proves 2,160 total delay ticks while preserving the separate counters. Continue actual timed F0445 frame replay, final endgame screen rendering, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 F0407/F0446 complete FUSE now arms and drains that aggregate delay budget through `M11_GameView_AdvanceIdleTick()` while `gameWon` is active, without advancing source `world.gameTick` or ordinary gameplay systems. Continue per-F0445 frame rendering, final endgame screen art, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 now queues the recorded F0445 fuse-sequence update count as non-blocking replay frames and drains those redraw frames through `M11_GameView_AdvanceIdleTick()` before the F0446 text/final delay countdown starts, without advancing ordinary gameplay ticks. Current main now also records and exposes one ordered replay event per F0445 frame (`SETUP`, fireball burst, Lord Order, HNM burst, Chaos/Order switches, final explosions, Grey Lord, fluxcage hide, group cleanup, text messages) so the presentation pass can distinguish the source mutations instead of replaying anonymous redraws. Continue rendering those replay events into actual per-frame art/state, final endgame screen art, and pixel proof separately.
+
+  - 2026-07-02 update: M11 F0407/F0446 complete FUSE now marks the final `F0444_STARTEND_Endgame(C1_TRUE)` handoff ready only after the non-blocking F0446 delay budget reaches zero, instead of treating registered ending parameters as presentation-ready immediately. Continue final screen rendering, per-F0445 frame rendering, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 now exposes that delayed final-handoff phase through `M11_GameView_GetEndgameFinalHandoffReady()`, so future render/probe code can consume the source-ordered readiness without peeking into `M11_GameViewState`. Continue final screen rendering, per-F0445 frame rendering, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 final endgame rendering and screen-reader final zones now consume the F0446 handoff through `M11_GameView_GetEndgameFinalPresentationReady()`, so complete-FUSE no longer presents THE END/champion-summary UI during the source `Delay(780)`/`Delay(600)` wait budget. Continue per-F0445 frame rendering, music playback asset route, restart/credits interaction flow, and pixel proof separately.
+
+  - 2026-07-02 update: M11 endgame BACK/ESC handling now also waits for `M11_GameView_GetEndgameFinalPresentationReady()`, so complete-FUSE cannot return to the launcher during the source F0446 victory-text/final delay before `F0444_STARTEND_Endgame(C1_TRUE)`. Continue credits path interaction, per-F0445 frame rendering, music playback asset route, restart fade/timing polish, and pixel proof separately.
+
+  - 2026-07-02 update: M11 final V1 endgame rendering now respects `endgameRestartAllowed` for restart/quit control drawing, matching ReDMCSB `G0524_B_RestartGameAllowed`; complete-FUSE leaves that flag false after F0446 and no longer draws the restart/quit boxes on the winning final screen. Continue credits path interaction, restart-request handling for restart-allowed loss/debug cases, per-F0445 frame rendering, music playback asset route, and pixel proof separately.
+
+  - 2026-07-02 update: M11 final V1 endgame pointer handling now honors the source restart/quit controls only after the final presentation gate and only when restart is allowed: restart latches the `G0523_B_RestartGameRequested` mirror and requests the main-loop restart handoff through the selected-entry launch path; quit returns to the launcher. Continue credits wait/interaction flow, per-F0445 frame rendering, music playback asset route, restart fade/timing polish, and pixel proof separately.
+
+  - 2026-07-02 update: the previously inert `endgame_credits_path` helper is now a CTest-backed PC34 contract: F0444 credits fade/blit, stale-input discard, keyboard/mouse wait, and post-credits restart re-entry only when both `G0524_B_RestartGameAllowed` and `P0856_B_DoNotDrawCreditsOnly` are true. Continue actual credits-screen rendering/input integration, per-F0445 frame rendering, music playback asset route, restart fade/timing polish, and pixel proof separately.
+
+  - 2026-07-16 update: complete-FUSE final presentation now has a DM1-owned
+    terminal receipt consumed by M11 after the source F0445 replay and F0446
+    delays drain. The receipt validates C2 game-won music request state,
+    original GRAPHICS.DAT ids C006/C346/C026, converted G0012 THE END runtime
+    rect, G0019 credits palette endpoints, gameplay-input blocking, and
+    terminal save/runtime state; missing original assets or wrong music track
+    fail closed. Remaining endgame work is actual per-F0445 pixel/audio capture
+    and full credits-screen runtime capture, not the terminal receipt boundary.
+
+- 🔧 2026-07-01 DM1 V1 C040 candidate/action follow-up: after the M11 action-row suppression, M11 action-menu open candidate-panel gate, M11 direct non-melee helper candidate-panel gate, M11 direct spell-area open/rune/recant/close/cast helper candidate-panel gate, M11 direct inventory-toggle helper candidate-panel gate, M11 direct map-overlay helper candidate-panel gate, M11 direct pickup/drop/use object-helper candidate-panel gate, M11 direct quickload candidate-panel gate while preserving intentional live-C040 quicksave/resume persistence, M10 candidate marker handoff, direct-live-action missing-group no-op guard, empty-hand PUNCH live-melee bridge, M11 empty-hand action-menu runtime gate, bounded WAR CRY/BLOW HORN/CALM/BRANDISH/CONFUSE F0401 flee/Influence-XP effects with CONFUSE charge decrement, deterministic WAR CRY resistance/half-XP and BLOW HORN immune/half-XP regressions, F0401 awards through the lifecycle F0304 wrapper, live `CMD_ATTACK` F0312 action-hand strength with RNG/object-weight/maxLoad/stamina/wound handling, F0407 closed-door melee destruction routing, DISRUPT action-row routing through F0402/F0231 with material-creature rejection, transient M11 F0407 action-disabled-tick gate, and M11/M10 F0391/F0253 `ActionDefense` storage/snapshot handling, remaining coding work is to review whether any other non-action C040 panel paths still bypass the source `G0299_ui_CandidateChampionOrdinal` disabled-state contract, and keep broader original-DOS/pixel evidence separate from this coding slice.
+
+  - 2026-07-01 update: M11 F0407 action-disable tails now read disabled ticks through the shared source-locked PC34 G0491 accessor instead of a private runtime table copy. Keep broader original-DOS/pixel evidence separate.
+
+  - 2026-07-01 update: M11 F0407 action-stamina tails now read base stamina through the shared source-locked PC34 G0494 accessor instead of a private runtime table copy. Keep original RNG parity for `M005_RANDOM(2)` separate from the current deterministic M11 jitter model.
+
+  - 2026-07-01 update: M11 F0407 melee-contact dispatch now reads the shared PC34 G0492 action-damage accessor instead of a private switch list, preserving the source BLOCK exception and PARRY F0402 failure-tail path; the M10 live `CMD_ATTACK` reserved2 action-index regression now also pins the shared G0492/G0493 accessors for SWING and default MELEE before proving the damage-factor delta. Continue deeper F0402/F0231 damage-side-effect work separately.
+
+  - 2026-07-01 update: M10 `CMD_ATTACK` default action index now resolves through shared `DM1_ACTION_MELEE` instead of a raw `25`, and the reserved2 action-index regression asserts that binding before exercising the G0496/G0492/G0493 paths. Continue deeper F0402/F0231 damage-side-effect work separately.
+
+  - 2026-07-01 update: the same M10 reserved2 action-index regression now rejects `DM1_GRAPHIC560_ACTION_COUNT` through the shared action-route query and proves out-of-range live action indexes fall back to default MELEE damage behavior under matched RNG seeds. Continue deeper F0402/F0231 damage-side-effect work separately.
+
+  - 2026-07-01 update: the M10 CMD_ATTACK regression suite now uses shared `DM1_ACTION_*` identifiers instead of raw Graphic560 numbers for SWING/PUNCH/DISRUPT/STUN paths. Continue deeper F0402/F0231 damage-side-effect work separately.
+
+  - 2026-07-01 update: the M10 live `CMD_ATTACK` reserved2 action-index skill-route regression now also pins shared G0496-backed routes for SWING, STUN, and default MELEE before proving the STUN-vs-SWING live damage delta. Continue deeper F0402/F0231 damage-side-effect work separately.
+
+  - 2026-07-01 update: M11 F0407 projectile-action required-mana routing now reads the shared G0496-backed action route instead of a private Fire/Air/Wizard switch for FIREBALL/SPIT/DISPELL/LIGHTNING/INVOKE, the INVOKE branch itself now uses that shared helper instead of a local hard-coded Wizard skill constant, and the INVOKE full-projectile-list failure path now proves F0327 false return with F0405 charge decrement plus halved G0497 XP. Continue projectile impact/render and broader F0327/F0811 work separately.
+
+  - 2026-07-01 update: M11 overlay command regression now pins the ReDMCSB `COMMAND.C F0380` C040 candidate-panel disabled-state contract for source REST (`C145`, BUG0_53) and source SAVE (`C140`): both inputs are ignored while `candidateMirrorPanelActive` mirrors `G0299_ui_CandidateChampionOrdinal`, leaving rest flags, last-save tick, C040 state, inventory panel, and the DM1 movement pipeline unchanged. Continue reviewing other non-action C040 paths separately.
+
+  - 2026-07-02 update: M11 read-side action-row lookup now also respects the C040 candidate-panel contract: if `candidateMirrorPanelActive` takes over while an action menu ordinal is stale, `M11_GameView_GetActingActionIndices()` returns no rows until the refresh/trigger path clears the acting champion. Continue auditing any remaining Firestaff-only helper APIs separately from original-DOS/pixel evidence.
+
+  - 2026-07-02 update: M11 public V1 leader-hand set/clear and action-hand chest open/close helpers now also respect the same C040/G0299 boundary, so direct Firestaff API calls cannot mutate the transient leader hand or G0426/G0425-equivalent chest panel while the resurrect/reincarnate candidate panel owns input. Continue any remaining Firestaff-only helper audit separately from routed command coverage and original-DOS/pixel evidence.
+
+  - 2026-07-19 update: the non-action C040 audit is complete across the public M11 V1 helper/command surface; the final two bypasses — direct `M11_GameView_LoadDm1SavePath` and `M11_GameView_LoadDm1OriginalPc34SaveBytes` — now refuse to replace the world behind a live candidate panel, locked by `m11_quick_resume_roundtrip`. No unguarded non-action C040 panel paths remain; original-DOS/pixel evidence stays tracked under the parity rows.
+
+- 🔧 2026-07-01 DM1 V1 F0303/runtime combat follow-up: `M11_GameView_GetSkillLevel()`, M11 cast validation, M11 F0407 SHOOT attack plus no-ammunition G0497 XP clearing across action-row and direct-helper paths, M11 F0407 CLIMB DOWN failed-rope disabled-tail cancellation with BUG0_79 XP preservation across action-row and direct-helper paths, M11 F0407 CLIMB DOWN successful open-pit movement, closed-pit BUG0_77 movement, and occupied-pit group block with BUG0_79 XP preservation, M11 F0328 THROW projectile handoff with action-hand removal, F0305 stamina/F0304 Throw-XP, F0328 kinetic/attack/step/side/movement-disable state, F0328 scheduled F0811 open-corridor advance, M10 TIMELINE_EVENT_PROJECTILE_MOVE F0811 flight/reschedule dispatch, M10 F0811/F0217 projectile impact explosion handoff, M10 F0220 explosion timeline-dispatch state handoff, M10 F0220 explosion group-damage handoff, M10 F0220 explosion party-damage handoff including lethal champion-down/party-dead tick result, F0811 creature-impact zero-coordinate handoff, F0811/F0217 non-material projectile pass-through plus Harm Non Material hit exception, F0407/F0328/F0811/F0217 thrown-potion launch/power explosion/consume handling, F0811/F0217 thrown-potion door-impact explosion handoff, F0811/F0217 impact explosion attack/cell scaling, F0811/F0217 magical wall-impact zero-adjusted no-sound gate, F0811/F0217 creature projectile defense/poison damage scaling, F0811/F0217 projectile-hit C30 creature reaction scheduling, F0811/F0217 Black Flame fireball-heal handoff, F0811/F0217 keep-thrown-sharp creature possession handoff, M10 F0811/F0217 projectile door-destruction schedule/dispatch handoff, M10 F0811/F0217 non-weapon door-impact wooden-thud handoff, M10 F0811/F0217 Open Door projectile button-door toggle handoff, M10 F0811/F0217 projectile champion-damage handoff, M10 F0811/F0217 projectile group-damage handoff, M10 F0811/F0217 projectile group all-kill cleanup handoff, M10 F0811/F0217 keep-thrown-sharp creature possession handoff, M10 F0811/F0217/F0190 projectile killed-some smoke/fixed-possession/event-cleanup/fear handoff, M10 F0811/F0217 projectile-hit C30 creature reaction scheduling handoff, M10 F0811/F0217/F0322 champion projectile-poison dose/C75 handoff, M10 F0811/F0217 projectile wall-impact sound handoff, M10 F0811/F0217 Open Door projectile door-impact sound handoff, M10 F0811/F0217 Open Door projectile no-button door gate, M10 F0811/F0217 kinetic projectile door-impact sound handoff, M10 F0811/F0217 magical projectile door-impact explosion handoff, M10 F0811/F0217 magical door-impact zero-adjusted explosion gate, M10 F0811/F0217 magical door-impact nonzero-adjusted explosion gate, and F0326/F0328/F0212 source Thing identity create-input handoff, DM1 F0312 weapon-class skill routing, the M10 F0312 live skill-bonus bridge, the M10 `CMD_ATTACK` F0312 skill-bonus snapshot with action-hand weaponClass/full weapon-profile lookup, the M10 live target creature snapshot helper, the M10 `CMD_ATTACK` bounded F0735/F0738 group-damage handoff with G0492/G0493 action damage/hit factors, G0496 action skill-index routing, F0735 F0308 lucky-hit damage entry, F0735 non-material short-circuit before F0231 hit RNG/F0308, F0735 dexterity-255 miss branch, lifecycle luck write-back, doubled map difficulty, auto front-square group target lookup, auto-target empty-front no-op routing, live-target dead/snapshot-missing no-op routing, invalid-champion auto-target no-op routing, candidate-target `NO_ACTION` side-effect suppression, champion Cell storage/rotation, F0177/F0229 creature-slot priority, F0407 back-row reach blocking, F0407 DISRUPT-vs-material target rejection in M10 and M11 action rows, F0407 closed-door melee destruction routing, F0407 failed-melee disabled-tick halving, F0407 action-row G0497 XP tail including failed-melee halving, direct BLOCK/PARRY G0497 XP tail including direct PARRY empty-front F0402 failure halving, direct BLOCK ActionPerformed return, F0403 SPELLSHIELD/FIRESHIELD success/failure/expiry handling, F0407 FREEZE LIFE common-branch F0405 charge decrement, F0407 LIGHT amount/F0404 decay/F0405 charge handling, F0412 spell LIGHT/DARKNESS/MAGIC TORCH amount/event-map handling, F0411/F0412 potion spell empty-flask mutation, F0412 Zokathra object materialization, F0231 hit/miss XP+stamina side effects, all-kill active-group unlink, kill notification, F0231 adjacent reaction scheduling, F0190 smoke/explosion handoff, F0190 fixed-possession drops for killed-some/all outcomes, F0190 killed-some per-creature event cleanup/fear side effects, M11 action-menu melee handoff into M10 front-square auto-targeting, F0326 action-projectile champion Cell launch routing, F0326 SHOOT explicit champion Cell launch routing, F0326 Open Door spell champion Cell launch routing, F0217 kinetic projectile launcherStrength create-input plumbing, the M10 `CMD_CAST_SPELL` projectile path, and the standalone `dm1_spell_cast()` skill gate now have a path for F0303-derived live skill levels with inventory/rest inputs. Remaining coding work is narrower: finish residual F0328 impact side effects/render parity beyond M11/M10 open-corridor advance, and continue the remaining F0407/F0231 action precondition/special non-melee XP audit beyond the now-covered shield success/failure/expiry, SHOOT no-ammunition XP, CLIMB DOWN failed/success/group-block tails, FREEZE LIFE common charge decrement, LIGHT amount/decay/charge handling, F0412 spell light/darkness/torch amount handling, F0407 HEAL hidden-skill query, F0407 WINDOW Thieves Eye scheduling/counter/charge handling, F0407/F0327 SPIT projectile/charge handling plus action-projectile skill/attack/step routing, F0407 projectile-action/INVOKE F0405 charge tail, F0407 projectile-action F0327 failure XP halving, and projectile handoffs listed above. Non-F0303 display/save/read paths can be audited separately.
+
+  - 2026-07-02 update: M10 F0266 group-move projectile prechecks now preserve the F0217/F0215 keep-thrown-sharp possession handoff by carrying the dungeon projectile's associated Thing into the runtime projectile adapter before damage/delete. The runtime regression now proves the group survives, the projectile is deleted, and the thrown arrow is appended after the existing group possession, matching ReDMCSB `DUNGEON.C F0163`. Continue residual F0328 impact/render parity and original-pixel evidence separately.
+
+  - 2026-07-02 update: direct M11 F0811/F0217 keep-thrown-sharp creature impacts now use the same F0215/F0163 append semantics as M10: existing group possession heads stay in place and the kept sharp weapon is linked at the tail with decoded/raw next pointers synchronized. Continue residual F0328 impact/render parity and original-pixel evidence separately.
+
+  - 2026-07-02 update: direct M11 F0811/F0217 creature impacts now resolve the damaged creature from the F0811 target cell instead of falling back to the first living group member, including the Fireball-versus-Black-Flame heal path. Continue residual F0328 impact/render parity and original-pixel evidence separately.
+
+  - 2026-07-02 update: M10 F0217 non-explosion projectile impact sound selection now reads the projectile's associated Thing (`Projectile.Slot`, carried in `reserved1`) before falling back to the old synthetic kinetic-arrow sentinel. Weapon-backed thrown projectiles now request C00 metallic thud, while explicit non-weapon associated Things request C04 wooden thud even if a legacy fixture uses the kinetic-arrow subtype. Continue residual F0328/F0811 world-mutation/render parity and original-pixel evidence separately.
+
+  - 2026-07-02 update: M10 F0215 projectile delete now materializes a consumed projectile's associated Thing (`Projectile.Slot`, carried in `reserved1`) back onto the projectile source square when F0217 did not hand it to a keep-thrown-sharp group slot. The new wall-impact regression proves an arrow-backed projectile striking a wall despawns and links the arrow to the source square with the projectile cell preserved. Continue residual F0328/F0811 render/pixel parity and any remaining champion/creature edge audits separately.
+
+  - 2026-07-02 update: M11 F0811/F0217 live projectile impacts now mirror that M10 F0215 materialization boundary for non-potion, non-explosion, non-group-retained thrown Things: the associated Thing is re-linked on the projectile source square with the projectile source cell after wall/door/champion/creature impact. Continue raw/decoded next-chain low-level audit, HoC pixel proof, and broader thrown-object render parity separately.
+
+  - 2026-07-02 update: M10 F0811/F0217/F0190 fixed-possession drops now rewrite the raw weapon/armour/junk record when a free decoded slot is reused, including item type, cursed flag, and next pointer. Continue HoC pixel proof, broader thrown-object render parity, and remaining F0407/F0231 audit separately.
+
+  - 2026-07-02 update: M10 F0811/F0217/F0190 group damage now rewrites the raw group record after projectile and live melee damage paths, so raw HP/cells/count/slot/next mirror decoded killed-some/all state. Continue HoC pixel proof, broader thrown-object render parity, and remaining F0407/F0231 audit separately.
+
+  - 2026-07-02 update: M11 creature melee now reuses the shared F0736 F0230/F0321 resolver for hit gating, wound selection, Parry-adjusted attack, late random reduction, F0321 defense scaling, wake-from-rest, Luck write-back, wound masks, and raw F0322 poison gating instead of the older gameTick-derived local model. Continue target-cell selection, full creature AI behavior parity, and original-runtime evidence separately.
+
+  - 2026-07-02 update: M10 periodic effects now implement the ReDMCSB 512-tick F0338 torch charge decay for lit action/ready-hand torches and raw weapon bitfield sync, M11 now reads dungeon palette selection from the shared M10 F0337 dungeon-view light query, and the M11 LIGHT action/F0257 decay path now proves palette 4 -> 4 -> 5 through that query. Continue packaged-app MacBook Pro capture, original-render timing/cadence proof, and broader runtime/pixel evidence separately.
+
+  - 2026-07-02 update: M11 SHOOT now delays ready-hand refill from compatible quiver ammunition until the action-disable expiry path, matching ReDMCSB `TIMELINE.C` C11 enable-action handling instead of refilling immediately at F0407 action end. Continue broader F0326/F0328/F0811 projectile render/impact parity and remaining F0407 special-action audit separately.
+
+  - 2026-07-01 update: F0735/F0308 now accounts for the PC34/I34E `Luck <= 0` branch exactly in RNG diagnostics: the branch consumes the hit-roll `rand32`, hit-gate `rand4`, and F0308 `rand2` only, then skips `random(luck * 2)` while still applying the source non-lucky +2 Luck update. Continue broader F0231 side-effect/render parity separately.
+
+  - 2026-07-01 update: F0328/F0811 thrown Ven/Ful potion handling now preserves the ReDMCSB zero-power edge: RemovePotion is keyed by potion Thing/subtype instead of nonzero power, zero-power potion impacts still create/consume the source explosion route with attack 0, and M11 no longer turns a zero-power Ven potion into an impact-attack poison payload. Continue broader thrown-object impact/render parity separately.
+
+  - 2026-07-01 update: M10 TIMELINE_EVENT_PROJECTILE_MOVE now has explicit regression coverage for F0811/F0217 creature impact at real map coordinate `(0,0)`: the projectile despawns, damages the group, and schedules C30 hit-by-projectile reaction at `(0,0)` instead of treating zero coordinates as absent. Continue broader projectile impact/render parity separately.
+
+  - 2026-07-01 update: M11 direct F0811/F0217 zero-adjusted Lightning/Poison Bolt impacts now suppress fallback impact audio when the adjusted explosion attack becomes zero, matching the source no-explosion/no-thud delete branch. Continue broader projectile render/original audio evidence separately.
+
+  - 2026-07-01 update: M11 direct F0811/F0217 all-kill projectile creature impacts now create F0190 C040 death smoke and schedule the explosion advance event. Keep original DOS evidence and broader projectile render parity open.
+
+  - 2026-07-01 update: M11 direct F0811/F0217 killed-some projectile creature impacts now materialize F0190/F0186 fixed possessions for `DROP_FIXED_POSSESSIONS` profiles, keep the surviving group chain traversable, clean/shift per-creature C33-C36/C38-C41 events, and can trigger source F0190 fear. Keep moving-creature deferred drops, original DOS evidence, and broader projectile render parity open.
+
+  - 2026-07-01 update: M11 F0328 now feeds ReDMCSB F0140 object weight into F0312 throw strength and F0305 stamina-cost calculation for weapon, armour, junk including waterskin charge weight, container contents, potion, and scroll objects. Keep residual F0328 impact side effects/render parity and original-runtime evidence open.
+
+  - 2026-07-01 update: `test_dm1_v1_projectile_side_wall_impact_pc34_compat` now pins the F0217 zero-adjusted magical wall-impact branch: a Lightning Bolt projectile whose `KineticEnergy >> 1` becomes zero follows the ReDMCSB `T0217044` no-explosion path, despawns, and emits no fallback thud/spell sound, combat action, or door event. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: the same side-wall impact suite now also pins the nonzero Lightning wall-impact explosion branch through ReDMCSB `PROJEXPL.C F0217` lines 565-585: `KineticEnergy >> 1` attack, `C002_EXPLOSION_LIGHTNING_BOLT`, original projectile cell preservation, no fallback thud/spell sound, no combat action, no door event, and projectile despawn. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: the same side-wall impact suite now pins the Harm Non Material wall-impact explosion branch through ReDMCSB `PROJEXPL.C F0217` lines 565-585: unshifted `KineticEnergy` attack, `C003_EXPLOSION_HARM_NON_MATERIAL`, original projectile cell preservation, no fallback thud/spell sound, no combat action, no door event, and projectile despawn. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: the same side-wall impact suite now pins the Slime wall-impact non-explosion branch through ReDMCSB `PROJEXPL.C F0217` line 459 plus lines 587-600: no `C001_EXPLOSION_SLIME`, wooden-thud sound request, no combat action, no door event, and projectile despawn. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: the M10 orchestrator suite now also drives the Slime wall-impact branch through real `TIMELINE_EVENT_PROJECTILE_MOVE`, proving the runtime handoff consumes the projectile, schedules no explosion, leaves the timeline empty, and emits the wooden-thud sound. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: the M10 orchestrator suite now drives nonzero Lightning Bolt, Poison Bolt, Poison Cloud, and Harm Non Material wall-impact branches through real `TIMELINE_EVENT_PROJECTILE_MOVE`, proving F0217 attack scaling, explosion type, cell/centered routing, explosion-advance scheduling, no fallback impact sound, and Poison Cloud F0220 attack decay/reschedule. Continue broader F0811/F0217 side-effect/render parity separately.
+
+  - 2026-07-01 update: the same side-wall impact suite now also pins the Poison Bolt `KineticEnergy >> 2` zero-adjusted branch through ReDMCSB `PROJEXPL.C F0217` lines 574-576 / `T0217044`: no poison-cloud explosion, no fallback spell sound/thud, no combat or door side effects, and projectile despawn. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: the side-wall impact suite now also pins the nonzero Poison Bolt wall-impact explosion branch through ReDMCSB `PROJEXPL.C F0217` lines 565-585: `KineticEnergy >> 2` attack, `C007_EXPLOSION_POISON_CLOUD`, centered-cell sentinel, no fallback thud/spell sound, no combat action, no door event, and projectile despawn. Continue broader F0811/F0217 side-effect work separately.
+
+  - 2026-07-01 update: M10 projectile champion impacts now route raw impact attack through the shared F0321 champion-damage scale before applying HP/wounds. The new runtime regression proves a magical Harm Non Material projectile uses antimagic F0307 scaling and no longer applies raw attack as champion damage. Remaining projectile champion work is narrower: live per-slot armor/wound-defense snapshot fidelity beyond current zeroed armor baselines, broader explosion party-damage, and residual projectile-poison/lethal party-dead edge coverage.
+
+  - 2026-07-01 update: M10 F0213/F0220 party-square explosions now mirror ReDMCSB `F0324 -> F0321`: attack is randomized per living champion by the source +/- 1/8 window, then scaled through fire/magic/defense shield handling before HP/wounds are applied; fireball/lightning party-square wounds now allow all six source wound slots, while poison cloud keeps WOUND_NONE. Remaining projectile/explosion work is narrower: richer armor-slot wound-defense snapshots, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-01 update: M10 kinetic projectile creation now defaults bare kinetic impacts to ReDMCSB `F0216` blunt attack type instead of C0 normal, and defender snapshots now include lifecycle Champion.ShieldDefense in the F0313/F0321 physical-defense path. Remaining projectile champion work is narrower: full equipped armour-info baseline from armour thing types, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-01 update: M10 defender snapshots now read the ReDMCSB `G0239` armour defense/attribute catalogue for equipped body armour and hand-held shield armour baselines before F0321 physical projectile/explosion scaling. Remaining projectile champion work is narrower: source-exact F0313 hand-shield strength/RNG/final-shift fidelity, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-02 update: M10 defender snapshots now include a deterministic F0312 hand-strength baseline for hand-held shields before F0313/F0321 physical scaling. Remaining projectile champion work is narrower: source-exact F0313 random16/wound-penalty fidelity, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-02 update: M10 F0733 now mirrors the ReDMCSB F0313 final half-scale plus 0..100 bound before F0321 averages wound defense. Remaining projectile champion work is narrower: source-exact F0313 random16/wound-random4 fidelity, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-02 update: M10 F0733 now applies the F0313 resting defense halve and the fixed `-8` base of the already-wounded-slot penalty from snapshots before the final half-scale/clamp. Remaining projectile champion work is narrower: source-exact F0313 random16 plus wounded-slot `RANDOM(4)` fidelity, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-02 update: M10 now has an RNG-bearing `F0733b_COMBAT_GetChampionWoundDefenseRng_Compat()` path for ReDMCSB F0313 `RANDOM((Vitality >> 3) + 1)`, sharp-defense halving, already-wounded-slot `RANDOM(4)`, resting half-scale, and final clamp; F0736 creature/champion damage now uses that path before F0321's `(130 - defense) / 64` scale, and the previously unwired sleep/wake poison F0230/F0321 fixture is CTest-registered. Remaining projectile champion work is narrower: carry the RNG-bearing F0313 path into the remaining direct projectile/explosion champion routes that still call deterministic F0739, residual thrown-object impact/render parity, and original/pixel evidence.
+
+  - 2026-07-02 update: M10 now exposes `F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat()` and routes both direct projectile champion impact and party-square explosion champion damage through the RNG-bearing F0313 path. The runtime projectile regression pins two F0313 vitality draws for HEAD/TORSO and final HP/seed. Remaining projectile/explosion work is narrower: residual thrown-object impact/render parity, original/pixel evidence, and auditing any non-M10/M11 compatibility helpers that intentionally keep deterministic F0739 for static fixtures.
+
+  - 2026-07-02 update: M10/M11 projectile champion damage and M10 party-square explosion champion damage now also use a ReDMCSB `F0321` post-scale wound-selection helper instead of blindly applying the full `allowedWounds` mask. Remaining projectile/explosion work is narrower: residual thrown-object render parity, original/pixel evidence, and any non-live static fixtures that intentionally keep deterministic wound masks for contract tests.
+
+- 🔧 2026-06-30 DM1 V1 pass162 original mouse-ingestion blocker: the stock-original DOSBox-X `-debug -break-start` HoC/movement live probes now prove the BP/BPM packet is accepted, FIRES starts, `DATA\DUNGEON.DAT` loads, and native route control can target the DOSBox window, but no C080-chain code breakpoint reaches F0359/F0380/F0377/F0275/F0280. HID pre-move, cursor warp, double-click, autolock/mouse_emulation changes, Ctrl-F10 capture toggling, external `/opt/homebrew/bin/cliclick`, macOS System Events clicking, and direct CGEvent `postToPid` all still stop before F0359 with no logged route-click motion/button rows. Next DM1 work is DOSBox-X SDL/Cocoa mouse event ingestion or debugger event-pump instrumentation before another pass435 six-shot promotion attempt.
+
+- 🔧 2026-06-30 DM1 V1 pass162 DOSBox-X output-backend follow-up: `FIRESTAFF_PASS162_DOSBOX_OUTPUT=opengl` is now configurable and captured once, but that run is not comparable to the surface-based F0359 controls because it did not prove BP/BPM retention, FIRES startup, `DATA\DUNGEON.DAT` readiness, or a route-window click. Keep using `output=surface` for current pass162 mouse-ingestion evidence until the OpenGL harness/readiness boundary is separately repaired.
+
+- 🔧 2026-06-30 DM1 V1 pass162 mouse-log evidence follow-up: `c080_address_gate_manifest.json` now auto-summarizes every live probe's DOSBox-X `mouse=debug` log through `dosbox_mouse_log_summary`. The current surface-backed controls all report `route_motion_button_line_count=0`; next work should instrument DOSBox-X SDL/Cocoa event ingestion or debugger event pumping rather than adding more macOS injection modes.
+
+- 🔧 2026-06-29 branch/worktree integration follow-up: the main-session sweep at 2026-06-29 11:17 selected 381 remaining local/remote Firestaff coding candidates and integrated 0 because every selected candidate needed manual review or conflict repair before it could be safely cherry-picked. The audit log is `/Volumes/Extern-disk/openclaw-work/firestaff/integration-logs/integrate-20260629-111707.log`. A later manual pass removed 11 safe worktrees/branches that were clean and already merged or reduced to obsolete scratch/build artifacts, then promoted the reviewed M11 gameplay accessibility-manifest work from the stale screen-reader branch. Current follow-up inventory still has about 185 dirty merged worktrees, 216 clean unmerged worktrees, 38 dirty unmerged worktrees, plus the external integration/main-verify worktrees; preserve them until their owners/results are reviewed. Continue the 4x-daily scheduled integrator through 2026-07-29 and prioritize conflict families around shared release/docs files (`CMakeLists.txt`, `TODO.md`, `DONE.md`, `RELEASE_NOTES.md`, `docs/FIRESTAFF_GAP_LIST.md`), remaining 2026-06-29 gapbug branches (high contrast, runtime gesture, Theron, Nexus, cloud sync, DM2 HUD), older HoC portrait probe matrices, DM2 creature/projectile branches, archive/cache/no-data-popup gates, and parity evidence rows. Promote only branches with reviewed code, focused verification, updated TODO/DONE, and a green post-push CI run.
+
+- 🔧 2026-06-27 docs gap/bug audit follow-up: audited the gap/bug surface under `docs/`, especially `docs/FIRESTAFF_GAP_LIST.md`, `docs/FINAL_GAPS.md`, `docs/FINAL_CSB_GAPS.md`, `docs/DM1_V1_BUG_AUDIT.md`, `docs/dm2_bugs.md`, `docs/nexus_bugs.md`, `docs/nexus_issues.md`, `docs/csb_gap_*.md`, `docs/dm1_gap_*.md`, `docs/dm2_*.md`, `docs/nexus_*.md`, `docs/source-lock/tqr_v1_phase2_data_formats_H2339.md`, and `docs/parity/*.md`. Verified open work to keep visible: DM1 still needs original DOS capture/pixel parity promotion, resurrection rename UI, original-save interop beyond the synthetic PC34 handoff/runtime/M11 fallback (real original bytes -> Firestaff runtime -> write-back round-trip), V2.2 finished-art/material pixel gates, platform-specific media receipts, and open parity rows from `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`; CSB still needs live F0282 champion-panel integration, real save compatibility artifacts, broader viewport/HUD/pixel parity, CSBgraphics.dat payload bitmap interpretation + M11 viewport binding, Hint Oracle graphical overlay + extra Utility Disk variants, and end-to-end playability proof; DM2 still needs original-overlay pixel evidence, demo/non-PC version classification, champion death/permanence source-lock, save compatibility, known exploit/quirk compatibility decisions from `docs/dm2_bugs.md`, and V2 real widget/hero art; Nexus still needs DGN 3D geometry decode, real runtime screen capture, text/glyph runtime binding, DMDF embedded BITMAP/palette/string handling, BPK/BPX real decode, SAL/MAP/CD-DA audio, broader save/champion/world round-trip coverage, demo/fan-translation media classification, and a resolved trigger/script model (`docs/nexus_ai_scripting.md` says no Nexus script VM, while `docs/nexus_triggers.md` and `docs/nexus_sensors.md` describe an SDDRVS.TSK-style script VM); Theron still needs real Track 02 dungeon-record decode, runtime route proof beyond bounded launch/cross-route gates, real `.srm` custom-body import into progression/champion state, audio/intro/outro receipts, BIN/CUE-vs-ISO/OGG classification, and README-eligible screenshot promotion. Docs hygiene follow-up: reconcile stale docs that are now superseded by later gates, including `docs/nexus_issues.md` B1/B2/B3/B4, old Nexus/Theron source-lock assumptions that say no disc/Track 02 data has been extracted, and old DM1/CSB bug snapshots whose fixed rows are already documented in DONE/FINAL_GAPS.
+
+- 🔧 2026-06-28 DM1 V1 resurrection rename UI follow-up: data-free source-lock coverage exists for the F0281 rename-panel boundary (`dm1_v1_resurrection_rename_ui_gate_pc34_compat`, see DONE.md 2026-06-28), and the live M11 C161 path now opens a non-blocking F0281 rename state with C027 panel rendering, source-coordinate panel clicks, a public ASCII input bridge, SDL text-input forwarding, and source-locked duplicate-name rejection before OK finalizes reincarnation. Remaining work is real DM1 PC34 GRAPHICS.DAT screenshot evidence for the C027 panel path and paired Firestaff/original pixel evidence. No original DOS pixel parity claim yet.
+
+- 🔧 2026-06-25 DM2 V2 HUD widget bitmap gap follow-up: `dm2_v2_hud_widget_assets` placeholder-vs-real manifest + gate is now CTest-backed (`dm2_v2_hud_widget_assets` 115/115 + `firestaff_dm2_v2_hud_widget_assets_probe` 54/54, see DONE.md 2026-06-25 entry). The gate reports `NO_MANIFEST` by default and keeps the procedural rectangle/letter fallback in `src/dm2/dm2_v2_hud_overlay.c` until an operator-installed manifest exists. **2026-06-27 runtime hook landed:** `dm2_v2_hud_runtime_render_with_assets()` consults `dm2_v2_hud_widget_assets_classify_slot()` for each of the 7 slots, records the per-slot path mode (`DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP` vs `PROCEDURAL_FALLBACK`) and gate classification into module state, and stamps a single-pixel marker at each REAL slot's anchor after the procedural overlay draws. `firestaff_dm2_v2_hud_widget_runtime_hook_probe` 100/100 PASS covers no-manifest baseline, empty manifest, placeholder manifest, synthetic PARTIAL/COMPLETE, per-slot path-mode stability, V2-off invariants, out-of-range safety, and source-evidence citations. **2026-06-28 synthetic example gate landed:** `examples/dm2_hud_widget_synthetic/` now provides a non-placeholder `generator="synthetic_test"` manifest plus seven 1x1 procedural PNG fixtures, and `firestaff_dm2_v2_hud_widget_synthetic_promotion_probe` proves scratch-only PARTIAL (1 copied fixture) and COMPLETE (7 copied fixtures) promotion without copyrighted or finished art. **2026-06-28 synthetic-example integrity + generator-agnostic strengthening landed:** the same probe now also (a) verifies every fixture's first 8 bytes match the PNG signature `89 50 4E 47 0D 0A 1A 0A` so a future fixture that silently rots into arbitrary text cannot pass the `synthetic-test-fixture` substring check alone, (b) verifies every COMPLETE slot reports `width > 0 && height > 0` so a corrupt manifest without declared dimensions cannot promote the gate, and (c) installs the manifest after rewriting every `generator` entry from `"synthetic_test"` to `"pbr_hero"`, installs all seven fixtures, and verifies the gate still promotes to COMPLETE — proving the gate's classification logic is generator-string-agnostic for any non-placeholder marker and guarding against a future refactor that accidentally introduces per-generator allowlisting. The probe grew from 51/51 to 81/81 PASS; see DONE.md 2026-06-28 entry for the per-check breakdown. **2026-06-29 single-slot real-size receipt landed:** `firestaff_dm2_v2_hud_widget_real_slot_receipt_probe` now generates a scratch-only 32x32 RGBA PNG for the `hud_chrome` `compass_rose` slot with `generator="pbr_hero_receipt"`, proves `compass_rose -> REAL` while the other six slots remain placeholders, and keeps the aggregate gate at PARTIAL (`real_count=1`, `total=7`) without using the checked-in synthetic 1x1 fixtures. Remaining work: (a) authoring real bitmap art for the 7 slots (2 Phase 3 primary in `hud_widgets/`: inventory quick-view + action prompt; 5 chrome supporting in `hud_chrome/`: compass rose + depth indicator + gold counter + champion bar frame + action strip frame), (b) replacing the 1-pixel anchor stamp with the actual real-bitmap blit when operator-installed art lands, and (c) visual verification for a real pack whose generator is neither `placeholder` nor `synthetic_test`. No original DOS pixel parity claim; this is runtime / procedural-fallback-vs-bitmap-asset classification.
+
+- 🔧 2026-06-25 Nexus V1 Track 1 phase-launch follow-up: `firestaff_nexus_v1_track1_phase_launch_probe` is now CTest-gated and PASS 3/3 (synthetic / extracted / saturn-ja ISO), so the E1 row can be lifted from `EXTRACTED + VERIFIED` to `EXTRACTED + VERIFIED + PHASE-LAUNCH GATED`. Current local work now also hardens the M11 startup handoff: empty Nexus data and extracted `DM.BIN` without `LEV00.DGN` leave M11 inactive, do not retain `M11_GAME_SOURCE_NEXUS_DGN`, and shut down the Nexus launcher singleton; a real local extracted Track 1 launch reaches `NEXUS READY`, exposes `LEV00.DGN`, and mirrors the level-zero engine state. Remaining work for the row: (a) classify the JP demo and EN/FR fan-translation disc images as separate media lines from the JP retail Track 1 source, (b) capture an actual Nexus screen using the real Track 1 assets before promoting this beyond `PHASE-LAUNCH GATED`, (c) wire save/load round-trip evidence into the phase-launch gate (the engine owns `nexus_v1_save_*`/`nexus_v1_load_*` for Firestaff-native `FNXS` saves; the original 8 KB Saturn memory-card format is not reverse-engineered), and (d) deepen DMDF MNS coverage (the current probe loads SCORPION.MNS through `nexus_v1_load_model`; remaining is bounding multi-model `model_count` accumulation + cleanup + a deterministic-load subset across the documented 30 creature MNS files). **2026-06-28 light-overflow M11/runtime wire-in landed:** new `nexus_v1_light_runtime` data-free module + CTest-gated probe (`firestaff_nexus_v1_light_runtime_probe`, 81/81 PASS) wire the bounded classification hook into a minimal M11 cast hook that preserves emulate-vs-guard mode, round-trips MagicalLightAmount + cast/decay/dropped counters + in-use slot array through an `NGLT` v1 blob that drops into the existing FNXS data section, and surfaces CAST_REJECTED via should_guard without leaking mode on a mode-mismatched load. Remaining work for the Light-overflow row: (a) extend `nexus_v1_load_full_from_path()` to recognize + decode the embedded `NGLT` blob at the documented offset and feed it back into a runtime instance, (b) save/load round-trip evidence against a real `FNXS` file staged by the operator, and (c) real Saturn runtime asset handoff (DM.BIN/FONT256.S2D/MNS models) + real F0238/F0257 decay-tick evidence.
+
+  - 2026-07-05 update: current local work now wires Firestaff-native `FNXS` save resume into the M11 Nexus startup path via `spec->savePath`, including champion/world load, saved level reload, party pose/tick handoff to both game and mechanics state, and optional embedded light-runtime decode. Current local work now also lets M12 Continue and the save browser validate/list Firestaff-native FNXS saves, including both `firestaff-nexus-*.sav` and Nexus manager `nexus_save_00.dat`..`nexus_save_07.dat` slot names, expose saved level/pose metadata, and route the exact selected Nexus `savePath` into that M11 resume gate. Remaining phase-launch work is still original Saturn 8 KB memory-card reverse-engineering, real Nexus screen capture, media-line classification, and broader MNS/DMDF runtime binding.
+
+- 🔧 2026-06-24 DM1 V1 Hall of Champions ordinal-2 palette_match_rect portrait_rect_position probe follow-up: see DONE.md 2026-06-24 entry for the `firestaff_dm1_v1_hoc_champion_portrait_02_palette_match_rect_runtime_probe` slice, DONE.md 2026-06-25 entry for the `firestaff_dm1_v1_hoc_champion_portrait_02_after_party_shuffle_portrait_rect_position_runtime_probe` sibling, DONE.md 2026-06-27 entry for the new `firestaff_dm1_v1_hoc_ordinal_2_future_route_readiness_gate_probe`, and DONE.md 2026-06-28 entry for the ordinal-2 `west_negative` promotion audit. The readiness gate confirms the live PC 3.4 DUNGEON.DAT still exposes zero real ordinal-2 corridor-sensor poses, so per-route visual capture remains dormant until a future data/layout change surfaces one. It now audits 10 known ordinal-2 sibling source files as source-present and CTest-wired, including the repaired `west_negative` negative-route probe and the `cancel_reopen` sibling. Remaining work is any per-route ordinal-2 visual capture if a future build surfaces ordinal 2 on a real corridor sensor; there is no longer a known source-present ordinal-2 sibling probe waiting to be repaired or retired.
+
+- 🔧 2026-06-22 CSB V1 save runtime boundary follow-up: data-free `csb_v1_save_runtime_boundary_pc34_compat` gate is now wired into CTest (see DONE.md 2026-06-22 entry). **2026-06-28 audio runtime/save boundary landed:** `csb_v1_audio_runtime_pc34_compat` now source-locks the ReDMCSB pending-sound request/flush path and proves `LastCreatureAttackTime` is save-restored while transient pending audio is not serialized. Remaining CSB save/audio work is real save compatibility artifacts (binary DUNGEON.DAT + party state round-tripped through the live F0435 STARTEND_LoadGame flow), real CSB sound payload playback/mixing, and broader end-to-end playability.
+
+- 🔧 2026-06-26 CSB V1 champion per-stat parity fixture follow-up: new data-free `test_csb_v1_champion_per_stat_parity_pc34_compat` (67/67 PASS, CTest `csb_v1_champion_per_stat_parity`) pins every per-stat field of the CHANGE7_24 reincarnation rule against the live `csb_v1_champion_reincarnate()` entry point in `src/csb/csb_v1_character_pc34_compat.c`: HP/Mana/Stamina halve (current+max), six non-Luck stats reduced by 1/8th of current value, Luck exempt, minimum-floor clamp at the per-stat minimum, all 16 CSB_V1_SKILL_COUNT skill slots cleared, NEEDS_RENAME attribute set, DEAD attribute cleared, ActionIndex reset to REST, and the per-champion `reincarnateStatPenalty` divisor (default 8, spec-allowed values 4/8/16 plus the zero-divisor fallback). The companion `test_csb_v1_reincarnation_per_stat_max_load_f0309_pc34_compat` now covers the seeded `randomPoints` + `reincarnateStatPenalty` interaction with F0309/F0306, including exact `randomPoints=12` and `25` per-stat LCG hit distributions. Remaining CSB Champions GAP 2 work is a live real-asset F0282 panel integration gate (requires a real CSB Utility Disk `CSBGAME` save + the M11 input handler wiring the C040 panel into the champion-mirror sensor).
+
+- 🔧 2026-06-25 Mapfile-to-asset-loader bridge follow-up: `tools/fetch_greatstone_sck_mapfiles.sh` can fetch/extract the SCK `db/map/*.map` corpus from Greatstone, `firestaff_sck_mapfile` parses SCK 2.x rows plus `SIZE=` slices, and `firestaff_sck_asset_bridge` now parses `_mapping.xml` into `(md5, path, file, games[])` rows, exposes MD5+filename lookup, and selects a single concrete asset slice from a referenced `.map` by item number or description substring with an `IMG`/`RAW`/etc. type prefix filter. CTest `firestaff_sck_asset_bridge` PASS 1/1 covers synthetic `_mapping.xml` and SCK 2.x `dm_atari_demo`-shape mapfile carrying IMG1+`SIZE=` slices. Real-corpus probe `firestaff_sck_asset_bridge_real_corpus_probe` PASS against `$HOME/.cache/firestaff/greatstone-sck-mapfiles/db/map/_mapping.xml` (231 rows) + `dm_atari_demo.map` selecting `012288` `IMG1` `Dungeon Graphics` @12288 size 2560. **2026-06-29 RAW decoder handoff gate landed:** `FirestaffSckBridge_DecodeRawSelection()` now validates a selector-chosen `RAW*` slice against caller-owned bytes and returns a borrowed byte view plus deterministic checksum; the synthetic bridge CTest proves RAW selection+decode and PAL/SND unsupported-decoder rejection without persisting corpus bytes. Remaining work is per-asset-type decoder wiring beyond RAW (IMG1/IMG3/IMG5 still go through the existing image backend; FTL/PAL/SND items remain selector-visible but no Firestaff-side decoder is wired), live menu/launch profile integration, and broader coverage beyond `SIZE=` slices.
+
+- 🔧 2026-06-22 Greatstone mapfile parser follow-up: bounded `firestaff_mapfile` parsing is now CTest-backed for documented mapfile 2.5-style header properties and item description rows. **2026-06-28 SCK db/map corpus verifier landed:** `firestaff_sck_mapfile_corpus_verifier` (include + src/shared) walks the bundled `~/.cache/firestaff/greatstone-sck-mapfiles/db/map` corpus, parses each `.map` with the bounded V1/V2 parsers, preserves raw attribute prefixes (`PAL`/`SIZE`/`ID`/`IMG5.x`/`SNDS.SPR`/`CLOCKMODE`/`ANMSPEED`), counts sized vs unsized vs oversized slices against a synthetic 16 MiB target file, and reports a per-FORMAT aggregate (the corpus has 11 distinct FORMATs: FTL/DMII/DMCSB1/DMCSB2/EXE/ROM/ANIMATION/SINGLEITEM/CMP/DUNGEON/DUNGEON_CSBWIN). Parser-buffer truncation at `FIRESTAFF_SCK_MAPFILE_MAX_ITEMS=1024` is classified as `TOO_LARGE` rather than `PARSE_FAILED` and the parsed count is reported as a lower bound so corpus totals stay honest. `firestaff_sck_mapfile_corpus_verifier` data-free CTest PASS, `firestaff_sck_mapfile_corpus_verifier_real_corpus_probe` skip-safe CTest PASS against the local sck@1.5.1 corpus: total=90 parseable=65 unparseable=25 truncated=18 v2_rows=33045 sized=397 unsized=14216 oversized=0 distinct_types=31 distinct_attrs=8. Source-of-truth: greatstone `d_mapfile.html` (mapfile 2.x spec), sck.jar@1.5.1 db/map corpus, the existing `firestaff_sck_mapfile` V1+V2 parsers. Stays bounded: no payload decoding, no live asset-loader wiring, no MAP-3 parser bump to lift the 1024-row cap. Remaining work: per-asset-type decoder wiring, live menu/launch profile integration, broader coverage beyond `SIZE=` slices, and any needed shortcut/alias normalization beyond raw attribute preservation.
+
+- 🔧 2026-06-22 Launcher session timer follow-up: M12 now persists and verifies the launcher-owned Session Timer setting, but in-game reminder overlay / forced-pause behavior remains deliberately out of scope until a separate runtime UX pass defines it. **2026-06-28 in-game reminder + forced-pause overlay landed:** new `session_timer_runtime` module + `include/session_timer_runtime.h` (data-free deterministic state machine) + `M11_GameView_InitFromMenuSessionTimer` / `TickSessionTimer` / `AcknowledgeSessionTimerReminder` / `ClearSessionTimerForcedPause` + `M11_GameView_Draw` reminder banner + forced-pause confirm dialog + `M11_GameView_HandleInput` gating + `src/engine/main_loop_m11.c` per-second tick. New CTest targets `session_timer_runtime` (data-free unit) + `session_timer_runtime_probe` (M11/M12 hand-off smoke) both PASS. See DONE.md 2026-06-28 entry for full source / invariant / verification surface. Remaining work is the original-capture / README-eligible screenshot evidence that the overlay paints against real assets (outside the handoff boundary).
+
+- 🔧 2026-06-22 Save export/import follow-up: M12 now has a CTest-gated launcher save-manifest export/import action for the quick-resume path/context only. **2026-06-29 DM1 LSV-02 per-game versioned manifest gate landed** (see DONE.md 2026-06-29 entry): the existing `memory_savegame_pc34_native_export_pc34_compat` LSV-01 byte-stable PC 3.4 save exporter/importer now stamps a 16-byte `LSV01RDM` / version / gameCode / dungeonCode / flags manifest into `AdditionalData[0..15]` (a region the original ReDMCSB engine never inspects, so vanilla DM 3.4 PC interop is preserved), and exposes the F0799 peek / F0800 strict per-game gate / F0801 gameCode name helper / F0796 import refusal on a non-DM1 manifest. **2026-06-28 DM1 original-save header classifier/readiness gate landed:** `dm1_v1_original_save_classifier_pc34` and `dm1_v1_original_save_classifier_probe` classify user-staged `DMSAVE`/`DMGAME` candidates as ReDMCSB-shaped original headers without importing them. **2026-06-30 PC34 classifier tightening landed:** the classifier now distinguishes ReDMCSB `FormatID=5` + `Platform=9` + `DungeonID=10` as `ORIGINAL_DM1_PC34` and marks it as a bounded `pc34_importer_candidate`. **2026-06-30 PC34 original-save handoff landed:** `dm1_v1_original_save_pc34_handoff` now consumes a ReDMCSB-shaped PC34 save buffer or file, deobfuscates the real `DM_SAVE_HEADER`/five save parts with the F0417 byte contract, records expected/actual part checksums, imports `GLOBAL_DATA` party position/count/leader plus bounded `CHAMPION_EXCLUDING_PORTRAIT` runtime fields (name/title, direction, vitals, food/water, wounds, stats, base-skill experience, F0303-derived base-skill levels, inventory slots, load) into caller-owned `SaveGame_Compat`, decodes bounded ReDMCSB `ACTIVE_GROUP` records, applies live active groups into `GameWorld_Compat.creatureAI[]`, resolves `GroupThingIndex` through Firestaff `DungeonThings_Compat.groups[]` when available, decodes original `EVENT` plus timeline index parts into `DM1_EventQueue_V1` with `GameTime`, `EventCount`, `FirstUnusedEventIndex`, event slots, and live timeline heap indices, exposes a file-to-`GameWorld_Compat` loader that re-anchors party map indices and ticks, and is now linked into M10 so the M12 savebrowser can use it for DM1 original PC34 metadata and load-handoff eligibility. It rejects non-PC34, missing/unreadable files, truncated-part, active-group length mismatch, malformed active-group/event-queue reports, out-of-range timeline indices, and corrupt-checksum inputs. **2026-06-30 M11 DM1 save-load fallback landed:** the M11 `savePath` quick-resume loader and the main-loop F9/entrance-RESUME code now route through `M11_GameView_LoadDm1SavePath()`, which falls back from invalid `M11QSAV1` header to `DM1_LoadGameWithBackup` and retains loaded DUNGEON.DAT ownership for Firestaff-native and original PC34 saves. **2026-06-30 PC34 native-export writer tightening landed:** `memory_savegame_pc34_native_export_pc34_compat` now writes the real `DM_SAVE_HEADER` offsets/checksum, byte-based F0417 obfuscation, a consistent zero-group/zero-event/zero-timeline v1 envelope, and four 319-byte champion records that the original-PC34 handoff reader can import. **2026-06-29 per-game save-byte manifest gate landed:** `save_byte_manifest_m12` validates Firestaff-native DM1 `FSDM1SV1` header/version, payload byte count, whole-file CRC, no-overwrite import, and corrupt-payload rejection. **2026-07-01 live F0303 skill query landed:** `dm1_skill_get_level_ex()` now covers resting, temporary-experience flags, PC34 Firestaff/Complete Firestaff modifiers, and neck/action-hand skill objects. Remaining work: real user-staged original PC34 saves through manual live M11/F9/RESUME evidence, Firestaff runtime -> PC34 write-back with real corpus/original-engine proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation, broader event side-effect/runtime route proof beyond queue import, CSB/DM2/Nexus/Theron per-game versioned and save-byte manifest variants, real community-dungeon-save import evidence, real per-game-version (Atari ST 1.x / Amiga 3.5 / Mac 1.2) byte-layout receipts, and a single cross-game save-browser that hands each save to the right runtime.
+
+  - 2026-07-02 update: DM1 PC34 native EVENTS export/import now also covers the source union forms for scheduled F0412 status events (`B.Defense`) and C24 remove-fluxcage (`C.Slot` as C15 explosion THING). Remaining save work is real-corpus/original-engine proof and broader event side-effect route coverage, not these bounded EVENT field mappings.
+  **2026-06-30 F0796 PARTY import symmetry landed:** `F0796_SAVEGAME_ImportPC34_Compat()` now unpacks the exported 319-byte PC34 champion records from the PARTY part, so `F0795 -> F0796` preserves the same bounded champion fields already proven through the original-PC34 handoff reader. Remaining save/export gaps stay open: real corpus proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation, active-group/event/timeline write-back, manual original engine load proof, and full original-save round-trip evidence.
+  **2026-06-30 PC34 EVENT/TIMELINE export bridge landed:** `F0795_SAVEGAME_ExportPC34_Compat()` now writes supported `TimelineQueue_Compat` entries as ReDMCSB-shaped `EVENT` records plus timeline heap indices, and `F0796` reconstructs the supported schedule. Remaining save/write gaps are now narrower: real corpus proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation, broader event-type/live-side-effect proof, manual original engine load proof, and full original-save round-trip evidence.
+  **2026-06-30 PC34 strict checksum gate landed:** `F0796_SAVEGAME_ImportPC34_Compat(..., strictChecksums=1)` now validates all five ReDMCSB part checksums and rejects corrupt payloads with `SAVEGAME_PC34_ERROR_BAD_CHECKSUM`; lenient mode remains available for diagnostics and tolerant imports. Remaining integrity work is real original-save corpus proof and runtime/manual load evidence, not the synthetic part-checksum contract.
+  **2026-06-30 PC34 ACTIVE_GROUP export bridge landed:** `F0802_SAVEGAME_ExportPC34FromWorld_Compat()` now writes ReDMCSB-shaped 16-byte `ACTIVE_GROUP` records from `GameWorld_Compat.creatureAI[]` and stamps the matching `GLOBAL_DATA` active-group counters; `F0795` intentionally remains the zero-active-group `SaveGame_Compat` API. Remaining save/write gaps are now real corpus/original-engine proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation, broader event side-effect proof, and full original-save round-trip evidence.
+  **2026-07-01 DM1_SaveGamePC34 write-back API landed:** `DM1_SaveGamePC34()` now exposes an explicit DM1-level original-PC34 writer that preserves `GameWorld_Compat.gameTick` in `GLOBAL_DATA.GameTime` and proves synthetic world -> PC34 file -> original handoff/DM1 fallback load. Remaining write-back work is real corpus/original-engine proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation, broader event side-effect proof, and full original-save round-trip evidence.
+  **2026-07-01 M12 DM1 PC34 export from native, quick-resume, and save-browser slots landed:** the save browser now has a separate `M12_SaveBrowser_ExportSelectedAsDM1PC34()` API that loads valid DM1 saves, writes `*-pc34.sav` through `DM1_SaveGamePC34()`, and proves the exported file through the original-PC34 handoff. The settings export row also switches to `EXPORT DM1 PC34 SAVE` when a DM1 `M11QSAV1` quick-resume save exists, deserializes that quicksave world, and writes a sibling `*-pc34.sav` through the same PC34 writer. The launcher now also owns a `SAVE BROWSER` settings row that opens an arbitrary-slot save list; the selected DM1 save can be exported as PC34, and Enter launches the selected save through the existing savePath handoff. Remaining launcher-save work is real user save corpus/original-engine proof, real original-save corpus/original-engine portrait proof and dungeon payload preservation (Firestaff portraitIndex metadata and stored external portrait bytes now round-trip), and extending equivalent per-game export/import handling beyond DM1.
+  **2026-07-01 PC34 world-export dungeon tail + handoff runtime materialization landed:** `F0802_SAVEGAME_ExportPC34FromWorld_Compat()` now appends ReDMCSB-ordered loaded dungeon bytes after the save parts and portrait blocks when the world has decoded `DungeonDatState_Compat` + `DungeonThings_Compat`, and `dm1_v1_original_save_pc34_handoff_load_world_from_bytes()` now materializes that optional tail into Firestaff-owned runtime dungeon/things state. The synthetic export test proves header/map/column-SFT/SFT/text/raw-thing/raw-map bytes plus F0422 checksum, proves the same tail through the original-PC34 handoff report, proves `GameWorld_Compat` receives owned loaded maps, tiles, SFT, text data and decoded door/weapon slices, proves a live `F0712` door-animation square mutation reaches the exported raw-map tail and reloads through handoff, and now proves decoded thing-list mutations are packed back into PC34 thing bytes during export while preserving unknown raw bits. Remaining dungeon-save work is now narrower: run real original-save corpus/original-engine load evidence and extend equivalent CSB save/dungeon-tail handling.
+
+  - 2026-07-02 update: `dm1_v1_original_save_pc34_handoff_load_world_from_bytes()` now also materializes decoded PC34 `EVENT`/`TIMELINE` parts into `GameWorld_Compat.timeline`, and the native export gate proves a supported world export can handoff-load and re-export byte-stable ReDMCSB save parts plus dungeon-tail bytes. Remaining save work is real-corpus/original-engine proof, real portrait proof, and broader live event side-effect routes, not this synthetic EVENTS/TIMELINE write-back body round-trip.
+
+- 🔧 2026-06-25 FTL container format follow-up: bounded HUNK_DATA area_1 zero-run decompression per greatstone `d_ftl.html` "Note 7" is now CTest-backed via `firestaff_ftl_hunk_data_zero_run_unit` (PASS 11/11 on 2026-06-25), complementing the existing `firestaff_ftl_container_unit` parser/checksum gate. The decoder accepts the HUNK_BSS-derived in-memory area_1 size, rejects truncated run headers, odd compressed input length, and any HUNK_BSS / HUNK_DATA size mismatch, and intentionally stays away from mapfile-driven item extraction. Remaining work is HUNK_CODE 0x5223 decompression/checksum verification, greatstone mapfile item extraction, real Amiga/X68000/MegaCD FTL corpus gates, and runtime asset loading.
+
+- 🔧 2026-06-25 DM1 / CSB X68000 HDM/floppy media import: bounded `firestaff_x68k_media_classify_unit` (expanded on 2026-06-29) + cross-module `firestaff_x68k_ftl_handoff_unit` lock down geometry, the `HPR-0007` Track 1 Side 1 Sector 9 sentinel, blank save-disk shape, FTL-payload handoff, conservative receipt classes, and configurable explicit-window FTL magic scans. The 2026-06-26 real-media probes cover the local public DMFiles DM1 X68000 v3.0 HDM geometry receipt and FTL handoff; the 2026-06-29 receipt-class gate proves an off-axis `HPR-0007` backup-label string is not treated as live protection-sector evidence; the 2026-06-29 FTL window gates add both `FirestaffX68kMedia_CountFTLMagicCandidates(data, size, offset, length)` and `FirestaffX68kMedia_ClassifyEx(..., scan_window_bytes, ...)`, so real-media receipts can compare the default first-32KiB sniff with full-HDM scans without misclassifying Hudson Soft boot-block disks as FTL payloads. Remaining work is hash/provenance classification across separately staged original/cracked/save-disk media lines, real `GRAPHICS.DAT`/`DUNGEON.DAT` extraction and payload receipts, FTL payload decode/runtime asset loading, 31 kHz presentation evidence, X68000 keypad/arrow input gates, and emulator/runtime launch proof.
+
+- 🔧 2026-06-25 CSB Hint Oracle HTC follow-up: HCSB.HTC format-contract parsing and data-free LZW/page-slice verification remain covered by `csb_hint_oracle_htc_unit`; real Utility Disk `HCSB.HTC` scan/cache handoff is now covered by `csb_hint_oracle_htc_real_scan` + `firestaff_csb_v1_hint_oracle_real_htc_scan_probe` (CTest `csb_v1_hint_oracle_real_htc_scan`, see DONE.md 2026-06-25 entry); runtime-adjacent UI/binding gate is now covered by `csb_hint_oracle_ui_runtime_binding` (data-free) + `firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe` (real-asset, CTest `csb_v1_hint_oracle_ui_runtime_binding`, see DONE.md 2026-06-26 entry) so a decoded HCSB.HTC page or page-slice can reach a Firestaff-facing oracle/hint surface (multi-line diagnostic/oracle report + per-hint text formatter + (level, x, y) → hint resolver, all backed by the existing parser + scan/cache). Remaining work is parsing additional Utility Disk release variants (English R1/R2/R3, French R1, German R1/R2), drawing the actual Hint Oracle graphical overlay, and real page/screen verification against a verified HCSB.HTC.
+
+- 🔧 2026-06-22 Theron runtime screenshot readiness: new `theron_v1_runtime_screenshot_readiness` CTest launches real Firestaff Theron paths when Track 02 data is present and records runtime-probe/BMP hash receipts only. The direct `--game theron --data-dir <root>` root-start case now has a focused fast path and launch proof (see DONE.md 2026-06-26 Theron V1 direct root startup fast path). 2026-07-05 update: M11 now promotes the verified raw Track 02 initial-level candidate on JP/US raw BIN startup before falling back to deterministic launch-room data. 2026-07-23 update (Lane E, cycle 11): the new `theron_v1_mechanics_playability` CTest adds a headless real-data movement/turning/blocking pass against the authentic JP/US Track 02 Hall-of-Records grid, providing the first runtime playability proof on original media. Remaining work is reviewed public screenshot promotion, full Track 02 dungeon-loader parity beyond the one initial candidate, real `.srm` / Track 02 save-import evidence, and broader runtime playability proof for doors/pits/teleporters/altar/combat/drops/sounds.
+
+- 🔧 2026-06-25 Theron Track 02 descriptor-table follow-up: `theron_v1_track02_decode_descriptor_table()` is now shape-gated for the 9-word JP/US Track 02 stride tables, pass1079 adds per-entry byte-window binding (zero-fill / payload data / descriptor-table window) via `theron_v1_track02_descriptor_table`, and 2026-06-27 adds a bounded descriptor-window to `theron_v1_level_load()` handoff gate via `theron_v1_track02_level_handoff`. 2026-07-05 update: raw JP/US startup now uses a separate bounded `descriptor_base - 0x92ce` initial-level candidate; the nine descriptor windows themselves still report no decoded level claim. The verified CD/MODE1 startup route is Hall of Records level 0 only. The independently authenticated `$4090 -> $4093` Stage 3 CD_READ proves only record-to-RAM transfer and cannot authorize a transition; the next route requires an original loader read, dispatch, or layout correlation for a later record. Remaining work is real dungeon-record decoding for all levels/windows, runtime route proof, real `.srm` import evidence, and README-eligible screenshots.
+
+- 🔧 2026-06-25 Theron V1 SRM real-artifact decode: `theron_v1_srm_classifier` (see DONE.md 2026-06-25 entry) is the bounded 5-slot Save Disk manifest that recognizes the gzipped-deflate body dmweb's `community/documentation/miscellaneous.html` and greatstone page reference for Theron savegames, reports a clean `present_count=0, recognized_count=0` ABSENT manifest on the current host (no real `.srm` file is staged), and accepts a real `.srm` when one is placed under `$HOME/.firestaff/data/theron/save/slot0.srm` ... `slot4.srm` or the `FIRESTAFF_THERON_SRM_DIR` override. 2026-06-27 adds a bounded gzip-payload probe that inflates a synthetic recognized `.srm` stream when zlib is present, and reports `ZLIB_UNAVAILABLE` honestly when it is not. 2026-06-27 also adds a Firestaff-only progression-envelope readiness import from inflated payload bytes into `Theron_DungeonProgression`, validating the T080/T800 between-dungeon completed-prefix sequence and preserving unknown real Sphenx/Greatstone custom bodies as `UNSUPPORTED_BODY`. 2026-06-28 adds a Firestaff-only party-envelope readiness import into `Theron_V1_Party` body fields (names/classes, alive/dead, HP/stamina/mana, base stats, levels, wounds/flags, food/water, shared gold) while deliberately leaving inventory/equipment empty and unknown real bodies unsupported. 2026-06-28 also adds a bounded recognized-slot gzip body gate that reads synthetic `.srm` slot bytes, inflates the body, and decodes one progression/champion block through the party importer. 2026-07-17 now binds an already opaque admitted SRM only to the exact direct Track 02 MD5/variant, campaign-layout epoch, and final replay record/sector; missing facts or SRM MD5/size/FNV, media, epoch, or replay drift reject before M11 route readiness. This is provenance only and does not decode, restore, or interpret the save body. Remaining work: real Sphenx TQ-RTC `.srm` body decode, real champion/body byte mapping, real `.srm` -> progression/party promotion evidence, inventory/equipment semantics, and a runnable Round-Trip CTest that pairs a real `.srm` against a written `.tqsv` export from the synthetic save path.
+
+- 🔧 2026-07-11 Theron original-media synthetic-path audit (indexed, V1 only): authoritative local media is `$HOME/.firestaff/data/theron/TQUS02End.iso` (MD5 `3d8b78571dcd0e6eb8eb4b01eeb7fbba`), the paired `TQUS19.iso`, JP counterparts, verified CUE metadata, and original CD audio `TQUS01.ogg`, `TQUS03.ogg`, `TQ04.ogg` through `TQ18.ogg` / JP equivalents. The following are the only currently identified synthetic fallback paths directly superseded by those containers: (1) **graphics/palette** — `src/theron/theron_v1_asset_loader.c` marker-miss route, `src/theron/theron_v1_palette.c:tqr_palette_init_defaults`, `src/theron/theron_v1_viewport.c:theron_vp_init`, and `src/theron/theron_v1_viewport.c:theron_vp_present` synthesize a stone palette and fixed indexed-color conversion; task: retain source bytes but require a hash/offset-proved HuC6260 palette route before render; (2) **graphics/tiles** — `src/theron/theron_v1_viewport.c` and `src/theron/theron_v1_tile_renderer.c` fixed tile tables plus `fill_square_flat` render generated tiles/gray squares; task: keep verified Track 02 blocked until a real tile-bank/object route is bound, then remove the generated path for verified media; (3) **menu/UI** — `src/theron/theron_v1_viewport.c:tqr_ui_glyph_row` and the startup-flow row/layout builders draw generated glyph/menu chrome even though Track 02 bitmap/text routes are locally verified; task: consume only source-locked title/stage/Soul Room/forcefield bitmap and text routes, and leave unbound menu regions blocked rather than painted; (4) **state/level** — `src/theron/theron_v1_startup_runtime_entry.c:theron_v1_startup_runtime_load_initial_level` calls `theron_v1_startup_fallback_room_synthesize` for unverified/data-free operation; task: verified Track 02 must use only the existing semantic level route or fail blocked, then identify later real level/object records before enabling them; (5) **audio** — no synthetic audio playback fallback was found in `src/theron`; task is to add a source-locked CD track routing receipt before adding any Theron audio output, using the locally staged OGG/CD metadata. The completed 2026-07-11 renderer gate blocks item (1)/(2) in the hash-verified no-graphics case; remaining rows require real-media probes and no invented payloads.   2026-07-22 update: the verified-media synthetic-rendering boundary is now wired end-to-end. `tr_asset_block_synthetic_rendering_for_verified_media` takes the caller-verified Track 02 MD5, matches it against the canonical JP/US BIN hashes, and sets `TrAssetBundle.synthetic_rendering_blocked` only when no source-locked graphics bank is present. The Theron boot path applies this boundary immediately after `tr_asset_load` for verified profiles. `test_theron_rendering` now exercises the real `TQUS02.bin`/`TQJP02.bin` files and proves that synthetic V1 rendering is blocked while the bundles remain loadable and raw bytes are retained. The runtime viewport already no-draws unbound tiles and UI chrome; the flag makes the boundary explicit and testable. Remaining work: real HuC6260 palette route, Track 02 tile-bank/object decode, source-locked runtime HUD/font bank, and later level/object record decoding.  2026-07-23 update (Lane E, cycle 10): item (5) audio is now implemented — `theron_v1_cd_audio_availability()` parses the original CUE sheet, resolves each declared track file, verifies the canonical 19-track Theron CD layout (Track 01 AUDIO, Track 02 MODE1, Tracks 03-18 AUDIO, Track 19 MODE1), and allows the locally staged .ogg CD-DA tracks when the CUE names the original .wav files.  A source-locked routing receipt with per-track presence, paths, and `playback_allowed` is returned.  Regression coverage: updated `firestaff_theron_v1_cd_audio_availability_probe` (synthetic + real TQUS.cue) and new `test_theron_v1_cd_audio_availability` both PASS.  Items (1)-(4) remain open until real Track 02 graphics/tile/level/object routes are bound.
+
+- ✅ 2026-07-22 Theron V1 synthetic-render-block runtime binding (Lane E, cycle 6): `theron_v1_boot_runtime_render_frame` now consults `TrAssetBundle.synthetic_rendering_blocked` and refuses to draw verified Track 02 media unless a decoded tile bank is present; M11 clears the framebuffer when the runtime refuses, so verified media no longer leaves a zero-pixel page. `tr_asset_generated_v1_rendering_allowed` treats a bound Track 03 tile bank as authoritative original data and overrides the synthetic block. The asset bundle's decoded palette/tile bank is shallow-copied into the viewport before rendering, wiring real tiles through the existing viewport blit path. 2026-07-22 update (Lane E, cycle 5): the render gate now also requires `TrAssetBundle.palette_route_verified` before it considers V1 rendering allowed; a decoded tile bank alone is no longer sufficient, closing the synthetic-default palette path. 2026-07-22 update (Lane E, cycle 6): the startup render-plan executor is now fail-closed for synthetic title/stage/Soul Room/forcefield shape commands; `Theron_StartupRenderPlan` carries an explicit `synthetic_graphics_allowed` permit that is clear by default, and the boot-level no-media fallback path is the only production route that sets it. The M11 startup screen already suppresses synthetic render-plan border/text when Track 02 atlas graphics execute, and the fallback-room path remains blocked whenever a verified Track 02 request is present. Regression coverage added in `test_theron_rendering` (`test_startup_render_plan_blocks_synthetic_shapes_without_permit`, 25/25 PASS). Remaining work: README-eligible capture proof once the real Track 02 decoder/capture pipeline supplies positive level/object/bitmap/palette evidence.
+
+- 🔧 2026-07-15 Theron later Track 02 loader-consumer blocker: the full
+  `activate=true` for a Mednafen window but still observed foreground PID 622;
+  activation acceptance is therefore recorded separately and never treated as
+  focus or input delivery.
+  these records has level/object/bitmap/palette semantics yet. Next blocker:
+
+- 🔧 2026-07-11 Theron synthetic-candidate index supplement:
+
+  - **2026-07-22 update (Lane E, cycle 4): TQR-SYN-01 resolved** — `src/theron/theron_v1_ui_chrome.c:tr_ui_render_topbar` and `tr_ui_draw_champion_slot` keep drawing placeholder dungeon/name/class blocks only in the no-source-bank path; `tr_ui_render()` remains a no-op until a source-locked font/panel bank is bound. Regression coverage added in `tests/test_theron_rendering.c` (`test_ui_chrome_blocks_unbound_source_bank`).
+
+  - **2026-07-22 update (Lane E, cycle 4): TQR-SYN-03 resolved** — `src/theron/theron_v1_viewport.c` gained a viewport-level `synthetic_rendering_blocked` flag and `theron_vp_set_synthetic_rendering_blocked()` setter. `theron_vp_render_dungeon()` and `theron_vp_render_ui()` now return early when the flag is set, providing defense-in-depth on top of the existing boot-level block. `src/theron/theron_v1_boot.c:theron_v1_boot_runtime_render_frame()` propagates the asset-bundle block state into the viewport. Regression coverage added in `tests/test_theron_rendering.c` (`test_viewport_direct_render_blocks_synthetic`).
+
+  - **TQR-SYN-05 remains open:** `src/theron/theron_v1_srm_classifier.c` and Firestaff-native `FSTQ*` envelopes have no locally staged real `.srm` counterpart (`~/.firestaff/data/theron/save/` is absent); leave real-body import blocked and do not substitute a synthetic profile when a real artifact is later supplied.
+
+- 🔧 2026-06-16 Theron V1 wire-up: 3 previously-unwired V1 tests (theron_v1_direct_launch_test, theron_v1_launcher_scan_reuse_test, theron_v1_m11_direct_launch_test) + 2 unwired probes (firestaff_theron_v1_viewport_renderer_probe, firestaff_theron_v1_tile_renderer_probe) are now in ctest + the linker, all green. firestaff_theron_v1_track02_bank_probe also wired. THERON_SOURCES glob extended to also match src/theron/theron_v2_*.c (otherwise theron_v2_presentation_mode would be a dangling include). M12 lib now compiles with FIRESTAFF_ASSET_STATUS_TESTING=1 so the launcher_scan_reuse test's M12_AssetStatus_Test* symbols are in the .a. All 9 Theron V1 tests + 5 Theron V1 probes pass.
+
+## Dungeon Master (DM1)
+
+### DM1 V1
+
+- 🔧 DM1 F0115/F0128 viewport follow-up: ordinary objects, creatures,
+  projectiles, pits, and explosions now fail closed without original PC34
+  material. Remaining work is the complete per-square source scheduler and
+  real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+
+  - 2026-07-23 F0115/F0219 creature/item update: D1-D3 corridor item and
+    creature receipts now require decoded PC34 `GRAPHICS.DAT`, hash-checked
+    raw `DUNGEON.DAT` corridor provenance, their owning C00..C03 cell, exact
+    source crop, C2500 scale/shift placement, and ReDMCSB D3/D2 palette maps.
+    Missing, foreign-cell, or tampered material is no-draw. Remaining work is
+    M11 consumption and broader real map capture; C14/C15, F0111/F0114,
+    walls, ornaments, fields, doors and inscriptions remain out of scope.
+
+  - 2026-07-23 F0110/F0112/F0113 non-door viewport update: wall, non-text
+    ornament, and visible/open C05 teleporter-field receipts now bind decoded
+    PC34 `GRAPHICS.DAT` pixels plus a hash-checked raw `DUNGEON.DAT` square
+    byte, ReDMCSB geometry, palette row, and source draw phase. Missing or
+    tampered provenance is no-draw. M11 adoption and packaged capture remain;
+    this slice excludes F0111, F0114, doors, C10/C11 and inscriptions.
+
+  - 2026-07-23 F0114-adjacent F0104 floor/pit/stairs update: every visible
+    F0108 pit and F0104 stair plan now requires the matching decoded
+    `GRAPHICS.DAT` surface, source fingerprint, original blit geometry, and
+    native PC34 palette receipt. Missing, tampered, or wrong-index material is
+    no-draw. Remaining work is M11 consumption and real packaged capture; this
+    deliberately changes neither M11, doors, C10/C11, nor fallback rendering.
+
+  - 2026-07-22 implementation update: the F0128 scheduler now preflights
+    every source material requirement before executing any draw step. Missing
+    material rejects the entire plan, including the `0x0000` alcove word,
+    rather than leaving a partial or substitute frame. The remaining work is
+    still the broader per-square scheduler and real-data capture coverage.
+
+  - 2026-07-22 inscription update: M648/F0168 now validates every glyph
+    binding plus the complete source font raster before drawing the first
+    glyph. A malformed line leaves the original wall untouched; no host-font
+    fallback exists.
+
+  - 2026-07-23 F0168/M648 source-layout update: all four F0107 front-wall
+    line slots are now verified at their original Y positions (41, 52, 68,
+    79) before the wall-ornament receipt is published. The receipt carries a
+    source-line mask, preserves blank-line slot identity, and fails closed on
+    any GRAPHICS.DAT M648 dimension, C10, glyph, or layout drift. Remaining
+    work is real packaged capture, not host-font substitution.
+
+  - 2026-07-23 F0111 update: D1/D2/D3 center and side door plans now require
+    a matching decoded PC34 GRAPHICS.DAT frame/panel catalogue before they
+    can publish a source-material receipt. Missing, resized, byte-drifted,
+    or host-created surfaces are no-draw. Remaining work is production M11
+    consumption and packaged capture, not another fallback door painter.
+
+- 🔧 DM1 runtime input/HUD/save follow-up: C127 HoC selection and its
+  C346/C026/C017/C040/C027 material gates now use resident original assets
+  rather than the broader launcher-completeness latch. The champion top-row
+  source plan, live action/spell material requirements, and PC34 resume
+  adoption are now individually source-gated and tested. The production M11
+  consumer now draws the source-validated top row; remaining work is full
+  original-save corpus coverage, original-vs-Firestaff capture, and the
+  remaining action/spell and HoC frame-path work.
+
+  - 2026-07-30 status correction: `m11_draw_dm1_v1_top_row_receipt()`
+    consumes the atomic C008/C028/C033-C035 receipt in the live framebuffer,
+    including original M653 champion names, C187 bars, C211/C212 hand zones,
+    C015/C016 damage overlays, and capture-route evidence. The focused M11
+    consumption/host-render/runtime-bridge tests and the local-PC34 geometry
+    probe pass. Do not reopen a second top-row consumption implementation;
+    only paired original capture remains.
+
+  - 2026-07-22 update: the top-row plan now has a dedicated original-asset
+    receipt that resolves and validates C008/C028/C033/C034/C035 directly
+    from the live M11 GRAPHICS.DAT loader. It fails closed on index, byte, or
+    dimension mismatch; M11 frame consumption remains open work.
+
+  - 2026-07-22 update: the asset receipt and live party frame now feed an
+    ordered PC34 presentation receipt for C008/C028/C033-C035, name zones,
+    and status bars. It rejects incomplete plans or source material. M11's
+    actual framebuffer consumer remains the next open runtime step.
+
+  - 2026-07-22 update: F0296 candidate early-return, inventory F0292 repaint,
+    changed action hands, and dead C008 status state now select exact subsets
+    of that presentation receipt. M11 framebuffer consumption remains open.
+
+  - 2026-07-22 update: source redraw priority now orders F0293/F0292 status
+    before C032 poison then C015/C016 damage, retaining C008-only handling for
+    dead champions. M11 framebuffer consumption remains open.
+
+  - 2026-07-22 update: F0407/F0412 now retain only source-bound action and
+    spell material (C014/C010/C009/C011/M653 plus their PC34 zones). MISS and
+    DOOR remain no-draw here. F0873 now keeps C127 selection, C040 ownership,
+    C161 rename, C160 confirmation, and C162 restore in one source-owned
+    receipt chain. Remaining work stays in their live M11 presentation paths.
+
+  - 2026-07-22 update: action, spell, and damage receipts now also expose
+    source-ordered presentation sequences. Original-save resume validates
+    imported C13/C24/C25 records against their exact PC34 event slots, map,
+    time, and C15 explosion state before atomic adoption. Real corpus breadth
+    and M11 execution remain open work.
+
+  - 2026-07-22 update: source-ordered action/spell sequences now admit only
+    real decoded GRAPHICS.DAT surfaces with matching bounds, zones, and font
+    material. Any invalid step rejects the entire command batch. M11 execution
+    remains open work.
+
+  - 2026-07-23 update: command admission now additionally binds the full PC34
+    material shapes for C014 `{88x45}`, C010 `{87x45}`, C009 `{87x25}`, and
+    C011 `{14x39}`. It checks the exact C011 source rows F0394 copies at
+    `y=13` and `y=26`, so a decoder can no longer pass with unrelated pixels
+    while either visible rune-control row is blank. C010's action material is
+    likewise rejected on any non-PC34 shape. Remaining work stays in broader
+    live M11/package capture, not synthetic HUD recovery.
+
+  - 2026-07-22 update: admitted command batches now bind to a live-effect,
+    champion, tick, serial, and batch-fingerprint execution receipt. Any
+    effect or command mismatch is fail-closed. M11 execution remains open.
+
+  - 2026-07-22 update: HoC C040 redraw, C162 close/restore, and reopen now
+    have a generation- and sensor-owner-bound receipt. Atlas ordinal zero is
+    explicitly valid. M11 panel execution remains open work.
+
+  - 2026-07-22 update: C160/C161 now retire C040 and stale portraits only
+    through the active source C127 sensor; C162 alone restores matching live
+    C127/C026 and becomes reopen-eligible. C161 cannot close before rename
+    succeeds. M11 panel execution remains open work.
+
+  - 2026-07-22 update: the completed HoC handoff now has an atomic apply plan
+    for G0299/G0305, C040, C127, and C026. C160/C161 retire source state while
+    C162 restores only the matching live source route. M11 application remains
+    open work.
+
+- 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
+  PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting
+  ticks. This removes the prior every-tick food/water, starvation, F0325, and
+  F0319 death acceleration. Focused cadence coverage is data-free; remaining
+  work is real-session duration evidence, not a changed poison/death rule.
+
+- 🔧 Original DOS capture parity: five specific paired evidence sets are blocked. Details and honest status labels at `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`. Minimum runbook at `docs/parity/DM1_V1_ORIGINAL_CAPTURE_RUNBOOK.md`.
+
+  - Live-capture harness: 2026-06-21 recovered the macOS DOSBox Staging app-binary path for `docs/parity/tools/dosbox_capture_session.py --live`; a local run reached `dungeon_gameplay` and produced operator-local `01_ingame_start.png` / `02_ingame_step_forward.png` plus a movement receipt. Remaining work: promote those local original frames through the existing pass608/pass1052/pass1056-style evidence path and pair them against Firestaff; do not count them as parity until the tracked artifacts and diffs exist.
+
+  - Live-capture receipt: pass1073 now CTest-locks a redacted receipt for that local run: two `dungeon_gameplay` frame hashes, a C070 no-change diagnostic, a `Keypad-5` viewport-hash change, DOSBox Staging conf pins, and explicit non-claims. Remaining work is unchanged: the original frame bytes stay operator-local until a deliberate promotion path exists, and no B1 row moves to fixed without tracked same-state pairing.
+
+  - Post-dungeon route receipts: `docs/parity/tools/dosbox_capture_session.py --post-dungeon-route` now supports bounded keypad routes after the first live movement proof and writes an operator-local route receipt with frame hashes, classifier states, route keys, and local frame paths. Remaining work: run reviewed routes for creature-chain, champion-panel, wall/door/fakewall, or viewport pairing targets and promote only non-proprietary/paired evidence. **2026-06-29 reviewed-target-selection hardness landed:** the new `docs/parity/DM1_V1_POST_DUNGEON_PAIRING_TARGET_CONTRACT.json` pins the 5 supported target kinds (`creature_chain` / `champion_panel` / `wall_door_fakewall` / `viewport` / `collision`) with source anchors + minimum route step counts + required selection fields + minimum semantic checks + non-claims, and the new `docs/parity/tools/dm1_v1_post_dungeon_pairing_target_selector.py` refuses to emit `target_selection.receipt.json` until the operator-written selection passes 12 pin checks (target kind supported, reviewer name + run id + PASS_ID safe, route step count meets kind minimum, every key is in the live runner's KEY_MAP keypad set, expected terminal classifier state + sensor family kind-matched, baseline non_claims present, asset set unmodified, on-disk preflight receipt pin-checks all PASS). **2026-06-29 wall/door/fakewall edge hardening landed:** `wall_door_fakewall` selections must now pin `selected_boundary_kind` + `expected_view_square` + `expected_visual_edge`, the selector validates boundary/edge compatibility against ReDMCSB `CLIKMENU.C:279-288`, `CLIKVIEW.C:356-389,404-445`, and `DUNVIEW.C:7873-7910`, and receipts preserve the required field values for later pairing audits. New CTest `dm1_v1_post_dungeon_pairing_target_selector` PASS, runbook-consistency probe is now 21/21 with the new `post_dungeon_target_selector_selftest` adding the route-key map pin (selector vs. live runner KEY_MAP). The runbook Step 5b.1 is split into 5b.1 (live receipt) + 5b.1.a (the reviewed-target-selection gate); 5b.1.a is now required before any post-dungeon route is dispatched. Remaining work is unchanged: run reviewed routes for the five pairing targets and promote only non-proprietary/paired evidence. Both contract and selector do NOT promote parity; original-vs-Firestaff pixel diffs, creature screenshots, and four-champion HUD screenshots stay in B1/B3 capture-gap rows.
+
+  - Viewport: pass1052 now has a clean original DM1 PC 3.4 DOSBox turn-cycle capture with 2 `dungeon_gameplay` frames, 0 duplicate raw hashes, and pass80 classifier PASS. pass1056 now gates the pass1054 Firestaff nearest-neighbor pairing artifacts in CTest: 4 original crops present, 4 pair rows present, and the one promoted wall row remains a 0-pixel exact match. pass376 measurement-only overlays now cover 6 original-vs-Firestaff viewport rows, with large deltas still recorded as non-claims. pass623/pass625/pass626 now gate the Firestaff-side transcript readiness bridge and one C002 turn-right original transcript target-row preflight. Remaining work: promote debugger-observed same-state viewport rows for the nonzero gameplay crops and, separately, produce the real I34E original runtime transcript row.
+
+  - Keyboard-buffer transcript: pass1072 now fingerprints the pass513 deterministic transcript and keeps the live-provenance blocker machine-checkable (`BLOCKED_ORIGINAL_I34E_KEYBOARD_BUFFER_LIVE_DEBUGGER_OBSERVATION_MISSING`, 0 debugger-observed rows). pass1075 adds the reusable acceptance gate for the future `02_turn_right_west_1_3` live-debugger row: it rejects source-filled rows unless they prove M528/F0361/F0380/F0365/F0284/F0128/F0097 under live original PC/I34E debugger provenance and match the pass625/pass626 C002 tuple/hash. **2026-06-22 the dosbox-debug / xvfb-run / wine / unlzexe shim stack is installed on the host** (`/opt/homebrew/bin/dosbox-debug` is a symlink to `dosbox-x 2026.06.02`, `/opt/homebrew/bin/xvfb-run` is the `/tmp/xrun` Xvfb launcher shim, `/opt/homebrew/bin/unlzexe` is the native LZEXE unpacker, `/opt/homebrew/bin/wine` is the `unlzexe.exe`-only dispatcher that preserves the historical `Z:` path prefix). pass235 entry-capture now spawns dosbox-debug via `pexpect.spawn` under a private Xvfb with `-o quit warning=false`, which is the correct combination for the macOS ARM64 dosbox-x 2026.06.02 build (the in-tree debugger is unavailable against a pipe STDIN/STDOUT, and the Cocoa Quit-warning modal otherwise swallows SIGTERM). Remaining work: the (Running)->-> break still does not surface against the pexpect-owned PTY on this host (dosbox-x reaches `COMMAND.COM stack: 0x0749` and then idles; `01ED:0000` / `BADA26` / `CS=` regexes all return empty). The real Terminal.app launch path is required to land the F0128/F0380/F0267 runtime evidence row; until then the M527/M528, F0361, F0380, F0128, F0097 live captures stay BLOCKED.
+
+  - Data coverage: pass1057 locks the extracted DM1 Amiga 2.2 English `DUNGEONB.DAT` kid-dungeon sidecar (`9bac133b…`, 4,806 bytes) and makes the coverage row 3/3 registry-backed. This closes the DM1 variant-data acquisition gap; it does not affect PC34 runtime launch requirements.
+
+  - 24h readiness roll-up: `tools/dm1_24h_readiness.py` now gives the active finish lane one PASS/FAIL command over DM1 data coverage, registry agreement, pass1056 viewport/wall pairing, pass1057 DUNGEONB lock, pass1058 keypad/route atlas, Phase A, playable-route, and pass1055 closed-door semantic CTests. Current status is PASS. This is a local readiness gate, not a claim that the remaining original-capture gaps are solved.
+
+  - Wall: pass1052 now has a clean original DM1 PC 3.4 DOSBox turn-cycle capture with 2 `wall_closeup` frames, 0 duplicate raw hashes, and pass80 classifier PASS. pass1054 promotes one exact original-to-Firestaff 224x136 wall-crop match: original `02_left_1_wall_original_viewport_224x136.png` == Firestaff `hall_1_4_dirE_viewport_224x136.ppm`, 0 changed pixels / MAE 0. Remaining work: broaden to a deterministic multi-state wall route and promote more exact pairings.
+
+  - Collision: pass1055 now has original DM1 PC 3.4 closed-door stasis evidence and CTest-gated Firestaff-side semantic pairs. Original `door_before`, `after_viewport_click`, and `after_kp5` are byte-identical at both raw-frame and 224x136 viewport-crop level; Firestaff replays the same movement sequence to `map=0 x=6 y=9 dir=3`, sees closed door square `0x94`, and blocks the next forward command without moving. The extended Firestaff-side collision probe now broadens that same target route across repeated closed-door stasis plus wall, door, fakewall, pit, and teleporter element substitution. Remaining work: pixel-pair this view and broaden to original party-occupied/diagonal blocked rows plus a full wall/door/fakewall transcript.
+
+  - Creature-chain: pass1058 locks the corrected original DOSBox keypad mapping for the next route attempt (`F=kp8`, `B=kp2`, `TR=kp4`, `TL=kp6`; `kp5` also moves forward from the tested start pose). The exact corrected route-token sequence is now preserved as redacted text in the pass1058 CTest manifest, but the first selected target remains behind an inert closed door: enter, space, two clicks, and forward all leave the raw frame unchanged. 2026-06-29 tail-frame hardening now machine-checks the two raw-only low-click/forward rows against the same stable inert-door hash. Remaining work: choose a level-1 group with open line of sight, or use a controlled save/debug route, then promote a paired original creature screenshot. Creature render remains source-locked until that paired original capture exists.
+
+- 🔧 Champion-panel original parity: pass1053 now tracks and CTest-gates original DM1 PC 3.4 candidate/resurrect-panel frames promoted from pass455 (`candidate_select` SHA256 `e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e`, terminal/HUD after C160 SHA256 `7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f`). pass1071 now machine-checks the remaining blocker status against those original artifacts and Firestaff V1 HUD PPM references. Remaining work: full four-champion party HUD + single-champion status-panel original pairing and Firestaff-vs-original pixel diffs.
+
+- 🔧 DM1 V1 champion-panel HUD/status top-row lane hardening: source-lock coverage remains in `dm1_v1_champion_panel_hud_status_source_lock`, pass107, and pass110. The real HoC runtime probe now recruits four champions from PC34 `DUNGEON.DAT`, admits the exact `GRAPHICS.DAT` material, and verifies C150..C218 plus F0287/F0292/F0293 on the live framebuffer. Remaining work: original-vs-Firestaff pixel pairs, blocked behind B1/B3 capture evidence.
+
+- 🔧 DM1 V1 champion-panel hand-slot refresh walk-order gate: data-free `test_dm1_v1_champion_panel_hand_slot_refresh_pc34_compat` (140/140 PASS, CTest `dm1_v1_champion_panel_hand_slot_refresh_pc34_compat`) pins the CHAMDRAW.C F0296 walk-order + leader-hand icon refresh precedence + candidate early-return + inventory-champion ordinal skip contract on a fully-alive 4-champion party. 2026-06-29 tightened the owner gate so `G0299_ui_CandidateChampionOrdinal && G0423_i_InventoryChampionOrdinal` walks normally with the inventory-owner slotbox skip instead of being rejected, and preserves the skipped-owner trace marker. Source-locked against CHAMDRAW.C F0295:1153-1182 + F0296:1184-1262 + OBJECT.C F0033/F0036/F0038 + MOUSE.C F0068/F0077/F0078 + DEFS.H C01/C195/C201/G0299/G0423/G0305/M070/M000/M001. Disjoint from dead_member_hand_refresh (F0296 walk with a dead member + F0292 dead-status-box branch), hand_slot_priority (CHAMPION.C F0302 input dispatch), portrait_box_redraw_states (F0291/F0292/F0296 event matrix), mirror_candidate_icon_refresh siblings, status_hand_rotation (F0284), and the per-state redraw + per-action-hand slot-box dispatch family. Contract-only: no real M11 graphics, no GRAPHICS.DAT/DUNGEON.DAT load, no real-asset bitmap parity claim. Remaining work is the live M11 frame-path handoff for the F0296 walk and a paired original-vs-Firestaff champion-panel hand-slot capture.
+
+- ✅ 2026-07-23 DM1 F0320 inventory pending-damage receipt: the live F0293/F0320 handoff now carries the positive pending-damage amount with its exact C015/C016 GRAPHICS.DAT source surface. M11 rejects the entire source top-row lane when the receipt amount, loaded C015/C016 pixels, or original M653 glyph plane is absent, and draws the F0320 1/2/3-digit value only at the original C179 inventory origins 21/18/15, Y=16. The real HoC runtime probe recruits four C127 records from hash-verified DUNGEON.DAT and verifies C016 plus M653 digits for 7, 37, and 137 on the live framebuffer. This supersedes the older inventory-live-bitmap subtask below; only an original-vs-Firestaff capture pair remains.
+
+- 🔧 DM1 V1 champion-panel F0320 damage box-geometry + per-digit text stride gate: data-free `test_dm1_v1_champion_panel_damage_indicator_pc34_compat` (957/957 PASS, CTest `dm1_v1_champion_panel_damage_indicator_pc34_compat`) now pins the CHAMPION.C F0320:1744-1775 PC34 MEDIA009 damage box-geometry + 1/2/3-digit x-stride slice that the prior F0623-only `damage_indicator` gate collapsed into a single `zone_index`. The new 8 result fields (`damage_box_top/bottom/left_offset/right_offset/byte_width`, `damage_text_x_offset/y`, `damage_digit_count`, `champion_x_base`) plus the new `test_damage_box_geometry_and_text_stride` matrix cover the inventory branch (1748-1758: box bottom=28, left=+7, right=+31, `C016_BYTE_WIDTH=16` blit, x-stride 21/18/15 for damage 1/2/3 digits, Y=16) and the non-inventory branch (1761-1773: box bottom=6, left=+0, right=+47, `C024_BYTE_WIDTH=24` blit, x-stride 19/16/13, Y=5), the 1734-1737 `if (!pendingDamage) continue;` short-circuit (collapses all geometry/stride fields to 0), the 1745 `AL0969_i_X = championIndex * C69_CHAMPION_STATUS_BOX_SPACING (69)`, and the 4-digit `damage >= 1000` clamp to the 3-digit x-stride bucket. Source-locked against CHAMPION.C F0320:1744-1775 + DEFS.H:2157 (C69=69) + DEFS.H:2471-2472 (C016_BYTE_WIDTH=16 / C024_BYTE_WIDTH=24) + DEFS.H:2086/2088/2093 (C08/C10/C15 colors) + CHAMDRAW.C F0623:680-699 (graphical blit + centered text wrapper). Disjoint from `damage_flash_decay_pc34_compat` (C12 schedule + F0254 overdraw), `status_recompute_pc34_compat` (PANEL.C F0344 stat-tuple recompute), `bar_pixels_pc34_compat` (F0287 PC34 HP/stamina/mana splits), `clock_tick_stat_repaint_pc34_compat` (F0331 tick-time recovery), and `hud_recompute_pc34_compat` (F0292:898-935 + F0349:1945-1949 food/water cascade). 2026-07-02 update: live M11 now prints non-inventory damage numbers at the PC34 F0320 fixed origins and the real-data damage-flash probe verifies visible 1/2/3-digit text at 19/5, 16/5, and 13/5; helper coverage also pins the inventory origins 21/16, 18/16, and 15/16. Remaining work is narrower: inventory-mode live bitmap capture and the original-vs-Firestaff pending-damage pixel pair once a real pending-damage HUD capture lands (still blocked behind the B1/B3 capture-gap rows in `docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md`).
+
+- 🔧 Inventory/chest polish beyond source-locked routes: DM1 portrait sensor parity is no longer a finish blocker: the 2026-06-21 pass1059 audit confirms C127 `sensorData` is the 0..23 C026 portrait-atlas ordinal, and the M11 runtime already rejects ordinals outside the mirror catalog. M12 launcher extras are also no longer a DM1 finish blocker: the 2026-06-21 pass1060 audit confirms the only disabled extras, spell reference and map viewer, are intentionally out-of-scope until there is a source-backed data source. Inventory pass1061 closes the stale `m11_obj_use()` consumable wiring gap, and pass1070 verifies the broader inventory route parity row across equip slots, backpack/chest, consumables, mouth/eye, panel-slot routing, object interaction, and M11 inventory runtime/pixel gates. Chest pass1062 promotes the existing pass652 scroll-wheel pickup-overflow runtime regression into CTest/Python verification, and the 2026-06-21 chest matrix now passes 38/38 across open/close, action-hand, full-hand, stack split/merge, scroll-wheel pickup, non-leader, party-rotate, candidate-panel, cross-champion, drop-to-floor, empty-reopen, and verifier gates. Champion-stat pass1063 closes the stale C01-C24 Hall-stat claim: runtime recruitment copies decoded mirror records through `F0606`/`F0652`/`F0673`, not flat helper defaults. C25/C26 pass1064 closes the stale Lord Order/Grey Lord projectile fallback gap with an explicit BUG0_13-safe Fireball route. Touch pass1065 closes the stale inventory/champion/menu zone rows against the existing source-locked touch matrix and mouse-command queue suite. **2026-06-23 Hall of Champions ordinal-3 south_return portrait_rect row opened:** the existing `firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe` expected ordinal 3 at (1,4) DIR_SOUTH per its reference fixture but on the open-source DM1 V1 DUNGEON.DAT the C127 sensor at (1,4) DIR_SOUTH is laid out differently and the walkpath probe SKIPs its (1,3) NORTH fixture check with `hall_walkpath_fixture_mismatch`. The new `firestaff_dm1_v1_champion_mirror_portrait_rect_south_return_runtime_probe` (DONE.md 2026-06-23) closes the ordinal-3 + DIR_SOUTH gap by scanning the local DUNGEON.DAT sensor layout for the unique DIR_SOUTH cell whose sensorData == 3 (currently (3,7) on the reference data) and asserting the D1C portrait cutout renders correctly. If the walkpath probe's reference fixture is ever updated, the new probe will keep passing on the new layout without re-deriving the expected sensor map. Remaining chest-adjacent work is visual/pixel evidence only, tracked under B1 capture pairs and B3 V2 material gates.
+
+### DM1 V2.0 / V2.1 / V2.2
+
+- 🔧 Phase 3 - Modern UI overlay hardening: HUD/action/champion route gates exist, and 2026-06-21 adds the missing V2 HUD spell/rune route mirror for spell parent/caster/rune/cast/recant (`C100`, `C101`..`C109`) without bypassing V1 command routes. The HUD overlay now also has a data-free champion/action/rune presentation-state API with deterministic pixel assertions for bars, leader/spell-ready cues, action highlight/flash decay, and rune/cast/recant/caster strips. Remaining work is finished inventory/champion/rune/action visual polish, real art/assets, fit/animation quality, and broader runtime screenshot/pixel gates.
+
+- 🔧 Phase 4 - Lighting and visual effects hardening: `dm1_v2_lighting_dynamic_pc34`, `dm1_v2_lighting_dynamic_source_lock`, `dm1_v2_enhanced_effects_runtime_pc34`, `firestaff_m11_dm1_v2_effects_framepath_probe`, `dm1_v2_field_projectile_effect_metadata_pc34`, `dm1_v2_field_projectile_vfx_pc34`, `dm1_v2_extended_field_vfx_pc34`, `dm1_v2_anim_timing_pc34`, `dm1_v2_creature_render_pc34`, `dm1_v2_spell_effect_pc34`, and `dm1_v2_field_projectile_effect_metadata_source_lock` verify source-palette lighting mirroring, deterministic fallback, additive light-map math, render-presentation-gated particle ticking, live M11 V2 frame-path handoff with V1 no-op preservation, indexed particle overlay painting in V2.0/V2.2 only, transient live projectile/explosion/field viewport seed hooks from already-filtered M11 metadata, dynamic-lighting-gated light-map ticking and live effect light-source seeding, source-palette-shadowed V2.2 material fallback, fallback material-category routing, field/projectile metadata, spell-overlay/particle triggers, fluxcage-field routing, extended teleporter/pit/stairs/fakewall/floor-ornament VFX families, V1-tick animation interpolation, creature animation frame clamping/manifest anchors, and presentation-only non-mutating boundaries. Remaining work is finished enhanced shadows beyond bounded light glints/source-palette fallback, finished art, real source-zone sprite/material assets beyond the fallback categories, and real screenshot/material pixel gates.
+
+  - 2026-07-14 update: V2.0's palette/filter post-pass now also consumes the
+    RGBA presentation copy produced by the original C001/TITLE and SWSH
+    special-palette route. The indexed C001 frame and its source VGA palette
+    remain unchanged; disabling V2.0 restores the exact original RGB result.
+
+  - 2026-07-14 update: TITLE, ENTRANCE, and C005 credits startup presents now
+    select that V2.0 lane before their source-owned timing loops run; the
+    original indexed frames and special VGA palettes remain authoritative.
+
+- 🔧 Phase 6 - Touch/controller ergonomics hardening: route gates and shared M11 SDL gamepad runtime routing exist; remaining work is broader V2-only gesture/controller affordances, richer in-launcher button-mapping UI polish, Steam Deck glyph hints, and touch target audits with V1 touch/click parity preserved.
+
+- 🔧 Phase 7 - V2 verification suite hardening: presentation-disabled state-hash, side-by-side seed pixel gates, selected-resolution input mapping gates, the launchable enhanced-mode runtime smoke, the DM1 V2.2 M11 in-place handoff source-lock, and the data-free actual-render screenshot probe are now registered in CTest (`dm1_v2_source_route_state_hash_pc34`, `dm1_v2_side_by_side_seed_pc34`, `dm1_v2_v1_v2_side_by_side_seed_pc34`, `dm1_v2_side_by_side_presentation_seed_probe`, `dm1_v2_selected_resolution_input_mapping_pc34`, `dm1_v2_4k_input_zone_mapping_pc34`, `dm1_v2_runtime_presentation_smoke`, `dm1_v22_m11_inplace_handoff_source_lock`, `dm1_v2_actual_render_screenshot_probe`). They cover deterministic source-route hashing, canonical V1/gap/V2 layout export, full-lane and D1C wall/portrait region parity, N/E/S/W presentation-disabled viewport parity, selected-resolution source-coordinate mapping, 4K source touch/HUD zone mapping, real `firestaff --game dm1` V2.0/V2.1 launcher-config smoke with source indexed BMP plus post-palette/post-filter presented RGBA BMP receipts whose configured-mode hashes differ, host-agnostic V1/V2.0/V2.1/V2.2 actual BMP output, a source-command-owned V2.2 route receipt with repeat-stable hashes and no DOSBox/finished-art claim, and a synthetic V2.2 in-place material route that paints wall/floor/pit/stairs plus teleporter fields as distinct categories. 2026-07-05 update: the source-owned V1/V2.0/V2.1/V2.2 screenshot receipt gate now takes the explicit DM1 data root from CTest/argv or `FIRESTAFF_DM1_DATA_DIR`, so the real-data route exercises the same `~/.firestaff/data/dm1` symlinked install layout as packaged smoke. Remaining work is finished-art / real-asset material screenshot verification, tracked under Phase 8/per-mode material gates.
+
+## DM1 F0115 live effect material follow-up
+
+## DM1 original-save corpus follow-up
+
