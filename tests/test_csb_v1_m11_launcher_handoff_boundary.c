@@ -1877,10 +1877,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
 }
 
 /* A31E has the PC34 GRAPHICS.DAT digest, but its paired TITL.DAT and APPA.C
- * program family are different source owners.  Until their native M11
- * handoff is recovered, the selected package must fail closed rather than
- * entering PC3.4 TITLE.C/ENTRANCE.C.  ReDMCSB APPA.C:51-68, ANIM.C F1205 and
- * COMPILE.H 199-243. */
+ * program family are different source owners.  Its native M11 route must
+ * expose TITL.DAT, never a PC3.4 TITLE.C/ENTRANCE.C replacement.  ReDMCSB
+ * APPA.C:51-68, ANIM.C F1205 and COMPILE.H 199-243. */
 static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
     static const char *const program_names[] = {
@@ -1964,12 +1963,16 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                     "A31M cache retains an authenticated native handoff member");
     }
     M11_GameView_Init(&view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 0,
-                "M11 rejects Amiga 3.1 before the PC34 startup fallback");
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "M11 opens Amiga 3.1 through its native TITL.DAT route");
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
-    expect_true(view.active == 0 && profile == NULL &&
-                view.csbStartupRuntimeAssetSession == NULL,
-                "M11 does not publish a mixed-platform Amiga startup session");
+    expect_true(view.active == 1 && profile != NULL &&
+                view.csbStartupRuntimeAssetSession == NULL &&
+                view.csbState.startup_title_active &&
+                view.csbAmigaTitlBytes != NULL &&
+                view.csbAmigaTitlAppliedDeltaCount == 0u &&
+                view.csbAmigaTitlPixels[89u * 320u + 186u] == 7u,
+                "M11 binds real Amiga title pixels without a mixed-platform session");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

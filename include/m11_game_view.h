@@ -1647,6 +1647,18 @@ typedef struct {
         CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS][4096];
     uint8_t csbAtariStAnimationPixels[320 * 200];
     uint8_t csbAtariStAnimationPalette[16][3];
+    /* Amiga A31 owns its title through APPA.C -> ANIM.C and TITL.DAT.
+     * Keep the selected, verified source member alive while GRF1 applies its
+     * real delta records; this is deliberately independent of PC TITLE.C. */
+    uint8_t *csbAmigaTitlBytes;
+    size_t csbAmigaTitlByteCount;
+    uint32_t csbAmigaTitlVbl;
+    uint16_t csbAmigaTitlVblRemainder;
+    uint16_t csbAmigaTitlAppliedDeltaCount;
+    int csbAmigaTitlClockStarted;
+    int csbAmigaTitlFrameBound;
+    uint8_t csbAmigaTitlPixels[320 * 200];
+    uint8_t csbAmigaTitlPalette[16][3];
     struct {
         int level_loaded;
         int current_level;

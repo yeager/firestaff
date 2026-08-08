@@ -38,6 +38,7 @@
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
+#include "csb_v1_amiga_titl_dat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
@@ -375,6 +376,11 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static void m11_csb_present_startup_raster(const unsigned char *source,
+                                           unsigned char *framebuffer,
+                                           int framebuffer_width,
+                                           int framebuffer_height);
 
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
 #define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
@@ -4116,6 +4122,148 @@ static int m11_csb_prepare_atari_st_animation_handoff(
         }
     }
     state->csbAtariStRuntimeHandoffComplete = 0;
+    return 1;
+}
+
+static int m11_csb_is_amiga_a31_profile(const CSB_V1_BootProfile *profile)
+{
+    return profile && (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+                       profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI);
+}
+
+/* ReDMCSB APPA.C:51-53 starts SWSH and passes FTL_TITL to ANIM.C.  A31's
+ * TITL.DAT is a separate application surface, so neither PC TITLE.C nor a
+ * reconstructed bitmap may stand in for it.  The final DL stream is known
+ * to read outside its FTL item (ANIM.C F1205 / EXPAND.C F0466); retain the
+ * last wholly source-backed frame rather than manufacture those bytes. */
+static int m11_csb_prepare_amiga_titl_handoff(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    char path[FSP_PATH_MAX];
+    char md5[33];
+    FILE *file = NULL;
+    long length;
+    CSB_V1_AmigaTitlSchedule schedule;
+    CSB_V1_AmigaTitlPalette palette;
+
+    if (!state || !state->csbBootProfile) return 0;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a31_profile(profile) || !profile->asset_root[0] ||
+        snprintf(path, sizeof(path), "%s/TITL.DAT", profile->asset_root) <= 0 ||
+        strlen(path) >= sizeof(path) ||
+        !asset_file_md5_hex(path, md5) ||
+        strcmp(md5, "5b590ea3a6f5eed513b5678b01468ee4") != 0) {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0 || length > 1024L * 1024L ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    free(state->csbAmigaTitlBytes);
+    state->csbAmigaTitlBytes = (uint8_t *)malloc((size_t)length);
+    if (!state->csbAmigaTitlBytes ||
+        fread(state->csbAmigaTitlBytes, 1u, (size_t)length, file) !=
+            (size_t)length) {
+        fclose(file);
+        free(state->csbAmigaTitlBytes);
+        state->csbAmigaTitlBytes = NULL;
+        return 0;
+    }
+    fclose(file);
+    state->csbAmigaTitlByteCount = (size_t)length;
+    memset(&schedule, 0, sizeof(schedule));
+    memset(&palette, 0, sizeof(palette));
+    if (csb_v1_amiga_titl_dat_decode(state->csbAmigaTitlBytes,
+                                      state->csbAmigaTitlByteCount,
+                                      &schedule) != 0 ||
+        csb_v1_amiga_titl_dat_decode_palette(state->csbAmigaTitlBytes,
+                                              state->csbAmigaTitlByteCount,
+                                              &palette) != 0 ||
+        !csb_v1_amiga_titl_dat_decode_initial_frame(
+            state->csbAmigaTitlBytes, state->csbAmigaTitlByteCount,
+            state->csbAmigaTitlPixels, sizeof(state->csbAmigaTitlPixels),
+            NULL)) {
+        free(state->csbAmigaTitlBytes);
+        state->csbAmigaTitlBytes = NULL;
+        state->csbAmigaTitlByteCount = 0u;
+        return 0;
+    }
+    memcpy(state->csbAmigaTitlPalette, palette.rgb4,
+           sizeof(state->csbAmigaTitlPalette));
+    state->csbAmigaTitlVbl = 0u;
+    state->csbAmigaTitlVblRemainder = 0u;
+    state->csbAmigaTitlAppliedDeltaCount = 0u;
+    state->csbAmigaTitlClockStarted = 0;
+    state->csbAmigaTitlFrameBound = 1;
+    return 1;
+}
+
+static void m11_csb_advance_amiga_titl(M11_GameViewState *state,
+                                        uint32_t elapsed_ms)
+{
+    CSB_V1_AmigaTitlSchedule schedule;
+    uint32_t completed_vbl;
+    uint16_t target_deltas = 0u;
+    uint16_t index;
+
+    if (!state || !state->csbAmigaTitlBytes || elapsed_ms == 0u) return;
+    if (!state->csbAmigaTitlClockStarted) {
+        state->csbAmigaTitlClockStarted = 1;
+        return;
+    }
+    {
+        const uint32_t units = (uint32_t)state->csbAmigaTitlVblRemainder +
+            elapsed_ms * 50u;
+        state->csbAmigaTitlVbl += units / 1000u;
+        state->csbAmigaTitlVblRemainder = (uint16_t)(units % 1000u);
+    }
+    if (csb_v1_amiga_titl_dat_decode(state->csbAmigaTitlBytes,
+                                      state->csbAmigaTitlByteCount,
+                                      &schedule) != 0) return;
+    completed_vbl = schedule.initial_duration_vbl;
+    for (index = 0u; index < 30u; ++index) {
+        if (state->csbAmigaTitlVbl < completed_vbl) break;
+        ++target_deltas;
+        completed_vbl += schedule.delta_durations_vbl[index];
+    }
+    while (state->csbAmigaTitlAppliedDeltaCount < target_deltas) {
+        const uint16_t delta = state->csbAmigaTitlAppliedDeltaCount;
+        if (!csb_v1_amiga_titl_dat_apply_delta(
+                state->csbAmigaTitlBytes, state->csbAmigaTitlByteCount,
+                delta, state->csbAmigaTitlPixels,
+                sizeof(state->csbAmigaTitlPixels), NULL)) {
+            return;
+        }
+        ++state->csbAmigaTitlAppliedDeltaCount;
+    }
+    state->csbState.startup_title_frame =
+        (int)state->csbAmigaTitlAppliedDeltaCount;
+    state->csbState.startup_title_source_step =
+        (int)state->csbAmigaTitlVbl;
+}
+
+static int m11_csb_present_amiga_titl_startup(M11_GameViewState *state,
+                                               unsigned char *framebuffer,
+                                               int framebuffer_width,
+                                               int framebuffer_height)
+{
+    uint8_t rgb6[256][3];
+    int color;
+
+    if (!state || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 || !state->csbAmigaTitlBytes) return 0;
+    for (color = 0; color < 256; ++color) {
+        const uint8_t *rgb = state->csbAmigaTitlPalette[color & 15];
+        rgb6[color][0] = (uint8_t)(rgb[0] << 2);
+        rgb6[color][1] = (uint8_t)(rgb[1] << 2);
+        rgb6[color][2] = (uint8_t)(rgb[2] << 2);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    m11_csb_present_startup_raster(state->csbAmigaTitlPixels, framebuffer,
+                                   framebuffer_width, framebuffer_height);
     return 1;
 }
 
@@ -8848,6 +8996,18 @@ static int m11_csb_apply_boot_runtime_receipt(
          * ANIMATE.SCR/DAT program.  Continue below through the verified
          * GRAPHICS.DAT startup records; do not fake an Atari animation. */
     }
+    if (m11_csb_is_amiga_a31_profile(receipt->profile)) {
+        state->csbStartupExpectedPackageIdentity =
+            package_identity ? package_identity : 1u;
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state, &receipt->receipts.init_state);
+        state->csbState.startup_title_active = 1;
+        state->csbState.startup_entrance_active = 0;
+        if (m11_csb_prepare_amiga_titl_handoff(state)) return 1;
+        m11_set_status(state, "CSB AMIGA", "TITL.DAT DECODE FAILED");
+        return 0;
+    }
     if (m11_csb_is_fmtowns_profile(receipt->profile)) {
         /* ReDMCSB ANIMTOWN.C invokes F2248/F2275 on TITLE.ANM; it does not
          * enter the PC34 TITLE.C/ENTRANCE.C surface session. */
@@ -8975,6 +9135,11 @@ static void m11_csb_startup_tick_receipt_to_m11(
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
         }
+    }
+    if (m11_csb_is_amiga_a31_profile(profile) &&
+        state->csbState.startup_title_active &&
+        !state->csbStartupRuntimeAssetSession) {
+        m11_csb_advance_amiga_titl(state, profile->tick_ms);
     }
 }
 
@@ -17676,6 +17841,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     }
     m11_csb_release_fmtowns_title(state);
     m11_csb_release_fmtowns_switch(state);
+    free(state->csbAmigaTitlBytes);
+    state->csbAmigaTitlBytes = NULL;
+    state->csbAmigaTitlByteCount = 0u;
     free(state->csbViewportFloorPixels);
     free(state->csbViewportCeilingPixels);
     state->csbViewportFloorPixels = NULL;
@@ -18697,21 +18865,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
-        if (runtime_receipt.profile &&
-            (runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
-             runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
-             runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
-             runtime_receipt.profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI)) {
-            /* A31/A35 owns its title through APPA.C -> ANIM.C, not the
-             * PC3.4 TITLE.C/ENTRANCE.C C001--C005 session.  TITL.DAT's
-             * final DL command reads beyond the item into Amiga allocation
-             * state (ANIM.C F1205 / EXPAND.C F0466), and no source-owned
-             * application handoff has been captured yet.  Never make the
-             * selected Amiga package appear to run by substituting the PC34
-             * title, entrance, HUD or viewport path. */
-            csb_v1_boot_startup_launch_cleanup_pc34(&launch);
-            return 0;
-        }
         if (!m11_csb_apply_boot_runtime_receipt(state, spec, &runtime_receipt)) {
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
@@ -19586,6 +19739,32 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->startupFrame = (int)state->csbAtariStAnimationVbl;
             out->startupAnimationActive = 1;
             out->startupTitleFrame = (int)state->csbAtariStAnimationVbl;
+            out->startupTitleReady = 1;
+            out->levelLoaded = 0;
+            out->mapIndex = -1;
+            out->partyX = -1;
+            out->partyY = -1;
+            out->partyDir = -1;
+            out->championCount = -1;
+            out->runtimeTick = 0;
+            return 1;
+        }
+        /* Amiga A31 is likewise a standalone APPA.C/ANIM.C program. Its
+         * VBlank counter reports only the real TITL.DAT schedule; it must
+         * not be described as a PC34 title-session frame. */
+        if (m11_csb_is_amiga_a31_profile(csb_profile) &&
+            !state->csbStartupRuntimeAssetSession &&
+            state->csbState.startup_title_active &&
+            state->csbAmigaTitlBytes) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "csb-amiga-a31-titl");
+            snprintf(out->startupAnimation, sizeof(out->startupAnimation),
+                     "%s", "titl-dat");
+            out->startupActive = 1;
+            out->startupFrame = (int)state->csbAmigaTitlVbl;
+            out->startupAnimationActive = 1;
+            out->startupTitleFrame =
+                (int)state->csbAmigaTitlAppliedDeltaCount;
             out->startupTitleReady = 1;
             out->levelLoaded = 0;
             out->mapIndex = -1;
@@ -23051,6 +23230,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 (uint16_t)(units % 1000u);
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (m11_csb_is_amiga_a31_profile(csb_profile) &&
+            state->csbState.startup_title_active &&
+            !state->csbStartupRuntimeAssetSession) {
+            m11_csb_advance_amiga_titl(state, csb_profile->tick_ms);
             return M11_GAME_INPUT_REDRAW;
         }
         /* Usually EMIT_GAME_WON enters this route immediately. Retain this
@@ -55155,6 +55340,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                             framebufferWidth, framebufferHeight) ||
              m11_csb_present_fmtowns_title(csb_state, framebuffer,
                                            framebufferWidth, framebufferHeight))) {
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
+        if (state->csbState.startup_title_active &&
+            m11_csb_present_amiga_titl_startup(csb_state, framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;

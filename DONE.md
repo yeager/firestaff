@@ -35,6 +35,17 @@
 
 # Nexus STABG receipt retains all retail maps (2026-08-08)
 
+# CSB Amiga A31 TITL.DAT binds to native M11 startup (2026-08-08)
+
+- ✅ Den valda A31E/A31M-katalogens hashverifierade `TITL.DAT` öppnas nu i
+  den egna APPA.C → ANIM.C-vägen. M11 avkodar originalets palett, EN-bild och
+  30 kompletta DL-steg med deras VBlank-kadens; PC34:s title- och entréväg
+  används aldrig som ersättning.
+- ✅ Den sista ofullständiga DL-posten förblir avsiktligt ospelad, enligt
+  ReDMCSB `ANIM.C` F1205 och `EXPAND.C` F0466. Verifieringen använder den
+  materialiserade A31M-originalkorpusen och kontrollerar den riktiga
+  titelbildens pixelprov vid M12/M11-handoff.
+
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
   dimensions, cell counts and maximum tile indices instead of keeping only
   first-map dimensions and aggregate counters.
