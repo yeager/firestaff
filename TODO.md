@@ -44,10 +44,12 @@
 - 🔧 DM2 New Game GAME_LOAD: den isolerade File_header-/DB-poolägaren har nu
   originalets källberäknade c_tim-kapacitet och kör den färska
   `DM2_PROCESS_ACTUATOR_TICK_GENERATOR`-fasen privat, med `savegamew8`-läge,
-  DB3 byte+4-mutationer och rollback vid köfel. Den gamla 32-posters kön
-  används inte. Nästa steg är exakt 0x56-continue-/invoke-kedja mot samma
-  ägare, följd av DYN, hero och sessionens atomära commit. Ingen party, HUD
-  eller timer får publiceras före hela den transaktionen.
+  DB3 byte+4-mutationer och rollback vid köfel. Den privata 0x56-fortsättningen
+  kan nu skapa originalets 0x04-meddelande och nästa 0x56-post i samma kö,
+  men 0x04-dispatchen är inte bunden till mekanik ännu. Den gamla 32-posters
+  kön används inte. Nästa steg är source-ordnad 0x04-/wall-/floor-dispatch
+  mot samma ägare, följd av DYN, hero och sessionens atomära commit. Ingen
+  party, HUD eller timer får publiceras före hela den transaktionen.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. Nästa

@@ -7,6 +7,20 @@
 - ✅ Riktiga Nexus `SDDRVS.TSK`-data passerar SLEV/SAL-korpus- och
   sound-runtime-testerna.
 
+# DM2 New Game 0x56-fortsättning i privat c_tim-ägare (2026-08-08)
+
+- ✅ Den privata File_header-ägaren har nu en källbunden port av
+  `DM2_CONTINUE_TICK_GENERATOR` samt dess `DM2_INVOKE_ACTUATOR`/
+  `DM2_INVOKE_MESSAGE`-svans. En 0x56-post kan bara skapa privata 0x04- och
+  efterföljande 0x56-poster med originalets delay-, mål-, action- och
+  alterneringsfält.
+- ✅ Ett kapacitetsfel återställer hela privata c_tim-kön, DB3:s active-bit
+  och aktuell karta. Ingen timer kan nå M11 eller spela effekter innan 0x04-
+  dispatchen har en komplett mekanikägartransaktion.
+- ✅ Den verkliga PC-DOS-startvärlden har 18 generatorindata men noll aktiva
+  0x56-poster, vilket realdatatestet uttryckligen kontrollerar. Därför har
+  ingen ersättningstimer eller syntetisk spelsekvens skapats.
+
 # DM2 New Game c_tim- och aktuatorgeneratorägare (2026-08-08)
 
 - ✅ Den privata File_header-världsägaren beräknar nu originalets

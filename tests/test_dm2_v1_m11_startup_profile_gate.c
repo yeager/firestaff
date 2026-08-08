@@ -1676,8 +1676,7 @@ int main(void) {
                         source_transaction.actuator_generators.control_bit2_clear_count &&
                     new_game_generators.activation_count ==
                         source_transaction.actuator_generators.control_bit2_set_count &&
-                    new_game_generators.queued_timer_count <=
-                        new_game_generators.activation_count &&
+                    new_game_generators.queued_timer_count == 0 &&
                     new_game_world_owner.timer_queue.num_timers ==
                         (int16_t)new_game_generators.queued_timer_count &&
                     !profile->source_game_load_session_ready &&

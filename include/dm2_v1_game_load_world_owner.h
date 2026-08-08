@@ -56,6 +56,19 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GameLoadActuatorGeneratorReceipt;
 
+typedef struct {
+    int valid;
+    int actuator_invoked;
+    int message_queued;
+    int requeued;
+    int active_flag_cleared;
+    int16_t record_link;
+    uint8_t action;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t target_direction;
+} DM2_V1_GameLoadTickGeneratorReceipt;
+
 /* Build a source-owned, pre-selection world from one currently mounted,
  * hash-verified PC File_header/GDAT pair and exact mirror clicks.  It rejects
  * partial record graphs and never modifies profile-owned raw media. */
@@ -75,6 +88,15 @@ int dm2_v1_game_load_world_owner_is_prepared(
 int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
     DM2_V1_GameLoadWorldOwner *owner,
     DM2_V1_GameLoadActuatorGeneratorReceipt *out_receipt);
+
+/* Source port of c_tim_proc.cpp::DM2_CONTINUE_TICK_GENERATOR and its
+ * DM2_INVOKE_ACTUATOR/DM2_INVOKE_MESSAGE tail. `timer` must be a popped 0x56
+ * entry from this owner's c_tim heap. This schedules only private 0x04/0x56
+ * entries and never dispatches their side effects into M11. */
+int dm2_v1_game_load_world_owner_continue_tick_generator(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadTickGeneratorReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

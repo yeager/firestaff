@@ -333,3 +333,134 @@ fail:
     free(db3_backup);
     return 0;
 }
+
+int dm2_v1_game_load_world_owner_continue_tick_generator(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadTickGeneratorReceipt *out_receipt)
+{
+    DM2_V1_GameLoadTickGeneratorReceipt receipt;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    uint8_t *record;
+    uint8_t record_byte4;
+    const int previous_map = owner ? owner->current_map : 0;
+    const int map = timer ? dm2_v1_timer_get_map(timer) : -1;
+    const int16_t record_link = timer ? (int16_t)((uint16_t)(uint8_t)timer->xA |
+        ((uint16_t)(uint8_t)timer->yA << 8)) : DM2_V1_RECORD_HANDLE_NULL;
+    uint16_t w2;
+    uint16_t w4;
+    uint16_t w6;
+    int control_bit2;
+    int alternating;
+    int remaining;
+    int should_invoke;
+    uint8_t action;
+    uint8_t alternating_toggle = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) || !timer ||
+        timer->ttype != 0x56u || map < 0 || map >= owner->dungeon.level_count ||
+        dm2_v1_record_handle_pool(record_link) != 3 ||
+        owner->timer_capacity == 0u || !owner->timer_entries ||
+        !owner->timer_indices) {
+        return 0;
+    }
+    record = dm2_v1_record_pool_address_mut(&owner->record_pools, record_link);
+    if (!record) return 0;
+    record_byte4 = record[4];
+
+    /* c_tim_proc.cpp:995-1066 schedules an ACTUATE message before it places
+     * the next 0x56 instance in c_tim. Snapshot the complete private heap so
+     * a capacity failure cannot publish only one half of that source step. */
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto fail;
+    memcpy(timer_backup, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*index_backup));
+    queue_backup = owner->timer_queue;
+    owner->current_map = map; /* PROCEED_TIMERS changes map before dispatch. */
+
+    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    w6 = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
+    control_bit2 = (w4 & 0x0004u) != 0u;
+    alternating = (w4 & 0x0018u) == 0x0018u;
+    if (alternating) {
+        alternating_toggle = (uint8_t)(((uint16_t)timer->wvalueB >> 8) & 1u) ^ 1u;
+        action = alternating_toggle == 0u ? 1u : 0u;
+        remaining = control_bit2 || alternating_toggle != 0u;
+        should_invoke = 1;
+    } else {
+        action = (uint8_t)((w4 >> 3) & 3u);
+        remaining = control_bit2;
+        should_invoke = control_bit2;
+    }
+
+    receipt.record_link = record_link;
+    receipt.action = action;
+    receipt.target_x = (uint8_t)(w6 & 0x001fu);
+    receipt.target_y = (uint8_t)((w6 >> 5) & 0x001fu);
+    receipt.target_direction = (uint8_t)((w6 >> 10) & 3u);
+    if (should_invoke) {
+        DM2_V1_TimerEntry message;
+        dm2_v1_timer_entry_init(&message);
+        dm2_v1_timer_set_mticks(&message, (int16_t)map,
+            owner->timer_queue.gametick + ((w4 >> 7) & 0x007fu));
+        message.ttype = 0x04u;
+        if (action == 0u) message.actor = 1u;
+        else if (action == 1u) message.actor = 3u;
+        else if (action == 2u) message.actor = 2u;
+        message.xA = (int8_t)receipt.target_x;
+        message.yA = (int8_t)receipt.target_y;
+        message.wvalueB = (int16_t)((uint16_t)receipt.target_direction |
+                                     ((uint16_t)action << 8));
+        if (dm2_v1_timer_queue(&owner->timer_queue, &message) < 0) goto fail;
+        receipt.actuator_invoked = 1;
+        receipt.message_queued = 1;
+    }
+
+    if (remaining) {
+        const int multiplier = dm2_v1_game_load_owner_tick_multiplier(
+            (uint8_t)(w2 & 0x007fu));
+        const uint16_t period = w2 >> 7;
+        DM2_V1_TimerEntry continuation;
+        if (multiplier == 0 || period == 0u ||
+            (uint8_t)timer->wvalueB != (uint8_t)multiplier) goto fail;
+        continuation = *timer;
+        if (alternating) {
+            continuation.wvalueB = (int16_t)((uint16_t)(uint8_t)timer->wvalueB |
+                ((uint16_t)alternating_toggle << 8));
+        }
+        continuation.l_00 += (int32_t)((uint32_t)period * (uint32_t)multiplier);
+        if (dm2_v1_timer_queue(&owner->timer_queue, &continuation) < 0) goto fail;
+        receipt.requeued = 1;
+    } else {
+        record[4] &= (uint8_t)~0x01u;
+        receipt.active_flag_cleared = 1;
+    }
+
+    receipt.valid = 1;
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+fail:
+    if (timer_backup) memcpy(owner->timer_entries, timer_backup,
+        (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    if (index_backup) memcpy(owner->timer_indices, index_backup,
+        (size_t)owner->timer_capacity * sizeof(*index_backup));
+    if (timer_backup && index_backup) owner->timer_queue = queue_backup;
+    if (record) record[4] = record_byte4;
+    owner->current_map = previous_map;
+    free(index_backup);
+    free(timer_backup);
+    return 0;
+}
