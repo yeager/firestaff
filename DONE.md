@@ -7,6 +7,9 @@
 - ✅ `bash tests/test_nexus_v1_saturn_raw_capture_launcher.sh` och
   `bash -n probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh`
   passerar.
+- ✅ Avbrottstestet använder en hängande fake-Mednafen och verifierar att
+  launchern terminerar child-processen inom testets timeout; ett kvarvarande
+  zombie-statusvärde räknas korrekt som avslutat på macOS.
 
 # Nexus 3D-admissionsflagga förtydligad (2026-08-08)
 

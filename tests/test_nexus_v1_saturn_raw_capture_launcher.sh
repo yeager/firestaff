@@ -70,4 +70,62 @@ if "$launcher" --operator-only --launch --mednafen /usr/bin/true \
   exit 1
 fi
 
+python3 - "$launcher" "$tmp_dir" "$bios_sha" "$disc_sha" <<'PY'
+import os
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+launcher, tmp_dir, bios_sha, disc_sha = sys.argv[1:]
+tmp = Path(tmp_dir)
+fake = tmp / "hanging-mednafen"
+pid_file = tmp / "hanging-mednafen.pid"
+fake.write_text(
+    "#!/bin/sh\n"
+    "echo $$ > \"$FAKE_PID_FILE\"\n"
+    "# FIRESTAFF_NEXUS_TRACE_OUTPUT is intentionally present for hook admission.\n"
+    "trap 'exit 130' INT TERM\n"
+    "sleep 30\n",
+    encoding="utf-8",
+)
+fake.chmod(0o755)
+env = os.environ.copy()
+env["FAKE_PID_FILE"] = str(pid_file)
+cmd = [
+    launcher, "--operator-only", "--launch", "--mednafen", str(fake),
+    "--bios", str(tmp / "bios.bin"), "--bios-sha256", bios_sha,
+    "--disc", str(tmp / "disc.cue"), "--disc-sha256", disc_sha,
+    "--trace", str(tmp / "trace-interrupted.raw"),
+    "--validator", "/usr/bin/true",
+    "--manifest", str(tmp / "manifest-interrupted.txt"),
+]
+proc = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+for _ in range(50):
+    if pid_file.exists():
+        break
+    time.sleep(0.02)
+if not pid_file.exists():
+    proc.kill()
+    proc.wait()
+    raise SystemExit("hanging fake Mednafen did not start")
+child_pid = int(pid_file.read_text().strip())
+proc.send_signal(signal.SIGTERM)
+proc.wait(timeout=5)
+for _ in range(50):
+    try:
+        os.kill(child_pid, 0)
+    except ProcessLookupError:
+        break
+    stat = subprocess.run(["ps", "-p", str(child_pid), "-o", "stat="],
+                          check=False, capture_output=True, text=True).stdout.strip()
+    if not stat or stat.startswith("Z"):
+        break
+    time.sleep(0.02)
+else:
+    raise SystemExit("capture launcher left Mednafen child alive after TERM")
+PY
+
 echo "nexus Saturn raw capture launcher: PASS"

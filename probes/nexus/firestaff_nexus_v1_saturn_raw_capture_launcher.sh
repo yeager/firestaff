@@ -31,10 +31,9 @@ capture_child_pid=
 cleanup_capture_child() {
   local status=$?
   if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
-    kill -INT "$capture_child_pid" 2>/dev/null || true
-    sleep 1
     kill -TERM "$capture_child_pid" 2>/dev/null || true
-    wait "$capture_child_pid" 2>/dev/null || true
+    sleep 1
+    kill -KILL "$capture_child_pid" 2>/dev/null || true
   fi
   capture_child_pid=
   return "$status"
