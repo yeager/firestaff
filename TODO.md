@@ -1047,6 +1047,18 @@
   `$17` from `a5=0x100000`. This is a source-owned command-to-driver corridor,
   not the SLEV event selector, MAP row or SAL sample; playback remains blocked.
 
+- **NEXUS-SLEV-SAL-RUNTIME-CORRIDOR:** The new
+  `analyze_nexus_slev_sal_runtime_corridor.py` receipt joins the authenticated
+  European gameplay SCSP trace to all 16 real `SLEV##.BIN`, `SNDLEV##.MAP`,
+  `SNDLEV##.SAL` pairs and `SDDRVS.TSK`. It applies the same DMWeb eight-byte
+  MAP grammar as the C loader and records 154 terminated rows, four non-zero
+  68K mailbox writes (all raw `0x02`) and five main-SH-2 mailbox records. Fifty-
+  four MAP windows are beyond the extracted SAL file length as direct file
+  intervals; the retail source treats those fields as an opaque driver-memory
+  area, so this is recorded as provenance, not rejected or relocated data.
+  Event-selector semantics, SAL codec and host playback remain explicitly
+  unproven/blocked.
+
 - **NEXUS-SLEV-SH2-STATIC-OWNER:** The 16 hash-authenticated `SLEV##.BIN`
   files now have a reproducible big-endian SH-2 static receipt. They share
   the `0x2fe6` entry word and contain 1,271 `RTS`, 2,220 `JSR`, 5,164

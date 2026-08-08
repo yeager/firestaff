@@ -1,3 +1,14 @@
+# Nexus SLEV/SAL/SDDRVS runtime corridor receipt (2026-08-08)
+
+- ✅ Added a source-bound audit that verifies all 16 real SLEV tasks, MAP/SAL
+  pairs and the authenticated `SDDRVS.TSK` before correlating runtime traces.
+- ✅ The DMWeb eight-byte MAP grammar yields 154 terminated rows; the retained
+  European trace has four non-zero 68K mailbox writes (raw `0x02`) and five
+  main-SH-2 mailbox records.
+- ✅ Direct SAL-file interval checks are reported as opaque driver-area facts
+  (54 windows exceed the extracted file length), matching the existing C
+  boundary. No event selector, SAL codec or host playback was inferred.
+
 # Nexus VDP1 source span scanned across verified retail files (2026-08-08)
 
 - ✅ The source-join audit now scans every extracted file whose SHA-256 matches

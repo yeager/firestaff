@@ -215,6 +215,24 @@ family at offset `$17` from `a5=0x100000`. This proves a runtime
 command-to-driver corridor, but does not bind the SLEV selector, MAP row or SAL
 sample; playback remains blocked.
 
+`scripts/analyze_nexus_slev_sal_runtime_corridor.py` now joins that runtime
+corridor to the complete real European sound corpus without promoting any
+meaning. It verifies all 16 `SLEV##.BIN`, `SNDLEV##.MAP`, `SNDLEV##.SAL` files
+and `SDDRVS.TSK`, then applies the same DMWeb eight-byte MAP record grammar as
+the C loader. The corpus contains 154 terminated MAP rows. The observed
+mailbox trace contains four non-zero 68K writes, all raw value `0x02`, from
+`SDDRVS.TSK` PCs `0x3224`, `0x1090`, `0x34aa` and `0x108e`; the main trace has
+five mailbox records (`0x0002` and `0x0200`).
+
+Fifty-four parsed MAP windows extend beyond the extracted SAL file length when
+treated as direct file intervals. The source code already identifies these
+fields as an opaque sound-driver memory area, so the audit records this as a
+boundary fact rather than an error or a guessed relocation. It does not prove
+which event selects a row, how SAL bytes are decoded, or which SCSP voice owns
+the data. The receipt therefore reports
+`event_selector_semantics=unproven`, `sal_codec=unproven` and
+`host_playback=blocked`.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the
