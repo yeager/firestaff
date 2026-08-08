@@ -2720,17 +2720,16 @@ that its exact runtime path is not already source-locked and tested.
    pixel stream. This closes the remaining partial-surface admission found in
    the reader; packaged macOS app capture remains open.
 
-4. **CSB-REAL-STARTUP-HUD:** C001-C005 title, Entrance, door-opening and
-  2026-07-30: the supplied standard CSBWin package has the canonical Atari
-  `GRAPHICS.DAT`/`DUNGEON.DAT` pair but no `ANIMATE.SCR`/`ANIMATE.DAT`.
-  Firestaff now admits its decoded original C001-C005 title/Entrance route in
-  V1, V2.0 and V2.1 (V2.2 correctly resolves to V2.1 without an admitted
-  pack). It deliberately does not produce a release/runtime receipt: C040
-  expands to `144x0`, so the later PC3.4 terminal-HUD and dungeon handoff
-  remain blocked until CSBWin's real runtime panel owner is established.
-  The shared M11 source-graphic/HUD/viewport decoder now correctly selects
-  CSBWin's DMCSB1 decoder for ST20/ST21 instead of attempting PC3.4 IMG3;
-  this prepares real runtime ingress but does not prove CSBWin F0128 geometry.
+4. **CSB-REAL-STARTUP-HUD:** ✅ C001-C005 title, Entrance, door-opening and
+  2026-08-08: C040 resurrect panel is now optional for CSBWin/Atari source.
+  CSB has no resurrection mechanic; CSBWin GRAPHICS.DAT stores C040 with
+  height 0. The HUD admission gate (hud_surfaces_ready, hud_assets_bound,
+  hud_surface_contract, terminal timeline receipt) now accepts C017-only
+  for CSBGRAPHICS_DAT source. The full_surface_contract check was also
+  added to terminal_hud_matches_profile to catch swapped door strips.
+  Test fixture source_kind fields corrected (pre-existing bug).
+  The shared M11 source-graphic/HUD/viewport decoder correctly selects
+  CSBWin's DMCSB1 decoder for ST20/ST21 instead of attempting PC3.4 IMG3.
   Real CSBWin HUD dimensions differ from PC3.4: C009=`96x33`, C010/C013=
   `96x45`, C017=`224x136`, C028=`80x14`. A separate source layout is required;
   PC3.4's `87px` and `76px` panel positions must not be stretched or reused.

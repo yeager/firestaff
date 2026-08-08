@@ -1,3 +1,14 @@
+# CSB C040 resurrect panel optional for CSBWin/Atari (2026-08-08)
+
+- ✅ CSB has no resurrection mechanic. CSBWin/Atari GRAPHICS.DAT stores
+  C040 with height 0, which blocked the entire HUD admission gate.
+- ✅ Made C040 validation conditional across 4 source files: contract,
+  runtime surfaces, real asset receipt, and terminal timeline receipt.
+- ✅ Fixed pre-existing test bug: surface source_kind was never set in
+  the terminal handoff test fixture; added full_surface_contract check
+  to terminal_hud_matches_profile to catch swapped door strips.
+- ✅ All 12 CSB startup tests pass.
+
 # Nexus startup PLRD glyph token retention (2026-08-08)
 
 # Nexus unproven interaction owners removed from production (2026-08-08)
