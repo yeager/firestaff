@@ -272,11 +272,16 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
     unsigned char framebuffer[320 * 200];
     DM1_V1_MovementArrowRectPc34 movement;
     const M11_AssetSlot *c013;
+    unsigned short queried_width = 0u;
+    unsigned short queried_height = 0u;
 
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(view, framebuffer, 320, 200);
     c013 = M11_AssetLoader_Load(&view->assetLoader, 13u);
     expect_true(dm1_v1_movement_arrows_graphic_rect_pc34(&movement) &&
+                    M11_AssetLoader_QuerySize(&view->assetLoader, 13u,
+                                              &queried_width, &queried_height) &&
+                    queried_width == 87u && queried_height == 45u &&
                     c013 && c013->loaded && c013->pixels &&
                     c013->width == 87u && c013->height == 45u &&
                     frame_region_matches_bitmap(framebuffer, 320,

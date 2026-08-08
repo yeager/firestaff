@@ -308,8 +308,31 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
         free(item);
         return 1;
     }
+    if (loader->csbAmiga) {
+        uint16_t amigaWidth = 0u;
+        uint16_t amigaHeight = 0u;
+        unsigned char *amigaPixels;
+
+        if (graphicIndex >= loader->graphicCount) return 0;
+        /* ReDMCSB MEMORY.C F0474 is the owning IMG1 expansion path.  The
+         * DMCSB2 table deliberately does not carry a width/height pair, so
+         * query through the same bounded original decoder as Load() rather
+         * than dereferencing the absent PC34 runtime metadata. */
+        amigaPixels = (unsigned char *)malloc(1024u * 1024u);
+        if (!amigaPixels || !csb_v1_amiga_graphics_decode_item(
+                loader->csbAmigaData, (size_t)loader->csbAmigaDataSize,
+                (uint16_t)graphicIndex, amigaPixels, 1024u * 1024u,
+                &amigaWidth, &amigaHeight)) {
+            free(amigaPixels);
+            return 0;
+        }
+        free(amigaPixels);
+        if (outWidth) *outWidth = amigaWidth;
+        if (outHeight) *outHeight = amigaHeight;
+        return 1;
+    }
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;
-    if (graphicIndex >= rt->graphicCount) {
+    if (!rt || graphicIndex >= rt->graphicCount) {
         return 0;
     }
     if (outWidth) {

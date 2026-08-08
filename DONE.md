@@ -131,6 +131,10 @@
 - ✅ Hashverifierade realdatatester för A31M, A35M och A35E passerar efter
   ändringen (29, 16 respektive 11 kontroller), vilket låser att varje native
   paketväg använder sina egna dekoder- och cachepixlar.
+- ✅ `M11_AssetLoader_QuerySize` läser nu även Amiga-CSB:s faktiska IMG1-post
+  genom den källbundna avkodaren. Den kan därför inte dereferera PC34-metadata
+  som saknas i en native DMCSB2-session; C013:s 87×45-mått verifieras i samma
+  A31M-, A35M- och A35E-realdatatest.
 
 # CI: CSB Amiga-IMG1-länkning (2026-08-08)
 
