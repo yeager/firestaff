@@ -6324,6 +6324,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_mve_video.c
     src/dm2/dm2_v1_mve_pcm.c
     src/dm2/dm2_v1_mve_presentation_owner.c
+    src/dm2/dm2_v1_mve_audio_sdl_owner.c
     src/shared/fmtowns_tsugaru_bridge.c
     src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
     src/dm1/dm1_v1_dos_pc34_an_container.c
@@ -17484,6 +17485,24 @@ endif()
     endif()
     add_test(NAME dm2_v1_dynamic_creature_material_real_data
              COMMAND test_dm2_v1_dynamic_creature_material_real_data)
+
+    # CAII admission must retain only genuine GDAT and File_header DB4
+    # prerequisites. It has no timer or movement fixture and is safe to run
+    # only against user-supplied canonical media.
+    add_executable(test_dm2_v1_caii_source_owner_real_data
+        tests/test_dm2_v1_caii_source_owner_real_data.c
+    )
+    target_include_directories(test_dm2_v1_caii_source_owner_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_source_owner_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_source_owner_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_caii_source_owner_real_data
+             COMMAND test_dm2_v1_caii_source_owner_real_data)
 
     add_executable(test_dm2_v1_g1_creature_viewport_field_real_data
         tests/test_dm2_v1_g1_creature_viewport_field_real_data.c
@@ -56565,6 +56584,24 @@ add_executable(test_dm2_v1_mve_presentation_owner
 )
 target_include_directories(test_dm2_v1_mve_presentation_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_mve_presentation_owner COMMAND test_dm2_v1_mve_presentation_owner)
+
+add_executable(test_dm2_v1_mve_audio_sdl_owner
+    tests/test_dm2_v1_mve_audio_sdl_owner.c
+    src/dm2/dm2_v1_dos_real_data_manifest.c
+    src/dm2/dm2_v1_mve_stream.c
+    src/dm2/dm2_v1_mve_video.c
+    src/dm2/dm2_v1_mve_pcm.c
+    src/dm2/dm2_v1_mve_presentation_owner.c
+    src/dm2/dm2_v1_mve_audio_sdl_owner.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/asset_find_by_hash.c
+)
+target_include_directories(test_dm2_v1_mve_audio_sdl_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3)
+add_test(NAME test_dm2_v1_mve_audio_sdl_owner COMMAND test_dm2_v1_mve_audio_sdl_owner)
+set_tests_properties(test_dm2_v1_mve_audio_sdl_owner PROPERTIES
+    ENVIRONMENT "SDL_AUDIODRIVER=dummy")
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c

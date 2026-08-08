@@ -9926,6 +9926,11 @@
   oberoende PCM-transporten, inklusive förbufferten, i strikt source-ordning.
   Det realdatatestade ägarskapet skriver varken film, pixlar eller PCM till
   disk och öppnar ingen M11- eller SDL-destination.
+- ✅ Den avskilda SDL3-ljudägaren öppnar nu endast en U8-stereo-22 050
+  Hz-ström och köar originalets PCM-paket direkt. Realdatatestet matar alla
+  217 `INTRO`- respektive 600 `END`-paket genom dummy-enheten och kontrollerar
+  deras antal och exakta totala källbytes. Den ändrar varken samplens form,
+  ordning eller MVE:s bildklocka och är ännu inte ansluten till M11.
 # Nexus europeisk VDP1/VDP2-korrelation (2026-08-08)
 
 - ✅ Inventeringen är uppdaterad till 38 externa `runtime-vdp12.raw`-filer.

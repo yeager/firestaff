@@ -2233,7 +2233,9 @@
   0x0f och video 0x11/v3. Varje ursprunglig PCM-ram, även förbufferten före
   första bilden, valideras och behålls i minnet. Den privata MVE-ägaren
   behåller nu också den verkliga 10416×8-mikrosekunders bildklockan och den
-  oberoende PCM-transporten i source-ordning. Nästa steg är IBMIOP:s
+  oberoende PCM-transporten i source-ordning. En privat SDL3-mottagare kan
+  nu ta exakt dessa U8-stereo-22 050 Hz-paket direkt utan egen resampling,
+  mixning eller syntetisk förbuffert. Nästa steg är IBMIOP:s kontrollerade
   presentation- och ljudenhetsväg i M11; MVE-ljudet får inte paras mot bild
   efter positionsindex eftersom retailströmmens förbuffert inte har den
   relationen. Ingen extern avkodare, värdgenererad bild eller extraherad
