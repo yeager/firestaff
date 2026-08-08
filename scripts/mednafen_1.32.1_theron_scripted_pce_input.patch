@@ -1,15 +1,9 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -26,6 +26,9 @@
- #include "input/tsushinkb.h"
- 
- #include <trio/trio.h>
+@@ -29,0 +30,3 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
- 
- namespace MDFN_IEN_PCE
- {
 @@ -178,6 +181,20 @@
  {
   static FILE *theron_input_trace = NULL;
@@ -31,7 +25,7 @@
   if(!theron_input_trace)
   {
    const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
-@@ -191,6 +208,105 @@
+@@ -191,6 +208,107 @@
     }
    }
   }
@@ -100,7 +94,9 @@
 +   fflush(theron_input_trace);
 +  }
 + }
-+ if(theron_script_valid && data_ptr[0])
++ /* data_ptr is the live five-port frame buffer; byte zero is normally zero
++  * while idle and must not gate the source-bound scripted mask. */
++ if(theron_script_valid)
 + {
 +  uint16 scripted_mask = 0;
 +  for(unsigned event_index = 0; event_index < theron_script_event_count; event_index++)
@@ -137,12 +133,10 @@
   if(theron_input_trace && data_ptr[0])
   {
    const uint16 port0 = MDFN_de16lsb(data_ptr[0]);
-@@ -204,6 +319,8 @@
+@@ -319,4 +319,6 @@
   for(int i = 0; i < 5; i++)
    if(devices[i])
     devices[i]->Update(data_ptr[i]);
 + if(theron_script_applied)
 +  MDFN_en16lsb(data_ptr[0], theron_script_original_port0);
  }
- 
- void INPUT_AdjustTS(int32 delta_timestamp)
