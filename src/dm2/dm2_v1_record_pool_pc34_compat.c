@@ -17,6 +17,7 @@
  */
 
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_skproject_core.h"
@@ -1473,7 +1474,7 @@ static void dm2_v1_sksave_rebuild_set_record_timer_backlink(
     dm2_v1_wr16(record + 6u, timer_index);
 }
 
-int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
+static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
     const uint8_t *raw_body,
     size_t raw_body_size,
     const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
@@ -1481,6 +1482,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveGameLoadOwner *retain_owner,
     DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
 {
     DM2_V1_RecordPoolSet pools;
@@ -1743,6 +1745,22 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     }
     ok = 1;
 done:
+    /* The preflight deliberately discards the transaction.  The one private
+     * GAME_LOAD owner is allowed to take it over only after every source
+     * phase above has succeeded; no partial map/pool can escape on failure. */
+    if (ok && retain_owner) {
+        retain_owner->map_owner = map_owner;
+        retain_owner->record_pools = pools;
+        memcpy(retain_owner->heroes, heroes, sizeof(heroes));
+        memcpy(retain_owner->timers, timers, sizeof(timers));
+        memcpy(retain_owner->timer_indices, timer_indices,
+               sizeof(timer_indices));
+        retain_owner->timer_queue_count = timer_queue_count;
+        retain_owner->timer_free_head = timer_free_head;
+        retain_owner->leader_hand_root = leader_hand_root;
+        memset(&map_owner, 0, sizeof(map_owner));
+        memset(&pools, 0, sizeof(pools));
+    }
     dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
     if (!ok && out_receipt) {
@@ -1770,6 +1788,35 @@ done:
         out_receipt->direct_root_hash = retained_direct_root_hash;
     }
     return ok;
+}
+
+int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
+    const uint8_t *raw_body, size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    uint16_t savegamew7, const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
+{
+    return dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
+        raw_body, raw_body_size, state_receipt, savegamew7, asset_loader,
+        query_creature_ai_flags, query_creature_ai_flags_ctx, NULL,
+        out_receipt);
+}
+
+int dm2_v1_record_pool_materialize_raw_sksave_game_load_owner(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size,
+    uint16_t savegamew7, const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
+{
+    if (!owner) return 0;
+    return dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
+        raw_body, raw_body_size, &owner->state, savegamew7, asset_loader,
+        query_creature_ai_flags, query_creature_ai_flags_ctx, owner,
+        out_receipt);
 }
 
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set)

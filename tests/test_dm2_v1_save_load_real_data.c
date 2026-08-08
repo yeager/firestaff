@@ -13,6 +13,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
@@ -49,6 +50,8 @@ typedef struct {
     unsigned int files_with_resurrection_timers;
     unsigned int pool_owner_restored;
     unsigned int pool_owner_blocked;
+    unsigned int game_load_owner_materialized;
+    unsigned int game_load_owner_blocked;
 } DirectRootStats;
 
 #define CHECK(condition, message) do { \
@@ -983,6 +986,7 @@ static void test_real_raw_save(const char *path, const char *root,
     {
         DM2_V1_SksaveSpecialTimerReceipt special_timers;
         DM2_V1_AssetLoader preflight_loader;
+        DM2_V1_SksaveGameLoadOwner game_load_owner;
         uint8_t *preflight_graphics;
         size_t preflight_graphics_size;
         char preflight_graphics_path[600];
@@ -996,6 +1000,7 @@ static void test_real_raw_save(const char *path, const char *root,
                                        &preflight_graphics_size);
         memset(&preflight_loader, 0, sizeof(preflight_loader));
         memset(&special_timers, 0, sizeof(special_timers));
+        memset(&game_load_owner, 0, sizeof(game_load_owner));
         const int special_ok =
             preflight_graphics && dm2_v1_asset_loader_init(
                 &preflight_loader, preflight_graphics, preflight_graphics_size) == 0 &&
@@ -1004,6 +1009,22 @@ static void test_real_raw_save(const char *path, const char *root,
                 savegamew7, &preflight_loader,
                 inventory_query_creature_ai_flags, NULL,
                 &special_timers);
+        const int owner_ok = preflight_graphics &&
+            dm2_v1_sksave_game_load_owner_init(&game_load_owner,
+                bytes + 42u, byte_count - 42u, savegamew7,
+                &preflight_loader, inventory_query_creature_ai_flags, NULL);
+        if (direct_roots) {
+            if (owner_ok) ++direct_roots->game_load_owner_materialized;
+            else ++direct_roots->game_load_owner_blocked;
+        }
+        CHECK(owner_ok == special_ok &&
+              (!owner_ok || (game_load_owner.valid &&
+                  !game_load_owner.source_game_load_session_ready &&
+                  game_load_owner.map_owner.valid &&
+                  game_load_owner.record_pools.valid &&
+                  game_load_owner.receipt.valid)),
+              "SKSave private GAME_LOAD owner transfers only a complete source transaction");
+        dm2_v1_sksave_game_load_owner_free(&game_load_owner);
         dm2_v1_asset_loader_free(&preflight_loader);
         free(preflight_graphics);
         CHECK(hash_bytes(2166136261u, bytes + 42u, byte_count - 42u) ==
@@ -1261,6 +1282,9 @@ int main(void)
     CHECK(direct_roots.pool_owner_restored == 4u &&
               direct_roots.pool_owner_blocked == 4u,
           "the supplied corpus distinguishes four complete and four blocked c_record-pool owners");
+    CHECK(direct_roots.game_load_owner_materialized == 0u &&
+              direct_roots.game_load_owner_blocked == 8u,
+          "no local pool subset is promoted to a private GAME_LOAD session owner");
     CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
           "scanner preserves lower-case, single-digit original slots in the data root");
     CHECK(corpus.valid_slot_backup_count == 4u,

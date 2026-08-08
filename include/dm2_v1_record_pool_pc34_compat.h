@@ -397,6 +397,18 @@ typedef struct {
     uint8_t next_stream_current_byte;
 } DM2_V1_SksaveSpecialTimerReceipt;
 
+struct DM2_V1_SksaveGameLoadOwner;
+/* Internal ownership bridge used by dm2_v1_sksave_game_load_owner.c. It is
+ * the same source walk as the public preflight, but transfers the completed
+ * private c_map/c_record/c_hero/c_tim state instead of freeing it. */
+int dm2_v1_record_pool_materialize_raw_sksave_game_load_owner(
+    struct DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size,
+    uint16_t savegamew7, const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveSpecialTimerReceipt *out_receipt);
+
 /* Preflight the source-ordered prefix through DM2_2066_197c.  It creates one
  * temporary raw c_map/c_record/c_tim owner, detaches dynamic tile records,
  * restores direct hero/cursor roots, consumes timer types 0x3c and 0x3d,
