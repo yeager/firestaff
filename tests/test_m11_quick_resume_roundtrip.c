@@ -268,6 +268,7 @@ static int explored_cell_is_set(const M11_GameViewState *view, unsigned int cell
 
 int main(void) {
     const char* dataDir = getenv("FIRESTAFF_DM1_CANONICAL_DIR");
+    char defaultDataDir[2048];
     char saveTemplate[] = "/tmp/firestaff-m11-resume-XXXXXX";
     char savePath[512];
     M11_GameViewState view;
@@ -283,7 +284,11 @@ int main(void) {
     unsigned int currentCell;
 
     if (!dataDir || dataDir[0] == '\0') {
-        dataDir = "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1";
+        const char* home = getenv("HOME");
+        if (!home || !home[0]) home = ".";
+        snprintf(defaultDataDir, sizeof(defaultDataDir),
+                 "%s/.firestaff/data/dm1", home);
+        dataDir = defaultDataDir;
     }
     if (access(dataDir, R_OK) != 0) {
         printf("skip: DM1 canonical dir not available: %s\n", dataDir);

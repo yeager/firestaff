@@ -2,7 +2,7 @@
  * test_dm2_v1_dungeon_loader_fmtowns.c
  *
  * Validates DM2 dungeon loader against real FM Towns DUNGEON.DAT.
- * Source: ~/.firestaff/data/dm2-fmtowns-ja/DUNGEON.DAT (37,954 bytes)
+ * Source: ~/.firestaff/data/dm2/fmtowns_iso/DATA/DUNGEON.DAT
  *
  * The FM Towns DUNGEON.DAT uses magic 0x3094 at offset 2 instead of
  * PC's 0x3147 ('G1'), but has the same header layout, map definition
@@ -123,7 +123,7 @@ int main(void) {
     }
 
     snprintf(fm_path, sizeof(fm_path),
-             "%s/.firestaff/data/dm2-fmtowns-ja/DUNGEON.DAT", home);
+             "%s/.firestaff/data/dm2/fmtowns_iso/DATA/DUNGEON.DAT", home);
     test_fmtowns_load(fm_path);
 
     snprintf(pc_path, sizeof(pc_path),

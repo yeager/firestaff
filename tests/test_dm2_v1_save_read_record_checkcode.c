@@ -279,7 +279,7 @@ static size_t write_timer_record(uint8_t *buf, size_t cap,
     DM2_WriteRecordSession session;
     DM2_WriteRecordCallbacks cb = make_writer_cb();
     int creature_idx[4], container_idx[4];
-    size_t flushed;
+    size_t flushed = 0;
 
     dm2_v1_write_record_session_init(&session, buf, cap,
         creature_idx, 4, container_idx, 4, &timer, 1);
@@ -486,7 +486,7 @@ static void test_round_trip_sub_chain_bits(void)
     DM2_ReadRecordCallbacks rcb;
     ReadPool pool;
     int ci[4], co[4];
-    size_t flush_size;
+    size_t flush_size = 0;
     uint16_t root;
 
     mock_init();
@@ -546,7 +546,7 @@ static void test_round_trip_moneybox_misc_mask(void)
     DM2_WriteRecordCallbacks wcb;
     ReadPool pool;
     int ci[4], co[4];
-    size_t flushed;
+    size_t flushed = 0;
     const uint8_t *sizes = dm2_v1_save_record_sizes();
     const uint8_t *default_mask = dm2_v1_save_record_mask_misc_default();
     const uint8_t *moneybox_mask = dm2_v1_save_record_mask_misc_moneybox();
@@ -619,7 +619,7 @@ static void test_creature_uses_source_ai_mask(void)
     DM2_ReadRecordCallbacks rcb;
     ReadPool pool;
     int ci[4], co[4];
-    size_t flushed;
+    size_t flushed = 0;
 
     mock_init();
     g_mock_records[0][2] = 0xfeu;

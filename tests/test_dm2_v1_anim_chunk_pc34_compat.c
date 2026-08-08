@@ -142,7 +142,7 @@ static void test_scan_real_swoosh(void)
     char path[512];
     DM2_V1_AnimChunkScanReceipt r;
 
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2-fmtowns-ja/SWOOSH",
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/fmtowns_iso/SWOOSH",
              getenv("HOME") ? getenv("HOME") : "/nonexistent");
     data = load_file(path, &size);
     if (!data) {
@@ -170,7 +170,7 @@ static void test_scan_real_title(void)
     uint8_t *data;
     DM2_V1_AnimChunkScanReceipt r;
 
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2-fmtowns-ja/TITLE",
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/fmtowns_iso/TITLE",
              getenv("HOME") ? getenv("HOME") : "/nonexistent");
     data = load_file(path, &size);
     if (!data) {
@@ -198,7 +198,7 @@ static void test_scan_real_end(void)
     uint8_t *data;
     DM2_V1_AnimChunkScanReceipt r;
 
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2-fmtowns-ja/END",
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/fmtowns_iso/END",
              getenv("HOME") ? getenv("HOME") : "/nonexistent");
     data = load_file(path, &size);
     if (!data) {
@@ -225,10 +225,11 @@ static void test_decode_en_keyframe_real(void)
     DM2_V1_AnimChunk chunk;
     uint32_t pos;
     uint8_t *framebuf;
-    uint16_t w, h;
+    uint16_t w = 0, h = 0;
+    int en_found = 0;
     size_t fb_size = 320 * 200 / 2;
 
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2-fmtowns-ja/SWOOSH",
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/fmtowns_iso/SWOOSH",
              getenv("HOME") ? getenv("HOME") : "/nonexistent");
     data = load_file(path, &size);
     if (!data) {
@@ -241,11 +242,19 @@ static void test_decode_en_keyframe_real(void)
 
     pos = 0;
     while (dm2_v1_anim_chunk_read(data, size, pos, &chunk)) {
-        if (chunk.tag == DM2_V1_ANIM_CHUNK_EN)
+        if (chunk.tag == DM2_V1_ANIM_CHUNK_EN) {
+            en_found = 1;
             break;
+        }
         pos += 4 + chunk.payload_size + 2;
     }
-    assert(chunk.tag == DM2_V1_ANIM_CHUNK_EN);
+    assert(en_found);
+    if (!en_found) {
+        printf("  FAIL: decode_en_keyframe_real (EN chunk missing)\n");
+        free(framebuf);
+        free(data);
+        return;
+    }
     assert(dm2_v1_anim_decode_en_keyframe(&chunk, framebuf, fb_size,
                                           &w, &h) == 1);
     assert(w == 320);
@@ -269,7 +278,7 @@ static void test_apply_dl_delta_real(void)
     int en_found = 0;
     int dl_applied = 0;
 
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2-fmtowns-ja/SWOOSH",
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/fmtowns_iso/SWOOSH",
              getenv("HOME") ? getenv("HOME") : "/nonexistent");
     data = load_file(path, &size);
     if (!data) {

@@ -7,12 +7,33 @@ Disassembles the combat dispatcher at file 0x0197DE and traces all
 subroutines to extract damage formulas, wound penalties, and combat constants.
 """
 
+import argparse
+import os
+from pathlib import Path
 import struct
 
-BIN_PATH = "/Users/bosse/.firestaff/data/nexus/DM.BIN"
+
+def resolve_bin_path() -> Path:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "bin_path",
+        nargs="?",
+        type=Path,
+        help="path to DM.BIN (default: FIRESTAFF_NEXUS_DATA_DIR/DM.BIN or ~/.firestaff/data/nexus/DM.BIN)",
+    )
+    args = parser.parse_args()
+    if args.bin_path:
+        return args.bin_path
+    data_dir = os.environ.get("FIRESTAFF_NEXUS_DATA_DIR")
+    if data_dir:
+        return Path(data_dir) / "DM.BIN"
+    return Path.home() / ".firestaff" / "data" / "nexus" / "DM.BIN"
+
+
+BIN_PATH = resolve_bin_path()
 BASE = 0x06010000
 
-with open(BIN_PATH, "rb") as f:
+with BIN_PATH.open("rb") as f:
     ROM = f.read()
 
 def r8(off): return ROM[off]

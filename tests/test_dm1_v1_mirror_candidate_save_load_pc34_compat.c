@@ -95,6 +95,7 @@ int main(void) {
     int mirrorOrdinal = 0;
     int nameMirrorOrdinal = 1;
     char mirrorName[CHAMPION_NAME_TEXT_CAPACITY];
+    char defaultDataDir[2048];
     int mapIndex = 2;
     int mapX = 11;
     int mapY = 7;
@@ -103,7 +104,11 @@ int main(void) {
         (unsigned short)((THING_TYPE_CONTAINER << 10) | 2U);
 
     if (!dataDir || dataDir[0] == '\0') {
-        dataDir = "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1";
+        const char* home = getenv("HOME");
+        if (!home || !home[0]) home = ".";
+        snprintf(defaultDataDir, sizeof(defaultDataDir),
+                 "%s/.firestaff/data/dm1", home);
+        dataDir = defaultDataDir;
     }
     if (access(dataDir, R_OK) != 0) {
         printf("skip: DM1 canonical dir not available: %s\n", dataDir);

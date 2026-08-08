@@ -40,7 +40,8 @@ void dm2_v1_rect_set_origin(DM2_V1_Rect *r, int16_t w, int16_t h);
 void dm2_v1_rect_inflate(DM2_V1_Rect *r, int16_t dw, int16_t dh);
 
 /* Intersect r with clip. Returns 1 if intersection is non-empty, 0 if empty.
- * On success, r is clipped and *ox/*oy give the offset into the original rect.
+ * On success, r is clipped and *ox and *oy give the offset into the original
+ * rectangle.
  * Source: skrect.cpp c_rect::unify (DM2_UNION_RECT) */
 int dm2_v1_rect_intersect(DM2_V1_Rect *r, const DM2_V1_Rect *clip,
                           int16_t *ox, int16_t *oy);

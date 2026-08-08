@@ -6,14 +6,47 @@
 
 static int failures = 0;
 
+static int dm1_path_exists(const char* path) {
+    FILE* f;
+    if (!path) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
 
 
 static const char* dm1_default_dungeon_dat_path(void) {
     static char path[2048];
+    static const char* const suffixes[] = {
+        "/DUNGEON.DAT",
+        "/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT",
+        "/fmtowns_iso/DATA/DUNGEON.DAT",
+        "/fmtowns_iso/JDATA/DUNGEON.DAT"
+    };
+    size_t i;
+    const char* configured = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* data_root = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
+    if (configured && configured[0]) {
+        for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+            snprintf(path, sizeof(path), "%s%s", configured, suffixes[i]);
+            if (dm1_path_exists(path)) return path;
+        }
+    }
+    if (data_root && data_root[0]) {
+        for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+            snprintf(path, sizeof(path), "%s/dm1%s", data_root, suffixes[i]);
+            if (dm1_path_exists(path)) return path;
+        }
+    }
     if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home);
-    return path;
+    for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1%s", home,
+                 suffixes[i]);
+        if (dm1_path_exists(path)) return path;
+    }
+    return NULL;
 }
 
 static unsigned char* read_file_bytes(const char* path, int* outSize) {

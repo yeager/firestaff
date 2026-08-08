@@ -14380,6 +14380,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_boot_profile_smoke
         tests/test_csb_v1_boot_profile_smoke.c
         src/csb/csb_v1_boot.c
+        src/csb/csb_v1_fmtowns_portrait.c
         src/csb/csb_v1_fmtowns_game.c
         src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
@@ -56290,6 +56291,7 @@ add_executable(test_dm1_v1_fmtowns_menu_render
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_egb_shim.c
     src/dm1/dm1_v1_fmtowns_font_rasteriser.c
+    src/dm1/dm1_v1_fmtowns_jdm_font.c
 )
 target_include_directories(test_dm1_v1_fmtowns_menu_render PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_menu_render COMMAND test_dm1_v1_fmtowns_menu_render)

@@ -138,7 +138,7 @@ int main(int argc, char **argv) {
         static char buf2[512];
         if (home) {
             snprintf(buf2, sizeof(buf2),
-                     "%s/.firestaff/data/dm2-fmtowns-ja/GRAPHICS.DAT", home);
+                     "%s/.firestaff/data/dm2/fmtowns_iso/DATA/GRAPHICS.DAT", home);
             fmtowns_path = buf2;
         }
     }
