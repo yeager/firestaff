@@ -2742,6 +2742,19 @@ level or consumer bindings.
   The FM Towns GRAPHICS.DAT is already decoded via the shared IMG2
   nibble RLE path so no new decoder was needed — the gap was purely
   that the FM Towns early-return skipped the icon drawing loop.
+  2026-08-08: Japanese JDM action menu text wired. The glyph draw
+  callback now routes Japanese labels through
+  `dm1_v1_fmtowns_jdm_font_render_string_pc34`, which renders ASCII
+  glyphs from the shared asset 557 raster (byte-identical EN/JP) and
+  advances the cursor for Shift-JIS pairs without painting (fail-closed
+  until a TBIOS font ROM callback is supplied). The backdrop function
+  now validates Japanese action indices against DYNA_BUTTONS_JA and
+  passes language=1 to `M11_GameView_RenderDm1FmtownsMenu`. TMENU
+  (TownsOS language-selection launcher) is not actionable — it requires
+  real-mode TBIOS calls via `fs:[0x20]` that cannot run outside
+  TownsOS; Firestaff's own launcher handles language selection. Native
+  DYNAMENU mouse/input is functionally equivalent via the FM Towns
+  click handler wired earlier this session.
   2026-08-08: FM Towns action menu click handling closed. The M11 input
   handler now hit-tests clicks against the source-locked 87×45 panel at
   (232,77)–(318,121) with three 7-pixel-tall rows (CHAR_Y_HYT=7),

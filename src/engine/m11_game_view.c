@@ -110,6 +110,7 @@
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "dm1_v1_fmtowns_dynamenu.h"
+#include "dm1_v1_fmtowns_dyna_buttons_ja.h"
 #include "dm1_v1_fmtowns_text_geometry.h"
 #include "dm1_v1_fmtowns_egb_shim.h"
 #include "dm1_v1_fmtowns_jdm_bss.h"
@@ -39604,11 +39605,18 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
     }
     for (slot = 0; slot < DM1_V1_FMTOWNS_DYNAMENU_BUTTON_COUNT; ++slot) {
         unsigned char action = actions[slot];
-        if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN &&
-            action != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED &&
-            (action >= state->dm1FmtownsStartupReceipt.game_action_name_count ||
-             state->dm1FmtownsStartupReceipt.game_action_names[action][0] == '\0')) {
-            return 0;
+        if (action != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED) {
+            if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+                if (action >= state->dm1FmtownsStartupReceipt.game_action_name_count ||
+                    state->dm1FmtownsStartupReceipt.game_action_names[action][0] == '\0') {
+                    return 0;
+                }
+            } else if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+                if (action >= DM1_V1_FMTOWNS_DYNA_BUTTONS_COUNT_JA ||
+                    !dm1_v1_fmtowns_dyna_button_label_ja_pc34(action)) {
+                    return 0;
+                }
+            }
         }
         dynamenu[DM1_V1_FMTOWNS_DYNAMENU_OFFSET_BUTTON0 + slot] = action;
     }
@@ -39620,14 +39628,15 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
     }
     /* Overlay text: consume the round-trip-verified font raster
      * asset 557 through the M11 game view's default glyph consumer.
-     * English labels render byte-exact into the panel; Japanese
-     * labels fail closed inside the consumer because asset 557 is
-     * ASCII-only. When the font is not yet loaded the composer
-     * returns 0 and the backdrop above stays visible without text
-     * — never a synthetic replacement. */
-    if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+     * English labels render byte-exact into the panel. Japanese
+     * labels render ASCII glyphs from the same raster (byte-identical
+     * to English); Shift-JIS pairs advance the cursor but paint no
+     * pixels until a TBIOS font ROM callback is supplied. */
+    {
+        int menuLang = (state->dm1FmtownsStartupReceipt.language ==
+                        DM1_FMTOWNS_LANG_JP) ? 1 : 0;
         (void)M11_GameView_RenderDm1FmtownsMenu(
-            (M11_GameViewState *)state, dynamenu, 0,
+            (M11_GameViewState *)state, dynamenu, menuLang,
             framebuffer, framebufferWidth, framebufferHeight,
             framebufferWidth, 4, 0);
     }

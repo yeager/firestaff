@@ -6,6 +6,7 @@
 #include "dm1_v1_fmtowns_text_geometry.h"
 #include "dm1_v1_fmtowns_egb_shim.h"
 #include "dm1_v1_fmtowns_font_rasteriser.h"
+#include "dm1_v1_fmtowns_jdm_font.h"
 
 #include <string.h>
 
@@ -18,11 +19,14 @@ int dm1_v1_fmtowns_menu_default_glyph_draw_pc34(
     unsigned int drawn;
     (void)slot;
     if (!raster || !label_bytes) return 0;
-    /* The 768-byte asset 557 covers ASCII 0x00..0x7f only.
-     * Japanese Shift-JIS labels need a separate JDM-owned font that
-     * has not been decoded yet — fail closed rather than paint
-     * broken glyphs. */
-    if (lang != DM1_V1_FMTOWNS_MENU_LANG_EN) return 0;
+    if (lang == DM1_V1_FMTOWNS_MENU_LANG_JA) {
+        drawn = dm1_v1_fmtowns_jdm_font_render_string_pc34(
+            raster, NULL, NULL,
+            fb, fb_width, fb_height, fb_stride,
+            dst_x, dst_y, fg, bg,
+            (const uint8_t *)label_bytes, strlen(label_bytes));
+        return drawn > 0u ? 1 : 0;
+    }
     drawn = dm1_v1_fmtowns_font_rasterise_string_pc34(
         raster, fb, fb_width, fb_height, fb_stride,
         dst_x, dst_y, fg, bg, 0, label_bytes);
