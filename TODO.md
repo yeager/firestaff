@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔧 DM2-inmatning: den verifierade PC-DOS-tabellen kan nu bara aktiveras av
+  BootProfiles hashadmitterade `GRAPHICS.DAT` och ger de riktiga viewport- och
+  rörelsehändelserna. Den ska anslutas till `c_input` först när en fullständig
+  `GAME_LOAD`-session äger eventkö, party och HUD; ingen DM1-rutt får användas.
+
 - 🔧 DM2 New Game: den privata GAME_LOAD-ägaren behåller nu den riktiga
   mirrorsvalsordningen, varje spegelrecord, partyposition och den enda
   ledarövergången. Den får fortfarande inte kopplas till M11-input eller HUD:

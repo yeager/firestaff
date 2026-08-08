@@ -1,5 +1,13 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 PC-DOS dungeoninmatning, verifierad ägare (2026-08-09)
+
+- ✅ Dungeonens källordnade SKWIN-klicktabell ägs nu av den hashverifierade
+  PC-English `GRAPHICS.DAT`-identiteten. Realtidstestet använder BootProfiles
+  riktiga tillgångsskanning före viewport- och rörelsehändelser kvitteras.
+  Tabellen publicerar inga DM1-fallbackar och inväntar fortsatt en komplett
+  `GAME_LOAD`-ägd `c_input`-konsument.
+
 # DM2 DOS-MVE M11-startflöde (2026-08-09)
 
 - ✅ DOS BootProfiles RAM-ägda, hashverifierade `INTRO` går nu hela vägen

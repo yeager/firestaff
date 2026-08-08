@@ -6,6 +6,7 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,11 +109,13 @@ int main(void)
                        action_receipt.host_menu_route.valid,
                    "the Amiga New Game rectangle resolves the original 0xD7 event");
         }
-        input_result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT);
+        input_result = M11_GameView_HandlePointer(
+            &view, layout.new_game.x + layout.new_game.w / 2,
+            layout.new_game.y + layout.new_game.h / 2, 1);
         expect(input_result == M11_GAME_INPUT_REDRAW &&
                    view.dm2State.startup_menu_active &&
                    view.world.party.championCount == 0 &&
-                   view.world.party.activeChampionIndex == -1,
+                   view.dm2State.leader_hand_object == 0u,
                "Amiga title completion permits only the source New Game route, without a fake party");
     }
     M11_GameView_Shutdown(&view);

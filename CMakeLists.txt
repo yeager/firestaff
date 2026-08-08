@@ -6321,6 +6321,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_dos_real_data_manifest.c
     src/dm2/dm2_v1_dos_startup_media.c
     src/dm2/dm2_v1_dos_intro_mve_owner.c
+    src/dm2/dm2_v1_dungeon_input_owner.c
     src/dm2/dm2_v1_mve_stream.c
     src/dm2/dm2_v1_mve_timeline.c
     src/dm2/dm2_v1_mve_video.c
@@ -49589,6 +49590,29 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_touch_click_zone_matrix_pc
         NAME dm2_touch_click_zone_matrix_audit
         COMMAND test_dm2_touch_click_zone_matrix_pc34_compat
     )
+endif()
+
+# Real-data admission for the PC-DOS dungeon pointer table.  The route owner
+# is intentionally a separate runtime seam until an authenticated GAME_LOAD
+# session can provide its c_input event consumer.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dungeon_input_owner_real_data.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm2_v1_dungeon_input_owner.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_dungeon_input_owner.c")
+    add_executable(test_dm2_v1_dungeon_input_owner_real_data
+        tests/test_dm2_v1_dungeon_input_owner_real_data.c
+        src/dm2/dm2_v1_dungeon_input_owner.c
+        src/dm2/dm2_touch_click_zone_matrix_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_dungeon_input_owner_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_dungeon_input_owner_real_data PRIVATE
+        firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dungeon_input_owner_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_dungeon_input_owner_real_data
+             COMMAND test_dm2_v1_dungeon_input_owner_real_data)
 endif()
 
 # Theron per-view zone inventory + hit-zone audit: consumes the live

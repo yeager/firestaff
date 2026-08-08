@@ -1745,6 +1745,91 @@ static int m11_dm2_present_fmtowns_skull_menu(
     return 1;
 }
 
+/* The Amiga installer reaches SHOW_MENU_SCREEN only after its native SWSH
+ * and TITL streams.  Its verified GRAPHICS.DAT contains the same source
+ * TITLE/0/4 menu surface, but the PC-only full-start receipt deliberately
+ * does not pretend to describe the Amiga animation handoff.  Present that
+ * actual 4 bpp GDAT page with its own field-4 palette; do not borrow the
+ * PC screen or manufacture a text menu.  Source: Amiga SKULL startup and
+ * SKWINSPX/src/v5/startend.cpp::DM2_SHOW_MENU_SCREEN. */
+static int m11_dm2_present_amiga_startup_menu(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt image;
+    const uint8_t *palette_raw;
+    uint8_t *pixels = NULL;
+    uint8_t rgb6[256][3];
+    size_t palette_size = 0u;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_byte_count = 0u;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int color;
+    int y;
+
+    if (!state || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 ||
+        !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_amiga_profile(profile) ||
+        !(loader = dm2_v1_boot_asset_loader(profile))) {
+        return 0;
+    }
+    memset(&image, 0, sizeof(image));
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0, 4, &image) ||
+        !image.accepted || image.metadata.width != 320u ||
+        image.metadata.height != 200u || image.metadata.bits_per_pixel != 4u ||
+        image.colors != 16u || image.palette_hash == 0u ||
+        !dm2_v1_boot_gdat_raw_asset_proof(
+            profile, DM2_GDAT_CATEGORY_TITLE, 0, 4, 0x414d4d45u,
+            &raw_hash, &raw_byte_count) ||
+        raw_hash == 0u || raw_byte_count == 0u) {
+        return 0;
+    }
+    palette_raw = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_TITLE, 0, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+        4, &palette_size);
+    if (!palette_raw || palette_size != 16u * 4u ||
+        dm2_v1_boot_gdat_image_asset_fetch(
+            profile, DM2_GDAT_CATEGORY_TITLE, 0, 4, &pixels, &width,
+            &height, &stride) != 0 || !pixels || width != 320 ||
+        height != 200 || stride < width) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    memset(rgb6, 0, sizeof(rgb6));
+    for (color = 0; color < 16; ++color) {
+        const uint8_t *row = palette_raw + (size_t)color * 4u;
+        if (row[0] != (uint8_t)color) {
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+            return 0;
+        }
+        rgb6[image.palette16[color]][0] = (uint8_t)(row[1] >> 2u);
+        rgb6[image.palette16[color]][1] = (uint8_t)(row[2] >> 2u);
+        rgb6[image.palette16[color]][2] = (uint8_t)(row[3] >> 2u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    for (y = 0; y < framebuffer_height; ++y) {
+        const int source_y = y * height / framebuffer_height;
+        int x;
+        for (x = 0; x < framebuffer_width; ++x) {
+            const int source_x = x * width / framebuffer_width;
+            framebuffer[(size_t)y * (size_t)framebuffer_width + (size_t)x] =
+                pixels[(size_t)source_y * (size_t)stride +
+                       (size_t)source_x];
+        }
+    }
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
 static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
 {
     if (!state) return;
@@ -2147,7 +2232,13 @@ static int m11_dm2_apply_boot_runtime_receipt(
      * admissible.  SKProject SKWINSPX SkWinCore.cpp::GAME_LOAD reaches
      * SELECT_CHAMPION only after this startup-menu boundary. */
     state->dm2State.level_loaded = 0;
-    if (!m11_dm2_bind_dos_intro(state)) {
+    /* The M12 launch handoff is the live presentation owner.  Direct M11
+     * boot probes deliberately exercise SKULL's static startup boundary and
+     * do not own an event loop or a monotonic presentation clock; starting
+     * IBMIOP there would strand those probes behind a movie they cannot
+     * schedule.  A normal Firestaff launch always binds launcher options.
+     * The retained BootProfile movie remains hash-verified in both cases. */
+    if (spec->launcherOptionsBound && !m11_dm2_bind_dos_intro(state)) {
         /* The DOS movie has been admitted by BootProfile but could not be
          * opened by the exact MVE path.  Keep the launch surface black; it
          * must not silently substitute SKULL's later GDAT page. */
@@ -56497,6 +56588,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                            (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
                        state->dm2FmtownsTitleFinished) {
                 startup_menu_drawn = m11_dm2_present_fmtowns_skull_menu(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+            } else if (m11_dm2_is_amiga_profile(
+                           (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+                       state->dm2FmtownsTitleFinished) {
+                startup_menu_drawn = m11_dm2_present_amiga_startup_menu(
                     state, framebuffer, framebufferWidth, framebufferHeight);
             } else {
                 startup_menu_drawn = m11_draw_dm2_startup_menu(
