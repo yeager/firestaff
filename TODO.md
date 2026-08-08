@@ -14,6 +14,11 @@
   to live creatures. The original RNG consumer, generator timing,
   reactivation, AI, combat, loot and T700/T900 consumers remain capture-gated.
 
+- 🔧 Theron verified-level movement now advances the common world tick and
+  timer/consumer dispatcher while leaving unresolved T700-owned stats
+  untouched. The hardening probe is aligned with that boundary; exact T700
+  cadence and field mutations still require original runtime evidence.
+
 - 🔧 Theron type-6 generator records now decode the real generation,
   toughness and pause overlay and persist it in save version 6. This remains
   source data only: original RNG consumption, activation timing,

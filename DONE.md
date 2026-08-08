@@ -8202,3 +8202,10 @@
   party initializer. Fixture probes retain the table for deterministic tests,
   while production now starts with empty inventory until the real Track 02
   start-object/T900 consumer is recovered.
+
+# 2026-08-08 Theron verified-level tick boundary
+
+- ✅ Corrected the mechanics hardening probe to expect the common world tick
+  to advance on a source-authenticated level. Timer/consumer dispatch is now
+  exercised, while stamina, food, water, poison and other unresolved T700
+  fields remain unchanged until the original consumer is captured.

@@ -439,7 +439,11 @@ static void test_source_level_stat_consumer_gate(void) {
 
     theron_v1_apply_post_move_effects(&w);
 
-    CHECK_INT("source world tick unchanged", (int)w.world_tick, 17);
+    /* A verified Track 02 level still advances the common world clock and
+     * timer/consumer dispatcher. Only unresolved T700-owned fields remain
+     * untouched; the old expectation incorrectly rejected that dispatch. */
+    CHECK_INT("source world tick advances without T700 field mutation",
+              (int)w.world_tick, 18);
     CHECK_INT("source stamina unchanged", w.party.champions[0].stamina, 20);
     CHECK_INT("source food unchanged", w.party.champions[0].food, 20);
     CHECK_INT("source water unchanged", w.party.champions[0].water, 20);
