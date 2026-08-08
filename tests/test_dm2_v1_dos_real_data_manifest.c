@@ -2,13 +2,11 @@
 #include "dm2_v1_dos_startup_media.h"
 #include "dm2_v1_mve_stream.h"
 #include "dm2_v1_mve_video.h"
+#include "firestaff_x68k_media_receipt.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef __APPLE__
-#include <CommonCrypto/CommonDigest.h>
-#endif
 
 static uint8_t *read_original(const char *path, size_t *out_size)
 {
@@ -94,7 +92,6 @@ int main(void) {
     {
         static const char *const movies[] = { "intro", "end" };
         static const uint32_t expected_presentations[] = { 217u, 600u };
-#ifdef __APPLE__
         static const char *const expected_frame_sha256[][3] = {
             { "f4f285b4f4b97058bb408c7747f0354761415ea029078320df0e932231e0746c",
               "550c99c3cec2885c21871a24f552b93a421f6788b93f7115029ffe55e0eb0a5c",
@@ -103,7 +100,6 @@ int main(void) {
               "efc94f0c32ef2dac2594398d934de13086ecb1dbe0d198df1daee38bbe274522",
               "ff833bf7b168df74a9ec24a45e9d0e0132dbd4a8a4bc79fafbcfd89acba8a26c" }
         };
-#endif
         for (size_t i = 0u; i < sizeof(movies) / sizeof(movies[0]); ++i) {
             char path[1024];
             DM2_V1_MveStreamReceipt mve;
@@ -140,23 +136,19 @@ int main(void) {
                 assert(dm2_v1_mve_video_decode_presentation(&video,
                                                               &presentation,
                                                               bytes, size) == 1);
-#ifdef __APPLE__
                 if (presentation.presentation_index == 0u ||
                     presentation.presentation_index ==
                         (expected_presentations[i] - 1u) / 2u ||
                     presentation.presentation_index + 1u == expected_presentations[i]) {
-                    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
-                    char actual[CC_SHA256_DIGEST_LENGTH * 2u + 1u];
-                    unsigned int j;
+                    char actual[65];
                     unsigned int sample = presentation.presentation_index == 0u ? 0u :
                         (presentation.presentation_index + 1u == expected_presentations[i] ? 2u : 1u);
-                    CC_SHA256(dm2_v1_mve_video_pixels(&video),
-                              DM2_V1_MVE_VIDEO_PIXELS, digest);
-                    for (j = 0u; j < CC_SHA256_DIGEST_LENGTH; ++j)
-                        snprintf(actual + j * 2u, 3u, "%02x", digest[j]);
+                    assert(firestaff_x68k_media_receipt_sha256_hex(
+                               dm2_v1_mve_video_pixels(&video),
+                               DM2_V1_MVE_VIDEO_PIXELS,
+                               actual, sizeof(actual)) == 0);
                     assert(strcmp(actual, expected_frame_sha256[i][sample]) == 0);
                 }
-#endif
                 if (presentation_count != 0u)
                     assert(presentation.presentation_time_us - previous_time ==
                            10416u * 8u);
