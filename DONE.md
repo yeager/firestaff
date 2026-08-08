@@ -2088,7 +2088,7 @@
   admission gate; no filename-only save is admitted.
 
 - ✅ Added a reproducible source-bound capture tool that requires the
-  authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
+  authenticated TQUS VRAM FNV `55c10e28` and VCE FNV `ea83f117` before rendering.
 - ✅ The earlier capture candidate and its README claim were audited against
   the current promotion gate and withdrawn because the current receipt does
   not prove README eligibility. No synthetic replacement was created.
@@ -2335,8 +2335,8 @@
 # Theron source-bound VRAM/VCE capture gate (2026-08-08)
 
 - ✅ Production viewport capture loading now verifies complete-file FNV-1a
-  identities before admitting the raw VDC/VCE pair: VRAM `f8ab6c1b` and VCE
-  `ea83f117` for the authenticated dungeon screen capture.
+  identities before admitting the raw VDC/VCE pair: VRAM `55c10e28` and VCE
+  `ea83f117` for the authenticated TQUS screen capture.
 - ✅ The generic in-memory decoder remains available for unit fixtures, while
   explicit runtime file paths cannot be promoted by size alone.
 - Verification: all VRAM/tile/palette tests pass, including the real 64 KiB

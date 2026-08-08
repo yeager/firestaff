@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
     vp.fb.stride = TQR_FB_W;
 
     if (theron_v1_vram_trace_load_verified_files(
-            &vp, argv[1], argv[2], 0xf8ab6c1bu, 0xea83f117u) != 0) {
+            &vp, argv[1], argv[2], 0x55c10e28u, 0xea83f117u) != 0) {
         free(framebuffer);
         return 1;
     }

@@ -110,7 +110,10 @@ int tqr_palette_load_group(TQR_PaletteState *pal,
     }
     for (int i = 0; i < count; i++) {
         uint16_t bgr = (uint16_t)(data[i*2] | (data[i*2+1] << 8));
-        pal->entries[start + i].bgr444 = bgr;
+        /* PCE VCE RAM stores a 9-bit BGR333 word in a 16-bit little-endian
+         * slot. Keep the source word intact; do not reinterpret it as the
+         * unrelated 12-bit BGR444 format. */
+        pal->entries[start + i].bgr333 = (uint16_t)(bgr & 0x01ffu);
         pal->entries[start + i].rgba   = tqr_bgr333_to_rgba(bgr);
     }
     return count;
@@ -119,7 +122,7 @@ int tqr_palette_load_group(TQR_PaletteState *pal,
 void tqr_palette_expand_rgba(TQR_PaletteState *pal) {
     if (!pal) return;
     for (int i = 0; i < TQR_PALETTE_SIZE; i++) {
-        pal->entries[i].rgba = tqr_bgr333_to_rgba(pal->entries[i].bgr444);
+        pal->entries[i].rgba = tqr_bgr333_to_rgba(pal->entries[i].bgr333);
     }
 }
 

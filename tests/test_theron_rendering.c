@@ -144,7 +144,7 @@ static int test_compile_palette_constants(void) {
 
     ASSERT(TQR_PALETTE_SIZE == 512,       "TQR_PALETTE_SIZE != 512");
     ASSERT(TQR_PALETTE_GROUP_SIZE == 16, "PALETTE_GROUP_SIZE != 16");
-    ASSERT(TQR_MAX_TILES == 1024,         "TQR_MAX_TILES != 1024");
+    ASSERT(TQR_MAX_TILES == 2048,         "TQR_MAX_TILES != 2048");
     ASSERT(TQR_TILE_SIZE_2BPP == 16,      "TILE_SIZE_2BPP != 16");
     ASSERT(TQR_TILE_SIZE_4BPP == 32,     "TILE_SIZE_4BPP != 32");
     ASSERT(TQR_TILE_DIM == 8,            "TILE_DIM != 8");
@@ -531,7 +531,7 @@ static int test_vp_present_with_custom_palette(void) {
     /* Custom palette — all white */
     TQR_PaletteState custom_pal;
     memset(&custom_pal, 0, sizeof(custom_pal));
-    custom_pal.entries[15].bgr444 = 0xFFF;  /* white */
+    custom_pal.entries[15].bgr333 = 0x1FF;  /* white */
     custom_pal.tile_count = 16;
 
     unsigned char m11_fb[320 * 200];
@@ -883,7 +883,7 @@ static int test_palette_state_init(void) {
     ASSERT(pal.tile_count >= 0, "tile_count should be >= 0");
     ASSERT(pal.tile_count >= 0, "tile_count should be >= 0");
 
-    ASSERT(pal.entries[0].bgr444 == 0 && pal.entries[15].bgr444 == 0,
+    ASSERT(pal.entries[0].bgr333 == 0 && pal.entries[15].bgr333 == 0,
            "Unbound palette must not synthesize colors");
 
     tqr_palette_free_tiles(&pal);

@@ -34,11 +34,11 @@ extern "C" {
  *   4bpp:  32 bytes per tile  (8 rows x 4 bit-planes)
  *   Bit order: MSB (bit 7) = leftmost pixel (HuC6270 VRAM byte order)
  *
- * Palette BGR444 format (4 bits per channel, 12-bit packed):
- *   bits [11:8] = R (4 bits, values 0-15)
- *   bits [ 7:4] = G (4 bits, values 0-15)
- *   bits [ 3:0] = B (4 bits, values 0-15)
- *   Expanded to RGBA8: r=(R<<4)|R, g=(G<<4)|G, b=(B<<4)|B, a=0xFF
+ * Palette formats:
+ *   VCE snapshots are BGR333: bits [8:6] = B, [5:3] = G,
+ *   [2:0] = R. This is the native HuC6260 9-bit colour word.
+ *   The generic packed-buffer helper below also retains BGR444 support,
+ *   but it must not be used for an authentic VCE snapshot.
  *
  * Source-only gate:
  *   Any tile/texture that cannot be loaded from verified Track 02 data is
@@ -85,7 +85,7 @@ typedef struct {
 
 /* ── Palette entry ─────────────────────────────────────────────────── */
 typedef struct {
-    uint16_t  bgr444;          /* 12-bit packed BGR (HuC6270 native)  */
+    uint16_t  bgr333;          /* Native HuC6260 VCE word (9-bit BGR)  */
     uint32_t  rgba;            /* 0xAARRGGBB, expanded 4→8 bits      */
 } TQR_PaletteEntry;
 
@@ -157,7 +157,7 @@ static inline uint32_t tqr_bgr333_to_rgba(uint16_t bgr333) {
  * Track 02 source bytes are decoded through a real handoff. */
 void tqr_palette_init_defaults(TQR_PaletteState *pal);
 
-/* Load palette data from a packed BGR444 buffer.
+/* Load native HuC6260 VCE words from a little-endian BGR333 buffer.
  * count entries from data (2 bytes each), starting at entry index start.
  * Returns entries loaded, or 0 on error. */
 int tqr_palette_load_group(TQR_PaletteState *pal,
