@@ -7787,3 +7787,17 @@
   route, source-lock validator, and headless Phase A probe.
 - Source reference: ReDMCSB `CLIKMENU.C` F0366 lines 342–351,
   `CHAMPION.C` F0310 lines 1180–1214, and `GAMELOOP.C` lines 124–155.
+
+# Theron source generator admission boundary (2026-08-08)
+
+- ✅ Track 02 generator binding now accepts only the source actuator type
+  `FLOOR_MONSTER_GEN` (type 6), only for a verified loaded level, and only for
+  coordinates inside the 32×32 map contract. Invalid records are rejected
+  without changing the source-generator ledger.
+- ✅ Added regression coverage for wrong actuator type, out-of-range
+  coordinates, and a valid source generator; the real US/JP Track 02 loader
+  census remains passing.
+- Source evidence: `docs/source-lock/theron-disassembly/
+  theron-us-spawn-consumer.asm` and `theron-runtime-spawn-capture.md`.
+  The actual RNG/timing/re-enable consumer remains intentionally fail-closed
+  until its dynamic return and state ownership are captured.

@@ -22,6 +22,7 @@
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_level_data_blocks.h"
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_text_decode.h"
 #include <string.h>
 
@@ -1332,6 +1333,9 @@ int theron_v1_world_bind_track02_generator(
     if (!world || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        type != TQ_ACT_FLOOR_MONSTER_GEN ||
+        x < 0 || x >= THERON_MAX_MAP_SIZE ||
+        y < 0 || y >= THERON_MAX_MAP_SIZE ||
         !world->level_loaded[dungeon_id - 1][level_index] ||
         !world->levels[dungeon_id - 1][level_index].source_header_verified ||
         world->source_generator_count >= THERON_MAX_SOURCE_GENERATORS)

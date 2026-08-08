@@ -421,8 +421,31 @@ static void test_real_bank_reload_clears_stale_levels(
     printf("  US Track 02: real bank reload clears stale level records\n");
 }
 
+static void test_generator_binding_rejects_non_source_records(void) {
+    Theron_V1_World world;
+    memset(&world, 0, sizeof(world));
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].source_header_verified = 1;
+
+    assert(theron_v1_world_bind_track02_generator(
+               &world, 1, 0, 1, 2, 3, 4, TQ_ACT_FLOOR_MONSTER, 5,
+               0, 0, 0, 0, 0, 0, 0, 0, 0) == -1);
+    assert(world.source_generator_count == 0);
+    assert(theron_v1_world_bind_track02_generator(
+               &world, 1, 0, 1, 2, THERON_MAX_MAP_SIZE, 4,
+               TQ_ACT_FLOOR_MONSTER_GEN, 5, 0, 0, 0, 0, 0, 0, 0, 0,
+               0) == -1);
+    assert(world.source_generator_count == 0);
+    assert(theron_v1_world_bind_track02_generator(
+               &world, 1, 0, 1, 2, 3, 4, TQ_ACT_FLOOR_MONSTER_GEN, 5,
+               0, 0, 0, 0, 0, 0, 0, 0, 0) == 0);
+    assert(world.source_generator_count == 1);
+}
+
 int main(void) {
     printf("test_theron_v1_track02_dungeon_loader\n");
+
+    test_generator_binding_rejects_non_source_records();
 
     const char *path = find_track02();
     if (!path) {
