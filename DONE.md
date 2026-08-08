@@ -109,6 +109,13 @@
   inte Atari ST:s F0497-LZW-väg. Poster som inte är IMG1 avvisas fortsatt
   tills de har en egen källbunden konsument.
 
+# CI: CSB Amiga-IMG1-länkning (2026-08-08)
+
+- ✅ De två fristående CSB-ljudtesterna länkar nu också den delade
+  `dm1_v1_legacy_graphics_dat`-implementeringen som Amiga-IMG1-avkodaren
+  använder. Därmed kan macOS-, Linux- och Windows-matrisen länka samma
+  källbundna avkodarväg som huvudbygget. Båda testerna passerar lokalt.
+
 # CSB Amiga C017-inventarieyta från originaldata (2026-08-08)
 
 - ✅ A31M, A35M och A35E visar nu `C017_GRAPHIC_INVENTORY` från den valda,

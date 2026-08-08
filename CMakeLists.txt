@@ -1431,6 +1431,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0060_sound_play_pc34_c
         tests/test_csb_v1_f0060_sound_play_pc34_compat.c
         src/csb/csb_v1_audio_runtime_pc34_compat.c
         src/csb/csb_v1_amiga_graphics_dat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c
         src/memory/memory_graphics_dat_pc34_compat.c
         src/memory/memory_graphics_dat_header_pc34_compat.c
         src/memory/memory_graphics_dat_metadata_pc34_compat.c
@@ -37656,6 +37657,7 @@ if(BUILD_TESTING)
         tests/test_csb_v1_audio_runtime_pc34_compat.c
         src/csb/csb_v1_audio_runtime_pc34_compat.c
         src/csb/csb_v1_amiga_graphics_dat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c
         src/memory/memory_graphics_dat_pc34_compat.c
         src/memory/memory_graphics_dat_header_pc34_compat.c
         src/memory/memory_graphics_dat_select_pc34_compat.c
