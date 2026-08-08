@@ -6902,6 +6902,10 @@ that its exact runtime path is not already source-locked and tested.
     använder då endast dess verkliga championantal. Återstår: koppla detta
     till den autentiska CEDT/Utility-medie- och filtransaktionen, inte till
     ett testsparformat eller en värdprompt.
+    2026-08-08: Utility-åtgärden `LOAD SAVED GAME` avvisar nu Firestaffs
+    privata runtimesparning helt. Filväljare, import, återupptagning, backup
+    och write-back får återöppnas först bakom en autentisk originalfil med
+    F0435:s fulla byte- och ägarbevis.
     2026-08-08: a former probe that derived a Firestaff save header, party
     pose and state prefix from `DUNGEON.DAT` was removed. A dungeon package is
     not a saved game and must never be used to manufacture one; this item now

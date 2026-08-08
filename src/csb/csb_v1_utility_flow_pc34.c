@@ -301,6 +301,7 @@ const char *csb_v1_util_flow_last_error(CSB_V1_UtilFlowContext *ctx)
     case -6:  return "Maximum disk check attempts reached";
     case -7:  return "Invalid party state";
     case -8:  return "No champions imported/loaded";
+    case -9:  return "Original CSB save corpus required";
     default:  return "Unknown error";
     }
 }
@@ -1626,48 +1627,19 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
         return 0;  /* continue */
 
     case CSB_V1_UTIL_FLOW_LOAD_GAME:
-        /* Load saved game from CSB save file.
-         * ReDMCSB LOADSAVE.C F0435: STARTEND_LoadGame.
-         * Uses the runtime loader so Firestaff-native, CSBWin, and bounded
-         * CSBGAME roster paths all share the same byte gate.
-         *
-         * In Firestaff: the UI sets csb_save_path, then this state
-         * loads the game state from the save file. */
+        /* ReDMCSB LOADSAVE.C F0435 owns original save decoding, its five
+         * disk parts and the live world handoff.  Firestaff's private runtime
+         * envelope and incomplete CSBWin-shaped bodies cannot substitute for
+         * that format.  No admissible original user-save corpus is staged, so
+         * fail closed after file selection rather than promoting arbitrary
+         * bytes to NEW_GAME. */
         if (ctx->csb_save_path[0] == '\0') {
             /* No path set — prompt for file selection.
              * Stay in this state and let UI set path. */
             return 0;
         }
-
-        {
-            CSB_V1_RuntimeProfile loaded;
-            CSB_V1_PartyState party;
-            int count;
-
-            csb_v1_runtime_init(&loaded, NULL);
-            memset(&party, 0, sizeof(party));
-            if (csb_v1_runtime_load_game_from_path(&loaded,
-                                                   ctx->csb_save_path) !=
-                CSB_V1_LOAD_OK) {
-                ctx->last_error = -5;
-                ctx->state = CSB_V1_UTIL_FLOW_ERROR;
-                csb_v1_runtime_cleanup(&loaded);
-                return 0;
-            }
-            count = csb_v1_runtime_get_party_state(&loaded, &party);
-            if (count <= 0 || party.ChampionCount <= 0) {
-                ctx->last_error = -8;
-                ctx->state = CSB_V1_UTIL_FLOW_ERROR;
-                csb_v1_runtime_cleanup(&loaded);
-                return 0;
-            }
-            ctx->imported_party = party;
-            ctx->imported_champion_count = count;
-            ctx->last_error = 0;
-            ctx->action = CSB_V1_UTIL_ACTION_LOAD;
-            csb_v1_runtime_cleanup(&loaded);
-            ctx->state = CSB_V1_UTIL_FLOW_NEW_GAME;
-        }
+        ctx->last_error = -9;
+        ctx->state = CSB_V1_UTIL_FLOW_ERROR;
         return 0;  /* continue */
 
     case CSB_V1_UTIL_FLOW_NEW_GAME:

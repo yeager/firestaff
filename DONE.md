@@ -39,6 +39,11 @@
   committed kommer championantalet i stället direkt från den party som
   handoffen äger.
 
+- ✅ Utility-valet `LOAD SAVED GAME` kan inte längre läsa Firestaffs privata
+  CSB-runtimefil och övergå till New Game. ReDMCSB `LOADSAVE.C` F0435 äger
+  originalformatets diskdelar och world-handoff; tills en autentisk corpus
+  finns stannar filvalet därför med ett tydligt corpusfel.
+
 - ✅ Realdataregressionen för CSB:s HUD använder inte längre testskapade
   party-, inventory- eller spellpanelstillstånd för C100, F1, F2 eller C022.
   Den verifierar den riktiga enhjältepartyns positiva och negativa kommandon
