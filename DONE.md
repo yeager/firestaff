@@ -81,6 +81,14 @@
 - ✅ Verifierat mot FM Towns originalskiva i minnet. Ingen ny party eller
   ersättningsstate skapas.
 
+# DM2 FM Towns credits återställer menypaletten (2026-08-08)
+
+- ✅ Realmediatestet bevisar nu även återgången från `SHOW_CREDITS` till
+  `SHOW_MENU_SCREEN`: TITLE/0/1:s lokala creditspalett ersätts av
+  TITLE/0/4:s ursprungliga menybild och palett efter källhändelse 239.
+- ✅ Kontrollen använder HME-242:s original-GDAT i minnet och jämför både
+  bildhash och hela indexerade paletten. Inga bilddata eller färger skapas.
+
 # DM2 SKSAVE-produktionsspärr (2026-08-08)
 
 - ✅ M10 länkar inte längre den callback-baserade specialtimerläsaren
