@@ -4198,6 +4198,39 @@ static int m11_csb_prepare_amiga_titl_handoff(M11_GameViewState *state)
     state->csbAmigaTitlAppliedDeltaCount = 0u;
     state->csbAmigaTitlClockStarted = 0;
     state->csbAmigaTitlFrameBound = 1;
+    state->csbAmigaTitlRuntimeHandoffComplete = 0;
+    return 1;
+}
+
+/* A31M APPA.C:63-65 requests APPB immediately after ANIM returns, then
+ * APPA.C:130 executes that authenticated application.  The original
+ * GAME/DUNGEON runtime is already bound from the same materialized package;
+ * retain that package boundary and never replace APPB with PC34 TITLE.C or
+ * ENTRANCE.C. */
+static int m11_csb_complete_amiga_a31_runtime_handoff(M11_GameViewState *state)
+{
+    CSB_V1_BootProfile *profile;
+    char path[FSP_PATH_MAX];
+    char md5[33];
+
+    if (!state || !state->csbBootProfile ||
+        state->csbAmigaTitlRuntimeHandoffComplete) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a31_profile(profile) ||
+        !profile->runtime.dungeon_handle || !profile->asset_root[0] ||
+        snprintf(path, sizeof(path), "%s/APPB.FTL", profile->asset_root) <= 0 ||
+        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        strcmp(md5, "35987d3f0278c6036fcc24786d4a75d7") != 0) {
+        return 0;
+    }
+    profile->runtime.state = CSB_STATE_GAME;
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_dismissed = 1;
+    state->csbAmigaTitlRuntimeHandoffComplete = 1;
+    m11_sync_csb_state_from_boot_profile(state, profile);
     return 1;
 }
 
@@ -4243,6 +4276,9 @@ static void m11_csb_advance_amiga_titl(M11_GameViewState *state,
         (int)state->csbAmigaTitlAppliedDeltaCount;
     state->csbState.startup_title_source_step =
         (int)state->csbAmigaTitlVbl;
+    if (state->csbAmigaTitlVbl >= schedule.total_duration_vbl) {
+        (void)m11_csb_complete_amiga_a31_runtime_handoff(state);
+    }
 }
 
 static int m11_csb_present_amiga_titl_startup(M11_GameViewState *state,

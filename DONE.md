@@ -82,6 +82,9 @@
 - ✅ A31M:s titel har en enda VBlank-ägare i M11:s idle-slinga. Den
   receiptsbaserade PC34-vägen kan inte längre dubbelräkna TITL.DAT-tid;
   regressionstestet kontrollerar exakt fem VBlanks efter två 55 ms-tick.
+- ✅ Efter TITL.DAT:s autentiska 606 VBlanks följer A31M nu APPA.C:s
+  `APPB.FTL`-handoff till den valda originaldungeonen. `APPB.FTL` kontrolleras
+  med sin kända hash innan titelytan får lämnas.
 
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
   dimensions, cell counts and maximum tile indices instead of keeping only

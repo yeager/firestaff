@@ -1985,6 +1985,17 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                 view.csbAmigaTitlVblRemainder == 500u &&
                 view.csbAmigaTitlAppliedDeltaCount == 0u,
                 "A31M TITL.DAT advances at one 50 Hz VBlank cadence");
+    while (view.csbState.startup_title_active &&
+           view.csbAmigaTitlVbl < 700u) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    expect_true(view.csbAmigaTitlRuntimeHandoffComplete &&
+                !view.csbState.startup_title_active &&
+                !view.csbState.startup_entrance_active &&
+                view.csbState.startup_entrance_dismissed &&
+                profile->runtime.state == CSB_STATE_GAME &&
+                view.csbState.level_loaded,
+                "A31M TITL.DAT returns through authenticated APPB into its dungeon runtime");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
