@@ -24,6 +24,8 @@ main_ram_e009_critical_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_
 main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch
 main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
+adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
+adpcm_fifo_direct_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
 main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 g4_main_ram_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch
@@ -148,6 +150,19 @@ if ! grep -Fq 'scsi_read_command generation=%u start_lba=%u sector_count=%u' "$t
    ! grep -Fq 'TheronPCECDTraceDiscardDataReadOnNonMainRAMWrite' "$transfer_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceTakeDataRead' "$transfer_patch_file"; then
     printf 'FAIL: Mednafen transfer patch no longer retains bounded SCSI/FIFO/RAM receipts\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'pce_cd_fifo_read transport=adpcm source_lba=%u source_offset=%u' "$adpcm_fifo_ram_patch_file" ||
+   ! grep -Fq 'pce_cd_adpcm_ram_write source_lba=%u source_offset=%u' "$adpcm_fifo_ram_patch_file" ||
+   ! grep -Fq 'pce_cd_adpcm_ram_read_prepare source_lba=%u source_offset=%u' "$adpcm_fifo_ram_patch_file" ||
+   ! grep -Fq 'pce_cd_adpcm_cpu_read source_lba=%u source_offset=%u' "$adpcm_fifo_ram_patch_file" ||
+   ! grep -Fq 'TheronPCECDAdpcmDMAReadActive = true' "$adpcm_fifo_ram_patch_file"; then
+    printf 'FAIL: ADPCM FIFO/RAM patch no longer retains byte-exact CD-to-game transfer evidence\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'TheronPCECDDataReadHasOrigin = SCSICD_GetLastDataOrigin' "$adpcm_fifo_direct_read_patch_file" ||
+   ! grep -Fq 'TheronPCECDDataReadFifoSequence' "$adpcm_fifo_direct_read_patch_file"; then
+    printf 'FAIL: direct PCE-CD data reads must retain authenticated FIFO origin\n' >&2
     exit 1
 fi
 if ! grep -Fq 'scsi_read_command generation=%u opcode=%02x cdb=%02x%02x%02x%02x%02x%02x start_lba=%u sector_count=%u' "$caller_patch_file" ||
@@ -361,4 +376,6 @@ patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_critical_patch
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_register_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_consumer_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_v2_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_ram_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_direct_read_patch_file"
 printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, FIFO-origin, and bounded e009 evidence\n'

@@ -1,0 +1,13 @@
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -837,6 +837,9 @@
+      TheronPCECDDataReadValue = ret;
+      TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x physical_pc=%06x data=%02x\n",
+                            TheronPCECDDataReadPC, TheronPCECDDataReadPhysicalPC, ret);
++     TheronPCECDDataReadHasOrigin = SCSICD_GetLastDataOrigin(
++         &TheronPCECDDataReadLBA, &TheronPCECDDataReadOffset,
++         &TheronPCECDDataReadFifoSequence);
+      if(TheronPCECDMainRAME009Active)
+       TheronTracePCECDCriticalState("main_ram_e009_data_read sequence=%u cpu_pc=%04x physical_pc=%06x data=%02x\n",
+                             TheronPCECDMainRAME009Sequence,

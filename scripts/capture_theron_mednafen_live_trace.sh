@@ -877,6 +877,11 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
 transition_scsi_read_command_count=$(trace_count '^scsi_read_command ' "$cd_trace")
 transition_scsi_sector_binding_count=$(trace_count '^scsi_read_sector_binding ' "$cd_trace")
 transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candidate ' "$cd_trace")
+transition_adpcm_fifo_read_count=$(trace_count '^pce_cd_fifo_read transport=adpcm ' "$cd_trace")
+transition_adpcm_ram_write_count=$(trace_count '^pce_cd_adpcm_ram_write ' "$cd_trace")
+transition_adpcm_ram_read_prepare_count=$(trace_count '^pce_cd_adpcm_ram_read_prepare ' "$cd_trace")
+transition_adpcm_cpu_read_count=$(trace_count '^pce_cd_adpcm_cpu_read ' "$cd_trace")
+transition_origin_ram_receipt_count=$(trace_count '^pce_cd_origin_ram_receipt ' "$cd_trace")
 transition_game_main_ram_e009_count=$(trace_count '^game_main_ram_e009_dispatch ' "$trace")
 transition_main_ram_loader_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii ' "$main_ram_loader_trace")
 transition_continuation_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii source=3c80 ' "$main_ram_loader_trace")
@@ -919,6 +924,11 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'scsi_read_commands=%s\n' "$transition_scsi_read_command_count"
     printf 'scsi_read_sector_bindings=%s\n' "$transition_scsi_sector_binding_count"
     printf 'byte_exact_fifo_ram_destinations=%s\n' "$transition_data_destination_count"
+    printf 'adpcm_fifo_reads=%s\n' "$transition_adpcm_fifo_read_count"
+    printf 'adpcm_ram_writes=%s\n' "$transition_adpcm_ram_write_count"
+    printf 'adpcm_ram_read_prepares=%s\n' "$transition_adpcm_ram_read_prepare_count"
+    printf 'adpcm_cpu_reads=%s\n' "$transition_adpcm_cpu_read_count"
+    printf 'byte_exact_origin_ram_receipts=%s\n' "$transition_origin_ram_receipt_count"
     printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"
     printf 'main_ram_loader_tii_transfers=%s\n' "$transition_main_ram_loader_tii_count"
     printf 'continuation_tii_source_3c80=%s\n' "$transition_continuation_tii_count"

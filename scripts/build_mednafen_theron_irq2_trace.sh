@@ -70,6 +70,10 @@ patch -d "$build_root/source" -p1 --batch --forward \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"

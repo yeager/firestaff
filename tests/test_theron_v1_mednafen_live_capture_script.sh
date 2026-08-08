@@ -215,10 +215,10 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'capture_host_code_for_mapping()' "$script" ||
    ! grep -Fq 'i:91) printf' "$script" ||
    ! grep -Fq 'i:32) printf' "$script" ||
-   grep -Fq 'i:29) printf' "$script" ||
+   ! grep -Fq 'i:29) printf' "$script" ||
    ! grep -Fq 'ii:90) printf' "$script" ||
    ! grep -Fq 'ii:31) printf' "$script" ||
-   grep -Fq 'ii:27) printf' "$script" ||
+   ! grep -Fq 'ii:27) printf' "$script" ||
    ! grep -Fq 'i:54) printf' "$script" ||
    ! grep -Fq 'i:55) printf' "$script" ||
    ! grep -Fq 'ii:54) printf' "$script" ||
@@ -312,6 +312,11 @@ if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'scsi_read_commands=%s' "$script" ||
    ! grep -Fq 'scsi_read_sector_bindings=%s' "$script" ||
    ! grep -Fq 'byte_exact_fifo_ram_destinations=%s' "$script" ||
+   ! grep -Fq 'adpcm_fifo_reads=%s' "$script" ||
+   ! grep -Fq 'adpcm_ram_writes=%s' "$script" ||
+   ! grep -Fq 'adpcm_ram_read_prepares=%s' "$script" ||
+   ! grep -Fq 'adpcm_cpu_reads=%s' "$script" ||
+   ! grep -Fq 'byte_exact_origin_ram_receipts=%s' "$script" ||
    ! grep -Fq 'game_main_ram_e009_dispatches=%s' "$script" ||
    ! grep -Fq 'System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s non_system_card_pcecd=%s' "$script" ||
    ! grep -Fq 'loader reached authentic raw sectors but no game-owned PCE-CD data read was observed' "$script" ||
