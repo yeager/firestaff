@@ -439,6 +439,73 @@ static int dm2_test_find_private_cross_map_wall(
     return 0;
 }
 
+/* The source ignores directional DB3 records that do not face the incoming
+ * action.  This chooses only a complete real chain whose matching records
+ * are COUNTERs; it never manufactures a tile, record or continuation. */
+static int dm2_test_find_private_counter_chain(
+    const DM2_V1_GameLoadWorldOwner *owner, int *out_map, int *out_x,
+    int *out_y, uint8_t *out_direction, int *out_count)
+{
+    int chain_limit = 0;
+
+    if (!owner || !out_map || !out_x || !out_y || !out_direction ||
+        !out_count) return 0;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count)
+            return 0;
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return 0;
+    for (int map = 0; map < owner->dungeon.level_count; ++map) {
+        for (int x = 0; x < owner->dungeon.level_widths[map]; ++x) {
+            for (int y = 0; y < owner->dungeon.level_heights[map]; ++y) {
+                const int tile_class = dm2_v1_dungeon_get_tile_raw(
+                    &owner->dungeon, map, x, y) >> 5;
+                if (tile_class != 0 && tile_class != 1) continue;
+                for (uint8_t direction = 0u; direction < 4u; ++direction) {
+                    int16_t link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                        &owner->dungeon, map, x, y);
+                    int steps = 0;
+                    int count = 0;
+                    int valid = 1;
+
+                    while (link != DM2_V1_RECORD_HANDLE_END && valid) {
+                        const uint8_t *record;
+                        int16_t next;
+                        if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                            steps >= chain_limit ||
+                            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+                            !(record = dm2_v1_record_pool_address(
+                                &owner->record_pools, link)) ||
+                            !dm2_v1_record_pool_next_link(&owner->record_pools,
+                                                           link, &next)) {
+                            valid = 0;
+                            break;
+                        }
+                        if ((uint8_t)(link & 3) == direction) {
+                            if (dm2_actu_type(record) != DM2_ACTU_COUNTER) {
+                                valid = 0;
+                                break;
+                            }
+                            ++count;
+                        }
+                        ++steps;
+                        link = next;
+                    }
+                    if (valid && link == DM2_V1_RECORD_HANDLE_END && count > 0) {
+                        *out_map = map; *out_x = x; *out_y = y;
+                        *out_direction = direction; *out_count = count;
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static void expect_true(int condition, const char* message) {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
@@ -1637,6 +1704,12 @@ int main(void) {
     uint8_t new_game_cross_map_target_direction = 0u;
     int new_game_cross_map_count = 0;
     int new_game_cross_map_found = 0;
+    int new_game_counter_map = -1;
+    int new_game_counter_x = -1;
+    int new_game_counter_y = -1;
+    uint8_t new_game_counter_direction = 0u;
+    int new_game_counter_count = 0;
+    int new_game_counter_found = 0;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -2602,6 +2675,41 @@ int main(void) {
         }
         expect_true(matching_messages > 0,
                     "M11 retains the authentic CROSS_MAP target map, coordinates, direction and action");
+    }
+    new_game_counter_found = profile && dm2_test_find_private_counter_chain(
+        &new_game_world_owner, &new_game_counter_map, &new_game_counter_x,
+        &new_game_counter_y, &new_game_counter_direction,
+        &new_game_counter_count);
+    expect_true(new_game_counter_found,
+                "M11 finds a complete real File_header COUNTER wall/floor chain");
+    if (new_game_counter_found) {
+        const int before_timers = new_game_world_owner.timer_queue.num_timers;
+        memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+        dm2_v1_timer_entry_init(&new_game_actuate_timer);
+        expect_true((dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                            (int16_t)new_game_counter_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 3u), 1) &&
+                    ((new_game_actuate_timer.xA =
+                        (int8_t)new_game_counter_x), 1) &&
+                    ((new_game_actuate_timer.yA =
+                        (int8_t)new_game_counter_y), 1) &&
+                    ((new_game_actuate_timer.wvalueB =
+                        (int16_t)((uint16_t)new_game_counter_direction |
+                                  (1u << 8))), 1) &&
+                    dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) && new_game_actuate.valid &&
+                    new_game_actuate.counter_actuators_seen ==
+                        new_game_counter_count &&
+                    new_game_actuate.counter_records_mutated ==
+                        new_game_counter_count &&
+                    new_game_actuate.private_counter_hash != 0u &&
+                    new_game_world_owner.timer_queue.num_timers ==
+                        before_timers + new_game_actuate.counter_messages_queued &&
+                    !new_game_actuate.blocked_incomplete_chain &&
+                    !profile->source_game_load_session_ready,
+                    "M11 mutates and queues only a real source COUNTER chain in the private File_header owner");
     }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];

@@ -210,6 +210,13 @@ typedef struct {
     int cross_map_actuators_seen;
     int cross_map_messages_queued;
     uint32_t private_cross_map_hash;
+    /* COUNTER is a self-contained DB3 mutation when the complete active
+     * tile chain contains only DB3 records.  It updates its authentic Data
+     * word and queues only the source-addressed 0x04 continuation. */
+    int counter_actuators_seen;
+    int counter_records_mutated;
+    int counter_messages_queued;
+    uint32_t private_counter_hash;
     uint8_t tile_state_before;
     uint8_t tile_state_after;
     uint32_t private_text_visibility_hash;
@@ -307,8 +314,11 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
  * mixed record chain and a newly-visible party-square hint until the message
  * delivery owner exists. Classes 2 and 5 can also close their source tile
  * before that same DB2 atom; their opening path stays blocked because it
- * requires DM2_ADVANCE_TILES_TIME. Classes 0, 4 and 6 remain rejected without
- * mutation rather than applying an incomplete wall/door/trick-wall fragment.
+ * requires DM2_ADVANCE_TILES_TIME. A complete direction-matching DB3 COUNTER
+ * chain on class 0 or 1 can also update its source Data word and queue its
+ * exact private 0x04 continuation. Other class 0, 4 and 6 families remain
+ * rejected without mutation rather than applying an incomplete
+ * wall/door/trick-wall fragment.
  */
 int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     DM2_V1_GameLoadWorldOwner *owner,

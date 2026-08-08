@@ -177,6 +177,11 @@
   En komplett riktad `CROSS_MAP`-WALL-kedja kan nu privat köa sina riktiga
   0x04-meddelanden på målkartan med atomär rollback. Målens följdeffekter
   förblir spärrade tills samma session äger deras tile- och recordkonsumenter.
+  En komplett riktad `COUNTER`-kedja kan nu också ändra sin autentiska
+  DB3-Data och köa bara den 0x04-fortsättning som originalposten adresserar.
+  Kedjor med en annan recordfamilj eller aktuator avbryts före första
+  mutation. Den här privata vägen ersätter varken sensorernas följdeffekt,
+  ljud eller partykollision.
   DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.

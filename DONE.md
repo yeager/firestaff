@@ -364,6 +364,20 @@
   varelser. WALL, DOOR och TRICKWALL avvisas fortsatt utan mutation; de kräver
   bland annat DB0, CAII, följdtimers och UI-/ljudvägar.
 
+# DM2 privat COUNTER-aktuator vid GAME_LOAD-gränsen (2026-08-09)
+
+- ✅ Den privata `GameLoadWorldOwner` följer `ACTUATE_WALL_MECHA` och
+  `ACTUATE_FLOOR_MECHA` för en komplett riktad DB3-COUNTER-kedja: varje
+  verklig Data-post räknas i källordning och en 0x04-fortsättning köas bara
+  när originalets aktiva tillstånd växlar.
+- ✅ Hela kedjan, varje målkoordinat och den dynamiska c_tim-kön kontrolleras
+  före commit. Fel återställer kön och lämnar recordpoolen orörd. Realdatatestet
+  hittar en faktisk File_header-kedja i PC-DOS `DUNGEON.DAT`; ingen testrecord,
+  timer eller sensor skapas.
+- ✅ Andra recordfamiljer lämnas till sina egna källbundna vägar. De blir inte
+  felaktigt COUNTER-blockerade och ingen sensor-, ljud- eller partyeffekt
+  publiceras från den privata ägaren.
+
 # DM2 PushButtonSwitch direkt DB0-atom (2026-08-08)
 
 - ✅ `PUSH_BUTTON_SWITCH` följer nu `skevent.cpp:2010–2028`: den använder
