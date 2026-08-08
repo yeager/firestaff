@@ -32,6 +32,14 @@ see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
 
 ## Evidence and screenshots
 
+![Authentic Theron's Quest US title screen](verification-screens/theron-quest-us-main-menu.png)
+
+*Authentic original Theron's Quest US Track 02 title/menu capture through
+Mednafen, with the real System Card and CD media. This is original-game media
+evidence, not a Firestaff-rendered frame; the Firestaff runtime screenshot
+promotion gate remains closed until its own semantic VDC/VCE and Track 02
+consumer proof is available. See the [capture receipt](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).*
+
 Public screenshots are promoted only when the source-owned runtime route and
 the capture provenance are verified. Generated, placeholder or synthetic
 images are never presented as game evidence.
@@ -146,9 +154,11 @@ available as a finished playable release. See
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
 The authenticated media inventory and placeholder boundary are tracked in
 [`docs/THERON_REALDATA_INVENTORY.md`](docs/THERON_REALDATA_INVENTORY.md).
-Theron screenshot promotion is controlled by the source-bound readiness and
-promotion gates in [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
-No image is promoted while the gate reports `NO_README_PROMOTION_PERMITTED`.
+Firestaff-rendered Theron screenshot promotion is controlled by the
+source-bound readiness and promotion gates in
+[`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md). The
+README image above is explicitly an original-media capture and does not claim
+that the Firestaff promotion gate has passed.
 
 For source-data investigation, an explicit authenticated fallback can load
 real Track 02 map/object records even when the original CD handoff has not

@@ -1,15 +1,20 @@
 # Theron Capture Readiness
 
-**Last verified: 2026-08-06.** The fresh authentic US Track 02 capture used
+**Last verified: 2026-08-08.** The fresh authentic US Track 02 capture used
 the real CUE/BIN and a real SDL2 Mednafen build. It observed 161 raw sectors,
 51 SCSI read commands and 25 CD IRQ callbacks, but zero game-owned `$E009`
 data reads. This is a useful negative boundary: the transport is real, while
 the dungeon handoff is not yet proven.
 
-Theron's Quest has no README-eligible capture at present. A previously
-tracked screen-space artifact was withdrawn because the current promotion
-gate does not prove its source receipt and its readiness row fails the public
-geometry/non-black contract. The current public status should stay clear:
+An additional authenticated GUI capture now proves the real BIOS Run-to-CD
+Track 02 startup handoff and supplies the original-media title/menu image in
+`verification-screens/theron-quest-us-main-menu.png`. This is a real original
+game capture, not a Firestaff frame. Its complete hashes and narrow evidence
+boundary are recorded in
+[`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`](source-lock/theron-authentic-track02-handoff-2026-08-08.md).
+
+The Firestaff runtime still has no `README_ELIGIBLE` Theron row. The current
+public status should stay clear:
 Firestaff can hash-verify JP/US Track 02 data, lock
 raw bank-anchor offsets, read the authenticated US 53-entry descriptor table
 from its real MODE1 user-data offset, and reach
@@ -112,22 +117,24 @@ The strongest current proof is:
   save conversion remain out of scope and are tracked under
   `docs/FIRESTAFF_GAP_LIST.md` A3 `Savegame format (Theron .SRM)`.
 
-These are readiness receipts, not public screenshot assets. Do not add Theron
-images to the README until the `theron_v1_runtime_screenshot_promotion_gate`
-classifies at least one readiness row as `README_ELIGIBLE` AND a human
-reviewer promotes that specific row from tracked evidence into
-`verification-screens/`. Do not use generated, illustrated, or mock Theron
-images as screenshots. A green readiness row proves the launch/capture path
-is alive; it does not prove semantic Track 02 dungeon-table parity, real
-`.srm` interchange, broader playability, or that the captured frame is
-README-eligible.
+These are Firestaff readiness receipts. They govern Firestaff-rendered
+screenshots, not the separately labelled original-media capture documented
+above. Do not add a Firestaff Theron image to the README until the
+`theron_v1_runtime_screenshot_promotion_gate` classifies at least one
+readiness row as `README_ELIGIBLE` AND a human reviewer promotes that specific
+row from tracked evidence into `verification-screens/`. Do not use generated,
+illustrated, or mock Theron images as screenshots. A green readiness row proves
+the launch/capture path is alive; it does not prove semantic Track 02
+dungeon-table parity, real `.srm` interchange, broader playability, or that
+the captured frame is README-eligible.
 
-The promotion gate is the single source of truth for whether a Theron
-screenshot is eligible to be promoted into public docs. Today it reports
+The promotion gate remains the single source of truth for whether a Firestaff
+runtime Theron screenshot is eligible to be promoted into public docs. Today it reports
 `NO_README_PROMOTION_PERMITTED`: every readiness row still uses
 deterministic fallback assets and shows no semantic Track 02 loader
 evidence, so no Theron capture may yet be promoted into the README even
-if the runtime-screenshot gate is green. This is the honest current state.
+if the runtime-screenshot gate is green. The original-media image is labelled
+separately and does not change this Firestaff-runtime verdict.
 
 Run the focused readiness check with:
 

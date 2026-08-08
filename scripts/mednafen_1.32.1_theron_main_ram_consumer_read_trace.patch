@@ -140,6 +140,8 @@
 + if(logical_address < 0x2600 || logical_address >= 0x2800 ||
 +    TheronPCECDMainRAMTargetTraceCount >= 4096)
 +  return;
++ if(!(writer_physical_pc >= 0x1f0000 && writer_physical_pc < 0x1f8000))
++  return;
 + if(!TheronPCECDMainRAMTargetTrace)
 + {
 +  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE");

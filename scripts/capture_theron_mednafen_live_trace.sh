@@ -69,20 +69,36 @@ md5_file() {
     fi
 }
 
-require_capture_profile_mapping() {
+capture_profile_scancode() {
     local key=$1
-    local expected_scancode=$2
-    local label=$3
-    local actual_scancode
-
-    actual_scancode=$(awk -v key="$key" '
+    awk -v key="$key" '
         $1 == key && $2 == "keyboard" && $3 == "0x0" { print $4; exit }
-    ' "$configured_home/mednafen.cfg")
-    if [[ "$actual_scancode" != "$expected_scancode" ]]; then
-        printf 'FAIL: THERON_MEDNAFEN_HOME does not retain the required %s mapping (expected SDL scancode %s, got %s)\n' \
-            "$label" "$expected_scancode" "${actual_scancode:-missing}" >&2
-        exit 1
-    fi
+    ' "$configured_home/mednafen.cfg"
+}
+
+capture_host_code_for_mapping() {
+    local key=$1
+    local scancode=$2
+    case "$key:$scancode" in
+        # The checked-in external capture home uses keypad 3/2 and WASD.
+        i:91) printf '%s' 85 ;;
+        ii:90) printf '%s' 84 ;;
+        up:26) printf '%s' 13 ;;
+        down:22) printf '%s' 1 ;;
+        left:4) printf '%s' 0 ;;
+        right:7) printf '%s' 2 ;;
+        # The normal macOS home uses number-row 3/2 and arrow keys.
+        i:29) printf '%s' 20 ;;
+        ii:27) printf '%s' 19 ;;
+        up:82) printf '%s' 126 ;;
+        down:81) printf '%s' 125 ;;
+        left:80) printf '%s' 123 ;;
+        right:79) printf '%s' 124 ;;
+        # Keep physical-I/II profiles usable when supplied by an older
+        # Mednafen template; the mapping is still authenticated by cfg.
+        i:12) printf '%s' 34 ;;
+        *) return 1 ;;
+    esac
 }
 
 require_capture_profile_mappings() {
@@ -91,16 +107,38 @@ require_capture_profile_mappings() {
         exit 1
     fi
 
-    # The Quartz codes below are only valid for this explicit physical-key
-    # profile. Refuse profile drift instead of silently sending a non-PCE key.
-    require_capture_profile_mapping pce.input.port1.gamepad.run 40 RUN
-    require_capture_profile_mapping pce.input.port1.gamepad.select 43 SELECT
-    require_capture_profile_mapping pce.input.port1.gamepad.i 12 I
-    require_capture_profile_mapping pce.input.port1.gamepad.ii 90 II
-    require_capture_profile_mapping pce.input.port1.gamepad.up 26 UP
-    require_capture_profile_mapping pce.input.port1.gamepad.down 22 DOWN
-    require_capture_profile_mapping pce.input.port1.gamepad.left 4 LEFT
-    require_capture_profile_mapping pce.input.port1.gamepad.right 7 RIGHT
+    # Mednafen's PCE defaults and the user's explicit macOS profile are both
+    # valid. Resolve the host key from the actual SDL scancode instead of
+    # silently sending a non-PCE key when the profile uses number-row or
+    # keypad Button I/II bindings.
+    local run_scancode select_scancode
+    run_scancode=$(capture_profile_scancode pce.input.port1.gamepad.run)
+    select_scancode=$(capture_profile_scancode pce.input.port1.gamepad.select)
+    if [[ "$run_scancode" != 40 || "$select_scancode" != 43 ]]; then
+        printf 'FAIL: THERON_MEDNAFEN_HOME must retain RUN=40 and SELECT=43 (got RUN=%s SELECT=%s)\n' \
+            "${run_scancode:-missing}" "${select_scancode:-missing}" >&2
+        exit 1
+    fi
+
+    local key label scancode host_code
+    for key in i ii up down left right; do
+        case "$key" in
+            i) label=I ;;
+            ii) label=II ;;
+            up) label=UP ;;
+            down) label=DOWN ;;
+            left) label=LEFT ;;
+            right) label=RIGHT ;;
+        esac
+        scancode=$(capture_profile_scancode "pce.input.port1.gamepad.$key")
+        host_code=$(capture_host_code_for_mapping "$key" "$scancode" || true)
+        if [[ -z "$host_code" ]]; then
+            printf 'FAIL: THERON_MEDNAFEN_HOME does not retain a supported %s mapping (SDL scancode %s)\n' \
+                "$label" "${scancode:-missing}" >&2
+            exit 1
+        fi
+        printf -v "capture_${key}_host_code" '%s' "$host_code"
+    done
 }
 
 track02_mode=$(awk '
@@ -265,15 +303,12 @@ if [[ "$host_input_requested" == 1 ]]; then
         case "$host_key" in
             run|return) host_key_code=36 ;;
             select) host_key_code=48 ;;
-            # The configured PCE I button is SDL scancode 12. The macOS
-            # physical I key is kVK_ANSI_I=34 and emits that SDL scancode.
-            # Quartz Q (12) becomes SDL 20; keypad 3 becomes SDL 91.
-            i) host_key_code=34 ;;
-            ii) host_key_code=84 ;;
-            up) host_key_code=13 ;;
-            down) host_key_code=1 ;;
-            left) host_key_code=0 ;;
-            right) host_key_code=2 ;;
+            i) host_key_code=$capture_i_host_code ;;
+            ii) host_key_code=$capture_ii_host_code ;;
+            up) host_key_code=$capture_up_host_code ;;
+            down) host_key_code=$capture_down_host_code ;;
+            left) host_key_code=$capture_left_host_code ;;
+            right) host_key_code=$capture_right_host_code ;;
         esac
     fi
     if [[ "$capture_sdl_video_driver" == dummy ]]; then
@@ -659,12 +694,12 @@ if [[ "$host_input_requested" == 1 ]]; then
             case "$host_key_sequence_label" in
                 run|return) host_key_sequence_codes+=(36) ;;
                 select) host_key_sequence_codes+=(48) ;;
-                i) host_key_sequence_codes+=(34) ;;
-                ii) host_key_sequence_codes+=(84) ;;
-                up) host_key_sequence_codes+=(13) ;;
-                down) host_key_sequence_codes+=(1) ;;
-                left) host_key_sequence_codes+=(0) ;;
-                right) host_key_sequence_codes+=(2) ;;
+                i) host_key_sequence_codes+=($capture_i_host_code) ;;
+                ii) host_key_sequence_codes+=($capture_ii_host_code) ;;
+                up) host_key_sequence_codes+=($capture_up_host_code) ;;
+                down) host_key_sequence_codes+=($capture_down_host_code) ;;
+                left) host_key_sequence_codes+=($capture_left_host_code) ;;
+                right) host_key_sequence_codes+=($capture_right_host_code) ;;
             esac
         done
     elif [[ -n "$host_key_delays" ]]; then

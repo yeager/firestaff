@@ -1,8 +1,12 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-08-06.** JP/US Track 02 identity and several loader
+> **Status reviewed 2026-08-08.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics, bitmap/palette binding and packaged-app capture remain open.
+> A separate authenticated Mednafen GUI run now proves BIOS Run-to-Track 02
+> startup and supplies the original title/menu image; it does not prove the
+> Firestaff `$2600` consumer or gameplay semantics. See the [startup
+> receipt](../source-lock/theron-authentic-track02-handoff-2026-08-08.md).
 
 ## Scope
 

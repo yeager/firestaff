@@ -17,7 +17,7 @@ bevismaterialet.
 | Inventory-provenance | Pickup kopierar nu hela källrecorden (storlek + 16 bytes) och v7-save roundtrip återställer den för samma object | Provenance godkänd, T900-regler ej godkända |
 | Dungeon-textkälla | US-loadern bevarar hela den riktiga codonströmmen i load-resultatet; JP Track 02 rapporterar verifierat noll textord | Source stream godkänd, HuC6280-textkonsument ej godkänd |
 | Statisk HuC6280-kedja | `theron-us-bank1f-consumer.asm` och `$2386–$252A` verifieras mot båda retailbilderna | Loader/dekomprimering godkänd |
-| Runtime object-consumer | En autentiserad Mednafen/System Card-körning på extern-disk når BIOS och producerar snapshots, men ingen verifierad spelruntime-läsning i `$2600–$27FF` | T900-konsument saknas fortfarande i beviset |
+| Runtime object-consumer | En autentiserad Mednafen/System Card-körning på extern-disk når BIOS och producerar snapshots; den nya GUI-körningen bevisar BIOS Run → Track 02-sektorläsning, men ingen verifierad spelruntime-läsning i `$2600–$27FF` | T900-konsument saknas fortfarande i beviset |
 | Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
 
 Den lokala real-data-körningen `test_theron_v1_track02_thing_data` passerar
@@ -93,22 +93,32 @@ autentiska US-körningen med ljud aktiverat gav samma negativa gräns
 capture-reproducerbarhet och inte ett bevis på en spelägd ljud- eller
 objectkonsument.
 
-Capturevägen väljer nu explicit Mednafen-medieindex `0` via `-which_medium 0`.
-Det eliminerar en initieringsambiguity i RMDUI-defaults: extern-disken loggar
-att den autentiska Track 02-skivan faktiskt sätts in och tray stängs. Den
-efterföljande BIOS-körningen fastnar ändå i samma verifierade CD-statusloop
-utan SCSI READ. Därför är medieinsättning nu bevisad, medan Track 02-handoff
-och alla efterföljande RNG-, AI-, T700- och T900-konsumenter fortfarande inte
-är bevisade.
+Den positiva GUI-körningen är nu ett separat startup-/mediareceipt: en riktig
+macOS Quartz Return-händelse (`SDL scancode 40`) når Mednafen, PCE-input visar
+Run-biten `raw=0008`, och samma körning loggar 56 SCSI-läsningar samt 175
+råsektorer från autentiserat US Track 02. Den första menyrutan är sparad som
+`verification-screens/theron-quest-us-main-menu.png` och dess fullständiga
+hashar och begränsningar finns i
+`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`.
+Detta ersätter den tidigare negativa slutsatsen om att ingen Track 02-handoff
+alls var bevisad, men den visar fortfarande inte `$2600`-konsumenten eller
+någon T900/RNG/AI/T700-semantik.
+
+En äldre captureväg väljer explicit Mednafen-medieindex `0` via
+`-which_medium 0`. Den eliminerar en initieringsambiguity i RMDUI-defaults:
+extern-disken loggar att den autentiska Track 02-skivan faktiskt sätts in och
+tray stängs, men just den körningen fastnade i BIOS-CD-statusloopen utan SCSI
+READ. Den nya GUI-körningen ovan ersätter den gamla negativa slutsatsen för
+startup-handoffens del. RNG-, AI-, T700- och T900-konsumenterna är fortfarande
+inte bevisade.
 
 Capture-scriptet kan dessutom välja den andra officiella HuC6280-kärnan med
 `THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`; standarden är fortsatt `pce`.
 Detta gör kärnbytesförsöket reproducerbart utan att byta System Card, CUE,
 Track 02-bytes eller att lägga in hostdata. Den externa `pce_fast`-körningen
 med samma autentiserade US ISO gav också noll spelägda sektor-/RAM-konsumenter.
-Kärnvalet löser alltså capture-infrastrukturen, men inte den fortfarande
-obekräftade BIOS/CD-handoff som krävs innan RNG, AI, T700 eller T900 kan
-aktiveras. En extern CPU-trace visar dessutom samma BIOS-loop
+Kärnvalet löser alltså capture-infrastrukturen, men ger inte i sig någon
+spelägd `$2600`-konsument eller semantik. En extern CPU-trace visar dessutom samma BIOS-loop
 `$E4E1–$E503` i `pce_fast`: den läser `$2227`, gör ingen SCSI READ och lämnar
 inte BIOS-handoffens statusväg. Det är ett reproducerat negativt bevis för
 den andra kärnan, inte en licens att hoppa över originalets CD/FIFO-konsument.

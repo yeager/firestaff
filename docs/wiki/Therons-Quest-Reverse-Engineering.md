@@ -1,5 +1,12 @@
 # Theron's Quest (PC Engine CD) — Reverse Engineering Wiki
 
+**Startup capture update (2026-08-08):** an authenticated US Track 02 GUI run
+now proves a real Return/Run event reaching Mednafen, followed by 56 SCSI reads
+and 175 raw-sector records. The original title/menu frame is tracked at
+`verification-screens/theron-quest-us-main-menu.png`; the receipt is
+`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`. This is
+original-game media evidence, not proof of Firestaff's semantic runtime.
+
 Theron's Quest is the PC Engine CD / TurboGrafx-CD "light" spin-off of Dungeon
 Master. Unlike DM1, CSB, and DM2, **there is no reconstructed reference
 source code** for Theron's Quest — all behavior is derived from disc
