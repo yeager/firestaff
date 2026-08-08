@@ -9358,3 +9358,10 @@
 - ✅ Verifierat med produktionsgrinden samt testparen för att produktbygget
   avvisar den syntetiska dungeonformen och att det isolerade historiska
   regressionstestet fortfarande fungerar.
+# Nexus SAL tone-directory corpus receipt (2026-08-08)
+
+- ✅ `test_nexus_v1_sal_map_corpus` now checks all 16 retail SAL banks for a
+  complete DMWeb DataID-0 tone directory, decoded entry table, 8/16-bit
+  metadata counts and a non-empty source payload.
+- ✅ The assertion is metadata-only: `nexus_sound_decode_sal()` remains
+  blocked, and no host PCM, event selector or SDDRVS playback route is opened.

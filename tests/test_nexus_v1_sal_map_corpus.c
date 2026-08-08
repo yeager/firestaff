@@ -191,6 +191,14 @@ int main(void) {
         CHECK(sound.map_record_count > 0 &&
               sound.map_record_count <= NEXUS_SFX_MAP_MAX_RECORDS,
               "retail MAP record count stays bounded");
+        CHECK(sound.sal_tone_bank_directory_supported == 1 &&
+              sound.sal_tone_entry_count > 4 &&
+              sound.sal_tone_entry_count_decoded == sound.sal_tone_entry_count,
+              "retail SAL DataID 0 tone directory and every entry decode");
+        CHECK(sound.sal_tone_pcm8_count + sound.sal_tone_pcm16_count ==
+                  sound.sal_tone_entry_count - 4 &&
+              sound.sal_tone_sample_payload_bytes > 0,
+              "retail SAL tone metadata preserves 8/16-bit source payload");
         record_total += sound.map_record_count;
         CHECK(sound.map_out_of_bounds_record_count == 0,
               "every retail MAP window is inside its SAL bank");
