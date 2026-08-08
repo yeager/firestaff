@@ -6501,6 +6501,10 @@ endif()
 # ── Nexus V1 static library ────────────────────────────────────────
 file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_bpx_bpk\\.c$")
+# 0DMSTRT structure admission accepts caller-supplied provenance identities
+# and is retained for explicit real-data/fixture probes only.  Its synthetic
+# mirror test must never be exported by the retail Nexus library.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_0dmstrt_structure_admission\\.c$")
 # The legacy heuristic string scraper guesses ASCII/Shift-JIS runs and is not
 # a source-owned Nexus consumer.  Keep it out of production; RLOWFIX TEXT/TABL
 # admission is handled by nexus_v1_rlowfix_text.c until full Saturn glyph and
@@ -40933,7 +40937,8 @@ add_test(NAME nexus_v1_title_cnfd_payload_admission_real
 set_tests_properties(nexus_v1_title_cnfd_payload_admission_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_0dmstrt_structure_admission
-    tests/test_nexus_v1_0dmstrt_structure_admission.c)
+    tests/test_nexus_v1_0dmstrt_structure_admission.c
+    src/nexus/nexus_v1_0dmstrt_structure_admission.c)
 target_include_directories(test_nexus_v1_0dmstrt_structure_admission PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_0dmstrt_structure_admission PRIVATE firestaff_nexus)

@@ -40,6 +40,9 @@ for exclusion in (
     # BPX0/BPX3 is an explicit synthetic archive contract. Keep it available
     # to parser probes, never to the retail Nexus library.
     r"nexus_v1_bpx_bpk\\.c$",
+    # 0DMSTRT admits caller-supplied provenance identities and has an
+    # explicit synthetic mirror fixture; keep it in probe/test targets.
+    r"nexus_v1_0dmstrt_structure_admission\\.c$",
     r"nexus_v1_text\\.c$",
     r"nexus_v1_s2d_text_layout\\.c$",
     r"nexus_v1_s2d_glyph_decode\\.c$",

@@ -1,3 +1,12 @@
+# Nexus 0DMSTRT synthetic-admission boundary (2026-08-08)
+
+- ✅ Flyttade `nexus_v1_0dmstrt_structure_admission.c` ut ur
+  `firestaff_nexus`. Modulen accepterar caller-supplied provenanceidentitet
+  och dess befintliga test bygger uttryckligen en syntetisk spegel; den får
+  därför endast ligga i realdata-/fixture-prober.
+- ✅ Testmålet länkar nu modulen explicit, medan produktions-boundary
+  verifierar att den inte kan återkomma via Nexus-källglobben.
+
 # Nexus capture-launcher child lifecycle (2026-08-08)
 
 - ✅ Den externa Saturn-råcapture-launchern väntar nu på sitt exakta
