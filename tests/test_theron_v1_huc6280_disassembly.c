@@ -59,9 +59,21 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.spawn_rng_preconsumer_bytes == 27u);
         assert(receipt.spawn_rng_preconsumer_file_offset == 0x9c4c4u);
         assert(receipt.spawn_rng_preconsumer_fnv1a == 0xa3c3f7ebu);
+        assert(receipt.spawn_rng_c96b_verified);
+        assert(receipt.spawn_rng_c96b_address == 0xc96bu);
+        assert(receipt.spawn_rng_c96b_bytes == 255u);
+        assert(receipt.spawn_rng_c96b_file_offset == 0xa47ebu);
+        assert(receipt.spawn_rng_c96b_fnv1a == 0xe689c658u);
+        assert(receipt.spawn_rng_cc4c_verified);
+        assert(receipt.spawn_rng_cc4c_address == 0xcc4cu);
+        assert(receipt.spawn_rng_cc4c_bytes == 200u);
+        assert(receipt.spawn_rng_cc4c_file_offset == 0xa4accu);
+        assert(receipt.spawn_rng_cc4c_fnv1a == 0x4ad0801eu);
     } else {
         assert(!receipt.spawn_rng_helper_verified);
         assert(!receipt.spawn_rng_preconsumer_verified);
+        assert(!receipt.spawn_rng_c96b_verified);
+        assert(!receipt.spawn_rng_cc4c_verified);
     }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);

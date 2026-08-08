@@ -47,6 +47,14 @@
 #define THERON_SPAWN_RNG_PRECONSUMER_ADDRESS 0x4644u
 #define THERON_SPAWN_RNG_PRECONSUMER_BYTES 27u
 #define THERON_SPAWN_RNG_PRECONSUMER_FNV1A 0xa3c3f7ebu
+#define THERON_US_SPAWN_C96B_FILE_OFFSET 0xa47ebu
+#define THERON_SPAWN_C96B_ADDRESS 0xc96bu
+#define THERON_SPAWN_C96B_BYTES 255u
+#define THERON_SPAWN_C96B_FNV1A 0xe689c658u
+#define THERON_US_SPAWN_CC4C_FILE_OFFSET 0xa4accu
+#define THERON_SPAWN_CC4C_ADDRESS 0xcc4cu
+#define THERON_SPAWN_CC4C_BYTES 200u
+#define THERON_SPAWN_CC4C_FNV1A 0x4ad0801eu
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -153,6 +161,8 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
     uint8_t spawn_rng_helper[THERON_SPAWN_RNG_HELPER_BYTES];
     uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
+    uint8_t spawn_rng_c96b[THERON_SPAWN_C96B_BYTES];
+    uint8_t spawn_rng_cc4c[THERON_SPAWN_CC4C_BYTES];
     int raw_bin_variant;
     uint32_t expected_size;
     uint32_t bank_file_offset;
@@ -206,7 +216,13 @@ int theron_v1_huc6280_disassembly_read_file(
               sizeof(spawn_rng_helper) ||
           fseek(file, THERON_US_SPAWN_RNG_PRECONSUMER_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_rng_preconsumer, 1u, sizeof(spawn_rng_preconsumer), file) !=
-              sizeof(spawn_rng_preconsumer))) ||
+              sizeof(spawn_rng_preconsumer) ||
+          fseek(file, THERON_US_SPAWN_C96B_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_rng_c96b, 1u, sizeof(spawn_rng_c96b), file) !=
+              sizeof(spawn_rng_c96b) ||
+          fseek(file, THERON_US_SPAWN_CC4C_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_rng_cc4c, 1u, sizeof(spawn_rng_cc4c), file) !=
+              sizeof(spawn_rng_cc4c))) ||
         (raw_bin_variant &&
          (fseek(file, (long)(bank_file_offset +
                              THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET),
@@ -238,6 +254,12 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          memcmp(spawn_rng_preconsumer, g_spawn_rng_preconsumer,
                 sizeof(spawn_rng_preconsumer)) != 0) ||
+        (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+         fnv1a(spawn_rng_c96b, sizeof(spawn_rng_c96b)) !=
+             THERON_SPAWN_C96B_FNV1A) ||
+        (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+         fnv1a(spawn_rng_cc4c, sizeof(spawn_rng_cc4c)) !=
+             THERON_SPAWN_CC4C_FNV1A) ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -274,6 +296,18 @@ int theron_v1_huc6280_disassembly_read_file(
             THERON_US_SPAWN_RNG_PRECONSUMER_FILE_OFFSET;
         receipt.spawn_rng_preconsumer_fnv1a = fnv1a(
             spawn_rng_preconsumer, sizeof(spawn_rng_preconsumer));
+        receipt.spawn_rng_c96b_verified = 1;
+        receipt.spawn_rng_c96b_address = THERON_SPAWN_C96B_ADDRESS;
+        receipt.spawn_rng_c96b_bytes = THERON_SPAWN_C96B_BYTES;
+        receipt.spawn_rng_c96b_file_offset = THERON_US_SPAWN_C96B_FILE_OFFSET;
+        receipt.spawn_rng_c96b_fnv1a = fnv1a(
+            spawn_rng_c96b, sizeof(spawn_rng_c96b));
+        receipt.spawn_rng_cc4c_verified = 1;
+        receipt.spawn_rng_cc4c_address = THERON_SPAWN_CC4C_ADDRESS;
+        receipt.spawn_rng_cc4c_bytes = THERON_SPAWN_CC4C_BYTES;
+        receipt.spawn_rng_cc4c_file_offset = THERON_US_SPAWN_CC4C_FILE_OFFSET;
+        receipt.spawn_rng_cc4c_fnv1a = fnv1a(
+            spawn_rng_cc4c, sizeof(spawn_rng_cc4c));
     }
     receipt.semantic_publication_allowed = 0;
     receipt.source_file_size = expected_size;

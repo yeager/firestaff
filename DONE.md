@@ -1,3 +1,12 @@
+# Theron static RNG-consumer boundaries (2026-08-08)
+
+- ✅ Added authenticated US-BIN receipt spans for the `$C96B` and `$CC4C`
+  routines reached by the `$4644` preconsumer: 255 and 200 bytes with exact
+  raw offsets and FNV-1a hashes.
+- ✅ The disassembly receipt and focused test verify the new fields while
+  keeping dynamic RNG/spawn admission disabled; bank-switched runtime state,
+  helper callees and semantic return ownership are not inferred.
+
 # Theron complete Track 02 source-occurrence census (2026-08-08)
 
 - ✅ The dungeon loader now retains and decodes one source occurrence for every

@@ -41,6 +41,19 @@ typedef struct {
     uint16_t spawn_rng_preconsumer_bytes;
     uint32_t spawn_rng_preconsumer_file_offset;
     uint32_t spawn_rng_preconsumer_fnv1a;
+    /* Static US-BIN bodies reached by the $4644 preconsumer. Their bytes and
+     * RTS-bounded spans are verified; this does not prove the bank-switched
+     * runtime state or semantic RNG return contract. */
+    int spawn_rng_c96b_verified;
+    uint16_t spawn_rng_c96b_address;
+    uint16_t spawn_rng_c96b_bytes;
+    uint32_t spawn_rng_c96b_file_offset;
+    uint32_t spawn_rng_c96b_fnv1a;
+    int spawn_rng_cc4c_verified;
+    uint16_t spawn_rng_cc4c_address;
+    uint16_t spawn_rng_cc4c_bytes;
+    uint32_t spawn_rng_cc4c_file_offset;
+    uint32_t spawn_rng_cc4c_fnv1a;
     /* Static palette consumer from the retail HuC6280 bank. The routine
      * proves the VCE write contract only; its dynamic $27c4/$27c5 source
      * pointer is not a Track 02 palette binding by itself. */

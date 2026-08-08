@@ -13,7 +13,9 @@
 ;
 ; Adjacent preconsumer L4644 is locked separately at raw file offset $9c4c4,
 ; 27 bytes, FNV-1a $a3c3f7eb. It prepares the arguments and calls the
-; consumers at $C96B/$CC4C; those bodies remain unresolved.
+; consumers at $C96B/$CC4C. Their US-BIN byte spans are now statically
+; bounded and hash-verified in theron-us-rng-consumers.asm, but their runtime
+; bank/callee state and semantic return contract remain unresolved.
 
         .setcpu "huc6280"
         .org    $4667
