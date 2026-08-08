@@ -99,7 +99,9 @@ fi
 if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
    ! grep -Fq -- 'THERON_CAPTURE_MEDNAFEN_MODULE' "$script" ||
    ! grep -Fq -- 'mednafen_module=%s' "$script" ||
-   ! grep -Fq -- '-pce.arcadecard 0' "$script"; then
+   ! grep -Fq -- 'capture_arcadecard_setting=pce.arcadecard' "$script" ||
+   ! grep -Fq -- 'capture_arcadecard_setting=pce_fast.arcadecard' "$script" ||
+   ! grep -Fq -- 'capture_cdbios_setting=pce_fast.cdbios' "$script"; then
     printf 'FAIL: capture script must force the PCE module and disable unrelated Arcade Card emulation\n' >&2
     exit 1
 fi

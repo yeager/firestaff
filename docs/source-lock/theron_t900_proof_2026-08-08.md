@@ -108,7 +108,10 @@ Track 02-bytes eller att lägga in hostdata. Den externa `pce_fast`-körningen
 med samma autentiserade US ISO gav också noll spelägda sektor-/RAM-konsumenter.
 Kärnvalet löser alltså capture-infrastrukturen, men inte den fortfarande
 obekräftade BIOS/CD-handoff som krävs innan RNG, AI, T700 eller T900 kan
-aktiveras.
+aktiveras. En extern CPU-trace visar dessutom samma BIOS-loop
+`$E4E1–$E503` i `pce_fast`: den läser `$2227`, gör ingen SCSI READ och lämnar
+inte BIOS-handoffens statusväg. Det är ett reproducerat negativt bevis för
+den andra kärnan, inte en licens att hoppa över originalets CD/FIFO-konsument.
 
 ## Verifiering
 

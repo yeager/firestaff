@@ -18,6 +18,12 @@ capture_sound=${THERON_CAPTURE_SOUND:-0}
 # authenticated media stalls in the BIOS before its first sector read.
 # This only changes the emulator core; it never changes admitted media bytes.
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
+capture_arcadecard_setting=pce.arcadecard
+capture_cdbios_setting=pce.cdbios
+if [[ "$capture_mednafen_module" == pce_fast ]]; then
+    capture_arcadecard_setting=pce_fast.arcadecard
+    capture_cdbios_setting=pce_fast.cdbios
+fi
 # An empty value is intentional on macOS: it lets native SDL2 select Cocoa.
 # Use `-` rather than `:-` so the caller can distinguish that from the
 # headless dummy default.
@@ -632,8 +638,8 @@ launch=(
     -video.driver softfb \
     -pce.input.multitap 0 \
     -pce.input.port1 gamepad \
-    -pce.arcadecard 0 \
-    -pce.cdbios "$system_card"
+    -"$capture_arcadecard_setting" 0 \
+    -"$capture_cdbios_setting" "$system_card"
     "$capture_cue"
 )
 set +e
