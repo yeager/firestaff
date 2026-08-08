@@ -139,8 +139,18 @@ def main() -> int:
     print(f"scsp_records={len(scsp)} mailbox_nonzero_records={len(mailbox)}")
     print("scsp_mailbox_values=" + ",".join(f"0x{value:02x}:{count}" for value, count in values.most_common()))
     print("scsp_mailbox_pcs=" + ",".join(f"0x{pc:04x}:{count}" for pc, count in pcs.most_common()))
+    print("scsp_mailbox_sequence=" + ",".join(
+        f"0x{row['addr']:06x}/0x{row['value']:x}/0x{row['pc']:04x}"
+        for row in scsp if row["addr"] in (args.mailbox, args.mailbox + 1,
+                                            args.mailbox + 2) and row["value"]
+    ))
     print(f"main_records={len(main_trace)} main_mailbox_nonzero_records={len(main_mailbox)}")
     print("main_mailbox_values=" + ",".join(f"0x{value:04x}:{count}" for value, count in main_values.most_common()))
+    print("main_mailbox_sequence=" + ",".join(
+        f"0x{row['addr']:08x}/0x{row['value']:x}/0x{row['pc0']:08x}/0x{row['pc1']:08x}"
+        for row in main_trace if row["addr"] in (args.mailbox, args.mailbox + 1,
+                                                  args.mailbox + 2) and row["value"]
+    ))
     print("event_selector_semantics=unproven")
     print("sal_codec=unproven")
     print("host_playback=blocked")

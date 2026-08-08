@@ -9365,3 +9365,10 @@
   metadata counts and a non-empty source payload.
 - ✅ The assertion is metadata-only: `nexus_sound_decode_sal()` remains
   blocked, and no host PCM, event selector or SDDRVS playback route is opened.
+# Nexus SCSP mailboxsekvens som råkvittot (2026-08-08)
+
+- ✅ `analyze_nexus_slev_sal_runtime_corridor.py` skriver nu den kronologiska
+  sound-CPU- och main-CPU-mailboxsekvensen med adress, råvärde och PC.
+- ✅ Sekvensen är kopplad till de hashverifierade SLEV/SAL/MAP/SDDRVS-filerna
+  endast som observation; event-ID, MAP-rad, SAL-codec och playback förblir
+  uttryckligen obundna.

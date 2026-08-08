@@ -223,6 +223,11 @@ the C loader. The corpus contains 154 terminated MAP rows. The observed
 mailbox trace contains four non-zero 68K writes, all raw value `0x02`, from
 `SDDRVS.TSK` PCs `0x3224`, `0x1090`, `0x34aa` and `0x108e`; the main trace has
 five mailbox records (`0x0002` and `0x0200`).
+The analyzer also preserves the chronological raw sequence: sound-CPU writes
+`0x02` to `0x100400`, `0x0f` to `0x100401` and `0x0118` to `0x100402`, repeated
+at the observed PCs; the main CPU writes `0x02` and `0x0200` to
+`0x00100400`. These are address/value/PC observations only and are not
+renamed to event IDs, MAP rows or samples.
 
 Fifty-four parsed MAP windows extend beyond the extracted SAL file length when
 treated as direct file intervals. The source code already identifies these
