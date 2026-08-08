@@ -81,7 +81,7 @@
 
 # CSB Amiga A31 TITL.DAT binds to native M11 startup (2026-08-08)
 
-- ✅ Den valda A31E/A31M-katalogens hashverifierade `TITL.DAT` öppnas nu i
+- ✅ Den valda A31M-katalogens hashverifierade `TITL.DAT` öppnas nu i
   den egna APPA.C → ANIM.C-vägen. M11 avkodar originalets palett, EN-bild och
   30 kompletta DL-steg med deras VBlank-kadens; PC34:s title- och entréväg
   används aldrig som ersättning.

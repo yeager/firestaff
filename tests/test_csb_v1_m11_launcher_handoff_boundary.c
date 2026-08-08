@@ -1876,20 +1876,21 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
     }
 }
 
-/* A31E has the PC34 GRAPHICS.DAT digest, but its paired TITL.DAT and APPA.C
- * program family are different source owners.  Its native M11 route must
+/* A31M has the PC34 GRAPHICS.DAT digest, but its paired TITL.DAT and APPA.C
+ * program family are different source owners. Its native M11 route must
  * expose TITL.DAT, never a PC3.4 TITLE.C/ENTRANCE.C replacement.  ReDMCSB
- * APPA.C:51-68, ANIM.C F1205 and COMPILE.H 199-243. */
+ * APPA.C:51-68, ANIM.C F1205 and COMPILE.H:246-269. */
 static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
     static const char *const program_names[] = {
-        "ANIM.FTL", "APPA.FTL", "APPB.FTL", "BJELoad_R", "CNFG.FTL",
+        "ANIM.FTL", "APPA.FTL", "APPB.FTL", "KAOS.FTL", "BJELoad_R", "CNFG.FTL",
         "GRF1.FTL", "MEM1.FTL", "USIO.FTL", "VDEO.FTL"
     };
     static const char *const program_md5[] = {
         "60ffbbe31830f2fe262cb8dee862b7fc",
         "8d68df400f71672df4d0339c806c6a25",
         "35987d3f0278c6036fcc24786d4a75d7",
+        "dbb79832c9cc3db82886ba8d3f72748a",
         "758e8549f2280e44ebeae2ae4790d644",
         "00dae1fcfe37b5bcb3ef1c59c9c0afca",
         "03d188f89640683b76f4b502415c7dee",

@@ -4132,8 +4132,10 @@ level or consumer bindings.
     pre-existing materialized PC receipt must not turn the independent A31M
     selected-package handoff into a false test failure.
   - 2026-08-07: The original A31M program receipt is now materialized and
-    hash-verified, but M11 still blocks launch. The native APPA → ANIM → APPB
-    language handoff and the allocator-dependent final TITL.DAT delta need a
+    hash-verified. M11 presents its native title and correctly pauses at
+    APPB's language-selector boundary; `KAOS.FTL` is now retained and
+    verified as the subsequent game program. The APPB language surface,
+    selection and persistent language-file transaction still need a
     source-bound presenter before this package can enter gameplay.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
