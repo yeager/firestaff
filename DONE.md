@@ -9,6 +9,9 @@
   uttryckligen spärrade tills deras egna runtimekedjor är verifierade.
 - ✅ Regressionen använder endast den verkliga A35M-ADF-korpusen och låser
   både APPB-pixelhash och den valda engelska handoff-gränsen.
+- ✅ M11:s bootkvitto identifierar APPB som den egna
+  `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
+  felaktigt publiceras för den Amiga-specifika språkväljaren.
 
 # Nexus VDP1 runtime-writer/source join (2026-08-08)
 

@@ -48,9 +48,9 @@
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
   mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35M:s
   verkliga APPB-språkval och engelska KAOS-handoff är nu bundna till sina
-  ADF-hashar, men franska/tyska och den separata A35E-APPB/C03-starten är
-  fortsatt fail-closed tills deras runtime-media har egen verifierad
-  konsumentväg. Atari ST:s redan
+  ADF-hashar och exponeras som en egen M11-capturefas, men franska/tyska och
+  den separata A35E-APPB/C03-starten är fortsatt fail-closed tills deras
+  runtime-media har egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
 

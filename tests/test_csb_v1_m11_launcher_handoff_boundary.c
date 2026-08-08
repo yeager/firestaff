@@ -2016,6 +2016,7 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
     const M12_MenuEntry *entry;
     const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
+    M11_BootProbeReceipt probe;
     int version_index;
 
     if (!data_dir || !data_dir[0]) {
@@ -2051,6 +2052,13 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
                 view.csbAmigaTitlBytes == NULL &&
                 view.csbAmigaTitlPixels[0] == 10u,
                 "A35M binds original APPB selection pixels without A31 or PC34 startup");
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &probe) == 1 &&
+                strcmp(probe.startupPhase, "csb-amiga-a35m-appb") == 0 &&
+                strcmp(probe.startupAnimation, "appb-language") == 0 &&
+                probe.startupActive == 1 && probe.startupTitleReady == 1 &&
+                probe.mapIndex == -1 && probe.partyX == -1 &&
+                probe.partyY == -1 && probe.runtimeTick == 0,
+                "A35M APPB selection has a native probe phase, not PC34 startup state");
     expect_true(M11_GameView_HandlePointerButtonRelease(
                     &view, 138, 70, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW &&

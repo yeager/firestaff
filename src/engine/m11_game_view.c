@@ -19948,6 +19948,32 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->runtimeTick = 0;
             return 1;
         }
+        /* A35M is a different native program boundary: APPB.FTL is C08_LANG
+         * and directly owns the still language-selection page. Do not let
+         * the generic PC34 host-view receipt report it as TITLE.C or an
+         * entrance frame. ReDMCSB COMPILE.H:287-298, SWITCH.C F1288. */
+        if (m11_csb_is_amiga_a35m_profile(csb_profile) &&
+            !state->csbStartupRuntimeAssetSession &&
+            state->csbState.startup_title_active &&
+            state->csbAmigaAppbSelectionActive) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "csb-amiga-a35m-appb");
+            snprintf(out->startupAnimation, sizeof(out->startupAnimation),
+                     "%s", "appb-language");
+            out->startupActive = 1;
+            out->startupFrame = 0;
+            out->startupAnimationActive = 0;
+            out->startupTitleFrame = 0;
+            out->startupTitleReady = 1;
+            out->levelLoaded = 0;
+            out->mapIndex = -1;
+            out->partyX = -1;
+            out->partyY = -1;
+            out->partyDir = -1;
+            out->championCount = -1;
+            out->runtimeTick = 0;
+            return 1;
+        }
         if (m11_csb_boot_runtime_full_visual_sequence_receipt(
                 state,
                 &visual_sequence)) {
