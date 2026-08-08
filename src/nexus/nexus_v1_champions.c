@@ -268,7 +268,11 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
          * startup navigation uses the separate source-row receipt. */
         c->alive = 0;
         c->roster_row_available = 1;
-        c->portrait_index = i;
+        /* FACE.BIN has 20 real records, but the retail PLRD->FACE ordinal
+         * join is not proven. Keep the PLRD portrait type and leave the
+         * cross-file portrait index unknown until a Saturn consumer trace
+         * binds the two resources. */
+        c->portrait_index = -1;
         for (j = 0; j < 30; ++j) c->inventory[j] = 0xffU;
         for (j = 0; j < NEXUS_SLOT_COUNT; ++j) {
             uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U * (unsigned)j] << 8) |

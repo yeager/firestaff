@@ -2570,6 +2570,7 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     int face_size = 0;
     Nexus_UI_FaceLayout face_layout;
     int i;
+    int face_count;
     uint8_t *face_data;
     if (!engine) return;
     engine->ui_faces_loaded = 0;
@@ -2580,24 +2581,24 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
 
     /* DMWeb defines the canonical FACE.BIN records as 20 56x56 portraits:
-     * each has a 64-entry BGR555 palette and a PRS3 pixel stream. The loader
-     * retains those source pixels; presentation remains no-draw until VDP1
-     * placement and command order are captured. */
-    for (i = 0; i < engine->champions.champion_count; ++i) {
-        const int portrait_index = engine->champions.champions[i].portrait_index;
+     * each has a 64-entry BGR555 palette and a PRS3 pixel stream. Retain the
+     * complete source corpus by file ordinal, independently of the still
+     * unproven PLRD champion-to-FACE join. Presentation remains no-draw until
+     * Saturn VDP1 placement and command order are captured. */
+    face_count = face_layout.valid ? face_layout.entry_count : 0;
+    if (face_count > NEXUS_FACE_BIN_PORTRAIT_COUNT) {
+        face_count = NEXUS_FACE_BIN_PORTRAIT_COUNT;
+    }
+    engine->ui_faces_expected = face_count;
+    for (i = 0; i < face_count; ++i) {
+        const int portrait_index = i;
         int load_result;
-        if (portrait_index < 0 ||
-            portrait_index >= NEXUS_FACE_BIN_PORTRAIT_COUNT) continue;
-        if (face_layout.valid && portrait_index >= face_layout.entry_count)
-            continue;
-        engine->ui_faces_expected++;
-        if (face_layout.valid && portrait_index < face_layout.entry_count) {
-            Nexus_UI_FaceCompactRecordDescriptor descriptor;
-            if (!nexus_ui_face_compact_record_descriptor(face_data, face_size,
-                                                         portrait_index,
-                                                         &descriptor)) {
-                load_result = -1;
-            } else {
+        Nexus_UI_FaceCompactRecordDescriptor descriptor;
+        if (!nexus_ui_face_compact_record_descriptor(face_data, face_size,
+                                                     portrait_index,
+                                                     &descriptor)) {
+            load_result = -1;
+        } else {
             load_result = nexus_ui_load_face_record(&engine->ui,
                                                     face_data + descriptor.prefix_offset,
                                                     descriptor.prefix_size +
@@ -2606,9 +2607,6 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
                                                     face_layout.portrait_w,
                                                     face_layout.portrait_h,
                                                     NULL);
-            }
-        } else {
-            load_result = -1;
         }
         if (load_result > 0) {
             engine->ui_faces_loaded++;

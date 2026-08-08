@@ -10044,3 +10044,12 @@
   `roster_row_available` bit, so navigation does not require synthetic
   liveness.
 - ✅ Champion PLRD and startup-menu regressions cover the split.
+# Nexus keeps FACE.BIN source ordinals separate from PLRD champions (2026-08-08)
+
+- ✅ Production retains all verified FACE.BIN records by their own file
+  ordinal as source evidence.
+- ✅ PLRD champions no longer receive `portrait_index=i`; the unproven
+  PLRD→FACE join remains unknown while the authentic `portrait_type` byte is
+  retained.
+- ✅ Startup still emits no portrait draw command without the Saturn VDP1
+  placement/consumer capture.
