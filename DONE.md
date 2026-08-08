@@ -9,6 +9,13 @@
 - ✅ `READY_DECODED` kan inte längre nås utan ett separat autentiserat
   event-dispatch-kvitto. En framtida SAL-decoder får alltså inte ensam öppna
   ljudruntime eller playback.
+- ✅ En stale host-ASCII-label i en championrad kan inte längre slå på
+  fixturefärger eller blinktiming för andra autentiserade PLRD-rader. Den
+  verkliga raden avgör själv om fixture-läget är tillåtet, och realdata-provet
+  täcker den blandade poolen.
+- ✅ Nexus creature-death skapar inte längre syntetiskt guld eller föremål.
+  Den tidigare DM1-liknande typformeln är borttagen; `ITEM.IBS`/DGN-golvobjekt
+  förblir källägda och dödsdrops väntar på autentiserad Saturn-dispatch/capture.
 - ✅ RLOWFIX/TEXT-parsern avvisar nu ofullständiga 8/9-byte-prefix innan
   `string_count` läses. Ett truncationstest täcker den autentiska TEXT-headerns
   10-byte-gräns utan att ändra den verifierade europeiska korpusens resultat.

@@ -17,11 +17,13 @@ int main(void) {
     memset(table, 0, sizeof(table));
     nexus_gold_init();
 
-    /* drops_for_type builds a gold drop entry */
-    check(nexus_drops_for_type(0, table, 8) == 1,
-          "creature type 0 has one drop entry");
-    check(table[0].item_id == -1, "gold drop has item_id -1");
-    check(table[0].chance > 0, "gold drop has nonzero chance");
+    /* No retail Nexus death/drop owner is authenticated.  The former
+     * creature-type gold formula was synthetic and must stay empty. */
+    check(nexus_drops_for_type(0, table, 8) == 0,
+          "unproven creature type has no drop entry");
+    check(table[0].item_id == 0 && table[0].min_qty == 0 &&
+              table[0].max_qty == 0 && table[0].chance == 0,
+          "blocked drop table does not retain synthetic values");
 
     /* gold_add works */
     check(nexus_gold_add(7, 9, 12) >= 0,

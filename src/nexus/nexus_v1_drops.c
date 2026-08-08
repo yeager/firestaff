@@ -1,53 +1,35 @@
 #include "nexus_v1_drops.h"
 #include "nexus_v1_combat.h"
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-static uint32_t drop_rng_state = 0x12345678U;
-
-static int drop_rand(int max) {
-    if (max <= 0) return 0;
-    drop_rng_state = drop_rng_state * 1103515245U + 12345U;
-    return (int)((drop_rng_state >> 16) % (unsigned)max);
-}
 
 int nexus_drops_for_type(int creature_type_idx,
                           Nexus_DropEntry *out_table,
                           int max_entries) {
-    if (!out_table || max_entries <= 0) return 0;
-    if (creature_type_idx < 0) return 0;
-    memset(out_table, 0, (size_t)max_entries * sizeof(Nexus_DropEntry));
-    if (max_entries >= 1) {
-        out_table[0].item_id = -1;
-        out_table[0].min_qty = 5 + creature_type_idx * 3;
-        out_table[0].max_qty = 15 + creature_type_idx * 5;
-        out_table[0].chance = 60;
-        return 1;
+    (void)creature_type_idx;
+    if (out_table && max_entries > 0) {
+        memset(out_table, 0, (size_t)max_entries * sizeof(Nexus_DropEntry));
     }
+    /* No retail Nexus creature-drop owner has been identified.  In
+     * particular, do not reuse the old DM1-shaped gold formula here:
+     * ITEM.IBS/DGN floor declarations are source-owned objects, not proof of
+     * a death-drop table.  Keep the production boundary empty until a
+     * Saturn action/event capture binds creature death to an item or gold
+     * record. */
     return 0;
 }
 
 int nexus_drops_roll(int creature_type_idx, int x, int y,
                       int *out_item_ids, int *out_quantities,
                       int max_drops) {
-    Nexus_DropEntry table[8];
-    int count, i, drops = 0;
+    (void)creature_type_idx;
     (void)x; (void)y;
-
-    if (!out_item_ids || !out_quantities || max_drops <= 0) return 0;
-    count = nexus_drops_for_type(creature_type_idx, table, 8);
-    for (i = 0; i < count && drops < max_drops; i++) {
-        int roll = drop_rand(100);
-        if (roll < table[i].chance) {
-            out_item_ids[drops] = table[i].item_id;
-            int range = table[i].max_qty - table[i].min_qty;
-            out_quantities[drops] = table[i].min_qty +
-                (range > 0 ? drop_rand(range + 1) : 0);
-            drops++;
-        }
-    }
-    return drops;
+    (void)out_item_ids;
+    (void)out_quantities;
+    (void)max_drops;
+    /* Fail closed: no guessed RNG, item id, quantity or gold amount may
+     * become a runtime floor mutation before Saturn capture proves the
+     * death/drop dispatch. */
+    return 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

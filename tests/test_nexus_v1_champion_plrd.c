@@ -99,6 +99,7 @@ int main(void) {
         pool.champions[0].name_tabl_code[0] != 0x00c1) return 1;
     {
         Nexus_V1_StartupChampionRenderRow row;
+        Nexus_V1_StartupChampionRenderRow rows[2];
         Nexus_V1_StartupChampionFooterRender footer;
         Nexus_V1_StartupChampionSnapshot snapshot;
         Nexus_V1_StartupDrawCommand commands[32];
@@ -128,6 +129,22 @@ int main(void) {
         if (nexus_v1_startup_menu_build_champion_render_rows(
                 &pool, 0, &row, 1, &footer) != 1 ||
             row.label[0] != '\0' || footer.label[0] != '\0') return 1;
+
+        /* A stale host label on one authenticated PLRD row must not reopen
+         * fixture colours or blink timing on another retail row. */
+        pool.champions[0].name_tabl_code[0] = 0U;
+        memset(rows, 0, sizeof(rows));
+        memset(&footer, 0, sizeof(footer));
+        if (nexus_v1_startup_menu_build_champion_render_rows_for_frame(
+                &pool, 1, 0, rows, 2, &footer) != 2 ||
+            rows[0].row != 0 || rows[1].row != 1 ||
+            rows[0].highlight_visible != 0 || rows[0].text_color != 15 ||
+            rows[0].portrait_border_color != 12 ||
+            rows[1].highlight_visible != 0 || rows[1].text_color != 0 ||
+            rows[1].portrait_border_color != 0 || footer.label[0] == '\0') {
+            return 1;
+        }
+        pool.champions[0].name_tabl_code[0] = 0x00c1U;
 
         memset(&snapshot, 0, sizeof(snapshot));
         memset(commands, 0, sizeof(commands));

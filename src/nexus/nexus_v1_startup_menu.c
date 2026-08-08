@@ -2453,6 +2453,9 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
         Nexus_V1_StartupChampionRenderRow *out = &rows[count];
         int in_party = 0;
         int party_index;
+        int row_host_label_fixture =
+            pool->champions[row].name_ascii[0] != '\0' &&
+            pool->champions[row].name_tabl_code[0] == 0U;
 
         if (!nexus_v1_startup_champion_row_rect(count, &out->rect)) {
             continue;
@@ -2484,15 +2487,15 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
          * TABL/FONT256 payload, but the Saturn VDP2 cursor consumer and its
          * timing have not been captured. Do not present host animation or
          * guessed colors as retail source metadata. */
-        out->highlight_visible = host_label_fixture &&
+        out->highlight_visible = row_host_label_fixture &&
             out->selected && blink_on ? 1 : 0;
-        out->text_color = host_label_fixture ?
+        out->text_color = row_host_label_fixture ?
             (out->selected && blink_on ? 11 : 15) : 0;
         out->shadow_color = 0;
-        out->portrait_border_color = host_label_fixture ?
+        out->portrait_border_color = row_host_label_fixture ?
             (out->selected && blink_on ? 11 :
              (out->in_party ? 7 : 12)) : 0;
-        out->party_marker_color = host_label_fixture && out->in_party ? 7 : 0;
+        out->party_marker_color = row_host_label_fixture && out->in_party ? 7 : 0;
         out->text_x = NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X;
         out->text_y = out->rect.y + 1;
         {
