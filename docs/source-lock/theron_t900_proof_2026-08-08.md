@@ -25,6 +25,12 @@ riktiga ground refs, object counts och kategori-4 monsterrecords. Detta
 bevisar att T900:s råa object-/propertyunderlag når Firestaffs data-lager; det
 bevisar inte att originalets T900-rutiner konsumerar eller muterar state.
 
+`test_theron_v1_track02_dungeon_loader` verifierar dessutom att varje
+source-bunden kategori-4-grupp med giltig typ/count/HP projiceras till den
+levande creature-poolen för US, och nu även JP, med bibehållen source-ref,
+cell, typ och HP. Attack, AI, loot och generator-spawn lämnas avsiktligt
+obundna tills deras originalkonsumenter är fångade.
+
 ## Vad T900-bevis skulle behöva innehålla
 
 En godkänd capture måste samtidigt visa:
@@ -54,6 +60,7 @@ firestaff_theron_v1_track19_inventory_probe    PASS
 theron_v1_track02_provenance_runtime_consumer  PASS
 theron_v1_track02_level_object_trace_preparation PASS
 test_theron_v1_track02_thing_data (US + JP real BIN) PASS
+test_theron_v1_track02_dungeon_loader (US + JP live creature projection) PASS
 ```
 
 Detta är ett bevis på den nuvarande gränsen, inte ett påstående om färdig

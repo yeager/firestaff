@@ -387,6 +387,21 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
                (unsigned int)result.source_occurrences_decoded);
         assert_source_category_census(&result);
         assert_source_type_census(&result);
+        /* JP category-4 records must reach the same source-bound live pool as
+         * US records.  This is static group materialization only; the
+         * separate random-generator consumer remains fail-closed. */
+        assert((unsigned int)world->creature_count ==
+               expected_live_monsters(world));
+        for (int ci = 0; ci < world->creature_count; ++ci) {
+            const Theron_V1_Creature *creature = &world->creatures[ci];
+            assert(creature->flags & THERON_CF_ACTIVE);
+            assert(creature->source_ref != 0u);
+            assert(creature->type >= THERON_CREATURE_AKUTUBA &&
+                   creature->type <= THERON_CREATURE_DEMON);
+            assert(creature->hp == creature->max_hp);
+            assert(creature->primary_attack == THERON_ATTACK_NONE);
+            assert(creature->secondary_attack == THERON_ATTACK_NONE);
+        }
         free(world);
     }
     printf("  JP Track 02: all dungeon object records OK\n");
