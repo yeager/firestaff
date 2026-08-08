@@ -54,6 +54,7 @@
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.h"
+#include "fs_gesture_navigation_gate.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -692,6 +693,63 @@ static int m11_map_window_pointer_to_game_source(
     *outX = framebufferX;
     *outY = framebufferY;
     return 1;
+}
+
+static void m11_sync_touch_gesture_gate(const M11_GameViewState* gameView,
+                                        const M12_StartupMenuState* menuState)
+{
+    FsGgGameId game;
+    int enabled;
+
+    if (!fs_gesture_gate_is_initialized()) {
+        (void)fs_gesture_gate_init();
+    }
+    if (!gameView || !gameView->active || !menuState) {
+        fs_gesture_recognizer_reset();
+        return;
+    }
+    switch (gameView->sourceKind) {
+    case M11_GAME_SOURCE_CSB_BOOT: game = FS_GG_GAME_CSB; break;
+    case M11_GAME_SOURCE_DM2_BOOT: game = FS_GG_GAME_DM2; break;
+    case M11_GAME_SOURCE_NEXUS_DGN: game = FS_GG_GAME_NEXUS; break;
+    case M11_GAME_SOURCE_THERON_TRACK02: game = FS_GG_GAME_THERON; break;
+    default: game = FS_GG_GAME_DM1; break;
+    }
+    enabled = menuState->settings.touchControlsIndex > 0 &&
+        (menuState->settings.inputModeIndex == 0 ||
+         menuState->settings.inputModeIndex == 2);
+    if (fs_gesture_gate_active_game() != game) {
+        fs_gesture_recognizer_reset();
+        (void)fs_gesture_gate_set_active_game(game);
+    }
+    (void)fs_gesture_gate_set_enabled(game, enabled);
+    if (!enabled) {
+        fs_gesture_recognizer_reset();
+    }
+}
+
+static int m11_map_normalized_touch_to_game_source(
+    const M11_GameViewState* gameView,
+    float normalizedX,
+    float normalizedY,
+    int* outX,
+    int* outY)
+{
+    int windowX;
+    int windowY;
+    int windowW = M11_Render_GetWindowWidth();
+    int windowH = M11_Render_GetWindowHeight();
+    if (normalizedX < 0.0f || normalizedX > 1.0f ||
+        normalizedY < 0.0f || normalizedY > 1.0f ||
+        windowW <= 0 || windowH <= 0) {
+        return 0;
+    }
+    windowX = (int)(normalizedX * (float)windowW);
+    windowY = (int)(normalizedY * (float)windowH);
+    if (windowX >= windowW) windowX = windowW - 1;
+    if (windowY >= windowH) windowY = windowH - 1;
+    return m11_map_window_pointer_to_game_source(gameView, windowX, windowY,
+                                                  outX, outY);
 }
 
 static void m11_sync_source_object_cursor(const M11_GameViewState* gameView) {
@@ -4611,6 +4669,28 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if ((ev.type == SDL_EVENT_FINGER_DOWN ||
+             ev.type == SDL_EVENT_FINGER_MOTION ||
+             ev.type == SDL_EVENT_FINGER_UP) &&
+            gameView && gameView->active) {
+            M11_TouchEventKind kind = ev.type == SDL_EVENT_FINGER_DOWN
+                ? M11_TOUCH_EVENT_DOWN
+                : (ev.type == SDL_EVENT_FINGER_MOTION
+                   ? M11_TOUCH_EVENT_MOVE : M11_TOUCH_EVENT_UP);
+            if (gameViewResult &&
+                m11_map_normalized_touch_to_game_source(gameView,
+                                                        ev.tfinger.x,
+                                                        ev.tfinger.y,
+                                                        &mappedX,
+                                                        &mappedY)) {
+                *gameViewResult = M11_GameView_HandleTouchEvent(
+                    gameView, kind, mappedX, mappedY, (uint32_t)SDL_GetTicks());
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
+            continue;
+        }
         if (ev.type == SDL_EVENT_MOUSE_MOTION &&
             gameView && gameView->active) {
             if (gameViewResult &&
@@ -6126,6 +6206,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * controller input is translated into shared CSB command tokens. */
         gamepadMap.enabled = M11_GamepadEnabledForInputMode(
             menuState.settings.inputModeIndex, gamepadConfiguredEnabled);
+        m11_sync_touch_gesture_gate(&gameView, &menuState);
 
         {
             int speedMul = M11_QolRuntime_GetSpeedMultiplier();

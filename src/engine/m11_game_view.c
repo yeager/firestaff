@@ -80,6 +80,7 @@
 #include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
+#include "fs_gesture_navigation_gate.h"
 #include "champion_status_slotbox_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_champion_stamina_adjusted_pc34_compat.h"
@@ -27411,6 +27412,79 @@ M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
         m11_refresh_world_hash_after_click(state);
     }
     return r;
+}
+
+static M12_MenuInput m11_touch_gesture_command_to_input(int command)
+{
+    /* ReDMCSB DEFS.H:238-243 names C001..C006; COMMAND.C F0380 dispatches
+     * the very same queue entries to CLIKMENU.C F0365/F0366.  Keep this
+     * translation beside the touch ingress rather than manufacturing a
+     * second movement path. */
+    switch (command) {
+    case 1: return M12_MENU_INPUT_TURN_LEFT;
+    case 2: return M12_MENU_INPUT_TURN_RIGHT;
+    case 3: return M12_MENU_INPUT_UP;
+    case 4: return M12_MENU_INPUT_STRAFE_RIGHT;
+    case 5: return M12_MENU_INPUT_DOWN;
+    case 6: return M12_MENU_INPUT_STRAFE_LEFT;
+    default: return M12_MENU_INPUT_NONE;
+    }
+}
+
+M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
+                                                  M11_TouchEventKind kind,
+                                                  int x,
+                                                  int y,
+                                                  uint32_t nowMs)
+{
+    FsGestureFeedEvent event;
+    FsGestureType gesture = FS_GG_GESTURE_NONE;
+    FsGestureGameCommand command;
+
+    if (!state || !state->active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!fs_gesture_gate_is_initialized() ||
+        !fs_gesture_gate_is_enabled(fs_gesture_gate_active_game())) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    switch (kind) {
+    case M11_TOUCH_EVENT_DOWN: event.kind = FS_GG_FEED_DOWN; break;
+    case M11_TOUCH_EVENT_MOVE: event.kind = FS_GG_FEED_MOVE; break;
+    case M11_TOUCH_EVENT_UP:   event.kind = FS_GG_FEED_UP;   break;
+    default: return M11_GAME_INPUT_IGNORED;
+    }
+    event.x = x;
+    event.y = y;
+    event.nowMs = nowMs;
+    if (!fs_gesture_recognizer_step(&event, &gesture) ||
+        kind != M11_TOUCH_EVENT_UP) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* COMMAND.C F0358 resolves a primary pointer hit against the original
+     * UI rectangles.  A stationary finger therefore remains a real source
+     * click, including CSB's startup/HUD/viewport route. */
+    if (gesture == FS_GG_GESTURE_TAP) {
+        return M11_GameView_HandlePointer(state, x, y, 1);
+    }
+    /* INPUT.C:641-664 forwards the secondary button independently.  The
+     * existing gesture table documents a stationary long press as that
+     * source-owned right-button affordance (for example C083). */
+    if (gesture == FS_GG_GESTURE_LONG_PRESS) {
+        return M11_GameView_HandlePointerButton(
+            state, x, y, DM1_V1_MOUSE_MASK_RIGHT_PC34);
+    }
+    if (fs_gesture_translate_with_reason(fs_gesture_gate_active_game(),
+                                         gesture, &command, NULL) &&
+        command.accepted) {
+        M12_MenuInput input = m11_touch_gesture_command_to_input(
+            command.gameCommand);
+        if (input != M12_MENU_INPUT_NONE) {
+            return M11_GameView_HandleInput(state, input);
+        }
+    }
+    return M11_GAME_INPUT_IGNORED;
 }
 
 M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,

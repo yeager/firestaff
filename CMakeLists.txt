@@ -6723,6 +6723,7 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
+    src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
     src/engine/m11_game_view_a11y.c

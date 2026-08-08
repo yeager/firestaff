@@ -14,6 +14,7 @@
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "gamepad_config_m12.h"
 #include "main_loop_m11.h"
+#include "fs_gesture_navigation_gate.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -529,6 +530,25 @@ int main(void)
                                   resumed_view.csbState.party_dir ==
                                       resumed_profile->runtime.party_dir,
                               "controller TURN_RIGHT reaches the real Atari GAMEBLOCK command queue");
+                        resumed_direction = resumed_profile->runtime.party_dir;
+                        CHECK(fs_gesture_gate_init() &&
+                                  fs_gesture_gate_set_active_game(
+                                      FS_GG_GAME_CSB) == FS_GG_GAME_DM1 &&
+                                  fs_gesture_gate_set_enabled(
+                                      FS_GG_GAME_CSB, 1) >= 0 &&
+                                  M11_GameView_HandleTouchEvent(
+                                      &resumed_view, M11_TOUCH_EVENT_DOWN,
+                                      120, 100, 1000u) ==
+                                      M11_GAME_INPUT_IGNORED &&
+                                  M11_GameView_HandleTouchEvent(
+                                      &resumed_view, M11_TOUCH_EVENT_UP,
+                                      190, 100, 1100u) ==
+                                      M11_GAME_INPUT_REDRAW &&
+                                  resumed_profile->runtime.party_dir ==
+                                      ((resumed_direction + 1) & 3) &&
+                                  resumed_view.csbState.party_dir ==
+                                      resumed_profile->runtime.party_dir,
+                              "touch swipe reaches C002 through the real Atari GAMEBLOCK command queue");
                     }
                     M11_GameView_Shutdown(&resumed_view);
                     remove(quicksave_path);

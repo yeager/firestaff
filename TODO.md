@@ -10,7 +10,10 @@
   maskeras som originalformat. Endast en verifierad
   Atari/Amiga-originalcontainer kan i nuläget annonseras eller startas som
   Resume. DSA-sparningar är uttryckligen uppskjutna tills en godkänd verklig
-  corpus finns.
+  corpus finns. M11:s fingerhändelser går nu, när användaren uttryckligen
+  väljer Touch-kontroller, genom samma källägda C001–C006- och pekarrutter
+  som mus/tangentbord. Kvar är extern app-capture och bred fysisk
+  touch-/hjälpmedelsverifiering på varje plattform.
 
 - 🔧 Theron real Track 02 loading now retains reserved category-4 monster
   bytes as source records while admitting only the authenticated 0..6 roster

@@ -1985,6 +1985,23 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int x,
     int y,
     int buttonMask);
+
+/* One SDL finger contact after main_loop_m11 has mapped it into the native
+ * source framebuffer.  Gesture commands deliberately re-enter the normal
+ * M11 input / pointer routes: ReDMCSB COMMAND.C F0358/F0359/F0380 owns the
+ * final C001..C006 dispatch, regardless of whether the host event began as
+ * a mouse click, keyboard key, controller action, or touch gesture. */
+typedef enum M11_TouchEventKind {
+    M11_TOUCH_EVENT_DOWN = 1,
+    M11_TOUCH_EVENT_MOVE = 2,
+    M11_TOUCH_EVENT_UP = 3
+} M11_TouchEventKind;
+
+M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
+                                                  M11_TouchEventKind kind,
+                                                  int x,
+                                                  int y,
+                                                  uint32_t nowMs);
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,

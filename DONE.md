@@ -98,6 +98,13 @@
   tangentbordet och ändrar den autentiskt återställda GAMEBLOCK-partyns
   riktning. Ingen controller-specifik party- eller rörelsemodell används.
 
+- ✅ M11 tar nu emot SDL3-fingerhändelser när användaren har valt
+  Touch-kontroller. Varje kontakt mappas först till den presenterade bildens
+  ursprungskoordinater och återgår sedan till den ordinarie pekar- eller
+  C001–C006-kommandovägen. Regressionen kör en verklig Atari `MINI.DAT`
+  genom kall resume och bevisar att en högerswipe når C002 och ändrar den
+  autentiska GAMEBLOCK-riktningen; ingen separat touch-partydata används.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan
