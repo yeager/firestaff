@@ -9427,3 +9427,8 @@
   c_record- och c_tim-transaktion och frigör alltid den igen. Ofullständiga
   corpusägare fortsätter därför att blockeras utan att en partiell Resume-
   session kan publiceras.
+# Nexus SMAP-realdata test and startup gate separation (2026-08-08)
+
+- ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.
+- ✅ LEV00 förblir fail-closed tills autentisk Saturn-startposition/startselector är fångad; SMAP/VDP2-dekodning testas separat.
+- ✅ `ctest -L real-media` med `/Users/bosse/.firestaff/data/nexus`: 8 Nexus-tester passerar; de 3 Theron-testerna är korrekt skip-safe utan Theron-data.
