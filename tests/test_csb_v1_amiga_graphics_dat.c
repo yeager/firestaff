@@ -161,6 +161,19 @@ static void test_real_a35e_img1_if_available(void) {
     {
         uint16_t width = 0u;
         uint16_t height = 0u;
+        /* REVIVE.C F0280 copies this 8x3 atlas as 32x29 champion portraits
+         * before PANEL.C F0354 places the selected portrait in a status box.
+         * Keep the native A35E source dimensions explicit so a future Amiga
+         * candidate/HUD consumer cannot substitute the PC34 asset shape. */
+        CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 26u,
+                                                 pixels, 640u * 400u,
+                                                 &width, &height) == 1 &&
+                  width == 256u && height == 87u,
+              "real_a35e_c026_portrait_atlas_decodes_at_source_dimensions");
+    }
+    {
+        uint16_t width = 0u;
+        uint16_t height = 0u;
         /* ReDMCSB PANEL.C F0346 overlays C040 at panel-relative (80,52),
          * with C06 as transparency, on top of the C017 inventory panel. */
         CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 40u,

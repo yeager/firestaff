@@ -139,6 +139,10 @@
 - ✅ När den källägda kandidatpanelen är aktiv läggs nu Amiga-C040 ovanpå
   C017 på `PANEL.C` F0346:s exakta koordinater `(128,85)`. Den använder
   originalets transparensfärg C06 och ersätter inte någon obunden panel.
+- ✅ Realtatprovet låser även Amiga-C026 till originalets 256×87-atlas
+  (åtta 32×29-porträtt per rad, tre rader) enligt `REVIVE.C` F0280 och
+  `PANEL.C` F0354. Denna atlas används ännu inte som en ersättning för den
+  återstående native kandidat-/statusboxkonsumenten.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 
