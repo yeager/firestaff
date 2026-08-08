@@ -9,6 +9,16 @@
 
 static int failures;
 
+/* Fixture-only coordinates.  The real LEV00.DGN cell at (11,29) is empty;
+ * keep these values local to this deterministic probe so they cannot become
+ * a production Nexus start position through a public header. */
+enum {
+    TEST_SYNTHETIC_PARTY_LEVEL = 0,
+    TEST_SYNTHETIC_PARTY_X = 11,
+    TEST_SYNTHETIC_PARTY_Y = 29,
+    TEST_SYNTHETIC_PARTY_DIR = 0
+};
+
 static void expect(int condition, const char *message) {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
@@ -231,9 +241,9 @@ int main(void) {
                                0) == 0,
            "viewport DGN fixture loads through real Structure1B parser");
     expect(nexus_v1_game_resolve_dungeon_start(
-               &engine.current_level, NEXUS_V1_SYNTHETIC_PARTY_LEVEL,
-               NEXUS_V1_SYNTHETIC_PARTY_X, NEXUS_V1_SYNTHETIC_PARTY_Y,
-               NEXUS_V1_SYNTHETIC_PARTY_DIR, &start) == 1 &&
+               &engine.current_level, TEST_SYNTHETIC_PARTY_LEVEL,
+               TEST_SYNTHETIC_PARTY_X, TEST_SYNTHETIC_PARTY_Y,
+               TEST_SYNTHETIC_PARTY_DIR, &start) == 1 &&
                start.status == NEXUS_V1_DUNGEON_START_READY &&
                start.dgn_cell_consumed && !start.blocks_runtime &&
                !start.fallback_visuals_permitted,
@@ -243,21 +253,21 @@ int main(void) {
                game.current_level == 0 && game.party_x == 11 &&
                game.party_y == 29 && game.party_dir == 0,
            "new-game host state consumes the validated DGN start pose");
-    set_dgn_collision_ref(structure1, 0x40, NEXUS_V1_SYNTHETIC_PARTY_X,
-                          NEXUS_V1_SYNTHETIC_PARTY_Y, 0x0fff);
+    set_dgn_collision_ref(structure1, 0x40, TEST_SYNTHETIC_PARTY_X,
+                          TEST_SYNTHETIC_PARTY_Y, 0x0fff);
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),
                                0) == 0 &&
                nexus_v1_game_resolve_dungeon_start(
-                   &engine.current_level, NEXUS_V1_SYNTHETIC_PARTY_LEVEL,
-                   NEXUS_V1_SYNTHETIC_PARTY_X, NEXUS_V1_SYNTHETIC_PARTY_Y,
-                   NEXUS_V1_SYNTHETIC_PARTY_DIR, &start) == 0 &&
+                   &engine.current_level, TEST_SYNTHETIC_PARTY_LEVEL,
+                   TEST_SYNTHETIC_PARTY_X, TEST_SYNTHETIC_PARTY_Y,
+                   TEST_SYNTHETIC_PARTY_DIR, &start) == 0 &&
                start.status == NEXUS_V1_DUNGEON_START_BLOCKED_CELL &&
                start.blocks_runtime && !start.fallback_visuals_permitted,
            "wall/collision start cell blocks the host route without fallback");
-    set_dgn_collision_ref(structure1, 0x40, NEXUS_V1_SYNTHETIC_PARTY_X,
-                          NEXUS_V1_SYNTHETIC_PARTY_Y, 0);
+    set_dgn_collision_ref(structure1, 0x40, TEST_SYNTHETIC_PARTY_X,
+                          TEST_SYNTHETIC_PARTY_Y, 0);
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),

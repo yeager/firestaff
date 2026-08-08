@@ -6,16 +6,6 @@
 
 /* Nexus V1 game state — ties together DM1 logic + Nexus 3D assets. */
 
-/* These coordinates are retained only for deterministic synthetic probes.
- * They are not a Nexus retail start position: the real LEV00.DGN cell at
- * (11,29) is empty. Production startup must obtain the pose from a
- * source-bound Saturn route/capture before mechanics or the viewport consume
- * it. */
-#define NEXUS_V1_SYNTHETIC_PARTY_LEVEL 0
-#define NEXUS_V1_SYNTHETIC_PARTY_X 11
-#define NEXUS_V1_SYNTHETIC_PARTY_Y 29
-#define NEXUS_V1_SYNTHETIC_PARTY_DIR 0
-
 typedef enum {
     NEXUS_V1_DUNGEON_START_MISSING = 0,
     NEXUS_V1_DUNGEON_START_READY = 1,

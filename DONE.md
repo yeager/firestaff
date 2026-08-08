@@ -13,6 +13,17 @@
   `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
   felaktigt publiceras för den Amiga-specifika språkväljaren.
 
+# Nexus synthetic party constants removed from production header (2026-08-08)
+
+- ✅ Removed the obsolete `NEXUS_V1_SYNTHETIC_PARTY_*` coordinates from the
+  public Nexus game header. They were referenced only by the deterministic
+  DGN material probe; that probe now keeps its deliberately synthetic test
+  pose local to the test translation unit. Production startup cannot inherit
+  the empty retail LEV00 `(11,29)` cell as a party position through the API.
+- ✅ Rebuilt and ran `test_nexus_v1_dgn_material_raster` against the real
+  `/Users/bosse/.firestaff/data/nexus` corpus, and reran the production source
+  boundary verifier. Retail presentation remains capture-gated.
+
 # Nexus capture inventory accepts single-run roots (2026-08-08)
 
 - ✅ `analyze_nexus_capture_inventory.py` now inventories both the external
