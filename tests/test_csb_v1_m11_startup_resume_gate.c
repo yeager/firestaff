@@ -1857,6 +1857,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_ENTER_DUNGEON,
                 "M11 CSB utility START NEW GAME row records the enter-dungeon command");
+    expect_true(view.csbState.startup_import_available == 0 &&
+                    view.csbState.startup_import_preview_active == 0,
+                "M11 CSB utility overlay retires when NEW reaches the live dungeon HUD");
     M11_GameView_Shutdown(&view);
 
     fill_csb_launch_spec(&spec, data_dir, NULL);
@@ -1884,6 +1887,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_last_command ==
                     M11_ENTRANCE_RUNTIME_COMMAND_RESUME,
                 "M11 CSB utility LOAD row records the resume command before loading");
+    expect_true(view.csbState.startup_import_available == 0 &&
+                    view.csbState.startup_import_preview_active == 0,
+                "M11 CSB utility overlay retires when LOAD reaches the live dungeon HUD");
     assert_csb_view_matches_expected_resume(
         &view,
         &expected,

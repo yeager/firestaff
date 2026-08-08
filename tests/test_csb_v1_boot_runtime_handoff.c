@@ -3483,6 +3483,28 @@ static void test_runtime_utility_startup_receipt_facades(void)
               boot_action_receipt.utility_receipt.entrance_receipt_valid,
           "boot utility keyboard action receipt chains entrance receipt");
 
+    facts.utility_selected_action_index = 2;
+    snapshot.utility_selected_action_index = facts.utility_selected_action_index;
+    CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
+              &snapshot,
+              9,
+              &boot_action_receipt) == 1,
+          "boot utility NEW keyboard action receipt handles accept");
+    CHECK(boot_action_receipt.kind ==
+                  CSB_V1_BOOT_STARTUP_ACTION_UTILITY_PC34 &&
+              boot_action_receipt.utility_receipt.util_receipt.result ==
+                  CSB_V1_UTIL_APPLY_ENTRANCE_COMMAND &&
+              boot_action_receipt.utility_receipt.util_receipt.entrance_command ==
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34 &&
+              boot_action_receipt.utility_receipt.entrance_receipt_valid &&
+              boot_action_receipt.post_input_render_view_valid &&
+              boot_action_receipt.post_input_render_view.opening_door_route &&
+              !boot_action_receipt.post_input_render_view.utility_menu_route &&
+              boot_action_receipt.post_input_render_view.route_receipt
+                      .hud_menu_state.kind !=
+                  CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34,
+          "boot utility NEW receipt retires the overlay before prison doors");
+
     snapshot.utility_overlay_active = 0;
     CHECK(csb_v1_boot_runtime_execute_startup_firestaff_input_from_snapshot_pc34(
               &snapshot,

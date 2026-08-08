@@ -9767,6 +9767,18 @@ static void m11_csb_startup_apply_entrance_action_state_receipt(
     m11_csb_startup_command_state_receipt_to_m11(
         state,
         &receipt->state_receipt);
+    /* ReDMCSB ENTRANCE.C F0441/F0806 leaves the Utility wait loop before
+     * it starts C002/C003 prison-door opening (or completes a resume).
+     * Keep the imported party in the runtime, but retire the startup-only
+     * overlay state immediately.  Otherwise a stale Utility selection can
+     * survive into the live HUD after NEW/LOAD has already handed control
+     * back to C03_GAME. */
+    if (receipt->state_receipt.opening_active ||
+        receipt->state_receipt.entrance_dismissed ||
+        !receipt->state_receipt.entrance_active) {
+        state->csbState.startup_import_available = 0;
+        state->csbState.startup_import_preview_active = 0;
+    }
 }
 
 static M11_GameInputResult m11_csb_handle_fmtowns_game_entrance_input(

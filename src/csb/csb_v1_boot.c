@@ -7312,6 +7312,16 @@ static int csb_v1_boot_startup_action_capture_post_input_render_pc34(
         csb_v1_boot_startup_snapshot_apply_command_state_pc34(
             &post_snapshot,
             &entrance->state_receipt);
+        /* ENTRANCE.C F0441/F0806 exits the Utility wait loop before it
+         * begins the prison-door sequence.  The imported party belongs to
+         * the runtime profile, but this transient overlay must not be
+         * carried into the post-input opening/HUD receipt. */
+        if (entrance->state_receipt.opening_active ||
+            entrance->state_receipt.entrance_dismissed ||
+            !entrance->state_receipt.entrance_active) {
+            post_snapshot.utility_overlay_active = 0;
+            post_snapshot.utility_preview_active = 0;
+        }
         if (entrance->host_receipt.input_result ==
             CSB_V1_STARTUP_ENTRANCE_INPUT_RETURN_TO_LAUNCHER_PC34) {
             receipt->input_requests_launcher_return = 1;
