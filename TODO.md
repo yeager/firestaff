@@ -1130,9 +1130,11 @@
   captured.
 
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
-  these static receipts do not authorize host drawing before admitting menu
-  placement, FONT256 text, HUD composition or viewport pixels.
-  executed VDP1 command-list/VRAM writes, the remaining VDP2 register/VRAM
+  static receipts do not authorize host drawing before admitting menu
+  placement, FONT256 text, HUD composition or viewport pixels. The observed
+  VDP1 command-list/VRAM writes and the remaining VDP2 register/VRAM
+  observations remain diagnostic only; they do not bind a source-owned
+  menu placement, FONT256 text consumer, HUD layer, or viewport compositor.
 
 - **DM1-D0C-F0108-SYNTHETIC-AUDIT:** The D0C/F0108 floor-ceiling-ornament
   helper remains a contract-only probe with fixed coordinate, zone and
