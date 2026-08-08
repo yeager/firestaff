@@ -1,3 +1,16 @@
+# DM2 New Game File_header-världsägare (2026-08-08)
+
+- ✅ `DM2_V1_GameLoadWorldOwner` materialiserar nu en egen RAM-kopia av den
+  hashadmitterade File_header-dungeonens verkliga kartor och alla
+  sourcevaliderade DB0–DB15-pooler efter originalets mirror-, DYN4- och
+  possessionsreceipt.
+- ✅ Ägaren är medvetet bara förberedd: den har ingen publicerad party,
+  timerkö, DYN-aktivering eller HUD. Profilens råa `DUNGEON.DAT` förblir
+  byteidentisk och `source_game_load_session_ready` fortsätter vara noll.
+- ✅ Realdatatestet använder den lokala PC-DOS-dungeonfilen med 44 kartor och
+  kontrollerar entrépositionen, poolägarskapet och att inget runtime-tick
+  eller sessionsläge öppnas. Inga speldata skapades.
+
 # DM2 SOUND1–9 uteslutna från produktbinären (2026-08-08)
 
 - ✅ Den äldre SKProject-inspirerade SOUND1–9-modellen kompileras nu endast

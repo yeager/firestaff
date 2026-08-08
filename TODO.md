@@ -41,6 +41,15 @@
   Ground-stackens storlek är begränsad till den autentiska kartans rutantal;
   ingen värdgenererad tillväxt får kringgå originalets c_map-kapacitet.
 
+- 🔧 DM2 New Game GAME_LOAD: en isolerad File_header-/DB-poolägare finns nu
+  i RAM efter den verifierade mirror- och possessionsreceipten, men den är
+  uttryckligen preselection och opublicerad. Nästa steg är att ge samma
+  ägare en originalstor c_tim-kö och portera
+  `DM2_PROCESS_ACTUATOR_TICK_GENERATOR` i dess verkliga ordning, inklusive
+  `savegamew8`-läget, DB3 byte+4-mutationer och atomär rollback. Den gamla
+  32-posters kön får inte användas som ersättning och ingen party, HUD eller
+  timer får publiceras före hela DYN/hero/actuator-transaktionen.
+
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. Nästa
   produktägare ska vara originalets sammanhängande GDAT/SND/DYN4-kö med

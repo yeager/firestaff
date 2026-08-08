@@ -17,6 +17,7 @@
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_session_fixture.h"
@@ -68,6 +69,17 @@ unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
 static int g_failures;
+
+static uint32_t dm2_test_fnv1a(const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+    if (!bytes || byte_count == 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
 
 static void expect_true(int condition, const char* message) {
     if (!condition) {
@@ -1214,6 +1226,7 @@ int main(void) {
     DM2_V1_BootNewGamePartyReceipt source_party;
     DM2_V1_BootNewGamePossessionReceipt source_possessions;
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
+    DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -1239,6 +1252,9 @@ int main(void) {
     uint32_t menu_raw_hash = 0u;
     uint32_t menu_raw_byte_count = 0u;
     uint32_t champion_selection_identity_zero = 0u;
+    uint32_t source_dungeon_hash_before_owner = 0u;
+    const uint8_t *source_dungeon_bytes_before_owner = NULL;
+    int source_dungeon_size_before_owner = 0;
 
     expect_dm2_startup_layout_contract();
     expect_true(!dm2_v1_boot_gdat_raw_asset_proof(NULL,
@@ -1597,6 +1613,43 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 joins entrance interactions, raw actuator-generator inputs, map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
+    memset(&new_game_world_owner, 0, sizeof(new_game_world_owner));
+    if (profile && profile->dungeon_data) {
+        const DM2_V1_DungeonData *source_dungeon =
+            (const DM2_V1_DungeonData *)profile->dungeon_data;
+        source_dungeon_bytes_before_owner = source_dungeon->raw_data;
+        source_dungeon_size_before_owner = source_dungeon->raw_size;
+        source_dungeon_hash_before_owner = dm2_test_fnv1a(
+            source_dungeon->raw_data, (size_t)source_dungeon->raw_size);
+    }
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_init_new_game(
+                        &new_game_world_owner, profile, party_selections, 2) &&
+                    dm2_v1_game_load_world_owner_is_prepared(
+                        &new_game_world_owner) &&
+                    !new_game_world_owner.committed &&
+                    new_game_world_owner.current_map == 0 &&
+                    new_game_world_owner.source_transaction_hash ==
+                        source_transaction.transaction_hash &&
+                    new_game_world_owner.dungeon.level_count == 44 &&
+                    new_game_world_owner.dungeon.initial_party_pose_valid &&
+                    new_game_world_owner.dungeon.initial_party_x == 1 &&
+                    new_game_world_owner.dungeon.initial_party_y == 8 &&
+                    new_game_world_owner.dungeon.initial_party_dir == 0 &&
+                    new_game_world_owner.record_pools.valid &&
+                    new_game_world_owner.record_pools.record_graph_complete &&
+                    new_game_world_owner.selected_party.heros_in_party == 2 &&
+                    source_dungeon_bytes_before_owner ==
+                        ((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_data &&
+                    source_dungeon_size_before_owner ==
+                        ((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_size &&
+                    source_dungeon_hash_before_owner == dm2_test_fnv1a(
+                        ((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_data,
+                        (size_t)((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_size) &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 materializes an isolated File_header and DB-pool world from original bytes without publishing a party or timer session");
+    dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,
