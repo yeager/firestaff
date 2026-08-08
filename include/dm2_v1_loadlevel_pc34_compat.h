@@ -75,6 +75,13 @@ typedef struct DM2_V1_LevelGraphicsState {
  * ======================================================================== */
 
 typedef struct DM2_V1_LoadLevelCallbacks {
+    /* The partial callback adapter below is not a world owner.  A caller may
+     * enter DM2_LOAD_LOCALLEVEL_DYN only after it can prove that File_header
+     * map roots, record pools and link traversal all belong to one live
+     * source session.  Returning false keeps DYN4, party and UI state out of
+     * a fabricated map walk. */
+    bool (*source_file_header_world_complete)(void *ctx);
+
     /* Memory allocation */
     void *(*alloc_lobigpool)(void *ctx, int32_t size, bool clear);
     void  (*dealloc_lobigpool)(void *ctx, int32_t size);

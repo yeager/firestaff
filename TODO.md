@@ -7,6 +7,12 @@
   selectors and `DM2_LOAD_DYN4` transaction before DYN4 bytes, hero state or
   a New Game party can be admitted.
 
+- **DM2-FILE-HEADER-LOCALLEVEL-OWNER:** The callback-shaped
+  `DM2_LOAD_LOCALLEVEL_DYN` translation is now explicitly blocked unless a
+  single live owner proves File_header maps, record pools and links. Replace
+  its test-only map bridge with that real runtime owner, then recover the
+  complete original tile/actuator/sensor resource queue before calling DYN4.
+
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media
   into a filename-only fallback or require users to unpack their archives.

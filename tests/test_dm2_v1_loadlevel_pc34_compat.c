@@ -150,12 +150,33 @@ static void test_null_safety(void)
     printf("  PASS: null_safety\n");
 }
 
+/* The callback adapter must not turn test memory into a playable map. */
+static void test_load_dyn_requires_file_header_owner(void)
+{
+    DM2_V1_LoadLevelCallbacks cb;
+    DM2_V1_DynLoadState dyn;
+    DM2_V1_MiscItemState misc;
+    DM2_V1_LevelGraphicsState gfx;
+    DM2_V1_LoadLevelReceipt receipt;
+
+    memset(&cb, 0, sizeof(cb));
+    memset(&dyn, 0, sizeof(dyn));
+    memset(&misc, 0, sizeof(misc));
+    memset(&gfx, 0, sizeof(gfx));
+    receipt = dm2_v1_load_locallevel_dyn(&cb, &dyn, &misc, &gfx);
+    assert(!receipt.loaded);
+    assert(receipt.dyn_count == 0);
+    assert(dyn.count == 0);
+    printf("  PASS: load_dyn_requires_file_header_owner\n");
+}
+
 /* ── Main ───────────────────────────────────────────────────────────── */
 
 int main(void)
 {
     printf("test_dm2_v1_loadlevel_pc34_compat:\n");
     test_null_safety();
+    test_load_dyn_requires_file_header_owner();
     test_mark_dyn_load();
     test_mark_dyn_load_hires();
     test_mark_dyn_load_with_flag();

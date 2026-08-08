@@ -46,6 +46,14 @@
 - ✅ Verifierat med originalets PC-DOS `DUNGEON.DAT`, M11:s startprofil och
   champion-livscykeltestet. Inga DYN4-byte, heroes eller partyn skapas.
 
+# DM2 fail-closed local-level adapter (2026-08-08)
+
+- ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu
+  en explicit, komplett File_header-världsägare innan den får göra en
+  kartvandring eller anropa DYN4.
+- ✅ Det förhindrar att testminne eller en partiell recordkedja blir en
+  spelbar New Game-väg. Det återställer inte den saknade originalägaren.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

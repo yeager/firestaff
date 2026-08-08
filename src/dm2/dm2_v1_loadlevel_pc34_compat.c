@@ -164,7 +164,16 @@ DM2_V1_LoadLevelReceipt dm2_v1_load_locallevel_dyn(
     r.loaded = false;
     r.dyn_count = 0;
 
-    if (cb == NULL || dyn == NULL) return r;
+    /* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN walks the live File_header
+     * map table and its record graph before it calls DM2_LOAD_DYN4.  This
+     * adapter has no such owner yet; callbacks alone are not provenance.
+     * Do not let a partial/synthetic callback set preload a different DYN4
+     * subset and thereby authorise New Game or gameplay. */
+    if (cb == NULL || dyn == NULL ||
+        cb->source_file_header_world_complete == NULL ||
+        !cb->source_file_header_world_complete(cb->ctx)) {
+        return r;
+    }
 
     /* Initialize state */
     dyn->count = 0;
