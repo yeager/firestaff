@@ -94,11 +94,13 @@
   resumeväg.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
-  testexklusiv och kan inte längre länkas in i spelbinären. Nästa
-  produktägare ska vara originalets sammanhängande GDAT/SND/DYN4-kö med
-  `c_sound.cpp` som källa, följd av den verkliga SDL- respektive FM
-  Towns-CDDA-backenden. En lokal ljudkö, löst musikindex eller genererat PCM
-  får inte bli reservväg när originaldata saknas.
+  testexklusiv och kan inte längre länkas in i spelbinären. New Games privata
+  GAME_LOAD-ägare räknar nu originalets hela GDAT-ljudtabell och binder endast
+  de DYN4-materialiserade råproven i en separat, beständig kö utan uppspelning
+  eller PCM-konvertering. Nästa steg är den sammanhängande sessionsägaren för
+  `c_sound.cpp` följd av den verkliga SDL- respektive FM Towns-CDDA-backenden.
+  En lokal ljudkö, löst musikindex eller genererat PCM får inte bli reservväg
+  när originaldata saknas.
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   monterad dungeon eller tom lokal cooldown får inte presenteras som en

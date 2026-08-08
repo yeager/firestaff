@@ -17,11 +17,35 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_timer_queue_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    uint16_t raw_index;
+    uint16_t raw_length;
+    uint32_t source_payload_hash;
+} DM2_V1_GameLoadSoundSampleBinding;
+
+/* The original start path first sizes xsndptr2 from every type-2 GDAT row,
+ * then DM2_LOAD_DYN4 adds only marked triples and DM2_482b_0684 binds their
+ * already materialised raw samples.  This is a durable private equivalent.
+ * It deliberately has no mixer, PCM conversion or process-global binding. */
+typedef struct {
+    int valid;
+    DM2_V1_DballocSoundCensusReceipt allocation;
+    DM2_V1_SoundSsoundEntry *queue_entries;
+    uint16_t queue_capacity;
+    uint16_t queue_entry_count;
+    DM2_V1_GameLoadSoundSampleBinding *sample_bindings;
+    uint16_t sample_capacity;
+    uint16_t sample_binding_count;
+    uint32_t materialized_raw_hash;
+    uint32_t receipt_hash;
+} DM2_V1_GameLoadSoundOwner;
 
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
@@ -61,14 +85,20 @@ typedef struct {
     uint8_t source_party_absdir;
     int source_display_pose_valid;
     int16_t source_last_moved_record;
+    /* Borrowed only while this private owner exists; it is the same
+     * hash-admitted profile that owns asset_loader. */
+    const DM2_V1_BootProfile *boot_profile;
     const DM2_V1_AssetLoader *asset_loader;
     int dyn4_materialized;
     uint16_t dyn4_selector_count;
+    uint32_t dyn4_selector_ids[
+        DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
     uint32_t dyn4_materialized_hash;
     uint16_t validated_map_count;
     uint32_t validated_world_hash;
     DM2_V1_GdatDyn4MaterializedSelection dyn4_selections[
         DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
+    DM2_V1_GameLoadSoundOwner sound_owner;
     DM2_V1_BootNewGameTransactionReceipt transaction;
     /* This remains zeroed until the source-ordered champion step.  It is
      * never installed in M11 or the runtime party state. */

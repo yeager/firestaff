@@ -225,6 +225,14 @@
 
 # DM2 New Game File_header-världsägare (2026-08-08)
 
+- ✅ New Games privata GAME_LOAD-världsägare har nu originalets GDAT/DYN4-
+  ljudallokering. Den läser `DM2_dballoc_3e74_24b8`-census från samma
+  hashverifierade `GRAPHICS.DAT`, behåller den verkliga PC-DOS-korpusens 292
+  `xsndptr2`-kapacitetsrader och 107 unika råprov samt fyller enbart de
+  DYN4-markerade ljudtrippel som originalets `DM2_SOUND9` når. Varje bindning
+  pekar på ett redan materialiserat originalprov och delar raw-index enligt
+  `DM2_482b_0684`; ingen PCM-konvertering, mixer, cue eller global runtimekö
+  skapas. Realdatagaten kontrollerar kapaciteter, bindningar och råhashar.
 - ✅ `DM2_V1_GameLoadWorldOwner` materialiserar nu en egen RAM-kopia av den
   hashadmitterade File_header-dungeonens verkliga kartor och alla
   sourcevaliderade DB0–DB15-pooler efter originalets mirror-, DYN4- och

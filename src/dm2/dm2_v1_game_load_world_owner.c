@@ -139,6 +139,7 @@ static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash, uint32_t value)
 static int dm2_v1_game_load_owner_materialize_dyn4(
     DM2_V1_GameLoadWorldOwner *owner)
 {
+    DM2_V1_BootChampionSelectionCensus census;
     DM2_V1_GdatDyn4SoundState sound_state;
     uint32_t hash = 2166136261u;
     int i;
@@ -148,17 +149,26 @@ static int dm2_v1_game_load_owner_materialize_dyn4(
         owner->transaction.dyn4_roster.selector_count <= 0 ||
         owner->transaction.dyn4_roster.selector_count >
             DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) return 0;
+    memset(&census, 0, sizeof(census));
+    if (!dm2_v1_boot_champion_selection_census(
+            owner->boot_profile, &census) || !census.valid ||
+        census.candidate_count != owner->transaction.dyn4_roster.selector_count) {
+        return 0;
+    }
     dm2_v1_gdat_dyn4_sound_state_init(&sound_state);
     for (i = 0; i < owner->transaction.dyn4_roster.selector_count; ++i) {
         const DM2_V1_GdatDyn4SelectionReceipt *source =
             &owner->transaction.dyn4_roster.selections[i];
+        DM2_V1_GdatDyn4SelectionReceipt recounted;
         DM2_V1_GdatDyn4MaterializedSelection *selection =
             &owner->dyn4_selections[i];
-        const uint32_t resource_id = ((uint32_t)source->category << 24) |
-            ((uint32_t)source->index << 16) |
-            ((uint32_t)source->type << 8) | source->field;
+        const uint32_t resource_id = census.candidates[i].mirror.dynamic_load_id;
         if (!source->valid || source->rejected_raw_count != 0u ||
             source->raw_loadable_entry_count == 0u ||
+            resource_id == 0u ||
+            !dm2_v1_gdat_dyn4_selection_receipt(owner->asset_loader,
+                resource_id, &recounted) ||
+            recounted.receipt_hash != source->receipt_hash ||
             !dm2_v1_gdat_dyn4_materialize_selection(owner->asset_loader,
                 resource_id, &sound_state, selection) || !selection->valid ||
             selection->receipt_hash == 0u || selection->block_count == 0u) {
@@ -166,11 +176,213 @@ static int dm2_v1_game_load_owner_materialize_dyn4(
         }
         hash = dm2_v1_game_load_owner_hash_step(hash, resource_id);
         hash = dm2_v1_game_load_owner_hash_step(hash, selection->receipt_hash);
+        owner->dyn4_selector_ids[i] = resource_id;
     }
     owner->dyn4_selector_count = (uint16_t)owner->transaction.dyn4_roster.selector_count;
     owner->dyn4_materialized_hash = hash;
     owner->dyn4_materialized = hash != 0u;
     return owner->dyn4_materialized;
+}
+
+static uint32_t dm2_v1_game_load_owner_hash_bytes(const uint8_t *bytes,
+                                                   size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || byte_count == 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int dm2_v1_game_load_owner_dyn4_has_raw(
+    const DM2_V1_GameLoadWorldOwner *owner, uint16_t raw_index)
+{
+    uint16_t selector;
+
+    if (!owner || !owner->dyn4_materialized) return 0;
+    for (selector = 0u; selector < owner->dyn4_selector_count; ++selector) {
+        const DM2_V1_GdatDyn4MaterializedSelection *selection =
+            &owner->dyn4_selections[selector];
+        uint16_t block;
+        if (!selection->valid || !selection->raw_indices) return 0;
+        for (block = 0u; block < selection->block_count; ++block) {
+            if (selection->raw_indices[block] == raw_index) return 1;
+        }
+    }
+    return 0;
+}
+
+static int dm2_v1_game_load_owner_dyn4_matches_selector(
+    const DM2_V1_GdatEntry *entry, uint32_t selector)
+{
+    const uint8_t category = (uint8_t)(selector >> 24);
+    const uint8_t index = (uint8_t)(selector >> 16);
+    const uint8_t type = (uint8_t)(selector >> 8);
+    const uint8_t field = (uint8_t)selector;
+
+    if (!entry) return 0;
+    return (category == 0xffu || entry->cls1 == category) &&
+           (index == 0xffu || entry->cls2 == index) &&
+           (type == 0xffu || entry->cls3 == type) &&
+           (field == 0xffu || entry->cls4 == field);
+}
+
+static void dm2_v1_game_load_owner_sound_free(
+    DM2_V1_GameLoadSoundOwner *sound)
+{
+    if (!sound) return;
+    free(sound->queue_entries);
+    free(sound->sample_bindings);
+    memset(sound, 0, sizeof(*sound));
+}
+
+/* Private c_dballoc/c_sound/c_gdatfile hand-off.  The capacity is the real
+ * DM2_dballoc_3e74_24b8 census (292 rows in the admitted PC corpus), so it
+ * must not be squeezed into Firestaff's old 64-entry gameplay queue.  Only
+ * raw blocks already copied by the source DYN4 selectors are bound.  No PCM
+ * header conversion, mixer state, global runtime binding or cue is created.
+ *
+ * Source: SKProject SKULLWIN/c_gdatfile.cpp::
+ * DM2_dballoc_3e74_24b8 (273-333), DM2_LOAD_DYN4 (1294-1510),
+ * DM2_482b_0684 (932-975); c_sound.cpp::DM2_SOUND9 (650-662).
+ */
+static int dm2_v1_game_load_owner_materialize_sound(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadSoundOwner candidate;
+    const DM2_V1_AssetLoader *loader;
+    uint16_t selector;
+
+    if (!owner || !(loader = owner->asset_loader) || !owner->dyn4_materialized ||
+        owner->dyn4_selector_count == 0u) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_dballoc_3e74_24b8_receipt(loader, &candidate.allocation) ||
+        !candidate.allocation.accepted ||
+        candidate.allocation.sound_entry_count == 0u ||
+        candidate.allocation.unique_raw_index_count == 0u) {
+        return 0;
+    }
+    candidate.queue_capacity = candidate.allocation.sound_entry_count;
+    candidate.sample_capacity = candidate.allocation.unique_raw_index_count;
+    candidate.queue_entries = calloc(candidate.queue_capacity,
+                                     sizeof(*candidate.queue_entries));
+    candidate.sample_bindings = calloc(candidate.sample_capacity,
+                                       sizeof(*candidate.sample_bindings));
+    if (!candidate.queue_entries || !candidate.sample_bindings) goto fail;
+
+    /* This is the second DM2_LOAD_DYN4 descriptor pass.  It calls SOUND9 in
+     * GDAT table order and permits only rows whose raw block was marked and
+     * materialised by one of the real selectors. */
+    for (selector = 0u; selector < owner->dyn4_selector_count; ++selector) {
+        uint16_t ordinal;
+        const uint32_t selector_id = owner->dyn4_selector_ids[selector];
+        if (selector_id == 0u) goto fail;
+        for (ordinal = 0u; ordinal < loader->entry_count; ++ordinal) {
+            const DM2_V1_GdatEntry *entry = &loader->entries[ordinal];
+            uint16_t raw_index;
+            uint16_t existing;
+
+            if (entry->cls3 != DM2_GDAT_ENTRY_TYPE_SOUND ||
+                !dm2_v1_game_load_owner_dyn4_matches_selector(entry,
+                                                               selector_id) ||
+                (entry->data_index & 0x8000u) != 0u) {
+                continue;
+            }
+            raw_index = entry->data_index;
+            if (!dm2_v1_game_load_owner_dyn4_has_raw(owner, raw_index)) {
+                continue;
+            }
+            for (existing = 0u; existing < candidate.queue_entry_count;
+                 ++existing) {
+                const DM2_V1_SoundSsoundEntry *prior =
+                    &candidate.queue_entries[existing];
+                if (prior->b_02 == (int8_t)entry->cls1 &&
+                    prior->b_03 == (int8_t)entry->cls2 &&
+                    prior->b_04 == (int8_t)entry->cls4) {
+                    break;
+                }
+            }
+            if (existing != candidate.queue_entry_count) continue;
+            if (candidate.queue_entry_count >= candidate.queue_capacity)
+                goto fail;
+            candidate.queue_entries[candidate.queue_entry_count].b_02 =
+                (int8_t)entry->cls1;
+            candidate.queue_entries[candidate.queue_entry_count].b_03 =
+                (int8_t)entry->cls2;
+            candidate.queue_entries[candidate.queue_entry_count].b_04 =
+                (int8_t)entry->cls4;
+            candidate.queue_entries[candidate.queue_entry_count].w_00 = -1;
+            candidate.queue_entries[candidate.queue_entry_count].w_05 = -1;
+            ++candidate.queue_entry_count;
+        }
+    }
+    if (candidate.queue_entry_count == 0u) goto fail;
+
+    /* DM2_482b_0684: resolve each SOUND9 row through the same GDAT table,
+     * then share or allocate a source sample slot by its raw index. */
+    for (selector = 0u; selector < candidate.queue_entry_count; ++selector) {
+        DM2_V1_SoundSsoundEntry *entry = &candidate.queue_entries[selector];
+        DM2_V1_GdatSoundEntryReceipt source;
+        uint16_t binding;
+        const uint8_t *raw;
+        size_t raw_size = 0u;
+
+        memset(&source, 0, sizeof(source));
+        if (!dm2_v1_gdat_sound_entry_receipt(loader, (uint8_t)entry->b_02,
+                (uint8_t)entry->b_03, (uint8_t)entry->b_04, 0, 0,
+                &source) || !source.accepted ||
+            !dm2_v1_game_load_owner_dyn4_has_raw(owner, source.raw_index)) {
+            goto fail;
+        }
+        for (binding = 0u; binding < candidate.sample_binding_count;
+             ++binding) {
+            if (candidate.sample_bindings[binding].raw_index == source.raw_index)
+                break;
+        }
+        if (binding == candidate.sample_binding_count) {
+            if (binding >= candidate.sample_capacity ||
+                !(raw = dm2_v1_load_gdat_raw_data(loader, source.raw_index,
+                                                   &raw_size)) ||
+                raw_size != source.raw_length || raw_size > UINT16_MAX) {
+                goto fail;
+            }
+            candidate.sample_bindings[binding].raw_index = source.raw_index;
+            candidate.sample_bindings[binding].raw_length = (uint16_t)raw_size;
+            candidate.sample_bindings[binding].source_payload_hash =
+                dm2_v1_game_load_owner_hash_bytes(raw, raw_size);
+            if (candidate.sample_bindings[binding].source_payload_hash == 0u)
+                goto fail;
+            candidate.materialized_raw_hash = dm2_v1_game_load_owner_hash_step(
+                candidate.materialized_raw_hash ? candidate.materialized_raw_hash :
+                    2166136261u, source.raw_index);
+            candidate.materialized_raw_hash = dm2_v1_game_load_owner_hash_step(
+                candidate.materialized_raw_hash,
+                candidate.sample_bindings[binding].source_payload_hash);
+            ++candidate.sample_binding_count;
+        }
+        entry->w_05 = (int16_t)source.raw_index;
+        entry->w_00 = (int16_t)binding;
+    }
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        0x474c534fu, candidate.allocation.receipt_hash); /* "GLSO" */
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, candidate.queue_entry_count);
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, candidate.sample_binding_count);
+    candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
+        candidate.receipt_hash, candidate.materialized_raw_hash);
+    candidate.valid = candidate.receipt_hash != 0u;
+    if (!candidate.valid) goto fail;
+    owner->sound_owner = candidate;
+    return 1;
+
+fail:
+    dm2_v1_game_load_owner_sound_free(&candidate);
+    return 0;
 }
 
 static int dm2_v1_game_load_owner_validate_world_maps(
@@ -349,6 +561,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     for (i = 0; i < DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES; ++i) {
         dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
     }
+    dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
     free(owner->timer_indices);
     free(owner->timer_entries);
     dm2_v1_record_pool_set_free(&owner->record_pools);
@@ -402,6 +615,7 @@ int dm2_v1_game_load_world_owner_init_new_game(
     }
 
     candidate.current_map = candidate.transaction.entrance.map;
+    candidate.boot_profile = profile;
     candidate.asset_loader = dm2_v1_boot_asset_loader(profile);
     candidate.source_transaction_hash = candidate.transaction.transaction_hash;
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
@@ -412,6 +626,10 @@ int dm2_v1_game_load_world_owner_init_new_game(
         return 0;
     }
     if (!dm2_v1_game_load_owner_materialize_dyn4(&candidate)) {
+        dm2_v1_game_load_world_owner_free(&candidate);
+        return 0;
+    }
+    if (!dm2_v1_game_load_owner_materialize_sound(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
@@ -508,6 +726,10 @@ int dm2_v1_game_load_world_owner_is_prepared(
         owner->dungeon.raw_data != NULL && owner->dungeon.raw_size > 0 &&
         owner->record_pools.valid && owner->record_pools.record_graph_complete &&
         owner->dyn4_materialized && owner->dyn4_selector_count > 0u &&
+        owner->sound_owner.valid && owner->sound_owner.queue_entries != NULL &&
+        owner->sound_owner.sample_bindings != NULL &&
+        owner->sound_owner.queue_entry_count > 0u &&
+        owner->sound_owner.sample_binding_count > 0u &&
         owner->validated_map_count == (uint16_t)owner->dungeon.level_count &&
         owner->validated_world_hash != 0u &&
         owner->source_transaction_hash != 0u;

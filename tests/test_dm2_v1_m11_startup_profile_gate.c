@@ -1340,6 +1340,7 @@ int main(void) {
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
     DM2_V1_TimerEntry new_game_actuate_timer;
     int new_game_generators_result;
+    int new_game_owner_initialized;
     int new_game_noop_map = -1;
     int new_game_noop_x = -1;
     int new_game_noop_y = -1;
@@ -1378,6 +1379,8 @@ int main(void) {
     uint32_t source_dungeon_hash_before_owner = 0u;
     const uint8_t *source_dungeon_bytes_before_owner = NULL;
     int source_dungeon_size_before_owner = 0;
+    const uint8_t *source_sound_bytes_before_owner = NULL;
+    size_t source_sound_size_before_owner = 0u;
 
     expect_dm2_startup_layout_contract();
     expect_true(!dm2_v1_boot_gdat_raw_asset_proof(NULL,
@@ -1745,9 +1748,18 @@ int main(void) {
         source_dungeon_hash_before_owner = dm2_test_fnv1a(
             source_dungeon->raw_data, (size_t)source_dungeon->raw_size);
     }
-    expect_true(profile &&
-                    dm2_v1_game_load_world_owner_init_new_game(
-                        &new_game_world_owner, profile, party_selections, 2) &&
+    new_game_owner_initialized = profile &&
+        dm2_v1_game_load_world_owner_init_new_game(
+            &new_game_world_owner, profile, party_selections, 2);
+    if (new_game_owner_initialized &&
+        new_game_world_owner.sound_owner.valid &&
+        new_game_world_owner.sound_owner.sample_binding_count > 0u) {
+        source_sound_bytes_before_owner = dm2_v1_load_gdat_raw_data(
+            dm2_v1_boot_asset_loader(profile),
+            new_game_world_owner.sound_owner.sample_bindings[0].raw_index,
+            &source_sound_size_before_owner);
+    }
+    expect_true(profile && new_game_owner_initialized &&
                     dm2_v1_game_load_world_owner_is_prepared(
                         &new_game_world_owner) &&
                     !new_game_world_owner.committed &&
@@ -1769,6 +1781,32 @@ int main(void) {
                     new_game_world_owner.dyn4_materialized_hash != 0u &&
                     new_game_world_owner.dyn4_selections[0].valid &&
                     new_game_world_owner.dyn4_selections[0].block_count > 0u &&
+                    new_game_world_owner.sound_owner.valid &&
+                    new_game_world_owner.sound_owner.allocation.accepted &&
+                    new_game_world_owner.sound_owner.allocation.sound_entry_count ==
+                        292u &&
+                    new_game_world_owner.sound_owner.allocation.unique_raw_index_count ==
+                        107u &&
+                    new_game_world_owner.sound_owner.queue_capacity ==
+                        new_game_world_owner.sound_owner.allocation.sound_entry_count &&
+                    new_game_world_owner.sound_owner.sample_capacity ==
+                        new_game_world_owner.sound_owner.allocation.unique_raw_index_count &&
+                    new_game_world_owner.sound_owner.queue_entry_count > 0u &&
+                    new_game_world_owner.sound_owner.sample_binding_count > 0u &&
+                    new_game_world_owner.sound_owner.queue_entries != NULL &&
+                    new_game_world_owner.sound_owner.sample_bindings != NULL &&
+                    new_game_world_owner.sound_owner.queue_entries[0].w_00 >= 0 &&
+                    new_game_world_owner.sound_owner.queue_entries[0].w_05 >= 0 &&
+                    new_game_world_owner.sound_owner.sample_bindings[0].raw_length > 0u &&
+                    new_game_world_owner.sound_owner.sample_bindings[0].source_payload_hash !=
+                        0u &&
+                    source_sound_bytes_before_owner != NULL &&
+                    source_sound_size_before_owner ==
+                        new_game_world_owner.sound_owner.sample_bindings[0].raw_length &&
+                    dm2_test_fnv1a(source_sound_bytes_before_owner,
+                        source_sound_size_before_owner) ==
+                        new_game_world_owner.sound_owner.sample_bindings[0].source_payload_hash &&
+                    new_game_world_owner.sound_owner.receipt_hash != 0u &&
                     new_game_world_owner.timer_capacity > 50u &&
                     new_game_world_owner.timer_queue.max_timers ==
                         (int16_t)new_game_world_owner.timer_capacity &&
@@ -1792,7 +1830,7 @@ int main(void) {
                         (size_t)((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_size) &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "M11 materializes an isolated File_header and DB-pool world from original bytes without publishing a party or timer session");
+                "M11 materializes an isolated File_header, DYN4 sound allocation and DB-pool world from original bytes without publishing a party, timer or playback session");
     memset(&new_game_generators, 0, sizeof(new_game_generators));
     new_game_generators_result = profile &&
         dm2_v1_game_load_world_owner_process_actuator_tick_generators(
