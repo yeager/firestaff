@@ -199,6 +199,8 @@
   objekt och andra ännu oexekverade posttyper inte försvinner i intaget.
 - ✅ Testet jämför censusens totalsumma med kartans verkliga recordantal för
   samtliga 44 PC-DOS-kartor. Ingen runtimeeffekt eller placeholder skapas.
+- ✅ Bootprofilen lämnar samma census från den redan verifierade dungeonen;
+  M11-testet binder den till kartans tidigare proveniensreceipt.
 
 # DM2 fail-closed local-level adapter (2026-08-08)
 

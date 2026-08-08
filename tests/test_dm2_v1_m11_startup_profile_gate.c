@@ -1210,6 +1210,7 @@ int main(void) {
     DM2_V1_G1RuntimeMapDoorReceipt file_header_doors;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt file_header_teleporters;
     DM2_V1_G1RuntimeMapActuatorReceipt file_header_actuators;
+    DM2_V1_FileHeaderRuntimeSceneCensus file_header_census;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
@@ -1372,6 +1373,7 @@ int main(void) {
     memset(&file_header_doors, 0, sizeof(file_header_doors));
     memset(&file_header_teleporters, 0, sizeof(file_header_teleporters));
     memset(&file_header_actuators, 0, sizeof(file_header_actuators));
+    memset(&file_header_census, 0, sizeof(file_header_census));
     expect_true(profile &&
                     dm2_v1_boot_file_header_map_doors_receipt(
                         profile, 0, &file_header_doors) &&
@@ -1379,6 +1381,8 @@ int main(void) {
                         profile, 0, &file_header_teleporters) &&
                     dm2_v1_boot_file_header_map_actuators_receipt(
                         profile, 0, &file_header_actuators) &&
+                    dm2_v1_boot_file_header_map_scene_census(
+                        profile, 0, &file_header_census) &&
                     file_header_doors.committed &&
                     file_header_teleporters.committed &&
                     file_header_actuators.committed &&
@@ -1387,7 +1391,9 @@ int main(void) {
                     file_header_teleporters.teleporter_record_reads ==
                         file_header_teleporters.teleporter_root_count &&
                     file_header_actuators.actuator_record_reads ==
-                        file_header_actuators.actuator_root_count,
+                        file_header_actuators.actuator_root_count &&
+                    file_header_census.committed &&
+                    file_header_census.record_count == file_header_map.record_count,
                 "M11 exposes File_header scene receipts through the mounted boot owner");
     memset(&champion_dyn4, 0, sizeof(champion_dyn4));
     /* The old 28-map pseudo-header happened to manufacture a 16-marker

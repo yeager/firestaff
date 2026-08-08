@@ -1460,6 +1460,9 @@ int dm2_v1_boot_file_header_map_teleporters_receipt(
 int dm2_v1_boot_file_header_map_actuators_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_G1RuntimeMapActuatorReceipt *out_receipt);
+int dm2_v1_boot_file_header_map_scene_census(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeSceneCensus *out_receipt);
 
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps
