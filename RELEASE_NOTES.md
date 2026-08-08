@@ -1,5 +1,13 @@
 # Firestaff v3.0.305
 
+## Current Nexus provenance clarification
+
+Äldre releaseposter nedan beskriver stängda byteformat-, tabell- eller
+ABI-receipts. De ska inte läsas som att Saturns runtime-konsumenter är
+verifierade: ITEM-loot/use, MENU/TEXT/PRS3-presentation, VDP1/VDP2
+komposition och SLEV/MAP/SAL→SDDRVS-event/playback är fortfarande
+capture-gated enligt `TODO.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
+
 ## Changed
 
 - Promote source-backed Nexus gameplay lookup/algorithm modules to the

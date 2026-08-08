@@ -1,3 +1,10 @@
+# Nexus historiska releaseclaims korrigerade (2026-08-08)
+
+- ✅ `RELEASE_NOTES.md` skiljer nu uttryckligen äldre format-/ABI-receipts
+  från dagens Saturn-runtime-gates. ITEM-use/loot, MENU/TEXT/PRS3, VDP1/VDP2
+  och SLEV/MAP/SAL→SDDRVS-playback kan inte längre misstolkas som färdig
+  runtime-parity.
+
 # Nexus public status claim audit (2026-08-08)
 
 - ✅ Korrigerade den aktuella releaseformuleringen så source-backed
