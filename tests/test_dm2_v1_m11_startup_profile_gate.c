@@ -1216,6 +1216,7 @@ int main(void) {
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
+    DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
     DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
     DM2_V1_G1RuntimeMapDoorReceipt file_header_doors;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt file_header_teleporters;
@@ -1613,6 +1614,7 @@ int main(void) {
                         champion_mirrors.mirrors[0].object_id,
                 "M11 keeps the source mirror identity separate from the selected formation quadrant");
     memset(&file_header_map, 0, sizeof(file_header_map));
+    memset(&file_header_world, 0, sizeof(file_header_world));
     expect_true(profile &&
                     dm2_v1_boot_file_header_runtime_map_receipt(
                         profile, 0, &file_header_map) &&
@@ -1621,6 +1623,16 @@ int main(void) {
                     file_header_map.root_count > 0 &&
                     file_header_map.record_count >= file_header_map.root_count,
                 "M11 exposes the mounted File_header map owner to later DM2 runtime consumers");
+    expect_true(profile &&
+                    dm2_v1_boot_file_header_world_interaction_receipt(
+                        profile, &file_header_world) &&
+                    file_header_world.valid &&
+                    file_header_world.incomplete_world &&
+                    file_header_world.map_count == 44 &&
+                    file_header_world.total_records >= file_header_map.record_count &&
+                    file_header_world.total_tiles > 0 &&
+                    file_header_world.interaction_hash != 0u,
+                "M11 retains every File_header interaction chain under one original dungeon owner");
     memset(&file_header_doors, 0, sizeof(file_header_doors));
     memset(&file_header_teleporters, 0, sizeof(file_header_teleporters));
     memset(&file_header_actuators, 0, sizeof(file_header_actuators));

@@ -204,6 +204,22 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_BootNewGameEntranceReceipt;
 
+/* Complete, read-only File_header interaction census.  It keeps the full
+ * dungeon's source ownership available to later map-transition and timer
+ * owners without inventing a live world or a parallel record pool. */
+typedef struct {
+    int valid;
+    int incomplete_world;
+    int map_count;
+    int total_records;
+    int total_tiles;
+    int total_doors;
+    int total_teleporters;
+    int total_texts;
+    int total_actuators;
+    uint32_t interaction_hash;
+} DM2_V1_FileHeaderWorldInteractionReceipt;
+
 /* One original champion-selection root joined to its exact CHAMPIONS Raw8
  * and text template. This is an observational receipt for the
  * c_hero.cpp::DM2_SELECT_CHAMPION precondition; it neither revives a hero nor
@@ -1717,6 +1733,13 @@ int dm2_v1_boot_champion_selection_census(
 int dm2_v1_boot_file_header_runtime_map_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt);
+
+/* Read every File_header map through the same bounded c_map -> c_record
+ * route as the local receipts.  This is an ownership census only and cannot
+ * make input, movement, timer dispatch or rendering live. */
+int dm2_v1_boot_file_header_world_interaction_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_FileHeaderWorldInteractionReceipt *out_receipt);
 
 /* Join File_header::w8's original map-0 start pose to the mounted
  * File_header ground-stack chain. It is a New Game admission receipt, not

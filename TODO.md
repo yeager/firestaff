@@ -16,6 +16,9 @@
   medium. Nästa atomära ägare måste därför bevara den delade recordägaren genom
   bonus- och handcontainertransaktionen, timerkö och aktuatorgenerator, och
   först därefter publicera party, HUD och viewport.
+  Alla 44 File_header-kartor har nu också ett gemensamt, läsande
+  interaktionskvitto för DB0/DB1/DB2/DB3, men kartbyten och mutationer är
+  fortfarande spärrade tills samma sessionägare finns.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

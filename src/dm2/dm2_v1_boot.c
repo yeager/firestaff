@@ -1820,6 +1820,111 @@ int dm2_v1_boot_file_header_map_texts_receipt(
         dungeon, map, out_receipt);
 }
 
+int dm2_v1_boot_file_header_world_interaction_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_FileHeaderWorldInteractionReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_FileHeaderWorldInteractionReceipt candidate;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    if (dungeon->level_count <= 0 || dungeon->level_count > DM2_V1_MAX_LEVELS)
+        return 0;
+
+    /* SKProject: sksvgame.cpp::DM2_LOAD_NEW_DUNGEON calls
+     * READ_DUNGEON_STRUCTURE(1), which owns every File_header map before
+     * DM2_PROCESS_ACTUATOR_TICK_GENERATOR runs.  Keep each payload tied to
+     * that one mounted allocation; c_map/c_record remain the only walkers. */
+    candidate.interaction_hash = 0x46485749u; /* "FHWI" domain. */
+    candidate.map_count = dungeon->level_count;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
+        DM2_V1_FileHeaderRuntimeTileCensus tiles;
+        DM2_V1_G1RuntimeMapDoorReceipt doors;
+        DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
+        DM2_V1_FileHeaderRuntimeTextReceipt texts;
+        DM2_V1_G1RuntimeMapActuatorReceipt actuators;
+        memset(&map_receipt, 0, sizeof(map_receipt));
+        memset(&tiles, 0, sizeof(tiles));
+        memset(&doors, 0, sizeof(doors));
+        memset(&teleporters, 0, sizeof(teleporters));
+        memset(&texts, 0, sizeof(texts));
+        memset(&actuators, 0, sizeof(actuators));
+        if (!dm2_v1_boot_file_header_runtime_map_receipt(
+                profile, map, &map_receipt) || !map_receipt.committed ||
+            !map_receipt.incomplete_world ||
+            !dm2_v1_boot_file_header_map_tile_census(profile, map, &tiles) ||
+            !tiles.committed || !tiles.incomplete_world ||
+            tiles.tile_count != map_receipt.width * map_receipt.height ||
+            !dm2_v1_boot_file_header_map_doors_receipt(profile, map, &doors) ||
+            !doors.committed || !doors.incomplete_world ||
+            doors.door_record_reads != doors.door_root_count ||
+            !dm2_v1_boot_file_header_map_teleporters_receipt(
+                profile, map, &teleporters) || !teleporters.committed ||
+            !teleporters.incomplete_world ||
+            teleporters.teleporter_record_reads !=
+                teleporters.teleporter_root_count ||
+            !dm2_v1_boot_file_header_map_texts_receipt(profile, map, &texts) ||
+            !texts.committed || !texts.incomplete_world ||
+            texts.text_record_reads != texts.text_record_count ||
+            !dm2_v1_boot_file_header_map_actuators_receipt(
+                profile, map, &actuators) || !actuators.committed ||
+            !actuators.incomplete_world ||
+            actuators.actuator_record_reads != actuators.actuator_root_count) {
+            return 0;
+        }
+        candidate.total_records += map_receipt.record_count;
+        candidate.total_tiles += tiles.tile_count;
+        candidate.total_doors += doors.door_root_count;
+        candidate.total_teleporters += teleporters.teleporter_root_count;
+        candidate.total_texts += texts.text_record_count;
+        candidate.total_actuators += actuators.actuator_root_count;
+        candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.interaction_hash, map_receipt.map_data_hash);
+        candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.interaction_hash, (uint32_t)map_receipt.record_count);
+        for (int tile_type = 0; tile_type < 8; ++tile_type)
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.interaction_hash, (uint32_t)tiles.tile_type_count[tile_type]);
+        for (int i = 0; i < doors.door_root_count; ++i)
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                dm2_v1_boot_packaged_capture_hash_step(
+                    candidate.interaction_hash, doors.doors[i].object_id),
+                doors.doors[i].attributes);
+        for (int i = 0; i < teleporters.teleporter_root_count; ++i)
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                dm2_v1_boot_packaged_capture_hash_step(
+                    candidate.interaction_hash, teleporters.teleporters[i].object_id),
+                teleporters.teleporters[i].destination_word);
+        for (int i = 0; i < texts.text_record_count; ++i)
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                dm2_v1_boot_packaged_capture_hash_step(
+                    candidate.interaction_hash, texts.texts[i].object_id),
+                texts.texts[i].text_index);
+        for (int i = 0; i < actuators.actuator_root_count; ++i) {
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.interaction_hash, actuators.actuators[i].object_id);
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.interaction_hash, actuators.actuators[i].attributes);
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.interaction_hash, actuators.actuators[i].control_word);
+            candidate.interaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.interaction_hash, actuators.actuators[i].target_word);
+        }
+    }
+    if (candidate.total_records <= 0 || candidate.total_tiles <= 0 ||
+        candidate.interaction_hash == 0u) return 0;
+    candidate.incomplete_world = 1;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_file_header_map_scene_census(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeSceneCensus *out_receipt)

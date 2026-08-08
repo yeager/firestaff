@@ -35,6 +35,10 @@
   både tickräknaren och `source_game_load_session_ready` avstängda. Det kan
   alltså inte starta ett syntetiskt spel; timerkö, handcontainrar,
   bonusmutationer och aktuatorgenerator återstår som en enda atomär ägare.
+- ✅ Hela den 44-kartors File_header-världen har nu ett källbundet
+  interaktionskvitto över DB0-dörrar, DB1-teleportörer, DB2-text/markörer och
+  DB3-aktuatorer. Det är läsande och kan inte öppna en obehörig kartbytes- eller
+  timerbana.
 
 - ✅ Added a reproducible inventory for all external `runtime-vdp12.raw`
   witnesses. The current corpus contains 34 valid files and 136 frame
