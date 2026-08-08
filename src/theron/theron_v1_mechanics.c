@@ -713,7 +713,15 @@ void theron_v1_apply_post_move_effects(Theron_V1_World *world) {
      *
      * Source: THQUEST.ASM T700; consumer destination remains unresolved.
      */
-    if (theron_v1_source_level_needs_stat_consumer(world)) return;
+    if (theron_v1_source_level_needs_stat_consumer(world)) {
+        /* A real move still advances the source world clock.  The previous
+         * early return skipped T700's tick orchestrator altogether, so a
+         * verified Track 02 level could move without timers (or any later
+         * source-bound consumer) seeing a tick.  Keep the unresolved stat
+         * fields untouched, but dispatch the common world tick. */
+        theron_v1_world_tick(world);
+        return;
+    }
 
     world->world_tick++;
 

@@ -398,6 +398,28 @@ static int test_idle_tick(void)
     return 1;
 }
 
+static int test_source_move_advances_tick_without_fixture_stats(void)
+{
+    Theron_V1_World world;
+    int result;
+
+    TEST("Source level move advances T700 clock without guessed stats");
+    setup_open_room(&world);
+    world.levels[0][0].source_header_verified = 1;
+    world.party.champions[0].food = 7;
+    world.party.champions[0].water = 8;
+    world.party.champions[0].stamina = 9;
+    result = theron_v1_move_party(&world, THERON_DIR_NORTH);
+    ASSERT(result == THERON_MOVE_OK, "source move should succeed");
+    ASSERT(world.world_tick == 11, "source move should advance world tick");
+    ASSERT(world.party.champions[0].food == 7 &&
+           world.party.champions[0].water == 8 &&
+           world.party.champions[0].stamina == 9,
+           "unresolved T700 stat consumer must not use fixture drains");
+    PASS();
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Main
  * ══════════════════════════════════════════════════════════════════════ */
@@ -418,6 +440,7 @@ int main(void)
     test_exit_dungeon();
     test_wait_tick();
     test_idle_tick();
+    test_source_move_advances_tick_without_fixture_stats();
 
     printf("\n=====================================================\n");
     printf("Results: %d/%d passed  (%s)\n",

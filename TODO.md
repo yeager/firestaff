@@ -101,6 +101,7 @@
 - Theron: the first real Track 02 screen-space capture is now published in README; replace the capture-only route with the authenticated T520/T600 square, perspective and HUD consumers when their runtime ownership is recovered.
 - Theron: world snapshot version 5 now preserves all 64 source-generator runtime slots and reads version 4's five-slot tail; bind the original T700 generator consumer, cadence and reactivation semantics before making those records executable.
 - Theron: regular-spawn admission now requires the matching raw Track 02 monster type and non-empty source group record; bind the dynamic RNG return contract before publishing those records as new live creatures.
+- Theron: verified-level moves now dispatch the common world tick without guessed stat drains; bind the original T700 field consumer and exact cadence before mutating hunger, water, stamina or poison.
 - Theron: source inventory, object, timer and admitted live-creature provenance now use explicit field-by-field wire layouts; retain version-1/2 readers only as migration support.
 - Theron: the loader now retains complete source occurrences for categories 0..10, 14 and 15; bind those control records to their original disassembly consumers without conflating the occurrence census with executable world-object ownership.
 - Theron: source-level pickup now rejects unbound/generic object fallback; bind source-authenticated use/equip/consume consumers before allowing those transitions on real levels.

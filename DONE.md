@@ -14,6 +14,15 @@
   proceed to the unresolved RNG consumer. Invalid group counts and empty
   source HP slots are rejected as well; no synthetic creature is published.
 
+# 2026-08-08 Theron verified-level tick dispatch
+
+- ✅ Verified Track 02 moves now advance the common world tick and timer/AI
+  dispatch even while the unresolved T700 hunger, water, stamina and poison
+  field consumer remains gated. The prior early return skipped the entire
+  tick, causing real-level movement to advance position without advancing
+  world time. A regression confirms the clock advances while fixture stat
+  drains remain disabled.
+
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
 # 2026-08-08 Theron source-property pickup gate
