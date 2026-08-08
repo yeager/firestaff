@@ -7449,6 +7449,12 @@ that its exact runtime path is not already source-locked and tested.
    an FSSB snapshot. This preserves documented GAMEBLOCK2/party state and
    leaves the selected game-data artifact untouched. User-created
    `CSBGAME.DAT` extended-object/timer round-trip support remains open.
+   2026-08-08: the real hash-verified PC 3.4 Prison route now has a cold
+   process-boundary regression as well: Ctrl-S Save and Quit, M11 shutdown,
+   a fresh boot profile and direct Resume retain the saved map, party pose
+   and game clock. This proves the user-facing F0433/F0435 handoff rather
+   than only a QuickLoad in the still-live process. It does not claim a
+   CSBWin DSA save format or complete original PC save-byte parity.
 6. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
    creature, and static-object rendering through the live M11 dungeon path.

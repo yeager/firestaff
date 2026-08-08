@@ -143,6 +143,12 @@ int main(void)
     int y;
     int c013_nonblack = 0;
     int viewport_nonblack = 0;
+    int relaunch_save_available = 0;
+    uint32_t relaunch_game_time = 0u;
+    int relaunch_level = -1;
+    int relaunch_x = -1;
+    int relaunch_y = -1;
+    int relaunch_dir = -1;
     const M11_AssetSlot *c013;
     unsigned char *decoded = NULL;
     int decoded_w = 0;
@@ -685,7 +691,18 @@ int main(void)
             profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
             CHECK(profile && profile->runtime.game_time == view.lastSaveTick,
                   "CSB save-and-quit records the F0433 runtime clock, not a DM1 world tick");
-            remove(quicksave_path);
+            if (profile) {
+                /* ReDMCSB LOADSAVE.C F0433 persists the state consumed by a
+                 * later F0435 process, not only an in-memory QuickLoad. Keep
+                 * this explicit disposable path until the cold-start check
+                 * below has rebuilt an independent M11/boot profile. */
+                relaunch_save_available = 1;
+                relaunch_game_time = profile->runtime.game_time;
+                relaunch_level = profile->runtime.current_level;
+                relaunch_x = profile->runtime.party_x;
+                relaunch_y = profile->runtime.party_y;
+                relaunch_dir = profile->runtime.party_dir;
+            }
         }
     }
     {
@@ -732,6 +749,27 @@ int main(void)
               "F0280 mirror record remains authoritative across the next CSB input refresh");
     }
     M11_GameView_Shutdown(&view);
+    if (relaunch_save_available) {
+        M11_GameLaunchSpec resumed_spec = spec;
+        M11_GameViewState resumed_view;
+        const CSB_V1_BootProfile *resumed_profile;
+
+        resumed_spec.savePath = quicksave_path;
+        M11_GameView_Init(&resumed_view);
+        CHECK(M11_GameView_Start(&resumed_view, &resumed_spec),
+              "cold M11 launch accepts the real PC3.4 Save and Quit artifact");
+        resumed_profile = (const CSB_V1_BootProfile *)resumed_view.csbBootProfile;
+        CHECK(resumed_profile && !resumed_view.csbState.startup_title_active &&
+                  !resumed_view.csbState.startup_entrance_active &&
+                  resumed_profile->runtime.game_time == relaunch_game_time &&
+                  resumed_profile->runtime.current_level == relaunch_level &&
+                  resumed_profile->runtime.party_x == relaunch_x &&
+                  resumed_profile->runtime.party_y == relaunch_y &&
+                  resumed_profile->runtime.party_dir == relaunch_dir,
+              "cold F0435 resume restores the saved PC3.4 runtime pose and clock");
+        M11_GameView_Shutdown(&resumed_view);
+        remove(quicksave_path);
+    }
     if (failures) return 1;
     puts("PASS: csb_v1_m11_prison_runtime_hud_pc34");
     return 0;

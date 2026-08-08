@@ -7689,3 +7689,13 @@
 - ✅ Backup recovery now updates this provenance after restoring a canonical
   `CSBGAME*.DAT` name. Source references: ReDMCSB `LOADSAVE.C` F0433 and
   F0435, including the verified-save restore sequence around lines 2721–2728.
+
+# CSB PC 3.4 cold resume (2026-08-08)
+
+- ✅ The real PC 3.4 Prison regression now drives Ctrl-S Save and Quit,
+  destroys the M11 view, then creates an independent M11/boot profile from
+  the saved path. The fresh F0435 handoff restores the exact saved map,
+  party position, facing and clock.
+- ✅ This complements the existing in-process Load Saved Game route and
+  confirms that the player-visible saved artifact is usable after a new app
+  launch. Source reference: ReDMCSB `LOADSAVE.C` F0433/F0435.
