@@ -9377,8 +9377,6 @@
 - ✅ Sekvensen är kopplad till de hashverifierade SLEV/SAL/MAP/SDDRVS-filerna
   endast som observation; event-ID, MAP-rad, SAL-codec och playback förblir
   uttryckligen obundna.
-<<<<<<< HEAD
-
 # DM2 SKSAVE possessionlänkar från direktrotter (2026-08-08)
 
 - ✅ Den källägda direct-root-fasen behåller nu varje
@@ -9397,7 +9395,6 @@
   instrumenterat Mednafen-child fail-closed.
 - ✅ Timeout-/avbrottstestet verifierar att processen stängs och att ingen
   ofullständig `runtime-vdp12.raw` lämnas som evidens.
-
 # DM2 SKSAVE teleportergrind för kartkedjor (2026-08-08)
 
 - ✅ Lade till den source-ägda teleporterfrågan för en aktiv SKSAVE-karta.
@@ -9409,3 +9406,10 @@
   resultat och skapar aldrig en destination, ett objekt eller ett mapbyte.
 - ✅ Realdataregressionen passerar 192/192. Det här är fortsatt en
   förberedande GAME_LOAD-del och öppnar inte Resume.
+# Nexus CTest-realdata bindning för SAL/MAP (2026-08-08)
+
+- ✅ `nexus_v1_sal_map_corpus` hade saknad `FIRESTAFF_NEXUS_DATA_DIR` och
+  skipade därför alltid retailkorpusen i CTest. CMake-testet binder nu samma
+  konfigurerade Nexus-dataroot som övriga real-media-tester.
+- ✅ Efter omkonfigurering kör CTest hela 16-level SAL/MAP-korpusen och
+  passerar, i stället för att bara passera som skip.

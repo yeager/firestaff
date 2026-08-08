@@ -41792,6 +41792,7 @@ add_test(
     COMMAND test_nexus_v1_sal_map_corpus
 )
 set_tests_properties(nexus_v1_sal_map_corpus PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "tier4;nexus;audio;sal;map;corpus"
     SKIP_RETURN_CODE 77
 )
