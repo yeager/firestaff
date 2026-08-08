@@ -1322,6 +1322,26 @@ def dry_run(plan: list[PlanStep],
             failures.append("dosbox rawshot backend: source size metadata missing")
         if rawshot_meta.get("capture_source_sha256") != _sha256_file(rawshot_source):
             failures.append("dosbox rawshot backend: source sha256 metadata mismatch")
+        partial_capture_dir = tmp_root / "rawshot-partial-png-capture-root" / "dosbox-capture"
+        partial_capture_dir.mkdir(parents=True)
+        partial_valid = partial_capture_dir / "image-valid-rendered.png"
+        Image.new("RGB", (320, 200), (68, 68, 68)).save(partial_valid)
+        time.sleep(0.01)
+        partial_png = partial_capture_dir / "image-partial-rendered.png"
+        partial_png.write_bytes(b"\x89PNG\r\n\x1a\npartial")
+        partial_target = (
+            tmp_root / "rawshot-partial-png-capture-root" /
+            "state-samples" / "partial_png_fixture.png"
+        )
+        partial_img, partial_meta = _load_latest_dosbox_capture(
+            partial_target, {}
+        )
+        if partial_img.size != (320, 200):
+            failures.append("dosbox rawshot backend: partial PNG fallback size mismatch")
+        if partial_meta.get("capture_source") != str(partial_valid):
+            failures.append(
+                "dosbox rawshot backend: unreadable newest PNG was not skipped"
+            )
         rewrite_capture_dir = tmp_root / "rawshot-rewrite-capture-root" / "dosbox-capture"
         rewrite_capture_dir.mkdir(parents=True)
         rewrite_source = rewrite_capture_dir / "rewritten.raw"
@@ -1640,7 +1660,19 @@ def _load_dosbox_capture_image(source: Path):
         raise RuntimeError("Pillow and numpy are required for --live")
     from PIL import Image
 
-    return Image.open(source).convert("RGB")
+    # DOSBox creates the rendered PNG in-place.  A caller can observe the
+    # directory entry before the encoder has finished writing it.  Force the
+    # decode while the file handle is open so the caller can retry a partial
+    # image instead of leaking PIL's lazy-read exception out of the capture
+    # state machine.
+    try:
+        with Image.open(source) as opened:
+            opened.load()
+            return opened.convert("RGB")
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(
+            f"DOSBox capture is not readable yet: {source}: {exc}"
+        ) from exc
 
 
 def _load_latest_dosbox_capture(
@@ -1655,8 +1687,19 @@ def _load_latest_dosbox_capture(
                 candidates.append((item, sig))
     if not candidates:
         raise RuntimeError(f"DOSBox rawshot did not create a capture in {capture_dir}")
-    latest, latest_sig = max(candidates, key=lambda p: (p[1][0], p[0].name))
-    img = _load_dosbox_capture_image(latest)
+    load_errors: list[str] = []
+    for latest, latest_sig in sorted(
+            candidates, key=lambda p: (p[1][0], p[0].name), reverse=True):
+        try:
+            img = _load_dosbox_capture_image(latest)
+            break
+        except RuntimeError as exc:
+            load_errors.append(str(exc))
+    else:
+        detail = "; ".join(load_errors[-3:])
+        raise RuntimeError(
+            f"DOSBox captures appeared but none was readable in {capture_dir}: {detail}"
+        )
     raw.parent.mkdir(parents=True, exist_ok=True)
     img.save(raw)
     return img, {
@@ -2143,7 +2186,14 @@ OSASCRIPT_KEY_CODES = {
     "Key-Down": 125,
     "Key-Left": 123,
     "Key-Right": 124,
+    # Apple virtual-key codes for the numeric keypad.  Keypad-5 was the only
+    # entry originally needed by the bootstrap route; post-dungeon capture
+    # routes also use the source-authenticated turn keys.
+    "Keypad-2": 84,
+    "Keypad-4": 86,
     "Keypad-5": 87,
+    "Keypad-6": 88,
+    "Keypad-8": 91,
     "0": 29, "1": 18, "2": 19, "3": 20, "4": 21,
     "5": 23, "6": 22, "7": 26, "8": 28, "9": 25,
 }
@@ -2157,6 +2207,11 @@ CICLICK_MODIFIED_KEYPAD = {
     # regular 2 key.
     "Alt-Keypad-2": "num-2",
     "Alt-Keypad-Plus": "num-plus",
+}
+
+OSASCRIPT_MODIFIED_KEYPAD_CODES = {
+    "Alt-Keypad-2": 84,
+    "Alt-Keypad-Plus": 69,
 }
 
 
@@ -2200,12 +2255,22 @@ def _press_key(key: str) -> None:
             ["cliclick", "kd:alt", f"kp:{modified_keypad}", "ku:alt"],
             timeout=5.0,
         )
-        if getattr(proc, "returncode", 1) != 0:
-            raise RuntimeError(
-                f"cliclick Alt+{modified_keypad} failed: "
-                f"{proc.stderr.strip() or proc.stdout.strip()}"
-            )
-        return
+        if getattr(proc, "returncode", 1) == 0:
+            return
+        fallback_code = OSASCRIPT_MODIFIED_KEYPAD_CODES.get(key)
+        if fallback_code is not None:
+            try:
+                _osascript_key_code(fallback_code, ("option",))
+                return
+            except RuntimeError as fallback_exc:
+                raise RuntimeError(
+                    f"cliclick and osascript Alt+{modified_keypad} failed: "
+                    f"{proc.stderr.strip() or proc.stdout.strip()}; {fallback_exc}"
+                ) from fallback_exc
+        raise RuntimeError(
+            f"cliclick Alt+{modified_keypad} failed: "
+            f"{proc.stderr.strip() or proc.stdout.strip()}"
+        )
     # Fallback for any single character not in the explicit key-code map.
     if len(key) == 1:
         proc = _run_quiet(
