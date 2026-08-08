@@ -117,6 +117,17 @@
   från publicerad session: fyra når lokala recordpooler, men ingen når den
   kompletta kart-/recycler-kedjan. Råa SKSAVE-byte förblir orörda.
 
+# DM2 SKSAVE privata postload-effekter (2026-08-08)
+
+- ✅ Den behållna SKSAVE-ägaren kör nu `DM2_PROCEED_GLOBAL_EFFECT_TIMERS` i
+  originalets ordning efter den källordnade dungeonläsningen. Den utför
+  0x46-ljus, 0x47-räknare, 0x48-förtrollningskraft och 0x4b-förgiftning mot
+  de verkliga `c_tim`- och `c_hero`-posterna.
+- ✅ En 0x0e-post saknar ännu sin kompletta spelvärldshanterare och avbryter
+  därför transaktionen atomärt. Viktberäkning är lika tydligt spärrad tills
+  aktiv hand, container och party ägs tillsammans med världen. Resume och
+  `source_game_load_session_ready` förblir noll.
+
 # DM2 New Game 0x04-konsument vid GAME_LOAD-gränsen (2026-08-08)
 
 - ✅ Den privata `GameLoadWorldOwner` kan nu konsumera en autentiskt kodad

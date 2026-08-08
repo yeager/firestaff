@@ -65,8 +65,11 @@
   först efter att hela den befintliga återställningskedjan lyckats. Den
   verkliga DOS-korpusen har ännu ingen fil vars kart-/recycler-kedja når hela
   vägen, så Resume är fortsatt spärrad för samtliga åtta filer. Nästa steg är
-  originalets globala effekt-timerfas och en komplett sessionscommit, inte en
-  påhittad save- eller resumeväg.
+  en komplett sessionscommit med viktberäkning, 0x0e-hantering och
+  timerdispatch mot samma c_party- och världsägarobjekt. Den privata
+  postload-fasen utför redan originalets 0x46/0x47/0x48/0x4b-effekter och
+  återställer atomärt vid 0x0e, men får inte bli en påhittad save- eller
+  resumeväg.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. Nästa
