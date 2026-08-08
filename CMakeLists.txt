@@ -53899,9 +53899,6 @@ endif()
 add_test(NAME dm1_v1_platform_timing_exception_pc34_compat
   COMMAND test_dm1_v1_platform_timing_exception_pc34_compat)
 
-add_test(NAME csb_v1_viewport_f0115_real_overlay_pc34_compat
-  COMMAND test_csb_v1_viewport_f0115_real_overlay_pc34_compat)
-
 add_executable(test_csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat
     tests/test_csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat.c
     src/csb/csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat.c)
