@@ -83,6 +83,15 @@ static int test_font256(void) {
         return 1;
     }
     printf("  PASS DMWeb FONT256 map/page header facts\n");
+    if (r.tilemap_entry_count != 4096 ||
+        r.tilemap_max_word != 4094U ||
+        r.tile_count != 2048 ||
+        r.character_generator_tile_count != 242) {
+        printf("  FAIL FONT256 page-pattern/CG counts\n");
+        free(data);
+        return 1;
+    }
+    printf("  PASS FONT256 separates 4096 page words, 2048 pattern capacity, 242 CG tiles\n");
     {
         uint8_t tile[64];
         if (nexus_v1_font_s2d_copy_character_generator_tile(

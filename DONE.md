@@ -1,3 +1,12 @@
+# Nexus FONT256 page-pattern and CG counts separated (2026-08-08)
+
+- ✅ The real `FONT256.S2D` receipt now distinguishes 4096 page words, the
+  derived 2048 pattern-name capacity and the 242 actual 8×8 CG tiles.
+- ✅ No glyph mapping or VDP2 text placement is promoted; the separation
+  prevents the derived pattern capacity from becoming a synthetic glyph table.
+- ✅ Verified against the mounted retail `FONT256.S2D` corpus and its S2D
+  decoder regression.
+
 # Nexus startup reset no longer invents LEV00 (2026-08-08)
 
 - ✅ `nexus_mechanics_init()` now keeps `map_index=-1` until a retail Saturn

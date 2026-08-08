@@ -1369,6 +1369,10 @@
   (`857` populated blocks, `68` runs, byte counts `8890/3498/3100/16`) by
   the real-data grammar test. This closes a false SKIP only; glyph mapping,
   pixels and VDP2 text placement remain capture-gated.
+  2026-08-08 follow-up: the real S2D receipt now keeps the 4096 page words,
+  2048 page-pattern capacity and 242 actual CG tiles as separate facts. The
+  pattern capacity is no longer available as if it were a 2048-entry glyph
+  table; code mapping and VDP2 placement remain capture-gated.
 
 - **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
   queued movement or turn commands merely because DGN floor geometry decoded;

@@ -43,7 +43,13 @@ typedef struct {
     uint16_t page_pattern_name_auxiliary_data;
     int tilemap_width;
     int tilemap_height;
+    /* `tile_count` is the capacity implied by page pattern-name words. It is
+     * not the number of real Character Generator tiles and must not be used
+     * as a glyph/code mapping. */
     int tile_count;
+    int tilemap_entry_count;
+    uint16_t tilemap_max_word;
+    int character_generator_tile_count;
     int palette_color_count;
     uint32_t data_hash;
 } Nexus_V1_FontS2dDecodeResult;

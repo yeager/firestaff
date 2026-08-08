@@ -169,12 +169,20 @@ int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
             int n_entries = (int)(map_data_size / 2);
             uint16_t max_idx = 0;
             int j;
+            out->tilemap_entry_count = n_entries;
             for (j = 0; j < n_entries; j++) {
                 uint16_t idx = read_be16(data + map_off + 16 + j * 2);
                 if (idx > max_idx) max_idx = idx;
             }
+            out->tilemap_max_word = max_idx;
             out->tile_count = (max_idx / 2) + 1;
         }
+    }
+
+    if (out->character_generator_size >= 16U &&
+        (out->character_generator_size - 16U) % 64U == 0U) {
+        out->character_generator_tile_count =
+            (int)((out->character_generator_size - 16U) / 64U);
     }
 
     /* Section 3: palette — 16-byte header + N*2 BGR555 colors */
