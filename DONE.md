@@ -24,6 +24,15 @@
   `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
   felaktigt publiceras för den Amiga-specifika språkväljaren.
 
+# Nexus samlet placeholder/provenance-audit (2026-08-08)
+
+- ✅ Added `docs/NEXUS_PLACEHOLDER_AUDIT.md`, which consolidates the current
+  real-data inventory, isolated synthetic fixture lanes, no-op/fallback gates,
+  37-file runtime-capture census and the exact verification commands. It
+  explicitly separates byte parsing from Saturn consumer provenance and
+  records the remaining startup/menu/HUD/viewport, Structure3, ITEM/loot and
+  SLEV/SAL/SDDRVS capture gaps.
+
 # Nexus Structure3 face campaign regenerated from all retail DGN levels (2026-08-08)
 
 - ✅ Ran the source-bound Structure3 face campaign against the real
