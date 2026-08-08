@@ -4245,6 +4245,102 @@ static void m11_csb_advance_amiga_titl(M11_GameViewState *state,
         (int)state->csbAmigaTitlVbl;
 }
 
+/* ReDMCSB APPA.C:63-90 enters APPB after ANIM returns. APPB owns only its
+ * selection page until a mouse release returns FNCH/ENGL/GRMN, so preserve
+ * M11's verified A31M package boundary and decode the page from APPB.FTL.
+ * No PC34 title, font, or reconstructed menu may appear in this interval. */
+static int m11_csb_prepare_amiga_appb_selection(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_AmigaAppbSelectionReceipt selection;
+    char path[FSP_PATH_MAX];
+    char md5[33];
+    FILE *file = NULL;
+    long length;
+    uint8_t *bytes = NULL;
+    int decoded = 0;
+
+    if (!state || !state->csbBootProfile || state->csbAmigaAppbSelectionActive) {
+        return state && state->csbAmigaAppbSelectionActive;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a31_profile(profile) || !profile->asset_root[0] ||
+        snprintf(path, sizeof(path), "%s/APPB.FTL", profile->asset_root) <= 0 ||
+        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        strcmp(md5, "35987d3f0278c6036fcc24786d4a75d7") != 0) {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0 || length > 1024L * 1024L ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (bytes && fread(bytes, 1u, (size_t)length, file) == (size_t)length) {
+        memset(&selection, 0, sizeof(selection));
+        decoded = csb_v1_amiga_appb_decode_language_selection(
+            bytes, (size_t)length, state->csbAmigaTitlPixels,
+            sizeof(state->csbAmigaTitlPixels), &selection);
+    }
+    fclose(file);
+    free(bytes);
+    if (!decoded) return 0;
+    memcpy(state->csbAmigaTitlPalette, selection.rgb4,
+           sizeof(state->csbAmigaTitlPalette));
+    state->csbAmigaAppbSelectionActive = 1;
+    return 1;
+}
+
+static int m11_csb_complete_amiga_appb_english_handoff(M11_GameViewState *state)
+{
+    CSB_V1_BootProfile *profile;
+    char path[FSP_PATH_MAX];
+    char md5[33];
+
+    if (!state || !state->csbBootProfile || !state->csbAmigaAppbSelectionActive) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a31_profile(profile) || !profile->asset_root[0] ||
+        !profile->runtime.dungeon_handle ||
+        snprintf(path, sizeof(path), "%s/KAOS.FTL", profile->asset_root) <= 0 ||
+        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        strcmp(md5, "dbb79832c9cc3db82886ba8d3f72748a") != 0) {
+        return 0;
+    }
+    /* APPA.C:71-74 maps ENGL to KAOS with language parameter zero. The
+     * selected package already owns the A31M dungeon/runtime allocation, so
+     * cross that same C03_GAME boundary without a PC34 entrance session. */
+    profile->runtime.state = CSB_STATE_GAME;
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_dismissed = 1;
+    state->csbAmigaAppbSelectionActive = 0;
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    return 1;
+}
+
+static int m11_csb_handle_amiga_appb_pointer_release(
+    M11_GameViewState *state, int x, int y, int button_mask)
+{
+    if (!state || !state->csbAmigaAppbSelectionActive ||
+        (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+        return 0;
+    }
+    /* SWITCHDA.C:1111-1115: French, English, German. F1288 consumes a
+     * left-button release, then F0798 tests those original 320x200 zones. */
+    if (x < 68 || x > 130) return 0;
+    if (y >= 79 && y <= 123) {
+        return m11_csb_complete_amiga_appb_english_handoff(state) ? 1 : -1;
+    }
+    /* The selected corpus has only the verified English KAOS continuation.
+     * Do not send French/German through English media or fabricate a marker. */
+    if ((y >= 28 && y <= 72) || (y >= 130 && y <= 174)) return -1;
+    return 0;
+}
+
 static int m11_csb_present_amiga_titl_startup(M11_GameViewState *state,
                                                unsigned char *framebuffer,
                                                int framebuffer_width,
@@ -4254,7 +4350,8 @@ static int m11_csb_present_amiga_titl_startup(M11_GameViewState *state,
     int color;
 
     if (!state || !framebuffer || framebuffer_width <= 0 ||
-        framebuffer_height <= 0 || !state->csbAmigaTitlBytes) return 0;
+        framebuffer_height <= 0 || (!state->csbAmigaTitlBytes &&
+                                    !state->csbAmigaAppbSelectionActive)) return 0;
     for (color = 0; color < 256; ++color) {
         const uint8_t *rgb = state->csbAmigaTitlPalette[color & 15];
         rgb6[color][0] = (uint8_t)(rgb[0] << 2);
@@ -23231,10 +23328,15 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_csb_is_amiga_a31_profile(csb_profile) &&
-            state->csbState.startup_title_active &&
-            !state->csbStartupRuntimeAssetSession) {
-            m11_csb_advance_amiga_titl(state, csb_profile->tick_ms);
+    if (m11_csb_is_amiga_a31_profile(csb_profile) &&
+        state->csbState.startup_title_active &&
+        !state->csbStartupRuntimeAssetSession) {
+            if (!state->csbAmigaAppbSelectionActive) {
+                m11_csb_advance_amiga_titl(state, csb_profile->tick_ms);
+                if (state->csbAmigaTitlVbl >= 606u) {
+                    (void)m11_csb_prepare_amiga_appb_selection(state);
+                }
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         /* Usually EMIT_GAME_WON enters this route immediately. Retain this
@@ -27981,6 +28083,14 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+    {
+        const int amiga_result = m11_csb_handle_amiga_appb_pointer_release(
+            state, x, y, buttonMask);
+        if (amiga_result != 0) {
+            return amiga_result > 0 ? M11_GAME_INPUT_REDRAW :
+                                      M11_GAME_INPUT_IGNORED;
+        }
+    }
     if (!state->v1InventoryDragActive) {
         return M11_GAME_INPUT_IGNORED;
     }

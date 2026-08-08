@@ -1657,6 +1657,10 @@ typedef struct {
     uint16_t csbAmigaTitlAppliedDeltaCount;
     int csbAmigaTitlClockStarted;
     int csbAmigaTitlFrameBound;
+    /* APPB.FTL follows A31M's 606-VBL TITL sequence. This flag has a
+     * separate owner because SWITCH.C F1288 waits for mouse-button release
+     * before APPA.C chooses the KAOS program. */
+    int csbAmigaAppbSelectionActive;
     uint8_t csbAmigaTitlPixels[320 * 200];
     uint8_t csbAmigaTitlPalette[16][3];
     struct {

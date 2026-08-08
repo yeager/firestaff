@@ -134,9 +134,19 @@
 - ✅ Ett realdatatest låser APPB.FTL:s MD5, palett och avkodade pixelhash.
   `TITL.DAT`-regressionen passerar samtidigt, så den nya APPB-vägen ändrar
   inte titelns VBlank-kadens eller dess källägda bild.
-- 🔧 Klickrutorna och `FNCH`/`ENGL`/`GRMN`-returen är medvetet inte bundna
-  ännu. Nästa steg är `SWITCH.C` F1288 och `APPA.C`-handoff till den
-  verifierade `KAOS.FTL`-runtimen.
+- ✅ APPB:s engelska releasezon är bunden till `SWITCH.C` F1288 och
+  `APPA.C`-handoff till den verifierade `KAOS.FTL`-runtimen. Fransk och tysk
+  returnerar fortsatt ingen ersättningsruntime utan egen mediebevisning.
+
+# CSB Amiga A31M APPB till KAOS-handoff (2026-08-08)
+
+- ✅ När den källägda titelströmmen passerar 606 VBlank visar M11 nu den
+  autentiskt avkodade APPB-sidan. En release i den engelska originalzonen
+  `(68,79,62,44)` följer ReDMCSB `SWITCH.C` F1288 och `APPA.C:71-74` till
+  hashverifierade `KAOS.FTL`, sedan C03_GAME-runtimen från samma paket.
+- ✅ Det verkliga A31M-handofftestet täcker TITL → APPB → engelsk release →
+  KAOS/C03_GAME. Fransk och tysk zon lämnas fail-closed eftersom den valda
+  originalkorpusen inte bevisar deras egna dungeon- och runtimevägar.
 
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
   dimensions, cell counts and maximum tile indices instead of keeping only

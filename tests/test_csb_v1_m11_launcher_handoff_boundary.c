@@ -1992,8 +1992,16 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     }
     expect_true(view.csbState.startup_title_active &&
                 view.csbAmigaTitlVbl >= 606u &&
+                view.csbAmigaAppbSelectionActive &&
                 profile->runtime.state != CSB_STATE_GAME,
-                "A31M retains its final title frame until native APPB language selection is bound");
+                "A31M presents its original APPB language selector after TITL.DAT");
+    expect_true(M11_GameView_HandlePointerButtonRelease(
+                    &view, 99, 100, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW &&
+                !view.csbState.startup_title_active &&
+                !view.csbAmigaAppbSelectionActive &&
+                profile->runtime.state == CSB_STATE_GAME,
+                "A31M English APPB release hands off through KAOS.FTL to C03_GAME");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

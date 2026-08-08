@@ -28,9 +28,10 @@
   startkvittomotor kan inte längre ticka samma A31-bild en andra gång.
   När den verkliga 606-VBL-strömmen har löpt klart stannar M11 på den sista
   autentiska bilden. A31M:s `APPB.FTL` språkvalsyta avkodas nu från samma
-  hashverifierade program, men M11 behöver fortfarande binda dess klickrutor
-  och fortsättning till `KAOS.FTL` innan dungeonruntime får startas. A31:s
-  senare meny-, Prison- och Utility-ytor saknar fortfarande autentisk capture.
+  hashverifierade program. Dess engelska klickruta följer nu `SWITCH.C`
+  F1288:s releaseväg till `KAOS.FTL`; franska och tyska förblir spärrade
+  tills deras egna runtime-media är verifierade. A31:s senare meny-, Prison-
+  och Utility-ytor saknar fortfarande autentisk capture.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
