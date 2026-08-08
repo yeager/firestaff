@@ -99,6 +99,16 @@ for required_noop in (
 ):
     if required_noop not in runtime_body:
         fail(f"capture-gated production adapter missing: {required_noop}")
+for required_noop in (
+    'nexus_v1_rest_status_runtime_noop.c',
+    'nexus_v1_combat_runtime_noop.c',
+    'nexus_v1_magic_runtime_noop.c',
+    'nexus_v1_experience_runtime_noop.c',
+):
+    if not (ROOT / 'src' / 'nexus' / required_noop).is_file():
+        fail(f"capture-gated gameplay adapter missing from production archive: {required_noop}")
+    if required_noop in body and f'EXCLUDE REGEX "{required_noop}' in body:
+        fail(f"capture-gated gameplay adapter excluded from production archive: {required_noop}")
 for forbidden in (
     "src/nexus/nexus_v1_rasterizer.c",
     "src/nexus/nexus_v2_hud_runtime.c",

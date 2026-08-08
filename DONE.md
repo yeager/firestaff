@@ -9542,3 +9542,7 @@
 - ✅ `nexus_v1_status.c` och `nexus_v1_rest.c` är nu uttryckliga study/test-källor; produktionsbiblioteket använder den fail-closed `nexus_v1_rest_status_runtime_noop.c`-adaptern.
 - ✅ Status-, vila-, item-use-, spell-effects-, tick- och production-boundary-testerna passerar. Källgränsverifieringen passerar.
 - ✅ Retail övergångar förblir stängda tills autentisk Saturn-dispatch/cadence/writeback och HUD/VDP-konsument är fångade.
+# Nexus capture-gated gameplay-adapter boundary verifier (2026-08-08)
+
+- ✅ Produktionsgränsverifieraren kräver nu att `rest_status`, combat, magic och experience har sina fail-closed runtime-adaptrar kvar i `firestaff_nexus` samtidigt som de infererade studieimplementationerna hålls ute.
+- ✅ Detta täcker en tidigare blind fläck där källgränsen kunde passera trots att en adapter saknades eller exkluderades.
