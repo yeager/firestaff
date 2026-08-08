@@ -59,6 +59,12 @@ command-to-VRAM-korridorer, men deras source-span har ännu ingen exakt
 bindning till retail-MNS, DGN, ITEM, MENU, TITLE eller CLUT. Reset-capture
 bevisar inte startup eller meny.
 
+Capture-inventoryn visar dessutom `manifest_binding=missing` för äldre
+artefakter utan råhash. En launcherproducerad fil får bara stå som
+`verified` när manifestets `raw_sha256` och `raw_bytes` matchar exakt. Ett
+manifest med ofullständig eller felaktig råhash blir `mismatch` och kan inte
+användas som presentationsevidence.
+
 `writer-code.trace` och `vdp1-writes.trace` är dessutom separata, externa
 diagnostikartefakter. De får inte kopplas till en `runtime-vdp12.raw` från en
 annan körning bara för att PC, VRAM-adress eller byteprefix råkar sammanfalla.

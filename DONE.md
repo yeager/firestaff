@@ -1,3 +1,12 @@
+# Nexus capture-inventory råhashkontroll (2026-08-08)
+
+- ✅ `analyze_nexus_capture_inventory.py` kontrollerar nu manifestets
+  `raw_sha256` och `raw_bytes` mot varje faktisk `runtime-vdp12.raw` när
+  fälten finns. Äldre manifest utan råhash markeras `missing`, felaktiga
+  bindningar `mismatch` och endast exakta hashbindningar `verified`.
+- ✅ Den externa korpusen är fortsatt 37 råcapturefiler med
+  `startup_menu_hud_viewport_identity=unbound`; ingen presentation öppnades.
+
 # Nexus Saturn-capture manifest hashbindning (2026-08-08)
 
 - ✅ Den operatorstyrda råcapture-launchern skriver nu `raw_sha256` och

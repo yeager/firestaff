@@ -9,6 +9,7 @@ viewport ownership without an asset and consumer join.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 from pathlib import Path
 
@@ -36,6 +37,37 @@ def classify(tvmd: int, bgon: int) -> str:
     if tvmd == 0x2080 and bgon == 0x1110:
         return "rbg0-only"
     return "other-active-vdp2-state"
+
+
+def manifest_binding(capture_dir: Path, blob: bytes) -> str:
+    """Check the launcher-written raw hash when this run has one.
+
+    Older operator manifests predate the raw hash fields and remain useful
+    parameter receipts, but must not be reported as hash-bound captures.
+    """
+    candidates = [capture_dir / "capture.manifest", capture_dir / "manifest.txt"]
+    candidates.extend(sorted(capture_dir.glob("*.manifest")))
+    manifest = next((path for path in candidates if path.is_file()), None)
+    if manifest is None:
+        return "missing"
+    try:
+        fields: dict[str, str] = {}
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            if "=" in line:
+                key, value = line.split("=", 1)
+                fields[key] = value
+    except (OSError, UnicodeError):
+        return "mismatch"
+    expected_hash = fields.get("raw_sha256", "").lower()
+    expected_bytes = fields.get("raw_bytes", "")
+    if not expected_hash and not expected_bytes:
+        return "missing"
+    if (not re.fullmatch(r"[0-9a-f]{64}", expected_hash) or
+            not expected_bytes.isdigit() or
+            int(expected_bytes) != len(blob) or
+            expected_hash != hashlib.sha256(blob).hexdigest()):
+        return "mismatch"
+    return "verified"
 
 
 def main() -> int:
@@ -95,6 +127,7 @@ def main() -> int:
         print(
             f"file={path.parent.name} frames={len(frames)} "
             f"vdp1_nonidle_state_frames={active} states={distinct} first={first} "
+            f"manifest_binding={manifest_binding(path.parent, blob)} "
             "asset_consumer_identity=unbound"
         )
     print("frame_state_counts=" + ",".join(f"{key}:{value}" for key, value in sorted(totals.items())))
