@@ -40,6 +40,15 @@ later_generation_filter_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_ge
 origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+capture_script=$repo/scripts/capture_theron_mednafen_live_trace.sh
+
+if ! grep -Fq 'i:29) printf' "$capture_script" ||
+   ! grep -Fq 'ii:27) printf' "$capture_script" ||
+   ! grep -Fq 'i:54) printf' "$capture_script" ||
+   ! grep -Fq 'ii:55) printf' "$capture_script"; then
+    printf 'FAIL: capture helper must support stable Z/X and explicit comma/period profiles\n' >&2
+    exit 1
+fi
 
 if ! grep -Fq 'system_card_controller_result_memory_write logical=222d physical=%08x value=%02x' "$patch_file" ||
    ! grep -Fq 'cd_interface_raw_sector_read lba=%d bytes=2352 sector_fnv1a=%08x span_offset=0 span_bytes=32 span_fnv1a=%08x' "$patch_file" ||

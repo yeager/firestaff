@@ -9,8 +9,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - ✅ Mednafen's PCE replay masks now follow the real `PCE_GamepadIDII` wire
   vector order. Button I is `0x0001`, Button II `0x0002`, and Run `0x0008`;
   the old `ConfigOrder` values no longer leak into runtime input.
-- ✅ The macOS capture profile maps comma/period to Button I/II and the local
-  `mednafen.cfg` uses SDL scancodes `54/55`. A clean instrumented Mednafen
+- ✅ The macOS profile now uses layout-stable `Z`/`X` for Button I/II (SDL
+  scancodes `29/27`); comma/period remain supported only when explicitly
+  configured. A clean instrumented Mednafen
   build and patch dry-run pass; authentic US Track 02 reaches 161 raw sectors.
 - 🔒 The capture still has no non-System-Card game-owned CD read, so it does
   not promote the RNG, AI, T700, T900, or later-level semantics.

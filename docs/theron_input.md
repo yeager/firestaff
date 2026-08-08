@@ -10,9 +10,9 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 | D-pad Down | Down Arrow        | S              |
 | D-pad Left | Left Arrow        | Home, Q        |
 | D-pad Right| Right Arrow       | End, E         |
-| Button I   | Return            | Space          |
-| Button II  | Escape            |                |
-| Run        | —                 |                |
+| Button I   | Z                 | Return, Space  |
+| Button II  | X                 | Escape         |
+| Run        | Return            |                |
 | Select     | —                 |                |
 
 ## Startup menu
@@ -45,11 +45,12 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 
 ## Mednafen macOS capture profile
 
-The authenticated external capture profile currently assigns PCE Button I to
-keypad 3 and Button II to keypad 2. Comma and period are valid SDL scancodes
-only when the active `mednafen.cfg` explicitly assigns them to `gamepad.i` and
-`gamepad.ii`; they are not universal aliases. The Firestaff capture helper
-resolves the host key from that profile instead of assuming a character key.
+The recommended macOS profile assigns PCE Button I to `Z` and Button II to `X`.
+This avoids keyboard-layout-dependent punctuation. Comma and period are valid
+only when the active `mednafen.cfg` explicitly assigns their SDL scancodes to
+`gamepad.i` and `gamepad.ii`; they are not universal aliases. The Firestaff
+capture helper resolves the host key from that profile instead of assuming a
+character key.
 
 The PCE wire-state masks used by the replay helper follow Mednafen's device
 vector order (`I`, `II`, `SELECT`, `RUN`, `UP`, `RIGHT`, `DOWN`, `LEFT`), not

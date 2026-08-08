@@ -99,6 +99,10 @@ capture_host_code_for_mapping() {
         # Keep physical-I/II profiles usable when supplied by an older
         # Mednafen template; the mapping is still authenticated by cfg.
         i:12) printf '%s' 34 ;;
+        # Stable letter bindings avoid keyboard-layout-dependent punctuation
+        # on macOS. SDL_SCANCODE_Z/X are 29/27; Quartz virtual keycodes are 6/7.
+        i:29) printf '%s' 6 ;;
+        ii:27) printf '%s' 7 ;;
         # SDL_SCANCODE_COMMA/SDL_SCANCODE_PERIOD are common on compact
         # Mac keyboards when Button I/II have been assigned to `,`/`.`.
         # Quartz uses virtual keycodes 43/47 for those two keys.  Accept

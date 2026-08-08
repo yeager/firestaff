@@ -5,7 +5,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 ## 2026-08-08 — nästa T900-bevis
 
 - 🔧 Inputtransporten är nu verifierad med riktiga PCE-wiremasker och lokal
-  macOS-profil: Button I `,`, Button II `.`. Fortsätt fånga den saknade
+  macOS-profil: Button I `Z`, Button II `X` (layout-stabila SDL-bindningar).
+  Komma/punkt får bara användas när de uttryckligen finns i `mednafen.cfg`.
+  Fortsätt fånga den saknade
   spelägda CD-läsningen efter de 161 autentiska Track 02-sektorerna innan
   någon RNG-, AI-, T700- eller T900-semantik aktiveras.
 
