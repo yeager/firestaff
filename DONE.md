@@ -9447,3 +9447,8 @@
 - ✅ De sex skip-safe Nexus-capturetesterna för PRS3, SLEV, SAL och DGN får nu samma konfigurerade `FIRESTAFF_NEXUS_DATA_DIR` som övriga realdata-mål.
 - ✅ Detta ändrar inte capture-gates eller semantisk admission; tester utan autentisk extern trace fortsätter att skipa, men kan inte längre missa den riktiga Nexus-katalogen på grund av CTest-miljön.
 - ✅ Full CMake-ombyggnad, fokuserad CTest-körning och `git diff --check` passerar.
+# Nexus no-op item/loot owners removed from production archive (2026-08-08)
+
+- ✅ `nexus_v1_item_use.c`, `nexus_v1_containers.c` och `nexus_v1_drops.c` hade inga produktionsanrop och innehåller endast fail-closed/studie-API:er utan autentiserad Saturn-producer.
+- ✅ Modulerna är nu uttryckligen fixture-/gate-only; motsvarande tester länkar dem direkt och fortsätter verifiera att obevisad item-use, container-loot och gold/drop-mutation nekas.
+- ✅ `firestaff_nexus` byggs utan dessa no-op-ägare; inventory, item-use, containers, drops-gate och production-boundary passerar.

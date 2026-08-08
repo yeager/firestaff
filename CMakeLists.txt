@@ -56,7 +56,8 @@ add_test(NAME nexus_v1_movement_gameplay COMMAND test_nexus_v1_movement_gameplay
 set_tests_properties(nexus_v1_movement_gameplay PROPERTIES LABELS "nexus;movement;tier4")
 
 add_executable(test_nexus_v1_inventory_gameplay
-    tests/test_nexus_v1_inventory_gameplay.c)
+    tests/test_nexus_v1_inventory_gameplay.c
+    src/nexus/nexus_v1_containers.c)
 target_include_directories(test_nexus_v1_inventory_gameplay PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_inventory_gameplay PRIVATE firestaff_nexus)
@@ -271,7 +272,8 @@ add_test(NAME nexus_v1_triggers COMMAND test_nexus_v1_triggers)
 set_tests_properties(nexus_v1_triggers PROPERTIES LABELS "nexus;triggers;tier4")
 
 add_executable(test_nexus_v1_item_use
-    tests/test_nexus_v1_item_use.c)
+    tests/test_nexus_v1_item_use.c
+    src/nexus/nexus_v1_item_use.c)
 target_include_directories(test_nexus_v1_item_use PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_item_use PRIVATE firestaff_nexus)
@@ -459,7 +461,8 @@ add_test(NAME nexus_v1_switches COMMAND test_nexus_v1_switches)
 set_tests_properties(nexus_v1_switches PROPERTIES LABELS "nexus;switches;tier4")
 
 add_executable(test_nexus_v1_containers
-    tests/test_nexus_v1_containers.c)
+    tests/test_nexus_v1_containers.c
+    src/nexus/nexus_v1_containers.c)
 target_include_directories(test_nexus_v1_containers PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_containers PRIVATE firestaff_nexus)
@@ -475,7 +478,8 @@ add_test(NAME nexus_v1_sal_decode COMMAND test_nexus_v1_sal_decode)
 set_tests_properties(nexus_v1_sal_decode PROPERTIES LABELS "nexus;audio;tier4")
 
 add_executable(test_nexus_v1_drops_gate
-    tests/test_nexus_v1_drops_gate.c)
+    tests/test_nexus_v1_drops_gate.c
+    src/nexus/nexus_v1_drops.c)
 target_include_directories(test_nexus_v1_drops_gate PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_drops_gate PRIVATE firestaff_nexus)
@@ -6530,6 +6534,12 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
 # writers are host presentation helpers without authenticated Saturn VDP1/VDP2
 # ownership. Keep both sources in their explicit receipt probes only.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_ibs\\.c$")
+# These APIs are explicit fail-closed study/fixture lanes: no retail Saturn
+# producer currently reaches them. Keep their symbols out of firestaff_nexus
+# and link them only into the gate tests that assert the blocked contract.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_use\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_containers\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_drops\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_title_cg\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is
