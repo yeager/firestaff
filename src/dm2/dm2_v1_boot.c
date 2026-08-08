@@ -1403,6 +1403,11 @@ int dm2_v1_boot_new_game_transaction_receipt(
         selection_count > DM2_MAX_HEROES ||
         !dm2_v1_boot_new_game_entrance_receipt(profile, &candidate.entrance) ||
         !candidate.entrance.valid || !candidate.entrance.incomplete_game_load ||
+        !dm2_v1_boot_file_header_world_interaction_receipt(
+            profile, &candidate.world_interactions) ||
+        !candidate.world_interactions.valid ||
+        !candidate.world_interactions.incomplete_world ||
+        candidate.world_interactions.map_count <= candidate.entrance.map ||
         !dm2_v1_boot_file_header_runtime_map_receipt(
             profile, candidate.entrance.map, &candidate.entrance_map) ||
         !candidate.entrance_map.committed ||
@@ -1480,6 +1485,8 @@ int dm2_v1_boot_new_game_transaction_receipt(
     candidate.transaction_hash = 0x4e475458u; /* "NGTX" receipt domain. */
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, candidate.entrance.receipt_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.world_interactions.interaction_hash);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, candidate.entrance_map.map_data_hash);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(

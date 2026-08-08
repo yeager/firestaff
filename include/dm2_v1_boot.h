@@ -363,6 +363,7 @@ typedef struct {
     int valid;
     int incomplete_game_load;
     int hero_count;
+    DM2_V1_FileHeaderWorldInteractionReceipt world_interactions;
     DM2_V1_FileHeaderRuntimeMapReceipt entrance_map;
     DM2_V1_FileHeaderRuntimeSceneCensus entrance_scene;
     DM2_V1_FileHeaderRuntimeTileCensus entrance_tiles;

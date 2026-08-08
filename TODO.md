@@ -13,7 +13,8 @@
   direkta DB0-dörrar, DB1-teleportörer och DB3-aktuatorer,
   hela champion-DYN4-rosterkön, den klickordnade partyreceipten och possessions
   är nu ett gemensamt, läsande transaktionskvitto från samma hashverifierade
-  medium. Nästa atomära ägare måste därför bevara den delade recordägaren genom
+  medium, inklusive hela File_header-världens interaktionskvitto. Nästa atomära
+  ägare måste därför bevara den delade recordägaren genom
   bonus- och handcontainertransaktionen, timerkö och aktuatorgenerator, och
   först därefter publicera party, HUD och viewport.
   Alla 44 File_header-kartor har nu också ett gemensamt, läsande

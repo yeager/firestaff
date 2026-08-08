@@ -1540,6 +1540,9 @@ int main(void) {
                     source_transaction.incomplete_game_load &&
                     source_transaction.hero_count == 2 &&
                     source_transaction.entrance.valid &&
+                    source_transaction.world_interactions.valid &&
+                    source_transaction.world_interactions.map_count == 44 &&
+                    source_transaction.world_interactions.interaction_hash != 0u &&
                     source_transaction.entrance_map.committed &&
                     source_transaction.entrance_map.map ==
                         source_transaction.entrance.map &&
