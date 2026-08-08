@@ -23,6 +23,7 @@
 #include "nexus_v1_save.h"
 #include "theron_v1_save_load.h"
 #include "theron_v1_srm_classifier.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1615,6 +1616,7 @@ int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir) {
         "dm1", "csb", "dm2", "nexus", "theron"
     };
     char saveDir[512];
+    char userDataDir[512];
     int i;
     int n;
 
@@ -1646,6 +1648,24 @@ int M12_SaveBrowser_Scan(M12_SaveBrowserState* state, const char* dataDir) {
                      dataDir, games[i]);
         if (n > 0 && n < (int)sizeof(saveDir)) {
             (void)save_browser_scan_dir(state, saveDir);
+        }
+    }
+
+    /* Game data and writable saves deliberately have separate roots.  In
+     * particular, a macOS launcher may use an external/.firestaff data root
+     * while normal sessions write to Application Support/Firestaff/saves.
+     * ReDMCSB CEDTINC7.C selects a real DM1 save through the utility flow;
+     * do not make that choice disappear merely because its game data lives
+     * elsewhere.  Duplicate paths remain harmless through
+     * save_browser_has_path(). */
+    if (FSP_GetUserDataDir(userDataDir, sizeof(userDataDir))) {
+        for (i = 0; i < (int)(sizeof(games) / sizeof(games[0])); ++i) {
+            if (state->entryCount >= SAVE_BROWSER_MAX_ENTRIES) break;
+            n = snprintf(saveDir, sizeof(saveDir), "%s/saves/%s",
+                         userDataDir, games[i]);
+            if (n > 0 && n < (int)sizeof(saveDir)) {
+                (void)save_browser_scan_dir(state, saveDir);
+            }
         }
     }
 

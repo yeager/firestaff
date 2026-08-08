@@ -86,6 +86,16 @@
   title, Entrance, first movement and F0433/F0435 save flow. Reference:
   ReDMCSB `REVIVE.C` F0280 lines 133-283.
 
+# CSB Utility import sees the standard writable save root (2026-08-08)
+
+- ✅ The launcher save browser now scans Firestaff's platform-native writable
+  `saves/<game>` root in addition to roots adjacent to the game-data tree.
+  This lets the CSB Utility action find a valid DM1 save when licensed game
+  data lives on another disk or under `~/.firestaff/data`, while runtime saves
+  remain in Application Support on macOS (and their equivalent on Windows and
+  Linux). Existing content/type validation and path de-duplication remain the
+  admission gate; no filename-only save is admitted.
+
 - ✅ Added a reproducible source-bound capture tool that requires the
   authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
 - ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a
