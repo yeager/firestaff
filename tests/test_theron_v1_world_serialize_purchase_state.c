@@ -133,6 +133,27 @@ static void seed_world(Theron_V1_World *world) {
     world->creatures[0].source_direction_flags = 0x81;
     world->creatures[0].source_flags_word = 0x4567;
     world->creatures[0].source_unknown_word = 0x89ab;
+    world->source_generator_count = 1;
+    world->source_generators[0].dungeon_id = THERON_DUNGEON_3_FORMIC;
+    world->source_generators[0].level = 2;
+    world->source_generators[0].x = 17;
+    world->source_generators[0].y = 19;
+    world->source_generators[0].source_ref = 0x4567;
+    world->source_generators[0].source_index = 0x001a;
+    world->source_generators[0].type = 6;
+    world->source_generators[0].value = 0x0203;
+    world->source_generators[0].once = 1;
+    world->source_generators[0].effect = 4;
+    world->source_generators[0].sound = 5;
+    world->source_generators[0].delay = 6;
+    world->source_generators[0].inactive = 1;
+    world->source_generators[0].graphism = 7;
+    world->source_generators[0].target_x = 21;
+    world->source_generators[0].target_y = 22;
+    world->source_generators[0].target_facing = 3;
+    world->generator_spawn_count[0] = 2;
+    world->generator_next_tick[0] = 0x0102030405060708ULL;
+    world->generator_active_count = 1;
     theron_v1_party_recalculate_loads(&world->party);
 }
 
@@ -234,6 +255,21 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.creatures[0].source_flags_word == 0x4567 &&
                 restored.creatures[0].source_unknown_word == 0x89ab,
                 "live creature record and source identity survive round-trip");
+    expect_true(restored.source_generator_count == 1 &&
+                restored.source_generators[0].dungeon_id == THERON_DUNGEON_3_FORMIC &&
+                restored.source_generators[0].level == 2 &&
+                restored.source_generators[0].x == 17 &&
+                restored.source_generators[0].y == 19 &&
+                restored.source_generators[0].source_ref == 0x4567 &&
+                restored.source_generators[0].source_index == 0x001a &&
+                restored.source_generators[0].type == 6 &&
+                restored.source_generators[0].value == 0x0203 &&
+                restored.source_generators[0].inactive == 1 &&
+                restored.source_generators[0].target_facing == 3 &&
+                restored.generator_spawn_count[0] == 2 &&
+                restored.generator_next_tick[0] == 0x0102030405060708ULL &&
+                restored.generator_active_count == 1,
+                "generator source record and runtime state survive round-trip");
 
     free(buffer);
 

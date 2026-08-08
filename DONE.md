@@ -1,3 +1,14 @@
+# Theron generator save-state persistence (2026-08-08)
+
+- ✅ World snapshot version 4 now carries each decoded Track 02 generator
+  record plus its spawn count, next-tick array and active count in an explicit
+  little-endian wire segment.
+- ✅ Version 1–3 readers remain supported; version 4 rejects missing or
+  truncated generator tails instead of silently resetting generator state.
+- ✅ Round-trip coverage verifies source coordinates, actuator fields and
+  runtime counters. This persists state only; the original T700 generator
+  consumer and reactivation timing remain capture-gated.
+
 # Theron live-creature save persistence (2026-08-08)
 
 - ✅ World snapshot version 3 now appends an explicit 87-byte wire record for
