@@ -856,6 +856,7 @@ static int m11_csb_install_runtime_source_graphic(
 static void m11_apply_csb_runtime_m11_mirror_receipt(
     M11_GameViewState *state,
     const CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt);
+static int m11_csb_refresh_party_mirror_from_runtime(M11_GameViewState *state);
 static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -3954,6 +3955,24 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
         state->leaderHandIconIndex = -1;
         state->leaderHandObjectName[0] = '\0';
     }
+}
+
+static int m11_csb_refresh_party_mirror_from_runtime(M11_GameViewState *state)
+{
+    CSB_V1_RuntimeM11MirrorReceipt_PC34 receipt;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+            (const CSB_V1_BootProfile *)state->csbBootProfile, &receipt) ||
+        !receipt.valid || !receipt.party.valid) {
+        return 0;
+    }
+    m11_apply_csb_runtime_m11_mirror_receipt(state, &receipt);
+    return 1;
 }
 
 static void m11_apply_csb_runtime_startup_session_state_receipt(
@@ -39102,6 +39121,15 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
         return 0;
     }
 
+    /* ReDMCSB CHAMPION.C F0302 reads the selected M516 record after the
+     * command is admitted. A CSB panel can remain visible across a runtime
+     * tick, save resume, or champion death, so never let its retained M11
+     * display mirror decide which status-hand slot receives a THING. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_refresh_party_mirror_from_runtime(state)) {
+        return 0;
+    }
+
     /* ReDMCSB: CLIKCHAM.C F0367 line 32 dispatches C020..C027 to
      * CHAMPION.C F0302 with slotBoxIndex 0..7.  F0302 lines 677-683
      * rejects candidate flow, the currently open inventory champion,
@@ -45189,6 +45217,13 @@ int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state) {
     int championIndex;
     unsigned short thing;
     if (!state || !state->inventoryPanelActive) return 0;
+    /* PANEL.C F0355/F0302 owns both G0423 and M516. Refresh before decoding
+     * C028..C065 so an old host mirror cannot mutate a stale inventory owner
+     * after CSB's live runtime has changed the party. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_refresh_party_mirror_from_runtime(state)) {
+        return 0;
+    }
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB: COMMAND.C F0380 line 2180 gates inventory toggle on
          * !G0299_ui_CandidateChampionOrdinal, and lines 2167-2170 skip
@@ -46147,6 +46182,7 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
         sourceSlotBoxIndex);
     if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
     champ = &state->world.party.champions[championIndex];
+    if (!champ->present || champ->hp.current <= 0) return 0;
     slotThing = champ->inventory[championSlot];
     if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) {
         unsigned short leaderThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
@@ -49869,10 +49905,6 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
     char champion[16];
 
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        CSB_V1_RuntimeM11MirrorReceipt_PC34 runtime_receipt;
-        const CSB_V1_BootProfile *profile =
-            (const CSB_V1_BootProfile *)state->csbBootProfile;
-
         /* ReDMCSB PANEL.C F0355:2267-2302 validates
          * M516_CHAMPIONS[P0719_i_ChampionIndex] before it compares the
          * requested ordinal with G0423_i_InventoryChampionOrdinal.  M11's
@@ -49880,15 +49912,10 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
          * GAMEBLOCK/CHARDESC receipt before testing this C007..C010 command.
          * A caller-seeded or stale M11 champion must neither open nor close a
          * CSB inventory panel. */
-        memset(&runtime_receipt, 0, sizeof(runtime_receipt));
-        if (!profile ||
-            !csb_v1_boot_runtime_m11_mirror_receipt_pc34(
-                profile, &runtime_receipt) ||
-            !runtime_receipt.valid || !runtime_receipt.party.valid) {
+        if (!m11_csb_refresh_party_mirror_from_runtime(state)) {
             m11_set_status(state, "INVENTORY", "NO CHAMPION");
             return M11_GAME_INPUT_REDRAW;
         }
-        m11_apply_csb_runtime_m11_mirror_receipt(state, &runtime_receipt);
     }
 
     if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||

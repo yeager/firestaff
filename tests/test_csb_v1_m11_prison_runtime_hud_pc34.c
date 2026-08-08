@@ -523,6 +523,27 @@ int main(void)
                   view.world.party.championCount == 1 &&
                   view.inventoryPanelActive,
               "CSB F1 refreshes GAMEBLOCK party before opening champion inventory");
+        {
+            int hand_x = 0;
+            int hand_y = 0;
+            int hand_w = 0;
+            int hand_h = 0;
+
+            /* C020..C027 take the same source M516 owner as the inventory
+             * grid. The real PC3.4 session has only champion 0, so a stale
+             * host-only champion 1 must be discarded before C022 can touch
+             * its status-hand slot. */
+            view.world.party.championCount = 2;
+            view.world.party.champions[1].present = 1;
+            view.world.party.champions[1].hp.current = 10;
+            CHECK(M11_GameView_GetV1StatusHandSlotBoxZone(
+                      1, 0, &hand_x, &hand_y, &hand_w, &hand_h) &&
+                      M11_GameView_HandlePointerButton(
+                          &view, hand_x + hand_w / 2, hand_y + hand_h / 2,
+                          M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_IGNORED &&
+                      view.world.party.championCount == 1,
+                  "CSB C022 status-hand click refreshes GAMEBLOCK before selecting its champion");
+        }
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: real Atari MINI.DAT reaches live M11 CSB HUD");

@@ -7925,3 +7925,14 @@
 - ✅ Source reference: ReDMCSB `PANEL.C` F0355, lines 2267–2302, where
   `M516_CHAMPIONS` is checked before `G0423_i_InventoryChampionOrdinal` is
   compared and updated.
+
+# CSB source-owned inventory slot selection (2026-08-08)
+
+- ✅ C020–C027 status-hand clicks and C028–C065 inventory-slot clicks now
+  refresh the live GAMEBLOCK/CHARDESC party before resolving their champion
+  or changing a slot. Dead and absent runtime champions are rejected.
+- ✅ The real PC 3.4 Prison test proves that a stale M11-only second champion
+  cannot receive a C022 status-hand click; the fresh runtime receipt reduces
+  the party back to the source-owned single champion before the route exits.
+- ✅ Source reference: ReDMCSB `CHAMPION.C` F0302 and `COMMAND.C` lines
+  2174–2178, which dispatch C020–C065 against M516 rather than a host copy.

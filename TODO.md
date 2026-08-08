@@ -12724,3 +12724,7 @@ as line/circle coordinates or promote them into movement geometry.
   requested champion. This closes the stale-M11-mirror route, but complete
   source-raster coverage and the remaining panel interactions still need
   real-runtime evidence.
+  2026-08-08 update: the same refresh now precedes C020--C027 status-hand
+  clicks and C028--C065 inventory slots, including a live PC 3.4 regression
+  for stale champion selection. Remaining work is complete panel behavior,
+  not a stale display-mirror write path.
