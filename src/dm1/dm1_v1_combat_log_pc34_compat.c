@@ -262,7 +262,7 @@ void DM1_CombatLog_Render(M11_GameViewState* state,
         int slot = (currentDrawIdx + i) % COMBAT_LOG_RING_CAP;
         const DM1_V1_CombatLogEntryPc34* e = &g_ring[slot];
         int ly = barY + 2 + i * lineH;
-        unsigned char color = fontFg;
+        unsigned char color;
         switch (e->type) {
             case DM1_V1_COMBAT_LOG_TYPE_CHAMP_HIT:    color = 14; break; /* yellow */
             case DM1_V1_COMBAT_LOG_TYPE_CREATURE_HIT: color = 12; break; /* red */
