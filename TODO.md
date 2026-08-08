@@ -2406,9 +2406,10 @@
   chains and the final possession continuations. **2026-08-08 source-order
   update:** when the specialtimer owner is complete, that same temporary
   c_map/c_record transaction now invokes `READ_SKSAVE_DUNGEON` and retains
-  its actual map/tile/chain census. The supplied corpus stops before that
-  phase, so possession continuations and the complete GAME_LOAD handoff still
-  block Resume.
+  its actual map/tile/chain census. It then consumes `DM2_2066_062b` in the
+  original order and writes only to the matching temporary record's `uw_02`.
+  The supplied corpus stops before that phase, so a complete GAME_LOAD
+  handoff, including a persistent possession owner, still blocks Resume.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   **2026-08-06 production-boundary update:** removed the empty

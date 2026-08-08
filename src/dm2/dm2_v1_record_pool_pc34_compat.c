@@ -552,6 +552,8 @@ typedef struct {
     uint32_t possession_link_count;
     uint16_t possession_links[DM2_V1_SKSAVE_POSSESSION_LINK_MAX];
     int possession_link_overflow;
+    uint32_t possession_continuation_count;
+    uint32_t continuation_hash;
     DM2_ReadRecordCreatureAiFlagsFn ai_fn;
     void *ai_ctx;
 } DM2_V1_SksavePoolRestoreContext;
@@ -690,6 +692,35 @@ static void dm2_v1_sksave_pool_add_possession(void *context,
         return;
     }
     ctx->possession_links[ctx->possession_link_count++] = record_link;
+}
+
+static int dm2_v1_sksave_pool_set_possession_continuation(
+    void *context, uint16_t record_link, uint16_t continuation)
+{
+    DM2_V1_SksavePoolRestoreContext *ctx =
+        (DM2_V1_SksavePoolRestoreContext *)context;
+    uint8_t *record;
+    const int type = dm2_v1_record_handle_pool((int16_t)record_link);
+
+    /* SKProject sksvgame.cpp::DM2_2066_062b writes the reconstructed ten-bit
+     * value, including its source marker, to the owning record's uw_02.
+     * This is reached only after direct roots, special timers and all map
+     * chains have contributed their ordered savegamep3 links. */
+    if (!ctx || !ctx->set || (type != 9 && type != 14) ||
+        !(record = dm2_v1_record_pool_address_mut(
+            ctx->set, (int16_t)record_link)) ||
+        ctx->set->pools[type].record_size < 4) {
+        return -1;
+    }
+    dm2_v1_wr16(record + 2, (int16_t)continuation);
+    ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
+        ctx->continuation_hash, (const uint8_t *)&record_link,
+        sizeof(record_link));
+    ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
+        ctx->continuation_hash, (const uint8_t *)&continuation,
+        sizeof(continuation));
+    ++ctx->possession_continuation_count;
+    return 0;
 }
 
 static int dm2_v1_sksave_pool_query_ai(void *context, uint16_t record_link,
@@ -1284,6 +1315,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_V1_SksaveMapRestoreContext map_context;
     DM2_ReadRecordCallbacks callbacks;
     DM2_LoadExtraDungeonCallbacks dungeon_callbacks;
+    DM2_ReadPossessionContinuationCallbacks possession_callbacks;
     DM2_ReadRecordSession session;
     DM2_V1_LoadExtraDungeonReceipt dungeon_receipt;
     uint16_t chains_read = 0u;
@@ -1298,6 +1330,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     memset(&map_context, 0, sizeof(map_context));
     memset(&callbacks, 0, sizeof(callbacks));
     memset(&dungeon_callbacks, 0, sizeof(dungeon_callbacks));
+    memset(&possession_callbacks, 0, sizeof(possession_callbacks));
     memset(&dungeon_receipt, 0, sizeof(dungeon_receipt));
     memset(&session, 0, sizeof(session));
 
@@ -1386,6 +1419,15 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         session.error || context.possession_link_overflow) {
         goto done;
     }
+    possession_callbacks.set_continuation =
+        dm2_v1_sksave_pool_set_possession_continuation;
+    possession_callbacks.ctx = &context;
+    if (dm2_v1_read_possession_continuations(
+            &session.reader, context.possession_links,
+            context.possession_link_count, &possession_callbacks) != 0 ||
+        context.possession_link_overflow) {
+        goto done;
+    }
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->timer_count = state_receipt->timer_count;
@@ -1396,6 +1438,10 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             (uint32_t)dungeon_receipt.record_chains_loaded;
         out_receipt->teleporter_forward_refs_skipped =
             (uint32_t)dungeon_receipt.teleporter_forward_refs_skipped;
+        out_receipt->possession_link_count = context.possession_link_count;
+        out_receipt->possession_continuation_count =
+            context.possession_continuation_count;
+        out_receipt->continuation_hash = context.continuation_hash;
         out_receipt->timer_hash = timer_stream.raw_hash;
         out_receipt->record_hash = context.record_hash;
         out_receipt->next_stream_offset = session.reader.position;

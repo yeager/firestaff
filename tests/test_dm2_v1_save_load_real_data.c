@@ -940,6 +940,12 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                special_timers.tiles_loaded == receipt.map_data_byte_count &&
                special_timers.map_record_chains_loaded <=
                    special_timers.tiles_loaded &&
+               special_timers.possession_continuation_count <=
+                   special_timers.possession_link_count &&
+               ((special_timers.possession_continuation_count == 0u &&
+                 special_timers.continuation_hash == 0u) ||
+                (special_timers.possession_continuation_count != 0u &&
+                 special_timers.continuation_hash != 0u)) &&
                special_timers.next_stream_offset >=
                    state_receipt.record_link_bitstream_offset &&
                special_timers.next_stream_offset <= byte_count - 42u &&

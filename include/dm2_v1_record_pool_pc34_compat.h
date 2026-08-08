@@ -336,8 +336,11 @@ typedef struct {
     uint32_t tiles_loaded;
     uint32_t map_record_chains_loaded;
     uint32_t teleporter_forward_refs_skipped;
+    uint32_t possession_link_count;
+    uint32_t possession_continuation_count;
     uint32_t timer_hash;
     uint32_t record_hash;
+    uint32_t continuation_hash;
     size_t next_stream_offset;
     uint8_t next_stream_bits_remaining;
     uint8_t next_stream_current_byte;
@@ -346,9 +349,9 @@ typedef struct {
 /* Preflight the source-ordered prefix through DM2_2066_197c.  It creates one
  * temporary raw c_map/c_record/c_tim owner, detaches dynamic tile records,
  * restores direct hero/cursor roots, consumes timer types 0x3c and 0x3d,
- * then walks every map through READ_SKSAVE_DUNGEON. The temporary owner is
- * always discarded: this is evidence for the next possession-chain phase,
- * never a partial Resume session. */
+ * then walks every map through READ_SKSAVE_DUNGEON and restores the final
+ * DM2_2066_062b possession continuations into those temporary record owners.
+ * The temporary owner is always discarded, never a partial Resume session. */
 int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     const uint8_t *raw_body,
     size_t raw_body_size,

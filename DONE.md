@@ -9452,6 +9452,17 @@
   specialtimerägare, och avslöjar därmed ingen låtsad kartläsning eller
   spelbar Resume-session. Bygge, kartläsartest, recordpooltest och
   realdataregressionen passerar (192/192).
+
+# DM2 SKSAVE-possessioner i källordning (2026-08-08)
+
+- ✅ Den tillfälliga source-ägda importtransaktionen avslutar nu en godkänd
+  kartvandring med `DM2_2066_062b`. Varje typ-9- eller typ-14-continuation
+  skrivs till just den autentiserade recordens `uw_02`, och kvittot tar med
+  antal samt hash. Övriga typer läser inga bitar.
+- ✅ Inget publiceras från den tillfälliga ägaren. Den lokala PC-DOS-korpusen
+  når fortfarande inte denna fas och Resume förblir spärrat. Avkodar- och
+  recordpooltesterna, produktionsgrinden och realdatakorpusen passerar
+  (192/192).
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)
 
 - ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.
