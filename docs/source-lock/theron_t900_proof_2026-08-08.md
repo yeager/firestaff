@@ -17,7 +17,7 @@ bevismaterialet.
 | Inventory-provenance | Pickup kopierar nu hela källrecorden (storlek + 16 bytes) och v7-save roundtrip återställer den för samma object | Provenance godkänd, T900-regler ej godkända |
 | Dungeon-textkälla | US-loadern bevarar hela den riktiga codonströmmen i load-resultatet; JP Track 02 rapporterar verifierat noll textord | Source stream godkänd, HuC6280-textkonsument ej godkänd |
 | Statisk HuC6280-kedja | `theron-us-bank1f-consumer.asm` och `$2386–$252A` verifieras mot båda retailbilderna | Loader/dekomprimering godkänd |
-| Runtime object-consumer | Samma verifiering rapporterar `ram_consumer_2600=not_present` för US och JP | T900-konsument saknas i beviset |
+| Runtime object-consumer | En autentiserad Mednafen/System Card-körning på extern-disk når BIOS och producerar snapshots, men ingen verifierad spelruntime-läsning i `$2600–$27FF` | T900-konsument saknas fortfarande i beviset |
 | Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
 
 Den lokala real-data-körningen `test_theron_v1_track02_thing_data` passerar
@@ -53,11 +53,15 @@ Den statiska VCE- och bank-$1f-receipten uppfyller inte dessa krav. Inte heller
 gör ett fixture-test, en hostmodell, en propertytabell eller ett strukturellt
 objectrecord det.
 
-Captureharnessen har därför utökats med `main_ram_target_write` för att kunna
-visa state-skrivningar när originalmedia och System Card faktiskt körs. En
-byggd instrumenterad binär innehåller både read- och write-formatsträngarna,
-men lokal publicering och T900-semantik är fortfarande spärrad: den verifierade
-capturekörningen saknar ännu en godkänd System Card/media-session.
+Captureharnessen har en definierad `main_ram_target_write`-rapport för framtida
+state-skrivningar när originalmedia och System Card faktiskt körs, men den
+aktuella HuC6280-patchen kopplar ännu bara in läsningen. Den
+autentiserade System Card 3.0-identiteten är nu verifierad
+(`ff1a674273fe3540ccef576376407d1d`), liksom US Track 02 ISO-identiteten
+(`ceb02343868f80cec899e9b239aff2da`). Den externa capturekörningen producerar
+dessutom 64 KiB VDC-VRAM och 1 KiB VCE-palette snapshots. Den nådde dock inte
+en godkänd spelägd `$2600–$27FF`-läsning eller state-skrivning; RNG, AI, T700
+och T900 förblir därför fail-closed.
 
 ## Verifiering
 

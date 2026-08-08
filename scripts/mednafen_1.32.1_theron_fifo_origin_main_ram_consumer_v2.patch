@@ -88,8 +88,6 @@ index 7d4efca..d9d9d43 100644
 -         "pce_cd_data_destination_candidate reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
 +         "pce_cd_origin_ram_receipt source_lba=%u source_offset=%u fifo_sequence=%llu reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
 +         source_lba, source_offset, (unsigned long long)fifo_sequence,
-@@ -1307 +1313,0 @@ MDFN_HIDE extern const MDFNGI EmulatedPCE =
--
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 index dff5f70..ae1778d 100644
 --- a/src/pce/pcecd.cpp
@@ -104,7 +102,7 @@ index dff5f70..ae1778d 100644
 +bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
 +                                  uint8 *value, uint32 *source_lba,
 +                                  uint16 *source_offset, uint64 *fifo_sequence)
-@@ -190 +196,4 @@ bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
+@@ -190,1 +196,4 @@ bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
 - return true;
 + *source_lba = TheronPCECDDataReadLBA;
 + *source_offset = TheronPCECDDataReadOffset;
