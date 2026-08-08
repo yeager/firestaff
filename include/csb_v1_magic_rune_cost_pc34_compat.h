@@ -1,14 +1,14 @@
 #ifndef FIRESTAFF_CSB_V1_MAGIC_RUNE_COST_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_MAGIC_RUNE_COST_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
-#include "csb_v1_csbgraphics_dat_real_scan.h"
-
-/* CSBWin CSBCode.cpp:10277-10284 expands GRAPHICS.DAT graphic 0x230 into
- * the menu-data block. Data.h places Byte19016 at 0x4cc and Byte19010 at
- * 0x4d2 of its fixed 0x4e8-byte decoded payload. CSBCode.cpp:9074-9093
- * consumes these values for the source F0399-style rune transaction. */
+/* CSBWin's separately decoded menu-data payload uses entry 0x230. Data.h
+ * places Byte19016 at 0x4cc and Byte19010 at 0x4d2 of its fixed 0x4e8-byte
+ * payload. This parser is for an already authenticated CSBWin payload only.
+ * Original PC3.4 CSB executes the corresponding G0485--G0487 menu block;
+ * it is not an IMG3 GRAPHICS.DAT record. */
 #define CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34 0x230u
 #define CSB_V1_MAGIC_RUNE_TABLE_DECODED_SIZE_PC34 0x4e8u
 #define CSB_V1_MAGIC_RUNE_POWER_MULTIPLIER_OFFSET_PC34 0x4ccu
@@ -49,10 +49,6 @@ int csb_v1_magic_rune_cost_table_from_decoded_graphic_pc34(
     const uint8_t *decoded_graphic, size_t decoded_size,
     CSB_V1_MagicRuneCostTablePc34 *out_table);
 
-/* Decodes graphic 0x230 through the authenticated active CSB package. */
-int csb_v1_magic_rune_cost_table_from_cache_pc34(
-    const CSB_V1_CSBGraphicsDatRealCache *cache,
-    CSB_V1_MagicRuneCostTablePc34 *out_table);
 
 /* Decodes CSBWin's own 25-entry SPELL table from the same exact source
  * payload. `spell_id` is the source big-endian rune sequence packed into a
@@ -61,9 +57,6 @@ int csb_v1_magic_spell_table_from_decoded_graphic_pc34(
     const uint8_t *decoded_graphic, size_t decoded_size,
     CSB_V1_MagicSpellTablePc34 *out_table);
 
-int csb_v1_magic_spell_table_from_cache_pc34(
-    const CSB_V1_CSBGraphicsDatRealCache *cache,
-    CSB_V1_MagicSpellTablePc34 *out_table);
 
 /* Mirrors ReDMCSB MENU.C F0409 / CSBWin Magic.cpp::Incantation2Spell. The
  * entered power rune is assembled in bits 31..24; normal source entries

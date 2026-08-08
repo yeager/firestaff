@@ -52,33 +52,6 @@ int csb_v1_magic_rune_cost_table_from_decoded_graphic_pc34(
     return 1;
 }
 
-int csb_v1_magic_rune_cost_table_from_cache_pc34(
-    const CSB_V1_CSBGraphicsDatRealCache *cache,
-    CSB_V1_MagicRuneCostTablePc34 *out_table)
-{
-    uint8_t payload[CSB_V1_MAGIC_RUNE_TABLE_DECODED_SIZE_PC34];
-    CSB_V1_CSBGraphicsEntrySpan span;
-    size_t written = 0u;
-    int rc;
-
-    if (out_table) memset(out_table, 0, sizeof(*out_table));
-    if (!cache || !cache->loaded || !cache->file_buffer || !out_table) return 0;
-    rc = csb_v1_csbgraphics_dat_entry_span(
-        cache->file_buffer, cache->file_size,
-        CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34, &span);
-    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
-        span.decompressed_size != sizeof(payload)) return 0;
-    rc = csb_v1_csbgraphics_dat_decode_entry(
-        cache->file_buffer, cache->file_size,
-        CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34,
-        payload, sizeof(payload), &written);
-    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK || written != sizeof(payload)) {
-        return 0;
-    }
-    return csb_v1_magic_rune_cost_table_from_decoded_graphic_pc34(
-        payload, written, out_table);
-}
-
 int csb_v1_magic_spell_table_from_decoded_graphic_pc34(
     const uint8_t *decoded_graphic, size_t decoded_size,
     CSB_V1_MagicSpellTablePc34 *out_table)
@@ -112,33 +85,6 @@ int csb_v1_magic_spell_table_from_decoded_graphic_pc34(
     table.valid = 1;
     *out_table = table;
     return 1;
-}
-
-int csb_v1_magic_spell_table_from_cache_pc34(
-    const CSB_V1_CSBGraphicsDatRealCache *cache,
-    CSB_V1_MagicSpellTablePc34 *out_table)
-{
-    uint8_t payload[CSB_V1_MAGIC_RUNE_TABLE_DECODED_SIZE_PC34];
-    CSB_V1_CSBGraphicsEntrySpan span;
-    size_t written = 0u;
-    int rc;
-
-    if (out_table) memset(out_table, 0, sizeof(*out_table));
-    if (!cache || !cache->loaded || !cache->file_buffer || !out_table) return 0;
-    rc = csb_v1_csbgraphics_dat_entry_span(
-        cache->file_buffer, cache->file_size,
-        CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34, &span);
-    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
-        span.decompressed_size != sizeof(payload)) return 0;
-    rc = csb_v1_csbgraphics_dat_decode_entry(
-        cache->file_buffer, cache->file_size,
-        CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34,
-        payload, sizeof(payload), &written);
-    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK || written != sizeof(payload)) {
-        return 0;
-    }
-    return csb_v1_magic_spell_table_from_decoded_graphic_pc34(
-        payload, written, out_table);
 }
 
 const CSB_V1_MagicSpellPc34 *csb_v1_magic_spell_lookup_pc34(

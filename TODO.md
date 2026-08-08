@@ -5941,11 +5941,13 @@ diagnostic; it must not silently fall back to a generated visual.
   decoded without a DM1 spell table. This is the required data owner for the
   later CastMagic transaction; effect classes remain closed until their
   character/object/timer/save side effects are implemented together.
-  2026-08-08: the source lookup now mirrors `MENU.C F0409` byte-for-byte:
-  entered symbols are packed from bit 24 down, and a zero high byte in the
-  source record deliberately ignores the selected power rune. Normal PC34
-  spells such as FUL IR can therefore identify their real table entry. The
-  subsequent F0412 cast/effect transaction remains separate work.
+  2026-08-08: the CSBWin payload parser's lookup mirrors `MENU.C F0409`
+  byte-for-byte: entered symbols are packed from bit 24 down, and a zero high
+  byte in the source record deliberately ignores the selected power rune.
+  Original PC34's G0485--G0487 menu block is executable-owned rather than an
+  IMG3 member; live C101 now uses that source-locked G0485/G0486 cost path
+  and writes the result back to GAMEBLOCK. The subsequent F0412 cast/effect
+  transaction remains separate work.
   2026-07-30 CSBWin standard-package check: the supplied `graphics.dat`
   (`ebf6a57af3f27782e358c0490bfd2f2e`) plus `Dungeon.dat` is correctly
   recognised as Atari ST 2.1, but the CSBWin game directory has no

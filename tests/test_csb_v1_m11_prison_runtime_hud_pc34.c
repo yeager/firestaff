@@ -378,6 +378,25 @@ int main(void)
                   view.world.party.championCount == 1 &&
                   view.spellPanelOpen,
               "CSB C100 refreshes GAMEBLOCK party before opening the spell panel");
+        {
+            CSB_V1_BootProfile *mutable_profile =
+                (CSB_V1_BootProfile *)view.csbBootProfile;
+            unsigned short mana_before = view.world.party.champions[0].mana.current;
+
+            CHECK(mana_before > 1u &&
+                      M11_GameView_HandleInput(
+                          &view, M12_MENU_INPUT_SPELL_RUNE_1) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      view.spellBuffer.runeCount == 1 &&
+                      view.spellBuffer.runes[0] == 0x60u &&
+                      view.world.party.champions[0].mana.current < mana_before &&
+                      mutable_profile &&
+                      mutable_profile->runtime.party_state.Champions[0]
+                          .CurrentMana ==
+                          (int16_t)view.world.party.champions[0].mana.current,
+                  "real Atari GAMEBLOCK consumes C101 through the source rune cost and writes mana back");
+            (void)M11_GameView_ClearSpell(&view);
+        }
         view.world.party.championCount = 0;
         view.inventoryPanelActive = 0;
         CHECK(M11_GameView_HandleInput(&view,

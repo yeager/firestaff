@@ -68,12 +68,17 @@
 
 # CSB source spell-table lookup repair (2026-08-08)
 
-- ✅ Fixed the CSB `GRAPHICS.DAT` spell-table lookup to match ReDMCSB
+- ✅ Fixed the separately decoded CSBWin spell-table lookup to match ReDMCSB
   `MENU.C F0409`: runes pack from bit 24 down and ordinary table entries
   intentionally ignore the chosen power rune. Real formulas such as FUL IR
   now resolve to their own source record rather than failing due to host-side
   byte ordering. Exact-power source records remain exact. Verified by the
   focused CSB rune-cost/table regression.
+- ✅ Corrected live C101 rune entry to use the source-owned PC34
+  G0485/G0486 executable menu block, not the unrelated optional CSBWin
+  graphics override cache. CSB keyboard rune input is now admitted through
+  the real C009/C011 HUD after boot. A real Atari `MINI.DAT` session proves
+  that mana decreases and is written back to GAMEBLOCK.
 
 # DM2 File_header champion test-link repair (2026-08-08)
 

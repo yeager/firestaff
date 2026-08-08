@@ -103,6 +103,7 @@
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
+#include "firestaff/dm1/v1/G0485_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
@@ -11453,6 +11454,7 @@ static int m11_build_dm1_hoc_current_front_mirror_runtime_decision(
 static int m11_front_cell_has_live_f0115_floor_item_request(
     const M11_GameViewState* state);
 static int m11_source_is_csb(const M11_GameViewState* state);
+static int m11_csb_spell_panel_input(M12_MenuInput input);
 static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
                                                  const void *boot_profile);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
@@ -14418,7 +14420,7 @@ static int m11_csb_consume_source_rune_cost(
     M11_GameViewState *state, int symbol_step, int symbol_index)
 {
     CSB_V1_BootProfile *profile;
-    CSB_V1_MagicRuneCostTablePc34 costs;
+    DM1_V1_G0485SymbolManaCostPc34 source_cost;
     struct ChampionState_Compat *champion;
     int caster;
     int power_rune;
@@ -14436,13 +14438,19 @@ static int m11_csb_consume_source_rune_cost(
     }
     champion = &state->world.party.champions[caster];
     power_rune = symbol_step == 0 ? -1 : (int)state->spellBuffer.runes[0];
-    if (!csb_v1_magic_rune_cost_table_from_cache_pc34(
-            &profile->csbgraphics_cache, &costs) ||
-        !csb_v1_magic_rune_cost_compute_pc34(
-            &costs, symbol_step, symbol_index, power_rune, &cost)) {
+    /* ReDMCSB MENU.C's G0485--G0487 Graphic560 records are loaded into the
+     * original executable's menu-data block, not an arbitrary IMG3 entry in
+     * GRAPHICS.DAT. Use the source-locked PC34 G0485/G0486 owner directly;
+     * CSBgraphics.dat is an optional CSBWin override and is not game-rule
+     * data. */
+    memset(&source_cost, 0, sizeof(source_cost));
+    if (!dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(
+            symbol_step, symbol_index, (char)power_rune, &source_cost) ||
+        !source_cost.accepted) {
         m11_set_status(state, "RUNE", "CSB RUNE DATA UNAVAILABLE");
         return 0;
     }
+    cost = source_cost.manaCost;
     if (cost < 0 || champion->mana.current < (unsigned int)cost) {
         m11_set_status(state, "RUNE", "NOT ENOUGH MANA");
         return 0;
@@ -26159,10 +26167,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!state->csbBootProfile) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (input != M12_MENU_INPUT_BACK) {
+        if (input != M12_MENU_INPUT_BACK && !m11_csb_spell_panel_input(input)) {
             return M11_GAME_INPUT_IGNORED;
         }
-        /* BACK falls through to the common G2018 quit guard below. */
+        /* BACK falls through to the common G2018 quit guard; C100's
+         * source-owned spell commands continue to the shared HUD handler. */
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
@@ -49645,6 +49654,18 @@ static int m11_source_is_csb(const M11_GameViewState* state) {
     return state &&
            (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
             strcmp(state->sourceId, "csb") == 0);
+}
+
+/* C100/C101..C109 are the shared ReDMCSB spell-panel command surface. Once
+ * a CSB boot session has reached its authenticated C009/C011 HUD, these
+ * inputs must reach the source G0485/G0486 rune transaction instead of being
+ * discarded solely because CSB owns movement through a separate queue. */
+static int m11_csb_spell_panel_input(M12_MenuInput input)
+{
+    return (input >= M12_MENU_INPUT_SPELL_RUNE_1 &&
+            input <= M12_MENU_INPUT_SPELL_RUNE_6) ||
+           input == M12_MENU_INPUT_SPELL_CAST ||
+           input == M12_MENU_INPUT_SPELL_CLEAR;
 }
 
 /* COMMAND.C C007..C010 reaches this same toggle from the champion status
