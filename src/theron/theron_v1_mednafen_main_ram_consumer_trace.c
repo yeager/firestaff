@@ -25,6 +25,43 @@ static int read_line(FILE *file, char *line, size_t capacity) {
     return length > 0;
 }
 
+/* Early probe writers encoded record separators as the two bytes "\\n".
+ * Normalize only the parser stream; the original sidecar remains the hash
+ * identity and no semantic fields are promoted by this transport repair. */
+static FILE *normalize_escaped_newlines(FILE *source) {
+    FILE *normalized;
+    int ch;
+
+    if (!source || fseek(source, 0L, SEEK_SET) != 0) return NULL;
+    normalized = tmpfile();
+    if (!normalized) return NULL;
+    while ((ch = fgetc(source)) != EOF) {
+        if (ch == '\\') {
+            int next = fgetc(source);
+            if (next == 'n') {
+                ch = '\n';
+            } else {
+                if (fputc(ch, normalized) == EOF ||
+                    (next != EOF && fputc(next, normalized) == EOF)) {
+                    fclose(normalized);
+                    return NULL;
+                }
+                continue;
+            }
+        }
+        if (fputc(ch, normalized) == EOF) {
+            fclose(normalized);
+            return NULL;
+        }
+    }
+    if (ferror(source) || fflush(normalized) != 0 ||
+        fseek(normalized, 0L, SEEK_SET) != 0) {
+        fclose(normalized);
+        return NULL;
+    }
+    return normalized;
+}
+
 static int reject(Theron_V1MednafenMainRamConsumerTraceReceipt *receipt) {
     receipt->status = THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_REJECTED;
     receipt->semantic_publication_allowed = 0;
@@ -62,6 +99,18 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
         receipt.status = THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_UNAVAILABLE;
         *out = receipt;
         return 1;
+    }
+
+    {
+        FILE *normalized = normalize_escaped_newlines(file);
+        if (!normalized) {
+            fclose(file);
+            receipt.status = THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_UNAVAILABLE;
+            *out = receipt;
+            return 1;
+        }
+        fclose(file);
+        file = normalized;
     }
 
     while (read_line(file, line, sizeof(line))) {
@@ -146,6 +195,16 @@ int theron_v1_mednafen_main_ram_consumer_trace_verify_code_window(
     if (!seen || !(file = fopen(path, "rb"))) {
         free(seen);
         return 0;
+    }
+    {
+        FILE *normalized = normalize_escaped_newlines(file);
+        if (!normalized) {
+            fclose(file);
+            free(seen);
+            return 0;
+        }
+        fclose(file);
+        file = normalized;
     }
     while (fgets(line, sizeof(line), file)) {
         unsigned logical_address, physical_address, value, reader_pc;

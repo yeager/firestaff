@@ -19,6 +19,10 @@ in the early local Mednafen artifact. Normalization is parser-only: the source
 file is still hashed as-is, and the receipt remains limited to loader
 coordinates rather than semantic publication.
 
+The same normalization is applied to the Main-RAM consumer trace and its
+code-window verifier, so a transport-escaped sidecar cannot be accepted by
+the loader stage but rejected later by the consumer stage.
+
 The strongest current proof is:
 
 - `tier1_strict_boot_probe`: JP canonical, JP extras, and US extras reach the

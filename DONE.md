@@ -6804,3 +6804,12 @@
 - This fixes capture ingestion only. It does not claim the missing `$2600`
   consumer, tile/material bank, VCE route, startup animation owner, HUD
   geometry, or later-level/object semantics.
+# 2026-08-08 Theron consumer-side trace normalization
+
+- ✅ Applied the loader-sidecar transport fix to the Main-RAM consumer trace
+  parser and executed HuC6280 code-window verifier.
+- Added a regression with escaped separators covering both record admission
+  and code-byte verification. Hash identity and semantic publication gates
+  remain unchanged.
+- No creature, RNG, T700/T900, inventory, palette, portrait, or audio meaning
+  is inferred from this transport-only repair.

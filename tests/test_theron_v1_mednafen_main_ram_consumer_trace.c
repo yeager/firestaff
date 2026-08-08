@@ -4,6 +4,46 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
+static int test_escaped_newline_trace(void) {
+#if defined(_WIN32)
+    return 1;
+#else
+    char path[] = "/tmp/firestaff-theron-consumer-XXXXXX";
+    const char *trace =
+        "source=mednafen-pce-instrumented-main-ram-consumer\\n"
+        "main_ram_consumer_read sequence=0 logical_address=2c54 physical_address=1f2c54 value=ad reader_pc=2c54 reader_physical_pc=1f2c54\\n"
+        "main_ram_consumer_read sequence=1 logical_address=2c55 physical_address=1f2c55 value=08 reader_pc=2c54 reader_physical_pc=1f2c54\\n";
+    Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
+    static const unsigned char code[] = { 0xad };
+    int fd = mkstemp(path);
+    FILE *file;
+    int result;
+
+    if (fd < 0) return 0;
+    file = fdopen(fd, "wb");
+    if (!file) {
+        close(fd);
+        unlink(path);
+        return 0;
+    }
+    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+        unlink(path);
+        return 0;
+    }
+    result = theron_v1_mednafen_main_ram_consumer_trace_parse_file(path, &receipt) &&
+             receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY &&
+             receipt.read_count == 2u &&
+             theron_v1_mednafen_main_ram_consumer_trace_verify_code_window(
+                 path, 0x2c54u, code, sizeof(code));
+    unlink(path);
+    return result;
+#endif
+}
+
 int main(void) {
     const char *path = getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE");
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
@@ -13,6 +53,11 @@ int main(void) {
         0x53, 0x08, 0xad, 0x0a, 0x30, 0x18
     };
     unsigned char wrong_window[sizeof(code_window)];
+
+    if (!test_escaped_newline_trace()) {
+        fprintf(stderr, "FAIL: escaped newline consumer trace normalization\n");
+        return 1;
+    }
 
     if (!path || !path[0]) {
         puts("SKIP: THERON_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE is not set");

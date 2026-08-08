@@ -2591,6 +2591,10 @@ level or consumer bindings.
   `$23ad–$243d` resource framing/variable-bit entry. This strengthens the
   source contract only; the live `$2600` RAM consumer and its level/object
   destination remain unbound.
+  2026-08-08 transport follow-up: the Main-RAM consumer parser and its
+  executed-code-window verifier now accept the same literal `\\n` sidecar
+  separators as the loader parser. This changes only ingest normalization;
+  the `$2600` consumer and all level/object/stat semantics remain closed.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** the old inferred viewport renderer is now
   explicitly fixture-only and excluded from the production archive. Replace
