@@ -151,6 +151,13 @@ if ((timeout_seconds > 0)); then
     sleep "$timeout_seconds"
     if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
       kill -TERM "$capture_child_pid" 2>/dev/null || true
+      # Mednafen's signal handler flushes the capture but may not return
+      # promptly. Give it a short grace period, then guarantee that the
+      # operator launcher cannot remain attached to a dead capture session.
+      sleep 2
+      if kill -0 "$capture_child_pid" 2>/dev/null; then
+        kill -KILL "$capture_child_pid" 2>/dev/null || true
+      fi
     fi
   ) &
   capture_timeout_pid=$!

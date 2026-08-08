@@ -10403,3 +10403,14 @@
 - ✅ A fresh run with the external French data-only CUE reached authentic
   Mednafen Saturn initialization, but timed out before producing a raw
   VDP1/VDP2 trace. No startup, menu, HUD or viewport admission was promoted.
+
+# Nexus startup raw capture timeout is bounded (2026-08-09)
+
+- ✅ The operator launcher now gives Mednafen a short SIGTERM flush window and
+  then force-terminates a child that ignores the signal. This prevents a
+  captured session from leaving the wrapper attached indefinitely; the raw
+  witness remains validator-gated.
+- ✅ The external E-BIOS/French capture produced one authentic reset frame
+  (`runtime-vdp12.raw`, 1,577,645 bytes). It contains no VDP1 draw command and
+  is therefore retained as startup boundary evidence only; menu, HUD and
+  viewport ownership remain blocked.
