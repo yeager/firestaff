@@ -25,7 +25,17 @@
   reactivation and creature-spawn ownership still require the authentic
   HuC6280/System-Card capture and must remain fail-closed.
 
-- 🔧 Theron authentic runtime capture now has a verified real SDL2/Quartz-capable Mednafen build. It still needs the verified US System Card 3.0 and original media capture; RNG return values, spawn timing, AI, T700/T900 consumers, media bindings and gameplay semantics remain fail-closed until that capture is obtained.
+- 🔧 Theron authentic runtime capture now has a source-built instrumented
+  Mednafen path, but the local runtime verifier rejects the linked
+  SDL2-compat library. A verified US System Card 3.0 and original media
+  capture are still required; RNG return values, spawn timing, AI, T700/T900
+  consumers, media bindings and gameplay semantics remain fail-closed.
+
+- 🔧 Theron T900 capture instrumentation now records both reads and writes in
+  `$2600-$27FF`, including logical/physical address and executing PC provenance.
+  The instrumented source builds through the Mednafen link step, but the local
+  runtime verifier still rejects the linked SDL2-compat library; no T900
+  gameplay semantics are enabled from this instrumentation alone.
 
 - 🔧 Theron media audit 2026-08-08 confirms the real US/JP Track 02 bitmap and
   palette bytes, but no authenticated VDC/VCE snapshot is present locally.

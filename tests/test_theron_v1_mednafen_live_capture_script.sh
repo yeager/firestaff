@@ -142,7 +142,9 @@ if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' 
    ! grep -Fq 'main_ram_loader_bra_targets=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_bra_target_jsrs=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_e009_dispatches=%s' "$script" ||
-   ! grep -Fq 'main_ram_consumer_reads=%s' "$script"; then
+   ! grep -Fq 'main_ram_consumer_reads=%s' "$script" ||
+   ! grep -Fq 'main_ram_target_reads=%s' "$script" ||
+   ! grep -Fq 'main_ram_target_writes=%s' "$script"; then
     printf 'FAIL: capture script must retain the post-$3800 TII producer receipt\n' >&2
     exit 1
 fi
@@ -151,6 +153,9 @@ if [[ ! -f "$consumer_read_patch" ]] ||
    ! grep -Fq 'physical_address >= 0x1f0000 && physical_address < 0x1f8000' "$consumer_read_patch" ||
    ! grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
+   ! grep -Fq 'TheronPCECDTraceMainRAMConsumerWrite' "$consumer_read_patch" ||
+   ! grep -Fq 'main_ram_target_write sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
+   ! grep -Fq 'writer_physical_pc >= 0x1f0000 && writer_physical_pc < 0x1f8000' "$consumer_read_patch" ||
    grep -Fq '\\\\n' "$consumer_read_patch"; then
     printf 'FAIL: consumer-read patch must retain bounded game-owned RAM provenance with real line-delimited output\n' >&2
     exit 1

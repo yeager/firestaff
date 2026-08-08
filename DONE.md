@@ -49,6 +49,11 @@
   rather than silently treating loader bytes as inventory semantics.
 - ✅ Production remains fail-closed for T900 use/equip/stack/drop/loot until a
   runtime `$2600` capture proves the source record and state-write consumer.
+- ✅ The authentic Mednafen capture patch now records bounded
+  `main_ram_target_read` and `main_ram_target_write` rows for `$2600-$27FF`,
+  including logical/physical address and reader/writer PC provenance. The
+  instrumented binary contains both receipt formats; the local SDL2 runtime
+  verifier remains a separate environment blocker.
 
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 

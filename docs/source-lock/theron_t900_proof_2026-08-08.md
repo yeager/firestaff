@@ -16,6 +16,7 @@ bevismaterialet.
 | Item properties | 66 × 6 byte matchar den riktiga US/JP-tabellen byte för byte; US/JP Track 19-proben passerar | Propertypayload godkänd, T900-consumer ej godkänd |
 | Statisk HuC6280-kedja | `theron-us-bank1f-consumer.asm` och `$2386–$252A` verifieras mot båda retailbilderna | Loader/dekomprimering godkänd |
 | Runtime object-consumer | Samma verifiering rapporterar `ram_consumer_2600=not_present` för US och JP | T900-konsument saknas i beviset |
+| Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
 
 ## Vad T900-bevis skulle behöva innehålla
 
@@ -31,6 +32,12 @@ En godkänd capture måste samtidigt visa:
 Den statiska VCE- och bank-$1f-receipten uppfyller inte dessa krav. Inte heller
 gör ett fixture-test, en hostmodell, en propertytabell eller ett strukturellt
 objectrecord det.
+
+Captureharnessen har därför utökats med `main_ram_target_write` för att kunna
+visa state-skrivningar när originalmedia och System Card faktiskt körs. En
+byggd instrumenterad binär innehåller både read- och write-formatsträngarna,
+men lokal publicering och T900-semantik är fortfarande spärrad: den verifierade
+capturekörningen saknar ännu en godkänd System Card/media-session.
 
 ## Verifiering
 
