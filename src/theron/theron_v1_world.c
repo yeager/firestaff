@@ -73,11 +73,73 @@ static uint64_t rw64(const uint8_t *p) {
     for (unsigned i = 0; i < 8; ++i) value |= (uint64_t)p[i] << (i * 8);
     return value;
 }
+static void ww16(uint8_t *p, uint16_t value) {
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+}
 static void ww32(uint8_t *p, uint32_t value) {
     for (unsigned i = 0; i < 4; ++i) p[i] = (uint8_t)(value >> (i * 8));
 }
 static void ww64(uint8_t *p, uint64_t value) {
     for (unsigned i = 0; i < 8; ++i) p[i] = (uint8_t)(value >> (i * 8));
+}
+
+#define THERON_INVENTORY_SOURCE_WIRE_BYTES 31u
+
+static size_t theron_inventory_source_wire_size(void) {
+    return (size_t)THERON_MAX_CHAMPIONS * THERON_INVENTORY_SLOTS *
+           THERON_INVENTORY_SOURCE_WIRE_BYTES;
+}
+
+static uint8_t *theron_inventory_source_write(
+    uint8_t *out, const Theron_V1_InventorySourceRecord *record) {
+    *out++ = record->valid;
+    *out++ = record->category;
+    *out++ = record->item_type;
+    *out++ = record->keep;
+    *out++ = record->cursed;
+    *out++ = record->broken;
+    *out++ = record->poisoned;
+    *out++ = record->closed;
+    *out++ = record->dump;
+    *out++ = record->power;
+    *out++ = record->charges;
+    ww16(out, record->source_ref); out += sizeof(uint16_t);
+    ww16(out, record->source_next_ref); out += sizeof(uint16_t);
+    ww16(out, record->source_index); out += sizeof(uint16_t);
+    ww16(out, record->text_ref); out += sizeof(uint16_t);
+    ww16(out, (uint16_t)record->chested); out += sizeof(uint16_t);
+    ww16(out, record->data1); out += sizeof(uint16_t);
+    *out++ = record->item_category;
+    *out++ = record->property_valid;
+    memcpy(out, record->property, sizeof(record->property));
+    return out + sizeof(record->property);
+}
+
+static const uint8_t *theron_inventory_source_read(
+    const uint8_t *in, Theron_V1_InventorySourceRecord *record) {
+    memset(record, 0, sizeof(*record));
+    record->valid = *in++;
+    record->category = *in++;
+    record->item_type = *in++;
+    record->keep = *in++;
+    record->cursed = *in++;
+    record->broken = *in++;
+    record->poisoned = *in++;
+    record->closed = *in++;
+    record->dump = *in++;
+    record->power = *in++;
+    record->charges = *in++;
+    record->source_ref = rw16(in); in += sizeof(uint16_t);
+    record->source_next_ref = rw16(in); in += sizeof(uint16_t);
+    record->source_index = rw16(in); in += sizeof(uint16_t);
+    record->text_ref = rw16(in); in += sizeof(uint16_t);
+    record->chested = (int16_t)rw16(in); in += sizeof(uint16_t);
+    record->data1 = rw16(in); in += sizeof(uint16_t);
+    record->item_category = *in++;
+    record->property_valid = *in++;
+    memcpy(record->property, in, sizeof(record->property));
+    return in + sizeof(record->property);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1548,7 +1610,7 @@ static size_t serialize_size(const Theron_V1_World *world) {
     n += sizeof(uint64_t); /* state_hash */
     /* T900 inventory provenance: source object/category/property fields have
      * no pointers and can be appended without changing existing offsets. */
-    n += sizeof(world->inventory_source);
+    n += theron_inventory_source_wire_size();
     return n;
 }
 
@@ -1600,8 +1662,12 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     out += sizeof(uint64_t);
     ww64(out, world->state_hash);
     out += sizeof(uint64_t);
-    memcpy(out, world->inventory_source, sizeof(world->inventory_source));
-    out += sizeof(world->inventory_source);
+    for (int champion = 0; champion < THERON_MAX_CHAMPIONS; ++champion) {
+        for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+            out = theron_inventory_source_write(
+                out, &world->inventory_source[champion][slot]);
+        }
+    }
 
     return need;
 }
@@ -1677,8 +1743,21 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     size_t remaining = bufsize - (size_t)(in - (const uint8_t *)buf);
     memset(world->inventory_source, 0, sizeof(world->inventory_source));
     if (remaining != 0u) {
-        if (remaining < sizeof(world->inventory_source)) return -1;
-        memcpy(world->inventory_source, in, sizeof(world->inventory_source));
+        if (remaining == sizeof(world->inventory_source)) {
+            /* Compatibility with the first source-provenance tail format. */
+            memcpy(world->inventory_source, in,
+                   sizeof(world->inventory_source));
+        } else if (remaining == theron_inventory_source_wire_size()) {
+            for (int champion = 0; champion < THERON_MAX_CHAMPIONS;
+                 ++champion) {
+                for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+                    in = theron_inventory_source_read(
+                        in, &world->inventory_source[champion][slot]);
+                }
+            }
+        } else {
+            return -1;
+        }
     }
 
     return 0;

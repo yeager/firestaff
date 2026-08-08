@@ -7144,8 +7144,10 @@
   BIN; JP and ISO receipts remain correctly unmarked for this US-only span.
 # Theron source inventory save provenance (2026-08-08)
 
-- ✅ Appended the complete `inventory_source` provenance matrix to the world
-  snapshot after the existing state fields. Existing version-1 snapshots with
-  no trailing section remain readable; truncated provenance sections reject.
+- ✅ Appended the complete `inventory_source` provenance matrix as an explicit
+  31-byte-per-slot little-endian wire record after the existing state fields.
+  Existing version-1 snapshots with no trailing section remain readable;
+  truncated provenance sections reject. The immediately preceding raw-tail
+  layout is also accepted for migration.
 - ✅ Verified category, source refs, poison/charges, text ref and property bytes
   survive serialize/deserialize in the focused purchase-state regression.

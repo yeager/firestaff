@@ -15,7 +15,7 @@
   before promoting the original random-spawn path into live gameplay.
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
-- Theron: the source inventory provenance matrix now survives the snapshot tail; replace the remaining raw object/timer snapshot structs with field-by-field serialization before claiming portable T900 save parity.
+- Theron: source inventory provenance now has a field-by-field wire layout; replace the remaining raw object/timer snapshot structs with the same layout before claiming portable T900 save parity.
 
 - **DM2-PC-DOS-LEGACY-G1-RECEIPTS:** The verified PC-DOS `DUNGEON.DAT` takes
   the 44-map `File_header` route. The completed audit repaired twelve
