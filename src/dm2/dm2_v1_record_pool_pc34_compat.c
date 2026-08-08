@@ -126,7 +126,11 @@ static int dm2_v1_sksave_map_owner_insert_tile_record_link(
             (size_t)x * dungeon->map_heights[map] + i];
         if ((prior & 0x10u) != 0u) ++insert_index;
     }
+    /* c_map has at most one ground-stack root per tile.  The source shifts
+     * inside its map-owned array; a host-side unbounded vector would admit
+     * links that no original dungeon allocation can represent. */
     if (insert_index > owner->ground_stack_count ||
+        owner->ground_stack_count >= owner->map_tiles_size ||
         owner->ground_stack_count == SIZE_MAX / sizeof(*grown)) return 0;
     for (i = column_base + (size_t)x + 1u; i < owner->column_index_count; ++i) {
         if (owner->column_indices[i] == UINT16_MAX) return 0;
@@ -164,7 +168,9 @@ int dm2_v1_sksave_map_owner_init(
     ground_stack_base = column_index_base +
         (size_t)dungeon_receipt->column_index_count * 2u;
     bytes = (size_t)dungeon_receipt->ground_stack_count * 2u;
-    if (column_index_base > raw_body_size ||
+    if (dungeon_receipt->ground_stack_count >
+            dungeon_receipt->map_data_byte_count ||
+        column_index_base > raw_body_size ||
         (size_t)dungeon_receipt->column_index_count >
             (raw_body_size - column_index_base) / 2u ||
         ground_stack_base > raw_body_size || bytes > raw_body_size - ground_stack_base)

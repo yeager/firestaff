@@ -36,6 +36,8 @@
   Den temporära c_map-ägaren kan nu infoga en verklig dynamisk ground-stack-
   post i originalets kolumnordning; nästa steg är recycler-valet och borttag-
   ningen från den fullständiga världskedjan, inte en lokal poolersättning.
+  Ground-stackens storlek är begränsad till den autentiska kartans rutantal;
+  ingen värdgenererad tillväxt får kringgå originalets c_map-kapacitet.
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   monterad dungeon eller tom lokal cooldown får inte presenteras som en

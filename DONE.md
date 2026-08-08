@@ -820,6 +820,9 @@
 - ✅ Realdatatestet hashkontrollerar nu hela råa SKSAVE-kroppen före och efter
   preflight. Den tillfälliga c_map-återställningen kan alltså inte skriva om
   användarens monterade speldata.
+- ✅ Den temporära ground-stack-kopian begränsas till den autentiska kartans
+  totala antal rutor. En sparström kan därför inte utöka c_map med
+  hostskapade länkar bortom originalets möjliga tile-rötter.
 
 # DM2 New Game-entréreceipt (2026-08-08)
 
