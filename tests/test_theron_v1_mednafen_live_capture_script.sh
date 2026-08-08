@@ -161,6 +161,12 @@ if ! grep -Fq 'spawn_consumer_read sequence=%u logical_address=%04x physical_add
     printf 'FAIL: capture must retain the disassembly-bound spawn consumer receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x' "$irq2_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace"' "$script" ||
+   ! grep -Fq 'spawn_register_samples=%s' "$script"; then
+    printf 'FAIL: capture must retain disassembly-bound spawn register samples\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_binary_md5=$(md5_file "$mednafen_bin")' "$script" ||
    ! grep -Fq 'could not hash the instrumented Mednafen binary' "$script" ||
    ! grep -Fq 'mednafen_binary_md5=%s' "$script"; then

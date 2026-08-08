@@ -21,3 +21,9 @@ host-generated data must not replace it.
 for this sidecar. It rejects malformed headers, non-contiguous sequences,
 non-bank coordinates, mismatched boundary flags and unrelated reads. Even a
 ready receipt has `semantic_publication_allowed == 0`.
+
+The companion `.spawn-registers` sidecar records A/X/Y/SP/P, MPR0, the
+disassembly-relevant `$B3-$BB` RAM bytes, logical PC and physical PC at
+`$4644`, `$4667`, `$C96B` and `$CC4C` boundary samples. It is an execution
+snapshot only; it does not turn any register or RAM byte into an RNG value or
+spawn record.

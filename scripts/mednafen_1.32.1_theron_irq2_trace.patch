@@ -138,6 +138,8 @@ index 347482c4..61d4758e 100644
 + * bounded raw JSR $e009 observations from that address range; this does not
 + * assign a media, level, object, or transition interpretation. */
 +static unsigned TheronIrq2TraceGameMainRamE009DispatchCount;
++static FILE *TheronIrq2TraceSpawnRegisters;
++static unsigned TheronIrq2TraceSpawnRegisterSamples;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -153,6 +155,47 @@ index 347482c4..61d4758e 100644
 +  return;
 + const RegGroupType *trace_regs = (*CurGame->Debugger->RegGroups)[0];
 + const uint32 logical_pc = trace_regs->GetRegister(trace_regs->Regs[0].id, NULL, 0) & 0xffff;
++ if((logical_pc == 0x4644 || logical_pc == 0x4667 ||
++     logical_pc == 0xc96b || logical_pc == 0xcc4c ||
++     (logical_pc >= 0xca00 && logical_pc <= 0xca69) ||
++     (logical_pc >= 0xccf0 && logical_pc <= 0xcd13)) &&
++    TheronIrq2TraceSpawnRegisterSamples < 2048)
++ {
++  const uint32 reg_a = trace_regs->GetRegister(trace_regs->Regs[1].id, NULL, 0) & 0xff;
++  const uint32 reg_x = trace_regs->GetRegister(trace_regs->Regs[2].id, NULL, 0) & 0xff;
++  const uint32 reg_y = trace_regs->GetRegister(trace_regs->Regs[3].id, NULL, 0) & 0xff;
++  const uint32 reg_sp = trace_regs->GetRegister(trace_regs->Regs[4].id, NULL, 0) & 0xff;
++  const uint32 reg_p = trace_regs->GetRegister(trace_regs->Regs[5].id, NULL, 0) & 0xff;
++  const uint32 reg_mpr0 = trace_regs->GetRegister(trace_regs->Regs[6].id, NULL, 0) & 0xff;
++  const uint32 ram_b3 = CurGame->Debugger->MemPeek(0x00b3, 1, true, true) & 0xff;
++  const uint32 ram_b4 = CurGame->Debugger->MemPeek(0x00b4, 1, true, true) & 0xff;
++  const uint32 ram_b5 = CurGame->Debugger->MemPeek(0x00b5, 1, true, true) & 0xff;
++  const uint32 ram_b6 = CurGame->Debugger->MemPeek(0x00b6, 1, true, true) & 0xff;
++  const uint32 ram_b8 = CurGame->Debugger->MemPeek(0x00b8, 1, true, true) & 0xff;
++  const uint32 ram_ba = CurGame->Debugger->MemPeek(0x00ba, 1, true, true) & 0xff;
++  const uint32 ram_bb = CurGame->Debugger->MemPeek(0x00bb, 1, true, true) & 0xff;
++  if(!TheronIrq2TraceSpawnRegisters)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_SPAWN_REGISTER_TRACE");
++   if(path && *path)
++   {
++    TheronIrq2TraceSpawnRegisters = fopen(path, "w");
++    if(TheronIrq2TraceSpawnRegisters)
++     fputs("source=mednafen-pce-instrumented-spawn-registers\n",
++           TheronIrq2TraceSpawnRegisters);
++   }
++  }
++  if(TheronIrq2TraceSpawnRegisters)
++  {
++   TheronIrq2TraceSpawnRegisters->print_format("spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u\n",
++     TheronIrq2TraceSpawnRegisterSamples++, logical_pc, PC, reg_a, reg_x,
++     reg_y, reg_sp, reg_p, reg_mpr0, ram_b3, ram_b4, ram_b5, ram_b6,
++     ram_b8, ram_ba, ram_bb, logical_pc >= 0xc96b && logical_pc <= 0xca69,
++     logical_pc >= 0xcc4c && logical_pc <= 0xcd13, logical_pc == 0x4644,
++     logical_pc == 0x4667);
++   TheronIrq2TraceSpawnRegisters->flush();
++  }
++ }
 +
 + /* Once the System Card return is observed, retain the raw control edge from
 +  * its return target to the next observed CPU PC. This does not classify the
@@ -851,13 +894,13 @@ index 347482c4..61d4758e 100644
  	IOWriteBreakpoints.size() || AuxReadBreakpoints.size() || AuxWriteBreakpoints.size() || OpBreakpoints.size();
 - bool CPUCBNeeded = BPInUse || TraceLog || InSteppingMode || (NeedStep == 2);
 + bool CPUCBNeeded = BPInUse || TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2);
- 
+
 - CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || IsActive);
 - CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || InSteppingMode || (NeedStep == 2));
 + CurGame->Debugger->EnableBranchTrace(BPInUse || TraceLog || TheronIrq2Trace || IsActive);
 + CurGame->Debugger->SetCPUCallback(CPUCBNeeded ? CPUCallback : NULL, TraceLog || TheronIrq2Trace || InSteppingMode || (NeedStep == 2));
  }
- 
+
  static void UpdatePCBreakpoints(void)
 @@ -1367,6 +1423,8 @@
   //
@@ -883,6 +926,8 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TraceRawControllerStateStoreCount = 0;
 +	  TheronIrq2TraceRawCDRegisterStoreCount = 0;
 +	  TheronIrq2TraceRawControllerResultStoreCount = 0;
++	  TheronIrq2TraceSpawnRegisterSamples = 0;
++	  TheronIrq2TraceSpawnRegisters = NULL;
 +	  memset(TheronIrq2TraceReturnWindowSeen, 0, sizeof(TheronIrq2TraceReturnWindowSeen));
 +	  TheronIrq2TraceReturnTransferPending = false;
 +	  memset(TheronIrq2TraceReturnTransferSeen, 0, sizeof(TheronIrq2TraceReturnTransferSeen));
@@ -929,6 +974,8 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2Trace.reset(new FileStream(theron_trace_path, FileStream::MODE_WRITE_INPLACE));
 +	  TheronIrq2Trace->print_format("trace_format=theron_irq2_capture_v2\n");
 +	  TheronIrq2Trace->print_format("source=mednafen-pce-instrumented\n");
++	  /* The register sidecar is opened lazily by the boundary hook so a
++	   * capture that never reaches the spawn path produces no false receipt. */
 +	  TheronIrq2Trace->print_format("variant=%s\n", getenv("FIRESTAFF_THERON_IRQ2_VARIANT") ? getenv("FIRESTAFF_THERON_IRQ2_VARIANT") : "unknown");
 +	  TheronIrq2Trace->print_format("stage3_track02_record=%s\n", getenv("FIRESTAFF_THERON_IRQ2_RECORD") ? getenv("FIRESTAFF_THERON_IRQ2_RECORD") : "unknown");
 +	  UpdateCoreHooks();

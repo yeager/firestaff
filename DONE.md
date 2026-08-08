@@ -1,3 +1,9 @@
+# Theron spawn register capture boundary (2026-08-08)
+
+- ✅ Extended the instrumented Mednafen path with lazy `.spawn-registers` snapshots at `$4644`, `$4667`, `$C96B` and `$CC4C`.
+- ✅ Captures A/X/Y/SP/P, MPR0, relevant `$B3-$BB` bytes, logical/physical PC and boundary flags.
+- ✅ Added capture cleanup, line-delimited validation and transition-receipt counting; no register value is promoted to RNG or spawn semantics.
+
 # Theron combat admission wording audit (2026-08-08)
 
 - ✅ Corrected the production combat-source receipt so it no longer claims that RNG spawn formulas are admitted.
