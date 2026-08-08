@@ -140,6 +140,9 @@
   var en felaktig värdcentrering. ReDMCSB `COORD.C` G2067/G2068 samt
   `PANEL.C` F0346/F0347 och `REVIVE.C` F0281 är nu direkt täckta av
   pixeljämförelser mot den valda ADF:ens C017/C040/C027-poster.
+- ✅ Samma realdatatest låser G0021:s första, full-ljusa Amiga-dungeonpalett
+  efter C013-presentationen: alla sexton RGB4-register och deras upprepning
+  i den 256-indexerade RGB6-paletten måste matcha `DATA.C` exakt.
 
 # CI: CSB Amiga-IMG1-länkning (2026-08-08)
 

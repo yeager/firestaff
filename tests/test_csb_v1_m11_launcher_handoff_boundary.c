@@ -266,6 +266,33 @@ static int frame_rect_is_color(const unsigned char* pixels,
     return 1;
 }
 
+/* ReDMCSB DATA.C G0021's first MEDIA425 row is the full-bright dungeon
+ * palette used by native C013/C017/C040 records. Each source RGB4 component
+ * maps to the indexed host RGB6 value by shifting it left two places. */
+static void expect_amiga_dungeon_palette(const char *label)
+{
+    static const uint8_t expected[16][3] = {
+        {  0u,  0u,  0u }, { 24u, 24u, 24u }, { 32u, 32u, 32u },
+        { 24u,  8u,  0u }, {  0u, 48u, 48u }, { 32u, 16u,  0u },
+        {  0u, 32u,  0u }, {  0u, 48u,  0u }, { 60u,  0u,  0u },
+        { 60u, 40u,  0u }, { 48u, 32u, 24u }, { 60u, 60u,  0u },
+        { 16u, 16u, 16u }, { 40u, 40u, 40u }, {  0u,  0u, 60u },
+        { 60u, 60u, 60u }
+    };
+    uint8_t palette[256][3];
+    int color;
+    int matches = M11_Render_CopyIndexedPaletteRgb6(palette) ? 1 : 0;
+
+    for (color = 0; color < 16 && matches; ++color) {
+        if (memcmp(palette[color], expected[color], sizeof(expected[color])) != 0 ||
+            memcmp(palette[color + 16], expected[color],
+                   sizeof(expected[color])) != 0) {
+            matches = 0;
+        }
+    }
+    expect_true(matches, label);
+}
+
 static void expect_amiga_c013_source_frame(M11_GameViewState *view,
                                            const char *label)
 {
@@ -293,6 +320,8 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
                                          movement.h) > 0 &&
                     frame_rect_is_color(framebuffer, 0, 0, 320, 124, 0u),
                 label);
+    expect_amiga_dungeon_palette(
+        "Amiga C013 publishes the original G0021 dungeon palette");
 }
 
 /* ReDMCSB PANEL.C F0347 expands C017 into the 224x136 viewport rectangle
