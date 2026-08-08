@@ -8042,3 +8042,10 @@
   gameplay evidence.
 - ✅ Focused verification: `test_theron_v1_track02_creature_spawn`,
   `theron_v1_combat_runtime_source`, and `theron_v1_combat_mechanics` all pass.
+# CSB Atari ST kall återupptagning från verklig sparning (2026-08-08)
+
+- Utökade den verkliga Atari ST `MINI.DAT`-regressionen med F0433 Save and
+  Quit följt av en ny M11-instans och F0435-laddning. Kontrollen jämför
+  originalformatets klocka, nivå och partiposition efter ANIM.C → FTLCODE.
+  Endast den uttryckligen angivna, disponibla sparfilen skrivs; originalets
+  `MINI.DAT` används bara som autentiserad, skrivskyddad mall.

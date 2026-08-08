@@ -405,6 +405,15 @@ int main(void)
                               &profile->runtime),
                       "real Atari save binds its disposable path to an authenticated MINI.DAT template");
                 if (save_path_bound) {
+                    uint32_t relaunch_game_time;
+                    int relaunch_level;
+                    int relaunch_x;
+                    int relaunch_y;
+                    int relaunch_dir;
+                    M11_GameLaunchSpec resumed_spec;
+                    M11_GameViewState resumed_view;
+                    const CSB_V1_BootProfile *resumed_profile;
+
                     remove(quicksave_path);
                     CHECK(M11_GameView_HandleInput(&view,
                                                    M12_MENU_INPUT_DISK_MENU) ==
@@ -435,7 +444,80 @@ int main(void)
                     CHECK(profile && profile->runtime.game_time == saved_game_time &&
                               view.loadGameTick == saved_game_time,
                           "F0435 restores the original Atari quicksave clock into M11");
+                    /* ReDMCSB LOADSAVE.C F0433 writes the source-format game
+                     * state which STARTUP1.C lines 162-165 later gives to
+                     * F0435.  Exercise that independent process boundary,
+                     * rather than treating the in-process Load Saved Game
+                     * action as sufficient resume proof.  The source MINI.DAT
+                     * remains read-only; only the explicit disposable path is
+                     * written. */
+                    relaunch_game_time = profile ? profile->runtime.game_time : 0u;
+                    relaunch_level = profile ? profile->runtime.current_level : -1;
+                    relaunch_x = profile ? profile->runtime.party_x : -1;
+                    relaunch_y = profile ? profile->runtime.party_y : -1;
+                    relaunch_dir = profile ? profile->runtime.party_dir : -1;
+                    CHECK(M11_GameView_HandleInput(&view,
+                                                   M12_MENU_INPUT_DISK_MENU) ==
+                              M11_GAME_INPUT_REDRAW &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_DOWN) ==
+                                  M11_GAME_INPUT_REDRAW &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_DOWN) ==
+                                  M11_GAME_INPUT_REDRAW &&
+                              view.csbDiskMenuSelectedChoice == 3 &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_ACCEPT) ==
+                                  M11_GAME_INPUT_RETURN_TO_MENU &&
+                              is_original_atari_save_file(quicksave_path),
+                          "real Atari Save and Quit writes the F0433 source-format artifact");
+                    M11_GameView_Shutdown(&view);
+                    resumed_spec = spec;
+                    resumed_spec.savePath = quicksave_path;
+                    M11_GameView_Init(&resumed_view);
+                    CHECK(M11_GameView_Start(&resumed_view, &resumed_spec),
+                          "cold M11 start accepts the real Atari Save and Quit artifact");
+                    for (tick = 0; tick < 800 &&
+                           resumed_view.csbState.startup_title_active; ++tick) {
+                        (void)M11_GameView_AdvanceIdleTick(&resumed_view);
+                    }
+                    resumed_profile = (const CSB_V1_BootProfile *)
+                        resumed_view.csbBootProfile;
+                    CHECK(resumed_profile &&
+                              resumed_view.csbAtariStRuntimeHandoffComplete &&
+                              resumed_view.csbState.level_loaded &&
+                              resumed_profile->runtime.game_time ==
+                                  relaunch_game_time &&
+                              resumed_profile->runtime.current_level ==
+                                  relaunch_level &&
+                              resumed_profile->runtime.party_x == relaunch_x &&
+                              resumed_profile->runtime.party_y == relaunch_y &&
+                              resumed_profile->runtime.party_dir == relaunch_dir,
+                          "cold F0435 resume restores the saved Atari pose and clock");
+                    memset(framebuffer, 0, sizeof(framebuffer));
+                    M11_GameView_Draw(&resumed_view, framebuffer, 320, 200);
+                    CHECK(resumed_profile &&
+                              check_atari_st_c232_hud_frame(
+                                  resumed_profile->graphics_path, framebuffer),
+                          "cold Atari resume redraws the complete C232-owned HUD");
+                    if (resumed_profile) {
+                        int resumed_direction = resumed_profile->runtime.party_dir;
+
+                        CHECK(M11_GameView_HandleInput(
+                                  &resumed_view,
+                                  M12_MENU_INPUT_TURN_RIGHT) ==
+                                  M11_GAME_INPUT_REDRAW &&
+                                  resumed_profile->runtime.party_dir ==
+                                      ((resumed_direction + 1) & 3) &&
+                                  resumed_view.csbState.party_dir ==
+                                      resumed_profile->runtime.party_dir,
+                              "cold Atari resume routes C002 through the live command queue");
+                    }
+                    M11_GameView_Shutdown(&resumed_view);
                     remove(quicksave_path);
+                    if (failures) return 1;
+                    puts("PASS: real Atari MINI.DAT save-and-quit cold resume");
+                    return 0;
                 }
             }
             M11_GameView_Shutdown(&view);
