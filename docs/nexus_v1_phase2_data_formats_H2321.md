@@ -154,7 +154,7 @@ for (gy = 0; gy < 32; gy++)
 |------|--------|--------|
 | Grid parsing | ✅ Implemented | `nexus_v1_dungeon.c:nexus_v1_level_load()` |
 | Square type enum | ✅ Implemented | `include/nexus_v1_world.h` |
-| 3D geometry blob parser | ❌ **NOT IMPLEMENTED** | Format unknown |
+| 3D geometry blob parser | ✅ Bounded Structure1B/2/3 source receipts | Saturn VDP1/material consumer capture-gated |
 | Thing/object list in DGN | ❌ **NOT IMPLEMENTED** | May be embedded or separate |
 | Per-level size validation | ✅ Implemented | Size check in load function |
 
@@ -274,7 +274,10 @@ typedef struct {
 
 ### 3.3 Object Placement Source
 
-Objects are placed from the LEV\*.DGN "thing list" — the portion of the DGN file between the grid section (offset 2048) and the 3D geometry blob. **This section is unparsed.** The current implementation (`nexus_v1_world.c`) provides only an in-memory object database API (`nexus_v1_object_place()`, etc.) without a file-format loader.
+Objects are described by LEV*.DGN source records, but the retail object/event
+consumer is not yet bound. Firestaff retains bounded DGN geometry and source
+provenance receipts; it does not promote the in-memory object API as a retail
+placement implementation.
 
 **ReDMCSB reference:** DUNGEON.C F0103 — object placement and collision (DM1 format, not Nexus). Nexus likely uses a similar but extended format.
 
@@ -602,8 +605,8 @@ c->portrait_index = i; /* ordinal retained pending FACE consumer capture */
 | Retail PLRD roster | ✅ 20 records parsed | `nexus_v1_champions_init_from_rlowfix()` |
 | Full 24-slot roster | ❌ **20 retail records; 24 is storage capacity** | Retail source |
 | Champion recruit/resurrect | ✅ Implemented | `nexus_v1_champion_recruit/resurrect()` |
-| FACE.BIN parsing | ❌ **NOT IMPLEMENTED** | Format unknown |
-| Portrait rendering | ❌ **NOT IMPLEMENTED** | |
+| FACE.BIN parsing | ✅ Bounded real-data source parser | `nexus_v1_face_bin.c` |
+| Portrait rendering | ❌ Saturn VDP1/CLUT/placement consumer not captured | Source pixels retained only |
 | Class system (4 classes) | ✅ Implemented | `Nexus_ChampionClass` enum |
 | Stat advancement (XP-based) | ❌ **NOT IMPLEMENTED** | DM1 formulas not ported |
 | 30-slot inventory | ✅ Implemented | `Nexus_V1_Champion` |
@@ -919,10 +922,10 @@ see `NEXUS_STALE_CLAIM_AUDIT.md`.
 
 | Format | Description | Evidence | Status |
 |--------|-------------|----------|--------|
-| `SNDLEV*.SAL` | Per-level sound bank, 290–460 KB | Size patterns | ❌ **UNKNOWN FORMAT** |
-| `SNDLEV*.MAP` | Event index, 66–90 bytes | Size range | ❌ **UNKNOWN FORMAT** |
+| `SNDLEV*.SAL` | Per-level sound bank, 290–460 KB | 16 real byte-level receipts | Codec/voice/playback semantics capture-gated |
+| `SNDLEV*.MAP` | Event index, 66–90 bytes | 16 real bounded MAP receipts | Event selector/driver handoff capture-gated |
 | CD Audio | Red Book Audio tracks 2–9 | ISO track listing | ⚠️ Tracks present, playback stub |
-| `SDDRVS.TSK` | Saturn sound driver task, 26 KB | Extracted file | ❌ **NOT ANALYZED** |
+| `SDDRVS.TSK` | Saturn 68000 sound-driver image, 26 KB | Entry/dispatch/PCM-register corridors | Event-to-driver ABI capture-gated |
 
 ### 7.8 Firestaff Conversion
 
@@ -942,18 +945,20 @@ void nexus_sound_set_music(Nexus_SoundEngine *eng, int enabled);
 const char *nexus_sound_event_name(Nexus_SoundEvent event);
 ```
 
-**All functions are stubs** — they initialize state and log calls but do not decode SAL/MAP or play audio.
+The production API retains verified SAL/MAP bytes and bounded directory
+metadata. SAL decoding, host PCM, and event-driven playback remain
+fail-closed until the Saturn SCSP/SDDRVS consumer is captured.
 
 ### 7.9 Status
 
 | Item | Status |
 |------|--------|
-| Sound engine API | ✅ Stub implemented |
-| SAL format decode | ❌ **NOT IMPLEMENTED** — format unknown |
-| MAP event index parse | ❌ **NOT IMPLEMENTED** — format unknown |
+| Sound engine API | ✅ Fail-closed production boundary |
+| SAL format decode | ❌ Codec/rate/loop semantics unproven |
+| MAP event index parse | ✅ Bounded byte-level receipt; event meaning unproven |
 | CD audio playback | ❌ **NOT IMPLEMENTED** — stub only |
 | SDL_mixer integration | ❌ **NOT IMPLEMENTED** |
-| SDDRVS.TSK analysis | ❌ **NOT ANALYZED** |
+| SDDRVS.TSK analysis | ✅ Static/runtime corridor receipts; playback ABI unproven |
 
 ---
 
