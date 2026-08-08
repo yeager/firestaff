@@ -94,7 +94,9 @@ int nexus_v1_action_semantics_proven(void);
  * Initialization and input
  * ═══════════════════════════════════════════════════════════════════ */
 
-/* Init mechanics state at starting position (DM1 default: x=11,y=29,dir=0=N) */
+/* Init mechanics state at a caller-owned position. Negative coordinates or
+ * direction preserve the native unplaced state; no DM1/Nexus default pose is
+ * invented here. */
 void nexus_mechanics_init(Nexus_MechanicsState *st,
                             int start_x, int start_y, int start_dir);
 

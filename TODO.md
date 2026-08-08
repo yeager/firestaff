@@ -10290,3 +10290,7 @@ as line/circle coordinates or promote them into movement geometry.
   unplaced until the same Saturn start-selector evidence exists. Fixture
   probes may set coordinates explicitly, but native world/save state must not
   inherit `(0,11,29,N)` from the retired compatibility path.
+  2026-08-08 follow-up: `nexus_mechanics_init()` now also keeps an unplaced
+  `(-1,-1,-1)` caller inert (`party_alive=0`); only explicit fixture placement
+  can mark the mechanics party alive. No native start pose or party status is
+  inferred from a DM1-shaped default.

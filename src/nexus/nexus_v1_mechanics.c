@@ -70,7 +70,12 @@ void nexus_mechanics_init(Nexus_MechanicsState *st,
     /* No retail start selector has been captured yet. Keep mechanics
      * unplaced instead of inventing LEV00 as the active map. */
     st->map_index = -1;
-    st->party_alive = 1;
+    /* A native Saturn start selector has not placed the party yet. Do not
+     * manufacture a living party from the caller's coordinates: explicit
+     * fixture callers may still provide a concrete position, while the
+     * unplaced (-1,-1,-1) state must remain inert until source-owned startup
+     * evidence supplies the pose. */
+    st->party_alive = (start_x >= 0 && start_y >= 0 && start_dir >= 0) ? 1 : 0;
     st->gold_pieces = 0;
     st->game_over = 0;
     st->game_over_reason = 0;

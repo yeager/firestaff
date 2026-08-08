@@ -450,6 +450,9 @@ static void test_mechanics_init_remains_unplaced(void) {
     nexus_mechanics_init(&st, -1, -1, -1);
     CHECK(st.map_index == -1,
           "mechanics init does not invent LEV00 before a retail start selector");
+    CHECK(st.party_alive == 0 && st.party_x == -1 && st.party_y == -1 &&
+              st.party_dir == -1,
+          "unplaced mechanics state has no synthetic living party or pose");
 }
 
 static void test_unregistered_door_fails_closed(void) {

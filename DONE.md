@@ -1,3 +1,13 @@
+# Nexus unplaced mechanics no longer invent a living party (2026-08-08)
+
+- ✅ An unplaced `(-1,-1,-1)` mechanics state now remains inert as well as
+  mapless; it cannot expose a synthetic living party before Saturn startup
+  selects a real pose.
+- ✅ Explicit caller-owned fixture positions retain their diagnostic setup
+  behavior; no native start-selector or viewport gate was relaxed.
+- ✅ Verified with the real Nexus startup/menu boundary and pit/teleporter
+  regression.
+
 # Nexus FONT256 page-pattern and CG counts separated (2026-08-08)
 
 - ✅ The real `FONT256.S2D` receipt now distinguishes 4096 page words, the
