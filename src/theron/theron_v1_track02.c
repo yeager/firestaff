@@ -1080,6 +1080,105 @@ static void catalog_add_startup_roster_name(
     entry->title_offset_valid = title_offset_valid ? 1 : 0;
 }
 
+/* The US Track 02 roster is not ASCII.  The authenticated raw BIN contains
+ * the eight names as little-endian 16-bit words carrying three 5-bit text
+ * symbols per word.  This is the source text alphabet already used by the
+ * diagnostic decoder; the fixed span and ordered names below are an admission
+ * check, not a generated label table.  The bytes following each name contain
+ * unresolved control fields, so titles remain unpromoted here. */
+static int tqr_find_us_roster_codon_name(
+    const uint8_t *data, size_t size, size_t start, size_t end,
+    const char *name, size_t *out_offset) {
+    uint16_t encoded[16];
+    uint16_t masks[16];
+    size_t encoded_words = 0u;
+    size_t name_len;
+    size_t i;
+
+    if (!data || !name || !out_offset || start > end || end > size) return 0;
+    name_len = strlen(name);
+    if (name_len == 0u || name_len > 48u) return 0;
+    for (i = 0u; i < name_len; i += 3u) {
+        uint16_t word = 0u;
+        size_t j;
+        for (j = 0u; j < 3u; ++j) {
+            unsigned int value = 26u; /* source-space padding */
+            if (i + j < name_len) {
+                unsigned char c = (unsigned char)name[i + j];
+                if (c < 'A' || c > 'Z') return 0;
+                value = (unsigned int)(c - 'A');
+            }
+            word |= (uint16_t)(value << (10u - j * 5u));
+        }
+        if (encoded_words >= sizeof(encoded) / sizeof(encoded[0])) return 0;
+        encoded[encoded_words] = word;
+        masks[encoded_words] = 0xffffu;
+        if (i + 2u >= name_len) {
+            size_t remaining = name_len - i;
+            masks[encoded_words] = remaining == 1u ? 0x7c00u : 0x7fe0u;
+        }
+        ++encoded_words;
+    }
+    if (end - start < encoded_words * 2u) return 0;
+    for (i = start; i + encoded_words * 2u <= end; i += 2u) {
+        size_t word_index;
+        int match = 1;
+        for (word_index = 0u; word_index < encoded_words; ++word_index) {
+            uint16_t actual = (uint16_t)data[i + word_index * 2u] |
+                (uint16_t)data[i + word_index * 2u + 1u] << 8u;
+            if ((actual & masks[word_index]) !=
+                    (encoded[word_index] & masks[word_index])) {
+                match = 0;
+                break;
+            }
+        }
+        if (match) {
+            *out_offset = i;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static Theron_Track02SignalStatus tqr_catalog_us_roster_names(
+    const uint8_t *track02_data, size_t track02_size,
+    const char *md5_hex, Theron_Track02StartupRosterNameCatalog *out_catalog) {
+    static const char *const names[] = {
+        "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN",
+        "DOTAN", "PENTAI"
+    };
+    const size_t stream_start = 0x0B46C8u;
+    const size_t stream_end = 0x0B4AC8u;
+    size_t cursor = stream_start;
+    size_t i;
+
+    if (theron_v1_track02_variant_for_md5(md5_hex) !=
+            THERON_TRACK02_VARIANT_US_BIN || stream_start >= track02_size ||
+        stream_end > track02_size) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    for (i = 0u; i < sizeof(names) / sizeof(names[0]); ++i) {
+        size_t raw_offset = 0u;
+        size_t user_offset = 0u;
+        int found = tqr_find_us_roster_codon_name(
+            track02_data, track02_size, cursor, stream_end,
+            names[i], &raw_offset);
+        Theron_Track02SignalStatus offset_status = found
+            ? theron_v1_track02_raw_offset_to_user_offset(
+                raw_offset, track02_size, md5_hex, &user_offset)
+            : THERON_TRACK02_SIGNAL_NOT_FOUND;
+        if (!found || offset_status != THERON_TRACK02_SIGNAL_OK) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        catalog_add_startup_roster_name(
+            out_catalog, names[i], raw_offset, user_offset,
+            NULL, 0u, 0u, 0);
+        cursor = raw_offset + ((strlen(names[i]) + 2u) / 3u) * 2u;
+    }
+    return out_catalog->name_count == sizeof(names) / sizeof(names[0])
+        ? THERON_TRACK02_SIGNAL_OK : THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
 static void catalog_add_startup_bitmap_sample(
     Theron_Track02StartupBitmapCatalog *catalog,
     unsigned int route_bit,
@@ -1509,13 +1608,11 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
     if (variant == THERON_TRACK02_VARIANT_US_BIN) {
-        /* The authenticated US BIN contains the startup prompt, but the
-         * champion roster is not present as a verified ASCII marker cluster.
-         * The old path copied the JP roster literals into the US receipt,
-         * which made host-owned labels look like source data.  Keep this
-         * route fail-closed until the executing US text consumer and its
-         * encoded payload are identified. */
-        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        /* The names are source-bound through the authenticated codon stream.
+         * Its title/control fields still require the executing US text
+         * consumer, so this route publishes names only. */
+        return tqr_catalog_us_roster_names(
+            track02_data, track02_size, md5_hex, out_catalog);
     }
     if (variant != THERON_TRACK02_VARIANT_JP_BIN) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;

@@ -12767,6 +12767,10 @@ as line/circle coordinates or promote them into movement geometry.
   branch constants remain a receipt, but the bank-switched RNG return contract
   and consumers are unresolved. Legacy data-free combat probes use an
   explicitly fixture-only helper; production remains fail-closed.
+- 🔧 2026-08-08 Theron US roster codon binding: all eight champion names are
+  now verified from the ordered 5-bit little-endian codon stream in real
+  `TQUS02.bin` and reach the startup media receipt. Title/control fields and
+  the general text consumer remain open; no title text is synthesized.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.

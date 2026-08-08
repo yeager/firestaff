@@ -121,6 +121,38 @@ static void check_real_jp_roster(const char *path, const char *md5) {
     free(track02);
 }
 
+static void check_real_us_roster(const char *path, const char *md5) {
+    static const char *const names[] = {
+        "THERON", "MARA", "LINOS", "HEXA",
+        "HAKAR", "TIRAN", "DOTAN", "PENTAI"
+    };
+    Theron_StartupMediaStateReceipt receipt;
+    uint8_t *track02;
+    size_t track02_bytes = 0u;
+    size_t i;
+
+    track02 = read_file(path, &track02_bytes);
+    if (!track02) {
+        fprintf(stderr, "skipping US roster (missing %s)\n", path);
+        return;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    theron_v1_startup_media_capture_track02_state_receipt(
+        track02, track02_bytes, md5, &receipt);
+    CHECK(receipt.track02_variant == THERON_TRACK02_VARIANT_US_BIN);
+    CHECK(receipt.startup_roster_name_status == THERON_TRACK02_SIGNAL_OK);
+    CHECK(receipt.startup_roster_name_count == 8);
+    for (i = 0u; i < 8u; ++i) {
+        CHECK(strcmp(receipt.startup_roster_names[i], names[i]) == 0);
+        /* US title/control fields are intentionally not promoted yet. */
+        CHECK(receipt.startup_roster_titles[i][0] == '\0');
+    }
+    fprintf(stderr,
+            "US Track 02 roster names bind from real codon stream: %d names\n",
+            receipt.startup_roster_name_count);
+    free(track02);
+}
+
 int main(void) {
     Theron_V1_World world;
     const char *real_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
@@ -151,6 +183,7 @@ int main(void) {
 
     if (default_track02_path("TQUS02.bin", us_path, sizeof(us_path))) {
         check_real_palette(us_path, THERON_TRACK02_MD5_US_BIN, "US");
+        check_real_us_roster(us_path, THERON_TRACK02_MD5_US_BIN);
     }
     if (default_track02_path("TQJP02.bin", jp_path, sizeof(jp_path))) {
         check_real_palette(jp_path, THERON_TRACK02_MD5_JP_BIN, "JP");

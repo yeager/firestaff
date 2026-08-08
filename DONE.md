@@ -8073,3 +8073,13 @@
   originalformatets klocka, nivå och partiposition efter ANIM.C → FTLCODE.
   Endast den uttryckligen angivna, disponibla sparfilen skrivs; originalets
   `MINI.DAT` används bara som autentiserad, skrivskyddad mall.
+# 2026-08-08 Theron US roster codon binding
+
+- ✅ The startup roster now validates and consumes the authentic ordered
+  champion-name codons from real `TQUS02.bin` (`0x0B46C8` onward), including
+  all eight names. The source bytes are checked through the raw-sector
+  user-data mapping before entering the receipt.
+- ✅ US titles/control fields remain unpromoted because their brace/control
+  semantics and executing HuC6280 text consumer are not yet proven.
+- ✅ Real-media startup-media regression passes for both US and JP Track 02;
+  US names and JP names/titles are verified independently.
