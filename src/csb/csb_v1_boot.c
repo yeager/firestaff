@@ -2717,7 +2717,8 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
      * in isolation; otherwise a stale title phase or swapped door strip can
      * open the runtime HUD through an old wrapper path. */
     if (!csb_v1_startup_session_title_handoff_complete_pc34(session) ||
-        !session->surfaces.valid || !session->surfaces.hud_surfaces_ready) {
+        !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
+        !csb_v1_startup_session_full_surface_contract_pc34(session)) {
         return 0;
     }
 

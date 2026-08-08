@@ -81,6 +81,9 @@ static void make_terminal_real_data_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title_pixels;
     session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].source_asset_id = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].width = 320;
@@ -92,6 +95,9 @@ static void make_terminal_real_data_session(
         CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].valid = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].pixels = presents_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34].source_asset_id = 1;
     session->surfaces.surfaces[
@@ -107,6 +113,9 @@ static void make_terminal_real_data_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].pixels = chaos_pixels;
     session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].source_asset_id = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34].width = 320;
@@ -118,6 +127,9 @@ static void make_terminal_real_data_session(
         CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].valid = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].pixels = strikes_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34].source_asset_id = 1;
     session->surfaces.surfaces[
@@ -133,6 +145,9 @@ static void make_terminal_real_data_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].pixels = left_door_pixels;
     session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].source_asset_id = 2;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].width = 105;
@@ -145,6 +160,9 @@ static void make_terminal_real_data_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels = right_door_pixels;
     session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].source_asset_id = 3;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 128;
@@ -156,6 +174,9 @@ static void make_terminal_real_data_session(
         CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].valid = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].source_kind =
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].source_asset_id = 4;
     session->surfaces.surfaces[
@@ -170,6 +191,8 @@ static void make_terminal_real_data_session(
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
     inventory->valid = 1;
     inventory->pixels = inventory_pixels;
+    inventory->source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     inventory->source_asset_id = 17;
     inventory->width =
         use_real_geometry ? CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 : 1;
@@ -178,6 +201,8 @@ static void make_terminal_real_data_session(
     inventory->transparent_color = -1;
     resurrect->valid = 1;
     resurrect->pixels = resurrect_pixels;
+    resurrect->source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     resurrect->source_asset_id = 40;
     resurrect->width =
         use_real_geometry ? CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 : 1;
