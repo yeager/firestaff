@@ -3927,6 +3927,20 @@ static int m11_game_view_is_dm1(const M11_GameViewState* gameView) {
                                                 gameView->sourceId);
 }
 
+static int m11_game_view_supports_held_motion_input(
+    const M11_GameViewState* gameView) {
+    if (!gameView || !M11_InputSourceSupportsHeldMotion(gameView->sourceId,
+                                                          gameView->active)) {
+        return 0;
+    }
+    /* TITLE/ENTRANCE have their own source dispatch.  GAMELOOP.C's held
+     * command wait begins only after F0441/F0435 has entered the dungeon, so
+     * a held controller must not repeatedly advance startup commands. */
+    return !m11_game_view_is_csb(gameView) ||
+           (!gameView->csbState.startup_title_active &&
+            !gameView->csbState.startup_entrance_active);
+}
+
 static int m11_csb_sdl_key_to_menu_input(int key, int ctrlDown, M12_MenuInput* outInput) {
     CsbV1KeyboardKeyPc34Compat csbKey = CSB_V1_KEYBOARD_KEY_NONE;
     switch (key) {
@@ -4860,7 +4874,8 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 }
             }
             if (gameView && gameView->active &&
-                m11_game_view_is_dm1(gameView) && ev.key.repeat) {
+                m11_game_view_supports_held_motion_input(gameView) &&
+                ev.key.repeat) {
                 M12_MenuInput repeatInput =
                     M11_DM1V1_NavigationInputFromScancode((int)ev.key.scancode);
                 if (repeatInput == M12_MENU_INPUT_NONE) {
@@ -5317,7 +5332,8 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 }
             }
             if (gameView && gameView->active &&
-                m11_game_view_is_dm1(gameView) && ev.key.repeat) {
+                m11_game_view_supports_held_motion_input(gameView) &&
+                ev.key.repeat) {
                 M12_MenuInput repeatInput =
                     M11_DM1V1_NavigationInputFromScancode((int)ev.key.keysym.scancode);
                 if (repeatInput == M12_MENU_INPUT_NONE) {
@@ -6349,7 +6365,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         if (input == M12_MENU_INPUT_NONE &&
             pointerResult == M11_GAME_INPUT_IGNORED &&
-            m11_game_view_is_dm1(&gameView) &&
+            m11_game_view_supports_held_motion_input(&gameView) &&
             M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
             {
                 int pendingInput = M12_MENU_INPUT_NONE;

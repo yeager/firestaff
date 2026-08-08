@@ -1,5 +1,7 @@
 #include "main_loop_m11.h"
 
+#include <string.h>
+
 enum {
     M11_SOURCE_FB_WIDTH = 320,
     M11_SOURCE_FB_HEIGHT = 200
@@ -79,6 +81,17 @@ int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled)
      * Gamepad retain the user-owned controller map. Unknown values resolve
      * to Auto so a corrupt preference cannot disable a working controller. */
     return inputModeIndex != 1 && inputModeIndex != 2;
+}
+
+int M11_InputSourceSupportsHeldMotion(const char* sourceId, int active)
+{
+    if (!active || !sourceId) return 0;
+    /* ReDMCSB GAMELOOP.C:164-219 owns the same wait-for-input / F0380
+     * command boundary for Dungeon Master and Chaos Strikes Back.  CSB was
+     * accidentally left out of M11's held-device sampler, which made a held
+     * stick or key depend on SDL axis motion or OS key-repeat after its first
+     * command. */
+    return strcmp(sourceId, "dm1") == 0 || strcmp(sourceId, "csb") == 0;
 }
 
 int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,

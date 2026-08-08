@@ -39,6 +39,15 @@ int main(void) {
     CHECK(M11_GamepadEnabledForInputMode(99, 1) == 1);
     CHECK(M11_GamepadEnabledForInputMode(3, 0) == 0);
 
+    /* ReDMCSB GAMELOOP.C consumes held commands on its source input
+     * boundary.  CSB must participate in this sampler just like DM1; a
+     * controller axis emits only one SDL motion event while it remains held. */
+    CHECK(M11_InputSourceSupportsHeldMotion("dm1", 1) == 1);
+    CHECK(M11_InputSourceSupportsHeldMotion("csb", 1) == 1);
+    CHECK(M11_InputSourceSupportsHeldMotion("csb", 0) == 0);
+    CHECK(M11_InputSourceSupportsHeldMotion("dm2", 1) == 0);
+    CHECK(M11_InputSourceSupportsHeldMotion(NULL, 1) == 0);
+
     /* Default CSB gameplay mapping: these are source input tokens, not a
      * parallel controller simulation.  M11_GameView_HandleInput forwards
      * them to the CSB GAMEBLOCK/COMMAND.C owner. */

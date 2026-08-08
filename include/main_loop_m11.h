@@ -150,6 +150,12 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
    2 (touch) additionally suppress the controller route. */
 int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled);
 
+/* Held keyboard/gamepad movement is sampled at the source input boundary,
+   rather than relying on host autorepeat events.  DM1 and CSB share the
+   ReDMCSB GAMELOOP.C command-wait loop; other game runtimes own different
+   input clocks. */
+int M11_InputSourceSupportsHeldMotion(const char* sourceId, int active);
+
 /* V1 original and V2.0 filtered both present the source-locked 320x200 glyph
    layer.  They must stay nearest-neighbor so small original glyphs such as DM1
    wall inscriptions remain readable when the window is enlarged. */
