@@ -5,8 +5,8 @@ Source: Daniel email `dm1 hall of champions map`, 2026-04-27 08:57.
 URL: https://www.oldgames.sk/sk/dungeon-mapper/map/1685
 Title: Level 01 - The Hall of Champions, 20 x 21, Dungeon Master / OldGames.
 
-Local image from email attachment:
-- `references/firestaff/dm1/hall-of-champions-map-email.png`
+The email attachment is not stored in the repository. The linked map page is
+the retained reference; no local image is required by the runtime or tests.
 
 Useful for Firestaff original-route work:
 - This is a navigation/coordinate reference for Hall of Champions, not pixel parity evidence.

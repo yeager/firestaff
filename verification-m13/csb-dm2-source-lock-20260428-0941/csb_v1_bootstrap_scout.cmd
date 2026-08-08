@@ -1,1 +1,0 @@
-python3 tools/csb_v1_bootstrap_scout.py

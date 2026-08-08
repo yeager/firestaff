@@ -1,3 +1,0 @@
-base_scene.ppm 192015 bytes
-creature_scene.ppm 192015 bytes
-scene_meta.txt 207 bytes

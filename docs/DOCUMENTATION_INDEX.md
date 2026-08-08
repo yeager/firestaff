@@ -33,6 +33,7 @@ handoff is not proven.
 - [Missing functions by game](MISSING_FUNCTIONS_BY_GAME.md) — code, data and verification gaps
 - [Synthetic data by game](SYNTHETIC_DATA_BY_GAME.md) — fixtures, placeholders and real-data replacements
 - [Preservation and provenance](wiki/Preservation.md) — evidence levels, capture manifests and external data rules
+- [External preservation archive](PRESERVATION_ARCHIVE.md) — moved historical runs and checksum manifest
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 
