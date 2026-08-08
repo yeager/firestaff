@@ -9127,6 +9127,17 @@ static void dm2_v1_boot_runtime_receipt_clear(
     }
 }
 
+static int dm2_v1_boot_has_live_source_session(
+    const DM2_V1_BootProfile *profile)
+{
+    /* A mounted File_header proves source bytes and map geometry, not the
+     * mutable GAME_LOAD graph.  SKProject's GAME_LOAD restores c_hero,
+     * record links and timers as one transaction before entering gameplay.
+     * Do not let any public runtime mutator create a parallel host session. */
+    return profile && profile->source_game_load_session_ready &&
+           profile->dm2_state && profile->dungeon_data;
+}
+
 int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
                                 DM2_V1_BootRuntimeReceipt *out_receipt)
 {
@@ -9149,7 +9160,7 @@ int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
 int dm2_v1_boot_runtime_tick(DM2_V1_BootProfile *profile,
                              DM2_V1_BootRuntimeReceipt *out_receipt)
 {
-    if (!profile || !profile->dm2_state) {
+    if (!dm2_v1_boot_has_live_source_session(profile)) {
         dm2_v1_boot_runtime_receipt_clear(out_receipt);
         return 0;
     }
@@ -9168,7 +9179,7 @@ int dm2_v1_boot_runtime_turn(DM2_V1_BootProfile *profile,
                              DM2_V1_BootRuntimeReceipt *out_receipt)
 {
     int result;
-    if (!profile || !profile->dm2_state) {
+    if (!dm2_v1_boot_has_live_source_session(profile)) {
         dm2_v1_boot_runtime_receipt_clear(out_receipt);
         return 0;
     }
@@ -9185,7 +9196,7 @@ int dm2_v1_boot_runtime_move(DM2_V1_BootProfile *profile,
                              DM2_V1_BootRuntimeReceipt *out_receipt)
 {
     int result;
-    if (!profile || !profile->dm2_state) {
+    if (!dm2_v1_boot_has_live_source_session(profile)) {
         dm2_v1_boot_runtime_receipt_clear(out_receipt);
         return 0;
     }
@@ -9224,7 +9235,7 @@ int dm2_v1_boot_runtime_action_front_cell(
     int square;
 
     dm2_v1_boot_runtime_action_receipt_clear(out_receipt);
-    if (!profile || !profile->dm2_state || !out_receipt) {
+    if (!dm2_v1_boot_has_live_source_session(profile) || !out_receipt) {
         return 0;
     }
     game = (DM2_V1_GameState *)profile->dm2_state;
@@ -9734,7 +9745,11 @@ int dm2_v1_boot_runtime_hud_capture_receipt(
     int frame_hash_count = 0;
 
     dm2_v1_boot_runtime_hud_capture_receipt_init(out_receipt);
-    if (!profile || !profile->dm2_state || !out_receipt) {
+    /* This probe rotates the party between frames.  It is consequently a
+     * gameplay consumer, not a safe way to inspect the static startup
+     * surface.  Do not turn a parsed File_header pose into four synthetic
+     * runtime views while GAME_LOAD has no complete source session. */
+    if (!dm2_v1_boot_has_live_source_session(profile) || !out_receipt) {
         return 0;
     }
 

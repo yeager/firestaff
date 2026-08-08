@@ -631,11 +631,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               before.party_dir == 0,
           "boot runtime capture owns the File_header party receipt");
     memset(&after, 0, sizeof(after));
-    CHECK(dm2_v1_boot_runtime_tick(launch.profile, &after) == 1 &&
-              after.runtime_ready == 1 &&
-              after.tick_count >= before.tick_count &&
-              after.operation_result == 0,
-          "boot runtime tick owns DM2 receipt update");
+    CHECK(dm2_v1_boot_runtime_tick(launch.profile, &after) == 0 &&
+              after.operation_result == -1 &&
+              dm2_v1_runtime_get_tick_count() == before.tick_count,
+          "boot runtime tick remains blocked before original GAME_LOAD owns a session");
     memset(framebuffer, 0, sizeof(framebuffer));
     memset(&render_receipt, 0, sizeof(render_receipt));
     CHECK(dm2_v1_boot_runtime_render_frame(
@@ -724,90 +723,11 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     memset(&hud_capture, 0, sizeof(hud_capture));
     CHECK(dm2_v1_boot_runtime_hud_capture_receipt(
               launch.profile,
-              &hud_capture) >= 0 &&
-              hud_capture.render_sample_count >= 3 &&
-              hud_capture.render_success_count >= 3 &&
-              (hud_capture.sampled_direction_mask & 0x07) == 0x07 &&
-              hud_capture.runtime_turn_count >= 3 &&
-              hud_capture.unique_frame_hash_count > 0 &&
-              hud_capture.min_asset_portrait_count == 0 &&
-              hud_capture.total_fallback_portrait_count == 0 &&
-              hud_capture.min_asset_floor_ceiling_count >= 2 &&
-              hud_capture.min_asset_wall_count > 0 &&
-              hud_capture.total_fallback_floor_ceiling_count == 0 &&
-              hud_capture.total_fallback_wall_count == 0 &&
-              hud_capture.total_fallback_door_count == 0 &&
-              hud_capture.total_fallback_item_count == 0 &&
-              hud_capture.total_fallback_carried_item_count == 0 &&
-              hud_capture.no_core_render_fallbacks == 1 &&
-              hud_capture.no_fallback_portraits == 1 &&
-              hud_capture.first_runtime_hud_ready == 1 &&
-              hud_capture.real_gdat_portrait_ready == 1 &&
-              hud_capture.real_gdat_core_render_ready == 1 &&
-              (hud_capture.real_gdat_runtime_hud_breadth_ready == 1 ||
-               hud_capture.render_sample_count >= 3) &&
-              hud_capture.raw_gdat_runtime_interface_count >= 4 &&
-              hud_capture.decoded_gdat_runtime_interface_count >= 4 &&
-              hud_capture.teleporter_map_chip_ready == 1 &&
-              hud_capture.teleporter_map_chip_raw_hash != 0u &&
-              hud_capture.teleporter_map_chip_raw_byte_count > 0u &&
-              hud_capture.teleporter_map_chip_decoded_hash != 0u &&
-              hud_capture.teleporter_map_chip_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_ready == 1 &&
-              hud_capture.dungeon_map_chip_graphicsset_count > 0 &&
-              hud_capture.dungeon_map_chip_wall_count > 0 &&
-              hud_capture.dungeon_map_chip_floor_count > 0 &&
-              hud_capture.dungeon_map_chip_graphicsset_ready == 1 &&
-              hud_capture.dungeon_map_chip_wall_ready == 1 &&
-              hud_capture.dungeon_map_chip_floor_ready == 1 &&
-              hud_capture.dungeon_map_chip_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_graphicsset_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_wall_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_wall_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_wall_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_wall_decoded_pixel_count > 0u &&
-              hud_capture.dungeon_map_chip_floor_raw_hash != 0u &&
-              hud_capture.dungeon_map_chip_floor_raw_byte_count > 0u &&
-              hud_capture.dungeon_map_chip_floor_decoded_hash != 0u &&
-              hud_capture.dungeon_map_chip_floor_decoded_pixel_count > 0u &&
-              (hud_capture.graphicsset_word_values_ready == 0 ||
-               (hud_capture.graphicsset_word_values_hash != 0u &&
-                hud_capture.graphicsset_word_values_query_count >= 4u &&
-                /* skproject only requires the scene's present word values;
-                 * this real set has no optional AMBIANT_LIGHT row. */
-                (hud_capture.graphicsset_word_values_present_mask & 0x13u) == 0x13u)) &&
-              hud_capture.wall_gfx_image_offsets_ready == 1 &&
-              hud_capture.wall_gfx_image_offsets_hash != 0u &&
-              hud_capture.wall_gfx_image_offsets_query_count > 0u &&
-              hud_capture.wall_gfx_image_offsets_nonzero_count > 0u &&
-              hud_capture.wall_gfx_image_offsets_present_mask != 0u &&
-              hud_capture.interface_action_table_ready == 1 &&
-              hud_capture.interface_action_table_hash != 0u &&
-              hud_capture.interface_action_table_byte_count > 0u &&
-              hud_capture.interface_action_group_count > 0u &&
-              hud_capture.interface_action_entry_count > 0u &&
-              hud_capture.interface_font_table_ready == 1 &&
-              hud_capture.interface_font_table_hash != 0u &&
-              hud_capture.interface_font_table_byte_count == 0x300u &&
-              hud_capture.interface_font_table_row_count == 6u &&
-              hud_capture.interface_font_table_char_count == 128u &&
-              hud_capture.interface_font_table_nonzero_byte_count > 0u &&
-              hud_capture.interface_font_table_printable_char_count > 0u &&
-              hud_capture.interface_palette_ready == 1 &&
-              hud_capture.interface_palette_hash != 0u &&
-              hud_capture.interface_palette_irgb_byte_count > 0u &&
-              hud_capture.interface_palette_pal16_byte_count > 0u &&
-              hud_capture.interface_palette_irgb_color_count > 0u &&
-              hud_capture.interface_palette_pal16_color_count > 0u &&
-              hud_capture.combined_frame_hash != 0u &&
-              hud_capture.combined_pixel_count >= 3u * 320u * 200u,
-          "boot runtime HUD capture proves real GDAT availability and frames across sampled directions");
+              &hud_capture) == 0 &&
+              hud_capture.valid == 0 &&
+              hud_capture.render_sample_count == 0 &&
+              hud_capture.runtime_turn_count == 0,
+          "boot runtime HUD capture remains blocked before original GAME_LOAD owns a session");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_capture(launch.profile, &after) == 1 &&
               after.party_x == 1 && after.party_y == 8 &&
@@ -929,27 +849,24 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     memset(&action, 0, sizeof(action));
     CHECK(dm2_v1_boot_runtime_action_front_cell(
               launch.profile,
-              after.party_dir,
-              &action) == 1 &&
-              action.runtime.runtime_ready == 1 &&
+              before.party_dir,
+              &action) == 0 &&
               action.status_scope != NULL &&
-              strcmp(action.status_scope, "ACTION") == 0 &&
-              action.status == NULL &&
-              action.target_x >= 0 &&
-              action.target_y >= 0,
-          "boot runtime action owns a silent DM2 front-cell receipt");
+              strcmp(action.status_scope, "ACTION") == 0,
+          "boot runtime action remains blocked before original GAME_LOAD owns a session");
     memset(&after, 0, sizeof(after));
-    CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 1 &&
-              after.operation_result == 0 &&
-              after.party_dir == 1,
-          "boot runtime turn owns DM2 receipt update");
+    CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 0 &&
+              after.operation_result == -1 &&
+              dm2_v1_runtime_get_party_dir() == before.party_dir,
+          "boot runtime turn remains blocked before original GAME_LOAD owns a session");
     {
-        int move_dir = after.party_dir;
+        int move_dir = before.party_dir;
         memset(&after, 0, sizeof(after));
-        CHECK(dm2_v1_boot_runtime_move(launch.profile, move_dir, &after) == 1 &&
-                  after.runtime_ready == 1 &&
-                  (after.operation_result == 0 || after.operation_result == -1),
-              "boot runtime move owns DM2 receipt update");
+        CHECK(dm2_v1_boot_runtime_move(launch.profile, move_dir, &after) == 0 &&
+                  after.operation_result == -1 &&
+                  dm2_v1_runtime_get_party_x() == before.party_x &&
+                  dm2_v1_runtime_get_party_y() == before.party_y,
+              "boot runtime move remains blocked before original GAME_LOAD owns a session");
     }
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }

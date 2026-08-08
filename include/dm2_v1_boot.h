@@ -268,6 +268,11 @@ typedef struct {
     void   *dm2_state;         /* DM2_V1_GameState* — set by dm2_v1_boot_enter_game() */
     void   *dungeon_data;      /* DM2_V1_DungeonData* — parsed dungeon */
     void   *graphics_dat;      /* graphics data handle */
+    /* Only a complete original GAME_LOAD transaction may set this.  A parsed
+     * File_header or an observational SKSAVE receipt is deliberately not a
+     * live session: tick, movement and world interaction must remain inert
+     * until party, record pools, possessions and timers share one owner. */
+    int     source_game_load_session_ready;
 } DM2_V1_BootProfile;
 
 /* Returns only the verified source material and source draw semantics for

@@ -204,6 +204,13 @@
   syntetisk party.
 - ✅ Verifierat med den lokala, hashverifierade PC-DOS-kopian samt
   startmeny- och M12/M11-handoff-regressionerna.
+- ✅ Alla publika gameplay-mutatorer för bootprofilen kontrollerar nu samma
+  GAME_LOAD-grind. Tick, vändning, rörelse, frontcellens dörr- och
+  aktuatorvägar samt den roterande HUD-capture-rutinen kan inte längre köra
+  mot enbart en parsad File_header-värld.
+- ✅ Den vanliga GDAT-bundna startmenyrenderingen är oförändrad. Det som
+  stängs är endast funktioner som annars skulle mutera eller presentera den
+  tomma parten som spelvärld.
 
 # DM2 File_header-teleporterbitfält (2026-08-08)
 

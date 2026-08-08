@@ -34,6 +34,9 @@
   complete original tile/actuator/sensor resource queue before calling DYN4.
   The M11 boundary now keeps a parsed File_header world out of
   `level_loaded` and party publication until that GAME_LOAD owner exists.
+  Tick, rotation, movement, front-cell interaction and the rotating runtime
+  HUD capture are likewise blocked until the same owner restores c_hero,
+  record pools, possessions and timers.
 
 - **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
   ground-stack/`w0` chains are now source-validated and all 44 canonical maps

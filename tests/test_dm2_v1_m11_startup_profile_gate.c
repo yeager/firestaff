@@ -1350,6 +1350,23 @@ int main(void) {
     expect_true(profile != NULL && profile->deterministic.max_levels == 44u &&
                     profile->deterministic.dungeon_seed == 0u,
                 "M11 DM2 launch retains the PC-DOS File_header map count and seed");
+    {
+        DM2_V1_BootRuntimeReceipt blocked_runtime;
+        DM2_V1_BootRuntimeActionReceipt blocked_action;
+        expect_true(profile &&
+                        !dm2_v1_boot_runtime_tick(profile, &blocked_runtime) &&
+                        blocked_runtime.operation_result == -1 &&
+                        !dm2_v1_boot_runtime_turn(profile, 1, &blocked_runtime) &&
+                        blocked_runtime.operation_result == -1 &&
+                        !dm2_v1_boot_runtime_move(profile, 0, &blocked_runtime) &&
+                        blocked_runtime.operation_result == -1 &&
+                        !dm2_v1_boot_runtime_action_front_cell(
+                            profile, 0, &blocked_action) &&
+                        dm2_v1_runtime_get_party_x() == 1 &&
+                        dm2_v1_runtime_get_party_y() == 8 &&
+                        dm2_v1_runtime_get_tick_count() == 0,
+                    "DM2 mounted File_header cannot mutate gameplay before original GAME_LOAD owns a session");
+    }
     memset(&champion_mirrors, 0, sizeof(champion_mirrors));
     expect_true(profile &&
                     dm2_v1_boot_champion_mirror_receipt(
