@@ -1371,6 +1371,11 @@ int main(void) {
     expect_true(profile != NULL && profile->deterministic.max_levels == 44u &&
                     profile->deterministic.dungeon_seed == 0u,
                 "M11 DM2 launch retains the PC-DOS File_header map count and seed");
+    expect_true(profile != NULL && profile->dos_startup_media_verified &&
+                    profile->dos_startup_media.valid &&
+                    profile->dos_startup_media.intro_has_interplay_mve &&
+                    profile->dos_startup_media.end_has_interplay_mve,
+                "M11 retains the selected PC-DOS IBMIOP/MVE startup receipt without substituting GDAT");
     {
         DM2_V1_BootRuntimeReceipt blocked_runtime;
         DM2_V1_BootRuntimeActionReceipt blocked_action;

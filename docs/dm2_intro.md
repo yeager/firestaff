@@ -17,12 +17,20 @@ den med en påhittad sekvens.
 
 ## Andra utgåvor
 
-DM2 har inte en gemensam uppstartsfiluppsättning för alla plattformar.
+DM2 har inte en gemensam uppstartsfiluppsättning för alla plattformar. Den
+verifierade PC-DOS-installationen har dessutom en yttre kedja före
+`SKULL.EXE`: `DM2.BAT` startar `IBMIOP`, och originalfilerna `SPLASH`, `FTL`,
+`INTRO`, `END` och `INTRPLAY.PCX` hör till den. `INTRO` och `END` innehåller
+Interplay MVE-data. Först när den kedjan lämnar över till `SKULL.EXE` gäller
+den statiska GDAT-menyn ovan.
+
 Greatstone visar bland annat `swsh.dat`, `titl.dat` och `enda.dat` för
 Amiga-, MegaCD- och Sega CD-utgåvor, `swoosh`/`title`/`end` för flera japanska
 datorutgåvor samt QuickTime-baserade `.moov`-filer på Macintosh. De formaten
-är egna framtida importspår och får inte behandlas som PC-data eller kopieras
-in i en PC-session.
+är egna plattformsmedia och får inte behandlas som PC-data eller kopieras in i
+en annan sessions kedja. Firestaff har en verifierad, aktiv FM Towns-spelare
+för `SWOOSH` → `TITLE` → `SKULL`; PC-DOS MVE och Amiga-animationerna är ännu
+inte avkodade och presenteras därför inte som färdiga.
 
 ## Källor
 

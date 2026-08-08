@@ -10,6 +10,7 @@
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_fmtowns_anim_stream.h"
+#include "dm2_v1_dos_startup_media.h"
 #include "dm2_v1_party.h"
 #include <stddef.h>
 
@@ -500,6 +501,13 @@ typedef struct {
     DM2_V1_FmtownsAnimStreamReceipt fmtowns_title_stream;
     DM2_V1_FmtownsAnimStreamReceipt fmtowns_end_stream;
     int      fmtowns_animation_streams_verified;
+
+    /* The PC DOS release has an outer IBMIOP/MVE presentation route before
+     * SKULL.EXE enters its GDAT title screen.  This receipt is intentionally
+     * independent of the graphics/dungeon pair: a data-only install may
+     * launch the static title but must not claim the retail intro exists. */
+    DM2_V1_DosStartupMediaReceipt dos_startup_media;
+    int      dos_startup_media_verified;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;

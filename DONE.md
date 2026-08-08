@@ -9187,3 +9187,16 @@
 - ✅ Removed the remaining menu/graphics wording that could be read as a
   retail animated title, options menu or host polygon parity claim; the
   stale-claim audit now records those routes as unbound.
+# DM2 DOS yttre uppstartsmedia verifierad (2026-08-08)
+
+- ✅ PC-DOS-installationens faktiska startkedja är nu skild från
+  `SKULL.EXE`: `DM2.BAT` → `IBMIOP` samt `SPLASH`, `FTL`, `INTRO`, `END` och
+  `INTRPLAY.PCX` valideras mot originalets SHA-256-manifest utan att någon fil
+  packas upp eller sparas.
+- ✅ `INTRO` och `END` måste både vara de autentiska DOS-programmen och bära
+  sina inbäddade Interplay MVE-rubriker. M11 behåller kvittot från den valda
+  DOS-installationen men går fortsatt fail-closed till den statiska
+  `TITLE/0/dt07/4`-menyn tills MVE-avkodning och IBMIOP:s exakta tidsväg är
+  portade.
+- ✅ Verifierat mot den lokala PC-DOS-kopian: manifestets 30/30 filer,
+  IBMIOP/MVE-receipt och M11:s startprofilgrind passerar.

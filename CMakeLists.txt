@@ -6265,6 +6265,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_fmtowns_cross_game_shared_ranges.c
     src/dm2/dm2_v1_fmtowns_graphics_dat_ext_walker.c
     src/dm2/dm2_v1_dos_real_data_manifest.c
+    src/dm2/dm2_v1_dos_startup_media.c
     src/shared/fmtowns_tsugaru_bridge.c
     src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
     src/dm1/dm1_v1_dos_pc34_an_container.c
@@ -56387,6 +56388,7 @@ add_test(NAME test_dm1_v1_dos_pc34_an_container COMMAND test_dm1_v1_dos_pc34_an_
 add_executable(test_dm2_v1_dos_real_data_manifest
     tests/test_dm2_v1_dos_real_data_manifest.c
     src/dm2/dm2_v1_dos_real_data_manifest.c
+    src/dm2/dm2_v1_dos_startup_media.c
 )
 target_include_directories(test_dm2_v1_dos_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_dos_real_data_manifest COMMAND test_dm2_v1_dos_real_data_manifest)

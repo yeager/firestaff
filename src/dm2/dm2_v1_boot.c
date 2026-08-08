@@ -3146,6 +3146,23 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         }
     }
 
+    /* The PC retail boot starts outside SKULL.EXE: DM2.BAT dispatches
+     * IBMIOP, whose authenticated presentation members include the original
+     * Interplay MVE intro.  GRAPHICS.DAT lives one DATA directory lower, so
+     * derive the selected install owner from that source path.  This receipt
+     * only proves media availability; M11 remains fail-closed until it owns
+     * a source-accurate MVE decoder and playback clock. */
+    memset(&profile->dos_startup_media, 0, sizeof(profile->dos_startup_media));
+    profile->dos_startup_media_verified = 0;
+    if (profile->assets_verified && profile->platform == DM2_PLATFORM_PC_EN &&
+        profile->asset_root[0] && !strstr(profile->asset_root, "::")) {
+        char dos_install_root[sizeof(profile->asset_root)];
+        copy_parent_dir(dos_install_root, profile->asset_root);
+        profile->dos_startup_media_verified =
+            dm2_v1_dos_startup_media_probe(dos_install_root,
+                                            &profile->dos_startup_media);
+    }
+
     /* PC music routing is an optional extra for launch, but it must never
      * borrow a filename-matched or generated table. SKProject's
      * `SKWINSPX/src/v5/sfxsnd.cpp:493` consumes

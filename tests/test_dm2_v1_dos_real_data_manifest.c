@@ -1,4 +1,5 @@
 #include "dm2_v1_dos_real_data_manifest.h"
+#include "dm2_v1_dos_startup_media.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +54,19 @@ int main(void) {
     printf("PASS: %d/%d DM2 DOS files match manifest size\n",
         ok, DM2_V1_DOS_FILE_COUNT);
     assert(ok == DM2_V1_DOS_FILE_COUNT);
+    {
+        DM2_V1_DosStartupMediaReceipt startup;
+        assert(dm2_v1_dos_startup_media_probe(root, &startup) == 1);
+        assert(startup.valid && startup.complete &&
+               startup.batch_dispatches_ibmiop && startup.ibmiop_verified &&
+               startup.splash_verified && startup.ftl_verified &&
+               startup.intro_verified && startup.end_verified &&
+               startup.intrplay_pcx_verified &&
+               startup.intro_has_interplay_mve && startup.end_has_interplay_mve &&
+               startup.intro_mve_header_offset > 0u &&
+               startup.end_mve_header_offset > 0u && startup.receipt_hash != 0u);
+        puts("PASS: DM2 DOS IBMIOP/MVE startup route matches retail media");
+    }
 
 done:
     puts("All dm2_v1_dos_real_data_manifest tests passed.");
