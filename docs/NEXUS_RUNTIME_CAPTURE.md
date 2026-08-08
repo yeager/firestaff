@@ -115,6 +115,14 @@ eight-frame witness has the same negative result. These are source-byte joins
 only: an exact match would still need the original command order, CLUT and
 placement relation before any DGN material could be admitted.
 
+The comparator also scans the extracted corpus as whole files, but admits a
+file to this scan only when its SHA-256 matches the selected retail manifest
+or the authenticated European startup-asset identity. Frames 1 and 7 each
+scan 126 verified files (five variant identities are rejected rather than
+silently treated as canonical); neither native nor word-swapped bytes contain
+the captured source span. This closes another false-positive route without
+claiming that relocated or decompressed runtime data has been recovered.
+
 A second authenticated E-BIOS/French run with START+A held at frames 18000–18119
 and capture beginning at frame 18500 is retained outside the repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-french-start18000x120-skip18500-live2/runtime-vdp12.raw`.

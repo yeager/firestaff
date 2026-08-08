@@ -354,6 +354,11 @@
   European frame-1 and frame-7 witnesses have no native or word-swapped exact
   owner. This broadens negative source evidence only; command order, CLUT,
   placement and DGN material semantics remain capture-gated.
+  2026-08-08 whole-file follow-up: the same audit scans 126 SHA-256-verified
+  extracted retail files, rejecting five variant identities instead of using
+  filename-only evidence. Neither frame-1 nor frame-7 has a native or
+  word-swapped whole-file owner; relocated/decompressed runtime ownership
+  remains open.
 
 - **NEXUS-SATURN-VDP1-SECOND-SOURCE-SPAN:** A second authenticated European
   START+A capture (raw SHA-256 `d648bd88…`) has active VDP1 draws in all eight

@@ -1,3 +1,13 @@
+# Nexus VDP1 source span scanned across verified retail files (2026-08-08)
+
+- ✅ The source-join audit now scans every extracted file whose SHA-256 matches
+  the selected retail manifest or authenticated European startup identity.
+- ✅ Both real gameplay witnesses scan 126 verified files and reject five
+  variant identities; neither has a native or word-swapped whole-file owner
+  for the captured 33,280-byte VDP1 span.
+- ✅ No filename-only asset was admitted and no relocated/decompressed source
+  ownership, CLUT, placement, HUD or viewport semantics were inferred.
+
 # Nexus VDP2 CRAM checked against retail Structure2 palettes (2026-08-08)
 
 - ✅ The authentic VDP2 bitmap-source audit now validates and compares all

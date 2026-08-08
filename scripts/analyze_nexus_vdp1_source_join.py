@@ -21,6 +21,18 @@ from analyze_nexus_vdp1_command_window import command_window
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 
 
+# The mounted European corpus uses these extracted-file identities for the
+# startup assets; the broader disc manifest retains the other retail member
+# identities. Both are authenticated inputs, never filename-only admission.
+STARTUP_ASSET_HASHES = {
+    "MENU.BPK": "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
+    "FONT256.S2D": "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb",
+    "TITLE.BIN": "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44",
+    "TITLE.CG": "fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580",
+    "STABG.BIN": "7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913",
+}
+
+
 def be16(data: bytes, offset: int) -> int:
     return int.from_bytes(data[offset:offset + 2], "big")
 
@@ -119,6 +131,29 @@ def swapped_words(data: bytes) -> bytes:
                     for offset in range(0, len(data), 2))
 
 
+def retail_file_matches(data_dir: Path, source: bytes) -> tuple[list[str], list[str], int, int]:
+    """Scan hash-verified extracted retail files for an exact source window."""
+    exact: list[str] = []
+    word_swap: list[str] = []
+    scanned = 0
+    rejected = 0
+    for name, expected in sorted(DISC_HASH.items()):
+        path = data_dir / name
+        if not path.is_file():
+            continue
+        data = path.read_bytes()
+        actual_hash = hashlib.sha256(data).hexdigest()
+        if actual_hash not in {expected, STARTUP_ASSET_HASHES.get(name)}:
+            rejected += 1
+            continue
+        scanned += 1
+        if data.find(source) >= 0:
+            exact.append(name)
+        if len(data) % 2 == 0 and swapped_words(data).find(source) >= 0:
+            word_swap.append(name)
+    return exact, word_swap, scanned, rejected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -163,6 +198,7 @@ def main() -> int:
         f"frame={args.frame} draw_commands={len(draws)} "
         f"mns_surfaces={len(mns)} dgn_structure2_surfaces={len(dgn)}"
     )
+    retail_join = False
     for offset, colour_mode, source_offset, source in draws:
         source_hash = hashlib.sha256(source).hexdigest()
         exact: list[str] = []
@@ -179,6 +215,10 @@ def main() -> int:
                 dgn_exact.append(name)
             if swapped_words(surface) == source:
                 dgn_swapped_exact.append(name)
+        file_exact, file_word_swap, scanned_files, rejected_files = retail_file_matches(
+            args.data_dir, source
+        )
+        retail_join = retail_join or bool(file_exact or file_word_swap)
         print(
             f"command_offset=0x{offset:05x} colour_mode={colour_mode} "
             f"source_offset=0x{source_offset:05x} source_bytes={len(source)} "
@@ -191,10 +231,15 @@ def main() -> int:
               ("|".join(dgn_exact) if dgn_exact else "none"))
         print("dgn_structure2_word_swap_exact=" +
               ("|".join(dgn_swapped_exact) if dgn_swapped_exact else "none"))
+        print("retail_file_exact=" + ("|".join(file_exact) if file_exact else "none"))
+        print("retail_file_word_swap_exact=" +
+              ("|".join(file_word_swap) if file_word_swap else "none"))
+        print(f"retail_files_scanned={scanned_files}")
+        print(f"retail_files_hash_rejected={rejected_files}")
     print("source_join=verified" if any(
         surface == source or swapped_words(surface) == source
         for _, _, _, source in draws for _, surface in (mns + dgn)
-    ) else "source_join=unbound")
+    ) or retail_join else "source_join=unbound")
     print("semantic_admission=blocked")
     return 0
 
