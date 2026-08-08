@@ -242,6 +242,9 @@ int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_StartupHostReceipt *out_receipt);
 void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
+/* Returns non-zero only when the completed original GAME_LOAD owner has
+ * published gameplay input and the source movement cooldown permits it.
+ * A mounted dungeon alone is never a movable party. */
 int  dm2_v1_runtime_can_move(void);
 int  dm2_v1_runtime_move(int direction);        /* 0=N 1=E 2=S 3=W, returns 0=ok -1=blocked */
 int  dm2_v1_runtime_last_perform_move_receipt(

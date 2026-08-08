@@ -28,7 +28,10 @@
   ändra ett record eller skapa en timer förrän den fullständiga ägaren finns.
   `DM2_ARRANGE_DUNGEON` har endast en statisk File_header-inputcensus; dess
   recordomlänkningar, aktuatorflaggor, varelseriktningar och koordinatskrivningar
-  måste ingå i samma framtida mutationstransaktion.
+  måste ingå i samma framtida mutationstransaktion. Även publika
+  inputpredikat måste fortsätta vara stängda fram till samma handoff; en
+  monterad dungeon eller tom lokal cooldown får inte presenteras som en
+  rörlig party.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

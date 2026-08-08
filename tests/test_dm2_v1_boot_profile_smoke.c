@@ -141,6 +141,8 @@ static void test_defaults(void)
           "dungeon seed remains unavailable before DUNGEON.DAT is verified");
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_runtime_init(&p);
+    CHECK(dm2_v1_runtime_can_move() == 0,
+          "runtime never advertises movement before original GAME_LOAD owns a party");
     CHECK(dm2_v1_runtime_render_frame(0, 0, 0, framebuffer, 320, 320, 200) == -1,
           "runtime refuses an unverified boot profile instead of drawing a fixture frame");
 }

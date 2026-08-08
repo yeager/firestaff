@@ -40,6 +40,17 @@
   command-byte→driver-state/SCSP-registerhandlern.
 - ✅ Eventselector, SAL-codec, MAP→sample-koppling och host playback förblir
   uttryckligen spärrade; ingen semantik har gissats från dessa bytes.
+# DM2 GAME_LOAD-rörelsegrind i publikt input-API (2026-08-08)
+
+- ✅ `dm2_v1_runtime_can_move()` kräver nu samma kompletta,
+  originalägda `GAME_LOAD`-grind som `move()` och `turn()`. En monterad
+  File_header-dungeon utan party, recordpooler, possessions och timerkö kan
+  alltså inte längre annonseras som en rörlig party för meny, tangentbord,
+  handkontroll eller Steam Deck.
+- ✅ Källgränsen är låst till SKProjects
+  `sksvgame.cpp::DM2_GAME_LOAD` (rader 1415–1546). Det datafria
+  bootprofiltestet verifierar uttryckligen att en omonterad profil inte
+  rapporterar rörelse. Ingen syntetisk session eller fixtureväg öppnas.
 
 # Nexus capture-inventory råhashkontroll (2026-08-08)
 

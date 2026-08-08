@@ -7324,6 +7324,8 @@ int dm2_v1_runtime_last_fallback_hud_portrait_count(void) {
 
 /* ── Movement ──────────────────────────────────────────────────────── */
 
+static int dm2_runtime_gameplay_source_ready(const DM2_V1_RuntimeState *rt);
+
 /*
  * dm2_v1_runtime_can_move — check if party can move this tick.
  *
@@ -7334,7 +7336,15 @@ int dm2_v1_runtime_last_fallback_hud_portrait_count(void) {
  */
 int dm2_v1_runtime_can_move(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    return (rt->move_cooldown_ticks == 0);
+    /* `can_move` is a public input predicate, not merely the local cooldown
+     * test.  Before DM2_GAME_LOAD has installed the one source-owned party,
+     * record-pool, possession and timer graph, reporting that a party can
+     * move gives callers a false playable state even though move() rejects
+     * the command later.  SKProject reaches c_move only after GAME_LOAD has
+     * completed (sksvgame.cpp::DM2_GAME_LOAD lines 1415-1546); keep this
+     * predicate at the same boundary as move() and turn(). */
+    return dm2_runtime_gameplay_source_ready(rt) &&
+        rt->move_cooldown_ticks == 0;
 }
 
 /* SKProject enters c_move only after DM2_GAME_LOAD has mounted both original
