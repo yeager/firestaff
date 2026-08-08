@@ -1404,12 +1404,13 @@ int main(void) {
                         profile, champion_mirrors.mirrors[0].map,
                         champion_mirrors.mirrors[0].x,
                         champion_mirrors.mirrors[0].y,
-                        champion_mirrors.mirrors[0].direction,
+                        0,
                         &champion_candidate) &&
                     champion_candidate.valid &&
                     champion_candidate.incomplete_game_load &&
                     champion_candidate.mirror.object_id ==
                         champion_mirrors.mirrors[0].object_id &&
+                    champion_candidate.selection_direction == 0 &&
                     champion_candidate.revive_data.valid &&
                     champion_candidate.revive_data.hero_type ==
                         champion_mirrors.mirrors[0].dynamic_hero_type &&
@@ -1431,7 +1432,7 @@ int main(void) {
                         profile, champion_mirrors.mirrors[0].map,
                         champion_mirrors.mirrors[0].x,
                         champion_mirrors.mirrors[0].y,
-                        champion_mirrors.mirrors[0].direction,
+                        0,
                         &champion_admission) &&
                     champion_admission.valid &&
                     champion_admission.incomplete_game_load &&
@@ -1448,7 +1449,7 @@ int main(void) {
                         profile, champion_mirrors.mirrors[0].map,
                         champion_mirrors.mirrors[0].x,
                         champion_mirrors.mirrors[0].y,
-                        champion_mirrors.mirrors[0].direction,
+                        0,
                         &first_champion) &&
                     first_champion.valid &&
                     first_champion.incomplete_game_load &&
@@ -1481,7 +1482,7 @@ int main(void) {
             party_selections[party_selection_index].y =
                 champion_mirrors.mirrors[party_selection_index].y;
             party_selections[party_selection_index].direction =
-                champion_mirrors.mirrors[party_selection_index].direction;
+                party_selection_index;
             party_selections[party_selection_index].mirror_object_id =
                 champion_mirrors.mirrors[party_selection_index].object_id;
         }
@@ -1548,15 +1549,17 @@ int main(void) {
                 "M11 exposes the entire original champion roster without creating a party");
     memset(&champion_candidate, 0x7f, sizeof(champion_candidate));
     expect_true(profile &&
-                    !dm2_v1_boot_champion_selection_candidate(
+                    dm2_v1_boot_champion_selection_candidate(
                         profile, champion_mirrors.mirrors[0].map,
                         champion_mirrors.mirrors[0].x,
                         champion_mirrors.mirrors[0].y,
-                        (champion_mirrors.mirrors[0].direction + 1) & 3,
+                        1,
                         &champion_candidate) &&
-                    !champion_candidate.valid &&
-                    !champion_candidate.revive_data.valid,
-                "M11 rejects a champion template when the exact source mirror does not match");
+                    champion_candidate.valid &&
+                    champion_candidate.selection_direction == 1 &&
+                    champion_candidate.mirror.object_id ==
+                        champion_mirrors.mirrors[0].object_id,
+                "M11 keeps the source mirror identity separate from the selected formation quadrant");
     memset(&file_header_map, 0, sizeof(file_header_map));
     expect_true(profile &&
                     dm2_v1_boot_file_header_runtime_map_receipt(

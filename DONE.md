@@ -407,6 +407,18 @@
   `test_dm2_v1_item_ops` och M11:s startup/profile-grind. Receiptet lämnar
   party, recordkedjor, timerkö, HUD och viewport ospublicerade.
 
+# DM2 championvalets formationsriktning (2026-08-08)
+
+- ✅ Championvalet skiljer nu DB3-spegelns File_header-orientering från den
+  klickade formationsrutan. Enligt `skhero.cpp::DM2_SELECT_CHAMPION` styr
+  den senare både `hero::absdir` och filtret `(klick + 2) & 3` för riktiga
+  startobjekt; spegelorienteringen får inte ersätta den.
+- ✅ Den valda rutan ingår i källidentiteten och används vid senare
+  possessionsomvalidering. Dubbla DB3-speglar på samma källkoordinat avvisas
+  i stället för att värdens riktning avgör vilken champion som väljs.
+- ✅ Verifierat mot hashverifierad PC-DOS-data i M11:s startup/profile-test.
+  Detta är fortfarande en läsande GAME_LOAD-grind, inte en publicerad party.
+
 # DM2 första c_hero-kandidat (2026-08-08)
 
 - ✅ Första valet kan nu materialiseras fält för fält som den 263-byte stora

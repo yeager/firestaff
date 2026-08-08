@@ -212,6 +212,11 @@ typedef struct {
 typedef struct {
     int valid;
     int incomplete_game_load;
+    /* This is the clicked formation quadrant (the `ebxl` input of
+     * DM2_SELECT_CHAMPION), not the orientation stored in the DB3 mirror
+     * record. The original uses (selection_direction + 2) & 3 to decide
+     * which source tile objects transfer to the revived hero. */
+    int selection_direction;
     DM2_V1_G1ChampionMirrorRoot mirror;
     DM2_V1_ChampionReviveDataReceipt revive_data;
     /* c_hero.cpp::DM2_SELECT_CHAMPION walks the same tile chain after the
@@ -270,6 +275,8 @@ typedef struct {
     int map;
     int x;
     int y;
+    /* Original click quadrant, 0..3. It is deliberately distinct from the
+     * File_header DB3 mirror orientation. */
     int direction;
     uint16_t mirror_object_id;
 } DM2_V1_BootNewGamePartySelection;
@@ -1623,9 +1630,10 @@ int dm2_v1_boot_champion_mirror_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_G1ChampionMirrorReceipt *out_receipt);
 
-/* Join the exact DB3 subtype-0x7e mirror at (map,x,y,direction) to the
- * CHAMPIONS/HeroType Raw8/text template used by DM2_REVIVE_PLAYER. A missing
- * or ambiguous source root returns zero. The result is not a live hero. */
+/* Join the exact DB3 subtype-0x7e mirror at (map,x,y) to the CHAMPIONS/HeroType
+ * Raw8/text template used by DM2_REVIVE_PLAYER. `direction` is the clicked
+ * formation quadrant, not the DB3 mirror orientation. A missing or ambiguous
+ * source root returns zero. The result is not a live hero. */
 int dm2_v1_boot_champion_selection_candidate(
     const DM2_V1_BootProfile *profile,
     int map, int x, int y, int direction,

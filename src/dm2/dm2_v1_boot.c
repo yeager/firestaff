@@ -796,6 +796,7 @@ int dm2_v1_boot_champion_selection_candidate(
     DM2_V1_G1ChampionMirrorReceipt mirrors;
     const DM2_V1_AssetLoader *loader;
     const DM2_V1_DungeonData *dungeon;
+    int mirror_matches = 0;
     int i;
 
     if (!out_candidate) return 0;
@@ -809,6 +810,18 @@ int dm2_v1_boot_champion_selection_candidate(
         return 0;
     }
 
+    /* DM2_SELECT_CHAMPION reaches its DB3 root through the clicked square.
+     * A caller may not turn a second root at the same File_header coordinate
+     * into a host-selected champion merely by supplying an orientation.
+     * SKProject: skhero.cpp::DM2_SELECT_CHAMPION lines 1075-1101. */
+    for (i = 0; i < mirrors.mirror_count; ++i) {
+        const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
+        if (mirror->map == map && mirror->x == x && mirror->y == y) {
+            ++mirror_matches;
+        }
+    }
+    if (mirror_matches != 1) return 0;
+
     for (i = 0; i < mirrors.mirror_count; ++i) {
         const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
         DM2_V1_BootChampionTileItems items;
@@ -816,7 +829,6 @@ int dm2_v1_boot_champion_selection_candidate(
         uint32_t identity_hash = 0x43484d50u; /* "CHMP" receipt domain. */
 
         if (mirror->map != map || mirror->x != x || mirror->y != y ||
-            mirror->direction != (uint8_t)direction ||
             mirror->dynamic_hero_type > 15u) {
             continue;
         }
@@ -854,6 +866,8 @@ int dm2_v1_boot_champion_selection_candidate(
             identity_hash, (uint32_t)mirror->x);
         identity_hash = dm2_v1_boot_packaged_capture_hash_step(
             identity_hash, (uint32_t)mirror->y);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, (uint32_t)direction);
         identity_hash = dm2_v1_boot_packaged_capture_hash_step(
             identity_hash, mirror->object_id);
         identity_hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -897,6 +911,7 @@ int dm2_v1_boot_champion_selection_candidate(
         }
         identity_hash = dm2_v1_boot_packaged_capture_hash_step(
             identity_hash, out_candidate->source_item_chain_hash);
+        out_candidate->selection_direction = direction;
         out_candidate->mirror = *mirror;
         out_candidate->source_item_count = items.item_count;
         out_candidate->identity_hash = identity_hash;
@@ -1294,7 +1309,7 @@ int dm2_v1_boot_new_game_possession_receipt(
             !dm2_v1_boot_champion_selection_candidate(
                 profile, admission->selection.mirror.map,
                 admission->selection.mirror.x, admission->selection.mirror.y,
-                admission->selection.mirror.direction, &revalidated) ||
+                admission->selection.selection_direction, &revalidated) ||
             !revalidated.valid ||
             revalidated.identity_hash != admission->selection.identity_hash ||
             revalidated.source_item_chain_hash !=
@@ -1396,7 +1411,7 @@ int dm2_v1_boot_champion_selection_census(
         if (hero_type > 15u || (hero_type_mask & (1u << hero_type)) ||
             !dm2_v1_boot_champion_selection_candidate(
                 profile, mirrors.mirrors[i].map, mirrors.mirrors[i].x,
-                mirrors.mirrors[i].y, mirrors.mirrors[i].direction,
+                mirrors.mirrors[i].y, 0,
                 candidate) || !candidate->valid ||
             !candidate->incomplete_game_load ||
             candidate->revive_data.hero_type != hero_type ||

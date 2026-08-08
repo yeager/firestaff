@@ -5,7 +5,9 @@
   startobjekt- och DYN4-data, och upp till fyra `c_hero` till samma
   c_randomdata-LCG-ström. Den läsande possessionsreceipten följer också
   originalets slotordning och GDAT-passning över File_header-ägda recordpooler
-  utan att uppfinna inventory. Nästa atomära ägare måste utföra själva
+  utan att uppfinna inventory; klickad formationsruta hålls separat från
+  DB3-spegelns orientering enligt originalets inventoryfilter. Nästa atomära
+  ägare måste utföra själva
   `CUT_RECORD_FROM`-/bonus-/handcontainertransaktionen, timerkö och
   aktuatorgenerator, och först därefter publicera party, HUD och viewport.
 
