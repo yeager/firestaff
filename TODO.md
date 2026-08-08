@@ -3066,10 +3066,12 @@ level or consumer bindings.
   SHA-256-verified RAM-only receipt for its outer `DM2.BAT` → `IBMIOP` route:
   `SPLASH`, `FTL`, `INTRO`, `END` and `INTRPLAY.PCX` must all match the retail
   corpus, and `INTRO`/`END` must expose their embedded Interplay MVE headers.
-  The receipt deliberately does not decode or present a frame yet. Port the
-  MVE video/audio clock and the reviewed IBMIOP dispatch order before exposing
-  this as a playable DOS intro; do not replace it with PC GDAT, a host movie,
-  an extracted cache or an invented timing sequence.
+  The MVE reader now validates the complete original chunk/opcode boundaries,
+  320×200 canvas, exact 10416×8-us timer and 217/600 source timelines in RAM.
+  It deliberately does not decode video blocks or present a frame yet. Port
+  all sixteen MVE video block modes, audio expansion and the reviewed IBMIOP
+  dispatch order before exposing this as a playable DOS intro; do not replace
+  it with PC GDAT, a host movie, an extracted cache or an invented sequence.
   **2026-08-06 FM Towns stream-count update:** M11 now keeps each active
   TWANIM member's frame limit from its authenticated `EN + DL` receipt while
   it remains in RAM. The source HME-242 streams, rather than hard-coded

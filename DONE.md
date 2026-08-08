@@ -9321,3 +9321,15 @@
   portade.
 - ✅ Verifierat mot den lokala PC-DOS-kopian: manifestets 30/30 filer,
   IBMIOP/MVE-receipt och M11:s startprofilgrind passerar.
+
+# DM2 DOS MVE-strömgräns (2026-08-08)
+
+- ✅ En minnesbaserad Interplay MVE-läsare verifierar nu de ursprungliga
+  `INTRO`- och `END`-medlemmarnas kompletta chunk- och opcodegränser efter
+  DOS-wrappern. Den läser inga filmer från eller till en extraktionscache.
+- ✅ Verifierat mot PC-DOS-kopian: båda filerna börjar sin MVE-medlem vid
+  byte 100206, använder den verkliga 40×25-blockytan (320×200 pixlar) och
+  10416×8-mikrosekunders klocka. `INTRO` har 217 och `END` 600
+  videopresentationer.
+- ✅ Detta är en källsäker avkodargrund, inte en falsk videopresentation.
+  MVE:s bildblock och ljudexpansion är fortfarande öppna arbete.

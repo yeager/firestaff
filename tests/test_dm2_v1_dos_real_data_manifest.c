@@ -1,9 +1,29 @@
 #include "dm2_v1_dos_real_data_manifest.h"
 #include "dm2_v1_dos_startup_media.h"
+#include "dm2_v1_mve_stream.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static uint8_t *read_original(const char *path, size_t *out_size)
+{
+    FILE *file;
+    long length;
+    uint8_t *bytes;
+    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (uint8_t *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)length;
+    return bytes;
+}
 
 int main(void) {
     /* Sanity lookups. */
@@ -66,6 +86,26 @@ int main(void) {
                startup.intro_mve_header_offset > 0u &&
                startup.end_mve_header_offset > 0u && startup.receipt_hash != 0u);
         puts("PASS: DM2 DOS IBMIOP/MVE startup route matches retail media");
+    }
+    {
+        static const char *const movies[] = { "intro", "end" };
+        for (size_t i = 0u; i < sizeof(movies) / sizeof(movies[0]); ++i) {
+            char path[1024];
+            DM2_V1_MveStreamReceipt mve;
+            size_t size = 0u;
+            uint8_t *bytes;
+            snprintf(path, sizeof(path), "%s/%s", root, movies[i]);
+            bytes = read_original(path, &size);
+            assert(bytes != NULL);
+            assert(dm2_v1_mve_stream_parse(bytes, size, &mve) == 1);
+            assert(mve.valid && mve.mve_offset == 100206u &&
+                   mve.width == 320u && mve.height == 200u &&
+                   mve.timer_rate_us != 0u && mve.timer_subdivision != 0u &&
+                   mve.video_frame_count != 0u && mve.display_count != 0u &&
+                   mve.receipt_hash != 0u);
+            free(bytes);
+        }
+        puts("PASS: DM2 DOS MVE streams have bounded original video timelines");
     }
 
 done:
