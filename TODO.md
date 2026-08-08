@@ -2194,7 +2194,9 @@
   Switch surface after SWITCH.C's sixty source-VBlank wait, retaining executable
   palette, page and button pixels. It also reproduces the language toggle and
   hands Story to `ANIMTW STORY.ANM`, returning to the selected language's
-  Switch loop when that stream completes. Utility and Game remain deliberately
+  source Switch page after its original Timer-A animation and VBlank wait.
+  The English- and Japanese-media regression covers that button-to-story-to-
+  same-language-Switch loop before it chooses Game. Utility and Game remain deliberately
   modal: `UTILJ`/`UTILE` are separate CEDT executables and `CHTWJ`/`CHTWE`
   are separate Game executables, so neither is routed through a PC34 surrogate.
   Their authentic handoff and user-save transfer still need original-media

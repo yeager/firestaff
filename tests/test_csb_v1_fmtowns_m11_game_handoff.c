@@ -66,6 +66,7 @@ int main(void)
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     DM1_V1_ChampionStatusRectPc34 champion_name_rect;
+    const CSB_V1_FmtownsSwitchButton *story_button;
     uint8_t music_track;
     unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
@@ -182,6 +183,45 @@ int main(void)
               52, 110, 1, &switch_input) &&
               switch_input.action == CSB_FMTOWNS_SWITCH_ACTION_GAME,
           "source SWITCHTW decoder classifies the Game rectangle as C03_GAME");
+    story_button = &view.csbFmtownsSwitchReceipt.buttons[0];
+    memset(&switch_input, 0, sizeof(switch_input));
+    CHECK(story_button->width > 0u && story_button->height > 0u &&
+              csb_v1_fmtowns_switch_route_click(
+                  &view.csbFmtownsSwitchReceipt, view.csbFmtownsSwitchLanguage,
+                  (int16_t)(story_button->x + story_button->width / 2u),
+                  (int16_t)(story_button->y + story_button->height / 2u),
+                  1, &switch_input) &&
+              switch_input.action == CSB_FMTOWNS_SWITCH_ACTION_STORY &&
+              M11_GameView_HandlePointerButton(
+                  &view,
+                  (int)(story_button->x + story_button->width / 2u),
+                  (int)(story_button->y + story_button->height / 2u),
+                  DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+              view.csbFmtownsTitleBound && !view.csbFmtownsSwitchBound &&
+              !view.csbFmtownsEndingActive,
+          "source SWITCHTW Story rectangle binds retail STORY.ANM");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    for (tick = 0u; tick < sizeof(framebuffer); ++tick) {
+        if (framebuffer[tick] != 0u) {
+            live_frame_nonblack = 1;
+            break;
+        }
+    }
+    CHECK(live_frame_nonblack,
+          "F31 Story presents a decoded original animation frame");
+    for (tick = 0u; tick < 12000u && !view.csbFmtownsSwitchBound; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    CHECK(view.csbFmtownsSwitchBound && !view.csbFmtownsTitleBound &&
+              view.csbFmtownsSwitchLanguage == language,
+          "F31 Story returns to the same original SWITCHTW language page");
+    for (tick = 0u; tick < 80u &&
+                       view.csbFmtownsSwitchVblanksRemaining != 0u; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    CHECK(view.csbFmtownsSwitchVblanksRemaining == 0u,
+          "F31 Story return observes the source SWITCHTW VBlank wait");
     memset(&direct_session, 0, sizeof(direct_session));
     memset(&direct_runtime, 0, sizeof(direct_runtime));
     CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(

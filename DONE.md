@@ -8233,6 +8233,10 @@
 - Den handskrivna `gameWon`-mutation som tidigare öppnade `ENDING.ANM` i
   realmediaregressionen är borttagen. Slutsekvensen kan därmed inte längre
   se ut som en verifierad kampanjväg utan en faktisk källaägd seger.
+- F31E/F31J:s första, exakta `SWITCHTW`-knapp verifierar nu den kompletta
+  originalvägen till `STORY.ANM`: källaägd knapprektangel, F2275-ram,
+  Timer-A-förlopp och återkomst till samma språkpages sextio-VBlank-spärr.
+  Därefter fortsätter samma session via Game till verklig `MINI.DAT`-Prison.
 
 # CSB FM Towns MINI-runtimeinventering (2026-08-08)
 
