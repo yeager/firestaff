@@ -42815,6 +42815,19 @@ if(BUILD_TESTING AND THERON_SOURCES)
     endif()
     add_test(NAME theron_v1_vram_trace_loader COMMAND test_theron_v1_vram_trace_loader)
 
+    add_executable(firestaff_theron_v1_authenticated_capture_bmp
+        probes/theron/firestaff_theron_v1_authenticated_capture_bmp.c
+        src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_palette.c)
+    target_link_libraries(firestaff_theron_v1_authenticated_capture_bmp PRIVATE
+        firestaff_theron firestaff_m12)
+    target_include_directories(firestaff_theron_v1_authenticated_capture_bmp PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(firestaff_theron_v1_authenticated_capture_bmp PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     add_executable(test_theron_v1_vram_trace_real_capture
         tests/test_theron_v1_vram_trace_real_capture.c
         src/theron/theron_v1_vram_trace_loader.c

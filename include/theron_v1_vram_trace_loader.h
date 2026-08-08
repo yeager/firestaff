@@ -50,4 +50,9 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
                                             int dst_x,
                                             int dst_y);
 
+/* Render the authenticated 256x224 screen-space BAT window at the native
+ * framebuffer origin. This is a VDC capture presentation route only: it does
+ * not claim a dungeon-square, perspective, HUD or object mapping. */
+int theron_v1_vram_trace_render_authenticated_screen(Theron_V1_Viewport *vp);
+
 #endif

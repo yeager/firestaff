@@ -330,3 +330,17 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
     }
     return copied;
 }
+
+int theron_v1_vram_trace_render_authenticated_screen(Theron_V1_Viewport *vp) {
+    if (!vp || !vp->vram_trace_loaded || !vp->fb.data ||
+        vp->fb.w < TQR_VIEWPORT_W || vp->fb.h < TQR_VIEWPORT_H) {
+        return -1;
+    }
+    /* The capture is a native 256x224 VDC screen. BAT cells are laid out in
+     * the source's 64-cell stride; the admitted screen window is the first
+     * 32 columns by 28 rows. Keep this separate from the unresolved
+     * T520/T600 square-to-tile consumer. */
+    return theron_v1_vram_trace_render_bat_preview(
+        vp, 0, TQR_VIEWPORT_W / TQR_TILE_DIM,
+        TQR_VIEWPORT_H / TQR_TILE_DIM, 0, 0);
+}

@@ -146,6 +146,8 @@ static void test_populate_tiles(void) {
     assert(theron_v1_vram_trace_populate_tiles(&vp, 1900, 8, 4) == -1);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 2048) == -1);
 
+    assert(theron_v1_vram_trace_render_authenticated_screen(&vp) > 0);
+
     theron_v1_vram_trace_unload(&vp);
     printf("PASS: test_populate_tiles\n");
 }
@@ -241,6 +243,15 @@ static void test_verified_real_capture(void) {
         &vp, vram_path, vce_path, 0xf8ab6c1bu, 0xea83f117u) == 0);
     assert(vp.vram_trace_loaded == 1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 64, 32) > 0);
+    {
+        uint8_t framebuffer[TQR_FB_W * TQR_FB_H];
+        memset(framebuffer, 0, sizeof(framebuffer));
+        vp.fb.data = framebuffer;
+        vp.fb.w = TQR_FB_W;
+        vp.fb.h = TQR_FB_H;
+        vp.fb.stride = TQR_FB_W;
+        assert(theron_v1_vram_trace_render_authenticated_screen(&vp) > 0);
+    }
     theron_v1_vram_trace_unload(&vp);
     printf("PASS: test_verified_real_capture\n");
 }

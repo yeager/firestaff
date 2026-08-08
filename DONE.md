@@ -1,3 +1,13 @@
+# Theron first real README capture (2026-08-08)
+
+- ✅ Added a reproducible source-bound capture tool that requires the
+  authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
+- ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a
+  256×224 native screen-space frame reconstructed from the captured BAT,
+  decoded tile atlas and VCE palette.
+- ✅ README labels the artifact accurately: it is not evidence for the still
+  unresolved dungeon-square, perspective or HUD consumers.
+
 # Theron generator save-state persistence (2026-08-08)
 
 - ✅ World snapshot version 4 now carries each decoded Track 02 generator
