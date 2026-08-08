@@ -217,6 +217,19 @@ def verify(repo: Path) -> list[str]:
                 "M11 calls an unbound DM2 compatibility text owner: "
                 f"{source_path.relative_to(repo)}")
 
+    # Position and outdoor compatibility setters are retained for narrow
+    # source-study targets.  They accept caller-authored coordinates, so M11
+    # must never use them to promote a parsed File_header pose into a party.
+    # The real route begins only after the still-missing atomic GAME_LOAD
+    # handoff restores the party, record pools, timers and environment.
+    legacy_pose_setter = re.compile(
+        r"\bdm2_v1_runtime_set_(?:position|outdoor)\s*\(")
+    for source_path in sorted((repo / "src/engine").rglob("*.c")):
+        if legacy_pose_setter.search(source_path.read_text(encoding="utf-8")):
+            errors.append(
+                "M11 calls a caller-authored DM2 party/environment setter: "
+                f"{source_path.relative_to(repo)}")
+
     runtime_path = repo / "src/dm2/dm2_v1_runtime.c"
     if not runtime_path.exists():
         errors.append(f"missing {runtime_path}")

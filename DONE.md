@@ -51,6 +51,16 @@
   samt produktionsgränsen för placeholders passerar. Inget speldata packas
   upp eller skapas.
 
+# DM2 M11:s party- och miljögräns (2026-08-08)
+
+- ✅ Produktionsverifieraren avvisar nu varje M11-anrop till de
+  callback-liknande runtime-sättarna för partyposition och utomhusläge.
+  De kan annars ta emot värdskapade koordinater utan den atomära
+  `GAME_LOAD`-transaktionen.
+- ✅ Den spelbara vägen förblir spärrad tills `GAME_LOAD` äger party,
+  recordpooler, timerkö och miljö samtidigt. Isolerade regressionsstudier
+  behåller sina egna testvägar, men kan inte bli M11-beteende av misstag.
+
 # DM2 SKSAVE-produktionsspärr (2026-08-08)
 
 - ✅ M10 länkar inte längre den callback-baserade specialtimerläsaren
