@@ -970,7 +970,7 @@ Nexus uses a layered graphics architecture:
 
 ```
 Saturn CD-ROM
-  ├── LEV*.DGN      → 3D geometry (walls, floors, ceilings) — unknown format
+  ├── LEV*.DGN      → bounded Structure1B/2/3 geometry receipts; VDP1 consumer gated
   ├── *.MNS (DMDF) → 3D creature models (vertices + faces + texture)
   ├── *.CG          → Color graphics (title screen)
   ├── *.DG2         → VDP2 background format (logo background)
@@ -1006,9 +1006,9 @@ VDP1 is the Saturn's second video display processor, capable of direct framebuff
 | `POTEFT.BIN` | 3 KB | Potion effect graphics | ❌ Not analyzed |
 | `STABG.BIN` | 52 KB | Status area background | ❌ Not analyzed |
 | `SWTCHR.BIN` | 38 KB | Candidate switch/lever graphics | ⚠️ Receipt only; owner/capture missing |
-| `ITEM.IBS` | 98 KB | Item icon/bitmap set | ❌ Not analyzed |
+| `ITEM.IBS` | 98 KB | Item icon/bitmap set | ✅ Retail source/record receipts; Saturn consumer gated |
 | `TM.BIN` | 156 KB | Candidate texture/tilemap data | ⚠️ Receipt only; owner/capture missing |
-| `MENU.BPK` | 87 KB | Menu graphics (packed) | ❌ Not analyzed |
+| `MENU.BPK` | 87 KB | Menu graphics (packed PRS3) | ✅ 162 real surfaces decoded; Saturn consumer gated |
 | `DEATH.BIN` | 4 KB | Death sequence data | ❌ Not analyzed |
 
 ### 8.4 Graphics Format Variants
@@ -1021,7 +1021,7 @@ VDP1 is the Saturn's second video display processor, capable of direct framebuff
 | Saturn SCR font | FONT256.S2D | ✅ Header ✅ Glyph access |
 | Packed (.BPK) | Menu graphics pack format | ❌ **NOT DOCUMENTED** |
 | IBS icon set | Item bitmap set | ❌ **NOT DOCUMENTED** |
-| CG color graphics | Title/color graphics | ❌ **NOT ANALYZED** |
+| CG color graphics | Title/color graphics | ✅ TITLE/LOGOBG source receipts; VDP owner gated |
 
 ### 8.5 Firestaff Conversion — DMDF
 
@@ -1116,7 +1116,7 @@ typedef struct {
 | Format | Confidence | Evidence |
 |--------|-----------|----------|
 | LEV\*.DGN grid | **High** | 32×32 confirmed by binary parsing |
-| LEV\*.DGN 3D geometry | **None** | Format completely unknown |
+| LEV\*.DGN 3D geometry | **Medium** | Structure1B/2/3 source receipts; Saturn VDP1 consumer unbound |
 | SMAP\*.BIN | **None** | No binary inspection |
 | NEXUS_OBJECT_\* types | **High** | Enum defined and implemented |
 | FONT256.S2D header | **High** | "SEGA SATURN SCR" magic confirmed |
@@ -1125,7 +1125,7 @@ typedef struct {
 | Shift-JIS Kanji | **Low** | Replaced with "?", no lookup table |
 | Champion roster | **High** | 8 entries confirmed in source |
 | Champion struct | **High** | Full struct defined |
-| FACE.BIN | **Low** | Size known, format unknown |
+| FACE.BIN | **High** | Bounded real-data portrait records/pixels; VDP1 placement unbound |
 | DMDF header | **High** | 0x444MDF magic confirmed |
 | DMDF vertex stride | **Medium** | Bug: 10B loaded vs 16B struct |
 | DMDF face format | **High** | Triangle assumption plausible |

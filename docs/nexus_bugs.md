@@ -117,7 +117,12 @@ For Original Nexus Game:
 3. BUG0_86 (Champion portrait graphics): Memory issue
 
 For Firestaff Implementation:
-1. No disc image: Cannot verify anything without it
-2. DGN 3D blob unparsed: Cannot render full dungeon
-3. SDDRVS.TSK not implemented: No event/door/trap scripts
-4. Audio not parsed: No sound or music in Firestaff
+1. Retail extracted/ISO data is now available for the verified Nexus corpus;
+   runtime presentation still requires source-owned Saturn capture.
+2. DGN Structure1B/2/3 source records have bounded parsers and receipts, but
+   the VDP1 material/command consumer is not yet bound, so full rendering is
+   correctly blocked.
+3. SDDRVS.TSK and SLEV banks have static/corridor receipts; event ownership
+   and door/trap dispatch remain unproven.
+4. SAL/MAP bytes are profiled, but codec, SCSP voice ABI and host playback
+   remain capture-gated.
