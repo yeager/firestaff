@@ -10,6 +10,7 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,6 +324,14 @@ int main(void)
             CHECK(check_atari_st_c232_hud_frame(profile->graphics_path,
                                                  framebuffer),
                   "real Atari MINI.DAT framebuffer contains all C232-owned HUD material");
+            view.world.party.championCount = 0;
+            view.inventoryPanelActive = 0;
+            CHECK(M11_GameView_HandleInput(
+                      &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      view.world.party.championCount == 1 &&
+                      view.inventoryPanelActive,
+                  "real Atari MINI.DAT F1 refreshes GAMEBLOCK before opening inventory");
             M11_GameView_Shutdown(&view);
             if (failures) return 1;
             puts("PASS: real Atari MINI.DAT reaches live Atari ST M11 runtime");
@@ -436,6 +445,8 @@ int main(void)
     {
         CSB_V1_BootProfile *profile =
             (CSB_V1_BootProfile *)view.csbBootProfile;
+        DM1_V1_MovementArrowRectPc34 turn_right_rect;
+        DM1_V1_MovementArrowRectPc34 forward_rect;
         int old_direction = profile ? profile->runtime.party_dir : -1;
 
         CHECK(profile && M11_GameView_HandleInput(
@@ -453,6 +464,33 @@ int main(void)
                       DM1_V1_COMMAND_MOVE_FORWARD &&
                   profile->runtime.last_input_dispatch.dispatchedMove,
               "live Prison C003 reaches the real dungeon movement dispatcher");
+        CHECK(dm1_v1_movement_arrow_rect_pc34(
+                  DM1_V1_MOVEMENT_ARROW_INDEX_TURN_RIGHT_PC34,
+                  &turn_right_rect) &&
+                  M11_GameView_HandlePointerButton(
+                      &view,
+                      turn_right_rect.x + turn_right_rect.w / 2,
+                      turn_right_rect.y + turn_right_rect.h / 2,
+                      M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "live Prison C002 pointer route reaches the CSB command queue");
+        CHECK(profile && profile->runtime.party_dir ==
+                  ((old_direction + 2) & 3) &&
+                  view.csbState.party_dir == profile->runtime.party_dir,
+              "live Prison C002 pointer updates the CSB runtime and M11 mirror");
+        CHECK(dm1_v1_movement_arrow_rect_pc34(
+                  DM1_V1_MOVEMENT_ARROW_INDEX_FORWARD_PC34,
+                  &forward_rect) &&
+                  M11_GameView_HandlePointerButton(
+                      &view,
+                      forward_rect.x + forward_rect.w / 2,
+                      forward_rect.y + forward_rect.h / 2,
+                      M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "live Prison C003 pointer route reaches the CSB command queue");
+        CHECK(profile && profile->runtime.last_input_dispatch.dequeued &&
+                  profile->runtime.last_input_dispatch.command ==
+                      DM1_V1_COMMAND_MOVE_FORWARD &&
+                  profile->runtime.last_input_dispatch.dispatchedMove,
+              "live Prison C003 pointer reaches the real dungeon movement dispatcher");
     }
     if (quicksave_path && quicksave_path[0]) {
         const CSB_V1_BootProfile *profile =

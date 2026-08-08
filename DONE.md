@@ -31,6 +31,10 @@
   command queue into the loaded dungeon runtime and back into M11's party
   mirror. This removes the stale claim that movement was only consumed at
   the queue boundary.
+- ✅ The same PC34 real-data path now covers the original G0448 mouse C002
+  turn and C003 forward rectangles. The local Atari ST `MINI.DAT` session
+  also proves that F1 refreshes the authentic GAMEBLOCK party before opening
+  its live inventory surface.
 
 # DM2 File_header champion test-link repair (2026-08-08)
 
