@@ -72,8 +72,7 @@ static int dm2_v1_sksave_map_owner_ground_index(
     if (map < 0 || map >= (int)dungeon->map_count || x < 0 || y < 0 ||
         x >= (int)dungeon->map_widths[map] ||
         y >= (int)dungeon->map_heights[map]) return 0;
-    tile = owner->raw_body[(size_t)dungeon->map_data_base +
-        (size_t)dungeon->map_data_relative_offsets[map] +
+    tile = owner->map_tiles[(size_t)owner->map_tile_offsets[map] +
         (size_t)x * dungeon->map_heights[map] + (size_t)y];
     if ((tile & 0x10u) == 0u) return -1;
     column_index_base = (size_t)DM2_V1_RAW_DUNGEON_HEADER_SIZE +
@@ -86,8 +85,7 @@ static int dm2_v1_sksave_map_owner_ground_index(
     object_index = (size_t)dm2_v1_raw_rd16(owner->raw_body +
         column_index_base + (column_base + (size_t)x) * 2u);
     for (i = 0u; i < (size_t)y; ++i) {
-        uint8_t prior = owner->raw_body[(size_t)dungeon->map_data_base +
-            (size_t)dungeon->map_data_relative_offsets[map] +
+        uint8_t prior = owner->map_tiles[(size_t)owner->map_tile_offsets[map] +
             (size_t)x * dungeon->map_heights[map] + i];
         if ((prior & 0x10u) != 0u) ++object_index;
     }
@@ -121,6 +119,36 @@ int dm2_v1_sksave_map_owner_init(
         return 0;
     owner->ground_stack_links = (uint16_t *)malloc(bytes ? bytes : 1u);
     if (!owner->ground_stack_links) return 0;
+    owner->map_tiles = (uint8_t *)malloc(dungeon_receipt->map_data_byte_count);
+    if (!owner->map_tiles) {
+        free(owner->ground_stack_links);
+        memset(owner, 0, sizeof(*owner));
+        return 0;
+    }
+    if ((size_t)dungeon_receipt->map_data_base > raw_body_size ||
+        (size_t)dungeon_receipt->map_data_byte_count >
+            raw_body_size - (size_t)dungeon_receipt->map_data_base) {
+        free(owner->map_tiles);
+        free(owner->ground_stack_links);
+        memset(owner, 0, sizeof(*owner));
+        return 0;
+    }
+    memcpy(owner->map_tiles, raw_body + dungeon_receipt->map_data_base,
+           dungeon_receipt->map_data_byte_count);
+    owner->map_tiles_size = dungeon_receipt->map_data_byte_count;
+    for (i = 0u; i < (size_t)dungeon_receipt->map_count; ++i) {
+        const size_t offset = dungeon_receipt->map_data_relative_offsets[i];
+        const size_t tile_count = (size_t)dungeon_receipt->map_widths[i] *
+                                  dungeon_receipt->map_heights[i];
+        if (offset > owner->map_tiles_size ||
+            tile_count > (size_t)dungeon_receipt->map_data_byte_count - offset) {
+            free(owner->map_tiles);
+            free(owner->ground_stack_links);
+            memset(owner, 0, sizeof(*owner));
+            return 0;
+        }
+        owner->map_tile_offsets[i] = (uint16_t)offset;
+    }
     for (i = 0u; i < (size_t)dungeon_receipt->ground_stack_count; ++i) {
         uint16_t link = dm2_v1_raw_rd16(raw_body + ground_stack_base + i * 2u);
         if (link != 0xfffeu && link != 0xffffu &&
@@ -137,6 +165,7 @@ int dm2_v1_sksave_map_owner_init(
     owner->raw_body_size = raw_body_size;
     owner->dungeon = dungeon_receipt;
     owner->ground_stack_count = dungeon_receipt->ground_stack_count;
+    owner->current_map = 0;
     owner->valid = 1;
     return 1;
 }
@@ -145,7 +174,66 @@ void dm2_v1_sksave_map_owner_free(DM2_V1_SksaveMapOwner *owner)
 {
     if (!owner) return;
     free(owner->ground_stack_links);
+    free(owner->map_tiles);
     memset(owner, 0, sizeof(*owner));
+}
+
+int dm2_v1_sksave_map_owner_get_map_count(void *ctx)
+{
+    const DM2_V1_SksaveMapOwner *owner = (const DM2_V1_SksaveMapOwner *)ctx;
+    return owner && owner->valid && owner->dungeon ? owner->dungeon->map_count : 0;
+}
+
+void dm2_v1_sksave_map_owner_get_map_dimensions(void *ctx, int *width, int *height)
+{
+    const DM2_V1_SksaveMapOwner *owner = (const DM2_V1_SksaveMapOwner *)ctx;
+    if (width) *width = 0;
+    if (height) *height = 0;
+    if (!owner || !owner->valid || owner->current_map < 0 ||
+        owner->current_map >= (int)owner->dungeon->map_count) return;
+    if (width) *width = owner->dungeon->map_widths[owner->current_map];
+    if (height) *height = owner->dungeon->map_heights[owner->current_map];
+}
+
+void dm2_v1_sksave_map_owner_change_current_map(void *ctx, int map)
+{
+    DM2_V1_SksaveMapOwner *owner = (DM2_V1_SksaveMapOwner *)ctx;
+    if (!owner || !owner->valid || map < 0 || map >= (int)owner->dungeon->map_count)
+        return;
+    owner->current_map = map;
+}
+
+uint8_t dm2_v1_sksave_map_owner_get_tile(void *ctx, int x, int y)
+{
+    DM2_V1_SksaveMapOwner *owner = (DM2_V1_SksaveMapOwner *)ctx;
+    int width = 0;
+    int height = 0;
+    dm2_v1_sksave_map_owner_get_map_dimensions(owner, &width, &height);
+    if (!owner || x < 0 || y < 0 || x >= width || y >= height) return 0u;
+    return owner->map_tiles[(size_t)owner->map_tile_offsets[owner->current_map] +
+                            (size_t)x * (size_t)height + (size_t)y];
+}
+
+int dm2_v1_sksave_map_owner_set_tile(void *ctx, int x, int y, uint8_t tile)
+{
+    DM2_V1_SksaveMapOwner *owner = (DM2_V1_SksaveMapOwner *)ctx;
+    int width = 0;
+    int height = 0;
+    dm2_v1_sksave_map_owner_get_map_dimensions(owner, &width, &height);
+    if (!owner || x < 0 || y < 0 || x >= width || y >= height) return -1;
+    owner->map_tiles[(size_t)owner->map_tile_offsets[owner->current_map] +
+                     (size_t)x * (size_t)height + (size_t)y] = tile;
+    return 0;
+}
+
+uint16_t dm2_v1_sksave_map_owner_get_tile_record_link_current(
+    void *ctx, int x, int y)
+{
+    DM2_V1_SksaveMapOwner *owner = (DM2_V1_SksaveMapOwner *)ctx;
+    uint16_t link = 0xfffeu;
+    if (!owner || !dm2_v1_sksave_map_owner_tile_record_link(
+            owner, owner->current_map, x, y, &link)) return 0xfffeu;
+    return link;
 }
 
 int dm2_v1_sksave_map_owner_tile_record_link(

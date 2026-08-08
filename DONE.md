@@ -57,6 +57,11 @@
   handles the eight DB3 actuator subtypes with the original preceding
   nine-bit value. The focused dungeon reader verifies that an existing record
   changes in place; the mounted PC-DOS corpus remains at 176 passing checks.
+- ✅ The SKSAVE map owner now keeps writable RAM copies of every authenticated
+  tile span and implements the map, geometry, tile and ground-link callbacks
+  needed by `DM2_LoadExtraDungeonCallbacks`. The original save body stays
+  immutable; the real corpus verifies both copied tile identity and that a
+  temporary RAM tile change cannot alter its source byte.
 
 - ✅ Corrected the direct-root reader to stop after the source hero and
   cursor chains. It no longer reads possession continuations from the wrong

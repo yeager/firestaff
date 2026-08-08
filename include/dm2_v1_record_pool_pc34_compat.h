@@ -72,6 +72,10 @@ typedef struct {
     const DM2_V1_OriginalRawDungeonReceipt *dungeon;
     uint16_t *ground_stack_links;
     size_t ground_stack_count;
+    uint8_t *map_tiles;
+    size_t map_tiles_size;
+    uint16_t map_tile_offsets[DM2_RAW_SKSAVE_MAX_MAPS];
+    int current_map;
     int valid;
     int dynamic_records_detached;
 } DM2_V1_SksaveMapOwner;
@@ -91,6 +95,17 @@ void dm2_v1_sksave_map_owner_free(DM2_V1_SksaveMapOwner *owner);
 int dm2_v1_sksave_map_owner_tile_record_link(
     const DM2_V1_SksaveMapOwner *owner,
     int map, int x, int y, uint16_t *out_link);
+
+/* Direct DM2_LoadExtraDungeonCallbacks adapters. They expose the mutable
+ * RAM tile copy while retaining the authenticated raw body as provenance. */
+int dm2_v1_sksave_map_owner_get_map_count(void *ctx);
+void dm2_v1_sksave_map_owner_get_map_dimensions(void *ctx,
+                                                 int *width, int *height);
+void dm2_v1_sksave_map_owner_change_current_map(void *ctx, int map);
+uint8_t dm2_v1_sksave_map_owner_get_tile(void *ctx, int x, int y);
+int dm2_v1_sksave_map_owner_set_tile(void *ctx, int x, int y, uint8_t tile);
+uint16_t dm2_v1_sksave_map_owner_get_tile_record_link_current(
+    void *ctx, int x, int y);
 
 /* First destructive phase of sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON:
  * unlink every DB4..DB15 record from actual tile chains, preserving DB0..DB3

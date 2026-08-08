@@ -3108,6 +3108,12 @@ level or consumer bindings.
   it into the single GAME_LOAD transaction with live map/tile callbacks,
   dynamic empty-tile allocation, possessions and timers; it remains
   deliberately unavailable as a standalone Resume path.
+  2026-08-08 tile-owner update: the map owner now has a writable RAM copy of
+  every authenticated map tile span and implements the native
+  `DM2_LoadExtraDungeonCallbacks` map, geometry, tile and ground-link
+  callbacks. The original SKSAVE body remains read-only. The remaining
+  transaction must supply the resident-chain callback plus dynamic allocation
+  and preserve this owner through possessions and timer reconstruction.
   2026-08-13 DB-clear update: the next `DM2_READ_SKSAVE_DUNGEON` phase now
   preserves DB0..DB3 and clears only GenericRecord::w0 in every DB4..DB15
   row, exactly as SKProject does before `READ_RECORD_CHECKCODE` allocates

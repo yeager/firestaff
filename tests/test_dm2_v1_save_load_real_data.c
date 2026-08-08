@@ -450,6 +450,23 @@ static int verify_real_raw_pool_baseline(
      * fabricated tile owner. */
     if (!dm2_v1_sksave_map_owner_init(
             &map_owner, payload, payload_size, dungeon) ||
+        dm2_v1_sksave_map_owner_get_map_count(&map_owner) !=
+            (int)dungeon->map_count ||
+        dm2_v1_sksave_map_owner_get_tile(&map_owner, 0, 0) !=
+            payload[(size_t)dungeon->map_data_base +
+                    dungeon->map_data_relative_offsets[0]] ||
+        dm2_v1_sksave_map_owner_set_tile(
+            &map_owner, 0, 0,
+            (uint8_t)(dm2_v1_sksave_map_owner_get_tile(&map_owner, 0, 0) ^
+                      0x01u)) != 0 ||
+        payload[(size_t)dungeon->map_data_base +
+                dungeon->map_data_relative_offsets[0]] !=
+            (uint8_t)(dm2_v1_sksave_map_owner_get_tile(
+                &map_owner, 0, 0) ^ 0x01u) ||
+        dm2_v1_sksave_map_owner_set_tile(
+            &map_owner, 0, 0,
+            payload[(size_t)dungeon->map_data_base +
+                    dungeon->map_data_relative_offsets[0]]) != 0 ||
         !dm2_v1_sksave_map_owner_detach_dynamic_records(
             &map_owner, &pools, NULL) ||
         !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
