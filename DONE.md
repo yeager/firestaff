@@ -789,6 +789,9 @@
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` måste hantera. Realdatatestet låser
   DB0-provenansen utan att allokera ett ersättningsrecord eller publicera en
   delvis laddad session.
+- ✅ Ett otaget recycler-steg är nu uttryckligen `-1`, aldrig den giltiga
+  DB0-koden. Korpusen skiljer därmed pooluttömning från tidigare
+  specialtimerfel och andra kartfel utan att föreslå en påhittad recycler.
 
 # DM2 New Game-entréreceipt (2026-08-08)
 

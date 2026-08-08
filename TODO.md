@@ -21,6 +21,8 @@
   Realdatakorpusen visar nu explicit när DB0 når originalets recycler-gräns;
   portera bara recyclern tillsammans med dess fullständiga c_map-, record-
   och partyägare, aldrig genom en syntetisk reservpost.
+  Övriga avbrutna faser rapporterar uttryckligen att recycler saknas (`-1`)
+  och får inte tolkas som ett DB0-krav.
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   monterad dungeon eller tom lokal cooldown får inte presenteras som en

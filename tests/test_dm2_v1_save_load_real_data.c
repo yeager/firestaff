@@ -1059,7 +1059,13 @@ static void test_real_raw_save(const char *path, const char *root,
                 CHECK(special_timers.recycle_required_db ==
                           special_timers.map_failure_record_type,
                       "full source record pool names the DB that requires world recycling");
+            } else {
+                CHECK(special_timers.recycle_required_db == -1,
+                      "non-exhausted source failure does not invent a recycler DB");
             }
+        } else {
+            CHECK(special_timers.recycle_required_db == -1,
+                  "pre-map source failure does not invent a recycler DB");
         }
     }
     {

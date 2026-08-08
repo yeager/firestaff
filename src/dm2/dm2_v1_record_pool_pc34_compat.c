@@ -1437,6 +1437,11 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         out_receipt->map_failure_x = -1;
         out_receipt->map_failure_y = -1;
         out_receipt->map_failure_record_type = -1;
+        /* c_record.cpp::DM2_ALLOC_NEW_RECORD reaches the recycler only after
+         * its linear OBJECT_NULL scan exhausts a specific DB.  Zero is a
+         * real DB number, so it must never double as the unset receipt
+         * value. */
+        out_receipt->recycle_required_db = -1;
     }
     memset(&pools, 0, sizeof(pools));
     memset(&map_owner, 0, sizeof(map_owner));
@@ -1448,6 +1453,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     memset(&rebuild_callbacks, 0, sizeof(rebuild_callbacks));
     memset(&rebuild_receipt, 0, sizeof(rebuild_receipt));
     memset(&context, 0, sizeof(context));
+    context.recycle_required_db = -1;
     memset(&map_context, 0, sizeof(map_context));
     memset(&callbacks, 0, sizeof(callbacks));
     memset(&dungeon_callbacks, 0, sizeof(dungeon_callbacks));
