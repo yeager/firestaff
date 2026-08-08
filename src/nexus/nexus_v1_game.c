@@ -112,6 +112,7 @@ int nexus_v1_game_apply_dungeon_start(
     const Nexus_V1_DungeonStartReceipt *receipt)
 {
     if (!state || !receipt || receipt->status != NEXUS_V1_DUNGEON_START_READY ||
+        receipt->party_dir < 0 || receipt->party_dir > 3 ||
         receipt->blocks_runtime || receipt->fallback_visuals_permitted) {
         return 0;
     }
