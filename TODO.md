@@ -10247,3 +10247,11 @@ as line/circle coordinates or promote them into movement geometry.
   clicks and C028--C065 inventory slots, including a live PC 3.4 regression
   for stale champion selection. Remaining work is complete panel behavior,
   not a stale display-mirror write path.
+# Nexus source-bound LEV00 start pose (2026-08-08)
+
+- **NEXUS-STARTUP-POSE-CAPTURE:** The previous production request `(LEV00,
+  11,29,N)` was a synthetic fixture, not a retail Nexus start position.
+  Real `LEV00.DGN` (`24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a`)
+  has eight zero bytes at Structure1B cell `(11,29)`, so production now
+  refuses startup with an unbound pose. Keep the gate closed until an
+  authentic Saturn start selector/capture is joined to the retail bytes.

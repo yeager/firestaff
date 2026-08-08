@@ -218,7 +218,8 @@ Six synthetic DMDF blobs covering valid and invalid cases:
 
 Deterministic world state → save → load → compare hashes.
 
-Fixed world: LEV00 position (11, 29), 2 objects, 1 active timer, 1 fired event.
+Fixed synthetic world fixture: LEV00 position (11, 29), 2 objects, 1 active
+timer, 1 fired event. This coordinate is not a retail Nexus start selector.
 Expected hash: `0x2F7A8BC4E6D09125ULL` (pre-computed from fixed state).
 
 **Run:** `./build/firestaff_nexus_v1_save_load_round_trip_probe`
@@ -246,7 +247,8 @@ Expected hash: `0x2F7A8BC4E6D09125ULL` (pre-computed from fixed state).
 ### Gate Conditions
 
 1. Load LEV00.DGN (or synthetic fixture)
-2. Place party at DM1 entrance (11, 29, dir=0/N)
+2. Place the synthetic fixture party at (11, 29, dir=0/N). Production Nexus
+   must not use this coordinate until a Saturn start-selector capture proves it.
 3. Execute each step at V1 tick rate (55 ms/step)
 4. Final world-state hash must match `expected` field
 5. If no game data: run with synthetic fixture, report SKIP with reason

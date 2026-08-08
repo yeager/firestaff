@@ -29,17 +29,17 @@ void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
     state->data_dir = data_dir;
-    state->party_x = NEXUS_V1_INITIAL_PARTY_X;
-    state->party_y = NEXUS_V1_INITIAL_PARTY_Y;
-    state->party_dir = NEXUS_V1_INITIAL_PARTY_DIR;
+    state->party_x = -1;
+    state->party_y = -1;
+    state->party_dir = -1;
     state->dungeon_start.status = NEXUS_V1_DUNGEON_START_MISSING;
-    state->dungeon_start.level = NEXUS_V1_INITIAL_PARTY_LEVEL;
-    state->dungeon_start.requested_x = NEXUS_V1_INITIAL_PARTY_X;
-    state->dungeon_start.requested_y = NEXUS_V1_INITIAL_PARTY_Y;
-    state->dungeon_start.requested_dir = NEXUS_V1_INITIAL_PARTY_DIR;
-    state->dungeon_start.party_x = NEXUS_V1_INITIAL_PARTY_X;
-    state->dungeon_start.party_y = NEXUS_V1_INITIAL_PARTY_Y;
-    state->dungeon_start.party_dir = NEXUS_V1_INITIAL_PARTY_DIR;
+    state->dungeon_start.level = -1;
+    state->dungeon_start.requested_x = -1;
+    state->dungeon_start.requested_y = -1;
+    state->dungeon_start.requested_dir = -1;
+    state->dungeon_start.party_x = -1;
+    state->dungeon_start.party_y = -1;
+    state->dungeon_start.party_dir = -1;
     state->dungeon_start.blocks_runtime = 1;
 }
 

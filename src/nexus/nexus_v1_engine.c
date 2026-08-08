@@ -4599,29 +4599,32 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     nexus_v1_load_shop_catalog(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
 
-    /* Nexus source-lock: docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md
-     * fixes new game at LEV00 (11,29,N). Accept it only after the real
-     * Structure1B cell has been decoded, so corrupt media or a parser change
-     * cannot start mechanics or DGN rendering inside a wall. */
-    if (level == NEXUS_V1_INITIAL_PARTY_LEVEL && !engine->game.game_started) {
-        if (!nexus_v1_game_resolve_dungeon_start(
-                &engine->current_level,
-                level,
-                NEXUS_V1_INITIAL_PARTY_X,
-                NEXUS_V1_INITIAL_PARTY_Y,
-                NEXUS_V1_INITIAL_PARTY_DIR,
-                &dungeon_start) ||
-            !nexus_v1_game_apply_dungeon_start(&engine->game,
-                                                &dungeon_start)) {
-            engine->game.dungeon_start = dungeon_start;
-            return -1;
-        }
-        if (engine->mechanics) {
-            nexus_mechanics_init(engine->mechanics,
-                                 engine->game.party_x,
-                                 engine->game.party_y,
-                                 engine->game.party_dir);
-        }
+    /* Source-faithful startup gate: the former (11,29,N) request was a
+     * synthetic fixture borrowed from DM1. Real LEV00.DGN contains an empty
+     * Structure1B cell there, and no Nexus Saturn start selector has yet
+     * been joined to the loaded retail bytes. Do not manufacture a party
+     * pose for mechanics or viewport composition. */
+    if (level == 0 && !engine->game.game_started) {
+        memset(&dungeon_start, 0, sizeof(dungeon_start));
+        dungeon_start.status = NEXUS_V1_DUNGEON_START_MISSING;
+        dungeon_start.level = level;
+        dungeon_start.requested_x = -1;
+        dungeon_start.requested_y = -1;
+        dungeon_start.requested_dir = -1;
+        dungeon_start.party_x = -1;
+        dungeon_start.party_y = -1;
+        dungeon_start.party_dir = -1;
+        dungeon_start.blocks_runtime = 1;
+        engine->game.dungeon_start = dungeon_start;
+        printf("Nexus: refusing LEV00 startup; Saturn start pose is not source-bound\n");
+        free(data);
+        free(engine->current_level_dgn_identity_data);
+        memset(&engine->current_level, 0, sizeof(engine->current_level));
+        engine->current_level_dgn_data = NULL;
+        engine->current_level_dgn_identity_data = NULL;
+        engine->current_level_dgn_size = 0;
+        engine->level_loaded = 0;
+        return -1;
     }
 
     engine->level_loaded = 1;

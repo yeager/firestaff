@@ -8510,3 +8510,14 @@
   an authentic SLEV→MAP→SDDRVS→SCSP capture proves sample encoding, rate,
   looping, voice ownership and event chronology. No host playback was
   enabled or inferred.
+# Nexus LEV00 synthetic start pose removed (2026-08-08)
+
+- ✅ Audited the former `(11,29,N)` Nexus startup request against the real
+  European `LEV00.DGN`; Structure1B cell `(11,29)` is `0000000000000000` and
+  is not enterable. The old claim was inherited from a synthetic DM1-style
+  fixture.
+- ✅ Production game state now starts with an unknown pose and the retail
+  engine refuses LEV00 startup until a Saturn-authenticated start selector
+  is available. Synthetic fixture probes retain their explicit coordinates.
+- ✅ Added source-boundary checks so the production engine cannot reintroduce
+  the synthetic pose or bypass the startup gate.

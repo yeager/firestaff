@@ -6,9 +6,11 @@
 
 /* Nexus V1 game state — ties together DM1 logic + Nexus 3D assets. */
 
-/* The verified Nexus V1 new-game pose is level 0, cell (11,29), facing
- * north. It is a host-owned start request, but it must be accepted by the
- * decoded Structure1B cell before mechanics or the viewport consume it. */
+/* These coordinates are retained only for deterministic synthetic probes.
+ * They are not a Nexus retail start position: the real LEV00.DGN cell at
+ * (11,29) is empty. Production startup must obtain the pose from a
+ * source-bound Saturn route/capture before mechanics or the viewport consume
+ * it. */
 #define NEXUS_V1_INITIAL_PARTY_LEVEL 0
 #define NEXUS_V1_INITIAL_PARTY_X 11
 #define NEXUS_V1_INITIAL_PARTY_Y 29
