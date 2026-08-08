@@ -1,3 +1,9 @@
+# Theron Mednafen trace patch compile verification (2026-08-08)
+
+- ✅ Corrected the spawn-register sidecar to use portable `FILE*` `fprintf()`/`fflush()` calls and fixed the generated patch hunk counts.
+- ✅ Applied the complete Theron IRQ2/main-RAM trace patch chain to the exact Mednafen 1.32.1 source archive and compiled the full emulator successfully.
+- ⚠️ Authentic runtime capture remains gated because this machine links `sdl2-compat`; no gameplay semantics were promoted from the compile-only result.
+
 # Theron spawn register capture boundary (2026-08-08)
 
 - ✅ Extended the instrumented Mednafen path with lazy `.spawn-registers` snapshots at `$4644`, `$4667`, `$C96B` and `$CC4C`.

@@ -1,5 +1,7 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron authentic runtime capture still needs a real SDL2/Quartz runtime and verified US System Card/media. The exact Mednafen 1.32.1 instrumented patch chain now applies and compiles; RNG return values, spawn timing, AI, T700/T900 consumers, media bindings and gameplay semantics remain fail-closed until a real capture is obtained.
+
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
   sixteen source File_header champion-mirror records across their real
   `w0`-kedjor, but must not materialise them independently. Recover the

@@ -42,7 +42,7 @@
  	}
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -108,5 +108,9 @@
+@@ -108,5 +108,11 @@
  static uint16 TheronPCECDMainRAME009ReturnPC;
  static unsigned TheronPCECDMainRAME009Sequence;
  static unsigned TheronPCECDCriticalTraceCount;
@@ -54,7 +54,7 @@
 +static unsigned TheronPCECDSpawnConsumerTraceCount;
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
-@@ -133,5 +135,51 @@
+@@ -133,6 +135,81 @@
   TheronPCECDMainRAME009Active = false;
  }
 
