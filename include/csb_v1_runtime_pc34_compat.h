@@ -1298,6 +1298,13 @@ int csb_v1_runtime_recompute_champion_load_pc34_compat(
     int champion_index);
 int csb_v1_runtime_recompute_party_loads_pc34_compat(
     CSB_V1_RuntimeProfile *profile);
+
+/* ReDMCSB CLIKMENU.C F0366: after a successful party step, G0310 receives
+ * the largest F0310 movement cost among living party champions. The result
+ * is at least one tick for an empty/new party and never reads M11's DM1
+ * world tables. */
+int csb_v1_runtime_party_movement_ticks_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled);
 int csb_v1_runtime_get_load_bonus_dungeon(

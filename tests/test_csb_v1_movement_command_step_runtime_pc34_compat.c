@@ -95,6 +95,27 @@ static void test_source_evidence(void)
           "source evidence cites imported champion Cell/Direction rotation");
 }
 
+static void test_party_movement_ticks_uses_slowest_living_champion(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    unsigned int maximum_load;
+
+    seed_profile(&profile, &party, 10, 10, CSB_V1_DIR_NORTH);
+    CHECK_EQ(csb_v1_runtime_party_movement_ticks_pc34_compat(&profile), 2,
+             "a light living party keeps F0310's two-tick floor");
+
+    maximum_load = csb_v1_champion_get_maximum_load(
+        &profile.party_state.Champions[2]);
+    profile.party_state.Champions[2].Load = (uint16_t)maximum_load;
+    CHECK_EQ(csb_v1_runtime_party_movement_ticks_pc34_compat(&profile), 4,
+             "an equal-load living champion supplies F0310's BUG0_72 four-tick cost");
+
+    profile.party_state.Champions[2].CurrentHealth = 0;
+    CHECK_EQ(csb_v1_runtime_party_movement_ticks_pc34_compat(&profile), 2,
+             "a dead champion does not delay the living party");
+}
+
 static void test_one_forward_step_through_queue(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -135,8 +156,8 @@ static void test_one_forward_step_through_queue(void)
     CHECK_EQ(profile.party_state.PartyDirection, CSB_V1_DIR_NORTH,
              "imported party direction mirrors runtime");
     CHECK_EQ(result.party_state_changed, 1, "result reports coordinate mutation");
-    CHECK_EQ(result.disabled_movement_ticks_after, 1,
-             "step reports one unresolved movement tick");
+    CHECK_EQ(result.disabled_movement_ticks_after, 2,
+             "step uses the living party's F0310 movement cost");
     CHECK_EQ(queue.count, 0, "queue is empty after one consumed command");
 
     for (i = 0; i < profile.party_state.ChampionCount; ++i) {
@@ -241,8 +262,8 @@ static void test_second_step_waits_for_first_resolution(void)
     CHECK_EQ(profile.party_x, 20, "first step x unchanged while facing north");
     CHECK_EQ(profile.party_y, 19, "first step advances one cell north");
     CHECK_EQ(queue.count, 1, "second command remains queued after first dispatch");
-    CHECK_EQ(result.disabled_movement_ticks_after, 1,
-             "first step reports unresolved movement timing");
+    CHECK_EQ(result.disabled_movement_ticks_after, 2,
+             "first step reports the living party's F0310 timing");
 
     CHECK_EQ(csb_v1_movement_command_step_runtime_process_queue_pc34_compat(
                  &profile, &queue, 1, 0, 0, NULL, NULL, &result),
@@ -276,6 +297,7 @@ int main(void)
 {
     printf("=== CSB V1 Movement Command Step Runtime Gate ===\n\n");
     test_source_evidence();
+    test_party_movement_ticks_uses_slowest_living_champion();
     test_one_forward_step_through_queue();
     test_forward_direction_matrix();
     test_wall_collision_does_not_advance();

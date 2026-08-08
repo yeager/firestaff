@@ -106,12 +106,14 @@ int csb_v1_movement_command_step_runtime_apply_pc34_compat(
      * MOVESENS.C F0267_MOVE_GetMoveResult_CPSCE for the party, then
      * commits movement timing.  This narrow CSB runtime slice commits only
      * the one-cell party coordinate step and mirrors the imported party
-     * snapshot fields; sensors, stamina, stairs, doors, groups, and VBlank
-     * timing remain owned by later CSB-specific gates. */
+     * snapshot fields. The source F0310 party delay is retained here; sensor
+     * damage/stamina effects, stairs, doors and groups remain owned by their
+     * respective CSB runtime gates. */
     profile->party_x = local_result.destination_x;
     profile->party_y = local_result.destination_y;
     local_result.step_applied = 1;
-    local_result.disabled_movement_ticks_after = 1;
+    local_result.disabled_movement_ticks_after =
+        csb_v1_runtime_party_movement_ticks_pc34_compat(profile);
 
     if (profile->party_state_valid) {
         profile->party_state.PartyMapX = profile->party_x;
@@ -183,5 +185,7 @@ const char *csb_v1_movement_command_step_runtime_source_evidence_pc34_compat(voi
            "CLIKMENU.C F0366 lines 224-233 movement-arrow forward/right counts, line 269 F0150 destination, lines 277-304 wall blocked false path, lines 325-351 commit step timing; "
            "DUNGEON.C F0150 lines 1389-1391 G0233/G0234 relative coordinate update; "
            "MOVESENS.C F0267 lines 316-328 party move-result entrypoint; "
+           "CLIKMENU.C F0366 lines 342-351 assigns G0310 the maximum living "
+           "champion F0310 movement cost; "
            "CHAMPION.C F0284 lines 117-130 imported champion Cell/Direction rotate only on party turns.";
 }

@@ -12708,6 +12708,38 @@ int csb_v1_runtime_recompute_party_loads_pc34_compat(
     return recomputed;
 }
 
+int csb_v1_runtime_party_movement_ticks_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    int champion_index;
+    int ticks = 1;
+
+    if (!profile || !profile->party_state_valid) {
+        return ticks;
+    }
+    /* ReDMCSB CLIKMENU.C F0366:342-351 starts at one and takes the
+     * maximum F0310_CHAMPION_GetMovementTicks result for each living member.
+     * This is deliberately the raw CSB GAMEBLOCK party, not M11's mirrored
+     * champion list. */
+    for (champion_index = 0;
+         champion_index < profile->party_state.ChampionCount &&
+         champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        const CSB_V1_Champion *champion =
+            &profile->party_state.Champions[champion_index];
+        int champion_ticks;
+
+        if (champion->CurrentHealth <= 0) {
+            continue;
+        }
+        champion_ticks = (int)csb_v1_champion_get_movement_ticks(champion);
+        if (champion_ticks > ticks) {
+            ticks = champion_ticks;
+        }
+    }
+    return ticks;
+}
+
 static int csb_v1_runtime_f0312_action_hand_strength(
     const CSB_V1_RuntimeProfile *profile,
     int champion_index,
@@ -30709,7 +30741,8 @@ int csb_v1_runtime_process_input_queue(
                 csb_v1_runtime_current_square_is_stairs(profile, NULL, NULL)) {
                 local_result.movement_command_handled = 1;
                 local_result.movement_step_attempted = 1;
-                local_result.disabled_movement_ticks_after = 1;
+                local_result.disabled_movement_ticks_after =
+                    csb_v1_runtime_party_movement_ticks_pc34_compat(profile);
                 csb_v1_runtime_take_current_stairs(profile, &local_result);
             } else {
                 local_result.unsupported_runtime_command =

@@ -22939,6 +22939,15 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 NULL) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
+        /* GAMELOOP.C:150-155 decrements both locks every source game tick.
+         * The CSB runtime owns the authoritative party state while M11 keeps
+         * only these input-gate counters for F0380. */
+        if (state->world.disabledMovementTicks > 0) {
+            state->world.disabledMovementTicks--;
+        }
+        if (state->world.projectileDisabledMovementTicks > 0) {
+            state->world.projectileDisabledMovementTicks--;
+        }
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
         m11_csb_update_fmtowns_game_music(state);
         if (state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
@@ -50035,6 +50044,8 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         unsigned int first_post_c040_tick = 0u;
+        struct Dm1V1InputEventPc34Compat movement_event;
+        int movement_input;
         if (!state->csbBootProfile) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -50051,14 +50062,29 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
             m11_set_status(state, "CSB", "STALE HUD SESSION");
             return M11_GAME_INPUT_IGNORED;
         }
+        movement_input = CSB_V1_InputCommandBridge_MenuInputToEventPc34Compat(
+            input, 0, 0, &movement_event);
+        if (movement_input) {
+            /* ReDMCSB GAMELOOP.C:124-155 advances game time and ages G0310/
+             * G0311 before F0380 evaluates the next keyboard command. Keep
+             * these source locks in the live CSB owner instead of repeatedly
+             * passing a synthetic zero through M11. */
+            state->world.gameTick++;
+            if (state->world.disabledMovementTicks > 0) {
+                state->world.disabledMovementTicks--;
+            }
+            if (state->world.projectileDisabledMovementTicks > 0) {
+                state->world.projectileDisabledMovementTicks--;
+            }
+        }
         memset(&bridge, 0, sizeof(bridge));
         if (CSB_V1_InputCommandBridge_ProcessMenuInputFromBootProfilePc34Compat(
                 state->csbBootProfile,
                 input,
                 0,
                 0,
-                0,
-                0,
+                state->world.disabledMovementTicks,
+                state->world.projectileDisabledMovementTicks,
                 -1,
                 &bridge) < 0) {
             m11_set_status(state, "CSB", "INPUT REJECTED");
@@ -50080,7 +50106,6 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
              * M11 action-effect clock one tick before the receipt-driven
              * cooldown pass; otherwise a SHOOT/THROW lock materialized at
              * the current tick can never expire on the CSB route. */
-            state->world.gameTick++;
             m11_decrement_action_disabled_ticks(state);
             /* ReDMCSB GAMELOOP.C processes TIMELINE.C's due queue before
              * the next command surface is exposed.  The CSB input route
@@ -50097,6 +50122,11 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
                 M11_GameView_ProcessTickEmissions(state);
             }
             m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            if (bridge.runtime_result.movement_step_applied) {
+                state->world.disabledMovementTicks =
+                    bridge.runtime_result.disabled_movement_ticks_after;
+                state->world.projectileDisabledMovementTicks = 0;
+            }
             if (bridge.is_turn && bridge.runtime_state_changed) {
                 m11_set_status(state, "CSB", "FACING UPDATED");
             } else if (bridge.queue_result.dispatchedMove) {

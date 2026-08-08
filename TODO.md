@@ -7974,6 +7974,13 @@ that its exact runtime path is not already source-locked and tested.
 30. **CSB-COMBAT-MOVEMENT-RUNTIME:** Complete source movement, group AI,
     melee/spells/projectiles, party interactions, damage, deaths, drops, and
     timer scheduling using ReDMCSB and CSBWin semantics.
+    2026-08-08: successful live PC34-compatible steps now retain the source
+    `G0310` movement delay rather than a host constant. `CLIKMENU.C` F0366
+    selects the maximum F0310 cost among living GAMEBLOCK champions, and M11
+    now ages that gate before F0380 dispatches a later movement command.
+    This does not yet implement F0325's stamina/damage side effects or the
+    source feet-slot Boot of Speed icon lookup; those remain part of this
+    runtime item.
 31. **CSB-SOUND-MUSIC-MEDIA:** Complete source audio/music media admission,
     startup/running sound events, palette/VBlank cadence, and platform-safe
     media playback without generated replacements. The host backend is no

@@ -7738,3 +7738,15 @@
 - ✅ This complements the existing in-process Load Saved Game route and
   confirms that the player-visible saved artifact is usable after a new app
   launch. Source reference: ReDMCSB `LOADSAVE.C` F0433/F0435.
+
+# CSB source-owned party movement delay (2026-08-08)
+
+- ✅ A successful CSB step now sets the live M11 movement gate from the
+  maximum `F0310_CHAMPION_GetMovementTicks` result among living GAMEBLOCK
+  champions instead of a fixed one-tick host delay. The gate is aged before
+  the next F0380 command dispatch and is covered at the light, equal-load
+  BUG0_72, and dead-champion boundaries.
+- ✅ Verified the focused queue/runtime regression, actual PC 3.4 Prison
+  route, source-lock validator, and headless Phase A probe.
+- Source reference: ReDMCSB `CLIKMENU.C` F0366 lines 342–351,
+  `CHAMPION.C` F0310 lines 1180–1214, and `GAMELOOP.C` lines 124–155.
