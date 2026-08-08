@@ -3,6 +3,7 @@
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_creature_names.h"
+#include "theron_v1_mechanics.h"
 #include "theron_v1_world.h"
 #include <assert.h>
 #include <stdio.h>
@@ -140,6 +141,58 @@ static unsigned int expected_live_monsters(const Theron_V1_World *world) {
             if (record->health[slot] != 0u) ++count;
     }
     return count;
+}
+
+static void assert_real_item_roundtrip(Theron_V1_World *world) {
+    int found = 0;
+    int initial_objects;
+
+    /* Exercise one object from the loaded level, not a hand-built fixture.
+     * T900 ownership remains source-gated: the item must carry its real
+     * category, source reference, item type and verified 6-byte property row
+     * through TAKE and DROP. */
+    for (int i = 0; i < world->object_count; ++i) {
+        Theron_V1_Object *object = &world->objects[i];
+        int inventory_slot = -1;
+        if (object->level != world->current_level ||
+            !object->source_ref || !object->source_property_valid ||
+            (object->source_category != THERON_CAT_WEAPON &&
+             object->source_category != THERON_CAT_CLOTHING &&
+             object->source_category != THERON_CAT_SCROLL &&
+             object->source_category != THERON_CAT_POTION)) {
+            continue;
+        }
+        /* The source loader can retain more than one thing at a square;
+         * click routing consumes the first object in source order. */
+        if (theron_v1_object_at(world, world->current_level,
+                                object->x, object->y) != object) {
+            continue;
+        }
+        initial_objects = world->object_count;
+        assert(theron_v1_click_route(world, object->x, object->y,
+                                     THERON_CMD_TAKE) == 0);
+        for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+            if (world->party.champions[world->party.active_slot]
+                    .inventory[slot] == object->source_item_type &&
+                world->inventory_source[world->party.active_slot][slot]
+                    .valid) {
+                inventory_slot = slot;
+                break;
+            }
+        }
+        assert(inventory_slot >= 0);
+        assert(world->inventory_source[world->party.active_slot]
+                   [inventory_slot].source_ref == object->source_ref);
+        assert(theron_v1_drop_inventory_source_item(
+                   world, world->party.active_slot, inventory_slot,
+                   object->x, object->y) > 0);
+        assert(world->object_count == initial_objects + 1);
+        assert(world->objects[world->object_count - 1].source_ref ==
+               object->source_ref);
+        found = 1;
+        break;
+    }
+    assert(found);
 }
 
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
@@ -363,6 +416,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */
         assert(world->object_count == result.total_things_placed);
+        if (d == 0)
+            assert_real_item_roundtrip(world);
 
         free(world);
     }
