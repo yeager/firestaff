@@ -1546,6 +1546,9 @@ static size_t serialize_size(const Theron_V1_World *world) {
     n += (size_t)world->timer_count * sizeof(Theron_V1_Timer);
     n += sizeof(uint64_t); /* world_tick */
     n += sizeof(uint64_t); /* state_hash */
+    /* T900 inventory provenance: source object/category/property fields have
+     * no pointers and can be appended without changing existing offsets. */
+    n += sizeof(world->inventory_source);
     return n;
 }
 
@@ -1597,6 +1600,8 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     out += sizeof(uint64_t);
     ww64(out, world->state_hash);
     out += sizeof(uint64_t);
+    memcpy(out, world->inventory_source, sizeof(world->inventory_source));
+    out += sizeof(world->inventory_source);
 
     return need;
 }
@@ -1664,6 +1669,17 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     world->world_tick = rw64(in);
     in += sizeof(uint64_t);
     world->state_hash = rw64(in);
+    in += sizeof(uint64_t);
+
+    /* Version 1 snapshots produced before source inventory provenance was
+     * appended remain readable. A partial trailing section is malformed and
+     * must not silently clear item semantics. */
+    size_t remaining = bufsize - (size_t)(in - (const uint8_t *)buf);
+    memset(world->inventory_source, 0, sizeof(world->inventory_source));
+    if (remaining != 0u) {
+        if (remaining < sizeof(world->inventory_source)) return -1;
+        memcpy(world->inventory_source, in, sizeof(world->inventory_source));
+    }
 
     return 0;
 }

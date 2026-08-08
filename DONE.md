@@ -7133,3 +7133,10 @@
   host RNG implementation.
 - ✅ The focused HuC6280 receipt test passes against the authentic US Track 02
   BIN; JP and ISO receipts remain correctly unmarked for this US-only span.
+# Theron source inventory save provenance (2026-08-08)
+
+- ✅ Appended the complete `inventory_source` provenance matrix to the world
+  snapshot after the existing state fields. Existing version-1 snapshots with
+  no trailing section remain readable; truncated provenance sections reject.
+- ✅ Verified category, source refs, poison/charges, text ref and property bytes
+  survive serialize/deserialize in the focused purchase-state regression.

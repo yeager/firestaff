@@ -14,6 +14,7 @@
  */
 
 #include "theron_v1_world.h"
+#include "theron_v1_track02_thing_data.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -71,6 +72,17 @@ static void seed_world(Theron_V1_World *world) {
     world->party.champions[0].inventory[1] = THERON_ITEM_POTION;
     world->party.champions[1].inventory[0] = THERON_ITEM_SCROLL;
     world->party.champions[1].inventory[3] = THERON_ITEM_SHIELD;
+    world->inventory_source[0][0].valid = 1;
+    world->inventory_source[0][0].category = THERON_CAT_WEAPON;
+    world->inventory_source[0][0].item_type = 9;
+    world->inventory_source[0][0].poisoned = 1;
+    world->inventory_source[0][0].charges = 7;
+    world->inventory_source[0][0].source_ref = 0x1234;
+    world->inventory_source[0][0].source_next_ref = 0x5678;
+    world->inventory_source[0][0].text_ref = 0x0042;
+    world->inventory_source[0][0].property_valid = 1;
+    world->inventory_source[0][0].property[0] = 0x20;
+    world->inventory_source[0][0].property[5] = 0x0a;
     theron_v1_party_recalculate_loads(&world->party);
 }
 
@@ -124,6 +136,18 @@ static void test_round_trip_keeps_purchase_state(void) {
                 "companion inventory slot 0 survives round-trip");
     expect_true(restored.party.champions[1].inventory[3] == THERON_ITEM_SHIELD,
                 "companion inventory slot 3 survives round-trip");
+    expect_true(restored.inventory_source[0][0].valid &&
+                restored.inventory_source[0][0].category == THERON_CAT_WEAPON &&
+                restored.inventory_source[0][0].item_type == 9 &&
+                restored.inventory_source[0][0].poisoned == 1 &&
+                restored.inventory_source[0][0].charges == 7 &&
+                restored.inventory_source[0][0].source_ref == 0x1234 &&
+                restored.inventory_source[0][0].source_next_ref == 0x5678 &&
+                restored.inventory_source[0][0].text_ref == 0x0042 &&
+                restored.inventory_source[0][0].property_valid &&
+                restored.inventory_source[0][0].property[0] == 0x20 &&
+                restored.inventory_source[0][0].property[5] == 0x0a,
+                "source item provenance survives round-trip");
     expect_true(restored.progression.quest_items_collected ==
                 original.progression.quest_items_collected,
                 "quest item bitmask survives round-trip");
