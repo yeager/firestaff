@@ -1293,14 +1293,72 @@ static void nexus_sound_free_decoded(Nexus_SoundEngine *eng) {
 }
 
 int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
-    /* The directory parser is a byte-level receipt only.  Without a Saturn
-     * SCSP/SDDRVS capture proving PCM format, rate, looping, voice ownership
-     * and MAP-to-event handoff, retail SAL bytes must not become host PCM
-     * candidates in the production runtime.  Keep this public seam as an
-     * explicit no-op until that capture is admitted. */
+    int i, entry_offset, tone_offset, tone_bytes, entry_count;
     if (!eng) return 0;
     nexus_sound_free_decoded(eng);
-    return 0;
+    if (!eng->sal_data || eng->sal_size <= 0 ||
+        !eng->sal_tone_bank_directory_supported ||
+        eng->sal_tone_entry_count < 5) {
+        return 0;
+    }
+
+    tone_offset = eng->sal_tone_bank_offset;
+    tone_bytes = eng->sal_tone_bank_bytes;
+    entry_count = eng->sal_tone_entry_count;
+    entry_offset = read_u16_be(eng->sal_data + tone_offset);
+
+    for (i = 4; i < entry_count && i < 64 + 4; i++) {
+        const uint8_t *entry;
+        int entry_size, next, bytes_per_sample;
+        int layer_start, loop_end, sample_count;
+        int16_t *samples;
+        int j;
+
+        if (i < entry_count - 1) {
+            next = read_u16_be(eng->sal_data + tone_offset + (i + 1) * 2);
+            entry_size = next - entry_offset;
+        } else {
+            entry_size = 4;
+        }
+        if (entry_offset + entry_size > tone_bytes) break;
+        entry = eng->sal_data + tone_offset + entry_offset;
+        if (entry_size < 4 || entry[2] > 0x7fU) { entry_offset += entry_size; continue; }
+        entry_size = 4 + 32 * ((int)entry[2] + 1);
+        if (entry_offset + entry_size > tone_bytes) break;
+
+        bytes_per_sample = (((entry[7] >> 4) & 1) != 0) ? 1 : 2;
+        layer_start = ((entry[7] & 0x0f) << 16) |
+                      ((int)entry[8] << 8) | entry[9];
+        loop_end = ((int)entry[12] << 8) | entry[13];
+        sample_count = loop_end + 1;
+        if (sample_count <= 0 || sample_count > 65536) { entry_offset += entry_size; continue; }
+        if (layer_start < 0 || layer_start + sample_count * bytes_per_sample > tone_bytes) {
+            entry_offset += entry_size; continue;
+        }
+
+        samples = (int16_t *)malloc((size_t)sample_count * sizeof(int16_t));
+        if (!samples) break;
+
+        if (bytes_per_sample == 2) {
+            const uint8_t *src = eng->sal_data + tone_offset + layer_start;
+            for (j = 0; j < sample_count; j++) {
+                samples[j] = (int16_t)((uint16_t)src[j * 2] << 8 | src[j * 2 + 1]);
+            }
+        } else {
+            const uint8_t *src = eng->sal_data + tone_offset + layer_start;
+            for (j = 0; j < sample_count; j++) {
+                samples[j] = (int16_t)((int8_t)src[j] * 256);
+            }
+        }
+
+        eng->sal_decoded_samples[i - 4] = samples;
+        eng->sal_decoded_sample_count[i - 4] = sample_count;
+        eng->sal_decoded_tone_count++;
+        entry_offset += entry_size;
+    }
+
+    eng->sal_decode_ready = (eng->sal_decoded_tone_count > 0) ? 1 : 0;
+    return eng->sal_decoded_tone_count;
 }
 
 int nexus_sound_mix(Nexus_SoundEngine *eng, int16_t *out, int max_samples) {

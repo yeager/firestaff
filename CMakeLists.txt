@@ -6535,16 +6535,22 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest_status_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer_runtime_noop\\.c$")
 # M11 owns the shared host lifecycle and calls these runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
 set(NEXUS_M11_RUNTIME_SOURCES
-    src/nexus/nexus_v1_rasterizer_runtime_noop.c
-    src/nexus/nexus_v1_saturn_font_runtime_noop.c
-    src/nexus/nexus_v2_hud_runtime_noop.c
-    src/nexus/nexus_v2_lighting_runtime_noop.c
-    src/nexus/nexus_v2_smooth_movement_runtime_noop.c
-    src/nexus/nexus_v2_touch_runtime_noop.c
+    src/nexus/nexus_v1_rasterizer.c
+    src/nexus/nexus_v2_hud_runtime.c
+    src/nexus/nexus_v2_hud_overlay.c
+    src/nexus/nexus_v2_lighting_runtime.c
+    src/nexus/nexus_v2_lighting.c
+    src/nexus/nexus_v2_smooth_movement_runtime.c
+    src/nexus/nexus_v2_smooth_movement.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/nexus/nexus_v2_touch_runtime.c
+    src/nexus/nexus_v2_touch_controller_affordance.c
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}

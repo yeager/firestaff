@@ -53,10 +53,10 @@ if 'target_compile_definitions(firestaff_nexus PRIVATE FIRESTAFF_NEXUS_PRODUCTIO
 saturn_font = (ROOT / "src/nexus/nexus_v1_saturn_font.c").read_text(
     encoding="utf-8"
 )
-if "#ifndef FIRESTAFF_NEXUS_PRODUCTION" not in saturn_font:
-    fail("Saturn font source lacks the production glyph-renderer guard")
-if "#endif /* !FIRESTAFF_NEXUS_PRODUCTION */" not in saturn_font:
-    fail("Saturn font source lacks the production glyph-renderer guard terminator")
+if "#ifndef FIRESTAFF_NEXUS_PRODUCTION" in saturn_font:
+    fail("Saturn font source still has the production glyph-renderer guard — should be removed")
+if "nexus_v1_font_load_from_s2d" not in saturn_font:
+    fail("Saturn font source missing nexus_v1_font_load_from_s2d")
 
 runtime_match = re.search(
     r"set\(NEXUS_M11_RUNTIME_SOURCES(?P<body>.*?)\n\)", text, re.DOTALL
@@ -64,20 +64,28 @@ runtime_match = re.search(
 if not runtime_match:
     fail("could not locate NEXUS_M11_RUNTIME_SOURCES")
 runtime_body = runtime_match.group("body")
-if "src/nexus/nexus_v2_hud_runtime_noop.c" not in runtime_body:
-    fail("production HUD runtime is not the no-op implementation")
-if "src/nexus/nexus_v1_rasterizer_runtime_noop.c" not in runtime_body:
-    fail("production rasterizer runtime is not the no-op implementation")
-if "src/nexus/nexus_v1_saturn_font_runtime_noop.c" not in runtime_body:
-    fail("production font runtime is not the no-op implementation")
-for forbidden in (
-    "src/nexus/nexus_v2_hud_runtime.c",
+if "src/nexus/nexus_v1_rasterizer.c" not in runtime_body:
+    fail("production rasterizer is not the real implementation")
+if "src/nexus/nexus_v1_rasterizer_runtime_noop.c" in runtime_body:
+    fail("production rasterizer is still the no-op — should use real rasterizer")
+if "src/nexus/nexus_v1_saturn_font_runtime_noop.c" in runtime_body:
+    fail("production font runtime is still the no-op — should use real saturn_font.c")
+for required_v2 in (
     "src/nexus/nexus_v2_hud_runtime.c",
     "src/nexus/nexus_v2_hud_overlay.c",
+    "src/nexus/nexus_v2_lighting_runtime.c",
+    "src/nexus/nexus_v2_lighting.c",
+    "src/nexus/nexus_v2_smooth_movement_runtime.c",
+    "src/nexus/nexus_v2_smooth_movement.c",
+    "src/nexus/nexus_v2_touch_runtime.c",
+    "src/nexus/nexus_v2_touch_controller_affordance.c",
+):
+    if required_v2 not in runtime_body:
+        fail(f"V2 phase-gated runtime missing from production: {required_v2}")
+for forbidden in (
     "src/nexus/nexus_v2_render_pipeline.c",
     "src/nexus/nexus_v2_particles.c",
     "src/nexus/nexus_v2_atmosphere.c",
-    "src/nexus/nexus_v1_rasterizer.c",
 ):
     if forbidden in runtime_body:
         fail(f"procedural presentation source entered runtime list: {forbidden}")
