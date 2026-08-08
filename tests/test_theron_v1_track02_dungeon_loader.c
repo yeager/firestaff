@@ -457,6 +457,8 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->primary_attack == THERON_ATTACK_NONE);
             assert(creature->secondary_attack == THERON_ATTACK_NONE);
         }
+        if (d == 0)
+            assert_real_item_roundtrip(world);
         free(world);
     }
     printf("  JP Track 02: all dungeon object records OK\n");
