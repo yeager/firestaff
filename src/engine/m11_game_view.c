@@ -9265,6 +9265,77 @@ int M11_GameView_ExecuteCSBDSARestoredTimer(
     return 1;
 }
 
+/* M11's ordinary DM1 launch path creates its query model while it reads the
+ * selected DUNGEON.DAT.  CSB correctly bypasses that path: F0435 has already
+ * made the verified CSB image live in profile->runtime.dungeon_handle before
+ * this M11 receipt is applied.  The bypass used to leave state->world and the
+ * mirror catalogue empty, which in turn made native Atari/Amiga C127 mirrors
+ * unreachable even though their C03 runtime was live.
+ *
+ * Build a second, read-only M11 query model from that *same materialized and
+ * hash-verified DUNGEON.DAT*.  It is deliberately not an alternate CSB
+ * runtime: movement, save/load, Thing mutations, timing, and graphics remain
+ * owned by profile->runtime and the platform-specific render route.  M11
+ * consumes this model solely for static dungeon queries such as the original
+ * mirror-text catalogue and front-wall hit testing.  Fresh CSB launch only:
+ * a save image may own later mutable dungeon state and must not be projected
+ * onto the base-package model as though it were current.
+ *
+ * ReDMCSB LOADSAVE.C F0435 lines 1929-1944 loads G0278/G0277 before C03 can
+ * consume them; DUNGEON.C F0173/F0174 selects the current map from that live
+ * source image. */
+static int m11_csb_bind_verified_dungeon_world_snapshot(
+    M11_GameViewState *state, const CSB_V1_BootProfile *profile,
+    int direct_save_requested)
+{
+    const CSB_V1_DungeonData *source;
+    struct ChampionMirrorCatalog_Compat catalogue;
+    struct GameWorld_Compat world;
+    uint32_t seed;
+    int world_loaded;
+
+    if (!state || !profile || direct_save_requested ||
+        state->world.dungeon || state->world.things ||
+        !profile->dungeon_verified || !profile->dungeon_path[0] ||
+        !profile->runtime.dungeon_handle ||
+        profile->runtime.dungeon_handle != csb_v1_dungeon_get_current()) {
+        return 0;
+    }
+    source = profile->runtime.dungeon_handle;
+    if (!source->raw_data || source->level_count <= 0) {
+        return 0;
+    }
+
+    /* The source header's ornament seed is the only seed admitted to this
+     * non-authoritative query model.  Its RNG is never advanced by CSB input. */
+    seed = (uint32_t)source->ornament_random_seed;
+    memset(&world, 0, sizeof(world));
+    world_loaded = F0882_WORLD_InitFromDungeonDat_Compat(
+        profile->dungeon_path, seed, &world);
+    if (!world_loaded) {
+        /* F0882 releases its local allocations on a failed parse.  Its
+         * caller-visible struct can still contain those retired addresses,
+         * so never route this branch through F0883 a second time. */
+        return 0;
+    }
+    if (!world.dungeon || !world.things || !world.ownsDungeon ||
+        world.dungeon->header.mapCount != (uint8_t)source->level_count) {
+        F0883_WORLD_Free_Compat(&world);
+        return 0;
+    }
+
+    memset(&catalogue, 0, sizeof(catalogue));
+    if (F0652_CHAMPION_BuildMirrorCatalog_Compat(world.things,
+                                                  &catalogue) <= 0) {
+        F0883_WORLD_Free_Compat(&world);
+        return 0;
+    }
+    state->world = world;
+    state->mirrorCatalog = catalogue;
+    state->mirrorCatalogAvailable = 1;
+    return 1;
+}
+
 static int m11_csb_apply_boot_runtime_receipt(
     M11_GameViewState *state,
     const M11_GameLaunchSpec *spec,
@@ -9382,6 +9453,13 @@ static int m11_csb_apply_boot_runtime_receipt(
     }
     state->csbBootProfile = receipt->profile;
     state->csbStartupAssetGateReceipt = receipt->startup_asset_gate;
+    /* Bind the query-only dungeon/mirror model before a native title or
+     * APPB route reaches C03.  A supplied save retains F0435 ownership and
+     * intentionally has no base-package projection here. */
+    if (!spec->savePath || !spec->savePath[0]) {
+        (void)m11_csb_bind_verified_dungeon_world_snapshot(
+            state, receipt->profile, 0);
+    }
     if (spec->savePath && spec->savePath[0] != '\0') {
         CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
 
