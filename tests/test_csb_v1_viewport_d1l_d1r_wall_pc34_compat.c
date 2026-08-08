@@ -16,7 +16,7 @@ static const char *real_graphics_path(void)
 {
     const char *from_env = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
     if (from_env && from_env[0]) return from_env;
-    return "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
+    return NULL;
 }
 
 static void check_metadata(void)
@@ -53,10 +53,15 @@ static void check_real_material(void)
     CSB_V1_D1LD1RWallMaterialPc34 right_material;
     uint32_t expected_left = 0u;
     uint32_t expected_right = 0u;
-    FILE *file = fopen(path, "rb");
+    FILE *file;
 
+    if (!path) {
+        puts("SKIP: FIRESTAFF_CSB_GRAPHICS_DAT is not set");
+        return;
+    }
+    file = fopen(path, "rb");
     if (!file) {
-        printf("SKIP: no local CSB PC3.4 GRAPHICS.DAT\n");
+        printf("SKIP: CSB PC3.4 GRAPHICS.DAT is unavailable at %s\n", path);
         return;
     }
     fclose(file);

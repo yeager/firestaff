@@ -516,7 +516,7 @@ static const char *graphics_dat_path(void)
     if (path && path[0]) {
         return path;
     }
-    return "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
+    return NULL;
 }
 
 static int build_route_receipts_and_proof(
@@ -537,8 +537,10 @@ static int build_route_receipts_and_proof(
     unsigned item_count = 0u;
 
     memset(proof, 0, sizeof(*proof));
-    if (!read_real_graphics_catalog_hash(path, &item_count, &catalog_hash)) {
-        printf("SKIP real CSB GRAPHICS.DAT unavailable at %s\n", path);
+    if (!path || !read_real_graphics_catalog_hash(path, &item_count,
+                                                   &catalog_hash)) {
+        printf("SKIP real CSB GRAPHICS.DAT unavailable%s%s\n",
+               path ? " at " : "", path ? path : "");
         return 0;
     }
 

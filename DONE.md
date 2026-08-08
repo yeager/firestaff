@@ -1,3 +1,13 @@
+# CSB real-data test-path admission (2026-08-08)
+
+- ✅ Removed two developer-machine-only `/Users/bosse/...` fallbacks from the
+  PC34 viewport material regressions. They now use an explicit
+  `FIRESTAFF_CSB_GRAPHICS_DAT` source file or execute their data-free checks
+  only, so a missing local corpus cannot silently select unrelated data.
+- ✅ Verified both the D1L/D1R wall and first-frame material routes against
+  the materialized, hash-verified PC34 `GRAPHICS.DAT`, and verified their
+  no-corpus paths remain safe.
+
 # CSB Amiga native dungeon real-media admission (2026-08-08)
 
 - ✅ Repaired the Amiga dungeon probe so it consumes only an explicitly
