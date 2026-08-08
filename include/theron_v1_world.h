@@ -349,6 +349,8 @@ typedef struct {
     uint8_t position;
     uint8_t number;
     uint8_t direction_flags;
+    uint16_t flags_word;
+    uint16_t unknown_word;
     uint16_t health[4];
 } Theron_V1_SourceMonsterRecord;
 
@@ -667,7 +669,9 @@ int theron_v1_world_bind_track02_monster(
     uint8_t position,
     const uint16_t health[4],
     uint8_t number,
-    uint8_t direction_flags);
+    uint8_t direction_flags,
+    uint16_t flags_word,
+    uint16_t unknown_word);
 int theron_v1_world_bind_track02_generator(
     Theron_V1_World *world,
     int dungeon_id,

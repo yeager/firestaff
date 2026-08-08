@@ -12476,3 +12476,8 @@ as line/circle coordinates or promote them into movement geometry.
   packed source `position`/cells byte. Group coordinates, current HP, source
   refs, and member slots are retained, but the original AI, attack, RNG,
   generator, and T900 consumers remain open.
+- 🔧 2026-08-08 Theron monster raw-word retention: category-4 decoding and
+  live creature admission now retain both source flag words verbatim. Their
+  behavior/count/direction/do-not-discard meanings remain unassigned until
+  the original AI/T900 consumers are captured; no host bit interpretation is
+  enabled.

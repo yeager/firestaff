@@ -928,6 +928,8 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             creature->source_slot = (uint8_t)slot;
             creature->source_group_count = (uint8_t)members;
             creature->source_direction_flags = record->direction_flags;
+            creature->source_flags_word = record->flags_word;
+            creature->source_unknown_word = record->unknown_word;
         }
     }
     return 0;
@@ -945,7 +947,9 @@ int theron_v1_world_bind_track02_monster(
     uint8_t position,
     const uint16_t health[4],
     uint8_t number,
-    uint8_t direction_flags)
+    uint8_t direction_flags,
+    uint16_t flags_word,
+    uint16_t unknown_word)
 {
     if (!world || !health || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
@@ -967,6 +971,8 @@ int theron_v1_world_bind_track02_monster(
     out->position = position;
     out->number = number;
     out->direction_flags = direction_flags;
+    out->flags_word = flags_word;
+    out->unknown_word = unknown_word;
     memcpy(out->health, health, sizeof(out->health));
     return 0;
 }

@@ -55,6 +55,10 @@ typedef struct {
     uint16_t health[4];
     uint8_t number;
     uint8_t direction_flags;
+    /* Preserve the two source words verbatim until the original AI/T900
+     * consumers assign their bit-level meanings. */
+    uint16_t flags_word;
+    uint16_t unknown_word;
 } Theron_Track02MonsterRecord;
 
 typedef struct {

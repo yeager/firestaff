@@ -67,6 +67,8 @@ int theron_v1_track02_item_record_decode(
         unknown = read_le16(raw + 14u);
         out->value.monster.number = (uint8_t)((flags >> 5) & 0x03u);
         out->value.monster.direction_flags = (uint8_t)(unknown >> 8);
+        out->value.monster.flags_word = flags;
+        out->value.monster.unknown_word = unknown;
         break;
     }
     case THERON_CAT_WEAPON: {

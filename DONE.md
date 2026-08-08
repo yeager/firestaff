@@ -7024,3 +7024,12 @@
   spawn/combat admission test.
 - The original RNG consumer, creature AI/attack/drop owners, and generator
   timing are still fail-closed; this change binds record identity only.
+# 2026-08-08 Theron monster raw-word retention
+
+- ✅ Track 02 monster decoding now preserves the two source flag words in
+  addition to the decoded count and direction fields.
+- ✅ The source ledger and every live creature retain those words for the
+  future AI, generator, combat, and T900 consumers without assigning guessed
+  bit meanings.
+- ✅ Verified all seven real US Track 02 dungeon loads and the production
+  regular-spawn admission test.

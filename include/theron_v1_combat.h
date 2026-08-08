@@ -157,6 +157,8 @@ typedef struct {
     uint8_t    source_slot;
     uint8_t    source_group_count;
     uint8_t    source_direction_flags;
+    uint16_t   source_flags_word;
+    uint16_t   source_unknown_word;
 } Theron_V1_Creature;
 
 /* ── Combat result ──────────────────────────────────────────────── */

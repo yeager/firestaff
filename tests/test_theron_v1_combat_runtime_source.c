@@ -21,8 +21,8 @@ int main(void) {
     memset(&world, 0, sizeof(world));
 
     CHECK(theron_v1_world_bind_track02_monster(
-              &world, 1, 0, 0x11ffu, 0x0041u, 1, 1, 0x0eu, 0u,
-              health, 1u, 0u) == -1 && world.source_monster_count == 0,
+                  &world, 1, 0, 0x11ffu, 0x0041u, 1, 1, 0x0eu, 0u,
+              health, 1u, 0u, 0x0020u, 0x1200u) == -1 && world.source_monster_count == 0,
           "unloaded/unverified level cannot admit source monster record");
 
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
@@ -38,7 +38,7 @@ int main(void) {
     {
         CHECK(theron_v1_world_bind_track02_monster(
                   &world, 1, 0, 0x1200u, 0x0042u, 1, 1, 0x0eu, 0u,
-                  health, 1u, 0u) == 0,
+                  health, 1u, 0u, 0x0020u, 0x1200u) == 0,
               "authentic source monster ledger entry binds");
     }
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
@@ -75,7 +75,7 @@ int main(void) {
     {
         CHECK(theron_v1_world_bind_track02_monster(
                   &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0x0eu, 0u,
-                  health, 1u, 0u) == 0,
+                  health, 1u, 0u, 0x0020u, 0x1200u) == 0,
               "second source monster ledger entry binds");
     }
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
