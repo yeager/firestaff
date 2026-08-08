@@ -43,6 +43,54 @@ theron_v1_source_monster_record_at(
     return NULL;
 }
 
+static int theron_v1_publish_source_group(
+    Theron_V1_World *world,
+    const Theron_V1_SourceMonsterRecord *record,
+    int dungeon_id,
+    int level) {
+    unsigned int members;
+    unsigned int slot;
+
+    if (!world || !record || record->number > 3u) return -1;
+    members = (unsigned int)record->number + 1u;
+    for (slot = 0; slot < members; ++slot) {
+        Theron_V1_Creature *creature;
+        if (record->health[slot] == 0u) continue;
+        if (world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL)
+            return -1;
+        creature = &world->creatures[world->creature_count++];
+        memset(creature, 0, sizeof(*creature));
+        creature->id = ((int)record->source_ref << 2) | (int)slot;
+        if (creature->id <= 0) creature->id = world->creature_count;
+        creature->type = (uint8_t)(record->type + 1u);
+        creature->level = (uint8_t)level;
+        creature->dungeon_id = dungeon_id;
+        creature->x = record->x;
+        creature->y = record->y;
+        creature->hp = (int)record->health[slot];
+        creature->max_hp = creature->hp;
+        creature->primary_attack = THERON_ATTACK_NONE;
+        creature->secondary_attack = THERON_ATTACK_NONE;
+        creature->flags = THERON_CF_ACTIVE;
+        creature->source_ref = record->source_ref;
+        creature->source_index = record->source_index;
+        creature->source_position = record->position;
+        creature->source_cell = (uint8_t)((record->position >> (slot * 2u)) & 0x03u);
+        creature->source_slot = (uint8_t)slot;
+        creature->source_group_count = (uint8_t)members;
+        creature->source_direction_flags = record->direction_flags;
+        creature->source_flags_word = record->flags_word;
+        creature->source_unknown_word = record->unknown_word;
+        {
+            const Theron_SpawnZoneDesc *zone =
+                theron_v1_track02_spawn_zone(record->type);
+            creature->source_spawn_category = zone ? zone->category : 0xffu;
+        }
+    }
+    return world->creature_count > 0 ?
+        world->creatures[world->creature_count - 1].id : -1;
+}
+
 int theron_v1_creature_spawn(Theron_V1_World *world,
                              Theron_CreatureType type,
                              int dungeon_id, int level, int x, int y) {
@@ -72,13 +120,15 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
         source_record->health[0] == 0u) {
         return -1;
     }
-    /* The source ledger is real, but the PCE bank-switched RNG call used by
-     * the category formulas is not recovered. A host tick/coordinate seed
-     * would be synthetic gameplay state, so retain the decoded occurrence
-     * and refuse live publication until the original RNG consumer is bound.
-     * Source: THQUEST.ASM spawn overlay $4644/$4667; the static category
-     * table remains available to diagnostic tests only. */
-    return -1;
+    if (theron_v1_creature_at(world, level, x, y)) return -1;
+    /* This API is also used for an explicit source occurrence.  Publish the
+     * authenticated group bytes directly; this is not the random generator
+     * path.  The latter still requires the original HuC6280 RNG return
+     * contract and remains fail-closed in theron_v1_world_tick_generators().
+     * Source: THQUEST.ASM static category-4 group records, with the regular
+     * spawn overlay at $4644/$4667 kept separate. */
+    return theron_v1_publish_source_group(world, source_record,
+                                          dungeon_id, level);
 }
 
 int theron_v1_creature_kill(Theron_V1_World *world, int creature_id) {

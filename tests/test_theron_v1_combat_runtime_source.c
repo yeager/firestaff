@@ -49,17 +49,17 @@ int main(void) {
               "authentic source monster ledger entry binds");
     }
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
-                                   1, 0, 1, 1) == -1 &&
-              world.source_monster_count == 1 && world.creature_count == 0,
-          "real source monster remains retained while unknown RNG blocks spawn");
+                                   1, 0, 1, 1) > 0 &&
+              world.source_monster_count == 1 && world.creature_count == 2,
+          "real source monster group publishes as live creatures");
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_DRATOR,
                                    1, 0, 1, 1) == -1 &&
-              world.creature_count == 0,
-          "a source monster cannot be retyped through the regular-spawn API");
-    creature = theron_v1_creature_by_id(&world, 1);
-    CHECK(creature == NULL && theron_v1_creature_at(&world, 0, 1, 1) == NULL &&
-              theron_v1_creature_count(&world, 1, 0) == 0,
-          "blocked source occurrence cannot publish a synthetic live creature");
+              world.creature_count == 2,
+          "a source monster cannot be retyped through the source API");
+    creature = theron_v1_creature_at(&world, 0, 1, 1);
+    CHECK(creature != NULL && creature->source_ref == 0x1200u &&
+              theron_v1_creature_count(&world, 1, 0) == 2,
+          "published live creatures retain their authentic source identity");
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_DEMON,
                                    1, 0, 2, 1) == -1,
           "scripted Demon remains blocked without a spawn record");
@@ -125,16 +125,16 @@ int main(void) {
               "second source monster ledger entry binds");
     }
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
-                                   1, 0, 1, 1) == -1 &&
-              world.source_monster_count == 1 && world.creature_count == 0,
-          "regular spawn remains blocked until the original RNG consumer is bound");
-    creature = theron_v1_creature_by_id(&world, 1);
+                                   1, 0, 1, 1) > 0 &&
+              world.source_monster_count == 1 && world.creature_count == 2,
+          "source group publishes without entering the random generator path");
+    creature = theron_v1_creature_at(&world, 0, 1, 1);
     CHECK(theron_v1_champion_attack(&world, 0, 1) == -1,
           "combat behavior stays blocked without the source consumer");
     CHECK(theron_v1_champion_cast_spell(&world, 0, 0, -1) == -1,
           "spell behavior stays blocked without the source consumer");
-    CHECK(creature == NULL && theron_v1_creature_kill(&world, 1) == -1,
-          "blocked source occurrence cannot be retired as a live creature");
+    CHECK(creature != NULL && theron_v1_creature_kill(&world, creature->id) == 0,
+          "source-backed live creature can be retired without synthetic loot");
     CHECK(theron_v1_drop_loot(&world, 1, 1, 1) == -1,
           "production drop publication stays blocked");
     CHECK(theron_v1_sound_is_valid(THERON_SOUND_SWORD_SWING) == 0,
