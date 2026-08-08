@@ -57,6 +57,22 @@ static int count_file_header_record(void *user, uint16_t thing, int type,
     return 0;
 }
 
+/* SKProject SKWIN/DME.h::Door, Teleporter, Text, Actuator and Creature.
+ * The receipts are deliberately read-only, but must still retain the exact
+ * payload fields of every original File_header-chain record.  Do not use
+ * fixture values here: this diagnostic is meaningful only against the
+ * mounted retail DUNGEON.DAT. */
+static int receipt_record(const DM2_V1_DungeonData *d, uint16_t object_id,
+                          int expected_type, const uint8_t **out_record)
+{
+    int type = -1;
+    int index = -1;
+    const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+        d, object_id, &type, &index, NULL);
+    if (out_record) *out_record = record;
+    return record && type == expected_type && index == (object_id & 0x03ffu);
+}
+
 int main(void) {
     const char *paths[] = {
         NULL,
@@ -181,6 +197,32 @@ int main(void) {
             ++failures;
         } else {
             door_record_total += chain_doors.door_record_reads;
+            for (int door_index = 0;
+                 door_index < chain_doors.door_root_count; ++door_index) {
+                const DM2_V1_G1DirectDoorRoot *door =
+                    &chain_doors.doors[door_index];
+                const uint8_t *record = NULL;
+                uint16_t w2;
+                if (!receipt_record(&d, door->object_id, 0, &record)) {
+                    printf("FAIL: File_header map-%d DB0 source was lost\n", map);
+                    ++failures;
+                    break;
+                }
+                w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                if (door->index != (door->object_id & 0x03ffu) ||
+                    door->direction != (uint8_t)(door->object_id >> 14) ||
+                    door->button != (uint8_t)((w2 >> 6) & 1u) ||
+                    door->door_type != (uint8_t)(w2 & 1u) ||
+                    door->button_state != (uint8_t)((w2 >> 11) & 1u) ||
+                    door->opening_dir != (uint8_t)((w2 >> 5) & 1u) ||
+                    door->ornate_index != (uint8_t)((w2 >> 1) & 0x0fu) ||
+                    door->destroyable_by_fireball != (uint8_t)((w2 >> 7) & 1u) ||
+                    door->bashable_by_chopping != (uint8_t)((w2 >> 8) & 1u)) {
+                    printf("FAIL: File_header map-%d DB0 fields disagree with source\n", map);
+                    ++failures;
+                    break;
+                }
+            }
         }
         memset(&chain_teleporters, 0, sizeof(chain_teleporters));
         if (!dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
@@ -192,6 +234,35 @@ int main(void) {
             ++failures;
         } else {
             teleporter_record_total += chain_teleporters.teleporter_record_reads;
+            for (int teleporter_index = 0;
+                 teleporter_index < chain_teleporters.teleporter_root_count;
+                 ++teleporter_index) {
+                const DM2_V1_G1DirectTeleporterRoot *teleporter =
+                    &chain_teleporters.teleporters[teleporter_index];
+                const uint8_t *record = NULL;
+                uint16_t w2;
+                uint16_t w4;
+                if (!receipt_record(&d, teleporter->object_id, 1, &record)) {
+                    printf("FAIL: File_header map-%d DB1 source was lost\n", map);
+                    ++failures;
+                    break;
+                }
+                w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+                if (teleporter->index != (teleporter->object_id & 0x03ffu) ||
+                    teleporter->direction != (uint8_t)(teleporter->object_id >> 14) ||
+                    teleporter->destination_x != (uint8_t)(w2 & 0x001fu) ||
+                    teleporter->destination_y != (uint8_t)((w2 >> 5) & 0x001fu) ||
+                    teleporter->destination_map != (uint8_t)(w4 >> 8) ||
+                    teleporter->scope != (uint8_t)((w2 >> 13) & 3u) ||
+                    teleporter->sound != (uint8_t)((w2 >> 15) & 1u) ||
+                    teleporter->rotation != (uint8_t)((w2 >> 10) & 3u) ||
+                    teleporter->rotation_type != (uint8_t)((w2 >> 12) & 1u)) {
+                    printf("FAIL: File_header map-%d DB1 fields disagree with source\n", map);
+                    ++failures;
+                    break;
+                }
+            }
         }
         memset(&chain_actuators, 0, sizeof(chain_actuators));
         if (!dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
@@ -203,6 +274,43 @@ int main(void) {
             ++failures;
         } else {
             actuator_record_total += chain_actuators.actuator_record_reads;
+            for (int actuator_index = 0;
+                 actuator_index < chain_actuators.actuator_root_count;
+                 ++actuator_index) {
+                const DM2_V1_G1DirectActuatorRoot *actuator =
+                    &chain_actuators.actuators[actuator_index];
+                const uint8_t *record = NULL;
+                uint16_t w2;
+                uint16_t w4;
+                uint16_t w6;
+                if (!receipt_record(&d, actuator->object_id, 3, &record)) {
+                    printf("FAIL: File_header map-%d DB3 source was lost\n", map);
+                    ++failures;
+                    break;
+                }
+                w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+                w6 = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
+                if (actuator->index != (actuator->object_id & 0x03ffu) ||
+                    actuator->direction != (uint8_t)(actuator->object_id >> 14) ||
+                    actuator->actuator_type != (uint8_t)(w2 & 0x007fu) ||
+                    actuator->actuator_data != (uint16_t)((w2 >> 7) & 0x01ffu) ||
+                    actuator->graphic_number != (uint8_t)((w4 >> 12) & 0x0fu) ||
+                    actuator->disabled != (uint8_t)((w4 >> 11) & 1u) ||
+                    actuator->delay != (uint8_t)((w4 >> 7) & 0x0fu) ||
+                    actuator->sound_effect != (uint8_t)((w4 >> 6) & 1u) ||
+                    actuator->revert_effect != (uint8_t)((w4 >> 5) & 1u) ||
+                    actuator->action_type != (uint8_t)((w4 >> 3) & 3u) ||
+                    actuator->once_only != (uint8_t)((w4 >> 2) & 1u) ||
+                    actuator->active_status != (uint8_t)(w4 & 1u) ||
+                    actuator->target_direction != (uint8_t)((w6 >> 4) & 3u) ||
+                    actuator->target_x != (uint8_t)((w6 >> 6) & 0x001fu) ||
+                    actuator->target_y != (uint8_t)((w6 >> 11) & 0x001fu)) {
+                    printf("FAIL: File_header map-%d DB3 fields disagree with source\n", map);
+                    ++failures;
+                    break;
+                }
+            }
         }
         if (!dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
                 &d, map, &texts) || !texts.committed ||
@@ -212,6 +320,29 @@ int main(void) {
             ++failures;
         } else {
             text_record_total += texts.text_record_count;
+            for (int text_index = 0; text_index < texts.text_record_count;
+                 ++text_index) {
+                const DM2_V1_FileHeaderTextRecord *text = &texts.texts[text_index];
+                const uint8_t *record = NULL;
+                uint16_t w2;
+                if (!receipt_record(&d, text->object_id, 2, &record)) {
+                    printf("FAIL: File_header map-%d DB2 source was lost\n", map);
+                    ++failures;
+                    break;
+                }
+                w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                if (text->index != (text->object_id & 0x03ffu) ||
+                    text->direction != (uint8_t)(text->object_id >> 14) ||
+                    text->visible != (uint8_t)(w2 & 1u) ||
+                    text->mode != (uint8_t)((w2 >> 1) & 3u) ||
+                    text->text_index != (uint16_t)((w2 >> 3) & 0x1fffu) ||
+                    text->simple_extension_usage !=
+                        (uint8_t)(((w2 >> 3) >> 8) & 0x1fu)) {
+                    printf("FAIL: File_header map-%d DB2 fields disagree with source\n", map);
+                    ++failures;
+                    break;
+                }
+            }
         }
         memset(&creatures, 0, sizeof(creatures));
         if (!dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
@@ -226,7 +357,30 @@ int main(void) {
                  creature_index < creatures.creature_record_count;
                  ++creature_index) {
                 DM2_V1_FileHeaderCreaturePossessionReceipt possessions;
+                const DM2_V1_FileHeaderCreatureRecord *creature =
+                    &creatures.creatures[creature_index];
+                const uint8_t *record = NULL;
                 memset(&possessions, 0, sizeof(possessions));
+                if (!receipt_record(&d, creature->object_id, 4, &record) ||
+                    creature->index != (creature->object_id & 0x03ffu) ||
+                    creature->direction != (uint8_t)(record[15] & 3u) ||
+                    creature->possession_object_id !=
+                        ((uint16_t)record[2] | ((uint16_t)record[3] << 8)) ||
+                    creature->creature_type != record[4] ||
+                    creature->info_slot != record[5] ||
+                    creature->hit_points_1 !=
+                        ((uint16_t)record[6] | ((uint16_t)record[7] << 8)) ||
+                    creature->hit_points_2 !=
+                        ((uint16_t)record[8] | ((uint16_t)record[9] << 8)) ||
+                    creature->hit_points_3 !=
+                        ((uint16_t)record[10] | ((uint16_t)record[11] << 8)) ||
+                    creature->hit_points_4 !=
+                        ((uint16_t)record[12] | ((uint16_t)record[13] << 8))) {
+                    printf("FAIL: File_header map-%d DB4 fields disagree with source\n",
+                           map);
+                    ++failures;
+                    break;
+                }
                 if (!dm2_v1_dungeon_collect_file_header_creature_possession_chain(
                         &d, &creatures, creature_index, &possessions) ||
                     !possessions.committed ||

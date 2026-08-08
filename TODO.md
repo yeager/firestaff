@@ -129,7 +129,10 @@
   Bootprofilen kan nu lämna samma tre scenreceipts från den redan monterade,
   hashverifierade dungeonen utan att någon konsument läser rådata på nytt.
   En komplett typcensus från samma vandring finns nu som kontrollgrund för
-  triggers, trappor, objekt och framtida local-level-konsumenter.
+  triggers, trappor, objekt och framtida local-level-konsumenter. Den
+  realdatabundna 44-kartorskontrollen jämför dessutom nu DB0-, DB1-, DB2-,
+  DB3- och DB4-receipts fält för fält mot de faktiska recordposterna. Den
+  bevisar läsningen, inte en spelbar session.
 
 - **DM2-CREATURE-POSSESSION-RUNTIME:** DB4-ägd possessionslänk och varje
   verklig underkedja är nu verifierade utan mutation. Återställ därefter

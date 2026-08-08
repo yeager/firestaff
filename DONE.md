@@ -1,3 +1,13 @@
+# DM2 File_header-receipt mot originalposter (2026-08-08)
+
+- ✅ `test_dm2_v1_g1_record_graph_diagnostic` jämför nu alla lästa DB0-dörrar,
+  DB1-teleportörer, DB2-texter, DB3-aktuatorer och DB4-varelser fält för fält
+  mot de verkliga PC-DOS-posterna i File_header-kedjorna. Index, riktning och
+  samtliga exponerade bitfält måste stämma med originalbytes.
+- ✅ Verifierat mot 44 kartor och 2 360 record i monterad `DUNGEON.DAT`, plus
+  produktionsgrinden som håller fixture- och placeholdermoduler utanför M10.
+  Testet är helt läsande och skapar inga spelposter, sparfiler eller party.
+
 # Theron T900 proof boundary (2026-08-08)
 
 - ✅ Real US/JP object records and the 66-row item-property tables are now
