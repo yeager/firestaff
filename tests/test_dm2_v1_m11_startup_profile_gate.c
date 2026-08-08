@@ -1236,6 +1236,7 @@ int main(void) {
     uint32_t title_raw_byte_count = 0u;
     uint32_t menu_raw_hash = 0u;
     uint32_t menu_raw_byte_count = 0u;
+    uint32_t champion_selection_identity_zero = 0u;
 
     expect_dm2_startup_layout_contract();
     expect_true(!dm2_v1_boot_gdat_raw_asset_proof(NULL,
@@ -1426,6 +1427,7 @@ int main(void) {
                       champion_candidate.source_item_records[0].type > 3u)) &&
                     champion_candidate.identity_hash != 0u,
                 "M11 joins each source mirror to its authentic champion template and File_header-owned source tile chain");
+    champion_selection_identity_zero = champion_candidate.identity_hash;
     memset(&champion_admission, 0, sizeof(champion_admission));
     expect_true(profile && champion_mirrors.mirror_count > 0 &&
                     dm2_v1_boot_new_game_champion_admission_receipt(
@@ -1557,6 +1559,9 @@ int main(void) {
                         &champion_candidate) &&
                     champion_candidate.valid &&
                     champion_candidate.selection_direction == 1 &&
+                    champion_candidate.identity_hash != 0u &&
+                    champion_candidate.identity_hash !=
+                        champion_selection_identity_zero &&
                     champion_candidate.mirror.object_id ==
                         champion_mirrors.mirrors[0].object_id,
                 "M11 keeps the source mirror identity separate from the selected formation quadrant");

@@ -419,6 +419,8 @@
   i stället för att värdens riktning avgör vilken champion som väljs.
 - ✅ Verifierat mot hashverifierad PC-DOS-data i M11:s startup/profile-test.
   Detta är fortfarande en läsande GAME_LOAD-grind, inte en publicerad party.
+  Testet kräver även att två formationsrutor för samma spegel ger olika
+  source-identity-hashar.
 
 # DM2 championvalets recordägarskap (2026-08-08)
 
