@@ -1,3 +1,12 @@
+# DM2 champion lifecycle production isolation (2026-08-08)
+
+- ✅ Removed the callback-only champion lifecycle compatibility module from
+  `firestaff_dm2`. It had no M11/GAME_LOAD caller with the original
+  File_header, `c_hero`, possession and timer owners, so it could not be a
+  valid live champion implementation.
+- ✅ Its focused source-contract test still compiles the module directly and
+  passes. The production archive no longer contains its object.
+
 # DM2 FM Towns source Enter-menu route (2026-08-08)
 
 - ✅ Added only the original title-menu Enter binding: `v1d39bc.dat` maps

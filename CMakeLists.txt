@@ -6390,6 +6390,11 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # callback studies, but no live runtime caller supplies the source DB14,
 # c_tim and dungeon transaction. Keep all three explicit-test-only until that
 # handoff exists; linking them would expose projectile mutation entry points.
+# The champion lifecycle module similarly requires caller-injected map,
+# revive, possession and HUD callbacks. M11/GAME_LOAD has no complete
+# File_header/c_hero/record-pool owner for that transaction, so keep this
+# source-contract exercise out of the production archive until those original
+# owners are bound together.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -6412,6 +6417,7 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_source_name_helpers.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ui_event_name_helper.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_hud_helpers.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_food_water_bridge.c"
     # This legacy facade only returns a procedural-sky no-draw sentinel. The
     # source-owned ENVIRONMENT/DistantEnvironment route lives in the mounted
@@ -21507,6 +21513,7 @@ endif()
     # ── DM2: champion lifecycle ──
     add_executable(test_dm2_v1_champion_lifecycle_pc34_compat
         tests/test_dm2_v1_champion_lifecycle_pc34_compat.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_champion_lifecycle_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
