@@ -22034,6 +22034,10 @@ endif()
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_champion_stat_bridge.c
+        # The stat bridge calls the three-stat GDAT bar-colour helper.  Keep
+        # its implementation in this standalone probe as well as its header;
+        # otherwise all CMake matrix linkers fail with an undefined symbol.
+        src/dm2/dm2_v1_champion_hud_helpers.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c

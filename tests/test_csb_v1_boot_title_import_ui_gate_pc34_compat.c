@@ -80,6 +80,25 @@ static int failed;
     else      { failed++; printf("  FAIL: %s\n", msg); } \
 } while (0)
 
+/* Populate the source metadata consumed by the terminal startup contract.
+ * ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806/F0807 hand the same decoded
+ * C001--C004/C017/C040 package to the runtime; a pointer-only fixture must
+ * not masquerade as that verified package. */
+static void set_verified_startup_surface(
+    CSB_V1_StartupRuntimeSurface_PC34 *surface,
+    int asset_id, int source_x, int source_y,
+    int width, int height, int transparent_color)
+{
+    surface->source_asset_id = asset_id;
+    surface->source_x = source_x;
+    surface->source_y = source_y;
+    surface->width = width;
+    surface->height = height;
+    surface->transparent_color = transparent_color;
+    surface->source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+}
+
 /* The decoder accepts the 464-byte portrait payload in the CMP
  * record. Keep the fixture size local to the test so it does not
  * depend on implementation-private constants. */
@@ -944,8 +963,10 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     session.rejects_legacy_wrappers = 1;
     session.generation = 31u;
     session.surfaces.valid = 1;
+    session.surfaces.real_asset_matched = 1;
     session.surfaces.title_regions_ready = 1;
     session.surfaces.opening_frame_ready = 1;
+    session.surfaces.entrance_screen_ready = 1;
     session.surfaces.hud_surfaces_ready = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels = title_pixels;
@@ -967,6 +988,37 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].pixels = inventory_pixels;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
     session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].pixels = resurrect_pixels;
+
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34],
+        1, 0, 0, 320, 153, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34],
+        1, 0, 137, 320, 16, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34],
+        1, 0, 0, 320, 80, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34],
+        1, 0, 80, 320, 57, 0);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34],
+        2, 0, 0, 128, 161, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34],
+        3, 0, 0, 128, 161, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34],
+        4, 0, 0, 320, 200, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34],
+        5, 0, 0, 320, 200, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34],
+        17, 0, 0, 224, 136, -1);
+    set_verified_startup_surface(
+        &session.surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34],
+        40, 0, 0, 144, 73, 6);
 
     CHECK(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) == 1 &&
               audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34 &&

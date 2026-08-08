@@ -299,7 +299,6 @@ int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
 {
     uint16_t *obf;
     uint16_t key_index;
-    int ki;
 
     if (!hdr || !raw_512) return -1;
 
@@ -310,7 +309,6 @@ int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
     }
 
     key_index = (uint16_t)csb_v1_save_header_get_key_index(hdr->Magic);
-    ki = (int)(key_index & 0x1F);
 
     /* Verify checksum over first 256 bytes (plain text) */
     /* The obfuscated block is stored as hdr->ObfuscatedBlock[0-127].

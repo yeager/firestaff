@@ -1,3 +1,20 @@
+# CSB audit and CI link repair (2026-08-08)
+
+- ✅ Restored the full CMake matrix link contract for
+  `probe_dm2_v1_world_state`: the probe now includes the direct HUD-helper
+  implementation required by its champion-stat bridge, resolving the
+  undefined `dm2_v1_QUERY_3STAT_BAR_COLOR` symbol on macOS, Linux and Windows.
+- ✅ Corrected the CSB damaged-save text to the Atari ST 2.1 disassembly's
+  `"SAVED GAME DAMAGED!"` string and removed a dead save-header local.
+- ✅ Repaired the CSB title → Entrance → HUD regression test so its decoded
+  session carries the source-owned C001–C005/C017/C040 identity, geometry and
+  transparency required by the terminal contract. This prevents a
+  pointer-only fixture from weakening the real-material handoff gate.
+- ✅ Verification: real CSB corpus scan found the eight supported editions;
+  focused save, title/entrance, viewport-door, DSA-save and Phase A probes
+  passed. Source anchors: ReDMCSB `SAVEHEAD.C` F0429/F0430, `TITLE.C` F0437,
+  `ENTRANCE.C` F0806/F0807, and Atari ST 2.1 `csb.s` string table `$43a(a4)`.
+
 # Scanner provenance after cache materialization (2026-08-07)
 
 # DM2 PC-DOS File_header real-data regression repair (2026-08-08)

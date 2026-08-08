@@ -235,6 +235,10 @@ int main(void)
 {
     printf("=== CSB V1 Save Runtime Boundary Regression ===\n\n");
 
+    /* Atari ST 2.1 csb.s string table $43a(a4) uses this exact damaged-save
+     * message; keep the desktop save boundary aligned with original media. */
+    CHECK(strcmp(CSB_V1_SAVE_MSG_DAMAGED, "SAVED GAME DAMAGED!") == 0,
+          "damaged-save message matches Atari ST source text");
     test_header_only_compatibility_and_bounded_prefix_load();
     test_truncated_load_and_backup_restore_are_transactional();
     test_damaged_native_backup_does_not_replace_active_save();
