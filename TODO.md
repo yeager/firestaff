@@ -4256,8 +4256,9 @@ level or consumer bindings.
   `DM2_REVIVE_PLAYER`: three vital bases, seven ability bases and sixteen
   skill levels. It retains the raw-byte identity and does not decode names,
   invent food/water rolls or write a hero record. The remaining owner must
-  join the original text decoder, RNG, party position, possessions and timer
-  initialization before New Game can leave the entrance flow.
+  join the original RNG, party position, possessions and timer initialization
+  before New Game can leave the entrance flow. The original champion-name
+  query and first-space split are now bound through `QUERY_GDAT_TEXT`.
   The narrow c_hero helper now retains the original five-row skill layout,
   but it is still disconnected from the live party and cannot authorize a
   synthetic selection or entry sequence.

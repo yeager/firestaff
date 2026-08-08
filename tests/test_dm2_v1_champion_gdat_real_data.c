@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static unsigned char *read_file(const char *path, size_t *out_size)
 {
@@ -90,7 +91,8 @@ int main(int argc, char **argv)
                 return 1;
             }
             if (revive.hit_points_base == 0u ||
-                revive.stamina_base == 0u || revive.raw8_hash == 0u) {
+                revive.stamina_base == 0u || revive.raw8_hash == 0u ||
+                revive.name_hash == 0u || revive.name1[0] == '\0') {
                 dm2_v1_asset_loader_free(&loader);
                 free(graphics);
                 fputs("FAIL: original champion revive values are incomplete\n",
@@ -118,18 +120,34 @@ int main(int argc, char **argv)
         return 1;
     }
     dm2_v1_asset_free_pixels(pixels);
-    dm2_v1_asset_loader_free(&loader);
-    free(graphics);
     if (direct_count != 0) {
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
         fputs("FAIL: CHAMPIONS/255 unexpectedly bypassed the source fallback\n",
               stderr);
         return 1;
     }
     if (raw8_count != 16) {
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
         fputs("FAIL: complete original champion RAW8 roster is unavailable\n",
               stderr);
         return 1;
     }
+    {
+        DM2_V1_ChampionReviveDataReceipt anders;
+        if (!dm2_v1_asset_champion_revive_data(&loader, 2u, &anders) ||
+            strcmp(anders.name1, "ANDERS") != 0 ||
+            strcmp(anders.name2, "LIGHT WIELDER") != 0) {
+            dm2_v1_asset_loader_free(&loader);
+            free(graphics);
+            fputs("FAIL: CHAMPIONS/2 original name split is unavailable\n",
+                  stderr);
+            return 1;
+        }
+    }
+    dm2_v1_asset_loader_free(&loader);
+    free(graphics);
     printf("PASS: CHAMPIONS/255 uses real fallback %u/%u/IMG/%u (%dx%d)\n",
            (unsigned int)DM2_GDAT_CATEGORY_MISCELLANEOUS, 0xfeu, 0xfeu,
            width, height);

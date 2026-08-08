@@ -864,9 +864,10 @@ const uint8_t *dm2_v1_asset_load_text_sized(
 
 /* Source inputs used by c_hero.cpp::DM2_REVIVE_PLAYER. The retail PC-DOS
  * CHAMPIONS/HeroType/dtRaw8/0 record is exactly 26 little-endian words:
- * HP, stamina, mana, seven abilities and sixteen sub-skill levels. Names
- * stay in their original GDAT text encoding and are deliberately not decoded
- * here. This receipt does not create a c_hero or a party. */
+ * HP, stamina, mana, seven abilities and sixteen sub-skill levels. Its name
+ * is decoded through the same QUERY_GDAT_TEXT cipher gate and is split at
+ * the first space exactly as c_hero does. This receipt does not create a
+ * c_hero or a party. */
 typedef struct {
     int valid;
     uint8_t hero_type;
@@ -875,7 +876,10 @@ typedef struct {
     uint16_t mana_base;
     uint8_t ability_base[7];
     uint8_t skill_level[16];
+    char name1[8];
+    char name2[20];
     uint32_t raw8_hash;
+    uint32_t name_hash;
     uint32_t raw8_byte_count;
 } DM2_V1_ChampionReviveDataReceipt;
 

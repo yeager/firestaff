@@ -8,6 +8,14 @@
 - ✅ README labels the artifact accurately: it is not evidence for the still
   unresolved dungeon-square, perspective or HUD consumers.
 
+# DM2 champion-name GDAT intake (2026-08-08)
+
+- ✅ Championernas namn läses nu genom den befintliga, källägda
+  `QUERY_GDAT_TEXT`-avkodningen för `CHAMPIONS/type/dtText/0x18` och delas
+  enligt `c_hero.cpp::DM2_REVIVE_PLAYER` i för- och efterled.
+- ✅ Verifierat med den verkliga PC-DOS-posten `ANDERS LIGHT WIELDER`.
+  Intaget skapar fortfarande inte en hero- eller party-post.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

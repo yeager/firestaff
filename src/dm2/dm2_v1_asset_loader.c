@@ -1073,6 +1073,7 @@ int dm2_v1_asset_champion_revive_data(
     const uint8_t *raw;
     size_t raw_size = 0u;
     DM2_V1_ChampionReviveDataReceipt candidate;
+    DM2_V1_GdatNameReceipt name;
     int i;
 
     if (!out_receipt) return 0;
@@ -1086,9 +1087,30 @@ int dm2_v1_asset_champion_revive_data(
         loader, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type,
         DM2_GDAT_ENTRY_TYPE_RAW8, 0, &raw_size);
     if (!raw || raw_size != 52u) return 0;
+    /* c_hero.cpp:988-1010 receives the plain dtText/0x18 result from
+     * QUERY_GDAT_TEXT, then splits its first word into name1 and the rest
+     * into name2. query_cmdstr_name_receipt is the bounded shared owner of
+     * that cipher gate; CHAMPIONS names have no command-string colon. */
+    if (!dm2_v1_query_cmdstr_name_receipt(
+            loader, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type, 0x18, &name) ||
+        !name.accepted || name.byte_count == 0u) {
+        return 0;
+    }
 
     memset(&candidate, 0, sizeof(candidate));
     candidate.hero_type = hero_type;
+    for (i = 0; i < (int)name.byte_count && i < 7 && name.text[i] != ' ';
+         ++i) {
+        candidate.name1[i] = name.text[i];
+    }
+    if (i < (int)name.byte_count && name.text[i] == ' ') {
+        size_t name2_offset = (size_t)i + 1u;
+        size_t name2_length = (size_t)name.byte_count - name2_offset;
+        if (name2_length > sizeof(candidate.name2) - 1u) {
+            name2_length = sizeof(candidate.name2) - 1u;
+        }
+        memcpy(candidate.name2, name.text + name2_offset, name2_length);
+    }
     candidate.hit_points_base = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
     candidate.stamina_base = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
     candidate.mana_base = (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
@@ -1107,8 +1129,10 @@ int dm2_v1_asset_champion_revive_data(
     }
     candidate.raw8_byte_count = (uint32_t)raw_size;
     candidate.raw8_hash = dm2_fnv1a_bytes(raw, raw_size);
+    candidate.name_hash = name.text_hash;
     if (candidate.hit_points_base == 0u || candidate.stamina_base == 0u ||
-        candidate.raw8_hash == 0u) {
+        candidate.raw8_hash == 0u || candidate.name_hash == 0u ||
+        candidate.name1[0] == '\0') {
         return 0;
     }
     candidate.valid = 1;
