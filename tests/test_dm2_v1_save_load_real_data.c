@@ -1024,6 +1024,36 @@ static void test_real_raw_save(const char *path, const char *root,
                   game_load_owner.record_pools.valid &&
                   game_load_owner.receipt.valid)),
               "SKSave private GAME_LOAD owner transfers only a complete source transaction");
+        CHECK(!owner_ok ||
+              (game_load_owner.recycler_context.valid &&
+               game_load_owner.recycler_context.recycle_blocked &&
+               game_load_owner.recycler_context.map_count == receipt.map_count &&
+               game_load_owner.recycler_context.current_map ==
+                   state_receipt.party_map &&
+               game_load_owner.map_owner.current_map ==
+                   (int)state_receipt.party_map &&
+               game_load_owner.recycler_context.party_x ==
+                   state_receipt.party_x &&
+               game_load_owner.recycler_context.party_y ==
+                   state_receipt.party_y &&
+               game_load_owner.recycler_context.party_direction ==
+                   state_receipt.party_direction &&
+               game_load_owner.recycler_context.column_index_count ==
+                   receipt.column_index_count &&
+               game_load_owner.recycler_context.ground_stack_count ==
+                   game_load_owner.map_owner.ground_stack_count &&
+               game_load_owner.recycler_context.map_data_byte_count ==
+                   receipt.map_data_byte_count &&
+               game_load_owner.recycler_context.column_index_hash ==
+                   receipt.column_index_hash &&
+               game_load_owner.recycler_context.ground_stack_hash ==
+                   receipt.ground_stack_hash &&
+               game_load_owner.recycler_context.map_data_hash ==
+                   receipt.map_data_hash &&
+               memcmp(game_load_owner.recycler_context.map_cursors,
+                      (uint8_t[18]){0},
+                      sizeof(game_load_owner.recycler_context.map_cursors)) == 0),
+              "SKSave private recycler context retains source map state while recycling remains blocked");
         dm2_v1_sksave_game_load_owner_free(&game_load_owner);
         dm2_v1_asset_loader_free(&preflight_loader);
         free(preflight_graphics);

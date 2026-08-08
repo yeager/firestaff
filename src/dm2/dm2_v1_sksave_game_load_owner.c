@@ -41,6 +41,52 @@ static void dm2_v1_sksave_owner_add_poison(void *ctx, int hero_index,
             owner->heroes[hero_index].poison + amount);
 }
 
+static int dm2_v1_sksave_owner_init_recycler_context(
+    DM2_V1_SksaveGameLoadOwner *owner)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    const DM2_V1_SksaveMapOwner *map_owner;
+
+    if (!owner || !owner->state.valid || !owner->map_owner.valid ||
+        !owner->map_owner.dungeon) return 0;
+    dungeon = &owner->state.dungeon;
+    map_owner = &owner->map_owner;
+    /* DM2_GAME_LOAD assigns ddat.v1e0266 from s_savegamebuffer.w_10 before
+     * it calls DM2_READ_SKSAVE_DUNGEON.  Its c_map owner must therefore be
+     * back at this saved map after the all-map stream walk, not whichever
+     * temporary map was touched last. */
+    if (!dungeon->valid || dungeon != map_owner->dungeon ||
+        owner->state.party_map >= dungeon->map_count ||
+        owner->state.party_x >= dungeon->map_widths[owner->state.party_map] ||
+        owner->state.party_y >= dungeon->map_heights[owner->state.party_map] ||
+        map_owner->current_map != (int)owner->state.party_map ||
+        map_owner->column_index_count != dungeon->column_index_count ||
+        map_owner->ground_stack_count < dungeon->ground_stack_count ||
+        map_owner->map_tiles_size != dungeon->map_data_byte_count) {
+        return 0;
+    }
+    memset(&owner->recycler_context, 0, sizeof(owner->recycler_context));
+    owner->recycler_context.valid = 1;
+    owner->recycler_context.map_count = dungeon->map_count;
+    owner->recycler_context.current_map = owner->state.party_map;
+    owner->recycler_context.party_x = owner->state.party_x;
+    owner->recycler_context.party_y = owner->state.party_y;
+    owner->recycler_context.party_direction = owner->state.party_direction;
+    owner->recycler_context.column_index_count = dungeon->column_index_count;
+    owner->recycler_context.ground_stack_count =
+        (uint16_t)map_owner->ground_stack_count;
+    owner->recycler_context.map_data_byte_count = dungeon->map_data_byte_count;
+    owner->recycler_context.column_index_hash = dungeon->column_index_hash;
+    owner->recycler_context.ground_stack_hash = dungeon->ground_stack_hash;
+    owner->recycler_context.map_data_hash = dungeon->map_data_hash;
+    /* dm2data.cpp resets all 18 source cursors.  Do not derive cursors from
+     * record counts or from a host free list. */
+    memset(owner->recycler_context.map_cursors, 0,
+           sizeof(owner->recycler_context.map_cursors));
+    owner->recycler_context.recycle_blocked = 1;
+    return 1;
+}
+
 int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
     DM2_V1_SksaveGameLoadOwner *owner)
 {
@@ -156,7 +202,8 @@ int dm2_v1_sksave_game_load_owner_init(
             query_creature_ai_flags, query_creature_ai_flags_ctx,
             &candidate.receipt) ||
         !dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
-            &candidate)) {
+            &candidate) ||
+        !dm2_v1_sksave_owner_init_recycler_context(&candidate)) {
         dm2_v1_sksave_game_load_owner_free(&candidate);
         return 0;
     }

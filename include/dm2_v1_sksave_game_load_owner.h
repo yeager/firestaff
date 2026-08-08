@@ -40,6 +40,37 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     DM2_V1_GlobalEffectReceipt global_effect_receipt;
     int global_effects_complete;
     int weight_recompute_blocked;
+    /* The narrow, private context that immediately precedes
+     * c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  It owns no
+     * recycler operation: the source routine can delete creatures, missiles
+     * and linked world objects, so callers must still reject allocation when
+     * a DB is exhausted.  `map_cursors` is ddat.v1e0426[0..17], which the
+     * original runtime initializes to zero, not a value serialized in the
+     * SKSave body.  The remaining values are authenticated from the exact
+     * GAME_LOAD c_map and savegame-buffer spans retained by this owner.
+     *
+     * Source: SKProject SKWINSPX/src/v5/dm2data.cpp:1371,
+     *         sksvgame.cpp:1485-1493,
+     *         c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.
+     */
+    struct {
+        int valid;
+        uint8_t map_cursors[18];
+        uint8_t map_count;
+        uint16_t current_map;
+        uint16_t party_x;
+        uint16_t party_y;
+        uint16_t party_direction;
+        uint16_t column_index_count;
+        uint16_t ground_stack_count;
+        uint16_t map_data_byte_count;
+        uint32_t column_index_hash;
+        uint32_t ground_stack_hash;
+        uint32_t map_data_hash;
+        /* Always true until the source deletion/move callbacks and their
+         * CAII, c_map and timer owners are retained in the same transaction. */
+        int recycle_blocked;
+    } recycler_context;
     DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_RecordPoolSet record_pools;
     DM2_V1_SksaveSpecialTimerReceipt receipt;

@@ -1123,6 +1123,14 @@
 - ✅ Ett otaget recycler-steg är nu uttryckligen `-1`, aldrig den giltiga
   DB0-koden. Korpusen skiljer därmed pooluttömning från tidigare
   specialtimerfel och andra kartfel utan att föreslå en påhittad recycler.
+- ✅ Den privata GAME_LOAD-ägaren behåller nu recyclerförstadiets riktiga
+  c_map-kontext: partiets sparade karta och pose, varje autentiserat
+  kolumn-/ground-stack-/tile-span samt de 18 nollställda
+  `ddat.v1e0426`-markörerna från originalets globalinitiering. Den riktiga
+  åttafils PC-DOS-korpusen verifierar både spansummorna och att kartägaren
+  återgår till sparad karta efter läsningen. Ingen recycleroperation är
+  aktiverad; den privata ägaren rapporterar fortsatt att återvinning är
+  blockerad tills världsdeletion och förflyttning har en komplett ägare.
 
 # DM2 SKSAVE:s c_map-infogning vid dynamiska poster (2026-08-08)
 

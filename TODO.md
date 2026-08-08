@@ -61,6 +61,10 @@
   Realdatakorpusen visar nu explicit när DB0 når originalets recycler-gräns;
   portera bara recyclern tillsammans med dess fullständiga c_map-, record-
   och partyägare, aldrig genom en syntetisk reservpost.
+  Den privata importägaren behåller nu den autentiserade sparade kartan,
+  kartspannen och originalets nollställda 18 recycler-markörer, men själva
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortfarande spärrad: den kräver
+  källtrogna delete/move-callbacks för creature-, missile- och objectkedjor.
   Övriga avbrutna faser rapporterar uttryckligen att recycler saknas (`-1`)
   och får inte tolkas som ett DB0-krav.
   Den temporära c_map-ägaren kan nu infoga en verklig dynamisk ground-stack-

@@ -1557,6 +1557,11 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
             &pools, raw_body, raw_body_size, &state_receipt->dungeon) ||
         !dm2_v1_sksave_map_owner_init(
             &map_owner, raw_body, raw_body_size, &state_receipt->dungeon) ||
+        state_receipt->party_map >= state_receipt->dungeon.map_count ||
+        state_receipt->party_x >=
+            state_receipt->dungeon.map_widths[state_receipt->party_map] ||
+        state_receipt->party_y >=
+            state_receipt->dungeon.map_heights[state_receipt->party_map] ||
         !dm2_v1_sksave_map_owner_detach_dynamic_records(
             &map_owner, &pools, NULL) ||
         !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
@@ -1574,6 +1579,13 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
         timer_stream.raw_hash != state_receipt->timers_hash) {
         goto done;
     }
+    /* DM2_GAME_LOAD assigns ddat.v1e0266 from the authenticated
+     * s_savegamebuffer before it enters DM2_READ_SKSAVE_DUNGEON.  The latter
+     * saves and restores that map around its full-map walks.  Beginning this
+     * temporary c_map owner at map zero loses that source state whenever the
+     * saved party is elsewhere. */
+    dm2_v1_sksave_map_owner_change_current_map(
+        &map_owner, (int)state_receipt->party_map);
     if (!dm2_v1_sksave_process_source_item_bonus_roots(
             heroes, DM2_MAX_HEROES, state_receipt->champion_count,
             &leader_hand_root, &pools, asset_loader, &item_bonus)) {
