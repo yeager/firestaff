@@ -24,6 +24,8 @@
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_text_decode.h"
 #include <string.h>
+
+#define THERON_LEGACY_GENERATOR_RUNTIME_SLOTS 5u
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -1962,7 +1964,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     in += sizeof(uint32_t);
 
     uint16_t ver = rw16(in);
-    if (ver != 1u && ver != 2u && ver != 3u &&
+    if (ver != 1u && ver != 2u && ver != 3u && ver != 4u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
@@ -2073,9 +2075,12 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                 }
                 remaining -= (size_t)creature_count * THERON_CREATURE_WIRE_BYTES;
                 if (ver >= 4u) {
+                    const size_t runtime_slots = (ver == 4u) ?
+                        THERON_LEGACY_GENERATOR_RUNTIME_SLOTS :
+                        THERON_MAX_SOURCE_GENERATORS;
                     const size_t runtime_tail =
-                        sizeof(world->generator_spawn_count) +
-                        sizeof(world->generator_next_tick) +
+                        runtime_slots * sizeof(uint32_t) +
+                        runtime_slots * sizeof(uint64_t) +
                         sizeof(world->generator_active_count);
                     if (remaining < sizeof(uint32_t) + runtime_tail)
                         return -1;
@@ -2090,18 +2095,19 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                         in = theron_generator_read(
                             in, &world->source_generators[i]);
                     }
-                    for (size_t i = 0; i < sizeof(world->generator_spawn_count) /
-                                           sizeof(world->generator_spawn_count[0]); ++i) {
+                    for (size_t i = 0; i < runtime_slots; ++i) {
                         world->generator_spawn_count[i] = (int32_t)rw32(in);
                         in += sizeof(uint32_t);
                     }
-                    for (size_t i = 0; i < sizeof(world->generator_next_tick) /
-                                           sizeof(world->generator_next_tick[0]); ++i) {
+                    for (size_t i = 0; i < runtime_slots; ++i) {
                         world->generator_next_tick[i] = rw64(in);
                         in += sizeof(uint64_t);
                     }
                     world->generator_active_count = (int32_t)rw32(in);
                     in += sizeof(uint32_t);
+                    if (world->generator_active_count < 0 ||
+                        world->generator_active_count >
+                            (int32_t)THERON_MAX_SOURCE_GENERATORS) return -1;
                 }
             }
         } else {

@@ -514,8 +514,11 @@ struct Theron_V1_World {
         inventory_source[THERON_MAX_CHAMPIONS][THERON_INVENTORY_SLOTS];
 
     /* Generator state (current dungeon, current level only) */
-    int generator_spawn_count[5];
-    uint64_t generator_next_tick[5];
+    /* Runtime slots mirror the authenticated source-generator bank.  The
+     * old five-slot array was a fixture limit and silently truncated real
+     * Track 02 maps (some contain 14 generator records). */
+    int generator_spawn_count[THERON_MAX_SOURCE_GENERATORS];
+    uint64_t generator_next_tick[THERON_MAX_SOURCE_GENERATORS];
     int generator_active_count;
 
     /* Timer pool */
@@ -779,7 +782,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Binary serialization ─────────────────────────────────────────── */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 4
+#define THERON_WORLD_SAVE_VERSION 5
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

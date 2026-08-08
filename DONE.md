@@ -1,3 +1,12 @@
+# 2026-08-08 Theron generator runtime capacity
+
+- ✅ Theron generator runtime counters now mirror all 64 authenticated
+  Track 02 source-generator slots instead of the old five-entry fixture
+  limit. The save writer emits version 5; the reader still accepts version 4
+  snapshots and expands their five-entry runtime tail safely. Regression
+  coverage exercises the real US-map maximum of 14 generators and preserves
+  the source-bound fail-closed generator consumer.
+
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
 # 2026-08-08 Theron source-property pickup gate

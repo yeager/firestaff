@@ -96,7 +96,7 @@
 - Theron: world snapshots now have endian-stable scalar envelopes, portable object/timer/creature records and bounds checks; progression/champion packing still needs a source-owned wire layout before claiming complete cross-host save parity.
 - Theron: runtime VRAM/VCE file admission is now byte-identified by the authenticated capture FNV receipts; the remaining presentation gap is the original square/material/perspective consumer and a source-owned HUD/text/portrait route.
 - Theron: the first real Track 02 screen-space capture is now published in README; replace the capture-only route with the authenticated T520/T600 square, perspective and HUD consumers when their runtime ownership is recovered.
-- Theron: world snapshot version 4 now preserves decoded generator records and runtime counters; bind the original T700 generator consumer, cadence and reactivation semantics before making those records executable.
+- Theron: world snapshot version 5 now preserves all 64 source-generator runtime slots and reads version 4's five-slot tail; bind the original T700 generator consumer, cadence and reactivation semantics before making those records executable.
 - Theron: source inventory, object, timer and admitted live-creature provenance now use explicit field-by-field wire layouts; retain version-1/2 readers only as migration support.
 - Theron: the loader now retains complete source occurrences for categories 0..10, 14 and 15; bind those control records to their original disassembly consumers without conflating the occurrence census with executable world-object ownership.
 - Theron: source-level pickup now rejects unbound/generic object fallback; bind source-authenticated use/equip/consume consumers before allowing those transitions on real levels.

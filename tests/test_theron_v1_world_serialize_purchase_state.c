@@ -153,7 +153,11 @@ static void seed_world(Theron_V1_World *world) {
     world->source_generators[0].target_facing = 3;
     world->generator_spawn_count[0] = 2;
     world->generator_next_tick[0] = 0x0102030405060708ULL;
-    world->generator_active_count = 1;
+    /* Real US Track 02 data contains a 14-generator map. Keep the last
+     * slot populated so this cannot regress to the old five-slot fixture. */
+    world->generator_spawn_count[13] = 9;
+    world->generator_next_tick[13] = 0x1112131415161718ULL;
+    world->generator_active_count = 14;
     theron_v1_party_recalculate_loads(&world->party);
 }
 
@@ -268,7 +272,9 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.source_generators[0].target_facing == 3 &&
                 restored.generator_spawn_count[0] == 2 &&
                 restored.generator_next_tick[0] == 0x0102030405060708ULL &&
-                restored.generator_active_count == 1,
+                restored.generator_spawn_count[13] == 9 &&
+                restored.generator_next_tick[13] == 0x1112131415161718ULL &&
+                restored.generator_active_count == 14,
                 "generator source record and runtime state survive round-trip");
 
     free(buffer);
