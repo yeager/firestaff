@@ -10404,3 +10404,13 @@ as line/circle coordinates or promote them into movement geometry.
   `(-1,-1,-1)` caller inert (`party_alive=0`); only explicit fixture placement
   can mark the mechanics party alive. No native start pose or party status is
   inferred from a DM1-shaped default.
+- **NEXUS-DOC-STALE-GRID-CLAIMS:** `docs/nexus_dungeon.md`,
+  `docs/nexus_content.md` and `docs/nexus_math.md` contained historical
+  32×32/fully-unparsed wording that contradicted the authenticated retail
+  intake. Keep their corrected 64×64 Structure1B and bounded Structure2/3
+  wording aligned with `NEXUS_STRICT_FIDELITY_INVENTORY.md`; do not let this
+  documentation correction be read as Saturn transform or VDP1 parity.
+- **NEXUS-DOC-SCRIPT-PLACEHOLDER:** `docs/nexus_dungeon.md` also described a
+  blank 5,448-byte script/VM route. Keep the actual 16-file `SLEV00.BIN`–
+  `SLEV15.BIN` corpus and its opaque dispatch status synchronized with the
+  authenticated SLEV receipts.

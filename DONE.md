@@ -8962,3 +8962,15 @@
 - ✅ Updated Structure2 intake, real English/French/legacy MENU.BPK hash tests,
   boot-boundary tests and public Nexus status docs. Targeted Nexus build and
   PRS3/renderer/startup regressions pass against `/Users/bosse/.firestaff/data/nexus`.
+# Nexus stale-claim documentation audit (2026-08-08)
+
+- ✅ Corrected the stale 32×32 Nexus grid claim to the verified 64×64
+  Structure1B/8-byte-cell format in `docs/nexus_dungeon.md` and
+  `docs/nexus_content.md`.
+- ✅ Corrected `docs/nexus_math.md` so bounded Structure1B/2/3 source intake is
+  distinguished from the still-gated Saturn transform/material/VDP1 consumer.
+- ✅ Added the three-document family to `NEXUS_STALE_CLAIM_AUDIT.md`; no
+  synthetic geometry, timing, palette or runtime dispatch was promoted.
+- ✅ Removed the blank script filename/VM placeholder from `docs/nexus_dungeon.md`
+  and corrected `docs/nexus_data.md`'s stale DM1 32×32 wording; both now name
+  the real 16-file SLEV corpus and the 64×64 Structure1B boundary.

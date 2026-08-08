@@ -59,7 +59,8 @@ Structure1B collision/grid data and additional bounded structures:
 ### Grid Parsing (Firestaff)
 `nexus_v1_level_get_square()` in `nexus_v1_dungeon.c` reads the already
 validated 64×64 Structure1B cell view. It does not reinterpret the DGN as a
-32×32 DM1 `DUNGEON.DAT` grid.
+64×64 Nexus Structure1B grid. Do not apply the 32×32 DM1 `DUNGEON.DAT`
+interpretation to these cells.
 
 ### 3D Geometry Parsing
 **Status: bounded real-data intake implemented.**

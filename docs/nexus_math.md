@@ -3,7 +3,11 @@
 ## Summary
 Nexus has a well-separated 3D math subsystem (nexus_v1_math3d.c) using
 floating-point vec3/mat4 operations. RNG uses standard C rand(). The
-3D geometry blob in DGN files is not parsed.
+
+The DGN geometry is not promoted to a host-rendered scene. The current parser
+retains bounded Structure1B/Structure2/Structure3 source records and
+real-corpus receipts; transform, face ownership, material semantics and VDP1
+submission remain capture-gated.
 
 ## 1. Vector3 Operations (nexus_v1_math3d.c)
 
@@ -60,7 +64,8 @@ and later render payloads after Structure1B:
 - Doors
 - Floor objects, sensors and decorations
 - Wall sensors and decorations
-Status: PARTIAL. Structure1B is parsed; the rest is still being split out.
+Status: bounded source intake. Structure1B/2/3 records are admitted only as
+hash-verified retail receipts; this is not yet a Saturn mesh-rendering route.
 
 Wall projection: 4 directions (N/E/S/W z-face or x-face).
 Each wall = 2 triangles (one quad). Screen-space via perspective matrix.
@@ -83,7 +88,7 @@ Firestaff uses float for simplicity on modern PCs.
 | Mat4 operations   | DONE   | Transform/prj/look-at done   |
 | RNG               | DONE   | rand()-based, simple          |
 | Grid parsing      | DONE   | DMWeb Structure1B, 64x64     |
-| 3D geometry parse | TODO   | DGN blob unparsed            |
+| 3D geometry parse | PARTIAL| Bounded Structure1B/2/3 intake; face/material consumer capture open |
 | Wall projection   | PARTIAL| Basic projection exists       |
 | Floor/ceiling proj| PARTIAL| May be incomplete             |
 | Z-buffer          | EXISTS | In rasterizer for depth sort  |

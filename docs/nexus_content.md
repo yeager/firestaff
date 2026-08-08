@@ -27,7 +27,7 @@ DM1-kompatibilitet gäller Nexus runtime.
 |--------|-----------|-----------------|-------|
 | Rendering | 2D sprite blitting | 3D polygon rasterizer | All new |
 | Dungeon levels | 10 (D0–D7 +入口) | 16 (LEV00–LEV15) | +6 levels |
-| Grid per level | Variable 16–30 | Fixed 32×32 | Larger, uniform |
+| Grid per level | Variable 16–30 | Fixed 64×64 Structure1B cells | Larger, uniform |
 | Dungeon data size | ~33 KB total | ~4.3 MB total | ~130× larger |
 | 3D geometry | None | Baked into DGN files | All new |
 | Creature models | 2D sprite sheets | 3D .MNS polygon meshes | All new |
@@ -58,7 +58,7 @@ DM1-kompatibilitet gäller Nexus runtime.
 
 ### 2.2 Extended Dungeon — 16 Levels
 - DM1 had 10 levels; Nexus has 16 (LEV00–LEV15)
-- Grid is fixed 32×32 vs. DM1's variable grid sizes
+- Grid is fixed 64×64 Structure1B cells, not a DM1-style 32×32 grid
 - Extra levels are in addition to the original DM1 layout, not replacing it
 - Source: `docs/nexus_dungeon.md` confirms 16 level files (147–321 KB each)
 
@@ -77,7 +77,8 @@ DM1-kompatibilitet gäller Nexus runtime.
 ### 2.5 Per-Level Scripts (SLEV*.BIN)
 - 2–12 KB of script data per level (`SLEV00.BIN` through `SLEV15.BIN`)
 - Declarative scripting vs. DM1's hardwired game loop
-- Script VM processes sensor events, creature spawns, teleport triggers
+- SLEV bytes are real SH-2 task candidates; event dispatch and script execution
+  are not yet proven
 - DM1 had no scripting — sensors were compile-time behavior in the game loop
 
 ### 2.6 Minimap Data (SMAP*.BIN)
