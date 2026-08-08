@@ -12,7 +12,8 @@
   originalets no-detail-gren tills kartkedjorna har lästs.
 
 - 🔧 DM2 GAME_LOAD/SKSAVE: den källägda `DM2_PROCESS_ITEM_BONUS(..., 0)`-
-  fasen kan nu köra mot den återställda recordpoolen och monterad
+  fasen kör nu i samma tillfälliga preflighttransaktion som direktrötterna,
+  före specialtimer- och kartkedjorna, mot återställd recordpool och monterad
   `GRAPHICS.DAT`, men den är fortfarande ett tillfälligt preflightsteg.
   Nästa steg är originalets specialtimer-, kart-, possessions- och
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD`-ägare i samma beständiga transaktion;

@@ -33,6 +33,7 @@
 
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load_extra_dungeon_data_pc34_compat.h"
 #include "dm2_v1_save_timers_pc34_compat.h"
@@ -339,6 +340,7 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
 typedef enum {
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_NONE = 0,
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE,
+    DM2_V1_SKSAVE_PREFLIGHT_FAILURE_ITEM_BONUSES,
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_SPECIAL_TIMERS,
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS,
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_POSSESSIONS,
@@ -373,10 +375,13 @@ typedef struct {
     uint16_t hero_timeridx_set;
     uint16_t ornate_timer_backlinks_set;
     uint16_t direct_root_count;
+    uint16_t item_bonus_roots_processed;
+    uint16_t item_bonus_roots_empty;
     uint16_t leader_hand_root_link;
     uint32_t timer_hash;
     uint32_t heroes_hash;
     uint32_t direct_root_hash;
+    uint32_t item_bonus_hash;
     uint32_t timer_queue_hash;
     uint32_t record_hash;
     uint32_t continuation_hash;
@@ -398,6 +403,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     size_t raw_body_size,
     const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
     uint16_t savegamew7,
+    const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx,
     DM2_V1_SksaveSpecialTimerReceipt *out_receipt);

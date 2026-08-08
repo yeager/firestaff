@@ -777,6 +777,10 @@
 - ✅ Verifierat mot alla åtta riktiga PC-DOS-SKSave-filer. De fyra filer som
   har komplett lokal recordpool passerar den nya GDAT-fasen. Den tillfälliga
   ägaren publiceras inte och Resume är fortsatt spärrad.
+- ✅ Fasen ligger nu även i samma source-ordnade, tillfälliga SKSAVE-kedja
+  direkt efter direktrötterna och före `DM2_2066_197c`/kartkedjorna. Därmed
+  kan inget senare SUPPRESS-steg prövas utan att originalets GDAT-rutt först
+  har godkänt heroes och ledarhand.
 
 # DM2 New Game-entréreceipt (2026-08-08)
 

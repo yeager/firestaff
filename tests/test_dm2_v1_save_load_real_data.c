@@ -982,14 +982,28 @@ static void test_real_raw_save(const char *path, const char *root,
           "real SKSave teleporter route keeps missing pre-chain DB1 detail fail-closed");
     {
         DM2_V1_SksaveSpecialTimerReceipt special_timers;
+        DM2_V1_AssetLoader preflight_loader;
+        uint8_t *preflight_graphics;
+        size_t preflight_graphics_size;
+        char preflight_graphics_path[600];
         const uint16_t savegamew7 = (uint16_t)bytes[0] |
             ((uint16_t)bytes[1] << 8);
+        snprintf(preflight_graphics_path, sizeof(preflight_graphics_path),
+                 "%s/graphics.dat", root);
+        preflight_graphics = read_file(preflight_graphics_path,
+                                       &preflight_graphics_size);
+        memset(&preflight_loader, 0, sizeof(preflight_loader));
         memset(&special_timers, 0, sizeof(special_timers));
         const int special_ok =
+            preflight_graphics && dm2_v1_asset_loader_init(
+                &preflight_loader, preflight_graphics, preflight_graphics_size) == 0 &&
             dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
                 bytes + 42u, byte_count - 42u, &state_receipt,
-                savegamew7, inventory_query_creature_ai_flags, NULL,
+                savegamew7, &preflight_loader,
+                inventory_query_creature_ai_flags, NULL,
                 &special_timers);
+        dm2_v1_asset_loader_free(&preflight_loader);
+        free(preflight_graphics);
         if (!special_ok) {
             printf("  SKSave preflight halted at source phase %d (map %d, %d,%d root %04x record %d reason %d)\n",
                    (int)special_timers.failure_stage,
@@ -1005,6 +1019,7 @@ static void test_real_raw_save(const char *path, const char *root,
                special_timers.heroes_hash == state_receipt.heroes_hash &&
                special_timers.timer_count == state_receipt.timer_count &&
                special_timers.timer_hash != 0u &&
+               special_timers.item_bonus_hash != 0u &&
                special_timers.maps_loaded == receipt.map_count &&
                special_timers.tiles_loaded == receipt.map_data_byte_count &&
                special_timers.map_record_chains_loaded <=

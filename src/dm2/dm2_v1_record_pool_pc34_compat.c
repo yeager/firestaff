@@ -17,6 +17,7 @@
  */
 
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_skproject_core.h"
 
@@ -1394,6 +1395,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     size_t raw_body_size,
     const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
     uint16_t savegamew7,
+    const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx,
     DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
@@ -1421,6 +1423,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     int16_t timer_free_head = -1;
     uint32_t timer_queue_hash = 2166136261u;
     uint32_t direct_root_hash = 0u;
+    DM2_V1_SksaveItemBonusReceipt item_bonus;
     DM2_V1_SksavePreflightFailureStage failure_stage =
         DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE;
     int ok = 0;
@@ -1435,6 +1438,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     memset(&pools, 0, sizeof(pools));
     memset(&map_owner, 0, sizeof(map_owner));
     memset(&roots, 0, sizeof(roots));
+    memset(&item_bonus, 0, sizeof(item_bonus));
     memset(heroes, 0, sizeof(heroes));
     memset(&timer_stream, 0, sizeof(timer_stream));
     memset(&rebuild_context, 0, sizeof(rebuild_context));
@@ -1453,6 +1457,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
      * shared SUPPRESS reader; a malformed source body cannot consume a later
      * map/possession bit as a special-timer record. */
     if (!raw_body || !state_receipt || !state_receipt->valid || !savegamew7 ||
+        !asset_loader ||
         !query_creature_ai_flags ||
         state_receipt->timer_count > DM2_V1_SAVE_TIMER_MAX ||
         !dm2_v1_original_raw_sksave_materialize_heroes(
@@ -1476,6 +1481,12 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             DM2_V1_SAVE_TIMER_MAX, &timer_stream) ||
         !timer_stream.valid ||
         timer_stream.raw_hash != state_receipt->timers_hash) {
+        goto done;
+    }
+    if (!dm2_v1_sksave_process_source_item_bonus_roots(
+            heroes, DM2_MAX_HEROES, state_receipt->champion_count,
+            &leader_hand_root, &pools, asset_loader, &item_bonus)) {
+        failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_ITEM_BONUSES;
         goto done;
     }
 
@@ -1600,6 +1611,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         out_receipt->direct_root_count = roots.root_count;
         out_receipt->leader_hand_root_link = leader_hand_root;
         out_receipt->direct_root_hash = direct_root_hash;
+        out_receipt->item_bonus_roots_processed = item_bonus.processed_item_roots;
+        out_receipt->item_bonus_roots_empty = item_bonus.empty_item_roots;
+        out_receipt->item_bonus_hash = item_bonus.source_hash;
         out_receipt->timer_count = state_receipt->timer_count;
         out_receipt->special_chain_count = chains_read;
         out_receipt->maps_loaded = (uint16_t)dungeon_receipt.maps_loaded;
