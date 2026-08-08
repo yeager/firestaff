@@ -73,6 +73,7 @@ int main(void) {
     DM2_V1_G1RuntimeMapActuatorReceipt actuators;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
     int text_record_total = 0;
+    int creature_record_total = 0;
     FileHeaderWalkTrace map0_walk;
 
     paths[0] = env;
@@ -134,6 +135,7 @@ int main(void) {
         DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
         FileHeaderWalkTrace map_walk;
         DM2_V1_FileHeaderRuntimeTextReceipt texts;
+        DM2_V1_FileHeaderRuntimeCreatureReceipt creatures;
 
         memset(&map_receipt, 0, sizeof(map_receipt));
         memset(&map_walk, 0, sizeof(map_walk));
@@ -157,9 +159,23 @@ int main(void) {
         } else {
             text_record_total += texts.text_record_count;
         }
+        memset(&creatures, 0, sizeof(creatures));
+        if (!dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
+                &d, map, &creatures) || !creatures.committed ||
+            creatures.creature_record_reads != creatures.creature_record_count) {
+            printf("FAIL: File_header map-%d creature records were not retained\n",
+                   map);
+            ++failures;
+        } else {
+            creature_record_total += creatures.creature_record_count;
+        }
     }
     if (text_record_total <= 0) {
         printf("FAIL: canonical File_header contains no retained DB2 texts\n");
+        ++failures;
+    }
+    if (creature_record_total <= 0) {
+        printf("FAIL: canonical File_header contains no retained DB4 creatures\n");
         ++failures;
     }
     memset(&doors, 0, sizeof(doors));

@@ -17,8 +17,8 @@
 - **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
   ground-stack/`w0` chains are now source-validated and all 44 canonical maps
   have one bounded callback walk. DB2 text/special-marker fields now use that
-  same owner. Bind it to the map-local graphics lists, actuator/sensor paths
-  and full
+  same owner, liksom DB4-varelsers placering, possessionslänkar och HP. Bind
+  den till kartans grafiklistor, aktuator- och sensorvägar samt full
   `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
 
 - **DM2-FILE-HEADER-DOOR-RUNTIME:** The canonical map-0 DB0 door roots are

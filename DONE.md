@@ -173,6 +173,13 @@
   sensorn utför ännu ingen effekt förrän text-, rörelse- och
   aktuatortransaktionerna har en komplett sessionsägare.
 
+# DM2 File_header DB4-varelseintag (2026-08-08)
+
+- ✅ DB4-varelser läses nu ur de fullständiga File_header-kedjorna med
+  position, typ, riktning, possessionslänk och originalets fyra HP-fält.
+- ✅ Verifierat mot samtliga 44 PC-DOS-kartor. Det skapar inga
+  `CreatureInfoData`-poster, AI-timers, droppar eller stridsresultat.
+
 # DM2 File_header boot handoff (2026-08-08)
 
 - ✅ M11/bootprofilen lämnar nu karta 0:s verifierade File_header-recipient

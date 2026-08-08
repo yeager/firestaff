@@ -3897,6 +3897,62 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
     return 1;
 }
 
+static int dm2_v1_file_header_collect_creature_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_FileHeaderRuntimeCreatureReceipt *receipt =
+        (DM2_V1_FileHeaderRuntimeCreatureReceipt *)user;
+    DM2_V1_FileHeaderCreatureRecord *creature;
+
+    /* SKProject SKWIN/DME.h::Creature defines possession at w2, creature
+     * type/info slot at b4/b5, HP1 at w6 and the remaining per-creature
+     * words at w8/w10/w12.  The File_header walker supplies the real map
+     * location and bounded c_record chain. */
+    if (!receipt || type != 4) return 0;
+    if (!record || record_size < 16 || index < 0 ||
+        receipt->creature_record_count >=
+            DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS) {
+        return -1;
+    }
+    creature = &receipt->creatures[receipt->creature_record_count++];
+    creature->x = x;
+    creature->y = y;
+    creature->object_id = thing;
+    creature->index = (uint16_t)index;
+    creature->possession_object_id = RD16(record + 2);
+    creature->creature_type = record[4];
+    creature->info_slot = record[5];
+    creature->hit_points_1 = RD16(record + 6);
+    creature->hit_points_2 = RD16(record + 8);
+    creature->hit_points_3 = RD16(record + 10);
+    creature->hit_points_4 = RD16(record + 12);
+    creature->direction = (uint8_t)(record[15] & 0x03u);
+    ++receipt->creature_record_reads;
+    (void)level;
+    return 0;
+}
+
+int dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeCreatureReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeCreatureReceipt candidate;
+
+    if (!out || !d) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_collect_creature_record, &candidate) < 0 ||
+        candidate.creature_record_reads != candidate.creature_record_count) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
     const DM2_V1_DungeonData *d,
     int map,

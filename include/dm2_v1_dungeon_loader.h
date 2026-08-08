@@ -661,6 +661,36 @@ typedef struct {
         creatures[DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS];
 } DM2_V1_G1RuntimeMapCreatureReceipt;
 
+/* The PC-DOS File_header path may place a DB4 Creature after another record
+ * in a tile chain.  Retain its raw possession link and four source HP/cursor
+ * words, but do not manufacture CreatureInfoData, timers or AI state. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint16_t possession_object_id;
+    uint8_t direction;
+    uint8_t creature_type;
+    uint8_t info_slot;
+    uint16_t hit_points_1;
+    uint16_t hit_points_2;
+    uint16_t hit_points_3;
+    uint16_t hit_points_4;
+} DM2_V1_FileHeaderCreatureRecord;
+
+#define DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS 256
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int creature_record_count;
+    int creature_record_reads;
+    DM2_V1_FileHeaderCreatureRecord
+        creatures[DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS];
+} DM2_V1_FileHeaderRuntimeCreatureReceipt;
+
 typedef struct {
     int x;
     int y;
@@ -1703,6 +1733,13 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapCreatureReceipt *out);
+/* Decode every DB4 Creature in a canonical File_header record chain.  This
+ * retains source placement/possession/HP data only; CreatureInfoData, CAII,
+ * drops and timer ownership remain unavailable until their live owner is
+ * recovered. */
+int dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeCreatureReceipt *out);
 /* Consume only declared direct DB5 roots on a runtime-admitted G1 map. It
  * reads source-defined Weapon::w2 fields and never the w0 next link, an
  * unvalidated map, or any inferred object traversal. */
