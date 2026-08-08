@@ -784,6 +784,7 @@ typedef struct {
 
     /* ── Data paths ─────────────────────────────── */
     const char             *data_dir;
+    const char             *utility_search_dir;
     const char             *save_dir;  /* resolved at init via _save_dir_x() */
     const char             *dungeon_path;
     const char             *graphics_path;

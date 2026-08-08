@@ -2373,6 +2373,7 @@ void csb_v1_boot_startup_launch_cleanup_pc34(
 
 int csb_v1_boot_startup_launch_alloc_pc34(
     const char *data_dir,
+    const char *utility_search_dir,
     const char *save_path,
     const char *import_dm1_save_path,
     const char *resume_save_path,
@@ -2403,6 +2404,15 @@ int csb_v1_boot_startup_launch_alloc_pc34(
         csb_v1_boot_startup_launch_cleanup_pc34(out_launch);
         out_launch->failure_host_receipt = failure_receipt;
         return 0;
+    }
+    if (utility_search_dir && utility_search_dir[0] != '\0') {
+        csb_v1_boot_copy(out_launch->profile->utility_search_root,
+                         sizeof(out_launch->profile->utility_search_root),
+                         utility_search_dir);
+    } else {
+        csb_v1_boot_copy(out_launch->profile->utility_search_root,
+                         sizeof(out_launch->profile->utility_search_root),
+                         out_launch->profile->asset_root);
     }
     if (csb_v1_boot_enter_game(out_launch->profile) != 0) {
         csb_v1_boot_startup_failure_host_receipt_pc34(
@@ -8573,6 +8583,11 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
      * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
     csb_v1_runtime_cleanup(&profile->runtime);
     csb_v1_runtime_init(&profile->runtime, profile->asset_root);
+    /* ReDMCSB CEDTINC7.C / CEDTDATA.C owns the Utility Disk handoff.  The
+     * selected core files may be in a private cache, so retain the M12
+     * scanner-admitted originals root for its hash-only media lookup. */
+    profile->runtime.utility_search_dir = profile->utility_search_root[0]
+        ? profile->utility_search_root : profile->asset_root;
     profile->runtime.variant_id = profile->variant_id;
     profile->runtime.difficulty = CSB_V1_DIFFICULTY_UNBOUND;
     profile->runtime.save_dir = profile->save_root;

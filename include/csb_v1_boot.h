@@ -76,6 +76,7 @@ typedef struct CSB_V1_BootProfile {
     char media_ref[64];
 
     char asset_root[512];
+    char utility_search_root[512];
     char graphics_path[512];
     char dungeon_path[512];
     char save_root[512];
@@ -1863,6 +1864,7 @@ int csb_v1_boot_build_startup_launch_receipts_pc34(
     CSB_V1_BootStartupLaunchReceipts_PC34 *out_receipts);
 int csb_v1_boot_startup_launch_alloc_pc34(
     const char *data_dir,
+    const char *utility_search_dir,
     const char *save_path,
     const char *import_dm1_save_path,
     const char *resume_save_path,

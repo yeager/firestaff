@@ -7727,6 +7727,13 @@ that its exact runtime path is not already source-locked and tested.
     still extracts that member and reruns the original Utility Disk check;
     only the expensive broad archive inventory is cached. A changed or
     unreadable cached member invalidates the cache and fails closed.
+    2026-08-08: M12 now preserves the configured originals root separately
+    from the private materialized CSB runtime directory. The Utility Disk
+    hash lookup uses that originals root, so a selected PC/Atari/Amiga core
+    cache does not hide a valid original ADF stored in the user's shared CSB
+    archive collection. A real English release-3 ADF in the local archive
+    reaches the completed import state; remaining work is still the original
+    Utility UI, editor and real-save corpus, not DSA-save support.
     2026-07-29: the live C140 `Ctrl-S` route now opens the source-dialog
     geometry with the Atari CSB v2.1 source order: Load Saved Game, Save and
     Play, Save and Quit, Format Floppy. The source Format Floppy confirmation

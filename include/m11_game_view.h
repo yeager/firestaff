@@ -541,6 +541,9 @@ typedef struct {
     const char* title;
     const char* gameId;
     const char* dataDir;
+    /* Original-data root remains separate when M12 materializes a CSB
+     * package into its private runtime cache. */
+    const char* csbUtilitySearchDir;
     const char* sourceId;
     const char* dungeonPath;
     const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */

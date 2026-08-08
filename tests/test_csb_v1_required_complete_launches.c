@@ -285,7 +285,7 @@ static void check_real_csb_startup_session_if_available(void) {
     memset(&receipt, 0, sizeof(receipt));
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
     if (!csb_v1_boot_startup_launch_alloc_pc34(
-            data_dir, NULL, NULL, NULL, &launch)) {
+            data_dir, NULL, NULL, NULL, NULL, &launch)) {
         puts("SKIP: CSB real startup session: canonical files not present");
         csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         return;

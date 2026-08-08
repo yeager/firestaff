@@ -372,7 +372,7 @@ static void test_atari_st_materialized_runtime_handoff(void)
 
     memset(&launch, 0, sizeof(launch));
     memset(&runtime_receipt, 0, sizeof(runtime_receipt));
-    CHECK(csb_v1_boot_startup_launch_alloc_pc34(data_dir, NULL, NULL, NULL,
+    CHECK(csb_v1_boot_startup_launch_alloc_pc34(data_dir, NULL, NULL, NULL, NULL,
                                                  &launch) == 1,
           "materialized Atari ST package builds the M11 startup transaction");
     CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(&launch,

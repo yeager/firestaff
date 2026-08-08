@@ -2468,6 +2468,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                       NULL,
                       NULL,
                       NULL,
+                      NULL,
                       &launch) == 0 &&
                       launch.profile == NULL &&
                       launch.failure_host_receipt.status_scope &&
@@ -2499,6 +2500,48 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     remove(path);
     set_csb_utility_disk_env(NULL);
     remove(utility_path);
+}
+
+/* Opt-in real-media regression.  M12 keeps the user-selected originals root
+ * separate from its materialized CSB cache; this proves that CEDTINC7.C's
+ * Utility Disk route can find a hash-known original ADF inside that root.
+ * The DM1 party buffer remains a narrow importer fixture: this test verifies
+ * real Utility media discovery, not a DSA save handoff. */
+static void test_runtime_import_discovers_real_utility_from_search_root(void)
+{
+    const char *root = getenv("FIRESTAFF_CSB_REAL_UTILITY_ROOT");
+    const char *path = "/tmp/firestaff-csb-v1-real-utility-import.sav";
+    CSB_V1_RuntimeProfile runtime;
+    uint8_t save_buf[1024];
+    FILE *f;
+    int count = 0;
+    int state = -1;
+    char prompt[128];
+
+    if (!root || root[0] == '\0') {
+        puts("  SKIP: FIRESTAFF_CSB_REAL_UTILITY_ROOT is not set");
+        return;
+    }
+    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+          "real Utility search regression builds importer fixture");
+    f = fopen(path, "wb");
+    CHECK(f != NULL, "real Utility search regression opens fixture");
+    if (!f) return;
+    CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
+          "real Utility search regression writes fixture");
+    fclose(f);
+    set_csb_utility_disk_env(NULL);
+    csb_v1_runtime_init(&runtime, NULL);
+    runtime.utility_search_dir = root;
+    runtime.save_dir = "/tmp";
+    prompt[0] = '\0';
+    CHECK(csb_v1_runtime_import_dm1_party_path(&runtime, path, &count, &state,
+                                               prompt, sizeof(prompt)) == 1 &&
+              count == 2 && state == (int)CSB_V1_UTIL_FLOW_DONE &&
+              strstr(prompt, "READY") != NULL,
+          "real Utility ADF is discovered from the selected originals root");
+    csb_v1_runtime_cleanup(&runtime);
+    remove(path);
 }
 
 static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
@@ -5320,6 +5363,7 @@ int main(void)
     test_enter_game_loads_real_m564_object_names_when_supplied();
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
+    test_runtime_import_discovers_real_utility_from_search_root();
     test_runtime_view_state_receipt_owns_scalar_handoff();
     test_door_opening_runtime_handoff_owns_hud_transition();
     test_runtime_utility_startup_receipt_facades();

@@ -2160,20 +2160,23 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     if (explicit_utility_media && explicit_utility_media[0] != '\0') {
         snprintf(utility_media, sizeof(utility_media), "%s",
                  explicit_utility_media);
-    } else if (profile->data_dir && profile->data_dir[0] != '\0' &&
-               strcmp(profile->data_dir, g_csb_utility_media_cache_root) == 0 &&
+    } else if (profile->utility_search_dir &&
+               profile->utility_search_dir[0] != '\0' &&
+               strcmp(profile->utility_search_dir,
+                      g_csb_utility_media_cache_root) == 0 &&
                g_csb_utility_media_cache_path[0] != '\0') {
         snprintf(utility_media, sizeof(utility_media), "%s",
                  g_csb_utility_media_cache_path);
         used_discovery_cache = 1;
-    } else if (profile->data_dir && profile->data_dir[0] != '\0') {
-        if (asset_find_by_md5_list(profile->data_dir,
+    } else if (profile->utility_search_dir &&
+               profile->utility_search_dir[0] != '\0') {
+        if (asset_find_by_md5_list(profile->utility_search_dir,
                                    g_csb_utility_disk_hashes,
                                    utility_media, sizeof(utility_media),
                                    NULL, 8)) {
             snprintf(g_csb_utility_media_cache_root,
                      sizeof(g_csb_utility_media_cache_root), "%s",
-                     profile->data_dir);
+                     profile->utility_search_dir);
             snprintf(g_csb_utility_media_cache_path,
                      sizeof(g_csb_utility_media_cache_path), "%s",
                      utility_media);
@@ -19059,6 +19062,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     csb_v1_runtime_init_action_sets_g0489(profile);
 
     profile->data_dir = data_dir;
+    profile->utility_search_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();
 }
 

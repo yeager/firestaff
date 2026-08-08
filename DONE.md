@@ -59,6 +59,18 @@
   inputs intact rather than asking users to unpack their collection.
 - ✅ Linked the README and wiki page to the maintained guide.
 
+# CSB Utility Disk discovery across the M12 runtime cache (2026-08-08)
+
+- ✅ Kept M12's configured originals directory as a separate, hash-only
+  Utility Disk search root when it materializes the selected CSB core package
+  into a private runtime cache. A valid DM1-party import can now discover an
+  original Utility ADF in the selected data root rather than incorrectly
+  searching only the cache containing `GRAPHICS.DAT` and `DUNGEON.DAT`.
+- ✅ Verified the full utility import state machine with the real English
+  release-3 ADF embedded in the local CSB archive: archive discovery,
+  extraction, `UTIO.C` identity check, import confirmation and `DONE` all
+  pass. This deliberately does not add DSA-save support.
+
 # Nexus audit iteration 1 — gameplay bug fixes (2026-08-08)
 
 - ✅ Fixed 3 slot off-by-one errors in mechanics (defense, ring, weapon lookups).

@@ -18490,6 +18490,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         m11_apply_launcher_options_handoff(state, spec);
         if (!csb_v1_boot_startup_launch_alloc_pc34(
                 dd,
+                spec->csbUtilitySearchDir,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
                 spec->entranceResumeSavePath,
@@ -18888,6 +18889,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.sourceId = entry->gameId;
     spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                      entry->gameId);
+    spec.csbUtilitySearchDir = M12_AssetStatus_GetDataDir(&menuState->assetStatus);
     /* Direct CLI launch has no M12 game-version picker to discover a
      * companion.  Preserve its explicit path until the selected FM Towns
      * branch validates the canonical PC-English hash in RAM.  An automatic
