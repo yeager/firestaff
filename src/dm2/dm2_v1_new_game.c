@@ -1150,6 +1150,61 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_materialize_heroes(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    DM2_V1_Hero *out_heroes,
+    size_t hero_capacity)
+{
+    DM2_SuppressReader reader;
+    uint8_t discard[128];
+    const uint8_t *hero_mask;
+    uint8_t full_mask[2] = { 0xffu, 0xffu };
+    uint16_t i;
+
+    if (!buf || !state_receipt || !state_receipt->valid ||
+        state_receipt->champion_count > hero_capacity ||
+        (state_receipt->champion_count > 0u && !out_heroes) ||
+        state_receipt->dungeon.suppress_state_offset >= buf_size) {
+        return 0;
+    }
+    hero_mask = dm2_v1_save_mask_hero();
+    if (!hero_mask) return 0;
+
+    /* Re-enter the one original GAME_LOAD SUPPRESS stream.  Do not seek to
+     * a guessed c_hero offset: savegamebuffer and the three preceding global
+     * sections may end mid-byte.  These reads intentionally mirror
+     * dm2_v1_original_raw_sksave_fixed_state_receipt and SKProject
+     * sksvgame.cpp::DM2_GAME_LOAD lines 1482-1504. */
+    dm2_suppress_reader_init(&reader,
+                             buf + state_receipt->dungeon.suppress_state_offset,
+                             buf_size - state_receipt->dungeon.suppress_state_offset);
+    memset(discard, 0, sizeof(discard));
+    if (dm2_suppress_reader_read(&reader,
+                                 dm2_v1_save_mask_savegame_buffer(),
+                                 60u, discard, 0u) != 0 ||
+        dm2_suppress_reader_read(&reader, full_mask, 1u, discard, 0u) != 0 ||
+        dm2_suppress_reader_read(&reader, full_mask, 1u, discard, 0u) != 0 ||
+        dm2_suppress_reader_read(&reader, full_mask, 2u, discard, 0u) != 0) {
+        return 0;
+    }
+    for (i = 0u; i < state_receipt->champion_count; ++i) {
+        memset(&out_heroes[i], 0, sizeof(out_heroes[i]));
+        if (dm2_suppress_reader_read(&reader, hero_mask,
+                                     sizeof(out_heroes[i]),
+                                     (uint8_t *)&out_heroes[i], 0u) != 0 ||
+            dm2_v1_raw_sksave_hash((const uint8_t *)&out_heroes[i],
+                                    sizeof(out_heroes[i])) !=
+                state_receipt->hero_hashes[i]) {
+            memset(out_heroes, 0,
+                   (size_t)state_receipt->champion_count * sizeof(*out_heroes));
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int dm2_v1_original_raw_sksave_decode_timer_stream(
     const uint8_t *buf,
     size_t buf_size,

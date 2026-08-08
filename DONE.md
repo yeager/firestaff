@@ -9493,6 +9493,18 @@
 - ✅ Kompileringstidskontroller låser originalets 263-byte `c_hero` samt
   `timeridx` vid `0x2e` och inventorylänkar vid `0xc3`. En strukturändring
   kan därmed inte flytta SKSAVE:s källägda fält utan att bygget stoppar.
+
+# DM2 SKSAVE c_hero-källmaterialisering (2026-08-08)
+
+- ✅ `c_hero` läses nu från originalets gemensamma, MSB-först komprimerade
+  `GAME_LOAD`-ström i stället för från en antagen offset eller en syntetisk
+  party. Varje 263-byte-post jämförs med den redan autentiserade
+  SKSAVE-hashen.
+- ✅ Arrayen är uttryckligen temporär och kan inte publicera Resume. Den
+  kopplas först när kartor, recordpooler, possessioner, timerkö och
+  actuator-generator delar en komplett originalägare.
+- ✅ PC-DOS-korpusen verifierar alla åtta riktiga sparfiler; bygg,
+  party-layouttest och produktionsgrind passerar.
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)
 
 - ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.

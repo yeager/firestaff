@@ -146,9 +146,10 @@
   raw dungeon, shared SUPPRESS stream and source-sorted c_tim queue; recover the linked
   record, possession, actuator-generator and post-load-effect phases next.
   A boolean or a parsed save receipt alone must never make a game playable.
-  c_hero:s ursprungliga 263-byte-layout är nu kompileringstidslåst, inklusive
-  `timeridx` och inventorylänkernas offsetar; materialisering och ägarskap
-  förblir nästa steg.
+  `c_hero` materialiseras nu byte för byte från samma autentiserade,
+  kontinuerliga SUPPRESS-ström och varje post hashverifieras mot kvittot.
+  Den temporära arrayen är ännu inte en live party-ägare; knyt den först till
+  den färdiga kart-, possession-, timer- och actuatortransaktionen.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem

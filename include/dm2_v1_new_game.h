@@ -33,6 +33,7 @@
 
 /* dm2_v1_boot.h defines DM2_V1_BootProfile */
 #include "dm2_v1_boot.h"
+#include "dm2_v1_party.h"
 
 /* dm2_v1_save_load.h defines DM2_ChampionRecord, DM2_GameStateBlock,
  * SUPPRESS codec, and slot manager */
@@ -457,6 +458,18 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     const uint8_t *buf,
     size_t buf_size,
     DM2_V1_OriginalRawSaveStateReceipt *out_receipt);
+
+/* Materialize only the original c_hero records from the same shared
+ * SUPPRESS prefix authenticated by fixed_state_receipt.  The caller owns
+ * this temporary array; it is not a live party and must not admit Resume
+ * before maps, possessions and timers have one complete GAME_LOAD owner.
+ * Each returned record is checked against the receipt's source hash. */
+int dm2_v1_original_raw_sksave_materialize_heroes(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    DM2_V1_Hero *out_heroes,
+    size_t hero_capacity);
 
 /* Decode only the authenticated c_tim section from the shared raw stream.
  * This preserves source bytes for a future GAME_LOAD owner and never mutates
