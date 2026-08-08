@@ -59,9 +59,11 @@
   verkliga APPB-språkval och engelska KAOS-handoff är nu bundna till sina
   ADF-hashar och exponeras som en egen M11-capturefas. A35E:s separata,
   engelska `APPB.FTL`-C03-handoff och `BJELoad_R`-C02-launcher är nu också
-  hashbundna till M11 utan en A35M- eller PC34-ersättningsyta. A35E:s första
-  spelbild är däremot fortsatt spärrad tills Amiga-GRAPHICS.DAT har en egen
-  autentisk HUD- och viewportkonsument. Franska/tyska och den återstående
+  hashbundna till M11 utan en A35M- eller PC34-ersättningsyta. A35E:s
+  direktlagrade IMG1-poster avkodas nu ur den autentiska `GRAPHICS.DAT`-filen
+  enligt IMAGE1.C, men första spelbilden är fortsatt spärrad tills dessa
+  poster har en egen autentisk HUD- och viewportkonsument. Komprimerade
+  poster avvisas tills deras expansionsväg är verifierad. Franska/tyska och den återstående
   A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.

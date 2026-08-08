@@ -63,6 +63,95 @@ static void test_synthetic_valid(void) {
     free(buf);
 }
 
+static void test_img1_decode(void) {
+    const uint16_t count = 700u;
+    const size_t header = 4u + (size_t)count * 8u;
+    const size_t total = 300000u;
+    uint8_t *buf = calloc(total, 1u);
+    uint8_t pixels[1];
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+
+    if (!buf) {
+        CHECK(0, "img1_decode_allocation");
+        return;
+    }
+    buf[0] = 0x80u; buf[1] = 0x01u;
+    buf[2] = (uint8_t)(count >> 8u); buf[3] = (uint8_t)count;
+    /* One literal 1x1 IMG1 pixel: big-endian dimensions followed by 0,7. */
+    buf[4] = 0u; buf[5] = 5u;
+    buf[4u + (size_t)count * 2u] = 0u;
+    buf[5u + (size_t)count * 2u] = 5u;
+    buf[header + 0u] = 0u; buf[header + 1u] = 1u;
+    buf[header + 2u] = 0u; buf[header + 3u] = 1u;
+    buf[header + 4u] = 0x07u;
+    CHECK(csb_v1_amiga_graphics_decode_item(buf, total, 0u, pixels,
+                                             sizeof(pixels), &width, &height) == 1 &&
+              width == 1u && height == 1u && pixels[0] == 7u,
+          "img1_decode_direct_be_record");
+    CHECK(csb_v1_amiga_graphics_decode_item(buf, total, 0u, pixels, 0u,
+                                             &width, &height) == 0,
+          "img1_decode_rejects_undersized_destination");
+    buf[4] = 0u; buf[5] = 4u;
+    CHECK(csb_v1_amiga_graphics_decode_item(buf, total, 0u, pixels,
+                                             sizeof(pixels), &width, &height) == 0,
+          "img1_decode_rejects_compressed_record_without_expansion_owner");
+    free(buf);
+}
+
+/* Opt-in corpus regression: the selected A35E GRAPHICS.DAT must expose at
+ * least one direct original IMG1 record.  This consumes no constructed
+ * campaign data and leaves compressed records fail-closed. */
+static void test_real_a35e_img1_if_available(void) {
+    const char *path = getenv("FIRESTAFF_CSB_AMIGA35E_GRAPHICS_DAT");
+    FILE *file = NULL;
+    long length;
+    uint8_t *bytes = NULL;
+    uint8_t *pixels = NULL;
+    CSB_V1_AmigaGraphicsReceipt receipt;
+    uint16_t item_index;
+    int decoded = 0;
+
+    if (!path || !path[0]) {
+        puts("SKIP real_a35e_img1: FIRESTAFF_CSB_AMIGA35E_GRAPHICS_DAT is unset");
+        return;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        CHECK(0, "real_a35e_img1_open");
+        if (file) fclose(file);
+        return;
+    }
+    bytes = malloc((size_t)length);
+    pixels = malloc(640u * 400u);
+    if (!bytes || !pixels || fread(bytes, 1u, (size_t)length, file) !=
+            (size_t)length ||
+        csb_v1_amiga_graphics_receipt(bytes, (size_t)length, &receipt) != 0 ||
+        receipt.version != CSB_AMIGA_VER_3_5 ||
+        receipt.lang != CSB_AMIGA_LANG_EN) {
+        CHECK(0, "real_a35e_img1_authentication");
+        free(pixels);
+        free(bytes);
+        fclose(file);
+        return;
+    }
+    for (item_index = 0u; item_index < receipt.item_count; ++item_index) {
+        uint16_t width = 0u;
+        uint16_t height = 0u;
+        if (csb_v1_amiga_graphics_decode_item(bytes, (size_t)length,
+                                               item_index, pixels, 640u * 400u,
+                                               &width, &height)) {
+            decoded = width > 0u && height > 0u;
+            break;
+        }
+    }
+    CHECK(decoded, "real_a35e_img1_direct_record_decodes");
+    free(pixels);
+    free(bytes);
+    fclose(file);
+}
+
 static void test_receipt_null(void) {
     CHECK(csb_v1_amiga_graphics_receipt(NULL, 0, NULL) == -1, "receipt_null");
 }
@@ -73,6 +162,8 @@ int main(void) {
     test_wrong_marker();
     test_wrong_count();
     test_synthetic_valid();
+    test_img1_decode();
+    test_real_a35e_img1_if_available();
     test_receipt_null();
     printf("csb_v1_amiga_graphics_dat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

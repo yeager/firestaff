@@ -1,4 +1,5 @@
 #include "csb_v1_amiga_graphics_dat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 #include <string.h>
 
 static uint16_t rd16be(const uint8_t *p) {
@@ -54,6 +55,32 @@ int csb_v1_amiga_graphics_item(const uint8_t *data, size_t size,
         offset += compressed;
     }
     return 0;
+}
+
+int csb_v1_amiga_graphics_decode_item(const uint8_t *data, size_t size,
+                                      uint16_t itemIndex,
+                                      uint8_t *indexed_pixels,
+                                      size_t indexed_pixel_capacity,
+                                      uint16_t *out_width,
+                                      uint16_t *out_height)
+{
+    CSB_V1_AmigaGraphicsItem item;
+
+    if (out_width) *out_width = 0u;
+    if (out_height) *out_height = 0u;
+    if (!indexed_pixels || !csb_v1_amiga_graphics_item(data, size, itemIndex,
+                                                        &item) ||
+        item.compressedByteCount == 0u ||
+        item.compressedByteCount != item.decompressedByteCount ||
+        (size_t)item.dataOffset > size ||
+        (size_t)item.decompressedByteCount > size - (size_t)item.dataOffset) {
+        return 0;
+    }
+    /* IMAGE1.C consumes the source's big-endian width/height and nibble RLE
+     * directly after F0474 has returned this Amiga record. */
+    return dm1_v1_legacy_graphics_decode_item(
+        data + item.dataOffset, item.decompressedByteCount, 1,
+        indexed_pixels, indexed_pixel_capacity, out_width, out_height);
 }
 
 /* MD5 — minimal implementation for receipt hashing. */

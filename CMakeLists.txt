@@ -57017,6 +57017,7 @@ set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES LABELS "dm1;amiga
 add_executable(test_csb_v1_amiga_graphics_dat
     tests/test_csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
 )
 target_include_directories(test_csb_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_csb_v1_amiga_graphics_dat COMMAND test_csb_v1_amiga_graphics_dat)

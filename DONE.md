@@ -4,6 +4,16 @@
 - ✅ Detta ändrar ingen retail-admission och öppnar inga pixlar; det gör den källtroga spärren regressionssäker medan autentisk Saturn-konsumentcapture saknas.
 - ✅ `python3 tools/verify_nexus_production_source_boundary.py` passerar.
 
+# CSB Amiga IMG1-avkodning från original-GRAPHICS.DAT (2026-08-08)
+
+- ✅ Den nya avkodaren läser en hashklassificerad Amiga-DMCSB2-post och
+  expanderar direktlagrad IMG1 med originalets big-endian dimensioner och
+  nibbel-RLE (`ReDMCSB IMAGE1.C`, `MEMORY.C` F0490/F0474). Ett realdatatest
+  går igenom den lokala A35E-filen och låser att minst en autentisk IMG1-post
+  dekoderas utan konstruerade bildbytes.
+- ✅ Poster med olika komprimerad och expanderad längd förblir fail-closed;
+  ingen oidentifierad LZW- eller värdavkodning kan bli en Amiga-bildkälla.
+
 # CSB Amiga 3.5 English direkt C03-handoff (2026-08-08)
 
 - ✅ M12→M11 följer nu A35E:s egna hashverifierade programgräns:

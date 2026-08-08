@@ -66,6 +66,17 @@ int csb_v1_amiga_graphics_item(const uint8_t *data, size_t size,
                                uint16_t itemIndex,
                                CSB_V1_AmigaGraphicsItem *out);
 
+/* Decodes one bounded, uncompressed Amiga IMG1 record into 4-bit indexed
+ * pixels.  ReDMCSB MEMORY.C F0490 takes the direct F0474 branch for the
+ * authenticated Amiga records; compressed records deliberately remain
+ * rejected until their own source-owned expansion route is bound. */
+int csb_v1_amiga_graphics_decode_item(const uint8_t *data, size_t size,
+                                      uint16_t itemIndex,
+                                      uint8_t *indexed_pixels,
+                                      size_t indexed_pixel_capacity,
+                                      uint16_t *out_width,
+                                      uint16_t *out_height);
+
 #ifdef __cplusplus
 }
 #endif
