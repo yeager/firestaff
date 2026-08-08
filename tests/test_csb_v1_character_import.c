@@ -198,12 +198,10 @@ static void test_import_clears_carried_objects(void)
           "import clears ready-hand carried object");
     CHECK(c->Slots[CSB_V1_SLOT_ACTION_HAND] == 0xFFFFu,
           "import clears action-hand carried object");
-    CHECK(c->Slots[CSB_V1_SLOT_BELT_4] == 0xFFFFu,
-          "import clears belt carried object");
-    CHECK(c->Slots[CSB_V1_SLOT_PACK_12] == 0xFFFFu,
+    CHECK(c->Slots[CSB_V1_SLOT_POUCH_1] == 0xFFFFu,
+          "import clears pouch carried object");
+    CHECK(c->Slots[CSB_V1_SLOT_BACKPACK_LINE2_9] == 0xFFFFu,
           "import clears backpack carried object");
-    CHECK(c->Slots[CSB_V1_SLOT_CHEST_1] == 0xFFFFu,
-          "import clears chest slot carried object");
     CHECK(c->Slots[CSB_V1_SLOT_COUNT - 1] == 0xFFFFu,
           "import clears final carried-object slot");
     CHECK_EQ(c->Load, 0, "import resets carried-object load", "d");

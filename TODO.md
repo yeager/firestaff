@@ -12620,3 +12620,6 @@ as line/circle coordinates or promote them into movement geometry.
   behavior/count/direction/do-not-discard meanings remain unassigned until
   the original AI/T900 consumers are captured; no host bit interpretation is
   enabled.
+- 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
+  is now source-locked. Remaining HUD work is source-raster coverage and
+  complete interaction behavior, not an inferred slot-order translation.

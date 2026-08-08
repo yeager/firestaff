@@ -1248,6 +1248,23 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
 
 static void test_enter_game_preserves_imported_party_and_switches_leader(void)
 {
+    static const int expected_m11_slot[CSB_V1_SLOT_COUNT] = {
+        CHAMPION_SLOT_HAND_LEFT,  CHAMPION_SLOT_ACTION_HAND,
+        CHAMPION_SLOT_HEAD,       CHAMPION_SLOT_TORSO,
+        CHAMPION_SLOT_LEGS,       CHAMPION_SLOT_FEET,
+        CHAMPION_SLOT_POUCH_2,    CHAMPION_SLOT_QUIVER_3,
+        CHAMPION_SLOT_QUIVER_2,   CHAMPION_SLOT_QUIVER_4,
+        CHAMPION_SLOT_NECK,       CHAMPION_SLOT_POUCH_1,
+        CHAMPION_SLOT_QUIVER_1,   CHAMPION_SLOT_BACKPACK_1,
+        CHAMPION_SLOT_BACKPACK_2, CHAMPION_SLOT_BACKPACK_3,
+        CHAMPION_SLOT_BACKPACK_4, CHAMPION_SLOT_BACKPACK_5,
+        CHAMPION_SLOT_BACKPACK_6, CHAMPION_SLOT_BACKPACK_7,
+        CHAMPION_SLOT_BACKPACK_8, CHAMPION_SLOT_BACKPACK_9,
+        CHAMPION_SLOT_BACKPACK_10, CHAMPION_SLOT_BACKPACK_11,
+        CHAMPION_SLOT_BACKPACK_12, CHAMPION_SLOT_BACKPACK_13,
+        CHAMPION_SLOT_BACKPACK_14, CHAMPION_SLOT_BACKPACK_15,
+        CHAMPION_SLOT_BACKPACK_16, CHAMPION_SLOT_BACKPACK_17
+    };
     CSB_V1_BootProfile p;
     CSB_V1_PartyState imported;
     CSB_V1_PartyState runtime_party;
@@ -1256,6 +1273,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     uint8_t save_buf[1024];
     char dungeon_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-party";
+    int slot;
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
@@ -1269,8 +1287,9 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CHECK(imported.LeaderIndex == 0,
           "imported party starts with first living champion as leader");
     imported.PartyDirection = CSB_V1_DIR_EAST;
-    imported.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] = 0x1234u;
-    imported.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] = 0x2345u;
+    for (slot = 0; slot < CSB_V1_SLOT_COUNT; ++slot) {
+        imported.Champions[0].Slots[slot] = (uint16_t)(0x1200u + (unsigned)slot);
+    }
     imported.Champions[0].Portrait[0] = 0xabu;
 
     memset(&p, 0, sizeof(p));
@@ -1332,9 +1351,17 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
           "party mirror receipt carries imported health stat");
     CHECK(party_receipt.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] == 55,
           "party mirror receipt carries imported strength");
-    CHECK(party_receipt.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1234u &&
-              party_receipt.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] == 0x2345u,
+    CHECK(party_receipt.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1200u &&
+              party_receipt.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] == 0x1201u,
           "party mirror receipt maps CSB hand slots to shared champion slots");
+    for (slot = 0; slot < CSB_V1_SLOT_COUNT; ++slot) {
+        CHECK(csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(slot) ==
+                  expected_m11_slot[slot] &&
+                  party_receipt.party.champions[0]
+                      .inventory[expected_m11_slot[slot]] ==
+                      (uint16_t)(0x1200u + (unsigned)slot),
+              "party mirror preserves the complete ReDMCSB C00-C29 slot map");
+    }
     CHECK(party_receipt.party.champions[0].portraitBitmapValid == 1 &&
               party_receipt.party.champions[0].portraitBitmap[0] == 0xabu,
           "party mirror receipt carries compatible imported portrait bytes");
@@ -1384,7 +1411,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
               mirror_receipt.view.party_x == p.runtime.party_x &&
               mirror_receipt.view.party_y == p.runtime.party_y &&
               mirror_receipt.party.party.championCount == 2 &&
-              mirror_receipt.party.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1234u &&
+              mirror_receipt.party.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1200u &&
               mirror_receipt.leader_hand_present &&
               mirror_receipt.leader_hand_thing == 0x1234u,
           "combined M11 mirror receipt carries view state, party mirror and leader hand");

@@ -67,27 +67,40 @@
 #define CSB_V1_ACTION_DROP          0x06
 #define CSB_V1_ACTION_MOVE          0x07
 
-/* ReDMCSB C00_SLOT_READY_HAND through C29_SLOT_CHEST_1 */
-#define CSB_V1_SLOT_READY_HAND      0
-#define CSB_V1_SLOT_ACTION_HAND      1
-#define CSB_V1_SLOT_BELT_1          2
-#define CSB_V1_SLOT_BELT_2          3
-#define CSB_V1_SLOT_BELT_3          4
-#define CSB_V1_SLOT_BELT_4          5
-#define CSB_V1_SLOT_PACK_1         10
-#define CSB_V1_SLOT_PACK_2         11
-#define CSB_V1_SLOT_PACK_3         12
-#define CSB_V1_SLOT_PACK_4         13
-#define CSB_V1_SLOT_PACK_5         14
-#define CSB_V1_SLOT_PACK_6         15
-#define CSB_V1_SLOT_PACK_7         16
-#define CSB_V1_SLOT_PACK_8         17
-#define CSB_V1_SLOT_PACK_9         18
-#define CSB_V1_SLOT_PACK_10        19
-#define CSB_V1_SLOT_PACK_11        20
-#define CSB_V1_SLOT_PACK_12        21
-#define CSB_V1_SLOT_CHEST_1        22
-/* Slots 22-29 are chest slots */
+/* ReDMCSB DEFS.H C00_SLOT_READY_HAND through C29_SLOT_BACKPACK_LINE1_9.
+ * These are the raw M516.Champion.Slots[] offsets, deliberately not visual
+ * panel order.  C30..C35 are container slots and do not belong to this
+ * 30-word champion record. */
+#define CSB_V1_SLOT_READY_HAND          0
+#define CSB_V1_SLOT_ACTION_HAND         1
+#define CSB_V1_SLOT_HEAD                2
+#define CSB_V1_SLOT_TORSO               3
+#define CSB_V1_SLOT_LEGS                4
+#define CSB_V1_SLOT_FEET                5
+#define CSB_V1_SLOT_POUCH_2             6
+#define CSB_V1_SLOT_QUIVER_LINE2_1      7
+#define CSB_V1_SLOT_QUIVER_LINE1_2      8
+#define CSB_V1_SLOT_QUIVER_LINE2_2      9
+#define CSB_V1_SLOT_NECK               10
+#define CSB_V1_SLOT_POUCH_1            11
+#define CSB_V1_SLOT_QUIVER_LINE1_1     12
+#define CSB_V1_SLOT_BACKPACK_LINE1_1   13
+#define CSB_V1_SLOT_BACKPACK_LINE2_2   14
+#define CSB_V1_SLOT_BACKPACK_LINE2_3   15
+#define CSB_V1_SLOT_BACKPACK_LINE2_4   16
+#define CSB_V1_SLOT_BACKPACK_LINE2_5   17
+#define CSB_V1_SLOT_BACKPACK_LINE2_6   18
+#define CSB_V1_SLOT_BACKPACK_LINE2_7   19
+#define CSB_V1_SLOT_BACKPACK_LINE2_8   20
+#define CSB_V1_SLOT_BACKPACK_LINE2_9   21
+#define CSB_V1_SLOT_BACKPACK_LINE1_2   22
+#define CSB_V1_SLOT_BACKPACK_LINE1_3   23
+#define CSB_V1_SLOT_BACKPACK_LINE1_4   24
+#define CSB_V1_SLOT_BACKPACK_LINE1_5   25
+#define CSB_V1_SLOT_BACKPACK_LINE1_6   26
+#define CSB_V1_SLOT_BACKPACK_LINE1_7   27
+#define CSB_V1_SLOT_BACKPACK_LINE1_8   28
+#define CSB_V1_SLOT_BACKPACK_LINE1_9   29
 
 /* Cell (view position) values — normalized 0-3 */
 #define CSB_V1_CELL_FRONT_LEFT      0

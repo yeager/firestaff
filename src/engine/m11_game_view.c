@@ -2238,35 +2238,16 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
 
 static int m11_csb_mapped_inventory_slot(int csb_slot)
 {
-    if (csb_slot == CSB_V1_SLOT_READY_HAND) return CHAMPION_SLOT_HAND_LEFT;
-    if (csb_slot == CSB_V1_SLOT_ACTION_HAND) return CHAMPION_SLOT_ACTION_HAND;
-    if (csb_slot >= CSB_V1_SLOT_BELT_1 && csb_slot <= CSB_V1_SLOT_BELT_4) {
-        return CHAMPION_SLOT_POUCH_1 + (csb_slot - CSB_V1_SLOT_BELT_1);
-    }
-    if (csb_slot >= CSB_V1_SLOT_PACK_1 && csb_slot <= CSB_V1_SLOT_PACK_8) {
-        return CHAMPION_SLOT_BACKPACK_1 + (csb_slot - CSB_V1_SLOT_PACK_1);
-    }
-    if (csb_slot >= CSB_V1_SLOT_PACK_9 && csb_slot <= CSB_V1_SLOT_PACK_12) {
-        return CHAMPION_SLOT_BACKPACK_9 + (csb_slot - CSB_V1_SLOT_PACK_9);
-    }
-    return -1;
+    return csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(csb_slot);
 }
 
 static int m11_csb_slot_for_m11_inventory_slot(int championSlot)
 {
-    if (championSlot == CHAMPION_SLOT_HAND_LEFT) return CSB_V1_SLOT_READY_HAND;
-    if (championSlot == CHAMPION_SLOT_ACTION_HAND) return CSB_V1_SLOT_ACTION_HAND;
-    if (championSlot >= CHAMPION_SLOT_POUCH_1 &&
-        championSlot <= CHAMPION_SLOT_POUCH_1 + 3) {
-        return CSB_V1_SLOT_BELT_1 + (championSlot - CHAMPION_SLOT_POUCH_1);
-    }
-    if (championSlot >= CHAMPION_SLOT_BACKPACK_1 &&
-        championSlot <= CHAMPION_SLOT_BACKPACK_8) {
-        return CSB_V1_SLOT_PACK_1 + (championSlot - CHAMPION_SLOT_BACKPACK_1);
-    }
-    if (championSlot >= CHAMPION_SLOT_BACKPACK_9 &&
-        championSlot <= CHAMPION_SLOT_BACKPACK_12) {
-        return CSB_V1_SLOT_PACK_9 + (championSlot - CHAMPION_SLOT_BACKPACK_9);
+    int csb_slot;
+    for (csb_slot = 0; csb_slot < CSB_V1_SLOT_COUNT; ++csb_slot) {
+        if (m11_csb_mapped_inventory_slot(csb_slot) == championSlot) {
+            return csb_slot;
+        }
     }
     return -1;
 }

@@ -7595,3 +7595,17 @@
 - ✅ Verified against the real Atari ST `MINI.DAT`, plus PC34 startup/reload,
   source-lock, and headless Phase A regressions. CSB casting remains
   deliberately fail-closed pending its own CASTER/CSBWin owner.
+
+# CSB source-slot inventory projection (2026-08-08)
+
+- ✅ Corrected the raw `M516.Champion.Slots[30]` declaration from a false
+  belt/pack/chest layout to ReDMCSB's exact C00–C29 semantic positions.
+  Container C30–C35 are explicitly excluded from the champion record.
+- ✅ Centralized the source-to-M11 projection so both the runtime party
+  mirror and M11 inventory write-back use the same full 30-slot mapping.
+  This preserves head, torso, legs, feet, pouch, quiver, neck, both backpack
+  rows, and hands rather than silently dropping or misplacing them.
+- ✅ Added a complete unique-value C00–C29 runtime mirror roundtrip
+  regression, and rebuilt the live real-asset Atari ST `MINI.DAT` M11 route.
+  Source references: ReDMCSB `DEFS.H:779–809`, `DATA.C:442–466`, and
+  `PANEL.C` F0354.

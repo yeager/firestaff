@@ -614,20 +614,30 @@ static void csb_v1_runtime_copy_stat(struct ChampionStat_Compat *dst,
     dst->shifted = (unsigned short)(shifted > 65535u ? 65535u : shifted);
 }
 
-static int csb_v1_runtime_m11_inventory_slot_for_csb_slot(int csb_slot)
+int csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(int csb_slot)
 {
-    if (csb_slot == CSB_V1_SLOT_READY_HAND) return CHAMPION_SLOT_HAND_LEFT;
-    if (csb_slot == CSB_V1_SLOT_ACTION_HAND) return CHAMPION_SLOT_ACTION_HAND;
-    if (csb_slot >= CSB_V1_SLOT_BELT_1 && csb_slot <= CSB_V1_SLOT_BELT_4) {
-        return CHAMPION_SLOT_POUCH_1 + (csb_slot - CSB_V1_SLOT_BELT_1);
-    }
-    if (csb_slot >= CSB_V1_SLOT_PACK_1 && csb_slot <= CSB_V1_SLOT_PACK_8) {
-        return CHAMPION_SLOT_BACKPACK_1 + (csb_slot - CSB_V1_SLOT_PACK_1);
-    }
-    if (csb_slot >= CSB_V1_SLOT_PACK_9 && csb_slot <= CSB_V1_SLOT_PACK_12) {
-        return CHAMPION_SLOT_BACKPACK_9 + (csb_slot - CSB_V1_SLOT_PACK_9);
-    }
-    return -1;
+    /* ReDMCSB DEFS.H:779-809 and DATA.C:442-466: raw M516 slots and source
+     * drop order.  The M11 mirror has a compact visual index order, so all
+     * thirty source-owned slots must be projected explicitly. */
+    static const int source_to_m11[CSB_V1_SLOT_COUNT] = {
+        CHAMPION_SLOT_HAND_LEFT,  CHAMPION_SLOT_ACTION_HAND,
+        CHAMPION_SLOT_HEAD,       CHAMPION_SLOT_TORSO,
+        CHAMPION_SLOT_LEGS,       CHAMPION_SLOT_FEET,
+        CHAMPION_SLOT_POUCH_2,    CHAMPION_SLOT_QUIVER_3,
+        CHAMPION_SLOT_QUIVER_2,   CHAMPION_SLOT_QUIVER_4,
+        CHAMPION_SLOT_NECK,       CHAMPION_SLOT_POUCH_1,
+        CHAMPION_SLOT_QUIVER_1,   CHAMPION_SLOT_BACKPACK_1,
+        CHAMPION_SLOT_BACKPACK_2, CHAMPION_SLOT_BACKPACK_3,
+        CHAMPION_SLOT_BACKPACK_4, CHAMPION_SLOT_BACKPACK_5,
+        CHAMPION_SLOT_BACKPACK_6, CHAMPION_SLOT_BACKPACK_7,
+        CHAMPION_SLOT_BACKPACK_8, CHAMPION_SLOT_BACKPACK_9,
+        CHAMPION_SLOT_BACKPACK_10, CHAMPION_SLOT_BACKPACK_11,
+        CHAMPION_SLOT_BACKPACK_12, CHAMPION_SLOT_BACKPACK_13,
+        CHAMPION_SLOT_BACKPACK_14, CHAMPION_SLOT_BACKPACK_15,
+        CHAMPION_SLOT_BACKPACK_16, CHAMPION_SLOT_BACKPACK_17
+    };
+    if (csb_slot < 0 || csb_slot >= CSB_V1_SLOT_COUNT) return -1;
+    return source_to_m11[csb_slot];
 }
 
 static int csb_v1_runtime_copy_portrait_compat(
@@ -2751,12 +2761,12 @@ int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
                 profile, i, skill);
             dst->skillLevels[skill] = (uint8_t)((level > 0) ? level : 1);
         }
-        /* ReDMCSB: DEFS.H C00_SLOT_READY_HAND/C01_SLOT_ACTION_HAND and
-         * PANEL.C F0354 status boxes read champion slots by semantic slot.
-         * Only storage slots with a clear shared M11 equivalent are mirrored;
-         * CSB chest slots remain runtime-owned. */
+        /* ReDMCSB DEFS.H:779-809 and PANEL.C F0354 read C00..C29 by their
+         * semantic source slots.  Every one of those champion slots has an
+         * M11 equivalent; container C30..C35 are not champion-record slots
+         * and remain runtime-owned. */
         for (csb_slot = 0; csb_slot < CSB_V1_SLOT_COUNT; ++csb_slot) {
-            int dst_slot = csb_v1_runtime_m11_inventory_slot_for_csb_slot(csb_slot);
+            int dst_slot = csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(csb_slot);
             if (dst_slot >= 0 && dst_slot < CHAMPION_SLOT_COUNT) {
                 dst->inventory[dst_slot] = src->Slots[csb_slot];
             }

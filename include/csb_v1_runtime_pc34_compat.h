@@ -2931,6 +2931,11 @@ int csb_v1_runtime_view_state_receipt_from_profile_pc34(
     CSB_V1_RuntimeViewStateReceipt_PC34 *out_receipt);
 void csb_v1_runtime_party_mirror_receipt_init_pc34(
     CSB_V1_RuntimePartyMirrorReceipt_PC34 *receipt);
+/* Map one raw ReDMCSB M516 champion slot (C00..C29) to Firestaff's compact
+ * M11 champion inventory index.  The source order is intentionally
+ * non-linear; see ReDMCSB DEFS.H C00_SLOT_READY_HAND..C29_SLOT_BACKPACK_LINE1_9
+ * and DATA.C G0057_ai_Graphic562_SlotDropOrder. */
+int csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(int csb_slot);
 int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_RuntimePartyMirrorReceipt_PC34 *out_receipt);

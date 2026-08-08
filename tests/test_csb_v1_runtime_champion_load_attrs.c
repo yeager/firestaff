@@ -830,9 +830,9 @@ static void test_loaded_champion_load_calculation(void)
     party.ChampionCount = 1;
     party.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] = weapon;
     party.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] = armour;
-    party.Champions[0].Slots[CSB_V1_SLOT_BELT_1] = potion;
-    party.Champions[0].Slots[CSB_V1_SLOT_BELT_2] = waterskin;
-    party.Champions[0].Slots[CSB_V1_SLOT_PACK_1] = container;
+    party.Champions[0].Slots[CSB_V1_SLOT_POUCH_1] = potion;
+    party.Champions[0].Slots[CSB_V1_SLOT_POUCH_2] = waterskin;
+    party.Champions[0].Slots[CSB_V1_SLOT_BACKPACK_LINE1_1] = container;
     CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
           "runtime accepts loaded champion fixture");
 
