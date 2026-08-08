@@ -173,7 +173,11 @@
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - Theron: world snapshots now have endian-stable scalar envelopes, portable object/timer/creature records and bounds checks; progression/champion packing still needs a source-owned wire layout before claiming complete cross-host save parity.
 - Theron: runtime VRAM/VCE file admission is now byte-identified by the authenticated capture FNV receipts; the remaining presentation gap is the original square/material/perspective consumer and a source-owned HUD/text/portrait route.
-- Theron: the first real Track 02 screen-space capture is now published in README; replace the capture-only route with the authenticated T520/T600 square, perspective and HUD consumers when their runtime ownership is recovered.
+- Theron: an earlier Track 02 screen-space artifact was withdrawn from README
+  after the current promotion gate rejected it. Publish the first real image
+  only after an authenticated runtime receipt proves the VDC/VCE route; then
+  replace the capture-only path with the T520/T600 square, perspective and HUD
+  consumers when their runtime ownership is recovered.
 - Theron: world snapshot version 5 now preserves all 64 source-generator runtime slots and reads version 4's five-slot tail; bind the original T700 generator consumer, cadence and reactivation semantics before making those records executable.
 - Theron: regular-spawn admission now requires the matching raw Track 02 monster type and non-empty source group record; bind the dynamic RNG return contract before publishing those records as new live creatures.
 - Theron: verified-level moves now dispatch the common world tick without guessed stat drains; bind the original T700 field consumer and exact cadence before mutating hunger, water, stamina or poison.

@@ -6,10 +6,11 @@ the real CUE/BIN and a real SDL2 Mednafen build. It observed 161 raw sectors,
 data reads. This is a useful negative boundary: the transport is real, while
 the dungeon handoff is not yet proven.
 
-Theron's Quest is now represented by one explicitly qualified README capture.
-It is a native 256×224 screen-space reconstruction from the authenticated VDC
-VRAM/VCE snapshot, not a claim of a complete Firestaff gameplay frame. The
-current public status should stay clear: Firestaff can hash-verify JP/US Track 02 data, lock
+Theron's Quest has no README-eligible capture at present. A previously
+tracked screen-space artifact was withdrawn because the current promotion
+gate does not prove its source receipt and its readiness row fails the public
+geometry/non-black contract. The current public status should stay clear:
+Firestaff can hash-verify JP/US Track 02 data, lock
 raw bank-anchor offsets, read the authenticated US 53-entry descriptor table
 from its real MODE1 user-data offset, and reach
 the M11 Theron runtime, but per-entry semantic Track 02 dungeon-table binding,
@@ -25,14 +26,10 @@ The same normalization is applied to the Main-RAM consumer trace and its
 code-window verifier, so a transport-escaped sidecar cannot be accepted by
 the loader stage but rejected later by the consumer stage.
 
-An operator-supplied raw VDC/VCE pair is now also accepted by the production
-viewport path. The supplied dungeon snapshot (`65536` bytes VRAM plus `1024`
-bytes VCE) binds 1057 source tile/palette entries and presents 896 BAT cells.
-The source-bound capture tool writes the tracked
-`verification-screens/theron-track02-dungeon-capture.png` README artifact. This
-proves the bitmap-bank transport and palette decode; it is still a raw
-screen-space BAT preview, not proof of square-to-tile perspective, creature
-ownership or HUD layout.
+An operator-supplied raw VDC/VCE pair is accepted only by the explicit capture
+tool when its exact FNV receipts are present. That path is a diagnostic
+screen-space BAT preview, not a README promotion: it does not prove
+square-to-tile perspective, creature ownership or HUD layout.
 
 The strongest current proof is:
 

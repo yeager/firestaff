@@ -390,7 +390,7 @@
   T900 and dynamic consumer admission remain fail-closed until their owners
   are proven.
 
-# Theron first real README capture (2026-08-08)
+# Theron first capture candidate withdrawn (2026-08-08)
 
 # CSB effective launch-version handoff (2026-08-08)
 
@@ -450,11 +450,10 @@
 
 - ✅ Added a reproducible source-bound capture tool that requires the
   authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
-- ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a
-  256×224 native screen-space frame reconstructed from the captured BAT,
-  decoded tile atlas and VCE palette.
-- ✅ README labels the artifact accurately: it is not evidence for the still
-  unresolved dungeon-square, perspective or HUD consumers.
+- ✅ The earlier capture candidate and its README claim were audited against
+  the current promotion gate and withdrawn because the current receipt does
+  not prove README eligibility. No synthetic replacement was created.
+- ✅ README now states the honest `NO_README_PROMOTION_PERMITTED` boundary.
 
 # DM2 champion-name GDAT intake (2026-08-08)
 
