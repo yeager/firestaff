@@ -1210,6 +1210,8 @@ int main(void) {
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
     DM2_V1_BootNewGameChampionAdmissionReceipt champion_admission;
     DM2_V1_BootNewGameFirstChampionReceipt first_champion;
+    DM2_V1_BootNewGamePartySelection party_selections[2];
+    DM2_V1_BootNewGamePartyReceipt source_party;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
@@ -1458,6 +1460,48 @@ int main(void) {
                     first_champion.hero_hash != 0u &&
                     first_champion.receipt_hash != 0u,
                 "M11 materializes the first source c_hero candidate without publishing a party");
+    memset(party_selections, 0, sizeof(party_selections));
+    memset(&source_party, 0, sizeof(source_party));
+    if (champion_mirrors.mirror_count >= 2) {
+        int party_selection_index;
+        for (party_selection_index = 0; party_selection_index < 2;
+             ++party_selection_index) {
+            party_selections[party_selection_index].map =
+                champion_mirrors.mirrors[party_selection_index].map;
+            party_selections[party_selection_index].x =
+                champion_mirrors.mirrors[party_selection_index].x;
+            party_selections[party_selection_index].y =
+                champion_mirrors.mirrors[party_selection_index].y;
+            party_selections[party_selection_index].direction =
+                champion_mirrors.mirrors[party_selection_index].direction;
+            party_selections[party_selection_index].mirror_object_id =
+                champion_mirrors.mirrors[party_selection_index].object_id;
+        }
+    }
+    expect_true(profile && champion_mirrors.mirror_count >= 2 &&
+                    dm2_v1_boot_new_game_party_receipt(profile,
+                        party_selections, 2, &source_party) &&
+                    source_party.valid && source_party.incomplete_game_load &&
+                    source_party.hero_count == 2 &&
+                    source_party.party.heros_in_party == 2 &&
+                    source_party.party.hero[0].herotype ==
+                        (int8_t)source_party.admissions[0].selection
+                            .revive_data.hero_type &&
+                    source_party.party.hero[0].partypos !=
+                        source_party.party.hero[1].partypos &&
+                    source_party.party.hero[0].food == first_champion.hero.food &&
+                    source_party.party.hero[0].water == first_champion.hero.water &&
+                    source_party.source_rng_state_before == 0u &&
+                    source_party.source_rng_state_after != 0u &&
+                    source_party.party_hash != 0u &&
+                    source_party.receipt_hash != 0u,
+                "M11 preserves source champion click order and RNG across a read-only party receipt");
+    party_selections[1] = party_selections[0];
+    expect_true(profile &&
+                    !dm2_v1_boot_new_game_party_receipt(profile,
+                        party_selections, 2, &source_party) &&
+                    !source_party.valid,
+                "M11 rejects duplicate source mirrors before constructing a party receipt");
     memset(&champion_census, 0, sizeof(champion_census));
     expect_true(profile &&
                     dm2_v1_boot_champion_selection_census(

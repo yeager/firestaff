@@ -295,9 +295,24 @@
   `REVIVE_PLAYER`, `ADD_ITEM_TO_PLAYER`, `LOAD_DYN4` eller någon party-/HUD-
   mutation.
 
+# DM2 källdriven New Game-party-receipt (2026-08-08)
+
+- ✅ En till fyra valda DB3-championmirrors kan nu lösas till en enda läsande
+  `c_party`-receipt. Den följer `DM2_SELECT_CHAMPION`/`DM2_REVIVE_PLAYER` i
+  `skhero.cpp`: samma klickordning, första lediga partyposition och den
+  sammanhängande `c_randomdata`-LCG-följden för food/water.
+- ✅ Varje val löses på nytt mot File_header, CHAMPIONS, riktade startobjekt
+  och DYN4; dubblett-speglar avvisas. Receiptet överför inga objektrecords
+  och publicerar inte party, HUD eller runtime-session.
+- ✅ Party-layoutens initierings- och specialforce-API har fått egna symboler.
+  Det tar bort en verklig ABI-kollision med den callback-baserade
+  hero-ops-modulen, där samma C-symboler tidigare hade olika signaturer.
+- ✅ Verifierat mot hashverifierad PC-DOS-media via M11:s
+  startup/profile-grind.
+
 # DM2 första c_hero-kandidat (2026-08-08)
 
-- ✅ Första valet kan nu materialiseras byteförbyte som den 263-byte stora
+- ✅ Första valet kan nu materialiseras fält för fält som den 263-byte stora
   `c_hero` som `DM2_REVIVE_PLAYER` bygger: namn, HP/stamina/mana, abilities,
   fem färdighetsrader, tomma item-platser, riktning och food/water från
   originalets `c_randomdata::init`/LCG-steg.

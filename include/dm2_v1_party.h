@@ -108,10 +108,13 @@ typedef struct {
     int8_t      handitems[20];
 } DM2_V1_Party;
 
-void dm2_v1_hero_init(DM2_V1_Hero *hero);
-void dm2_v1_party_init(DM2_V1_Party *party);
+/* These layout owners intentionally carry the `_state_` qualifier.  The
+ * callback-oriented hero-ops compatibility module has legacy operations with
+ * the same source names but different ABI signatures. */
+void dm2_v1_party_hero_init(DM2_V1_Hero *hero);
+void dm2_v1_party_state_init(DM2_V1_Party *party);
 
-void dm2_v1_party_set_hero_flags(DM2_V1_Party *party);
+void dm2_v1_party_state_set_hero_flags(DM2_V1_Party *party);
 
 int16_t dm2_v1_hero_get_adj_ability1_raw(
     DM2_V1_Hero *hero, DM2_Ability abi, DM2_CurMax curmax,
@@ -139,7 +142,8 @@ void dm2_v1_hero_2c1d_0300(DM2_V1_Hero *hero, int16_t ability_idx, int16_t delta
 
 int32_t dm2_v1_hero_37bea(DM2_V1_Party *party, int16_t hero_idx, int16_t carried_weight);
 
-int32_t dm2_v1_get_party_special_force(DM2_V1_Party *party, const int16_t *carried_weights);
+int32_t dm2_v1_party_get_special_force_raw(
+    DM2_V1_Party *party, const int16_t *carried_weights);
 
 void dm2_v1_party_reset_squad_dir(DM2_V1_Party *party, int8_t facing_dir);
 

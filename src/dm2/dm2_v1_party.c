@@ -14,14 +14,14 @@ static int32_t dm2_atimesb_rshiftc(int16_t a, int16_t b, int16_t c) {
     return product >> c;
 }
 
-void dm2_v1_hero_init(DM2_V1_Hero *hero) {
+void dm2_v1_party_hero_init(DM2_V1_Hero *hero) {
     memset(hero, 0, sizeof(*hero));
 }
 
-void dm2_v1_party_init(DM2_V1_Party *party) {
+void dm2_v1_party_state_init(DM2_V1_Party *party) {
     int i;
     for (i = 0; i < DM2_MAX_HEROES; ++i)
-        dm2_v1_hero_init(&party->hero[i]);
+        dm2_v1_party_hero_init(&party->hero[i]);
     party->heros_in_party = 0;
     party->absdir = 0;
     party->curactevhero = DM2_HERO_NONE;
@@ -32,7 +32,7 @@ void dm2_v1_party_init(DM2_V1_Party *party) {
 }
 
 /* skproject c_party::set_hero_flags (c_hero.cpp:190) */
-void dm2_v1_party_set_hero_flags(DM2_V1_Party *party) {
+void dm2_v1_party_state_set_hero_flags(DM2_V1_Party *party) {
     int i;
     for (i = 0; i < party->heros_in_party; ++i)
         party->hero[i].heroflag |= 0x4000;
@@ -188,7 +188,8 @@ int32_t dm2_v1_hero_37bea(DM2_V1_Party *party, int16_t hero_idx, int16_t carried
 
 /* skproject DM2_GET_PARTY_SPECIAL_FORCE (c_hero.cpp:2407)
  * Sums hero special-force contributions. carried_weights[i] = weight for hero i. */
-int32_t dm2_v1_get_party_special_force(DM2_V1_Party *party, const int16_t *carried_weights) {
+int32_t dm2_v1_party_get_special_force_raw(
+    DM2_V1_Party *party, const int16_t *carried_weights) {
     int32_t total = 0;
     for (int16_t i = 0; i < party->heros_in_party; i++)
         total += dm2_v1_hero_37bea(party, i, carried_weights[i]);

@@ -4,9 +4,11 @@
   riktiga ground-stack-/recordkedjan i ett läsande kvitto, och ett valt
   championmirror kräver nu exakt GDAT-, startobjekt- och DYN4-data. Första
   `c_hero` materialiseras nu från samma originaldata och c_randomdata:s
-  dokumenterade initiala LCG-ström. Nästa atomära ägare måste förena den med
-  possessions, efterföljande heroes, timerkö och aktuatorgenerator; starten
-  får inte publicera party, HUD eller viewport innan hela transaktionen finns.
+  dokumenterade initiala LCG-ström. Upp till fyra uttryckligen valda
+  originalspeglar kan läsas som en gemensam party-receipt med korrekt
+  klickordning, formation och RNG-följd. Nästa atomära ägare måste förena den
+  med possessions, timerkö och aktuatorgenerator; starten får inte publicera
+  party, HUD eller viewport innan hela transaktionen finns.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

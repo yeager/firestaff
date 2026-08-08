@@ -250,6 +250,33 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_BootNewGameFirstChampionReceipt;
 
+/* A requested selection is an original G1 mirror root, normally obtained
+ * from DM2_V1_BootChampionSelectionCensus.  It is not a host-authored hero
+ * description: the receipt re-resolves it through the current File_header
+ * and CHAMPIONS data before accepting it. */
+typedef struct {
+    int map;
+    int x;
+    int y;
+    int direction;
+    uint16_t mirror_object_id;
+} DM2_V1_BootNewGamePartySelection;
+
+/* Read-only result of one to four original DM2_SELECT_CHAMPION calls.  The
+ * c_party bytes are transaction evidence only: no record links, possessions,
+ * DYN4 rows, timers, HUD state or runtime session is published here. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int hero_count;
+    DM2_V1_BootNewGameChampionAdmissionReceipt admissions[DM2_MAX_HEROES];
+    DM2_V1_Party party;
+    uint32_t source_rng_state_before;
+    uint32_t source_rng_state_after;
+    uint32_t party_hash;
+    uint32_t receipt_hash;
+} DM2_V1_BootNewGamePartyReceipt;
+
 /* Complete source roster for the mirror-selection screen. The order is the
  * canonical File_header chain order, not a host-authored portrait order. */
 typedef struct {
@@ -1568,6 +1595,11 @@ int dm2_v1_boot_new_game_first_champion_receipt(
     const DM2_V1_BootProfile *profile,
     int map, int x, int y, int direction,
     DM2_V1_BootNewGameFirstChampionReceipt *out_receipt);
+
+int dm2_v1_boot_new_game_party_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartySelection *selections, int selection_count,
+    DM2_V1_BootNewGamePartyReceipt *out_receipt);
 
 /* Enumerate every authentic DB3 subtype-0x7e selection candidate. Duplicate
  * hero types or a candidate that cannot be joined to exact GDAT and tile data
