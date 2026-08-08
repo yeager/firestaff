@@ -696,8 +696,10 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
     surfaces->hud_surfaces_ready =
         surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
                 .valid &&
-        surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
-                .valid;
+        (surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+                .valid ||
+         (inventory && inventory->source ==
+              CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34));
     surfaces->real_asset_matched = 1;
     surfaces->valid = 1;
     out_session->hud_inventory_binding = inventory ? *inventory : (CSB_V1_StartupAssetBinding_PC34){0};
@@ -748,14 +750,20 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid &&
         surfaces->surfaces[
             CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid;
-    out_session->hud_assets_bound = inventory && resurrect && inventory->verified &&
-        resurrect->verified &&
-        ((inventory->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
-          resurrect->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34) ||
-         (inventory->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
-          resurrect->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34)) &&
-        surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid &&
-        surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid;
+    if (inventory && inventory->verified &&
+        inventory->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid) {
+        out_session->hud_assets_bound = 1;
+    } else {
+        out_session->hud_assets_bound = inventory && resurrect &&
+            inventory->verified && resurrect->verified &&
+            ((inventory->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
+              resurrect->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34) ||
+             (inventory->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+              resurrect->source == CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34)) &&
+            surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid &&
+            surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid;
+    }
     out_session->full_startup_ready =
         out_session->title_presents_ready && out_session->title_chaos_ready &&
         out_session->title_strikes_back_ready && out_session->entrance_assets_ready &&

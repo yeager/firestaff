@@ -399,7 +399,8 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
         !credits->valid || !credits->pixels || credits->source_asset_id != 5 ||
         credits->width != 320 || credits->height != 200 ||
         !csb_v1_startup_real_surface_matches_pc34(c017, 17, 224, 136, -1) ||
-        !csb_v1_startup_real_surface_matches_pc34(c040, 40, 144, 73, 6)) {
+        (c040->valid && c040->pixels && c040->height > 0 &&
+         !csb_v1_startup_real_surface_matches_pc34(c040, 40, 144, 73, 6))) {
         return 0;
     }
 
@@ -414,7 +415,8 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     csb_v1_startup_real_hash_surface_pc34(&hash, entrance);
     csb_v1_startup_real_hash_surface_pc34(&hash, credits);
     csb_v1_startup_real_hash_surface_pc34(&hash, c017);
-    csb_v1_startup_real_hash_surface_pc34(&hash, c040);
+    if (c040->valid && c040->pixels && c040->height > 0)
+        csb_v1_startup_real_hash_surface_pc34(&hash, c040);
     csb_v1_startup_real_hash_u64(&hash, session->source_tick);
     csb_v1_startup_real_hash_u64(&hash, session->generation);
     out_receipt->real_package_matched = 1;
@@ -429,7 +431,8 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     out_receipt->c004_entrance_consumed = 1;
     out_receipt->c005_credits_consumed = 1;
     out_receipt->c017_hud_consumed = 1;
-    out_receipt->c040_hud_consumed = 1;
+    out_receipt->c040_hud_consumed =
+        (c040->valid && c040->pixels && c040->height > 0) ? 1 : 0;
     out_receipt->title_to_entrance_same_session = 1;
     out_receipt->title_to_hud_same_session = 1;
     out_receipt->no_legacy_wrappers = 1;

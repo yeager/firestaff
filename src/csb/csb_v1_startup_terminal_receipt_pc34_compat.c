@@ -46,18 +46,22 @@ int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
     if (!c017->valid || !c017->pixels || c017->source_asset_id != 17 ||
         c017->width != CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 ||
         c017->height != CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 ||
-        c017->transparent_color != -1 || !c040->valid || !c040->pixels ||
-        c040->source_asset_id != 40 ||
-        c040->width != CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 ||
-        c040->height != CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 ||
-        c040->transparent_color !=
-            CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34) return 0;
+        c017->transparent_color != -1) return 0;
+    if (c040->valid && c040->pixels && c040->height > 0) {
+        if (c040->source_asset_id != 40 ||
+            c040->width != CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 ||
+            c040->height != CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 ||
+            c040->transparent_color !=
+                CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34)
+            return 0;
+    }
     out_receipt->valid = 1;
     out_receipt->c001_complete = 1;
     out_receipt->terminal_f0807_complete = 1;
     out_receipt->hud_session_ready = 1;
     out_receipt->c017_ready = 1;
-    out_receipt->c040_ready = 1;
+    out_receipt->c040_ready =
+        (c040->valid && c040->pixels && c040->height > 0) ? 1 : 0;
     out_receipt->no_legacy_wrapper = 1;
     out_receipt->no_fallback_route = 1;
     out_receipt->source_tick = session->source_tick;

@@ -236,15 +236,23 @@ int csb_v1_startup_session_hud_surface_contract_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
     /* ReDMCSB PANEL.C F0346/F0347 bind C017/C040 from a real graphics
        owner; the terminal handoff must not bless an untyped cache entry. */
-    return c017->valid && c017->pixels &&
-        (c017->source_kind ==
-             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34 ||
-         c017->source_kind ==
-             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34) &&
-        c017->source_asset_id == 17 &&
-        c017->width == CSB_V1_CONTRACT_C017_WIDTH_PC34 &&
-        c017->height == CSB_V1_CONTRACT_C017_HEIGHT_PC34 &&
-        c017->transparent_color == -1 && c040->valid && c040->pixels &&
+    if (!c017->valid || !c017->pixels ||
+        (c017->source_kind !=
+             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34 &&
+         c017->source_kind !=
+             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34) ||
+        c017->source_asset_id != 17 ||
+        c017->width != CSB_V1_CONTRACT_C017_WIDTH_PC34 ||
+        c017->height != CSB_V1_CONTRACT_C017_HEIGHT_PC34 ||
+        c017->transparent_color != -1)
+        return 0;
+    /* CSB has no resurrection mechanic. CSBWin/Atari GRAPHICS.DAT stores
+       C040 with height 0, so skip the C040 check for that source. */
+    if (c017->source_kind ==
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        (!c040->valid || c040->height == 0))
+        return 1;
+    return c040->valid && c040->pixels &&
         c040->source_asset_id == 40 &&
         c040->width == CSB_V1_CONTRACT_C040_WIDTH_PC34 &&
         c040->height == CSB_V1_CONTRACT_C040_HEIGHT_PC34 &&
