@@ -77,7 +77,8 @@ add_test(NAME nexus_v1_combat COMMAND test_nexus_v1_combat)
 set_tests_properties(nexus_v1_combat PROPERTIES LABELS "nexus;combat;tier4")
 
 add_executable(test_nexus_v1_magic
-    tests/test_nexus_v1_magic.c)
+    tests/test_nexus_v1_magic.c
+    src/nexus/nexus_v1_magic.c)
 target_include_directories(test_nexus_v1_magic PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_magic PRIVATE firestaff_nexus)
@@ -169,7 +170,8 @@ set_tests_properties(nexus_v1_startup_presentation_animation_receipt PROPERTIES
     LABELS "nexus;startup;animation;tier4")
 
 add_executable(test_nexus_v1_spell_cast_mechanics
-    tests/test_nexus_v1_spell_cast_mechanics.c)
+    tests/test_nexus_v1_spell_cast_mechanics.c
+    src/nexus/nexus_v1_magic.c)
 target_include_directories(test_nexus_v1_spell_cast_mechanics PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_spell_cast_mechanics PRIVATE firestaff_nexus)
@@ -372,7 +374,8 @@ add_test(NAME nexus_v1_formation COMMAND test_nexus_v1_formation)
 set_tests_properties(nexus_v1_formation PROPERTIES LABELS "nexus;formation;tier4")
 
 add_executable(test_nexus_v1_experience
-    tests/test_nexus_v1_experience.c)
+    tests/test_nexus_v1_experience.c
+    src/nexus/nexus_v1_experience.c)
 target_include_directories(test_nexus_v1_experience PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_experience PRIVATE firestaff_nexus)
@@ -6571,12 +6574,12 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
 # formula parity is not evidence of a Saturn Nexus action, HUD, or VDP owner.
 # Keep the production ABI fail-closed until the corresponding runtime capture
 # is admitted.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic\\.c$")
 # The DM.BIN combat formula/RNG is an inferred study. Production keeps the
 # ABI's state-preserving boundary; the formula study is linked only by its
 # explicit diagnostic test.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest_status_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light_runtime_noop\\.c$")

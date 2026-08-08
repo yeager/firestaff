@@ -9502,3 +9502,8 @@
 - ✅ `nexus_v1_combat.c` innehåller DM.BIN-formel-/RNG-studien men saknar autentiserad Saturn-dispatch, RNG-state, damage/wound-writeback, XP- och SLEV/SFX-kedja.
 - ✅ Produktionsbiblioteket länkar nu `nexus_v1_combat_runtime_noop.c`; formelstudien länkas endast av `nexus_v1_combat`-testet.
 - ✅ Creature, combat, production-boundary, dungeon-start och SMAP-tester passerar.
+# Nexus inferred magic/experience studies removed from production (2026-08-08)
+
+- ✅ `nexus_v1_magic.c` och `nexus_v1_experience.c` var inferred DM.BIN-modeller utan autentiserad Saturn action/event-, writeback-, RNG- eller SLEV/SFX-kedja.
+- ✅ Produktionsbiblioteket länkar nu `magic_runtime_noop` och `experience_runtime_noop`; studieimplementationerna länkas endast av sina explicita formeltester.
+- ✅ Magic, spell-cast, experience, production-boundary och Nexus source-boundary passerar.
