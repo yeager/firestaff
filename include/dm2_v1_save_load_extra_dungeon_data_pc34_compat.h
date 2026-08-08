@@ -31,7 +31,23 @@ typedef struct {
      * lose authentic tile state. Required when a tile mask is nonzero. */
     int (*set_tile)(void *ctx, int x, int y, uint8_t tile);
 
-    /* Set tile record link head for a tile with objects (bit 4 set). */
+    /* Return the source-owned tile record-link head.  READ_SKSAVE_DUNGEON
+     * does not replace resident DB0..DB3 chains: it restores their masked
+     * record bytes in place, and invokes READ_RECORD_CHECKCODE only when
+     * this is OBJECT_END_MARKER. */
+    uint16_t (*get_tile_record_link)(void *ctx, int x, int y);
+
+    /* Restore the masked bytes of a resident tile chain.  The callback must
+     * traverse the exact existing chain and consume its SUPPRESS fields;
+     * returning nonzero rejects the whole load transaction.  It is never
+     * legal to allocate a replacement chain for a non-empty tile. */
+    int (*restore_existing_tile_record_chain)(void *ctx,
+                                               DM2_ReadRecordSession *session,
+                                               uint16_t root_link,
+                                               int x, int y);
+
+    /* Set tile record link head only for an originally empty tile whose
+     * chain was just decoded by READ_RECORD_CHECKCODE. */
     void (*set_tile_record_link)(void *ctx, int x, int y, uint16_t link);
 
     /* Get teleporter detail for forward-ref skipping.

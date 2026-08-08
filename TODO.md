@@ -4182,6 +4182,13 @@ level or consumer bindings.
   c_hex2a `w_00`, c_tim bytes and carried SUPPRESS state. It remains blocked
   whenever the local pool cannot own the chain; map-chain and possession
   phases still need to join this transaction before Resume can open.
+  **2026-08-08 map-chain correction:** `READ_SKSAVE_DUNGEON` no longer treats
+  every tile as an empty dynamic chain. A resident DB0..DB3 tile chain must
+  be restored in place by its map/record owner; only `OBJECT_END_MARKER`
+  reaches `READ_RECORD_CHECKCODE`. The generic loader now rejects a missing
+  resident-chain owner instead of consuming the shared stream into a
+  fabricated replacement. The remaining transaction must provide that owner,
+  then bind map chains and possessions in the original order.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

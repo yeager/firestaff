@@ -4,7 +4,7 @@
   cursor chains. It no longer reads possession continuations from the wrong
   position in the shared SUPPRESS stream. SKProject restores special timer
   records and map chains first, then consumes possession continuations.
-- ✅ Verification: all eight original PC-DOS SKSAVE files pass the 160-check
+- ✅ Verification: all eight original PC-DOS SKSAVE files pass the 168-check
   real-data corpus suite. The revised pool receipt proves that this phase has
   consumed zero continuation records rather than misclassifying later source
   bytes.
@@ -17,6 +17,14 @@
   chains. The four files without a complete local pool remain fail-closed.
 - ✅ Verification: the real PC-DOS SKSAVE corpus passes 168 checks. No save
   is written, unpacked or promoted into a playable session.
+- ✅ Corrected the generic `READ_SKSAVE_DUNGEON` tile-chain branch to match
+  `sksvgame.cpp:1320-1399`: a resident tile chain is restored by its existing
+  map/record owner, while `READ_RECORD_CHECKCODE` is reserved for an empty
+  `OBJECT_END_MARKER` tile. Missing ownership now fails closed instead of
+  consuming real map bits into an invented replacement chain.
+- ✅ Verification: `test_dm2_v1_save_load_extra_dungeon_data` and the
+  168-check real PC-DOS SKSAVE corpus pass. The change reads data in place;
+  it does not unpack, write or publish a save.
 
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 

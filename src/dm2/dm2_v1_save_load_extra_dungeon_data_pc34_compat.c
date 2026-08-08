@@ -94,27 +94,40 @@ int dm2_v1_load_extra_dungeon_data(
 
                 local.tiles_loaded++;
 
-                /* Read the record chain unless skipped. */
+                /* SKProject sksvgame.cpp:1320-1399 distinguishes resident
+                 * DB0..DB3 chains from an empty tile.  Only an empty tile
+                 * calls READ_RECORD_CHECKCODE.  The former implementation
+                 * decoded a new chain for every tile, consumed the wrong
+                 * bits from a real SKSAVE stream, and discarded the source
+                 * record owner. */
                 if (!skip_record_chain) {
-                    uint16_t root_link = 0xfffeu;
-                    int rc = dm2_v1_read_record_checkcode(
-                        session, rec_cb, &root_link, x, y, 1, 1);
-                    if (rc > 0) {
+                    uint16_t root_link;
+                    if (!dung_cb->get_tile_record_link) {
                         local.error = 1;
                         goto done;
                     }
-                    if (rc < 0) {
+                    root_link = dung_cb->get_tile_record_link(
+                        dung_cb->ctx, x, y);
+                    if (root_link == 0xfffeu) {
+                        int rc = dm2_v1_read_record_checkcode(
+                            session, rec_cb, &root_link, x, y, 1, 1);
+                        if (rc != 0 || session->error ||
+                            (root_link != 0xfffeu &&
+                             (!dung_cb->set_tile_record_link ||
+                              dung_cb->set_tile_record_link(
+                                  dung_cb->ctx, x, y, root_link) != 0))) {
+                            local.error = 1;
+                            goto done;
+                        }
+                    } else if (!dung_cb->restore_existing_tile_record_chain ||
+                               dung_cb->restore_existing_tile_record_chain(
+                                   dung_cb->ctx, session, root_link, x, y) != 0 ||
+                               session->error) {
+                        /* A partial loader may not reinterpret resident
+                         * records as dynamic ones.  Fail closed until the
+                         * GAME_LOAD transaction supplies this owner. */
                         local.error = 1;
                         goto done;
-                    }
-                    /* SKProject sksvgame.cpp:1390-1399 installs the
-                     * decoded chain head in the tile's record-link field.
-                     * Passing NULL here used to consume authentic bytes and
-                     * then discard the entire tile ownership edge. */
-                    if (root_link != 0xfffeu &&
-                        dung_cb->set_tile_record_link) {
-                        dung_cb->set_tile_record_link(dung_cb->ctx, x, y,
-                                                      root_link);
                     }
                     local.record_chains_loaded++;
                 }

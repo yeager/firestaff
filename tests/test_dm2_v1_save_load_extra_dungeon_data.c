@@ -160,6 +160,7 @@ static void test_empty_dungeon_round_trip(void)
     ldcb.change_current_map = mock_change_map;
     ldcb.get_tile = mock_get_tile;
     ldcb.set_tile = mock_set_tile;
+    ldcb.get_tile_record_link = mock_get_rec_link;
     ldcb.get_teleporter_detail = mock_get_tp;
 
     DM2_V1_LoadExtraDungeonReceipt receipt;
@@ -229,6 +230,7 @@ static void test_tile_mask_restores_live_tile(void)
     lcb.change_current_map = mock_change_map;
     lcb.get_tile = mock_get_tile;
     lcb.set_tile = mock_set_tile;
+    lcb.get_tile_record_link = mock_get_rec_link;
     lcb.get_teleporter_detail = mock_get_tp;
     assert(dm2_v1_load_extra_dungeon_data(&rd, &rcb, &lcb, 0, &receipt) == 0);
     assert(receipt.valid && g_tiles[0][0] == 0x48);
