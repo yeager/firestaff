@@ -1688,10 +1688,16 @@ int main(void) {
                         &new_game_world_owner) &&
                     new_game_world_owner.champion_selection_materialized &&
                     new_game_world_owner.selected_party.heros_in_party == 2 &&
+                    new_game_world_owner.champion_item_bonus.valid &&
+                    !new_game_world_owner.champion_item_bonus.blocked &&
+                    new_game_world_owner.champion_item_bonus.processed_item_roots ==
+                        source_transaction.possessions.placed_item_count &&
                     new_game_world_owner.selected_party.hero[0].herotype ==
                         source_transaction.possessions.projected_party.hero[0].herotype &&
                     new_game_world_owner.selected_party.hero[0].item[0] ==
                         source_transaction.possessions.projected_party.hero[0].item[0] &&
+                    (new_game_world_owner.selected_party.hero[0].heroflag &
+                        0x1000) != 0 &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 materializes source-selected heroes and possessions after private GAME_LOAD generators without publishing a session");

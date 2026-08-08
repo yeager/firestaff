@@ -48,8 +48,9 @@
   kan nu skapa originalets 0x04-meddelande och nästa 0x56-post i samma kö.
   Championvalet materialiseras därefter i den privata `c_party`-ägaren från
   samma click-ordnade GDAT- och File_header-receipt, med varje itemlänk
-  kontrollerad mot dess riktiga DB-pool. 0x04-dispatchen, DYN-aktiveringen,
-  vikter/itembonusar och sessionens atomära commit återstår. Den gamla
+  kontrollerad mot dess riktiga DB-pool. Originalets equip-bonusläge och
+  startvikt är nu tillämpade privat mot GDAT. 0x04-dispatchen,
+  DYN-aktiveringen och sessionens atomära commit återstår. Den gamla
   32-posters kön används inte. Ingen party, HUD eller timer får publiceras
   före hela den transaktionen.
 

@@ -204,8 +204,10 @@ int dm2_v1_game_load_world_owner_init_new_game(
     }
 
     candidate.current_map = candidate.transaction.entrance.map;
+    candidate.asset_loader = dm2_v1_boot_asset_loader(profile);
     candidate.source_transaction_hash = candidate.transaction.transaction_hash;
-    if (candidate.source_transaction_hash == 0u ||
+    if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
+        candidate.source_transaction_hash == 0u ||
         !dm2_v1_game_load_owner_validate_possessions(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
@@ -231,7 +233,12 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
      * links. This creates a private c_party owner, never an M11 party. */
     candidate = owner->transaction.possessions.projected_party;
     if (!dm2_v1_game_load_owner_validate_possessions(owner) ||
-        !dm2_v1_game_load_owner_validate_selected_party(owner, &candidate)) {
+        !dm2_v1_game_load_owner_validate_selected_party(owner, &candidate) ||
+        !dm2_v1_new_game_apply_source_item_bonuses(&candidate,
+            &owner->record_pools, owner->asset_loader,
+            &owner->champion_item_bonus) ||
+        !owner->champion_item_bonus.valid ||
+        owner->champion_item_bonus.blocked) {
         return 0;
     }
     owner->selected_party = candidate;

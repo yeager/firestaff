@@ -15,6 +15,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_timer_queue_pc34_compat.h"
 
@@ -41,10 +42,12 @@ typedef struct {
     DM2_V1_TimerQueue timer_queue;
     uint16_t timer_capacity;
     int fresh_game_mode;
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_BootNewGameTransactionReceipt transaction;
     /* This remains zeroed until the source-ordered champion step.  It is
      * never installed in M11 or the runtime party state. */
     int champion_selection_materialized;
+    DM2_V1_SksaveItemBonusReceipt champion_item_bonus;
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
 

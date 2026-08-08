@@ -371,6 +371,94 @@ static int dm2_v1_sksave_process_one_item_bonus_root(
     return 1;
 }
 
+static void dm2_v1_new_game_apply_item_bonus_receipt(DM2_V1_Hero *hero,
+    const DM2_V1_ProcessItemBonusReceipt *bonus)
+{
+    int i;
+    if (!hero || !bonus) return;
+    hero->maxMP = (int16_t)(hero->maxMP + bonus->max_mp_delta);
+    for (i = 0; i < DM2_V1_NUM_ABILITIES; ++i) {
+        hero->eability[i] = (int8_t)(hero->eability[i] +
+            bonus->eability_delta[i]);
+    }
+    for (i = 0; i < DM2_V1_NUM_SKILL_SLOTS; ++i) {
+        hero->sbonus[i / 4][i % 4] = (int8_t)(hero->sbonus[i / 4][i % 4] +
+            bonus->sbonus_delta[i]);
+    }
+    hero->walkspeed = (int8_t)(hero->walkspeed + bonus->walkspeed_delta);
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+        (uint16_t)bonus->heroflag_or);
+}
+
+int dm2_v1_new_game_apply_source_item_bonuses(
+    DM2_V1_Party *party, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SksaveItemBonusReceipt *out_receipt)
+{
+    DM2_V1_SksaveItemBonusReceipt receipt;
+    DM2_V1_SksaveItemBonusContext context;
+    int hero_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&context, 0, sizeof(context));
+    receipt.source_hash = 2166136261u;
+    if (!party || !pools || !pools->valid || !loader ||
+        party->heros_in_party <= 0 || party->heros_in_party > DM2_MAX_HEROES) {
+        receipt.blocked = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    context.pools = pools;
+    context.loader = loader;
+    for (hero_index = 0; hero_index < party->heros_in_party; ++hero_index) {
+        DM2_V1_Hero *hero = &party->hero[hero_index];
+        int slot;
+        int32_t total_weight = 0;
+        for (slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+            DM2_V1_ProcessItemBonusCallbacks callbacks;
+            DM2_V1_ProcessItemBonusInput input;
+            DM2_V1_ProcessItemBonusReceipt bonus;
+            const uint16_t item = (uint16_t)hero->item[slot];
+            receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
+                receipt.source_hash, item);
+            if (item == OBJECT_NULL_WORD) continue;
+            if (item == OBJECT_END_WORD ||
+                !dm2_v1_sksave_item_bonus_classify(&context, item, NULL, NULL)) {
+                receipt.blocked = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            memset(&callbacks, 0, sizeof(callbacks));
+            memset(&input, 0, sizeof(input));
+            memset(&bonus, 0, sizeof(bonus));
+            callbacks.query_dbspec_word = dm2_v1_sksave_item_bonus_query_dbspec;
+            callbacks.is_item_fit_for_equip = dm2_v1_sksave_item_bonus_fit;
+            callbacks.retrieve_item_bonus = dm2_v1_sksave_item_bonus_retrieve;
+            callbacks.query_cls2_from_record = dm2_v1_sksave_item_bonus_query_cls2;
+            callbacks.ctx = &context;
+            input.hero_index = (int16_t)hero_index;
+            input.item_ref = item;
+            input.slot = (int16_t)slot;
+            input.mode = 1;
+            dm2_v1_PROCESS_ITEM_BONUS(&input, &callbacks, &bonus);
+            if (context.invalid || !bonus.valid || bonus.blocked) {
+                receipt.blocked = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            dm2_v1_new_game_apply_item_bonus_receipt(hero, &bonus);
+            total_weight += (int16_t)dm2_v1_sksave_item_bonus_query_dbspec(
+                &context, item, 1);
+            ++receipt.processed_item_roots;
+        }
+        hero->weight = (int16_t)total_weight;
+        hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x1000u);
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_sksave_process_source_item_bonus_roots(
     DM2_V1_Hero *heroes, size_t hero_capacity, uint16_t hero_count,
     uint16_t *leader_hand_root, const DM2_V1_RecordPoolSet *pools,

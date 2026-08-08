@@ -168,6 +168,15 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_SksaveItemBonusReceipt *out_receipt);
 
+/* c_hero.cpp::DM2_EQUIP_ITEM_TO_HAND invokes PROCESS_ITEM_BONUS with mode 1
+ * while SELECT_CHAMPION transfers each original mirror possession. This
+ * applies that same source operation to a private New Game c_party. Unlike
+ * the SKSAVE mode-0 preflight, it mutates only the supplied RAM heroes. */
+int dm2_v1_new_game_apply_source_item_bonuses(
+    DM2_V1_Party *party, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SksaveItemBonusReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif
