@@ -12,6 +12,7 @@
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -463,8 +464,16 @@ int main(void)
          * live command loop.  Require that its real MINI.DAT party drives
          * both the native runtime and the rendered M11 mirror; the F31
          * title/switch programs must not leave an inert PC34-style page
-         * behind.  ReDMCSB COMMAND.C F0358/F0359 dispatches C002/C003 after
-         * the F0435/ENTRANCE.C handoff. */
+         * behind. ReDMCSB COMMAND.C F0358/F0359 dispatches C002..C006 after
+         * the F0435/ENTRANCE.C handoff. Exercise C004 first: a prior turn
+         * would otherwise hide a stale C040/C017 first-input gate. */
+        CHECK(live_profile &&
+                  M11_GameView_HandleInput(&view,
+                                           M12_MENU_INPUT_STRAFE_RIGHT) ==
+                      M11_GAME_INPUT_REDRAW &&
+                  live_profile->runtime.last_input_dispatch.command ==
+                      DM1_V1_COMMAND_MOVE_RIGHT,
+              "F31 first post-Prison C004 side-step reaches the real MINI.DAT command queue");
         CHECK(live_profile &&
                   M11_GameView_HandleInput(&view,
                                            M12_MENU_INPUT_TURN_RIGHT) ==

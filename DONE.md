@@ -154,6 +154,11 @@
   den autentiska dungeonen avgör fortsatt om steget går att utföra eller
   blockeras. Ingen testkarta eller ersatt partystatus används.
 
+- ✅ Samma C004-gräns är nu även låst mot FM Towns verkliga F31-handoff:
+  `TITLE.ANM` → `SWITCHTW` → `CHTWE.EXP` → Prison → första sidosteg använder
+  den autentiska `CDATA/MINI.DAT`-kön. Testet tar sidosteget före någon
+  vändning, så en föråldrad C040/C017-spärr inte kan döljas av senare inmatning.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan
