@@ -75,6 +75,11 @@
   CLI. Boot-regressionen provar den negativa vägen och kräver statusen
   `CSB ORIGINAL SAVE REQUIRED` innan någon runtimeåterställning sker.
 
+- ✅ CSBWin-/sparformatets interna kontrollvägar skriver inte längre
+  `DBG`-rader till stderr under en vanlig Atari/Amiga-start. Dekodern
+  behåller sina fail-closed-returer och sitt isolerade fixture-test, men en
+  corpus-lös CSBWin-body kan inte heller annonseras som Resume.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan

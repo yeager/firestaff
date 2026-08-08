@@ -337,8 +337,8 @@ int main(void) {
 
         CHECK(firestaff_test_write_csbwin_resume_fixture(path, 0),
               "write verified CSBWin runtime import fixture");
-        CHECK(csb_v1_runtime_can_load_resume_path(path),
-              "runtime resume validator accepts verified CSBWin save body");
+        CHECK(!csb_v1_runtime_can_load_resume_path(path),
+              "runtime resume validator keeps a corpus-less CSBWin body out of Resume");
         csb_v1_runtime_init(&runtime, NULL);
         runtime.party_x = 1;
         runtime.party_y = 1;

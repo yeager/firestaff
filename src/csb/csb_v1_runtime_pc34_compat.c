@@ -21309,15 +21309,6 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
             CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
         summary->timer_queue_summary_count >
             CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES) {
-        fprintf(stderr, "DBG stage_resume: guard fail: cand=%d sum=%d hdr=%d sec=%d nchar=%u px=%u py=%u pf=%u i16=%u ts=%u tq=%u\n",
-                !!candidate, !!summary, summary?summary->header_valid:0,
-                summary?(int)summary->sections_verified:0,
-                summary?summary->num_character:0,
-                summary?summary->party_x:0, summary?summary->party_y:0,
-                summary?summary->party_facing:0,
-                summary?summary->item16_summary_count:0,
-                summary?summary->timer_summary_count:0,
-                summary?summary->timer_queue_summary_count:0);
         return -1;
     }
 
@@ -21326,9 +21317,8 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
      * turn a malformed decoded reference into a shorter live queue. */
     for (champion_index = 0u;
          champion_index < summary->num_character;
-         ++champion_index) {
+        ++champion_index) {
         if (!summary->champions[champion_index].valid) {
-            fprintf(stderr, "DBG stage_resume: champ %u invalid\n", champion_index);
             return -1;
         }
     }
@@ -21337,40 +21327,30 @@ static int csb_v1_runtime_stage_csbwin_resume_report(
          ++queue_index) {
         if (summary->timer_queue[queue_index] >=
             summary->timer_summary_count) {
-            fprintf(stderr, "DBG stage_resume: tq[%u]=%u >= ts=%u\n",
-                    queue_index, summary->timer_queue[queue_index],
-                    summary->timer_summary_count);
             return -1;
         }
     }
     if (csb_v1_runtime_validate_csbwin_inventory_ownership(summary) != 0) {
-        fprintf(stderr, "DBG stage_resume: inventory ownership fail\n");
         return -1;
     }
     if (csb_v1_runtime_apply_csbwin_gameblock2_summary(
             candidate, summary) != 0) {
-        fprintf(stderr, "DBG stage_resume: gameblock2 fail\n");
         return -1;
     }
     if (csb_v1_runtime_apply_csbwin_champion_summaries(
             candidate, summary) != 0) {
-        fprintf(stderr, "DBG stage_resume: champion_summaries fail\n");
         return -1;
     }
     if (csb_v1_runtime_apply_csbwin_body_runtime_summaries(
             candidate, summary) != 0) {
-        fprintf(stderr, "DBG stage_resume: body_runtime fail\n");
         return -1;
     }
     if (csb_v1_runtime_materialize_csbwin_item16_summaries(candidate) < 0) {
-        fprintf(stderr, "DBG stage_resume: item16 fail\n");
         return -1;
     }
     {
         int tq_rc = csb_v1_runtime_materialize_csbwin_timer_queue(candidate);
-        fprintf(stderr, "DBG stage_resume: materialize_tq returned %d\n", tq_rc);
         if (tq_rc < 0) {
-            fprintf(stderr, "DBG stage_resume: timer_queue fail\n");
             return -1;
         }
     }
@@ -21547,7 +21527,6 @@ int csb_v1_runtime_apply_csbwin_resume_file(
                tail.next_payload_offset <= file_size) {
         core_offset = tail.next_payload_offset;
     } else {
-        fprintf(stderr, "DBG resume_file: extended_tail rc=%d valid=%d\n", rc, tail.valid);
         free(bytes);
         return -1;
     }
@@ -21556,13 +21535,11 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         bytes + core_offset, file_size - core_offset,
         csb_v1_runtime_csbwin_timer_record_size(&features), &report);
     if (rc != CSB_V1_CSBWIN_512_OK) {
-        fprintf(stderr, "DBG resume_file: verify_save_body rc=%d core_offset=%zu size=%zu timer_rec=%d\n", rc, core_offset, file_size, csb_v1_runtime_csbwin_timer_record_size(&features));
         free(bytes);
         return -1;
     }
     if (!csb_v1_csbwin_512_validate_appended_expool_tail(&report) &&
         !(core_offset != 0u && tail.valid && report.appended_size != 0u)) {
-        fprintf(stderr, "DBG resume_file: expool_tail fail core_offset=%zu tail.valid=%d appended_size=%zu\n", core_offset, tail.valid, (size_t)report.appended_size);
         free(bytes);
         return -1;
     }
@@ -21575,7 +21552,6 @@ int csb_v1_runtime_apply_csbwin_resume_file(
                 &dungeon_tail) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
             csb_v1_csbwin_dungeon_tail_validate_checksum(
                 dungeon_tail_bytes, report.appended_size, NULL, NULL) != 1) {
-            fprintf(stderr, "DBG resume_file: dungeon_tail fail\n");
             free(bytes);
             return -1;
         }
@@ -21583,7 +21559,6 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     candidate = *profile;
     previous_dungeon_level = csb_v1_dungeon_get_current_level();
     if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, &report) != 0) {
-        fprintf(stderr, "DBG resume_file: stage_resume_report fail\n");
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         free(bytes);
         return -1;
