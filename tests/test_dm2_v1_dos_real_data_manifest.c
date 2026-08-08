@@ -2,6 +2,7 @@
 #include "dm2_v1_dos_startup_media.h"
 #include "dm2_v1_mve_stream.h"
 #include "dm2_v1_mve_video.h"
+#include "dm2_v1_mve_pcm.h"
 #include "firestaff_x68k_media_receipt.h"
 #include <assert.h>
 #include <stdio.h>
@@ -25,6 +26,16 @@ static uint8_t *read_original(const char *path, size_t *out_size)
     fclose(file);
     *out_size = (size_t)length;
     return bytes;
+}
+
+static uint32_t fnv1a_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
+{
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
 }
 
 int main(void) {
@@ -92,6 +103,8 @@ int main(void) {
     {
         static const char *const movies[] = { "intro", "end" };
         static const uint32_t expected_presentations[] = { 217u, 600u };
+        static const uint32_t expected_pcm_bytes[] = { 797426u, 2204900u };
+        static const uint32_t expected_pcm_fnv1a[] = { 0x2cb44b6au, 0x107b1929u };
         static const char *const expected_frame_sha256[][3] = {
             { "f4f285b4f4b97058bb408c7747f0354761415ea029078320df0e932231e0746c",
               "550c99c3cec2885c21871a24f552b93a421f6788b93f7115029ffe55e0eb0a5c",
@@ -132,6 +145,10 @@ int main(void) {
                        presentation.code_map_size == 500u &&
                        presentation.video_version == 3u &&
                        presentation.video_data_size > 0u &&
+                       presentation.audio_sample_rate == 22050u &&
+                       presentation.audio_channels == 2u &&
+                       presentation.audio_bits == 8u &&
+                       presentation.audio_compressed == 0u &&
                        presentation.transport13_size == 132u);
                 assert(dm2_v1_mve_video_decode_presentation(&video,
                                                               &presentation,
@@ -163,9 +180,44 @@ int main(void) {
             assert(video.decoded_presentations == presentation_count &&
                    dm2_v1_mve_video_pixels(&video) != NULL &&
                    dm2_v1_mve_video_palette_rgb(&video) != NULL);
+            {
+                DM2_V1_MveAudioIterator audio_iterator;
+                DM2_V1_MvePcm pcm;
+                DM2_V1_MvePcmSourceFrame source_frame;
+                DM2_V1_MvePcmFrame pcm_frame;
+                uint32_t pcm_count = 0u;
+                uint32_t pcm_bytes = 0u;
+                uint32_t pcm_fnv1a = 2166136261u;
+                assert(dm2_v1_mve_audio_iterator_init(&audio_iterator, bytes,
+                                                       size) == 1);
+                dm2_v1_mve_pcm_init(&pcm);
+                for (;;) {
+                    const int next = dm2_v1_mve_audio_iterator_next(&audio_iterator,
+                                                                       &source_frame);
+                    if (next == 0) break;
+                    assert(next == 1 && source_frame.valid &&
+                           source_frame.source_sequence == pcm_count &&
+                           source_frame.source_stream_mask == 1u);
+                    assert(dm2_v1_mve_pcm_decode_source_frame(&pcm, &source_frame,
+                                                               bytes, size,
+                                                               &pcm_frame) == 1);
+                    assert(pcm_frame.valid && pcm_frame.sample_bytes != 0u &&
+                           pcm_frame.sample_frames * 2u == pcm_frame.sample_bytes);
+                    pcm_bytes += pcm_frame.sample_bytes;
+                    pcm_fnv1a = fnv1a_bytes(pcm_fnv1a, pcm_frame.samples,
+                                             pcm_frame.sample_bytes);
+                    ++pcm_count;
+                }
+                assert(pcm.initialized && pcm.sample_rate == 22050u &&
+                       pcm.channels == 2u && pcm.bits == 8u &&
+                       pcm.decoded_frame_count == pcm_count &&
+                       pcm_count == expected_presentations[i] &&
+                       pcm_bytes == expected_pcm_bytes[i] &&
+                       pcm_fnv1a == expected_pcm_fnv1a[i]);
+            }
             free(bytes);
         }
-        puts("PASS: DM2 DOS MVE streams expose every original presentation payload in RAM");
+        puts("PASS: DM2 DOS MVE streams expose every original PAL8 and PCM presentation in RAM");
     }
 
 done:

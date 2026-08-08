@@ -49,6 +49,11 @@ typedef struct {
     uint16_t palette_size;
     uint32_t audio_offset;
     uint16_t audio_size;
+    uint32_t audio_sample_rate;
+    uint16_t audio_flags;
+    uint8_t audio_channels;
+    uint8_t audio_bits;
+    uint8_t audio_compressed;
     uint32_t transport13_offset;
     uint16_t transport13_size;
 } DM2_V1_MvePresentation;
@@ -66,6 +71,12 @@ typedef struct {
     uint16_t timer_subdivision;
     uint16_t width;
     uint16_t height;
+    uint32_t audio_sample_rate;
+    uint16_t audio_flags;
+    uint8_t audio_channels;
+    uint8_t audio_bits;
+    uint8_t audio_compressed;
+    int audio_initialized;
     uint32_t presentation_count;
     int initialized;
     int ended;

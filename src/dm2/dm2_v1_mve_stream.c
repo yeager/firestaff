@@ -148,6 +148,21 @@ int dm2_v1_mve_presentation_iterator_next(
                 iterator->width = 320u;
                 iterator->height = 200u;
                 break;
+            case 0x03u: {
+                const uint16_t flags = mve_le16(data + 2u);
+                const uint16_t rate = mve_le16(data + 4u);
+                if (iterator->audio_initialized || rate == 0u ||
+                    (flags & (uint16_t)~0x0007u) != 0u) return -1;
+                iterator->audio_flags = flags;
+                iterator->audio_sample_rate = rate;
+                iterator->audio_channels = (uint8_t)((flags & 1u) + 1u);
+                iterator->audio_bits = (uint8_t)((((flags >> 1u) & 1u) + 1u) * 8u);
+                iterator->audio_compressed = (uint8_t)((flags >> 2u) & 1u);
+                /* The admitted version-0 source stream cannot carry MVE DPCM. */
+                if (iterator->audio_compressed != 0u) return -1;
+                iterator->audio_initialized = 1;
+                break;
+            }
             case 0x0cu:
                 presentation.palette_offset = (uint32_t)data_offset;
                 presentation.palette_size = size;
@@ -172,6 +187,8 @@ int dm2_v1_mve_presentation_iterator_next(
                 have_transport13 = 1;
                 break;
             case 0x08u:
+                if (!iterator->audio_initialized || size < 6u ||
+                    mve_le16(data + 4u) != (uint16_t)(size - 6u)) return -1;
                 presentation.audio_offset = (uint32_t)data_offset;
                 presentation.audio_size = size;
                 break;
@@ -180,6 +197,11 @@ int dm2_v1_mve_presentation_iterator_next(
                     iterator->timer_rate_us == 0u || iterator->width != 320u ||
                     iterator->height != 200u) return -1;
                 presentation.valid = 1;
+                presentation.audio_sample_rate = iterator->audio_sample_rate;
+                presentation.audio_flags = iterator->audio_flags;
+                presentation.audio_channels = iterator->audio_channels;
+                presentation.audio_bits = iterator->audio_bits;
+                presentation.audio_compressed = iterator->audio_compressed;
                 ++iterator->presentation_count;
                 *out = presentation;
                 return 1;

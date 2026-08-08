@@ -56539,6 +56539,7 @@ add_executable(test_dm2_v1_dos_real_data_manifest
     src/dm2/dm2_v1_dos_startup_media.c
     src/dm2/dm2_v1_mve_stream.c
     src/dm2/dm2_v1_mve_video.c
+    src/dm2/dm2_v1_mve_pcm.c
     src/shared/firestaff_x68k_media_receipt.c
     src/shared/firestaff_x68k_media_classify.c
     src/shared/asset_find_by_hash.c

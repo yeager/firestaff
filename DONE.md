@@ -9805,6 +9805,11 @@
 - ✅ Riktiga bildkontroller bekräftar avkodade indexpixlar för `INTRO` bild
   0, 108 och 216 samt `END` bild 0, 299 och 599. Ingen extern avkodare,
   värdskapad bild eller extraherad filmfil används.
+- ✅ MVE-ljudets `0x03`-konfiguration och samtliga `0x08`-PCM-ramar läses nu
+  minnesbaserat. DOS-korpusen är 22 050 Hz, okomprimerad 8-bitars stereo;
+  ljuditeratorn bevarar även de elva förbuffrade ramarna före första bilden.
+  Realdatatestet kontrollerar alla 217 `INTRO`- respektive 600 `END`-ramar,
+  deras ordning och samplens källhash.
 - ✅ Bilditeratorn bevarar nu varje presentation som originalpayload i RAM:
   500-byte kodkarta, 0x11/v3-videoblock, palett, ljudblock och den återkommande
   132-byte 0x13-posten. Den accepterar endast den verifierade DOS-korpusens
