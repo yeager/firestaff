@@ -24,7 +24,10 @@ int nexus_v1_rlowfix_text_parse(const uint8_t *data, size_t size,
     uint16_t string_index;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!data || resource_offset > size || size - resource_offset < 8 ||
+    /* The resource index occupies bytes 6..7 and string_count occupies
+     * bytes 8..9.  A short eight-byte prefix must be rejected before the
+     * latter read; it is not a complete DMWeb TEXT header. */
+    if (!data || resource_offset > size || size - resource_offset < 10U ||
         memcmp(data + resource_offset, "TEXT", 4) != 0) return 0;
     out->resource_index = be16(data + resource_offset + 6);
     out->string_count = be16(data + resource_offset + 8);

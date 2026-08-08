@@ -20,6 +20,15 @@ int main(void) {
     Nexus_V1_RlowfixText text;
     Nexus_V1_RlowfixText menu_text;
     Nexus_V1_RlowfixTabl tabl;
+    {
+        static const uint8_t truncated_text[9] = {
+            'T', 'E', 'X', 'T', 0, 0, 0, 0, 0
+        };
+        if (nexus_v1_rlowfix_text_parse(truncated_text,
+                                        sizeof(truncated_text), 0, &text)) {
+            return 1;
+        }
+    }
     if (!root || !root[0]) root = ".firestaff/data/nexus";
     if (snprintf(path, sizeof(path), "%s/RLOWFIX.BIN", root) >=
             (int)sizeof(path) ||

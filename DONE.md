@@ -1,5 +1,8 @@
 # Nexus startup PLRD glyph token retention (2026-08-08)
 
+- ✅ RLOWFIX/TEXT-parsern avvisar nu ofullständiga 8/9-byte-prefix innan
+  `string_count` läses. Ett truncationstest täcker den autentiska TEXT-headerns
+  10-byte-gräns utan att ändra den verifierade europeiska korpusens resultat.
 - ✅ En äldre DGN-materialiseringsväg kunde tidigare promota ett caller-supplied
   ready-kvitto till autentiserad rendering. Den är nu fail-closed vid den
   ursprungliga Saturn-renderingsgränsen och tillåter varken fallback-bilder,
