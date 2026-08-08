@@ -25,6 +25,14 @@
 - ✅ Verification: `test_dm2_v1_save_load_extra_dungeon_data` and the
   168-check real PC-DOS SKSAVE corpus pass. The change reads data in place;
   it does not unpack, write or publish a save.
+- ✅ Recovered source-owned resident tile roots from the raw SKSAVE layout.
+  The lookup follows `skmap.cpp::DM2_GET_OBJECT_INDEX_FROM_TILE`: tile bit
+  `0x10` selects the saved `v1e03d8` column index, preceding marked tiles in
+  that column advance it, and `dm2_v1e038c` supplies the record link. Empty
+  tiles retain `OBJECT_END_MARKER`.
+- ✅ Verification: all eight original PC-DOS SKSAVE files resolve their
+  marked-tile roots directly from those source spans. The real-data suite now
+  passes 176 checks, with no save unpacked, written or promoted to runtime.
 
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 

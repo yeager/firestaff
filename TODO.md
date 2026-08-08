@@ -4199,6 +4199,12 @@ level or consumer bindings.
   resident-chain owner instead of consuming the shared stream into a
   fabricated replacement. The remaining transaction must provide that owner,
   then bind map chains and possessions in the original order.
+  **2026-08-08 map-index recovery:** the raw SKSAVE receipt now resolves each
+  tile with bit `0x10` through the original `v1e03d8` column-index span and
+  `dm2_v1e038c` ground-stack links. This identifies the resident root before
+  any stream bytes are consumed. The next transaction phase must restore the
+  root's masked DB0..DB3 bytes in place, then restore only empty-tile dynamic
+  chains and the final possession continuations.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

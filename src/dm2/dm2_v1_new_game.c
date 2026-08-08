@@ -913,6 +913,68 @@ int dm2_v1_original_raw_sksave_map_receipt(
     return 1;
 }
 
+int dm2_v1_original_raw_sksave_tile_record_link(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon,
+    int map,
+    int x,
+    int y,
+    uint16_t *out_link)
+{
+    size_t column_index_base;
+    size_t ground_stack_base;
+    size_t column_base = 0u;
+    size_t object_index;
+    size_t prior_y;
+    size_t i;
+    uint8_t tile;
+
+    if (out_link) *out_link = 0xfffeu;
+    if (!buf || !dungeon || !dungeon->valid || !out_link || map < 0 ||
+        map >= (int)dungeon->map_count || x < 0 || y < 0 ||
+        x >= (int)dungeon->map_widths[map] ||
+        y >= (int)dungeon->map_heights[map]) {
+        return 0;
+    }
+    column_index_base = (size_t)DM2_RAW_DUNGEON_HEADER_SIZE +
+                        (size_t)dungeon->map_count * DM2_RAW_MAP_DESC_SIZE;
+    ground_stack_base = column_index_base +
+                        (size_t)dungeon->column_index_count * 2u;
+    if (column_index_base > buf_size ||
+        (size_t)dungeon->column_index_count >
+            (buf_size - column_index_base) / 2u ||
+        ground_stack_base > buf_size ||
+        (size_t)dungeon->ground_stack_count >
+            (buf_size - ground_stack_base) / 2u) {
+        return 0;
+    }
+    for (i = 0u; i < (size_t)map; ++i) {
+        column_base += dungeon->map_widths[i];
+    }
+    if (column_base + (size_t)x >= (size_t)dungeon->column_index_count) {
+        return 0;
+    }
+    tile = buf[(size_t)dungeon->map_data_base +
+               (size_t)dungeon->map_data_relative_offsets[map] +
+               (size_t)x * dungeon->map_heights[map] + (size_t)y];
+    if ((tile & 0x10u) == 0u) {
+        *out_link = 0xfffeu;
+        return 1;
+    }
+    object_index = (size_t)dm2_v1_read_u16_le_at(
+        buf, column_index_base + (column_base + (size_t)x) * 2u);
+    for (prior_y = 0u; prior_y < (size_t)y; ++prior_y) {
+        uint8_t prior_tile = buf[(size_t)dungeon->map_data_base +
+            (size_t)dungeon->map_data_relative_offsets[map] +
+            (size_t)x * dungeon->map_heights[map] + prior_y];
+        if ((prior_tile & 0x10u) != 0u) ++object_index;
+    }
+    if (object_index >= (size_t)dungeon->ground_stack_count) return 0;
+    *out_link = dm2_v1_read_u16_le_at(buf, ground_stack_base + object_index * 2u);
+    return 1;
+}
+
 int dm2_v1_original_raw_sksave_fixed_state_receipt(
     const uint8_t *buf, size_t buf_size,
     DM2_V1_OriginalRawSaveStateReceipt *out_receipt)

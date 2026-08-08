@@ -410,6 +410,21 @@ int dm2_v1_original_raw_sksave_map_receipt(
     int map,
     DM2_V1_OriginalRawMapReceipt *out_receipt);
 
+/* Resolve the resident c_map record root for one saved tile without creating
+ * a parallel map representation.  SKProject skmap.cpp::DM2_GET_OBJECT_INDEX_FROM_TILE
+ * maps each tile with bit 0x10 through v1e03d8 (the column-index span) into
+ * dm2_v1e038c (the saved ground-stack link array).  An unmarked tile returns
+ * OBJECT_END_MARKER.  This is the owner lookup used before
+ * READ_SKSAVE_DUNGEON decides whether a chain is resident or dynamic. */
+int dm2_v1_original_raw_sksave_tile_record_link(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon,
+    int map,
+    int x,
+    int y,
+    uint16_t *out_link);
+
 /* Decode exactly s_savegamebuffer, v1e0104, globalb, globalw, c_hero,
  * c_wbbb and c_tim from the one shared SUPPRESS stream. Source: SKProject
  * SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD lines 1482-1525. No

@@ -635,6 +635,36 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
         CHECK(maps_ok && map_hash != 0u,
               "real SKSave retains every source map geometry and tile span");
     }
+    {
+        int map_links_ok = 1;
+        unsigned int marked_tiles = 0u;
+        unsigned int resolved_roots = 0u;
+        int map;
+        for (map = 0; map < (int)receipt.map_count && map_links_ok; ++map) {
+            int x;
+            for (x = 0; x < (int)receipt.map_widths[map] && map_links_ok; ++x) {
+                int y;
+                for (y = 0; y < (int)receipt.map_heights[map]; ++y) {
+                    const size_t tile_offset = (size_t)receipt.map_data_base +
+                        (size_t)receipt.map_data_relative_offsets[map] +
+                        (size_t)x * receipt.map_heights[map] + (size_t)y;
+                    uint16_t link = 0xfffeu;
+                    if (!dm2_v1_original_raw_sksave_tile_record_link(
+                            bytes + 42u, byte_count - 42u, &receipt,
+                            map, x, y, &link)) {
+                        map_links_ok = 0;
+                        break;
+                    }
+                    if (((bytes + 42u)[tile_offset] & 0x10u) != 0u) {
+                        ++marked_tiles;
+                        if (link != 0xfffeu) ++resolved_roots;
+                    }
+                }
+            }
+        }
+        CHECK(map_links_ok && marked_tiles > 0u && resolved_roots > 0u,
+              "real SKSave maps resolve resident record roots through original column indices");
+    }
     memset(&state_receipt, 0, sizeof(state_receipt));
     CHECK(dm2_v1_original_raw_sksave_fixed_state_receipt(
               bytes + 42u, byte_count - 42u, &state_receipt) &&
