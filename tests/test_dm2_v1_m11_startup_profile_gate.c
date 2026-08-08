@@ -1213,6 +1213,7 @@ int main(void) {
     DM2_V1_BootNewGamePartySelection party_selections[2];
     DM2_V1_BootNewGamePartyReceipt source_party;
     DM2_V1_BootNewGamePossessionReceipt source_possessions;
+    DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
@@ -1530,6 +1531,30 @@ int main(void) {
                     source_possessions.receipt_hash != 0u &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 preserves the exact original initial inventories through GDAT slots without publishing a live party");
+    memset(&source_transaction, 0, sizeof(source_transaction));
+    expect_true(profile &&
+                    dm2_v1_boot_new_game_transaction_receipt(profile,
+                        party_selections, 2, &source_transaction) &&
+                    source_transaction.valid &&
+                    source_transaction.incomplete_game_load &&
+                    source_transaction.hero_count == 2 &&
+                    source_transaction.entrance.valid &&
+                    source_transaction.entrance_map.committed &&
+                    source_transaction.entrance_map.map ==
+                        source_transaction.entrance.map &&
+                    source_transaction.entrance_map.map_data_hash ==
+                        source_transaction.entrance.map_data_hash &&
+                    source_transaction.dyn4_roster.valid &&
+                    source_transaction.dyn4_roster.selector_count ==
+                        champion_mirrors.mirror_count &&
+                    source_transaction.party.receipt_hash ==
+                        source_party.receipt_hash &&
+                    source_transaction.possessions.receipt_hash ==
+                        source_possessions.receipt_hash &&
+                    source_transaction.transaction_hash != 0u &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 joins map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,

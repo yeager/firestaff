@@ -334,6 +334,26 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_BootNewGamePossessionReceipt;
 
+/* One read-only, all-or-nothing projection of the New Game branch of
+ * DM2_GAME_LOAD.  It deliberately combines only facts that originate from
+ * the same hash-admitted File_header/GDAT pair: the map-0 entrance chain,
+ * LOAD_LOCALLEVEL_DYN's complete champion selector roster, the clicked
+ * mirror order, revived c_hero bytes and the still File_header-owned item
+ * chains.  It is not a live session: record moves, item bonuses, hand
+ * containers, timers and the actuator generator must be committed by the
+ * later source-shaped owner in one mutation transaction. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int hero_count;
+    DM2_V1_FileHeaderRuntimeMapReceipt entrance_map;
+    DM2_V1_BootNewGameEntranceReceipt entrance;
+    DM2_V1_BootChampionDyn4RosterReceipt dyn4_roster;
+    DM2_V1_BootNewGamePartyReceipt party;
+    DM2_V1_BootNewGamePossessionReceipt possessions;
+    uint32_t transaction_hash;
+} DM2_V1_BootNewGameTransactionReceipt;
+
 /* Complete source roster for the mirror-selection screen. The order is the
  * canonical File_header chain order, not a host-authored portrait order. */
 typedef struct {
@@ -1667,6 +1687,14 @@ int dm2_v1_boot_new_game_possession_receipt(
     const DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartyReceipt *party,
     DM2_V1_BootNewGamePossessionReceipt *out_receipt);
+
+/* Build the complete non-mutating New Game admission transaction from one
+ * to four original mirror clicks.  This does not set
+ * source_game_load_session_ready and cannot make the dungeon playable. */
+int dm2_v1_boot_new_game_transaction_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartySelection *selections, int selection_count,
+    DM2_V1_BootNewGameTransactionReceipt *out_receipt);
 
 /* Enumerate every authentic DB3 subtype-0x7e selection candidate. Duplicate
  * hero types or a candidate that cannot be joined to exact GDAT and tile data

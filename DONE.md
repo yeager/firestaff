@@ -10,6 +10,18 @@
 
 # Nexus external capture inventory (2026-08-08)
 
+# DM2 New Game transaktionsgrund (2026-08-08)
+
+- ✅ Ett gemensamt, läsande GAME_LOAD-kvitto binder nu den verifierade
+  File_header-entrén, hela `DM2_LOAD_LOCALLEVEL_DYN`-championrosterkön,
+  användarens autentiska spegelval, c_hero-projektionen och de
+  File_header-ägda startobjekten. Alla komponenter måste komma från samma
+  hashverifierade GRAPHICS.DAT/DUNGEON.DAT-par.
+- ✅ Kvittoflödet är verifierat mot den verkliga PC-DOS-korpusen och lämnar
+  både tickräknaren och `source_game_load_session_ready` avstängda. Det kan
+  alltså inte starta ett syntetiskt spel; timerkö, handcontainrar,
+  bonusmutationer och aktuatorgenerator återstår som en enda atomär ägare.
+
 - ✅ Added a reproducible inventory for all external `runtime-vdp12.raw`
   witnesses. The current corpus contains 34 valid files and 136 frame
   observations: 8 reset/no-layer, 14 RBG0-only CD-player, 100 NBG1-only

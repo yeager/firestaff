@@ -1388,6 +1388,75 @@ int dm2_v1_boot_new_game_possession_receipt(
     return 1;
 }
 
+int dm2_v1_boot_new_game_transaction_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartySelection *selections, int selection_count,
+    DM2_V1_BootNewGameTransactionReceipt *out_receipt)
+{
+    DM2_V1_BootNewGameTransactionReceipt candidate;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data ||
+        !selections || selection_count <= 0 ||
+        selection_count > DM2_MAX_HEROES ||
+        !dm2_v1_boot_new_game_entrance_receipt(profile, &candidate.entrance) ||
+        !candidate.entrance.valid || !candidate.entrance.incomplete_game_load ||
+        !dm2_v1_boot_file_header_runtime_map_receipt(
+            profile, candidate.entrance.map, &candidate.entrance_map) ||
+        !candidate.entrance_map.committed ||
+        !candidate.entrance_map.incomplete_world ||
+        candidate.entrance_map.map_data_hash != candidate.entrance.map_data_hash ||
+        candidate.entrance_map.record_count <
+            candidate.entrance.entrance_record_count ||
+        !dm2_v1_boot_champion_dyn4_roster_receipt(
+            profile, &candidate.dyn4_roster) ||
+        !candidate.dyn4_roster.valid ||
+        !candidate.dyn4_roster.incomplete_champion_activation ||
+        !dm2_v1_boot_new_game_party_receipt(
+            profile, selections, selection_count, &candidate.party) ||
+        !candidate.party.valid || !candidate.party.incomplete_game_load ||
+        candidate.party.hero_count != selection_count ||
+        !dm2_v1_boot_new_game_possession_receipt(
+            profile, &candidate.party, &candidate.possessions) ||
+        !candidate.possessions.valid ||
+        !candidate.possessions.incomplete_game_load ||
+        candidate.possessions.hero_count != candidate.party.hero_count) {
+        return 0;
+    }
+
+    /* SKProject: sksvgame.cpp::DM2_GAME_LOAD lines 1519-1530 only reaches
+     * DM2_PROCESS_ACTUATOR_TICK_GENERATOR after LOAD_NEW_DUNGEON has read
+     * File_header roots and sklodlvl.cpp::DM2_LOAD_LOCALLEVEL_DYN has built
+     * the dynamic selector list.  skhero.cpp::DM2_SELECT_CHAMPION lines
+     * 1054-1168 then supplies the click-ordered hero/item inputs.  Keep all
+     * of those preconditions in one immutable receipt so a later owner cannot
+     * mix a party from one scan with a map, DYN4 roster or record chain from
+     * another.  No field here is a permission to mutate source records. */
+    candidate.hero_count = candidate.party.hero_count;
+    candidate.transaction_hash = 0x4e475458u; /* "NGTX" receipt domain. */
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.entrance.receipt_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.entrance_map.map_data_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, (uint32_t)candidate.entrance_map.root_count);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, (uint32_t)candidate.entrance_map.record_count);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.dyn4_roster.selector_roster_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.party.receipt_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.possessions.receipt_hash);
+    if (candidate.transaction_hash == 0u) return 0;
+    candidate.incomplete_game_load = 1;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_champion_selection_census(
     const DM2_V1_BootProfile *profile,
     DM2_V1_BootChampionSelectionCensus *out_census)
