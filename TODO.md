@@ -3095,6 +3095,13 @@ level or consumer bindings.
   one-byte tamper rejection. This is only the state after
   `READ_DUNGEON_STRUCTURE`: port the source remove/clear/reallocate order,
   tile roots, possessions and timer links before connecting it to Continue.
+  2026-08-08 map-owner update: the source `c_map::dm2_v1e038c`
+  ground-stack span now has one mutable RAM owner. It follows
+  `skmap.cpp::DM2_GET_OBJECT_INDEX_FROM_TILE`, removes DB4..DB15 links from
+  real tile chains before the DB-clear phase, and retains the DB0..DB3
+  resident chain. All eight original PC-DOS saves pass this ordering check.
+  This is still only the predecessor to map-chain mask restoration and does
+  not publish a session, reuse a synthetic map or unblock Continue.
   2026-08-13 DB-clear update: the next `DM2_READ_SKSAVE_DUNGEON` phase now
   preserves DB0..DB3 and clears only GenericRecord::w0 in every DB4..DB15
   row, exactly as SKProject does before `READ_RECORD_CHECKCODE` allocates

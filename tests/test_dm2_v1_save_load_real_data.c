@@ -384,12 +384,14 @@ static int verify_real_raw_pool_baseline(
     const DM2_V1_OriginalRawDungeonReceipt *dungeon)
 {
     DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_RecordPoolSet rejected;
     uint8_t *corrupt = NULL;
     int pool;
 
     if (!payload || !dungeon || !dungeon->valid) return 0;
     memset(&pools, 0, sizeof(pools));
+    memset(&map_owner, 0, sizeof(map_owner));
     if (!dm2_v1_record_pool_set_init_from_raw_sksave(
             &pools, payload, payload_size, dungeon) || !pools.valid ||
         pools.record_graph_complete != 0) {
@@ -442,14 +444,44 @@ static int verify_real_raw_pool_baseline(
         }
     }
 
-    /* DM2_READ_SKSAVE_DUNGEON first leaves DB0..DB3 resident, then clears
-     * the first word of every dynamic DB record before it decodes any saved
-     * hero or tile root. Verify that exact source phase against the mounted
-     * corpus, including preservation of all non-link bytes. */
-    if (!dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+    /* sksvgame.cpp first severs DB4..DB15 records from the real c_map
+     * ground-stack chains. Only then can it clear dynamic DB first words.
+     * Verify that sequence against each mounted SKSAVE, not against a
+     * fabricated tile owner. */
+    if (!dm2_v1_sksave_map_owner_init(
+            &map_owner, payload, payload_size, dungeon) ||
+        !dm2_v1_sksave_map_owner_detach_dynamic_records(
+            &map_owner, &pools, NULL) ||
+        !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
             &pools, dungeon)) {
+        dm2_v1_sksave_map_owner_free(&map_owner);
         dm2_v1_record_pool_set_free(&pools);
         return 0;
+    }
+    {
+        int resident_only = 1;
+        int map;
+        for (map = 0; map < (int)dungeon->map_count && resident_only; ++map) {
+            int x;
+            for (x = 0; x < (int)dungeon->map_widths[map] && resident_only; ++x) {
+                int y;
+                for (y = 0; y < (int)dungeon->map_heights[map]; ++y) {
+                    uint16_t link = 0xfffeu;
+                    if (!dm2_v1_sksave_map_owner_tile_record_link(
+                            &map_owner, map, x, y, &link) ||
+                        (link != 0xfffeu && link != 0xffffu &&
+                         dm2_v1_record_handle_pool((int16_t)link) >= 4)) {
+                        resident_only = 0;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!resident_only) {
+            dm2_v1_sksave_map_owner_free(&map_owner);
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
     }
     for (pool = 0; pool < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++pool) {
         const int record_size = dm2_v1_record_pool_record_size(pool);
@@ -463,12 +495,17 @@ static int verify_real_raw_pool_baseline(
                 (size_t)index * (size_t)record_size;
             const uint8_t *original = payload + dungeon->db_pool_offsets[pool] +
                 (size_t)index * (size_t)record_size;
-            if ((pool < 4 && memcmp(record, original,
-                                    (size_t)record_size) != 0) ||
+            /* The source map walk may splice a DB4+ successor out of a
+             * resident DB0..DB3 record, so only the link word may differ in
+             * a resident record. Its payload must remain byte-identical. */
+            if ((pool < 4 && record_size > 2 && memcmp(record + 2u,
+                                    original + 2u,
+                                    (size_t)record_size - 2u) != 0) ||
                 (pool >= 4 &&
                  (record[0] != 0xffu || record[1] != 0xffu ||
                   (record_size > 2 && memcmp(record + 2u, original + 2u,
                                               (size_t)record_size - 2u) != 0)))) {
+                dm2_v1_sksave_map_owner_free(&map_owner);
                 dm2_v1_record_pool_set_free(&pools);
                 return 0;
             }
@@ -483,6 +520,7 @@ static int verify_real_raw_pool_baseline(
             ++probe_pool;
         }
         if (probe_pool >= 4) {
+            dm2_v1_sksave_map_owner_free(&map_owner);
             dm2_v1_record_pool_set_free(&pools);
             return 0;
         }
@@ -492,6 +530,7 @@ static int verify_real_raw_pool_baseline(
                 &pools, &mismatched) != 0 ||
             memcmp(before, pools.pools[probe_pool].bytes,
                    sizeof(before)) != 0) {
+            dm2_v1_sksave_map_owner_free(&map_owner);
             dm2_v1_record_pool_set_free(&pools);
             return 0;
         }
@@ -504,11 +543,13 @@ static int verify_real_raw_pool_baseline(
         if (dungeon->db_record_counts[pool] != 0u) break;
     }
     if (pool == DM2_RAW_SKSAVE_DB_POOL_COUNT) {
+        dm2_v1_sksave_map_owner_free(&map_owner);
         dm2_v1_record_pool_set_free(&pools);
         return 0;
     }
     corrupt = (uint8_t *)malloc(payload_size);
     if (!corrupt) {
+        dm2_v1_sksave_map_owner_free(&map_owner);
         dm2_v1_record_pool_set_free(&pools);
         return 0;
     }
@@ -520,11 +561,13 @@ static int verify_real_raw_pool_baseline(
         rejected.valid != 0 || rejected.record_graph_complete != 0 ||
         rejected.pools[pool].bytes != NULL) {
         free(corrupt);
+        dm2_v1_sksave_map_owner_free(&map_owner);
         dm2_v1_record_pool_set_free(&pools);
         dm2_v1_record_pool_set_free(&rejected);
         return 0;
     }
     free(corrupt);
+    dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
     return 1;
 }
@@ -534,15 +577,22 @@ static int verify_real_pool_direct_roots(
     const DM2_V1_OriginalRawSaveStateReceipt *state)
 {
     DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_SksaveDirectRootReceipt receipt;
     int ok;
 
     if (!payload || !state || !state->valid) return 0;
     memset(&pools, 0, sizeof(pools));
+    memset(&map_owner, 0, sizeof(map_owner));
     if (!dm2_v1_record_pool_set_init_from_raw_sksave(
             &pools, payload, payload_size, &state->dungeon) ||
+        !dm2_v1_sksave_map_owner_init(
+            &map_owner, payload, payload_size, &state->dungeon) ||
+        !dm2_v1_sksave_map_owner_detach_dynamic_records(
+            &map_owner, &pools, NULL) ||
         !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
             &pools, &state->dungeon)) {
+        dm2_v1_sksave_map_owner_free(&map_owner);
         dm2_v1_record_pool_set_free(&pools);
         return 0;
     }
@@ -560,6 +610,7 @@ static int verify_real_pool_direct_roots(
             receipt.next_stream_offset <= payload_size &&
             receipt.next_stream_bits_remaining <= 7u;
     }
+    dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
     return ok;
 }

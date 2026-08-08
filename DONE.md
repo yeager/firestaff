@@ -80,6 +80,15 @@
   source pool selector and 10-bit index fit the matching raw-SKSAVE DB pool.
   This is the same address boundary used by `DM2_GET_ADDRESS_OF_RECORD` and
   prevents a malformed map root from becoming a fabricated chain.
+- ✅ Added the mutable, source-owned `c_map::dm2_v1e038c` ground-stack phase
+  used at the start of `DM2_READ_SKSAVE_DUNGEON`. It copies only real link
+  words into RAM, derives each tile slot with
+  `skmap.cpp::DM2_GET_OBJECT_INDEX_FROM_TILE`, detaches DB4–DB15 records
+  before their pools are cleared, and preserves resident DB0–DB3 chains.
+- ✅ Verification: the eight original PC-DOS SKSAVE files pass 176 checks,
+  including the detach → clear order and the invariant that no dynamic root
+  remains in a live map slot. Game data is read in place and never unpacked,
+  written or promoted into a playable session.
 
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 

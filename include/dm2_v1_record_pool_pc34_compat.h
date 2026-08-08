@@ -61,6 +61,46 @@ typedef struct DM2_V1_RecordPoolSet {
     int record_graph_complete;  /* mirrors the loader's graph state */
 } DM2_V1_RecordPoolSet;
 
+/* Source-owned mutable view of c_map::dm2_v1e038c during
+ * READ_SKSAVE_DUNGEON.  The raw SKSAVE body remains immutable; only its
+ * ground-stack link span is copied because SKProject removes DB4..DB15 links
+ * from that span before it clears the dynamic record pools.  This is not a
+ * replacement dungeon model. */
+typedef struct {
+    const uint8_t *raw_body;
+    size_t raw_body_size;
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    uint16_t *ground_stack_links;
+    size_t ground_stack_count;
+    int valid;
+    int dynamic_records_detached;
+} DM2_V1_SksaveMapOwner;
+
+/* Construct the sole mutable owner of the authenticated ground-stack links.
+ * `raw_body` is never copied or modified. */
+int dm2_v1_sksave_map_owner_init(
+    DM2_V1_SksaveMapOwner *owner,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt);
+
+void dm2_v1_sksave_map_owner_free(DM2_V1_SksaveMapOwner *owner);
+
+/* c_map::DM2_GET_TILE_RECORD_LINK against the mutable dm2_v1e038c copy.
+ * An unmarked tile returns OBJECT_END_MARKER (0xfffe). */
+int dm2_v1_sksave_map_owner_tile_record_link(
+    const DM2_V1_SksaveMapOwner *owner,
+    int map, int x, int y, uint16_t *out_link);
+
+/* First destructive phase of sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON:
+ * unlink every DB4..DB15 record from actual tile chains, preserving DB0..DB3
+ * resident roots and setting each detached record link to OBJECT_END_MARKER.
+ * The caller may clear dynamic pools only after this succeeds. */
+int dm2_v1_sksave_map_owner_detach_dynamic_records(
+    DM2_V1_SksaveMapOwner *owner,
+    DM2_V1_RecordPoolSet *set,
+    uint32_t *out_detached_count);
+
 /* Receipt for the source-owned direct-root phase of READ_SKSAVE_DUNGEON.
  * Root links are retained for the later champion/hand owner, while the
  * record bytes and list links are written into the authenticated pools. */

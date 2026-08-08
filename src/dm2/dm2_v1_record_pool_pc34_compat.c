@@ -30,6 +30,14 @@ static const uint8_t s_table_recordsizes[DM2_V1_RECORD_POOL_COUNT] = {
     4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
 };
 
+/* skmap.cpp reads these fixed READ_DUNGEON_STRUCTURE spans.  They remain
+ * local because the public raw-dungeon receipt deliberately exposes offsets,
+ * not a second serialized-layout API. */
+enum {
+    DM2_V1_RAW_DUNGEON_HEADER_SIZE = 44,
+    DM2_V1_RAW_MAP_DESC_SIZE = 16
+};
+
 static int16_t dm2_v1_rd16(const uint8_t *p)
 {
     return (int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
@@ -40,6 +48,184 @@ static void dm2_v1_wr16(uint8_t *p, int16_t v)
     uint16_t u = (uint16_t)v;
     p[0] = (uint8_t)(u & 0xffu);
     p[1] = (uint8_t)((u >> 8) & 0xffu);
+}
+
+static uint16_t dm2_v1_raw_rd16(const uint8_t *p)
+{
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static int dm2_v1_sksave_map_owner_ground_index(
+    const DM2_V1_SksaveMapOwner *owner, int map, int x, int y,
+    size_t *out_index)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    size_t column_index_base;
+    size_t column_base = 0u;
+    size_t object_index;
+    size_t i;
+    uint8_t tile;
+
+    if (!owner || !owner->valid || !owner->raw_body || !owner->dungeon ||
+        !out_index) return 0;
+    dungeon = owner->dungeon;
+    if (map < 0 || map >= (int)dungeon->map_count || x < 0 || y < 0 ||
+        x >= (int)dungeon->map_widths[map] ||
+        y >= (int)dungeon->map_heights[map]) return 0;
+    tile = owner->raw_body[(size_t)dungeon->map_data_base +
+        (size_t)dungeon->map_data_relative_offsets[map] +
+        (size_t)x * dungeon->map_heights[map] + (size_t)y];
+    if ((tile & 0x10u) == 0u) return -1;
+    column_index_base = (size_t)DM2_V1_RAW_DUNGEON_HEADER_SIZE +
+        (size_t)dungeon->map_count * DM2_V1_RAW_MAP_DESC_SIZE;
+    for (i = 0u; i < (size_t)map; ++i) column_base += dungeon->map_widths[i];
+    if (column_base + (size_t)x >= (size_t)dungeon->column_index_count ||
+        column_index_base > owner->raw_body_size ||
+        (size_t)dungeon->column_index_count >
+            (owner->raw_body_size - column_index_base) / 2u) return 0;
+    object_index = (size_t)dm2_v1_raw_rd16(owner->raw_body +
+        column_index_base + (column_base + (size_t)x) * 2u);
+    for (i = 0u; i < (size_t)y; ++i) {
+        uint8_t prior = owner->raw_body[(size_t)dungeon->map_data_base +
+            (size_t)dungeon->map_data_relative_offsets[map] +
+            (size_t)x * dungeon->map_heights[map] + i];
+        if ((prior & 0x10u) != 0u) ++object_index;
+    }
+    if (object_index >= owner->ground_stack_count) return 0;
+    *out_index = object_index;
+    return 1;
+}
+
+int dm2_v1_sksave_map_owner_init(
+    DM2_V1_SksaveMapOwner *owner, const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon_receipt)
+{
+    size_t column_index_base;
+    size_t ground_stack_base;
+    size_t bytes;
+    size_t i;
+
+    if (owner) memset(owner, 0, sizeof(*owner));
+    if (!owner || !raw_body || !dungeon_receipt || !dungeon_receipt->valid)
+        return 0;
+    column_index_base = (size_t)DM2_V1_RAW_DUNGEON_HEADER_SIZE +
+        (size_t)dungeon_receipt->map_count * DM2_V1_RAW_MAP_DESC_SIZE;
+    ground_stack_base = column_index_base +
+        (size_t)dungeon_receipt->column_index_count * 2u;
+    bytes = (size_t)dungeon_receipt->ground_stack_count * 2u;
+    if (column_index_base > raw_body_size ||
+        (size_t)dungeon_receipt->column_index_count >
+            (raw_body_size - column_index_base) / 2u ||
+        ground_stack_base > raw_body_size || bytes > raw_body_size - ground_stack_base)
+        return 0;
+    owner->ground_stack_links = (uint16_t *)malloc(bytes ? bytes : 1u);
+    if (!owner->ground_stack_links) return 0;
+    for (i = 0u; i < (size_t)dungeon_receipt->ground_stack_count; ++i) {
+        uint16_t link = dm2_v1_raw_rd16(raw_body + ground_stack_base + i * 2u);
+        if (link != 0xfffeu && link != 0xffffu &&
+            (dm2_v1_record_handle_pool((int16_t)link) >= DM2_V1_RECORD_POOL_COUNT ||
+             dm2_v1_record_handle_index((int16_t)link) >=
+                 dungeon_receipt->db_record_counts[dm2_v1_record_handle_pool((int16_t)link)])) {
+            free(owner->ground_stack_links);
+            memset(owner, 0, sizeof(*owner));
+            return 0;
+        }
+        owner->ground_stack_links[i] = link;
+    }
+    owner->raw_body = raw_body;
+    owner->raw_body_size = raw_body_size;
+    owner->dungeon = dungeon_receipt;
+    owner->ground_stack_count = dungeon_receipt->ground_stack_count;
+    owner->valid = 1;
+    return 1;
+}
+
+void dm2_v1_sksave_map_owner_free(DM2_V1_SksaveMapOwner *owner)
+{
+    if (!owner) return;
+    free(owner->ground_stack_links);
+    memset(owner, 0, sizeof(*owner));
+}
+
+int dm2_v1_sksave_map_owner_tile_record_link(
+    const DM2_V1_SksaveMapOwner *owner, int map, int x, int y,
+    uint16_t *out_link)
+{
+    size_t index;
+    int rc;
+
+    if (out_link) *out_link = 0xfffeu;
+    if (!out_link) return 0;
+    rc = dm2_v1_sksave_map_owner_ground_index(owner, map, x, y, &index);
+    if (rc < 0) return 1;
+    if (rc == 0) return 0;
+    *out_link = owner->ground_stack_links[index];
+    return 1;
+}
+
+int dm2_v1_sksave_map_owner_detach_dynamic_records(
+    DM2_V1_SksaveMapOwner *owner, DM2_V1_RecordPoolSet *set,
+    uint32_t *out_detached_count)
+{
+    size_t budget = 1u;
+    uint32_t detached = 0u;
+    int map;
+    int pool;
+
+    if (out_detached_count) *out_detached_count = 0u;
+    if (!owner || !owner->valid || owner->dynamic_records_detached || !set ||
+        !set->valid || set->record_graph_complete != 0) return 0;
+    for (pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        if (set->pools[pool].record_count > 0)
+            budget += (size_t)set->pools[pool].record_count;
+    }
+    for (map = 0; map < (int)owner->dungeon->map_count; ++map) {
+        int x;
+        for (x = 0; x < (int)owner->dungeon->map_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < (int)owner->dungeon->map_heights[map]; ++y) {
+                size_t ground_index;
+                int rc = dm2_v1_sksave_map_owner_ground_index(owner, map, x, y,
+                                                               &ground_index);
+                int16_t current;
+                int16_t previous = DM2_V1_RECORD_HANDLE_NULL;
+                size_t steps = 0u;
+                if (rc < 0) continue;
+                if (rc == 0) return 0;
+                current = (int16_t)owner->ground_stack_links[ground_index];
+                while (current != DM2_V1_RECORD_HANDLE_END &&
+                       current != DM2_V1_RECORD_HANDLE_NULL) {
+                    uint8_t *record;
+                    int16_t next;
+                    int current_pool = dm2_v1_record_handle_pool(current);
+                    if (++steps > budget || current_pool < 0 ||
+                        current_pool >= DM2_V1_RECORD_POOL_COUNT ||
+                        !(record = dm2_v1_record_pool_address_mut(set, current)) ||
+                        !dm2_v1_record_pool_next_link(set, current, &next)) return 0;
+                    if (current_pool >= 4) {
+                        /* sksvgame.cpp:1138-1150: sever the dynamic record
+                         * before CUT_RECORD_FROM rewires its real tile owner. */
+                        dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_END);
+                        if (previous == DM2_V1_RECORD_HANDLE_NULL) {
+                            owner->ground_stack_links[ground_index] = (uint16_t)next;
+                        } else {
+                            uint8_t *prev = dm2_v1_record_pool_address_mut(set, previous);
+                            if (!prev) return 0;
+                            dm2_v1_wr16(prev, next);
+                        }
+                        ++detached;
+                    } else {
+                        previous = current;
+                    }
+                    current = next;
+                }
+            }
+        }
+    }
+    owner->dynamic_records_detached = 1;
+    if (out_detached_count) *out_detached_count = detached;
+    return 1;
 }
 
 /* The record-pool owner is also compiled by narrow G1 audit targets that do
@@ -650,11 +836,10 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     size_t root;
 
 #define DM2_V1_SKSAVE_ROOT_ABORT() do { \
+        /* The preceding map-detach phase cannot be replayed from this
+         * direct-root helper, so a decode error must not leave a partly
+         * restored pool available to a caller. */ \
         dm2_v1_record_pool_set_free(set); \
-        (void)dm2_v1_record_pool_set_init_from_raw_sksave( \
-            set, raw_body, raw_body_size, &state_receipt->dungeon); \
-        (void)dm2_v1_record_pool_clear_raw_sksave_dynamic_records( \
-            set, &state_receipt->dungeon); \
     } while (0)
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -735,6 +920,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
 {
     DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_SksaveDirectRootReceipt roots;
     DM2_V1_SksavePoolRestoreContext context;
     DM2_ReadRecordCallbacks callbacks;
@@ -748,6 +934,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&pools, 0, sizeof(pools));
+    memset(&map_owner, 0, sizeof(map_owner));
     memset(&roots, 0, sizeof(roots));
     memset(&context, 0, sizeof(context));
     memset(&callbacks, 0, sizeof(callbacks));
@@ -758,6 +945,10 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         state_receipt->timer_count > 4096u ||
         !dm2_v1_record_pool_set_init_from_raw_sksave(
             &pools, raw_body, raw_body_size, &state_receipt->dungeon) ||
+        !dm2_v1_sksave_map_owner_init(
+            &map_owner, raw_body, raw_body_size, &state_receipt->dungeon) ||
+        !dm2_v1_sksave_map_owner_detach_dynamic_records(
+            &map_owner, &pools, NULL) ||
         !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
             &pools, &state_receipt->dungeon) ||
         !dm2_v1_record_pool_restore_raw_sksave_direct_roots(
@@ -810,6 +1001,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     ok = 1;
 done:
     free(timers);
+    dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
     return ok;
 }
