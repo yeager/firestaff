@@ -23,7 +23,7 @@ obundna konsumenter får inte ersättas med syntetiska ytor.
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | riktiga ytor avkodas och får bytesproveniens; presentation saknas |
 | `FACE.BIN` | 20 verkliga PRS3-porträtt, 56×56, med källpaletter; VDP1-destination saknas |
 | `FONT256.S2D` | 242 CG-tiles; Saturns page/attribute/glyph-mapping saknas |
-| `MENU.BPK` | 162 PRS3-ytor avkodas; menyordning, CLUT och VDP1/VDP2 saknas |
+| `MENU.BPK` | 162 PRS3-ytor avkodas till source-bound indexed bytes; menyordning, CLUT och VDP1/VDP2 saknas |
 
 ## Runtimegräns
 

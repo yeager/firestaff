@@ -66,14 +66,14 @@ static int bpk_intake_ready(
 
     if (nexus_v1_bpk_archive_runtime_decode_receipt(
             input->menu_bpk, input->menu_bpk_size, &decode) != 0 ||
-        decode.route != NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
+        decode.route != NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED ||
         !decode.requires_prs3_decoder ||
-        !decode.prs3_evidence_only ||
-        decode.prs3_decoder_promoted ||
+        decode.prs3_evidence_only ||
+        !decode.prs3_decoder_promoted ||
         decode.prs3_decoded_pixels_emitted != 0U ||
         !decode.renderer_handoff_blocked ||
         decode.fallback_visuals_permitted ||
-        !decode.decode_blocked) {
+        decode.decode_blocked) {
         receipt->status = NEXUS_V1_PRS3_STRUCTURE2_INTAKE_BLOCKED_PRS3;
         return 0;
     }
@@ -81,6 +81,7 @@ static int bpk_intake_ready(
     receipt->prs3_stream_plan_failure_count = decode.prs3_stream_plan_failures;
     receipt->prs3_decoder_promoted = decode.prs3_decoder_promoted;
     receipt->prs3_decoded_pixels_emitted = decode.prs3_decoded_pixels_emitted;
+    receipt->can_decode_prs3 = decode.prs3_decoder_promoted ? 1 : 0;
 
     for (index = 0U; index < archive.candidate_offset_count; ++index) {
         if (nexus_v1_bpk_archive_prs3_stream_plan(
@@ -105,14 +106,7 @@ static int bpk_intake_ready(
                 plan.stream_size > 0U &&
                 plan.expected_output_bytes > 0U &&
                 plan.pixel_count == (uint32_t)plan.width *
-                    (uint32_t)plan.height &&
-                plan.decode_blocked &&
-                plan.evidence_only &&
-                plan.renderer_handoff_blocked &&
-                plan.upload_blocked &&
-                !plan.decoder_promoted &&
-                plan.decoded_pixels_emitted == 0U &&
-                !plan.fallback_visuals_permitted;
+                    (uint32_t)plan.height;
             receipt->prs3_framing_bound = receipt->prs3_framing_bound &&
                 receipt->prs3_bitmap_candidate_bound;
             break;
@@ -207,7 +201,7 @@ int nexus_v1_prs3_structure2_intake_admit(
         return 0;
     }
 
-    if (out_receipt->prs3_decoder_promoted ||
+    if (!out_receipt->prs3_decoder_promoted ||
         out_receipt->prs3_decoded_pixels_emitted != 0U ||
         out_receipt->structure2_pixel_span_proven ||
         out_receipt->structure2_palette_addressing_proven ||
@@ -219,7 +213,10 @@ int nexus_v1_prs3_structure2_intake_admit(
 
     out_receipt->status =
         NEXUS_V1_PRS3_STRUCTURE2_INTAKE_READY_NO_DRAW;
-    out_receipt->can_decode_prs3 = 0;
+    /* The DMWeb byte decoder is source-bound now. This does not authorize
+     * Structure2 pixels: Saturn CLUT addressing and VDP1/VDP2 placement are
+     * still absent, so the intake remains explicitly no-draw. */
+    out_receipt->can_decode_prs3 = 1;
     out_receipt->can_submit_structure2_pixels = 0;
     out_receipt->can_submit_palette = 0;
     out_receipt->runtime_render_permitted = 0;

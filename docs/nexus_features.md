@@ -9,8 +9,9 @@ fortfarande saknar Saturn-runtime-bindning.
   Structure2-textur-/palettebytes är verifierade på den lokala korpusen.
 - `.MNS`: 30 riktiga DMDF-kontainrar och deras TEXT-/modelldeskriptorer är
   inventerade; Structure3-faceägare och VDP1-kommandoordning är inte bevisade.
-- `MENU.BPK`: 162 riktiga PRS3-ytor dekoderas med DMWeb-reglerna; CLUT,
-  destination och menysemantik saknas.
+- `MENU.BPK`: 162 riktiga PRS3-ytor dekoderas med DMWeb-reglerna och går till
+  en source-bound indexed-pixelreceipt; CLUT, destination och menysemantik
+  saknas fortfarande.
 - `STABG.BIN`, `SMAP00`–`SMAP15`, `ITEM.IBS`, `FACE.BIN` och `STONE.BIN` har
   separata source-owned avkodnings- och palette receipts.
 - `SLEV*.BIN`, `SNDLEV*.SAL`/`.MAP` och `SDDRVS.TSK` har bounded byte-/entry-

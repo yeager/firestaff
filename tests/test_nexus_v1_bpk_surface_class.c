@@ -934,15 +934,16 @@ static void test_runtime_decode_receipt_routes(void) {
     rc = nexus_v1_bpk_archive_runtime_decode_receipt(
         data, sizeof(data), &receipt);
     expect(rc == 0, "decode receipt returns 0 for literal PRS3 archive");
-    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
-           "decode receipt keeps literal PRS3 archive evidence-only");
+    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
+           "decode receipt admits a complete literal PRS3 byte stream");
     expect(receipt.prs3_decode_successes == 1U &&
                receipt.prs3_decode_failures == 0U &&
                receipt.prs3_decoded_surface_bytes > 0U &&
-               receipt.prs3_decoder_promoted == 0 &&
+               receipt.prs3_decoder_promoted == 1 &&
                receipt.prs3_decoded_pixels_emitted == 0U &&
-               receipt.decode_blocked == 1,
-           "decode receipt records bounded bytes without renderer readiness");
+               receipt.decode_blocked == 0 &&
+               receipt.renderer_handoff_blocked == 1,
+           "decode receipt records complete bytes without renderer readiness");
 
     make_synthetic_stored_bpk(data, sizeof(data));
     memset(&receipt, 0, sizeof(receipt));
@@ -1361,16 +1362,16 @@ static int test_optional_local_menu_bpk(int require_real_data) {
     expect(nexus_v1_bpk_archive_runtime_decode_receipt(
                data, size, &decode_receipt) == 0,
            "local MENU.BPK runtime decode receipt returns 0");
-    expect(decode_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
-           "local MENU.BPK decode route remains blocked for Saturn presentation proof");
+    expect(decode_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
+           "local MENU.BPK decode route admits the DMWeb PRS3 byte decoder");
     expect(decode_receipt.prs3_decode_successes == 162U &&
                decode_receipt.prs3_decode_failures == 0U &&
                decode_receipt.prs3_decoded_surface_bytes > 0U,
            "local MENU.BPK decodes all PRS3 surfaces");
-    expect(decode_receipt.decode_blocked == 1 &&
-               decode_receipt.prs3_decoder_promoted == 0 &&
+    expect(decode_receipt.decode_blocked == 0 &&
+               decode_receipt.prs3_decoder_promoted == 1 &&
                decode_receipt.prs3_decoded_pixels_emitted == 0U,
-           "local MENU.BPK decode receipt keeps rendering blocked");
+           "local MENU.BPK promotes decoded bytes without emitting renderer pixels");
 
     memset(upload_rows, 0, sizeof(upload_rows));
     memset(&upload_receipt, 0, sizeof(upload_receipt));

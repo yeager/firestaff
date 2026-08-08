@@ -2573,10 +2573,12 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
     } else if (out_receipt->blocked_truncated_surfaces > 0U) {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED;
     } else if (out_receipt->blocked_prs3_surfaces > 0U) {
-        /* A bounded PRS3 decode is diagnostic evidence only. It does not
-         * authenticate Saturn CLUT ownership, VDP1 upload framing, or the
-         * destination used by the original renderer. */
-        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
+        /* DMWeb's DecodePRS3 grammar has now been exercised against every
+         * declared pixel in the authenticated retail corpus. This promotes
+         * the byte decoder, not the Saturn presentation route: CLUT ownership,
+         * VDP1 upload framing and the destination used by the original
+         * renderer remain separately blocked below. */
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
     } else {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
     }
@@ -2586,14 +2588,21 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
          out_receipt->route == NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES)
             ? 1 : 0;
     out_receipt->prs3_evidence_only =
-        (out_receipt->blocked_prs3_surfaces > 0U ||
-         out_receipt->prs3_stream_plans > 0U ||
-         out_receipt->prs3_decode_failures > 0U)
+        (out_receipt->prs3_decode_failures > 0U)
             ? 1 : 0;
-    out_receipt->prs3_decoder_promoted = 0;
+    out_receipt->prs3_decoder_promoted =
+        out_receipt->blocked_prs3_surfaces > 0U &&
+        out_receipt->prs3_decode_failures == 0U &&
+        out_receipt->prs3_decode_successes ==
+            out_receipt->blocked_prs3_surfaces;
     out_receipt->prs3_decoded_pixels_emitted = 0U;
+    /* Decoded bytes are retained as a receipt/hash only. No pixel buffer is
+     * handed to the renderer by this API, so Saturn presentation stays
+     * blocked even when the byte decoder is promoted. */
     out_receipt->renderer_handoff_blocked =
-        out_receipt->decode_blocked;
+        out_receipt->blocked_prs3_surfaces > 0U
+            ? 1
+            : out_receipt->decode_blocked;
     out_receipt->fallback_visuals_permitted = 0;
     return 0;
 }

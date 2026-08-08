@@ -1335,11 +1335,11 @@
   level consumers.
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
-  bounded DMWeb format evidence, but the runtime no longer decodes their
-  08h/28h payloads into host surfaces during LEV load or through the public
-  decode helper. Recover the Saturn pixel order, CLUT owner and VDP1 command
-  capture before reopening texture surfaces, palette conversion or DGN raster
-  submission.
+  bounded DMWeb format evidence. The source-bound DMWeb PRS3 byte decoder now
+  admits all 162 real MENU.BPK surfaces to a decoded-byte receipt; it does not
+  emit renderer pixels. Recover the Saturn pixel order, CLUT owner and VDP1
+  command capture before reopening texture surfaces, palette conversion or
+  DGN raster submission.
 
 - **NEXUS-STARTUP-TEXT-CAPTURE:** Retail PLRD rows now refuse stale
   serialized ASCII names in the startup footer/row-label lane; only the

@@ -8588,3 +8588,17 @@
   explicitly labeled as synthetic fixture input rather than native startup.
 - ✅ Extended the production source-boundary verifier to reject restoration of
   the old world initializer.
+
+# Nexus DMWeb PRS3 indexed-byte admission (2026-08-08)
+
+- ✅ Promoted the documented DMWeb PRS3 byte decoder after the real
+  `MENU.BPK` corpus decoded all 162/162 declared surfaces to their exact
+  indexed pixel counts; malformed references remain fail-closed.
+- ✅ Runtime receipts now expose the deterministic decoded-pixel byte census
+  and mark the decoder as promoted without emitting pixels to the renderer.
+- ✅ Kept the Saturn presentation boundary intact: MENU.BPK upload planning,
+  CLUT ownership, VDP1 upload framing, VDP2 composition and menu placement
+  remain blocked until authentic Saturn capture binds them.
+- ✅ Updated Structure2 intake, real English/French/legacy MENU.BPK hash tests,
+  boot-boundary tests and public Nexus status docs. Targeted Nexus build and
+  PRS3/renderer/startup regressions pass against `/Users/bosse/.firestaff/data/nexus`.

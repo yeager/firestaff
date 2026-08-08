@@ -208,11 +208,10 @@ typedef enum {
 } Nexus_V1_BpkSurfaceExtractStatus;
 
 /* Decode a single renderable BPK entry to its declared unpacked surface.
- * Stored entries and the bounded PRS3 candidate decoder are supported for
- * format analysis, including the supplied retail MENU.BPK.  Decode success
- * alone does not authenticate Saturn opcode, palette, or VDP1 semantics;
- * the launcher therefore keeps the live MENU.BPK draw route blocked until
- * those independent provenance requirements are met. */
+ * Stored entries and the DMWeb PRS3 decoder are supported, including every
+ * declared surface in the supplied retail MENU.BPK. Decode success proves
+ * indexed source bytes only; it does not authenticate Saturn palette, VDP1
+ * upload, or VDP2 composition semantics. */
 typedef enum {
     NEXUS_V1_BPK_DECODE_OK = 0,
     NEXUS_V1_BPK_DECODE_ERR_NULL = -1,
@@ -823,8 +822,8 @@ typedef struct {
     int first_blocked_decode_status;
     int requires_prs3_decoder;
     int prs3_evidence_only;
-    int prs3_decoder_promoted;
-    uint32_t prs3_decoded_pixels_emitted;
+    int prs3_decoder_promoted; /* byte decoder only; not renderer permission */
+    uint32_t prs3_decoded_pixels_emitted; /* zero until upload admission */
     int renderer_handoff_blocked;
     int fallback_visuals_permitted;
     int decode_blocked;
