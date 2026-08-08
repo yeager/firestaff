@@ -54,6 +54,27 @@ static void test_level_cd_selector_stays_unbound(void) {
           "retail CDDA layout does not invent a level-to-track selector");
 }
 
+static void test_audio_decode_capability_stays_fail_closed(void) {
+    CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_MAP_TABLE) == 1 &&
+          nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK) == 0 &&
+          nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SOUND_DRIVER) == 0,
+          "only bounded MAP inspection is advertised; SAL/SDDRVS decoding stays closed");
+}
+
+static void test_event_dispatch_stays_capture_gated_at_init(void) {
+    Nexus_SoundEngine eng;
+    Nexus_SfxRuntimeReceipt receipt;
+
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_sound_init(&eng) == 0 &&
+          nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+          receipt.event_dispatch_source_verified == 0 &&
+          receipt.blocks_real_sfx_playback == 1,
+          "sound init does not manufacture an authenticated Saturn event dispatcher");
+    nexus_sound_shutdown(&eng);
+}
+
 static void test_cd_selection_is_not_playback_readiness(void) {
     Nexus_SoundEngine eng;
     Nexus_SfxRuntimeReceipt receipt;
@@ -838,6 +859,8 @@ static void test_mismatched_assets_block_playback(void) {
 }
 
 int main(void) {
+    test_audio_decode_capability_stays_fail_closed();
+    test_event_dispatch_stays_capture_gated_at_init();
     test_level_cd_selector_stays_unbound();
     test_cd_selection_is_not_playback_readiness();
     test_missing_assets_block_playback();

@@ -181,8 +181,8 @@ int main(void) {
               "retail SAL/MAP runtime receipt emits");
         CHECK(runtime_receipt.sal_canonical_source_verified == 1 &&
               runtime_receipt.map_canonical_source_verified == 1 &&
-              runtime_receipt.event_dispatch_source_verified == 1,
-              "retail SAL/MAP metadata ready with event dispatch enabled");
+              runtime_receipt.event_dispatch_source_verified == 0,
+              "retail SAL/MAP metadata is ready while event dispatch stays gated");
         CHECK(sound.map_record_table_supported,
               "retail MAP has a terminated record table");
         CHECK(sound.map_record_count > 0 &&

@@ -629,12 +629,15 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->music_enabled = 1;
     eng->current_cd_track = -1;
     eng->current_level = -1;
-    eng->event_dispatch_source_verified = 1;
+    /* Sound-engine initialization has no authenticated Saturn event trace.
+     * SDDRVS identity and a MAP/SAL corpus are separate source receipts; do
+     * not open event dispatch merely because the host engine exists. */
+    eng->event_dispatch_source_verified = 0;
     ensure_event_selector_init(eng);
     clear_map_route(eng);
     clear_sal_profile(eng);
-    printf("Nexus sound: initialized (event dispatch enabled, "
-           "SAL decode active, CD playback enabled)\n");
+    printf("Nexus sound: initialized (event dispatch capture-gated, "
+           "SAL decode capture-gated, CD playback capture-gated)\n");
     return 0;
 }
 

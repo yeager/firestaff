@@ -413,9 +413,9 @@ int nexus_v1_audio_decode_supported(Nexus_V1_AudioKind kind) {
     if (kind == NEXUS_V1_AUDIO_KIND_MAP_TABLE) {
         return 1;
     }
-    if (kind == NEXUS_V1_AUDIO_KIND_SAL_BANK) {
-        return 1;
-    }
+    /* SAL bytes are still only opaque source windows. Do not advertise a
+     * decoder capability while codec/sample semantics and the SDDRVS owner
+     * remain capture-gated. */
     return 0;
 }
 
