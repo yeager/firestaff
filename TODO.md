@@ -758,7 +758,9 @@
   corridors to VDP1 register values `0x25d00000`, `0x25d00002`, `0x25d00006`,
   `0x25d00008`, `0x25d0000a` and `0x25d00010`, plus VDP2 register literals.
   `scripts/analyze_nexus_tm_bin_vdp_owner.py` verifies this against the real
-  file. This improves static owner evidence only; execution, command-source
+  file. The same scan now accepts the hash-verified `DM.BIN` as well; its
+  VDP2 literal set is `0x25f00000`, `0x25f00006`, `0x25f00018`, `0x25f000a0`.
+  This improves static owner evidence only; execution, command-source
   identity, CLUT and asset join remain capture-gated.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an

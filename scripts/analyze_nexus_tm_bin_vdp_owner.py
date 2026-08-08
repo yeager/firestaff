@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract static SH-2 VDP register literal corridors from retail TM.BIN.
+"""Extract static SH-2 VDP register literal corridors from retail DM/TM.BIN.
 
 This is disassembly evidence only. A literal load proves that the binary can
 address a VDP register window; it does not prove that a particular runtime
@@ -14,8 +14,10 @@ import struct
 from pathlib import Path
 
 
-EXPECTED_SIZE = 160044
-EXPECTED_SHA256 = "d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6"
+EXPECTED = {
+    "DM.BIN": (555144, "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"),
+    "TM.BIN": (160044, "d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6"),
+}
 VDP1_REQUIRED = {0x25D00000, 0x25D00002, 0x25D00006, 0x25D00008, 0x25D0000A, 0x25D00010}
 
 
@@ -38,19 +40,24 @@ def scan(blob: bytes) -> list[tuple[int, int, int, int]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("tm_bin", type=Path)
+    parser.add_argument("retail_bin", type=Path, help="hash-verified DM.BIN or TM.BIN")
     args = parser.parse_args()
+    expected = EXPECTED.get(args.retail_bin.name.upper())
+    if expected is None:
+        print("NEXUS_TM_BIN_VDP_OWNER_INVALID: expected DM.BIN or TM.BIN")
+        return 1
     try:
-        blob = args.tm_bin.read_bytes()
+        blob = args.retail_bin.read_bytes()
     except OSError as error:
         print(f"NEXUS_TM_BIN_VDP_OWNER_INVALID: {error}")
         return 1
     digest = hashlib.sha256(blob).hexdigest()
-    if len(blob) != EXPECTED_SIZE or digest != EXPECTED_SHA256:
+    if len(blob) != expected[0] or digest != expected[1]:
         print(f"NEXUS_TM_BIN_VDP_OWNER_INVALID: size={len(blob)} sha256={digest}")
         return 1
     rows = scan(blob)
     values = {value for _, _, _, value in rows}
+    print(f"source_file={args.retail_bin.name.upper()}")
     for instruction, literal, register, value in rows:
         bank = "VDP1" if (value & 0xFFFFFFE0) == 0x25D00000 else "VDP2"
         print(
@@ -58,7 +65,10 @@ def main() -> int:
             f"load_register=r{register} value=0x{value:08x}"
         )
     missing = sorted(VDP1_REQUIRED - values)
-    print(f"tm_bin_sha256={digest} size={len(blob)}")
+    vdp2_values = sorted(value for value in values
+                         if (value & 0xFFFFFF00) == 0x25F00000)
+    print("vdp2_literal_values=" + ",".join(f"0x{value:08x}" for value in vdp2_values))
+    print(f"source_sha256={digest} size={len(blob)}")
     print("semantic_admission=blocked")
     if missing:
         print("missing_vdp1_literals=" + ",".join(f"0x{x:08x}" for x in missing))

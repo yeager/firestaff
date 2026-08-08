@@ -1,3 +1,13 @@
+# Nexus DM/TM VDP-literal disassembly (2026-08-08)
+
+- ✅ `analyze_nexus_tm_bin_vdp_owner.py` accepterar nu båda hashverifierade
+  retailfilerna `DM.BIN` och `TM.BIN`. `DM.BIN` ger VDP2-literalvärdena
+  `0x25f00000`, `0x25f00006`, `0x25f00018`, `0x25f000a0`; `TM.BIN` ger
+  `0x25f00000`.
+- ✅ Båda filerna behåller full VDP1-literalkontroll och exakt SHA-256.
+  Detta är statiskt kodägarbevis, inte bevis för vilken runtime-frame,
+  tilemap, CLUT, meny, HUD eller viewport som konsumerar värdena.
+
 # Nexus SLEV/SAL/SDDRVS-korridor återverifierad (2026-08-08)
 
 - ✅ Den autentiska SCSP/68K-receipten reproducerar 16/16 SLEV, MAP och SAL
