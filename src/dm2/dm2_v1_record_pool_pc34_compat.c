@@ -543,29 +543,6 @@ int dm2_v1_record_pool_restore_raw_sksave_resident_chain(
     return current == DM2_V1_RECORD_HANDLE_END;
 }
 
-/* The record-pool owner is also compiled by narrow G1 audit targets that do
- * not link the optional SKSAVE decoder. Keep those targets linkable while a
- * decoder-linked target resolves these weak fail-closed fallbacks with the
- * source implementation. */
-__attribute__((weak)) void dm2_v1_read_record_session_init(
-    DM2_ReadRecordSession *session, const uint8_t *in_buf, size_t in_size)
-{
-    if (!session) return;
-    memset(session, 0, sizeof(*session));
-    session->in_buf = in_buf;
-    session->in_size = in_size;
-}
-
-__attribute__((weak)) int dm2_v1_read_record_checkcode(
-    DM2_ReadRecordSession *session, const DM2_ReadRecordCallbacks *cb,
-    uint16_t *owner_link, int map_x, int map_y, int read_sub_chain_info,
-    int follow_chain)
-{
-    (void)session; (void)cb; (void)owner_link; (void)map_x; (void)map_y;
-    (void)read_sub_chain_info; (void)follow_chain;
-    return -1;
-}
-
 typedef struct {
     DM2_V1_RecordPoolSet *set;
     uint32_t record_hash;
@@ -1290,22 +1267,95 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     void *query_creature_ai_flags_ctx,
     DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
 {
-    /* SKProject sksvgame.cpp::DM2_GAME_LOAD (lines 1415-1490) owns this
-     * phase only after it has restored the complete GAME_LOAD transaction:
-     * the map list, record pools, heroes, timers and DYN state share one
-     * bitstream owner.  The callback-only reader is intentionally built only
-     * by its dedicated test target; linking it into M10 would make this
-     * partial receipt look like a runtime save loader.  Until that original
-     * owner is implemented, reject the phase without consuming bytes or
-     * publishing a reconstructed record/timer graph. */
-    (void)raw_body;
-    (void)raw_body_size;
-    (void)state_receipt;
-    (void)savegamew7;
-    (void)query_creature_ai_flags;
-    (void)query_creature_ai_flags_ctx;
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveMapOwner map_owner;
+    DM2_V1_SksaveDirectRootReceipt roots;
+    DM2_V1_SaveTimerRecord timers[DM2_V1_SAVE_TIMER_MAX];
+    DM2_V1_OriginalRawTimerStreamReceipt timer_stream;
+    DM2_V1_SksavePoolRestoreContext context;
+    DM2_ReadRecordCallbacks callbacks;
+    DM2_ReadRecordSession session;
+    uint16_t chains_read = 0u;
+    int ok = 0;
+
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    return 0;
+    memset(&pools, 0, sizeof(pools));
+    memset(&map_owner, 0, sizeof(map_owner));
+    memset(&roots, 0, sizeof(roots));
+    memset(&timer_stream, 0, sizeof(timer_stream));
+    memset(&context, 0, sizeof(context));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&session, 0, sizeof(session));
+
+    /* SKProject sksvgame.cpp:1108-1183 and DM2_2066_197c.  These checks
+     * deliberately establish every earlier owner before advancing the one
+     * shared SUPPRESS reader; a malformed source body cannot consume a later
+     * map/possession bit as a special-timer record. */
+    if (!raw_body || !state_receipt || !state_receipt->valid || !savegamew7 ||
+        !query_creature_ai_flags ||
+        state_receipt->timer_count > DM2_V1_SAVE_TIMER_MAX ||
+        !dm2_v1_record_pool_set_init_from_raw_sksave(
+            &pools, raw_body, raw_body_size, &state_receipt->dungeon) ||
+        !dm2_v1_sksave_map_owner_init(
+            &map_owner, raw_body, raw_body_size, &state_receipt->dungeon) ||
+        !dm2_v1_sksave_map_owner_detach_dynamic_records(
+            &map_owner, &pools, NULL) ||
+        !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+            &pools, &state_receipt->dungeon) ||
+        !dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+            &pools, raw_body, raw_body_size, state_receipt,
+            query_creature_ai_flags, query_creature_ai_flags_ctx, &roots) ||
+        !dm2_v1_original_raw_sksave_decode_timer_stream(
+            raw_body, raw_body_size, state_receipt, (uint8_t *)timers,
+            DM2_V1_SAVE_TIMER_MAX, &timer_stream) ||
+        !timer_stream.valid ||
+        timer_stream.raw_hash != state_receipt->timers_hash) {
+        goto done;
+    }
+
+    context.set = &pools;
+    context.record_hash = roots.record_hash;
+    context.ai_fn = query_creature_ai_flags;
+    context.ai_ctx = query_creature_ai_flags_ctx;
+    context.possession_link_count = roots.possession_link_count;
+    if (roots.possession_link_count != 0u) {
+        memcpy(context.possession_links, roots.possession_links,
+               (size_t)roots.possession_link_count *
+               sizeof(roots.possession_links[0]));
+    }
+    callbacks.alloc_record = dm2_v1_sksave_pool_alloc;
+    callbacks.set_data = dm2_v1_sksave_pool_set_data;
+    callbacks.append_record = dm2_v1_sksave_pool_append;
+    callbacks.child_owner = dm2_v1_sksave_pool_child_owner;
+    callbacks.add_possession_index = dm2_v1_sksave_pool_add_possession;
+    callbacks.query_creature_ai_flags = dm2_v1_sksave_pool_query_ai;
+    callbacks.ctx = &context;
+    dm2_v1_read_record_session_init(&session, raw_body, raw_body_size);
+    session.reader.position = roots.next_stream_offset;
+    session.reader.bits_remaining = roots.next_stream_bits_remaining;
+    session.reader.current_byte = roots.next_stream_current_byte;
+    if (dm2_v1_read_special_timer_record_chains(
+            &session, &callbacks, timers, state_receipt->timer_count,
+            savegamew7, &chains_read) != 0 || session.error ||
+        context.possession_link_overflow) {
+        goto done;
+    }
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->timer_count = state_receipt->timer_count;
+        out_receipt->special_chain_count = chains_read;
+        out_receipt->timer_hash = timer_stream.raw_hash;
+        out_receipt->record_hash = context.record_hash;
+        out_receipt->next_stream_offset = session.reader.position;
+        out_receipt->next_stream_bits_remaining = session.reader.bits_remaining;
+        out_receipt->next_stream_current_byte = session.reader.current_byte;
+    }
+    ok = 1;
+done:
+    dm2_v1_sksave_map_owner_free(&map_owner);
+    dm2_v1_record_pool_set_free(&pools);
+    if (!ok && out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    return ok;
 }
 
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set)

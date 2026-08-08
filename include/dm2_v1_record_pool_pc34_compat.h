@@ -339,10 +339,11 @@ typedef struct {
     uint8_t next_stream_current_byte;
 } DM2_V1_SksaveSpecialTimerReceipt;
 
-/* Production currently rejects this partial phase.  SKProject's
- * DM2_GAME_LOAD owns it only alongside the complete map/record/hero/timer/DYN
- * transaction; the callback reader itself is test-only until that owner is
- * available. */
+/* Preflight the source-ordered prefix through DM2_2066_197c.  It creates one
+ * temporary raw c_map/c_record/c_tim owner, detaches dynamic tile records,
+ * restores direct hero/cursor roots, then consumes only timer types 0x3c and
+ * 0x3d.  The temporary owner is always discarded: this is evidence for the
+ * next map-chain phase, never a partial Resume session. */
 int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     const uint8_t *raw_body,
     size_t raw_body_size,

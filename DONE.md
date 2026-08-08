@@ -9418,3 +9418,12 @@
   konfigurerade Nexus-dataroot som övriga real-media-tester.
 - ✅ Efter omkonfigurering kör CTest hela 16-level SAL/MAP-korpusen och
   passerar, i stället för att bara passera som skip.
+# DM2 SKSAVE källavkodare i produktionsägaren (2026-08-08)
+
+- ✅ Tog bort den svaga, alltid-felande ersättningen för
+  `READ_RECORD_CHECKCODE`. Den verkliga SKProject-låsta avkodaren länkas nu
+  till den råa c_record-ägarens direct-root- och specialtimerförberedelse.
+- ✅ Specialtimerförberedelsen skapar en tillfällig, autentiserad c_map-,
+  c_record- och c_tim-transaktion och frigör alltid den igen. Ofullständiga
+  corpusägare fortsätter därför att blockeras utan att en partiell Resume-
+  session kan publiceras.
