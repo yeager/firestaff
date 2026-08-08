@@ -25,6 +25,8 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES 68u
 #define CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_BYTES 420u
+#define CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES 247u
+#define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES 324u
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
@@ -176,6 +178,15 @@ typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
     int icon_palette_verified;
     uint32_t icon_palette_file_offset;
     uint8_t icon_palette_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
+    /* CEDT018.C's F31 mirror and file-picker-arrow bitmaps.  These are read
+     * from the selected C06 executable, never carried as host artwork. */
+    int static_art_verified;
+    uint32_t mirror_bitmap_file_offset;
+    uint32_t mirror_bitmap_fnv1a;
+    uint8_t mirror_bitmap[CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES];
+    uint32_t file_picker_arrows_file_offset;
+    uint32_t file_picker_arrows_fnv1a;
+    uint8_t file_picker_arrows[CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES];
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityHandoffReceipt;
 

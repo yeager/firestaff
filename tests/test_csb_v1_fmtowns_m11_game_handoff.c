@@ -318,7 +318,16 @@ int main(void)
               utility_handoff.p3_header_size == 384u &&
               utility_handoff.p3_load_image_offset == 512u &&
               utility_handoff.p3_load_image_size == expected_utility_load_size &&
-              utility_handoff.p3_initial_eip == expected_utility_initial_eip,
+              utility_handoff.p3_initial_eip == expected_utility_initial_eip &&
+              utility_handoff.static_art_verified &&
+              utility_handoff.mirror_bitmap_fnv1a == 0xf8a19ba4u &&
+              utility_handoff.file_picker_arrows_fnv1a == 0xe2226054u &&
+              utility_handoff.mirror_bitmap_file_offset ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x14e78u :
+                                                           0x14ee0u) &&
+              utility_handoff.file_picker_arrows_file_offset ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x14f70u :
+                                                           0x14fd8u),
           "verified F31 profile resolves its language-owned C06 P3 envelope");
     memset(&utility_menu, 0, sizeof(utility_menu));
     CHECK(csb_v1_fmtowns_utility_menu_open(

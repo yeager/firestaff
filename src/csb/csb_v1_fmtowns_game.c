@@ -70,6 +70,12 @@ enum {
     CSB_V1_FMTOWNS_UTILE_INTERFACE_FONT_OFFSET = 0x150d8u,
     CSB_V1_FMTOWNS_UTILJ_INTERFACE_FONT_OFFSET = 0x15140u,
     CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_FNV1A = 0x8c36f65bu,
+    CSB_V1_FMTOWNS_UTILE_MIRROR_BITMAP_OFFSET = 0x14e78u,
+    CSB_V1_FMTOWNS_UTILJ_MIRROR_BITMAP_OFFSET = 0x14ee0u,
+    CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_FNV1A = 0xf8a19ba4u,
+    CSB_V1_FMTOWNS_UTILE_FILE_PICKER_ARROWS_OFFSET = 0x14f70u,
+    CSB_V1_FMTOWNS_UTILJ_FILE_PICKER_ARROWS_OFFSET = 0x14fd8u,
+    CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_FNV1A = 0xe2226054u,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -847,6 +853,32 @@ static int csb_v1_fmtowns_utility_icon_palette_open(
     return 1;
 }
 
+static int csb_v1_fmtowns_utility_static_art_open(
+    const char *path, uint32_t mirror_offset, uint32_t arrows_offset,
+    CSB_V1_FmtownsUtilityHandoffReceipt *receipt)
+{
+    if (!path || !receipt ||
+        !csb_v1_fmtowns_game_read_span(
+            path, mirror_offset, receipt->mirror_bitmap,
+            sizeof(receipt->mirror_bitmap)) ||
+        csb_v1_fmtowns_game_bytes_fnv1a(receipt->mirror_bitmap,
+                                        sizeof(receipt->mirror_bitmap)) !=
+            CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_FNV1A ||
+        !csb_v1_fmtowns_game_read_span(
+            path, arrows_offset, receipt->file_picker_arrows,
+            sizeof(receipt->file_picker_arrows)) ||
+        csb_v1_fmtowns_game_bytes_fnv1a(receipt->file_picker_arrows,
+                                        sizeof(receipt->file_picker_arrows)) !=
+            CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_FNV1A) return 0;
+    receipt->mirror_bitmap_file_offset = mirror_offset;
+    receipt->mirror_bitmap_fnv1a = CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_FNV1A;
+    receipt->file_picker_arrows_file_offset = arrows_offset;
+    receipt->file_picker_arrows_fnv1a =
+        CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_FNV1A;
+    receipt->static_art_verified = 1;
+    return 1;
+}
+
 int csb_v1_fmtowns_utility_icon_palette_rgb6(
     const CSB_V1_FmtownsUtilityMenuReceipt *receipt,
     uint8_t out_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3])
@@ -1109,6 +1141,8 @@ int csb_v1_fmtowns_utility_handoff_open(
     uint32_t expected_size;
     uint32_t expected_hash;
     uint32_t icon_palette_offset;
+    uint32_t mirror_bitmap_offset;
+    uint32_t file_picker_arrows_offset;
     uint32_t actual_size;
     uint32_t actual_hash;
     CSB_V1_VariantId expected_variant;
@@ -1122,12 +1156,18 @@ int csb_v1_fmtowns_utility_handoff_open(
         expected_size = CSB_V1_FMTOWNS_UTILE_SIZE;
         expected_hash = CSB_V1_FMTOWNS_UTILE_FNV1A;
         icon_palette_offset = CSB_V1_FMTOWNS_UTILE_ICON_PALETTE_OFFSET;
+        mirror_bitmap_offset = CSB_V1_FMTOWNS_UTILE_MIRROR_BITMAP_OFFSET;
+        file_picker_arrows_offset =
+            CSB_V1_FMTOWNS_UTILE_FILE_PICKER_ARROWS_OFFSET;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_EN;
     } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
         name = "UTILJ.EXP";
         expected_size = CSB_V1_FMTOWNS_UTILJ_SIZE;
         expected_hash = CSB_V1_FMTOWNS_UTILJ_FNV1A;
         icon_palette_offset = CSB_V1_FMTOWNS_UTILJ_ICON_PALETTE_OFFSET;
+        mirror_bitmap_offset = CSB_V1_FMTOWNS_UTILJ_MIRROR_BITMAP_OFFSET;
+        file_picker_arrows_offset =
+            CSB_V1_FMTOWNS_UTILJ_FILE_PICKER_ARROWS_OFFSET;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_JA;
     } else return 0;
     if (profile->variant_id != expected_variant ||
@@ -1156,6 +1196,15 @@ int csb_v1_fmtowns_utility_handoff_open(
     if (!csb_v1_fmtowns_utility_icon_palette_open(out_receipt->executable_path,
                                                   icon_palette_offset,
                                                   out_receipt)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    /* ReDMCSB CEDT018.C F31 G2267/G2268 and CEDT006.C F7040/F7004 consume
+     * these two native bitmaps. Their retail image locations differ by
+     * language, so bind them before any host rendering path can see them. */
+    if (!csb_v1_fmtowns_utility_static_art_open(
+            out_receipt->executable_path, mirror_bitmap_offset,
+            file_picker_arrows_offset, out_receipt)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }

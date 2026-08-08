@@ -1,3 +1,16 @@
+# CSB FM Towns C06-grafik bindning till originalprogram (2026-08-08)
+
+- ✅ F31:s spegelram och filväljarpilar läses nu direkt ur det valda,
+  hashverifierade `UTILE.EXP`- eller `UTILJ.EXP`-programmet. De två språkens
+  råoffsetar och båda byteidentiteterna kontrolleras innan C06-handoff får
+  lämna ut dem.
+- ✅ ReDMCSB `CEDT018.C` identifierar grafikerna och `CEDT006.C` deras
+  konsumenter. Firestaff bär inga kopierade bitmappar som kan bli en
+  värdersättning för originalprogrammet.
+- ✅ Den verkliga F31E-kedjan och källåsningskontrollen passerar fortsatt.
+  Ingen Utility-UI aktiveras förrän kompletterande EGB- och filflöden är
+  verifierade mot originalkörning.
+
 # CSB FM Towns C06-font bindning till originalprogram (2026-08-08)
 
 - ✅ F31E:s Utility-väg läser nu C06:s 420-byte interface-/scrollfont direkt
