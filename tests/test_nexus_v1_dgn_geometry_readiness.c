@@ -550,7 +550,7 @@ static void test_variable_grid_and_mesh_ready(void) {
 
     CHECK(build_dmweb_dgn(dgn, (int)sizeof(dgn), 24,
                           structure1b_rel, geometry_bytes) == 0,
-          "synthetic DMWeb DGN buffer builds");
+          "[fixture] synthetic DMWeb DGN buffer builds (not gameplay evidence)");
     structure1 = dgn + NEXUS_DGN_BLOCK_SIZE;
 
     set_collision_ref(structure1, structure1b_rel, 2, 2, 1);

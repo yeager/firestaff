@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "nexus_v1_world.h"
 #include "nexus_v1_dungeon.h"
@@ -347,22 +348,70 @@ static void probe_dungeon_parse(void) {
 
     Nexus_V1_Level level;
     int r = nexus_v1_level_load(&level, buf, (int)sizeof(buf), 0);
-    CHECK(r == 0, "nexus_v1_level_load succeeds on synthetic DGN");
-    CHECK(level.width == 64, "level width = 64");
-    CHECK(level.height == 64, "level height = 64");
-    CHECK(level.squares[5][5] == 0, "wall at (5,5)");
-    CHECK(level.squares[1][1] == 1, "floor at (1,1)");
-    CHECK(level.has_3d_geometry, "has_3d_geometry flag set");
-    CHECK(level.geometry_offset > 0, "geometry_offset > 0");
+    CHECK(r == 0, "[fixture] nexus_v1_level_load succeeds on synthetic DGN");
+    CHECK(level.width == 64, "[fixture] level width = 64");
+    CHECK(level.height == 64, "[fixture] level height = 64");
+    CHECK(level.squares[5][5] == 0, "[fixture] wall at (5,5)");
+    CHECK(level.squares[1][1] == 1, "[fixture] floor at (1,1)");
+    CHECK(level.has_3d_geometry, "[fixture] has_3d_geometry flag set");
+    CHECK(level.geometry_offset > 0, "[fixture] geometry_offset > 0");
 
     int sq = nexus_v1_level_get_square(&level, 5, 5);
-    CHECK(sq == 0, "level_get_square returns wall");
+    CHECK(sq == 0, "[fixture] level_get_square returns wall");
     sq = nexus_v1_level_get_square(&level, 1, 1);
-    CHECK(sq == 1, "level_get_square returns floor");
+    CHECK(sq == 1, "[fixture] level_get_square returns floor");
 
     /* Out-of-bounds returns wall */
     sq = nexus_v1_level_get_square(&level, 99, 99);
-    CHECK(sq == 0, "out-of-bounds returns wall");
+    CHECK(sq == 0, "[fixture] out-of-bounds returns wall");
+}
+
+/* ── DGN level parse (real Saturn disc corpus) ───────────────────
+ * Real-data probe: loads LEV00..LEV14.DGN from
+ * ${FIRESTAFF_NEXUS_DATA_DIR} (or ~/.firestaff/data/nexus). Skips
+ * only when no real corpus is available; a synthetic DGN never
+ * substitutes for a real disc file in gameplay evidence. */
+static void probe_dungeon_parse_real(void) {
+    printf("\n[DGN Level Parse — Saturn disc corpus]\n");
+    const char *dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char home_path[1024];
+    if (!dir || !dir[0]) {
+        const char *home = getenv("HOME");
+        if (home && home[0]) {
+            snprintf(home_path, sizeof(home_path),
+                     "%s/.firestaff/data/nexus", home);
+            dir = home_path;
+        }
+    }
+    if (!dir || !dir[0]) { printf("  SKIP: no data dir\n"); return; }
+    int loaded = 0;
+    for (int lv = 0; lv < 15; ++lv) {
+        char path[1200];
+        snprintf(path, sizeof(path), "%s/LEV%02d.DGN", dir, lv);
+        FILE *fp = fopen(path, "rb");
+        if (!fp) continue;
+        fseek(fp, 0, SEEK_END);
+        long sz = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        if (sz <= 0 || sz > (long)(1 << 22)) { fclose(fp); continue; }
+        uint8_t *buf = (uint8_t *)malloc((size_t)sz);
+        if (!buf) { fclose(fp); continue; }
+        if (fread(buf, 1, (size_t)sz, fp) != (size_t)sz) {
+            free(buf); fclose(fp); continue;
+        }
+        fclose(fp);
+        Nexus_V1_Level level;
+        int r = nexus_v1_level_load(&level, buf, (int)sz, 0);
+        char msg[128];
+        snprintf(msg, sizeof(msg),
+                 "[real] LEV%02d.DGN load rc=%d (w=%d h=%d)",
+                 lv, r, r == 0 ? level.width : 0,
+                 r == 0 ? level.height : 0);
+        CHECK(r == 0, msg);
+        free(buf);
+        ++loaded;
+    }
+    if (!loaded) printf("  SKIP: no LEV*.DGN files found under %s\n", dir);
 }
 
 /* ── Main ───────────────────────────────────────────────────────── */
@@ -382,6 +431,7 @@ int main(int argc, char **argv) {
     probe_hash();
     probe_tick();
     probe_dungeon_parse();
+    probe_dungeon_parse_real();
 
     printf("\n═══════════════════════════════════════════════════\n");
     printf("  Results: %d PASS, %d FAIL\n", g_pass, g_fail);

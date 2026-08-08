@@ -21,13 +21,16 @@ static uint8_t *load_file(const char *path, int *out_size) {
     return buf;
 }
 
-static int test_synthetic(void) {
+/* Rejection-only fixture: feeds 64 zero bytes and NULL to the DGN
+ * decoder to confirm both are rejected. This is NOT gameplay
+ * evidence — see test_all_levels for the real-disc corpus check. */
+static int test_synthetic_rejection_fixture(void) {
     Nexus_V1_DgnDecodeResult r;
     uint8_t bad[64];
     memset(bad, 0, sizeof(bad));
     if (nexus_v1_dgn_decode(bad, 64, &r)) return 1;
     if (nexus_v1_dgn_decode(NULL, 0, &r)) return 1;
-    printf("  PASS synthetic\n");
+    printf("  PASS [fixture] synthetic-input rejection\n");
     return 0;
 }
 
@@ -83,7 +86,7 @@ static int test_all_levels(void) {
 int main(void) {
     int fail = 0;
     printf("=== Nexus V1 DGN Dungeon Decoder ===\n");
-    fail += test_synthetic();
+    fail += test_synthetic_rejection_fixture();
     fail += test_all_levels();
     printf("summary: fail=%d\n", fail);
     return fail ? 1 : 0;
