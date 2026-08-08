@@ -23676,6 +23676,70 @@ static void m11_repair_dead_party_leader(M11_GameViewState* state) {
     state->world.party.activeChampionIndex = -1;
 }
 
+/* ReDMCSB REVIVE.C F0280 writes M516_CHAMPIONS, not the host's reduced
+ * HUD-party projection.  Keep PC34 mirror candidates in GAMEBLOCK before a
+ * later COMMAND.C input refreshes M11 from CSB authority. */
+static int m11_csb_append_pc34_mirror_candidate_to_runtime(
+    M11_GameViewState* state, int champion_index)
+{
+    CSB_V1_BootProfile* profile;
+
+    if (!state || !m11_source_is_csb(state) || !state->csbBootProfile ||
+        champion_index < 0 || champion_index >= CHAMPION_MAX_PARTY ||
+        !state->world.party.champions[champion_index].present) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+    if (profile->variant_id != CSB_V1_VARIANT_PC34_EN &&
+        profile->variant_id != CSB_V1_VARIANT_PC34_MULTI) {
+        return 0;
+    }
+    if (profile->runtime.party_state_valid &&
+        profile->runtime.party_state.ChampionCount != champion_index) {
+        return 0;
+    }
+    if (csb_v1_runtime_append_mirror_candidate_pc34(
+            &profile->runtime,
+            &state->world.party.champions[champion_index]) != 0) {
+        return 0;
+    }
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    return state->world.party.championCount == champion_index + 1 &&
+           state->world.party.champions[champion_index].present;
+}
+
+static int m11_csb_remove_pc34_pending_mirror_candidate_from_runtime(
+    M11_GameViewState* state, int champion_index)
+{
+    CSB_V1_BootProfile* profile;
+    CSB_V1_PartyState party;
+
+    if (!state || !m11_source_is_csb(state) || !state->csbBootProfile ||
+        champion_index < 0 || champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+    if ((profile->variant_id != CSB_V1_VARIANT_PC34_EN &&
+         profile->variant_id != CSB_V1_VARIANT_PC34_MULTI) ||
+        csb_v1_runtime_get_party_state(&profile->runtime, &party) < 0 ||
+        party.ChampionCount != champion_index + 1) {
+        return 0;
+    }
+    /* ReDMCSB REVIVE.C F0282 C162 clears the just-appended contiguous
+     * M516 entry.  It never removes a pre-existing middle champion. */
+    csb_v1_champion_init(&party.Champions[champion_index]);
+    party.ChampionCount = champion_index;
+    if (party.LeaderIndex >= party.ChampionCount) party.LeaderIndex = -1;
+    if (party.MagicCasterIndex >= party.ChampionCount) {
+        party.MagicCasterIndex = -1;
+    }
+    if (csb_v1_runtime_set_party_state(&profile->runtime, &party) != 0) {
+        return 0;
+    }
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    return state->world.party.championCount == champion_index;
+}
+
 int M11_GameView_RecruitChampionByMirrorOrdinal(M11_GameViewState* state,
                                                 int mirrorOrdinal) {
     int previousPartyCount;
@@ -24908,6 +24972,14 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     if (M11_GameView_RecruitChampionByMirrorOrdinal(state, mirrorOrdinal) != 1) {
         return 0;
     }
+    if (m11_source_is_csb(state) &&
+        !m11_csb_append_pc34_mirror_candidate_to_runtime(
+            state, previousPartyCount)) {
+        (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
+                                                    previousPartyCount);
+        m11_set_status(state, "MIRROR", "CSB SOURCE RECORD REJECTED");
+        return 0;
+    }
 
     state->candidateMirrorOrdinal = mirrorOrdinal;
     state->candidateMirrorPartyIndex = previousPartyCount;
@@ -24962,6 +25034,13 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
     mirrorName[0] = '\0';
     if (!state || !state->active || !state->candidateMirrorPanelActive ||
         state->candidateMirrorRenameActive || state->candidateMirrorOrdinal < 0) {
+        return 0;
+    }
+    if (reincarnate && m11_source_is_csb(state)) {
+        /* Keep the public probe API on the same fail-closed C161 boundary as
+         * the live panel.  REVIVE.C F0282's RNG sequence is not DM1's host
+         * helper and must not be substituted into a CSB GAMEBLOCK. */
+        m11_set_status(state, "MIRROR", "CSB REINCARNATE NOT YET SOURCE-BOUND");
         return 0;
     }
     /* The C127 owner belongs to the selection receipt. The modal can remain
@@ -25058,6 +25137,13 @@ int M11_GameView_BeginMirrorCandidateReincarnateRename(M11_GameViewState* state)
 
     if (!state || !state->active || !state->candidateMirrorPanelActive ||
         state->candidateMirrorOrdinal < 0) {
+        return 0;
+    }
+    if (m11_source_is_csb(state)) {
+        /* F0282 C161 consumes source RNG while changing every statistic.
+         * PC34's C160 and C162 are runtime-bound below, but do not apply
+         * DM1's deterministic host approximation to a CSB GAMEBLOCK. */
+        m11_set_status(state, "MIRROR", "CSB REINCARNATE NOT YET SOURCE-BOUND");
         return 0;
     }
     championIndex = state->candidateMirrorPartyIndex;
@@ -25292,6 +25378,12 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
         return 0;
     }
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
+        if (m11_source_is_csb(state) &&
+            !m11_csb_remove_pc34_pending_mirror_candidate_from_runtime(
+                state, championIndex)) {
+            m11_set_status(state, "MIRROR", "CSB SOURCE RECEIPT STALE");
+            return 0;
+        }
         if (F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
                                                  championIndex)) {
             /* ReDMCSB REVIVE.C F0282 C162 cancels this temporary candidate.

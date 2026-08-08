@@ -66,6 +66,21 @@
   `COMMAND.C` F0361 and `LOADSAVE.C` F0433/F0435; it intentionally does not
   claim CSBWin DSA-save support.
 
+# CSB PC34 F0280 mirror-to-GAMEBLOCK handoff (2026-08-08)
+
+- ✅ A PC 3.4 mirror candidate is now materialized into the authoritative CSB
+  `GAMEBLOCK` party before M11 next refreshes its HUD projection. The bridge
+  decodes the original `A..P` vital, Luck..AntiFire and C04..C19 fields, keeps
+  all 20 source skill-experience rows, and copies only the known C026 PC
+  portrait bytes; it does not manufacture cross-platform planar data.
+- ✅ The C162 cancellation path removes only that pending contiguous source
+  entry. C161 remains deliberately blocked for CSB until F0282's source RNG
+  and all-stat reincarnation transaction are runtime-bound.
+- ✅ The PC3.4 Prison regression now verifies the encoded F0280 record across
+  a subsequent authoritative CSB input refresh, alongside the authenticated
+  title, Entrance, first movement and F0433/F0435 save flow. Reference:
+  ReDMCSB `REVIVE.C` F0280 lines 133-283.
+
 - ✅ Added a reproducible source-bound capture tool that requires the
   authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
 - ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a

@@ -19735,6 +19735,143 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
     return 0;
 }
 
+static int csb_v1_runtime_decode_mirror_value_pc34(
+    const unsigned char *encoded, int encoded_length, int offset,
+    int digits, unsigned int *out_value)
+{
+    unsigned int value = 0u;
+    int i;
+
+    if (!encoded || !out_value || offset < 0 || digits <= 0 ||
+        offset + digits > encoded_length) {
+        return 0;
+    }
+    for (i = 0; i < digits; ++i) {
+        unsigned char ch = encoded[offset + i];
+        if (ch < 'A' || ch > 'P') {
+            return 0;
+        }
+        value = (value << 4) | (unsigned int)(ch - 'A');
+    }
+    *out_value = value;
+    return 1;
+}
+
+int csb_v1_runtime_append_mirror_candidate_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct ChampionState_Compat *source_record)
+{
+    CSB_V1_PartyState party;
+    CSB_V1_Champion *champion;
+    unsigned int value;
+    int source_stat;
+    int skill;
+    int slot;
+    static const int source_stat_to_csb_stat[CSB_V1_STAT_COUNT] = {
+        CSB_V1_STAT_LUCK, CSB_V1_STAT_STR, CSB_V1_STAT_DEX,
+        CSB_V1_STAT_WIS, CSB_V1_STAT_VIT, CSB_V1_STAT_ANTIMAGIC,
+        CSB_V1_STAT_ANTIFIRE
+    };
+
+    if (!profile || !source_record ||
+        !F0634_CHAMPION_HasValidEncodedMirrorFields_Compat(source_record)) {
+        return -1;
+    }
+    if (profile->party_state_valid) {
+        party = profile->party_state;
+    } else {
+        csb_v1_character_init_default(&party);
+    }
+    party.PartyDirection = profile->party_dir & 3;
+    if (party.ChampionCount < 0 || party.ChampionCount >= CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    slot = party.ChampionCount;
+    champion = &party.Champions[slot];
+    csb_v1_champion_init(champion);
+
+    /* ReDMCSB REVIVE.C F0280 lines 195-243: F0168 obtains the original
+     * mirror text, then F0279 decodes 4/4/4 vital nibbles and seven
+     * Luck..AntiFire pairs.  The shared record keeps those three encoded
+     * lines byte-for-byte; do not derive values from M11's six-stat HUD. */
+    if (!F0628_CHAMPION_UnpackName_Compat(source_record, champion->Name,
+                                          sizeof(champion->Name)) ||
+        !F0629_CHAMPION_UnpackTitle_Compat(source_record, champion->Title,
+                                           sizeof(champion->Title)) ||
+        !csb_v1_runtime_decode_mirror_value_pc34(
+            source_record->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
+            0, 4, &value)) {
+        return -1;
+    }
+    champion->CurrentHealth = champion->MaximumHealth = (int16_t)value;
+    if (!csb_v1_runtime_decode_mirror_value_pc34(
+            source_record->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
+            4, 4, &value)) return -1;
+    champion->CurrentStamina = champion->MaximumStamina = (int16_t)value;
+    if (!csb_v1_runtime_decode_mirror_value_pc34(
+            source_record->mirrorStatsText, CHAMPION_MIRROR_FIELD_LENGTH,
+            8, 4, &value)) return -1;
+    champion->CurrentMana = champion->MaximumMana = (int16_t)value;
+    for (source_stat = 0; source_stat < CSB_V1_STAT_COUNT; ++source_stat) {
+        if (!csb_v1_runtime_decode_mirror_value_pc34(
+                source_record->mirrorSkillsText,
+                CHAMPION_MIRROR_FIELD_LENGTH, source_stat * 2, 2,
+                &value)) return -1;
+        champion->Statistics[source_stat_to_csb_stat[source_stat]]
+            [CSB_V1_STAT_CUR] = (uint16_t)value;
+        champion->Statistics[source_stat_to_csb_stat[source_stat]]
+            [CSB_V1_STAT_MAX] = (uint16_t)value;
+    }
+    champion->Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_MIN] = 10u;
+    champion->SkillExperienceValid = 1u;
+    for (skill = 4; skill < CSB_V1_FULL_SKILL_COUNT; ++skill) {
+        if (!csb_v1_runtime_decode_mirror_value_pc34(
+                source_record->mirrorInventoryText,
+                CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH, skill - 4, 1,
+                &value)) return -1;
+        champion->SkillExperience[skill] = value == 0u ? 0u :
+            (uint32_t)(125u << value);
+    }
+    for (skill = 0; skill < 4; ++skill) {
+        int hidden;
+        uint32_t total = 0u;
+        for (hidden = 0; hidden < 4; ++hidden) {
+            total += champion->SkillExperience[(skill + 1) * 4 + hidden];
+        }
+        champion->SkillExperience[skill] = total;
+    }
+    for (skill = 0; skill < CSB_V1_SKILL_COUNT; ++skill) {
+        champion->Skills[skill] = (uint8_t)csb_v1_runtime_imported_skill_level(
+            champion, skill);
+    }
+    if (source_record->sex == 'M') {
+        champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_MALE;
+    }
+    champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_ICON;
+    champion->Cell = (uint8_t)((slot + party.PartyDirection) & 3);
+    champion->Direction = (uint8_t)(party.PartyDirection & 3);
+    champion->DirectionMaximumDamageReceived =
+        (uint16_t)(party.PartyDirection & 3);
+    champion->Food = 1500;
+    champion->Water = 1500;
+    champion->Load = 0u;
+    if (source_record->portraitBitmapValid) {
+        /* PC I34 F0280:142 blits C026 using C016 byte-width (16) for 29
+         * rows.  The wider cross-platform storage remains zero rather than
+         * being populated with invented planar bytes. */
+        memcpy(champion->Portrait, source_record->portraitBitmap,
+               CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT);
+    }
+    party.ChampionCount++;
+    if (party.ChampionCount == 1) {
+        party.LeaderIndex = 0;
+        party.MagicCasterIndex = 0;
+    }
+    party.PartyMapX = profile->party_x;
+    party.PartyMapY = profile->party_y;
+    return csb_v1_runtime_set_party_state(profile, &party);
+}
+
 int csb_v1_runtime_set_magic_caster(CSB_V1_RuntimeProfile *profile,
                                     int champion_index)
 {

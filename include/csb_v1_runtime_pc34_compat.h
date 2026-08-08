@@ -1266,6 +1266,15 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
 
+/* ReDMCSB REVIVE.C F0280 (PC I34): materialize one live champion from a
+ * decoded dungeon mirror record.  The record retains the encoded source
+ * vital/stat/skill fields and the C026 portrait that the shared M11 mirror
+ * catalog obtained from the original PC34 files.  This is deliberately not
+ * the DM1 candidate model: it writes CSB's complete 20-row skill state. */
+int csb_v1_runtime_append_mirror_candidate_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct ChampionState_Compat *source_record);
+
 /* ReDMCSB DUNGEON.C F0140: compute one live Thing's inventory weight from
  * the loaded original dungeon data.  This includes waterskin charges and
  * recursive container contents.  Returns zero for an invalid/unloaded Thing.
