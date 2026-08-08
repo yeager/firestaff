@@ -2090,8 +2090,59 @@ static void m12_materialize_dm1_startup_optional_cache(const char* seedPath,
  * roles, while the fingerprint registry records the accepted original bytes.
  * Never place a name-matched archive member in the runtime cache: that would
  * let a synthetic TITL/ENDA/KAOS/SWSH file impersonate source media. */
-static const char* m12_csb_amiga_sidecar_expected_md5(const char* label) {
-    if (!label) {
+static int m12_csb_amiga_sidecar_label_known(const char* label) {
+    static const char* const labels[] = {
+        "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL", "ANIM.FTL",
+        "APPA.FTL", "APPB.FTL", "BJELoad_R", "CNFG.FTL", "GRF1.FTL",
+        "MEM1.FTL", "USIO.FTL", "VDEO.FTL", NULL
+    };
+    size_t index;
+    if (!label) return 0;
+    for (index = 0U; labels[index] != NULL; ++index) {
+        if (strcmp(label, labels[index]) == 0) return 1;
+    }
+    return 0;
+}
+
+static const char* m12_csb_amiga_sidecar_expected_md5(const char* versionId,
+                                                       const char* label) {
+    if (!versionId || !label) {
+        return NULL;
+    }
+    /* ReDMCSB COMPILE.H:274-298 distinguishes A35E's direct APPB C03_GAME
+     * program from A35M's KAOS/ANIM/APPB family.  These values are MD5s of
+     * the supplied original 3.5 ADFs, not names copied out of an archive. */
+    if (strcmp(versionId, "amiga35-en") == 0) {
+        if (strcmp(label, "ANIM.FTL") == 0) return "60ffbbe31830f2fe262cb8dee862b7fc";
+        if (strcmp(label, "APPA.FTL") == 0) return "8d68df400f71672df4d0339c806c6a25";
+        if (strcmp(label, "APPB.FTL") == 0) return "11d8d059cd8f241d6f68ec09c5c8b66d";
+        if (strcmp(label, "BJELoad_R") == 0) return "6aec320606f014a149548e664719cf5b";
+        if (strcmp(label, "CNFG.FTL") == 0) return "00dae1fcfe37b5bcb3ef1c59c9c0afca";
+        if (strcmp(label, "ENDA.DAT") == 0) return "9f2b73ff73ad0032810d79021c900ca9";
+        if (strcmp(label, "GRF1.FTL") == 0) return "03d188f89640683b76f4b502415c7dee";
+        if (strcmp(label, "MEM1.FTL") == 0) return "383bd296e025a1eb2ee941cf5eb6ee29";
+        if (strcmp(label, "SWSH.FTL") == 0) return "ff3872baaed8ee4e83ee3c0684b2eeec";
+        if (strcmp(label, "USIO.FTL") == 0) return "65a18a7d553186df1206241abbd1560e";
+        if (strcmp(label, "VDEO.FTL") == 0) return "d86f045085481448f6ae3db8d3d640d2";
+        return NULL;
+    }
+    if (strcmp(versionId, "amiga35-multi") == 0) {
+        if (strcmp(label, "TITL.DAT") == 0) return "5b590ea3a6f5eed513b5678b01468ee4";
+        if (strcmp(label, "ENDA.DAT") == 0) return "9f2b73ff73ad0032810d79021c900ca9";
+        if (strcmp(label, "KAOS.FTL") == 0) return "229d3253968d6e616f8b5171efdf04a5";
+        if (strcmp(label, "SWSH.FTL") == 0) return "ff3872baaed8ee4e83ee3c0684b2eeec";
+        if (strcmp(label, "ANIM.FTL") == 0) return "0685af41f4ec2d941eb6450d0f331b2c";
+        if (strcmp(label, "APPA.FTL") == 0) return "8d68df400f71672df4d0339c806c6a25";
+        if (strcmp(label, "APPB.FTL") == 0) return "1533410beaeea4fa614ae0f0142e0861";
+        if (strcmp(label, "BJELoad_R") == 0) return "758e8549f2280e44ebeae2ae4790d644";
+        if (strcmp(label, "CNFG.FTL") == 0) return "00dae1fcfe37b5bcb3ef1c59c9c0afca";
+        if (strcmp(label, "GRF1.FTL") == 0) return "03d188f89640683b76f4b502415c7dee";
+        if (strcmp(label, "MEM1.FTL") == 0) return "383bd296e025a1eb2ee941cf5eb6ee29";
+        if (strcmp(label, "USIO.FTL") == 0) return "65a18a7d553186df1206241abbd1560e";
+        if (strcmp(label, "VDEO.FTL") == 0) return "d86f045085481448f6ae3db8d3d640d2";
+        return NULL;
+    }
+    if (strcmp(versionId, "amiga31-multi") != 0) {
         return NULL;
     }
     if (strcmp(label, "TITL.DAT") == 0) return "5b590ea3a6f5eed513b5678b01468ee4";
@@ -2114,8 +2165,10 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* label) {
 }
 
 static int m12_materialize_authenticated_csb_amiga_sidecar(
-    const char* seedPath, const char* label, const char* outPath) {
-    const char* expectedMd5 = m12_csb_amiga_sidecar_expected_md5(label);
+    const char* seedPath, const char* versionId, const char* label,
+    const char* outPath) {
+    const char* expectedMd5 = m12_csb_amiga_sidecar_expected_md5(versionId,
+                                                                   label);
     char md5[M12_ASSET_MD5_CAPACITY];
     if (!expectedMd5 ||
         !m12_materialize_optional_for_cache_seed(seedPath, label, outPath)) {
@@ -2197,7 +2250,7 @@ static int m12_materialize_authenticated_csb_atari_sidecar(
 
 static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
                                                        const char* gameCacheDir,
-                                                       int permitAmiga31Sidecars,
+                                                       const char* amigaVersionId,
                                                        int permitAtariStSidecars) {
     static const char* const labels[] = {
         "SWOOSH", "SWOOSH.DAT",
@@ -2307,10 +2360,12 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * paired A31E version admission may retain these four sidecars.
          * ReDMCSB APPA.C:51-53 selects the Amiga FTL/TITL path, whereas
          * TITLE.C F0437 owns PC34's C001 sequence. */
-        amigaExpectedMd5 = m12_csb_amiga_sidecar_expected_md5(labels[i]);
+        amigaExpectedMd5 = amigaVersionId
+            ? m12_csb_amiga_sidecar_expected_md5(amigaVersionId, labels[i])
+            : NULL;
         atariExpectedMd5 = m12_csb_atari_sidecar_expected_md5(labels[i]);
-        if (amigaExpectedMd5 != NULL &&
-            !permitAmiga31Sidecars) {
+        if (m12_csb_amiga_sidecar_label_known(labels[i]) &&
+            (!amigaVersionId || amigaExpectedMd5 == NULL)) {
             (void)remove(outPath);
             continue;
         }
@@ -2323,7 +2378,7 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
         }
         if (!(amigaExpectedMd5 != NULL
                   ? m12_materialize_authenticated_csb_amiga_sidecar(
-                        seedPath, labels[i], outPath)
+                        seedPath, amigaVersionId, labels[i], outPath)
                   : permitAtariStSidecars && atariExpectedMd5 != NULL
                     ? m12_materialize_authenticated_csb_atari_sidecar(
                         seedPath, labels[i], outPath)
@@ -4447,7 +4502,10 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         m12_materialize_csb_startup_optional_cache(
             optionalSeedPath, gameCacheDir,
             selectedVersion && selectedVersion->versionId &&
-            strcmp(selectedVersion->versionId, "amiga31-multi") == 0,
+            (strcmp(selectedVersion->versionId, "amiga31-multi") == 0 ||
+             strcmp(selectedVersion->versionId, "amiga35-en") == 0 ||
+             strcmp(selectedVersion->versionId, "amiga35-multi") == 0)
+                ? selectedVersion->versionId : NULL,
             selectedVersion && selectedVersion->versionId &&
             strncmp(selectedVersion->versionId, "st20-21-", 8) == 0);
     }
@@ -5779,7 +5837,8 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 m12_file_md5_hex(dungeonPath, copiedMd5) &&
                 strcmp(copiedMd5, expectedDungeonMd5) == 0) {
                 m12_materialize_csb_startup_optional_cache(version->matchedPath,
-                                                           outPath, 1, 0);
+                                                           outPath,
+                                                           "amiga31-multi", 0);
                 return 1;
             }
             (void)remove(dungeonPath);
@@ -5813,7 +5872,9 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         m12_file_md5_hex(dungeonPath, copiedMd5) &&
         strcmp(copiedMd5, expectedDungeonMd5) == 0) {
         m12_materialize_csb_startup_optional_cache(
-            version->matchedPath, outPath, 0,
+            version->matchedPath, outPath,
+            (strcmp(versionId, "amiga35-en") == 0 ||
+             strcmp(versionId, "amiga35-multi") == 0) ? versionId : NULL,
             strncmp(versionId, "st20-21-", 8) == 0);
         return 1;
     }
@@ -5827,7 +5888,9 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         return 0;
     }
     m12_materialize_csb_startup_optional_cache(
-        version->matchedPath, outPath, 0,
+        version->matchedPath, outPath,
+        (strcmp(versionId, "amiga35-en") == 0 ||
+         strcmp(versionId, "amiga35-multi") == 0) ? versionId : NULL,
         strncmp(versionId, "st20-21-", 8) == 0);
     return 1;
 }

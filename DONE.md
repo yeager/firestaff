@@ -160,6 +160,10 @@
 - ✅ APPB:s språkparameter är nu ett bootprofilsfält med samma 0/1/2-värden
   som `APPA.C` skickar till KAOS. Den engelska realdatavägen låser värdet 0
   genom hela M11-handoffet i stället för att tappa det efter klicket.
+- ✅ Amiga 3.5 English och Multilanguage får nu sina egna hashverifierade
+  programcachar. A35E:s direkta `APPB.FTL` och A35M:s separata
+  `KAOS.FTL`/`ANIM.FTL`/`APPB.FTL` tas enbart från den valda original-ADF:en;
+  en namnmatchad fil från ett annat paket rensas bort.
 
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
   dimensions, cell counts and maximum tile indices instead of keeping only

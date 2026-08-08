@@ -911,6 +911,72 @@ static void check_csb_amiga31_real_archive_when_available(const char* root) {
               "selected Amiga 3.1 cache should retain the authenticated title package");
 }
 
+/* A35 is not an A31 title-package alias.  ReDMCSB COMPILE.H:274-298 gives
+ * A35E a direct APPB C03_GAME executable and A35M separate KAOS/ANIM/APPB
+ * executables.  Assert the selected ADF contributes those exact bytes to its
+ * private cache, rather than accepting same-named sidecars from A31 or PC. */
+static void check_csb_amiga35_real_archive_when_available(const char* root) {
+    static const struct {
+        const char* version_id;
+        const char* graphics_md5;
+        const char* program_names[4];
+        const char* program_md5[4];
+    } editions[] = {
+        { "amiga35-en", "291e1bc6803e3dc4b974c60117ca5d68",
+          { "APPB.FTL", "BJELoad_R", "ANIM.FTL", "VDEO.FTL" },
+          { "11d8d059cd8f241d6f68ec09c5c8b66d",
+            "6aec320606f014a149548e664719cf5b",
+            "60ffbbe31830f2fe262cb8dee862b7fc",
+            "d86f045085481448f6ae3db8d3d640d2" } },
+        { "amiga35-multi", "cefaddfdf5651df2c91f61b5611a8362",
+          { "KAOS.FTL", "ANIM.FTL", "APPB.FTL", "TITL.DAT" },
+          { "229d3253968d6e616f8b5171efdf04a5",
+            "0685af41f4ec2d941eb6450d0f331b2c",
+            "1533410beaeea4fa614ae0f0142e0861",
+            "5b590ea3a6f5eed513b5678b01468ee4" } }
+    };
+    M12_AssetStatus status;
+    size_t edition_index;
+
+    if (!root || root[0] == '\0') {
+        puts("skip: FIRESTAFF_CSB_AMIGA35_DATA_DIR not set");
+        return;
+    }
+    M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_ScanGame(&status, root, "csb");
+    for (edition_index = 0U;
+         edition_index < sizeof(editions) / sizeof(editions[0]);
+         ++edition_index) {
+        const M12_AssetVersionStatus* edition;
+        char runtime_root[ASSET_PATH_MAX];
+        char path[ASSET_PATH_MAX];
+        int index = M12_AssetStatus_FindVersionIndex("csb",
+                                                      editions[edition_index].version_id);
+        size_t program_index;
+        edition = index >= 0
+            ? M12_AssetStatus_GetVersion(&status, "csb", (size_t)index) : NULL;
+        check_int(edition && edition->matched &&
+                      strcmp(edition->matchedMd5,
+                             editions[edition_index].graphics_md5) == 0,
+                  "real Amiga 3.5 ADF should retain its selected graphics identity");
+        check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                      &status, editions[edition_index].version_id,
+                      runtime_root, sizeof(runtime_root)) &&
+                      FSP_JoinPath(path, sizeof(path), runtime_root,
+                                   "GRAPHICS.DAT") &&
+                      asset_file_matches_md5(path,
+                          editions[edition_index].graphics_md5),
+                  "selected Amiga 3.5 cache should retain its authenticated graphics data");
+        for (program_index = 0U; program_index < 4U; ++program_index) {
+            check_int(FSP_JoinPath(path, sizeof(path), runtime_root,
+                                   editions[edition_index].program_names[program_index]) &&
+                          asset_file_matches_md5(path,
+                              editions[edition_index].program_md5[program_index]),
+                      "selected Amiga 3.5 cache should retain its authenticated program sidecars");
+        }
+    }
+}
+
 /* Exercise the real Atari ST package separately from the synthetic archive
  * fixtures.  ANIM.C/HINTLOAD.C/SWITCH.C consume these as source media, so a
  * cache may only retain bytes found through the selected container's known
@@ -970,6 +1036,7 @@ int main(void) {
     char negativeRoot[512];
     const char* realFmtownsRoot = getenv("FIRESTAFF_CSB_FMTOWNS_DATA_DIR");
     const char* realAmiga31Root = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    const char* realAmiga35Root = getenv("FIRESTAFF_CSB_AMIGA35_DATA_DIR");
     const char* realAtariRoot = getenv("FIRESTAFF_CSB_ATARI_DATA_DIR");
 
     if (!make_isolated_home(home, sizeof(home)) ||
@@ -992,6 +1059,7 @@ int main(void) {
     (void)test_setenv("FIRESTAFF_DATA", NULL);
     check_csb_fmtowns_real_archive_when_available(realFmtownsRoot);
     check_csb_amiga31_real_archive_when_available(realAmiga31Root);
+    check_csb_amiga35_real_archive_when_available(realAmiga35Root);
     check_csb_atari_real_archive_when_available(realAtariRoot);
 
     if (failures) {

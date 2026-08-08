@@ -40,7 +40,10 @@
   mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35
   och efterföljande Amiga-programhandoff
   (titel till meny/entré/Utility) är fortsatt spärrade; ingen PC34-yta får
-  ersätta dem. Atari ST:s redan separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
+  ersätta dem. A35 Englishs APPB och A35 Multis KAOS/ANIM/APPB-familjer
+  materialiseras nu endast efter respektive ADF-hash, men någon runtimeväg
+  får ännu inte låtsas att dessa 68k-program redan körs. Atari ST:s redan
+  separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
 
 - 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT-party-, dungeon-,
