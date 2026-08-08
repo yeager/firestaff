@@ -54,6 +54,7 @@ struct SensorEffect_Compat {
     int destMapY;            /* TELEPORT: destination Y */
     int destCell;            /* TELEPORT: destination cell */
     int textIndex;           /* SHOW_TEXT: text-table index */
+    int delayTicks;          /* F0268: sensor->value delay before event fires */
 };
 
 struct SensorEffectList_Compat {
@@ -62,7 +63,7 @@ struct SensorEffectList_Compat {
 };
 
 /* ---- Serialized sizes (bit-identical round-trip) ---- */
-#define SENSOR_EFFECT_SERIALIZED_SIZE      28  /* 7 ints * 4 bytes LE */
+#define SENSOR_EFFECT_SERIALIZED_SIZE      28  /* 7 ints * 4 bytes LE (delayTicks is transient) */
 #define SENSOR_EFFECT_LIST_SERIALIZED_SIZE (4 + (SENSOR_EFFECT_LIST_MAX_COUNT * SENSOR_EFFECT_SERIALIZED_SIZE))
 
 /*

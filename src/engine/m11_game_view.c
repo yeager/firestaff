@@ -11828,13 +11828,9 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
         }
 
         case SENSOR_EFFECT_TOGGLE_REMOTE: {
-            /* Toggle remote target square: door, pit, teleporter, etc.
-             * e->destMapX/Y = target coordinates
-             * e->textIndex = effect code (0=SET, 1=CLEAR, 2=TOGGLE, 3=HOLD)
-             *
-             * ReDMCSB MOVESENS.C F0268: resolves target square type
-             * and creates a timed event.  We apply immediately since
-             * our timeline system handles the animation delay. */
+            /* ReDMCSB F0272→F0268: resolves target square type and
+             * schedules an event at gameTick + sensor->Value.  When
+             * delayTicks > 0, defer via TIMELINE_EVENT_SQUARE_STATE. */
             unsigned char targetSquare = 0;
             int targetElement;
 
@@ -11845,6 +11841,25 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                 break;
             }
             targetElement = (targetSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+
+            if (e->delayTicks > 0) {
+                int eventType = F0727_SENSOR_SquareTypeToEventType_Compat(targetElement);
+                if (eventType > 0) {
+                    struct TimelineEvent_Compat deferEv;
+                    memset(&deferEv, 0, sizeof(deferEv));
+                    deferEv.kind = TIMELINE_EVENT_SQUARE_STATE;
+                    deferEv.fireAtTick = state->world.gameTick + (uint32_t)e->delayTicks;
+                    deferEv.mapIndex = state->world.party.mapIndex;
+                    deferEv.mapX = e->destMapX;
+                    deferEv.mapY = e->destMapY;
+                    deferEv.cell = e->destCell;
+                    deferEv.aux0 = eventType;
+                    deferEv.aux1 = e->textIndex;
+                    (void)F0721_TIMELINE_Schedule_Compat(
+                        &state->world.timeline, &deferEv);
+                }
+                break;
+            }
 
             if (targetElement == DUNGEON_ELEMENT_DOOR) {
                 /* Toggle door at remote location */
@@ -31172,7 +31187,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                     SENSOR_EFFECT_TOGGLE_REMOTE;
                                 effects.effects[effects.count].destMapX = tr->targetMapX;
                                 effects.effects[effects.count].destMapY = tr->targetMapY;
+                                effects.effects[effects.count].destCell = tr->targetCell;
                                 effects.effects[effects.count].textIndex = tr->resolvedEffect;
+                                effects.effects[effects.count].delayTicks = tr->delayTicks;
                                 effects.count++;
                             }
                         }

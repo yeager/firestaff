@@ -112,6 +112,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
         e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
+        e->delayTicks = sensor->value;
         outList->count = 1;
         return 1;
     }
@@ -126,6 +127,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
         e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
+        e->delayTicks = sensor->value;
         outList->count = 1;
         return 1;
     }
@@ -155,6 +157,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
         e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
+        e->delayTicks = sensor->value;
         outList->count = 1;
         return 1;
     }
@@ -211,6 +214,7 @@ int F0712_SENSOR_EffectDeserialize_Compat(
     effect->destMapY     = read_i32_le(buf + 16);
     effect->destCell     = read_i32_le(buf + 20);
     effect->textIndex    = read_i32_le(buf + 24);
+    effect->delayTicks   = 0;
     return 1;
 }
 
@@ -404,6 +408,7 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
                 out->effect = sensor->effect;
                 out->isLocal = sensor->localEffect;
                 out->cell = THING_GET_CELL(thingRef);
+                out->value = sensor->value;
                 if (!sensor->localEffect) {
                     out->targetMapX = sensor->targetMapX;
                     out->targetMapY = sensor->targetMapY;
