@@ -54,8 +54,7 @@ gör ett fixture-test, en hostmodell, en propertytabell eller ett strukturellt
 objectrecord det.
 
 Captureharnessen har en definierad `main_ram_target_write`-rapport för framtida
-state-skrivningar när originalmedia och System Card faktiskt körs, men den
-aktuella HuC6280-patchen kopplar ännu bara in läsningen. Den
+state-skrivningar när originalmedia och System Card faktiskt körs. Den
 autentiserade System Card 3.0-identiteten är nu verifierad
 (`ff1a674273fe3540ccef576376407d1d`), liksom US Track 02 ISO-identiteten
 (`ceb02343868f80cec899e9b239aff2da`). Den externa capturekörningen producerar
@@ -78,6 +77,14 @@ transaktioner, två CD-IRQ samt VCE/VRAM-snapshots. Den gav fortfarande noll
 icke-System-Card-CD-anrop och noll `$2600–$27FF`-konsumentläsningar. Det
 stärker capturebevisets reproducerbarhet, men ändrar inte den semantiska
 gränsen.
+
+Den senaste native-körningen på extern-disken loggade dessutom BIOS-CD-portarna
+med HuC6280-PC: `$1804` resetades med `02` och därefter `00`, följt av skrivningar
+till `$1802` och statusläsningar från `$1802/$1803`. BIOS lämnar ändå inte denna
+CD-initieringsväg: SCSI READ-kommandon, råa sektorer, FIFO-bindningar och
+spelägda RAM-konsumenter är fortfarande noll. Detta skiljer ett verifierat
+BIOS/CD-resetförsök från en faktisk Track 02-handoff och låser fortsatt
+RNG-, AI-, T700- och T900-semantik.
 
 ## Verifiering
 
