@@ -56100,6 +56100,14 @@ add_executable(test_dm1_v1_fmtowns_menu_regions
 target_include_directories(test_dm1_v1_fmtowns_menu_regions PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_menu_regions COMMAND test_dm1_v1_fmtowns_menu_regions)
 
+add_executable(test_dm1_v1_fmtowns_menu_click_geometry
+    tests/test_dm1_v1_fmtowns_menu_click_geometry.c
+    src/dm1/dm1_v1_fmtowns_menu_regions.c
+    src/dm1/dm1_v1_fmtowns_text_geometry.c
+)
+target_include_directories(test_dm1_v1_fmtowns_menu_click_geometry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_menu_click_geometry COMMAND test_dm1_v1_fmtowns_menu_click_geometry)
+
 add_executable(test_dm1_v1_fmtowns_dyna_buttons
     tests/test_dm1_v1_fmtowns_dyna_buttons.c
     src/dm1/dm1_v1_fmtowns_dyna_buttons.c

@@ -2641,8 +2641,14 @@ level or consumer bindings.
   `M11_GameView_RenderDm1FmtownsMenu` compose the full pipeline. The
   M11 action-menu path now paints DYNAMENU text into the source-owned
   EGB backdrop for English sessions. Japanese Shift-JIS glyphs remain
-  blank pending a JDM-owned font decode; native icon bitmap decode and
-  mouse/input capture also remain open.
+  blank pending a JDM-owned font decode; native icon bitmap decode
+  remains open.
+  2026-08-08: FM Towns action menu click handling closed. The M11 input
+  handler now hit-tests clicks against the source-locked 87×45 panel at
+  (232,77)–(318,121) with three 7-pixel-tall rows (CHAR_Y_HYT=7),
+  dispatching to `M11_GameView_TriggerActionRow`. Disabled slots (0xFF)
+  are respected. The PC34 route-table path is skipped when FM Towns is
+  active. Test: `test_dm1_v1_fmtowns_menu_click_geometry`.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

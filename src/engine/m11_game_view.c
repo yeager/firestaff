@@ -109,6 +109,7 @@
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "dm1_v1_fmtowns_dynamenu.h"
+#include "dm1_v1_fmtowns_text_geometry.h"
 #include "dm1_v1_fmtowns_egb_shim.h"
 #include "dm1_v1_fmtowns_jdm_bss.h"
 #include "dm1_v1_fmtowns_jdm_symbols.h"
@@ -28189,10 +28190,28 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     }
                 }
             }
+            /* FM Towns uses a narrower 87-pixel panel at x=232..318
+             * with three 7-pixel-tall text rows starting at y=77.
+             * Hit-test directly against the source-locked geometry
+             * instead of the PC34 route table. */
+            if (actionCount > 0 && state->dm1FmtownsStartupReceiptValid) {
+                int fmx1 = 232, fmy1 = 77, fmx2 = 318;
+                if (x >= fmx1 && x <= fmx2 && y >= fmy1 &&
+                    y < fmy1 + (int)(actionCount * DM1_V1_FMTOWNS_CHAR_Y_HYT)) {
+                    int row = (y - fmy1) / DM1_V1_FMTOWNS_CHAR_Y_HYT;
+                    if (row >= 0 && row < actionCount &&
+                        actions[row] != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED) {
+                        (void)M11_GameView_TriggerActionRow(state, row);
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    return M11_GAME_INPUT_REDRAW;
+                }
+            }
             /* F0371 resolves G0452 before it calls F0391.  The route table
              * carries C112/C113/C114/C115 and is cross-checked against the
              * source touch matrix; do not derive a command from pixels here. */
-            if (actionCount > 0 && action_area_routes_GetTouchMatrixInvariant() &&
+            if (actionCount > 0 && !state->dm1FmtownsStartupReceiptValid &&
+                action_area_routes_GetTouchMatrixInvariant() &&
                 action_area_routes_ResolveNameMenuClick(
                     x, y, (unsigned int)actionCount, &sourceRoute)) {
                 if (sourceRoute.commandId >= 113u &&
