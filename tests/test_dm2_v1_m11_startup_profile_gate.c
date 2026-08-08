@@ -1554,6 +1554,9 @@ int main(void) {
                     source_transaction.entrance_objects.committed &&
                     source_transaction.entrance_objects.object_record_reads ==
                         source_transaction.entrance_objects.object_record_count &&
+                    source_transaction.entrance_texts.committed &&
+                    source_transaction.entrance_texts.text_record_reads ==
+                        source_transaction.entrance_texts.text_record_count &&
                     source_transaction.entrance_doors.committed &&
                     source_transaction.entrance_doors.door_record_reads ==
                         source_transaction.entrance_doors.door_root_count &&

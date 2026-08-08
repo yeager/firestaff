@@ -351,6 +351,7 @@ typedef struct {
     DM2_V1_FileHeaderRuntimeSceneCensus entrance_scene;
     DM2_V1_FileHeaderRuntimeTileCensus entrance_tiles;
     DM2_V1_FileHeaderRuntimeObjectReceipt entrance_objects;
+    DM2_V1_FileHeaderRuntimeTextReceipt entrance_texts;
     DM2_V1_G1RuntimeMapDoorReceipt entrance_doors;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt entrance_teleporters;
     DM2_V1_G1RuntimeMapActuatorReceipt entrance_actuators;
@@ -1744,6 +1745,11 @@ int dm2_v1_boot_file_header_map_tile_census(
 int dm2_v1_boot_file_header_map_objects_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeObjectReceipt *out_receipt);
+/* DB2 records cover wall text, marker labels and some source-owned level
+ * transitions. The receipt reads only the validated File_header chain. */
+int dm2_v1_boot_file_header_map_texts_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeTextReceipt *out_receipt);
 
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps

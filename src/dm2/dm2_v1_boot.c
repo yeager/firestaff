@@ -1428,6 +1428,12 @@ int dm2_v1_boot_new_game_transaction_receipt(
         !candidate.entrance_objects.incomplete_world ||
         candidate.entrance_objects.object_record_reads !=
             candidate.entrance_objects.object_record_count ||
+        !dm2_v1_boot_file_header_map_texts_receipt(
+            profile, candidate.entrance.map, &candidate.entrance_texts) ||
+        !candidate.entrance_texts.committed ||
+        !candidate.entrance_texts.incomplete_world ||
+        candidate.entrance_texts.text_record_reads !=
+            candidate.entrance_texts.text_record_count ||
         !dm2_v1_boot_file_header_map_doors_receipt(
             profile, candidate.entrance.map, &candidate.entrance_doors) ||
         !candidate.entrance_doors.committed ||
@@ -1502,6 +1508,18 @@ int dm2_v1_boot_new_game_transaction_receipt(
             candidate.transaction_hash, (uint32_t)source->record_offset);
         candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
             candidate.transaction_hash, (uint32_t)source->record_size);
+    }
+    for (int text = 0; text < candidate.entrance_texts.text_record_count;
+         ++text) {
+        const DM2_V1_FileHeaderTextRecord *source =
+            &candidate.entrance_texts.texts[text];
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->object_id);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->text_index);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash,
+            ((uint32_t)source->visible << 8) | source->mode);
     }
     for (int door = 0; door < candidate.entrance_doors.door_root_count; ++door) {
         const DM2_V1_G1DirectDoorRoot *source =
@@ -1785,6 +1803,20 @@ int dm2_v1_boot_file_header_map_actuators_receipt(
         return 0;
     dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
     return dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
+        dungeon, map, out_receipt);
+}
+
+int dm2_v1_boot_file_header_map_texts_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeTextReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    return dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
         dungeon, map, out_receipt);
 }
 
