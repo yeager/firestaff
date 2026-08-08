@@ -36,6 +36,15 @@
   also proves that F1 refreshes the authentic GAMEBLOCK party before opening
   its live inventory surface.
 
+# CSB source spell-table lookup repair (2026-08-08)
+
+- ✅ Fixed the CSB `GRAPHICS.DAT` spell-table lookup to match ReDMCSB
+  `MENU.C F0409`: runes pack from bit 24 down and ordinary table entries
+  intentionally ignore the chosen power rune. Real formulas such as FUL IR
+  now resolve to their own source record rather than failing due to host-side
+  byte ordering. Exact-power source records remain exact. Verified by the
+  focused CSB rune-cost/table regression.
+
 # DM2 File_header champion test-link repair (2026-08-08)
 
 - ✅ Removed the unrelated SKSAVE record-pool translation unit from the

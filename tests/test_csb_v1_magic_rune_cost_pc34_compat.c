@@ -19,7 +19,10 @@ int main(void)
     CSB_V1_MagicRuneCostTablePc34 table;
     CSB_V1_MagicSpellTablePc34 spell_table;
     const CSB_V1_MagicSpellPc34 *spell;
-    const uint8_t fireball[4] = { 0x69u, 0x6fu, 0u, 0u };
+    const uint8_t fireball_oh_power[4] = { 0x68u, 0x69u, 0x6fu, 0u };
+    const uint8_t fireball_zo_power[4] = { 0x6bu, 0x69u, 0x6fu, 0u };
+    const uint8_t exact_power_spell[4] = { 0x65u, 0x68u, 0x6du, 0x77u };
+    const uint8_t wrong_power_spell[4] = { 0x64u, 0x68u, 0x6du, 0x77u };
     int cost = -1;
 
     memset(graphic, 0, sizeof(graphic));
@@ -44,6 +47,12 @@ int main(void)
         graphic[offset + 1u] = 0x60u + (uint8_t)i;
         graphic[offset + 7u] = 3u;
     }
+    /* A synthetic table record with a nonzero high byte has the exceptional
+     * F0409 exact-power match rule. */
+    graphic[CSB_V1_MAGIC_SPELL_TABLE_OFFSET_PC34 + 9u * 8u + 0u] = 0x65u;
+    graphic[CSB_V1_MAGIC_SPELL_TABLE_OFFSET_PC34 + 9u * 8u + 1u] = 0x68u;
+    graphic[CSB_V1_MAGIC_SPELL_TABLE_OFFSET_PC34 + 9u * 8u + 2u] = 0x6du;
+    graphic[CSB_V1_MAGIC_SPELL_TABLE_OFFSET_PC34 + 9u * 8u + 3u] = 0x77u;
 
     check_int("table.accept", csb_v1_magic_rune_cost_table_from_decoded_graphic_pc34(
         graphic, sizeof(graphic), &table), 1);
@@ -64,11 +73,20 @@ int main(void)
 
     check_int("spells.accept", csb_v1_magic_spell_table_from_decoded_graphic_pc34(
         graphic, sizeof(graphic), &spell_table), 1);
-    spell = csb_v1_magic_spell_lookup_pc34(&spell_table, fireball);
+    spell = csb_v1_magic_spell_lookup_pc34(&spell_table, fireball_oh_power);
     check_int("spells.lookup", spell != NULL, 1);
     check_int("spells.skill", spell ? spell->skill_required : -1, 3);
     check_int("spells.kind", spell ? spell->skill_kind : -1, 4);
     check_int("spells.class", spell ? (spell->descriptor & 0x0f) : -1, 2);
+    check_int("spells.power_ignored",
+              csb_v1_magic_spell_lookup_pc34(&spell_table, fireball_zo_power)
+                  != NULL, 1);
+    check_int("spells.exact_power",
+              csb_v1_magic_spell_lookup_pc34(&spell_table, exact_power_spell)
+                  != NULL, 1);
+    check_int("spells.exact_power_reject",
+              csb_v1_magic_spell_lookup_pc34(&spell_table, wrong_power_spell)
+                  == NULL, 1);
 
     if (failures) return 1;
     puts("csb_v1_magic_rune_cost_pc34_compat: PASS");

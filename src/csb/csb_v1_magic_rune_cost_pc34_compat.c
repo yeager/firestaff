@@ -150,14 +150,19 @@ const CSB_V1_MagicSpellPc34 *csb_v1_magic_spell_lookup_pc34(
 
     if (!table || !table->valid || !runes || runes[1] == 0u) return NULL;
     for (rune = 0u; rune < 4u && runes[rune] != 0u; ++rune) {
-        /* Data.h's spelling is deliberately source-shaped: 4-4 is
-         * 0x00696f00, rather than a host byte-order-dependent integer. */
-        packed |= (uint32_t)runes[rune] <<
-            (rune < 3u ? 16u - (uint32_t)rune * 8u : 24u);
+        /* ReDMCSB MENU.C F0409 lines 1683-1703 starts at bit 24 and
+         * shifts down once per entered symbol.  Its table records use a
+         * zero high byte for normal spells, so the power symbol occupies
+         * the byte that F0409 subsequently masks out.  For example,
+         * `FUL IR` is stored as 0x00696f00, while an OH-power cast is
+         * assembled as 0x68696f00 before the low-24-bit comparison. */
+        packed |= (uint32_t)runes[rune] << (24u - (uint32_t)rune * 8u);
     }
     for (i = 0u; i < CSB_V1_MAGIC_SPELL_COUNT_PC34; ++i) {
         const CSB_V1_MagicSpellPc34 *spell = &table->spells[i];
-        if (spell->spell_id == packed) {
+        if ((spell->spell_id & 0xff000000u) != 0u
+                ? spell->spell_id == packed
+                : spell->spell_id == (packed & 0x00ffffffu)) {
             return spell;
         }
     }

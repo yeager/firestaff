@@ -65,9 +65,10 @@ int csb_v1_magic_spell_table_from_cache_pc34(
     const CSB_V1_CSBGraphicsDatRealCache *cache,
     CSB_V1_MagicSpellTablePc34 *out_table);
 
-/* Mirrors CSBWin Magic.cpp::Incantation2Spell: the source table stores the
- * first three runes in bits 23..0 (Data.h: 4-4 is 0x696f00), with an
- * optional fourth-rune high byte. */
+/* Mirrors ReDMCSB MENU.C F0409 / CSBWin Magic.cpp::Incantation2Spell. The
+ * entered power rune is assembled in bits 31..24; normal source entries
+ * leave that byte zero so their lookup deliberately ignores power. The
+ * remaining three runes occupy bits 23..0 (Data.h: 4-4 is 0x00696f00). */
 const CSB_V1_MagicSpellPc34 *csb_v1_magic_spell_lookup_pc34(
     const CSB_V1_MagicSpellTablePc34 *table, const uint8_t runes[4]);
 
