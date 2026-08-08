@@ -57376,3 +57376,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_pressing
     add_test(NAME dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat
         COMMAND test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat)
 endif()
+
+# A number of focused DM2 tests compile the record-pool owner directly so
+# they can assert its local invariants.  That owner now shares the production
+# SKSAVE admission readers (including the raw timer-stream decoder) with the
+# runtime.  Link those focused executables to the production DM2 archive
+# instead of duplicating, stubbing, or weakening the real reader boundary.
+# This is test linkage only: it neither parses nor writes a save file.
+get_property(_firestaff_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(_firestaff_target IN LISTS _firestaff_all_targets)
+    if(NOT _firestaff_target STREQUAL "firestaff_dm2")
+        get_target_property(_firestaff_target_sources ${_firestaff_target} SOURCES)
+        string(FIND "${_firestaff_target_sources}"
+            "dm2_v1_record_pool_pc34_compat.c" _firestaff_has_dm2_record_pool)
+        if(_firestaff_has_dm2_record_pool GREATER -1)
+            target_link_libraries(${_firestaff_target} PRIVATE firestaff_dm2)
+        endif()
+    endif()
+endforeach()

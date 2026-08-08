@@ -1,3 +1,12 @@
+# DM2 record-pool focused-test linkage repair (2026-08-08)
+
+- ✅ Focused DM2 executables that compile the record-pool owner directly now
+  link the production `firestaff_dm2` archive for its existing source-owned
+  save admission helpers. No helper is duplicated, stubbed, or weakened.
+- ✅ Verified the record-pool, creature-think, creature-schedule, and CAII
+  allocator tests all build and pass. SKSAVE parsing, writing, and runtime
+  admission behavior are unchanged.
+
 # CSB F0435 save-clock real-data regression (2026-08-08)
 
 - ✅ Corrected the real PC34 F0435/F9 regression setup to keep the timeline
