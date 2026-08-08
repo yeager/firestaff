@@ -110,6 +110,29 @@ static void seed_world(Theron_V1_World *world) {
     world->timers[0].remaining_ticks = 37;
     world->timers[0].interval_ticks = 120;
     world->timers[0].flags = 0x01020304U;
+    world->creature_count = 1;
+    world->creatures[0].id = 77;
+    world->creatures[0].type = THERON_CREATURE_AKUTUBA;
+    world->creatures[0].level = 2;
+    world->creatures[0].dungeon_id = THERON_DUNGEON_3_FORMIC;
+    world->creatures[0].x = 11;
+    world->creatures[0].y = 13;
+    world->creatures[0].hp = 88;
+    world->creatures[0].max_hp = 120;
+    world->creatures[0].speed = 5;
+    world->creatures[0].next_move_tick = 99;
+    world->creatures[0].ai = THERON_AI_GUARD;
+    world->creatures[0].primary_attack = THERON_ATTACK_SLASH;
+    world->creatures[0].flags = THERON_CF_ACTIVE | THERON_CF_ALERTED;
+    world->creatures[0].source_ref = 0x3456;
+    world->creatures[0].source_index = 0x0012;
+    world->creatures[0].source_position = 0x39;
+    world->creatures[0].source_cell = 2;
+    world->creatures[0].source_slot = 1;
+    world->creatures[0].source_group_count = 3;
+    world->creatures[0].source_direction_flags = 0x81;
+    world->creatures[0].source_flags_word = 0x4567;
+    world->creatures[0].source_unknown_word = 0x89ab;
     theron_v1_party_recalculate_loads(&world->party);
 }
 
@@ -197,6 +220,20 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.timers[0].flags == 0x01020304U &&
                 restored.timers[0].userdata == NULL,
                 "portable timer record survives round-trip");
+    expect_true(restored.creature_count == 1 &&
+                restored.creatures[0].id == 77 &&
+                restored.creatures[0].type == THERON_CREATURE_AKUTUBA &&
+                restored.creatures[0].x == 11 && restored.creatures[0].y == 13 &&
+                restored.creatures[0].hp == 88 &&
+                restored.creatures[0].max_hp == 120 &&
+                restored.creatures[0].ai == THERON_AI_GUARD &&
+                restored.creatures[0].primary_attack == THERON_ATTACK_SLASH &&
+                restored.creatures[0].source_ref == 0x3456 &&
+                restored.creatures[0].source_cell == 2 &&
+                restored.creatures[0].source_slot == 1 &&
+                restored.creatures[0].source_flags_word == 0x4567 &&
+                restored.creatures[0].source_unknown_word == 0x89ab,
+                "live creature record and source identity survive round-trip");
 
     free(buffer);
 

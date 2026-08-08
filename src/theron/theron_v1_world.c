@@ -87,6 +87,7 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_INVENTORY_SOURCE_WIRE_BYTES 31u
 #define THERON_OBJECT_WIRE_BYTES 86u
 #define THERON_TIMER_WIRE_BYTES 24u
+#define THERON_CREATURE_WIRE_BYTES 87u
 
 static size_t theron_object_wire_size(void) {
     return THERON_OBJECT_WIRE_BYTES;
@@ -190,6 +191,77 @@ static const uint8_t *theron_timer_read(const uint8_t *in,
     timer->interval_ticks = (int32_t)rw32(in); in += 4;
     timer->flags = rw32(in); in += 4;
     timer->userdata = NULL;
+    return in;
+}
+
+static uint8_t *theron_creature_write(uint8_t *out,
+                                      const Theron_V1_Creature *creature) {
+    ww32(out, (uint32_t)creature->id); out += 4;
+    *out++ = creature->type;
+    *out++ = creature->level;
+    ww32(out, (uint32_t)creature->dungeon_id); out += 4;
+    ww32(out, (uint32_t)creature->x); out += 4;
+    ww32(out, (uint32_t)creature->y); out += 4;
+    ww32(out, (uint32_t)creature->hp); out += 4;
+    ww32(out, (uint32_t)creature->max_hp); out += 4;
+    ww32(out, (uint32_t)creature->attack); out += 4;
+    ww32(out, (uint32_t)creature->defense); out += 4;
+    ww32(out, (uint32_t)creature->speed); out += 4;
+    ww32(out, (uint32_t)creature->next_move_tick); out += 4;
+    ww32(out, (uint32_t)creature->ai); out += 4;
+    ww32(out, (uint32_t)creature->primary_attack); out += 4;
+    ww32(out, (uint32_t)creature->secondary_attack); out += 4;
+    ww32(out, creature->flags); out += 4;
+    ww32(out, (uint32_t)creature->gold_drop_min); out += 4;
+    ww32(out, (uint32_t)creature->gold_drop_max); out += 4;
+    memcpy(out, creature->item_drop_table, sizeof(creature->item_drop_table));
+    out += sizeof(creature->item_drop_table);
+    ww32(out, (uint32_t)creature->link_id); out += 4;
+    ww16(out, creature->source_ref); out += 2;
+    ww16(out, creature->source_index); out += 2;
+    *out++ = creature->source_position;
+    *out++ = creature->source_cell;
+    *out++ = creature->source_slot;
+    *out++ = creature->source_group_count;
+    *out++ = creature->source_direction_flags;
+    ww16(out, creature->source_flags_word); out += 2;
+    ww16(out, creature->source_unknown_word); out += 2;
+    return out;
+}
+
+static const uint8_t *theron_creature_read(
+    const uint8_t *in, Theron_V1_Creature *creature) {
+    memset(creature, 0, sizeof(*creature));
+    creature->id = (int32_t)rw32(in); in += 4;
+    creature->type = *in++;
+    creature->level = *in++;
+    creature->dungeon_id = (int32_t)rw32(in); in += 4;
+    creature->x = (int32_t)rw32(in); in += 4;
+    creature->y = (int32_t)rw32(in); in += 4;
+    creature->hp = (int32_t)rw32(in); in += 4;
+    creature->max_hp = (int32_t)rw32(in); in += 4;
+    creature->attack = (int32_t)rw32(in); in += 4;
+    creature->defense = (int32_t)rw32(in); in += 4;
+    creature->speed = (int32_t)rw32(in); in += 4;
+    creature->next_move_tick = (int32_t)rw32(in); in += 4;
+    creature->ai = (Theron_AIBehaviour)rw32(in); in += 4;
+    creature->primary_attack = (Theron_AttackType)rw32(in); in += 4;
+    creature->secondary_attack = (Theron_AttackType)rw32(in); in += 4;
+    creature->flags = rw32(in); in += 4;
+    creature->gold_drop_min = (int32_t)rw32(in); in += 4;
+    creature->gold_drop_max = (int32_t)rw32(in); in += 4;
+    memcpy(creature->item_drop_table, in, sizeof(creature->item_drop_table));
+    in += sizeof(creature->item_drop_table);
+    creature->link_id = (int32_t)rw32(in); in += 4;
+    creature->source_ref = rw16(in); in += 2;
+    creature->source_index = rw16(in); in += 2;
+    creature->source_position = *in++;
+    creature->source_cell = *in++;
+    creature->source_slot = *in++;
+    creature->source_group_count = *in++;
+    creature->source_direction_flags = *in++;
+    creature->source_flags_word = rw16(in); in += 2;
+    creature->source_unknown_word = rw16(in); in += 2;
     return in;
 }
 
@@ -1696,7 +1768,9 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit_fi
 static size_t serialize_size(const Theron_V1_World *world) {
     if (!world) return 0;
     if (world->object_count < 0 || world->object_count > THERON_MAX_OBJECTS ||
-        world->timer_count < 0 || world->timer_count > THERON_MAX_TIMERS) {
+        world->timer_count < 0 || world->timer_count > THERON_MAX_TIMERS ||
+        world->creature_count < 0 ||
+        world->creature_count > THERON_MAX_CREATURES_PER_LEVEL) {
         return 0;
     }
     size_t n = 0;
@@ -1718,6 +1792,8 @@ static size_t serialize_size(const Theron_V1_World *world) {
     /* T900 inventory provenance: source object/category/property fields have
      * no pointers and can be appended without changing existing offsets. */
     n += theron_inventory_source_wire_size();
+    n += sizeof(uint32_t); /* live creature_count */
+    n += (size_t)world->creature_count * THERON_CREATURE_WIRE_BYTES;
     return n;
 }
 
@@ -1771,6 +1847,11 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
                 out, &world->inventory_source[champion][slot]);
         }
     }
+    ww32(out, (uint32_t)world->creature_count);
+    out += sizeof(uint32_t);
+    for (int i = 0; i < world->creature_count; ++i) {
+        out = theron_creature_write(out, &world->creatures[i]);
+    }
 
     return need;
 }
@@ -1795,7 +1876,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     in += sizeof(uint32_t);
 
     uint16_t ver = rw16(in);
-    if (ver != 1u && ver != THERON_WORLD_SAVE_VERSION) return -3;
+    if (ver != 1u && ver != 2u && ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
 
@@ -1857,20 +1938,40 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
 
     /* Version 1 snapshots produced before source inventory provenance was
      * appended remain readable. A partial trailing section is malformed and
-     * must not silently clear item semantics. */
+     * must not silently clear item semantics. Version 3 appends a live
+     * creature section after the fixed inventory wire records. */
     size_t remaining = bufsize - (size_t)(in - (const uint8_t *)buf);
     memset(world->inventory_source, 0, sizeof(world->inventory_source));
+    world->creature_count = 0;
+    memset(world->creatures, 0, sizeof(world->creatures));
     if (remaining != 0u) {
+        size_t inventory_wire = theron_inventory_source_wire_size();
         if (remaining == sizeof(world->inventory_source)) {
             /* Compatibility with the first source-provenance tail format. */
             memcpy(world->inventory_source, in,
                    sizeof(world->inventory_source));
-        } else if (remaining == theron_inventory_source_wire_size()) {
+        } else if (remaining == inventory_wire ||
+                   (ver == THERON_WORLD_SAVE_VERSION &&
+                    remaining >= inventory_wire + sizeof(uint32_t))) {
             for (int champion = 0; champion < THERON_MAX_CHAMPIONS;
                  ++champion) {
                 for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
                     in = theron_inventory_source_read(
                         in, &world->inventory_source[champion][slot]);
+                }
+            }
+            remaining -= inventory_wire;
+            if (ver == THERON_WORLD_SAVE_VERSION) {
+                if (remaining < sizeof(uint32_t)) return -1;
+                uint32_t creature_count = rw32(in);
+                in += sizeof(uint32_t);
+                remaining -= sizeof(uint32_t);
+                if (creature_count > THERON_MAX_CREATURES_PER_LEVEL ||
+                    (size_t)creature_count * THERON_CREATURE_WIRE_BYTES !=
+                        remaining) return -1;
+                world->creature_count = (int)creature_count;
+                for (uint32_t i = 0; i < creature_count; ++i) {
+                    in = theron_creature_read(in, &world->creatures[i]);
                 }
             }
         } else {

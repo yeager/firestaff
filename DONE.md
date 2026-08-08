@@ -1,3 +1,16 @@
+# Theron live-creature save persistence (2026-08-08)
+
+- ✅ World snapshot version 3 now appends an explicit 87-byte wire record for
+  every admitted live creature, including HP, AI/combat state, movement tick,
+  drop fields and the complete Track 02 source identity.
+- ✅ Deserialization bounds-checks the creature count and exact trailing size;
+  version-1 and version-2 snapshots remain readable without inventing live
+  creatures.
+- ✅ Round-trip coverage verifies source cell/slot/group identity and active
+  creature state alongside the existing object, timer and inventory records.
+- Note: this persists already-authenticated static groups; the original RNG
+  consumer and dynamic wave consumer remain a separate capture-gated boundary.
+
 # Nexus audit iterations 4-5 — champion deserialize bounds (2026-08-08)
 
 - ✅ Fixed champion pool deserialize bounds check (21→26 int fields).
