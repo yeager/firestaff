@@ -30,11 +30,8 @@ void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count) {
         g_ibs_defs[i].attack = 0;
         g_ibs_defs[i].defense = 0;
         g_ibs_defs[i].flags = 0;
-        if (g_ibs_defs[i].carry_locations != 0)
-            g_ibs_defs[i].flags |= NEXUS_ITEMF_EQUIPPABLE;
-        if (g_ibs_defs[i].category == NEXUS_ITEM_FOOD ||
-            g_ibs_defs[i].category == NEXUS_ITEM_POTION)
-            g_ibs_defs[i].flags |= NEXUS_ITEMF_STACKABLE | NEXUS_ITEMF_CONSUMABLE;
+        /* ITEM.IBS category/carry bytes are declarations only.  They do not
+         * authenticate equipping, stacking, or usable-item action flags. */
         g_ibs_defs[i].action_id[0] = rec[16];
         g_ibs_defs[i].action_id[1] = rec[17];
         g_ibs_defs[i].action_id[2] = rec[18];
@@ -90,11 +87,7 @@ void nexus_itemdef_bind_ibs_bank(const void *bank_ptr, int count) {
         g_ibs_defs[i].ibs_flags = bank->item_ibs_flags[i];
         g_ibs_defs[i].weight = bank->item_weight[i];
         g_ibs_defs[i].flags = 0;
-        if (g_ibs_defs[i].carry_locations != 0)
-            g_ibs_defs[i].flags |= NEXUS_ITEMF_EQUIPPABLE;
-        if (g_ibs_defs[i].category == NEXUS_ITEM_FOOD ||
-            g_ibs_defs[i].category == NEXUS_ITEM_POTION)
-            g_ibs_defs[i].flags |= NEXUS_ITEMF_STACKABLE | NEXUS_ITEMF_CONSUMABLE;
+        /* Do not infer gameplay flags from retail declaration fields. */
         g_ibs_defs[i].action_id[0] = bank->item_action_id[i][0];
         g_ibs_defs[i].action_id[1] = bank->item_action_id[i][1];
         g_ibs_defs[i].action_id[2] = bank->item_action_id[i][2];
@@ -408,7 +401,13 @@ void nexus_floor_init(void) {
 }
 
 int nexus_floor_drop(int x, int y, int item_id, int qty) {
-    return nexus_floor_drop_source(x, y, item_id, qty, 0, 0, -1);
+    (void)x;
+    (void)y;
+    (void)item_id;
+    (void)qty;
+    /* A caller-supplied floor object has no authenticated Saturn owner.
+     * Only the source-bound DGN path may materialize a floor record. */
+    return -1;
 }
 
 int nexus_floor_drop_source(int x, int y, int item_id, int qty,

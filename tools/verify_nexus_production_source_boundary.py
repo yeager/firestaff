@@ -98,21 +98,35 @@ for required_noop in (
     "src/nexus/nexus_v2_lighting_runtime_noop.c",
     "src/nexus/nexus_v2_smooth_movement_runtime_noop.c",
     "src/nexus/nexus_v2_touch_runtime_noop.c",
+    "src/nexus/nexus_v1_item_use_runtime_noop.c",
+    "src/nexus/nexus_v1_container_runtime_noop.c",
+    "src/nexus/nexus_v1_shop_runtime_noop.c",
+    "src/nexus/nexus_v1_fountain_runtime_noop.c",
 ):
     if required_noop not in runtime_body:
         fail(f"capture-gated production adapter missing: {required_noop}")
-# Gameplay modules are promoted: real implementations are in the glob,
-# noop adapters are excluded.
+# The source implementations remain available to explicit study tests, but
+# item-use/container/shop/fountain mutations must not enter the retail archive.
+for excluded_study in (
+    'nexus_v1_item_use.c',
+    'nexus_v1_containers.c',
+    'nexus_v1_shop.c',
+    'nexus_v1_fountain.c',
+):
+    if not (ROOT / 'src' / 'nexus' / excluded_study).is_file():
+        fail(f"study module missing: {excluded_study}")
+    expected_exclusion = (
+        f'EXCLUDE REGEX "{excluded_study[:-2]}\\\\.c$"'
+    )
+    if expected_exclusion not in body:
+        fail(f"capture-gated study module entered production: {excluded_study}")
 for promoted_real in (
     'nexus_v1_magic.c',
     'nexus_v1_combat.c',
     'nexus_v1_experience.c',
     'nexus_v1_status.c',
     'nexus_v1_rest.c',
-    'nexus_v1_item_use.c',
-    'nexus_v1_containers.c',
     'nexus_v1_drops.c',
-    'nexus_v1_shop.c',
 ):
     if not (ROOT / 'src' / 'nexus' / promoted_real).is_file():
         fail(f"promoted gameplay module missing: {promoted_real}")

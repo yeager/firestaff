@@ -56,8 +56,7 @@ add_test(NAME nexus_v1_movement_gameplay COMMAND test_nexus_v1_movement_gameplay
 set_tests_properties(nexus_v1_movement_gameplay PROPERTIES LABELS "nexus;movement;tier4")
 
 add_executable(test_nexus_v1_inventory_gameplay
-    tests/test_nexus_v1_inventory_gameplay.c
-    src/nexus/nexus_v1_containers.c)
+    tests/test_nexus_v1_inventory_gameplay.c)
 target_include_directories(test_nexus_v1_inventory_gameplay PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_inventory_gameplay PRIVATE firestaff_nexus)
@@ -6575,8 +6574,14 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
 # writers are host presentation helpers without authenticated Saturn VDP1/VDP2
 # ownership. Keep both sources in their explicit receipt probes only.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_ibs\\.c$")
-# Gameplay modules promoted: item_use, containers, drops, shop provide the
-# canonical Nexus runtime path and are no longer excluded.
+# Item-use, container, shop-object and fountain implementations are studies:
+# their caller-supplied mutations have no authenticated Saturn producer or
+# consumer. Keep source implementations in explicit fixture tests and link
+# capture-gated production adapters below.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_use\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_containers\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_shop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_fountain\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_title_cg\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is
@@ -6612,6 +6617,10 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v2_lighting_runtime_noop.c
     src/nexus/nexus_v2_smooth_movement_runtime_noop.c
     src/nexus/nexus_v2_touch_runtime_noop.c
+    src/nexus/nexus_v1_item_use_runtime_noop.c
+    src/nexus/nexus_v1_container_runtime_noop.c
+    src/nexus/nexus_v1_shop_runtime_noop.c
+    src/nexus/nexus_v1_fountain_runtime_noop.c
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}

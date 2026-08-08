@@ -1,5 +1,18 @@
 # Nexus startup PLRD glyph token retention (2026-08-08)
 
+# Nexus unproven interaction owners removed from production (2026-08-08)
+
+- ✅ `firestaff_nexus` no longer links the caller-supplied item-use,
+  container, shop-object or fountain study implementations. Dedicated
+  capture-gated adapters preserve the ABI without exporting synthetic state
+  mutation; fixture tests still link the studies explicitly.
+- ✅ `ITEM.IBS` category/carry-location declarations no longer infer
+  equippable, stackable or consumable gameplay flags.
+- ✅ Unqualified caller-supplied floor drops now remain blocked; only the
+  source-bound DGN floor path can materialize a floor record.
+- ✅ Inventory, item-use, fountain, shop, container and production-boundary
+  regressions pass against the real Nexus corpus.
+
 # Nexus item/fountain mutation boundary restored (2026-08-08)
 
 - ✅ `ITEM.IBS` no longer advertises usable items or applies guessed food and
