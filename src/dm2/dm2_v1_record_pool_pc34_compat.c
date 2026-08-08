@@ -1310,6 +1310,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_SksaveDirectRootReceipt roots;
     DM2_V1_SaveTimerRecord timers[DM2_V1_SAVE_TIMER_MAX];
+    int16_t timer_indices[DM2_V1_SAVE_TIMER_MAX];
     DM2_V1_OriginalRawTimerStreamReceipt timer_stream;
     DM2_V1_SksavePoolRestoreContext context;
     DM2_V1_SksaveMapRestoreContext map_context;
@@ -1319,6 +1320,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_ReadRecordSession session;
     DM2_V1_LoadExtraDungeonReceipt dungeon_receipt;
     uint16_t chains_read = 0u;
+    int16_t timer_queue_count = -1;
+    int16_t timer_free_head = -1;
+    uint32_t timer_queue_hash = 2166136261u;
     int ok = 0;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -1428,6 +1432,21 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         context.possession_link_overflow) {
         goto done;
     }
+    /* sksvgame.cpp::DM2_GAME_LOAD calls DM2_SORT_TIMERS only after every
+     * record, map and possession stream owner has been restored. Rebuild the
+     * exact temporary c_tim heap/free chain here; it is not exposed to M11. */
+    dm2_v1_save_timer_sort(timers, state_receipt->timer_count, timer_indices);
+    dm2_v1_save_timer_rearrange(timers, DM2_V1_SAVE_TIMER_MAX,
+                                &timer_queue_count, &timer_free_head);
+    timer_queue_hash = dm2_v1_sksave_hash_bytes(
+        timer_queue_hash, (const uint8_t *)timer_indices,
+        (size_t)state_receipt->timer_count * sizeof(timer_indices[0]));
+    timer_queue_hash = dm2_v1_sksave_hash_bytes(
+        timer_queue_hash, (const uint8_t *)&timer_queue_count,
+        sizeof(timer_queue_count));
+    timer_queue_hash = dm2_v1_sksave_hash_bytes(
+        timer_queue_hash, (const uint8_t *)&timer_free_head,
+        sizeof(timer_free_head));
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->timer_count = state_receipt->timer_count;
@@ -1441,8 +1460,11 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         out_receipt->possession_link_count = context.possession_link_count;
         out_receipt->possession_continuation_count =
             context.possession_continuation_count;
+        out_receipt->timer_queue_count = timer_queue_count;
+        out_receipt->timer_free_head = timer_free_head;
         out_receipt->continuation_hash = context.continuation_hash;
         out_receipt->timer_hash = timer_stream.raw_hash;
+        out_receipt->timer_queue_hash = timer_queue_hash;
         out_receipt->record_hash = context.record_hash;
         out_receipt->next_stream_offset = session.reader.position;
         out_receipt->next_stream_bits_remaining = session.reader.bits_remaining;

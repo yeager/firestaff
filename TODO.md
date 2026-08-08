@@ -2408,6 +2408,8 @@
   c_map/c_record transaction now invokes `READ_SKSAVE_DUNGEON` and retains
   its actual map/tile/chain census. It then consumes `DM2_2066_062b` in the
   original order and writes only to the matching temporary record's `uw_02`.
+  Originalets timerheap och fria c_tim-lista återställs därefter i samma
+  tillfälliga ägare.
   The supplied corpus stops before that phase, so a complete GAME_LOAD
   handoff, including a persistent possession owner, still blocks Resume.
 

@@ -9474,6 +9474,15 @@
   når fortfarande inte denna fas och Resume förblir spärrat. Avkodar- och
   recordpooltesterna, produktionsgrinden och realdatakorpusen passerar
   (192/192).
+
+# DM2 SKSAVE-timerkö i källordning (2026-08-08)
+
+- ✅ Efter karta och possessioner återuppbygger den tillfälliga
+  importtransaktionen nu originalets `DM2_SORT_TIMERS`-heap och c_tim:s
+  fria lista. Kvittot innehåller antal, fri-listans huvud och en hash av den
+  verkliga ordningen.
+- ✅ Resultatet lämnar aldrig den tillfälliga ägaren. PC-DOS-korpusen är
+  fortfarande spärrad före denna fas och Resume öppnas inte.
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)
 
 - ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.

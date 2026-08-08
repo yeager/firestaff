@@ -946,6 +946,13 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                  special_timers.continuation_hash == 0u) ||
                 (special_timers.possession_continuation_count != 0u &&
                  special_timers.continuation_hash != 0u)) &&
+               special_timers.timer_queue_count >= 0 &&
+               special_timers.timer_queue_count <=
+                   (int16_t)DM2_V1_SAVE_TIMER_MAX &&
+               special_timers.timer_free_head >= -1 &&
+               special_timers.timer_free_head <
+                   (int16_t)DM2_V1_SAVE_TIMER_MAX &&
+               special_timers.timer_queue_hash != 0u &&
                special_timers.next_stream_offset >=
                    state_receipt.record_link_bitstream_offset &&
                special_timers.next_stream_offset <= byte_count - 42u &&
