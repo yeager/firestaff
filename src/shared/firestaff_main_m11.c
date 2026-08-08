@@ -37,6 +37,7 @@ static void usage(const char* prog) {
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
             "  --save <path>       Resume a validated save for --game\n"
             "  --dm2-english-companion <path>  Hash-verified PC-English GRAPHICS.DAT for DM2 FM Towns\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
@@ -383,6 +384,7 @@ int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
     int verbose = 0;
+    int theronAuthenticatedFallback = 0;
     M11_PhaseA_SetDefaultOptions(&opts);
 
     for (int i = 1; i < argc; ++i) {
@@ -409,6 +411,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--theron-authenticated-fallback") == 0) {
+            theronAuthenticatedFallback = 1;
             continue;
         }
         if (strcmp(a, "--scan-data") == 0 ||
@@ -622,6 +628,14 @@ int main(int argc, char** argv) {
     }
 
     opts.verbose = verbose;
+
+    if (theronAuthenticatedFallback) {
+#if defined(_WIN32)
+        _putenv_s("FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK", "1");
+#else
+        setenv("FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK", "1", 1);
+#endif
+    }
 
     if (scanData) {
         return run_data_scan(opts.dataDir, verbose);
