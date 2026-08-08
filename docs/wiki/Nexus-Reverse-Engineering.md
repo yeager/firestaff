@@ -299,8 +299,9 @@ claiming semantics:
   payload size closely (`header_minus_payload` typically 4-7 bytes),
   byte-frequency and 4-quadrant byte-class histograms per entry.
 - `nexus_v1_bpk_archive_prs3_stream_plan` / `_prs3_compression_descriptor` —
-  bounded, source-locked framing of the compressed span (offset/length/hash)
-  without decoding it.
+  bounded, source-locked framing of the compressed span (offset/length/hash).
+  The DMWeb `DecodePRS3` byte decoder now consumes the authenticated retail
+  MENU.BPK corpus and emits decoded-byte receipts for all 162 PRS3 surfaces.
 - `nexus_v1_bpk_archive_prs3_candidate_evidence[_with_bit_order]` — trial
   literal/back-reference opcode grammar evaluated in both LSB-first and
   MSB-first control-bit orders, diagnostic only.
@@ -310,15 +311,15 @@ claiming semantics:
 - `nexus_v1_bpk_archive_prs3_opcode_prefix_witness` — walks a bounded
   number of trial opcodes, recording consumed control/operand bytes.
 - `nexus_v1_bpk_archive_prs3_decoded_output_proof_gate` — the terminal gate:
-  even a caller-supplied decoded sidecar matching by exact byte count and
-  FNV-1a64 **cannot** authorize runtime upload without independent original
-  Saturn opcode-grammar provenance (`decoder_promoted` stays 0 throughout
-  every evidence path in this header).
+  the promoted decoder authorizes only source-indexed bytes. Exact byte count
+  and FNV-1a64 receipts do **not** authorize palette application, CLUT upload,
+  VDP1 command emission, destination placement, or runtime drawing; those still
+  require an independent original Saturn capture.
 
-All decode/render/upload routing enums (`Nexus_V1_BpkRuntimeRenderRoute`,
-`Nexus_V1_BpkRuntimeDecodeRoute`, `Nexus_V1_BpkRuntimeUploadRoute`) have
-explicit `BLOCKED_PRS3` states — the engine fails closed on PRS3 content
-system-wide until the codec is proven.
+Render/upload routing retains explicit `BLOCKED_PRS3`/presentation-gated
+states. `Nexus_V1_BpkRuntimeDecodeRoute` may now be `READY_DECODED` for the
+authenticated retail corpus, but no decoded pixels are handed to the renderer
+until Saturn palette, CLUT, VDP1 command, and placement ownership are captured.
 
 ### Surface classes
 `Nexus_V1_BpkSurfaceClass` maps the mode byte (offset 19) to a pixel

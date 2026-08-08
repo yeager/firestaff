@@ -1,3 +1,12 @@
+# Nexus PRS3/palett-dokumentation synkroniserad (2026-08-08)
+
+- ✅ Reverse-engineering-dokumentationen skiljer nu korrekt mellan den
+  verifierade DMWeb-byteavkodningen av alla 162 retail-ytor och den ännu
+  låsta Saturn-presentationen.
+- ✅ PALT/ WARNING.BIN-korrelationen är fortsatt källbevis, inte en påhittad
+  PRS3-CLUT-bindning. VDP1/VDP2, placering och faktisk menyritning kräver
+  fortfarande autentisk capture.
+
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 
 - ✅ F31:s fyra C06-porträtt läses nu som sina exakta, planära 464-byteblock

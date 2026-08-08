@@ -1774,19 +1774,14 @@
 
 - **NEXUS-PRS3-VDP1-STATE-RECEIPT:** The real MENU.BPK PRS3 decoder now
   passes all 162 retail surfaces, and DM.BIN's VDP1 register/state corridors
-  are hash-bound. Keep this as byte/source evidence only: the current static
-  PRS3 evidence regression now accepts only the authenticated English/French
+  are hash-bound. The bounded DMWeb decoder is promoted for source-indexed
+  bytes only; its receipts do not prove PRS3-to-PALT association, CLUT upload,
+  draw-command emission, destination placement or viewport/menu ownership.
+  The static regression accepts only the authenticated English/French
   `MENU.BPK` identities (`a6f2272a4f6cb3c6b3b33012bc5b15ed` and
-  `fcf8a00fbb92593ed9ae908f8e285cda`). Keep this as byte/source evidence only:
-  receipts do not prove PRS3 opcode execution, CLUT upload, draw-command
-  emission, destination placement or viewport/menu ownership. Do not promote
-  the decoder or any VDP1 candidate into production pixels without an
-  instrumented Saturn/Mednafen capture.
-  2026-08-06: runtime decode and upload receipts now remain
-  `BLOCKED_PRS3` even when the bounded DMWeb decoder succeeds. Decode byte
-  counts and hashes remain diagnostic evidence; no decoded pixels, upload row,
-  renderer handoff or fallback surface is marked ready without the missing
-  Saturn CLUT/VDP1 capture.
+  `fcf8a00fbb92593ed9ae908f8e285cda`). Runtime upload and renderer handoff
+  remain presentation-gated until an instrumented Saturn/Mednafen capture
+  binds palette state, VDP1 commands and screen placement.
   2026-08-06 follow-up: the renderer prerequisite normalizer no longer
   overwrites a `SATURN_PRESENTATION` block with `READY_STORED` after a
   source-authenticated stored/decoded route is found. The menu handoff now
