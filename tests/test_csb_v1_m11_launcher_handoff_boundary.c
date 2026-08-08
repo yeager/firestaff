@@ -2007,9 +2007,66 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     M12_StartupMenu_Destroy(&menu);
 }
 
+/* A35M starts in APPB's C08_LANG program, not A31M's APPA/TITL chain.
+ * ReDMCSB COMPILE.H:287-298; SWITCH.C F1288; SWITCHDA.C:1111-1127. */
+static void run_real_amiga35_selected_package_handoff_if_available(void) {
+    const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA35_DATA_DIR");
+    M12_StartupMenuState menu;
+    M11_GameViewState view;
+    const M12_MenuEntry *entry;
+    const M12_AssetVersionStatus *amiga_version;
+    const CSB_V1_BootProfile *profile;
+    int version_index;
+
+    if (!data_dir || !data_dir[0]) {
+        expect_skip("FIRESTAFF_CSB_AMIGA35_DATA_DIR not set");
+        return;
+    }
+    init_menu_without_gallery(&menu, data_dir, "csb");
+    dismiss_initial_message(&menu);
+    entry = M12_StartupMenu_GetEntry(&menu, 1);
+    version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga35-multi");
+    amiga_version = version_index >= 0
+        ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                     (size_t)version_index)
+        : NULL;
+    if (!entry || !entry->available || version_index < 0 ||
+        !amiga_version || !amiga_version->matched) {
+        expect_skip("no verified Amiga 3.5 multilingual CSB package at requested data root");
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+    menu.selectedIndex = 1;
+    menu.activatedIndex = 1;
+    menu.launchRequested = 1;
+    menu.gameOptions[1].versionIndex = version_index;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "M11 opens Amiga 3.5 multilingual through native APPB");
+    profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+    expect_true(view.active == 1 && profile != NULL &&
+                view.csbStartupRuntimeAssetSession == NULL &&
+                view.csbState.startup_title_active &&
+                view.csbAmigaAppbSelectionActive &&
+                view.csbAmigaTitlBytes == NULL &&
+                view.csbAmigaTitlPixels[0] == 10u,
+                "A35M binds original APPB selection pixels without A31 or PC34 startup");
+    expect_true(M11_GameView_HandlePointerButtonRelease(
+                    &view, 138, 70, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW &&
+                !view.csbState.startup_title_active &&
+                !view.csbAmigaAppbSelectionActive &&
+                profile->amiga_language_index == 0u &&
+                profile->runtime.state == CSB_STATE_GAME,
+                "A35M English APPB release hands off through KAOS.FTL to C03_GAME");
+    M11_GameView_Shutdown(&view);
+    M12_StartupMenu_Destroy(&menu);
+}
+
 int main(void) {
     const char *atari_only = getenv("FIRESTAFF_CSB_ATARI_ST_ONLY");
     const char *amiga31_only = getenv("FIRESTAFF_CSB_AMIGA31_ONLY");
+    const char *amiga35_only = getenv("FIRESTAFF_CSB_AMIGA35_ONLY");
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
                 "CSB launcher startup sequence contract is source-ordered");
@@ -2023,7 +2080,9 @@ int main(void) {
     /* A supplied Atari-only corpus deliberately has no PC34 package.  Keep
      * the source-specific ANIMATE.SCR regression lane independently runnable
      * instead of making the PC34 assertions dereference a failed launch. */
-    if (amiga31_only && amiga31_only[0]) {
+    if (amiga35_only && amiga35_only[0]) {
+        run_real_amiga35_selected_package_handoff_if_available();
+    } else if (amiga31_only && amiga31_only[0]) {
         run_real_amiga31_selected_package_handoff_if_available();
     } else if (!atari_only || !atari_only[0]) {
         run_empty_launcher_boundary();
@@ -2031,6 +2090,7 @@ int main(void) {
         run_real_v2_launcher_handoffs_if_available();
         run_real_atari_st_launcher_handoffs_if_available();
         run_real_amiga31_selected_package_handoff_if_available();
+        run_real_amiga35_selected_package_handoff_if_available();
     } else {
         run_real_atari_st_launcher_handoffs_if_available();
     }

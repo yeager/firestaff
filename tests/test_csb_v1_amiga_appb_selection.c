@@ -30,6 +30,7 @@ static int load_file(const char *path, uint8_t **bytes, size_t *size)
 int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_APPB");
+    const char *a35m_path = getenv("FIRESTAFF_CSB_AMIGA35M_APPB");
     CSB_V1_AmigaAppbSelectionReceipt receipt;
     uint8_t *bytes = NULL;
     uint8_t *pixels = NULL;
@@ -66,6 +67,39 @@ int main(void)
         return 1;
     }
     printf("ok: original A31M APPB selection hash %016llx\n",
+           (unsigned long long)hash);
+    free(pixels);
+    free(bytes);
+    if (!a35m_path || !*a35m_path) return 0;
+    if (!asset_file_md5_hex(a35m_path, md5) ||
+        strcmp(md5, "1533410beaeea4fa614ae0f0142e0861") != 0 ||
+        !load_file(a35m_path, &bytes, &size)) {
+        fputs("FAIL: APPB fixture is not original A35M media\n", stderr);
+        return 1;
+    }
+    pixels = malloc(320u * 200u);
+    if (!pixels || !csb_v1_amiga_a35m_appb_decode_language_selection(
+            bytes, size, pixels, 320u * 200u, &receipt)) {
+        fputs("FAIL: cannot decode original A35M APPB selection\n", stderr);
+        free(pixels);
+        free(bytes);
+        return 1;
+    }
+    hash = UINT64_C(1469598103934665603);
+    for (pixel = 0u; pixel < 320u * 200u; ++pixel) {
+        hash ^= pixels[pixel];
+        hash *= UINT64_C(1099511628211);
+    }
+    if (receipt.width != 320u || receipt.height != 200u ||
+        receipt.rgb4[0][0] != 7u || receipt.rgb4[0][1] != 1u ||
+        receipt.rgb4[0][2] != 7u ||
+        hash != UINT64_C(0x8039bb203b9dfd26)) {
+        fputs("FAIL: A35M APPB selection receipt is incomplete\n", stderr);
+        free(pixels);
+        free(bytes);
+        return 1;
+    }
+    printf("ok: original A35M APPB selection hash %016llx\n",
            (unsigned long long)hash);
     free(pixels);
     free(bytes);

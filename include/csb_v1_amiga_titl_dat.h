@@ -106,6 +106,13 @@ int csb_v1_amiga_appb_decode_language_selection(
     const uint8_t *data, size_t size, uint8_t *indexed_pixels,
     size_t indexed_pixel_capacity, CSB_V1_AmigaAppbSelectionReceipt *out);
 
+/* Amiga 3.5 multilingual APPB is a separate C08_LANG executable.  Its
+ * G3300 palette and G3301 320x200 graphic are embedded at their original
+ * program offsets; EXPAND.C F0466 decodes the latter. */
+int csb_v1_amiga_a35m_appb_decode_language_selection(
+    const uint8_t *data, size_t size, uint8_t *indexed_pixels,
+    size_t indexed_pixel_capacity, CSB_V1_AmigaAppbSelectionReceipt *out);
+
 #ifdef __cplusplus
 }
 #endif

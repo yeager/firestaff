@@ -4131,6 +4131,11 @@ static int m11_csb_is_amiga_a31_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI);
 }
 
+static int m11_csb_is_amiga_a35m_profile(const CSB_V1_BootProfile *profile)
+{
+    return profile && profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI;
+}
+
 /* ReDMCSB APPA.C:51-53 starts SWSH and passes FTL_TITL to ANIM.C.  A31's
  * TITL.DAT is a separate application surface, so neither PC TITLE.C nor a
  * reconstructed bitmap may stand in for it.  The final DL stream is known
@@ -4293,6 +4298,53 @@ static int m11_csb_prepare_amiga_appb_selection(M11_GameViewState *state)
     return 1;
 }
 
+/* ReDMCSB COMPILE.H:287-298 assigns A35M APPB to C08_LANG, while
+ * SWITCH.C F1288 and SWITCHDA.C (MEDIA742_A35M) own its embedded selection
+ * page. A35M does not enter A31's APPA/TITL program chain. */
+static int m11_csb_prepare_amiga_a35m_appb_selection(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_AmigaAppbSelectionReceipt selection;
+    char path[FSP_PATH_MAX];
+    char md5[33];
+    FILE *file = NULL;
+    long length;
+    uint8_t *bytes = NULL;
+    int decoded = 0;
+
+    if (!state || !state->csbBootProfile || state->csbAmigaAppbSelectionActive) {
+        return state && state->csbAmigaAppbSelectionActive;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a35m_profile(profile) || !profile->asset_root[0] ||
+        snprintf(path, sizeof(path), "%s/APPB.FTL", profile->asset_root) <= 0 ||
+        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        strcmp(md5, "1533410beaeea4fa614ae0f0142e0861") != 0) {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0 || length > 1024L * 1024L ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (bytes && fread(bytes, 1u, (size_t)length, file) == (size_t)length) {
+        memset(&selection, 0, sizeof(selection));
+        decoded = csb_v1_amiga_a35m_appb_decode_language_selection(
+            bytes, (size_t)length, state->csbAmigaTitlPixels,
+            sizeof(state->csbAmigaTitlPixels), &selection);
+    }
+    fclose(file);
+    free(bytes);
+    if (!decoded) return 0;
+    memcpy(state->csbAmigaTitlPalette, selection.rgb4,
+           sizeof(state->csbAmigaTitlPalette));
+    state->csbAmigaAppbSelectionActive = 1;
+    return 1;
+}
+
 static int m11_csb_complete_amiga_appb_english_handoff(M11_GameViewState *state)
 {
     CSB_V1_BootProfile *profile;
@@ -4303,11 +4355,14 @@ static int m11_csb_complete_amiga_appb_english_handoff(M11_GameViewState *state)
         return 0;
     }
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_amiga_a31_profile(profile) || !profile->asset_root[0] ||
+    if ((!m11_csb_is_amiga_a31_profile(profile) &&
+         !m11_csb_is_amiga_a35m_profile(profile)) || !profile->asset_root[0] ||
         !profile->runtime.dungeon_handle ||
         snprintf(path, sizeof(path), "%s/KAOS.FTL", profile->asset_root) <= 0 ||
         strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
-        strcmp(md5, "dbb79832c9cc3db82886ba8d3f72748a") != 0) {
+        strcmp(md5, m11_csb_is_amiga_a35m_profile(profile)
+                    ? "229d3253968d6e616f8b5171efdf04a5"
+                    : "dbb79832c9cc3db82886ba8d3f72748a") != 0) {
         return 0;
     }
     /* APPA.C:71-74 maps ENGL to KAOS with language parameter zero. The
@@ -4330,8 +4385,17 @@ static int m11_csb_handle_amiga_appb_pointer_release(
         (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return 0;
     }
-    /* SWITCHDA.C:1111-1115: French, English, German. F1288 consumes a
-     * left-button release, then F0798 tests those original 320x200 zones. */
+    /* SWITCHDA.C:1111-1127: F1288 consumes a left-button release and F0798
+     * tests the source-owned French, English and German boxes. */
+    if (state->csbBootProfile && m11_csb_is_amiga_a35m_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile)) {
+        if (x >= 122 && x <= 154 && y >= 62 && y <= 85) {
+            return m11_csb_complete_amiga_appb_english_handoff(state) ? 1 : -1;
+        }
+        if ((x >= 138 && x <= 170 && y >= 136 && y <= 159) ||
+            (x >= 194 && x <= 226 && y >= 91 && y <= 114)) return -1;
+        return 0;
+    }
     if (x < 68 || x > 130) return 0;
     if (y >= 79 && y <= 123) {
         return m11_csb_complete_amiga_appb_english_handoff(state) ? 1 : -1;
@@ -9093,6 +9157,18 @@ static int m11_csb_apply_boot_runtime_receipt(
          * GRAPHICS.DAT/DUNGEON.DAT pair while omitting the optional Atari
          * ANIMATE.SCR/DAT program.  Continue below through the verified
          * GRAPHICS.DAT startup records; do not fake an Atari animation. */
+    }
+    if (m11_csb_is_amiga_a35m_profile(receipt->profile)) {
+        state->csbStartupExpectedPackageIdentity =
+            package_identity ? package_identity : 1u;
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state, &receipt->receipts.init_state);
+        state->csbState.startup_title_active = 1;
+        state->csbState.startup_entrance_active = 0;
+        if (m11_csb_prepare_amiga_a35m_appb_selection(state)) return 1;
+        m11_set_status(state, "CSB AMIGA", "A35M APPB DECODE FAILED");
+        return 0;
     }
     if (m11_csb_is_amiga_a31_profile(receipt->profile)) {
         state->csbStartupExpectedPackageIdentity =
@@ -23329,7 +23405,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;
         }
-    if (m11_csb_is_amiga_a31_profile(csb_profile) &&
+    if ((m11_csb_is_amiga_a31_profile(csb_profile) ||
+         m11_csb_is_amiga_a35m_profile(csb_profile)) &&
         state->csbState.startup_title_active &&
         !state->csbStartupRuntimeAssetSession) {
             if (!state->csbAmigaAppbSelectionActive) {

@@ -1,3 +1,15 @@
+# CSB Amiga 3.5 multilingual APPB handoff (2026-08-08)
+
+- ✅ M12→M11 startar nu det hashverifierade A35M-APPB-programmets egna
+  320×200-språkval från den riktiga ADF:n. Palettens ordjusterade lagring och
+  G3301-kommandoström avkodas enligt ReDMCSB `SWITCHDA.C` och `EXPAND.C`
+  F0466, utan A31- eller PC34-ersättningsyta.
+- ✅ Den engelska originalrutan följer `SWITCH.C` F1288/F0798 till den
+  hashverifierade `KAOS.FTL`-C03-handoffen. Franska och tyska förblir
+  uttryckligen spärrade tills deras egna runtimekedjor är verifierade.
+- ✅ Regressionen använder endast den verkliga A35M-ADF-korpusen och låser
+  både APPB-pixelhash och den valda engelska handoff-gränsen.
+
 # Nexus VDP1 runtime-writer/source join (2026-08-08)
 
 - ✅ Added `analyze_nexus_vdp1_runtime_writer_join.py`, which authenticates

@@ -473,3 +473,58 @@ int csb_v1_amiga_appb_decode_language_selection(
     }
     return 1;
 }
+
+int csb_v1_amiga_a35m_appb_decode_language_selection(
+    const uint8_t *data, size_t size, uint8_t *indexed_pixels,
+    size_t indexed_pixel_capacity, CSB_V1_AmigaAppbSelectionReceipt *out)
+{
+    enum {
+        CSB_V1_A35M_APPB_PALETTE_OFFSET = 0x0deu,
+        CSB_V1_A35M_APPB_SELECTION_OFFSET = 0x122u
+    };
+    CSB_V1_AmigaTitlDeltaReceipt frame;
+    size_t color;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || !indexed_pixels ||
+        size < CSB_V1_A35M_APPB_SELECTION_OFFSET + 5u ||
+        indexed_pixel_capacity < CSB_V1_AMIGA_TITL_WIDTH *
+                                 CSB_V1_AMIGA_TITL_HEIGHT) {
+        return 0;
+    }
+    /* ReDMCSB SWITCHDA.C (MEDIA742_A35M) declares G3300 immediately before
+     * G3301. SWITCH.C F1288 installs G3300 then calls VDEO_05/F0466 with
+     * G3301. The generic Amiga F0466 command semantics are preserved by the
+     * source-locked GRF1 decoder above; do not feed this program image into
+     * A31M's APPB envelope decoder. */
+    for (color = 0u; color < 16u; ++color) {
+        const size_t at = color < 12u
+            ? CSB_V1_A35M_APPB_PALETTE_OFFSET + color * 4u
+            : 0x110u + (color - 12u) * 4u;
+        if (at + 4u > size || data[at] != color ||
+            (data[at + 1u] & 0x0fu) != 0u ||
+            (data[at + 2u] & 0x0fu) != 0u ||
+            (data[at + 3u] & 0x0fu) != 0u) {
+            return 0;
+        }
+        if (out) {
+            out->rgb4[color][0] = (uint8_t)(data[at + 1u] >> 4u);
+            out->rgb4[color][1] = (uint8_t)(data[at + 2u] >> 4u);
+            out->rgb4[color][2] = (uint8_t)(data[at + 3u] >> 4u);
+        }
+    }
+    memset(indexed_pixels, 0, CSB_V1_AMIGA_TITL_WIDTH *
+                              CSB_V1_AMIGA_TITL_HEIGHT);
+    if (!csb_v1_amiga_grf1_apply_delta(
+            data + CSB_V1_A35M_APPB_SELECTION_OFFSET,
+            size - CSB_V1_A35M_APPB_SELECTION_OFFSET, indexed_pixels,
+            indexed_pixel_capacity, &frame)) {
+        return 0;
+    }
+    if (out) {
+        out->width = frame.width;
+        out->height = frame.height;
+        out->source_bytes_consumed = frame.source_bytes_consumed;
+    }
+    return 1;
+}

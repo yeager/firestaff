@@ -41,12 +41,11 @@
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
-  mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35
-  och efterföljande Amiga-programhandoff
-  (titel till meny/entré/Utility) är fortsatt spärrade; ingen PC34-yta får
-  ersätta dem. A35 Englishs APPB och A35 Multis KAOS/ANIM/APPB-familjer
-  materialiseras nu endast efter respektive ADF-hash, men någon runtimeväg
-  får ännu inte låtsas att dessa 68k-program redan körs. Atari ST:s redan
+  mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35M:s
+  verkliga APPB-språkval och engelska KAOS-handoff är nu bundna till sina
+  ADF-hashar, men franska/tyska och den separata A35E-APPB/C03-starten är
+  fortsatt fail-closed tills deras runtime-media har egen verifierad
+  konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
 
