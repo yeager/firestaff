@@ -986,10 +986,10 @@ VDP1 is the Saturn's second video display processor, capable of direct framebuff
 
 | File | Size | Format | Status |
 |------|------|--------|--------|
-| `TITLE.CG` | 164 KB | Unknown (color graphics) | ❌ Not analyzed |
-| `LOGOBG.DG2` | 71 KB | VDP2 background | ❌ Not analyzed |
+| `TITLE.CG` | 164 KB | 4bpp source atlas for `TITLE.BIN` MAPD/TIBG | ✅ Retail layout/pixels decoded; Saturn placement remains capture-gated |
+| `LOGOBG.DG2` | 71 KB | DGT2 PP indexed surface with BGR555 CLUT | ✅ Retail pixels/CLUT decoded; VDP2 layer ownership remains capture-gated |
 | `FONT256.S2D` | 24 KB | Saturn SCR | ✅ Header ✅ Glyph access |
-| `FACE.BIN` | 44 KB | Champion portraits (24 entries) | ❌ Format unknown |
+| `FACE.BIN` | 44 KB | 20 56×56 PRS3 portraits with source palettes | ✅ Retail records/pixels decoded; VDP1 destination remains capture-gated |
 | `STONE.BIN` | 4 KB | Wall/stone texture base | ❌ Not analyzed |
 | `NBG3.BIN` | 7 KB | Candidate VDP2 background asset | ⚠️ Receipt only; owner/capture missing |
 | `POTEFT.BIN` | 3 KB | Potion effect graphics | ❌ Not analyzed |
@@ -1034,13 +1034,13 @@ const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int idx);
 |------|--------|
 | DMDF header/vertex/face parsing | ✅ Implemented |
 | DMDF vertex stride bug | ⚠️ 10B loaded vs 16B struct |
-| VDP1 BITMAP texture format | ❌ **NOT DOCUMENTED** |
-| VDP2 background format | ❌ **NOT DOCUMENTED** |
+| VDP1 BITMAP texture format | ⚠️ Source surfaces decoded; Saturn command/CLUT consumer remains capture-gated |
+| VDP2 background format | ⚠️ Retail surface/CLUT facts decoded; layer/timing consumer remains capture-gated |
 | Saturn SCR font | ✅ Header ✅ Glyph access |
-| FACE.BIN portraits | ❌ **NOT IMPLEMENTED** |
-| ITEM.IBS icon set | ❌ **NOT IMPLEMENTED** |
-| MENU.BPK packed graphics | ❌ **NOT DOCUMENTED** |
-| TITLE.CG / LOGOBG.DG2 | ❌ **NOT ANALYZED** |
+| FACE.BIN portraits | ✅ Retail PRS3 records/pixels decoded; portrait VDP1 consumer remains capture-gated |
+| ITEM.IBS icon set | ✅ Retail records/provenance decoded; item VDP1 consumer remains capture-gated |
+| MENU.BPK packed graphics | ✅ Retail PRS3/BPK records/palette provenance decoded; menu consumer remains capture-gated |
+| TITLE.CG / LOGOBG.DG2 | ✅ Retail source pixels/CLUT decoded; final Saturn layer/placement remains capture-gated |
 
 ---
 
@@ -1214,12 +1214,12 @@ Sound (SNDLEV*.SAL, SNDLEV*.MAP):
 Graphics/Model (DMDF + VDP1 + other):
 [✓] DMDF parsing
 [~] DMDF vertex stride (buggy)
-[✗] VDP1 BITMAP texture spec
-[✗] VDP2 background format
-[✗] TITLE.CG / LOGOBG.DG2
-[✗] ITEM.IBS icon set
-[✗] MENU.BPK packed graphics
-[✗] FACE.BIN portraits
+[~] VDP1 BITMAP texture spec (source decode exists; Saturn consumer capture missing)
+[~] VDP2 background format (source decode exists; layer consumer capture missing)
+[~] TITLE.CG / LOGOBG.DG2 (source decode exists; placement capture missing)
+[~] ITEM.IBS icon set (source decode exists; VDP1 consumer capture missing)
+[~] MENU.BPK packed graphics (source decode exists; menu consumer capture missing)
+[~] FACE.BIN portraits (source decode exists; VDP1 consumer capture missing)
 ```
 
 **Phase 2 completion: ~45%** (format documented but implementation incomplete across most areas)

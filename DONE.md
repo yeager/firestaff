@@ -6,6 +6,15 @@
 - ✅ Riktiga Nexus-medietester för MNS, DGN face/mesh, BPK-material och
   multi-model bounds passerar. Detta öppnar inte VDP1/VDP2-rendering utan
   bevarar bara källmaterialet korrekt tills autentisk Saturn-capture finns.
+
+# Nexus Phase-2 stale inventory audit (2026-08-08)
+
+- ✅ Uppdaterade den historiska Phase-2-tabellen så verifierade realdata-
+  dekodrar för `TITLE.CG`, `LOGOBG.DG2`, `FACE.BIN`, `ITEM.IBS` och
+  `MENU.BPK` inte längre listas som oanalyserade. Tabellen skiljer nu mellan
+  känd källformatdekodning och den fortfarande saknade autentiska
+  VDP1/VDP2-konsumenten.
+
 # CSB Atari ST runtimehandoff inventerad (2026-08-08)
 
 - ✅ Bekräftade den hashverifierade Atari ST 2.0/2.1-kedjan: originalets
