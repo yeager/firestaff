@@ -287,8 +287,24 @@ def verify(repo: Path) -> list[str]:
         errors.append(
             "DM2 dungeon loader no longer excludes the word-square fixture "
             "parser from product builds")
-    if "FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES=1" not in cmake:
-        errors.append("DM2 word-square fixture target has no explicit test-only definition")
+    # The historic word-square reader is compiled only by the one direct
+    # regression target.  A mere substring check is not enough here: a
+    # future developer could add the same definition to firestaff_dm2 or M10
+    # and leave this check green while production once again accepted
+    # caller-authored dungeon bytes.  Keep the definition singular and bind
+    # it to the test target explicitly.
+    synthetic_fixture_definitions = re.findall(
+        r"target_compile_definitions\(\s*([^\s)]+)(.*?)\)",
+        cmake, flags=re.DOTALL)
+    synthetic_fixture_targets = [
+        target for target, definitions in synthetic_fixture_definitions
+        if "FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES=1" in definitions
+    ]
+    if synthetic_fixture_targets != ["test_dm2_v1_dungeon_loader_first_map_gate"]:
+        errors.append(
+            "DM2 word-square fixture definition must occur exactly once and "
+            "only on test_dm2_v1_dungeon_loader_first_map_gate; found: " +
+            (", ".join(synthetic_fixture_targets) or "none"))
 
     creature_path = repo / "src/dm2/dm2_v1_creature.c"
     if not creature_path.exists():

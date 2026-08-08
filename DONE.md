@@ -9341,3 +9341,16 @@
 - ✅ VDP1 source-span och VDP2 palette/source-joins körs fail-closed och
   dokumenteras som negativ evidens; ingen meny, HUD eller viewport binds utan
   retail asset/consumer-identitet.
+
+# DM2 produktionsgrind för syntetisk dungeondata (2026-08-08)
+
+- ✅ Inventerade DM2:s produktionsarkiv och bekräftade att V1-, V2- och
+  V2.2-vägarna inte kan rita eller ladda lokalt skapade ersättningspixlar.
+  Saknat GDAT-material är fortsatt no-draw och blockerar ramen.
+- ✅ Härdade \`verify_dm2_production_placeholder_boundary.py\`: den gamla
+  word-square-läsaren får nu ha testmakrot exakt en gång och endast på
+  \`test_dm2_v1_dungeon_loader_first_map_gate\`. Ett framtida produktionsmål
+  kan alltså inte tyst få \`FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES\`.
+- ✅ Verifierat med produktionsgrinden samt testparen för att produktbygget
+  avvisar den syntetiska dungeonformen och att det isolerade historiska
+  regressionstestet fortfarande fungerar.
