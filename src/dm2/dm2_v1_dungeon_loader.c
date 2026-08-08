@@ -3118,6 +3118,42 @@ int dm2_v1_dungeon_walk_file_header_runtime_map(
     return record_count == validation.record_count ? record_count : -1;
 }
 
+static int dm2_v1_file_header_count_scene_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_FileHeaderRuntimeSceneCensus *census =
+        (DM2_V1_FileHeaderRuntimeSceneCensus *)user;
+    if (!census || type < 0 || type >= 16 || !record || record_size < 2 ||
+        index < 0) return -1;
+    ++census->record_count;
+    ++census->type_count[type];
+    (void)thing; (void)level; (void)x; (void)y;
+    return 0;
+}
+
+int dm2_v1_dungeon_collect_file_header_runtime_map_scene_census(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeSceneCensus *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
+    DM2_V1_FileHeaderRuntimeSceneCensus candidate;
+
+    if (!out || !d ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, map, &map_receipt) || !map_receipt.committed) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_count_scene_record, &candidate) !=
+        map_receipt.record_count ||
+        candidate.record_count != map_receipt.record_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_resolve_g1_direct_root_record(
     const DM2_V1_DungeonData *d,
     int level,

@@ -25,6 +25,8 @@
   `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
   Bootprofilen kan nu lämna samma tre scenreceipts från den redan monterade,
   hashverifierade dungeonen utan att någon konsument läser rådata på nytt.
+  En komplett typcensus från samma vandring finns nu som kontrollgrund för
+  triggers, trappor, objekt och framtida local-level-konsumenter.
 
 - **DM2-CREATURE-POSSESSION-RUNTIME:** DB4-ägd possessionslänk och varje
   verklig underkedja är nu verifierade utan mutation. Återställ därefter

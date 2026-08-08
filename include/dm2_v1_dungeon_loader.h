@@ -452,6 +452,17 @@ typedef struct {
     uint32_t map_data_hash;
 } DM2_V1_FileHeaderRuntimeMapReceipt;
 
+/* Complete, read-only type census for one already validated File_header map.
+ * Counts are derived from the same bounded c_map -> c_record walk used by
+ * local-level loading, not from pool allocation totals. */
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int record_count;
+    int type_count[16];
+} DM2_V1_FileHeaderRuntimeSceneCensus;
+
 typedef struct {
     int committed;
     int incomplete_world;
@@ -1652,6 +1663,9 @@ int dm2_v1_dungeon_validate_file_header_runtime_map(
 int dm2_v1_dungeon_walk_file_header_runtime_map(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_DungeonThingVisitor visitor, void *user);
+int dm2_v1_dungeon_collect_file_header_runtime_map_scene_census(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeSceneCensus *out);
 /* Resolve a selected tile through c_map.cpp's ground-stack lookup to a
  * declared direct DB0..DB5/DB9 record address. Other types, extensions, and
  * tiles without a root fail closed without mutating out. */

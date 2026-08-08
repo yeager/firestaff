@@ -180,6 +180,14 @@
   med befintlig kartproveniens. Det publicerar ingen rörelse, dörrstatus eller
   aktuatorhändelse.
 
+# DM2 File_header-sceninventering (2026-08-08)
+
+- ✅ Varje karta kan nu lämna en fullständig, läsande census per recordtyp,
+  räknad ur den validerade `w0`-kedjan. Den bekräftar att trappor, triggers,
+  objekt och andra ännu oexekverade posttyper inte försvinner i intaget.
+- ✅ Testet jämför censusens totalsumma med kartans verkliga recordantal för
+  samtliga 44 PC-DOS-kartor. Ingen runtimeeffekt eller placeholder skapas.
+
 # DM2 fail-closed local-level adapter (2026-08-08)
 
 - ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu
