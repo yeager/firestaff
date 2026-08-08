@@ -2375,14 +2375,14 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
         outSnapshot->creatureType = -1;
         outSnapshot->creatureIndex = -1;
     }
-    if (!outSnapshot || !world || !world->things || !world->things->groups) { fprintf(stderr, "F0888: g1\n"); return 0; }
-    if (groupIndex < 0 || groupIndex >= world->things->groupCount) { fprintf(stderr, "F0888: g2 gi=%d gc=%d\n", groupIndex, world->things->groupCount); return 0; }
-    if (creatureIndex < 0 || creatureIndex > 3) { fprintf(stderr, "F0888: g3\n"); return 0; }
+    if (!outSnapshot || !world || !world->things || !world->things->groups) return 0;
+    if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
+    if (creatureIndex < 0 || creatureIndex > 3) return 0;
 
     group = &world->things->groups[groupIndex];
-    if (creatureIndex > (int)group->count) { fprintf(stderr, "F0888: g4 ci=%d gc=%d\n", creatureIndex, (int)group->count); return 0; }
+    if (creatureIndex > (int)group->count) return 0;
     profile = CREATURE_GetProfile_Compat(group->creatureType);
-    if (!profile) { fprintf(stderr, "F0888: g5\n"); return 0; }
+    if (!profile) return 0;
 
     memset(&in, 0, sizeof(in));
     in.groupIndex = groupIndex;
@@ -8082,16 +8082,14 @@ static int orch_create_explosion_with_fallback_compat(
     int c15Cell)
 {
     int hasAuthenticatedRawThings = 0;
-    int thingType;
 
-    if (world && world->things && world->things->loaded) {
-        for (thingType = 0; thingType < DUNGEON_THING_TYPE_COUNT; ++thingType) {
-            if (world->things->rawThingData[thingType] &&
-                world->things->thingCounts[thingType] > 0) {
-                hasAuthenticatedRawThings = 1;
-                break;
-            }
-        }
+    if (world && world->things && world->things->loaded &&
+        world->dungeon && world->dungeon->loaded &&
+        world->things->rawThingData[THING_TYPE_EXPLOSION] &&
+        world->things->thingCounts[THING_TYPE_EXPLOSION] > 0 &&
+        world->things->explosions &&
+        world->things->explosionCount > 0) {
+        hasAuthenticatedRawThings = 1;
     }
     if (hasAuthenticatedRawThings) {
         /* A loaded PC34 Thing table is authoritative.  ReDMCSB F0217/F0220
@@ -12994,7 +12992,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                          preflightPlan.emitOutcome);
                 }
                 if (preflightPlan.shouldReturnHandled) {
-                    fprintf(stderr, "CMD_ATTACK: preflight1 shouldReturnHandled\n");
                     return 1;
                 }
                 if (!targetResolved && preflightPlan.canUseLegacyMarker) {
@@ -13005,7 +13002,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 }
             }
             if (targetResolved) {
-                fprintf(stderr, "CMD_ATTACK: calling F0888 gi=%d ci=%d\n", groupIndex, creatureIndex);
                 creatureSnapshotReady =
                     F0888_ORCH_GetCreatureSnapshot_Compat(
                         world, groupIndex, creatureIndex,
@@ -13036,11 +13032,9 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                 (void)dm1_v1_melee_preflight_plan_f0402_pc34(
                     &preflightIn, &preflightPlan);
                 if (preflightPlan.shouldReturnHandled) {
-                    fprintf(stderr, "CMD_ATTACK: preflight2 shouldReturnHandled csReady=%d chReady=%d targetRes=%d reach=%d disrupt=%d candInv=%d\n", creatureSnapshotReady, championSnapshotReady, targetResolved, reachBlocked, disruptBlocked, (int)(creatureSnapshotReady && creatureSnapshot.isCandidateInvulnerable));
                     return 1;
                 }
                 if (!preflightPlan.canResolveDamage) {
-                    fprintf(stderr, "CMD_ATTACK: preflight2 !canResolveDamage csReady=%d chReady=%d\n", creatureSnapshotReady, championSnapshotReady);
                     return 1;
                 }
             }
