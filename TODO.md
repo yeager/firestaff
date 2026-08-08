@@ -9608,6 +9608,11 @@ as line/circle coordinates or promote them into movement geometry.
   from face rows to transform, winding/culling, normal use, fill-selector
   texture and palette data, and a concrete draw command. The retained
   entry-local pair multiplicity is row incidence only until this exists.
+  - 2026-08-08: regenerated the source-bound all-level campaign from the
+    real LEV00.DGN–LEV15.DGN corpus: 0x482e (18,478) no-draw face targets,
+    `original_saturn_capture_required=1`, `decoder_or_renderer_authorized=0`.
+    The remaining work is the corresponding authentic Saturn face trace, not
+    another synthetic target or renderer.
   - 2026-07-14: `nexus_v1_dgn_bind_structure3_face_capture_candidate` now
     defines the fail-closed byte-binding boundary for that trace: it requires
     the retail typed-row corpus identity, exact DGN and Structure3 payload

@@ -24,6 +24,17 @@
   `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
   felaktigt publiceras för den Amiga-specifika språkväljaren.
 
+# Nexus Structure3 face campaign regenerated from all retail DGN levels (2026-08-08)
+
+- ✅ Ran the source-bound Structure3 face campaign against the real
+  `/Users/bosse/.firestaff/data/nexus` `LEV00.DGN`–`LEV15.DGN` corpus. The
+  external ledger contains `target_count=0x482e` (18,478) face targets,
+  `level_mask=ffff`, ordered-target FNV-1a64 `11fb3d0753443bb2`, source
+  identity FNV-1a64 `ac8bf4bebec367d0`, and typed-mesh FNV-1a32 `d3f42b1f`.
+- ✅ Every target remains `original_saturn_capture_required=1`, `no_draw_only=1`
+  and `decoder_or_renderer_authorized=0`; the campaign proves corpus
+  coverage only and does not promote Structure3 face rendering.
+
 # Nexus operator launcher verified against European reset capture (2026-08-08)
 
 - ✅ The external-only raw Saturn launcher completed its real BIOS/disc hash
