@@ -8234,3 +8234,13 @@
   to advance on a source-authenticated level. Timer/consumer dispatch is now
   exercised, while stamina, food, water, poison and other unresolved T700
   fields remain unchanged until the original consumer is captured.
+# Theron verklig mediarevision (2026-08-08)
+
+- ✅ US- och JP-Track 02 har verifierats från de riktiga `.bin`-filerna i
+  Firestaffs dataområde. Roster, regionala palettkandidater och
+  bitmapdekomprimering använder originalbytes.
+- ✅ VCE-konsumentens statiska `$96a5`-spännvidd är verifierad mot disassembly,
+  men den dynamiska FIFO/RAM- och VDC-joinen saknas fortfarande.
+- ✅ Produktionsgrinden fortsätter därför att neka palette promotion,
+  startup-presentation och README-screenshot utan autentiserad capture.
+  Inget syntetiskt speldata eller ersättningsbild har skapats.
