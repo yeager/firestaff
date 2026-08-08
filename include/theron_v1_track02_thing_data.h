@@ -49,6 +49,50 @@ typedef struct {
 } Theron_ThingData;
 
 typedef struct {
+    uint8_t type;
+    uint8_t ornate;
+    uint8_t opens_up;
+    uint8_t button;
+    uint8_t destroyable;
+    uint8_t bashable;
+    uint8_t unknown;
+} Theron_Track02DoorRecord;
+
+typedef struct {
+    uint8_t xdest;
+    uint8_t ydest;
+    uint8_t rotation;
+    uint8_t absolute;
+    uint8_t scope;
+    uint8_t sound;
+    uint8_t ldest;
+    uint8_t unused;
+} Theron_Track02TeleporterRecord;
+
+typedef struct {
+    uint16_t offset;
+    uint8_t visible;
+    uint8_t flag2;
+    uint8_t flag3;
+} Theron_Track02TextRecord;
+
+typedef struct {
+    uint8_t type;
+    uint8_t value;
+    uint8_t bit1;
+    uint8_t bit2;
+    uint8_t once;
+    uint8_t effect;
+    uint8_t sound;
+    uint8_t delay;
+    uint8_t inactive;
+    uint8_t graphism;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t facing;
+} Theron_Track02ActuatorRecord;
+
+typedef struct {
     uint16_t next_ref;
     uint8_t type;
     uint8_t position;
@@ -124,6 +168,10 @@ typedef struct {
     unsigned int category;
     uint16_t next_ref;
     union {
+        Theron_Track02DoorRecord door;
+        Theron_Track02TeleporterRecord teleporter;
+        Theron_Track02TextRecord text;
+        Theron_Track02ActuatorRecord actuator;
         Theron_Track02MonsterRecord monster;
         Theron_Track02WeaponRecord weapon;
         Theron_Track02ClothingRecord clothing;
@@ -157,9 +205,9 @@ unsigned int theron_v1_track02_compute_ground_ref_count(
     const uint8_t *tiles_flat,
     unsigned int total_tiles);
 
-/* Decodes source-bound fields for categories 4..10, 14 and 15. The six-byte
+/* Decodes source-bound fields for categories 0..10, 14 and 15. The six-byte
  * missile and two-byte cloud payloads follow their two-byte linked-list
- * reference. Source: DMBUILDER6/src/dms.h:244-258. This remains a data
+ * reference. Source: DMBUILDER6/src/dms.h:69-176, 244-258. This remains a data
  * receipt; it does not promote a record into host gameplay semantics. */
 int theron_v1_track02_item_record_decode(
     unsigned int category,

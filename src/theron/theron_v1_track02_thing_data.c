@@ -44,7 +44,7 @@ int theron_v1_track02_item_record_decode(
     Theron_Track02ItemRecord *out)
 {
     if (!raw || !out ||
-        (category < THERON_CAT_MONSTER ||
+        (category >= THERON_ITEM_CATEGORY_COUNT ||
          (category > THERON_CAT_MISC && category != THERON_CAT_MISSILE &&
           category != THERON_CAT_CLOUD)) ||
         raw_size < theron_item_bytes[category])
@@ -55,6 +55,59 @@ int theron_v1_track02_item_record_decode(
     out->next_ref = read_le16(raw);
 
     switch (category) {
+    case THERON_CAT_DOOR: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.door.type = (uint8_t)(w & 1u);
+        out->value.door.ornate = (uint8_t)((w >> 1) & 0x0Fu);
+        out->value.door.opens_up = (uint8_t)((w >> 5) & 1u);
+        out->value.door.button = (uint8_t)((w >> 6) & 1u);
+        out->value.door.destroyable = (uint8_t)((w >> 7) & 1u);
+        out->value.door.bashable = (uint8_t)((w >> 8) & 1u);
+        out->value.door.unknown = (uint8_t)((w >> 9) & 0x7Fu);
+        break;
+    }
+    case THERON_CAT_TELEPORTER: {
+        uint16_t w0 = read_le16(raw + 2u);
+        uint16_t w1 = read_le16(raw + 4u);
+        out->value.teleporter.xdest = (uint8_t)(w0 & 0x1Fu);
+        out->value.teleporter.ydest = (uint8_t)((w0 >> 5) & 0x1Fu);
+        out->value.teleporter.rotation = (uint8_t)((w0 >> 10) & 3u);
+        out->value.teleporter.absolute = (uint8_t)((w0 >> 12) & 1u);
+        out->value.teleporter.scope = (uint8_t)((w0 >> 13) & 3u);
+        out->value.teleporter.sound = (uint8_t)((w0 >> 15) & 1u);
+        out->value.teleporter.ldest = (uint8_t)(w1 & 0x3Fu);
+        out->value.teleporter.unused = (uint8_t)((w1 >> 6) & 3u);
+        break;
+    }
+    case THERON_CAT_TEXT: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.text.visible = (uint8_t)(w & 1u);
+        out->value.text.flag2 = (uint8_t)((w >> 1) & 1u);
+        out->value.text.flag3 = (uint8_t)((w >> 2) & 1u);
+        out->value.text.offset = (uint16_t)((w >> 3) & 0x1FFFu);
+        break;
+    }
+    case THERON_CAT_ACTUATOR: {
+        uint16_t type = read_le16(raw + 2u);
+        uint16_t effect = read_le16(raw + 4u);
+        uint16_t target = read_le16(raw + 6u);
+        out->value.actuator.type = (uint8_t)(type & 0x7Fu);
+        out->value.actuator.value = (uint8_t)((type >> 7) & 0x01FFu);
+        out->value.actuator.bit1 = (uint8_t)(effect & 1u);
+        out->value.actuator.bit2 = (uint8_t)((effect >> 1) & 1u);
+        out->value.actuator.once = (uint8_t)((effect >> 2) & 1u);
+        out->value.actuator.effect = (uint8_t)((effect >> 3) & 7u);
+        out->value.actuator.sound = (uint8_t)((effect >> 6) & 1u);
+        out->value.actuator.delay = (uint8_t)((effect >> 7) & 0x0Fu);
+        out->value.actuator.inactive = (uint8_t)((effect >> 11) & 1u);
+        out->value.actuator.graphism = (uint8_t)((effect >> 12) & 0x0Fu);
+        /* DMBUILDER6/src/actuator.h: target word is
+         * bit1..4, facing:2, xdest:5, ydest:5. */
+        out->value.actuator.target_x = (uint8_t)((target >> 6) & 0x1Fu);
+        out->value.actuator.target_y = (uint8_t)((target >> 11) & 0x1Fu);
+        out->value.actuator.facing = (uint8_t)((target >> 4) & 3u);
+        break;
+    }
     case THERON_CAT_MONSTER: {
         uint16_t flags;
         uint16_t unknown;

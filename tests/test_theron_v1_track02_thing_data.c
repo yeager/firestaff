@@ -139,6 +139,44 @@ static void test_source_projectile_records(void) {
     printf("  source missile/cloud record layouts OK\n");
 }
 
+static void test_source_control_record_fields(void) {
+    const uint8_t door[] = {0x34, 0x12, 0x61, 0x00};
+    const uint8_t teleporter[] = {0x78, 0x56, 0xE1, 0xA4, 0x2B, 0x00};
+    const uint8_t text[] = {0x34, 0x12, 0x2D, 0x5A};
+    const uint8_t actuator[] = {0x34, 0x12, 0x81, 0x01, 0x9D, 0xF2,
+                                0x00, 0xA0};
+    Theron_Track02ItemRecord record;
+
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_DOOR, door, sizeof(door), &record));
+    assert(record.next_ref == 0x1234u && record.value.door.type == 1u &&
+           record.value.door.ornate == 0u && record.value.door.opens_up == 1u &&
+           record.value.door.button == 1u && record.value.door.destroyable == 0u &&
+           record.value.door.bashable == 0u);
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_TELEPORTER, teleporter, sizeof(teleporter), &record));
+    assert(record.value.teleporter.xdest == 1u &&
+           record.value.teleporter.ydest == 7u &&
+           record.value.teleporter.rotation == 1u &&
+           record.value.teleporter.absolute == 0u &&
+           record.value.teleporter.scope == 1u &&
+           record.value.teleporter.sound == 1u);
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_TEXT, text, sizeof(text), &record));
+    assert(record.value.text.visible == 1u && record.value.text.flag2 == 0u &&
+           record.value.text.flag3 == 1u && record.value.text.offset == 0x0B45u);
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_ACTUATOR, actuator, sizeof(actuator), &record));
+    assert(record.value.actuator.type == 1u &&
+           record.value.actuator.value == 3u &&
+           record.value.actuator.effect == 3u &&
+           record.value.actuator.graphism == 15u &&
+           record.value.actuator.target_x == 0u &&
+           record.value.actuator.target_y == 20u &&
+           record.value.actuator.facing == 0u);
+    printf("  source door/teleporter/text/actuator fields OK\n");
+}
+
 static void test_real_item_records(const Theron_ThingData *td,
                                    unsigned int dungeon_index,
                                    int require_us_counts) {
@@ -250,6 +288,7 @@ int main(void) {
     test_truncated_map_source_rejected();
     test_source_category_layout();
     test_source_projectile_records();
+    test_source_control_record_fields();
 
     const char *path = find_track02_variant(THERON_TRACK02_VARIANT_US_BIN);
     if (!path) {
