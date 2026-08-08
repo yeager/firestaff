@@ -12,10 +12,10 @@ missing. Do not push — the orchestrator pushes after assembly. Update this
 file and DONE.md after every completed job.
 
 - **Lane A — DM2 SkWinCore symbol audit batch 16 (cycle 16):** Done — see
-  "Recently Completed" below.
+  `DONE-dm2.md` for the completion record.
 
 - **Lane A — DM2 SkWinCore symbol audit batch 17 (cycle 16):** Done — see
-  "Recently Completed" below.
+  `DONE-dm2.md` for the completion record.
 
 - **Lane A — DM2 SkWinCore symbol audit batch 18:** Done (v3.0.182). Ported
   16 symbols from `SKULLWIN/c_1c9a.cpp`: 14 fully ported, 2 fail-closed stubs.
@@ -44,152 +44,8 @@ file and DONE.md after every completed job.
   m11_startup_profile_gate (30 deep runtime failures, pre-existing) and
   utility_import (timeout, pre-existing).
 
-- **Lane D — DM2-010 creature/cloud passes (cycle 16):** Done (see
-  "Cycle 16 Completed Lanes" below).
-
-## Cycle 16 Completed (DM2 only — lanes report here; orchestrator pushes)
-
-- **Lane E — DM2 real-data combat and drops mechanics (cycle 16):** Done
-  2026-07-23; committed on `cycle16-lane-E`, not pushed.
-  - Drops: new `dm2_v1_drops_resolve_gdat_creature_drops()` reads the eleven
-    CREATURES drop words (fields 0x0A..0x14) straight from a verified
-    GRAPHICS.DAT loader and resolves them in source order
-    (skcrture.cpp:2092-2100 DROP_CREATURE_POSSESSION).  Proven against the
-    local canonical GDAT: GLOP/24 drops items 284/314 (words 0x8E10/0x9D10),
-    ATTACK MINION/14 drops items 8/264 (0x0410/0x8412), TREE/0 drops item
-    292 (0x9241); the live death path
-    (`dm2_v1_creature_load_ai_table_from_gdat` → `dm2_v1_creature_death_check`)
-    reports the real item through the observer with replica-exact RNG draws.
-    A creature without imported GDAT drop words now produces no generated
-    loot, exactly as `DROP_CREATURE_POSSESSION` does for eleven zero words.
-  - Combat: melee/ranged resolution gained the real-data defense route —
-    `dm2_v1_combat_bind_creature_defense_fn()` (caller-owned provider hook,
-    same pattern as the CAII word providers) and
-    `dm2_v1_combat_resolve_attack_on_creature()` resolve the source damage
-    formula against the creature's AIDefinition Defense byte @8
-    (c_engage.cpp via c_record.cpp:1351-1354), with kill threshold
-    (damage >= hp) receipted.  New data-backed accessor
-    `dm2_v1_creature_ai_defense()` mirrors `dm2_v1_creature_ai_base_hp`.
-    Fail-closed: without a provider, or when the session did not prove the
-    creature's defense — the local PC English GDAT has no CREATURE_AI
-    (0x19) category, so the route rejects explicitly locally instead of
-    inventing a defense value.
-  - Tests: `test_dm2_v1_combat_pc34_compat` 49 → 56 checks (provider-bound
-    resolution, kill threshold, undestroyable Defense=255, invalid-weapon
-    rejection, out-of-range zero damage, both fail-closed gates); new
-    `test_dm2_v1_drops_gdat_real_data` (explicit-corpus; proven drop words, RNG
-    replica, death-observer chain, fail-closed defense); creature/combat
-    probe 158 → 166 assertions (fail-closed gates for all three modules).
-  Verify: `ctest --test-dir build -R 'dm2_v1_(combat|drops|creature_death_drop|creature_combat_probe)'`
-  7/7 PASS incl. `dm2_v1_combat_probe` and `dm2_v1_creature_death_drop_probe`;
-  strict `-Wall -Wextra -Werror` clean on all touched files.
-  Remaining: a CREATURE_AI-proven graphics session to light up the
-  defense/BaseHP route locally, DUNGEON.DAT door-record evidence for the
-  door-destruction table, and ALLOC_NEW_DBITEM item-record creation for
-  admitted drop slots.
-
-- **Lane B — DM2-008 audible playback backend (cycle 16):** Done 2026-07-23;
-  committed on `cycle16-lane-B`, not pushed.  Voice allocation, PCM decode,
-  and a real SDL3 playback backend now sit behind the existing fail-closed
-  contract in `src/dm2/dm2_v1_sound.c`:
-  - `dm2_v1_sound_decode_gdat_pcm()` decodes the unsigned 8-bit mono PCM of a
-    verified `GRAPHICS.DAT` sound raw entry (payload = raw bytes after the
-    two-byte format header, converted `byte ^ 0x80`, exactly the SKWin
-    `0x80 + raw_byte` alloc-time conversion; playback rate 6000 Hz per
-    SKWIN/SkwinSDL.cpp).  Verified against real data: 292 loadable SOUND
-    entries locally; entry 3/0/129 decodes byte-for-byte.
-  - Voice allocation owns MAX_SB = 16 voice slots (SKWin `MAX_SB`); voices
-    free when the backend reports playback complete, no stealing, the 17th
-    simultaneous request is explicitly rejected (`rejected_no_free_voice`).
-  - `dm2_v1_sound_bind_playback_backend()` binds an SDL-free vtable;
-    `src/dm2/dm2_v1_sound_sdl_backend.c` (+ header) is the concrete SDL3
-    backend (6000 Hz U8 mono stream, additive sdlAudMix-shaped mixing,
-    per-voice volume).  `dm2_v1_sound_play_gdat_entry()` /
-    `_positional()` start audible playback only when the sample decodes from
-    a verified GDAT entry AND the backend reports ready; attenuation is the
-    source-locked R_928 metric (c_sound.cpp:256-308), never synthesized.
-    `dm2_v1_sound_play()` / `dm2_v1_sound_play_positional()` now resolve
-    the sound_id as the GDAT raw sample binding (xsndptr2 `w_00`) and stay
-    fail-closed (-1) without loader, backend, or a matching SOUND entry.
-  - Title music stays fail-closed: no verified music asset root is proven
-    locally (no `SKWIN/data/*.hmp.mid` present; the DOS zip only ships
-    `test.hmp`, which is not the title cue).
-  - Tests: `test_dm2_v1_sound_gdat_real_data` gained PCM-decode and
-    no-backend rejection checks; new `test_dm2_v1_sound_playback_sdl`
-    (SDL_AUDIODRIVER=dummy) proves audible playback start, voice completion,
-    legacy sound_id routing, R_928 positional attenuation, 16-voice
-    exhaustion, and stop_all reuse against real GRAPHICS.DAT;
-    `test_dm2_v1_sound_source_gate` gained fail-closed decode/playback
-    checks.  `firestaff_dm2_v1_creature_combat_probe` unchanged (158/158).
-    `firestaff_dm2` now links SDL3::SDL3 publicly (glob picked up the new
-    backend source).
-  Verify: `ctest --test-dir build -R dm2_v1_sound` 4/4 PASS;
-  `firestaff_dm2_v1_creature_combat_probe` 158/158 PASS.
-  **2026-07-31 update:** M11 now describes and binds the SDL backend only
-  after `dm2_v1_boot_startup_launch_alloc()` admits the verified boot
-  profile, then unbinds it during DM2 shutdown. The real-data M11 startup
-  gate proves that lifecycle. Remaining: bind a verified music asset root
-  when `*.hmp.mid` assets are proven, and prove wall-occlusion/facing routing
-  before positional cues leave the queue.
-
-- **Lane E (next) — DM2 combat follow-ups (cycle 16/17):** bind a verified
-  music asset root; ALLOC_NEW_DBITEM drop-slot materialization (c_dballoc);
-  DUNGEON.DAT door-record evidence for the door-destruction table; a
-  CREATURE_AI-proven graphics session to light the defense/BaseHP route locally.
-
-## Cycle 15 Completed (DM2 only — both lanes pushed)
-
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done 2026-07-23;
-  pushed. Backlog 891 → 883 `MISSING`; `c_querydb.cpp` fully drained.
-
-- **Lane B — DM2-010 static-object pixel draw (cycle 15):** Done.
-  Source-locked the remaining DRAW_ITEM floor-object chain against skproject
-  SKWIN/SkWinCore.cpp (DRAW_ITEM _32cb_3672, DRAW_PUT_DOWN_ITEM _32cb_3991,
-  DRAW_STATIC_OBJECT _32cb_3b9d, QUERY_GDAT_ENTRY_DATA_INDEX /
-  QUERY_TEMP_PICST) and DME.h ExtendedPicture w28/w30:
-  - `dtImageOffset` is now source-owned: the boot selectors read it at the
-    default item index 0xFE exactly like DRAW_ITEM (tt == 0), and a
-    proven-absent entry binds offset 0 (QUERY_GDAT_ENTRY_DATA_INDEX returns 0
-    for an absent fmtPicOff entry) instead of blocking the object.  The
-    per-type offset entries are inventory-icon material the floor route never
-    consumes.  The offset flows selector -> viewport sprite -> render row ->
-    blit (signed high byte to x, low byte to y).
-  - The expanded-clip receipt (raw4 rect) plus raw GDAT image receipt and
-    local palette now travel from the admitted static-object material onto
-    the viewport sprite (`dm2_runtime_admit_static_object_draw_item_material`),
-    and `dm2_runtime_bind_g1_scene_item_material` binds the decoded F0/F4
-    image through `dm2_v1_viewport_set_g1_scene_static_item_material_direct`
-    with matching raw identities, so admitted static objects leave `no_draw`
-    and actually blit in `dm2_v1_render_items` where the GDAT evidence is
-    complete (canonically: the map-26 WEAPONS/0/F0 record; WEAPONS/126 and
-    palette-less records stay fail-closed).
-  - Per-square chain-slot ordinals are proven rather than assumed: the G1
-    materializers only admit tile chain heads (square-first-thing), and
-    DRAW_PUT_DOWN_ITEM draws the head of a matching direction group first, so
-    draw_slot 0 and record_list_ordinal 1 are bound with that evidence
-    (replacing the synthetic global (i+1) ordinal).
-  - Side/deep cells 1..15 are admitted (glbTabYAxisDistance, _4976_418e rows
-    0..3 and the 16-cell display-order table prove their placement); cell 0
-    (no table1d7029 pass) and D4 cells 16+ (DRAW_PUT_DOWN_ITEM distance
-    guard) stay fail-closed.  The chest mirror rule now follows the source
-    (x-distance 1 always mirrors, x-distance 0 mirrors right-column anchors).
-  - Fixed a cycle-13 source-lock bug: the draw-slot deltas were assigned to
-    the wrong axes — DRAW_ITEM adds _4976_41de[_4976_41b0[vv][0]] to the x
-    anchor (offx -> ExtendedPicture.w28) and [vv][1] to the y anchor (w30).
-  - Tests: `test_dm2_v1_draw_item_source_placement` 106/106 (was 78/78),
-    `test_dm2_v1_g1_static_object_visibility_real_data` 39/39 with the real
-    pixel-draw chain, `test_dm2_v1_g1_weapon_viewport_material_gate` 9/9,
-    `test_dm2_v1_viewport_door_state_side_cells` 25/25; new probe
-    `probes/dm2/firestaff_dm2_v1_static_object_pixel_probe.c` (11/0, 1 record
-    admitted, 3 fail-closed on the canonical corpus); updated probes
-    `firestaff_dm2_v1_draw_item_source_probe` (10/10) and
-    `firestaff_dm2_v1_draw_item_source_pass_probe` (135/0).
-  - Verify: `ctest --test-dir build -R dm2_v1` 227/237; the 10 failures are
-    byte-identical to the fully rebuilt cycle-15 baseline (pre-existing).
-  Remaining: only the first admitted static object binds scene material per
-    frame (single g1_scene_item_material slot, same bounded pattern as the
-    G1 creature route); M11 delivery plans keep `no_draw` for the host handoff;
-    creature/cloud passes keep their existing map-chip routes.
+- **Lane D — DM2-010 creature/cloud passes (cycle 16):** Done; see
+  `DONE-dm2.md` for the completion record.
 
 ## Skproject Audit (DM2)
 

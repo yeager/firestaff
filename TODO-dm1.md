@@ -6314,24 +6314,6 @@ Remaining work is those runtime material bindings and real Mac/app capture,
 not pack admission. The selected-menu regression still rejects missing or
 partial packs rather than silently using a placeholder or synthetic pack.
 
-## DM1 Verified Cleanup (2026-07-11)
-
-The M648 front-wall inscription all-map follow-up is complete: remaining work
-is unrelated visual coverage, not DM1 PC34 font-258 glyph routing.
-
-The F0181/F0186/F0188/F0189 killed-group cleanup is complete and is no longer
-open work: the verified DM1 death path drops fixed and Slot possessions before
-unlink, clears raw next/active-group state only on the party map, and removes
-C29..C41 group events at the deleted square. Remaining DM1 work is deeper
-F0231 combat, non-melee mutation adapters, and broad real-route proof.
-
-The Firestaff-only `NO FOCUS: PRESS ENTER OR CLICK THE VIEW ...` and
-`CLICK CENTER TO ADVANCE OR READ ...` inspect/startup prompts are no longer
-eligible for the DM1 V1 chrome message reroute. Explicit ReDMCSB
-wall-inscription and scroll reads remain on their original TEXT.C paths.
-Remaining V1 text work is broader source-visible message-route proof, not
-these synthetic prompts.
-
 ## DM1 PC34 Original Save Follow-up (2026-07-11)
 
 The native PC34 importer now transactionally validates the five source save
@@ -11138,24 +11120,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 7 - V2 verification suite hardening: presentation-disabled state-hash, side-by-side seed pixel gates, selected-resolution input mapping gates, the launchable enhanced-mode runtime smoke, the DM1 V2.2 M11 in-place handoff source-lock, and the data-free actual-render screenshot probe are now registered in CTest (`dm1_v2_source_route_state_hash_pc34`, `dm1_v2_side_by_side_seed_pc34`, `dm1_v2_v1_v2_side_by_side_seed_pc34`, `dm1_v2_side_by_side_presentation_seed_probe`, `dm1_v2_selected_resolution_input_mapping_pc34`, `dm1_v2_4k_input_zone_mapping_pc34`, `dm1_v2_runtime_presentation_smoke`, `dm1_v22_m11_inplace_handoff_source_lock`, `dm1_v2_actual_render_screenshot_probe`). They cover deterministic source-route hashing, canonical V1/gap/V2 layout export, full-lane and D1C wall/portrait region parity, N/E/S/W presentation-disabled viewport parity, selected-resolution source-coordinate mapping, 4K source touch/HUD zone mapping, real `firestaff --game dm1` V2.0/V2.1 launcher-config smoke with source indexed BMP plus post-palette/post-filter presented RGBA BMP receipts whose configured-mode hashes differ, host-agnostic V1/V2.0/V2.1/V2.2 actual BMP output, a source-command-owned V2.2 route receipt with repeat-stable hashes and no DOSBox/finished-art claim, and a synthetic V2.2 in-place material route that paints wall/floor/pit/stairs plus teleporter fields as distinct categories. 2026-07-05 update: the source-owned V1/V2.0/V2.1/V2.2 screenshot receipt gate now takes the explicit DM1 data root from CTest/argv or `FIRESTAFF_DM1_DATA_DIR`, so the real-data route exercises the same `~/.firestaff/data/dm1` symlinked install layout as packaged smoke. Remaining work is finished-art / real-asset material screenshot verification, tracked under Phase 8/per-mode material gates.
 ## DM1 F0115 live effect material follow-up
 
-- [x] 2026-07-28 F0115 near-square production-consumer audit: closed as
-  superseded. The legacy standalone D0/D1 receipt has no production caller;
-  M11 already consumes the source-backed F0098 background and the real
-  F0115 C2500/F0791 floor-object lane for all visible D1-D3 cells. Wiring
-  the obsolete receipt a second time would double-draw items. The real-PC34
-  floor-item and alcove regressions exercise that live path; missing source
-  material remains no-draw.
-
-- [x] 2026-07-28 Consume the completed PC34 C14/C15 catalog and F0248/F0142
-  receipt gate from the final DM1 host presentation path. The DM1 materializer
-  validates decoder-owned, fingerprinted `GRAPHICS.DAT` surfaces and admits
-  associated C14 objects only with their exact F0142/G0209 Slot receipt;
-  missing, malformed, foreign, or changed source data is no-draw. The real
-  PC34 `m11_dm1_throw_projectile_runtime_materialization_pc34`,
-  `m11_dm1_projectile_host_presentation_receipt`, and
-  `m11_dm1_f0115_c15_runtime_capture_pc34` gates prove C14 and C15 reach
-  their final M11 pixel consumers. No synthetic marker or fallback remains.
-
 ## DM1 F0248/F0213 timeline ownership follow-up
 
 - 2026-08-06 source-audio audit: authenticated DM1 event calls no longer use
@@ -11174,41 +11138,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     cannot remove later ordinary effects from the live receipt.
 
 ## DM1 original-save corpus follow-up
-
-- [x] 2026-08-06 Keep the DM1 boot receipt fail-closed when no original save corpus is
-  configured. A normal GRAPHICS.DAT/DUNGEON.DAT HoC boot must not infer the
-  five save parts, four champion portraits, save header, dungeon payload, or
-  required save hashes from the live dungeon. The boot-probe correction leaves
-  those fields unset. The staged real PC34 corpus now passes the original-save
-  roundtrip against the authenticated original DUNGEON.DAT; no live dungeon
-  bytes are promoted into save metadata. Verification: `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip`
-  passed for both operator-supplied `DMSAVE.DAT` files from `/Users/bosse/Downloads`
-  with `FIRESTAFF_DM1_PC_DATA=/Volumes/Extern-disk/Firestaff-tmp-dm1`.
-
-- [x] Stage an operator-supplied, original PC34 save corpus and run the
-  fixture-free F0435 -> F0433 -> F0435 admission target. The implementation
-  now requires C3/C4 raw identity plus party, GLOBAL_DATA/map, ACTIVE_GROUP,
-  and timeline identity across staging/adoption; no generated save is valid
-  positive evidence.
-  - 2026-07-28 real DOSBox corpus follow-up: the supplied `DMSAVE.DAT`
-    reaches F0435 staging, runtime adoption, a visible saved-portrait
-    inventory panel, and an F0435 -> F0433 -> F0435 core-state/tail round
-    trip. Portrait, inactive-champion, C3, C4 and tail receipts now travel
-    through the round-trip report. The fixture-free external-corpus target now
-    admits this C13-free original by its preserved C3/C4 envelope without
-    weakening the separate C13-bearing fixture lifecycle checks.
-  - 2026-07-30 presentation follow-up: the public `--game dm1 --save`
-    route was boot-proved against that same DOSBox file in V1, V2.0, V2.1,
-    and V2.2. All four modes restored party `16,14,2` with four champions
-    and a full original-asset HoC receipt.
-  - 2026-07-30 receipt-integrity follow-up: successful F0435 -> F0433 ->
-    F0435 corpus entries now publish a nonzero, stable FNV-1a fingerprint of
-    their admitted source and transient export. The independent provenance
-    fingerprint is retained instead of being overwritten by that receipt.
-  - 2026-07-31 F0433 section-layout correction: the public original-PC34
-    command export now writes the five authenticated parts contiguously, as
-    ReDMCSB F0419/F0420 and DMweb specify. Its historical length-prefixed
-    fixture helper is explicitly isolated and cannot produce a runtime export.
 
 ## DM1 F0134/F0135 production material follow-up
 
