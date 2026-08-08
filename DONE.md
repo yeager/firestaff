@@ -171,6 +171,15 @@
   `DUNGEON.DAT`. Intaget är läsande; dörranimation, teleporterförflyttning
   och aktuatoranrop är fortfarande spärrade utan deras fulla originalägare.
 
+# DM2 boot-handoff för File_header-scenen (2026-08-08)
+
+- ✅ Den monterade, hashverifierade bootprofilen lämnar nu läsande receipts
+  för DB0-dörrar, DB1-teleportörer och DB3-aktuatorer. En senare lokalnivå-
+  konsument behöver därmed inte öppna eller tolka en andra kopia av rådata.
+- ✅ M11:s verkliga PC-DOS-startprofiltest verifierar handoffet tillsammans
+  med befintlig kartproveniens. Det publicerar ingen rörelse, dörrstatus eller
+  aktuatorhändelse.
+
 # DM2 fail-closed local-level adapter (2026-08-08)
 
 - ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu

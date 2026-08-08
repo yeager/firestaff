@@ -756,6 +756,51 @@ int dm2_v1_boot_file_header_runtime_map_receipt(
         dungeon, map, out_receipt);
 }
 
+int dm2_v1_boot_file_header_map_doors_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    return dm2_v1_dungeon_collect_file_header_runtime_map_doors(
+        dungeon, map, out_receipt);
+}
+
+int dm2_v1_boot_file_header_map_teleporters_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    return dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
+        dungeon, map, out_receipt);
+}
+
+int dm2_v1_boot_file_header_map_actuators_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    return dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
+        dungeon, map, out_receipt);
+}
+
 int dm2_v1_boot_champion_dyn4_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_BootChampionDyn4Receipt *out_receipt)

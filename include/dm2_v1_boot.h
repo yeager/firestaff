@@ -1448,6 +1448,18 @@ int dm2_v1_boot_champion_mirror_receipt(
 int dm2_v1_boot_file_header_runtime_map_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt);
+/* Read-only File_header scene receipts from the dungeon already admitted by
+ * this boot profile.  They are the provenance boundary for later local-level
+ * consumers and deliberately do not perform gameplay transactions. */
+int dm2_v1_boot_file_header_map_doors_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out_receipt);
+int dm2_v1_boot_file_header_map_teleporters_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *out_receipt);
+int dm2_v1_boot_file_header_map_actuators_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out_receipt);
 
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps

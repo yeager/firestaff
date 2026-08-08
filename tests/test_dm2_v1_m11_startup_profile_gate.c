@@ -1207,6 +1207,9 @@ int main(void) {
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
+    DM2_V1_G1RuntimeMapDoorReceipt file_header_doors;
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt file_header_teleporters;
+    DM2_V1_G1RuntimeMapActuatorReceipt file_header_actuators;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
@@ -1366,6 +1369,26 @@ int main(void) {
                     file_header_map.root_count > 0 &&
                     file_header_map.record_count >= file_header_map.root_count,
                 "M11 exposes the mounted File_header map owner to later DM2 runtime consumers");
+    memset(&file_header_doors, 0, sizeof(file_header_doors));
+    memset(&file_header_teleporters, 0, sizeof(file_header_teleporters));
+    memset(&file_header_actuators, 0, sizeof(file_header_actuators));
+    expect_true(profile &&
+                    dm2_v1_boot_file_header_map_doors_receipt(
+                        profile, 0, &file_header_doors) &&
+                    dm2_v1_boot_file_header_map_teleporters_receipt(
+                        profile, 0, &file_header_teleporters) &&
+                    dm2_v1_boot_file_header_map_actuators_receipt(
+                        profile, 0, &file_header_actuators) &&
+                    file_header_doors.committed &&
+                    file_header_teleporters.committed &&
+                    file_header_actuators.committed &&
+                    file_header_doors.door_record_reads ==
+                        file_header_doors.door_root_count &&
+                    file_header_teleporters.teleporter_record_reads ==
+                        file_header_teleporters.teleporter_root_count &&
+                    file_header_actuators.actuator_record_reads ==
+                        file_header_actuators.actuator_root_count,
+                "M11 exposes File_header scene receipts through the mounted boot owner");
     memset(&champion_dyn4, 0, sizeof(champion_dyn4));
     /* The old 28-map pseudo-header happened to manufacture a 16-marker
      * continuation and thereby admitted a DYN4 bundle. The real 44-map
