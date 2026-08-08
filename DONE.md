@@ -1,3 +1,10 @@
+# Nexus verifieringsmiljö återställd (2026-08-08)
+
+- ✅ Regenererade den externa Debug-builden och byggde det tidigare saknade
+  `test_m12_version_changelog_consistency`-målet.
+- ✅ Versionskonsistensen passerar; Nexus production-boundary passerar och
+  startup/menu/title/DGN/face/SLEV/ITEM/SAL-realdata-svepet passerar 8/8.
+
 # Nexus historiska releaseclaims korrigerade (2026-08-08)
 
 - ✅ `RELEASE_NOTES.md` skiljer nu uttryckligen äldre format-/ABI-receipts
