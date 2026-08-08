@@ -1055,6 +1055,11 @@ static void test_real_raw_save(const char *path, const char *root,
                       (uint16_t)(state_receipt.champion_count * DM2_NUM_ITEMS + 1u) &&
                   special_timers.direct_root_hash != 0u,
                   "real SKSave binds all direct hero inventory roots before map restore");
+            if (special_timers.map_failure_record_reason == 2) {
+                CHECK(special_timers.recycle_required_db ==
+                          special_timers.map_failure_record_type,
+                      "full source record pool names the DB that requires world recycling");
+            }
         }
     }
     {

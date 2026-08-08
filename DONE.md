@@ -782,6 +782,14 @@
   kan inget senare SUPPRESS-steg prövas utan att originalets GDAT-rutt först
   har godkänt heroes och ledarhand.
 
+# DM2 SKSAVE:s recycler-provenans (2026-08-08)
+
+- ✅ När den verkliga PC-DOS-korpusen fyller DB0 under
+  `DM2_READ_SKSAVE_DUNGEON` sparar preflighten exakt vilken DB originalets
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` måste hantera. Realdatatestet låser
+  DB0-provenansen utan att allokera ett ersättningsrecord eller publicera en
+  delvis laddad session.
+
 # DM2 New Game-entréreceipt (2026-08-08)
 
 - ✅ File_header::`w8`-startpositionen binds nu till karta 0:s verkliga
