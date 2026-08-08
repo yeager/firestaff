@@ -1640,6 +1640,8 @@ int main(void) {
                     new_game_world_owner.dungeon.initial_party_dir == 0 &&
                     new_game_world_owner.record_pools.valid &&
                     new_game_world_owner.record_pools.record_graph_complete &&
+                    new_game_world_owner.validated_map_count == 44u &&
+                    new_game_world_owner.validated_world_hash != 0u &&
                     new_game_world_owner.dyn4_materialized &&
                     new_game_world_owner.dyn4_selector_count ==
                         source_transaction.dyn4_roster.selector_count &&

@@ -172,6 +172,38 @@ static int dm2_v1_game_load_owner_materialize_dyn4(
     return owner->dyn4_materialized;
 }
 
+static int dm2_v1_game_load_owner_validate_world_maps(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    uint32_t hash = 2166136261u;
+    int total_records = 0;
+    int map;
+
+    if (!owner || !owner->transaction.world_interactions.valid ||
+        !owner->transaction.world_interactions.incomplete_world ||
+        owner->dungeon.level_count != owner->transaction.world_interactions.map_count)
+        return 0;
+    for (map = 0; map < owner->dungeon.level_count; ++map) {
+        DM2_V1_FileHeaderRuntimeMapReceipt receipt;
+        memset(&receipt, 0, sizeof(receipt));
+        if (!dm2_v1_dungeon_validate_file_header_runtime_map(
+                &owner->dungeon, map, &receipt) || !receipt.committed ||
+            !receipt.incomplete_world || receipt.map != map ||
+            receipt.record_count < 0 || total_records > INT_MAX - receipt.record_count) {
+            return 0;
+        }
+        total_records += receipt.record_count;
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)map);
+        hash = dm2_v1_game_load_owner_hash_step(hash, receipt.map_data_hash);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)receipt.record_count);
+    }
+    if (total_records != owner->transaction.world_interactions.total_records)
+        return 0;
+    owner->validated_map_count = (uint16_t)owner->dungeon.level_count;
+    owner->validated_world_hash = hash;
+    return hash != 0u;
+}
+
 static int dm2_v1_game_load_owner_tick_multiplier(uint8_t subtype)
 {
     switch (subtype) {
@@ -249,7 +281,8 @@ int dm2_v1_game_load_world_owner_init_new_game(
     candidate.source_transaction_hash = candidate.transaction.transaction_hash;
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
         candidate.source_transaction_hash == 0u ||
-        !dm2_v1_game_load_owner_validate_possessions(&candidate)) {
+        !dm2_v1_game_load_owner_validate_possessions(&candidate) ||
+        !dm2_v1_game_load_owner_validate_world_maps(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
@@ -298,6 +331,8 @@ int dm2_v1_game_load_world_owner_is_prepared(
         owner->dungeon.raw_data != NULL && owner->dungeon.raw_size > 0 &&
         owner->record_pools.valid && owner->record_pools.record_graph_complete &&
         owner->dyn4_materialized && owner->dyn4_selector_count > 0u &&
+        owner->validated_map_count == (uint16_t)owner->dungeon.level_count &&
+        owner->validated_world_hash != 0u &&
         owner->source_transaction_hash != 0u;
 }
 

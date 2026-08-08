@@ -46,6 +46,8 @@ typedef struct {
     int dyn4_materialized;
     uint16_t dyn4_selector_count;
     uint32_t dyn4_materialized_hash;
+    uint16_t validated_map_count;
+    uint32_t validated_world_hash;
     DM2_V1_GdatDyn4MaterializedSelection dyn4_selections[
         DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
     DM2_V1_BootNewGameTransactionReceipt transaction;

@@ -48,6 +48,10 @@
   championrosterens verifierade selektorlista. Allokeringen följer
   `DM2_LOAD_DYN4` och startar med originalets tomma SOUND7-tillstånd, utan
   syntetisk cache, PCM eller publicerad runtime-resurs.
+- ✅ Innan ägaren kan användas valideras nu samtliga File_header-kartor och
+  deras fullständiga recordkedjor på den privata RAM-kopian. Summan måste
+  motsvara transaktionens riktiga interaktionsräkning för dörrar,
+  teleportörer, texter och aktuatorer.
 - ✅ Realdatatestet kör mot den lokala PC-DOS-profilen och bevisar att detta
   inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
   skapades eller ändrades.
