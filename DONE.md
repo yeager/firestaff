@@ -1,3 +1,15 @@
+# Nexus retail-format inventory refresh (2026-08-08)
+
+- ✅ Phase-2- och triggerdokumentationen beskriver nu verifierade bounded
+  receipts för DGN Structure1B/2/3, FACE.BIN, ITEM.IBS, MENU.BPK, STONE.BIN,
+  POTEFT.BIN, STABG.BIN, FONT256.S2D och SLEV/SAL/MAP i stället för gamla
+  “unparsed/stub”-påståenden.
+- ✅ 20 DGN/FACE/BPK/PRS3/ITEM-tester och 7 SLEV/script/sound-tester kördes
+  mot `/Users/bosse/.firestaff/data/nexus`; capture-specifika tester skippar
+  korrekt utan autentisk Saturn-capture.
+- ✅ VDP1/VDP2-materialkonsument, FONT256-kodmappning, SLEV-event-ABI,
+  SAL-codec och SCSP-uppspelning är fortfarande uttryckligen capture-gated.
+
 # Nexus MNS TEXT direct-colour preservation (2026-08-08)
 
 - ✅ MNS `TEXT`-descriptors bevarar nu varje källpixel som exakt BGR555
