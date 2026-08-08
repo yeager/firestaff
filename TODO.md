@@ -49,8 +49,9 @@
   Championvalet materialiseras därefter i den privata `c_party`-ägaren från
   samma click-ordnade GDAT- och File_header-receipt, med varje itemlänk
   kontrollerad mot dess riktiga DB-pool. Originalets equip-bonusläge och
-  startvikt är nu tillämpade privat mot GDAT. 0x04-dispatchen,
-  DYN-aktiveringen och sessionens atomära commit återstår. Den gamla
+  startvikt är nu tillämpade privat mot GDAT. Hela championrosterens DYN4-
+  råblock är materialiserade i samma privata ägare. 0x04-dispatchen,
+  DYN-konsumenterna och sessionens atomära commit återstår. Den gamla
   32-posters kön används inte. Ingen party, HUD eller timer får publiceras
   före hela den transaktionen.
 

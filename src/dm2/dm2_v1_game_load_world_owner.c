@@ -135,6 +135,43 @@ static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash, uint32_t value)
     return hash;
 }
 
+static int dm2_v1_game_load_owner_materialize_dyn4(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GdatDyn4SoundState sound_state;
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (!owner || !owner->asset_loader || !owner->transaction.dyn4_roster.valid ||
+        !owner->transaction.dyn4_roster.incomplete_champion_activation ||
+        owner->transaction.dyn4_roster.selector_count <= 0 ||
+        owner->transaction.dyn4_roster.selector_count >
+            DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) return 0;
+    dm2_v1_gdat_dyn4_sound_state_init(&sound_state);
+    for (i = 0; i < owner->transaction.dyn4_roster.selector_count; ++i) {
+        const DM2_V1_GdatDyn4SelectionReceipt *source =
+            &owner->transaction.dyn4_roster.selections[i];
+        DM2_V1_GdatDyn4MaterializedSelection *selection =
+            &owner->dyn4_selections[i];
+        const uint32_t resource_id = ((uint32_t)source->category << 24) |
+            ((uint32_t)source->index << 16) |
+            ((uint32_t)source->type << 8) | source->field;
+        if (!source->valid || source->rejected_raw_count != 0u ||
+            source->raw_loadable_entry_count == 0u ||
+            !dm2_v1_gdat_dyn4_materialize_selection(owner->asset_loader,
+                resource_id, &sound_state, selection) || !selection->valid ||
+            selection->receipt_hash == 0u || selection->block_count == 0u) {
+            return 0;
+        }
+        hash = dm2_v1_game_load_owner_hash_step(hash, resource_id);
+        hash = dm2_v1_game_load_owner_hash_step(hash, selection->receipt_hash);
+    }
+    owner->dyn4_selector_count = (uint16_t)owner->transaction.dyn4_roster.selector_count;
+    owner->dyn4_materialized_hash = hash;
+    owner->dyn4_materialized = hash != 0u;
+    return owner->dyn4_materialized;
+}
+
 static int dm2_v1_game_load_owner_tick_multiplier(uint8_t subtype)
 {
     switch (subtype) {
@@ -150,7 +187,11 @@ static int dm2_v1_game_load_owner_tick_multiplier(uint8_t subtype)
 
 void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
 {
+    int i;
     if (!owner) return;
+    for (i = 0; i < DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES; ++i) {
+        dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
+    }
     free(owner->timer_indices);
     free(owner->timer_entries);
     dm2_v1_record_pool_set_free(&owner->record_pools);
@@ -212,6 +253,10 @@ int dm2_v1_game_load_world_owner_init_new_game(
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
+    if (!dm2_v1_game_load_owner_materialize_dyn4(&candidate)) {
+        dm2_v1_game_load_world_owner_free(&candidate);
+        return 0;
+    }
     candidate.prepared = 1;
     candidate.committed = 0;
     *owner = candidate;
@@ -252,6 +297,7 @@ int dm2_v1_game_load_world_owner_is_prepared(
     return owner != NULL && owner->prepared && !owner->committed &&
         owner->dungeon.raw_data != NULL && owner->dungeon.raw_size > 0 &&
         owner->record_pools.valid && owner->record_pools.record_graph_complete &&
+        owner->dyn4_materialized && owner->dyn4_selector_count > 0u &&
         owner->source_transaction_hash != 0u;
 }
 

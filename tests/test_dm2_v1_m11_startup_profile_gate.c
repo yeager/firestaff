@@ -1640,6 +1640,12 @@ int main(void) {
                     new_game_world_owner.dungeon.initial_party_dir == 0 &&
                     new_game_world_owner.record_pools.valid &&
                     new_game_world_owner.record_pools.record_graph_complete &&
+                    new_game_world_owner.dyn4_materialized &&
+                    new_game_world_owner.dyn4_selector_count ==
+                        source_transaction.dyn4_roster.selector_count &&
+                    new_game_world_owner.dyn4_materialized_hash != 0u &&
+                    new_game_world_owner.dyn4_selections[0].valid &&
+                    new_game_world_owner.dyn4_selections[0].block_count > 0u &&
                     new_game_world_owner.timer_capacity > 50u &&
                     new_game_world_owner.timer_queue.max_timers ==
                         (int16_t)new_game_world_owner.timer_capacity &&

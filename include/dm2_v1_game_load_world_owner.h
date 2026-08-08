@@ -43,6 +43,11 @@ typedef struct {
     uint16_t timer_capacity;
     int fresh_game_mode;
     const DM2_V1_AssetLoader *asset_loader;
+    int dyn4_materialized;
+    uint16_t dyn4_selector_count;
+    uint32_t dyn4_materialized_hash;
+    DM2_V1_GdatDyn4MaterializedSelection dyn4_selections[
+        DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
     DM2_V1_BootNewGameTransactionReceipt transaction;
     /* This remains zeroed until the source-ordered champion step.  It is
      * never installed in M11 or the runtime party state. */

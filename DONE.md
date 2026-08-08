@@ -44,6 +44,10 @@
 - ✅ Varje initialt föremål passerar nu originalets
   `DM2_PROCESS_ITEM_BONUS(..., 1)` mot monterad GDAT. MP-, ability-, skill-
   och walkspeedfält samt startvikten tillhör den privata `c_party`-ägaren.
+- ✅ Samma ägare materialiserar nu DYN4:s råa GDAT-block för hela
+  championrosterens verifierade selektorlista. Allokeringen följer
+  `DM2_LOAD_DYN4` och startar med originalets tomma SOUND7-tillstånd, utan
+  syntetisk cache, PCM eller publicerad runtime-resurs.
 - ✅ Realdatatestet kör mot den lokala PC-DOS-profilen och bevisar att detta
   inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
   skapades eller ändrades.
