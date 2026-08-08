@@ -52,6 +52,14 @@ extern "C" {
  * This replaces the previous 166ms approximation. */
 #define DM1_V1_GAME_TICK_INTERVAL_MS        (DM1_V1_PAL_VBLANK_MS * DM1_V1_MAX_VBLANK_COUNT_ORIGINAL)
 
+/* FM Towns CRTC runs at ~60 Hz (NTSC-like).  With maxVBlankCount = 12
+ * (MEDIA722 branch) the game tick is 12 * 16.67ms ≈ 200ms, matching
+ * PAL wall-clock speed exactly.  Integer 16ms gives 192ms ticks —
+ * close enough for the sub-VBlank accumulator to absorb the remainder
+ * without perceptible drift. */
+#define DM1_V1_FMTOWNS_VBLANK_HZ           60
+#define DM1_V1_FMTOWNS_VBLANK_MS           16
+
 /* -- VBlank tick state -- */
 
 typedef struct {
@@ -74,6 +82,11 @@ typedef struct {
      * Must be 1 for the game loop to advance past input wait.
      * Always 1 during normal gameplay; 0 during entrance/loading. */
     int gameTimeTicking;
+
+    /* Per-VBlank period in milliseconds.  PAL = 20, FM Towns = 16.
+     * Set once during init; Update() consumes this many ms per
+     * simulated VBlank interrupt. */
+    uint32_t vblankPeriodMs;
 
     /* Wall-clock accumulator for VBlank simulation (milliseconds).
      * Tracks sub-VBlank time between updates. */
@@ -107,6 +120,11 @@ void DM1_V1_VBlankTiming_ConfigurePlatformHost(
 
 /* Initialize timing state with authentic PAL defaults. */
 void DM1_V1_VBlankTiming_Init(DM1_V1_VBlankTimingState* state);
+
+/* Switch to FM Towns 60 Hz CRTC cadence.  Sets vblankPeriodMs = 16
+ * and maxVBlankCount = 12 (MEDIA722) so the game tick stays ~200ms.
+ * Call after Init but before the first Update. */
+void DM1_V1_VBlankTiming_ConfigureFmTowns(DM1_V1_VBlankTimingState* state);
 
 /* Simulate VBlank interrupts for the given elapsed milliseconds.
  * Call this every frame with real wall-clock delta.

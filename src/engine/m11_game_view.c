@@ -18695,6 +18695,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     &state->dm1FmtownsStartupReceipt)) {
                 return 0;
             }
+            DM1_V1_VBlankTiming_ConfigureFmTowns(&state->vblankTiming);
         }
     } else {
         state->active = 1;

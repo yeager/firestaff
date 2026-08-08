@@ -56063,6 +56063,14 @@ add_executable(test_dm1_v1_fmtowns_menu_click_geometry
 target_include_directories(test_dm1_v1_fmtowns_menu_click_geometry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_menu_click_geometry COMMAND test_dm1_v1_fmtowns_menu_click_geometry)
 
+add_executable(test_dm1_v1_fmtowns_vblank_timing
+    tests/test_dm1_v1_fmtowns_vblank_timing.c
+    src/dm1/dm1_v1_vblank_timing.c
+    src/dm1/dm1_v1_platform_timing_exception_pc34_compat.c
+)
+target_include_directories(test_dm1_v1_fmtowns_vblank_timing PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_vblank_timing COMMAND test_dm1_v1_fmtowns_vblank_timing)
+
 add_executable(test_dm1_v1_fmtowns_dyna_buttons
     tests/test_dm1_v1_fmtowns_dyna_buttons.c
     src/dm1/dm1_v1_fmtowns_dyna_buttons.c

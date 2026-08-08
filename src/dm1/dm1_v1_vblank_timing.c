@@ -40,7 +40,15 @@ void DM1_V1_VBlankTiming_Init(DM1_V1_VBlankTimingState* state)
     memset(state, 0, sizeof(*state));
     dm1_v1_platform_timing_exception_init_pc34(&state->platformTiming);
     state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_ORIGINAL;
+    state->vblankPeriodMs = DM1_V1_PAL_VBLANK_MS;
     state->gameTimeTicking = 1;
+}
+
+void DM1_V1_VBlankTiming_ConfigureFmTowns(DM1_V1_VBlankTimingState* state)
+{
+    if (!state) return;
+    state->vblankPeriodMs = DM1_V1_FMTOWNS_VBLANK_MS;
+    state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_LATER;
 }
 
 void DM1_V1_VBlankTiming_ConfigurePlatformHost(
@@ -65,11 +73,11 @@ int DM1_V1_VBlankTiming_Update(DM1_V1_VBlankTimingState* state,
 
     state->vblankAccumulatorMs += elapsedMs;
 
-    /* Simulate VBlank interrupts at PAL rate.
-     * Each VBlank = 20ms.  For each 20ms elapsed, increment the
-     * VBlank counter just like F0577 does on the real hardware. */
-    while (state->vblankAccumulatorMs >= DM1_V1_PAL_VBLANK_MS) {
-        state->vblankAccumulatorMs -= DM1_V1_PAL_VBLANK_MS;
+    /* Simulate VBlank interrupts at the configured rate.
+     * PAL = 20ms, FM Towns = 16ms.  For each period elapsed,
+     * increment the VBlank counter like F0577 on real hardware. */
+    while (state->vblankAccumulatorMs >= state->vblankPeriodMs) {
+        state->vblankAccumulatorMs -= state->vblankPeriodMs;
         /* E0017 is the source tick authority.  Never advance gameplay from
          * elapsed wall time when the authenticated host cadence is missing. */
         if (!dm1_v1_e0017_vertical_blank_pc34(&state->platformTiming)) {
@@ -132,7 +140,7 @@ void DM1_V1_VBlankTiming_RecordTurn(DM1_V1_VBlankTimingState* state)
      * In the original, the next turn can only happen after the VBlank
      * counter resets at the next tick boundary.  This is approximately
      * one tick interval. */
-    state->turnCooldownMs = DM1_V1_GAME_TICK_INTERVAL_MS;
+    state->turnCooldownMs = state->vblankPeriodMs * (uint32_t)state->maxVBlankCount;
 }
 
 int DM1_V1_VBlankTiming_MovementAllowed(const DM1_V1_VBlankTimingState* state)

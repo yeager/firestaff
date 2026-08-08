@@ -2667,8 +2667,16 @@ level or consumer bindings.
   later transition. `TMENU.INF` is now parsed as its two real 128-byte
   TownsOS launch records (`\\JDM.EXP`, `\\EDM.EXP`) instead of accepting any
   matching text in the configuration. Its icon bitmap format, visible layout
-  and mouse input routes remain capture-gated. Exact wall-clock timing and
-  TMENU input capture remain open. M11 routes a selected FM Towns edition around the PC34
+  and mouse input routes remain capture-gated. TMENU input capture
+  remains open.
+  2026-08-08: FM Towns wall-clock timing closed. The VBlank timing
+  system now carries a per-instance `vblankPeriodMs` field (PAL=20,
+  FM Towns=16) and `DM1_V1_VBlankTiming_ConfigureFmTowns` sets 60Hz
+  CRTC cadence with maxVBlankCount=12 (MEDIA722 branch), giving
+  12×16ms=192ms game ticks that match PAL's 200ms within the
+  sub-VBlank accumulator tolerance. M11 wires this automatically
+  when an FM Towns startup receipt is validated.
+  Test: `test_dm1_v1_fmtowns_vblank_timing`. M11 routes a selected FM Towns edition around the PC34
   `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the selected
   hash-verified Towns data; do not restore the PC34 path as a presentation
   fallback.
