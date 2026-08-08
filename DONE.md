@@ -10338,3 +10338,11 @@
 - ✅ M11 Structure3 topology, VDP1 envelope, BIOS/disc-bound route and blocked
   transform-trace checks now run past the real menu handoff without synthetic
   host fields or presentation promotion.
+
+# Nexus capture inventory exposes authentic VDP1 activity (2026-08-09)
+
+- ✅ `scripts/analyze_nexus_capture_inventory.py` now counts bounded VDP1 draw
+  commands per raw Saturn frame alongside the VDP2 hardware-state label.
+- ✅ The external French gameplay witness reports two frames with one VDP1
+  draw command each. Asset/CLUT/consumer identity remains explicitly unbound;
+  the inventory does not promote a screen name or unlock presentation.

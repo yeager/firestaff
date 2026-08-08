@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_vdp1_command_window import command_window
 
 
 REG = {
@@ -104,6 +105,8 @@ def main() -> int:
             continue
         labels = []
         active = 0
+        vdp1_draw_frames = 0
+        vdp1_draw_commands = 0
         for frame, state in zip(frames, states):
             registers = frame["vdp2-regs"]
             tvmd = u16(registers, REG["TVMD"])
@@ -115,6 +118,18 @@ def main() -> int:
             match = STATE_RE.search(state)
             if match and int(match.group(1), 16) != 0 and int(match.group(2), 16) != 0:
                 active += 1
+            try:
+                command_count = sum(
+                    1 for _offset, words in command_window(
+                        frame["vdp1-vram"], state
+                    )
+                    if (words[0] & 0x8000) == 0 and (words[0] & 0x000F) <= 2
+                )
+            except (ValueError, IndexError):
+                command_count = 0
+            if command_count:
+                vdp1_draw_frames += 1
+                vdp1_draw_commands += command_count
             totals[label] = totals.get(label, 0) + 1
             # Keep the first observation compact and reproducible; later
             # frames are represented by the distinct label/count summary.
@@ -127,6 +142,8 @@ def main() -> int:
         print(
             f"file={path.parent.name} frames={len(frames)} "
             f"vdp1_nonidle_state_frames={active} states={distinct} first={first} "
+            f"vdp1_draw_command_frames={vdp1_draw_frames} "
+            f"vdp1_draw_commands={vdp1_draw_commands} "
             f"manifest_binding={manifest_binding(path.parent, blob)} "
             "asset_consumer_identity=unbound"
         )
