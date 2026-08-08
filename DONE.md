@@ -9483,6 +9483,12 @@
   verkliga ordningen.
 - ✅ Resultatet lämnar aldrig den tillfälliga ägaren. PC-DOS-korpusen är
   fortfarande spärrad före denna fas och Resume öppnas inte.
+
+# DM2 c_hero-layoutgrind (2026-08-08)
+
+- ✅ Kompileringstidskontroller låser originalets 263-byte `c_hero` samt
+  `timeridx` vid `0x2e` och inventorylänkar vid `0xc3`. En strukturändring
+  kan därmed inte flytta SKSAVE:s källägda fält utan att bygget stoppar.
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)
 
 - ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.

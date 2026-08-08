@@ -10,6 +10,7 @@
  */
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +97,15 @@ typedef struct {
     int8_t   b_106;                          /* @0x106 unused */
 } DM2_V1_Hero;
 #pragma pack(pop)
+
+/* c_hero.h layout used by SKSAVE's table1d6356[263] SUPPRESS mask.  These
+ * guards keep future host-side changes from silently moving the timer and
+ * possession-link owners away from their original byte positions. */
+_Static_assert(sizeof(DM2_V1_Hero) == 263u, "DM2 c_hero must be 263 bytes");
+_Static_assert(offsetof(DM2_V1_Hero, timeridx) == 0x2eu,
+               "DM2 c_hero timeridx offset");
+_Static_assert(offsetof(DM2_V1_Hero, item) == 0xc3u,
+               "DM2 c_hero item-link offset");
 
 typedef struct {
     DM2_V1_Hero hero[DM2_MAX_HEROES];
