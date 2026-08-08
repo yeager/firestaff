@@ -486,6 +486,34 @@ static int test_wrong_dungeon_item_rejection(void) {
     return 1;
 }
 
+/* ── Test: malformed current dungeon rejection ───────────────────── */
+
+static int test_invalid_current_dungeon_rejection(void) {
+    TEST("Quest item rejection — malformed current dungeon is safe");
+
+    Theron_DungeonProgression prog;
+    theron_v1_dungeon_progression_init(&prog);
+
+    prog.current_dungeon = THERON_DUNGEON_INVALID;
+    ASSERT(theron_v1_quest_item_collect(
+               &prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) == -1,
+           "invalid dungeon zero must be rejected");
+    ASSERT(prog.quest_items_collected == 0 &&
+               prog.quest_items_in_current_dungeon == 0,
+           "invalid dungeon zero must not mutate quest state");
+
+    prog.current_dungeon = (Theron_DungeonID)(THERON_DUNGEON_COUNT + 1);
+    ASSERT(theron_v1_quest_item_collect(
+               &prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) == -1,
+           "out-of-range dungeon must be rejected");
+    ASSERT(prog.quest_items_collected == 0 &&
+               prog.quest_items_in_current_dungeon == 0,
+           "out-of-range dungeon must not mutate quest state");
+
+    PASS();
+    return 1;
+}
+
 /* ── Test: full sequence simulation ──────────────────────────────── */
 
 static int test_full_sequence(void) {
@@ -570,6 +598,7 @@ int main(void) {
         test_print,
         test_state_names,
         test_wrong_dungeon_item_rejection,
+        test_invalid_current_dungeon_rejection,
         test_dungeon_exit_transition_gate,
         test_full_sequence,
         test_source_evidence,

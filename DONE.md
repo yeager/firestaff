@@ -15,6 +15,14 @@
   passed. Source anchors: ReDMCSB `SAVEHEAD.C` F0429/F0430, `TITLE.C` F0437,
   `ENTRANCE.C` F0806/F0807, and Atari ST 2.1 `csb.s` string table `$43a(a4)`.
 
+# Theron V1 five-pass audit hardening (2026-08-08)
+
+- ✅ Rejected malformed dungeon IDs before quest-item mask shifts and save-header indexing.
+- ✅ Corrected overlapping save metadata, added explicit little-endian scalar encoding, footer-marker validation, payload bounds, and allocation-overflow checks.
+- ✅ Hardened world snapshots against invalid object/timer counts and out-of-bounds copies.
+- ✅ Bounded champion-name reads in roster and SRM export paths.
+- ✅ Focused Theron CTest selection: 7/7 passed, including determinism and HuC6280 disassembly checks.
+
 # Scanner provenance after cache materialization (2026-08-07)
 
 # DM2 PC-DOS File_header real-data regression repair (2026-08-08)

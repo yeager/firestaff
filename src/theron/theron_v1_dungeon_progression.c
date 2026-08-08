@@ -281,6 +281,13 @@ int theron_v1_quest_item_collect(Theron_DungeonProgression *prog,
 
     /* Check dungeon consistency: item bit must match current dungeon */
     Theron_DungeonID current = prog->current_dungeon;
+    /* The mask macro shifts by (current - 1).  Validate the persisted/current
+     * dungeon before evaluating it so malformed save state cannot trigger an
+     * undefined shift or index below. */
+    if (current < THERON_DUNGEON_1_AKUTUBA ||
+        current > THERON_DUNGEON_7_DEMON) {
+        return -1;
+    }
     uint8_t expected_bit = THERON_QUEST_ITEM_MASK_FROM_DUNGEON(current);
     if ((expected_bit & (uint8_t)item) == 0) {
         /* Item doesn't belong to current dungeon — reject */

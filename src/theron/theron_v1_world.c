@@ -56,6 +56,29 @@ static uint32_t rb32(const uint8_t *p) {
     return ((uint32_t)rb16(p) << 16) | rb16(p + 2);
 }
 
+/* Firestaff world snapshots use explicit little-endian scalar fields.  The
+ * original THQUEST data is separately decoded as 68000 big-endian above. */
+static uint16_t rw16(const uint8_t *p) {
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+static uint32_t rw32(const uint8_t *p) {
+    return (uint32_t)p[0] |
+           ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) |
+           ((uint32_t)p[3] << 24);
+}
+static uint64_t rw64(const uint8_t *p) {
+    uint64_t value = 0;
+    for (unsigned i = 0; i < 8; ++i) value |= (uint64_t)p[i] << (i * 8);
+    return value;
+}
+static void ww32(uint8_t *p, uint32_t value) {
+    for (unsigned i = 0; i < 4; ++i) p[i] = (uint8_t)(value >> (i * 8));
+}
+static void ww64(uint8_t *p, uint64_t value) {
+    for (unsigned i = 0; i < 8; ++i) p[i] = (uint8_t)(value >> (i * 8));
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Party management
  * ============================================================================
@@ -89,8 +112,8 @@ size_t _tqw_party_pack(const Theron_V1_Party *p, void *buf, size_t bufsize) {
     size_t need = _tqw_party_pack_size();
     if (bufsize < need) return 0;
     uint8_t *out = (uint8_t *)buf;
-    memcpy(out, &p->gold, sizeof(p->gold));
-    out += sizeof(p->gold);
+    ww32(out, p->gold);
+    out += sizeof(uint32_t);
     for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
         memcpy(out, &p->champions[i], sizeof(p->champions[i]));
         out += sizeof(p->champions[i]);
@@ -101,8 +124,8 @@ size_t _tqw_party_pack(const Theron_V1_Party *p, void *buf, size_t bufsize) {
 int _tqw_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
     if (!p || !buf || bufsize < _tqw_party_pack_size()) return -1;
     const uint8_t *in = (const uint8_t *)buf;
-    memcpy(&p->gold, in, sizeof(p->gold));
-    in += sizeof(p->gold);
+    p->gold = rw32(in);
+    in += sizeof(uint32_t);
     for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
         memcpy(&p->champions[i], in, sizeof(p->champions[i]));
         in += sizeof(p->champions[i]);
@@ -1361,6 +1384,10 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit_fi
 
 static size_t serialize_size(const Theron_V1_World *world) {
     if (!world) return 0;
+    if (world->object_count < 0 || world->object_count > THERON_MAX_OBJECTS ||
+        world->timer_count < 0 || world->timer_count > THERON_MAX_TIMERS) {
+        return 0;
+    }
     size_t n = 0;
     n += sizeof(uint32_t); /* magic */
     n += sizeof(uint16_t); /* version */
@@ -1392,9 +1419,10 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     uint8_t *out = (uint8_t *)buf;
     memset(out, 0, need);
 
-    *(uint32_t *)out = THERON_WORLD_SAVE_MAGIC;
+    ww32(out, THERON_WORLD_SAVE_MAGIC);
     out += sizeof(uint32_t);
-    *(uint16_t *)out = THERON_WORLD_SAVE_VERSION;
+    out[0] = (uint8_t)THERON_WORLD_SAVE_VERSION;
+    out[1] = 0;
     out += sizeof(uint16_t) * 2;
     *out++ = (uint8_t)world->current_dungeon;
     *out++ = (uint8_t)world->current_level;
@@ -1407,13 +1435,13 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     _tqw_party_pack(&world->party, out, bufsize - (out - (uint8_t *)buf));
     out += _tqw_party_pack_size();
 
-    *(uint32_t *)out = (uint32_t)world->object_count;
+    ww32(out, (uint32_t)world->object_count);
     out += sizeof(uint32_t);
     size_t objsz = (size_t)world->object_count * sizeof(Theron_V1_Object);
     memcpy(out, world->objects, objsz);
     out += objsz;
 
-    *(uint32_t *)out = (uint32_t)world->timer_count;
+    ww32(out, (uint32_t)world->timer_count);
     out += sizeof(uint32_t);
     size_t tmsz = (size_t)world->timer_count * sizeof(Theron_V1_Timer);
     /* Zero userdata pointers before serializing */
@@ -1423,9 +1451,9 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     memcpy(out, tms, tmsz);
     out += tmsz;
 
-    *(uint64_t *)out = world->world_tick;
+    ww64(out, world->world_tick);
     out += sizeof(uint64_t);
-    *(uint64_t *)out = world->state_hash;
+    ww64(out, world->state_hash);
     out += sizeof(uint64_t);
 
     return need;
@@ -1440,14 +1468,17 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                                  const void *buf, size_t bufsize) {
     if (!world || !buf) return -1;
     const uint8_t *in = (const uint8_t *)buf;
-    size_t need = serialize_size(world);
-    if (bufsize < need) return -1;
+    const size_t fixed_size = sizeof(uint32_t) + sizeof(uint16_t) * 2 +
+        sizeof(uint8_t) * 4 + sizeof(Theron_DungeonProgression) +
+        _tqw_party_pack_size() + sizeof(uint32_t) + sizeof(uint32_t) +
+        sizeof(uint64_t) * 2;
+    if (bufsize < fixed_size) return -1;
 
-    uint32_t magic = *(const uint32_t *)in;
+    uint32_t magic = rw32(in);
     if (magic != THERON_WORLD_SAVE_MAGIC) return -2;
     in += sizeof(uint32_t);
 
-    uint16_t ver = *(const uint16_t *)in;
+    uint16_t ver = rw16(in);
     if (ver != THERON_WORLD_SAVE_VERSION) return -3;
     in += sizeof(uint16_t) * 2;
 
@@ -1465,23 +1496,32 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     }
     in += _tqw_party_pack_size();
 
-    uint32_t oc = *(const uint32_t *)in;
+    if ((size_t)(in - (const uint8_t *)buf) > bufsize - sizeof(uint32_t)) return -1;
+    uint32_t oc = rw32(in);
     in += sizeof(uint32_t);
+    if (oc > THERON_MAX_OBJECTS) return -1;
     world->object_count = (int)oc;
     size_t objsz = (size_t)oc * sizeof(Theron_V1_Object);
+    if (objsz > bufsize - (size_t)(in - (const uint8_t *)buf)) return -1;
     memcpy(world->objects, in, objsz);
     in += objsz;
 
-    uint32_t tc = *(const uint32_t *)in;
+    if ((size_t)(in - (const uint8_t *)buf) > bufsize - sizeof(uint32_t)) return -1;
+    uint32_t tc = rw32(in);
     in += sizeof(uint32_t);
+    if (tc > THERON_MAX_TIMERS) return -1;
     world->timer_count = (int)tc;
     size_t tmsz = (size_t)tc * sizeof(Theron_V1_Timer);
+    if (tmsz > bufsize - (size_t)(in - (const uint8_t *)buf) ||
+        bufsize - (size_t)(in - (const uint8_t *)buf) - tmsz < sizeof(uint64_t) * 2) {
+        return -1;
+    }
     memcpy(world->timers, in, tmsz);
     in += tmsz;
 
-    world->world_tick = *(const uint64_t *)in;
+    world->world_tick = rw64(in);
     in += sizeof(uint64_t);
-    world->state_hash = *(const uint64_t *)in;
+    world->state_hash = rw64(in);
 
     return 0;
 }

@@ -40,6 +40,19 @@ static size_t world_gold_offset(void) {
            sizeof(Theron_DungeonProgression);
 }
 
+static size_t world_object_count_offset(void) {
+    return world_gold_offset() +
+           THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion) +
+           sizeof(uint32_t);
+}
+
+static void put_le32(uint8_t *p, uint32_t value) {
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+    p[2] = (uint8_t)(value >> 16);
+    p[3] = (uint8_t)(value >> 24);
+}
+
 static void seed_world(Theron_V1_World *world) {
     theron_v1_world_init(world);
     world->current_dungeon = THERON_DUNGEON_3_FORMIC;
@@ -126,7 +139,43 @@ static void test_round_trip_keeps_purchase_state(void) {
     }
 }
 
+static void test_corrupt_counts_are_rejected(void) {
+    Theron_V1_World original;
+    Theron_V1_World restored;
+    size_t size;
+    uint8_t *buffer;
+    size_t count_offset;
+
+    printf("  %-55s ", "World deserialize rejects corrupt object/timer counts");
+    fflush(stdout);
+    seed_world(&original);
+    size = theron_v1_world_serialize_size(&original);
+    buffer = (uint8_t *)malloc(size);
+    expect_true(buffer != NULL, "corrupt-count buffer allocated");
+    if (!buffer) {
+        printf("FAIL\n");
+        return;
+    }
+    expect_true(theron_v1_world_serialize(&original, buffer, size) == size,
+                "corrupt-count fixture serialized");
+    count_offset = world_object_count_offset();
+    put_le32(buffer + count_offset, THERON_MAX_OBJECTS + 1u);
+    memset(&restored, 0, sizeof(restored));
+    expect_true(theron_v1_world_deserialize(&restored, buffer, size) == -1,
+                "object count above capacity is rejected");
+
+    expect_true(theron_v1_world_serialize(&original, buffer, size) == size,
+                "timer-count fixture reserialized");
+    put_le32(buffer + count_offset, 0u);
+    put_le32(buffer + count_offset + sizeof(uint32_t), THERON_MAX_TIMERS + 1u);
+    expect_true(theron_v1_world_deserialize(&restored, buffer, size) == -1,
+                "timer count above capacity is rejected");
+    free(buffer);
+    puts(g_failures == 0 ? "PASS" : "FAIL");
+}
+
 int main(void) {
     test_round_trip_keeps_purchase_state();
+    test_corrupt_counts_are_rejected();
     return g_failures == 0 ? 0 : 1;
 }

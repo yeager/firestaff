@@ -21,6 +21,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+static size_t bounded_text_len(const char *text, size_t capacity) {
+    size_t n = 0;
+    if (!text) return 0;
+    while (n < capacity && text[n] != '\0') ++n;
+    return n;
+}
+
 /* ── Block size (must match save format) ─────────────────────────────── */
 
 size_t theron_v1_champion_block_size(void) {
@@ -42,7 +49,7 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
      * Keep the numeric/source record usable for the forcefield handoff while
      * leaving its unavailable name empty instead of dereferencing NULL. */
     if (rec->name) {
-        size_t len = strlen(rec->name);
+        size_t len = bounded_text_len(rec->name, sizeof(c->name));
         if (len > 23) len = 23;
         memcpy(c->name, rec->name, len);
         c->name[23] = '\0';

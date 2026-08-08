@@ -17,6 +17,13 @@
 static void wr16le(uint8_t *p, uint16_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); }
 static void wr32le(uint8_t *p, uint32_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24); }
 
+static size_t bounded_name_len(const char *name, size_t capacity) {
+    size_t n = 0;
+    if (!name) return 0;
+    while (n < capacity && name[n] != '\0') ++n;
+    return n;
+}
+
 static uint8_t clamp_byte(int value) {
     return (uint8_t)(value < 0 ? 0 : (value > 255 ? 255 : value));
 }
@@ -43,7 +50,9 @@ static void build_party_payload(const Theron_V1_World *world, uint8_t payload[TQ
     for (i = 0; i < THERON_MAX_CHAMPIONS; ++i) {
         const Theron_V1_Champion *c = &world->party.champions[i];
         uint8_t *r = payload + TQR_SRM_PROGRESS_BYTES + 4u + (size_t)i * TQR_SRM_RECORD_BYTES;
-        memcpy(r, c->name, strlen(c->name) < 16u ? strlen(c->name) : 16u);
+        size_t name_len = bounded_name_len(c->name, sizeof(c->name));
+        if (name_len > 16u) name_len = 16u;
+        memcpy(r, c->name, name_len);
         r[16] = (uint8_t)c->primary_class; r[17] = c->alive;
         r[18] = clamp_byte(c->health); r[19] = clamp_byte(c->max_health);
         r[20] = clamp_byte(c->stamina); r[21] = clamp_byte(c->max_stamina);

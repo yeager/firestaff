@@ -1,5 +1,8 @@
 # Firestaff TODO - Open Work
 
+- Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
+- Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
+
 - **DM2-PC-DOS-LEGACY-G1-RECEIPTS:** The verified PC-DOS `DUNGEON.DAT` takes
   the 44-map `File_header` route. The first audit repaired six real-data
   tests that had asserted an older shifted 28-map interpretation; the
@@ -12360,4 +12363,3 @@ as line/circle coordinates or promote them into movement geometry.
     marker. This machine has Mednafen 1.32.1 but no local `sega_101.bin` or
     verified Nexus media, so no authentic trace or format-derived decoder was
     produced here.
-

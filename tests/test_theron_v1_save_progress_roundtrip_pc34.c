@@ -528,6 +528,20 @@ int main(void) {
                     "verify: slot 4 is intact");
     }
 
+    /* A malformed persisted dungeon must fail before save-directory or slot
+     * state is touched; otherwise the header gather below would index before
+     * the runtime's progression validation boundary. */
+    {
+        Theron_DungeonProgression malformed = prog_before;
+        malformed.current_dungeon = THERON_DUNGEON_INVALID;
+        expect_true(theron_v1_save_to_slot_with_gold(
+                        temp_dir, 5, champion_buffer, packed, &malformed,
+                        party_before.gold, "must reject") == -1,
+                    "save rejects invalid current dungeon without indexing");
+        expect_true(theron_v1_save_verify_slot(temp_dir, 5) == 0,
+                    "rejected malformed save does not create a slot");
+    }
+
     /* ── 9. Re-save (overwrite) round-trip: a second save with new
      *      progress must replace the old slot's champion data and
      *      progression exactly. Catches any stale-tail or partial-

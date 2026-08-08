@@ -60,8 +60,8 @@ typedef struct {
  *   0x09    1     current_dungeon_id
  *   0x0A    1     current_dungeon_state
  *   0x0B    1     current_level (1..3)
- *   0x0C    4     dungeon_seeds[7] (packed: 4 bits per seed * 7 = 28 bits)
- *   0x10    4     dungeon_states[7] (packed: 2 bits per state * 7 = 14 bits)
+ *   0x0C    4     low-nibble dungeon seed summaries (7 × 4 bits)
+ *   0x10    4     dungeon states (7 × 2 bits)
  *   0x14    4     champion_gold (32-bit gold total for party)
  *   0x18    4     playtime_seconds
  *   0x1C    4     timestamp (Unix epoch)
@@ -73,7 +73,12 @@ typedef struct {
  *   4 champion slots × champion_block_size (same layout as DM1 v1).
  *   No in-dungeon save = no creature/object state to serialize.
  *
- * Footer: 4-byte checksum of entire file (same algorithm as header checksum).
+ * Footer: 4 bytes: little-endian checksum plus 0x5A, 0xA5 marker.
+ *
+ * The compact header summaries are Firestaff metadata.  The full
+ * Theron_DungeonProgression snapshot follows the champion stream; T080/T800
+ * are the source evidence for the save boundary and persistence rule, not a
+ * claim that this host-side container is the original PC Engine file format.
  */
 
 #define THERON_SAVE_CHAMPION_BLOCK_SIZE  128  /* per champion slot */

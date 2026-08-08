@@ -75,6 +75,29 @@ static uint16_t compute_checksum16(const uint8_t *data, size_t size) {
     return (uint16_t)(sum & 0xFFFF);
 }
 
+static uint16_t get_le16(const uint8_t *p) {
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static uint32_t get_le32(const uint8_t *p) {
+    return (uint32_t)p[0] |
+           ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) |
+           ((uint32_t)p[3] << 24);
+}
+
+static void put_le16(uint8_t *p, uint16_t value) {
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+}
+
+static void put_le32(uint8_t *p, uint32_t value) {
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+    p[2] = (uint8_t)(value >> 16);
+    p[3] = (uint8_t)(value >> 24);
+}
+
 /* ── Slot path builder ───────────────────────────────────────────── */
 
 void theron_v1_save_slot_path(const char *save_root,
@@ -148,6 +171,9 @@ static size_t build_save_image(
     size_t header_size = THERON_SAVE_HEADER_SIZE;
     size_t prog_size = sizeof(Theron_DungeonProgression);
     size_t footer_size = THERON_SAVE_FOOTER_SIZE;
+    if (champion_data_size > SIZE_MAX - header_size - prog_size - footer_size) {
+        return 0;
+    }
     size_t total_size = header_size + champion_data_size + prog_size + footer_size;
 
     if (!out_image || max_image_size < total_size) return 0;
@@ -180,31 +206,26 @@ static size_t build_save_image(
     /* dungeon seeds (7 × 4 bytes = 28 bytes) — packed from dungeon_progression */
     if (dungeon_progression) {
         const Theron_DungeonProgression *prog = (const Theron_DungeonProgression *)dungeon_progression;
-        uint8_t *seeds_off = out_image + THERON_SAVE_OFF_SEEDS;
-        for (int i = 0; i < THERON_DUNGEON_COUNT && i < 7; i++) {
-            uint32_t seed = prog->dungeon_seeds[i];
-            seeds_off[i * 4 + 0] = (uint8_t)(seed & 0xFF);
-            seeds_off[i * 4 + 1] = (uint8_t)((seed >> 8) & 0xFF);
-            seeds_off[i * 4 + 2] = (uint8_t)((seed >> 16) & 0xFF);
-            seeds_off[i * 4 + 3] = (uint8_t)((seed >> 24) & 0xFF);
-        }
-        /* dungeon states (7 × 1 byte = 7 bytes) — packed 2 bits per state */
+        /* Header summaries are compact and non-overlapping.  The complete
+         * progression is serialized after the champion blocks. */
         uint8_t *states_off = out_image + THERON_SAVE_OFF_DUNGEON_STATES;
+        memset(out_image + THERON_SAVE_OFF_SEEDS, 0, 4);
+        memset(states_off, 0, 4);
         for (int i = 0; i < THERON_DUNGEON_COUNT && i < 7; i++) {
-            states_off[i] = (uint8_t)prog->dungeon_states[i];
+            out_image[THERON_SAVE_OFF_SEEDS + i / 2] |=
+                (uint8_t)((prog->dungeon_seeds[i] & 0x0fU) << ((i % 2) * 4));
+            states_off[i / 4] |=
+                (uint8_t)((prog->dungeon_states[i] & 0x03U) << ((i % 4) * 2));
         }
         /* Party gold is supplied by the save API's live-party variant. */
-        uint32_t *gold_off = (uint32_t *)(out_image + THERON_SAVE_OFF_CHAMPION_GOLD);
-        *gold_off = party_gold;
+        put_le32(out_image + THERON_SAVE_OFF_CHAMPION_GOLD, party_gold);
     }
 
     /* playtime */
-    uint32_t *ptime = (uint32_t *)(out_image + THERON_SAVE_OFF_PLAYTIME);
-    *ptime = playtime_secs;
+    put_le32(out_image + THERON_SAVE_OFF_PLAYTIME, playtime_secs);
 
     /* timestamp */
-    uint32_t *ts = (uint32_t *)(out_image + THERON_SAVE_OFF_TIMESTAMP);
-    *ts = (uint32_t)time(NULL);
+    put_le32(out_image + THERON_SAVE_OFF_TIMESTAMP, (uint32_t)time(NULL));
 
     /* label (max 31 chars + null) */
     if (label) {
@@ -253,8 +274,7 @@ static size_t build_save_image(
         THERON_SAVE_HEADER_SIZE - THERON_SAVE_FOOTER_SIZE);
     out_image[THERON_SAVE_OFF_CHECKSUM + 0] = saved_hdr_byte0;
     out_image[THERON_SAVE_OFF_CHECKSUM + 1] = saved_hdr_byte1;
-    uint16_t *hdr_cs = (uint16_t *)(out_image + THERON_SAVE_OFF_CHECKSUM);
-    *hdr_cs = header_checksum;
+    put_le16(out_image + THERON_SAVE_OFF_CHECKSUM, header_checksum);
 
     /* Apply XOR obfuscation to entire image */
     uint8_t seed = (uint8_t)(THERON_SAVE_OBFUSCATE_SEED);
@@ -303,23 +323,28 @@ static int parse_save_image(
      * part of the bytes that compute_checksum16 reads, so we must
      * zero it before computing (mirrors the footer-checksum pattern
      * below) to avoid a circular definition. */
-    uint16_t stored_cs = *(uint16_t *)(deobuf + THERON_SAVE_OFF_CHECKSUM);
+    uint16_t stored_cs = get_le16(deobuf + THERON_SAVE_OFF_CHECKSUM);
     deobuf[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
     deobuf[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
     uint16_t computed_cs = compute_checksum16(deobuf, THERON_SAVE_HEADER_SIZE - THERON_SAVE_FOOTER_SIZE);
     if (stored_cs != computed_cs) {
         /* Restore the stored checksum so the caller can inspect it
          * via theron_v1_save_verify_slot if needed. */
-        *(uint16_t *)(deobuf + THERON_SAVE_OFF_CHECKSUM) = stored_cs;
+        put_le16(deobuf + THERON_SAVE_OFF_CHECKSUM, stored_cs);
         free(deobuf);
         return -1; /* corrupt header */
     }
     /* Restore the stored checksum so subsequent footer-checksum
      * compute (which also zeroes it) sees the right bytes. */
-    *(uint16_t *)(deobuf + THERON_SAVE_OFF_CHECKSUM) = stored_cs;
+    put_le16(deobuf + THERON_SAVE_OFF_CHECKSUM, stored_cs);
 
     /* Verify footer checksum */
-    uint16_t footer_cs = *(uint16_t *)(deobuf + image_size - THERON_SAVE_FOOTER_SIZE);
+    const uint8_t *footer = deobuf + image_size - THERON_SAVE_FOOTER_SIZE;
+    uint16_t footer_cs = get_le16(footer);
+    if (footer[2] != 0x5A || footer[3] != 0xA5) {
+        free(deobuf);
+        return -1;
+    }
     deobuf[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
     deobuf[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
     uint16_t computed_footer_cs = compute_checksum16(deobuf, image_size - THERON_SAVE_FOOTER_SIZE);
@@ -335,9 +360,9 @@ static int parse_save_image(
         out_info->quest_items = deobuf[THERON_SAVE_OFF_QUEST_ITEMS];
         out_info->current_dungeon = deobuf[THERON_SAVE_OFF_CURRENT_DUNGEON];
         out_info->dungeon_state = deobuf[THERON_SAVE_OFF_DUNGEON_STATE];
-        out_info->party_gold = *(uint32_t *)(deobuf + THERON_SAVE_OFF_CHAMPION_GOLD);
-        out_info->playtime_secs = *(uint32_t *)(deobuf + THERON_SAVE_OFF_PLAYTIME);
-        out_info->timestamp = *(uint32_t *)(deobuf + THERON_SAVE_OFF_TIMESTAMP);
+        out_info->party_gold = get_le32(deobuf + THERON_SAVE_OFF_CHAMPION_GOLD);
+        out_info->playtime_secs = get_le32(deobuf + THERON_SAVE_OFF_PLAYTIME);
+        out_info->timestamp = get_le32(deobuf + THERON_SAVE_OFF_TIMESTAMP);
         out_info->size_bytes = image_size;
 
         /* Label */
@@ -348,17 +373,22 @@ static int parse_save_image(
     /* Copy champion data */
     size_t hdr_end = THERON_SAVE_HEADER_SIZE;
     if (champion_data && champion_data_size > 0) {
-        size_t copy_sz = (champion_data_size <= image_size - hdr_end)
-            ? champion_data_size : (image_size - hdr_end);
-        memcpy(champion_data, deobuf + hdr_end, copy_sz);
+        if (champion_data_size > image_size - hdr_end - THERON_SAVE_FOOTER_SIZE) {
+            free(deobuf);
+            return -1;
+        }
+        memcpy(champion_data, deobuf + hdr_end, champion_data_size);
     }
 
     /* Copy dungeon progression */
     if (dungeon_progression && dungeon_progression_size > 0) {
         size_t prog_offset = hdr_end + champion_data_size;
-        if (prog_offset + dungeon_progression_size <= image_size - THERON_SAVE_FOOTER_SIZE) {
-            memcpy(dungeon_progression, deobuf + prog_offset, dungeon_progression_size);
+        if (prog_offset > image_size - THERON_SAVE_FOOTER_SIZE ||
+            dungeon_progression_size > image_size - THERON_SAVE_FOOTER_SIZE - prog_offset) {
+            free(deobuf);
+            return -1;
         }
+        memcpy(dungeon_progression, deobuf + prog_offset, dungeon_progression_size);
     }
 
     free(deobuf);
@@ -425,6 +455,12 @@ int theron_v1_save_to_slot_with_gold(const char *save_root,
     /* Gather header info */
     const Theron_DungeonProgression *prog =
         (const Theron_DungeonProgression *)dungeon_progression;
+    if (prog && (prog->current_dungeon < THERON_DUNGEON_1_AKUTUBA ||
+                 prog->current_dungeon > THERON_DUNGEON_7_DEMON)) {
+        /* Do not index dungeon_states or write a misleading save header from
+         * malformed persisted state. */
+        return -1;
+    }
     uint8_t quest_items = prog ? prog->quest_items_collected : 0;
     uint8_t current_dungeon = prog ? (uint8_t)prog->current_dungeon : 1;
     uint8_t dungeon_state = prog ? (uint8_t)prog->dungeon_states[prog->current_dungeon - 1]
@@ -433,6 +469,10 @@ int theron_v1_save_to_slot_with_gold(const char *save_root,
 
     /* Build save image */
     size_t prog_size = sizeof(Theron_DungeonProgression);
+    if (champion_data_size > SIZE_MAX - THERON_SAVE_HEADER_SIZE -
+                              prog_size - THERON_SAVE_FOOTER_SIZE) {
+        return -1;
+    }
     size_t total_size = THERON_SAVE_HEADER_SIZE + champion_data_size + prog_size + THERON_SAVE_FOOTER_SIZE;
 
     uint8_t *image = (uint8_t *)malloc(total_size);
@@ -745,11 +785,13 @@ int theron_v1_save_verify_slot(const char *save_root, int slot_index) {
     if (memcmp(copy + THERON_SAVE_OFF_MAGIC, "TQR ", 4) == 0 &&
         copy[THERON_SAVE_OFF_VERSION] == 1) {
         /* Verify footer */
-        uint16_t footer_cs = *(uint16_t *)(copy + file_size - THERON_SAVE_FOOTER_SIZE);
+        const uint8_t *footer = copy + file_size - THERON_SAVE_FOOTER_SIZE;
+        uint16_t footer_cs = get_le16(footer);
         copy[THERON_SAVE_OFF_CHECKSUM + 0] = 0;
         copy[THERON_SAVE_OFF_CHECKSUM + 1] = 0;
         uint16_t computed_cs = compute_checksum16(copy, file_size - THERON_SAVE_FOOTER_SIZE);
-        valid = (footer_cs == computed_cs) ? 1 : 0;
+        valid = (footer[2] == 0x5A && footer[3] == 0xA5 &&
+                 footer_cs == computed_cs) ? 1 : 0;
     }
 
     free(copy);
