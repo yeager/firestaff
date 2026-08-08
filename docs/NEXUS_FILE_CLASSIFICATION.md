@@ -32,7 +32,7 @@ DMV0.AVI (34 MB), DMV1.AVI (28 MB), DMV2.AVI (39 MB).
 FMV cutscenes — intro, ending, possibly mid-game.
 
 ### Level Supplementary (.BIN + .BIN) — 32 files
-SLEV00-15.BIN (2-12 KB): level script/event data.
+SLEV00-15.BIN (2-12 KB): per-level task candidates with bounded SH-2/source receipts; event meaning unproven.
 SMAP00-15.BIN (17-30 KB): level minimap/automap data.
 
 ### Core Game Data (.BIN) — 15 files
@@ -54,11 +54,11 @@ SWTCHR.BIN (38 KB): switch/lever graphics.
 ### Graphics
 TITLE.CG (164 KB): title screen color graphics.
 LOGOBG.DG2 (71 KB): logo background.
-FONT256.S2D (24 KB): font sprite data (256 chars).
+FONT256.S2D (24 KB): Saturn SCR/page data with 242 authenticated CG tiles; glyph mapping unproven.
 ITEM.IBS (98 KB): item icon/bitmap set.
 
 ### Other
-TM.BIN (156 KB): likely texture map or tilemap.
+TM.BIN (156 KB): retail byte/hash receipt; texture/tilemap consumer unbound.
 MENU.BPK (87 KB): menu graphics packed.
 SDDRVS.TSK (26 KB): sound driver task.
 DMN_ABS.TXT, DMN_BIB.TXT, DMN_CPY.TXT: tiny text files.
