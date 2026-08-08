@@ -7878,3 +7878,26 @@
 - ✅ The full startup/save/resume regression is green at **325/325** while
   the production `firestaff_theron` library keeps its source-bound fallback
   policy.
+
+# CSB source-owned movement stamina and boots (2026-08-08)
+
+- ✅ PC34 F0366 now decrements every source party record through F0325 before
+  blocker resolution. Underflow accumulates as F0321 pending damage and F0320
+  applies it in the following game-loop pass, preserving the source order.
+- ✅ Live C05 object records now drive F0309/F0310: Elven Boots apply their
+  pre-rounding capacity bonus and Boot of Speed icon 194 subtracts one move
+  tick. The same runtime maximum-load value is used for F0325.
+- ✅ Focused movement tests cover normal cost, underflow, delayed damage, and
+  the source Armour-record icon route.
+
+# CSB source-owned inventory selection (2026-08-08)
+
+- ✅ CSB status-box and F1–F4 inventory toggles now refresh their party from
+  the live GAMEBLOCK/CHARDESC mirror receipt before validating or selecting a
+  champion. A stale M11-only champion can no longer open or close the panel.
+- ✅ The real PC 3.4 Prison regression deliberately makes M11 disagree with
+  the runtime and confirms that a non-source champion is rejected while a
+  live source champion is restored and opened.
+- ✅ Source reference: ReDMCSB `PANEL.C` F0355, lines 2267–2302, where
+  `M516_CHAMPIONS` is checked before `G0423_i_InventoryChampionOrdinal` is
+  compared and updated.

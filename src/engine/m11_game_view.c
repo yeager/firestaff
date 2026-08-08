@@ -853,6 +853,9 @@ static int m11_draw_thrown_object_projectile_sprite(
 static int m11_csb_install_runtime_source_graphic(
     const M11_GameViewState *state,
     unsigned int graphic_index);
+static void m11_apply_csb_runtime_m11_mirror_receipt(
+    M11_GameViewState *state,
+    const CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt);
 static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -49864,6 +49867,29 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
                                                           int championIndex) {
     int sameOpen;
     char champion[16];
+
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V1_RuntimeM11MirrorReceipt_PC34 runtime_receipt;
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+
+        /* ReDMCSB PANEL.C F0355:2267-2302 validates
+         * M516_CHAMPIONS[P0719_i_ChampionIndex] before it compares the
+         * requested ordinal with G0423_i_InventoryChampionOrdinal.  M11's
+         * party is only a presentation mirror, so refresh it from the
+         * GAMEBLOCK/CHARDESC receipt before testing this C007..C010 command.
+         * A caller-seeded or stale M11 champion must neither open nor close a
+         * CSB inventory panel. */
+        memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+        if (!profile ||
+            !csb_v1_boot_runtime_m11_mirror_receipt_pc34(
+                profile, &runtime_receipt) ||
+            !runtime_receipt.valid || !runtime_receipt.party.valid) {
+            m11_set_status(state, "INVENTORY", "NO CHAMPION");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        m11_apply_csb_runtime_m11_mirror_receipt(state, &runtime_receipt);
+    }
 
     if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
         championIndex >= state->world.party.championCount ||

@@ -12708,3 +12708,8 @@ as line/circle coordinates or promote them into movement geometry.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.
+- 🔧 2026-08-08 CSB inventory input: status-box/F1 inventory selection now
+  refreshes the GAMEBLOCK/CHARDESC party receipt before accepting the
+  requested champion. This closes the stale-M11-mirror route, but complete
+  source-raster coverage and the remaining panel interactions still need
+  real-runtime evidence.

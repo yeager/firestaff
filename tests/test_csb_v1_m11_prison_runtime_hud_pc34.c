@@ -503,8 +503,20 @@ int main(void)
                   "real Atari C107 recant clears the persisted F0400 incantation without refunding mana");
             (void)M11_GameView_ClearSpell(&view);
         }
-        view.world.party.championCount = 0;
+        /* PANEL.C F0355 validates M516 before changing G0423.  Deliberately
+         * make only M11 claim that a second champion exists, then use the
+         * real PC3.4 runtime session to prove F2 cannot open that panel. */
+        view.world.party.championCount = 2;
+        view.world.party.champions[1].present = 1;
+        view.world.party.champions[1].hp.current = 10;
         view.inventoryPanelActive = 0;
+        CHECK(M11_GameView_HandleInput(&view,
+                                       M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  view.world.party.championCount == 1 &&
+                  !view.inventoryPanelActive,
+              "CSB F2 rejects a champion absent from the real PC3.4 GAMEBLOCK");
+        view.world.party.championCount = 0;
         CHECK(M11_GameView_HandleInput(&view,
                                        M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW &&
