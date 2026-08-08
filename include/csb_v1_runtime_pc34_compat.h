@@ -2325,6 +2325,16 @@ int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
     int map_y,
     int cell);
 
+/* Consume the first source Sensor on the square immediately in front of the
+ * party.  This is intentionally the original F0282 behavior after a C127
+ * champion-mirror candidate is confirmed: it clears the low seven Type_Data
+ * bits of the first Sensor rather than unlinking the Thing.  Callers must
+ * already have admitted the C127/C160 or C161 receipt; this helper does not
+ * substitute a general wall-click route.  Returns 1 only when a live source
+ * Sensor was disabled.  ReDMCSB: REVIVE.C F0282 lines 785-800. */
+int csb_v1_runtime_disable_front_mirror_sensor_source_compat(
+    CSB_V1_RuntimeProfile *profile);
+
 /* Move one existing ordinary object through ReDMCSB MOVESENS.C F0267 using
  * only the loaded PC34 DUNGEON.DAT image.  The thing must already be linked
  * at the supplied source square; legacy fixture maps, detached records,

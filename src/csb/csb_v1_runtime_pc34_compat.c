@@ -11924,6 +11924,53 @@ int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
     return queued;
 }
 
+int csb_v1_runtime_disable_front_mirror_sensor_source_compat(
+    CSB_V1_RuntimeProfile *profile)
+{
+    static const int step_east[4] = { 0, 1, 0, -1 };
+    static const int step_north[4] = { -1, 0, 1, 0 };
+    CSB_V1_DungeonData *dungeon;
+    int front_x;
+    int front_y;
+    int thing;
+    int guard;
+
+    if (!profile || !profile->dungeon_handle) return 0;
+    dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon || !dungeon->raw_data || profile->current_level < 0 ||
+        profile->current_level >= dungeon->level_count) {
+        return 0;
+    }
+    front_x = profile->party_x + step_east[profile->party_dir & 3];
+    front_y = profile->party_y + step_north[profile->party_dir & 3];
+    thing = csb_v1_dungeon_get_first_thing(dungeon, profile->current_level,
+                                            front_x, front_y);
+    for (guard = 0;
+         guard < 128 && thing >= 0 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        uint8_t *record;
+        int thing_type;
+        int record_size;
+
+        record = csb_v1_runtime_mutable_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, &record_size);
+        if (!record || record_size < 2) return 0;
+        /* ReDMCSB REVIVE.C F0282:794-800 (M044_SET_TYPE_DISABLED): after
+         * C160/C161 it disables the first Sensor on the mirror square.  The
+         * original deliberately does not re-check C127 here. */
+        if (thing_type == CSB_THING_TYPE_SENSOR) {
+            if (record_size < 4) return 0;
+            csb_v1_runtime_write_u16(
+                record + 2,
+                (uint16_t)(csb_v1_runtime_read_u16(record + 2) & 0xFF80u));
+            return 1;
+        }
+        thing = (int)csb_v1_runtime_sensor_next_thing(
+            dungeon, (uint16_t)thing);
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_scan_thing_chain_for_object_type(
     const CSB_V1_DungeonData *dungeon,
     uint16_t thing,

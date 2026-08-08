@@ -628,6 +628,22 @@ static void expect_native_live_mirror_and_command_handoff(
     }
     mirror_ordinal = -1;
     found_pose = native_handoff_find_live_c127_pose(view, &mirror_ordinal);
+    if (found_pose) {
+        /* The probe deliberately walks to a real C127 square.  Keep the
+         * GAMEBLOCK pose aligned with that visible query-world pose so the
+         * following C160 confirmation exercises REVIVE.C F0282's native
+         * front-square mutation instead of a test-only M11 projection. */
+        profile->runtime.current_level = view->world.party.mapIndex;
+        profile->runtime.party_x = view->world.party.mapX;
+        profile->runtime.party_y = view->world.party.mapY;
+        profile->runtime.party_dir = view->world.party.direction & 3;
+        if (profile->runtime.party_state_valid) {
+            profile->runtime.party_state.PartyMapX = profile->runtime.party_x;
+            profile->runtime.party_state.PartyMapY = profile->runtime.party_y;
+            profile->runtime.party_state.PartyDirection =
+                profile->runtime.party_dir;
+        }
+    }
     front_ordinal = found_pose ? M11_GameView_GetFrontMirrorOrdinal(view) : -1;
     selection_result = front_ordinal == mirror_ordinal
         ? M11_GameView_SelectFrontMirrorCandidate(view) : 0;
@@ -666,6 +682,23 @@ static void expect_native_live_mirror_and_command_handoff(
                         ((initial_direction + 1) & 3) &&
                     view->csbState.party_dir == profile->runtime.party_dir,
                 label);
+    if (found_pose && profile->runtime.dungeon_handle) {
+        const CSB_V1_DungeonData *dungeon = profile->runtime.dungeon_handle;
+        const int front_x = profile->runtime.party_x +
+            (int[]){ 0, 1, 0, -1 }[initial_direction & 3];
+        const int front_y = profile->runtime.party_y +
+            (int[]){ -1, 0, 1, 0 }[initial_direction & 3];
+        const int first_thing = csb_v1_dungeon_get_first_thing(
+            dungeon, profile->runtime.current_level, front_x, front_y);
+        const uint8_t *record = first_thing >= 0
+            ? csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)first_thing,
+                                               NULL, NULL, NULL)
+            : NULL;
+        const uint16_t type_data = record
+            ? (uint16_t)(record[2] | ((uint16_t)record[3] << 8)) : 0xFFFFu;
+        expect_true(record != NULL && (type_data & 0x007Fu) == 0u,
+                    "native C160 confirmation disables the real front C127 sensor");
+    }
 }
 
 static int frame_matches_source_rect(const unsigned char* frame,

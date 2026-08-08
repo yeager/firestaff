@@ -26148,6 +26148,20 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         m11_set_status(state, "MIRROR", "SOURCE RECEIPT STALE");
         return 0;
     }
+    if (m11_source_is_csb(state)) {
+        CSB_V1_BootProfile* profile = (CSB_V1_BootProfile*)state->csbBootProfile;
+        /* ReDMCSB REVIVE.C F0282:785-800 clears M044 Type_Data in the
+         * active GAMEBLOCK after C160/C161.  Clearing only M11's query-world
+         * sensor made a confirmed PC34 mirror return after a runtime refresh.
+         * Do the native mutation before retiring the matching presentation
+         * receipt, and fail closed if its live front square is stale. */
+        if (!profile ||
+            !csb_v1_runtime_disable_front_mirror_sensor_source_compat(
+                &profile->runtime)) {
+            m11_set_status(state, "MIRROR", "CSB SOURCE SENSOR STALE");
+            return 0;
+        }
+    }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, state->candidateMirrorOrdinal,
                                               mirrorName, sizeof(mirrorName));
     m11_repair_mirror_candidate_survival_fields(state, championIndex);
