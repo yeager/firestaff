@@ -101,6 +101,15 @@ utan SCSI READ. Därför är medieinsättning nu bevisad, medan Track 02-handoff
 och alla efterföljande RNG-, AI-, T700- och T900-konsumenter fortfarande inte
 är bevisade.
 
+Capture-scriptet kan dessutom välja den andra officiella HuC6280-kärnan med
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`; standarden är fortsatt `pce`.
+Detta gör kärnbytesförsöket reproducerbart utan att byta System Card, CUE,
+Track 02-bytes eller att lägga in hostdata. Den externa `pce_fast`-körningen
+med samma autentiserade US ISO gav också noll spelägda sektor-/RAM-konsumenter.
+Kärnvalet löser alltså capture-infrastrukturen, men inte den fortfarande
+obekräftade BIOS/CD-handoff som krävs innan RNG, AI, T700 eller T900 kan
+aktiveras.
+
 ## Verifiering
 
 ```text

@@ -96,7 +96,9 @@ if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then
     printf 'FAIL: Quartz helper accepted a non-positive target PID\n' >&2
     exit 1
 fi
-if ! grep -Fq -- '-force_module pce' "$script" ||
+if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
+   ! grep -Fq -- 'THERON_CAPTURE_MEDNAFEN_MODULE' "$script" ||
+   ! grep -Fq -- 'mednafen_module=%s' "$script" ||
    ! grep -Fq -- '-pce.arcadecard 0' "$script"; then
     printf 'FAIL: capture script must force the PCE module and disable unrelated Arcade Card emulation\n' >&2
     exit 1

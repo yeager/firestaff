@@ -13,6 +13,11 @@ capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
 # run when investigating BIOS/CD initialization.  This flag changes only the
 # emulator's audio output path; it never promotes media bytes to game state.
 capture_sound=${THERON_CAPTURE_SOUND:-0}
+# Mednafen exposes two HuC6280 CD cores. Keep the source-compatible `pce`
+# default, but allow an explicitly requested `pce_fast` capture when the
+# authenticated media stalls in the BIOS before its first sector read.
+# This only changes the emulator core; it never changes admitted media bytes.
+capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
 # An empty value is intentional on macOS: it lets native SDL2 select Cocoa.
 # Use `-` rather than `:-` so the caller can distinguish that from the
 # headless dummy default.
@@ -210,6 +215,10 @@ if [[ ! "$capture_startup_grace" =~ ^[1-9][0-9]*$ ]]; then
 fi
 if [[ "$capture_sound" != 0 && "$capture_sound" != 1 ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SOUND must be 0 or 1' >&2
+    exit 1
+fi
+if [[ "$capture_mednafen_module" != pce && "$capture_mednafen_module" != pce_fast ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MEDNAFEN_MODULE must be pce or pce_fast' >&2
     exit 1
 fi
 if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then
@@ -617,7 +626,7 @@ launch=(
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
-    -force_module pce \
+    -force_module "$capture_mednafen_module" \
     -which_medium 0 \
     -sound "$capture_sound" \
     -video.driver softfb \
@@ -825,6 +834,7 @@ transition_spawn_register_sample_count=$(trace_count '^spawn_consumer_registers 
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
+    printf 'mednafen_module=%s\n' "$capture_mednafen_module"
     printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
     printf 'track02_mode=%s\n' "$track02_mode"
     printf 'track02_md5=%s\n' "$track02_md5"
