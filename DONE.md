@@ -1,5 +1,14 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 DOS-MVE PCM/display-tidslinje (2026-08-08)
+
+- ✅ Tillagd minnesbaserad, verifierad join mellan varje original opcode-0x08
+  PCM-paket och efterföljande opcode-0x07-display. Den använder endast
+  MVE-strömmens byteordning och timer för bildtiden, aldrig en påhittad
+  ljudklocka. Realdataregressionen verifierar INTRO och END: 12 paket före
+  första displayen, ett per display till de sista 11 tysta bilderna samt
+  exakt antal byte och sample frames.
+
 - ✅ Added an explicit non-serialized compatibility-fixture marker to the
   champion pool. Startup host labels, colors, and blink timing now require
   that marker; stale ASCII fields from retail saves cannot impersonate the

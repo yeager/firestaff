@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
+  opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår
+  första bilden, ett paket ligger före varje följande bild fram till de elva
+  sista tysta bilderna. Detta är inte en värdschemaläggning. M11 måste ännu
+  binda samma råa kö till en SDL-ström och bildklockan utan att härleda ljudtid
+  ur paketlängd eller värdlatens.
+
 - 🔧 Nexus uncaptured text/audio receipt boundary (2026-08-08): script
   `DISPLAY_MESSAGE` no longer copies raw TEXT4/TABL bytes into a host C
   string until the explicit Saturn text-consumer capture seam is admitted.
