@@ -1,3 +1,17 @@
+# Nexus startup fixture-label boundary and capture audit (2026-08-08)
+
+- ✅ Added an explicit non-serialized compatibility-fixture marker to the
+  champion pool. Startup host labels, colors, and blink timing now require
+  that marker; stale ASCII fields from retail saves cannot impersonate the
+  isolated fixture.
+- ✅ Added a regression covering a stale-save pool with `name_ascii` data and
+  no fixture marker. Retail PLRD/FONT256 text remains empty until its Saturn
+  VDP2 consumer is captured.
+- ✅ Audited the latest E-BIOS/French capture attempt. Mednafen identified
+  retail Nexus correctly, but the external timeout ended before a complete raw
+  witness. No VDP1/VDP2, PRS3, HUD/viewport, or SLEV/SAL/SDDRVS admission was
+  changed.
+
 # CSB C040 resurrect panel optional for CSBWin/Atari (2026-08-08)
 
 - ✅ CSB has no resurrection mechanic. CSBWin/Atari GRAPHICS.DAT stores

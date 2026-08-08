@@ -217,6 +217,7 @@ int main(void)
     int package_title_frame_max;
     int package_title_ready;
     Nexus_V1_ChampionPool empty_champions;
+    Nexus_V1_ChampionPool stale_save_champions;
 
     if (!make_temp_root(root, sizeof(root))) {
         fprintf(stderr, "FAIL: could not create temporary root\n");
@@ -409,6 +410,26 @@ int main(void)
                champion_footer.text_x == NEXUS_V1_STARTUP_FOOTER_X &&
                champion_footer.text_y == NEXUS_V1_STARTUP_FOOTER_Y,
            "Nexus champion startup footer render metadata is Nexus-owned");
+    memset(&stale_save_champions, 0, sizeof(stale_save_champions));
+    stale_save_champions.champion_count = 1;
+    stale_save_champions.champions[0].name_ascii[0] = 'S';
+    stale_save_champions.champions[0].name_ascii[1] = 'T';
+    stale_save_champions.champions[0].name_ascii[2] = 'A';
+    stale_save_champions.champions[0].name_ascii[3] = 'L';
+    stale_save_champions.champions[0].name_ascii[4] = 'E';
+    stale_save_champions.champions[0].name_ascii[5] = '\0';
+    memset(champion_rows, 0, sizeof(champion_rows));
+    memset(&champion_footer, 0, sizeof(champion_footer));
+    expect(nexus_v1_startup_menu_build_champion_render_rows(
+               &stale_save_champions,
+               0,
+               champion_rows,
+               (int)(sizeof(champion_rows) / sizeof(champion_rows[0])),
+               &champion_footer) == 1 &&
+               champion_rows[0].label[0] == '\0' &&
+               champion_footer.label[0] == '\0' &&
+               champion_rows[0].text_color == 0,
+           "Nexus startup does not turn stale save ASCII into host labels");
     cursor = 13;
     memset(champion_rows, 0, sizeof(champion_rows));
     memset(&champion_footer, 0, sizeof(champion_footer));

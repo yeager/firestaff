@@ -73,4 +73,5 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
     }
     for (i = 0; i < NEXUS_MAX_PARTY; ++i) pool->party[i] = -1;
     pool->leader_index = 0;
+    pool->compatibility_fixture = 1;
 }

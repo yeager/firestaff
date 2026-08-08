@@ -92,6 +92,10 @@ typedef struct {
     int party[NEXUS_MAX_PARTY];
     int party_count;
     int leader_index;
+    /* Host-only compatibility marker.  It is never serialized and is set
+     * only by the isolated fixture translation unit.  Retail PLRD/save
+     * bytes must not acquire host labels from populated name_ascii fields. */
+    int compatibility_fixture;
 } Nexus_V1_ChampionPool;
 
 /* Max load: DM.BIN 0x029ECC — (strength<<3)+100.

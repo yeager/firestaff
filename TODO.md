@@ -1,5 +1,18 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus startup stale-save label boundary (2026-08-08): host ASCII labels
+  are now gated by an explicit non-serialized compatibility-fixture marker;
+  retail PLRD and deserialized saves cannot enable fixture text, colors, or
+  blink timing merely by containing `name_ascii`. Authentic FONT256/VDP2
+  startup text ownership remains capture-gated.
+
+- 🔧 Nexus Saturn capture follow-up (2026-08-08): the latest E-BIOS/French
+  data-only-CUE attempt ended at the external SIGTERM before a complete raw
+  witness was produced. Existing captures still show authentic VDP activity
+  but no retail source/consumer join. Next attempt should use the complete
+  English merged CUE and a short window around the source-unknown startup
+  transition; do not unlock presentation from the incomplete run.
+
 - 🔧 Nexus phase-gate stale claims (2026-08-08): `nexus_v1_compat_gate`
   previously described source-locked Saturn domains as active and returned
   `v2PresentationAllowed=1` for them. The gate now reports source receipts

@@ -2409,7 +2409,7 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
     int count = 0;
     int first_row = 0;
     int blink_on;
-    int host_label_fixture = 0;
+    int host_label_fixture;
 
     if (!pool || !rows || max_rows <= 0) {
         return 0;
@@ -2418,17 +2418,8 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
         frame = 0;
     }
     blink_on = ((frame / 12) & 1) == 0;
+    host_label_fixture = pool->compatibility_fixture;
     memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
-    for (row = 0; row < pool->champion_count; ++row) {
-        /* ASCII names are permitted only for the isolated compatibility
-         * roster.  An authenticated PLRD row owns TABL/FONT256 codes; do
-         * not let a stale serialized host name create a retail footer. */
-        if (pool->champions[row].name_ascii[0] != '\0' &&
-            pool->champions[row].name_tabl_code[0] == 0U) {
-            host_label_fixture = 1;
-            break;
-        }
-    }
     if (out_footer) {
         Nexus_V1_StartupRect footer_rect;
         memset(out_footer, 0, sizeof(*out_footer));
@@ -2455,9 +2446,7 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
         Nexus_V1_StartupChampionRenderRow *out = &rows[count];
         int in_party = 0;
         int party_index;
-        int row_host_label_fixture =
-            pool->champions[row].name_ascii[0] != '\0' &&
-            pool->champions[row].name_tabl_code[0] == 0U;
+        int row_host_label_fixture = host_label_fixture;
 
         if (!nexus_v1_startup_champion_row_rect(count, &out->rect)) {
             continue;
@@ -2521,7 +2510,8 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
          * champion name or a host-formatted HP/MP line.  Keep this legacy
          * label lane empty for authenticated records until the Saturn text
          * consumer and glyph placement are captured. */
-        if (pool->champions[row].name_ascii[0] != '\0' &&
+        if (host_label_fixture &&
+            pool->champions[row].name_ascii[0] != '\0' &&
             pool->champions[row].name_tabl_code[0] == 0U) {
             snprintf(out->label,
                      sizeof(out->label),

@@ -580,6 +580,11 @@ int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool,
 
     if (!pool || !buf || bufsize < 32) return -1;
 
+    /* Save data is not the isolated ASCII compatibility fixture.  Clear the
+     * non-serialized marker before accepting any rows so a caller cannot
+     * reuse a fixture pool and accidentally expose host labels. */
+    pool->compatibility_fixture = 0;
+
     /* Magic + version */
     p = rd32(p, &magic);
     p = rd32(p, &version);
