@@ -87,6 +87,12 @@
   endast en temporär `CSBGAME2.DAT` och bevisar både backupåterställningen
   och den aktuella receipten.
 
+- ✅ F0433 binder om samma M11-receipt till den nyss skrivna
+  Atari/Amiga-originalslotten. En giltig sparning kan alltså inte längre
+  göra sessionen falskt föråldrad genom att receipten pekar på den gamla
+  mallen. Detta bevisas efter en verklig backupåterställning och skrivning
+  till den återställda temporära sloten.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan

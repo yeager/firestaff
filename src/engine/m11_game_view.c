@@ -22084,6 +22084,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;
         CSB_V1_BootProfile *profile;
+        CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
         const char *original_atari_source;
 
         if (!state->csbBootProfile) {
@@ -22111,7 +22112,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             /* ReDMCSB LOADSAVE.C F0433/F0435 use one original save format
              * across this resumed Atari/Amiga route.  Preserve unowned timer
              * and dungeon bytes by patching a verified original template into
-             * the private user save path; never write back into the selected
+             * the selected user save path; never write back into the selected
              * game-data artifact. */
             if (!csb_v1_runtime_original_atari_save_source_current(
                     &profile->runtime) ||
@@ -22130,6 +22131,19 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             m11_set_status(state, "SAVE", "CSB ORIGINAL SAVE REQUIRED");
             return 0;
         }
+        /* F0433 has now replaced the selected original save slot. Rebind
+         * the F0435 provenance receipt to its new source bytes before the
+         * next runtime tick; otherwise a valid save would make the previous
+         * receipt look stale solely because it still names the old template. */
+        memset(&original_save_receipt, 0, sizeof(original_save_receipt));
+        if (!csb_v1_boot_runtime_load_original_save_receipt_pc34(
+                profile, path, &original_save_receipt)) {
+            m11_set_status(state, "SAVE", "CSB ORIGINAL VERIFY FAILED");
+            return 0;
+        }
+        state->csbOriginalSaveRuntimeReceipt = original_save_receipt;
+        state->csbOriginalSaveRuntimeReceiptRequired = 1;
+        game_time = original_save_receipt.runtime_game_time_after;
         /* ReDMCSB LOADSAVE.C F0433 writes CSB GLOBAL_DATA, party state,
          * event queues, and timeline so F0435 can resume the live game.
          * An authenticated Atari/Amiga resume retains that native container;

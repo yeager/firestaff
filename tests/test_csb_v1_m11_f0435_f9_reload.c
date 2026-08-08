@@ -189,6 +189,13 @@ int main(void)
                           (const CSB_V1_BootProfile *)view.csbBootProfile,
                           &view.csbOriginalSaveRuntimeReceipt),
                   "F0435 receipt hashes the recovered original save, not damaged bytes");
+            CHECK(setenv("FIRESTAFF_QUICKSAVE_PATH", recovery_path, 1) == 0 &&
+                      M11_GameView_QuickSave(&view) &&
+                      view.csbOriginalSaveRuntimeReceiptRequired &&
+                      csb_v1_boot_original_save_runtime_receipt_current_pc34(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &view.csbOriginalSaveRuntimeReceipt),
+                  "F0433 rebinds M11 provenance to its newly written original slot");
             M11_GameView_Shutdown(&view);
         }
         remove(recovery_path);
