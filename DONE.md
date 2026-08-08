@@ -8380,3 +8380,13 @@
 - ✅ The real S2D text bridge remains no-draw because the Saturn glyph mapping,
   tilemap/CLUT consumer and framebuffer placement are not captured. No
   synthetic menu, HUD or viewport pixels were promoted.
+
+# Nexus isolated source-lock verification (2026-08-08)
+
+- ✅ `verify_nexus_v2_verification_suite_source_lock.py` now accepts the
+  existing `FIRESTAFF_REDMCSB_SOURCE` override before falling back to the
+  user's normal ReDMCSB location. This prevents an isolated test `HOME` from
+  turning an otherwise valid source-lock check into a false missing-source
+  failure.
+- ✅ The verifier passes with isolated `HOME` and the real ReDMCSB tree. This
+  changes no Nexus runtime admission and does not weaken any capture gate.

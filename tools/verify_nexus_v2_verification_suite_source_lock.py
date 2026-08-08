@@ -2,10 +2,15 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/"
+        "ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+)).expanduser()
 EVIDENCE = ROOT / "parity-evidence/verification/nexus_v2_verification_suite_source_lock.json"
 
 REQUIRED_SOURCE = [
