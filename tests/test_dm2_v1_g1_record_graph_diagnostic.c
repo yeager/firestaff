@@ -47,6 +47,7 @@ int main(void) {
     int size = 0;
     int failures = 0;
     DM2_V1_DungeonData d;
+    DM2_V1_FileHeaderRuntimeMapReceipt map0;
 
     paths[0] = env;
 
@@ -85,6 +86,14 @@ int main(void) {
     if (dm2_v1_dungeon_get_next_thing(&d, 0x04A5) !=
         (int)DM2_THING_END_MARKER) {
         printf("FAIL: G1 get_next_thing should return END_MARKER\n");
+        ++failures;
+    }
+    memset(&map0, 0, sizeof(map0));
+    if (!dm2_v1_dungeon_validate_file_header_runtime_map(&d, 0, &map0) ||
+        !map0.committed || map0.incomplete_world != 1 ||
+        map0.root_count <= 0 || map0.record_count < map0.root_count ||
+        map0.link_word_reads != map0.record_count) {
+        printf("FAIL: File_header map-0 record owner was not retained\n");
         ++failures;
     }
 

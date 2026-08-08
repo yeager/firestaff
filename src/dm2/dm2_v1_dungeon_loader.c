@@ -3016,6 +3016,70 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     return 1;
 }
 
+int dm2_v1_dungeon_validate_file_header_runtime_map(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeMapReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt candidate;
+    DM2_V1_G1MapCorpusReceipt corpus;
+    int total_records = 0;
+
+    /* SKProject SKWIN/SkWinCore.cpp::READ_DUNGEON_STRUCTURE assigns the
+     * File_header pools in DB order, then c_map.cpp obtains a ground-stack
+     * root and c_record.cpp follows GenericRecord::w0.  Keep this route
+     * distinct from the PC G1 extension layout. */
+    if (!out || !d || !d->raw_data || d->square_bytes != 1 ||
+        d->g1_extension_base >= 0 || !d->record_graph_complete ||
+        d->g1_w0_chains_disabled || map < 0 || map >= d->level_count ||
+        !dm2_v1_dungeon_collect_g1_map_corpus_receipt(d, &corpus) ||
+        !corpus.available || corpus.g1_layout_absent) {
+        return 0;
+    }
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] < 0) return 0;
+        total_records += d->thing_type_counts[type];
+    }
+    if (total_records <= 0) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    candidate.width = d->level_widths[map];
+    candidate.height = d->level_heights[map];
+    candidate.map_data_hash = corpus.maps[map].map_hash;
+    if (candidate.width <= 0 || candidate.height <= 0 ||
+        candidate.map_data_hash == 0u) return 0;
+
+    for (int x = 0; x < candidate.width; ++x) {
+        for (int y = 0; y < candidate.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int thing;
+            int steps = 0;
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+            if (thing < 0 || thing == (int)DM2_THING_NULL_MARKER) return 0;
+            if (thing == (int)DM2_THING_END_MARKER) continue;
+            ++candidate.root_count;
+            while (thing != (int)DM2_THING_END_MARKER) {
+                int next;
+                if (++steps > total_records ||
+                    !dm2_v1_dungeon_get_thing_record(
+                        d, (uint16_t)thing, NULL, NULL, NULL)) return 0;
+                ++candidate.record_count;
+                next = dm2_v1_dungeon_get_next_thing(d, (uint16_t)thing);
+                ++candidate.link_word_reads;
+                if (next < 0) return 0;
+                thing = next;
+            }
+        }
+    }
+    if (candidate.root_count <= 0 || candidate.record_count < candidate.root_count)
+        return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_resolve_g1_direct_root_record(
     const DM2_V1_DungeonData *d,
     int level,

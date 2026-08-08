@@ -435,6 +435,23 @@ typedef struct {
     int blocked_record_reads;
 } DM2_V1_G1RuntimeMapValidationReceipt;
 
+/* Runtime admission for the canonical PC-DOS File_header layout.  It is
+ * intentionally separate from the legacy G1 extension receipts: File_header
+ * owns its standard DB pools directly after text data and has no G1 extension
+ * owner.  The receipt proves only bounded map-root/record-chain ownership;
+ * it neither creates a party nor decodes gameplay payloads. */
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int width;
+    int height;
+    int root_count;
+    int record_count;
+    int link_word_reads;
+    uint32_t map_data_hash;
+} DM2_V1_FileHeaderRuntimeMapReceipt;
+
 typedef struct {
     int committed;
     int incomplete_world;
@@ -1528,6 +1545,12 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapValidationReceipt *out);
+/* Validate one canonical File_header map's original ground-stack roots and
+ * GenericRecord::w0 chains.  G1-extension layouts and incomplete graphs are
+ * rejected rather than falling through to legacy admission. */
+int dm2_v1_dungeon_validate_file_header_runtime_map(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeMapReceipt *out);
 /* Resolve a selected tile through c_map.cpp's ground-stack lookup to a
  * declared direct DB0..DB5/DB9 record address. Other types, extensions, and
  * tiles without a root fail closed without mutating out. */

@@ -68,6 +68,15 @@
 - ✅ Det förhindrar att testminne eller en partiell recordkedja blir en
   spelbar New Game-väg. Det återställer inte den saknade originalägaren.
 
+# DM2 File_header map-chain admission (2026-08-08)
+
+- ✅ Lade till en separat runtime-validerare för den kanoniska PC-DOS
+  File_header-layouten. Den följer originalets markrötter och begränsade
+  `GenericRecord::w0`-kedjor utan att falla tillbaka till G1-extensionen.
+- ✅ Verifierat direkt med den verkliga 44-kartors `DUNGEON.DAT`-filen.
+  Resultatet är fortsatt ofullständigt och materialiserar inte party, DYN4
+  eller spelmekanik.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

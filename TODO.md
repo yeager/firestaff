@@ -13,6 +13,11 @@
   its test-only map bridge with that real runtime owner, then recover the
   complete original tile/actuator/sensor resource queue before calling DYN4.
 
+- **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
+  ground-stack/`w0` chains are now source-validated. Bind the same owner to
+  the map-local graphics lists, DB payload decoders, actuator/sensor paths
+  and full `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
+
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media
   into a filename-only fallback or require users to unpack their archives.
