@@ -168,6 +168,23 @@ int main(void) {
             ++failures;
         } else {
             creature_record_total += creatures.creature_record_count;
+            for (int creature_index = 0;
+                 creature_index < creatures.creature_record_count;
+                 ++creature_index) {
+                DM2_V1_FileHeaderCreaturePossessionReceipt possessions;
+                memset(&possessions, 0, sizeof(possessions));
+                if (!dm2_v1_dungeon_collect_file_header_creature_possession_chain(
+                        &d, &creatures, creature_index, &possessions) ||
+                    !possessions.committed ||
+                    possessions.creature_object_id !=
+                        creatures.creatures[creature_index].object_id ||
+                    possessions.link_word_reads != possessions.node_count) {
+                    printf("FAIL: File_header map-%d creature possessions were not retained\n",
+                           map);
+                    ++failures;
+                    break;
+                }
+            }
         }
     }
     if (text_record_total <= 0) {

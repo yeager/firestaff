@@ -3953,6 +3953,79 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
     return 1;
 }
 
+int dm2_v1_dungeon_collect_file_header_creature_possession_chain(
+    const DM2_V1_DungeonData *d,
+    const DM2_V1_FileHeaderRuntimeCreatureReceipt *creatures,
+    int creature_record_index,
+    DM2_V1_FileHeaderCreaturePossessionReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt validation;
+    DM2_V1_FileHeaderCreaturePossessionReceipt candidate;
+    const DM2_V1_FileHeaderCreatureRecord *creature;
+    const uint8_t *creature_record;
+    uint16_t thing;
+    int total_records = 0;
+
+    /* SKProject DME.h::Creature::GetPossessionObject returns w2; inventory
+     * and drop consumers subsequently follow c_record.cpp
+     * ::DM2_GET_NEXT_RECORD_LINK and mutate through CUT_RECORD_FROM or
+     * APPEND_RECORD_TO.  This read-only receipt keeps those transactions out
+     * of the loader while proving the real possession owner and chain. */
+    if (!out || !d || !creatures || !creatures->committed ||
+        !creatures->incomplete_world || creature_record_index < 0 ||
+        creature_record_index >= creatures->creature_record_count ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, creatures->map, &validation) || !validation.committed) {
+        return 0;
+    }
+    creature = &creatures->creatures[creature_record_index];
+    creature_record = dm2_v1_dungeon_get_thing_record(
+        d, creature->object_id, NULL, NULL, NULL);
+    if (!creature_record || ((creature->object_id >> 10) & 0x0fu) != 4u ||
+        RD16(creature_record + 2) != creature->possession_object_id) {
+        return 0;
+    }
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] < 0) return 0;
+        total_records += d->thing_type_counts[type];
+    }
+    if (total_records <= 0) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = creatures->map;
+    candidate.creature_object_id = creature->object_id;
+    candidate.possession_root = creature->possession_object_id;
+    thing = candidate.possession_root;
+    if (thing == DM2_THING_NULL_MARKER) return 0;
+    while (thing != DM2_THING_END_MARKER) {
+        const uint8_t *record;
+        int type = -1;
+        int index = -1;
+        int next;
+        DM2_V1_FileHeaderPossessionNode *node;
+
+        if (candidate.node_count >= DM2_V1_FILE_HEADER_MAX_CREATURE_POSSESSIONS ||
+            candidate.node_count >= total_records) {
+            return 0;
+        }
+        record = dm2_v1_dungeon_get_thing_record(
+            d, thing, &type, &index, NULL);
+        if (!record || type < 0 || type >= DM2_THING_TYPE_COUNT || index < 0)
+            return 0;
+        node = &candidate.nodes[candidate.node_count++];
+        node->object_id = thing;
+        node->type = (uint8_t)type;
+        node->index = (uint16_t)index;
+        next = dm2_v1_dungeon_get_next_thing(d, thing);
+        ++candidate.link_word_reads;
+        if (next < 0) return 0;
+        thing = (uint16_t)next;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
     const DM2_V1_DungeonData *d,
     int map,

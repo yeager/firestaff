@@ -180,6 +180,13 @@
 - ✅ Verifierat mot samtliga 44 PC-DOS-kartor. Det skapar inga
   `CreatureInfoData`-poster, AI-timers, droppar eller stridsresultat.
 
+# DM2 File_header possessionskedjor (2026-08-08)
+
+- ✅ Varje materialiserad DB4-varelse kan nu få sin egen `Creature::w2`-
+  ägda possessionskedja läst genom originalets recordlänkar.
+- ✅ Verifierat mot alla varelser i alla 44 PC-DOS-kartor. Läsningen flyttar,
+  utrustar eller tappar inte föremål.
+
 # DM2 File_header boot handoff (2026-08-08)
 
 - ✅ M11/bootprofilen lämnar nu karta 0:s verifierade File_header-recipient

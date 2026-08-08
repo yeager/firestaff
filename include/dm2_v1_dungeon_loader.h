@@ -692,6 +692,26 @@ typedef struct {
 } DM2_V1_FileHeaderRuntimeCreatureReceipt;
 
 typedef struct {
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t type;
+} DM2_V1_FileHeaderPossessionNode;
+
+#define DM2_V1_FILE_HEADER_MAX_CREATURE_POSSESSIONS 64
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    uint16_t creature_object_id;
+    uint16_t possession_root;
+    int node_count;
+    int link_word_reads;
+    DM2_V1_FileHeaderPossessionNode
+        nodes[DM2_V1_FILE_HEADER_MAX_CREATURE_POSSESSIONS];
+} DM2_V1_FileHeaderCreaturePossessionReceipt;
+
+typedef struct {
     int x;
     int y;
     uint16_t object_id;
@@ -1740,6 +1760,15 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
 int dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeCreatureReceipt *out);
+/* Follow one source-owned Creature::possession (w2) chain.  The creature must
+ * come from the committed File_header map receipt, and every node is resolved
+ * through c_record's bounded w0 link.  This exposes ownership only: it does
+ * not move, equip, drop or otherwise mutate possessions. */
+int dm2_v1_dungeon_collect_file_header_creature_possession_chain(
+    const DM2_V1_DungeonData *d,
+    const DM2_V1_FileHeaderRuntimeCreatureReceipt *creatures,
+    int creature_record_index,
+    DM2_V1_FileHeaderCreaturePossessionReceipt *out);
 /* Consume only declared direct DB5 roots on a runtime-admitted G1 map. It
  * reads source-defined Weapon::w2 fields and never the w0 next link, an
  * unvalidated map, or any inferred object traversal. */

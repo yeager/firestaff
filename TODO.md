@@ -21,6 +21,11 @@
   den till kartans grafiklistor, aktuator- och sensorvägar samt full
   `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
 
+- **DM2-CREATURE-POSSESSION-RUNTIME:** DB4-ägd possessionslänk och varje
+  verklig underkedja är nu verifierade utan mutation. Återställ därefter
+  originalens inventarie-, dropp-, flytt- och timertransaktioner innan några
+  föremål kan bli spelbara.
+
 - **DM2-FILE-HEADER-DOOR-RUNTIME:** The canonical map-0 DB0 door roots are
   now source-decoded. Bind their original animation, lock/key, sound, button
   and sensor consumers before publishing door transitions to gameplay.
