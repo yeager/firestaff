@@ -17,12 +17,6 @@
   `M11_Render_SetIndexedPaletteRgb6`/`M11_Render_PresentIndexed`-presentation.
   Ljudtid får inte härledas ur paketlängd eller värdlatens.
 
-- 🔧 Nexus direct LEV/M11 handoff regression (2026-08-09): the real DGN
-  no-draw receipts now bind correctly, but the integrated handoff fixture
-  still lacks an admitted MENU.BPK upload-row presentation receipt. Populate
-  that route from the verified MENU.BPK corpus before treating the full
-  Structure3 replay chain as green; do not bypass it with host fields.
-
 - 🔧 Nexus uncaptured text/audio receipt boundary (2026-08-08): script
   `DISPLAY_MESSAGE` no longer copies raw TEXT4/TABL bytes into a host C
   string until the explicit Saturn text-consumer capture seam is admitted.

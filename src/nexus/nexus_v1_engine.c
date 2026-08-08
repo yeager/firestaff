@@ -5699,7 +5699,10 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     if (!out_target) return -1;
     memset(out_target, 0, sizeof(*out_target));
     out_target->level_index = -1;
-    out_target->no_draw_only = 0;
+    /* Structure3 material bytes are provenance only; without a Saturn
+     * capture consumer this target must remain an opaque no-draw envelope. */
+    out_target->no_draw_only = 1;
+    out_target->fallback_visuals_permitted = 0;
     if (!engine ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 ||

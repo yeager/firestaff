@@ -29,6 +29,84 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size)
     return hash;
 }
 
+static int bind_real_menu_bpk_no_draw_route(
+    Nexus_V1_Engine *engine, const char *data_dir, uint64_t *out_package)
+{
+    char path[1024];
+    FILE *file = NULL;
+    long file_size;
+    uint8_t *data = NULL;
+    Nexus_V1_BpkRuntimeUploadRow rows[NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS];
+    Nexus_V1_BpkRuntimeUploadReceipt upload;
+    Nexus_V1_LevelAuxSourceReceipt source;
+    Nexus_V1_LauncherMenuBpkNoDrawPresentationReceipt presentation;
+    Nexus_V1_LauncherM11MenuBpkNoDrawHostReceipt host;
+    int row_count;
+    int row_index;
+    uint64_t package;
+
+    memset(&source, 0, sizeof(source));
+    if (!engine || !data_dir || !out_package) return 0;
+    engine->source = NEXUS_SRC_EXTRACTED;
+    if (snprintf(engine->data_dir, sizeof(engine->data_dir), "%s", data_dir) >=
+            (int)sizeof(engine->data_dir) ||
+        snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) >=
+            (int)sizeof(path) ||
+        nexus_v1_menu_bpk_source_receipt(engine, &source) != 0 ||
+        !source.canonical_hash_verified ||
+        !(file = fopen(path, "rb")) || fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0L || fseek(file, 0L, SEEK_SET) != 0 ||
+        !(data = (uint8_t *)malloc((size_t)file_size)) ||
+        fread(data, 1U, (size_t)file_size, file) != (size_t)file_size) {
+        if (file) fclose(file);
+        free(data);
+        return 0;
+    }
+    fclose(file);
+    package = fnv1a64(data, (size_t)file_size);
+    memset(&upload, 0, sizeof(upload));
+    memset(rows, 0, sizeof(rows));
+    if (!package || nexus_v1_bpk_archive_runtime_upload_plan(
+            data, (size_t)file_size, rows,
+            NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS, &upload) != 0) {
+        free(data);
+        return 0;
+    }
+    engine->menu_bpk_package_fnv1a64 = package;
+    engine->menu_bpk_upload_receipt = upload;
+    engine->menu_bpk_upload_receipt_valid = 1;
+    engine->menu_bpk_upload_row_count =
+        upload.planned_rows > NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS
+            ? (int)NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS
+            : (int)upload.planned_rows;
+    memcpy(engine->menu_bpk_upload_rows, rows,
+           (size_t)engine->menu_bpk_upload_row_count * sizeof(rows[0]));
+    engine->menu_bpk_source.canonical_hash_verified = 1;
+    row_count = nexus_v1_menu_bpk_upload_plan_rows(
+        engine, rows, NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS);
+    row_index = -1;
+    for (int index = 0; index < row_count; ++index) {
+        if (rows[index].entry_index == upload.first_prs3_entry_index) {
+            row_index = index;
+            break;
+        }
+    }
+    memset(&presentation, 0, sizeof(presentation));
+    memset(&host, 0, sizeof(host));
+    if (row_index < 0 ||
+        nexus_v1_launcher_menu_bpk_no_draw_presentation_receipt(
+            &upload, &rows[row_index], &presentation) != 1 ||
+        nexus_v1_launcher_admit_m11_menu_bpk_no_draw_host(
+            engine, 1U, package, &presentation, &host) != 1 ||
+        !host.valid || !host.no_draw_only || !host.draw_disabled) {
+        free(data);
+        return 0;
+    }
+    *out_package = package;
+    free(data);
+    return 1;
+}
+
 static void write_be32(uint8_t *bytes, size_t offset, uint32_t value)
 {
     bytes[offset] = (uint8_t)(value >> 24U);
@@ -167,6 +245,7 @@ int main(void)
     int transform_found = 0;
     int adjacency_transform_found = 0;
     int direct_static_target_count = 0;
+    uint64_t menu_package = 0U;
     Nexus_V1_LevCorpusDiscoveryReceipt lev_corpus;
 
     if (!data_dir || !data_dir[0]) {
@@ -258,6 +337,10 @@ int main(void)
     }
     memset(&engine, 0, sizeof(engine));
     memset(&level, 0, sizeof(level));
+    if (failures == 0) {
+        CHECK(nexus_v1_init(&engine, data_dir) == 0,
+              "canonical Nexus data initializes the production source boundary");
+    }
     if (failures == 0) {
         CHECK(nexus_v1_level_load(&level, data, (int)file_size, 1) == 0,
               "canonical LEV01 parses before direct material selection");
@@ -370,13 +453,11 @@ int main(void)
                           &engine, &adjacency) == 1,
                       "M11 consumes only exact parser-bound Structure1F/3 face adjacency, Structure2 envelope identity, and raw transform selectors");
                 memset(&m11_dungeon, 0, sizeof(m11_dungeon));
-                engine.external_saturn_save_capture_valid = 1;
-                engine.external_saturn_save_card_fnv1a64 = UINT64_C(0x1234);
-                engine.external_saturn_save_route_epoch = 1U;
-                engine.menu_bpk_no_draw_host_valid = 1;
-                engine.menu_bpk_no_draw_host_route_epoch = 1U;
-                engine.menu_bpk_package_fnv1a64 = UINT64_C(0x5678);
-                engine.menu_bpk_no_draw_host_package_fnv1a64 = UINT64_C(0x5678);
+        CHECK(bind_real_menu_bpk_no_draw_route(&engine, data_dir, &menu_package) == 1,
+              "real MENU.BPK upload plan admits an opaque no-draw host route");
+        engine.external_saturn_save_capture_valid = 1;
+        engine.external_saturn_save_card_fnv1a64 = UINT64_C(0x1234);
+        engine.external_saturn_save_route_epoch = 1U;
                 memset(&campaign, 0, sizeof(campaign));
                 campaign.valid = 1;
                 campaign.operator_only = 1;
@@ -385,7 +466,7 @@ int main(void)
                 campaign.jobs[1].dgn_fnv1a64 = lev_corpus.levels[1].fnv1a64;
                 memset(&campaign_handoff, 0, sizeof(campaign_handoff));
                 CHECK(nexus_v1_launcher_admit_multi_level_m11_dungeon_handoff(
-                          &engine, &lev_corpus, &campaign, 1U, UINT64_C(0x5678),
+                          &engine, &lev_corpus, &campaign, 1U, menu_package,
                           UINT64_C(0x1234), 1, 1U, &adjacency,
                           &campaign_handoff) == 1 &&
                       campaign_handoff.valid && campaign_handoff.no_draw_only &&
@@ -396,7 +477,7 @@ int main(void)
                           lev_corpus.levels[1].fnv1a64 &&
                       campaign_handoff.direct_lev.valid &&
                       campaign_handoff.direct_lev.package_fnv1a64 ==
-                          UINT64_C(0x5678) &&
+                          menu_package &&
                       campaign_handoff.direct_lev.card_fnv1a64 ==
                           UINT64_C(0x1234) &&
                       nexus_v1_engine_m11_direct_lev_dungeon_no_draw_ready(
@@ -829,7 +910,7 @@ int main(void)
                 campaign_handoff.direct_lev.card_fnv1a64 ^= UINT64_C(1);
                 campaign.jobs[1].dgn_fnv1a64 ^= UINT64_C(1);
                 CHECK(nexus_v1_launcher_admit_multi_level_m11_dungeon_handoff(
-                          &engine, &lev_corpus, &campaign, 1U, UINT64_C(0x5678),
+                          &engine, &lev_corpus, &campaign, 1U, menu_package,
                           UINT64_C(0x1234), 1, 1U, &adjacency,
                           &campaign_handoff) == 0 &&
                       !campaign_handoff.valid && campaign_handoff.no_draw_only &&

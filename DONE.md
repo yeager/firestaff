@@ -10303,3 +10303,11 @@
   adjacency retain the same no-draw/blocking contract used by M11 handoffs.
 - ✅ Real-data HUD, BPK, DGN, face/mesh, startup and SLEV regressions pass;
   the production source boundary remains capture-gated.
+# Nexus integrated DGN/M11 handoff uses real MENU.BPK provenance (2026-08-09)
+
+- ✅ The direct Structure3 capture regression now reads the hash-verified
+  `MENU.BPK`, builds its real PRS3 upload plan, and admits the first row through
+  the normal opaque no-draw host route.
+- ✅ M11 Structure3 topology, VDP1 envelope, BIOS/disc-bound route and blocked
+  transform-trace checks now run past the real menu handoff without synthetic
+  host fields or presentation promotion.
