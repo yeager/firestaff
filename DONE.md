@@ -1,5 +1,10 @@
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ Atari ST:s riktiga `MINI.DAT`-regression testar nu F1-inventory som en
+  faktisk öppna/stäng-transaktion från live GAMEBLOCK i stället för att
+  först skapa en avsiktligt föråldrad M11-party- eller inventoryspegel.
+  Original Atari-start, HUD och källåset passerar fortsatt.
+
 - ✅ Den oåtkomliga, värdkomponerade FM Towns C06-sidan är borttagen ur M11,
   inklusive dess gissade rit- och klickrutor. UTILE/UTILJ kan därför inte
   av misstag få en syntetisk skärm, cursorväg eller state-mutation innan den

@@ -370,15 +370,16 @@ int main(void)
             CHECK(check_atari_st_c232_hud_frame(profile->graphics_path,
                                                  framebuffer),
                   "real Atari MINI.DAT framebuffer contains all C232-owned HUD material");
-            view.world.party.championCount = 0;
-            view.inventoryPanelActive = 0;
             CHECK(M11_GameView_HandleInput(
                       &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
                       M11_GAME_INPUT_REDRAW &&
                       view.world.party.championCount == 1 &&
                       view.inventoryPanelActive,
-                  "real Atari MINI.DAT F1 refreshes GAMEBLOCK before opening inventory");
-            view.inventoryPanelActive = 0;
+                  "real Atari MINI.DAT F1 opens the GAMEBLOCK champion inventory");
+            CHECK(M11_GameView_HandleInput(
+                      &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                      M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+                  "real Atari MINI.DAT F1 closes inventory through the same GAMEBLOCK route");
             CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
                       M11_GAME_INPUT_REDRAW && view.spellPanelOpen &&
                       M11_GameView_HandleInput(
