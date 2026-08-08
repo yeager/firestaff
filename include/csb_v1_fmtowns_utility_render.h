@@ -21,6 +21,8 @@ typedef struct CSB_V1_FmtownsUtilityRenderReceipt {
     uint32_t source_fnv1a;
     uint32_t pixel_fnv1a;
     uint16_t rendered_champion_count;
+    uint16_t selected_champion_index;
+    uint8_t selected_color_index;
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityRenderReceipt;
 
@@ -30,6 +32,17 @@ typedef struct CSB_V1_FmtownsUtilityRenderReceipt {
  * label, placeholder portrait or host artwork is accepted.  F31J is
  * deliberately rejected until its native Shift-JIS/TBIOS text consumer is
  * recovered from runtime evidence. */
+int csb_v1_fmtowns_utility_render_editor(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityMenuReceipt *menu,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion_index, uint8_t selected_color_index,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
+
+/* First F7042 frame: champion and palette index zero. */
 int csb_v1_fmtowns_utility_render_initial(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
     const CSB_V1_FmtownsUtilityMenuReceipt *menu,

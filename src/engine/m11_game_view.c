@@ -6890,12 +6890,7 @@ static int m11_csb_bind_fmtowns_switch(
 static int m11_csb_enter_fmtowns_utility(
     M11_GameViewState *state, CSB_V1_FmtownsSwitchLanguage language)
 {
-    CSB_V1_FmtownsUtilityHandoffReceipt utility;
-    CSB_V1_FmtownsUtilityMenuReceipt menu;
-    CSB_V1_FmtownsUtilityFontReceipt font;
     CSB_V1_FmtownsGameHandoffReceipt game;
-    CSB_V1_FmtownsStartupPortraitReceipt portraits;
-    CSB_V1_PartyState party;
     CSB_V1_FmtownsUtilityRenderReceipt rendered;
     const CSB_V1_BootProfile *profile;
 
@@ -6906,23 +6901,38 @@ static int m11_csb_enter_fmtowns_utility(
     if (!state || language != CSB_FMTOWNS_SWITCH_ENGLISH ||
         !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    memset(&utility, 0, sizeof(utility));
-    memset(&menu, 0, sizeof(menu));
-    memset(&font, 0, sizeof(font));
+    memset(&state->csbFmtownsUtilityHandoffReceipt, 0,
+           sizeof(state->csbFmtownsUtilityHandoffReceipt));
+    memset(&state->csbFmtownsUtilityMenuReceipt, 0,
+           sizeof(state->csbFmtownsUtilityMenuReceipt));
+    memset(&state->csbFmtownsUtilityFontReceipt, 0,
+           sizeof(state->csbFmtownsUtilityFontReceipt));
     memset(&game, 0, sizeof(game));
-    memset(&portraits, 0, sizeof(portraits));
-    memset(&party, 0, sizeof(party));
+    memset(&state->csbFmtownsUtilityPortraitReceipt, 0,
+           sizeof(state->csbFmtownsUtilityPortraitReceipt));
+    memset(&state->csbFmtownsUtilityParty, 0,
+           sizeof(state->csbFmtownsUtilityParty));
     memset(&rendered, 0, sizeof(rendered));
-    if (!csb_v1_fmtowns_utility_handoff_open(profile, language, &utility) ||
-        !csb_v1_fmtowns_utility_menu_open(profile, language, &menu) ||
-        !csb_v1_fmtowns_utility_font_open(profile, language, &font) ||
+    if (!csb_v1_fmtowns_utility_handoff_open(
+            profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
+        !csb_v1_fmtowns_utility_menu_open(
+            profile, language, &state->csbFmtownsUtilityMenuReceipt) ||
+        !csb_v1_fmtowns_utility_font_open(
+            profile, language, &state->csbFmtownsUtilityFontReceipt) ||
         !csb_v1_fmtowns_game_handoff_open(profile, language, &game) ||
-        !csb_v1_fmtowns_game_load_startup_party(&game, &party) ||
-        !csb_v1_fmtowns_game_load_startup_portraits(&game, &portraits) ||
+        !csb_v1_fmtowns_game_load_startup_party(
+            &game, &state->csbFmtownsUtilityParty) ||
+        !csb_v1_fmtowns_game_load_startup_portraits(
+            &game, &state->csbFmtownsUtilityPortraitReceipt) ||
         !csb_v1_fmtowns_utility_icon_palette_rgb6(
-            &menu, state->csbFmtownsUtilityPaletteRgb6) ||
+            &state->csbFmtownsUtilityMenuReceipt,
+            state->csbFmtownsUtilityPaletteRgb6) ||
         !csb_v1_fmtowns_utility_render_initial(
-            &utility, &menu, &font, &party, &portraits,
+            &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityMenuReceipt,
+            &state->csbFmtownsUtilityFontReceipt,
+            &state->csbFmtownsUtilityParty,
+            &state->csbFmtownsUtilityPortraitReceipt,
             state->csbFmtownsUtilityPixels,
             sizeof(state->csbFmtownsUtilityPixels), &rendered)) {
         memset(state->csbFmtownsUtilityPixels, 0,
@@ -6931,10 +6941,29 @@ static int m11_csb_enter_fmtowns_utility(
                sizeof(state->csbFmtownsUtilityPaletteRgb6));
         return 0;
     }
+    state->csbFmtownsUtilitySelectedChampion = 0u;
+    state->csbFmtownsUtilitySelectedColor = 0u;
     state->csbFmtownsUtilityBound = 1;
     /* AUTOEXEC.BAT has transferred ownership from SWITCHTW to C06. */
     state->csbFmtownsSwitchBound = 0;
     return 1;
+}
+
+static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
+{
+    CSB_V1_FmtownsUtilityRenderReceipt rendered;
+    if (!state || !state->csbFmtownsUtilityBound) return 0;
+    memset(&rendered, 0, sizeof(rendered));
+    return csb_v1_fmtowns_utility_render_editor(
+        &state->csbFmtownsUtilityHandoffReceipt,
+        &state->csbFmtownsUtilityMenuReceipt,
+        &state->csbFmtownsUtilityFontReceipt,
+        &state->csbFmtownsUtilityParty,
+        &state->csbFmtownsUtilityPortraitReceipt,
+        state->csbFmtownsUtilitySelectedChampion,
+        state->csbFmtownsUtilitySelectedColor,
+        state->csbFmtownsUtilityPixels,
+        sizeof(state->csbFmtownsUtilityPixels), &rendered);
 }
 
 /* ------------------------------------------------------------------ */
@@ -7080,6 +7109,16 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
     state->csbFmtownsUtilityBound = 0;
     memset(state->csbFmtownsUtilityPixels, 0,
            sizeof(state->csbFmtownsUtilityPixels));
+    memset(&state->csbFmtownsUtilityHandoffReceipt, 0,
+           sizeof(state->csbFmtownsUtilityHandoffReceipt));
+    memset(&state->csbFmtownsUtilityMenuReceipt, 0,
+           sizeof(state->csbFmtownsUtilityMenuReceipt));
+    memset(&state->csbFmtownsUtilityFontReceipt, 0,
+           sizeof(state->csbFmtownsUtilityFontReceipt));
+    memset(&state->csbFmtownsUtilityParty, 0,
+           sizeof(state->csbFmtownsUtilityParty));
+    memset(&state->csbFmtownsUtilityPortraitReceipt, 0,
+           sizeof(state->csbFmtownsUtilityPortraitReceipt));
     m11_csb_release_fmtowns_switch(state);
     if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
@@ -7243,19 +7282,38 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
 static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     M11_GameViewState *state, int x, int y, int button_mask)
 {
-    CSB_V1_FmtownsUtilityMenuReceipt menu;
     CSB_V1_FmtownsUtilityMenuHitBox hit;
-    const CSB_V1_BootProfile *profile;
+    int champion;
     if (!state || !state->csbFmtownsUtilityBound ||
         (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 ||
         !state->csbBootProfile) return M11_GAME_INPUT_REDRAW;
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    memset(&menu, 0, sizeof(menu));
     memset(&hit, 0, sizeof(hit));
-    if (!csb_v1_fmtowns_utility_menu_open(
-            profile, CSB_FMTOWNS_SWITCH_ENGLISH, &menu) ||
-        !csb_v1_fmtowns_utility_menu_action_at(&menu, (int16_t)x, (int16_t)y,
-                                               &hit)) return M11_GAME_INPUT_REDRAW;
+    /* CEDTDATA.C G2272_MouseInputs[0..3] and F7050 first select only an
+     * existing source champion.  The retained MINI.DAT portrait receipt is
+     * re-expanded; no temporary host portrait is ever installed. */
+    champion = x >= 4 && x <= 48 ? 0 :
+               x >= 71 && x <= 115 ? 1 :
+               x >= 138 && x <= 182 ? 2 :
+               x >= 205 && x <= 249 ? 3 : -1;
+    if (champion >= 0 && y >= 3 && y <= 42) {
+        if ((unsigned int)champion < state->csbFmtownsUtilityParty.ChampionCount) {
+            state->csbFmtownsUtilitySelectedChampion = (uint16_t)champion;
+            if (!m11_csb_redraw_fmtowns_utility(state))
+                return M11_GAME_INPUT_IGNORED;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
+    /* CEDTDATA.C G2272_MouseInputs[6] and CEDT006.C F7043 derive the
+     * source colour from (y - 43) / 8. */
+    if (x >= 286 && x <= 303 && y >= 43 && y <= 169) {
+        state->csbFmtownsUtilitySelectedColor = (uint8_t)((y - 43) / 8);
+        if (!m11_csb_redraw_fmtowns_utility(state))
+            return M11_GAME_INPUT_IGNORED;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (!csb_v1_fmtowns_utility_menu_action_at(
+            &state->csbFmtownsUtilityMenuReceipt, (int16_t)x, (int16_t)y,
+            &hit)) return M11_GAME_INPUT_REDRAW;
     if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT) {
         /* CEDT006 returns to AUTOEXEC's F31E loop.  Rebind the original
          * SWITCHTW page; no made-up post-editor page is kept on screen. */

@@ -431,6 +431,14 @@ int main(void)
                      sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
               "F31E Utility presents its C06-owned source raster, not SWITCHTW");
         result = M11_GameView_HandlePointerButton(
+            &view, 290, 67, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilitySelectedColor == 3u &&
+                  framebuffer[68u * 320u + 287u] == 15u,
+              "F31E C06 palette selection redraws the original selected swatch");
+        result = M11_GameView_HandlePointerButton(
             &view, 300, 8, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsSwitchBound &&
                   !view.csbFmtownsUtilityBound,

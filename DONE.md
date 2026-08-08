@@ -33,6 +33,10 @@
   saknar runtimebevis.
 - ✅ Verifierat mot verklig F31E-media i `test_csb_v1_fmtowns_m11_game_handoff`
   och med CSB/DM2:s källåsningskontroll.
+- ✅ Champion- och färgpalettsurval följer också originalets
+  `CEDTDATA.C`/`CEDT006.C` F7040/F7043-koordinater. Omritningen använder
+  samma receiptsbundna MINI.DAT-porträtt och C06-palettelement; klick på en
+  tom championplats skapar ingen ersättningschampion.
 
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 

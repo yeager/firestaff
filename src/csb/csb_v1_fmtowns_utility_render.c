@@ -122,12 +122,13 @@ static void blit(const uint8_t *source, int width, int height, int x, int y,
     }
 }
 
-int csb_v1_fmtowns_utility_render_initial(
+int csb_v1_fmtowns_utility_render_editor(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
     const CSB_V1_FmtownsUtilityMenuReceipt *menu,
     const CSB_V1_FmtownsUtilityFontReceipt *font,
     const CSB_V1_PartyState *party,
     const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion_index, uint8_t selected_color_index,
     uint8_t *pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
 {
@@ -159,15 +160,19 @@ int csb_v1_fmtowns_utility_render_initial(
         portraits->language != CSB_FMTOWNS_SWITCH_ENGLISH ||
         party->ChampionCount < 1 || party->ChampionCount > CSB_V1_MAX_CHAMPIONS)
         return 0;
+    champion_count = (unsigned int)party->ChampionCount;
+    if (selected_champion_index >= champion_count || selected_color_index > 15u)
+        return 0;
     memset(&decoded, 0, sizeof(decoded));
     if (!csb_v1_fmtowns_img2_decode(handoff->mirror_bitmap,
                                     CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES,
                                     48u, 41u, mirror, sizeof(mirror), &decoded) ||
         !decoded.valid || decoded.stream_bytes_consumed !=
                          CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES ||
-        !csb_v1_fmtowns_portrait_decode_planar(portraits->source_bytes[0],
-                                               CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES,
-                                               portrait, sizeof(portrait))) return 0;
+        !csb_v1_fmtowns_portrait_decode_planar(
+            portraits->source_bytes[selected_champion_index],
+            CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES, portrait, sizeof(portrait)))
+        return 0;
 
     memset(pixels, C00_BLACK, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
     for (index = 0u; index < 6u; ++index) {
@@ -177,17 +182,17 @@ int csb_v1_fmtowns_utility_render_initial(
     }
     filled_box((C06_Box){157, 252, 60, 146}, 3, C03_DARK_BROWN, C00_BLACK, pixels);
     filled_box((C06_Box){284, 305, 41, 171}, 2, C02_LIGHT_GRAY, C00_BLACK, pixels);
-    champion_count = (unsigned int)party->ChampionCount;
     for (index = 0u; index < champion_count; ++index) {
         if (!csb_v1_fmtowns_portrait_decode_planar(portraits->source_bytes[index],
                                                    CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES,
                                                    portrait, sizeof(portrait))) return 0;
         fill(name_boxes[index], C01_DARK_GRAY, pixels);
         text(font, name_boxes[index].left + 2, 9,
-             index == 0u ? C09_GOLD : C15_WHITE, C01_DARK_GRAY,
+             index == selected_champion_index ? C09_GOLD : C15_WHITE,
              (const uint8_t *)party->Champions[index].Name,
              CSB_V1_MAX_NAME_LEN, pixels);
-        filled_box(portrait_boxes[index], 1, index == 0u ? C15_WHITE : C00_BLACK,
+        filled_box(portrait_boxes[index], 1,
+                   index == selected_champion_index ? C15_WHITE : C00_BLACK,
                    C01_DARK_GRAY, pixels);
         blit(portrait, 32, 29, portrait_boxes[index].left,
              portrait_boxes[index].top, -1, pixels);
@@ -205,6 +210,14 @@ int csb_v1_fmtowns_utility_render_initial(
     for (index = 1u; index < 16u; ++index)
         fill((C06_Box){286, 303, 43 + (int)index * 8,
                        49 + (int)index * 8}, (uint8_t)index, pixels);
+    /* CEDT006.C F7035/F7036: the selected swatch gets the source colour as
+     * its line and white as its two-pass inner box. */
+    filled_box((C06_Box){286, 303, 43 + (int)selected_color_index * 8,
+                         49 + (int)selected_color_index * 8}, 1,
+               C15_WHITE, selected_color_index, pixels);
+    filled_box((C06_Box){286, 303, 43 + (int)selected_color_index * 8,
+                         49 + (int)selected_color_index * 8}, 1,
+               C15_WHITE, selected_color_index, pixels);
 
     if (out_receipt) {
         out_receipt->valid = 1;
@@ -215,9 +228,25 @@ int csb_v1_fmtowns_utility_render_initial(
         out_receipt->pixel_fnv1a = fnv1a(pixels,
                                          CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
         out_receipt->rendered_champion_count = (uint16_t)champion_count;
+        out_receipt->selected_champion_index = selected_champion_index;
+        out_receipt->selected_color_index = selected_color_index;
         out_receipt->source_evidence =
             "ReDMCSB CEDT006.C F7030/F7031/F7032/F7033/F7034/F7042; "
             "CEDT018.C F0689; CEDT019.C F2124; CEDT030.C F7338";
     }
     return 1;
+}
+
+int csb_v1_fmtowns_utility_render_initial(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityMenuReceipt *menu,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint8_t *pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    return csb_v1_fmtowns_utility_render_editor(
+        handoff, menu, font, party, portraits, 0u, 0u, pixels,
+        pixel_capacity, out_receipt);
 }

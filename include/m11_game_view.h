@@ -1594,6 +1594,13 @@ typedef struct {
     uint8_t csbFmtownsUtilityPixels[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
     uint8_t csbFmtownsUtilityPaletteRgb6
         [CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
+    CSB_V1_FmtownsUtilityHandoffReceipt csbFmtownsUtilityHandoffReceipt;
+    CSB_V1_FmtownsUtilityMenuReceipt csbFmtownsUtilityMenuReceipt;
+    CSB_V1_FmtownsUtilityFontReceipt csbFmtownsUtilityFontReceipt;
+    CSB_V1_PartyState csbFmtownsUtilityParty;
+    CSB_V1_FmtownsStartupPortraitReceipt csbFmtownsUtilityPortraitReceipt;
+    uint16_t csbFmtownsUtilitySelectedChampion;
+    uint8_t csbFmtownsUtilitySelectedColor;
     int csbFmtownsUtilityBound;
     /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
      * Retain its verified identity alongside the launch gate so M11 can open
