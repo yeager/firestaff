@@ -1096,6 +1096,7 @@ static int dm2_scan_known_hash_assets(const char *base,
 }
 
 static void copy_parent_dir(char dst[512], const char *path) {
+    const char *virtual_separator;
     const char *slash;
     const char *backslash;
     size_t n;
@@ -1103,6 +1104,28 @@ static void copy_parent_dir(char dst[512], const char *path) {
     dst[0] = '\0';
     if (!path || !path[0]) {
         snprintf(dst, 512, ".");
+        return;
+    }
+    /* Archive provenance is deliberately represented as
+     * `outer-archive::member`.  The selected outer archive is the actual
+     * runtime owner; taking the last slash from the complete provenance used
+     * to produce a nonexistent `outer-archive::nested-directory` path for
+     * Amiga LZX and FM Towns media.  Preserve the outer archive exactly so
+     * M12 and boot keep the same selected edition.  The bytes themselves are
+     * still opened only through the RAM-backed media loader.
+     *
+     * Source ownership: SKProject SKWINSPX/src/v5/skfileop.cpp selects the
+     * game medium before GDAT/DUNGEON reads; M12's virtual provenance is the
+     * corresponding Firestaff medium receipt. */
+    virtual_separator = strstr(path, "::");
+    if (virtual_separator) {
+        n = (size_t)(virtual_separator - path);
+        if (n == 0u || n >= 512u) {
+            snprintf(dst, 512, ".");
+            return;
+        }
+        memcpy(dst, path, n);
+        dst[n] = '\0';
         return;
     }
     slash = strrchr(path, '/');

@@ -43,6 +43,9 @@ int main(void)
     expect(strstr(profile.graphics_path, "::DM2_archive.LZX/GRAPHICS.DAT") != NULL &&
                strstr(profile.dungeon_path, "::DM2_archive.LZX/DUNGEON.DAT") != NULL,
            "boot records nested media provenance instead of a cache path");
+    expect(strcmp(profile.asset_root, root) == 0 &&
+               strstr(profile.asset_root, "::") == NULL,
+           "boot retains the selected outer archive as the runtime media owner");
     expect(dm2_v1_boot_enter_game(&profile) == 0,
            "the admitted original Amiga buffers complete DM2 boot");
     dm2_v1_boot_cleanup(&profile);

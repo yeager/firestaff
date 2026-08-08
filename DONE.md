@@ -18,6 +18,16 @@
 - ✅ Fixed spawner timer init to use respawn_delay.
 - Version: v3.0.302
 
+# DM2 archive runtime-media owner repair (2026-08-08)
+
+- ✅ Fixed DM2 boot's archive provenance handling. Amiga LZX and FM Towns
+  virtual members (`archive::member`) now retain the selected outer archive
+  as their runtime media owner instead of constructing a nonexistent path
+  beneath the archive name.
+- ✅ Verified with the original six-disk Amiga AGA installer and HME-242 FM
+  Towns CD: both stay in RAM, no game member is unpacked, and the M12, boot,
+  title and Phase A checks pass.
+
 # DM2 champion lifecycle production isolation (2026-08-08)
 
 - ✅ Removed the callback-only champion lifecycle compatibility module from

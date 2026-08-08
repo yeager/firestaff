@@ -178,7 +178,11 @@ typedef struct {
     char             version_id[16];    /* e.g. "pc-en", "pc-fr" */
 
     /* ── Asset paths ─────────────────────────────────────── */
-    char    asset_root[512];   /* parent dir of resolved dungeon/graphics data */
+    /* The selected runtime media owner.  Loose data keeps its containing
+     * directory here; archive-backed editions keep the outer archive path.
+     * It must never be derived as a fictitious path beneath a virtual
+     * `archive::member` provenance string. */
+    char    asset_root[512];
     /* Resolved only by a recognised content hash.  The original install name
      * is retained as display metadata after admission; it is never a lookup
      * fallback or a launch credential. */

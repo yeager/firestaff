@@ -2667,6 +2667,10 @@ level or consumer bindings.
   **2026-08-07 GDAT verification update:** the broad creature-animation,
   visual-census, GRAPHICSSET, scene-plan and wall-plan probes now likewise
   require the selected corpus and fail an unreadable explicit selection.
+  **2026-08-08 archive-owner repair:** archive-backed `GRAPHICS.DAT` and
+  `DUNGEON.DAT` provenance no longer yields a fictitious
+  `archive::member-parent` runtime root. The selected outer archive remains
+  the boot owner, while all member bytes continue to be read in RAM.
   **2026-08-07 corpus-selection follow-up:** the boot-profile hash-renaming
   and live weather-frame regressions now also take real PC-DOS data only from
   `FIRESTAFF_DM2_DATA_DIR`. They skip only when it is unset; an explicitly
