@@ -126,6 +126,21 @@ static void assert_source_type_census(
                   sizeof(expected)) == 0);
 }
 
+static unsigned int expected_live_monsters(const Theron_V1_World *world) {
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < world->source_monster_count; ++i) {
+        const Theron_V1_SourceMonsterRecord *record =
+            &world->source_monsters[i];
+        if (record->dungeon_id != world->current_dungeon ||
+            record->level != world->current_level) continue;
+        unsigned int members = (unsigned int)record->number + 1u;
+        if (members > 4u) members = 4u;
+        for (unsigned int slot = 0; slot < members; ++slot)
+            if (record->health[slot] != 0u) ++count;
+    }
+    return count;
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA","DRATOR","FORMICIA","SARMON","SHADODAN","THIEVES","DEMON"
@@ -214,11 +229,24 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                result.source_category_counts[THERON_CAT_MONSTER]);
         assert(world->source_generator_count == expected_source_generators[d]);
         assert(world->source_object_count == result.source_object_count);
-        assert(world->creature_count == 0);
+        /* Static category-4 group records are now admitted to the live pool
+         * for the current level.  This is source materialization, not the
+         * still-gated random generator path. */
+        assert((unsigned int)world->creature_count ==
+               expected_live_monsters(world));
+        for (int ci = 0; ci < world->creature_count; ++ci) {
+            const Theron_V1_Creature *creature = &world->creatures[ci];
+            assert(creature->flags & THERON_CF_ACTIVE);
+            assert(creature->source_ref != 0u);
+            assert(creature->hp == creature->max_hp);
+            assert(creature->primary_attack == THERON_ATTACK_NONE);
+            assert(creature->secondary_attack == THERON_ATTACK_NONE);
+        }
         theron_v1_world_init_generators(world);
         world->world_tick = 60;
         theron_v1_world_tick_generators(world);
-        assert(world->creature_count == 0);
+        assert((unsigned int)world->creature_count ==
+               expected_live_monsters(world));
         for (int i = 0; i < world->generator_active_count; ++i)
             assert(world->generator_spawn_count[i] == 0);
         assert_source_category_census(&result);

@@ -794,10 +794,68 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
     if (lvl < 0 || lvl >= THERON_MAX_LEVELS_PER_DUNGEON) return -1;
     if (!world->level_loaded[di][lvl]) return -1;
 
-    /* Track 02's real monster records are bound by the thing-data loader.
-     * Until their type, graphics and AI handoff is source-proven, do not
-     * replace them with random placement or the legacy DM-style type table. */
-    if (world->source_thing_directory_verified[di]) return 0;
+    /* Track 02 category-4 records are actual in-dungeon monster groups.  A
+     * group carries the source creature type, cell byte, count and one HP
+     * word per member (the same 16-byte group shape documented by the
+     * DungeonGroup layout).  Materialize those bytes directly; do not use
+     * the separate random-wave path here.  The latter still requires its
+     * original HuC6280 RNG consumer and remains fail-closed in combat.c. */
+    if (!world->source_thing_directory_verified[di]) return 0;
+
+    unsigned int required = 0;
+    for (unsigned int i = 0; i < world->source_monster_count; ++i) {
+        const Theron_V1_SourceMonsterRecord *record =
+            &world->source_monsters[i];
+        if (record->dungeon_id != world->current_dungeon ||
+            record->level != lvl) continue;
+        /* The on-disk count is the two-bit value; actual members are value+1.
+         * This is the source Group count contract, not a gameplay default. */
+        unsigned int members = (unsigned int)record->number + 1u;
+        if (members > 4u) members = 4u;
+        for (unsigned int slot = 0; slot < members; ++slot)
+            if (record->health[slot] != 0u) ++required;
+    }
+    if (required > THERON_MAX_CREATURES_PER_LEVEL) return -1;
+
+    /* Creature pool is explicitly current-level state.  Rebuilding it on a
+     * level entry prevents old-level records surviving a transition. */
+    world->creature_count = 0;
+    memset(world->creatures, 0, sizeof(world->creatures));
+    for (unsigned int i = 0; i < world->source_monster_count; ++i) {
+        const Theron_V1_SourceMonsterRecord *record =
+            &world->source_monsters[i];
+        if (record->dungeon_id != world->current_dungeon ||
+            record->level != lvl) continue;
+        unsigned int members = (unsigned int)record->number + 1u;
+        if (members > 4u) members = 4u;
+        for (unsigned int slot = 0; slot < members; ++slot) {
+            Theron_V1_Creature *creature;
+            uint16_t hp = record->health[slot];
+            if (hp == 0u) continue; /* unused source group member */
+            creature = &world->creatures[world->creature_count++];
+            memset(creature, 0, sizeof(*creature));
+            creature->id = ((int)record->source_ref << 2) | (int)slot;
+            if (creature->id <= 0) creature->id = world->creature_count;
+            creature->type = record->type;
+            creature->level = (uint8_t)lvl;
+            creature->dungeon_id = world->current_dungeon;
+            creature->x = record->x;
+            creature->y = record->y;
+            creature->hp = (int)hp;
+            creature->max_hp = (int)hp;
+            /* Attack, defense, AI, drops and sound are intentionally left
+             * unbound until their original consumers are captured. */
+            creature->primary_attack = THERON_ATTACK_NONE;
+            creature->secondary_attack = THERON_ATTACK_NONE;
+            creature->flags = THERON_CF_ACTIVE;
+            creature->source_ref = record->source_ref;
+            creature->source_index = record->source_index;
+            creature->source_position = record->position;
+            creature->source_slot = (uint8_t)slot;
+            creature->source_group_count = (uint8_t)members;
+            creature->source_direction_flags = record->direction_flags;
+        }
+    }
     return 0;
 }
 

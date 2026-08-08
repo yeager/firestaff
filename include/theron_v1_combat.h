@@ -142,6 +142,17 @@ typedef struct {
     int        gold_drop_max;
     uint8_t    item_drop_table[4]; /* item IDs, 0 = end of list */
     int        link_id;          /* teleporter / trigger link */
+
+    /* Authentic Track 02 monster-group identity.  These fields are copied
+     * from the category-4 record when a static group is admitted to the live
+     * pool; they are not inferred gameplay state.  Source: DMBUILDER6
+     * DungeonGroup layout, THQUEST thing-list category 4. */
+    uint16_t   source_ref;
+    uint16_t   source_index;
+    uint8_t    source_position;
+    uint8_t    source_slot;
+    uint8_t    source_group_count;
+    uint8_t    source_direction_flags;
 } Theron_V1_Creature;
 
 /* ── Combat result ──────────────────────────────────────────────── */

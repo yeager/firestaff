@@ -399,5 +399,14 @@ int theron_v1_track02_load_full_dungeon_for_variant(
 
     free(pos_table);
     free(td);
+
+    /* Initial level entry and later transitions use the same source-owned
+     * category-4 group admission.  This publishes only static monster
+     * records; random generators still require their original consumer. */
+    if (world->current_dungeon == dungeon_id &&
+        world->current_level >= 0 &&
+        world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+        theron_v1_world_spawn_level_creatures(world) != 0)
+        return -1;
     return 0;
 }

@@ -1,3 +1,16 @@
+# Theron static monster-group admission (2026-08-08)
+
+- ✅ Bound authenticated Track 02 category-4 monster-group records to the
+  current-level live creature pool. Each member preserves source reference,
+  source index, group position, slot, count, direction flags and the original
+  HP word; no attack, AI, loot or sound values are fabricated.
+- ✅ Initial full-dungeon loading and later level transitions rebuild the
+  current-level creature pool from those records. Random-wave spawning remains
+  fail-closed until the original HuC6280 RNG consumer is captured.
+- ✅ Verification: all seven US Track 02 dungeon loads pass with the real BIN;
+  source-group member counts match live creatures and the combat admission
+  suite remains green.
+
 # DM2 SKSAVE bitstream-order repair (2026-08-08)
 
 - ✅ Corrected the direct-root reader to stop after the source hero and

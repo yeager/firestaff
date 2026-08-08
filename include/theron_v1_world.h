@@ -306,9 +306,10 @@ typedef struct {
 
 #define THERON_MAX_OBJECTS 512
 
-/* A decoded source monster is retained separately from the live creature
- * pool until the reviewed type/graphics/AI handoff is complete.  This keeps
- * authentic Track 02 records available without promoting guessed semantics. */
+/* A decoded source monster remains available as provenance even after its
+ * static group members are admitted to the live creature pool.  The live
+ * admission copies only fields present in the record; combat/AI consumers
+ * still refuse to invent missing attack, drop or sound semantics. */
 #define THERON_MAX_SOURCE_MONSTERS 128
 
 typedef struct {
