@@ -1227,6 +1227,8 @@ int main(void) {
     DM2_V1_BootNewGamePossessionReceipt source_possessions;
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
+    DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
+    int new_game_generators_result;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -1638,6 +1640,18 @@ int main(void) {
                     new_game_world_owner.dungeon.initial_party_dir == 0 &&
                     new_game_world_owner.record_pools.valid &&
                     new_game_world_owner.record_pools.record_graph_complete &&
+                    new_game_world_owner.timer_capacity > 50u &&
+                    new_game_world_owner.timer_queue.max_timers ==
+                        (int16_t)new_game_world_owner.timer_capacity &&
+                    new_game_world_owner.timer_queue.num_timers == 0 &&
+                    new_game_world_owner.timer_queue.gametick == 0 &&
+                    new_game_world_owner.fresh_game_mode &&
+                    new_game_world_owner.record_capacities[4] >=
+                        new_game_world_owner.dungeon.thing_type_counts[4] &&
+                    new_game_world_owner.record_capacities[14] >=
+                        new_game_world_owner.dungeon.thing_type_counts[14] &&
+                    new_game_world_owner.record_capacities[15] >=
+                        new_game_world_owner.dungeon.thing_type_counts[15] &&
                     new_game_world_owner.selected_party.heros_in_party == 2 &&
                     source_dungeon_bytes_before_owner ==
                         ((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_data &&
@@ -1649,6 +1663,26 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 materializes an isolated File_header and DB-pool world from original bytes without publishing a party or timer session");
+    memset(&new_game_generators, 0, sizeof(new_game_generators));
+    new_game_generators_result = profile &&
+        dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+            &new_game_world_owner, &new_game_generators);
+    expect_true(profile &&
+                    new_game_generators_result &&
+                    new_game_generators.valid &&
+                    new_game_generators.candidate_count ==
+                        source_transaction.actuator_generators.tick_generator_candidate_count &&
+                    new_game_generators.control_bit2_clear_count ==
+                        source_transaction.actuator_generators.control_bit2_clear_count &&
+                    new_game_generators.activation_count ==
+                        source_transaction.actuator_generators.control_bit2_set_count &&
+                    new_game_generators.queued_timer_count <=
+                        new_game_generators.activation_count &&
+                    new_game_world_owner.timer_queue.num_timers ==
+                        (int16_t)new_game_generators.queued_timer_count &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 runs the original fresh-game actuator-generator pass only in the private File_header/c_tim owner");
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&

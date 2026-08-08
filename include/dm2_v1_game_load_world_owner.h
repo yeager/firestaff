@@ -16,6 +16,7 @@
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_timer_queue_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,11 +32,29 @@ typedef struct {
     uint32_t source_transaction_hash;
     DM2_V1_DungeonData dungeon;
     DM2_V1_RecordPoolSet record_pools;
+    /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
+     * before it allocates the original 12-byte c_tim array and index heap.
+     * They are allocation limits, not invented queued timers. */
+    uint16_t record_capacities[DM2_V1_RECORD_POOL_COUNT];
+    DM2_V1_TimerEntry *timer_entries;
+    int16_t *timer_indices;
+    DM2_V1_TimerQueue timer_queue;
+    uint16_t timer_capacity;
+    int fresh_game_mode;
     DM2_V1_BootNewGameTransactionReceipt transaction;
     /* Exact detached result of the source selection receipt.  This is not
      * installed in M11 or the runtime party state. */
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
+
+typedef struct {
+    int valid;
+    uint16_t candidate_count;
+    uint16_t control_bit2_clear_count;
+    uint16_t activation_count;
+    uint16_t queued_timer_count;
+    uint32_t receipt_hash;
+} DM2_V1_GameLoadActuatorGeneratorReceipt;
 
 /* Build a source-owned, pre-selection world from one currently mounted,
  * hash-verified PC File_header/GDAT pair and exact mirror clicks.  It rejects
@@ -49,6 +68,13 @@ int dm2_v1_game_load_world_owner_init_new_game(
 void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner);
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner);
+
+/* Source port of c_tim_proc.cpp::DM2_PROCESS_ACTUATOR_TICK_GENERATOR for
+ * the prepared fresh-game owner. It changes only owned DB3 bytes and its
+ * owned c_tim heap; an enqueue failure restores both before returning 0. */
+int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadActuatorGeneratorReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

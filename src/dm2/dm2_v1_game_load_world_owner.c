@@ -1,8 +1,52 @@
 /* Source-owned File_header world materialisation for DM2 New Game. */
 
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
+
+static int dm2_v1_game_load_owner_prepare_timer_capacity(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    int type;
+    int capacity = 50; /* c_savegame.cpp:395, fresh GAME_LOAD. */
+
+    if (!owner) return 0;
+    for (type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
+        const int source_count = owner->dungeon.thing_type_counts[type];
+        const int hard_limit = type == 15 ? 0x300 : 0x400;
+        int db_capacity;
+
+        if (source_count < 0 || source_count > hard_limit ||
+            dm2_v1_record_pool_record_size(type) == 0) {
+            /* DB11..DB13 are deliberately unallocated in c_record. */
+            if (source_count != 0) return 0;
+            owner->record_capacities[type] = 0u;
+            continue;
+        }
+        db_capacity = (int)dm2_v1_table_1d281c[type] + source_count;
+        if (db_capacity > hard_limit) db_capacity = hard_limit;
+        if (db_capacity < source_count || db_capacity > UINT16_MAX) return 0;
+        owner->record_capacities[type] = (uint16_t)db_capacity;
+        if (type == 4 || type >= 14) {
+            if (capacity > INT16_MAX - db_capacity) return 0;
+            capacity += db_capacity;
+        }
+    }
+    if (capacity <= 0 || capacity > INT16_MAX) return 0;
+    owner->timer_entries = (DM2_V1_TimerEntry *)calloc((size_t)capacity,
+        sizeof(*owner->timer_entries));
+    owner->timer_indices = (int16_t *)calloc((size_t)capacity,
+        sizeof(*owner->timer_indices));
+    if (!owner->timer_entries || !owner->timer_indices) return 0;
+    dm2_v1_timer_queue_init(&owner->timer_queue, owner->timer_entries,
+                            owner->timer_indices, (int16_t)capacity);
+    owner->timer_capacity = (uint16_t)capacity;
+    owner->fresh_game_mode = 1;
+    return 1;
+}
 
 static int dm2_v1_game_load_owner_validate_possessions(
     const DM2_V1_GameLoadWorldOwner *owner)
@@ -24,9 +68,31 @@ static int dm2_v1_game_load_owner_validate_possessions(
     return 1;
 }
 
+static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash, uint32_t value)
+{
+    hash ^= value;
+    hash *= 16777619u;
+    return hash;
+}
+
+static int dm2_v1_game_load_owner_tick_multiplier(uint8_t subtype)
+{
+    switch (subtype) {
+    case 0x1e: return 1;
+    case 0x33: return 8;
+    case 0x34: return 16;
+    case 0x35: return 32;
+    case 0x36: return 64;
+    case 0x37: return 128;
+    default: return 0;
+    }
+}
+
 void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
 {
     if (!owner) return;
+    free(owner->timer_indices);
+    free(owner->timer_entries);
     dm2_v1_record_pool_set_free(&owner->record_pools);
     dm2_v1_dungeon_free(&owner->dungeon);
     memset(owner, 0, sizeof(*owner));
@@ -71,7 +137,8 @@ int dm2_v1_game_load_world_owner_init_new_game(
         !dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools,
                                                    &candidate.dungeon) ||
         !candidate.record_pools.valid ||
-        !candidate.record_pools.record_graph_complete) {
+        !candidate.record_pools.record_graph_complete ||
+        !dm2_v1_game_load_owner_prepare_timer_capacity(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
@@ -98,4 +165,171 @@ int dm2_v1_game_load_world_owner_is_prepared(
         owner->dungeon.raw_data != NULL && owner->dungeon.raw_size > 0 &&
         owner->record_pools.valid && owner->record_pools.record_graph_complete &&
         owner->source_transaction_hash != 0u;
+}
+
+int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadActuatorGeneratorReceipt *out_receipt)
+{
+    DM2_V1_GameLoadActuatorGeneratorReceipt receipt;
+    DM2_V1_RecordPool *db3;
+    uint8_t *db3_backup = NULL;
+    uint8_t *db3_extension_backup = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    int max_chain_steps = 0;
+    int map;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || owner->committed) return 0;
+    db3 = &owner->record_pools.pools[3];
+    if (!db3->bytes || db3->record_size != 8 || db3->record_count <= 0 ||
+        (db3->extension_count > 0 && !db3->extension_bytes) ||
+        owner->timer_capacity == 0u || !owner->timer_entries ||
+        !owner->timer_indices) return 0;
+
+    /* c_tim_proc.cpp:4396-4510 mutates DB3 and queues c_tim records as one
+     * GAME_LOAD phase. Retain exact owner-state snapshots so a bounded host
+     * allocation failure cannot leave a half-started original world. */
+    db3_backup = (uint8_t *)malloc((size_t)db3->record_count * 8u);
+    if (db3->extension_count > 0) {
+        db3_extension_backup = (uint8_t *)malloc(
+            (size_t)db3->extension_count * 8u);
+    }
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*index_backup));
+    if (!db3_backup || (db3->extension_count > 0 && !db3_extension_backup) ||
+        !timer_backup || !index_backup) goto fail;
+    memcpy(db3_backup, db3->bytes, (size_t)db3->record_count * 8u);
+    if (db3_extension_backup) {
+        memcpy(db3_extension_backup, db3->extension_bytes,
+               (size_t)db3->extension_count * 8u);
+    }
+    memcpy(timer_backup, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*index_backup));
+    queue_backup = owner->timer_queue;
+
+    for (map = 0; map < DM2_V1_RECORD_POOL_COUNT; ++map) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[map];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            max_chain_steps > INT_MAX - pool->record_count ||
+            max_chain_steps + pool->record_count >
+                INT_MAX - pool->extension_count) goto fail;
+        max_chain_steps += pool->record_count + pool->extension_count;
+    }
+    if (max_chain_steps <= 0) goto fail;
+
+    receipt.receipt_hash = 0x41475447u; /* "AGTG" */
+    for (map = 0; map < owner->dungeon.level_count; ++map) {
+        int x;
+        const int width = owner->dungeon.level_widths[map];
+        const int height = owner->dungeon.level_heights[map];
+        if (width <= 0 || height <= 0) goto fail;
+        for (x = 0; x < width; ++x) {
+            int y;
+            for (y = 0; y < height; ++y) {
+                const int raw_link = dm2_v1_dungeon_get_first_thing(
+                    &owner->dungeon, map, x, y);
+                int16_t link;
+                int steps = 0;
+                /* The File_header accessor uses -1 for byte-squares without
+                 * the tile-record flag. c_map walks only the corresponding
+                 * ground-stack roots, so there is no chain to follow here. */
+                if (raw_link < 0) continue;
+                if ((uint16_t)raw_link == DM2_THING_NULL_MARKER) goto fail;
+                link = (int16_t)(uint16_t)raw_link;
+                /* Dungeon roots carry 0xfffe, while c_record returns the
+                 * same terminal link as signed int16_t -2. Keep the walk in
+                 * source link representation so it cannot chase -2 as DB15.
+                 * SKProject c_record.cpp::DM2_GET_NEXT_RECORD_LINK. */
+                while (link != DM2_V1_RECORD_HANDLE_END) {
+                    int16_t next;
+                    const int pool = dm2_v1_record_handle_pool(link);
+                    if (++steps > max_chain_steps ||
+                        !dm2_v1_record_pool_next_link(&owner->record_pools,
+                            link, &next)) goto fail;
+                    if (pool == 3) {
+                        uint8_t *record = dm2_v1_record_pool_address_mut(
+                            &owner->record_pools, link);
+                        uint16_t attributes;
+                        uint8_t subtype;
+                        int multiplier;
+                        if (!record) goto fail;
+                        attributes = (uint16_t)record[2] |
+                            ((uint16_t)record[3] << 8);
+                        subtype = (uint8_t)(attributes & 0x7fu);
+                        multiplier = dm2_v1_game_load_owner_tick_multiplier(subtype);
+                        if (multiplier != 0) {
+                            ++receipt.candidate_count;
+                            receipt.receipt_hash = dm2_v1_game_load_owner_hash_step(
+                                receipt.receipt_hash, (uint32_t)map);
+                            receipt.receipt_hash = dm2_v1_game_load_owner_hash_step(
+                                receipt.receipt_hash, (uint16_t)link);
+                            receipt.receipt_hash = dm2_v1_game_load_owner_hash_step(
+                                receipt.receipt_hash, attributes);
+                            if ((record[4] & 0x04u) == 0u) {
+                                record[4] &= (uint8_t)~0x01u;
+                                ++receipt.control_bit2_clear_count;
+                            } else {
+                                const uint16_t period = attributes >> 7;
+                                ++receipt.activation_count;
+                                owner->current_map = map;
+                                if (period != 0u) {
+                                    DM2_V1_TimerEntry timer;
+                                    const uint32_t cadence =
+                                        (uint32_t)period * (uint32_t)multiplier;
+                                    if (cadence == 0u) goto fail;
+                                    dm2_v1_timer_entry_init(&timer);
+                                    dm2_v1_timer_set_mticks(&timer, (int16_t)map,
+                                        owner->timer_queue.gametick +
+                                        owner->timer_queue.gametick % cadence);
+                                    timer.ttype = 0x56u;
+                                    timer.actor = 0u;
+                                    timer.xA = (int8_t)((uint16_t)link & 0xffu);
+                                    timer.yA = (int8_t)(((uint16_t)link >> 8) & 0xffu);
+                                    timer.wvalueB = (int16_t)(uint8_t)multiplier;
+                                    if (dm2_v1_timer_queue(&owner->timer_queue,
+                                        &timer) < 0) goto fail;
+                                    record[4] |= 0x01u;
+                                    ++receipt.queued_timer_count;
+                                }
+                            }
+                        }
+                    }
+                    if (next == DM2_V1_RECORD_HANDLE_NULL) goto fail;
+                    link = next;
+                }
+            }
+        }
+    }
+    receipt.valid = receipt.receipt_hash != 0u;
+    free(index_backup);
+    free(timer_backup);
+    free(db3_extension_backup);
+    free(db3_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+
+fail:
+    if (db3_backup) memcpy(db3->bytes, db3_backup,
+        (size_t)db3->record_count * 8u);
+    if (db3_extension_backup) memcpy(db3->extension_bytes,
+        db3_extension_backup, (size_t)db3->extension_count * 8u);
+    if (timer_backup) memcpy(owner->timer_entries, timer_backup,
+        (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    if (index_backup) memcpy(owner->timer_indices, index_backup,
+        (size_t)owner->timer_capacity * sizeof(*index_backup));
+    if (timer_backup && index_backup) owner->timer_queue = queue_backup;
+    free(index_backup);
+    free(timer_backup);
+    free(db3_extension_backup);
+    free(db3_backup);
+    return 0;
 }

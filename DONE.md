@@ -1,3 +1,15 @@
+# DM2 New Game c_tim- och aktuatorgeneratorägare (2026-08-08)
+
+- ✅ Den privata File_header-världsägaren beräknar nu originalets
+  fresh-GAME_LOAD-kapacitet för DB-pooler och c_tim från verifierad
+  `DUNGEON.DAT`; den tidigare fasta 32-posters kön används inte.
+- ✅ `DM2_PROCESS_ACTUATOR_TICK_GENERATOR` är portad mot samma privata
+  kart-, DB3- och c_tim-ägare. Den följer originalets subtype-, period- och
+  byte+4-regler och återställer både DB3 och kön om en köning misslyckas.
+- ✅ PC-DOS-profilens 44 kartor ger exakt samma 18 generatorindata som det
+  läsande källkvittot. Passet publicerar varken party, tick eller session;
+  inga speldata skapades eller ändrades.
+
 # DM2 New Game File_header-världsägare (2026-08-08)
 
 - ✅ `DM2_V1_GameLoadWorldOwner` materialiserar nu en egen RAM-kopia av den
