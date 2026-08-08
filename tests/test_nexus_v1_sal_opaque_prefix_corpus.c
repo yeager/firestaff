@@ -109,6 +109,12 @@ int main(void) {
             free(data);
             return 1;
         }
+        data[0x1c2e] ^= 0x01u;
+        if (nexus_v1_audio_sddrvs_disassembly_receipt(data, size, &driver)) {
+            puts("FAIL: altered SDDRVS jump-table entry was accepted");
+            free(data);
+            return 1;
+        }
         free(data);
         puts("SDDRVS.TSK disassembly: 68k entry/dispatch/PCM corridors bound; playback blocked");
     }
