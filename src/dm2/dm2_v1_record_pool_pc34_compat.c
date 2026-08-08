@@ -155,6 +155,7 @@ int dm2_v1_sksave_map_owner_init(
             (dm2_v1_record_handle_pool((int16_t)link) >= DM2_V1_RECORD_POOL_COUNT ||
              dm2_v1_record_handle_index((int16_t)link) >=
                  dungeon_receipt->db_record_counts[dm2_v1_record_handle_pool((int16_t)link)])) {
+            free(owner->map_tiles);
             free(owner->ground_stack_links);
             memset(owner, 0, sizeof(*owner));
             return 0;

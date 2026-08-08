@@ -67,6 +67,8 @@
   matching c_record pools, including resident-chain restoration and tile-root
   publication. The context is covered by the focused dungeon checks and the
   176-check original PC-DOS corpus.
+- ✅ Hardened malformed-ground-link rejection in the map owner: both owned
+  RAM spans are now released before the source save is rejected.
 
 - ✅ Corrected the direct-root reader to stop after the source hero and
   cursor chains. It no longer reads possession continuations from the wrong
