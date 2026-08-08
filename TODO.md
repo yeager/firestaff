@@ -2284,12 +2284,10 @@
   presented. The `.CMP` decoder now follows `PORTRAIT.C F7251`'s F31
   Atari-ST-planar conversion instead of a fabricated packed-nibble view, so
   its real 24-portrait corpus is ready for that placement work. 2026-08-06:
-  a real F31 Game victory now activates
-  `ENDING.ANM` through the retained F2275 interpreter. It uses the original
-  Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
-  F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame
-  screen. The real English cache regression traverses Switch, Game, C004,
-  C002/C003, C017/F0128, then the complete 419-frame `ENDING.ANM` stream.
+  `ENDING.ANM` remains a verified standalone F2275 asset only. A former
+  regression set `gameWon` directly to enter it; that synthetic victory
+  route was removed. Bind it only after a real loaded dungeon reaches the
+  source endgame owner and retain its Timer-A/CDDA handoff then.
   The CLI scanner now reports every hash-verified CSB edition, including both
   F31 English and Japanese archive members, rather than implying that only
   the selected cache's `GRAPHICS.DAT`/`DUNGEON.DAT` pair was found. The

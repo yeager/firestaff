@@ -496,32 +496,6 @@ int main(void)
     CHECK(game_music_started,
           "F31 live map music waits 100 F0743 updates then selects its retail CUE track");
 
-    /* ReDMCSB STARTUP2.C F0750 invokes F2248("ending.anm") after the F31
-     * game has won. The live game state is already source-admitted above;
-     * latch its victory here so this regression can prove the host handoff
-     * without manufacturing a dungeon-side Lord Chaos encounter. */
-    view.gameWon = 1;
-    (void)M11_GameView_AdvanceIdleTick(&view);
-    CHECK(view.csbFmtownsEndingActive && view.csbFmtownsTitleBound &&
-              !view.csbFmtownsSwitchBound,
-          "F31 victory binds retail ENDING.ANM instead of returning to SWITCHTW");
-    live_frame_nonblack = 0;
-    memset(framebuffer, 0, sizeof(framebuffer));
-    M11_GameView_Draw(&view, framebuffer, 320, 200);
-    for (tick = 0u; tick < sizeof(framebuffer); ++tick) {
-        if (framebuffer[tick] != 0u) {
-            live_frame_nonblack = 1;
-            break;
-        }
-    }
-    CHECK(live_frame_nonblack,
-          "F31 victory presents an indexed frame decoded from ENDING.ANM");
-    for (tick = 0u; tick < 5600u && !view.csbFmtownsEndingFinished; ++tick) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
-    }
-    CHECK(view.csbFmtownsEndingFinished && view.csbFmtownsTitleBound &&
-              !view.csbFmtownsSwitchBound,
-          "ENDING.ANM completion retains its final frame and never chains to Switch");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     printf("PASS: real FM Towns SWITCHTW -> %s entrance handoff\n",

@@ -8205,8 +8205,12 @@
   ReDMCSB `LOADSAVE.C F0435`: fyra 319-byte `M516_CHAMPIONS`-poster, aldrig
   Atari/Amiga-GAMEBLOCK eller konstruerade championdata.
 - Den verkliga English- och Japanese-regressionen verifierar championdata,
-  Prison → HUD, rörelse, inventory, CDDA-val och `ENDING.ANM`. MINI:s
+  Prison → HUD, rörelse, inventory och CDDA-val. `ENDING.ANM` är fortsatt
+  en separat originaltillgång tills en riktig dungeonseger når F0750. MINI:s
   dungeon-/event-/timeline-del överförs ännu inte som en falsk delresume.
+- Den handskrivna `gameWon`-mutation som tidigare öppnade `ENDING.ANM` i
+  realmediaregressionen är borttagen. Slutsekvensen kan därmed inte längre
+  se ut som en verifierad kampanjväg utan en faktisk källaägd seger.
 
 # CSB FM Towns MINI-runtimeinventering (2026-08-08)
 
