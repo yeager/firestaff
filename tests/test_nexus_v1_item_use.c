@@ -6,7 +6,7 @@
 int main(void) {
     int fail = 0;
 
-    /* Food restores food and stamina. */
+    /* ITEM.IBS does not authenticate a Saturn action/effect consumer. */
     {
         Nexus_V1_Champion ch;
         Nexus_ItemDef item;
@@ -20,15 +20,15 @@ int main(void) {
         item.category = NEXUS_ITEM_FOOD;
         item.attribute = 25;
         r = nexus_v1_item_use(&ch, NULL, &item);
-        if (r.result != NEXUS_USE_RESULT_CONSUMED || ch.food != 510) {
-            fprintf(stderr, "FAIL: food use: result=%d food=%d\n", r.result, ch.food);
+        if (r.result != NEXUS_USE_RESULT_NONE || ch.food != 10) {
+            fprintf(stderr, "FAIL: food use was not fail-closed: result=%d food=%d\n", r.result, ch.food);
             fail++;
         } else {
-            printf("  Food restores food and stamina\n");
+            printf("  Food use remains fail-closed\n");
         }
     }
 
-    /* Potion with positive attribute restores health. */
+    /* Potion magnitude is not a proven ITEM.IBS field. */
     {
         Nexus_V1_Champion ch;
         Nexus_ItemDef item;
@@ -41,15 +41,15 @@ int main(void) {
         item.category = NEXUS_ITEM_POTION;
         item.attribute = 30;
         r = nexus_v1_item_use(&ch, NULL, &item);
-        if (r.result != NEXUS_USE_RESULT_CONSUMED || ch.health != 80) {
-            fprintf(stderr, "FAIL: health potion: hp=%d\n", ch.health);
+        if (r.result != NEXUS_USE_RESULT_NONE || ch.health != 50) {
+            fprintf(stderr, "FAIL: health potion mutated state: hp=%d\n", ch.health);
             fail++;
         } else {
-            printf("  Health potion restores HP\n");
+            printf("  Health potion remains fail-closed\n");
         }
     }
 
-    /* Potion with positive attribute restores health (capped at max). */
+    /* A guessed potion cap must not be applied. */
     {
         Nexus_V1_Champion ch;
         Nexus_ItemDef item;
@@ -62,15 +62,15 @@ int main(void) {
         item.category = NEXUS_ITEM_POTION;
         item.attribute = 50;
         r = nexus_v1_item_use(&ch, NULL, &item);
-        if (r.result != NEXUS_USE_RESULT_CONSUMED || ch.health != 100) {
+        if (r.result != NEXUS_USE_RESULT_NONE || ch.health != 90) {
             fprintf(stderr, "FAIL: health potion cap: hp=%d\n", ch.health);
             fail++;
         } else {
-            printf("  Health potion caps at max_health\n");
+            printf("  Health potion does not mutate champion state\n");
         }
     }
 
-    /* can_use returns 1 for food and potion, 0 for weapon. */
+    /* No item is advertised as usable before Saturn action capture. */
     {
         Nexus_ItemDef food, weapon, potion;
         memset(&food, 0, sizeof(food));
@@ -79,11 +79,11 @@ int main(void) {
         food.category = NEXUS_ITEM_FOOD;
         weapon.category = NEXUS_ITEM_WEAPON;
         potion.category = NEXUS_ITEM_POTION;
-        if (!nexus_v1_item_can_use(&food) || nexus_v1_item_can_use(&weapon) ||
-            !nexus_v1_item_can_use(&potion)) {
+        if (nexus_v1_item_can_use(&food) || nexus_v1_item_can_use(&weapon) ||
+            nexus_v1_item_can_use(&potion)) {
             fprintf(stderr, "FAIL: can_use\n"); fail++;
         } else {
-            printf("  can_use: food/potion usable, weapon not\n");
+            printf("  can_use: all item effects remain closed\n");
         }
     }
 

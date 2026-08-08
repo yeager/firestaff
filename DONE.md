@@ -1,5 +1,16 @@
 # Nexus startup PLRD glyph token retention (2026-08-08)
 
+# Nexus item/fountain mutation boundary restored (2026-08-08)
+
+- ✅ `ITEM.IBS` no longer advertises usable items or applies guessed food and
+  potion effects. The exported item-use helpers return a no-mutation receipt
+  until a Saturn action/effect consumer is captured.
+- ✅ Fountain registration and drinking remain fail-closed; no host fountain,
+  restore magnitude, poison effect, or use counter can be invented from the
+  absence of an authenticated retail record.
+- ✅ Real-data/source-boundary, item-use and fountain regressions pass without
+  changing the authenticated Nexus corpus.
+
 - ✅ SAL-kapabilitetsflaggan annonserar inte längre en decoder som inte finns.
   Endast den bounded MAP-inspektionen är stödd; SAL/SDDRVS förblir capture-gated
   med no-playback-semantik.
