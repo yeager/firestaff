@@ -6884,120 +6884,6 @@ static void m11_csb_release_fmtowns_switch(M11_GameViewState *state)
 static int m11_csb_bind_fmtowns_switch(
     M11_GameViewState *state, CSB_V1_FmtownsSwitchLanguage language);
 
-/* ReDMCSB CEDT006.C F7030: draw the line-colour box, then four inset fill
- * bands. Boxes use inclusive source coordinates throughout CEDT. */
-static void m11_csb_fmtowns_utility_fill_box(uint8_t *pixels,
-                                              int left, int right,
-                                              int top, int bottom,
-                                              uint8_t color)
-{
-    int x, y;
-    if (!pixels) return;
-    if (left < 0) left = 0;
-    if (right > 319) right = 319;
-    if (top < 0) top = 0;
-    if (bottom > 199) bottom = 199;
-    if (left > right || top > bottom) return;
-    for (y = top; y <= bottom; ++y) {
-        for (x = left; x <= right; ++x) {
-            pixels[(size_t)y * 320u + (size_t)x] = color;
-        }
-    }
-}
-
-static void m11_csb_fmtowns_utility_draw_filled_box(
-    uint8_t *pixels, int left, int right, int top, int bottom,
-    int border, uint8_t fill_color, uint8_t line_color)
-{
-    int side, expanded_left, expanded_right, expanded_top, expanded_bottom;
-    m11_csb_fmtowns_utility_fill_box(pixels, left, right, top, bottom,
-                                     line_color);
-    if (border <= 0) return;
-    expanded_left = left - border;
-    expanded_right = right + border;
-    expanded_top = top - border;
-    expanded_bottom = bottom + border;
-    --border;
-    for (side = 0; side < 4; ++side) {
-        int band_left = expanded_left, band_right = expanded_right;
-        int band_top = expanded_top, band_bottom = expanded_bottom;
-        if (side == 0) band_right = expanded_left + border;
-        else if (side == 1) band_left = expanded_right - border;
-        else if (side == 2) band_bottom = expanded_top + border;
-        else band_top = expanded_bottom - border;
-        m11_csb_fmtowns_utility_fill_box(pixels, band_left, band_right,
-                                         band_top, band_bottom, fill_color);
-    }
-}
-
-static int m11_csb_build_fmtowns_utility_english(M11_GameViewState *state)
-{
-    static const struct {
-        int left, right, top, bottom;
-        unsigned int label_offset;
-    } buttons[] = {
-        { 2, 92, 186, 194, 0u }, { 102, 192, 186, 194, 16u },
-        { 202, 316, 186, 194, 32u }, { 156, 196, 159, 167, 52u },
-        { 225, 253, 159, 167, 60u }, { 288, 316, 5, 13, 68u }
-    };
-    uint8_t palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
-    unsigned int index;
-
-    if (!state || !state->csbFmtownsUtilityMenuReceipt.valid ||
-        state->csbFmtownsUtilityMenuReceipt.language !=
-            CSB_FMTOWNS_SWITCH_ENGLISH ||
-        !M11_Font_IsLoaded(&state->originalFont) ||
-        !csb_v1_fmtowns_utility_icon_palette_rgb6(
-            &state->csbFmtownsUtilityMenuReceipt, palette)) {
-        return 0;
-    }
-    memset(state->csbFmtownsUtilityPixels, 0,
-           sizeof(state->csbFmtownsUtilityPixels));
-    /* CEDT006.C F7042: six C02 buttons on a cleared F31 screen.  Their
-     * strings are read from the authenticated UTILE.EXP pool, never copied
-     * into a host string table. */
-    for (index = 0u; index < sizeof(buttons) / sizeof(buttons[0]); ++index) {
-        const char *label = (const char *)state->csbFmtownsUtilityMenuReceipt
-            .source_bytes + buttons[index].label_offset;
-        int width = (int)strlen(label) * 6;
-        int center = (buttons[index].left + buttons[index].right) >> 1;
-        m11_csb_fmtowns_utility_draw_filled_box(
-            state->csbFmtownsUtilityPixels, buttons[index].left,
-            buttons[index].right, buttons[index].top, buttons[index].bottom,
-            2, 2u, 0u);
-        if (width <= 0 || width > buttons[index].right - buttons[index].left + 1)
-            return 0;
-        if (M11_Font_DrawF31CEDTAsciiString(
-                &state->originalFont, state->csbFmtownsUtilityPixels, 320,
-                200, center - (width >> 1), buttons[index].bottom - 2,
-                label, 15u, 0) != width)
-            return 0;
-    }
-    /* CEDT006.C F7042 and F7035/F7036: empty editor frame, selected black
-     * swatch, then the remaining source C09_ICON swatches. No portrait or
-     * champion is invented when C06 has not loaded a save/CMP record. */
-    m11_csb_fmtowns_utility_draw_filled_box(state->csbFmtownsUtilityPixels,
-                                            157, 252, 60, 146, 3, 3u, 0u);
-    m11_csb_fmtowns_utility_draw_filled_box(state->csbFmtownsUtilityPixels,
-                                            284, 305, 41, 171, 2, 2u, 0u);
-    for (index = 1u; index < 16u; ++index) {
-        int top = 43 + (int)index * 8;
-        m11_csb_fmtowns_utility_fill_box(state->csbFmtownsUtilityPixels,
-                                         286, 303, top, top + 6,
-                                         (uint8_t)index);
-    }
-    /* CEDT006.C F7036 selects the same native C09_ICON inner colour while
-     * retaining a white, expanded one-pixel exterior. */
-    if (state->csbFmtownsUtilitySelectedColor >= 16u) return 0;
-    {
-        int top = 43 + (int)state->csbFmtownsUtilitySelectedColor * 8;
-        m11_csb_fmtowns_utility_draw_filled_box(
-            state->csbFmtownsUtilityPixels, 286, 303, top, top + 6, 1,
-            15u, state->csbFmtownsUtilitySelectedColor);
-    }
-    return 1;
-}
-
 static int m11_csb_enter_fmtowns_utility(
     M11_GameViewState *state, CSB_V1_FmtownsSwitchLanguage language)
 {
@@ -7014,69 +6900,6 @@ static int m11_csb_enter_fmtowns_utility(
     (void)state;
     (void)language;
     return 0;
-}
-
-static int m11_csb_present_fmtowns_utility(M11_GameViewState *state,
-                                            unsigned char *framebuffer,
-                                            int framebuffer_width,
-                                            int framebuffer_height)
-{
-    uint8_t palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
-    uint8_t rgb6[256][3];
-    int color;
-    if (!state || !framebuffer || !state->csbFmtownsUtilityBound ||
-        !csb_v1_fmtowns_utility_icon_palette_rgb6(
-            &state->csbFmtownsUtilityMenuReceipt, palette)) return 0;
-    for (color = 0; color < 256; ++color) {
-        rgb6[color][0] = (uint8_t)(palette[color & 15][0] << 2u);
-        rgb6[color][1] = (uint8_t)(palette[color & 15][1] << 2u);
-        rgb6[color][2] = (uint8_t)(palette[color & 15][2] << 2u);
-    }
-    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
-    m11_csb_present_startup_raster(state->csbFmtownsUtilityPixels, framebuffer,
-                                   framebuffer_width, framebuffer_height);
-    return 1;
-}
-
-static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
-    M11_GameViewState *state, int x, int y, int button_mask)
-{
-    CSB_V1_FmtownsUtilityMenuHitBox hit;
-    if (!state || !state->csbFmtownsUtilityBound ||
-        (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
-        return M11_GAME_INPUT_IGNORED;
-    }
-    /* ReDMCSB CEDTDATA.C G2272_MouseInputs[6] and CEDT006.C F7043:
-     * selection only updates C06's editor-local colour index. It has no
-     * save, portrait or champion side effect. */
-    if (x >= 286 && x <= 303 && y >= 43 && y <= 169) {
-        uint8_t selected = (uint8_t)((y - 43) / 8);
-        if (selected < 16u) {
-            state->csbFmtownsUtilitySelectedColor = selected;
-            if (!m11_csb_build_fmtowns_utility_english(state)) {
-                return M11_GAME_INPUT_IGNORED;
-            }
-        }
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (!csb_v1_fmtowns_utility_menu_action_at(
-            &state->csbFmtownsUtilityMenuReceipt, (int16_t)x, (int16_t)y,
-            &hit)) {
-        return M11_GAME_INPUT_REDRAW;
-    }
-    if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT) {
-        state->csbFmtownsUtilityBound = 0;
-        memset(&state->csbFmtownsUtilityMenuReceipt, 0,
-               sizeof(state->csbFmtownsUtilityMenuReceipt));
-        if (!m11_csb_bind_fmtowns_switch(state,
-                                         CSB_FMTOWNS_SWITCH_ENGLISH)) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-    }
-    /* C06 file picker/save and portrait edit transactions remain separate
-     * source owners. A source rectangle alone must not mutate a Firestaff
-     * save or manufacture a champion. */
-    return M11_GAME_INPUT_REDRAW;
 }
 
 /* ------------------------------------------------------------------ */
@@ -27750,11 +27573,6 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         const CSB_V1_BootProfile *csb_profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
-        if (m11_csb_is_fmtowns_profile(csb_profile) &&
-            state->csbFmtownsUtilityBound) {
-            return m11_csb_handle_fmtowns_utility_pointer(state, x, y,
-                                                          buttonMask);
-        }
         if (m11_csb_is_fmtowns_profile(csb_profile) &&
             state->csbState.startup_title_active &&
             state->csbFmtownsSwitchBound) {
@@ -54945,17 +54763,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * public draw API is const for ordinary renderers; a live game view
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
-        if (state->csbFmtownsUtilityBound &&
-            m11_csb_present_fmtowns_utility(csb_state, framebuffer,
-                                             framebufferWidth,
-                                             framebufferHeight)) {
-            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
-                                framebufferHeight);
-            g_drawState = NULL;
-            g_activeOriginalFont = NULL;
-            g_m11_font_scale_override = 0;
-            return;
-        }
         if ((state->csbState.startup_title_active ||
              state->csbFmtownsEndingActive) &&
             (m11_csb_present_fmtowns_switch(csb_state, framebuffer,

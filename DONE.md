@@ -1,5 +1,10 @@
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ Den oåtkomliga, värdkomponerade FM Towns C06-sidan är borttagen ur M11,
+  inklusive dess gissade rit- och klickrutor. UTILE/UTILJ kan därför inte
+  av misstag få en syntetisk skärm, cursorväg eller state-mutation innan den
+  egna EGB- och filtransaktionsägaren är återställd från originalmedia.
+
 - ✅ F31:s API- och öppna-arbetsdokumentation skiljer nu korrekt på den
   färdiga bootstrap-resumen och den kvarvarande användarsparningen:
   `MINI.DAT` installerar verklig party-, dungeon-, event-, timeline- och

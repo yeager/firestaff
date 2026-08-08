@@ -327,9 +327,8 @@ int main(void)
          * native EGB/editor consumer has not yet been recovered. */
         result = M11_GameView_HandlePointerButton(
             &view, 57, 59, DM1_V1_MOUSE_MASK_LEFT_PC34);
-        CHECK(result == M11_GAME_INPUT_IGNORED && !view.csbFmtownsUtilityBound &&
-                  view.csbFmtownsSwitchBound &&
-                  !view.csbFmtownsUtilityMenuReceipt.valid,
+        CHECK(result == M11_GAME_INPUT_IGNORED && view.csbFmtownsSwitchBound &&
+                  !view.csbState.startup_entrance_active,
               "F31E Utility stays fail-closed until its native C06 owner runs");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
