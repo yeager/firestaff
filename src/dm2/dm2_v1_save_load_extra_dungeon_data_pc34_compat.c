@@ -113,11 +113,13 @@ int dm2_v1_load_extra_dungeon_data(
                             session, rec_cb, &root_link, x, y, 1, 1);
                         if (rc != 0 || session->error ||
                             (root_link != 0xfffeu &&
-                             (!dung_cb->set_tile_record_link ||
-                              dung_cb->set_tile_record_link(
-                                  dung_cb->ctx, x, y, root_link) != 0))) {
+                             !dung_cb->set_tile_record_link)) {
                             local.error = 1;
                             goto done;
+                        }
+                        if (root_link != 0xfffeu) {
+                            dung_cb->set_tile_record_link(
+                                dung_cb->ctx, x, y, root_link);
                         }
                     } else if (!dung_cb->restore_existing_tile_record_chain ||
                                dung_cb->restore_existing_tile_record_chain(
