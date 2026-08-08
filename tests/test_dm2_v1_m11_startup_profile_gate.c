@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -332,6 +333,105 @@ static int dm2_test_find_private_push_button_floor(
                 if (valid && count > 0 && link == DM2_V1_RECORD_HANDLE_END) {
                     *out_map = map; *out_x = x; *out_y = y;
                     return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/* Find a real WALL_MECHA chain whose direction-matching DB3 records are all
+ * CROSS_MAP.  Unmatched directional records are source-ignored.  No target
+ * map, timer or actuator is manufactured: this only selects a complete
+ * File_header chain the private owner can queue atomically. */
+static int dm2_test_find_private_cross_map_wall(
+    const DM2_V1_GameLoadWorldOwner *owner, int *out_map, int *out_x,
+    int *out_y, uint8_t *out_direction, int *out_target_map,
+    int *out_target_x, int *out_target_y, uint8_t *out_target_direction,
+    int *out_count)
+{
+    int chain_limit = 0;
+
+    if (!owner || !out_map || !out_x || !out_y || !out_direction ||
+        !out_target_map || !out_target_x || !out_target_y ||
+        !out_target_direction || !out_count) return 0;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count) {
+            return 0;
+        }
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return 0;
+    for (int map = 0; map < owner->dungeon.level_count; ++map) {
+        for (int x = 0; x < owner->dungeon.level_widths[map]; ++x) {
+            for (int y = 0; y < owner->dungeon.level_heights[map]; ++y) {
+                if ((dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) >> 5) != 0)
+                    continue;
+                for (uint8_t direction = 0u; direction < 4u; ++direction) {
+                    int16_t link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                        &owner->dungeon, map, x, y);
+                    int steps = 0;
+                    int count = 0;
+                    int valid = 1;
+                    int first_map = -1;
+                    int first_x = -1;
+                    int first_y = -1;
+                    uint8_t first_dir = 0u;
+
+                    while (link != DM2_V1_RECORD_HANDLE_END && valid) {
+                        const uint8_t *record;
+                        int16_t next;
+                        uint16_t data;
+                        int target_map;
+                        int target_x;
+                        int target_y;
+                        if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                            steps >= chain_limit ||
+                            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+                            !(record = dm2_v1_record_pool_address(
+                                &owner->record_pools, link)) ||
+                            !dm2_v1_record_pool_next_link(&owner->record_pools,
+                                                           link, &next)) {
+                            valid = 0;
+                            break;
+                        }
+                        if ((uint8_t)(link & 3) == direction) {
+                            data = dm2_actu_data(record);
+                            target_map = (int)(data & 0x003fu);
+                            target_x = (int)dm2_actu_xcoord(record);
+                            target_y = (int)dm2_actu_ycoord(record);
+                            if (dm2_actu_type(record) != DM2_ACTU_CROSS_MAP ||
+                                target_map < 0 ||
+                                target_map >= owner->dungeon.level_count ||
+                                target_x < 0 || target_y < 0 ||
+                                target_x >= owner->dungeon.level_widths[target_map] ||
+                                target_y >= owner->dungeon.level_heights[target_map]) {
+                                valid = 0;
+                                break;
+                            }
+                            if (count == 0) {
+                                first_map = target_map;
+                                first_x = target_x;
+                                first_y = target_y;
+                                first_dir = (uint8_t)((data >> 6) & 3u);
+                            }
+                            ++count;
+                        }
+                        ++steps;
+                        link = next;
+                    }
+                    if (valid && link == DM2_V1_RECORD_HANDLE_END && count > 0) {
+                        *out_map = map; *out_x = x; *out_y = y;
+                        *out_direction = direction;
+                        *out_target_map = first_map;
+                        *out_target_x = first_x;
+                        *out_target_y = first_y;
+                        *out_target_direction = first_dir;
+                        *out_count = count;
+                        return 1;
+                    }
                 }
             }
         }
@@ -1525,6 +1625,16 @@ int main(void) {
     int new_game_push_button_x = -1;
     int new_game_push_button_y = -1;
     int new_game_push_button_found = 0;
+    int new_game_cross_map_map = -1;
+    int new_game_cross_map_x = -1;
+    int new_game_cross_map_y = -1;
+    uint8_t new_game_cross_map_direction = 0u;
+    int new_game_cross_map_target_map = -1;
+    int new_game_cross_map_target_x = -1;
+    int new_game_cross_map_target_y = -1;
+    uint8_t new_game_cross_map_target_direction = 0u;
+    int new_game_cross_map_count = 0;
+    int new_game_cross_map_found = 0;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -2386,6 +2496,58 @@ int main(void) {
                     !new_game_actuate.blocked_incomplete_chain &&
                     !profile->source_game_load_session_ready,
                     "M11 toggles only the source-addressed DB0 doors of a real PUSH_BUTTON_SWITCH chain");
+    }
+    new_game_cross_map_found = profile && dm2_test_find_private_cross_map_wall(
+        &new_game_world_owner, &new_game_cross_map_map,
+        &new_game_cross_map_x, &new_game_cross_map_y,
+        &new_game_cross_map_direction, &new_game_cross_map_target_map,
+        &new_game_cross_map_target_x, &new_game_cross_map_target_y,
+        &new_game_cross_map_target_direction, &new_game_cross_map_count);
+    expect_true(new_game_cross_map_found,
+                "M11 finds a real source-complete CROSS_MAP WALL_MECHA chain");
+    if (new_game_cross_map_found) {
+        int before_timers = new_game_world_owner.timer_queue.num_timers;
+        int matching_messages = 0;
+        memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+        dm2_v1_timer_entry_init(&new_game_actuate_timer);
+        expect_true((dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                            (int16_t)new_game_cross_map_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 2u), 1) &&
+                    ((new_game_actuate_timer.xA =
+                        (int8_t)new_game_cross_map_x), 1) &&
+                    ((new_game_actuate_timer.yA =
+                        (int8_t)new_game_cross_map_y), 1) &&
+                    ((new_game_actuate_timer.wvalueB =
+                        (int16_t)((uint16_t)new_game_cross_map_direction |
+                                  (2u << 8))), 1) &&
+                    dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) && new_game_actuate.valid &&
+                    new_game_actuate.cross_map_actuators_seen ==
+                        new_game_cross_map_count &&
+                    new_game_actuate.cross_map_messages_queued ==
+                        new_game_cross_map_count &&
+                    new_game_actuate.private_cross_map_hash != 0u &&
+                    new_game_world_owner.timer_queue.num_timers ==
+                        before_timers + new_game_cross_map_count &&
+                    !profile->source_game_load_session_ready,
+                    "M11 queues real CROSS_MAP 0x04 messages only in the private File_header owner");
+        for (int i = 0; i < new_game_world_owner.timer_capacity; ++i) {
+            const DM2_V1_TimerEntry *queued =
+                &new_game_world_owner.timer_entries[i];
+            if (queued->ttype == 0x04u &&
+                dm2_v1_timer_get_map(queued) == new_game_cross_map_target_map &&
+                (uint8_t)queued->xA == (uint8_t)new_game_cross_map_target_x &&
+                (uint8_t)queued->yA == (uint8_t)new_game_cross_map_target_y &&
+                (uint8_t)queued->wvalueB == new_game_cross_map_target_direction &&
+                (uint8_t)((uint16_t)queued->wvalueB >> 8) == 2u &&
+                queued->actor == 2u) {
+                ++matching_messages;
+            }
+        }
+        expect_true(matching_messages > 0,
+                    "M11 retains the authentic CROSS_MAP target map, coordinates, direction and action");
     }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];

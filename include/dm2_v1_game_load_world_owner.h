@@ -204,6 +204,12 @@ typedef struct {
     int push_button_actuators_seen;
     int push_button_doors_mutated;
     uint32_t private_push_button_hash;
+    /* CROSS_MAP is the one WALL_MECHA route that only creates a source 0x04
+     * message for another authenticated map.  The queued record remains
+     * private; no target tile is dispatched here. */
+    int cross_map_actuators_seen;
+    int cross_map_messages_queued;
+    uint32_t private_cross_map_hash;
     uint8_t tile_state_before;
     uint8_t tile_state_after;
     uint32_t private_text_visibility_hash;

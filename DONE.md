@@ -1,5 +1,15 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 privat CROSS_MAP-kedja vid GAME_LOAD-gränsen (2026-08-09)
+
+- ✅ En komplett, riktad `CROSS_MAP`-väggkedja från File_header kan nu skapa
+  sina verkliga 0x04-meddelanden på den källadresserade målkartan i den
+  privata dynamiska `c_tim`-kön. Hela kedjan och samtliga mål valideras före
+  första köskrivningen, och köägaren återställs vid fel. Varken målrutans
+  effekt, party, HUD eller session publiceras.
+- ✅ DOS-regressionen hittar en autentisk kedja och verifierar dess målkarta,
+  koordinater, riktning, action och antal köade meddelanden från originaldata.
+
 # DM2 PC-DOS dungeoninmatning, verifierad ägare (2026-08-09)
 
 - ✅ Dungeonens källordnade SKWIN-klicktabell ägs nu av den hashverifierade

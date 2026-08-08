@@ -168,6 +168,9 @@
   `DM2_move_2fcf_0b8b` läser nu också File_header-teleportörer privat efter
   generatorpasset, men den beräknade displayposen är inte en viewport och får
   inte publicera karta eller party.
+  En komplett riktad `CROSS_MAP`-WALL-kedja kan nu privat köa sina riktiga
+  0x04-meddelanden på målkartan med atomär rollback. Målens följdeffekter
+  förblir spärrade tills samma session äger deras tile- och recordkonsumenter.
   DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.

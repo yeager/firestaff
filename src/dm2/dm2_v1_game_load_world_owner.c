@@ -1290,6 +1290,164 @@ done:
     return result;
 }
 
+/*
+ * Private source-complete WALL_MECHA atom for CROSS_MAP.
+ *
+ * c_tim_proc.cpp::DM2_ACTUATE_WALL_MECHA dispatches a direction-matching
+ * type 0x16 record by queueing an ACTUATE (0x04) message on the map encoded
+ * in Actuator::Data.  Its target coordinates and direction come directly
+ * from the same DB3 record.  No party, creature, item, palette or sound
+ * state participates in this particular arm.  We therefore retain it only
+ * when every *matching* DB3 record in the real tile chain is CROSS_MAP and
+ * every resulting target is within the owned File_header world.  Other
+ * direction records are source-ignored; every other matching actuator is an
+ * unowned WALL_MECHA family and blocks before the first timer is queued.
+ *
+ * This is deliberately stricter than the source walk about non-DB3 chain
+ * members.  Refusing an otherwise valid route is safe; skipping a text,
+ * teleporter or object callback would not be.  Queue rollback makes this a
+ * single private mutation.
+ *
+ * Source: SKProject SKULLWIN/c_tim_proc.cpp::DM2_ACTUATE_WALL_MECHA
+ * (1923+), SKWINSPX/src/v4/skevent.cpp::CROSS_MAP (1920-1933),
+ * c_tim_proc.cpp::DM2_INVOKE_MESSAGE (4332-4365).
+ */
+static int dm2_v1_game_load_owner_dispatch_cross_map_wall(
+    DM2_V1_GameLoadWorldOwner *owner, int map, int x, int y,
+    uint8_t direction, uint8_t action, DM2_V1_GameLoadActuateReceipt *receipt)
+{
+    int chain_limit = 0;
+    int16_t link;
+    DM2_V1_TimerEntry *messages = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    int count = 0;
+    int steps = 0;
+    uint32_t hash = 0x43524d50u; /* "CRMP" */
+    int result = 0;
+
+    if (!owner || !receipt || direction > 3u || action > 2u ||
+        owner->timer_capacity == 0u || !owner->timer_entries ||
+        !owner->timer_indices) {
+        return -1;
+    }
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count) {
+            return -1;
+        }
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&owner->dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL) {
+        return 0;
+    }
+    messages = (DM2_V1_TimerEntry *)calloc((size_t)chain_limit,
+                                            sizeof(*messages));
+    if (!messages) return -1;
+
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        int16_t next;
+        uint16_t data;
+        int target_map;
+        int target_x;
+        int target_y;
+        uint8_t target_direction;
+        DM2_V1_TimerEntry *message;
+
+        if (link == DM2_V1_RECORD_HANDLE_NULL || steps >= chain_limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(record = dm2_v1_record_pool_address(&owner->record_pools, link)) ||
+            !dm2_v1_record_pool_next_link(&owner->record_pools, link, &next)) {
+            result = -1;
+            goto done;
+        }
+        if ((uint8_t)(link & 3) != direction) {
+            ++steps;
+            link = next;
+            continue;
+        }
+        if (dm2_actu_type(record) != DM2_ACTU_CROSS_MAP) {
+            result = -1;
+            goto done;
+        }
+        data = dm2_actu_data(record);
+        target_map = (int)(data & 0x003fu);
+        target_x = (int)dm2_actu_xcoord(record);
+        target_y = (int)dm2_actu_ycoord(record);
+        /* CROSS_MAP stores its target facing in Data, unlike the ordinary
+         * generic actuator-message path that uses Actuator::Direction.
+         * SKWINSPX/v4/skevent.cpp::CROSS_MAP (1920-1933). */
+        target_direction = (uint8_t)((data >> 6) & 3u);
+        if (target_map < 0 || target_map >= owner->dungeon.level_count ||
+            target_x < 0 || target_y < 0 ||
+            target_x >= owner->dungeon.level_widths[target_map] ||
+            target_y >= owner->dungeon.level_heights[target_map] ||
+            target_direction > 3u) {
+            result = -1;
+            goto done;
+        }
+        message = &messages[count];
+        dm2_v1_timer_entry_init(message);
+        dm2_v1_timer_set_mticks(message, (int16_t)target_map,
+                                owner->timer_queue.gametick);
+        message->ttype = 0x04u;
+        message->actor = action == 0u ? 1u : (action == 1u ? 3u : 2u);
+        message->xA = (int8_t)target_x;
+        message->yA = (int8_t)target_y;
+        message->wvalueB = (int16_t)((uint16_t)target_direction |
+                                      ((uint16_t)action << 8));
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_map);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_x);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_y);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_direction);
+        ++count;
+        ++steps;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto done;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) {
+        result = -1;
+        goto done;
+    }
+    memcpy(timer_backup, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*index_backup));
+    queue_backup = owner->timer_queue;
+    for (int i = 0; i < count; ++i) {
+        if (dm2_v1_timer_queue(&owner->timer_queue, &messages[i]) < 0) {
+            memcpy(owner->timer_entries, timer_backup,
+                   (size_t)owner->timer_capacity * sizeof(*timer_backup));
+            memcpy(owner->timer_indices, index_backup,
+                   (size_t)owner->timer_capacity * sizeof(*index_backup));
+            owner->timer_queue = queue_backup;
+            result = -1;
+            goto done;
+        }
+    }
+    receipt->cross_map_actuators_seen = count;
+    receipt->cross_map_messages_queued = count;
+    receipt->private_cross_map_hash = hash;
+    receipt->valid = 1;
+    result = 1;
+
+done:
+    free(index_backup);
+    free(timer_backup);
+    free(messages);
+    return result;
+}
+
 int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_TimerEntry *timer,
@@ -1335,6 +1493,20 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
         receipt.source_noop = 1;
         if (out_receipt) *out_receipt = receipt;
         return 1;
+    }
+
+    if (receipt.tile_class == 0u) {
+        const int cross_map = dm2_v1_game_load_owner_dispatch_cross_map_wall(
+            owner, map, x, y, direction, action, &receipt);
+        if (cross_map > 0) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (cross_map < 0) {
+            receipt.blocked_incomplete_chain = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
     }
 
     if (receipt.tile_class == 0u || receipt.tile_class == 1u) {
