@@ -1,3 +1,13 @@
+# Theron T900 proof boundary (2026-08-08)
+
+- ✅ Real US/JP object records and the 66-row item-property tables are now
+  explicitly separated from T900 gameplay claims.
+- ✅ The authenticated bank-$1f receipt passes for both retail images and
+  reports `ram_consumer_2600=not_present`; this proves the remaining T900 gap
+  rather than silently treating loader bytes as inventory semantics.
+- ✅ Production remains fail-closed for T900 use/equip/stack/drop/loot until a
+  runtime `$2600` capture proves the source record and state-write consumer.
+
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som

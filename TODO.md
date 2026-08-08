@@ -50,6 +50,12 @@
   consumers still need their original T900 ownership rules; incomplete source
   objects remain rejected rather than entering inventory.
 
+- 🔧 Theron T900 proof audit 2026-08-08 confirms the real 66-row property
+  tables and source object records, but the verified bank-$1f receipt still
+  reports `ram_consumer_2600=not_present` for both US and JP. Keep all T900
+  use/equip/stack/drop/loot promotion blocked until a real `$2600` runtime
+  capture joins the record source to the object-state writes.
+
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
   sixteen source File_header champion-mirror records across their real
   `w0`-kedjor and can join an exact mirror to its matching `CHAMPIONS` Raw8
