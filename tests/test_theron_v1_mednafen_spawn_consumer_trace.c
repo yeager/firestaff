@@ -39,10 +39,14 @@ int main(void) {
     return 77;
 #else
     char path[] = "/tmp/firestaff-theron-spawn-XXXXXX";
+    char path2[] = "/tmp/firestaff-theron-spawn-XXXXXX";
     Theron_V1SpawnConsumerTraceReceipt receipt;
     int fd = mkstemp(path);
+    int fd2 = mkstemp(path2);
     assert(fd >= 0);
+    assert(fd2 >= 0);
     close(fd);
+    close(fd2);
     write_fixture(path, 0);
     assert(theron_v1_mednafen_spawn_consumer_trace_parse_file(path, &receipt));
     assert(receipt.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
@@ -67,6 +71,21 @@ int main(void) {
         assert(registers.last_a == 0x31u && registers.last_bb == 0x73u);
         assert(!registers.semantic_publication_allowed);
     }
+    {
+        Theron_V1SpawnCaptureCorrelationReceipt correlation;
+        write_fixture(path2, 0);
+        assert(theron_v1_mednafen_spawn_capture_correlate_files(
+            path2, path, &correlation));
+        assert(correlation.ready && correlation.source_windows_paired);
+        assert(correlation.consumer_read_count == 2u &&
+               correlation.register_sample_count == 4u);
+        assert(!correlation.dynamic_return_contract_verified &&
+               !correlation.semantic_publication_allowed);
+        assert(theron_v1_mednafen_spawn_capture_correlate_files(
+            path, path, &correlation) == 0);
+        /* The same path cannot contain both sidecar headers. */
+        assert(!correlation.ready && !correlation.semantic_publication_allowed);
+    }
     write_register_fixture(path, 1);
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
@@ -75,6 +94,7 @@ int main(void) {
         assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
     }
     unlink(path);
+    unlink(path2);
     puts("PASS: disassembly-bound spawn receipts validate provenance and block semantics");
     return 0;
 #endif

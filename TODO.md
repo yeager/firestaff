@@ -12705,6 +12705,11 @@ as line/circle coordinates or promote them into movement geometry.
   source-bound, while the save/resume fixture target now compiles its own
   fixture-enabled `startup_flow.c`; keep production and fixture fallback
   behavior separately verified.
+- 🔧 2026-08-08 Theron spawn-capture correlation: the consumer and register
+  sidecars can now be paired only when both carry the same disassembly-bound
+  windows, sequence, bank coordinates, and boundary markers. Dynamic
+  `$4644/$4667` return ownership and semantic RNG publication remain blocked;
+  no creature or spawn state is synthesized from the capture.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.

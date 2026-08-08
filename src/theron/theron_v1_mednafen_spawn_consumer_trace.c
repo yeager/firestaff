@@ -222,3 +222,40 @@ int theron_v1_mednafen_spawn_register_trace_parse_file(
     out->status = THERON_V1_SPAWN_CONSUMER_TRACE_READY;
     return 1;
 }
+
+int theron_v1_mednafen_spawn_capture_correlate_files(
+    const char *consumer_path,
+    const char *register_path,
+    Theron_V1SpawnCaptureCorrelationReceipt *out) {
+    Theron_V1SpawnConsumerTraceReceipt consumer;
+    Theron_V1SpawnRegisterTraceReceipt registers;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->semantic_publication_allowed = 0;
+    out->dynamic_return_contract_verified = 0;
+    out->consumer_ready =
+        theron_v1_mednafen_spawn_consumer_trace_parse_file(
+            consumer_path, &consumer);
+    out->registers_ready =
+        theron_v1_mednafen_spawn_register_trace_parse_file(
+            register_path, &registers);
+    if (out->consumer_ready) {
+        out->consumer_read_count = consumer.read_count;
+    }
+    if (out->registers_ready) {
+        out->register_sample_count = registers.sample_count;
+    }
+    out->source_windows_paired =
+        out->consumer_ready && out->registers_ready &&
+        consumer.source_header_verified && registers.source_header_verified &&
+        consumer.sequence_verified && registers.sequence_verified &&
+        consumer.bank_coordinates_verified &&
+        registers.bank_coordinates_verified &&
+        consumer.boundary_flags_verified && registers.boundary_flags_verified &&
+        consumer.c96b_window_seen && consumer.cc4c_window_seen &&
+        registers.c96b_window_seen && registers.cc4c_window_seen &&
+        registers.preconsumer_4644_seen && registers.helper_4667_seen;
+    out->ready = out->source_windows_paired;
+    return out->ready;
+}

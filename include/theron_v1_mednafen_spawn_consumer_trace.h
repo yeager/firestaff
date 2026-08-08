@@ -78,4 +78,24 @@ typedef struct {
 int theron_v1_mednafen_spawn_register_trace_parse_file(
     const char *path, Theron_V1SpawnRegisterTraceReceipt *out);
 
+/* Correlates the two sidecars emitted by one instrumented run.  This is a
+ * stronger capture handoff than either parser alone, but it deliberately
+ * remains non-semantic: the dynamic RAM-loaded callees and return ownership
+ * are not identified by window provenance. */
+typedef struct {
+    int ready;
+    int consumer_ready;
+    int registers_ready;
+    int source_windows_paired;
+    int dynamic_return_contract_verified;
+    int semantic_publication_allowed;
+    uint32_t consumer_read_count;
+    uint32_t register_sample_count;
+} Theron_V1SpawnCaptureCorrelationReceipt;
+
+int theron_v1_mednafen_spawn_capture_correlate_files(
+    const char *consumer_path,
+    const char *register_path,
+    Theron_V1SpawnCaptureCorrelationReceipt *out);
+
 #endif

@@ -7879,6 +7879,21 @@
   the production `firestaff_theron` library keeps its source-bound fallback
   policy.
 
+# Theron spawn-capture sidecar correlation (2026-08-08)
+
+- ✅ Added a strict receipt that pairs the consumer and register sidecars from
+  one instrumented run only when both validate the disassembly-bound C96B,
+  CC4C, `$4644`, and `$4667` windows, sequence, bank coordinates, and
+  boundary markers.
+- ✅ The receipt retains read/sample counts but explicitly keeps dynamic return
+  ownership and semantic publication disabled. It cannot create RNG values,
+  creatures, spawns, or gameplay records from incomplete evidence.
+- ✅ Focused parser/correlation regression passes; real US/JP Track 02 and
+  Track 19 media verification also passes against `/Users/bosse/.firestaff/data/theron`.
+- Source evidence: `docs/source-lock/theron-disassembly/
+  theron-us-spawn-consumer.asm`, `theron-us-rng-helper.asm`, and
+  `theron-runtime-spawn-capture.md`.
+
 # CSB source-owned movement stamina and boots (2026-08-08)
 
 - ✅ PC34 F0366 now decrements every source party record through F0325 before
