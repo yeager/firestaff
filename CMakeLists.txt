@@ -56644,7 +56644,8 @@ add_executable(test_m11_dm2_mve_presenter
     src/engine/m11_dm2_mve_presenter.c
 )
 target_include_directories(test_m11_dm2_mve_presenter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_m11_dm2_mve_presenter PRIVATE SDL3::SDL3)
+target_link_libraries(test_m11_dm2_mve_presenter PRIVATE
+    SDL3::SDL3 firestaff_dm2 firestaff_m10 m)
 add_test(NAME test_m11_dm2_mve_presenter COMMAND test_m11_dm2_mve_presenter)
 set_tests_properties(test_m11_dm2_mve_presenter PROPERTIES
     ENVIRONMENT "SDL_AUDIODRIVER=dummy")

@@ -82,6 +82,7 @@
 #include "m11_v2_vertical_slice_assets.h"
 #include "m11_game_text_utf8_decoder_pc34_compat.h"
 #include "render_sdl_m11.h"
+#include <SDL3/SDL.h>
 #include "vga_palette_pc34_compat.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "fs_gesture_navigation_gate.h"
@@ -1499,6 +1500,104 @@ static int m11_dm2_is_amiga_profile(const DM2_V1_BootProfile *profile)
     return profile && profile->platform == DM2_PLATFORM_AMIGA_EN;
 }
 
+/* IBMIOP owns the DOS INTRO before SKULL.EXE reaches SHOW_MENU_SCREEN.
+ * Keep MVE decoding and its source PCM queue on the same monotonic
+ * microsecond clock.  The callback copies the exact PAL8 page into the M11
+ * state; it neither scales pixels nor invents a palette entry.  SKProject's
+ * INIT enters SHOW_MENU_SCREEN only after the outer presentation returns. */
+static int m11_dm2_dos_mve_sink(void *context, const uint8_t *pixels,
+                                const uint8_t palette_rgb6[256][3],
+                                uint32_t presentation_index,
+                                uint64_t presentation_time_us)
+{
+    M11_GameViewState *state = (M11_GameViewState *)context;
+    if (!state || !pixels || !palette_rgb6 || !state->dm2DosMveIntroActive) {
+        return 0;
+    }
+    memcpy(state->dm2DosMvePixels, pixels, sizeof(state->dm2DosMvePixels));
+    memcpy(state->dm2DosMvePaletteRgb6, palette_rgb6,
+           sizeof(state->dm2DosMvePaletteRgb6));
+    state->dm2DosMvePresentationIndex = presentation_index;
+    state->dm2DosMvePresentationTimeUs = presentation_time_us;
+    return 1;
+}
+
+static int m11_dm2_bind_dos_intro(M11_GameViewState *state)
+{
+    DM2_V1_BootProfile *profile;
+    const uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
+    uint64_t now_us;
+
+    if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        profile->platform != DM2_PLATFORM_PC_EN) {
+        return 1;
+    }
+    if (!dm2_v1_boot_dos_intro_mve_readonly(profile, &bytes, &byte_count)) {
+        /* The retail intro is optional media.  A data-only DOS install
+         * proceeds directly to SKULL's authenticated static menu instead of
+         * borrowing title pixels from another release. */
+        return 1;
+    }
+    now_us = SDL_GetTicksNS() / UINT64_C(1000);
+    if (!m11_dm2_mve_presenter_open(&state->dm2DosMvePresenter, bytes,
+                                    byte_count, now_us,
+                                    m11_dm2_dos_mve_sink, state)) {
+        state->dm2DosMveIntroRejected = 1;
+        return 0;
+    }
+    state->dm2DosMveIntroActive = 1;
+    return 1;
+}
+
+static int m11_dm2_present_dos_intro(M11_GameViewState *state,
+                                     unsigned char *framebuffer,
+                                     int framebuffer_width,
+                                     int framebuffer_height)
+{
+    int result;
+    int x;
+    int y;
+
+    if (!state || !framebuffer || !state->dm2DosMveIntroActive) return 0;
+    /* The last source page must reach one host present before the stream and
+     * its SDL device are closed.  On the following Draw call, release M11's
+     * resources and permit SKULL's GDAT menu to take over. */
+    if (state->dm2DosMvePresenter.ended) {
+        m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
+        state->dm2DosMveIntroActive = 0;
+        state->dm2DosMveIntroComplete = 1;
+        return 0;
+    }
+    result = m11_dm2_mve_presenter_advance(
+        &state->dm2DosMvePresenter, SDL_GetTicksNS() / UINT64_C(1000));
+    if (result < 0) {
+        /* A broken clock, queue or source order has no lawful GDAT fallback:
+         * retain black rather than claiming that SKULL reached its menu. */
+        m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
+        state->dm2DosMveIntroActive = 0;
+        state->dm2DosMveIntroRejected = 1;
+        return -1;
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(state->dm2DosMvePaletteRgb6) !=
+        M11_RENDER_OK) {
+        m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
+        state->dm2DosMveIntroActive = 0;
+        state->dm2DosMveIntroRejected = 1;
+        return -1;
+    }
+    for (y = 0; y < framebuffer_height; ++y) {
+        const int source_y = y * 200 / framebuffer_height;
+        for (x = 0; x < framebuffer_width; ++x) {
+            const int source_x = x * 320 / framebuffer_width;
+            framebuffer[(size_t)y * (size_t)framebuffer_width + (size_t)x] =
+                state->dm2DosMvePixels[(size_t)source_y * 320u +
+                                        (size_t)source_x];
+        }
+    }
+    return 1;
+}
+
 /* TWANIM emits one displayable canvas for each EN or DL record.  Keep the
  * count from the already authenticated source receipt; M11 must not infer a
  * fixed retail duration or silently accept a different stream.  DMWeb,
@@ -2048,6 +2147,12 @@ static int m11_dm2_apply_boot_runtime_receipt(
      * admissible.  SKProject SKWINSPX SkWinCore.cpp::GAME_LOAD reaches
      * SELECT_CHAMPION only after this startup-menu boundary. */
     state->dm2State.level_loaded = 0;
+    if (!m11_dm2_bind_dos_intro(state)) {
+        /* The DOS movie has been admitted by BootProfile but could not be
+         * opened by the exact MVE path.  Keep the launch surface black; it
+         * must not silently substitute SKULL's later GDAT page. */
+        state->dm2DosMveIntroRejected = 1;
+    }
     if ((m11_dm2_is_fmtowns_profile(receipt->profile) &&
          !m11_dm2_bind_fmtowns_swoosh(state)) ||
         (m11_dm2_is_amiga_profile(receipt->profile) &&
@@ -18387,6 +18492,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         /* The SDL device is a host resource, while decoded PCM remains
          * owned by the verified GDAT loader in the DM2 boot profile. */
         dm2_v1_sound_bind_playback_backend(NULL);
+        m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
     }
     theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
     m11_nexus_release_title(state);
@@ -23933,6 +24039,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
             DM2_V1_MusicScheduleReceipt music_schedule;
+            if (state->dm2DosMveIntroActive || state->dm2DosMveIntroRejected) {
+                /* IBMIOP has not yet returned to SKULL.EXE.  Its MVE clock
+                 * advances in Draw, and no menu idle/input side effect may
+                 * run behind the source movie. */
+                return M11_GAME_INPUT_REDRAW;
+            }
             if (state->dm2FmtownsEndComplete) {
                 /* The selected END stream has completed. AUTOEXEC has no
                  * further game stage, so this is the one source-ordered
@@ -27595,8 +27707,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int dir;
         int result;
-        if (state->dm2FmtownsTitleBound ||
-            (state->dm2FmtownsTitleFinished &&
+        if (state->dm2DosMveIntroActive || state->dm2DosMveIntroRejected ||
+            state->dm2FmtownsTitleBound ||
+            (m11_dm2_is_fmtowns_profile(
+                 (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+             state->dm2FmtownsTitleFinished &&
              !m11_dm2_fmtowns_skull_menu_ready(state))) {
             /* AUTOEXEC's TITLE has no SKULL menu hit rectangles.  Do not
              * leak clicks through the original animation, nor through an
@@ -28374,8 +28489,11 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (state->dm2FmtownsTitleBound ||
-        (state->dm2FmtownsTitleFinished &&
+    if (state->dm2DosMveIntroActive || state->dm2DosMveIntroRejected ||
+        state->dm2FmtownsTitleBound ||
+        (m11_dm2_is_fmtowns_profile(
+             (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+         state->dm2FmtownsTitleFinished &&
          !m11_dm2_fmtowns_skull_menu_ready(state))) {
         /* AUTOEXEC's TITLE stream precedes SKULL.EXP and has no menu click
          * table.  SKProject's SHOW_MENU_SCREEN only enters the GDAT-driven
@@ -56348,7 +56466,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            if (state->dm2FmtownsTitleRejected) {
+            if (((M11_GameViewState *)state)->dm2DosMveIntroActive) {
+                /* IBMIOP's PC-DOS MVE is earlier than SHOW_MENU_SCREEN.
+                 * While it owns the screen, do not evaluate any GDAT title,
+                 * credits or host overlay route.  The presenter advances at
+                 * most one exact source frame per Draw call, even when the
+                 * host has missed several deadlines. */
+                (void)m11_dm2_present_dos_intro((M11_GameViewState *)state,
+                                                framebuffer, framebufferWidth,
+                                                framebufferHeight);
+            } else if (((const M11_GameViewState *)state)->dm2DosMveIntroRejected) {
+                /* A verified MVE that cannot retain strict source order must
+                 * fail black.  Showing SKULL's menu here would falsely claim
+                 * that IBMIOP completed. */
+            } else if (state->dm2FmtownsTitleRejected) {
                 /* Fail closed: selected FM Towns media cannot claim PC
                  * GDAT's static startup page as an alternate TITLE. */
             } else if (state->dm2FmtownsTitleBound) {

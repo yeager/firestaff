@@ -1,5 +1,18 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 DOS-MVE M11-startflöde (2026-08-09)
+
+- ✅ DOS BootProfiles RAM-ägda, hashverifierade `INTRO` går nu hela vägen
+  genom M11:s MVE-presenterare till den riktiga indexed framebuffern med
+  originalets RGB6-palett och mikrosekundsklocka. En försenad värdram får
+  bara visa nästa källbild; den får aldrig hoppa över eller skapa en bild.
+- ✅ Under IBMIOP-filmen är M11:s GDAT-meny, credits, input och idle-sida
+  spärrade. Efter sista visade källbild stängs SDL-kön innan SKULL:s
+  source-menu får rita. Fel i källa, klocka, ljudkö eller palett blir svart,
+  utan stillbild eller tyst reservväg.
+- ✅ Realdatatestet följer BootProfile → M11-presenterare med retail-INTRO,
+  217 bilder och 217 PCM-paket. Filmdata stannar i profilens RAM.
+
 # DM2 New Game privat mirrorsvalsordning (2026-08-09)
 
 - ✅ Den privata GAME_LOAD-ägaren behåller nu varje autentiserat

@@ -65,6 +65,7 @@
 #include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
 #include "dm1_v1_f0740_f0743_music_source_pc34_compat.h"
 #include "dm1_v1_fmtowns_startup.h"
+#include "m11_dm2_mve_presenter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1767,6 +1768,18 @@ typedef struct {
     int dm2FmtownsTitleBound;
     int dm2FmtownsTitleFinished;
     int dm2FmtownsTitleRejected;
+    /* PC DOS starts in IBMIOP's verified INTRO MVE before SKULL.EXE draws
+     * its GDAT menu.  M11 retains the decoded PAL8 page only for the one
+     * source presentation that is currently on the host display; movie
+     * bytes remain owned by DM2_V1_BootProfile. */
+    M11_Dm2MvePresenter dm2DosMvePresenter;
+    uint8_t dm2DosMvePixels[320u * 200u];
+    uint8_t dm2DosMvePaletteRgb6[256u][3u];
+    uint32_t dm2DosMvePresentationIndex;
+    uint64_t dm2DosMvePresentationTimeUs;
+    int dm2DosMveIntroActive;
+    int dm2DosMveIntroRejected;
+    int dm2DosMveIntroComplete;
     int dm2SaveDialoguePanelActive;
     struct {
         int level_loaded;

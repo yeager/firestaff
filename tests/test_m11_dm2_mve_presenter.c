@@ -1,3 +1,4 @@
+#include "dm2_v1_boot.h"
 #include "dm2_v1_dos_real_data_manifest.h"
 #include "m11_dm2_mve_presenter.h"
 
@@ -11,25 +12,6 @@ typedef struct {
     uint64_t last_time_us;
     uint32_t pixel_hash;
 } TestSink;
-
-static uint8_t *read_original(const char *path, size_t *out_size)
-{
-    FILE *file;
-    long length;
-    uint8_t *bytes;
-    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
-    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0 ||
-        !(bytes = (uint8_t *)malloc((size_t)length)) ||
-        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
-        free(bytes);
-        fclose(file);
-        return NULL;
-    }
-    fclose(file);
-    *out_size = (size_t)length;
-    return bytes;
-}
 
 static int sink_present(void *context, const uint8_t *pixels,
                         const uint8_t palette[256][3], uint32_t index,
@@ -46,23 +28,26 @@ static int sink_present(void *context, const uint8_t *pixels,
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DOS_ROOT");
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
     const dm2_v1_dos_file_fp_t *fingerprint;
+    DM2_V1_BootProfile boot;
     M11_Dm2MvePresenter presenter;
     TestSink sink = {0};
-    uint8_t *bytes;
-    size_t size;
-    char path[1024];
+    const uint8_t *bytes = NULL;
+    size_t size = 0u;
     uint32_t index;
 
     if (!root) {
-        puts("SKIP: no DM2 DOS root");
+        puts("SKIP: no DM2 DOS DATA root");
         return 0;
     }
     fingerprint = dm2_v1_dos_file_fp_lookup_pc34("intro");
-    snprintf(path, sizeof(path), "%s/intro", root);
-    bytes = read_original(path, &size);
-    assert(fingerprint && bytes && size == fingerprint->size_bytes);
+    dm2_v1_boot_profile_init(&boot);
+    assert(dm2_v1_boot_scan_assets(&boot, root) == 0);
+    assert(boot.assets_verified && boot.platform == DM2_PLATFORM_PC_EN);
+    assert(fingerprint &&
+           dm2_v1_boot_dos_intro_mve_readonly(&boot, &bytes, &size) == 1 &&
+           bytes && size == fingerprint->size_bytes);
     assert(m11_dm2_mve_presenter_open(&presenter, bytes, size, 1000u,
                                       sink_present, &sink) == 1);
     assert(m11_dm2_mve_presenter_advance(&presenter, 999u) == -1);
@@ -89,7 +74,7 @@ int main(void)
     assert(m11_dm2_mve_presenter_advance(&presenter,
                                          1000u + 217u * 83328u) == 0);
     m11_dm2_mve_presenter_close(&presenter);
-    free(bytes);
+    dm2_v1_boot_cleanup(&boot);
     puts("PASS: M11 DM2 MVE seam preserves retail display and PCM order");
     return 0;
 }
