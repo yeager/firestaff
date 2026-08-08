@@ -6954,3 +6954,12 @@
 - Inventory ownership, pickup/equip/use, T900 rules, misc consumers,
   projectile/cloud consumers, and creature combat remain explicitly gated;
   this change does not infer those semantics.
+# 2026-08-08 Theron source item-property binding
+
+- ✅ Ground objects now retain the source Track 02 66-entry category value
+  and matched six-byte item-property record when the object type agrees with
+  the weapon/armor/consumable category table.
+- ✅ Real US and JP Track 02 loader tests pass; mismatched or out-of-range
+  source types remain unclassified instead of being guessed into inventory.
+- Inventory ownership, equipment/use resolution, T900 translation, and
+  remaining creature/media consumers are still open requirements.

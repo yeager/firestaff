@@ -48,6 +48,7 @@ typedef struct {
     int unbound_item_refs;
     int raw_only_item_refs;
     int source_objects_materialized;
+    int source_item_properties_bound;
     unsigned int source_object_count;
     /* Authenticated source-occurrence census.  These counts describe the
      * DMBUILDER6 category byte retained in source_objects.  A subset of

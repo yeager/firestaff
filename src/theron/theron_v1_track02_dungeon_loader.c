@@ -5,6 +5,8 @@
 #include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_door.h"
 #include "theron_v1_track02_item_id_map.h"
+#include "theron_v1_track02_item_categories.h"
+#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_world.h"
 #include <stdlib.h>
 #include <string.h>
@@ -62,11 +64,14 @@ static int materialize_source_item(
     unsigned int source_index,
     const uint8_t *raw,
     size_t raw_size,
-    const Theron_Track02ItemRecord *record)
+    const Theron_Track02ItemRecord *record,
+    int *property_bound)
 {
     if (!object || !raw || !record || raw_size > sizeof(object->source_raw) ||
         source_index > UINT16_MAX || position > UINT8_MAX)
         return 0;
+
+    if (property_bound) *property_bound = 0;
 
     /* DMBUILDER6/src/dms.h:244-258 supplies the byte layouts.  The
      * category-to-host-kind mapping is only emitted for categories whose
@@ -90,7 +95,7 @@ static int materialize_source_item(
         object->source_poisoned = record->value.weapon.poisoned;
         object->source_broken = record->value.weapon.broken;
         object->quantity = record->value.weapon.charges;
-        return 1;
+        break;
     case THERON_CAT_CLOTHING:
         object->type = THERON_OBJTYPE_ARMOR;
         object->item_index = record->value.clothing.type;
@@ -99,30 +104,62 @@ static int materialize_source_item(
         object->source_cursed = record->value.clothing.cursed;
         object->source_dump = record->value.clothing.dump;
         object->source_broken = record->value.clothing.broken;
-        return 1;
+        break;
     case THERON_CAT_SCROLL:
         object->type = THERON_OBJTYPE_SCROLL;
         object->item_index = record->value.scroll.type;
         object->source_item_type = record->value.scroll.type;
         object->source_closed = record->value.scroll.closed;
         object->source_text_ref = record->value.scroll.reftxt;
-        return 1;
+        break;
     case THERON_CAT_POTION:
         object->type = THERON_OBJTYPE_POTION;
         object->item_index = record->value.potion.type;
         object->source_item_type = record->value.potion.type;
         object->source_keep = record->value.potion.keep;
         object->source_power = record->value.potion.power;
-        return 1;
+        break;
     case THERON_CAT_CHEST:
         object->type = THERON_OBJTYPE_CHEST;
         object->source_chested = record->value.chest.chested;
         object->source_data1 = record->value.chest.data1;
         object->quantity = record->value.chest.chested;
-        return 1;
+        break;
     default:
         return 0;
     }
+
+    /* Track 02 UD $21A046 and UD $099825 are parallel 66-entry tables.
+     * Match the source object type against both before exposing its raw
+     * property bytes to later inventory/equip consumers. */
+    if ((unsigned int)object->item_index <
+            theron_v1_track02_item_property_count()) {
+        uint8_t expected = 0;
+        switch (category) {
+        case THERON_CAT_WEAPON:   expected = THERON_ITEM_CAT_WEAPON; break;
+        case THERON_CAT_CLOTHING: expected = THERON_ITEM_CAT_ARMOR; break;
+        case THERON_CAT_SCROLL:
+        case THERON_CAT_POTION:
+        case THERON_CAT_CHEST:    expected = THERON_ITEM_CAT_CONSUMABLE; break;
+        default: break;
+        }
+        if (expected != 0u &&
+            theron_v1_track02_item_category((unsigned int)object->item_index) ==
+                expected) {
+            const Theron_ItemPropertyRecord *property =
+                theron_v1_track02_item_property((unsigned int)object->item_index);
+            object->source_item_category = expected;
+            object->source_property_valid = 1;
+            object->source_property[0] = property->b0;
+            object->source_property[1] = property->b1;
+            object->source_property[2] = property->b2;
+            object->source_property[3] = property->b3;
+            object->source_property[4] = property->b4;
+            object->source_property[5] = property->b5;
+            if (property_bound) *property_bound = 1;
+        }
+    }
+    return 1;
 }
 
 static int retain_source_object_occurrence(
@@ -412,12 +449,15 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     free(td);
                     return -1;
                 }
+                int property_bound = 0;
                 if (cat != THERON_CAT_MONSTER &&
                     materialize_source_item(&obj, cat, pos, ref, id, raw,
-                                             theron_item_bytes[cat], &record)) {
+                                             theron_item_bytes[cat], &record,
+                                             &property_bound)) {
                     place = 1;
                     result->items_placed++;
                     result->source_objects_materialized++;
+                    result->source_item_properties_bound += property_bound;
                 }
                 /* Every source record remains counted as not yet owned by an
                  * inventory/consumer path.  A materialized ground object is

@@ -12435,3 +12435,8 @@ as line/circle coordinates or promote them into movement geometry.
   ground-object representation preserves raw bytes and decoded fields, but
   no inferred inventory semantics are enabled. Misc, missile, and cloud
   records remain source-only until their consumers are recovered.
+- 🔧 2026-08-08 Theron item property consumer: weapon, armor, scroll,
+  potion, and chest ground objects now carry matched 66-entry category and
+  six-byte property records where the source type agrees. Remaining source
+  object types still need the original T900/item-ID translation and full
+  inventory ownership/equip/use semantics; do not promote them by range.

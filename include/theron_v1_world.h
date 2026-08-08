@@ -325,6 +325,9 @@ typedef struct {
     uint16_t source_text_ref;
     int16_t  source_chested;
     uint16_t source_data1;
+    uint8_t  source_item_category;
+    uint8_t  source_property_valid;
+    uint8_t  source_property[6];
 } Theron_V1_Object;
 
 #define THERON_MAX_OBJECTS 512
