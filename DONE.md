@@ -145,6 +145,9 @@
   valda C026-cellen dessutom ogenomskinligt till originalets C175-statusbox
   (`x = 7 + 69 × championindex`, `y = 0`), efter C017/C040-kompositionen.
   Realtidstester täcker A31M, A35M och A35E utan PC34-porträttfallback.
+- ✅ Kandidatens namnändringsfas använder nu den separata Amiga-C027-posten
+  på samma C101-yta som C040. `REVIVE.C` F0281:s C04-cyantransparens bevarar
+  C017 under panelen; den får aldrig ersättas av PC34:s namnändringsruta.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 

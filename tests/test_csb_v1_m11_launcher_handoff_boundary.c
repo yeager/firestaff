@@ -294,6 +294,8 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     unsigned char framebuffer[320 * 200];
     unsigned char *bytes = NULL;
     unsigned char *portraits = NULL;
+    unsigned char *inventory = NULL;
+    unsigned char *rename_panel = NULL;
     CSB_V1_BootProfile *profile;
     FILE *file = NULL;
     long length;
@@ -309,12 +311,24 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
         !(bytes = (unsigned char *)malloc((size_t)length)) ||
         fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
         !(portraits = (unsigned char *)malloc(256u * 87u)) ||
+        !(inventory = (unsigned char *)malloc(224u * 136u)) ||
+        !(rename_panel = (unsigned char *)malloc(144u * 73u)) ||
         !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 26u,
                                             portraits, 256u * 87u,
                                             &width, &height) ||
-        width != 256u || height != 87u) {
+        width != 256u || height != 87u ||
+        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 17u,
+                                            inventory, 224u * 136u,
+                                            &width, &height) ||
+        width != 224u || height != 136u ||
+        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 27u,
+                                            rename_panel, 144u * 73u,
+                                            &width, &height) ||
+        width != 144u || height != 73u) {
         expect_true(0, "Amiga candidate route opens authenticated C026 data");
         if (file) fclose(file);
+        free(rename_panel);
+        free(inventory);
         free(portraits);
         free(bytes);
         return;
@@ -336,10 +350,35 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
         }
     }
     expect_true(matches, label);
+    view->candidateMirrorRenameActive = 1;
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    matches = 1;
+    for (row = 0; row < 73; ++row) {
+        int column;
+        for (column = 0; column < 144; ++column) {
+            const unsigned char source = rename_panel[(size_t)row * 144u +
+                                                       (size_t)column];
+            const unsigned char expected = source == 4u
+                ? inventory[(size_t)(52 + row) * 224u + (size_t)(80 + column)]
+                : source;
+            if (framebuffer[(size_t)(85 + row) * 320u +
+                            (size_t)(128 + column)] != expected) {
+                matches = 0;
+                break;
+            }
+        }
+        if (!matches) break;
+    }
+    expect_true(matches,
+                "Amiga candidate rename composes source C027 with C04 transparency");
+    view->candidateMirrorRenameActive = 0;
     view->candidateMirrorPanelActive = 0;
     view->candidateMirrorOrdinal = -1;
     view->candidateMirrorPartyIndex = -1;
     view->inventoryPanelActive = 0;
+    free(rename_panel);
+    free(inventory);
     free(portraits);
     free(bytes);
 }

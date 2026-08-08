@@ -174,6 +174,17 @@ static void test_real_a35e_img1_if_available(void) {
     {
         uint16_t width = 0u;
         uint16_t height = 0u;
+        /* REVIVE.C F0281 places C027 in C101 with C04 transparency.  It has
+         * the same 144x73 panel geometry as C040, but distinct source bytes. */
+        CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 27u,
+                                                 pixels, 640u * 400u,
+                                                 &width, &height) == 1 &&
+                  width == 144u && height == 73u,
+              "real_a35e_c027_rename_panel_decodes_at_source_dimensions");
+    }
+    {
+        uint16_t width = 0u;
+        uint16_t height = 0u;
         /* ReDMCSB PANEL.C F0346 overlays C040 at panel-relative (80,52),
          * with C06 as transparency, on top of the C017 inventory panel. */
         CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 40u,

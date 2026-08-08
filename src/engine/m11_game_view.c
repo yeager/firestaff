@@ -4302,17 +4302,23 @@ static int m11_csb_present_amiga_runtime_surface(
     int status_box_index;
     int ok = 0;
 
-    const unsigned int graphic_index = state && state->candidateMirrorPanelActive
+    const unsigned int graphic_index = state && state->candidateMirrorRenameActive
+        ? 27u : state && state->candidateMirrorPanelActive
         ? 40u : state && state->inventoryPanelActive ? 17u : 13u;
-    /* ReDMCSB PANEL.C F0347 puts C017 at viewport (48,33); F0346 overlays
-     * C040 at panel-relative (80,52), so its page position is (128,85). */
-    const int target_x = state && state->candidateMirrorPanelActive ? 128 :
+    /* ReDMCSB PANEL.C F0347 puts C017 at viewport (48,33). F0346 overlays
+     * C040 at panel-relative (80,52); REVIVE.C F0281 puts C027 in the same
+     * C101 panel zone, so both native panel records start at (128,85). */
+    const int target_x = state && (state->candidateMirrorPanelActive ||
+                                   state->candidateMirrorRenameActive) ? 128 :
         state && state->inventoryPanelActive ? 48 : 233;
-    const int target_y = state && state->candidateMirrorPanelActive ? 85 :
+    const int target_y = state && (state->candidateMirrorPanelActive ||
+                                   state->candidateMirrorRenameActive) ? 85 :
         state && state->inventoryPanelActive ? 33 : 124;
-    const int expected_width = state && state->candidateMirrorPanelActive ? 144 :
+    const int expected_width = state && (state->candidateMirrorPanelActive ||
+                                         state->candidateMirrorRenameActive) ? 144 :
         state && state->inventoryPanelActive ? 224 : 87;
-    const int expected_height = state && state->candidateMirrorPanelActive ? 73 :
+    const int expected_height = state && (state->candidateMirrorPanelActive ||
+                                          state->candidateMirrorRenameActive) ? 73 :
         state && state->inventoryPanelActive ? 136 : 45;
 
     if (!state || !framebuffer || framebuffer_width < 320 ||
@@ -4340,7 +4346,7 @@ static int m11_csb_present_amiga_runtime_surface(
             (size_t)expected_width * (size_t)expected_height,
             &width, &height) || width != (uint16_t)expected_width ||
         height != (uint16_t)expected_height ||
-        (state->candidateMirrorPanelActive &&
+        ((state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) &&
          (!(inventory_pixels = (uint8_t *)malloc(224u * 136u)) ||
           !csb_v1_amiga_graphics_decode_item(
               bytes, (size_t)length, 17u, inventory_pixels, 224u * 136u,
@@ -4349,7 +4355,7 @@ static int m11_csb_present_amiga_runtime_surface(
     }
     portrait_index = state->candidateMirrorOrdinal;
     status_box_index = state->candidateMirrorPartyIndex;
-    if (state->candidateMirrorPanelActive &&
+    if ((state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) &&
         (portrait_index < 0 || portrait_index >= 24 ||
          status_box_index < 0 || status_box_index >= CHAMPION_MAX_PARTY ||
          !(portrait_pixels = (uint8_t *)malloc(256u * 87u)) ||
@@ -4368,14 +4374,15 @@ static int m11_csb_present_amiga_runtime_surface(
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) goto done;
     memset(framebuffer, 0, (size_t)framebuffer_width *
                            (size_t)framebuffer_height);
-    if (state->candidateMirrorPanelActive) {
+    if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
         for (row = 0; row < 136; ++row) {
             memcpy(framebuffer + (size_t)(33 + row) *
                    (size_t)framebuffer_width + 48u,
                    inventory_pixels + (size_t)row * 224u, 224u);
         }
     }
-    if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive) {
+    if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
+        !state->candidateMirrorRenameActive) {
         m11_fill_rect(framebuffer, framebuffer_width, framebuffer_height,
                       outer_rect.x, outer_rect.y, outer_rect.w, outer_rect.h,
                       0u);
@@ -4386,19 +4393,20 @@ static int m11_csb_present_amiga_runtime_surface(
             (size_t)target_x;
         const uint8_t *source = pixels +
             (size_t)row * (size_t)expected_width;
-        if (graphic_index == 40u) {
+        if (graphic_index == 40u || graphic_index == 27u) {
             int column;
-            /* PANEL.C F0346 passes C06_COLOR_DARK_GREEN as C040's
-             * transparent colour. Preserve C017 beneath exactly as the
-             * original blit does; no opaque host substitute is permitted. */
+            const uint8_t transparent = graphic_index == 40u ? 6u : 4u;
+            /* PANEL.C F0346 passes C06_COLOR_DARK_GREEN for C040; REVIVE.C
+             * F0281 passes C04_COLOR_CYAN for C027. Preserve C017 beneath
+             * exactly as those original blits do; no host substitute. */
             for (column = 0; column < expected_width; ++column) {
-                if (source[column] != 6u) destination[column] = source[column];
+                if (source[column] != transparent) destination[column] = source[column];
             }
         } else {
             memcpy(destination, source, (size_t)expected_width);
         }
     }
-    if (state->candidateMirrorPanelActive) {
+    if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
         const int portrait_source_x = (portrait_index & 7) * 32;
         const int portrait_source_y = (portrait_index >> 3) * 29;
         const int portrait_dest_x = status_box_index * 69 + 7;

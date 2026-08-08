@@ -81,7 +81,8 @@
   Återstående Amiga-dungeonviewport, champion-HUD och övriga
   statusboxöverlägg samt inventarie-/kandidatinmatning saknar dock egna
   autentiska konsumenter. C026-porträttet har nu en avgränsad native
-  kandidat-/statusboxkonsument, men inte hela den interaktiva panelkedjan.
+  kandidat-/statusboxkonsument, inklusive C027:s källägda namnändringsyta,
+  men inte hela den interaktiva panelkedjan.
   Franska/tyska och den återstående
   A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
