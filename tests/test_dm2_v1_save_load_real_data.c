@@ -1000,6 +1000,13 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
               special_ok
                   ? "real SKSave reaches the source special-timer boundary before map chains"
                   : "real SKSave records the original phase that blocks its incomplete local owner");
+        if (special_timers.failure_stage ==
+            DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS) {
+            CHECK(special_timers.direct_root_count ==
+                      (uint16_t)(state_receipt.champion_count * DM2_NUM_ITEMS + 1u) &&
+                  special_timers.direct_root_hash != 0u,
+                  "real SKSave binds all direct hero inventory roots before map restore");
+        }
     }
     {
         const int direct_root_result = verify_real_direct_record_roots(

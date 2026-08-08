@@ -9529,6 +9529,18 @@
   tills originalets world-recycler kan ägas atomärt; inga extra records eller
   syntetiska pooler skapas.
 
+# DM2 SKSAVE c_hero inventory-root owner (2026-08-08)
+
+- ✅ Den temporära, källägda `GAME_LOAD`-transaktionen skriver nu de 30
+  `READ_RECORD_CHECKCODE`-rötterna per hjälte direkt till den redan
+  materialiserade 263-byte `c_hero::item`-arrayen, följd av den riktiga
+  ledarhandsroten. Kort eller motsägelsefull rootlista avvisas före första
+  mutation; ingen värdinventory eller startutrustning skapas.
+- ✅ Verifierat både med den källordnade unit-testen och de fyra verkliga
+  PC-DOS-sparfiler som når kartfasen. `test_dm2_v1_save_load_real_data`
+  passerar 204/204; Resume är fortsatt spärrad tills komplett map/recycler,
+  possessions och actuator-generatorer delar samma live-ägare.
+
 # DM2 SKSAVE-possessioner i källordning (2026-08-08)
 
 - ✅ Den tillfälliga source-ägda importtransaktionen avslutar nu en godkänd

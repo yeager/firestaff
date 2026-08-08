@@ -194,6 +194,17 @@ typedef struct {
     uint8_t next_stream_current_byte;
 } DM2_V1_SksaveDirectRootReceipt;
 
+/* Apply the exact source-order direct-root result to the already
+ * materialised c_hero bytes.  sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON first
+ * writes 30 OBJECT_END_MARKER roots per party hero, then the leader-hand
+ * root.  This function owns neither a live session nor item bonuses; it is
+ * the bounded c_hero/link handoff within the temporary GAME_LOAD
+ * transaction. */
+int dm2_v1_sksave_apply_direct_roots_to_heroes(
+    DM2_V1_Hero *heroes, size_t hero_capacity, uint16_t hero_count,
+    const DM2_V1_SksaveDirectRootReceipt *roots,
+    uint16_t *out_leader_hand_root, uint32_t *out_root_hash);
+
 /* Exact skproject table_recordsizes entry (bytes).  Returns 0 for the
  * unallocated DB11/DB12/DB13 pools and for out-of-range pool ids. */
 int dm2_v1_record_pool_record_size(int pool);
@@ -361,8 +372,11 @@ typedef struct {
     uint16_t hero_timeridx_cleared;
     uint16_t hero_timeridx_set;
     uint16_t ornate_timer_backlinks_set;
+    uint16_t direct_root_count;
+    uint16_t leader_hand_root_link;
     uint32_t timer_hash;
     uint32_t heroes_hash;
+    uint32_t direct_root_hash;
     uint32_t timer_queue_hash;
     uint32_t record_hash;
     uint32_t continuation_hash;

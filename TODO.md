@@ -161,7 +161,12 @@
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` för en full DB0/DB15-pool. Implementera
   den bara tillsammans med dess kompletta c_map/record-ägare; skapa inte en
   ersättningspool, återanvänd inte en godtycklig record och publicera inte
-  Resume förrän den atomära transaktionen är komplett.
+  Resume förrän den atomära transaktionen är komplett. Direktrötterna skrivs
+  nu till de materialiserade `c_hero::item[30]` och den verkliga
+  ledarhandsroten i samma temporära ägare. Nästa källsteg är
+  `DM2_PROCESS_ITEM_BONUS` efter dessa rötter och före specialtimerfasen;
+  den behöver den kompletta GDAT-/itemägaren och får inte ersättas av
+  nollade stats eller en värdinventory.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem

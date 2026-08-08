@@ -75,6 +75,36 @@ int main(void)
         CHECK(dm2_v1_record_pool_record_size(16) == 0, "pool 16 size 0");
     }
 
+    /* READ_SKSAVE_DUNGEON writes each decoded direct root into the already
+     * source-materialised c_hero inventory, followed by leader hand. */
+    {
+        DM2_V1_Hero heroes[DM2_MAX_HEROES];
+        DM2_V1_SksaveDirectRootReceipt roots;
+        uint16_t leader_hand = 0u;
+        uint32_t root_hash = 0u;
+        size_t i;
+
+        memset(heroes, 0, sizeof(heroes));
+        memset(&roots, 0, sizeof(roots));
+        roots.valid = 1;
+        roots.root_count = (uint16_t)(2u * DM2_NUM_ITEMS + 1u);
+        for (i = 0u; i < roots.root_count; ++i) {
+            roots.roots[i] = (uint16_t)(0x4000u | (uint16_t)i);
+        }
+        CHECK(dm2_v1_sksave_apply_direct_roots_to_heroes(
+                  heroes, DM2_MAX_HEROES, 2u, &roots, &leader_hand,
+                  &root_hash),
+              "direct roots bind source c_hero inventory owners");
+        CHECK((uint16_t)heroes[0].item[0] == 0x4000u &&
+                  (uint16_t)heroes[1].item[DM2_NUM_ITEMS - 1] == 0x403bu &&
+                  leader_hand == 0x403cu && root_hash != 0u,
+              "direct-root order retains all 30 hero slots then leader hand");
+        roots.root_count--;
+        CHECK(!dm2_v1_sksave_apply_direct_roots_to_heroes(
+                   heroes, DM2_MAX_HEROES, 2u, &roots, NULL, NULL),
+              "short direct-root owner fails before c_hero mutation");
+    }
+
     /* ── handle decode (c_record.cpp:44-52) ─────────────────────── */
     CHECK(dm2_v1_record_handle_pool(mk_handle(4, 173)) == 4, "pool decode");
     CHECK(dm2_v1_record_handle_index(mk_handle(4, 173)) == 173,

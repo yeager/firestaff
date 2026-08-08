@@ -569,6 +569,47 @@ static uint32_t dm2_v1_sksave_hash_bytes(uint32_t hash,
     return hash;
 }
 
+int dm2_v1_sksave_apply_direct_roots_to_heroes(
+    DM2_V1_Hero *heroes, size_t hero_capacity, uint16_t hero_count,
+    const DM2_V1_SksaveDirectRootReceipt *roots,
+    uint16_t *out_leader_hand_root, uint32_t *out_root_hash)
+{
+    const size_t expected_root_count = (size_t)hero_count * DM2_NUM_ITEMS + 1u;
+    uint32_t hash = 2166136261u;
+    size_t hero_index;
+
+    if (out_leader_hand_root) *out_leader_hand_root = 0xfffeu;
+    if (out_root_hash) *out_root_hash = 0u;
+    /* SKProject SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON
+     * lines 1185-1200 reads the roots straight into c_hero::item[30] and
+     * ddat.savegamewpc.w_00.  Require the exact cardinality before writing
+     * even a single c_hero field: a short shared SUPPRESS stream must never
+     * leave a partly owned inventory behind. */
+    if (!heroes || !roots || !roots->valid || hero_count > hero_capacity ||
+        hero_count > DM2_MAX_HEROES || roots->root_count != expected_root_count) {
+        return 0;
+    }
+
+    for (hero_index = 0u; hero_index < (size_t)hero_count; ++hero_index) {
+        size_t item_index;
+        for (item_index = 0u; item_index < DM2_NUM_ITEMS; ++item_index) {
+            const uint16_t root = roots->roots[
+                hero_index * DM2_NUM_ITEMS + item_index];
+            heroes[hero_index].item[item_index] = (int16_t)root;
+            hash = dm2_v1_sksave_hash_bytes(hash,
+                (const uint8_t *)&root, sizeof(root));
+        }
+    }
+    {
+        const uint16_t leader_hand = roots->roots[expected_root_count - 1u];
+        hash = dm2_v1_sksave_hash_bytes(hash,
+            (const uint8_t *)&leader_hand, sizeof(leader_hand));
+        if (out_leader_hand_root) *out_leader_hand_root = leader_hand;
+    }
+    if (out_root_hash) *out_root_hash = hash;
+    return 1;
+}
+
 static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
 {
     DM2_V1_SksavePoolRestoreContext *ctx =
@@ -1375,9 +1416,11 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_ReadRecordSession session;
     DM2_V1_LoadExtraDungeonReceipt dungeon_receipt;
     uint16_t chains_read = 0u;
+    uint16_t leader_hand_root = 0xfffeu;
     int16_t timer_queue_count = -1;
     int16_t timer_free_head = -1;
     uint32_t timer_queue_hash = 2166136261u;
+    uint32_t direct_root_hash = 0u;
     DM2_V1_SksavePreflightFailureStage failure_stage =
         DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE;
     int ok = 0;
@@ -1425,6 +1468,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         !dm2_v1_record_pool_restore_raw_sksave_direct_roots(
             &pools, raw_body, raw_body_size, state_receipt,
             query_creature_ai_flags, query_creature_ai_flags_ctx, &roots) ||
+        !dm2_v1_sksave_apply_direct_roots_to_heroes(
+            heroes, DM2_MAX_HEROES, state_receipt->champion_count, &roots,
+            &leader_hand_root, &direct_root_hash) ||
         !dm2_v1_original_raw_sksave_decode_timer_stream(
             raw_body, raw_body_size, state_receipt, (uint8_t *)timers,
             DM2_V1_SAVE_TIMER_MAX, &timer_stream) ||
@@ -1551,6 +1597,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->hero_count = state_receipt->champion_count;
+        out_receipt->direct_root_count = roots.root_count;
+        out_receipt->leader_hand_root_link = leader_hand_root;
+        out_receipt->direct_root_hash = direct_root_hash;
         out_receipt->timer_count = state_receipt->timer_count;
         out_receipt->special_chain_count = chains_read;
         out_receipt->maps_loaded = (uint16_t)dungeon_receipt.maps_loaded;
@@ -1598,6 +1647,9 @@ done:
         const uint16_t failed_root_link = out_receipt->map_failure_root_link;
         const int16_t failed_record_type = out_receipt->map_failure_record_type;
         const int16_t failed_record_reason = out_receipt->map_failure_record_reason;
+        const uint16_t direct_root_count = roots.root_count;
+        const uint16_t leader_hand_root_link = leader_hand_root;
+        const uint32_t retained_direct_root_hash = direct_root_hash;
         memset(out_receipt, 0, sizeof(*out_receipt));
         out_receipt->failure_stage = failure_stage;
         out_receipt->map_failure_map = failed_map;
@@ -1606,6 +1658,9 @@ done:
         out_receipt->map_failure_root_link = failed_root_link;
         out_receipt->map_failure_record_type = failed_record_type;
         out_receipt->map_failure_record_reason = failed_record_reason;
+        out_receipt->direct_root_count = direct_root_count;
+        out_receipt->leader_hand_root_link = leader_hand_root_link;
+        out_receipt->direct_root_hash = retained_direct_root_hash;
     }
     return ok;
 }
