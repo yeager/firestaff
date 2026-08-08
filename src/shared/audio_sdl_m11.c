@@ -114,50 +114,155 @@ static unsigned int m11_fnv1a_bytes(const unsigned char* bytes, int count) {
 }
 
 /* The PC34 SWSH sound is an Atari ST PSG command stream, not PCM.  Its
- * actual waveform is therefore produced by a tiny AY-3-8910 compatible
- * noise lane from the original register values and original VBlank waits.
+ * actual waveform is therefore produced by a cycle-accurate YM2149
+ * noise + envelope emulation from the original register values and
+ * original VBlank waits.  Atari ST master clock = 2 MHz.
+ *
+ * YM2149 noise generator:  17-bit LFSR, XOR taps at bits 0 and 3.
+ *   Clock rate = master_clock / (16 * NP), NP = max(1, reg6 & 0x1F).
+ *
+ * YM2149 envelope generator:
+ *   Period = master_clock / (256 * EP), EP = reg0B | (reg0C << 8), min 1.
+ *   Shape from reg 0D:
+ *     0x09 = single decay  (15 -> 0, then hold 0)
+ *     0x0D = decay-attack repeat (15 -> 0 -> 15, cycle)
+ *
  * This path intentionally has no generic tone/noise fallback. */
+
+#define YM2149_MASTER_CLOCK 2000000u
+
 static int m11_render_dm1_swsh_psg_segment(M11_SoundBuffer* out,
                                             const unsigned char regs[14],
                                             unsigned int vblank_ms,
                                             unsigned int vblank_count,
-                                            unsigned int* noise_lfsr) {
-    unsigned int frames;
-    unsigned int frame;
+                                            unsigned int* noise_lfsr,
+                                            unsigned int* envelope_counter,
+                                            unsigned int* envelope_pos) {
+    unsigned int total_samples;
+    unsigned int s;
     unsigned int noise_period;
-    unsigned int noise_counter = 0u;
     unsigned int lfsr;
-    float envelope_start;
-    float envelope_end;
+    unsigned int env_ctr;
+    unsigned int env_pos;
+    unsigned int env_period;
+    unsigned int env_shape;
+    int noise_ch_a;
+    int noise_ch_b;
+    /* Fractional accumulators for sub-sample clocking (fixed-point 16.16) */
+    unsigned int noise_frac = 0u;
+    unsigned int noise_step;
+    unsigned int env_frac = 0u;
+    unsigned int env_step;
 
-    if (!out || !regs || !noise_lfsr || vblank_ms != 20u ||
-        vblank_count == 0u || vblank_count > 20u) return 0;
-    frames = ((unsigned int)M11_AUDIO_SAMPLE_RATE * vblank_ms * vblank_count) /
-             1000u;
-    if (frames == 0u || frames > (unsigned int)M11_AUDIO_MAX_SAMPLES ||
-        !m11_sound_reserve(out, out->sampleCount + (int)frames)) return 0;
+    if (!out || !regs || !noise_lfsr || !envelope_counter || !envelope_pos ||
+        vblank_ms != 20u || vblank_count == 0u || vblank_count > 20u)
+        return 0;
+    total_samples = ((unsigned int)M11_AUDIO_SAMPLE_RATE * vblank_ms *
+                     vblank_count) / 1000u;
+    if (total_samples == 0u ||
+        total_samples > (unsigned int)M11_AUDIO_MAX_SAMPLES ||
+        !m11_sound_reserve(out, out->sampleCount + (int)total_samples))
+        return 0;
 
-    /* PSG register 6 is the noise period; register 7 enables noise on A/B.
-     * The SWSH program selects envelope volume for both channels in 8/9. */
-    noise_period = ((unsigned int)regs[6] & 0x1fu) + 1u;
+    /* Noise period: NP = max(1, reg6 & 0x1F).
+     * YM2149 clocks noise at master_clock / (16 * NP).
+     * Fixed-point step per output sample = (master_clock / (16*NP)) / SR
+     *   scaled to 16.16: (master_clock << 16) / (16 * NP * SR). */
+    noise_period = (unsigned int)(regs[6] & 0x1fu);
+    if (noise_period == 0u) noise_period = 1u;
+    noise_step = (unsigned int)(((uint64_t)YM2149_MASTER_CLOCK << 16u) /
+                                (16u * noise_period *
+                                 (unsigned int)M11_AUDIO_SAMPLE_RATE));
+
+    /* Envelope period: EP = reg0B | (reg0C << 8), min 1.
+     * YM2149 clocks envelope at master_clock / (256 * EP).
+     * One full envelope cycle = 32 steps (0..31) in the shape table. */
+    env_period = (unsigned int)regs[11] | ((unsigned int)regs[12] << 8u);
+    if (env_period == 0u) env_period = 1u;
+    env_step = (unsigned int)(((uint64_t)YM2149_MASTER_CLOCK << 16u) /
+                              (256u * env_period *
+                               (unsigned int)M11_AUDIO_SAMPLE_RATE));
+
+    env_shape = (unsigned int)regs[13] & 0x0fu;
     lfsr = *noise_lfsr ? *noise_lfsr : 0x1ffffu;
-    envelope_start = ((regs[8] & 0x10u) ? 1.0f : (float)(regs[8] & 0x0fu) / 15.0f) +
-                     ((regs[9] & 0x10u) ? 1.0f : (float)(regs[9] & 0x0fu) / 15.0f);
-    if ((regs[7] & 0x18u) != 0u) envelope_start = 0.0f;
-    envelope_end = (regs[13] == 0x09u) ? 0.0f : envelope_start * 0.25f;
-    for (frame = 0u; frame < frames; ++frame) {
-        float progress = (float)frame / (float)frames;
-        float envelope = envelope_start + (envelope_end - envelope_start) * progress;
-        float noise;
-        if (++noise_counter >= noise_period * 8u) {
+    env_ctr = *envelope_counter;
+    env_pos = *envelope_pos;
+
+    /* Mixer register 7: bits 3-5 = noise enable for channels A/B/C
+     * (active low: 0 = enabled). */
+    noise_ch_a = ((regs[7] & 0x08u) == 0u) ? 1 : 0;
+    noise_ch_b = ((regs[7] & 0x10u) == 0u) ? 1 : 0;
+
+    for (s = 0u; s < total_samples; ++s) {
+        float amplitude;
+        float noise_val;
+        unsigned int env_level;
+
+        /* Advance noise LFSR by fractional accumulator */
+        noise_frac += noise_step;
+        while (noise_frac >= 0x10000u) {
             unsigned int bit = (lfsr ^ (lfsr >> 3u)) & 1u;
             lfsr = (lfsr >> 1u) | (bit << 16u);
-            noise_counter = 0u;
+            noise_frac -= 0x10000u;
         }
-        noise = (lfsr & 1u) ? 1.0f : -1.0f;
-        if (!m11_sound_append_sample(out, noise * envelope * 0.18f)) return 0;
+
+        /* Advance envelope by fractional accumulator.
+         * Each envelope "tick" advances env_pos by 1.
+         * env_pos 0..31 = one full cycle. */
+        env_frac += env_step;
+        while (env_frac >= 0x10000u) {
+            env_ctr++;
+            env_frac -= 0x10000u;
+        }
+
+        /* Compute envelope level (0..15) from shape and position.
+         * Shape 0x09: single decay  (15->0, hold 0)
+         * Shape 0x0D: decay-attack repeat (15->0, 0->15, repeat) */
+        env_pos = env_ctr / 16u;
+        if (env_shape == 0x09u) {
+            /* Single decay: 15..0 then hold 0 */
+            if (env_pos > 15u)
+                env_level = 0u;
+            else
+                env_level = 15u - env_pos;
+        } else if (env_shape == 0x0Du) {
+            /* Decay-attack repeat: period = 32 steps */
+            unsigned int phase = env_pos % 32u;
+            if (phase < 16u)
+                env_level = 15u - phase;  /* decay */
+            else
+                env_level = phase - 16u;  /* attack */
+        } else {
+            /* Fallback: single decay (safe default) */
+            if (env_pos > 15u)
+                env_level = 0u;
+            else
+                env_level = 15u - env_pos;
+        }
+
+        /* Channel amplitude: if bit 4 of reg 8/9 is set, use envelope.
+         * Otherwise use the fixed 4-bit level. Mix channels A+B. */
+        amplitude = 0.0f;
+        if (noise_ch_a) {
+            float ch_a = (regs[8] & 0x10u)
+                ? (float)env_level / 15.0f
+                : (float)(regs[8] & 0x0fu) / 15.0f;
+            amplitude += ch_a;
+        }
+        if (noise_ch_b) {
+            float ch_b = (regs[9] & 0x10u)
+                ? (float)env_level / 15.0f
+                : (float)(regs[9] & 0x0fu) / 15.0f;
+            amplitude += ch_b;
+        }
+
+        noise_val = (lfsr & 1u) ? 1.0f : -1.0f;
+        if (!m11_sound_append_sample(out, noise_val * amplitude * 0.18f))
+            return 0;
     }
     *noise_lfsr = lfsr;
+    *envelope_counter = env_ctr;
+    *envelope_pos = env_pos;
     return 1;
 }
 
@@ -1191,6 +1296,8 @@ int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
     unsigned int writes = 0u;
     unsigned int waits = 0u;
     unsigned int lfsr = 0x1ffffu;
+    unsigned int envelope_counter = 0u;
+    unsigned int envelope_pos = 0u;
 
     if (!state || !state->initialized || !program || programBytes <= 0 ||
         vblankMs != 20u ||
@@ -1235,7 +1342,9 @@ int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
             }
             if (value > 20u || waits > 20u - value ||
                 !m11_render_dm1_swsh_psg_segment(&state->dm1SwshProgram,
-                                                  regs, vblankMs, value, &lfsr)) {
+                                                  regs, vblankMs, value, &lfsr,
+                                                  &envelope_counter,
+                                                  &envelope_pos)) {
                 m11_sound_clear(&state->dm1SwshProgram);
                 return 0;
             }
@@ -1247,6 +1356,10 @@ int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
             return 0;
         }
         regs[reg] = (unsigned char)value;
+        if (reg == 0x0du) {
+            envelope_counter = 0u;
+            envelope_pos = 0u;
+        }
         ++writes;
     }
     m11_sound_clear(&state->dm1SwshProgram);
