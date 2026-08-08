@@ -312,6 +312,9 @@ static void check_real_mapd_tile_join(const uint8_t *title_bin,
           title.decoded_map_count == NEXUS_V1_TITLE_MAP_COUNT);
     for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
         size_t pixel;
+        CHECK(title.decoded_map_cell_fnv1a64[map] != 0U &&
+              title.decoded_map_cell_bytes[map] ==
+                  NEXUS_V1_TITLE_MAP_CELL_BYTES);
         int nonzero = 0;
         CHECK(title.decoded_map_pixels[map] != NULL);
         if (!title.decoded_map_pixels[map]) continue;

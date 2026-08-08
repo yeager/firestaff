@@ -2543,6 +2543,9 @@ level or consumer bindings.
   receipts cannot authorize a direct source-to-host framebuffer copy.
   WARNING DGT2 M11 callback modules are also excluded from the production
   library and remain explicit probe/test sources only.
+  2026-08-08: the source decoder now retains per-map MAPD cell-span hashes,
+  tile ranges and opaque attribute-word masks for all five real title maps;
+  these receipts do not assign VDP2 meaning or enable drawing.
   2026-08-06: a separate title VDP capture-admission bit now gates the
   full-start title-capture receipt; retail TITLE.CG/TITLE.BIN bytes alone
   cannot make M11/M12 advertise a drawable title package.

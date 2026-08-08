@@ -1,3 +1,12 @@
+# Nexus TITLE MAPD receipts retain all five raw cell spans (2026-08-08)
+
+- ✅ The DMWeb-confirmed TITLE.BIN decoder now retains each retail map's
+  source offset, 7,168-byte cell span, tile range, raw-word masks and FNV-1a64
+  cell receipt.
+- ✅ Attribute bits remain opaque; no guessed flip/palette meaning or VDP2
+  placement was introduced.
+- ✅ Real TITLE.BIN/TITLE.CG regressions verify the five retained receipts.
+
 # Nexus STABG receipt retains all retail maps (2026-08-08)
 
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,

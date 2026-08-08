@@ -10,6 +10,17 @@ static uint16_t nexus_title_be16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
 }
 
+static uint64_t nexus_title_fnv1a64(const uint8_t *bytes, size_t size)
+{
+    uint64_t value = UINT64_C(1469598103934665603);
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        value ^= bytes[i];
+        value *= UINT64_C(1099511628211);
+    }
+    return value;
+}
+
 /* DMWeb MAPD/TIBG layout: five 0x1c04-byte 64x28 maps begin at 0x40
  * (ending at 0x8c54), followed by sixteen BE16 palette words at 0x8c54.
  * The final palette word therefore ends at 0x8c74. */
@@ -36,6 +47,11 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
             (size_t)NEXUS_V1_TITLE_MAP_WIDTH * NEXUS_V1_TITLE_MAP_HEIGHT,
             1U);
         int cell;
+        uint16_t tile_min = UINT16_MAX;
+        uint16_t tile_max = 0U;
+        uint16_t word0_or = 0U;
+        uint16_t word1_or = 0U;
+        uint16_t word1_attribute_or = 0U;
         if (!out || map_offset + 4U + 0x1c00U > mapd_size) {
             free(out);
             return 0;
@@ -47,6 +63,8 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
         }
         for (cell = 0; cell < 64 * 28; ++cell) {
             size_t cell_offset = map_offset + 4U + (size_t)cell * 4U;
+            uint16_t word0 = nexus_title_be16(mapd + cell_offset);
+            uint16_t word1 = nexus_title_be16(mapd + cell_offset + 2U);
             int tile_index = (int)(nexus_title_be16(mapd + cell_offset + 2U) &
                                    0x7fffU) - 4608;
             int x = (cell % 64) * 8;
@@ -57,6 +75,14 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
                 free(out);
                 return 0;
             }
+            if ((uint16_t)tile_index < tile_min)
+                tile_min = (uint16_t)tile_index;
+            if ((uint16_t)tile_index > tile_max)
+                tile_max = (uint16_t)tile_index;
+            word0_or = (uint16_t)(word0_or | word0);
+            word1_or = (uint16_t)(word1_or | word1);
+            word1_attribute_or =
+                (uint16_t)(word1_attribute_or | (word1 & 0xfe00U));
             for (py = 0; py < 8; ++py) {
                 int px;
                 for (px = 0; px < 4; ++px) {
@@ -69,6 +95,15 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
                 }
             }
         }
+        title->decoded_map_source_offsets[map] = (uint32_t)map_offset;
+        title->decoded_map_cell_bytes[map] = NEXUS_V1_TITLE_MAP_CELL_BYTES;
+        title->decoded_map_tile_min[map] = tile_min;
+        title->decoded_map_tile_max[map] = tile_max;
+        title->decoded_map_word0_or[map] = word0_or;
+        title->decoded_map_word1_or[map] = word1_or;
+        title->decoded_map_word1_attribute_or[map] = word1_attribute_or;
+        title->decoded_map_cell_fnv1a64[map] = nexus_title_fnv1a64(
+            mapd + map_offset + 4U, NEXUS_V1_TITLE_MAP_CELL_BYTES);
         title->decoded_map_pixels[map] = out;
     }
     for (map = 0; map < 16; ++map) {

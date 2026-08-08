@@ -10,6 +10,8 @@
 enum {
     NEXUS_V1_TITLE_RENDER_MAX_RECTS = 40,
     NEXUS_V1_TITLE_MAP_COUNT = 5,
+    NEXUS_V1_TITLE_MAP_CELLS = 64 * 28,
+    NEXUS_V1_TITLE_MAP_CELL_BYTES = NEXUS_V1_TITLE_MAP_CELLS * 4,
     NEXUS_V1_TITLE_MAP_WIDTH = 512,
     NEXUS_V1_TITLE_MAP_HEIGHT = 224
 };
@@ -58,6 +60,16 @@ typedef struct {
     int warning_palette_loaded;
     uint8_t *decoded_map_pixels[NEXUS_V1_TITLE_MAP_COUNT];
     uint16_t decoded_map_palette[16];
+    /* Per-map raw MAPD receipts. The second cell word's high bits are kept
+     * opaque until a Saturn VDP2 consumer assigns their meaning. */
+    uint32_t decoded_map_source_offsets[NEXUS_V1_TITLE_MAP_COUNT];
+    uint32_t decoded_map_cell_bytes[NEXUS_V1_TITLE_MAP_COUNT];
+    uint16_t decoded_map_tile_min[NEXUS_V1_TITLE_MAP_COUNT];
+    uint16_t decoded_map_tile_max[NEXUS_V1_TITLE_MAP_COUNT];
+    uint16_t decoded_map_word0_or[NEXUS_V1_TITLE_MAP_COUNT];
+    uint16_t decoded_map_word1_or[NEXUS_V1_TITLE_MAP_COUNT];
+    uint16_t decoded_map_word1_attribute_or[NEXUS_V1_TITLE_MAP_COUNT];
+    uint64_t decoded_map_cell_fnv1a64[NEXUS_V1_TITLE_MAP_COUNT];
     int decoded_map_count;
     int decoded_map_source_bound;
 } Nexus_TitleScreen;

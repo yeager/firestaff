@@ -64,6 +64,15 @@ int main(void)
           "all five retail title maps are source-bound");
     for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
         size_t i, nonzero = 0;
+        check(title.decoded_map_source_offsets[map] ==
+                  0x40U + (uint32_t)map * 0x1c04U &&
+              title.decoded_map_cell_bytes[map] ==
+                  NEXUS_V1_TITLE_MAP_CELL_BYTES &&
+              title.decoded_map_tile_min[map] <=
+                  title.decoded_map_tile_max[map] &&
+              title.decoded_map_tile_max[map] < 5249U &&
+              title.decoded_map_cell_fnv1a64[map] != 0U,
+              "retail title map retains bounded raw cell provenance");
         check(title.decoded_map_pixels[map] != NULL,
               "retail title map has decoded pixel storage");
         if (!title.decoded_map_pixels[map]) continue;
