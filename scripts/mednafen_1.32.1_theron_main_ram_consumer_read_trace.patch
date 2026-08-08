@@ -6,7 +6,7 @@
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc);
- 
+
  class alignas(128) HuC6280
 @@ -398,11 +400,27 @@
  	// Logical
@@ -22,7 +22,7 @@
 +	  uint8 wmpr = MPR[address >> 13];
 +	  ret = ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
 +	 }
- 
+
 -	 LastLogicalReadAddr = address;
 +	 const uint8 wmpr = MPR[address >> 13];
 +	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
@@ -35,7 +35,7 @@
 +	   TheronPCECDTraceMainRAMConsumerRead(address, physical_address, ret,
 +	                                       reader_pc, reader_physical_pc);
 +	 }
- 
+
 -	 uint8 wmpr = MPR[address >> 13];
 -	 return ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
 +	 return ret;
@@ -50,16 +50,47 @@
 +static unsigned TheronPCECDMainRAMConsumerTraceCount;
 +static FILE *TheronPCECDMainRAMTargetTrace;
 +static unsigned TheronPCECDMainRAMTargetTraceCount;
++static FILE *TheronPCECDSpawnConsumerTrace;
++static unsigned TheronPCECDSpawnConsumerTraceCount;
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
 @@ -133,5 +135,51 @@
   TheronPCECDMainRAME009Active = false;
  }
- 
+
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc)
 +{
++ bool spawn_consumer_probe =
++  logical_address == 0x5d64 || logical_address == 0x5d6a ||
++  (reader_pc >= 0xc96b && reader_pc <= 0xca69) ||
++  (reader_pc >= 0xcc4c && reader_pc <= 0xcd13);
++ if(spawn_consumer_probe && TheronPCECDSpawnConsumerTraceCount < 4096)
++ {
++  if(!TheronPCECDSpawnConsumerTrace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE");
++   if(path && *path)
++   {
++    TheronPCECDSpawnConsumerTrace = fopen(path, "w");
++    if(TheronPCECDSpawnConsumerTrace)
++     fputs("source=mednafen-pce-instrumented-spawn-consumer\n",
++           TheronPCECDSpawnConsumerTrace);
++   }
++  }
++  if(TheronPCECDSpawnConsumerTrace)
++  {
++   fprintf(TheronPCECDSpawnConsumerTrace,
++           "spawn_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x target_5d64=%u target_5d6a=%u c96b_window=%u cc4c_window=%u\n",
++           TheronPCECDSpawnConsumerTraceCount++, logical_address,
++           physical_address, value, reader_pc, reader_physical_pc,
++           logical_address == 0x5d64, logical_address == 0x5d6a,
++           reader_pc >= 0xc96b && reader_pc <= 0xca69,
++           reader_pc >= 0xcc4c && reader_pc <= 0xcd13);
++   fflush(TheronPCECDSpawnConsumerTrace);
++  }
++ }
 + if(logical_address >= 0x2600 && logical_address < 0x2800)
 + {
 +  if(!TheronPCECDMainRAMTargetTrace)
@@ -102,6 +133,6 @@
 +         physical_address, value, reader_pc, reader_physical_pc);
 + fflush(TheronPCECDMainRAMConsumerTrace);
 +}
- 
+
  static void TheronTracePCECDState(const char *format, ...)
  {

@@ -47,7 +47,8 @@
 - Theron: the adjacent US `$4644` preconsumer and its static `$C96B`/`$CC4C`
   body spans are now byte-verified; recover bank-switched runtime state,
   helper callees and return-value ownership before promoting the original
-  random-spawn path into live gameplay.
+  random-spawn path into live gameplay. The live capture now emits a separate
+  disassembly-bound `.spawn-consumer` receipt for those windows and `$5D64/$5D6A`.
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - Theron: world snapshots now have endian-stable scalar envelopes, portable object/timer/creature records and bounds checks; progression/champion packing still needs a source-owned wire layout before claiming complete cross-host save parity.
 - Theron: runtime VRAM/VCE file admission is now byte-identified by the authenticated capture FNV receipts; the remaining presentation gap is the original square/material/perspective consumer and a source-owned HUD/text/portrait route.

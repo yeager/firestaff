@@ -1,3 +1,9 @@
+# Theron disassembly-bound spawn consumer capture (2026-08-08)
+
+- ✅ Added a separate Mednafen receipt for `$5D64/$5D6A` reads and instruction fetches in the authenticated `$C96B-$CA69` and `$CC4C-$CD13` US Track 02 consumer bodies.
+- ✅ Added capture-script counting and line-delimited trace validation.
+- ✅ Kept semantic publication fail-closed: the receipt records execution provenance only and does not invent RNG, spawn, monster, or return-value semantics.
+
 # Theron static RNG-consumer boundaries (2026-08-08)
 
 - ✅ Added authenticated US-BIN receipt spans for the `$C96B` and `$CC4C`

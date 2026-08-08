@@ -155,6 +155,12 @@ if [[ ! -f "$consumer_read_patch" ]] ||
     printf 'FAIL: consumer-read patch must retain bounded game-owned RAM provenance with real line-delimited output\n' >&2
     exit 1
 fi
+if ! grep -Fq 'spawn_consumer_read sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace"' "$script" ||
+   ! grep -Fq 'spawn_consumer_reads=%s' "$script"; then
+    printf 'FAIL: capture must retain the disassembly-bound spawn consumer receipt\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_binary_md5=$(md5_file "$mednafen_bin")' "$script" ||
    ! grep -Fq 'could not hash the instrumented Mednafen binary' "$script" ||
    ! grep -Fq 'mednafen_binary_md5=%s' "$script"; then
