@@ -141,7 +141,6 @@
   GDAT tills sista MVE-bilden har presenterats och M11 har stängt sin kö.
   Återstår: originalets fullständiga IBMIOP-avbrotts- och avbrytningsvägar;
   ljudtid får inte härledas ur paketlängd eller värdlatens.
-
 - 🔧 DM2 Amiga-start: den äkta SWSH → TITL-bildkedjan går nu vidare till
   Amiga-GDAT-menyn efter sista TITL-bilden. FM Towns särskilda SKULL.EXP-grind
   får inte längre fånga Amiga-input. Källägda ENDA och Amiga SD/SO-ljud väntar
