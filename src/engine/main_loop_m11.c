@@ -636,19 +636,6 @@ int M11_ResolveGameScaleFilterForPresentation(int presentationMode,
     return requestedScaleFilter;
 }
 
-static void m11_map_presented_game_point_to_source(const M11_GameViewState* gameView,
-                                                   int* x,
-                                                   int* y) {
-    if (!gameView) {
-        return;
-    }
-    (void)M11_MapPresentedGamePointToSourceForPresentation(gameView->presentationMode,
-                                                           gameView->presentationWidth,
-                                                           gameView->presentationHeight,
-                                                           x,
-                                                           y);
-}
-
 static int m11_map_window_pointer_to_game_source(
     const M11_GameViewState* gameView,
     int windowX,

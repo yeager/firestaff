@@ -124,8 +124,7 @@ int V1_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
     const M12_AssetVersionStatus* dm1v;
     size_t i;
     static const char* homeRoots[] = {
-        ".firestaff/data",
-        ".openclaw/data/firestaff-original-games/DM"
+        ".firestaff/data"
     };
 
     if (!outPath || outPathBytes == 0U) {

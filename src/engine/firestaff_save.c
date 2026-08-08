@@ -67,8 +67,11 @@ int fs_save_game(const FS_GameState *state, int slot) {
     hdr.party_y = state->party_y;
     hdr.party_dir = state->party_direction;
     hdr.timestamp = (uint32_t)time(NULL);
-    fwrite(&hdr, sizeof(hdr), 1, f);
-    fclose(f);
+    if (fwrite(&hdr, sizeof(hdr), 1, f) != 1) {
+        fclose(f);
+        return -1;
+    }
+    if (fclose(f) != 0) return -1;
     return 0;
 }
 
@@ -88,6 +91,10 @@ int fs_load_game(FS_GameState *state, int slot) {
     if (!f) return -1;
     if (fread(&hdr, sizeof(hdr), 1, f) != 1) { fclose(f); return -1; }
     if (memcmp(hdr.magic, FS_SAVE_MAGIC, 4) != 0) { fclose(f); return -1; }
+    if (hdr.version != FS_SAVE_VERSION || hdr.game_id != state->config.game) {
+        fclose(f);
+        return -1;
+    }
     state->current_level = hdr.level;
     state->party_x = hdr.party_x;
     state->party_y = hdr.party_y;

@@ -354,9 +354,6 @@ int V1_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
         "dm-pc34/DungeonMasterPC34Multilingual/SWOOSH.DAT"
     };
     static const char* dm1HomeSuffixes[] = {
-        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/SWOOSH",
         ".firestaff/data/dm1/SWOOSH",
         ".firestaff/data/dm1-multilingual/SWOOSH"
     };
@@ -386,9 +383,7 @@ int V1_SWSH_Intro_FindLogoPathForGame(const M12_StartupMenuState* menuState,
     };
     static const char* csbHomeSuffixes[] = {
         ".firestaff/data/csb/SWOOSH",
-        ".firestaff/data/csb/SWOOSH.DAT",
-        ".openclaw/data/firestaff-original-games/DM/_canonical/csb/SWOOSH",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/csb/ChaosStrikesBackPC34/SWOOSH"
+        ".firestaff/data/csb/SWOOSH.DAT"
     };
 
     if (!gameId || strcmp(gameId, "dm1") == 0) {

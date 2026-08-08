@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 int fs_gfx_load(FS_GraphicsAtlas *atlas, const char *path) {
     FILE *f;
@@ -15,17 +16,25 @@ int fs_gfx_load(FS_GraphicsAtlas *atlas, const char *path) {
 
     f = fopen(path, "rb");
     if (!f) { printf("GFX: cannot open %s\n", path); return -1; }
-    fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
-    atlas->raw_data = (uint8_t *)malloc(fsize);
+    if (fseek(f, 0, SEEK_END) != 0 || (fsize = ftell(f)) < 8 ||
+        fsize > INT_MAX || fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return -1;
+    }
+    atlas->raw_data = (uint8_t *)malloc((size_t)fsize);
     if (!atlas->raw_data) { fclose(f); return -1; }
-    fread(atlas->raw_data, 1, fsize, f);
-    fclose(f);
+    if (fread(atlas->raw_data, 1u, (size_t)fsize, f) != (size_t)fsize ||
+        ferror(f) || fclose(f) != 0) {
+        free(atlas->raw_data);
+        atlas->raw_data = NULL;
+        return -1;
+    }
     atlas->raw_size = (int)fsize;
 
     hdr = atlas->raw_data;
 
     /* Verify PC34 new format signature */
-    if (fsize < 8 || hdr[0] != 0x01 || hdr[1] != 0x80) {
+    if (hdr[0] != 0x01 || hdr[1] != 0x80) {
         printf("GFX: not PC34 new format (sig=%02x%02x)\n", hdr[0], hdr[1]);
         /* Try anyway — might be old format */
     }
@@ -33,6 +42,11 @@ int fs_gfx_load(FS_GraphicsAtlas *atlas, const char *path) {
     count = hdr[2] | (hdr[3] << 8);
     if (count <= 0 || count > GFX_MAX_BITMAPS) {
         printf("GFX: invalid count %d\n", count);
+        fs_gfx_free(atlas);
+        return -1;
+    }
+    if (4L + (long)count * 8L > fsize) {
+        fs_gfx_free(atlas);
         return -1;
     }
     atlas->bitmap_count = count;
@@ -63,10 +77,18 @@ int fs_gfx_load(FS_GraphicsAtlas *atlas, const char *path) {
     {
         int data_start = offset;
         int cur = data_start;
+        if (data_start < 0 || data_start > fsize) {
+            fs_gfx_free(atlas);
+            return -1;
+        }
         for (i = 0; i < count; i++) {
             atlas->bitmaps[i].data_offset = cur;
             int sz = atlas->bitmaps[i].comp_size;
             if (sz == 0) sz = atlas->bitmaps[i].decomp_size;
+            if (sz < 0 || cur > (int)fsize - sz) {
+                fs_gfx_free(atlas);
+                return -1;
+            }
             cur += sz;
         }
     }
@@ -139,4 +161,3 @@ void fs_gfx_indexed_to_rgba(const uint8_t *indexed, int w, int h,
 void fs_gfx_free(FS_GraphicsAtlas *atlas) {
     if (atlas) { free(atlas->raw_data); atlas->raw_data = NULL; }
 }
-

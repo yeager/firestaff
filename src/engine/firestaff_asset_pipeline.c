@@ -83,16 +83,48 @@ static int load_stx_file_or_virtual(const char *path,
 }
 
 static int load_file(const char *path, uint8_t **out, int *out_size) {
-    FILE *f = fopen(path, "rb");
+    FILE *f;
     long size;
-    if (!f) return -1;
-    fseek(f, 0, SEEK_END);
+    size_t got;
+    char temp[256];
+    int written;
+    int result;
+    if (!path || !out || !out_size) return -1;
+    *out = NULL;
+    *out_size = 0;
+    if (strstr(path, "::") != NULL) {
+        written = snprintf(temp, sizeof(temp), "/tmp/firestaff-asset-%ld.bin",
+                           (long)FIRESTAFF_PIPELINE_GETPID());
+        if (written <= 0 || (size_t)written >= sizeof(temp) ||
+            !asset_extract_virtual_path(path, temp)) {
+            return -1;
+        }
+        result = load_file(temp, out, out_size);
+        (void)remove(temp);
+        return result;
+    }
+    f = fopen(path, "rb");
+    if (!f || fseek(f, 0, SEEK_END) != 0) {
+        if (f) fclose(f);
+        return -1;
+    }
     size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    *out = (uint8_t *)malloc(size);
-    if (!*out) { fclose(f); return -1; }
-    *out_size = (int)fread(*out, 1, size, f);
-    fclose(f);
+    if (size <= 0 || size > INT_MAX || fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return -1;
+    }
+    *out = (uint8_t *)malloc((size_t)size);
+    if (!*out) {
+        fclose(f);
+        return -1;
+    }
+    got = fread(*out, 1u, (size_t)size, f);
+    if (got != (size_t)size || ferror(f) || fclose(f) != 0) {
+        free(*out);
+        *out = NULL;
+        return -1;
+    }
+    *out_size = (int)size;
     return 0;
 }
 
@@ -135,9 +167,6 @@ static int fs_assets_load_game_by_hash(FS_AssetBundle *bundle,
     if (!bundle || !data_dir || !game_id) return -1;
 
     M12_AssetStatus_ScanGame(&status, data_dir, game_id);
-    if (!M12_AssetStatus_GameAvailable(&status, game_id)) {
-        return -1;
-    }
     graphics = find_required_role(&status, game_id, "graphics");
     dungeon = find_required_role(&status, game_id, "dungeon");
     if (!graphics || !graphics->matchedPath[0]) {

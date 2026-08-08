@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 /* Extract VGA palette from GRAPHICS.DAT.
  *
@@ -96,15 +97,26 @@ void fs_dm1_get_full_palette(uint32_t *out256) {
 }
 
 int fs_dm1_load_palette_from_file(const char *gfx_path) {
-    FILE *f = fopen(gfx_path, "rb");
+    FILE *f;
     uint8_t *data;
     long size;
+    size_t got;
     int r;
+    if (!gfx_path) return -1;
+    f = fopen(gfx_path, "rb");
     if (!f) return -1;
-    fseek(f, 0, SEEK_END); size = ftell(f); fseek(f, 0, SEEK_SET);
-    data = (uint8_t *)malloc(size);
+    if (fseek(f, 0, SEEK_END) != 0 || (size = ftell(f)) <= 0 ||
+        size > INT_MAX || fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return -1;
+    }
+    data = (uint8_t *)malloc((size_t)size);
     if (!data) { fclose(f); return -1; }
-    fread(data, 1, size, f); fclose(f);
+    got = fread(data, 1u, (size_t)size, f);
+    if (got != (size_t)size || ferror(f) || fclose(f) != 0) {
+        free(data);
+        return -1;
+    }
     r = fs_extract_vga_palette(data, (int)size, g_full_vga_palette);
     free(data);
     if (r > 0) g_palette_extracted = 1;
