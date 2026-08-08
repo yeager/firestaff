@@ -242,6 +242,26 @@ typedef struct {
     uint32_t raw_hash;
 } DM2_V1_OriginalRawTimerStreamReceipt;
 
+/* Atomic read-only receipt for the prefix DM2_GAME_LOAD consumes before
+ * DM2_READ_SKSAVE_DUNGEON resolves record links.  This joins the raw
+ * c_map/c_record allocation, the one continuous SUPPRESS state stream and
+ * source-sized c_tim queue under one payload identity.  It is deliberately
+ * not a session: possessions, linked records, actuator generators and the
+ * post-load effects still belong to the later original transaction.
+ *
+ * Source: SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD,
+ * lines 1476-1530. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDungeonReceipt dungeon;
+    DM2_V1_OriginalRawSaveStateReceipt fixed_state;
+    DM2_V1_OriginalRawTimerStreamReceipt timers;
+    int party_pose_in_map_bounds;
+    int party_tile_root_resolved;
+    uint16_t party_tile_root;
+    uint32_t transaction_hash;
+} DM2_V1_OriginalRawGameLoadPrefixReceipt;
+
 /* A decoded save candidate. dungeon_bytes aliases the caller-owned input and
  * is populated only for an original raw SKSave body. Its receipt is the
  * source-owned byte-layout proof that runtime must match before publishing
@@ -446,6 +466,16 @@ int dm2_v1_original_raw_sksave_decode_timer_stream(
     uint8_t *out_records,
     size_t record_capacity,
     DM2_V1_OriginalRawTimerStreamReceipt *out_receipt);
+
+/* Build one fail-closed receipt for the exact pre-READ_SKSAVE_DUNGEON
+ * DM2_GAME_LOAD prefix.  This never installs or modifies a session and must
+ * not be used as a Resume admission; it exists so the later record-link
+ * owner receives one authenticated transaction rather than independently
+ * decoded dungeon/state/timer fragments. */
+int dm2_v1_original_raw_sksave_game_load_prefix_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    DM2_V1_OriginalRawGameLoadPrefixReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_db_record_receipt(
     const uint8_t *buf,
     size_t buf_size,

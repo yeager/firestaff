@@ -155,6 +155,17 @@
 
 # DM2 File_header-receipt mot originalposter (2026-08-08)
 
+# DM2 atomärt GAME_LOAD-prefixkvitto (2026-08-08)
+
+- ✅ Ett läsande, atomärt kvitto binder nu exakt samma råa dungeonprefix,
+  kontinuerliga SUPPRESS-flöde och källstorleksriktiga `c_tim`-kö som
+  SKProjects `DM2_GAME_LOAD` läser före `DM2_READ_SKSAVE_DUNGEON`.
+  Icke-serialiserade SUPPRESS-bitar nollställs före avkodning så att inget
+  stackinnehåll kan påverka källkvittots hash.
+- ✅ Verifierat mot alla åtta riktiga PC-DOS-SKSave-filer. Det installerar
+  ingen session och lämnar Resume spärrad tills originalens länkade records,
+  possessions, aktuatorkö och efterladdningssteg har en komplett ägare.
+
 - ✅ `test_dm2_v1_g1_record_graph_diagnostic` jämför nu alla lästa DB0-dörrar,
   DB1-teleportörer, DB2-texter, DB3-aktuatorer och DB4-varelser fält för fält
   mot de verkliga PC-DOS-posterna i File_header-kedjorna. Index, riktning och

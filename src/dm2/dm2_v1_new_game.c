@@ -1033,6 +1033,12 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     dm2_suppress_reader_init(&reader,
                              buf + candidate.dungeon.suppress_state_offset,
                              buf_size - candidate.dungeon.suppress_state_offset);
+    /* SUPPRESS only writes mask-selected bits.  A receipt must never hash
+     * whatever happened to be on Firestaff's stack for the unselected bits;
+     * zero gives those non-serialised bits one canonical, non-source value.
+     * The original destination structs are already owned by GAME_LOAD here;
+     * this read-only decoder has no such live owner. */
+    memset(savegame_buffer, 0, sizeof(savegame_buffer));
     if (dm2_suppress_reader_read(&reader,
                                  dm2_v1_save_mask_savegame_buffer(),
                                  sizeof(savegame_buffer), savegame_buffer,
@@ -1069,6 +1075,9 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, savegame_buffer,
                                                 sizeof(savegame_buffer));
 
+    memset(v1e0104, 0, sizeof(v1e0104));
+    memset(globalb, 0, sizeof(globalb));
+    memset(globalw, 0, sizeof(globalw));
     if (dm2_suppress_reader_read(&reader, full_mask, 1u, v1e0104, 0u) != 0 ||
         dm2_suppress_reader_read(&reader, full_mask, 1u, globalb, 0u) != 0 ||
         dm2_suppress_reader_read(&reader, full_mask, 2u, globalw, 0u) != 0) {
@@ -1084,6 +1093,7 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, globalw,
                                                 sizeof(globalw));
     for (i = 0u; i < hero_count; ++i) {
+        memset(hero, 0, sizeof(hero));
         if (dm2_suppress_reader_read(&reader, hero_mask, sizeof(hero), hero,
                                      0u) != 0) {
             return 0;
@@ -1098,6 +1108,7 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
                                                      sizeof(hero));
     }
     candidate.heroes_hash = heroes_hash ? heroes_hash : 1u;
+    memset(save_state, 0, sizeof(save_state));
     if (dm2_suppress_reader_read(&reader, save_state_mask, sizeof(save_state),
                                  save_state, 0u) != 0) {
         return 0;
@@ -1115,6 +1126,7 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     candidate.timer_bitstream_bits_remaining = reader.bits_remaining;
     candidate.timer_bitstream_current_byte = reader.current_byte;
     for (i = 0u; i < timer_count; ++i) {
+        memset(timer, 0, sizeof(timer));
         if (dm2_suppress_reader_read(&reader, timer_mask, sizeof(timer), timer,
                                      0u) != 0) {
             return 0;
@@ -1186,6 +1198,7 @@ int dm2_v1_original_raw_sksave_decode_timer_stream(
     for (i = 0u; i < state_receipt->timer_count; ++i) {
         uint8_t *record = out_records +
             (size_t)i * DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE;
+        memset(record, 0, DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE);
         if (dm2_suppress_reader_read(
                 &reader, timer_mask,
                 DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE,
@@ -1204,6 +1217,83 @@ int dm2_v1_original_raw_sksave_decode_timer_stream(
     candidate.end_bits_remaining = reader.bits_remaining;
     candidate.raw_hash = raw_hash ? raw_hash : 1u;
     candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
+int dm2_v1_original_raw_sksave_game_load_prefix_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    DM2_V1_OriginalRawGameLoadPrefixReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawGameLoadPrefixReceipt candidate;
+    uint8_t *timer_records = NULL;
+    size_t timer_bytes;
+    uint16_t party_root = 0xfffeu;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!buf || !out_receipt ||
+        !dm2_v1_original_raw_sksave_dungeon_receipt(
+            buf, buf_size, &candidate.dungeon) ||
+        !dm2_v1_original_raw_sksave_fixed_state_receipt(
+            buf, buf_size, &candidate.fixed_state) ||
+        !candidate.dungeon.valid || !candidate.fixed_state.valid ||
+        candidate.dungeon.prefix_hash != candidate.fixed_state.dungeon.prefix_hash ||
+        candidate.dungeon.suppress_state_offset !=
+            candidate.fixed_state.dungeon.suppress_state_offset) {
+        return 0;
+    }
+
+    timer_bytes = (size_t)candidate.fixed_state.timer_count *
+        DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE;
+    if (timer_bytes != 0u) {
+        timer_records = (uint8_t *)malloc(timer_bytes);
+        if (!timer_records) return 0;
+    }
+    if (!dm2_v1_original_raw_sksave_decode_timer_stream(
+            buf, buf_size, &candidate.fixed_state, timer_records,
+            candidate.fixed_state.timer_count, &candidate.timers) ||
+        !candidate.timers.valid ||
+        candidate.timers.raw_hash != candidate.fixed_state.timers_hash ||
+        candidate.timers.end_offset !=
+            candidate.fixed_state.record_link_bitstream_offset ||
+        candidate.timers.end_bits_remaining !=
+            candidate.fixed_state.record_link_bitstream_bits_remaining) {
+        free(timer_records);
+        return 0;
+    }
+    free(timer_records);
+
+    if (candidate.fixed_state.party_map < candidate.dungeon.map_count) {
+        uint8_t width = candidate.dungeon.map_widths[candidate.fixed_state.party_map];
+        uint8_t height = candidate.dungeon.map_heights[candidate.fixed_state.party_map];
+        candidate.party_pose_in_map_bounds =
+            candidate.fixed_state.party_x < width &&
+            candidate.fixed_state.party_y < height;
+        if (candidate.party_pose_in_map_bounds &&
+            dm2_v1_original_raw_sksave_tile_record_link(
+                buf, buf_size, &candidate.dungeon,
+                candidate.fixed_state.party_map,
+                candidate.fixed_state.party_x,
+                candidate.fixed_state.party_y, &party_root)) {
+            candidate.party_tile_root = party_root;
+            candidate.party_tile_root_resolved = party_root != 0xfffeu;
+        }
+    }
+
+    /* Use source byte identities only.  This is a transaction receipt, not a
+     * host session checksum.  SKProject sorts c_tim before it starts
+     * DM2_READ_SKSAVE_DUNGEON, so an unmatched queue or carry boundary must
+     * reject the whole prefix. */
+    candidate.transaction_hash = dm2_v1_raw_sksave_hash(
+        buf, candidate.fixed_state.record_link_bitstream_offset);
+    /* DM2_GAME_LOAD copies the saved pose before it calls
+     * DM2_READ_SKSAVE_DUNGEON.  The latter is the source owner that decides
+     * whether that pose can enter a live map; do not pre-empt it with a
+     * Firestaff coordinate admission rule. */
+    candidate.valid = candidate.transaction_hash != 0u;
+    if (!candidate.valid) return 0;
     *out_receipt = candidate;
     return 1;
 }

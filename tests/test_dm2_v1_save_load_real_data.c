@@ -772,7 +772,7 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                   timer_receipt.end_offset ==
                       state_receipt.record_link_bitstream_offset &&
                   timer_receipt.raw_hash == state_receipt.timers_hash,
-                  "real SKSave preserves source-sized c_tim records at the shared bitstream boundary");
+              "real SKSave preserves source-sized c_tim records at the shared bitstream boundary");
         if (timer_receipt.valid && timer_records) {
             unsigned int file_resurrection_timers = 0u;
             uint16_t timer_index;
@@ -799,6 +799,20 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                    file_resurrection_timers);
         }
         free(timer_records);
+    }
+    {
+        DM2_V1_OriginalRawGameLoadPrefixReceipt game_load_prefix;
+        memset(&game_load_prefix, 0, sizeof(game_load_prefix));
+        CHECK(dm2_v1_original_raw_sksave_game_load_prefix_receipt(
+                  bytes + 42u, byte_count - 42u, &game_load_prefix) &&
+                  game_load_prefix.valid && game_load_prefix.dungeon.valid &&
+                  game_load_prefix.fixed_state.valid && game_load_prefix.timers.valid &&
+                  game_load_prefix.dungeon.prefix_hash == receipt.prefix_hash &&
+                  game_load_prefix.fixed_state.fixed_sections_hash ==
+                      state_receipt.fixed_sections_hash &&
+                  game_load_prefix.timers.raw_hash == state_receipt.timers_hash &&
+                  game_load_prefix.transaction_hash != 0u,
+              "real SKSave joins dungeon, SUPPRESS state and c_tim under one pre-link GAME_LOAD receipt");
     }
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
                                        &receipt),

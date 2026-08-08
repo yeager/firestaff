@@ -113,8 +113,11 @@
 - **DM2-GAME-LOAD-OWNER-HANDOFF:** New Game and Resume now both stop at the
   original `DM2_GAME_LOAD` boundary. Recover one atomic owner for map,
   record pools, possessions, heroes, timers and actuator generators, then
-  install its source-shaped session handoff here. A boolean or a parsed save
-  receipt alone must never make a game playable.
+  install its source-shaped session handoff here. The pre-
+  `DM2_READ_SKSAVE_DUNGEON` prefix is now one source-identity receipt for the
+  raw dungeon, shared SUPPRESS stream and c_tim queue; recover the linked
+  record, possession, actuator-generator and post-load-effect phases next.
+  A boolean or a parsed save receipt alone must never make a game playable.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem
