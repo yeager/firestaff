@@ -367,6 +367,7 @@ typedef struct {
     uint16_t map_failure_root_link;
     int16_t map_failure_record_type;
     int16_t map_failure_record_reason;
+    int16_t recycle_required_db;
     uint32_t possession_link_count;
     uint32_t possession_continuation_count;
     int16_t timer_queue_count;

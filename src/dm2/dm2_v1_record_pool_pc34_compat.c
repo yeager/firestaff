@@ -557,6 +557,7 @@ typedef struct {
     uint32_t continuation_hash;
     DM2_ReadRecordCreatureAiFlagsFn ai_fn;
     void *ai_ctx;
+    int16_t recycle_required_db;
 } DM2_V1_SksavePoolRestoreContext;
 
 static uint32_t dm2_v1_sksave_hash_bytes(uint32_t hash,
@@ -637,6 +638,7 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
             return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)index);
         }
     }
+    ctx->recycle_required_db = (int16_t)record_type;
     return 0xfffeu;
 }
 
@@ -1278,6 +1280,7 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     }
 
     memset(&context, 0, sizeof(context));
+    context.recycle_required_db = -1;
     context.set = set;
     context.record_hash = 2166136261u;
     context.ai_fn = query_creature_ai_flags;
@@ -1555,8 +1558,9 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             out_receipt->map_failure_root_link = dungeon_receipt.failed_root_link;
             out_receipt->map_failure_record_type =
                 (int16_t)dungeon_receipt.failed_record_type;
-            out_receipt->map_failure_record_reason =
+        out_receipt->map_failure_record_reason =
                 (int16_t)dungeon_receipt.failed_record_reason;
+        out_receipt->recycle_required_db = context.recycle_required_db;
         }
         failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS;
         goto done;
@@ -1661,6 +1665,7 @@ done:
         const uint16_t failed_root_link = out_receipt->map_failure_root_link;
         const int16_t failed_record_type = out_receipt->map_failure_record_type;
         const int16_t failed_record_reason = out_receipt->map_failure_record_reason;
+        const int16_t recycle_required_db = context.recycle_required_db;
         const uint16_t direct_root_count = roots.root_count;
         const uint16_t leader_hand_root_link = leader_hand_root;
         const uint32_t retained_direct_root_hash = direct_root_hash;
@@ -1672,6 +1677,7 @@ done:
         out_receipt->map_failure_root_link = failed_root_link;
         out_receipt->map_failure_record_type = failed_record_type;
         out_receipt->map_failure_record_reason = failed_record_reason;
+        out_receipt->recycle_required_db = recycle_required_db;
         out_receipt->direct_root_count = direct_root_count;
         out_receipt->leader_hand_root_link = leader_hand_root_link;
         out_receipt->direct_root_hash = retained_direct_root_hash;
