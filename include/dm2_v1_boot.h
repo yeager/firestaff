@@ -1434,6 +1434,14 @@ int dm2_v1_boot_champion_dyn4_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_BootChampionDyn4Receipt *out_receipt);
 
+/* Returns the direct File_header DB3 subtype-0x7e roots retained during
+ * boot.  This is source evidence for c_hero.cpp::DM2_SELECT_CHAMPION, not a
+ * live party or a DYN4 admission: DM2_LOAD_LOCALLEVEL_DYN owns the latter
+ * queue and has not yet been recovered as a complete runtime transaction. */
+int dm2_v1_boot_champion_mirror_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_G1ChampionMirrorReceipt *out_receipt);
+
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps
  * the parsed G1 data only after a complete candidate parse succeeds.

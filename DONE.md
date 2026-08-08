@@ -27,6 +27,16 @@
 - ✅ Verifierat med den verkliga PC-DOS-posten `ANDERS LIGHT WIELDER`.
   Intaget skapar fortfarande inte en hero- eller party-post.
 
+# DM2 champion-mirror boot receipt (2026-08-08)
+
+- ✅ PC-DOS-bootprofilen behåller nu de 16 verkliga File_header-ägda
+  subtype-`0x7e`-spegelrötterna och kan lämna dem till champion-livscykeln.
+- ✅ Rättade den felaktiga DYN4-antasningen: `c_loadlevel.cpp` köar en
+  separat `0x16xxffff`-nyckel per spegel. Den globala `0x16ffffff`-nyckeln
+  är villkorlig och får inte ersätta spegelnycklarna vid boot.
+- ✅ Verifierat med originalets PC-DOS `DUNGEON.DAT`, M11:s startprofil och
+  champion-livscykeltestet. Inga DYN4-byte, heroes eller partyn skapas.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

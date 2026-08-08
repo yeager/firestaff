@@ -1205,6 +1205,7 @@ int main(void) {
     DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
     DM2_V1_BootProfile* profile;
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
+    DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
@@ -1345,6 +1346,16 @@ int main(void) {
     expect_true(profile != NULL && profile->deterministic.max_levels == 44u &&
                     profile->deterministic.dungeon_seed == 0u,
                 "M11 DM2 launch retains the PC-DOS File_header map count and seed");
+    memset(&champion_mirrors, 0, sizeof(champion_mirrors));
+    expect_true(profile &&
+                    dm2_v1_boot_champion_mirror_receipt(
+                        profile, &champion_mirrors) &&
+                    champion_mirrors.committed &&
+                    champion_mirrors.incomplete_world &&
+                    champion_mirrors.mirror_count == 16 &&
+                    champion_mirrors.mirrors[0].dynamic_hero_type == 14u &&
+                    champion_mirrors.mirrors[0].dynamic_load_id == 0x160effffu,
+                "M11 retains the authentic PC-DOS champion mirror roots without activating them");
     memset(&champion_dyn4, 0, sizeof(champion_dyn4));
     /* The old 28-map pseudo-header happened to manufacture a 16-marker
      * continuation and thereby admitted a DYN4 bundle. The real 44-map

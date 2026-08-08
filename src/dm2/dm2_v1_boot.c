@@ -695,51 +695,48 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     free(gfx);
 }
 
-static int dm2_v1_boot_bind_champion_dyn4(
+static int dm2_v1_boot_collect_champion_mirrors(
     DM2_V1_BootGraphicsDat *gfx, const DM2_V1_DungeonData *dungeon)
 {
     DM2_V1_G1ChampionMirrorReceipt mirrors;
-    DM2_V1_GdatDyn4MaterializedSelection selection;
-    DM2_V1_GdatDyn4SoundState sound_state;
-    uint32_t dynamic_load_id;
-    int index;
 
-    if (!gfx || !dungeon || gfx->champion_dyn4_verified) return 0;
+    if (!gfx || !dungeon) return 0;
+    if (gfx->champion_mirrors.committed) return 1;
     memset(&mirrors, 0, sizeof(mirrors));
-    memset(&selection, 0, sizeof(selection));
     if (!dm2_v1_dungeon_collect_g1_champion_mirrors(dungeon, &mirrors) ||
         !mirrors.committed || mirrors.mirror_count <= 0) {
         return 0;
     }
-    dynamic_load_id = mirrors.mirrors[0].dynamic_load_id;
-    /* SKProject c_loadlevel.cpp:604-611 truncates the authenticated 0x1ff
-     * actuator data to 0xff and queues exactly 0x16ffffff before
-     * DM2_LOAD_DYN4. Do not promote another agreed-upon selector: that would
-     * turn an unrelated or caller-authored DYN4 bundle into champion data. */
-    if (dynamic_load_id != DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID) return 0;
-    for (index = 0; index < mirrors.mirror_count; ++index) {
-        if (mirrors.mirrors[index].dynamic_load_id != dynamic_load_id) {
-            return 0;
-        }
-    }
 
-    /* SKProject c_loadlevel.cpp DM2_MARK_DYN_LOAD queues each subtype-0x7e
-     * marker before c_gdatfile.cpp::DM2_LOAD_DYN4.  SOUND5 has established
-     * an empty, allocation-capable queue at this point, so type-2 source rows
-     * are admitted instead of silently omitted.  The materialised bytes stay
-     * in this graphics owner and never cross through a disk cache. */
-    dm2_v1_gdat_dyn4_sound_state_init(&sound_state);
-    if (!dm2_v1_gdat_dyn4_materialize_selection(
-            &gfx->loader, dynamic_load_id, &sound_state, &selection) ||
-        !selection.valid || selection.block_count == 0u ||
-        selection.byte_count == 0u) {
-        dm2_v1_gdat_dyn4_materialized_selection_free(&selection);
+    /* SKProject c_loadlevel.cpp:604-611 emits one distinct 0x16xxffff
+     * selector for each subtype-0x7e map marker.  Its later 0x16ffffff
+     * marker is conditional (lines 374-383), after party/local-level state
+     * has participated in the queue.  Never substitute that wildcard for a
+     * mirror key or materialise any individual selector at boot: doing so
+     * would bypass the original queue owner and fabricate champion data.
+     *
+     * The retail PC executable is a DOS4GW LE image without symbols, so it
+     * cannot supply a trustworthy function boundary by itself. The recovered
+     * SKProject control flow remains the line-addressable reference here. */
+    gfx->champion_mirrors = mirrors;
+    return 1;
+}
+
+int dm2_v1_boot_champion_mirror_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_G1ChampionMirrorReceipt *out_receipt)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat ||
+        !(gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat) ||
+        !gfx->champion_mirrors.committed ||
+        gfx->champion_mirrors.mirror_count <= 0) {
         return 0;
     }
-    gfx->champion_mirrors = mirrors;
-    gfx->champion_dyn4 = selection;
-    gfx->champion_dynamic_load_id = dynamic_load_id;
-    gfx->champion_dyn4_verified = 1;
+    *out_receipt = gfx->champion_mirrors;
     return 1;
 }
 
@@ -2263,7 +2260,7 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         if (profile->platform == DM2_PLATFORM_PC_EN ||
             profile->platform == DM2_PLATFORM_PC_FR ||
             profile->platform == DM2_PLATFORM_PC_JEWEL) {
-            (void)dm2_v1_boot_bind_champion_dyn4(gfx, dd);
+            (void)dm2_v1_boot_collect_champion_mirrors(gfx, dd);
         }
         /* c_sound.cpp consumes music through the already hash-admitted GDAT
          * handle.  Bind the same owner used by the title/HUD/viewport rather
