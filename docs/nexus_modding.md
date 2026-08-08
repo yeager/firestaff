@@ -12,14 +12,16 @@ Short answer: Not practically, at this time.
 Obstacles:
 - No source code -- not open-source, no ReDMCSB-style decompilation exists
 - No disc image -- the repository has no Saturn disc image (critical blocker)
-- No script VM -- SDDRVS.TSK (event/AI script interpreter) is unimplemented
+- No source-locked event VM -- SLEV/SDDRVS profiling exists, but event and
+  runtime ownership remain unproven
 - Big-endian only -- all data is SH2 big-endian; no off-the-shelf tools apply
 - Japanese text -- Shift-JIS encoded; no translation tooling in tree
 - No community -- no known Nexus modding forum, tool, or patch community
 
 What Could Be Modified (Theoretically):
 1. Replace creature model files (e.g. ANTMAN.MNS, CHAOS.MNS) with custom DMDF meshes
-2. Replace level files with custom dungeon layouts (grid known; 3D blob unknown)
+2. Replace level files with custom dungeon layouts (grid and bounded DGN
+   structures are known; Saturn 3D consumer remains unbound)
 3. Replace CD audio tracks with custom music (Red Book Audio tracks 2-9)
 
 Unbrick Path: Disc image + disassembly + DGN 3D blob reverse-engineering + SDDRVS.TSK parser.
@@ -36,7 +38,8 @@ Creature Models (DMDF format):
 - Vertex: 16 bytes (int16 x,y,z + nx,ny,nz + uint16 u,v)
 - Face: uint16[3] triangle indices
 - Textures: embedded VDP1 BITMAP (undocumented)
-- nexus_v1_dmdf_load() scaffolded for header/vertices/faces
+- nexus_v1_dmdf_load() admits bounded header/vertex/face/material receipts;
+  Saturn texture/VDP1 ownership remains capture-gated
 
 Audio/runtime dispatch remains source-gated for SNDLEV00-15.SAL and SLEV00-15.BIN.
 SMAP00-15.BIN is a decoded LVMP tilemap/palette/tileset resource; its Saturn
@@ -46,10 +49,10 @@ VDP2 HUD placement and explored-state writes are not yet authenticated.
 
 | Asset          | Parsed? | Editable? | Notes                        |
 |----------------|---------|-----------|------------------------------|
-| LEV DGN grid   | Yes     | Partially | 3D blob unknown              |
-| DMDF MNS models| Partial | No        | Textures not parsed          |
-| SNDLEV SAL     | No      | No        | Audio bank format unknown    |
-| SLEV BIN       | No      | No        | Script VM not implemented    |
+| LEV DGN grid   | Yes     | Partially | Structure1B/2/3 receipts; VDP1 consumer unbound |
+| DMDF MNS models| Partial | No        | Source mesh/material receipts; VDP1 consumer unbound |
+| SNDLEV SAL     | Receipt | No       | Codec and playback ABI capture-gated |
+| SLEV BIN       | Receipt | No       | Event semantics and dispatch unproven |
 | CD audio tracks| No      | Yes       | Red Book Audio               |
 
 ## 4. Comparison to DM1 Moddability
@@ -57,13 +60,14 @@ VDP2 HUD placement and explored-state writes are not yet authenticated.
 | Aspect         | DM1                    | Nexus                  |
 |----------------|------------------------|------------------------|
 | Disassembly    | ReDMCSB (complete)     | None                   |
-| Dungeon format | Fully documented       | Grid known, 3D unknown |
-| Script VM      | Hardwired in C         | SDDRVS.TSK (not impl.) |
+| Dungeon format | Fully documented       | Grid/Structure receipts; Saturn consumer unbound |
+| Script VM      | Hardwired in C         | SLEV/SDDRVS profiling; event VM unproven |
 | Model format   | 2D sprites (doc.)      | DMDF 3D (partial)      |
 | Mod community  | Active (CSB, etc.)     | None known             |
 
 ## 5. Conclusion
 
-Theoretically moddable but practically immoddedable today. The path to
-modding requires: (1) disc image acquisition, (2) SH2 disassembly, (3)
-DGN 3D blob reverse-engineering, (4) SDDRVS.TSK implementation.
+Theoretically moddable but practically limited today. The path to source-
+faithful runtime editing requires: (1) an authenticated Saturn execution
+capture, (2) SH2/68K owner joins, (3) DGN material/VDP1 binding, and (4)
+SLEV/SDDRVS event-ABI evidence. Existing receipts are not runtime parity.
