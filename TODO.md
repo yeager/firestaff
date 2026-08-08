@@ -8183,6 +8183,12 @@ that its exact runtime path is not already source-locked and tested.
     row rectangles, English labels and generic pointer wrappers are now
     fail-closed in the production API. Only `dm2_v1_boot` may expose a menu
     hit after decoding the mounted GDAT RAW4 matrix.
+    **2026-08-08 coordinate correction:** SDL maps the window point to the
+    original 320×200 source space before it reaches the DM2 handler. The
+    handler no longer maps a failed GDAT hit a second time, because that
+    treated source coordinates as window coordinates and could displace a
+    click in a scaled presentation. The decoded 0xD7/0xD9 rectangles remain
+    the only accepted targets.
     **2026-08-06 save-root correction:** startup action execution now follows
     the explicit selected save root, matching the snapshot/scan path. The
     profile root remains only an absent-root fallback, so it cannot redirect a

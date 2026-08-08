@@ -27373,8 +27373,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
     DM2_V1_StartupMenuAuxPointerLayout aux_layout;
-    int fbX;
-    int fbY;
 
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
@@ -27437,28 +27435,21 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
     }
+    /* main_loop_m11 maps every SDL window point through its current content
+     * rectangle before M11_GameView_HandlePointerButton reaches this source
+     * handler.  Thus x/y are already the original 320x200 coordinates used
+     * by SHOW_MENU_SCREEN's GDAT rectangles.  Mapping a miss again treated a
+     * source coordinate as a host-window coordinate, moving a valid click on
+     * scaled presentations.  Keep this boundary source-coordinate-only;
+     * direct callers have the same public HandlePointerButton contract. */
     if (!m11_dm2_boot_runtime_startup_pointer(
-            state,
-            x,
-            y,
-            &execution,
-            &action_receipt)) {
-        if (!M11_Render_MapWindowToFramebuffer(x, y, &fbX, &fbY) ||
-            (fbX == x && fbY == y) ||
-            !m11_dm2_boot_runtime_startup_pointer(
-                state,
-                fbX,
-                fbY,
-                &execution,
-                &action_receipt)) {
-            /* The original SHOW_MENU_SCREEN input table owns the only
-             * admissible menu hit regions (GDAT rect ids 0x0197/0x0199,
-             * dispatched as 0xD7/0xD9).  Do not fall through to Firestaff's
-             * old row/panel layout: it could turn host-invented save rows
-             * into a gameplay action.  A physical-window click gets one
-             * source-coordinate retry above; otherwise it is inert. */
-            return M11_GAME_INPUT_IGNORED;
-        }
+            state, x, y, &execution, &action_receipt)) {
+        /* The original SHOW_MENU_SCREEN input table owns the only admissible
+         * menu hit regions (GDAT rect ids 0x0197/0x0199, dispatched as
+         * 0xD7/0xD9).  Do not fall through to Firestaff's old row/panel
+         * layout: it could turn host-invented save rows into a gameplay
+         * action. */
+        return M11_GAME_INPUT_IGNORED;
     }
     return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
 }

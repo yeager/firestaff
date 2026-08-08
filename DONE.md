@@ -11,6 +11,18 @@
   `GRAPHICS.DAT`-hash. Amiga- och PC-startvägar förblir separata enligt
   ReDMCSB `COMPILE.H` och `APPA.C`.
 
+# DM2 startmeny: källkoordinater (2026-08-08)
+
+- ✅ SDL:s huvudslinga normaliserar fönsterklick till originalets 320×200-
+  koordinater före `M11_GameView_HandlePointerButton`. DM2:s startmeny gör
+  inte längre en andra fönsteromräkning när en GDAT-träff missar, vilket
+  tidigare kunde flytta ett giltigt klick i ett skalat fönster.
+- ✅ Endast de av monterad `GRAPHICS.DAT` avkodade 0xD7- och 0xD9-rektanglarna
+  kan aktivera Nytt spel respektive Resume. Missar förblir inerta och Nytt
+  spel stannar vid den ofullständiga, spärrade `GAME_LOAD`-gränsen.
+- ✅ Verifierat med hashverifierad PC-DOS-data: M11:s startprofilgrind,
+  startmenyns åtgärdskontrakt (106/106) och utility/import-proben (73/73).
+
 # CSB Atari ST effective-version launcher receipt (2026-08-08)
 
 - ✅ Atari ST:s riktiga hårddiskutgåva väljs nu och kontrolleras som den
