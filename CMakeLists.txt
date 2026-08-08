@@ -3296,6 +3296,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_pro
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_source_provenance_gate.c")
+    add_executable(test_nexus_v1_dgn_source_provenance_gate
+        tests/test_nexus_v1_dgn_source_provenance_gate.c
+    )
+    target_include_directories(test_nexus_v1_dgn_source_provenance_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_dgn_source_provenance_gate PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_source_provenance_gate PRIVATE
+            -std=c99 -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_source_provenance_gate
+        COMMAND test_nexus_v1_dgn_source_provenance_gate
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_retail_corpus.c")
     add_executable(test_nexus_v1_dgn_face_material_retail_corpus
         tests/test_nexus_v1_dgn_face_material_retail_corpus.c

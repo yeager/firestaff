@@ -1,3 +1,14 @@
+# Nexus false-positive presentation admissions closed (2026-08-08)
+
+- ✅ DGN scene-planen behåller real Structure1F/Structure3-geometri som
+  källkvittot, men öppnar inte längre texture/raster-submit, M11-handoff eller
+  fallback-visuals utan full VDP1-consumer/capture-evidence.
+- ✅ MENU.BPK:s hashbundna PRS3- och DM.BIN-framing är fortsatt byteprovenance;
+  `decoder_promoted` och `runtime_decode_permitted` förblir noll tills
+  autentisk Saturn-capture binder instruktionsgrammatik och konsument.
+- ✅ Den tidigare oregistrerade DGN source-provenance-regressionen ligger nu i
+  CMake/CTest. Scene-plan, boot-hash-scan och DGN source-gate passerar.
+
 # Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
 
 - ✅ `SDDRVS.TSK`-kvittot validerar nu hela den retail-hashbundna 16-entry

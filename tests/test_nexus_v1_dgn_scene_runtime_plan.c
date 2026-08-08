@@ -225,11 +225,11 @@ static void test_lev01_owned_scene_plan(void)
               receipt.structure1f_face_selector_bound &&
               receipt.structure1a_model_rotation_bound &&
               receipt.mesh_entry_bound && receipt.geometry_consumer_ready &&
-              !receipt.texture_submit_blocked && !receipt.raster_submit_blocked &&
-              receipt.m11_runtime_handoff_permitted &&
-              receipt.fallback_geometry_permitted &&
-              receipt.fallback_visuals_permitted,
-          "LEV01 scene plan uses a source-owned Structure1F to Structure3 chain without raster promotion");
+              receipt.texture_submit_blocked && receipt.raster_submit_blocked &&
+              !receipt.m11_runtime_handoff_permitted &&
+              !receipt.fallback_geometry_permitted &&
+              !receipt.fallback_visuals_permitted && receipt.no_draw_only,
+          "LEV01 scene plan retains the source-owned Structure1F to Structure3 chain without raster or fallback promotion");
     free(data);
 }
 

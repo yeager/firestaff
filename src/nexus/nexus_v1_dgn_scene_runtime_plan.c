@@ -243,16 +243,17 @@ int nexus_v1_dgn_scene_runtime_plan_build(
         out_receipt->selected_face_fill_kind != NEXUS_V1_DGN_MESH_FILL_COLOR;
     out_receipt->geometry_consumer_ready = 1;
     /* A bare boolean is not Saturn evidence. The legacy input field is kept
-     * for source compatibility, but a Structure3 plan cannot open texture
-     * submission without the complete VDP1 trace/CLUT/VRAM/owner receipt.
-     * That receipt is not part of this geometry-only planner. */
+     * for source compatibility, but a Structure3 plan cannot open texture,
+     * raster, fallback, or M11 submission without the complete VDP1
+     * trace/CLUT/VRAM/owner receipt. That receipt is not part of this
+     * geometry-only planner. */
     (void)input->vdp1_consumer_evidence_available;
-    out_receipt->texture_submit_blocked = 0;
-    out_receipt->raster_submit_blocked = 0;
-    out_receipt->m11_runtime_handoff_permitted = 1;
-    out_receipt->fallback_geometry_permitted = 1;
-    out_receipt->fallback_visuals_permitted = 1;
-    out_receipt->no_draw_only = 0;
+    out_receipt->texture_submit_blocked = 1;
+    out_receipt->raster_submit_blocked = 1;
+    out_receipt->m11_runtime_handoff_permitted = 0;
+    out_receipt->fallback_geometry_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->no_draw_only = 1;
     out_receipt->status =
         NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_READY_GEOMETRY_NO_DRAW;
 

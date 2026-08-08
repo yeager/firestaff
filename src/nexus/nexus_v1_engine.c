@@ -304,8 +304,8 @@ void nexus_v1_dgn_renderer_handoff_require_canonical_source(
     if (receipt->canonical_source_verified) return;
     receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE;
     receipt->can_render_dgn_mesh = 0;
-    receipt->blocks_real_dgn_mesh_render = 0;
-    receipt->fallback_visuals_permitted = 1;
+    receipt->blocks_real_dgn_mesh_render = 1;
+    receipt->fallback_visuals_permitted = 0;
 }
 
 #undef NEXUS_V1_MD5_STEP
@@ -2853,9 +2853,13 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
         engine->menu_bpk_prs3_execution_evidence.valid = 1;
         engine->menu_bpk_prs3_execution_evidence_valid = 1;
     }
-    engine->menu_bpk_prs3_execution_evidence.decoder_promoted = 1;
-    engine->menu_bpk_prs3_execution_evidence.runtime_decode_permitted = 1;
-    engine->menu_bpk_prs3_execution_evidence.fallback_visuals_permitted = 1;
+    /* Cross-asset framing and static loader bytes are provenance only. They
+     * do not prove the Saturn PRS3 instruction grammar, output relation, or
+     * VDP1/VDP2 consumer. Keep runtime decode and fallback presentation
+     * closed until an authenticated original-Saturn capture is admitted. */
+    engine->menu_bpk_prs3_execution_evidence.decoder_promoted = 0;
+    engine->menu_bpk_prs3_execution_evidence.runtime_decode_permitted = 0;
+    engine->menu_bpk_prs3_execution_evidence.fallback_visuals_permitted = 0;
     free(dm_bin);
     free(data);
 }

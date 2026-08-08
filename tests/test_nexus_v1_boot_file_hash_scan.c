@@ -424,7 +424,7 @@ int main(void) {
                           prs3_execution.sh2_loader.sh2_output_store_verified &&
                           !prs3_execution.decoder_promoted &&
                           !prs3_execution.runtime_decode_permitted &&
-                          prs3_execution.fallback_visuals_permitted,
+                          !prs3_execution.fallback_visuals_permitted,
                           "Nexus boot binds real MENU.BPK framing to the verified DM.BIN loader");
             check_int(nexus_v1_menu_bpk_decode_receipt(&engine, &receipt) == 0,
                       "Nexus engine exposes MENU.BPK decode receipt");
