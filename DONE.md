@@ -6826,3 +6826,10 @@
   remain unchanged.
 - No creature, RNG, T700/T900, inventory, palette, portrait, or audio meaning
   is inferred from this transport-only repair.
+# 2026-08-08 Theron source-record admission hardening
+
+- ✅ Track 02 monster and generator ledger binders now reject records for
+  unloaded or source-header-unverified levels.
+- Added regression coverage proving an unverified level cannot seed a source
+  monster record. Live creature publication remains blocked until the original
+  RNG consumer and creature consumer are authenticated.

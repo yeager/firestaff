@@ -818,6 +818,8 @@ int theron_v1_world_bind_track02_monster(
     if (!world || !health || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[dungeon_id - 1][level_index] ||
+        !world->levels[dungeon_id - 1][level_index].source_header_verified ||
         world->source_monster_count >= THERON_MAX_SOURCE_MONSTERS)
         return -1;
     Theron_V1_SourceMonsterRecord *out =
@@ -860,6 +862,8 @@ int theron_v1_world_bind_track02_generator(
     if (!world || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[dungeon_id - 1][level_index] ||
+        !world->levels[dungeon_id - 1][level_index].source_header_verified ||
         world->source_generator_count >= THERON_MAX_SOURCE_GENERATORS)
         return -1;
     Theron_V1_SourceGeneratorRecord *out =

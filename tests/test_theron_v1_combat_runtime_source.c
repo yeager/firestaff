@@ -17,7 +17,13 @@ static int failures;
 int main(void) {
     Theron_V1_World world;
     Theron_V1_Creature *creature;
+    const uint16_t health[4] = { 10u, 20u, 30u, 40u };
     memset(&world, 0, sizeof(world));
+
+    CHECK(theron_v1_world_bind_track02_monster(
+              &world, 1, 0, 0x11ffu, 0x0041u, 1, 1, 0x0eu, 0u,
+              health, 1u, 0u) == -1 && world.source_monster_count == 0,
+          "unloaded/unverified level cannot admit source monster record");
 
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
                                    1, 0, 1, 1) == -1,
@@ -30,7 +36,6 @@ int main(void) {
                                    1, 0, 1, 1) == -1,
           "verified level header without a source monster stays blocked");
     {
-        const uint16_t health[4] = { 10u, 20u, 30u, 40u };
         CHECK(theron_v1_world_bind_track02_monster(
                   &world, 1, 0, 0x1200u, 0x0042u, 1, 1, 0x0eu, 0u,
                   health, 1u, 0u) == 0,
@@ -68,7 +73,6 @@ int main(void) {
     world.levels[0][0].source_header_verified = 1;
     world.levels[0][0].dungeon_seed = 0x0108e938u;
     {
-        const uint16_t health[4] = { 10u, 20u, 30u, 40u };
         CHECK(theron_v1_world_bind_track02_monster(
                   &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0x0eu, 0u,
                   health, 1u, 0u) == 0,
