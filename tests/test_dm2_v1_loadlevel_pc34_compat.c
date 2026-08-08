@@ -170,6 +170,35 @@ static void test_load_dyn_requires_file_header_owner(void)
     printf("  PASS: load_dyn_requires_file_header_owner\n");
 }
 
+static bool mock_claims_complete_source_world(void *ctx)
+{
+    (void)ctx;
+    return true;
+}
+
+/* A success-valued callback is still test data, not the atomic GAME_LOAD
+ * owner. It must never make DYN4 or a mutable level appear live. */
+static void test_load_dyn_rejects_callback_claim(void)
+{
+    DM2_V1_LoadLevelCallbacks cb;
+    DM2_V1_DynLoadState dyn;
+    DM2_V1_MiscItemState misc;
+    DM2_V1_LevelGraphicsState gfx;
+    DM2_V1_LoadLevelReceipt receipt;
+
+    memset(&cb, 0, sizeof(cb));
+    memset(&dyn, 0, sizeof(dyn));
+    memset(&misc, 0, sizeof(misc));
+    memset(&gfx, 0, sizeof(gfx));
+    cb.source_file_header_world_complete = mock_claims_complete_source_world;
+    receipt = dm2_v1_load_locallevel_dyn(&cb, &dyn, &misc, &gfx);
+    assert(!receipt.loaded);
+    assert(receipt.dyn_count == 0);
+    assert(dyn.count == 0);
+    assert(!misc.loaded);
+    printf("  PASS: load_dyn_rejects_callback_claim\n");
+}
+
 /* ── Main ───────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -177,6 +206,7 @@ int main(void)
     printf("test_dm2_v1_loadlevel_pc34_compat:\n");
     test_null_safety();
     test_load_dyn_requires_file_header_owner();
+    test_load_dyn_rejects_callback_claim();
     test_mark_dyn_load();
     test_mark_dyn_load_hires();
     test_mark_dyn_load_with_flag();

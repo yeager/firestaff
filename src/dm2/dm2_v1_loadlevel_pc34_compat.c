@@ -160,150 +160,20 @@ DM2_V1_LoadLevelReceipt dm2_v1_load_locallevel_dyn(
     DM2_V1_LevelGraphicsState *gfx)
 {
     DM2_V1_LoadLevelReceipt r;
-    (void)gfx; /* used in full tile walk implementation */
+    (void)cb;
+    (void)dyn;
+    (void)misc;
+    (void)gfx;
     r.loaded = false;
     r.dyn_count = 0;
 
-    /* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN walks the live File_header
-     * map table and its record graph before it calls DM2_LOAD_DYN4.  This
-     * adapter has no such owner yet; callbacks alone are not provenance.
-     * Do not let a partial/synthetic callback set preload a different DYN4
-     * subset and thereby authorise New Game or gameplay. */
-    if (cb == NULL || dyn == NULL ||
-        cb->source_file_header_world_complete == NULL ||
-        !cb->source_file_header_world_complete(cb->ctx)) {
-        return r;
-    }
-
-    /* Initialize state */
-    dyn->count = 0;
-
-    /* Mark common resources — source: c_loadlevel.cpp:202..296 */
-    dm2_v1_mark_dyn_load(dyn, 0x01FF02FF);  /* base UI */
-    dm2_v1_mark_dyn_load(dyn, 0x18FF02FF);  /* overlay */
-    dm2_v1_mark_dyn_load(dyn, 0x07FF02FF);  /* items */
-
-    int16_t v1e13fe_0 = cb->get_v1e13fe_0(cb->ctx);
-
-    if (v1e13fe_0 == 0) {
-        dm2_v1_mark_dyn_load(dyn, 0x0D0002FF);
-        if (dyn->count > 0)
-            dyn->entries[dyn->count - 1].flags = 1;
-        dm2_v1_mark_dyn_load(dyn, 0x0D2F02FF);
-        dm2_v1_mark_dyn_load(dyn, 0x0D7E02FF);
-        if (dyn->count > 0)
-            dyn->entries[dyn->count - 1].flags = 1;
-        dm2_v1_mark_dyn_load(dyn, 0x0D9F02FF);
-    } else {
-        dm2_v1_mark_dyn_load(dyn, 0x0DFF02FF);
-    }
-
-    dm2_v1_mark_dyn_load(dyn, 0x10FF02FF);
-    if (dyn->count > 0)
-        dyn->entries[dyn->count - 1].flags = 1;
-    dm2_v1_mark_dyn_load(dyn, 0x15FF02FF);
-    dm2_v1_mark_dyn_load(dyn, 0x30002FF);
-    dm2_v1_mark_dyn_load(dyn, 0x08FE02FF);
-    dm2_v1_mark_dyn_load(dyn, 0x16FE02FF);
-    dm2_v1_mark_dyn_load(dyn, 0x09FE02FF);
-    dm2_v1_mark_dyn_load(dyn, 0x0AFE02FF);
-    dm2_v1_mark_dyn_load(dyn, 0x0FFF08FB);
-    dm2_v1_mark_dyn_load(dyn, 0x0FFF07FC);
-    dm2_v1_mark_dyn_load(dyn, 0x01FFFFFF);
-
-    /* Image resources with hi-res flags */
-    dm2_v1_mark_dyn_load(dyn, 0x01000400);
-    if (dyn->count > 0)
-        dyn->entries[dyn->count - 1].flags |= DM2_V1_LOADLEVEL_DYN_FLAG_HIRES;
-    dm2_v1_mark_dyn_load(dyn, 0x01000600);
-    if (dyn->count > 0)
-        dyn->entries[dyn->count - 1].flags |= DM2_V1_LOADLEVEL_DYN_FLAG_HIRES;
-    dm2_v1_mark_dyn_load(dyn, 0x0100070A);
-    if (dyn->count > 0)
-        dyn->entries[dyn->count - 1].flags |= DM2_V1_LOADLEVEL_DYN_FLAG_HIRES;
-
-    /* Dialogue resources */
-    dm2_v1_mark_dyn_load(dyn, 0x1A80FFFF);
-    dm2_v1_mark_dyn_load(dyn, 0x1A81FFFF);
-    dm2_v1_mark_dyn_load(dyn, 0x0300FFFF);
-    dm2_v1_mark_dyn_load(dyn, 0x0700FFFF);
-
-    /* Walk map tiles — source: m_2AF2B..m_2B1B4 */
-    int16_t map_w = cb->get_map_width(cb->ctx);
-    int16_t map_h = cb->get_map_height(cb->ctx);
-
-    for (int16_t tx = 0; tx < map_w; tx++) {
-        for (int16_t ty = 0; ty < map_h; ty++) {
-            uint8_t tile = cb->get_tile_byte(cb->ctx, tx, ty);
-            if ((tile & 0x10) == 0) continue;
-
-            /* Walk record list for this tile */
-            int32_t link = cb->get_tile_record_link(cb->ctx, tx, ty);
-            while ((link & 0xFFFF) != 0xFFFE) {
-                uint16_t rec = (uint16_t)(link & 0xFFFF);
-                int rec_type = (int)(((link & 0x3C00) >> 10) & 0xF);
-
-                if (rec_type == 3 && v1e13fe_0 == 0) {
-                    /* Actuator — check for special types */
-                    uint8_t *addr = cb->get_record_address(cb->ctx, rec);
-                    if (addr != NULL) {
-                        int16_t actu_type = (int16_t)(addr[2] & 0x7F);
-                        /* Mark creature/wall resources based on type */
-                        (void)actu_type;
-                    }
-                } else if (rec_type == 2) {
-                    /* Sensor — check subtype for resource loading */
-                    uint8_t *addr = cb->get_record_address(cb->ctx, rec);
-                    if (addr != NULL) {
-                        int16_t w2 = (int16_t)(addr[2] | (addr[3] << 8));
-                        int16_t sub_type = (w2 >> 3) >> 8;
-                        sub_type &= 0x1F;
-                        /* Mark resources based on sensor subtype */
-                        (void)sub_type;
-                    }
-                }
-
-                link = cb->get_next_record_link(cb->ctx, rec);
-            }
-        }
-    }
-
-    /* Mark music resource */
-    int16_t cur_map = cb->get_current_map(cb->ctx);
-    uint8_t music_idx = cb->get_music_map_entry(cb->ctx, cur_map);
-    int32_t music_id = ((int32_t)music_idx << 16) | 0x04000300;
-    dm2_v1_mark_dyn_load(dyn, music_id);
-
-    /* Mark hero resources if not hi-res mode */
-    if (v1e13fe_0 == 0) {
-        int16_t party_count = cb->get_party_count(cb->ctx);
-        for (int16_t h = 0; h < party_count; h++) {
-            int16_t htype = cb->get_hero_type(cb->ctx, h);
-            int32_t hero_img = ((int32_t)htype << 16) | 0x16000100;
-            dm2_v1_mark_dyn_load(dyn, hero_img);
-            hero_img = ((int32_t)htype << 16) | 0x160002FF;
-            dm2_v1_mark_dyn_load(dyn, hero_img);
-        }
-    }
-
-    /* Final loading and state setup */
-    if (!cb->get_v1e0a84(cb->ctx))
-        cb->sound_init(cb->ctx);
-
-    cb->load_dyn4(cb->ctx, (int16_t *)dyn->entries, dyn->count);
-
-    if (!cb->get_v1e0a84(cb->ctx))
-        dm2_v1_load_miscitem(cb, misc);
-
-    r.loaded = true;
-    r.dyn_count = dyn->count;
-
-    /* Update weather and viewport */
-    cb->set_backbuff2(cb->ctx, 1);
-    cb->update_weather(cb->ctx, 0);
-    cb->set_viewport_dirty(cb->ctx, 1);
-    cb->check_recompute_light(cb->ctx);
-
+    /* SKProject SKULLWIN/c_loadlevel.cpp:203-972: the original transaction
+     * allocates the DYN queue, reads File_header tile roots and records,
+     * derives selector bytes, loads GDAT, and only then changes sound,
+     * weather and viewport state.  This translation unit is linked only by
+     * its unit test and owns none of those live structures.  A callback that
+     * claims otherwise is not original data.  Keep it inert until one
+     * production GAME_LOAD owner can supply the complete transaction. */
     return r;
 }
 

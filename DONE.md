@@ -24,6 +24,16 @@
   possessions och timers saknas. Ingen syntetisk session eller ny sparfil
   skapas.
 
+# DM2 local-level callbackspärr (2026-08-08)
+
+- ✅ Den isolerade `c_loadlevel.cpp`-adaptern kan inte längre behandla en
+  callback som en levande File_header-värld. Den är inte länkad i
+  produktbygget och är nu helt inert, även om en testcallback påstår att
+  karta och recordpool är kompletta.
+- ✅ Därmed kan ingen callbackbyggd DYN4-kö starta ljud, väder, viewport eller
+  en spelbar nivå. Originalets sammanhållna transaktion i
+  `DM2_LOAD_LOCALLEVEL_DYN` måste först få en verklig `GAME_LOAD`-ägare.
+
 - ✅ Den publika Resume-vägen har samma källgrind som Nytt spel. Saknad
   bootprofil, overifierade tillgångar och varje ofullständig `GAME_LOAD`-
   ägare avvisas utan att ändra sessionens bytes.

@@ -74,6 +74,9 @@
   Tick, rotation, movement, front-cell interaction and the rotating runtime
   HUD capture are likewise blocked until the same owner restores c_hero,
   record pools, possessions and timers.
+  Den tidigare testadaptern kan inte längre verkställa en callback-uppbyggd
+  DYN4-kö; återinför bara detta genom en produktionsväg som kan bevisa hela
+  `DM2_LOAD_LOCALLEVEL_DYN`-transaktionen från en atomär `GAME_LOAD`-session.
 
 - **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
   ground-stack/`w0` chains are now source-validated and all 44 canonical maps

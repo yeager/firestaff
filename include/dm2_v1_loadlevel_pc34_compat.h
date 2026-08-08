@@ -235,8 +235,9 @@ void dm2_v1_load_miscitem(
     DM2_V1_MiscItemState *misc);
 
 /*
- * Load all dynamic resources for current level.
- * Source: DM2_LOAD_LOCALLEVEL_DYN in c_loadlevel.cpp.
+ * Diagnostic-only shape of DM2_LOAD_LOCALLEVEL_DYN. It always refuses to
+ * execute because this callback adapter has no original GAME_LOAD owner for
+ * maps, record pools, party, GDAT cache and post-load mutations.
  */
 DM2_V1_LoadLevelReceipt dm2_v1_load_locallevel_dyn(
     const DM2_V1_LoadLevelCallbacks *cb,
