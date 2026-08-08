@@ -302,6 +302,29 @@ typedef struct {
     int      item_index;  /* Track 02 item index (0-65), -1 = none/gold */
     int      linked_id;
     uint32_t flags;
+
+    /* Source-bound Track 02 occurrence.  These fields preserve the exact
+     * object record alongside the host kind; they do not imply inventory
+     * ownership, pickup, equip, or use semantics. */
+    uint16_t source_ref;
+    uint16_t source_next_ref;
+    uint16_t source_index;
+    uint8_t  source_category;
+    uint8_t  source_position;
+    uint8_t  source_raw_size;
+    uint8_t  source_raw[16];
+    uint8_t  source_item_type;
+    uint8_t  source_keep;
+    uint8_t  source_cursed;
+    uint8_t  source_broken;
+    uint8_t  source_poisoned;
+    uint8_t  source_closed;
+    uint8_t  source_dump;
+    uint8_t  source_power;
+    uint8_t  source_capacity;
+    uint16_t source_text_ref;
+    int16_t  source_chested;
+    uint16_t source_data1;
 } Theron_V1_Object;
 
 #define THERON_MAX_OBJECTS 512
@@ -351,9 +374,10 @@ typedef struct {
     uint8_t target_facing;
 } Theron_V1_SourceGeneratorRecord;
 
-/* Opaque source occurrence for every decoded non-host object record.  The
- * loader owns the category/index/chain contract; this bank keeps the actual
- * bytes and map occurrence available after the temporary load result dies. */
+/* Source occurrence for every decoded record.  The loader owns the
+ * category/index/chain contract; this bank keeps the actual bytes and map
+ * occurrence available after the temporary load result dies, including
+ * records that also have a source-backed ground-object representation. */
 #define THERON_MAX_SOURCE_OBJECT_RECORDS 2048
 
 typedef struct {

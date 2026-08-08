@@ -6935,3 +6935,13 @@
   1 KiB VCE, 1057 bound tile/palette entries, 896 BAT cells and 27,259
   presented indexed pixels. The optional test BMP writer is source-backed
   inspection only and is not a README promotion.
+# 2026-08-08 Theron source-backed ground object materialization
+
+- ✅ Materialized authenticated Track 02 weapon, clothing, scroll, potion,
+  and chest occurrences as ground objects with exact source category/index,
+  chain reference, raw bytes, and decoded flags/payload fields.
+- ✅ Added regression coverage over the real US Track 02 BIN and JP variant;
+  all seven dungeons load successfully and report source materialization.
+- Inventory ownership, pickup/equip/use, T900 rules, misc consumers,
+  projectile/cloud consumers, and creature combat remain explicitly gated;
+  this change does not infer those semantics.

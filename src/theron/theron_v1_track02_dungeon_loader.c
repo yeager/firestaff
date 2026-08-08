@@ -54,6 +54,77 @@ static uint8_t tile_type_at(const Theron_DungeonData *dd,
     return theron_tile_type(dd->maps[map].tiles[x][y]);
 }
 
+static int materialize_source_item(
+    Theron_V1_Object *object,
+    unsigned int category,
+    unsigned int position,
+    uint16_t source_ref,
+    unsigned int source_index,
+    const uint8_t *raw,
+    size_t raw_size,
+    const Theron_Track02ItemRecord *record)
+{
+    if (!object || !raw || !record || raw_size > sizeof(object->source_raw) ||
+        source_index > UINT16_MAX || position > UINT8_MAX)
+        return 0;
+
+    /* DMBUILDER6/src/dms.h:244-258 supplies the byte layouts.  The
+     * category-to-host-kind mapping is only emitted for categories whose
+     * object role is explicit in the source table; misc remains source-only
+     * until its consumer is identified. */
+    object->source_ref = source_ref;
+    object->source_next_ref = record->next_ref;
+    object->source_index = (uint16_t)source_index;
+    object->source_category = (uint8_t)category;
+    object->source_position = (uint8_t)position;
+    object->source_raw_size = (uint8_t)raw_size;
+    memcpy(object->source_raw, raw, raw_size);
+
+    switch (category) {
+    case THERON_CAT_WEAPON:
+        object->type = THERON_OBJTYPE_WEAPON;
+        object->item_index = record->value.weapon.type;
+        object->source_item_type = record->value.weapon.type;
+        object->source_keep = record->value.weapon.keep;
+        object->source_cursed = record->value.weapon.cursed;
+        object->source_poisoned = record->value.weapon.poisoned;
+        object->source_broken = record->value.weapon.broken;
+        object->quantity = record->value.weapon.charges;
+        return 1;
+    case THERON_CAT_CLOTHING:
+        object->type = THERON_OBJTYPE_ARMOR;
+        object->item_index = record->value.clothing.type;
+        object->source_item_type = record->value.clothing.type;
+        object->source_keep = record->value.clothing.keep;
+        object->source_cursed = record->value.clothing.cursed;
+        object->source_dump = record->value.clothing.dump;
+        object->source_broken = record->value.clothing.broken;
+        return 1;
+    case THERON_CAT_SCROLL:
+        object->type = THERON_OBJTYPE_SCROLL;
+        object->item_index = record->value.scroll.type;
+        object->source_item_type = record->value.scroll.type;
+        object->source_closed = record->value.scroll.closed;
+        object->source_text_ref = record->value.scroll.reftxt;
+        return 1;
+    case THERON_CAT_POTION:
+        object->type = THERON_OBJTYPE_POTION;
+        object->item_index = record->value.potion.type;
+        object->source_item_type = record->value.potion.type;
+        object->source_keep = record->value.potion.keep;
+        object->source_power = record->value.potion.power;
+        return 1;
+    case THERON_CAT_CHEST:
+        object->type = THERON_OBJTYPE_CHEST;
+        object->source_chested = record->value.chest.chested;
+        object->source_data1 = record->value.chest.data1;
+        object->quantity = record->value.chest.chested;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int retain_source_object_occurrence(
     Theron_DungeonLoadResult *result,
     uint16_t source_ref,
@@ -341,12 +412,18 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     free(td);
                     return -1;
                 }
-                /* Source record and chain are real and consumed. The host
-                 * object kind/item-index owner is not yet proven, so keep
-                 * the record out of Theron_V1_Object and continue the chain. */
+                if (cat != THERON_CAT_MONSTER &&
+                    materialize_source_item(&obj, cat, pos, ref, id, raw,
+                                             theron_item_bytes[cat], &record)) {
+                    place = 1;
+                    result->items_placed++;
+                    result->source_objects_materialized++;
+                }
+                /* Every source record remains counted as not yet owned by an
+                 * inventory/consumer path.  A materialized ground object is
+                 * only the source-faithful world representation. */
                 result->source_records_decoded++;
                 result->unbound_item_refs++;
-                place = 0;
                 break;
             }
             case THERON_CAT_MISSILE:

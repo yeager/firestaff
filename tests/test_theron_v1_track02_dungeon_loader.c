@@ -192,7 +192,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
 
         printf("  %s: %d levels, %d things placed "
                "(%d doors, %d telep, %d act[%d fixed], %d source records, "
-               "%d unbound, %d raw-only) %d refs linked\n",
+               "%d unbound, %d raw-only, %d materialized) %d refs linked\n",
                names[d],
                result.levels_loaded,
                result.total_things_placed,
@@ -203,6 +203,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                result.source_records_decoded,
                result.unbound_item_refs,
                result.raw_only_item_refs,
+               result.source_objects_materialized,
                result.ground_refs_linked);
 
         printf("    source categories: monster=%u weapon=%u clothing=%u "
@@ -223,6 +224,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.unbound_item_refs == result.source_records_decoded +
                result.raw_only_item_refs);
         assert(result.raw_only_item_refs == 0);
+        assert(result.source_objects_materialized > 0);
         assert(result.source_object_count ==
                (unsigned int)result.unbound_item_refs);
         assert(world->source_monster_count ==

@@ -12429,3 +12429,9 @@ as line/circle coordinates or promote them into movement geometry.
     marker. This machine has Mednafen 1.32.1 but no local `sega_101.bin` or
     verified Nexus media, so no authentic trace or format-derived decoder was
     produced here.
+- 🔧 2026-08-08 Theron source-backed ground items: authenticated Track 02
+  weapon, clothing, scroll, potion, and chest records now need pickup,
+  inventory ownership, equip/use, stack, and T900 consumer binding. The
+  ground-object representation preserves raw bytes and decoded fields, but
+  no inferred inventory semantics are enabled. Misc, missile, and cloud
+  records remain source-only until their consumers are recovered.

@@ -47,10 +47,12 @@ typedef struct {
     int source_records_decoded;
     int unbound_item_refs;
     int raw_only_item_refs;
+    int source_objects_materialized;
     unsigned int source_object_count;
     /* Authenticated source-occurrence census.  These counts describe the
-     * DMBUILDER6 category byte retained in source_objects; they are not host
-     * object, inventory, or item-kind publication. */
+     * DMBUILDER6 category byte retained in source_objects.  A subset of
+     * ground records also has a source-backed host-object representation;
+     * inventory ownership remains a separate, gated consumer. */
     unsigned int source_category_counts[THERON_ITEM_CATEGORY_COUNT];
     /* Bitsets for the raw `type` fields that the source record decoder
      * exposes in categories 4..8 and 10.  A set bit is only a value census;
