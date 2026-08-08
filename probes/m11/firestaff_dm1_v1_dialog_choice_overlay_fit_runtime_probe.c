@@ -326,8 +326,8 @@ int main(int argc, char** argv) {
      *     here so the test exercises the same code path the
      *     player actually hits in V1. */
     M11_GameView_ShowDialogOverlayChoices(&game, "USE THIS ITEM?", "YES", "NO", NULL, NULL);
-    memset(&game.messageLog, 0, sizeof(game.messageLog));
-    M11_MessageLog_Push(&game.messageLog, "DOOR OPENING", 11 /* YELLOW */);
+    dm1_v1_text_clear_all_rows(&game.dm1V1TextMessage);
+    dm1_v1_text_print_message(&game.dm1V1TextMessage, 11 /* YELLOW */, "DOOR OPENING");
 
     game.fontScale = 1;
     memset(fb, 0, sizeof(fb));
