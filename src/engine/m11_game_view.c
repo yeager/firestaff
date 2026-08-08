@@ -8507,6 +8507,24 @@ static int m11_csb_apply_boot_runtime_receipt(
     }
     state->csbBootProfile = receipt->profile;
     state->csbStartupAssetGateReceipt = receipt->startup_asset_gate;
+    if (spec->savePath && spec->savePath[0] != '\0') {
+        CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
+
+        /* The boot handoff has already admitted this path through the
+         * original-container gate. Bind its F0435 provenance to the M11
+         * session as well, so an Atari/Amiga direct resume has the same
+         * stale-file protection as an F9 resume. This second source-owned
+         * F0435 read also captures a CSBGAMEx.BAK recovery after it has
+         * replaced the damaged selected slot. */
+        memset(&original_save_receipt, 0, sizeof(original_save_receipt));
+        if (!csb_v1_boot_runtime_load_original_save_receipt_pc34(
+                receipt->profile, spec->savePath,
+                &original_save_receipt)) {
+            return 0;
+        }
+        state->csbOriginalSaveRuntimeReceipt = original_save_receipt;
+        state->csbOriginalSaveRuntimeReceiptRequired = 1;
+    }
     if (receipt->load_original_font_from_graphics) {
         unsigned char *font_pixels = NULL;
         int font_width = 0;

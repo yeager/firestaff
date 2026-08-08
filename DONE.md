@@ -80,6 +80,13 @@
   behåller sina fail-closed-returer och sitt isolerade fixture-test, men en
   corpus-lös CSBWin-body kan inte heller annonseras som Resume.
 
+- ✅ F0435:s Atari/Amiga-backupväg binder nu den återställda originalfilen
+  till M11:s provenance-receipt efter att `CSBGAMEx.BAK` har återställt den
+  skadade sloten. Direktstart med ett originalsave får därmed samma
+  stale-file-skydd som F9. Regressionen använder riktig `MINI.DAT`, skadar
+  endast en temporär `CSBGAME2.DAT` och bevisar både backupåterställningen
+  och den aktuella receipten.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan

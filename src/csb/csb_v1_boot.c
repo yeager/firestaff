@@ -7799,12 +7799,6 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
     if (!profile || !path || !path[0] || !profile->assets_verified ||
         !profile->dungeon_verified ||
         !csb_v1_runtime_can_load_resume_path(path)) return 0;
-    file = fopen(path, "rb");
-    if (!file || fread(raw_header, 1u, sizeof(raw_header), file) != sizeof(raw_header)) {
-        if (file) fclose(file);
-        return 0;
-    }
-    fclose(file);
     receipt.boot_profile_ready = 1;
     /* `native_csb_header_valid` predates the Atari/Amiga decoder and now
      * means the selected original container passed its source-owned shape
@@ -7818,6 +7812,17 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
     receipt.runtime_party_ready = profile->runtime.champion_count >= 0;
     if (!csb_v1_runtime_original_atari_save_source_current(
             &profile->runtime)) return 0;
+    /* F0435 may have restored CSBGAMEx.BAK over an unreadable selected
+     * original slot.  Hash the recovered source only after that transaction;
+     * hashing the damaged pre-recovery bytes would make this receipt stale
+     * immediately even though the runtime correctly owns the restored save. */
+    file = fopen(path, "rb");
+    if (!file || fread(raw_header, 1u, sizeof(raw_header), file) !=
+                     sizeof(raw_header)) {
+        if (file) fclose(file);
+        return 0;
+    }
+    fclose(file);
     receipt.runtime_current_level_after = profile->runtime.current_level;
     receipt.runtime_champion_count_after = profile->runtime.champion_count;
     receipt.runtime_game_time_after = game_time;

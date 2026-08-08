@@ -75,10 +75,52 @@ static int corrupt_header_byte(const char *path)
     return fclose(file) == 0;
 }
 
+static int copy_file(const char *source_path, const char *destination_path)
+{
+    unsigned char buffer[4096];
+    FILE *source = NULL;
+    FILE *destination = NULL;
+    size_t count;
+    int ok = 1;
+
+    if (!source_path || !destination_path ||
+        !(source = fopen(source_path, "rb")) ||
+        !(destination = fopen(destination_path, "wb"))) {
+        if (source) fclose(source);
+        return 0;
+    }
+    while ((count = fread(buffer, 1u, sizeof(buffer), source)) != 0u) {
+        if (fwrite(buffer, 1u, count, destination) != count) {
+            ok = 0;
+            break;
+        }
+    }
+    if (ferror(source) || fclose(destination) != 0) {
+        ok = 0;
+    }
+    fclose(source);
+    return ok;
+}
+
+static int write_damaged_file(const char *path)
+{
+    static const unsigned char damaged[] = { 'b', 'a', 'd' };
+    FILE *file = path ? fopen(path, "wb") : NULL;
+    int ok;
+
+    if (!file) return 0;
+    ok = fwrite(damaged, 1u, sizeof(damaged), file) == sizeof(damaged);
+    if (fclose(file) != 0) ok = 0;
+    return ok;
+}
+
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_CSB_DATA_DIR");
     char save_template[] = "/tmp/firestaff-csb-f0435-f9-XXXXXX";
+    const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
+    const char *recovery_path = "/tmp/CSBGAME2.DAT";
+    const char *recovery_backup_path = "/tmp/CSBGAME2.BAK";
     char *save_path;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -122,6 +164,36 @@ int main(void)
     CHECK(!M11_GameView_QuickLoad(&view),
           "M11 F9 rejects a corrupted private header");
     M11_GameView_Shutdown(&view);
+
+    if (atari_mini && atari_mini[0]) {
+        remove(recovery_path);
+        remove(recovery_backup_path);
+        CHECK(copy_file(atari_mini, recovery_backup_path) &&
+                  write_damaged_file(recovery_path),
+              "real Atari MINI.DAT backup and damaged selected slot are staged");
+        if (!failures) {
+            memset(&spec, 0, sizeof(spec));
+            spec.title = "CHAOS STRIKES BACK";
+            spec.gameId = "csb";
+            spec.sourceId = "csb";
+            spec.dataDir = data_dir;
+            spec.savePath = recovery_path;
+            spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+            spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+            M11_GameView_Init(&view);
+            CHECK(M11_GameView_Start(&view, &spec),
+                  "M11 F0435 restores a damaged original slot from its backup");
+            CHECK(view.csbOriginalSaveRuntimeReceiptRequired &&
+                      view.csbOriginalSaveRuntimeReceipt.valid &&
+                      csb_v1_boot_original_save_runtime_receipt_current_pc34(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &view.csbOriginalSaveRuntimeReceipt),
+                  "F0435 receipt hashes the recovered original save, not damaged bytes");
+            M11_GameView_Shutdown(&view);
+        }
+        remove(recovery_path);
+        remove(recovery_backup_path);
+    }
 done:
     (void)unsetenv("FIRESTAFF_QUICKSAVE_PATH");
     (void)remove(save_template);
