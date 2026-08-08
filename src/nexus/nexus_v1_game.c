@@ -53,6 +53,7 @@ int nexus_v1_game_resolve_dungeon_start(
 {
     Nexus_V1_DungeonStartReceipt receipt;
     Nexus_V1_DgnCellGeometry cell;
+    int normalized_dir = requested_dir >= 0 ? (requested_dir & 3) : -1;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
@@ -60,10 +61,12 @@ int nexus_v1_game_resolve_dungeon_start(
     receipt.level = requested_level;
     receipt.requested_x = requested_x;
     receipt.requested_y = requested_y;
-    receipt.requested_dir = requested_dir & 3;
+    /* Unknown is a real state while the Saturn start selector/pose is
+     * uncaptured. Do not turn -1 into direction 3 by masking it. */
+    receipt.requested_dir = normalized_dir;
     receipt.party_x = requested_x;
     receipt.party_y = requested_y;
-    receipt.party_dir = requested_dir & 3;
+    receipt.party_dir = normalized_dir;
     receipt.fallback_visuals_permitted = 0;
     receipt.blocks_runtime = 1;
 

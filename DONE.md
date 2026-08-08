@@ -9464,3 +9464,7 @@
 - ✅ Flyttade DM.BIN:s verifierade åtta prisrader och hashbundna bindning till `nexus_v1_shop_catalog.c`, som fortsatt ingår i produktionen och används av engine.
 - ✅ `nexus_v1_shop.c` innehåller nu endast den obevisade shop-object/register/open/buy/sell-studien och länkas bara av fail-closed-manager-testet.
 - ✅ Shop-pris, shop-manager, Nexus-build och production-boundary passerar.
+# Nexus unknown startup direction no longer becomes synthetic WEST (2026-08-08)
+
+- ✅ `nexus_v1_game_resolve_dungeon_start()` bevarar nu `-1` som okänd Saturn-riktning i stället för att maskera den till riktning 3.
+- ✅ Ny provenance-regression täcker både okänd och känd riktning; startup-, SMAP- och title-pointer-tester passerar.
