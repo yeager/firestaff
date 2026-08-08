@@ -6,9 +6,10 @@
   c_randomdata-LCG-ström. Den läsande possessionsreceipten följer också
   originalets slotordning och GDAT-passning över File_header-ägda recordpooler
   utan att uppfinna inventory; klickad formationsruta hålls separat från
-  DB3-spegelns orientering enligt originalets inventoryfilter. Nästa atomära
-  ägare måste utföra själva
-  `CUT_RECORD_FROM`-/bonus-/handcontainertransaktionen, timerkö och
+  DB3-spegelns orientering enligt originalets inventoryfilter. `SELECT_CHAMPION`
+  behåller originalets recordreferens och gör inte `CUT_RECORD_FROM`. Nästa
+  atomära ägare måste därför bevara den delade recordägaren genom bonus- och
+  handcontainertransaktionen, timerkö och
   aktuatorgenerator, och först därefter publicera party, HUD och viewport.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och

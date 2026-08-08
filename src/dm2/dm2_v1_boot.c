@@ -1189,7 +1189,9 @@ static int dm2_v1_boot_project_source_possession(
      * passes literally: body (2..5), neck (10), type-5 hands, type-6 hands,
      * then pack slots (13..29).  ADD_ITEM_TO_PLAYER only calls
      * IS_ITEM_FIT_FOR_EQUIP with slots below 30, so this path never needs a
-     * guessed current active-hand result. */
+     * guessed current active-hand result. SELECT_CHAMPION lines 1140-1157
+     * calls this routine without CUT_RECORD_FROM, so its ObjectID must stay
+     * bound to the File_header tile chain rather than being copied or cut. */
     static const struct {
         uint8_t first_slot;
         uint8_t last_slot;

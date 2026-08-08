@@ -384,8 +384,9 @@
   och DYN4; dubblett-speglar avvisas. Receiptet överför inga objektrecords
   och publicerar inte party, HUD eller runtime-session.
 - ✅ Varje riktat startobjekt behåller nu även sin File_header-ägda DB-typ,
-  recordindex och ursprungliga nästa-länk. Detta är underlaget för framtida
-  `CUT_RECORD_FROM`/`ADD_ITEM_TO_PLAYER`-mutation utan syntetisk inventory.
+  recordindex och ursprungliga nästa-länk. `DM2_SELECT_CHAMPION` lämnar dessa
+  recordreferenser i tile-kedjan när den anropar `ADD_ITEM_TO_PLAYER`; ingen
+  `CUT_RECORD_FROM`-mutation får hittas på av Firestaff.
 - ✅ Party-layoutens initierings- och specialforce-API har fått egna symboler.
   Det tar bort en verklig ABI-kollision med den callback-baserade
   hero-ops-modulen, där samma C-symboler tidigare hade olika signaturer.
@@ -418,6 +419,16 @@
   i stället för att värdens riktning avgör vilken champion som väljs.
 - ✅ Verifierat mot hashverifierad PC-DOS-data i M11:s startup/profile-test.
   Detta är fortfarande en läsande GAME_LOAD-grind, inte en publicerad party.
+
+# DM2 championvalets recordägarskap (2026-08-08)
+
+- ✅ SKProjects `skhero.cpp::DM2_SELECT_CHAMPION` är nu även källreferensen
+  för inventoryägarskapet: den anropar `DM2_ADD_ITEM_TO_PLAYER` direkt och
+  saknar `DM2_CUT_RECORD_FROM`. Startobjektet ska därför behålla sin
+  File_header-kedjereferens när orienteringsbitarna maskas till `hero::item`.
+- ✅ API-dokumentation och GAME_LOAD-planen är rättade så att en framtida
+  session inte kan skapa en falsk "transfer" genom att kopiera eller klippa
+  rekord som originalvägen inte klipper.
 
 # DM2 första c_hero-kandidat (2026-08-08)
 

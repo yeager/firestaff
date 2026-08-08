@@ -226,9 +226,10 @@ typedef struct {
     int source_item_count;
     uint16_t source_item_object_ids[30];
     /* Exact File_header-owned tile-chain nodes which SELECT_CHAMPION hands
-     * to ADD_ITEM_TO_PLAYER.  `next_object_id` is retained before any future
-     * CUT_RECORD_FROM mutation, so inventory transfer can be transactional
-     * rather than a host-created item list. */
+     * to ADD_ITEM_TO_PLAYER. `next_object_id` is retained because the
+     * original selection path does not call CUT_RECORD_FROM: the equipped
+     * item remains a source-owned record reference, rather than a
+     * host-created inventory copy. */
     struct {
         uint16_t object_id;
         uint16_t next_object_id;
@@ -297,9 +298,9 @@ typedef struct {
 } DM2_V1_BootNewGamePartyReceipt;
 
 /* A read-only projection of c_hero.cpp::DM2_ADD_ITEM_TO_PLAYER for every
- * source object selected by DM2_SELECT_CHAMPION.  `source_object_id` retains
- * the File_header chain word for the later CUT_RECORD_FROM phase;
- * `equipped_record_id` is the orientation-free value which
+ * source object selected by DM2_SELECT_CHAMPION. `source_object_id` retains
+ * the still File_header-owned chain word; `equipped_record_id` is the
+ * orientation-free value which
  * DM2_EQUIP_ITEM_TO_HAND writes to hero::item.  No source record, tile chain,
  * bonus, hand container or live party is mutated here. */
 #define DM2_V1_BOOT_MAX_NEW_GAME_POSSESSIONS (DM2_MAX_HEROES * 30)
@@ -1660,8 +1661,8 @@ int dm2_v1_boot_new_game_party_receipt(
 
 /* Resolve the exact ADD_ITEM_TO_PLAYER slot order from the verified dungeon
  * record pool and real GDAT equipment flags. This remains an uncommitted
- * GAME_LOAD receipt until CUT_RECORD_FROM, item bonuses, hand containers,
- * timers and the session owner are committed atomically. */
+ * GAME_LOAD receipt until the original shared record reference, item bonuses,
+ * hand containers, timers and session owner are committed atomically. */
 int dm2_v1_boot_new_game_possession_receipt(
     const DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartyReceipt *party,
