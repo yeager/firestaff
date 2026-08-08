@@ -1,19 +1,53 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -29,0 +30,3 @@
+@@ -19,0 +20,3 @@
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
-@@ -178,6 +181,20 @@
- {
-  static FILE *theron_input_trace = NULL;
-  static uint16 theron_previous_port0 = 0xffff;
+@@ -95,0 +99,16 @@
++static bool theron_script_boot_applied = false;
++static uint16 theron_script_boot_original_port0 = 0;
++
++static uint16 theron_script_key_mask(const char *key, size_t key_length)
++{
++ if(key_length == 1 && key[0] == 'i') return 0x1000;
++ if(key_length == 2 && !strncmp(key, "ii", 2)) return 0x0800;
++ if(key_length == 6 && !strncmp(key, "select", 6)) return 0x0010;
++ if(key_length == 3 && !strncmp(key, "run", 3)) return 0x0020;
++ if(key_length == 2 && !strncmp(key, "up", 2)) return 0x0001;
++ if(key_length == 4 && !strncmp(key, "down", 4)) return 0x0002;
++ if(key_length == 4 && !strncmp(key, "left", 4)) return 0x0004;
++ if(key_length == 5 && !strncmp(key, "right", 5)) return 0x0008;
++ return 0;
++}
++
+@@ -161,0 +181,19 @@
++ if(port == 0 && ptr && !theron_script_boot_applied)
++ {
++  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
++  const char *at = script ? strchr(script, '@') : NULL;
++  const char *comma = at ? strchr(at + 1, ',') : NULL;
++  const size_t key_length = at ? (size_t)(at - script) : 0;
++  char *end = NULL;
++  unsigned long frame = at ? strtoul(at + 1, &end, 10) : 0;
++  uint16 mask = theron_script_key_mask(script, key_length);
++  if(at && frame == 1 && mask && end &&
++     (*end == ':' || *end == ',' || *end == 0) &&
++     (!comma || end == comma))
++  {
++   theron_script_boot_original_port0 = MDFN_de16lsb(ptr);
++   MDFN_en16lsb(ptr, theron_script_boot_original_port0 | mask);
++   theron_script_boot_applied = true;
++  }
++ }
++
+@@ -180,0 +219,14 @@
 + static bool theron_script_initialized = false;
 + static bool theron_script_valid = false;
 + static unsigned theron_script_frame = 0;
 + static unsigned theron_script_event_count = 0;
-+ uint16 theron_script_original_port0 = 0;
-+ bool theron_script_applied = false;
++ static uint16 theron_script_original_port0 = 0;
++ static bool theron_script_applied = false;
 + static struct
 + {
 +  unsigned frame;
@@ -22,13 +56,7 @@
 +  bool emitted;
 +  char key[8];
 + } theron_script_events[32];
-  if(!theron_input_trace)
-  {
-   const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
-@@ -191,6 +208,107 @@
-    }
-   }
-  }
+@@ -193,0 +246,102 @@
 + if(!theron_script_initialized)
 + {
 +  const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
@@ -57,15 +85,8 @@
 +    theron_script_valid = false;
 +    break;
 +   }
-+   if(key_length == 1 && cursor[0] == 'i') mask = 0x0001;
-+   else if(key_length == 2 && !strncmp(cursor, "ii", 2)) mask = 0x0002;
-+   else if(key_length == 6 && !strncmp(cursor, "select", 6)) mask = 0x0004;
-+   else if(key_length == 3 && !strncmp(cursor, "run", 3)) mask = 0x0008;
-+   else if(key_length == 2 && !strncmp(cursor, "up", 2)) mask = 0x0010;
-+   else if(key_length == 4 && !strncmp(cursor, "down", 4)) mask = 0x0020;
-+   else if(key_length == 4 && !strncmp(cursor, "left", 4)) mask = 0x0040;
-+   else if(key_length == 5 && !strncmp(cursor, "right", 5)) mask = 0x0080;
-+   else
++   mask = theron_script_key_mask(cursor, key_length);
++   if(!mask)
 +   {
 +    theron_script_valid = false;
 +    break;
@@ -94,8 +115,16 @@
 +   fflush(theron_input_trace);
 +  }
 + }
-+ /* data_ptr is the live five-port frame buffer; byte zero is normally zero
-+  * while idle and must not gate the source-bound scripted mask. */
++ if(theron_script_applied)
++ {
++  MDFN_en16lsb(data_ptr[0], theron_script_original_port0);
++  theron_script_applied = false;
++ }
++ if(theron_script_boot_applied)
++ {
++  MDFN_en16lsb(data_ptr[0], theron_script_boot_original_port0);
++  theron_script_boot_applied = false;
++ }
 + if(theron_script_valid)
 + {
 +  uint16 scripted_mask = 0;
@@ -130,13 +159,21 @@
 +  }
 + }
 + theron_script_frame++;
-  if(theron_input_trace && data_ptr[0])
-  {
-   const uint16 port0 = MDFN_de16lsb(data_ptr[0]);
-@@ -319,4 +319,6 @@
-  for(int i = 0; i < 5; i++)
-   if(devices[i])
-    devices[i]->Update(data_ptr[i]);
-+ if(theron_script_applied)
-+  MDFN_en16lsb(data_ptr[0], theron_script_original_port0);
- }
+--- a/src/pce/input/gamepad.cpp
++++ b/src/pce/input/gamepad.cpp
+@@ -20,0 +21,2 @@
++#include <stdlib.h>
++#include <string.h>
+@@ -43,0 +46,3 @@
++static bool theron_script_run_hold = false;
++static unsigned theron_script_run_frame = 0;
++
+@@ -53,0 +59,5 @@
++ const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
++ theron_script_run_hold = script && !strncmp(script, "run@1", 5);
++ theron_script_run_frame = 0;
++ if(theron_script_run_hold)
++  buttons = 0x0020;
+@@ -72,0 +83,2 @@
++ if(theron_script_run_hold && theron_script_run_frame++ < 1800)
++  buttons |= 0x0020;
