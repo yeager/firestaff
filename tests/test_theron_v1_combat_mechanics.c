@@ -15,6 +15,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_item_properties.h"
 #include "theron_v1_world.h"
 
@@ -675,6 +676,46 @@ static void test_decode_dungeon_level_object_table(void) {
               status, THERON_TRACK02_SIGNAL_NOT_FOUND);
 }
 
+static void test_source_item_pickup_provenance(void) {
+    printf("[test:source_item_pickup_provenance]\n");
+    Theron_V1_World w;
+    Theron_V1_Object object;
+    const Theron_V1_InventorySourceRecord *carried;
+
+    make_world(&w);
+    memset(&object, 0, sizeof(object));
+    object.type = THERON_OBJTYPE_WEAPON;
+    object.item_index = 6;
+    object.quantity = 3;
+    object.level = 0;
+    object.x = 2;
+    object.y = 2;
+    object.source_ref = 0x1234u;
+    object.source_next_ref = 0x2345u;
+    object.source_index = 7u;
+    object.source_category = THERON_CAT_WEAPON;
+    object.source_item_type = 6u;
+    object.source_keep = 1u;
+    object.source_cursed = 1u;
+    object.source_poisoned = 1u;
+    object.source_property_valid = 1u;
+    object.source_property[0] = 0x09u;
+    object.source_property[1] = 0x2fu;
+    CHECK_INT("source weapon placed", theron_v1_object_place(&w, &object), 0);
+    CHECK_INT("source weapon picked up",
+              theron_v1_click_route(&w, 2, 2, THERON_CMD_TAKE), 0);
+    CHECK_INT("compact inventory keeps source item id",
+              w.party.champions[0].inventory[0], 6);
+    carried = theron_v1_inventory_source_at(&w, 0, 0);
+    CHECK(carried && carried->valid, "inventory source record valid");
+    CHECK_INT("inventory source category", carried->category,
+              THERON_CAT_WEAPON);
+    CHECK_INT("inventory source ref", carried->source_ref, 0x1234);
+    CHECK_INT("inventory source charges", carried->charges, 3);
+    CHECK_INT("inventory source curse", carried->cursed, 1);
+    CHECK_INT("inventory source property", carried->property[1], 0x2f);
+}
+
 int main(void) {
     printf("=== Theron V1 Combat Mechanics Regression ===\n");
 
@@ -698,6 +739,7 @@ int main(void) {
     test_spell_casting();
     test_armed_combat_uses_item_properties();
     test_source_evidence();
+    test_source_item_pickup_provenance();
 
     printf("\nResults: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

@@ -6974,3 +6974,12 @@
   source types remain unclassified instead of being guessed into inventory.
 - Inventory ownership, equipment/use resolution, T900 translation, and
   remaining creature/media consumers are still open requirements.
+# 2026-08-08 Theron source-backed inventory pickup provenance
+
+- ✅ Pickup no longer reduces a source-authenticated object solely to a
+  compact item ID: the runtime keeps category, type, keep/curse/broken/
+  poison state, charges/power, text/chest fields, source references, and
+  matched property bytes in the champion's parallel inventory-source slot.
+- ✅ The legacy 30-slot item-ID array remains unchanged for compatibility;
+  this is source provenance, not an unsupported claim about T900 equip/use,
+  stacking, save serialization, or consumption behavior.

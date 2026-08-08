@@ -411,6 +411,14 @@ int theron_v1_object_remove(Theron_V1_World *world, int id) {
     return -1;
 }
 
+const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
+    const Theron_V1_World *world, int champion_slot, int inventory_slot) {
+    if (!world || champion_slot < 0 || champion_slot >= THERON_MAX_CHAMPIONS ||
+        inventory_slot < 0 || inventory_slot >= THERON_INVENTORY_SLOTS)
+        return NULL;
+    return &world->inventory_source[champion_slot][inventory_slot];
+}
+
 Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world,
                                         int level, int x, int y) {
     if (!world) return NULL;

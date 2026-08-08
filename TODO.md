@@ -12452,3 +12452,7 @@ as line/circle coordinates or promote them into movement geometry.
   six-byte property records where the source type agrees. Remaining source
   object types still need the original T900/item-ID translation and full
   inventory ownership/equip/use semantics; do not promote them by range.
+- 🔧 2026-08-08 Theron source-backed pickup provenance: a picked-up
+  Track 02 object now retains its exact decoded payload in a parallel
+  inventory-source slot. T900 ownership, equip/use, stack, save persistence,
+  and item-specific consumption rules still require the original consumer.

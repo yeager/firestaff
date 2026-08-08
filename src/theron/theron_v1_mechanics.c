@@ -126,6 +126,33 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         }
         if (inventory_slot < 0) return -1;
         champion->inventory[inventory_slot] = (uint8_t)item_id;
+        if (o->source_ref != 0u && o->source_category != 0u) {
+            Theron_V1_InventorySourceRecord *carried =
+                &world->inventory_source[world->party.active_slot]
+                                           [inventory_slot];
+            memset(carried, 0, sizeof(*carried));
+            carried->valid = 1;
+            carried->category = o->source_category;
+            carried->item_type = o->source_item_type;
+            carried->keep = o->source_keep;
+            carried->cursed = o->source_cursed;
+            carried->broken = o->source_broken;
+            carried->poisoned = o->source_poisoned;
+            carried->closed = o->source_closed;
+            carried->dump = o->source_dump;
+            carried->power = o->source_power;
+            carried->charges = (uint8_t)(o->quantity & 0xff);
+            carried->source_ref = o->source_ref;
+            carried->source_next_ref = o->source_next_ref;
+            carried->source_index = o->source_index;
+            carried->text_ref = o->source_text_ref;
+            carried->chested = o->source_chested;
+            carried->data1 = o->source_data1;
+            carried->item_category = o->source_item_category;
+            carried->property_valid = o->source_property_valid;
+            memcpy(carried->property, o->source_property,
+                   sizeof(carried->property));
+        }
         o->flags |= THERON_OBJ_F_PICKED_UP;
         theron_v1_party_recalculate_loads(&world->party);
         return 0;

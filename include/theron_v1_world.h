@@ -397,6 +397,34 @@ typedef struct {
     uint8_t raw[16];
 } Theron_V1_SourceObjectRecord;
 
+/* Runtime provenance for a carried Track 02 object.  The legacy champion
+ * array keeps its compact item ID for compatibility; this parallel record
+ * preserves the source payload needed by the future T900 inventory/equip/use
+ * consumer without pretending that a pickup is already an authenticated
+ * save-format or T900 rule. */
+typedef struct {
+    uint8_t valid;
+    uint8_t category;
+    uint8_t item_type;
+    uint8_t keep;
+    uint8_t cursed;
+    uint8_t broken;
+    uint8_t poisoned;
+    uint8_t closed;
+    uint8_t dump;
+    uint8_t power;
+    uint8_t charges;
+    uint16_t source_ref;
+    uint16_t source_next_ref;
+    uint16_t source_index;
+    uint16_t text_ref;
+    int16_t chested;
+    uint16_t data1;
+    uint8_t item_category;
+    uint8_t property_valid;
+    uint8_t property[6];
+} Theron_V1_InventorySourceRecord;
+
 /* ── Timer system ─────────────────────────────────────────────────── */
 typedef enum {
     THERON_TIMER_ONESHOT   = 0,
@@ -480,6 +508,8 @@ struct Theron_V1_World {
     Theron_V1_SourceObjectRecord
         source_objects[THERON_MAX_SOURCE_OBJECT_RECORDS];
     unsigned int source_object_count;
+    Theron_V1_InventorySourceRecord
+        inventory_source[THERON_MAX_CHAMPIONS][THERON_INVENTORY_SLOTS];
 
     /* Generator state (current dungeon, current level only) */
     int generator_spawn_count[5];
@@ -565,6 +595,8 @@ int theron_v1_object_place(Theron_V1_World *world, Theron_V1_Object *object);
 int theron_v1_object_remove(Theron_V1_World *world, int id);
 Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world, int level, int x, int y);
 Theron_V1_Object *theron_v1_object_by_id(Theron_V1_World *world, int id);
+const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
+    const Theron_V1_World *world, int champion_slot, int inventory_slot);
 int theron_v1_object_set_state(Theron_V1_World *world, int id, uint8_t new_state);
 int theron_v1_object_set_flag(Theron_V1_World *world, int id, uint32_t flag);
 int theron_v1_object_clear_flag(Theron_V1_World *world, int id, uint32_t flag);
