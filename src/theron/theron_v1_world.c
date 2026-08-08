@@ -1301,10 +1301,13 @@ int theron_v1_world_bind_track02_monster(
     uint16_t flags_word,
     uint16_t unknown_word)
 {
+    /* Keep every real category-4 source record, including reserved or
+     * sentinel type bytes. spawn_level_creatures() admits only the
+     * authenticated 0..6 roster; no invented live creature is created for
+     * an unknown source byte. */
     if (!world || !health || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
-        type >= THERON_TRACK02_CREATURE_TYPE_COUNT ||
         x < 0 || x >= THERON_MAX_MAP_SIZE ||
         y < 0 || y >= THERON_MAX_MAP_SIZE ||
         number > 3u ||

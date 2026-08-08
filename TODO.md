@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron real Track 02 loading now retains reserved category-4 monster
+  bytes as source records while admitting only the authenticated 0..6 roster
+  to live creatures. The original RNG consumer, generator timing,
+  reactivation, AI, combat, loot and T700/T900 consumers remain capture-gated.
+
 - 🔧 Theron type-6 generator records now decode the real generation,
   toughness and pause overlay and persist it in save version 6. This remains
   source data only: original RNG consumption, activation timing,

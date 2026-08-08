@@ -8004,3 +8004,12 @@
 - ✅ Verified against the real `TQUS02.bin` actuator census and the generator
   save round-trip tests. The disassembly capture gate remains authoritative
   for executable consumer semantics.
+# 2026-08-08 Theron reserved monster-record gate
+
+- ✅ The full US and JP Track 02 dungeon loader now accepts real category-4
+  records whose raw type is outside the seven-name roster, retaining their
+  bytes and provenance instead of aborting the whole dungeon load.
+- ✅ Live-creature materialization still admits only authenticated roster
+  types 0–6, so reserved source bytes cannot create invented creatures.
+- ✅ Verified with all seven real US and JP dungeons; the loader passes and
+  reports the expected source category census and live-creature counts.
