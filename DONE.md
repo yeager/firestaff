@@ -7,6 +7,17 @@
 - ✅ Verified a real PC34 session writes, reloads and rejects a corrupted
   native save; the real Prison handoff/HUD regression also passes.
 
+# DM2 File_header champion test-link repair (2026-08-08)
+
+- ✅ Removed the unrelated SKSAVE record-pool translation unit from the
+  canonical G1 champion-mirror test target. The test now declares only the
+  dungeon, GDAT and champion-lifecycle code it exercises, so it links after
+  the record-pool implementation gained its genuine SUPPRESS dependencies.
+- ✅ Verification: both the real-data 44-map `File_header` champion boundary
+  and direct-root-chain boundary build and pass against the mounted PC-DOS
+  `DUNGEON.DAT`. Champion activation remains correctly unavailable until the
+  File_header record graph has a complete owner.
+
 # CSB real-data test-path admission (2026-08-08)
 
 - ✅ Removed two developer-machine-only `/Users/bosse/...` fallbacks from the

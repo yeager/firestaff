@@ -16,7 +16,10 @@
   Audit the remaining `g1_direct_*`, champion and material receipts one by
   one before they can claim PC-DOS provenance. They must either use the
   File_header-owned record graph or explicitly prove that the legacy G1-only
-  path remains unavailable. Do not restore a continuation segment,
+  path remains unavailable. The isolated real-data champion receipt now has
+  only its actual dungeon/GDAT/lifecycle link dependencies; do not re-add a
+  SKSAVE translation unit to make it carry unrelated runtime ownership. Do
+  not restore a continuation segment,
   pseudo-pool or DYN4 selection to make an old receipt pass.
 
 - **CSB-PLATFORM-NATIVE-STARTUP-OWNERS:** The PC34 launcher-handoff regression
