@@ -360,13 +360,15 @@
 
 - **NEXUS-CAPTURE-INVENTORY:** `analyze_nexus_capture_inventory.py` now
   inventories the complete external raw-witness directory without treating
-  hardware state as a screen label. The current 37 valid captures contain
-  11 reset/no-layer frames, 14 RBG0-only CD-player frames, 100 NBG1-only
-  dungeon frames and 14 other active VDP2 frames. The new frame-0 startup
-  attempt is reset-only. It also accepts a single operator run as the capture
-  root, so a fresh witness cannot be silently omitted before corpus merge. No
-  startup/menu/HUD/viewport asset consumer is authenticated; future capture
-  work must add the asset and consumer join.
+  hardware state as a screen label. The current 38 valid captures contain
+  12 reset/no-layer frames, 14 RBG0-only CD-player frames, 100 NBG1-only
+  dungeon frames and 14 other active VDP2 frames. The latest European
+  `run-french-hold-starta-skip18000` run contributes eight active VDP1 frames;
+  its source span and NBG1 bitmap still have no exact retail MENU/MNS/DGN/
+  ITEM/STABG/TITLE or CLUT join. It also accepts a single operator run as the
+  capture root, so a fresh witness cannot be silently omitted before corpus
+  merge. No startup/menu/HUD/viewport asset consumer is authenticated; future
+  capture work must add the asset and consumer join.
 
 - **NEXUS-VDP2-BITMAP-SOURCE-JOIN:** The bounded real-data comparator now
   derives the active 131072-byte NBG1 bitmap span at VRAM `0x000000` and
