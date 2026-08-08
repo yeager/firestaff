@@ -4487,7 +4487,9 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
             M11_AssetLoader_InitDm1LegacyFromFile(
                 &state->assetLoader, receipt->graphics_dat_path, 0) ||
             M11_AssetLoader_InitDm1LegacyFromFile(
-                &state->assetLoader, receipt->graphics_dat_path, 1);
+                &state->assetLoader, receipt->graphics_dat_path, 1) ||
+            M11_AssetLoader_InitDm1AtariStFromFile(
+                &state->assetLoader, receipt->graphics_dat_path);
         if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
             if (!legacyLoaded && !M11_AssetLoader_InitFromBuffer(&state->assetLoader,
                     state->fmtownsGraphicsDat,

@@ -17,6 +17,7 @@
 #include "memory_frontend_pc34_compat.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_atari_st_graphics_dat.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -170,12 +171,54 @@ int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
     return ok;
 }
 
+int M11_AssetLoader_InitDm1AtariStFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size) {
+    DM1_V1_AtariStGraphicsDat probe;
+    unsigned char *copy;
+    if (!loader || !data || size <= 0 ||
+        !dm1_v1_atari_st_graphics_open(data, (size_t)size, &probe)) return 0;
+    copy = (unsigned char *)malloc((size_t)size);
+    if (!copy) return 0;
+    memcpy(copy, data, (size_t)size);
+    memset(loader, 0, sizeof(*loader));
+    loader->atariStData = copy;
+    loader->atariStDataSize = size;
+    loader->atariStDm1 = 1;
+    loader->graphicCount = DM1_V1_ATARI_ST_GRAPHICS_COUNT;
+    loader->initialized = 1;
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+             "(DM1 Atari ST DMCSB1, %ld bytes)", size);
+    return 1;
+}
+
+int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath) {
+    FILE *file;
+    long size;
+    unsigned char *data;
+    int ok;
+    if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
+        !(file = fopen(graphicsDatPath, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
+        free(data); fclose(file); return 0;
+    }
+    fclose(file);
+    ok = M11_AssetLoader_InitDm1AtariStFromBuffer(loader, data, size);
+    free(data);
+    return ok;
+}
+
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {
         return;
     }
     free(loader->legacyData);
+    free(loader->atariStData);
     for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
         if (loader->cache[i].loaded && loader->cache[i].pixels) {
             free(loader->cache[i].pixels);
@@ -211,6 +254,25 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
         return dm1_v1_legacy_graphics_query(loader->legacyData,
             (size_t)loader->legacyDataSize, loader->legacyBigEndian,
             (uint16_t)graphicIndex, outWidth, outHeight);
+    }
+    if (loader->atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        uint8_t *item;
+        uint16_t idx = (uint16_t)graphicIndex;
+        if (graphicIndex >= DM1_V1_ATARI_ST_GRAPHICS_COUNT) return 0;
+        if (!dm1_v1_atari_st_graphics_open(loader->atariStData,
+                (size_t)loader->atariStDataSize, &dat)) return 0;
+        if (dat.records[idx].expanded_size < 4u) return 0;
+        item = (uint8_t *)malloc(dat.records[idx].expanded_size);
+        if (!item) return 0;
+        if (dm1_v1_atari_st_graphics_read(&dat, idx, item,
+                dat.records[idx].expanded_size) < 4) {
+            free(item); return 0;
+        }
+        if (outWidth) *outWidth = (uint16_t)(((uint16_t)item[0] << 8) | item[1]);
+        if (outHeight) *outHeight = (uint16_t)(((uint16_t)item[2] << 8) | item[3]);
+        free(item);
+        return 1;
     }
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;
     if (graphicIndex >= rt->graphicCount) {
@@ -341,6 +403,32 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             return NULL;
         }
         free(legacyPixels);
+        return m11_find_cached(loader, graphicIndex);
+    }
+
+    if (loader->atariStDm1) {
+        if (!dm1_v1_legacy_graphics_is_bitmap_index((uint16_t)graphicIndex) ||
+            graphicIndex >= DM1_V1_ATARI_ST_GRAPHICS_COUNT) {
+            return NULL;
+        }
+        DM1_V1_AtariStGraphicsDat dat;
+        uint16_t stW = 0u, stH = 0u;
+        size_t stCap = 1024u * 1024u;
+        unsigned char *stPixels = (unsigned char *)malloc(stCap);
+        if (!stPixels) return NULL;
+        if (!dm1_v1_atari_st_graphics_open(loader->atariStData,
+                (size_t)loader->atariStDataSize, &dat) ||
+            !dm1_v1_atari_st_graphics_decode(&dat, (uint16_t)graphicIndex,
+                stPixels, stCap, &stW, &stH)) {
+            free(stPixels);
+            return NULL;
+        }
+        if (!M11_AssetLoader_InstallDecodedPixels(loader, graphicIndex,
+                                                   stPixels, stW, stH)) {
+            free(stPixels);
+            return NULL;
+        }
+        free(stPixels);
         return m11_find_cached(loader, graphicIndex);
     }
 

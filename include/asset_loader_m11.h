@@ -60,6 +60,12 @@ typedef struct {
     int legacyBigEndian;
     int legacyDm1;
 
+    /* DM1 Atari ST DMCSB1 source.  563-record container with Atari-LZW;
+     * decoded items share the IMG1 pixel format with the Amiga path. */
+    unsigned char *atariStData;
+    long atariStDataSize;
+    int atariStDm1;
+
     /* Cache */
     M11_AssetSlot cache[M11_ASSET_CACHE_SLOTS];
     int cacheUsed;
@@ -89,6 +95,14 @@ int M11_AssetLoader_InitDm1LegacyFromBuffer(M11_AssetLoader* loader,
 int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
                                           const char *graphicsDatPath,
                                           int big_endian);
+
+/* Initialize from a DM1 Atari ST DMCSB1 GRAPHICS.DAT (563 records,
+ * Atari-LZW compressed, big-endian IMG1 pixels). */
+int M11_AssetLoader_InitDm1AtariStFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size);
+int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);

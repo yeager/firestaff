@@ -6219,6 +6219,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_atari_msa.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_dungeon_dat.c
     src/dm1/dm1_v1_fmtowns_iso9660.c
@@ -6769,6 +6770,7 @@ set(M11_SOURCES
     src/frontend/title_dat_loader_v1.c
     src/frontend/title_frontend_v1.c
     src/shared/asset_loader_m11.c
+    src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/font_m11.c
     src/shared/fs_portable_compat.c

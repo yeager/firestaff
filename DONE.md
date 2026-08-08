@@ -1,3 +1,20 @@
+# DM1 Amiga och Atari ST stöd i M11-renderaren (2026-08-08)
+
+- ✅ `M11_AssetLoader_InitDm1AtariStFromBuffer/File()` öppnar DM1 Atari ST
+  DMCSB1-container (563 poster, Atari-LZW), avkodar via den delade IMG1-
+  dekodern. Nya fält `atariStData`/`atariStDataSize`/`atariStDm1` i
+  `M11_AssetLoader`.
+- ✅ DM1 grafik-bindningskedjan i `m11_game_view.c` provar nu fyra format:
+  PC34 IMG3 → legacy LE (FM Towns) → legacy BE (Amiga) → Atari ST DMCSB1.
+- ✅ DUNGEON.DAT är byte-identisk mellan PC/Amiga/Atari ST; laddaren
+  autodetekterar endianness via signatur. Alla tre plattformar delar
+  samma MD5-hash i den obligatoriska filspecen.
+- ✅ Alla 6 Atari ST-varianter (1.0a/1.0b/1.1/1.2-en/1.2-de/1.3-fr) och
+  6 Amiga-varianter (2.0-en/fr/de, 2.1-en, 3.6-multi, demo-en) katalogiserade
+  med MD5-hashar, ADF/STX-utvinning via hash-first pipeline.
+- ✅ VBlank-timing: PAL 50 Hz (20 ms/VBlank, 200 ms/tick) korrekt för
+  både Amiga och Atari ST.
+
 # Nexus DGN readiness regression aligned with capture gate (2026-08-08)
 
 - ✅ The real 16-level readiness test now checks canonical LEV hashes, parsing

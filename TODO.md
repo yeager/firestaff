@@ -2821,9 +2821,15 @@ level or consumer bindings.
   GRAPHICS.DAT/DUNGEON.DAT from the supplied STX. The hash-first asset
   pipeline now also materializes all six catalogued retail STX identities
   from a selected file or supported archive into a source-tagged bundle.
-  Remaining work is joining that extracted pair to the Atari dungeon/runtime
-  owner and validating more protected STX variants; the PC34 runtime still
-  rejects the non-PC34 bundle rather than guessing.
+  2026-08-08: the M11 asset loader now has a dedicated Atari ST DMCSB1 path
+  (`M11_AssetLoader_InitDm1AtariStFromFile`) that opens the 563-record
+  DMCSB1 container, decompresses Atari-LZW per record, and decodes the
+  big-endian IMG1 pixels through the shared legacy decoder. The DM1 graphics
+  binding chain in `m11_game_view.c` tries PC34 IMG3 → legacy LE (FM Towns)
+  → legacy BE (Amiga) → Atari ST DMCSB1, so all four GRAPHICS.DAT formats
+  are now live. DUNGEON.DAT is byte-identical across PC/Amiga/Atari ST and
+  the loader auto-detects endianness. Amiga and Atari ST DM1 are now
+  launch-ready when their game data archives are available.
 
 - **DM1-BLOCKED-STEP-AUDIO-DAMAGE-HUD:** The DM1 runtime now owns the remaining
   wall-step audio and damage-overlay corrections: blocked step commands emit
