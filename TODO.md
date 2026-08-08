@@ -31,6 +31,12 @@
   selectors and `DM2_LOAD_DYN4` transaction before DYN4 bytes, hero state or
   a New Game party can be admitted.
 
+- **DM2-GAME-LOAD-OWNER-HANDOFF:** New Game and Resume now both stop at the
+  original `DM2_GAME_LOAD` boundary. Recover one atomic owner for map,
+  record pools, possessions, heroes, timers and actuator generators, then
+  install its source-shaped session handoff here. A boolean or a parsed save
+  receipt alone must never make a game playable.
+
 - **DM2-FILE-HEADER-LOCALLEVEL-OWNER:** The callback-shaped
   `DM2_LOAD_LOCALLEVEL_DYN` translation is now explicitly blocked unless a
   single live owner proves File_header maps, record pools and links. Replace

@@ -3,10 +3,10 @@
  *
  * Phase 6: Utility/import flow — DM2-specific load/start flow.
  *
- * Implements:
- *   1. Starter party generation — creates 4 initial champions at game start
- *   2. New game flow — full boot→game→dungeon→party pipeline
- *   3. Session save/load — save/load round-trip with slot manager
+ * Provides the public admission boundary for new-game and save selection.
+ * It deliberately does not construct a starter party or deserialize an
+ * incomplete save into a playable session: those mutations belong to the
+ * source-owned DM2_GAME_LOAD transaction.
  *
  * Source locks (ReDMCSB WIP20210206):
  *   CHAMPION.C F0280 — CHAMPION_AddCandidateChampionToParty: portrait index
@@ -541,7 +541,7 @@ int dm2_v1_session_delete_slot(const char *save_base, uint8_t slot);
 bool dm2_v1_session_validate(const DM2_V1_SessionState *session);
 
 /* ════════════════════════════════════════════════════════════════
- * New game flow — full boot→game pipeline
+ * New-game and load admission
  * ════════════════════════════════════════════════════════════════ */
 
 /* Result of a new game or load game operation */
@@ -567,13 +567,12 @@ typedef enum {
 DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
                                       const DM2_V1_BootProfile *boot);
 
-/* Load a saved game from slot N.
- * Deserializes the session state from the save slot.
- * Caller is responsible for loading dungeon data separately
- * (dungeon is shared across saves and loaded once at boot).
+/* Request a saved game from slot N. This remains at the same GAME_LOAD
+ * boundary as a new game until one owner has restored the original map,
+ * record pools, possessions, heroes and timers. The function never changes
+ * session on rejection.
  *
- * Source: dm2_v1_save_load.h dm2_sl_load()
- *         docs/dm2_save_format.md — save slot layout */
+ * Source: SKProject SKULLWIN/c_savegame.cpp::DM2_GAME_LOAD */
 DM2_FlowResult dm2_v1_load_game_flow(DM2_V1_SessionState *session,
                                       const DM2_V1_BootProfile *boot,
                                       uint8_t slot);

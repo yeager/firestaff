@@ -1727,17 +1727,24 @@ DM2_FlowResult dm2_v1_load_game_flow(DM2_V1_SessionState *session,
                                       uint8_t slot)
 {
     if (!session) return DM2_FLOW_BAD_SESSION;
+    if (!boot || !boot->assets_verified) return DM2_FLOW_NO_ASSETS;
     if (!dm2_v1_save_slot_valid(slot)) return DM2_FLOW_SLOT_ERROR;
 
-    /* Load session from slot */
-    int r = dm2_v1_session_load_slot(boot->save_root, slot, session);
-    if (r != 0) return DM2_FLOW_SLOT_ERROR;
-
-    if (!dm2_v1_session_validate(session)) {
-        return DM2_FLOW_BAD_SESSION;
+    /* SKProject c_savegame.cpp::DM2_GAME_LOAD:1447-1529 reads the selected
+     * SKSAVE stream, restores the dungeon structure, c_hero records and
+     * timers, then calls DM2_READ_SKSAVE_DUNGEON before it can return a live
+     * session. Firestaff deliberately has no partial equivalent. In
+     * particular, do not call dm2_v1_session_load_slot() here: that API
+     * retains diagnostic source receipts but must never publish a
+     * DM2_V1_SessionState before the complete original owner exists. */
+    if (!boot->source_game_load_session_ready) {
+        return DM2_FLOW_GAME_LOAD_REQUIRED;
     }
 
-    return DM2_FLOW_OK;
+    /* A future GAME_LOAD owner must install a source-shaped session handoff
+     * here atomically. Returning success without that handoff would turn a
+     * boolean admission bit into a synthetic save loader. */
+    return DM2_FLOW_GAME_LOAD_REQUIRED;
 }
 
 /* ════════════════════════════════════════════════════════════════

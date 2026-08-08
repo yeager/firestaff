@@ -309,6 +309,37 @@ static void test_new_game_flow(void)
           "new_game_flow leaves fixture session bytes untouched");
 }
 
+/* ── Test 7b: Load game remains at the original GAME_LOAD boundary ── */
+static void test_load_game_flow_gate(void)
+{
+    printf("  Load game flow gate...\n");
+    DM2_V1_SessionState session;
+    DM2_V1_BootProfile boot;
+    DM2_FlowResult result;
+
+    memset(&session, 0xA5, sizeof(session));
+    result = dm2_v1_load_game_flow(&session, NULL, 0u);
+    CHECK(result == DM2_FLOW_NO_ASSETS,
+          "load_game_flow rejects a missing boot profile");
+    CHECK(((const unsigned char *)&session)[0] == 0xA5,
+          "missing boot profile leaves session untouched");
+
+    dm2_v1_boot_profile_init(&boot);
+    boot.assets_verified = 1;
+    result = dm2_v1_load_game_flow(&session, &boot, 0u);
+    CHECK(result == DM2_FLOW_GAME_LOAD_REQUIRED,
+          "load_game_flow requires the complete original GAME_LOAD owner");
+    CHECK(((const unsigned char *)&session)[0] == 0xA5,
+          "incomplete GAME_LOAD leaves session untouched");
+
+    boot.source_game_load_session_ready = 1;
+    result = dm2_v1_load_game_flow(&session, &boot, 0u);
+    CHECK(result == DM2_FLOW_GAME_LOAD_REQUIRED,
+          "admission bit alone cannot publish a synthetic loaded session");
+    CHECK(((const unsigned char *)&session)[0] == 0xA5,
+          "unbound admission bit leaves session untouched");
+}
+
 /* ── Test 8: Source evidence ── */
 static void test_source_evidence(void)
 {
@@ -382,6 +413,7 @@ int main(void)
     /* ── New game flow ── */
     printf("\n--- New game flow ---\n");
     test_new_game_flow();
+    test_load_game_flow_gate();
 
     /* ── Source evidence ── */
     printf("\n--- Source evidence ---\n");
