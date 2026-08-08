@@ -76,15 +76,18 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     char startup_mini_path[512];
     /* F0435 reads and authenticates the F31 512-byte header with the CSB
      * key at word 29.  This proves the selected seed is a native C5-format
-     * FM Towns save header; it does not yet decode its saved-game body. */
+     * FM Towns save header. The following receipt fields describe the
+     * verified body; csb_v1_fmtowns_game_load_startup_state() decodes and
+     * applies that seed atomically to the live F31 runtime. */
     int startup_mini_header_verified;
     uint16_t startup_mini_header_key;
     uint8_t startup_mini_header_format_id;
     uint16_t startup_mini_header_platform;
     uint16_t startup_mini_header_dungeon_id;
-    /* CEDTINCD.C F7051 then reads these five native F31 save parts.  Their
-     * checksums are verified here as corpus evidence only; the dungeon tail
-     * and live Resume handoff remain deliberately unavailable. */
+    /* CEDTINCD.C F7051 then reads these five native F31 save parts. Their
+     * checksums admit the seed body; the receipt itself remains descriptive,
+     * while the state loader transfers the body and F7063 dungeon tail as
+     * one candidate without using the Atari/Amiga decoder. */
     int startup_mini_save_parts_verified;
     uint16_t startup_mini_party_champion_count;
     uint16_t startup_mini_event_count;
@@ -99,8 +102,9 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     int16_t startup_mini_party_map_index;
     uint32_t startup_mini_verified_save_body_offset;
     /* F7063 consumes the raw dungeon tail after the four F31 portraits and
-     * compares its source byte-sum footer. This remains validation only: it
-     * does not publish a resumed dungeon into the live runtime. */
+     * compares its source byte-sum footer. The receipt does not mutate a
+     * runtime; the state loader materializes this exact tail and the apply
+     * API commits it together with party, events and active groups. */
     int startup_mini_dungeon_tail_verified;
     uint8_t startup_mini_dungeon_map_count;
     uint16_t startup_mini_dungeon_column_count;

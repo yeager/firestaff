@@ -1,5 +1,12 @@
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ F31:s API- och öppna-arbetsdokumentation skiljer nu korrekt på den
+  färdiga bootstrap-resumen och den kvarvarande användarsparningen:
+  `MINI.DAT` installerar verklig party-, dungeon-, event-, timeline- och
+  aktivgruppsdata atomärt i live runtime, medan en privata snapshotformatet
+  fortfarande är spärrat för FM Towns. Detta verifieras fortsatt mot både
+  den engelska och japanska originalmedian.
+
 - ✅ FM Towns F31 Prison-resumen testas nu via den ritade, källkoordinerade
   CHAMDRAW.C F0292-namnrutan och COMMAND.C G0447/C007: ett verkligt
   MINI.DAT-party öppnar och stänger inventory med samma musväg som användaren
