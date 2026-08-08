@@ -78,7 +78,8 @@
   enligt IMAGE1.C och C013-rörelsepanelen samt C017-inventariebackdropen visas
   för A31M/A35E/A35M med ursprunglig G0021-palett. Kandidatläget komponerar
   också den äkta C040-resurrect/reincarnate-ytan över C017 med originalets
-  C06-transparens. De verifierade
+  C06-transparens. Amiga-DMCSB2 binds enbart via den egna decoded-only-vägen;
+  PC34-laddaren och dess fontkonsument får inte tolka samma bytes. De verifierade
   Amiga-utgåvornas storlekstabeller är direktlagrade och följer F0474, inte
   Atari ST:s LZW-väg; icke-IMG1-poster avvisas tills de har egen konsument.
   Återstående Amiga-dungeonviewport, champion-HUD och övriga

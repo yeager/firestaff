@@ -9362,8 +9362,14 @@ static int m11_csb_apply_boot_runtime_receipt(
      * CSB runtime before the first dungeon frame. M11's shared V1 chrome and
      * font paths still use the asset loader, so bind them from the verified
      * CSB boot receipt. */
+    /* Amiga CSB is DMCSB2/IMG1, not PC3.4's GRAPHICS.DAT container.  It has
+     * its own authenticated direct decoder in m11_csb_present_amiga_runtime_surface.
+     * Do not let the shared PC loader claim the file first: an apparently
+     * successful PC34 header bind would make unrelated HUD/font consumers
+     * treat a native Amiga session as PC material. */
     if (receipt->bind_graphics_to_runtime_asset_loader &&
         receipt->graphics_path[0] != '\0' &&
+        !m11_csb_is_amiga_profile(receipt->profile) &&
         M11_AssetLoader_Init(&state->assetLoader, receipt->graphics_path)) {
         state->assetsAvailable = 1;
         if (receipt->load_original_font_from_graphics) {
@@ -9377,13 +9383,14 @@ static int m11_csb_apply_boot_runtime_receipt(
         }
     }
     if (!state->assetsAvailable &&
-        (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-         receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+        ((receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+          receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) ||
+         m11_csb_is_amiga_profile(receipt->profile)) &&
         M11_AssetLoader_InitDecodedOnly(&state->assetLoader,
                                         receipt->graphics_path)) {
-        /* Atari ST GRAPHICS.DAT is not the PC reader's container.  ANIM.C
-         * hands off to CSBWin's C232/022e consumers, which install only
-         * pixels decoded by the verified ST source reader. */
+        /* Atari ST and Amiga GRAPHICS.DAT are not PC reader containers.
+         * Their runtime consumers install only pixels decoded by the
+         * verified platform-specific source readers. */
         state->assetsAvailable = 1;
     }
     state->csbBootProfile = receipt->profile;
@@ -9423,6 +9430,7 @@ static int m11_csb_apply_boot_runtime_receipt(
         /* ReDMCSB DEFS.H M653 resolves to C695 for the PC3.4 CSB media.
          * Do not let the DM1-oriented generic loader define CSB glyphs. */
         if (!state->originalFontAvailable &&
+            !m11_csb_is_amiga_profile(receipt->profile) &&
             csb_v1_boot_decode_graphics_dat_asset_pc34(
                 receipt->profile->graphics_path, 695u, &font_pixels,
                 &font_width, &font_height, &font_receipt) &&

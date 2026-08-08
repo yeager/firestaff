@@ -2103,6 +2103,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
     expect_true(view.active == 1 && profile != NULL &&
                 view.csbStartupRuntimeAssetSession == NULL &&
+                view.assetsAvailable && view.assetLoader.fileState == NULL &&
+                view.assetLoader.runtimeState == NULL &&
                 view.csbState.startup_title_active &&
                 view.csbAmigaTitlBytes != NULL &&
                 view.csbAmigaTitlAppliedDeltaCount == 0u &&
@@ -2222,6 +2224,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
     expect_true(view.active == 1 && profile != NULL &&
                 view.csbStartupRuntimeAssetSession == NULL &&
+                view.assetsAvailable && view.assetLoader.fileState == NULL &&
+                view.assetLoader.runtimeState == NULL &&
                 view.csbState.startup_title_active &&
                 view.csbAmigaAppbSelectionActive &&
                 view.csbAmigaTitlBytes == NULL &&
@@ -2338,6 +2342,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
     profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
     expect_true(view.active == 1 && profile != NULL &&
                     profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN &&
+                    view.assetsAvailable && view.assetLoader.fileState == NULL &&
+                    view.assetLoader.runtimeState == NULL &&
                     profile->runtime.dungeon_handle != NULL &&
                     profile->runtime.state == CSB_STATE_GAME &&
                     !view.csbState.startup_title_active &&

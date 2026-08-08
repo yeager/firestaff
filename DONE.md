@@ -153,6 +153,10 @@
   ENGL/FNCH/GRMN-parametrarna 0/1/2. Realtidsprovet öppnar varje väg från
   originalpaketet och kontrollerar att språkparametern når C03_GAME utan en
   PC34-övergång.
+- ✅ Amiga-CSB använder en explicit decoded-only-materialbindning i M11.
+  PC34-laddaren och dess C695-typsnitt får inte längre tolka Amiga-DMCSB2/
+  IMG1 som PC-data. Realtidsproven täcker A31M, A35M och A35E och kräver att
+  ingen PC34-fil- eller runtime-state har bundits.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 
