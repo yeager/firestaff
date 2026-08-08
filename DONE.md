@@ -8426,3 +8426,16 @@
 - ✅ This improves capture reproducibility only. It does not admit a raw
   frame as MENU/PRS3/HUD/viewport evidence; those source and VDP joins remain
   capture-gated.
+
+# Nexus strict production presentation boundary (2026-08-08)
+
+- ✅ Removed the CPU rasterizer and procedural V2 HUD/lighting/smooth-motion/
+  touch implementations from the retail `firestaff_nexus` link set. They
+  remain available to explicit fixture/probe targets only.
+- ✅ Restored the Saturn font glyph/framebuffer guard and kept only the
+  source-format section parser visible to the production archive. The retail
+  runtime therefore cannot draw synthetic FONT256/HUD/viewport pixels or
+  apply an inferred lighting/camera path.
+- ✅ Updated the production-boundary verifier and CTest to assert fail-closed
+  adapters. Build, boundary test, `git diff --check` and the source-boundary
+  verifier pass; no capture evidence was promoted.

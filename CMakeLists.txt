@@ -6535,9 +6535,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_warning_dgt2_resource_corpus\\
 # keep it available to the real-data decoder test without exporting a host
 # presentation path from firestaff_nexus.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
-# Gameplay modules promoted to production — DM1/DM.BIN-shaped implementations
-# with proven formula parity (Nexus audit v3.0.302–v3.0.304).
-# Exclude the noop adapters that were replaced by real implementations.
+# Gameplay modules remain source-study/fixture implementations. DM1/DM.BIN
+# formula parity is not evidence of a Saturn Nexus action, HUD, or VDP owner.
+# Keep the production ABI fail-closed until the corresponding runtime capture
+# is admitted.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience_runtime_noop\\.c$")
@@ -6546,20 +6547,16 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer_runtime_noop\\.c$")
-# M11 owns the shared host lifecycle and calls these runtime adapters.
-# Keep the procedural V2 renderer modules out of the production library, but
-# retain the explicit lifecycle implementations needed to satisfy M11.
+# M11 owns the shared host lifecycle and calls these fail-closed adapters.
+# The real rasterizer and V2 presentation modules remain available to explicit
+# fixture/probe targets only: no Saturn VDP1/VDP2 capture currently binds them.
 set(NEXUS_M11_RUNTIME_SOURCES
-    src/nexus/nexus_v1_rasterizer.c
-    src/nexus/nexus_v2_hud_runtime.c
-    src/nexus/nexus_v2_hud_overlay.c
-    src/nexus/nexus_v2_lighting_runtime.c
-    src/nexus/nexus_v2_lighting.c
-    src/nexus/nexus_v2_smooth_movement_runtime.c
-    src/nexus/nexus_v2_smooth_movement.c
-    src/dm1v2/dm1_v2_anim_timing_pc34.c
-    src/nexus/nexus_v2_touch_runtime.c
-    src/nexus/nexus_v2_touch_controller_affordance.c
+    src/nexus/nexus_v1_rasterizer_runtime_noop.c
+    src/nexus/nexus_v1_saturn_font_runtime_noop.c
+    src/nexus/nexus_v2_hud_runtime_noop.c
+    src/nexus/nexus_v2_lighting_runtime_noop.c
+    src/nexus/nexus_v2_smooth_movement_runtime_noop.c
+    src/nexus/nexus_v2_touch_runtime_noop.c
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
