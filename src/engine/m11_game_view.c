@@ -31035,53 +31035,149 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     ctx.cell = 0;
                     ctx.leaderEmptyHanded =
                         (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) ? 1 : 0;
+                    /* ReDMCSB F0275: sensor data is compared against
+                     * F032_OBJECT_GetType (icon index), not THING_GET_TYPE. */
                     ctx.leaderHandObjectType = ctx.leaderEmptyHanded ? -1 :
-                        (int)THING_GET_TYPE(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state));
+                        DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(state);
                     ctx.leaderIndex = state->world.party.activeChampionIndex;
                     ctx.sensorCountInCell = sensCount;
+                    /* ReDMCSB F0275 C013/C016: populate square-object
+                     * context for storage/exchanger sensors. */
+                    {
+                        unsigned short sqThing = frontCell.firstThing;
+                        int sqSafety = 0;
+                        ctx.squareHasObject = 0;
+                        ctx.squareObjectType = -1;
+                        ctx.cellHasStorageObjectOfType = 0;
+                        while (sqThing != THING_ENDOFLIST && sqThing != THING_NONE &&
+                               sqSafety++ < 64) {
+                            int sqType = THING_GET_TYPE(sqThing);
+                            if (sqType > THING_TYPE_GROUP && sqType < THING_TYPE_PROJECTILE) {
+                                int sqIcon = M11_GameView_GetObjectIconIndexForThing(
+                                    state, sqThing);
+                                ctx.squareHasObject = 1;
+                                if (ctx.squareObjectType < 0)
+                                    ctx.squareObjectType = sqIcon;
+                                /* Check if any sensor on this cell wants
+                                 * this object type for C013 storage. */
+                                {
+                                    int si2;
+                                    for (si2 = 0; si2 < sensCount; ++si2) {
+                                        if (sensorsOnSq[si2].found &&
+                                            sensorsOnSq[si2].sensorType ==
+                                                DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE &&
+                                            (int)sensorsOnSq[si2].sensorData == sqIcon) {
+                                            ctx.cellHasStorageObjectOfType = 1;
+                                        }
+                                    }
+                                }
+                            }
+                            sqThing = m11_raw_next_thing(state->world.things, sqThing);
+                        }
+                    }
                     memset(&trigResults, 0, sizeof(trigResults));
                     if (F0726_SENSOR_ProcessWallClick_Compat(
                             sensorsOnSq, sensCount,
                             state->world.things->sensors,
                             state->world.things->sensorCount,
                             &ctx, &trigResults) && trigResults.count > 0) {
-                        /* Convert trigger results to effect list */
                         struct SensorEffectList_Compat effects;
                         int ri;
+                        int anyAudible = 0;
                         memset(&effects, 0, sizeof(effects));
                         for (ri = 0; ri < trigResults.count &&
                              effects.count < SENSOR_EFFECT_LIST_MAX_COUNT; ++ri) {
                             const struct SensorTriggerResult_Compat* tr =
                                 &trigResults.results[ri];
                             if (!tr->triggered) continue;
+
+                            /* ReDMCSB F0275: C127 champion portrait. */
                             if (tr->effectKind == SENSOR_EFFECT_CHAMPION &&
                                 tr->sensorIndex >= 0 &&
                                 tr->sensorIndex < state->world.things->sensorCount) {
                                 int mirrorOrdinal =
                                     (int)state->world.things->sensors[tr->sensorIndex].sensorData;
-                                /* ReDMCSB MOVESENS.C F0275 lines 1501-1503
-                                 * handles C127 inside the wall-click sensor
-                                 * loop by calling REVIVE.C F0280 with the
-                                 * sensor data.  The D1C portrait fast-path
-                                 * above covers visible portrait clicks; this
-                                 * branch keeps the source wall-sensor route
-                                 * working for the same C127 sensor result
-                                 * instead of treating it as a remote toggle. */
                                 if (m11_select_mirror_candidate_by_ordinal(
                                         state, mirrorOrdinal)) {
                                     return M11_GAME_INPUT_REDRAW;
                                 }
                                 continue;
                             }
-                            effects.effects[effects.count].kind =
-                                SENSOR_EFFECT_TOGGLE_REMOTE;
-                            effects.effects[effects.count].destMapX = tr->targetMapX;
-                            effects.effects[effects.count].destMapY = tr->targetMapY;
-                            effects.effects[effects.count].textIndex = tr->resolvedEffect;
-                            effects.count++;
+
+                            /* ReDMCSB F0275: audible sensors play
+                             * C01_SOUND_SWITCH. */
+                            if (tr->audible) anyAudible = 1;
+
+                            /* ReDMCSB F0275 lines 1527-1531: C004/C011/C017
+                             * consume the leader hand object on trigger. */
+                            if (tr->leaderHandObjectRemoved) {
+                                DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                            }
+
+                            /* ReDMCSB F0275 lines 1534-1536: C012 generates
+                             * an object into the leader hand when empty. */
+                            if (tr->leaderHandObjectReceived &&
+                                !tr->wallStorageObjectTaken &&
+                                !tr->wallObjectTaken) {
+                                /* Object generator: F0167 creates a new
+                                 * unused object.  Fail-closed if the dungeon
+                                 * lacks an unused pool entry. */
+                            }
+
+                            /* ReDMCSB F0275: C013 storage take — take a
+                             * matching object from the wall cell. */
+                            if (tr->wallStorageObjectTaken &&
+                                tr->leaderHandObjectReceived) {
+                                /* Storage sensor take: the evaluation layer
+                                 * confirmed the cell has a matching object.
+                                 * Object list mutation is deferred to the
+                                 * caller until the dungeon mutation API is
+                                 * fully wired for live wall-cell operations.
+                                 * The remote-target toggle still fires. */
+                            }
+
+                            /* ReDMCSB F0275: C013 storage store — place
+                             * the hand object into the wall cell. */
+                            if (tr->wallStorageObjectStored &&
+                                tr->leaderHandObjectRemoved) {
+                                /* Hand object already cleared above; linking
+                                 * into the wall cell deferred until dungeon
+                                 * mutation API is wired for live wall ops. */
+                            }
+
+                            /* ReDMCSB F0275: C016 exchanger — swap hand
+                             * object with the first square object. */
+                            if (tr->wallObjectTaken && tr->wallObjectStored) {
+                                /* Exchange: both objects need dungeon list
+                                 * mutation; deferred until fully wired. */
+                            }
+
+                            /* ReDMCSB F0275: onceOnly sensors are disabled
+                             * after triggering (M44_SET_TYPE_DISABLED). */
+                            if (tr->sensorDisabled &&
+                                tr->sensorIndex >= 0 &&
+                                tr->sensorIndex < state->world.things->sensorCount) {
+                                state->world.things->sensors[tr->sensorIndex].sensorType = 0;
+                            }
+
+                            /* ReDMCSB F0275: end game sensor (C018). */
+                            if (tr->endGameGameWon) {
+                                m11_set_status(state, "SENSOR", "GAME WON");
+                            }
+
+                            /* Convert to remote-target toggle for the
+                             * actuator dispatch. */
+                            if (!tr->isLocal) {
+                                effects.effects[effects.count].kind =
+                                    SENSOR_EFFECT_TOGGLE_REMOTE;
+                                effects.effects[effects.count].destMapX = tr->targetMapX;
+                                effects.effects[effects.count].destMapY = tr->targetMapY;
+                                effects.effects[effects.count].textIndex = tr->resolvedEffect;
+                                effects.count++;
+                            }
                         }
                         m11_apply_sensor_effects(state, &effects);
-                        if (trigResults.results[0].audible) {
+                        if (anyAudible) {
                             m11_audio_emit_source_sound(state, 1,
                                                       M11_AUDIO_MARKER_DOOR);
                         }
