@@ -93,6 +93,14 @@ autentiska US-körningen med ljud aktiverat gav samma negativa gräns
 capture-reproducerbarhet och inte ett bevis på en spelägd ljud- eller
 objectkonsument.
 
+Capturevägen väljer nu explicit Mednafen-medieindex `0` via `-which_medium 0`.
+Det eliminerar en initieringsambiguity i RMDUI-defaults: extern-disken loggar
+att den autentiska Track 02-skivan faktiskt sätts in och tray stängs. Den
+efterföljande BIOS-körningen fastnar ändå i samma verifierade CD-statusloop
+utan SCSI READ. Därför är medieinsättning nu bevisad, medan Track 02-handoff
+och alla efterföljande RNG-, AI-, T700- och T900-konsumenter fortfarande inte
+är bevisade.
+
 ## Verifiering
 
 ```text

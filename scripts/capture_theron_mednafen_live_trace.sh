@@ -596,6 +596,8 @@ cleanup_capture() {
 }
 trap cleanup_capture EXIT INT TERM
 
+# RMDUI defaults to the first disc, but make the capture contract explicit:
+# the authenticated Track 02 medium must be inserted before BIOS execution.
 launch=(
     "${timeout_command[@]}" env
     MEDNAFEN_HOME="$home_dir" \
@@ -616,6 +618,7 @@ launch=(
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
     -force_module pce \
+    -which_medium 0 \
     -sound "$capture_sound" \
     -video.driver softfb \
     -pce.input.multitap 0 \
