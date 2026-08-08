@@ -14,6 +14,11 @@
   until a matching roster/graphics consumer is proven; RNG spawns, AI, combat,
   loot and generator execution remain blocked.
 
+- 🔧 Theron real-level pickup now requires the source property row as well as
+  the object reference/category/type. Equip, consume, stack, drop and save
+  consumers still need their original T900 ownership rules; incomplete source
+  objects remain rejected rather than entering inventory.
+
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
   sixteen source File_header champion-mirror records across their real
   `w0`-kedjor, but must not materialise them independently. Recover the

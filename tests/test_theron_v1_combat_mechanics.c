@@ -701,6 +701,19 @@ static void test_source_item_pickup_provenance(void) {
     memset(&object, 0, sizeof(object));
     object.type = THERON_OBJTYPE_WEAPON;
     object.item_index = 6;
+    object.level = 0;
+    object.x = 1;
+    object.y = 2;
+    object.source_ref = 0x1233u;
+    object.source_category = THERON_CAT_WEAPON;
+    object.source_item_type = 6u;
+    CHECK_INT("bound weapon without property row placed",
+              theron_v1_object_place(&w, &object), 0);
+    CHECK_INT("bound weapon without property row rejected",
+              theron_v1_click_route(&w, 1, 2, THERON_CMD_TAKE), -1);
+    memset(&object, 0, sizeof(object));
+    object.type = THERON_OBJTYPE_WEAPON;
+    object.item_index = 6;
     object.quantity = 3;
     object.level = 0;
     object.x = 2;

@@ -1,5 +1,16 @@
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
+# 2026-08-08 Theron source-property pickup gate
+
+- ✅ Real Track 02 pickup now requires a matching source object reference,
+  carryable category, item type and authenticated 6-byte property row before
+  it enters champion inventory.
+- ✅ A bound object with missing property data is rejected, preventing an
+  inventory item with unproven equip/use statistics from reaching T900-facing
+  state. Source provenance is still preserved for later consumer work.
+- ✅ The focused mechanics suite passes 108/108; the gate remains separate from
+  the still-unresolved original equip, consume, stack, drop and save rules.
+
 # 2026-08-08 Theron source monster enum boundary
 
 - ✅ Fixed the production Track 02 source-record to live-creature boundary:

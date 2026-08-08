@@ -137,17 +137,21 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         int inventory_slot = -1;
         if (!o || (o->flags & THERON_OBJ_F_PICKED_UP)) return -1;
         if (o->type == THERON_OBJTYPE_CHEST) return 0;
+        item_id = object_item_id(o);
+        if (item_id == THERON_ITEM_NONE) return -1;
         if (theron_v1_source_level_requires_item_provenance(world) &&
             (o->source_ref == 0u ||
              !theron_v1_source_item_category_is_carryable(
-                 o->source_category))) {
+                 o->source_category) ||
+             !o->source_property_valid ||
+             o->source_item_type != (uint8_t)item_id)) {
             /* ReDMCSB THQUEST T900 owns the object/category transition. A
              * real Track 02 level must never turn an unbound host object into
-             * a carried item merely because its compact ID looks usable. */
+             * a carried item merely because its compact ID looks usable. The
+             * source property row is also required: without it the later
+             * equip/use consumer would have no authenticated stat payload. */
             return -1;
         }
-        item_id = object_item_id(o);
-        if (item_id == THERON_ITEM_NONE) return -1;
         champion = theron_v1_party_getChampion(&world->party,
                                                 world->party.active_slot);
         if (!champion) return -1;
