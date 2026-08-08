@@ -437,7 +437,8 @@ add_test(NAME nexus_v1_dialogue COMMAND test_nexus_v1_dialogue)
 set_tests_properties(nexus_v1_dialogue PROPERTIES LABELS "nexus;dialogue;tier4")
 
 add_executable(test_nexus_v1_shop_manager
-    tests/test_nexus_v1_shop_manager.c)
+    tests/test_nexus_v1_shop_manager.c
+    src/nexus/nexus_v1_shop.c)
 target_include_directories(test_nexus_v1_shop_manager PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_shop_manager PRIVATE firestaff_nexus)
@@ -6540,6 +6541,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_ibs\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_use\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_containers\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_drops\\.c$")
+# The DM.BIN price catalog/parser is production-owned; the shop-object
+# register/open/buy/sell study has no authenticated Saturn owner and is
+# linked only by its fail-closed manager test.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_shop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_title_cg\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is

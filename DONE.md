@@ -9459,3 +9459,8 @@
 - ✅ `nexus_v1_item_use.c`, `nexus_v1_containers.c` och `nexus_v1_drops.c` hade inga produktionsanrop och innehåller endast fail-closed/studie-API:er utan autentiserad Saturn-producer.
 - ✅ Modulerna är nu uttryckligen fixture-/gate-only; motsvarande tester länkar dem direkt och fortsätter verifiera att obevisad item-use, container-loot och gold/drop-mutation nekas.
 - ✅ `firestaff_nexus` byggs utan dessa no-op-ägare; inventory, item-use, containers, drops-gate och production-boundary passerar.
+# Nexus shop catalog separated from unproven shop runtime (2026-08-08)
+
+- ✅ Flyttade DM.BIN:s verifierade åtta prisrader och hashbundna bindning till `nexus_v1_shop_catalog.c`, som fortsatt ingår i produktionen och används av engine.
+- ✅ `nexus_v1_shop.c` innehåller nu endast den obevisade shop-object/register/open/buy/sell-studien och länkas bara av fail-closed-manager-testet.
+- ✅ Shop-pris, shop-manager, Nexus-build och production-boundary passerar.
