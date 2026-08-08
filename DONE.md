@@ -1,3 +1,17 @@
+# CSB FM Towns C06-font bindning till originalprogram (2026-08-08)
+
+- ✅ F31E:s Utility-väg läser nu C06:s 420-byte interface-/scrollfont direkt
+  ur den hashverifierade `UTILE.EXP`-filen. F31J har en separat råoffset i
+  `UTILJ.EXP`; båda versionerna måste ge samma ReDMCSB-identifierade
+  bytesumma innan ett kvitto lämnas ut.
+- ✅ Ingen fonttabell är inbäddad i Firestaff och ingen PC34- eller värdfont
+  kan användas som ersättning. ReDMCSB `CEDT019.C` och `CEDTFNT.C` används
+  endast för att identifiera den verkliga objektgränsen och dess konsument.
+- ✅ Verifierat genom den riktiga engelska FM Towns-skivan, hela
+  `TITLE.ANM → SWITCHTW → CHTWE.EXP → Prison`-regressionen och CSB:s
+  källåsningskontroll. Den värdritade C06-sidan är fortsatt fail-closed tills
+  dess kompletta EGB- och filtransaktionsägare är återställda.
+
 # Verifierad cache-reskanning bevarar originaldata (2026-08-08)
 
 - ✅ M12:s materialiserare behandlar nu en exakt käll- och destinationssökväg

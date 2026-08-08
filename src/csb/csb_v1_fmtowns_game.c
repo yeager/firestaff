@@ -64,6 +64,12 @@ enum {
     CSB_V1_FMTOWNS_UTILJ_MENU_FNV1A = 0xdceefc60u,
     CSB_V1_FMTOWNS_UTILE_ICON_PALETTE_OFFSET = 0x17db0u,
     CSB_V1_FMTOWNS_UTILJ_ICON_PALETTE_OFFSET = 0x17e18u,
+    /* ReDMCSB CEDT019.C:18-35 / CEDTFNT.C:43-94.  These raw offsets were
+     * located once in the retail F31E/F31J images and remain separately
+     * hash-bound below; they must never be replaced by a compiled font. */
+    CSB_V1_FMTOWNS_UTILE_INTERFACE_FONT_OFFSET = 0x150d8u,
+    CSB_V1_FMTOWNS_UTILJ_INTERFACE_FONT_OFFSET = 0x15140u,
+    CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_FNV1A = 0x8c36f65bu,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -73,6 +79,8 @@ enum {
 
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size);
+static uint32_t csb_v1_fmtowns_game_bytes_fnv1a(const unsigned char *bytes,
+                                                 size_t size);
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
 static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes);
 
@@ -1224,6 +1232,47 @@ int csb_v1_fmtowns_utility_menu_open(
     out_receipt->source_evidence =
         "UTILE/UTILJ Phar Lap P3 disassembly: C06 menu label pool; "
         "ReDMCSB COMPILE.H EXEID 63/64 C06_CEDT";
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_font_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityFontReceipt *out_receipt)
+{
+    CSB_V1_FmtownsUtilityHandoffReceipt handoff;
+    uint32_t source_offset;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!csb_v1_fmtowns_utility_handoff_open(profile, language, &handoff))
+        return 0;
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        source_offset = CSB_V1_FMTOWNS_UTILE_INTERFACE_FONT_OFFSET;
+    } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
+        source_offset = CSB_V1_FMTOWNS_UTILJ_INTERFACE_FONT_OFFSET;
+    } else return 0;
+    /* CEDT019.C:18 declares G1103; CEDTFNT.C:43-94 expands exactly these
+     * 420 source bytes into native C06 text colors.  Bind the recovered
+     * object to its own retail program rather than shipping its bytes. */
+    if (!csb_v1_fmtowns_game_read_span(
+            handoff.executable_path, source_offset,
+            out_receipt->source_bytes,
+            sizeof(out_receipt->source_bytes)) ||
+        csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->source_bytes,
+                                        sizeof(out_receipt->source_bytes)) !=
+            CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_FNV1A) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->language = language;
+    out_receipt->variant_id = handoff.variant_id;
+    out_receipt->source_file_offset = source_offset;
+    out_receipt->source_size = sizeof(out_receipt->source_bytes);
+    out_receipt->source_fnv1a = CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_FNV1A;
+    out_receipt->source_evidence =
+        "ReDMCSB CEDT019.C G1103 lines 18-35; CEDTFNT.C F7337 lines 43-94";
     return 1;
 }
 

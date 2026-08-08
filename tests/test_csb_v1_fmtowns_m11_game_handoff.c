@@ -64,6 +64,7 @@ int main(void)
     CSB_V1_DungeonData mini_dungeon;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
+    CSB_V1_FmtownsUtilityFontReceipt utility_font;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     DM1_V1_ChampionStatusRectPc34 champion_name_rect;
@@ -329,6 +330,17 @@ int main(void)
                   (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0xfd9986bfu :
                                                            0xdceefc60u),
           "verified F31 profile resolves its language-owned C06 menu bytes");
+    memset(&utility_font, 0, sizeof(utility_font));
+    CHECK(csb_v1_fmtowns_utility_font_open(
+              (const CSB_V1_BootProfile *)view.csbBootProfile,
+              language, &utility_font) && utility_font.valid &&
+              utility_font.source_size ==
+                  CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_BYTES &&
+              utility_font.source_fnv1a == 0x8c36f65bu &&
+              utility_font.source_file_offset ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x150d8u :
+                                                           0x15140u),
+          "C06 interface font is read from the selected retail utility image");
     CHECK(csb_v1_fmtowns_utility_menu_action_at(
               &utility_menu,
               language == CSB_FMTOWNS_SWITCH_ENGLISH ? 102 : 98,

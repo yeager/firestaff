@@ -24,6 +24,7 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES 68u
+#define CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_BYTES 420u
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
@@ -197,6 +198,22 @@ typedef struct CSB_V1_FmtownsUtilityMenuReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityMenuReceipt;
 
+/* The C06 interface/scroll font is retained only after it has been read from
+ * the exact hash-verified UTILE/UTILJ program selected by SWITCHTW.  The
+ * bytes are not a host-font substitute: ReDMCSB CEDT019.C:18 and
+ * CEDTFNT.C:44 identify the 420-byte source object and its native consumer.
+ * The raw offsets differ between F31E and F31J. */
+typedef struct CSB_V1_FmtownsUtilityFontReceipt {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t source_file_offset;
+    uint32_t source_size;
+    uint32_t source_fnv1a;
+    uint8_t source_bytes[CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_BYTES];
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityFontReceipt;
+
 /* Admit precisely the F31E/F31J executable selected by SWITCHTW.  A valid
  * CSB profile alone is deliberately insufficient: this gate also checks the
  * exact retail program identity before the entrance/HUD session is opened. */
@@ -253,6 +270,14 @@ int csb_v1_fmtowns_utility_menu_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityMenuReceipt *out_receipt);
+
+/* Read the native C06 interface font from the verified F31 executable.
+ * The call deliberately fails on an unrecognized executable or source span;
+ * callers must not replace it with a generated or PC34 font. */
+int csb_v1_fmtowns_utility_font_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityFontReceipt *out_receipt);
 
 /* Decode the original C06 mouse target in its 320x200 source coordinate
  * space. ReDMCSB CEDTDATA.C lines 128-165 defines these F31E/F31J boxes,
