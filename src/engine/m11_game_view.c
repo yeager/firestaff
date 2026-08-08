@@ -4274,7 +4274,9 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
  * C017 is the source inventory backdrop, C040 the resurrect/reincarnate
  * overlay and C013 the source movement panel.  No unbound Amiga dungeon
  * viewport, champion HUD, or synthetic replacement is exposed while their
- * native owners remain unavailable. */
+ * native owners remain unavailable.  The authenticated DMCSB2 decoder is
+ * owned by the M11 cache; this presentation path consumes only its stable
+ * decoded records, so a frame never reopens or reparses game data. */
 static int m11_csb_present_amiga_runtime_surface(
     const M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
@@ -4286,16 +4288,10 @@ static int m11_csb_present_amiga_runtime_surface(
     const CSB_V1_BootProfile *profile;
     DM1_V1_MovementArrowRectPc34 outer_rect;
     DM1_V1_MovementArrowRectPc34 graphic_rect;
-    CSB_V1_AmigaGraphicsReceipt graphics_receipt;
+    const M11_AssetSlot *surface;
+    const M11_AssetSlot *inventory_surface = NULL;
+    const M11_AssetSlot *portrait_surface = NULL;
     uint8_t rgb6[256][3];
-    uint8_t *bytes = NULL;
-    uint8_t *pixels = NULL;
-    uint8_t *inventory_pixels = NULL;
-    uint8_t *portrait_pixels = NULL;
-    FILE *file = NULL;
-    long length;
-    uint16_t width = 0u;
-    uint16_t height = 0u;
     int color;
     int row;
     int portrait_index;
@@ -4327,41 +4323,29 @@ static int m11_csb_present_amiga_runtime_surface(
         !m11_csb_is_amiga_profile(profile) ||
         profile->runtime.state != CSB_STATE_GAME ||
         !profile->graphics_verified || !profile->graphics_path[0] ||
+        !state->assetLoader.csbAmiga ||
         !dm1_v1_movement_arrows_outer_rect_pc34(&outer_rect) ||
         !dm1_v1_movement_arrows_graphic_rect_pc34(&graphic_rect) ||
-        !(file = fopen(profile->graphics_path, "rb")) ||
-        fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0 ||
-        !(bytes = (uint8_t *)malloc((size_t)length)) ||
-        fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
-        csb_v1_amiga_graphics_receipt(bytes, (size_t)length,
-                                      &graphics_receipt) != 0 ||
-        !graphics_receipt.is_amiga ||
-        graphics_receipt.version == CSB_AMIGA_VER_UNKNOWN ||
-        graphics_receipt.lang == CSB_AMIGA_LANG_UNKNOWN ||
-        !(pixels = (uint8_t *)malloc((size_t)expected_width *
-                                     (size_t)expected_height)) ||
-        !csb_v1_amiga_graphics_decode_item(
-            bytes, (size_t)length, (uint16_t)graphic_index, pixels,
-            (size_t)expected_width * (size_t)expected_height,
-            &width, &height) || width != (uint16_t)expected_width ||
-        height != (uint16_t)expected_height ||
-        ((state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) &&
-         (!(inventory_pixels = (uint8_t *)malloc(224u * 136u)) ||
-          !csb_v1_amiga_graphics_decode_item(
-              bytes, (size_t)length, 17u, inventory_pixels, 224u * 136u,
-              &width, &height) || width != 224u || height != 136u))) {
+        !(surface = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader,
+                                         graphic_index)) ||
+        surface->width != (uint16_t)expected_width ||
+        surface->height != (uint16_t)expected_height) {
         goto done;
+    }
+    if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
+        inventory_surface = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader, 17u);
+        if (!inventory_surface || inventory_surface->width != 224u ||
+            inventory_surface->height != 136u) goto done;
     }
     portrait_index = state->candidateMirrorOrdinal;
     status_box_index = state->candidateMirrorPartyIndex;
     if ((state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) &&
         (portrait_index < 0 || portrait_index >= 24 ||
          status_box_index < 0 || status_box_index >= CHAMPION_MAX_PARTY ||
-         !(portrait_pixels = (uint8_t *)malloc(256u * 87u)) ||
-         !csb_v1_amiga_graphics_decode_item(
-             bytes, (size_t)length, 26u, portrait_pixels, 256u * 87u,
-             &width, &height) || width != 256u || height != 87u)) {
+         !(portrait_surface = M11_AssetLoader_Load(
+             (M11_AssetLoader *)&state->assetLoader, 26u)) ||
+         portrait_surface->width != 256u || portrait_surface->height != 87u)) {
         goto done;
     }
     memset(rgb6, 0, sizeof(rgb6));
@@ -4378,7 +4362,7 @@ static int m11_csb_present_amiga_runtime_surface(
         for (row = 0; row < 136; ++row) {
             memcpy(framebuffer + (size_t)(33 + row) *
                    (size_t)framebuffer_width + 48u,
-                   inventory_pixels + (size_t)row * 224u, 224u);
+                   inventory_surface->pixels + (size_t)row * 224u, 224u);
         }
     }
     if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
@@ -4391,7 +4375,7 @@ static int m11_csb_present_amiga_runtime_surface(
         unsigned char *destination = framebuffer +
             (size_t)(target_y + row) * (size_t)framebuffer_width +
             (size_t)target_x;
-        const uint8_t *source = pixels +
+        const uint8_t *source = surface->pixels +
             (size_t)row * (size_t)expected_width;
         if (graphic_index == 40u || graphic_index == 27u) {
             int column;
@@ -4418,7 +4402,7 @@ static int m11_csb_present_amiga_runtime_surface(
         for (row = 0; row < 29; ++row) {
             memcpy(framebuffer + (size_t)row * (size_t)framebuffer_width +
                    (size_t)portrait_dest_x,
-                   portrait_pixels +
+                   portrait_surface->pixels +
                        (size_t)(portrait_source_y + row) * 256u +
                        (size_t)portrait_source_x,
                    32u);
@@ -4426,11 +4410,6 @@ static int m11_csb_present_amiga_runtime_surface(
     }
     ok = 1;
 done:
-    if (file) fclose(file);
-    free(portrait_pixels);
-    free(inventory_pixels);
-    free(pixels);
-    free(bytes);
     return ok;
 }
 

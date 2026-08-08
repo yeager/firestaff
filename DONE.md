@@ -121,6 +121,17 @@
   inte Atari ST:s F0497-LZW-väg. Poster som inte är IMG1 avvisas fortsatt
   tills de har en egen källbunden konsument.
 
+# CSB Amiga-runtimeytor använder cacheade originalposter (2026-08-08)
+
+- ✅ M11:s Amiga-CSB-presentatör hämtar nu C013, C017, C026, C027 och C040
+  ur den autentiserade DMCSB2/IMG1-cachen. Den öppnar eller avkodar inte
+  `GRAPHICS.DAT` per bildruta längre. ReDMCSB:s PANEL.C F0346/F0347/F0354 och
+  REVIVE.C F0280/F0281 styr fortsatt de ursprungliga placeringarna,
+  transparensfärgerna och porträttblitten.
+- ✅ Hashverifierade realdatatester för A31M, A35M och A35E passerar efter
+  ändringen (29, 16 respektive 11 kontroller), vilket låser att varje native
+  paketväg använder sina egna dekoder- och cachepixlar.
+
 # CI: CSB Amiga-IMG1-länkning (2026-08-08)
 
 - ✅ De två fristående CSB-ljudtesterna länkar nu också den delade
