@@ -13,6 +13,14 @@
   `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
   felaktigt publiceras för den Amiga-specifika språkväljaren.
 
+# Nexus raw-capture launcher accepts Python validators (2026-08-08)
+
+- ✅ The operator-only Saturn raw-capture launcher now accepts a validator
+  script as a regular file and invokes `.py` validators through `python3`;
+  compiled validators still run directly. This keeps the real external
+  capture path usable without requiring BIOS, disc, or trace files in Git.
+- ✅ `bash -n` and the `nexus_v1_saturn_raw_capture_launcher` CTest pass.
+
 # Nexus synthetic party constants removed from production header (2026-08-08)
 
 - ✅ Removed the obsolete `NEXUS_V1_SYNTHETIC_PARTY_*` coordinates from the

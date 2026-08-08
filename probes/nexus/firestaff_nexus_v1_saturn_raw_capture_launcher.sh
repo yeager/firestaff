@@ -20,6 +20,13 @@ require_disc_container() {
   esac
 }
 
+run_validator() {
+  case "$validator" in
+    *.py) python3 "$validator" "$@" ;;
+    *) "$validator" "$@" ;;
+  esac
+}
+
 launch=0
 operator_only=0
 skip_frames=0
@@ -43,7 +50,7 @@ done
 
 : "${mednafen:?}" "${bios:?}" "${bios_sha256:?}" "${disc:?}" "${disc_sha256:?}" \
   "${trace:?}" "${validator:?}" "${manifest:?}"
-[[ -x "$mednafen" && -x "$validator" ]] || exit 1
+[[ -x "$mednafen" && -f "$validator" ]] || exit 1
 if [[ -n "$mednafen_home" && ! -d "$mednafen_home" ]]; then
   echo "ERROR: --mednafen-home must name an existing directory" >&2
   exit 1
@@ -110,4 +117,4 @@ else
     "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc"
 fi
 [[ -s "$trace" ]] || exit 1
-"$validator" "$trace" --require-frames "$frame_limit"
+run_validator "$trace" --require-frames "$frame_limit"
