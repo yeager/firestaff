@@ -67,6 +67,14 @@ int csb_v1_fmtowns_portrait_decode_planar(const uint8_t *planar_bytes,
                                            uint8_t *indexed_pixels,
                                            size_t pixel_capacity);
 
+/* Inverse F7252 conversion for an already admitted F31 portrait buffer.
+ * It emits the exact 464-byte Atari-ST planar representation expected by the
+ * C06 save and .CMP paths; callers supply the source-indexed colours. */
+int csb_v1_fmtowns_portrait_encode_planar(const uint8_t *indexed_pixels,
+                                           size_t pixel_count,
+                                           uint8_t *planar_bytes,
+                                           size_t planar_capacity);
+
 #ifdef __cplusplus
 }
 #endif

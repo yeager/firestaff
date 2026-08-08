@@ -189,6 +189,7 @@ int csb_v1_fmtowns_utility_render_editor(
         fill(name_boxes[index], C01_DARK_GRAY, pixels);
         text(font, name_boxes[index].left + 2, 9,
              index == selected_champion_index ? C09_GOLD : C15_WHITE,
+             C01_DARK_GRAY,
              (const uint8_t *)party->Champions[index].Name,
              CSB_V1_MAX_NAME_LEN, pixels);
         filled_box(portrait_boxes[index], 1,

@@ -21,8 +21,10 @@
   dessa originalbytes via CEDT006/CEDT018/CEDT019/CEDT030:s faktiska
   konverterings- och ritvägar; F31J är fortsatt spärrad tills dess verkliga
   Shift-JIS/EGB-konsument är fångad. F31E:s champions- och paletturval följer
-  nu CEDTDATA/F7040/F7043, men porträttredigering och filtransaktioner är
-  fortsatt spärrade. Kvar är filtransaktionsägaren.
+  nu CEDTDATA/F7040/F7043. Enkelt porträttpenseldrag och Revert följer nu
+  F7037/F7044/F7045 samt den verkliga F7251/F7252-byteomvandlingen i den
+  receiptsbundna sessionen, men filtransaktioner är fortsatt spärrade. Kvar
+  är filtransaktionsägaren.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,
   bytekorrekt FM Towns-sparning/återupptagning (F0433/F0435:s obfuskerade
   femdelarsformat med porträtt), full action/spell/item- och cursorsemantik

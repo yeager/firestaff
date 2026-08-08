@@ -46,6 +46,11 @@
   `CEDTDATA.C`/`CEDT006.C` F7040/F7043-koordinater. Omritningen använder
   samma receiptsbundna MINI.DAT-porträtt och C06-palettelement; klick på en
   tom championplats skapar ingen ersättningschampion.
+- ✅ Ett vänsterklick i den förstorade porträttytan går genom CEDT006.C
+  F7037/F7044/F7045 och den verifierade F7251/F7252-planarkonverteringen.
+  Revert återställer exakt originalbytes från MINI.DAT i den aktiva sessionen.
+  Redigeringen skrivs medvetet inte till disk förrän C06:s riktiga filväljare
+  och save-transaktion är verifierade.
 
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 

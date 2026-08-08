@@ -1599,6 +1599,14 @@ typedef struct {
     CSB_V1_FmtownsUtilityFontReceipt csbFmtownsUtilityFontReceipt;
     CSB_V1_PartyState csbFmtownsUtilityParty;
     CSB_V1_FmtownsStartupPortraitReceipt csbFmtownsUtilityPortraitReceipt;
+    uint8_t csbFmtownsUtilityOriginalPortraits
+        [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT]
+        [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
+    uint8_t csbFmtownsUtilityUndoPortrait
+        [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
+    uint8_t csbFmtownsUtilityPortraitModified[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT];
+    int csbFmtownsUtilityUndoModified;
+    int csbFmtownsUtilityUndoAvailable;
     uint16_t csbFmtownsUtilitySelectedChampion;
     uint8_t csbFmtownsUtilitySelectedColor;
     int csbFmtownsUtilityBound;

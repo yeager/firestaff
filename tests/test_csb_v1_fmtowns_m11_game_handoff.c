@@ -10,6 +10,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
+#include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_fmtowns_utility_render.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
@@ -76,6 +77,8 @@ int main(void)
     unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     uint8_t utility_frame[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
+    uint8_t portrait_pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
+    uint8_t portrait_roundtrip[CSB_FMTOWNS_PORTRAIT_DATA_SIZE];
 
     if (language_name && strcmp(language_name, "ja") == 0) {
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
@@ -296,6 +299,16 @@ int main(void)
                   (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x748ce10fu :
                                                            0x4facab0bu),
           "F31 MINI.DAT preserves the four original C06 portrait payloads");
+    CHECK(csb_v1_fmtowns_portrait_decode_planar(
+              mini_portraits.source_bytes[0],
+              CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES, portrait_pixels,
+              sizeof(portrait_pixels)) &&
+              csb_v1_fmtowns_portrait_encode_planar(
+                  portrait_pixels, sizeof(portrait_pixels), portrait_roundtrip,
+                  sizeof(portrait_roundtrip)) &&
+              memcmp(mini_portraits.source_bytes[0], portrait_roundtrip,
+                     sizeof(portrait_roundtrip)) == 0,
+          "F31 C06 portrait F7251/F7252 conversion preserves real MINI bytes");
     memset(&mini_state, 0, sizeof(mini_state));
     CHECK(csb_v1_fmtowns_game_load_startup_state(&direct_handoff, &mini_state) &&
               mini_state.valid && mini_state.game_time ==
@@ -411,7 +424,7 @@ int main(void)
                   utility_frame[9u * 320u + 6u] == 9u &&
                   utility_frame[186u * 320u + 2u] == 0u &&
                   utility_frame[188u * 320u + 4u] == 2u &&
-                  utility_frame[43u * 320u + 286u] == 2u &&
+                  utility_frame[43u * 320u + 286u] == 0u &&
                   utility_frame[51u * 320u + 286u] == 1u,
               "F31E C06 initial editor frame uses only verified source pixels");
     }
@@ -438,6 +451,35 @@ int main(void)
                   view.csbFmtownsUtilitySelectedColor == 3u &&
                   framebuffer[68u * 320u + 287u] == 15u,
               "F31E C06 palette selection redraws the original selected swatch");
+        result = M11_GameView_HandlePointerButton(
+            &view, 157, 60, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityPortraitModified[0] != 0u &&
+                  framebuffer[60u * 320u + 157u] == 3u,
+              "F31E C06 draw maps the selected source colour into MINI portrait bytes");
+        result = M11_GameView_HandlePointerButton(
+            &view, 230, 160, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityPortraitModified[0] == 0u &&
+                  memcmp(view.csbFmtownsUtilityPortraitReceipt.source_bytes[0],
+                         view.csbFmtownsUtilityOriginalPortraits[0],
+                         CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES) == 0,
+              "F31E C06 Undo swaps the original source-format portrait backup");
+        result = M11_GameView_HandlePointerButton(
+            &view, 230, 160, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityPortraitModified[0] != 0u,
+              "F31E C06 Undo keeps its source-style toggle backup");
+        result = M11_GameView_HandlePointerButton(
+            &view, 160, 160, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityPortraitModified[0] == 0u &&
+                  memcmp(view.csbFmtownsUtilityPortraitReceipt.source_bytes[0],
+                         view.csbFmtownsUtilityOriginalPortraits[0],
+                         CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES) == 0,
+              "F31E C06 Revert restores the original MINI portrait payload");
         result = M11_GameView_HandlePointerButton(
             &view, 300, 8, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsSwitchBound &&

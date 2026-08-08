@@ -60,6 +60,43 @@ int csb_v1_fmtowns_portrait_decode_planar(const uint8_t *img,
     return 1;
 }
 
+int csb_v1_fmtowns_portrait_encode_planar(const uint8_t *indexed_pixels,
+                                           size_t pixel_count,
+                                           uint8_t *planar_bytes,
+                                           size_t planar_capacity) {
+    unsigned int x;
+    unsigned int y;
+
+    if (!indexed_pixels || pixel_count != CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT ||
+        !planar_bytes || planar_capacity < CSB_FMTOWNS_PORTRAIT_DATA_SIZE)
+        return 0;
+    memset(planar_bytes, 0, CSB_FMTOWNS_PORTRAIT_DATA_SIZE);
+    /* ReDMCSB PORTRAIT.C F7252, inverse of F7251: preserve the big-endian
+     * four-plane groups that C06 writes to a real F31 portrait record. */
+    for (y = 0u; y < CSB_FMTOWNS_PORTRAIT_HEIGHT; ++y) {
+        for (x = 0u; x < CSB_FMTOWNS_PORTRAIT_WIDTH; ++x) {
+            const size_t plane_group =
+                (size_t)y * 16u + (size_t)(x >> 4) * 8u;
+            const uint16_t bit = (uint16_t)(0x8000u >> (x & 15u));
+            const uint8_t color = indexed_pixels[
+                (size_t)y * CSB_FMTOWNS_PORTRAIT_WIDTH + x];
+            unsigned int plane;
+            if (color > 15u) return 0;
+            for (plane = 0u; plane < 4u; ++plane) {
+                if ((color & (uint8_t)(1u << plane)) != 0u) {
+                    uint8_t *word = planar_bytes + plane_group + plane * 2u;
+                    uint16_t value = (uint16_t)(((uint16_t)word[0] << 8u) |
+                                                word[1]);
+                    value = (uint16_t)(value | bit);
+                    word[0] = (uint8_t)(value >> 8u);
+                    word[1] = (uint8_t)value;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
                                     uint8_t *indexed_pixels,
                                     size_t pixel_capacity,
