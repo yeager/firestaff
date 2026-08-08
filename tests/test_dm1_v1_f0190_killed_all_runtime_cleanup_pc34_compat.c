@@ -118,7 +118,7 @@ int main(void) {
     world.dungeon = &dungeon;
     world.things = &things;
     world.gameTick = 60;
-    world.masterRng.seed = 1;
+    world.masterRng.seed = 2;
     world.partyMapIndex = 0;
     world.party.mapIndex = 0;
     world.party.mapX = 1;
