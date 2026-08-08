@@ -36,6 +36,7 @@
 - Theron: the first real Track 02 screen-space capture is now published in README; replace the capture-only route with the authenticated T520/T600 square, perspective and HUD consumers when their runtime ownership is recovered.
 - Theron: world snapshot version 4 now preserves decoded generator records and runtime counters; bind the original T700 generator consumer, cadence and reactivation semantics before making those records executable.
 - Theron: source inventory, object, timer and admitted live-creature provenance now use explicit field-by-field wire layouts; retain version-1/2 readers only as migration support.
+- Theron: the loader now retains complete source occurrences for categories 0..10, 14 and 15; bind those control records to their original disassembly consumers without conflating the occurrence census with executable world-object ownership.
 - Theron: source-level pickup now rejects unbound/generic object fallback; bind source-authenticated use/equip/consume consumers before allowing those transitions on real levels.
 
 - **DM2-PC-DOS-LEGACY-G1-RECEIPTS:** The verified PC-DOS `DUNGEON.DAT` takes

@@ -324,6 +324,33 @@ int theron_v1_track02_load_full_dungeon_for_variant(
             obj.flags = (uint32_t)pos;
 
             int place = 1;
+            Theron_Track02ItemRecord source_record;
+            int source_record_valid = 0;
+
+            /* Keep one source-faithful occurrence for every real placable
+             * category.  The old path only retained categories 4..10, 14
+             * and 15 even though DMBUILDER6/src/dms.h defines the same
+             * linked-record prefix for doors, teleporters, text and
+             * actuators.  This is record provenance, not gameplay admission.
+             */
+            if (cat <= THERON_CAT_MISC || cat == THERON_CAT_MISSILE ||
+                cat == THERON_CAT_CLOUD) {
+                const uint8_t *raw =
+                    &td->items[cat][id * theron_item_bytes[cat]];
+                if (!theron_v1_track02_item_record_decode(
+                        cat, raw, theron_item_bytes[cat], &source_record) ||
+                    !retain_source_object_occurrence(
+                        result, ref, cat, id, pos, raw, theron_item_bytes[cat],
+                        map, tx, ty, &source_record)) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
+                source_record_valid = 1;
+                result->source_occurrences_decoded++;
+                if (cat >= THERON_CAT_MONSTER)
+                    result->source_records_decoded++;
+            }
 
             switch (cat) {
             case THERON_CAT_DOOR: {
@@ -412,25 +439,16 @@ int theron_v1_track02_load_full_dungeon_for_variant(
             case THERON_CAT_POTION:
             case THERON_CAT_CHEST:
             case THERON_CAT_MISC: {
-                Theron_Track02ItemRecord record;
                 const uint8_t *raw =
                     &td->items[cat][id * theron_item_bytes[cat]];
-                if (!theron_v1_track02_item_record_decode(
-                        cat, raw, theron_item_bytes[cat], &record)) {
-                    free(pos_table);
-                    free(td);
-                    return -1;
-                }
-                if (!retain_source_object_occurrence(
-                        result, ref, cat, id, pos, raw, theron_item_bytes[cat],
-                        map, tx, ty, &record)) {
+                if (!source_record_valid) {
                     free(pos_table);
                     free(td);
                     return -1;
                 }
                 if (theron_v1_world_bind_track02_source_object(
                         world, dungeon_id, (int)map, ref,
-                        record.next_ref, (uint16_t)id, (uint8_t)cat,
+                        source_record.next_ref, (uint16_t)id, (uint8_t)cat,
                         (uint8_t)pos, (int)tx, (int)ty, raw,
                         (uint8_t)theron_item_bytes[cat]) != 0) {
                     free(pos_table);
@@ -440,13 +458,13 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 if (cat == THERON_CAT_MONSTER &&
                     theron_v1_world_bind_track02_monster(
                         world, dungeon_id, (int)map, ref, id, (int)tx, (int)ty,
-                        record.value.monster.type,
-                        record.value.monster.position,
-                        record.value.monster.health,
-                        record.value.monster.number,
-                        record.value.monster.direction_flags,
-                        record.value.monster.flags_word,
-                        record.value.monster.unknown_word) != 0) {
+                        source_record.value.monster.type,
+                        source_record.value.monster.position,
+                        source_record.value.monster.health,
+                        source_record.value.monster.number,
+                        source_record.value.monster.direction_flags,
+                        source_record.value.monster.flags_word,
+                        source_record.value.monster.unknown_word) != 0) {
                     free(pos_table);
                     free(td);
                     return -1;
@@ -454,7 +472,7 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 int property_bound = 0;
                 if (cat != THERON_CAT_MONSTER &&
                     materialize_source_item(&obj, cat, pos, ref, id, raw,
-                                             theron_item_bytes[cat], &record,
+                                             theron_item_bytes[cat], &source_record,
                                              &property_bound)) {
                     place = 1;
                     result->items_placed++;
@@ -464,32 +482,19 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 /* Every source record remains counted as not yet owned by an
                  * inventory/consumer path.  A materialized ground object is
                  * only the source-faithful world representation. */
-                result->source_records_decoded++;
                 result->unbound_item_refs++;
                 break;
             }
             case THERON_CAT_MISSILE:
             case THERON_CAT_CLOUD:
             {
-                Theron_Track02ItemRecord record;
-                const uint8_t *raw =
-                    &td->items[cat][id * theron_item_bytes[cat]];
-                if (!theron_v1_track02_item_record_decode(
-                        cat, raw, theron_item_bytes[cat], &record)) {
-                    free(pos_table);
-                    free(td);
-                    return -1;
-                }
-                if (!retain_source_object_occurrence(
-                        result, ref, cat, id, pos, raw, theron_item_bytes[cat],
-                        map, tx, ty, &record)) {
+                if (!source_record_valid) {
                     free(pos_table);
                     free(td);
                     return -1;
                 }
                 /* Missile/cloud source layouts are now decoded as records,
                  * but remain unbound from the host projectile/cloud owners. */
-                result->source_records_decoded++;
                 result->unbound_item_refs++;
                 place = 0;
                 break;

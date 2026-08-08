@@ -44,6 +44,10 @@ typedef struct {
     int creatures_placed;
     int champions_placed;
     int items_placed;
+    /* Every retained linked-list occurrence, including doors, teleporters,
+     * text and actuators. This is distinct from source_records_decoded,
+     * which remains the historical item/consumer-record counter. */
+    int source_occurrences_decoded;
     int source_records_decoded;
     int unbound_item_refs;
     int raw_only_item_refs;

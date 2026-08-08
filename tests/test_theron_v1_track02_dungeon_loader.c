@@ -78,8 +78,7 @@ static void assert_source_category_census(
     for (unsigned int category = 0; category < THERON_ITEM_CATEGORY_COUNT;
          ++category) {
         total += result->source_category_counts[category];
-        if (category < THERON_CAT_MONSTER ||
-            (category > THERON_CAT_MISC && category < THERON_CAT_MISSILE) ||
+        if ((category > THERON_CAT_MISC && category < THERON_CAT_MISSILE) ||
             category > THERON_CAT_CLOUD)
             assert(result->source_category_counts[category] == 0);
     }
@@ -229,11 +228,16 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_objects_materialized > 0);
         assert(result.source_item_properties_bound > 0);
         assert(result.source_object_count ==
-               (unsigned int)result.unbound_item_refs);
+               (unsigned int)result.source_occurrences_decoded);
+        assert(result.source_occurrences_decoded ==
+               (int)result.source_object_count);
         assert(world->source_monster_count ==
                result.source_category_counts[THERON_CAT_MONSTER]);
         assert(world->source_generator_count == expected_source_generators[d]);
-        assert(world->source_object_count == result.source_object_count);
+        /* World object binding currently covers the item/creature consumer
+         * subset; control records remain in the loader occurrence census. */
+        assert(world->source_object_count ==
+               (unsigned int)result.unbound_item_refs);
         /* Static category-4 group records are now admitted to the live pool
          * for the current level.  This is source materialization, not the
          * still-gated random generator path. */
@@ -262,9 +266,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         for (unsigned int i = 0; i < result.source_object_count; ++i) {
             const Theron_Track02SourceObjectOccurrence *occ =
                 &result.source_objects[i];
-            assert(occ->category == THERON_CAT_MONSTER ||
-                   (occ->category >= THERON_CAT_WEAPON &&
-                    occ->category <= THERON_CAT_MISC) ||
+            assert(occ->category <= THERON_CAT_MISC ||
                    occ->category == THERON_CAT_MISSILE ||
                    occ->category == THERON_CAT_CLOUD);
             assert(occ->raw_size == theron_item_bytes[occ->category]);
@@ -318,8 +320,18 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         for (unsigned int i = 0; i < world->source_object_count; ++i) {
             const Theron_V1_SourceObjectRecord *object =
                 &world->source_objects[i];
-            const Theron_Track02SourceObjectOccurrence *source =
-                &result.source_objects[i];
+            const Theron_Track02SourceObjectOccurrence *source = NULL;
+            for (unsigned int j = 0; j < result.source_object_count; ++j) {
+                const Theron_Track02SourceObjectOccurrence *candidate =
+                    &result.source_objects[j];
+                if (candidate->source_ref == object->source_ref &&
+                    candidate->source_index == object->source_index &&
+                    candidate->category == object->category) {
+                    source = candidate;
+                    break;
+                }
+            }
+            assert(source != NULL);
             assert(object->dungeon_id == d + 1);
             assert(object->level == (int)source->map);
             assert(object->x == (int)source->x);
@@ -355,7 +367,7 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_records_decoded > 0);
         assert(result.raw_only_item_refs == 0);
         assert(result.source_object_count ==
-               (unsigned int)result.unbound_item_refs);
+               (unsigned int)result.source_occurrences_decoded);
         assert_source_category_census(&result);
         assert_source_type_census(&result);
         free(world);

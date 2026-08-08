@@ -1,3 +1,17 @@
+# Theron complete Track 02 source-occurrence census (2026-08-08)
+
+- ✅ The dungeon loader now retains and decodes one source occurrence for every
+  real placable category: doors, teleporters, text, actuators, monsters,
+  inventory records, missiles and clouds.
+- ✅ Added a separate occurrence counter so control-record provenance is not
+  confused with the historical item/consumer-record counter or world object
+  binding.
+- ✅ US and JP Track 02 loader, record-layout and source-object regression tests
+  pass against all seven real dungeon blocks.
+- Note: this expands source provenance only. Disassembly-owned RNG, AI, T700,
+  T900 and dynamic consumer admission remain fail-closed until their owners
+  are proven.
+
 # Theron first real README capture (2026-08-08)
 
 # CSB effective launch-version handoff (2026-08-08)
