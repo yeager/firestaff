@@ -2571,6 +2571,9 @@ level or consumer bindings.
   `firestaff_nexus`; production links a lifecycle-safe no-op adapter and the
   material raster test compiles the fixture explicitly. Keep the real VDP1
   command/CLUT/VRAM and DGN/MNS owner capture open.
+  2026-08-08: the large real-data readiness regression now asserts the
+  authenticated 16-level parse plus the current blocked/no-draw contract;
+  its removed pre-capture READY_MESH expectations are legacy diagnostics only.
 
 - **NEXUS-STONE-PP-VDP1-BINDING:** The missing image-local `STONE.BIN`
   decoder is now implemented from DMWeb `DecodeRawPPpp`: all eight retail

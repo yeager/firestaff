@@ -1,3 +1,12 @@
+# Nexus DGN readiness regression aligned with capture gate (2026-08-08)
+
+- ✅ The real 16-level readiness test now checks canonical LEV hashes, parsing
+  and fail-closed VDP1/VDP2 status instead of demanding the retired host mesh
+  route.
+- ✅ The old pre-capture assertions remain available only with the explicit
+  `FIRESTAFF_NEXUS_LEGACY_GEOMETRY_READINESS` diagnostic switch.
+- ✅ No renderer, fallback art or capture admission was enabled.
+
 # Nexus TITLE MAPD receipts retain all five raw cell spans (2026-08-08)
 
 - ✅ The DMWeb-confirmed TITLE.BIN decoder now retains each retail map's

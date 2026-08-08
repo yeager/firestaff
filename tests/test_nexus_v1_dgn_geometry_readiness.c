@@ -698,6 +698,66 @@ static void test_real_dgn_structure1_layout_corpus(void) {
     int level;
     int checked = 0;
     if (!data_dir || !data_dir[0]) return;
+
+    /* The historical body below predates the production Saturn-capture gate
+     * and asks a retail LEV for the removed READY_MESH host route. Keep it
+     * available as an explicit diagnostic, but make the default real-data
+     * regression verify the current source-faithful contract instead: every
+     * authenticated LEV loads, and no retail geometry is drawable without
+     * the original VDP1/VDP2 capture package. */
+    if (!getenv("FIRESTAFF_NEXUS_LEGACY_GEOMETRY_READINESS")) {
+        for (level = 0; level < NEXUS_MAX_LEVELS; ++level) {
+            char gated_path[4096];
+            FILE *gated_file;
+            long gated_size;
+            uint8_t *gated_data;
+            Nexus_V1_Level gated_level;
+            Nexus_V1_DgnRendererHandoffReceipt gated_handoff;
+
+            snprintf(gated_path, sizeof(gated_path), "%s/LEV%02d.DGN",
+                     data_dir, level);
+            gated_file = fopen(gated_path, "rb");
+            CHECK(gated_file != NULL, "capture-gated LEV file opens");
+            if (!gated_file) continue;
+            CHECK(real_dgn_is_hash_verified(gated_path, level),
+                  "capture-gated LEV file matches canonical MD5");
+            CHECK(fseek(gated_file, 0, SEEK_END) == 0,
+                  "capture-gated LEV seeks");
+            gated_size = ftell(gated_file);
+            CHECK(gated_size > 0 && fseek(gated_file, 0, SEEK_SET) == 0,
+                  "capture-gated LEV has bounded size");
+            gated_data = gated_size > 0 ?
+                (uint8_t *)malloc((size_t)gated_size) : NULL;
+            CHECK(gated_data != NULL, "capture-gated LEV allocates");
+            if (!gated_data) {
+                fclose(gated_file);
+                continue;
+            }
+            CHECK(fread(gated_data, 1, (size_t)gated_size, gated_file) ==
+                      (size_t)gated_size,
+                  "capture-gated LEV reads completely");
+            fclose(gated_file);
+            memset(&gated_level, 0, sizeof(gated_level));
+            CHECK(nexus_v1_level_load(&gated_level, gated_data,
+                                      (int)gated_size, level) == 0,
+                  "capture-gated retail LEV parses");
+            memset(&gated_handoff, 0, sizeof(gated_handoff));
+            CHECK(nexus_v1_level_dgn_renderer_handoff_receipt(
+                      &gated_level, &gated_handoff) == 0 &&
+                      gated_handoff.dmweb_container &&
+                      gated_handoff.status !=
+                          NEXUS_V1_DGN_RENDERER_HANDOFF_READY_MESH &&
+                      !gated_handoff.can_render_dgn_mesh &&
+                      gated_handoff.blocks_real_dgn_mesh_render &&
+                      !gated_handoff.fallback_visuals_permitted,
+                  "retail LEV remains blocked until original VDP1/VDP2 capture");
+            ++checked;
+            free(gated_data);
+        }
+        CHECK(checked == NEXUS_MAX_LEVELS,
+              "all authenticated retail LEV files reach the capture gate");
+        return;
+    }
     {
         Nexus_V1_Engine corpus_engine;
         Nexus_V1_DgnMaterialCorpusReceipt corpus;
