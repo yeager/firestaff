@@ -6321,6 +6321,9 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_dos_real_data_manifest.c
     src/dm2/dm2_v1_dos_startup_media.c
     src/dm2/dm2_v1_mve_stream.c
+    src/dm2/dm2_v1_mve_video.c
+    src/dm2/dm2_v1_mve_pcm.c
+    src/dm2/dm2_v1_mve_presentation_owner.c
     src/shared/fmtowns_tsugaru_bridge.c
     src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
     src/dm1/dm1_v1_dos_pc34_an_container.c
@@ -56546,6 +56549,20 @@ add_executable(test_dm2_v1_dos_real_data_manifest
 )
 target_include_directories(test_dm2_v1_dos_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_dos_real_data_manifest COMMAND test_dm2_v1_dos_real_data_manifest)
+
+add_executable(test_dm2_v1_mve_presentation_owner
+    tests/test_dm2_v1_mve_presentation_owner.c
+    src/dm2/dm2_v1_dos_real_data_manifest.c
+    src/dm2/dm2_v1_mve_stream.c
+    src/dm2/dm2_v1_mve_video.c
+    src/dm2/dm2_v1_mve_pcm.c
+    src/dm2/dm2_v1_mve_presentation_owner.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/asset_find_by_hash.c
+)
+target_include_directories(test_dm2_v1_mve_presentation_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_mve_presentation_owner COMMAND test_dm2_v1_mve_presentation_owner)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c

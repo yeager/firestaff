@@ -9837,6 +9837,11 @@
   132-byte 0x13-posten. Den accepterar endast den verifierade DOS-korpusens
   opcodeversioner och längder och testas mot alla 217 `INTRO`- respektive 600
   `END`-presentationer.
+- ✅ Den privata MVE-presentationägaren går nu igenom samtliga bilder med
+  originalets 10416×8-mikrosekunders klocka och behåller samtidigt den
+  oberoende PCM-transporten, inklusive förbufferten, i strikt source-ordning.
+  Det realdatatestade ägarskapet skriver varken film, pixlar eller PCM till
+  disk och öppnar ingen M11- eller SDL-destination.
 # Nexus europeisk VDP1/VDP2-korrelation (2026-08-08)
 
 - ✅ Inventeringen är uppdaterad till 38 externa `runtime-vdp12.raw`-filer.

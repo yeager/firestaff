@@ -2184,10 +2184,13 @@
 - **DM2-DOS-MVE-PLAYBACK:** `INTRO` och `END` har nu en strikt,
   minnesbaserad bilditerator och en verifierad PAL8-avkodare för kodkarta
   0x0f och video 0x11/v3. Varje ursprunglig PCM-ram, även förbufferten före
-  första bilden, valideras och behålls i minnet. Nästa steg är IBMIOP:s
-  tids- och presentationsväg samt kopplingen till den riktiga ljudenheten.
-  Ingen extern avkodare, värdgenererad bild eller extraherad filmfil får bli
-  produktväg.
+  första bilden, valideras och behålls i minnet. Den privata MVE-ägaren
+  behåller nu också den verkliga 10416×8-mikrosekunders bildklockan och den
+  oberoende PCM-transporten i source-ordning. Nästa steg är IBMIOP:s
+  presentation- och ljudenhetsväg i M11; MVE-ljudet får inte paras mot bild
+  efter positionsindex eftersom retailströmmens förbuffert inte har den
+  relationen. Ingen extern avkodare, värdgenererad bild eller extraherad
+  filmfil får bli produktväg.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   **2026-08-07 real-corpus census:** all eight supplied PC-DOS
