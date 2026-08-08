@@ -3,9 +3,10 @@
  *
  * The former theron_v1_compat.c contains inferred creature templates and
  * combat constants. Those values remain fixture-only. This production file
- * admits only the five regular Track 02 spawn zones and their disassembly-
- * bound category HP/attack/defense formulas; scripted encounters, behavior,
- * combat, drops and sounds remain fail-closed.
+ * admits only source-identified static Track 02 monster occurrences; the
+ * disassembly-bound category formulas are diagnostic-only until the original
+ * RNG return contract is captured. Scripted encounters, behavior, combat,
+ * drops and sounds remain fail-closed.
  */
 
 #include "theron_v1_combat.h"
@@ -198,5 +199,5 @@ int theron_v1_sound_is_valid(Theron_SoundID id) {
 }
 
 const char *theron_v1_combat_source_evidence(void) {
-    return "Track 02 regular spawn formulas admitted; scripted encounters, AI, loot and combat consumer remain blocked";
+    return "Track 02 regular static monster records admitted; RNG spawn formulas, scripted encounters, AI, loot and combat consumer remain blocked";
 }

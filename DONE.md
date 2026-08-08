@@ -1,3 +1,8 @@
+# Theron combat admission wording audit (2026-08-08)
+
+- ✅ Corrected the production combat-source receipt so it no longer claims that RNG spawn formulas are admitted.
+- ✅ It now states the actual boundary: static Track 02 monster records are admitted, while RNG formulas, scripted encounters, AI, combat, loot and sound remain blocked.
+
 # Theron spawn-consumer receipt admission (2026-08-08)
 
 - ✅ Added a strict C11 parser for the Mednafen `spawn_consumer_read` sidecar.
