@@ -3652,15 +3652,14 @@ int dm2_v1_dungeon_collect_g1_champion_mirrors(
     DM2_V1_G1ChampionMirrorReceipt *out)
 {
     DM2_V1_G1ChampionMirrorReceipt candidate;
-    int column_index = 0;
+    int total_records = 0;
 
-    /* SKProject c_hero.cpp DM2_SELECT_CHAMPION:1081-1098 reaches the tile
-     * root through c_map, then accepts DB3 only when Actuator::Type()
-     * (w2 & 0x7f) equals 0x7e.  READ_DUNGEON_STRUCTURE has not yet run here,
-     * so the raw File_header pools have no runtime w0 chain owner.  The
-     * sixteen original mirror markers are nevertheless direct roots in the
-     * source ground-stack table.  Read exactly that direct DB3 address and
-     * never promote a later link or an unowned synthetic chain. */
+    /* SKProject c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN:518-626 walks each
+     * marked byte-square's complete GenericRecord::w0 chain.  Its DB3
+     * Actuator::Type()==0x7e branch derives the DYN4 hero key.  c_hero.cpp
+     * ::DM2_SELECT_CHAMPION consumes the same w2 fields.  The canonical
+     * File_header owner above has already bounded those chains, so retain
+     * every source-linked mirror marker rather than assuming it is a root. */
     if (!out || !d || !d->raw_data || d->square_bytes != 1 ||
         d->level_count <= 0 || d->level_count > DM2_V1_MAX_LEVELS ||
         !d->record_graph_complete || d->column_index_base < 0 ||
@@ -3668,65 +3667,66 @@ int dm2_v1_dungeon_collect_g1_champion_mirrors(
         d->square_first_thing_count <= 0) {
         return 0;
     }
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        if (d->thing_type_counts[type] < 0) return 0;
+        total_records += d->thing_type_counts[type];
+    }
+    if (total_records <= 0) return 0;
     memset(&candidate, 0, sizeof(candidate));
     candidate.incomplete_world = 1;
     for (int map = 0; map < d->level_count; ++map) {
         for (int x = 0; x < d->level_widths[map]; ++x) {
-            int stack = (int)RD16(d->raw_data + d->column_index_base +
-                                  (column_index + x) * 2);
             for (int y = 0; y < d->level_heights[map]; ++y) {
                 int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
-                uint16_t root;
-                int type = -1;
-                int record_size = 0;
-                const uint8_t *record;
-                uint16_t w2;
-                DM2_V1_G1ChampionMirrorRoot *mirror;
+                int thing;
+                int steps = 0;
 
                 if (raw < 0) return 0;
                 if ((raw & 0x10) == 0) continue;
-                if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-                root = RD16(d->raw_data + d->square_first_thing_base +
-                            stack * 2);
-                if (((root >> 10) & 0x0fu) != 3u) {
-                    ++stack;
-                    continue;
-                }
-                record = dm2_v1_dungeon_get_thing_record(
-                    d, root, &type, NULL, &record_size);
-                if (!record || type != 3 || record_size < 8) return 0;
-                ++candidate.actuator_record_reads;
-                w2 = RD16(record + 2);
-                if ((w2 & 0x007fu) == 0x007eu) {
-                    if (candidate.mirror_count >=
-                        DM2_V1_G1_MAX_CHAMPION_MIRRORS) {
-                        return 0;
+                thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+                if (thing < 0 || thing == (int)DM2_THING_NULL_MARKER)
+                    return 0;
+                while (thing != (int)DM2_THING_END_MARKER) {
+                    int type = -1;
+                    int record_size = 0;
+                    const uint8_t *record;
+                    uint16_t w2;
+
+                    if (++steps > total_records) return 0;
+                    record = dm2_v1_dungeon_get_thing_record(
+                        d, (uint16_t)thing, &type, NULL, &record_size);
+                    if (!record) return 0;
+                    if (type == 3) {
+                        DM2_V1_G1ChampionMirrorRoot *mirror;
+                        if (record_size < 8) return 0;
+                        ++candidate.actuator_record_reads;
+                        w2 = RD16(record + 2);
+                        if ((w2 & 0x007fu) == 0x007eu) {
+                            if (candidate.mirror_count >=
+                                DM2_V1_G1_MAX_CHAMPION_MIRRORS) {
+                                return 0;
+                            }
+                            mirror = &candidate.mirrors[candidate.mirror_count++];
+                            mirror->map = map;
+                            mirror->x = x;
+                            mirror->y = y;
+                            mirror->object_id = (uint16_t)thing;
+                            mirror->direction = (uint8_t)((unsigned int)thing >> 14);
+                            mirror->actuator_data =
+                                (uint16_t)((w2 >> 7) & 0x01ffu);
+                            mirror->dynamic_hero_type =
+                                (uint8_t)mirror->actuator_data;
+                            mirror->dynamic_load_id =
+                                ((uint32_t)mirror->dynamic_hero_type << 16) |
+                                0x1600ffffu;
+                        }
                     }
-                    mirror = &candidate.mirrors[candidate.mirror_count++];
-                    mirror->map = map;
-                    mirror->x = x;
-                    mirror->y = y;
-                    mirror->object_id = root;
-                    mirror->direction = (uint8_t)(root >> 14);
-                    mirror->actuator_data =
-                        (uint16_t)((w2 >> 7) & 0x01ffu);
-                    /* SKProject c_loadlevel.cpp:604-611 reads the same w2,
-                     * keeps RG1Blo, and calls DM2_MARK_DYN_LOAD with
-                     * (hero_type << 16) + 0x1600ffff.  The byte is also what
-                     * c_hero.cpp::DM2_SELECT_CHAMPION passes to the signed
-                     * i8 REVIVE_PLAYER htype parameter.  Retain both forms:
-                     * raw 9-bit data is evidence, the dynamic key is the
-                     * source-owned handoff required before GDAT queries. */
-                    mirror->dynamic_hero_type =
-                        (uint8_t)mirror->actuator_data;
-                    mirror->dynamic_load_id =
-                        ((uint32_t)mirror->dynamic_hero_type << 16) |
-                        0x1600ffffu;
+                    thing = dm2_v1_dungeon_get_next_thing(
+                        d, (uint16_t)thing);
+                    if (thing < 0) return 0;
                 }
-                ++stack;
             }
         }
-        column_index += d->level_widths[map];
     }
     if (candidate.mirror_count <= 0 || candidate.actuator_record_reads <= 0) {
         return 0;

@@ -597,10 +597,10 @@ typedef struct {
 
 /* A champion-mirror marker is not a made-up UI object: c_hero.cpp
  * DM2_SELECT_CHAMPION identifies it by Actuator::Type() == 0x7e and reads
- * the raw Actuator::Data() field.  This receipt deliberately admits
- * only a source-addressed DB3 root, including the proven PC G1 DB3
- * continuation.  It neither walks GenericRecord::w0 nor claims that the
- * surrounding world is playable. */
+ * the raw Actuator::Data() field.  The source's map walk follows the
+ * GenericRecord::w0 chain from each source-addressed ground-stack root;
+ * this receipt does the same after the record graph has been bounded.  It
+ * does not claim that the surrounding world is playable. */
 typedef struct {
     int map;
     int x;

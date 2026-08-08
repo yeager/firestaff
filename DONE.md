@@ -86,6 +86,15 @@
 - ✅ Verifierat med originalets PC-DOS `DUNGEON.DAT`, M11:s startprofil och
   champion-livscykeltestet. Inga DYN4-byte, heroes eller partyn skapas.
 
+# DM2 champion-mirror chain traversal (2026-08-08)
+
+- ✅ Championinventeringen följer nu samma kompletta `GenericRecord::w0`-
+  kedja som `DM2_LOAD_LOCALLEVEL_DYN`, i stället för att förutsätta att en
+  DB3-spegel alltid ligger först på rutan.
+- ✅ Verifierat mot den verkliga 44-kartors PC-DOS-filen: de 16 ursprungliga
+  speglarna och deras DYN4-nycklar är oförändrade. Ingen DYN4-laddning,
+  hero- eller partyinitiering tillåts ännu.
+
 # DM2 fail-closed local-level adapter (2026-08-08)
 
 - ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu

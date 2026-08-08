@@ -1,8 +1,9 @@
 # Firestaff TODO - Open Work
 
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
-  sixteen source File_header champion-mirror roots, but must not materialise
-  them independently. Recover the complete `DM2_LOAD_LOCALLEVEL_DYN` queue
+  sixteen source File_header champion-mirror records across their real
+  `w0`-kedjor, but must not materialise them independently. Recover the
+  complete `DM2_LOAD_LOCALLEVEL_DYN` queue
   owner, including its conditional `0x16ffffff` marker, party-dependent
   selectors and `DM2_LOAD_DYN4` transaction before DYN4 bytes, hero state or
   a New Game party can be admitted.
