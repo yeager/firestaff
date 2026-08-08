@@ -111,51 +111,51 @@ Nexus_V1_PhaseGateDecision nexus_v1_phase_gate_decide(
 
         case NEXUS_V2_PHASE_DOMAIN_DUNGEON_LOADING:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_dmdf_model.c; nexus_v1_dungeon.c",
-                "DGN level format and DMDF parser active");
+                "authenticated DGN/DMDF source parsing only; runtime presentation remains capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_DUNGEON_RASTERIZER:
             return make_decision(
-                1, 1,
-                "nexus_v1_rasterizer.c",
-                "VDP1 rasterizer pipeline active");
+                1, 0,
+                "Saturn VDP1 capture boundary; production raster submission remains no-draw",
+                "VDP1 command, CLUT and placement ownership are not authenticated");
 
         case NEXUS_V2_PHASE_DOMAIN_CHAMPION_POOL:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_champions.c; nexus_v1_mechanics.c",
-                "champion pool and party management active");
+                "authenticated PLRD source rows only; party runtime remains capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_COMBAT:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_combat.c",
-                "combat system active");
+                "combat tables/helpers are diagnostic; Saturn action and state-write owners remain unbound");
 
         case NEXUS_V2_PHASE_DOMAIN_MOVEMENT:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_movement.c; nexus_v1_mechanics.c",
-                "movement command routing active");
+                "movement source tables are retained; Saturn command producer and consumer remain capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_MAGIC:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_magic.c",
-                "spell casting and mana system active");
+                "spell tables are diagnostic; Saturn rune dispatch and effect writes remain unbound");
 
         case NEXUS_V2_PHASE_DOMAIN_SAVE_LOAD:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_save_load.c",
-                "save/load system active");
+                "native save receipts are retained; Saturn save consumer remains capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_AUDIO:
             return make_decision(
-                1, 1,
+                1, 0,
                 "nexus_v1_sound.c",
-                "audio system active");
+                "SLEV/SAL/SDDRVS source receipts only; event dispatch and playback remain capture-gated");
 
         /* ── V2-presentation-eligible domains ── */
 
@@ -306,7 +306,7 @@ const char *nexus_v1_phase_gate_source_evidence(void)
            "V1 anchors: docs/NEXUS_FILE_CLASSIFICATION.md, "
            "Greatstone DM Nexus (greatstone.free.fr/g_dm.html), "
            "ReDMCSB DUNGEON.C/COMMAND.C/CHAMPION.C/MOVESENS.C/GAMELOOP.C, "
-           "nexus_v1_*.c (all 27 source files source-locked). "
+           "nexus_v1_*.c (source receipts and capture-gated adapters). "
            "V2 anchors: nexus_v2_*.c (atmosphere, hud, lighting, "
            "particles, render_pipeline, touch, upscaler) Phase 0 locked.";
 }

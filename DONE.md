@@ -10059,3 +10059,12 @@
   retained.
 - ✅ Startup still emits no portrait draw command without the Saturn VDP1
   placement/consumer capture.
+# Nexus phase gate no longer claims uncaptured runtime owners (2026-08-08)
+
+- ✅ V1-locked domains now return `v2PresentationAllowed=0`, matching the
+  existing gate contract instead of advertising an inactive presentation path.
+- ✅ DGN, PLRD, combat, movement, magic, save/load, rasterizer and
+  SLEV/SAL/SDDRVS messages now describe source receipts or capture-gated
+  ownership; no Saturn runtime behavior is fabricated.
+- ✅ The standalone compatibility-gate regression documents the corrected
+  boundary.

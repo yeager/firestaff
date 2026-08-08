@@ -5,11 +5,11 @@
  *
  * NEXUS_V1_PHASE_DOMAIN_LOCK is a compile-time flag that locks all
  * Nexus V1 boundaries (dungeon loading, rasterizer, champions, combat,
- * movement, magic, save/load, sound) and explicitly blocks V2-only
- * code paths from activating.
+ * movement, magic, save/load, sound) and explicitly blocks unproven
+ * runtime paths from activating.
  *
- * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any V2
- * presentation code being active. All V2 modules (atmosphere,
+ * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any unverified
+ * Saturn presentation code being active. All V2 modules (atmosphere,
  * HUD overlay, smooth movement, lighting, particles, upscaler,
  * touch controller affordances) MUST NOT alter V1 game-logic state.
  *
@@ -67,9 +67,10 @@ extern "C" {
  * Phase domains
  * ================================================================
  *
- * V1-source-locked domains: V2 must NOT alter behaviour.
- * V2-presentation-eligible domains: V2 may PRESENT but not alter
- * the underlying V1 game-logic state.
+ * V1-source-locked domains: V2 must NOT alter behaviour. A domain being
+ * source-locked does not mean its Saturn runtime consumer is recovered.
+ * V2-presentation-eligible domains may present only behind their own
+ * authenticated capture boundary and may not alter V1 game state.
  */
 
 typedef enum {

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus phase-gate stale claims (2026-08-08): `nexus_v1_compat_gate`
+  previously described source-locked Saturn domains as active and returned
+  `v2PresentationAllowed=1` for them. The gate now reports source receipts
+  and capture-gated/no-draw runtime ownership truthfully. No VDP1/VDP2,
+  action, save, or SLEV/SAL/SDDRVS semantics were opened by this cleanup.
+
 - 🔧 Nexus DMWeb data-file audit (2026-08-08): the historical H2321 notes
   are now reconciled with the verified retail corpus: DGN is the 64×64
   Structure1B block-container path, SMAP/SAL/MAP/FACE/MNS/SLEV have bounded

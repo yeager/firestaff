@@ -112,6 +112,14 @@ target_link_libraries(test_nexus_v1_event PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_event COMMAND test_nexus_v1_event)
 set_tests_properties(nexus_v1_event PROPERTIES LABELS "nexus;event;tier4")
 
+add_executable(test_nexus_v1_compat_gate
+    tests/test_nexus_v1_compat_gate.c
+    src/nexus/nexus_v1_compat_gate.c)
+target_include_directories(test_nexus_v1_compat_gate PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_compat_gate COMMAND test_nexus_v1_compat_gate)
+set_tests_properties(nexus_v1_compat_gate PROPERTIES LABELS "nexus;capture_gate;tier4")
+
 add_executable(test_nexus_v1_dgn_level_content
     tests/test_nexus_v1_dgn_level_content.c)
 target_include_directories(test_nexus_v1_dgn_level_content PRIVATE

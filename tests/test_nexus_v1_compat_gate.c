@@ -7,7 +7,8 @@
  * domains. Validates:
  *   1. Compile-time NEXUS_V1_PHASE_DOMAIN_LOCK flag is set to 1
  *   2. nexus_v1_phase_gate_defaults() sets v2PresentationEnabled=0
- *   3. All 8 V1-source-locked domains always return v1SourceLocked=1
+ *   3. All 8 V1-source-locked domains always return v1SourceLocked=1 and
+ *      v2PresentationAllowed=0
  *   4. V2-presentation-eligible domains return correct v2PresentationAllowed
  *      (0 when v2PresentationEnabled=0, 1 when v2PresentationEnabled=1)
  *   5. nexus_v1_phase_gate_v2_active() returns 0 by default
