@@ -4,50 +4,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
-- **DM1 synthetic-path audit:** Completed 2026-08-06. The active `firestaff`
-  M11 target was checked against the local real PC34 corpus and its Ninja link
-  graph. Authenticated DM1 object names use M564, object icons and charge
-  state use raw Thing/G0237 data, and viewport material uses decoded
-  GRAPHICS.DAT surfaces; missing source material fails closed. The old generic
-  viewport renderer is not linked into the M11 executable. Full findings and
-  evidence are in `docs/parity/DM1_V1_SYNTHETIC_PATH_AUDIT.md`. Remaining
-  items are real Mac capture, C13-bearing original saves, and broader paired
-  original-pixel capture.
-
-- **DM1-HOC-C040-TIME-EFFECTS:** Closed 2026-07-31. The live M11 idle
-  path now has a F0331 due-tick regression: a selected Hall of Champions
-  candidate is excluded from health, stamina, food and water mutation while
-  C040 is open, then returns to ordinary source-owned need decay at the next
-  cadence after confirmation. This closes the reported candidate-death
-  boundary; broader original capture remains separate.
-
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
   Real multi-effect corpus capture remains open; no missing surface may be
   replaced by a marker or generated sprite.
-
-- 2026-08-06 update: the active outer floor/ceiling frame consumer now also
-  requires decoded pixel ownership (`loaded` plus `pixels`) before blitting
-  the PC34 floor-set records. Dimension-only cache entries are rejected, so
-  they cannot masquerade as real frame material. Remaining work is broader
-  real multi-effect and packaged-app capture, not another frame fallback.
-
-- 2026-08-06 update: the active DM1 inventory/champion-panel consumers now
-  apply the same decoded-pixel gate to slot boxes, item fallback sprites,
-  open-chest panels, portrait strips and champion icon strips. Dimension-only
-  cache records cannot reach these source blits. Remaining work is real
-  packaged-app pickup/panel capture, not another metadata fallback.
-
-- 2026-08-06 update: the active DM1 F0098 floor/ceiling provider and empty
-  champion status-box consumer now also require `loaded` plus `pixels` before
-  exposing or blitting a source surface. Remaining work is packaged Mac/app
-  capture and original-pixel comparison, not another cache-metadata route.
-
-- 2026-08-06 update: the remaining active DM1 inventory-panel selectors and
-  blits now apply the same gate to slot-size probing, rename/resurrection
-  panels, FOOD/WATER labels and the inventory damage overlay. Remaining work
-  is packaged Mac/app capture and original-pixel comparison.
 
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
@@ -73,26 +34,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     the longest `ANTI-MAGIC`/`ANTI-FIRE` rows do not alter pixels outside the
     original 144-pixel C101 panel. This closes the reported oversized-text
     regression boundary; original DOS pixel comparison remains open.
-
-- 2026-07-23 F0344/F0658 HUD material follow-up: a DM1-only receipt now
-  requires real C010 action pixels for C079/C077/C011 crop ownership,
-  C009/C011 spell rows, C020, C030/C031/C032 F0658 label surfaces, and raw
-  M653 glyph bits. It preserves C00/C04 text palette roles, C12 label
-  transparency, source crops, zones, and source lines. Missing or altered
-  material is no-receipt; no generated panel, glyph, palette, or crop is
-  available. Remaining work is production consumption and capture only.
-
-- 2026-07-23 F0344/F0658 integration repair: ordinary F0344/F0345 inventory
-  presentation must not depend on a HoC C040/C026 receipt. C020 remains an
-  opaque original surface, while C030/C031/C032 alone use C12 transparency.
-  Keep action-menu source geometry tied to the C079/C077/C011 layout box;
-  missing or mismatched material remains no-draw.
-
-- 2026-07-23 F0292/F0293/F0296/F0302 champion-panel material follow-up:
-  source admission now requires C008/C017/C026/C028/C032/C015/C016 and
-  C033-C035 together with M653 and the PC34 16-colour palette. Remaining
-  work is capture comparison only; no host font, panel, portrait, slot, or
-  status fallback may bypass this gate.
 
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
@@ -133,14 +74,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   gameplay ownership gap; `G0369`, `G0372`, and `G0373` are source-audited
   storage contracts.
 
-- Integrate the remaining source-backed M11 consumers for champion HUD, C13
-  save handoff, action/spell feedback, and HoC mirror admission. Each route
-  must remain clear-only on stale, mismatched, or unavailable original data.
-
-- Keep the M11 consumer as the final authority for party/inventory source
-  receipts. The lower-level handoff now retains C008/C028/C032/C015/C016 and
-  orders the party top row before overlays; live M11 consumption remains open.
-
 - Broaden live original-save corpus coverage and consume the validated
   SquareFirstThings/timeline receipt in the complete runtime transition.
 
@@ -150,86 +83,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
   payload identity through F0435 staging and adoption; C050 fluxcage remains
 
-- Require source identity evidence before admitting a PC34 corpus roundtrip.
-
-- Bind accepted PC34 corpus identity evidence into the live C13 runtime
-  handoff route.
-
-- Consume active source-owned C13 runtime state with stale/revoked-state
-  fencing at the visible DM1 handoff.
-
-- Consume source-owned champion statusbar atomic frame presentation in M11.
-
-- Consume source-owned atomic top-row C008/C028/statusbar composition in M11
-  with the same all-or-clear contract.
-
 - Consume the action/spell feedback-frame receipt in M11 before final HUD
   paint commands are accepted.
-
-- Consume the source-owned HoC confirmation/apply bridge in M11.
 
 - Admit HoC runtime clear/portrait commands only from matching apply
   presentation completion receipts, then consume them in M11.
 
-- Consume source-owned HoC render admission, action/spell feedback, and
-  champion statusbar receipts in the M11 runtime frame path.
-
-- Consume the validated statusbar command sequence in M11, without a host
-  palette or replacement render target.
-
-- Consume source-owned HoC frame commands and final action/spell HUD paint in
-  M11, then verify lifecycle behavior across real runtime ticks.
-
-- Consume source-owned action/spell and HoC lifecycle receipts in M11 before
-  final frame commands can become visible.
-
-- Consume source-owned top-row lifecycle and C13 active-state consumption in
-  M11/runtime handoff paths; verify against real data when corpus is present.
-
-- Consume source-owned HoC, action/spell, and top-row host-route receipts in
-  M11 without bypassing their generation/tick fences.
-
-- Consume active host-route lifecycle fences in M11 and verify the complete
-  DM1 HUD/HoC route against original game data.
-
-- Consume source-owned C13 visible-handoff and HoC lifecycle-host bridge in
-  M11/runtime without allowing stale state.
-
 - Consume active top-row/action host lifecycle receipts in M11 with original
   material proof and without fallback drawing.
 
-- Consume the pre-M11 top-row/action/HoC receipt chain in M11 and prove it
-  against original runtime data.
-
-- Consume source-owned HoC/action M11 lifecycle bridges and retain only
-  current-tick source evidence through host rendering.
-
-- Consume source-owned C13/top-row M11 admissions in the visible runtime
-  route and verify with a real PC34 corpus when available.
-
-- Consume source-owned M11 host-render lifecycle receipts in the live runtime
-  path, retaining clear-only behavior for stale data.
-
-- Consume source-owned C13, HoC, champion, and action runtime frame-admission
-  receipts in M11 against real game data.
-
-- Consume the source-owned HoC runtime frame-admission receipt in M11 and
-  retain clear-only behavior on a stale or missing source route.
-
-- Consume source-owned C13/top-row/action runtime admissions in M11 and
-  verify complete visible runtime handoff with real game data.
-
-- Consume source-owned HoC/action runtime frame lifecycles in M11 with
-  current-source admission and clear-only stale behavior.
-
 - Perform real-data runtime capture of the now source-gated C13/HoC/top-row/
   action paths; no substitute material may be introduced during capture.
-
-- Consume the live original champion composition evidence in runtime/M11 and
-  broaden capture across real party states.
-
-- Consume live HoC/action source-material routes in runtime/M11 and broaden
-  original-data capture across candidate, action, and spell states.
 
 - Exercise the final M11 source-capture receipt with a configured real DM1
   corpus; missing/stale routes must remain capture-ineligible.
@@ -239,29 +103,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 - Capture configured original C13, HoC, champion, and action routes from a
   real runtime session; the combined gate is implemented and tested.
-
-- Consume live champion/HoC/action M11 bridge lifecycles in the final capture
-  route and exercise them with configured original data.
-
-- Consume the source-owned action/spell and HoC presentation receipts from
-  M11; do not introduce fallback material for missing source frames.
-
-- Add the matching source-owned clear/repaint lifecycle consumer for accepted
-  action/spell frame order in M11.
-
-- Bind source-owned action/rune input admission to the command builder, then
-  consume the complete receipt chain in M11.
-
-- Feed champion leader/inventory ownership into the live M11 HUD path; retain
-  original source materials and do not substitute an inactive selection.
-
-- Consume the source-owned portrait/status redraw policy in M11.
-
-- 2026-07-21 DM2/DM1 round-23 cross-cutting (job/w3) — FIXED (see
-  blocked rather than failing the source lane. The movement matrix and the
-  viewport-walls golden comparison pass locally. This does not close the
-  separate original-PC34 capture requirements below.
-  CTest/Ninja build directory; pass207/pass608 blocker receipts are generated
 
   - v1_viewport_wall_blit_transparency_gate (C10 owner =
     dm1_v1_viewport_3d_pc34_compat.c handoff.transparent_color = 10)
@@ -283,25 +124,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     on Event73Count_ThievesEye)
   The round-22 STILL-OPEN list was fully triaged in round 23 (see the
   round-23 entry above; three fixed, the rest classified/diagnosed).
-
-- 2026-07-21 DM2/DM1 round-21 cross-cutting triage (job/w3) — the
-  against the DM1/M10 owner-module delegations). Round-22 follow-up
-  resolved the remaining class-a restpost family (see round-22 entry
-  above); only m11_open_door_spell_runtime_source_lock carries over.
-
-- 2026-07-21 DM2 round-18 cross-cutting triage (job/w3) — three
-  undiagnosed DM2 failures from the palette/material/plan ctest net were
-  triaged; two are FIXED (see DONE.md same-date entry:
-  dm2_v1_gdat_materialization_handoff, dm2_v1_g1_record_list_material_gate).
-  One remains open as its own round:
-
-- 2026-07-21 Nexus round-18 update (job/w4): the round-17 remainder is
-  CLOSED — `m11_nexus_startup_runtime_handoff` turned out class (a)
-  after all (fixture missed the bounded-BPK-provenance fields; see
-  DONE.md same-date entry), and `nexus_v1_track1_phase_launch_synthetic`
-  was fixed with the same proven-Structure1B wall-encoding re-anchor as
-  round 17's mechanics_parity. No round-17/18 items remain open from
-  this triage line.
 
   - `nexus_v1_startup_menu_pc34_compat` (#1741) — FIXED in round 21
     (see DONE.md same-date entry): three class-(a) fixture gaps
@@ -343,23 +165,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     the engine's external PRS3 placement receipt now requires a nonzero
     `trace_size`; the tests only set `trace_fnv1a64`. Added `trace_size`
     to each fixture. These are now green.
-
-- 2026-07-21 Nexus round-17 deep triage (job/w4) — six named failures
-  (the timeouts are the pre-existing live/skip-safe tier1 family
-  without FIRESTAFF_NEXUS_DATA_DIR; `nexus_v1_dgn_material_raster`
-  stays capture-bound class (b) — do not touch).
-
-- 2026-07-20 DM1 clobber-restoration follow-up, round 9: both
-  suite failures are the long-tail portrait/mirror re-base family
-  (see the 2026-07-18 entries below) and other independently tracked
-  work.
-  remaining triaged failures are now fixed (round 8: framepath probe,
-
-- 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
-  (7,9)N and deliberately does NOT pair a same-square WEST look,
-  keeping the open (17,9)W far-view D1C question unblocked.
-  Remaining 53, grouped for round 3:
-  the hall. Remaining: ~94 failing probes, same re-base pattern;
 
   - needs per-probe side-band/frame recalibration (pose-specific
     thresholds calibrated to the old (1,2) corridor view):
@@ -448,19 +253,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the receipt-based side-wall architecture, not a token tweak.
   pass505_dm1_v1_blocked_movement_collision_timing_gap re-anchored
 
-- 2026-07-18 DM1 Jobb E parts 1-2: part 1 (F0115/F0128 complete
-  per-square source scheduler) has a first landed contract slice —
-  see the 2026-07-19 entry at the top of the DM1 V1 section and
-  DONE.md. Remaining on part 1: wire the merged per-square schedule
-  into the live M11 draw path so the runtime consumes the contract
-  plan (today it is a verified contract model beside the draw path),
-  plus real PC34/Mac capture breadth. Part 2 (DM1 V2 material/pixel
-  gates, "Next: V2 material/pixel gates" in Known Bugs) remains open:
-  its remaining gates are (a) an operator-reviewed DM1 V2.2
-  finished-art pack plus real screenshot receipt promoted to final
-  local evidence (blocked on operator art, not code) and (b) later
-  CSB real-asset pixel/material verification (CSB lane).
-
   - 2026-07-17 update: the local G8 FIFO-output capture schema now requires
     the exact sequence-4 callsite, G8 READ(6), and one ordered FIFO-origin
     game-RAM output row while rejecting a consumer claim. The remaining
@@ -519,16 +311,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     permissions must all remain false. This is capture-required/no-draw
     lifecycle metadata, not a G8 consumer, payload, route, or bitmap claim.
 
-- 2026-07-27 Theron live main-RAM `$e009` window capture follow-up: the
-  reproducible active Mednafen build now opens a bounded trace window only
-  after an observed main-RAM `JSR $e009`, emits any PCE-CD data-register reads
-  while that call is active, and records the next main-RAM step against the
-  exact expected return PC. Transition receipts expose enter/read/return
-  counts. A fresh authentic US-CUE smoke reports all three counts as zero,
-  so this is an instrumentation improvement only: it proves neither a
-  Track-02 loader invocation nor record, object, bitmap, palette, route, or
-  dungeon semantics. Positive original capture remains required.
-
   - 2026-07-27 update: capture replay can now supply an explicitly recorded,
     frame-indexed PCE input plan when macOS cannot deliver physical keyboard
     events to the unbundled SDL process. The active Mednafen producer retains
@@ -553,29 +335,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     assigned. Required next evidence remains an original FIFO-to-game-RAM
     transfer joined to a game-owned consumer.
 
-- 2026-07-17 Theron Track 02 `0x0b52` multi-capture level-index/seed
-  correlation blocker: the workspace contains one source-locked Stage-3
-  `0x0b52` envelope/loader chain, but no second independent original capture
-  that pairs a distinct or repeated header-level-index/seed with its following
-  observed `$e009` CD-read record and a game-owned level-route consumer.
-  Disassembly proves the read and its return to `$3800`, not a level-route
-  selector. Consequently no typed index/seed-to-route admission exists. The
-  next required evidence is at least two independently attested original
-  CUE/BIN plus coalesced Mednafen traces with the same authenticated layout,
-  header facts, subsequent record identity, and an observed route consumer.
-  Bitmap continuation bytes remain opaque; do not infer a level, object,
-  route, palette, pixel, or fallback visual from this single capture.
-
-- 2026-07-17 Theron Track 02 non-startup sector-record follow-up: a strict
-  CUE/BIN transaction now rehashes the admitted raw member, accepts only the
-  source-owned Stage-3 descriptor directory and a complete observed later
-  `$e009` loader chain, and retains one descriptor-resolved physical record
-  as opaque M11 no-draw readiness. Remaining work is an operator-supplied
-  original raw CUE/BIN plus its complete coalesced Mednafen trace, so the
-  corpus probe can produce a real READY receipt. Do not assign descriptor or
-  record payload semantics, decode level/object fields or pixels, or add a
-  fallback visual while that evidence is absent.
-
   - 2026-07-17 update: M11 now rechecks the admitted later record against the
     current direct layout, capture plan, media scan epoch, and active replay
     tail. The resolved record must still be the replay's final record/raw
@@ -599,14 +358,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     the M11 no-draw bridge. Absent files SKIP safely; virtual, malformed,
     ambiguous, or non-admitted candidates cannot produce readiness.
 
-- 2026-07-17 Theron Track 02 dynamic CD_READ ownership follow-up: the
-  authenticated raw CUE/BIN and existing Mednafen loader receipt now normalize
-  the observed CL/DL/CH bytes into one source-owned record and require the
-  exact MODE1 raw-sector/user-data window before retaining its opaque
-  provenance. Remaining work is an original trace whose later record and
-  consumer evidence can be independently joined to this ownership receipt;
-  do not infer payload, level/object, bitmap/palette, pixel, or draw semantics.
-
   - 2026-07-17 update: the normalized loader receipt now joins the closed
     HuC6280 loader/consumer event log before the existing opaque runtime route
     is marked ready. The next positive step remains an original observation
@@ -618,12 +369,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     stable converted source-trace MD5. Bad ordering, epoch, media identity or
     trace identity clears both route flags. Remaining work is still original
     graphics/object evidence; this lifecycle never enables a draw path.
-
-- 2026-07-17 Theron Track 02 M12 campaign-media follow-up: the selected-game
-  launcher now has a separate M12 scan entry that retains only an exact,
-  plan-bound direct CUE/BIN/ISO receipt. Missing, malformed, ambiguous, or
-    virtual/container-only evidence remains diagnostic and cannot mark Theron
-    available or launch-ready; this path never materializes a cache member.
 
   - 2026-07-27 update: the actual Launch action now selects a compatible
     hash-matched Track 02 version before this direct-media admission and then
@@ -800,11 +545,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     observed absence for that boot window only. It does not claim FIFO,
     destination, record, or loader semantics.
 
-- 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
-  runtime state are independently proven. Do not add synthetic viewport
-  pixels, fallback sprites, guessed palettes or title/Entrance rewrites for
-  this follow-up.
-
   - 2026-07-17 update: a source-locked live-frame receipt now carries bounded
     decoded wall, floor and door spans plus the shared palette. It starts only
     from the accepted first-frame M11 receipt and permits subsequent frames
@@ -900,12 +640,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     route, keeping raw declaration/corpus helpers private. Remaining work is
     a genuinely supplied real corpus and capture parity, not inferred entry
     mapping or a substitute draw route.
-
-- 2026-07-17 CSB DSA/save-runtime admission follow-up: checksum-bound DSA
-  opt-in gate. Remaining work is a positive original CSBWin save/Dungeon
-  corpus; no DSA instruction semantics, generated save, or fallback runtime
-  is admitted by this boundary.
-  overlays also remain no-draw until that route has a matching admitted
 
   - 2026-07-17 update: M11 now has a single explicit ingress for a restored
     CSBWin timer: caller-named location plus TimerQueue slot go to the
@@ -1212,11 +946,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     The positive CSBWin DSA/save-runtime path remains separately blocked on an
     operator-supplied checksum-valid DSA-bearing save/dungeon corpus.
 
-- 2026-07-16 CSBgraphics palette follow-up: startup-package indexed surfaces
-  check.
-  bitmap indices, reuse another asset's palette, or enable a draw path from
-  package geometry alone.
-
   - 2026-07-16 update: each declared title, entrance-door and HUD entry now
     retains its own cache-derived image receipt (source kind/path/MD5 and
     bounded archive span). The startup package grants draw eligibility only
@@ -1238,18 +967,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     palette readiness separately; absent or mismatched receipts make selected
     CSBgraphics HUD bindings unverified and keep M11 no-draw. Original
     `GRAPHICS.DAT` routes are not recolored or substituted by this gate.
-
-- 2026-07-16 DM2 GDAT viewport follow-up: the G1 floor/ceiling scene route
-  and canonical GRAPHICSSET wall-plan route now both consume real GDAT pixels,
-  trailing source palettes, stationary wall geometry, and moving signed RAW4
-  wall geometry directly in M11 with no callback fallback after rejected
-  sidecars. Remaining adjacent viewport work is broader dungeon material
-  coverage beyond the current G1 floor/ceiling, wall plan, and door
-  receipt/state/movement gates, especially full door runtime placement after
-  source geometry proof, lighting, weather, item/creature/cloud passes, G1
-  map-style routing, or additional source-owned dungeon material classes.
-  Keep this in the dungeon viewport/GDAT path only; do not synthesize visuals,
-  promote guessed decoders, or touch menu/HUD/save files for this follow-up.
 
   - 2026-07-16 update: host dungeon-consumer admission now accepts only the
     named original Track 02 host route and carries its FNV identity checksum
@@ -1488,15 +1205,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     Remaining blocker: operator-supplied original direct media and complete
     independent capture bundles for the selected variant.
 
-- 2026-07-17 Theron SRM opaque admission: a separate `.srm` intake now
-  requires an explicit direct file path, exact size, MD5, closed gzip/DEFLATE
-  container shape, admission-format version, and matching known Track 02
-  variant/MD5 before it publishes an opaque save-route receipt. Unknown
-  shapes, version drift, Track 02 drift, missing corpus files, and symlinks
-  reject or skip; no SRM body is inflated, decoded, or used as a fallback.
-  Remaining work is a source-attested original SRM catalog/receipt and a
-  runtime consumer that retains only this opaque admission.
-
   - 2026-07-17 update: runtime now consumes an accepted SRM receipt only as
     MD5/size/version/Track 02 identity. It rejects any missing admission fact
     and explicitly keeps restore, body semantics, and fallback disabled.
@@ -1517,36 +1225,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     then feed those real records into the existing M11 draw gate. Do not use
     synthetic geometry, synthetic objects, fallback visuals, or guessed level
     decoders to close this.
-
-- 2026-07-16 Nexus startup/menu animation follow-up: presentation receipts,
-  the package-level animation gate, and the MENU.BPK handoff gate now
-  distinguish active title/champion-select labels and fail closed when package
-  receipts, real package assets, Saturn timing/capture frames, MENU.BPK source
-  identity, PRS3 trace requirements, or fallback-visual facts are not
-  independently proven. Remaining work is wiring any future menu animation draw
-  command through real package asset consumers after the relevant PRS3/Saturn
-  data route is reviewed; do not add synthetic visuals or guessed decoders.
-
-- 2026-07-16 Launcher `.fsart` follow-up: the startup menu now persists a
-  selected `.fsart` artpack path and an optional broad Unicode font path.
-  Closed 2026-07-29 for CSB: the M11 handoff now hash-keys a private cache,
-  extracts the manifest, native V2.2 cache and reviewed route assets through
-  the shared ZIP reader, then rechecks the existing FAMG gate before V2.2.
-  Remaining work is live F0128 draw-command consumption, not package loading.
-  path, and wire the chosen Unicode font into the modern menu renderer when a
-  real TTF backend is available. Do not synthesize missing art or glyphs.
-
-- 2026-07-16 Artpack Studio follow-up: DM2 `GRAPHICS.DAT` import now lists the
-  real GDAT raw/ENT1 inventory and previews skproject-style IMG3 C4/U4/U8
-  records. Full skproject-backed GDAT pixel preview is still warning-only for
-  unsupported payloads, especially IMG9 C8. Do not replace those warnings with
-  generated/synthetic pixels; close this only when the studio consumes the same
-  proven DM2 image decode breadth as runtime.
-
-- 2026-07-16 source-symbol backlog follow-up: `tools/symbol_backlog.py`
-  across MISSING, UNCERTAIN, and UNCERTAIN_NUMBERED_EVIDENCE. Remaining work
-  is actual source-backed implementation or explicit non-applicability
-  decisions per row; the backlog tool is queue evidence only, not completion.
 
   - 2026-07-16 DM2 skproject alias audit update:
     14 already implemented HUD/item/object/query aliases were moved out of
@@ -2213,13 +1891,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     `QUERY_PICST_IT` are now closed through focused skproject-backed helper
     tests. Remaining adjacent work is live GDAT image-buffer ownership,
     dungeon/HUD pixel consumption, and broader missile/minion runtime adoption.
-
-- 2026-07-16 build-system follow-up: fresh `cmake -S . -B build-ninja -G Ninja`
-  now gets past the duplicate `test_dm2_v1_weather_gdat_receipt` target after
-  the local guard fix, but full generation is still blocked by many pre-existing
-  stale `add_executable`/`add_library` entries pointing at deleted/missing
-  source files. Continue with direct focused builds for symbol closures until
-  the broad CMakeLists stale-target cleanup is handled.
 
   - 2026-07-16 Theron update: a verifier now turns instrumented Mednafen
     FIFO-origin logs into the required original consumer markers. Remaining
@@ -2912,17 +2583,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   `docs/reference/audits/REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv` instead.
     side-effect bodies remain separate backlog work.
 
-- 2026-07-16 CSB HINTLOAD follow-up: F2262's PC34 input-wait timer boundary
-  is now isolated, CMake-registered, tested, and audit-mapped, with the
-  FM-Towns SND branch recorded as a non-PC34 platform branch unless a future
-  FM-Towns target supplies real counter/volume state. HINTLOAD
-  `F1910_LoadSavedGamePart`,
-  `F1913_LoadAndDeobfuscateSavedGamePart`, and
-  `F1914_LoadAndDeobfuscateSavedGameHeader` now sit on the existing CSB
-  save/header load path. Remaining CSB startup work is real packaged
-  title/PRESENTS/CHAOS/STRIKES/HUD capture and DSA/save-runtime handoff
-  breadth, not a synthetic save envelope.
-
   - 2026-07-17 TITLE.C capture update: the source-step owner now transitions
     from PRESENTS frame 59/step 1 to CHAOS frame 60/step 2, retains the
     source-owned full-CHAOS sample at frame 77/step 19, holds the CHAOS plan
@@ -3345,12 +3005,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     work is positive DSA-bearing corpus breadth and broader event-family
     execution evidence, not another synthetic timer wrapper.
 
-- 2026-07-16 DM2 real-profile smoke follow-up: source G1 pool receipts,
-  executable, absent `test_dm2_v1_boot_profile_smoke` build target, and CMake
-  regeneration failure from many unrelated missing non-DM2/probe/shared
-  sources.
-  Remaining verification is
-
   - 2026-07-16 update: skproject `c_map.cpp` `GET_TILE_VALUE`,
     `GET_ADDRESS_OF_TILE_RECORD`, and `IS_TILE_PASSAGE` now have bounded
     Firestaff wrappers over the parsed byte-map, column-index, and
@@ -3358,23 +3012,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     record-chain traversal, DB8/DB10 roots, map transitions, and complete live
     dungeon/HUD material; these wrappers must not substitute GDAT pixels or a
     playable record graph.
-
-- 2026-07-16 DM2 SKSave corpus follow-up: the corpus receipt now exposes the
-  first accepted importable payload's source kind and byte size, distinguishing
-  Firestaff session envelopes from original SKSave envelopes without promoting
-  rejected raw/backup-shaped candidates. The full `test_dm2_v1_save_load`
-  executable now passes; remaining corpus work is external real-save breadth,
-  not synthetic fixture promotion.
-
-- 2026-07-16 Nexus startup/menu/DGN route blocker: after the Structure2 shared
-  texture/palette anchor receipt proof, `nexus_v1_startup_menu_pc34_compat`
-  still fails on 39 broader startup completeness assertions: title/menu audio
-  readiness, first DGN render state after champion start, startup route proof
-  across Saturn title/menu/runtime assets, SAVE/TITLE host package capture
-  consumption, MENU.BPK/PRS3 blocking, and runtime DGN host-route/material
-  coverage. Keep MENU.BPK/PRS3 blocked without fallback visuals and do not
-  promote Structure2 opaque spans into decoded pixels or palette semantics
-  without authentic Saturn capture evidence.
 
   - 2026-07-16 update: the MENU.BPK renderer handoff test is now a CMake/CTest
     target and proves `READY_DECODED` still maps to `blocked-prs3` unless an
@@ -3659,14 +3296,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     VDP1/material/palette capture, and broader startup/menu/DGN route
     completion.
 
-- 2026-07-16 Theron ISO/Track02 capture follow-up: the ISO-end media gate now
-  classifies JP/US ISO Track 02 as opaque end-variant data only, blocks loader,
-  bitmap, level, object, audio, and visual fallback routes, and allows capture
-  planning only for raw Track02-ready media. Remaining Theron work is to bind a
-  real accepted v3 IRQ2 trace and raw Track02 corpus to an admitted runtime
-  session; do not promote ISO-end bytes, Track 19 inventory, or generated
-  fallback visuals as a substitute.
-
   - 2026-07-16 update: game-owned FIFO payload consumer traces now have a
     bounded file import/corpus gate. A staged local US raw Track 02 plus
     original Mednafen consumer transcript must rehash, parse through the
@@ -3731,45 +3360,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 	    visuals remain denied.
     text, runtime, or fallback-visual semantics. Remaining blocker: a real
 
-- 2026-07-16 Theron Track02 post-envelope loader follow-up: the copied-code
-  successor receipt now keeps the second TII source-window offset when mapping
-  executed bytes back to the authenticated `$0b52` post-envelope continuation.
-  Remaining work is still an independently captured loader consumer that proves
-  object-table grammar or dungeon semantics; the current receipt remains
-  byte/control-flow provenance only and must not authorize fallback visuals.
-
-- 2026-07-23 DM1 original-save corpus discovery follow-up: the corpus scanner
-  SHA-256: `26ccd1591ccf6ec9e53186e994f73924185143f82055312cafd474ed7abc9437`
-  and `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`.
-  Remaining: broader C13-bearing corpus and packaged Mac/app capture.
-  F0435-qualified PC34 files; Firestaff-manifest exports remain rejected as
-
   - 2026-07-23 update: the public `DM1_SaveGamePC34()` path now emits an
     untagged PC3.4 envelope through F0803; the former manifest-bearing F0802
     route remains diagnostic-only. The focused F0435 handoff regression proves
     the untagged header is admitted. Remaining proof is an original DOS
     executable roundtrip and an operator-provided original-save corpus.
-
-- 2026-07-16 CSB startup terminal capture follow-up: the terminal C017/C040
-  HUD receipt gate is now code-owned and rejects stale source ticks,
-  generation changes, wrappers, fallback routes, incomplete title phase masks,
-  stale door-open state, and mismatched HUD geometry/GRAPHICS.DAT ownership.
-  The packed 4bpp presentation edge now also requires the exact receipt-owned
-  startup host surface and recomputed indexed-pixel hash before touching the
-  destination page, so a standalone title/door/HUD raster cannot bypass the
-  CSB session receipt.
-  Remaining CSB startup evidence is real Mac/release app presented-frame
-  capture with local CSB data through that receipt path, not another synthetic
-  title/door/HUD path.
-
-- 2026-07-15 DM1 title/HoC startup follow-up: local TITLE.C F0437 admission
-  now requires the exact 320x200 GRAPHICS.DAT C001 surface, rejects cropped
-  C001/TITLE.DAT substitution, holds the verified title through the original
-  frame-bank-equivalent handoff boundary, and refuses failed staged
-  save-corpus scans as HoC complete-support evidence. Remaining work is a real
-  PC34/Mac capture of the full title-to-HoC handoff and an operator-staged
-  external original-save corpus run; do not promote synthetic title frames or
-  checksum-authenticated fixture envelopes as external evidence.
 
   - 2026-07-16 update: the low-level V1 title source selector now also skips
     malformed or missing C001 even when TITLE.DAT is available, so TITLE.DAT
@@ -3791,18 +3386,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     cleanly; positive title/HoC completion still requires real PC34/Mac capture
     plus operator-staged original-save files.
 
-- 2026-07-16 Nexus startup/DGN follow-up: the runtime-handoff declaration drift
-  below the startup title route is repaired, and
-  `tests/test_nexus_v1_startup_title_route_asset_gate.c` now passes against
-  the real launcher object. The MENU.BPK renderer handoff is now fail-closed
-  for missing, invalid, no-surface, PRS3-blocked, and truncated routes, and
-  the launcher no longer treats a missing renderer receipt as a real-menu
-  asset handoff. Remaining Nexus work is still real MENU.BPK PRS3 decode,
-  original Structure2/ITEM.IBS/VDP1 texture-palette binding, broad DGN
-  command-plan readiness repair, Structure3 mesh draw admission, and Saturn
-  capture comparison. Keep the startup/menu/DGN path fail-closed; do not
-  promote fallback startup menu or synthetic dungeon visuals.
-
   - 2026-07-16 update: Structure1Fa ITEM.IBS descriptor-0008 material now
     reaches the exact DGN floor-command receipt as authenticated packed 4bpp
     source bytes, while explicitly carrying
@@ -3820,21 +3403,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     with no fallback. Remaining work is unchanged: real original-Saturn VDP1
     command/state/palette capture tied to ITEM.IBS and the DGN command route
     before texel order, palette semantics, or drawing can open.
-
-- 2026-07-15 DM1 SAVEUTIL F0419 external-corpus follow-up: the local
-  original-PC34 part reader now rejects overflowing cursor state before
-  touching the F0420 length prefix or body. Remaining work is an
-  operator-staged `FIRESTAFF_DM1_PC34_SAVE_CORPUS` run that exercises the
-  same malformed-boundary cases against real original save files; do not
-  promote checksum-authenticated fixture envelopes as external-save evidence.
-
-- 2026-07-15 DM1 F0168/F0172 inscription-owner follow-up: M11 now consumes
-  only the F0172-selected raw G0290 TextString for F0107/M648 front, side,
-  and depth wall passes; a malformed selected record cannot borrow another
-  visible TextString from a broader Thing list. The unreadable side/depth
-  receipt retains exact F0107 geometry, C10 key, and palette map. Remaining
-  work is real PC34/Mac capture across every HoC and non-HoC projection; no
-  host text, font, or palette substitute.
 
   - 2026-07-15 raster-source binding update: both F0168 world discovery and
     F0172 selected-wall consumption now prove the same raw M648 receipt,
@@ -3862,31 +3430,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     original unreadable ornament palette/clip path. Remaining work is broader
     packaged PC34/Mac capture, not host-font substitution or synthetic text.
 
-- 2026-07-15 DM1 F0292 champion-HUD material follow-up: the live status-box
-  route no longer uses the generic cyan host frame when C008 or another
-  required source surface is unavailable, even with V1 chrome disabled. The
-  original C008 dead-champion 67x29 surface is now blitted opaquely, so its
-  black pixels clear stale bars and hands. Remaining work is real PC34/Mac
-  capture across dead/alive, shields, hands, and four-champion transitions;
-  absent source material must remain no-draw.
-
   - 2026-07-15 update: the public champion-status layout now exposes the
     F0287 PC34 bar container at y=2, matching the existing live bar-fill model
     and ReDMCSB's 4x25 split. This closes the stale y=0 HUD geometry path;
     remaining work is still real PC34/Mac capture breadth.
-
-- 2026-07-15 DM1 F0172/C127 mirror-material follow-up: the live D1C route
-  now treats C346 followed by C026 as one source-owned operation. A missing or
-  malformed C346 backing must suppress C026 rather than leave a floating
-  portrait; missing C026 keeps the verified backing but draws no substitute
-  portrait. The D1C C346/C026 route remains portrait-only; only one-tile D1L
-  and D1R C127 wall facts pass through the ordinary F0107 wall-ornament
-  projection for real C346 backing, with C026 suppressed outside D1C and
-  D2/D3 or mismatched-view facts rejected. M11 publishes a
-  frame-local receipt only after the D1C C346/C026 blits succeed, while
-  D1-side mirror backing remains owned by the GRAPHICS.DAT wall-ornament
-  host receipt. Remaining work is real PC34/Mac capture across every HoC C127
-  sensor and candidate-panel state.
 
   - 2026-07-15 all-C127 source proof update: the C026 portrait source is now
     explicitly bounded to ReDMCSB's 8x3 (24-cell) 32x29 atlas. A malformed
@@ -3920,130 +3467,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     and D3 backing, while the separate D1C suite retains C346/C026 ownership.
     Remaining work is Mac/release-frame capture, not a missing side/depth
     mirror-frame route.
-
-- 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
-  F0387's action-panel family, so they are explicitly excluded from the
-  F0394 C009/C011/M653 spell-material route. Remaining work is unchanged:
-  real PC34/Mac capture of the admitted source transitions.
-  arbitrary 768-byte font records are not DM1 fallbacks. Remaining work is
-
-- 2026-07-15 DM1 F0115 creature-material/geometry follow-up: C584+ creature
-  surfaces now require decoded loaded pixels, and C3200/G0224 zero coordinates
-  are source no-draw rather than pane-relative placement. Remaining work is
-  real PC34/Mac capture across creature type, group count, depth, pose, and
-  palette replacement. Do not restore side-hint geometry or a dimension-only
-  cache admission.
-
-- 2026-07-15 DM1 F0115 projectile/object material follow-up: M613 projectile,
-  F0142/G0209 thrown-object, and C2500 floor-object paths now require decoded
-  PC34 pixel surfaces before their source placement plans run. Remaining work
-  is real PC34/Mac multi-projectile and object-pile capture. Missing media
-  must be no-draw, never a dimension-only or host-material substitute.
-  2026-07-23 update: C2500/G0209 object-pile, F0142/G0209 thrown-object, and
-  C2900/M613 native-projectile handoffs now share one fail-closed DM1-owned
-  material contract and are admitted into the F0128 per-square scheduler only
-  after source ownership, C10/F0791, pixels, and graphic identity validate.
-  Remaining: consume this verified scheduled handoff in the final M11 draw
-  lane after its concurrent refactor.
-
-- 2026-07-15 DM1 F0114 explosion follow-up: live D1–D3 F0114 sprites and the
-  separate D0C M636 pattern now require loaded-pixel PC34 surfaces. Remaining
-  work is real PC34/Mac capture across explosion type, depth, and animation
-  frames. Missing or malformed source media must stay no-draw, never a host
-  bloom or colour substitute.
-
-- 2026-07-15 DM1 F0113 teleporter-field follow-up: live M11 now requires the
-  complete real C076 field and its required C070..C075 projection mask before
-  drawing a HoC teleporter. Remaining work is PC34/Mac capture across all
-  field zones and animation phases. Do not expose an unmasked field when its
-  source mask is missing or malformed.
-
-- 2026-07-15 DM1 F0387 action-menu follow-up: C079/C077/C011 now require
-  96-pixel C010/C009 material rectangles from the narrower C011/C013 click
-  zones. Two retired status/champion geometry probe cases remain explicitly
-  disabled in their test until a source-owned public probe API exists.
-  Remaining work is real PC34/Mac capture of action-menu transitions, spell
-
-- 2026-07-15 DM1 F0292 auxiliary-HUD follow-up: C032 POISONED and
-  C037/C038/C039 shield borders now require exact loaded-pixel PC34 surfaces
-  at source status geometry. Remaining work is a real PC34/Mac capture for
-  stacked shields and poisoned champions. Missing or malformed material must
-  remain no-draw; do not add host borders, labels, or substitute coordinates.
-
-- 2026-07-15 DM1 F0623/F0320 damage-HUD follow-up: normal V1 damage feedback
-  now requires exact loaded-pixel C015/C016 and the original M653 source-font
-  route at C167/C179 geometry. Remaining work is a real PC34/Mac pending-damage
-  capture for normal and inventory champions. Missing or malformed material
-  must leave the status clear unchanged; do not restore generic M11 text or
-  default status-box coordinates.
-
-  2026-08-06 source audit: corrected the C015/C016 transparency slot to the
-  ReDMCSB C10_COLOR_FLESH route. The previous black-key treatment could paint
-  the damage bitmap over champion names. Focused source and PC34 contract
-  tests now pass; real packaged Mac capture remains open.
-
-- 2026-07-15 DM1 status-hand HUD follow-up: F0291 now accepts only exact
-  loaded-pixel C033/C034/C035 at C211..C218 before it may draw a source icon.
-  Remaining work is real PC34/Mac capture for ready, wounded, and acting-hand
-  variants; absent or malformed material must preserve the F0292 status clear
-  instead of drawing a host border or item placeholder.
-
-- 2026-07-15 DM1 leader-hand HUD follow-up: F0034 now preserves the exact
-  C017 black clear and prints its bounded 14-character name only through the
-  loaded PC34 M653 font at the source zone geometry. Remaining work is a real
-  PC34/Mac capture across short and maximum-length names; unavailable font
-  material must keep the field clear rather than use a host font.
-
-- 2026-07-15 DM1 champion-statistics follow-up: F0351 now requires exact
-  loaded-pixel C020 plus loaded M653 font at the existing source C557/C559
-  geometry. Remaining work is a real PC34/Mac capture covering skill levels,
-  red/green/gray statistic runs, and locale variants. Missing material must
-  remain no-draw rather than recreating the statistics panel with host text.
-
-- 2026-07-15 DM1 object-description follow-up: F0342 now requires exact
-  loaded-pixel C020/C029 and M653 font geometry, with the C556 continuation
-  origin used directly. Remaining work is a real PC34/Mac capture of weapon,
-  potion, and junk descriptions. Missing media must remain no-draw rather
-  than recreating the panel, circle, icon, or text in host primitives.
-
-- 2026-07-15 DM1 inventory panel follow-up: normal V1 F0355/F0341 now
-  accepts only exact loaded-pixel C017/C023/C033 GRAPHICS.DAT surfaces and
-  the original loaded font. Remaining work is a real PC34/Mac capture of
-  scroll, chest, and full 30-slot inventory states. Missing source material
-  must keep the C017-cleared area untouched; do not restore host slot boxes,
-  scroll chrome, or generic text.
-
-- 2026-07-15 DM1 CHAMDRAW HUD follow-up: F0622 champion-position icons and
-  F0292 dead status boxes now require their exact PC34 GRAPHICS.DAT surfaces.
-  Remaining work is a real four-champion HUD capture across live/dead and
-  invisibility states; missing media must remain unavailable, not a colored
-  icon tile or procedural status frame.
-
-- 2026-07-15 DM1 ornament follow-up: F0107/F0108/F0109 runtime consumers now
-  require F0173-owned DUNGEON.DAT local indices and original GRAPHICS.DAT
-  pixels. Remaining work is broader real HoC/Mac capture across all wall and
-  door-ornament views, including F0107 alcove classification; do not restore
-  identity graphics or generated ornament art.
-
-- 2026-07-15 DM1 F0111 D3 door-front follow-up: the F0676/F0677 C3700/C3710
-  panel route now requires an expanded GRAPHICS.DAT G0693 span or the verified
-  packed G0693-to-G0074 path. Remaining work is real PC34/Mac capture of door
-  opening variants; missing media must remain no-draw, never a host-colored
-  panel.
-
-- 2026-07-15 CSB archive-only media discovery: loose CSB package candidates
-  are now verified in one files-only MD5 pass before any archive container is
-  opened. Archive-only CSB media deliberately retains the complete
-  hash-verified container path; do not replace it with filename guesses or
-  accept an archive member without its canonical MD5.
-
-- 2026-07-15 CSB PC3.4 palette/capture gate: playback now consumes the exact
-  TITLE.C F0437 source plan for C001 PRESENTS/CHAOS/STRIKES, and M11 atomically
-  rejects a stale C040/viewport page before presenting package C004/C002/C003
-  or C017/C040. Exact CSBWin `Palette360` program-data bytes and an external
-  original visual capture are still absent locally. Do not replace the
-  ReDMCSB palette with guessed RGB values or promote current package hashes to
-  pixel-parity evidence.
 
   - 2026-07-15 update: the live M11 app boundary now re-composes the current
     C001--C005 plan and requires byte-for-byte indexed-raster equality plus
@@ -4129,11 +3552,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     original-window capture and broader app-route parity; the local opt-in
     real-package launch probe still has broader real-data/hash failures.
 
-- 2026-07-15 DM1 F0225 follow-up: raw Lord Chaos escape mutation is live.
-  F0213/F0220 now own validated C15-to-C25 creation and live C25 advancement;
-  remaining endgame work is caller-specific harm-explosion transaction breadth,
-  not a fallback C15/C25 path.
-
   - 2026-07-17 update: the F0217 Ven/Ful impact consumer now admits only a
     byte-identical C14 Slot and C05 power/type record, publishes its C15/C25
     owner before runtime F0213, and rolls C15/SFT/runtime/timeline state back
@@ -4161,12 +3579,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     any C14 or runtime mutation. Remaining F0221 work is broader caller
     adoption, not a runtime-list substitute.
 
-- 2026-07-15 DM1 F0128 follow-up: F0115 now runs in source square order
-  D3L/D3R/D3C, D2L/D2R/D2C, then D1L/D1R/D1C. Remaining viewport work is
-  merging the existing F0104/F0107/F0111/F0113 material families into the
-  same per-square scheduler, including real field-after-things and door/object
-  occlusion capture. No host substitutes are permitted.
-
   - 2026-07-16 update: the DM1 wall-material scheduler now source-locks the
     F0128 D0-D3 wall renderplan against ReDMCSB draw-order rows and keeps
     D2L/D2R C710/C711 side-wall receipts alive even when nearer D1L/D1R side
@@ -4180,24 +3592,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     broaden real PC34/Mac capture parity (the live M11 wiring landed
     2026-07-19, see DONE).
 
-- 2026-07-15 DM1 TITLE/Entrance follow-up: the M11 special-palette route now
-  preserves the exact source RGB output and the 53-tick C001 cadence receipt.
-  ENTRANCE.C G0020's palette id, entry count, and fingerprint are now bound
-  through the timing receipt and per-step M11 presentation command; altered
-  receipts reject before any frame is presented. Remaining evidence is a real
-  macOS release capture across SWSH -> TITLE -> Entrance; do not re-enable V2
-  color/motion filters for source-owned palette phases or replace the capture
-  with a synthetic frame sequence.
-
-- 2026-07-15 DM1 F0223 follow-up: raw target-square allow classification is
-  complete and source-locked by `test_dm1_v1_endgame_system_pc34_compat`;
-  F0224's source action plan is now closed; broader real Lord Chaos
-  escape-route capture remains separate.
-
-- 2026-07-15 DM1 F0222 follow-up: FUSE still needs broader real-map route
-  capture; the F0222 raw C04 lookup and F0224 source action plan are now
-  source-locked by `test_dm1_v1_endgame_system_pc34_compat`.
-
   - 2026-07-16 update: the live CSBWin `SetTimer` duplicate-policy matrix for
     C05..C10 map timers now stays inside the CSBWin owner. Matching timer
     functions on the same square/time replace only the action byte, TT_STONEROOM
@@ -4206,29 +3600,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     through the shared DM1 merge helper. Remaining work is full requeue
     semantics from a real CSBWin save corpus.
 
-- 2026-07-15 CSBWin SetTimer owner contract: `Timer.cpp:912-941` deletes by
-  handle and repairs the heap; `944-1172` first applies TT_MAP/TT_1/TT_DOOR/
-  TT_BASH_DOOR duplicate rules, allocates `m_firstAvailTimer`, copies the full
-  TIMER record, assigns sequence, finds the next TT_EMPTY slot, appends the
-  handle, then calls `AdjustTimerQueue`. Firestaff now uses that atomic
-  delete/requeue ownership path for TT_53, collision-free TT_1, and deferred
-  TT_7 CLEAR, including source slot/sequence and rollback of a staged timeline
-  event. The C05..C10 duplicate matrix is now live-owned by the CSBWin timer
-  path; I_Delay/Message and broader requeue corpus execution remain blocked
-  until source comparisons can be staged transactionally from a real CSBWin
-  save.
-
   - 2026-07-22 update: boot now publishes an inventory receipt only after a
     second classification exactly matches the manifest-admitted cache index.
     Missing or mismatched media is clear-only. The remaining blocker is still
     real type/id-to-entry capture, not a generated bitmap or palette fallback.
-
-- 2026-07-15 CSB callable-audit: local `REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv`
-  MISSING candidates were mechanically rechecked. The high-priority rows
-  available locally resolve only to declarations/platform stubs (not complete
-  ReDMCSB bodies), or are already source-implemented CSB routes such as F0243.
-  Do not promote an audit label into an implementation candidate until its
-  referenced source file and complete body are locally staged.
 
   - 2026-07-22 update: FIO1's portable caller-owned routes now map F1321,
     F1323, F1328-F1336, F1338-F1339, and F1341-F1342 over existing PC34
@@ -4239,39 +3614,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     planar bitmap, inclusive box, and color to F0135. IMAGE3's packed-raster
     F0692 stays a separate route; no video data is generated by this bridge.
 
-- 2026-07-15 CSBWin `STKOP_ObjectID` now fail-closes without a live DSA-bank
-  owner. Remaining work is binding the actual DSA execution context.
-
-- 2026-07-15 DM1 GROUP F0182 follow-up: live F0209 now consumes its
-  source-defined stop-attacking decision through F0182, clearing all four
-  active-group attack bits and exact-square C29..C41 reactions before the
-  replacement behavior event. Remaining group work is real original runtime
-  capture across the broader C29--C41 paths; no synthesized AI route is used.
-
-- 2026-07-15 DM1 CHAMPION F0286 follow-up: C04 melee now resolves its
-  non-`ATTACK_ANY_CHAMPION` target through the original adjacent-range,
-  F0229/G0023, and F0285 chain. Remaining target work is real original
-  combat-capture; do not choose a host cell or consume fallback RNG.
-
-- 2026-07-15 DM1 MOVE F0265 follow-up: blocked C04 movement now builds the
-  original C60/C61 `Map_Time`, `B.Location`, and exact little-endian `C.Slot`
-  record before M10 schedules its retry. The source-shaped event builder is
-  now audit-closed; remaining F0265 work is real original-save corpus capture,
-  not replacement of C.Slot with a host-only index.
-
-- 2026-07-15 DM1 MOVE F0264 follow-up: the source-defined C04 raw-attribute,
-  C14 projectile, and C15 explosion levitation classifier now drives the live
-  F0267 ordinary-Thing sensor gate. Remaining F0267 work requires real
-  original route capture; do not classify a decoded object or substitute a
-  default levitation state.
-
-- 2026-07-15 CSBWin DSA `STKOP_Copy` is source-backed for loaded DB3
-  actuators: `DSA.cpp:4696-4721` copies only bytes 2..7 after both Thing
-  integers validate as actuators. The authenticated runtime stages chained
-  copies inside one action and writes the profile candidate only after full
-  bytecode acceptance. Broader DSA coverage remains open; no DB3 substitute
-  record or synthetic payload is accepted.
-
   - 2026-07-15 follow-up: `STKOP_Mastery` now binds `DSA.cpp:3389-3409` to
     the same loaded CHARDESC rows, including selector-four hand character,
     temporary-XP suppression, hidden-skill averaging, and transient
@@ -4280,144 +3622,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     possession bonuses, so the unflagged route remains unavailable rather
     than mapping a host item.
 
-- 2026-07-15 CSBWin DSA `STKOP_SetAdjustSkillsParameters` now stages the
-  exact five `DSA.cpp:3034-3043` values and commits them only to an explicit
-  `Magic.cpp::AddToSkill` owner after complete authenticated bytecode. The
-  remaining live gap is binding that owner to the original skill-adjustment
-  route; do not retain parameters in a synthetic global or apply them outside
-  the source skill path.
-
-- 2026-07-15 CSBWin DSA `STKOP_Describe` now preserves `DSA.cpp`'s
-  location/index/color stack order and commits only through a real
-  `Character.cpp::ModifyDescription` DB2/phrase owner. Remaining work is
-  binding that owner to loaded DB2 text plus live HUD phrase rendering; do not
-  derive text from a host string or create a substitute phrase table.
-
-- 2026-07-15 DM1 GROUP F0177 follow-up: raw adjacent C04 melee target
-  selection now consumes F0175/F0176 and the original F0229/G0023 cell order.
-  Remaining work is routing live M10/M11 attack consumers through effective
-  F0145/F0147 values; do not choose a target for diagonal, non-adjacent, or
-  absent-C04 input.
-
-- 2026-07-15 DM1 GROUP F0176 follow-up: raw C04 count/type now selects the
-  exact centered/full/half-square cell scan. Remaining work is binding live
-  M10/M11 consumers to F0145/F0147 effective active-group cells and directions;
-  do not derive an ordinal from decoded health/slot mirrors or choose a
-  fallback target.
-
-- 2026-07-15 DM1 GROUP F0175 follow-up: loaded PC3.4 square chains now
-  resolve their first C04 group through F0161/F0159. Remaining work is
-  routing separately-owned M10/M11 live group consumers through this raw
-  accessor; do not use a decoded group list, synthetic group, or default
-  target when no C04 record exists.
-
-- 2026-07-15 DM1 GROUP F0178 follow-up: packed C04 creature cells and
-  directions now use the exact source replacement primitive in the live F0262
-  teleporter route. Remaining work is routing separately-owned group AI and
-  viewport packed-value writes through it; do not reconstruct a packed value
-  from decoded creature state or use a default direction/cell.
-
-- 2026-07-15 DM1 GROUP F0185 follow-up: live C006 generation now uses the
-  original GROUP.C allocation, raw C04 initialization, one start-cell RNG
-  draw, descending `GROUP.Count` cell/health writes, F0267 route, and M560
-  buzz. Remaining work is authentic original generator/save capture; do not
-  replace a missing RNG, Thing slot, or move result with a generated group.
-
-- 2026-07-15 DM1 GROUP F0196 follow-up: PC3.4 new-world initialization now
-  owns exactly sixty cleared active-group slots with the original unused
-  sentinel before F0195 traverses real C04 chains. Remaining work is authentic
-  original-save corpus coverage; do not infer active entries outside the
-  serialized source range.
-
-- 2026-07-15 DM1 DUNGEON F0144 follow-up: raw PC3.4 `GROUP.Type` now
-  selects exact G0243 Attributes through F0156. Remaining work is routing
-  separately-owned live M10/M11 creature consumers through this raw accessor;
-  do not substitute a decoded group mirror or a default creature profile.
-
-- 2026-07-15 DM1 DUNGEON F0140 follow-up: the source-defined raw PC3.4
-  object-weight route now covers F0156 object rows, F0159 container contents,
-  and M11 F0328 thrown-object preflight. Remaining work is separately-owned
-  live inventory and non-F0328 champion load consumers; do not substitute
-  decoded object weights, a default weight, or a truncated/cyclic container
-  chain.
-
-- 2026-07-15 DM1 DUNGEON F0143 follow-up: raw PC3.4 `ARMOUR.Type` now
-  resolves through the complete original G0239 table and exact sharp-defense
-  scaling. Remaining work is separately-owned live champion inventory
-  snapshot consumption; do not derive armour values from decoded mirrors or
-  admit an absent/out-of-range G0239 row.
-
-- 2026-07-15 DM1 F0141/F0032/F0033 follow-up: raw PC3.4 object-info and
-  dynamic icon resolution now read the loaded F0156 Thing record and exact
-  G0237 Type column; F0115 candidate subtype extraction and the live M11
-  champion-panel/leader-hand icon painter share the same F0033 result.
-  F0302/F0303 hand, inventory, and chest placement now also consumes that
-  source-selected G0237 row's AllowedSlots field. Missing raw records are
-  no-draw and no-place even when decoded mirrors have an icon-like subtype.
-  Remaining work is real PC34/Mac capture across inventory, hand, charge,
-  compass, scroll-state, and slot-placement changes; do not substitute a
-  decoded Thing mirror, subtype-zero object, or host-generated icon.
-
-- 2026-07-15 DM1 DUNGEON F0168 follow-up: the HoC wall-inscription consumer
-  reads raw PC3.4 TEXTSTRING visible/offset fields through F0156 before
-  building its original glyph/M648 receipt. Remaining F0168 work belongs to
-  separately owned message and scroll consumers; do not route those through a
-  host-text or decoded-TextString fallback.
-
-- 2026-07-15 DM1 original-save F0421 follow-up: saved dungeon-tail sections
-  now pass the original running byte-checksum gate before F0435 materializes
-  them. F0420/F0419 own each obfuscated save part and F0421/F0422 own the
-  paired raw tail spans through explicit source checksum contracts before the
-  complete envelope is committed. Remaining save work is authentic external
-  corpus breadth and launcher/UI consumption; do not admit a malformed,
-  header-only, or aggregate-checksum substitute.
-
-- 2026-07-15 DM1 DUNGEON F0156 follow-up: the source-defined raw Thing-data
-  accessor now owns the live door-button read path. Remaining work is to
-  route other DM1 raw Thing consumers through this accessor while preserving
-  their caller-owned mutation rules. Do not infer a record from decoded
-  mirrors, or return data for absent, reserved, or out-of-range source slots.
-
-- 2026-07-15 DM2 HUD follow-up: HUD now binds to its G1 scene receipt. Save corpus remains.
-
-- 2026-07-15 DM2 HUD follow-up: exact real HUD command counts now cross M11.
-  Remaining work is original save-corpus admission, not partial HUD fallback.
-
-- 2026-07-15 DM2 HUD follow-up: M11 now verifies each decoded GDAT HUD
-  command before its blit. Remaining work is real save-corpus state binding.
-
-- 2026-07-15 DM2 HUD follow-up: M11 now recomputes the real GDAT HUD command
-  plan receipt at consumption time and blocks source-required champion
-  portraits if the `RECT_173..176` table identity drifts. Remaining work is
-  still live save-corpus state binding, broader object-icon state/corpus
-  resolution, and broader dungeon/HUD runtime capture; do not replace missing
-  state with local material fallback.
-
   - 2026-07-15 update: M11 now binds source-required item/icon material
     receipts to the same G1 scene-control identity as the viewport frame, so
     a matching item material hash/count cannot be replayed from another scene.
     Remaining object-icon work is save-corpus state binding and broader
     inventory/hand/possession capture, not a local icon fallback.
-
-- 2026-07-15 DM2 startup/runtime follow-up: skproject title/menu startup now
-  Do not add synthetic menu, dungeon, HUD, or party substitutes; next work
-  must bind the remaining consumers to real `GRAPHICS.DAT`, `DUNGEON.DAT`,
-  and save-corpus data.
-
-- 2026-07-15 DM1 F0094/F0098: packaged active-map C079/C078 assets now reach
-  the PC34 224x39 plus 224x97 viewport pair. Remaining work is broader
-  original Mac/app capture, not a fallback texture path.
-
-- 2026-07-15 DM2 DRAW_DOOR remaining: closed D0-D3 panels consume their
-  exact `tlbRectnoDoorPosition` -> RAW4 `QUERY_BLIT_RECT` destinations.
-  Vertical state-1..3 and horizontal state-1..3 at D0/D1/D2 now use the
-  original source panels. Horizontal draws are atomic right/left image crops,
-  not a scaled substitute. Remaining: distance stretch/light-palette
-  execution, `DRAW_DOOR_FRAMES`, and broader door-type routing. The source
-  `tlbGraphicsDoorSideFrames` fields and `QUERY_CREATURE_BLIT_RECTI` keys for
-  D0--D3 now reach the runtime door receipt; actual side-frame pixel blits
-  remain blocked pending complete `QUERY_TEMP_PICST`/RAW4 geometry proof. No generic
-  panel/frame fallback.
 
   - 2026-07-17 update: `DRAW_DOOR_FRAMES`' bounded `yy & 1` roof-slit
     `DRAW_DUNGEON_GRAPHIC` transaction now has an M11 consumer for only the
@@ -4440,88 +3649,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     D3/custom WALL_GFX buttons, door opening transforms, and verified GDAT
     material.
 
-- 2026-07-15 DM2 `DRAW_DOOR` follow-up: map `UseDoor0/UseDoor1` now gates
-  the matching DB0 `DoorType` before a `DOORS` material plan can exist.
-  Horizontal split-panel crop/order is now source-proven for D0/D1/D2 states
-  1..3. Remaining: per-distance light palette execution and the unresolved
-  wider `DRAW_DOOR_FRAMES` geometry. Do not revive an inactive type with a
-  default door panel.
-
-- 2026-07-15 DM2 `DRAW_DOOR` follow-up: DB0 `OrnateIndex` now resolves
-  through the source-owned map-local `glbMapDoorOrnatesList`. The horizontal
-  split-panel sequence is now the source right-then-left crop transaction.
-  Remaining: distance/light-palette execution and `DRAW_DOOR_FRAMES` pixels
-  when the active corpus supplies the selected graphicsset fields. Do not
-  treat an ornament ordinal as a direct `DOOR_GFX` entry.
-
-- 2026-07-15 DM2 skproject wall follow-up: D2/D3 side-wall M11 commands now
-  own G0163 source and destination geometry and fail closed on a mismatch.
-  Remaining work is source-proven panel compositing/light behavior, not a
-  renderer-local rectangle or synthetic material path.
-
-- 2026-07-15 DM2 skproject scene/light follow-up: the active G1
-  `GDAT_GFXSET_AMBIANT_LIGHT` word now reaches the source-owned scene plan,
-  light receipt, runtime and viewport. Remaining light work is dynamic
-  party/spell/rain accumulation and palette selection, never a host-derived
-  brightness value.
-
-- 2026-07-15 DM2 M10 presentation follow-up: active GRAPHICSSET ambient
-  light and fully consumed weather receipts now form one source-owned frame
-  identity. Remaining: skproject's dynamic light accumulation and its exact
-  palette selection; this receipt must not be treated as a blend instruction.
-
-- 2026-07-15 DM2 skproject scene follow-up: floor and ceiling commands now
-  carry decoded-pixel and QUERY_BLIT_RECT geometry receipts, verified at the
-  source-required M11 boundary. Remaining work is original light/weather
-  composition evidence, not a substitute plane or rectangle.
-
-- 2026-07-15 DM2 skproject scene follow-up: the final floor/ceiling viewport
-  gate now rehashes each command's local IMG3 palette alongside decoded pixels
-  and QUERY_BLIT_RECT geometry. A modified palette blocks both source planes
-  before any blit; the canonical G1 regression covers the no-draw result.
-  `DM2_DISPLAY_VIEWPORT`'s D1/D2 blocked-wall trim branch now also consumes
-  the selected GRAPHICSSET `dtWordValue` 0x70/0x71 high/low trim pair through
-  M11: ceiling consumes the low byte and floor the high byte, with D1 taking
-  precedence. A missing optional source word remains the source's zero/no-trim
-  result. Remaining scene work is original light/weather composition, not a
-  palette substitute.
-
-- 2026-07-15 DM2 skproject scene/light follow-up: the stationary
-  `QUERY_TEMP_PICST/_32cb_0804` floor/ceiling palette route now consumes the
-  authenticated `DM2_DISPLAY_VIEWPORT` `glbLightLevel * 10` parameter through
-  M11. It retains the source's `_4976_4226[0/1] == 0` result. When
-  `GRAPHICSSET/dt07/0` or `/1` exists, M11 now consumes its exact first 256
-  bytes as Skproject `TRANSLATE_PALETTE`'s direct palette-index lookup, then
-  runs the original interface-table `_0b36_037e` light remap. The translated
-  palette and lookup window are hash-bound to the matching `c_light` receipt.
-  A truncated lookup still blocks both planes. Remaining scene work is
-  source-backed weather composition and wider moving-class semantics; no
-  base-palette or host-light fallback may stand in for either route.
-
-- 2026-07-15 DM2 skproject moving-scene follow-up: M11 now carries the live
-  movement state into `_32cb_0804` palette selection. Stationary floor/ceiling
-  use `GRAPHICSSET/dt07/0` and `/1`; moving floor/ceiling use `/9` and `/10`
-  after the source's `cls4 += 9` branch. The selected lookup-field identity is
-  included in the palette transaction before the existing local-palette blit,
-  so a stationary receipt cannot be replayed while moving. Remaining scene
-  work is source-backed weather composition and the other moving-class
-  semantics, never a host-derived palette choice.
-
-- 2026-07-15 DM2 scene follow-up: M11 now carries G1 MapGraphicsStyle with
-  the level identity. Remaining work is source-proven light/weather compositing.
-
-- 2026-07-15 CSB M11 startup follow-up: broaden real package/app capture of
-  the verified terminal surface. M11 now discards the released C004/C002/C003
-  opening page before the first F0128 live dungeon pass, and consumes the
-  CSB-owned C017/C040 host receipt only after the full C001-to-door-to-HUD
-  session validates. The real M11 package regression now captures every
-  C002/C003 opening step with exact PC3.4 strip geometry, and the first
-  F0128 viewport now publishes its real indexed-pixel/draw-count receipt
-  against that same terminal session. The old direct asset-loader startup
-  wrappers are removed. Remaining work is external Mac/app capture; do not
-  reopen substitute presentation paths or retain a startup page as runtime
-  backing storage.
-
   - 2026-07-15 update: the CSB startup presentation receipt now rejects an
     active door-opening frame until the ReDMCSB C002/C003 animation has a
     real step in the 1..31 range. The pre-open delay may still retain the
@@ -4534,31 +3661,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     path and obtain an opening-frame plan with step 0, step 32+, or a pre-open
     delay carrying a real door step. Remaining work is still external
     Mac/app capture.
-
-- 2026-07-14 Nexus Structure3 runtime-capture follow-up: a complete external
-  capture now reaches engine-owned runtime storage only through the active
-  canonical `LEVxx.DGN` identity, parsed manifest, byte-matched six raw lanes,
-  matching session/bundle/trace-order attestation, and the existing complete
-  face binding. The route remains strictly no-draw: texture/palette codecs,
-  VDP1 field meanings, transforms, culling, and actual rasterization still
-  require separate original-Saturn proof. A missing or altered lane cannot
-  replace a previously admitted runtime source.
-
-- 2026-07-14 Nexus Structure3 entry-framing follow-up: each external capture
-  manifest must now echo the canonical entry, vertex, face, and normal offsets
-  plus vertex/face counts from the precise requested DGN entry. This binds a
-  future transform/camera trace to its source layout but assigns no Saturn
-  field meanings. Independent original-Saturn provenance and proven texture,
-  palette, VDP1, transform, culling, and raster rules remain required before
-  any renderer draw is allowed.
-
-- 2026-07-15 Nexus Structure1F/Structure1A capture follow-up: the new
-  dual-source producer target joins one visible Structure1F owner row and its
-  exact Structure1A bytes with a separately selected bounded Structure3 face.
-  The target explicitly records that the Structure1A model index has not been
-  proven to select that mesh entry. A real original-Saturn trace must establish
-  or reject this relation, then separately prove texture, palette, VDP1,
-  transform, culling, and draw semantics before any renderer promotion.
 
   - 2026-07-15 owner-corpus update: `firestaff_nexus_v1_structure1f_owner_corpus_probe`
     now rechecks every canonical Structure1F owner row against its exact
@@ -4592,114 +3694,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     records. Remaining blocker is unchanged: original Saturn evidence must
     still prove Structure1A selector semantics, transforms, texture/palette,
     VDP1, culling, and draw behavior.
-
-- 2026-07-14 Nexus Structure3 producer-admission follow-up: an instrumented
-  Mednafen producer now has a concrete session protocol for its target,
-  manifest, binary-bound attestation, and six lane files. Firestaff verifies
-  their exact session/bundle/order and raw hashes, but a producer claim is not
-  independent original-Saturn authentication: it cannot set the runtime
-  admission bit or enable mesh drawing. Obtain an independently reviewed
-  original trace and proven VDP1/texture/palette semantics next.
-
-- 2026-07-14 Nexus Structure3 capture-producer follow-up: the source-bound
-  session launcher now invokes an external instrumented emulator/tracer with
-  the exact canonical target and six immutable output paths. It accepts only
-  a producer-written manifest whose DGN, mesh, entry, face, vertex, normal,
-  and fill-selector witnesses match that target, and whose raw lane sizes
-  match the manifest. It deliberately does not attest Saturn provenance,
-  import runtime bytes, infer VDP1/texture/palette semantics, or draw. The
-  installed Mednafen binary does not emit the six lane artifacts, so the next
-  evidence remains one authenticated run from a suitably instrumented Saturn
-  producer.
-
-- 2026-07-15 Theron BIN/CUE media follow-up: CUE Track 02 now preserves its
-  fallback visuals keep the route closed. Remaining Theron work is staging a
-  real parser/corpus for that consumer trace and wiring runtime consumers to
-  this receipt rather than to opaque loader bytes.
-  declared MODE1 sector width. A hash-verified `MODE1/2048` payload remains a
-
-- 2026-07-14 Theron Track 02 capture follow-up: generic Hall-of-Records
-  later loader/CD receipts; do not inject an emulated controller state.
-  Receipt-only inspection now uses an isolated staging world; direct runtime
-  mutation continues to require the original Stage 2/3 physical-media gate.
-  a verified real-SDL2 prefix via `FIRESTAFF_MEDNAFEN_SDL2_PREFIX`. It remains
-
-- 2026-07-14 Nexus Structure3 external capture follow-up: the capture-target
-  writer now derives one exact entry/face request from a canonical loaded
-  `LEVxx.DGN`, including the source DGN, payload, face, referenced-vertex,
-  normal, and fill-selector fingerprints. An external Saturn/VDP1 producer
-  must record all six raw lanes named by that request and then write the
-  existing capture manifest. The target contains no lane bytes or hashes and
-  cannot be treated as a capture, decoder, palette, transform, or draw route.
-  Remaining blocker: obtain and independently authenticate an original-Saturn
-  trace that satisfies one emitted target.
-
-- 2026-07-14 DM1 ReDMCSB F8144: `NEC816.C:1554-1557` and C25
-  `VIDEODRV.C:1529-1532` have empty bodies and only commented parameter
-  names; no horizontal readback-flip contract exists to port without
-  speculation. F8143's distinct C25 readback body is implemented below.
-
-- 2026-07-14 Theron Track 02 dungeon/object follow-up: the authenticated US
-  this control-mediated payload into game-owned memory with an original format
-  contract; do not reinterpret the System Card acknowledgement traffic as
-  dungeon data.
-  dungeon records and the bytes after its level envelope remain opaque:
-
-- 2026-07-14 DM1 V2.1 packaged-capture follow-up: the in-game `F12` route
-  replacing an earlier presented frame. Asset-free fallback frames are
-  rejected before capture, and the probe locks Scale2x edges in the displayed
-  RGBA surface and saved BMP.
-
-- 2026-07-14 DM1 original-PC34 save/HoC follow-up: tail-backed external C13
-  rows now have an explicit F0435-to-runtime-to-adoption receipt for the
-  source-owned Vi Altar fields. M11 also consumes the single due F0887 result
-  on movement ticks, so admitted C11 action-enable rows reach the existing
-  F0253/F0259 state consumer before F0891 republishes the live hash. A
-  source-owned C75 poison expiry now also emits M11's existing champion-damage
-  signal only after its F0322-shaped HP decrement, so a saved poison tick can
-  update the live champion-damage overlay. Remaining work is authentic corpus
-  coverage for positive C75 and additional C13 states, plus original-PC34
-  capture evidence; this does not establish original executable parity.
-
-- 2026-07-14 DM2 original SKSave corpus follow-up: raw original candidates now
-  map/column/ground-stack/text/pool/map-tail boundaries and the first/last
-  source record address in each nonempty DB pool; record links, object graph,
-  checkcodes, minion associations, and post-load effects remain unowned.
-  until the saved DB graph has an exact address owner. Remaining:
-
-- 2026-07-14 Nexus Structure3 original-Saturn capture follow-up: the strict
-  from a real V3 trace bundle only after canonical media and all raw sidecars
-  pass their existing byte checks. It copies no original bytes and remains an
-  acquisition aid, not a producer authentication, decode, or render route.
-  original-Saturn source. The intake remains no-draw.
-
-- 2026-07-14 Nexus MENU.BPK PRS3 texture/palette follow-up: V3 of the
-  the exact capture-producer binary by FNV. It deliberately reports producer
-  authentication as false: local searches found no authentic Nexus V3 trace,
-  sidecars, or emulator log to admit.
-  capture/corpus gate only. Remaining proof is the original PRS3 opcode
-
-- 2026-07-14 Theron Track 02 loader/CD handoff follow-up: the new bounded
-  gate, while receipt collection remains a byte-checked inspection path.
-  Continue binds only the prior source-captured indexed receipt; it never
-  re-decodes absent Track 02 bytes or emits a replacement visual.
-  startup envelope. It remains unavailable until an operator supplies that
-
-- 2026-07-14 DM1 save-and-quit follow-up: the header guard is source-locked;
-  comparator before M10 consumes them, rather than treating heap storage order
-  as runtime order. Broader original PC34 executable route/capture comparison
-  remains an external-corpus task.
-
-- 2026-07-14 DM2 GDAT dungeon-rendering follow-up: dynamic light still needs
-  source-owned destination/clipping plans. The static
-  floor/ceiling route now accepts only the source-bound `QUERY_BLIT_RECT`
-  700/701 program receipt. Complete standard door panels,
-  frames, default buttons, and overlays now reach M11 through exact material
-  plans. HUD champion portraits now bind their M11 destination to the original
-  `INTERFACE_GENERAL/0/dt04` RECT_173..RECT_176 table receipt; custom `WALL_GFX` buttons remain receipt-gated, including the
-  source receipt's decoded dimensions. Direct DB4 creature sprites require
-  their exact original ObjectID/tile/material receipt before M11 can draw them.
-  Do not replace missing GDAT entries with generic art.
 
   - 2026-07-14 update: the full skproject `LOAD_GDAT_INTERFACE_00_02` HUD
     plan now carries its exact consumed command hash from viewport through
@@ -4846,15 +3840,6 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
     `INTERFACE_GENERAL/0/dt07/0x02` action-palette identity alongside the
     interface palette. Remaining work is the source-owned dynamic light
     input, not a substitute HUD palette.
-
-- 2026-07-14 DM2 original SKSave corpus follow-up: the fixture-free
-  `test_dm2_v1_save_load` external-corpus census accepts only
-  `FIRESTAFF_DM2_SKSAVE_CORPUS` files that survive a complete-file/payload
-  hash revalidation before and after the source-bound envelope/raw parser. It
-  reports an unset root as a non-promoting skip, performs no export or runtime
-  restore, and rejects any incomplete original-candidate census. Remaining
-  work is byte-level ownership for the rebuilt dungeon DB regions;
-  do not infer either from a header-valid save.
 
   - 2026-07-14 update: recursive corpus discovery now also retains a renamed
     artifact only after its exact 42-byte SKSave header and full source-bound

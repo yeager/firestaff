@@ -3394,3 +3394,10 @@ Closed TODO.md item (5) under the 2026-07-11 Theron original-media
 synthetic-path audit: implemented a source-locked CD audio track routing
 receipt that gates any future Theron V1 audio output on original CUE
 metadata and locally staged CD-DA tracks.
+
+### 2026-08-08 — arkiverade poster
+
+- ✅ 2026-07-27 Theron CDDA host-consumer correction
+- ✅ 2026-07-22 Theron boot runtime input/idle facade
+- ✅ 2026-07-23 Theron boot startup host-receipt apply facade
+- ✅ 2026-07-23 Theron boot startup action/state-receipt apply facade
