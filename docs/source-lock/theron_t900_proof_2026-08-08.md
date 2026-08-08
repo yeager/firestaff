@@ -71,6 +71,14 @@ extern-disken autoloadades den hashmatchande US-savestaten utan fel, men den
 icke-System-Card-CD-anrop och 0 `$2600–$27FF`-konsumentläsningar. Det är en
 negativ capturegräns, inte ett tillstånd att aktivera RNG, AI, T700 eller T900.
 
+Captureinfrastrukturen är nu också verifierad med en native SDL 2.30.9-build
+på extern-disken och Cocoa som faktisk macOS-videobackend. En körning med
+äkta Quartz RUN-events producerade fyra host key-events, 47 PCE-input-
+transaktioner, två CD-IRQ samt VCE/VRAM-snapshots. Den gav fortfarande noll
+icke-System-Card-CD-anrop och noll `$2600–$27FF`-konsumentläsningar. Det
+stärker capturebevisets reproducerbarhet, men ändrar inte den semantiska
+gränsen.
+
 ## Verifiering
 
 ```text

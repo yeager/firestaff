@@ -9,7 +9,10 @@ trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
 capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
-capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
+# An empty value is intentional on macOS: it lets native SDL2 select Cocoa.
+# Use `-` rather than `:-` so the caller can distinguish that from the
+# headless dummy default.
+capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER-dummy}
 configured_home=${THERON_MEDNAFEN_HOME:-}
 host_key=${THERON_CAPTURE_HOST_KEY:-}
 # The authentic System Card 3.0 title needs to become interactive before RUN.
@@ -431,10 +434,11 @@ wait_for_host_key_events() {
 wait_for_trace_producer() {
     local file=$1
     local attempts=$2
+    local marker=${3:-source=mednafen-pce-instrumented}
     local attempt
 
     for ((attempt = 0; attempt < attempts; ++attempt)); do
-        if [[ -s "$file" ]] && grep -Fqx 'source=mednafen-pce-instrumented' "$file"; then
+        if [[ -s "$file" ]] && grep -Fqx "$marker" "$file"; then
             return 0
         fi
         sleep 0.25
@@ -665,7 +669,12 @@ if [[ "$host_input_requested" == 1 ]]; then
         # owns the foreground before using the global HID route.
         sleep 1
     fi
-    if ! wait_for_trace_producer "$trace" "$((capture_startup_grace * 4))"; then
+    # The CPU trace is stdio-buffered until shutdown. The input producer is
+    # flushed per capture event and is the safe readiness boundary for
+    # scheduling real Quartz input while the process is still running.
+    if ! wait_for_trace_producer "$input_trace" \
+        "$((capture_startup_grace * 4))" \
+        'source=mednafen-pce-instrumented-input'; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true
         printf '%s\n' 'FAIL: Mednafen did not produce an instrumented trace before host-input scheduling' >&2
