@@ -932,6 +932,7 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
     if (!out_receipt->sal_canonical_source_verified ||
         !out_receipt->map_canonical_source_verified ||
         !out_receipt->sound_driver_canonical_source_verified ||
+        !out_receipt->event_dispatch_source_verified ||
         !out_receipt->sal_decode_supported ||
         !out_receipt->map_decode_supported) {
         out_receipt->status = NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE;

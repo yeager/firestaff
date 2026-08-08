@@ -6,6 +6,9 @@
 - ✅ Ljudmotorns initiering öppnar inte längre SLEV/event-dispatch automatiskt.
   En riktig SDDRVS-identitet eller SAL/MAP-korpus räcker inte som runtime-trace;
   dispatch och playback börjar nu i capture-gated läge.
+- ✅ `READY_DECODED` kan inte längre nås utan ett separat autentiserat
+  event-dispatch-kvitto. En framtida SAL-decoder får alltså inte ensam öppna
+  ljudruntime eller playback.
 - ✅ RLOWFIX/TEXT-parsern avvisar nu ofullständiga 8/9-byte-prefix innan
   `string_count` läses. Ett truncationstest täcker den autentiska TEXT-headerns
   10-byte-gräns utan att ändra den verifierade europeiska korpusens resultat.
