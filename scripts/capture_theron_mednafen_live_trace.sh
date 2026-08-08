@@ -641,6 +641,62 @@ if [[ -n "$configured_home" ]]; then
         exit 1
     fi
 fi
+link_capture_cue_members() {
+    local source_cue=$1
+    local destination_dir=$2
+    local source_dir
+    local member source_path destination_path destination_parent
+
+    source_dir=$(CDPATH= cd -- "$(dirname -- "$source_cue")" && pwd)
+    while IFS= read -r member; do
+        [[ -n "$member" ]] || continue
+        # Track 02 is replaced below by the hash-verified normalized ISO.
+        [[ "$member" == "$track02_member" ]] && continue
+        # An absolute FILE already resolves independently of the private CUE
+        # directory. Relative members must be made visible there.
+        [[ "$member" == /* ]] && continue
+        case "$member" in
+            ../*|*/../*|*/..)
+                printf 'FAIL: CUE member escapes its source directory: %s\n' \
+                    "$member" >&2
+                return 1
+                ;;
+        esac
+        source_path="$source_dir/$member"
+        if [[ ! -f "$source_path" ]]; then
+            printf 'FAIL: CUE member is missing from source directory: %s\n' \
+                "$source_path" >&2
+            return 1
+        fi
+        destination_path="$destination_dir/$member"
+        destination_parent=$(dirname -- "$destination_path")
+        mkdir -p "$destination_parent"
+        if [[ -e "$destination_path" || -L "$destination_path" ]]; then
+            if [[ ! -L "$destination_path" ||
+                  "$(readlink "$destination_path")" != "$source_path" ]]; then
+                printf 'FAIL: capture-home member collides with another file: %s\n' \
+                    "$destination_path" >&2
+                return 1
+            fi
+        else
+            ln -s "$source_path" "$destination_path"
+        fi
+    done < <(awk '
+        /^[[:space:]]*FILE[[:space:]]+"/ {
+            line = $0
+            sub(/^[[:space:]]*FILE[[:space:]]+"/, "", line)
+            sub(/"[[:space:]]+(WAVE|BINARY)[[:space:]]*$/, "", line)
+            print line
+            next
+        }
+        /^[[:space:]]*FILE[[:space:]]+[^"[:space:]]+[[:space:]]+(WAVE|BINARY)[[:space:]]*$/ {
+            line = $0
+            sub(/^[[:space:]]*FILE[[:space:]]+/, "", line)
+            sub(/[[:space:]]+(WAVE|BINARY)[[:space:]]*$/, "", line)
+            print line
+        }
+    ' "$source_cue")
+}
 if [[ "$capture_cue_needs_split_iso" == 1 ]]; then
     capture_cue="$home_dir/theron-capture.cue"
     # Accept both the quoted and unquoted FILE spelling used by the supplied
@@ -650,6 +706,7 @@ if [[ "$capture_cue_needs_split_iso" == 1 ]]; then
         -e "s#^FILE \\\"${track02_member}\\\" BINARY[[:space:]]*\$#FILE \\\"$capture_split_iso_cache\\\" BINARY#" \
         -e "s#^FILE ${track02_member} BINARY[[:space:]]*\$#FILE \\\"$capture_split_iso_cache\\\" BINARY#" \
         "$cue" >"$capture_cue"
+    link_capture_cue_members "$cue" "$home_dir" || exit 1
 fi
 cleanup_capture() {
     local exit_status=$?
