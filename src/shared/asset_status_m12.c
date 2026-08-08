@@ -3933,6 +3933,26 @@ static void m12_prefer_dm2_loose_graphics_runtime_dir(M12_AssetStatus* status,
     }
 }
 
+static void m12_normalize_dm2_runtime_owner(M12_AssetStatus* status,
+                                            int gameIndex) {
+    char physicalAssetDir[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0 ||
+        m12_path_is_virtual_asset(status->runtimeDataDirs[gameIndex])) {
+        return;
+    }
+    /* Cache admission compares the original logical matched paths first.
+     * Only after that check may the launch handoff collapse user symlinks.
+     * This keeps M12 and dm2_v1_boot on the one hash-selected physical DATA
+     * directory without copying, unpacking or substituting game data. */
+    if (FSP_ResolvePhysicalPath(physicalAssetDir, sizeof(physicalAssetDir),
+                                status->runtimeDataDirs[gameIndex])) {
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]),
+                        physicalAssetDir);
+    }
+}
+
 static void m12_apply_required_game_availability(M12_AssetStatus* status,
                                                  int gameIndex,
                                                  int available) {
@@ -5252,6 +5272,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         if (!m12_materialize_runtime_cache_for_game(status, i)) {
             m12_apply_required_game_availability(status, i, 0);
         }
+        m12_normalize_dm2_runtime_owner(status, i);
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -5517,6 +5538,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (!m12_materialize_runtime_cache_for_game(status, gameIndex)) {
         m12_apply_required_game_availability(status, gameIndex, 0);
     }
+    m12_normalize_dm2_runtime_owner(status, gameIndex);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
         m12_refresh_theron_track02_loader_receipt(status);

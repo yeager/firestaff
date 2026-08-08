@@ -18,6 +18,15 @@
   actuatorväg.
 - ✅ Runtime-ticken är spärrad på samma sätt. Den kan därmed inte skapa
   förfluten tid, timerkörning eller väderarbete från bara en monterad karta.
+
+# DM2 fysisk tillgångsägare vid uppstart (2026-08-08)
+
+- ✅ Efter att `GRAPHICS.DAT` och `DUNGEON.DAT` har hashverifierats
+  normaliserar bootprofilen en lös tillgångskatalog genom symlänkar. M12 och
+  M11 överlämnar därmed samma faktiska DOS `DATA`-katalog även när
+  `.firestaff/data/dm2/data` är en länk till en extraherad installation.
+- ✅ Ingen fil kopieras, packas upp eller ersätts. Virtuella arkivvägar lämnas
+  orörda och den ofullständiga `GAME_LOAD`-grinden är fortfarande stängd.
 # DM2 källbunden championroster (2026-08-08)
 
 - ✅ Bootprofilen exponerar nu alla 16 verkliga PC-DOS-champions i samma

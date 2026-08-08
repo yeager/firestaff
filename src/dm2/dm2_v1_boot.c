@@ -2054,6 +2054,23 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                  "%s%cdm2", base, DM2_PATH_SEP);
     }
 
+    /* A user may keep the original DATA directory behind a symlink (the
+     * default Firestaff staging does this for an extracted DOS install).
+     * M12 resolves the matched loose-file owner to its physical directory,
+     * so boot must use that same owner before opening companion media.  Do
+     * this only after the GRAPHICS/DUNGEON hash pair has selected the source;
+     * resolving a path neither admits nor materializes any replacement data.
+     * SKULL.ASM T560 owns the subsequent DUNGEON.DAT read. */
+    if (!strstr(profile->asset_root, "::")) {
+        char physical_asset_root[sizeof(profile->asset_root)];
+        if (FSP_ResolvePhysicalPath(physical_asset_root,
+                                    sizeof(physical_asset_root),
+                                    profile->asset_root)) {
+            snprintf(profile->asset_root, sizeof(profile->asset_root), "%s",
+                     physical_asset_root);
+        }
+    }
+
     /* PC music routing is an optional extra for launch, but it must never
      * borrow a filename-matched or generated table. SKProject's
      * `SKWINSPX/src/v5/sfxsnd.cpp:493` consumes
