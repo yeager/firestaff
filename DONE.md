@@ -11,6 +11,15 @@
   `csb-title-1` with the PC34 graphics MD5. ReDMCSB reference:
   `COMPILE.H:199-243`.
 
+# CSB PC34 first dungeon-command regression (2026-08-08)
+
+- ✅ Extended the real-data direct-launch regression beyond Prison: after
+  the source-owned title, Entrance wait and door opening, it sends the first
+  PC34 forward command and verifies the authenticated initial party move from
+  `(9,0,2)` to `(9,1,2)` in the live CSB runtime.
+- ✅ This pins the `ENTRANCE.C` F0806 → `COMMAND.C` F0361/F0380 handoff rather
+  than treating an inactive title or a static dungeon frame as gameplay.
+
 - ✅ Added a reproducible source-bound capture tool that requires the
   authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
 - ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a

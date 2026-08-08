@@ -527,12 +527,18 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectChampionCount = 4;
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
                 opts.bootProbeFrames = 240;
-                opts.script = "key:enter";
+                /* Prove the first real PC34 command after Prison as well as
+                 * the title/entrance handoff. ReDMCSB ENTRANCE.C F0806
+                 * releases the HUD only after the door sequence; COMMAND.C
+                 * F0361/F0380 then routes the first forward key through the
+                 * CSB queue. The authenticated local dungeon begins at
+                 * (9,0,2), whose first forward step is (9,1,2). */
+                opts.script = "key:enter,up";
                 /* ReDMCSB LOADSAVE.C F0435 uses DUNGEON.DAT's
                  * InitialPartyLocation, not a generic fixed spawn.
                  * The verified local CSB header encodes (9,0,2). */
                 opts.bootProbeExpectPartyX = 9;
-                opts.bootProbeExpectPartyY = 0;
+                opts.bootProbeExpectPartyY = 1;
                 opts.bootProbeExpectPartyDir = 2;
                 opts.bootProbeExpectChampionCount = 0;
             } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
