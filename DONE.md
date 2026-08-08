@@ -1,3 +1,14 @@
+# Nexus VDP1 source join expanded to retail Structure2 (2026-08-08)
+
+- ✅ `analyze_nexus_vdp1_source_join.py` now validates all canonical
+  `LEV00.DGN`–`LEV15.DGN` hashes and compares their bounded raw Structure2
+  image spans alongside the MNS TEXT corpus.
+- ✅ The real European frame-1 witness checks 815 MNS surfaces and 1,678
+  Structure2 spans; its 33,280-byte 16bpp source has no native or word-swapped
+  exact owner. The independent eight-frame frame-7 witness is also negative.
+- ✅ No pixel, palette, placement, DGN, HUD or viewport semantics were inferred;
+  production presentation remains capture-gated.
+
 # Nexus VDP2 multi-frame source audit (2026-08-08)
 
 - ✅ The authentic VDP2 composition and bitmap-source analyzers now accept

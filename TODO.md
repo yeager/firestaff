@@ -340,6 +340,11 @@
   surfaces in both native and word-swapped byte order; the current witness
   has no exact owner. Keep the result as negative evidence while the
   relocated/decompressed source and VDP1/CLUT owner remain open.
+  2026-08-08 Structure2 follow-up: the same comparator now checks 1,678 raw
+  image spans from the hash-verified LEV00--LEV15 Structure2 descriptors. The
+  European frame-1 and frame-7 witnesses have no native or word-swapped exact
+  owner. This broadens negative source evidence only; command order, CLUT,
+  placement and DGN material semantics remain capture-gated.
 
 - **NEXUS-SATURN-VDP1-SECOND-SOURCE-SPAN:** A second authenticated European
   START+A capture (raw SHA-256 `d648bd88…`) has active VDP1 draws in all eight

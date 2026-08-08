@@ -107,6 +107,14 @@ join, not permission to use a host texture: the source may still belong to a
 relocated/decompressed runtime buffer or another retail asset class, and the
 CLUT/placement/command-order gates remain open.
 
+The same comparator now also checks the raw image spans of all hash-verified
+`LEV00.DGN` through `LEV15.DGN` Structure2 descriptors. The European frame-1
+witness contains 1,678 bounded Structure2 candidates; its 33,280-byte 16bpp
+source span has no native or word-swapped exact match. Frame 7 of the separate
+eight-frame witness has the same negative result. These are source-byte joins
+only: an exact match would still need the original command order, CLUT and
+placement relation before any DGN material could be admitted.
+
 A second authenticated E-BIOS/French run with START+A held at frames 18000–18119
 and capture beginning at frame 18500 is retained outside the repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-french-start18000x120-skip18500-live2/runtime-vdp12.raw`.
