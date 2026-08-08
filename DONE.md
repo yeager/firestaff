@@ -1,3 +1,13 @@
+# Nexus VDP2 CRAM checked against retail Structure2 palettes (2026-08-08)
+
+- ✅ The authentic VDP2 bitmap-source audit now validates and compares all
+  1,266 nonzero 32-byte Structure2 palette anchors from canonical LEV00–LEV15.
+- ✅ European frame 1 and the independent eight-frame frame 7 have no native
+  or word-swapped exact CRAM match; MENU, TITLE and STABG palette checks remain
+  negative.
+- ✅ No palette bank, CLUT owner or VDP2 layer meaning was inferred, and no
+  production presentation route was opened.
+
 # Nexus VDP1 source join expanded to retail Structure2 (2026-08-08)
 
 - ✅ `analyze_nexus_vdp1_source_join.py` now validates all canonical

@@ -320,6 +320,10 @@
   and MENU, title and STABG palettes have no exact byte or word-swapped CRAM
   match. Keep the result negative and continue with dungeon bitmap and CLUT
   producer joins; do not promote a guessed source.
+  2026-08-08 CLUT follow-up: the comparator now checks 1,266 nonzero 32-byte
+  palette anchors from hash-verified LEV00--LEV15 Structure2 descriptors.
+  European frame-1 and frame-7 captures have no native or word-swapped exact
+  CRAM match. Palette-bank ownership and layer composition remain blocked.
 
 - **NEXUS-SCSP-READ-CORRIDOR:** The external European gameplay producer now
   supports bounded sound-CPU SCSP-read tracing with optional 68K-PC filtering.

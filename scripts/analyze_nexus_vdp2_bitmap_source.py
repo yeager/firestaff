@@ -15,6 +15,7 @@ import hashlib
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
+from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 
 
 ASSET_HASHES = {
@@ -181,6 +182,46 @@ def stabg_first_map(data: bytes) -> tuple[bytes, bytes]:
     return bytes(pixels), data[part2:part2 + 512]
 
 
+def dgn_structure2_palettes(data_dir: Path) -> list[tuple[str, bytes]]:
+    """Return only bounded nonzero 32-byte palette anchors from retail DGN."""
+    palettes: list[tuple[str, bytes]] = []
+    for level in range(16):
+        name = f"LEV{level:02d}.DGN"
+        data = (data_dir / name).read_bytes()
+        expected = DISC_HASH.get(name)
+        if expected is None or hashlib.sha256(data).hexdigest() != expected:
+            raise ValueError(f"{name} hash mismatch")
+        if len(data) < 0x1C:
+            raise ValueError(f"{name} header is truncated")
+        block = int.from_bytes(data[0x14:0x16], "big")
+        blocks = int.from_bytes(data[0x16:0x18], "big")
+        useful = int.from_bytes(data[0x18:0x1C], "big")
+        start = block * 0x800
+        capacity = blocks * 0x800
+        if (block == 0 or blocks == 0 or start > len(data) or
+                capacity > len(data) - start or useful > capacity):
+            raise ValueError(f"{name} Structure2 envelope invalid")
+        cursor = 0
+        descriptor_index = 0
+        while cursor + 20 <= useful:
+            descriptor = data[start + cursor:start + cursor + 20]
+            image_id = int.from_bytes(descriptor[0:2], "big")
+            if image_id == 0xFFFF:
+                break
+            if image_id != descriptor_index:
+                raise ValueError(f"{name} Structure2 ids are not sequential")
+            palette = int.from_bytes(descriptor[16:20], "big")
+            if palette:
+                if palette < cursor + 20 or palette > useful or 32 > useful - palette:
+                    raise ValueError(f"{name} Structure2 palette span invalid")
+                palettes.append((f"{name}[Structure2={image_id}]", data[start + palette:start + palette + 32]))
+            descriptor_index += 1
+            cursor += 20
+        else:
+            raise ValueError(f"{name} Structure2 terminator missing")
+    return palettes
+
+
 def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
     best = (0, 0, 0)
     if len(source) < 32:
@@ -231,6 +272,7 @@ def main() -> int:
         stabg = read_asset(args.data_dir, "STABG.BIN")
         stabg_pixels, stabg_palette = stabg_first_map(stabg)
         menu_sources, menu_palette = menu_surfaces(menu)
+        dgn_palettes = dgn_structure2_palettes(args.data_dir)
         sources = menu_sources + font_tiles(font) + title
         sources.append(("STABG.BIN[map=0]", stabg_pixels))
     except (OSError, ValueError) as error:
@@ -283,6 +325,22 @@ def main() -> int:
                                    for offset in range(0, len(stabg_palette), 2))
     print(f"stabg_palette_cram_match={cram.find(stabg_palette)}")
     print(f"stabg_palette_cram_word_swap_match={cram.find(stabg_palette_swap)}")
+    dgn_exact = [(name, cram.find(palette)) for name, palette in dgn_palettes
+                 if cram.find(palette) >= 0]
+    dgn_word_swap_exact = []
+    for name, palette in dgn_palettes:
+        swapped = b"".join(palette[offset:offset + 2][::-1]
+                            for offset in range(0, len(palette), 2))
+        offset = cram.find(swapped)
+        if offset >= 0:
+            dgn_word_swap_exact.append((name, offset))
+    print("dgn_structure2_palette_cram_matches=" +
+          ("|".join(f"{name}@0x{offset:x}" for name, offset in dgn_exact)
+           if dgn_exact else "none"))
+    print("dgn_structure2_palette_cram_word_swap_matches=" +
+          ("|".join(f"{name}@0x{offset:x}" for name, offset in dgn_word_swap_exact)
+           if dgn_word_swap_exact else "none"))
+    print(f"dgn_structure2_palettes={len(dgn_palettes)}")
     print(f"decoded_sources={len(sources)}")
     print(f"exact_source_matches={exact}")
     print("source_join=verified" if exact else "source_join=unbound")

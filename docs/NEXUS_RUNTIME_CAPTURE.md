@@ -175,6 +175,14 @@ word-swapped position in captured VDP2 CRAM. This is bounded negative evidence
 for the captured gameplay/intro state, not proof of another source owner.
 Dungeon bitmap and CLUT joins remain open.
 
+The VDP2 bitmap comparator now also validates every nonzero 32-byte palette
+anchor in the canonical LEV00–LEV15 Structure2 descriptors. The real corpus
+contains 1,266 such anchors. Neither the European frame-1 witness nor the
+independent eight-frame frame-7 witness contains a native or word-swapped
+exact CRAM match for any of them; the previously checked MENU, TITLE and
+STABG palettes remain negative as well. This is a bounded CLUT-source result,
+not permission to select a palette bank or compose a layer.
+
 Both VDP2 analyzers accept `--capture-frames N` and can now inspect any frame
 inside an authenticated multi-frame witness. The eight-frame European
 gameplay witness was rechecked at frame 7: it retains the same `NBG1` bitmap
