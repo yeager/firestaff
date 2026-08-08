@@ -83,12 +83,23 @@ int main(void)
     spec.title = "DUNGEON MASTER II";
     spec.dataDir = selected_runtime;
     spec.dm2EnglishCompanionPath = companion;
+    /* Swedish is the launcher locale.  The only verified in-game companion
+     * is PC English, so it must still bind English game text without changing
+     * the launcher choice or falling back to native Japanese GDAT text. */
+    spec.languageIndex = 1;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.presentationWidth = M11_FB_WIDTH;
     spec.presentationHeight = M11_FB_HEIGHT;
     M11_GameView_Init(&view);
     expect(M11_GameView_Start(&view, &spec) == 1,
            "selected HME-242 archive enters the DM2 M11 path");
+    {
+        const uint8_t *text;
+        size_t text_size = 0u;
+        text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
+        expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
+               "a Swedish launcher still binds the verified English FM Towns game-text companion");
+    }
     {
         DM2_V1_RuntimeMusicMapReceipt music;
         memset(&music, 0, sizeof(music));

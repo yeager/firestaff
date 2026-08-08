@@ -1,5 +1,16 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 FM Towns engelsk speltext oberoende av startmenyns språk (2026-08-09)
+
+- ✅ M12 väljer nu den hashverifierade PC-engelska `GRAPHICS.DAT`-kompanjonen
+  för den valda japanska FM Towns-utgåvan oberoende av startmenyns språk.
+  Startmenyn kan alltså vara svensk medan den dynamiska speltexten använder
+  den enda autentiska engelska textkällan.
+- ✅ Den riktiga HME-242-skivan äger fortfarande SWOOSH, TITLE, SKULL och END.
+  Japansk rastertext i de originalbilderna ändras inte. Både FM Towns-M12-
+  och M11-realdatatesterna passerar med svensk launcherlocale och RAM-only
+  PC-DOS-kompanjon.
+
 # DM2 tick-generatorns aktuatormål (2026-08-09)
 
 - ✅ Den privata 0x56-fortsättningen använder nu samma källbundna

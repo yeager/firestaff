@@ -12426,14 +12426,16 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
         free(profile);
         return 0;
     }
-    /* The Towns retail disc is Japanese. English is permitted only when M12
-     * explicitly selected the canonical PC-English GRAPHICS.DAT as a
-     * companion. Do not scan data_dir here: that was the former accidental
-     * sibling-install overlay and violates selected-media ownership. */
-    if (profile->platform == DM2_PLATFORM_FMTOWNS_JA && language_index == 0) {
-        if (!english_companion_graphics_path ||
-            english_companion_graphics_path[0] == '\0' ||
-            !dm2_v1_boot_read_english_companion(
+    /* The Towns retail disc is Japanese.  The host launcher locale is not a
+     * game-data locale: when M12 has selected the canonical PC-English GDAT
+     * companion, bind it for every host language.  Do not scan data_dir here:
+     * that would resurrect the accidental sibling-install overlay and break
+     * selected-media ownership.  An explicit English request still fails
+     * closed when its verified companion is unavailable. */
+    if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        english_companion_graphics_path &&
+        english_companion_graphics_path[0] != '\0') {
+        if (!dm2_v1_boot_read_english_companion(
                 english_companion_graphics_path, &english_companion,
                 &english_companion_size)) {
             out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
@@ -12443,6 +12445,14 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
             free(profile);
             return 0;
         }
+    } else if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+               language_index == 0) {
+        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
+        dm2_v1_boot_cleanup(profile);
+        free(profile);
+        return 0;
     }
     dm2_v1_boot_set_save_root(profile, NULL);
     if (dm2_v1_boot_enter_game(profile) != 0) {
