@@ -105,6 +105,16 @@
   privata statefält först efter generatorpasset, medan M11, HUD och
   `source_game_load_session_ready` fortfarande är noll.
 
+# DM2 New Game championledare i privat ägare (2026-08-08)
+
+- ✅ Championvalets privata `c_party` behåller nu originalets första
+  eventqueue-ledare och nästa championnummer. Åtgärden följer
+  `DM2_SELECT_CHAMPION` och `DM2_SELECT_CHAMPION_LEADER` i `skhero.cpp` och
+  ändrar inte de autentiska hero- eller inventoryposterna till påhittade data.
+- ✅ DB2 är nu återställd som textrecordklass. DB1 är teleporter, DB2 text och
+  DB3 actuator enligt originalets recorddefinitioner. Den privata ägaren
+  publicerar fortfarande varken party, HUD, timers eller spelbar session.
+
 # DM2 SKSAVE privat GAME_LOAD-ägare (2026-08-08)
 
 - ✅ `DM2_V1_SksaveGameLoadOwner` kan nu behålla en komplett källordnad

@@ -305,10 +305,12 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
         owner->champion_selection_materialized || !owner->fresh_game_mode ||
         !owner->source_map_context_materialized || owner->committed) return 0;
 
-    /* SKProject c_savegame.cpp::DM2_GAME_LOAD reaches SELECT_CHAMPION only
-     * after DM2_PROCESS_ACTUATOR_TICK_GENERATOR. The transaction has replayed
-     * c_hero.cpp's click order and RNG against authenticated GDAT and map
-     * links. This creates a private c_party owner, never an M11 party. */
+    /* Mirror events call SELECT_CHAMPION after DM2_GAME_LOAD has returned.
+     * This private transaction materialises their already authenticated click
+     * order and RNG against GDAT and map links; it does not claim to run the
+     * UI event loop or install an M11 party.  Source: SKProject skhero.cpp
+     * DM2_SELECT_CHAMPION (1119-1128), DM2_SELECT_CHAMPION_LEADER (2327-2354).
+     */
     candidate = owner->transaction.possessions.projected_party;
     if (!dm2_v1_game_load_owner_validate_possessions(owner) ||
         !dm2_v1_game_load_owner_validate_selected_party(owner, &candidate) ||
@@ -319,7 +321,21 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
         owner->champion_item_bonus.blocked) {
         return 0;
     }
+    if (candidate.heros_in_party <= 0 ||
+        candidate.heros_in_party > DM2_MAX_HEROES ||
+        candidate.hero[0].curHP == 0) {
+        return 0;
+    }
+    /* The source invokes SELECT_CHAMPION_LEADER only for RG5W == 0, after
+     * setting v1e0288 to one.  Replaying it with the final party count would
+     * incorrectly set bit 0x1400 on hero 0. */
+    dm2_v1_party_select_champion_leader(&candidate, 0, DM2_HERO_NONE, 1);
+    if (candidate.curactevhero != 0) {
+        return 0;
+    }
     owner->selected_party = candidate;
+    owner->source_next_champion_number = candidate.heros_in_party;
+    owner->source_event_hero_index = 0;
     owner->champion_selection_materialized = 1;
     return 1;
 }

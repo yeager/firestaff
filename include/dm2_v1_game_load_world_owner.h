@@ -62,6 +62,12 @@ typedef struct {
     /* This remains zeroed until the source-ordered champion step.  It is
      * never installed in M11 or the runtime party state. */
     int champion_selection_materialized;
+    /* Private equivalents of ddat.v1e0288 and eventqueue.event_heroidx.
+     * SELECT_CHAMPION writes v1e0288 after every real mirror click, and only
+     * the first click calls SELECT_CHAMPION_LEADER(0).  They are kept here
+     * because the UI/event queue is not yet a session owner. */
+    int16_t source_next_champion_number;
+    int16_t source_event_hero_index;
     DM2_V1_SksaveItemBonusReceipt champion_item_bonus;
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;

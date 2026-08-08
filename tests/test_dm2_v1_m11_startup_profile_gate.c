@@ -1758,9 +1758,12 @@ int main(void) {
                         source_transaction.possessions.projected_party.hero[0].item[0] &&
                     (new_game_world_owner.selected_party.hero[0].heroflag &
                         0x1000) != 0 &&
+                    new_game_world_owner.source_next_champion_number == 2 &&
+                    new_game_world_owner.source_event_hero_index == 0 &&
+                    new_game_world_owner.selected_party.curactevhero == 0 &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "M11 materializes source-selected heroes and possessions after private GAME_LOAD generators without publishing a session");
+                "M11 retains the source-selected leader, hero count and possessions without publishing a session");
     expect_true(profile &&
                     !dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner),

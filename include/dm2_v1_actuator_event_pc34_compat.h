@@ -108,7 +108,9 @@ static inline int dm2_handle_dir(int16_t handle) {
 }
 
 /* DB type constants (skproject dme.h) */
-#define DM2_DB_TEXT     1
+/* SKProject v0/dme.h:1063-1068 and c_record.cpp:28-31: DB1 is a
+ * teleporter, DB2 is the four-byte text record, DB3 is an actuator. */
+#define DM2_DB_TEXT     2
 #define DM2_DB_ACTUATOR 3
 #define DM2_DB_CREATURE 4
 

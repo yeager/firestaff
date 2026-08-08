@@ -51,8 +51,10 @@
   aldrig viewporten före en komplett sessionscommit.
   Championvalet materialiseras därefter i den privata `c_party`-ägaren från
   samma click-ordnade GDAT- och File_header-receipt, med varje itemlänk
-  kontrollerad mot dess riktiga DB-pool. Originalets equip-bonusläge och
-  startvikt är nu tillämpade privat mot GDAT. Hela championrosterens DYN4-
+  kontrollerad mot dess riktiga DB-pool. Första championens privata
+  eventqueue-ledare och nästa championnummer följer nu originalets
+  clickordning. Originalets equip-bonusläge och startvikt är nu tillämpade
+  privat mot GDAT. Hela championrosterens DYN4-
   råblock är materialiserade i samma privata ägare. 0x04-konsumenten läser nu
   verkliga File_header-rutor och genomför originalets klass-3-no-op; WALL,
   FLOOR, PIT, DOOR, TELEPORTER och TRICKWALL avvisas utan mutation tills deras
