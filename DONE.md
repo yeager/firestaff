@@ -35,6 +35,19 @@
 - ✅ Poster med olika komprimerad och expanderad längd förblir fail-closed;
   ingen oidentifierad LZW- eller värdavkodning kan bli en Amiga-bildkälla.
 
+# CSB Amiga A35E C013-runtimenyta från originaldata (2026-08-08)
+
+- ✅ A35E:s direkta `APPB.FTL` → C03-väg har nu en egen konsument för
+  `C013_GRAPHIC_MOVEMENT_ARROWS`: exakt 87×45 IMG1-pixlar hämtas ur den
+  hashverifierade Amiga-`GRAPHICS.DAT`-filen och placeras i ReDMCSB:s
+  `C009_ZONE_MOVEMENT_ARROWS` (`PANEL.C` F0395, `MENUDRAW.C` F0021/F0660).
+- ✅ Färgerna kommer från den ursprungliga A35E-dungeonpalettens första rad
+  i ReDMCSB `DATA.C` G0021, inte från PC34:s VGA-palett. Realtidstestet
+  verifierar att C03 visar Amiga-C013 och att ingen PC34-runtimeyta läcker
+  in ovanför panelen.
+- ✅ Konsumenten är avsiktligt avgränsad: saknade Amiga-viewport- och
+  champion-HUD-ägare fylls inte med konstruerade eller PC34-avkodade pixlar.
+
 # CSB Amiga 3.5 English direkt C03-handoff (2026-08-08)
 
 - ✅ M12→M11 följer nu A35E:s egna hashverifierade programgräns:

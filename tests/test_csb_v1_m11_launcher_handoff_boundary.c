@@ -2085,6 +2085,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
     char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char path[M12_ASSET_DATA_DIR_CAPACITY];
     char md5[33];
+    unsigned char framebuffer[320 * 200];
+    DM1_V1_MovementArrowRectPc34 movement;
     int version_index;
 
     if (!data_dir || !data_dir[0]) {
@@ -2133,6 +2135,14 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
                     !view.csbAmigaAppbSelectionActive &&
                     view.csbAmigaTitlBytes == NULL,
                 "A35E reaches C03_GAME without an A31/A35M/PC34 replacement screen");
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(dm1_v1_movement_arrows_graphic_rect_pc34(&movement) &&
+                    count_nonzero_region(framebuffer, 320, movement.x,
+                                         movement.y, movement.w,
+                                         movement.h) > 0 &&
+                    frame_rect_is_color(framebuffer, 0, 0, 320, 124, 0u),
+                "A35E C03 presents original Amiga C013 without a PC34 runtime page");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

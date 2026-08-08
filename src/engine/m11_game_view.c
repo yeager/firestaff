@@ -38,6 +38,7 @@
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
+#include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_amiga_titl_dat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
@@ -4177,6 +4178,97 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
     state->csbState.startup_entrance_dismissed = 1;
     m11_sync_csb_state_from_boot_profile(state, profile);
     return 1;
+}
+
+/* A35E's APPB.FTL enters C03_GAME directly, so it cannot use the PC3.4
+ * C017/C040 runtime-session consumer below.  The first independently-bound
+ * live game surface is C013: PANEL.C F0395 calls MENUDRAW.C F0021/F0660 to
+ * place that 87x45 source record in C009_ZONE_MOVEMENT_ARROWS.  Read the
+ * DMCSB2 record from the authenticated Amiga GRAPHICS.DAT instead of asking
+ * the PC IMG3 decoder to interpret it.
+ *
+ * DATA.C G0021's first MEDIA425 palette is the full-bright dungeon palette
+ * used before PANEL.C F0337 selects a darker row.  C013 uses these original
+ * four-bit indices; duplicating the 16 source registers across the indexed
+ * host palette preserves that meaning without inventing PC VGA colours.
+ * This is deliberately a bounded C013-only consumer.  No unbound Amiga
+ * viewport, champion HUD, or synthetic replacement is exposed as a game
+ * page while their native owners remain unavailable. */
+static int m11_csb_present_amiga_a35e_runtime_c013(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    static const uint16_t dungeon_palette_rgb4[16] = {
+        0x000u, 0x666u, 0x888u, 0x620u, 0x0ccu, 0x840u, 0x080u, 0x0c0u,
+        0xf00u, 0xfa0u, 0xc86u, 0xff0u, 0x444u, 0xaaau, 0x00fu, 0xfffu
+    };
+    const CSB_V1_BootProfile *profile;
+    DM1_V1_MovementArrowRectPc34 outer_rect;
+    DM1_V1_MovementArrowRectPc34 graphic_rect;
+    CSB_V1_AmigaGraphicsReceipt graphics_receipt;
+    uint8_t rgb6[256][3];
+    uint8_t *bytes = NULL;
+    uint8_t *pixels = NULL;
+    FILE *file = NULL;
+    long length;
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+    int color;
+    int row;
+    int ok = 0;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !m11_csb_is_amiga_a35e_profile(profile) ||
+        profile->runtime.state != CSB_STATE_GAME ||
+        !profile->graphics_verified || !profile->graphics_path[0] ||
+        !dm1_v1_movement_arrows_outer_rect_pc34(&outer_rect) ||
+        !dm1_v1_movement_arrows_graphic_rect_pc34(&graphic_rect) ||
+        !(file = fopen(profile->graphics_path, "rb")) ||
+        fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (uint8_t *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
+        csb_v1_amiga_graphics_receipt(bytes, (size_t)length,
+                                      &graphics_receipt) != 0 ||
+        !graphics_receipt.is_amiga ||
+        graphics_receipt.version != CSB_AMIGA_VER_3_5 ||
+        graphics_receipt.lang != CSB_AMIGA_LANG_EN ||
+        !(pixels = (uint8_t *)malloc((size_t)graphic_rect.w *
+                                     (size_t)graphic_rect.h)) ||
+        !csb_v1_amiga_graphics_decode_item(
+            bytes, (size_t)length, 13u, pixels,
+            (size_t)graphic_rect.w * (size_t)graphic_rect.h,
+            &width, &height) || width != (uint16_t)graphic_rect.w ||
+        height != (uint16_t)graphic_rect.h) {
+        goto done;
+    }
+    memset(rgb6, 0, sizeof(rgb6));
+    for (color = 0; color < 256; ++color) {
+        const uint16_t source = dungeon_palette_rgb4[color & 15];
+        rgb6[color][0] = (uint8_t)(((source >> 8) & 15u) << 2);
+        rgb6[color][1] = (uint8_t)(((source >> 4) & 15u) << 2);
+        rgb6[color][2] = (uint8_t)((source & 15u) << 2);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) goto done;
+    memset(framebuffer, 0, (size_t)framebuffer_width *
+                           (size_t)framebuffer_height);
+    m11_fill_rect(framebuffer, framebuffer_width, framebuffer_height,
+                  outer_rect.x, outer_rect.y, outer_rect.w, outer_rect.h,
+                  0u);
+    for (row = 0; row < graphic_rect.h; ++row) {
+        memcpy(framebuffer + (size_t)(graphic_rect.y + row) *
+               (size_t)framebuffer_width + (size_t)graphic_rect.x,
+               pixels + (size_t)row * (size_t)graphic_rect.w,
+               (size_t)graphic_rect.w);
+    }
+    ok = 1;
+done:
+    if (file) fclose(file);
+    free(pixels);
+    free(bytes);
+    return ok;
 }
 
 /* ReDMCSB APPA.C:51-53 starts SWSH and passes FTL_TITL to ANIM.C.  A31's
@@ -55655,6 +55747,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_csb_present_atari_st_runtime_hud(csb_state, framebuffer,
                                                  framebufferWidth,
                                                  framebufferHeight)) {
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
+        if (m11_csb_present_amiga_a35e_runtime_c013(
+                state, framebuffer, framebufferWidth, framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;

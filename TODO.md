@@ -61,9 +61,10 @@
   engelska `APPB.FTL`-C03-handoff och `BJELoad_R`-C02-launcher är nu också
   hashbundna till M11 utan en A35M- eller PC34-ersättningsyta. A35E:s
   direktlagrade IMG1-poster avkodas nu ur den autentiska `GRAPHICS.DAT`-filen
-  enligt IMAGE1.C, men första spelbilden är fortsatt spärrad tills dessa
-  poster har en egen autentisk HUD- och viewportkonsument. Komprimerade
-  poster avvisas tills deras expansionsväg är verifierad. Franska/tyska och den återstående
+  enligt IMAGE1.C och C013-rörelsepanelen visas med A35E:s ursprungliga
+  G0021-palett. Återstående Amiga-viewport och champion-HUD saknar dock
+  egna autentiska konsumenter. Komprimerade poster avvisas tills deras
+  expansionsväg är verifierad. Franska/tyska och den återstående
   A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
