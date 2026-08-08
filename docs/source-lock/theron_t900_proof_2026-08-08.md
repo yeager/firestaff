@@ -86,6 +86,13 @@ spelägda RAM-konsumenter är fortfarande noll. Detta skiljer ett verifierat
 BIOS/CD-resetförsök från en faktisk Track 02-handoff och låser fortsatt
 RNG-, AI-, T700- och T900-semantik.
 
+Capture-scriptet stöder nu också `THERON_CAPTURE_SOUND=1` för en diagnostisk
+CDDA-aktiverad körning; standardvärdet är fortfarande tyst (`0`). Den
+autentiska US-körningen med ljud aktiverat gav samma negativa gräns
+(`cd_irq_callbacks=2`, `non_system_card_pcecd_reads=0`), så ljudflaggan är en
+capture-reproducerbarhet och inte ett bevis på en spelägd ljud- eller
+objectkonsument.
+
 ## Verifiering
 
 ```text

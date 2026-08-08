@@ -9,6 +9,10 @@ trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
 capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
+# Keep the historical silent capture default, but allow a real CDDA-backed
+# run when investigating BIOS/CD initialization.  This flag changes only the
+# emulator's audio output path; it never promotes media bytes to game state.
+capture_sound=${THERON_CAPTURE_SOUND:-0}
 # An empty value is intentional on macOS: it lets native SDL2 select Cocoa.
 # Use `-` rather than `:-` so the caller can distinguish that from the
 # headless dummy default.
@@ -202,6 +206,10 @@ if [[ ! "$seconds" =~ ^[1-9][0-9]*$ ]]; then
 fi
 if [[ ! "$capture_startup_grace" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_STARTUP_GRACE must be a positive integer' >&2
+    exit 1
+fi
+if [[ "$capture_sound" != 0 && "$capture_sound" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_SOUND must be 0 or 1' >&2
     exit 1
 fi
 if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then
@@ -608,7 +616,7 @@ launch=(
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
     -force_module pce \
-    -sound 0 \
+    -sound "$capture_sound" \
     -video.driver softfb \
     -pce.input.multitap 0 \
     -pce.input.port1 gamepad \
