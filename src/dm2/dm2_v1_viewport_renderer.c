@@ -1270,6 +1270,13 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
      * former Hall-of-Champions/noon fixture values. */
     s->dirty        = 1;
     s->last_hud_core_gdat_hash = 2166136261u;
+    /* SKProject skguivwp.cpp::DM2_DRAW_VIEWPORT resets the first nine
+     * c_rwbb entries before rendering. A newly allocated Firestaff viewport
+     * has no rendered source frame, so retain the complete 13-slot shape but
+     * expose zero targets and the source null ObjectID. */
+    for (int i = 0; i < DM2_V1_VIEWPORT_CLICK_TARGET_COUNT; ++i) {
+        s->source_click_targets[i].object_id = -1;
+    }
 
     /* Initialize all view squares to empty */
     for (int i = 0; i < DM2_SQ_COUNT; i++) {

@@ -61,6 +61,21 @@ typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan DM2_V1_GdatDoorOverlayM11Com
  * runtime HUD by 1da849469); the portrait packing must not narrow it. */
 #define DM2_V1_HUD_PORTRAIT_COUNT 256
 
+/* SKProject dm2data.h::c_rwbb / ddat.v1e02f0.  The renderer rebuilds this
+ * 13-entry list for each frame and c_events.cpp::DM2_CLICK_VWPT consumes it.
+ * It deliberately holds only renderer-derived source targets; no host click
+ * geometry or invented object identity may enter this owner. */
+#define DM2_V1_VIEWPORT_CLICK_TARGET_COUNT 13
+typedef struct {
+    int16_t x;
+    int16_t y;
+    int16_t w;
+    int16_t h;
+    int16_t object_id; /* c_rwbb::w_08; -1 when no ObjectID is attached. */
+    uint8_t view_slot; /* c_rwbb::b_0a */
+    uint8_t target_kind; /* c_rwbb::b_0b */
+} DM2_V1_ViewportClickTarget;
+
 /* ── Depth / distance rows ─────────────────────────────────────── */
 /* DM2 uses the same 4-row perspective as DM1:
  *   D3C/D3L/D3R = back wall row (depth 3, smallest strips)
@@ -1967,6 +1982,12 @@ typedef struct {
     int gdat_dialogue_open_panel_active;
     int gdat_dialogue_open_panel_consumed_count;
     uint32_t gdat_dialogue_open_panel_consumed_hash;
+    /* Private source-shaped v1e02f0 click list. It is reset with each
+     * renderer-owned frame; input remains blocked until a source renderer
+     * has populated and authenticated these entries. */
+    DM2_V1_ViewportClickTarget
+        source_click_targets[DM2_V1_VIEWPORT_CLICK_TARGET_COUNT];
+    uint8_t source_click_target_count;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */

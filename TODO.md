@@ -11,6 +11,9 @@
   materialiseras i källordning utan automatiskt championval. M11 saknar ännu
   den riktiga mirrorskärmen och den kompletta sessionscommitten för
   c_eventqueue, handcontainer, timerkö och fortlöpande map-/recordmutationer.
+  Viewportägaren har nu originalets 13-posters `v1e02f0`-form, men renderaren
+  måste fortfarande fylla den med varje bildrutas autentiska scenmål innan
+  `0x50` kan nå en spegel, dörr eller sensor.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår

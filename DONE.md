@@ -1,5 +1,12 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 sourceägd viewport-klicklista (2026-08-09)
+
+- ✅ Viewportägaren har nu SKProjects exakta 13-posters form för
+  `ddat.v1e02f0`/`c_rwbb`: bildrektangel, ObjectID, visningsslot och måltyp.
+  Den initieras med originalets null-ObjectID och exponerar inga klick förrän
+  den source-renderade bilden själv har fyllt posterna.
+
 # CI: DM2 duplicate bar-colour symbols isolated (2026-08-09)
 
 # DM2 New Game före mirrorval (2026-08-09)
