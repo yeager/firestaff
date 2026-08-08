@@ -18,9 +18,10 @@
 
 - **DM2-FILE-HEADER-LOCALLEVEL-CONSUMER:** Map-0's bounded File_header
   ground-stack/`w0` chains are now source-validated and all 44 canonical maps
-  have one bounded callback walk. DB2 text/special-marker fields now use that
-  same owner, liksom DB4-varelsers placering, possessionslänkar och HP. Bind
-  den till kartans grafiklistor, aktuator- och sensorvägar samt full
+  have one bounded callback walk. DB0 doors, DB1 teleporters and DB3
+  actuators now use that same owner, liksom DB2 text/special-marker fields
+  och DB4-varelsers placering, possessionslänkar och HP. Bind den till
+  kartans grafiklistor, aktuator- och sensorvägar samt full
   `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
 
 - **DM2-CREATURE-POSSESSION-RUNTIME:** DB4-ägd possessionslänk och varje
@@ -28,18 +29,22 @@
   originalens inventarie-, dropp-, flytt- och timertransaktioner innan några
   föremål kan bli spelbara.
 
-- **DM2-FILE-HEADER-DOOR-RUNTIME:** The canonical map-0 DB0 door roots are
-  now source-decoded. Bind their original animation, lock/key, sound, button
-  and sensor consumers before publishing door transitions to gameplay.
+- **DM2-FILE-HEADER-DOOR-RUNTIME:** Canonical DB0 door records are now
+  retained across all 44 File_header chains. Bind their original animation,
+  lock/key, sound, button and sensor consumers before publishing door
+  transitions to gameplay.
 
-- **DM2-FILE-HEADER-ACTUATOR-RUNTIME:** Canonical map-0 DB3 roots now decode
-  their source target/delay/effect fields. Recover `DM2_INVOKE_ACTUATOR`,
-  DB14/timer ownership and target record mutation before any actuator fires.
+- **DM2-FILE-HEADER-ACTUATOR-RUNTIME:** Canonical DB3 records now decode
+  their source target/delay/effect fields across every File_header chain;
+  dense original maps are no longer truncated at 64 entries. Recover
+  `DM2_INVOKE_ACTUATOR`, DB14/timer ownership and target record mutation
+  before any actuator fires.
 
-- **DM2-FILE-HEADER-TELEPORT-RUNTIME:** Canonical map-0 DB1 teleporters now
-  expose the original `w2` destination, scope, sound and rotation fields,
-  plus `w4` destination map. Bind `c_moverec` map changes, party/session
-  ownership, collision and sound before allowing a transition.
+- **DM2-FILE-HEADER-TELEPORT-RUNTIME:** Canonical DB1 records now expose the
+  original `w2` destination, scope, sound and rotation fields, plus `w4`
+  destination map across every File_header chain. Bind `c_moverec` map
+  changes, party/session ownership, collision and sound before allowing a
+  transition.
 
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media

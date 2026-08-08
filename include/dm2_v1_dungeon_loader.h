@@ -581,7 +581,10 @@ typedef struct {
     uint8_t target_y;
 } DM2_V1_G1DirectActuatorRoot;
 
-#define DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS 64
+/* File_header map chains can contain more than 64 DB3 records on a single
+ * real PC-DOS map.  Keep a bounded receipt, but do not turn that historical
+ * direct-root convenience limit into an artificial data rejection. */
+#define DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS 256
 
 typedef struct {
     int committed;
@@ -1724,6 +1727,19 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
 int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeTeleporterReceipt *out);
+/* Retain every DB0/DB1/DB3 record reached through the canonical File_header
+ * map walk, including records behind a nonmatching root.  These functions
+ * only establish source ownership; no door, movement or actuator transaction
+ * is admitted by their receipts. */
+int dm2_v1_dungeon_collect_file_header_runtime_map_doors(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out);
+int dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *out);
+int dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out);
 /* Decode every DB2 Text record encountered by the canonical File_header
  * map-wide record walk.  The receipt exposes only source fields; text-table
  * decoding, visibility mutation and teleporter/sensor effects stay with their

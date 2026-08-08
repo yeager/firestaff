@@ -159,6 +159,18 @@
   faktiska `DUNGEON.DAT`-byte. Ingen rörelse, ljuduppspelning eller syntetisk
   session aktiveras av intaget.
 
+# DM2 File_header-kedjeintag för dörrar, teleportörer och aktuatorer (2026-08-08)
+
+- ✅ DB0-, DB1- och DB3-poster samlas nu ur varje fullständig `w0`-kedja på
+  samtliga 44 PC-DOS-kartor. De behöver alltså inte längre vara rutans första
+  post för att behållas.
+- ✅ Mottagargränsen för DB3 höjdes från den gamla, påhittade 64-postergränsen
+  till en begränsad 256-posterreceipt. De verkliga kartorna 8 och 9 visar att
+  den mindre gränsen hade klippt originaldata.
+- ✅ Verifierat med det kompletta File_header-vandringstestet mot originalets
+  `DUNGEON.DAT`. Intaget är läsande; dörranimation, teleporterförflyttning
+  och aktuatoranrop är fortfarande spärrade utan deras fulla originalägare.
+
 # DM2 fail-closed local-level adapter (2026-08-08)
 
 - ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu

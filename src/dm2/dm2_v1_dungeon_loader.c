@@ -3660,6 +3660,161 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
     return 1;
 }
 
+static int dm2_v1_file_header_collect_door_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_G1RuntimeMapDoorReceipt *receipt =
+        (DM2_V1_G1RuntimeMapDoorReceipt *)user;
+    DM2_V1_G1DirectDoorRoot *door;
+    uint16_t attributes;
+
+    /* Retail PC-DOS File_header maps use the same DB0 payload as DME.h::Door.
+     * The caller is the bounded c_map -> c_record map walker, so DB0 need not
+     * be the ground-stack root to retain its real coordinate and owner. */
+    if (!receipt || type != 0) return 0;
+    if (!record || record_size < 4 || index < 0 ||
+        receipt->door_root_count >= DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS)
+        return -1;
+    attributes = RD16(record + 2);
+    door = &receipt->doors[receipt->door_root_count++];
+    door->x = x; door->y = y; door->object_id = thing;
+    door->index = (uint16_t)index;
+    door->direction = (uint8_t)((unsigned int)thing >> 14);
+    door->button = (uint8_t)((attributes >> 6) & 1u);
+    door->door_type = (uint8_t)(attributes & 1u);
+    door->button_state = (uint8_t)((attributes >> 11) & 1u);
+    door->opening_dir = (uint8_t)((attributes >> 5) & 1u);
+    door->ornate_index = (uint8_t)((attributes >> 1) & 0x0fu);
+    door->destroyable_by_fireball = (uint8_t)((attributes >> 7) & 1u);
+    door->bashable_by_chopping = (uint8_t)((attributes >> 8) & 1u);
+    ++receipt->door_record_reads;
+    (void)level;
+    return 0;
+}
+
+int dm2_v1_dungeon_collect_file_header_runtime_map_doors(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out)
+{
+    DM2_V1_G1RuntimeMapDoorReceipt candidate;
+
+    if (!out || !d) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_collect_door_record, &candidate) < 0 ||
+        candidate.door_record_reads != candidate.door_root_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
+static int dm2_v1_file_header_collect_teleporter_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *receipt =
+        (DM2_V1_FileHeaderRuntimeTeleporterReceipt *)user;
+    DM2_V1_G1DirectTeleporterRoot *teleporter;
+    uint16_t w2, w4;
+
+    if (!receipt || type != 1) return 0;
+    if (!record || record_size < 6 || index < 0 ||
+        receipt->teleporter_root_count >=
+            DM2_V1_FILE_HEADER_RUNTIME_MAX_TELEPORTERS) return -1;
+    w2 = RD16(record + 2); w4 = RD16(record + 4);
+    teleporter = &receipt->teleporters[receipt->teleporter_root_count++];
+    teleporter->x = x; teleporter->y = y; teleporter->object_id = thing;
+    teleporter->index = (uint16_t)index;
+    teleporter->direction = (uint8_t)((unsigned int)thing >> 14);
+    teleporter->destination_x = (uint8_t)(w2 & 0x001fu);
+    teleporter->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
+    teleporter->destination_map = (uint8_t)(w4 >> 8);
+    teleporter->scope = (uint8_t)((w2 >> 13) & 3u);
+    teleporter->sound = (uint8_t)((w2 >> 15) & 1u);
+    teleporter->rotation = (uint8_t)((w2 >> 10) & 3u);
+    teleporter->rotation_type = (uint8_t)((w2 >> 12) & 1u);
+    ++receipt->teleporter_record_reads;
+    (void)level;
+    return 0;
+}
+
+int dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt candidate;
+
+    if (!out || !d) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_collect_teleporter_record,
+            &candidate) < 0 ||
+        candidate.teleporter_record_reads != candidate.teleporter_root_count)
+        return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
+static int dm2_v1_file_header_collect_actuator_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_G1RuntimeMapActuatorReceipt *receipt =
+        (DM2_V1_G1RuntimeMapActuatorReceipt *)user;
+    DM2_V1_G1DirectActuatorRoot *actuator;
+    uint16_t w2, w4, w6;
+
+    if (!receipt || type != 3) return 0;
+    if (!record || record_size < 8 || index < 0 ||
+        receipt->actuator_root_count >=
+            DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS) return -1;
+    w2 = RD16(record + 2); w4 = RD16(record + 4); w6 = RD16(record + 6);
+    actuator = &receipt->actuators[receipt->actuator_root_count++];
+    actuator->x = x; actuator->y = y; actuator->object_id = thing;
+    actuator->index = (uint16_t)index;
+    actuator->direction = (uint8_t)((unsigned int)thing >> 14);
+    actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
+    actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
+    actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
+    actuator->disabled = (uint8_t)((w4 >> 11) & 1u);
+    actuator->delay = (uint8_t)((w4 >> 7) & 0x000fu);
+    actuator->sound_effect = (uint8_t)((w4 >> 6) & 1u);
+    actuator->revert_effect = (uint8_t)((w4 >> 5) & 1u);
+    actuator->action_type = (uint8_t)((w4 >> 3) & 3u);
+    actuator->once_only = (uint8_t)((w4 >> 2) & 1u);
+    actuator->active_status = (uint8_t)(w4 & 1u);
+    actuator->target_direction = (uint8_t)((w6 >> 4) & 3u);
+    actuator->target_x = (uint8_t)((w6 >> 6) & 0x001fu);
+    actuator->target_y = (uint8_t)((w6 >> 11) & 0x001fu);
+    ++receipt->actuator_record_reads;
+    (void)level;
+    return 0;
+}
+
+int dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out)
+{
+    DM2_V1_G1RuntimeMapActuatorReceipt candidate;
+
+    if (!out || !d) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_collect_actuator_record, &candidate) < 0 ||
+        candidate.actuator_record_reads != candidate.actuator_root_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 static int dm2_v1_file_header_collect_text_record(
     void *user, uint16_t thing, int type, int index, const uint8_t *record,
     int record_size, int level, int x, int y)

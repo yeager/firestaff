@@ -74,6 +74,9 @@ int main(void) {
     DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
     int text_record_total = 0;
     int creature_record_total = 0;
+    int door_record_total = 0;
+    int teleporter_record_total = 0;
+    int actuator_record_total = 0;
     FileHeaderWalkTrace map0_walk;
 
     paths[0] = env;
@@ -136,6 +139,9 @@ int main(void) {
         FileHeaderWalkTrace map_walk;
         DM2_V1_FileHeaderRuntimeTextReceipt texts;
         DM2_V1_FileHeaderRuntimeCreatureReceipt creatures;
+        DM2_V1_G1RuntimeMapDoorReceipt chain_doors;
+        DM2_V1_FileHeaderRuntimeTeleporterReceipt chain_teleporters;
+        DM2_V1_G1RuntimeMapActuatorReceipt chain_actuators;
 
         memset(&map_receipt, 0, sizeof(map_receipt));
         memset(&map_walk, 0, sizeof(map_walk));
@@ -150,6 +156,38 @@ int main(void) {
             ++failures;
         }
         memset(&texts, 0, sizeof(texts));
+        memset(&chain_doors, 0, sizeof(chain_doors));
+        if (!dm2_v1_dungeon_collect_file_header_runtime_map_doors(
+                &d, map, &chain_doors) || !chain_doors.committed ||
+            chain_doors.door_record_reads != chain_doors.door_root_count) {
+            printf("FAIL: File_header map-%d chained door records were not retained\n",
+                   map);
+            ++failures;
+        } else {
+            door_record_total += chain_doors.door_record_reads;
+        }
+        memset(&chain_teleporters, 0, sizeof(chain_teleporters));
+        if (!dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
+                &d, map, &chain_teleporters) || !chain_teleporters.committed ||
+            chain_teleporters.teleporter_record_reads !=
+                chain_teleporters.teleporter_root_count) {
+            printf("FAIL: File_header map-%d chained teleporter records were not retained\n",
+                   map);
+            ++failures;
+        } else {
+            teleporter_record_total += chain_teleporters.teleporter_record_reads;
+        }
+        memset(&chain_actuators, 0, sizeof(chain_actuators));
+        if (!dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
+                &d, map, &chain_actuators) || !chain_actuators.committed ||
+            chain_actuators.actuator_record_reads !=
+                chain_actuators.actuator_root_count) {
+            printf("FAIL: File_header map-%d chained actuator records were not retained\n",
+                   map);
+            ++failures;
+        } else {
+            actuator_record_total += chain_actuators.actuator_record_reads;
+        }
         if (!dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
                 &d, map, &texts) || !texts.committed ||
             texts.text_record_reads != texts.text_record_count) {
@@ -193,6 +231,11 @@ int main(void) {
     }
     if (creature_record_total <= 0) {
         printf("FAIL: canonical File_header contains no retained DB4 creatures\n");
+        ++failures;
+    }
+    if (door_record_total <= 0 || teleporter_record_total <= 0 ||
+        actuator_record_total <= 0) {
+        printf("FAIL: canonical File_header lacks chained DB0/DB1/DB3 records\n");
         ++failures;
     }
     memset(&doors, 0, sizeof(doors));
