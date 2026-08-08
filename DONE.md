@@ -9591,3 +9591,7 @@
 - ✅ `nexus_v1_dmdf_import_bpk_material_bank()` lånar inte längre paletten från första giltiga materialyta för indexed BPK/PRS3-data.
 - ✅ Indexed ytor utan egen, källbunden CLUT förblir nu opaque/capture-gated; truecolor stored-material och riktiga BPK receipt-tester passerar.
 - ✅ Detta eliminerar en konkret syntetisk palettväg utan att öppna VDP1-upload eller rendering.
+# Nexus palette-source audit (2026-08-08)
+
+- ✅ Genomgången av Nexus palette-kopior fann inga ytterligare “första giltiga”/default-palettevägar i DMDF/ITEM/SMAP; ITEM/Structure2-inherited palettes följer uttryckliga DMWeb-regler och saknad källa avvisas.
+- ✅ BPK indexed-materialet är nu den enda korrigerade fallbackvägen i detta auditpass: utan egen CLUT förblir det blockerat.
