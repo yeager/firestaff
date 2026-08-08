@@ -4,8 +4,10 @@
   are now reconciled with the verified retail corpus: DGN is the 64×64
   Structure1B block-container path, SMAP/SAL/MAP/FACE/MNS/SLEV have bounded
   source receipts, and shared item/HUD/AI/audio helpers are explicitly
-  fixture-only or fail-closed. Remaining work is positive evidence in the
-  requested order: authentic startup/menu animation capture, FONT256
+  fixture-only or fail-closed. The launcher now keeps hash availability
+  separate from launch readiness: Nexus remains discoverable, but the M12
+  launch gate blocks until its full-start Saturn receipt exists. Remaining
+  work is positive evidence in the requested order: authentic startup/menu animation capture, FONT256
   page/tilemap/VDP2 text ownership, then VDP1/VDP2 HUD/viewport composition
   and SLEV/SAL/SDDRVS dispatch/playback. Do not resolve these with generated
   pixels, guessed selectors, DM1-derived item/loot tables, or host PCM.

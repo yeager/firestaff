@@ -8483,11 +8483,12 @@ int M12_StartupMenu_GetLaunchGate(
     } else if (!gate.versionReady) {
         gate.blockedLabel = "SELECTED VERSION NOT FOUND";
         gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);
-    /* Nexus obtains its full-start graphics/package receipt only after M11
-     * opens the verified Saturn runtime. Availability may permit that launch,
-     * but it must never be promoted to a capture-ready package in M12. */
+    /* DM1 retains its established post-present HOC capture exception. Nexus
+     * has no equivalent exception: authenticated Saturn source discovery is
+     * not a startup/menu presentation proof, so the card must remain blocked
+     * until M11 supplies the full-start graphics receipt. */
     } else if ((!gate.fullStartGraphicsReady &&
-                (!entry->gameId || strcmp(entry->gameId, "nexus") != 0)) ||
+                (!entry->gameId || strcmp(entry->gameId, "dm1") != 0)) ||
                (gate.boot.startupContractExpected &&
                 !gate.startupContractReady)) {
         gate.blockedLabel = "STARTUP PROOF MISSING";

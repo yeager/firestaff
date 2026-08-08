@@ -14,6 +14,17 @@
 
 # Nexus retail-format inventory refresh (2026-08-08)
 
+# Nexus M12 launch-gate false-positive repair (2026-08-08)
+
+- ✅ Nexus hash availability no longer promotes the game card to
+  `READY TO LAUNCH` when the full-start Saturn graphics/capture receipt is
+  absent. The menu now reports `STARTUP PROOF MISSING` while retaining the
+  real-data discovery result.
+- ✅ DM1:s befintliga efter-present-HOC-undantag är oförändrat; bara Nexus-
+  vägen hårdnas enligt dess capture-gated runtimegräns.
+- ✅ `m12_all_games_boot_readiness_receipt`, Nexus availability och Nexus
+  startup/menu-kompatibilitet passerar efter ändringen.
+
 # Nexus startup capture admission hardening (2026-08-08)
 
 - ✅ WARNING.BIN/GAMEOVER.BIN source-byte loading no longer self-admits

@@ -309,8 +309,11 @@ int main(void) {
         }
         if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
                     "launch gate should build")) return 1;
-        if (!expect(gate.canLaunch == 1,
-                    "ready game launch gate should allow launch")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(gate.canLaunch == 0,
+                        "Nexus launch gate must block without Saturn startup proof")) return 1;
+        } else if (!expect(gate.canLaunch == 1,
+                           "ready game launch gate should allow launch")) return 1;
         if (!expect(gate.rendererReady == 1 && gate.presentationReady == 1,
                     "ready game launch gate should expose renderer/presentation readiness")) return 1;
         if (strcmp(expected[i].gameId, "nexus") == 0) {
@@ -328,21 +331,29 @@ int main(void) {
             if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
                         "launch gate should carry boot receipt progress")) return 1;
         }
-        if (!expect(gate.blockedLabel &&
-                    strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0,
-                    "ready game launch gate should report ready label")) return 1;
-        if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, i),
-                           "READY TO LAUNCH") == 0,
-                    "ready game launch status label should come from launch gate")) return 1;
         if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(gate.blockedLabel &&
+                        strcmp(gate.blockedLabel, "STARTUP PROOF MISSING") == 0,
+                        "Nexus launch gate should report missing startup proof")) return 1;
+            if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, i),
+                               "STARTUP PROOF MISSING") == 0,
+                        "Nexus launch status should come from the startup-proof gate")) return 1;
             if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
-                               "CANONICAL RUNTIME RECEIPT") == 0,
-                        "nexus launch detail label should demand the runtime receipt")) return 1;
-        } else if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
+                               expected[i].contractLabel) == 0,
+                        "nexus launch detail label should identify the missing full-start receipt")) return 1;
+        } else {
+            if (!expect(gate.blockedLabel &&
+                        strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0,
+                        "ready game launch gate should report ready label")) return 1;
+            if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, i),
+                               "READY TO LAUNCH") == 0,
+                        "ready game launch status label should come from launch gate")) return 1;
+            if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
                                   expected[i].captureLabel) == 0,
                            "ready game launch detail label should name active capture proof")) return 1;
+        }
     }
-    if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "5 GAMES READY") == 0,
+    if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "4 GAMES READY") == 0,
                 "scan feedback should count launch-gated full-start-ready games")) return 1;
 
     state.activatedIndex = 0;
