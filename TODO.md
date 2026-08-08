@@ -2142,12 +2142,12 @@
   retained in the source streams, but no Amiga mixer is connected yet.
   full GAME_LOAD/runtime ownership remains separately gated. **2026-08-08
 
-- **DM2-DOS-MVE-PLAYBACK:** The selected PC English install now produces a
-  **2026-08-06 FM Towns GDAT gate update:** the bounded format classifier now
-  also requires HME-242's actual 3,407-entry raw catalogue. A made-up
-  0x8004 header and plausible buffer size therefore cannot enter even the
-  format receipt; the boot profile retains the stricter full-media identity
-  gate.
+- **DM2-DOS-MVE-PLAYBACK:** `INTRO` och `END` har nu en strikt,
+  minnesbaserad bilditerator som släpper fram endast den hashverifierade
+  PC-DOS-korpusens MVE-grammatik och originalpayloads. Nästa steg är en egen
+  indexed-8-bit-avkodare med två 320×200-buffertar för kodkarta 0x0f och
+  video 0x11/v3, följd av originalets PCM- och IBMIOP-tidsväg. Ingen extern
+  avkodare, värdgenererad bild eller extraherad filmfil får bli produktväg.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   **2026-08-07 real-corpus census:** all eight supplied PC-DOS

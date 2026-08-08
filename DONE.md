@@ -9769,6 +9769,11 @@
   videopresentationer.
 - ✅ Detta är en källsäker avkodargrund, inte en falsk videopresentation.
   MVE:s bildblock och ljudexpansion är fortfarande öppna arbete.
+- ✅ Bilditeratorn bevarar nu varje presentation som originalpayload i RAM:
+  500-byte kodkarta, 0x11/v3-videoblock, palett, ljudblock och den återkommande
+  132-byte 0x13-posten. Den accepterar endast den verifierade DOS-korpusens
+  opcodeversioner och längder och testas mot alla 217 `INTRO`- respektive 600
+  `END`-presentationer.
 # Nexus europeisk VDP1/VDP2-korrelation (2026-08-08)
 
 - ✅ Inventeringen är uppdaterad till 38 externa `runtime-vdp12.raw`-filer.

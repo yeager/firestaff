@@ -89,9 +89,14 @@ int main(void) {
     }
     {
         static const char *const movies[] = { "intro", "end" };
+        static const uint32_t expected_presentations[] = { 217u, 600u };
         for (size_t i = 0u; i < sizeof(movies) / sizeof(movies[0]); ++i) {
             char path[1024];
             DM2_V1_MveStreamReceipt mve;
+            DM2_V1_MvePresentationIterator iterator;
+            DM2_V1_MvePresentation presentation;
+            uint32_t presentation_count = 0u;
+            uint64_t previous_time = 0u;
             size_t size = 0u;
             uint8_t *bytes;
             snprintf(path, sizeof(path), "%s/%s", root, movies[i]);
@@ -103,9 +108,33 @@ int main(void) {
                    mve.timer_rate_us != 0u && mve.timer_subdivision != 0u &&
                    mve.video_frame_count != 0u && mve.display_count != 0u &&
                    mve.receipt_hash != 0u);
+            assert(dm2_v1_mve_presentation_iterator_init(&iterator, bytes,
+                                                           size) == 1);
+            for (;;) {
+                const int next = dm2_v1_mve_presentation_iterator_next(
+                    &iterator, &presentation);
+                if (next == 0) break;
+                assert(next == 1);
+                assert(presentation.valid &&
+                       presentation.presentation_index == presentation_count &&
+                       presentation.code_map_size == 500u &&
+                       presentation.video_version == 3u &&
+                       presentation.video_data_size > 0u &&
+                       presentation.transport13_size == 132u);
+                if (presentation_count != 0u)
+                    assert(presentation.presentation_time_us - previous_time ==
+                           10416u * 8u);
+                previous_time = presentation.presentation_time_us;
+                ++presentation_count;
+            }
+            assert(presentation_count == expected_presentations[i] &&
+                   presentation_count == mve.display_count &&
+                   iterator.width == 320u && iterator.height == 200u &&
+                   iterator.timer_rate_us == 10416u &&
+                   iterator.timer_subdivision == 8u);
             free(bytes);
         }
-        puts("PASS: DM2 DOS MVE streams have bounded original video timelines");
+        puts("PASS: DM2 DOS MVE streams expose every original presentation payload in RAM");
     }
 
 done:

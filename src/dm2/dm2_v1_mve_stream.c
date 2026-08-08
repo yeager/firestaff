@@ -36,6 +36,162 @@ static int mve_find_header(const uint8_t *bytes, size_t byte_count,
     return 0;
 }
 
+static int mve_iterator_validate_opcode(uint8_t opcode, uint8_t version,
+                                        uint16_t size)
+{
+    /* This is the opcode/version grammar in both admitted PC-DOS movies.
+     * It is narrower than generic MVE on purpose: an unrecognised stream
+     * must not reach a future presentation decoder as if it were DM2 media. */
+    switch (opcode) {
+    case 0x00u: return version == 0u && size == 0u;
+    case 0x01u: return version == 0u && size == 0u;
+    case 0x02u: return version == 0u && size == 6u;
+    case 0x03u: return version == 0u && size == 8u;
+    case 0x04u: return version == 0u && size == 0u;
+    case 0x05u: return version == 2u && size == 8u;
+    case 0x07u: return version == 1u && size == 6u;
+    case 0x08u: return version == 0u && size >= 4u;
+    case 0x09u: return version == 0u && size == 6u;
+    case 0x0au: return version == 0u && size == 6u;
+    case 0x0cu: return version == 0u && size == 766u;
+    case 0x0fu: return version == 0u && size == 500u;
+    case 0x11u: return version == 3u && size > 0u;
+    case 0x13u: return version == 0u && size == 132u;
+    default: return 0;
+    }
+}
+
+int dm2_v1_mve_presentation_iterator_init(
+    DM2_V1_MvePresentationIterator *iterator,
+    const uint8_t *bytes, size_t byte_count)
+{
+    size_t offset;
+    if (!iterator) return 0;
+    memset(iterator, 0, sizeof(*iterator));
+    if (!bytes || !mve_find_header(bytes, byte_count, &offset) ||
+        offset > byte_count - 26u) return 0;
+    iterator->bytes = bytes;
+    iterator->byte_count = byte_count;
+    iterator->offset = offset + 26u;
+    iterator->initialized = 1;
+    return 1;
+}
+
+int dm2_v1_mve_presentation_iterator_next(
+    DM2_V1_MvePresentationIterator *iterator,
+    DM2_V1_MvePresentation *out)
+{
+    DM2_V1_MvePresentation presentation;
+    int have_map = 0;
+    int have_video = 0;
+    int have_transport13 = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!iterator || !out || !iterator->initialized || iterator->ended ||
+        !iterator->bytes || iterator->offset > iterator->byte_count) return -1;
+    memset(&presentation, 0, sizeof(presentation));
+    presentation.presentation_index = iterator->presentation_count;
+    if (iterator->timer_rate_us == 0u || iterator->timer_subdivision == 0u) {
+        presentation.presentation_time_us = 0u;
+    } else {
+        presentation.presentation_time_us =
+            (uint64_t)iterator->presentation_count *
+            (uint64_t)iterator->timer_rate_us *
+            (uint64_t)iterator->timer_subdivision;
+    }
+    while (iterator->offset < iterator->byte_count) {
+        size_t chunk_end;
+        uint16_t chunk_size;
+        uint16_t chunk_type;
+        if (iterator->offset + 4u > iterator->byte_count) return -1;
+        chunk_size = mve_le16(iterator->bytes + iterator->offset);
+        chunk_type = mve_le16(iterator->bytes + iterator->offset + 2u);
+        iterator->offset += 4u;
+        if ((size_t)chunk_size > iterator->byte_count - iterator->offset)
+            return -1;
+        if (chunk_type == 5u) {
+            if (chunk_size != 0u) return -1;
+            iterator->ended = 1;
+            return have_map || have_video || have_transport13 ? -1 : 0;
+        }
+        chunk_end = iterator->offset + (size_t)chunk_size;
+        while (iterator->offset < chunk_end) {
+            const uint8_t *data;
+            uint16_t size;
+            uint8_t opcode;
+            uint8_t version;
+            size_t data_offset;
+            if (chunk_end - iterator->offset < 4u) return -1;
+            size = mve_le16(iterator->bytes + iterator->offset);
+            opcode = iterator->bytes[iterator->offset + 2u];
+            version = iterator->bytes[iterator->offset + 3u];
+            iterator->offset += 4u;
+            if ((size_t)size > chunk_end - iterator->offset ||
+                !mve_iterator_validate_opcode(opcode, version, size)) return -1;
+            data_offset = iterator->offset;
+            data = iterator->bytes + data_offset;
+            iterator->offset += size;
+            switch (opcode) {
+            case 0x00u:
+                if (have_map || have_video || have_transport13) return -1;
+                iterator->ended = 1;
+                break;
+            case 0x02u:
+                if (iterator->timer_rate_us != 0u ||
+                    mve_le32(data) == 0u || mve_le16(data + 4u) == 0u) return -1;
+                iterator->timer_rate_us = mve_le32(data);
+                iterator->timer_subdivision = mve_le16(data + 4u);
+                break;
+            case 0x05u:
+                if (iterator->width != 0u || iterator->height != 0u ||
+                    mve_le16(data) != 40u || mve_le16(data + 2u) != 25u) return -1;
+                iterator->width = 320u;
+                iterator->height = 200u;
+                break;
+            case 0x0cu:
+                presentation.palette_offset = (uint32_t)data_offset;
+                presentation.palette_size = size;
+                break;
+            case 0x0fu:
+                if (have_map) return -1;
+                presentation.code_map_offset = (uint32_t)data_offset;
+                presentation.code_map_size = size;
+                have_map = 1;
+                break;
+            case 0x11u:
+                if (have_video) return -1;
+                presentation.video_data_offset = (uint32_t)data_offset;
+                presentation.video_data_size = size;
+                presentation.video_version = version;
+                have_video = 1;
+                break;
+            case 0x13u:
+                if (have_transport13) return -1;
+                presentation.transport13_offset = (uint32_t)data_offset;
+                presentation.transport13_size = size;
+                have_transport13 = 1;
+                break;
+            case 0x08u:
+                presentation.audio_offset = (uint32_t)data_offset;
+                presentation.audio_size = size;
+                break;
+            case 0x07u:
+                if (!have_map || !have_video || !have_transport13 ||
+                    iterator->timer_rate_us == 0u || iterator->width != 320u ||
+                    iterator->height != 200u) return -1;
+                presentation.valid = 1;
+                ++iterator->presentation_count;
+                *out = presentation;
+                return 1;
+            default:
+                break;
+            }
+        }
+        if (iterator->offset != chunk_end) return -1;
+    }
+    return -1;
+}
+
 int dm2_v1_mve_stream_parse(const uint8_t *bytes, size_t byte_count,
                             DM2_V1_MveStreamReceipt *out)
 {
