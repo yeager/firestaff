@@ -186,23 +186,27 @@ int nexus_v1_dgn_runtime_materialization_admit(
         return 0;
     }
 
+    /* No input field here authenticates the original Saturn VDP1/VDP2 frame,
+     * palette state or final pixels.  A source-complete no-draw chain must
+     * therefore stop at the original-render boundary; it may never turn
+     * itself into a READY_NO_DRAW presentation receipt. */
     out_receipt->status =
-        NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_READY_NO_DRAW;
+        NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_ORIGINAL_RENDER;
     out_receipt->source_bound = 1;
     out_receipt->m11_host_route_bound = 1;
     out_receipt->runtime_consumed_by_m11_host = 1;
-    out_receipt->can_present_runtime_dgn = 1;
-    out_receipt->blocks_real_dgn_mesh_render = 0;
-    out_receipt->no_draw_only = 0;
-    out_receipt->fallback_visuals_permitted = 1;
-    out_receipt->original_render_capture_required = 0;
-    out_receipt->original_render_capture_authenticated = 1;
-    out_receipt->material_semantics_proven = 1;
-    out_receipt->palette_semantics_proven = 1;
-    out_receipt->texel_order_proven = 1;
-    out_receipt->vdp1_command_proven = 1;
+    out_receipt->can_present_runtime_dgn = 0;
+    out_receipt->blocks_real_dgn_mesh_render = 1;
+    out_receipt->no_draw_only = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->original_render_capture_required = 1;
+    out_receipt->original_render_capture_authenticated = 0;
+    out_receipt->material_semantics_proven = 0;
+    out_receipt->palette_semantics_proven = 0;
+    out_receipt->texel_order_proven = 0;
+    out_receipt->vdp1_command_proven = 0;
     out_receipt->m11_frame_hash = 0U;
-    return 1;
+    return 0;
 }
 
 const char *nexus_v1_dgn_runtime_materialization_status_name(

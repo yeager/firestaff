@@ -226,6 +226,56 @@ static void test_runtime_materialization_gate(void)
                    NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_MATERIAL &&
                receipt.m11_frame_hash == 0U,
            "unproved original route still cannot publish a captured frame hash");
+
+    /* Exercise the old false-positive exit directly: even a caller-supplied
+     * ready-looking no-draw chain has no Saturn frame witness in this ABI. */
+    material.no_draw_only = 1;
+    material.blocks_real_dgn_mesh_render = 1;
+    material.permits_fallback_visuals = 0;
+    material.package_host_route_bound = 1;
+    input.bpk_source_verified = 1;
+    input.m11_capture_ready = 0;
+    input.m11_frame_hash = 0U;
+    host.status = NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_READY_NO_DRAW;
+    host.material_receipt_ready = 1;
+    host.source_route_consumed_by_host = 1;
+    host.real_dgn_source_consumed_by_host = 1;
+    host.structure2_structure3_admission_bound = 1;
+    host.package_host_route_bound = 1;
+    host.material_pixel_promotion_blocked = 1;
+    host.no_draw_only = 1;
+    host.blocks_real_dgn_mesh_render = 1;
+    host.fallback_visuals_permitted = 0;
+    prs3.dgn_package_host_bound = 1;
+    prs3.prs3_output_upload_bound = 1;
+    prs3.prs3_decoded_output_proof_bound = 1;
+    prs3.prs3_decoded_output_sidecar_bound = 1;
+    prs3.prs3_reviewed_upload_path_bound = 1;
+    prs3.prs3_menu_bpk_upload_reviewed = 1;
+    prs3.prs3_original_saturn_provenance_verified = 1;
+    prs3.prs3_independent_authentication_required = 1;
+    prs3.prs3_source_bound_no_runtime = 1;
+    prs3.material_pixel_promotion_blocked = 1;
+    prs3.prs3_runtime_upload_blocked = 1;
+    prs3.no_draw_only = 1;
+    prs3.blocks_real_dgn_mesh_render = 1;
+    prs3.fallback_visuals_permitted = 0;
+    prs3.runtime_dgn_render_permitted = 0;
+    prs3.startup_menu_render_permitted = 0;
+    prs3.prs3_stream_size = 1U;
+    prs3.prs3_expected_output_bytes = 1U;
+    prs3.prs3_output_fnv1a64 = 1U;
+    expect(!nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) &&
+               receipt.status ==
+                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_ORIGINAL_RENDER &&
+               receipt.source_bound && receipt.blocks_real_dgn_mesh_render &&
+               receipt.no_draw_only && !receipt.can_present_runtime_dgn &&
+               !receipt.fallback_visuals_permitted &&
+               receipt.original_render_capture_required &&
+               !receipt.original_render_capture_authenticated &&
+               !receipt.material_semantics_proven &&
+               !receipt.palette_semantics_proven,
+           "source-complete DGN chain remains capture-gated at original render");
 }
 
 int main(void)
