@@ -37,6 +37,9 @@ if not match:
 body = match.group("body")
 
 for exclusion in (
+    # BPX0/BPX3 is an explicit synthetic archive contract. Keep it available
+    # to parser probes, never to the retail Nexus library.
+    r"nexus_v1_bpx_bpk\\.c$",
     r"nexus_v1_text\\.c$",
     r"nexus_v1_s2d_text_layout\\.c$",
     r"nexus_v1_s2d_glyph_decode\\.c$",
@@ -45,7 +48,16 @@ for exclusion in (
     r"nexus_v1_item_ibs\\.c$",
     r"nexus_v1_title_cg\\.c$",
     r"nexus_v1_warning_dgt2_m11_presentation\\.c$",
+    r"nexus_v1_warning_dgt2_resource_corpus\\.c$",
     r"nexus_v1_mns\\.c$",
+    r"nexus_v1_magic_runtime_noop\\.c$",
+    r"nexus_v1_combat_runtime_noop\\.c$",
+    r"nexus_v1_experience_runtime_noop\\.c$",
+    r"nexus_v1_rest_status_runtime_noop\\.c$",
+    r"nexus_v1_action_world_runtime_noop\\.c$",
+    r"nexus_v1_light_runtime_noop\\.c$",
+    r"nexus_v1_saturn_font_runtime_noop\\.c$",
+    r"nexus_v1_rasterizer_runtime_noop\\.c$",
 ):
     if f'EXCLUDE REGEX "{exclusion}"' not in body:
         fail(f"missing production exclusion: {exclusion}")

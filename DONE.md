@@ -1,3 +1,9 @@
+# Nexus production source-boundary skydd för syntetiska moduler (2026-08-08)
+
+- ✅ Verifieraren kräver nu att den syntetiska BPX0/BPX3-parsern, WARNING-/MNS-/ITEM-/TITLE-hostvägarna och alla capture-gated runtime-/no-op-moduler hålls utanför `firestaff_nexus` enligt CMake-listan.
+- ✅ Detta ändrar ingen retail-admission och öppnar inga pixlar; det gör den källtroga spärren regressionssäker medan autentisk Saturn-konsumentcapture saknas.
+- ✅ `python3 tools/verify_nexus_production_source_boundary.py` passerar.
+
 # CSB Amiga 3.5 English direkt C03-handoff (2026-08-08)
 
 - ✅ M12→M11 följer nu A35E:s egna hashverifierade programgräns:
