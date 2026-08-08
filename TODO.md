@@ -22,6 +22,8 @@
 
 - 🔧 CSB:s Amiga A31-väg visar nu den hashverifierade, separata TITL.DAT-
   animationen genom APPA.C → ANIM.C:s första bild och 30 kompletta DL-steg.
+  M11 äger nu exakt en 50 Hz-VBL-klocka för den vägen; PC34:s
+  startkvittomotor kan inte längre ticka samma A31-bild en andra gång.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-

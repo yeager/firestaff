@@ -1973,6 +1973,18 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                 view.csbAmigaTitlAppliedDeltaCount == 0u &&
                 view.csbAmigaTitlPixels[89u * 320u + 186u] == 7u,
                 "M11 binds real Amiga title pixels without a mixed-platform session");
+    /* The native title has one VBlank clock owner.  The first M11 idle call
+     * arms the clock and the next two 55 ms M11 ticks yield floor(110*50/1000)
+     * = 5 VBlanks, rather than advancing both an inherited PC34 receipt and
+     * the native APPA.C/ANIM.C route. */
+    expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
+                M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
+                M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW &&
+                view.csbAmigaTitlClockStarted &&
+                view.csbAmigaTitlVbl == 5u &&
+                view.csbAmigaTitlVblRemainder == 500u &&
+                view.csbAmigaTitlAppliedDeltaCount == 0u,
+                "A31M TITL.DAT advances at one 50 Hz VBlank cadence");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

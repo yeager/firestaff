@@ -9136,11 +9136,10 @@ static void m11_csb_startup_tick_receipt_to_m11(
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
         }
     }
-    if (m11_csb_is_amiga_a31_profile(profile) &&
-        state->csbState.startup_title_active &&
-        !state->csbStartupRuntimeAssetSession) {
-        m11_csb_advance_amiga_titl(state, profile->tick_ms);
-    }
+    /* Native A31 TITL.DAT is deliberately not advanced here.  This receipt
+     * belongs to the PC34 startup owner; the native route has no PC34 asset
+     * session and advances exactly once from M11_GameView_AdvanceIdleTick.
+     * ReDMCSB APPA.C:51-68 hands the title to ANIM.C F1205's VBlank loop. */
 }
 
 static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
