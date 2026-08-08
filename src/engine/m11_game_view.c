@@ -53100,10 +53100,12 @@ static void m11_draw_fullscreen_map(const M11_GameViewState* state,
 
     /* Footer — minimal dismiss hint, not a keybinding cheat sheet */
     {
+        int fs = state->fontScale > 1 ? state->fontScale : 1;
+        int footerH = 8 * fs + 4;
         M11_TextStyle footerStyle = g_text_small;
         footerStyle.color = M11_COLOR_DARK_GRAY;
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      panelX + 6, panelY + panelH - 12, "PRESS M", &footerStyle);
+                      panelX + 6, panelY + panelH - footerH, "PRESS M", &footerStyle);
     }
 }
 

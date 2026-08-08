@@ -12243,6 +12243,45 @@ if(BUILD_TESTING)
             COMMAND firestaff_dm1_v1_dialog_choice_overlay_fit_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
         )
     endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe.c")
+        add_executable(firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe
+            probes/m11/firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe.c)
+        target_link_libraries(firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe
+            COMMAND firestaff_dm1_v1_fullscreen_map_font_scale_fit_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe.c")
+        add_executable(firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe
+            probes/m11/firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe.c)
+        target_link_libraries(firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe
+            COMMAND firestaff_dm1_v1_utility_panel_font_scale_fit_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe.c")
+        add_executable(firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe
+            probes/m11/firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe.c)
+        target_link_libraries(firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe PRIVATE firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe
+            COMMAND firestaff_dm1_v1_inventory_panel_font_scale_fit_runtime_probe "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+        )
+    endif()
 endif()
 
 if(BUILD_TESTING)
