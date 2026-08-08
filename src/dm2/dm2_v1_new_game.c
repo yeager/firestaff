@@ -1696,17 +1696,18 @@ DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
     if (!session) return DM2_FLOW_BAD_SESSION;
     if (!boot)    return DM2_FLOW_NO_ASSETS;
 
-    /* Verify assets are available */
-    if (!boot->assets_verified) {
-        /* Try scanning assets if not done */
-        DM2_V1_BootProfile tmp;
-        dm2_v1_boot_profile_init(&tmp);
-        if (dm2_v1_boot_scan_assets(&tmp,
-                                    boot->asset_root[0]
-                                        ? boot->asset_root
-                                        : ".") != 0) {
-            return DM2_FLOW_NO_ASSETS;
-        }
+    /* A readiness bit or an arbitrary directory is not a New Game source.
+     * M12/M11 must first retain the exact hash-admitted GRAPHICS.DAT and
+     * File_header DUNGEON.DAT pair in this boot profile.  In particular, do
+     * not re-scan a caller-controlled path here: a later match could select a
+     * different edition than the menu selected, and neither route supplies
+     * the missing GAME_LOAD session graph.  Source: SKProject
+     * sksvgame.cpp::DM2_LOAD_NEW_DUNGEON opens the already selected medium
+     * before it clears party state and reads the dungeon structure. */
+    if (!boot->assets_verified || !boot->graphics_dat ||
+        !boot->dungeon_data || boot->graphics_path[0] == '\0' ||
+        boot->dungeon_path[0] == '\0') {
+        return DM2_FLOW_NO_ASSETS;
     }
 
     /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT, then

@@ -1289,6 +1289,15 @@ int main(void) {
                 "M11 stores the DM2 V1 world pointer");
     expect_true(view.dm2State.level_loaded == 0,
                 "M11 DM2 keeps parsed File_header data out of live gameplay before GAME_LOAD");
+    {
+        DM2_V1_SessionState new_game_session;
+        memset(&new_game_session, 0xA5, sizeof(new_game_session));
+        expect_true(dm2_v1_new_game_flow(&new_game_session,
+                                         view.dm2BootProfile) ==
+                        DM2_FLOW_GAME_LOAD_REQUIRED &&
+                        ((const unsigned char *)&new_game_session)[0] == 0xA5,
+                    "M11-mounted original DM2 data reaches GAME_LOAD without a synthetic New Game session");
+    }
     expect_true(dm2_v1_sound_playback_backend_bound(),
                 "M11 DM2 binds playback only after the verified boot profile");
     /* File_header::w8 is 0x0101, directly yielding the map-0 (1,8,0)

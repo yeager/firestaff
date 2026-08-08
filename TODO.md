@@ -46,6 +46,12 @@
   Timer- och renderhändelser ska fortsatt flyttas till den atomära handoffen i
   stället för att förlita sig på en monterad File_header-värld.
 
+- **DM2-NEW-GAME-MEDIUM-IDENTITY:** New Game now refuses a stand-alone
+  `assets_verified` flag or a caller-supplied rescan path. It requires the
+  M12/M11-mounted, hash-selected graphics and File_header dungeon pair, but
+  still stops before `DM2_GAME_LOAD` creates the missing party/record/timer
+  graph.
+
 - **DM2-FILE-HEADER-LOCALLEVEL-OWNER:** The callback-shaped
   `DM2_LOAD_LOCALLEVEL_DYN` translation is now explicitly blocked unless a
   single live owner proves File_header maps, record pools and links. Replace

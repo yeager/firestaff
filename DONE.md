@@ -27,6 +27,15 @@
   `.firestaff/data/dm2/data` är en länk till en extraherad installation.
 - ✅ Ingen fil kopieras, packas upp eller ersätts. Virtuella arkivvägar lämnas
   orörda och den ofullständiga `GAME_LOAD`-grinden är fortfarande stängd.
+
+# DM2 nya-spel-mediegrind (2026-08-08)
+
+- ✅ Nytt spel kräver nu den redan monterade, hashverifierade
+  `GRAPHICS.DAT`-/`DUNGEON.DAT`-paret från M12/M11. En ensam readiness-bit
+  eller godtycklig sökväg kan inte längre utlösa en ny sökning och maskera
+  en annan spelutgåva som den valda originalmedian.
+- ✅ Grinden skapar fortfarande inte party, inventory, klocka eller timers.
+  Den riktiga `DM2_GAME_LOAD`-transaktionen äger allt detta.
 # DM2 källbunden championroster (2026-08-08)
 
 - ✅ Bootprofilen exponerar nu alla 16 verkliga PC-DOS-champions i samma

@@ -297,14 +297,15 @@ static void test_new_game_flow(void)
     DM2_V1_BootProfile boot;
 
     dm2_v1_boot_profile_init(&boot);
-    /* The public flow must not recurse through an arbitrary test cwd merely
-     * to manufacture a session. Exercise the admitted-asset boundary. */
+    /* A public bit is not an admitted original medium. The flow must not
+     * recurse through an arbitrary test cwd to manufacture a session. */
     boot.assets_verified = 1;
+    snprintf(boot.asset_root, sizeof(boot.asset_root), "%s", g_save_dir);
     memset(&session, 0xA5, sizeof(session));
     DM2_FlowResult result = dm2_v1_new_game_flow(&session, &boot);
     CHECK(result <= 0, "new_game_flow returns a non-success gate result");
-    CHECK(result == DM2_FLOW_GAME_LOAD_REQUIRED,
-          "verified assets still require original GAME_LOAD records");
+    CHECK(result == DM2_FLOW_NO_ASSETS,
+          "a bare verified bit is not a hash-mounted original medium");
     CHECK(((const unsigned char *)&session)[0] == 0xA5,
           "new_game_flow leaves fixture session bytes untouched");
 }
