@@ -10374,3 +10374,12 @@
   semantic admission remain explicitly unbound.
 - ✅ Cross-run joins explicitly report session identity as unbound; address
   overlap is not promoted to a same-session capture claim.
+
+# Nexus Saturn capture launcher is portable on macOS Bash (2026-08-09)
+
+- ✅ Replaced Bash-incompatible bounded ERE quantifiers in the BIOS, disc and
+  FNV argument gates with length checks plus hexadecimal validation. The
+  verified European BIOS now passes the real hash gate under macOS Bash 3.2.
+- ✅ A fresh run with the external French data-only CUE reached authentic
+  Mednafen Saturn initialization, but timed out before producing a raw
+  VDP1/VDP2 trace. No startup, menu, HUD or viewport admission was promoted.

@@ -13,12 +13,14 @@ lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
 require_file_hash() {
   local path=$1 expected=$2 actual
-  [[ -f "$path" && "$expected" =~ ^[[:xdigit:]]{64}$ ]] || return 1
+  [[ -f "$path" && "${#expected}" -eq 64 && "$expected" =~ ^[[:xdigit:]]+$ ]] || return 1
   actual=$(hash_file "$path")
   [[ "$(lower "$actual")" == "$(lower "$expected")" ]]
 }
 
-require_fnv() { [[ "$1" =~ ^[[:xdigit:]]{1,16}$ && "$1" != 0 ]]; }
+require_fnv() {
+  [[ "${#1}" -ge 1 && "${#1}" -le 16 && "$1" =~ ^[[:xdigit:]]+$ && "$1" != 0 ]]
+}
 
 require_saturn_disc_container() {
   case "${1##*/}" in

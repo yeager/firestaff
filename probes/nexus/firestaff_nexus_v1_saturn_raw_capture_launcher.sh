@@ -10,7 +10,7 @@ usage() {
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 require_hash() {
-  [[ -f "$1" && "$2" =~ ^[[:xdigit:]]{64}$ ]] || return 1
+  [[ -f "$1" && "${#2}" -eq 64 && "$2" =~ ^[[:xdigit:]]+$ ]] || return 1
   [[ "$(lower "$(hash_file "$1")")" == "$(lower "$2")" ]]
 }
 require_disc_container() {
