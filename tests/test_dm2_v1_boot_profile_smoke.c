@@ -623,11 +623,13 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               typed_bytes == 0u,
           "boot GDAT typed parser keeps absent skproject dt06 isolated");
     memset(&before, 0, sizeof(before));
+    /* SKProject DME.h::File_header.w8 is the PC-DOS start pose. Earlier
+     * values (3,5,2) came from the now-rejected shifted 28-map reading. */
     CHECK(dm2_v1_boot_runtime_capture(launch.profile, &before) == 1 &&
               before.runtime_ready == 1 &&
-              before.party_x == 3 && before.party_y == 5 &&
-              before.party_dir == 2,
-          "boot runtime capture owns source G1 party receipt");
+              before.party_x == 1 && before.party_y == 8 &&
+              before.party_dir == 0,
+          "boot runtime capture owns the File_header party receipt");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_tick(launch.profile, &after) == 1 &&
               after.runtime_ready == 1 &&
@@ -808,9 +810,9 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
           "boot runtime HUD capture proves real GDAT availability and frames across sampled directions");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_capture(launch.profile, &after) == 1 &&
-              after.party_x == 3 && after.party_y == 5 &&
-              after.party_dir == 2,
-          "directional HUD capture returns to the source G1 pose");
+              after.party_x == 1 && after.party_y == 8 &&
+              after.party_dir == 0,
+          "directional HUD capture returns to the File_header pose");
     {
         DM2_V1_InterfaceActionTable action_table;
         CHECK(dm2_v1_boot_interface_action_table(launch.profile,
@@ -938,7 +940,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 1 &&
               after.operation_result == 0 &&
-              after.party_dir == 3,
+              after.party_dir == 1,
           "boot runtime turn owns DM2 receipt update");
     {
         int move_dir = after.party_dir;

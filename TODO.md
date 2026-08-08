@@ -4,14 +4,13 @@
 - Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
 
 - **DM2-PC-DOS-LEGACY-G1-RECEIPTS:** The verified PC-DOS `DUNGEON.DAT` takes
-  the 44-map `File_header` route. The first audit repaired six real-data
-  tests that had asserted an older shifted 28-map interpretation; the
-  remaining `g1_direct_*`, champion, creature, weapon, container and scene
-  receipt tests must be audited one by one before they can claim PC-DOS
-  provenance. They must either use the File_header-owned record graph or
-  explicitly prove that the legacy G1-only path remains unavailable. Do not
-  restore a continuation segment, pseudo-pool or DYN4 selection to make an
-  old receipt pass.
+  the 44-map `File_header` route. The completed audit repaired twelve
+  real-data tests that had asserted an older shifted 28-map interpretation.
+  Audit the remaining `g1_direct_*`, champion and material receipts one by
+  one before they can claim PC-DOS provenance. They must either use the
+  File_header-owned record graph or explicitly prove that the legacy G1-only
+  path remains unavailable. Do not restore a continuation segment,
+  pseudo-pool or DYN4 selection to make an old receipt pass.
 
 - **CSB-PLATFORM-NATIVE-STARTUP-OWNERS:** The PC34 launcher-handoff regression
   now pins its PC34 package instead of inheriting a persisted platform choice;

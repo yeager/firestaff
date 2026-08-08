@@ -25,6 +25,23 @@
 
 # Scanner provenance after cache materialization (2026-08-07)
 
+# DM2 PC-DOS five-pass real-data audit (2026-08-08)
+
+- ✅ Boot, start-menu and entrance pass: corrected the real-data boot gate to
+  use `File_header.w8` directly. The original PC-DOS start pose is map 0,
+  `(1,8)`, north; the old `(3,5,2)` expectation came from a shifted 28-map
+  interpretation. The HUD direction capture now proves that it restores this
+  source pose before ordinary runtime input resumes.
+- ✅ Dungeon and record-boundary pass: six more legacy G1-only door, actuator,
+  creature, weapon, container and scene receipts now prove the correct
+  fail-closed result for the PC-DOS File_header route. They no longer turn
+  shifted file bytes into live record payloads.
+- ✅ Save-corpus pass: all eight supplied PC-DOS saves retain their source
+  decode receipts, while incomplete record-pool owners remain unable to
+  publish a runtime session.
+- ✅ HUD and viewport pass: real GDAT scene, HUD, material and dialogue gates
+  pass with the mounted PC-DOS data; no placeholder material is admitted.
+
 # DM2 PC-DOS File_header real-data regression repair (2026-08-08)
 
 - ✅ Corrected two DM2 real-data gates that still described a shifted,
