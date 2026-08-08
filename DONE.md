@@ -1,3 +1,14 @@
+# Nexus external capture inventory (2026-08-08)
+
+- ✅ Added a reproducible inventory for all external `runtime-vdp12.raw`
+  witnesses. The current corpus contains 34 valid files and 136 frame
+  observations: 8 reset/no-layer, 14 RBG0-only CD-player, 100 NBG1-only
+  dungeon and 14 other active VDP2 states.
+- ✅ The inventory keeps `asset_consumer_identity=unbound` and
+  `startup_menu_hud_viewport_identity=unbound` for every state. The latest
+  frame-0 startup attempt is confirmed reset-only; no presentation route was
+  promoted.
+
 # Nexus SLEV/SAL/SDDRVS runtime corridor receipt (2026-08-08)
 
 - ✅ Added a source-bound audit that verifies all 16 real SLEV tasks, MAP/SAL

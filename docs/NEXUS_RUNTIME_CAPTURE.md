@@ -233,6 +233,15 @@ the data. The receipt therefore reports
 `event_selector_semantics=unproven`, `sal_codec=unproven` and
 `host_playback=blocked`.
 
+The external capture inventory is reproducible with
+`scripts/analyze_nexus_capture_inventory.py`. The current operator corpus has
+34 valid raw witnesses and 136 frame observations: 8 reset/no-layer frames,
+14 RBG0-only frames from the Saturn CD-player state, 100 NBG1-only frames from
+the dungeon witness, and 14 other active VDP2 states. The inventory does not
+call any of these states a menu, HUD or viewport. The latest frame-0 startup
+attempt is a one-frame reset witness (`TVMD=0`, `BGON=0`) and supplies no
+startup asset-consumer evidence.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the
