@@ -43092,6 +43092,22 @@ if(BUILD_TESTING)
     )
 endif()
 
+# ── Auto platform priority gate ──────────────────────────────────────
+if(BUILD_TESTING)
+    add_executable(test_m12_auto_platform_priority
+        tests/test_m12_auto_platform_priority.c
+    )
+    target_include_directories(test_m12_auto_platform_priority PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_m12_auto_platform_priority PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_auto_platform_priority PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME m12_auto_platform_priority
+             COMMAND test_m12_auto_platform_priority)
+endif()
+
 # ── Data-dir change cache invalidation gate ──────────────────────────
 # Source-lock: src/shared/asset_status_m12.c M12_AssetStatus_Scan +
 #   m12_scan_direct_theron_request / m12_scan_explicit_file_request /

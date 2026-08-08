@@ -2992,6 +2992,10 @@ level or consumer bindings.
   only after it reads the raw image in memory and verifies its original
   GRAPHICS.DAT/DUNGEON.DAT pair; the same identity-first requirement now holds
   for Amiga.
+  **2026-08-08 selection update:** Auto now prefers a verified FM Towns
+  corpus for DM1, CSB and DM2, while `--amiga` is an explicit, authenticated
+  DM2 Amiga English CLI/start-menu choice. This changes only source selection;
+  full GAME_LOAD/runtime ownership remains separately gated.
   **2026-08-06 FM Towns stream-count update:** M11 now keeps each active
   TWANIM member's frame limit from its authenticated `EN + DL` receipt while
   it remains in RAM. The source HME-242 streams, rather than hard-coded

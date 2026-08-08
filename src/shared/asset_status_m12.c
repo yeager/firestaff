@@ -6033,8 +6033,11 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     int gameIndex;
     size_t i;
     static const int autoPriority[] = {
-        M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST,
-        M12_ARCH_FM_TOWNS, M12_ARCH_X68000, M12_ARCH_PC98,
+        /* Auto must prefer a verified FM Towns corpus for every game which
+         * has one. The user can still select a source platform explicitly;
+         * this only resolves the AUTO choice and never invents a fallback. */
+        M12_ARCH_FM_TOWNS, M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST,
+        M12_ARCH_X68000, M12_ARCH_PC98,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
 

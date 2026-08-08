@@ -72,6 +72,7 @@ static void usage(const char* prog) {
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
             "  --platform <name>   Select source platform: auto, pc, amiga, atari-st, fm-towns, pc98, saturn\n"
             "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
+            "  --amiga             Select the verified Amiga edition (including DM2 Amiga English)\n"
             "  --retroachievements Enable RetroAchievements runtime bridge\n"
             "  --ra-user <name>    RetroAchievements username\n"
             "  --ra-token <token>  RetroAchievements API token\n"
@@ -546,6 +547,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--fm-towns") == 0) {
             opts.architectureOverride = M12_ARCH_FM_TOWNS;
+            continue;
+        }
+        if (strcmp(a, "--amiga") == 0) {
+            opts.architectureOverride = M12_ARCH_AMIGA;
             continue;
         }
         if (strcmp(a, "--save") == 0 && i + 1 < argc) {

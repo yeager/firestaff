@@ -585,6 +585,14 @@
   **Amiga English**. AGA förekommer endast i namnet på en känd arkivdump;
   den verkliga utgåvan kräver 68020+ och är OCS/ECS-kompatibel, så AGA får
   inte presenteras som ett runtimekrav.
+- ✅ CLI har nu det explicita valet `--amiga` (samma val som
+  `--platform amiga`), och verifierad DM2 Amiga English når startup-menyn
+  från originalets ZIP/ADF/LZX-media helt i RAM. Startmenyn respekterar
+  samma val utan att falla tillbaka till en syskoninstallation.
+- ✅ Med Auto vald prioriteras verifierad FM Towns-data före PC, Amiga och
+  Atari ST för Dungeon Master, Chaos Strikes Back och Dungeon Master II.
+  Ett sparat PC-versionindex kan därmed inte maskera en senare verifierad
+  FM Towns-installation; ett uttryckligt plattformsval ändras aldrig.
 
 # DM2 M11:s party- och miljögräns (2026-08-08)
 

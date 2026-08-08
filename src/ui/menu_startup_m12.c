@@ -1620,6 +1620,30 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
     }
 }
 
+/* The version row is a persisted index, whereas AUTO is a source-platform
+ * policy. Refresh AUTO after each real-data scan so an old PC index cannot
+ * mask a newly found FM Towns corpus. Explicit platform choices are left
+ * untouched. */
+static void m12_apply_auto_platform_versions(M12_StartupMenuState* state) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    int gameIndex;
+
+    if (!state) return;
+    for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
+        int versionIndex;
+        if (state->gameOptions[gameIndex].architectureIndex != M12_ARCH_AUTO) {
+            continue;
+        }
+        versionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &state->assetStatus, gameIds[gameIndex], M12_ARCH_AUTO);
+        if (versionIndex >= 0) {
+            state->gameOptions[gameIndex].versionIndex = versionIndex;
+        }
+    }
+}
+
 static M12_NavLevel g_nav_level = M12_NAV_MAIN;
 
 static void m12_set_buffered_message(M12_StartupMenuState* state,
@@ -2056,6 +2080,7 @@ static void m12_apply_completed_asset_scan(M12_StartupMenuState* state) {
         return;
     }
     m12_sync_entries_from_assets(state);
+    m12_apply_auto_platform_versions(state);
     m12_publish_game_availability(state);
     m12_sync_card_art(state);
     M12_CreatureArt_Init(&state->creatureArt,
@@ -4057,6 +4082,7 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     }
     m12_apply_loaded_config(state, dataDir, gameId, options);
     m12_sync_entries_from_assets(state);
+    m12_apply_auto_platform_versions(state);
     {
         FS_GameAvailability avail;
         avail.dm1_available = M12_AssetStatus_GameAvailable(&state->assetStatus, "dm1");
