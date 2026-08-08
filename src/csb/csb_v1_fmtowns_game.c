@@ -366,6 +366,32 @@ int csb_v1_fmtowns_game_load_startup_party(
     return 1;
 }
 
+int csb_v1_fmtowns_game_load_startup_dungeon(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_DungeonData *out_dungeon)
+{
+    uint8_t *bytes;
+    int result;
+
+    if (!receipt || !out_dungeon || !receipt->valid ||
+        !receipt->startup_mini_verified ||
+        !receipt->startup_mini_dungeon_tail_verified ||
+        receipt->startup_mini_dungeon_tail_size == 0u ||
+        receipt->startup_mini_dungeon_tail_size > 0x7fffffffu) return 0;
+    bytes = (uint8_t *)malloc(receipt->startup_mini_dungeon_tail_size);
+    if (!bytes) return 0;
+    if (!csb_v1_fmtowns_game_copy_verified_dungeon_tail(
+            receipt, bytes, receipt->startup_mini_dungeon_tail_size)) {
+        free(bytes);
+        return 0;
+    }
+    memset(out_dungeon, 0, sizeof(*out_dungeon));
+    result = csb_v1_dungeon_load_source_bytes(
+        out_dungeon, bytes, (int)receipt->startup_mini_dungeon_tail_size);
+    free(bytes);
+    return result == 0;
+}
+
 static int csb_v1_fmtowns_game_startup_mini_save_parts_open(
     const char *path, uint32_t file_size, const unsigned char *header,
     CSB_V1_FmtownsGameHandoffReceipt *receipt)

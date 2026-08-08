@@ -186,6 +186,13 @@ int csb_v1_fmtowns_game_load_startup_party(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     CSB_V1_PartyState *out_party);
 
+/* Materialize the authenticated F7063-checked dungeon tail as an original
+ * CSB dungeon.  The caller owns the returned allocation through
+ * csb_v1_dungeon_free(); no base-package or fixture dungeon is substituted. */
+int csb_v1_fmtowns_game_load_startup_dungeon(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_DungeonData *out_dungeon);
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
