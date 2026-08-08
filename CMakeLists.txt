@@ -56573,6 +56573,16 @@ set_tests_properties(csb_v1_amiga_titl_dat PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "csb;amiga;real_data;title")
 
+add_executable(test_csb_v1_amiga_appb_selection
+    tests/test_csb_v1_amiga_appb_selection.c
+    src/csb/csb_v1_amiga_titl_dat.c)
+target_include_directories(test_csb_v1_amiga_appb_selection PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_amiga_appb_selection PRIVATE firestaff_m10)
+add_test(NAME csb_v1_amiga_appb_selection COMMAND test_csb_v1_amiga_appb_selection)
+set_tests_properties(csb_v1_amiga_appb_selection PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "csb;amiga;real_data;startup")
+
 add_executable(test_csb_v1_amiga_dungeon_probe tests/test_csb_v1_amiga_dungeon_probe.c)
 target_include_directories(test_csb_v1_amiga_dungeon_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_amiga_dungeon_probe PRIVATE firestaff_m10)

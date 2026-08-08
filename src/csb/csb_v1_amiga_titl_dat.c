@@ -420,3 +420,56 @@ int csb_v1_amiga_titl_dat_apply_delta(
     }
     return 1;
 }
+
+int csb_v1_amiga_appb_decode_language_selection(
+    const uint8_t *data, size_t size, uint8_t *indexed_pixels,
+    size_t indexed_pixel_capacity, CSB_V1_AmigaAppbSelectionReceipt *out)
+{
+    CSB_V1_AmigaTitlDeltaReceipt frame;
+    size_t color;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || !indexed_pixels ||
+        size < CSB_V1_AMIGA_APPB_SELECTION_END_OFFSET ||
+        indexed_pixel_capacity < CSB_V1_AMIGA_TITL_WIDTH *
+                                 CSB_V1_AMIGA_TITL_HEIGHT) {
+        return 0;
+    }
+    /* SWITCH.C F1288 clears the selection bitmap before invoking GRF1_05.
+     * The delta-style decoder faithfully implements its transparent skips,
+     * which leave that cleared source destination untouched. */
+    memset(indexed_pixels, 0, CSB_V1_AMIGA_TITL_WIDTH *
+                              CSB_V1_AMIGA_TITL_HEIGHT);
+    if (!csb_v1_amiga_grf1_apply_delta(
+            data + CSB_V1_AMIGA_APPB_SELECTION_BITMAP_OFFSET,
+            size - CSB_V1_AMIGA_APPB_SELECTION_BITMAP_OFFSET,
+            indexed_pixels, indexed_pixel_capacity, &frame)) {
+        return 0;
+    }
+    if (out) {
+        memset(out->rgb4, 0, sizeof(out->rgb4));
+        for (color = 1u; color < 16u; ++color) {
+            /* The executable aligns its final two palette rows to a word.
+             * Retain the observed A31M storage gap rather than pretending
+             * the compiler emitted a packed host structure. SWITCHDA.C's
+             * G3300 is the source declaration. */
+            const size_t at = color < 14u
+                ? CSB_V1_AMIGA_APPB_SELECTION_PALETTE_OFFSET +
+                      (color - 1u) * 4u
+                : 0x0d0u + (color - 14u) * 4u;
+            if (at + 4u > size || data[at] != color ||
+                (data[at + 1u] & 0x0fu) != 0u ||
+                (data[at + 2u] & 0x0fu) != 0u ||
+                (data[at + 3u] & 0x0fu) != 0u) {
+                return 0;
+            }
+            out->rgb4[color][0] = (uint8_t)(data[at + 1u] >> 4u);
+            out->rgb4[color][1] = (uint8_t)(data[at + 2u] >> 4u);
+            out->rgb4[color][2] = (uint8_t)(data[at + 3u] >> 4u);
+        }
+        out->width = frame.width;
+        out->height = frame.height;
+        out->source_bytes_consumed = frame.source_bytes_consumed;
+    }
+    return 1;
+}

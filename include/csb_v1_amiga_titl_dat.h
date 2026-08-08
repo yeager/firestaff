@@ -28,6 +28,12 @@ extern "C" {
 #define CSB_V1_AMIGA_TITL_DELTA_COUNT            31u
 #define CSB_V1_AMIGA_TITL_FRAME_COUNT            32u
 
+/* APPB.FTL embeds A31M's language-selection screen.  These offsets are
+ * source addresses in the authenticated executable: SWITCHDA.C:619-718. */
+#define CSB_V1_AMIGA_APPB_SELECTION_PALETTE_OFFSET 0x09au
+#define CSB_V1_AMIGA_APPB_SELECTION_BITMAP_OFFSET  0x0d8u
+#define CSB_V1_AMIGA_APPB_SELECTION_END_OFFSET     0x0db2u
+
 typedef struct {
     uint16_t width;
     uint16_t height;
@@ -61,6 +67,13 @@ typedef struct {
     size_t decoded_pixel_count;
 } CSB_V1_AmigaTitlDeltaReceipt;
 
+typedef struct {
+    uint8_t rgb4[16][3];
+    uint16_t width;
+    uint16_t height;
+    size_t source_bytes_consumed;
+} CSB_V1_AmigaAppbSelectionReceipt;
+
 /* Decode the strict AN/PL/EN/DL.../DO record envelope and its real VBL
  * schedule.  Image and delta payloads stay opaque here; their decompression
  * belongs to the renderer once the IMGA delta operation is source-locked. */
@@ -85,6 +98,13 @@ int csb_v1_amiga_titl_dat_apply_delta(
     const uint8_t *data, size_t size, uint16_t delta_index,
     uint8_t *indexed_pixels, size_t indexed_pixel_capacity,
     CSB_V1_AmigaTitlDeltaReceipt *out);
+
+/* APPB is cleared before GRF1_05 draws its selection art. Its long-form
+ * transparent command is owned by EXPAND.C F0466 @Tloc_10E56, unlike the
+ * shorter TITL EN stream. The function does not choose a language. */
+int csb_v1_amiga_appb_decode_language_selection(
+    const uint8_t *data, size_t size, uint8_t *indexed_pixels,
+    size_t indexed_pixel_capacity, CSB_V1_AmigaAppbSelectionReceipt *out);
 
 #ifdef __cplusplus
 }

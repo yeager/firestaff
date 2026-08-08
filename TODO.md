@@ -27,10 +27,10 @@
   M11 äger nu exakt en 50 Hz-VBL-klocka för den vägen; PC34:s
   startkvittomotor kan inte längre ticka samma A31-bild en andra gång.
   När den verkliga 606-VBL-strömmen har löpt klart stannar M11 på den sista
-  autentiska bilden. A31M:s `APPB.FTL` är språkvalet, och dess fortsättning
-  till `KAOS.FTL` kräver en källbunden språkvals- och filmarkörväg innan
-  dungeonruntime får startas. A31:s senare meny-, Prison- och Utility-ytor
-  saknar fortfarande autentisk capture.
+  autentiska bilden. A31M:s `APPB.FTL` språkvalsyta avkodas nu från samma
+  hashverifierade program, men M11 behöver fortfarande binda dess klickrutor
+  och fortsättning till `KAOS.FTL` innan dungeonruntime får startas. A31:s
+  senare meny-, Prison- och Utility-ytor saknar fortfarande autentisk capture.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-

@@ -125,6 +125,19 @@
   receiptsbaserade PC34-vägen kan inte längre dubbelräkna TITL.DAT-tid;
   regressionstestet kontrollerar exakt fem VBlanks efter två 55 ms-tick.
 
+# CSB Amiga A31M APPB språkvalsyta avkodas från originalmedian (2026-08-08)
+
+- ✅ APPB.FTL:s verkliga 320×200-språkvalsyta avkodas nu ur den
+  hashverifierade A31M-filen. Avkodaren följer ReDMCSB `EXPAND.C` F0466:s
+  transparenta hoppgren (`Tloc_10E56`) och läser inte en PC34-yta eller
+  konstruerade bilddata.
+- ✅ Ett realdatatest låser APPB.FTL:s MD5, palett och avkodade pixelhash.
+  `TITL.DAT`-regressionen passerar samtidigt, så den nya APPB-vägen ändrar
+  inte titelns VBlank-kadens eller dess källägda bild.
+- 🔧 Klickrutorna och `FNCH`/`ENGL`/`GRMN`-returen är medvetet inte bundna
+  ännu. Nästa steg är `SWITCH.C` F1288 och `APPA.C`-handoff till den
+  verifierade `KAOS.FTL`-runtimen.
+
 - ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
   dimensions, cell counts and maximum tile indices instead of keeping only
   first-map dimensions and aggregate counters.
