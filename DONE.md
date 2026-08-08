@@ -19,6 +19,17 @@
   44-kartorsregressionen. De är läsande kvitton och gör inte en ofullständig
   session spelbar.
 
+# Nexus real-data root precedence (2026-08-08)
+
+- ✅ Nexus startup/screen-capture readiness tools now honor the explicit
+  `FIRESTAFF_NEXUS_DATA_DIR` real-data root before falling back to
+  `$HOME/.firestaff/data/nexus`. The C probe also preserves its more specific
+  `FIRESTAFF_NEXUS_TRACK1_DATA_DIR` override.
+- ✅ With the real `/Users/bosse/.firestaff/data/nexus` corpus and an isolated
+  test `HOME`, all eight Track-1 startup/readiness gates pass. The existing
+  Saturn VDP1/VDP2 no-draw boundary is unchanged; no synthetic pixels or
+  unverified presentation consumer was admitted.
+
 # Theron T900 proof boundary (2026-08-08)
 
 - ✅ Real US/JP object records and the 66-row item-property tables are now

@@ -52,11 +52,18 @@ VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
+_EXTERNAL_DATA_ROOT = os.environ.get("FIRESTAFF_NEXUS_DATA_DIR", "").strip()
+_CANONICAL_DATA_ROOT = (
+    Path(_EXTERNAL_DATA_ROOT)
+    if _EXTERNAL_DATA_ROOT
+    else Path.home() / ".firestaff" / "data" / "nexus"
+)
+
 DEFAULT_CASES = (
     {
         "id": "extracted_root",
         "label": "Nexus extracted Track 1 root",
-        "path": Path.home() / ".firestaff" / "data" / "nexus",
+        "path": _CANONICAL_DATA_ROOT,
     },
     {
         "id": "saturn_ja_track1_bin",

@@ -91,8 +91,11 @@ static int ensure_dir(const char *path)
 static const char *default_data_dir(char *buf, size_t cap)
 {
     const char *env = getenv("FIRESTAFF_NEXUS_TRACK1_DATA_DIR");
+    const char *shared_env;
     const char *home;
     if (env && env[0]) return env;
+    shared_env = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    if (shared_env && shared_env[0]) return shared_env;
     home = getenv("HOME");
     if (!home || !home[0] || cap == 0) return NULL;
     snprintf(buf, cap, "%s/.firestaff/data/nexus", home);
