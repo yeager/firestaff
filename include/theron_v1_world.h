@@ -377,6 +377,10 @@ typedef struct {
     uint8_t target_x;
     uint8_t target_y;
     uint8_t target_facing;
+    uint8_t generator_fields_valid;
+    uint8_t generator_generation;
+    uint8_t generator_toughness;
+    uint8_t generator_pause;
 } Theron_V1_SourceGeneratorRecord;
 
 /* Source occurrence for every decoded record.  The loader owns the
@@ -693,7 +697,11 @@ int theron_v1_world_bind_track02_generator(
     uint8_t graphism,
     uint8_t target_x,
     uint8_t target_y,
-    uint8_t target_facing);
+    uint8_t target_facing,
+    uint8_t generator_fields_valid,
+    uint8_t generator_generation,
+    uint8_t generator_toughness,
+    uint8_t generator_pause);
 int theron_v1_world_bind_track02_source_object(
     Theron_V1_World *world,
     int dungeon_id,
@@ -782,7 +790,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Binary serialization ─────────────────────────────────────────── */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 5
+#define THERON_WORLD_SAVE_VERSION 6
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

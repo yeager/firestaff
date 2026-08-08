@@ -411,7 +411,9 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                         world, dungeon_id, (int)map, ref, id, (int)tx, (int)ty,
                         act.type, act.value, act.once, act.effect, act.sound,
                         act.delay, act.inactive, act.graphism,
-                        act.target_x, act.target_y, act.target_facing) != 0) {
+                        act.target_x, act.target_y, act.target_facing,
+                        act.generator_fields_valid, act.generator_generation,
+                        act.generator_toughness, act.generator_pause) != 0) {
                     free(pos_table);
                     free(td);
                     return -1;

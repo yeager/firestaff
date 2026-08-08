@@ -110,6 +110,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         unsigned int type_counts[128] = {0};
         unsigned int value_fix_count = 0;
         unsigned int none_refs = 0;
+        unsigned int generator_count = 0;
 
         for (unsigned int i = 0; i < num_act; i++) {
             Theron_Actuator act;
@@ -117,6 +118,12 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                 &td->items[3][i * 8], &act) == 0);
             if (act.type < 128) type_counts[act.type]++;
             if (act.next_ref == 0xFFFE) none_refs++;
+            if (act.type == TQ_ACT_FLOOR_MONSTER_GEN) {
+                assert(act.generator_fields_valid == 1);
+                generator_count++;
+            } else {
+                assert(act.generator_fields_valid == 0);
+            }
 
             if (theron_v1_track02_actuator_needs_value_fix(act.type, 1)) {
                 uint8_t translated = theron_v1_track02_translate_item_id(
@@ -140,6 +147,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         if (d == 0) {
             assert(num_act == 180);
             assert(type_counts[TQ_ACT_WALL_TRIGGER] > 0);
+            assert(generator_count == type_counts[TQ_ACT_FLOOR_MONSTER_GEN]);
         }
 
         free(td);

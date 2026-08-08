@@ -151,6 +151,10 @@ static void seed_world(Theron_V1_World *world) {
     world->source_generators[0].target_x = 21;
     world->source_generators[0].target_y = 22;
     world->source_generators[0].target_facing = 3;
+    world->source_generators[0].generator_fields_valid = 1;
+    world->source_generators[0].generator_generation = 4;
+    world->source_generators[0].generator_toughness = 0x12;
+    world->source_generators[0].generator_pause = 0x34;
     world->generator_spawn_count[0] = 2;
     world->generator_next_tick[0] = 0x0102030405060708ULL;
     /* Real US Track 02 data contains a 14-generator map. Keep the last
@@ -270,6 +274,10 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.source_generators[0].value == 0x0203 &&
                 restored.source_generators[0].inactive == 1 &&
                 restored.source_generators[0].target_facing == 3 &&
+                restored.source_generators[0].generator_fields_valid == 1 &&
+                restored.source_generators[0].generator_generation == 4 &&
+                restored.source_generators[0].generator_toughness == 0x12 &&
+                restored.source_generators[0].generator_pause == 0x34 &&
                 restored.generator_spawn_count[0] == 2 &&
                 restored.generator_next_tick[0] == 0x0102030405060708ULL &&
                 restored.generator_spawn_count[13] == 9 &&

@@ -42,6 +42,13 @@ typedef struct {
     uint8_t  target_x;
     uint8_t  target_y;
     uint8_t  target_facing;
+    /* Type 6 replaces the generic target word with the generator overlay.
+     * These are source-record fields only; the original runtime consumer is
+     * still gated until the HuC6280 trace proves when they are consumed. */
+    uint8_t  generator_fields_valid;
+    uint8_t  generator_generation;
+    uint8_t  generator_toughness;
+    uint8_t  generator_pause;
 } Theron_Actuator;
 
 int theron_v1_track02_actuator_decode(

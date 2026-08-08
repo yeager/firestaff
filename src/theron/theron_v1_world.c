@@ -93,9 +93,15 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_TIMER_WIRE_BYTES 24u
 #define THERON_CREATURE_WIRE_BYTES 87u
 #define THERON_GENERATOR_WIRE_BYTES 32u
+#define THERON_GENERATOR_WIRE_BYTES_V6 36u
 
 static size_t theron_generator_wire_size(void) {
-    return THERON_GENERATOR_WIRE_BYTES;
+    return THERON_GENERATOR_WIRE_BYTES_V6;
+}
+
+static size_t theron_generator_wire_size_for_version(uint16_t version) {
+    return version >= 6u ? THERON_GENERATOR_WIRE_BYTES_V6
+                         : THERON_GENERATOR_WIRE_BYTES;
 }
 
 /* Source generator records are save data, not an inferred executable
@@ -121,11 +127,16 @@ static uint8_t *theron_generator_write(
     *out++ = record->target_x;
     *out++ = record->target_y;
     *out++ = record->target_facing;
+    *out++ = record->generator_fields_valid;
+    *out++ = record->generator_generation;
+    *out++ = record->generator_toughness;
+    *out++ = record->generator_pause;
     return out;
 }
 
 static const uint8_t *theron_generator_read(
-    const uint8_t *in, Theron_V1_SourceGeneratorRecord *record) {
+    const uint8_t *in, Theron_V1_SourceGeneratorRecord *record,
+    uint16_t version) {
     memset(record, 0, sizeof(*record));
     record->dungeon_id = (int32_t)rw32(in); in += 4;
     record->level = (int32_t)rw32(in); in += 4;
@@ -144,6 +155,12 @@ static const uint8_t *theron_generator_read(
     record->target_x = *in++;
     record->target_y = *in++;
     record->target_facing = *in++;
+    if (version >= 6u) {
+        record->generator_fields_valid = *in++;
+        record->generator_generation = *in++;
+        record->generator_toughness = *in++;
+        record->generator_pause = *in++;
+    }
     return in;
 }
 
@@ -1332,7 +1349,11 @@ int theron_v1_world_bind_track02_generator(
     uint8_t graphism,
     uint8_t target_x,
     uint8_t target_y,
-    uint8_t target_facing)
+    uint8_t target_facing,
+    uint8_t generator_fields_valid,
+    uint8_t generator_generation,
+    uint8_t generator_toughness,
+    uint8_t generator_pause)
 {
     if (!world || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
@@ -1364,6 +1385,10 @@ int theron_v1_world_bind_track02_generator(
     out->target_x = target_x;
     out->target_y = target_y;
     out->target_facing = target_facing;
+    out->generator_fields_valid = generator_fields_valid;
+    out->generator_generation = generator_generation;
+    out->generator_toughness = generator_toughness;
+    out->generator_pause = generator_pause;
     return 0;
 }
 
@@ -2003,7 +2028,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     in += sizeof(uint32_t);
 
     uint16_t ver = rw16(in);
-    if (ver != 1u && ver != 2u && ver != 3u && ver != 4u &&
+    if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
@@ -2126,13 +2151,15 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                     uint32_t generator_count = rw32(in);
                     in += sizeof(uint32_t);
                     remaining -= sizeof(uint32_t);
+                    const size_t generator_wire =
+                        theron_generator_wire_size_for_version(ver);
                     if (generator_count > THERON_MAX_SOURCE_GENERATORS ||
-                        (size_t)generator_count * theron_generator_wire_size() +
+                        (size_t)generator_count * generator_wire +
                             runtime_tail != remaining) return -1;
                     world->source_generator_count = generator_count;
                     for (uint32_t i = 0; i < generator_count; ++i) {
                         in = theron_generator_read(
-                            in, &world->source_generators[i]);
+                            in, &world->source_generators[i], ver);
                     }
                     for (size_t i = 0; i < runtime_slots; ++i) {
                         world->generator_spawn_count[i] = (int32_t)rw32(in);

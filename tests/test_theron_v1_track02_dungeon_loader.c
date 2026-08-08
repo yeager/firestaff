@@ -429,16 +429,16 @@ static void test_generator_binding_rejects_non_source_records(void) {
 
     assert(theron_v1_world_bind_track02_generator(
                &world, 1, 0, 1, 2, 3, 4, TQ_ACT_FLOOR_MONSTER, 5,
-               0, 0, 0, 0, 0, 0, 0, 0, 0) == -1);
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == -1);
     assert(world.source_generator_count == 0);
     assert(theron_v1_world_bind_track02_generator(
                &world, 1, 0, 1, 2, THERON_MAX_MAP_SIZE, 4,
                TQ_ACT_FLOOR_MONSTER_GEN, 5, 0, 0, 0, 0, 0, 0, 0, 0,
-               0) == -1);
+               0, 0, 0, 0, 0) == -1);
     assert(world.source_generator_count == 0);
     assert(theron_v1_world_bind_track02_generator(
                &world, 1, 0, 1, 2, 3, 4, TQ_ACT_FLOOR_MONSTER_GEN, 5,
-               0, 0, 0, 0, 0, 0, 0, 0, 0) == 0);
+               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == 0);
     assert(world.source_generator_count == 1);
 }
 

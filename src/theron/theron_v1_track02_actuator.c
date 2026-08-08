@@ -31,6 +31,19 @@ int theron_v1_track02_actuator_decode(
     out->target_x      = (w3 >> 6) & 0x1F;
     out->target_y      = (w3 >> 11) & 0x1F;
 
+    /* DMBUILDER6/src/actuator.h identifies w3 as a distinct
+     * dm_actuator_monster_regenerator overlay for floor type 6:
+     * low byte = toughness and high byte = pause.  This is a record-layout
+     * decode, not an inferred spawn algorithm.  The HuC6280 consumer remains
+     * source-gated by the disassembly capture (theron-us-spawn-consumer.asm). */
+    out->generator_fields_valid = (out->type == TQ_ACT_FLOOR_MONSTER_GEN);
+    out->generator_generation = out->generator_fields_valid
+        ? (uint8_t)((w2 >> 7) & 0x0F) : 0;
+    out->generator_toughness = out->generator_fields_valid
+        ? raw8[6] : 0;
+    out->generator_pause = out->generator_fields_valid
+        ? raw8[7] : 0;
+
     return 0;
 }
 

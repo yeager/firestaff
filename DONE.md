@@ -7969,3 +7969,15 @@
   the party back to the source-owned single champion before the route exits.
 - ✅ Source reference: ReDMCSB `CHAMPION.C` F0302 and `COMMAND.C` lines
   2174–2178, which dispatch C020–C065 against M516 rather than a host copy.
+# 2026-08-08 Theron source generator overlay
+
+- ✅ Track 02 floor monster-generator records now preserve the source
+  `generation`, `toughness` and `pause` overlay from the real 8-byte actuator
+  record. Generic target fields remain separate compatibility data; no
+  gameplay meaning is inferred from them.
+- ✅ Native Theron saves use version 6 for the four new bytes per generator;
+  version 5 and earlier generator wire records remain readable with zeroed
+  overlay fields. No spawn, timing, RNG or reactivation consumer was enabled.
+- ✅ Verified against the real `TQUS02.bin` actuator census and the generator
+  save round-trip tests. The disassembly capture gate remains authoritative
+  for executable consumer semantics.

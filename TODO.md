@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron type-6 generator records now decode the real generation,
+  toughness and pause overlay and persist it in save version 6. This remains
+  source data only: original RNG consumption, activation timing,
+  reactivation and creature-spawn ownership still require the authentic
+  HuC6280/System-Card capture and must remain fail-closed.
+
 - 🔧 Theron authentic runtime capture now has a verified real SDL2/Quartz-capable Mednafen build. It still needs the verified US System Card 3.0 and original media capture; RNG return values, spawn timing, AI, T700/T900 consumers, media bindings and gameplay semantics remain fail-closed until that capture is obtained.
 
 - 🔧 Theron `.spawn-registers` sidecars now have a strict parser tied to the
