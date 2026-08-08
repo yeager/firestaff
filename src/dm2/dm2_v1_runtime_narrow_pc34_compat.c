@@ -780,14 +780,16 @@ void dm2_v1_revive_player(
         int32_t v = 0;
         if (cb->skill_level[i] != 0)
             v = 0x40 << (uint8_t)cb->skill_level[i];
-        hero->skill[i / 4][i % 4] = v;
+        /* c_hero.cpp:1018-1027 stores dp[10..25] in rows 1..4. Row 0
+         * is reserved for the group totals calculated below. */
+        hero->skill[i / 4 + 1][i % 4] = v;
     }
     for (int g = 0; g < 4; g++) {
         int32_t sum = 0;
         for (int i = 0; i < 4; i++)
-            sum += hero->skill[g][i];
-        /* group total stored alongside sub-skills, matching the
-         * skill[0][group] layout used by DM2_QUERY_PLAYER_SKILL_LV */
+            sum += hero->skill[g + 1][i];
+        /* c_hero.cpp:1030-1039: skill[0][group] holds the sum of the
+         * corresponding four sub-skills. */
         hero->skill[0][g] = sum;
     }
 

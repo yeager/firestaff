@@ -480,7 +480,9 @@ typedef struct {
     int16_t cur_stamina, max_stamina;
     int16_t cur_mp, max_mp;
     int16_t ability_cur[7], ability_max[7];
-    int32_t skill[4][4]; /* [group][sub] */
+    /* c_hero::skill is five rows: row 0 holds the four group totals and
+     * rows 1..4 hold the sixteen source sub-skills. */
+    int32_t skill[5][4];
     uint16_t food, water;
     int8_t partypos;
     int8_t absdir;

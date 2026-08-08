@@ -8,6 +8,15 @@
 - ✅ README labels the artifact accurately: it is not evidence for the still
   unresolved dungeon-square, perspective or HUD consumers.
 
+# DM2 c_hero skill-row correction (2026-08-08)
+
+- ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the
+  original five skill rows: four group totals in row 0 and the sixteen
+  source sub-skills in rows 1–4.
+- ✅ Added regression coverage for the original `0x40 << level` mapping,
+  group sums, vital scaling, ability clamp, formation slot and food/water RNG
+  inputs. This remains a source-locked helper, not a New Game party owner.
+
 # Theron generator save-state persistence (2026-08-08)
 
 - ✅ World snapshot version 4 now carries each decoded Track 02 generator

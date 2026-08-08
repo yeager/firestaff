@@ -138,6 +138,67 @@ static void test_adjust_skills(void)
     printf("test_adjust_skills OK\n");
 }
 
+/* ---- hero category: DM2_REVIVE_PLAYER ---- */
+
+typedef struct {
+    int random_call_count;
+} ReviveTrace;
+
+static int revive_random(void *ctx)
+{
+    ReviveTrace *trace = (ReviveTrace *)ctx;
+    trace->random_call_count++;
+    return trace->random_call_count == 1 ? 0x34 : 0xab;
+}
+
+static int revive_free_position(void *ctx, int8_t base_dir)
+{
+    (void)ctx;
+    assert(base_dir == 2);
+    return 3;
+}
+
+static void test_revive_player_skill_layout(void)
+{
+    DM2_V1_HeroRecord hero;
+    DM2_V1_RevivePlayerCallbacks cb;
+    ReviveTrace trace;
+
+    memset(&hero, 0, sizeof(hero));
+    memset(&cb, 0, sizeof(cb));
+    memset(&trace, 0, sizeof(trace));
+    cb.hp_base = 40;
+    cb.stamina_base = 50;
+    cb.mp_base = 60;
+    cb.ability_base[0] = 12;
+    cb.ability_base[1] = 31;
+    cb.skill_level[0] = 1;
+    cb.skill_level[1] = 2;
+    cb.skill_level[4] = 3;
+    cb.skill_level[15] = 4;
+    cb.random = revive_random;
+    cb.find_free_position = revive_free_position;
+
+    dm2_v1_revive_player(&hero, 14, 2, &cb, &trace);
+    assert(hero.cur_hp == 400 && hero.max_hp == 400);
+    assert(hero.cur_stamina == 500 && hero.max_stamina == 500);
+    assert(hero.cur_mp == 600 && hero.max_mp == 600);
+    assert(hero.ability_cur[0] == 30 && hero.ability_max[0] == 30);
+    assert(hero.ability_cur[1] == 31 && hero.ability_max[1] == 31);
+    assert(hero.skill[1][0] == (0x40 << 1));
+    assert(hero.skill[1][1] == (0x40 << 2));
+    assert(hero.skill[2][0] == (0x40 << 3));
+    assert(hero.skill[4][3] == (0x40 << 4));
+    assert(hero.skill[0][0] == (0x40 << 1) + (0x40 << 2));
+    assert(hero.skill[0][1] == (0x40 << 3));
+    assert(hero.skill[0][2] == 0);
+    assert(hero.skill[0][3] == (0x40 << 4));
+    assert(hero.food == 0x34 + 1500);
+    assert(hero.water == 0xab + 1500);
+    assert(hero.partypos == 3 && hero.absdir == 2);
+    printf("test_revive_player_skill_layout OK\n");
+}
+
 /* ---- creature category: DM2_WOUND_CREATURE ---- */
 
 static int g_creature_defeated = -1;
@@ -329,6 +390,7 @@ int main(void)
 {
     test_wound_player();
     test_adjust_skills();
+    test_revive_player_skill_layout();
     test_wound_creature();
     test_creature_attacks_player();
     test_move_item_to();

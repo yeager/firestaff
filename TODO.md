@@ -4258,6 +4258,9 @@ level or consumer bindings.
   invent food/water rolls or write a hero record. The remaining owner must
   join the original text decoder, RNG, party position, possessions and timer
   initialization before New Game can leave the entrance flow.
+  The narrow c_hero helper now retains the original five-row skill layout,
+  but it is still disconnected from the live party and cannot authorize a
+  synthetic selection or entry sequence.
   **2026-08-08 status-gate correction:** the complete-support receipt now
   distinguishes a parsed raw-SKSAVE census from a completed live GAME_LOAD
   owner. It cannot report complete support until the chosen original stream
