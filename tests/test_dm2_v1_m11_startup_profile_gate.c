@@ -111,6 +111,85 @@ static int dm2_test_find_file_header_tile_class(const DM2_V1_DungeonData *d,
     return 0;
 }
 
+/* Find an authentic class-1 square whose complete source chain is DB2-only
+ * and does not require the missing DISPLAY_HINT_TEXT owner.  This mirrors the
+ * deliberately narrow private FLOOR atom rather than inventing a test map. */
+static int dm2_test_find_private_db2_floor(
+    const DM2_V1_GameLoadWorldOwner *owner,
+    int *out_map, int *out_x, int *out_y, int16_t *out_link)
+{
+    int map;
+
+    if (!owner || !out_map || !out_x || !out_y || !out_link) return 0;
+    for (map = 0; map < owner->dungeon.level_count; ++map) {
+        int x;
+        for (x = 0; x < owner->dungeon.level_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < owner->dungeon.level_heights[map]; ++y) {
+                int16_t link;
+                int count = 0;
+                int max_count;
+                int acceptable = 1;
+                int has_mutable_text = 0;
+                if (dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) < 0 ||
+                    ((dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y) >> 5) & 7) != 1)
+                    continue;
+                link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &owner->dungeon, map, x, y);
+                if (link == DM2_V1_RECORD_HANDLE_END ||
+                    link == DM2_V1_RECORD_HANDLE_NULL) continue;
+                max_count = owner->record_pools.pools[2].record_count +
+                            owner->record_pools.pools[2].extension_count;
+                while (link != DM2_V1_RECORD_HANDLE_END && acceptable) {
+                    const uint8_t *record;
+                    int16_t next;
+                    uint16_t w2;
+                    uint16_t text_index;
+                    uint8_t mode;
+                    if (link == DM2_V1_RECORD_HANDLE_NULL || count >= max_count ||
+                        dm2_v1_record_handle_pool(link) != 2) {
+                        acceptable = 0;
+                        break;
+                    }
+                    record = dm2_v1_record_pool_address(&owner->record_pools, link);
+                    if (!record || !dm2_v1_record_pool_next_link(
+                            &owner->record_pools, link, &next)) {
+                        acceptable = 0;
+                        break;
+                    }
+                    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                    text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
+                    mode = (uint8_t)((w2 >> 1) & 3u);
+                    if (mode == 0u ||
+                        (mode == 1u && ((text_index >> 8) & 0x1fu) == 5u) ||
+                        (mode == 2u && ((text_index >> 9) & 0x0fu) == 2u)) {
+                        if (mode == 0u && (w2 & 1u) == 0u &&
+                            map == owner->source_party_map &&
+                            x == (int)owner->source_party_x &&
+                            y == (int)owner->source_party_y) {
+                            acceptable = 0;
+                            break;
+                        }
+                        has_mutable_text = 1;
+                    }
+                    ++count;
+                    link = next;
+                }
+                if (acceptable && count > 0 && has_mutable_text &&
+                    link == DM2_V1_RECORD_HANDLE_END) {
+                    *out_map = map;
+                    *out_x = x;
+                    *out_y = y;
+                    *out_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                        &owner->dungeon, map, x, y);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static void expect_true(int condition, const char* message) {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
@@ -1267,6 +1346,10 @@ int main(void) {
     int new_game_floor_map = -1;
     int new_game_floor_x = -1;
     int new_game_floor_y = -1;
+    int new_game_db2_floor_map = -1;
+    int new_game_db2_floor_x = -1;
+    int new_game_db2_floor_y = -1;
+    int16_t new_game_db2_floor_link = DM2_V1_RECORD_HANDLE_NULL;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -1811,6 +1894,40 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 refuses a real FLOOR ACTUATE message until its complete source chain has one owner");
+    /* The DOS File_header corpus does not promise that a map contains an
+     * all-DB2 floor chain.  When it does, prove the private 0x04 atom against
+     * that authentic coordinate and source record rather than a fixture. */
+    if (profile && dm2_test_find_private_db2_floor(
+            &new_game_world_owner, &new_game_db2_floor_map,
+            &new_game_db2_floor_x, &new_game_db2_floor_y,
+            &new_game_db2_floor_link)) {
+        const uint8_t *before = dm2_v1_record_pool_address(
+            &new_game_world_owner.record_pools, new_game_db2_floor_link);
+        memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+        dm2_v1_timer_entry_init(&new_game_actuate_timer);
+        expect_true(before &&
+                        (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                            (int16_t)new_game_db2_floor_map, 0), 1) &&
+                        ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                        ((new_game_actuate_timer.actor = 2u), 1) &&
+                        ((new_game_actuate_timer.xA =
+                            (int8_t)new_game_db2_floor_x), 1) &&
+                        ((new_game_actuate_timer.yA =
+                            (int8_t)new_game_db2_floor_y), 1) &&
+                        ((new_game_actuate_timer.wvalueB = 2 << 8), 1) &&
+                        dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                            &new_game_world_owner, &new_game_actuate_timer,
+                            &new_game_actuate) &&
+                        new_game_actuate.valid &&
+                        new_game_actuate.tile_class == 1u &&
+                        new_game_actuate.text_records_seen > 0 &&
+                        new_game_actuate.text_records_toggled > 0 &&
+                        new_game_actuate.private_text_visibility_hash != 0u &&
+                        !new_game_actuate.blocked_non_text_chain &&
+                        !new_game_actuate.blocked_hint_delivery &&
+                        !profile->source_game_load_session_ready,
+                    "M11 toggles an all-DB2 FLOOR chain from real File_header data only in the private owner");
+    }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&

@@ -729,9 +729,147 @@ int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
         return 1;
     }
 
+    if (receipt.tile_class == 1u) {
+        const int16_t root = (int16_t)dm2_v1_dungeon_get_first_thing(
+            &owner->dungeon, map, x, y);
+        int16_t link = root;
+        int16_t *links = NULL;
+        uint8_t *visibility = NULL;
+        int link_count = 0;
+        int max_links;
+        uint32_t hash = 2166136261u;
+        int success = 0;
+
+        /* c_tim_proc.cpp::DM2_ACTUATE_FLOOR_MECHA (3009-3180) is a single
+         * ordered DB0..DB3 walk.  This private atom deliberately accepts
+         * only an all-DB2 chain.  A non-text record has source behaviour in
+         * another subsystem, so skipping it here would incorrectly promote
+         * a partial FLOOR dispatch. */
+        if (!owner->source_map_context_materialized ||
+            root == DM2_V1_RECORD_HANDLE_END ||
+            root == DM2_V1_RECORD_HANDLE_NULL ||
+            owner->record_pools.pools[2].record_size != 4 ||
+            owner->record_pools.pools[2].record_count < 0 ||
+            owner->record_pools.pools[2].extension_count < 0) {
+            receipt.blocked_incomplete_chain = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        max_links = owner->record_pools.pools[2].record_count +
+                    owner->record_pools.pools[2].extension_count;
+        if (max_links <= 0) {
+            receipt.blocked_incomplete_chain = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        links = (int16_t *)calloc((size_t)max_links, sizeof(*links));
+        visibility = (uint8_t *)calloc((size_t)max_links, sizeof(*visibility));
+        if (!links || !visibility) goto floor_done;
+
+        while (link != DM2_V1_RECORD_HANDLE_END) {
+            const uint8_t *record;
+            uint16_t w2;
+            uint16_t text_index;
+            uint8_t mode;
+            uint8_t ext_usage;
+            uint8_t complex_usage;
+            uint8_t old_visibility;
+            uint8_t new_visibility;
+            int16_t next;
+
+            if (link == DM2_V1_RECORD_HANDLE_NULL || link_count >= max_links ||
+                dm2_v1_record_handle_pool(link) != 2) {
+                receipt.blocked_non_text_chain = 1;
+                goto floor_done;
+            }
+            record = dm2_v1_record_pool_address(&owner->record_pools, link);
+            if (!record || !dm2_v1_record_pool_next_link(
+                    &owner->record_pools, link, &next)) {
+                receipt.blocked_incomplete_chain = 1;
+                goto floor_done;
+            }
+            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            mode = (uint8_t)((w2 >> 1) & 3u);
+            text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
+            ext_usage = (uint8_t)((text_index >> 8) & 0x1fu);
+            complex_usage = (uint8_t)((text_index >> 9) & 0x0fu);
+            old_visibility = (uint8_t)(w2 & 1u);
+            if (mode != 0u &&
+                !(mode == 1u && ext_usage == 5u) &&
+                !(mode == 2u && complex_usage == 2u)) {
+                /* The original merely continues for this DB2 form.  It is
+                 * nevertheless a wholly-owned text record, so retain its
+                 * source link and leave its visibility untouched. */
+                new_visibility = old_visibility;
+            } else {
+                new_visibility = action == 2u ? (uint8_t)!old_visibility :
+                    (action == 0u ? 1u : 0u);
+                /* The source calls QUERY_MESSAGE_TEXT/DISPLAY_HINT_TEXT when
+                 * a mode-zero text becomes visible at the party square.  No
+                 * partial owner may silently suppress that player-visible
+                 * effect, so reject before altering any private record. */
+                if (mode == 0u && old_visibility == 0u &&
+                    new_visibility != 0u && map == owner->source_party_map &&
+                    x == (int)owner->source_party_x &&
+                    y == (int)owner->source_party_y) {
+                    receipt.blocked_hint_delivery = 1;
+                    goto floor_done;
+                }
+            }
+            links[link_count] = link;
+            visibility[link_count] = new_visibility;
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+            hash = dm2_v1_game_load_owner_hash_step(hash, w2);
+            hash = dm2_v1_game_load_owner_hash_step(hash, new_visibility);
+            ++link_count;
+            link = next;
+        }
+        if (link_count == 0) {
+            receipt.blocked_incomplete_chain = 1;
+            goto floor_done;
+        }
+        /* Resolve every mutable address before the first visibility bit is
+         * written.  The owner cannot publish half a DB2 chain if an address
+         * invariant breaks between source validation and commit. */
+        for (int i = 0; i < link_count; ++i) {
+            if (!dm2_v1_record_pool_address_mut(&owner->record_pools,
+                                                links[i])) {
+                receipt.blocked_incomplete_chain = 1;
+                goto floor_done;
+            }
+        }
+        for (int i = 0; i < link_count; ++i) {
+            uint8_t *record = dm2_v1_record_pool_address_mut(
+                &owner->record_pools, links[i]);
+            uint16_t w2;
+            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            if ((uint8_t)(w2 & 1u) != visibility[i]) {
+                w2 = (uint16_t)((w2 & ~1u) | visibility[i]);
+                record[2] = (uint8_t)w2;
+                record[3] = (uint8_t)(w2 >> 8);
+                ++receipt.text_records_toggled;
+            }
+        }
+        receipt.text_records_seen = link_count;
+        receipt.private_text_visibility_hash = hash;
+        receipt.valid = hash != 0u;
+        success = receipt.valid;
+
+floor_done:
+        free(visibility);
+        free(links);
+        if (success) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        receipt.blocked_incomplete_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
     /* PIT/TELE must always fall into FLOOR_MECHA; DOOR requeues a type-1
-     * c_tim; TRICKWALL consults party/CAII; WALL/FLOOR walk complete DB
-     * chains.  None may be mutated as a coordinate-only approximation. */
+     * c_tim; TRICKWALL consults party/CAII; WALL walks complete DB chains.
+     * None may be mutated as a coordinate-only approximation. */
     receipt.blocked_incomplete_chain = 1;
     if (out_receipt) *out_receipt = receipt;
     return 0;

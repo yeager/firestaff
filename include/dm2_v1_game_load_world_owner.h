@@ -110,6 +110,14 @@ typedef struct {
     uint8_t action;
     uint8_t tile_class;
     uint8_t raw_tile;
+    /* Only the DB2-only FLOOR atom below can commit.  The count and hash
+     * describe mutable bytes in this private owner, never a hint payload or
+     * a live HUD side effect. */
+    int text_records_seen;
+    int text_records_toggled;
+    int blocked_non_text_chain;
+    int blocked_hint_delivery;
+    uint32_t private_text_visibility_hash;
 } DM2_V1_GameLoadActuateReceipt;
 
 /* Build a source-owned, pre-selection world from one currently mounted,
@@ -158,9 +166,13 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
 
 /* Consume one private 0x04 message after it was popped from this owner's
  * queue.  This ports DM2_PROCEED_TIMERS' tile-class selection exactly, but
- * performs a successful action only for source class 3 (the original no-op).
- * Classes 0, 1, 2, 4, 5 and 6 are rejected without mutation rather than
- * applying an incomplete wall/floor/door/pit/teleporter/trick-wall fragment.
+ * performs a successful action only for source class 3 (the original no-op)
+ * and the fully-owned DB2-only FLOOR subset.  The latter implements the
+ * exact Text::TextVisibility update from ACTUATE_FLOOR_MECHA, but rejects a
+ * mixed record chain and a newly-visible party-square hint until the message
+ * delivery owner exists. Classes 0, 2, 4, 5 and 6 remain rejected without
+ * mutation rather than applying an incomplete wall/door/pit/teleporter/
+ * trick-wall fragment.
  */
 int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
     DM2_V1_GameLoadWorldOwner *owner,
