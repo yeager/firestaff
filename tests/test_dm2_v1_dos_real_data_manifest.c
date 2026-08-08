@@ -1,10 +1,14 @@
 #include "dm2_v1_dos_real_data_manifest.h"
 #include "dm2_v1_dos_startup_media.h"
 #include "dm2_v1_mve_stream.h"
+#include "dm2_v1_mve_video.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __APPLE__
+#include <CommonCrypto/CommonDigest.h>
+#endif
 
 static uint8_t *read_original(const char *path, size_t *out_size)
 {
@@ -90,11 +94,22 @@ int main(void) {
     {
         static const char *const movies[] = { "intro", "end" };
         static const uint32_t expected_presentations[] = { 217u, 600u };
+#ifdef __APPLE__
+        static const char *const expected_frame_sha256[][3] = {
+            { "f4f285b4f4b97058bb408c7747f0354761415ea029078320df0e932231e0746c",
+              "550c99c3cec2885c21871a24f552b93a421f6788b93f7115029ffe55e0eb0a5c",
+              "6bdfc70fae47fb3cb8b18a7b574e62b9e6af0b63cb25f2ebc8033fb436d2de17" },
+            { "4f7988030a00d082fe445e00a2ac5dab502300ff1b80e8592dd569867b60ef74",
+              "efc94f0c32ef2dac2594398d934de13086ecb1dbe0d198df1daee38bbe274522",
+              "ff833bf7b168df74a9ec24a45e9d0e0132dbd4a8a4bc79fafbcfd89acba8a26c" }
+        };
+#endif
         for (size_t i = 0u; i < sizeof(movies) / sizeof(movies[0]); ++i) {
             char path[1024];
             DM2_V1_MveStreamReceipt mve;
             DM2_V1_MvePresentationIterator iterator;
             DM2_V1_MvePresentation presentation;
+            DM2_V1_MveVideo video;
             uint32_t presentation_count = 0u;
             uint64_t previous_time = 0u;
             size_t size = 0u;
@@ -110,6 +125,7 @@ int main(void) {
                    mve.receipt_hash != 0u);
             assert(dm2_v1_mve_presentation_iterator_init(&iterator, bytes,
                                                            size) == 1);
+            dm2_v1_mve_video_init(&video);
             for (;;) {
                 const int next = dm2_v1_mve_presentation_iterator_next(
                     &iterator, &presentation);
@@ -121,6 +137,26 @@ int main(void) {
                        presentation.video_version == 3u &&
                        presentation.video_data_size > 0u &&
                        presentation.transport13_size == 132u);
+                assert(dm2_v1_mve_video_decode_presentation(&video,
+                                                              &presentation,
+                                                              bytes, size) == 1);
+#ifdef __APPLE__
+                if (presentation.presentation_index == 0u ||
+                    presentation.presentation_index ==
+                        (expected_presentations[i] - 1u) / 2u ||
+                    presentation.presentation_index + 1u == expected_presentations[i]) {
+                    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+                    char actual[CC_SHA256_DIGEST_LENGTH * 2u + 1u];
+                    unsigned int j;
+                    unsigned int sample = presentation.presentation_index == 0u ? 0u :
+                        (presentation.presentation_index + 1u == expected_presentations[i] ? 2u : 1u);
+                    CC_SHA256(dm2_v1_mve_video_pixels(&video),
+                              DM2_V1_MVE_VIDEO_PIXELS, digest);
+                    for (j = 0u; j < CC_SHA256_DIGEST_LENGTH; ++j)
+                        snprintf(actual + j * 2u, 3u, "%02x", digest[j]);
+                    assert(strcmp(actual, expected_frame_sha256[i][sample]) == 0);
+                }
+#endif
                 if (presentation_count != 0u)
                     assert(presentation.presentation_time_us - previous_time ==
                            10416u * 8u);
@@ -132,6 +168,9 @@ int main(void) {
                    iterator.width == 320u && iterator.height == 200u &&
                    iterator.timer_rate_us == 10416u &&
                    iterator.timer_subdivision == 8u);
+            assert(video.decoded_presentations == presentation_count &&
+                   dm2_v1_mve_video_pixels(&video) != NULL &&
+                   dm2_v1_mve_video_palette_rgb(&video) != NULL);
             free(bytes);
         }
         puts("PASS: DM2 DOS MVE streams expose every original presentation payload in RAM");

@@ -56530,6 +56530,7 @@ add_executable(test_dm2_v1_dos_real_data_manifest
     src/dm2/dm2_v1_dos_real_data_manifest.c
     src/dm2/dm2_v1_dos_startup_media.c
     src/dm2/dm2_v1_mve_stream.c
+    src/dm2/dm2_v1_mve_video.c
 )
 target_include_directories(test_dm2_v1_dos_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_dos_real_data_manifest COMMAND test_dm2_v1_dos_real_data_manifest)
