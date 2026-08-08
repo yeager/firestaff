@@ -1054,7 +1054,6 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
         ((uint16_t)(uint8_t)timer->yA << 8)) : DM2_V1_RECORD_HANDLE_NULL;
     uint16_t w2;
     uint16_t w4;
-    uint16_t w6;
     int control_bit2;
     int alternating;
     int remaining;
@@ -1092,7 +1091,6 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
 
     w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
     w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
-    w6 = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
     control_bit2 = (w4 & 0x0004u) != 0u;
     alternating = (w4 & 0x0018u) == 0x0018u;
     if (alternating) {
@@ -1108,9 +1106,12 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
 
     receipt.record_link = record_link;
     receipt.action = action;
-    receipt.target_x = (uint8_t)(w6 & 0x001fu);
-    receipt.target_y = (uint8_t)((w6 >> 5) & 0x001fu);
-    receipt.target_direction = (uint8_t)((w6 >> 10) & 3u);
+    /* DME.h Actuator::Direction/Xcoord/Ycoord share w6.  Keep the timer
+     * message on the same source-locked accessors as all other actuator
+     * paths; the low bits of w6 are not the target x coordinate. */
+    receipt.target_x = dm2_actu_xcoord(record);
+    receipt.target_y = dm2_actu_ycoord(record);
+    receipt.target_direction = dm2_actu_direction(record);
     if (should_invoke) {
         DM2_V1_TimerEntry message;
         dm2_v1_timer_entry_init(&message);

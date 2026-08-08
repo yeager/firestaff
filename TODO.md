@@ -142,7 +142,9 @@
   originalets källberäknade c_tim-kapacitet och kör den färska
   `DM2_PROCESS_ACTUATOR_TICK_GENERATOR`-fasen privat, med `savegamew8`-läge,
   DB3 byte+4-mutationer och rollback vid köfel. Den privata 0x56-fortsättningen
-  kan nu skapa originalets 0x04-meddelande och nästa 0x56-post i samma kö.
+  kan nu skapa originalets 0x04-meddelande och nästa 0x56-post i samma kö;
+  dess målruta läses genom Actuators källbundna Direction/Xcoord/Ycoord-fält,
+  aldrig genom en egen w6-tolkning.
   Efter generatorpasset materialiseras den privata kartkontext som
   `DM2_move_2fcf_0b8b` bygger från Fileheaders riktiga startpose. Den når
   aldrig viewporten före en komplett sessionscommit.

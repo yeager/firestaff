@@ -1,5 +1,14 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 tick-generatorns aktuatormål (2026-08-09)
+
+- ✅ Den privata 0x56-fortsättningen använder nu samma källbundna
+  `Actuator::Direction`, `Xcoord` och `Ycoord` som övriga DM2-vägar när den
+  skapar sitt riktiga 0x04-meddelande. Därmed kan inte w6:s flagg- och
+  riktningsbitar förväxlas med målkoordinater i GAME_LOAD-ägaren.
+- ✅ Bygge, DOS-startprofil med riktig `DUNGEON.DAT` och produktionsgrinden
+  passerar; ingen timer, party eller HUD har publicerats.
+
 # DM2 privat c_tim-konsumtion vid GAME_LOAD-gränsen (2026-08-09)
 
 - ✅ Den privata File_header-ägaren kan nu konsumera nästa förfallna
