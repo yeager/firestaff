@@ -1,3 +1,13 @@
+# Verifierad cache-reskanning bevarar originaldata (2026-08-08)
+
+- ✅ M12:s materialiserare behandlar nu en exakt käll- och destinationssökväg
+  som en redan fullbordad kopiering. En användare kan alltså välja en tidigare
+  materialiserad cache som datarot utan att `GRAPHICS.DAT` eller `DUNGEON.DAT`
+  öppnas med `"wb"` och trunkeras.
+- ✅ Regressionen gör två skanningar i följd och jämför båda cachefilerna byte
+  för byte efter den andra. Rättningen gäller transportlagret och skapar inga
+  spelobjekt eller ersätter någon originalresurs.
+
 # Nexus startup/meny-produktionsgrind förstärkt (2026-08-08)
 
 - ✅ Produktionsverifieraren kontrollerar nu inte bara CMake-listan och

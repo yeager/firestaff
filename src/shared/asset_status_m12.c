@@ -1855,6 +1855,16 @@ static int m12_copy_file_to_path(const char* srcPath, const char* dstPath) {
     if (!srcPath || !dstPath || m12_path_is_virtual_asset(srcPath)) {
         return 0;
     }
+    /* A selected version may already be materialized below asset-cache and
+     * then be scanned again as the user's data root.  Opening dstPath with
+     * "wb" after opening the identical source truncates the authenticated
+     * game file before its copy can start.  The cache is a view of the
+     * original package, so an exact same-path request is already complete;
+     * leave the bytes untouched rather than turning a re-scan into data
+     * loss. */
+    if (strcmp(srcPath, dstPath) == 0) {
+        return 1;
+    }
     in = fopen(srcPath, "rb");
     if (!in) {
         return 0;

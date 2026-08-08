@@ -682,6 +682,23 @@ int main(void) {
                   "virtual container separator");
     }
 
+    /* A user can deliberately select the already materialized cache as the
+     * data root.  That makes each required-file source path identical to its
+     * destination path on the next scan.  It is a transport regression, not
+     * game content: the fixture remains only the scanner's test-only hash
+     * carrier.  The real-data Amiga CSB lane exercises the same cache shape.
+     * A re-scan must keep the authenticated bytes intact instead of opening
+     * GRAPHICS.DAT with "wb" and truncating its own source. */
+    M12_AssetStatus_Scan(&status, cacheRoot);
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm1"),
+              "re-scanning a materialized cache must retain DM1 availability");
+    check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
+                                   graphicsSize),
+              "re-scanning a materialized cache must not truncate GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
+                                   dungeonSize),
+              "re-scanning a materialized cache must not truncate DUNGEON.DAT");
+
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
 
