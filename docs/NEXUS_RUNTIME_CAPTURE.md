@@ -167,6 +167,13 @@ word-swapped position in captured VDP2 CRAM. This is bounded negative evidence
 for the captured gameplay/intro state, not proof of another source owner.
 Dungeon bitmap and CLUT joins remain open.
 
+Both VDP2 analyzers accept `--capture-frames N` and can now inspect any frame
+inside an authenticated multi-frame witness. The eight-frame European
+gameplay witness was rechecked at frame 7: it retains the same `NBG1` bitmap
+composition (`BGON=0x0002`, `CHCTLA=0x1211`, `BMPNA=0x0000`) and still has zero
+exact retail-source joins. This extends animation-state observation only; it
+does not turn a frame into menu, HUD or viewport evidence.
+
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at

@@ -76,13 +76,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
     parser.add_argument("--frame", type=int, default=0)
+    parser.add_argument(
+        "--capture-frames",
+        type=int,
+        default=None,
+        help="number of frames in the authenticated capture (defaults to frame + 1)",
+    )
     parser.add_argument("--require-layer", action="append", choices=("NBG0", "NBG1", "NBG2", "NBG3", "RBG0"), default=[])
     args = parser.parse_args()
     if args.frame < 0:
         print("NEXUS_VDP2_COMPOSITION_INVALID: negative frame")
         return 1
+    capture_frames = args.capture_frames if args.capture_frames is not None else args.frame + 1
+    if capture_frames <= args.frame:
+        print("NEXUS_VDP2_COMPOSITION_INVALID: capture frame count does not include selected frame")
+        return 1
     try:
-        frames, _ = frame_regions(args.capture.read_bytes(), args.frame + 1)
+        frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
     except (OSError, ValueError) as error:
         print(f"NEXUS_VDP2_COMPOSITION_INVALID: {error}")
         return 1

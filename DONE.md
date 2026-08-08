@@ -1,3 +1,15 @@
+# Nexus VDP2 multi-frame source audit (2026-08-08)
+
+- ✅ The authentic VDP2 composition and bitmap-source analyzers now accept
+  `--capture-frames N` and inspect a selected frame in a validated multi-frame
+  witness.
+- ✅ Rechecked the real eight-frame European capture at frame 7: `NBG1`
+  remains the only enabled layer, with `BGON=0x0002`, `CHCTLA=0x1211` and
+  `BMPNA=0x0000`; the 410 decoded retail candidates still produce zero exact
+  source joins.
+- ✅ This improves capture coverage only. Asset ownership, CLUT identity,
+  menu/HUD/viewport meaning and host composition remain blocked.
+
 # DM1 Amiga och Atari ST stöd i M11-renderaren (2026-08-08)
 
 - ✅ `M11_AssetLoader_InitDm1AtariStFromBuffer/File()` öppnar DM1 Atari ST

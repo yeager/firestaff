@@ -207,12 +207,22 @@ def main() -> int:
     parser.add_argument("capture", type=Path)
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--frame", type=int, default=0)
+    parser.add_argument(
+        "--capture-frames",
+        type=int,
+        default=None,
+        help="number of frames in the authenticated capture (defaults to frame + 1)",
+    )
     args = parser.parse_args()
     if args.frame < 0:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: negative frame")
         return 1
+    capture_frames = args.capture_frames if args.capture_frames is not None else args.frame + 1
+    if capture_frames <= args.frame:
+        print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: capture frame count does not include selected frame")
+        return 1
     try:
-        frames, _ = frame_regions(args.capture.read_bytes(), args.frame + 1)
+        frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
         menu = read_asset(args.data_dir, "MENU.BPK")
         font = read_asset(args.data_dir, "FONT256.S2D")
         title_bin = read_asset(args.data_dir, "TITLE.BIN")

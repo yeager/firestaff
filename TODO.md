@@ -9453,6 +9453,12 @@ as line/circle coordinates or promote them into movement geometry.
   CSB rendering work is broader original-capture/pixel evidence, not another
   object-family mapper.
 - 🔧 2026-07-10 Nexus follow-up: remaining real-asset promotion is authentic Saturn palette/VDP1 capture comparison beyond the DGN material block. DMWeb-compatible MENU.BPK PRS3 decode and BPK/DMDF host-route receipts are verified; pixel-mode interpretation and presentation handoff remain gated.
+  - 2026-08-08: `analyze_nexus_vdp2_composition.py` and
+    `analyze_nexus_vdp2_bitmap_source.py` now accept an authenticated
+    multi-frame count and inspect a selected frame without truncating the
+    witness. The real eight-frame European sample remains `NBG1` bitmap
+    (`BGON=0x0002`, `CHCTLA=0x1211`) at frame 7 with zero exact retail-source
+    joins; this is observation coverage only and does not relax any gate.
   - 2026-07-15 MENU.BPK source-admission update: startup now binds the archive to the canonical retail Track 1 hash before it can produce a decode/upload receipt or reach the launcher. A parseable same-named archive remains blocked; the still-required work is an authentic PRS3 decoder/capture, not a substitute menu surface.
   - 2026-07-15 PRS3 promotion update: generic `ready-decoded` receipts are
     explicitly blocked on the retail menu route until authentic opcode and
