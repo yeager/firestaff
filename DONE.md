@@ -11,6 +11,18 @@
 - Note: this persists already-authenticated static groups; the original RNG
   consumer and dynamic wave consumer remain a separate capture-gated boundary.
 
+# Theron source-bound VRAM/VCE capture gate (2026-08-08)
+
+- ✅ Production viewport capture loading now verifies complete-file FNV-1a
+  identities before admitting the raw VDC/VCE pair: VRAM `f8ab6c1b` and VCE
+  `ea83f117` for the authenticated dungeon screen capture.
+- ✅ The generic in-memory decoder remains available for unit fixtures, while
+  explicit runtime file paths cannot be promoted by size alone.
+- Verification: all VRAM/tile/palette tests pass, including the real 64 KiB
+  VRAM + 1 KiB VCE capture and 1,057 source-backed atlas entries.
+- This still proves screen-space capture only; it does not claim dungeon
+  square-to-tile semantics or the missing post-CD consumer.
+
 # Nexus audit iterations 4-5 — champion deserialize bounds (2026-08-08)
 
 - ✅ Fixed champion pool deserialize bounds check (21→26 int fields).

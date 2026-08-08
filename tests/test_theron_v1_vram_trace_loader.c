@@ -219,9 +219,30 @@ static void test_null_safety(void) {
                                          vce, THERON_VCE_SIZE) == -1);
     assert(theron_v1_vram_trace_load_raw(&vp, vram, THERON_VRAM_SIZE,
                                          vce, THERON_VCE_SIZE + 1) == -1);
+    assert(theron_v1_vram_trace_load_verified_files(
+        &vp, "/tmp/not-authenticated-vram.bin", "/tmp/not-authenticated-vce.bin",
+        0xf8ab6c1bu, 0xea83f117u) == -1);
     theron_v1_vram_trace_unload(NULL);
     assert(theron_v1_vram_trace_populate_tiles(NULL, 0, 0, 0) == -1);
     printf("PASS: test_null_safety\n");
+}
+
+static void test_verified_real_capture(void) {
+    const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
+    const char *vce_path = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
+    Theron_V1_Viewport vp;
+
+    if (!vram_path || !vce_path) {
+        printf("SKIP: test_verified_real_capture (snapshot paths absent)\n");
+        return;
+    }
+    memset(&vp, 0, sizeof(vp));
+    assert(theron_v1_vram_trace_load_verified_files(
+        &vp, vram_path, vce_path, 0xf8ab6c1bu, 0xea83f117u) == 0);
+    assert(vp.vram_trace_loaded == 1);
+    assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 64, 32) > 0);
+    theron_v1_vram_trace_unload(&vp);
+    printf("PASS: test_verified_real_capture\n");
 }
 
 int main(void) {
@@ -232,6 +253,7 @@ int main(void) {
     test_load_tqtr_extended_vram_alignment();
     test_populate_tiles();
     test_null_safety();
+    test_verified_real_capture();
     printf("All VRAM trace loader tests passed.\n");
     return 0;
 }

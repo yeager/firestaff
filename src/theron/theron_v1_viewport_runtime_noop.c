@@ -43,7 +43,10 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
     vram_snapshot = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
     vce_snapshot = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
     if (vram_snapshot && vram_snapshot[0] && vce_snapshot && vce_snapshot[0] &&
-        theron_v1_vram_trace_load_files(vp, vram_snapshot, vce_snapshot) == 0 &&
+        /* Capture receipt: vram_dungeon.bin FNV-1a f8ab6c1b,
+         * vce_dungeon.bin FNV-1a ea83f117. */
+        theron_v1_vram_trace_load_verified_files(
+            vp, vram_snapshot, vce_snapshot, 0xf8ab6c1bu, 0xea83f117u) == 0 &&
         theron_v1_vram_trace_populate_tiles(vp, 0, 64, 32) > 0) {
         vp->synthetic_rendering_blocked = 1;
     } else if (vp->vram_trace_loaded) {

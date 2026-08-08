@@ -15,6 +15,16 @@ int theron_v1_vram_trace_load_files(Theron_V1_Viewport *vp,
                                     const char *vram_path,
                                     const char *vce_path);
 
+/* Load the operator-authenticated screen-space dungeon capture.  The FNV-1a
+ * values identify the complete raw files, not merely their lengths; callers
+ * must supply the expected values from the capture receipt. */
+int theron_v1_vram_trace_load_verified_files(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    uint32_t expected_vram_fnv1a,
+    uint32_t expected_vce_fnv1a);
+
 int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
                                    const char *tqtr_path);
 

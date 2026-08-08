@@ -19,6 +19,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+static uint32_t theron_vram_trace_fnv1a_file(const char *path) {
+    FILE *file;
+    uint8_t buffer[4096];
+    size_t count;
+    uint32_t hash = 0x811c9dc5u;
+
+    if (!path || !(file = fopen(path, "rb"))) return 0u;
+    while ((count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
+        for (size_t i = 0u; i < count; ++i) {
+            hash ^= buffer[i];
+            hash *= 0x01000193u;
+        }
+    }
+    if (ferror(file)) hash = 0u;
+    fclose(file);
+    return hash;
+}
+
 int theron_v1_vram_trace_load_raw(Theron_V1_Viewport *vp,
                                   const uint8_t *vram_data, int vram_size,
                                   const uint8_t *vce_data, int vce_size) {
@@ -99,6 +117,21 @@ int theron_v1_vram_trace_load_files(Theron_V1_Viewport *vp,
     free(vram);
     free(vce);
     return rc;
+}
+
+int theron_v1_vram_trace_load_verified_files(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    uint32_t expected_vram_fnv1a,
+    uint32_t expected_vce_fnv1a) {
+    if (!vp || !vram_path || !vce_path || expected_vram_fnv1a == 0u ||
+        expected_vce_fnv1a == 0u ||
+        theron_vram_trace_fnv1a_file(vram_path) != expected_vram_fnv1a ||
+        theron_vram_trace_fnv1a_file(vce_path) != expected_vce_fnv1a) {
+        return -1;
+    }
+    return theron_v1_vram_trace_load_files(vp, vram_path, vce_path);
 }
 
 int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
