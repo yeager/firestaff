@@ -75,6 +75,9 @@
   hel DB2-textkedja på FLOOR kan nu ändra synlighetsbit privat, men blandade
   FLOOR-kedjor, partyhints, WALL, PIT, DOOR, TELEPORTER och TRICKWALL avvisas
   utan mutation tills deras kompletta följdkedjor har samma ägare.
+  `DM2_move_2fcf_0b8b` läser nu också File_header-teleportörer privat efter
+  generatorpasset, men den beräknade displayposen är inte en viewport och får
+  inte publicera karta eller party.
   DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.

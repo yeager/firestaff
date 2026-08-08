@@ -50,6 +50,17 @@ typedef struct {
     uint8_t source_party_x;
     uint8_t source_party_y;
     uint8_t source_party_direction;
+    /* Private result of skmove.cpp::DM2_move_2fcf_0b8b.  The original
+     * probes the party square and its four neighbours for a File_header
+     * teleporter after GAME_LOAD.  These are map-context bytes only; no
+     * viewport, party placement or live map is published from them. */
+    int source_staircase_flag;
+    int16_t source_teleporter_map;
+    int16_t source_display_x;
+    int16_t source_display_y;
+    uint8_t source_party_absdir;
+    int source_display_pose_valid;
+    int16_t source_last_moved_record;
     const DM2_V1_AssetLoader *asset_loader;
     int dyn4_materialized;
     uint16_t dyn4_selector_count;

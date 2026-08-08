@@ -2,6 +2,7 @@
 
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -217,6 +218,130 @@ static int dm2_v1_game_load_owner_tick_multiplier(uint8_t subtype)
     }
 }
 
+/* Resolve exactly one DM2_GET_TELEPORTER_DETAIL probe against the private
+ * File_header world.  c_querydb first uses the origin record to select its
+ * destination-map span, then verifies the destination square.  Keeping that
+ * selection here avoids treating a filename, a guessed map, or a renderer
+ * coordinate as game data.
+ *
+ * Source: SKProject SKWINSPX/src/v5/skgdtqdb.cpp::DM2_GET_TELEPORTER_DETAIL
+ * (3113-3165), skmove.cpp::DM2_move_2fcf_0b8b (947-1015).
+ */
+static int dm2_v1_game_load_owner_get_teleporter_detail(
+    const DM2_V1_GameLoadWorldOwner *owner,
+    int map,
+    int x,
+    int y,
+    DM2_V1_SkprojectTeleporterDetail *out_detail)
+{
+    const uint8_t *origin_tiles;
+    const uint8_t *destination_tiles;
+    const uint8_t *origin_record;
+    DM2_V1_SkprojectQuery0cee0897Receipt origin_receipt;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    uint16_t first_link;
+    uint16_t word4;
+    uint8_t source_detail;
+    uint8_t destination_map;
+    int16_t origin_width;
+    int16_t origin_height;
+    int16_t destination_width;
+    int16_t destination_height;
+
+    if (out_detail) memset(out_detail, 0, sizeof(*out_detail));
+    if (!owner || !out_detail || map < 0 || map >= owner->dungeon.level_count)
+        return 0;
+    origin_tiles = dm2_v1_dungeon_level_tile_data(&owner->dungeon, map,
+                                                   &origin_width, &origin_height);
+    if (!origin_tiles || x < 0 || y < 0 || x >= origin_width || y >= origin_height)
+        return 0;
+    memset(&origin_receipt, 0, sizeof(origin_receipt));
+    if (!dm2_v1_skproject_query_0cee_0897(
+            (int16_t)x, (int16_t)y, origin_tiles, origin_width, origin_height,
+            &owner->record_pools, &first_link, &source_detail,
+            &origin_receipt) || !origin_receipt.valid || source_detail == 0u ||
+        !(origin_record = dm2_v1_record_pool_address(&owner->record_pools,
+                                                      (int16_t)first_link))) {
+        return 0;
+    }
+    word4 = (uint16_t)origin_record[4] | ((uint16_t)origin_record[5] << 8);
+    destination_map = (uint8_t)(word4 >> 8);
+    if (destination_map >= (uint8_t)owner->dungeon.level_count)
+        return 0;
+    destination_tiles = dm2_v1_dungeon_level_tile_data(
+        &owner->dungeon, (int)destination_map, &destination_width,
+        &destination_height);
+    if (!destination_tiles) return 0;
+    memset(&detail_receipt, 0, sizeof(detail_receipt));
+    return dm2_v1_skproject_get_teleporter_detail(
+        (int16_t)x, (int16_t)y, origin_tiles, origin_width, origin_height,
+        &owner->record_pools, (uint8_t)map, destination_tiles,
+        destination_width, destination_height, out_detail, &detail_receipt) &&
+        detail_receipt.valid && detail_receipt.dest_map == destination_map;
+}
+
+static int dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    static const int8_t direction_x[4] = { 0, 1, 0, -1 };
+    static const int8_t direction_y[4] = { -1, 0, 1, 0 };
+    DM2_V1_SkprojectTeleporterDetail detail;
+    const int map = owner->source_party_map;
+    const int x = owner->source_party_x;
+    const int y = owner->source_party_y;
+    const int direction = owner->source_party_direction;
+    int probe_direction;
+
+    if (!owner || map < 0 || map >= owner->dungeon.level_count ||
+        direction < 0 || direction > 3) return 0;
+
+    /* DM2_move_2fcf_0b8b begins with v1e027c=-1 and treats a failed direct
+     * probe exactly like the four failed adjacent probes. */
+    owner->source_staircase_flag = 0;
+    owner->source_teleporter_map = -1;
+    owner->source_display_x = 0;
+    owner->source_display_y = 0;
+    owner->source_party_absdir = 0;
+    owner->source_display_pose_valid = 0;
+    if (dm2_v1_game_load_owner_get_teleporter_detail(owner, map, x, y,
+                                                      &detail)) {
+        owner->source_staircase_flag = 1;
+        owner->source_teleporter_map = detail.b_04;
+        owner->source_display_x = detail.b_02;
+        owner->source_display_y = detail.b_03;
+        owner->source_party_absdir = (uint8_t)((detail.b_01 - detail.b_00 +
+                                                 direction) & 3);
+        owner->source_display_pose_valid = 1;
+    } else {
+        for (probe_direction = 0; probe_direction < 4; ++probe_direction) {
+            const int probe_x = x + direction_x[probe_direction];
+            const int probe_y = y + direction_y[probe_direction];
+            int display_direction;
+            if (!dm2_v1_game_load_owner_get_teleporter_detail(
+                    owner, map, probe_x, probe_y, &detail)) {
+                continue;
+            }
+            /* table1d27fc/table1d2804 and the direction arithmetic are
+             * copied from skmove.cpp lines 975-1003. */
+            display_direction = (probe_direction + detail.b_01 + 6 -
+                                 detail.b_00 + 2) & 3;
+            owner->source_staircase_flag = 1;
+            owner->source_teleporter_map = detail.b_04;
+            owner->source_display_x = (int16_t)(detail.b_02 +
+                                                 direction_x[display_direction]);
+            owner->source_display_y = (int16_t)(detail.b_03 +
+                                                 direction_y[display_direction]);
+            owner->source_party_absdir = (uint8_t)((detail.b_04 + direction) & 3);
+            owner->source_display_pose_valid = 1;
+            break;
+        }
+    }
+    /* v1d3248 is reset after either source path; this is the private analogue
+     * only, not an M11 held-item or movement record. */
+    owner->source_last_moved_record = -1;
+    return 1;
+}
+
 void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
 {
     int i;
@@ -333,6 +458,10 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
     if (candidate.curactevhero != 0) {
         return 0;
     }
+    /* DM2_GAME_LOAD has already run DM2_move_2fcf_0b8b before a mirror click.
+     * Preserve that private party-facing result when c_hero materializes;
+     * it does not expose an M11 party or a viewport. */
+    candidate.absdir = owner->source_party_absdir;
     owner->selected_party = candidate;
     owner->source_next_champion_number = candidate.heros_in_party;
     owner->source_event_hero_index = 0;
@@ -360,13 +489,14 @@ int dm2_v1_game_load_world_owner_materialize_source_map_context(
      * DM2_move_2fcf_0b8b only after PROCESS_ACTUATOR_TICK_GENERATOR.
      * DUNGEON_STRUCTURE established v1e0266=0 for New Game and header w8
      * supplies the three pose fields.  These are source bytes, not defaults.
-     * CHANGE_CURRENT_MAP_TO's display-relative fields remain unmaterialised
-     * because a private preselection owner may not expose a viewport. */
+     * Run its teleporter probes against the owned File_header pools as well;
+     * their display pose remains private because this owner exposes no view. */
     owner->current_map = map;
     owner->source_party_map = map;
     owner->source_party_x = (uint8_t)owner->dungeon.initial_party_x;
     owner->source_party_y = (uint8_t)owner->dungeon.initial_party_y;
     owner->source_party_direction = (uint8_t)owner->dungeon.initial_party_dir;
+    if (!dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(owner)) return 0;
     owner->source_map_context_materialized = 1;
     return 1;
 }

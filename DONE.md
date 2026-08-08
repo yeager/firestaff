@@ -129,6 +129,17 @@
   privata statefält först efter generatorpasset, medan M11, HUD och
   `source_game_load_session_ready` fortfarande är noll.
 
+# DM2 New Game privat teleporterstartkontext (2026-08-08)
+
+- ✅ Den privata kartkontexten porterar nu hela den läsande
+  `DM2_move_2fcf_0b8b`-proben mot ägda File_header-rutor och recordpooler:
+  startpunkten och de fyra grannarna kontrolleras med originalets
+  `DM2_GET_TELEPORTER_DETAIL` före championvalet.
+- ✅ Trappa-/teleporterflagga, målpose, absdir och nollställt
+  senaste-rörelserecord hålls enbart i `GameLoadWorldOwner`. Realdatatestet
+  bekräftar bounds och att den senare privata `c_party`-bilden får samma
+  riktning, utan att publicera viewport, M11-karta, timer eller session.
+
 # DM2 New Game championledare i privat ägare (2026-08-08)
 
 - ✅ Championvalets privata `c_party` behåller nu originalets första

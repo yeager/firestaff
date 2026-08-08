@@ -1823,9 +1823,17 @@ int main(void) {
                     new_game_world_owner.source_party_x == 1u &&
                     new_game_world_owner.source_party_y == 8u &&
                     new_game_world_owner.source_party_direction == 0u &&
+                    new_game_world_owner.source_staircase_flag ==
+                        new_game_world_owner.source_display_pose_valid &&
+                    new_game_world_owner.source_party_absdir <= 3u &&
+                    new_game_world_owner.source_last_moved_record == -1 &&
+                    (!new_game_world_owner.source_display_pose_valid ||
+                     (new_game_world_owner.source_teleporter_map >= 0 &&
+                      new_game_world_owner.source_teleporter_map <
+                          new_game_world_owner.dungeon.level_count)) &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "M11 restores the private New Game map context from the real File_header only after actuator generators");
+                "M11 restores the private New Game map and teleporter context from the real File_header only after actuator generators");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner) &&
@@ -1844,6 +1852,8 @@ int main(void) {
                     new_game_world_owner.source_next_champion_number == 2 &&
                     new_game_world_owner.source_event_hero_index == 0 &&
                     new_game_world_owner.selected_party.curactevhero == 0 &&
+                    new_game_world_owner.selected_party.absdir ==
+                        new_game_world_owner.source_party_absdir &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 retains the source-selected leader, hero count and possessions without publishing a session");
