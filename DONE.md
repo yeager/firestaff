@@ -7837,3 +7837,14 @@
 - The change preserves raw records without promoting them to inventory or
   gameplay state; T900 ownership and item-consumer semantics remain
   source-capture gated.
+
+# CSB source-owned movement stamina and boots (2026-08-08)
+
+- ✅ PC34 F0366 now decrements every source party record through F0325 before
+  blocker resolution. Underflow accumulates as F0321 pending damage and F0320
+  applies it in the following game-loop pass, preserving the source order.
+- ✅ Live C05 object records now drive F0309/F0310: Elven Boots apply their
+  pre-rounding capacity bonus and Boot of Speed icon 194 subtracts one move
+  tick. The same runtime maximum-load value is used for F0325.
+- ✅ Focused movement tests cover normal cost, underflow, delayed damage, and
+  the source Armour-record icon route.

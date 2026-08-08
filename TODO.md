@@ -7983,9 +7983,13 @@ that its exact runtime path is not already source-locked and tested.
     `G0310` movement delay rather than a host constant. `CLIKMENU.C` F0366
     selects the maximum F0310 cost among living GAMEBLOCK champions, and M11
     now ages that gate before F0380 dispatches a later movement command.
-    This does not yet implement F0325's stamina/damage side effects or the
-    source feet-slot Boot of Speed icon lookup; those remain part of this
-    runtime item.
+    2026-08-08: the same PC34 step now performs F0325 before blocked/stairs
+    resolution, accumulates F0321-style stamina underflow in the F0320
+    pending-damage pass, and applies its C12 HUD receipt on the next source
+    tick. C05 is resolved through the live DUNGEON.DAT object record: Elven
+    Boots affect F0309 before rounding and Boot of Speed icon 194 affects
+    F0310, including the F0325 load denominator. Group AI, melee/spells,
+    drops, and wider sensor/event coverage remain open.
 31. **CSB-SOUND-MUSIC-MEDIA:** Complete source audio/music media admission,
     startup/running sound events, palette/VBlank cadence, and platform-safe
     media playback without generated replacements. The host backend is no
