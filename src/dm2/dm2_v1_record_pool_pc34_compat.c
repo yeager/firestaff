@@ -545,6 +545,7 @@ int dm2_v1_record_pool_restore_raw_sksave_resident_chain(
 
 typedef struct {
     DM2_V1_RecordPoolSet *set;
+    DM2_V1_SksaveMapOwner *map_owner;
     uint32_t record_hash;
     uint32_t record_count;
     uint16_t record_links[4096];
@@ -622,9 +623,17 @@ static int dm2_v1_sksave_pool_append(void *context, uint16_t new_link,
     uint16_t cursor;
     unsigned int guard = 0u;
 
-    if (!ctx || !ctx->set || !owner_link || map_x != -1 || map_y != 0) {
+    if (!ctx || !ctx->set) {
         return -1;
     }
+    if (map_x >= 0) {
+        size_t ground_index;
+        if (!ctx->map_owner || !ctx->map_owner->valid || owner_link ||
+            dm2_v1_sksave_map_owner_ground_index(ctx->map_owner,
+                ctx->map_owner->current_map, map_x, map_y,
+                &ground_index) != 1) return -1;
+        owner_link = &ctx->map_owner->ground_stack_links[ground_index];
+    } else if (!owner_link || map_y != 0) return -1;
     dm2_v1_wr16((uint8_t *)dm2_v1_record_pool_address_mut(
                     ctx->set, (int16_t)new_link), DM2_V1_RECORD_HANDLE_END);
     cursor = *owner_link;
@@ -1201,7 +1210,6 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     callbacks.add_possession_index = dm2_v1_sksave_pool_add_possession;
     callbacks.query_creature_ai_flags = dm2_v1_sksave_pool_query_ai;
     callbacks.ctx = &context;
-
     memset(&session, 0, sizeof(session));
     dm2_v1_read_record_session_init(&session, raw_body, raw_body_size);
     session.reader.position = state_receipt->record_link_bitstream_offset;
@@ -1314,6 +1322,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     }
 
     context.set = &pools;
+    context.map_owner = &map_owner;
     context.record_hash = roots.record_hash;
     context.ai_fn = query_creature_ai_flags;
     context.ai_ctx = query_creature_ai_flags_ctx;
