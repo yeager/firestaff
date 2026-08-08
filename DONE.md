@@ -30,6 +30,17 @@
   `GRAPHICS.DAT`-hash. Amiga- och PC-startvägar förblir separata enligt
   ReDMCSB `COMPILE.H` och `APPA.C`.
 
+# DM2 Amiga-arkivets ägaridentitet (2026-08-08)
+
+- ✅ Bootprofilen behåller nu den exakta, av användaren valda sökvägen till
+  Amiga-installationsarkivet när `GRAPHICS.DAT` och `DUNGEON.DAT` kommer från
+  dess LZX-medier. En länk till arkivet normaliseras alltså inte till en
+  annan stagingplats efter M12:s val.
+- ✅ Verifierat med originalets sex Amiga-diskdelar: LZX-uppslagning,
+  RAM-läsning av `GRAPHICS.DAT`, `DUNGEON.DAT` och `CD.DAT`, M12-mediekvittot
+  samt produktionsgränsen för placeholders passerar. Inget speldata packas
+  upp eller skapas.
+
 # DM2 SKSAVE-produktionsspärr (2026-08-08)
 
 - ✅ M10 länkar inte längre den callback-baserade specialtimerläsaren

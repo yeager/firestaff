@@ -62,9 +62,11 @@
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF (path identity):** The hash-selected loose
   `GRAPHICS.DAT`/`DUNGEON.DAT` owner is now normalized through filesystem
-  links before boot opens optional companion media. Continue to keep this as
-  path identity only: it does not supply the missing original `GAME_LOAD`
-  session owner or permit play.
+  links before boot opens optional companion media. A selected archive keeps
+  its original user-visible path instead, so a link cannot silently replace
+  its M12 media receipt. Continue to keep this as path identity only: it
+  does not supply the missing original `GAME_LOAD` session owner or permit
+  play.
   Rörelse, vändning och runtime-tick kräver nu samma owner-bit som M11.
   Timer- och renderhändelser ska fortsatt flyttas till den atomära handoffen i
   stället för att förlita sig på en monterad File_header-värld.

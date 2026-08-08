@@ -2061,7 +2061,14 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
      * this only after the GRAPHICS/DUNGEON hash pair has selected the source;
      * resolving a path neither admits nor materializes any replacement data.
      * SKULL.ASM T560 owns the subsequent DUNGEON.DAT read. */
-    if (!strstr(profile->asset_root, "::")) {
+    /* A virtual member resolves to its selected outer archive above.  Keep
+     * that user-selected archive spelling as the runtime ownership receipt:
+     * resolving a symlink here would silently substitute the staging target
+     * and make the boot profile disagree with M12's selected medium.  Loose
+     * assets, in contrast, have a directory root and may still be resolved
+     * for companion-file lookup. */
+    if (!strstr(profile->asset_root, "::") &&
+        !FSP_FileExists(profile->asset_root)) {
         char physical_asset_root[sizeof(profile->asset_root)];
         if (FSP_ResolvePhysicalPath(physical_asset_root,
                                     sizeof(physical_asset_root),
