@@ -11,6 +11,12 @@
   C013 HUD now writes and restores its own F0433/F0435 runtime clock without
   a synthetic save fixture. The probe removes only that caller-supplied
   disposable file and never touches a player's default quicksave.
+- ✅ Routed CSB's unsaved-game quit guard through the same native F0433 save
+  transaction. BACK now reaches the G2018 prompt, compares CSB's boot-owned
+  G0313 clock rather than the unrelated M11 world mirror, and both keyboard
+  and pointer confirmation paths save a CSB runtime snapshot instead of a
+  DM1 world file. Verified from a live PC34 Prison session after 101 real
+  CSB runtime ticks.
 
 # DM2 File_header champion test-link repair (2026-08-08)
 

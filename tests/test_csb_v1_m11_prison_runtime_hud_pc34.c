@@ -471,6 +471,21 @@ int main(void)
                       view.loadGameTick == saved_game_time &&
                       view.lastSaveTick == saved_game_time,
                   "F0435 resume restores the Prison quicksave clock into M11");
+            for (tick = 0; tick < 101; ++tick) {
+                CHECK(csb_v1_boot_runtime_tick_pc34(
+                          (CSB_V1_BootProfile *)view.csbBootProfile, NULL),
+                      "live Prison session advances its source-owned game clock");
+            }
+            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      view.returnToMenuConfirmActive && view.quitGuardActive,
+                  "live CSB Prison session opens the source save-and-quit guard");
+            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                      M11_GAME_INPUT_RETURN_TO_MENU,
+                  "CSB save-and-quit accepts the native runtime save route");
+            profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+            CHECK(profile && profile->runtime.game_time == view.lastSaveTick,
+                  "CSB save-and-quit records the F0433 runtime clock, not a DM1 world tick");
             remove(quicksave_path);
         }
     }

@@ -25909,6 +25909,60 @@ static M11_GameInputResult m11_csb_cancel_save_disk_menu(
     return M11_GAME_INPUT_REDRAW;
 }
 
+/* ReDMCSB LOADSAVE.C F0433 owns CSB's save-and-quit transaction just as it
+ * owns direct F5.  A CSB session cannot be serialized by the generic DM1
+ * world writer: it would lose the CSB runtime/timeline envelope that F0435
+ * consumes on resume.  Keep both keyboard and pointer confirmation routes
+ * behind this one owner so their save media is identical. */
+static int m11_save_before_return_to_menu(M11_GameViewState* state)
+{
+    char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+    int saveResult;
+
+    if (!state) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        return M11_GameView_QuickSave(state);
+    }
+    if (!M11_GameView_GetQuickSavePath(state, savePath, sizeof(savePath)) ||
+        !dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
+        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+        return 0;
+    }
+    saveResult = (state->sourceId[0] != '\0' &&
+                  strcmp(state->sourceId, "dm1") == 0)
+        ? DM1_SaveGamePC34(&state->world, savePath, state->dm1GameID)
+        : DM1_SaveGame(&state->world, savePath, state->dm1GameID, 0,
+                       state->dm1MusicOn);
+    if (saveResult != DM1_SAVE_OK) {
+        m11_set_status(state, "SAVE", DM1_SaveLoadErrorString(saveResult));
+        return 0;
+    }
+    state->lastSaveTick = (uint32_t)state->world.gameTick;
+    M12_Config_SetLastSavePath(savePath);
+    return 1;
+}
+
+static uint32_t m11_quit_guard_clock(const M11_GameViewState* state)
+{
+    const CSB_V1_BootProfile *profile;
+
+    if (!state) {
+        return 0u;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile) {
+        /* CSB's G0313 lives in the boot-owned runtime.  `world.gameTick` is
+         * a compatibility presentation mirror and is deliberately not its
+         * save clock, so using it here suppresses LOADSAVE.C's unsaved-game
+         * guard after actual CSB play. */
+        profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        return profile->runtime.game_time;
+    }
+    return (uint32_t)state->world.gameTick;
+}
+
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
@@ -25999,29 +26053,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                  * save path has been taken; we collapse that into a direct
                  * DM1_SaveGame call so the same invariant holds). */
                 if (state->quitGuardActive) {
-                    char savePath[M11_GAME_VIEW_PATH_CAPACITY];
-                    if (M11_GameView_GetQuickSavePath(state, savePath,
-                                                      sizeof(savePath)) &&
-                        dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
-                        int saveResult =
-                            (state->sourceId[0] != '\0' &&
-                             strcmp(state->sourceId, "dm1") == 0)
-                                ? DM1_SaveGamePC34(&state->world, savePath,
-                                                   state->dm1GameID)
-                                : DM1_SaveGame(&state->world, savePath,
-                                               state->dm1GameID, 0,
-                                               state->dm1MusicOn);
-                        if (saveResult == DM1_SAVE_OK) {
-                            state->lastSaveTick =
-                                (uint32_t)state->world.gameTick;
-                            M12_Config_SetLastSavePath(savePath);
-                        } else {
-                            m11_set_status(state, "SAVE",
-                                           DM1_SaveLoadErrorString(saveResult));
-                            return M11_GAME_INPUT_REDRAW;
-                        }
-                    } else {
-                        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+                    if (!m11_save_before_return_to_menu(state)) {
                         return M11_GAME_INPUT_REDRAW;
                     }
                     state->quitGuardActive = 0;
@@ -26107,11 +26139,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!state->csbBootProfile) {
             return M11_GAME_INPUT_IGNORED;
         }
-        if (input == M12_MENU_INPUT_BACK) {
-            m11_dm2_clear_unbound_feedback(state);
-            return M11_GAME_INPUT_RETURN_TO_MENU;
+        if (input != M12_MENU_INPUT_BACK) {
+            return M11_GAME_INPUT_IGNORED;
         }
-        return M11_GAME_INPUT_IGNORED;
+        /* BACK falls through to the common G2018 quit guard below. */
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
@@ -26801,7 +26832,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * instead of the plain confirm.  The compound condition matches
              * LOADSAVE.C verbatim: both inequalities must hold. */
             {
-                uint32_t tick = (uint32_t)state->world.gameTick;
+                uint32_t tick = m11_quit_guard_clock(state);
                 int unsaved = (tick > state->lastSaveTick + 100u) &&
                               (tick > state->loadGameTick + 100u);
                 if (unsaved) {
@@ -27419,24 +27450,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             if (choice == 1) {
                 /* G2018 quit-guard: SAVE-AND-QUIT path also saves on click. */
                 if (state->quitGuardActive) {
-                    char savePath[M11_GAME_VIEW_PATH_CAPACITY];
-                    if (M11_GameView_GetQuickSavePath(state, savePath,
-                                                      sizeof(savePath)) &&
-                        dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
-                        int saveResult = DM1_SaveGame(&state->world, savePath,
-                                                      state->dm1GameID, 0,
-                                                      state->dm1MusicOn);
-                        if (saveResult == DM1_SAVE_OK) {
-                            state->lastSaveTick =
-                                (uint32_t)state->world.gameTick;
-                            M12_Config_SetLastSavePath(savePath);
-                        } else {
-                            m11_set_status(state, "SAVE",
-                                           DM1_SaveLoadErrorString(saveResult));
-                            return M11_GAME_INPUT_REDRAW;
-                        }
-                    } else {
-                        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+                    if (!m11_save_before_return_to_menu(state)) {
                         return M11_GAME_INPUT_REDRAW;
                     }
                     state->quitGuardActive = 0;
@@ -49782,6 +49796,14 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
     }
 
     if (state->csbDiskMenuActive) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* BACK is Firestaff's launcher-return request, not a COMMAND.C gameplay
+     * scancode.  Let the common quit guard below evaluate G0313 and choose
+     * the F0433 save-and-quit transaction; feeding it to the CSB command
+     * bridge consumed the request before that route could run. */
+    if (input == M12_MENU_INPUT_BACK) {
         return M11_GAME_INPUT_IGNORED;
     }
 
