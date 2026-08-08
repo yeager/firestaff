@@ -10077,3 +10077,10 @@
   identify source receipts or capture-gated consumers.
 - ✅ V2 probe eligibility remains available for isolated tests, while it is no
   longer described as production Saturn presentation admission.
+
+# Nexus startup statuses no longer imply playable runtime (2026-08-08)
+
+- ✅ Champion-menu start actions now report `NEXUS START REQUESTED`, leaving
+  the Saturn pose and render handoff visibly capture-gated.
+- ✅ M11 logs `NEXUS STARTUP RECEIPT READY` rather than claiming the game is
+  ready before a source-owned runtime handoff exists.

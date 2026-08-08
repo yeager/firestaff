@@ -20928,7 +20928,8 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         nexus_v1_launcher_shutdown();
         return 0;
     }
-    fprintf(stderr, "NEXUS READY: gameId=nexus dataDir=%s\n", dataDir);
+    fprintf(stderr, "NEXUS STARTUP RECEIPT READY: gameId=nexus dataDir=%s\n",
+            dataDir);
     return 1;
 }
 

@@ -918,7 +918,7 @@ int main(void)
                champion_execution.kind ==
                    NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
                strcmp(champion_execution.status_scope, "BOOT") == 0 &&
-               strcmp(champion_execution.status, "NEXUS READY") == 0,
+               strcmp(champion_execution.status, "NEXUS START REQUESTED") == 0,
            "Nexus champion execution resolves start-dungeon handoff");
     memset(&synthetic_engine, 0, sizeof(synthetic_engine));
     synthetic_engine.level_loaded = 1;

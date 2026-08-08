@@ -11,6 +11,10 @@
   identify the Saturn start selector as unknown and keep V2 probe eligibility
   separate from production capture admission.
 
+- 🔧 Nexus startup status provenance (2026-08-08): a start request and the
+  M11 startup receipt no longer use the ambiguous `NEXUS READY` wording.
+  Neither change opens the Saturn start pose or DGN/VDP1/VDP2 handoff.
+
 - 🔧 Nexus DMWeb data-file audit (2026-08-08): the historical H2321 notes
   are now reconciled with the verified retail corpus: DGN is the 64×64
   Structure1B block-container path, SMAP/SAL/MAP/FACE/MNS/SLEV have bounded

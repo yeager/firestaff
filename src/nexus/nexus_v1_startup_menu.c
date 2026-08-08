@@ -1335,7 +1335,9 @@ int nexus_v1_startup_execute_champion_action(
             out_execution->kind =
                 NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON;
             out_execution->status_scope = "BOOT";
-            out_execution->status = "NEXUS READY";
+            /* This is only the host's start request. The Saturn start pose,
+             * DGN consumer and VDP1/VDP2 handoff remain capture-gated. */
+            out_execution->status = "NEXUS START REQUESTED";
             return 1;
         case NEXUS_V1_STARTUP_ACTION_SHOW_SAVE_SELECT:
             out_execution->kind =
