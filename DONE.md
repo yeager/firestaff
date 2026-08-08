@@ -19,6 +19,19 @@
 - ✅ Den tidigare oregistrerade DGN source-provenance-regressionen ligger nu i
   CMake/CTest. Scene-plan, boot-hash-scan och DGN source-gate passerar.
 
+# DM2 New Game championval i privat GAME_LOAD-ägare (2026-08-08)
+
+- ✅ `DM2_V1_GameLoadWorldOwner` följer nu `DM2_GAME_LOAD`-ordningen:
+  först File_header-värld och privat aktuatorkö, sedan championvalet. De
+  click-ordnade `c_hero`-bytesen och inventories kommer uteslutande från den
+  hashverifierade GDAT-/DUNGEON.DAT-transaktionen.
+- ✅ Varje materialiserad itemreferens måste finnas i den privata, verkliga
+  DB-poolen och varje verifierad source-possession måste återfinnas hos rätt
+  hjälte. Ett andra materialiseringsförsök avvisas.
+- ✅ Realdatatestet kör mot den lokala PC-DOS-profilen och bevisar att detta
+  inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
+  skapades eller ändrades.
+
 # Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
 
 - ✅ `SDDRVS.TSK`-kvittot validerar nu hela den retail-hashbundna 16-entry

@@ -68,6 +68,66 @@ static int dm2_v1_game_load_owner_validate_possessions(
     return 1;
 }
 
+static int dm2_v1_game_load_owner_validate_selected_party(
+    const DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_Party *party)
+{
+    int hero_index;
+
+    if (!owner || !party || party->heros_in_party <= 0 ||
+        party->heros_in_party != owner->transaction.hero_count ||
+        party->heros_in_party > DM2_MAX_HEROES) return 0;
+    for (hero_index = 0; hero_index < party->heros_in_party; ++hero_index) {
+        const DM2_V1_BootNewGameChampionAdmissionReceipt *admission =
+            &owner->transaction.party.admissions[hero_index];
+        int slot;
+        if (!admission->valid || !admission->incomplete_game_load ||
+            party->hero[hero_index].herotype !=
+                (int8_t)admission->selection.revive_data.hero_type ||
+            party->hero[hero_index].partypos < 0 ||
+            party->hero[hero_index].partypos > 3) return 0;
+        for (slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+            const int16_t item = party->hero[hero_index].item[slot];
+            int possession_index;
+            int found = item == DM2_V1_RECORD_HANDLE_NULL;
+            if (item == DM2_V1_RECORD_HANDLE_NULL) continue;
+            if (!dm2_v1_record_pool_address(&owner->record_pools, item)) return 0;
+            for (possession_index = 0;
+                 possession_index < owner->transaction.possessions.placed_item_count;
+                 ++possession_index) {
+                const DM2_V1_BootNewGamePossession *possession =
+                    &owner->transaction.possessions.possessions[possession_index];
+                if (possession->hero_index == (uint8_t)hero_index &&
+                    possession->equipped_record_id == (uint16_t)item) {
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found) return 0;
+        }
+    }
+    for (hero_index = 0;
+         hero_index < owner->transaction.possessions.placed_item_count;
+         ++hero_index) {
+        const DM2_V1_BootNewGamePossession *possession =
+            &owner->transaction.possessions.possessions[hero_index];
+        int slot;
+        int found = 0;
+        if (possession->hero_index >= (uint8_t)party->heros_in_party ||
+            !dm2_v1_record_pool_address(&owner->record_pools,
+                (int16_t)possession->equipped_record_id)) return 0;
+        for (slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+            if (party->hero[possession->hero_index].item[slot] ==
+                (int16_t)possession->equipped_record_id) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) return 0;
+    }
+    return 1;
+}
+
 static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash, uint32_t value)
 {
     hash ^= value;
@@ -144,10 +204,8 @@ int dm2_v1_game_load_world_owner_init_new_game(
     }
 
     candidate.current_map = candidate.transaction.entrance.map;
-    candidate.selected_party = candidate.transaction.possessions.projected_party;
     candidate.source_transaction_hash = candidate.transaction.transaction_hash;
-    if (candidate.selected_party.heros_in_party != selection_count ||
-        candidate.source_transaction_hash == 0u ||
+    if (candidate.source_transaction_hash == 0u ||
         !dm2_v1_game_load_owner_validate_possessions(&candidate)) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
@@ -155,6 +213,29 @@ int dm2_v1_game_load_world_owner_init_new_game(
     candidate.prepared = 1;
     candidate.committed = 0;
     *owner = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_champion_selection(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_Party candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        owner->champion_selection_materialized || !owner->fresh_game_mode ||
+        owner->committed) return 0;
+
+    /* SKProject c_savegame.cpp::DM2_GAME_LOAD reaches SELECT_CHAMPION only
+     * after DM2_PROCESS_ACTUATOR_TICK_GENERATOR. The transaction has replayed
+     * c_hero.cpp's click order and RNG against authenticated GDAT and map
+     * links. This creates a private c_party owner, never an M11 party. */
+    candidate = owner->transaction.possessions.projected_party;
+    if (!dm2_v1_game_load_owner_validate_possessions(owner) ||
+        !dm2_v1_game_load_owner_validate_selected_party(owner, &candidate)) {
+        return 0;
+    }
+    owner->selected_party = candidate;
+    owner->champion_selection_materialized = 1;
     return 1;
 }
 

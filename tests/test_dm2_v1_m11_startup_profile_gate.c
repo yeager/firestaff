@@ -1652,7 +1652,8 @@ int main(void) {
                         new_game_world_owner.dungeon.thing_type_counts[14] &&
                     new_game_world_owner.record_capacities[15] >=
                         new_game_world_owner.dungeon.thing_type_counts[15] &&
-                    new_game_world_owner.selected_party.heros_in_party == 2 &&
+                    !new_game_world_owner.champion_selection_materialized &&
+                    new_game_world_owner.selected_party.heros_in_party == 0 &&
                     source_dungeon_bytes_before_owner ==
                         ((const DM2_V1_DungeonData *)profile->dungeon_data)->raw_data &&
                     source_dungeon_size_before_owner ==
@@ -1682,6 +1683,22 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 runs the original fresh-game actuator-generator pass only in the private File_header/c_tim owner");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_champion_selection(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.champion_selection_materialized &&
+                    new_game_world_owner.selected_party.heros_in_party == 2 &&
+                    new_game_world_owner.selected_party.hero[0].herotype ==
+                        source_transaction.possessions.projected_party.hero[0].herotype &&
+                    new_game_world_owner.selected_party.hero[0].item[0] ==
+                        source_transaction.possessions.projected_party.hero[0].item[0] &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 materializes source-selected heroes and possessions after private GAME_LOAD generators without publishing a session");
+    expect_true(profile &&
+                    !dm2_v1_game_load_world_owner_materialize_champion_selection(
+                        &new_game_world_owner),
+                "M11 refuses to replay an already materialized source champion selection");
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&

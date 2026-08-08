@@ -42,8 +42,9 @@ typedef struct {
     uint16_t timer_capacity;
     int fresh_game_mode;
     DM2_V1_BootNewGameTransactionReceipt transaction;
-    /* Exact detached result of the source selection receipt.  This is not
-     * installed in M11 or the runtime party state. */
+    /* This remains zeroed until the source-ordered champion step.  It is
+     * never installed in M11 or the runtime party state. */
+    int champion_selection_materialized;
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
 
@@ -88,6 +89,14 @@ int dm2_v1_game_load_world_owner_is_prepared(
 int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
     DM2_V1_GameLoadWorldOwner *owner,
     DM2_V1_GameLoadActuatorGeneratorReceipt *out_receipt);
+
+/* Materialize the click-ordered c_hero and possession result that was
+ * authenticated while the owner was built.  This is deliberately after the
+ * fresh-game actuator-generator phase, as in c_savegame.cpp::DM2_GAME_LOAD.
+ * It only transfers real source records into the private c_party image; it
+ * neither removes map-chain records nor publishes a live session. */
+int dm2_v1_game_load_world_owner_materialize_champion_selection(
+    DM2_V1_GameLoadWorldOwner *owner);
 
 /* Source port of c_tim_proc.cpp::DM2_CONTINUE_TICK_GENERATOR and its
  * DM2_INVOKE_ACTUATOR/DM2_INVOKE_MESSAGE tail. `timer` must be a popped 0x56
