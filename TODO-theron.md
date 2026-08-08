@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-08 — nästa T900-bevis
+
+- 🔧 Råa itemrecords följer nu inventory genom pickup, drop och save/load.
+  Bind den ursprungliga T900-konsumenten för equip/use/stack och validera
+  dess state-skrivningar mot samma bytes innan någon regel aktiveras.
+- 🔧 Kör den befintliga Mednafen/System Card-capturevägen med originalmedia
+  för att ersätta `ram_consumer_2600=not_present`; utan den fångsten ska
+  T700/T900-statistik, loot, AI och generatorlogik fortsatt neka mutation.
+
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 
 2026-07-13 live stage-two correction: the authentic US-CUE/System Card capture
@@ -3410,4 +3419,3 @@ required before semantic promotion.
   baseline and never publishes a session. The mounted workspace has no raw
   SKSAVE corpus, so this positive path remains compile/test-gated until one is
   supplied.
-

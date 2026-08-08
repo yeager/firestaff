@@ -429,6 +429,11 @@ typedef struct {
     uint8_t item_category;
     uint8_t property_valid;
     uint8_t property[6];
+    /* Preserve the complete authenticated Track 02 item record across
+     * pickup, drop and save/load.  This is provenance, not a T900 semantic
+     * interpretation of the bytes. */
+    uint8_t source_raw_size;
+    uint8_t source_raw[16];
 } Theron_V1_InventorySourceRecord;
 
 /* ── Timer system ─────────────────────────────────────────────────── */
@@ -790,7 +795,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Binary serialization ─────────────────────────────────────────── */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 6
+#define THERON_WORLD_SAVE_VERSION 7
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

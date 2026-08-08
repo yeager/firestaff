@@ -88,7 +88,8 @@ static void ww64(uint8_t *p, uint64_t value) {
     for (unsigned i = 0; i < 8; ++i) p[i] = (uint8_t)(value >> (i * 8));
 }
 
-#define THERON_INVENTORY_SOURCE_WIRE_BYTES 31u
+#define THERON_INVENTORY_SOURCE_WIRE_BYTES_V6 31u
+#define THERON_INVENTORY_SOURCE_WIRE_BYTES_V7 48u
 #define THERON_OBJECT_WIRE_BYTES 86u
 #define THERON_TIMER_WIRE_BYTES 24u
 #define THERON_CREATURE_WIRE_BYTES 87u
@@ -340,9 +341,15 @@ static const uint8_t *theron_creature_read(
     return in;
 }
 
+static size_t theron_inventory_source_wire_size_for_version(uint16_t version) {
+    size_t bytes = version >= 7u ? THERON_INVENTORY_SOURCE_WIRE_BYTES_V7
+                                 : THERON_INVENTORY_SOURCE_WIRE_BYTES_V6;
+    return (size_t)THERON_MAX_CHAMPIONS * THERON_INVENTORY_SLOTS * bytes;
+}
+
 static size_t theron_inventory_source_wire_size(void) {
-    return (size_t)THERON_MAX_CHAMPIONS * THERON_INVENTORY_SLOTS *
-           THERON_INVENTORY_SOURCE_WIRE_BYTES;
+    return theron_inventory_source_wire_size_for_version(
+        THERON_WORLD_SAVE_VERSION);
 }
 
 static int theron_v1_world_source_level_verified(
@@ -381,11 +388,15 @@ static uint8_t *theron_inventory_source_write(
     *out++ = record->item_category;
     *out++ = record->property_valid;
     memcpy(out, record->property, sizeof(record->property));
-    return out + sizeof(record->property);
+    out += sizeof(record->property);
+    *out++ = record->source_raw_size;
+    memcpy(out, record->source_raw, sizeof(record->source_raw));
+    return out + sizeof(record->source_raw);
 }
 
 static const uint8_t *theron_inventory_source_read(
-    const uint8_t *in, Theron_V1_InventorySourceRecord *record) {
+    const uint8_t *in, Theron_V1_InventorySourceRecord *record,
+    uint16_t version) {
     memset(record, 0, sizeof(*record));
     record->valid = *in++;
     record->category = *in++;
@@ -407,7 +418,13 @@ static const uint8_t *theron_inventory_source_read(
     record->item_category = *in++;
     record->property_valid = *in++;
     memcpy(record->property, in, sizeof(record->property));
-    return in + sizeof(record->property);
+    in += sizeof(record->property);
+    if (version >= 7u) {
+        record->source_raw_size = *in++;
+        memcpy(record->source_raw, in, sizeof(record->source_raw));
+        in += sizeof(record->source_raw);
+    }
+    return in;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -815,6 +832,8 @@ int theron_v1_drop_inventory_source_item(
     object.source_property_valid = carried->property_valid;
     memcpy(object.source_property, carried->property,
            sizeof(object.source_property));
+    object.source_raw_size = carried->source_raw_size;
+    memcpy(object.source_raw, carried->source_raw, sizeof(object.source_raw));
     if (theron_v1_object_place(world, &object) != 0)
         return -1;
 
@@ -2032,6 +2051,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
 
     uint16_t ver = rw16(in);
     if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
+        ver != 6u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
@@ -2110,7 +2130,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     world->generator_active_count = 0;
     if (ver >= 4u && remaining == 0u) return -1;
     if (remaining != 0u) {
-        size_t inventory_wire = theron_inventory_source_wire_size();
+        size_t inventory_wire = theron_inventory_source_wire_size_for_version(ver);
         if (remaining == sizeof(world->inventory_source)) {
             /* Compatibility with the first source-provenance tail format. */
             memcpy(world->inventory_source, in,
@@ -2122,7 +2142,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                  ++champion) {
                 for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
                     in = theron_inventory_source_read(
-                        in, &world->inventory_source[champion][slot]);
+                        in, &world->inventory_source[champion][slot], ver);
                 }
             }
             remaining -= inventory_wire;

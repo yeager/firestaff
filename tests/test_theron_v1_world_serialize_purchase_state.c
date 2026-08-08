@@ -83,6 +83,9 @@ static void seed_world(Theron_V1_World *world) {
     world->inventory_source[0][0].property_valid = 1;
     world->inventory_source[0][0].property[0] = 0x20;
     world->inventory_source[0][0].property[5] = 0x0a;
+    world->inventory_source[0][0].source_raw_size = 6;
+    world->inventory_source[0][0].source_raw[0] = 0xde;
+    world->inventory_source[0][0].source_raw[5] = 0xad;
     world->object_count = 1;
     world->objects[0].id = 0x10203040;
     world->objects[0].type = THERON_OBJTYPE_WEAPON;
@@ -225,7 +228,10 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.inventory_source[0][0].text_ref == 0x0042 &&
                 restored.inventory_source[0][0].property_valid &&
                 restored.inventory_source[0][0].property[0] == 0x20 &&
-                restored.inventory_source[0][0].property[5] == 0x0a,
+                restored.inventory_source[0][0].property[5] == 0x0a &&
+                restored.inventory_source[0][0].source_raw_size == 6 &&
+                restored.inventory_source[0][0].source_raw[0] == 0xde &&
+                restored.inventory_source[0][0].source_raw[5] == 0xad,
                 "source item provenance survives round-trip");
     expect_true(restored.progression.quest_items_collected ==
                 original.progression.quest_items_collected,

@@ -4,6 +4,20 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Theron's Quest
 
+### 2026-08-08 — lossless T900 item-provenance
+
+- ✅ `Theron_V1_InventorySourceRecord` bevarar nu hela den riktiga Track 02-
+  itemrecorden (recordstorlek och upp till 16 råbytes) genom pickup, drop och
+  save/load. Save-formatet är version 7; version 6:s 31-byte provenance-tail
+  kan fortfarande läsas utan att hitta på nya fält.
+- ✅ `test_theron_v1_world_serialize_purchase_state` verifierar rårecordens
+  bytepositioner efter roundtrip. Riktiga US/JP
+  `test_theron_v1_track02_dungeon_loader` passerar fortsatt med source-bound
+  object- och creature-projektion.
+- 🔒 Detta bevarar källan lossless men aktiverar inte T900:s obevisade
+  equip/use/stack/loot-regler; runtimekonsumenten kring `$2600` är fortfarande
+  capture-gated.
+
 ### Theron V1
 
 - ✅ 2026-07-13 Theron Track02 completed HuC6260-word receipt: the strict
@@ -3360,4 +3374,3 @@ Closed TODO.md item (5) under the 2026-07-11 Theron original-media
 synthetic-path audit: implemented a source-locked CD audio track routing
 receipt that gates any future Theron V1 audio output on original CUE
 metadata and locally staged CD-DA tracks.
-

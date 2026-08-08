@@ -12,6 +12,16 @@
   Ingen hostpixel, HUD- eller viewport-konsument har därmed promoverats utan
   autentiserad Saturn-capture.
 
+# Theron lossless item provenance (2026-08-08)
+
+- ✅ Riktiga Track 02-itemrecords bevaras nu fullständigt genom pickup, drop
+  och save/load; save-version 7 läser även äldre version 6-tail.
+- ✅ Rårecord-roundtrip är verifierad av
+  `test_theron_v1_world_serialize_purchase_state`, och US/JP dungeon-loadern
+  passerar fortsatt mot `/Users/bosse/.firestaff/data/theron`.
+- 🔒 Detta är provenance, inte återfunnen T900-gameplay. `$2600`-konsumenten,
+  equip/use/stack/loot och T700-mutationer är fortsatt fail-closed.
+
 # DM2 File_header-receipt mot originalposter (2026-08-08)
 
 - ✅ `test_dm2_v1_g1_record_graph_diagnostic` jämför nu alla lästa DB0-dörrar,

@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
+  save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder
+  T900:s equip/use/stack/loot-regler; gissade mutationer ska fortsatt nekas.
+
 - 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT-party-, dungeon-,
   tidslinje- och aktivgruppsdata och har en realdataverifierad HUD-musväg.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,

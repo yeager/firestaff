@@ -14,6 +14,7 @@ bevismaterialet.
 | Track 02-identitet | US `TQUS02.bin`, MD5 `f23601102138f87c33025877767ebf76`; JP `TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a` | Godkänt |
 | Object-/thing-records | Kategorier 0..10, 14 och 15 avkodas från riktiga Track 02-user-data; monster, weapon, clothing, scroll, potion, chest och misc behåller råfält och provenance | Datapost godkänd, semantik ej godkänd |
 | Item properties | 66 × 6 byte matchar den riktiga US/JP-tabellen byte för byte; US/JP Track 19-proben passerar | Propertypayload godkänd, T900-consumer ej godkänd |
+| Inventory-provenance | Pickup kopierar nu hela källrecorden (storlek + 16 bytes) och v7-save roundtrip återställer den för samma object | Provenance godkänd, T900-regler ej godkända |
 | Statisk HuC6280-kedja | `theron-us-bank1f-consumer.asm` och `$2386–$252A` verifieras mot båda retailbilderna | Loader/dekomprimering godkänd |
 | Runtime object-consumer | Samma verifiering rapporterar `ram_consumer_2600=not_present` för US och JP | T900-konsument saknas i beviset |
 | Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
@@ -30,6 +31,11 @@ source-bunden kategori-4-grupp med giltig typ/count/HP projiceras till den
 levande creature-poolen för US, och nu även JP, med bibehållen source-ref,
 cell, typ och HP. Attack, AI, loot och generator-spawn lämnas avsiktligt
 obundna tills deras originalkonsumenter är fångade.
+
+Inventoryprovenancen är nu också lossless genom pickup, drop och save/load:
+den fullständiga råa itemrecorden följer med utöver propertyraden och de
+namngivna tillståndsfälten. Detta är ett källbytebevarande, inte ett påstående
+om att Firestaff har återfunnit T900:s equip/use/stack-regler.
 
 ## Vad T900-bevis skulle behöva innehålla
 

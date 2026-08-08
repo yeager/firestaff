@@ -196,6 +196,9 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
             carried->property_valid = o->source_property_valid;
             memcpy(carried->property, o->source_property,
                    sizeof(carried->property));
+            carried->source_raw_size = o->source_raw_size;
+            memcpy(carried->source_raw, o->source_raw,
+                   sizeof(carried->source_raw));
         }
         o->flags |= THERON_OBJ_F_PICKED_UP;
         theron_v1_party_recalculate_loads(&world->party);
