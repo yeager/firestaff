@@ -10242,3 +10242,11 @@
   the Saturn pose and render handoff visibly capture-gated.
 - ✅ M11 logs `NEXUS STARTUP RECEIPT READY` rather than claiming the game is
   ready before a source-owned runtime handoff exists.
+# Nexus DGN/M11 capture-gated receipts preserve the no-draw contract (2026-08-08)
+
+- ✅ Structure1F transform, direct material/untextured/animated targets now
+  initialize as no-draw and blocking, including rejected/out-of-range owners.
+- ✅ M11 Structure1F/Structure2/Structure3 intake and aggregate LEV handoffs
+  now retain the same blocking flags after authentic source binding.
+- ✅ This repairs receipt consistency without admitting Saturn VDP1 rendering;
+  production presentation remains capture-gated.

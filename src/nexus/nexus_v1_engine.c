@@ -7709,8 +7709,8 @@ int nexus_v1_engine_build_structure1f_transform_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 0;
-    target.blocks_real_dgn_mesh_render = 0;
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
     if (!engine || nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
             engine, structure1f_entry_index, &target.geometry) != 1 ||
         !target.geometry.valid || !target.geometry.source_geometry_bound ||
@@ -8563,8 +8563,8 @@ int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 0;
-    target.blocks_real_dgn_mesh_render = 0;
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
     /* Real LEV00..15 selectors exceed the 15-entry MNS TEXT banks. Until
      * Saturn proves the selector transform, this API must not claim a direct
      * Structure1F-to-Structure2 material owner. The geometry/transform
@@ -8735,8 +8735,8 @@ int nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 0;
-    target.blocks_real_dgn_mesh_render = 0;
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
     if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
         !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
@@ -8777,8 +8777,8 @@ int nexus_v1_engine_build_structure1f_direct_animated_material_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 0;
-    target.blocks_real_dgn_mesh_render = 0;
+    target.no_draw_only = 1;
+    target.blocks_real_dgn_mesh_render = 1;
     if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
         !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
@@ -11096,6 +11096,8 @@ static int nexus_v1_engine_build_m11_structure1f_descriptor_intake(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
         !header_descriptor || !header_descriptor->valid ||
         !geometry || !geometry->valid ||
@@ -11149,8 +11151,9 @@ static int nexus_v1_engine_build_m11_structure1f_descriptor_intake(
     receipt.face_ordinal = direct_mesh->face_ordinal;
     receipt.face_mesh_reference_bound = 1;
     receipt.material_reference_opaque = 1;
-    receipt.no_draw_only = 0;
-    receipt.blocks_real_dgn_mesh_render = 0;
+    /* Source-bound descriptor only; Saturn VDP1 evidence is still required. */
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     *out_receipt = receipt;
     return 1;
 }
@@ -11193,6 +11196,8 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     memset(&material_target, 0, sizeof(material_target));
     if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
         !structure1f || !structure1f->valid ||
@@ -11282,8 +11287,9 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
     receipt.palette_candidate_fnv1a64 = descriptor->palette_payload_candidate_fnv1a64;
     receipt.face_descriptor_bound = 1;
     receipt.candidates_opaque = 1;
-    receipt.no_draw_only = 0;
-    receipt.blocks_real_dgn_mesh_render = 0;
+    /* Opaque material provenance remains an explicit no-draw handoff. */
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     *out_receipt = receipt;
     return 1;
 }
@@ -11350,6 +11356,8 @@ static int nexus_v1_engine_build_m11_structure3_topology_descriptor_intake(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     memset(&packet, 0, sizeof(packet));
     memset(&mesh, 0, sizeof(mesh));
     if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
@@ -11481,8 +11489,9 @@ static int nexus_v1_engine_build_m11_structure3_topology_descriptor_intake(
         data + normal_row_offset, 12);
     receipt.topology_framing_bound = 1;
     receipt.capture_required = 1;
-    receipt.no_draw_only = 0;
-    receipt.blocks_real_dgn_mesh_render = 0;
+    /* Topology is admitted as source data, never as a render authorization. */
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     *out_receipt = receipt;
     return 1;
 }
@@ -11584,8 +11593,9 @@ int nexus_v1_engine_set_m11_direct_lev_dungeon_no_draw_receipt(
     receipt.structure2_face_descriptor = structure2_face_descriptor;
     receipt.structure3_topology_descriptor = topology_descriptor;
     receipt.geometry = *geometry;
-    receipt.no_draw_only = 0;
-    receipt.blocks_real_dgn_mesh_render = 0;
+    /* Aggregate handoff stays no-draw until a matching Saturn capture exists. */
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     engine->m11_direct_lev_dungeon = receipt;
     engine->m11_direct_lev_dungeon_no_draw_valid = 1;
     engine->m11_direct_lev_dungeon_route_epoch = route_epoch;
