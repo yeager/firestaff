@@ -660,9 +660,12 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng) {
 
 /* ═══════════════════════════════════════════════════════════════════
  * Load SFX bank for level
- * SAL format: SCSP tone bank — "dsp01.EXB" DSP program header followed
- * by tone directory (BE16 offset table) and signed 16-bit big-endian
- * PCM sample data at 22050 Hz.
+ * SAL format: the real DMWeb DataID 0 region contains an SCSP tone-bank
+ * directory (BE16 offsets) and bounded source-control/sample-width fields.
+ * The sample codec, byte order, rate, loop points and SCSP voice ownership
+ * are not established by those fields alone; do not describe the payload as
+ * host PCM or assign a 22050 Hz rate until an authenticated SDDRVS/SCSP
+ * execution trace binds the consumer.
  * MAP format: 8-byte records (DataID/ID/start/size), terminated by 0xFF.
  * Source: docs/nexus_audio_format.md.
  * ═══════════════════════════════════════════════════════════════════ */

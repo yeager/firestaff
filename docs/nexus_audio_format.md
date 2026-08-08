@@ -41,8 +41,9 @@ Located in Track 1 of the ISO (MODE1/2352, game data track).
 - One per dungeon level
 - Format: bounded DMWeb DataID 0 tone-bank directory plus additional data
 - Contains: per-level tone-bank data and other SAL regions
-- Firestaff decodes directory offsets and bounded 8/16-bit sample metadata;
-  it does not assume that every remaining region is PCM
+- Firestaff decodes directory offsets and bounded 8/16-bit source metadata;
+  it does not promote the remaining region to host PCM, a sample rate or a
+  looped voice without an authenticated SDDRVS/SCSP consumer trace
 
 ### SNDLEV*.MAP Files (66-90 bytes each)
 

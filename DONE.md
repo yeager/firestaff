@@ -14,6 +14,14 @@
   utan PC34:s start- eller ytersättningar. Arbetslistan beskriver nu enbart
   återstående Utility-disk- och extern capture-paritet som öppet arbete.
 
+# Nexus SAL codec boundary wording (2026-08-08)
+
+- ✅ Rättade den missvisande SAL-kommentaren som kallade råa DataID 0-fält
+  för 22050 Hz signed PCM. Koden och ljudformatdokumentationen anger nu
+  endast verifierade directory-/sample-width-fält; codec, frekvens, loopar,
+  SCSP-röst och SLEV/MAP-händelsebindning förblir capture-gated.
+- ✅ Riktiga `SNDLEV*.SAL`/`.MAP`-tester passerar utan att skapa en host-röst.
+
 # Nexus 0DMSTRT synthetic-admission boundary (2026-08-08)
 
 - ✅ Flyttade `nexus_v1_0dmstrt_structure_admission.c` ut ur
