@@ -1,3 +1,12 @@
+# CSB F0435 save-clock real-data regression (2026-08-08)
+
+- ✅ Corrected the real PC34 F0435/F9 regression setup to keep the timeline
+  heap clock at the same `G0313_ul_GameTime` boundary as the deliberately
+  advanced save clock. This is the source transaction in `LOADSAVE.C F0435`,
+  rather than a writer relaxation.
+- ✅ Verified a real PC34 session writes, reloads and rejects a corrupted
+  native save; the real Prison handoff/HUD regression also passes.
+
 # CSB real-data test-path admission (2026-08-08)
 
 - ✅ Removed two developer-machine-only `/Users/bosse/...` fallbacks from the

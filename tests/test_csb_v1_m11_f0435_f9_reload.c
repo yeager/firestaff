@@ -39,6 +39,11 @@ static int make_native_save(const char *data_dir, const char *save_path)
     profile.runtime.party_y = CSB_V1_START_PARTY_Y + 1;
     profile.runtime.tick_count = 7u;
     profile.runtime.game_time = 7u;
+    /* LOADSAVE.C F0435 restores G0313_ul_GameTime and the TIMELINE heap as
+     * one transaction.  This real-data setup advances G0313 deliberately,
+     * so retain the same source boundary before asking the production writer
+     * to serialize it. */
+    profile.runtime.timeline_queue.gameTick = profile.runtime.game_time;
     profile.runtime.party_state.PartyMapX = profile.runtime.party_x;
     profile.runtime.party_state.PartyMapY = profile.runtime.party_y;
     if (csb_v1_boot_runtime_save_game_to_path_pc34(
