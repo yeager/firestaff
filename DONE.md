@@ -7815,3 +7815,14 @@
   theron-us-spawn-consumer.asm` and `theron-runtime-spawn-capture.md`.
   The actual RNG/timing/re-enable consumer remains intentionally fail-closed
   until its dynamic return and state ownership are captured.
+
+# Theron authenticated roster text/class join (2026-08-08)
+
+- ✅ Startup layout class semantics now use the authenticated Track 02 roster
+  name as the text-consumer gate and the source mirror-to-record index for
+  numeric class data. Production no longer rejects a decoded label merely
+  because the static numeric table intentionally exposes no C label.
+- ✅ The focused JP/roster regression passes; portrait pixels and portrait IDs
+  remain fail-closed and are not inferred from the text join.
+- Source evidence: Track 02 startup roster catalog and the T520 forcefield
+  mirror handoff.

@@ -1069,8 +1069,18 @@ static int tqr_startup_layout_real_roster_class(
         roster_index >= (int)theron_v1_track02_us_champion_count()) {
         return -1;
     }
+    /* In production the static numeric roster deliberately carries no
+     * labels: the authenticated Track 02 text consumer owns the name.  The
+     * decoded name has already passed through the startup media route above;
+     * use the source mirror->record index for numeric class semantics rather
+     * than requiring a duplicate C label. Source: Track 02 startup roster
+     * catalog and T520 forcefield mirror. */
+    if (roster_index >= state->startup_roster_name_count ||
+        roster_index >= THERON_STARTUP_LAYOUT_ROSTER_CAPACITY) {
+        return -1;
+    }
     record = theron_v1_track02_us_champion((unsigned int)roster_index);
-    if (!record || !record->name || strcmp(record->name, decoded_name) != 0) {
+    if (!record) {
         return -1;
     }
 
