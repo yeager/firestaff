@@ -1,3 +1,13 @@
+# Nexus VDP1 runtime-writer/source join (2026-08-08)
+
+- ✅ Added `analyze_nexus_vdp1_runtime_writer_join.py`, which authenticates
+  the European `DM.BIN`/`TM.BIN` pair and compares the captured 48-word
+  writer window against direct-base and whole-file native ownership.
+- ✅ The observed `PC=0x06013098` writer has no exact retail owner; the
+  explicit `0x06010000` mapping reaches `DM.BIN+0x3058` but mismatches, and
+  the longest file overlap is one word. Relocation/decompression remains
+  unproven and presentation stays capture-gated.
+
 # Nexus external capture inventory (2026-08-08)
 
 - ✅ Added a reproducible inventory for all external `runtime-vdp12.raw`

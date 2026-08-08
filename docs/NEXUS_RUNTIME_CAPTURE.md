@@ -262,6 +262,16 @@ requires an observed END record when requested. Its output is still a state
 receipt: command type `0x09`, `0x0A`, or END does not establish a game-asset
 owner or authorize a host draw.
 
+The runtime writer/source join is reproducible with
+`scripts/analyze_nexus_vdp1_runtime_writer_join.py`. On the authenticated
+European `DM.BIN`/`TM.BIN` pair, the captured writer window beginning at
+`PC=0x06013058` and writing `0x47c00` has no whole native owner. With the
+explicit `0x06010000` load-base hypothesis, its direct `DM.BIN` offset
+`0x3058` is a byte mismatch; the best retail-file overlap is one SH-2 word.
+The tool records this as negative evidence and leaves relocation,
+decompression and runtime-code ownership unbound. It does not treat a short
+word overlap as a source join or unlock menu, DGN, HUD or viewport drawing.
+
 `scripts/analyze_nexus_tm_bin_vdp_owner.py` records a separate static source
 receipt. On the authenticated retail `TM.BIN`, its SH-2 PC-relative literal
 loads reach the VDP1 register window (`0x25d00000` through the observed

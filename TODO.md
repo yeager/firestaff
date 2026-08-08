@@ -1642,6 +1642,14 @@
   span still lacks a decoded MENU/DGN/ITEM owner and VDP2 CLUT/tile join, so
   menu/HUD/viewport production drawing remains blocked.
 
+- **NEXUS-VDP1-RUNTIME-WRITER-JOIN:** The captured writer code window at
+  `PC=0x06013098` is now checked against hash-authenticated `DM.BIN` and
+  `TM.BIN`. Under the explicit `0x06010000` hypothesis, `DM.BIN+0x3058`
+  mismatches and the best whole-file native overlap is one word. Recover the
+  actual relocated/decompressed code image and its loader handoff before
+  claiming a runtime source owner; short byte overlaps must not promote a
+  DGN, MENU, ITEM, HUD or viewport consumer.
+
 - **NEXUS-VDP2-WRITE-OWNER:** The authentic startup producer now emits a
   strict VDP2 write witness covering registers (`0x180000..0x18011e`), VRAM
   (`0x000000..0x0743fe`) and CRAM (`0x100000..0x1007fe`). The current
