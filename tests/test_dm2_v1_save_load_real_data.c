@@ -986,6 +986,8 @@ static void test_real_raw_save(const char *path, const char *root,
         uint8_t *preflight_graphics;
         size_t preflight_graphics_size;
         char preflight_graphics_path[600];
+        const uint32_t raw_body_hash_before = hash_bytes(
+            2166136261u, bytes + 42u, byte_count - 42u);
         const uint16_t savegamew7 = (uint16_t)bytes[0] |
             ((uint16_t)bytes[1] << 8);
         snprintf(preflight_graphics_path, sizeof(preflight_graphics_path),
@@ -1004,6 +1006,9 @@ static void test_real_raw_save(const char *path, const char *root,
                 &special_timers);
         dm2_v1_asset_loader_free(&preflight_loader);
         free(preflight_graphics);
+        CHECK(hash_bytes(2166136261u, bytes + 42u, byte_count - 42u) ==
+                  raw_body_hash_before,
+              "SKSave c_map restore keeps the supplied raw game data immutable");
         if (!special_ok) {
             printf("  SKSave preflight halted at source phase %d (map %d, %d,%d root %04x record %d reason %d)\n",
                    (int)special_timers.failure_stage,

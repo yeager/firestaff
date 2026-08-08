@@ -817,6 +817,9 @@
 - ✅ Verifierat mot alla åtta riktiga PC-DOS-sparfiler. Kartkedjor som tidigare
   avvisades vid DB15-append fortsätter nu till originalets DB0-recyclergräns.
   Sessionen publiceras fortfarande inte.
+- ✅ Realdatatestet hashkontrollerar nu hela råa SKSAVE-kroppen före och efter
+  preflight. Den tillfälliga c_map-återställningen kan alltså inte skriva om
+  användarens monterade speldata.
 
 # DM2 New Game-entréreceipt (2026-08-08)
 
