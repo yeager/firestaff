@@ -4,6 +4,7 @@
 
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
+#include "asset_status_m12.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
 
@@ -50,20 +51,36 @@ int main(void)
 {
     const char* root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
     const char* companion = getenv("FIRESTAFF_DM2_ENGLISH_COMPANION");
+    M12_AssetStatus assets;
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
     unsigned char framebuffer[M11_FB_BYTES];
+    char selected_runtime[1024];
     int step;
 
     if (!root || !root[0] || !companion || !companion[0]) {
         puts("SKIP: FIRESTAFF_DM2_FMTOWNS_ROOT and English companion are required");
         return 0;
     }
+    /* M11 receives the edition selected by M12, never the shared scan root.
+     * Resolve the HME-242 archive here so this real-media regression covers
+     * the same ownership handoff as the launcher when PC, Amiga and Towns
+     * corpora coexist.  The archive remains virtual/RAM-only. */
+    memset(&assets, 0, sizeof(assets));
+    memset(selected_runtime, 0, sizeof(selected_runtime));
+    M12_AssetStatus_ScanGame(&assets, root, "dm2");
+    expect(M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+               &assets, "dm2", "fmtowns-ja", selected_runtime,
+               sizeof(selected_runtime)) == 1 &&
+               strstr(selected_runtime,
+                      "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL,
+           "M12 resolves the selected HME-242 archive instead of the shared scan root");
+    if (failures != 0) return 1;
     memset(&spec, 0, sizeof(spec));
     spec.gameId = "dm2";
     spec.sourceId = "dm2";
     spec.title = "DUNGEON MASTER II";
-    spec.dataDir = root;
+    spec.dataDir = selected_runtime;
     spec.dm2EnglishCompanionPath = companion;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.presentationWidth = M11_FB_WIDTH;

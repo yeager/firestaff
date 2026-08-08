@@ -36,6 +36,18 @@
 - ✅ Verifierat med M11:s uppstartsprofilgrind mot hashverifierad PC-DOS-data,
   championlivscykeltestet och en symbolkontroll av M10.
 
+# DM2 FM Towns verklig M11-överlämning (2026-08-08)
+
+- ✅ FM Towns-regressionen lämnar inte längre en blandad datarot direkt till
+  M11. Den går först genom samma M12-upplösning som startmenyn använder och
+  överlämnar det hashverifierade HME-242-arkivet för `fmtowns-ja`.
+- ✅ Det bevisar att PC-DOS-kompanjonen bara tillför kontrollerad engelsk text;
+  FM Towns CD, SWOOSH, TITLE, SKULL och END förblir den valda originalmedian.
+  Inga arkivmedlemmar packas upp och ingen ersättningsanimation, palett eller
+  menybild kan användas.
+- ✅ Verifierat både från den delade DM2-dataroten och från det direkta
+  originalarkivet med `test_dm2_fmtowns_m11_title_real_media`.
+
 # DM2 startmeny: källkoordinater (2026-08-08)
 
 - ✅ SDL:s huvudslinga normaliserar fönsterklick till originalets 320×200-
