@@ -979,12 +979,14 @@
   event selector, callback ABI, SLEV dispatch order or SDDRVS playback, so
   no runtime script route is enabled.
 
-- **NEXUS-SAL-HOST-PCM-BOUNDARY:** The production SAL path must remain a
-  byte-level receipt path only.  PCM format/rate/looping, voice ownership and
-  MAP→event handoff still require a Saturn SCSP/SDDRVS execution capture;
-  `nexus_sound_decode_sal()` is therefore kept as an explicit no-op until
-  that capture is admitted. The public mixer is also silence-only, even when
-  diagnostic voice fields are manually populated.
+- **NEXUS-SAL-HOST-PCM-BOUNDARY:** The production SAL path remains a
+  byte-level receipt path only. DMWeb directory/profile facts are retained
+  from the real 16-bank corpus, but PCM format/rate/looping, voice ownership
+  and MAP→event handoff still require a Saturn SCSP/SDDRVS execution capture;
+  `nexus_sound_decode_sal()` therefore remains an explicit no-op. The public
+  mixer is also silence-only, even when diagnostic voice fields are manually
+  populated. Do not turn the profile's bounded tone entries into host PCM
+  candidates until that capture is admitted.
 
 - **NEXUS-NGLT-RESUME-BOUNDARY:** Native FNXS/NGLT light state is no longer
   rehydrated by the retail launcher resume path while Saturn action/state-write

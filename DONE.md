@@ -8439,3 +8439,13 @@
 - ✅ Updated the production-boundary verifier and CTest to assert fail-closed
   adapters. Build, boundary test, `git diff --check` and the source-boundary
   verifier pass; no capture evidence was promoted.
+
+# Nexus strict SAL PCM boundary (2026-08-08)
+
+- ✅ Removed the unadmitted SAL directory-to-host-PCM materialization path
+  from the retail sound runtime. The real SAL/MAP directory and tone-entry
+  profile remains available as byte-level diagnostic evidence.
+- ✅ `nexus_sound_decode_sal()` is again explicitly silence/no-candidate until
+  an authentic SLEV→MAP→SDDRVS→SCSP capture proves sample encoding, rate,
+  looping, voice ownership and event chronology. No host playback was
+  enabled or inferred.
