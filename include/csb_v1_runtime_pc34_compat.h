@@ -1276,11 +1276,18 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party);
 
-/* ReDMCSB REVIVE.C F0280 (PC I34): materialize one live champion from a
- * decoded dungeon mirror record.  The record retains the encoded source
- * vital/stat/skill fields and the C026 portrait that the shared M11 mirror
- * catalog obtained from the original PC34 files.  This is deliberately not
- * the DM1 candidate model: it writes CSB's complete 20-row skill state. */
+/* ReDMCSB REVIVE.C F0280 is shared by PC I34, Atari S20/S21 and Amiga
+ * A31/A35 (MEDIA720): materialize one live champion from a decoded original
+ * dungeon mirror record.  The record retains the encoded source
+ * vital/stat/skill fields and C026 portrait.  This is deliberately not the
+ * DM1 candidate model: it writes CSB's complete 20-row skill state. */
+int csb_v1_runtime_append_mirror_candidate_source_compat(
+    CSB_V1_RuntimeProfile *profile,
+    const struct ChampionState_Compat *source_record);
+
+/* Compatibility spelling retained for existing PC34 callers.  The source
+ * record codec is also used by the supported Atari ST and Amiga families;
+ * callers must still admit only a verified native CSB boot profile. */
 int csb_v1_runtime_append_mirror_candidate_pc34(
     CSB_V1_RuntimeProfile *profile,
     const struct ChampionState_Compat *source_record);

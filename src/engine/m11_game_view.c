@@ -24626,10 +24626,34 @@ static void m11_repair_dead_party_leader(M11_GameViewState* state) {
     state->world.party.activeChampionIndex = -1;
 }
 
+/* ReDMCSB REVIVE.C F0280 is compiled for the source record families below
+ * (COMPILE.H MEDIA720).  They all decode the same C127 mirror text into
+ * M516_CHAMPIONS; no PC34-only serialization occurs at this runtime boundary.
+ * Keep FM Towns outside this gate until its distinct text path has equivalent
+ * runtime evidence. */
+static int m11_csb_native_mirror_runtime_supported(
+    const CSB_V1_BootProfile* profile)
+{
+    if (!profile) return 0;
+    switch (profile->variant_id) {
+        case CSB_V1_VARIANT_PC34_EN:
+        case CSB_V1_VARIANT_PC34_MULTI:
+        case CSB_V1_VARIANT_ST20_EN:
+        case CSB_V1_VARIANT_ST21_EN:
+        case CSB_V1_VARIANT_AMIGA31_EN:
+        case CSB_V1_VARIANT_AMIGA31_MULTI:
+        case CSB_V1_VARIANT_AMIGA35_EN:
+        case CSB_V1_VARIANT_AMIGA35_MULTI:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
 /* ReDMCSB REVIVE.C F0280 writes M516_CHAMPIONS, not the host's reduced
- * HUD-party projection.  Keep PC34 mirror candidates in GAMEBLOCK before a
- * later COMMAND.C input refreshes M11 from CSB authority. */
-static int m11_csb_append_pc34_mirror_candidate_to_runtime(
+ * HUD-party projection.  Keep each verified native CSB candidate in
+ * GAMEBLOCK before a later COMMAND.C input refreshes M11 from CSB authority. */
+static int m11_csb_append_native_mirror_candidate_to_runtime(
     M11_GameViewState* state, int champion_index)
 {
     CSB_V1_BootProfile* profile;
@@ -24640,15 +24664,14 @@ static int m11_csb_append_pc34_mirror_candidate_to_runtime(
         return 0;
     }
     profile = (CSB_V1_BootProfile*)state->csbBootProfile;
-    if (profile->variant_id != CSB_V1_VARIANT_PC34_EN &&
-        profile->variant_id != CSB_V1_VARIANT_PC34_MULTI) {
+    if (!m11_csb_native_mirror_runtime_supported(profile)) {
         return 0;
     }
     if (profile->runtime.party_state_valid &&
         profile->runtime.party_state.ChampionCount != champion_index) {
         return 0;
     }
-    if (csb_v1_runtime_append_mirror_candidate_pc34(
+    if (csb_v1_runtime_append_mirror_candidate_source_compat(
             &profile->runtime,
             &state->world.party.champions[champion_index]) != 0) {
         return 0;
@@ -24658,7 +24681,7 @@ static int m11_csb_append_pc34_mirror_candidate_to_runtime(
            state->world.party.champions[champion_index].present;
 }
 
-static int m11_csb_remove_pc34_pending_mirror_candidate_from_runtime(
+static int m11_csb_remove_native_pending_mirror_candidate_from_runtime(
     M11_GameViewState* state, int champion_index)
 {
     CSB_V1_BootProfile* profile;
@@ -24669,8 +24692,7 @@ static int m11_csb_remove_pc34_pending_mirror_candidate_from_runtime(
         return 0;
     }
     profile = (CSB_V1_BootProfile*)state->csbBootProfile;
-    if ((profile->variant_id != CSB_V1_VARIANT_PC34_EN &&
-         profile->variant_id != CSB_V1_VARIANT_PC34_MULTI) ||
+    if (!m11_csb_native_mirror_runtime_supported(profile) ||
         csb_v1_runtime_get_party_state(&profile->runtime, &party) < 0 ||
         party.ChampionCount != champion_index + 1) {
         return 0;
@@ -25923,7 +25945,7 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
         return 0;
     }
     if (m11_source_is_csb(state) &&
-        !m11_csb_append_pc34_mirror_candidate_to_runtime(
+        !m11_csb_append_native_mirror_candidate_to_runtime(
             state, previousPartyCount)) {
         (void)F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
                                                     previousPartyCount);
@@ -26329,7 +26351,7 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     }
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
         if (m11_source_is_csb(state) &&
-            !m11_csb_remove_pc34_pending_mirror_candidate_from_runtime(
+            !m11_csb_remove_native_pending_mirror_candidate_from_runtime(
                 state, championIndex)) {
             m11_set_status(state, "MIRROR", "CSB SOURCE RECEIPT STALE");
             return 0;

@@ -19918,7 +19918,7 @@ static int csb_v1_runtime_decode_mirror_value_pc34(
     return 1;
 }
 
-int csb_v1_runtime_append_mirror_candidate_pc34(
+int csb_v1_runtime_append_mirror_candidate_source_compat(
     CSB_V1_RuntimeProfile *profile,
     const struct ChampionState_Compat *source_record)
 {
@@ -20031,6 +20031,14 @@ int csb_v1_runtime_append_mirror_candidate_pc34(
     party.PartyMapX = profile->party_x;
     party.PartyMapY = profile->party_y;
     return csb_v1_runtime_set_party_state(profile, &party);
+}
+
+int csb_v1_runtime_append_mirror_candidate_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct ChampionState_Compat *source_record)
+{
+    return csb_v1_runtime_append_mirror_candidate_source_compat(
+        profile, source_record);
 }
 
 int csb_v1_runtime_set_magic_caster(CSB_V1_RuntimeProfile *profile,
