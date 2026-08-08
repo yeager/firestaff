@@ -10,6 +10,7 @@
 typedef struct Theron_V1_World Theron_V1_World;
 
 #define THERON_TRACK02_SOURCE_OBJECT_MAX 2048u
+#define THERON_TRACK02_SOURCE_TEXT_MAX 1024u
 
 /* Source-faithful object occurrence retained for the next consumer pass.
  * DMBUILDER6/src/dms.h documents the first two bytes as the linked-list
@@ -53,6 +54,11 @@ typedef struct {
     int raw_only_item_refs;
     int source_objects_materialized;
     int source_item_properties_bound;
+    /* Raw text codons from the authenticated dungeon block.  They remain
+     * source data until the original HuC6280 text consumer resolves control
+     * codes; no host string is implied by this field. */
+    uint16_t source_text_data_count;
+    uint16_t source_text_data[THERON_TRACK02_SOURCE_TEXT_MAX];
     unsigned int source_object_count;
     /* Authenticated source-occurrence census.  These counts describe the
      * DMBUILDER6 category byte retained in source_objects.  A subset of

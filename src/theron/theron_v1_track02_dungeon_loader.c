@@ -298,6 +298,17 @@ int theron_v1_track02_load_full_dungeon_for_variant(
         return -1;
     }
 
+    /* Preserve the authentic text stream before the temporary decoder is
+     * released.  The current text consumer still rejects unresolved
+     * HuC6280 control codes, so this is a lossless source handoff only. */
+    if (td->text_data_count > THERON_TRACK02_SOURCE_TEXT_MAX) {
+        free(td);
+        return -1;
+    }
+    result->source_text_data_count = td->text_data_count;
+    memcpy(result->source_text_data, td->text_data,
+           (size_t)td->text_data_count * sizeof(td->text_data[0]));
+
     TilePosition *pos_table = NULL;
     if (gref_count > 0u) {
         pos_table = calloc(gref_count, sizeof(TilePosition));

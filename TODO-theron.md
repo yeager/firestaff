@@ -10,6 +10,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔧 Kör den befintliga Mednafen/System Card-capturevägen med originalmedia
   för att ersätta `ram_consumer_2600=not_present`; utan den fångsten ska
   T700/T900-statistik, loot, AI och generatorlogik fortsatt neka mutation.
+- 🔧 Bind den bevarade US-textcodonströmmen till originalets HuC6280
+  textkonsument och kontrollkodtabell. Loadern får inte göra en hoststräng av
+  `{...}`-värden innan den kedjan är fångad.
 
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 

@@ -17,6 +17,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔒 Detta bevarar källan lossless men aktiverar inte T900:s obevisade
   equip/use/stack/loot-regler; runtimekonsumenten kring `$2600` är fortfarande
   capture-gated.
+- ✅ Dungeon-loadern behåller nu också hela den autentiska US-textcodonströmmen
+  i `Theron_DungeonLoadResult`; JP:s verifierade zero-textblock förblir noll.
+  Olösta HuC6280-kontrollkoder exponeras inte som UI-text.
 
 ### Theron V1
 

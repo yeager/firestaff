@@ -15,6 +15,7 @@ bevismaterialet.
 | Object-/thing-records | Kategorier 0..10, 14 och 15 avkodas från riktiga Track 02-user-data; monster, weapon, clothing, scroll, potion, chest och misc behåller råfält och provenance | Datapost godkänd, semantik ej godkänd |
 | Item properties | 66 × 6 byte matchar den riktiga US/JP-tabellen byte för byte; US/JP Track 19-proben passerar | Propertypayload godkänd, T900-consumer ej godkänd |
 | Inventory-provenance | Pickup kopierar nu hela källrecorden (storlek + 16 bytes) och v7-save roundtrip återställer den för samma object | Provenance godkänd, T900-regler ej godkända |
+| Dungeon-textkälla | US-loadern bevarar hela den riktiga codonströmmen i load-resultatet; JP Track 02 rapporterar verifierat noll textord | Source stream godkänd, HuC6280-textkonsument ej godkänd |
 | Statisk HuC6280-kedja | `theron-us-bank1f-consumer.asm` och `$2386–$252A` verifieras mot båda retailbilderna | Loader/dekomprimering godkänd |
 | Runtime object-consumer | Samma verifiering rapporterar `ram_consumer_2600=not_present` för US och JP | T900-konsument saknas i beviset |
 | Capture-instrumentering | Mednafen-harnessen fångar nu både läsningar och skrivningar i `$2600–$27FF`, med PC, fysisk adress och MPR-avledd fysisk PC | Mätväg godkänd, ingen semantik godkänd |
