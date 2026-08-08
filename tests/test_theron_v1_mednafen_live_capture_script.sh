@@ -207,6 +207,10 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'i:29) printf' "$script" ||
    ! grep -Fq 'ii:90) printf' "$script" ||
    ! grep -Fq 'ii:27) printf' "$script" ||
+   ! grep -Fq 'i:54) printf' "$script" ||
+   ! grep -Fq 'i:55) printf' "$script" ||
+   ! grep -Fq 'ii:54) printf' "$script" ||
+   ! grep -Fq 'ii:55) printf' "$script" ||
    ! grep -Fq 'capture_i_host_code' "$script" ||
    ! grep -Fq 'capture_ii_host_code' "$script" ||
    ! grep -Fq 'must retain RUN=40 and SELECT=43' "$script" ||

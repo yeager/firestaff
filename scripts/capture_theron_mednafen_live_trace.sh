@@ -97,6 +97,15 @@ capture_host_code_for_mapping() {
         # Keep physical-I/II profiles usable when supplied by an older
         # Mednafen template; the mapping is still authenticated by cfg.
         i:12) printf '%s' 34 ;;
+        # SDL_SCANCODE_COMMA/SDL_SCANCODE_PERIOD are common on compact
+        # Mac keyboards when Button I/II have been assigned to `,`/`.`.
+        # Quartz uses virtual keycodes 43/47 for those two keys.  Accept
+        # either punctuation key for either PCE button; the Mednafen cfg is
+        # the authority for which one is Button I versus Button II.
+        i:54) printf '%s' 43 ;;
+        i:55) printf '%s' 47 ;;
+        ii:54) printf '%s' 43 ;;
+        ii:55) printf '%s' 47 ;;
         *) return 1 ;;
     esac
 }
