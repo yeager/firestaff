@@ -23,15 +23,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* The gameplay subsystems (combat, spells, AI, doors, traps, projectiles,
- * status effects, hunger, rest, light) are proven via DM.BIN disassembly
- * and ReDMCSB source parity. The V1 tick loop gates all subsystem dispatch
- * behind this function; returning 1 enables the full gameplay loop.
- * Source: DM.BIN+0x0..0x60000 (game loop, command dispatch, creature AI),
- * ReDMCSB COMMAND.C, MOVESENS.C, CHAMPION.C, CREATURE.C, GAMELOOP.C. */
+/* ReDMCSB/DM.BIN are useful format and compatibility references, but they do
+ * not prove that Nexus Saturn owns the same command routing or state writes.
+ * The V1 tick loop gates all retail subsystem dispatch behind this function.
+ * Keep the production answer false until an original Saturn trace binds the
+ * action producer, consumer order and writes; source-less fixture callers
+ * are handled explicitly by the surrounding NEXUS_SRC_NONE branches. */
 int nexus_v1_action_semantics_proven(void)
 {
-    return 1;
+    return 0;
 }
 
 /* Nexus V1 mechanics — assembled game loop.

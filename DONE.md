@@ -16,6 +16,11 @@
 - ✅ Nexus creature-death skapar inte längre syntetiskt guld eller föremål.
   Den tidigare DM1-liknande typformeln är borttagen; `ITEM.IBS`/DGN-golvobjekt
   förblir källägda och dödsdrops väntar på autentiserad Saturn-dispatch/capture.
+- ✅ Nexus action-semantik annonseras inte längre som verifierad bara för att
+  DM.BIN/ReDMCSB har en kompatibel DM-familjekodväg. Verklig Saturn-combat,
+  spell-, sensor- och state-write-dispatch förblir stängd tills samma
+  producent/consumer-trace är autentiserad; `NEXUS_SRC_NONE` är fortsatt
+  isolerad fixture-bana.
 - ✅ RLOWFIX/TEXT-parsern avvisar nu ofullständiga 8/9-byte-prefix innan
   `string_count` läses. Ett truncationstest täcker den autentiska TEXT-headerns
   10-byte-gräns utan att ändra den verifierade europeiska korpusens resultat.

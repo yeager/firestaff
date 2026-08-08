@@ -17,6 +17,12 @@ int main(void)
     Nexus_ProjectileManager projectiles;
     Nexus_V1_Trap trap;
 
+    if (nexus_v1_action_semantics_proven() != 0) {
+        fprintf(stderr,
+                "FAIL: un-captured Saturn action semantics opened production dispatch\n");
+        return 1;
+    }
+
     nexus_v1_action_timers_init(&timers);
     nexus_v1_action_start_cooldown(&timers, 0, 24, NULL);
     if (timers.cooldown[0] != 24) {
