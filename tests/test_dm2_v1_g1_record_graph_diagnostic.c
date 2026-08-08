@@ -48,6 +48,7 @@ int main(void) {
     int failures = 0;
     DM2_V1_DungeonData d;
     DM2_V1_FileHeaderRuntimeMapReceipt map0;
+    DM2_V1_G1RuntimeMapDoorReceipt doors;
 
     paths[0] = env;
 
@@ -94,6 +95,13 @@ int main(void) {
         map0.root_count <= 0 || map0.record_count < map0.root_count ||
         map0.link_word_reads != map0.record_count) {
         printf("FAIL: File_header map-0 record owner was not retained\n");
+        ++failures;
+    }
+    memset(&doors, 0, sizeof(doors));
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_doors(
+            &d, 0, &doors) || !doors.committed ||
+        doors.door_record_reads != doors.door_root_count) {
+        printf("FAIL: File_header map-0 door roots were not retained\n");
         ++failures;
     }
 

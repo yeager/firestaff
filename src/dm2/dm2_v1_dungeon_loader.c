@@ -3368,6 +3368,63 @@ int dm2_v1_g1_runtime_map_door_at(
     return 0;
 }
 
+int dm2_v1_dungeon_materialize_file_header_runtime_map_doors(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapDoorReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt validation;
+    DM2_V1_G1RuntimeMapDoorReceipt candidate;
+
+    /* DME.h::Door's payload is shared, but File_header map ownership is not
+     * a G1-extension receipt.  Read only the root DB0 payload after the
+     * File_header chain owner has validated the mounted map. */
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, map, &validation) || !validation.committed) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int root;
+            const uint8_t *record;
+            uint16_t attributes;
+            DM2_V1_G1DirectDoorRoot *door;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            root = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+            if (root < 0 || root == (int)DM2_THING_END_MARKER) continue;
+            if ((((unsigned int)root >> 10) & 0x0fu) != 0u) continue;
+            if (candidate.door_root_count >= DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS)
+                return 0;
+            record = dm2_v1_dungeon_get_thing_record(
+                d, (uint16_t)root, NULL, NULL, NULL);
+            if (!record) return 0;
+            attributes = RD16(record + 2);
+            door = &candidate.doors[candidate.door_root_count++];
+            door->x = x; door->y = y; door->object_id = (uint16_t)root;
+            door->index = (uint16_t)root & 0x03ffu;
+            door->direction = (uint8_t)((unsigned int)root >> 14);
+            door->button = (uint8_t)((attributes >> 6) & 1u);
+            door->door_type = (uint8_t)(attributes & 1u);
+            door->button_state = (uint8_t)((attributes >> 11) & 1u);
+            door->opening_dir = (uint8_t)((attributes >> 5) & 1u);
+            door->ornate_index = (uint8_t)((attributes >> 1) & 0x0fu);
+            door->destroyable_by_fireball = (uint8_t)((attributes >> 7) & 1u);
+            door->bashable_by_chopping = (uint8_t)((attributes >> 8) & 1u);
+            ++candidate.door_record_reads;
+        }
+    }
+    if (candidate.door_record_reads != candidate.door_root_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     const DM2_V1_DungeonData *d,
     int map,

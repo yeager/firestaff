@@ -105,6 +105,13 @@
 - ✅ Verifierat genom M11:s PC-DOS-startprofil och den verkliga
   `DUNGEON.DAT`-recordgrafen. Handoffet skapar inte party eller DYN4-cache.
 
+# DM2 File_header door-root intake (2026-08-08)
+
+- ✅ Kanoniska PC-DOS File_header-kartan kan nu materialisera sina direkta
+  DB0-dörrrötter med DME.h:s verkliga attributfält.
+- ✅ Verifierat mot originalets karta 0. Ingen dörranimation, låsning eller
+  spelmutation har aktiverats utan de återstående originalkonsumenterna.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

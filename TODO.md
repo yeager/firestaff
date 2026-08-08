@@ -18,6 +18,10 @@
   the map-local graphics lists, DB payload decoders, actuator/sensor paths
   and full `DM2_LOAD_LOCALLEVEL_DYN` queue before enabling DYN4 or gameplay.
 
+- **DM2-FILE-HEADER-DOOR-RUNTIME:** The canonical map-0 DB0 door roots are
+  now source-decoded. Bind their original animation, lock/key, sound, button
+  and sensor consumers before publishing door transitions to gameplay.
+
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media
   into a filename-only fallback or require users to unpack their archives.
