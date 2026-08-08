@@ -242,11 +242,11 @@ struct dm2_dungeon_world;
 int dm2_v1_record_pool_set_init_from_world(DM2_V1_RecordPoolSet *set,
                                            const struct dm2_dungeon_world *world);
 
-/* Populate the pool set directly from dungeon data whose G1 candidate
- * evidence validates (dm2_v1_dungeon_collect_g1_record_pool_evidence).
- * Same population contract as init_from_world; the world wrapper only
- * adds its own verification gate.  Returns 1 on full population, 0
- * fail-closed. */
+/* Populate the pool set directly from authenticated dungeon data. The legacy
+ * PC G1 extension route requires its candidate-pool evidence; the canonical
+ * 44-map File_header route requires its own runtime-map receipt and copies
+ * the exact declared DB spans. The two layouts are never reinterpreted as
+ * one another. Returns 1 on full population, 0 fail-closed. */
 int dm2_v1_record_pool_set_init_from_dungeon(
     DM2_V1_RecordPoolSet *set,
     const DM2_V1_DungeonData *dungeon);

@@ -389,6 +389,21 @@
 - ✅ Verifierat mot hashverifierad PC-DOS-media via M11:s
   startup/profile-grind.
 
+# DM2 New Game-possessionsreceipt (2026-08-08)
+
+- ✅ Den kanoniska 44-kartors `File_header`-vägen kan nu bygga en avskild
+  recordpool av sina deklarerade DB-spann utan att feltolkas som den äldre
+  28-kartors G1-layouten. Varje spann valideras först genom den befintliga
+  File_header-runtimekartan.
+- ✅ `DM2_ADD_ITEM_TO_PLAYER` följs nu läsande för de valda championsens
+  verkliga startobjekt: SKProjects fem ursprungliga slotgrupper,
+  GDAT-baserad `DM2_IS_ITEM_FIT_FOR_EQUIP` och orienteringsmaskningen före
+  `hero::item` används utan `CUT_RECORD_FROM`, bonusar eller sessionmutation.
+  En tom originalinventory förblir tom; inga föremål uppfinns.
+- ✅ Verifierat mot den hashverifierade PC-DOS-korpusen i
+  `test_dm2_v1_item_ops` och M11:s startup/profile-grind. Receiptet lämnar
+  party, recordkedjor, timerkö, HUD och viewport ospublicerade.
+
 # DM2 första c_hero-kandidat (2026-08-08)
 
 - ✅ Första valet kan nu materialiseras fält för fält som den 263-byte stora

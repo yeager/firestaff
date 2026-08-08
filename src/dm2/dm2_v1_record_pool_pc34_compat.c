@@ -853,16 +853,43 @@ int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
                                              const DM2_V1_DungeonData *d)
 {
     DM2_V1_G1RecordPoolEvidence evidence;
+    DM2_V1_FileHeaderRuntimeMapReceipt file_header;
+    int source_bases[DM2_V1_RECORD_POOL_COUNT];
+    int file_header_route = 0;
     int cursor_ok = 1;
 
     if (set == NULL) {
         return 0;
     }
     memset(set, 0, sizeof(*set));
-    if (d == NULL || d->raw_data == NULL ||
-        !dm2_v1_dungeon_collect_g1_record_pool_evidence(d, &evidence) ||
-        !evidence.available) {
+    if (d == NULL || d->raw_data == NULL || !d->record_graph_complete) {
         return 0;
+    }
+
+    /* The original PC retail member has a 44-map File_header and no G1
+     * extension. Its DB spans are already proven by
+     * dm2_v1_dungeon_validate_file_header_runtime_map(), which walks the
+     * c_map ground-stack/GenericRecord::w0 ownership before this mutable
+     * copy exists. Do not send it through the unrelated 28-map G1 receipt. */
+    memset(source_bases, 0xff, sizeof(source_bases));
+    if (d->g1_extension_base < 0) {
+        memset(&file_header, 0, sizeof(file_header));
+        if (!dm2_v1_dungeon_validate_file_header_runtime_map(d, 0,
+                                                              &file_header) ||
+            !file_header.committed || file_header.record_count <= 0) {
+            return 0;
+        }
+        file_header_route = 1;
+        for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
+            source_bases[type] = d->thing_data_bases[type];
+        }
+    } else if (!dm2_v1_dungeon_collect_g1_record_pool_evidence(d, &evidence) ||
+               !evidence.available) {
+        return 0;
+    } else {
+        for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
+            source_bases[type] = evidence.candidate_pool_bases[type];
+        }
     }
 
     for (int type = 0; type < DM2_V1_RECORD_POOL_COUNT; ++type) {
@@ -872,7 +899,7 @@ int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
         long bytes;
 
         p->record_size = size;
-        p->source_base = evidence.candidate_pool_bases[type];
+        p->source_base = source_bases[type];
         if (count <= 0 || size <= 0 || p->source_base < 0) {
             continue;
         }
@@ -893,7 +920,7 @@ int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
          * DB4 at 300 rows) extend the same source pools; see
          * dm2_v1_dungeon_loader.c dm2_v1_configure_pc_g1_extension_records
          * and skproject c_record.cpp pool addressing. */
-        if (d->g1_extension_record_bases[type] >= 0 &&
+        if (!file_header_route && d->g1_extension_record_bases[type] >= 0 &&
             d->g1_extension_record_counts[type] > 0) {
             long ext_bytes = (long)d->g1_extension_record_counts[type] * size;
             if (d->g1_extension_record_bases[type] + ext_bytes > d->raw_size) {

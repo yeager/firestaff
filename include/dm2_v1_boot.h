@@ -289,6 +289,43 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_BootNewGamePartyReceipt;
 
+/* A read-only projection of c_hero.cpp::DM2_ADD_ITEM_TO_PLAYER for every
+ * source object selected by DM2_SELECT_CHAMPION.  `source_object_id` retains
+ * the File_header chain word for the later CUT_RECORD_FROM phase;
+ * `equipped_record_id` is the orientation-free value which
+ * DM2_EQUIP_ITEM_TO_HAND writes to hero::item.  No source record, tile chain,
+ * bonus, hand container or live party is mutated here. */
+#define DM2_V1_BOOT_MAX_NEW_GAME_POSSESSIONS (DM2_MAX_HEROES * 30)
+typedef struct {
+    uint8_t hero_index;
+    uint8_t inventory_slot;
+    uint8_t record_type;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint16_t source_object_id;
+    uint16_t source_next_object_id;
+    uint16_t equipped_record_id;
+    uint32_t fit_receipt_hash;
+} DM2_V1_BootNewGamePossession;
+
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int hero_count;
+    int source_item_count;
+    int placed_item_count;
+    int unplaced_item_count;
+    DM2_V1_BootNewGamePartyReceipt source_party;
+    /* This is a detached c_party image used only to prove the original slot
+     * traversal. It is never installed as the runtime party. */
+    DM2_V1_Party projected_party;
+    DM2_V1_BootNewGamePossession
+        possessions[DM2_V1_BOOT_MAX_NEW_GAME_POSSESSIONS];
+    uint32_t source_chain_hash;
+    uint32_t projection_hash;
+    uint32_t receipt_hash;
+} DM2_V1_BootNewGamePossessionReceipt;
+
 /* Complete source roster for the mirror-selection screen. The order is the
  * canonical File_header chain order, not a host-authored portrait order. */
 typedef struct {
@@ -1612,6 +1649,15 @@ int dm2_v1_boot_new_game_party_receipt(
     const DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selections, int selection_count,
     DM2_V1_BootNewGamePartyReceipt *out_receipt);
+
+/* Resolve the exact ADD_ITEM_TO_PLAYER slot order from the verified dungeon
+ * record pool and real GDAT equipment flags. This remains an uncommitted
+ * GAME_LOAD receipt until CUT_RECORD_FROM, item bonuses, hand containers,
+ * timers and the session owner are committed atomically. */
+int dm2_v1_boot_new_game_possession_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartyReceipt *party,
+    DM2_V1_BootNewGamePossessionReceipt *out_receipt);
 
 /* Enumerate every authentic DB3 subtype-0x7e selection candidate. Duplicate
  * hero types or a candidate that cannot be joined to exact GDAT and tile data

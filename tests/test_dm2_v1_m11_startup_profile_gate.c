@@ -1212,6 +1212,7 @@ int main(void) {
     DM2_V1_BootNewGameFirstChampionReceipt first_champion;
     DM2_V1_BootNewGamePartySelection party_selections[2];
     DM2_V1_BootNewGamePartyReceipt source_party;
+    DM2_V1_BootNewGamePossessionReceipt source_possessions;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
@@ -1503,6 +1504,29 @@ int main(void) {
                     source_party.party_hash != 0u &&
                     source_party.receipt_hash != 0u,
                 "M11 preserves source champion click order and RNG across a read-only party receipt");
+    memset(&source_possessions, 0, sizeof(source_possessions));
+    expect_true(profile && source_party.valid &&
+                    dm2_v1_boot_new_game_possession_receipt(profile,
+                        &source_party, &source_possessions) &&
+                    source_possessions.valid &&
+                    source_possessions.incomplete_game_load &&
+                    source_possessions.hero_count == source_party.hero_count &&
+                    source_possessions.source_item_count ==
+                        source_party.admissions[0].selection.source_item_count +
+                        source_party.admissions[1].selection.source_item_count &&
+                    source_possessions.source_item_count ==
+                        source_possessions.placed_item_count &&
+                    source_possessions.unplaced_item_count == 0 &&
+                    (source_possessions.source_item_count == 0 ||
+                     (source_possessions.possessions[0].source_object_id != 0u &&
+                      source_possessions.possessions[0].equipped_record_id ==
+                          (source_possessions.possessions[0].source_object_id & 0x3fffu) &&
+                      source_possessions.possessions[0].fit_receipt_hash != 0u)) &&
+                    source_possessions.source_chain_hash != 0u &&
+                    source_possessions.projection_hash != 0u &&
+                    source_possessions.receipt_hash != 0u &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 preserves the exact original initial inventories through GDAT slots without publishing a live party");
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,

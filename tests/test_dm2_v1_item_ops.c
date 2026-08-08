@@ -300,14 +300,15 @@ static void test_source_item_name_receipt_real_record(void)
     assert(dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0);
     assert(dm2_v1_asset_loader_verify(&loader));
 
-    /* G1 direct DB5 weapon receipt: map 17, object 0xD407, source index 7.
-     * The name must come from this decoded record and the real GDAT stream. */
+    /* Canonical File_header DB5 weapon receipt: map 17, object 0xD407,
+     * source index 7. The name must come from the copied source record and
+     * real GDAT, never a host item catalogue. */
     assert(dm2_v1_query_source_item_name_receipt(
-               0xd407u, &pools, &loader, &receipt) == 0);
+               0xd407u, &pools, &loader, &receipt) == 1);
     assert(receipt.cls1 == DM2_GDAT_CATEGORY_WEAPONS);
-    assert(receipt.cls2 == 126u);
-    assert(receipt.accepted == 0u && receipt.gdat.accepted == 0u);
-    printf("  PASS: source_item_name_receipt_real_record (WEAPONS/%u unnamed)\n",
+    assert(receipt.accepted == 1u && receipt.gdat.accepted == 1u &&
+           receipt.gdat.text[0] != '\0');
+    printf("  PASS: source_item_name_receipt_real_record (WEAPONS/%u)\n",
            receipt.cls2);
 
     dm2_v1_asset_loader_free(&loader);

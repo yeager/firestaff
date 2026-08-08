@@ -1,14 +1,13 @@
 # Firestaff TODO - Open Work
 
-- 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är nu bunden till den
-  riktiga ground-stack-/recordkedjan i ett läsande kvitto, och ett valt
-  championmirror kräver nu exakt GDAT-, startobjekt- och DYN4-data. Första
-  `c_hero` materialiseras nu från samma originaldata och c_randomdata:s
-  dokumenterade initiala LCG-ström. Upp till fyra uttryckligen valda
-  originalspeglar kan läsas som en gemensam party-receipt med korrekt
-  klickordning, formation och RNG-följd. Nästa atomära ägare måste förena den
-  med recordmutation för possessions, timerkö och aktuatorgenerator; starten
-  får inte publicera party, HUD eller viewport innan hela transaktionen finns.
+- 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
+  ground-stack-/recordkedjan, valda championmirrors till exakt GDAT-,
+  startobjekt- och DYN4-data, och upp till fyra `c_hero` till samma
+  c_randomdata-LCG-ström. Den läsande possessionsreceipten följer också
+  originalets slotordning och GDAT-passning över File_header-ägda recordpooler
+  utan att uppfinna inventory. Nästa atomära ägare måste utföra själva
+  `CUT_RECORD_FROM`-/bonus-/handcontainertransaktionen, timerkö och
+  aktuatorgenerator, och först därefter publicera party, HUD och viewport.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

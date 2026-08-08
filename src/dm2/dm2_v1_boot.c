@@ -31,7 +31,9 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_random_pc34_compat.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_music_map.h"
 #include "dm2_v1_cdda_cd_dat.h"
@@ -1155,6 +1157,214 @@ int dm2_v1_boot_new_game_party_receipt(
     candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.receipt_hash, candidate.party_hash);
     if (candidate.party_hash == 0u || candidate.receipt_hash == 0u) return 0;
+    candidate.incomplete_game_load = 1;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
+static int dm2_v1_boot_project_source_possession(
+    const DM2_V1_AssetLoader *loader, const DM2_V1_RecordPoolSet *pools,
+    DM2_V1_Hero *hero, int hero_index, uint16_t source_object_id,
+    uint16_t source_next_object_id, uint8_t source_type, uint16_t source_index,
+    DM2_V1_BootNewGamePossession *out_possession)
+{
+    /* SKProject dm2data.cpp:843 table1d6a31 and
+     * skhero.cpp:2190-2244 DM2_ADD_ITEM_TO_PLAYER.  Preserve the five group
+     * passes literally: body (2..5), neck (10), type-5 hands, type-6 hands,
+     * then pack slots (13..29).  ADD_ITEM_TO_PLAYER only calls
+     * IS_ITEM_FIT_FOR_EQUIP with slots below 30, so this path never needs a
+     * guessed current active-hand result. */
+    static const struct {
+        uint8_t first_slot;
+        uint8_t last_slot;
+        int type_filter;
+    } slot_groups[] = {
+        { 2u, 5u, -1 }, { 10u, 10u, -1 }, { 0u, 1u, 5 },
+        { 0u, 1u, 6 }, { 13u, 29u, -1 }
+    };
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    uint8_t cls1 = 0xffu;
+    uint8_t cls2 = 0xffu;
+    int record_type;
+    int group;
+
+    if (!loader || !pools || !pools->valid || !hero || !out_possession ||
+        hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
+        source_object_id >= 0xff80u || source_type > 15u ||
+        source_type != ((source_object_id >> 10) & 15u) ||
+        source_index != (source_object_id & DM2_V1_RECORD_INDEX_MASK)) {
+        return 0;
+    }
+    record_type = (source_object_id >> 10) & 15u;
+    memset(&cls1_receipt, 0, sizeof(cls1_receipt));
+    memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+    if (!dm2_v1_skproject_query_cls1_from_record_ex(source_object_id, pools,
+                                                     &cls1, &cls1_receipt) ||
+        !cls1_receipt.valid || cls1 == 0xffu ||
+        !dm2_v1_skproject_query_cls2_from_record(source_object_id, pools,
+                                                   &cls2, &cls2_receipt) ||
+        !cls2_receipt.valid || cls2 == 0xffu) {
+        return 0;
+    }
+
+    for (group = 0; group < (int)(sizeof(slot_groups) / sizeof(slot_groups[0]));
+         ++group) {
+        int slot;
+        for (slot = slot_groups[group].first_slot;
+             slot <= slot_groups[group].last_slot; ++slot) {
+            DM2_V1_ItemFitForEquipReceipt fit;
+
+            if (hero->item[slot] != DM2_V1_RECORD_HANDLE_NULL ||
+                (slot_groups[group].type_filter >= 0 &&
+                 record_type != slot_groups[group].type_filter)) {
+                continue;
+            }
+            memset(&fit, 0, sizeof(fit));
+            if (!dm2_v1_is_item_fit_for_equip_receipt(loader, cls1, cls2,
+                                                       slot, 0, -1, &fit) ||
+                !fit.accepted) {
+                return 0;
+            }
+            if (fit.result == 0u) continue;
+
+            /* skhero.cpp:2172 masks the two orientation bits before the
+             * record is installed in hero::item. Do not mutate the source
+             * tile chain; the original object word is retained separately. */
+            hero->item[slot] = (int16_t)(source_object_id & 0x3fffu);
+            memset(out_possession, 0, sizeof(*out_possession));
+            out_possession->hero_index = (uint8_t)hero_index;
+            out_possession->inventory_slot = (uint8_t)slot;
+            out_possession->record_type = (uint8_t)record_type;
+            out_possession->cls1 = cls1;
+            out_possession->cls2 = cls2;
+            out_possession->source_object_id = source_object_id;
+            out_possession->source_next_object_id = source_next_object_id;
+            out_possession->equipped_record_id =
+                (uint16_t)(source_object_id & 0x3fffu);
+            out_possession->fit_receipt_hash = fit.receipt_hash;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_boot_new_game_possession_receipt(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartyReceipt *party,
+    DM2_V1_BootNewGamePossessionReceipt *out_receipt)
+{
+    DM2_V1_BootNewGamePossessionReceipt candidate;
+    DM2_V1_RecordPoolSet pools;
+    const DM2_V1_AssetLoader *loader;
+    const DM2_V1_DungeonData *dungeon;
+    int hero_index;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    memset(&pools, 0, sizeof(pools));
+    if (!profile || !party || !party->valid || !party->incomplete_game_load ||
+        party->hero_count <= 0 || party->hero_count > DM2_MAX_HEROES ||
+        party->hero_count != party->party.heros_in_party ||
+        !(loader = dm2_v1_boot_asset_loader(profile)) ||
+        !(dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data)) {
+        return 0;
+    }
+    if (!dm2_v1_record_pool_set_init_from_dungeon(&pools, dungeon)) {
+        return 0;
+    }
+
+    candidate.source_party = *party;
+    candidate.projected_party = party->party;
+    candidate.hero_count = party->hero_count;
+    candidate.source_chain_hash = 0x4e47504fu; /* "NGPO" receipt domain. */
+    for (hero_index = 0; hero_index < party->hero_count; ++hero_index) {
+        const DM2_V1_BootNewGameChampionAdmissionReceipt *admission =
+            &party->admissions[hero_index];
+        DM2_V1_BootChampionSelectionCandidate revalidated;
+        int item_index;
+
+        /* A detached party receipt must still belong to this exact profile.
+         * Re-resolve the mirror and its File_header chain before consuming
+         * any record bytes. */
+        memset(&revalidated, 0, sizeof(revalidated));
+        if (!admission->valid || !admission->incomplete_game_load ||
+            !dm2_v1_boot_champion_selection_candidate(
+                profile, admission->selection.mirror.map,
+                admission->selection.mirror.x, admission->selection.mirror.y,
+                admission->selection.mirror.direction, &revalidated) ||
+            !revalidated.valid ||
+            revalidated.identity_hash != admission->selection.identity_hash ||
+            revalidated.source_item_chain_hash !=
+                admission->selection.source_item_chain_hash ||
+            revalidated.source_item_count != admission->selection.source_item_count) {
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
+        for (item_index = 0;
+             item_index < admission->selection.source_item_count; ++item_index) {
+            uint16_t source_object_id =
+                admission->selection.source_item_records[item_index].object_id;
+            uint16_t source_next_object_id =
+                admission->selection.source_item_records[item_index].next_object_id;
+            uint8_t source_type =
+                admission->selection.source_item_records[item_index].type;
+            uint16_t source_index =
+                admission->selection.source_item_records[item_index].index;
+            DM2_V1_BootNewGamePossession *possession;
+
+            if (candidate.source_item_count >=
+                DM2_V1_BOOT_MAX_NEW_GAME_POSSESSIONS) {
+                dm2_v1_record_pool_set_free(&pools);
+                return 0;
+            }
+            ++candidate.source_item_count;
+            candidate.source_chain_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.source_chain_hash, source_object_id);
+            candidate.source_chain_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.source_chain_hash, source_next_object_id);
+            candidate.source_chain_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.source_chain_hash, source_type);
+            candidate.source_chain_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.source_chain_hash, source_index);
+            possession = &candidate.possessions[candidate.placed_item_count];
+            if (dm2_v1_boot_project_source_possession(
+                    loader, &pools, &candidate.projected_party.hero[hero_index],
+                    hero_index, source_object_id, source_next_object_id,
+                    source_type, source_index, possession)) {
+                ++candidate.placed_item_count;
+            } else {
+                ++candidate.unplaced_item_count;
+            }
+        }
+    }
+    dm2_v1_record_pool_set_free(&pools);
+
+    /* An unplaceable original object is not silently discarded. The future
+     * transaction must either bind its source behavior or reject the whole
+     * selection; do not turn it into an invented backpack entry. */
+    if (candidate.source_item_count != candidate.placed_item_count ||
+        candidate.unplaced_item_count != 0 || candidate.source_chain_hash == 0u) {
+        return 0;
+    }
+    candidate.projection_hash = 2166136261u;
+    for (size_t i = 0u; i < sizeof(candidate.projected_party); ++i) {
+        candidate.projection_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.projection_hash,
+            ((const uint8_t *)&candidate.projected_party)[i]);
+    }
+    candidate.receipt_hash = 0x4e475052u; /* "NGPR" continuation domain. */
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, party->receipt_hash);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.source_chain_hash);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.projection_hash);
+    if (candidate.projection_hash == 0u || candidate.receipt_hash == 0u) {
+        return 0;
+    }
     candidate.incomplete_game_load = 1;
     candidate.valid = 1;
     *out_receipt = candidate;
