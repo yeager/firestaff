@@ -11,6 +11,12 @@
 - ✅ The direct-root receipt now carries the exact post-root byte, carry byte
   and remaining-bit count. This gives the special-timer importer the original
   shared-stream position without assuming byte alignment.
+- ✅ Added an isolated source-order preflight for `DM2_2066_197c`: it builds
+  a temporary raw record pool, restores hero/cursor roots, decodes the real
+  12-byte `c_tim` records and reads special `0x3c`/`0x3d` chains before map
+  chains. The four files without a complete local pool remain fail-closed.
+- ✅ Verification: the real PC-DOS SKSAVE corpus passes 168 checks. No save
+  is written, unpacked or promoted into a playable session.
 
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 

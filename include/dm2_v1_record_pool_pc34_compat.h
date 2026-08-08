@@ -34,6 +34,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
+#include "dm2_v1_save_timers_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -210,6 +211,30 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx,
     DM2_V1_SksaveDirectRootReceipt *out_receipt);
+
+/* Source-order preflight through DM2_2066_197c.  It owns a temporary raw
+ * c_record pool and therefore never publishes a partial runtime session.
+ * The caller supplies c_hex2a.w_00 (`savegamew7`) from the same verified
+ * 42-byte SKSAVE header that owns `raw_body`. */
+typedef struct {
+    int valid;
+    uint16_t timer_count;
+    uint16_t special_chain_count;
+    uint32_t timer_hash;
+    uint32_t record_hash;
+    size_t next_stream_offset;
+    uint8_t next_stream_bits_remaining;
+    uint8_t next_stream_current_byte;
+} DM2_V1_SksaveSpecialTimerReceipt;
+
+int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    uint16_t savegamew7,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveSpecialTimerReceipt *out_receipt);
 
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set);
 

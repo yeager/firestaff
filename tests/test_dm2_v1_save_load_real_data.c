@@ -706,6 +706,28 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                                         &receipt),
           "real SKSave DB baseline is owned in RAM before source record-link restoration");
     {
+        DM2_V1_SksaveSpecialTimerReceipt special_timers;
+        const uint16_t savegamew7 = (uint16_t)bytes[0] |
+            ((uint16_t)bytes[1] << 8);
+        memset(&special_timers, 0, sizeof(special_timers));
+        const int special_ok =
+            dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
+                bytes + 42u, byte_count - 42u, &state_receipt,
+                savegamew7, inventory_query_creature_ai_flags, NULL,
+                &special_timers);
+        CHECK((special_ok && special_timers.valid &&
+               special_timers.timer_count == state_receipt.timer_count &&
+               special_timers.timer_hash != 0u &&
+               special_timers.next_stream_offset >=
+                   state_receipt.record_link_bitstream_offset &&
+               special_timers.next_stream_offset <= byte_count - 42u &&
+               special_timers.next_stream_bits_remaining <= 7u) ||
+              (!special_ok && !special_timers.valid),
+              special_ok
+                  ? "real SKSave reaches the source special-timer boundary before map chains"
+                  : "real SKSave keeps special timers blocked with an incomplete local record pool owner");
+    }
+    {
         const int direct_root_result = verify_real_direct_record_roots(
             bytes + 42u, byte_count - 42u, &state_receipt);
         if (direct_roots) {

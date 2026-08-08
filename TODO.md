@@ -4177,6 +4177,11 @@ level or consumer bindings.
   `DM2_READ_SKSAVE_DUNGEON` orders them.
   The direct-root receipt now carries the exact bit position at that boundary;
   use it for the next phase rather than deriving a byte-aligned substitute.
+  **2026-08-08 special-timer phase:** source order now reaches
+  `DM2_2066_197c` through an isolated raw-pool preflight, with the original
+  c_hex2a `w_00`, c_tim bytes and carried SUPPRESS state. It remains blocked
+  whenever the local pool cannot own the chain; map-chain and possession
+  phases still need to join this transaction before Resume can open.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

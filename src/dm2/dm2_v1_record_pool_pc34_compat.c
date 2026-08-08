@@ -725,6 +725,95 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     return 1;
 }
 
+int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    uint16_t savegamew7,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveSpecialTimerReceipt *out_receipt)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveDirectRootReceipt roots;
+    DM2_V1_SksavePoolRestoreContext context;
+    DM2_ReadRecordCallbacks callbacks;
+    DM2_ReadRecordSession session;
+    DM2_V1_SaveTimerRecord *timers = NULL;
+    DM2_V1_OriginalRawTimerStreamReceipt timer_stream;
+    uint16_t special_count = 0u;
+    uint32_t timer_hash = 2166136261u;
+    uint16_t i;
+    int ok = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&pools, 0, sizeof(pools));
+    memset(&roots, 0, sizeof(roots));
+    memset(&context, 0, sizeof(context));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&session, 0, sizeof(session));
+    memset(&timer_stream, 0, sizeof(timer_stream));
+    if (!raw_body || !state_receipt || !state_receipt->valid ||
+        !query_creature_ai_flags || !out_receipt || savegamew7 == 0u ||
+        state_receipt->timer_count > 4096u ||
+        !dm2_v1_record_pool_set_init_from_raw_sksave(
+            &pools, raw_body, raw_body_size, &state_receipt->dungeon) ||
+        !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+            &pools, &state_receipt->dungeon) ||
+        !dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+            &pools, raw_body, raw_body_size, state_receipt,
+            query_creature_ai_flags, query_creature_ai_flags_ctx, &roots)) {
+        goto done;
+    }
+    if (state_receipt->timer_count != 0u) {
+        timers = (DM2_V1_SaveTimerRecord *)calloc(
+            state_receipt->timer_count, sizeof(*timers));
+        if (!timers || !dm2_v1_original_raw_sksave_decode_timer_stream(
+                raw_body, raw_body_size, state_receipt,
+                (uint8_t *)timers, state_receipt->timer_count,
+                &timer_stream) || !timer_stream.valid) {
+            goto done;
+        }
+    }
+    dm2_v1_read_record_session_init(&session, raw_body, raw_body_size);
+    session.reader.position = roots.next_stream_offset;
+    session.reader.bits_remaining = roots.next_stream_bits_remaining;
+    session.reader.current_byte = roots.next_stream_current_byte;
+    context.set = &pools;
+    context.record_hash = 2166136261u;
+    context.ai_fn = query_creature_ai_flags;
+    context.ai_ctx = query_creature_ai_flags_ctx;
+    callbacks.alloc_record = dm2_v1_sksave_pool_alloc;
+    callbacks.set_data = dm2_v1_sksave_pool_set_data;
+    callbacks.append_record = dm2_v1_sksave_pool_append;
+    callbacks.child_owner = dm2_v1_sksave_pool_child_owner;
+    callbacks.add_possession_index = dm2_v1_sksave_pool_add_possession;
+    callbacks.query_creature_ai_flags = dm2_v1_sksave_pool_query_ai;
+    callbacks.ctx = &context;
+    if (dm2_v1_read_special_timer_record_chains(
+            &session, &callbacks, timers, state_receipt->timer_count,
+            savegamew7, &special_count) != 0 || session.error) {
+        goto done;
+    }
+    for (i = 0u; i < state_receipt->timer_count; ++i) {
+        timer_hash = dm2_v1_sksave_hash_bytes(
+            timer_hash, timers[i].bytes, sizeof(timers[i].bytes));
+    }
+    out_receipt->valid = 1;
+    out_receipt->timer_count = state_receipt->timer_count;
+    out_receipt->special_chain_count = special_count;
+    out_receipt->timer_hash = timer_hash ? timer_hash : 1u;
+    out_receipt->record_hash = context.record_hash;
+    out_receipt->next_stream_offset = session.reader.position;
+    out_receipt->next_stream_bits_remaining = session.reader.bits_remaining;
+    out_receipt->next_stream_current_byte = session.reader.current_byte;
+    ok = 1;
+done:
+    free(timers);
+    dm2_v1_record_pool_set_free(&pools);
+    return ok;
+}
+
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set)
 {
     if (set == NULL) {
