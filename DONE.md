@@ -11,6 +11,16 @@
   source-group member counts match live creatures and the combat admission
   suite remains green.
 
+# Theron spawn-consumer source lock (2026-08-08)
+
+- ✅ Added the raw-US HuC6280 `$B0DD..$B1EB` regular-spawn body to the source
+  lock. It records the real category branches, `$15`/`$19` multipliers, two
+  `$4667` consumers and the `$0384` HP clamp without promoting unknown helper
+  routines to host gameplay.
+- ✅ The source note explicitly keeps `L4644`/`L4667` RNG ownership and later
+  combat/drop consumers open; the legacy one-seed diagnostic helper is not
+  treated as original-runtime proof.
+
 # DM2 SKSAVE bitstream-order repair (2026-08-08)
 
 - ✅ Corrected the direct-root reader to stop after the source hero and

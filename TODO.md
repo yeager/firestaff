@@ -4,6 +4,9 @@
   creature pool with source type/position/count/HP. Bind the original random
   wave consumer, creature AI/combat/drop ownership and generator timing before
   treating live creatures as complete gameplay parity.
+- Theron: the raw US spawn body is now source-locked at HuC6280 $B0E5,
+  including its L4644/L4667 call sites and HP clamp. Recover the external RNG
+  and helper consumers before replacing the old diagnostic formula helper.
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
 
