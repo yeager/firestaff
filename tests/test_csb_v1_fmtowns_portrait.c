@@ -29,6 +29,13 @@ static uint8_t *load_file(const char *path, size_t *out_size) {
     return buf;
 }
 
+static int file_exists(const char *path) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
+
 static void test_probe_null(void) {
     ASSERT(csb_v1_fmtowns_portrait_probe(NULL, 0) == 0, "probe rejects NULL");
     uint8_t small[4] = {0};
@@ -59,6 +66,7 @@ static void test_real_portraits(void) {
     const char *home = getenv("HOME");
     const char *portrait_dir = getenv("FIRESTAFF_CSB_FMTOWNS_PORTRAIT_DIR");
     char path[512];
+    char cache_path[512];
     const char *names[] = {
         "ALEX", "AZIZI", "BORIS", "CHANI", "DAROOU", "ELIJA",
         "GANDO", "GOTHMOG", "HALK", "HAWK", "HISSSSA", "IAIDO",
@@ -84,6 +92,15 @@ static void test_real_portraits(void) {
             snprintf(path, sizeof(path),
                      "%s/.firestaff/data/csb/fmtowns/PORTRAIT/%s.CMP",
                      home, names[i]);
+            /* M12 keeps the selected F31E/F31J package in this ordinary-file
+             * cache after ISO/ZIP materialization. Exercise that production
+             * path before declaring the portrait unavailable. */
+            if (!file_exists(path)) {
+                snprintf(cache_path, sizeof(cache_path),
+                         "%s/Library/Application Support/Firestaff/asset-cache/"
+                         "csb-fmtowns-en/PORTRAIT/%s.CMP", home, names[i]);
+                snprintf(path, sizeof(path), "%s", cache_path);
+            }
         }
         data = load_file(path, &size);
         if (!data) {

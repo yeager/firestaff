@@ -156,6 +156,111 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
 
 static void csb_v1_boot_copy(char *dst, size_t dst_size, const char *src);
 
+/* M12 normally materializes archive members before the M11 launch handoff,
+ * but the CSB boot API is also used directly by the CLI and real-data probes.
+ * A hash match represented as archive::member is discovery evidence, not an
+ * fopen-able runtime path. Keep the two required bytes as one private pair
+ * and recheck both hashes before publishing them to the profile.
+ *
+ * ReDMCSB LOADSAVE.C F0435 lines 1936-1944 opens the selected dungeon as an
+ * ordinary file after media selection; it never treats a container locator as
+ * a game-data handle. */
+static int csb_v1_boot_path_is_virtual_asset_pc34(const char *path)
+{
+    return path && strstr(path, "::") != NULL;
+}
+
+static int csb_v1_boot_copy_file_pc34(const char *source, const char *target)
+{
+    unsigned char buffer[16384];
+    FILE *in;
+    FILE *out;
+    size_t count;
+
+    if (!source || !target) return 0;
+    in = fopen(source, "rb");
+    if (!in) return 0;
+    out = fopen(target, "wb");
+    if (!out) {
+        fclose(in);
+        return 0;
+    }
+    while ((count = fread(buffer, 1u, sizeof(buffer), in)) != 0u) {
+        if (fwrite(buffer, 1u, count, out) != count) {
+            fclose(in);
+            fclose(out);
+            return 0;
+        }
+    }
+    if (ferror(in) || fclose(in) != 0 || fclose(out) != 0) return 0;
+    return 1;
+}
+
+static int csb_v1_boot_materialize_runtime_pair_pc34(CSB_V1_BootProfile *profile)
+{
+    char user_data[ASSET_PATH_MAX];
+    char cache_root[ASSET_PATH_MAX];
+    char cache_dir[ASSET_PATH_MAX];
+    char graphics_next[ASSET_PATH_MAX];
+    char dungeon_next[ASSET_PATH_MAX];
+    char graphics_path[ASSET_PATH_MAX];
+    char dungeon_path[ASSET_PATH_MAX];
+    int graphics_virtual;
+    int dungeon_virtual;
+
+    if (!profile || !profile->graphics_path[0] || !profile->dungeon_path[0] ||
+        !profile->graphics_md5[0] || !profile->dungeon_md5[0]) return 0;
+    graphics_virtual = csb_v1_boot_path_is_virtual_asset_pc34(
+        profile->graphics_path);
+    dungeon_virtual = csb_v1_boot_path_is_virtual_asset_pc34(
+        profile->dungeon_path);
+    if (!graphics_virtual && !dungeon_virtual) return 1;
+    if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+        !FSP_JoinPath(cache_root, sizeof(cache_root), user_data, "asset-cache") ||
+        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root,
+                      "csb-boot-runtime") ||
+        !FSP_CreateDirectoryRecursive(cache_dir) ||
+        !FSP_JoinPath(graphics_next, sizeof(graphics_next), cache_dir,
+                      "GRAPHICS.DAT.next") ||
+        !FSP_JoinPath(dungeon_next, sizeof(dungeon_next), cache_dir,
+                      "DUNGEON.DAT.next") ||
+        !FSP_JoinPath(graphics_path, sizeof(graphics_path), cache_dir,
+                      "GRAPHICS.DAT") ||
+        !FSP_JoinPath(dungeon_path, sizeof(dungeon_path), cache_dir,
+                      "DUNGEON.DAT")) return 0;
+
+    (void)remove(graphics_next);
+    (void)remove(dungeon_next);
+    if (!(graphics_virtual
+              ? asset_extract_virtual_path(profile->graphics_path, graphics_next)
+              : csb_v1_boot_copy_file_pc34(profile->graphics_path,
+                                            graphics_next)) ||
+        !(dungeon_virtual
+              ? asset_extract_virtual_path(profile->dungeon_path, dungeon_next)
+              : csb_v1_boot_copy_file_pc34(profile->dungeon_path,
+                                            dungeon_next)) ||
+        !asset_file_matches_md5(graphics_next, profile->graphics_md5) ||
+        !asset_file_matches_md5(dungeon_next, profile->dungeon_md5)) {
+        (void)remove(graphics_next);
+        (void)remove(dungeon_next);
+        return 0;
+    }
+    (void)remove(graphics_path);
+    (void)remove(dungeon_path);
+    if (rename(graphics_next, graphics_path) != 0 ||
+        rename(dungeon_next, dungeon_path) != 0) {
+        (void)remove(graphics_next);
+        (void)remove(dungeon_next);
+        return 0;
+    }
+    csb_v1_boot_copy(profile->asset_root, sizeof(profile->asset_root), cache_dir);
+    csb_v1_boot_copy(profile->graphics_path, sizeof(profile->graphics_path),
+                     graphics_path);
+    csb_v1_boot_copy(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     dungeon_path);
+    return 1;
+}
+
 enum { CSB_V1_BOOT_SWOOSH_SOURCE_BYTES_PC34 = 9078 };
 
 static uint32_t csb_v1_boot_swoosh_fnv1a_pc34(const uint8_t *bytes,
@@ -8390,6 +8495,12 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     }
 
     profile->assets_verified = profile->graphics_verified && profile->dungeon_verified;
+    if (profile->assets_verified &&
+        !csb_v1_boot_materialize_runtime_pair_pc34(profile)) {
+        profile->assets_verified = 0;
+        profile->graphics_verified = 0;
+        profile->dungeon_verified = 0;
+    }
     /* SWSHSND.C G0746 is optional startup media. Its absence must not turn a
      * verified graphics/dungeon package into a synthetic sound route. */
     (void)csb_v1_boot_load_swoosh_source_pc34(profile);

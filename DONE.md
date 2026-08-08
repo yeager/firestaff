@@ -23,6 +23,16 @@
 
 # CSB audit and CI link repair (2026-08-08)
 
+- ✅ Made direct CSB boot consume archive-backed original PC34 media safely:
+  after hash discovery, `GRAPHICS.DAT` and `DUNGEON.DAT` are materialized as
+  one private, re-hashed runtime pair before any startup decoder or dungeon
+  loader opens them. The real PC34 launch and package-presentation probes now
+  pass from the archive corpus. This matches ReDMCSB `LOADSAVE.C` F0435's
+  ordinary-file dungeon handoff and prevents a virtual archive locator from
+  being misreported as a runnable game session.
+- ✅ Repaired the FM Towns portrait regression to read the launcher’s actual
+  selected-package cache (`csb-fmtowns-en/PORTRAIT`); all 24 original CMP
+  portraits now decode through the production materialization route.
 - ✅ Restored the full CMake matrix link contract for
   `probe_dm2_v1_world_state`: the probe now includes the direct HUD-helper
   implementation required by its champion-stat bridge, resolving the
