@@ -539,14 +539,14 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
     /* The retail MNS TEXT section is a single source bank. A partial decode
      * would make a malformed or unsupported original descriptor look like a
      * usable material route, so commit no surface unless every descriptor has
-     * one unambiguous source-bank slot. Direct-colour slots remain non-indexed
-     * until an authenticated Saturn VDP1 path exists. */
+     * one unambiguous source-bank slot. TEXT stores source BGR555 words; keep
+     * every descriptor in the exact direct-colour lane, even when its observed
+     * colour cardinality happens to fit a host indexed palette. Quantizing it
+     * would invent a host CLUT and could make an unproven VDP1 route appear
+     * drawable. */
     for (i = 0; i < section.descriptor_count; ++i) {
         const Nexus_DMDFTextureDescriptor *descriptor = &section.descriptors[i];
         Nexus_DMDFTextureSurface *surface;
-        uint16_t colors[256];
-        int color_count = 0;
-        int direct_color = 0;
         int pixel_count;
         int p;
 
@@ -557,59 +557,19 @@ int nexus_v1_dmdf_decode_text_material_bank(const uint8_t *data, int size,
         }
         surface = &out->surfaces[descriptor->material_id];
         pixel_count = (int)descriptor->width * descriptor->height;
-        /* Classify exact source colour cardinality first. A texture beyond
-         * the indexed host bank is valid Saturn data, not a parse failure. */
+        surface->direct_pixels = (uint16_t *)malloc(
+            (size_t)pixel_count * sizeof(*surface->direct_pixels));
+        if (!surface->direct_pixels) {
+            nexus_v1_dmdf_free_material_bank(out);
+            return 0;
+        }
         for (p = 0; p < pixel_count; ++p) {
-            const uint8_t *source = data + section.offset + descriptor->pixel_offset +
-                (size_t)p * 2U;
-            uint16_t bgr555 = rb16(source);
-            int palette_index = 0;
-            while (palette_index < color_count && colors[palette_index] != bgr555) {
-                ++palette_index;
-            }
-            if (palette_index == color_count) {
-                if (color_count == 256) {
-                    direct_color = 1;
-                    break;
-                }
-                colors[color_count] = bgr555;
-                ++color_count;
-            }
+            surface->direct_pixels[p] = rb16(
+                data + section.offset + descriptor->pixel_offset +
+                (size_t)p * 2U);
         }
-        if (direct_color) {
-            surface->direct_pixels = (uint16_t *)malloc(
-                (size_t)pixel_count * sizeof(*surface->direct_pixels));
-            if (!surface->direct_pixels) {
-                nexus_v1_dmdf_free_material_bank(out);
-                return 0;
-            }
-            for (p = 0; p < pixel_count; ++p) {
-                surface->direct_pixels[p] = rb16(
-                    data + section.offset + descriptor->pixel_offset +
-                    (size_t)p * 2U);
-            }
-            surface->direct_pixel_count = (size_t)pixel_count;
-            surface->direct_color = 1;
-        } else {
-            surface->pixels = (uint8_t *)malloc((size_t)pixel_count);
-            if (!surface->pixels) {
-                nexus_v1_dmdf_free_material_bank(out);
-                return 0;
-            }
-            for (p = 0; p < color_count; ++p) {
-                surface->palette[p] = dmdf_bgr555_rgba(colors[p]);
-            }
-            for (p = 0; p < pixel_count; ++p) {
-                const uint8_t *source = data + section.offset + descriptor->pixel_offset +
-                    (size_t)p * 2U;
-                uint16_t bgr555 = rb16(source);
-                int palette_index = 0;
-                while (palette_index < color_count && colors[palette_index] != bgr555) {
-                    ++palette_index;
-                }
-                surface->pixels[p] = (uint8_t)palette_index;
-            }
-        }
+        surface->direct_pixel_count = (size_t)pixel_count;
+        surface->direct_color = 1;
         surface->width = descriptor->width;
         surface->height = descriptor->height;
         surface->from_bpk = 0;

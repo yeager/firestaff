@@ -1,3 +1,12 @@
+# Nexus MNS TEXT direct-colour preservation (2026-08-08)
+
+- ✅ MNS `TEXT`-descriptors bevarar nu varje källpixel som exakt BGR555
+  i direct-colour-läge. Den tidigare host-palette-kvantiserningen vid ≤256
+  observerade färger är borttagen.
+- ✅ Riktiga Nexus-medietester för MNS, DGN face/mesh, BPK-material och
+  multi-model bounds passerar. Detta öppnar inte VDP1/VDP2-rendering utan
+  bevarar bara källmaterialet korrekt tills autentisk Saturn-capture finns.
+
 # Nexus 0DMSTRT synthetic-admission boundary (2026-08-08)
 
 - ✅ Flyttade `nexus_v1_0dmstrt_structure_admission.c` ut ur

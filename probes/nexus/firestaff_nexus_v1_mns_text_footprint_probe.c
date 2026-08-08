@@ -129,8 +129,11 @@ static int verify_mns(Nexus_V1_Engine *engine, const char *name)
               "TEXT descriptor footprint remains inside declared source bytes");
         check(surface->valid && !surface->from_bpk &&
                   surface->width == descriptor->width &&
-                  surface->height == descriptor->height && surface->pixels,
-              "TEXT descriptor maps to the matching decoded MNS surface");
+                  surface->height == descriptor->height &&
+                  surface->direct_color && surface->direct_pixels &&
+                  surface->direct_pixel_count == footprint_bytes / 2U &&
+                  !surface->pixels,
+              "TEXT descriptor preserves exact BGR555 MNS surface");
         if (surface->valid) ++mapped;
     }
     printf("%s: descriptors=%u mapped=%d section=%u+%u\n", name,
