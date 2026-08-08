@@ -351,6 +351,9 @@ typedef struct {
     DM2_V1_FileHeaderRuntimeSceneCensus entrance_scene;
     DM2_V1_FileHeaderRuntimeTileCensus entrance_tiles;
     DM2_V1_FileHeaderRuntimeObjectReceipt entrance_objects;
+    DM2_V1_G1RuntimeMapDoorReceipt entrance_doors;
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt entrance_teleporters;
+    DM2_V1_G1RuntimeMapActuatorReceipt entrance_actuators;
     DM2_V1_BootNewGameEntranceReceipt entrance;
     DM2_V1_BootChampionDyn4RosterReceipt dyn4_roster;
     DM2_V1_BootNewGamePartyReceipt party;

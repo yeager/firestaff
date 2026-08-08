@@ -13,7 +13,8 @@
 # DM2 New Game transaktionsgrund (2026-08-08)
 
 - ✅ Ett gemensamt, läsande GAME_LOAD-kvitto binder nu den verifierade
-  File_header-entrén med dess scenrekord, tilecensus och DB5–DB15-objekt,
+  File_header-entrén med dess scenrekord, tilecensus, DB5–DB15-objekt samt
+  direkta DB0-dörrar, DB1-teleportörer och DB3-aktuatorer,
   hela `DM2_LOAD_LOCALLEVEL_DYN`-championrosterkön, användarens autentiska
   spegelval, c_hero-projektionen och de File_header-ägda startobjekten. Alla
   komponenter måste komma från samma hashverifierade GRAPHICS.DAT/DUNGEON.DAT-par.

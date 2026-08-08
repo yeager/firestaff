@@ -1428,6 +1428,24 @@ int dm2_v1_boot_new_game_transaction_receipt(
         !candidate.entrance_objects.incomplete_world ||
         candidate.entrance_objects.object_record_reads !=
             candidate.entrance_objects.object_record_count ||
+        !dm2_v1_boot_file_header_map_doors_receipt(
+            profile, candidate.entrance.map, &candidate.entrance_doors) ||
+        !candidate.entrance_doors.committed ||
+        !candidate.entrance_doors.incomplete_world ||
+        candidate.entrance_doors.door_record_reads !=
+            candidate.entrance_doors.door_root_count ||
+        !dm2_v1_boot_file_header_map_teleporters_receipt(
+            profile, candidate.entrance.map, &candidate.entrance_teleporters) ||
+        !candidate.entrance_teleporters.committed ||
+        !candidate.entrance_teleporters.incomplete_world ||
+        candidate.entrance_teleporters.teleporter_record_reads !=
+            candidate.entrance_teleporters.teleporter_root_count ||
+        !dm2_v1_boot_file_header_map_actuators_receipt(
+            profile, candidate.entrance.map, &candidate.entrance_actuators) ||
+        !candidate.entrance_actuators.committed ||
+        !candidate.entrance_actuators.incomplete_world ||
+        candidate.entrance_actuators.actuator_record_reads !=
+            candidate.entrance_actuators.actuator_root_count ||
         !dm2_v1_boot_champion_dyn4_roster_receipt(
             profile, &candidate.dyn4_roster) ||
         !candidate.dyn4_roster.valid ||
@@ -1484,6 +1502,38 @@ int dm2_v1_boot_new_game_transaction_receipt(
             candidate.transaction_hash, (uint32_t)source->record_offset);
         candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
             candidate.transaction_hash, (uint32_t)source->record_size);
+    }
+    for (int door = 0; door < candidate.entrance_doors.door_root_count; ++door) {
+        const DM2_V1_G1DirectDoorRoot *source =
+            &candidate.entrance_doors.doors[door];
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->object_id);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->attributes);
+    }
+    for (int teleporter = 0;
+         teleporter < candidate.entrance_teleporters.teleporter_root_count;
+         ++teleporter) {
+        const DM2_V1_G1DirectTeleporterRoot *source =
+            &candidate.entrance_teleporters.teleporters[teleporter];
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->object_id);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->destination_word);
+    }
+    for (int actuator = 0;
+         actuator < candidate.entrance_actuators.actuator_root_count;
+         ++actuator) {
+        const DM2_V1_G1DirectActuatorRoot *source =
+            &candidate.entrance_actuators.actuators[actuator];
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->object_id);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->attributes);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->control_word);
+        candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.transaction_hash, source->target_word);
     }
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, candidate.dyn4_roster.selector_roster_hash);

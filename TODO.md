@@ -8,7 +8,8 @@
   utan att uppfinna inventory; klickad formationsruta hålls separat från
   DB3-spegelns orientering enligt originalets inventoryfilter. `SELECT_CHAMPION`
   behåller originalets recordreferens och gör inte `CUT_RECORD_FROM`.
-  Entréens File_header-karta, scenrekord, tilecensus, DB5–DB15-objekt,
+  Entréens File_header-karta, scenrekord, tilecensus, DB5–DB15-objekt samt
+  direkta DB0-dörrar, DB1-teleportörer och DB3-aktuatorer,
   hela champion-DYN4-rosterkön, den klickordnade partyreceipten och possessions
   är nu ett gemensamt, läsande transaktionskvitto från samma hashverifierade
   medium. Nästa atomära ägare måste därför bevara den delade recordägaren genom

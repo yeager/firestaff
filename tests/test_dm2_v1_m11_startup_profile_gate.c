@@ -1554,6 +1554,15 @@ int main(void) {
                     source_transaction.entrance_objects.committed &&
                     source_transaction.entrance_objects.object_record_reads ==
                         source_transaction.entrance_objects.object_record_count &&
+                    source_transaction.entrance_doors.committed &&
+                    source_transaction.entrance_doors.door_record_reads ==
+                        source_transaction.entrance_doors.door_root_count &&
+                    source_transaction.entrance_teleporters.committed &&
+                    source_transaction.entrance_teleporters.teleporter_record_reads ==
+                        source_transaction.entrance_teleporters.teleporter_root_count &&
+                    source_transaction.entrance_actuators.committed &&
+                    source_transaction.entrance_actuators.actuator_record_reads ==
+                        source_transaction.entrance_actuators.actuator_root_count &&
                     source_transaction.dyn4_roster.valid &&
                     source_transaction.dyn4_roster.selector_count ==
                         champion_mirrors.mirror_count &&
@@ -1564,7 +1573,7 @@ int main(void) {
                     source_transaction.transaction_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "M11 joins map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
+                "M11 joins entrance interactions, map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,
