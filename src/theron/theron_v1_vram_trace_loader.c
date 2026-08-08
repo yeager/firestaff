@@ -6,9 +6,10 @@
  * rendering with authentic game data instead of synthetic placeholders.
  *
  * VRAM layout (word-addressed, 64KB = 32K words):
- *   $0000-$07FF: BAT (Background Attribute Table) — 64×32 tile map
- *   $0800-$7EFF: BG tile data (4bpp, 32 bytes per 8×8 tile)
- *   $7F00-$7FFF: SAT (Sprite Attribute Table) — 64 entries
+ *   The authenticated dungeon snapshot has its BAT at $0000 and its tile
+ *   patterns in the remaining VRAM. Older fixture snapshots use a $1000
+ *   tile-data base. The loader tries the fixture layout first and falls back
+ *   to the observed source layout only when the BAT yields no valid tiles.
  *
  * VCE layout: 512 × 16-bit LE words, BGR333 format.
  */
@@ -156,9 +157,9 @@ void theron_v1_vram_trace_unload(Theron_V1_Viewport *vp) {
     tqr_palette_free_tiles(&vp->palette);
 }
 
-int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
-                                        int bat_start_word,
-                                        int bat_w, int bat_h) {
+static int theron_v1_vram_trace_populate_tiles_with_base(
+    Theron_V1_Viewport *vp, int bat_start_word, int bat_w, int bat_h,
+    int tile_base_byte) {
     if (!vp || !vp->vram_trace_loaded || !vp->vram_trace_data) return -1;
     /* The PCE BAT occupies 2048 words (64 columns × 32 rows).  The
      * current atlas population still loads the complete authenticated BG
@@ -185,8 +186,9 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
         }
     }
 
-    /* BG tiles start at VRAM word $0800 = byte offset $1000 */
-    int tile_base_byte = 0x1000;
+    if (tile_base_byte < 0 || tile_base_byte >= THERON_VRAM_SIZE)
+        return -1;
+
     tqr_palette_free_tiles(&vp->palette);
     for (int i = 0; i < 2048; ++i)
         vp->bat_atlas_indices[i] = -1;
@@ -224,6 +226,21 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
     }
 
     return loaded;
+}
+
+int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
+                                        int bat_start_word,
+                                        int bat_w, int bat_h) {
+    int loaded = theron_v1_vram_trace_populate_tiles_with_base(
+        vp, bat_start_word, bat_w, bat_h, 0x1000);
+
+    if (loaded != 0) return loaded;
+    /* The real dungeon capture has BAT words at $0000 whose tile indices
+     * address patterns from VRAM byte zero.  Only use this source-observed
+     * route when the historical fixture base produced no admissible tile;
+     * never silently merge the two layouts. */
+    return theron_v1_vram_trace_populate_tiles_with_base(
+        vp, bat_start_word, bat_w, bat_h, 0);
 }
 
 int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,

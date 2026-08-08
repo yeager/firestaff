@@ -55,7 +55,7 @@ extern "C" {
 #define TQR_PALETTE_SIZE        512  /* 16 palette groups × 16 colors */
 #define TQR_PALETTE_GROUP_SIZE   16  /* colors per palette group     */
 #define TQR_PALETTE_GROUPS       16  /* palette groups 0-15          */
-#define TQR_MAX_TILES          1024  /* max tile indices in atlas    */
+#define TQR_MAX_TILES          2048  /* max BAT tile/palette pairs   */
 #define TQR_TILE_SIZE_2BPP       16  /* bytes per 8×8 tile, 2bpp     */
 #define TQR_TILE_SIZE_4BPP       32  /* bytes per 8×8 tile, 4bpp     */
 #define TQR_TILE_DIM              8  /* tile is 8×8 pixels           */

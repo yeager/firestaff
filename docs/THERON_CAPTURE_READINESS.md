@@ -23,6 +23,13 @@ The same normalization is applied to the Main-RAM consumer trace and its
 code-window verifier, so a transport-escaped sidecar cannot be accepted by
 the loader stage but rejected later by the consumer stage.
 
+An operator-supplied raw VDC/VCE pair is now also accepted by the production
+viewport path. The supplied dungeon snapshot (`65536` bytes VRAM plus `1024`
+bytes VCE) binds 1057 source tile/palette entries and presents 896 BAT cells.
+That proves the bitmap-bank transport and palette decode; it is still a raw
+screen-space BAT preview, not proof of square-to-tile perspective, creature
+ownership, HUD layout, or README screenshot eligibility.
+
 The strongest current proof is:
 
 - `tier1_strict_boot_probe`: JP canonical, JP extras, and US extras reach the

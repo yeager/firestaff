@@ -3650,6 +3650,16 @@ level or consumer bindings.
   now require a loaded, source-header-verified level before accepting a record.
   This closes phantom source records without promoting RNG, AI, timing or loot
   semantics.
+  2026-08-08 VRAM snapshot correction: the authenticated dungeon snapshot's
+  BAT-at-$0000/tile-at-VRAM-zero layout is now admitted after the legacy
+  fixture `$1000` tile base yields no tiles. This binds the captured VDC/VCE
+  bitmap bank without claiming square-to-tile dungeon semantics.
+  2026-08-08 atlas-capacity follow-up: the real 64x32 BAT can address up to
+  2048 distinct tile/palette pairs; the production atlas now has that exact
+  capacity instead of rejecting a valid full snapshot after 1024 entries.
+  The operator snapshot now passes the real-capture probe with 1057 atlas
+  entries and 896 BAT cells; keep its output behind the raw-capture gate until
+  the dungeon square consumer and screen provenance are joined.
   2026-08-06 source-object update: every decoded map-reachable category
   4–10/14/15 occurrence is now copied into a persistent world source bank
   with raw bytes, chain links, category/index, position and map coordinates.

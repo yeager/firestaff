@@ -6851,3 +6851,23 @@
 - Added regression coverage proving an unverified level cannot seed a source
   monster record. Live creature publication remains blocked until the original
   RNG consumer and creature consumer are authenticated.
+# 2026-08-08 Theron authenticated dungeon VRAM layout
+
+- ✅ Fixed the production VRAM snapshot loader to admit the observed dungeon
+  layout: BAT at VRAM `$0000`, with BAT tile indices addressing patterns from
+  VRAM byte zero. The historical `$1000` fixture layout remains supported and
+  is tried first.
+- The source-backed VCE palette and BAT/tile atlas now bind from the supplied
+  `vram_dungeon.bin`/`vce_dungeon.bin` snapshot instead of being rejected as
+  an empty production surface.
+- This is a real bitmap/tile-bank transport fix, not a claim that dungeon
+  squares, creatures, HUD ownership or perspective are decoded.
+# 2026-08-08 Theron VDC atlas capacity
+
+- ✅ Increased the source-backed VDC tile/palette atlas from 1024 to the
+  BAT-defined maximum of 2048 entries. The real 64×32 dungeon snapshot is no
+  longer rejected when its captured BAT uses more than 1024 unique pairs.
+- ✅ Verified the supplied raw dungeon snapshot end to end: 64 KiB VRAM,
+  1 KiB VCE, 1057 bound tile/palette entries, 896 BAT cells and 27,259
+  presented indexed pixels. The optional test BMP writer is source-backed
+  inspection only and is not a README promotion.

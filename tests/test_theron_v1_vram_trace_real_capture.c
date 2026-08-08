@@ -12,6 +12,53 @@ static size_t nonzero_bytes(const unsigned char *data, size_t count) {
     return nonzero;
 }
 
+static int write_source_bmp(const char *path,
+                            const Theron_V1_Viewport *viewport) {
+    FILE *file;
+    uint8_t header[54] = {0};
+    int y;
+
+    if (!path || !path[0] || !viewport || !viewport->fb.data) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    header[0] = 'B';
+    header[1] = 'M';
+    {
+        uint32_t size = 54u + (uint32_t)(viewport->fb.w * viewport->fb.h * 3);
+        header[2] = (uint8_t)size; header[3] = (uint8_t)(size >> 8);
+        header[4] = (uint8_t)(size >> 16); header[5] = (uint8_t)(size >> 24);
+    }
+    header[10] = 54;
+    header[14] = 40;
+    header[18] = (uint8_t)viewport->fb.w;
+    header[19] = (uint8_t)(viewport->fb.w >> 8);
+    header[22] = (uint8_t)viewport->fb.h;
+    header[23] = (uint8_t)(viewport->fb.h >> 8);
+    header[26] = 1;
+    header[28] = 24;
+    if (fwrite(header, 1, sizeof(header), file) != sizeof(header)) {
+        fclose(file);
+        return 0;
+    }
+    for (y = viewport->fb.h - 1; y >= 0; --y) {
+        int x;
+        for (x = 0; x < viewport->fb.w; ++x) {
+            uint8_t index = viewport->fb.data[y * viewport->fb.stride + x];
+            uint32_t rgba = viewport->palette.entries[index].rgba;
+            uint8_t pixel[3] = {
+                (uint8_t)(rgba & 0xffu),
+                (uint8_t)((rgba >> 8) & 0xffu),
+                (uint8_t)((rgba >> 16) & 0xffu)
+            };
+            if (fwrite(pixel, 1, sizeof(pixel), file) != sizeof(pixel)) {
+                fclose(file);
+                return 0;
+            }
+        }
+    }
+    return fclose(file) == 0;
+}
+
 int main(void) {
     const char *vram_path = getenv("THERON_VRAM_SNAPSHOT");
     const char *vce_path = getenv("THERON_VCE_SNAPSHOT");
@@ -38,7 +85,7 @@ int main(void) {
     memset(&viewport, 0, sizeof(viewport));
     if (!theron_vp_init(&viewport) || !viewport.vram_trace_loaded ||
         !viewport.vram_trace_data || !viewport.vce_trace_data) {
-        fprintf(stderr, "FAIL: production viewport did not initialize\n");
+        fprintf(stderr, "FAIL: production viewport did not initialize or bind real VRAM/VCE\n");
         return 1;
     }
     if (!viewport.synthetic_rendering_blocked) {
@@ -73,6 +120,12 @@ int main(void) {
                                       sizeof(m11_framebuffer));
     if (presented_nonzero == 0u) {
         fprintf(stderr, "FAIL: authentic BAT frame was not presented to M11\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
+    if (getenv("THERON_VRAM_CAPTURE_BMP") &&
+        !write_source_bmp(getenv("THERON_VRAM_CAPTURE_BMP"), &viewport)) {
+        fprintf(stderr, "FAIL: requested source-backed BMP could not be written\n");
         theron_vp_free(&viewport);
         return 1;
     }
