@@ -100,9 +100,17 @@ int main(void) {
             driver.command_dispatch_offset != 0x1c08U ||
             driver.command_jump_table_offset != 0x1c2aU ||
             driver.command_jump_table_count != 16U ||
+            driver.command_handler_offset != 0x2220U ||
+            driver.command_handler_runtime_pc != 0x3224U ||
+            driver.command_handler_valid_command_limit != 0x12U ||
+            driver.command_handler_state_offset != 0x187eU ||
+            driver.command_handler_channel_stride != 0x20U ||
+            driver.command_handler_scsp_register_offset != 0x17U ||
+            driver.command_handler_return_offset != 0x223cU ||
             driver.pcm_voice_handler_offset != 0x1f0eU ||
             !driver.m68k_instruction_stream_proven ||
             !driver.command_dispatch_proven ||
+            !driver.command_handler_proven ||
             !driver.pcm_voice_register_route_proven ||
             driver.event_dispatch_proven || driver.playback_permitted) {
             puts("FAIL: SDDRVS.TSK 68k disassembly receipt was not admitted");

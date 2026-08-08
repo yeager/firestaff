@@ -790,9 +790,17 @@ static void test_optional_real_sddrvs_engine_provenance(void) {
           engine.sound_driver_disassembly_receipt.command_dispatch_offset == 0x1c08U &&
           engine.sound_driver_disassembly_receipt.command_jump_table_offset == 0x1c2aU &&
           engine.sound_driver_disassembly_receipt.command_jump_table_count == 16U &&
+          engine.sound_driver_disassembly_receipt.command_handler_offset == 0x2220U &&
+          engine.sound_driver_disassembly_receipt.command_handler_runtime_pc == 0x3224U &&
+          engine.sound_driver_disassembly_receipt.command_handler_valid_command_limit == 0x12U &&
+          engine.sound_driver_disassembly_receipt.command_handler_state_offset == 0x187eU &&
+          engine.sound_driver_disassembly_receipt.command_handler_channel_stride == 0x20U &&
+          engine.sound_driver_disassembly_receipt.command_handler_scsp_register_offset == 0x17U &&
+          engine.sound_driver_disassembly_receipt.command_handler_return_offset == 0x223cU &&
           engine.sound_driver_disassembly_receipt.pcm_voice_handler_offset == 0x1f0eU &&
           engine.sound_driver_disassembly_receipt.m68k_instruction_stream_proven &&
           engine.sound_driver_disassembly_receipt.command_dispatch_proven &&
+          engine.sound_driver_disassembly_receipt.command_handler_proven &&
           engine.sound_driver_disassembly_receipt.pcm_voice_register_route_proven,
           "real Nexus engine carries the verified SDDRVS 68k corridors");
     CHECK(engine.sound_driver_disassembly_receipt.event_dispatch_proven == 0 &&

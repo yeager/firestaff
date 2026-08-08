@@ -294,6 +294,12 @@ int nexus_v1_audio_sddrvs_disassembly_receipt(
         0x4e, 0xf9, 0x00, 0x00, 0x1c, 0xba, 0x4e, 0xfa,
         0x00, 0x50
     };
+    static const uint8_t command_handler_signature[] = {
+        0x42, 0x40, 0x10, 0x18, 0x0c, 0x40, 0x00, 0x12,
+        0x64, 0x00, 0x00, 0x12, 0x12, 0x10, 0x43, 0xee,
+        0x18, 0x7e, 0x13, 0x81, 0x00, 0x00, 0xeb, 0x48,
+        0x1b, 0x81, 0x00, 0x17, 0x4e, 0x75
+    };
     static const uint8_t pcm_signature[] = {
         0x47, 0xee, 0x18, 0x90, 0x45, 0xee, 0x10, 0x00,
         0x1e, 0x28, 0x00, 0x00
@@ -309,6 +315,13 @@ int nexus_v1_audio_sddrvs_disassembly_receipt(
     receipt.command_dispatch_offset = 0x1c08U;
     receipt.command_jump_table_offset = 0x1c2aU;
     receipt.command_jump_table_count = 16U;
+    receipt.command_handler_offset = 0x2220U;
+    receipt.command_handler_runtime_pc = 0x3224U;
+    receipt.command_handler_valid_command_limit = 0x12U;
+    receipt.command_handler_state_offset = 0x187eU;
+    receipt.command_handler_channel_stride = 0x20U;
+    receipt.command_handler_scsp_register_offset = 0x17U;
+    receipt.command_handler_return_offset = 0x223cU;
     receipt.pcm_voice_handler_offset = 0x1f0eU;
     receipt.event_dispatch_proven = 0;
     receipt.playback_permitted = 0;
@@ -325,8 +338,14 @@ int nexus_v1_audio_sddrvs_disassembly_receipt(
                            (uint32_t)sizeof(entry_signature)) &&
         sddrvs_bytes_match(data, size, 0x1080U, sound_base_signature,
                            (uint32_t)sizeof(sound_base_signature));
+    receipt.command_handler_proven =
+        receipt.m68k_instruction_stream_proven &&
+        sddrvs_bytes_match(data, size, receipt.command_handler_offset,
+                           command_handler_signature,
+                           (uint32_t)sizeof(command_handler_signature));
     receipt.command_dispatch_proven =
         receipt.m68k_instruction_stream_proven &&
+        receipt.command_handler_proven &&
         sddrvs_bytes_match(data, size, 0x1c08U, command_signature,
                            (uint32_t)sizeof(command_signature)) &&
         sddrvs_bytes_match(data, size, 0x1c2aU, jump_table_signature,

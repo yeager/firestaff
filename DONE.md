@@ -1,3 +1,13 @@
+# Nexus SDDRVS command-handler ABI receipt (2026-08-08)
+
+- ✅ Den autentiska 68k-handlern vid `SDDRVS.TSK+0x2220` är nu bytebunden
+  med runtime-PC `0x3224`, kommandogräns `0x12`, state-offset `0x187e`,
+  kanalsteg `0x20`, SCSP-fält `0x17` och retur-offset `0x223c`.
+- ✅ Extern SCSP-trace verifierar samma handler-PC mot den riktiga
+  `SDDRVS.TSK`-hashen. SLEV-selektor, SAL-sample, codec och host playback
+  förblir spärrade.
+- ✅ SLEV/SAL-korpus- och sound-runtime-testerna passerar mot realdata.
+
 # Nexus false-positive presentation admissions closed (2026-08-08)
 
 - ✅ DGN scene-planen behåller real Structure1F/Structure3-geometri som

@@ -69,9 +69,17 @@ typedef struct {
     uint32_t command_dispatch_offset;
     uint32_t command_jump_table_offset;
     uint32_t command_jump_table_count;
+    uint32_t command_handler_offset;
+    uint32_t command_handler_runtime_pc;
+    uint32_t command_handler_valid_command_limit;
+    uint32_t command_handler_state_offset;
+    uint32_t command_handler_channel_stride;
+    uint32_t command_handler_scsp_register_offset;
+    uint32_t command_handler_return_offset;
     uint32_t pcm_voice_handler_offset;
     int m68k_instruction_stream_proven;
     int command_dispatch_proven;
+    int command_handler_proven;
     int pcm_voice_register_route_proven;
     int event_dispatch_proven;
     int playback_permitted;
