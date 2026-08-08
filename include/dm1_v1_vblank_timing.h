@@ -33,7 +33,12 @@ extern "C" {
  * = 20ms * 10 = 200ms.
  */
 
-/* -- PAL VBlank constants from ReDMCSB -- */
+/* -- VBlank constants from ReDMCSB -- */
+
+/* VGA vertical blank frequency: ~70 Hz (mode 13h).
+ * ReDMCSB VIDEODRV.C:3166-3184 M526_WaitVerticalBlank polls 0x3DA bit 3. */
+#define DM1_V1_VGA_VBLANK_HZ                70
+#define DM1_V1_VGA_VBLANK_MS                14
 
 /* PAL vertical blank frequency: 50 Hz */
 #define DM1_V1_PAL_VBLANK_HZ                50

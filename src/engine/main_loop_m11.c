@@ -96,7 +96,6 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
          gameView->csbState.startup_entrance_active)) {
         const CSB_V1_BootProfile* profile =
             (const CSB_V1_BootProfile*)gameView->csbBootProfile;
-        uint32_t tick_ms;
         if (profile &&
             (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
              profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) &&
@@ -107,30 +106,13 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
              * the original Timer-A period instead of rounding title frames. */
             return 16u;
         }
-        /* TITLE.C F0437's waits are source VBlank waits.  The CSB runtime
-         * profile owns the corresponding PC cadence (55 ms); using the host
-         * display's 20 ms cadence made PRESENTS/CHAOS/STRIKES race through
-         * in roughly two seconds on modern Macs.
-         *
-         * The 20 generated C425 CHAOS rasters are the only rapidly changing
-         * title frames. DM1's C001 zoom already keeps a decoded raster on
-         * the host surface for two cadence slots. CSB's larger 20-step zoom
-         * needs four slots to remain legible at the M11 presentation
-         * boundary. This does not add a source blit or alter TITLE.C's
-         * subsequent Delay(20): it only keeps the already source-rendered
-         * zoom raster observable before advancing the M11 receipt. */
-        tick_ms = profile && profile->tick_ms != 0u
-                      ? profile->tick_ms
-                      : CSB_V1_TICK_MS_NOMINAL;
-        if (gameView->csbState.startup_title_active &&
-            gameView->csbState.startup_title_frame >=
-                csb_v1_startup_title_presents_ticks_pc34() &&
-            gameView->csbState.startup_title_frame <
-                csb_v1_startup_title_presents_ticks_pc34() +
-                csb_v1_startup_title_chaos_zoom_ticks_pc34()) {
-            return tick_ms > UINT32_MAX / 4u ? UINT32_MAX : tick_ms * 4u;
-        }
-        return tick_ms;
+        /* TITLE.C F0437's waits are source VBlank waits.  Each tick in the
+         * CSB title sequence corresponds to one M526_WaitVerticalBlank call.
+         * On VGA mode 13h that polls 0x3DA at ~70 Hz = 14ms per VBlank.
+         * All phases (PRESENTS, CHAOS zoom, CHAOS hold, STRIKES BACK) use
+         * the same VBlank period — the 4× multiplier on zoom was wrong and
+         * caused STRIKES BACK to appear at the wrong time. */
+        return DM1_V1_VGA_VBLANK_MS;
     }
 
     if (speedMultiplier < 50) speedMultiplier = 50;
