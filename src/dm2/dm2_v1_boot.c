@@ -977,6 +977,88 @@ int dm2_v1_boot_file_header_runtime_map_receipt(
         dungeon, map, out_receipt);
 }
 
+int dm2_v1_boot_new_game_entrance_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootNewGameEntranceReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
+    DM2_V1_BootNewGameEntranceReceipt candidate;
+    int thing;
+    int tile;
+    int steps = 0;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+
+    /* SKProject SKWIN/SkWinCore.cpp::READ_DUNGEON_STRUCTURE changes to map
+     * zero, then assigns File_header::w8 directly as the party pose. Before
+     * GAME_LOAD may ever make that pose live, prove it against the exact
+     * File_header c_map -> GenericRecord::w0 owner. */
+    if (!dungeon->initial_party_pose_valid ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            dungeon, 0, &map_receipt) || !map_receipt.committed ||
+        dungeon->initial_party_x < 0 ||
+        dungeon->initial_party_x >= map_receipt.width ||
+        dungeon->initial_party_y < 0 ||
+        dungeon->initial_party_y >= map_receipt.height) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_game_load = 1;
+    candidate.map = 0;
+    candidate.x = dungeon->initial_party_x;
+    candidate.y = dungeon->initial_party_y;
+    candidate.direction = dungeon->initial_party_dir & 3;
+    candidate.map_data_hash = map_receipt.map_data_hash;
+    thing = dm2_v1_dungeon_get_first_thing(
+        dungeon, candidate.map, candidate.x, candidate.y);
+    if (thing < 0) return 0;
+    candidate.first_object_id = (uint16_t)thing;
+    tile = dm2_v1_dungeon_get_tile_raw(
+        dungeon, candidate.map, candidate.x, candidate.y);
+    if (tile < 0) return 0;
+    candidate.tile_byte = (uint8_t)tile;
+
+    /* A start square may legally have no ground stack. If it does, follow
+     * the original link owner with the map validator's source-sized bound;
+     * do not project records into an invented entrance model. */
+    while (thing != (int)DM2_THING_END_MARKER) {
+        if (++steps > map_receipt.record_count ||
+            !dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)thing, NULL, NULL, NULL)) {
+            return 0;
+        }
+        ++candidate.entrance_record_count;
+        thing = dm2_v1_dungeon_get_next_thing(dungeon, (uint16_t)thing);
+        if (thing < 0) return 0;
+    }
+    candidate.receipt_hash = 2166136261u;
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, (uint32_t)candidate.map);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, (uint32_t)candidate.x);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, (uint32_t)candidate.y);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, (uint32_t)candidate.direction);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.tile_byte);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.first_object_id);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, (uint32_t)candidate.entrance_record_count);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.map_data_hash);
+    if (candidate.receipt_hash == 0u) return 0;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_file_header_map_doors_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_G1RuntimeMapDoorReceipt *out_receipt)

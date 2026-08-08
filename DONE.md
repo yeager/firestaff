@@ -213,6 +213,15 @@
   ingen session och lämnar Resume spärrad tills originalens länkade records,
   possessions, aktuatorkö och efterladdningssteg har en komplett ägare.
 
+# DM2 New Game-entréreceipt (2026-08-08)
+
+- ✅ File_header::`w8`-startpositionen binds nu till karta 0:s verkliga
+  `c_map`-ground-stack och den avgränsade `GenericRecord::w0`-kedjan. Ett
+  trasigt startkoordinat-, tile- eller recordled gör hela kvittot ogiltigt.
+- ✅ Verifierat med hashverifierad PC-DOS `DUNGEON.DAT` via M11:s
+  startup/profile-grind. Kvittot är läsande: det skapar inte party, DYN4,
+  timers, HUD eller viewport.
+
 # DM2 championmirror-DYN4-roster (2026-08-08)
 
 - ✅ Alla sexton källägda DB3 subtype-`0x7e` championmirror-markörer binds

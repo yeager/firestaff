@@ -412,6 +412,25 @@ typedef struct {
     uint32_t raw_hash;
 } DM2_V1_BootNewDungeonReceipt;
 
+/* Read-only start of the New Game GAME_LOAD transaction.  The original
+ * File_header::w8 pose is only useful when it belongs to the same canonical
+ * map-0 ground-stack and GenericRecord::w0 chain that c_map/c_record expose.
+ * This receipt never publishes a party, DYN4 queue, timer queue, or viewport.
+ */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int map;
+    int x;
+    int y;
+    int direction;
+    uint8_t tile_byte;
+    uint16_t first_object_id;
+    int entrance_record_count;
+    uint32_t map_data_hash;
+    uint32_t receipt_hash;
+} DM2_V1_BootNewGameEntranceReceipt;
+
 typedef enum {
     DM2_V1_BOOT_ACTION_NO_TARGET = 0,
     DM2_V1_BOOT_ACTION_SHOP,
@@ -1521,6 +1540,13 @@ int dm2_v1_boot_champion_selection_census(
 int dm2_v1_boot_file_header_runtime_map_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt);
+
+/* Join File_header::w8's original map-0 start pose to the mounted
+ * File_header ground-stack chain. It is a New Game admission receipt, not
+ * a live GAME_LOAD completion. */
+int dm2_v1_boot_new_game_entrance_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootNewGameEntranceReceipt *out_receipt);
 /* Read-only File_header scene receipts from the dungeon already admitted by
  * this boot profile.  They are the provenance boundary for later local-level
  * consumers and deliberately do not perform gameplay transactions. */

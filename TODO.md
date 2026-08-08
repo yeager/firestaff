@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är nu bunden till den
+  riktiga ground-stack-/recordkedjan i ett läsande kvitto. Nästa atomära
+  ägare måste förena den med originalets mirrorval, possessions, c_hero,
+  DYN4, timers och aktuatorgenerator; starten får inte publicera party,
+  HUD eller viewport innan hela transaktionen finns.
+
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder
   T900:s equip/use/stack/loot-regler; gissade mutationer ska fortsatt nekas.

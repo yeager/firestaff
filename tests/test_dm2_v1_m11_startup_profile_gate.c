@@ -1210,6 +1210,7 @@ int main(void) {
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
+    DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
     DM2_V1_G1RuntimeMapDoorReceipt file_header_doors;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt file_header_teleporters;
     DM2_V1_G1RuntimeMapActuatorReceipt file_header_actuators;
@@ -1476,6 +1477,20 @@ int main(void) {
                     file_header_tiles.tile_count ==
                         file_header_map.width * file_header_map.height,
                 "M11 exposes File_header scene receipts through the mounted boot owner");
+    memset(&new_game_entrance, 0, sizeof(new_game_entrance));
+    expect_true(profile &&
+                    dm2_v1_boot_new_game_entrance_receipt(
+                        profile, &new_game_entrance) &&
+                    new_game_entrance.valid &&
+                    new_game_entrance.incomplete_game_load &&
+                    new_game_entrance.map == 0 &&
+                    new_game_entrance.x >= 0 &&
+                    new_game_entrance.x < file_header_map.width &&
+                    new_game_entrance.y >= 0 &&
+                    new_game_entrance.y < file_header_map.height &&
+                    new_game_entrance.map_data_hash == file_header_map.map_data_hash &&
+                    new_game_entrance.receipt_hash != 0u,
+                "M11 binds the original New Game entrance pose to the File_header map owner");
     memset(&champion_dyn4, 0, sizeof(champion_dyn4));
     /* The old 28-map pseudo-header happened to manufacture a 16-marker
      * continuation and thereby admitted a DYN4 bundle. The real 44-map
