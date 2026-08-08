@@ -22,6 +22,9 @@
   022e-viewport, Palette552 och GAMEBLOCK-inmatning använder Atari-material
   utan PC34:s start- eller ytersättningar. Arbetslistan beskriver nu enbart
   återstående Utility-disk- och extern capture-paritet som öppet arbete.
+- ✅ Realtdata-grinden jämför nu samtliga 256 M11-paletteposter mot den
+  paketvalda C232 `Palette552[0]` från Atari ST `GRAPHICS.DAT`; ett enstaka
+  upprepat färgindex kan inte längre maskera en felaktig PC/VGA-palett.
 
 # Nexus SAL codec boundary wording (2026-08-08)
 

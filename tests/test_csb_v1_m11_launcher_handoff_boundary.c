@@ -26,6 +26,7 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_amiga_graphics_dat.h"
+#include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -76,6 +77,35 @@ static void expect_true(int condition, const char* message) {
 static void expect_skip(const char* message) {
     fprintf(stderr, "SKIP: %s\n", message);
     ++g_skipped;
+}
+
+/* CSBWin CSBCode.cpp::ReadTablesFromGraphicsFile expands item C232 into
+ * Palette552.  The initial Atari ST boot has no GAMEBLOCK light receipt, so
+ * it must install Palette552[0] exactly; merely checking a repeated 16-colour
+ * slot would let a PC/VGA palette pass unnoticed. */
+static int expect_atari_st_initial_palette(const char *graphics_path) {
+    CSB_V1_CSBWinLayout0232 layout;
+    uint8_t actual[256][3];
+    int color;
+
+    if (!graphics_path || !graphics_path[0] ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(graphics_path, &layout) ||
+        !layout.valid || !M11_Render_CopyIndexedPaletteRgb6(actual)) {
+        return 0;
+    }
+    for (color = 0; color < 256; ++color) {
+        const uint16_t source = layout.viewport_palettes[0][color & 15];
+        const uint8_t expected[3] = {
+            (uint8_t)(((source >> 8) & 7u) * 9u),
+            (uint8_t)(((source >> 4) & 7u) * 9u),
+            (uint8_t)((source & 7u) * 9u)
+        };
+        if ((source & 0xf888u) != 0u ||
+            memcmp(actual[color], expected, sizeof(expected)) != 0) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static void init_menu_without_gallery(M12_StartupMenuState* state,
@@ -2086,12 +2116,10 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST floor/ceiling and wall source pixels reach the FTLCODE aperture");
         expect_true(view.csbState.runtime_v22_cells_painted == 0,
                     "Atari ST TAG0088b2 page bypasses the PC3.4 V2.2 compositor");
-        {
-            uint8_t palette[256][3];
-            expect_true(M11_Render_CopyIndexedPaletteRgb6(palette) &&
-                            !memcmp(palette[0], palette[16], sizeof(palette[0])),
-                        "Atari ST page receives its source 0x232 Palette552 palette");
-        }
+        expect_true(expect_atari_st_initial_palette(
+                        ((const CSB_V1_BootProfile *)view.csbBootProfile)
+                            ->graphics_path),
+                    "Atari ST page receives every source C232 Palette552[0] register");
         expect_true(strcmp(view.lastOutcome,
                            "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED") != 0,
                     "Atari ST source frame does not publish diagnostic chrome");
