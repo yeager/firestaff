@@ -164,16 +164,35 @@
 @@ -20,0 +21,2 @@
 +#include <stdlib.h>
 +#include <string.h>
-@@ -43,0 +46,3 @@
+@@ -43,0 +46,5 @@
 +static bool theron_script_run_hold = false;
 +static unsigned theron_script_run_frame = 0;
++static unsigned theron_script_run_start = 0;
++static unsigned theron_script_run_end = 0;
 +
-@@ -53,0 +59,5 @@
+@@ -53,0 +61,19 @@
 + const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
-+ theron_script_run_hold = script && !strncmp(script, "run@1", 5);
++ theron_script_run_hold = false;
++ theron_script_run_start = 0;
++ theron_script_run_end = 0;
++ if(script && !strncmp(script, "run@", 4))
++ {
++  char *end = NULL;
++  unsigned long start = strtoul(script + 4, &end, 10);
++  unsigned long duration = 0;
++  if(end && *end == ':')
++   duration = strtoul(end + 1, &end, 10);
++  if(end && *end == 0 && duration && start <= UINT_MAX - duration)
++  {
++   theron_script_run_hold = true;
++   theron_script_run_start = (unsigned)start;
++   theron_script_run_end = (unsigned)(start + duration);
++  }
++ }
 + theron_script_run_frame = 0;
-+ if(theron_script_run_hold)
-+  buttons = 0x0020;
-@@ -72,0 +83,2 @@
-+ if(theron_script_run_hold && theron_script_run_frame++ < 1800)
+@@ -72,0 +96,5 @@
++ if(theron_script_run_hold && theron_script_run_frame >= theron_script_run_start &&
++    theron_script_run_frame < theron_script_run_end)
 +  buttons |= 0x0020;
++ if(theron_script_run_hold)
++  theron_script_run_frame++;
