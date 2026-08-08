@@ -41,6 +41,80 @@ static void dm2_v1_sksave_owner_add_poison(void *ctx, int hero_index,
             owner->heroes[hero_index].poison + amount);
 }
 
+typedef struct {
+    DM2_V1_SksaveGameLoadOwner *owner;
+    int invalid;
+} DM2_V1_SksaveOwnerTimerRebuildContext;
+
+static void dm2_v1_sksave_owner_set_hero_timeridx(
+    void *ctx, int hero_index, int16_t timer_index)
+{
+    DM2_V1_SksaveOwnerTimerRebuildContext *context =
+        (DM2_V1_SksaveOwnerTimerRebuildContext *)ctx;
+    if (!context || !context->owner || hero_index < 0 ||
+        hero_index >= (int)context->owner->state.champion_count) {
+        if (context) context->invalid = 1;
+        return;
+    }
+    context->owner->heroes[hero_index].timeridx = timer_index;
+}
+
+static void dm2_v1_sksave_owner_set_record_timer_backlink(
+    void *ctx, uint16_t link, int16_t timer_index)
+{
+    DM2_V1_SksaveOwnerTimerRebuildContext *context =
+        (DM2_V1_SksaveOwnerTimerRebuildContext *)ctx;
+    const int pool = dm2_v1_record_handle_pool((int16_t)link);
+    uint8_t *record;
+
+    if (!context || !context->owner || pool < 0 ||
+        pool >= DM2_V1_RECORD_POOL_COUNT ||
+        context->owner->record_pools.pools[pool].record_size < 8) {
+        if (context) context->invalid = 1;
+        return;
+    }
+    record = dm2_v1_record_pool_address_mut(&context->owner->record_pools,
+                                             (int16_t)link);
+    if (!record) {
+        context->invalid = 1;
+        return;
+    }
+    /* SKProject c_savegame.cpp::DM2_3a15_020f writes timer index at +6
+     * for type 0x1d/0x1e records. */
+    record[6] = (uint8_t)((uint16_t)timer_index & 0xffu);
+    record[7] = (uint8_t)((uint16_t)timer_index >> 8);
+}
+
+static int dm2_v1_sksave_owner_rebuild_timer_backlinks(
+    DM2_V1_SksaveGameLoadOwner *owner)
+{
+    DM2_V1_SksaveOwnerTimerRebuildContext context;
+    DM2_V1_TimerRebuildCallbacks callbacks;
+    DM2_V1_TimerRebuildReceipt receipt;
+
+    if (!owner || !owner->state.valid || !owner->record_pools.valid ||
+        owner->state.champion_count > DM2_MAX_HEROES ||
+        owner->state.timer_count > DM2_V1_SAVE_TIMER_MAX) return 0;
+    memset(&context, 0, sizeof(context));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&receipt, 0, sizeof(receipt));
+    context.owner = owner;
+    callbacks.ctx = &context;
+    callbacks.set_hero_timeridx = dm2_v1_sksave_owner_set_hero_timeridx;
+    callbacks.set_record_timer_backlink =
+        dm2_v1_sksave_owner_set_record_timer_backlink;
+    if (dm2_v1_post_load_timer_rebuild(
+            (const uint8_t *)owner->timers, owner->state.timer_count,
+            owner->state.champion_count, &callbacks, &receipt) != 0 ||
+        !receipt.valid || context.invalid) return 0;
+    owner->receipt.hero_timeridx_cleared =
+        (uint16_t)receipt.hero_timeridx_cleared;
+    owner->receipt.hero_timeridx_set = (uint16_t)receipt.hero_timeridx_set;
+    owner->receipt.ornate_timer_backlinks_set =
+        (uint16_t)receipt.ornate_backlinks_set;
+    return 1;
+}
+
 static int dm2_v1_sksave_owner_init_recycler_context(
     DM2_V1_SksaveGameLoadOwner *owner)
 {
@@ -203,6 +277,7 @@ int dm2_v1_sksave_game_load_owner_init(
             &candidate.receipt) ||
         !dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
             &candidate) ||
+        !dm2_v1_sksave_owner_rebuild_timer_backlinks(&candidate) ||
         !dm2_v1_sksave_owner_init_recycler_context(&candidate)) {
         dm2_v1_sksave_game_load_owner_free(&candidate);
         return 0;

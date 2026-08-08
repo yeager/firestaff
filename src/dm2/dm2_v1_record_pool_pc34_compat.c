@@ -1681,24 +1681,27 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
     dm2_v1_save_timer_sort(timers, state_receipt->timer_count, timer_indices);
     dm2_v1_save_timer_rearrange(timers, DM2_V1_SAVE_TIMER_MAX,
                                 &timer_queue_count, &timer_free_head);
-    /* sksvgame.cpp::DM2_3a15_020f runs after the restored timer list owns
-     * c_hero and c_record. Rebuild those links in this same temporary
-     * transaction; any unavailable original record aborts the preflight. */
-    rebuild_context.heroes = heroes;
-    rebuild_context.hero_count = state_receipt->champion_count;
-    rebuild_context.pools = &pools;
-    rebuild_callbacks.ctx = &rebuild_context;
-    rebuild_callbacks.set_hero_timeridx =
-        dm2_v1_sksave_rebuild_set_hero_timeridx;
-    rebuild_callbacks.set_record_timer_backlink =
-        dm2_v1_sksave_rebuild_set_record_timer_backlink;
-    if (dm2_v1_post_load_timer_rebuild(
-            (const uint8_t *)timers, state_receipt->timer_count,
-            state_receipt->champion_count, &rebuild_callbacks,
-            &rebuild_receipt) != 0 || !rebuild_receipt.valid ||
-        rebuild_context.invalid) {
-        failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_TIMER_REBUILD;
-        goto done;
+    /* c_savegame.cpp:1525-1528 orders the actual 3a15_020f mutation after
+     * DM2_PROCEED_GLOBAL_EFFECT_TIMERS.  A preflight has no such retained
+     * owner, so it may validate the final links here; the real private owner
+     * defers its mutation to dm2_v1_sksave_game_load_owner_init(). */
+    if (retain_owner == NULL) {
+        rebuild_context.heroes = heroes;
+        rebuild_context.hero_count = state_receipt->champion_count;
+        rebuild_context.pools = &pools;
+        rebuild_callbacks.ctx = &rebuild_context;
+        rebuild_callbacks.set_hero_timeridx =
+            dm2_v1_sksave_rebuild_set_hero_timeridx;
+        rebuild_callbacks.set_record_timer_backlink =
+            dm2_v1_sksave_rebuild_set_record_timer_backlink;
+        if (dm2_v1_post_load_timer_rebuild(
+                (const uint8_t *)timers, state_receipt->timer_count,
+                state_receipt->champion_count, &rebuild_callbacks,
+                &rebuild_receipt) != 0 || !rebuild_receipt.valid ||
+            rebuild_context.invalid) {
+            failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_TIMER_REBUILD;
+            goto done;
+        }
     }
     timer_queue_hash = dm2_v1_sksave_hash_bytes(
         timer_queue_hash, (const uint8_t *)timer_indices,
