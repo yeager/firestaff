@@ -107,6 +107,8 @@ int main(void)
     const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
     const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
     const char *csbwin_graphics = getenv("FIRESTAFF_CSBWIN_GRAPHICS");
+    const char *quicksave_path = getenv("FIRESTAFF_CSB_TEST_QUICKSAVE_PATH");
+    const char *configured_quicksave_path = getenv("FIRESTAFF_QUICKSAVE_PATH");
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     unsigned char framebuffer[320 * 200];
@@ -431,6 +433,47 @@ int main(void)
     }
     CHECK(c013_nonblack > 0,
           "live Prison framebuffer consumes real C013 movement pixels");
+    if (quicksave_path && quicksave_path[0]) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        uint32_t saved_game_time;
+        int save_path_bound;
+        FILE *save_file;
+
+        /* This is intentionally opt-in: a real-media probe must never
+         * overwrite the player's normal quicksave.  The caller supplies a
+         * disposable path through M11's normal F5/F9 environment override.
+         * ReDMCSB LOADSAVE.C F0433 writes the runtime state; F0435 must
+         * restore that same clock after the Prison handoff. */
+        save_path_bound = configured_quicksave_path &&
+            strcmp(configured_quicksave_path, quicksave_path) == 0;
+        CHECK(save_path_bound,
+              "real-data save probe uses its explicit disposable save path");
+        if (save_path_bound) {
+            saved_game_time = profile ? profile->runtime.game_time : 0u;
+            CHECK(profile && M11_GameView_QuickSave(&view),
+                  "live Prison runtime writes a native CSB quicksave");
+            save_file = fopen(quicksave_path, "rb");
+            CHECK(save_file != NULL,
+                  "live Prison quicksave materializes at its explicit path");
+            if (save_file) {
+                fclose(save_file);
+            }
+            for (tick = 0; tick < 5; ++tick) {
+                (void)M11_GameView_AdvanceIdleTick(&view);
+            }
+            CHECK(profile && profile->runtime.game_time >= saved_game_time,
+                  "live Prison runtime remains clocked after saving");
+            CHECK(M11_GameView_QuickLoad(&view),
+                  "live Prison runtime resumes its native CSB quicksave");
+            profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+            CHECK(profile && profile->runtime.game_time == saved_game_time &&
+                      view.loadGameTick == saved_game_time &&
+                      view.lastSaveTick == saved_game_time,
+                  "F0435 resume restores the Prison quicksave clock into M11");
+            remove(quicksave_path);
+        }
+    }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: csb_v1_m11_prison_runtime_hud_pc34");

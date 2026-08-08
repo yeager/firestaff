@@ -6,6 +6,11 @@
   rather than a writer relaxation.
 - ✅ Verified a real PC34 session writes, reloads and rejects a corrupted
   native save; the real Prison handoff/HUD regression also passes.
+- ✅ Extended the real-media Prison regression through the normal M11 F5/F9
+  route when given an explicit disposable path: PC34 title → Prison → live
+  C013 HUD now writes and restores its own F0433/F0435 runtime clock without
+  a synthetic save fixture. The probe removes only that caller-supplied
+  disposable file and never touches a player's default quicksave.
 
 # DM2 File_header champion test-link repair (2026-08-08)
 
