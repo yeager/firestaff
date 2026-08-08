@@ -1001,15 +1001,15 @@ VDP1 is the Saturn's second video display processor, capable of direct framebuff
 | `LOGOBG.DG2` | 71 KB | DGT2 PP indexed surface with BGR555 CLUT | ✅ Retail pixels/CLUT decoded; VDP2 layer ownership remains capture-gated |
 | `FONT256.S2D` | 24 KB | Saturn SCR | ✅ Header ✅ Glyph access |
 | `FACE.BIN` | 44 KB | 20 56×56 PRS3 portraits with source palettes | ✅ Retail records/pixels decoded; VDP1 destination remains capture-gated |
-| `STONE.BIN` | 4 KB | Wall/stone texture base | ❌ Not analyzed |
+| `STONE.BIN` | 4 KB | Eight image-local `pp` records | ✅ Real palette/pixel receipts; global CLUT/render route gated |
 | `NBG3.BIN` | 7 KB | Candidate VDP2 background asset | ⚠️ Receipt only; owner/capture missing |
-| `POTEFT.BIN` | 3 KB | Potion effect graphics | ❌ Not analyzed |
-| `STABG.BIN` | 52 KB | Status area background | ❌ Not analyzed |
+| `POTEFT.BIN` | 3 KB | RES*/FONT012 effect glyphs | ✅ Real header/glyph receipts; consumer gated |
+| `STABG.BIN` | 52 KB | STMP tilemap/background | ✅ Real map/tile receipts; VDP2 layer gated |
 | `SWTCHR.BIN` | 38 KB | Candidate switch/lever graphics | ⚠️ Receipt only; owner/capture missing |
 | `ITEM.IBS` | 98 KB | Item icon/bitmap set | ✅ Retail source/record receipts; Saturn consumer gated |
 | `TM.BIN` | 156 KB | Candidate texture/tilemap data | ⚠️ Receipt only; owner/capture missing |
 | `MENU.BPK` | 87 KB | Menu graphics (packed PRS3) | ✅ 162 real surfaces decoded; Saturn consumer gated |
-| `DEATH.BIN` | 4 KB | Death sequence data | ❌ Not analyzed |
+| `DEATH.BIN` | 4 KB | Raw retail resource receipt | ⚠️ Byte-bound; sequence consumer not identified |
 
 ### 8.4 Graphics Format Variants
 
@@ -1126,6 +1126,7 @@ typedef struct {
 | Champion roster | **High** | 8 entries confirmed in source |
 | Champion struct | **High** | Full struct defined |
 | FACE.BIN | **High** | Bounded real-data portrait records/pixels; VDP1 placement unbound |
+| STONE.BIN | **High** | Eight real image-local `pp` records; global palette ownership intentionally not inferred |
 | DMDF header | **High** | 0x444MDF magic confirmed |
 | DMDF vertex stride | **Medium** | Bug: 10B loaded vs 16B struct |
 | DMDF face format | **High** | Triangle assumption plausible |
