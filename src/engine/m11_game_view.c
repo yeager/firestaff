@@ -25897,6 +25897,24 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
 
     previousPartyCount = state->world.party.championCount;
     F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
+    /* Atari ST CSB owns this path too.  ReDMCSB REVIVE.C F0280 reads C026
+     * for the selected portrait and PANEL.C F0346/F0347 then blits C040
+     * over C017 before COMMAND.C routes C160/C161/C162.  The ST boot starts
+     * with a decoded-only GRAPHICS.DAT loader, so these records must enter
+     * the M11 cache through the verified Atari decoder; never borrow their
+     * same-numbered PC34 graphics. */
+    if (m11_source_is_csb(state)) {
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (csb_profile &&
+            (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+            (!m11_csb_install_runtime_source_graphic(state, 17u) ||
+             !m11_csb_install_runtime_source_graphic(state, 26u) ||
+             !m11_csb_install_runtime_source_graphic(state, 40u))) {
+            return 0;
+        }
+    }
     portraits = M11_AssetLoader_Load(&state->assetLoader, 26u);
     c040Panel = M11_AssetLoader_Load(&state->assetLoader, 40u);
     memset(&click, 0, sizeof(click));
