@@ -384,6 +384,19 @@ int main(void)
           "F31 Prison transition draws a source-owned C002/C003 door frame");
     CHECK(!view.csbState.startup_entrance_active && view.csbState.level_loaded,
           "F31 Prison door handoff reaches the live CSB runtime");
+    {
+        const CSB_V1_RuntimeProfile *runtime =
+            &((const CSB_V1_BootProfile *)view.csbBootProfile)->runtime;
+        CHECK(runtime->current_level == 4 && runtime->party_x == 22 &&
+                  runtime->party_y == 18 && runtime->party_dir == 2 &&
+                  runtime->game_time ==
+                      (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 82u : 88u) &&
+                  runtime->timeline_queue.eventCount == 23 &&
+                  runtime->timeline_queue.firstUnusedIndex == 23 &&
+                  runtime->timeline_queue.maxEvents == 436 &&
+                  runtime->active_group_state_count == 8u,
+              "F31 Prison handoff retains the original MINI.DAT runtime graph");
+    }
     memset(&terminal, 0, sizeof(terminal));
     CHECK(csb_v1_startup_session_terminal_receipt_pc34(
               (CSB_V1_StartupRuntimeAssetSession_PC34 *)

@@ -8104,6 +8104,8 @@
   MINI-dungeon, sparad karta/position, championer, eventheap, timeline och
   alla åtta C04-ägda active groups. Musiken läser därefter rätt F0743-byte
   för den verkliga återupptagna positionen, inte en gammal karta-0-modell.
+- Den verkliga M11-regressionen kontrollerar detta efter Prison-handoffen i
+  den liveägda runtimeprofilen för både English och Japanese.
 # 2026-08-08 Theron inferred spawn-stat boundary
 
 - ✅ Removed the old host-seeded HP/attack/defense arithmetic from the
