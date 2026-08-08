@@ -1,7 +1,11 @@
 # Nexus V1 AI System Audit
 
 ## Summary
-Nexus V1 implements a minimal stub creature AI - 3-state patrol/chase/attack in nexus_v1_creatures_tick(). DM1 V1 has a fully event-driven, sensor-driven, group-coordinated AI.
+The historical Nexus creature study contains a minimal DM1-shaped
+patrol/chase/attack model, but it is not a source-authenticated Saturn AI.
+Retail Nexus MNS/creature records are retained as provenance; production
+action/AI dispatch remains fail-closed until the SLEV/DM.BIN owner and runtime
+writeback are captured. DM1 comparisons below are lineage references only.
 
 ## 1. Nexus V1 AI Architecture
 File: src/nexus/nexus_v1_creatures.c
@@ -40,4 +44,6 @@ Giggler steal: F0193 steal attempt, flee on success
 No changes to creature AI. nexus_v2_*.c: atmosphere, lighting, upscaler, render pipeline.
 
 ## 5. Conclusion
-Nexus V1 AI is a functional stub. Priority for parity: sensor ranges, LOS, group formation, ranged attacks.
+Do not describe the study model as playable Nexus parity. The next evidence
+must bind creature state reads, action dispatch, timing, damage/writeback,
+SLEV ownership and SFX/HUD consumers from an authentic Saturn trace.

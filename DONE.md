@@ -10,6 +10,21 @@
 - ✅ VDP1/VDP2-materialkonsument, FONT256-kodmappning, SLEV-event-ABI,
   SAL-codec och SCSP-uppspelning är fortfarande uttryckligen capture-gated.
 
+# Nexus DMWeb data-file stale-claim repair (2026-08-08)
+
+- ✅ Reconciled the historical H2321 document with the DMWeb-bound retail
+  receipts: DGN now states the 64×64 Structure1B block-container boundary,
+  geometry is described as bounded Structure1B/2/3 source material, and
+  SMAP/SAL/MAP/FACE/MNS/SLEV statuses no longer claim absent parsers where
+  current bounded receipts exist.
+- ✅ Marked the shared item encyclopedia, old Shift-JIS `"?"` route, host
+  glyph blit, creature AI study, and audio text as fixtures or fail-closed
+  boundaries rather than Nexus retail behavior.
+- ✅ Kept the actual remaining gaps explicit: Saturn FONT256 page/tilemap/
+  VDP2 ownership, VDP1 mesh/material presentation, SLEV event dispatch,
+  SAL/SCSP playback, and CDDA selector ownership still require authentic
+  runtime evidence.
+
 # Nexus MNS TEXT direct-colour preservation (2026-08-08)
 
 - ✅ MNS `TEXT`-descriptors bevarar nu varje källpixel som exakt BGR555

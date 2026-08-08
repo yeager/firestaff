@@ -5,8 +5,9 @@
 > `SDDRVS.TSK` is verified at 26,610 bytes and currently classified as a
 > Saturn sound driver task. Treat any condition/action opcode examples in older
 > text as hypotheses, not reversed facts. Nexus trigger ownership remains
-> unresolved; `SLEV*.BIN` files are candidate per-level event data but are not
-> parsed by Firestaff.
+> unresolved; `SLEV*.BIN` files are candidate per-level event data. Firestaff
+> profiles their authenticated source/header/task boundaries, but does not
+> admit opcode or event semantics.
 
 ## Source Files
 - `src/nexus/nexus_v1_engine.c` — engine init, level load, tick (Firestaff)

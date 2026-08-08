@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus DMWeb data-file audit (2026-08-08): the historical H2321 notes
+  are now reconciled with the verified retail corpus: DGN is the 64×64
+  Structure1B block-container path, SMAP/SAL/MAP/FACE/MNS/SLEV have bounded
+  source receipts, and shared item/HUD/AI/audio helpers are explicitly
+  fixture-only or fail-closed. Remaining work is positive evidence in the
+  requested order: authentic startup/menu animation capture, FONT256
+  page/tilemap/VDP2 text ownership, then VDP1/VDP2 HUD/viewport composition
+  and SLEV/SAL/SDDRVS dispatch/playback. Do not resolve these with generated
+  pixels, guessed selectors, DM1-derived item/loot tables, or host PCM.
+
 - 🔧 DM2:s återstående byte-tillstånd får endast aktiveras genom den atomära,
   originalägda GAME_LOAD-kedjan. Produktionsgrinden verifierar nu också att
   den historiska word-square-fixturen kompileras exklusivt i sitt enskilda

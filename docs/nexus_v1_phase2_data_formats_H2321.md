@@ -27,7 +27,12 @@
 
 This document source-locks every data file format used by Dungeon Master Nexus (Sega Saturn), with byte layout, field definitions, and every known variant. Where format evidence is absent, the gap is explicitly noted with reasoning and a `TODO`.
 
-Format-to-Firestaff C structure mappings are provided for each format. "Implemented" means there is working C code; "stub" means an API exists but the underlying format is not decoded; "unknown" means no implementation or format evidence exists.
+Format-to-Firestaff C structure mappings are provided for each format. This
+file contains historical phase-2 notes, so current status must distinguish a
+retail source receipt from Saturn consumer admission. A bounded parser or
+corpus receipt is not automatically a renderer, event dispatcher, audio
+codec, or runtime owner. Historical `STUB`/`UNKNOWN` labels below must not be
+used to justify generated retail data or host fallbacks.
 
 ReDMCSB (WIP20210206) covers DM1/CSB/DM2 only — **no Saturn/Nexus code exists in ReDMCSB**. All Nexus format claims are best-effort reverse engineering from disc extraction, binary inspection, and game-content analysis.
 
@@ -43,7 +48,7 @@ ReDMCSB (WIP20210206) covers DM1/CSB/DM2 only — **no Saturn/Nexus code exists 
 | 4 | Text | `FONT256.S2D`, `*.TXT` | ✅ Partial |
 | 5 | Champion | `CHAMPIONS.DAT`, `FACE.BIN` | ✅ Partial |
 | 6 | Monster/Creature | `*.MNS` (DMDF) | ✅ Partial |
-| 7 | Sound | `SNDLEV*.SAL`, `SNDLEV*.MAP` | ❌ STUB |
+| 7 | Sound | `SNDLEV*.SAL`, `SNDLEV*.MAP` | ✅ bounded SAL/MAP receipts · playback capture-gated |
 | 8 | Graphics/Model | `*.MNS`, `*.CG`, `*.DG2` | ✅ Partial |
 
 ---
@@ -99,7 +104,10 @@ longer valid for real Nexus DGN files.
 13 = stairs down        (NEXUS_SQUARE_STAIRS_DOWN)
 ```
 
-Reading: `rb16(data + (y * 32 + x) * 2) & 0x1F` — lower 5 bits only.
+Reading: the retail loader derives the Structure1B cell address from the
+DMWeb section boundary and decodes the 8-byte cell with the bounded
+`nexus_v1_decode_structure1b_*` helpers; the old raw 32×32 `rb16` expression
+is fixture/history only.
 
 **ReDMCSB reference:** DUNGEON.C F0023 — grid square type enumeration matches exactly.
 
@@ -107,11 +115,11 @@ Reading: `rb16(data + (y * 32 + x) * 2) & 0x1F` — lower 5 bits only.
 
 Location: **offset 2048** through end of file.
 
-**Status: FORMAT UNKNOWN.** No structural evidence has been extracted.
+**Status: bounded source receipt.** The verified corpus has authenticated
+Structure1B/2/3 and face/material payload boundaries. Their Saturn mesh,
+transform, texture, palette and VDP1 consumers remain capture-gated.
 
-Hypothesis: Pre-computed polygon data per grid position — wall faces, floor meshes, ceiling meshes. DM1 uses 2D raycasting (no geometry). Nexus bakes all 3D polygon data into the DGN file.
-
-**Approach for reverse-engineering:**
+**Historical approach (superseded by the bounded receipts):**
 1. Dump bytes at offset 2048 through 2048+8192 of LEV00.DGN
 2. Look for repeating 12-byte patterns (DMDF int16×6 = 12 bytes/vertex)
 3. Check for magic bytes at geometry start (DMDF uses `0x444D4446`)
@@ -122,7 +130,10 @@ Hypothesis: Pre-computed polygon data per grid position — wall faces, floor me
 
 ### 1.3 DGN Variants
 
-No per-level structural variants detected. All 16 files use the same 32×32 grid + geometry blob structure. File size variation (147–321 KB) is solely attributable to geometry complexity.
+No per-level structural variants detected. All 16 files use the same DMWeb
+2048-byte block-container layout with a 64×64 Structure1B grid and bounded
+Structure1B/2/3 payloads. File size variation (147–321 KB) includes the
+source payloads; it does not authorize a geometry/material consumer.
 
 ### 1.4 Endianness
 
@@ -133,19 +144,20 @@ Big-endian throughout (SH2 Saturn processor). All multi-byte reads use `rb16()` 
 ```c
 /* Source: include/nexus_v1_dungeon.h */
 typedef struct {
-    int      width, height;              /* = 32, fixed */
-    uint8_t  squares[32][32];             /* lower 5 bits = square type */
-    int      thing_count;                 /* objects in this level */
-    int      creature_count;              /* creatures in this level */
-    int      has_3d_geometry;             /* = 1 for Nexus */
-    int      geometry_offset;             /* = 2048 */
-    int      geometry_size;               /* = size - 2048 */
+    int      width, height;              /* = 64, fixed Structure1B grid */
+    uint8_t  squares[64][64];            /* decoded Structure1B cell type */
+    int      thing_count;                /* not a retail placement claim */
+    int      creature_count;             /* not a retail placement claim */
+    int      has_3d_geometry;             /* source payload receipt only */
+    int      geometry_offset;             /* block/section-derived */
+    int      geometry_size;               /* bounded source payload */
 } Nexus_V1_Level;
 
-/* Grid parsing: src/nexus/nexus_v1_dungeon.c:nexus_v1_level_load() */
-for (gy = 0; gy < 32; gy++)
-    for (gx = 0; gx < 32; gx++)
-        level->squares[gy][gx] = rb16(data + (gy*32+gx)*2) & 0x1F;
+/* Retail path: src/nexus/nexus_v1_dungeon.c:nexus_v1_level_load() */
+/* DMWeb Structure1B: 64x64 cells, 8 bytes per cell. */
+for (gy = 0; gy < 64; gy++)
+    for (gx = 0; gx < 64; gx++)
+        level->squares[gy][gx] = dgn_structure1b_cell_type(data, gx, gy);
 ```
 
 ### 1.6 Status
@@ -155,7 +167,7 @@ for (gy = 0; gy < 32; gy++)
 | Grid parsing | ✅ Implemented | `nexus_v1_dungeon.c:nexus_v1_level_load()` |
 | Square type enum | ✅ Implemented | `include/nexus_v1_world.h` |
 | 3D geometry blob parser | ✅ Bounded Structure1B/2/3 source receipts | Saturn VDP1/material consumer capture-gated |
-| Thing/object list in DGN | ❌ **NOT IMPLEMENTED** | May be embedded or separate |
+| Thing/object list in DGN | ❌ retail placement consumer not admitted | Source references retained; Saturn owner/writeback capture-gated |
 | Per-level size validation | ✅ Implemented | Size check in load function |
 
 ---
@@ -279,11 +291,17 @@ consumer is not yet bound. Firestaff retains bounded DGN geometry and source
 provenance receipts; it does not promote the in-memory object API as a retail
 placement implementation.
 
-**ReDMCSB reference:** DUNGEON.C F0103 — object placement and collision (DM1 format, not Nexus). Nexus likely uses a similar but extended format.
+**ReDMCSB reference:** DUNGEON.C F0103 is DM1 context only and does not prove
+Nexus placement semantics. No Nexus object owner is promoted from that
+analogy.
 
 ### 3.4 Item Encyclopedia (UI Layer)
 
-The UI layer defines a shared item encyclopedia in `src/ui/firestaff_item_encyclopedia.c`. This is **not** a Nexus-specific data file — it's a Firestaff UI structure. Representative items include:
+The UI layer defines a shared item encyclopedia in
+`src/ui/firestaff_item_encyclopedia.c`. This is **not** Nexus retail data and
+must not be used as item-ID, loot, or HUD evidence. It is a host/UI fixture;
+the production Nexus path retains ITEM.IBS/DGN references until Saturn action
+and presentation consumers are captured. Representative labels include:
 
 | Category | Items |
 |----------|-------|
@@ -331,7 +349,7 @@ int     nexus_v1_object_clear_flag(Nexus_V1_World *world, int id, uint32_t flag)
 | Object type enum | ✅ Implemented | `include/nexus_v1_world.h` |
 | Object struct | ✅ Implemented | `include/nexus_v1_world.h` |
 | Object database API | ✅ Implemented | `nexus_v1_world.c` |
-| Object placement from DGN | ❌ **NOT IMPLEMENTED** | Thing list unknown |
+| Object placement from DGN | ❌ retail placement consumer not admitted | Source references retained; Saturn owner/writeback capture-gated |
 | Item encyclopedia UI | ✅ Implemented | `firestaff_item_encyclopedia.c` |
 | Champion inventory (30 slots) | ✅ Implemented | `nexus_v1_champions.h` |
 
@@ -384,7 +402,8 @@ void nexus_v1_font_free(Nexus_V1_Font *font);
 const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int idx);
 ```
 
-Glyph blitting to framebuffer: **NOT IMPLEMENTED.**
+Glyph blitting to a host framebuffer is a fixture-only diagnostic route; no
+Saturn FONT256 page/tilemap/attribute/VDP2 destination has been admitted.
 
 ### 4.2 Text Encoding — Shift-JIS
 
@@ -398,10 +417,12 @@ Nexus uses **Shift-JIS** for all Japanese text. No UTF-8 or Latin-1.
 |-----------|------|------------|--------|
 | `0x20–0x7E` | ASCII | Pass-through | ✅ Implemented |
 | `0xA1–0xDF` | Hankaku katakana | → U+FF61–U+FF9F | ✅ Implemented |
-| `0x81–0x9F` | Daiji (2-byte lead) | → "?" | ❌ Not implemented |
-| `0xE0–0xEF` | Daiji (2-byte lead) | → "?" | ❌ Not implemented |
+| `0x81–0x9F` | JIS lead byte | diagnostic decoder only | Saturn text consumer unbound |
+| `0xE0–0xEF` | JIS lead byte | diagnostic decoder only | Saturn text consumer unbound |
 
-**Double-byte JIS X 0208 kanji:** Not implemented — requires full lookup table (~6000 characters). Currently replaced with "?".
+**Double-byte JIS X 0208 kanji:** No retail Saturn glyph mapping has been
+authenticated. The old `"?"` replacement belongs to the excluded diagnostic
+host route and is not a production text fallback.
 
 #### Conversion Function
 
@@ -411,7 +432,8 @@ int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
     char *utf8_out, int utf8_max);
 ```
 
-Handles ASCII and Hankaku katakana. Double-byte characters replaced with "?".
+Handles ASCII and Hankaku katakana in the diagnostic route. Double-byte
+characters remain unbound because the Saturn glyph consumer is not captured.
 
 ### 4.3 Text Files
 
@@ -441,7 +463,7 @@ or runtime rule is admitted because the Saturn consumer is not source-bound.
 | FONT256.S2D | Saturn SCR font; 256 nominal page entries, 242 authenticated CG tiles | ✅ SCR/CG source receipts ❌ Saturn glyph mapping/VDP2 blit |
 | Shift-JIS ASCII | Single-byte ASCII (0x20-0x7E) | ✅ |
 | Shift-JIS Hankaku Katakana | Half-width katakana (0xA1-0xDF) | ✅ |
-| Shift-JIS Daiji/Kanji | Double-byte JIS X 0208 | ❌ "?" replacement |
+| Shift-JIS Daiji/Kanji | Double-byte JIS X 0208 | Saturn glyph mapping unbound; no production `"?"` fallback |
 | `*.TXT` lore files | Plain text with Shift-JIS | ❌ Not loaded |
 | `SLEV*.BIN` scripts | SDDRVS.TSK binary scripts | ✅ bounded source/header receipt ❌ event semantics |
 
@@ -954,10 +976,10 @@ fail-closed until the Saturn SCSP/SDDRVS consumer is captured.
 | Item | Status |
 |------|--------|
 | Sound engine API | ✅ Fail-closed production boundary |
-| SAL format decode | ❌ Codec/rate/loop semantics unproven |
+| SAL format decode | ✅ bounded DataID-0 directory/metadata; codec/rate/loop semantics unproven |
 | MAP event index parse | ✅ Bounded byte-level receipt; event meaning unproven |
-| CD audio playback | ❌ **NOT IMPLEMENTED** — stub only |
-| SDL_mixer integration | ❌ **NOT IMPLEMENTED** |
+| CD audio playback | ❌ Saturn CDDA owner/track handoff not captured |
+| SDL_mixer integration | ❌ no source-faithful host playback route admitted |
 | SDDRVS.TSK analysis | ✅ Static/runtime corridor receipts; playback ABI unproven |
 
 ---
@@ -1115,14 +1137,14 @@ typedef struct {
 
 | Format | Confidence | Evidence |
 |--------|-----------|----------|
-| LEV\*.DGN grid | **High** | 32×32 confirmed by binary parsing |
+| LEV\*.DGN grid | **High** | DMWeb 64×64 Structure1B confirmed by retail parsing |
 | LEV\*.DGN 3D geometry | **Medium** | Structure1B/2/3 source receipts; Saturn VDP1 consumer unbound |
-| SMAP\*.BIN | **None** | No binary inspection |
+| SMAP\*.BIN | **High for bounded source receipt** | LVMP/tile/palette source regions parsed; VDP2 placement unbound |
 | NEXUS_OBJECT_\* types | **High** | Enum defined and implemented |
 | FONT256.S2D header | **High** | "SEGA SATURN SCR" magic confirmed |
 | FONT256.S2D glyph data | **Medium** | Structure plausible, not byte-verified |
 | Shift-JIS ASCII/Katakana | **High** | Source code confirmed |
-| Shift-JIS Kanji | **Low** | Replaced with "?", no lookup table |
+| Shift-JIS Kanji | **Low** | Saturn FONT256 mapping and VDP2 text consumer unbound |
 | Champion roster | **High** | 8 entries confirmed in source |
 | Champion struct | **High** | Full struct defined |
 | FACE.BIN | **High** | Bounded real-data portrait records/pixels; VDP1 placement unbound |
@@ -1190,9 +1212,9 @@ Text (FONT256.S2D + Shift-JIS):
 [✓] Glyph access API
 [✓] Shift-JIS → UTF-8 ASCII/Katakana
 [✗] Shift-JIS → UTF-8 Kanji (lookup table)
-[✗] Glyph blit to framebuffer
+[✗] Saturn FONT256 page/tilemap/VDP2 text consumer
 [✗] *.TXT lore file loading
-[✗] SLEV*.BIN script parsing
+[~] SLEV*.BIN bounded source/header profiling; event dispatch remains capture-gated
 
 Champion (CHAMPIONS.DAT, FACE.BIN):
 [✓] Champion roster (8 of 24)
@@ -1200,28 +1222,28 @@ Champion (CHAMPIONS.DAT, FACE.BIN):
 [✓] 4-class system (Fighter/Wizard/Priest/Ninja)
 [✓] Party system (4 active)
 [✗] Full 24-champion roster
-[✗] FACE.BIN portrait parsing
+[✓] FACE.BIN bounded real-data source parsing
 [✗] Portrait rendering
 [✗] Stat advancement (XP-based)
 
 Monster (*.MNS DMDF):
 [✓] DMDF header (0x444D4446 magic)
-[~] DMDF vertex loading (buggy stride)
+[~] DMDF vertex/face source receipts; mesh consumer capture-gated
 [✓] DMDF face index loading
 [✓] Nexus_CreatureType definitions
 [✓] Creature AI state machine
-[✗] DMDF vertex stride fix (10B vs 16B)
+[✗] Saturn MNS vertex/face/texture consumer binding
 [✗] VDP1 BITMAP texture format
 [✗] DMDF texture decompression
 
 Sound (SNDLEV*.SAL, SNDLEV*.MAP):
-[✓] Sound engine API (stub)
+[✓] Sound engine API (fail-closed production boundary)
 [✓] Nexus_SoundEvent enum
-[✓] CD audio track mapping
-[✗] SAL format decode
-[✗] MAP event index parse
+[~] CD track presence; level selector/owner unbound
+[~] SAL DataID-0 directory/metadata receipt; codec/rate/loop unproven
+[~] MAP bounded index receipt; event selector unproven
 [✗] SDL_mixer integration
-[✗] SDDRVS.TSK analysis
+[~] SDDRVS.TSK static/runtime corridor receipts; playback ABI unproven
 
 Graphics/Model (DMDF + VDP1 + other):
 [✓] DMDF parsing
