@@ -387,6 +387,15 @@
   antal aktuatorer, exakta privata följdposter och att ingen session publiceras.
   Målens effekter förblir spärrade tills de har komplett tile-/recordägarskap.
 
+# DM2 privat FINITE_RELAY vid GAME_LOAD-gränsen (2026-08-09)
+
+- ✅ Den deterministiska källvägen i `FINITE_RELAY` är nu privat ägd: verkliga
+  Data-värden 1–400 minskas och köar den riktiga omedelbara 0x04-posten.
+  Hela DB3-kedjan och timerkön kontrolleras före commit.
+- ✅ Realdatatestet använder en faktisk File_header-kedja. Värden över 400
+  aktiverar originalets RAND16-väg och avvisas därför utan mutation tills
+  random state och full session har samma ägare.
+
 # DM2 PushButtonSwitch direkt DB0-atom (2026-08-08)
 
 - ✅ `PUSH_BUTTON_SWITCH` följer nu `skevent.cpp:2010–2028`: den använder

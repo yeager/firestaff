@@ -185,6 +185,8 @@
   `RELAY_1` och `RELAY_3` behåller nu på samma sätt sina verkliga, fördröjda
   0x04-poster inklusive originalets once/revert-grind. En köad post körs
   dock inte förrän dess målkonsument ingår i den gemensamma sessionägaren.
+  `FINITE_RELAY` kör nu sin deterministiska Data 1–400-väg privat. Originalets
+  RAND16-gren över 400 är fortsatt spärrad tills samma ägare har random state.
   DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.

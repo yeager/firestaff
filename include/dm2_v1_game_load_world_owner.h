@@ -223,6 +223,10 @@ typedef struct {
     int relay_actuators_seen;
     int relay_messages_queued;
     uint32_t private_relay_hash;
+    int finite_relay_actuators_seen;
+    int finite_relay_records_mutated;
+    int finite_relay_messages_queued;
+    uint32_t private_finite_relay_hash;
     uint8_t tile_state_before;
     uint8_t tile_state_after;
     uint32_t private_text_visibility_hash;
