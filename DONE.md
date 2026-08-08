@@ -1,3 +1,15 @@
+# DM2 GAME_LOAD status ownership repair (2026-08-08)
+
+- ✅ Corrected the DM2 complete-support receipt so an observational parse of
+  an original SKSAVE can no longer be reported as a playable GAME_LOAD.
+  The receipt now requires a single live owner for the restored map, records,
+  possessions, heroes, timers and actuator generator. Until that transaction
+  exists, status is explicitly `incomplete-game-load-owner` and Resume stays
+  blocked for every original save.
+- ✅ Verification: the real PC-DOS boot probe passes 106 checks and the eight
+  original SKSAVE files pass 160 checks. The verification reads them in place
+  and does not unpack or modify any game data.
+
 # CSB audit and CI link repair (2026-08-08)
 
 - ✅ Restored the full CMake matrix link contract for

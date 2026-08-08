@@ -1252,6 +1252,12 @@ typedef struct {
     int save_corpus_original_state_parsed_candidate_count;
     int save_corpus_original_state_rejected_candidate_count;
     uint32_t save_corpus_original_state_hash;
+    /* A parsed SKSAVE census is not a playable GAME_LOAD.  This flag may
+     * become true only when the selected original stream has restored the
+     * complete record, possession, hero, timer and map ownership graph into
+     * the live runtime.  It prevents visual/data receipts from promoting an
+     * observational raw-save decode to "complete DM2 support". */
+    int save_corpus_original_game_load_owner_complete;
     int complete_support_ready;
     uint32_t complete_support_hash;
     const char *status_scope;

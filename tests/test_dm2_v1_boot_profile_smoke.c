@@ -919,6 +919,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               complete_support.save_corpus_original_state_parsed_candidate_count == 0 &&
               complete_support.save_corpus_original_state_rejected_candidate_count == 0 &&
               complete_support.save_corpus_original_state_hash != 0u &&
+              complete_support.save_corpus_original_game_load_owner_complete == 0 &&
               complete_support.save_corpus_valid_candidate_count >=
                   complete_support.save_corpus_importable_candidate_count &&
               complete_support.complete_support_ready == 0 &&

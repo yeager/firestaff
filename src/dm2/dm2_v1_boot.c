@@ -10473,6 +10473,12 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         original_save_state_corpus.rejected_candidate_count;
     out_receipt->save_corpus_original_state_hash =
         original_save_state_corpus.corpus_hash;
+    /* SKProject's DM2_GAME_LOAD publishes only after READ_SKSAVE_DUNGEON,
+     * possession continuations, special timer chains, SORT_TIMERS and the
+     * actuator generator share one live owner (sksvgame.cpp:1415-1530).
+     * Firestaff currently keeps that transaction fail-closed, so the corpus
+     * probe above is evidence only and cannot satisfy this runtime gate. */
+    out_receipt->save_corpus_original_game_load_owner_complete = 0;
 
     out_receipt->skproject_gdat_queries_ready =
         out_receipt->startup_visual.skproject_title_query_ready &&
@@ -10671,6 +10677,8 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         hash, (uint32_t)out_receipt->save_corpus_original_state_rejected_candidate_count);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->save_corpus_original_state_hash);
+    hash = dm2_v1_boot_packaged_capture_hash_step(
+        hash, (uint32_t)out_receipt->save_corpus_original_game_load_owner_complete);
     out_receipt->complete_support_hash = hash;
 
     /* skproject/SKWIN T520/T560 consumes GDAT title/menu, HUD, and dungeon
@@ -10698,6 +10706,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->save_corpus_original_state_parsed_candidate_count > 0 &&
         out_receipt->save_corpus_original_state_rejected_candidate_count == 0 &&
         out_receipt->save_corpus_original_state_hash != 0u &&
+        out_receipt->save_corpus_original_game_load_owner_complete &&
         out_receipt->complete_support_hash != 0u;
     out_receipt->valid = out_receipt->complete_support_ready;
     out_receipt->status_scope = "DM2";
@@ -10715,7 +10724,7 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
            out_receipt->no_fallback_title_or_runtime_visuals &&
            out_receipt->raw_gdat_capture_complete &&
            out_receipt->decoded_gdat_capture_complete)
-        ? "incomplete-save-corpus"
+        ? "incomplete-game-load-owner"
         : out_receipt->runtime_gdat_dungeon_complete
         ? "incomplete-startup-gdat"
         : "incomplete-runtime-gdat";

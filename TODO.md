@@ -4153,6 +4153,12 @@ level or consumer bindings.
   `DUNGEON.DAT` as a skip. It now fails the selected input, then verifies the
   actual 16 source G1 mirror roots and keeps selection fail-closed until the
   remaining `GAME_LOAD` hero/record handoff exists.
+  **2026-08-08 status-gate correction:** the complete-support receipt now
+  distinguishes a parsed raw-SKSAVE census from a completed live GAME_LOAD
+  owner. It cannot report complete support until the chosen original stream
+  has atomically restored map, record, possession, hero, timer and actuator
+  ownership. The current importer therefore remains explicitly blocked,
+  including for the four corpus files whose local record pool is complete.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its
