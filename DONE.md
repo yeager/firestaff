@@ -10068,3 +10068,12 @@
   ownership; no Saturn runtime behavior is fabricated.
 - ✅ The standalone compatibility-gate regression documents the corrected
   boundary.
+
+# Nexus V2 phase gate keeps start pose and probe presentation source-bound (2026-08-08)
+
+- ✅ Removed the stale `(11,29,N)` start-pose claim from V2 provenance; the
+  Saturn selector remains unknown until captured.
+- ✅ AI, combat, movement, magic, save, audio and rasterizer descriptions now
+  identify source receipts or capture-gated consumers.
+- ✅ V2 probe eligibility remains available for isolated tests, while it is no
+  longer described as production Saturn presentation admission.

@@ -16,8 +16,8 @@ extern "C" {
  * overlay, touch/controller affordances, upscaler, particles,
  * atmosphere).
  *
- * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any V2
- * presentation code being active. The V2 static library
+ * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any unverified
+ * Saturn presentation code being active. The V2 probe library
  * (firestaff_nexus_v2) MUST NOT alter V1 game-logic behaviour.
  *
  * Source-lock anchors (Saturn DM Nexus + ReDMCSB Common Toolchains):
@@ -25,16 +25,16 @@ extern "C" {
  * - nexus_v1_dmdf_model.c     DMDF (Dungeon Master Data Format) decoder
  * - nexus_v1_dungeon.c        DGN level loader, 16 levels
  * - nexus_v1_engine.c         V1 engine singleton (data + state)
- * - nexus_v1_game.c           game state init and level load; CD selector gated
- * - nexus_v1_champions.c      4-champion party (DM1 + Nexus variants)
- * - nexus_v1_creatures.c      creature AI + render (MNS files)
- * - nexus_v1_movement.c       NEXUS_CMD_* (F0365/F0366 analogues)
- * - nexus_v1_combat.c         melee + spell combat
- * - nexus_v1_magic.c          spell casting, mana, runes
- * - nexus_v1_inventory.c      inventory + chest pickup
- * - nexus_v1_save_load.c      save/load round-trip (CDL format)
- * - nexus_v1_sound.c          Saturn SCSP sound driver
- * - nexus_v1_rasterizer.c     320x200 indexed framebuffer rasterizer
+ * - nexus_v1_game.c           game state receipt; start selector unknown
+ * - nexus_v1_champions.c      authenticated PLRD source rows
+ * - nexus_v1_creatures.c      CRET/MNS source receipts; AI/render gated
+ * - nexus_v1_movement.c       NEXUS_CMD_* source labels; producer unbound
+ * - nexus_v1_combat.c         diagnostic melee/spell tables only
+ * - nexus_v1_magic.c          diagnostic rune/mana tables only
+ * - nexus_v1_inventory.c      source records; action consumer unbound
+ * - nexus_v1_save_load.c      native save receipt; Saturn owner unbound
+ * - nexus_v1_sound.c          SLEV/SAL/SDDRVS source receipts only
+ * - nexus_v1_rasterizer.c     host raster probe; Saturn submit no-draw
  * - nexus_v1_palette.c        256-color VGA palette
  * - nexus_v1_math3d.c         3D math (vec3, mat4, project)
  * - nexus_v1_launcher.c       singleton engine lifecycle
@@ -64,9 +64,10 @@ extern "C" {
  * or V2-presentation-eligible.
  *
  * V1-source-locked domains MUST NOT have their behaviour altered
- * by any V2 code. V2-presentation-eligible domains MAY receive
- * enhanced visual presentation when v2PresentationEnabled is true,
- * but V2 code MUST NOT change the underlying V1 game-logic state.
+ * by any V2 code. V2-presentation-eligible domains MAY be exercised by
+ * isolated probes when v2PresentationEnabled is true, but production
+ * presentation remains behind its authenticated Saturn capture boundary.
+ * V2 code MUST NOT change the underlying V1 game-logic state.
  * ============================================================ */
 
 typedef enum {
@@ -82,12 +83,13 @@ typedef enum {
 
     NEXUS_V2_PHASE_DOMAIN_GAME_STATE_INIT = 2,
         /* nexus_v1_game.c + nexus_v1_launcher.c - state init,
-         * party spawn (11,29,N), level load, and CDDA layout receipt. */
+         * Saturn start selector/pose is unknown; level and CDDA receipts are
+         * source evidence only until their consumers are captured. */
 
     NEXUS_V2_PHASE_DOMAIN_CHAMPION_PARTY = 3,
-        /* nexus_v1_champions.c - 4-champion party, stats, level-up,
-         * food/water/stamina, resurrect logic. DM1-compatible
-         * with Nexus-specific champion variants. */
+        /* nexus_v1_champions.c - authenticated PLRD source rows and FACE
+         * provenance. Party stats, provisions and resurrect consumers remain
+         * capture-gated. */
 
     NEXUS_V2_PHASE_DOMAIN_CREATURE_AI = 4,
         /* nexus_v1_creatures.c + nexus_v1_combat.c - creature groups

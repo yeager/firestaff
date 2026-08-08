@@ -9,19 +9,19 @@
  * - nexus_v1_dmdf_model.c     DMDF (Dungeon Master Data Format) decoder
  * - nexus_v1_dungeon.c        DGN level loader, 16 levels
  * - nexus_v1_engine.c         V1 engine singleton
- * - nexus_v1_game.c           state init, level load, CD track map
- * - nexus_v1_champions.c      4-champion party
- * - nexus_v1_creatures.c      creature AI + render
- * - nexus_v1_movement.c       NEXUS_CMD_* (F0365/F0366 analogues)
- * - nexus_v1_combat.c         melee + spell combat
- * - nexus_v1_magic.c          spell casting, mana, runes
- * - nexus_v1_inventory.c      inventory + chest pickup
- * - nexus_v1_save_load.c      save/load round-trip
- * - nexus_v1_sound.c          Saturn SCSP sound driver
- * - nexus_v1_rasterizer.c     320x200 indexed framebuffer
+ * - nexus_v1_game.c           state receipt; start selector unknown
+ * - nexus_v1_champions.c      authenticated PLRD source rows
+ * - nexus_v1_creatures.c      CRET/MNS source receipts; AI/render gated
+ * - nexus_v1_movement.c       NEXUS_CMD_* source labels; producer unbound
+ * - nexus_v1_combat.c         diagnostic melee/spell tables only
+ * - nexus_v1_magic.c          diagnostic rune/mana tables only
+ * - nexus_v1_inventory.c      source records; action consumer unbound
+ * - nexus_v1_save_load.c      native save receipt; Saturn owner unbound
+ * - nexus_v1_sound.c          SLEV/SAL/SDDRVS source receipts only
+ * - nexus_v1_rasterizer.c     host raster probe; Saturn submit no-draw
  *
- * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any V2
- * presentation code being active. V2 modules (lighting, particles,
+ * Phase 0 rule: V1 Nexus code compiles cleanly WITHOUT any unverified
+ * Saturn presentation code being active. V2 probe modules (lighting, particles,
  * atmosphere, HUD overlay, smooth movement, touch/controller
  * affordances) MUST NOT mutate V1 game state.
  */
@@ -181,53 +181,51 @@ NEXUS_V2_PhaseGateDecision nexus_v2_phase_gate_decide(
         case NEXUS_V2_PHASE_DOMAIN_GAME_STATE_INIT:
             return make_decision(
                 1, 0,
-                "nexus_v1_game.c; nexus_v1_launcher.c (party spawn 11,29,N)",
-                "Game state init, party spawn, level load, and CD audio "
-                "track mapping (2-9) stay V1-source-locked");
+                "nexus_v1_game.c; nexus_v1_launcher.c (start selector unknown)",
+                "Game state init, Saturn start pose, level load, and CD audio "
+                "track mapping remain source receipts/capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_CHAMPION_PARTY:
             return make_decision(
                 1, 0,
-                "nexus_v1_champions.c (4-champion party, stats, level-up, resurrect)",
-                "Champion stats, level-up, food/water/stamina, and resurrect "
-                "stay V1-source-locked; V2 must not mutate champion state");
+                "nexus_v1_champions.c (authenticated PLRD source rows)",
+                "Champion runtime, provisions, level-up and resurrect consumers "
+                "remain capture-gated; V2 must not mutate champion state");
 
         case NEXUS_V2_PHASE_DOMAIN_CREATURE_AI:
             return make_decision(
                 1, 0,
-                "nexus_v1_creatures.c (MNS-driven AI); nexus_v1_combat.c",
-                "Creature groups, AI behavior, melee/spell combat, and drops "
-                "stay V1-source-locked; V2 may only render the existing AI state");
+                "nexus_v1_creatures.c (CRET/MNS source receipts); nexus_v1_combat.c",
+                "Creature groups, AI behavior, combat and drops remain "
+                "capture-gated; V2 has no authenticated creature render owner");
 
         case NEXUS_V2_PHASE_DOMAIN_SPELL_MAGIC:
             return make_decision(
                 1, 0,
-                "nexus_v1_magic.c (rune UI, mana, projectile spells)",
-                "Spell casting, rune UI, mana cost, and projectile behaviour "
-                "stay V1-source-locked; V2 may only render spell visuals");
+                "nexus_v1_magic.c (diagnostic rune/mana tables)",
+                "Spell dispatch, rune UI, mana mutation, projectiles and visuals "
+                "remain capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_MOVEMENT:
             return make_decision(
                 1, 0,
-                "nexus_v1_movement.c (NEXUS_CMD_*); ReDMCSB CLIKMENU.C:142/180",
-                "Party movement, turn, strafe, and collision response stay "
-                "V1-source-locked; V2 smooth movement may only interpolate "
-                "the visual presentation between V1 ticks");
+                "nexus_v1_movement.c (NEXUS_CMD_* source labels); ReDMCSB CLIKMENU.C:142/180",
+                "Saturn movement producer, collision response and visual owner "
+                "remain capture-gated; probes cannot publish a party move");
 
         case NEXUS_V2_PHASE_DOMAIN_SAVE_LOAD:
             return make_decision(
                 1, 0,
-                "nexus_v1_save_load.c (CDL format round-trip)",
-                "V1 CDL save/load payload stays V1-source-locked; V2 config "
-                "persistence is explicitly separate and gated by "
-                "v2ConfigPersistenceEnabled");
+                "nexus_v1_save_load.c (native save receipt)",
+                "Saturn save consumer remains capture-gated; V2 config "
+                "persistence is separate and gated by v2ConfigPersistenceEnabled");
 
         case NEXUS_V2_PHASE_DOMAIN_SOUND_DRIVER:
             return make_decision(
                 1, 0,
-                "nexus_v1_sound.c (Saturn SCSP driver + CD audio)",
-                "SCSP sound driver, SFX scheduling, and CD audio track 2-9 "
-                "stay V1-owned; V2 enhanced audio is presentation-only");
+                "nexus_v1_sound.c (SLEV/SAL/SDDRVS source receipts)",
+                "SCSP event dispatch, SFX scheduling and CD audio playback "
+                "remain capture-gated");
 
         case NEXUS_V2_PHASE_DOMAIN_RASTERIZER:
             return make_decision(

@@ -6,6 +6,11 @@
   and capture-gated/no-draw runtime ownership truthfully. No VDP1/VDP2,
   action, save, or SLEV/SAL/SDDRVS semantics were opened by this cleanup.
 
+- 🔧 Nexus V2 phase-gate provenance (2026-08-08): the probe gate still had
+  stale `(11,29,N)` and active AI/render wording. Its source anchors now
+  identify the Saturn start selector as unknown and keep V2 probe eligibility
+  separate from production capture admission.
+
 - 🔧 Nexus DMWeb data-file audit (2026-08-08): the historical H2321 notes
   are now reconciled with the verified retail corpus: DGN is the 64×64
   Structure1B block-container path, SMAP/SAL/MAP/FACE/MNS/SLEV have bounded
