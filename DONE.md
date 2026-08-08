@@ -9432,3 +9432,10 @@
 - ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.
 - ✅ LEV00 förblir fail-closed tills autentisk Saturn-startposition/startselector är fångad; SMAP/VDP2-dekodning testas separat.
 - ✅ `ctest -L real-media` med `/Users/bosse/.firestaff/data/nexus`: 8 Nexus-tester passerar; de 3 Theron-testerna är korrekt skip-safe utan Theron-data.
+
+# DM2 SKSAVE originalkapacitet för c_tim (2026-08-08)
+
+- ✅ Den temporära GAME_LOAD-ägaren använder nu originalets `vsgame[120]`
+  för serialiserade c_tim-poster i stället för en Firestaff-specifik gräns på
+  64. Riktiga sparfiler förblir oförändrade och Resume är fortsatt spärrat
+  tills hela sessionkedjan är återställd.

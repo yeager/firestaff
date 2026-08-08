@@ -45,7 +45,8 @@ extern "C" {
 
 #define DM2_V1_SAVE_TIMER_RECORD_SIZE 12u /* c_timer.h:8 sizeof(c_tim) 0xc */
 #define DM2_V1_SAVE_TIMER_MASK_SIZE 12u
-#define DM2_V1_SAVE_TIMER_MAX 64u /* module cap; source max_timers base 50 */
+/* dm2data.cpp:97-99 owns vsgame[120], the serialized c_tim workspace. */
+#define DM2_V1_SAVE_TIMER_MAX 120u
 
 typedef struct {
     uint8_t bytes[DM2_V1_SAVE_TIMER_RECORD_SIZE];
