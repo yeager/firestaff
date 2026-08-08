@@ -976,6 +976,34 @@ typedef struct {
     DM2_V1_G1TextRoot texts[DM2_V1_G1_MAP5_MAX_TEXT_ROOTS];
 } DM2_V1_G1Map5TextRuntimeReceipt;
 
+/* File_header DB2 Text records are shared by wall text, markers and special
+ * floor transitions.  Keep their original w2 fields distinct from the older
+ * map-5 direct-root receipt: the PC-DOS local-level path may encounter DB2
+ * anywhere in a validated GenericRecord::w0 chain. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t direction;
+    uint8_t visible;
+    uint8_t mode;
+    uint8_t simple_extension_usage;
+    uint16_t text_index;
+} DM2_V1_FileHeaderTextRecord;
+
+#define DM2_V1_FILE_HEADER_RUNTIME_MAX_TEXT_RECORDS 256
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int text_record_count;
+    int text_record_reads;
+    DM2_V1_FileHeaderTextRecord
+        texts[DM2_V1_FILE_HEADER_RUNTIME_MAX_TEXT_RECORDS];
+} DM2_V1_FileHeaderRuntimeTextReceipt;
+
 /* Why a selected DB1 teleporter did not move the party. `DestinationMap()` is
  * the raw high byte of Teleporter::w4. skproject c_moverec.cpp passes it
  * directly to c_map.cpp CHANGE_CURRENT_MAP_TO(), whose map-array access has no
@@ -1646,6 +1674,13 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
 int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeTeleporterReceipt *out);
+/* Decode every DB2 Text record encountered by the canonical File_header
+ * map-wide record walk.  The receipt exposes only source fields; text-table
+ * decoding, visibility mutation and teleporter/sensor effects stay with their
+ * respective original consumers. */
+int dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTextReceipt *out);
 /* Finds one previously materialized direct DB3 root by source map
  * coordinate. This is a lookup-only handoff: it does not invoke the
  * actuator, follow GenericRecord::w0, or mutate a record/timer. */

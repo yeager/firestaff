@@ -72,6 +72,7 @@ int main(void) {
     DM2_V1_G1RuntimeMapDoorReceipt doors;
     DM2_V1_G1RuntimeMapActuatorReceipt actuators;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
+    int text_record_total = 0;
     FileHeaderWalkTrace map0_walk;
 
     paths[0] = env;
@@ -132,6 +133,7 @@ int main(void) {
     for (int map = 0; map < d.level_count; ++map) {
         DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
         FileHeaderWalkTrace map_walk;
+        DM2_V1_FileHeaderRuntimeTextReceipt texts;
 
         memset(&map_receipt, 0, sizeof(map_receipt));
         memset(&map_walk, 0, sizeof(map_walk));
@@ -145,6 +147,20 @@ int main(void) {
                    map);
             ++failures;
         }
+        memset(&texts, 0, sizeof(texts));
+        if (!dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
+                &d, map, &texts) || !texts.committed ||
+            texts.text_record_reads != texts.text_record_count) {
+            printf("FAIL: File_header map-%d text records were not retained\n",
+                   map);
+            ++failures;
+        } else {
+            text_record_total += texts.text_record_count;
+        }
+    }
+    if (text_record_total <= 0) {
+        printf("FAIL: canonical File_header contains no retained DB2 texts\n");
+        ++failures;
     }
     memset(&doors, 0, sizeof(doors));
     if (!dm2_v1_dungeon_materialize_file_header_runtime_map_doors(

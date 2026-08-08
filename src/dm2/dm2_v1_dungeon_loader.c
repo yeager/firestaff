@@ -3655,6 +3655,61 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
     return 1;
 }
 
+static int dm2_v1_file_header_collect_text_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_FileHeaderRuntimeTextReceipt *receipt =
+        (DM2_V1_FileHeaderRuntimeTextReceipt *)user;
+    DM2_V1_FileHeaderTextRecord *text;
+    uint16_t w2;
+
+    /* SKProject SKWIN/DME.h::Text fixes the DB2 w2 fields.  This callback is
+     * invoked exclusively by the File_header c_map -> c_record walker, which
+     * is also how QUERY_MESSAGE_TEXT and special-marker scans reach DB2. */
+    if (!receipt || type != 2) return 0;
+    if (!record || record_size < 4 || index < 0 ||
+        receipt->text_record_count >=
+            DM2_V1_FILE_HEADER_RUNTIME_MAX_TEXT_RECORDS) {
+        return -1;
+    }
+    w2 = RD16(record + 2);
+    text = &receipt->texts[receipt->text_record_count++];
+    text->x = x;
+    text->y = y;
+    text->object_id = thing;
+    text->index = (uint16_t)index;
+    text->direction = (uint8_t)((unsigned int)thing >> 14);
+    text->visible = (uint8_t)(w2 & 0x0001u);
+    text->mode = (uint8_t)((w2 >> 1) & 0x0003u);
+    text->text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
+    text->simple_extension_usage =
+        (uint8_t)((text->text_index >> 8) & 0x001fu);
+    ++receipt->text_record_reads;
+    (void)level;
+    return 0;
+}
+
+int dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTextReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeTextReceipt candidate;
+
+    if (!out || !d) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_collect_text_record, &candidate) < 0 ||
+        candidate.text_record_reads != candidate.text_record_count) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_g1_runtime_map_actuator_at(
     const DM2_V1_G1RuntimeMapActuatorReceipt *receipt,
     int x,

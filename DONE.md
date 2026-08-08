@@ -164,6 +164,15 @@
   endast originaldata och kan ännu inte materialisera DYN4, party eller
   spelmekanik.
 
+# DM2 File_header DB2-textintag (2026-08-08)
+
+- ✅ DB2-poster i samtliga File_header-kedjor materialiseras nu med
+  originalens synlighet, textläge, textindex och specialanvändning från
+  `DME.h::Text`.
+- ✅ Verifierat mot alla 44 kartor i PC-DOS-data. Väggen, markören eller
+  sensorn utför ännu ingen effekt förrän text-, rörelse- och
+  aktuatortransaktionerna har en komplett sessionsägare.
+
 # DM2 File_header boot handoff (2026-08-08)
 
 - ✅ M11/bootprofilen lämnar nu karta 0:s verifierade File_header-recipient
