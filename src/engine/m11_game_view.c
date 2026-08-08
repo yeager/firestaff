@@ -4301,12 +4301,15 @@ static int m11_csb_present_amiga_runtime_surface(
     const unsigned int graphic_index = state && state->candidateMirrorRenameActive
         ? 27u : state && state->candidateMirrorPanelActive
         ? 40u : state && state->inventoryPanelActive ? 17u : 13u;
-    /* ReDMCSB PANEL.C F0347 puts C017 at viewport (48,33). F0346 overlays
-     * C040 at panel-relative (80,52); REVIVE.C F0281 puts C027 in the same
-     * C101 panel zone, so both native panel records start at (128,85). */
+    /* ReDMCSB COORD.C G2067/G2068 places the 224x136 viewport at (0,33).
+     * PANEL.C F0347 fills that viewport with C017.  F0346 and REVIVE.C
+     * F0281 then target C101: layout record C101 is centered at (152,89),
+     * so each 144x73 C040/C027 record starts at viewport-local (80,52), or
+     * screen (80,85).  Do not apply a host centering offset to these source
+     * coordinates. */
     const int target_x = state && (state->candidateMirrorPanelActive ||
-                                   state->candidateMirrorRenameActive) ? 128 :
-        state && state->inventoryPanelActive ? 48 : 233;
+                                   state->candidateMirrorRenameActive) ? 80 :
+        state && state->inventoryPanelActive ? 0 : 233;
     const int target_y = state && (state->candidateMirrorPanelActive ||
                                    state->candidateMirrorRenameActive) ? 85 :
         state && state->inventoryPanelActive ? 33 : 124;
@@ -4361,7 +4364,7 @@ static int m11_csb_present_amiga_runtime_surface(
     if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
         for (row = 0; row < 136; ++row) {
             memcpy(framebuffer + (size_t)(33 + row) *
-                   (size_t)framebuffer_width + 48u,
+                   (size_t)framebuffer_width,
                    inventory_surface->pixels + (size_t)row * 224u, 224u);
         }
     }

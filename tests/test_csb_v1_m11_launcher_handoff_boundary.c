@@ -302,12 +302,19 @@ static void expect_amiga_c017_inventory_source_frame(M11_GameViewState *view,
                                                       const char *label)
 {
     unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *c017;
 
     expect_true(M11_GameView_ToggleInventoryPanel(view) == 1,
                 "Amiga inventory command opens C017 source surface");
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(view, framebuffer, 320, 200);
-    expect_true(count_nonzero_region(framebuffer, 320, 48, 33, 224, 136) > 0 &&
+    c017 = M11_AssetLoader_Load(&view->assetLoader, 17u);
+    expect_true(c017 && c017->loaded && c017->pixels &&
+                    c017->width == 224u && c017->height == 136u &&
+                    frame_region_matches_bitmap(framebuffer, 320, 0, 33,
+                                                c017->pixels, c017->width,
+                                                c017->height) &&
+                    frame_rect_is_color(framebuffer, 224, 33, 96, 136, 0u) &&
                     frame_rect_is_color(framebuffer, 0, 0, 320, 33, 0u),
                 label);
     expect_true(M11_GameView_ToggleInventoryPanel(view) == 0,
@@ -324,6 +331,7 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     unsigned char *bytes = NULL;
     unsigned char *portraits = NULL;
     unsigned char *inventory = NULL;
+    unsigned char *resurrection_panel = NULL;
     unsigned char *rename_panel = NULL;
     CSB_V1_BootProfile *profile;
     FILE *file = NULL;
@@ -341,6 +349,7 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
         fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
         !(portraits = (unsigned char *)malloc(256u * 87u)) ||
         !(inventory = (unsigned char *)malloc(224u * 136u)) ||
+        !(resurrection_panel = (unsigned char *)malloc(144u * 73u)) ||
         !(rename_panel = (unsigned char *)malloc(144u * 73u)) ||
         !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 26u,
                                             portraits, 256u * 87u,
@@ -350,6 +359,10 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
                                             inventory, 224u * 136u,
                                             &width, &height) ||
         width != 224u || height != 136u ||
+        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 40u,
+                                            resurrection_panel, 144u * 73u,
+                                            &width, &height) ||
+        width != 144u || height != 73u ||
         !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 27u,
                                             rename_panel, 144u * 73u,
                                             &width, &height) ||
@@ -357,6 +370,7 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
         expect_true(0, "Amiga candidate route opens authenticated C026 data");
         if (file) fclose(file);
         free(rename_panel);
+        free(resurrection_panel);
         free(inventory);
         free(portraits);
         free(bytes);
@@ -370,6 +384,25 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     view->inventoryPanelActive = 1;
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(view, framebuffer, 320, 200);
+    matches = 1;
+    for (row = 0; row < 73; ++row) {
+        int column;
+        for (column = 0; column < 144; ++column) {
+            const unsigned char source = resurrection_panel[
+                (size_t)row * 144u + (size_t)column];
+            const unsigned char expected = source == 6u
+                ? inventory[(size_t)(52 + row) * 224u + (size_t)(80 + column)]
+                : source;
+            if (framebuffer[(size_t)(85 + row) * 320u +
+                            (size_t)(80 + column)] != expected) {
+                matches = 0;
+                break;
+            }
+        }
+        if (!matches) break;
+    }
+    expect_true(matches,
+                "Amiga candidate panel composes source C040 at C101 without host offset");
     matches = 1;
     for (row = 0; row < 29; ++row) {
         if (memcmp(framebuffer + (size_t)row * 320u + 7u,
@@ -392,7 +425,7 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
                 ? inventory[(size_t)(52 + row) * 224u + (size_t)(80 + column)]
                 : source;
             if (framebuffer[(size_t)(85 + row) * 320u +
-                            (size_t)(128 + column)] != expected) {
+                            (size_t)(80 + column)] != expected) {
                 matches = 0;
                 break;
             }
@@ -407,6 +440,7 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     view->candidateMirrorPartyIndex = -1;
     view->inventoryPanelActive = 0;
     free(rename_panel);
+    free(resurrection_panel);
     free(inventory);
     free(portraits);
     free(bytes);

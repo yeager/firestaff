@@ -135,6 +135,11 @@
   genom den källbundna avkodaren. Den kan därför inte dereferera PC34-metadata
   som saknas i en native DMCSB2-session; C013:s 87×45-mått verifieras i samma
   A31M-, A35M- och A35E-realdatatest.
+- ✅ C017 fyller nu originalets viewport `(0,33,224,136)`, medan C040 och
+  C027 placeras i C101 vid `(80,85)`. Den tidigare 48-pixelsförskjutningen
+  var en felaktig värdcentrering. ReDMCSB `COORD.C` G2067/G2068 samt
+  `PANEL.C` F0346/F0347 och `REVIVE.C` F0281 är nu direkt täckta av
+  pixeljämförelser mot den valda ADF:ens C017/C040/C027-poster.
 
 # CI: CSB Amiga-IMG1-länkning (2026-08-08)
 
