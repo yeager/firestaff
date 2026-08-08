@@ -8095,3 +8095,13 @@
   semantics and executing HuC6280 text consumer are not yet proven.
 - ✅ Real-media startup-media regression passes for both US and JP Track 02;
   US names and JP names/titles are verified independently.
+# 2026-08-08 Theron JP property-table gate
+
+- ✅ Stopped the loader from publishing the authenticated US 66-entry item
+  property table for JP Track 02. The JP bytes at the corresponding inspected
+  span are not byte-identical, and no verified JP table offset/consumer is
+  available.
+- ✅ JP source object records remain retained and decoded; only the
+  unproven property binding is withheld. US property binding remains covered
+  by the real US dungeon-loader regression, while JP now asserts zero property
+  publications until its own source table is recovered.

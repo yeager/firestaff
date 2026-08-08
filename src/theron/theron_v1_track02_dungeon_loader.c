@@ -65,6 +65,7 @@ static int materialize_source_item(
     const uint8_t *raw,
     size_t raw_size,
     const Theron_Track02ItemRecord *record,
+    int allow_us_property_table,
     int *property_bound)
 {
     if (!object || !raw || !record || raw_size > sizeof(object->source_raw) ||
@@ -129,10 +130,14 @@ static int materialize_source_item(
         return 0;
     }
 
-    /* Track 02 UD $21A046 and UD $099825 are parallel 66-entry tables.
+    /* Track 02 US UD $21A046 and UD $099825 are parallel 66-entry tables.
      * Match the source object type against both before exposing its raw
-     * property bytes to later inventory/equip consumers. */
-    if ((unsigned int)object->item_index <
+     * property bytes to later inventory/equip consumers.  The JP bytes at
+     * the corresponding inspected span are not byte-identical and its table
+     * offset/consumer is not source-bound, so the caller must not pass the US
+     * table gate for JP. */
+    if (allow_us_property_table &&
+        (unsigned int)object->item_index <
             theron_v1_track02_item_property_count()) {
         uint8_t expected = 0;
         switch (category) {
@@ -475,6 +480,7 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 if (cat != THERON_CAT_MONSTER &&
                     materialize_source_item(&obj, cat, pos, ref, id, raw,
                                              theron_item_bytes[cat], &source_record,
+                                             variant == THERON_TRACK02_VARIANT_US_BIN,
                                              &property_bound)) {
                     place = 1;
                     result->items_placed++;
