@@ -111,6 +111,17 @@
   Ingen Utility-UI aktiveras förrän kompletterande EGB- och filflöden är
   verifierade mot originalkörning.
 
+# CSB FM Towns C06 IMG2-strid för filväljarpilar (2026-08-08)
+
+- ✅ `F0689_IMG_ExpandGraphicToBitmap` följs nu även för C06:s udda
+  31×75-pilbild: den verkliga 290-byte IMG2-strömmen från UTILE avkodas till
+  en nollinitierad 32-pixelstrid. Den verifierade 324-byte bärarspannen är
+  fortsatt intakt, men dess efterföljande programbytes kan inte misstas för
+  bildkommandon.
+- ✅ ReDMCSB `IMAGE2.C` F0689 och `IMAGE4.C` F0685/F0686/F1003 är
+  källåsningen. Realdatatestet kontrollerar strömgräns, fysisk strid,
+  nollutfyllnad och att rasterinnehållet inte är tomt.
+
 # CSB FM Towns C06-font bindning till originalprogram (2026-08-08)
 
 - ✅ F31E:s Utility-väg läser nu C06:s 420-byte interface-/scrollfont direkt

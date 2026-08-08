@@ -28,6 +28,10 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_BYTES 420u
 #define CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES 247u
 #define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES 324u
+/* F0689 reaches the end of C06's 31x75 IMG2 command stream after 290 bytes.
+ * The remaining verified carrier span precedes the following executable data
+ * and must not be treated as image commands. */
+#define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_STREAM_BYTES 290u
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT 4u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES 464u

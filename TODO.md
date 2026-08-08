@@ -1317,6 +1317,9 @@
   present on the retail CD but do not establish a C06 glyph bitmap owner.
   Keep Japanese C06 drawing closed until an EGB/system-font capture proves
   the actual glyph handoff; see `parity-evidence/csb_fmtowns_f31j_text_owner.md`.
+  2026-08-08: filväljarpilarna avkodas nu med den verkliga F0689-striden
+  (31 logiska pixlar, 32-pixelbuffert). Återstår att binda den källägda
+  dialogytan och katalogvalet innan Load får lämna sin fail-closed-grind.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.

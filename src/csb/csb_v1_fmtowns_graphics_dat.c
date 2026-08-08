@@ -17,6 +17,145 @@ static uint32_t fnv1a(const uint8_t *data, size_t len) {
     return h ? h : 1u;
 }
 
+static int csb_v1_fmtowns_img2_strided_emit(
+    uint8_t *pixels, size_t pixel_capacity, uint16_t width,
+    uint16_t height, uint16_t stride, uint16_t *in_out_x,
+    uint16_t *in_out_y, uint8_t color, int copy_previous_line)
+{
+    size_t destination;
+    uint16_t x;
+    uint16_t y;
+
+    if (!pixels || !in_out_x || !in_out_y || *in_out_y >= height ||
+        *in_out_x >= width) return 0;
+    x = *in_out_x;
+    y = *in_out_y;
+    destination = (size_t)y * stride + x;
+    if (destination >= pixel_capacity) return 0;
+    if (copy_previous_line) {
+        if (y == 0u) return 0;
+        pixels[destination] = pixels[(size_t)(y - 1u) * stride + x];
+    } else {
+        pixels[destination] = color;
+    }
+    x++;
+    if (x == width) {
+        x = 0u;
+        y++;
+    }
+    *in_out_x = x;
+    *in_out_y = y;
+    return 1;
+}
+
+int csb_v1_fmtowns_img2_decode_strided(
+    const uint8_t *item, size_t item_size, uint16_t container_width,
+    uint16_t container_height, uint16_t output_stride,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsItemDecodeReceipt *receipt)
+{
+    uint16_t width;
+    uint16_t height;
+    uint16_t x = 0u;
+    uint16_t y = 0u;
+    size_t source = 4u;
+    size_t required;
+
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!item || !indexed_pixels || item_size < 4u ||
+        container_width == 0u || container_height == 0u ||
+        output_stride < container_width || output_stride > 640u ||
+        container_height > 400u ||
+        (size_t)output_stride > SIZE_MAX / container_height) return 0;
+    width = rd16le(item);
+    height = rd16le(item + 2u);
+    if (width != container_width || height != container_height ||
+        width > 640u || height > 400u) return 0;
+    required = (size_t)output_stride * height;
+    if (required > pixel_capacity) return 0;
+    /* F0689 writes into G4108_DEC_BUF, a static C object.  Its unused
+     * trailing nibble is consequently zero before an odd-width expansion. */
+    memset(indexed_pixels, 0, required);
+
+    while (y < height && source < item_size) {
+        uint8_t command = item[source++];
+        uint8_t color = command & 0x0fu;
+        size_t count;
+        size_t index;
+
+        if ((command & 0x80u) == 0u) {
+            count = (size_t)(command >> 4) + 1u;
+            for (index = 0u; index < count; ++index) {
+                if (!csb_v1_fmtowns_img2_strided_emit(
+                        indexed_pixels, required, width, height, output_stride,
+                        &x, &y, color, 0)) return 0;
+            }
+            continue;
+        }
+        if ((command & 0x40u) == 0u) {
+            if (source >= item_size) return 0;
+            count = (size_t)item[source++] + 1u;
+        } else {
+            if (source + 1u >= item_size) return 0;
+            count = (size_t)(((uint16_t)item[source] << 8u) |
+                             item[source + 1u]) + 1u;
+            source += 2u;
+        }
+        switch (command & 0x30u) {
+        case 0x00u:
+            for (index = 0u; index < count; ++index) {
+                if (!csb_v1_fmtowns_img2_strided_emit(
+                        indexed_pixels, required, width, height, output_stride,
+                        &x, &y, color, 0)) return 0;
+            }
+            break;
+        case 0x10u:
+            if (count & 1u) {
+                if (!csb_v1_fmtowns_img2_strided_emit(
+                        indexed_pixels, required, width, height, output_stride,
+                        &x, &y, color, 0)) return 0;
+                count--;
+            }
+            if (source + count / 2u > item_size) return 0;
+            for (index = 0u; index < count / 2u; ++index) {
+                uint8_t packed = item[source++];
+                if (!csb_v1_fmtowns_img2_strided_emit(
+                        indexed_pixels, required, width, height, output_stride,
+                        &x, &y, packed >> 4u, 0) ||
+                    !csb_v1_fmtowns_img2_strided_emit(
+                        indexed_pixels, required, width, height, output_stride,
+                        &x, &y, packed & 0x0fu, 0)) return 0;
+            }
+            break;
+        case 0x30u:
+            for (index = 0u; index < count; ++index) {
+                if (!csb_v1_fmtowns_img2_strided_emit(
+                        indexed_pixels, required, width, height, output_stride,
+                        &x, &y, 0u, 1)) return 0;
+            }
+            if (!csb_v1_fmtowns_img2_strided_emit(
+                    indexed_pixels, required, width, height, output_stride,
+                    &x, &y, color, 0)) return 0;
+            break;
+        default:
+            return 0;
+        }
+    }
+    if (y != height || x != 0u) return 0;
+    if (receipt) {
+        receipt->valid = 1;
+        receipt->width = width;
+        receipt->height = height;
+        receipt->stream_byte_count = item_size;
+        receipt->stream_bytes_consumed = source;
+        receipt->pixel_count = required;
+        receipt->stream_fnv1a = fnv1a(item, item_size);
+        receipt->pixel_fnv1a = fnv1a(indexed_pixels, required);
+        receipt->is_image = 1;
+    }
+    return 1;
+}
+
 int csb_v1_fmtowns_graphics_probe(const uint8_t *data, size_t size) {
     uint16_t marker, count;
     if (!data || size < 4) return 0;

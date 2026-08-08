@@ -10,6 +10,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_fmtowns_utility_render.h"
@@ -71,6 +72,7 @@ int main(void)
     CSB_V1_FmtownsUtilityPortraitCatalog utility_portrait_catalog;
     CSB_V1_FmtownsUtilityRenderReceipt utility_render;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
+    CSB_V1_FmtownsItemDecodeReceipt utility_arrows_decode;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     DM1_V1_ChampionStatusRectPc34 champion_name_rect;
     const CSB_V1_FmtownsSwitchButton *story_button;
@@ -78,6 +80,7 @@ int main(void)
     unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     uint8_t utility_frame[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
+    uint8_t utility_arrows[32u * 75u];
     uint8_t portrait_pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
     uint8_t portrait_roundtrip[CSB_FMTOWNS_PORTRAIT_DATA_SIZE];
 
@@ -404,6 +407,34 @@ int main(void)
                   &utility_hit) &&
               utility_hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT,
           "verified F31 profile retains its language-owned C06 input boxes");
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        size_t arrow_row;
+        size_t non_padding_pixels = 0u;
+        int padding_is_zero = 1;
+        int utility_arrows_ok;
+        memset(&utility_arrows_decode, 0, sizeof(utility_arrows_decode));
+        memset(utility_arrows, 0xff, sizeof(utility_arrows));
+        utility_arrows_ok = csb_v1_fmtowns_img2_decode_strided(
+                  utility_handoff.file_picker_arrows,
+                  CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_STREAM_BYTES,
+                  31u, 75u,
+                  32u, utility_arrows, sizeof(utility_arrows),
+                  &utility_arrows_decode);
+        CHECK(utility_arrows_ok && utility_arrows_decode.valid &&
+              utility_arrows_decode.stream_bytes_consumed ==
+                  CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_STREAM_BYTES &&
+              utility_arrows_decode.pixel_count == sizeof(utility_arrows),
+              "C06 F0689 decodes the verified 31x75 file-picker stream with its 32-pixel stride");
+        for (arrow_row = 0u; arrow_row < 75u; ++arrow_row) {
+            size_t arrow_column;
+            if (utility_arrows[arrow_row * 32u + 31u] != 0u)
+                padding_is_zero = 0;
+            for (arrow_column = 0u; arrow_column < 31u; ++arrow_column)
+                non_padding_pixels += utility_arrows[arrow_row * 32u + arrow_column] != 0u;
+        }
+        CHECK(padding_is_zero && non_padding_pixels != 0u,
+              "C06's odd-width IMG2 row padding remains static-buffer zero, not image data");
+    }
     memset(utility_palette, 0, sizeof(utility_palette));
     CHECK(csb_v1_fmtowns_utility_icon_palette_rgb6(&utility_menu,
                                                     utility_palette) &&

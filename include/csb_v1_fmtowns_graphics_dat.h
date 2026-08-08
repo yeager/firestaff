@@ -88,6 +88,21 @@ int csb_v1_fmtowns_img2_decode(const uint8_t *item, size_t item_size,
                                 size_t pixel_capacity,
                                 CSB_V1_FmtownsItemDecodeReceipt *receipt);
 
+/* Expand an F31 IMG2 stream into an explicitly strided indexed surface.
+ *
+ * C06_CEDT's F0689 rounds its packed destination to a 32-pixel boundary,
+ * while the IMG2 header keeps the logical width.  This matters for C06's
+ * 31x75 file-picker arrows: a normal width*height destination would move
+ * every later scanline one pixel left.  output_stride is in indexed pixels,
+ * must be at least container_width, and its padding is zeroed to mirror the
+ * statically-zeroed F31 decode buffer.  ReDMCSB IMAGE2.C F0689:141-290 and
+ * IMAGE4.C F0685/F0686/F1003. */
+int csb_v1_fmtowns_img2_decode_strided(
+    const uint8_t *item, size_t item_size,
+    uint16_t container_width, uint16_t container_height,
+    uint16_t output_stride, uint8_t *indexed_pixels,
+    size_t pixel_capacity, CSB_V1_FmtownsItemDecodeReceipt *receipt);
+
 /* Select and expand one raster item directly from the original F31E/F31J
  * GRAPHICS.DAT container.  This mirrors ReDMCSB MEMORY.C F0490 selecting a
  * record followed by IMAGE2.C F0689 expansion; non-raster data records are
