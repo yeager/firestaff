@@ -55,7 +55,7 @@ See `docs/dm2_triggers.md` and `docs/dm2_scripting.md`.
 ## 5. Gap
 | Feature             | Nexus V1 current status | DM1 | DM2 |
 |---------------------|--------------------------|-----|-----|
-| Level scripts       | Unresolved; `SLEV*.BIN` unparsed | None | No script VM |
+| Level scripts       | Bounded `SLEV*.BIN` source/header receipts; event semantics unresolved | None | No script VM |
 | `SDDRVS.TSK` role   | Sound driver task unless proven otherwise | N/A | N/A |
 | Conditional spawn   | Not source-locked | Hardwired creature/data paths | Actuator generator |
 | Door/switch events  | Not source-locked | Hardwired sensors | Actuators |

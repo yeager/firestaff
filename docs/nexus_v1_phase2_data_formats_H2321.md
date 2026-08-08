@@ -427,7 +427,9 @@ Handles ASCII and Hankaku katakana. Double-byte characters replaced with "?".
 **Purpose:** Declarative event scripts for teleporters, traps, door animations
 
 **Format:** Binary, processed by `SDDRVS.TSK` script VM.
-**Implementation:** None in Firestaff. Script VM in `nexus_v1_script_vm.c` is a stub.
+**Implementation:** Firestaff has a bounded source/header profiler and
+real-corpus receipt in `nexus_v1_script_vm.c`; no SLEV opcode, event selector,
+or runtime rule is admitted because the Saturn consumer is not source-bound.
 
 ### 4.5 Text Format Variants
 
@@ -438,7 +440,7 @@ Handles ASCII and Hankaku katakana. Double-byte characters replaced with "?".
 | Shift-JIS Hankaku Katakana | Half-width katakana (0xA1-0xDF) | ✅ |
 | Shift-JIS Daiji/Kanji | Double-byte JIS X 0208 | ❌ "?" replacement |
 | `*.TXT` lore files | Plain text with Shift-JIS | ❌ Not loaded |
-| `SLEV*.BIN` scripts | SDDRVS.TSK binary scripts | ❌ STUB only |
+| `SLEV*.BIN` scripts | SDDRVS.TSK binary scripts | ✅ bounded source/header receipt ❌ event semantics |
 
 ### 4.6 Firestaff Conversion
 
@@ -463,7 +465,7 @@ typedef struct {
 | Shift-JIS → UTF-8 Katakana | ✅ Implemented | `nexus_v1_sjis_to_utf8()` |
 | Shift-JIS → UTF-8 Kanji | ❌ Replaced with "?" | No lookup table |
 | `*.TXT` lore files | ❌ Not loaded | |
-| `SLEV*.BIN` script parsing | ❌ STUB only | `nexus_v1_script_vm.c` |
+| `SLEV*.BIN` source profiling | ✅ bounded receipt; no event dispatch | `nexus_v1_script_vm.c`, `nexus_v1_slev_task_corpus_receipt.c` |
 
 ---
 
