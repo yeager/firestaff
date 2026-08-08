@@ -178,8 +178,9 @@ int main(void) {
                   startup_world.party.champions[0].health == 175 &&
                   startup_world.party.champions[1].health == 400 &&
                   startup_world.party.champions[1].strength == 60 &&
-                  startup_world.party.champions[1].slots[THERON_ESLOT_WEAPON] == 8,
-              "verified startup retains source roster stats and equipment before capture gate");
+                  startup_world.party.champions[1].slots[THERON_ESLOT_WEAPON] == -1 &&
+                  startup_world.party.champions[1].load == 0,
+              "verified startup retains source roster stats while unbound T900 equipment stays gated");
     }
 
     if (failures) return 1;
