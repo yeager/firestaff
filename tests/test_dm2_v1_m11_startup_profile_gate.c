@@ -1726,9 +1726,23 @@ int main(void) {
                     new_game_generators.queued_timer_count == 0 &&
                     new_game_world_owner.timer_queue.num_timers ==
                         (int16_t)new_game_generators.queued_timer_count &&
+                    new_game_world_owner.actuator_generators_processed &&
+                    !new_game_world_owner.source_map_context_materialized &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 runs the original fresh-game actuator-generator pass only in the private File_header/c_tim owner");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_source_map_context(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.source_map_context_materialized &&
+                    new_game_world_owner.current_map == 0 &&
+                    new_game_world_owner.source_party_map == 0 &&
+                    new_game_world_owner.source_party_x == 1u &&
+                    new_game_world_owner.source_party_y == 8u &&
+                    new_game_world_owner.source_party_direction == 0u &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 restores the private New Game map context from the real File_header only after actuator generators");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner) &&

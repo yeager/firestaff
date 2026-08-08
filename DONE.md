@@ -84,6 +84,28 @@
   inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
   skapades eller ändrades.
 
+# DM2 New Game privat kartkontext efter aktuatorkön (2026-08-08)
+
+- ✅ Den privata `GameLoadWorldOwner` följer nu svansen av
+  `DM2_GAME_LOAD`: efter ett lyckat `DM2_PROCESS_ACTUATOR_TICK_GENERATOR`
+  materialiseras karta, X, Y och riktning från Fileheaders autentiska
+  startpose enligt `DM2_move_2fcf_0b8b`.
+- ✅ Källordningen är låst i realdatatestet. Karta 0 och pose `(1,8,0)` blir
+  privata statefält först efter generatorpasset, medan M11, HUD och
+  `source_game_load_session_ready` fortfarande är noll.
+
+# DM2 SKSAVE privat GAME_LOAD-ägare (2026-08-08)
+
+- ✅ `DM2_V1_SksaveGameLoadOwner` kan nu behålla en komplett källordnad
+  återställning i RAM: fixed-state-sektioner, hjältar, timerposter med
+  heap/fri-lista, kartägare, recordpooler och leader-hand-root.
+- ✅ Den gemensamma walkern behåller ägarskapet först när alla originalfaser
+  har lyckats. Preflight fortsätter att frigöra sin temporära transaktion och
+  ingen delvis karta eller recordpool kan läcka till Resume.
+- ✅ Korpustestet bekräftar att alla åtta verkliga DOS-sparfiler är spärrade
+  från publicerad session: fyra når lokala recordpooler, men ingen når den
+  kompletta kart-/recycler-kedjan. Råa SKSAVE-byte förblir orörda.
+
 # DM2 New Game 0x04-konsument vid GAME_LOAD-gränsen (2026-08-08)
 
 - ✅ Den privata `GameLoadWorldOwner` kan nu konsumera en autentiskt kodad

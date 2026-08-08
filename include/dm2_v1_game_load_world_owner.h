@@ -42,6 +42,14 @@ typedef struct {
     DM2_V1_TimerQueue timer_queue;
     uint16_t timer_capacity;
     int fresh_game_mode;
+    int actuator_generators_processed;
+    /* DM2_move_2fcf_0b8b / CHANGE_CURRENT_MAP_TO source state.  This stays
+     * private until the later all-owner session commit. */
+    int source_map_context_materialized;
+    int source_party_map;
+    uint8_t source_party_x;
+    uint8_t source_party_y;
+    uint8_t source_party_direction;
     const DM2_V1_AssetLoader *asset_loader;
     int dyn4_materialized;
     uint16_t dyn4_selector_count;
@@ -117,6 +125,13 @@ int dm2_v1_game_load_world_owner_is_prepared(
 int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
     DM2_V1_GameLoadWorldOwner *owner,
     DM2_V1_GameLoadActuatorGeneratorReceipt *out_receipt);
+
+/* Source-ordered New Game equivalent of the DM2_move_2fcf_0b8b call at the
+ * tail of DM2_GAME_LOAD.  It is legal only after the full generator scan and
+ * derives map, position and direction from authenticated DUNGEON.DAT header
+ * fields.  It does not publish a party, viewport or M11 map. */
+int dm2_v1_game_load_world_owner_materialize_source_map_context(
+    DM2_V1_GameLoadWorldOwner *owner);
 
 /* Materialize the click-ordered c_hero and possession result that was
  * authenticated while the owner was built.  This is deliberately after the

@@ -46,6 +46,9 @@
   `DM2_PROCESS_ACTUATOR_TICK_GENERATOR`-fasen privat, med `savegamew8`-läge,
   DB3 byte+4-mutationer och rollback vid köfel. Den privata 0x56-fortsättningen
   kan nu skapa originalets 0x04-meddelande och nästa 0x56-post i samma kö.
+  Efter generatorpasset materialiseras den privata kartkontext som
+  `DM2_move_2fcf_0b8b` bygger från Fileheaders riktiga startpose. Den når
+  aldrig viewporten före en komplett sessionscommit.
   Championvalet materialiseras därefter i den privata `c_party`-ägaren från
   samma click-ordnade GDAT- och File_header-receipt, med varje itemlänk
   kontrollerad mot dess riktiga DB-pool. Originalets equip-bonusläge och
@@ -56,6 +59,14 @@
   kompletta följdkedjor har samma ägare. DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.
+
+- 🔧 DM2 SKSAVE GAME_LOAD: en privat RAM-ägare behåller nu de källordnade
+  fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
+  först efter att hela den befintliga återställningskedjan lyckats. Den
+  verkliga DOS-korpusen har ännu ingen fil vars kart-/recycler-kedja når hela
+  vägen, så Resume är fortsatt spärrad för samtliga åtta filer. Nästa steg är
+  originalets globala effekt-timerfas och en komplett sessionscommit, inte en
+  påhittad save- eller resumeväg.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. Nästa

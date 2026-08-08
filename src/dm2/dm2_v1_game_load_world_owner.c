@@ -303,7 +303,7 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         owner->champion_selection_materialized || !owner->fresh_game_mode ||
-        owner->committed) return 0;
+        !owner->source_map_context_materialized || owner->committed) return 0;
 
     /* SKProject c_savegame.cpp::DM2_GAME_LOAD reaches SELECT_CHAMPION only
      * after DM2_PROCESS_ACTUATOR_TICK_GENERATOR. The transaction has replayed
@@ -321,6 +321,37 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
     }
     owner->selected_party = candidate;
     owner->champion_selection_materialized = 1;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_source_map_context(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    const int map = owner ? owner->transaction.entrance.map : -1;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || !owner->actuator_generators_processed ||
+        owner->source_map_context_materialized || owner->committed ||
+        map < 0 || map >= owner->dungeon.level_count ||
+        !owner->dungeon.initial_party_pose_valid ||
+        owner->dungeon.initial_party_x != owner->transaction.entrance.x ||
+        owner->dungeon.initial_party_y != owner->transaction.entrance.y ||
+        owner->dungeon.initial_party_dir != owner->transaction.entrance.direction) {
+        return 0;
+    }
+
+    /* SKProject sksvgame.cpp::DM2_GAME_LOAD (1561-1565) calls
+     * DM2_move_2fcf_0b8b only after PROCESS_ACTUATOR_TICK_GENERATOR.
+     * DUNGEON_STRUCTURE established v1e0266=0 for New Game and header w8
+     * supplies the three pose fields.  These are source bytes, not defaults.
+     * CHANGE_CURRENT_MAP_TO's display-relative fields remain unmaterialised
+     * because a private preselection owner may not expose a viewport. */
+    owner->current_map = map;
+    owner->source_party_map = map;
+    owner->source_party_x = (uint8_t)owner->dungeon.initial_party_x;
+    owner->source_party_y = (uint8_t)owner->dungeon.initial_party_y;
+    owner->source_party_direction = (uint8_t)owner->dungeon.initial_party_dir;
+    owner->source_map_context_materialized = 1;
     return 1;
 }
 
@@ -353,7 +384,8 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
-        !owner->fresh_game_mode || owner->committed) return 0;
+        !owner->fresh_game_mode || owner->actuator_generators_processed ||
+        owner->committed) return 0;
     db3 = &owner->record_pools.pools[3];
     if (!db3->bytes || db3->record_size != 8 || db3->record_count <= 0 ||
         (db3->extension_count > 0 && !db3->extension_bytes) ||
@@ -479,6 +511,8 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
         }
     }
     receipt.valid = receipt.receipt_hash != 0u;
+    if (!receipt.valid) goto fail;
+    owner->actuator_generators_processed = 1;
     free(index_backup);
     free(timer_backup);
     free(db3_extension_backup);
