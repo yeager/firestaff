@@ -808,6 +808,16 @@
   DB0-koden. Korpusen skiljer därmed pooluttömning från tidigare
   specialtimerfel och andra kartfel utan att föreslå en påhittad recycler.
 
+# DM2 SKSAVE:s c_map-infogning vid dynamiska poster (2026-08-08)
+
+- ✅ Den tillfälliga, källägda `c_map`-ägaren följer nu
+  `DM2_APPEND_RECORD_TO` när en omarkerad sparad ruta får sin första
+  dynamiska post: den infogar ground-stack-länken och flyttar följande
+  kolumnindex i den temporära kartkopian. Rå SKSAVE-data ändras inte.
+- ✅ Verifierat mot alla åtta riktiga PC-DOS-sparfiler. Kartkedjor som tidigare
+  avvisades vid DB15-append fortsätter nu till originalets DB0-recyclergräns.
+  Sessionen publiceras fortfarande inte.
+
 # DM2 New Game-entréreceipt (2026-08-08)
 
 - ✅ File_header::`w8`-startpositionen binds nu till karta 0:s verkliga

@@ -1055,14 +1055,11 @@ static void test_real_raw_save(const char *path, const char *root,
                       (uint16_t)(state_receipt.champion_count * DM2_NUM_ITEMS + 1u) &&
                   special_timers.direct_root_hash != 0u,
                   "real SKSave binds all direct hero inventory roots before map restore");
-            if (special_timers.map_failure_record_reason == 2) {
-                CHECK(special_timers.recycle_required_db ==
-                          special_timers.map_failure_record_type,
-                      "full source record pool names the DB that requires world recycling");
-            } else {
-                CHECK(special_timers.recycle_required_db == -1,
-                      "non-exhausted source failure does not invent a recycler DB");
-            }
+            CHECK(special_timers.map_failure_record_reason ==
+                      DM2_READ_RECORD_FAILURE_ALLOC &&
+                  special_timers.recycle_required_db ==
+                      special_timers.map_failure_record_type,
+                  "real map chains reach the original recycler boundary after c_map insertion");
         } else {
             CHECK(special_timers.recycle_required_db == -1,
                   "pre-map source failure does not invent a recycler DB");

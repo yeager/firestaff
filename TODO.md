@@ -33,6 +33,9 @@
   och partyägare, aldrig genom en syntetisk reservpost.
   Övriga avbrutna faser rapporterar uttryckligen att recycler saknas (`-1`)
   och får inte tolkas som ett DB0-krav.
+  Den temporära c_map-ägaren kan nu infoga en verklig dynamisk ground-stack-
+  post i originalets kolumnordning; nästa steg är recycler-valet och borttag-
+  ningen från den fullständiga världskedjan, inte en lokal poolersättning.
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   monterad dungeon eller tom lokal cooldown får inte presenteras som en

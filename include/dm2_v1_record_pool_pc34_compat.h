@@ -73,6 +73,12 @@ typedef struct {
     const uint8_t *raw_body;
     size_t raw_body_size;
     const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    /* Mutable c_map::v1e03f4-equivalent column starts.  SKProject
+     * c_record.cpp::DM2_APPEND_RECORD_TO inserts an entry and increments
+     * each following column when a formerly unmarked tile receives its
+     * first restored dynamic record. */
+    uint16_t *column_indices;
+    size_t column_index_count;
     uint16_t *ground_stack_links;
     size_t ground_stack_count;
     uint8_t *map_tiles;

@@ -80,12 +80,10 @@ static int dm2_v1_sksave_map_owner_ground_index(
     column_index_base = (size_t)DM2_V1_RAW_DUNGEON_HEADER_SIZE +
         (size_t)dungeon->map_count * DM2_V1_RAW_MAP_DESC_SIZE;
     for (i = 0u; i < (size_t)map; ++i) column_base += dungeon->map_widths[i];
-    if (column_base + (size_t)x >= (size_t)dungeon->column_index_count ||
-        column_index_base > owner->raw_body_size ||
-        (size_t)dungeon->column_index_count >
-            (owner->raw_body_size - column_index_base) / 2u) return 0;
-    object_index = (size_t)dm2_v1_raw_rd16(owner->raw_body +
-        column_index_base + (column_base + (size_t)x) * 2u);
+    (void)column_index_base;
+    if (!owner->column_indices ||
+        column_base + (size_t)x >= owner->column_index_count) return 0;
+    object_index = (size_t)owner->column_indices[column_base + (size_t)x];
     for (i = 0u; i < (size_t)y; ++i) {
         uint8_t prior = owner->map_tiles[(size_t)owner->map_tile_offsets[map] +
             (size_t)x * dungeon->map_heights[map] + i];
@@ -93,6 +91,58 @@ static int dm2_v1_sksave_map_owner_ground_index(
     }
     if (object_index >= owner->ground_stack_count) return 0;
     *out_index = object_index;
+    return 1;
+}
+
+/* c_record.cpp:76-108, DM2_APPEND_RECORD_TO's tile path.  The source adds
+ * a c_map ground-stack slot when a dynamic record is restored on an
+ * unmarked tile.  Keep the raw SKSAVE bytes immutable: only the temporary
+ * c_map owner receives the inserted link and adjusted column starts. */
+static int dm2_v1_sksave_map_owner_insert_tile_record_link(
+    DM2_V1_SksaveMapOwner *owner, int map, int x, int y, uint16_t link)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    size_t column_base = 0u;
+    size_t insert_index;
+    size_t i;
+    uint16_t *grown;
+    uint8_t *tile;
+
+    if (!owner || !owner->valid || !owner->dungeon || !owner->column_indices ||
+        map < 0 || map >= (int)owner->dungeon->map_count || x < 0 || y < 0 ||
+        x >= (int)owner->dungeon->map_widths[map] ||
+        y >= (int)owner->dungeon->map_heights[map] ||
+        link == 0xffffu || link == 0xfffeu) return 0;
+    dungeon = owner->dungeon;
+    tile = owner->map_tiles + (size_t)owner->map_tile_offsets[map] +
+        (size_t)x * dungeon->map_heights[map] + (size_t)y;
+    if ((*tile & 0x10u) != 0u) return 0;
+    for (i = 0u; i < (size_t)map; ++i) column_base += dungeon->map_widths[i];
+    if (column_base + (size_t)x >= owner->column_index_count) return 0;
+    insert_index = (size_t)owner->column_indices[column_base + (size_t)x];
+    for (i = 0u; i < (size_t)y; ++i) {
+        const uint8_t prior = owner->map_tiles[
+            (size_t)owner->map_tile_offsets[map] +
+            (size_t)x * dungeon->map_heights[map] + i];
+        if ((prior & 0x10u) != 0u) ++insert_index;
+    }
+    if (insert_index > owner->ground_stack_count ||
+        owner->ground_stack_count == SIZE_MAX / sizeof(*grown)) return 0;
+    for (i = column_base + (size_t)x + 1u; i < owner->column_index_count; ++i) {
+        if (owner->column_indices[i] == UINT16_MAX) return 0;
+    }
+    grown = (uint16_t *)realloc(owner->ground_stack_links,
+        (owner->ground_stack_count + 1u) * sizeof(*grown));
+    if (!grown) return 0;
+    owner->ground_stack_links = grown;
+    memmove(grown + insert_index + 1u, grown + insert_index,
+            (owner->ground_stack_count - insert_index) * sizeof(*grown));
+    grown[insert_index] = link;
+    ++owner->ground_stack_count;
+    for (i = column_base + (size_t)x + 1u; i < owner->column_index_count; ++i) {
+        ++owner->column_indices[i];
+    }
+    *tile |= 0x10u;
     return 1;
 }
 
@@ -121,8 +171,16 @@ int dm2_v1_sksave_map_owner_init(
         return 0;
     owner->ground_stack_links = (uint16_t *)malloc(bytes ? bytes : 1u);
     if (!owner->ground_stack_links) return 0;
+    owner->column_indices = (uint16_t *)malloc(
+        (size_t)dungeon_receipt->column_index_count * sizeof(*owner->column_indices));
+    if (!owner->column_indices) {
+        free(owner->ground_stack_links);
+        memset(owner, 0, sizeof(*owner));
+        return 0;
+    }
     owner->map_tiles = (uint8_t *)malloc(dungeon_receipt->map_data_byte_count);
     if (!owner->map_tiles) {
+        free(owner->column_indices);
         free(owner->ground_stack_links);
         memset(owner, 0, sizeof(*owner));
         return 0;
@@ -131,12 +189,18 @@ int dm2_v1_sksave_map_owner_init(
         (size_t)dungeon_receipt->map_data_byte_count >
             raw_body_size - (size_t)dungeon_receipt->map_data_base) {
         free(owner->map_tiles);
+        free(owner->column_indices);
         free(owner->ground_stack_links);
         memset(owner, 0, sizeof(*owner));
         return 0;
     }
     memcpy(owner->map_tiles, raw_body + dungeon_receipt->map_data_base,
            dungeon_receipt->map_data_byte_count);
+    for (i = 0u; i < (size_t)dungeon_receipt->column_index_count; ++i) {
+        owner->column_indices[i] = dm2_v1_raw_rd16(raw_body +
+            column_index_base + i * 2u);
+    }
+    owner->column_index_count = dungeon_receipt->column_index_count;
     owner->map_tiles_size = dungeon_receipt->map_data_byte_count;
     for (i = 0u; i < (size_t)dungeon_receipt->map_count; ++i) {
         const size_t offset = dungeon_receipt->map_data_relative_offsets[i];
@@ -145,6 +209,7 @@ int dm2_v1_sksave_map_owner_init(
         if (offset > owner->map_tiles_size ||
             tile_count > (size_t)dungeon_receipt->map_data_byte_count - offset) {
             free(owner->map_tiles);
+            free(owner->column_indices);
             free(owner->ground_stack_links);
             memset(owner, 0, sizeof(*owner));
             return 0;
@@ -158,6 +223,7 @@ int dm2_v1_sksave_map_owner_init(
              dm2_v1_record_handle_index((int16_t)link) >=
                  dungeon_receipt->db_record_counts[dm2_v1_record_handle_pool((int16_t)link)])) {
             free(owner->map_tiles);
+            free(owner->column_indices);
             free(owner->ground_stack_links);
             memset(owner, 0, sizeof(*owner));
             return 0;
@@ -177,6 +243,7 @@ void dm2_v1_sksave_map_owner_free(DM2_V1_SksaveMapOwner *owner)
 {
     if (!owner) return;
     free(owner->ground_stack_links);
+    free(owner->column_indices);
     free(owner->map_tiles);
     memset(owner, 0, sizeof(*owner));
 }
@@ -681,11 +748,18 @@ static int dm2_v1_sksave_pool_append(void *context, uint16_t new_link,
     }
     if (map_x >= 0) {
         size_t ground_index;
-        if (!ctx->map_owner || !ctx->map_owner->valid || owner_link ||
+        const int ground_result = (!ctx->map_owner || !ctx->map_owner->valid ||
+                                   owner_link) ? 0 :
             dm2_v1_sksave_map_owner_ground_index(ctx->map_owner,
-                ctx->map_owner->current_map, map_x, map_y,
-                &ground_index) != 1) return -1;
-        owner_link = &ctx->map_owner->ground_stack_links[ground_index];
+                ctx->map_owner->current_map, map_x, map_y, &ground_index);
+        if (ground_result == 1) {
+            owner_link = &ctx->map_owner->ground_stack_links[ground_index];
+        } else if (ground_result == -1) {
+            if (!dm2_v1_sksave_map_owner_insert_tile_record_link(
+                    ctx->map_owner, ctx->map_owner->current_map,
+                    map_x, map_y, new_link)) return -1;
+            return 0;
+        } else return -1;
     } else if (!owner_link || map_y != 0) return -1;
     dm2_v1_wr16((uint8_t *)dm2_v1_record_pool_address_mut(
                     ctx->set, (int16_t)new_link), DM2_V1_RECORD_HANDLE_END);
