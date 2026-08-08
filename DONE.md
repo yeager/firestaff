@@ -9468,3 +9468,7 @@
 
 - ✅ `nexus_v1_game_resolve_dungeon_start()` bevarar nu `-1` som okänd Saturn-riktning i stället för att maskera den till riktning 3.
 - ✅ Ny provenance-regression täcker både okänd och känd riktning; startup-, SMAP- och title-pointer-tester passerar.
+# Nexus runtime start rejects READY receipts without direction (2026-08-08)
+
+- ✅ `nexus_v1_game_apply_dungeon_start()` nekar nu även en `READY`-receipt med okänd riktning, så en giltig DGN-cell inte kan kringgå Saturn-startpose-grinden och nå viewporten med syntetisk riktning.
+- ✅ Dungeon-start-provenance och realdata-SMAP-regression passerar.
