@@ -8068,6 +8068,13 @@
 - Den verkliga English- och Japanese-regressionen verifierar championdata,
   Prison → HUD, rörelse, inventory, CDDA-val och `ENDING.ANM`. MINI:s
   dungeon-/event-/timeline-del överförs ännu inte som en falsk delresume.
+
+# CSB FM Towns MINI-runtimeinventering (2026-08-08)
+
+- Verifierade `GLOBAL_DATA`-metadata från båda riktiga F31-seederna: 23
+  event, första lediga index 23 och åtta aktiva grupper i en 436-posters
+  timeline. Uppgifterna behålls som autentisk handoff-evidens och förhindrar
+  att en framtida resume av misstag ersätter dem med en tom runtimekö.
 # 2026-08-08 Theron inferred spawn-stat boundary
 
 - ✅ Removed the old host-seeded HP/attack/defense arithmetic from the

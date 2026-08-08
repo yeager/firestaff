@@ -209,6 +209,9 @@ int main(void)
               direct_handoff.startup_mini_party_map_y == 18 &&
               direct_handoff.startup_mini_party_direction == 2 &&
               direct_handoff.startup_mini_party_map_index == 4 &&
+              direct_handoff.startup_mini_event_count == 23u &&
+              direct_handoff.startup_mini_first_unused_event_index == 23u &&
+              direct_handoff.startup_mini_current_active_group_count == 8u &&
               direct_handoff.startup_mini_event_maximum_count == 436u &&
               direct_handoff.startup_mini_active_group_capacity == 60u &&
               direct_handoff.startup_mini_verified_save_body_offset == 8236u &&

@@ -86,6 +86,9 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
      * and live Resume handoff remain deliberately unavailable. */
     int startup_mini_save_parts_verified;
     uint16_t startup_mini_party_champion_count;
+    uint16_t startup_mini_event_count;
+    uint16_t startup_mini_first_unused_event_index;
+    uint16_t startup_mini_current_active_group_count;
     uint16_t startup_mini_event_maximum_count;
     uint16_t startup_mini_active_group_capacity;
     uint32_t startup_mini_game_time;

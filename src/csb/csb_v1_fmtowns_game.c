@@ -40,7 +40,10 @@ enum {
     CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_Y_OFFSET = 14u,
     CSB_V1_FMTOWNS_GLOBAL_PARTY_DIRECTION_OFFSET = 16u,
     CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_INDEX_OFFSET = 18u,
+    CSB_V1_FMTOWNS_GLOBAL_EVENT_COUNT_OFFSET = 24u,
+    CSB_V1_FMTOWNS_GLOBAL_FIRST_UNUSED_EVENT_INDEX_OFFSET = 26u,
     CSB_V1_FMTOWNS_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET = 28u,
+    CSB_V1_FMTOWNS_GLOBAL_CURRENT_ACTIVE_GROUP_COUNT_OFFSET = 30u,
     CSB_V1_FMTOWNS_GLOBAL_ACTIVE_GROUP_CAPACITY_OFFSET = 46u,
     CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_BYTES = 464u,
     CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_COUNT = 4u,
@@ -443,8 +446,18 @@ static int csb_v1_fmtowns_game_startup_mini_save_parts_open(
         part_data = NULL;
         offset += part_sizes[index];
     }
+    /* ReDMCSB DEFS.H GLOBAL_DATA lines 538-568 fixes these F31 offsets.
+     * Retain the source heap metadata even though Resume stays closed until
+     * its event records and the eight live ACTIVE_GROUP owners transfer in
+     * the same transaction as the dungeon tail. */
     receipt->startup_mini_party_champion_count = csb_v1_fmtowns_game_read_le16(
         global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_CHAMPION_COUNT_OFFSET);
+    receipt->startup_mini_event_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_EVENT_COUNT_OFFSET);
+    receipt->startup_mini_first_unused_event_index = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_FIRST_UNUSED_EVENT_INDEX_OFFSET);
+    receipt->startup_mini_current_active_group_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_CURRENT_ACTIVE_GROUP_COUNT_OFFSET);
     receipt->startup_mini_game_time = csb_v1_fmtowns_game_read_le32(global_data);
     receipt->startup_mini_party_map_x = (int16_t)csb_v1_fmtowns_game_read_le16(
         global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_X_OFFSET);

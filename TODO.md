@@ -2181,6 +2181,10 @@
   events and timeline can transfer atomically; mixing the verified MINI pose
   with another live dungeon body would be a false resume. User-save
   persistence and complete event/timeline restoration remain open.
+  The shipped English and Japanese seeds both contain 23 scheduled events
+  (436-slot heap) and eight live `ACTIVE_GROUP` entries; a resume must restore
+  those original owners with the same MINI dungeon transaction, never clear
+  them or synthesize an empty timeline.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only
   after both original CD hashes admit. M11 binds its package-language Switch
