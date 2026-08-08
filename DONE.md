@@ -119,6 +119,13 @@
 - ✅ Verifierat mot PC-DOS karta 0. Aktuering, timers och målmutation är
   fortsatt spärrade tills deras kompletta sessionägare är återställd.
 
+# DM2 File_header teleporter-root intake (2026-08-08)
+
+- ✅ Kanoniska karta 0 läser nu direkta DB1-teleportörer med destination,
+  räckvidd, ljud- och rotationsfält från originalets recordpool.
+- ✅ Verifierat mot PC-DOS-data. Ingen party förflyttas och inga kartor byts
+  förrän originalets rörelse- och sessionskedja är komplett.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

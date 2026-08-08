@@ -918,6 +918,17 @@ typedef struct {
     uint8_t rotation_type;
 } DM2_V1_G1DirectTeleporterRoot;
 
+#define DM2_V1_FILE_HEADER_RUNTIME_MAX_TELEPORTERS 64
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int teleporter_root_count;
+    int teleporter_record_reads;
+    DM2_V1_G1DirectTeleporterRoot
+        teleporters[DM2_V1_FILE_HEADER_RUNTIME_MAX_TELEPORTERS];
+} DM2_V1_FileHeaderRuntimeTeleporterReceipt;
+
 #define DM2_V1_G1_FIRST_MAP_MAX_ROOTS 64
 
 typedef struct {
@@ -1621,6 +1632,11 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
 int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_G1RuntimeMapActuatorReceipt *out);
+/* Decode direct DB1 Teleporter roots from a canonical File_header map without
+ * applying movement or sound. */
+int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *out);
 /* Finds one previously materialized direct DB3 root by source map
  * coordinate. This is a lookup-only handoff: it does not invoke the
  * actuator, follow GenericRecord::w0, or mutate a record/timer. */

@@ -3567,6 +3567,59 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt validation;
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt candidate;
+
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, map, &validation) || !validation.committed) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int root;
+            const uint8_t *record;
+            uint16_t w2, w4;
+            DM2_V1_G1DirectTeleporterRoot *teleporter;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            root = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+            if (root < 0 || root == (int)DM2_THING_END_MARKER ||
+                (((unsigned int)root >> 10) & 0x0fu) != 1u) continue;
+            if (candidate.teleporter_root_count >=
+                DM2_V1_FILE_HEADER_RUNTIME_MAX_TELEPORTERS) return 0;
+            record = dm2_v1_dungeon_get_thing_record(
+                d, (uint16_t)root, NULL, NULL, NULL);
+            if (!record) return 0;
+            w2 = RD16(record + 2); w4 = RD16(record + 4);
+            teleporter = &candidate.teleporters[candidate.teleporter_root_count++];
+            teleporter->x = x; teleporter->y = y;
+            teleporter->object_id = (uint16_t)root;
+            teleporter->index = (uint16_t)root & 0x03ffu;
+            teleporter->direction = (uint8_t)((unsigned int)root >> 14);
+            teleporter->destination_x = (uint8_t)(w2 & 0x001fu);
+            teleporter->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
+            teleporter->destination_map = (uint8_t)(w4 >> 8);
+            teleporter->scope = (uint8_t)(w4 & 0x000fu);
+            teleporter->sound = (uint8_t)((w4 >> 4) & 1u);
+            teleporter->rotation = (uint8_t)((w4 >> 5) & 3u);
+            teleporter->rotation_type = (uint8_t)((w4 >> 7) & 1u);
+            ++candidate.teleporter_record_reads;
+        }
+    }
+    if (candidate.teleporter_record_reads != candidate.teleporter_root_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_g1_runtime_map_actuator_at(
     const DM2_V1_G1RuntimeMapActuatorReceipt *receipt,
     int x,

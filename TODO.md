@@ -26,6 +26,10 @@
   their source target/delay/effect fields. Recover `DM2_INVOKE_ACTUATOR`,
   DB14/timer ownership and target record mutation before any actuator fires.
 
+- **DM2-FILE-HEADER-TELEPORT-RUNTIME:** Canonical map-0 DB1 teleporters now
+  expose original destinations and scope. Bind `c_moverec` map changes,
+  party/session ownership, collision and sound before allowing a transition.
+
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media
   into a filename-only fallback or require users to unpack their archives.

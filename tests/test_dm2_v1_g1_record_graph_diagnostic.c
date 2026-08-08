@@ -50,6 +50,7 @@ int main(void) {
     DM2_V1_FileHeaderRuntimeMapReceipt map0;
     DM2_V1_G1RuntimeMapDoorReceipt doors;
     DM2_V1_G1RuntimeMapActuatorReceipt actuators;
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
 
     paths[0] = env;
 
@@ -110,6 +111,13 @@ int main(void) {
             &d, 0, &actuators) || !actuators.committed ||
         actuators.actuator_record_reads != actuators.actuator_root_count) {
         printf("FAIL: File_header map-0 actuator roots were not retained\n");
+        ++failures;
+    }
+    memset(&teleporters, 0, sizeof(teleporters));
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
+            &d, 0, &teleporters) || !teleporters.committed ||
+        teleporters.teleporter_record_reads != teleporters.teleporter_root_count) {
+        printf("FAIL: File_header map-0 teleporter roots were not retained\n");
         ++failures;
     }
 
