@@ -74,6 +74,41 @@ static int creature_id_for_index(int index) {
     return index + 1;
 }
 
+/* Fixture-only arithmetic retained for legacy combat probes.  The values are
+ * deliberately not source-backed and must never be linked into production;
+ * the source-bound API in theron_v1_track02_creature_spawn.c fails closed.
+ * This helper exists only so old data-free fixture tests remain explicit about
+ * the synthetic stand-in they exercise while the original RNG is captured. */
+static int fixture_compute_inferred_spawn_stats(
+    unsigned int category, uint8_t param1, uint8_t param2,
+    uint16_t rand_seed, Theron_SpawnStats *out) {
+    int hp, atk, def;
+    int r = (int)(rand_seed & 0xFF);
+    if (!out) return 0;
+    hp = atk = def = 0;
+    switch (category) {
+    case 0: hp = (r % 4) + param1; atk = (r % 3) + 2; def = 1; break;
+    case 1: hp = ((r * 21) >> 8) + param1;
+            atk = ((r * 15) >> 8) + 3;
+            def = ((r * 10) >> 8) + 1; break;
+    case 2: hp = (((r * 25) >> 8) * 3 / 2) + param1;
+            atk = (((r * 18) >> 8) * 3 / 2) + 4;
+            def = ((r * 12) >> 8) + 2; break;
+    case 3: hp = ((r % 5) * param1) + (param2 * 3 / 2);
+            atk = ((r % 5) + 1) * 2 + param2;
+            def = ((r % 4) + 1) + param2; break;
+    default: return 0;
+    }
+    if (hp > THERON_CREATURE_HP_CAP) hp = THERON_CREATURE_HP_CAP;
+    if (hp < 1) hp = 1;
+    if (atk < 1) atk = 1;
+    if (def < 1) def = 1;
+    out->hp = (int16_t)hp;
+    out->attack = (int16_t)atk;
+    out->defense = (int16_t)def;
+    return 1;
+}
+
 /* Look up b4 (damage/defense) from the Track 02 item property table.
  * Weapons (cat 0x80): b4 = attack damage bonus.
  * Armor   (cat 0x81): b4 = defense bonus. */
@@ -111,7 +146,7 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     if (zone) {
         Theron_SpawnStats stats;
         uint16_t seed = (uint16_t)(world->world_tick ^ (unsigned)(x * 31 + y * 17));
-        if (!theron_v1_track02_compute_spawn_stats(
+        if (!fixture_compute_inferred_spawn_stats(
                 zone->category, zone->param1, zone->param2, seed, &stats)) {
             /* Track 02 has no source-backed fallback for an unknown category. */
             return -1;

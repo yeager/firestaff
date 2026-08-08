@@ -34,7 +34,7 @@ typedef struct {
 #define THERON_CREATURE_SPAWN_CATEGORY_COUNT  4
 #define THERON_CREATURE_HP_CAP                900
 
-/* Category formula multipliers from disassembly:
+/* Category branch constants observed in disassembly:
  *   Cat 0: dice param = 4
  *   Cat 1: multiplier = 21 (0x15)
  *   Cat 2: multiplier = 25 (0x19), then *1.5
@@ -61,15 +61,18 @@ typedef struct {
 
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index);
 
-/* Computed creature stats from category formula + random seed.
- * The seed replaces rand() for deterministic replay. */
+/* Reserved result shape for a future captured spawn consumer.  No host seed
+ * may stand in for the original RNG.  Until the HuC6280 RNG return contract
+ * and its consumers are captured, the function below always fails closed and
+ * clears this structure. */
 typedef struct {
     int16_t hp;
     int16_t attack;
     int16_t defense;
 } Theron_SpawnStats;
 
-/* Returns 1 when the category is source-backed, otherwise 0. */
+/* Returns 1 only after the original RNG consumer has been source-bound.
+ * Current implementation returns 0 for every input. */
 int theron_v1_track02_compute_spawn_stats(
     unsigned int category, uint8_t param1, uint8_t param2,
     uint16_t rand_seed, Theron_SpawnStats *out);

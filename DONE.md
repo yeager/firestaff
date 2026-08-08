@@ -8032,3 +8032,13 @@
   språkpaket. Testet fortsätter inte längre till en oöppnad handoff och kan
   därför inte krascha. Den vanliga M12-vägen materialiserar fortfarande det
   hash-verifierade, valda språkpaketet privat före M11.
+# 2026-08-08 Theron inferred spawn-stat boundary
+
+- ✅ Removed the old host-seeded HP/attack/defense arithmetic from the
+  source-bound Track 02 spawn API. It now clears output and fails closed until
+  the original HuC6280 RNG return contract and consumers are captured.
+- ✅ Kept the old arithmetic only behind the explicitly fixture-only combat
+  implementation so data-free regression probes cannot be mistaken for real
+  gameplay evidence.
+- ✅ Focused verification: `test_theron_v1_track02_creature_spawn`,
+  `theron_v1_combat_runtime_source`, and `theron_v1_combat_mechanics` all pass.

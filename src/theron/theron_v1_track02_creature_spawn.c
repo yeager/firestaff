@@ -53,53 +53,25 @@ const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned i
     return &g_pointer_table[index];
 }
 
-/* Category-based stat computation from disassembly at UD 0x0870E5.
- * param1/param2 come from the spawn zone descriptor.
- * rand_seed provides determinism (original uses PCE rand). */
+/* The disassembly identifies category branches and constants at UD 0x0870E5,
+ * but it does not yet identify the bank-switched RNG return contract or the
+ * consumers that supply the final values.  A host seed would therefore create
+ * synthetic gameplay data.  Keep this API fail-closed until a live HuC6280
+ * capture binds those bytes and consumers.  The old arithmetic sketch belongs
+ * only in explicitly labelled fixture code, never in this source-bound path.
+ */
 int theron_v1_track02_compute_spawn_stats(
     unsigned int category, uint8_t param1, uint8_t param2,
     uint16_t rand_seed, Theron_SpawnStats *out)
 {
-    if (!out) return 0;
-    out->hp = 0;
-    out->attack = 0;
-    out->defense = 0;
-    int hp = 0, atk = 0, def = 0;
-    int r = (int)(rand_seed & 0xFF);
-
-    switch (category) {
-    case 0: /* dice(4): HP = rand % 4 + param1 */
-        hp = (r % 4) + param1;
-        atk = (r % 3) + 2;
-        def = 1;
-        break;
-    case 1: /* rand * 21: HP = (rand * 21) >> 8 + param1 */
-        hp = ((r * 21) >> 8) + param1;
-        atk = ((r * 15) >> 8) + 3;
-        def = ((r * 10) >> 8) + 1;
-        break;
-    case 2: /* rand * 25 * 1.5: HP = ((rand * 25) >> 8) * 3 / 2 + param1 */
-        hp = (((r * 25) >> 8) * 3 / 2) + param1;
-        atk = (((r * 18) >> 8) * 3 / 2) + 4;
-        def = ((r * 12) >> 8) + 2;
-        break;
-    case 3: /* dice(5) * scaling + 1.5*adj */
-        hp = ((r % 5) * param1 + (param2 * 3 / 2));
-        atk = ((r % 5) + 1) * 2 + param2;
-        def = ((r % 4) + 1) + param2;
-        break;
-    default:
-        /* No disassembly-backed formula exists outside categories 0-3. */
-        return 0;
+    (void)category;
+    (void)param1;
+    (void)param2;
+    (void)rand_seed;
+    if (out) {
+        out->hp = 0;
+        out->attack = 0;
+        out->defense = 0;
     }
-
-    if (hp > THERON_CREATURE_HP_CAP) hp = THERON_CREATURE_HP_CAP;
-    if (hp < 1) hp = 1;
-    if (atk < 1) atk = 1;
-    if (def < 1) def = 1;
-
-    out->hp = (int16_t)hp;
-    out->attack = (int16_t)atk;
-    out->defense = (int16_t)def;
-    return 1;
+    return 0;
 }

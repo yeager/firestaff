@@ -83,38 +83,13 @@ int main(void) {
     /* HP cap constant */
     assert(THERON_CREATURE_HP_CAP == 900);
 
-    /* Stat computation: category 0 (dice(4)) */
+    /* The disassembly branch constants are a receipt, not a complete
+     * gameplay formula.  Until the original RNG consumer is captured, the
+     * source-bound API must not publish synthetic stats. */
     {
-        Theron_SpawnStats s;
-        assert(theron_v1_track02_compute_spawn_stats(0, 14, 2, 0, &s) == 1);
-        assert(s.hp >= 14 && s.hp <= 17); /* 0..3 + 14 */
-        assert(s.attack >= 2);
-        assert(s.defense >= 1);
-    }
-
-    /* Stat computation: category 2 (rand*25*1.5 + param1) */
-    {
-        Theron_SpawnStats s;
-        assert(theron_v1_track02_compute_spawn_stats(2, 16, 2, 100, &s) == 1);
-        assert(s.hp >= 16);
-        assert(s.hp <= THERON_CREATURE_HP_CAP);
-        assert(s.attack >= 4);
-        assert(s.defense >= 2);
-    }
-
-    /* Stat computation: category 3 (dice(5)*scaling + 1.5*adj) */
-    {
-        Theron_SpawnStats s;
-        assert(theron_v1_track02_compute_spawn_stats(3, 14, 2, 42, &s) == 1);
-        assert(s.hp >= 1);
-        assert(s.hp <= THERON_CREATURE_HP_CAP);
-    }
-
-    /* HP cap enforcement */
-    {
-        Theron_SpawnStats s;
-        assert(theron_v1_track02_compute_spawn_stats(3, 200, 200, 255, &s) == 1);
-        assert(s.hp <= THERON_CREATURE_HP_CAP);
+        Theron_SpawnStats s = { 9, 9, 9 };
+        assert(theron_v1_track02_compute_spawn_stats(0, 14, 2, 0, &s) == 0);
+        assert(s.hp == 0 && s.attack == 0 && s.defense == 0);
     }
 
     /* Unknown categories must not receive invented combat statistics. */
