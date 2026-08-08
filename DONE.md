@@ -57,6 +57,19 @@
 
 # CSB verklig kampanjssparning utan cacheförväxling (2026-08-08)
 
+- ✅ M11:s CSB-spara och F9-återupptagning kan inte längre skriva eller läsa
+  Firestaffs privata runtime-snapshot. Resume-kandidaten måste nu vara en
+  verifierad Atari/Amiga-originalcontainer; en formellt giltig privat header
+  eller en corpus-lös CSBWin-fixture räcker inte. Detta följer ReDMCSB
+  `LOADSAVE.C` F0433/F0435:s odelbara originaltransaktion och lämnar
+  testformat till isolerade decoderprov i stället för spelgränssnittet.
+
+- ✅ Original-save-receipten kontrollerar nu att runtime verkligen äger den
+  laddade Atari/Amiga-källcontainern. Den använder inte längre Firestaffs
+  privata 512-bytesheader som ursprungsbevis. Den riktiga `MINI.DAT`
+  handoff-regressionen passerar fortsatt, medan den privata F9-fixturen
+  explicit avvisas.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan

@@ -22102,11 +22102,13 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
                 return 0;
             }
             game_time = profile->runtime.game_time;
-        } else if (csb_v1_boot_runtime_save_game_to_path_pc34(
-                       state->csbBootProfile,
-                       path,
-                       &game_time) != CSB_V1_SAVE_OK) {
-            m11_set_status(state, "SAVE", "CSB WRITE FAILED");
+        } else {
+            /* A compact Firestaff runtime image is useful for isolated
+             * decoder tests, but it is not an F0433 save.  LOADSAVE.C writes
+             * the original container as one transaction; without an owned
+             * original save template (and its untouched sections), M11 must
+             * not offer a private file as a playable CSB save slot. */
+            m11_set_status(state, "SAVE", "CSB ORIGINAL SAVE REQUIRED");
             return 0;
         }
         /* ReDMCSB LOADSAVE.C F0433 writes CSB GLOBAL_DATA, party state,
@@ -22333,8 +22335,6 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;
         CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_receipt;
-        char legacy_path[M11_GAME_VIEW_PATH_CAPACITY];
-        const char *explicit_path = getenv("FIRESTAFF_QUICKSAVE_PATH");
 
         if (!state->csbBootProfile) {
             m11_set_status(state, "LOAD", "CSB PROFILE MISSING");
@@ -22359,30 +22359,12 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
             game_time = original_receipt.runtime_game_time_after;
             state->csbOriginalSaveRuntimeReceipt = original_receipt;
             state->csbOriginalSaveRuntimeReceiptRequired = 1;
-        } else if (csb_v1_boot_runtime_load_game_from_path_pc34(
-                       state->csbBootProfile, path, &game_time) ==
-                   CSB_V1_LOAD_OK) {
-            /* CSBWin is independently authenticated by its existing runtime
-             * loader and cannot inherit a native F0435 provenance receipt. */
-            memset(&state->csbOriginalSaveRuntimeReceipt, 0,
-                   sizeof(state->csbOriginalSaveRuntimeReceipt));
-            state->csbOriginalSaveRuntimeReceiptRequired = 0;
-        } else if ((!explicit_path || explicit_path[0] == '\0') &&
-                   !m11_path_is_readable(path) &&
-                   m11_get_legacy_csb_quicksave_path(
-                       legacy_path, sizeof(legacy_path)) &&
-                   m11_path_is_readable(legacy_path) &&
-                   csb_v1_boot_runtime_load_game_from_path_pc34(
-                       state->csbBootProfile, legacy_path, &game_time) ==
-                       CSB_V1_LOAD_OK) {
-            /* Only an absent new default may fall back. A malformed native
-             * CSB save must report its failure rather than silently loading
-             * an unrelated old snapshot. */
-            snprintf(path, sizeof(path), "%s", legacy_path);
-            memset(&state->csbOriginalSaveRuntimeReceipt, 0,
-                   sizeof(state->csbOriginalSaveRuntimeReceipt));
-            state->csbOriginalSaveRuntimeReceiptRequired = 0;
         } else {
+            /* Do not fall back to csb_v1_runtime_load_game_from_path_pc34:
+             * that accepts Firestaff-private snapshots and corpus-less
+             * CSBWin shapes for decoder coverage.  Neither is an authentic
+             * F0435 handoff.  ReDMCSB LOADSAVE.C F0435 owns the original
+             * whole-save transaction, including the source container. */
             m11_set_status(state, "LOAD", "CSB QUICKSAVE INVALID");
             return 0;
         }

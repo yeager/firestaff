@@ -1,5 +1,7 @@
-/* Focused native CSB F0435 -> M11 F9 provenance gate.
- * ReDMCSB LOADSAVE.C F0435 owns header validation before runtime restore. */
+/* Focused CSB F0435 -> M11 F9 provenance gate.
+ * ReDMCSB LOADSAVE.C F0435 owns the original whole-save transaction.  This
+ * test deliberately writes Firestaff's private decoder fixture only to prove
+ * that M11 will not present it as an original save. */
 
 #include "csb_v1_boot.h"
 #include "csb_v1_save_load_pc34_compat.h"
@@ -80,7 +82,6 @@ int main(void)
     char *save_path;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
-    int tick_before;
     int save_fd;
 
     if (!data_dir || !data_dir[0]) {
@@ -96,7 +97,7 @@ int main(void)
     (void)close(save_fd);
     (void)remove(save_path);
     CHECK(make_native_save(data_dir, save_path),
-          "known CSB corpus produces a native F0435 save");
+          "test-only runtime fixture writes for the F9 rejection gate");
     if (failures) goto done;
 
     memset(&spec, 0, sizeof(spec));
@@ -111,22 +112,15 @@ int main(void)
           "M11 opens the hash-verified CSB boot session");
     CHECK(setenv("FIRESTAFF_QUICKSAVE_PATH", save_path, 1) == 0,
           "focused F9 path is explicit");
-    CHECK(M11_GameView_QuickLoad(&view),
-          "M11 F9 accepts the native F0435 save");
-    CHECK(view.csbOriginalSaveRuntimeReceiptRequired &&
-              view.csbOriginalSaveRuntimeReceipt.valid &&
-              csb_v1_boot_original_save_runtime_receipt_current_pc34(
-                  (const CSB_V1_BootProfile *)view.csbBootProfile,
-                  &view.csbOriginalSaveRuntimeReceipt),
-          "M11 F9 binds a current native F0435 receipt");
-
-    tick_before = view.csbState.tick_count;
-    CHECK(corrupt_header_byte(save_path), "fixture corrupts native header");
     CHECK(!M11_GameView_QuickLoad(&view),
-          "M11 F9 rejects a corrupted native F0435 header");
-    CHECK(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_IGNORED &&
-              view.csbState.tick_count == tick_before,
-          "stale F0435 receipt blocks tick without runtime mutation");
+          "M11 F9 rejects a Firestaff-private runtime fixture");
+    CHECK(!view.csbOriginalSaveRuntimeReceiptRequired &&
+              !view.csbOriginalSaveRuntimeReceipt.valid,
+          "rejected fixture cannot bind an F0435 provenance receipt");
+
+    CHECK(corrupt_header_byte(save_path), "fixture corrupts private header");
+    CHECK(!M11_GameView_QuickLoad(&view),
+          "M11 F9 rejects a corrupted private header");
     M11_GameView_Shutdown(&view);
 done:
     (void)unsetenv("FIRESTAFF_QUICKSAVE_PATH");

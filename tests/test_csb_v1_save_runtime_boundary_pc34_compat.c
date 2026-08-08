@@ -78,8 +78,8 @@ static void test_header_only_compatibility_and_bounded_prefix_load(void)
 
     r = csb_v1_save_verify_compatible(path, CSB_V1_SAVE_MAGIC_CSB, 0x1234u);
     CHECK_EQ(r, CSB_V1_LOAD_OK, "header-only compatible save check");
-    CHECK(csb_v1_runtime_can_load_resume_path(path),
-          "runtime resume validator accepts native CSB save header");
+    CHECK(!csb_v1_runtime_can_load_resume_path(path),
+          "runtime resume validator rejects a private CSB save header");
 
     r = csb_v1_save_verify_compatible(path, CSB_V1_SAVE_MAGIC_CSB, 0x9999u);
     CHECK_EQ(r, CSB_V1_LOAD_ERR_DIFFERENT_GAME,
