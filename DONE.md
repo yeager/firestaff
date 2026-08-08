@@ -1,3 +1,13 @@
+# Nexus capture-launcher child lifecycle (2026-08-08)
+
+- ✅ Den externa Saturn-råcapture-launchern väntar nu på sitt exakta
+  Mednafen-child och städar det vid `INT`/`TERM`/`EXIT`. Avbrutna körningar
+  lämnar därmed inte ett låsande Mednafen-processträd efter sig. Detta ändrar
+  inte råcapture-validatorn eller någon semantisk presentation-admission.
+- ✅ `bash tests/test_nexus_v1_saturn_raw_capture_launcher.sh` och
+  `bash -n probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh`
+  passerar.
+
 # Nexus 3D-admissionsflagga förtydligad (2026-08-08)
 
 - ✅ Dokumenterade att `NEXUS_V1_RF_NO_3D_ENGINE` och

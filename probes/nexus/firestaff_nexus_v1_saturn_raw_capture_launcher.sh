@@ -27,6 +27,19 @@ run_validator() {
   esac
 }
 
+capture_child_pid=
+cleanup_capture_child() {
+  local status=$?
+  if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
+    kill -INT "$capture_child_pid" 2>/dev/null || true
+    sleep 1
+    kill -TERM "$capture_child_pid" 2>/dev/null || true
+    wait "$capture_child_pid" 2>/dev/null || true
+  fi
+  capture_child_pid=
+  return "$status"
+}
+
 launch=0
 operator_only=0
 skip_frames=0
@@ -97,6 +110,7 @@ else
   waiting_env="${FIRESTAFF_NEXUS_NO_WAITING:-}"
 fi
 if [[ -n "$mednafen_home" ]]; then
+  trap cleanup_capture_child INT TERM EXIT
   HOME="$mednafen_home" \
   FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
   FIRESTAFF_NEXUS_NO_WAITING="$waiting_env" \
@@ -105,8 +119,10 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
   FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
   FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
-    "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc"
+    "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc" &
+  capture_child_pid=$!
 else
+  trap cleanup_capture_child INT TERM EXIT
   FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
   FIRESTAFF_NEXUS_NO_WAITING="$waiting_env" \
   FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
@@ -114,8 +130,16 @@ else
   FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
   FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
   FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
-    "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc"
+    "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc" &
+  capture_child_pid=$!
 fi
+set +e
+wait "$capture_child_pid"
+capture_status=$?
+set -e
+capture_child_pid=
+trap - INT TERM EXIT
+((capture_status == 0)) || exit "$capture_status"
 [[ -s "$trace" ]] || exit 1
 run_validator "$trace" --require-frames "$frame_limit"
 raw_bytes=$(wc -c < "$trace" | tr -d '[:space:]')
