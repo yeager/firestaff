@@ -120,8 +120,32 @@ int main(void)
     spec.presentationWidth = 320;
     spec.presentationHeight = 200;
     M11_GameView_Init(&view);
-    CHECK(M11_GameView_Start(&view, &spec),
+    result = M11_GameView_Start(&view, &spec);
+    CHECK(result,
           "verified F31 media opens its real TITLE.ANM owner");
+    /* A broad loose F31 directory can contain both CDATA and CJDATA.  The
+     * production launcher materializes the selected language into its own
+     * cache before reaching M11; this direct-root test must never continue
+     * with the sibling program merely because it was found first.  In
+     * particular, continuing after a failed title owner used to dereference
+     * an unopened handoff later in this test.  ReDMCSB COMPILE.H 199-243
+     * keeps the English and Japanese executable/media families separate. */
+    if (!result || !view.csbBootProfile ||
+        ((const CSB_V1_BootProfile *)view.csbBootProfile)->variant_id !=
+            (language == CSB_FMTOWNS_SWITCH_JAPANESE
+                 ? CSB_V1_VARIANT_FMTOWNS_JA
+                 : CSB_V1_VARIANT_FMTOWNS_EN)) {
+        if (result) {
+            fprintf(stderr,
+                    "FAIL: requested FM Towns %s needs its selected "
+                    "version-private runtime package\n",
+                    language == CSB_FMTOWNS_SWITCH_JAPANESE ? "Japanese"
+                                                              : "English");
+            ++failures;
+        }
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     CHECK(view.originalFontAvailable &&
               M11_Font_ResolvedGraphicIndex(&view.originalFont) == 695,
           "verified F31 M653 raw interface font is bound before title playback");

@@ -8025,3 +8025,10 @@
   types 0–6, so reserved source bytes cannot create invented creatures.
 - ✅ Verified with all seven real US and JP dungeons; the loader passes and
   reports the expected source category census and live-creature counts.
+# CSB FM Towns språkpaket fail-closed i verklig M11-regression (2026-08-08)
+
+- Härdade den verkliga F31 Game-handoff-regressionen så att den stannar med
+  ett begripligt fel om en blandad CDATA/CJDATA-katalog öppnar syskonets
+  språkpaket. Testet fortsätter inte längre till en oöppnad handoff och kan
+  därför inte krascha. Den vanliga M12-vägen materialiserar fortfarande det
+  hash-verifierade, valda språkpaketet privat före M11.
