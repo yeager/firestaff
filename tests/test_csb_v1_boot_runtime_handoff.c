@@ -2544,6 +2544,45 @@ static void test_runtime_import_discovers_real_utility_from_search_root(void)
     remove(path);
 }
 
+/* This is the production-shaped M12/M11 boundary: the core data directory
+ * is the private materialized PC34 cache while the real Utility ADF remains
+ * inside the configured originals root.  ReDMCSB CEDTINC7.C performs this
+ * import before the entrance owns the final start command. */
+static void test_boot_import_discovers_real_utility_from_originals_root(void)
+{
+    const char *core = getenv("FIRESTAFF_CSB_REAL_PC34_RUNTIME_DIR");
+    const char *root = getenv("FIRESTAFF_CSB_REAL_UTILITY_ROOT");
+    const char *path = "/tmp/firestaff-csb-v1-real-boot-import.sav";
+    CSB_V1_BootStartupLaunch_PC34 launch;
+    uint8_t save_buf[1024];
+    FILE *f;
+
+    if (!core || core[0] == '\0' || !root || root[0] == '\0') {
+        puts("  SKIP: real PC34 runtime directory or Utility root is not set");
+        return;
+    }
+    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+          "real boot Utility regression builds importer fixture");
+    f = fopen(path, "wb");
+    CHECK(f != NULL, "real boot Utility regression opens fixture");
+    if (!f) return;
+    CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
+          "real boot Utility regression writes fixture");
+    fclose(f);
+    set_csb_utility_disk_env(NULL);
+    memset(&launch, 0, sizeof(launch));
+    CHECK(csb_v1_boot_startup_launch_alloc_pc34(core, root, NULL, path, NULL,
+                                                 &launch) == 1 &&
+              launch.profile != NULL &&
+              launch.receipts.handoff.import_succeeded &&
+              launch.receipts.handoff.import_champion_count == 2 &&
+              launch.receipts.handoff.import_utility_state ==
+                  (int)CSB_V1_UTIL_FLOW_DONE,
+          "M12/M11 boot import finds the real Utility ADF outside its cache");
+    csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+    remove(path);
+}
+
 static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
 {
     CSB_V1_RuntimeProfile runtime;
@@ -5364,6 +5403,7 @@ int main(void)
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_runtime_import_discovers_real_utility_from_search_root();
+    test_boot_import_discovers_real_utility_from_originals_root();
     test_runtime_view_state_receipt_owns_scalar_handoff();
     test_door_opening_runtime_handoff_owns_hud_transition();
     test_runtime_utility_startup_receipt_facades();

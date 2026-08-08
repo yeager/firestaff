@@ -29,6 +29,7 @@
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
 #include "csb_v1_teleporter_rotation_runtime_pc34_compat.h"
 #include "asset_find_by_hash.h"
+#include "fs_portable_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
@@ -2188,6 +2189,13 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     if (strstr(utility_media, "::") != NULL) {
         int written;
         if (!profile->save_dir || profile->save_dir[0] == '\0') {
+            return 0;
+        }
+        /* M12 may materialize the selected CSB core into a fresh private
+         * cache.  The original Utility image is then extracted only for the
+         * UTIO.C F1991 identity check, so create that private save/cache
+         * directory before asking the archive backend to open its output. */
+        if (!FSP_CreateDirectoryRecursive(profile->save_dir)) {
             return 0;
         }
         written = snprintf(checked_utility_media,

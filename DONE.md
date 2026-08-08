@@ -82,6 +82,10 @@
   release-3 ADF embedded in the local CSB archive: archive discovery,
   extraction, `UTIO.C` identity check, import confirmation and `DONE` all
   pass. This deliberately does not add DSA-save support.
+- ✅ Fixed the materialized-package case where the private CSB save/cache
+  directory did not yet exist before archive extraction. The boot transaction
+  now creates it before temporary ADF materialization. The full PC34
+  cache → originals root → Utility Disk → import handoff passes.
 
 # Nexus audit iteration 1 — gameplay bug fixes (2026-08-08)
 

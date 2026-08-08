@@ -7735,6 +7735,10 @@ that its exact runtime path is not already source-locked and tested.
     archive collection. A real English release-3 ADF in the local archive
     reaches the completed import state; remaining work is still the original
     Utility UI, editor and real-save corpus, not DSA-save support.
+    2026-08-08: archive-backed import now creates the private materialized
+    package save/cache directory before extracting the hash-admitted ADF.
+    The full PC34 cache-to-originals-root boot transaction reaches the import
+    handoff; it no longer relies on a pre-existing cache sibling directory.
     2026-07-29: the live C140 `Ctrl-S` route now opens the source-dialog
     geometry with the Atari CSB v2.1 source order: Load Saved Game, Save and
     Play, Save and Quit, Format Floppy. The source Format Floppy confirmation
