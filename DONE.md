@@ -763,6 +763,21 @@
   ingen session och lämnar Resume spärrad tills originalens länkade records,
   possessions, aktuatorkö och efterladdningssteg har en komplett ägare.
 
+# DM2 SKSAVE:s GDAT-bundna item-bonusfas (2026-08-08)
+
+- ✅ `DM2_READ_SKSAVE_DUNGEON` följer nu originalets steg efter direktrötterna:
+  varje `c_hero::item` och ledarhanden går genom
+  `DM2_PROCESS_ITEM_BONUS(..., 0)` med klassificering från den återställda
+  recordpoolen och ordvärden från monterad original-`GRAPHICS.DAT`. Tommarkören
+  `0xfffe` normaliseras bara där originalet gör det, till `0xffff`.
+- ✅ `DM2_PROCESS_ITEM_BONUS` skiljer nu ett normalt GDAT-objekt utan
+  equipment-bonus från ett spärrat anrop. Ingen saknad rad ersätts med data;
+  frånvarande DBSPEC är originalfrågans nollresultat, medan saknad
+  recordägare eller obligatorisk equip-data avvisar fasen.
+- ✅ Verifierat mot alla åtta riktiga PC-DOS-SKSave-filer. De fyra filer som
+  har komplett lokal recordpool passerar den nya GDAT-fasen. Den tillfälliga
+  ägaren publiceras inte och Resume är fortsatt spärrad.
+
 # DM2 New Game-entréreceipt (2026-08-08)
 
 - ✅ File_header::`w8`-startpositionen binds nu till karta 0:s verkliga

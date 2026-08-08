@@ -11,9 +11,11 @@
  *   DM2_TAKE_OBJECT                  c_item.cpp:1185
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_party.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -134,6 +136,37 @@ int dm2_v1_query_source_item_name_receipt(
     const DM2_V1_RecordPoolSet *pools,
     const DM2_V1_AssetLoader *loader,
     DM2_V1_SourceItemNameReceipt *out_receipt);
+
+/* ------------------------------------------------------------------ */
+/* SKSAVE direct-root item-bonus phase.
+ *
+ * SKProject SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON processes
+ * every just-restored c_hero::item root, then the leader hand, with
+ * DM2_PROCESS_ITEM_BONUS(..., mode 0).  An OBJECT_END (0xfffe) root is
+ * converted to OBJECT_NULL (0xffff) instead.  This bridge uses the decoded
+ * source record pool to derive cls1/cls2 and the supplied original GDAT to
+ * answer DBSPEC and equipment queries.  It owns no alternate item table.
+ *
+ * It is deliberately separate from the temporary map preflight because a
+ * caller must hold the authenticated GRAPHICS.DAT loader for this original
+ * GDAT phase.  Missing record ownership, classification, or required body
+ * equipment data rejects the whole operation rather than inventing a bonus.
+ */
+typedef struct {
+    int valid;
+    int blocked;
+    uint16_t processed_item_roots;
+    uint16_t empty_item_roots;
+    uint16_t processed_leader_hand;
+    uint16_t empty_leader_hand;
+    uint32_t source_hash;
+} DM2_V1_SksaveItemBonusReceipt;
+
+int dm2_v1_sksave_process_source_item_bonus_roots(
+    DM2_V1_Hero *heroes, size_t hero_capacity, uint16_t hero_count,
+    uint16_t *leader_hand_root, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SksaveItemBonusReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

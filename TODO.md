@@ -11,6 +11,13 @@
   här fasen saknar de återställda DB1-kedjor och måste därför fortsätta genom
   originalets no-detail-gren tills kartkedjorna har lästs.
 
+- 🔧 DM2 GAME_LOAD/SKSAVE: den källägda `DM2_PROCESS_ITEM_BONUS(..., 0)`-
+  fasen kan nu köra mot den återställda recordpoolen och monterad
+  `GRAPHICS.DAT`, men den är fortfarande ett tillfälligt preflightsteg.
+  Nästa steg är originalets specialtimer-, kart-, possessions- och
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD`-ägare i samma beständiga transaktion;
+  Resume ska fortsätta vara spärrad tills hela kedjan kan publiceras atomärt.
+
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   monterad dungeon eller tom lokal cooldown får inte presenteras som en
   rörlig party.

@@ -14,6 +14,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
@@ -597,16 +598,26 @@ static int verify_real_raw_pool_baseline(
 
 static int verify_real_pool_direct_roots(
     const uint8_t *payload, size_t payload_size,
-    const DM2_V1_OriginalRawSaveStateReceipt *state)
+    const DM2_V1_OriginalRawSaveStateReceipt *state, const char *root)
 {
     DM2_V1_RecordPoolSet pools;
     DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_SksaveDirectRootReceipt receipt;
+    DM2_V1_SksaveItemBonusReceipt item_bonus;
+    DM2_V1_Hero heroes[DM2_MAX_HEROES];
+    DM2_V1_AssetLoader loader;
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    uint16_t leader_hand = 0xfffeu;
+    uint32_t root_hash = 0u;
+    char graphics_path[600];
     int ok;
 
-    if (!payload || !state || !state->valid) return 0;
+    if (!payload || !state || !state->valid || !root || !root[0]) return 0;
     memset(&pools, 0, sizeof(pools));
     memset(&map_owner, 0, sizeof(map_owner));
+    memset(heroes, 0, sizeof(heroes));
+    memset(&loader, 0, sizeof(loader));
     if (!dm2_v1_record_pool_set_init_from_raw_sksave(
             &pools, payload, payload_size, &state->dungeon) ||
         !dm2_v1_sksave_map_owner_init(
@@ -661,7 +672,29 @@ static int verify_real_pool_direct_roots(
             possession_hash != receipt.possession_link_hash) {
             ok = 0;
         }
+        if (ok &&
+            (!dm2_v1_original_raw_sksave_materialize_heroes(
+                 payload, payload_size, state, heroes, DM2_MAX_HEROES) ||
+             !dm2_v1_sksave_apply_direct_roots_to_heroes(
+                 heroes, DM2_MAX_HEROES, state->champion_count, &receipt,
+                 &leader_hand, &root_hash))) {
+            ok = 0;
+        }
+        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+        if (ok) graphics = read_file(graphics_path, &graphics_size);
+        if (ok && (!graphics || dm2_v1_asset_loader_init(
+                &loader, graphics, graphics_size) != 0 ||
+            !dm2_v1_sksave_process_source_item_bonus_roots(
+                heroes, DM2_MAX_HEROES, state->champion_count, &leader_hand,
+                &pools, &loader, &item_bonus) || !item_bonus.valid ||
+            item_bonus.source_hash != root_hash ||
+            item_bonus.processed_item_roots + item_bonus.empty_item_roots !=
+                (uint16_t)(state->champion_count * DM2_NUM_ITEMS))) {
+            ok = 0;
+        }
     }
+    dm2_v1_asset_loader_free(&loader);
+    free(graphics);
     dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
     return ok;
@@ -764,7 +797,8 @@ static int verify_real_runtime_resume_is_blocked(const uint8_t *payload,
            !handoff.valid;
 }
 
-static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
+static void test_real_raw_save(const char *path, const char *root,
+                               DirectRootStats *direct_roots)
 {
     DM2_V1_OriginalRawDungeonReceipt receipt;
     DM2_V1_OriginalRawSaveStateReceipt state_receipt;
@@ -1024,7 +1058,7 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
               "real SKSave direct roots decode through source-owned AI rows");
         {
             const int pool_owner_result = verify_real_pool_direct_roots(
-                bytes + 42u, byte_count - 42u, &state_receipt);
+                bytes + 42u, byte_count - 42u, &state_receipt, root);
             if (direct_roots) {
                 if (pool_owner_result) ++direct_roots->pool_owner_restored;
                 else ++direct_roots->pool_owner_blocked;
@@ -1036,7 +1070,7 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
              * treating the old all-slots assertion as evidence. */
             CHECK(direct_root_result == 1,
                   pool_owner_result ?
-                      "real SKSave direct roots bind the authenticated c_record pool owner" :
+                      "real SKSave direct roots bind c_record and the original GDAT item-bonus route" :
                       "real SKSave direct roots remain blocked without a complete c_record pool owner");
         }
     }
@@ -1179,7 +1213,7 @@ int main(void)
             if (!file) continue;
             fclose(file);
             ++found;
-            test_real_raw_save(path, &direct_roots);
+            test_real_raw_save(path, root, &direct_roots);
         }
     }
     if (found == 0u) {

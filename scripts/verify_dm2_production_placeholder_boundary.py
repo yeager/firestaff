@@ -44,7 +44,6 @@ EXPECTED_REMOVALS = {
         "dm2_v1_record_name_helper.c",
         "dm2_v1_source_name_helpers.c",
         "dm2_v1_ui_event_name_helper.c",
-        "dm2_v1_champion_hud_helpers.c",
         "dm2_v1_food_water_bridge.c",
         "dm2_v1_outdoor_renderer.c",
         "dm2_v1_1c9a_pc34_compat.c",

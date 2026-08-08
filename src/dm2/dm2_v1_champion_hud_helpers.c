@@ -77,6 +77,11 @@ void dm2_v1_PROCESS_ITEM_BONUS(
         return;
     }
 
+    /* c_item.cpp is a void routine.  Record that its control flow entered;
+     * `blocked` remains authoritative if a later source callback is absent.
+     * This also covers successful no-op paths outside the equipment range. */
+    out_receipt->valid = 1;
+
     mode = input->mode;
     item_ref = input->item_ref;
 
@@ -211,8 +216,6 @@ void dm2_v1_PROCESS_ITEM_BONUS(
                 callbacks->query_cls2_from_record(callbacks->ctx, item_ref);
         }
     }
-
-    out_receipt->valid = 1;
 
 weight_check:
     /* Weight recalc when mode != 0. */
