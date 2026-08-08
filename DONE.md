@@ -1,3 +1,14 @@
+# DM2 SKSAVE bitstream-order repair (2026-08-08)
+
+- ✅ Corrected the direct-root reader to stop after the source hero and
+  cursor chains. It no longer reads possession continuations from the wrong
+  position in the shared SUPPRESS stream. SKProject restores special timer
+  records and map chains first, then consumes possession continuations.
+- ✅ Verification: all eight original PC-DOS SKSAVE files pass the 160-check
+  real-data corpus suite. The revised pool receipt proves that this phase has
+  consumed zero continuation records rather than misclassifying later source
+  bytes.
+
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 
 - ✅ Corrected the DM2 complete-support receipt so an observational parse of

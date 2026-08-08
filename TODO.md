@@ -4163,6 +4163,10 @@ level or consumer bindings.
   has atomically restored map, record, possession, hero, timer and actuator
   ownership. The current importer therefore remains explicitly blocked,
   including for the four corpus files whose local record pool is complete.
+  **2026-08-08 stream-order correction:** direct hero/cursor roots now stop
+  at their authentic boundary. The remaining importer must restore special
+  timer chains, map chains and only then possession continuations, exactly as
+  `DM2_READ_SKSAVE_DUNGEON` orders them.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

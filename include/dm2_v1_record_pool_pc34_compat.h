@@ -190,8 +190,11 @@ int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
 
 /* Decode the source direct-root stream after the authenticated DB-clear
  * phase. This is the production pool owner for SKProject's
- * READ_RECORD_CHECKCODE roots; it does not attach tile roots or publish a
- * playable session. `query_creature_ai_flags` must resolve the authenticated
+ * READ_RECORD_CHECKCODE hero/cursor roots; it does not attach tile roots or
+ * publish a playable session.  The returned reader boundary is deliberately
+ * before special timer chains and map chains.  SKProject reads possession
+ * continuations only after both of those phases, so this helper must not
+ * consume them. `query_creature_ai_flags` must resolve the authenticated
  * CREATURES[type] -> v1d296c source row, or the whole transaction fails. */
 int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     DM2_V1_RecordPoolSet *set,

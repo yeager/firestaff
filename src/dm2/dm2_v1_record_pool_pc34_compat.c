@@ -65,21 +65,10 @@ __attribute__((weak)) int dm2_v1_read_record_checkcode(
     return -1;
 }
 
-__attribute__((weak)) int dm2_v1_read_possession_continuations(
-    DM2_SuppressReader *reader, const uint16_t *record_links,
-    size_t record_link_count,
-    const DM2_ReadPossessionContinuationCallbacks *cb)
-{
-    (void)reader; (void)record_links; (void)record_link_count; (void)cb;
-    return -1;
-}
-
 typedef struct {
     DM2_V1_RecordPoolSet *set;
     uint32_t record_hash;
-    uint32_t continuation_hash;
     uint32_t record_count;
-    uint32_t continuation_count;
     uint16_t record_links[4096];
     DM2_ReadRecordCreatureAiFlagsFn ai_fn;
     void *ai_ctx;
@@ -210,29 +199,6 @@ static int dm2_v1_sksave_pool_query_ai(void *context, uint16_t record_link,
         (DM2_V1_SksavePoolRestoreContext *)context;
     if (!ctx || !ctx->ai_fn) return -1;
     return ctx->ai_fn(ctx->ai_ctx, record_link, creature_type, out_flags);
-}
-
-static int dm2_v1_sksave_pool_set_continuation(void *context,
-                                               uint16_t record_link,
-                                               uint16_t continuation)
-{
-    DM2_V1_SksavePoolRestoreContext *ctx =
-        (DM2_V1_SksavePoolRestoreContext *)context;
-    uint8_t *record;
-
-    if (!ctx || !ctx->set) return -1;
-    record = dm2_v1_record_pool_address_mut(ctx->set, (int16_t)record_link);
-    if (!record || ctx->set->pools[dm2_v1_record_handle_pool(
-                       (int16_t)record_link)].record_size < 4) return -1;
-    dm2_v1_wr16(record + 2, (int16_t)continuation);
-    ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
-        ctx->continuation_hash, (const uint8_t *)&record_link,
-        sizeof(record_link));
-    ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
-        ctx->continuation_hash, (const uint8_t *)&continuation,
-        sizeof(continuation));
-    ++ctx->continuation_count;
-    return 0;
 }
 
 int dm2_v1_record_pool_record_size(int pool)
@@ -679,7 +645,6 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     DM2_V1_SksavePoolRestoreContext context;
     DM2_ReadRecordCallbacks callbacks;
     DM2_ReadRecordSession session;
-    DM2_ReadPossessionContinuationCallbacks continuation_callbacks;
     uint16_t roots[DM2_V1_SKSAVE_DIRECT_ROOT_MAX];
     size_t root_count;
     size_t root;
@@ -708,7 +673,6 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     memset(&context, 0, sizeof(context));
     context.set = set;
     context.record_hash = 2166136261u;
-    context.continuation_hash = 2166136261u;
     context.ai_fn = query_creature_ai_flags;
     context.ai_ctx = query_creature_ai_flags_ctx;
     memset(&callbacks, 0, sizeof(callbacks));
@@ -740,26 +704,19 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
         }
     }
 
-    memset(&continuation_callbacks, 0, sizeof(continuation_callbacks));
-    continuation_callbacks.set_continuation =
-        dm2_v1_sksave_pool_set_continuation;
-    continuation_callbacks.ctx = &context;
-    if (dm2_v1_read_possession_continuations(
-            &session.reader, context.record_links, context.record_count,
-            &continuation_callbacks) != 0) {
-        DM2_V1_SKSAVE_ROOT_ABORT();
-        return 0;
-    }
-
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->root_count = (uint16_t)root_count;
         memcpy(out_receipt->roots, roots, root_count * sizeof(roots[0]));
         out_receipt->record_count = context.record_count;
-        out_receipt->possession_continuation_count =
-            context.continuation_count;
+        /* Source order: DM2_READ_SKSAVE_DUNGEON first restores the direct
+         * hero/cursor roots, then special timer chains and every map chain.
+         * DM2_2066_062b consumes possession continuations only afterwards
+         * (SKProject sksvgame.cpp:1178-1400).  Reading them here used map
+         * bits as fake continuations and corrupted the shared stream. */
+        out_receipt->possession_continuation_count = 0u;
         out_receipt->record_hash = context.record_hash;
-        out_receipt->continuation_hash = context.continuation_hash;
+        out_receipt->continuation_hash = 0u;
     }
 #undef DM2_V1_SKSAVE_ROOT_ABORT
     return 1;
