@@ -1,3 +1,14 @@
+# CSB PC34 Utility-import från original DM1-sparning (2026-08-08)
+
+- ✅ Den opt-in-bundna PC34-regressionen klassificerar nu en verklig
+  `DMSAVE.DAT` som original-DM1 PC 3.4 innan den skickas genom M12/M11,
+  cache → originals root och den hashverifierade Utility-ADF:n. Den bevisar
+  därmed den riktiga importkedjan utan en konstruerad partybuffert när
+  användardata finns tillgänglig.
+- ✅ Den lilla DM1-fixturen är kvar endast för datafri CI, där någon verklig
+  användarsparning inte får antas. DSA och autentiska CSB-sparningar omfattas
+  inte av denna ändring.
+
 # CSB Amiga 3.5 multilingual APPB handoff (2026-08-08)
 
 - ✅ M12→M11 startar nu det hashverifierade A35M-APPB-programmets egna

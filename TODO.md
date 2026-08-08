@@ -57,6 +57,12 @@
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
 
+- 🔧 PC34:s Utility-import kan nu i den opt-in-bundna realdatakedjan läsa en
+  klassificerad original-`DMSAVE.DAT` tillsammans med den hashverifierade
+  Utility-ADF:n. Den lilla konstruerade DM1-bufferten finns kvar enbart för
+  datafri CI. Kvar är autentiska CSB-sparningar och DSA (uttryckligen
+  uppskjutet), bytekorrekt originalskrivning och den kompletta filväljarytan.
+
 - 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT-party-, dungeon-,
   tidslinje- och aktivgruppsdata och har en realdataverifierad HUD-musväg.
   C06:s interfacefont är nu också bunden direkt till det valda

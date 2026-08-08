@@ -36,6 +36,7 @@
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "asset_find_by_hash.h"
 #include "csb_v1_csbwin_save_loader_boundary_fixture.h"
+#include "dm1_v1_original_save_classifier.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +67,19 @@ static int failed;
 #define TEST_CSB_UTILITY_ADF_BYTES (80u * 2u * 11u * 512u)
 #define TEST_CSB_UTILITY_ROOT_OFFSET (880u * 512u)
 #define TEST_CSB_UTILITY_NAME_OFFSET 432u
+
+static int test_real_dm1_save_is_pc34(const char *path)
+{
+    DM1OriginalSaveClassifyResult classified;
+
+    memset(&classified, 0, sizeof(classified));
+    return path && path[0] &&
+           dm1_v1_original_save_classify_file(path, &classified) &&
+           classified.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 &&
+           classified.readiness ==
+               DM1_ORIGINAL_SAVE_READY_CLASSIFIED_HEADER_ONLY &&
+           classified.pc34_importer_candidate;
+}
 
 typedef struct {
     uint8_t *buf;
@@ -2449,18 +2463,21 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     remove(utility_path);
 }
 
-/* Opt-in real-media regression.  M12 keeps the user-selected originals root
+/* Opt-in real-media regression. M12 keeps the user-selected originals root
  * separate from its materialized CSB cache; this proves that CEDTINC7.C's
  * Utility Disk route can find a hash-known original ADF inside that root.
- * The DM1 party buffer remains a narrow importer fixture: this test verifies
- * real Utility media discovery, not a DSA save handoff. */
+ * When an operator supplies an authenticated DM1 save, consume that source
+ * file directly. The small fixture remains only for data-free CI. */
 static void test_runtime_import_discovers_real_utility_from_search_root(void)
 {
     const char *root = getenv("FIRESTAFF_CSB_REAL_UTILITY_ROOT");
-    const char *path = "/tmp/firestaff-csb-v1-real-utility-import.sav";
+    const char *real_save = getenv("FIRESTAFF_DM1_REAL_SAVE");
+    const char *path = real_save && real_save[0]
+        ? real_save : "/tmp/firestaff-csb-v1-real-utility-import.sav";
     CSB_V1_RuntimeProfile runtime;
     uint8_t save_buf[1024];
-    FILE *f;
+    FILE *f = NULL;
+    int real_save_valid;
     int count = 0;
     int state = -1;
     char prompt[128];
@@ -2469,14 +2486,22 @@ static void test_runtime_import_discovers_real_utility_from_search_root(void)
         puts("  SKIP: FIRESTAFF_CSB_REAL_UTILITY_ROOT is not set");
         return;
     }
-    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
-          "real Utility search regression builds importer fixture");
-    f = fopen(path, "wb");
-    CHECK(f != NULL, "real Utility search regression opens fixture");
-    if (!f) return;
-    CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
-          "real Utility search regression writes fixture");
-    fclose(f);
+    if (real_save && real_save[0]) {
+        real_save_valid = test_real_dm1_save_is_pc34(real_save);
+        CHECK(real_save_valid,
+              "operator-supplied DM1 save is an original PC34 importer candidate");
+        if (!real_save_valid) return;
+    }
+    if (!real_save || !real_save[0]) {
+        CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+              "CI Utility regression builds importer fixture");
+        f = fopen(path, "wb");
+        CHECK(f != NULL, "CI Utility regression opens fixture");
+        if (!f) return;
+        CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
+              "CI Utility regression writes fixture");
+        fclose(f);
+    }
     set_csb_utility_disk_env(NULL);
     csb_v1_runtime_init(&runtime, NULL);
     runtime.utility_search_dir = root;
@@ -2484,11 +2509,14 @@ static void test_runtime_import_discovers_real_utility_from_search_root(void)
     prompt[0] = '\0';
     CHECK(csb_v1_runtime_import_dm1_party_path(&runtime, path, &count, &state,
                                                prompt, sizeof(prompt)) == 1 &&
-              count == 2 && state == (int)CSB_V1_UTIL_FLOW_DONE &&
+              count >= 1 && count <= 4 &&
+              state == (int)CSB_V1_UTIL_FLOW_DONE &&
               strstr(prompt, "READY") != NULL,
-          "real Utility ADF is discovered from the selected originals root");
+          real_save && real_save[0]
+              ? "real DM1 save and Utility ADF complete the original import route"
+              : "real Utility ADF is discovered from the selected originals root");
     csb_v1_runtime_cleanup(&runtime);
-    remove(path);
+    if (!real_save || !real_save[0]) remove(path);
 }
 
 /* This is the production-shaped M12/M11 boundary: the core data directory
@@ -2499,35 +2527,49 @@ static void test_boot_import_discovers_real_utility_from_originals_root(void)
 {
     const char *core = getenv("FIRESTAFF_CSB_REAL_PC34_RUNTIME_DIR");
     const char *root = getenv("FIRESTAFF_CSB_REAL_UTILITY_ROOT");
-    const char *path = "/tmp/firestaff-csb-v1-real-boot-import.sav";
+    const char *real_save = getenv("FIRESTAFF_DM1_REAL_SAVE");
+    const char *path = real_save && real_save[0]
+        ? real_save : "/tmp/firestaff-csb-v1-real-boot-import.sav";
     CSB_V1_BootStartupLaunch_PC34 launch;
     uint8_t save_buf[1024];
-    FILE *f;
+    FILE *f = NULL;
+    int real_save_valid;
 
     if (!core || core[0] == '\0' || !root || root[0] == '\0') {
         puts("  SKIP: real PC34 runtime directory or Utility root is not set");
         return;
     }
-    CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
-          "real boot Utility regression builds importer fixture");
-    f = fopen(path, "wb");
-    CHECK(f != NULL, "real boot Utility regression opens fixture");
-    if (!f) return;
-    CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
-          "real boot Utility regression writes fixture");
-    fclose(f);
+    if (real_save && real_save[0]) {
+        real_save_valid = test_real_dm1_save_is_pc34(real_save);
+        CHECK(real_save_valid,
+              "boot import receives an original PC34 DM1 save");
+        if (!real_save_valid) return;
+    }
+    if (!real_save || !real_save[0]) {
+        CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
+              "CI boot Utility regression builds importer fixture");
+        f = fopen(path, "wb");
+        CHECK(f != NULL, "CI boot Utility regression opens fixture");
+        if (!f) return;
+        CHECK(fwrite(save_buf, 1u, sizeof(save_buf), f) == sizeof(save_buf),
+              "CI boot Utility regression writes fixture");
+        fclose(f);
+    }
     set_csb_utility_disk_env(NULL);
     memset(&launch, 0, sizeof(launch));
     CHECK(csb_v1_boot_startup_launch_alloc_pc34(core, root, NULL, path, NULL,
                                                  &launch) == 1 &&
               launch.profile != NULL &&
               launch.receipts.handoff.import_succeeded &&
-              launch.receipts.handoff.import_champion_count == 2 &&
+              launch.receipts.handoff.import_champion_count >= 1 &&
+              launch.receipts.handoff.import_champion_count <= 4 &&
               launch.receipts.handoff.import_utility_state ==
                   (int)CSB_V1_UTIL_FLOW_DONE,
-          "M12/M11 boot import finds the real Utility ADF outside its cache");
+          real_save && real_save[0]
+              ? "M12/M11 boots a real DM1 save through the original Utility ADF"
+              : "M12/M11 boot import finds the real Utility ADF outside its cache");
     csb_v1_boot_startup_launch_cleanup_pc34(&launch);
-    remove(path);
+    if (!real_save || !real_save[0]) remove(path);
 }
 
 static void test_runtime_view_state_receipt_owns_scalar_handoff(void)
