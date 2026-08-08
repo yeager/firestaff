@@ -2519,22 +2519,25 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
         return;
     }
-    if (m11_play_redmcsb_title_graphic_intro_if_available(menuState, gameView,
-                                                          sourceId,
-                                                          outPlayedAnyFrame,
-                                                          dm1MediaReceipt)) {
-        return;
-    }
+    /* The TITLE animation file contains the full 53-frame sequence including
+     * the letter-by-letter MASTER reveal and authentic palette transitions.
+     * Prefer it over the simplified C001 runtime zoom when available. */
     if (!V1_TitleIntro_FindTitleDatPath(menuState, NULL, titlePath, sizeof(titlePath))) {
+        if (m11_play_redmcsb_title_graphic_intro_if_available(menuState, gameView,
+                                                              sourceId,
+                                                              outPlayedAnyFrame,
+                                                              dm1MediaReceipt)) {
+            return;
+        }
         fprintf(stderr,
-                "Firestaff V1 original TITLE intro skipped: no GRAPHICS.DAT C001 title graphic "
-                "or DM PC 3.4 TITLE fallback file found; set FIRESTAFF_TITLE_DAT or install "
+                "Firestaff V1 original TITLE intro skipped: no TITLE animation file "
+                "or GRAPHICS.DAT C001 title graphic found; set FIRESTAFF_TITLE_DAT or install "
                 "the canonical original-data anchor at "
                 "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE.\n");
         return;
     }
     packedStorage = (unsigned char*)calloc(1U, 4U + 32000U);
-    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES);
+    indexedScreen = (unsigned char*)malloc((size_t)M11_FB_BYTES + (size_t)M11_FB_BYTES * 4u);
     if (!packedStorage || !indexedScreen) {
         free(packedStorage);
         free(indexedScreen);
@@ -2594,35 +2597,53 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
                                                          M11_FB_HEIGHT,
                                                          indexedScreen,
                                                          M11_FB_WIDTH);
-        /* TITLE.DAT is the bank-of-frames fallback used when the
-         * GRAPHICS.DAT C001 graphic is not available.  Keep its palette
-         * choice behind the same ReDMCSB TITLE.C source-lock helper as
-         * the normal GRAPHICS.DAT path; the runtime must not hard-code a
-         * different interpretation of the C12_PRESENTS -> C13_DUNGEON +
-         * C14_MASTER switch. */
-        (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
-                                                       &stepPalette);
-        if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
-                                                        M11_FB_WIDTH,
-                                                        M11_FB_HEIGHT,
-                                                        stepPalette) != M11_RENDER_OK) {
-            fprintf(stderr,
-                    "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
-                    d.renderFrameOrdinal);
-            break;
+        if (renderResult.hasPalette) {
+            /* TITLE.DAT embeds its own Amiga palette in PL records.
+             * Convert indexed pixels to RGBA using the native palette. */
+            unsigned char* rgbaScreen = indexedScreen + M11_FB_BYTES;
+            unsigned int px;
+            for (px = 0u; px < (unsigned int)(M11_FB_WIDTH * M11_FB_HEIGHT); ++px) {
+                unsigned int ci = indexedScreen[px] & 0x0fu;
+                rgbaScreen[px * 4u + 0u] = renderResult.palette.rgba[ci][0];
+                rgbaScreen[px * 4u + 1u] = renderResult.palette.rgba[ci][1];
+                rgbaScreen[px * 4u + 2u] = renderResult.palette.rgba[ci][2];
+                rgbaScreen[px * 4u + 3u] = 255u;
+            }
+            if (M11_Render_PresentRGBA(rgbaScreen,
+                                       M11_FB_WIDTH,
+                                       M11_FB_HEIGHT) != M11_RENDER_OK) {
+                fprintf(stderr,
+                        "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
+                        d.renderFrameOrdinal);
+                break;
+            }
+        } else {
+            (void)V1_TitleFrontend_GetFallbackFramePalette(renderResult.paletteOrdinal,
+                                                           &stepPalette);
+            if (M11_Render_PresentIndexedWithSpecialPalette(indexedScreen,
+                                                            M11_FB_WIDTH,
+                                                            M11_FB_HEIGHT,
+                                                            stepPalette) != M11_RENDER_OK) {
+                fprintf(stderr,
+                        "Firestaff V1 original TITLE intro stopped: renderer failed to present frame %u\n",
+                        d.renderFrameOrdinal);
+                break;
+            }
         }
         if (outPlayedAnyFrame) {
             *outPlayedAnyFrame = 1;
         }
-        /* ReDMCSB TITLE.C:201-214 gates the zoom on vertical blanks, then
-         * TITLE.C:251 adds a final BUG0_71 guard so fast machines do not
-         * smash straight into the entrance screen.  Bind the runtime delay
-         * through the TITLE frontend helper so the observable handoff cadence
-         * remains tied to the source timing evidence. */
-        if (m11_delay_ms_with_intro_event_pump(
-                hasDm1Media ? dm1Media.title_zoom_frame_delay_ms :
-                              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing))) {
-            break;
+        /* Each TITLE animation frame carries its own durationFrames count
+         * (VBlanks to hold before advancing).  The TITLE file is an
+         * Amiga-format animation; use PAL 20ms per VBlank for the hold. */
+        {
+            unsigned int holdMs = renderResult.durationFrames > 0u
+                ? renderResult.durationFrames * DM1_V1_PAL_VBLANK_MS
+                : (hasDm1Media ? dm1Media.title_zoom_frame_delay_ms
+                               : V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing));
+            if (m11_delay_ms_with_intro_event_pump(holdMs)) {
+                break;
+            }
         }
     }
     (void)m11_delay_ms_with_intro_event_pump(

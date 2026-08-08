@@ -42,6 +42,8 @@ typedef struct V1_TitleFrontendRenderResult {
     unsigned int width;
     unsigned int height;
     int usedOriginalTitleData;
+    V1_TitlePalette palette;
+    int hasPalette;
 } V1_TitleFrontendRenderResult;
 
 typedef enum V1_TitleFrontendSourceEventKind {

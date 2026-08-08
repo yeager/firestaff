@@ -83,6 +83,10 @@ static int title_frontend_on_frame(const V1_TitleRenderFrame* frame,
             capture->result->width = frame->width;
             capture->result->height = frame->height;
             capture->result->usedOriginalTitleData = 1;
+            if (frame->palette) {
+                capture->result->palette = *frame->palette;
+                capture->result->hasPalette = 1;
+            }
         }
         capture->copied = 1;
     }
