@@ -10036,3 +10036,11 @@
   closed; no synthetic text or host glyphs are emitted.
 - ✅ Real-data boot coverage asserts four retained FONT256 sections and the
   closed presentation boundary.
+# Nexus PLRD no longer invents champion liveness (2026-08-08)
+
+- ✅ Real RLOWFIX/PLRD rows now retain `alive=0` as unknown runtime state;
+  PLRD does not contain a live/dead field.
+- ✅ Startup-row availability is represented separately by the source-bound
+  `roster_row_available` bit, so navigation does not require synthetic
+  liveness.
+- ✅ Champion PLRD and startup-menu regressions cover the split.

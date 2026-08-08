@@ -45,6 +45,8 @@ int main(void) {
     if (!bytes || fread(bytes, 1, (size_t)size, f) != (size_t)size) return 1;
     fclose(f);
     if (!nexus_v1_champions_init_from_rlowfix(&pool, bytes, (size_t)size)) return 1;
+    if (pool.champions[0].alive != 0 ||
+        pool.champions[0].roster_row_available != 1) return 1;
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xa374, &text) ||
         text.resource_index != 0 || text.string_count != 450) return 1;
     /* European RLOWFIX.BIN: TEXT resource 4 at 0xF270. */

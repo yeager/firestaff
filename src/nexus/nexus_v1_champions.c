@@ -264,7 +264,10 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
         c->food = 0;
         c->water = 0;
         c->gold = 0;
-        c->alive = 1;
+        /* PLRD has no live/dead field.  Keep runtime liveness unknown;
+         * startup navigation uses the separate source-row receipt. */
+        c->alive = 0;
+        c->roster_row_available = 1;
         c->portrait_index = i;
         for (j = 0; j < 30; ++j) c->inventory[j] = 0xffU;
         for (j = 0; j < NEXUS_SLOT_COUNT; ++j) {
@@ -292,7 +295,7 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index) {
     int i;
     if (!pool || mirror_index < 0 || mirror_index >= pool->champion_count) return -1;
-    if (!pool->champions[mirror_index].alive) return -1;
+    if (!pool->champions[mirror_index].roster_row_available) return -1;
     if (pool->party_count >= NEXUS_MAX_PARTY) return -1;
     /* Check not already in party */
     for (i = 0; i < pool->party_count; i++)

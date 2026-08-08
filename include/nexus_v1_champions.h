@@ -57,7 +57,8 @@ typedef struct Nexus_V1_Champion {
     int strength, dexterity, wisdom, vitality, anti_magic, anti_fire;
     int fighter_level, ninja_level, priest_level, wizard_level;
     int food, water;
-    int alive;
+    int alive;              /* Saturn runtime state; PLRD does not provide it. */
+    int roster_row_available; /* source PLRD row exists for startup selection */
     int direction;            /* 0=N 1=E 2=S 3=W, used by Vi altar rebirth */
     int portrait_index;       /* CG texture index for portrait */
     int portrait_type;        /* PLRD byte 23: body type (0-2) */

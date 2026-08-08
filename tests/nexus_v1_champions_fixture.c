@@ -64,6 +64,7 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
         c->food = 1500;
         c->water = 1500;
         c->alive = 1;
+        c->roster_row_available = 1;
         c->portrait_index = i;
         for (j = 0; j < 30; ++j) c->inventory[j] = -1;
         for (j = 0; j < NEXUS_SLOT_COUNT; ++j) c->slots[j] = -1;
