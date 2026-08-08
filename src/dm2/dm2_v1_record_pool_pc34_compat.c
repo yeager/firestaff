@@ -1640,6 +1640,7 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
             (int16_t)dungeon_receipt.failed_record_type;
         out_receipt->map_failure_record_reason =
             (int16_t)dungeon_receipt.failed_record_reason;
+        out_receipt->recycle_required_db = context.recycle_required_db;
         out_receipt->possession_link_count = context.possession_link_count;
         out_receipt->possession_continuation_count =
             context.possession_continuation_count;
