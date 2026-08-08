@@ -50,17 +50,6 @@ static const uint8_t table1d607e_local[0x2f][4] = {
 #define DM2_V1_CREATURE_TYPE_OFFSET 4
 #define DM2_V1_MAX_XACT_ITERATIONS 32
 
-static uint16_t rd16_local(const uint8_t *p)
-{
-    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
-}
-
-static void wr16_local(uint8_t *p, uint16_t v)
-{
-    p[0] = (uint8_t)(v & 0xffu);
-    p[1] = (uint8_t)((v >> 8) & 0xffu);
-}
-
 /* ================================================================== */
 /* DM2_50CB — animation frame resolver (c_ai.cpp:5275-5338)           */
 /* ================================================================== */
@@ -304,12 +293,11 @@ int dm2_v1_creature_strategy_select(
             int iteration;
             for (iteration = 0; iteration <= DM2_V1_MAX_XACT_ITERATIONS;
                  ++iteration) {
-                int xact_result;
                 rc.xact_loop_iterations = iteration + 1;
 
                 /* c_ai.cpp:5242: PROCEED_XACT(DECIDE_NEXT_XACT(...)) */
-                xact_result = xact_cb(xact_ctx, slot, creature_type,
-                                      game_tick, iteration);
+                (void)xact_cb(xact_ctx, slot, creature_type,
+                              game_tick, iteration);
                 rc.decide_next_calls++;
                 rc.proceed_xact_calls++;
 
@@ -523,6 +511,13 @@ int dm2_v1_think_creature_main(
     int16_t creature;
     const uint8_t *rec_addr;
     void *prepare_token = NULL;
+
+    /* The current fail-closed bridge does not yet own the original wound
+     * transaction or its timer/record consumer. Keep those ABI parameters
+     * for the eventual c_ai.cpp handoff without inventing a callback use. */
+    (void)game_tick;
+    (void)wound_cb;
+    (void)wound_ctx;
 
     dm2_v1_think_creature_main_receipt_init(&rc);
 

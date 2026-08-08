@@ -20,6 +20,14 @@
   `test_theron_v1_combat_mechanics` (106/106), and real US/JP Track 02 dungeon
   loader regression all pass.
 
+# DM2 AI-loop warning cleanup (2026-08-08)
+
+- ✅ Removed dead local helpers and unused temporary state from the
+  source-locked creature AI loop. The intentionally unbound wound/tick
+  parameters are now explicit, with no change to AI callback order or runtime
+  ownership.
+- ✅ Verified the focused AI-loop suite and the real PC-DOS M11 startup gate.
+
 # Nexus audit iterations 2-3 — inventory bounds, hunger comment (2026-08-08)
 
 - ✅ Added weapon_slot bounds check in nexus_inventory_equip.

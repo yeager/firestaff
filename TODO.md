@@ -4490,6 +4490,10 @@ level or consumer bindings.
   word-`+8` comparison through the record-owner callback. This isolated
   helper does not re-enable the disconnected AI archive or substitute any
   creature state; the remaining larger c_1c9a bodies stay fail-closed.
+  **2026-08-08 build-hygiene update:** the production AI-loop translation unit
+  is warning-clean under `-Wall -Wextra`; removed dead local word helpers and
+  made the deliberately unbound wound/tick ABI explicit. This changes no AI
+  decision or callback ordering. The live DB4/CAII/CCM handoff remains open.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic
