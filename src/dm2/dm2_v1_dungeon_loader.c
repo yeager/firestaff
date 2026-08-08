@@ -3154,6 +3154,26 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_scene_census(
     return 1;
 }
 
+int dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTileCensus *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt receipt;
+    DM2_V1_FileHeaderRuntimeTileCensus candidate;
+    if (!out || !d || !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, map, &receipt) || !receipt.committed) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1; candidate.map = map;
+    for (int x = 0; x < receipt.width; ++x) for (int y = 0; y < receipt.height; ++y) {
+        int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+        if (raw < 0) return 0;
+        ++candidate.tile_count;
+        ++candidate.tile_type_count[((unsigned int)raw >> 5) & 7u];
+    }
+    if (candidate.tile_count != receipt.width * receipt.height) return 0;
+    candidate.committed = 1; *out = candidate; return 1;
+}
+
 int dm2_v1_dungeon_resolve_g1_direct_root_record(
     const DM2_V1_DungeonData *d,
     int level,

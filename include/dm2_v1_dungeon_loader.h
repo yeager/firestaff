@@ -462,6 +462,13 @@ typedef struct {
     int record_count;
     int type_count[16];
 } DM2_V1_FileHeaderRuntimeSceneCensus;
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int tile_count;
+    int tile_type_count[8];
+} DM2_V1_FileHeaderRuntimeTileCensus;
 
 typedef struct {
     int committed;
@@ -1666,6 +1673,9 @@ int dm2_v1_dungeon_walk_file_header_runtime_map(
 int dm2_v1_dungeon_collect_file_header_runtime_map_scene_census(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeSceneCensus *out);
+int dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeTileCensus *out);
 /* Resolve a selected tile through c_map.cpp's ground-stack lookup to a
  * declared direct DB0..DB5/DB9 record address. Other types, extensions, and
  * tiles without a root fail closed without mutating out. */

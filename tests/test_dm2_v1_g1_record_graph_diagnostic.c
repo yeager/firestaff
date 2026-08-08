@@ -137,6 +137,7 @@ int main(void) {
     for (int map = 0; map < d.level_count; ++map) {
         DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
         DM2_V1_FileHeaderRuntimeSceneCensus scene_census;
+        DM2_V1_FileHeaderRuntimeTileCensus tile_census;
         FileHeaderWalkTrace map_walk;
         DM2_V1_FileHeaderRuntimeTextReceipt texts;
         DM2_V1_FileHeaderRuntimeCreatureReceipt creatures;
@@ -146,6 +147,7 @@ int main(void) {
 
         memset(&map_receipt, 0, sizeof(map_receipt));
         memset(&scene_census, 0, sizeof(scene_census));
+        memset(&tile_census, 0, sizeof(tile_census));
         memset(&map_walk, 0, sizeof(map_walk));
         if (!dm2_v1_dungeon_validate_file_header_runtime_map(
                 &d, map, &map_receipt) || !map_receipt.committed ||
@@ -161,6 +163,12 @@ int main(void) {
                 &d, map, &scene_census) || !scene_census.committed ||
             scene_census.record_count != map_receipt.record_count) {
             printf("FAIL: File_header map-%d scene census was not retained\n", map);
+            ++failures;
+        }
+        if (!dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
+                &d, map, &tile_census) || !tile_census.committed ||
+            tile_census.tile_count != map_receipt.width * map_receipt.height) {
+            printf("FAIL: File_header map-%d tile census was not retained\n", map);
             ++failures;
         }
         memset(&texts, 0, sizeof(texts));

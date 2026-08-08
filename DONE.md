@@ -202,6 +202,12 @@
 - ✅ Bootprofilen lämnar samma census från den redan verifierade dungeonen;
   M11-testet binder den till kartans tidigare proveniensreceipt.
 
+# DM2 File_header-tilecensus (2026-08-08)
+
+- ✅ Kartbytesens övre tre bitar räknas nu enligt `DME.h::tileTypeIndex` som
+  vägg, golv, grop, trappa, dörr eller teleporter. Alla rutor på samtliga
+  44 PC-DOS-kartor verifieras; detta är fortfarande läsande metadata.
+
 # DM2 fail-closed local-level adapter (2026-08-08)
 
 - ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu
