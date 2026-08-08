@@ -211,6 +211,7 @@ int main(void) {
                 w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
                 if (door->index != (door->object_id & 0x03ffu) ||
                     door->direction != (uint8_t)(door->object_id >> 14) ||
+                    door->attributes != w2 ||
                     door->button != (uint8_t)((w2 >> 6) & 1u) ||
                     door->door_type != (uint8_t)(w2 & 1u) ||
                     door->button_state != (uint8_t)((w2 >> 11) & 1u) ||
@@ -251,6 +252,7 @@ int main(void) {
                 w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
                 if (teleporter->index != (teleporter->object_id & 0x03ffu) ||
                     teleporter->direction != (uint8_t)(teleporter->object_id >> 14) ||
+                    teleporter->destination_word != w4 ||
                     teleporter->destination_x != (uint8_t)(w2 & 0x001fu) ||
                     teleporter->destination_y != (uint8_t)((w2 >> 5) & 0x001fu) ||
                     teleporter->destination_map != (uint8_t)(w4 >> 8) ||
@@ -293,6 +295,9 @@ int main(void) {
                 w6 = (uint16_t)record[6] | ((uint16_t)record[7] << 8);
                 if (actuator->index != (actuator->object_id & 0x03ffu) ||
                     actuator->direction != (uint8_t)(actuator->object_id >> 14) ||
+                    actuator->attributes != w2 ||
+                    actuator->control_word != w4 ||
+                    actuator->target_word != w6 ||
                     actuator->actuator_type != (uint8_t)(w2 & 0x007fu) ||
                     actuator->actuator_data != (uint16_t)((w2 >> 7) & 0x01ffu) ||
                     actuator->graphic_number != (uint8_t)((w4 >> 12) & 0x0fu) ||
@@ -375,7 +380,9 @@ int main(void) {
                     creature->hit_points_3 !=
                         ((uint16_t)record[10] | ((uint16_t)record[11] << 8)) ||
                     creature->hit_points_4 !=
-                        ((uint16_t)record[12] | ((uint16_t)record[13] << 8))) {
+                        ((uint16_t)record[12] | ((uint16_t)record[13] << 8)) ||
+                    creature->state_byte_14 != record[14] ||
+                    creature->state_byte_15 != record[15]) {
                     printf("FAIL: File_header map-%d DB4 fields disagree with source\n",
                            map);
                     ++failures;

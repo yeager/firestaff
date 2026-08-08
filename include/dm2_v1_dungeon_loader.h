@@ -556,6 +556,10 @@ typedef struct {
     uint16_t object_id;
     uint16_t index;
     uint8_t direction;
+    /* Complete original Door::w2.  The named fields below are convenient
+     * read-only projections, but no source status bit may be discarded while
+     * the actuator/sensor and animation owners are still being recovered. */
+    uint16_t attributes;
     uint8_t button;
     uint8_t door_type;
     uint8_t button_state;
@@ -584,6 +588,11 @@ typedef struct {
     uint16_t object_id;
     uint16_t index;
     uint8_t direction;
+    /* Complete original Actuator words. The projections below are useful for
+     * the current census, but the runtime owner must not lose other bits. */
+    uint16_t attributes;
+    uint16_t control_word;
+    uint16_t target_word;
     uint8_t actuator_type;
     uint16_t actuator_data;
     uint8_t graphic_number;
@@ -698,6 +707,8 @@ typedef struct {
     uint16_t hit_points_2;
     uint16_t hit_points_3;
     uint16_t hit_points_4;
+    uint8_t state_byte_14;
+    uint8_t state_byte_15;
 } DM2_V1_FileHeaderCreatureRecord;
 
 #define DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS 256
@@ -980,6 +991,9 @@ typedef struct {
     uint16_t object_id;
     uint16_t index;
     uint8_t direction;
+    /* Complete Teleporter::w4. destination_map is its high byte; preserve
+     * the low source flags until c_moverec owns their runtime meaning. */
+    uint16_t destination_word;
     uint8_t destination_x;
     uint8_t destination_y;
     uint8_t destination_map;

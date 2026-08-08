@@ -8,6 +8,17 @@
   produktionsgrinden som håller fixture- och placeholdermoduler utanför M10.
   Testet är helt läsande och skapar inga spelposter, sparfiler eller party.
 
+# DM2 File_header bevarar kompletta payloadord (2026-08-08)
+
+- ✅ DB0:s hela dörrord `w2`, DB1:s teleporterord `w4` och DB3:s
+  aktuatorord `w2`/`w4`/`w6` finns nu kvar i File_header-receipten utöver de
+  namngivna bitfälten. DB4 behåller även byte 14 och 15 från varelseposten.
+  En senare dörr-, sensor-, teleport- eller AI-ägare behöver alltså inte
+  ersätta förlorad källdata med en gissning.
+- ✅ Samtliga ord och byten jämförs mot monterad originaldata i
+  44-kartorsregressionen. De är läsande kvitton och gör inte en ofullständig
+  session spelbar.
+
 # Theron T900 proof boundary (2026-08-08)
 
 - ✅ Real US/JP object records and the 66-row item-property tables are now

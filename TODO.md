@@ -132,7 +132,8 @@
   triggers, trappor, objekt och framtida local-level-konsumenter. Den
   realdatabundna 44-kartorskontrollen jämför dessutom nu DB0-, DB1-, DB2-,
   DB3- och DB4-receipts fält för fält mot de faktiska recordposterna. Den
-  bevisar läsningen, inte en spelbar session.
+  bevarar nu även DB0:s hela `w2`, DB1:s hela `w4`, DB3:s hela `w2`/`w4`/`w6`
+  och DB4:s båda statusbyten. Den bevisar läsningen, inte en spelbar session.
 
 - **DM2-CREATURE-POSSESSION-RUNTIME:** DB4-ägd possessionslänk och varje
   verklig underkedja är nu verifierade utan mutation. Återställ därefter

@@ -3416,6 +3416,7 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_doors(
                 door->object_id = root;
                 door->index = root & 0x03ff;
                 door->direction = (uint8_t)(root >> 14);
+                door->attributes = attributes;
                 door->button = (uint8_t)((attributes >> 6) & 1u);
                 door->door_type = (uint8_t)(attributes & 1u);
                 door->button_state = (uint8_t)((attributes >> 11) & 1u);
@@ -3503,6 +3504,7 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_doors(
             door->x = x; door->y = y; door->object_id = (uint16_t)root;
             door->index = (uint16_t)root & 0x03ffu;
             door->direction = (uint8_t)((unsigned int)root >> 14);
+            door->attributes = attributes;
             door->button = (uint8_t)((attributes >> 6) & 1u);
             door->door_type = (uint8_t)(attributes & 1u);
             door->button_state = (uint8_t)((attributes >> 11) & 1u);
@@ -3575,6 +3577,9 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
                 actuator->object_id = root;
                 actuator->index = root & 0x03ff;
                 actuator->direction = (uint8_t)(root >> 14);
+                actuator->attributes = w2;
+                actuator->control_word = w4;
+                actuator->target_word = w6;
                 actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
                 actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
                 actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
@@ -3639,6 +3644,9 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
             actuator->x = x; actuator->y = y; actuator->object_id = (uint16_t)root;
             actuator->index = (uint16_t)root & 0x03ffu;
             actuator->direction = (uint8_t)((unsigned int)root >> 14);
+            actuator->attributes = w2;
+            actuator->control_word = w4;
+            actuator->target_word = w6;
             actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
             actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
             actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
@@ -3698,11 +3706,12 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
             teleporter->object_id = (uint16_t)root;
             teleporter->index = (uint16_t)root & 0x03ffu;
             teleporter->direction = (uint8_t)((unsigned int)root >> 14);
+            teleporter->destination_word = w4;
             teleporter->destination_x = (uint8_t)(w2 & 0x001fu);
             teleporter->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
             teleporter->destination_map = (uint8_t)(w4 >> 8);
-            /* SKWIN/DME.h::Teleporter lines 371-374.  Do not interpret the
-             * reserved low byte of w4 as teleporter attributes. */
+            /* SKWIN/DME.h::Teleporter lines 371-374. The lower byte remains
+             * in destination_word but is not interpreted as an attribute. */
             teleporter->scope = (uint8_t)((w2 >> 13) & 3u);
             teleporter->sound = (uint8_t)((w2 >> 15) & 1u);
             teleporter->rotation = (uint8_t)((w2 >> 10) & 3u);
@@ -3737,6 +3746,7 @@ static int dm2_v1_file_header_collect_door_record(
     door->x = x; door->y = y; door->object_id = thing;
     door->index = (uint16_t)index;
     door->direction = (uint8_t)((unsigned int)thing >> 14);
+    door->attributes = attributes;
     door->button = (uint8_t)((attributes >> 6) & 1u);
     door->door_type = (uint8_t)(attributes & 1u);
     door->button_state = (uint8_t)((attributes >> 11) & 1u);
@@ -3785,6 +3795,7 @@ static int dm2_v1_file_header_collect_teleporter_record(
     teleporter->x = x; teleporter->y = y; teleporter->object_id = thing;
     teleporter->index = (uint16_t)index;
     teleporter->direction = (uint8_t)((unsigned int)thing >> 14);
+    teleporter->destination_word = w4;
     teleporter->destination_x = (uint8_t)(w2 & 0x001fu);
     teleporter->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
     teleporter->destination_map = (uint8_t)(w4 >> 8);
@@ -3835,6 +3846,9 @@ static int dm2_v1_file_header_collect_actuator_record(
     actuator->x = x; actuator->y = y; actuator->object_id = thing;
     actuator->index = (uint16_t)index;
     actuator->direction = (uint8_t)((unsigned int)thing >> 14);
+    actuator->attributes = w2;
+    actuator->control_word = w4;
+    actuator->target_word = w6;
     actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
     actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
     actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
@@ -4143,6 +4157,8 @@ static int dm2_v1_file_header_collect_creature_record(
     creature->hit_points_2 = RD16(record + 8);
     creature->hit_points_3 = RD16(record + 10);
     creature->hit_points_4 = RD16(record + 12);
+    creature->state_byte_14 = record[14];
+    creature->state_byte_15 = record[15];
     creature->direction = (uint8_t)(record[15] & 0x03u);
     ++receipt->creature_record_reads;
     (void)level;
