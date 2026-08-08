@@ -8402,3 +8402,16 @@
   failure.
 - ✅ The verifier passes with isolated `HOME` and the real ReDMCSB tree. This
   changes no Nexus runtime admission and does not weaken any capture gate.
+
+# Nexus Saturn capture launcher reproducibility (2026-08-08)
+
+- ✅ The operator-only raw Saturn launcher now accepts an existing isolated
+  `--mednafen-home` and records it in the capture plan instead of silently
+  inheriting the caller's private Mednafen configuration.
+- ✅ `--no-waiting` is now an explicit capture-plan setting and forces the
+  instrumented producer's `FIRESTAFF_NEXUS_NO_WAITING=1` route when requested.
+  The launcher test and a real E-BIOS/French-CUE manifest audit pass with the
+  supplied hashes.
+- ✅ This improves capture reproducibility only. It does not admit a raw
+  frame as MENU/PRS3/HUD/viewport evidence; those source and VDP joins remain
+  capture-gated.

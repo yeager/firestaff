@@ -23,6 +23,15 @@ grep -Fq 'frame_limit=8' "$tmp_dir/manifest.txt"
 grep -Fq 'press_start_frame=0' "$tmp_dir/manifest.txt"
 grep -Fq 'press_start_length=1' "$tmp_dir/manifest.txt"
 grep -Fq 'press_button_mask=0x10' "$tmp_dir/manifest.txt"
+mkdir -p "$tmp_dir/mednafen-home"
+"$launcher" --operator-only --mednafen /usr/bin/true \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-home.raw" --validator "$validator" \
+  --manifest "$tmp_dir/manifest-home.txt" \
+  --mednafen-home "$tmp_dir/mednafen-home" --no-waiting >/dev/null
+grep -Fq "mednafen_home=$tmp_dir/mednafen-home" "$tmp_dir/manifest-home.txt"
+grep -Fq 'no_waiting=1' "$tmp_dir/manifest-home.txt"
 "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \

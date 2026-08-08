@@ -4,7 +4,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 [--operator-only --launch] --mednafen PATH --bios PATH --bios-sha256 HEX --disc PATH --disc-sha256 HEX --trace PATH --validator PATH --manifest PATH [--skip-frames DEC] [--frame-limit DEC] [--press-start-frame DEC] [--press-start-length DEC] [--press-button-mask DEC/HEX]" >&2
+  echo "usage: $0 [--operator-only --launch] --mednafen PATH --bios PATH --bios-sha256 HEX --disc PATH --disc-sha256 HEX --trace PATH --validator PATH --manifest PATH [--mednafen-home PATH] [--no-waiting] [--skip-frames DEC] [--frame-limit DEC] [--press-start-frame DEC] [--press-start-length DEC] [--press-button-mask DEC/HEX]" >&2
 }
 
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
@@ -27,13 +27,16 @@ frame_limit=2
 press_start_frame=0
 press_start_length=1
 press_button_mask=0x10
+mednafen_home=
+no_waiting=0
 while (($#)); do
   case "$1" in
     --launch) launch=1; shift ;;
     --operator-only) operator_only=1; shift ;;
-    --mednafen|--bios|--bios-sha256|--disc|--disc-sha256|--trace|--validator|--manifest|--skip-frames|--frame-limit|--press-start-frame|--press-start-length|--press-button-mask)
+    --mednafen|--bios|--bios-sha256|--disc|--disc-sha256|--trace|--validator|--manifest|--mednafen-home|--skip-frames|--frame-limit|--press-start-frame|--press-start-length|--press-button-mask)
       (($# >= 2)) || { usage; exit 2; }
       key=${1#--}; key=${key//-/_}; printf -v "$key" '%s' "$2"; shift 2 ;;
+    --no-waiting) no_waiting=1; shift ;;
     *) usage; exit 2 ;;
   esac
 done
@@ -41,6 +44,10 @@ done
 : "${mednafen:?}" "${bios:?}" "${bios_sha256:?}" "${disc:?}" "${disc_sha256:?}" \
   "${trace:?}" "${validator:?}" "${manifest:?}"
 [[ -x "$mednafen" && -x "$validator" ]] || exit 1
+if [[ -n "$mednafen_home" && ! -d "$mednafen_home" ]]; then
+  echo "ERROR: --mednafen-home must name an existing directory" >&2
+  exit 1
+fi
 require_hash "$bios" "$bios_sha256" || exit 1
 require_hash "$disc" "$disc_sha256" || exit 1
 require_disc_container "$disc" || exit 1
@@ -63,6 +70,7 @@ umask 077
   printf 'FIRESTAFF_NEXUS_SATURN_RAW_CAPTURE_PLAN_V1\n'
   printf 'bios_sha256=%s\ndisc_sha256=%s\nskip_frames=%s\nframe_limit=%s\npress_start_frame=%s\npress_start_length=%s\npress_button_mask=%s\n' \
     "$(lower "$bios_sha256")" "$(lower "$disc_sha256")" "$skip_frames" "$frame_limit" "$press_start_frame" "$press_start_length" "$press_button_mask"
+  printf 'mednafen_home=%s\nno_waiting=%s\n' "${mednafen_home:-}" "$no_waiting"
   printf 'capture_magic=FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n'
 } > "$manifest_tmp"
 mv "$manifest_tmp" "$manifest"
@@ -76,13 +84,30 @@ printf 'command=%q -filesys.untrusted_fip_check 0 -ss.bios_na_eu %q %q\n' "$medn
 ((launch)) || exit 0
 ((operator_only)) || exit 1
 
-FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
-FIRESTAFF_NEXUS_NO_WAITING="${FIRESTAFF_NEXUS_NO_WAITING:-}" \
-FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
-FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT="$frame_limit" \
-FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
-FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
-FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
-  "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc"
+if ((no_waiting)); then
+  waiting_env=1
+else
+  waiting_env="${FIRESTAFF_NEXUS_NO_WAITING:-}"
+fi
+if [[ -n "$mednafen_home" ]]; then
+  HOME="$mednafen_home" \
+  FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
+  FIRESTAFF_NEXUS_NO_WAITING="$waiting_env" \
+  FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
+  FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT="$frame_limit" \
+  FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
+  FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
+  FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
+    "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc"
+else
+  FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
+  FIRESTAFF_NEXUS_NO_WAITING="$waiting_env" \
+  FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
+  FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT="$frame_limit" \
+  FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
+  FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
+  FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
+    "$mednafen" -filesys.untrusted_fip_check 0 -ss.bios_na_eu "$bios" "$disc"
+fi
 [[ -s "$trace" ]] || exit 1
 "$validator" "$trace" --require-frames "$frame_limit"
