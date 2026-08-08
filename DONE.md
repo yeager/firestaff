@@ -5,6 +5,12 @@
   MINI.DAT-party öppnar och stänger inventory med samma musväg som användaren
   använder. Testet använder inget modellparty, inga hårdkodade hitkoordinater
   och ingen direkt mutation av HUD-tillståndet.
+- ✅ F31 kan inte längre skriva eller läsa Firestaffs privata CSB-snapshot
+  som om den vore en FM Towns-sparning. ReDMCSB LOADSAVE.C F0433/F0435 kräver
+  F31:s plattformsidentitet, obfuskerade fem sparblock och porträttpayloads;
+  den vägen är därför ärligt spärrad tills en autentisk sparcorpus kan
+  verifiera en bytekorrekt implementation. EN- och JP-originalmedian testar
+  båda spärren efter att den riktiga MINI.DAT-resumen nått live HUD.
 
 - ✅ Prison/HUD-provet binder nu den disponibla F0433/F0435-sökvägen först
   efter den källägda title- och Prison-kedjan. En gammal global F5/F9-

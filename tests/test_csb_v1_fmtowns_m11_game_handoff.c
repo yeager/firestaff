@@ -466,6 +466,13 @@ int main(void)
                   DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
                   !view.inventoryPanelActive,
               "F31 live pointer closes that inventory through C007");
+        /* A user save must be the original F31 F0433/F0435 container.  No
+         * authentic FM Towns corpus is available here, so the live session
+         * must reject the generic Firestaff snapshot rather than manufacture
+         * a file and present it as a native save. */
+        CHECK(!M11_GameView_QuickSave(&view) &&
+                  !M11_GameView_QuickLoad(&view),
+              "F31 live session refuses a non-native save envelope");
     }
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
      * The atomic F31 resume owns map 4 and its saved pose, so query the

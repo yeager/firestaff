@@ -3,9 +3,11 @@
 - 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT-party-, dungeon-,
   tidslinje- och aktivgruppsdata och har en realdataverifierad HUD-musväg.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,
-  bytekorrekt FM Towns-sparning/återupptagning, full action/spell/item- och
-  cursorsemantik samt externa app-captures. DSA-sparningar är uttryckligen
-  uppskjutna tills en godkänd verklig corpus finns.
+  bytekorrekt FM Towns-sparning/återupptagning (F0433/F0435:s obfuskerade
+  femdelarsformat med porträtt), full action/spell/item- och cursorsemantik
+  samt externa app-captures. Den privata CSB-snapshoten är avsiktligt spärrad
+  för F31 i stället för att maskeras som originalformat. DSA-sparningar är
+  uttryckligen uppskjutna tills en godkänd verklig corpus finns.
 
 - 🔧 Theron real Track 02 loading now retains reserved category-4 monster
   bytes as source records while admitting only the authenticated 0..6 roster

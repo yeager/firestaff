@@ -22253,6 +22253,16 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             return 0;
         }
         profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+        if (m11_csb_is_fmtowns_profile(profile)) {
+            /* ReDMCSB LOADSAVE.C F0433/F0435 uses the native F31 save
+             * header, five obfuscated save parts and four portrait payloads
+             * (MEDIA551/F31E,F31J).  The generic CSB snapshot is a
+             * Firestaff-private envelope and is not an FM Towns save.  Until
+             * that source container is implemented and checked against an
+             * authentic F31 corpus, never write a misleading substitute. */
+            m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE REQUIRED");
+            return 0;
+        }
         original_atari_source =
             csb_v1_runtime_original_atari_save_source_path(&profile->runtime);
         if (original_atari_source) {
@@ -22505,6 +22515,15 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
 
         if (!state->csbBootProfile) {
             m11_set_status(state, "LOAD", "CSB PROFILE MISSING");
+            return 0;
+        }
+        if (m11_csb_is_fmtowns_profile(
+                (const CSB_V1_BootProfile *)state->csbBootProfile)) {
+            /* See the matching F0433 gate in QuickSave.  F0435 validates
+             * F31 platform identity plus the native obfuscated parts; it
+             * must not accept a private PC34-style snapshot as if it were
+             * original FM Towns media. */
+            m11_set_status(state, "LOAD", "FM TOWNS NATIVE SAVE REQUIRED");
             return 0;
         }
         /* ReDMCSB LOADSAVE.C F0435 restores CSB live globals from the save
