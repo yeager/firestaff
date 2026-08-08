@@ -1,3 +1,21 @@
+# DM2 GAME_LOAD load-flow gate (2026-08-08)
+
+- ✅ Den publika Resume-vägen har samma källgrind som Nytt spel. Saknad
+  bootprofil, overifierade tillgångar och varje ofullständig `GAME_LOAD`-
+  ägare avvisas utan att ändra sessionens bytes.
+- ✅ Inte heller en ensam intern readiness-bit kan publicera en Firestaff-
+  konstruerad save-session. `c_savegame.cpp::DM2_GAME_LOAD` måste först
+  återställa karta, recordpooler, possessions, heroes och timerkö som en
+  atomär originaltransaktion.
+- ✅ Verifierat med utility/import-proben (73/73) och M11:s
+  startprofilgrind mot hashverifierad PC-DOS-data.
+
+# DM2 GAME_LOAD-rörelsegrind (2026-08-08)
+
+- ✅ Rörelse och vändning kräver nu både den riktiga GDAT-/File_header-vägen
+  och en komplett originalägd `GAME_LOAD`-session. En testbyggd karta med
+  giltiga grafikhooks kan därför inte längre flytta party eller trigga en
+  actuatorväg.
 # DM2 källbunden championroster (2026-08-08)
 
 - ✅ Bootprofilen exponerar nu alla 16 verkliga PC-DOS-champions i samma

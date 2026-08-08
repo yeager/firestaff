@@ -7319,6 +7319,10 @@ int dm2_v1_runtime_can_move(void) {
 static int dm2_runtime_gameplay_source_ready(const DM2_V1_RuntimeState *rt)
 {
     return rt && rt->boot && rt->boot->assets_verified &&
+        /* A mounted File_header/GDAT pair is presentation evidence, not a
+         * playable world. c_savegame.cpp::DM2_GAME_LOAD must first own the
+         * party, record pools, possessions and timer queue together. */
+        rt->boot->source_game_load_session_ready &&
         rt->boot->graphics_dat && rt->boot->dungeon_data &&
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
         rt->viewport_asset_user == rt->boot &&

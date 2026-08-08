@@ -655,13 +655,13 @@ static void test_first_tick_after_boot_profile_handoff(void)
                 int before_actuators = dm2_v1_runtime_get_actuator_count();
                 dm2_v1_runtime_set_position(0, 0, 1, 0);
                 dm2_v1_runtime_set_outdoor(1);
-                CHECK(dm2_v1_runtime_move(0) == 0 &&
+                CHECK(dm2_v1_runtime_move(0) < 0 &&
                       dm2_v1_runtime_get_party_x() == 0 &&
                       dm2_v1_runtime_get_party_y() == 0 &&
                       dm2_v1_runtime_get_actuator_count() ==
                           before_actuators &&
                       dm2_v1_runtime_get_last_generated_object() == 0u,
-                      "runtime arrival cannot infer an actuator transition from a DB3 fixture");
+                      "runtime rejects a fixture world before it can infer an actuator transition");
             }
         } else {
             CHECK(0, "runtime square-actuator fixture loads");
