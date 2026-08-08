@@ -6,6 +6,12 @@
   ursprunglig partydata att framstå som spelbar; bootprofilprovet låser
   därför både count, party-validering och `ChampionCount` till noll.
 
+- ✅ Den gamla fristående "real-artifact"-proben är avvecklad. Trots att den
+  läste en riktig `DUNGEON.DAT` skapade den en privat sparheader,
+  partyposition, champion count och state-prefix från modellen. Utan en
+  autentisk CSB-sparfil är sådan generering inte ett sparformatstest och kan
+  inte längre byggas eller köras.
+
 - ✅ Realdataregressionen för CSB:s HUD använder inte längre testskapade
   party-, inventory- eller spellpanelstillstånd för C100, F1, F2 eller C022.
   Den verifierar den riktiga enhjältepartyns positiva och negativa kommandon

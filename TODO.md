@@ -7788,6 +7788,10 @@ that its exact runtime path is not already source-locked and tested.
 24. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
     native import/export/backup/resume compatibility, EXPOOL/DB11 ownership,
     and byte-level failure handling.
+    2026-08-08: a former probe that derived a Firestaff save header, party
+    pose and state prefix from `DUNGEON.DAT` was removed. A dungeon package is
+    not a saved game and must never be used to manufacture one; this item now
+    accepts only an authenticated original CSB/CSBWin save corpus.
     2026-07-28: local CSB material includes the original Atari ST Save Disk
     (`Chaos Strikes Back for Atari ST Save Disk.msa`) and it has been decoded
     and inspected as a valid 720 KiB FAT disk. It is blank: there is no

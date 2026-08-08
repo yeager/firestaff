@@ -219,7 +219,6 @@ behavior (DSA execution, extended timers).
 | Export/import round trip | `csb_v1_save_export_import_pc34_compat.c` |
 | Save import path | `csb_v1_save_import_path_pc34_compat.c` |
 | Load | `csb_v1_save_load_pc34_compat.c` |
-| Real-artifact boundary (hash-gated) | `csb_v1_save_real_artifact_boundary_pc34_compat.c` |
 | Utility Disk transaction (import/edit/inventory/dialogs) | `csb_v1_utility_save_transaction_pc34_compat.c`, `csb_v1_utility_flow_pc34.c`, `csb_v1_utility_import_pc34.c` |
 
 Test coverage: 32 save/Utility Disk files (Q-CSB-09), 15 of which are
