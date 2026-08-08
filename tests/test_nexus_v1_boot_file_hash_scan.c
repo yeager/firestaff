@@ -167,6 +167,8 @@ int main(void) {
     char level_dst[FSP_PATH_MAX];
     char wrong_level_canonical_dst[FSP_PATH_MAX];
     char negative_root[FSP_PATH_MAX];
+    char negative_nexus_dir[FSP_PATH_MAX];
+    char negative_profile_level_dst[FSP_PATH_MAX];
     char wrong_level_dst[FSP_PATH_MAX];
     char slev00_src[FSP_PATH_MAX];
     char slev00_dst[FSP_PATH_MAX];
@@ -368,7 +370,14 @@ int main(void) {
                      "negative-level-name-only") &&
         FSP_CreateDirectoryRecursive(negative_root) &&
         FSP_JoinPath(wrong_level_dst, sizeof(wrong_level_dst), negative_root, "LEV00.DGN") &&
-        copy_file_bytes(dm_bin_src, wrong_level_dst)) {
+        copy_file_bytes(dm_bin_src, wrong_level_dst) &&
+        FSP_JoinPath(negative_nexus_dir, sizeof(negative_nexus_dir),
+                     negative_root, "nexus") &&
+        FSP_CreateDirectoryRecursive(negative_nexus_dir) &&
+        FSP_JoinPath(negative_profile_level_dst,
+                     sizeof(negative_profile_level_dst),
+                     negative_nexus_dir, "LEV00.DGN") &&
+        copy_file_bytes(dm_bin_src, negative_profile_level_dst)) {
         if (FSP_JoinPath(menu_bpk_src, sizeof(menu_bpk_src), data_root, "MENU.BPK") &&
             local_file_exists(menu_bpk_src) &&
             FSP_JoinPath(menu_bpk_dst, sizeof(menu_bpk_dst), root, "renamed-menu-bpk.payload") &&
@@ -531,6 +540,17 @@ int main(void) {
         nexus_v1_shutdown(&engine);
 
         nexus_v1_game_init(&game, negative_root);
+        memset(&profile, 0, sizeof(profile));
+        memset(diags, 0, sizeof(diags));
+        check_int(Nexus_V1_BootProfile_Init(&profile,
+                                            negative_root,
+                                            negative_root,
+                                            0U) == 0,
+                  "Nexus boot profile initializes against wrong-name-only root");
+        (void)Nexus_V1_BootProfile_ValidateAssets(&profile, diags, 4U);
+        check_int(diag_details_contain(diags, 4U, "LEV00.DGN") &&
+                      diag_details_contain(diags, 4U, "hash mismatch"),
+                  "Nexus boot profile rejects readable but non-canonical LEV00.DGN bytes");
         check_int(nexus_v1_game_load_level(&game, 0) == -1,
                   "Nexus level loader rejects wrong bytes under canonical LEV00.DGN name");
         check_int(game.level_path[0] == '\0',

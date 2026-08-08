@@ -27,6 +27,26 @@
 
 # Nexus retail-format inventory refresh (2026-08-08)
 
+# Nexus boot-profile hash gate hardening (2026-08-08)
+
+- ✅ A readable `DM.BIN`, `LEV00.DGN`, `SN_FLOOR.MNS`, `SN_WALL.MNS` or
+  `RLOWFIX.BIN` filename is no longer accepted as source evidence by itself.
+  Canonical loose files must match the expected retail MD5, otherwise a
+  separate hash-verified file/archive member must be found or the profile
+  emits a hash-mismatch diagnostic.
+- ✅ Existing renamed-retail and wrong-canonical hash-scan coverage remains
+  green, with the production source-boundary verifier passing.
+
+# Nexus SDDRVS runtime provenance binding (2026-08-08)
+
+- ✅ `nexus_v1_init()` now reads the hash-verified retail `SDDRVS.TSK` and
+  carries its byte-bound 68k entry, command-dispatch, jump-table and
+  PCM-register corridor receipt in the live engine state.
+- ✅ The integration remains provenance-only: SLEV event ownership, SAL
+  codec semantics, SCSP writes and host playback remain explicitly closed.
+- ✅ Real Nexus runtime sound receipt, SLEV/SAL discovery, SAL/MAP corpus,
+  startup/menu and production-boundary tests pass with the external corpus.
+
 # Nexus M12 launch-gate false-positive repair (2026-08-08)
 
 - ✅ Nexus hash availability no longer promotes the game card to

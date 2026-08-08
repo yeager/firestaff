@@ -60,6 +60,7 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
+#include "nexus_v1_audio_receipt.h"
 #include "nexus_v1_structure3_capture_manifest.h"
 #include "nexus_v1_rlowfix_text.h"
 #include "nexus_v1_res.h"
@@ -2642,6 +2643,10 @@ struct Nexus_V1_Engine {
     Nexus_V1_SmapRuntimeReceipt smap_runtime_receipt;
     uint32_t *smap_rgba;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
+    /* Read-only structure proof for the authenticated 68k sound task. This
+     * never authorizes event dispatch, SAL decoding, SCSP writes, or host
+     * playback. */
+    Nexus_V1_SddrvsDisassemblyReceipt sound_driver_disassembly_receipt;
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;

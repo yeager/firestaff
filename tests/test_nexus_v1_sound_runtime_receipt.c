@@ -773,6 +773,34 @@ static void test_optional_real_sal_layout_provenance(void) {
     fclose(fp);
 }
 
+static void test_optional_real_sddrvs_engine_provenance(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_V1_Engine engine;
+
+    if (!data_dir || !data_dir[0]) return;
+    memset(&engine, 0, sizeof(engine));
+    if (nexus_v1_init(&engine, data_dir) != 0) {
+        return;
+    }
+    CHECK(engine.sound_driver_source.canonical_hash_verified == 1,
+          "real Nexus engine binds the canonical SDDRVS source");
+    CHECK(engine.sound_driver_disassembly_receipt.valid == 1 &&
+          engine.sound_driver_disassembly_receipt.source_size == 26610U &&
+          engine.sound_driver_disassembly_receipt.code_entry_offset == 0x1000U &&
+          engine.sound_driver_disassembly_receipt.command_dispatch_offset == 0x1c08U &&
+          engine.sound_driver_disassembly_receipt.command_jump_table_offset == 0x1c2aU &&
+          engine.sound_driver_disassembly_receipt.command_jump_table_count == 16U &&
+          engine.sound_driver_disassembly_receipt.pcm_voice_handler_offset == 0x1f0eU &&
+          engine.sound_driver_disassembly_receipt.m68k_instruction_stream_proven &&
+          engine.sound_driver_disassembly_receipt.command_dispatch_proven &&
+          engine.sound_driver_disassembly_receipt.pcm_voice_register_route_proven,
+          "real Nexus engine carries the verified SDDRVS 68k corridors");
+    CHECK(engine.sound_driver_disassembly_receipt.event_dispatch_proven == 0 &&
+          engine.sound_driver_disassembly_receipt.playback_permitted == 0,
+          "SDDRVS structure proof does not open event dispatch or playback");
+    nexus_v1_shutdown(&engine);
+}
+
 static void test_mismatched_assets_block_playback(void) {
     Nexus_SoundEngine eng;
     Nexus_SfxRuntimeReceipt receipt;
@@ -815,6 +843,7 @@ int main(void) {
     test_canonical_source_handoff_stays_decode_blocked();
     test_optional_real_sal_corpus_profile();
     test_optional_real_sal_layout_provenance();
+    test_optional_real_sddrvs_engine_provenance();
     if (g_failures) {
         printf("test_nexus_v1_sound_runtime_receipt: %d failure(s)\n",
                g_failures);

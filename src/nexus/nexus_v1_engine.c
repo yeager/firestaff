@@ -3166,6 +3166,23 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_sound_init(&engine->audio);
     (void)nexus_v1_level_aux_source_receipt(
         engine, "SDDRVS.TSK", &engine->sound_driver_source);
+    if (engine->sound_driver_source.canonical_hash_verified) {
+        int sound_driver_size = 0;
+        uint8_t *sound_driver = nexus_v1_read_file(
+            engine, "SDDRVS.TSK", &sound_driver_size);
+        if (sound_driver && sound_driver_size > 0 &&
+            nexus_v1_dgn_bytes_match_canonical_md5(
+                sound_driver, sound_driver_size,
+                engine->sound_driver_source.canonical_md5)) {
+            /* Source-bound disassembly only: the receipt identifies byte
+             * corridors in the authenticated retail image, but deliberately
+             * leaves event ownership and playback closed. */
+            (void)nexus_v1_audio_sddrvs_disassembly_receipt(
+                sound_driver, (uint32_t)sound_driver_size,
+                &engine->sound_driver_disassembly_receipt);
+        }
+        free(sound_driver);
+    }
     nexus_sound_set_driver_canonical_source_verified(
         &engine->audio,
         engine->sound_driver_source.canonical_hash_verified);

@@ -352,24 +352,39 @@ static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
     char matched[ASSET_PATH_MAX];
     char canonical[ASSET_PATH_MAX];
     FILE *file;
-    /* A staged canonical loose file wins deterministically.  Hash discovery
-     * is only the no-copy fallback and may retain a virtual ZIP/ISO path. */
+    /* A staged canonical loose file is only acceptable when it matches the
+     * supplied identity. Hash discovery is the no-copy fallback and may
+     * retain a virtual ZIP/ISO path; an arbitrary readable filename is not
+     * source evidence. */
     if (dir && filename && snprintf(canonical, sizeof(canonical), "%s/%s",
                                     dir, filename) > 0 &&
         (file = fopen(canonical, "rb")) != NULL) {
         fclose(file);
-        /* A second hash-addressed container candidate makes release identity
-         * ambiguous.  Do not let canonical naming hide mixed media. */
-        if (md5 && asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8) &&
-            strcmp(matched, canonical) != 0) {
-            if (*outIndex >= (size_t)NEXUS_V1_DIAG_COUNT) return -1;
-            diags[*outIndex].code = NEXUS_V1_DIAG_MISSING_DM_BIN;
-            snprintf(diags[*outIndex].message, sizeof(diags[*outIndex].message),
-                     "Ambiguous Nexus asset: %s", filename);
-            (*outIndex)++;
-            return 1;
+        if (!md5 || asset_file_matches_md5(canonical, md5)) {
+            return 0;
         }
-        return 0;
+        /* A wrong canonical name may coexist with a hash-verified renamed
+         * or archived member. Prefer the authenticated member rather than
+         * promoting the wrong loose bytes. */
+        if (asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8)) {
+            return 0;
+        }
+        if (*outIndex >= (size_t)NEXUS_V1_DIAG_COUNT) return -1;
+        diags[*outIndex].code = (okCode != NEXUS_V1_DIAG_OK)
+            ? okCode : NEXUS_V1_DIAG_MISSING_DM_BIN;
+        snprintf(diags[*outIndex].message,
+                 sizeof(diags[*outIndex].message),
+                 "Asset hash mismatch: %s", filename);
+        snprintf(diags[*outIndex].detail,
+                 sizeof(diags[*outIndex].detail),
+                 "Readable file is not the authenticated Nexus source (hash mismatch): %s",
+                 canonical);
+        snprintf(diags[*outIndex].suggestion,
+                 sizeof(diags[*outIndex].suggestion),
+                 "Replace %s with the hash-verified retail file or provide a verified archive.",
+                 filename);
+        (*outIndex)++;
+        return 1;
     }
     if (dir && md5 && asset_find_by_md5(dir, md5, matched,
                                         (int)sizeof(matched), 8)) {
