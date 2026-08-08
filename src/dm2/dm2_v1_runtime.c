@@ -4441,6 +4441,15 @@ static int dm2_runtime_spell_timer_delegate(void *user,
  */
 void dm2_v1_runtime_tick(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    /* GAME_LOAD owns gametick, the timer heap and the v1e14xx weather
+     * globals as one restored session (SKProject c_savegame.cpp::DM2_GAME_LOAD
+     * followed by c_tim_proc.cpp::DM2_PROCEED_TIMERS). A boot-mounted
+     * File_header world has none of those owners, so advancing even the local
+     * tick counter would manufacture elapsed time for a non-session. */
+    if (!rt->boot || !rt->boot->source_game_load_session_ready) {
+        return;
+    }
     rt->tick_count++;
 
     /* skweathr.cpp derives environmental time from its source globals and

@@ -16,6 +16,8 @@
   och en komplett originalägd `GAME_LOAD`-session. En testbyggd karta med
   giltiga grafikhooks kan därför inte längre flytta party eller trigga en
   actuatorväg.
+- ✅ Runtime-ticken är spärrad på samma sätt. Den kan därmed inte skapa
+  förfluten tid, timerkörning eller väderarbete från bara en monterad karta.
 # DM2 källbunden championroster (2026-08-08)
 
 - ✅ Bootprofilen exponerar nu alla 16 verkliga PC-DOS-champions i samma

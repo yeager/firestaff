@@ -36,9 +36,9 @@
   record pools, possessions, heroes, timers and actuator generators, then
   install its source-shaped session handoff here. A boolean or a parsed save
   receipt alone must never make a game playable.
-  Rörelse och vändning kräver nu samma owner-bit som M11, men tick-, timer-
-  och renderhändelser ska fortsatt flyttas till den atomära handoffen i stället
-  för att förlita sig på en monterad File_header-värld.
+  Rörelse, vändning och runtime-tick kräver nu samma owner-bit som M11.
+  Timer- och renderhändelser ska fortsatt flyttas till den atomära handoffen i
+  stället för att förlita sig på en monterad File_header-värld.
 
 - **DM2-FILE-HEADER-LOCALLEVEL-OWNER:** The callback-shaped
   `DM2_LOAD_LOCALLEVEL_DYN` translation is now explicitly blocked unless a

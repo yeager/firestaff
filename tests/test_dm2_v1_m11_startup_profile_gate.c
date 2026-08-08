@@ -1369,6 +1369,9 @@ int main(void) {
                         dm2_v1_runtime_get_tick_count() == 0,
                     "DM2 mounted File_header cannot mutate gameplay before original GAME_LOAD owns a session");
     }
+    dm2_v1_runtime_tick();
+    expect_true(dm2_v1_runtime_get_tick_count() == 0,
+                "DM2 mounted File_header cannot advance runtime time before GAME_LOAD");
     memset(&champion_mirrors, 0, sizeof(champion_mirrors));
     expect_true(profile &&
                     dm2_v1_boot_champion_mirror_receipt(
