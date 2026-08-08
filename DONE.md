@@ -1,5 +1,17 @@
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
+# 2026-08-08 Theron source monster enum boundary
+
+- ✅ Fixed the production Track 02 source-record to live-creature boundary:
+  the authenticated roster table is zero-based (`AKUTUBA=0..DEMON=6`), while
+  the runtime enum reserves zero for `NONE`. Live creatures now receive the
+  correct one-based type without altering the retained raw source record.
+- ✅ Unknown authentic raw type `7` records are preserved as source provenance
+  but are not fabricated into a creature and no longer abort dungeon loading.
+- ✅ Verified all seven real US dungeon blocks, JP object records, source
+  thing-data layouts, production combat gates, world serialization and the
+  authentic US/JP HuC6280 disassembly receipts.
+
 # 2026-08-08 Theron disassembly-bound spawn register receipts
 
 - ✅ Added a strict parser for the Mednafen `.spawn-registers` sidecar. It

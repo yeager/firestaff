@@ -2,6 +2,7 @@
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_actuator.h"
+#include "theron_v1_track02_creature_names.h"
 #include "theron_v1_world.h"
 #include <assert.h>
 #include <stdio.h>
@@ -132,6 +133,7 @@ static unsigned int expected_live_monsters(const Theron_V1_World *world) {
             &world->source_monsters[i];
         if (record->dungeon_id != world->current_dungeon ||
             record->level != world->current_level) continue;
+        if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
         unsigned int members = (unsigned int)record->number + 1u;
         if (members > 4u) members = 4u;
         for (unsigned int slot = 0; slot < members; ++slot)
@@ -245,8 +247,22 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                expected_live_monsters(world));
         for (int ci = 0; ci < world->creature_count; ++ci) {
             const Theron_V1_Creature *creature = &world->creatures[ci];
+            const Theron_V1_SourceMonsterRecord *source = NULL;
+            for (unsigned int si = 0; si < world->source_monster_count; ++si) {
+                const Theron_V1_SourceMonsterRecord *candidate =
+                    &world->source_monsters[si];
+                if (candidate->source_ref == creature->source_ref &&
+                    candidate->source_index == creature->source_index) {
+                    source = candidate;
+                    break;
+                }
+            }
             assert(creature->flags & THERON_CF_ACTIVE);
             assert(creature->source_ref != 0u);
+            assert(source != NULL);
+            assert(creature->type == (uint8_t)(source->type + 1u));
+            assert(creature->type >= THERON_CREATURE_AKUTUBA &&
+                   creature->type <= THERON_CREATURE_DEMON);
             assert(creature->source_cell ==
                    (uint8_t)((creature->source_position >>
                               (creature->source_slot * 2u)) & 0x03u));

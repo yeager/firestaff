@@ -16,6 +16,7 @@
  */
 
 #include "theron_v1_world.h"
+#include "theron_v1_track02_creature_names.h"
 #include "theron_v1_combat.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_dungeon_map.h"
@@ -1175,6 +1176,7 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             &world->source_monsters[i];
         if (record->dungeon_id != world->current_dungeon ||
             record->level != lvl) continue;
+        if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
         /* The on-disk count is the two-bit value; actual members are value+1.
          * This is the source Group count contract, not a gameplay default. */
         unsigned int members = (unsigned int)record->number + 1u;
@@ -1193,6 +1195,7 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             &world->source_monsters[i];
         if (record->dungeon_id != world->current_dungeon ||
             record->level != lvl) continue;
+        if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
         unsigned int members = (unsigned int)record->number + 1u;
         if (members > 4u) members = 4u;
         for (unsigned int slot = 0; slot < members; ++slot) {
@@ -1203,7 +1206,12 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             memset(creature, 0, sizeof(*creature));
             creature->id = ((int)record->source_ref << 2) | (int)slot;
             if (creature->id <= 0) creature->id = world->creature_count;
-            creature->type = record->type;
+            /* Track 02's authenticated creature-name table at UD $2741EF is
+             * zero-based (AKUTUBA=0..DEMON=6), while the live C API reserves
+             * zero for NONE and uses AKUTUBA=1..DEMON=7.  Preserve the raw
+             * source value in source_monsters, but translate it at the
+             * source-record -> live-creature boundary. */
+            creature->type = (uint8_t)(record->type + 1u);
             creature->level = (uint8_t)lvl;
             creature->dungeon_id = world->current_dungeon;
             creature->x = record->x;

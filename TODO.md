@@ -8,6 +8,12 @@
   publish RNG, creature, AI, loot or generator semantics without the original
   System Card-backed capture.
 
+- 🔧 Theron live creature materialization now translates the zero-based
+  Track 02 roster types (`AKUTUBA=0..DEMON=6`) to the one-based runtime enum.
+  An authentic raw type `7` is retained as source data but remains unbound
+  until a matching roster/graphics consumer is proven; RNG spawns, AI, combat,
+  loot and generator execution remain blocked.
+
 - **DM2-CHAMPION-DYN4-LOCALLEVEL-QUEUE:** PC-DOS boot now retains the
   sixteen source File_header champion-mirror records across their real
   `w0`-kedjor, but must not materialise them independently. Recover the
