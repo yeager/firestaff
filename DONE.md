@@ -1,3 +1,9 @@
+# Theron authentic SDL2 capture runtime (2026-08-08)
+
+- ✅ Built SDL2 2.30.9 in an isolated `/tmp` prefix and rebuilt the complete instrumented Mednafen 1.32.1 patch chain against that real SDL2 library.
+- ✅ `verify_theron_mednafen_sdl2_runtime.sh` now passes with the direct SDL2 linkage; the previous `sdl2-compat` blocker is removed.
+- ⚠️ Dynamic Theron capture was not promoted: the required original System Card 3.0 is not present locally, so RNG return values, spawn timing and later consumers remain unproven.
+
 # Theron Mednafen trace patch compile verification (2026-08-08)
 
 - ✅ Corrected the spawn-register sidecar to use portable `FILE*` `fprintf()`/`fflush()` calls and fixed the generated patch hunk counts.
