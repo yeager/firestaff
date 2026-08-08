@@ -12,12 +12,14 @@
  * inside each populated section correspond to a given glyph index,
  * and lets the caller copy those bytes straight out of the SCR file.
  *
- * On FONT256.S2D (25,012 bytes), section [0] holds 8208 bytes =
- * 256 glyphs at 32 bytes/glyph, so every glyph index 0..255 maps
- * into section [0] at `local_offset = glyph_index * 32`. Sections
- * [2]/[4]/[6] are trailing padding that the layout cursor does not
- * reach (their 0x3c90/0x0210/0x01e4 bytes sit past the SCR header's
- * `char_count=256` cap).
+ * On the authenticated FONT256.S2D corpus (25,012 bytes), section [0]
+ * exposes 8208 bytes, which is 256 bounded 32-byte *windows*. That is
+ * byte-layout evidence only: it must not be called 256 retail glyphs.
+ * The separate authenticated SCR character-generator receipt contains
+ * 242 actual 8x8 tiles, while glyph-code mapping and VDP2 placement remain
+ * capture-gated. Sections [2]/[4]/[6] are additional opaque populated
+ * sections; the layout cursor does not assign them glyph semantics merely
+ * because their bytes lie beyond the SCR header's `char_count=256` cap.
  *
  * Source-lock:
  *   include/nexus_v1_saturn_font.h
