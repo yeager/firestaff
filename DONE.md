@@ -24,6 +24,18 @@
   utility/import-proben (73/73), läsarens egna test och kontroll av att M10
   saknar referenser till den testbegränsade läsaren.
 
+# DM2 championvalsproduktionsspärr (2026-08-08)
+
+- ✅ Den callback-baserade transkriptionen av `DM2_SELECT_CHAMPION` och
+  `DM2_BRING_CHAMPION_TO_LIFE` byggs inte längre in i M10. Den kunde få sin
+  karta, hero, possessions och HUD utifrån anroparens callbacks och saknar
+  därför den gemensamma `GAME_LOAD`-ägaren.
+- ✅ Det separata kontraktstestet finns kvar för att kontrollera SKProjects
+  urvalsordning, men ingen produktionslänk kan använda den för att skapa en
+  party från testdata eller värdskapade callbacks.
+- ✅ Verifierat med M11:s uppstartsprofilgrind mot hashverifierad PC-DOS-data,
+  championlivscykeltestet och en symbolkontroll av M10.
+
 # DM2 startmeny: källkoordinater (2026-08-08)
 
 - ✅ SDL:s huvudslinga normaliserar fönsterklick till originalets 320×200-

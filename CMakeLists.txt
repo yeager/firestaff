@@ -6073,6 +6073,14 @@ list(REMOVE_ITEM M10_SOURCES
 # dm2_v1_glob_var.c.  Keep the remaining audit test-only.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_parity_pc34_compat.c")
+# The champion lifecycle transcription accepts caller-provided map, revive,
+# possession and HUD callbacks.  It can describe SKProject's selection order,
+# but cannot own the atomic File_header/c_hero/record-pool/timer GAME_LOAD
+# transaction.  It is already excluded from firestaff_dm2; exclude it from
+# the broad M10 archive as well so no future caller can publish a callback-
+# constructed party through a production link.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c")
 # The load-orchestrator transcript stops after fixed SGWORD/record arrays: it
 # has no source-owned raw-block/map sizing, callback owner, or live caller for
 # DM2_GAME_LOAD → READ_SKSAVE_DUNGEON.  Its null/ABI contract test compiles

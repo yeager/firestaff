@@ -40,7 +40,10 @@
   `DM2_LOAD_LOCALLEVEL_DYN` queue
   owner, including its conditional `0x16ffffff` marker, party-dependent
   selectors and `DM2_LOAD_DYN4` transaction before DYN4 bytes, hero state or
-  a New Game party can be admitted.
+  a New Game party can be admitted. 2026-08-08: den äldre callback-modellen
+  för championval är nu utesluten även ur M10. Den kan bara köras av sitt
+  explicita kontraktstest, eftersom den saknar den atomära ägaren för
+  File_header, `c_hero`, possessions, timerkö och HUD.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF:** New Game and Resume now both stop at the
   original `DM2_GAME_LOAD` boundary. Recover one atomic owner for map,

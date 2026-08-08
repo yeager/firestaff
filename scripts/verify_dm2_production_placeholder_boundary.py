@@ -21,6 +21,7 @@ EXPECTED_REMOVALS = {
         "dm2_v1_0aaf_pc34_compat.c",
         "dm2_v1_runtime_narrow_pc34_compat.c",
         "dm2_v1_runtime_parity_pc34_compat.c",
+        "dm2_v1_champion_lifecycle_pc34_compat.c",
         "dm2_v1_load_orchestrator_pc34_compat.c",
         "dm2_v1_save_orchestrator_pc34_compat.c",
         "dm2_v1_save_load_extra_dungeon_data_pc34_compat.c",
