@@ -10011,3 +10011,12 @@
 
 - ✅ Genomgången av Nexus palette-kopior fann inga ytterligare “första giltiga”/default-palettevägar i DMDF/ITEM/SMAP; ITEM/Structure2-inherited palettes följer uttryckliga DMWeb-regler och saknad källa avvisas.
 - ✅ BPK indexed-materialet är nu den enda korrigerade fallbackvägen i detta auditpass: utan egen CLUT förblir det blockerat.
+# Nexus retains authenticated FONT256 source sections without opening presentation (2026-08-08)
+
+- ✅ Production engine state now retains the bounded, real `FONT256.S2D`
+  section-table receipt and records source admission separately from
+  `font_loaded`.
+- ✅ The Saturn glyph-mapping, VDP2 placement and framebuffer gates remain
+  closed; no synthetic text or host glyphs are emitted.
+- ✅ Real-data boot coverage asserts four retained FONT256 sections and the
+  closed presentation boundary.

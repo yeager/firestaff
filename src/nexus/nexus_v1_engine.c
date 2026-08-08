@@ -3205,13 +3205,20 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         if (font_data) {
             Nexus_V1_FontS2dDecodeResult font_regions;
             if (nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1) {
+                if (nexus_v1_font_load_sections(font_data, font_size,
+                                                &engine->font_sections) == 0 &&
+                    nexus_v1_font_section_count(&engine->font_sections) > 0) {
+                    engine->font_source_loaded = 1;
+                }
                 if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
                                                  font_size, &font_regions) > 0) {
                     engine->font_loaded = 1;
                     printf("Nexus font: FONT256.S2D loaded (%d CG tiles)\n",
                            engine->font.char_count);
                 } else {
-                    printf("Nexus font: FONT256.S2D regions admitted\n");
+                    printf("Nexus font: FONT256.S2D sections admitted (%d); "
+                           "glyph mapping pending\n",
+                           nexus_v1_font_section_count(&engine->font_sections));
                     engine->font_loaded = 0;
                 }
             }

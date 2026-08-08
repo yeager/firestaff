@@ -2549,6 +2549,11 @@ struct Nexus_V1_Engine {
 
     /* Font */
     Nexus_V1_Font font;
+    /* Source-only FONT256.S2D section receipt.  This authenticates the
+     * bounded SCR section table, but does not authorize glyph mapping,
+     * VDP2 placement, or framebuffer writes. */
+    Nexus_V1_FontSections font_sections;
+    int font_source_loaded;
     int font_loaded;
 
     /* Champion pool — full champion roster + party management */

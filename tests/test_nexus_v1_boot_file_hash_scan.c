@@ -704,8 +704,11 @@ int main(void) {
                           nexus_v1_load_level(&item_engine, 1) == 0,
                       "real LEV01 loads for ITEM.IBS floor provenance");
             if (item_engine.level_loaded) {
-                check_int(item_engine.font_loaded == 1,
-                          "real FONT256 production route loads once page mapping is proven");
+                check_int(item_engine.font_source_loaded == 1 &&
+                              nexus_v1_font_section_count(&item_engine.font_sections) == 4,
+                          "real FONT256.S2D sections are retained as source evidence");
+                check_int(item_engine.font_loaded == 0,
+                          "real FONT256 glyph presentation remains closed pending Saturn capture");
                 for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {
                     if (item_engine.current_level.structure1f_entries[i].family ==
                             NEXUS_V1_DGN_STRUCTURE1F_ITEMS) {
