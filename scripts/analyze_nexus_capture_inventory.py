@@ -71,6 +71,32 @@ def manifest_binding(capture_dir: Path, blob: bytes) -> str:
     return "verified"
 
 
+def draw_descriptors(frame: dict[str, bytes], state: str) -> list[str]:
+    """Return bounded hardware descriptors, never an inferred screen owner."""
+    descriptors: list[str] = []
+    for offset, words in command_window(frame["vdp1-vram"], state):
+        control = words[0]
+        command_type = control & 0x000F
+        if control & 0x8000 or command_type > 2:
+            continue
+        colour_mode = (words[2] >> 3) & 0x7
+        width = (words[5] & 0x003F) * 8
+        height = (words[5] >> 8) & 0x00FF
+        bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
+        source_offset = words[4] * 8
+        source_size = (width * height * bits_per_pixel) // 8
+        source_end = source_offset + source_size
+        if source_size <= 0 or source_end > len(frame["vdp1-vram"]):
+            continue
+        source = frame["vdp1-vram"][source_offset:source_end]
+        descriptors.append(
+            f"0x{offset:05x}/t{command_type}/m{colour_mode}/"
+            f"{width}x{height}/src0x{source_offset:05x}/n{source_size}/"
+            f"sha256:{hashlib.sha256(source).hexdigest()}"
+        )
+    return descriptors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_root", type=Path)
@@ -107,6 +133,7 @@ def main() -> int:
         active = 0
         vdp1_draw_frames = 0
         vdp1_draw_commands = 0
+        vdp1_draw_sources: list[str] = []
         for frame, state in zip(frames, states):
             registers = frame["vdp2-regs"]
             tvmd = u16(registers, REG["TVMD"])
@@ -119,17 +146,17 @@ def main() -> int:
             if match and int(match.group(1), 16) != 0 and int(match.group(2), 16) != 0:
                 active += 1
             try:
-                command_count = sum(
-                    1 for _offset, words in command_window(
-                        frame["vdp1-vram"], state
-                    )
-                    if (words[0] & 0x8000) == 0 and (words[0] & 0x000F) <= 2
-                )
+                descriptors = draw_descriptors(frame, state)
             except (ValueError, IndexError):
-                command_count = 0
-            if command_count:
+                descriptors = []
+            command_count = len(descriptors)
+            if descriptors:
                 vdp1_draw_frames += 1
                 vdp1_draw_commands += command_count
+                vdp1_draw_sources.extend(
+                    f"f{len(labels) - 1}:{descriptor}"
+                    for descriptor in descriptors
+                )
             totals[label] = totals.get(label, 0) + 1
             # Keep the first observation compact and reproducible; later
             # frames are represented by the distinct label/count summary.
@@ -144,6 +171,7 @@ def main() -> int:
             f"vdp1_nonidle_state_frames={active} states={distinct} first={first} "
             f"vdp1_draw_command_frames={vdp1_draw_frames} "
             f"vdp1_draw_commands={vdp1_draw_commands} "
+            f"vdp1_draw_sources={'|'.join(vdp1_draw_sources) or 'none'} "
             f"manifest_binding={manifest_binding(path.parent, blob)} "
             "asset_consumer_identity=unbound"
         )

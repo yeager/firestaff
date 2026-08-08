@@ -10346,3 +10346,11 @@
 - ✅ The external French gameplay witness reports two frames with one VDP1
   draw command each. Asset/CLUT/consumer identity remains explicitly unbound;
   the inventory does not promote a screen name or unlock presentation.
+
+# Nexus inventory records bounded VDP1 source fingerprints (2026-08-09)
+
+- ✅ The same inventory now records command type, colour mode, dimensions,
+  bounded VRAM source span, byte count and SHA-256 for each observed VDP1 draw
+  command.
+- ✅ This makes the real source-span comparison reproducible while keeping
+  CLUT, placement, screen ownership and semantic admission blocked.
