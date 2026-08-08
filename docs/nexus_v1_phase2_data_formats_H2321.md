@@ -363,7 +363,11 @@ else
     dimensions = 8px wide, glyph_size tall;
 ```
 
-For 256 glyphs at 16×16 (1bpp = 32 bytes/glyph): **8192 bytes** of glyph data.
+The header's nominal `char_count=256` is not a proven retail glyph count.
+The authenticated FONT256.S2D corpus exposes 242 actual 8×8/8bpp CG tiles;
+the remaining page/section bytes are retained as opaque source windows until
+the Saturn glyph mapping is captured. The old 16×16/1bpp calculation is
+fixture-only and must not describe the retail asset.
 
 #### Glyph Bitmap Format
 
@@ -429,7 +433,7 @@ Handles ASCII and Hankaku katakana. Double-byte characters replaced with "?".
 
 | Variant | Description | Status |
 |---------|-------------|--------|
-| FONT256.S2D | Saturn SCR font, 256 glyphs | ✅ Header parsing ✅ Glyph access ❌ Blit |
+| FONT256.S2D | Saturn SCR font; 256 nominal page entries, 242 authenticated CG tiles | ✅ SCR/CG source receipts ❌ Saturn glyph mapping/VDP2 blit |
 | Shift-JIS ASCII | Single-byte ASCII (0x20-0x7E) | ✅ |
 | Shift-JIS Hankaku Katakana | Half-width katakana (0xA1-0xDF) | ✅ |
 | Shift-JIS Daiji/Kanji | Double-byte JIS X 0208 | ❌ "?" replacement |

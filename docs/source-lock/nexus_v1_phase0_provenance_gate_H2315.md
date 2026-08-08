@@ -298,7 +298,7 @@ file_manifest.json`. The key canonical hashes for version catalog are:
 | *.SAL | Unknown | Sound bank format | Per-level SFX + music; likely custom |
 | *.BPK | Yes | Packed (game-specific) | Menu graphics — size savings vs raw |
 | *.AVI | No | AVI container | Standard AVI, 3 FMV files totaling ~106 MB |
-| FONT256.S2D | No | Uncompressed Saturn SCR format | 25,012 bytes for 256 glyphs = ~98 bytes/glyph |
+| FONT256.S2D | No | Uncompressed Saturn SCR format | 25,012 bytes; header has 256 nominal page entries, while the authenticated CG receipt contains 242 actual 8×8 tiles |
 | FACE.BIN | No | Raw portrait sprites (possibly VDP1 BITMAP) | 45,104 / 24 ≈ 1.9 KB/portrait |
 | MENU.BPK | Yes | Packed | 89,060 bytes; raw uncompressed size unknown |
 

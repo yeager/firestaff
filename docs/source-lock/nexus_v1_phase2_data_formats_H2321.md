@@ -394,7 +394,9 @@ Offset 18+:    Glyph bitmap data begins here
   - `glyph_size >= 18` → 12×12 px
   - otherwise → 8px wide, `glyph_size` tall
 - 1 bpp bitmap per glyph (1 bit per pixel)
-- For 256 glyphs at 16×16 (1 bpp = 32 bytes/glyph): 8192 bytes of glyph data
+- The old 256×16×16/1bpp calculation is fixture-only. The authenticated
+  retail FONT256.S2D receipt contains 242 actual 8×8/8bpp CG tiles; its
+  nominal 256-entry page/header fields do not prove the Saturn glyph map.
 
 Loaded by `nexus_v1_font_load()` in `nexus_v1_engine.c`. API:
 ```c
