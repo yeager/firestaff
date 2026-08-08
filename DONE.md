@@ -91,6 +91,10 @@
   generator-typ, komplett control/target-ord och exakt kontrollbit 2. Den är
   verifierad mot den verkliga PC-DOS-korpusen, men är läsande och kan varken
   starta en generator eller publicera en timerkö.
+- ✅ `DM2_ARRANGE_DUNGEON`-inventeringen är korrigerad: den tidigare
+  layoutcensusen kunde felaktigt framstå som en färdig arrangerad värld.
+  Receiptet är nu alltid ofullständigt, symbolinventeringen är uppdaterad och
+  realdatatestet bekräftar att statiska indata aldrig publiceras som runtime.
 
 - ✅ Ett gemensamt, läsande GAME_LOAD-kvitto binder nu den verifierade
   File_header-entrén med dess scenrekord, tilecensus, DB2-text/markörposter,

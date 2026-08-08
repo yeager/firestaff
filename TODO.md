@@ -26,6 +26,9 @@
   Käll-DATAs samtliga DB3-generatorindata och kontrollbit 2 finns nu i samma
   läsande transaktion, men `DM2_PROCESS_ACTUATOR_TICK_GENERATOR` får inte
   ändra ett record eller skapa en timer förrän den fullständiga ägaren finns.
+  `DM2_ARRANGE_DUNGEON` har endast en statisk File_header-inputcensus; dess
+  recordomlänkningar, aktuatorflaggor, varelseriktningar och koordinatskrivningar
+  måste ingå i samma framtida mutationstransaktion.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

@@ -2615,7 +2615,11 @@ int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
 
     out->valid = 1;
     out->committed = 1;
-    out->incomplete = dungeon.record_graph_complete ? 0 : 1;
+    /* DM2_ARRANGE_DUNGEON (skmap.cpp:826-1220) mutates source-owned record
+     * links, directions, actuator flags and creature positions. This helper
+     * only authenticates its immutable File_header inputs, so a complete
+     * static record graph is not evidence that those writes happened. */
+    out->incomplete = 1;
     out->map_count = dungeon.level_count;
     out->outdoor_map_count = outdoor_count;
     out->indoor_map_count = indoor_count;
@@ -6410,12 +6414,11 @@ const char *dm2_v1_dungeon_source_evidence(void) {
 
 const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void) {
     return
-        "skproject SKULLWIN/c_map.cpp DM2_ARRANGE_DUNGEON arranges the "
-        "loaded dungeon maps before runtime use; Firestaff admits only the "
-        "dm2_v1_dungeon_load-proven map descriptors, byte/word square layout, "
-        "MapGraphicsStyle values, ground-stack/text table addresses, and "
-        "record-graph completion state. PC G1 partial graphs remain marked "
-        "incomplete instead of receiving fabricated c_record semantics.";
+        "SKProject SKWINSPX/src/v5/skmap.cpp::DM2_ARRANGE_DUNGEON lines "
+        "826-1220 mutates loaded record links, actuator flags, creature "
+        "directions and coordinates. Firestaff's receipt authenticates only "
+        "the immutable File_header layout inputs and is always incomplete; "
+        "it cannot stand in for arranged runtime state.";
 }
 
 const uint8_t *dm2_v1_dungeon_level_tile_data(

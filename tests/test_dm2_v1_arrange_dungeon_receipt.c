@@ -122,24 +122,23 @@ int main(void)
               receipt.map_graphics_style_hash != 0u &&
               receipt.arrangement_hash != 0u,
           "arranged dungeon receipt carries real layout/style hashes");
-    CHECK(receipt.record_graph_complete == 1 &&
-              receipt.incomplete == 0 &&
-              receipt.g1_extension_size > 0,
-          "real PC G1 record graph validates with extension records");
+    CHECK(receipt.incomplete == 1,
+          "static input receipt remains incomplete regardless of graph shape");
     corrupt_data = (uint8_t *)malloc(dungeon_size);
     CHECK(corrupt_data != NULL, "corrupt real-data copy allocated");
     if (corrupt_data) {
         memcpy(corrupt_data, dungeon_data, dungeon_size);
-        corrupt_data[6] = 0u;
+        corrupt_data[4] = 0u;
         CHECK(dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
                   corrupt_data, (int)dungeon_size, &receipt) == 0,
-              "corrupt real DUNGEON.DAT map count is rejected");
+              "corrupt real DUNGEON.DAT File_header map count is rejected");
     }
     CHECK(dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
               NULL, (int)dungeon_size, &receipt) == 0,
           "ARRANGE_DUNGEON rejects missing bytes");
-    CHECK(dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence()[0] != '\0',
-          "ARRANGE_DUNGEON exposes skproject source evidence");
+    CHECK(strstr(dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(),
+                 "always incomplete") != NULL,
+          "ARRANGE_DUNGEON evidence rejects static layout as runtime state");
 
     free(corrupt_data);
     free(dungeon_data);

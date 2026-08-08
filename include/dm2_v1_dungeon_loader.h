@@ -1191,6 +1191,10 @@ typedef struct {
     DM2_V1_G1BlockedRoot blocked_roots[DM2_V1_G1_PARTIAL_BOOT_MAX_BLOCKED_ROOTS];
 } DM2_V1_G1PartialMapBootReceipt;
 
+/* Static source-layout evidence for the input to DM2_ARRANGE_DUNGEON.  It
+ * does not replay the original routine's map changes, record rewiring,
+ * random creature directions, actuator flags, or creature-coordinate writes.
+ * `incomplete` is therefore always set for a successful receipt. */
 typedef struct {
     int valid;
     int committed;
@@ -1656,9 +1660,9 @@ int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
  * promoted as a partial world. */
 int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d);
 int dm2_v1_dungeon_validate_record_pools(const DM2_V1_DungeonData *d);
-/* Source-named DM2_ARRANGE_DUNGEON receipt.  This does not invent records or
- * complete the PC G1 graph; it only admits the arranged map/dungeon layout
- * already proven by dm2_v1_dungeon_load. */
+/* Source-named static input receipt for DM2_ARRANGE_DUNGEON. It does not
+ * execute the original mutator and must never be accepted as an arranged
+ * world or a GAME_LOAD completion. */
 int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
     const uint8_t *dat,
     int size,
