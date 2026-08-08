@@ -1206,6 +1206,7 @@ int main(void) {
     DM2_V1_BootProfile* profile;
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
+    DM2_V1_BootChampionSelectionCandidate champion_candidate;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_G1RuntimeMapDoorReceipt file_header_doors;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt file_header_teleporters;
@@ -1377,6 +1378,35 @@ int main(void) {
                     champion_mirrors.mirrors[0].dynamic_hero_type == 14u &&
                     champion_mirrors.mirrors[0].dynamic_load_id == 0x160effffu,
                 "M11 retains the authentic PC-DOS champion mirror roots without activating them");
+    memset(&champion_candidate, 0, sizeof(champion_candidate));
+    expect_true(profile && champion_mirrors.mirror_count > 0 &&
+                    dm2_v1_boot_champion_selection_candidate(
+                        profile, champion_mirrors.mirrors[0].map,
+                        champion_mirrors.mirrors[0].x,
+                        champion_mirrors.mirrors[0].y,
+                        champion_mirrors.mirrors[0].direction,
+                        &champion_candidate) &&
+                    champion_candidate.valid &&
+                    champion_candidate.incomplete_game_load &&
+                    champion_candidate.mirror.object_id ==
+                        champion_mirrors.mirrors[0].object_id &&
+                    champion_candidate.revive_data.valid &&
+                    champion_candidate.revive_data.hero_type ==
+                        champion_mirrors.mirrors[0].dynamic_hero_type &&
+                    champion_candidate.revive_data.name1[0] != '\0' &&
+                    champion_candidate.identity_hash != 0u,
+                "M11 joins each source mirror only to its matching authentic champion template");
+    memset(&champion_candidate, 0x7f, sizeof(champion_candidate));
+    expect_true(profile &&
+                    !dm2_v1_boot_champion_selection_candidate(
+                        profile, champion_mirrors.mirrors[0].map,
+                        champion_mirrors.mirrors[0].x,
+                        champion_mirrors.mirrors[0].y,
+                        (champion_mirrors.mirrors[0].direction + 1) & 3,
+                        &champion_candidate) &&
+                    !champion_candidate.valid &&
+                    !champion_candidate.revive_data.valid,
+                "M11 rejects a champion template when the exact source mirror does not match");
     memset(&file_header_map, 0, sizeof(file_header_map));
     expect_true(profile &&
                     dm2_v1_boot_file_header_runtime_map_receipt(

@@ -740,6 +740,69 @@ int dm2_v1_boot_champion_mirror_receipt(
     return 1;
 }
 
+int dm2_v1_boot_champion_selection_candidate(
+    const DM2_V1_BootProfile *profile,
+    int map, int x, int y, int direction,
+    DM2_V1_BootChampionSelectionCandidate *out_candidate)
+{
+    DM2_V1_G1ChampionMirrorReceipt mirrors;
+    const DM2_V1_AssetLoader *loader;
+    int i;
+
+    if (!out_candidate) return 0;
+    memset(out_candidate, 0, sizeof(*out_candidate));
+    if (!profile || !profile->assets_verified ||
+        !dm2_v1_boot_champion_mirror_receipt(profile, &mirrors) ||
+        !mirrors.committed || !mirrors.incomplete_world ||
+        mirrors.mirror_count <= 0 ||
+        !(loader = dm2_v1_boot_asset_loader(profile))) {
+        return 0;
+    }
+
+    for (i = 0; i < mirrors.mirror_count; ++i) {
+        const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
+        uint32_t identity_hash = 0x43484d50u; /* "CHMP" receipt domain. */
+
+        if (mirror->map != map || mirror->x != x || mirror->y != y ||
+            mirror->direction != (uint8_t)direction ||
+            mirror->dynamic_hero_type > 15u) {
+            continue;
+        }
+        /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION reads htype from the
+         * DB3 subtype-0x7e marker, then DM2_REVIVE_PLAYER reads precisely the
+         * matching CHAMPIONS/htype Raw8 and text entries. Do not accept a
+         * roster row merely because it is otherwise valid GDAT. */
+        if (!dm2_v1_asset_champion_revive_data(
+                loader, mirror->dynamic_hero_type,
+                &out_candidate->revive_data)) {
+            memset(out_candidate, 0, sizeof(*out_candidate));
+            return 0;
+        }
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, (uint32_t)mirror->map);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, (uint32_t)mirror->x);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, (uint32_t)mirror->y);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, mirror->object_id);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, mirror->actuator_data);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, mirror->dynamic_load_id);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, out_candidate->revive_data.raw8_hash);
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, out_candidate->revive_data.name_hash);
+        out_candidate->mirror = *mirror;
+        out_candidate->identity_hash = identity_hash;
+        out_candidate->incomplete_game_load = 1;
+        out_candidate->valid = 1;
+        return 1;
+    }
+    return 0;
+}
+
 int dm2_v1_boot_file_header_runtime_map_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt)

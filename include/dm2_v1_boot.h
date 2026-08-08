@@ -168,6 +168,19 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_BootChampionDyn4Receipt;
 
+/* One original champion-selection root joined to its exact CHAMPIONS Raw8
+ * and text template. This is an observational receipt for the
+ * c_hero.cpp::DM2_SELECT_CHAMPION precondition; it neither revives a hero nor
+ * changes the party. The original GAME_LOAD owner remains responsible for
+ * possessions, timers and every session mutation. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    DM2_V1_G1ChampionMirrorRoot mirror;
+    DM2_V1_ChampionReviveDataReceipt revive_data;
+    uint32_t identity_hash;
+} DM2_V1_BootChampionSelectionCandidate;
+
 /* DM2 boot profile — collected at startup before game loop begins.
  * All fields are set once and read-only during gameplay. */
 typedef struct {
@@ -1446,6 +1459,14 @@ int dm2_v1_boot_champion_dyn4_receipt(
 int dm2_v1_boot_champion_mirror_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_G1ChampionMirrorReceipt *out_receipt);
+
+/* Join the exact DB3 subtype-0x7e mirror at (map,x,y,direction) to the
+ * CHAMPIONS/HeroType Raw8/text template used by DM2_REVIVE_PLAYER. A missing
+ * or ambiguous source root returns zero. The result is not a live hero. */
+int dm2_v1_boot_champion_selection_candidate(
+    const DM2_V1_BootProfile *profile,
+    int map, int x, int y, int direction,
+    DM2_V1_BootChampionSelectionCandidate *out_candidate);
 
 /* Resolves a map receipt from the File_header-owned dungeon already mounted
  * in this boot session.  It is the only map provenance a later local-level

@@ -1,3 +1,18 @@
+# DM2 källbunden championkandidat (2026-08-08)
+
+- ✅ Bootprofilen kan nu slå upp en enskild PC-DOS-spegel med exakt karta,
+  ruta och riktning och kopplar den endast till samma championtyp i
+  `CHAMPIONS` Raw8- och textposter. Kandidaten innehåller de verifierade
+  grundvärdena och namnet från originalets `GRAPHICS.DAT` samt en
+  identitetshash för hela kopplingen.
+- ✅ Matchning med fel riktning nekas och tömmer resultatet. Ingen lös
+  rosterpost kan alltså användas för en godtycklig spegel.
+- ✅ Detta är endast försteget i `c_hero.cpp::DM2_SELECT_CHAMPION` och
+  `DM2_REVIVE_PLAYER`. Hero, party, ägodelar, timers och DYN4 förblir
+  spärrade tills den kompletta originalägda `GAME_LOAD`-transaktionen finns.
+- ✅ Verifierat med den hashverifierade PC-DOS-kopian i M11:s
+  startprofilgrind och bootprofilens realdatatest, 106/106 kontroller.
+
 # 2026-08-08 Theron generator runtime capacity
 
 - ✅ Theron generator runtime counters now mirror all 64 authenticated
