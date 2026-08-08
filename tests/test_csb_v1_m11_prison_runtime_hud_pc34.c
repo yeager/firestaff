@@ -879,49 +879,6 @@ int main(void)
             }
         }
     }
-    {
-        CSB_V1_BootProfile *profile =
-            (CSB_V1_BootProfile *)view.csbBootProfile;
-        struct ChampionState_Compat mirror_record;
-
-        /* Prison has no C127 sensor, so this is a narrow F0280 encoded-text
-         * fixture rather than a fake dungeon route.  It makes the original
-         * A..P wire format explicit: 100 HP/STA/MANA, Luck 10, the other
-         * six statistics 36, and C04..C19 at 250 experience each. */
-        F0600_CHAMPION_InitEmpty_Compat(&mirror_record);
-        memcpy(mirror_record.name, "MIRROR  ", CHAMPION_NAME_LENGTH);
-        memcpy(mirror_record.title, "SOURCE CANDIDATE    ",
-               CHAMPION_TITLE_LENGTH);
-        mirror_record.sex = 'M';
-        memcpy(mirror_record.mirrorStatsText, "AAGEAAGEAAGE", 12u);
-        memcpy(mirror_record.mirrorSkillsText, "AKCECECECECECE", 14u);
-        memset(mirror_record.mirrorInventoryText, 'B',
-               CHAMPION_MIRROR_INVENTORY_TEXT_LENGTH);
-        mirror_record.portraitBitmapValid = 1;
-        mirror_record.portraitBitmap[0] = 0x5au;
-        CHECK(profile &&
-                  csb_v1_runtime_append_mirror_candidate_pc34(
-                      &profile->runtime, &mirror_record) == 0 &&
-                  profile->runtime.party_state.ChampionCount == 1 &&
-                  profile->runtime.party_state.Champions[0].CurrentHealth ==
-                      100 &&
-                  profile->runtime.party_state.Champions[0]
-                      .Statistics[CSB_V1_STAT_LUCK][CSB_V1_STAT_CUR] == 10u &&
-                  profile->runtime.party_state.Champions[0]
-                      .Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] == 36u &&
-                  profile->runtime.party_state.Champions[0]
-                      .SkillExperienceValid &&
-                  profile->runtime.party_state.Champions[0]
-                      .SkillExperience[4] == 250u &&
-                  profile->runtime.party_state.Champions[0].Portrait[0] ==
-                      0x5au &&
-                  M11_GameView_HandleInput(&view, M12_MENU_INPUT_NONE) ==
-                      M11_GAME_INPUT_IGNORED &&
-                  view.world.party.championCount == 1 &&
-                  memcmp(view.world.party.champions[0].name,
-                         mirror_record.name, CHAMPION_NAME_LENGTH) == 0,
-              "F0280 mirror record remains authoritative across the next CSB input refresh");
-    }
     M11_GameView_Shutdown(&view);
     if (relaunch_save_available) {
         M11_GameLaunchSpec resumed_spec = spec;

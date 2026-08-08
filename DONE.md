@@ -158,6 +158,13 @@
   IMG1 som PC-data. Realtidsproven täcker A31M, A35M och A35E och kräver att
   ingen PC34-fil- eller runtime-state har bundits.
 
+# CSB PC3.4 Prison-realtidsprov utan syntetisk kandidatinmatning (2026-08-08)
+
+- ✅ Det verkliga Prison-provet omfattar nu endast den hashverifierade
+  titel-, Prison-, HUD-, inmatnings- och originalsavevägen. Den tidigare
+  handgjorda F0280-spegelkandidaten är borttagen; kandidatlogik provas i sina
+  isolerade kontrakt tills en verklig C127-capture kan driva samma flöde.
+
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 
 - ✅ A31M:s TITL/APPA/KAOS-kedja samt A35E:s och A35M:s egna APPB/KAOS-vägar
