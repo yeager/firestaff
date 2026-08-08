@@ -70,11 +70,13 @@
   hashbundna till M11 utan en A35M- eller PC34-ersättningsyta. A35E:s
   direktlagrade IMG1-poster avkodas nu ur den autentiska `GRAPHICS.DAT`-filen
   enligt IMAGE1.C och C013-rörelsepanelen samt C017-inventariebackdropen visas
-  för A31M/A35E/A35M med ursprunglig G0021-palett. De verifierade
+  för A31M/A35E/A35M med ursprunglig G0021-palett. Kandidatläget komponerar
+  också den äkta C040-resurrect/reincarnate-ytan över C017 med originalets
+  C06-transparens. De verifierade
   Amiga-utgåvornas storlekstabeller är direktlagrade och följer F0474, inte
   Atari ST:s LZW-väg; icke-IMG1-poster avvisas tills de har egen konsument.
-  Återstående Amiga-dungeonviewport, champion-HUD-överlägg och
-  inventarieinteraktion saknar dock egna autentiska konsumenter.
+  Återstående Amiga-dungeonviewport, champion-HUD- och C026-porträttöverlägg
+  samt inventarie-/kandidatinmatning saknar dock egna autentiska konsumenter.
   Franska/tyska och den återstående
   A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
