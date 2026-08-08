@@ -908,6 +908,59 @@ int dm2_v1_boot_champion_selection_census(
     return 1;
 }
 
+int dm2_v1_boot_champion_dyn4_roster_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionDyn4RosterReceipt *out_receipt)
+{
+    DM2_V1_BootChampionSelectionCensus census;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_BootChampionDyn4RosterReceipt candidate;
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!profile || !(loader = dm2_v1_boot_asset_loader(profile)) ||
+        !dm2_v1_boot_champion_selection_census(profile, &census) ||
+        !census.valid || !census.incomplete_game_load ||
+        census.candidate_count <= 0 ||
+        census.candidate_count > DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) {
+        return 0;
+    }
+
+    /* SKProject sklodlvl.cpp::DM2_LOAD_LOCALLEVEL_DYN lines 604-611 derives
+     * the selector from every DB3 Actuator::Data() subtype-0x7e root, then
+     * calls DM2_MARK_DYN_LOAD before the later DM2_LOAD_DYN4 pass. Retain
+     * the whole source list; choosing a representative hero key would lose
+     * real GDAT ownership for the remaining mirrors. */
+    candidate.selector_roster_hash = 2166136261u;
+    for (i = 0; i < census.candidate_count; ++i) {
+        const DM2_V1_BootChampionSelectionCandidate *selection =
+            &census.candidates[i];
+        DM2_V1_GdatDyn4SelectionReceipt *dyn4 = &candidate.selections[i];
+
+        if (!selection->valid ||
+            !dm2_v1_gdat_dyn4_selection_receipt(
+                loader, selection->mirror.dynamic_load_id, dyn4) ||
+            dyn4->rejected_raw_count != 0u ||
+            dyn4->raw_loadable_entry_count == 0u ||
+            dyn4->receipt_hash == 0u) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+            return 0;
+        }
+        candidate.selector_roster_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.selector_roster_hash, selection->mirror.dynamic_load_id);
+        candidate.selector_roster_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.selector_roster_hash, dyn4->receipt_hash);
+    }
+    candidate.selector_count = census.candidate_count;
+    candidate.incomplete_champion_activation = 1;
+    candidate.valid = candidate.selector_roster_hash != 0u;
+    if (!candidate.valid) return 0;
+    *out_receipt = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_file_header_runtime_map_receipt(
     const DM2_V1_BootProfile *profile, int map,
     DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt)

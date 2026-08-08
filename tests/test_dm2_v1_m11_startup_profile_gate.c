@@ -1205,6 +1205,7 @@ int main(void) {
     DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
     DM2_V1_BootProfile* profile;
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
+    DM2_V1_BootChampionDyn4RosterReceipt champion_dyn4_roster;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
     DM2_V1_BootChampionSelectionCensus champion_census;
@@ -1486,6 +1487,17 @@ int main(void) {
                         profile, &champion_dyn4) &&
                     !champion_dyn4.valid,
                 "M11 does not promote an unproven champion DYN4 bundle");
+    memset(&champion_dyn4_roster, 0, sizeof(champion_dyn4_roster));
+    expect_true(profile &&
+                    dm2_v1_boot_champion_dyn4_roster_receipt(
+                        profile, &champion_dyn4_roster) &&
+                    champion_dyn4_roster.valid &&
+                    champion_dyn4_roster.incomplete_champion_activation &&
+                    champion_dyn4_roster.selector_count ==
+                        champion_mirrors.mirror_count &&
+                    champion_dyn4_roster.selections[0].raw_loadable_entry_count > 0u &&
+                    champion_dyn4_roster.selector_roster_hash != 0u,
+                "M11 verifies every source champion mirror DYN4 selector without activating a party");
     if (profile) {
         DM2_V1_StartupMenuPointerLayout pointer_layout;
         int source_x;

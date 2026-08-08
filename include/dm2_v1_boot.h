@@ -168,6 +168,22 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_BootChampionDyn4Receipt;
 
+#define DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES 16
+
+/* DM2_LOAD_LOCALLEVEL_DYN marks one 0x16<hero-type>ffff selector for every
+ * DB3 subtype-0x7e champion mirror before it calls DM2_LOAD_DYN4.  The old
+ * single-selector receipt cannot represent that source list.  This is a
+ * read-only roster proof for all mirror keys; it neither creates champions
+ * nor materialises a live GDAT cache. */
+typedef struct {
+    int valid;
+    int incomplete_champion_activation;
+    int selector_count;
+    uint32_t selector_roster_hash;
+    DM2_V1_GdatDyn4SelectionReceipt selections[
+        DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES];
+} DM2_V1_BootChampionDyn4RosterReceipt;
+
 /* One original champion-selection root joined to its exact CHAMPIONS Raw8
  * and text template. This is an observational receipt for the
  * c_hero.cpp::DM2_SELECT_CHAMPION precondition; it neither revives a hero nor
@@ -186,8 +202,6 @@ typedef struct {
     uint16_t source_item_object_ids[30];
     uint32_t identity_hash;
 } DM2_V1_BootChampionSelectionCandidate;
-
-#define DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES 16
 
 /* Complete source roster for the mirror-selection screen. The order is the
  * canonical File_header chain order, not a host-authored portrait order. */
@@ -1470,6 +1484,13 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
 int dm2_v1_boot_champion_dyn4_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_BootChampionDyn4Receipt *out_receipt);
+
+/* Join every mounted DB3 champion-mirror selector to the exact first-pass
+ * DYN4 rows in the same admitted GRAPHICS.DAT.  This is not a substitute for
+ * DM2_LOAD_LOCALLEVEL_DYN's complete map/party/actuator transaction. */
+int dm2_v1_boot_champion_dyn4_roster_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionDyn4RosterReceipt *out_receipt);
 
 /* Returns the direct File_header DB3 subtype-0x7e roots retained during
  * boot.  This is source evidence for c_hero.cpp::DM2_SELECT_CHAMPION, not a

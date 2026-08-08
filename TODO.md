@@ -109,14 +109,16 @@
   a New Game party can be admitted. 2026-08-08: den äldre callback-modellen
   för championval är nu utesluten även ur M10. Den kan bara köras av sitt
   explicita kontraktstest, eftersom den saknar den atomära ägaren för
-  File_header, `c_hero`, possessions, timerkö och HUD.
+  File_header, `c_hero`, possessions, timerkö och HUD. Varje av de 16
+  riktiga spegelmarkörernas egna `0x16<hero-type>ffff`-DYN4-selektioner är
+  nu verifierad mot GDAT; det ersätter inte den sammanhängande originalkön.
 
 - **DM2-GAME-LOAD-OWNER-HANDOFF:** New Game and Resume now both stop at the
   original `DM2_GAME_LOAD` boundary. Recover one atomic owner for map,
   record pools, possessions, heroes, timers and actuator generators, then
   install its source-shaped session handoff here. The pre-
   `DM2_READ_SKSAVE_DUNGEON` prefix is now one source-identity receipt for the
-  raw dungeon, shared SUPPRESS stream och källsorterade c_tim-kö; recover the linked
+  raw dungeon, shared SUPPRESS stream and source-sorted c_tim queue; recover the linked
   record, possession, actuator-generator and post-load-effect phases next.
   A boolean or a parsed save receipt alone must never make a game playable.
 

@@ -193,6 +193,15 @@
   ingen session och lämnar Resume spärrad tills originalens länkade records,
   possessions, aktuatorkö och efterladdningssteg har en komplett ägare.
 
+# DM2 championmirror-DYN4-roster (2026-08-08)
+
+- ✅ Alla sexton källägda DB3 subtype-`0x7e` championmirror-markörer binds
+  nu var för sig till sin riktiga `0x16<hero-type>ffff`-DYN4-selektion i
+  samma hashverifierade `GRAPHICS.DAT`. Det ersätter den gamla felaktiga
+  antagelsen om en enda championresurs.
+- ✅ Verifierat genom M11:s PC-DOS-startprofil. Kvittot är läsande och gör
+  inte DYN4-cache, champion, inventory eller party spelbar på egen hand.
+
 - ✅ `test_dm2_v1_g1_record_graph_diagnostic` jämför nu alla lästa DB0-dörrar,
   DB1-teleportörer, DB2-texter, DB3-aktuatorer och DB4-varelser fält för fält
   mot de verkliga PC-DOS-posterna i File_header-kedjorna. Index, riktning och
