@@ -3,6 +3,90 @@
 
 #include <string.h>
 
+static int dm2_v1_sksave_owner_hero_alive(void *ctx, int hero_index)
+{
+    const DM2_V1_SksaveGameLoadOwner *owner =
+        (const DM2_V1_SksaveGameLoadOwner *)ctx;
+    return owner && hero_index >= 0 &&
+        hero_index < (int)owner->state.champion_count &&
+        owner->heroes[hero_index].curHP != 0;
+}
+
+static void dm2_v1_sksave_owner_add_ench_power(void *ctx, int hero_index,
+                                                 int16_t amount)
+{
+    DM2_V1_SksaveGameLoadOwner *owner = (DM2_V1_SksaveGameLoadOwner *)ctx;
+    if (owner && hero_index >= 0 &&
+        hero_index < (int)owner->state.champion_count)
+        owner->heroes[hero_index].ench_power = (int16_t)(
+            owner->heroes[hero_index].ench_power + amount);
+}
+
+static void dm2_v1_sksave_owner_increment_poisoned(void *ctx, int hero_index)
+{
+    DM2_V1_SksaveGameLoadOwner *owner = (DM2_V1_SksaveGameLoadOwner *)ctx;
+    if (owner && hero_index >= 0 &&
+        hero_index < (int)owner->state.champion_count)
+        owner->heroes[hero_index].poisoned = (int8_t)(
+            owner->heroes[hero_index].poisoned + 1);
+}
+
+static void dm2_v1_sksave_owner_add_poison(void *ctx, int hero_index,
+                                             int16_t amount)
+{
+    DM2_V1_SksaveGameLoadOwner *owner = (DM2_V1_SksaveGameLoadOwner *)ctx;
+    if (owner && hero_index >= 0 &&
+        hero_index < (int)owner->state.champion_count)
+        owner->heroes[hero_index].poison = (int16_t)(
+            owner->heroes[hero_index].poison + amount);
+}
+
+int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
+    DM2_V1_SksaveGameLoadOwner *owner)
+{
+    DM2_V1_GlobalEffectCallbacks callbacks;
+    DM2_V1_GlobalEffectReceipt receipt;
+    DM2_V1_Hero heroes_before[DM2_MAX_HEROES];
+    uint8_t savegames1_before[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
+
+    if (!owner || !owner->state.valid ||
+        owner->state.champion_count > DM2_MAX_HEROES ||
+        owner->state.timer_count > DM2_V1_SAVE_TIMER_MAX) return 0;
+    memcpy(heroes_before, owner->heroes, sizeof(heroes_before));
+    memcpy(savegames1_before, owner->savegames1, sizeof(savegames1_before));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&receipt, 0, sizeof(receipt));
+    callbacks.ctx = owner;
+    callbacks.hero_is_alive = dm2_v1_sksave_owner_hero_alive;
+    callbacks.add_hero_ench_power = dm2_v1_sksave_owner_add_ench_power;
+    callbacks.increment_hero_poisoned = dm2_v1_sksave_owner_increment_poisoned;
+    callbacks.add_hero_poison = dm2_v1_sksave_owner_add_poison;
+
+    /* sksvgame.cpp:1047 clears exactly c_wbbb/savegames1 before it walks
+     * c_tim.  No 0x0e callback is supplied: spell effects need a complete
+     * dungeon/CCM/runtime owner and thus reject this private transaction. */
+    memset(owner->savegames1, 0, sizeof(owner->savegames1));
+    if (dm2_v1_post_load_global_effects(
+            (const uint8_t *)owner->timers, owner->state.timer_count,
+            owner->state.champion_count, &callbacks, &receipt) != 0) {
+        memcpy(owner->heroes, heroes_before, sizeof(heroes_before));
+        memcpy(owner->savegames1, savegames1_before, sizeof(savegames1_before));
+        owner->global_effect_receipt = receipt;
+        owner->global_effects_complete = 0;
+        return 0;
+    }
+    owner->savegames1[0] = (uint8_t)((uint16_t)receipt.light_accumulator);
+    owner->savegames1[1] = (uint8_t)((uint16_t)receipt.light_accumulator >> 8);
+    owner->savegames1[2] = (uint8_t)receipt.attack_count;
+    owner->global_effect_receipt = receipt;
+    owner->global_effects_complete = 1;
+    /* c_party::calc_player_weight also consults curacthero/curactmode and
+     * hand_container for an open chest.  This owner retains neither active
+     * eventqueue nor c_party hand state, so recomputation cannot be proven. */
+    owner->weight_recompute_blocked = 1;
+    return 1;
+}
+
 static int dm2_v1_sksave_owner_decode_fixed(
     DM2_V1_SksaveGameLoadOwner *owner, const uint8_t *raw_body,
     size_t raw_body_size)
@@ -70,7 +154,9 @@ int dm2_v1_sksave_game_load_owner_init(
         !dm2_v1_record_pool_materialize_raw_sksave_game_load_owner(
             &candidate, raw_body, raw_body_size, savegamew7, asset_loader,
             query_creature_ai_flags, query_creature_ai_flags_ctx,
-            &candidate.receipt)) {
+            &candidate.receipt) ||
+        !dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
+            &candidate)) {
         dm2_v1_sksave_game_load_owner_free(&candidate);
         return 0;
     }

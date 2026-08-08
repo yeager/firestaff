@@ -6,11 +6,11 @@
  *
  * After loading a save game, walks the timer array and accumulates
  * global effect state from active timers:
- * - Type 0x0E: process spell effect (delegated to callback)
- * - Type 0x46: light level delta from table1d6702
+ * - Type 0x0E: process spell effect (delegated to a complete owner)
+ * - Type 0x46: savegames1.w_00 light contribution from table1d6702
  * - Type 0x47: attack counter increment
  * - Type 0x48: enchantment power per hero (from actor bitmask)
- * - Type 0x4B: poison per hero */
+ * - Type 0x4B: poisoned++ and poison per hero */
 
 #include <stdint.h>
 
@@ -27,12 +27,13 @@ static const int16_t dm2_v1_light_table[16] = {
 
 typedef struct {
     void *ctx;
-    /* Process timer 0E effect.  mode=3 (post-load).
-     * timer: raw 12-byte timer record. */
-    void (*process_timer_0e)(void *ctx, const uint8_t *timer);
+    /* Process timer 0E effect in mode 3 (post-load).  Returns nonzero only
+     * when a complete source owner consumed its spell/record effects. */
+    int (*process_timer_0e)(void *ctx, const uint8_t *timer);
     /* Add enchantment power to hero.  hero_idx: 0..3, power: valueA. */
     void (*add_hero_ench_power)(void *ctx, int hero_idx, int16_t power);
-    /* Add poison to hero.  hero_idx: actor, count: 1, amount: valueA. */
+    /* c_hero::poisoned++ then c_hero::poison += valueA. */
+    void (*increment_hero_poisoned)(void *ctx, int hero_idx);
     void (*add_hero_poison)(void *ctx, int hero_idx, int16_t amount);
     /* Check if hero is alive.  Returns nonzero if curHP != 0. */
     int (*hero_is_alive)(void *ctx, int hero_idx);
@@ -46,6 +47,8 @@ typedef struct {
     int ench_power_applied;
     int poison_applied;
     int timer_0e_processed;
+    int blocked_unimplemented_0e;
+    int invalid_actor;
 } DM2_V1_GlobalEffectReceipt;
 
 /* Accumulate global effects from timer array.

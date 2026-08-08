@@ -10,6 +10,7 @@
  */
 
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_save_post_load_global_effects_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,12 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     int16_t timer_queue_count;
     int16_t timer_free_head;
     uint16_t leader_hand_root;
+    /* sksvgame.cpp::DM2_PROCEED_GLOBAL_EFFECT_TIMERS runs over the retained
+     * c_tim/c_hero/savegames1 objects only.  It never promotes this owner to
+     * M11; an unimplemented 0x0e leaves the transaction invalid. */
+    DM2_V1_GlobalEffectReceipt global_effect_receipt;
+    int global_effects_complete;
+    int weight_recompute_blocked;
     DM2_V1_SksaveMapOwner map_owner;
     DM2_V1_RecordPoolSet record_pools;
     DM2_V1_SksaveSpecialTimerReceipt receipt;
@@ -47,6 +54,13 @@ int dm2_v1_sksave_game_load_owner_init(
     const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx);
+
+/* Apply DM2_PROCEED_GLOBAL_EFFECT_TIMERS to an already retained private
+ * owner.  It is atomic: a timer type 0x0e or invalid actor restores the
+ * source bytes and returns zero.  Weight recalculation intentionally remains
+ * blocked because c_party's active hand/container owner is not retained. */
+int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
+    DM2_V1_SksaveGameLoadOwner *owner);
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner);
 
