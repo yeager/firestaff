@@ -4242,6 +4242,13 @@ level or consumer bindings.
   `DUNGEON.DAT` as a skip. It now fails the selected input, then verifies the
   actual 16 source G1 mirror roots and keeps selection fail-closed until the
   remaining `GAME_LOAD` hero/record handoff exists.
+  **2026-08-08 mirror-owner correction:** the direct File_header census now
+  reads the sixteen real DB3 subtype-`0x7e` roots from `dunGroundStacks` and
+  preserves their map-0 positions, facing and source champion types `0..15`.
+  It no longer confuses the unrelated `0x1ff` dynamic-load marker with a
+  champion identity. The bounded selection seam accepts only those matching
+  source fields, but remains non-mutating until the original c_hero,
+  possessions and timer transaction is one owner.
   **2026-08-08 status-gate correction:** the complete-support receipt now
   distinguishes a parsed raw-SKSAVE census from a completed live GAME_LOAD
   owner. It cannot report complete support until the chosen original stream

@@ -18,7 +18,7 @@ static void trace_event(LiveTrace *trace, int event)
 static void trace_map(void *ctx, int map) { (void)map; trace_event(ctx, 1); }
 static void trace_revive(void *ctx, int8_t type, int8_t direction)
 {
-    assert(type == -1 && direction == 2);
+    assert(type == 14 && direction == 2);
     trace_event(ctx, 2);
 }
 static void trace_leader(void *ctx, int index) { assert(index == 0); trace_event(ctx, 3); }
@@ -95,8 +95,8 @@ static void test_select_requires_exact_source_marker_identity(void)
     mirrors.mirrors[0].x = 5;
     mirrors.mirrors[0].y = 10;
     mirrors.mirrors[0].direction = 2;
-    mirrors.mirrors[0].actuator_data = 0x1ffu;
-    mirrors.mirrors[0].dynamic_hero_type = 0xffu;
+    mirrors.mirrors[0].actuator_data = 14u;
+    mirrors.mirrors[0].dynamic_hero_type = 14u;
     mirrors.mirrors[0].dynamic_load_id = 0x1500ffffu;
 
     memset(&req, 0, sizeof(req));
@@ -109,28 +109,27 @@ static void test_select_requires_exact_source_marker_identity(void)
     assert(receipt.fail_closed == 1);
     assert(receipt.source_mirror_bound == 0);
 
-    mirrors.mirrors[0].dynamic_load_id =
-        DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID;
+    mirrors.mirrors[0].dynamic_load_id = 0x160effffu;
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 1);
-    assert(receipt.hero_type == -1);
+    assert(receipt.hero_type == 14);
     req.direction = 1;
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 0);
 
-    /* The selector key alone is insufficient: c_loadlevel.cpp derives
-     * 0x16ffffff from the canonical raw DB3 value 0x1ff, so a mismatched
-     * actuator word must remain fail-closed. */
+    /* The selector key alone is insufficient: c_loadlevel.cpp derives the
+     * key from the raw DB3 marker byte, so a mismatched actuator word must
+     * remain fail-closed. */
     req.direction = 2;
-    mirrors.mirrors[0].actuator_data = 0x1feu;
+    mirrors.mirrors[0].actuator_data = 13u;
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 0);
-    mirrors.mirrors[0].actuator_data = 0x1ffu;
+    mirrors.mirrors[0].actuator_data = 14u;
 
-    /* Other source-authored hero types retain their own derived selector;
-     * the lifecycle seam must not overfit the PC G1 type-0xff case. */
+    /* Other source-authored hero types retain their own derived selector. */
     mirrors.mirrors[0].dynamic_hero_type = 2u;
     mirrors.mirrors[0].dynamic_load_id = 0x1602ffffu;
+    mirrors.mirrors[0].actuator_data = 2u;
     req.direction = 2;
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 1);
@@ -154,9 +153,9 @@ static void test_source_bound_select_commits_only_with_live_owners(void)
     mirrors.mirrors[0].x = 5;
     mirrors.mirrors[0].y = 10;
     mirrors.mirrors[0].direction = 2;
-    mirrors.mirrors[0].actuator_data = 0x1ffu;
-    mirrors.mirrors[0].dynamic_hero_type = 0xffu;
-    mirrors.mirrors[0].dynamic_load_id = DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID;
+    mirrors.mirrors[0].actuator_data = 14u;
+    mirrors.mirrors[0].dynamic_hero_type = 14u;
+    mirrors.mirrors[0].dynamic_load_id = 0x160effffu;
     memset(&req, 0, sizeof(req));
     req.tile_x = 5;
     req.tile_y = 10;
@@ -176,9 +175,9 @@ static void test_source_bound_select_commits_only_with_live_owners(void)
     assert(dm2_v1_select_champion_source_bound(
                &req, 7, 0, &callbacks, &trace, &receipt) == 1);
     assert(receipt.champion_selected == 1);
-    assert(receipt.hero_type == -1);
+    assert(receipt.hero_type == 14);
     assert(receipt.source_dynamic_load_id ==
-           DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID);
+           0x160effffu);
     assert(trace.count == 7);
     assert(trace.events[0] == 1 && trace.events[1] == 2 &&
            trace.events[2] == 3 && trace.events[3] == 4 &&

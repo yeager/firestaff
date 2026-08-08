@@ -590,10 +590,10 @@ typedef struct {
     int y;
     uint16_t object_id;
     uint8_t direction;
-    /* Raw DB3 w2 high nine bits.  SELECT_CHAMPION passes its low byte as
-     * the signed htype, while LOAD_LOCALLEVEL_DYN preloads the exact
-     * CHAMPIONS dynamic key formed below.  Do not treat this as a static
-     * GDAT index: PC G1's original marker value is 0x1ff. */
+    /* Raw DB3 w2 high nine bits. SELECT_CHAMPION passes its low byte as the
+     * signed htype, while LOAD_LOCALLEVEL_DYN preloads the exact dynamic key
+     * formed below. The PC-DOS roster uses source types 0..15. Do not treat
+     * this as a static GDAT index. */
     uint16_t actuator_data;
     uint8_t dynamic_hero_type;
     uint32_t dynamic_load_id;

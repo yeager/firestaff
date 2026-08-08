@@ -22,6 +22,15 @@
   VRAM + 1 KiB VCE capture and 1,057 source-backed atlas entries.
 - This still proves screen-space capture only; it does not claim dungeon
   square-to-tile semantics or the missing post-CD consumer.
+# DM2 PC-DOS champion-mirror census (2026-08-08)
+
+- ✅ Bound the File_header reader to the sixteen original map-0 DB3
+  subtype-`0x7e` mirror roots and their champion types `0..15`.
+- ✅ Removed the incorrect `0x1ff` champion identity assumption from the
+  source-bound selection seam. Party creation remains blocked until c_hero,
+  possessions and timer ownership are connected.
+- ✅ Verified against real PC-DOS media, the champion-lifecycle contract,
+  M11 startup gate and boot-profile smoke suite.
 
 # Nexus audit iterations 4-5 — champion deserialize bounds (2026-08-08)
 

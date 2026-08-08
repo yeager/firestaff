@@ -1,4 +1,4 @@
-/* Real-data-only boundary test for canonical PC-DOS DM2 File_header. */
+/* Real-data-only champion-mirror census for canonical PC-DOS DM2 File_header. */
 
 #include "dm2_v1_dungeon_loader.h"
 
@@ -81,13 +81,43 @@ int main(int argc, char **argv)
         return 1;
     }
     memset(&mirrors, 0, sizeof(mirrors));
-    if (dm2_v1_dungeon_collect_g1_champion_mirrors(&dungeon, &mirrors)) {
+    if (!dm2_v1_dungeon_collect_g1_champion_mirrors(&dungeon, &mirrors) ||
+        !mirrors.committed || !mirrors.incomplete_world ||
+        mirrors.mirror_count != 16 || mirrors.actuator_record_reads <= 0) {
         dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: File_header parser promoted an unproven champion continuation\n",
+        fputs("FAIL: canonical File_header mirror roots were not retained\n",
               stderr);
         return 1;
     }
-    puts("PASS: canonical 44-map File_header is loaded and champion DYN4 stays gated");
+    {
+        unsigned int type_mask = 0u;
+        int i;
+
+        for (i = 0; i < mirrors.mirror_count; ++i) {
+            const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
+            if (mirror->map != 0 || mirror->dynamic_hero_type > 15u ||
+                mirror->actuator_data != mirror->dynamic_hero_type ||
+                mirror->dynamic_load_id !=
+                    (0x1600ffffu +
+                     ((unsigned int)mirror->dynamic_hero_type << 16))) {
+                dm2_v1_dungeon_free(&dungeon);
+                fputs("FAIL: mirror root diverges from c_hero/c_loadlevel fields\n",
+                      stderr);
+                return 1;
+            }
+            type_mask |= 1u << mirror->dynamic_hero_type;
+        }
+        if (type_mask != 0xffffu ||
+            mirrors.mirrors[0].x != 0 || mirrors.mirrors[0].y != 0 ||
+            mirrors.mirrors[0].dynamic_hero_type != 14u ||
+            mirrors.mirrors[15].x != 6 || mirrors.mirrors[15].y != 8 ||
+            mirrors.mirrors[15].dynamic_hero_type != 12u) {
+            dm2_v1_dungeon_free(&dungeon);
+            fputs("FAIL: canonical mirror census changed unexpectedly\n", stderr);
+            return 1;
+        }
+    }
+    puts("PASS: canonical 44-map File_header retains all 16 direct champion mirrors");
     dm2_v1_dungeon_free(&dungeon);
     return 0;
 }
