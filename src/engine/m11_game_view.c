@@ -9444,8 +9444,9 @@ static int m11_csb_apply_boot_runtime_receipt(
         /* The Atari package has an original ANIMATE.SCR/DAT startup program,
          * not PC34 TITLE.C assets.  Do not attempt to open the PC34 surface
          * session: it rejects the verified ST GRAPHICS.DAT before M11 gets a
-         * chance to show the real animation.  Runtime handoff remains
-         * deliberately separate until its Atari owner is implemented. */
+         * chance to show the real animation.  ANIM.C crosses into the
+         * separately-bound C232/Viewport runtime only at its final source
+         * VBlank (m11_csb_complete_atari_st_runtime_handoff). */
         state->csbStartupExpectedPackageIdentity =
             package_identity ? package_identity : 1u;
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);

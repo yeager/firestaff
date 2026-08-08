@@ -6,6 +6,13 @@
 - ✅ Riktiga Nexus-medietester för MNS, DGN face/mesh, BPK-material och
   multi-model bounds passerar. Detta öppnar inte VDP1/VDP2-rendering utan
   bevarar bara källmaterialet korrekt tills autentisk Saturn-capture finns.
+# CSB Atari ST runtimehandoff inventerad (2026-08-08)
+
+- ✅ Bekräftade den hashverifierade Atari ST 2.0/2.1-kedjan: originalets
+  `ANIMATE.SCR`/`ANIMATE.DAT` går med 50 Hz-VBL till FTLCODE, vars C232-HUD,
+  022e-viewport, Palette552 och GAMEBLOCK-inmatning använder Atari-material
+  utan PC34:s start- eller ytersättningar. Arbetslistan beskriver nu enbart
+  återstående Utility-disk- och extern capture-paritet som öppet arbete.
 
 # Nexus 0DMSTRT synthetic-admission boundary (2026-08-08)
 

@@ -61,9 +61,12 @@
   kandidat-/statusboxkonsument, inklusive C027:s källägda namnändringsyta,
   men inte hela den interaktiva panelkedjan.
   Den återstående A35M-runtimen saknar fortfarande egen verifierad
-  konsumentväg. Atari ST:s redan
-  separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
-  fortfarande full runtime-/menyhandoff efter animationsprogrammet.
+  konsumentväg. Atari ST:s separata ANIMATE.SCR/ANIMATE.DAT-väg är
+  däremot bunden hela vägen till den källägda FTLCODE-runtimen: slutlig
+  50 Hz-VBL-överlämning, C232-HUD, 022e-viewport, originalpalett och
+  GAMEBLOCK-inmatning används utan PC34-surface-ersättning. Kvar för
+  Atari är bredare Utility-disk- och extern capture-paritet, inte grundläggande
+  start- eller runtimehandoff.
 
 - 🔧 PC34:s Utility-import kan nu i den opt-in-bundna realdatakedjan läsa en
   klassificerad original-`DMSAVE.DAT` tillsammans med den hashverifierade
