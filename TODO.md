@@ -331,6 +331,11 @@
   dungeon scene, but the command source is not yet joined to a source-owned
   DGN/mesh/texture, HUD, menu or CLUT record. Keep production presentation
   gated until those identities are bound.
+  2026-08-08 follow-up: `scripts/analyze_nexus_vdp1_source_join.py` now
+  compares the captured 16bpp source against all 815 bounded real MNS TEXT
+  surfaces in both native and word-swapped byte order; the current witness
+  has no exact owner. Keep the result as negative evidence while the
+  relocated/decompressed source and VDP1/CLUT owner remain open.
 
 - **NEXUS-SATURN-VDP1-SECOND-SOURCE-SPAN:** A second authenticated European
   START+A capture (raw SHA-256 `d648bd88…`) has active VDP1 draws in all eight

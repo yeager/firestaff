@@ -24,6 +24,17 @@
   `FIRESTAFF_NEXUS_LEGACY_GEOMETRY_READINESS` diagnostic switch.
 - ✅ No renderer, fallback art or capture admission was enabled.
 
+# Nexus VDP1 source-span MNS join audit (2026-08-08)
+
+- ✅ Added `scripts/analyze_nexus_vdp1_source_join.py`, which reads the
+  authenticated raw VDP1 command window and compares each 16bpp source span
+  with every bounded TEXT surface in the operator's real MNS corpus.
+- ✅ The current two-frame European gameplay witness checks 815 real MNS
+  surfaces with native and word-swapped bytes and finds no exact owner.
+- ✅ The result remains explicitly `source_join=unbound` and
+  `semantic_admission=blocked`; no guessed DGN, menu, HUD or viewport material
+  was promoted.
+
 # Nexus TITLE MAPD receipts retain all five raw cell spans (2026-08-08)
 
 - ✅ The DMWeb-confirmed TITLE.BIN decoder now retains each retail map's

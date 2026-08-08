@@ -98,6 +98,15 @@ runtime writer PC `0x06013098`. The captured source span is
 the source span is still not joined to a decoded MENU/DGN/ITEM record or a
 VDP2 CLUT/tile owner, so production menu/HUD/viewport drawing remains gated.
 
+The reproducible `scripts/analyze_nexus_vdp1_source_join.py` comparator now
+checks that source span against every bounded TEXT surface in the real MNS
+corpus. The two-frame gameplay witness has one 16bpp draw command and 815
+retail MNS surfaces in the supplied data root; neither native-byte nor
+word-swapped comparison produces an exact owner. This is a negative source
+join, not permission to use a host texture: the source may still belong to a
+relocated/decompressed runtime buffer or another retail asset class, and the
+CLUT/placement/command-order gates remain open.
+
 A second authenticated E-BIOS/French run with START+A held at frames 18000–18119
 and capture beginning at frame 18500 is retained outside the repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-french-start18000x120-skip18500-live2/runtime-vdp12.raw`.
