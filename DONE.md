@@ -25,6 +25,10 @@
 - ✅ Realtdata-grinden jämför nu samtliga 256 M11-paletteposter mot den
   paketvalda C232 `Palette552[0]` från Atari ST `GRAPHICS.DAT`; ett enstaka
   upprepat färgindex kan inte längre maskera en felaktig PC/VGA-palett.
+- ✅ En skip-säker realdata-CTest extraherar nu originalets Atari-hårddisk-
+  korpus och kör `MINI.DAT` genom ANIM→FTLCODE, F0433-save, F0435-load och
+  kall återupptagning. Den körs endast när användarens arkiv och `7z` eller
+  `7zz` finns, och skriver enbart i sin temporära kopia.
 
 # Nexus SAL codec boundary wording (2026-08-08)
 

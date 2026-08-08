@@ -16603,6 +16603,14 @@ endif()
     set_tests_properties(csb_v1_m11_prison_runtime_hud_pc34 PROPERTIES
         LABELS "csb;real_data;m11;hud")
     add_test(
+        NAME csb_v1_atari_mini_runtime_archive
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"
+            "$<TARGET_FILE:test_csb_v1_m11_prison_runtime_hud_pc34>"
+    )
+    set_tests_properties(csb_v1_atari_mini_runtime_archive PROPERTIES
+        LABELS "tier2;csb;atari;save;runtime;real_data;archive;skip_safe"
+    )
+    add_test(
         NAME csb_v20_m11_prison_runtime_hud_pc34
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )

@@ -14,15 +14,19 @@ if [ ! -f "$archive" ]; then
     echo "SKIP: local CSB Atari archive is unavailable: $archive"
     exit 0
 fi
-if ! command -v 7zz >/dev/null 2>&1; then
-    echo "SKIP: 7zz is unavailable for local CSB archive verification"
+if command -v 7zz >/dev/null 2>&1; then
+    seven_zip=7zz
+elif command -v 7z >/dev/null 2>&1; then
+    seven_zip=7z
+else
+    echo "SKIP: 7z/7zz is unavailable for local CSB archive verification"
     exit 0
 fi
 
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-mini-XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
 
-if ! 7zz e -y -o"$tmp_dir" "$archive" "$member" >/dev/null; then
+if ! "$seven_zip" e -y -o"$tmp_dir" "$archive" "$member" >/dev/null; then
     echo "FAIL: could not extract original CSB Atari MINI.DAT" >&2
     exit 1
 fi
