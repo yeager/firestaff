@@ -7533,3 +7533,16 @@
   fallback at the T900 ownership boundary.
 - ✅ Fixture worlds without a verified source level retain their existing
   behavior; the focused 104-case mechanics suite remains green.
+
+# CSB durable spell-symbol input (2026-08-08)
+
+- ✅ CSB C101..C106 rune input now writes the selected source byte sequence
+  and the champion-owned 0..3 `SymbolStep` ring into the live GAMEBLOCK,
+  rather than leaving it solely in M11's presentation buffer. C107 recant
+  deletes the same durable byte while preserving the source's no-refund rule.
+- ✅ This follows ReDMCSB `SYMBOL.C` F0399:17-39 and F0400:85-103; the
+  decompiler's F31 hand-verified instruction note was reviewed as a
+  cross-check, while this PC34 path uses the normal modulo-four branch.
+- ✅ Verified against the real Atari ST `MINI.DAT`, plus PC34 startup/reload,
+  source-lock, and headless Phase A regressions. CSB casting remains
+  deliberately fail-closed pending its own CASTER/CSBWin owner.

@@ -14219,6 +14219,67 @@ static int m11_dm1_spell_caster_index(const M11_GameViewState* state)
     return state->world.party.activeChampionIndex;
 }
 
+/* ReDMCSB SYMBOL.C F0399:17-39 writes both the symbol bytes and the
+ * champion-owned SymbolStep before repainting C009/C011.  CSB's GAMEBLOCK
+ * is the durable owner of those fields; the M11 spell buffer is only the
+ * current HUD projection.  Keep the two coherent so F0433 saves and a
+ * F0394 caster change cannot discard an accepted C101..C106 input. */
+static void m11_csb_spell_sync_legacy_to_runtime(M11_GameViewState* state)
+{
+    CSB_V1_BootProfile *profile;
+    CSB_V1_Champion *champion;
+    int caster;
+    int i;
+
+    if (!state || !m11_source_is_csb(state) || !state->csbBootProfile) {
+        return;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    caster = m11_dm1_spell_caster_index(state);
+    if (!profile->runtime.party_state_valid || caster < 0 ||
+        caster >= profile->runtime.party_state.ChampionCount ||
+        caster >= CSB_V1_MAX_CHAMPIONS) {
+        return;
+    }
+    champion = &profile->runtime.party_state.Champions[caster];
+    memset(champion->Incantation, 0, sizeof(champion->Incantation));
+    for (i = 0; i < state->spellBuffer.runeCount &&
+                i < (int)sizeof(champion->Incantation); ++i) {
+        champion->Incantation[i] = (int8_t)state->spellBuffer.runes[i];
+    }
+    champion->SymbolStep = (uint8_t)(state->spellRuneRow & 3);
+}
+
+static int m11_csb_spell_sync_runtime_to_legacy(M11_GameViewState* state)
+{
+    const CSB_V1_BootProfile *profile;
+    const CSB_V1_Champion *champion;
+    int caster;
+    int i;
+
+    if (!state || !m11_source_is_csb(state) || !state->csbBootProfile) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    caster = m11_dm1_spell_caster_index(state);
+    if (!profile->runtime.party_state_valid || caster < 0 ||
+        caster >= profile->runtime.party_state.ChampionCount ||
+        caster >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &profile->runtime.party_state.Champions[caster];
+    if (champion->SymbolStep > 3u) return 0;
+    memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+    for (i = 0; i < (int)sizeof(champion->Incantation) &&
+                champion->Incantation[i] != 0; ++i) {
+        state->spellBuffer.runes[i] =
+            (unsigned char)champion->Incantation[i];
+        state->spellBuffer.runeCount = i + 1;
+    }
+    state->spellRuneRow = champion->SymbolStep;
+    return 1;
+}
+
 static void m11_dm1_spell_sync_legacy_to_caster(M11_GameViewState* state)
 {
     DM1_ChampionSpellInput* input;
@@ -14235,6 +14296,7 @@ static void m11_dm1_spell_sync_legacy_to_caster(M11_GameViewState* state)
         input->symbols[i] = (char)state->spellBuffer.runes[i];
     }
     input->symbolStep = (uint8_t)(state->spellRuneRow & 3);
+    m11_csb_spell_sync_legacy_to_runtime(state);
 }
 
 static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state)
@@ -14244,6 +14306,7 @@ static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state)
     int i;
 
     if (!state) return;
+    if (m11_csb_spell_sync_runtime_to_legacy(state)) return;
     caster = state->dm1SpellCasting.magicCasterIndex;
     if (caster < 0 || caster >= CHAMPION_MAX_PARTY) return;
     input = &state->dm1SpellCasting.input[caster];

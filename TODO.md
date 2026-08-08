@@ -7872,7 +7872,13 @@ that its exact runtime path is not already source-locked and tested.
     recant, and caster tabs retain their source geometry and per-champion
     state. CSB spell-area execution is still separate: casting requires a
     source-owned CSBWin caster/cast binding rather than the DM1 spell
-    executor. 2026-07-30: the shared `M11_GameView_CastSpell` boundary now
+    executor. 2026-08-08: C101..C106 now also persist their exact four-byte
+    `Champion.Incantation` line and 0..3 `SymbolStep` ring in CSB's live
+    GAMEBLOCK; C107 deletes that same durable state without refunding mana.
+    This follows ReDMCSB `SYMBOL.C` F0399/F0400, and is covered with the
+    authentic Atari ST `MINI.DAT` path. It is input/save continuity only,
+    not a claim that the still-gated CSB cast executor is available.
+    2026-07-30: the shared `M11_GameView_CastSpell` boundary now
     explicitly rejects CSB before DM1 F0750--F0754 can run. A rejected CSB
     cast preserves the source rune line, champion mana and world tick until
     the CSBWin caster/cast transaction can own them. 2026-07-30: C009/C011 now consumes the current CSB GAMEBLOCK

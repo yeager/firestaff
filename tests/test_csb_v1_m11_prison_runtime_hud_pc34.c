@@ -289,7 +289,7 @@ int main(void)
                   profile->runtime.party_dir == 2 &&
                   profile->runtime.current_level == 4,
               "real Atari MINI.DAT restores its party pose and champion into M11 CSB runtime");
-        CHECK(view.world.party.championCount == 1 &&
+            CHECK(view.world.party.championCount == 1 &&
                   memcmp(view.world.party.champions[0].name, "HALK", 4u) == 0 &&
                   view.world.party.mapX == 22 && view.world.party.mapY == 18 &&
                   view.world.party.direction == 2 && view.world.party.mapIndex == 4,
@@ -332,6 +332,24 @@ int main(void)
                       view.world.party.championCount == 1 &&
                       view.inventoryPanelActive,
                   "real Atari MINI.DAT F1 refreshes GAMEBLOCK before opening inventory");
+            view.inventoryPanelActive = 0;
+            CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
+                      M11_GAME_INPUT_REDRAW && view.spellPanelOpen &&
+                      M11_GameView_HandleInput(
+                          &view, M12_MENU_INPUT_SPELL_RUNE_1) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      profile->runtime.party_state.Champions[0]
+                          .Incantation[0] == 0x60 &&
+                      profile->runtime.party_state.Champions[0]
+                          .SymbolStep == 1u,
+                  "real Atari MINI.DAT C101 writes F0399 incantation fields into GAMEBLOCK");
+            CHECK(M11_GameView_HandlePointerButton(&view, 306, 64, 0x0002) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      profile->runtime.party_state.Champions[0]
+                          .Incantation[0] == 0 &&
+                      profile->runtime.party_state.Champions[0]
+                          .SymbolStep == 0u,
+                  "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
             M11_GameView_Shutdown(&view);
             if (failures) return 1;
             puts("PASS: real Atari MINI.DAT reaches live Atari ST M11 runtime");
@@ -393,8 +411,22 @@ int main(void)
                       mutable_profile &&
                       mutable_profile->runtime.party_state.Champions[0]
                           .CurrentMana ==
-                          (int16_t)view.world.party.champions[0].mana.current,
-                  "real Atari GAMEBLOCK consumes C101 through the source rune cost and writes mana back");
+                          (int16_t)view.world.party.champions[0].mana.current &&
+                      mutable_profile->runtime.party_state.Champions[0]
+                          .Incantation[0] == 0x60 &&
+                      mutable_profile->runtime.party_state.Champions[0]
+                          .Incantation[1] == 0 &&
+                      mutable_profile->runtime.party_state.Champions[0]
+                          .SymbolStep == 1u,
+                  "real Atari GAMEBLOCK persists C101 mana, incantation, and F0399 SymbolStep");
+            CHECK(M11_GameView_HandlePointerButton(&view, 306, 64, 0x0002) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      view.spellBuffer.runeCount == 0 &&
+                      mutable_profile->runtime.party_state.Champions[0]
+                          .Incantation[0] == 0 &&
+                      mutable_profile->runtime.party_state.Champions[0]
+                          .SymbolStep == 0u,
+                  "real Atari C107 recant clears the persisted F0400 incantation without refunding mana");
             (void)M11_GameView_ClearSpell(&view);
         }
         view.world.party.championCount = 0;
