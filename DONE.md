@@ -26,6 +26,11 @@
   and pointer confirmation paths save a CSB runtime snapshot instead of a
   DM1 world file. Verified from a live PC34 Prison session after 101 real
   CSB runtime ticks.
+- ✅ Expanded the real PC34 Prison path to exercise ordinary keyboard input:
+  C002 turn and C003 forward now prove their route from M11 through the CSB
+  command queue into the loaded dungeon runtime and back into M11's party
+  mirror. This removes the stale claim that movement was only consumed at
+  the queue boundary.
 
 # DM2 File_header champion test-link repair (2026-08-08)
 

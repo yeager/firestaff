@@ -49822,10 +49822,10 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
         /* ReDMCSB COMMAND.C F0361/F0380 owns keyboard movement command
          * queueing for CSB.  Reuse the source-locked CSB bridge so M11
          * does not duplicate the C001..C006 scancode/queue mapping.
-         * Current CSB runtime support applies C001/C002 turns through
-         * F0365/F0284; C003..C006 movement commands are consumed and
-         * reported by the bridge until the dungeon-aware movement boundary
-         * is widened separately. */
+         * The CSB runtime owns C001/C002 turns through F0365/F0284 and
+         * C003..C006 through its source-locked dungeon one-step boundary.
+         * M11 only consumes its receipts and mirrors the authoritative
+         * GAMEBLOCK state after dispatch. */
         if (!m11_csb_preflight_first_post_c040_input(
                 state, input, &first_post_c040_tick)) {
             m11_set_status(state, "CSB", "STALE HUD SESSION");

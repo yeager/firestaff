@@ -433,6 +433,27 @@ int main(void)
     }
     CHECK(c013_nonblack > 0,
           "live Prison framebuffer consumes real C013 movement pixels");
+    {
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile *)view.csbBootProfile;
+        int old_direction = profile ? profile->runtime.party_dir : -1;
+
+        CHECK(profile && M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_TURN_RIGHT) == M11_GAME_INPUT_REDRAW,
+              "live Prison keyboard routes C002 through the CSB command queue");
+        CHECK(profile && profile->runtime.party_dir ==
+                  ((old_direction + 1) & 3) &&
+                  view.csbState.party_dir == profile->runtime.party_dir,
+              "live Prison C002 turn updates both CSB runtime and M11 mirror");
+        CHECK(profile && M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_UP) == M11_GAME_INPUT_REDRAW,
+              "live Prison keyboard routes C003 through the CSB command queue");
+        CHECK(profile && profile->runtime.last_input_dispatch.dequeued &&
+                  profile->runtime.last_input_dispatch.command ==
+                      DM1_V1_COMMAND_MOVE_FORWARD &&
+                  profile->runtime.last_input_dispatch.dispatchedMove,
+              "live Prison C003 reaches the real dungeon movement dispatcher");
+    }
     if (quicksave_path && quicksave_path[0]) {
         const CSB_V1_BootProfile *profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
