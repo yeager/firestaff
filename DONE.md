@@ -1,3 +1,12 @@
+# Nexus audit iterations 4-5 — champion deserialize bounds (2026-08-08)
+
+- ✅ Fixed champion pool deserialize bounds check (21→26 int fields).
+- ✅ Fixed champion blob comment in header.
+- ✅ Audited: dungeon.c (7k lines), ui_surfaces, font_s2d, dgn_texture_decode,
+  save_load, all 10 header files. No additional runtime bugs beyond the
+  bounds check.
+- Version: v3.0.304
+
 # Nexus audit iterations 2-3 — inventory bounds, hunger comment (2026-08-08)
 
 - ✅ Added weapon_slot bounds check in nexus_inventory_equip.

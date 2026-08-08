@@ -1,3 +1,12 @@
+# Firestaff v3.0.304
+
+## Fixed
+
+- `nexus_v1_champions.c`: fix deserialize bounds check from `21 * 4` to `26 * 4`
+  — serialize writes 26 int fields per champion but deserialize validation only
+  required space for 21, risking buffer overread on short buffers.
+- `nexus_v1_champions.h`: fix stale comment with wrong field count and byte total.
+
 # Firestaff v3.0.303
 
 ## Fixed

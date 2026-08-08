@@ -590,7 +590,7 @@ int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool,
 
     {
         const uint8_t *end = (const uint8_t *)buf + bufsize;
-        size_t per_champion = 32 + 64 + 21 * 4 + 30 + NEXUS_SLOT_COUNT * 4;
+        size_t per_champion = 32 + 64 + 26 * 4 + 30 + NEXUS_SLOT_COUNT * 4;
         size_t needed = 32 + (size_t)pool->champion_count * per_champion +
                         NEXUS_MAX_PARTY * 4;
         if (needed > bufsize) return -1;

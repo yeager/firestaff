@@ -145,9 +145,8 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
  *   + [champion_count × champion blob]
  *   + [4 × party slot (4 bytes each)]
  *
- * Champion blob: name_ascii(32) + name_jp(64) + all int fields
- *                 + inventory(30) + slots(9×4)
- *                 = 32+64+23*4+30+9*4 = 268 bytes per champion
+ * Champion blob: name_ascii(32) + name_jp(64) + 26 int fields(26×4)
+ *                 + inventory(30) + slots(NEXUS_SLOT_COUNT×4)
  *
  * Source-lock: ReDMCSB LOADSAVE.C F0433/F0434 (DM1 save/load structure),
  *              CHAMPION.C F0309 (champion save format). */
