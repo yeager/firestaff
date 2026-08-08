@@ -605,6 +605,91 @@ int csb_v1_fmtowns_game_load_startup_state(
     return 1;
 }
 
+int csb_v1_fmtowns_game_apply_startup_state(
+    CSB_V1_FmtownsStartupState *state, CSB_V1_RuntimeProfile *runtime)
+{
+    CSB_V1_DungeonData *new_dungeon;
+    CSB_V1_DungeonData *old_dungeon;
+    uint16_t slot;
+
+    if (!state || !runtime || !state->valid || !state->dungeon.raw_data ||
+        state->party_map_index < 0 ||
+        state->party_map_index >= state->dungeon.level_count ||
+        state->active_group_resolved_count != state->active_group_count ||
+        state->timeline_queue.eventCount < 0 ||
+        state->timeline_queue.maxEvents <= 0 ||
+        state->timeline_queue.maxEvents > DM1_EVENT_MAX_COUNT ||
+        !(new_dungeon = (CSB_V1_DungeonData *)malloc(sizeof(*new_dungeon))) ) {
+        return 0;
+    }
+    if (csb_v1_runtime_set_party_state(runtime, &state->party) != 0) {
+        free(new_dungeon);
+        return 0;
+    }
+    /* Every saved active record must have its uniquely resolved C04 owner
+     * before this point. GROUP.C F0183/F0184 uses the saved table index to
+     * select that group; it is never legal to replace a missing owner. */
+    for (slot = 0u; slot < state->active_group_capacity; ++slot) {
+        if ((int16_t)csb_v1_fmtowns_game_read_le16(
+                state->active_groups[slot]) >= 0 &&
+            !state->active_group_owners[slot].valid) {
+            free(new_dungeon);
+            return 0;
+        }
+    }
+    *new_dungeon = state->dungeon;
+    memset(&state->dungeon, 0, sizeof(state->dungeon));
+    old_dungeon = runtime->dungeon_handle;
+    runtime->dungeon_handle = new_dungeon;
+    runtime->level_count = new_dungeon->level_count;
+    runtime->current_level = state->party_map_index;
+    runtime->party_x = state->party.PartyMapX;
+    runtime->party_y = state->party.PartyMapY;
+    runtime->party_dir = state->party.PartyDirection & 3;
+    runtime->game_time = state->game_time;
+    runtime->timeline_queue = state->timeline_queue;
+    runtime->timeline_queue.gameTick = state->game_time;
+    memset(runtime->active_group_state, 0, sizeof(runtime->active_group_state));
+    runtime->active_group_state_count = 0u;
+    for (slot = 0u; slot < state->active_group_capacity; ++slot) {
+        const uint8_t *raw = state->active_groups[slot];
+        const int16_t group_index = (int16_t)csb_v1_fmtowns_game_read_le16(raw);
+        CSB_V1_RuntimeActiveGroupState *target;
+        uint32_t last_move_time;
+
+        if (group_index < 0) continue;
+        target = &runtime->active_group_state[slot];
+        target->valid = 1;
+        target->group_thing = state->active_group_owners[slot].group_thing;
+        target->map_index = state->active_group_owners[slot].map_index;
+        target->map_x = state->active_group_owners[slot].map_x;
+        target->map_y = state->active_group_owners[slot].map_y;
+        target->directions = raw[2u];
+        target->cells = raw[3u];
+        /* ACTIVE_GROUP stores only G0313's low byte. Reconstruct the most
+         * recent source tick, never a future host time. */
+        last_move_time = (state->game_time & ~0xffu) | raw[4u];
+        if (last_move_time > state->game_time) last_move_time -= 0x100u;
+        target->last_move_time = last_move_time;
+        target->delay_fleeing_from_target = raw[5u];
+        target->target_map_x = raw[6u];
+        target->target_map_y = raw[7u];
+        target->prior_map_x = raw[8u];
+        target->prior_map_y = raw[9u];
+        target->home_map_x = raw[10u];
+        target->home_map_y = raw[11u];
+        memcpy(target->aspect, raw + 12u, sizeof(target->aspect));
+        ++runtime->active_group_state_count;
+    }
+    csb_v1_dungeon_set_current(new_dungeon);
+    csb_v1_dungeon_set_current_level(runtime->current_level);
+    if (old_dungeon) {
+        csb_v1_dungeon_free(old_dungeon);
+        free(old_dungeon);
+    }
+    return 1;
+}
+
 static int csb_v1_fmtowns_game_startup_mini_save_parts_open(
     const char *path, uint32_t file_size, const unsigned char *header,
     CSB_V1_FmtownsGameHandoffReceipt *receipt)

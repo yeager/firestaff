@@ -234,6 +234,12 @@ int csb_v1_fmtowns_game_load_startup_state(
 void csb_v1_fmtowns_game_startup_state_free(
     CSB_V1_FmtownsStartupState *state);
 
+/* Commit a fully resolved F31 candidate in one ownership transfer. The call
+ * fails without modifying runtime unless dungeon, party, timeline and every
+ * saved ACTIVE_GROUP owner are all present. */
+int csb_v1_fmtowns_game_apply_startup_state(
+    CSB_V1_FmtownsStartupState *state, CSB_V1_RuntimeProfile *runtime);
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,

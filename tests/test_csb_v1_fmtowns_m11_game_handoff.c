@@ -52,6 +52,7 @@ int main(void)
     int door_frame_seen = 0;
     int live_frame_nonblack = 0;
     int game_music_started = 0;
+    uint8_t expected_game_music_track = 0u;
     CSB_V1_FmtownsSwitchInputReceipt switch_input;
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
@@ -432,15 +433,27 @@ int main(void)
         view.inventoryPanelActive = 0;
     }
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
-     * The real Prison handoff reaches map 0, (9,0), whose retail selector is
-     * 2. Do not overwrite the boot-owned party state with a test coordinate. */
+     * The atomic F31 resume owns map 4 and its saved pose, so query the
+     * matching retail selector instead of retaining the old map-0 fixture
+     * expectation. */
+    CHECK(csb_v1_fmtowns_game_music_track_at(
+              &direct_handoff,
+              (uint32_t)((const CSB_V1_BootProfile *)view.csbBootProfile)
+                  ->runtime.current_level,
+              (uint32_t)((const CSB_V1_BootProfile *)view.csbBootProfile)
+                  ->runtime.party_x,
+              (uint32_t)((const CSB_V1_BootProfile *)view.csbBootProfile)
+                  ->runtime.party_y,
+              &expected_game_music_track) && expected_game_music_track != 0u,
+          "F31 resumed party pose selects a nonzero retail F0743 music byte");
     for (tick = 0u; tick < 101u; ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
-    game_music_started = view.csbFmtownsGameMusicPlayingTrack == 2 &&
+    game_music_started = view.csbFmtownsGameMusicPlayingTrack ==
+                             expected_game_music_track &&
                          !view.csbFmtownsGameMusicPending;
     CHECK(game_music_started,
-          "F31 live map music waits 100 F0743 updates then selects CUE track 2");
+          "F31 live map music waits 100 F0743 updates then selects its retail CUE track");
 
     /* ReDMCSB STARTUP2.C F0750 invokes F2248("ending.anm") after the F31
      * game has won. The live game state is already source-admitted above;

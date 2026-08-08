@@ -8097,6 +8097,13 @@
   C04-tabellindex. Alla åtta aktiva grupper i både F31E och F31J löses nu
   entydigt mot sina riktiga C04-poster på karta 4. Kandidaten ändrar ännu inte
   live-runtimen innan full active-group-installation kan ske atomiskt.
+
+# CSB FM Towns atomär F0435-handoff (2026-08-08)
+
+- C03 Game installerar nu den verifierade F31-candidaten som en transaktion:
+  MINI-dungeon, sparad karta/position, championer, eventheap, timeline och
+  alla åtta C04-ägda active groups. Musiken läser därefter rätt F0743-byte
+  för den verkliga återupptagna positionen, inte en gammal karta-0-modell.
 # 2026-08-08 Theron inferred spawn-stat boundary
 
 - ✅ Removed the old host-seeded HP/attack/defense arithmetic from the
