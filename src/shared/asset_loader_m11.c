@@ -18,6 +18,7 @@
 #include "graphics_dat_entry_classify_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
+#include "csb_v1_amiga_graphics_dat.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -212,6 +213,38 @@ int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
     return ok;
 }
 
+int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
+                                         const char *graphicsDatPath) {
+    FILE *file;
+    long size;
+    unsigned char *data;
+    CSB_V1_AmigaGraphicsReceipt receipt;
+
+    if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
+        !(file = fopen(graphicsDatPath, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
+        free(data); fclose(file); return 0;
+    }
+    fclose(file);
+    memset(&receipt, 0, sizeof(receipt));
+    if (csb_v1_amiga_graphics_receipt(data, (size_t)size, &receipt) != 0 ||
+        !receipt.is_amiga || receipt.item_count == 0u) {
+        free(data); return 0;
+    }
+    memset(loader, 0, sizeof(*loader));
+    loader->csbAmigaData = data;
+    loader->csbAmigaDataSize = size;
+    loader->csbAmiga = 1;
+    loader->graphicCount = receipt.item_count;
+    loader->initialized = 1;
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath), "%s",
+             graphicsDatPath);
+    return 1;
+}
+
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {
@@ -219,6 +252,7 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     }
     free(loader->legacyData);
     free(loader->atariStData);
+    free(loader->csbAmigaData);
     for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
         if (loader->cache[i].loaded && loader->cache[i].pixels) {
             free(loader->cache[i].pixels);
@@ -429,6 +463,33 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             return NULL;
         }
         free(stPixels);
+        return m11_find_cached(loader, graphicIndex);
+    }
+
+    if (loader->csbAmiga) {
+        CSB_V1_AmigaGraphicsItem item;
+        uint16_t amigaWidth = 0u, amigaHeight = 0u;
+        unsigned char *amigaPixels;
+        if (graphicIndex >= loader->graphicCount ||
+            !csb_v1_amiga_graphics_item(loader->csbAmigaData,
+                                         (size_t)loader->csbAmigaDataSize,
+                                         (uint16_t)graphicIndex, &item) ||
+            item.decompressedByteCount == 0u) return NULL;
+        /* DMCSB2's table describes the IMG1 source record, not necessarily
+         * the final unpacked pixel count. Decode into the same bounded
+         * 1 MiB host buffer used by the other IMG1 loader paths. */
+        amigaPixels = (unsigned char *)malloc(1024u * 1024u);
+        if (!amigaPixels || !csb_v1_amiga_graphics_decode_item(
+                loader->csbAmigaData, (size_t)loader->csbAmigaDataSize,
+                (uint16_t)graphicIndex, amigaPixels,
+                1024u * 1024u, &amigaWidth, &amigaHeight) ||
+            !M11_AssetLoader_InstallDecodedPixels(loader, graphicIndex,
+                                                    amigaPixels, amigaWidth,
+                                                    amigaHeight)) {
+            free(amigaPixels);
+            return NULL;
+        }
+        free(amigaPixels);
         return m11_find_cached(loader, graphicIndex);
     }
 

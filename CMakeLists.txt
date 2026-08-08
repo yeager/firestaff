@@ -6583,6 +6583,11 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer_runtime_noop\\.c$")
 # The real rasterizer and V2 presentation modules remain available to explicit
 # fixture/probe targets only: no Saturn VDP1/VDP2 capture currently binds them.
 set(NEXUS_M11_RUNTIME_SOURCES
+    # Engine/mechanics own only their fail-closed storage initializers.
+    # Keeping these explicit prevents an excluded study lane from leaving
+    # unresolved symbols in every M11-linked executable.
+    src/nexus/nexus_v1_containers.c
+    src/nexus/nexus_v1_drops.c
     src/nexus/nexus_v1_rasterizer_runtime_noop.c
     src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c

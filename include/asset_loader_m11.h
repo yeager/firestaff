@@ -66,6 +66,12 @@ typedef struct {
     long atariStDataSize;
     int atariStDm1;
 
+    /* CSB Amiga DMCSB2 source.  Its IMG1 records are intentionally separate
+     * from both PC34 IMG3 and DM1's legacy IMG2 layout. */
+    unsigned char *csbAmigaData;
+    long csbAmigaDataSize;
+    int csbAmiga;
+
     /* Cache */
     M11_AssetSlot cache[M11_ASSET_CACHE_SLOTS];
     int cacheUsed;
@@ -103,6 +109,10 @@ int M11_AssetLoader_InitDm1AtariStFromBuffer(M11_AssetLoader* loader,
                                              long size);
 int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath);
+
+/* Initialize from CSB Amiga DMCSB2 GRAPHICS.DAT (big-endian IMG1 records). */
+int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
+                                         const char *graphicsDatPath);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);

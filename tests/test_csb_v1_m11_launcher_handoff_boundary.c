@@ -23,6 +23,7 @@
 #endif
 
 #include "m11_game_view.h"
+#include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
@@ -226,6 +227,21 @@ static int frame_rect_matches(const unsigned char* first,
     return 1;
 }
 
+static int frame_region_matches_bitmap(const unsigned char *framebuffer,
+                                       int frame_stride, int x, int y,
+                                       const unsigned char *bitmap,
+                                       int width, int height) {
+    int row;
+    if (!framebuffer || !bitmap || frame_stride < x + width || x < 0 ||
+        y < 0 || width <= 0 || height <= 0) return 0;
+    for (row = 0; row < height; ++row) {
+        if (memcmp(framebuffer + (size_t)(y + row) * (size_t)frame_stride +
+                   (size_t)x, bitmap + (size_t)row * (size_t)width,
+                   (size_t)width) != 0) return 0;
+    }
+    return 1;
+}
+
 static int frame_rect_is_color(const unsigned char* pixels,
                                int x,
                                int y,
@@ -255,10 +271,18 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
 {
     unsigned char framebuffer[320 * 200];
     DM1_V1_MovementArrowRectPc34 movement;
+    const M11_AssetSlot *c013;
 
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(view, framebuffer, 320, 200);
+    c013 = M11_AssetLoader_Load(&view->assetLoader, 13u);
     expect_true(dm1_v1_movement_arrows_graphic_rect_pc34(&movement) &&
+                    c013 && c013->loaded && c013->pixels &&
+                    c013->width == 87u && c013->height == 45u &&
+                    frame_region_matches_bitmap(framebuffer, 320,
+                                                movement.x, movement.y,
+                                                c013->pixels, c013->width,
+                                                c013->height) &&
                     count_nonzero_region(framebuffer, 320, movement.x,
                                          movement.y, movement.w,
                                          movement.h) > 0 &&

@@ -9382,15 +9382,20 @@ static int m11_csb_apply_boot_runtime_receipt(
             }
         }
     }
+    if (!state->assetsAvailable && m11_csb_is_amiga_profile(receipt->profile) &&
+        M11_AssetLoader_InitCsbAmigaFromFile(&state->assetLoader,
+                                             receipt->graphics_path)) {
+        /* Native CSB Amiga IMG1 records are now cached by their own decoder.
+         * The loader has no PC34 file/runtime state, so later consumers can
+         * use only these authenticated Amiga pixels. */
+        state->assetsAvailable = 1;
+    }
     if (!state->assetsAvailable &&
-        ((receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-          receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) ||
-         m11_csb_is_amiga_profile(receipt->profile)) &&
+        (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+         receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
         M11_AssetLoader_InitDecodedOnly(&state->assetLoader,
                                         receipt->graphics_path)) {
-        /* Atari ST and Amiga GRAPHICS.DAT are not PC reader containers.
-         * Their runtime consumers install only pixels decoded by the
-         * verified platform-specific source readers. */
+        /* Atari ST GRAPHICS.DAT has a separate C232/022e consumer. */
         state->assetsAvailable = 1;
     }
     state->csbBootProfile = receipt->profile;
