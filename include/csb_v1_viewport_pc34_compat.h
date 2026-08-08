@@ -1615,6 +1615,9 @@ int csb_v1_viewport_runtime_group_overlay_placement(
     int coordinate_set,
     CSB_V1_ViewportRuntimeGroupOverlayPlacement *out_placement);
 int csb_v1_viewport_runtime_creature_coordinate_set(int creature_type);
+/* ReDMCSB DUNVIEW.C F0115 uses M072 on G0219 rather than a universal C10
+ * transparency key when it sends a creature bitmap to F0791. */
+int csb_v1_viewport_runtime_creature_transparent_color(int creature_type);
 int csb_v1_viewport_runtime_group_overlay_creature_placement(
     int forward,
     int side,

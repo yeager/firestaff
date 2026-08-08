@@ -3584,6 +3584,16 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               csb_v1_viewport_runtime_creature_coordinate_set(3), 2);
     check_int("csb.runtime_group_overlay.coord.invalid",
               csb_v1_viewport_runtime_creature_coordinate_set(99), 0);
+    check_int("csb.runtime_group_overlay.transparent.giant_scorpion",
+              csb_v1_viewport_runtime_creature_transparent_color(0), 13);
+    check_int("csb.runtime_group_overlay.transparent.swamp_slime",
+              csb_v1_viewport_runtime_creature_transparent_color(1), 11);
+    check_int("csb.runtime_group_overlay.transparent.wizard_eye",
+              csb_v1_viewport_runtime_creature_transparent_color(3), 4);
+    check_int("csb.runtime_group_overlay.transparent.ruster",
+              csb_v1_viewport_runtime_creature_transparent_color(5), 8);
+    check_int("csb.runtime_group_overlay.transparent.invalid_fails_closed",
+              csb_v1_viewport_runtime_creature_transparent_color(99), 10);
     memset(&group_place, 0, sizeof(group_place));
     check_true("csb.runtime_group_overlay.creature_wrapper.type0",
                csb_v1_viewport_runtime_group_overlay_creature_placement(
@@ -3594,6 +3604,8 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               group_place.sprite_creature_type, 0);
     check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_side",
               group_place.sprite_relative_side, 0);
+    check_int("csb.runtime_group_overlay.creature_wrapper.type0.transparent",
+              group_place.sprite_transparent_color, 13);
     check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_x",
               group_place.sprite_x, 85);
     check_int("csb.runtime_group_overlay.creature_wrapper.type0.sprite_y",

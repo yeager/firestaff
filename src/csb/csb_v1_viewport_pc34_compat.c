@@ -2241,6 +2241,29 @@ int csb_v1_viewport_runtime_creature_coordinate_set(int creature_type)
     return (int)k_coordinate_sets[creature_type];
 }
 
+int csb_v1_viewport_runtime_creature_transparent_color(int creature_type)
+{
+    /* ReDMCSB DUNVIEW.C G0219_as_Graphic558_CreatureAspects and F0115
+     * lines 5408, 5453-5456, 5543, 5598-5601: M072 extracts the low nibble
+     * of CoordinateSet_TransparentColor for the native C584+ raster.  It is
+     * not universally C10: for example Scorpion is C13, Slime is C11 and
+     * Wizard Eye is C4.  Keep this alongside the already source-locked high
+     * nibble coordinate-set table above so M11 receives the exact F0791 key
+     * with its source-owned C3200 rectangle. */
+    static const unsigned char k_transparent_colors[27] = {
+        13, 11, 11, 4, 4, 8, 13, 4, 4,
+        4, 4, 4, 4, 13, 4, 4, 4, 4,
+        4, 13, 4, 4, 4, 4, 4, 4, 4
+    };
+
+    if (creature_type < 0 ||
+        creature_type >= (int)(sizeof(k_transparent_colors) /
+                               sizeof(k_transparent_colors[0]))) {
+        return CSB_V1_F0115_TRANSPARENT_COLOR;
+    }
+    return (int)k_transparent_colors[creature_type];
+}
+
 int csb_v1_viewport_runtime_group_overlay_creature_placement(
     int forward,
     int side,
@@ -2259,6 +2282,8 @@ int csb_v1_viewport_runtime_group_overlay_creature_placement(
     if (out_placement) {
         out_placement->sprite_creature_type = creature_type;
         out_placement->sprite_relative_side = side;
+        out_placement->sprite_transparent_color =
+            csb_v1_viewport_runtime_creature_transparent_color(creature_type);
     }
     return visible;
 }
