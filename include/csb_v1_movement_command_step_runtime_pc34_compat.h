@@ -31,6 +31,9 @@ typedef struct {
     int new_party_dir;
     int party_state_changed;
     int disabled_movement_ticks_after;
+    int stamina_affected_count;
+    int stamina_cost[CSB_V1_MAX_CHAMPIONS];
+    int stamina_pending_damage[CSB_V1_MAX_CHAMPIONS];
 } CSB_V1_MovementCommandStepRuntimeResultPc34Compat;
 
 int csb_v1_movement_command_step_runtime_apply_pc34_compat(

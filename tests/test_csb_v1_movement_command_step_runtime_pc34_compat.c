@@ -125,6 +125,10 @@ static void test_one_forward_step_through_queue(void)
     int i;
 
     seed_profile(&profile, &party, 10, 10, CSB_V1_DIR_NORTH);
+    for (i = 0; i < profile.party_state.ChampionCount; ++i) {
+        profile.party_state.Champions[i].CurrentStamina = 100;
+        profile.party_state.Champions[i].MaximumStamina = 100;
+    }
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     enqueue_forward(&queue, "PC-34 forward key queues one V1 command");
     CHECK_EQ(queue.count, 1, "queue contains one command before dispatch");
@@ -158,6 +162,12 @@ static void test_one_forward_step_through_queue(void)
     CHECK_EQ(result.party_state_changed, 1, "result reports coordinate mutation");
     CHECK_EQ(result.disabled_movement_ticks_after, 2,
              "step uses the living party's F0310 movement cost");
+    CHECK_EQ(result.stamina_affected_count, CSB_V1_MAX_CHAMPIONS,
+             "F0366 applies F0325 to every PC34 party record before resolution");
+    CHECK_EQ(result.stamina_cost[0], 1,
+             "a light champion pays the source one-point movement stamina cost");
+    CHECK_EQ(profile.party_state.Champions[0].CurrentStamina, 99,
+             "successful movement mutates the raw CSB champion stamina");
     CHECK_EQ(queue.count, 0, "queue is empty after one consumed command");
 
     for (i = 0; i < profile.party_state.ChampionCount; ++i) {
@@ -166,6 +176,35 @@ static void test_one_forward_step_through_queue(void)
         CHECK_EQ(profile.party_state.Champions[i].Direction, i & 3,
                  "forward step leaves imported champion Direction stable");
     }
+}
+
+static void test_stamina_underflow_applies_on_next_game_tick(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_PartyState party;
+    CSB_V1_MovementCommandStepRuntimeResultPc34Compat result;
+
+    seed_profile(&profile, &party, 10, 10, CSB_V1_DIR_NORTH);
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.Champions[0].CurrentHealth = 10;
+    profile.party_state.Champions[0].MaximumHealth = 10;
+    profile.party_state.Champions[0].CurrentStamina = 1;
+    profile.party_state.Champions[0].MaximumStamina = 100;
+    profile.party_state.Champions[0].Load = 100;
+
+    CHECK_EQ(csb_v1_movement_command_step_runtime_apply_pc34_compat(
+                 &profile, DM1_V1_COMMAND_MOVE_FORWARD, NULL, NULL, &result),
+             1, "underflow fixture accepts an open source step");
+    CHECK_EQ(profile.party_state.Champions[0].CurrentStamina, 0,
+             "F0325 clamps exhausted stamina immediately");
+    CHECK_EQ(result.stamina_pending_damage[0], 2,
+             "F0325 records half-deficit damage in G0409");
+    CHECK_EQ(profile.party_state.Champions[0].CurrentHealth, 10,
+             "F0325 leaves health pending until F0320's next loop pass");
+    CHECK_EQ(csb_v1_runtime_tick_v1(&profile), 1,
+             "the next source game-loop pass advances");
+    CHECK_EQ(profile.party_state.Champions[0].CurrentHealth, 8,
+             "F0320 consumes pending stamina damage before advancing time");
 }
 
 static void test_forward_direction_matrix(void)
@@ -299,6 +338,7 @@ int main(void)
     test_source_evidence();
     test_party_movement_ticks_uses_slowest_living_champion();
     test_one_forward_step_through_queue();
+    test_stamina_underflow_applies_on_next_game_tick();
     test_forward_direction_matrix();
     test_wall_collision_does_not_advance();
     test_second_step_waits_for_first_resolution();

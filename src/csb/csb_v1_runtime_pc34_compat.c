@@ -2910,6 +2910,49 @@ static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
     CSB_V1_CSBWin512TimerSummary *timer,
     uint16_t timer_index,
     uint16_t queue_slot);
+static void csb_v1_runtime_mark_champion_dead(
+    CSB_V1_RuntimeProfile *profile, int champion_index);
+
+static void csb_v1_runtime_apply_pending_champion_damage(
+    CSB_V1_RuntimeProfile *profile)
+{
+    int champion_index;
+
+    if (!profile || !profile->party_state_valid) return;
+    /* ReDMCSB CHAMPION.C F0320: clear G0409/G0410, apply damage to the
+     * live GAMEBLOCK, and schedule C12 at G0313+5 for the HUD receipt. */
+    for (champion_index = 0;
+         champion_index < profile->party_state.ChampionCount &&
+         champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        CSB_V1_Champion *champion = &profile->party_state.Champions[champion_index];
+        unsigned int damage = profile->champion_pending_damage[champion_index];
+        uint16_t wounds = profile->champion_pending_wounds[champion_index];
+
+        profile->champion_pending_damage[champion_index] = 0;
+        profile->champion_pending_wounds[champion_index] = 0;
+        champion->Wounds |= wounds;
+        if (damage == 0u || champion->CurrentHealth <= 0) continue;
+        champion->MaximumDamageReceived = (uint16_t)damage;
+        if (damage >= (unsigned int)champion->CurrentHealth) {
+            csb_v1_runtime_mark_champion_dead(profile, champion_index);
+            continue;
+        }
+        champion->CurrentHealth = (int16_t)(champion->CurrentHealth - damage);
+        champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS;
+        if (champion->HideDamageReceivedEventIndex < 0) {
+            struct DM1_Event_V1 event;
+            int event_index;
+            memset(&event, 0, sizeof(event));
+            event.map_time = DM1_MAP_TIME_MAKE(profile->current_level,
+                                                profile->game_time + 5u);
+            event.type = DM1_EVENT_HIDE_DAMAGE_RECEIVED;
+            event.priority = (uint8_t)champion_index;
+            event_index = csb_v1_runtime_add_timeline_event(profile, &event);
+            if (event_index >= 0) champion->HideDamageReceivedEventIndex = event_index;
+        }
+    }
+}
 
 /* ── Internal tick helper ─────────────────────────────────────────────── */
 
@@ -2994,6 +3037,8 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
          * timer was consumed or any live event lost its source receipt. */
         (void)csb_v1_runtime_reheapify_live_csbwin_timer_queue(profile);
     }
+
+    csb_v1_runtime_apply_pending_champion_damage(profile);
 
     profile->game_time++;
     profile->tick_count++;

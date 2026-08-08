@@ -48,6 +48,8 @@
 
 /* Champion attribute bit flags */
 #define CSB_V1_CHAMPION_ATTRIBUTE_NONE         0x0000
+#define CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS    0x0100
+#define CSB_V1_CHAMPION_ATTRIBUTE_LOAD          0x0200
 #define CSB_V1_CHAMPION_ATTRIBUTE_ICON         0x0400  /* champion has icon on minimap */
 #define CSB_V1_CHAMPION_ATTRIBUTE_DEAD          0x0800  /* champion is dead */
 #define CSB_V1_CHAMPION_ATTRIBUTE_NEEDS_RENAME 0x1000  /* reincarnate requires rename */

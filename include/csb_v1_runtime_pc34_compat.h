@@ -591,6 +591,11 @@ typedef struct {
     int                     magic_caster_index;
     int                     party_state_valid;
     CSB_V1_PartyState       party_state;
+    /* ReDMCSB DEFS.H G0409/G0410. These are transient GAMELOOP.C F0320
+     * inputs: F0325 accumulates here and the next game-loop pass consumes
+     * them before it advances G0313. */
+    uint16_t                champion_pending_damage[CSB_V1_MAX_CHAMPIONS];
+    uint16_t                champion_pending_wounds[CSB_V1_MAX_CHAMPIONS];
 
     /* ── State machine ─────────────────────────── */
     int                     state;   /* CSB_STATE_* enum */

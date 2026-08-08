@@ -47,6 +47,55 @@ static void csb_v1_step_destination(
         north_count[(dir + 1) & 3] * right_count[arrow_index];
 }
 
+static void csb_v1_step_decrement_party_stamina(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_MovementCommandStepRuntimeResultPc34Compat *result)
+{
+    int champion_index;
+
+    if (!profile || !result || !profile->party_state_valid) return;
+    /* ReDMCSB CLIKMENU.C F0366:224-255 invokes F0325 for every PC3.4
+     * GAMEBLOCK member before stairs, wall, door, or group resolution. */
+    for (champion_index = 0;
+         champion_index < profile->party_state.ChampionCount &&
+         champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        CSB_V1_Champion *champion =
+            &profile->party_state.Champions[champion_index];
+        unsigned int maximum_load =
+            csb_v1_champion_get_maximum_load(champion);
+        int cost;
+        int stamina_after;
+
+        /* A real CHAMPION has nonzero maximum load. Keep malformed imported
+         * records safe without manufacturing a divide-by-zero host path. */
+        if (maximum_load == 0u) maximum_load = 1u;
+        cost = (int)(((unsigned long)champion->Load * 3ul) /
+                     (unsigned long)maximum_load) + 1;
+        stamina_after = (int)champion->CurrentStamina - cost;
+        result->stamina_affected_count++;
+        result->stamina_cost[champion_index] = cost;
+        if (stamina_after <= 0) {
+            unsigned int damage = (unsigned int)(-stamina_after) >> 1;
+            unsigned int pending = profile->champion_pending_damage[champion_index];
+            champion->CurrentStamina = 0;
+            if (damage > 0u) {
+                pending += damage;
+                if (pending > 0xffffu) pending = 0xffffu;
+                profile->champion_pending_damage[champion_index] =
+                    (uint16_t)pending;
+                result->stamina_pending_damage[champion_index] = (int)damage;
+            }
+        } else if (stamina_after > champion->MaximumStamina) {
+            champion->CurrentStamina = champion->MaximumStamina;
+        } else {
+            champion->CurrentStamina = (int16_t)stamina_after;
+        }
+        champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_LOAD |
+                                CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS;
+    }
+}
+
 int csb_v1_movement_command_step_runtime_apply_pc34_compat(
     CSB_V1_RuntimeProfile *profile,
     int command,
@@ -69,6 +118,8 @@ int csb_v1_movement_command_step_runtime_apply_pc34_compat(
 
     local_result.command_handled = 1;
     local_result.step_attempted = 1;
+
+    csb_v1_step_decrement_party_stamina(profile, &local_result);
 
     /* Source-lock: ReDMCSB CLIKMENU.C F0366 lines 224-233 maps
      * C003..C006 to forward/right step counts, then line 269 calls
