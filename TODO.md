@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron: den autentiska CD/ADPCM-traceparsern godkänner nu hela den
+  externa Mednafen-transportcapturen och två source-origin-RAM-kvitton, men
+  detta är ännu inte en game-owned `$2600`/level/object/tile-consumercapture.
+  Nästa beviskrav är därför fortfarande originalets RNG/spawn/AI/combat/loot,
+  generatoråteraktivering, T700-tick och T900-regler. Den externa
+  Mednafen-profilen använder `,`/`.` för PCE I/II.
+
 - 🔧 DM2-inmatning: den verifierade PC-DOS-tabellen kan nu bara aktiveras av
   BootProfiles hashadmitterade `GRAPHICS.DAT` och ger de riktiga viewport- och
   rörelsehändelserna. Den ska anslutas till `c_input` först när en fullständig

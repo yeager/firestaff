@@ -1,3 +1,17 @@
+# Theron autentisk CD/ADPCM-traceparser (2026-08-09)
+
+- ✅ Parsern accepterar nu hela den verkliga Mednafen-capturen, inklusive
+  `source=mednafen-pce-instrumented-adpcm-fifo`, `pce_cd_fifo_read` och
+  `pce_cd_adpcm_ram_write`. Den exakta SCSI/RAW-sektorbindningen och de två
+  verifierade source-origin-RAM-kvittona godkänns nu från den riktiga
+  externa `theron-long-authentic.cd`-capturen.
+- ✅ Verifiering: `test_theron_v1_mednafen_cd_state_trace` passerar med
+  44 kommandon, 132 MODE1/2352-sektorer, 132 bindningar och 2 origin-RAM-
+  kvitton. Semantisk level/object/tile/RNG/AI/T700/T900-publicering är
+  fortfarande uttryckligen spärrad.
+- ✅ Den externa Mednafen-profilen på extern disk binder nu PCE Button I/II
+  till `,`/`.` (SDL 54/55). RUN och SELECT lämnas på Return respektive Tab.
+
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
 # DM2 sourceägd viewport-klicklista (2026-08-09)

@@ -59,6 +59,7 @@ static int known_source_marker(const char *line) {
         "source=mednafen-pce-instrumented-cd",
         "source=mednafen-pce-instrumented-cd-register",
         "source=mednafen-pce-instrumented-cd-transfer",
+        "source=mednafen-pce-instrumented-adpcm-fifo",
         "source=mednafen-pce-instrumented-scsi-read",
     };
     size_t i;
@@ -155,6 +156,10 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
         }
         if (known_observation_row(line, "pce_cd_register_write ")) {
             receipt.register_write_count++;
+            continue;
+        }
+        if (known_observation_row(line, "pce_cd_fifo_read ") ||
+            known_observation_row(line, "pce_cd_adpcm_ram_write ")) {
             continue;
         }
         if (known_observation_row(line, "pce_cd_data_destination_candidate ")) {
@@ -270,7 +275,7 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
     fclose(file);
 
     if (first_line || pending.active || !receipt.source_header_verified ||
-        receipt.source_marker_rows != 5u ||
+        (receipt.source_marker_rows != 5u && receipt.source_marker_rows != 6u) ||
         !receipt.scsi_command_count ||
         receipt.requested_sector_count != receipt.raw_sector_count ||
         receipt.raw_sector_count != receipt.sector_binding_count ||
