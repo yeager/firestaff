@@ -1415,6 +1415,7 @@ int main(void) {
     DM2_V1_BootNewGamePossessionReceipt source_possessions;
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
+    DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
     DM2_V1_TimerEntry new_game_actuate_timer;
@@ -1839,6 +1840,8 @@ int main(void) {
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 joins entrance interactions, raw actuator-generator inputs, map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
     memset(&new_game_world_owner, 0, sizeof(new_game_world_owner));
+    memset(&tampered_new_game_world_owner, 0,
+           sizeof(tampered_new_game_world_owner));
     if (profile && profile->dungeon_data) {
         const DM2_V1_DungeonData *source_dungeon =
             (const DM2_V1_DungeonData *)profile->dungeon_data;
@@ -2004,6 +2007,34 @@ int main(void) {
                     !dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner),
                 "M11 refuses to replay an already materialized source champion selection");
+    if (profile && source_transaction.possessions.placed_item_count > 0) {
+        const DM2_V1_BootNewGamePossession *first_source_item =
+            &source_transaction.possessions.possessions[0];
+        uint8_t *tampered_item_link = NULL;
+        int16_t replacement_next =
+            first_source_item->source_next_object_id == 0xfffeu ?
+                DM2_V1_RECORD_HANDLE_NULL : DM2_V1_RECORD_HANDLE_END;
+
+        expect_true(dm2_v1_game_load_world_owner_init_new_game(
+                        &tampered_new_game_world_owner, profile,
+                        party_selections, 2) &&
+                    dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+                        &tampered_new_game_world_owner, NULL) &&
+                    dm2_v1_game_load_world_owner_materialize_source_map_context(
+                        &tampered_new_game_world_owner) &&
+                    (tampered_item_link = dm2_v1_record_pool_address_mut(
+                        &tampered_new_game_world_owner.record_pools,
+                        (int16_t)first_source_item->source_object_id)) != NULL,
+                    "M11 retains a separately owned real item chain for New Game validation");
+        if (tampered_item_link) {
+            tampered_item_link[0] = (uint8_t)replacement_next;
+            tampered_item_link[1] = (uint8_t)((uint16_t)replacement_next >> 8);
+            expect_true(!dm2_v1_game_load_world_owner_materialize_champion_selection(
+                            &tampered_new_game_world_owner),
+                        "M11 rejects a private New Game inventory whose real tile link diverges");
+        }
+        dm2_v1_game_load_world_owner_free(&tampered_new_game_world_owner);
+    }
     memset(&new_game_actuate, 0, sizeof(new_game_actuate));
     dm2_v1_timer_entry_init(&new_game_actuate_timer);
     expect_true(profile &&

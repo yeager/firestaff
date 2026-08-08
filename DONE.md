@@ -1281,6 +1281,11 @@
   GDAT-baserad `DM2_IS_ITEM_FIT_FOR_EQUIP` och orienteringsmaskningen före
   `hero::item` används utan `CUT_RECORD_FROM`, bonusar eller sessionmutation.
   En tom originalinventory förblir tom; inga föremål uppfinns.
+- ✅ Den privata GAME_LOAD-ägaren omvaliderar nu varje utrustad posts råa
+  ObjectID, DB-typ och nästa-länk mot sin egen klonade File_header-recordpool
+  före den läsande partyprojektionen. En avvikande länk eller samma post i två
+  slots stoppar hela materialiseringen utan att en party eller session
+  publiceras.
 - ✅ Verifierat mot den hashverifierade PC-DOS-korpusen i
   `test_dm2_v1_item_ops` och M11:s startup/profile-grind. Receiptet lämnar
   party, recordkedjor, timerkö, HUD och viewport ospublicerade.

@@ -55,16 +55,47 @@ static int dm2_v1_game_load_owner_validate_possessions(
 {
     int i;
 
-    if (!owner) return 0;
+    if (!owner || !owner->transaction.possessions.valid ||
+        !owner->transaction.possessions.incomplete_game_load ||
+        owner->transaction.possessions.source_item_count < 0 ||
+        owner->transaction.possessions.placed_item_count < 0 ||
+        owner->transaction.possessions.unplaced_item_count != 0 ||
+        owner->transaction.possessions.source_item_count !=
+            owner->transaction.possessions.placed_item_count ||
+        owner->transaction.possessions.placed_item_count >
+            DM2_V1_BOOT_MAX_NEW_GAME_POSSESSIONS) {
+        return 0;
+    }
     for (i = 0; i < owner->transaction.possessions.placed_item_count; ++i) {
         const DM2_V1_BootNewGamePossession *possession =
             &owner->transaction.possessions.possessions[i];
+        int16_t source_next;
+        int j;
+
         if (possession->source_object_id == 0u ||
+            possession->source_object_id == 0xfffeu ||
+            possession->source_object_id == 0xffffu ||
+            possession->record_type !=
+                (uint8_t)((possession->source_object_id >> 10) & 15u) ||
             possession->equipped_record_id !=
                 (uint16_t)(possession->source_object_id & 0x3fffu) ||
             dm2_v1_record_pool_address(&owner->record_pools,
-                (int16_t)possession->source_object_id) == NULL) {
+                (int16_t)possession->source_object_id) == NULL ||
+            !dm2_v1_record_pool_next_link(&owner->record_pools,
+                (int16_t)possession->source_object_id, &source_next) ||
+            (uint16_t)source_next != possession->source_next_object_id) {
             return 0;
+        }
+        /* DM2_SELECT_CHAMPION walks each mirror tile chain once.  Two
+         * private inventory slots must never claim the same File_header
+         * record merely because its orientation-free handle fits both.
+         * Source: SKProject SKULLWIN/c_hero.cpp::DM2_SELECT_CHAMPION
+         * (1139-1157), ::DM2_ADD_ITEM_TO_PLAYER (2188-2244). */
+        for (j = 0; j < i; ++j) {
+            if (owner->transaction.possessions.possessions[j]
+                    .source_object_id == possession->source_object_id) {
+                return 0;
+            }
         }
     }
     return 1;

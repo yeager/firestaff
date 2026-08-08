@@ -120,7 +120,8 @@
   aldrig viewporten före en komplett sessionscommit.
   Championvalet materialiseras därefter i den privata `c_party`-ägaren från
   samma click-ordnade GDAT- och File_header-receipt, med varje itemlänk
-  kontrollerad mot dess riktiga DB-pool. Första championens privata
+  kontrollerad mot dess riktiga DB-pool och ursprungliga nästapost. Dubbla
+  privata slots kan inte dela samma File_header-post. Första championens privata
   eventqueue-ledare och nästa championnummer följer nu originalets
   clickordning. Originalets equip-bonusläge och startvikt är nu tillämpade
   privat mot GDAT. Hela championrosterens DYN4-
