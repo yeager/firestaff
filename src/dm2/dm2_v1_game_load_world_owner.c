@@ -1839,3 +1839,182 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
     if (out_receipt) *out_receipt = receipt;
     return receipt.valid;
 }
+
+typedef struct {
+    uint8_t *dungeon_raw;
+    uint8_t *pool_bytes[DM2_V1_RECORD_POOL_COUNT];
+    uint8_t *pool_extension_bytes[DM2_V1_RECORD_POOL_COUNT];
+    DM2_V1_TimerEntry *timer_entries;
+    int16_t *timer_indices;
+    DM2_V1_TimerQueue timer_queue;
+    int current_map;
+} DM2_V1_GameLoadTimerSnapshot;
+
+/* The timer heap is only a small part of a source timer step: 0x04 can alter
+ * a File_header tile and DB0/DB2, while 0x56 changes DB3 before it queues its
+ * successors.  Keep all mutable source-owned bytes in the outer transaction
+ * so a later unowned consumer cannot consume the old timer or leak a partial
+ * change. */
+static void dm2_v1_game_load_owner_timer_snapshot_free(
+    DM2_V1_GameLoadTimerSnapshot *snapshot)
+{
+    int db;
+    if (!snapshot) return;
+    for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        free(snapshot->pool_extension_bytes[db]);
+        free(snapshot->pool_bytes[db]);
+    }
+    free(snapshot->timer_indices);
+    free(snapshot->timer_entries);
+    free(snapshot->dungeon_raw);
+    memset(snapshot, 0, sizeof(*snapshot));
+}
+
+static int dm2_v1_game_load_owner_timer_snapshot_take(
+    const DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadTimerSnapshot *snapshot)
+{
+    int db;
+
+    if (!owner || !snapshot || !owner->dungeon.raw_data ||
+        owner->dungeon.raw_size == 0u || owner->timer_capacity == 0u ||
+        !owner->timer_entries || !owner->timer_indices) return 0;
+    memset(snapshot, 0, sizeof(*snapshot));
+    snapshot->dungeon_raw = (uint8_t *)malloc(owner->dungeon.raw_size);
+    snapshot->timer_entries = (DM2_V1_TimerEntry *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*snapshot->timer_entries));
+    snapshot->timer_indices = (int16_t *)malloc(
+        (size_t)owner->timer_capacity * sizeof(*snapshot->timer_indices));
+    if (!snapshot->dungeon_raw || !snapshot->timer_entries ||
+        !snapshot->timer_indices) goto fail;
+    memcpy(snapshot->dungeon_raw, owner->dungeon.raw_data, owner->dungeon.raw_size);
+    memcpy(snapshot->timer_entries, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*snapshot->timer_entries));
+    memcpy(snapshot->timer_indices, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*snapshot->timer_indices));
+    snapshot->timer_queue = owner->timer_queue;
+    snapshot->current_map = owner->current_map;
+    for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        size_t main_size;
+        size_t extension_size;
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            ((pool->record_count != 0 || pool->extension_count != 0) &&
+             pool->record_size <= 0) ||
+            (pool->record_size > 0 &&
+             ((size_t)pool->record_count > SIZE_MAX / (size_t)pool->record_size ||
+              (size_t)pool->extension_count > SIZE_MAX / (size_t)pool->record_size))) {
+            goto fail;
+        }
+        main_size = (size_t)pool->record_count * (size_t)pool->record_size;
+        extension_size = (size_t)pool->extension_count * (size_t)pool->record_size;
+        if ((main_size != 0u && !pool->bytes) ||
+            (extension_size != 0u && !pool->extension_bytes)) goto fail;
+        if (main_size != 0u) {
+            snapshot->pool_bytes[db] = (uint8_t *)malloc(main_size);
+            if (!snapshot->pool_bytes[db]) goto fail;
+            memcpy(snapshot->pool_bytes[db], pool->bytes, main_size);
+        }
+        if (extension_size != 0u) {
+            snapshot->pool_extension_bytes[db] = (uint8_t *)malloc(extension_size);
+            if (!snapshot->pool_extension_bytes[db]) goto fail;
+            memcpy(snapshot->pool_extension_bytes[db], pool->extension_bytes,
+                   extension_size);
+        }
+    }
+    return 1;
+
+fail:
+    dm2_v1_game_load_owner_timer_snapshot_free(snapshot);
+    return 0;
+}
+
+static void dm2_v1_game_load_owner_timer_snapshot_restore(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_GameLoadTimerSnapshot *snapshot)
+{
+    int db;
+    if (!owner || !snapshot || !snapshot->dungeon_raw ||
+        !snapshot->timer_entries || !snapshot->timer_indices) return;
+    memcpy(owner->dungeon.raw_data, snapshot->dungeon_raw, owner->dungeon.raw_size);
+    memcpy(owner->timer_entries, snapshot->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*snapshot->timer_entries));
+    memcpy(owner->timer_indices, snapshot->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*snapshot->timer_indices));
+    owner->timer_queue = snapshot->timer_queue;
+    owner->current_map = snapshot->current_map;
+    for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        DM2_V1_RecordPool *pool = &owner->record_pools.pools[db];
+        const size_t main_size = (size_t)pool->record_count * (size_t)pool->record_size;
+        const size_t extension_size = (size_t)pool->extension_count *
+            (size_t)pool->record_size;
+        if (main_size != 0u && snapshot->pool_bytes[db])
+            memcpy(pool->bytes, snapshot->pool_bytes[db], main_size);
+        if (extension_size != 0u && snapshot->pool_extension_bytes[db])
+            memcpy(pool->extension_bytes, snapshot->pool_extension_bytes[db],
+                   extension_size);
+    }
+}
+
+int dm2_v1_game_load_world_owner_process_next_due_timer(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadTimerProcessReceipt *out_receipt)
+{
+    DM2_V1_GameLoadTimerProcessReceipt receipt;
+    DM2_V1_GameLoadTimerSnapshot snapshot;
+    DM2_V1_TimerEntry timer;
+    int accepted = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&snapshot, 0, sizeof(snapshot));
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        owner->timer_queue.num_timers <= 0 ||
+        !dm2_v1_game_load_owner_timer_snapshot_take(owner, &snapshot)) {
+        return 0;
+    }
+    /* DM2_PROCEED_TIMERS asks the heap whether the head is due before it
+     * deletes it. Snapshot predates this call because the heap may sift. */
+    if (!dm2_v1_timer_is_due(&owner->timer_queue)) {
+        dm2_v1_game_load_owner_timer_snapshot_restore(owner, &snapshot);
+        dm2_v1_game_load_owner_timer_snapshot_free(&snapshot);
+        return 0;
+    }
+    dm2_v1_timer_get_and_delete_next(&owner->timer_queue, &timer);
+    receipt.timer_dequeued = 1;
+    receipt.timer_type = timer.ttype;
+    receipt.timer_map = dm2_v1_timer_get_map(&timer);
+    if (receipt.timer_map < 0 || receipt.timer_map >= owner->dungeon.level_count)
+        goto blocked;
+    owner->current_map = receipt.timer_map;
+    switch (timer.ttype) {
+        case 0x56u:
+            accepted = dm2_v1_game_load_world_owner_continue_tick_generator(
+                owner, &timer, &receipt.tick_generator);
+            break;
+        case 0x04u:
+            accepted = dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                owner, &timer, &receipt.actuate);
+            break;
+        case 0x01u:
+            accepted = dm2_v1_game_load_world_owner_process_door_step_timer(
+                owner, &timer, &receipt.door_step);
+            break;
+        default:
+            break;
+    }
+    if (!accepted) goto blocked;
+    receipt.valid = 1;
+    dm2_v1_game_load_owner_timer_snapshot_free(&snapshot);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+blocked:
+    dm2_v1_game_load_owner_timer_snapshot_restore(owner, &snapshot);
+    receipt.valid = 0;
+    receipt.timer_dequeued = 0;
+    receipt.blocked_unowned_timer = 1;
+    dm2_v1_game_load_owner_timer_snapshot_free(&snapshot);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}

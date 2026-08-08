@@ -1,5 +1,16 @@
 # Nexus startup fixture-label boundary and capture audit (2026-08-08)
 
+# DM2 privat c_tim-konsumtion vid GAME_LOAD-gränsen (2026-08-09)
+
+- ✅ Den privata File_header-ägaren kan nu konsumera nästa förfallna
+  originaltimer i samma ordning som `DM2_PROCEED_TIMERS`: ta bort från heapen,
+  växla privat karta och köra en helt ägd 0x56-, 0x04- eller 0x01-väg. Hela
+  dungeonbilden, recordpoolerna och heapen återställs om en följdväg saknas.
+  Okända och oägda timertyper ligger därför kvar i kön, utan förlorad timer
+  eller delvis mutation.
+- ✅ DOS-regressionen kör en verklig klass-3-ruta genom den privata c_tim-heapen
+  och bevisar både ordnad konsumtion och fail-closed återställning.
+
 # DM2 privat CROSS_MAP-kedja vid GAME_LOAD-gränsen (2026-08-09)
 
 - ✅ En komplett, riktad `CROSS_MAP`-väggkedja från File_header kan nu skapa

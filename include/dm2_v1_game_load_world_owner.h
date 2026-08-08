@@ -240,6 +240,21 @@ typedef struct {
     uint32_t private_animation_hash;
 } DM2_V1_GameLoadDoorStepReceipt;
 
+/* Private, source-ordered result for one due c_tim record.  The owner only
+ * consumes timer families whose entire immediate mutation chain is already
+ * retained here.  Any other heap head remains in place and blocks the
+ * pre-session transaction rather than being silently dropped. */
+typedef struct {
+    int valid;
+    int timer_dequeued;
+    int blocked_unowned_timer;
+    uint8_t timer_type;
+    int16_t timer_map;
+    DM2_V1_GameLoadTickGeneratorReceipt tick_generator;
+    DM2_V1_GameLoadActuateReceipt actuate;
+    DM2_V1_GameLoadDoorStepReceipt door_step;
+} DM2_V1_GameLoadTimerProcessReceipt;
+
 /* Build a source-owned, pre-selection world from one currently mounted,
  * hash-verified PC File_header/GDAT pair and exact mirror clicks.  It rejects
  * partial record graphs and never modifies profile-owned raw media. */
@@ -309,6 +324,14 @@ int dm2_v1_game_load_world_owner_process_door_step_timer(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_TimerEntry *timer,
     DM2_V1_GameLoadDoorStepReceipt *out_receipt);
+
+/* Source order for one due c_tim entry: pop first, change the private current
+ * map, then dispatch.  Only the retained 0x56 generator, 0x04 actuator and
+ * 0x01 door paths can commit.  A missing family restores the full private
+ * map, DB pools and heap byte-for-byte, leaving its head pending. */
+int dm2_v1_game_load_world_owner_process_next_due_timer(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadTimerProcessReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

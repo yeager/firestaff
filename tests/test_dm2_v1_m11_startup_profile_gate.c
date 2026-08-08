@@ -1586,10 +1586,12 @@ int main(void) {
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
+    DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
     DM2_V1_TimerEntry new_game_actuate_timer;
     DM2_V1_GameLoadDoorStepReceipt new_game_door_step;
+    DM2_V1_GameLoadTimerProcessReceipt new_game_timer_process;
     DM2_V1_TimerEntry new_game_door_step_timer;
     int new_game_generators_result;
     int new_game_owner_initialized;
@@ -2026,6 +2028,7 @@ int main(void) {
     memset(&new_game_world_owner, 0, sizeof(new_game_world_owner));
     memset(&tampered_new_game_world_owner, 0,
            sizeof(tampered_new_game_world_owner));
+    memset(&timer_process_world_owner, 0, sizeof(timer_process_world_owner));
     if (profile && profile->dungeon_data) {
         const DM2_V1_DungeonData *source_dungeon =
             (const DM2_V1_DungeonData *)profile->dungeon_data;
@@ -2277,6 +2280,57 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 consumes original class-3 ACTUATE messages as source no-ops without publishing a session");
+    /* Drive the same real class-3 coordinate through the actual private
+     * c_tim heap.  A fresh owner keeps this assertion independent from the
+     * generator's real pending timers and proves POP -> CHANGE_MAP -> 0x04
+     * dispatch is one transaction rather than a direct-call shortcut. */
+    memset(&new_game_timer_process, 0, sizeof(new_game_timer_process));
+    dm2_v1_timer_entry_init(&new_game_actuate_timer);
+    expect_true(profile && new_game_noop_map >= 0 &&
+                    dm2_v1_game_load_world_owner_init_new_game(
+                        &timer_process_world_owner, profile,
+                        party_selections, 2) &&
+                    (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                        (int16_t)new_game_noop_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 1u), 1) &&
+                    ((new_game_actuate_timer.xA = (int8_t)new_game_noop_x), 1) &&
+                    ((new_game_actuate_timer.yA = (int8_t)new_game_noop_y), 1) &&
+                    dm2_v1_timer_queue(&timer_process_world_owner.timer_queue,
+                                       &new_game_actuate_timer) >= 0 &&
+                    dm2_v1_game_load_world_owner_process_next_due_timer(
+                        &timer_process_world_owner, &new_game_timer_process) &&
+                    new_game_timer_process.valid &&
+                    new_game_timer_process.timer_dequeued &&
+                    new_game_timer_process.timer_type == 0x04u &&
+                    new_game_timer_process.timer_map == new_game_noop_map &&
+                    new_game_timer_process.actuate.source_noop &&
+                    timer_process_world_owner.timer_queue.num_timers == 0 &&
+                    timer_process_world_owner.current_map == new_game_noop_map &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 consumes a due real-tile 0x04 only through the private source timer heap");
+    /* An unavailable source family must leave the exact heap head pending.
+     * It is intentionally an adversarial timer transport, not game data. */
+    dm2_v1_timer_entry_init(&new_game_actuate_timer);
+    memset(&new_game_timer_process, 0, sizeof(new_game_timer_process));
+    expect_true(timer_process_world_owner.prepared &&
+                    (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                        (int16_t)new_game_noop_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x05u), 1) &&
+                    dm2_v1_timer_queue(&timer_process_world_owner.timer_queue,
+                                       &new_game_actuate_timer) >= 0 &&
+                    !dm2_v1_game_load_world_owner_process_next_due_timer(
+                        &timer_process_world_owner, &new_game_timer_process) &&
+                    !new_game_timer_process.valid &&
+                    !new_game_timer_process.timer_dequeued &&
+                    new_game_timer_process.blocked_unowned_timer &&
+                    new_game_timer_process.timer_type == 0x05u &&
+                    timer_process_world_owner.timer_queue.num_timers == 1 &&
+                    timer_process_world_owner.timer_entries[
+                        timer_process_world_owner.timer_queue.indices[0]].ttype == 0x05u,
+                "M11 keeps an unowned private timer pending instead of dropping it");
+    dm2_v1_game_load_world_owner_free(&timer_process_world_owner);
     memset(&new_game_actuate, 0, sizeof(new_game_actuate));
     dm2_v1_timer_entry_init(&new_game_actuate_timer);
     expect_true(profile &&

@@ -168,6 +168,10 @@
   `DM2_move_2fcf_0b8b` läser nu också File_header-teleportörer privat efter
   generatorpasset, men den beräknade displayposen är inte en viewport och får
   inte publicera karta eller party.
+  Nästa förfallna privata `c_tim` kan nu tas i originalordning och köras genom
+  de helt ägda 0x56-, 0x04- och 0x01-vägarna. Varje missad följdkonsument
+  återställer dungeon, recordpooler och heap, så den ursprungliga timern blir
+  kvar för den framtida kompletta sessionen.
   En komplett riktad `CROSS_MAP`-WALL-kedja kan nu privat köa sina riktiga
   0x04-meddelanden på målkartan med atomär rollback. Målens följdeffekter
   förblir spärrade tills samma session äger deras tile- och recordkonsumenter.
