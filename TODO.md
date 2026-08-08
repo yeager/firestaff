@@ -7885,6 +7885,11 @@ that its exact runtime path is not already source-locked and tested.
     incorrectly interpreted its first two samples as a control word; it now
     uses this same source layout. Runtime mixer and original timing binding
     remain open.
+    2026-08-08: `--scan-data` now inventories every registered optional CSB
+    source-media fingerprint in the configured data root through the same
+    recursive hash traversal used for required files. This exposes nested
+    archive/ADF media such as the authenticated Amiga `SWSH.FTL`, title and
+    Utility Disk resources without making any of them a launch requirement.
     2026-08-06: the Amiga game-data path now resolves a direct-loaded
     DMCSB2 `GRAPHICS.DAT` item to the F1051/F0709 PCM view using the item
     table's length and the original two-byte offset. This is an admission

@@ -37,6 +37,19 @@
 - ✅ Verified with real PC-DOS `GRAPHICS.DAT`, the mirror census and M11
   startup gate.
 
+# CSB complete optional-media inventory in `--scan-data` (2026-08-08)
+
+- ✅ Replaced filename/path guesses in the CSB optional-media report with a
+  single hash-first traversal of the registered CSB fingerprint corpus.
+  The scanner now reports authenticated sidecars nested in original archive
+  and ADF containers, including Amiga `SWSH.FTL`, `TITL.DAT`, `ENDA.DAT`,
+  `KAOS.FTL`, Utility Disk media, and Atari startup modules.
+- ✅ Required `GRAPHICS.DAT`/`DUNGEON.DAT` launch gating is unchanged; these
+  additional results remain informational and cannot authorize a launch.
+- ✅ Verified against the real local CSB collection, including 7z→ADF and
+  ZIP→ADF paths. ReDMCSB references: `SWSHSND.C` F0908–F0910,
+  `HINTLOAD.C:15–18`, `ANIM.C:67–72`, and `SWITCH.C:473`.
+
 # Theron live-creature save persistence (2026-08-08)
 
 - ✅ World snapshot version 3 now appends an explicit 87-byte wire record for

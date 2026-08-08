@@ -99,99 +99,61 @@ static int parse_party_triplet(const char* text,
     return 1;
 }
 
-/* These files are deliberately reported separately from the two-file CSB
- * launch gate. ReDMCSB HINTLOAD.C:15-18, ANIM.C:67-72 and SWITCH.C:473
- * establish that they are genuine source media, but missing tool companions
- * must not make the base game unavailable. The status scan has already
- * materialized its archive siblings into the runtime cache; do not start a
- * second recursive archive traversal merely to print this report. */
-static int find_csb_optional_media(const M12_AssetStatus* status,
-                                   const char* label,
-                                   char outPath[512],
-                                   char outSourcePath[512]) {
-    const char* runtimeRoot;
-    const char* dataRoot;
-    const M12_AssetRequiredFileStatus* graphics;
-    char csbDir[512];
-    char parent[512];
-    char grandparent[512];
-    if (!status || !label || !outPath || !outSourcePath) return 0;
-    outPath[0] = '\0';
-    outSourcePath[0] = '\0';
-    runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, "csb");
-    if (runtimeRoot && FSP_JoinPath(csbDir, sizeof(csbDir), runtimeRoot, "csb") &&
-        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) {
-        graphics = M12_AssetStatus_GetRequiredFile(status, "csb", 0U);
-        if (graphics && graphics->sourcePath[0] != '\0') {
-            const char* leaf = NULL;
-            const char* scan = graphics->sourcePath;
-            while ((scan = strstr(scan, "::")) != NULL) {
-                leaf = scan;
-                scan += 2;
-            }
-            if (leaf) {
-                const size_t prefix = (size_t)(leaf - graphics->sourcePath) + 2U;
-                if (prefix + strlen(label) < 512U) {
-                    memcpy(outSourcePath, graphics->sourcePath, prefix);
-                    snprintf(outSourcePath + prefix, 512U - prefix, "%s", label);
-                }
-            }
-        }
-        return 1;
-    }
-    dataRoot = M12_AssetStatus_GetDataDir(status);
-    if (dataRoot && FSP_JoinPath(outPath, 512U, dataRoot, label) && FSP_FileExists(outPath)) return 1;
-    if (dataRoot && FSP_JoinPath(csbDir, sizeof(csbDir), dataRoot, "csb") &&
-        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) return 1;
-    /* A hash-first scan deliberately accepts the user's original directory
-     * layout.  When GRAPHICS.DAT was found as a loose nested file, inspect
-     * its package directory (and its immediate parent) before falling back
-     * to dataRoot/csb.  This keeps --scan-data's verified-media report from
-     * appearing to search only the two launch files.  Archive-backed sources
-     * are already represented by the runtime cache above. */
-    graphics = M12_AssetStatus_GetRequiredFile(status, "csb", 0U);
-    if (graphics && graphics->matched && graphics->matchedPath[0] != '\0' &&
-        strstr(graphics->matchedPath, "::") == NULL &&
-        FSP_ParentDir(parent, sizeof(parent), graphics->matchedPath)) {
-        if (FSP_JoinPath(outPath, 512U, parent, label) && FSP_FileExists(outPath)) return 1;
-        if (FSP_ParentDir(grandparent, sizeof(grandparent), parent) &&
-            FSP_JoinPath(outPath, 512U, grandparent, label) && FSP_FileExists(outPath)) return 1;
-    }
-    outPath[0] = '\0';
-    return 0;
-}
-
 static void print_csb_verified_source_media(const M12_AssetStatus* status) {
-    static const char* const labels[] = {
-        "SWOOSH", "SWOOSH.DAT", "SWSHSND.C", "SWSHSND.DAT",
-        "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC", "HCSB.DAT", "HINT.FTL",
-        "ANIMATE.DAT", "ANIMATE.SCR", "ANIMATE.FTL", "CHAOS.FTL",
-        "FTLCODE", "SWITCH.DAT", "MINI.DAT",
-        /* Greatstone's Amiga 3.1 catalogue: these are independent title,
-         * credits, palette/code and logo-media files, not GRAPHICS.DAT
-         * aliases. The cache accepts them only after their exact source MD5
-         * is verified in asset_status_m12.c. */
-        "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL"
-    };
+    const char* dataRoot;
+    const char* hashes[FIRESTAFF_FINGERPRINT_COUNT + 1U];
+    char hashText[FIRESTAFF_FINGERPRINT_COUNT][33];
+    char paths[FIRESTAFF_FINGERPRINT_COUNT][ASSET_PATH_MAX];
+    int matched[FIRESTAFF_FINGERPRINT_COUNT];
+    size_t count = 0U;
     size_t i;
     int heading_printed = 0;
 
     if (!status) return;
-    for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
-        char path[512];
-        char sourcePath[512];
-        char md5[33];
+    dataRoot = M12_AssetStatus_GetDataDir(status);
+    if (!dataRoot || dataRoot[0] == '\0') return;
+
+    /* The two required files are reported above.  All remaining CSB entries
+     * in the fingerprint registry are optional source media.  Search for
+     * their authenticated bytes in one recursive pass so a sidecar nested in
+     * 7z -> ADF (for example Amiga SWSH.FTL) is visible to --scan-data just
+     * like GRAPHICS.DAT and DUNGEON.DAT.  ReDMCSB SWSHSND.C F0908-F0910,
+     * HINTLOAD.C:15-18, ANIM.C:67-72 and SWITCH.C:473 establish the media
+     * roles; none of them changes the base launch gate. */
+    for (i = 0U; i < FIRESTAFF_FINGERPRINT_COUNT; ++i) {
+        const FirestaffGameDataFingerprint* entry = &firestaff_fingerprint_table[i];
+        size_t byteIndex;
+        if (entry->game != FIRESTAFF_GAME_CSB ||
+            entry->file_type == FIRESTAFF_FILE_GRAPHICS_DAT ||
+            entry->file_type == FIRESTAFF_FILE_DUNGEON_DAT) {
+            continue;
+        }
+        for (byteIndex = 0U; byteIndex < sizeof(entry->md5); ++byteIndex) {
+            static const char hex[] = "0123456789abcdef";
+            hashText[count][byteIndex * 2U] = hex[(entry->md5[byteIndex] >> 4) & 15U];
+            hashText[count][byteIndex * 2U + 1U] = hex[entry->md5[byteIndex] & 15U];
+        }
+        hashText[count][32] = '\0';
+        hashes[count] = hashText[count];
+        ++count;
+    }
+    hashes[count] = NULL;
+    if (count == 0U ||
+        asset_find_all_by_md5_list(dataRoot, hashes, paths, matched,
+                                   (int)count, 32) < 0) {
+        return;
+    }
+    for (i = 0U; i < count; ++i) {
         FirestaffGameDataClassifyResult classified;
-        if (!find_csb_optional_media(status, labels[i], path, sourcePath) ||
-            !asset_file_md5_hex(path, md5)) continue;
-        classified = firestaff_game_data_classify_hex(md5);
+        if (!matched[i]) continue;
+        classified = firestaff_game_data_classify_hex(hashes[i]);
         if (!classified.valid || !classified.entry || classified.entry->game != FIRESTAFF_GAME_CSB) continue;
         if (!heading_printed) {
             printf("  Verified CSB source media (does not block start):\n");
             heading_printed = 1;
         }
         printf("    %-26s FOUND  %s\n", classified.entry->description,
-               sourcePath[0] != '\0' ? sourcePath : path);
+               paths[i]);
     }
 }
 
