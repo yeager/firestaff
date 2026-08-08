@@ -6,6 +6,7 @@ script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+state_autoload_patch=$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch
 irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 consumer_read_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
@@ -256,6 +257,14 @@ if ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-k
    ! grep -Fq 'input_delivery=scripted_pce_replay' "$script" ||
    ! grep -Fq 'scripted_pce_input_plan=%s' "$script"; then
     printf 'FAIL: capture script must retain explicit scripted-PCE-input provenance\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_AUTOLOAD_MOVIE' "$state_autoload_patch"; then
+    printf 'FAIL: capture script and Mednafen patch must retain authentic movie-replay provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'dynamic CPU receipts lack a complete authentic raw-sector receipt' "$script" ||

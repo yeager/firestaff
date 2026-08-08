@@ -40,6 +40,7 @@ host_key_delays=${THERON_CAPTURE_HOST_KEY_DELAYS:-}
 host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
+autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -284,6 +285,14 @@ if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
 fi
 if [[ -n "$autoload_state" && ! -f "$autoload_state" ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE must name an existing Mednafen state file' >&2
+    exit 1
+fi
+if [[ -n "$autoload_movie" && ! -f "$autoload_movie" ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' >&2
+    exit 1
+fi
+if [[ -n "$autoload_state" && -n "$autoload_movie" ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' >&2
     exit 1
 fi
 if [[ "$host_input_requested" == 1 ]]; then
@@ -666,6 +675,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
+    FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \

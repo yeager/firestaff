@@ -1,6 +1,6 @@
 --- a/src/drivers/main.cpp
 +++ b/src/drivers/main.cpp
-@@ -1135,0 +1136,8 @@
+@@ -1135,0 +1136,11 @@
 +    const char *theron_autoload_state = getenv("FIRESTAFF_THERON_AUTOLOAD_STATE");
 +    if(theron_autoload_state && *theron_autoload_state)
 +    {
@@ -9,3 +9,6 @@
 +        else
 +            MDFN_printf("Theron autoload state loaded: %s", theron_autoload_state);
 +    }
++    const char *theron_autoload_movie = getenv("FIRESTAFF_THERON_AUTOLOAD_MOVIE");
++    if(theron_autoload_movie && *theron_autoload_movie)
++        MDFNI_LoadMovie((char *)theron_autoload_movie);
