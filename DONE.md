@@ -29,6 +29,10 @@
   korpus och kör `MINI.DAT` genom ANIM→FTLCODE, F0433-save, F0435-load och
   kall återupptagning. Den körs endast när användarens arkiv och `7z` eller
   `7zz` finns, och skriver enbart i sin temporära kopia.
+- ✅ Atari-korpuskörningen verifierar även originalslotternas backupkedja:
+  en andra F0433-sparning ersätter `CSBGAME.DAT`, roterar föregående
+  autentiska sparning till `CSBGAME.BAK` och bekräftar dess föregående
+  källägda spelklocka innan F0435-kallåterupptagningen fortsätter.
 
 # Nexus SAL codec boundary wording (2026-08-08)
 

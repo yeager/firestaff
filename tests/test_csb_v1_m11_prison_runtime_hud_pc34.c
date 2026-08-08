@@ -82,6 +82,31 @@ static int is_original_atari_save_file(const char *path)
     return valid;
 }
 
+static int read_original_atari_save_info(const char *path,
+                                         CSB_V1_AtariSaveInfo *out_info)
+{
+    FILE *file;
+    long length;
+    unsigned char *bytes = NULL;
+    int valid;
+
+    if (!path || !out_info || !(file = fopen(path, "rb"))) return 0;
+    memset(out_info, 0, sizeof(*out_info));
+    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (unsigned char *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    valid = csb_v1_atari_save_decode_pc34_compat(bytes, (size_t)length,
+                                                   out_info) == CSB_V1_ATARI_SAVE_OK;
+    free(bytes);
+    return valid;
+}
+
 /* CSBWin's C232 record owns the Atari ST HUD page.  Compare every source
  * row after M11 has drawn it, rather than accepting a merely non-black
  * lower screen.  This keeps the real-data capture tied to the exact
@@ -399,10 +424,26 @@ int main(void)
                           .Incantation[0] == 0 &&
                       profile->runtime.party_state.Champions[0]
                           .SymbolStep == 0u,
-                  "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
+            "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
             if (quicksave_path && quicksave_path[0]) {
                 uint32_t saved_game_time = profile->runtime.game_time;
                 int save_path_bound = set_test_quicksave_path(quicksave_path);
+                char backup_path[1024];
+                int backup_path_bound = 0;
+
+                /* The archive runner deliberately supplies CSBGAME.DAT, the
+                 * source slot family whose replacement rotates to .BAK in
+                 * LOADSAVE.C F0433. Arbitrary Firestaff paths must not gain
+                 * that original-media convention. */
+                if (strlen(quicksave_path) >= strlen("CSBGAME.DAT") &&
+                    strcmp(quicksave_path + strlen(quicksave_path) -
+                           strlen("CSBGAME.DAT"), "CSBGAME.DAT") == 0) {
+                    int length = snprintf(
+                        backup_path, sizeof(backup_path), "%.*s.BAK",
+                        (int)(strlen(quicksave_path) - 4u), quicksave_path);
+                    backup_path_bound = length >= 0 &&
+                        (size_t)length < sizeof(backup_path);
+                }
 
                 CHECK(save_path_bound &&
                           csb_v1_runtime_original_atari_save_source_current(
@@ -417,8 +458,12 @@ int main(void)
                     M11_GameLaunchSpec resumed_spec;
                     M11_GameViewState resumed_view;
                     const CSB_V1_BootProfile *resumed_profile;
+                    CSB_V1_AtariSaveInfo first_save_info;
+                    CSB_V1_AtariSaveInfo current_save_info;
+                    CSB_V1_AtariSaveInfo backup_save_info;
 
                     remove(quicksave_path);
+                    if (backup_path_bound) remove(backup_path);
                     CHECK(M11_GameView_HandleInput(&view,
                                                    M12_MENU_INPUT_DISK_MENU) ==
                               M11_GAME_INPUT_REDRAW &&
@@ -433,8 +478,36 @@ int main(void)
                           "real Atari Ctrl-S Save and Play reaches F0433");
                     CHECK(is_original_atari_save_file(quicksave_path),
                           "real Atari Ctrl-S writes an authenticated original save, not FSSB");
+                    CHECK(read_original_atari_save_info(quicksave_path,
+                                                        &first_save_info) &&
+                              first_save_info.game_time == saved_game_time,
+                          "first Atari F0433 write preserves its source-owned game clock");
                     for (tick = 0; tick < 5; ++tick) {
                         (void)M11_GameView_AdvanceIdleTick(&view);
+                    }
+                    saved_game_time = profile->runtime.game_time;
+                    CHECK(M11_GameView_HandleInput(&view,
+                                                   M12_MENU_INPUT_DISK_MENU) ==
+                              M11_GAME_INPUT_REDRAW &&
+                              view.csbDiskMenuActive &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_DOWN) ==
+                                  M11_GAME_INPUT_REDRAW &&
+                              view.csbDiskMenuSelectedChoice == 2 &&
+                              M11_GameView_HandleInput(&view,
+                                                       M12_MENU_INPUT_ACCEPT) ==
+                                  M11_GAME_INPUT_REDRAW,
+                          "second real Atari Ctrl-S Save and Play replaces the original slot");
+                    CHECK(read_original_atari_save_info(quicksave_path,
+                                                        &current_save_info) &&
+                              current_save_info.game_time == saved_game_time,
+                          "second Atari F0433 write advances the source-format slot");
+                    if (backup_path_bound) {
+                        CHECK(read_original_atari_save_info(backup_path,
+                                                            &backup_save_info) &&
+                                  backup_save_info.game_time ==
+                                      first_save_info.game_time,
+                              "second Atari F0433 write rotates the prior original slot to .BAK");
                     }
                     CHECK(M11_GameView_HandleInput(&view,
                                                    M12_MENU_INPUT_DISK_MENU) ==
@@ -582,6 +655,7 @@ int main(void)
                     }
                     M11_GameView_Shutdown(&resumed_view);
                     remove(quicksave_path);
+                    if (backup_path_bound) remove(backup_path);
                     if (failures) return 1;
                     puts("PASS: real Atari MINI.DAT save-and-quit cold resume");
                     return 0;
