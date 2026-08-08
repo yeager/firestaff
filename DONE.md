@@ -9391,11 +9391,21 @@
 - ✅ Verifierat med samtliga åtta lokala PC-DOS SKSaveN.dat/.bak och
   test_dm2_v1_record_pool_pc34_compat; GAME_LOAD/Resume är fortsatt
   fail-closed tills den kompletta kedjan finns.
-=======
 # Nexus capture-timeout och child-cleanup (2026-08-08)
 
 - ✅ Saturn-launchern stöder nu `--timeout-seconds` och avslutar ett hängande
   instrumenterat Mednafen-child fail-closed.
 - ✅ Timeout-/avbrottstestet verifierar att processen stängs och att ingen
   ofullständig `runtime-vdp12.raw` lämnas som evidens.
->>>>>>> 50508b2af (nexus: bound saturn capture runtime)
+
+# DM2 SKSAVE teleportergrind för kartkedjor (2026-08-08)
+
+- ✅ Lade till den source-ägda teleporterfrågan för en aktiv SKSAVE-karta.
+  Den använder endast den muterbara c_map-kopian och autentiserad DB1 genom
+  SKProjects GET_TELEPORTER_DETAIL-väg; destinationen kontrolleras mot den
+  sparade kartans verkliga dimensioner.
+- ✅ De åtta PC-DOS-sparfilerna når typ-5-rutor före deras streamägda
+  DB1-kedjor har återställts. Grinden lämnar då exakt originalets no-detail-
+  resultat och skapar aldrig en destination, ett objekt eller ett mapbyte.
+- ✅ Realdataregressionen passerar 192/192. Det här är fortsatt en
+  förberedande GAME_LOAD-del och öppnar inte Resume.

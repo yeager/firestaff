@@ -34,6 +34,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
+#include "dm2_v1_save_load_extra_dungeon_data_pc34_compat.h"
 #include "dm2_v1_save_timers_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -137,6 +138,12 @@ void dm2_v1_sksave_map_restore_set_tile_record_link(void *ctx,
 int dm2_v1_sksave_map_restore_existing_tile_record_chain(
     void *ctx, DM2_ReadRecordSession *session, uint16_t root_link,
     int x, int y);
+/* Source-owned c_querydb teleporter detail for the active saved map. This
+ * is the DM2_LoadExtraDungeonCallbacks forward-reference query; it reads
+ * only the authentic DB1 link and the mutable c_map tile spans held by the
+ * same restore context. */
+int dm2_v1_sksave_map_restore_get_teleporter_detail(
+    void *ctx, DM2_TeleporterDetail *out, int x, int y);
 
 /* First destructive phase of sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON:
  * unlink every DB4..DB15 record from actual tile chains, preserving DB0..DB3

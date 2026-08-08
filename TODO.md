@@ -7,6 +7,9 @@
   Direktrotternas source-ordnade possessionlänkar är nu bevarade, men den
   gemensamma ägaren måste först lägga till specialtimer- och kartkedjornas
   länkar innan DM2_2066_062b får läsa några continuation-värden.
+  Sparfilernas typ-5-rutor följer nu den källägda DB1/c_map-frågan, men i den
+  här fasen saknar de återställda DB1-kedjor och måste därför fortsätta genom
+  originalets no-detail-gren tills kartkedjorna har lästs.
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   ground-stack-/recordkedjan, valda championmirrors till exakt GDAT-,

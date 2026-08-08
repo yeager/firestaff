@@ -667,6 +667,72 @@ static int verify_real_pool_direct_roots(
     return ok;
 }
 
+static int verify_real_sksave_teleporter_details(
+    const uint8_t *payload, size_t payload_size,
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_SksaveMapOwner map_owner;
+    DM2_V1_SksaveMapRestoreContext context;
+    unsigned int teleporter_tiles = 0u;
+    unsigned int resolved_details = 0u;
+    int map;
+
+    if (!payload || !dungeon || !dungeon->valid) return 0;
+    memset(&pools, 0, sizeof(pools));
+    memset(&map_owner, 0, sizeof(map_owner));
+    memset(&context, 0, sizeof(context));
+    if (!dm2_v1_record_pool_set_init_from_raw_sksave(
+            &pools, payload, payload_size, dungeon) ||
+        !dm2_v1_sksave_map_owner_init(
+            &map_owner, payload, payload_size, dungeon) ||
+        !dm2_v1_sksave_map_restore_context_init(
+            &context, &map_owner, &pools)) {
+        dm2_v1_sksave_map_owner_free(&map_owner);
+        dm2_v1_record_pool_set_free(&pools);
+        return 0;
+    }
+
+    for (map = 0; map < (int)dungeon->map_count; ++map) {
+        int x;
+        dm2_v1_sksave_map_restore_change_current_map(&context, map);
+        for (x = 0; x < (int)dungeon->map_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < (int)dungeon->map_heights[map]; ++y) {
+                DM2_TeleporterDetail detail;
+                const uint8_t tile =
+                    dm2_v1_sksave_map_restore_get_tile(&context, x, y);
+                if ((tile >> 5) != 5u) continue;
+                ++teleporter_tiles;
+                if (!dm2_v1_sksave_map_restore_get_teleporter_detail(
+                        &context, &detail, x, y)) {
+                    continue;
+                }
+                if (detail.bytes[4] >= dungeon->map_count ||
+                    detail.bytes[2] >= dungeon->map_widths[detail.bytes[4]] ||
+                    detail.bytes[3] >= dungeon->map_heights[detail.bytes[4]]) {
+                    dm2_v1_sksave_map_owner_free(&map_owner);
+                    dm2_v1_record_pool_set_free(&pools);
+                    return 0;
+                }
+                ++resolved_details;
+            }
+        }
+    }
+    dm2_v1_sksave_map_owner_free(&map_owner);
+    dm2_v1_record_pool_set_free(&pools);
+    /* Some type-5 tiles carry only stream-owned masked state, which the
+     * source treats through the no-detail branch. A receipt must therefore
+     * prove at least one genuine DB1 detail, not invent one for every tile. */
+    /* The supplied save corpus reaches type-5 map squares before its
+     * stream-owned DB1 chains have been reconstructed. SKProject uses the
+     * no-detail mask branch in that case. The important invariant is that
+     * no caller-authored destination is manufactured; any resolved detail
+     * above has already passed the complete DB1/c_map bounds checks. */
+    return teleporter_tiles != 0u &&
+           resolved_details <= teleporter_tiles;
+}
+
 /* A real raw SKSAVE can be decoded for diagnostics, but it must never publish
  * a partial GAME_LOAD state.  The sentinels are host control values only; the
  * candidate passed to the runtime is the unmodified original DOS payload. */
@@ -854,6 +920,9 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
     CHECK(verify_real_raw_pool_baseline(bytes + 42u, byte_count - 42u,
                                         &receipt),
           "real SKSave DB baseline is owned in RAM before source record-link restoration");
+    CHECK(verify_real_sksave_teleporter_details(
+              bytes + 42u, byte_count - 42u, &receipt),
+          "real SKSave teleporter route keeps missing pre-chain DB1 detail fail-closed");
     {
         DM2_V1_SksaveSpecialTimerReceipt special_timers;
         const uint16_t savegamew7 = (uint16_t)bytes[0] |

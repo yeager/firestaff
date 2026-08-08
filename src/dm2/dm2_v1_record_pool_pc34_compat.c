@@ -18,6 +18,7 @@
 
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -330,6 +331,79 @@ int dm2_v1_sksave_map_restore_existing_tile_record_chain(
         return -1;
     return dm2_v1_record_pool_restore_raw_sksave_resident_chain(
         context->record_pools, session, root_link) ? 0 : -1;
+}
+
+int dm2_v1_sksave_map_restore_get_teleporter_detail(
+    void *ctx, DM2_TeleporterDetail *out, int x, int y)
+{
+    DM2_V1_SksaveMapRestoreContext *context =
+        dm2_v1_sksave_map_restore_ctx(ctx);
+    DM2_V1_SksaveMapOwner *owner;
+    DM2_V1_SkprojectQuery0cee0897Receipt origin_receipt;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    const uint8_t *origin_tiles;
+    const uint8_t *destination_tiles;
+    const uint8_t *origin_record;
+    uint16_t first_link;
+    uint16_t word4;
+    uint8_t source_detail;
+    uint8_t destination_map;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!context || !out || !context->map_owner ||
+        !context->record_pools || !context->record_pools->valid) {
+        return 0;
+    }
+    owner = context->map_owner;
+    if (!owner->valid || owner->current_map < 0 ||
+        owner->current_map >= (int)owner->dungeon->map_count) {
+        return 0;
+    }
+    origin_tiles = owner->map_tiles +
+        owner->map_tile_offsets[owner->current_map];
+    memset(&origin_receipt, 0, sizeof(origin_receipt));
+    if (!dm2_v1_skproject_query_0cee_0897(
+            (int16_t)x, (int16_t)y, origin_tiles,
+            owner->dungeon->map_widths[owner->current_map],
+            owner->dungeon->map_heights[owner->current_map],
+            context->record_pools, &first_link, &source_detail,
+            &origin_receipt) || !origin_receipt.valid ||
+        source_detail == 0u ||
+        !(origin_record = dm2_v1_record_pool_address(
+            context->record_pools, (int16_t)first_link))) {
+        return 0;
+    }
+    /* DME.h::Teleporter w4 high byte is destination map.  Read it solely
+     * to select the destination c_map span that c_querydb needs; the final
+     * detail still comes from the source-locked helper below. */
+    word4 = (uint16_t)origin_record[4] |
+        ((uint16_t)origin_record[5] << 8);
+    destination_map = (uint8_t)(word4 >> 8);
+    if (destination_map >= owner->dungeon->map_count) {
+        return 0;
+    }
+    destination_tiles = owner->map_tiles +
+        owner->map_tile_offsets[destination_map];
+    memset(&detail, 0, sizeof(detail));
+    memset(&detail_receipt, 0, sizeof(detail_receipt));
+    if (!dm2_v1_skproject_get_teleporter_detail(
+            (int16_t)x, (int16_t)y, origin_tiles,
+            owner->dungeon->map_widths[owner->current_map],
+            owner->dungeon->map_heights[owner->current_map],
+            context->record_pools, (uint8_t)owner->current_map,
+            destination_tiles, owner->dungeon->map_widths[destination_map],
+            owner->dungeon->map_heights[destination_map], &detail,
+            &detail_receipt) || !detail_receipt.valid ||
+        detail.b_04 != destination_map) {
+        return 0;
+    }
+    out->bytes[0] = detail.b_00;
+    out->bytes[1] = detail.b_01;
+    out->bytes[2] = detail.b_02;
+    out->bytes[3] = detail.b_03;
+    out->bytes[4] = detail.b_04;
+    return 1;
 }
 
 int dm2_v1_sksave_map_owner_tile_record_link(
