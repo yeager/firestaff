@@ -58,7 +58,7 @@ int nexus_v1_action_semantics_proven(void)
 
 #define FOOD_DRAIN_TICKS   60
 #define WATER_DRAIN_TICKS  60
-#define NEXUS_MAX_LEVEL    15
+#define NEXUS_MAX_LEVEL    (NEXUS_MAX_LEVELS - 1)
 
 void nexus_mechanics_init(Nexus_MechanicsState *st,
                             int start_x, int start_y, int start_dir) {
@@ -67,7 +67,9 @@ void nexus_mechanics_init(Nexus_MechanicsState *st,
     st->party_x = start_x;
     st->party_y = start_y;
     st->party_dir = start_dir;
-    st->map_index = 0;
+    /* No retail start selector has been captured yet. Keep mechanics
+     * unplaced instead of inventing LEV00 as the active map. */
+    st->map_index = -1;
     st->party_alive = 1;
     st->gold_pieces = 0;
     st->game_over = 0;

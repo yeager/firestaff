@@ -32,7 +32,7 @@
 struct Nexus_MechanicsState {
     /* Movement */
     int party_x, party_y, party_dir;
-    int map_index;               /* current level 0-15 */
+    int map_index;               /* current level 0-15, or -1 unplaced */
 
     /* Party status */
     int party_alive;            /* 1 = at least one champion alive */

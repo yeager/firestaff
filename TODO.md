@@ -10272,6 +10272,10 @@ as line/circle coordinates or promote them into movement geometry.
   has eight zero bytes at Structure1B cell `(11,29)`, so production now
   refuses startup with an unbound pose. Keep the gate closed until an
   authentic Saturn start selector/capture is joined to the retail bytes.
+  The mechanics reset now preserves that same unplaced state (`map_index=-1`);
+  the launcher no longer silently reinstates LEV00 after a reset. The
+  16-level bound is derived from the authenticated LEV00-LEV15 corpus rather
+  than a second production literal.
 
 - **NEXUS-WORLD-POSE-BOUNDARY:** `nexus_v1_world_init()` must remain
   unplaced until the same Saturn start-selector evidence exists. Fixture

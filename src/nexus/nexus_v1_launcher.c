@@ -9084,7 +9084,6 @@ int nexus_v1_launcher_boot_level0_startup(
                              engine->game.party_x,
                              engine->game.party_y,
                              engine->game.party_dir);
-        engine->mechanics->map_index = 0;
     }
 
     if (title) {

@@ -1,3 +1,13 @@
+# Nexus startup reset no longer invents LEV00 (2026-08-08)
+
+- ✅ `nexus_mechanics_init()` now keeps `map_index=-1` until a retail Saturn
+  start selector supplies a level and pose.
+- ✅ The launcher no longer overwrites that unplaced state with synthetic
+  LEV00, and the mechanics transition bound is derived from the verified
+  16-level Nexus corpus.
+- ✅ Verified against the real Nexus data root, startup/menu source anchors,
+  boot hash scan, pit/teleporter runtime regression and production boundary.
+
 # Nexus PRS3/palett-dokumentation synkroniserad (2026-08-08)
 
 - ✅ Reverse-engineering-dokumentationen skiljer nu korrekt mellan den

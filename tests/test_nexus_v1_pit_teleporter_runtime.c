@@ -444,6 +444,14 @@ static void test_square_event_fire_returns_cross_fire(void) {
           "fire square returns NEXUS_EVENT_CROSS_FIRE");
 }
 
+static void test_mechanics_init_remains_unplaced(void) {
+    Nexus_MechanicsState st;
+
+    nexus_mechanics_init(&st, -1, -1, -1);
+    CHECK(st.map_index == -1,
+          "mechanics init does not invent LEV00 before a retail start selector");
+}
+
 static void test_unregistered_door_fails_closed(void) {
     nexus_doors_init();
 
@@ -482,6 +490,7 @@ int main(void) {
     test_fire_crossed_with_rune();
     test_square_event_water_returns_cross_water();
     test_square_event_fire_returns_cross_fire();
+    test_mechanics_init_remains_unplaced();
     test_unregistered_door_fails_closed();
 
     printf("Results: %d PASS, %d FAIL\n", g_pass, g_fail);
