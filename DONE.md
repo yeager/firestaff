@@ -10285,3 +10285,11 @@
   now retain the same blocking flags after authentic source binding.
 - ✅ This repairs receipt consistency without admitting Saturn VDP1 rendering;
   production presentation remains capture-gated.
+# Nexus static Saturn evidence receipts now fail closed consistently (2026-08-09)
+
+- ✅ `MENU.BPK` PALT/WARNING correlation and the static `DM.BIN` VDP1-state
+  corridor now report source-only, no-draw evidence with fallback disabled.
+- ✅ Structure1F source packets, direct mesh geometry and Structure1F/2/3
+  adjacency retain the same no-draw/blocking contract used by M11 handoffs.
+- ✅ Real-data HUD, BPK, DGN, face/mesh, startup and SLEV regressions pass;
+  the production source boundary remains capture-gated.

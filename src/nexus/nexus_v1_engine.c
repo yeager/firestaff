@@ -3466,8 +3466,10 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     receipt.vdp1_vram_base_literal_offset = STATE_TABLE_OFFSET + 36;
     receipt.vdp1_vram_base_load_offset = 0x7d3e8;
     receipt.vdp1_vram_base_r14_store_offset = 0x7d3ea;
-    receipt.no_draw_only = 0;
-    receipt.fallback_visuals_permitted = 1;
+    /* Static DM.BIN evidence is a capture-gated no-draw receipt; it must
+     * never authorize host or synthetic visual fallback. */
+    receipt.no_draw_only = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine ||
         nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
         !receipt.source.canonical_hash_verified) {
@@ -7231,8 +7233,8 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
         }
         packet.direct_coordinate_source = direct;
         packet.structure1a_owner_source = owned;
-        packet.no_draw_only = 0;
-        packet.blocks_real_dgn_mesh_render = 0;
+        packet.no_draw_only = 1;
+        packet.blocks_real_dgn_mesh_render = 1;
         if (consumer && consumer(context, &packet) != 0) {
             *out_receipt = receipt;
             return 0;
@@ -7284,8 +7286,8 @@ int nexus_v1_current_level_lookup_structure1f_source_entry(
 
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
-    out_packet->no_draw_only = 0;
-    out_packet->blocks_real_dgn_mesh_render = 0;
+    out_packet->no_draw_only = 1;
+    out_packet->blocks_real_dgn_mesh_render = 1;
     if (!engine || !engine->level_loaded || entry_index < 0 ||
         entry_index >= engine->current_level.structure1f_entry_count) {
         return 0;
@@ -7578,7 +7580,7 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 0;
+    receipt.no_draw_only = 1;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0 ||
         structure1f_entry_index < 0 ||
@@ -7655,8 +7657,9 @@ int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
 
     if (!out_packet) return -1;
     memset(&packet, 0, sizeof(packet));
-    packet.no_draw_only = 0;
-    packet.blocks_real_dgn_mesh_render = 0;
+    /* Geometry intake is source-bound only; no Saturn consumer is admitted. */
+    packet.no_draw_only = 1;
+    packet.blocks_real_dgn_mesh_render = 1;
     if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &packet.direct_mesh) != 1 ||
         !packet.direct_mesh.valid || !packet.direct_mesh.model_to_entry_proven ||
@@ -8614,8 +8617,9 @@ int nexus_v1_engine_build_structure1f2_face_adjacency_transform_receipt(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 0;
-    receipt.blocks_real_dgn_mesh_render = 0;
+    /* Exact Structure1F/2/3 adjacency is still a no-draw capture target. */
+    receipt.no_draw_only = 1;
+    receipt.blocks_real_dgn_mesh_render = 1;
     if (!engine || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0 ||
         nexus_v1_current_level_lookup_structure1f_source_entry(
@@ -11956,7 +11960,9 @@ int nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 0;
+    /* Palette correlation is source evidence only; presentation stays
+     * explicitly blocked until Saturn PALT/VDP1 ownership is captured. */
+    receipt.no_draw_only = 1;
     memset(&menu_bpk_source, 0, sizeof(menu_bpk_source));
     memset(&warning_source, 0, sizeof(warning_source));
     if (!engine ||
