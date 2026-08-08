@@ -20,6 +20,9 @@ m11_game_view = (ROOT / "src/engine/m11_game_view.c").read_text(
 engine = (ROOT / "src/nexus/nexus_v1_engine.c").read_text(encoding="utf-8")
 game = (ROOT / "src/nexus/nexus_v1_game.c").read_text(encoding="utf-8")
 world = (ROOT / "src/nexus/nexus_v1_world.c").read_text(encoding="utf-8")
+ui_surfaces = (ROOT / "src/nexus/nexus_v1_ui_surfaces.c").read_text(
+    encoding="utf-8"
+)
 
 
 def fail(message: str) -> None:
@@ -172,6 +175,26 @@ for function_name in noop_executors:
     body_text = function.group(0)
     if "(void)command;" not in body_text:
         fail(f"M11 startup executor is no longer explicit no-draw: {function_name}")
+
+# Real TITLE/WARNING/STABG/LOGOBG bytes may be retained for provenance, but
+# the host blit helpers must remain no-draw until Saturn VDP1/VDP2 destination,
+# CLUT bank and command order are captured.
+for function_name in (
+    "nexus_ui_blit_surface",
+    "nexus_ui_blit_surface_flip",
+    "nexus_ui_render_title",
+    "nexus_ui_render_warning",
+    "nexus_ui_render_gameover",
+):
+    function = re.search(
+        rf"(?:static )?void {function_name}\(.*?\n\}}",
+        ui_surfaces,
+        re.DOTALL,
+    )
+    if not function:
+        fail(f"Nexus UI no-draw helper missing: {function_name}")
+    if "(void)" not in function.group(0):
+        fail(f"Nexus UI helper lost explicit no-draw boundary: {function_name}")
 
 if "m11_nexus_startup_title_receipt_ready(context, command)" not in m11_game_view:
     fail("boot-title executor lost its authenticated transition-capture gate")

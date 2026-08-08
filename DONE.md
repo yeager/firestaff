@@ -9574,3 +9574,7 @@
 
 - ✅ `nexus_v1_dgn_texture_decode.c` accepterar caller-supplied bytes men sätter alltid `source_verified=0`; den är därför nu explicit real-corpus/test-only och exkluderas från `firestaff_nexus`.
 - ✅ Riktiga LEV00–LEV15 DGN texture- och face/material-corpus-tester passerar efter ändringen. Ingen renderer eller fallback öppnades.
+# Nexus UI host-blit boundary regression guard (2026-08-08)
+
+- ✅ Produktionsverifieraren kontrollerar nu att TITLE/WARNING/GAMEOVER/STABG/LOGOBG:s host-blit- och renderhelpers förblir explicita no-draw-vägar.
+- ✅ Äkta UI-bytes får fortsatt behållas som provenance, men ingen host-framebuffer får fyllas utan autentisk Saturn VDP1/VDP2-destination, CLUT och command-order.
