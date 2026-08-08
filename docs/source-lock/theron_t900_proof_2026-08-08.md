@@ -63,6 +63,14 @@ dessutom 64 KiB VDC-VRAM och 1 KiB VCE-palette snapshots. Den nådde dock inte
 en godkänd spelägd `$2600–$27FF`-läsning eller state-skrivning; RNG, AI, T700
 och T900 förblir därför fail-closed.
 
+Den reproducerbara externa capturevägen stöder nu även
+`THERON_CAPTURE_AUTOLOAD_STATE` för en autentisk Mednafen-savestate. På
+extern-disken autoloadades den hashmatchande US-savestaten utan fel, men den
+återupptog inte en körande spelägd HuC6280-loop. En frame-bunden replay med
+äkta Track 02/System Card gav 47 inputtransaktioner och 2 CD-IRQ, men 0
+icke-System-Card-CD-anrop och 0 `$2600–$27FF`-konsumentläsningar. Det är en
+negativ capturegräns, inte ett tillstånd att aktivera RNG, AI, T700 eller T900.
+
 ## Verifiering
 
 ```text
