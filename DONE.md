@@ -9,8 +9,9 @@
 - ✅ Den nya avkodaren läser en hashklassificerad Amiga-DMCSB2-post och
   expanderar direktlagrad IMG1 med originalets big-endian dimensioner och
   nibbel-RLE (`ReDMCSB IMAGE1.C`, `MEMORY.C` F0490/F0474). Ett realdatatest
-  går igenom den lokala A35E-filen och låser att minst en autentisk IMG1-post
-  dekoderas utan konstruerade bildbytes.
+  går igenom den lokala A35E-filen, låser den konkreta C013-rörelsepanelen
+  till originalets 87×45 pixlar enligt `PANEL.C` F0395 och avkodar inga
+  konstruerade bildbytes.
 - ✅ Poster med olika komprimerad och expanderad längd förblir fail-closed;
   ingen oidentifierad LZW- eller värdavkodning kan bli en Amiga-bildkälla.
 

@@ -147,6 +147,17 @@ static void test_real_a35e_img1_if_available(void) {
         }
     }
     CHECK(decoded, "real_a35e_img1_direct_record_decodes");
+    {
+        uint16_t width = 0u;
+        uint16_t height = 0u;
+        /* ReDMCSB DEFS.H C013_GRAPHIC_MOVEMENT_ARROWS and PANEL.C F0395
+         * bind this exact 87x45 source panel to C009_ZONE_MOVEMENT_ARROWS. */
+        CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 13u,
+                                                 pixels, 640u * 400u,
+                                                 &width, &height) == 1 &&
+                  width == 87u && height == 45u,
+              "real_a35e_c013_movement_panel_decodes_at_source_dimensions");
+    }
     free(pixels);
     free(bytes);
     fclose(file);
