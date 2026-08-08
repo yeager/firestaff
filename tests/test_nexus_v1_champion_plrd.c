@@ -91,6 +91,11 @@ int main(void) {
     {
         Nexus_V1_StartupChampionRenderRow row;
         Nexus_V1_StartupChampionFooterRender footer;
+        Nexus_V1_StartupChampionSnapshot snapshot;
+        Nexus_V1_StartupDrawCommand commands[32];
+        int command_count;
+        int command_index;
+        int source_token_found = 0;
         memset(&row, 0, sizeof(row));
         memset(&footer, 0, sizeof(footer));
         if (nexus_v1_startup_menu_build_champion_render_rows(
@@ -114,6 +119,28 @@ int main(void) {
         if (nexus_v1_startup_menu_build_champion_render_rows(
                 &pool, 0, &row, 1, &footer) != 1 ||
             row.label[0] != '\0' || footer.label[0] != '\0') return 1;
+
+        memset(&snapshot, 0, sizeof(snapshot));
+        memset(commands, 0, sizeof(commands));
+        snapshot.cursor = 0;
+        snapshot.frame = 0;
+        command_count = nexus_v1_startup_presentation_build_champion(
+            &pool, &snapshot, commands,
+            (int)(sizeof(commands) / sizeof(commands[0])));
+        for (command_index = 0; command_index < command_count;
+             ++command_index) {
+            const Nexus_V1_StartupDrawCommand *command =
+                &commands[command_index];
+            if (command->kind == NEXUS_V1_STARTUP_DRAW_NONE &&
+                command->source_text_glyphs_valid &&
+                command->source_text_glyph_count == 4 &&
+                command->source_text_glyphs[0] == 0x00c1U &&
+                command->source_text_glyphs[3] == 0x00d8U) {
+                source_token_found = 1;
+                break;
+            }
+        }
+        if (!source_token_found) return 1;
     }
     {
         FILE *item_file = fopen(item_path, "rb");

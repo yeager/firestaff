@@ -1,3 +1,13 @@
+# Nexus startup PLRD glyph token retention (2026-08-08)
+
+- ✅ Autentiserade PLRD/TABL/FONT256-namn följer nu med i startup-menyns
+  `DRAW_NONE`-källkvittorad i stället för att tappas bort bakom en tom
+  placeholder. Glypherna är fortfarande no-draw och öppnar ingen VDP2-text.
+- ✅ Ett realdata-test mot `RLOWFIX.BIN` verifierar den första riktiga
+  glyphsekvensen (`0x00c1 ... 0x00d8`) genom presentationens no-draw-seam.
+- ✅ Startup-, FONT256- och textlayout-testerna samt produktionsgrinden
+  passerar.
+
 # Nexus SDDRVS command-handler ABI receipt (2026-08-08)
 
 - ✅ Den autentiska 68k-handlern vid `SDDRVS.TSK+0x2220` är nu bytebunden

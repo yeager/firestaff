@@ -3114,9 +3114,18 @@ int nexus_v1_startup_presentation_build_champion(
             /* Preserve one bounded command slot per source row. Both the
              * authenticated PLRD row and the ASCII compatibility row remain
              * text-no-draw here; only a captured Saturn text consumer may
-             * turn TABL/FONT256 codes into pixels. */
+             * turn TABL/FONT256 codes into pixels. Retain the authenticated
+             * glyph token on that slot so the future consumer does not need
+             * to reconstruct it from a host label. */
             nexus_v1_startup_draw_clear(&opaque_row);
             opaque_row.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+            opaque_row.source_text_glyph_count =
+                render_row->source_name_glyph_count;
+            opaque_row.source_text_glyphs_valid =
+                render_row->source_name_glyphs_valid;
+            memcpy(opaque_row.source_text_glyphs,
+                   render_row->source_name_glyphs,
+                   sizeof(opaque_row.source_text_glyphs));
             if (!nexus_v1_startup_push_draw(out_commands, max_commands,
                                             &count, &opaque_row)) {
                 return count;

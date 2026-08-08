@@ -333,6 +333,12 @@ typedef struct {
     int text_color;
     int shadow_color;
     Nexus_V1_StartupTextStyle text_style;
+    /* Authenticated PLRD/TABL/FONT256 glyphs retained on a no-draw command.
+     * These are source tokens only; no host text renderer may consume them
+     * until the Saturn VDP2 text consumer and placement are captured. */
+    uint16_t source_text_glyphs[6];
+    int source_text_glyph_count;
+    int source_text_glyphs_valid;
     char label[NEXUS_V1_STARTUP_DRAW_LABEL_CAPACITY];
 } Nexus_V1_StartupDrawCommand;
 
