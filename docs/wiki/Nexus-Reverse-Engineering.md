@@ -287,21 +287,23 @@ byte  15     : height (BE uint8)
 bytes 16..19 : reserved/zero, except byte 19 = pixel-mode flag
 ```
 
-### PRS3 compression
+### PRS3 compression and byte decoder
 Every PRS3 sub-header is 12 bytes: magic `'PRS3'`, a constant BE version
 word `0x00000001`, then a BE `pixel_count` (== width × height in every
-observed entry). **The PRS3 compression algorithm itself remains
-unsupported/undecoded** — the header defines an extensive ladder of
-evidence-only probes (never a working decoder) to characterize it without
-claiming semantics:
+observed entry). The reviewed DMWeb `DecodePRS3` grammar is implemented as a
+bounded byte decoder and passes the authenticated retail `MENU.BPK` corpus:
+all 162 PRS3 entries decode to their declared pixel counts. This is a byte-
+format result, not a Saturn presentation result:
 
 - `nexus_v1_bpk_archive_prs3_payload_evidence` — leading BE u32 tracks
   payload size closely (`header_minus_payload` typically 4-7 bytes),
   byte-frequency and 4-quadrant byte-class histograms per entry.
 - `nexus_v1_bpk_archive_prs3_stream_plan` / `_prs3_compression_descriptor` —
   bounded, source-locked framing of the compressed span (offset/length/hash).
-  The DMWeb `DecodePRS3` byte decoder now consumes the authenticated retail
-  MENU.BPK corpus and emits decoded-byte receipts for all 162 PRS3 surfaces.
+- `nexus_v1_bpk_archive_decode_surface` — applies the DMWeb byte grammar to
+  the real indexed PRS3 streams and emits decoded-byte receipts. The
+  directory bounds, declared pixel count and decoder result are checked by
+  `test_nexus_v1_bpk_archive`.
 - `nexus_v1_bpk_archive_prs3_candidate_evidence[_with_bit_order]` — trial
   literal/back-reference opcode grammar evaluated in both LSB-first and
   MSB-first control-bit orders, diagnostic only.
@@ -454,7 +456,7 @@ reimplementation built on top of them.
 | `Nexus_V1_DgnFloorItem/FloorDecor/FloorSensor/Alcove/WallDecor/WallSensor` | `nexus_v1_dgn.h` | Structure1F fixed-size sub-records |
 | `Nexus_V1_0DmstrtStructureReceipt` | `nexus_v1_0dmstrt_structure_admission.h` | Boot-image byte-partition provenance receipt |
 | `Nexus_V1_BpkArchiveInfo/BpkEntry/BpkEntryPrefix` | `nexus_v1_bpk_archive.h` | MENU.BPK directory/entry framing |
-| `Nexus_V1_BpkPrs3Info/StreamPlan/PayloadEvidence/CandidateEvidence/FramedEvalEvidence/OpcodePrefixEvidence/DecodedOutputProofReceipt` | `nexus_v1_bpk_archive.h` | PRS3 evidence ladder (never a working decoder) |
+| `Nexus_V1_BpkPrs3Info/StreamPlan/PayloadEvidence/CandidateEvidence/FramedEvalEvidence/OpcodePrefixEvidence/DecodedOutputProofReceipt` | `nexus_v1_bpk_archive.h` | PRS3 byte-decoder/evidence ladder; decoded output remains presentation-gated |
 | `Nexus_V1_BpkRuntimeRenderReceipt/DecodeReceipt/UploadReceipt/UploadRow` | `nexus_v1_bpk_archive.h` | Fail-closed render/decode/upload routing |
 | `Nexus_V1_MnsJoint/MnsMesh/MnsVertex/MnsFace/MnsTextureDesc` | `nexus_v1_mns.h` | MNS skeletal mesh |
 | `Nexus_V1_MnsMotnFrame/MnsMotnTable/MnsAnimState/MnsJointPose/MnsPose` | `nexus_v1_mns.h` | MNS keyframe animation runtime |

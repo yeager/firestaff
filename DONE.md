@@ -30,6 +30,13 @@
 - ✅ Warning/title readiness now requires the corresponding authenticated
   Saturn VDP capture flags; positive tests mark that admission explicitly.
 
+# Nexus PRS3 documentation reconciled with real decoder (2026-08-08)
+
+- ✅ Corrected the reverse-engineering gap text: the bounded DMWeb PRS3 byte
+  decoder passes the real `MENU.BPK` corpus for all 162 surfaces.
+- ✅ Kept Saturn VDP1/VDP2, CLUT, placement and menu-sequence ownership
+  explicitly capture-gated; byte decoding is not presentation parity.
+
 # Nexus capture launcher accepts Saturn BIOS region (2026-08-08)
 
 - ✅ Added `--bios-region us|eu|jp` to the external raw VDP1/VDP2 launcher.

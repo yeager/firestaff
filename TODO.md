@@ -10,6 +10,12 @@
   readiness is now fail-closed and no longer reports static art as Saturn
   capture. Authentic VDP1/VDP2 startup capture is still required.
 
+- 🔧 Nexus startup capture retry (2026-08-08): a corrected E-BIOS/French-CUE
+  run with the instrumented Mednafen and `validate_nexus_saturn_runtime_capture.py`
+  still ended at the bounded host timeout before emitting a raw frame. This
+  remains negative transport evidence; no startup/menu/HUD/viewport gate is
+  opened from it.
+
 - 🔧 Nexus raw-capture region support (2026-08-08): the external Saturn
   launcher now accepts `--bios-region us|eu|jp` and records the selected
   Mednafen BIOS option. This fixes the previous forced-EU option for the
