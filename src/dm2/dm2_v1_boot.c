@@ -1573,7 +1573,7 @@ static const char *const g_platform_labels[DM2_PLATFORM_COUNT] = {
     [DM2_PLATFORM_FMTOWNS_JA] = "FM Towns Japanese",
     [DM2_PLATFORM_MAC_EN]      = "Macintosh English",
     [DM2_PLATFORM_MAC_FR]      = "Macintosh French",
-    [DM2_PLATFORM_AMIGA_EN]    = "Amiga AGA English",
+    [DM2_PLATFORM_AMIGA_EN]    = "Amiga English",
     [DM2_PLATFORM_MEGACD_JA]   = "Mega CD Japanese",
     [DM2_PLATFORM_PC9821_JA]   = "PC-9821 Japanese",
 };
@@ -2174,7 +2174,7 @@ static int dm2_v1_boot_capture_amiga_part(const char *name,
     return 1;
 }
 
-/* The AGA release's install payload is not a loose directory and must not be
+/* The Amiga release's install payload is not a loose directory and must not be
  * unpacked into one.  The original outer archive contains one ZIP per ADF;
  * each OFS volume contributes dm2_arcsplitN to the LZX archive.  Keep that
  * whole transport chain private to boot and retain only the two authenticated

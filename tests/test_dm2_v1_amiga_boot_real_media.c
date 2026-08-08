@@ -1,4 +1,4 @@
-/* Opt-in boot regression for DM2's original Amiga AGA installer.
+/* Opt-in boot regression for DM2's original Amiga installer.
  *
  * The archive is read through its nested ZIP/ADF/LZX transport in memory.
  * No game member is extracted, copied or materialized on disk. */

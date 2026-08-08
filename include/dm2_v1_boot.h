@@ -60,7 +60,7 @@ typedef enum {
     DM2_PLATFORM_FMTOWNS_JA,  /* FM Towns Japanese (Victor HME-242, 1994) */
     DM2_PLATFORM_MAC_EN,       /* Macintosh English */
     DM2_PLATFORM_MAC_FR,       /* Macintosh French */
-    DM2_PLATFORM_AMIGA_EN,     /* Amiga AGA English */
+    DM2_PLATFORM_AMIGA_EN,     /* Amiga English, 68020+ */
     DM2_PLATFORM_MEGACD_JA,    /* Mega CD / Sega CD Japanese */
     DM2_PLATFORM_PC9821_JA,    /* PC-9821 Japanese */
     DM2_PLATFORM_COUNT

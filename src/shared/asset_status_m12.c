@@ -357,7 +357,7 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d", M12_ARCH_PC},
     {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
     {"dm2", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm2GraphicsNames, "027ff3b8ddc2c4c4cdda7ada0b0bc46c", M12_ARCH_FM_TOWNS},
-    {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
+    {"dm2", "amiga-en", "Amiga English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
     /* DM2 boot profile / DMWeb-authenticated PC-9821 pair.  This is a
      * retail Japanese variant, not the separate PC-9801 demo above.
      * dm2_v1_boot.c admits GRAPHICS a80c555a... only with DUNGEON
@@ -1055,7 +1055,7 @@ static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
 }
 
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-/* The Amiga AGA release is a nested installer, not a ZIP with visible DAT
+/* The Amiga release is a nested installer, not a ZIP with visible DAT
  * members.  Let the DM2 boot owner perform its bounded RAM-only transport
  * read, then copy only the verified identity receipt into M12.  M12 must not
  * duplicate an LZX decoder or materialize the output as a cache. */

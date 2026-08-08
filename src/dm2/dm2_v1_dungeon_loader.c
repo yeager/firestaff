@@ -566,7 +566,7 @@ static int dm2_decode_map_dimensions_from_w8_be(const uint8_t *map_desc,
     return 1;
 }
 
-/* Mac 68k and Amiga AGA DUNGEON.DAT: big-endian u16 fields throughout,
+/* Mac 68k and Amiga DUNGEON.DAT: big-endian u16 fields throughout,
  * except offset 4-5 (header_size) which is LE, and map descriptor byte
  * fields at desc+6,desc+7 which are individual bytes unaffected by endian.
  * Magic 0x313b at offset 2-3 (reads as 0x3b31 via LE RD16). */

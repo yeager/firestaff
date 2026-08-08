@@ -1,4 +1,4 @@
-/* Opt-in M12 receipt for the original DM2 Amiga AGA installer.
+/* Opt-in M12 receipt for the original DM2 Amiga installer.
  *
  * FIRESTAFF_DM2_AMIGA_ROOT may name the original ZIP directly, or a directory
  * containing it. The scan reads nested media in RAM and preserves the archive

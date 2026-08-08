@@ -550,6 +550,10 @@
   RAM-läsning av `GRAPHICS.DAT`, `DUNGEON.DAT` och `CD.DAT`, M12-mediekvittot
   samt produktionsgränsen för placeholders passerar. Inget speldata packas
   upp eller skapas.
+- ✅ Startmenyn och plattformsdokumentationen benämner nu korrekt utgåvan
+  **Amiga English**. AGA förekommer endast i namnet på en känd arkivdump;
+  den verkliga utgåvan kräver 68020+ och är OCS/ECS-kompatibel, så AGA får
+  inte presenteras som ett runtimekrav.
 
 # DM2 M11:s party- och miljögräns (2026-08-08)
 

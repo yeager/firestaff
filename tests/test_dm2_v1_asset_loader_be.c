@@ -2,7 +2,7 @@
  * test_dm2_v1_asset_loader_be.c
  *
  * Validates the DM2 GDAT asset loader against big-endian GRAPHICS.DAT
- * files from Mac 68k and Amiga AGA platforms.
+ * files from Mac 68k and Amiga platforms.
  *
  * Amiga EN: ~/.firestaff/data/dm2-extras/amiga-en-extracted/GRAPHICS.DAT (3,493,879 bytes)
  * Mac EN:   ~/.firestaff/data/dm2-extras/mac-en-v1/Dungeon Master II/DMFiles/Graphics.dat (8,157,169 bytes)
