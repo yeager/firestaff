@@ -10354,3 +10354,13 @@
   command.
 - ✅ This makes the real source-span comparison reproducible while keeping
   CLUT, placement, screen ownership and semantic admission blocked.
+
+# Nexus raw VDP1 source-to-writer join (2026-08-09)
+
+- ✅ Added `scripts/analyze_nexus_vdp1_source_write_join.py`, which joins a
+  raw command source-span to an authenticated VDP1 VRAM-write trace and reports
+  covered bytes plus runtime writer PCs.
+- ✅ The join is provenance-only: asset owner, CLUT/placement consumer and
+  semantic admission remain explicitly unbound.
+- ✅ Cross-run joins explicitly report session identity as unbound; address
+  overlap is not promoted to a same-session capture claim.
