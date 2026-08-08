@@ -4136,6 +4136,49 @@ static int m11_csb_is_amiga_a35m_profile(const CSB_V1_BootProfile *profile)
     return profile && profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI;
 }
 
+static int m11_csb_is_amiga_a35e_profile(const CSB_V1_BootProfile *profile)
+{
+    return profile && profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN;
+}
+
+/* ReDMCSB COMPILE.H:274-280 assigns A35E APPB.FTL directly to C03_GAME;
+ * BJELoad_R is its separate C02 launcher.  Unlike A31M/A35M there is no
+ * C08 language page or C05 title program to emulate between those two
+ * authenticated native program boundaries. */
+static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
+{
+    CSB_V1_BootProfile *profile;
+    static const struct {
+        const char *name;
+        const char *md5;
+    } required_programs[] = {
+        { "APPB.FTL", "11d8d059cd8f241d6f68ec09c5c8b66d" },
+        { "BJELoad_R", "6aec320606f014a149548e664719cf5b" }
+    };
+    char path[FSP_PATH_MAX];
+    char md5[33];
+    size_t index;
+
+    if (!state || !state->csbBootProfile) return 0;
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a35e_profile(profile) || !profile->asset_root[0] ||
+        !profile->runtime.dungeon_handle) return 0;
+    for (index = 0u; index < sizeof(required_programs) /
+             sizeof(required_programs[0]); ++index) {
+        if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
+                     required_programs[index].name) <= 0 ||
+            strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+            strcmp(md5, required_programs[index].md5) != 0) return 0;
+    }
+    profile->amiga_language_index = 0u;
+    profile->runtime.state = CSB_STATE_GAME;
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_dismissed = 1;
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    return 1;
+}
+
 /* ReDMCSB APPA.C:51-53 starts SWSH and passes FTL_TITL to ANIM.C.  A31's
  * TITL.DAT is a separate application surface, so neither PC TITLE.C nor a
  * reconstructed bitmap may stand in for it.  The final DL stream is known
@@ -9168,6 +9211,16 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbState.startup_entrance_active = 0;
         if (m11_csb_prepare_amiga_a35m_appb_selection(state)) return 1;
         m11_set_status(state, "CSB AMIGA", "A35M APPB DECODE FAILED");
+        return 0;
+    }
+    if (m11_csb_is_amiga_a35e_profile(receipt->profile)) {
+        state->csbStartupExpectedPackageIdentity =
+            package_identity ? package_identity : 1u;
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state, &receipt->receipts.init_state);
+        if (m11_csb_complete_amiga_a35e_direct_handoff(state)) return 1;
+        m11_set_status(state, "CSB AMIGA", "A35E C03 HANDOFF FAILED");
         return 0;
     }
     if (m11_csb_is_amiga_a31_profile(receipt->profile)) {

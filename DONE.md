@@ -1,3 +1,14 @@
+# CSB Amiga 3.5 English direkt C03-handoff (2026-08-08)
+
+- ✅ M12→M11 följer nu A35E:s egna hashverifierade programgräns:
+  `BJELoad_R` (C02 launcher) till `APPB.FTL` (C03 game), enligt ReDMCSB
+  `COMPILE.H:274–280`. Vägen kräver den valda A35E-ADF:ns båda program och
+  laddade originaldungeon innan den når spelruntimen.
+- ✅ Realdataregressionen låser A35E:s programhashar och visar att vägen inte
+  kan falla tillbaka till A31:s `TITL.DAT`, A35M:s språkval eller PC34:s
+  title/entrance-session. Amiga-HUD och viewport från `GRAPHICS.DAT` är
+  fortfarande separat capture- och konsumentarbete.
+
 # CSB PC34 Utility-import från original DM1-sparning (2026-08-08)
 
 - ✅ Den opt-in-bundna PC34-regressionen klassificerar nu en verklig

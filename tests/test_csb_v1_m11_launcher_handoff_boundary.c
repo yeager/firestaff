@@ -2071,10 +2071,78 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
     M12_StartupMenu_Destroy(&menu);
 }
 
+/* A35E is not an A35M language-screen alias: APPB.FTL itself is C03_GAME
+ * and BJELoad_R is C02_LAUNCHER (ReDMCSB COMPILE.H:274-280).  The direct
+ * route must therefore enter the verified game runtime without presenting
+ * A31 TITL.DAT, A35M's C08 selector, or the incompatible PC34 title. */
+static void run_real_amiga35_english_direct_handoff_if_available(void) {
+    const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA35_EN_DATA_DIR");
+    M12_StartupMenuState menu;
+    M11_GameViewState view;
+    const M12_MenuEntry *entry;
+    const M12_AssetVersionStatus *amiga_version;
+    const CSB_V1_BootProfile *profile;
+    char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    char md5[33];
+    int version_index;
+
+    if (!data_dir || !data_dir[0]) {
+        expect_skip("FIRESTAFF_CSB_AMIGA35_EN_DATA_DIR not set");
+        return;
+    }
+    init_menu_without_gallery(&menu, data_dir, "csb");
+    dismiss_initial_message(&menu);
+    entry = M12_StartupMenu_GetEntry(&menu, 1);
+    version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga35-en");
+    amiga_version = version_index >= 0
+        ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                     (size_t)version_index)
+        : NULL;
+    if (!entry || !entry->available || version_index < 0 ||
+        !amiga_version || !amiga_version->matched) {
+        expect_skip("no verified Amiga 3.5 English CSB package at requested data root");
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+    memset(runtime_dir, 0, sizeof(runtime_dir));
+    expect_true(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                    &menu.assetStatus, "amiga35-en", runtime_dir,
+                    sizeof(runtime_dir)) == 1 &&
+                    snprintf(path, sizeof(path), "%s/APPB.FTL", runtime_dir) > 0 &&
+                    asset_file_md5_hex(path, md5) &&
+                    strcmp(md5, "11d8d059cd8f241d6f68ec09c5c8b66d") == 0 &&
+                    snprintf(path, sizeof(path), "%s/BJELoad_R", runtime_dir) > 0 &&
+                    asset_file_md5_hex(path, md5) &&
+                    strcmp(md5, "6aec320606f014a149548e664719cf5b") == 0,
+                "A35E cache retains its direct C03 game and C02 launcher programs");
+    menu.selectedIndex = 1;
+    menu.activatedIndex = 1;
+    menu.launchRequested = 1;
+    menu.gameOptions[1].versionIndex = version_index;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "M11 opens Amiga 3.5 English through direct APPB C03");
+    profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+    expect_true(view.active == 1 && profile != NULL &&
+                    profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN &&
+                    profile->runtime.dungeon_handle != NULL &&
+                    profile->runtime.state == CSB_STATE_GAME &&
+                    !view.csbState.startup_title_active &&
+                    !view.csbState.startup_entrance_active &&
+                    !view.csbAmigaAppbSelectionActive &&
+                    view.csbAmigaTitlBytes == NULL,
+                "A35E reaches C03_GAME without an A31/A35M/PC34 replacement screen");
+    M11_GameView_Shutdown(&view);
+    M12_StartupMenu_Destroy(&menu);
+}
+
 int main(void) {
     const char *atari_only = getenv("FIRESTAFF_CSB_ATARI_ST_ONLY");
     const char *amiga31_only = getenv("FIRESTAFF_CSB_AMIGA31_ONLY");
     const char *amiga35_only = getenv("FIRESTAFF_CSB_AMIGA35_ONLY");
+    const char *amiga35_english_only =
+        getenv("FIRESTAFF_CSB_AMIGA35_EN_ONLY");
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
                 "CSB launcher startup sequence contract is source-ordered");
@@ -2088,7 +2156,9 @@ int main(void) {
     /* A supplied Atari-only corpus deliberately has no PC34 package.  Keep
      * the source-specific ANIMATE.SCR regression lane independently runnable
      * instead of making the PC34 assertions dereference a failed launch. */
-    if (amiga35_only && amiga35_only[0]) {
+    if (amiga35_english_only && amiga35_english_only[0]) {
+        run_real_amiga35_english_direct_handoff_if_available();
+    } else if (amiga35_only && amiga35_only[0]) {
         run_real_amiga35_selected_package_handoff_if_available();
     } else if (amiga31_only && amiga31_only[0]) {
         run_real_amiga31_selected_package_handoff_if_available();
@@ -2099,6 +2169,7 @@ int main(void) {
         run_real_atari_st_launcher_handoffs_if_available();
         run_real_amiga31_selected_package_handoff_if_available();
         run_real_amiga35_selected_package_handoff_if_available();
+        run_real_amiga35_english_direct_handoff_if_available();
     } else {
         run_real_atari_st_launcher_handoffs_if_available();
     }

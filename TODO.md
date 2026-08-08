@@ -57,9 +57,12 @@
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
   mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35M:s
   verkliga APPB-språkval och engelska KAOS-handoff är nu bundna till sina
-  ADF-hashar och exponeras som en egen M11-capturefas, men franska/tyska och
-  den separata A35E-APPB/C03-starten är fortsatt fail-closed tills deras
-  runtime-media har egen verifierad konsumentväg. Atari ST:s redan
+  ADF-hashar och exponeras som en egen M11-capturefas. A35E:s separata,
+  engelska `APPB.FTL`-C03-handoff och `BJELoad_R`-C02-launcher är nu också
+  hashbundna till M11 utan en A35M- eller PC34-ersättningsyta. A35E:s första
+  spelbild är däremot fortsatt spärrad tills Amiga-GRAPHICS.DAT har en egen
+  autentisk HUD- och viewportkonsument. Franska/tyska och den återstående
+  A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
 
