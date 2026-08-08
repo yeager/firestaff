@@ -142,7 +142,7 @@ static size_t make_synthetic_bpx3(uint8_t *buf, size_t cap) {
     return data_offset + sizeof(blob0) + sizeof(blob1) + sizeof(blob2);
 }
 
-static int read_optional_menu_bpk(const char *home,
+static int read_optional_menu_bpk(const char *data_dir,
                                   uint8_t **out_data,
                                   size_t *out_size) {
     char path[1024];
@@ -150,9 +150,8 @@ static int read_optional_menu_bpk(const char *home,
     long size;
     uint8_t *data;
 
-    if (!home || !home[0]) return 0;
-    if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                 home) <= 0) return 0;
+    if (!data_dir || !data_dir[0]) return 0;
+    if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) <= 0) return 0;
     fp = fopen(path, "rb");
     if (!fp) return 0;
     if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return 0; }
@@ -263,12 +262,19 @@ static void test_synthetic_bpx3_contract(void) {
 }
 
 static void test_optional_real_menumenu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
+    char default_dir[1024];
     uint8_t *data = NULL;
     size_t size = 0;
 
+    if ((!data_dir || !data_dir[0]) && home && home[0] &&
+        snprintf(default_dir, sizeof(default_dir), "%s/.firestaff/data/nexus",
+                 home) > 0) {
+        data_dir = default_dir;
+    }
     printf("\n--- optional real MENU.BPK (no asset loaded in CI) ---\n");
-    if (!read_optional_menu_bpk(home, &data, &size)) {
+    if (!read_optional_menu_bpk(data_dir, &data, &size)) {
         printf("  SKIP: real MENU.BPK not present\n");
         return;
     }
@@ -279,7 +285,7 @@ static void test_optional_real_menumenu_bpk(void) {
     Nexus_V1_BpkEntryPrefix prefix;
     int rc;
 
-    printf("  loaded %zu bytes from ~/.firestaff/data/nexus/MENU.BPK\n", size);
+    printf("  loaded %zu bytes from selected Nexus data root/MENU.BPK\n", size);
 
     rc = nexus_v1_bpk_archive_parse(data, size, &info);
     CHECK(rc == 0, "real MENU.BPK BPPK/BMPD directory parses");

@@ -106,6 +106,12 @@ int main(int argc, char **argv) {
     const uint8_t *embedded;
 
     if (!data_dir) {
+        const char *shared_data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+        if (shared_data_dir && shared_data_dir[0]) {
+            data_dir = shared_data_dir;
+        }
+    }
+    if (!data_dir) {
         home = getenv("HOME");
         if (!home || snprintf(default_dir, sizeof(default_dir),
                               "%s/.firestaff/data/nexus", home) <= 0) {

@@ -8349,3 +8349,16 @@
 - ✅ Produktionsgrinden fortsätter därför att neka palette promotion,
   startup-presentation och README-screenshot utan autentiserad capture.
   Inget syntetiskt speldata eller ersättningsbild har skapats.
+
+# Nexus explicit data-root precedence for startup/menu probes (2026-08-08)
+
+- ✅ PRS3 loader-media, MENU.BPK archive/surface, Saturn SCR section and
+  screen-text probes now prefer `FIRESTAFF_NEXUS_DATA_DIR` over the implicit
+  `HOME/.firestaff/data/nexus` fallback. An explicit
+  `FIRESTAFF_NEXUS_FONT256_S2D` path remains the most specific override.
+- ✅ With an isolated `HOME`, the real European corpus still passes: locked
+  DM.BIN/MENU.BPK identities, 162 retail PRS3 entries, 163 MENU.BPK directory
+  entries and the four authenticated FONT256.S2D sections.
+- ✅ The real S2D text bridge remains no-draw because the Saturn glyph mapping,
+  tilemap/CLUT consumer and framebuffer placement are not captured. No
+  synthetic menu, HUD or viewport pixels were promoted.

@@ -143,8 +143,13 @@ static uint8_t *make_cross_font(int char_count,
 static const char *default_real_font_path(char *buf, size_t cap)
 {
     const char *env = getenv("FIRESTAFF_NEXUS_FONT256_S2D");
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home;
     if (env && env[0]) return env;
+    if (data_dir && data_dir[0] && cap > 0) {
+        snprintf(buf, cap, "%s/FONT256.S2D", data_dir);
+        return buf;
+    }
     home = getenv("HOME");
     if (!home || !home[0] || cap == 0) return NULL;
     snprintf(buf, cap, "%s/.firestaff/data/nexus/FONT256.S2D", home);

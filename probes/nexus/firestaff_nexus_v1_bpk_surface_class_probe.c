@@ -230,7 +230,7 @@ static void test_synthetic_bpx3_trailer(void) {
     }
 }
 
-static void read_optional_menu_bpk(const char *home,
+static void read_optional_menu_bpk(const char *data_dir,
                                    uint8_t **out_data,
                                    size_t *out_size) {
     char path[1024];
@@ -240,9 +240,8 @@ static void read_optional_menu_bpk(const char *home,
 
     *out_data = NULL;
     *out_size = 0;
-    if (!home || !home[0]) return;
-    if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                 home) <= 0) return;
+    if (!data_dir || !data_dir[0]) return;
+    if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) <= 0) return;
     fp = fopen(path, "rb");
     if (!fp) return;
     if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return; }
@@ -260,17 +259,24 @@ static void read_optional_menu_bpk(const char *home,
 }
 
 static void test_optional_real_menumenu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
+    char default_dir[1024];
     uint8_t *data = NULL;
     size_t size = 0;
 
+    if ((!data_dir || !data_dir[0]) && home && home[0] &&
+        snprintf(default_dir, sizeof(default_dir), "%s/.firestaff/data/nexus",
+                 home) > 0) {
+        data_dir = default_dir;
+    }
     printf("\n--- optional real MENU.BPK (no asset loaded in CI) ---\n");
-    read_optional_menu_bpk(home, &data, &size);
+    read_optional_menu_bpk(data_dir, &data, &size);
     if (!data) {
         printf("  SKIP: real MENU.BPK not present\n");
         return;
     }
-    printf("  loaded %zu bytes from ~/.firestaff/data/nexus/MENU.BPK\n", size);
+    printf("  loaded %zu bytes from selected Nexus data root/MENU.BPK\n", size);
 
     Nexus_V1_BpkSurfaceEntry entries[200];
     Nexus_V1_BpkSurfaceEstimate summary;
