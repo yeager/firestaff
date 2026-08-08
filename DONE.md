@@ -69,6 +69,20 @@
   inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
   skapades eller ändrades.
 
+# DM2 New Game 0x04-konsument vid GAME_LOAD-gränsen (2026-08-08)
+
+- ✅ Den privata `GameLoadWorldOwner` kan nu konsumera en autentiskt kodad
+  0x04-ACTUATE-post och läser målkoordinat, riktning, action och tileklass från
+  samma privata File_header-värld som skapade posten.
+- ✅ Originalets tileklass 3 genomförs som det no-op som
+  `DM2_PROCEED_TIMERS` har i `sktimprc.cpp:4283–4327`. Realdatatestet väljer en
+  befintlig klass-3-ruta ur hashverifierad `DUNGEON.DAT`; ingen testkarta,
+  recordpool eller speltimer skapas.
+- ✅ WALL, FLOOR, PIT, DOOR, TELEPORTER och TRICKWALL avvisas utan mutation.
+  PIT och TELEPORTER måste alltid följa FLOOR_MECHA, dörren behöver DB0 och en
+  typ-1-timer och trickväggen behöver party/CAII. Grinden förhindrar därför en
+  koordinatbaserad ersättningsmekanik innan den kompletta originalkedjan finns.
+
 # Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
 
 - ✅ `SDDRVS.TSK`-kvittot validerar nu hela den retail-hashbundna 16-entry

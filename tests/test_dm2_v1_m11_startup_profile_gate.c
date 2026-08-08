@@ -81,6 +81,36 @@ static uint32_t dm2_test_fnv1a(const uint8_t *bytes, size_t byte_count) {
     return hash;
 }
 
+/* Select an existing File_header square from verified DUNGEON.DAT.  The
+ * message below is a test transport for that authentic coordinate, not a
+ * replacement map, record or timer corpus. */
+static int dm2_test_find_file_header_tile_class(const DM2_V1_DungeonData *d,
+                                                int wanted_class,
+                                                int *out_map,
+                                                int *out_x,
+                                                int *out_y)
+{
+    int map;
+    if (!d || !out_map || !out_x || !out_y || wanted_class < 0 ||
+        wanted_class > 7) return 0;
+    for (map = 0; map < d->level_count; ++map) {
+        int x;
+        for (x = 0; x < d->level_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < d->level_heights[map]; ++y) {
+                const int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+                if (raw >= 0 && ((raw >> 5) & 7) == wanted_class) {
+                    *out_map = map;
+                    *out_x = x;
+                    *out_y = y;
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static void expect_true(int condition, const char* message) {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
@@ -1228,7 +1258,15 @@ int main(void) {
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
+    DM2_V1_GameLoadActuateReceipt new_game_actuate;
+    DM2_V1_TimerEntry new_game_actuate_timer;
     int new_game_generators_result;
+    int new_game_noop_map = -1;
+    int new_game_noop_x = -1;
+    int new_game_noop_y = -1;
+    int new_game_floor_map = -1;
+    int new_game_floor_x = -1;
+    int new_game_floor_y = -1;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_FileHeaderWorldInteractionReceipt file_header_world;
@@ -1713,6 +1751,49 @@ int main(void) {
                     !dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner),
                 "M11 refuses to replay an already materialized source champion selection");
+    memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+    dm2_v1_timer_entry_init(&new_game_actuate_timer);
+    expect_true(profile &&
+                    dm2_test_find_file_header_tile_class(
+                        &new_game_world_owner.dungeon, 3,
+                        &new_game_noop_map, &new_game_noop_x, &new_game_noop_y) &&
+                    (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                        (int16_t)new_game_noop_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 1u), 1) &&
+                    ((new_game_actuate_timer.xA = (int8_t)new_game_noop_x), 1) &&
+                    ((new_game_actuate_timer.yA = (int8_t)new_game_noop_y), 1) &&
+                    dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) &&
+                    new_game_actuate.valid && new_game_actuate.source_noop &&
+                    !new_game_actuate.blocked_incomplete_chain &&
+                    new_game_actuate.tile_class == 3u &&
+                    new_game_actuate.map == new_game_noop_map &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 consumes original class-3 ACTUATE messages as source no-ops without publishing a session");
+    memset(&new_game_actuate, 0, sizeof(new_game_actuate));
+    dm2_v1_timer_entry_init(&new_game_actuate_timer);
+    expect_true(profile &&
+                    dm2_test_find_file_header_tile_class(
+                        &new_game_world_owner.dungeon, 1,
+                        &new_game_floor_map, &new_game_floor_x, &new_game_floor_y) &&
+                    (dm2_v1_timer_set_mticks(&new_game_actuate_timer,
+                        (int16_t)new_game_floor_map, 0), 1) &&
+                    ((new_game_actuate_timer.ttype = 0x04u), 1) &&
+                    ((new_game_actuate_timer.actor = 1u), 1) &&
+                    ((new_game_actuate_timer.xA = (int8_t)new_game_floor_x), 1) &&
+                    ((new_game_actuate_timer.yA = (int8_t)new_game_floor_y), 1) &&
+                    !dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+                        &new_game_world_owner, &new_game_actuate_timer,
+                        &new_game_actuate) &&
+                    !new_game_actuate.valid &&
+                    new_game_actuate.blocked_incomplete_chain &&
+                    new_game_actuate.tile_class == 1u &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 refuses a real FLOOR ACTUATE message until its complete source chain has one owner");
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&

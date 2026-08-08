@@ -633,3 +633,56 @@ fail:
     free(timer_backup);
     return 0;
 }
+
+int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadActuateReceipt *out_receipt)
+{
+    DM2_V1_GameLoadActuateReceipt receipt;
+    const int map = timer ? dm2_v1_timer_get_map(timer) : -1;
+    const int x = timer ? (int)(uint8_t)timer->xA : -1;
+    const int y = timer ? (int)(uint8_t)timer->yA : -1;
+    const uint16_t payload = timer ? (uint16_t)timer->wvalueB : 0u;
+    const uint8_t direction = (uint8_t)(payload & 0xffu);
+    const uint8_t action = (uint8_t)(payload >> 8);
+    int raw_tile;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) || !timer ||
+        timer->ttype != 0x04u || map < 0 || map >= owner->dungeon.level_count ||
+        direction > 3u || action > 2u ||
+        (action == 0u && timer->actor != 1u) ||
+        (action == 1u && timer->actor != 3u) ||
+        (action == 2u && timer->actor != 2u)) {
+        return 0;
+    }
+    raw_tile = dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map, x, y);
+    if (raw_tile < 0) return 0;
+
+    receipt.map = map;
+    receipt.x = (uint8_t)x;
+    receipt.y = (uint8_t)y;
+    receipt.direction = direction;
+    receipt.action = action;
+    receipt.raw_tile = (uint8_t)raw_tile;
+    receipt.tile_class = (uint8_t)((unsigned int)raw_tile >> 5);
+
+    /* SKProject sktimprc.cpp::DM2_PROCEED_TIMERS (4283-4327): type 3
+     * deliberately has no case body.  It is the only 0x04 outcome that can
+     * be completed without synthesising a FLOOR/WALL callback graph. */
+    if (receipt.tile_class == 3u) {
+        receipt.valid = 1;
+        receipt.source_noop = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* PIT/TELE must always fall into FLOOR_MECHA; DOOR requeues a type-1
+     * c_tim; TRICKWALL consults party/CAII; WALL/FLOOR walk complete DB
+     * chains.  None may be mutated as a coordinate-only approximation. */
+    receipt.blocked_incomplete_chain = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}

@@ -50,10 +50,12 @@
   samma click-ordnade GDAT- och File_header-receipt, med varje itemlänk
   kontrollerad mot dess riktiga DB-pool. Originalets equip-bonusläge och
   startvikt är nu tillämpade privat mot GDAT. Hela championrosterens DYN4-
-  råblock är materialiserade i samma privata ägare. 0x04-dispatchen,
-  DYN-konsumenterna och sessionens atomära commit återstår. Den gamla
-  32-posters kön används inte. Ingen party, HUD eller timer får publiceras
-  före hela den transaktionen.
+  råblock är materialiserade i samma privata ägare. 0x04-konsumenten läser nu
+  verkliga File_header-rutor och genomför originalets klass-3-no-op; WALL,
+  FLOOR, PIT, DOOR, TELEPORTER och TRICKWALL avvisas utan mutation tills deras
+  kompletta följdkedjor har samma ägare. DYN-konsumenterna och sessionens
+  atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
+  HUD eller timer får publiceras före hela den transaktionen.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. Nästa

@@ -80,6 +80,24 @@ typedef struct {
     uint8_t target_direction;
 } DM2_V1_GameLoadTickGeneratorReceipt;
 
+/* Result of consuming a private 0x04 message produced by the tick-generator
+ * continuation above.  Tile class 3 is the only complete source case that
+ * needs no further owner: c_tim_proc.cpp falls through without a handler.
+ * Every mutating class remains blocked until one source-owned FLOOR/WALL
+ * chain, including its follow-up timers, can be committed as a unit. */
+typedef struct {
+    int valid;
+    int source_noop;
+    int blocked_incomplete_chain;
+    int map;
+    uint8_t x;
+    uint8_t y;
+    uint8_t direction;
+    uint8_t action;
+    uint8_t tile_class;
+    uint8_t raw_tile;
+} DM2_V1_GameLoadActuateReceipt;
+
 /* Build a source-owned, pre-selection world from one currently mounted,
  * hash-verified PC File_header/GDAT pair and exact mirror clicks.  It rejects
  * partial record graphs and never modifies profile-owned raw media. */
@@ -116,6 +134,17 @@ int dm2_v1_game_load_world_owner_continue_tick_generator(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_TimerEntry *timer,
     DM2_V1_GameLoadTickGeneratorReceipt *out_receipt);
+
+/* Consume one private 0x04 message after it was popped from this owner's
+ * queue.  This ports DM2_PROCEED_TIMERS' tile-class selection exactly, but
+ * performs a successful action only for source class 3 (the original no-op).
+ * Classes 0, 1, 2, 4, 5 and 6 are rejected without mutation rather than
+ * applying an incomplete wall/floor/door/pit/teleporter/trick-wall fragment.
+ */
+int dm2_v1_game_load_world_owner_dispatch_actuate_timer(
+    DM2_V1_GameLoadWorldOwner *owner,
+    const DM2_V1_TimerEntry *timer,
+    DM2_V1_GameLoadActuateReceipt *out_receipt);
 
 #ifdef __cplusplus
 }
