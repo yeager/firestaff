@@ -1,28 +1,88 @@
 # Firestaff v3.0.305
 
-## Current Nexus provenance clarification
+## DM1
 
-Äldre releaseposter nedan beskriver stängda byteformat-, tabell- eller
-ABI-receipts. De ska inte läsas som att Saturns runtime-konsumenter är
-verifierade: ITEM-loot/use, MENU/TEXT/PRS3-presentation, VDP1/VDP2
-komposition och SLEV/MAP/SAL→SDDRVS-event/playback är fortfarande
-capture-gated enligt `TODO.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
+### Added
 
-## Changed
+- None.
 
-- Promote source-backed Nexus gameplay lookup/algorithm modules to the
-  production ABI: combat, magic, experience, rest/status, action timers,
-  doors/traps/projectiles, light, and spell effects are available for their
-  verified data and contract surfaces. This does not claim Saturn runtime
-  parity: the event/action owners, SLEV/SDDRVS side effects and VDP1/VDP2
-  consumers remain capture-gated. Remaining presentation no-ops include the
-  rasterizer, Saturn font, HUD, lighting, smooth movement and touch paths.
-- Update production boundary tests to verify real behavior instead of noop
+### Changed
+
+- None.
+
+### Removed
+
+- None.
+
+## DM2
+
+### Added
+
+- None.
+
+### Changed
+
+- None.
+
+### Removed
+
+- None.
+
+## CSB
+
+### Added
+
+- None.
+
+### Changed
+
+- None.
+
+### Removed
+
+- None.
+
+## Nexus
+
+### Added
+
+- `nexus_v1_spell_effects.c`: Promote the source-backed spell-effects module
+  to the production ABI.
+
+### Changed
+
+- `nexus_v1_gameplay_modules`: Promote verified combat, magic, experience,
+  rest/status, action-timer, door/trap/projectile, light and spell-effect
+  surfaces; Saturn runtime parity remains capture-gated.
+- `nexus_v1_production_boundary_tests`: Verify real behavior instead of noop
   assertions.
-- Fix `nexus_v1_availability_profile_gate` hash count from 2 to 4 (English
-  and French fan translations were added).
-- Remove `nexus_v1_spell_effects.c` from production source exclusion list
-  (now a promoted module).
+- `nexus_v1_availability_profile_gate`: Count four accepted hashes instead of
+  two for the English and French translation set.
+
+### Removed
+
+- `nexus_v1_spell_effects.c`: Remove the production source exclusion.
+
+## Theron
+
+### Added
+
+- None.
+
+### Changed
+
+- None.
+
+### Removed
+
+- None.
+
+## Status note
+
+Äldre releaseposter beskriver tidigare ändringar. De ska inte läsas som att
+Nexus Saturn-runtime är färdig: ITEM-loot/use, MENU/TEXT/PRS3-presentation,
+VDP1/VDP2-komposition och SLEV/MAP/SAL→SDDRVS-event/playback är fortfarande
+capture-gated enligt `TODO-nexus.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
 
 # Firestaff v3.0.304
 

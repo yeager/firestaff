@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 HEADER_RE = re.compile(r"^# Firestaff v([^\s]+)\s*$")
+GAME_NAMES = ("DM1", "DM2", "CSB", "Nexus", "Theron")
 SECTION_NAMES = ("Added", "Changed", "Removed")
 GENERIC_TERMS = (
     "various",
@@ -19,7 +20,7 @@ GENERIC_TERMS = (
     "etc",
 )
 ACTION_WORDS = {
-    "Added": ("add", "introduc", "register", "admit", "enable", "create"),
+    "Added": ("add", "introduc", "register", "admit", "enable", "create", "promot"),
     "Changed": (
         "change",
         "fix",
@@ -36,6 +37,9 @@ ACTION_WORDS = {
         "bind",
         "restore",
         "update",
+        "promot",
+        "verif",
+        "count",
     ),
     "Removed": ("remove", "delete", "drop", "retire", "disable", "unregister"),
 }
@@ -61,24 +65,31 @@ def selected_section(notes: str, version: str) -> list[str]:
     return lines[start:end]
 
 
-def verify_category(lines: list[str], name: str) -> None:
-    heading = f"## {name}"
+def verify_category(lines: list[str], game: str, name: str) -> None:
+    heading = f"### {name}"
     try:
         start = lines.index(heading) + 1
     except ValueError:
-        fail(f"missing required {heading!r} category")
+        fail(f"missing required {heading!r} category under {game}")
 
     end = len(lines)
     for i in range(start, len(lines)):
-        if lines[i].startswith("## "):
+        if lines[i].startswith("### ") or lines[i].startswith("## "):
             end = i
             break
 
-    entries = [line for line in lines[start:end] if line.strip()]
+    entries = []
+    for line in lines[start:end]:
+        if not line.strip():
+            continue
+        if line.startswith("- "):
+            entries.append(line)
+        elif entries:
+            entries[-1] += " " + line.strip()
+        else:
+            fail(f"{heading!r} may contain only bullet entries")
     if not entries:
         fail(f"{heading!r} must explicitly state its functional delta or 'None.'")
-    if any(not line.startswith("- ") for line in entries):
-        fail(f"{heading!r} may contain only bullet entries")
 
     for entry in entries:
         body = entry[2:]
@@ -102,6 +113,23 @@ def verify_category(lines: list[str], name: str) -> None:
             )
 
 
+def verify_game(lines: list[str], game: str) -> None:
+    heading = f"## {game}"
+    try:
+        start = lines.index(heading) + 1
+    except ValueError:
+        fail(f"missing required game section {heading!r}")
+
+    end = len(lines)
+    for i in range(start, len(lines)):
+        if lines[i].startswith("## "):
+            end = i
+            break
+    game_lines = lines[start:end]
+    for name in SECTION_NAMES:
+        verify_category(game_lines, game, name)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--notes", required=True, type=Path)
@@ -114,8 +142,8 @@ def main() -> None:
         fail(f"cannot read {args.notes}: {exc}")
 
     section = selected_section(notes, args.version)
-    for name in SECTION_NAMES:
-        verify_category(section, name)
+    for game in GAME_NAMES:
+        verify_game(section, game)
 
     print(f"release notes: {args.notes} v{args.version} has concrete functional deltas")
 

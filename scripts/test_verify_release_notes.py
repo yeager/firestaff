@@ -11,18 +11,16 @@ ROOT = Path(__file__).resolve().parents[1]
 VERIFY = ROOT / "scripts" / "verify_release_notes.py"
 
 
+GAMES = ("DM1", "DM2", "CSB", "Nexus", "Theron")
+
+
 def note(added: str, changed: str, removed: str) -> str:
-    return f"""# Firestaff v9.8.7
-
-## Added
-{added}
-
-## Changed
-{changed}
-
-## Removed
-{removed}
-"""
+    blocks = []
+    for game in GAMES:
+        blocks.append(
+            f"## {game}\n\n### Added\n{added}\n\n### Changed\n{changed}\n\n### Removed\n{removed}"
+        )
+    return "# Firestaff v9.8.7\n\n" + "\n\n".join(blocks) + "\n"
 
 
 def run_case(contents: str, expected: int) -> None:
