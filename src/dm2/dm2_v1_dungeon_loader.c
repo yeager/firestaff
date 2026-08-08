@@ -2427,10 +2427,13 @@ static int dm2_v1_g1_read_teleporter_root(
     out->destination_x = (uint8_t)(w2 & 0x001fu);
     out->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
     out->destination_map = (uint8_t)(w4 >> 8);
-    out->scope = (uint8_t)(w4 & 0x000fu);
-    out->sound = (uint8_t)((w4 >> 4) & 1u);
-    out->rotation = (uint8_t)((w4 >> 5) & 3u);
-    out->rotation_type = (uint8_t)((w4 >> 7) & 1u);
+    /* Retail DM2 LE Teleporter::w2 owns scope, sound and rotation.  The
+     * recovered SKProject layout, SKWIN/DME.h::Teleporter lines 371-374,
+     * names these exact bitfields; w4 only supplies the destination map. */
+    out->scope = (uint8_t)((w2 >> 13) & 3u);
+    out->sound = (uint8_t)((w2 >> 15) & 1u);
+    out->rotation = (uint8_t)((w2 >> 10) & 3u);
+    out->rotation_type = (uint8_t)((w2 >> 12) & 1u);
     return 1;
 }
 
@@ -3642,10 +3645,12 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
             teleporter->destination_x = (uint8_t)(w2 & 0x001fu);
             teleporter->destination_y = (uint8_t)((w2 >> 5) & 0x001fu);
             teleporter->destination_map = (uint8_t)(w4 >> 8);
-            teleporter->scope = (uint8_t)(w4 & 0x000fu);
-            teleporter->sound = (uint8_t)((w4 >> 4) & 1u);
-            teleporter->rotation = (uint8_t)((w4 >> 5) & 3u);
-            teleporter->rotation_type = (uint8_t)((w4 >> 7) & 1u);
+            /* SKWIN/DME.h::Teleporter lines 371-374.  Do not interpret the
+             * reserved low byte of w4 as teleporter attributes. */
+            teleporter->scope = (uint8_t)((w2 >> 13) & 3u);
+            teleporter->sound = (uint8_t)((w2 >> 15) & 1u);
+            teleporter->rotation = (uint8_t)((w2 >> 10) & 3u);
+            teleporter->rotation_type = (uint8_t)((w2 >> 12) & 1u);
             ++candidate.teleporter_record_reads;
         }
     }

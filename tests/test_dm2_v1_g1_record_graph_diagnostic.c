@@ -4,9 +4,9 @@
  * Validates DM2 PC G1 DUNGEON.DAT record graph completion.
  * Loads real game data and verifies record_graph_complete == 1.
  *
- * Key finding: G1 byte-square format stores game data in w0,
- * NOT next-links. The validator checks ground-stack entries
- * resolve to valid records (including G1 extension pools).
+ * The canonical File_header route follows record w0 links from every marked
+ * square. The validator checks that each complete chain resolves to declared
+ * original record pools.
  */
 
 #include "dm2_v1_dungeon_loader.h"
@@ -215,6 +215,34 @@ int main(void) {
         teleporters.teleporter_record_reads != teleporters.teleporter_root_count) {
         printf("FAIL: File_header map-0 teleporter roots were not retained\n");
         ++failures;
+    } else {
+        for (int i = 0; i < teleporters.teleporter_root_count; ++i) {
+            const DM2_V1_G1DirectTeleporterRoot *teleporter =
+                &teleporters.teleporters[i];
+            const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                &d, teleporter->object_id, NULL, NULL, NULL);
+            uint16_t w2;
+            uint16_t w4;
+
+            if (!record) {
+                printf("FAIL: File_header map-0 teleporter source was lost\n");
+                ++failures;
+                break;
+            }
+            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+            if (teleporter->destination_x != (uint8_t)(w2 & 0x001fu) ||
+                teleporter->destination_y != (uint8_t)((w2 >> 5) & 0x001fu) ||
+                teleporter->destination_map != (uint8_t)(w4 >> 8) ||
+                teleporter->scope != (uint8_t)((w2 >> 13) & 3u) ||
+                teleporter->sound != (uint8_t)((w2 >> 15) & 1u) ||
+                teleporter->rotation != (uint8_t)((w2 >> 10) & 3u) ||
+                teleporter->rotation_type != (uint8_t)((w2 >> 12) & 1u)) {
+                printf("FAIL: File_header map-0 teleporter bitfields disagree with source\n");
+                ++failures;
+                break;
+            }
+        }
     }
 
     dm2_v1_dungeon_free(&d);

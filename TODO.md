@@ -37,8 +37,9 @@
   DB14/timer ownership and target record mutation before any actuator fires.
 
 - **DM2-FILE-HEADER-TELEPORT-RUNTIME:** Canonical map-0 DB1 teleporters now
-  expose original destinations and scope. Bind `c_moverec` map changes,
-  party/session ownership, collision and sound before allowing a transition.
+  expose the original `w2` destination, scope, sound and rotation fields,
+  plus `w4` destination map. Bind `c_moverec` map changes, party/session
+  ownership, collision and sound before allowing a transition.
 
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media

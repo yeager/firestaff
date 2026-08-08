@@ -143,6 +143,16 @@
   speglarna och deras DYN4-nycklar är oförändrade. Ingen DYN4-laddning,
   hero- eller partyinitiering tillåts ännu.
 
+# DM2 File_header-teleporterbitfält (2026-08-08)
+
+- ✅ Rättade PC-DOS DB1-avkodningen så att räckvidd, ljud och rotation läses
+  ur `Teleporter::w2`; `w4` används endast för destinationskartan. Detta
+  följer den återvunna retail-layouten i SKProject `SKWIN/DME.h`,
+  `Teleporter` raderna 371–374.
+- ✅ Diagnostiktestet jämför varje intagen teleporter på karta 0 med dess
+  faktiska `DUNGEON.DAT`-byte. Ingen rörelse, ljuduppspelning eller syntetisk
+  session aktiveras av intaget.
+
 # DM2 fail-closed local-level adapter (2026-08-08)
 
 - ✅ Den fristående callback-adaptern för `DM2_LOAD_LOCALLEVEL_DYN` kräver nu
