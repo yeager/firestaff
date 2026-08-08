@@ -27,10 +27,10 @@ int csb_v1_f0248_local_effect_consume_pc34_compat(
         out_receipt->award_steal_experience = 1;
         out_receipt->leader_only = (source_cell != -1);
     } else {
-        /* F0270 overwrites this pending value with the resolved effect from
-         * F0272. F0271 later rotates only for CLEAR or TOGGLE, so a
-         * resolved SET remains a deliberate no-rotation result. */
-        out_receipt->rotation_effect = sensor_result->resolvedEffect;
+        /* ReDMCSB MOVESENS.C F0272 passes M049_LOCAL_EFFECT (not the
+         * sensor's resolved remote effect) to F0270. F0271 rotates only for
+         * local CLEAR or TOGGLE; local SET is deliberately a no-op. */
+        out_receipt->rotation_effect = sensor_result->localEffectValue;
     }
     return 1;
 }

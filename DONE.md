@@ -36,6 +36,10 @@
 - ✅ Repaired the FM Towns portrait regression to read the launcher’s actual
   selected-package cache (`csb-fmtowns-en/PORTRAIT`); all 24 original CMP
   portraits now decode through the production materialization route.
+- ✅ Deferred CSB C005/C006 local-sensor rotation to the terminal F0271
+  boundary after the full wall-sensor list has been walked. This preserves
+  source order and all subsequent sensor effects, and follows ReDMCSB
+  `MOVESENS.C` F0270/F0271 and `TIMELINE.C` F0248.
 - ✅ Restored the full CMake matrix link contract for
   `probe_dm2_v1_world_state`: the probe now includes the direct HUD-helper
   implementation required by its champion-stat bridge, resolving the

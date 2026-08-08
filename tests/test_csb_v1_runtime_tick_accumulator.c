@@ -4337,8 +4337,12 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
           "C06 wall local-effect gate rotates same-cell sensors");
     CHECK((test_get_le16(raw, 70) & 0x007fu) == 0u,
           "C06 wall local-effect once-only gate disables the triggering sensor");
-    CHECK(profile.timeline_queue.eventCount == 0,
-          "C06 wall local-effect gate queues no remote square effect");
+    /* ReDMCSB TIMELINE.C F0248 walks every C005 on the square before its
+     * terminal F0271 rotation. The next, non-local gate is therefore still
+     * entitled to enqueue its own remote effect; local rotation is not a
+     * short-circuit for later sensors. */
+    CHECK(profile.timeline_queue.eventCount == 1,
+          "C06 local gate preserves the later wall gate's remote square effect");
 
     make_real_format_wall_text_dungeon(
         &dungeon,

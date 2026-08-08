@@ -18743,6 +18743,8 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     memset(&local_result, 0, sizeof(local_result));
                     local_result.triggered = 1;
                     local_result.isLocal = 1;
+                    /* ReDMCSB MOVESENS.C F0272 gives F0270 the encoded
+                     * M049_LOCAL_EFFECT, independently of trigger_effect. */
                     local_result.localEffectValue = local_multiple;
                     if (csb_v1_f0248_local_effect_consume_pc34_compat(
                             &local_result, record->mapX, record->mapY,
@@ -18753,17 +18755,12 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                         } else {
                             pending_local_receipt = local_receipt;
                             has_pending_local_rotation = 1;
-                            /* F0272→F0270→F0271: rotate same-cell sensors
-                             * immediately so the walk reads the post-rotation
-                             * next pointer and stops at this sensor. */
-                            if (local_receipt.rotation_effect == DM1_EFFECT_CLEAR ||
-                                local_receipt.rotation_effect == DM1_EFFECT_TOGGLE) {
-                                (void)csb_v1_runtime_rotate_wall_cell_sensors(
-                                    dungeon, record->mapIndex,
-                                    local_receipt.map_x,
-                                    local_receipt.map_y,
-                                    local_receipt.cell);
-                            }
+                            /* ReDMCSB MOVESENS.C F0270/F0271 (lines
+                             * 1080-1097) retains the final local effect and
+                             * rotates only after F0248 has walked the entire
+                             * sensor list.  Altering a Thing's next pointer
+                             * here skips or repeats neighbours and can turn a
+                             * local C005/C006 effect into a remote dispatch. */
                         }
                     }
                 } else {
@@ -18780,8 +18777,16 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
     }
-    (void)has_pending_local_rotation;
-    (void)pending_local_receipt;
+    /* ReDMCSB TIMELINE.C F0248 calls F0271_SENSOR_ProcessRotationEffect at
+     * its list boundary.  One pending receipt is intentional: F0270 keeps
+     * the last local effect seen while processing a square. */
+    if (has_pending_local_rotation && pending_local_receipt.valid &&
+        (pending_local_receipt.rotation_effect == DM1_EFFECT_CLEAR ||
+         pending_local_receipt.rotation_effect == DM1_EFFECT_TOGGLE)) {
+        (void)csb_v1_runtime_rotate_wall_cell_sensors(
+            dungeon, record->mapIndex, pending_local_receipt.map_x,
+            pending_local_receipt.map_y, pending_local_receipt.cell);
+    }
 }
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
