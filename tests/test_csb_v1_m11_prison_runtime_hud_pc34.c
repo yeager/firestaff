@@ -521,16 +521,29 @@ int main(void)
         /* This is intentionally opt-in: a real-media probe must never
          * overwrite the player's normal quicksave.  The caller supplies a
          * disposable path through M11's normal F5/F9 environment override.
-         * ReDMCSB LOADSAVE.C F0433 writes the runtime state; F0435 must
-         * restore that same clock after the Prison handoff. */
+         * ReDMCSB COMMAND.C F0361 opens C140 from Ctrl-S, whose source menu
+         * invokes LOADSAVE.C F0433/F0435.  Exercise that complete route
+         * after the real Prison handoff rather than calling the save helpers
+         * directly. */
         save_path_bound = configured_quicksave_path &&
             strcmp(configured_quicksave_path, quicksave_path) == 0;
         CHECK(save_path_bound,
               "real-data save probe uses its explicit disposable save path");
         if (save_path_bound) {
             saved_game_time = profile ? profile->runtime.game_time : 0u;
-            CHECK(profile && M11_GameView_QuickSave(&view),
-                  "live Prison runtime writes a native CSB quicksave");
+            CHECK(profile &&
+                      M11_GameView_HandleInput(&view,
+                                                M12_MENU_INPUT_DISK_MENU) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      view.csbDiskMenuActive && view.dialogOverlayActive &&
+                      view.dialogChoiceCount == 4 &&
+                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      view.csbDiskMenuSelectedChoice == 2 &&
+                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      !view.csbDiskMenuActive && !view.dialogOverlayActive,
+                  "real Ctrl-S C140 Save and Play writes a native CSB quicksave");
             save_file = fopen(quicksave_path, "rb");
             CHECK(save_file != NULL,
                   "live Prison quicksave materializes at its explicit path");
@@ -542,8 +555,13 @@ int main(void)
             }
             CHECK(profile && profile->runtime.game_time >= saved_game_time,
                   "live Prison runtime remains clocked after saving");
-            CHECK(M11_GameView_QuickLoad(&view),
-                  "live Prison runtime resumes its native CSB quicksave");
+            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DISK_MENU) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      view.csbDiskMenuSelectedChoice == 1 &&
+                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      !view.csbDiskMenuActive && !view.dialogOverlayActive,
+                  "real Ctrl-S C140 Load Saved Game resumes its native CSB quicksave");
             profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
             CHECK(profile && profile->runtime.game_time == saved_game_time &&
                       view.loadGameTick == saved_game_time &&
@@ -554,13 +572,16 @@ int main(void)
                           (CSB_V1_BootProfile *)view.csbBootProfile, NULL),
                       "live Prison session advances its source-owned game clock");
             }
-            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DISK_MENU) ==
                       M11_GAME_INPUT_REDRAW &&
-                      view.returnToMenuConfirmActive && view.quitGuardActive,
-                  "live CSB Prison session opens the source save-and-quit guard");
-            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                      M11_GAME_INPUT_RETURN_TO_MENU,
-                  "CSB save-and-quit accepts the native runtime save route");
+                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      view.csbDiskMenuSelectedChoice == 3 &&
+                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                          M11_GAME_INPUT_RETURN_TO_MENU,
+                  "real Ctrl-S C140 Save and Quit accepts the native runtime save route");
             profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
             CHECK(profile && profile->runtime.game_time == view.lastSaveTick,
                   "CSB save-and-quit records the F0433 runtime clock, not a DM1 world tick");

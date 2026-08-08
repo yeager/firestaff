@@ -34,6 +34,17 @@
 - ✅ This pins the `ENTRANCE.C` F0806 → `COMMAND.C` F0361/F0380 handoff rather
   than treating an inactive title or a static dungeon frame as gameplay.
 
+# CSB PC34 source save-disk transaction regression (2026-08-08)
+
+- ✅ The real-data Prison test now follows the source Ctrl-S/C140 dialog for
+  Save and Play, Load Saved Game and Save and Quit, rather than calling the
+  runtime save helpers directly. It verifies the same native F0433/F0435
+  transaction against the authenticated PC 3.4 `GRAPHICS.DAT` and
+  `DUNGEON.DAT` pair on a disposable host save path.
+- ✅ This locks the complete in-game save-menu handoff cited by ReDMCSB
+  `COMMAND.C` F0361 and `LOADSAVE.C` F0433/F0435; it intentionally does not
+  claim CSBWin DSA-save support.
+
 - ✅ Added a reproducible source-bound capture tool that requires the
   authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
 - ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a
