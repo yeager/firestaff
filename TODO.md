@@ -39,6 +39,13 @@
   Ground-stackens storlek är begränsad till den autentiska kartans rutantal;
   ingen värdgenererad tillväxt får kringgå originalets c_map-kapacitet.
 
+- 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
+  testexklusiv och kan inte längre länkas in i spelbinären. Nästa
+  produktägare ska vara originalets sammanhängande GDAT/SND/DYN4-kö med
+  `c_sound.cpp` som källa, följd av den verkliga SDL- respektive FM
+  Towns-CDDA-backenden. En lokal ljudkö, löst musikindex eller genererat PCM
+  får inte bli reservväg när originaldata saknas.
+
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är bunden till den riktiga
   monterad dungeon eller tom lokal cooldown får inte presenteras som en
   rörlig party.

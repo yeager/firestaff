@@ -19933,6 +19933,12 @@ endif()
     target_include_directories(test_dm2_v1_sound_source_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    # The caller-authored SOUND1..9 model is a direct source-contract
+    # fixture.  It is deliberately compiled only by this focused test; the
+    # playable archive retains the GDAT/SND-bound queue and no private sound
+    # history.
+    target_compile_definitions(test_dm2_v1_sound_source_gate PRIVATE
+        FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE=1)
     target_link_libraries(test_dm2_v1_sound_source_gate PRIVATE firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_sound_source_gate PRIVATE -Wall -Wextra -O2)

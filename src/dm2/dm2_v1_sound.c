@@ -16,12 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE
 static const uint16_t g_skproject_sound_bearing_table[24] = {
     0x25a0u, 0x11f0u, 0x0b00u, 0x0730u, 0x0490u, 0x0290u,
     0x00d0u, 0x0000u, 0x0800u, 0x1700u, 0x2600u, 0x3500u,
     0x4400u, 0x5300u, 0x6200u, 0x7100u, 0x8f00u, 0x9e00u,
     0xad00u, 0xbc00u, 0xcb00u, 0xda00u, 0xe900u, 0xf800u
 };
+#endif
 
 static DM2_V1_MusicScheduledEvent g_dm2_music_events[64];
 static uint16_t g_dm2_music_event_count;
@@ -403,6 +405,15 @@ static int dm2_inspect_hmp(const uint8_t *data,
     return DM2_V1_MUSIC_INSPECT_OK;
 }
 
+/* The following caller-authored c_sound model predates the authenticated
+ * GDAT/SND/DYN4 runtime owner.  It remains valuable for the direct source
+ * contracts, but it must not be linked into Firestaff's playable archive:
+ * a local state/queue would be a second sound history unrelated to an
+ * original GAME_LOAD transaction.  Focused tests explicitly define this
+ * symbol; production keeps only the verified GDAT queue boundary below.
+ *
+ * Source boundary: SKProject SKULLWIN/c_sound.cpp::DM2_SOUND1..9. */
+#ifdef FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE
 static void dm2_v1_skproject_sound_clear_receipt(
     DM2_V1_SkprojectSoundReceipt *receipt)
 {
@@ -1006,6 +1017,7 @@ int dm2_v1_skproject_sound6_sndptr6_allocation(
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
+#endif /* FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE */
 
 /* ── DM2-008 GDAT binding ─────────────────────────────────────────────────
  * Source: skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp

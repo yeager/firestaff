@@ -212,6 +212,21 @@ def verify(repo: Path) -> list[str]:
                 "M11 calls an unbound DM2 compatibility text owner: "
                 f"{source_path.relative_to(repo)}")
 
+    # SOUND1..9's historical local queue accepts caller-authored state and
+    # music maps.  It is useful to its direct contract test but is not an
+    # original GAME_LOAD/GDAT sound owner; the product source must compile it
+    # only behind its explicit fixture definition.
+    sound_path = repo / "src/dm2/dm2_v1_sound.c"
+    if not sound_path.exists():
+        errors.append(f"missing {sound_path}")
+    else:
+        sound = sound_path.read_text(encoding="utf-8")
+        if ("#ifdef FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE" not in sound or
+                "#endif /* FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE */" not in sound):
+            errors.append("DM2 caller-authored SOUND1..9 fixture is not compile-gated")
+    if "FIRESTAFF_DM2_SKPROJECT_SOUND_FIXTURE=1" not in cmake:
+        errors.append("DM2 SOUND1..9 source-contract target lacks its fixture definition")
+
     # Position and outdoor compatibility setters are retained for narrow
     # source-study targets.  They accept caller-authored coordinates, so M11
     # must never use them to promote a parsed File_header pose into a party.

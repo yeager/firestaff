@@ -1,3 +1,17 @@
+# DM2 SOUND1–9 uteslutna från produktbinären (2026-08-08)
+
+- ✅ Den äldre SKProject-inspirerade SOUND1–9-modellen kompileras nu endast
+  av sitt direkta kontraktstest. Den tar emot anroparskapad kö- och
+  musiktillståndsdata och saknade därför originalets sammanhängande
+  GAME_LOAD/GDAT/SND/DYN4-ägare.
+- ✅ Produktbygget behåller den verifierade GDAT-ljudgrinden men exporterar
+  inte längre `dm2_v1_skproject_sound1` till `sound9`. Produktionsgrinden
+  kontrollerar både källgrinden och testdefinitionen så den lokala modellen
+  inte kan återinföras av misstag.
+- ✅ Verifierat med komplett `firestaff`-bygge, SOUND1–9:s kontraktstest,
+  GDAT-ljudtest mot användarens original-`GRAPHICS.DAT` och den verkliga
+  PC-DOS-SKSAVE-korpusen. Inga ljud- eller speldata skapades.
+
 # Nexus retail-format inventory refresh (2026-08-08)
 
 # Nexus startup capture admission hardening (2026-08-08)
