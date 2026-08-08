@@ -7,7 +7,42 @@
 #if !defined(_WIN32)
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
+
+static int test_escaped_newline_normalization(void) {
+#if defined(_WIN32)
+    return 1;
+#else
+    char path[] = "/tmp/firestaff-theron-mainram-XXXXXX";
+    const char *trace =
+        "source=mednafen-pce-instrumented-main-ram-loader\\n"
+        "main_ram_loader_block_transfer logical_pc=2286 physical_pc=1f0286 operation=tia source=c800 destination=0404 length=80\\n"
+        "main_ram_loader_rts logical_pc=228d physical_pc=1f028d\\n"
+        "main_ram_loader_post_rts source_logical_pc=228d source_physical_pc=1f028d logical_pc=2286 physical_pc=1f0286 opcode=e3\\n";
+    Theron_V1MednafenMainRamTraceReceipt receipt;
+    int fd = mkstemp(path);
+    FILE *file;
+    int result;
+
+    if (fd < 0) return 0;
+    file = fdopen(fd, "wb");
+    if (!file) {
+        close(fd);
+        unlink(path);
+        return 0;
+    }
+    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+        unlink(path);
+        return 0;
+    }
+    result = theron_v1_mednafen_main_ram_trace_parse_file(path, &receipt) &&
+             receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_READY &&
+             receipt.first_length == 0x80u;
+    unlink(path);
+    return result;
+#endif
+}
 
 static const char *resolve_real_trace_path(char *path, size_t path_size) {
     const char *configured = getenv("THERON_MEDNAFEN_MAIN_RAM_TRACE");
@@ -61,6 +96,11 @@ int main(void) {
     const char *path = resolve_real_trace_path(discovered_path,
                                                sizeof(discovered_path));
     Theron_V1MednafenMainRamTraceReceipt receipt;
+
+    if (!test_escaped_newline_normalization()) {
+        fprintf(stderr, "FAIL: escaped newline trace normalization\n");
+        return 1;
+    }
 
     if (!path || !path[0]) {
         puts("SKIP: no real Theron Main-RAM loader capture was supplied");

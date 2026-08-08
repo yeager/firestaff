@@ -24,6 +24,48 @@ static int read_line(FILE *file, char *line, size_t capacity) {
     return length > 0;
 }
 
+/* Some early Mednafen probe writers emitted the record separator as the two
+ * bytes "\\n" instead of a physical newline.  Normalize that transport
+ * artifact before parsing; the original file remains the hash identity and
+ * is still re-hashed below. */
+static FILE *normalize_escaped_newlines(FILE *source) {
+    FILE *normalized;
+    int ch;
+
+    if (!source) return NULL;
+    normalized = tmpfile();
+    if (!normalized) return NULL;
+    if (fseek(source, 0L, SEEK_SET) != 0) {
+        fclose(normalized);
+        return NULL;
+    }
+    while ((ch = fgetc(source)) != EOF) {
+        if (ch == '\\') {
+            int next = fgetc(source);
+            if (next == 'n') {
+                ch = '\n';
+            } else {
+                if (fputc(ch, normalized) == EOF ||
+                    (next != EOF && fputc(next, normalized) == EOF)) {
+                    fclose(normalized);
+                    return NULL;
+                }
+                continue;
+            }
+        }
+        if (fputc(ch, normalized) == EOF) {
+            fclose(normalized);
+            return NULL;
+        }
+    }
+    if (ferror(source) || fflush(normalized) != 0 ||
+        fseek(normalized, 0L, SEEK_SET) != 0) {
+        fclose(normalized);
+        return NULL;
+    }
+    return normalized;
+}
+
 static int reject(Theron_V1MednafenMainRamTraceReceipt *receipt) {
     receipt->status = THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_REJECTED;
     receipt->semantic_publication_allowed = 0;
@@ -84,6 +126,18 @@ int theron_v1_mednafen_main_ram_trace_parse_file(
         receipt.status = THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_UNAVAILABLE;
         *out = receipt;
         return 1;
+    }
+
+    {
+        FILE *normalized = normalize_escaped_newlines(file);
+        if (!normalized) {
+            fclose(file);
+            receipt.status = THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_UNAVAILABLE;
+            *out = receipt;
+            return 1;
+        }
+        fclose(file);
+        file = normalized;
     }
 
     while (read_line(file, line, sizeof(line))) {

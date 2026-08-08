@@ -14,6 +14,11 @@ the M11 Theron runtime, but per-entry semantic Track 02 dungeon-table binding,
 broader loader parity, runtime playability proof, and reviewed screenshot
 promotion are still active work.
 
+The loader sidecar importer accepts the literal `\\n` record separators found
+in the early local Mednafen artifact. Normalization is parser-only: the source
+file is still hashed as-is, and the receipt remains limited to loader
+coordinates rather than semantic publication.
+
 The strongest current proof is:
 
 - `tier1_strict_boot_probe`: JP canonical, JP extras, and US extras reach the

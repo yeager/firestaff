@@ -2582,6 +2582,10 @@ level or consumer bindings.
   host-input capture reproduce the same absence. Keep the `$2600`/object/level/
   tile/palette/HUD/viewport gates closed. The capture script now accepts
   `run` as an alias for its physical `return`/Run key.
+  2026-08-08 parser hardening: the loader-sidecar reader now normalizes the
+  literal `\\n` separators emitted by the early probe writer before parsing.
+  The original file bytes remain the MD5 identity, and the regression accepts
+  the local two-transfer capture without opening semantic publication.
   2026-08-06 static-listing update: the checked-in bank-$1f disassembly now
   includes the authenticated `$2386–$23a3` output-size caller and
   `$23ad–$243d` resource framing/variable-bit entry. This strengthens the

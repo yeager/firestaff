@@ -6779,3 +6779,17 @@
 - Kept the boundary non-promoting. DSA descriptions and program words remain in the caller buffer, no runtime profile changes, and game-info, trace data, and level-index bytes remain separate follow-up formats.
 - Extended the data-free classifier test with positive, checksum-reject, action-count-reject, and input-immutability coverage.
 - ✅ 2026-07-11 DM2 TITLE/0 raw-menu fallback regression: corrected the M11 startup profile gate to model skproject `SkWinCore::SHOW_MENU_SCREEN` lines 55187-55199 exactly: `TITLE/0 dt07/4` is consumed as the complete 320x200 menu only when that typed raw entry exists; otherwise the decoded `dtImage/4` menu surface and its menu commands remain required. The local verified PC English data takes the image-fallback branch, while the raw branch retains the existing no-overlay contract. Verified after the Nexus `mesh_ref` build repair with a fresh target build and focused CTest: `dm2_v1_boot_profile_smoke`, `dm2_v1_m11_startup_profile_gate`, and `dm2_v1_runtime_handoff_smoke` passed 3/3.
+# 2026-08-08 Theron loader sidecar normalization
+
+- ✅ Hardened `theron_v1_mednafen_main_ram_trace_parse_file()` for the actual
+  early Mednafen artifact format, which wrote record separators as literal
+  `\\n` bytes. Parsing normalizes only an in-memory temporary stream; the
+  original sidecar remains the MD5 identity and semantic publication stays
+  blocked.
+- Added a regression using a complete escaped-separator loader witness. The
+  local real capture now parses as READY with two block transfers, two RTS
+  records, and the source-locked first TIA (`$2286/$1f0286`, `$c800 → $0404`,
+  `0x80` bytes).
+- This fixes capture ingestion only. It does not claim the missing `$2600`
+  consumer, tile/material bank, VCE route, startup animation owner, HUD
+  geometry, or later-level/object semantics.
