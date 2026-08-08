@@ -112,6 +112,13 @@
 - ✅ Verifierat mot originalets karta 0. Ingen dörranimation, låsning eller
   spelmutation har aktiverats utan de återstående originalkonsumenterna.
 
+# DM2 File_header actuator-root intake (2026-08-08)
+
+- ✅ Kanoniska File_header-kartan läser nu direkta DB3-aktuatorrötter med
+  originalens typ-, data-, fördröjnings-, effekt- och målfält.
+- ✅ Verifierat mot PC-DOS karta 0. Aktuering, timers och målmutation är
+  fortsatt spärrade tills deras kompletta sessionägare är återställd.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the

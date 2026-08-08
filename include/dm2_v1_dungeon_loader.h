@@ -1615,6 +1615,12 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapActuatorReceipt *out);
+/* Decode direct DB3 Actuator roots from a canonical File_header map.  This is
+ * payload provenance only; DM2_INVOKE_ACTUATOR, timer and target mutation
+ * remain separately owned transactions. */
+int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out);
 /* Finds one previously materialized direct DB3 root by source map
  * coordinate. This is a lookup-only handoff: it does not invoke the
  * actuator, follow GenericRecord::w0, or mutate a record/timer. */

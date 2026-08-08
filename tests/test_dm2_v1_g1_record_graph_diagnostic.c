@@ -49,6 +49,7 @@ int main(void) {
     DM2_V1_DungeonData d;
     DM2_V1_FileHeaderRuntimeMapReceipt map0;
     DM2_V1_G1RuntimeMapDoorReceipt doors;
+    DM2_V1_G1RuntimeMapActuatorReceipt actuators;
 
     paths[0] = env;
 
@@ -102,6 +103,13 @@ int main(void) {
             &d, 0, &doors) || !doors.committed ||
         doors.door_record_reads != doors.door_root_count) {
         printf("FAIL: File_header map-0 door roots were not retained\n");
+        ++failures;
+    }
+    memset(&actuators, 0, sizeof(actuators));
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
+            &d, 0, &actuators) || !actuators.committed ||
+        actuators.actuator_record_reads != actuators.actuator_root_count) {
+        printf("FAIL: File_header map-0 actuator roots were not retained\n");
         ++failures;
     }
 

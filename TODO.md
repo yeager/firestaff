@@ -22,6 +22,10 @@
   now source-decoded. Bind their original animation, lock/key, sound, button
   and sensor consumers before publishing door transitions to gameplay.
 
+- **DM2-FILE-HEADER-ACTUATOR-RUNTIME:** Canonical map-0 DB3 roots now decode
+  their source target/delay/effect fields. Recover `DM2_INVOKE_ACTUATOR`,
+  DB14/timer ownership and target record mutation before any actuator fires.
+
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media
   into a filename-only fallback or require users to unpack their archives.

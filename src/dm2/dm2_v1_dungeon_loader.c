@@ -3509,6 +3509,64 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     return 1;
 }
 
+int dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_G1RuntimeMapActuatorReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt validation;
+    DM2_V1_G1RuntimeMapActuatorReceipt candidate;
+
+    if (!out || !d || !d->raw_data ||
+        !dm2_v1_dungeon_validate_file_header_runtime_map(
+            d, map, &validation) || !validation.committed) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    for (int x = 0; x < validation.width; ++x) {
+        for (int y = 0; y < validation.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int root;
+            const uint8_t *record;
+            uint16_t w2, w4, w6;
+            DM2_V1_G1DirectActuatorRoot *actuator;
+
+            if (raw < 0) return 0;
+            if ((raw & 0x10) == 0) continue;
+            root = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+            if (root < 0 || root == (int)DM2_THING_END_MARKER ||
+                (((unsigned int)root >> 10) & 0x0fu) != 3u) continue;
+            if (candidate.actuator_root_count >=
+                DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS) return 0;
+            record = dm2_v1_dungeon_get_thing_record(
+                d, (uint16_t)root, NULL, NULL, NULL);
+            if (!record) return 0;
+            w2 = RD16(record + 2); w4 = RD16(record + 4); w6 = RD16(record + 6);
+            actuator = &candidate.actuators[candidate.actuator_root_count++];
+            actuator->x = x; actuator->y = y; actuator->object_id = (uint16_t)root;
+            actuator->index = (uint16_t)root & 0x03ffu;
+            actuator->direction = (uint8_t)((unsigned int)root >> 14);
+            actuator->actuator_type = (uint8_t)(w2 & 0x007fu);
+            actuator->actuator_data = (uint16_t)((w2 >> 7) & 0x01ffu);
+            actuator->graphic_number = (uint8_t)((w4 >> 12) & 0x000fu);
+            actuator->disabled = (uint8_t)((w4 >> 11) & 1u);
+            actuator->delay = (uint8_t)((w4 >> 7) & 0x000fu);
+            actuator->sound_effect = (uint8_t)((w4 >> 6) & 1u);
+            actuator->revert_effect = (uint8_t)((w4 >> 5) & 1u);
+            actuator->action_type = (uint8_t)((w4 >> 3) & 3u);
+            actuator->once_only = (uint8_t)((w4 >> 2) & 1u);
+            actuator->active_status = (uint8_t)(w4 & 1u);
+            actuator->target_direction = (uint8_t)((w6 >> 4) & 3u);
+            actuator->target_x = (uint8_t)((w6 >> 6) & 0x001fu);
+            actuator->target_y = (uint8_t)((w6 >> 11) & 0x001fu);
+            ++candidate.actuator_record_reads;
+        }
+    }
+    if (candidate.actuator_record_reads != candidate.actuator_root_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_g1_runtime_map_actuator_at(
     const DM2_V1_G1RuntimeMapActuatorReceipt *receipt,
     int x,
