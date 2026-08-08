@@ -19,6 +19,7 @@ m11_game_view = (ROOT / "src/engine/m11_game_view.c").read_text(
 )
 engine = (ROOT / "src/nexus/nexus_v1_engine.c").read_text(encoding="utf-8")
 game = (ROOT / "src/nexus/nexus_v1_game.c").read_text(encoding="utf-8")
+world = (ROOT / "src/nexus/nexus_v1_world.c").read_text(encoding="utf-8")
 
 
 def fail(message: str) -> None:
@@ -148,7 +149,7 @@ if "m11_nexus_startup_title_receipt_ready(context, command)" not in m11_game_vie
 # The old production loader passed the synthetic DM1-style (11,29,N) pose
 # into Nexus LEV00. The real retail DGN cell is empty there, so startup must
 # remain blocked until the Saturn start selector is joined to source bytes.
-if "NEXUS_V1_INITIAL_PARTY_X" in engine or "NEXUS_V1_INITIAL_PARTY_Y" in engine:
+if "NEXUS_V1_SYNTHETIC_PARTY_X" in engine or "NEXUS_V1_SYNTHETIC_PARTY_Y" in engine:
     fail("Nexus engine still injects the synthetic initial party pose")
 if "Saturn start pose is not source-bound" not in engine:
     fail("Nexus engine lost the source-bound start gate")
@@ -159,6 +160,14 @@ for required in (
 ):
     if required not in game:
         fail(f"Nexus game state still initializes an unbound party pose: {required}")
+for required in (
+    "world->party_level = -1;",
+    "world->party_x = -1;",
+    "world->party_y = -1;",
+    "world->party_dir = -1;",
+):
+    if required not in world:
+        fail(f"Nexus world still initializes an unbound party pose: {required}")
 
 print(
     "nexus_production_source_boundary: PASS "

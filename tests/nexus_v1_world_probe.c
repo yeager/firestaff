@@ -43,10 +43,10 @@ static void probe_init(void) {
     Nexus_V1_World world;
     nexus_v1_world_init(&world);
 
-    CHECK(world.party_level == 0,       "party_level starts at 0");
-    CHECK(world.party_x == 11,         "party_x = 11 (DM1 entrance)");
-    CHECK(world.party_y == 29,         "party_y = 29 (DM1 entrance)");
-    CHECK(world.party_dir == 0,         "party_dir = 0 (North)");
+    CHECK(world.party_level == -1,      "party_level starts unplaced");
+    CHECK(world.party_x == -1,          "party_x starts unplaced");
+    CHECK(world.party_y == -1,          "party_y starts unplaced");
+    CHECK(world.party_dir == -1,        "party_dir starts unplaced");
     CHECK(world.world_tick == 0,        "world_tick starts at 0");
     CHECK(world.object_count == 0,      "no objects initially");
     CHECK(world.event_count == 0,       "no events initially");

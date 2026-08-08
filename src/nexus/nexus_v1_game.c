@@ -71,7 +71,9 @@ int nexus_v1_game_resolve_dungeon_start(
         *out_receipt = receipt;
         return 0;
     }
-    if (requested_level != NEXUS_V1_INITIAL_PARTY_LEVEL) {
+    /* The resolver is a LEV00-only compatibility seam; the retail pose
+     * itself remains unbound and is never supplied by production startup. */
+    if (requested_level != 0) {
         receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_LEVEL;
         *out_receipt = receipt;
         return 0;

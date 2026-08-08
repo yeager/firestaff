@@ -109,12 +109,13 @@ void nexus_v1_world_hash_inject(Nexus_V1_World *world, uint64_t seed) {
 void nexus_v1_world_init(Nexus_V1_World *world) {
     if (!world) return;
     memset(world, 0, sizeof(*world));
-    /* Nexus startup coordinates are owned by the game-state contract, not
-     * the historical DM1 compatibility fixture. */
-    world->party_level = NEXUS_V1_INITIAL_PARTY_LEVEL;
-    world->party_x = NEXUS_V1_INITIAL_PARTY_X;
-    world->party_y = NEXUS_V1_INITIAL_PARTY_Y;
-    world->party_dir = NEXUS_V1_INITIAL_PARTY_DIR;
+    /* No retail Nexus start selector has been joined to Saturn source bytes.
+     * Keep the native world unplaced; deterministic fixtures must place their
+     * own party explicitly before exercising movement or save logic. */
+    world->party_level = -1;
+    world->party_x = -1;
+    world->party_y = -1;
+    world->party_dir = -1;
     world->world_tick = 0;
     world->state_hash = FNV64_OFFSET;
     printf("Nexus V1 world initialized (%dx%d DMWeb grid, %d levels)\n",

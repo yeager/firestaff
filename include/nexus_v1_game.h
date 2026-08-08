@@ -11,10 +11,10 @@
  * (11,29) is empty. Production startup must obtain the pose from a
  * source-bound Saturn route/capture before mechanics or the viewport consume
  * it. */
-#define NEXUS_V1_INITIAL_PARTY_LEVEL 0
-#define NEXUS_V1_INITIAL_PARTY_X 11
-#define NEXUS_V1_INITIAL_PARTY_Y 29
-#define NEXUS_V1_INITIAL_PARTY_DIR 0
+#define NEXUS_V1_SYNTHETIC_PARTY_LEVEL 0
+#define NEXUS_V1_SYNTHETIC_PARTY_X 11
+#define NEXUS_V1_SYNTHETIC_PARTY_Y 29
+#define NEXUS_V1_SYNTHETIC_PARTY_DIR 0
 
 typedef enum {
     NEXUS_V1_DUNGEON_START_MISSING = 0,

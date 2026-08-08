@@ -737,6 +737,12 @@ static PROBE_NOINLINE void probe_world(void)
        would blow the 8 MB main-thread stack). */
     static Nexus_V1_World world;
     nexus_v1_world_init(&world);
+    /* Explicit synthetic fixture pose; retail Nexus has no source-bound
+       start selector yet and LEV00.DGN cell (11,29) is empty. */
+    world.party_level = 0;
+    world.party_x = 11;
+    world.party_y = 29;
+    world.party_dir = 0;
     CHECK(world.party_level   == 0,   "world.party_level = 0");
     CHECK(world.party_x       == 11,  "world.party_x = 11 (DM1 entrance)");
     CHECK(world.party_y       == 29,  "world.party_y = 29");

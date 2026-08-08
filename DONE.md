@@ -8542,3 +8542,11 @@
   is available. Synthetic fixture probes retain their explicit coordinates.
 - ✅ Added source-boundary checks so the production engine cannot reintroduce
   the synthetic pose or bypass the startup gate.
+
+# Nexus native world pose no longer inherits fixture coordinates (2026-08-08)
+
+- ✅ Changed `nexus_v1_world_init()` to an unplaced `(-1,-1,-1,-1)` pose.
+- ✅ Updated the world regression and parity probe so `(0,11,29,N)` is
+  explicitly labeled as synthetic fixture input rather than native startup.
+- ✅ Extended the production source-boundary verifier to reject restoration of
+  the old world initializer.

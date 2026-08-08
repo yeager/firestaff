@@ -10259,3 +10259,8 @@ as line/circle coordinates or promote them into movement geometry.
   has eight zero bytes at Structure1B cell `(11,29)`, so production now
   refuses startup with an unbound pose. Keep the gate closed until an
   authentic Saturn start selector/capture is joined to the retail bytes.
+
+- **NEXUS-WORLD-POSE-BOUNDARY:** `nexus_v1_world_init()` must remain
+  unplaced until the same Saturn start-selector evidence exists. Fixture
+  probes may set coordinates explicitly, but native world/save state must not
+  inherit `(0,11,29,N)` from the retired compatibility path.
