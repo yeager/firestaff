@@ -2610,6 +2610,8 @@ struct Nexus_V1_Engine {
     Nexus_V1_RlowfixText startup_menu_text_source;
     Nexus_V1_RlowfixTabl startup_menu_tabl_source;
     int startup_menu_text_source_bound;
+    uint8_t *rlowfix_data;
+    size_t rlowfix_size;
     Nexus_V1_Font012Receipt startup_menu_font012[3];
     int startup_menu_font012_bound;
     /* Test/capture seam only: real startup remains zero until the TEXT4/TABL/

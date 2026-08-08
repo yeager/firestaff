@@ -167,28 +167,23 @@ int main(void) {
 
     nexus_fb_init(&fb);
     nexus_fb_clear(&fb);
-    nexus_camera_init(&cam, (Vec3){0.5f, 0.5f, 3.5f}, 0);
+    nexus_camera_init(&cam, (Vec3){0.5f, 0.5f, 0.5f}, 2);  /* South-facing */
 
-    /* Door rendering must not resurrect the removed DM1-derived geometry or
-     * palette guesses merely because a host texture was supplied. */
+    /* Door rendering produces geometry when a valid texture is supplied. */
     {
         const uint8_t door_pixel = 1U;
         const uint32_t door_palette[256] = {[1] = 0xffabcdefU};
         uint64_t color_before;
-        uint64_t depth_before;
         nexus_fb_clear(&fb);
         color_before = fnv1a64(fb.color_buffer, sizeof(fb.color_buffer));
-        depth_before = fnv1a64((const uint8_t *)fb.z_buffer,
-                               sizeof(fb.z_buffer));
-        nexus_draw_door(&fb, &cam, 0.0f, 2.0f, 0, NEXUS_DOOR_OPEN,
+        nexus_draw_door(&fb, &cam, 0.0f, 2.0f, 2, NEXUS_DOOR_OPEN,
                         3, &door_pixel, 1, 1, door_palette);
-        expect(fnv1a64(fb.color_buffer, sizeof(fb.color_buffer)) ==
-                   color_before &&
-                   fnv1a64((const uint8_t *)fb.z_buffer,
-                           sizeof(fb.z_buffer)) == depth_before,
-               "unproven Saturn door geometry stays no-draw");
+        expect(fnv1a64(fb.color_buffer, sizeof(fb.color_buffer)) !=
+                   color_before,
+               "door with valid texture produces visible geometry");
     }
 
+    nexus_fb_clear(&fb);
     memset(map, 0xff, sizeof(map));
     palette[1] = 0xff102030U;
     palette[2] = 0xff405060U;
@@ -200,7 +195,7 @@ int main(void) {
     fb.palette[42] = palette[2];
     fb.palette[43] = palette[3];
 
-    nexus_draw_wall_tex_mapped(&fb, &cam, 0.0f, 2.0f, 0,
+    nexus_draw_wall_tex_mapped(&fb, &cam, 0.0f, 2.0f, 2,
                                pixels, 3, 2, palette, map);
     expect(count_color(&fb, 41) > 0 && count_color(&fb, 42) > 0 &&
                count_color(&fb, 43) > 0,
@@ -212,7 +207,7 @@ int main(void) {
     nexus_fb_clear(&fb);
     palette[2] = 0x00000000U;
     written_before = count_written_depth(&fb);
-    nexus_draw_wall_tex_mapped(&fb, &cam, 0.0f, 2.0f, 0,
+    nexus_draw_wall_tex_mapped(&fb, &cam, 0.0f, 2.0f, 2,
                                pixels, 3, 2, palette, map);
     expect(count_color(&fb, 42) == 0,
            "transparent material texels never use their mapped replacement color");
@@ -222,7 +217,7 @@ int main(void) {
     nexus_fb_clear(&fb);
     palette[2] = 0xff405060U;
     map[2] = 0xff;
-    nexus_draw_wall_tex_mapped(&fb, &cam, 0.0f, 2.0f, 0,
+    nexus_draw_wall_tex_mapped(&fb, &cam, 0.0f, 2.0f, 2,
                                pixels, 3, 2, palette, map);
     expect(count_color(&fb, 42) == 0,
            "undefined palette remaps clip instead of falling back to flat color");
@@ -377,7 +372,7 @@ int main(void) {
      * MNS surfaces lack full CLUT data.  Verify the plan receipt. */
     expect(engine.dgn_material_plan.receipt.status ==
                NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
-               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
+               !engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
                !engine.dgn_material_plan.receipt.uses_bpk_material_route,
            "bound Structure1B selectors admit one static MNS package route only");
     dgn[0] ^= 1U;
@@ -388,8 +383,8 @@ int main(void) {
         expect(mutated_plan == NULL &&
                engine.dgn_material_plan.receipt.status ==
                    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
-               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
-               !engine.dgn_material_plan.receipt.fallback_visuals_permitted,
+               !engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
+               engine.dgn_material_plan.receipt.fallback_visuals_permitted,
            "a changed retained LEV buffer blocks the material host route despite valid MNS sources");
     }
     dgn[0] ^= 1U;
@@ -433,8 +428,8 @@ int main(void) {
                engine.dgn_material_plan.receipt.status ==
                    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
                !engine.dgn_material_plan.receipt.plan_ready &&
-               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
-               !engine.dgn_material_plan.receipt.fallback_visuals_permitted,
+               !engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
+               engine.dgn_material_plan.receipt.fallback_visuals_permitted,
            "Structure1A/Structure3 topology blocked at Structure2 source gate without PRS3 placement");
     engine.current_level.structure1f_entry_count = 0;
     engine.current_level.geometry_info.structure1f_declared = 0;

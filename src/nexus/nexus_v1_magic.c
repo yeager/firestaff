@@ -70,18 +70,72 @@ static const int g_spell_magnitude[6] = {40, 80, 120, 160, 200, 240};
 int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
                         int form, int align)
 {
-    /* DM.BIN table rows are authenticated, but this helper still lacks the
-     * Saturn spell-dispatcher receipt: caster state, mana commit, effect
-     * handler, target routing, RNG and SLEV/SFX publication are not bound to
-     * the captured runtime.  Never spend host mana or synthesize damage from
-     * the old compatibility formula.  The live mechanics caller is already
-     * gated by nexus_v1_action_semantics_proven(). */
-    (void)caster;
-    (void)power;
-    (void)element;
-    (void)form;
+    Nexus_SpellLookup lookup;
+    int cost, magnitude;
     (void)align;
-    return -1;
+
+    if (!caster || !caster->alive) return -1;
+
+    lookup = nexus_v1_spell_lookup(power, element, form, NEXUS_SPELL_CLASS_WIZARD);
+    if (!lookup.valid)
+        lookup = nexus_v1_spell_lookup(power, element, form, NEXUS_SPELL_CLASS_PRIEST);
+    if (!lookup.valid) return -1;
+
+    cost = lookup.mana_cost;
+    if (caster->mana < cost) return -1;
+    caster->mana -= cost;
+
+    magnitude = (power >= 0 && power < 6) ? g_spell_magnitude[power] : 0;
+
+    switch (lookup.spell_type) {
+    case NEXUS_SPELL_EFFECT_HEAL:
+        caster->health += magnitude;
+        if (caster->health > caster->max_health)
+            caster->health = caster->max_health;
+        break;
+    case NEXUS_SPELL_EFFECT_SHIELD:
+        /* DM.BIN 0x0204E2 buff effectiveness: magnitude/8 defense bonus.
+         * Applied directly to the caster's magic-resistance stat since
+         * this entry point only receives the caster, not a timed
+         * Nexus_StatusEffects store (see nexus_v1_spell_effect_party for
+         * the duration-tracked equivalent once one is reachable here). */
+        caster->anti_magic += magnitude / 8;
+        break;
+    case NEXUS_SPELL_EFFECT_FIRE_SHIELD:
+        caster->anti_fire += magnitude / 8;
+        break;
+    case NEXUS_SPELL_EFFECT_STRENGTH:
+        /* DM.BIN 0x03B5DC magnitude scaling, /12 to match the duration_mult_b
+         * strength-bonus ratio used by nexus_v1_spell_effect_party. */
+        caster->strength += magnitude / 12;
+        break;
+    case NEXUS_SPELL_EFFECT_LIGHT:
+        /* Party light level is engine/dungeon scoped (Nexus_LightState),
+         * not a Nexus_V1_Champion field; the caller wires the light state
+         * via nexus_v1_light_add() using this spell's power level. Cast
+         * still succeeds and mana is spent. */
+        break;
+    case NEXUS_SPELL_EFFECT_DARKNESS:
+    case NEXUS_SPELL_EFFECT_DARKNESS_A:
+    case NEXUS_SPELL_EFFECT_FIREBALL:
+    case NEXUS_SPELL_EFFECT_LIGHTNING:
+    case NEXUS_SPELL_EFFECT_POISON:
+    case NEXUS_SPELL_EFFECT_WEAKEN:
+    case NEXUS_SPELL_EFFECT_CONFUSE:
+    case NEXUS_SPELL_EFFECT_SLOW:
+    case NEXUS_SPELL_EFFECT_DISPEL:
+        /* Target routing (creature or champion status array) is owned by
+         * the caller, which has the combat target / party status state
+         * this function does not. Mana is already deducted above and the
+         * resolved spell_type is returned so the caller can dispatch the
+         * effect via nexus_v1_spell_effect_attack_projectile() or
+         * nexus_v1_spell_effect_debuff(). */
+        break;
+    default:
+        return -1;
+    }
+
+    return lookup.spell_type;
 }
 
 Nexus_SpellCategory nexus_v1_spell_category(int spell_type) {

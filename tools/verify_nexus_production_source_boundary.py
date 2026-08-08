@@ -57,11 +57,9 @@ for exclusion in (
     r"nexus_v1_warning_dgt2_resource_corpus\\.c$",
     r"nexus_v1_mns\\.c$",
     r"nexus_v1_dgn_texture_decode\\.c$",
-    r"nexus_v1_magic\\.c$",
-    r"nexus_v1_combat\\.c$",
-    r"nexus_v1_experience\\.c$",
-    r"nexus_v1_status\\.c$",
-    r"nexus_v1_rest\\.c$",
+    r"nexus_v1_combat_runtime_noop\\.c$",
+    r"nexus_v1_magic_runtime_noop\\.c$",
+    r"nexus_v1_experience_runtime_noop\\.c$",
     r"nexus_v1_action_world_runtime_noop\\.c$",
     r"nexus_v1_light_runtime_noop\\.c$",
     r"nexus_v1_saturn_font_runtime_noop\\.c$",
@@ -103,19 +101,26 @@ for required_noop in (
 ):
     if required_noop not in runtime_body:
         fail(f"capture-gated production adapter missing: {required_noop}")
-for required_noop in (
-    'nexus_v1_rest_status_runtime_noop.c',
-    'nexus_v1_combat_runtime_noop.c',
-    'nexus_v1_magic_runtime_noop.c',
-    'nexus_v1_experience_runtime_noop.c',
+# Gameplay modules are promoted: real implementations are in the glob,
+# noop adapters are excluded.
+for promoted_real in (
+    'nexus_v1_magic.c',
+    'nexus_v1_combat.c',
+    'nexus_v1_experience.c',
+    'nexus_v1_status.c',
+    'nexus_v1_rest.c',
+    'nexus_v1_item_use.c',
+    'nexus_v1_containers.c',
+    'nexus_v1_drops.c',
+    'nexus_v1_shop.c',
 ):
-    if not (ROOT / 'src' / 'nexus' / required_noop).is_file():
-        fail(f"capture-gated gameplay adapter missing from production archive: {required_noop}")
+    if not (ROOT / 'src' / 'nexus' / promoted_real).is_file():
+        fail(f"promoted gameplay module missing: {promoted_real}")
     if re.search(
-        rf'EXCLUDE REGEX "{re.escape(required_noop)}',
+        rf'EXCLUDE REGEX "{re.escape(promoted_real)}',
         body,
     ):
-        fail(f"capture-gated gameplay adapter excluded from production archive: {required_noop}")
+        fail(f"promoted gameplay module is still excluded: {promoted_real}")
 for forbidden in (
     "src/nexus/nexus_v1_rasterizer.c",
     "src/nexus/nexus_v2_hud_runtime.c",

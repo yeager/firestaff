@@ -452,10 +452,10 @@ int nexus_v1_creature_spawn_actor(Nexus_V1_CreatureManager *mgr,
 
     type_idx = nexus_v1_creature_actor_type_for(mgr, model_signature,
                                                 structure3_model_index);
-    /* A model signature identifies geometry only.  Do not promote the actor
-     * to a live creature type until the matching retail CRET record has
-     * supplied its health/combat/AI fields; otherwise a missing RLOWFIX
-     * resource would create a zero-health actor from roster defaults. */
+    /* Only promote to a live type if evidence-gated binding has been
+     * applied (rebind_unbound sets cret_bound on the type). Without
+     * this gate, a model-only binding would promote zero-health roster
+     * defaults before CRET statistics arrive. */
     if (type_idx >= 0 && !mgr->types[type_idx].cret_bound) {
         type_idx = -1;
     }
@@ -573,6 +573,7 @@ int nexus_v1_creature_rebind_unbound(Nexus_V1_CreatureManager *mgr) {
         if (type_idx < 0) continue;
         c->type_index = type_idx;
         c->health = mgr->types[type_idx].health;
+        mgr->types[type_idx].cret_bound = 1;
         if (!c->hidden && c->state == 0) c->state = 1; /* patrol */
         resolved++;
     }

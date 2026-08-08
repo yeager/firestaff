@@ -62,7 +62,7 @@ int main(void) {
         }
     }
 
-    /* Test 5: cast remains capture-gated and does not mutate host state */
+    /* Test 5: cast runs the real DM.BIN spell table and mutates host state */
     {
         Nexus_V1_Champion ch;
         int result;
@@ -73,15 +73,15 @@ int main(void) {
         ch.wizard_level = 5;
         result = nexus_v1_cast_spell(&ch, NEXUS_RUNE_ON, NEXUS_ELEM_FUL,
                                      NEXUS_FORM_IR, 0);
-        if (result != -1) {
-            fprintf(stderr, "FAIL: blocked cast returned %d (expected -1)\n", result);
+        if (result < 0) {
+            fprintf(stderr, "FAIL: cast returned %d (expected >= 0)\n", result);
             fail++;
         } else {
-            if (ch.mana != 500) {
-                fprintf(stderr, "FAIL: blocked cast changed mana to %d\n", ch.mana);
+            if (ch.mana >= 500) {
+                fprintf(stderr, "FAIL: successful cast did not consume mana (%d)\n", ch.mana);
                 fail++;
             } else {
-                printf("  Cast FUL+IR: blocked without Saturn receipt, mana=%d OK\n", ch.mana);
+                printf("  Cast FUL+IR: succeeded, mana=%d OK\n", ch.mana);
             }
         }
     }

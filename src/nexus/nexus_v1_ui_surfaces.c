@@ -1014,7 +1014,7 @@ int nexus_ui_face_prs3_corpus_receipt(const uint8_t *data,
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!data || data_size <= 0 ||
         !nexus_ui_face_compact_walk(data, data_size, -1, NULL)) {
         *out_receipt = receipt;
@@ -1034,7 +1034,7 @@ int nexus_ui_face_prs3_corpus_receipt(const uint8_t *data,
             descriptor.stream_offset > (size_t)data_size ||
             descriptor.stream_size > (size_t)data_size - descriptor.stream_offset) {
             memset(&receipt, 0, sizeof(receipt));
-            receipt.no_draw_only = 1;
+            receipt.no_draw_only = 0;
             *out_receipt = receipt;
             return 0;
         }
@@ -1064,7 +1064,7 @@ int nexus_ui_face_prs3_capture_target(const uint8_t *data,
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
     target.face_index = -1;
-    target.no_draw_only = 1;
+    target.no_draw_only = 0;
     if (!data || data_size <= 0 || !source_hash_verified ||
         !nexus_ui_face_compact_record_descriptor(data, data_size, face_index,
                                                  &target.descriptor) ||
@@ -1115,7 +1115,7 @@ int nexus_ui_face_prs3_capture_campaign(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!data || data_size <= 0 || !source_hash_verified) {
         *out_receipt = receipt;
         return 0;
@@ -1135,7 +1135,7 @@ int nexus_ui_face_prs3_capture_campaign(
             target.decoder_permitted || !target.no_draw_only ||
             target.fallback_visuals_permitted) {
             memset(&receipt, 0, sizeof(receipt));
-            receipt.no_draw_only = 1;
+            receipt.no_draw_only = 0;
             *out_receipt = receipt;
             return 0;
         }
@@ -1154,7 +1154,7 @@ int nexus_ui_face_prs3_capture_campaign(
         if (receipt.total_stream_byte_count > SIZE_MAX -
             target.descriptor.stream_size) {
             memset(&receipt, 0, sizeof(receipt));
-            receipt.no_draw_only = 1;
+            receipt.no_draw_only = 0;
             *out_receipt = receipt;
             return 0;
         }

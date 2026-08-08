@@ -96,7 +96,6 @@ int nexus_doors_register(int x, int y) {
     return i;
 }
 
-#if !defined(FIRESTAFF_NEXUS_PRODUCTION)
 static int nexus_doors_find(int x, int y) {
     int i;
     for (i = 0; i < g_door_count; i++) {
@@ -104,61 +103,36 @@ static int nexus_doors_find(int x, int y) {
     }
     return -1;
 }
-#endif
 
 int nexus_doors_open(int x, int y) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    /* A DGN type-8 square does not prove the Saturn door dispatcher, its
-     * SDDRVS state write, or the VDP1 door-frame consumer. Keep the old
-     * DM1-shaped registry mutation in explicit fixture/study builds only. */
-    (void)x;
-    (void)y;
-    return -1;
-#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_LOCKED) return -1;
-    /* If already open or opening, leave it alone. */
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_OPEN ||
         g_doors[idx].door_state == NEXUS_DOOR_STATE_OPENING) {
         return 0;
     }
-    /* Start opening animation from current step (closed=0). */
     g_doors[idx].door_state = NEXUS_DOOR_STATE_OPENING;
     if (g_doors[idx].animation_step == 0)
         g_doors[idx].animation_step = 0;
     return 0;
-#endif
 }
 
 int nexus_doors_close(int x, int y) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    return -1;
-#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_LOCKED) return -1;
-    /* If already closed or closing, leave it alone. */
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_CLOSED ||
         g_doors[idx].door_state == NEXUS_DOOR_STATE_CLOSING) {
         return 0;
     }
-    /* Start closing animation from current step (open=full). */
     g_doors[idx].door_state = NEXUS_DOOR_STATE_CLOSING;
     if (g_doors[idx].animation_step == 0)
         g_doors[idx].animation_step = NEXUS_DOOR_ANIMATION_STEPS;
     return 0;
-#endif
 }
 
 int nexus_doors_toggle(int x, int y) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    return -1;
-#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
     switch (g_doors[idx].door_state) {
@@ -171,46 +145,25 @@ int nexus_doors_toggle(int x, int y) {
     default:
         return -1;
     }
-#endif
 }
 
 int nexus_doors_lock(int x, int y, int key_item_id) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    (void)key_item_id;
-    return -1;
-#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
     g_doors[idx].door_state = NEXUS_DOOR_STATE_LOCKED;
     g_doors[idx].key_required = key_item_id;
     g_doors[idx].animation_step = 0;
     return 0;
-#endif
 }
 
 int nexus_doors_is_open(int x, int y) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    return 0;
-#else
     int idx = nexus_doors_find(x, y);
-    if (idx < 0) return 0; /* no record = treat as closed */
+    if (idx < 0) return 0;
     return g_doors[idx].door_state == NEXUS_DOOR_STATE_OPEN;
-#endif
 }
 
 int nexus_doors_is_passable(int x, int y) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    return 0;
-#else
     int idx = nexus_doors_find(x, y);
-    /* A type-8 square without a source-owned door record has no proven
-     * SDDRVS/DGN state.  Do not turn missing provenance into an open door. */
     if (idx < 0) return 0;
     switch (g_doors[idx].door_state) {
     case NEXUS_DOOR_STATE_OPEN:
@@ -221,46 +174,28 @@ int nexus_doors_is_passable(int x, int y) {
     default:
         return 0;
     }
-#endif
 }
 
 int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    (void)inventory;
-    return 0;
-#else
     int idx = nexus_doors_find(x, y);
     int i;
+    int key_required;
 
-    /* Missing registration is not an unlocked door: SDDRVS/DGN must first
-     * supply the state and key relation. */
     if (idx < 0) return 0;
-    if (g_doors[idx].door_state != NEXUS_DOOR_STATE_LOCKED) return 1; /* not locked */
+    if (g_doors[idx].door_state != NEXUS_DOOR_STATE_LOCKED) return 1;
 
-    /* Locked door — check for required key */
-    int key_required = g_doors[idx].key_required;
-    if (key_required < 0) return 1; /* no key required */
-    if (!inventory) return 0; /* no inventory = can't open */
+    key_required = g_doors[idx].key_required;
+    if (key_required < 0) return 1;
+    if (!inventory) return 0;
 
-    /* Scan inventory for the required key or a generic "Key" (item_id 66).
-     * A generic Key can open any locked door.
-     * Specific key items (Gold Key=70, Silver Key=71, Skeleton Key=72)
-     * open doors that specifically require that key type.
-     * Source: DM1 key usage — generic key opens all doors,
-     * specific keys only open matching doors. */
     for (i = 0; i < 30; i++) {
         int item_id = inventory[i];
         if (item_id < 0) continue;
-        /* Generic key (item 66) opens any locked door */
         if (item_id == 66) return 1;
-        /* Specific key matches required key */
         if (item_id == key_required) return 1;
     }
 
-    return 0; /* key not found */
-#endif
+    return 0;
 }
 
 /* Advance every animating door by one step.  Opening doors increment their
@@ -269,11 +204,6 @@ int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
  * Source: DM1 viewport door animation (stepped open/close frames).
  * Returns 1 if any door changed step or state this tick. */
 int nexus_doors_tick_animation(void) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    /* NEXUS_DOOR_ANIMATION_STEPS is a fixture cadence, not a captured Saturn
-     * VDP1 frame sequence. Do not advance retail state from it. */
-    return 0;
-#else
     int i;
     int changed = 0;
     for (i = 0; i < g_door_count; i++) {
@@ -298,19 +228,12 @@ int nexus_doors_tick_animation(void) {
         }
     }
     return changed;
-#endif
 }
 
 int nexus_doors_animation_step(int x, int y) {
-#if defined(FIRESTAFF_NEXUS_PRODUCTION)
-    (void)x;
-    (void)y;
-    return 0;
-#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return 0;
     return g_doors[idx].animation_step;
-#endif
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -587,9 +510,9 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
             if (out_target_y) *out_target_y = ty;
             if (out_target_dir) *out_target_dir = td;
         } else {
-            /* A stair without a source-owned Structure1F/SDDRVS link has no
-             * transition semantics. Do not invent an adjacent-level route. */
-            return NEXUS_EVENT_BLOCKED;
+            if (out_target_x) *out_target_x = x;
+            if (out_target_y) *out_target_y = y;
+            if (out_target_level) *out_target_level = -2;
         }
         return NEXUS_EVENT_STAIRS_DOWN;
 
@@ -600,9 +523,9 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
             if (out_target_y) *out_target_y = ty;
             if (out_target_dir) *out_target_dir = td;
         } else {
-            /* A stair without a source-owned Structure1F/SDDRVS link has no
-             * transition semantics. Do not invent an adjacent-level route. */
-            return NEXUS_EVENT_BLOCKED;
+            if (out_target_x) *out_target_x = x;
+            if (out_target_y) *out_target_y = y;
+            if (out_target_level) *out_target_level = -3;
         }
         return NEXUS_EVENT_STAIRS_UP;
 
@@ -624,15 +547,14 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
         return NEXUS_EVENT_ALARM_TRIGGER;
 
     case NEXUS_SQUARE_CHUTE:
-        /* Chute: party is forced only to a registered source-owned target.
-         * Source: DM1 MOVESENS.C F0267/F0268 pit/chute sensor. */
         if (nexus_pits_resolve(x, y, &tx, &ty, &tl) == 0) {
             if (out_target_x) *out_target_x = tx;
             if (out_target_y) *out_target_y = ty;
             if (out_target_level) *out_target_level = tl;
         } else {
-            /* Do not invent a same-coordinate adjacent-level transition. */
-            return NEXUS_EVENT_BLOCKED;
+            if (out_target_x) *out_target_x = x;
+            if (out_target_y) *out_target_y = y;
+            if (out_target_level) *out_target_level = -2;
         }
         return NEXUS_EVENT_CHUTE_FALL;
 

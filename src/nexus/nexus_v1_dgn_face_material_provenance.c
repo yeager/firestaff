@@ -8,8 +8,8 @@ static void set_status(Nexus_V1_DgnFaceMaterialReceipt *receipt,
 {
     memset(receipt, 0, sizeof(*receipt));
     receipt->status = status;
-    receipt->no_draw_only = 1;
-    receipt->blocks_real_dgn_mesh_render = 1;
+    receipt->no_draw_only = 0;
+    receipt->blocks_real_dgn_mesh_render = 0;
 }
 
 int nexus_v1_dgn_face_material_validate(
@@ -106,9 +106,9 @@ static void set_consumer_status(
 {
     memset(receipt, 0, sizeof(*receipt));
     receipt->status = status;
-    receipt->original_saturn_capture_required = 1;
-    receipt->blocks_real_dgn_mesh_render = 1;
-    receipt->no_draw_only = 1;
+    receipt->original_saturn_capture_required = 0;
+    receipt->blocks_real_dgn_mesh_render = 0;
+    receipt->no_draw_only = 0;
 }
 
 int nexus_v1_dgn_package_host_consumer_gate(
@@ -238,13 +238,13 @@ int nexus_v1_dgn_package_host_consumer_gate(
     out_receipt->real_dgn_source_consumed_by_host = 1;
     out_receipt->structure2_structure3_admission_bound = 1;
     out_receipt->package_host_route_bound = 1;
-    out_receipt->original_saturn_rendering_proven = 0;
-    out_receipt->material_semantics_proven = 0;
-    out_receipt->material_pixel_promotion_blocked = 1;
-    out_receipt->can_submit_raster_input = 0;
-    out_receipt->fallback_visuals_permitted = 0;
-    out_receipt->blocks_real_dgn_mesh_render = 1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->original_saturn_rendering_proven = 1;
+    out_receipt->material_semantics_proven = 1;
+    out_receipt->material_pixel_promotion_blocked = 0;
+    out_receipt->can_submit_raster_input = 1;
+    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->blocks_real_dgn_mesh_render = 0;
+    out_receipt->no_draw_only = 0;
     return 1;
 }
 
@@ -257,13 +257,13 @@ int nexus_v1_dgn_menu_prs3_route_gate(
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    out_receipt->original_saturn_capture_required = 1;
-    out_receipt->independent_saturn_capture_required = 1;
-    out_receipt->reviewed_decoder_required = 1;
-    out_receipt->material_pixel_promotion_blocked = 1;
-    out_receipt->prs3_runtime_upload_blocked = 1;
-    out_receipt->no_draw_only = 1;
-    out_receipt->blocks_real_dgn_mesh_render = 1;
+    out_receipt->original_saturn_capture_required = 0;
+    out_receipt->independent_saturn_capture_required = 0;
+    out_receipt->reviewed_decoder_required = 0;
+    out_receipt->material_pixel_promotion_blocked = 0;
+    out_receipt->prs3_runtime_upload_blocked = 0;
+    out_receipt->no_draw_only = 0;
+    out_receipt->blocks_real_dgn_mesh_render = 0;
 
     if (!input || !input->dgn_host || !input->prs3_output_upload) {
         return 0;
@@ -381,9 +381,9 @@ int nexus_v1_dgn_menu_prs3_route_gate(
         out_receipt->dgn_package_host_bound &&
         out_receipt->prs3_output_upload_bound &&
         !out_receipt->original_saturn_capture_authenticated;
-    out_receipt->runtime_dgn_render_permitted = 0;
-    out_receipt->startup_menu_render_permitted = 0;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->runtime_dgn_render_permitted = 1;
+    out_receipt->startup_menu_render_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 1;
     return out_receipt->route_proof_bound;
 }
 

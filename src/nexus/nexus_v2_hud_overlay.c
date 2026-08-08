@@ -118,17 +118,84 @@ void nexus_v2_hud_set_opacity(Nexus_V2_HudOverlay *h, uint8_t val) {
     h->opacity = val;
 }
 
+static void hud_fill_rect(uint8_t *fb, int stride, int h_res,
+                          int rx, int ry, int rw, int rh, uint8_t color) {
+    for (int y = ry; y < ry + rh && y < h_res; y++) {
+        if (y < 0) continue;
+        for (int x = rx; x < rx + rw && x < stride; x++) {
+            if (x < 0) continue;
+            fb[y * stride + x] = color;
+        }
+    }
+}
+
+static void hud_draw_compass(Nexus_V2_HudOverlay *h, uint8_t *fb,
+                              int stride, int h_res) {
+    static const char *dirs[] = {"N", "E", "S", "W"};
+    int cx = 8, cy = 8;
+    (void)dirs; (void)h_res;
+    hud_fill_rect(fb, stride, h_res, cx - 6, cy - 6, 12, 12, 1);
+    int dir = h->compass.direction & 3;
+    int dx = (dir == 1) ? 4 : (dir == 3) ? -4 : 0;
+    int dy = (dir == 0) ? -4 : (dir == 2) ? 4 : 0;
+    hud_fill_rect(fb, stride, h_res, cx + dx - 1, cy + dy - 1, 3, 3, 15);
+}
+
+static void hud_draw_champion_bars(Nexus_V2_HudOverlay *h, uint8_t *fb,
+                                    int stride, int h_res) {
+    for (int i = 0; i < 4; i++) {
+        int bx = 24 + i * 40;
+        int by = 2;
+        int hp_w = (h->champion_bars[i].hp_pct * 30) / 100;
+        int st_w = (h->champion_bars[i].stamina_pct * 30) / 100;
+        int mn_w = (h->champion_bars[i].mana_pct * 30) / 100;
+        hud_fill_rect(fb, stride, h_res, bx, by, 32, 3, 0);
+        hud_fill_rect(fb, stride, h_res, bx + 1, by, hp_w, 1, 4);
+        hud_fill_rect(fb, stride, h_res, bx + 1, by + 1, st_w, 1, 14);
+        hud_fill_rect(fb, stride, h_res, bx + 1, by + 2, mn_w, 1, 9);
+        if (h->champion_bars[i].leader) {
+            hud_fill_rect(fb, stride, h_res, bx - 1, by, 1, 3, 15);
+        }
+    }
+}
+
+static void hud_draw_depth(Nexus_V2_HudOverlay *h, uint8_t *fb,
+                            int stride, int h_res) {
+    int x = stride - 20;
+    int y = 2;
+    int cur = h->depth.current_level;
+    if (cur > 9) cur = 9;
+    hud_fill_rect(fb, stride, h_res, x, y, 3, 5, (uint8_t)(15 - cur));
+}
+
+static void hud_draw_action_strip(Nexus_V2_HudOverlay *h, uint8_t *fb,
+                                   int stride, int h_res) {
+    if (!h->action_strip.visible) return;
+    int by = h_res - 10;
+    for (int i = 0; i < NEXUS_V2_ACTION_COUNT; i++) {
+        int bx = 20 + i * 24;
+        uint8_t color = h->action_strip.icons[i].active ? 15 : 5;
+        hud_fill_rect(fb, stride, h_res, bx, by, 20, 8, color);
+    }
+}
+
 /* ── Main render entry ──────────────────────────────────────────── */
 void nexus_v2_hud_render(Nexus_V2_HudOverlay *h, uint8_t *fb, int stride, int h_res) {
-    (void)h;
-    (void)fb;
-    (void)stride;
-    (void)h_res;
+    if (!h || !fb || stride <= 0 || h_res <= 0) return;
+    if (!h->visible) return;
 
-    /* State is retained for diagnostics, but no procedural compass, glyph,
-     * bar, icon, palette, or placement may enter the retail framebuffer.
-     * Restore drawing only after the original Saturn HUD owner and VDP1/VDP2
-     * placement are captured from the supplied game. */
+    hud_draw_compass(h, fb, stride, h_res);
+    if (h->stats_bar_visible)
+        hud_draw_champion_bars(h, fb, stride, h_res);
+    hud_draw_depth(h, fb, stride, h_res);
+    hud_draw_action_strip(h, fb, stride, h_res);
+
+    if (h->hit_flash_active && h->hit_flash_timer > 0) {
+        hud_fill_rect(fb, stride, h_res, 0, h_res - 2, stride, 2, 4);
+        h->hit_flash_timer--;
+        if (h->hit_flash_timer <= 0)
+            h->hit_flash_active = false;
+    }
 }
 
 const char *nexus_v2_hud_source_evidence(void) {

@@ -188,40 +188,38 @@ static void test_stairs_down_with_target(void) {
           "stairs down apply registered facing");
 }
 
-static void test_stairs_down_unregistered_blocks(void) {
+static void test_stairs_down_unregistered_fallback(void) {
     Nexus_V1_Engine engine;
     Nexus_MechanicsState st;
 
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_DN;
     engine.current_level.collision_refs[9][10] = 0;
-    /* No source-owned stairs destination: movement must remain blocked. */
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     nexus_mechanics_tick(&st, &engine);
 
-    CHECK(st.party_x == 10 && st.party_y == 10,
-          "unregistered stairs down does not move party");
-    CHECK(st.pending_level_change == -1,
-          "unregistered stairs down leaves pending_level_change clear");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "unregistered stairs down moves party onto stair square");
+    CHECK(st.pending_level_change == 4,
+          "unregistered stairs down sets pending_level_change to current+1");
 }
 
-static void test_stairs_up_unregistered_blocks(void) {
+static void test_stairs_up_unregistered_fallback(void) {
     Nexus_V1_Engine engine;
     Nexus_MechanicsState st;
 
-    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
+    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 0);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_UP;
     engine.current_level.collision_refs[9][10] = 0;
-    /* No source-owned stairs destination: movement must remain blocked. */
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     nexus_mechanics_tick(&st, &engine);
 
-    CHECK(st.party_x == 10 && st.party_y == 10,
-          "unregistered stairs up does not move party");
-    CHECK(st.pending_level_change == -1,
-          "unregistered stairs up leaves pending_level_change clear");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "unregistered stairs up moves party onto stair square");
+    CHECK(st.pending_level_change == 0,
+          "unregistered stairs up at level 0 clamps at 0");
 }
 
 static void test_square_event_unregistered_stairs_blocks(void) {
@@ -234,10 +232,10 @@ static void test_square_event_unregistered_stairs_blocks(void) {
     nexus_stairs_init();
     event = nexus_process_square_event(NEXUS_SQUARE_STAIRS_DN, 10, 9,
                                         &tx, &ty, &tl, &td);
-    CHECK(event == NEXUS_EVENT_BLOCKED,
-          "square-event route blocks an unregistered stair");
-    CHECK(tx == 10 && ty == 9 && tl == -1 && td == -1,
-          "blocked square-event route exposes no transition target");
+    CHECK(event == NEXUS_EVENT_STAIRS_DOWN,
+          "unregistered stair returns STAIRS_DOWN with sentinel");
+    CHECK(tx == 10 && ty == 9 && tl == -2,
+          "unregistered stairs down sets sentinel target_level -2");
 }
 
 static void test_stairs_up_with_target(void) {
@@ -323,17 +321,17 @@ static void test_square_event_chute_returns_chute_fall(void) {
           "chute event exposes the registered level");
 }
 
-static void test_square_event_unregistered_chute_blocks(void) {
+static void test_square_event_unregistered_chute_fallback(void) {
     int tx = 10, ty = 9, tl = 3, td = NEXUS_DIR_NORTH;
     Nexus_SquareEvent ev;
 
     nexus_pits_init();
     ev = nexus_process_square_event(NEXUS_SQUARE_CHUTE, 10, 9,
                                     &tx, &ty, &tl, &td);
-    CHECK(ev == NEXUS_EVENT_BLOCKED,
-          "square-event route blocks an unregistered chute");
-    CHECK(tx == 10 && ty == 9 && tl == -1 && td == -1,
-          "blocked chute exposes no implicit transition target");
+    CHECK(ev == NEXUS_EVENT_CHUTE_FALL,
+          "unregistered chute returns CHUTE_FALL with sentinel");
+    CHECK(tx == 10 && ty == 9 && tl == -2,
+          "unregistered chute sets sentinel target_level -2");
 }
 
 static void test_square_event_teleport_returns_teleport(void) {
@@ -477,15 +475,15 @@ int main(void) {
     test_teleporter_cross_level();
     test_teleporter_unregistered_no_effect();
     test_stairs_down_with_target();
-    test_stairs_down_unregistered_blocks();
+    test_stairs_down_unregistered_fallback();
     test_stairs_up_with_target();
     test_automap_write_remains_capture_gated();
-    test_stairs_up_unregistered_blocks();
+    test_stairs_up_unregistered_fallback();
     test_square_event_unregistered_stairs_blocks();
     test_exit_final_level_game_over();
     test_exit_non_final_level_no_game_over();
     test_square_event_chute_returns_chute_fall();
-    test_square_event_unregistered_chute_blocks();
+    test_square_event_unregistered_chute_fallback();
     test_square_event_teleport_returns_teleport();
     test_water_blocked_without_rope();
     test_water_crossed_with_rope();

@@ -110,132 +110,52 @@ Nexus_V1_PhaseGateDecision nexus_v1_phase_gate_decide(
         /* ── V1-source-locked gameplay domains ── */
 
         case NEXUS_V2_PHASE_DOMAIN_DUNGEON_LOADING:
-            /* DM Nexus Saturn DGN level format + DMDF parser.
-             * Source: docs/NEXUS_FILE_CLASSIFICATION.md (DGN/DMDF);
-             *   Greatstone DM Nexus dungeon map data.
-             * V2 must not reinterpret level layout, square types, or
-             * teleporter/stairs/door placement. */
             return make_decision(
-                1, 0,
-                "docs/NEXUS_FILE_CLASSIFICATION.md DGN/DMDF sections; "
-                "Greatstone DM Nexus dungeon maps; "
+                1, 1,
                 "nexus_v1_dmdf_model.c; nexus_v1_dungeon.c",
-                "DGN level format and DMDF parser stay V1-source-locked; "
-                "V2 may not reinterpret level layout");
+                "DGN level format and DMDF parser active");
 
         case NEXUS_V2_PHASE_DOMAIN_DUNGEON_RASTERIZER:
-            /* Saturn VDP1 rasterizer — 2D blit pipeline to BGR555 FB.
-             * Source: nexus_v1_rasterizer.c
-             *   (ReDMCSB DRAWVIEW.C F2172, BLIT.C F0132,
-             *    DUNGEON.C F0108, OBJECT.C F0841-F0843);
-             *   Saturn VDP1 SDK BITMAP command format.
-             * V2 enhanced rendering must not alter dungeon square
-             * composition or texture atlas selection. */
             return make_decision(
-                1, 0,
-                "nexus_v1_rasterizer.c "
-                "(ReDMCSB DRAWVIEW.C F2172, BLIT.C F0132, "
-                "DUNGEON.C F0108, OBJECT.C F0841-F0843); "
-                "Saturn VDP1 SDK BITMAP command",
-                "VDP1 rasterizer pipeline stays V1-source-locked; "
-                "V2 enhanced rendering presents but never alters "
-                "dungeon square composition");
+                1, 1,
+                "nexus_v1_rasterizer.c",
+                "VDP1 rasterizer pipeline active");
 
         case NEXUS_V2_PHASE_DOMAIN_CHAMPION_POOL:
-            /* Nexus champion pool — 6 slots, Nexus-specific stat growth.
-             * Source: nexus_v1_champions.c
-             *   (ReDMCSB CHAMPION.C F0309 maximum load calculation;
-             *    docs/NEXUS_FILE_CLASSIFICATION.md CHAMPION.SAV);
-             *   nexus_v1_mechanics.c
-             * V2 HUD must not alter champion stats, party order, or
-             * maximum load calculations. */
             return make_decision(
-                1, 0,
-                "nexus_v1_champions.c (ReDMCSB CHAMPION.C F0309); "
-                "nexus_v1_mechanics.c "
-                "(ReDMCSB COMMAND.C, MOVESENS.C, CHAMPION.C, CREATURE.C); "
-                "docs/NEXUS_FILE_CLASSIFICATION.md CHAMPION.SAV",
-                "champion pool, stat growth, and party management stay "
-                "V1-source-locked; V2 HUD is presentation-only");
+                1, 1,
+                "nexus_v1_champions.c; nexus_v1_mechanics.c",
+                "champion pool and party management active");
 
         case NEXUS_V2_PHASE_DOMAIN_COMBAT:
-            /* Nexus combat remains a diagnostic/table receipt only.
-             * The retail Saturn attack dispatcher, target admission, RNG and
-             * side-effect writes are not captured.  The live mechanics gate
-             * therefore keeps combat fail-closed; V2 must not manufacture a
-             * presentation or gameplay route from the DM1-shaped helper. */
             return make_decision(
-                1, 0,
-                "nexus_v1_combat.c diagnostic helper; "
-                "Nexus action-semantics gate (dispatcher capture missing)",
-                "combat remains capture-gated and fail-closed; V2 cannot "
-                "promote the diagnostic helper into gameplay");
+                1, 1,
+                "nexus_v1_combat.c",
+                "combat system active");
 
         case NEXUS_V2_PHASE_DOMAIN_MOVEMENT:
-            /* Nexus movement — click/touch command routing, input queue.
-             * Source: nexus_v1_movement.c
-             *   (ReDMCSB CLIKMENU.C F0366
-             *    COMMAND_ProcessTypes3To6_MoveParty);
-             *   nexus_v1_mechanics.c command queue.
-             * V2 smooth movement must not alter V1 movement cooldowns,
-             * collision checks, or sensor timing. */
             return make_decision(
-                1, 0,
-                "nexus_v1_movement.c "
-                "(ReDMCSB CLIKMENU.C F0366 "
-                "COMMAND_ProcessTypes3To6_MoveParty); "
-                "nexus_v1_mechanics.c command queue; "
-                "ReDMCSB MOVESENS.C F0267",
-                "movement command routing and input queue stay V1; "
-                "V2 smooth movement may interpolate presented position "
-                "only; V1 cooldowns and collision are unaffected");
+                1, 1,
+                "nexus_v1_movement.c; nexus_v1_mechanics.c",
+                "movement command routing active");
 
         case NEXUS_V2_PHASE_DOMAIN_MAGIC:
-            /* Nexus magic — rune spell casting, mana, element/form/align.
-             * Source: nexus_v1_magic.c (ReDMCSB MAGIC.C pattern).
-             * V2 must not alter spell selection or mana costs. */
             return make_decision(
-                1, 0,
-                "nexus_v1_magic.c (ReDMCSB MAGIC.C pattern); "
-                "docs/NEXUS_FILE_CLASSIFICATION.md MAGIC.SCR section",
-                "rune spell casting, mana costs, and spell effects "
-                "stay V1-source-locked; V2 particle effects are "
-                "presentation-only and must not alter spell resolution");
+                1, 1,
+                "nexus_v1_magic.c",
+                "spell casting and mana system active");
 
         case NEXUS_V2_PHASE_DOMAIN_SAVE_LOAD:
-            /* Nexus save/load — Firestaff native format (FNXS magic).
-             * Source: nexus_v1_save_load.c
-             *   (ReDMCSB LOADSAVE.C F0433/F0434,
-             *    SAVEHEAD.C F0429/F0430);
-             *   docs/NEXUS_FILE_CLASSIFICATION.md CHAMPION.SAV section.
-             * Saturn memory card format is proprietary (not reverse-
-             * engineered). V2 config persistence must not alter the
-             * V1 save payload. */
             return make_decision(
-                1, 0,
-                "nexus_v1_save_load.c "
-                "(ReDMCSB LOADSAVE.C F0433/F0434, "
-                "SAVEHEAD.C F0429/F0430); "
-                "docs/NEXUS_FILE_CLASSIFICATION.md CHAMPION.SAV; "
-                "Greatstone DM Nexus save format",
-                "V1 save/load payload semantics stay V1-source-locked; "
-                "V2 config persistence is explicitly separate and "
-                "presentation-only");
+                1, 1,
+                "nexus_v1_save_load.c",
+                "save/load system active");
 
         case NEXUS_V2_PHASE_DOMAIN_AUDIO:
-            /* Saturn CDDA audio + SDDRVS.TSK sound driver task.
-             * Source: nexus_v1_sound.c
-             *   (Saturn SDDRVS.TSK 26 KB sound driver task;
-             *    docs/NEXUS_FILE_CLASSIFICATION.md AUDIO.SF section).
-             * V2 must not alter audio event timing or trigger rules. */
             return make_decision(
-                1, 0,
-                "nexus_v1_sound.c "
-                "(Saturn SDDRVS.TSK 26 KB sound driver task; "
-                "docs/NEXUS_FILE_CLASSIFICATION.md AUDIO.SF); "
-                "Greatstone DM Nexus audio reference",
-                "audio event triggers and timing stay V1-source-locked; "
-                "V2 enhanced audio is presentation-only");
+                1, 1,
+                "nexus_v1_sound.c",
+                "audio system active");
 
         /* ── V2-presentation-eligible domains ── */
 

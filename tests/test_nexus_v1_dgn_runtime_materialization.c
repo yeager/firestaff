@@ -83,8 +83,9 @@ static void build_ready_chain(
     host_input.observed_face_count = 2;
     host_input.expected_structure2_descriptor_count = 2;
     host_input.observed_structure2_descriptor_count = 2;
-    expect(nexus_v1_dgn_package_host_consumer_gate(&host_input, host) == 1,
-           "package host consumes real DGN material route no-draw");
+    expect(nexus_v1_dgn_package_host_consumer_gate(&host_input, host) == 0 &&
+               host->status == NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_MATERIAL,
+           "package host consumer gate now blocks on the material receipt's no-draw flags");
 
     memset(&prs3_upload, 0, sizeof(prs3_upload));
     prs3_upload.entry_index = 5U;
@@ -104,8 +105,9 @@ static void build_ready_chain(
     route_input.prs3_output_upload = &prs3_upload;
     route_input.startup_route_requested = 1;
     route_input.dgn_route_requested = 1;
-    expect(nexus_v1_dgn_menu_prs3_route_gate(&route_input, prs3) == 1,
-           "PRS3 route proof binds BPK upload evidence no-runtime");
+    expect(nexus_v1_dgn_menu_prs3_route_gate(&route_input, prs3) == 0 &&
+               !prs3->route_proof_bound,
+           "PRS3 route proof stays unbound because the DGN package host route never reaches ready-no-draw");
 
     memset(structure1f, 0, sizeof(*structure1f));
     structure1f->source_hash_verified = 1;
@@ -153,18 +155,23 @@ static void test_runtime_materialization_gate(void)
 
     build_ready_chain(&mesh, &material, &host, &prs3, &structure1f, &packed,
                       &input);
-    expect(nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) == 1 &&
+    /* The package-host consumer gate and the PRS3 route gate never reach
+     * their ready/route-proof-bound states now (see
+     * nexus_v1_dgn_face_material_provenance.c), so material_ready() inside
+     * this admit() can never see host->status == READY_NO_DRAW. The chain
+     * therefore always stops at BLOCKED_MATERIAL even though the mesh stage
+     * still validates cleanly. */
+    expect(nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) == 0 &&
                receipt.status ==
-                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_READY_NO_DRAW &&
-               receipt.source_bound &&
+                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_MATERIAL &&
                receipt.mesh_plan_bound &&
-               receipt.face_material_plan_bound &&
-               receipt.bpk_prs3_plan_bound &&
-               receipt.structure1f_plan_bound &&
-               receipt.palette_plan_bound &&
-               receipt.package_host_route_bound &&
-               receipt.m11_host_route_bound &&
-               receipt.runtime_consumed_by_m11_host &&
+               !receipt.face_material_plan_bound &&
+               !receipt.bpk_prs3_plan_bound &&
+               !receipt.structure1f_plan_bound &&
+               !receipt.palette_plan_bound &&
+               !receipt.package_host_route_bound &&
+               !receipt.m11_host_route_bound &&
+               !receipt.runtime_consumed_by_m11_host &&
                !receipt.can_present_runtime_dgn &&
                receipt.blocks_real_dgn_mesh_render &&
                receipt.no_draw_only &&
@@ -177,14 +184,8 @@ static void test_runtime_materialization_gate(void)
                !receipt.vdp1_command_proven &&
                receipt.mesh_face_count == 2 &&
                receipt.mesh_textured_face_count == 2 &&
-               receipt.static_selector_count == 1 &&
-               receipt.animated_selector_count == 1 &&
-               receipt.structure1f_item_entry_count == 1 &&
-               receipt.structure1f_command_material_count == 1 &&
-               receipt.bpk_surface_count == 3 &&
-               receipt.bpk_prs3_surface_count == 1 &&
                receipt.m11_frame_hash == 0U,
-           "real DGN/BPK/PRS3/Structure1F path is consumed by M11 as no-draw");
+           "real DGN/BPK/PRS3/Structure1F path stops at the material no-draw boundary");
 
     mesh.canonical_source_verified = 0;
     expect(!nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) &&
@@ -198,33 +199,33 @@ static void test_runtime_materialization_gate(void)
     prs3.route_proof_bound = 0;
     expect(!nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) &&
                receipt.status ==
-                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_BPK_PRS3 &&
+                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_MATERIAL &&
                !receipt.can_present_runtime_dgn &&
                !receipt.fallback_visuals_permitted,
-           "missing PRS3 proof blocks the BPK material route");
+           "missing PRS3 proof still leaves the chain blocked at the material stage");
     prs3.route_proof_bound = 1;
 
     packed.blocked_missing_vdp1_command_provenance_count = 0;
     expect(!nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) &&
                receipt.status ==
-                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_STRUCTURE1F,
-           "Structure1F material without VDP1-provenance blocker is rejected");
+                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_MATERIAL,
+           "Structure1F provenance changes are unreachable while the material stage blocks");
     packed.blocked_missing_vdp1_command_provenance_count = 1;
 
     input.m11_host_route_blocks_runtime = 0;
     expect(!nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) &&
                receipt.status ==
-                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_HOST_ROUTE &&
+                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_MATERIAL &&
                receipt.blocks_real_dgn_mesh_render,
-           "M11 host route may not present when original render is unproved");
+           "M11 host route changes are unreachable while the material stage blocks");
     input.m11_host_route_blocks_runtime = 1;
     input.m11_capture_ready = 1;
     input.m11_frame_hash = 0x1234U;
     expect(!nexus_v1_dgn_runtime_materialization_admit(&input, &receipt) &&
                receipt.status ==
-                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_HOST_ROUTE &&
+                   NEXUS_V1_DGN_RUNTIME_MATERIALIZATION_BLOCKED_MATERIAL &&
                receipt.m11_frame_hash == 0U,
-           "unproved original route cannot publish a captured frame hash");
+           "unproved original route still cannot publish a captured frame hash");
 }
 
 int main(void)

@@ -329,11 +329,14 @@ static void probe_real_data(const char *data_dir,
           "DM.BIN is readable and meets the documented 542 KB floor");
     if (dm) dm_hash = fnv1a64(dm, (size_t)dm_size);
 
-    CHECK(nexus_v1_load_level(&engine, 0) == 0,
-          "LEV00.DGN loads through nexus_v1_load_level");
-    CHECK(engine.level_loaded == 1 && engine.current_level.width == 64 &&
-          engine.current_level.height == 64,
-          "level 0 is resident as a 64x64 Nexus level");
+    /* Source-faithful startup gate (nexus_v1_engine.c nexus_v1_load_level):
+     * the retail (11,29,N) start pose was a synthetic DM1 fixture, and no
+     * Saturn start selector has been joined to the loaded retail bytes yet,
+     * so LEV00 startup is deliberately refused. */
+    CHECK(nexus_v1_load_level(&engine, 0) == -1,
+          "LEV00.DGN load refuses unproven Saturn start pose");
+    CHECK(engine.level_loaded == 0,
+          "level 0 is not resident while the Saturn start pose is unproven");
     CHECK(nexus_v1_dgn_static_material_source_receipt(&engine,
                                                        &static_materials) == 0,
           "static MNS material source receipt is available");
@@ -342,9 +345,9 @@ static void probe_real_data(const char *data_dir,
     CHECK(font != NULL && font_size > 0,
           "FONT256.S2D is readable through engine file reader");
     if (font) font_hash = fnv1a64(font, (size_t)font_size);
-    CHECK(engine.font_loaded == 0 &&
+    CHECK(engine.font_loaded == 1 &&
           engine.font.char_count == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
-          "engine retains 242 CG tiles while the unproven text consumer stays closed");
+          "engine loads 242 CG tiles and marks the font as ready");
 
     model_index = nexus_v1_load_model(&engine, "SCORPION.MNS");
     CHECK(model_index >= 0, "SCORPION.MNS loads through nexus_v1_load_model");
@@ -356,15 +359,18 @@ static void probe_real_data(const char *data_dir,
     nexus_viewport_init(&vp);
     nexus_viewport_render(&vp, &engine);
     memset(&dgn_render, 0, sizeof(dgn_render));
+    /* LEV00 is refused above (Saturn start pose is not source-bound), so no
+     * level is resident and the real DGN route is never attempted; the
+     * viewport must still write zero pixels and stay unready. */
     CHECK(nexus_viewport_last_dgn_render_receipt(&vp, &dgn_render) == 0 &&
-          dgn_render.attempted && dgn_render.used_real_dgn_route &&
+          !dgn_render.attempted && !dgn_render.used_real_dgn_route &&
           !dgn_render.fallback_visuals_permitted &&
-          dgn_render.blocked &&
+          !dgn_render.blocked &&
           !dgn_render.ready &&
           dgn_render.rasterized_command_count == 0 &&
           dgn_render.written_pixels == 0 &&
           !dgn_render.captured_frame_ready,
-          "real DGN/MNS viewport route stays capture-required/no-draw");
+          "real DGN/MNS viewport route is not attempted without a resident level");
     memset(&dgn_host_route, 0, sizeof(dgn_host_route));
     CHECK(nexus_viewport_dgn_host_route_receipt(&vp, &engine,
                                                 &dgn_host_route) == 0 &&

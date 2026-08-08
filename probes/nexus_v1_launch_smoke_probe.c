@@ -107,22 +107,34 @@ int main(int argc, char **argv) {
     printf("\n[Step 2: Load Level 0]\n");
     printf("  Loading entrance dungeon (LEV00.DGN)...\n");
 
+    /* Real LEV00.DGN carries an empty Structure1B cell at the former
+     * synthetic party-start selector, and no Nexus Saturn start pose has
+     * been joined to the loaded retail bytes yet ("nexus: remove synthetic
+     * retail start pose"). nexus_v1_load_level(0) now refuses to manufacture
+     * a party pose and permanently blocks level 0 rather than fabricate
+     * one, so this probe asserts that blocked reality instead of a
+     * successful load. */
     rc = nexus_v1_load_level(&engine, 0);
-    PROBE_ASSERT(rc == 0, "nexus_v1_load_level(0) returned 0");
+    PROBE_ASSERT(rc == -1,
+                 "nexus_v1_load_level(0) returns -1 (LEV00 start pose "
+                 "unproven, load is blocked)");
 
-    /* After loading, the current_level and party position should be set */
-    PROBE_ASSERT(engine.current_level.width > 0,
-                 "level width > 0 (got %d)", engine.current_level.width);
-    PROBE_ASSERT(engine.current_level.height > 0,
-                 "level height > 0 (got %d)", engine.current_level.height);
+    /* Level 0 is blocked before geometry or party pose is committed. */
+    PROBE_ASSERT(engine.current_level.width == 0,
+                 "level width == 0 when LEV00 startup is blocked (got %d)",
+                 engine.current_level.width);
+    PROBE_ASSERT(engine.current_level.height == 0,
+                 "level height == 0 when LEV00 startup is blocked (got %d)",
+                 engine.current_level.height);
     PROBE_ASSERT(engine.game.current_level == 0,
                  "game.current_level == 0 (got %d)", engine.game.current_level);
 
-    /* Party should be at a valid position */
-    PROBE_ASSERT(engine.game.party_x >= 0, "party_x >= 0 (got %d)", engine.game.party_x);
-    PROBE_ASSERT(engine.game.party_y >= 0, "party_y >= 0 (got %d)", engine.game.party_y);
-    PROBE_ASSERT(engine.game.party_dir >= 0 && engine.game.party_dir < 4,
-                 "party_dir in [0,3] (got %d)", engine.game.party_dir);
+    /* Party pose stays at its unset sentinel since no start pose was ever
+     * committed for the blocked level. */
+    PROBE_ASSERT(engine.game.party_x == -1, "party_x == -1 (got %d)", engine.game.party_x);
+    PROBE_ASSERT(engine.game.party_y == -1, "party_y == -1 (got %d)", engine.game.party_y);
+    PROBE_ASSERT(engine.game.party_dir == -1,
+                 "party_dir == -1 (got %d)", engine.game.party_dir);
 
     /* Record tick count before ticking */
     uint32_t tick_before = (uint32_t)engine.game.tick_count;

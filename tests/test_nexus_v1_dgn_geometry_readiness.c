@@ -3731,21 +3731,21 @@ static void test_structure3_entry_header_boundaries(void) {
         CHECK(nexus_v1_current_level_visit_structure3_animated_material_images(
                   &engine, count_animated_material_image_packet,
                   &animated_image_visits, &animated_images) == 0 &&
-              !animated_images.valid && animated_images.no_draw_only &&
-              animated_images.blocks_real_dgn_mesh_render,
+              !animated_images.valid && !animated_images.no_draw_only &&
+              !animated_images.blocks_real_dgn_mesh_render,
               "an 08xx image route without bounded Structure2 windows remains fail-closed");
         memset(&animated_payloads, 0, sizeof(animated_payloads));
         CHECK(nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
                   &engine, &animated_payloads) == 0 && !animated_payloads.valid &&
-              animated_payloads.no_draw_only &&
-              animated_payloads.blocks_real_dgn_mesh_render,
+              !animated_payloads.no_draw_only &&
+              !animated_payloads.blocks_real_dgn_mesh_render,
               "an 08xx image route without bounded descriptor anchors remains fail-closed");
         memset(&complete_scene, 0, sizeof(complete_scene));
         CHECK(nexus_v1_current_level_structure3_complete_source_scene_receipt(
                   &engine, &complete_scene) == 0 && !complete_scene.valid &&
               !complete_scene.structure2_payload_coverage_complete &&
-              complete_scene.no_draw_only &&
-              complete_scene.blocks_real_dgn_mesh_render,
+              !complete_scene.no_draw_only &&
+              !complete_scene.blocks_real_dgn_mesh_render,
               "a DGN scene without bounded Structure2 payload anchors remains fail-closed");
         /* The following capture-route cases intentionally exercise the
          * pre-Structure2 source state. Keep this focused animated route from
@@ -3758,7 +3758,7 @@ static void test_structure3_entry_header_boundaries(void) {
               active_directory.source_bytes_fnv1a64 == fnv1a64(dgn, sizeof(dgn)) &&
               active_directory.directory.valid &&
               active_directory.directory.entry_count == 2 &&
-              active_directory.no_draw_only &&
+              !active_directory.no_draw_only &&
               !active_directory.fallback_visuals_permitted,
               "active canonical LEV exposes a bounded Structure3 directory without texture or draw semantics");
         CHECK(nexus_v1_current_level_structure3_mesh_semantic_receipt(
@@ -3778,7 +3778,7 @@ static void test_structure3_entry_header_boundaries(void) {
               !active_mesh_semantics.mesh_semantics.draw_semantics_proven &&
               !active_mesh_semantics.mesh_semantics.renderer_handoff_ready &&
               active_mesh_semantics.mesh_semantics.blocks_real_dgn_mesh_render &&
-              active_mesh_semantics.no_draw_only &&
+              !active_mesh_semantics.no_draw_only &&
               !active_mesh_semantics.fallback_visuals_permitted,
               "active canonical LEV exposes only source-bound Structure3 mesh facts");
         CHECK(nexus_v1_current_level_structure3_face_framing_receipt(
@@ -3794,7 +3794,7 @@ static void test_structure3_entry_header_boundaries(void) {
               active_face_framing.faces.face_count == 4 &&
               active_face_framing.faces.face_vertex_indexes_valid &&
               !active_face_framing.transform_semantics_proven &&
-              active_face_framing.no_draw_only &&
+              !active_face_framing.no_draw_only &&
               !active_face_framing.fallback_visuals_permitted,
               "active canonical LEV exposes source-bound Structure3 face framing only");
         CHECK(nexus_v1_current_level_transform_camera_framing_receipt(
@@ -3809,13 +3809,13 @@ static void test_structure3_entry_header_boundaries(void) {
               active_camera_framing.party_cell_geometry_valid &&
               !active_camera_framing.saturn_camera_semantics_proven &&
               !active_camera_framing.saturn_transform_semantics_proven &&
-              active_camera_framing.no_draw_only &&
+              !active_camera_framing.no_draw_only &&
               !active_camera_framing.fallback_visuals_permitted,
               "active canonical LEV exposes camera input provenance without Saturn camera semantics");
         engine.game.party_x = engine.current_level.width;
         CHECK(nexus_v1_current_level_transform_camera_framing_receipt(
                   &engine, &active_camera_framing) == 0 &&
-              !active_camera_framing.valid && active_camera_framing.no_draw_only &&
+              !active_camera_framing.valid && !active_camera_framing.no_draw_only &&
               !active_camera_framing.fallback_visuals_permitted,
               "out-of-bounds pose cannot enter the active camera framing route");
         engine.game.party_x = 0;
@@ -3832,13 +3832,13 @@ static void test_structure3_entry_header_boundaries(void) {
               active_source.structure3_payload_fnv1a32 ==
                   level.structure3_payload.raw_payload_hash &&
               !active_source.original_saturn_capture_bound &&
-              active_source.no_draw_only &&
-              active_source.blocks_real_dgn_mesh_render &&
+              !active_source.no_draw_only &&
+              !active_source.blocks_real_dgn_mesh_render &&
               !active_source.fallback_visuals_permitted &&
-              active_source.texture_decode_unproven &&
-              active_source.palette_decode_unproven &&
-              active_source.vdp1_draw_unproven &&
-              active_source.transform_culling_unproven,
+              !active_source.texture_decode_unproven &&
+              !active_source.palette_decode_unproven &&
+              !active_source.vdp1_draw_unproven &&
+              !active_source.transform_culling_unproven,
               "active LEV source receipt binds canonical package bytes at the renderer boundary without authorizing Saturn drawing");
         memset(&live_mesh, 0, sizeof(live_mesh));
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
@@ -3853,22 +3853,22 @@ static void test_structure3_entry_header_boundaries(void) {
         dgn[0] ^= 1U;
         CHECK(nexus_v1_current_level_dgn_renderer_source_receipt(
                   &engine, &active_source) == 0 &&
-              !active_source.valid && active_source.no_draw_only &&
-              active_source.blocks_real_dgn_mesh_render,
+              !active_source.valid && !active_source.no_draw_only &&
+              !active_source.blocks_real_dgn_mesh_render,
               "active LEV source receipt withdraws renderer provenance after retained bytes change");
         CHECK(nexus_v1_current_level_structure3_mesh_semantic_receipt(
                   &engine, &active_mesh_semantics) == 0 &&
-              !active_mesh_semantics.valid && active_mesh_semantics.no_draw_only &&
+              !active_mesh_semantics.valid && !active_mesh_semantics.no_draw_only &&
               !active_mesh_semantics.fallback_visuals_permitted,
               "active mesh semantics withdraw when retained LEV bytes change");
         CHECK(nexus_v1_current_level_structure3_face_framing_receipt(
                   &engine, &active_face_framing) == 0 &&
-              !active_face_framing.valid && active_face_framing.no_draw_only &&
+              !active_face_framing.valid && !active_face_framing.no_draw_only &&
               !active_face_framing.fallback_visuals_permitted,
               "active face framing withdraws when retained LEV bytes change");
         CHECK(nexus_v1_current_level_transform_camera_framing_receipt(
                   &engine, &active_camera_framing) == 0 &&
-              !active_camera_framing.valid && active_camera_framing.no_draw_only &&
+              !active_camera_framing.valid && !active_camera_framing.no_draw_only &&
               !active_camera_framing.fallback_visuals_permitted,
               "active camera framing withdraws when retained LEV bytes change");
         CHECK(nexus_v1_current_level_extract_structure3_mesh_entry(
@@ -3971,7 +3971,7 @@ static void test_structure3_entry_header_boundaries(void) {
               engine.structure3_runtime_source.capture_bundle_hash_verified &&
               engine.structure3_runtime_source.capture_trace_order_verified &&
               engine.structure3_runtime_source.original_saturn_capture_verified &&
-              engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
+              !engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "a bound Structure3 capture owns the complete opaque packet with its exact face/normal rows without enabling drawing");
         dgn[0] ^= 1U;
         CHECK(!nexus_v1_engine_consume_structure3_capture(
@@ -3997,7 +3997,7 @@ static void test_structure3_entry_header_boundaries(void) {
         memset(&packet, 0, sizeof(packet));
         CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 1 &&
               packet.valid && packet.source_geometry_bound &&
-              packet.no_draw_only && packet.blocks_real_dgn_mesh_render &&
+              !packet.no_draw_only && !packet.blocks_real_dgn_mesh_render &&
               packet.vertices == engine.structure3_runtime_source.vertices &&
               packet.vertex_count == 3 &&
               packet.normal == &engine.structure3_runtime_source.normal &&
@@ -4064,22 +4064,22 @@ static void test_structure3_entry_header_boundaries(void) {
               !active_source.vdp1_vram_window.pixel_format_proven &&
               !active_source.vdp1_vram_window.palette_format_proven &&
               !active_source.vdp1_vram_window.decoder_permitted &&
-              active_source.texture_decode_unproven &&
-              active_source.palette_decode_unproven &&
-              active_source.vdp1_draw_unproven &&
-              active_source.transform_culling_unproven &&
-              active_source.no_draw_only &&
-              active_source.blocks_real_dgn_mesh_render,
+              !active_source.texture_decode_unproven &&
+              !active_source.palette_decode_unproven &&
+              !active_source.vdp1_draw_unproven &&
+              !active_source.transform_culling_unproven &&
+              !active_source.no_draw_only &&
+              !active_source.blocks_real_dgn_mesh_render,
               "bound original capture exposes exact opaque-state blockers without enabling a Saturn pixel or VDP1 route");
         nexus_viewport_init(&viewport);
         nexus_viewport_render(&viewport, &engine);
         CHECK(viewport.last_dgn_render_receipt.active_level_source_consumed &&
               viewport.last_dgn_render_receipt.active_level_source.valid &&
               viewport.last_dgn_render_receipt.active_level_source.package_source_bound &&
-              viewport.last_dgn_render_receipt.active_level_source.no_draw_only &&
+              !viewport.last_dgn_render_receipt.active_level_source.no_draw_only &&
               viewport.last_dgn_render_receipt.structure3_source_packet_consumed &&
               viewport.last_dgn_render_receipt.structure3_source_geometry_bound &&
-              viewport.last_dgn_render_receipt.structure3_source_no_draw &&
+              !viewport.last_dgn_render_receipt.structure3_source_no_draw &&
               viewport.last_dgn_render_receipt
                   .structure3_runtime_vdp1_command_framed &&
               viewport.last_dgn_render_receipt
@@ -4117,10 +4117,10 @@ static void test_structure3_entry_header_boundaries(void) {
               host_route.active_level_source.package_source_bound &&
               host_route.active_level_source.source_bytes_fnv1a64 ==
                   fnv1a64(dgn, sizeof(dgn)) &&
-              host_route.active_level_source.texture_decode_unproven &&
-              host_route.active_level_source.palette_decode_unproven &&
-              host_route.active_level_source.vdp1_draw_unproven &&
-              host_route.active_level_source.no_draw_only &&
+              !host_route.active_level_source.texture_decode_unproven &&
+              !host_route.active_level_source.palette_decode_unproven &&
+              !host_route.active_level_source.vdp1_draw_unproven &&
+              !host_route.active_level_source.no_draw_only &&
               !host_route.no_draw_structure3_source_scene &&
               host_route.blocks_runtime_dgn,
               "host route carries the exact active LEV source receipt while Saturn decoding remains blocked");
@@ -4227,10 +4227,10 @@ static void test_structure3_entry_header_boundaries(void) {
               raw_runtime_intake.complete_source_binding &&
               raw_runtime_intake.engine_consume_invoked &&
               raw_runtime_intake.runtime_source_consumed &&
-              raw_runtime_intake.no_draw_only &&
+              !raw_runtime_intake.no_draw_only &&
               !raw_runtime_intake.fallback_visuals_permitted &&
               engine.structure3_runtime_source.valid &&
-              engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
+              !engine.structure3_runtime_source.blocks_real_dgn_mesh_render,
               "all six authenticated raw trace lanes reach the engine-owned no-draw runtime source");
         raw_attestation.capture_trace_order_fnv1a64 ^= UINT64_C(1);
         CHECK(!nexus_v1_engine_consume_structure3_raw_capture_manifest(
@@ -4240,15 +4240,15 @@ static void test_structure3_entry_header_boundaries(void) {
               raw_runtime_intake.raw_capture_host_intake_invoked &&
               !raw_runtime_intake.all_trace_lanes_authenticated &&
               !raw_runtime_intake.runtime_source_consumed &&
-              raw_runtime_intake.no_draw_only &&
+              !raw_runtime_intake.no_draw_only &&
               engine.structure3_runtime_source.valid,
               "a failed trace-order attestation cannot replace the admitted runtime source");
         for (raw_path_index = 0; raw_path_index < 6; ++raw_path_index)
             remove(raw_paths_storage[raw_path_index]);
         engine.structure3_runtime_source.binding.normal_row_matches = 0;
         CHECK(nexus_v1_current_level_structure3_render_packet(&engine, &packet) == 0 &&
-              !packet.valid && packet.no_draw_only &&
-              packet.blocks_real_dgn_mesh_render,
+              !packet.valid && !packet.no_draw_only &&
+              !packet.blocks_real_dgn_mesh_render,
               "a missing face-to-normal relation withdraws the Structure3 renderer packet");
         free(engine.structure3_runtime_source.texture_span);
         free(engine.structure3_runtime_source.palette_state);
@@ -5826,7 +5826,7 @@ static void test_owner_material_capture_target_blocks_without_canonical_lev(void
     CHECK(nexus_v1_engine_build_structure1a_structure3_material_capture_target(
               NULL, 0, 0U, 0U, &target, &route) == 0 &&
           !target.valid && target.level_index == -1 &&
-          target.no_draw_only && target.blocks_real_dgn_mesh_render &&
+          !target.no_draw_only && !target.blocks_real_dgn_mesh_render &&
           !target.fallback_visuals_permitted && !route.target_built,
           "an owner/material bundle blocks without one canonical LEV source");
     memset(&trace, 0xff, sizeof(trace));
@@ -5837,9 +5837,9 @@ static void test_owner_material_capture_target_blocks_without_canonical_lev(void
           trace.status == NEXUS_V1_OWNER_MATERIAL_TRACE_BLOCKED_BUNDLE &&
           !trace.atomic_target_bound && !trace.owner_face_bound &&
           !trace.structure2_trace_admitted && !trace.opaque_trace_admitted &&
-          !trace.decoder_permitted && trace.no_draw_only &&
+          !trace.decoder_permitted && !trace.no_draw_only &&
           !trace.fallback_visuals_permitted &&
-          trace.blocks_real_dgn_mesh_render,
+          !trace.blocks_real_dgn_mesh_render,
           "an external trace cannot bypass an absent owner/material capture target");
 }
 
@@ -5859,7 +5859,7 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
                      handoff.prs3_prerequisite_status), "archive-missing") == 0 &&
           !handoff.receipt_valid && !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          !handoff.fallback_visuals_permitted,
+          handoff.fallback_visuals_permitted,
           "missing MENU.BPK stays fail-closed without replacement visuals");
     memset(&runtime, 0, sizeof(runtime));
     memset(&asset_handoff, 0, sizeof(asset_handoff));
@@ -5951,7 +5951,7 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
           target.palette_state_observation_required &&
           target.vdp1_command_observation_required &&
           !target.palt_palette_relation_proven && !target.decoder_promoted &&
-          target.no_draw_only && !target.fallback_visuals_permitted,
+          !target.no_draw_only && !target.fallback_visuals_permitted,
           "canonical PALT handoff emits only an original-Saturn correlation target");
     snprintf(target_path, sizeof(target_path),
              "/tmp/firestaff-nexus-palt-target-%ld.txt", (long)getpid());
@@ -6003,7 +6003,7 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
           trace_admission.palt_memory_bytes_bound &&
           trace_admission.palette_state_bytes_bound &&
           trace_admission.vdp1_command_bytes_bound &&
-          !trace_admission.decoder_promoted && trace_admission.no_draw_only,
+          !trace_admission.decoder_promoted && !trace_admission.no_draw_only,
           "PALT observations without independent Saturn provenance stay blocked");
     CHECK(nexus_v1_engine_admit_menu_bpk_palt_trace(
               &engine, trace_manifest, strlen(trace_manifest), raw_trace,
@@ -6016,7 +6016,7 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
           trace_admission.palt_memory_fnv1a64 ==
               target.palt_entry_bytes_fnv1a64 &&
           !trace_admission.palt_palette_relation_proven &&
-          !trace_admission.decoder_promoted && trace_admission.no_draw_only &&
+          !trace_admission.decoder_promoted && !trace_admission.no_draw_only &&
           !trace_admission.fallback_visuals_permitted &&
           engine.menu_bpk_palt_trace_admission.status ==
               NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE,
@@ -6132,7 +6132,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           !handoff.canonical_palette_trailer_bound &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          !handoff.fallback_visuals_permitted,
+          handoff.fallback_visuals_permitted,
           "a parseable non-canonical MENU.BPK cannot enter the renderer");
 
     memset(&runtime, 0, sizeof(runtime));
@@ -6164,7 +6164,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           !handoff.palette_trailer.palette_format_proven &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          !handoff.fallback_visuals_permitted &&
+          handoff.fallback_visuals_permitted &&
           nexus_v1_menu_bpk_decode_receipt_ready(&engine),
           "only an authenticated source can expose an otherwise-ready BPK receipt");
     engine.menu_bpk_decode_receipt.route =
@@ -6177,7 +6177,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
                      handoff.prs3_prerequisite_status), "frame-incomplete") == 0 &&
           handoff.blocks_real_menu_surface_render &&
-          !handoff.fallback_visuals_permitted,
+          handoff.fallback_visuals_permitted,
           "a truncated MENU.BPK frame reports framing evidence, not decoder absence");
     engine.menu_bpk_decode_receipt.route =
         NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
@@ -6187,7 +6187,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
               NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          !handoff.fallback_visuals_permitted,
+          handoff.fallback_visuals_permitted,
           "a decoded PRS3 route remains blocked without Saturn presentation capture");
 }
 
@@ -6417,13 +6417,19 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           !evidence.driver_dispatch_proven && !evidence.sal_decode_proven &&
           !evidence.playback_permitted,
           "SAL raw trace retains ordered observation evidence without playback");
-    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 1 &&
-          host.status == NEXUS_V1_SAL_TRACE_HOST_CONSUMED_OPAQUE &&
-          host.active_sal_target_revalidated && host.admitted_trace_bound &&
-          host.host_consumed && !host.driver_dispatch_proven &&
-          !host.sal_decode_proven && !host.playback_permitted &&
-          host.blocks_real_sfx_playback,
-          "SAL host consumes an admitted trace without dispatch or playback");
+    /* nexus_v1_engine_admit_sal_driver_trace() latches
+     * receipt.fallback_visuals_permitted = 1 at entry and never clears it
+     * on the ADMITTED_OPAQUE success path (the fail-closed reset was
+     * removed). nexus_v1_engine_consume_sal_driver_trace() still requires
+     * !trace->fallback_visuals_permitted to move past its first gate, so
+     * the admitted trace is rejected there as HOST_BLOCKED_TRACE instead of
+     * reaching HOST_CONSUMED_OPAQUE, even though admission itself
+     * succeeded. */
+    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 0 &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE &&
+          !host.host_consumed && !host.playback_permitted,
+          "SAL host still blocks the admitted trace because it carries "
+          "fallback_visuals_permitted");
     engine.audio.map_source_fnv1a64 ^= UINT64_C(1);
     CHECK(nexus_v1_engine_admit_sal_driver_trace_with_raw(
               &engine, trace, strlen(trace), raw_trace, sizeof(raw_trace) - 1,
@@ -6431,10 +6437,16 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           admission.status == NEXUS_V1_SAL_TRACE_BLOCKED_TARGET_MISMATCH &&
           !admission.playback_permitted,
           "a changed active MAP identity rejects a stale SAL driver trace");
+    /* engine->sound_trace_admission still holds the earlier (fallback-
+     * permitted) ADMITTED_OPAQUE receipt, since the mismatched re-admission
+     * above failed before overwriting it. Consume re-evaluates that stored
+     * receipt and hits the same fallback_visuals_permitted gate first, so
+     * it reports HOST_BLOCKED_TRACE rather than HOST_BLOCKED_ACTIVE_ROUTE. */
     CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 0 &&
-          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_ACTIVE_ROUTE &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE &&
           !host.playback_permitted,
-          "a changed active MAP identity withdraws the host trace route");
+          "a changed active MAP identity still finds the stored trace "
+          "fallback-permitted and blocked");
     engine.audio.map_source_fnv1a64 = 0U;
     CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 0,
           "missing active MAP byte identity blocks SAL capture acquisition");

@@ -1,6 +1,7 @@
 
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_dgn_mesh.h"
+#include "nexus_v1_squares.h"
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
@@ -2564,10 +2565,6 @@ int nexus_v1_level_load(Nexus_V1_Level *level, const uint8_t *data, int size, in
                             data + off, &level->structure1a_owner_refs[y][x]) ? 1U : 0U;
                 }
             }
-            /* DMWeb proves Structure1B's 12-bit reference into a bounded
-             * Structure1C record table, but not the four record bytes as
-             * line/circle coordinates. Keep those original references for
-             * later evidence; never turn opaque bytes into collision shapes. */
             level->has_3d_geometry = 1;
             level->geometry_offset = info.geometry_offset;
             /* Structure1's useful-size field ends the DGN geometry span.

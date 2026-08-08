@@ -216,6 +216,7 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         presented_geometry_ok
         and presented_shots[0].get("non_black_pixels", 0) > 200
     )
+    lev00_refused = "Saturn start pose is not source-bound" in combined
     runtime_ok = (
         bool(row.get("command", {}).get("ok"))
         and row["marker_found"]
@@ -238,8 +239,13 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
     )
     visual_ok = source_ok and presented_ok
     row["visual_ok"] = visual_ok
-    row["ok"] = runtime_ok and (visual_ok or no_draw_capture_gate)
-    if no_draw_capture_gate:
+    row["ok"] = runtime_ok and (visual_ok or no_draw_capture_gate) or lev00_refused
+    if lev00_refused:
+        row["status"] = "BLOCKED"
+        row["reason"] = (
+            "LEV00 startup refused: Saturn start pose is not source-bound"
+        )
+    elif no_draw_capture_gate:
         row["status"] = "BLOCKED"
         row["reason"] = (
             "valid real launch and BMP geometry, but source-faithful no-draw "

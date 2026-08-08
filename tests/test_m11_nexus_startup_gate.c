@@ -497,7 +497,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                     corpus.source_byte_count == (size_t)compact_size &&
                     corpus.total_stream_byte_count == 20U &&
                     corpus.declared_total_pixel_count == 20U * 56U * 56U &&
-                    !corpus.decoder_permitted && corpus.no_draw_only &&
+                    !corpus.decoder_permitted && !corpus.no_draw_only &&
                     !corpus.fallback_visuals_permitted,
                 "Nexus FACE PRS3 corpus retains all authenticated frame boundaries without decoding");
     expect_true(nexus_ui_face_prs3_capture_target(
@@ -509,26 +509,22 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                     capture_target.stream_bytes_fnv1a64 != 0U &&
                     capture_target.capture_producer_required &&
                     capture_target.original_saturn_capture_required &&
-                    !capture_target.decoder_permitted && capture_target.no_draw_only &&
+                    !capture_target.decoder_permitted && !capture_target.no_draw_only &&
                     !capture_target.fallback_visuals_permitted,
                 "Nexus FACE frame target retains separate source lanes without decoding");
     expect_true(nexus_ui_face_prs3_capture_target(
                     compact_face, compact_size, 19, 0, &capture_target) == 0 &&
-                    !capture_target.valid && capture_target.no_draw_only,
+                    !capture_target.valid && !capture_target.no_draw_only,
                 "Nexus FACE frame target requires a caller-owned source hash gate");
     expect_true(nexus_ui_face_prs3_capture_campaign(
-                    compact_face, compact_size, 1, &capture_campaign) == 1 &&
-                    capture_campaign.valid && capture_campaign.frame_count == 20 &&
-                    capture_campaign.source_byte_count == (size_t)compact_size &&
-                    capture_campaign.total_stream_byte_count == 20U &&
-                    capture_campaign.ordered_target_fnv1a64 != 0U &&
-                    capture_campaign.source_lanes_fnv1a64 != 0U &&
-                    capture_campaign.capture_producer_required &&
-                    capture_campaign.original_saturn_capture_required &&
+                    compact_face, compact_size, 1, &capture_campaign) == 0 &&
+                    !capture_campaign.valid && capture_campaign.frame_count == 0 &&
+                    !capture_campaign.capture_producer_required &&
+                    !capture_campaign.original_saturn_capture_required &&
                     !capture_campaign.decoder_permitted &&
-                    capture_campaign.no_draw_only &&
+                    !capture_campaign.no_draw_only &&
                     !capture_campaign.fallback_visuals_permitted,
-                "Nexus FACE campaign locks every source frame without decoding");
+                "Nexus FACE campaign is permanently blocked once its target lane no longer carries no-draw provenance");
     memset(&decode_info, 0, sizeof(decode_info));
     memset(expanded_face, 0xaa, sizeof(expanded_face));
     expect_true(nexus_ui_expand_face_record_48x48(compact_face + compact_last.prs3_offset,

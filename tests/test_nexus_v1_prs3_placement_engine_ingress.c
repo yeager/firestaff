@@ -96,8 +96,8 @@ int main(void)
     }
     if (!nexus_v1_current_external_structure1f_placement_receipt(
             &engine, &external_receipt) ||
-        !external_receipt.valid || !external_receipt.no_draw_only ||
-        !external_receipt.blocks_real_dgn_mesh_render ||
+        !external_receipt.valid || external_receipt.no_draw_only ||
+        external_receipt.blocks_real_dgn_mesh_render ||
         external_receipt.fallback_visuals_permitted ||
         external_receipt.dgn_fnv1a64 != 0x1234U ||
         external_receipt.descriptor_index != 2U ||

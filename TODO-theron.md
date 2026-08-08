@@ -269,7 +269,7 @@ the remaining SRM blocker is still only original body-layout correlation.
 
 - 🔧 Phase 2 - Enhanced asset pipeline: presentation-mode selection API + filter config + V2.1 EPX upscaler pipeline are wired (`theron_v2_texture_upscale_pc34.c` provides `theron_v2_epx_upscale` indexed→RGBA via PCE palette). The Theron V2.2 manifest parser remains available for fixture inspection, but production now requires `source_provenance="authenticated_track02"`; the existing procedural/gpt-image-2 pack is explicitly rejected as real data. Remaining: obtain source-owned Track 02 bitmap/material records and bind them before enabling V2.2 art.
 
-- 🔧 **2026-06-27 Theron V2 Phase 3 HUD overlay:** `theron_v2_hud_overlay_pc34.c/.h` provides presentation-only HUD overlay for V2 modes on PC Engine 256x224 indexed framebuffer. Tests: `theron_v2_phase3_hud_overlay_probe` (40/40 PASS), `theron_v2_hud_overlay_pc34` (58/58 PASS), `theron_v2_hud_widget_assets_pc34` (105/105 PASS), `firestaff_theron_v2_hud_widget_assets_probe` (65/65 PASS). M11 runtime handoff and overlay seed gate are landed. **Remaining Phase 3 work:** (a) finish PBR top-bar / bottom-panel / action-strip bitmap assets under `~/.firestaff/assets/theron/hud/hud_widgets/` and `~/.firestaff/assets/theron/hud/hud_chrome/`, (b) author an example `~/.firestaff/assets/theron/hud/hud_widget_manifest.json` with `generator != "placeholder"` so the gate can promote to `PARTIAL`/`COMPLETE`, and (c) real-art visual verification + per-region pixel gates against real Track 02 captures.
+- 🔧 **2026-06-27 Theron V2 Phase 3 initial seed landed (presentation-only, data-free):** `theron_v2_hud_overlay_pc34.c/.h` is the Theron-specific sibling of `csb_v2_hud_overlay_pc34.c` + `dm2_v2_hud_overlay.c`. New CTest `theron_v2_phase3_hud_overlay_probe` (40/40 PASS, labels `tier2;theron;v2;phase3;hud;presentation-only`) covers the phase-gate + presentation-mode selector contract (V1_FAITHFUL → no HUD overlay, V20_FILTERED / V21_UPSCALED / V22_MODERN → HUD active), all 6 setters (direction, quest items, dungeon progress 1/7, relic counter 0/7, spell-rune ready indicator, 4-champion bars), render into a 256×224 indexed framebuffer, V1 chrome preservation when V2 inactive, source evidence citations (THQUEST.ASM T520/T560/T600/T700/T800/T900 + HuC6260/HuC6270 + dmweb Theron 7 dungeons + 7 relic goals + sibling csb/dm2 modules), and null safety. Companion smoke test `theron_v2_hud_overlay_pc34` (58/58 PASS, CTest `theron_v2_hud_overlay_pc34`) covers init/reset, hit-flash decay, low-HP pulse trigger, top-bar / stats-bar / action-strip visibility toggles, and per-region pixel-write assertions (compass / quest / dungeon / relic / champion bars / action strip all paint when active, and `visible=0` or `opacity=0` writes zero pixels). HUD surface: top-bar (compass + quest items + dungeon progress 1/7 + relic counter 0/7 + spell-rune ready indicator), bottom-panel (4 champion mini-bars HP/Stamina/Mana with Theron-as-leader at slot 0), and bottom action strip (ATK/CST/USE/DRP/MOV with active underline and hit-flash). Theron-specific surfaces (PC Engine 256×224 indexed fb, HuC6260 VDC layout, 7 dungeons + 7 relic goals, rune magic ready indicator) are mirrored from `dm2_v2_hud_overlay.c` + `csb_v2_hud_overlay_pc34.c`. **2026-06-27 Phase 3 placeholder-vs-real asset gate landed:** `theron_v2_hud_widget_assets_pc34.c/.h` is the Theron-specific sibling of `dm2_v2_hud_widget_assets` (the original Phase 3 gate pattern). New CTest `theron_v2_hud_widget_assets_pc34` (105/105 PASS) and headless probe `firestaff_theron_v2_hud_widget_assets_probe` (65/65 PASS, labels `tier2;theron;v2;phase3;hud;widget-assets;presentation-only`) cover `NOT_PROBED`/`NO_MANIFEST`/`PLACEHOLDER`/`PARTIAL`/`COMPLETE` gates with the NO_MANIFEST-by-default baseline matching the current runtime. Slot table (7 slots, stable order, ordinals = indices): 5 Phase 3 primary (`compass_rose`, `quest_items`, `dungeon_progress`, `relic_counter`, `rune_indicator`, category `hud_widgets`) + 2 chrome supporting (`champion_bars`, `action_strip`, category `hud_chrome`). Manifest schema `{ id, generator, source_file, width, height }` aligned with sibling `theron_v22_modern_assets_pc34` and `dm2_v2_hud_widget_assets` shapes; manifest path `~/.firestaff/assets/theron/hud/hud_widget_manifest.json`. Companion source-lock doc `docs/source-lock/theron_v2_phase3_hud_widget_assets_H2340.md` documents the slot table, schema, gate state machine, M12/Phase 7 integration points, and honest boundary. Source-locked against THQUEST.ASM T520/T560/T600/T700/T800/T900, HuC6260/HuC6270, ReDMCSB PANEL.C F0354 + DUNGEON.C F0260, dmweb Theron overview, `docs/source-lock/tqr_v1_phase2_data_formats_H2339.md`, sibling `dm2_v2_hud_widget_assets.h`. **2026-06-28 runtime handoff landed:** M11 now calls `theron_v2_hud_render()` in the live Theron Track 02 render path after `theron_vp_render_ui()` and before `theron_vp_present()`, gated by non-V1 presentation mode. **2026-06-29 overlay seed gate landed:** `theron_v2_hud_seed_from_v1_world()` now owns the V1-world snapshot mapping and returns explicit `V1_SKIPPED` / `V2_READY` states; `firestaff_theron_v2_overlay_seed_gate_probe` covers V1 hidden/no-paint behavior, V2 field mapping, byte-identical synthetic V1 world state before/after seeding and rendering, deterministic framebuffer output, gate-name stability, and NULL safety. **Remaining Phase 3 work:** (a) finish PBR top-bar / bottom-panel / action-strip bitmap assets under `~/.firestaff/assets/theron/hud/hud_widgets/` and `~/.firestaff/assets/theron/hud/hud_chrome/`, (b) author an example `~/.firestaff/assets/theron/hud/hud_widget_manifest.json` with `generator ≠ "placeholder"` so the gate can promote to `PARTIAL`/`COMPLETE`, and (c) real-art visual verification + per-region pixel gates against real Track 02 captures.
 
 - ❌ Phase 4 - Enhanced lighting/effects.
 
@@ -359,7 +359,44 @@ the remaining SRM blocker is still only original body-layout correlation.
   object-table record to a concrete runtime consumer. Do not infer palette,
   layout, object fields, or draw behavior from the retained startup envelope.
 
-  - Update (latest): the positive decode vector can now feed a production M11
+  - Update 2026-07-20: the chain now generalizes the loader's per-byte
+    loop on original media, and evidence of where the loop terminates or
+    dispatches into a record consumer.
+    Remaining: an authentic capture of the repeated consume/dispatch
+
+  - Update: the render-asset admission receipt can now feed a dungeon-facing
+    real-data handoff receipt only when the same admitted US raw Track 02
+    session carries matching route hashes, payload/envelope/consumer checksums,
+    decoded level/object-table/bitmap/palette hashes, source-byte binding,
+    object-table layout proof, and bitmap/palette decode proof. The handoff
+    explicitly keeps dungeon drawing and fallback visuals closed and rejects
+    synthetic dungeon state, synthetic object layout, synthetic bitmap/palette
+    decode, hash drift, and fallback observation. Remaining: the positive
+    original capture/decoder producer that supplies these real proofs from
+    Track 02 without sidecar or generated visual data.
+
+  - Update: the multilevel Track 02 runtime path can now retain a same-capture
+    bitmap/palette source-window receipt after a real level transition. The
+    receipt binds the selected record, source/target levels, palette raw and
+    MODE1 user-data offsets, palette payload/decode checksums, bitmap atlas
+    route facts, and a combined source hash while explicitly requiring
+    palette decode, bitmap decode, pixel output, M11 render admission, dungeon
+    draw, and fallback visuals to remain closed. Remaining: acquire a positive
+    original loader/decoder trace that proves palette words and bitmap pixels
+    before connecting this source receipt to render-asset or M11 admission.
+
+  - Update: a positive decode-vector receipt now consumes that source-window
+    receipt plus the real US Track 02 bytes and verifies the HuC6260 palette
+    words, the indexed bitmap atlas, route/tile/nonzero-pixel counts, first
+    pixel row hash, and source checksum agreement. This proves a real
+    palette/indexed-pixel vector on the multilevel route, but it deliberately
+    still blocks M11 runtime consumption, M11 rendering, dungeon draw, and
+    fallback visuals. Remaining: capture the original nonstartup dungeon
+    graphics consumer that binds these decoded vectors, or another real
+    Track 02 bitmap/palette window, to the active dungeon level before any
+    render-asset admission or host-surface upload.
+
+  - Update: the positive decode vector can now feed a production M11
     Soul Room runtime-consumption receipt. The receipt selects Track 02 level
     0 through the live `Theron_RuntimeLevelMedia` Soul Room surface, verifies
     exact indexed-atlas route checksum/nonzero pixels/offsets against the
@@ -563,11 +600,99 @@ the remaining SRM blocker is still only original body-layout correlation.
   It remains `no_draw`: cell 0's `SET_GRAPHICS_FLIP_FROM_POSITION` and the
   selected `QUERY_BLIT_RECT` placement/clip chain are not yet proven.
 
-  - 2026-07-17 latest cell consume state: normal (`blitmode=0`) cells 1, 3, 4,
-    6, 7, 11, 12, 14 each admit their exact GRAPHICSSET field, RAW4 rect,
-    independent B073/RAW7 palette receipt and ordered U4 handoff. HFLIP cells
-    2, 5, 8, 13, 15 admit their exact fields/rects with source-locked reverse-X
-    U4 row walk. Every other mirrored or unproven form remains fail-closed.
+  - 2026-07-17 composition update: cells 1..15 now bind their accepted
+    SUMMARY_IMAGE/GFX256 material identity into the current DM2 viewport
+    composition session/data epoch and parent ordering receipt. The receipt
+    explicitly records that PIT_TILE's own draw slot is unresolved, so it
+    cannot consume pixels. The sole remaining promotion precondition is the
+    source's per-cell `QUERY_BLIT_RECT` destination/clip transaction.
+
+  - 2026-07-17 RAW4 placement update: `table1d6c70[cell]` now binds through
+    `DRAW_DUNGEON_GRAPHIC`/`QUERY_PICST_IT` to the exact
+    INTERFACE_GENERAL/0/RAW4 root row, with destination, full material extent
+    and table/row hashes retained in the PIT composition receipt. Chained
+    rectangles, crop and clip grammar remain rejected. It stays no-draw until
+    a PIT-owned ordered composition slot and authenticated buffer handoff are
+    proven together.
+
+  - 2026-07-17 buffer/slot update: PIT_TILE now retains its own authenticated
+    decoded U4 buffer handoff and binds it to the generic DM2 viewport
+    before/after surface snapshot and composition identity. Pointer, extent,
+    stride, palette, material and surface-generation drift reject with no
+    write. The slot deliberately remains no-draw: source proof is still
+    missing for PIT_TILE's normal-branch `DRAW_PICST` row ordering.
+
+  - 2026-07-17 normal-row update: cell 1's `blitmode=0` branch is now bound
+    to `DRAW_PICST`'s top-to-bottom/left-to-right U4 row order and exact RAW4
+    placement identity. It remains no-draw because `DRAW_DUNGEON_GRAPHIC`
+    applies `DM2_query_B073` before that row loop; PIT still lacks its own
+    authenticated transformed palette transaction.
+
+  - 2026-07-17 B073 update: cell 1 now binds `DM2_query_B073`'s RAW7
+    count/left/right/lookup palette program to its material, RAW4 placement
+    and normal-row receipt. RAW7, placement or palette drift rejects. The
+    transformed palette remains no-draw until alpha ownership and the final
+    ordered handoff consumer are jointly admitted.
+
+  - 2026-07-17 cell-1 consume update: only cell 1's normal (`blitmode=0`)
+    path now consumes the authenticated U4 handoff through B073's transformed
+    palette and low-nibble alpha into the current ordered owner surface. All
+    other PIT cells, mirrors, crops and chained clips remain fail-closed.
+
+  - 2026-07-17 cell-3 consume update: cell 3's independent normal
+    (`blitmode=0`) route now admits only its exact GRAPHICSSET field `0x6e`,
+    RAW4 rect `0x35b`, B073 transaction and ordered U4 handoff. Cell 2 and all
+    other mirrored or unproven normal forms remain fail-closed.
+
+  - 2026-07-17 cell-4 consume update: cell 4's separate normal
+    (`blitmode=0`) route admits only GRAPHICSSET field `0x6f`, RAW4 rect
+    `0x35a`, an independent B073/RAW7 palette receipt and its ordered U4
+    handoff. Cell 2 and every other mirrored or unproven normal form remain
+    fail-closed.
+
+  - 2026-07-17 cell-6 consume update: cell 6's separate normal
+    (`blitmode=0`) route admits only GRAPHICSSET field `0x71`, RAW4 rect
+    `0x358`, an independent B073/RAW7 palette receipt and its ordered U4
+    handoff. Every mirrored or unproven normal form remains fail-closed.
+
+  - 2026-07-17 cell-7 consume update: cell 7's separate normal
+    (`blitmode=0`) route admits only GRAPHICSSET field `0x72`, RAW4 rect
+    `0x357`, an independent B073/RAW7 palette receipt and its ordered U4
+    handoff. Every mirrored or unproven normal form remains fail-closed.
+
+  - 2026-07-17 cell-11 consume update: cell 11's separate normal
+    (`blitmode=0`) route admits only GRAPHICSSET field `0x76`, RAW4 rect
+    `0x355`, an independent B073/RAW7 palette receipt and its ordered U4
+    handoff. Every mirrored or unproven normal form remains fail-closed.
+
+  - 2026-07-17 cell-12 consume update: cell 12's separate normal
+    (`blitmode=0`) route admits only GRAPHICSSET field `0x77`, RAW4 rect
+    `0x354`, an independent B073/RAW7 palette receipt and its ordered U4
+    handoff. Every mirrored or unproven normal form remains fail-closed.
+
+  - 2026-07-17 cell-14 consume update: cell 14's separate normal
+    (`blitmode=0`) route admits only GRAPHICSSET field `0x79`, RAW4 rect
+    `0x352`, an independent B073/RAW7 palette receipt and its ordered U4
+    handoff. Every mirrored or unproven normal form remains fail-closed.
+
+  - 2026-07-17 cell-2 HFLIP consume update: cell 2 admits only GRAPHICSSET
+    field `0x6c`, RAW4 rect `0x35f`, B073/RAW7, and its own source-locked
+    reverse-X U4 row walk. Crop, chained clips, vertical flip and all other
+    mirror cells remain fail-closed.
+
+  - 2026-07-17 cell-5 HFLIP consume update: cell 5 admits only GRAPHICSSET
+    field `0x6f`, RAW4 rect `0x35c`, B073/RAW7 and its own source-locked
+    reverse-X U4 row walk. All other mirrored forms remain fail-closed.
+
+  - 2026-07-17 cell-8 HFLIP consume update: cell 8 admits only GRAPHICSSET
+    field `0x72`, RAW4 rect `0x359`, B073/RAW7 and its own source-locked
+    reverse-X U4 row walk. All other mirrored forms remain fail-closed.
+
+  - 2026-07-17 cell-13 HFLIP consume update: cell 13 admits only GRAPHICSSET
+    field `0x77`, RAW4 rect `0x356`, B073/RAW7 and its source-locked reverse-X
+    U4 row walk. All other mirrored forms remain fail-closed.
+
+  - 2026-07-17 cell-15 HFLIP consume update: cell 15 admits only GRAPHICSSET field `0x79`, RAW4 rect `0x353`, B073/RAW7 and its source-locked reverse-X U4 row walk.
 
   - 2026-07-17 crop/chained-clip update: `QUERY_BLIT_RECT` source-coordinate mutation remains no-draw behind a source-locked PIT provenance receipt; root RAW4 does not prove crop or chaining.
 
@@ -614,34 +739,214 @@ the remaining SRM blocker is still only original body-layout correlation.
   exact 0/1/2 delegated-call count and `table1d6afe` orientation; it remains
   no-draw because `DM2_guivp_32cb_15b8` has separate unbound GDAT transforms.
 
-  - 2026-07-17 DRAW_TEMP_PICST admission (latest): three category-8/9
-    `32cb_15b8` input receipts combine with loadable `0x0f` agreement into
-    a no-draw consumption gate. It carries no destination or pixel information.
+  - 2026-07-17 `32cb_15b8` input update: the first simple `QUERY_TEMP_PICST`
+    call at `c_gui_vp.cpp:6618-6628` now has a source-owned no-draw input
+    receipt for category 9 selector/image field, exact `0x40` scales, flip,
+    query parameters and RG71l alpha. Record layout and destination remain
+    explicitly unavailable.
+
+  - 2026-07-17 loadable `0x0f` update: the distinct `c_gui_vp.cpp:6651-6692`
+    category-9 `QUERY_GDAT_ENTRY_IF_LOADABLE` branch now binds its successful
+    `0x0f` selector, normal scales, transform inputs and RG71l alpha as a
+    no-draw receipt. Its destination is still not inferred.
+
+  - 2026-07-17 category-8 overlay update: `c_gui_vp.cpp:6322-6329` now has
+    its own no-draw QUERY_TEMP_PICST input receipt for selector/image field,
+    normal scales, flip, transform parameters and RG71l alpha.
+
+  - 2026-07-17 branch-set update: the three authenticated category-8/9
+    `32cb_15b8` input receipts now combine only when their independent
+    identities and the loadable `0x0f` field agree; the aggregate stays
+    no-draw and has no placement contract.
+
+  - 2026-07-17 DRAW_TEMP_PICST admission update: the aggregate now has a
+    no-draw consumption gate that rechecks every branch-set identity,
+    category, `0x0f` field and normal-scale transform before admitting the
+    source call. It carries no destination or pixel information.
 
 - 2026-07-17 DM2 `query_B073` input admission: `c_querydb.cpp:2506-2545`
   now requires authentic palette, live light, alpha/mask, colors/cache,
   RAW7, lookup and traversal identities in one no-draw receipt. No palette
   buffer or pixel result is produced.
 
-  - 2026-07-17 DRAW_PICST M11 update (latest): the fully authenticated 8-bit
-    BLITMODE0/PAL256/mask native executor now enters only through a DM2-owned
-    M11 consumer that requires the exact live material handoff buffer/palette
-    and owner generation. The complete B073-to-surface pipeline (palette
-    borrowing, material pairing, QUERY_BLIT_RECT mode-1/global-clip/intersection,
-    DRAW_PICST rect/surface-address/row-traversal/mask/palette-index/write) is
-    source-proven. No legacy renderer or fallback path can reach this consumer.
+  - 2026-07-17 B073/DRAW_TEMP_PICST surface update: authenticated B073 and
+    DRAW_TEMP_PICST receipts now bind to an owned viewport-surface snapshot
+    in one no-draw palette/surface receipt. No buffer is borrowed or written.
 
-  - 2026-07-17 DRAW_WALL latest state: the full B073 RAW7 interpreter
-    (`c_gdatfile.cpp:1919-2003`, `c_querydb.cpp:2506-2668`) source-binds
-    PAL16-to-PAL256 cache. Normal unflipped 0x40 U4-to-8 and BLITMODE1
-    HFLIP branches consume the authenticated B073 cache. Scaling, vertical/
-    chained flips, movement and scale changes remain fail-closed.
+  - 2026-07-17 original palette update: the next consumer may borrow only
+    original 16/256-byte palette storage when its bytes hash matches the
+    caller's authenticated identity and the B073/surface receipt remains
+    current. No transformed palette or pixel buffer is created.
 
-  - 2026-07-17 DRAW_DOOR latest state: stationary closed panel, horizontal
-    split states 1..3, vertical intermediate states 1..3, right/left jamb
-    frames (reverse-X / forward-X), and DOOR_FRAMES movement are all
-    source-proven M11 consumers. Panel motion, scaling, flips and every
+  - 2026-07-17 M11 palette-consumer update: borrowed original palette bytes
+    now bind to a current owner-surface generation in a no-draw M11 receipt,
+    with no transform, destination or pixel material.
+
+  - 2026-07-17 original material update: a later consumer may borrow only
+    original decoded GDAT storage with proven dimensions, stride, byte count
+    and byte hash paired to the current M11 palette consumer. No decoder or
+    render path is admitted.
+
+  - 2026-07-17 M11 material/palette pair update: original material and
+    original palette now admit only as a matching no-draw pair with current
+    owner generation and verified dimensions/stride. No render contract.
+
+  - 2026-07-17 live materialization update: the validated pair now has a
+    no-draw M11 handoff guarded by the same live owner generation. It carries
+    only borrowed bytes/layout, never a blit or destination.
+
+  - 2026-07-17 DRAW_PICST trace update: source handoff now reaches an exact
+    `QUERY_PICST_IT`/`DRAW_PICST` trace receipt, but missing source and
+    destination rectangles remain an explicit no-draw blocker.
+
+  - 2026-07-17 DRAW_PICST rect update: `query1 == -1` now admits only the
+    exact direct `srcx/srcy + imgdesc.x/y` source rectangle branch from
+    `c_image.cpp:240-296`; all QUERY_BLIT_RECT, flip and destination paths
+    remain no-draw.
+
+  - 2026-07-17 QUERY_BLIT_RECT trace update: `c_xrect.cpp:217-280` now
+    admits only an authenticated unsigned root rectangle node with
+    `query2 == -1`, `mode1 <= 8`, `mode2 == 0`, a present bitmap and its
+    captured source-rectangle identity. Signed, overridden, mode-9 and
+    chained nodes remain no-draw until their clip/destination semantics are
+    separately evidenced.
+
+  - 2026-07-17 QUERY_BLIT_RECT signed-root update: `c_xrect.cpp:228-276`
+    now records the exact signed-node `datax/datay + input-x/input-y`
+    transform for an authenticated unchained root. `crdecode`, final clip,
+    destination, overrides and every chained node remain no-draw.
+
+  - 2026-07-17 QUERY_BLIT_RECT mode-1 update: the signed-root receipt now
+    reaches the exact `crdecode(1, ...)` origin assignment in
+    `c_xrect.cpp:162-211,426-436`, guarded by current authenticated material
+    dimensions and surface generation. All other modes, clipping and final
+    destination bounds remain no-draw.
+
+  - 2026-07-17 QUERY_BLIT_RECT default-clip update: `c_xrect.cpp:239,438-470`
+    now admits the untouched `rc=[-10000,10000)` range only for a current
+    mode-1 receipt whose full material rectangle lies inside it. Global clip
+    override, chained terminal nodes and all surface-specific destinations
+    remain no-draw.
+
+  - 2026-07-17 QUERY_BLIT_RECT global-clip update: the explicit
+    `c_gui_vp.cpp:570-573` `TRIM_BLIT_RECT` transaction now provides the only
+    admitted `dm2rect1` override input for `c_xrect.cpp:438-439`, with active
+    flag, trim-call, material and surface identities. Intersecting that clip
+    with the destination rect and every final blit remains no-draw.
+
+  - 2026-07-17 QUERY_BLIT_RECT global-intersection update:
+    `c_xrect.cpp:446-470` now admits the exact `dx/dy` source-offset and
+    clipped destination-rectangle calculation for the authenticated mode-1
+    global-clip path. Missing overlap or any clip/material/surface identity
+    drift rejects; no blit is admitted.
+
+  - 2026-07-17 DRAW_PICST surface-address update: `c_image.cpp:293-335` and
+    `c_gfx_blit.cpp:604-656` now admit only the native 8-bit `gfxsys.dm2screen`
+    row-address path with packed original source stride, exact source/dest
+    offsets, no palette translation and no alpha mask. The receipt borrows
+    addresses only; all pixel writes and other surface formats remain no-draw.
+
+  - 2026-07-17 DRAW_PICST row-traversal update: the original material bytecount
+    now remains attached through the M11 handoff. `c_gfx_blit.cpp:604-656`
+    default `BLITMODE0` admits only forward rows with authenticated first/last
+    row offsets and exclusive source/destination bounds. Other modes and every
+    pixel operation remain no-draw.
+
+  - 2026-07-17 DRAW_PICST mask/palette update: `c_image.h:45-70` and
+    `c_gfx_blit.cpp:655-760` now admit only the masked translated `BLITMODE0`
+    input transaction with 256 authenticated palette bytes, exact alpha index,
+    original material bytecount and forward row bounds. Palette translation
+    and every pixel write remain no-draw.
+
+  - 2026-07-17 DRAW_PICST palette-index update: `c_gfx_blit.cpp:39-42,675-682`
+    now has a source-locked trace that records the exact ordering: compare raw
+    8-bit source index to alpha first, then use that same index in PAL256.
+    It does not dereference source/palette bytes or write pixels.
+
+  - 2026-07-17 DRAW_PICST palette-write update: source proof now fixes each
+    `t_palette` entry to one `c_pixel256` byte and PAL256 to 256 bytes. The
+    masked destination write order is carried as no-draw row metadata with
+    current surface identity; no conditional pixel write is executed.
+
+  - 2026-07-17 DRAW_PICST native execution update: the fully authenticated
+    8-bit BLITMODE0/PAL256/mask branch now has its first source-backed pixel
+    consumer. It revalidates all receipts and owner generation before the
+    exact forward masked writes; every mismatch is no-write.
+
+  - 2026-07-17 DRAW_PICST M11 update: the native executor now enters only
+    through a DM2-owned M11 consumer that requires the exact live material
+    handoff buffer/palette and owner generation. No legacy renderer or
+    fallback path can reach this consumer.
+
+  - 2026-07-17 DRAW_WALL admission update: authentic GDAT wall commands now
+    enter a strict DRAW_PICST admission with their raw/decoded/palette/geometry
+    receipts, but remain no-draw because the source route owns PAL16 rather
+    than the proven native PAL256 executor contract.
+
+  - 2026-07-17 DRAW_WALL B073 update: PAL16 now binds to a strict PAL256 cache
+    output receipt only with complete RAW7, lookup, traversal and allocation
+    identities from `c_querydb.cpp:2506-2668`; no expansion or write occurs.
+
+  - 2026-07-17 DRAW_WALL B073 contiguous RAW7 loader update: only the
+    original `INTERFACE_GENERAL/0/RAW7/2` record admitted by
+    `dm2_v1_asset_load_typed_sized()` may bind its contiguous bytes, exact
+    length and FNV identity to the wall PAL16/B073 cache allocation.
+
+  - 2026-07-17 DRAW_WALL B073 interpreter update: `c_gdatfile.cpp:1919-2003`
+    and `c_querydb.cpp:2506-2668` now source-bind RAW7's descriptor, interval,
+    output and lookup regions to a supplied owned PAL256 cache. The resulting
+    cache is attached to the wall `DRAW_PICST` output receipt, but remains
+    no-draw until the authentic U4-to-PAL256 blit consumer is proven.
+
+  - 2026-07-17 DRAW_WALL native M11 update: the proven normal, unflipped,
+    unmoved 0x40 U4-to-8 branch now consumes the authenticated B073 cache
+    using `c_gfx_blit.cpp:495-548` source order. Scaling, flip, movement,
+    clip, cache, surface and composition drift remain fail-closed.
+
+  - 2026-07-17 DRAW_WALL HFLIP M11 update: the separately proven BLITMODE1
+    branch now follows `blitline_48_mi/mima` reverse-X destination order.
+    Vertical/chained flips, movement and scale changes remain fail-closed.
+
+  - 2026-07-17 DRAW_DOOR panel M11 update: the stationary, closed, unflipped
+    and unscaled DOORS panel now consumes its exact IMG3 U4 bytes, local PAL16,
+    colour key, RAW4 rectangle and composition-owned surface. Opening,
+    movement and light-remap branches remain fail-closed.
+
+  - 2026-07-17 DRAW_DOOR split M11 update: only the source-proven horizontal
+    opening states 1..3 now consume the paired halves in the `DRAW_DOOR`
+    table order: right half (`base + state + 6`), then left half
+    (`base + state + 3`). Both halves require the same authenticated DOORS
+    material receipt and distinct RAW4 geometry rows, plus current composition
+    and owner surface identities. Vertical opening, movement, flip and every
     incomplete table/material chain remain fail-closed.
+
+  - 2026-07-17 DRAW_DOOR vertical M11 update: the source-proven vertical
+    intermediate states 1..3 now retain the whole original DOORS image and
+    select exactly `tlbRectnoDoorPosition[cell] + state` before one forward
+    palette-mapped consume. The raw material, RAW4 table row, composition and
+    live surface must all still match; horizontal split, movement and flip
+    remain separate fail-closed routes.
+
+  - 2026-07-17 DRAW_DOOR_FRAMES right-jamb M11 update: the stationary
+    `QUERY_TEMP_PICST(1, 0x40, 0x40, ..., rect, 3)` route now admits the
+    authenticated GRAPHICSSET U4/PAL16 side-frame with reverse-X writes. Its
+    scene-owned colour key and current scene hash are required alongside RAW4
+    geometry, composition and surface identity. Left jamb, panel flips,
+    frame motion and every other transform remain fail-closed.
+
+  - 2026-07-17 DRAW_DOOR_FRAMES left-jamb M11 update: the matching stationary
+    `QUERY_TEMP_PICST(0, 0x40, 0x40, ..., rect, 4)` branch now consumes its
+    authenticated GRAPHICSSET U4/PAL16 material in forward-X order. Receipt
+    identity locks the jamb kind, RAW4 row, scene colour key/hash, composition
+    and live surface, so it cannot be used as the mirrored right route.
+    Frame motion, scaling and panel flips remain fail-closed.
+
+  - 2026-07-17 DRAW_DOOR_FRAMES movement M11 update: only the source's
+    `v1e12d0` branch may select `table1d6b2c[cell]` and its swapped
+    `table1d6ee1` jamb column, while preserving the original cell's RAW4
+    rectangle and normal jamb direction. The movement owner bit, selected
+    field, scene, composition and surface must all match; panel motion,
+    scaling and every unrelated transform remain fail-closed.
 
 - 2026-07-17 DM2 pit-roof viewport admission: `c_gui_vp.cpp:118-206` now
   source-gates cells 1..8 on the exact roof flag, `LOCATE_OTHER_LEVEL`
@@ -651,13 +956,68 @@ the remaining SRM blocker is still only original body-layout correlation.
   position flip, the actual remote-map address walk, and `QUERY_BLIT_RECT`
   placement/clip still require separate evidence.
 
-  - 2026-07-17 ordered-consume update (latest): the full PIT_ROOF pipeline is
-    source-proven: B073 c_light/RAW4/alpha/blend, RAW7 table/traversal,
-    QUERY_PICST_IT destination, surface-owner, composition-slot and
-    material-buffer handoff. The source-owned hook now executes DRAW_PICST's
-    authenticated normal-scale U4-to-8bpp masked rows including horizontal
-    mirror. Every crop, scale, vertical/combined flip, changed source index,
-    composition/surface drift, or incomplete receipt remains no-write.
+  - 2026-07-17 prerequisite update: the admitted PIT_ROOF receipt now also
+    binds `DRAW_DUNGEON_GRAPHIC`'s `DM2_query_B073` c_light transaction and
+    the authentic INTERFACE_GENERAL/0/RAW4 row for rects `0x360..0x368`.
+    Only the exact root `mode1=1/mode2=0` `QUERY_BLIT_RECT` form is admitted;
+    changed c_light identity, palette, RAW4 row/table, clip chain, cell 0,
+    and every richer rectangle branch reject. It remains no-draw until the
+    full B073 palette expansion and a pixel consumer are separately proven.
+
+  - 2026-07-17 alpha/blend update: `SKULLWIN/c_image.cpp:450-475` and
+    `c_gfx_blit.cpp:370-549` now bind the exact U4 alpha transaction to the
+    B073 and RAW4 identities. The source alpha mask is retained in full and
+    its low nibble is the only admitted transparent source index; only the
+    proven normal and horizontal-mirror modes enter the no-draw receipt.
+    Mask drift, vertical/combined modes, palette drift, and destination
+    identity drift reject. B073's transformed palette and final destination
+    composition still need independent source proof before any blit.
+
+  - 2026-07-17 B073 table update: `SKULLWIN/c_gdatfile.cpp:1919-2003` now
+    binds the exact `INTERFACE_GENERAL/0/dt07/2` RAW7 program that initializes
+    `v1e020c` and `v1e0210` for `DM2_query_B073`. The count/length layout,
+    both packed table regions, trailing color lookup region, raw hash, and
+    B073/material identities are retained as no-draw evidence. Missing dt07/2,
+    malformed lengths, and any valid raw-data drift reject.
+
+  - 2026-07-17 B073 traversal update: `SKULLWIN/c_querydb.cpp:2506-2668`
+    now admits only the cache-free per-color traversal for the authenticated
+    U4 palette. Every palette byte must have an in-range two-byte RAW7 lookup,
+    group, subindex, interval and alternate alpha neighbour; index drift and
+    alpha-branch ownership drift reject. The transformed palette is still a
+    no-draw receipt pending the exact QUERY_PICST_IT destination composition.
+
+  - 2026-07-17 destination update: `SKULLWIN/c_image.cpp:98-410` now binds
+    the normal-scale (`0x40/0x40`), zero-crop PIT_ROOF `QUERY_PICST_IT` path
+    to its root RAW4 `QUERY_BLIT_RECT`, B073 palette traversal, alpha mask and
+    source-proven horizontal flip. Clip receipt drift and every scale/crop or
+    unsupported flip reject. It remains no-draw: the destination bitmap's
+    live ownership, dimensions/resolution and final viewport clip are inputs
+    to `DRAW_PICST` that are not yet retained by this DM2 receipt chain.
+
+  - 2026-07-17 surface-owner update: DM2 viewport ownership now publishes an
+    atomic framebuffer snapshot with pointer, dimensions, stride, resolution
+    and monotonically advanced generation. PIT_ROOF binds only the exact
+    current generation and remains no-draw on stale or rebound surfaces.
+
+  - 2026-07-17 composition-slot update: PIT_ROOF additionally requires the
+    DM2 composition slot's before/after owner surface pointer and generation,
+    session identity, data epoch and ordered-member identity. Every mismatch
+    remains no-draw; native blit still lacks a source-owned M11 consume hook.
+
+  - 2026-07-17 material-buffer handoff update: PIT_ROOF now retains a borrowed
+    identity receipt for the already authenticated decoded U4 buffer. Its
+    pointer, width, height, stride, pixel count, palette hash and material
+    identity must equal the composition candidate; every buffer or receipt
+    drift remains no-draw.
+
+  - 2026-07-17 ordered-consume update: the source-owned PIT_ROOF hook now
+    executes only `DRAW_PICST`'s authenticated normal-scale U4-to-8bpp masked
+    rows, including the proven horizontal mirror. It consumes the borrowed
+    handoff buffer directly after the composition-order and before/after
+    surface checks; there is no reload or re-decode. Every crop, scale,
+    vertical/combined flip, changed source index, composition/surface drift,
+    or incomplete receipt remains no-write.
 
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
 

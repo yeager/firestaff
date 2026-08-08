@@ -67,7 +67,7 @@ Nexus_SquareInfo nexus_square_info(int type);
 #define NEXUS_DOOR_PASSABLE_STEP_THRESHOLD 2
 
 #ifndef NEXUS_MAX_DOORS
-#define NEXUS_MAX_DOORS 64
+#define NEXUS_MAX_DOORS 256
 #endif
 
 typedef struct {

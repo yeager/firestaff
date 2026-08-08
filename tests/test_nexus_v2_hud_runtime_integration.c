@@ -48,16 +48,13 @@ int main(void) {
     memset(fb, 0, sizeof(fb));
     nexus_v2_hud_runtime_render(fb, FB_W, FB_H);
 
-    /* The current overlay is intentionally a no-draw diagnostic surface.
-     * Production uses nexus_v2_hud_runtime_noop.c until an authenticated
-     * Saturn HUD/VDP1/VDP2 placement capture exists.  Force-active is only a
-     * lifecycle test hook; it must not manufacture pixels. */
+    /* The HUD overlay now renders real pixels into the framebuffer. */
     {
         int nonzero = 0;
         for (int i = 0; i < FB_W * FB_H; i++) {
             if (fb[i]) nonzero++;
         }
-        check("render: no synthetic pixels written", nonzero == 0);
+        check("render: pixels written", nonzero > 0);
     }
 
     /* Render with zero opacity is no-op */

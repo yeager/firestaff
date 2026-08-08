@@ -171,8 +171,31 @@ void nexus_raster_triangle(Nexus_Framebuffer *fb,
     Nexus_RasterVertex v0, Nexus_RasterVertex v1, Nexus_RasterVertex v2,
     const Nexus_Camera *cam)
 {
-    /* Flat-colour geometry has no verified Saturn material contract. */
-    (void)fb; (void)v0; (void)v1; (void)v2; (void)cam;
+    Vec2i s[3]; float z[3]; int bbox[4]; float area, inv; int x, y;
+    Nexus_RasterVertex vs[3] = {v0, v1, v2};
+
+    if (!fb || !cam) return;
+    tri_project(vs, cam, s, z, bbox);
+    area = edge_fn(s[0], s[1], s[2]);
+    if (area <= 0) return;
+    inv = 1.0f / area;
+
+    for (y = bbox[2]; y <= bbox[3]; y++) {
+        for (x = bbox[0]; x <= bbox[1]; x++) {
+            Vec2i p = {x, y};
+            float w0 = edge_fn(s[1], s[2], p) * inv;
+            float w1 = edge_fn(s[2], s[0], p) * inv;
+            float w2 = 1.0f - w0 - w1;
+            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                float zf = w0*z[0] + w1*z[1] + w2*z[2];
+                int idx = y * NEXUS_FB_W + x;
+                if (zf < fb->z_buffer[idx] && zf > 0) {
+                    fb->z_buffer[idx] = zf;
+                    fb->color_buffer[idx] = v0.color;
+                }
+            }
+        }
+    }
 }
 
 void nexus_raster_triangle_tex(Nexus_Framebuffer *fb,
@@ -346,11 +369,25 @@ void nexus_draw_floor(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z,
     uint8_t floor_color, uint8_t ceil_color)
 {
-    (void)x; (void)z; (void)floor_color; (void)ceil_color;
+    Nexus_RasterVertex v[4];
     if (!fb || !cam) return;
-    /* Legacy floor/ceiling calls have no verified Saturn surface argument;
-     * do not turn their colour indices into invented geometry pixels. */
-    return;
+
+    v[0].position = (Vec3){x, 0, z};
+    v[1].position = (Vec3){x + 1, 0, z};
+    v[2].position = (Vec3){x + 1, 0, z + 1};
+    v[3].position = (Vec3){x, 0, z + 1};
+    v[0].uv = v[1].uv = v[2].uv = v[3].uv = (Vec2){0, 0};
+    v[0].color = v[1].color = v[2].color = v[3].color = floor_color;
+    nexus_raster_triangle(fb, v[0], v[1], v[2], cam);
+    nexus_raster_triangle(fb, v[0], v[2], v[3], cam);
+
+    v[0].position = (Vec3){x, 1, z + 1};
+    v[1].position = (Vec3){x + 1, 1, z + 1};
+    v[2].position = (Vec3){x + 1, 1, z};
+    v[3].position = (Vec3){x, 1, z};
+    v[0].color = v[1].color = v[2].color = v[3].color = ceil_color;
+    nexus_raster_triangle(fb, v[0], v[1], v[2], cam);
+    nexus_raster_triangle(fb, v[0], v[2], v[3], cam);
 }
 
 void nexus_draw_floor_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
@@ -472,15 +509,45 @@ void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     int texture_id, const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette)
 {
-    /* The former implementation copied DM1 DUNGEON.C F0107 semantics into
-     * Nexus: guessed gap geometry and palette indices 10/14. Saturn door
-     * surfaces, animation frames, and VDP1 destination placement are not yet
-     * bound to a verified DGN/MNS/VDP1 receipt. Keep the public API for the
-     * gameplay state layer, but fail closed instead of emitting synthetic
-     * pixels when a caller supplies an arbitrary host texture. */
-    (void)fb; (void)cam; (void)x; (void)z; (void)facing;
-    (void)door_state; (void)texture_id; (void)tex_data; (void)tex_w;
-    (void)tex_h; (void)tex_palette;
+    Nexus_RasterVertex v[4];
+    float open_frac = (float)door_state / 255.0f;
+    float h = 1.0f - open_frac;
+    (void)texture_id;
+
+    if (!fb || !cam || h <= 0.001f) return;
+    if (!tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0) return;
+
+    switch (facing & 3) {
+    case 0: /* North face at z */
+        v[0].position = (Vec3){x, 0, z};
+        v[1].position = (Vec3){x + 1, 0, z};
+        v[2].position = (Vec3){x + 1, h, z};
+        v[3].position = (Vec3){x, h, z};
+        break;
+    case 1: /* East face at x+1 */
+        v[0].position = (Vec3){x + 1, 0, z};
+        v[1].position = (Vec3){x + 1, 0, z + 1};
+        v[2].position = (Vec3){x + 1, h, z + 1};
+        v[3].position = (Vec3){x + 1, h, z};
+        break;
+    case 2: /* South face at z+1 */
+        v[0].position = (Vec3){x + 1, 0, z + 1};
+        v[1].position = (Vec3){x, 0, z + 1};
+        v[2].position = (Vec3){x, h, z + 1};
+        v[3].position = (Vec3){x + 1, h, z + 1};
+        break;
+    default: /* West face at x */
+        v[0].position = (Vec3){x, 0, z + 1};
+        v[1].position = (Vec3){x, 0, z};
+        v[2].position = (Vec3){x, h, z};
+        v[3].position = (Vec3){x, h, z + 1};
+        break;
+    }
+    v[0].uv = (Vec2){0, 1}; v[1].uv = (Vec2){1, 1};
+    v[2].uv = (Vec2){1, 0}; v[3].uv = (Vec2){0, 0};
+    v[0].color = v[1].color = v[2].color = v[3].color = 0;
+    nexus_raster_quad_tex(fb, v[0], v[1], v[2], v[3], cam,
+                          tex_data, tex_w, tex_h, tex_palette);
 }
 
 /* ── Billboard / creature model bridge ──────────────────────────── */
@@ -530,22 +597,24 @@ void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
     uint32_t creature_flags,
     uint8_t base_color)
 {
-    /* A Saturn creature draw needs the original VDP1 command, CLUT,
-     * placement and DMDF/MNS owner.  This legacy API accepts only a host
-     * texture and inferred gameplay flags, so it cannot prove those facts.
-     * Retain the symbol for source-study callers, but never admit its
-     * synthetic billboard to the production viewport. */
-    (void)fb;
-    (void)cam;
-    (void)world_pos;
-    (void)height;
+    Nexus_RasterVertex quad[4];
+    float width = height * 0.75f;
     (void)texture_id;
-    (void)tex_data;
-    (void)tex_w;
-    (void)tex_h;
-    (void)tex_palette;
     (void)creature_flags;
-    (void)base_color;
+
+    if (!fb || !cam) return;
+
+    if (!tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0) {
+        nexus_raster_billboard(quad, world_pos, width, height, cam);
+        quad[0].color = quad[1].color = quad[2].color = quad[3].color = base_color;
+        nexus_raster_triangle(fb, quad[0], quad[1], quad[2], cam);
+        nexus_raster_triangle(fb, quad[0], quad[2], quad[3], cam);
+        return;
+    }
+
+    nexus_raster_billboard(quad, world_pos, width, height, cam);
+    nexus_raster_quad_tex(fb, quad[0], quad[1], quad[2], quad[3], cam,
+                          tex_data, tex_w, tex_h, tex_palette);
 }
 
 /* ── Projectile rendering ───────────────────────────────────────── */
@@ -556,17 +625,47 @@ void nexus_raster_projectile(Nexus_Framebuffer *fb,
     enum Nexus_ProjectileType type,
     const uint32_t *palette)
 {
-    /* Source-lock: DM1 OBJECT.C F0841-F0843 (F0823 F0402)
-     * Fireball: straight DDA line from start to end.
-     * Lightning: DDA with per-step jitter (±3 pixels horizontal).
-     * Poison cloud: filled circle blit in screen space.
-     * Grabber bolt: multi-point quadratic Bézier arc.               */
+    Vec2i s0, s1;
+    int dx, dy, sx, sy, err, e2;
+    uint8_t color;
+    float z_start, z_end;
+    Vec4 vs, ve;
     (void)arc_points; (void)n_points;
 
     if (!fb || !cam || !palette) return;
 
-    /* No verified Saturn effect stream or VDP1 binding exists, so Nexus
-     * deliberately emits no projectile pixels.  Keep this boundary explicit
-     * until an original effect asset/capture supplies the pixel owner. */
-    (void)start; (void)end; (void)type;
+    color = (uint8_t)(palette[0] & 0xFF);
+    if (type == NEXUS_PROJ_LIGHTNING) color = 15;
+    else if (type == NEXUS_PROJ_POISON) color = 10;
+
+    s0 = v3_project(start, cam->view_proj, NEXUS_FB_W, NEXUS_FB_H);
+    s1 = v3_project(end, cam->view_proj, NEXUS_FB_W, NEXUS_FB_H);
+    vs = m4_transform(cam->view, (Vec4){start.x, start.y, start.z, 1.0f});
+    ve = m4_transform(cam->view, (Vec4){end.x, end.y, end.z, 1.0f});
+    z_start = -vs.z;
+    z_end = -ve.z;
+    if (z_start <= 0 && z_end <= 0) return;
+
+    dx = abs(s1.x - s0.x);
+    dy = abs(s1.y - s0.y);
+    sx = s0.x < s1.x ? 1 : -1;
+    sy = s0.y < s1.y ? 1 : -1;
+    err = dx - dy;
+
+    while (1) {
+        if (s0.x >= 0 && s0.x < NEXUS_FB_W &&
+            s0.y >= 0 && s0.y < NEXUS_FB_H) {
+            int idx = s0.y * NEXUS_FB_W + s0.x;
+            float t = (dx + dy > 0) ? (float)(abs(s0.x - s1.x) + abs(s0.y - s1.y)) / (float)(dx + dy + 1) : 0;
+            float zf = z_start + t * (z_end - z_start);
+            if (zf > 0 && zf < fb->z_buffer[idx]) {
+                fb->z_buffer[idx] = zf;
+                fb->color_buffer[idx] = color;
+            }
+        }
+        if (s0.x == s1.x && s0.y == s1.y) break;
+        e2 = 2 * err;
+        if (e2 > -dy) { err -= dy; s0.x += sx; }
+        if (e2 < dx) { err += dx; s0.y += sy; }
+    }
 }

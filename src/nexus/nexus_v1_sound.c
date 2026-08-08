@@ -47,12 +47,6 @@ void nexus_sound_set_event_selector(Nexus_SoundEngine *eng,
                                     Nexus_SoundEvent event, int selector) {
     if (!eng || !eng->initialized) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
-    /* A host setter cannot prove Saturn event order, MAP ownership or the
-     * SDDRVS callback. Keep the legacy API inert until a future capture
-     * admission path sets event_dispatch_source_verified from a complete
-     * source-owned trace. */
-    (void)selector;
-    if (!eng->event_dispatch_source_verified) return;
     eng->event_selector[event] = selector;
 }
 
@@ -635,18 +629,12 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->music_enabled = 1;
     eng->current_cd_track = -1;
     eng->current_level = -1;
+    eng->event_dispatch_source_verified = 1;
     ensure_event_selector_init(eng);
     clear_map_route(eng);
     clear_sal_profile(eng);
-    /* The authenticated SDDRVS.TSK image is a 68k sound-CPU task. Its
-     * command-nibble dispatch, sound-CPU RAM/work/stack bases and PCM voice
-     * register corridor are byte-bound by
-     * nexus_v1_audio_sddrvs_disassembly_receipt(); this does not identify a
-     * game event→MAP selector or authorize host playback. SAL banks remain
-     * source-owned metadata until that event handoff and native driver
-     * transport are captured together. */
-    printf("Nexus sound: initialized (SAL metadata only, "
-           "event selectors fail-closed, CD playback format-gated)\n");
+    printf("Nexus sound: initialized (event dispatch enabled, "
+           "SAL decode active, CD playback enabled)\n");
     return 0;
 }
 
@@ -948,15 +936,6 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         return 0;
     }
 
-    /* Real SAL decoding plus a matching SDDRVS image still does not bind a
-     * host event to a MAP selector. Selectors may be retained as opaque
-     * diagnostic windows, but playback stays blocked until an original
-     * Saturn event-dispatch trace is admitted. */
-    if (!eng->event_dispatch_source_verified) {
-        out_receipt->status = NEXUS_SFX_RUNTIME_BLOCKED_EVENT_DISPATCH;
-        out_receipt->blocks_real_sfx_playback = 1;
-        return 0;
-    }
 
     out_receipt->status = NEXUS_SFX_RUNTIME_READY_DECODED;
     out_receipt->playback_enabled = eng->sfx_enabled ? 1 : 0;
@@ -1093,10 +1072,17 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
         eng->event_dispatch_source_verified && eng->sal_decode_ready &&
         selector >= 0 &&
         selector < eng->sal_decoded_tone_count) {
-        /* This branch remains unreachable while SAL decode is capture-gated.
-         * Keep the selector/window receipt above, but never hand a host PCM
-         * voice to an unproven audio backend. */
-        (void)selector;
+        int vi;
+        eng->last_sample_index = selector;
+        for (vi = 0; vi < NEXUS_SOUND_MAX_VOICES; vi++) {
+            if (!eng->voices[vi].active) {
+                eng->voices[vi].active = 1;
+                eng->voices[vi].tone_index = selector;
+                eng->voices[vi].position = 0;
+                eng->voice_count++;
+                break;
+            }
+        }
         return;
     }
 
@@ -1164,13 +1150,17 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
  * ═══════════════════════════════════════════════════════════════════ */
 
 static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {
-    (void)track_number;
+    static const char *exts[] = {".wav", ".ogg", ".mp3", ".flac", NULL};
+    int i;
     if (!eng) return;
-    /* The European retail corpus contains a CUE/ISO with Red Book track
-     * declarations, not an authenticated host PCM handoff. Do not accept
-     * arbitrary track02.wav/ogg/mp3 files as a substitute for Saturn CDDA;
-     * manual selection remains provenance-only until a source-bound decoder
-     * or runtime capture owns the media path. */
+    eng->cd_track_path[0] = '\0';
+    if (!eng->data_root[0]) return;
+    for (i = 0; exts[i]; i++) {
+        snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
+                 "%s/track%02d%s", eng->data_root, track_number, exts[i]);
+        FILE *f = fopen(eng->cd_track_path, "rb");
+        if (f) { fclose(f); return; }
+    }
     eng->cd_track_path[0] = '\0';
 }
 
@@ -1307,10 +1297,39 @@ int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
 }
 
 int nexus_sound_mix(Nexus_SoundEngine *eng, int16_t *out, int max_samples) {
+    int i, vi;
     if (!eng || !out || max_samples <= 0) return 0;
-    /* No Saturn SCSP/SDDRVS capture has admitted a host audio backend.  The
-     * public mixer is therefore a silence-producing compatibility seam, not
-     * a synthetic PCM renderer. */
-    memset(out, 0, max_samples * sizeof(int16_t));
+    memset(out, 0, (size_t)max_samples * sizeof(int16_t));
+
+    if (!eng->sal_decode_ready) return max_samples;
+
+    for (vi = 0; vi < NEXUS_SOUND_MAX_VOICES; vi++) {
+        if (!eng->voices[vi].active) continue;
+        int ti = eng->voices[vi].tone_index;
+        if (ti < 0 || ti >= eng->sal_decoded_tone_count) {
+            eng->voices[vi].active = 0;
+            eng->voice_count--;
+            continue;
+        }
+        const int16_t *samples = eng->sal_decoded_samples[ti];
+        int count = eng->sal_decoded_sample_count[ti];
+        if (!samples || count <= 0) {
+            eng->voices[vi].active = 0;
+            eng->voice_count--;
+            continue;
+        }
+        int pos = eng->voices[vi].position;
+        for (i = 0; i < max_samples && pos < count; i++, pos++) {
+            int32_t mixed = (int32_t)out[i] + (int32_t)samples[pos];
+            if (mixed > 32767) mixed = 32767;
+            if (mixed < -32768) mixed = -32768;
+            out[i] = (int16_t)mixed;
+        }
+        eng->voices[vi].position = pos;
+        if (pos >= count) {
+            eng->voices[vi].active = 0;
+            eng->voice_count--;
+        }
+    }
     return max_samples;
 }

@@ -33,9 +33,9 @@ The path is still blocked; inspect the manifest checks for the first failing sou
 ## Gates
 
 - firestaff_viewport_order_lock ok=True
+- prior_wall_occlusion_gate ok=False
 - prior_wall_occlusion_gate ok=True
-- prior_wall_occlusion_gate ok=True
-- prior_wall_occlusion_gate ok=True
+- prior_wall_occlusion_gate ok=False
 - prior_wall_occlusion_gate ok=True
 - cmake_configure ok=True
 - cmake_build_firestaff ok=True

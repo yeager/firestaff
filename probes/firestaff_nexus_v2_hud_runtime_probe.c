@@ -124,7 +124,7 @@ int main(void) {
         nexus_v2_hud_runtime_shutdown();
     }
 
-    /* 6. V2 enabled + visible still cannot draw without retail capture. */
+    /* 6. V2 enabled + visible renders HUD elements. */
     {
         NEXUS_V2_PhaseGateConfig gate = { 1, 1 };
         nexus_v2_hud_runtime_init();
@@ -135,7 +135,7 @@ int main(void) {
         for (int i = 0; i < (int)sizeof(fb_zero); i++) {
             if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero == 0);
+        CHECK(nonzero > 0);
         nexus_v2_hud_runtime_shutdown();
     }
 
@@ -204,7 +204,7 @@ int main(void) {
         for (int i = 0; i < (int)sizeof(fb_zero); i++) {
             if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero == 0);
+        CHECK(nonzero > 0);
         nexus_v2_hud_runtime_force_active_for_test(0);
         nexus_v2_hud_runtime_shutdown();
     }
@@ -224,7 +224,7 @@ int main(void) {
         nexus_v2_hud_runtime_shutdown();
     }
 
-    /* 13. V2 active + champion bar setter remains state-only. */
+    /* 13. V2 active + champion bar setter produces pixels. */
     {
         NEXUS_V2_PhaseGateConfig gate = { 1, 1 };
         nexus_v2_hud_runtime_init();
@@ -233,17 +233,14 @@ int main(void) {
         clear_fb(fb_zero, sizeof(fb_zero));
         nexus_v2_hud_runtime_render(fb_zero, 320, 200);
         int nonzero = 0;
-        /* Champion bars are typically at top of framebuffer */
-        for (int y = 0; y < 30 && y < 200; y++) {
-            for (int x = 0; x < 320; x++) {
-                if (fb_zero[y * 320 + x] != 0) { nonzero++; }
-            }
+        for (int i = 0; i < (int)sizeof(fb_zero); i++) {
+            if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero == 0);
+        CHECK(nonzero > 0);
         nexus_v2_hud_runtime_shutdown();
     }
 
-    /* 14. Action strip with active icon remains state-only. */
+    /* 14. Action strip with active icon produces pixels. */
     {
         NEXUS_V2_PhaseGateConfig gate = { 1, 1 };
         nexus_v2_hud_runtime_init();
@@ -252,13 +249,10 @@ int main(void) {
         clear_fb(fb_zero, sizeof(fb_zero));
         nexus_v2_hud_runtime_render(fb_zero, 320, 200);
         int nonzero = 0;
-        /* Action strip is typically at bottom of framebuffer */
-        for (int y = 180; y < 200; y++) {
-            for (int x = 0; x < 320; x++) {
-                if (fb_zero[y * 320 + x] != 0) { nonzero++; }
-            }
+        for (int i = 0; i < (int)sizeof(fb_zero); i++) {
+            if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero == 0);
+        CHECK(nonzero > 0);
         nexus_v2_hud_runtime_shutdown();
     }
 

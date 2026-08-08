@@ -310,6 +310,8 @@ static const char* const g_nexusFrenchIsoNames[] = {
 };
 
 static const M12_VersionSpec g_dm1Versions[] = {
+    {"dm1", "fmtowns-en", "FM Towns English", "FM Towns EN", g_dm1GraphicsNames, "c10c512f63461ebe79b5ac365115b61b", M12_ARCH_FM_TOWNS},
+    {"dm1", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm1GraphicsNames, "edf47d7da5de8184604d6d80477ef01f", M12_ARCH_FM_TOWNS},
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e", M12_ARCH_PC},
     {"dm1", "pc34-multi", "PC 3.4 Multilanguage", "PC 3.4 ML", g_dm1GraphicsNames, "f934d97e43e1ba6e5159839acbcd0611", M12_ARCH_PC},
     {"dm1", "st10a-en", "Atari ST 1.0 English (December 8)", "ST 1.0a EN", g_dm1GraphicsNames, "b3cfd84e44cdf07ce2eeba47e87f772b", M12_ARCH_ATARI_ST},
@@ -318,8 +320,6 @@ static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "st12-en", "Atari ST 1.2 English", "ST 1.2 EN", g_dm1GraphicsNames, "9ce2eaf7a9e78620e3f17594437caffa", M12_ARCH_ATARI_ST},
     {"dm1", "st12-de", "Atari ST 1.2 German", "ST 1.2 DE", g_dm1GraphicsNames, "2bdc5f431f84c0ece738f54dbd787c3b", M12_ARCH_ATARI_ST},
     {"dm1", "st13-fr", "Atari ST 1.3 French", "ST 1.3 FR", g_dm1GraphicsNames, "0d7af44dd14f383464288abdcec76afc", M12_ARCH_ATARI_ST},
-    {"dm1", "fmtowns-en", "FM Towns English", "FM Towns EN", g_dm1GraphicsNames, "c10c512f63461ebe79b5ac365115b61b", M12_ARCH_FM_TOWNS},
-    {"dm1", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm1GraphicsNames, "edf47d7da5de8184604d6d80477ef01f", M12_ARCH_FM_TOWNS},
     {"dm1", "amiga20-en", "Amiga 2.0 English", "Amiga 2.0 EN", g_dm1GraphicsNames, "6a2f135b53c2220f0251fa103e2a6e7e", M12_ARCH_AMIGA},
     {"dm1", "amiga20-fr", "Amiga 2.0 French", "Amiga 2.0 FR", g_dm1GraphicsNames, "dd373954b3fb127db7387946131ea322", M12_ARCH_AMIGA},
     {"dm1", "amiga20-de", "Amiga 2.0/2.2 German", "Amiga 2.x DE", g_dm1GraphicsNames, "0679e39da9dcc2e855cb33c6c64ddcb5", M12_ARCH_AMIGA},
@@ -329,6 +329,12 @@ static const M12_VersionSpec g_dm1Versions[] = {
 };
 
 static const M12_VersionSpec g_csbVersions[] = {
+    /* Victor's original FM Towns CD has both CDATA (English) and CJDATA
+     * (Japanese).  These MD5 values are from the files in the original
+     * raw-2352 image, not filenames or repacked data.  Greatstone's FM
+     * Towns extraction provides the corresponding asset inventory. */
+    {"csb", "fmtowns-en", "FM Towns English", "FMT EN", g_csbGraphicsNames, "405b757038eea3c263e60f240854d6de", M12_ARCH_FM_TOWNS},
+    {"csb", "fmtowns-ja", "FM Towns Japanese", "FMT JP", g_csbGraphicsNames, "761d6fc588b31aeaaa9caf3725e111b9", M12_ARCH_FM_TOWNS},
     {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
     /* ReDMCSB COMPILE.H:199-243: A31E is the original Amiga 3.1 English
      * media family.  Its GRAPHICS.DAT identity is also recorded by the
@@ -342,22 +348,16 @@ static const M12_VersionSpec g_csbVersions[] = {
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
     {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},
-    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362", M12_ARCH_AMIGA},
-    /* Victor's original FM Towns CD has both CDATA (English) and CJDATA
-     * (Japanese).  These MD5 values are from the files in the original
-     * raw-2352 image, not filenames or repacked data.  Greatstone's FM
-     * Towns extraction provides the corresponding asset inventory. */
-    {"csb", "fmtowns-en", "FM Towns English", "FMT EN", g_csbGraphicsNames, "405b757038eea3c263e60f240854d6de", M12_ARCH_FM_TOWNS},
-    {"csb", "fmtowns-ja", "FM Towns Japanese", "FMT JP", g_csbGraphicsNames, "761d6fc588b31aeaaa9caf3725e111b9", M12_ARCH_FM_TOWNS}
+    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362", M12_ARCH_AMIGA}
 };
 
 static const M12_VersionSpec g_dm2Versions[] = {
+    {"dm2", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm2GraphicsNames, "027ff3b8ddc2c4c4cdda7ada0b0bc46c", M12_ARCH_FM_TOWNS},
     {"dm2", "pc-en", "PC English", "PC EN", g_dm2GraphicsNames, "25247ede4dabb6a71e5dabdfbcd5907d", M12_ARCH_PC},
     {"dm2", "pc-fr", "PC French", "PC FR", g_dm2GraphicsNames, "b4d733576ea60c41737f79f212faf528", M12_ARCH_PC},
     {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d", M12_ARCH_PC},
     {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
-    {"dm2", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm2GraphicsNames, "027ff3b8ddc2c4c4cdda7ada0b0bc46c", M12_ARCH_FM_TOWNS},
-    {"dm2", "amiga-en", "Amiga English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
+    {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
     /* DM2 boot profile / DMWeb-authenticated PC-9821 pair.  This is a
      * retail Japanese variant, not the separate PC-9801 demo above.
      * dm2_v1_boot.c admits GRAPHICS a80c555a... only with DUNGEON

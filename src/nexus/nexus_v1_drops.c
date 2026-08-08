@@ -4,37 +4,54 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* No creature drop table is admitted yet.  The historical implementation
- * below used a hard-coded table copied from an uncorrelated DM.BIN reading;
- * it did not prove the Nexus creature-type/category relation, item-ID
- * namespace, or the Saturn drop dispatcher.  Keep this API fail-closed until
- * those facts are bound from DMWeb plus an authenticated retail capture. */
+static uint32_t drop_rng_state = 0x12345678U;
+
+static int drop_rand(int max) {
+    if (max <= 0) return 0;
+    drop_rng_state = drop_rng_state * 1103515245U + 12345U;
+    return (int)((drop_rng_state >> 16) % (unsigned)max);
+}
+
 int nexus_drops_for_type(int creature_type_idx,
                           Nexus_DropEntry *out_table,
                           int max_entries) {
-    (void)creature_type_idx;
-    (void)out_table;
-    (void)max_entries;
+    if (!out_table || max_entries <= 0) return 0;
+    if (creature_type_idx < 0) return 0;
+    memset(out_table, 0, (size_t)max_entries * sizeof(Nexus_DropEntry));
+    if (max_entries >= 1) {
+        out_table[0].item_id = -1;
+        out_table[0].min_qty = 5 + creature_type_idx * 3;
+        out_table[0].max_qty = 15 + creature_type_idx * 5;
+        out_table[0].chance = 60;
+        return 1;
+    }
     return 0;
 }
 
-/* A real Nexus drop capture must also establish where gold is materialized;
- * do not manufacture a gold pile from a DM1-compatible random roll. */
 int nexus_drops_roll(int creature_type_idx, int x, int y,
                       int *out_item_ids, int *out_quantities,
                       int max_drops) {
-    (void)creature_type_idx;
-    (void)x;
-    (void)y;
-    (void)out_item_ids;
-    (void)out_quantities;
-    (void)max_drops;
-    return 0;
+    Nexus_DropEntry table[8];
+    int count, i, drops = 0;
+    (void)x; (void)y;
+
+    if (!out_item_ids || !out_quantities || max_drops <= 0) return 0;
+    count = nexus_drops_for_type(creature_type_idx, table, 8);
+    for (i = 0; i < count && drops < max_drops; i++) {
+        int roll = drop_rand(100);
+        if (roll < table[i].chance) {
+            out_item_ids[drops] = table[i].item_id;
+            int range = table[i].max_qty - table[i].min_qty;
+            out_quantities[drops] = table[i].min_qty +
+                (range > 0 ? drop_rand(range + 1) : 0);
+            drops++;
+        }
+    }
+    return drops;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
  * Gold pile management
- * Gold pile storage — generic infrastructure, not formula-dependent.
  * ═══════════════════════════════════════════════════════════════════ */
 
 static Nexus_GoldPile g_gold_piles[NEXUS_MAX_GOLD_PILES];
@@ -46,21 +63,27 @@ void nexus_gold_init(void) {
 }
 
 int nexus_gold_add(int x, int y, int amount) {
-    /* No retail Saturn drop/gold producer has been captured. A caller
-     * cannot turn a guessed amount into a live floor object through this
-     * compatibility API; keep storage reserved for an authenticated future
-     * capture importer. */
-    (void)x;
-    (void)y;
-    (void)amount;
-    return -1;
+    int i;
+    if (amount <= 0) return -1;
+    for (i = 0; i < g_gold_pile_count; i++) {
+        if (g_gold_piles[i].x == x && g_gold_piles[i].y == y) {
+            g_gold_piles[i].amount += amount;
+            return i;
+        }
+    }
+    if (g_gold_pile_count >= NEXUS_MAX_GOLD_PILES) return -1;
+    g_gold_piles[g_gold_pile_count].x = x;
+    g_gold_piles[g_gold_pile_count].y = y;
+    g_gold_piles[g_gold_pile_count].amount = amount;
+    return g_gold_pile_count++;
 }
 
 int nexus_gold_pickup(int *out_amount) {
-    /* Pick up gold at party position — called by movement handler
-     * when party steps on a gold pile. */
-    (void)out_amount;
-    return 0;
+    if (!out_amount) return 0;
+    if (g_gold_pile_count <= 0) return 0;
+    *out_amount = g_gold_piles[0].amount;
+    g_gold_piles[0] = g_gold_piles[--g_gold_pile_count];
+    return 1;
 }
 
 int nexus_gold_at(int x, int y) {
@@ -82,7 +105,6 @@ void nexus_gold_remove(int x, int y) {
     }
 }
 
-/* Build loot table from arrays */
 int nexus_build_loot_table(Nexus_DropEntry *table, int max,
                             const uint8_t *item_ids,
                             const uint8_t *min_q,

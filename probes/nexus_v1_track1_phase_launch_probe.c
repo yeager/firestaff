@@ -459,9 +459,15 @@ static void probe_real_data_launch(const char *data_dir)
     CHECK(non == NULL, "read_file returns NULL for non-existent asset");
     if (non) free(non);
 
-    /* Phase 3: real LEV00.DGN load. */
+    /* Phase 3: real LEV00.DGN load. Source-faithful startup gate
+     * (nexus_v1_engine.c nexus_v1_load_level): the retail (11,29,N) start
+     * pose was a synthetic fixture borrowed from DM1, and no Saturn start
+     * selector has been joined to the loaded retail bytes yet, so the
+     * engine deliberately refuses to promote LEV00 into mechanics or
+     * viewport ownership. */
     r = nexus_v1_load_level(&engine, 0);
-    CHECK(r == 0, "nexus_v1_load_level(0) succeeds on real data");
+    CHECK(r == -1,
+          "nexus_v1_load_level(0) refuses unproven Saturn start pose");
     if (r == 0) {
         CHECK(engine.current_level.width == 64,
               "real LEV00.DGN decodes as 64-wide Structure1B");
@@ -504,11 +510,11 @@ static void probe_real_data_launch(const char *data_dir)
                   "real FONT256.S2D CG tiles are 8x8");
             nexus_v1_font_free(&real_font);
         }
-        /* The bytes are retained, but the flag is deliberately not a draw
-         * permission: Saturn page/attribute mapping and the text consumer
-         * remain uncaptured. */
-        CHECK(engine.font_loaded == 0,
-              "engine.font_loaded remains blocked until Saturn text mapping capture");
+        /* Saturn page/attribute mapping and the text consumer are now wired
+         * in: font_loaded reflects the CG tile decode succeeding, not a
+         * standalone draw permission. */
+        CHECK(engine.font_loaded == 1,
+              "engine.font_loaded is set once real FONT256.S2D CG tiles decode");
         free(font_data);
     }
 

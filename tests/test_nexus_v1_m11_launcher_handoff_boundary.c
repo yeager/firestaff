@@ -297,84 +297,31 @@ static void run_real_launcher_handoff_if_available(void) {
         return;
     }
 
+    /* Source-faithful startup gate (nexus_v1_engine.c, "nexus: remove
+     * synthetic retail start pose"): real LEV00.DGN carries an empty
+     * Structure1B cell at the former synthetic party-start selector, and
+     * no Nexus Saturn start pose has been joined to the loaded retail
+     * bytes yet. M11 now refuses to open the launcher into a level-0
+     * session rather than manufacture a party pose, so this handoff is
+     * permanently blocked until a real Saturn start-pose source lands.
+     * Assert that blocked reality instead of the retired title/startup
+     * hold sequence, which can no longer be reached through level 0. */
     M11_GameView_Init(&view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
-                "M11 opens Nexus through M12 selected-menu entry");
-    expect_true(view.startedFromLauncher == 1,
-                "M11 marks Nexus startup as launcher-started");
-    expect_true(view.active == 1,
-                "M11 Nexus launcher handoff leaves view active");
-    expect_true(view.sourceKind == M11_GAME_SOURCE_NEXUS_DGN,
-                "M11 Nexus launcher handoff claims Nexus DGN source");
-    expect_true(view.nexusEngine != NULL,
-                "M11 Nexus launcher handoff exposes Nexus engine");
-    expect_true(view.nexusState.level_loaded == 1,
-                "M11 Nexus launcher handoff loads level zero");
-    expect_true(view.nexusState.title_active == 1,
-                "M11 Nexus launcher handoff enters title phase");
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 0,
+                "M11 Nexus launcher handoff is blocked by the unproven LEV00 start pose");
+    expect_true(view.startedFromLauncher == 0,
+                "M11 does not mark Nexus startup as launcher-started when LEV00 is blocked");
+    expect_true(view.active == 0,
+                "M11 Nexus launcher handoff leaves view inactive when LEV00 is blocked");
+    expect_true(view.sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG,
+                "M11 Nexus launcher handoff falls back to the builtin catalog source");
+    expect_true(view.nexusEngine == NULL,
+                "M11 Nexus launcher handoff releases the Nexus engine on blocked LEV00 startup");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
-                "M11 Nexus launcher title phase stays blank without Saturn capture");
-    for (int t = 0;
-         t < 128 &&
-             view.nexusState.title_frame <
-                 nexus_title_boot_warning_frames() + 16;
-         ++t) {
-        expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
-                    "M11 Nexus launcher title idle advances title animation");
-    }
-    expect_true(view.nexusState.title_frame >=
-                    nexus_title_boot_warning_frames() + 16,
-                "M11 Nexus launcher title advances frame counter");
-    memset(framebuffer_later, 0, sizeof(framebuffer_later));
-    M11_GameView_Draw(&view, framebuffer_later, 320, 200);
-    expect_true(count_diff_pixels(framebuffer,
-                                  framebuffer_later,
-                                  sizeof(framebuffer)) == 0,
-                "M11 Nexus launcher title framebuffer stays blank across reveal timing");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-                    M11_GAME_INPUT_IGNORED,
-                "M11 Nexus launcher title ignores movement input");
-    expect_true(view.nexusState.title_active == 1,
-                "M11 Nexus launcher title remains active after movement");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                    M11_GAME_INPUT_REDRAW,
-                "M11 Nexus launcher title blocks early accept");
-    expect_true(view.nexusState.title_active == 1,
-                "M11 Nexus launcher title remains active after early accept");
-    for (int t = 0; t < 128 &&
-                    view.nexusState.title_frame <
-                        nexus_title_boot_warning_frames() +
-                            nexus_title_min_boot_frames();
-         ++t) {
-        expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
-                    "M11 Nexus launcher title completes boot reveal");
-    }
-    expect_true(view.nexusState.title_frame >=
-                    nexus_title_boot_warning_frames() +
-                        nexus_title_min_boot_frames(),
-                "M11 Nexus launcher title reaches boot reveal frame");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                    M11_GAME_INPUT_REDRAW,
-                "M11 Nexus launcher title blocks explicit accept during hold");
-    expect_true(view.nexusState.title_active == 1,
-                "M11 Nexus launcher title remains active during hold");
-    for (int t = 0; t < 128 &&
-                    view.nexusState.title_frame <
-                        nexus_title_boot_start_ready_frames();
-         ++t) {
-        expect_true(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_REDRAW,
-                    "M11 Nexus launcher title completes startup hold");
-    }
-    expect_true(view.nexusState.title_frame >=
-                    nexus_title_boot_start_ready_frames(),
-                "M11 Nexus launcher title reaches start-ready frame");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                    M11_GAME_INPUT_REDRAW,
-                "M11 Nexus launcher title advances on explicit accept after hold");
-    expect_true(view.nexusState.title_active == 1,
-                "M11 Nexus launcher title stays active until menu capture");
+    (void)framebuffer_later;
+    (void)count_nonzero_pixels;
+    (void)count_diff_pixels;
     M11_GameView_Shutdown(&view);
     nexus_v1_launcher_shutdown();
 }

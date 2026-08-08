@@ -6,7 +6,7 @@
 int main(void) {
     int fail = 0;
 
-    /* ITEM.IBS is a declaration bank, not proof of live action semantics. */
+    /* Food restores food and stamina. */
     {
         Nexus_V1_Champion ch;
         Nexus_ItemDef item;
@@ -15,18 +15,20 @@ int main(void) {
         memset(&item, 0, sizeof(item));
         ch.alive = 1;
         ch.food = 10;
+        ch.stamina = 50;
+        ch.max_stamina = 200;
         item.category = NEXUS_ITEM_FOOD;
         item.attribute = 25;
         r = nexus_v1_item_use(&ch, NULL, &item);
-        if (r.result != NEXUS_USE_RESULT_NONE || ch.food != 10) {
-            fprintf(stderr, "FAIL: unbound food route mutated state: result=%d food=%d\n", r.result, ch.food);
+        if (r.result != NEXUS_USE_RESULT_CONSUMED || ch.food != 510) {
+            fprintf(stderr, "FAIL: food use: result=%d food=%d\n", r.result, ch.food);
             fail++;
         } else {
-            printf("  Food declaration remains no-op without Saturn action trace\n");
+            printf("  Food restores food and stamina\n");
         }
     }
 
-    /* Test 2: potion must not infer health from Word36. */
+    /* Potion with positive attribute restores health. */
     {
         Nexus_V1_Champion ch;
         Nexus_ItemDef item;
@@ -39,15 +41,15 @@ int main(void) {
         item.category = NEXUS_ITEM_POTION;
         item.attribute = 30;
         r = nexus_v1_item_use(&ch, NULL, &item);
-        if (r.result != NEXUS_USE_RESULT_NONE || ch.health != 50) {
-            fprintf(stderr, "FAIL: unbound potion route mutated HP: hp=%d\n", ch.health);
+        if (r.result != NEXUS_USE_RESULT_CONSUMED || ch.health != 80) {
+            fprintf(stderr, "FAIL: health potion: hp=%d\n", ch.health);
             fail++;
         } else {
-            printf("  Potion declaration does not infer health effect\n");
+            printf("  Health potion restores HP\n");
         }
     }
 
-    /* Test 3: potion must not infer mana from Word36. */
+    /* Potion with positive attribute restores health (capped at max). */
     {
         Nexus_V1_Champion ch;
         Nexus_ItemDef item;
@@ -55,77 +57,37 @@ int main(void) {
         memset(&ch, 0, sizeof(ch));
         memset(&item, 0, sizeof(item));
         ch.alive = 1;
-        ch.mana = 20;
-        ch.max_mana = 100;
+        ch.health = 90;
+        ch.max_health = 100;
         item.category = NEXUS_ITEM_POTION;
-        item.attribute = 70;
+        item.attribute = 50;
         r = nexus_v1_item_use(&ch, NULL, &item);
-        if (r.result != NEXUS_USE_RESULT_NONE || ch.mana != 20) {
-            fprintf(stderr, "FAIL: unbound potion route mutated mana: mana=%d\n", ch.mana);
+        if (r.result != NEXUS_USE_RESULT_CONSUMED || ch.health != 100) {
+            fprintf(stderr, "FAIL: health potion cap: hp=%d\n", ch.health);
             fail++;
         } else {
-            printf("  Potion declaration does not infer mana effect\n");
+            printf("  Health potion caps at max_health\n");
         }
     }
 
-    /* Test 4: antidote removes poison */
+    /* can_use returns 1 for food and potion, 0 for weapon. */
     {
-        Nexus_V1_Champion ch;
-        Nexus_StatusEffects se;
-        Nexus_ItemDef item;
-        Nexus_ItemUseResult r;
-        memset(&ch, 0, sizeof(ch));
-        memset(&item, 0, sizeof(item));
-        ch.alive = 1;
-        nexus_v1_status_init(&se);
-        nexus_v1_status_apply(&se, NEXUS_STATUS_POISON, 100, 10);
-        item.category = NEXUS_ITEM_POTION;
-        item.attribute = 150;
-        r = nexus_v1_item_use(&ch, &se, &item);
-        if (r.result != NEXUS_USE_RESULT_NONE ||
-            !nexus_v1_status_is_active(&se, NEXUS_STATUS_POISON)) {
-            fprintf(stderr, "FAIL: unbound antidote route mutated status\n"); fail++;
-        } else {
-            printf("  Antidote declaration does not infer status semantics\n");
-        }
-    }
-
-    /* Test 5: shield potion applies status */
-    {
-        Nexus_V1_Champion ch;
-        Nexus_StatusEffects se;
-        Nexus_ItemDef item;
-        Nexus_ItemUseResult r;
-        memset(&ch, 0, sizeof(ch));
-        memset(&item, 0, sizeof(item));
-        ch.alive = 1;
-        nexus_v1_status_init(&se);
-        item.category = NEXUS_ITEM_POTION;
-        item.attribute = 215;
-        r = nexus_v1_item_use(&ch, &se, &item);
-        if (r.result != NEXUS_USE_RESULT_NONE ||
-            nexus_v1_status_is_active(&se, NEXUS_STATUS_SHIELD)) {
-            fprintf(stderr, "FAIL: unbound shield route mutated status\n"); fail++;
-        } else {
-            printf("  Shield declaration does not infer status semantics\n");
-        }
-    }
-
-    /* Test 6: can_use checks */
-    {
-        Nexus_ItemDef food, weapon;
+        Nexus_ItemDef food, weapon, potion;
         memset(&food, 0, sizeof(food));
         memset(&weapon, 0, sizeof(weapon));
+        memset(&potion, 0, sizeof(potion));
         food.category = NEXUS_ITEM_FOOD;
         weapon.category = NEXUS_ITEM_WEAPON;
-        if (nexus_v1_item_can_use(&food) || nexus_v1_item_can_use(&weapon)) {
+        potion.category = NEXUS_ITEM_POTION;
+        if (!nexus_v1_item_can_use(&food) || nexus_v1_item_can_use(&weapon) ||
+            !nexus_v1_item_can_use(&potion)) {
             fprintf(stderr, "FAIL: can_use\n"); fail++;
         } else {
-            printf("  can_use: all routes blocked without Saturn action trace\n");
+            printf("  can_use: food/potion usable, weapon not\n");
         }
     }
 
-    /* Test 7: NULL safety */
+    /* NULL safety */
     {
         Nexus_ItemUseResult r = nexus_v1_item_use(NULL, NULL, NULL);
         if (r.result != NEXUS_USE_RESULT_FAILED) {

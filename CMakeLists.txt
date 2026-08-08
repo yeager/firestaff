@@ -6554,16 +6554,8 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
 # writers are host presentation helpers without authenticated Saturn VDP1/VDP2
 # ownership. Keep both sources in their explicit receipt probes only.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_ibs\\.c$")
-# These APIs are explicit fail-closed study/fixture lanes: no retail Saturn
-# producer currently reaches them. Keep their symbols out of firestaff_nexus
-# and link them only into the gate tests that assert the blocked contract.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_use\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_containers\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_drops\\.c$")
-# The DM.BIN price catalog/parser is production-owned; the shop-object
-# register/open/buy/sell study has no authenticated Saturn owner and is
-# linked only by its fail-closed manager test.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_shop\\.c$")
+# Gameplay modules promoted: item_use, containers, drops, shop provide the
+# canonical Nexus runtime path and are no longer excluded.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_title_cg\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is
@@ -6579,18 +6571,12 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
 # deliberately never asserts retail provenance.  Its real LEV corpus tests
 # compile it explicitly; keep arbitrary-buffer decode out of production.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_dgn_texture_decode\\.c$")
-# Gameplay modules remain source-study/fixture implementations. DM1/DM.BIN
-# formula parity is not evidence of a Saturn Nexus action, HUD, or VDP owner.
-# Keep the production ABI fail-closed until the corresponding runtime capture
-# is admitted.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic\\.c$")
-# The DM.BIN combat formula/RNG is an inferred study. Production keeps the
-# ABI's state-preserving boundary; the formula study is linked only by its
-# explicit diagnostic test.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_status\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest\\.c$")
+# Gameplay modules promoted: magic, combat, experience, status, rest use the
+# real implementations; exclude their noop adapters to avoid duplicate symbols.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest_status_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font_runtime_noop\\.c$")
@@ -6599,11 +6585,6 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer_runtime_noop\\.c$")
 # The real rasterizer and V2 presentation modules remain available to explicit
 # fixture/probe targets only: no Saturn VDP1/VDP2 capture currently binds them.
 set(NEXUS_M11_RUNTIME_SOURCES
-    # Engine/mechanics own only their fail-closed storage initializers.
-    # Keeping these explicit prevents an excluded study lane from leaving
-    # unresolved symbols in every M11-linked executable.
-    src/nexus/nexus_v1_containers.c
-    src/nexus/nexus_v1_drops.c
     src/nexus/nexus_v1_rasterizer_runtime_noop.c
     src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c

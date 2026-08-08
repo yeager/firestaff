@@ -1099,6 +1099,23 @@ static PROBE_NOINLINE void probe_mechanics_tick_item_usage(void)
     engine.audio.initialized = 1;
     engine.audio.sfx_enabled = 1;
 
+    /* Register fixture item definitions so nexus_itemdef_get works. */
+    {
+        Nexus_ItemDef potion_def;
+        Nexus_ItemDef sword_def;
+        memset(&potion_def, 0, sizeof(potion_def));
+        potion_def.category = NEXUS_ITEM_POTION;
+        potion_def.attribute = 25;
+        potion_def.flags = NEXUS_ITEMF_CONSUMABLE;
+        nexus_itemdef_set(30, &potion_def);
+
+        memset(&sword_def, 0, sizeof(sword_def));
+        sword_def.category = NEXUS_ITEM_WEAPON;
+        sword_def.carry_locations = (1 << (NEXUS_SLOT_WEAPON - 1));
+        sword_def.flags = NEXUS_ITEMF_EQUIPPABLE;
+        nexus_itemdef_set(5, &sword_def);
+    }
+
     /* One champion in the party with low health and a health potion. */
     Nexus_V1_Champion *champ = &engine.champions.champions[0];
     strncpy(champ->name_ascii, "TestChamp", 31);

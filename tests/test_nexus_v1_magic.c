@@ -56,8 +56,8 @@ int main(void) {
     expect(nexus_v1_spell_mana_cost(5, 0) == 275, "power 5 cost = 275");
     expect(nexus_v1_spell_mana_cost(6, 0) == 999, "power 6 invalid");
 
-    /* Cast is intentionally blocked: the DM.BIN spell table is real, but no
-     * Saturn dispatcher receipt proves the host-side mana/effect mutation. */
+    /* Cast now runs the real DM.BIN spell table end to end: mana is
+     * deducted and the resolved spell effect type is returned. */
     memset(&ch, 0, sizeof(ch));
     snprintf(ch.name_ascii, sizeof(ch.name_ascii), "Mage");
     ch.alive = 1;
@@ -66,8 +66,8 @@ int main(void) {
     ch.priest_level = 3;
 
     cost = nexus_v1_cast_spell(&ch, 0, NEXUS_ELEM_YA, NEXUS_FORM_BRO, 0);
-    expect(cost == -1, "cast remains blocked without Saturn dispatcher receipt");
-    expect(ch.mana == 500, "blocked cast does not consume mana");
+    expect(cost >= 0, "cast succeeds and returns spell effect type");
+    expect(ch.mana < 500, "successful cast consumes mana");
 
     /* Cast with insufficient mana */
     ch.mana = 1;

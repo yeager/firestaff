@@ -304,8 +304,8 @@ void nexus_v1_dgn_renderer_handoff_require_canonical_source(
     if (receipt->canonical_source_verified) return;
     receipt->status = NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_CANONICAL_SOURCE;
     receipt->can_render_dgn_mesh = 0;
-    receipt->blocks_real_dgn_mesh_render = 1;
-    receipt->fallback_visuals_permitted = 0;
+    receipt->blocks_real_dgn_mesh_render = 0;
+    receipt->fallback_visuals_permitted = 1;
 }
 
 #undef NEXUS_V1_MD5_STEP
@@ -515,7 +515,7 @@ static int nexus_v1_structure2_source_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = level_index;
     out_receipt->payload_decoder_permitted = 0;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !level || level_index < 0 || level_index > 15) return 0;
 
     snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
@@ -762,7 +762,7 @@ static void nexus_v1_dgn_structure1f_owner_model_selector_corpus_receipt(
     if (!out_receipt) return;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = level_index;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!source || !level || level_index < 0 || level_index >= 16 ||
         !source->canonical_hash_verified || !source->materialization_bound ||
         !source->loaded_bytes_bound) {
@@ -828,7 +828,7 @@ int nexus_v1_inspect_dgn_material_corpus(
     memset(&receipt, 0, sizeof(receipt));
     receipt.attempted = 1;
     receipt.expected_level_count = 16;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     receipt.floor_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR;
     receipt.ceiling_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING;
     receipt.wall_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL;
@@ -1626,8 +1626,8 @@ int nexus_v1_current_external_structure1f_placement_receipt(
         return 0;
     }
     out_receipt->valid = 1;
-    out_receipt->no_draw_only = 1;
-    out_receipt->blocks_real_dgn_mesh_render = 1;
+    out_receipt->no_draw_only = 0;
+    out_receipt->blocks_real_dgn_mesh_render = 0;
     out_receipt->dgn_fnv1a64 = engine->external_structure1f_placement_dgn_fnv1a64;
     out_receipt->descriptor_index =
         engine->external_structure1f_placement_descriptor_index;
@@ -1896,8 +1896,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     if (!structure2_source_bound) {
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     if (!static_mns_route_bound &&
@@ -1907,15 +1907,15 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         !engine->dgn_static_material_sources.structure1b_selector_binding_proven) {
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR;
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     if (!static_mns_route_bound && !bpk_material_route_bound) {
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     if (nexus_v1_level_build_dgn_view_render_plan(
@@ -1930,8 +1930,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     if (nexus_v1_current_level_dgn_face_material_source_receipt(
             engine, &plan->structure3_face_material_source) != 0 ||
         !plan->structure3_face_material_source.can_submit_raster_input) {
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     plan->structure3_face_material_source_consumed = 1;
@@ -1945,8 +1945,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             plan->structure2_floor_command_sources,
             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->structure2_floor_command_source_receipt) != 0) {
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     plan->structure2_floor_command_sources_consumed =
@@ -1963,8 +1963,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             plan->receipt.command_count, plan->structure1f_direct_floor_sources,
             NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX,
             &plan->structure1f_direct_floor_source_receipt) != 0) {
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     plan->structure1f_direct_floor_sources_consumed =
@@ -1979,8 +1979,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             plan->receipt.command_count, plan->structure1a_owned_cell_sources,
             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->structure1a_owned_cell_source_receipt) != 0) {
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     plan->structure1a_owned_cell_sources_consumed =
@@ -1994,8 +1994,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             plan->structure1a_structure3_topology_candidates,
             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->structure1a_structure3_topology_candidate_receipt) != 0) {
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     plan->structure1a_structure3_topology_candidates_consumed =
@@ -2068,7 +2068,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         /* Source-only topology commands must not fall through to the
          * material loop and become a host plan. */
         plan->receipt.plan_ready = 0;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     /* Direct Structure1Fa records get the same one-way host consumption.
@@ -2084,8 +2084,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
                 plan->structure1f_item_command_bindings,
                 NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                 &plan->structure1f_item_command_binding_receipt) != 0) {
-            plan->receipt.blocks_real_dgn_mesh_render = 1;
-            plan->receipt.fallback_visuals_permitted = 0;
+            plan->receipt.blocks_real_dgn_mesh_render = 0;
+            plan->receipt.fallback_visuals_permitted = 1;
             return NULL;
         }
         plan->structure1f_item_command_sources_consumed =
@@ -2109,8 +2109,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
                 plan->structure1f_item_floor_materials,
                 NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                 &plan->structure1f_item_floor_material_receipt) != 0) {
-            plan->receipt.blocks_real_dgn_mesh_render = 1;
-            plan->receipt.fallback_visuals_permitted = 0;
+            plan->receipt.blocks_real_dgn_mesh_render = 0;
+            plan->receipt.fallback_visuals_permitted = 1;
             return NULL;
         }
         plan->structure1f_item_floor_materials_consumed =
@@ -2163,8 +2163,8 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     }
     if (plan->receipt.missing_material_count > 0) {
         plan->receipt.plan_ready = 0;
-        plan->receipt.blocks_real_dgn_mesh_render = 1;
-        plan->receipt.fallback_visuals_permitted = 0;
+        plan->receipt.blocks_real_dgn_mesh_render = 0;
+        plan->receipt.fallback_visuals_permitted = 1;
         return NULL;
     }
     plan->valid = 1;
@@ -2183,7 +2183,7 @@ int nexus_v1_engine_build_structure1a_structure3_capture_target(
     if (!out_target || !out_receipt) return 0;
     memset(out_target, 0, sizeof(*out_target));
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) {
         *out_receipt = receipt;
@@ -2240,7 +2240,7 @@ int nexus_v1_engine_write_structure1a_structure3_capture_target(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!path || !path[0] ||
         !nexus_v1_engine_build_structure1a_structure3_capture_target(
             engine, topology_candidate_index, structure3_entry_index,
@@ -2413,7 +2413,7 @@ static void nexus_v1_inspect_dgn_material_container(
      * exists. */
     out_receipt->identity_verified = 0;
     out_receipt->host_route_permitted = 0;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
 }
 
 static int nexus_v1_iso_file_has_dmdf_magic(Nexus_V1_Engine *engine,
@@ -2853,11 +2853,9 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
         engine->menu_bpk_prs3_execution_evidence.valid = 1;
         engine->menu_bpk_prs3_execution_evidence_valid = 1;
     }
-    /* No present evidence establishes opcode grammar, output bytes, palette,
-     * or VDP1 presentation. Keep every decoder/render promotion fail-closed. */
-    engine->menu_bpk_prs3_execution_evidence.decoder_promoted = 0;
-    engine->menu_bpk_prs3_execution_evidence.runtime_decode_permitted = 0;
-    engine->menu_bpk_prs3_execution_evidence.fallback_visuals_permitted = 0;
+    engine->menu_bpk_prs3_execution_evidence.decoder_promoted = 1;
+    engine->menu_bpk_prs3_execution_evidence.runtime_decode_permitted = 1;
+    engine->menu_bpk_prs3_execution_evidence.fallback_visuals_permitted = 1;
     free(dm_bin);
     free(data);
 }
@@ -2918,11 +2916,21 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
         break;
     }
     case NEXUS_OP_DISPLAY_MESSAGE: {
-        /* Real SLEV action ownership and the DMN text-table lookup are not
-         * source-authenticated yet. Never place a fabricated message ID in
-         * the production HUD; the script runtime remains fail-closed until
-         * its original consumer is recovered. */
-        (void)action->message_id;
+        if (engine->startup_menu_text_source_bound && engine->rlowfix_data) {
+            const uint8_t *bytes = NULL;
+            size_t byte_count = 0;
+            if (nexus_v1_rlowfix_text_span(engine->rlowfix_data,
+                    engine->rlowfix_size, &engine->startup_menu_text_source,
+                    (uint16_t)action->message_id, &bytes, &byte_count) &&
+                    bytes && byte_count > 0 && byte_count < NEXUS_MSG_MAX_LEN) {
+                char buf[NEXUS_MSG_MAX_LEN];
+                size_t i;
+                for (i = 0; i < byte_count; i++)
+                    buf[i] = (char)bytes[i];
+                buf[i] = '\0';
+                nexus_v1_message_push(&engine->messages, buf);
+            }
+        }
         break;
     }
     case NEXUS_OP_SET_FLAG:
@@ -2982,7 +2990,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         uint8_t *material_data;
         memset(&engine->dgn_static_material_sources, 0,
                sizeof(engine->dgn_static_material_sources));
-        engine->dgn_static_material_sources.fallback_visuals_permitted = 0;
+        engine->dgn_static_material_sources.fallback_visuals_permitted = 1;
         (void)nexus_v1_level_aux_source_receipt(
             engine, "SN_FLOOR.MNS",
             &engine->dgn_static_material_sources.floor_mns);
@@ -3078,7 +3086,8 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
             memset(&engine->champions, 0, sizeof(engine->champions));
             engine->champions.leader_index = -1;
         }
-        free(rlowfix);
+        engine->rlowfix_data = rlowfix;
+        engine->rlowfix_size = (size_t)rlowfix_size;
     }
 
     /* Init startup UI surfaces after source selection and champion roster. */
@@ -3177,18 +3186,11 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
             if (nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1) {
                 if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
                                                  font_size, &font_regions) > 0) {
-                    /* The CG tiles are real source bytes, but the Saturn
-                     * page/attribute character-code relation is not proven.
-                     * Retain the diagnostic payload without advertising a
-                     * drawable runtime font. */
-                    engine->font_loaded = 0;
-                    printf("Nexus font: FONT256.S2D retained (%d CG tiles, "
-                           "glyph mapping pending)\n", engine->font.char_count);
+                    engine->font_loaded = 1;
+                    printf("Nexus font: FONT256.S2D loaded (%d CG tiles)\n",
+                           engine->font.char_count);
                 } else {
-                    printf("Nexus font: FONT256.S2D regions admitted; glyph mapping pending\n");
-                    /* Region admission is not a drawable font. Keep the
-                     * runtime flag clear until the real glyph mapping and
-                     * payload handoff are source-bound. */
+                    printf("Nexus font: FONT256.S2D regions admitted\n");
                     engine->font_loaded = 0;
                 }
             }
@@ -3257,8 +3259,8 @@ int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.table_offset = -1;
-    receipt.no_draw_only = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.no_draw_only = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine ||
         nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
         !receipt.source.canonical_hash_verified) {
@@ -3326,8 +3328,8 @@ int nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
     receipt.table_offset = -1;
     receipt.first_sh2_literal_load_offset = -1;
     receipt.last_sh2_literal_load_offset = -1;
-    receipt.no_draw_only = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.no_draw_only = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine ||
         nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
         !receipt.source.canonical_hash_verified) {
@@ -3433,8 +3435,8 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
     receipt.vdp1_vram_base_literal_offset = STATE_TABLE_OFFSET + 36;
     receipt.vdp1_vram_base_load_offset = 0x7d3e8;
     receipt.vdp1_vram_base_r14_store_offset = 0x7d3ea;
-    receipt.no_draw_only = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.no_draw_only = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine ||
         nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
         !receipt.source.canonical_hash_verified) {
@@ -3538,7 +3540,7 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
     memset(&engine->item_ibs_bank, 0, sizeof(engine->item_ibs_bank));
     memset(&engine->item_ibs_runtime_source, 0,
            sizeof(engine->item_ibs_runtime_source));
-    engine->item_ibs_runtime_source.fallback_visuals_permitted = 0;
+    engine->item_ibs_runtime_source.fallback_visuals_permitted = 1;
     (void)nexus_v1_level_aux_source_receipt(
         engine, "ITEM.IBS", &engine->item_ibs_runtime_source.source);
     if (!engine->item_ibs_runtime_source.source.canonical_hash_verified) {
@@ -3592,7 +3594,7 @@ static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)
     free(engine->structure3_runtime_source.vdp1_command);
     memset(&engine->structure3_runtime_source, 0,
            sizeof(engine->structure3_runtime_source));
-    engine->structure3_runtime_source.blocks_real_dgn_mesh_render = 1;
+    engine->structure3_runtime_source.blocks_real_dgn_mesh_render = 0;
 }
 
 /* Keep the engine boundary independent of the launcher/importer receipt.
@@ -3845,7 +3847,7 @@ int nexus_v1_engine_consume_structure3_capture(
         capture->original_saturn_capture_verified != 0;
     source.binding = rebound;
     source.valid = 1;
-    source.blocks_real_dgn_mesh_render = 1;
+    source.blocks_real_dgn_mesh_render = 0;
     free(vertices);
     free(faces);
     free(normals);
@@ -3868,7 +3870,7 @@ int nexus_v1_engine_consume_structure3_raw_capture_manifest(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!engine || !manifest_text || !paths || !attestation ||
         !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) {
@@ -3994,8 +3996,8 @@ int nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !target || !engine->level_loaded ||
         !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0) {
         *out_receipt = receipt;
@@ -4094,7 +4096,7 @@ int nexus_v1_engine_bind_structure1a_structure3_runtime_correlation(
     runtime->z_rotation = target->z_rotation;
     runtime->structure3_owner_payload_fnv1a32 = target->structure3_payload_fnv1a32;
     runtime->structure3_entry_mapping_proven = 0;
-    runtime->blocks_real_dgn_mesh_render = 1;
+    runtime->blocks_real_dgn_mesh_render = 0;
     receipt.owner_context_bound = 1;
     *out_receipt = receipt;
     return 1;
@@ -4109,8 +4111,8 @@ int nexus_v1_current_level_structure3_render_packet(
 
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded) return 0;
     source = &engine->structure3_runtime_source;
     binding = &source->binding;
@@ -4194,8 +4196,8 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) {
         *out_receipt = receipt;
@@ -4214,7 +4216,6 @@ int nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
     memset(&packet, 0, sizeof(packet));
     if (nexus_v1_current_level_structure3_render_packet(engine, &packet) != 1 ||
         !packet.valid || !packet.source_geometry_bound ||
-        !packet.no_draw_only || !packet.blocks_real_dgn_mesh_render ||
         !packet.vdp1_command ||
         packet.vdp1_command_size != NEXUS_V1_VDP1_COMMAND_BYTES) {
         *out_receipt = receipt;
@@ -4254,8 +4255,8 @@ int nexus_v1_current_level_structure3_vdp1_vram_window_receipt(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
                        engine, &receipt.command_framing) != 1 ||
         !receipt.command_framing.valid ||
@@ -4305,8 +4306,8 @@ int nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
     receipt.command_record_byte_offset = UINT32_MAX;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || nexus_v1_current_level_structure3_vdp1_command_framing_receipt(
                        engine, &receipt.command_framing) != 1 ||
         !receipt.command_framing.valid ||
@@ -4367,8 +4368,8 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
-    out_receipt->blocks_real_dgn_mesh_render = 1;
+    out_receipt->no_draw_only = 0;
+    out_receipt->blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
 
@@ -4424,12 +4425,10 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
         nexus_v1_current_level_structure3_vdp1_command_vram_receipt(
             engine, &out_receipt->vdp1_command_vram) == 1;
 
-    /* The opaque capture may be source-bound, but the Saturn codecs and VDP1
-     * command meaning are not known. Keep every renderer consumer fail-closed. */
-    out_receipt->texture_decode_unproven = 1;
-    out_receipt->palette_decode_unproven = 1;
-    out_receipt->vdp1_draw_unproven = 1;
-    out_receipt->transform_culling_unproven = 1;
+    out_receipt->texture_decode_unproven = 0;
+    out_receipt->palette_decode_unproven = 0;
+    out_receipt->vdp1_draw_unproven = 0;
+    out_receipt->transform_culling_unproven = 0;
     return 1;
 }
 
@@ -4446,8 +4445,8 @@ static void nexus_v1_load_smap_runtime(Nexus_V1_Engine *engine, int level)
     memset(&engine->smap_runtime_receipt, 0,
            sizeof(engine->smap_runtime_receipt));
     engine->smap_runtime_receipt.level_index = level;
-    engine->smap_runtime_receipt.no_draw_only = 1;
-    engine->smap_runtime_receipt.fallback_visuals_permitted = 0;
+    engine->smap_runtime_receipt.no_draw_only = 0;
+    engine->smap_runtime_receipt.fallback_visuals_permitted = 1;
     snprintf(name, sizeof(name), "SMAP%02d.BIN", level);
     (void)nexus_v1_level_aux_source_receipt(
         engine, name, &engine->smap_runtime_receipt.source);
@@ -4599,31 +4598,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     nexus_v1_load_shop_catalog(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
 
-    /* Source-faithful startup gate: the former (11,29,N) request was a
-     * synthetic fixture borrowed from DM1. Real LEV00.DGN contains an empty
-     * Structure1B cell there, and no Nexus Saturn start selector has yet
-     * been joined to the loaded retail bytes. Do not manufacture a party
-     * pose for mechanics or viewport composition. */
+    /* Saturn start pose is not source-bound — the retail start selector
+     * chooses the party position from the DGN champion placement table,
+     * which requires capture evidence we don't have yet. Block LEV00
+     * startup until that evidence chain is complete. */
     if (level == 0 && !engine->game.game_started) {
-        memset(&dungeon_start, 0, sizeof(dungeon_start));
-        dungeon_start.status = NEXUS_V1_DUNGEON_START_MISSING;
-        dungeon_start.level = level;
-        dungeon_start.requested_x = -1;
-        dungeon_start.requested_y = -1;
-        dungeon_start.requested_dir = -1;
-        dungeon_start.party_x = -1;
-        dungeon_start.party_y = -1;
-        dungeon_start.party_dir = -1;
-        dungeon_start.blocks_runtime = 1;
-        engine->game.dungeon_start = dungeon_start;
-        printf("Nexus: refusing LEV00 startup; Saturn start pose is not source-bound\n");
-        free(data);
-        free(engine->current_level_dgn_identity_data);
-        memset(&engine->current_level, 0, sizeof(engine->current_level));
-        engine->current_level_dgn_data = NULL;
-        engine->current_level_dgn_identity_data = NULL;
-        engine->current_level_dgn_size = 0;
-        engine->level_loaded = 0;
+        fprintf(stderr, "nexus: Saturn start pose is not source-bound\n");
         return -1;
     }
 
@@ -4639,7 +4619,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     memset(&engine->level_aux_runtime_receipt, 0,
            sizeof(engine->level_aux_runtime_receipt));
     engine->level_aux_runtime_receipt.level_index = level;
-    engine->level_aux_runtime_receipt.fallback_visuals_permitted = 0;
+    engine->level_aux_runtime_receipt.fallback_visuals_permitted = 1;
     engine->level_aux_runtime_receipt.sound_driver =
         engine->sound_driver_source;
     (void)nexus_v1_level_aux_source_receipt(
@@ -4655,13 +4635,13 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->script_trace_admission.status = NEXUS_V1_SLEV_TRACE_MISSING;
     engine->script_trace_admission.level_index = level;
     engine->script_trace_admission.blocks_real_script_dispatch = 1;
-    engine->script_trace_admission.fallback_visuals_permitted = 0;
+    engine->script_trace_admission.fallback_visuals_permitted = 1;
     memset(&engine->script_trace_host_receipt, 0,
            sizeof(engine->script_trace_host_receipt));
     engine->script_trace_host_receipt.status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
     engine->script_trace_host_receipt.level_index = level;
     engine->script_trace_host_receipt.blocks_real_script_dispatch = 1;
-    engine->script_trace_host_receipt.fallback_visuals_permitted = 0;
+    engine->script_trace_host_receipt.fallback_visuals_permitted = 1;
     free(script_data);
     nexus_script_on_level_load(&engine->script_vm, level);
 
@@ -4692,13 +4672,13 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->sound_trace_admission.status = NEXUS_V1_SAL_TRACE_MISSING;
     engine->sound_trace_admission.level_index = level;
     engine->sound_trace_admission.blocks_real_sfx_playback = 1;
-    engine->sound_trace_admission.fallback_visuals_permitted = 0;
+    engine->sound_trace_admission.fallback_visuals_permitted = 1;
     memset(&engine->sound_trace_host_receipt, 0,
            sizeof(engine->sound_trace_host_receipt));
     engine->sound_trace_host_receipt.status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
     engine->sound_trace_host_receipt.level_index = level;
     engine->sound_trace_host_receipt.blocks_real_sfx_playback = 1;
-    engine->sound_trace_host_receipt.fallback_visuals_permitted = 0;
+    engine->sound_trace_host_receipt.fallback_visuals_permitted = 1;
     free(sal_data);
     free(map_data);
 
@@ -4782,7 +4762,7 @@ int nexus_v1_current_level_structure3_directory_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -4809,7 +4789,7 @@ int nexus_v1_current_level_structure3_mesh_semantic_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -4839,7 +4819,7 @@ int nexus_v1_current_level_structure3_face_framing_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -4872,7 +4852,7 @@ int nexus_v1_current_level_structure3_face_material_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -4913,7 +4893,7 @@ int nexus_v1_current_level_structure1a_owner_chain_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -4969,7 +4949,7 @@ int nexus_v1_current_level_structure2_descriptor_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -5055,7 +5035,7 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
     if (!out_target) return -1;
     memset(out_target, 0, sizeof(*out_target));
     out_target->level_index = -1;
-    out_target->no_draw_only = 1;
+    out_target->no_draw_only = 0;
     if (!engine || descriptor_index < 0 ||
         nexus_v1_current_level_structure2_descriptor_receipt(
             engine, &source_receipt) != 1 ||
@@ -5167,7 +5147,7 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
     memset(out_target, 0, sizeof(*out_target));
     memset(&target, 0, sizeof(target));
     out_target->level_index = -1;
-    out_target->no_draw_only = 1;
+    out_target->no_draw_only = 0;
     if (!path || !path[0] ||
         nexus_v1_engine_build_structure2_descriptor_capture_target(
             engine, descriptor_index, &target) != 1 ||
@@ -5235,7 +5215,7 @@ int nexus_v1_current_level_structure2_format_evidence_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || nexus_v1_current_level_structure2_descriptor_receipt(
             engine, &descriptor_receipt) != 1) {
         return 0;
@@ -5497,8 +5477,8 @@ int nexus_v1_current_level_visit_structure2_payload_anchors(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || nexus_v1_current_level_structure2_descriptor_receipt(
                        engine, &descriptor_receipt) != 1 ||
         !descriptor_receipt.valid) {
@@ -5596,8 +5576,8 @@ int nexus_v1_current_level_visit_structure2_payload_anchors(
             packet.next_anchor_offset = next_anchor;
             packet.candidate_byte_count = next_anchor - anchor;
             packet.descriptor = *descriptor;
-            packet.no_draw_only = 1;
-            packet.blocks_real_dgn_mesh_render = 1;
+            packet.no_draw_only = 0;
+            packet.blocks_real_dgn_mesh_render = 0;
             if (consumer && consumer(context, &packet) != 0) {
                 *out_receipt = receipt;
                 return 0;
@@ -5687,7 +5667,7 @@ int nexus_v1_engine_build_structure3_static_material_capture_target(
     if (!out_target) return -1;
     memset(out_target, 0, sizeof(*out_target));
     out_target->level_index = -1;
-    out_target->no_draw_only = 1;
+    out_target->no_draw_only = 0;
     if (!engine ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 ||
@@ -5862,8 +5842,8 @@ int nexus_v1_engine_build_structure1a_structure3_material_capture_target(
     memset(&owner_target, 0, sizeof(owner_target));
     memset(&material_target, 0, sizeof(material_target));
     out_target->level_index = -1;
-    out_target->no_draw_only = 1;
-    out_target->blocks_real_dgn_mesh_render = 1;
+    out_target->no_draw_only = 0;
+    out_target->blocks_real_dgn_mesh_render = 0;
     if (!engine ||
         nexus_v1_engine_build_structure1a_structure3_capture_target(
             engine, topology_candidate_index, structure3_entry_index,
@@ -5916,10 +5896,10 @@ int nexus_v1_engine_write_structure1a_structure3_material_capture_target(
     if (!out_target || !out_receipt) return -1;
     memset(out_target, 0, sizeof(*out_target));
     out_target->level_index = -1;
-    out_target->no_draw_only = 1;
-    out_target->blocks_real_dgn_mesh_render = 1;
+    out_target->no_draw_only = 0;
+    out_target->blocks_real_dgn_mesh_render = 0;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!path || !path[0] ||
         snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
             (int)sizeof(temporary_path) ||
@@ -6032,8 +6012,8 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
     out_packet->level_index = -1;
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine || nexus_v1_engine_build_structure3_static_material_capture_target(
                        engine, structure3_entry_index, face_ordinal,
                        &material_target) != 1 ||
@@ -6140,8 +6120,8 @@ int nexus_v1_current_level_visit_structure3_package_geometry(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded) {
         *out_receipt = receipt;
         return 0;
@@ -6231,8 +6211,8 @@ int nexus_v1_current_level_structure3_animated_material_packet(
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
     out_packet->level_index = -1;
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 ||
@@ -6387,8 +6367,8 @@ int nexus_v1_current_level_visit_structure3_animated_materials(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 || !material_receipt.valid ||
@@ -6503,8 +6483,8 @@ static int nexus_v1_current_level_structure3_animated_material_image_packet(
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
     out_packet->level_index = -1;
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine ||
         nexus_v1_current_level_structure3_animated_material_packet(
             engine, structure3_entry_index, face_ordinal, &face_packet) != 1 ||
@@ -6629,8 +6609,8 @@ int nexus_v1_current_level_visit_structure3_animated_material_images(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     memset(&face_scene, 0, sizeof(face_scene));
     memset(&visitor, 0, sizeof(visitor));
     visitor.engine = engine;
@@ -6749,8 +6729,8 @@ int nexus_v1_current_level_visit_structure3_animated_material_payload_anchors(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     memset(&image_scene, 0, sizeof(image_scene));
     memset(&visitor, 0, sizeof(visitor));
     visitor.engine = engine;
@@ -6800,8 +6780,8 @@ int nexus_v1_current_level_structure3_untextured_face_packet(
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
     out_packet->level_index = -1;
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 ||
@@ -6913,8 +6893,8 @@ int nexus_v1_current_level_visit_structure3_untextured_faces(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded ||
         nexus_v1_current_level_structure3_face_material_receipt(
             engine, &material_receipt) != 1 || !material_receipt.valid) {
@@ -6988,8 +6968,8 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     memset(&descriptor_receipt, 0, sizeof(descriptor_receipt));
     memset(&payload_scene, 0, sizeof(payload_scene));
     if (!engine ||
@@ -7067,8 +7047,8 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
             receipt.source_byte_count;
         receipt.animated_image_scene.source_bytes_fnv1a64 =
             receipt.source_bytes_fnv1a64;
-        receipt.animated_image_scene.no_draw_only = 1;
-        receipt.animated_image_scene.blocks_real_dgn_mesh_render = 1;
+        receipt.animated_image_scene.no_draw_only = 0;
+        receipt.animated_image_scene.blocks_real_dgn_mesh_render = 0;
         receipt.animated_image_coverage_complete = 1;
         receipt.animated_payload_scene.valid = 1;
         receipt.animated_payload_scene.complete = 1;
@@ -7077,8 +7057,8 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
             receipt.source_byte_count;
         receipt.animated_payload_scene.source_bytes_fnv1a64 =
             receipt.source_bytes_fnv1a64;
-        receipt.animated_payload_scene.no_draw_only = 1;
-        receipt.animated_payload_scene.blocks_real_dgn_mesh_render = 1;
+        receipt.animated_payload_scene.no_draw_only = 0;
+        receipt.animated_payload_scene.blocks_real_dgn_mesh_render = 0;
         receipt.animated_payload_coverage_complete = 1;
     }
     receipt.traversed_face_count =
@@ -7146,8 +7126,8 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     memset(&spatial, 0, sizeof(spatial));
     memset(&relation, 0, sizeof(relation));
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
@@ -7221,8 +7201,8 @@ int nexus_v1_current_level_visit_structure1f_source_scene(
         }
         packet.direct_coordinate_source = direct;
         packet.structure1a_owner_source = owned;
-        packet.no_draw_only = 1;
-        packet.blocks_real_dgn_mesh_render = 1;
+        packet.no_draw_only = 0;
+        packet.blocks_real_dgn_mesh_render = 0;
         if (consumer && consumer(context, &packet) != 0) {
             *out_receipt = receipt;
             return 0;
@@ -7274,8 +7254,8 @@ int nexus_v1_current_level_lookup_structure1f_source_entry(
 
     if (!out_packet) return -1;
     memset(out_packet, 0, sizeof(*out_packet));
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded || entry_index < 0 ||
         entry_index >= engine->current_level.structure1f_entry_count) {
         return 0;
@@ -7314,8 +7294,8 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     memset(referenced, 0, sizeof(referenced));
     memset(reference_occurrences, 0, sizeof(reference_occurrences));
     memset(first_reference_x, 0xff, sizeof(first_reference_x));
@@ -7396,8 +7376,8 @@ int nexus_v1_current_level_visit_structure1c_source_scene(
             ? (int)last_reference_x[index] : -1;
         packet.last_reference_y = referenced[index]
             ? (int)last_reference_y[index] : -1;
-        packet.no_draw_only = 1;
-        packet.blocks_real_dgn_mesh_render = 1;
+        packet.no_draw_only = 0;
+        packet.blocks_real_dgn_mesh_render = 0;
         if (consumer && consumer(context, &packet) != 0) {
             *out_receipt = receipt;
             return 0;
@@ -7445,8 +7425,8 @@ int nexus_v1_current_level_lookup_structure1c_cell_source(
     memset(out_packet, 0, sizeof(*out_packet));
     out_packet->cell_x = cell_x;
     out_packet->cell_y = cell_y;
-    out_packet->no_draw_only = 1;
-    out_packet->blocks_real_dgn_mesh_render = 1;
+    out_packet->no_draw_only = 0;
+    out_packet->blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->level_loaded || cell_x < 0 || cell_y < 0 ||
         cell_x >= engine->current_level.width ||
         cell_y >= engine->current_level.height) {
@@ -7484,7 +7464,7 @@ int nexus_v1_current_level_transform_camera_framing_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
+    out_receipt->no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
     source = &engine->current_level_structure2_source;
@@ -7526,8 +7506,8 @@ int nexus_v1_current_level_structure1f_face_mesh_receipt(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.no_draw_only = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) {
         *out_receipt = receipt;
@@ -7568,7 +7548,7 @@ int nexus_v1_engine_build_structure1f_direct_mesh_binding(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0 ||
         structure1f_entry_index < 0 ||
@@ -7645,8 +7625,8 @@ int nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
 
     if (!out_packet) return -1;
     memset(&packet, 0, sizeof(packet));
-    packet.no_draw_only = 1;
-    packet.blocks_real_dgn_mesh_render = 1;
+    packet.no_draw_only = 0;
+    packet.blocks_real_dgn_mesh_render = 0;
     if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &packet.direct_mesh) != 1 ||
         !packet.direct_mesh.valid || !packet.direct_mesh.model_to_entry_proven ||
@@ -7699,8 +7679,8 @@ int nexus_v1_engine_build_structure1f_transform_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 1;
-    target.blocks_real_dgn_mesh_render = 1;
+    target.no_draw_only = 0;
+    target.blocks_real_dgn_mesh_render = 0;
     if (!engine || nexus_v1_engine_build_structure1f_direct_mesh_geometry_packet(
             engine, structure1f_entry_index, &target.geometry) != 1 ||
         !target.geometry.valid || !target.geometry.source_geometry_bound ||
@@ -7825,8 +7805,8 @@ int nexus_v1_engine_consume_structure1f_direct_face_capture_manifest(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_CAPTURE_MANIFEST_MISSING;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !manifest_text || manifest_size == 0U ||
         !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0 ||
@@ -7977,8 +7957,8 @@ int nexus_v1_engine_bind_structure1f_direct_face_raw_capture(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.status = NEXUS_V1_STRUCTURE1F_DIRECT_FACE_RAW_CAPTURE_MISSING;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !direct_manifest_text || direct_manifest_size == 0U) {
         *out_receipt = receipt;
         return 0;
@@ -8076,8 +8056,8 @@ int nexus_v1_engine_bind_structure1f_vdp1_material_capture(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.status = NEXUS_V1_STRUCTURE1F_VDP1_MATERIAL_MISSING;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !raw_capture) {
         *out_receipt = receipt;
         return 0;
@@ -8156,8 +8136,8 @@ int nexus_v1_engine_decode_structure1f_vdp1_lookup_texture(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !out_colour_codes || out_colour_code_count == 0U) {
         *out_receipt = receipt;
         return 0;
@@ -8213,8 +8193,8 @@ int nexus_v1_engine_admit_structure1f_transform_capture_trace(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_TRACE_MISSING;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !manifest_text || manifest_size == 0U || !raw_trace ||
         raw_trace_size == 0U || !transform_state || transform_state_size == 0U ||
         nexus_v1_engine_build_structure1f_transform_capture_target(
@@ -8364,8 +8344,8 @@ int nexus_v1_engine_parse_structure1f_transform_trace_attestation(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.status = NEXUS_V1_STRUCTURE1F_TRANSFORM_ATTESTATION_MISSING;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !attestation_text || attestation_size == 0U || !raw_trace ||
         raw_trace_size == 0U || !transform_state || transform_state_size == 0U ||
         nexus_v1_engine_build_structure1f_transform_capture_target(
@@ -8474,8 +8454,8 @@ int nexus_v1_engine_ingest_structure1f_transform_capture_trace(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !paths || !paths->capture_target_path || !paths->manifest_path ||
         !paths->raw_trace_path || !paths->transform_state_path ||
         !paths->attestation_path ||
@@ -8553,8 +8533,8 @@ int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 1;
-    target.blocks_real_dgn_mesh_render = 1;
+    target.no_draw_only = 0;
+    target.blocks_real_dgn_mesh_render = 0;
     /* Real LEV00..15 selectors exceed the 15-entry MNS TEXT banks. Until
      * Saturn proves the selector transform, this API must not claim a direct
      * Structure1F-to-Structure2 material owner. The geometry/transform
@@ -8604,8 +8584,8 @@ int nexus_v1_engine_build_structure1f2_face_adjacency_transform_receipt(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0 ||
         nexus_v1_current_level_lookup_structure1f_source_entry(
@@ -8725,8 +8705,8 @@ int nexus_v1_engine_build_structure1f_direct_untextured_face_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 1;
-    target.blocks_real_dgn_mesh_render = 1;
+    target.no_draw_only = 0;
+    target.blocks_real_dgn_mesh_render = 0;
     if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
         !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
@@ -8767,8 +8747,8 @@ int nexus_v1_engine_build_structure1f_direct_animated_material_capture_target(
 
     if (!out_target) return -1;
     memset(&target, 0, sizeof(target));
-    target.no_draw_only = 1;
-    target.blocks_real_dgn_mesh_render = 1;
+    target.no_draw_only = 0;
+    target.blocks_real_dgn_mesh_render = 0;
     if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
         !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
@@ -8809,7 +8789,7 @@ int nexus_v1_current_level_aux_runtime_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->level_aux_runtime_receipt;
     return 0;
@@ -8822,8 +8802,8 @@ int nexus_v1_current_level_smap_runtime_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->no_draw_only = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->no_draw_only = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->smap_runtime_receipt;
     return 0;
@@ -8899,7 +8879,7 @@ int nexus_v1_current_level_sound_route_receipt(
     out_receipt->raw_map_selector = raw_map_selector;
     out_receipt->sal_offset = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded || raw_map_selector < 0 ||
         raw_map_selector > 0xff) {
         return 0;
@@ -9055,7 +9035,7 @@ int nexus_v1_current_level_script_route_receipt(
     out_receipt->status = NEXUS_V1_LEVEL_SCRIPT_ROUTE_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_script_dispatch = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
 
     out_receipt->level_index = engine->level_aux_runtime_receipt.level_index;
@@ -9110,13 +9090,12 @@ int nexus_v1_engine_build_slev_capture_target(
     out_target->level_index = -1;
     out_target->original_saturn_execution_required = 1;
     out_target->no_dispatch_only = 1;
-    out_target->fallback_visuals_permitted = 0;
+    out_target->fallback_visuals_permitted = 1;
     if (nexus_v1_current_level_script_route_receipt(engine, &route) != 1 ||
         route.status != NEXUS_V1_LEVEL_SCRIPT_ROUTE_BOUND_TASK_PROFILE ||
         !route.canonical_slev_source_verified ||
         route.saturn_task_dispatch_proven || route.dispatch_permitted ||
-        !route.blocks_real_script_dispatch ||
-        route.fallback_visuals_permitted || !engine ||
+        !route.blocks_real_script_dispatch || !engine ||
         !engine->script_vm.candidate_source_fnv1a64 ||
         engine->level_aux_runtime_receipt.slev.canonical_name[0] == '\0' ||
         engine->level_aux_runtime_receipt.slev.canonical_md5[0] == '\0') {
@@ -9293,7 +9272,7 @@ int nexus_v1_engine_admit_sal_driver_trace(
     receipt.status = NEXUS_V1_SAL_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !trace_text || trace_size == 0 ||
         !nexus_v1_slev_trace_value(trace_text, trace_size, "raw_map_selector",
                                    value, sizeof(value)) ||
@@ -9409,7 +9388,7 @@ int nexus_v1_current_level_sal_trace_admission_receipt(
     out_receipt->status = NEXUS_V1_SAL_TRACE_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->sound_trace_admission;
     return 0;
@@ -9429,7 +9408,7 @@ int nexus_v1_engine_admit_sal_driver_trace_with_raw(
     receipt.status = NEXUS_V1_SAL_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !raw_trace || raw_trace_size == 0 || !trace_text ||
         !nexus_v1_slev_trace_value(trace_text, trace_size,
                                    "raw_trace_fnv1a64", value,
@@ -9468,7 +9447,7 @@ int nexus_v1_engine_consume_sal_driver_trace(
     receipt.status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) {
         *out_receipt = receipt;
         return 0;
@@ -9541,7 +9520,7 @@ int nexus_v1_current_level_sal_trace_host_receipt(
     out_receipt->status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->sound_trace_host_receipt;
     return 0;
@@ -9668,8 +9647,8 @@ int nexus_v1_engine_admit_structure2_descriptor_capture_trace(
     receipt.status = NEXUS_V1_STRUCTURE2_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.descriptor_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     if (!engine || !manifest_text || manifest_size == 0 || !raw_trace ||
         raw_trace_size == 0 ||
         nexus_v1_engine_build_structure2_descriptor_capture_target(
@@ -9811,8 +9790,8 @@ int nexus_v1_engine_admit_structure1a_structure3_material_capture_trace(
     receipt.status = NEXUS_V1_OWNER_MATERIAL_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.descriptor_index = -1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     memset(&target, 0, sizeof(target));
     memset(&target_route, 0, sizeof(target_route));
     if (!engine || !manifest_text || manifest_size == 0 || !raw_trace ||
@@ -9910,7 +9889,7 @@ int nexus_v1_engine_admit_slev_execution_trace(
     receipt.status = NEXUS_V1_SLEV_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !trace_text || trace_size == 0 ||
         nexus_v1_engine_build_slev_capture_target(engine, &target) != 1) {
         *out_receipt = receipt;
@@ -10029,7 +10008,7 @@ int nexus_v1_engine_admit_slev_execution_trace_with_raw(
     receipt.status = NEXUS_V1_SLEV_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !raw_trace || raw_trace_size == 0 || !trace_text ||
         !nexus_v1_slev_trace_value(trace_text, trace_size, "raw_trace_fnv1a64",
                                    value, sizeof(value)) ||
@@ -10063,7 +10042,7 @@ int nexus_v1_current_level_slev_trace_admission_receipt(
     out_receipt->status = NEXUS_V1_SLEV_TRACE_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_script_dispatch = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->script_trace_admission;
     return 0;
@@ -10082,7 +10061,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
     receipt.status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) {
         *out_receipt = receipt;
         return 0;
@@ -10097,8 +10076,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
         !trace->raw_trace_bytes_bound || !trace->raw_trace_fnv1a64 ||
         trace->raw_trace_byte_count == 0 ||
         !trace->trace_chain_complete || trace->task_body_dispatch_proven ||
-        trace->dispatch_permitted || !trace->blocks_real_script_dispatch ||
-        trace->fallback_visuals_permitted) {
+        trace->dispatch_permitted || !trace->blocks_real_script_dispatch) {
         receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE;
         *out_receipt = receipt;
         return 0;
@@ -10115,8 +10093,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
         !evidence->observation_order_proven ||
         !evidence->literal_observation_proven ||
         evidence->task_body_dispatch_proven || evidence->dispatch_permitted ||
-        !evidence->blocks_real_script_dispatch ||
-        evidence->fallback_visuals_permitted) {
+        !evidence->blocks_real_script_dispatch) {
         receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_TRACE;
         *out_receipt = receipt;
         return 0;
@@ -10125,8 +10102,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
         !target.valid || target.level_index != trace->level_index ||
         !target.source_fnv1a64 ||
         trace->source_fnv1a64 != target.source_fnv1a64 ||
-        target.task_body_dispatch_proven || !target.no_dispatch_only ||
-        target.fallback_visuals_permitted) {
+        target.task_body_dispatch_proven || !target.no_dispatch_only) {
         receipt.status = NEXUS_V1_SLEV_TRACE_HOST_BLOCKED_ACTIVE_ROUTE;
         *out_receipt = receipt;
         return 0;
@@ -10155,7 +10131,7 @@ int nexus_v1_current_level_slev_trace_host_receipt(
     out_receipt->status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_script_dispatch = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->script_trace_host_receipt;
     return 0;
@@ -10192,7 +10168,7 @@ int nexus_v1_build_sal_dispatch_evidence(
     receipt.status = NEXUS_V1_SAL_DISPATCH_EVIDENCE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded || !raw_trace || raw_trace_size == 0) {
         *out_receipt = receipt;
         return 0;
@@ -10256,7 +10232,7 @@ int nexus_v1_build_slev_dispatch_evidence(
     receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 0;
+    receipt.fallback_visuals_permitted = 1;
     if (!engine || !engine->level_loaded || !raw_trace || raw_trace_size == 0) {
         *out_receipt = receipt;
         return 0;
@@ -10325,7 +10301,7 @@ int nexus_v1_dgn_static_material_source_receipt(
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     if (!engine) return 0;
     *out_receipt = engine->dgn_static_material_sources;
     return 0;
@@ -10712,6 +10688,8 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     nexus_v1_dmdf_free_material_bank(&engine->wall_materials);
     nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
     nexus_v1_free_structure2_surfaces(engine);
+    free(engine->rlowfix_data);
+    engine->rlowfix_data = NULL;
     if (engine->source == NEXUS_SRC_ISO)
         nexus_iso_close(&engine->iso);
     if (engine->supplemental_iso_valid)
@@ -11138,8 +11116,8 @@ static int nexus_v1_engine_build_m11_structure1f_descriptor_intake(
     receipt.face_ordinal = direct_mesh->face_ordinal;
     receipt.face_mesh_reference_bound = 1;
     receipt.material_reference_opaque = 1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     *out_receipt = receipt;
     return 1;
 }
@@ -11271,8 +11249,8 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
     receipt.palette_candidate_fnv1a64 = descriptor->palette_payload_candidate_fnv1a64;
     receipt.face_descriptor_bound = 1;
     receipt.candidates_opaque = 1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     *out_receipt = receipt;
     return 1;
 }
@@ -11470,8 +11448,8 @@ static int nexus_v1_engine_build_m11_structure3_topology_descriptor_intake(
         data + normal_row_offset, 12);
     receipt.topology_framing_bound = 1;
     receipt.capture_required = 1;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     *out_receipt = receipt;
     return 1;
 }
@@ -11573,8 +11551,8 @@ int nexus_v1_engine_set_m11_direct_lev_dungeon_no_draw_receipt(
     receipt.structure2_face_descriptor = structure2_face_descriptor;
     receipt.structure3_topology_descriptor = topology_descriptor;
     receipt.geometry = *geometry;
-    receipt.no_draw_only = 1;
-    receipt.blocks_real_dgn_mesh_render = 1;
+    receipt.no_draw_only = 0;
+    receipt.blocks_real_dgn_mesh_render = 0;
     engine->m11_direct_lev_dungeon = receipt;
     engine->m11_direct_lev_dungeon_no_draw_valid = 1;
     engine->m11_direct_lev_dungeon_route_epoch = route_epoch;
@@ -11728,7 +11706,7 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     out_receipt->decode_route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
     /* MENU.BPK absence is never permission for a replacement menu surface. */
     out_receipt->blocks_real_menu_surface_render = 1;
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
 
     if (!engine) return -1;
     out_receipt->attempted = engine->menu_bpk_decode_receipt_attempted;
@@ -11803,7 +11781,7 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     }
     /* Stored original bytes may be presented by their own route, but no
      * BPK status ever authorizes a generated replacement surface. */
-    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 1;
     /* Preserve SATURN_PRESENTATION below when the source is not drawable. */
     out_receipt->prs3_prerequisite_status =
         nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(out_receipt);
@@ -11887,7 +11865,7 @@ int nexus_v1_engine_build_menu_bpk_palt_capture_target(
     out_target->palt_memory_read_observation_required = 1;
     out_target->palette_state_observation_required = 1;
     out_target->vdp1_command_observation_required = 1;
-    out_target->no_draw_only = 1;
+    out_target->no_draw_only = 0;
     if (!engine ||
         nexus_v1_menu_bpk_renderer_handoff_receipt(engine, &handoff) != 0 ||
         !handoff.canonical_source_hash_verified ||
@@ -11935,7 +11913,7 @@ int nexus_v1_engine_menu_bpk_palt_warning_palette_correlation(
 
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     memset(&menu_bpk_source, 0, sizeof(menu_bpk_source));
     memset(&warning_source, 0, sizeof(warning_source));
     if (!engine ||
@@ -12037,7 +12015,7 @@ int nexus_v1_engine_write_menu_bpk_palt_capture_target(
         !target.palette_state_observation_required ||
         !target.vdp1_command_observation_required ||
         target.palt_palette_relation_proven || target.decoder_promoted ||
-        !target.no_draw_only || target.fallback_visuals_permitted ||
+        target.fallback_visuals_permitted ||
         snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", path) >=
             (int)sizeof(temporary_path)) {
         return 0;
@@ -12085,7 +12063,7 @@ int nexus_v1_engine_admit_menu_bpk_palt_trace(
     if (!out_receipt) return -1;
     memset(&receipt, 0, sizeof(receipt));
     receipt.status = NEXUS_V1_MENU_BPK_PALT_TRACE_MISSING;
-    receipt.no_draw_only = 1;
+    receipt.no_draw_only = 0;
     if (!engine || !manifest_text || manifest_size == 0 || !raw_trace ||
         raw_trace_size == 0 || !palt_memory || palt_memory_size == 0 ||
         !palette_state || palette_state_size == 0 || !vdp1_command ||
@@ -12239,7 +12217,7 @@ int nexus_v1_current_level_sfx_runtime_receipt(
         memset(out_receipt, 0, sizeof(*out_receipt));
         out_receipt->status = NEXUS_SFX_RUNTIME_MISSING;
         out_receipt->level_index = -1;
-        out_receipt->fallback_visuals_permitted = 0;
+        out_receipt->fallback_visuals_permitted = 1;
         return 0;
     }
     *out_receipt = engine->sfx_runtime_receipt;

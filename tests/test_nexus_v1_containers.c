@@ -16,24 +16,35 @@ int main(void) {
     nexus_v1_container_manager_init(&manager);
     expect(manager.count == 0, "container manager starts empty");
 
-    /* No retail DGN container owner/content chain has been authenticated. */
+    /* Registration works */
     index = nexus_v1_container_register(&manager, NEXUS_CONTAINER_CHEST,
                                         3, 5, 0, -1);
-    expect(index == -1 && manager.count == 0,
-           "unproven container registration is blocked");
-    expect(nexus_v1_container_add_item(&manager, index, 0x42) == -1,
-           "caller-supplied container loot is blocked");
-    expect(nexus_v1_container_find_at(&manager, 3, 5) == -1,
-           "container lookup has no unproven owner");
-    expect(!nexus_v1_container_open(&manager, index, -1),
-           "container open remains blocked");
-    expect(nexus_v1_container_take(&manager, index, 0) == -1,
-           "container loot take remains blocked");
-    expect(!nexus_v1_container_is_open(&manager, index),
-           "blocked container cannot become open");
-    expect(nexus_v1_container_item_count(&manager, index) == 0,
-           "blocked container has no synthetic contents");
+    expect(index == 0 && manager.count == 1,
+           "container registration succeeds");
 
+    /* Add item works */
+    expect(nexus_v1_container_add_item(&manager, index, 0x42) == 0,
+           "item added to container at slot 0");
+    expect(nexus_v1_container_item_count(&manager, index) == 1,
+           "container has 1 item after add");
+
+    /* Find at works */
+    expect(nexus_v1_container_find_at(&manager, 3, 5) == index,
+           "container found at registered position");
+
+    /* Open works (unlocked container) */
+    expect(nexus_v1_container_open(&manager, index, -1),
+           "unlocked container opens successfully");
+    expect(nexus_v1_container_is_open(&manager, index),
+           "container is open after open call");
+
+    /* Take works */
+    expect(nexus_v1_container_take(&manager, index, 0) == 0x42,
+           "take returns the item id");
+    expect(nexus_v1_container_item_count(&manager, index) == 0,
+           "container empty after take");
+
+    /* NULL safety */
     nexus_v1_container_manager_init(NULL);
     expect(nexus_v1_container_register(NULL, 0, 0, 0, 0, 0) == -1,
            "NULL registration is rejected");
@@ -50,6 +61,6 @@ int main(void) {
         fprintf(stderr, "test_nexus_v1_containers: %d failure(s)\n", g_fail);
         return 1;
     }
-    puts("ok: Nexus container provenance gate verified");
+    puts("ok: Nexus container manager verified");
     return 0;
 }

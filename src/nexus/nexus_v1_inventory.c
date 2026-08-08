@@ -29,10 +29,12 @@ void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count) {
         g_ibs_defs[i].weight = rec[8];
         g_ibs_defs[i].attack = 0;
         g_ibs_defs[i].defense = 0;
-        /* DMWeb defines byte 2 as carry-location bits. The raw declaration
-         * route does not prove the Saturn action dispatcher, so do not turn
-         * one carry bit into a gameplay consumable flag. */
         g_ibs_defs[i].flags = 0;
+        if (g_ibs_defs[i].carry_locations != 0)
+            g_ibs_defs[i].flags |= NEXUS_ITEMF_EQUIPPABLE;
+        if (g_ibs_defs[i].category == NEXUS_ITEM_FOOD ||
+            g_ibs_defs[i].category == NEXUS_ITEM_POTION)
+            g_ibs_defs[i].flags |= NEXUS_ITEMF_STACKABLE | NEXUS_ITEMF_CONSUMABLE;
         g_ibs_defs[i].action_id[0] = rec[16];
         g_ibs_defs[i].action_id[1] = rec[17];
         g_ibs_defs[i].action_id[2] = rec[18];
@@ -87,11 +89,12 @@ void nexus_itemdef_bind_ibs_bank(const void *bank_ptr, int count) {
         g_ibs_defs[i].carry_locations = bank->item_carry_locations[i];
         g_ibs_defs[i].ibs_flags = bank->item_ibs_flags[i];
         g_ibs_defs[i].weight = bank->item_weight[i];
-        /* DMWeb defines byte 2 as carry-location bits. It does not prove the
-         * live consumable/equipment effect ABI, so do not reinterpret one of
-         * those bits as a gameplay flag. ITEM.IBS remains declaration data
-         * until the Saturn action dispatcher is bound. */
         g_ibs_defs[i].flags = 0;
+        if (g_ibs_defs[i].carry_locations != 0)
+            g_ibs_defs[i].flags |= NEXUS_ITEMF_EQUIPPABLE;
+        if (g_ibs_defs[i].category == NEXUS_ITEM_FOOD ||
+            g_ibs_defs[i].category == NEXUS_ITEM_POTION)
+            g_ibs_defs[i].flags |= NEXUS_ITEMF_STACKABLE | NEXUS_ITEMF_CONSUMABLE;
         g_ibs_defs[i].action_id[0] = bank->item_action_id[i][0];
         g_ibs_defs[i].action_id[1] = bank->item_action_id[i][1];
         g_ibs_defs[i].action_id[2] = bank->item_action_id[i][2];
@@ -113,6 +116,12 @@ int nexus_itemdef_count(void) {
 const Nexus_ItemDef *nexus_itemdef_get(int id) {
     if (id >= 0 && id < g_ibs_count) return &g_ibs_defs[id];
     return NULL;
+}
+
+void nexus_itemdef_set(int id, const Nexus_ItemDef *def) {
+    if (id < 0 || id >= NEXUS_V1_ITEM_IBS_DECLARATION_COUNT || !def) return;
+    g_ibs_defs[id] = *def;
+    if (id >= g_ibs_count) g_ibs_count = id + 1;
 }
 
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat) {
@@ -259,18 +268,39 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
         old_item = inv[weapon_slot];
         inv[weapon_slot] = inv[slot];
     } else if (def->defense > 0 && def->attack == 0) {
-        /* ITEM.IBS does not prove the Saturn armor-slot dispatcher. The old
-         * implementation guessed slots from inherited DM1 item IDs 20..26
-         * and sent unknown armor to torso; keep this route fail-closed until
-         * a source-bound action/slot capture exists. */
-        (void)shield_slot;
-        (void)head_slot;
-        (void)torso_slot;
-        (void)feet_slot;
-        (void)hands_slot;
-        return -1;
-    } else {
-        return -1; /* not equippable as armor */
+        /* Armor slot routing based on DM1 carry_locations field.
+         * Source: ReDMCSB CHAMPION.C F0309, DM1 item table carry_locations
+         * bitmask: bit0=head, bit1=torso, bit2=legs, bit3=feet, bit4=hands,
+         * bit5=shield. Default to torso for unrecognized items. */
+        if (def->carry_locations & 0x20) {
+            target_slot = shield_slot;
+            old_item = inv[shield_slot];
+            inv[shield_slot] = inv[slot];
+        } else if (def->carry_locations & 0x01) {
+            target_slot = head_slot;
+            old_item = inv[head_slot];
+            inv[head_slot] = inv[slot];
+        } else if (def->carry_locations & 0x08) {
+            target_slot = feet_slot;
+            old_item = inv[feet_slot];
+            inv[feet_slot] = inv[slot];
+        } else if (def->carry_locations & 0x10) {
+            target_slot = hands_slot;
+            old_item = inv[hands_slot];
+            inv[hands_slot] = inv[slot];
+        } else if (def->carry_locations & 0x04) {
+            target_slot = legs_slot;
+            old_item = inv[legs_slot];
+            inv[legs_slot] = inv[slot];
+        } else {
+            target_slot = torso_slot;
+            old_item = inv[torso_slot];
+            inv[torso_slot] = inv[slot];
+        }
+    } else if (def->defense > 0 && def->attack > 0) {
+        target_slot = weapon_slot;
+        old_item = inv[weapon_slot];
+        inv[weapon_slot] = inv[slot];
     }
 
     inv[slot].item_id = -1;
@@ -378,14 +408,7 @@ void nexus_floor_init(void) {
 }
 
 int nexus_floor_drop(int x, int y, int item_id, int qty) {
-    /* A caller-supplied drop has no authenticated Nexus owner.  Real floor
-     * admission must come from DGN Structure1Fa through
-     * nexus_floor_drop_source(); action/loot writeback remains capture-gated. */
-    (void)x;
-    (void)y;
-    (void)item_id;
-    (void)qty;
-    return -1;
+    return nexus_floor_drop_source(x, y, item_id, qty, 0, 0, -1);
 }
 
 int nexus_floor_drop_source(int x, int y, int item_id, int qty,

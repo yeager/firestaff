@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## DM2 arkiverade poster (2026-08-08)
+
+- ✅ Lane C real-data startup/dungeon gate repair — Done (v3.0.181)
+- ✅ Lane D DM2-010 creature/cloud passes — Done
+- ✅ DM2-011 weather — Closed (see existing DONE.md)
+
 ## Dungeon Master II: Skullkeep (DM2)
 
 ### DM2 V1

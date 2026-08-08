@@ -202,6 +202,16 @@ int main(void) {
         nexus_v1_light_runtime_shutdown(&rt);
     }
 
+    /* Nexus_V1_World is ~5.5 MB; heap-allocate to avoid stack overflow. */
+    Nexus_V1_World *heap_world = (Nexus_V1_World *)malloc(sizeof(Nexus_V1_World));
+    Nexus_V1_World *heap_world2 = (Nexus_V1_World *)malloc(sizeof(Nexus_V1_World));
+    Nexus_V1_ChampionPool *heap_pool = (Nexus_V1_ChampionPool *)malloc(sizeof(Nexus_V1_ChampionPool));
+    Nexus_V1_ChampionPool *heap_pool2 = (Nexus_V1_ChampionPool *)malloc(sizeof(Nexus_V1_ChampionPool));
+    if (!heap_world || !heap_world2 || !heap_pool || !heap_pool2) {
+        printf("  FAIL: heap allocation for world/pool failed\n");
+        return 1;
+    }
+
     /* ── [2] Save with embedded NGLT ─────────────────────────────── */
     printf("\n[2] Save with embedded NGLT\n");
     char tmpdir[256];
@@ -210,10 +220,8 @@ int main(void) {
         printf("  FAIL: could not create temp dir %s\n", tmpdir);
         ++g_fail;
     } else {
-        Nexus_V1_ChampionPool pool;
-        Nexus_V1_World world;
-        build_pool(&pool);
-        build_world(&world);
+        build_pool(heap_pool);
+        build_world(heap_world);
 
         Nexus_V1_LightRuntime rt;
         nexus_v1_light_runtime_init(&rt, /*guard=*/0);
@@ -222,17 +230,17 @@ int main(void) {
                                               NEXUS_LIGHT_KIND_TORCH, 2);
         }
         size_t expected_nglt = nexus_v1_light_runtime_blob_size();
-        size_t expected_world = nexus_v1_world_serialize_size(&world);
-        size_t expected_champ = nexus_v1_champion_pool_serialize_size(&pool);
+        size_t expected_world = nexus_v1_world_serialize_size(heap_world);
+        size_t expected_champ = nexus_v1_champion_pool_serialize_size(heap_pool);
         size_t expected_data = 0;
 
         size_t actual_data = 0;
         Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
             slot_path,
-            world.party_level, world.party_x, world.party_y,
-            world.party_dir, (uint32_t)world.world_tick,
-            nexus_v1_world_hash(&world),
-            &pool, &world, &rt, &actual_data);
+            heap_world->party_level, heap_world->party_x, heap_world->party_y,
+            heap_world->party_dir, (uint32_t)heap_world->world_tick,
+            nexus_v1_world_hash(heap_world),
+            heap_pool, heap_world, &rt, &actual_data);
         CHECK(sr == NEXUS_SAVE_OK,
               "save_full_to_path_with_runtime() returned NEXUS_SAVE_OK");
         expected_data = expected_champ + expected_world + expected_nglt;
@@ -285,10 +293,8 @@ int main(void) {
     {
         /* Build the same world/pool state in memory so we can compare
          * hashes before vs. after the round-trip. */
-        Nexus_V1_World src_world;
-        Nexus_V1_ChampionPool src_pool;
-        build_world(&src_world);
-        build_pool(&src_pool);
+        build_world(heap_world);
+        build_pool(heap_pool);
 
         Nexus_V1_LightRuntime src_rt;
         nexus_v1_light_runtime_init(&src_rt, /*guard=*/0);
@@ -305,16 +311,14 @@ int main(void) {
         size_t data_size = 0;
         Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
             slot_path,
-            src_world.party_level, src_world.party_x, src_world.party_y,
-            src_world.party_dir, (uint32_t)src_world.world_tick,
-            nexus_v1_world_hash(&src_world),
-            &src_pool, &src_world, &src_rt, &data_size);
+            heap_world->party_level, heap_world->party_x, heap_world->party_y,
+            heap_world->party_dir, (uint32_t)heap_world->world_tick,
+            nexus_v1_world_hash(heap_world),
+            heap_pool, heap_world, &src_rt, &data_size);
         CHECK(sr == NEXUS_SAVE_OK,
               "resaved FNXS with NGLT for the load step");
 
         /* Load into fresh storage + a fresh runtime. */
-        Nexus_V1_World dst_world;
-        Nexus_V1_ChampionPool dst_pool;
         Nexus_V1_LightRuntime dst_rt;
         nexus_v1_light_runtime_init(&dst_rt, /*guard=*/0);
         Nexus_V1_SaveHeader hdr;
@@ -323,7 +327,7 @@ int main(void) {
         char diag[256] = {0};
         sr = nexus_v1_load_full_from_path_with_runtime(
             slot_path, &hdr,
-            &dst_pool, &dst_world, &dst_rt,
+            heap_pool2, heap_world2, &dst_rt,
             &nglt_decoded, nglt_diag, sizeof(nglt_diag),
             diag, sizeof(diag));
         CHECK(sr == NEXUS_SAVE_OK, "load_full_from_path_with_runtime OK");
@@ -339,14 +343,14 @@ int main(void) {
         CHECK(nexus_v1_light_runtime_classify(&dst_rt) ==
               nexus_v1_light_runtime_classify(&src_rt),
               "classification kind matches across reload");
-        CHECK(dst_world.party_x == src_world.party_x &&
-              dst_world.party_y == src_world.party_y,
+        CHECK(heap_world2->party_x == heap_world->party_x &&
+              heap_world2->party_y == heap_world->party_y,
               "world.party_x/y survives FNXS round-trip");
-        CHECK(dst_world.party_level == src_world.party_level,
+        CHECK(heap_world2->party_level == heap_world->party_level,
               "world.party_level survives FNXS round-trip");
-        CHECK(dst_world.object_count == src_world.object_count,
+        CHECK(heap_world2->object_count == heap_world->object_count,
               "world.object_count survives FNXS round-trip");
-        CHECK(dst_world.event_count == src_world.event_count,
+        CHECK(heap_world2->event_count == heap_world->event_count,
               "world.event_count survives FNXS round-trip");
         /* Note: we do NOT compare world_hash() because the in-memory
          * object id (set by nexus_v1_object_place) is not part of the
@@ -367,22 +371,20 @@ int main(void) {
             printf("  FAIL: could not create legacy tmpdir\n");
             ++g_fail;
         } else {
-            Nexus_V1_ChampionPool pool;
-            Nexus_V1_World world;
-            build_pool(&pool);
-            build_world(&world);
+            build_pool(heap_pool);
+            build_world(heap_world);
 
             size_t data_size = 0;
             Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
                 legacy_slot,
-                world.party_level, world.party_x, world.party_y,
-                world.party_dir, (uint32_t)world.world_tick,
-                nexus_v1_world_hash(&world),
-                &pool, &world, /*runtime=*/NULL, &data_size);
+                heap_world->party_level, heap_world->party_x, heap_world->party_y,
+                heap_world->party_dir, (uint32_t)heap_world->world_tick,
+                nexus_v1_world_hash(heap_world),
+                heap_pool, heap_world, /*runtime=*/NULL, &data_size);
             CHECK(sr == NEXUS_SAVE_OK,
                   "save with NULL runtime returned OK");
-            size_t expected = nexus_v1_champion_pool_serialize_size(&pool)
-                            + nexus_v1_world_serialize_size(&world);
+            size_t expected = nexus_v1_champion_pool_serialize_size(heap_pool)
+                            + nexus_v1_world_serialize_size(heap_world);
             CHECK(data_size == expected,
                   "data_size matches champion + world (no NGLT tail)");
 
@@ -412,10 +414,8 @@ int main(void) {
     /* ── [5] Load with NULL runtime ───────────────────────────────── */
     printf("\n[5] Load with NULL runtime\n");
     {
-        Nexus_V1_World src_world;
-        Nexus_V1_ChampionPool src_pool;
-        build_world(&src_world);
-        build_pool(&src_pool);
+        build_world(heap_world);
+        build_pool(heap_pool);
 
         Nexus_V1_LightRuntime src_rt;
         nexus_v1_light_runtime_init(&src_rt, /*guard=*/0);
@@ -427,14 +427,12 @@ int main(void) {
         size_t data_size = 0;
         Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
             slot_path,
-            src_world.party_level, src_world.party_x, src_world.party_y,
-            src_world.party_dir, (uint32_t)src_world.world_tick,
-            nexus_v1_world_hash(&src_world),
-            &src_pool, &src_world, &src_rt, &data_size);
+            heap_world->party_level, heap_world->party_x, heap_world->party_y,
+            heap_world->party_dir, (uint32_t)heap_world->world_tick,
+            nexus_v1_world_hash(heap_world),
+            heap_pool, heap_world, &src_rt, &data_size);
         CHECK(sr == NEXUS_SAVE_OK, "save with NGLT for NULL-runtime load");
 
-        Nexus_V1_World dst_world;
-        Nexus_V1_ChampionPool dst_pool;
         Nexus_V1_SaveHeader hdr;
         int nglt_decoded = 99;  /* sentinel: loader should leave this alone */
         char nglt_diag[256];
@@ -443,7 +441,7 @@ int main(void) {
         diag[0] = 'X';
         sr = nexus_v1_load_full_from_path_with_runtime(
             slot_path, &hdr,
-            &dst_pool, &dst_world, /*runtime=*/NULL,
+            heap_pool2, heap_world2, /*runtime=*/NULL,
             &nglt_decoded, nglt_diag, sizeof(nglt_diag),
             diag, sizeof(diag));
         CHECK(sr == NEXUS_SAVE_OK,
@@ -452,9 +450,9 @@ int main(void) {
               "NULL runtime leaves out_nglt_decoded untouched");
         CHECK(nglt_diag[0] == 'X',
               "NULL runtime leaves nglt_diagnostic untouched");
-        CHECK(dst_world.party_x == src_world.party_x &&
-              dst_world.party_y == src_world.party_y &&
-              dst_world.party_level == src_world.party_level,
+        CHECK(heap_world2->party_x == heap_world->party_x &&
+              heap_world2->party_y == heap_world->party_y &&
+              heap_world2->party_level == heap_world->party_level,
               "world survives NULL-runtime load");
         nexus_v1_light_runtime_shutdown(&src_rt);
     }
@@ -469,23 +467,19 @@ int main(void) {
             printf("  FAIL: could not create non-nglt tmpdir\n");
             ++g_fail;
         } else {
-            Nexus_V1_ChampionPool pool;
-            Nexus_V1_World world;
-            build_pool(&pool);
-            build_world(&world);
+            build_pool(heap_pool);
+            build_world(heap_world);
 
             /* Save without runtime (no tail). */
             Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
                 nonnglt_slot,
-                world.party_level, world.party_x, world.party_y,
-                world.party_dir, (uint32_t)world.world_tick,
-                nexus_v1_world_hash(&world),
-                &pool, &world, /*runtime=*/NULL, /*out_data_size=*/NULL);
+                heap_world->party_level, heap_world->party_x, heap_world->party_y,
+                heap_world->party_dir, (uint32_t)heap_world->world_tick,
+                nexus_v1_world_hash(heap_world),
+                heap_pool, heap_world, /*runtime=*/NULL, /*out_data_size=*/NULL);
             CHECK(sr == NEXUS_SAVE_OK, "non-NGLT save OK");
 
             /* Load with a runtime; the runtime should stay clean. */
-            Nexus_V1_World dst_world;
-            Nexus_V1_ChampionPool dst_pool;
             Nexus_V1_LightRuntime dst_rt;
             nexus_v1_light_runtime_init(&dst_rt, /*guard=*/0);
             /* Cast once so we can detect any accidental override. */
@@ -500,7 +494,7 @@ int main(void) {
             char diag[256] = {0};
             sr = nexus_v1_load_full_from_path_with_runtime(
                 nonnglt_slot, &hdr,
-                &dst_pool, &dst_world, &dst_rt,
+                heap_pool2, heap_world2, &dst_rt,
                 &nglt_decoded, nglt_diag, sizeof(nglt_diag),
                 diag, sizeof(diag));
             CHECK(sr == NEXUS_SAVE_OK, "non-NGLT load OK");
@@ -512,8 +506,8 @@ int main(void) {
                   "non-NGLT save: runtime active_count preserved");
             CHECK(dst_rt.state.magical_light_amount == pre_mla,
                   "non-NGLT save: runtime MLA preserved");
-            CHECK(dst_world.party_x == world.party_x &&
-                  dst_world.party_y == world.party_y,
+            CHECK(heap_world2->party_x == heap_world->party_x &&
+                  heap_world2->party_y == heap_world->party_y,
                   "non-NGLT save: world fields preserved");
             nexus_v1_light_runtime_shutdown(&dst_rt);
             remove(nonnglt_slot);
@@ -525,8 +519,6 @@ int main(void) {
     printf("\n[7] Load with NGLT but uninitialized runtime\n");
     {
         /* `slot_path` from [2] still has an NGLT tail. */
-        Nexus_V1_World dst_world;
-        Nexus_V1_ChampionPool dst_pool;
         Nexus_V1_LightRuntime dst_rt;
         /* Deliberately do NOT init() the runtime. memset the
          * initialized field to 0 so we hit the diagnostic branch. */
@@ -538,7 +530,7 @@ int main(void) {
         char diag[256] = {0};
         Nexus_SaveResult sr = nexus_v1_load_full_from_path_with_runtime(
             slot_path, &hdr,
-            &dst_pool, &dst_world, &dst_rt,
+            heap_pool2, heap_world2, &dst_rt,
             &nglt_decoded, nglt_diag, sizeof(nglt_diag),
             diag, sizeof(diag));
         CHECK(sr == NEXUS_SAVE_OK,
@@ -549,7 +541,7 @@ int main(void) {
               "uninit runtime: nglt_diagnostic surfaces a reason");
         CHECK(dst_rt.initialized == 0,
               "uninit runtime: initialized flag stays 0");
-        CHECK(nexus_v1_world_hash(&dst_world) != 0,
+        CHECK(nexus_v1_world_hash(heap_world2) != 0,
               "world was loaded successfully despite uninit runtime");
     }
 
@@ -557,10 +549,8 @@ int main(void) {
     printf("\n[8] Mode-mismatched NGLT (guard blob into emulate runtime)\n");
     {
         /* Build a guard-mode save with NGLT. */
-        Nexus_V1_ChampionPool pool;
-        Nexus_V1_World world;
-        build_pool(&pool);
-        build_world(&world);
+        build_pool(heap_pool);
+        build_world(heap_world);
 
         Nexus_V1_LightRuntime src_rt;
         nexus_v1_light_runtime_init(&src_rt, /*guard=*/1);
@@ -576,17 +566,15 @@ int main(void) {
         } else {
             Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
                 mm_slot,
-                world.party_level, world.party_x, world.party_y,
-                world.party_dir, (uint32_t)world.world_tick,
-                nexus_v1_world_hash(&world),
-                &pool, &world, &src_rt, /*out_data_size=*/NULL);
+                heap_world->party_level, heap_world->party_x, heap_world->party_y,
+                heap_world->party_dir, (uint32_t)heap_world->world_tick,
+                nexus_v1_world_hash(heap_world),
+                heap_pool, heap_world, &src_rt, /*out_data_size=*/NULL);
             CHECK(sr == NEXUS_SAVE_OK, "guard-mode save OK");
             nexus_v1_light_runtime_shutdown(&src_rt);
 
             /* Load into an emulate-mode runtime; the NGLT must be
              * rejected cleanly. */
-            Nexus_V1_World dst_world;
-            Nexus_V1_ChampionPool dst_pool;
             Nexus_V1_LightRuntime dst_rt;
             nexus_v1_light_runtime_init(&dst_rt, /*guard=*/0);
             uint32_t pre_active = dst_rt.timeline.active_count;
@@ -598,7 +586,7 @@ int main(void) {
             char diag[256] = {0};
             sr = nexus_v1_load_full_from_path_with_runtime(
                 mm_slot, &hdr,
-                &dst_pool, &dst_world, &dst_rt,
+                heap_pool2, heap_world2, &dst_rt,
                 &nglt_decoded, nglt_diag, sizeof(nglt_diag),
                 diag, sizeof(diag));
             CHECK(sr == NEXUS_SAVE_OK,
@@ -629,10 +617,8 @@ int main(void) {
         int32_t  expected_object_count = 0;
         int mismatch = 0;
         for (int rep = 0; rep < 5; ++rep) {
-            Nexus_V1_ChampionPool pool;
-            Nexus_V1_World world;
-            build_pool(&pool);
-            build_world(&world);
+            build_pool(heap_pool);
+            build_world(heap_world);
 
             Nexus_V1_LightRuntime rt;
             nexus_v1_light_runtime_init(&rt, /*guard=*/0);
@@ -651,14 +637,12 @@ int main(void) {
             size_t data_size = 0;
             Nexus_SaveResult sr = nexus_v1_save_full_to_path_with_runtime(
                 rep_path,
-                world.party_level, world.party_x, world.party_y,
-                world.party_dir, (uint32_t)world.world_tick,
-                nexus_v1_world_hash(&world),
-                &pool, &world, &rt, &data_size);
+                heap_world->party_level, heap_world->party_x, heap_world->party_y,
+                heap_world->party_dir, (uint32_t)heap_world->world_tick,
+                nexus_v1_world_hash(heap_world),
+                heap_pool, heap_world, &rt, &data_size);
             if (sr != NEXUS_SAVE_OK) { ++mismatch; continue; }
 
-            Nexus_V1_World dst_world;
-            Nexus_V1_ChampionPool dst_pool;
             Nexus_V1_LightRuntime dst_rt;
             nexus_v1_light_runtime_init(&dst_rt, /*guard=*/0);
             Nexus_V1_SaveHeader hdr;
@@ -667,7 +651,7 @@ int main(void) {
             char diag[256] = {0};
             sr = nexus_v1_load_full_from_path_with_runtime(
                 rep_path, &hdr,
-                &dst_pool, &dst_world, &dst_rt,
+                heap_pool2, heap_world2, &dst_rt,
                 &nglt_decoded, nglt_diag, sizeof(nglt_diag),
                 diag, sizeof(diag));
             remove(rep_path);
@@ -677,14 +661,14 @@ int main(void) {
                 expected_state_hash = h;
                 expected_cast_counter = dst_rt.timeline.cast_counter;
                 expected_mla = dst_rt.state.magical_light_amount;
-                expected_party_x = dst_world.party_x;
-                expected_object_count = dst_world.object_count;
+                expected_party_x = heap_world2->party_x;
+                expected_object_count = heap_world2->object_count;
             } else {
                 if (h != expected_state_hash) ++mismatch;
                 if (dst_rt.timeline.cast_counter != expected_cast_counter) ++mismatch;
                 if (dst_rt.state.magical_light_amount != expected_mla) ++mismatch;
-                if (dst_world.party_x != expected_party_x) ++mismatch;
-                if (dst_world.object_count != expected_object_count) ++mismatch;
+                if (heap_world2->party_x != expected_party_x) ++mismatch;
+                if (heap_world2->object_count != expected_object_count) ++mismatch;
             }
             nexus_v1_light_runtime_shutdown(&dst_rt);
             nexus_v1_light_runtime_shutdown(&rt);
@@ -719,6 +703,10 @@ int main(void) {
     }
 
     /* ── Summary ──────────────────────────────────────────────────── */
+    free(heap_world);
+    free(heap_world2);
+    free(heap_pool);
+    free(heap_pool2);
     printf("\n# summary: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
 }

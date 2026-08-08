@@ -99,6 +99,7 @@ typedef struct {
  * ═══════════════════════════════════════════════════════════════════ */
 int nexus_itemdef_count(void);
 const Nexus_ItemDef *nexus_itemdef_get(int id);
+void nexus_itemdef_set(int id, const Nexus_ItemDef *def);
 /* Bind raw 40-byte ITEM.IBS records (DMWeb format).
  * data points to count * 40 bytes of item declarations. */
 void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count);

@@ -17,7 +17,6 @@ and it does not rewrite public docs.
 |---|---:|---:|---:|---:|---:|
 | Nexus extracted Track 1 root | PASS | yes | `0` | `0` | yes |
 | Nexus saturn-ja Track 1 .bin | SKIP | no | `0` | `0` | no |
-| local | PASS | yes | `0` | `0` | yes |
 
 ## Public Screenshot Boundary
 

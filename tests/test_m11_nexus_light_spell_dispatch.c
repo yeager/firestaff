@@ -1,5 +1,5 @@
 /*
- * M11 Nexus Light/Torch/Darkness spell dispatch gate.
+ * M11 Nexus Light/Torch/Darkness spell dispatch.
  *
  * Source-lock:
  *   ReDMCSB MENU.C:1926-1942 dispatches Light / Magic Torch /
@@ -79,43 +79,42 @@ static void enter_darkness_spell(M11_GameViewState *state) {
     ASSERT_EQ(M11_GameView_EnterRune(state, 5), 1, "SAR rune entered");
 }
 
-static void test_m11_nexus_light_cast_is_capture_gated(void) {
+static void test_m11_nexus_light_cast_applies(void) {
     M11_GameViewState state;
     seed_nexus_state(&state, 0);
 
     enter_light_spell(&state);
     ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
-              "Nexus Light input consumed by capture gate");
+              "Nexus Light input consumed");
     ASSERT_EQ(state.spellPanelOpen, 0,
-              "capture-gated Nexus Light closes panel");
+              "Nexus Light closes panel");
     ASSERT_EQ(state.spellBuffer.runeCount, 0,
-              "capture-gated Nexus Light clears runes");
+              "Nexus Light clears runes");
     ASSERT_EQ(nexus_v1_light_runtime_total_casts_applied(&state.nexusLightRuntime),
-              0, "capture-gated Nexus Light does not apply a cast");
+              1, "Nexus Light applies one cast");
     ASSERT_EQ(nexus_v1_light_runtime_magical_light_amount(&state.nexusLightRuntime),
-              0, "capture-gated Nexus Light preserves light amount");
-    ASSERT_TRUE(strstr(state.inspectDetail,
-                       "SATURN ACTION DISPATCH CAPTURE REQUIRED") != NULL,
-                "capture gate explains missing Saturn spell owner");
+              68, "Nexus Light sets MagicalLightAmount to 68");
+    ASSERT_TRUE(strstr(state.inspectDetail, "LIGHTPOWER") != NULL,
+                "inspect detail reports light power");
 
     M11_GameView_Shutdown(&state);
 }
 
-static void test_m11_nexus_torch_and_darkness_are_capture_gated(void) {
+static void test_m11_nexus_torch_and_darkness_apply(void) {
     M11_GameViewState state;
     seed_nexus_state(&state, 0);
 
     enter_torch_spell(&state);
     ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
-              "Nexus Torch input consumed by capture gate");
+              "Nexus Torch input consumed");
     ASSERT_EQ(nexus_v1_light_runtime_magical_light_amount(&state.nexusLightRuntime),
-              0, "capture-gated Torch preserves light amount");
+              12, "Nexus Torch sets MagicalLightAmount to 12");
 
     enter_darkness_spell(&state);
     ASSERT_EQ(M11_GameView_CastSpell(&state), 1,
-              "Nexus Darkness input consumed by capture gate");
+              "Nexus Darkness input consumed");
     ASSERT_EQ(nexus_v1_light_runtime_magical_light_amount(&state.nexusLightRuntime),
-              0, "capture-gated Darkness preserves light amount");
+              -28, "Nexus Darkness brings MagicalLightAmount to -28");
 
     M11_GameView_Shutdown(&state);
 }
@@ -123,7 +122,6 @@ static void test_m11_nexus_torch_and_darkness_are_capture_gated(void) {
 static void test_m11_nexus_guard_mode_rejects_at_cap_without_mode_leak(void) {
     M11_GameViewState state;
     int32_t before;
-    Nexus_V1_LightOverflowKind classification_before;
     seed_nexus_state(&state, 1);
 
     while (state.nexusLightRuntime.timeline.active_count <
@@ -132,19 +130,14 @@ static void test_m11_nexus_guard_mode_rejects_at_cap_without_mode_leak(void) {
                                                 NEXUS_LIGHT_KIND_LIGHT, 4);
     }
     before = nexus_v1_light_runtime_magical_light_amount(&state.nexusLightRuntime);
-    classification_before = state.nexusLightRuntime.last_classification;
 
     enter_light_spell(&state);
     ASSERT_EQ(M11_GameView_CastSpell(&state), 1, "guarded Nexus Light input consumed");
     ASSERT_EQ(state.nexusLightRuntime.guard_rejects, 1, "M11 dispatch preserves guard mode");
     ASSERT_EQ(nexus_v1_light_runtime_magical_light_amount(&state.nexusLightRuntime),
               before, "guarded M11 cast does not mutate MagicalLightAmount");
-    ASSERT_EQ(state.nexusLightRuntime.last_classification,
-              classification_before,
-              "capture-gated M11 cast leaves runtime classification untouched");
-    ASSERT_TRUE(strstr(state.inspectDetail,
-                       "SATURN ACTION DISPATCH CAPTURE REQUIRED") != NULL,
-                "inspect detail surfaces missing Saturn action owner");
+    ASSERT_TRUE(strstr(state.inspectDetail, "CAST_REJECTED") != NULL,
+                "inspect detail surfaces cast rejection");
 
     M11_GameView_Shutdown(&state);
 }
@@ -162,18 +155,18 @@ static void test_m11_nexus_unknown_spell_is_readiness_gated(void) {
     ASSERT_EQ(nexus_v1_light_runtime_magical_light_amount(&state.nexusLightRuntime),
               0, "unknown Nexus spell leaves MagicalLightAmount untouched");
     ASSERT_TRUE(strstr(state.inspectDetail,
-                       "SATURN ACTION DISPATCH CAPTURE REQUIRED") != NULL,
-                "unknown spell reports action capture gate");
+                       "ONLY LIGHT, TORCH, AND DARKNESS ROUTE THROUGH M11") != NULL,
+                "unknown spell reports non-light routing");
 
     M11_GameView_Shutdown(&state);
 }
 
 int main(void) {
-    printf("=== M11 Nexus light spell dispatch gate ===\n");
+    printf("=== M11 Nexus light spell dispatch ===\n");
     printf("ReDMCSB: MENU.C:1926-1942, TIMELINE.C:F0238/F0257, CHAMPION.C:27\n\n");
 
-    test_m11_nexus_light_cast_is_capture_gated();
-    test_m11_nexus_torch_and_darkness_are_capture_gated();
+    test_m11_nexus_light_cast_applies();
+    test_m11_nexus_torch_and_darkness_apply();
     test_m11_nexus_guard_mode_rejects_at_cap_without_mode_leak();
     test_m11_nexus_unknown_spell_is_readiness_gated();
 

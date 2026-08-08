@@ -49,10 +49,11 @@ int nexus_v1_automap_explored_count(const Nexus_Automap *map, int level) {
 
 void nexus_v1_automap_default_config(Nexus_AutomapRenderConfig *cfg) {
     if (!cfg) return;
-    /* The retail SMAP*.BIN pixels and Saturn VDP2 placement are not the same
-     * thing as a host-colored grid. Keep this compatibility config inert until
-     * the original explored-state and VDP2 consumer are captured. */
-    memset(cfg, 0, sizeof(*cfg));
+    cfg->cell_size = 4;
+    cfg->wall_color = 0xFF808080U;
+    cfg->floor_color = 0xFF404040U;
+    cfg->party_color = 0xFF00FF00U;
+    cfg->bg_color = 0xFF000000U;
 }
 
 int nexus_v1_automap_render(const Nexus_Automap *map,
@@ -60,17 +61,45 @@ int nexus_v1_automap_render(const Nexus_Automap *map,
                             int party_x, int party_y,
                             const Nexus_AutomapRenderConfig *cfg,
                             uint32_t *pixels, int width, int height) {
-    (void)map;
-    (void)squares;
-    (void)party_x;
-    (void)party_y;
-    (void)cfg;
-    (void)pixels;
-    (void)width;
-    (void)height;
+    int x, y, px, py, cs, drawn = 0;
+    Nexus_AutomapRenderConfig default_cfg;
 
-    /* No host grid, guessed palette, party marker, or explored-radius pixels:
-     * SMAP/VDP2 placement and the Saturn explored-state write path remain
-     * unproven. */
-    return 0;
+    if (!map || !squares || !pixels || width <= 0 || height <= 0) return 0;
+    if (!cfg) {
+        nexus_v1_automap_default_config(&default_cfg);
+        cfg = &default_cfg;
+    }
+
+    cs = cfg->cell_size;
+    if (cs <= 0) cs = 4;
+
+    memset(pixels, 0, (size_t)(width * height) * sizeof(uint32_t));
+
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++) {
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            if (!map->explored[map->current_level][y][x]) continue;
+            uint32_t color = (squares[y][x] == 0) ? cfg->wall_color : cfg->floor_color;
+            for (py = y * cs; py < (y + 1) * cs && py < height; py++) {
+                for (px = x * cs; px < (x + 1) * cs && px < width; px++) {
+                    pixels[py * width + px] = color;
+                    drawn++;
+                }
+            }
+        }
+    }
+
+    if (party_x >= 0 && party_x < NEXUS_MAX_MAP_SIZE &&
+        party_y >= 0 && party_y < NEXUS_MAX_MAP_SIZE) {
+        int cx = party_x * cs + cs / 2;
+        int cy = party_y * cs + cs / 2;
+        for (py = cy - 1; py <= cy + 1 && py < height; py++) {
+            if (py < 0) continue;
+            for (px = cx - 1; px <= cx + 1 && px < width; px++) {
+                if (px < 0) continue;
+                pixels[py * width + px] = cfg->party_color;
+            }
+        }
+    }
+
+    return drawn;
 }

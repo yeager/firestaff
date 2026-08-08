@@ -1,7 +1,7 @@
 {
   "cases": [
     {
-      "capture_gate": "BLOCKED_NO_SATURN_PRESENTATION",
+      "capture_gate": null,
       "command": {
         "cmd": [
           "<build-firestaff>",
@@ -12,10 +12,10 @@
           "--duration",
           "1500"
         ],
-        "ok": true,
-        "returncode": 0,
-        "stderr": "NEXUS READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260808-141735.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260808-141735.bmp",
-        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus UI: surface 3 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 4 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 5 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 6 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 7 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 8 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 9 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 10 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 11 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 12 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 13 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 14 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 15 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 16 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 17 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 18 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 19 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 20 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 21 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 22 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus sound: initialized (SAL metadata only, event selectors fail-closed, CD playback format-gated)\nSaturn font: 242 chars (8x8 8bpp from SCR character generator, 242 tiles)\nNexus font: FONT256.S2D retained (242 CG tiles, glyph mapping pending)\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 verified=1 bytes=2388 parser=task-header rules=0\nNexus sound: loaded level 0 SFX metadata (SAL=297082 bytes, MAP=66 bytes, diagnostic_candidates=42)\nNexus launcher: loaded level 0"
+        "ok": false,
+        "returncode": 1,
+        "stderr": "nexus: Saturn start pose is not source-bound\nfirestaff: direct launch failed for --game nexus\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260808-203524.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260808-203524.bmp\nfirestaff: phase-a run failed (rc=3)",
+        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus UI: surface 3 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 4 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 5 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 6 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 7 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 8 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 9 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 10 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 11 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 12 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 13 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 14 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 15 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 16 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 17 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 18 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 19 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 20 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 21 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 22 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus sound: initialized (event dispatch enabled, SAL decode active, CD playback enabled)\nNexus font: FONT256.S2D regions admitted\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus launcher: failed to load level 0\nNexus V1 engine shut down\nNexus launcher: shut down"
       },
       "geometry_ok": true,
       "id": "canonical_extracted_root",
@@ -27,7 +27,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260808-141735.bmp",
+          "name": "firestaff-presented-20260808-203524.bmp",
           "non_black_pixels": 0,
           "sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
           "size": 1555254,
@@ -36,11 +36,11 @@
         }
       ],
       "probe": {
-        "active": 1,
+        "active": 0,
         "gameTick": 0,
-        "lastAction": "STARTUP",
-        "lastOutcome": "NEXUS TITLE",
-        "launchedEver": 1,
+        "lastAction": "NEXUS STARTUP",
+        "lastOutcome": "NEXUS LEVEL ERROR",
+        "launchedEver": 0,
         "party": {
           "championCount": 0,
           "direction": 0,
@@ -59,9 +59,9 @@
           "viewportDirty": 0
         },
         "presentation": {
-          "height": 200,
+          "height": 0,
           "mode": 0,
-          "width": 320
+          "width": 0
         },
         "redraw": {
           "inputRedrawAfterViewportDirtyCount": 0,
@@ -72,13 +72,13 @@
         "sourceId": "nexus",
         "title": "DUNGEON MASTER NEXUS"
       },
-      "reason": "valid real launch and BMP geometry, but source-faithful no-draw seam is waiting for authenticated Saturn VDP1/VDP2 capture",
-      "runtime_ok": true,
+      "reason": "LEV00 startup refused: Saturn start pose is not source-bound",
+      "runtime_ok": false,
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260808-141735.bmp",
+          "name": "firestaff-20260808-203524.bmp",
           "non_black_pixels": 0,
           "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
@@ -105,7 +105,7 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-08-08T12:17:33.376696+00:00",
+  "generated_at": "2026-08-08T18:35:22.644334+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",

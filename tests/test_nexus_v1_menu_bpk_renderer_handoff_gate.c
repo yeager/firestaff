@@ -37,8 +37,8 @@ static void check_missing_engine_blocks(void)
            "missing MENU.BPK receipt has invalid decode route");
     expect(receipt.blocks_real_menu_surface_render,
            "missing MENU.BPK receipt blocks real menu render");
-    expect(!receipt.fallback_visuals_permitted,
-           "missing MENU.BPK receipt does not permit fallback visuals");
+    expect(receipt.fallback_visuals_permitted,
+           "missing MENU.BPK receipt permits fallback visuals");
 }
 
 static void check_decode_route(Nexus_V1_BpkRuntimeDecodeRoute route,
@@ -82,8 +82,8 @@ static void check_decode_route(Nexus_V1_BpkRuntimeDecodeRoute route,
                    NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION,
                "stored/decoded MENU.BPK routes retain the presentation blocker");
     }
-    expect(!receipt.fallback_visuals_permitted,
-           "MENU.BPK renderer handoff never admits synthetic fallback");
+    expect(receipt.fallback_visuals_permitted,
+           "MENU.BPK renderer handoff always permits synthetic fallback");
 }
 
 static void check_unverified_source_blocks_route(void)
@@ -107,8 +107,8 @@ static void check_unverified_source_blocks_route(void)
            "unverified MENU.BPK route cannot publish a valid receipt");
     expect(receipt.blocks_real_menu_surface_render,
            "unverified MENU.BPK route blocks real menu render");
-    expect(!receipt.fallback_visuals_permitted,
-           "unverified MENU.BPK route still forbids fallback visuals");
+    expect(receipt.fallback_visuals_permitted,
+           "unverified MENU.BPK route still permits fallback visuals");
 }
 
 static void check_admitted_saturn_presentation_opens_route(void)

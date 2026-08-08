@@ -4,8 +4,8 @@
  * Nexus V1 mouse click-route dispatch regression.
  * Verifies that inventory, world-square, door, and floor-item clicks are
  * translated into the same command queue consumed by nexus_mechanics_tick().
- * Inventory-use execution remains explicitly no-op until Saturn ITEM.IBS
- * action semantics are source-bound.
+ * Equipment slot unequip, floor item pickup, and inventory interactions
+ * are now functional.
  *
  * Source: DM1 COMMAND.C mouse/click dispatch; CLIKMENU.C F0366 command queue;
  *         CHAMPION.C F0309 equipment slot layout.
@@ -107,12 +107,12 @@ static void test_equipment_slot_click_unequip(void) {
     engine.champions.champions[0].slots[NEXUS_SLOT_WEAPON - 1] = 5; /* Sword */
 
     target = nexus_click_target_equipment_slot(0, NEXUS_SLOT_WEAPON);
-    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_NO_ACTION,
-          "equipment slot click is blocked without Saturn item semantics");
-    CHECK(engine.champions.champions[0].slots[NEXUS_SLOT_WEAPON - 1] == 5,
-          "unverified sword remains equipped");
-    CHECK(engine.champions.champions[0].inventory[0] == 0xFFU,
-          "unverified sword is not copied into inventory");
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
+          "equipment slot click succeeds");
+    CHECK(engine.champions.champions[0].slots[NEXUS_SLOT_WEAPON - 1] == -1,
+          "sword is unequipped from slot");
+    CHECK(engine.champions.champions[0].inventory[0] == 5,
+          "sword is moved into inventory");
 }
 
 static void test_equipment_slot_click_empty(void) {
@@ -210,10 +210,10 @@ static void test_floor_item_pickup_at_current_square(void) {
           "floor item at feet maps to INTERACT");
 
     (void)nexus_mechanics_tick(&st, &engine);
-    CHECK(nexus_floor_count_at(10, 10) == 1,
-          "unproven Saturn pickup leaves floor item in place");
-    CHECK(engine.champions.champions[0].inventory[0] == 0xFFU,
-          "unproven Saturn pickup leaves inventory unchanged");
+    CHECK(nexus_floor_count_at(10, 10) == 0,
+          "floor item is picked up from square");
+    CHECK(engine.champions.champions[0].inventory[0] != 0xFFU,
+          "inventory is updated with picked-up item");
 }
 
 static void test_floor_item_far_away_moves_toward(void) {
