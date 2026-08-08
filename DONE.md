@@ -10466,6 +10466,17 @@
   Mednafen Saturn initialization, but timed out before producing a raw
   VDP1/VDP2 trace. No startup, menu, HUD or viewport admission was promoted.
 
+# Nexus VDP1 trace producer is in the reproducible external build (2026-08-09)
+
+- ✅ `scripts/build_mednafen_nexus_saturn_capture.sh` now applies the existing
+  VDP1 VRAM-write and writer-PC patches, with composable source-context
+  patches and versioned markers. A clean external build links successfully
+  and advertises both VDP1 trace hooks.
+- ✅ A same-session E-BIOS/French startup run produced a valid raw Saturn
+  capture and the VDP1 trace hooks were active. The reset-only window had no
+  VDP1 VRAM writes or writer-PC record, so it proves only the pre-render
+  boundary; semantic menu/HUD/viewport admission remains blocked.
+
 # Nexus startup raw capture timeout is bounded (2026-08-09)
 
 - ✅ The operator launcher now gives Mednafen a short SIGTERM flush window and

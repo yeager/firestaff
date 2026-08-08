@@ -52,18 +52,3 @@
 +  FirestaffTraceVramWrite(A, 1, (uint16)(DB >> (((A & 1) ^ 1) << 3)));
 @@ -1276,0 +1323 @@
 +  FirestaffTraceVramWrite(A, 2, DB);
---- src/ss/ss.h
-+++ src/ss/ss.h
-@@ -121,0 +122,2 @@
-+ uint32 FirestaffGetSH2PC(unsigned which);
-+
---- src/ss/ss.cpp
-+++ src/ss/ss.cpp
-@@ -462,0 +463,5 @@
-+
-+uint32 FirestaffGetSH2PC(unsigned which)
-+{
-+ return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
-+}
-@@ -2595 +2599,0 @@
--

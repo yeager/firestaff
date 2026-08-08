@@ -7,7 +7,7 @@
   enum
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -467,0 +468,5 @@
+@@ -468,0 +477,5 @@
 +uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
 +{
 + (void)which;

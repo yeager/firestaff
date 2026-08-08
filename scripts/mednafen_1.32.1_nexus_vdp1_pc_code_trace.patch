@@ -1,15 +1,3 @@
---- src/ss/ss.h
-+++ src/ss/ss.h
-@@ -123,0 +123,1 @@
-+ uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
---- src/ss/ss.cpp
-+++ src/ss/ss.cpp
-@@ -468,0 +468,5 @@
-+uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
-+{
-+ (void)which;
-+ return ne16_rbo_be<uint16>(SH7095_FastMap[address >> SH7095_EXT_MAP_GRAN_BITS], address);
-+}
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
 @@ -1251,0 +1251,25 @@
@@ -26,7 +14,7 @@
 + {
 +  FirestaffVramCodeTraceFile = fopen(path, "wb");
 +  if(!FirestaffVramCodeTraceFile) return;
-+  fputs("FIRESTAFF_NEXUS_VDP1_WRITER_CODE_TRACE_V1\\n", FirestaffVramCodeTraceFile);
++  fputs("FIRESTAFF_NEXUS_VDP1_WRITER_CODE_TRACE_V1\n", FirestaffVramCodeTraceFile);
 + }
 + fprintf(FirestaffVramCodeTraceFile, "pc=0x%08x vram_addr=0x%05x code_start=0x%08x words=%u code=",
 +  (unsigned)pc, (unsigned)address, (unsigned)(pc - 0x40), 48U);
@@ -34,9 +22,16 @@
 +  fprintf(FirestaffVramCodeTraceFile, "%04x%s",
 +   (unsigned)FirestaffPeekSH2Memory(0, pc - 0x40 + offset * 2U),
 +   offset + 1U == 48U ? "" : ",");
-+ fputc('\\n', FirestaffVramCodeTraceFile);
++ fputc('\n', FirestaffVramCodeTraceFile);
 + fflush(FirestaffVramCodeTraceFile);
 + FirestaffVramCodeTraceWritten = true;
 +}
-+@@ -1285,0 +1285,1 @@
-++ FirestaffTraceVramWriterCode(address);
+@@ -1290,7 +1290,8 @@
+  if(FirestaffVramWriteTraceMax <= FirestaffVramWriteTraceMin ||
+     value == 0 ||
+     address < FirestaffVramWriteTraceMin ||
+     address + size > FirestaffVramWriteTraceMax ||
+     FirestaffVramWriteTraceCount >= FirestaffVramWriteTraceLimit)
+  return;
++ FirestaffTraceVramWriterCode(address);
+ path = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITES");

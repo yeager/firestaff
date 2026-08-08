@@ -13,7 +13,7 @@
 @@ -375,0 +378,2 @@
 + if(IsWrite && sizeof(T) == 4)
 +  FirestaffTraceSH2RAMSourceWrite(A, DB);
-@@ -462,0 +463,5 @@
+@@ -467,0 +471,5 @@
 +
 +uint32 FirestaffGetSH2PC(unsigned which)
 +{
