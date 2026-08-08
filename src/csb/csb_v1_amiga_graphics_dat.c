@@ -76,8 +76,10 @@ int csb_v1_amiga_graphics_decode_item(const uint8_t *data, size_t size,
         (size_t)item.decompressedByteCount > size - (size_t)item.dataOffset) {
         return 0;
     }
-    /* IMAGE1.C consumes the source's big-endian width/height and nibble RLE
-     * directly after F0474 has returned this Amiga record. */
+    /* ReDMCSB MEMORY.C F0490 selects F0474 directly for MEDIA728 Amiga
+     * releases; unlike the Atari MEDIA007 branch, it does not call F0497.
+     * IMAGE1.C then consumes this source record's big-endian dimensions and
+     * nibble RLE directly. */
     return dm1_v1_legacy_graphics_decode_item(
         data + item.dataOffset, item.decompressedByteCount, 1,
         indexed_pixels, indexed_pixel_capacity, out_width, out_height);

@@ -150,6 +150,17 @@ static void test_real_a35e_img1_if_available(void) {
     {
         uint16_t width = 0u;
         uint16_t height = 0u;
+        /* ReDMCSB DEFS.H C017_GRAPHIC_INVENTORY and PANEL.C F0347 bind
+         * this exact 224x136 source backdrop to the inventory viewport. */
+        CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 17u,
+                                                 pixels, 640u * 400u,
+                                                 &width, &height) == 1 &&
+                  width == 224u && height == 136u,
+              "real_a35e_c017_inventory_decodes_at_source_dimensions");
+    }
+    {
+        uint16_t width = 0u;
+        uint16_t height = 0u;
         /* ReDMCSB DEFS.H C013_GRAPHIC_MOVEMENT_ARROWS and PANEL.C F0395
          * bind this exact 87x45 source panel to C009_ZONE_MOVEMENT_ARROWS. */
         CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 13u,

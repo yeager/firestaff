@@ -84,10 +84,21 @@
   expanderar direktlagrad IMG1 med originalets big-endian dimensioner och
   nibbel-RLE (`ReDMCSB IMAGE1.C`, `MEMORY.C` F0490/F0474). Ett realdatatest
   går igenom den lokala A35E-filen, låser den konkreta C013-rörelsepanelen
-  till originalets 87×45 pixlar enligt `PANEL.C` F0395 och avkodar inga
-  konstruerade bildbytes.
-- ✅ Poster med olika komprimerad och expanderad längd förblir fail-closed;
-  ingen oidentifierad LZW- eller värdavkodning kan bli en Amiga-bildkälla.
+  till originalets 87×45 pixlar enligt `PANEL.C` F0395 och C017-inventariet
+  till 224×136 pixlar enligt `PANEL.C` F0347, utan konstruerade bildbytes.
+- ✅ De verifierade Amiga-utgåvornas storlekstabeller är direktlagrade
+  (`compressed == decompressed`) och följer ReDMCSB `MEMORY.C` F0490/F0474,
+  inte Atari ST:s F0497-LZW-väg. Poster som inte är IMG1 avvisas fortsatt
+  tills de har en egen källbunden konsument.
+
+# CSB Amiga C017-inventarieyta från originaldata (2026-08-08)
+
+- ✅ A31M, A35M och A35E visar nu `C017_GRAPHIC_INVENTORY` från den valda,
+  hashverifierade Amiga-`GRAPHICS.DAT` när inventariekommandot är aktivt.
+  Ytan placeras i originalets 224×136 viewportrektangel `(48,33)` och använder
+  Amiga-G0021-paletten, utan PC34:s terminalsession eller panelbild.
+- ✅ Realtidstester täcker C03-handoff, öppning och stängning av inventariet
+  för samtliga tre Amiga-vägar.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 
@@ -100,8 +111,9 @@
   i ReDMCSB `DATA.C` G0021, inte från PC34:s VGA-palett. Realtidstestet
   verifierar A31M, A35E och A35M efter respektive C03-handoff och att ingen
   PC34-runtimeyta läcker in ovanför panelen.
-- ✅ Konsumenten är avsiktligt avgränsad: saknade Amiga-viewport- och
-  champion-HUD-ägare fylls inte med konstruerade eller PC34-avkodade pixlar.
+- ✅ Konsumenten är avsiktligt avgränsad: saknade Amiga-dungeonviewport,
+  champion-HUD-överlägg och inventarieinteraktion fylls inte med konstruerade
+  eller PC34-avkodade pixlar.
 
 # CSB Amiga 3.5 English direkt C03-handoff (2026-08-08)
 

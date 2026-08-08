@@ -265,6 +265,25 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
                 label);
 }
 
+/* ReDMCSB PANEL.C F0347 expands C017 into the 224x136 viewport rectangle
+ * when the inventory command is active.  Amiga C03 has no PC34 terminal
+ * session, so this must come directly from its own big-endian GRAPHICS.DAT. */
+static void expect_amiga_c017_inventory_source_frame(M11_GameViewState *view,
+                                                      const char *label)
+{
+    unsigned char framebuffer[320 * 200];
+
+    expect_true(M11_GameView_ToggleInventoryPanel(view) == 1,
+                "Amiga inventory command opens C017 source surface");
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    expect_true(count_nonzero_region(framebuffer, 320, 48, 33, 224, 136) > 0 &&
+                    frame_rect_is_color(framebuffer, 0, 0, 320, 33, 0u),
+                label);
+    expect_true(M11_GameView_ToggleInventoryPanel(view) == 0,
+                "Amiga inventory command restores C013 source surface");
+}
+
 static int frame_matches_source_rect(const unsigned char* frame,
                                      const CSB_V1_StartupRuntimeSurface_PC34* source,
                                      int source_x,
@@ -2021,6 +2040,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                 "A31M English APPB release hands off through KAOS.FTL to C03_GAME");
     expect_amiga_c013_source_frame(
         &view, "A31M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c017_inventory_source_frame(
+        &view, "A31M inventory presents original Amiga C017 without a PC34 panel");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
@@ -2087,6 +2108,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
                 "A35M English APPB release hands off through KAOS.FTL to C03_GAME");
     expect_amiga_c013_source_frame(
         &view, "A35M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c017_inventory_source_frame(
+        &view, "A35M inventory presents original Amiga C017 without a PC34 panel");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
@@ -2155,6 +2178,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
                 "A35E reaches C03_GAME without an A31/A35M/PC34 replacement screen");
     expect_amiga_c013_source_frame(
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c017_inventory_source_frame(
+        &view, "A35E inventory presents original Amiga C017 without a PC34 panel");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

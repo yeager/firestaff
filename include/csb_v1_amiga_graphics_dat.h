@@ -17,9 +17,9 @@ extern "C" {
  *
  * Known variants and their item counts:
  *   61fbfd56887c94adc26888a9491c6611  CSB Amiga 3.1/3.3 Multilanguage  (749 items)
- *   291e1bc6803e3dc4b974c60117ca5d68  CSB Amiga 3.5 English
- *   cefaddfdf5651df2c91f61b5611a8362  CSB Amiga 3.5 Multilanguage
- *   21197b1d4994fd835c403d5a33dcac2b  CSB Amiga X.X/3.1 English
+ *   291e1bc6803e3dc4b974c60117ca5d68  CSB Amiga 3.5 English            (728 items)
+ *   cefaddfdf5651df2c91f61b5611a8362  CSB Amiga 3.5 Multilanguage      (749 items)
+ *   21197b1d4994fd835c403d5a33dcac2b  CSB Amiga X.X/3.1 English        (unverified corpus)
  *
  * Source references:
  *   ReDMCSB IMAGE1.C: IMG1 nibble RLE decoding
@@ -66,10 +66,10 @@ int csb_v1_amiga_graphics_item(const uint8_t *data, size_t size,
                                uint16_t itemIndex,
                                CSB_V1_AmigaGraphicsItem *out);
 
-/* Decodes one bounded, uncompressed Amiga IMG1 record into 4-bit indexed
- * pixels.  ReDMCSB MEMORY.C F0490 takes the direct F0474 branch for the
- * authenticated Amiga records; compressed records deliberately remain
- * rejected until their own source-owned expansion route is bound. */
+/* Decodes one bounded Amiga IMG1 record into 4-bit indexed pixels.
+ * ReDMCSB MEMORY.C F0490 takes the direct F0474 branch for the authenticated
+ * Amiga releases (their compressed/decompressed size tables are equal).
+ * Non-IMG1 records remain rejected: they need their own source consumer. */
 int csb_v1_amiga_graphics_decode_item(const uint8_t *data, size_t size,
                                       uint16_t itemIndex,
                                       uint8_t *indexed_pixels,

@@ -4198,10 +4198,10 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
  * used before PANEL.C F0337 selects a darker row.  C013 uses these original
  * four-bit indices; duplicating the 16 source registers across the indexed
  * host palette preserves that meaning without inventing PC VGA colours.
- * This is deliberately a bounded C013-only consumer.  No unbound Amiga
- * viewport, champion HUD, or synthetic replacement is exposed as a game
- * page while their native owners remain unavailable. */
-static int m11_csb_present_amiga_runtime_c013(
+ * C017 is the source inventory backdrop and C013 is the source movement
+ * panel.  No unbound Amiga dungeon viewport, champion HUD, or synthetic
+ * replacement is exposed while their native owners remain unavailable. */
+static int m11_csb_present_amiga_runtime_surface(
     const M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
 {
@@ -4224,6 +4224,13 @@ static int m11_csb_present_amiga_runtime_c013(
     int row;
     int ok = 0;
 
+    const unsigned int graphic_index = state && state->inventoryPanelActive
+        ? 17u : 13u;
+    const int target_x = state && state->inventoryPanelActive ? 48 : 233;
+    const int target_y = state && state->inventoryPanelActive ? 33 : 124;
+    const int expected_width = state && state->inventoryPanelActive ? 224 : 87;
+    const int expected_height = state && state->inventoryPanelActive ? 136 : 45;
+
     if (!state || !framebuffer || framebuffer_width < 320 ||
         framebuffer_height < 200 ||
         !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
@@ -4242,13 +4249,13 @@ static int m11_csb_present_amiga_runtime_c013(
         !graphics_receipt.is_amiga ||
         graphics_receipt.version == CSB_AMIGA_VER_UNKNOWN ||
         graphics_receipt.lang == CSB_AMIGA_LANG_UNKNOWN ||
-        !(pixels = (uint8_t *)malloc((size_t)graphic_rect.w *
-                                     (size_t)graphic_rect.h)) ||
+        !(pixels = (uint8_t *)malloc((size_t)expected_width *
+                                     (size_t)expected_height)) ||
         !csb_v1_amiga_graphics_decode_item(
-            bytes, (size_t)length, 13u, pixels,
-            (size_t)graphic_rect.w * (size_t)graphic_rect.h,
-            &width, &height) || width != (uint16_t)graphic_rect.w ||
-        height != (uint16_t)graphic_rect.h) {
+            bytes, (size_t)length, (uint16_t)graphic_index, pixels,
+            (size_t)expected_width * (size_t)expected_height,
+            &width, &height) || width != (uint16_t)expected_width ||
+        height != (uint16_t)expected_height) {
         goto done;
     }
     memset(rgb6, 0, sizeof(rgb6));
@@ -4261,14 +4268,16 @@ static int m11_csb_present_amiga_runtime_c013(
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) goto done;
     memset(framebuffer, 0, (size_t)framebuffer_width *
                            (size_t)framebuffer_height);
-    m11_fill_rect(framebuffer, framebuffer_width, framebuffer_height,
-                  outer_rect.x, outer_rect.y, outer_rect.w, outer_rect.h,
-                  0u);
-    for (row = 0; row < graphic_rect.h; ++row) {
-        memcpy(framebuffer + (size_t)(graphic_rect.y + row) *
-               (size_t)framebuffer_width + (size_t)graphic_rect.x,
-               pixels + (size_t)row * (size_t)graphic_rect.w,
-               (size_t)graphic_rect.w);
+    if (!state->inventoryPanelActive) {
+        m11_fill_rect(framebuffer, framebuffer_width, framebuffer_height,
+                      outer_rect.x, outer_rect.y, outer_rect.w, outer_rect.h,
+                      0u);
+    }
+    for (row = 0; row < expected_height; ++row) {
+        memcpy(framebuffer + (size_t)(target_y + row) *
+               (size_t)framebuffer_width + (size_t)target_x,
+               pixels + (size_t)row * (size_t)expected_width,
+               (size_t)expected_width);
     }
     ok = 1;
 done:
@@ -55761,7 +55770,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
-        if (m11_csb_present_amiga_runtime_c013(
+        if (m11_csb_present_amiga_runtime_surface(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
