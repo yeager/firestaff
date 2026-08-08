@@ -936,6 +936,10 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
         CHECK((special_ok && special_timers.valid &&
                special_timers.timer_count == state_receipt.timer_count &&
                special_timers.timer_hash != 0u &&
+               special_timers.maps_loaded == receipt.map_count &&
+               special_timers.tiles_loaded == receipt.map_data_byte_count &&
+               special_timers.map_record_chains_loaded <=
+                   special_timers.tiles_loaded &&
                special_timers.next_stream_offset >=
                    state_receipt.record_link_bitstream_offset &&
                special_timers.next_stream_offset <= byte_count - 42u &&

@@ -2403,7 +2403,12 @@
   `dm2_v1e038c` ground-stack links. This identifies the resident root before
   any stream bytes are consumed. The next transaction phase must restore the
   root's masked DB0..DB3 bytes in place, then restore only empty-tile dynamic
-  chains and the final possession continuations.
+  chains and the final possession continuations. **2026-08-08 source-order
+  update:** when the specialtimer owner is complete, that same temporary
+  c_map/c_record transaction now invokes `READ_SKSAVE_DUNGEON` and retains
+  its actual map/tile/chain census. The supplied corpus stops before that
+  phase, so possession continuations and the complete GAME_LOAD handoff still
+  block Resume.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   **2026-08-06 production-boundary update:** removed the empty
@@ -4524,4 +4529,3 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   records are not retail Saturn title/menu/VDP1 parity. Do not reintroduce
   “3D animated logo”, options or host polygon rendering as implemented until
   the consumer capture is source-joined.
-

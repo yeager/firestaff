@@ -6108,11 +6108,11 @@ list(REMOVE_ITEM M10_SOURCES
 # The save-orchestrator and map/writer transcripts are callback round-trips.
 # They have no M11/runtime caller and cannot establish real SKSAVE ownership
 # without the full raw dungeon, GDAT and possession-index path. The bounded
-# READ_RECORD_CHECKCODE decoder is different: the source-owned raw pool uses
-# it for its direct-root and special-timer preflight, so it is linked normally.
+# READ_RECORD_CHECKCODE decoder and READ_SKSAVE_DUNGEON walker are different:
+# the source-owned raw pool uses them for its temporary source-order
+# preflight, so they are linked normally.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_orchestrator_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_load_extra_dungeon_data_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c")
 # The broad `c_gui_draw` callback transcription has no M11 caller and still
@@ -6439,7 +6439,6 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_parity_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_load_orchestrator_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_orchestrator_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_load_extra_dungeon_data_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c"

@@ -9438,6 +9438,20 @@
   c_record- och c_tim-transaktion och frigör alltid den igen. Ofullständiga
   corpusägare fortsätter därför att blockeras utan att en partiell Resume-
   session kan publiceras.
+
+# DM2 SKSAVE-kartvandring i källordning (2026-08-08)
+
+- ✅ När den autentiserade specialtimerfasen har en komplett lokal ägare
+  fortsätter samma tillfälliga transaktion nu med originalets
+  `READ_SKSAVE_DUNGEON`. Den använder den muterbara c_map-kopian och samma
+  c_record-pool för residenta DB0–DB3-kedjor och tomma dynamiska tilekedjor.
+  Produktionsarkiven länkar därför den källåsta kartläsaren i stället för en
+  separat callback-fixtur.
+- ✅ Kvittot innehåller kartor, rutor, recordkedjor och teleporterhopp från
+  den faktiska vandringen. PC-DOS-korpusen passerar fortfarande inte sin
+  specialtimerägare, och avslöjar därmed ingen låtsad kartläsning eller
+  spelbar Resume-session. Bygge, kartläsartest, recordpooltest och
+  realdataregressionen passerar (192/192).
 # Nexus SMAP-realdata test and startup gate separation (2026-08-08)
 
 - ✅ SMAP runtime-bindning verifieras nu mot hashverifierad retail-LEV01 i stället för LEV00.

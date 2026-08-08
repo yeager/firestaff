@@ -1281,8 +1281,11 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     DM2_V1_SaveTimerRecord timers[DM2_V1_SAVE_TIMER_MAX];
     DM2_V1_OriginalRawTimerStreamReceipt timer_stream;
     DM2_V1_SksavePoolRestoreContext context;
+    DM2_V1_SksaveMapRestoreContext map_context;
     DM2_ReadRecordCallbacks callbacks;
+    DM2_LoadExtraDungeonCallbacks dungeon_callbacks;
     DM2_ReadRecordSession session;
+    DM2_V1_LoadExtraDungeonReceipt dungeon_receipt;
     uint16_t chains_read = 0u;
     int ok = 0;
 
@@ -1292,7 +1295,10 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     memset(&roots, 0, sizeof(roots));
     memset(&timer_stream, 0, sizeof(timer_stream));
     memset(&context, 0, sizeof(context));
+    memset(&map_context, 0, sizeof(map_context));
     memset(&callbacks, 0, sizeof(callbacks));
+    memset(&dungeon_callbacks, 0, sizeof(dungeon_callbacks));
+    memset(&dungeon_receipt, 0, sizeof(dungeon_receipt));
     memset(&session, 0, sizeof(session));
 
     /* SKProject sksvgame.cpp:1108-1183 and DM2_2066_197c.  These checks
@@ -1339,6 +1345,31 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     callbacks.add_possession_index = dm2_v1_sksave_pool_add_possession;
     callbacks.query_creature_ai_flags = dm2_v1_sksave_pool_query_ai;
     callbacks.ctx = &context;
+    /* SKProject sksvgame.cpp:1178-1202 enters READ_SKSAVE_DUNGEON only
+     * after DM2_2066_197c has consumed its special timer chains.  Give that
+     * walker the same mutable c_map and c_record owners as the preceding
+     * phases.  This remains a temporary transaction: a successful traversal
+     * is evidence for the later all-or-nothing GAME_LOAD owner, not Resume. */
+    if (!dm2_v1_sksave_map_restore_context_init(
+            &map_context, &map_owner, &pools)) {
+        goto done;
+    }
+    dungeon_callbacks.get_map_count = dm2_v1_sksave_map_restore_get_map_count;
+    dungeon_callbacks.get_map_dimensions =
+        dm2_v1_sksave_map_restore_get_map_dimensions;
+    dungeon_callbacks.change_current_map =
+        dm2_v1_sksave_map_restore_change_current_map;
+    dungeon_callbacks.get_tile = dm2_v1_sksave_map_restore_get_tile;
+    dungeon_callbacks.set_tile = dm2_v1_sksave_map_restore_set_tile;
+    dungeon_callbacks.get_tile_record_link =
+        dm2_v1_sksave_map_restore_get_tile_record_link;
+    dungeon_callbacks.restore_existing_tile_record_chain =
+        dm2_v1_sksave_map_restore_existing_tile_record_chain;
+    dungeon_callbacks.set_tile_record_link =
+        dm2_v1_sksave_map_restore_set_tile_record_link;
+    dungeon_callbacks.get_teleporter_detail =
+        dm2_v1_sksave_map_restore_get_teleporter_detail;
+    dungeon_callbacks.ctx = &map_context;
     dm2_v1_read_record_session_init(&session, raw_body, raw_body_size);
     session.reader.position = roots.next_stream_offset;
     session.reader.bits_remaining = roots.next_stream_bits_remaining;
@@ -1349,10 +1380,22 @@ int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
         context.possession_link_overflow) {
         goto done;
     }
+    if (dm2_v1_load_extra_dungeon_data(
+            &session, &callbacks, &dungeon_callbacks, map_owner.current_map,
+            &dungeon_receipt) != 0 || !dungeon_receipt.valid ||
+        session.error || context.possession_link_overflow) {
+        goto done;
+    }
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->timer_count = state_receipt->timer_count;
         out_receipt->special_chain_count = chains_read;
+        out_receipt->maps_loaded = (uint16_t)dungeon_receipt.maps_loaded;
+        out_receipt->tiles_loaded = (uint32_t)dungeon_receipt.tiles_loaded;
+        out_receipt->map_record_chains_loaded =
+            (uint32_t)dungeon_receipt.record_chains_loaded;
+        out_receipt->teleporter_forward_refs_skipped =
+            (uint32_t)dungeon_receipt.teleporter_forward_refs_skipped;
         out_receipt->timer_hash = timer_stream.raw_hash;
         out_receipt->record_hash = context.record_hash;
         out_receipt->next_stream_offset = session.reader.position;
