@@ -42,7 +42,20 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_root", type=Path)
     args = parser.parse_args()
-    paths = sorted(args.capture_root.glob("run-*/runtime-vdp12.raw"))
+    # Accept both the external corpus layout (run-*/runtime-vdp12.raw) and a
+    # single operator capture directory.  The latter is useful for reviewing
+    # a fresh run before it is folded into the corpus; do not require a
+    # run-directory name to establish capture provenance.
+    paths = sorted(
+        {
+            path
+            for path in (
+                [args.capture_root / "runtime-vdp12.raw"]
+                + list(args.capture_root.glob("run-*/runtime-vdp12.raw"))
+            )
+            if path.is_file()
+        }
+    )
     if not paths:
         print("NEXUS_CAPTURE_INVENTORY_EMPTY")
         return 1

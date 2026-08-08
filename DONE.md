@@ -13,6 +13,15 @@
   `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
   felaktigt publiceras för den Amiga-specifika språkväljaren.
 
+# Nexus capture inventory accepts single-run roots (2026-08-08)
+
+- ✅ `analyze_nexus_capture_inventory.py` now inventories both the external
+  corpus layout (`run-*/runtime-vdp12.raw`) and a single operator run whose
+  `runtime-vdp12.raw` is at the supplied root. The single-run European reset
+  witness is detected as one frame with `semantic_admission=blocked`, and the
+  full external corpus still inventories all 35 raw files without promoting
+  startup, menu, HUD or viewport meaning.
+
 # Nexus VDP1 runtime-writer/source join (2026-08-08)
 
 - ✅ Added `analyze_nexus_vdp1_runtime_writer_join.py`, which authenticates
