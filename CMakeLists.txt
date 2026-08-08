@@ -16568,6 +16568,14 @@ endif()
         NAME csb_v1_m11_f0435_f9_reload
         COMMAND test_csb_v1_m11_f0435_f9_reload
     )
+    add_test(
+        NAME csb_v1_atari_mini_f0435_recovery_archive
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"
+            "$<TARGET_FILE:test_csb_v1_m11_f0435_f9_reload>"
+    )
+    set_tests_properties(csb_v1_atari_mini_f0435_recovery_archive PROPERTIES
+        LABELS "tier2;csb;atari;save;recovery;real_data;archive;skip_safe"
+    )
 
     add_executable(test_csb_v1_m11_utility_capture_admission
         tests/test_csb_v1_m11_utility_capture_admission.c
