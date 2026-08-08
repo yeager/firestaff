@@ -1209,6 +1209,7 @@ int main(void) {
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
     DM2_V1_BootNewGameChampionAdmissionReceipt champion_admission;
+    DM2_V1_BootNewGameFirstChampionReceipt first_champion;
     DM2_V1_BootChampionSelectionCensus champion_census;
     DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     DM2_V1_BootNewGameEntranceReceipt new_game_entrance;
@@ -1431,6 +1432,32 @@ int main(void) {
                     champion_admission.dyn4.raw_loadable_entry_count > 0u &&
                     champion_admission.receipt_hash != 0u,
                 "M11 joins New Game entrance, selected mirror, source items and DYN4 without creating a party");
+    memset(&first_champion, 0, sizeof(first_champion));
+    expect_true(profile && champion_mirrors.mirror_count > 0 &&
+                    dm2_v1_boot_new_game_first_champion_receipt(
+                        profile, champion_mirrors.mirrors[0].map,
+                        champion_mirrors.mirrors[0].x,
+                        champion_mirrors.mirrors[0].y,
+                        champion_mirrors.mirrors[0].direction,
+                        &first_champion) &&
+                    first_champion.valid &&
+                    first_champion.incomplete_game_load &&
+                    first_champion.admission.valid &&
+                    first_champion.hero.herotype ==
+                        (int8_t)champion_mirrors.mirrors[0].dynamic_hero_type &&
+                    first_champion.hero.handcmd[0] == -1 &&
+                    first_champion.hero.handcmd[1] == -1 &&
+                    first_champion.hero.timeridx == -1 &&
+                    first_champion.hero.item[0] == -1 &&
+                    first_champion.hero.food >= 1500 &&
+                    first_champion.hero.food <= 1755 &&
+                    first_champion.hero.water >= 1500 &&
+                    first_champion.hero.water <= 1755 &&
+                    first_champion.source_rng_state_before == 0u &&
+                    first_champion.source_rng_state_after != 0u &&
+                    first_champion.hero_hash != 0u &&
+                    first_champion.receipt_hash != 0u,
+                "M11 materializes the first source c_hero candidate without publishing a party");
     memset(&champion_census, 0, sizeof(champion_census));
     expect_true(profile &&
                     dm2_v1_boot_champion_selection_census(

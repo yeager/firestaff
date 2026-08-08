@@ -2,10 +2,11 @@
 
 - 🔧 DM2 GAME_LOAD: File_header-starten på karta 0 är nu bunden till den
   riktiga ground-stack-/recordkedjan i ett läsande kvitto, och ett valt
-  championmirror kräver nu exakt GDAT-, startobjekt- och DYN4-data. Nästa
-  atomära ägare måste förena detta med possessions, c_hero, timerkö och
-  aktuatorgenerator; starten får inte publicera party, HUD eller viewport
-  innan hela transaktionen finns.
+  championmirror kräver nu exakt GDAT-, startobjekt- och DYN4-data. Första
+  `c_hero` materialiseras nu från samma originaldata och c_randomdata:s
+  dokumenterade initiala LCG-ström. Nästa atomära ägare måste förena den med
+  possessions, efterföljande heroes, timerkö och aktuatorgenerator; starten
+  får inte publicera party, HUD eller viewport innan hela transaktionen finns.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

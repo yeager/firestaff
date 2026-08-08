@@ -30,6 +30,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_music_map.h"
@@ -907,6 +908,101 @@ int dm2_v1_boot_new_game_champion_admission_receipt(
     candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.receipt_hash, candidate.dyn4.receipt_hash);
     if (candidate.receipt_hash == 0u) return 0;
+    candidate.incomplete_game_load = 1;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
+int dm2_v1_boot_new_game_first_champion_receipt(
+    const DM2_V1_BootProfile *profile,
+    int map, int x, int y, int direction,
+    DM2_V1_BootNewGameFirstChampionReceipt *out_receipt)
+{
+    DM2_V1_BootNewGameFirstChampionReceipt candidate;
+    const DM2_V1_ChampionReviveDataReceipt *source;
+    DM2_V1_RandomState random;
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_boot_new_game_champion_admission_receipt(
+            profile, map, x, y, direction, &candidate.admission) ||
+        !candidate.admission.valid ||
+        !candidate.admission.incomplete_game_load) {
+        return 0;
+    }
+    source = &candidate.admission.selection.revive_data;
+    if (!source->valid || source->hero_type > 15u ||
+        source->hit_points_base > 3276u ||
+        source->stamina_base > 3276u || source->mana_base > 3276u) {
+        return 0;
+    }
+
+    /* SKProject skhero.cpp::DM2_REVIVE_PLAYER lines 959-1052.  The first
+     * selection starts after c_randomdata::init (skrandom.cpp:7-10), whose
+     * state is exactly zero. The two draws below are food then water; retain
+     * their state transition so a later transaction cannot replace it with
+     * a host seed. This function owns no global random state. */
+    dm2_v1_hero_init(&candidate.hero);
+    candidate.hero.herotype = (int8_t)source->hero_type;
+    candidate.hero.handcmd[0] = -1;
+    candidate.hero.handcmd[1] = -1;
+    candidate.hero.timeridx = -1;
+    candidate.hero.absdir = (int8_t)(direction & 3);
+    candidate.hero.partypos = (int8_t)candidate.admission.entrance.direction;
+    candidate.hero.b_28 = (int8_t)candidate.admission.entrance.direction;
+    memcpy(candidate.hero.name1, source->name1,
+           sizeof(candidate.hero.name1));
+    memcpy(candidate.hero.name2, source->name2,
+           sizeof(candidate.hero.name2));
+    candidate.hero.curHP = candidate.hero.maxHP =
+        (int16_t)(source->hit_points_base * 10u);
+    candidate.hero.curStamina = candidate.hero.maxStamina =
+        (int16_t)(source->stamina_base * 10u);
+    candidate.hero.curMP = candidate.hero.maxMP =
+        (int16_t)(source->mana_base * 10u);
+    for (i = 0; i < DM2_NUM_ABILITIES; ++i) {
+        candidate.hero.ability[i][DM2_CUR] =
+            candidate.hero.ability[i][DM2_MAX] =
+                (int8_t)source->ability_base[i];
+    }
+    for (i = 0; i < 16; ++i) {
+        uint8_t level = source->skill_level[i];
+        int group = i / 4 + 1;
+        int skill = i % 4;
+
+        /* The source performs `0x40 << CUTX8(dp[i + 6])`. A shift beyond
+         * the 32-bit c_hero skill word has no portable representation, so
+         * reject it rather than truncating a corrupted template. */
+        if (level > 25u) return 0;
+        candidate.hero.skill[group][skill] = level == 0u ? 0 :
+            (int32_t)((uint32_t)0x40u << level);
+        candidate.hero.skill[0][skill] += candidate.hero.skill[group][skill];
+    }
+    for (i = 0; i < DM2_NUM_ITEMS; ++i) candidate.hero.item[i] = -1;
+    dm2_v1_random_init(&random);
+    candidate.source_rng_state_before = random.state;
+    candidate.hero.food = (int16_t)((uint8_t)dm2_v1_rand(&random) + 1500);
+    candidate.hero.water = (int16_t)((uint8_t)dm2_v1_rand(&random) + 1500);
+    candidate.source_rng_state_after = random.state;
+
+    candidate.hero_hash = 2166136261u;
+    for (i = 0; i < (int)sizeof(candidate.hero); ++i) {
+        candidate.hero_hash = dm2_v1_boot_packaged_capture_hash_step(
+            candidate.hero_hash, ((const uint8_t *)&candidate.hero)[i]);
+    }
+    candidate.receipt_hash = 0x4e474631u; /* "NGF1" receipt domain. */
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.admission.receipt_hash);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.source_rng_state_before);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.source_rng_state_after);
+    candidate.receipt_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.receipt_hash, candidate.hero_hash);
+    if (candidate.hero_hash == 0u || candidate.receipt_hash == 0u) return 0;
     candidate.incomplete_game_load = 1;
     candidate.valid = 1;
     *out_receipt = candidate;

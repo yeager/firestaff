@@ -269,6 +269,17 @@
   `REVIVE_PLAYER`, `ADD_ITEM_TO_PLAYER`, `LOAD_DYN4` eller någon party-/HUD-
   mutation.
 
+# DM2 första c_hero-kandidat (2026-08-08)
+
+- ✅ Första valet kan nu materialiseras byteförbyte som den 263-byte stora
+  `c_hero` som `DM2_REVIVE_PLAYER` bygger: namn, HP/stamina/mana, abilities,
+  fem färdighetsrader, tomma item-platser, riktning och food/water från
+  originalets `c_randomdata::init`/LCG-steg.
+- ✅ Verifierat mot hashverifierad PC-DOS-media via M11:s
+  startup/profile-grind. Kandidaten är inte en party: possessions, efterföljande
+  champions, DYN4, timers och HUD är fortsatt ospublicerade tills samma
+  GAME_LOAD-ägare kan installera allt atomärt.
+
 # DM2 championmirror-DYN4-roster (2026-08-08)
 
 - ✅ Alla sexton källägda DB3 subtype-`0x7e` championmirror-markörer binds

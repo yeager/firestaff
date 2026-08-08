@@ -10,6 +10,7 @@
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_fmtowns_anim_stream.h"
+#include "dm2_v1_party.h"
 #include <stddef.h>
 
 #define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
@@ -233,6 +234,21 @@ typedef struct {
     DM2_V1_GdatDyn4SelectionReceipt dyn4;
     uint32_t receipt_hash;
 } DM2_V1_BootNewGameChampionAdmissionReceipt;
+
+/* Exact first c_hero candidate produced by DM2_REVIVE_PLAYER after the
+ * original c_randomdata::init state. It is retained only as transaction
+ * evidence: possession transfer, party publication, DYN4 materialisation,
+ * timer initialization and HUD ownership remain uncommitted. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    DM2_V1_BootNewGameChampionAdmissionReceipt admission;
+    DM2_V1_Hero hero;
+    uint32_t source_rng_state_before;
+    uint32_t source_rng_state_after;
+    uint32_t hero_hash;
+    uint32_t receipt_hash;
+} DM2_V1_BootNewGameFirstChampionReceipt;
 
 /* Complete source roster for the mirror-selection screen. The order is the
  * canonical File_header chain order, not a host-authored portrait order. */
@@ -1545,6 +1561,13 @@ int dm2_v1_boot_new_game_champion_admission_receipt(
     const DM2_V1_BootProfile *profile,
     int map, int x, int y, int direction,
     DM2_V1_BootNewGameChampionAdmissionReceipt *out_receipt);
+
+/* Materialize only the first source-selected c_hero after c_randomdata::init.
+ * This does not alter the boot profile or publish a party/session. */
+int dm2_v1_boot_new_game_first_champion_receipt(
+    const DM2_V1_BootProfile *profile,
+    int map, int x, int y, int direction,
+    DM2_V1_BootNewGameFirstChampionReceipt *out_receipt);
 
 /* Enumerate every authentic DB3 subtype-0x7e selection candidate. Duplicate
  * hero types or a candidate that cannot be joined to exact GDAT and tile data
