@@ -207,6 +207,8 @@
 - ✅ Kartbytesens övre tre bitar räknas nu enligt `DME.h::tileTypeIndex` som
   vägg, golv, grop, trappa, dörr eller teleporter. Alla rutor på samtliga
   44 PC-DOS-kartor verifieras; detta är fortfarande läsande metadata.
+- ✅ Bootprofilen lämnar tilecensusen med scen- och recordreceipts; M11-testet
+  verifierar handoffet från den hashverifierade dungeonen.
 
 # DM2 fail-closed local-level adapter (2026-08-08)
 
