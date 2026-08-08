@@ -9562,3 +9562,7 @@
 
 - ✅ Produktionsverifieraren upptäcker nu korrekt även om en capture-gated gameplay-adapter skulle exkluderas via CMake-regex; kontrollen validerades mot den riktiga Nexus-korpusen.
 - ✅ Real-data SAL/MAP, sound-runtime receipt och FONT256.S2D corpus-tester passerar fortsatt; SFX playback och Saturn text/VDP2-konsument förblir spärrade utan autentisk runtime-bindning.
+# Nexus arbitrary DGN texture decoder isolated from production (2026-08-08)
+
+- ✅ `nexus_v1_dgn_texture_decode.c` accepterar caller-supplied bytes men sätter alltid `source_verified=0`; den är därför nu explicit real-corpus/test-only och exkluderas från `firestaff_nexus`.
+- ✅ Riktiga LEV00–LEV15 DGN texture- och face/material-corpus-tester passerar efter ändringen. Ingen renderer eller fallback öppnades.

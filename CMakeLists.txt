@@ -6576,6 +6576,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_warning_dgt2_resource_corpus\\
 # keep it available to the real-data decoder test without exporting a host
 # presentation path from firestaff_nexus.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
+# The standalone Structure2 texture decoder accepts caller-supplied bytes and
+# deliberately never asserts retail provenance.  Its real LEV corpus tests
+# compile it explicitly; keep arbitrary-buffer decode out of production.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_dgn_texture_decode\\.c$")
 # Gameplay modules remain source-study/fixture implementations. DM1/DM.BIN
 # formula parity is not evidence of a Saturn Nexus action, HUD, or VDP owner.
 # Keep the production ABI fail-closed until the corresponding runtime capture

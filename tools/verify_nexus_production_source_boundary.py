@@ -53,6 +53,7 @@ for exclusion in (
     r"nexus_v1_warning_dgt2_m11_presentation\\.c$",
     r"nexus_v1_warning_dgt2_resource_corpus\\.c$",
     r"nexus_v1_mns\\.c$",
+    r"nexus_v1_dgn_texture_decode\\.c$",
     r"nexus_v1_magic\\.c$",
     r"nexus_v1_combat\\.c$",
     r"nexus_v1_experience\\.c$",
