@@ -220,6 +220,18 @@ typedef struct {
      * source ObjectIDs, not an inventory projection. */
     int source_item_count;
     uint16_t source_item_object_ids[30];
+    /* Exact File_header-owned tile-chain nodes which SELECT_CHAMPION hands
+     * to ADD_ITEM_TO_PLAYER.  `next_object_id` is retained before any future
+     * CUT_RECORD_FROM mutation, so inventory transfer can be transactional
+     * rather than a host-created item list. */
+    struct {
+        uint16_t object_id;
+        uint16_t next_object_id;
+        uint8_t type;
+        uint16_t index;
+    } source_item_records[30];
+    int source_item_link_word_reads;
+    uint32_t source_item_chain_hash;
     uint32_t identity_hash;
 } DM2_V1_BootChampionSelectionCandidate;
 

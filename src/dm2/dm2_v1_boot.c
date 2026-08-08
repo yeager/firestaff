@@ -744,7 +744,11 @@ int dm2_v1_boot_champion_mirror_receipt(
 typedef struct {
     int selection_direction;
     int item_count;
+    const DM2_V1_DungeonData *dungeon;
     uint16_t object_ids[30];
+    uint16_t next_object_ids[30];
+    uint8_t types[30];
+    uint16_t indices[30];
 } DM2_V1_BootChampionTileItems;
 
 static int dm2_v1_boot_collect_champion_tile_item(
@@ -765,11 +769,19 @@ static int dm2_v1_boot_collect_champion_tile_item(
      * original ObjectID in source chain order. No item is decoded, moved or
      * equipped by this receipt. */
     if (type > 3 && record_direction == items->selection_direction) {
+        int next;
         if (items->item_count >= (int)(sizeof(items->object_ids) /
                                        sizeof(items->object_ids[0]))) {
             return -1;
         }
+        if (!items->dungeon ||
+            (next = dm2_v1_dungeon_get_next_thing(items->dungeon, thing)) < 0) {
+            return -1;
+        }
         items->object_ids[items->item_count++] = thing;
+        items->next_object_ids[items->item_count - 1] = (uint16_t)next;
+        items->types[items->item_count - 1] = (uint8_t)type;
+        items->indices[items->item_count - 1] = (uint16_t)index;
     }
     return 0;
 }
@@ -820,6 +832,7 @@ int dm2_v1_boot_champion_selection_candidate(
         memset(&items, 0, sizeof(items));
         memset(&map_receipt, 0, sizeof(map_receipt));
         items.selection_direction = (direction + 2) & 3;
+        items.dungeon = dungeon;
         if (!dm2_v1_dungeon_validate_file_header_runtime_map(
                 dungeon, mirror->map, &map_receipt) ||
             !map_receipt.committed || map_receipt.record_count <= 0) {
@@ -849,12 +862,39 @@ int dm2_v1_boot_champion_selection_candidate(
             identity_hash, out_candidate->revive_data.raw8_hash);
         identity_hash = dm2_v1_boot_packaged_capture_hash_step(
             identity_hash, out_candidate->revive_data.name_hash);
+        out_candidate->source_item_chain_hash = 0x4348494eu; /* "CHIN". */
         for (int item = 0; item < items.item_count; ++item) {
             identity_hash = dm2_v1_boot_packaged_capture_hash_step(
                 identity_hash, items.object_ids[item]);
             out_candidate->source_item_object_ids[item] =
                 items.object_ids[item];
+            out_candidate->source_item_records[item].object_id =
+                items.object_ids[item];
+            out_candidate->source_item_records[item].next_object_id =
+                items.next_object_ids[item];
+            out_candidate->source_item_records[item].type = items.types[item];
+            out_candidate->source_item_records[item].index = items.indices[item];
+            out_candidate->source_item_link_word_reads++;
+            out_candidate->source_item_chain_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_candidate->source_item_chain_hash, items.object_ids[item]);
+            out_candidate->source_item_chain_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_candidate->source_item_chain_hash,
+                    items.next_object_ids[item]);
+            out_candidate->source_item_chain_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_candidate->source_item_chain_hash, items.types[item]);
+            out_candidate->source_item_chain_hash =
+                dm2_v1_boot_packaged_capture_hash_step(
+                    out_candidate->source_item_chain_hash, items.indices[item]);
         }
+        if (out_candidate->source_item_chain_hash == 0u) {
+            memset(out_candidate, 0, sizeof(*out_candidate));
+            return 0;
+        }
+        identity_hash = dm2_v1_boot_packaged_capture_hash_step(
+            identity_hash, out_candidate->source_item_chain_hash);
         out_candidate->mirror = *mirror;
         out_candidate->source_item_count = items.item_count;
         out_candidate->identity_hash = identity_hash;

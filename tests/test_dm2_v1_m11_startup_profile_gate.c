@@ -1415,8 +1415,15 @@ int main(void) {
                     champion_candidate.revive_data.name1[0] != '\0' &&
                     champion_candidate.source_item_count >= 0 &&
                     champion_candidate.source_item_count <= 30 &&
+                    champion_candidate.source_item_link_word_reads ==
+                        champion_candidate.source_item_count &&
+                    champion_candidate.source_item_chain_hash != 0u &&
+                    (champion_candidate.source_item_count == 0 ||
+                     (champion_candidate.source_item_records[0].object_id ==
+                          champion_candidate.source_item_object_ids[0] &&
+                      champion_candidate.source_item_records[0].type > 3u)) &&
                     champion_candidate.identity_hash != 0u,
-                "M11 joins each source mirror to its authentic champion template and source tile items");
+                "M11 joins each source mirror to its authentic champion template and File_header-owned source tile chain");
     memset(&champion_admission, 0, sizeof(champion_admission));
     expect_true(profile && champion_mirrors.mirror_count > 0 &&
                     dm2_v1_boot_new_game_champion_admission_receipt(

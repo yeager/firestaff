@@ -325,6 +325,9 @@
 - ✅ Varje val löses på nytt mot File_header, CHAMPIONS, riktade startobjekt
   och DYN4; dubblett-speglar avvisas. Receiptet överför inga objektrecords
   och publicerar inte party, HUD eller runtime-session.
+- ✅ Varje riktat startobjekt behåller nu även sin File_header-ägda DB-typ,
+  recordindex och ursprungliga nästa-länk. Detta är underlaget för framtida
+  `CUT_RECORD_FROM`/`ADD_ITEM_TO_PLAYER`-mutation utan syntetisk inventory.
 - ✅ Party-layoutens initierings- och specialforce-API har fått egna symboler.
   Det tar bort en verklig ABI-kollision med den callback-baserade
   hero-ops-modulen, där samma C-symboler tidigare hade olika signaturer.

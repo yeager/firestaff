@@ -7,8 +7,8 @@
   dokumenterade initiala LCG-ström. Upp till fyra uttryckligen valda
   originalspeglar kan läsas som en gemensam party-receipt med korrekt
   klickordning, formation och RNG-följd. Nästa atomära ägare måste förena den
-  med possessions, timerkö och aktuatorgenerator; starten får inte publicera
-  party, HUD eller viewport innan hela transaktionen finns.
+  med recordmutation för possessions, timerkö och aktuatorgenerator; starten
+  får inte publicera party, HUD eller viewport innan hela transaktionen finns.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder
