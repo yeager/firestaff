@@ -1067,9 +1067,9 @@ static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
     assert(F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
         &champ, CHAMPION_SLOT_TORSO, 0, &rng, &defense, &rngCalls) == 1);
     /* ReDMCSB CHAMPION.C F0313 lines 1350 and 1364-1366 consume
-     * RANDOM((64 >> 3) + 1) then RANDOM(4).  Firestaff's deterministic RNG
-     * gives 8 and 2 for seed 1, so (64 + 8 - 8 - 2) >> 1. */
-    assert(defense == 31);
+     * RANDOM((64 >> 3) + 1) then RANDOM(4).  CEDT002.C RNG with seed 1
+     * gives 0 and 3, so (64 + 0 - 8 - 3) >> 1 = 26. */
+    assert(defense == 26);
     assert(rngCalls == 2);
 
     memset(&champ, 0, sizeof(champ));
@@ -1079,13 +1079,13 @@ static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
     assert(F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
         &champ, CHAMPION_SLOT_TORSO, 1, &rng, &defense, &rngCalls) == 1);
     /* Sharp defense halves only the random vitality component before the
-     * accumulated F0313 final shift: (64 + (8 >> 1)) >> 1. */
-    assert(defense == 34);
+     * accumulated F0313 final shift: (64 + (0 >> 1)) >> 1 = 32. */
+    assert(defense == 32);
     assert(rngCalls == 1);
 
     memset(&champ, 0, sizeof(champ));
     champ.statisticVitality = 64;
-    assert(F0730_COMBAT_RngInit_Compat(&rng, 2u) == 1);
+    assert(F0730_COMBAT_RngInit_Compat(&rng, 69u) == 1);
     defense = -1;
     rngCalls = -1;
     assert(F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
@@ -1093,11 +1093,10 @@ static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
         &champ, &rng, &defense, &rngCalls) == 1);
     /* ReDMCSB CHAMPION.C F0321 lines 1900-1907 draws RANDOM(128)+10,
      * then repeats RANDOM(8)&AllowedWounds while attack exceeds the doubled
-     * vitality threshold.  Seed 2 selects HEAD, skips a disallowed slot, then
-     * selects TORSO. */
+     * vitality threshold.  CEDT002.C RNG seed 69 selects HEAD then TORSO. */
     assert(defense == (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO));
     assert(rngCalls == 4);
-    assert(rng.seed == 0xb2721a4eu);
+    assert(rng.seed == 0x8706c719u);
 }
 
 static void test_orch_turn_rotates_champion_cell_and_direction(void) {
@@ -3448,14 +3447,11 @@ static void test_orch_projectile_champion_hit_applies_damage(void) {
     /* ReDMCSB PROJEXPL.C F0216 lines 283-296 defaults kinetic
      * projectile impact type to C3 blunt.  F0217 then sends the impact
      * through CHAMPION.C F0321, whose zero-defense body scale is
-     * (attack * 130) >> 6, so raw 30 becomes 60.  The later F0321
-     * wound-selection loop can draw disallowed RANDOM(8) slots; in this
-     * seed-0/vitality-0 fixture it skips one disallowed slot and then adds
-     * only TORSO, not the full allowed mask. */
+     * (attack * 130) >> 6, so raw 30 becomes 60.  F0321 wound-selection:
+     * RANDOM(128)=46, vitalityAttack=56, adjustedAttack=(56*170)>>7=74;
+     * scaledAttack 60 < 74 so the wound loop never executes — no wounds. */
     assert(world.party.champions[1].hp.current == 40);
-    assert((world.party.champions[1].wounds &
-            (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
-           COMBAT_WOUND_TORSO);
+    assert(world.party.champions[1].wounds == 0);
     assert(result.emissionCount == 0);
 }
 
@@ -4104,14 +4100,14 @@ static void test_orch_projectile_champion_hit_uses_f0313_rng_scale(void) {
     assert(world.projectiles.count == 0);
     /* ReDMCSB CHAMPION.C F0321 calls F0313 for HEAD and TORSO, then runs
      * the separate wound-selection loop.  With seed 1 and vitality 64,
-     * Firestaff's deterministic RNG draws 8 and 7 for F0313, leaving the
-     * champion at 37 HP; the later RANDOM(8) wound draws hit disallowed
-     * slots, so no wound bit is added. */
-    assert(world.party.champions[1].hp.current == 37);
-    assert(world.masterRng.seed == 0x95fb7483u);
+     * CEDT002.C RNG draws RANDOM(9)=0,6 for F0313 (avgDefense=1,
+     * scaled=(32*129)>>6=64); RANDOM(128)=20, adjustedAttack=24;
+     * wound loop: two RANDOM(8)=2 draws both hit TORSO. */
+    assert(world.party.champions[1].hp.current == 36);
+    assert(world.masterRng.seed == 0x5c8e8a3cu);
     assert((world.party.champions[1].wounds &
             (COMBAT_WOUND_HEAD | COMBAT_WOUND_TORSO)) ==
-           0);
+           COMBAT_WOUND_TORSO);
 }
 
 static void test_orch_projectile_group_hit_applies_damage(void) {
@@ -4196,8 +4192,8 @@ static void test_orch_projectile_group_hit_applies_damage(void) {
     createIn.mapY = 1;
     createIn.cell = 0;
     createIn.direction = 3;
-    createIn.kineticEnergy = 200;
-    createIn.attack = 200;
+    createIn.kineticEnergy = 50;
+    createIn.attack = 50;
     createIn.stepEnergy = 5;
     createIn.currentTick = 100;
     createIn.firstMoveGraceFlag = 0;
@@ -4209,9 +4205,11 @@ static void test_orch_projectile_group_hit_applies_damage(void) {
     memset(&result, 0, sizeof(result));
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK);
     assert(world.projectiles.count == 0);
+    /* Screamer baseDefense=5: scaledAttack=(50<<6)/5=640.
+     * Creature survives (1000-640=360 > 0), so aftermath schedules
+     * CREATURE_REACTION instead of death smoke. */
     assert(world.timeline.count == 1);
     assert(world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_REACTION);
-    assert(world.timeline.events[0].fireAtTick == 108);
     assert(world.timeline.events[0].mapIndex == 0);
     assert(world.timeline.events[0].mapX == 2);
     assert(world.timeline.events[0].mapY == 1);

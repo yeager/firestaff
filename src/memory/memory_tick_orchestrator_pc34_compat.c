@@ -14074,10 +14074,23 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_MOVE_TIMER:
             break;
         case TIMELINE_EVENT_SENSOR_DELAYED:
-            /* ReDMCSB PROJEXPL.C F0217 schedules sensor-delayed events
-             * with aux0=eventType (C05-C10), aux1=effect.  Route through
-             * the same square-state dispatcher used by F0272→F0268. */
-            (void)orch_dispatch_square_state_event_compat(world, &ev, result);
+            if (ev.aux0 == DM1_EVENT_DOOR) {
+                int resolvedEffect = -1;
+                struct TimelineEvent_Compat animEvent;
+                int doorEffect = ev.aux1;
+                if (F0714_DOOR_ResolveAnimationEffect_Compat(
+                        world->dungeon, ev.mapIndex, ev.mapX, ev.mapY,
+                        doorEffect, &resolvedEffect, NULL) &&
+                    F0713_DOOR_BuildAnimationEvent_Compat(
+                        ev.mapIndex, ev.mapX, ev.mapY, resolvedEffect,
+                        ev.fireAtTick, &animEvent)) {
+                    (void)F0721_TIMELINE_Schedule_Compat(
+                        &world->timeline, &animEvent);
+                }
+            } else {
+                (void)orch_dispatch_square_state_event_compat(
+                    world, &ev, result);
+            }
             break;
         case TIMELINE_EVENT_CREATURE_TICK:
             (void)orch_handle_creature_tick_group_move_compat(world, &ev, result);
