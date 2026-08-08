@@ -1,5 +1,16 @@
 # Theron first real README capture (2026-08-08)
 
+# CSB effective launch-version handoff (2026-08-08)
+
+- ✅ M11 now consumes M12's effective verified version from the launch intent,
+  rather than reopening a stale persisted version slot. This keeps a PC34
+  direct launch bound to the PC34 package when several CSB platform families
+  coexist under one data root.
+- ✅ Verified with the authentic PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair and
+  `--game csb --platform pc --boot-probe`; the source-owned title reaches
+  `csb-title-1` with the PC34 graphics MD5. ReDMCSB reference:
+  `COMPILE.H:199-243`.
+
 - ✅ Added a reproducible source-bound capture tool that requires the
   authenticated VRAM FNV `f8ab6c1b` and VCE FNV `ea83f117` before rendering.
 - ✅ Published `verification-screens/theron-track02-dungeon-capture.png`, a

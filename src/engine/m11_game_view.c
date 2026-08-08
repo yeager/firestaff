@@ -18911,10 +18911,26 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         gameOptionSlot = 4;
     }
     if (gameOptionSlot >= 0 && gameOptionSlot < M12_CONFIG_GAME_COUNT) {
+        size_t selectedVersionIndex =
+            (size_t)menuState->gameOptions[gameOptionSlot].versionIndex;
+        /* M12 may resolve a stale saved architecture/version choice to a
+         * verified version while building the launch intent.  M11 must use
+         * that effective selection, rather than reopening the stale menu
+         * slot: CSB's PC, Amiga and Atari program families can coexist below
+         * one data root and own different TITLE/ENTRANCE media.
+         *
+         * ReDMCSB COMPILE.H lines 199-243 separates those program families;
+         * the original dispatcher never cross-binds a selected executable
+         * family with another family's media.  The corresponding binary
+         * dispatch is checked against the ReDMCSB-derived call map in
+         * tools/validate_csb_dm2_source_lock.py. */
+        if (hasLaunchIntent && intent.options.versionIndex >= 0) {
+            selectedVersionIndex = (size_t)intent.options.versionIndex;
+        }
         const M12_AssetVersionStatus* version =
             M12_AssetStatus_GetVersion(&menuState->assetStatus,
                                        entry->gameId,
-                                       (size_t)menuState->gameOptions[gameOptionSlot].versionIndex);
+                                       selectedVersionIndex);
         if (version && version->matchedPath[0] != '\0' &&
             version->matchedMd5[0] != '\0') {
             spec.verifiedAssetPath = version->matchedPath;
