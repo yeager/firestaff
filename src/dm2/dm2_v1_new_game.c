@@ -972,6 +972,18 @@ int dm2_v1_original_raw_sksave_tile_record_link(
     }
     if (object_index >= (size_t)dungeon->ground_stack_count) return 0;
     *out_link = dm2_v1_read_u16_le_at(buf, ground_stack_base + object_index * 2u);
+    if (*out_link != 0xfffeu) {
+        const unsigned int pool = ((unsigned int)*out_link >> 10) & 0x0fu;
+        const unsigned int index = (unsigned int)*out_link & 0x03ffu;
+        /* DM2_GET_ADDRESS_OF_RECORD accepts only an allocated source pool
+         * and its 10-bit record index.  A corrupt saved ground-stack link
+         * must fail before READ_SKSAVE_DUNGEON consumes a single record bit. */
+        if (pool >= DM2_RAW_SKSAVE_DB_POOL_COUNT ||
+            index >= dungeon->db_record_counts[pool]) {
+            *out_link = 0xfffeu;
+            return 0;
+        }
+    }
     return 1;
 }
 

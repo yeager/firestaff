@@ -33,6 +33,10 @@
 - ✅ Verification: all eight original PC-DOS SKSAVE files resolve their
   marked-tile roots directly from those source spans. The real-data suite now
   passes 176 checks, with no save unpacked, written or promoted to runtime.
+- ✅ Ground-stack roots are now rejected before stream consumption unless their
+  source pool selector and 10-bit index fit the matching raw-SKSAVE DB pool.
+  This is the same address boundary used by `DM2_GET_ADDRESS_OF_RECORD` and
+  prevents a malformed map root from becoming a fabricated chain.
 
 # DM2 GAME_LOAD status ownership repair (2026-08-08)
 
