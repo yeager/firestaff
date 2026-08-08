@@ -512,6 +512,17 @@
   bootprofiltestet verifierar uttryckligen att en omonterad profil inte
   rapporterar rörelse. Ingen syntetisk session eller fixtureväg öppnas.
 
+# DM2 M11-viewporten avvisar DM1-styrning (2026-08-08)
+
+- ✅ En mus-, touch- eller Steam Deck-styrplatteknapp i DM2:s viewport kan
+  inte längre falla igenom till M11:s DM1-heurstik med vänster/höger-tredjedel
+  som rörelse och vändning. DM2:s ursprungliga `c_tmouse`/`c_input`-tabell är
+  ännu inte monterad med en levande session, så fallthrough skulle ha skapat
+  ett kommando som ingen originalrektangel valt.
+- ✅ Verifierat genom den reella DM2 M11-startprofilen och den datafria
+  handkontrollsgrinden. DM2 deltar fortsatt inte i DM1/CSB:s hållna
+  VBlank-sampler förrän en separat, källtrogen DM2-schemaläggare finns.
+
 # Nexus capture-inventory råhashkontroll (2026-08-08)
 
 - ✅ `analyze_nexus_capture_inventory.py` kontrollerar nu manifestets

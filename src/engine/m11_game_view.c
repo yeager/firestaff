@@ -29406,6 +29406,21 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                           M11_VIEWPORT_Y,
                           M11_VIEWPORT_W,
                           M11_VIEWPORT_H)) {
+        if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+            /* SKProject routes a live DM2 viewport click through c_tmouse /
+             * c_input's active GDAT click table, then c_gui_draw/c_dialog
+             * or the map-record owner.  M11's m11_pointer_viewport_input()
+             * is DM1 geometry: it turns the left/right viewport thirds into
+             * host movement tokens.  The DM2 table has not been mounted with
+             * the runtime session yet, so letting that fallback through
+             * would make a real mouse, touch tap, or Steam Deck touchpad
+             * synthesize movement that no original DM2 event selected.
+             *
+             * Keep source-owned startup rectangles above this branch live;
+             * a future c_tmouse table owner must replace this rejection,
+             * rather than re-enable the DM1 viewport heuristic. */
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (m11_v1_chrome_mode_enabled(state) && !state->showDebugHUD) {
             int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
             int zoneId = 0;

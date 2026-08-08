@@ -90,6 +90,14 @@
   Ground-stackens storlek är begränsad till den autentiska kartans rutantal;
   ingen värdgenererad tillväxt får kringgå originalets c_map-kapacitet.
 
+- 🔧 DM2:s levande viewport-inmatning saknar ännu den monterade
+  `c_tmouse`/`c_input`-tabellen med aktiva GDAT-rektanglar. M11 avvisar
+  därför nu DM1:s tredelade viewport-styrning för DM2, även från touch och
+  Steam Decks styrplatta. Startmenyns verifierade originalrektanglar och
+  den normaliserade handkontrollens explicita rörelsekommandon är separata
+  vägar. Återöppna aldrig den generiska klickheuristiken; ersätt den endast
+  med den fullständigt ägda DM2-tabellen och dess record-/dialogue-konsument.
+
 - 🔧 DM2 New Game GAME_LOAD: den isolerade File_header-/DB-poolägaren har nu
   originalets privata `DM2_LOAD_NEW_DUNGEON`-förstadium: partyantalet är
   noll, ledarhandtaget är `0xffff` och sparströmmen har ännu inte lästs.

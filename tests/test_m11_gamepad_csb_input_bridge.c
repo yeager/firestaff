@@ -45,6 +45,9 @@ int main(void) {
     CHECK(M11_InputSourceSupportsHeldMotion("dm1", 1) == 1);
     CHECK(M11_InputSourceSupportsHeldMotion("csb", 1) == 1);
     CHECK(M11_InputSourceSupportsHeldMotion("csb", 0) == 0);
+    /* DM2's public movement bridge is gated behind its complete GAME_LOAD
+     * session and has no imported held-input scheduler.  M11 must not reuse
+     * DM1/CSB's VBlank sampler for a controller or Steam Deck stick. */
     CHECK(M11_InputSourceSupportsHeldMotion("dm2", 1) == 0);
     CHECK(M11_InputSourceSupportsHeldMotion(NULL, 1) == 0);
 
