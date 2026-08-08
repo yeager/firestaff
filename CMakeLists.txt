@@ -40627,6 +40627,7 @@ add_test(NAME nexus_v1_prs3_vdp1_capture_replay_local
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_capture_replay_local.sh)
 set_tests_properties(nexus_v1_prs3_vdp1_capture_replay_local PROPERTIES
     SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;prs3;vdp1;real_data;skip_safe")
 add_executable(test_nexus_v1_prs3_placement_engine_ingress
     tests/test_nexus_v1_prs3_placement_engine_ingress.c
@@ -40666,7 +40667,9 @@ set_tests_properties(nexus_v1_slev_task_corpus_receipt PROPERTIES
 add_test(NAME nexus_v1_slev_task_body_capture_plan_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_slev_task_body_capture_plan_real.sh)
 set_tests_properties(nexus_v1_slev_task_body_capture_plan_real PROPERTIES
-    SKIP_RETURN_CODE 77 LABELS "nexus;slev;real_data;skip_safe")
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;slev;real_data;skip_safe")
 add_executable(test_nexus_v1_sal_capture_plan
     tests/test_nexus_v1_sal_capture_plan.c
     src/nexus/nexus_v1_sal_capture_plan.c)
@@ -40675,7 +40678,9 @@ add_test(NAME nexus_v1_sal_capture_plan COMMAND test_nexus_v1_sal_capture_plan)
 add_test(NAME nexus_v1_sal_capture_plan_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_sal_capture_plan_real.sh)
 set_tests_properties(nexus_v1_sal_capture_plan_real PROPERTIES
-    SKIP_RETURN_CODE 77 LABELS "nexus;sndlev;sal;real_data;skip_safe")
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;sndlev;sal;real_data;skip_safe")
 add_executable(test_nexus_v1_saturn_capture_campaign_import
     tests/test_nexus_v1_saturn_capture_campaign_import.c
     src/nexus/nexus_v1_saturn_capture_campaign_import.c)
@@ -41112,7 +41117,9 @@ set_tests_properties(nexus_v1_structure3_face_admission_fixture PROPERTIES LABEL
 add_test(NAME nexus_v1_prs3_original_execution_import_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_original_execution_import_real.sh)
 set_tests_properties(nexus_v1_prs3_original_execution_import_real PROPERTIES
-    SKIP_RETURN_CODE 77 LABELS "nexus;prs3;real_data;skip_safe")
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;prs3;real_data;skip_safe")
 add_executable(test_nexus_v1_prs3_multi_capture_adjudicator
     tests/test_nexus_v1_prs3_multi_capture_adjudicator.c
     src/nexus/nexus_v1_prs3_multi_capture_adjudicator.c)
@@ -41121,7 +41128,9 @@ add_test(NAME nexus_v1_prs3_multi_capture_adjudicator COMMAND test_nexus_v1_prs3
 add_test(NAME nexus_v1_prs3_multi_capture_adjudicator_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_multi_capture_adjudicator_real.sh)
 set_tests_properties(nexus_v1_prs3_multi_capture_adjudicator_real PROPERTIES
-    SKIP_RETURN_CODE 77 LABELS "nexus;prs3;real_data;skip_safe")
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;prs3;real_data;skip_safe")
 add_executable(test_nexus_v1_structure3_face_texturing_capture_plan tests/test_nexus_v1_structure3_face_texturing_capture_plan.c src/nexus/nexus_v1_structure3_face_texturing_capture_plan.c)
 target_include_directories(test_nexus_v1_structure3_face_texturing_capture_plan PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME nexus_v1_structure3_face_texturing_capture_plan COMMAND test_nexus_v1_structure3_face_texturing_capture_plan)
@@ -41131,7 +41140,10 @@ add_executable(test_nexus_v1_dgn_multi_level_capture_adjudicator tests/test_nexu
 target_include_directories(test_nexus_v1_dgn_multi_level_capture_adjudicator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME nexus_v1_dgn_multi_level_capture_adjudicator COMMAND test_nexus_v1_dgn_multi_level_capture_adjudicator)
 add_test(NAME nexus_v1_dgn_multi_level_capture_adjudicator_real COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_multi_level_capture_adjudicator_real.sh)
-set_tests_properties(nexus_v1_dgn_multi_level_capture_adjudicator_real PROPERTIES SKIP_RETURN_CODE 77 LABELS "nexus;dgn;real_data;skip_safe")
+set_tests_properties(nexus_v1_dgn_multi_level_capture_adjudicator_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;dgn;real_data;skip_safe")
 add_executable(test_nexus_v1_dgn_campaign_engine_ingress
     tests/test_nexus_v1_dgn_campaign_engine_ingress.c
     src/shared/asset_find_by_hash.c)
