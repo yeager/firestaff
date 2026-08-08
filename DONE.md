@@ -70,6 +70,11 @@
   handoff-regressionen passerar fortsatt, medan den privata F9-fixturen
   explicit avvisas.
 
+- ✅ Samma originalgrind finns nu före bootens direkta `savePath`-handoff.
+  En privat runtimefil kan därmed inte kringgå F9-grinden genom launcher eller
+  CLI. Boot-regressionen provar den negativa vägen och kräver statusen
+  `CSB ORIGINAL SAVE REQUIRED` innan någon runtimeåterställning sker.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan

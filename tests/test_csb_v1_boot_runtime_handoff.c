@@ -1033,6 +1033,20 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               &adapter_game_time) == CSB_V1_SAVE_OK &&
               adapter_game_time == p.runtime.game_time,
           "boot-profile save adapter writes CSB runtime save and reports game time");
+    {
+        CSB_V1_RuntimeStartupHandoffReceipt_PC34 private_resume_receipt;
+        CHECK(!csb_v1_boot_apply_startup_handoff_pc34(
+                  &p,
+                  save_path,
+                  NULL,
+                  &private_resume_receipt) &&
+                  private_resume_receipt.kind ==
+                      CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34 &&
+                  private_resume_receipt.status &&
+                  strcmp(private_resume_receipt.status,
+                         "CSB ORIGINAL SAVE REQUIRED") == 0,
+              "boot startup handoff rejects the private runtime save");
+    }
     p.runtime.party_x = 3;
     p.runtime.party_y = 4;
     p.runtime.party_dir = CSB_V1_DIR_WEST;
@@ -1104,21 +1118,10 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               strstr(save_import_receipt.source_evidence,
                      "LOADSAVE.C F0433/F0435") != NULL,
           "boot save/import receipt keeps compact CSBGAME outside the runtime and DSA handoff gates");
-    CHECK(csb_v1_boot_runtime_load_original_save_receipt_pc34(
-              &p, save_path, &original_save_receipt) == 1 &&
-              original_save_receipt.valid &&
-              original_save_receipt.native_csb_header_valid &&
-              original_save_receipt.runtime_load_succeeded &&
-              original_save_receipt.runtime_dungeon_ready &&
-              original_save_receipt.runtime_party_ready &&
-              original_save_receipt.runtime_champion_count_after >= 0 &&
-              original_save_receipt.native_header_fnv1a != 0u &&
-              strcmp(original_save_receipt.dungeon_md5, p.dungeon_md5) == 0 &&
-              original_save_receipt.source_identity_hash != 0u &&
-              strcmp(original_save_receipt.save_path, save_path) == 0 &&
-              strstr(original_save_receipt.source_evidence,
-                     "LOADSAVE.C F0435") != NULL,
-          "native CSB save handoff is source-owned and cannot use CSBWin fallback");
+    CHECK(!csb_v1_boot_runtime_load_original_save_receipt_pc34(
+               &p, save_path, &original_save_receipt) &&
+              !original_save_receipt.valid,
+          "private CSB save cannot claim an original F0435 handoff");
     CHECK(csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
               &p,
               csbwin_save_path,

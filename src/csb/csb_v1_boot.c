@@ -2264,12 +2264,25 @@ int csb_v1_boot_apply_startup_handoff_pc34(
     const char *import_dm1_save_path,
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt)
 {
-    return profile ? csb_v1_runtime_apply_startup_handoff_pc34(
-                         &profile->runtime,
-                         save_path,
-                         import_dm1_save_path,
-                         out_receipt)
-                   : 0;
+    if (!profile) {
+        return 0;
+    }
+    if (save_path && save_path[0] != '\0' &&
+        !csb_v1_runtime_can_load_resume_path(save_path)) {
+        /* ReDMCSB LOADSAVE.C F0435 restores one original whole-save
+         * container.  The boot API is shared by launcher direct-resume and
+         * M11, so reject a private snapshot here rather than relying on a
+         * later UI-specific F9 guard. */
+        if (out_receipt) {
+            csb_v1_runtime_startup_handoff_receipt_init_pc34(out_receipt);
+            out_receipt->kind = CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34;
+            out_receipt->status_scope = "BOOT";
+            out_receipt->status = "CSB ORIGINAL SAVE REQUIRED";
+        }
+        return 0;
+    }
+    return csb_v1_runtime_apply_startup_handoff_pc34(
+        &profile->runtime, save_path, import_dm1_save_path, out_receipt);
 }
 
 int csb_v1_boot_build_startup_session_state_receipt_pc34(
