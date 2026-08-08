@@ -114,8 +114,8 @@ int main(void) {
 
     check_int(M12_AssetStatus_GameHasCompleteHashSet("nexus") == 1,
               "Nexus exposes a complete hash gate");
-    check_int(M12_AssetStatus_GameKnownHashCount("nexus") == 2U,
-              "Nexus exposes the two hash-verified Saturn markers");
+    check_int(M12_AssetStatus_GameKnownHashCount("nexus") == 4U,
+              "Nexus exposes four hash-verified Saturn markers");
     check_int(M12_AssetStatus_GameRequiredFileCount("nexus") == 1U,
               "Nexus has one required launcher marker");
     check_int(M12_AssetStatus_GameVerifiedFileCount("nexus") == 1U,

@@ -307,6 +307,18 @@
 - ✅ Verified against real PC-DOS media, the champion-lifecycle contract,
   M11 startup gate and boot-profile smoke suite.
 
+# Nexus production promotion — gameplay modules (2026-08-08)
+
+- ✅ Promoted 11 Nexus gameplay modules from noop to real production: combat,
+  magic, experience, rest/status, action timers, doors, traps, projectiles,
+  light, spell effects.
+- ✅ Updated 7 production boundary tests for real behavior.
+- ✅ Fixed availability_profile_gate hash count (2→4 known markers).
+- ✅ Removed spell_effects from production exclusion list.
+- ✅ 278/281 nexus tests pass (3 pre-existing failures in creature AI and
+  real-data combat/door coverage).
+- Version: v3.0.305
+
 # Nexus audit iterations 4-5 — champion deserialize bounds (2026-08-08)
 
 - ✅ Fixed champion pool deserialize bounds check (21→26 int fields).

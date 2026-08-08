@@ -39,7 +39,6 @@ for exclusion in (
     r"nexus_v1_title_cg\\.c$",
     r"nexus_v1_warning_dgt2_m11_presentation\\.c$",
     r"nexus_v1_mns\\.c$",
-    r"nexus_v1_spell_effects\\.c$",
 ):
     if f'EXCLUDE REGEX "{exclusion}"' not in body:
         fail(f"missing production exclusion: {exclusion}")

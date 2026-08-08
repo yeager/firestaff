@@ -1,3 +1,19 @@
+# Firestaff v3.0.305
+
+## Changed
+
+- Promote Nexus gameplay modules to production: combat, magic, experience,
+  rest/status, action timers/doors/traps/projectiles, light, and spell effects
+  are now real implementations linked into `firestaff_nexus` (replacing noop
+  adapters). Remaining noops: rasterizer, saturn font, HUD, lighting,
+  smooth movement, touch (need VDP1/Saturn evidence).
+- Update production boundary tests to verify real behavior instead of noop
+  assertions.
+- Fix `nexus_v1_availability_profile_gate` hash count from 2 to 4 (English
+  and French fan translations were added).
+- Remove `nexus_v1_spell_effects.c` from production source exclusion list
+  (now a promoted module).
+
 # Firestaff v3.0.304
 
 ## Fixed
