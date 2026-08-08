@@ -1,5 +1,22 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus uncaptured text/audio receipt boundary (2026-08-08): script
+  `DISPLAY_MESSAGE` no longer copies raw TEXT4/TABL bytes into a host C
+  string until the explicit Saturn text-consumer capture seam is admitted.
+  Opaque SNDLEV selector-to-SAL receipts no longer advertise visual fallback;
+  event dispatch, SAL decode, SDDRVS handoff and playback remain blocked.
+
+- 🔧 Nexus startup presentation capture (2026-08-08): warning/title receipt
+  readiness is now fail-closed and no longer reports static art as Saturn
+  capture. Authentic VDP1/VDP2 startup capture is still required.
+
+- 🔧 Nexus raw-capture region support (2026-08-08): the external Saturn
+  launcher now accepts `--bios-region us|eu|jp` and records the selected
+  Mednafen BIOS option. This fixes the previous forced-EU option for the
+  English `SGAREA J` disc, but the corrected 120-second run still ended before
+  a complete trace witness was emitted. No startup/menu/VDP semantic gate is
+  opened by that incomplete attempt.
+
 - 🔧 Nexus startup stale-save label boundary (2026-08-08): host ASCII labels
   are now gated by an explicit non-serialized compatibility-fixture marker;
   retail PLRD and deserialized saves cannot enable fixture text, colors, or

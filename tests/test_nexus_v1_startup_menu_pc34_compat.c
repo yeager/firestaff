@@ -236,7 +236,7 @@ int main(void)
                strcmp(m12_package_receipt.card_subtitle_label,
                       "Saturn boot, title, save, champions") == 0 &&
                strcmp(m12_package_receipt.timing_summary_label,
-                      "warning 48f / title ready 102f") == 0,
+                      "warning 48f / title capture required") == 0,
            "Nexus M12 startup package clear resets capture and card fields");
     expect(nexus_v1_launcher_m12_startup_package_from_data_gate(
                1,
@@ -278,7 +278,7 @@ int main(void)
            strcmp(m12_package_receipt.card_subtitle_label,
                   "Saturn boot, title, save, champions") == 0 &&
            strcmp(m12_package_receipt.timing_summary_label,
-                  "warning 48f / title ready 102f") == 0 &&
+                  "warning 48f / title capture required") == 0 &&
            strcmp(m12_package_receipt.status_label,
                   "RUNTIME RECEIPT REQUIRED") == 0 &&
            strcmp(m12_package_receipt.detail_label,
@@ -943,6 +943,9 @@ int main(void)
            "Nexus champion execution resolves start-dungeon handoff");
     memset(&synthetic_engine, 0, sizeof(synthetic_engine));
     synthetic_engine.level_loaded = 1;
+    /* Explicit fixture-only admission for the positive receipt path. */
+    synthetic_engine.startup_warning_vdp_capture_verified = 1;
+    synthetic_engine.startup_title_vdp_capture_verified = 1;
     synthetic_engine.game.party_x = 3;
     synthetic_engine.game.party_y = 4;
     synthetic_engine.game.party_dir = 0;

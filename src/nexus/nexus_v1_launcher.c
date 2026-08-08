@@ -3642,9 +3642,12 @@ void nexus_v1_launcher_m12_startup_package_receipt_clear(
     receipt->game_id = "nexus";
     receipt->card_title_label = "DM Nexus";
     receipt->card_subtitle_label = "Saturn boot, title, save, champions";
-    receipt->timing_summary_label = "warning 48f / title ready 102f";
-    receipt->ready_status_label = "TITLE MENU READY";
-    receipt->ready_detail_label = "TITLE, WARNING, SAVE, CHAMPIONS";
+    /* These are receipt defaults, not a capture witness. Keep the startup
+     * surface honest until Saturn title/menu pixels and consumers are bound. */
+    receipt->timing_summary_label = "warning 48f / title capture required";
+    receipt->ready_status_label = "CAPTURE REQUIRED";
+    receipt->ready_detail_label =
+        "AUTHENTIC TITLE, WARNING, SAVE, CHAMPION CAPTURE REQUIRED";
     receipt->path_label = "NEXUS TITLE MENU";
     receipt->contract_label =
         "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS";
@@ -6489,9 +6492,12 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
     out_receipt->gameover_capture_surface_ready =
         out_receipt->gameover_art_loaded &&
         state->engine->startup_gameover_vdp_capture_verified;
-    out_receipt->warning_status_ready = out_receipt->warning_art_loaded;
+    out_receipt->warning_status_ready =
+        out_receipt->warning_art_loaded &&
+        state->engine->startup_warning_vdp_capture_verified;
     out_receipt->title_status_ready =
-        out_receipt->title_art_loaded && assets.title_route_ready;
+        out_receipt->title_art_loaded && assets.title_route_ready &&
+        state->engine->startup_title_vdp_capture_verified;
     out_receipt->boot_warning_title_ready =
         out_receipt->warning_art_loaded &&
         out_receipt->title_art_loaded &&

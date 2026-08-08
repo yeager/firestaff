@@ -505,7 +505,7 @@ static void test_engine_raw_map_window_handoff_stays_opaque(void) {
           route.map_window_unique_and_bounded &&
           !route.saturn_event_dispatch_proven && !route.sal_decode_proven &&
           !route.playback_permitted && route.blocks_real_sfx_playback &&
-          route.fallback_visuals_permitted,
+          !route.fallback_visuals_permitted,
           "engine exposes only a verified opaque SNDLEV selector-to-SAL window");
     CHECK(nexus_v1_current_level_sound_route_receipt(&engine, 0x43, &route) == 0 &&
           route.status == NEXUS_V1_LEVEL_SOUND_ROUTE_BLOCKED_SELECTOR &&

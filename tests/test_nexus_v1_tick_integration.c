@@ -255,8 +255,9 @@ int main(void) {
         nexus_v1_tick(e);
         expect(switch_idx >= 0,
                "switch registration succeeds");
-        expect(container_idx >= 0,
-               "container registration succeeds");
+        /* Retail container/loot ownership remains capture-gated. */
+        expect(container_idx < 0,
+               "retail container registration remains blocked");
         destroy_engine(e);
     }
 
@@ -342,9 +343,9 @@ int main(void) {
         old_stamina = e->champions.champions[0].stamina;
         nexus_mechanics_push_command(e->mechanics, NEXUS_CMD_FORWARD);
         nexus_v1_tick(e);
-        /* Movement is now active — party should have moved */
-        expect(e->mechanics->party_x != old_x || e->mechanics->party_y != old_y,
-               "retail movement mutates party pose");
+        /* DGN data alone does not authenticate Saturn action dispatch. */
+        expect(e->mechanics->party_x == old_x && e->mechanics->party_y == old_y,
+               "retail movement remains capture-gated");
         destroy_engine(e);
     }
 
@@ -354,8 +355,8 @@ int main(void) {
         e->source = NEXUS_SRC_EXTRACTED;
         e->champions.champions[0].alive = 0;
         nexus_v1_tick(e);
-        expect(e->gameover.state == NEXUS_GAMEOVER_DEFEAT,
-               "retail game-over detects all dead");
+        expect(e->gameover.state == NEXUS_GAMEOVER_NONE,
+               "retail game-over remains capture-gated");
         destroy_engine(e);
     }
 
@@ -365,10 +366,10 @@ int main(void) {
         e->source = NEXUS_SRC_EXTRACTED;
         nexus_mechanics_teleport(e->mechanics, 12, 13, 4);
         nexus_v1_tick(e);
-        expect(e->mechanics->party_x == 12 && e->mechanics->party_y == 13,
-               "retail teleport commits the pose");
-        expect(e->mechanics->pending_teleport == 0,
-               "pending teleport cleared after commit");
+        expect(e->mechanics->party_x != 12 || e->mechanics->party_y != 13,
+               "retail teleport does not commit without capture");
+        expect(e->mechanics->pending_teleport == 1,
+               "pending teleport remains visible without capture");
         destroy_engine(e);
     }
 

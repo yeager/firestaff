@@ -12,6 +12,35 @@
   witness. No VDP1/VDP2, PRS3, HUD/viewport, or SLEV/SAL/SDDRVS admission was
   changed.
 
+# Nexus uncaptured TEXT4 and opaque SAL fallback leaks closed (2026-08-08)
+
+- ✅ `NEXUS_OP_DISPLAY_MESSAGE` now remains inert for real data until the
+  authenticated TEXT4/TABL/FONT012/VDP2 consumer capture is explicitly set.
+  Source bytes are no longer silently reinterpreted as a host C string.
+- ✅ `nexus_v1_current_level_sound_route_receipt()` now reports no visual
+  fallback for both blocked and `BOUND_OPAQUE` routes. Selector/MAP/SAL
+  provenance remains diagnostic only; playback is still prohibited.
+- ✅ Focused message/audio regressions and the production boundary cover the
+  fail-closed behavior.
+
+# Nexus startup readiness labels are capture-gated (2026-08-08)
+
+- ✅ Startup receipt defaults no longer claim `TITLE MENU READY` or a ready
+  title from static timing/data fields.
+- ✅ Warning/title readiness now requires the corresponding authenticated
+  Saturn VDP capture flags; positive tests mark that admission explicitly.
+
+# Nexus capture launcher accepts Saturn BIOS region (2026-08-08)
+
+- ✅ Added `--bios-region us|eu|jp` to the external raw VDP1/VDP2 launcher.
+  EU/US select `-ss.bios_na_eu`; JP selects `-ss.bios_jp`, and the choice is
+  retained in the manifest and printed command.
+- ✅ Dry-run smoke tests passed for the verified E-BIOS/French CUE and
+  J-BIOS/English merged CUE. The live JP run identified `SGAREA: J` correctly,
+  but the external timeout ended before a complete raw trace was produced.
+- ✅ No retail data, BIOS, capture bytes, or presentation semantics were
+  added to the repository.
+
 # CSB C040 resurrect panel optional for CSBWin/Atari (2026-08-08)
 
 - ✅ CSB has no resurrection mechanic. CSBWin/Atari GRAPHICS.DAT stores

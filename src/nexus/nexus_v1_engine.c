@@ -2918,7 +2918,12 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
         break;
     }
     case NEXUS_OP_DISPLAY_MESSAGE: {
-        if (engine->startup_menu_text_source_bound && engine->rlowfix_data) {
+        /* TEXT4/TABL/FONT012 bytes are authentic source evidence, but the
+         * Saturn text consumer and VDP2 placement are still unproven. Do not
+         * turn those bytes into a host C string or expose a latent fallback
+         * message route before the capture seam is explicitly admitted. */
+        if (engine->startup_menu_text_consumer_capture_verified &&
+            engine->startup_menu_text_source_bound && engine->rlowfix_data) {
             const uint8_t *bytes = NULL;
             size_t byte_count = 0;
             if (nexus_v1_rlowfix_text_span(engine->rlowfix_data,
@@ -8905,7 +8910,10 @@ int nexus_v1_current_level_sound_route_receipt(
     out_receipt->raw_map_selector = raw_map_selector;
     out_receipt->sal_offset = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    /* An opaque source route has no visual fallback. Keep this false for
+     * both blocked and BOUND_OPAQUE results so the receipt cannot advertise
+     * a host substitute for missing Saturn audio/presentation semantics. */
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded || raw_map_selector < 0 ||
         raw_map_selector > 0xff) {
         return 0;
