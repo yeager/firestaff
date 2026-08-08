@@ -24,6 +24,7 @@
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -282,6 +283,65 @@ static void expect_amiga_c017_inventory_source_frame(M11_GameViewState *view,
                 label);
     expect_true(M11_GameView_ToggleInventoryPanel(view) == 0,
                 "Amiga inventory command restores C013 source surface");
+}
+
+/* REVIVE.C F0280 selects one 32x29 cell from C026 before PANEL.C F0354
+ * writes it at x=7 + championIndex*69 in C175.  Exercise that native
+ * C017/C040 candidate composition using only the selected ADF's data. */
+static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
+                                                      const char *label)
+{
+    unsigned char framebuffer[320 * 200];
+    unsigned char *bytes = NULL;
+    unsigned char *portraits = NULL;
+    CSB_V1_BootProfile *profile;
+    FILE *file = NULL;
+    long length;
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+    int matches = 0;
+    int row;
+
+    if (!view || !(profile = (CSB_V1_BootProfile *)view->csbBootProfile) ||
+        !profile->graphics_path[0] || !(file = fopen(profile->graphics_path, "rb")) ||
+        fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (unsigned char *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
+        !(portraits = (unsigned char *)malloc(256u * 87u)) ||
+        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 26u,
+                                            portraits, 256u * 87u,
+                                            &width, &height) ||
+        width != 256u || height != 87u) {
+        expect_true(0, "Amiga candidate route opens authenticated C026 data");
+        if (file) fclose(file);
+        free(portraits);
+        free(bytes);
+        return;
+    }
+    fclose(file);
+    file = NULL;
+    view->candidateMirrorOrdinal = 0;
+    view->candidateMirrorPartyIndex = 0;
+    view->candidateMirrorPanelActive = 1;
+    view->inventoryPanelActive = 1;
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    matches = 1;
+    for (row = 0; row < 29; ++row) {
+        if (memcmp(framebuffer + (size_t)row * 320u + 7u,
+                   portraits + (size_t)row * 256u, 32u) != 0) {
+            matches = 0;
+            break;
+        }
+    }
+    expect_true(matches, label);
+    view->candidateMirrorPanelActive = 0;
+    view->candidateMirrorOrdinal = -1;
+    view->candidateMirrorPartyIndex = -1;
+    view->inventoryPanelActive = 0;
+    free(portraits);
+    free(bytes);
 }
 
 static int frame_matches_source_rect(const unsigned char* frame,
@@ -2042,6 +2102,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
         &view, "A31M C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c017_inventory_source_frame(
         &view, "A31M inventory presents original Amiga C017 without a PC34 panel");
+    expect_amiga_candidate_c026_source_frame(
+        &view, "A31M candidate route presents original Amiga C026 without a PC34 portrait");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
@@ -2110,6 +2172,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
         &view, "A35M C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c017_inventory_source_frame(
         &view, "A35M inventory presents original Amiga C017 without a PC34 panel");
+    expect_amiga_candidate_c026_source_frame(
+        &view, "A35M candidate route presents original Amiga C026 without a PC34 portrait");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }
@@ -2180,6 +2244,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c017_inventory_source_frame(
         &view, "A35E inventory presents original Amiga C017 without a PC34 panel");
+    expect_amiga_candidate_c026_source_frame(
+        &view, "A35E candidate route presents original Amiga C026 without a PC34 portrait");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
 }

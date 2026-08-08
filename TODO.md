@@ -75,8 +75,10 @@
   C06-transparens. De verifierade
   Amiga-utgåvornas storlekstabeller är direktlagrade och följer F0474, inte
   Atari ST:s LZW-väg; icke-IMG1-poster avvisas tills de har egen konsument.
-  Återstående Amiga-dungeonviewport, champion-HUD- och C026-porträttöverlägg
-  samt inventarie-/kandidatinmatning saknar dock egna autentiska konsumenter.
+  Återstående Amiga-dungeonviewport, champion-HUD och övriga
+  statusboxöverlägg samt inventarie-/kandidatinmatning saknar dock egna
+  autentiska konsumenter. C026-porträttet har nu en avgränsad native
+  kandidat-/statusboxkonsument, men inte hela den interaktiva panelkedjan.
   Franska/tyska och den återstående
   A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver

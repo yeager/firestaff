@@ -141,8 +141,10 @@
   originalets transparensfärg C06 och ersätter inte någon obunden panel.
 - ✅ Realtatprovet låser även Amiga-C026 till originalets 256×87-atlas
   (åtta 32×29-porträtt per rad, tre rader) enligt `REVIVE.C` F0280 och
-  `PANEL.C` F0354. Denna atlas används ännu inte som en ersättning för den
-  återstående native kandidat-/statusboxkonsumenten.
+  `PANEL.C` F0354. När den native kandidatpanelen är aktiv kopieras den
+  valda C026-cellen dessutom ogenomskinligt till originalets C175-statusbox
+  (`x = 7 + 69 × championindex`, `y = 0`), efter C017/C040-kompositionen.
+  Realtidstester täcker A31M, A35M och A35E utan PC34-porträttfallback.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 

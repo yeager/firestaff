@@ -4291,12 +4291,15 @@ static int m11_csb_present_amiga_runtime_surface(
     uint8_t *bytes = NULL;
     uint8_t *pixels = NULL;
     uint8_t *inventory_pixels = NULL;
+    uint8_t *portrait_pixels = NULL;
     FILE *file = NULL;
     long length;
     uint16_t width = 0u;
     uint16_t height = 0u;
     int color;
     int row;
+    int portrait_index;
+    int status_box_index;
     int ok = 0;
 
     const unsigned int graphic_index = state && state->candidateMirrorPanelActive
@@ -4344,6 +4347,17 @@ static int m11_csb_present_amiga_runtime_surface(
               &width, &height) || width != 224u || height != 136u))) {
         goto done;
     }
+    portrait_index = state->candidateMirrorOrdinal;
+    status_box_index = state->candidateMirrorPartyIndex;
+    if (state->candidateMirrorPanelActive &&
+        (portrait_index < 0 || portrait_index >= 24 ||
+         status_box_index < 0 || status_box_index >= CHAMPION_MAX_PARTY ||
+         !(portrait_pixels = (uint8_t *)malloc(256u * 87u)) ||
+         !csb_v1_amiga_graphics_decode_item(
+             bytes, (size_t)length, 26u, portrait_pixels, 256u * 87u,
+             &width, &height) || width != 256u || height != 87u)) {
+        goto done;
+    }
     memset(rgb6, 0, sizeof(rgb6));
     for (color = 0; color < 256; ++color) {
         const uint16_t source = dungeon_palette_rgb4[color & 15];
@@ -4384,9 +4398,28 @@ static int m11_csb_present_amiga_runtime_surface(
             memcpy(destination, source, (size_t)expected_width);
         }
     }
+    if (state->candidateMirrorPanelActive) {
+        const int portrait_source_x = (portrait_index & 7) * 32;
+        const int portrait_source_y = (portrait_index >> 3) * 29;
+        const int portrait_dest_x = status_box_index * 69 + 7;
+
+        /* ReDMCSB REVIVE.C F0280 copies the selected C026 32x29 portrait
+         * before PANEL.C F0354 blits it opaque into its C175 status box.
+         * C040 only owns C101; its transparent overlay must not replace the
+         * candidate's real status portrait with a host-made approximation. */
+        for (row = 0; row < 29; ++row) {
+            memcpy(framebuffer + (size_t)row * (size_t)framebuffer_width +
+                   (size_t)portrait_dest_x,
+                   portrait_pixels +
+                       (size_t)(portrait_source_y + row) * 256u +
+                       (size_t)portrait_source_x,
+                   32u);
+        }
+    }
     ok = 1;
 done:
     if (file) fclose(file);
+    free(portrait_pixels);
     free(inventory_pixels);
     free(pixels);
     free(bytes);
