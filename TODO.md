@@ -2184,7 +2184,10 @@
   The shipped English and Japanese seeds both contain 23 scheduled events
   (436-slot heap) and eight live `ACTIVE_GROUP` entries; a resume must restore
   those original owners with the same MINI dungeon transaction, never clear
-  them or synthesize an empty timeline.
+  them or synthesize an empty timeline. 2026-08-08: every saved F31
+  `GroupThingIndex` now resolves uniquely to a C04 record on the saved map 4;
+  preserve that raw owner mapping while recovering the active-group runtime
+  fields and committing the full handoff.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only
   after both original CD hashes admit. M11 binds its package-language Switch

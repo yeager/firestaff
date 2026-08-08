@@ -8087,6 +8087,16 @@
   event, första lediga index 23 och åtta aktiva grupper i en 436-posters
   timeline. Uppgifterna behålls som autentisk handoff-evidens och förhindrar
   att en framtida resume av misstag ersätter dem med en tom runtimekö.
+
+# CSB FM Towns MINI-stategraf (2026-08-08)
+
+- Laddar nu hela den autentiska F0435-kandidaten utan testdata: championparti,
+  F7063-dungeon, tio-byte eventposter, två-byte timeline och alla 60 råa
+  `ACTIVE_GROUP`-poster.
+- ReDMCSB `GROUP.C F0183/F0184` visar att sparpostens `GroupThingIndex` är ett
+  C04-tabellindex. Alla åtta aktiva grupper i både F31E och F31J löses nu
+  entydigt mot sina riktiga C04-poster på karta 4. Kandidaten ändrar ännu inte
+  live-runtimen innan full active-group-installation kan ske atomiskt.
 # 2026-08-08 Theron inferred spawn-stat boundary
 
 - ✅ Removed the old host-seeded HP/attack/defense arithmetic from the

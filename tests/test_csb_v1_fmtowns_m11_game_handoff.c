@@ -57,12 +57,14 @@ int main(void)
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
     CSB_V1_PartyState mini_party;
+    CSB_V1_FmtownsStartupState mini_state;
     CSB_V1_DungeonData mini_dungeon;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     uint8_t music_track;
+    unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
 
     if (language_name && strcmp(language_name, "ja") == 0) {
@@ -232,6 +234,27 @@ int main(void)
               mini_party.Champions[0].Name[0] != '\0' &&
               mini_party.Champions[0].CurrentHealth > 0,
           "F31 MINI.DAT supplies its checksum-verified champion record without a fixture");
+    memset(&mini_state, 0, sizeof(mini_state));
+    CHECK(csb_v1_fmtowns_game_load_startup_state(&direct_handoff, &mini_state) &&
+              mini_state.valid && mini_state.game_time ==
+                  direct_handoff.startup_mini_game_time &&
+              mini_state.party_map_index == 4 &&
+              mini_state.party.ChampionCount == 1 &&
+              mini_state.timeline_queue.gameTick == mini_state.game_time &&
+              mini_state.timeline_queue.eventCount == 23 &&
+              mini_state.timeline_queue.firstUnusedIndex == 23 &&
+              mini_state.timeline_queue.maxEvents == 436 &&
+              mini_state.active_group_capacity == 60u &&
+              mini_state.active_group_count == 8u &&
+              mini_state.active_group_resolved_count == 8u,
+          "F31 MINI.DAT preserves its actual event heap and active-group bytes");
+    for (mini_active_index = 0u; mini_active_index < 8u;
+         ++mini_active_index) {
+        CHECK(mini_state.active_group_owners[mini_active_index].valid &&
+                  mini_state.active_group_owners[mini_active_index].map_index == 4,
+              "F31 ACTIVE_GROUP owner resolves to one C04 on the saved party map");
+    }
+    csb_v1_fmtowns_game_startup_state_free(&mini_state);
     memset(&mini_dungeon, 0, sizeof(mini_dungeon));
     CHECK(csb_v1_fmtowns_game_load_startup_dungeon(
                   &direct_handoff, &mini_dungeon) &&

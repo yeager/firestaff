@@ -24,6 +24,7 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES 68u
+#define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
 typedef enum CSB_V1_FmtownsUtilityMenuAction {
@@ -115,6 +116,34 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsGameHandoffReceipt;
 
+/* Exact F31 F0435 save-state material retained before any runtime install.
+ * The event heap is expanded from the original ten-byte EVENT representation
+ * (DEFS.H EVENT, with the G20-only padding absent); active-group bytes stay
+ * raw until their C04 dungeon owners have been resolved. */
+typedef struct CSB_V1_FmtownsStartupState {
+    int valid;
+    CSB_V1_PartyState party;
+    uint32_t game_time;
+    int16_t party_map_index;
+    uint16_t active_group_capacity;
+    uint16_t active_group_count;
+    uint8_t active_groups[CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY][16];
+    /* F0183/F0184 address groups by their C04 table index, not a THING
+     * handle. Resolve every nonnegative saved index back to exactly one
+     * original C04 square before a future runtime install may use it. */
+    uint16_t active_group_resolved_count;
+    struct {
+        int valid;
+        uint16_t group_thing_index;
+        uint16_t group_thing;
+        int map_index;
+        int map_x;
+        int map_y;
+    } active_group_owners[CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY];
+    struct DM1_EventQueue_V1 timeline_queue;
+    CSB_V1_DungeonData dungeon;
+} CSB_V1_FmtownsStartupState;
+
 /* AUTOEXEC.BAT exit 2/5 enters a different C06_CEDT program. This receipt
  * admits that program only; it does not pretend its editor UI is C03_GAME. */
 typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
@@ -195,6 +224,15 @@ int csb_v1_fmtowns_game_load_startup_party(
 int csb_v1_fmtowns_game_load_startup_dungeon(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     CSB_V1_DungeonData *out_dungeon);
+
+/* Decode all five F0435 save parts plus the F7063 dungeon tail as one
+ * receipt-bound candidate. It does not modify a runtime profile; callers
+ * must resolve every raw ACTIVE_GROUP owner before committing it. */
+int csb_v1_fmtowns_game_load_startup_state(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_FmtownsStartupState *out_state);
+void csb_v1_fmtowns_game_startup_state_free(
+    CSB_V1_FmtownsStartupState *state);
 
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,

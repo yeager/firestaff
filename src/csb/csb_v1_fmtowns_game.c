@@ -76,6 +76,64 @@ static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
 static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes);
 
+static int csb_v1_fmtowns_game_resolve_active_group_owners(
+    CSB_V1_FmtownsStartupState *state)
+{
+    uint16_t slot;
+
+    if (!state || !state->dungeon.raw_data || state->party_map_index < 0 ||
+        state->party_map_index >= state->dungeon.level_count) return 0;
+    for (slot = 0u; slot < state->active_group_capacity; ++slot) {
+        const int16_t group_index = (int16_t)csb_v1_fmtowns_game_read_le16(
+            state->active_groups[slot]);
+        int level;
+        int matches = 0;
+
+        if (group_index < 0) continue;
+        for (level = 0; level < state->dungeon.level_count; ++level) {
+            int x;
+            for (x = 0; x < state->dungeon.level_widths[level]; ++x) {
+                int y;
+                for (y = 0; y < state->dungeon.level_heights[level]; ++y) {
+                    int thing = csb_v1_dungeon_get_first_thing(
+                        &state->dungeon, level, x, y);
+                    int guard;
+                    for (guard = 0; guard < 128 && thing >= 0 &&
+                         thing != THING_ENDOFLIST; ++guard) {
+                        const uint8_t *record;
+                        int type = -1;
+                        int size = 0;
+
+                        record = csb_v1_dungeon_get_thing_record(
+                            &state->dungeon, (uint16_t)thing, &type, NULL,
+                            &size);
+                        if (!record || size < 2) return 0;
+                        if (type == CSB_V1_THING_TYPE_GROUP &&
+                            ((uint16_t)thing & 0x03ffu) ==
+                                (uint16_t)group_index) {
+                            if (++matches != 1 || level != state->party_map_index)
+                                return 0;
+                            state->active_group_owners[slot].valid = 1;
+                            state->active_group_owners[slot].group_thing_index =
+                                (uint16_t)group_index;
+                            state->active_group_owners[slot].group_thing =
+                                (uint16_t)thing;
+                            state->active_group_owners[slot].map_index = level;
+                            state->active_group_owners[slot].map_x = x;
+                            state->active_group_owners[slot].map_y = y;
+                            ++state->active_group_resolved_count;
+                        }
+                        thing = (int)csb_v1_fmtowns_game_read_le16(record);
+                    }
+                    if (guard == 128 && thing != THING_ENDOFLIST) return 0;
+                }
+            }
+        }
+        if (matches != 1) return 0;
+    }
+    return state->active_group_resolved_count == state->active_group_count;
+}
+
 static void csb_v1_fmtowns_game_copy_text(char *dst, size_t dst_size,
                                            const unsigned char *src,
                                            size_t src_size)
@@ -393,6 +451,158 @@ int csb_v1_fmtowns_game_load_startup_dungeon(
         out_dungeon, bytes, (int)receipt->startup_mini_dungeon_tail_size);
     free(bytes);
     return result == 0;
+}
+
+void csb_v1_fmtowns_game_startup_state_free(
+    CSB_V1_FmtownsStartupState *state)
+{
+    if (!state) return;
+    csb_v1_dungeon_free(&state->dungeon);
+    memset(state, 0, sizeof(*state));
+}
+
+int csb_v1_fmtowns_game_load_startup_state(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_FmtownsStartupState *out_state)
+{
+    unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
+    unsigned char global_data[CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES];
+    unsigned char *events = NULL;
+    unsigned char *timeline = NULL;
+    uint32_t active_offset;
+    uint32_t party_offset;
+    uint32_t event_offset;
+    uint32_t timeline_offset;
+    uint32_t index;
+    uint16_t keys[5];
+    uint16_t checksums[5];
+
+    if (!receipt || !out_state || !receipt->valid ||
+        !receipt->startup_mini_verified ||
+        !receipt->startup_mini_header_verified ||
+        !receipt->startup_mini_save_parts_verified ||
+        receipt->startup_mini_active_group_capacity == 0u ||
+        receipt->startup_mini_active_group_capacity >
+            CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY ||
+        receipt->startup_mini_event_maximum_count == 0u ||
+        receipt->startup_mini_event_maximum_count > DM1_EVENT_MAX_COUNT ||
+        receipt->startup_mini_event_count >
+            receipt->startup_mini_event_maximum_count ||
+        receipt->startup_mini_first_unused_event_index >
+            receipt->startup_mini_event_maximum_count ||
+        receipt->startup_mini_current_active_group_count >
+            receipt->startup_mini_active_group_capacity ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path, 0u,
+                                        header, sizeof(header)) ||
+        !redmcsb_f7061_is_read_save_header_successful_pc34(
+            header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX) ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        CSB_V1_FMTOWNS_SAVE_HEADER_BYTES,
+                                        global_data, sizeof(global_data))) {
+        return 0;
+    }
+    memset(out_state, 0, sizeof(*out_state));
+    for (index = 0u; index < 5u; ++index) {
+        keys[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u);
+        checksums[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET + index * 2u);
+    }
+    if (!redmcsb_f7057_read_save_part_with_checksum_pc34(
+            global_data, sizeof(global_data), keys[0], checksums[0])) return 0;
+
+    active_offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES +
+        CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES;
+    party_offset = active_offset +
+        (uint32_t)receipt->startup_mini_active_group_capacity *
+            CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES;
+    event_offset = party_offset + CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES;
+    timeline_offset = event_offset +
+        (uint32_t)receipt->startup_mini_event_maximum_count *
+            CSB_V1_FMTOWNS_EVENT_BYTES;
+    if (timeline_offset > receipt->startup_mini_size ||
+        (uint32_t)receipt->startup_mini_event_maximum_count *
+                CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES >
+            receipt->startup_mini_size - timeline_offset ||
+        !(events = (unsigned char *)malloc(
+            (uint32_t)receipt->startup_mini_event_maximum_count *
+                CSB_V1_FMTOWNS_EVENT_BYTES)) ||
+        !(timeline = (unsigned char *)malloc(
+            (uint32_t)receipt->startup_mini_event_maximum_count *
+                CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES)) ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        active_offset,
+                                        (unsigned char *)out_state->active_groups,
+                                        (uint32_t)receipt->startup_mini_active_group_capacity *
+                                            CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES) ||
+        !redmcsb_f7057_read_save_part_with_checksum_pc34(
+            (unsigned char *)out_state->active_groups,
+            (uint32_t)receipt->startup_mini_active_group_capacity *
+                CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES, keys[1], checksums[1]) ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        event_offset, events,
+                                        (uint32_t)receipt->startup_mini_event_maximum_count *
+                                            CSB_V1_FMTOWNS_EVENT_BYTES) ||
+        !redmcsb_f7057_read_save_part_with_checksum_pc34(
+            events, (uint32_t)receipt->startup_mini_event_maximum_count *
+                CSB_V1_FMTOWNS_EVENT_BYTES, keys[3], checksums[3]) ||
+        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        timeline_offset, timeline,
+                                        (uint32_t)receipt->startup_mini_event_maximum_count *
+                                            CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES) ||
+        !redmcsb_f7057_read_save_part_with_checksum_pc34(
+            timeline, (uint32_t)receipt->startup_mini_event_maximum_count *
+                CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES, keys[4], checksums[4])) {
+        free(events);
+        free(timeline);
+        return 0;
+    }
+    if (!csb_v1_fmtowns_game_load_startup_party(receipt, &out_state->party) ||
+        !csb_v1_fmtowns_game_load_startup_dungeon(receipt, &out_state->dungeon)) {
+        free(events);
+        free(timeline);
+        csb_v1_fmtowns_game_startup_state_free(out_state);
+        return 0;
+    }
+    out_state->game_time = csb_v1_fmtowns_game_read_le32(global_data);
+    out_state->party_map_index = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_INDEX_OFFSET);
+    out_state->active_group_capacity = receipt->startup_mini_active_group_capacity;
+    out_state->active_group_count = receipt->startup_mini_current_active_group_count;
+    out_state->timeline_queue.gameTick = out_state->game_time;
+    out_state->timeline_queue.eventCount = receipt->startup_mini_event_count;
+    out_state->timeline_queue.firstUnusedIndex =
+        receipt->startup_mini_first_unused_event_index;
+    out_state->timeline_queue.maxEvents = receipt->startup_mini_event_maximum_count;
+    for (index = 0u; index < receipt->startup_mini_event_maximum_count; ++index) {
+        const unsigned char *event = events + index * CSB_V1_FMTOWNS_EVENT_BYTES;
+        out_state->timeline_queue.events[index].map_time =
+            csb_v1_fmtowns_game_read_le32(event);
+        out_state->timeline_queue.events[index].type = event[4u];
+        out_state->timeline_queue.events[index].priority = event[5u];
+        out_state->timeline_queue.events[index].b_mapX = event[6u];
+        out_state->timeline_queue.events[index].b_mapY = event[7u];
+        out_state->timeline_queue.events[index].c_cell = event[8u];
+        out_state->timeline_queue.events[index].c_effect = event[9u];
+        out_state->timeline_queue.timeline[index] =
+            csb_v1_fmtowns_game_read_le16(timeline + index * 2u);
+        if (index < receipt->startup_mini_event_count &&
+            out_state->timeline_queue.timeline[index] >=
+                receipt->startup_mini_event_maximum_count) {
+            free(events);
+            free(timeline);
+            csb_v1_fmtowns_game_startup_state_free(out_state);
+            return 0;
+        }
+    }
+    free(events);
+    free(timeline);
+    if (!csb_v1_fmtowns_game_resolve_active_group_owners(out_state)) {
+        csb_v1_fmtowns_game_startup_state_free(out_state);
+        return 0;
+    }
+    out_state->valid = 1;
+    return 1;
 }
 
 static int csb_v1_fmtowns_game_startup_mini_save_parts_open(
