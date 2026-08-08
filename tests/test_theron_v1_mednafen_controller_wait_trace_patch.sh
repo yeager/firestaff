@@ -91,6 +91,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file
    ! grep -Fq 'theron_script_run_start' "$scripted_input_patch_file" ||
    ! grep -Fq 'theron_script_run_end' "$scripted_input_patch_file" ||
    ! grep -Fq 'theron_script_run_frame >= theron_script_run_start' "$scripted_input_patch_file" ||
+   ! grep -Fq 'theron_script_run_frame + 1u >= theron_script_run_start' "$scripted_input_patch_file" ||
    ! grep -Fq 'MDFN_en16lsb(data_ptr[0], theron_script_original_port0);' "$scripted_input_patch_file"; then
     printf 'FAIL: scripted PCE input patch no longer retains explicit replay provenance\n' >&2
     exit 1

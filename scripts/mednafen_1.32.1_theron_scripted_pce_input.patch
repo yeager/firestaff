@@ -191,7 +191,10 @@
 + }
 + theron_script_run_frame = 0;
 @@ -72,0 +96,5 @@
-+ if(theron_script_run_hold && theron_script_run_frame >= theron_script_run_start &&
++ if(theron_script_run_hold &&
++    ((theron_script_run_frame >= theron_script_run_start) ||
++     (theron_script_run_start > 0 &&
++      theron_script_run_frame + 1u >= theron_script_run_start)) &&
 +    theron_script_run_frame < theron_script_run_end)
 +  buttons |= 0x0020;
 + if(theron_script_run_hold)
