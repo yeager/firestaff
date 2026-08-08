@@ -9537,3 +9537,8 @@
 - ✅ `nexus_v1_magic.c` och `nexus_v1_experience.c` var inferred DM.BIN-modeller utan autentiserad Saturn action/event-, writeback-, RNG- eller SLEV/SFX-kedja.
 - ✅ Produktionsbiblioteket länkar nu `magic_runtime_noop` och `experience_runtime_noop`; studieimplementationerna länkas endast av sina explicita formeltester.
 - ✅ Magic, spell-cast, experience, production-boundary och Nexus source-boundary passerar.
+# Nexus infererade status/vila isolerade från produktion (2026-08-08)
+
+- ✅ `nexus_v1_status.c` och `nexus_v1_rest.c` är nu uttryckliga study/test-källor; produktionsbiblioteket använder den fail-closed `nexus_v1_rest_status_runtime_noop.c`-adaptern.
+- ✅ Status-, vila-, item-use-, spell-effects-, tick- och production-boundary-testerna passerar. Källgränsverifieringen passerar.
+- ✅ Retail övergångar förblir stängda tills autentisk Saturn-dispatch/cadence/writeback och HUD/VDP-konsument är fångade.

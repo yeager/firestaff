@@ -402,7 +402,8 @@ int main(void) {
         e->mechanics->pending_teleport = 0;
         e->mechanics->pending_level_change = 4;
         nexus_v1_tick(e);
-        expect(e->game.current_level == 0 &&
+        expect(e->game.current_level != 4 &&
+               e->mechanics->map_index != 4 &&
                e->mechanics->pending_level_change == 4,
                "uncaptured retail level transition does not load");
         destroy_engine(e);

@@ -259,7 +259,8 @@ set_tests_properties(nexus_v1_light_production_boundary PROPERTIES
     LABELS "nexus;light;production-boundary;tier4")
 
 add_executable(test_nexus_v1_status
-    tests/test_nexus_v1_status.c)
+    tests/test_nexus_v1_status.c
+    src/nexus/nexus_v1_status.c)
 target_include_directories(test_nexus_v1_status PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_status PRIVATE firestaff_nexus)
@@ -276,7 +277,8 @@ set_tests_properties(nexus_v1_triggers PROPERTIES LABELS "nexus;triggers;tier4")
 
 add_executable(test_nexus_v1_item_use
     tests/test_nexus_v1_item_use.c
-    src/nexus/nexus_v1_item_use.c)
+    src/nexus/nexus_v1_item_use.c
+    src/nexus/nexus_v1_status.c)
 target_include_directories(test_nexus_v1_item_use PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_item_use PRIVATE firestaff_nexus)
@@ -284,7 +286,8 @@ add_test(NAME nexus_v1_item_use COMMAND test_nexus_v1_item_use)
 set_tests_properties(nexus_v1_item_use PROPERTIES LABELS "nexus;item;tier4")
 
 add_executable(test_nexus_v1_rest
-    tests/test_nexus_v1_rest.c)
+    tests/test_nexus_v1_rest.c
+    src/nexus/nexus_v1_rest.c)
 target_include_directories(test_nexus_v1_rest PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_rest PRIVATE firestaff_nexus)
@@ -326,7 +329,8 @@ add_test(NAME nexus_v1_hunger COMMAND test_nexus_v1_hunger)
 set_tests_properties(nexus_v1_hunger PROPERTIES LABELS "nexus;hunger;tier4")
 
 add_executable(test_nexus_v1_spell_effects
-    tests/test_nexus_v1_spell_effects.c)
+    tests/test_nexus_v1_spell_effects.c
+    src/nexus/nexus_v1_status.c)
 target_include_directories(test_nexus_v1_spell_effects PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_spell_effects PRIVATE firestaff_nexus)
@@ -409,7 +413,9 @@ add_test(NAME nexus_v1_traps COMMAND test_nexus_v1_traps)
 set_tests_properties(nexus_v1_traps PROPERTIES LABELS "nexus;traps;tier4")
 
 add_executable(test_nexus_v1_tick_integration
-    tests/test_nexus_v1_tick_integration.c)
+    tests/test_nexus_v1_tick_integration.c
+    src/nexus/nexus_v1_status.c
+    src/nexus/nexus_v1_rest.c)
 target_include_directories(test_nexus_v1_tick_integration PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_tick_integration PRIVATE firestaff_nexus)
@@ -6580,7 +6586,8 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic\\.c$")
 # explicit diagnostic test.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest_status_runtime_noop\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_status\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font_runtime_noop\\.c$")
