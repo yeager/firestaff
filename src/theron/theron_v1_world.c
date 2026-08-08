@@ -1380,6 +1380,10 @@ int theron_v1_world_bind_track02_source_object(
     if (!world || !raw || raw_size == 0u || raw_size > 16u ||
         dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        x < 0 || x >= THERON_MAX_MAP_SIZE ||
+        y < 0 || y >= THERON_MAX_MAP_SIZE ||
+        !world->level_loaded[dungeon_id - 1][level_index] ||
+        !world->levels[dungeon_id - 1][level_index].source_header_verified ||
         world->source_object_count >= THERON_MAX_SOURCE_OBJECT_RECORDS)
         return -1;
     Theron_V1_SourceObjectRecord *out =

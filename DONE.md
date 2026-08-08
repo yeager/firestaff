@@ -7826,3 +7826,14 @@
   remain fail-closed and are not inferred from the text join.
 - Source evidence: Track 02 startup roster catalog and the T520 forcefield
   mirror handoff.
+
+# Theron source object admission boundary (2026-08-08)
+
+- ✅ Raw Track 02 object occurrences can only be bound to a loaded,
+  header-verified level and coordinates within the 32×32 map contract.
+- ✅ Added regression coverage for an unverified level, an out-of-map
+  occurrence, and a valid source object; the complete US/JP loader census
+  remains passing.
+- The change preserves raw records without promoting them to inventory or
+  gameplay state; T900 ownership and item-consumer semantics remain
+  source-capture gated.

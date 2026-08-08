@@ -12681,6 +12681,9 @@ as line/circle coordinates or promote them into movement geometry.
   supplies US names/titles while the static production roster keeps labels
   unavailable. Startup layout now joins decoded text to numeric class records
   by source mirror index; portrait pixels and portrait IDs remain unbound.
+- 🔧 2026-08-08 Theron object-record admission: source object binding now
+  requires a loaded, header-verified level and in-map coordinates. Full T900
+  ownership/equip/use/stack semantics remain pending the original consumer.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.
