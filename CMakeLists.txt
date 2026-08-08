@@ -7421,6 +7421,10 @@ set_tests_properties(theron_v1_startup_save_resume_probe PROPERTIES
 
 add_executable(test_theron_v1_startup_save_resume_pc34
     tests/test_theron_v1_startup_save_resume_pc34.c
+    # Compile the startup implementation into this fixture target so its
+    # fixture-only fallback definition is effective. Production continues to
+    # link the source-bound firestaff_theron library unchanged.
+    src/theron/theron_v1_startup_flow.c
     src/theron/theron_v1_startup_receipt.c
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_track02_level_data_blocks.c

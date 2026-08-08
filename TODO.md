@@ -12701,6 +12701,10 @@ as line/circle coordinates or promote them into movement geometry.
   require a source creature type, group count 0..3, and in-map coordinates.
   RNG publication remains blocked until the dynamic `$4644/$4667` return
   contract is captured.
+- 🔧 2026-08-08 Theron startup fixture linkage: production startup remains
+  source-bound, while the save/resume fixture target now compiles its own
+  fixture-enabled `startup_flow.c`; keep production and fixture fallback
+  behavior separately verified.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.

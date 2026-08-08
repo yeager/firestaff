@@ -7867,3 +7867,12 @@
 - Source references: Track 02 creature-name table and the disassembly-locked
   `$4644/$4667` regular-spawn path in
   `docs/source-lock/theron-disassembly/theron-us-rng-helper.asm`.
+
+# Theron startup fixture linkage (2026-08-08)
+
+- ✅ The `test_theron_v1_startup_save_resume_pc34` target now compiles its
+  fixture-enabled `theron_v1_startup_flow.c` directly, so its fixture
+  fallback definition is not lost behind the production static library.
+- ✅ The full startup/save/resume regression is green at **325/325** while
+  the production `firestaff_theron` library keeps its source-bound fallback
+  policy.
