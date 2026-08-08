@@ -113,7 +113,7 @@ OP_AWARD_XP           = 0x16  // action: add XP to champion
 | Conditional logic | No | Limited (flag tests) | Not source-locked |
 | Cross-map events | No | Yes (ACTUATOR_TYPE_CROSS_MAP) | Not source-locked |
 | Designer iteration | Recompile EXE | Edit dungeon data file | Unknown; likely data/executable reverse-engineering |
-| Level scripts | None | None (level-specific actuators) | `SLEV*.BIN` candidate; unparsed |
+| Level scripts | None | None (level-specific actuators) | `SLEV*.BIN` bounded receipt; event semantics unproven |
 | Creature spawn | Hardwired level data | CREATURE_GENERATOR actuator | Not source-locked |
 | Teleporter | Types 9-10 hardwired | PLACED_ITEM_TELEPORTER | Not source-locked |
 

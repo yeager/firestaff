@@ -523,7 +523,7 @@ Source: `include/nexus_v1_champions.h`, `src/nexus/nexus_v1_champions.c`
 | Champion persistence | ❌ NOT IMPLEMENTED | No binary champion file parsed from disc |
 | 24-champion Hall of Fame | ⚠️ PARTIAL | 8 defined, full 24 not yet |
 | Party management (in-game) | ✅ API exists | `nexus_v1_champion_recruit()`, `nexus_v1_champion_resurrect()` |
-| FACE.BIN portraits | ⚠️ FILE EXISTS (44 KB) | No parser exists; format unknown |
+| FACE.BIN portraits | ✅ Bounded real-data parser | Portrait records/pixels admitted; VDP1 placement remains capture-gated |
 
 ### 7.4 FACE.BIN Note
 

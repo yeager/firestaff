@@ -40,7 +40,9 @@ Every claimed feature in TODO.md for Nexus V1 has a regression relative to plan 
 
 ### 5. No VDP1/VDP2 texture format implementation
 **Severity:** HIGH
-**Details:** nexus_v1_rasterizer.c exists but the actual VDP1 format parsing (4bpp/8bpp paletted, SH2 big-endian) is not implemented. Textures are not loaded.
+**Details:** the host rasterizer remains fixture-only. Retail DGN/MNS source
+materials and VDP1 command/format receipts are retained, but source-owned
+CLUT, VRAM, command order and runtime texture consumption are not yet bound.
 
 ### 6. No DMDF model format implementation
 **Severity:** HIGH
@@ -48,7 +50,9 @@ Every claimed feature in TODO.md for Nexus V1 has a regression relative to plan 
 
 ### 7. No text encoding implementation
 **Severity:** MEDIUM
-**Details:** nexus_v1_text.c and nexus_v1_saturn_font.c exist but Shift-JIS decoding is not implemented. Japanese text will not render.
+**Details:** bounded SCR/FONT256 source parsing exists, but Shift-JIS glyph
+mapping and Saturn text placement are not source-bound; Japanese text is not
+admitted to production rendering.
 
 ### 8. No CD audio integration
 **Severity:** MEDIUM

@@ -383,7 +383,8 @@ Estimated contents:
 3. Check for magic bytes at geometry start (like DMDF's `0x444D4446`)
 4. Scan for face index sequences (uint16 arrays, values < vertex_count)
 
-**Status:** Geometry blob parser is NOT implemented.
+**Status:** Bounded Structure1B/2/3 geometry receipts are implemented;
+the Saturn VDP1 material/command consumer remains unbound.
 See `docs/nexus_issues.md M2` and `docs/nexus_v1_phase2_data_formats_H2321.md §1.5`.
 
 ### 4.4 Level File Size Distribution
