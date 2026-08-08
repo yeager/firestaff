@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+- **DM2-PC-DOS-LEGACY-G1-RECEIPTS:** The verified PC-DOS `DUNGEON.DAT` takes
+  the 44-map `File_header` route. The first audit repaired six real-data
+  tests that had asserted an older shifted 28-map interpretation; the
+  remaining `g1_direct_*`, champion, creature, weapon, container and scene
+  receipt tests must be audited one by one before they can claim PC-DOS
+  provenance. They must either use the File_header-owned record graph or
+  explicitly prove that the legacy G1-only path remains unavailable. Do not
+  restore a continuation segment, pseudo-pool or DYN4 selection to make an
+  old receipt pass.
+
 - **CSB-PLATFORM-NATIVE-STARTUP-OWNERS:** The PC34 launcher-handoff regression
   now pins its PC34 package instead of inheriting a persisted platform choice;
   it therefore cannot mistake Atari, Amiga or FM Towns startup for TITLE.C
@@ -12350,5 +12360,4 @@ as line/circle coordinates or promote them into movement geometry.
     marker. This machine has Mednafen 1.32.1 but no local `sega_101.bin` or
     verified Nexus media, so no authentic trace or format-derived decoder was
     produced here.
-
 

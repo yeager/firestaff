@@ -6,7 +6,7 @@
  *   IS_TILE_SOLID
  *   GET_TILE_VALUE
  *
- * The test accepts only canonical PC G1 DUNGEON.DAT. It builds no fixture,
+ * The test accepts only canonical PC File_header DUNGEON.DAT. It builds no fixture,
  * follows no GenericRecord::w0 chain, and does not synthesize map roots.
  */
 
@@ -80,17 +80,20 @@ int main(int argc, char **argv)
     }
 
     bytes = read_file(path, &size);
-    if (!bytes || bytes[2] != 0x47 || bytes[3] != 0x31 ||
-        bytes[6] != 28 || fnv1a(bytes, size) == 0u ||
+    if (!bytes || bytes[0] != 0 || bytes[1] != 0 ||
+        bytes[2] != 0x47 || bytes[3] != 0x31 ||
+        bytes[4] != 44 || bytes[5] != 0 || bytes[6] != 28 || bytes[7] != 0 ||
+        bytes[8] != 1 || bytes[9] != 1 || fnv1a(bytes, size) == 0u ||
         dm2_v1_dungeon_load(&dungeon, bytes, size) != 0) {
         free(bytes);
-        fputs("FAIL: canonical G1 DUNGEON.DAT was not accepted\n", stderr);
+        fputs("FAIL: canonical File_header DUNGEON.DAT was not accepted\n", stderr);
         return 1;
     }
     free(bytes);
 
-    if (dungeon.level_widths[0] != 7 || dungeon.level_heights[0] != 10 ||
-        dungeon.raw_map_data_base != 31667 || dungeon.level_offsets[0] != 0) {
+    if (dungeon.level_count != 44 || dungeon.level_widths[0] != 7 ||
+        dungeon.level_heights[0] != 10 || dungeon.raw_map_data_base != 26820 ||
+        dungeon.level_offsets[0] != 0 || dungeon.g1_extension_base != -1) {
         dm2_v1_dungeon_free(&dungeon);
         fputs("FAIL: canonical map-0 source span changed\n", stderr);
         return 1;
@@ -133,7 +136,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (root_count != 22 || solid_count <= 0 || passage_count <= 0 ||
+    if (root_count != 23 || solid_count != 37 || passage_count != 33 ||
         first_root_x < 0 || first_plain_x < 0) {
         dm2_v1_dungeon_free(&dungeon);
         fputs("FAIL: canonical map-0 tile/root census changed\n", stderr);

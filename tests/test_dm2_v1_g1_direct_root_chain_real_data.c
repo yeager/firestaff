@@ -1,4 +1,4 @@
-/* Real-data bounded direct c_record chain test for canonical PC G1. */
+/* Canonical PC File_header must reject legacy G1 direct-chain receipts. */
 
 #include "dm2_v1_dungeon_loader.h"
 
@@ -41,16 +41,6 @@ static const char *resolve_dungeon_dat_path(int argc, char **argv,
     return NULL;
 }
 
-static int expect_node(const DM2_V1_G1DirectRootChainReceipt *receipt, int row,
-                       uint16_t object_id, int type, int index,
-                       int offset, int size)
-{
-    const DM2_V1_G1DirectChainNode *node = &receipt->nodes[row];
-    return node->object_id == object_id && node->type == type &&
-           node->index == index && node->record_offset == offset &&
-           node->record_size == size;
-}
-
 int main(int argc, char **argv)
 {
     char path_buf[1024];
@@ -58,7 +48,6 @@ int main(int argc, char **argv)
     unsigned char *bytes = NULL;
     int size;
     DM2_V1_DungeonData dungeon;
-    DM2_V1_G1DirectRootChainReceipt chain;
     DM2_V1_G1DirectRootChainReceipt sentinel;
 
     if (!path) {
@@ -69,42 +58,23 @@ int main(int argc, char **argv)
         fputs("FAIL: selected canonical DM2 data is unreadable\n", stderr);
         return 1;
     }
-    if (bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
+    if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0x47 ||
+        bytes[3] != 0x31 || bytes[4] != 44 || bytes[5] != 0 ||
+        bytes[6] != 28 || bytes[7] != 0 ||
         dm2_v1_dungeon_load(&dungeon, bytes, size) != 0) {
         free(bytes);
-        fputs("FAIL: canonical G1 input was not accepted\n", stderr);
+        fputs("FAIL: canonical File_header input was not accepted\n", stderr);
         return 1;
     }
     free(bytes);
-    if (!dm2_v1_dungeon_collect_g1_direct_root_chain(
-            &dungeon, 0, 0, 8, &chain) ||
-        chain.committed != 1 || chain.incomplete_world != 1 ||
-        chain.node_count != 2 || chain.link_word_reads != 2 ||
-        !expect_node(&chain, 0, 0x04b0, 1, 176, 8866, 6) ||
-        !expect_node(&chain, 1, 0x000a, 0, 10, 6982, 4)) {
-        dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: direct DB1-to-DB0 chain changed\n", stderr);
-        return 1;
-    }
-    if (!dm2_v1_dungeon_collect_g1_direct_root_chain(
-            &dungeon, 17, 5, 8, &chain) ||
-        chain.node_count != 4 || chain.link_word_reads != 4 ||
-        !expect_node(&chain, 0, 0xd407, 5, 7, 20534, 4) ||
-        !expect_node(&chain, 1, 0x0400, 1, 0, 7810, 6) ||
-        !expect_node(&chain, 2, 0x0c6d, 3, 109, 16218, 8) ||
-        !expect_node(&chain, 3, 0x0030, 0, 48, 7134, 4)) {
-        dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: direct DB5 chain changed\n", stderr);
-        return 1;
-    }
     sentinel.committed = -1;
     if (dm2_v1_dungeon_collect_g1_direct_root_chain(
-            &dungeon, 9, 7, 3, &sentinel) != 0 || sentinel.committed != -1) {
+            &dungeon, 0, 0, 0, &sentinel) != 0 || sentinel.committed != -1) {
         dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: unknown next link mutated direct chain receipt\n", stderr);
+        fputs("FAIL: File_header entered the legacy G1 direct-chain path\n", stderr);
         return 1;
     }
     dm2_v1_dungeon_free(&dungeon);
-    puts("PASS: direct G1 c_record chains stay bounded and fail closed");
+    puts("PASS: File_header leaves legacy G1 direct chains unavailable");
     return 0;
 }

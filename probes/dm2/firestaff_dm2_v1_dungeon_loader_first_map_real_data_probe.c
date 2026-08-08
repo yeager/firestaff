@@ -10,8 +10,8 @@
  * Source-lock:
  *   ReDMCSB DEFS.H lines 989-998: DUNGEON_HEADER.MapCount.
  *   skproject SKWIN/DME.h Map_definitions: map offset and w8 dimensions.
- *   dm2_v1_dungeon_loader.c: DM2 PC G1 preamble, 28 map definitions, and
- *   column-major byte-square access for the first map.
+ *   dm2_v1_dungeon_loader.c: File_header, Map_definitions, and column-major
+ *   byte-square access for the first map.
  *
  * Exit code: 0 on PASS or SKIP, 1 on a verified-data regression.
  */
@@ -37,13 +37,9 @@
 #define DM2_CANONICAL_DUNGEON_SIZE 39437
 #define DM2_HEADER_SIZE 44
 #define DM2_MAP_DESCRIPTOR_SIZE 16
-#define DM2_MAP_DESCRIPTOR_COUNT 28
+#define DM2_MAP_DESCRIPTOR_COUNT 44
 #define DM2_TILE_DATA_START \
     (DM2_HEADER_SIZE + DM2_MAP_DESCRIPTOR_COUNT * DM2_MAP_DESCRIPTOR_SIZE)
-
-static const unsigned char k_skproject_record_sizes[16] = {
-    4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
-};
 
 static int g_checks;
 static int g_failures;
@@ -61,16 +57,6 @@ static int g_failures;
 static unsigned read16le(const unsigned char *p)
 {
     return (unsigned)p[0] | ((unsigned)p[1] << 8);
-}
-
-static unsigned g1_declared_record_pool_bytes(const unsigned char *raw)
-{
-    unsigned total = 0;
-    int type;
-
-    for (type = 0; type < 16; ++type)
-        total += read16le(raw + 14 + type * 2) * k_skproject_record_sizes[type];
-    return total;
 }
 
 static const char *dm2_data_root(int argc, char **argv,
@@ -186,20 +172,24 @@ static unsigned char *read_file(const char *path, int *out_size)
 static void probe_first_map(const unsigned char *raw, int size)
 {
     DM2_V1_DungeonData dungeon;
-    DM2_V1_G1RecordPoolEvidence evidence;
     int load_rc;
-    unsigned declared_pool_bytes;
 
     CHECK(size == DM2_CANONICAL_DUNGEON_SIZE,
           "canonical DM2 DUNGEON.DAT size is 39437 bytes");
     CHECK(size >= DM2_TILE_DATA_START,
-          "file contains the G1 header plus 28 map descriptors");
+          "file contains File_header plus 44 map descriptors");
+    CHECK(read16le(raw) == 0U,
+          "File_header.w0 is zero");
     CHECK(read16le(raw + 2) == 0x3147U,
-          "G1 marker is present at bytes 2..3");
-    CHECK(read16le(raw + 4) == DM2_HEADER_SIZE,
-          "DM2 header-size field is 44 bytes");
-    CHECK(raw[6] == DM2_MAP_DESCRIPTOR_COUNT,
-          "map count byte is 28");
+          "File_header.cbMapData is 0x3147");
+    CHECK(raw[4] == DM2_MAP_DESCRIPTOR_COUNT && raw[5] == 0U,
+          "File_header.nMaps is 44");
+    CHECK(read16le(raw + 6) == 28U,
+          "File_header.cwTextData is 28 words");
+    CHECK(read16le(raw + 8) == 0x0101U,
+          "File_header initial party position is map 0, (1,8), north");
+    CHECK(read16le(raw + 10) == 2360U,
+          "File_header.cwListSize is 2360 words");
     CHECK(read16le(raw + DM2_HEADER_SIZE) == 0U,
           "map-0 RawMapDataByteOffset is zero");
     CHECK((((read16le(raw + DM2_HEADER_SIZE + 8) >> 6) & 0x1fU) + 1U) == 7U,
@@ -211,78 +201,37 @@ static void probe_first_map(const unsigned char *raw, int size)
     CHECK(load_rc == 0, "dm2_v1_dungeon_load accepts verified real data");
     if (load_rc != 0) return;
 
-    declared_pool_bytes = g1_declared_record_pool_bytes(raw);
-
     CHECK(dungeon.level_count == DM2_MAP_DESCRIPTOR_COUNT,
-          "loader preserves the 28-level map count");
+          "loader preserves the 44-level map count");
     CHECK(dungeon.level_offsets[0] == 0,
           "loader preserves map-0 tile-data offset");
     CHECK(dungeon.square_bytes == 1,
-          "loader selects the PC G1 byte-square layout");
-    CHECK(dungeon.raw_map_data_base == 31667,
-          "loader starts byte-square data at the trailing PC G1 map-data block");
-    CHECK(dungeon.text_word_count == 257,
-          "loader preserves PC G1 shifted File_header.cwTextData");
+          "loader selects the PC byte-square layout");
+    CHECK(dungeon.raw_map_data_base == 26820,
+          "loader derives byte-square data after File_header-owned pools");
+    CHECK(dungeon.text_word_count == 28,
+          "loader preserves File_header.cwTextData");
     CHECK(dungeon.square_first_thing_count == 2360,
-          "loader preserves the PC G1 ground-stack capacity");
-    CHECK(dungeon.thing_type_counts[0] == 217 &&
-              dungeon.thing_type_counts[1] == 576 &&
-              dungeon.thing_type_counts[2] == 1020 &&
-              dungeon.thing_type_counts[3] == 299,
-          "loader preserves leading PC G1 DB record counts");
+          "loader preserves File_header.cwListSize");
+    CHECK(dungeon.thing_type_counts[0] == 53 &&
+              dungeon.thing_type_counts[1] == 217 &&
+              dungeon.thing_type_counts[2] == 576 &&
+              dungeon.thing_type_counts[3] == 1020,
+          "loader preserves File_header DB record counts");
     CHECK(dungeon.column_index_base == 748 &&
-              dungeon.square_first_thing_base == 1708 &&
-              dungeon.text_data_base == 6428,
-          "loader exposes proven G1 c_map column and ground-stack tables");
-    CHECK(dungeon.thing_data_bases[0] == 6942 &&
-              dungeon.thing_data_bases[1] == 7810 &&
-              dungeon.thing_data_bases[2] == 11266 &&
-              dungeon.thing_data_bases[3] == 15346,
-          "loader maps PC G1 c_record pools from the text-adjacent source order");
-    CHECK(dungeon.g1_extension_base == 23826 &&
-              dungeon.g1_extension_size == 7841 &&
-              dungeon.g1_extension_base + dungeon.g1_extension_size ==
-                  dungeon.raw_map_data_base,
-          "loader bounds the remaining untyped G1 pre-map segment");
-    CHECK(declared_pool_bytes == 16884U &&
-              (unsigned)(dungeon.raw_map_data_base - dungeon.g1_extension_base) ==
-                  7841U && declared_pool_bytes !=
-                  (unsigned)(dungeon.raw_map_data_base - dungeon.g1_extension_base),
-          "real G1 rejects the tempting map-tail DB-pool placement by size");
-    CHECK(dm2_v1_dungeon_collect_g1_record_pool_evidence(
-              &dungeon, &evidence) == 1 && evidence.available == 1,
-          "real G1 produces a bounded non-tail record-pool evidence receipt");
-    CHECK(evidence.candidate_base == 6942 && evidence.candidate_end == 23826 &&
-              evidence.candidate_bytes == (int)declared_pool_bytes &&
-              evidence.candidate_end == dungeon.g1_extension_base,
-          "c_record span is anchored after text data, before the untyped G1 extension");
-    CHECK(evidence.tail_pool_base == 14783 && evidence.tail_pool_base_rejected,
-          "tail-aligned pool base remains rejected by the non-tail text anchor");
-    CHECK(evidence.root_count == dungeon.square_first_thing_count &&
-              evidence.root_end_markers + evidence.root_shape_valid +
-                  evidence.map_root_extension_shape_valid +
-                  evidence.root_shape_invalid == evidence.root_count &&
-              evidence.candidate_record_count > 0 &&
-              evidence.candidate_first_link_end_markers +
-                  evidence.candidate_first_link_shape_valid +
-                  evidence.candidate_first_link_extension_shape_valid +
-                  evidence.candidate_first_link_shape_invalid ==
-                      evidence.candidate_record_count,
-          "real G1 root and c_record first-word shapes are fully accounted");
-    CHECK(evidence.root_shape_invalid == 562 &&
-              evidence.candidate_first_link_shape_invalid == 914,
-          "real G1 pins every observed non-direct root and c_record link");
-    printf("  INFO: G1 candidate [%d,%d), roots end=%d valid=%d invalid=%d, "
-           "records end=%d valid=%d invalid=%d\n",
-           evidence.candidate_base, evidence.candidate_end,
-           evidence.root_end_markers, evidence.root_shape_valid,
-           evidence.root_shape_invalid,
-           evidence.candidate_first_link_end_markers,
-           evidence.candidate_first_link_shape_valid,
-           evidence.candidate_first_link_shape_invalid);
+              dungeon.square_first_thing_base == 2198 &&
+              dungeon.text_data_base == 6918,
+          "loader exposes File_header column, ground-stack, and text tables");
+    CHECK(dungeon.thing_data_bases[0] == 6974 &&
+              dungeon.thing_data_bases[1] == 7186 &&
+              dungeon.thing_data_bases[2] == 8488 &&
+              dungeon.thing_data_bases[3] == 10792,
+          "loader maps File_header c_record pools in source order");
+    CHECK(dungeon.g1_extension_base == -1 && dungeon.g1_extension_size == 0,
+          "File_header route admits no fabricated continuation segment");
     CHECK(dungeon.record_graph_complete == 1 &&
               dm2_v1_dungeon_validate_record_graph(&dungeon) == 1,
-          "PC G1 record graph validates via ground-stack (w0 is game data)");
+          "PC record graph validates through File_header-owned pools");
     CHECK(dungeon.level_widths[0] == 7,
           "loader reports map-0 width from Map_definitions.w8");
     CHECK(dungeon.level_heights[0] == 10,
@@ -292,32 +241,24 @@ static void probe_first_map(const unsigned char *raw, int size)
     CHECK(dungeon.raw_size == size && dungeon.raw_data != NULL,
           "loader retains raw dungeon bytes for tile lookups");
 
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x20,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 0) == 0x10,
           "map-0 tile(0,0) raw byte is stable");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 1,
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 0) == 0,
           "map-0 tile(0,0) type comes from high three bits");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 1) == 0x20,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 0, 1) == 0x10,
           "map-0 tile(0,1) raw byte is stable");
-    CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 4) == 0x04a5,
-          "map-0 c_map link resolves through the proven G1 ground stack");
-    CHECK(dm2_v1_dungeon_get_thing_record(&dungeon, 0x04a5,
-                                           NULL, NULL, NULL) != NULL,
-          "map-0 root resolves through the source-ordered c_record pool");
-    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x04a5) ==
-              (int)DM2_THING_END_MARKER,
-          "G1 get_next_thing returns END_MARKER (no w0 chain in file)");
     CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x00,
           "map-0 tile(1,0) confirms byte column-major stepping");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 0,
           "map-0 tile(1,0) type comes from high three bits");
-    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 6, 9) == 0x20,
+    CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 6, 9) == 0x00,
           "map-0 tile(6,9) last in-bounds raw byte is stable");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 7, 0) == -1,
           "map-0 x=7 is rejected");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 0, 10) == -1,
           "map-0 y=10 is rejected");
-    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 28, 0, 0) == -1,
-          "level 28 is rejected");
+    CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 44, 0, 0) == -1,
+          "level 44 is rejected");
 
     dm2_v1_dungeon_free(&dungeon);
 }

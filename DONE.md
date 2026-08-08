@@ -1,5 +1,25 @@
 # Scanner provenance after cache materialization (2026-08-07)
 
+# DM2 PC-DOS File_header real-data regression repair (2026-08-08)
+
+- ✅ Corrected two DM2 real-data gates that still described a shifted,
+  fabricated 28-map ``G1`` layout. They now assert the original PC-DOS
+  `DUNGEON.DAT` `File_header` (`w0=0`, `nMaps=44`, `cwTextData=28`,
+  `cwListSize=2360`) and the source-owned 44 `Map_definitions` records.
+  The gates explicitly require the generic File_header route to leave the
+  continuation segment absent; no pseudo-pool or synthetic root is admitted.
+- ✅ Verification: the hash-identified original 39,437-byte DOS dungeon passes
+  the 36-check loader probe and the `c_map` tile-value/solid/address gate.
+- ✅ A second pass repaired four legacy G1-only root/map/chain gates. With the
+  same original corpus, all four now verify the intended fail-closed boundary
+  and the actual `File_header` party pose instead of treating shifted bytes as
+  live dungeon records.
+- ✅ The PC-DOS SKSave corpus gate now records the observed boundary correctly:
+  four of the eight original primary/backup files bind a complete c_record
+  pool, while four remain blocked after source decoding because their pool
+  owner is incomplete. All eight remain prohibited from publishing a partial
+  GAME_LOAD session. Verification: 160 real-corpus checks pass.
+
 # M11 action-icon hatch dependency repair (2026-08-06)
 
 - ✅ Restored the M11 link boundary after the synthetic disabled-icon audit was
