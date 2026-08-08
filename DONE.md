@@ -1,3 +1,13 @@
+# Nexus STABG receipt retains all retail maps (2026-08-08)
+
+- ✅ `DecodeSTABGBIN` now retains each of the 11 real STABG map offsets,
+  dimensions, cell counts and maximum tile indices instead of keeping only
+  first-map dimensions and aggregate counters.
+- ✅ The real startup-media gate verifies that all retained map metadata is
+  bounded and internally consistent; VDP1/VDP2 placement remains capture-gated.
+- ✅ Built the Nexus library and ran the five focused startup/media/STMP/boot
+  tests plus the production-source boundary check successfully.
+
 # Nexus data-format documentation corrected to retail facts (2026-08-08)
 
 - ✅ `docs/nexus_data.md` now records the real 64×64 Structure1B DGN grid with

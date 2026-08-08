@@ -145,6 +145,13 @@ typedef struct {
     uint32_t part3_offset;
     uint32_t part3_size;
     int map_count;
+    /* Per-map DecodeSTABGBIN facts retained from the retail directory. These
+     * are source receipts only; they do not assign a VDP1/VDP2 destination. */
+    uint32_t map_offsets[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
+    uint16_t map_widths[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
+    uint16_t map_heights[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
+    uint32_t map_cell_counts[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
+    uint16_t map_max_tile_indices[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
     int first_map_width;
     int first_map_height;
     int tile_count;

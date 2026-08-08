@@ -688,6 +688,10 @@ int nexus_ui_stabg_dmweb_decode_receipt(const uint8_t *data,
         if (width == 0U || height == 0U ||
             word_addr + 4U + cells * 2U > part2_off)
             return -1;
+        out->map_offsets[i] = map_offsets[i];
+        out->map_widths[i] = width;
+        out->map_heights[i] = height;
+        out->map_cell_counts[i] = cells;
         if (i == 0) {
             out->first_map_width = width;
             out->first_map_height = height;
@@ -696,6 +700,8 @@ int nexus_ui_stabg_dmweb_decode_receipt(const uint8_t *data,
             uint16_t cell = nexus_ui_read_be16(data + word_addr + 4U + j * 2U);
             uint16_t tile = (uint16_t)((cell / 2U) & 0x07ffU);
             if (tile >= 791U) return -1;
+            if (tile > out->map_max_tile_indices[i])
+                out->map_max_tile_indices[i] = tile;
             if (tile > out->max_tile_index) out->max_tile_index = tile;
             if (((cell / (1U << 14)) & 1U) != 0U)
                 ++out->horizontal_flip_count;

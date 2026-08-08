@@ -251,6 +251,26 @@ int main(void)
                     expect_true(0, "STABG terminator regression allocation");
                 }
             }
+            {
+                Nexus_UI_StabgDmwebReceipt dmweb_receipt;
+                int maps_ok = nexus_ui_stabg_dmweb_decode_receipt(
+                                   local_stabg, (int)local_warning_size,
+                                   &dmweb_receipt) == 0 &&
+                              dmweb_receipt.valid &&
+                              dmweb_receipt.map_count == 11;
+                for (int map = 0; maps_ok && map < dmweb_receipt.map_count;
+                     ++map) {
+                    maps_ok = dmweb_receipt.map_offsets[map] >= 48U &&
+                              dmweb_receipt.map_widths[map] > 0U &&
+                              dmweb_receipt.map_heights[map] > 0U &&
+                              dmweb_receipt.map_cell_counts[map] ==
+                                  (uint32_t)dmweb_receipt.map_widths[map] *
+                                      (uint32_t)dmweb_receipt.map_heights[map] &&
+                              dmweb_receipt.map_max_tile_indices[map] < 791U;
+                }
+                expect_true(maps_ok,
+                            "STABG DMWeb receipt retains all retail map metadata");
+            }
             expect_true(nexus_ui_load_stabg(&ui, local_stabg,
                                             (int)local_warning_size,
                                             NULL) > 0 &&

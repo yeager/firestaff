@@ -1414,7 +1414,10 @@
   GAMEOVER/TITLE/LOGOBG inputs before format receipts count. The V2 HUD
   diagnostic probes now match that boundary: enabling the phase gate, setting
   champion/action state, or using the test force switch cannot write synthetic
-  pixels while the retail HUD/VDP1/VDP2 capture is absent.
+  pixels while the retail HUD/VDP1/VDP2 capture is absent. 2026-08-08:
+  the STABG DMWeb receipt now retains offset, dimensions, cell count and
+  maximum tile index for all 11 retail maps; this is still source inventory,
+  not a VDP placement or drawable-HUD proof.
 
 - **DM2-PRODUCTION-PLACEHOLDER-INVENTORY:** The source tree retains bounded
   compatibility studies, fixture readers and modern-art probes for direct
