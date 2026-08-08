@@ -246,7 +246,7 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
     (void)legs_slot;
     (void)amulet_slot;
 
-    if (!inv || slot < 0) return -1;
+    if (!inv || slot < 0 || weapon_slot < 0) return -1;
 
     def = nexus_inventory_get(inv, slot);
     if (!def) return -1;

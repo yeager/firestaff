@@ -1,3 +1,12 @@
+# Nexus audit iterations 2-3 — inventory bounds, hunger comment (2026-08-08)
+
+- ✅ Added weapon_slot bounds check in nexus_inventory_equip.
+- ✅ Fixed hunger drain comment to match actual output sequence.
+- ✅ Audited: inventory, movement, doors, triggers, creatures, light, status,
+  item_use, experience, hunger, engine (12k lines), game, text, throw, rest,
+  encumbrance, projectiles, automap, squares, shop. No additional runtime bugs found.
+- Version: v3.0.303
+
 # Nexus audit iteration 1 — gameplay bug fixes (2026-08-08)
 
 - ✅ Fixed 3 slot off-by-one errors in mechanics (defense, ring, weapon lookups).

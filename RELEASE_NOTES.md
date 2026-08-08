@@ -1,3 +1,12 @@
+# Firestaff v3.0.303
+
+## Fixed
+
+- `nexus_v1_inventory.c`: add bounds check on `weapon_slot` parameter in
+  `nexus_inventory_equip` — prevents OOB write if caller passes -1.
+- `nexus_v1_hunger.c`: fix comment to match actual food drain output sequence
+  ({4,4,8,8,12,12,16,16} at encumbrance 0, not {4,4,6,6,8,8,10,10}).
+
 # Firestaff v3.0.302
 
 ## Fixed
