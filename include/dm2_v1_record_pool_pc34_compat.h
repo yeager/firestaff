@@ -101,6 +101,16 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
     DM2_V1_RecordPoolSet *set,
     uint32_t *out_detached_count);
 
+/* Restore the source SUPPRESS fields of one already resident DB0..DB3 tile
+ * chain. The caller obtains `root_link` from DM2_V1_SksaveMapOwner; no
+ * record is allocated and no tile link is replaced. This is
+ * sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON's non-empty-tile branch, including
+ * DB3's eight actuator subtypes with a preceding nine-bit value. */
+int dm2_v1_record_pool_restore_raw_sksave_resident_chain(
+    DM2_V1_RecordPoolSet *set,
+    DM2_ReadRecordSession *session,
+    uint16_t root_link);
+
 /* Receipt for the source-owned direct-root phase of READ_SKSAVE_DUNGEON.
  * Root links are retained for the later champion/hand owner, while the
  * record bytes and list links are written into the authenticated pools. */

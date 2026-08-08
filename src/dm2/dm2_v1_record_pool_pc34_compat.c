@@ -228,6 +228,63 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
     return 1;
 }
 
+static int dm2_v1_sksave_db3_has_extra_value(const uint8_t *record)
+{
+    const uint8_t subtype = (uint8_t)(record[2] & 0x7fu);
+
+    /* sksvgame.cpp:1336-1345 — only these c_actuator subtypes carry the
+     * nine-bit value ahead of table1d64db[3]'s normal record mask. */
+    return subtype == 0x27u || subtype == 0x1bu || subtype == 0x1du ||
+           subtype == 0x41u || subtype == 0x2cu || subtype == 0x32u ||
+           subtype == 0x30u || subtype == 0x2du;
+}
+
+int dm2_v1_record_pool_restore_raw_sksave_resident_chain(
+    DM2_V1_RecordPoolSet *set, DM2_ReadRecordSession *session,
+    uint16_t root_link)
+{
+    const uint8_t *sizes = dm2_v1_save_record_sizes();
+    int16_t current = (int16_t)root_link;
+    size_t budget = 1u;
+    size_t steps = 0u;
+    int pool;
+
+    if (!set || !set->valid || set->record_graph_complete != 0 || !session ||
+        root_link == 0xfffeu || root_link == 0xffffu) return 0;
+    for (pool = 0; pool < 4; ++pool) {
+        if (set->pools[pool].record_count > 0)
+            budget += (size_t)set->pools[pool].record_count;
+    }
+    while (current != DM2_V1_RECORD_HANDLE_END &&
+           current != DM2_V1_RECORD_HANDLE_NULL) {
+        const int type = dm2_v1_record_handle_pool(current);
+        const uint8_t *mask;
+        uint8_t *record;
+        int16_t next;
+
+        if (++steps > budget || type < 0 || type > 3 ||
+            !(record = dm2_v1_record_pool_address_mut(set, current)) ||
+            !dm2_v1_record_pool_next_link(set, current, &next)) return 0;
+        mask = dm2_v1_save_record_mask_for_type(type);
+        if (type == 3 && dm2_v1_sksave_db3_has_extra_value(record)) {
+            uint8_t value_bytes[2] = { 0u, 0u };
+            static const uint8_t nine_bit_mask[2] = { 0xffu, 0x01u };
+            uint16_t value;
+            if (dm2_suppress_reader_read(&session->reader, nine_bit_mask, 2u,
+                                         value_bytes, 0u) != 0) return 0;
+            value = (uint16_t)value_bytes[0] |
+                    ((uint16_t)value_bytes[1] << 8);
+            record[2] = (uint8_t)((record[2] & 0x7fu) |
+                                  ((value & 0x01u) << 7));
+            record[3] = (uint8_t)(value >> 1);
+        }
+        if (mask && dm2_suppress_reader_read_preserve(
+                &session->reader, mask, sizes[type], record) != 0) return 0;
+        current = next;
+    }
+    return current == DM2_V1_RECORD_HANDLE_END;
+}
+
 /* The record-pool owner is also compiled by narrow G1 audit targets that do
  * not link the optional SKSAVE decoder. Keep those targets linkable while a
  * decoder-linked target resolves these weak fail-closed fallbacks with the

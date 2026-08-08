@@ -3,6 +3,7 @@
 
 #include "dm2_v1_save_load_extra_dungeon_data_pc34_compat.h"
 #include "dm2_v1_save_store_extra_dungeon_data_pc34_compat.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -237,6 +238,26 @@ static void test_tile_mask_restores_live_tile(void)
     printf("  PASS: tile_mask_restores_live_tile\n");
 }
 
+static void test_resident_record_chain_restores_in_place(void)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_ReadRecordSession session;
+    static uint8_t record[4] = { 0xfeu, 0xffu, 0x00u, 0x00u };
+    const uint8_t stream[1] = { 0xf8u };
+
+    memset(&pools, 0, sizeof(pools));
+    pools.valid = 1;
+    pools.pools[0].bytes = record;
+    pools.pools[0].record_count = 1;
+    pools.pools[0].record_size = 4;
+    dm2_v1_read_record_session_init(&session, stream, sizeof(stream));
+    assert(dm2_v1_record_pool_restore_raw_sksave_resident_chain(
+        &pools, &session, 0u) == 1);
+    assert(record[3] == 0x3eu);
+    pools.pools[0].bytes = NULL; /* static fixture remains test-owned */
+    printf("  PASS: resident_record_chain_restores_in_place\n");
+}
+
 static void test_receipt_fields(void)
 {
     DM2_V1_LoadExtraDungeonReceipt r;
@@ -255,6 +276,7 @@ int main(void)
     test_null_safety();
     test_empty_dungeon_round_trip();
     test_tile_mask_restores_live_tile();
+    test_resident_record_chain_restores_in_place();
     test_receipt_fields();
     printf("All load_extra_dungeon_data tests passed.\n");
     return 0;

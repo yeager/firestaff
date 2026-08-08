@@ -3102,6 +3102,12 @@ level or consumer bindings.
   resident chain. All eight original PC-DOS saves pass this ordering check.
   This is still only the predecessor to map-chain mask restoration and does
   not publish a session, reuse a synthetic map or unblock Continue.
+  2026-08-08 resident-chain update: the DB0–DB3 in-place SUPPRESS reader is
+  now available to that map owner. It follows `table1d64db` and the eight
+  original DB3 actuator subtypes that carry a preceding nine-bit value. Wire
+  it into the single GAME_LOAD transaction with live map/tile callbacks,
+  dynamic empty-tile allocation, possessions and timers; it remains
+  deliberately unavailable as a standalone Resume path.
   2026-08-13 DB-clear update: the next `DM2_READ_SKSAVE_DUNGEON` phase now
   preserves DB0..DB3 and clears only GenericRecord::w0 in every DB4..DB15
   row, exactly as SKProject does before `READ_RECORD_CHECKCODE` allocates

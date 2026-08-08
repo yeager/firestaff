@@ -52,6 +52,12 @@
 
 # DM2 SKSAVE bitstream-order repair (2026-08-08)
 
+- ✅ Added the source in-place reader for resident DB0–DB3 map chains. It
+  consumes `table1d64db` fields without replacing a real tile root and
+  handles the eight DB3 actuator subtypes with the original preceding
+  nine-bit value. The focused dungeon reader verifies that an existing record
+  changes in place; the mounted PC-DOS corpus remains at 176 passing checks.
+
 - ✅ Corrected the direct-root reader to stop after the source hero and
   cursor chains. It no longer reads possession continuations from the wrong
   position in the shared SUPPRESS stream. SKProject restores special timer
