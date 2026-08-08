@@ -740,6 +740,22 @@ int dm2_v1_boot_champion_mirror_receipt(
     return 1;
 }
 
+int dm2_v1_boot_file_header_runtime_map_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    return dm2_v1_dungeon_validate_file_header_runtime_map(
+        dungeon, map, out_receipt);
+}
+
 int dm2_v1_boot_champion_dyn4_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_BootChampionDyn4Receipt *out_receipt)

@@ -1442,6 +1442,13 @@ int dm2_v1_boot_champion_mirror_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_G1ChampionMirrorReceipt *out_receipt);
 
+/* Resolves a map receipt from the File_header-owned dungeon already mounted
+ * in this boot session.  It is the only map provenance a later local-level
+ * consumer may use for canonical PC-DOS media. */
+int dm2_v1_boot_file_header_runtime_map_receipt(
+    const DM2_V1_BootProfile *profile, int map,
+    DM2_V1_FileHeaderRuntimeMapReceipt *out_receipt);
+
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps
  * the parsed G1 data only after a complete candidate parse succeeds.

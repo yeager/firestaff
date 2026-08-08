@@ -1206,6 +1206,7 @@ int main(void) {
     DM2_V1_BootProfile* profile;
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
+    DM2_V1_FileHeaderRuntimeMapReceipt file_header_map;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
@@ -1356,6 +1357,15 @@ int main(void) {
                     champion_mirrors.mirrors[0].dynamic_hero_type == 14u &&
                     champion_mirrors.mirrors[0].dynamic_load_id == 0x160effffu,
                 "M11 retains the authentic PC-DOS champion mirror roots without activating them");
+    memset(&file_header_map, 0, sizeof(file_header_map));
+    expect_true(profile &&
+                    dm2_v1_boot_file_header_runtime_map_receipt(
+                        profile, 0, &file_header_map) &&
+                    file_header_map.committed &&
+                    file_header_map.incomplete_world &&
+                    file_header_map.root_count > 0 &&
+                    file_header_map.record_count >= file_header_map.root_count,
+                "M11 exposes the mounted File_header map owner to later DM2 runtime consumers");
     memset(&champion_dyn4, 0, sizeof(champion_dyn4));
     /* The old 28-map pseudo-header happened to manufacture a 16-marker
      * continuation and thereby admitted a DYN4 bundle. The real 44-map

@@ -88,6 +88,14 @@
   Resultatet är fortsatt ofullständigt och materialiserar inte party, DYN4
   eller spelmekanik.
 
+# DM2 File_header boot handoff (2026-08-08)
+
+- ✅ M11/bootprofilen lämnar nu karta 0:s verifierade File_header-recipient
+  från den hash-admitterade, monterade dungeon-sessionen till senare
+  local-level-konsumenter.
+- ✅ Verifierat genom M11:s PC-DOS-startprofil och den verkliga
+  `DUNGEON.DAT`-recordgrafen. Handoffet skapar inte party eller DYN4-cache.
+
 # DM2 c_hero skill-row correction (2026-08-08)
 
 - ✅ Corrected the narrow `DM2_REVIVE_PLAYER` translation to retain the
