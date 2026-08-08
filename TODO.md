@@ -1819,6 +1819,11 @@
   documentation alone. The testing, armor, potion and combat-item pages now
   carry explicit historical/diagnostic banners; their old “implemented” and
   “no tests” wording is not current status.
+  2026-08-08 follow-up: `docs/nexus_data.md` no longer describes retail DGN
+  files as 32×32/DM1-shaped or `DM.BIN` as a disc image. It now records the
+  mounted corpus's 64×64 Structure1B/8-byte cells, 25,012-byte FONT256
+  revision and 555,144-byte DM.BIN resource, while retaining presentation and
+  audio capture gates.
 
 - **NEXUS-COMPAT-GATE-COMBAT-CLAIM:** The Nexus phase-gate combat description
   now calls the DM1-shaped combat helper diagnostic only. The retail Saturn

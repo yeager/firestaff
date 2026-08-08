@@ -1,3 +1,13 @@
+# Nexus data-format documentation corrected to retail facts (2026-08-08)
+
+- ✅ `docs/nexus_data.md` now records the real 64×64 Structure1B DGN grid with
+  8-byte cells instead of the retired 32×32 DM1-shaped description.
+- ✅ The mounted retail sizes for `FONT256.S2D` (25,012 bytes) and `DM.BIN`
+  (555,144 bytes) are recorded accurately; unsupported audio/field semantics
+  remain capture-gated.
+- ✅ The corrected documentation was checked against the mounted Nexus corpus
+  and current parser headers; no runtime presentation route was opened.
+
 # Nexus unplaced mechanics no longer invent a living party (2026-08-08)
 
 - ✅ An unplaced `(-1,-1,-1)` mechanics state now remains inert as well as

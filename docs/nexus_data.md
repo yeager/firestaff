@@ -19,47 +19,47 @@
 ### File Overview
 | Level | File | Size (bytes) | Grid | Notes |
 |-------|------|-------------|------|-------|
-| 0 | LEV00.DGN | 147,456 | 32×32 | Entry/temple level |
-| 1 | LEV01.DGN | 280,576 | 32×32 | |
-| 2 | LEV02.DGN | 272,384 | 32×32 | |
-| 3 | LEV03.DGN | 290,816 | 32×32 | |
-| 4 | LEV04.DGN | 245,760 | 32×32 | |
-| 5 | LEV05.DGN | 266,240 | 32×32 | |
-| 6 | LEV06.DGN | 239,616 | 32×32 | |
-| 7 | LEV07.DGN | 258,048 | 32×32 | |
-| 8 | LEV08.DGN | 303,104 | 32×32 | |
-| 9 | LEV09.DGN | 288,768 | 32×32 | |
-| 10 | LEV10.DGN | 290,816 | 32×32 | |
-| 11 | LEV11.DGN | 278,528 | 32×32 | |
-| 12 | LEV12.DGN | 321,536 | 32×32 | Largest (boss level?) |
-| 13 | LEV13.DGN | 256,000 | 32×32 | |
-| 14 | LEV14.DGN | 253,952 | 32×32 | |
-| 15 | LEV15.DGN | 270,336 | 32×32 | Final level |
+| 0 | LEV00.DGN | 147,456 | 64×64 Structure1B | Entry level; start pose is not inferred |
+| 1 | LEV01.DGN | 280,576 | 64×64 Structure1B | |
+| 2 | LEV02.DGN | 272,384 | 64×64 Structure1B | |
+| 3 | LEV03.DGN | 290,816 | 64×64 Structure1B | |
+| 4 | LEV04.DGN | 245,760 | 64×64 Structure1B | |
+| 5 | LEV05.DGN | 266,240 | 64×64 Structure1B | |
+| 6 | LEV06.DGN | 239,616 | 64×64 Structure1B | |
+| 7 | LEV07.DGN | 258,048 | 64×64 Structure1B | |
+| 8 | LEV08.DGN | 303,104 | 64×64 Structure1B | |
+| 9 | LEV09.DGN | 288,768 | 64×64 Structure1B | |
+| 10 | LEV10.DGN | 290,816 | 64×64 Structure1B | |
+| 11 | LEV11.DGN | 278,528 | 64×64 Structure1B | |
+| 12 | LEV12.DGN | 321,536 | 64×64 Structure1B | Largest checked file |
+| 13 | LEV13.DGN | 256,000 | 64×64 Structure1B | |
+| 14 | LEV14.DGN | 253,952 | 64×64 Structure1B | |
+| 15 | LEV15.DGN | 270,336 | 64×64 Structure1B | Final-level file; presentation remains gated |
 
 **Total: the checked European corpus is retained as source data; do not infer
 runtime presentation from file size alone.**
 
 ### Format Structure
-Each DGN file contains two sections:
+Each DGN file is a 2048-byte-block container with a Structure1 header,
+Structure1B collision/grid data and additional bounded structures:
 
-1. **Grid section** (beginning of file):
-   - 32×32 = 1024 square entries
-   - Each square: lower 5 bits = square type (matching DM1 convention)
-   - Square type 0 = solid wall; types 1-31 = various floor/passable
-   - Grid uses same column-major format as DM1's DUNGEON.DAT
+1. **Structure1B**:
+   - 64×64 = 4096 cells
+   - Each cell occupies 8 bytes (`0x8000` bytes total)
+   - Firestaff retains the bounded cell/square and collision-reference fields
+     identified by the DMWeb decoder; unknown fields are not assigned DM1
+     semantics
 
-2. **3D geometry blob** (remaining bytes after grid):
-   - Pre-computed wall polygon data per grid position
-   - Floor/ceiling mesh vertices per open square
-   - Per-square mesh identifiers for wall type, door state, stairs variant
-   - No procedural geometry — all geometry is baked into the file
+2. **Post-Structure1 data**:
+   - Structure1C collision records and bounded Structure1A/1F/2/3 spans
+   - Structure2 descriptor/payload bytes and Structure3 mesh evidence are
+     retained only as source receipts until Saturn transform, palette, VDP1
+     command order and runtime ownership are captured
 
 ### Grid Parsing (Firestaff)
-`nexus_v1_level_get_square()` in `nexus_v1_dungeon.c`:
-```c
-return (int)((uint8_t *)level->grid)[y * width + x] & 0x1F;
-```
-Lower 5 bits extracted, matching DM1 square type semantics.
+`nexus_v1_level_get_square()` in `nexus_v1_dungeon.c` reads the already
+validated 64×64 Structure1B cell view. It does not reinterpret the DGN as a
+32×32 DM1 `DUNGEON.DAT` grid.
 
 ### 3D Geometry Parsing
 **Status: bounded real-data intake implemented.**
@@ -137,7 +137,8 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 - 16 sound banks, one per level
 - Each: 290–460 KB
 - Loaded on level entry
-- CD audio track for music + ADX/SEGA PCM for SFX
+- CD audio is present in the retail disc layout; SAL/SDDRVS SFX transport
+  and level-to-track selection remain capture-gated
 
 ### Script Files: SLEV00-15.BIN
 - Real per-level SH-2 task candidates (the complete 16-file corpus)
@@ -162,7 +163,8 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 ## 4. Other Asset Files
 
 ### FONT256.S2D
-- `FONT256.S2D` har 242 verifierade CG-tiles från retail.
+- `FONT256.S2D` är 25,012 byte i den monterade retailrevisionen och har 242
+  verifierade CG-tiles.
 - Loadern behåller bytes/glyph-åtkomst som receipt.
 - Saturns textkonsument, page/attribute mapping och synlig textplacering är
   inte verifierade; den används inte som bevis för all in-game text.
@@ -190,9 +192,9 @@ execution trace proves the owner and ABI.
 | *.MNS | DMDF (big-endian) | 46-88 KB each | 3D creature models | Header + vertices + faces parsed |
 | SNDLEV*.SAL | SAL DataID 0 + bounded payload | 290-460 KB each | Per-level audio bank | Real directory/metadata parsed; playback gated |
 | SLEV*.BIN | SH-2 task candidate | 2-12 KB each | Per-level task payload | 16-file entry profile; dispatch opaque |
-| SMAP*.BIN | LVMP binary | 17-30 KB each | 80×76 tilemap + 256-colour BGR555 palette + 8×8 indexed tiles | Parsed to source RGBA; VDP2 placement remains gated |
-| FONT256.S2D | Saturn font binary | ~64 KB | 256-char font (incl. JP) | Parsed (Saturn font loader) |
-| DM.BIN | Binary | ~133 MB | Full disc image data | ISO reader exists |
+| SMAP*.BIN | LVMP binary | 17-30 KB each | 80×76 tilemap + 256-colour BGR555 palette + 8×8 indexed tiles | Parsed as source data; VDP2 placement remains gated |
+| FONT256.S2D | Saturn font binary | 25,012 bytes in mounted retail revision | Page words plus 242 actual CG tiles; mapping is unproven | Section/CG receipt only |
+| DM.BIN | Saturn executable/resource binary | 555,144 bytes in mounted retail revision | Startup/menu/VDP/audio code and resource anchors | Hash-verified source receipt; not an ISO image |
 | FACE.BIN | Authenticated indexed portrait records | retail resource | Champion portraits | 20 records admitted; VDP1 placement gated |
 
 ---
@@ -214,7 +216,7 @@ Byte-swapping functions handle conversion:
 | Aspect | DM1 | Nexus V1 |
 |--------|-----|----------|
 | Dungeon file | DUNGEON.DAT (~33 KB total) | LEV*.DGN (130× larger) |
-| Grid format | Column-major, 5-bit types | Same 5-bit types, 32×32 fixed |
+| Grid format | Column-major, 5-bit types | 64×64 Structure1B cells; do not assume DM1 field semantics |
 | 3D geometry | None (2D sprite) | Baked polygon meshes in DGN |
 | Creature models | 2D sprites in GRAPHICS.DAT | DMDF .MNS 3D models |
 | Texture format | PC CGA/EGA BITMAP | VDP1 BITMAP (big-endian) |
