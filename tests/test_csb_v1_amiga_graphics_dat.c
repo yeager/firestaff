@@ -161,6 +161,17 @@ static void test_real_a35e_img1_if_available(void) {
     {
         uint16_t width = 0u;
         uint16_t height = 0u;
+        /* ReDMCSB PANEL.C F0346 overlays C040 at panel-relative (80,52),
+         * with C06 as transparency, on top of the C017 inventory panel. */
+        CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 40u,
+                                                 pixels, 640u * 400u,
+                                                 &width, &height) == 1 &&
+                  width == 144u && height == 73u,
+              "real_a35e_c040_resurrect_panel_decodes_at_source_dimensions");
+    }
+    {
+        uint16_t width = 0u;
+        uint16_t height = 0u;
         /* ReDMCSB DEFS.H C013_GRAPHIC_MOVEMENT_ARROWS and PANEL.C F0395
          * bind this exact 87x45 source panel to C009_ZONE_MOVEMENT_ARROWS. */
         CHECK(csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 13u,

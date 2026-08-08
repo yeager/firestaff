@@ -4271,9 +4271,10 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
  * used before PANEL.C F0337 selects a darker row.  C013 uses these original
  * four-bit indices; duplicating the 16 source registers across the indexed
  * host palette preserves that meaning without inventing PC VGA colours.
- * C017 is the source inventory backdrop and C013 is the source movement
- * panel.  No unbound Amiga dungeon viewport, champion HUD, or synthetic
- * replacement is exposed while their native owners remain unavailable. */
+ * C017 is the source inventory backdrop, C040 the resurrect/reincarnate
+ * overlay and C013 the source movement panel.  No unbound Amiga dungeon
+ * viewport, champion HUD, or synthetic replacement is exposed while their
+ * native owners remain unavailable. */
 static int m11_csb_present_amiga_runtime_surface(
     const M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
@@ -4289,6 +4290,7 @@ static int m11_csb_present_amiga_runtime_surface(
     uint8_t rgb6[256][3];
     uint8_t *bytes = NULL;
     uint8_t *pixels = NULL;
+    uint8_t *inventory_pixels = NULL;
     FILE *file = NULL;
     long length;
     uint16_t width = 0u;
@@ -4297,12 +4299,18 @@ static int m11_csb_present_amiga_runtime_surface(
     int row;
     int ok = 0;
 
-    const unsigned int graphic_index = state && state->inventoryPanelActive
-        ? 17u : 13u;
-    const int target_x = state && state->inventoryPanelActive ? 48 : 233;
-    const int target_y = state && state->inventoryPanelActive ? 33 : 124;
-    const int expected_width = state && state->inventoryPanelActive ? 224 : 87;
-    const int expected_height = state && state->inventoryPanelActive ? 136 : 45;
+    const unsigned int graphic_index = state && state->candidateMirrorPanelActive
+        ? 40u : state && state->inventoryPanelActive ? 17u : 13u;
+    /* ReDMCSB PANEL.C F0347 puts C017 at viewport (48,33); F0346 overlays
+     * C040 at panel-relative (80,52), so its page position is (128,85). */
+    const int target_x = state && state->candidateMirrorPanelActive ? 128 :
+        state && state->inventoryPanelActive ? 48 : 233;
+    const int target_y = state && state->candidateMirrorPanelActive ? 85 :
+        state && state->inventoryPanelActive ? 33 : 124;
+    const int expected_width = state && state->candidateMirrorPanelActive ? 144 :
+        state && state->inventoryPanelActive ? 224 : 87;
+    const int expected_height = state && state->candidateMirrorPanelActive ? 73 :
+        state && state->inventoryPanelActive ? 136 : 45;
 
     if (!state || !framebuffer || framebuffer_width < 320 ||
         framebuffer_height < 200 ||
@@ -4328,7 +4336,12 @@ static int m11_csb_present_amiga_runtime_surface(
             bytes, (size_t)length, (uint16_t)graphic_index, pixels,
             (size_t)expected_width * (size_t)expected_height,
             &width, &height) || width != (uint16_t)expected_width ||
-        height != (uint16_t)expected_height) {
+        height != (uint16_t)expected_height ||
+        (state->candidateMirrorPanelActive &&
+         (!(inventory_pixels = (uint8_t *)malloc(224u * 136u)) ||
+          !csb_v1_amiga_graphics_decode_item(
+              bytes, (size_t)length, 17u, inventory_pixels, 224u * 136u,
+              &width, &height) || width != 224u || height != 136u))) {
         goto done;
     }
     memset(rgb6, 0, sizeof(rgb6));
@@ -4341,20 +4354,40 @@ static int m11_csb_present_amiga_runtime_surface(
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) goto done;
     memset(framebuffer, 0, (size_t)framebuffer_width *
                            (size_t)framebuffer_height);
-    if (!state->inventoryPanelActive) {
+    if (state->candidateMirrorPanelActive) {
+        for (row = 0; row < 136; ++row) {
+            memcpy(framebuffer + (size_t)(33 + row) *
+                   (size_t)framebuffer_width + 48u,
+                   inventory_pixels + (size_t)row * 224u, 224u);
+        }
+    }
+    if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive) {
         m11_fill_rect(framebuffer, framebuffer_width, framebuffer_height,
                       outer_rect.x, outer_rect.y, outer_rect.w, outer_rect.h,
                       0u);
     }
     for (row = 0; row < expected_height; ++row) {
-        memcpy(framebuffer + (size_t)(target_y + row) *
-               (size_t)framebuffer_width + (size_t)target_x,
-               pixels + (size_t)row * (size_t)expected_width,
-               (size_t)expected_width);
+        unsigned char *destination = framebuffer +
+            (size_t)(target_y + row) * (size_t)framebuffer_width +
+            (size_t)target_x;
+        const uint8_t *source = pixels +
+            (size_t)row * (size_t)expected_width;
+        if (graphic_index == 40u) {
+            int column;
+            /* PANEL.C F0346 passes C06_COLOR_DARK_GREEN as C040's
+             * transparent colour. Preserve C017 beneath exactly as the
+             * original blit does; no opaque host substitute is permitted. */
+            for (column = 0; column < expected_width; ++column) {
+                if (source[column] != 6u) destination[column] = source[column];
+            }
+        } else {
+            memcpy(destination, source, (size_t)expected_width);
+        }
     }
     ok = 1;
 done:
     if (file) fclose(file);
+    free(inventory_pixels);
     free(pixels);
     free(bytes);
     return ok;

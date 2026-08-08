@@ -136,6 +136,9 @@
   Amiga-G0021-paletten, utan PC34:s terminalsession eller panelbild.
 - ✅ Realtidstester täcker C03-handoff, öppning och stängning av inventariet
   för samtliga tre Amiga-vägar.
+- ✅ När den källägda kandidatpanelen är aktiv läggs nu Amiga-C040 ovanpå
+  C017 på `PANEL.C` F0346:s exakta koordinater `(128,85)`. Den använder
+  originalets transparensfärg C06 och ersätter inte någon obunden panel.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 
