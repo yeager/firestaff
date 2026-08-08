@@ -11,7 +11,6 @@ Status reviewed 2026-08-08. For the exact boundary, see
 [project status](docs/PROJECT_STATUS.md); for missing functions and evidence,
 see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
 
-[![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Current game](https://img.shields.io/badge/current%20game-DM1%20v1-blue)]()
@@ -24,11 +23,11 @@ see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
 
 | Game | Original data | Reference Source | Status |
 |------|---------------|-----------------|--------|
-| **Dungeon Master v1** | PC DOS 3.4 | ReDMCSB / DMWeb | **Available and playable** |
-| **Chaos Strikes Back** | PC DOS 3.4 data | ReDMCSB / CSBWin | Development only |
-| **Dungeon Master II: Skullkeep** | DOS data | skproject | Development only |
-| **DM Nexus** | Sega Saturn data | Saturn disassembly | Development only |
-| **Theron's Quest** | PC Engine CD data | PC Engine disassembly | Development only |
+| **Dungeon Master v1** | PC DOS 3.4 | ReDMCSB / DMWeb | **Playable V1; parity work remains** |
+| **Chaos Strikes Back** | PC DOS 3.4 data | ReDMCSB / CSBWin | Active hardening |
+| **Dungeon Master II: Skullkeep** | DOS data | skproject | Active hardening |
+| **DM Nexus** | Sega Saturn data | Saturn disassembly | Active real-data bring-up |
+| **Theron's Quest** | PC Engine CD data | PC Engine disassembly | Active real-media bring-up |
 
 ## Evidence and screenshots
 
@@ -90,7 +89,7 @@ source-reference boundaries for all five games.
 | Linux | Build target; packaged DM1 v1 runtime verification pending | `~/.firestaff/data/` |
 | Windows | Build target; packaged DM1 v1 runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
 | Steam Deck | Linux/AppImage target; packaged DM1 v1 verification pending | `~/.firestaff/data/` |
-| iOS / Android | Not supported today | Coming soon |
+| iOS / Android | Not supported today | No current target |
 
 Suggested layout:
 
@@ -104,7 +103,10 @@ Suggested layout:
 ```
 
 See [game-data setup](docs/DATA_SETUP.md) for the exact required and optional
-original files for every game, including disc-image and archive media.
+original files for every game, including disc-image and archive media. In the
+development checkout, the authenticated corpus is kept outside Git under the
+user's `.firestaff/data/` directory; do not copy original game data into this
+repository.
 
 ## In-game runtime panel
 
@@ -117,10 +119,10 @@ for the complete control list and source-data boundaries.
 
 ## Download
 
-The current verified playable scope is **DM1 v1 on macOS**. Linux, Windows and Steam
-Deck are build/package targets whose final packaged runtime verification is
-still pending. A package does not imply that CSB, DM2, Theron's Quest or DM
-Nexus is playable. iOS and Android packages are not currently available.
+The current verified playable scope is **DM1 v1 on macOS**. Linux, Windows and
+Steam Deck are build targets whose packaged runtime verification is still
+pending. No release or package implies that CSB, DM2, Theron's Quest or DM
+Nexus is playable. iOS and Android are not supported today.
 
 ## Game Status
 
@@ -129,8 +131,11 @@ Nexus is playable. iOS and Android packages are not currently available.
 Available and source-locked against ReDMCSB for the PC DOS 3.4 data path.
 The current runtime includes the title/entrance route, dungeon viewport,
 movement, HUD, Hall of Champions and original-data asset loading. Save corpus
-coverage and broader external capture verification remain active work; this
-README does not claim complete parity.
+coverage and broader original-vs-Firestaff capture verification remain active
+work. In particular, an authenticated C13 save and complete pixel-pair
+coverage for viewport, creature-chain, champion HUD, panels, launcher, effects
+and Mac/app execution are still open. This README does not claim complete
+parity.
 
 ### Chaos Strikes Back (PC 3.4)
 
@@ -176,7 +181,11 @@ The cross-game status and evidence boundary are kept in
 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Presentation work follows
 the same order for every game: startup, menu, HUD, then viewport.
 The complete documentation map is in
-[`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md).
+[`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md). Historical
+verification output is kept outside the repository in the
+[external preservation archive](docs/PRESERVATION_ARCHIVE.md); active CTest
+verifiers and explicit synthetic fixtures remain in the tree where the build
+uses them.
 Preservation rules and capture provenance are in
 [`docs/wiki/Preservation.md`](docs/wiki/Preservation.md). The synthetic-data
 inventory is in [`docs/SYNTHETIC_DATA_BY_GAME.md`](docs/SYNTHETIC_DATA_BY_GAME.md).
