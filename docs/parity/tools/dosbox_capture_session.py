@@ -195,6 +195,18 @@ ENTRANCE_ENTER_CLICK_KEY = "entrance_enter_click"
 # fractions of the content rectangle keeps the click correct across window
 # sizes and Retina scale factors.
 ENTRANCE_ENTER_CLICK_FRAC = (696.0 / 799.0, 160.0 / 599.0)
+# ReDMCSB COMMAND.C maps I34E Resume to C409_ZONE_ENTRANCE_RESUME;
+# layout-696 records 408/409 resolve to the PC framebuffer rectangle
+# x=244..298, y=76..93.  Click its centre in the same normalized
+# framebuffer space as the ENTER route.  This is the source mouse path; the
+# former Alt+keypad cursor simulation was accepted by the host but did not
+# move DOSBox-X's internal cursor on the live macOS route.
+ENTRANCE_RESUME_CLICK_KEY = "entrance_resume_click"
+ENTRANCE_RESUME_CLICK_SCREEN_COORD = (271, 84)
+ENTRANCE_RESUME_CLICK_FRAC = (
+    ENTRANCE_RESUME_CLICK_SCREEN_COORD[0] / 320.0,
+    ENTRANCE_RESUME_CLICK_SCREEN_COORD[1] / 200.0,
+)
 # Height of the macOS window title bar (points) to skip when mapping a
 # framebuffer-fractional target to an absolute on-screen click.
 MACOS_WINDOW_TITLEBAR_H = 28
@@ -2151,6 +2163,32 @@ def _press_entrance_enter_click() -> None:
     subprocess.run(["cliclick", f"m:{px},{py}"], check=True)
     time.sleep(0.3)
     subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
+
+
+def _press_entrance_resume_click() -> None:
+    """Click the original PC34 C409 Resume target once.
+
+    The first click is consumed when DOSBox captures the mouse.  The second
+    click is the original left-button event that COMMAND.C dispatches to
+    I34E/C409.  Keeping this as a real screen click is important: the
+    keyboard-simulation Alt+keypad fallback can report success while leaving
+    DOSBox-X's internal cursor on ENTER.
+    """
+    if shutil.which("cliclick") is None:
+        raise RuntimeError("cliclick is required for the entrance Resume click")
+    _activate_dosbox()
+    point = _framebuffer_click_point(
+        _dosbox_window_bounds(),
+        ENTRANCE_RESUME_CLICK_FRAC,
+    )
+    if point is None:
+        raise RuntimeError(
+            "cannot resolve DOSBox window bounds for the entrance Resume click"
+        )
+    px, py = point
+    subprocess.run(["cliclick", f"m:{px},{py}"], check=True)
+    time.sleep(0.3)
+    subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
     time.sleep(0.4)
     subprocess.run(["cliclick", f"c:{px},{py}"], check=True)
 
@@ -2233,6 +2271,9 @@ def _press_key(key: str) -> None:
     time.sleep(0.25)
     if key == ENTRANCE_ENTER_CLICK_KEY:
         _press_entrance_enter_click()
+        return
+    if key == ENTRANCE_RESUME_CLICK_KEY:
+        _press_entrance_resume_click()
         return
     if key == DUNGEON_MOVE_FORWARD_CLICK_KEY:
         _press_dungeon_move_forward_click()
@@ -2326,6 +2367,7 @@ def _last_key_dispatch_from_log(capture_root: Path) -> KeyDispatch | None:
 def _dispatch_key_for_live_step(capture_root: Path, step_name: str, key: str) -> None:
     pseudo_map = {
         ENTRANCE_ENTER_CLICK_KEY: "mouse:left:entrance_enter",
+        ENTRANCE_RESUME_CLICK_KEY: "mouse:left:c409_entrance_resume",
         DUNGEON_MOVE_FORWARD_CLICK_KEY: "mouse:left:c070_move_forward",
     }
     mapped = KEY_MAP.get(key, pseudo_map.get(key, key if len(key) == 1 else ""))
@@ -3270,22 +3312,27 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"--resume requires {diskette_save}")
         if not 1 <= args.resume_down_steps <= 24:
             parser.error("--resume-down-steps must be between 1 and 24")
-        # ReDMCSB COMMAND.C maps I34E Resume to the source C409 mouse zone
-        # (x=244..298, y=76..93).  After selector option 4 the PC34 control
-        # table accepts DMWeb's Alt+keypad mouse simulation.  The cursor
-        # starts in the adjacent ENTER zone; seven down steps reach the
-        # centre of C409 without relying on macOS host click injection.
+        # ReDMCSB COMMAND.C maps I34E Resume to C409 (x=244..298,
+        # y=76..93).  Use the source mouse zone directly.  The previous
+        # Alt+keypad simulation reached the host input path but left the
+        # DOSBox-X internal cursor on ENTER, so it could never activate
+        # Resume with an authentic save.
         plan = [
-            *DEFAULT_PLAN[:4],
+            *DEFAULT_PLAN[:2],
             PlanStep(
-                "resume_cursor_position", "entrance_menu",
-                keys=["Alt-Keypad-2"] * args.resume_down_steps,
+                "input_select_resume", "entrance_menu",
+                # PC34 option 1 is the original Mouse control path.  C409
+                # is a real left-button zone; option 4's keyboard
+                # simulation is deliberately not used for Resume because
+                # DOSBox-X does not ingest the host mouse event there.
+                keys=["1", "Return"],
                 settle_only=True,
-                settle_s=1.0,
+                settle_s=4.0,
             ),
+            DEFAULT_PLAN[3],
             PlanStep(
                 "resume_dungeon", "dungeon_gameplay",
-                keys=["Alt-Keypad-Plus"],
+                keys=[ENTRANCE_RESUME_CLICK_KEY],
                 timeout_s=60.0,
             ),
             DEFAULT_PLAN[-1],
