@@ -19,7 +19,10 @@
   först därefter publicera party, HUD och viewport.
   Alla 44 File_header-kartor har nu också ett gemensamt, läsande
   interaktionskvitto för DB0/DB1/DB2/DB3, men kartbyten och mutationer är
-  fortfarande spärrade tills samma sessionägare finns.
+  fortfarande spärrade tills samma sessionägare finns. Den gamla
+  Firestaff-convenience-sessionen är nu uttryckligen diagnostisk och får
+  inte användas som SKSAVE- eller GAME_LOAD-ersättning; nästa ägare ska
+  fortsätta direkt från SKProjects `DM2_LOAD_NEW_DUNGEON`/`DM2_GAME_LOAD`.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

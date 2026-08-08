@@ -1,26 +1,23 @@
 /*
  * dm2_v1_new_game.h — DM2 V1 New Game & Session Management API
  *
- * Phase 6: Utility/import flow — DM2-specific load/start flow.
+ * DM2-specific load/start admission boundary.
  *
  * Provides the public admission boundary for new-game and save selection.
  * It deliberately does not construct a starter party or deserialize an
  * incomplete save into a playable session: those mutations belong to the
  * source-owned DM2_GAME_LOAD transaction.
  *
- * Source locks (ReDMCSB WIP20210206):
- *   CHAMPION.C F0280 — CHAMPION_AddCandidateChampionToParty: portrait index
- *     to squad position assignment, initial attribute setting.
- *     SKULL.ASM T520 — party placement and start position (Hall of Champions).
- *     SKULL.ASM T560 — dungeon load completion and party state init.
- *     CHAMPRST.C F0278 — CHAMPION_ResetDataToStartGame: clears hand, clears
- *       champion load/HP/name/title masks on new game.
- *   REQDISK.C F0428 — DIALOG_RequireGameDiskInDrive_NoDialogDrawn: floppy
- *     disk check gate (N/A for modern file-based loading).
- *   docs/dm2_party_state.md — champion record (261 bytes), SUPPRESS mask,
- *     portrait→class mapping, HP/stamina/mana initial values.
- *   docs/dm2_save_format.md — slot header layout (42 bytes), SUPPRESS
- *     game-state block (56 bytes), party state encoding.
+ * Source locks (SKProject SKWINSPX/src/v5):
+ *   sksvgame.cpp::DM2_GAME_LOAD (lines 1415-1546) owns resume versus new
+ *     dungeon selection and the post-load actuator-generator boundary.
+ *   sksvgame.cpp::DM2_LOAD_NEW_DUNGEON (lines 616-640) clears the party
+ *     count/leader possession before reading the selected dungeon structure.
+ *   skhero.cpp::DM2_SELECT_CHAMPION (lines 1054-1168) revives a selected
+ *     mirror champion, establishes the leader and follows its source items.
+ *   skhero.cpp::DM2_EQUIP_ITEM_TO_HAND (lines 2163-2188) and
+ *     DM2_ADD_ITEM_TO_PLAYER (lines 2190-2255) own item-slot routing and
+ *     item-bonus processing.
  *
  * Production new-game state is not constructed from fixed party defaults.
  * It is admitted only through the source-owned GAME_LOAD/LOAD_NEW_DUNGEON
@@ -48,13 +45,14 @@ extern "C" {
 /* ════════════════════════════════════════════════════════════════
  * Session state — encapsulates all DM2 runtime state for save/load
  * This is what gets serialized to a save slot.
- * Source: docs/dm2_save_format.md — full save file layout
+ * This is a legacy Firestaff convenience model, not an original SKSAVE
+ * layout. Production admission never serializes or restores it.
  * ════════════════════════════════════════════════════════════════ */
 
-/* Maximum serialized session size (conservative estimate) */
+/* Maximum legacy convenience-session size. */
 #define DM2_SESSION_MAX_SIZE  (2 * 1024 * 1024)
 
-/* Session version marker — written in slot header extension */
+/* Legacy convenience-session format version; not an original SKSAVE marker. */
 #define DM2_SESSION_VERSION   1
 
 /* The PC DOS c_hero stream is 0x107 bytes.  It is deliberately kept apart

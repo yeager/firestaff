@@ -36,6 +36,16 @@
 
 # DM2 New Game transaktionsgrund (2026-08-08)
 
+- ✅ DM2:s New Game- och sessionbevis hänvisar nu till den faktiska
+  SKProject-kedjan: `DM2_GAME_LOAD`, `DM2_LOAD_NEW_DUNGEON`,
+  `DM2_SELECT_CHAMPION`, `DM2_EQUIP_ITEM_TO_HAND` och
+  `DM2_ADD_ITEM_TO_PLAYER`. De felaktiga DM1-symbolerna och den vilseledande
+  "Phase 6"-beskrivningen är borttagna.
+- ✅ Den äldre Firestaff-convenience-sessionen är nu märkt som diagnostisk
+  och produktionsvägarna är fortsatt spärrade från att använda den som en
+  original-SKSAVE eller spelbar GAME_LOAD-session. Regressionstestet låser
+  den faktiska DM2-källkedjan.
+
 - ✅ Ett gemensamt, läsande GAME_LOAD-kvitto binder nu den verifierade
   File_header-entrén med dess scenrekord, tilecensus, DB2-text/markörposter,
   DB5–DB15-objekt samt

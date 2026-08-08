@@ -5,23 +5,19 @@
  *
  * Implements source-owned new-game/load boundaries and session save/load.
  *
- * Source locks (ReDMCSB WIP20210206):
- *   CHAMPION.C F0280  — CHAMPION_AddCandidateChampionToParty:
- *     portrait-to-squad-position assignment, portrait blit from
- *     GRAPHICS.DAT, initial attribute loop (lines 63-170).
- *     MASK0x0080_NAME_TITLE | MASK0x0100_STATISTICS | MASK0x0200_LOAD |
- *     MASK0x0400_ICON | MASK0x0800_PANEL | MASK0x1000_STATUS_BOX
- *     cleared by M009_CLEAR before champion init.
- *   CHAMPRST.C F0278  — CHAMPION_ResetDataToStartGame:
- *     clears G4055_s_LeaderHandObject, G0415_ui_LeaderEmptyHanded,
- *     clears all champion Attributes masks.
- *   CHAMPION.C G0417_apc_BaseSkillNames[4] — class names.
- *   docs/dm2_party_state.md — 261-byte champion record, SUPPRESS mask,
- *     portrait→class mapping, initial HP/stamina/mana values.
- *   docs/dm2_save_format.md — session serialization, slot header layout.
- *   SKULL.ASM T520  — party_placement: Hall of Champions (mapX=15,mapY=15,N).
- *   SKULL.ASM T560  — DUNGEON_Load completion, game state init.
- *   SKULL.ASM T048  — input dispatch / new game gate.
+ * Source locks (SKProject SKWINSPX/src/v5):
+ *   sksvgame.cpp::DM2_GAME_LOAD (lines 1415-1546) owns the loaded-session
+ *     branch and invokes DM2_LOAD_NEW_DUNGEON for a new game.
+ *   sksvgame.cpp::DM2_LOAD_NEW_DUNGEON (lines 616-640) resets party state
+ *     before DM2_READ_DUNGEON_STRUCTURE(1).
+ *   skhero.cpp::DM2_SELECT_CHAMPION (lines 1054-1168) joins a mirror,
+ *     revived c_hero, party leader and source-owned starting objects.
+ *   skhero.cpp::DM2_EQUIP_ITEM_TO_HAND (lines 2163-2188) and
+ *     DM2_ADD_ITEM_TO_PLAYER (lines 2190-2255) own equipment placement.
+ *
+ * The legacy convenience-session helpers below are retained solely for
+ * read-only diagnostics and explicit tests. They are not an original
+ * SKSAVE writer and cannot publish a playable DM2 session.
  */
 
 #include "dm2_v1_new_game.h"
@@ -139,7 +135,7 @@ bool dm2_v1_session_validate(const DM2_V1_SessionState *session)
 
 /* ════════════════════════════════════════════════════════════════
  * Session serialization
- * Source: docs/dm2_save_format.md — session state serialization
+ * Legacy Firestaff diagnostic format, never an original SKSAVE format.
  * ════════════════════════════════════════════════════════════════ */
 
 /*
@@ -1801,11 +1797,10 @@ int dm2_v1_session_delete_slot(const char *save_base, uint8_t slot)
 
 /* ════════════════════════════════════════════════════════════════
  * New game flow
- * Source: SKULL.ASM T520 — party_placement (Hall of Champions, N)
- *         SKULL.ASM T560 — DUNGEON_Load completion
- *         CHAMPION.C F0280 — starter party generation
- *         CHAMPRST.C F0278 — CHAMPION_ResetDataToStartGame
- *         REQDISK.C F0428 — disk gate (N/A for modern file loading)
+ * Source: SKProject sksvgame.cpp::DM2_GAME_LOAD (1415-1546),
+ * DM2_LOAD_NEW_DUNGEON (616-640), and skhero.cpp::DM2_SELECT_CHAMPION
+ * (1054-1168).  The source-owned transaction is intentionally not projected
+ * onto this legacy convenience-session structure.
  * ════════════════════════════════════════════════════════════════ */
 
 DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
@@ -1873,13 +1868,16 @@ DM2_FlowResult dm2_v1_load_game_flow(DM2_V1_SessionState *session,
 const char *dm2_v1_new_game_source_evidence(void)
 {
     return
-        "DM2 V1 New Game & Session Management — Phase 6 implementation\n"
-        "CHAMPION.C F0280 lines 63-170: CHAMPION_AddCandidateChampionToParty\n"
-        "  — portrait-to-squad-position assignment, attribute loop\n"
-        "CHAMPRST.C F0278: CHAMPION_ResetDataToStartGame — clears party state\n"
-        "SKULL.ASM T520: party_placement — Hall of Champions (15,15,N)\n"
-        "SKULL.ASM T560: DUNGEON_Load completion\n"
-        "docs/dm2_party_state.md: 261-byte champion record, SUPPRESS mask\n"
-        "docs/dm2_save_format.md: session serialization (1306 bytes)\n"
-        "docs/dm2_save_slots.md: 10-slot SKSave%02u.dat layout (42+1306 bytes)\n";
+        "DM2 New Game source evidence\n"
+        "SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD lines 1415-1546\n"
+        "  — selects resume versus DM2_LOAD_NEW_DUNGEON and owns the load boundary\n"
+        "SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON lines 616-640\n"
+        "  — clears party count and leader possession before reading the dungeon\n"
+        "SKProject SKWINSPX/src/v5/skhero.cpp::DM2_SELECT_CHAMPION lines 1054-1168\n"
+        "  — mirror selection, hero revival, party leader and source item traversal\n"
+        "SKProject SKWINSPX/src/v5/skhero.cpp::DM2_EQUIP_ITEM_TO_HAND lines 2163-2188\n"
+        "  — source item slot/leader-hand routing and item-bonus processing\n"
+        "SKProject SKWINSPX/src/v5/skhero.cpp::DM2_ADD_ITEM_TO_PLAYER lines 2190-2255\n"
+        "  — source possession placement for the selected champion\n"
+        "SKULL.ASM remains disassembly evidence only; it is not a substitute source owner.\n";
 }

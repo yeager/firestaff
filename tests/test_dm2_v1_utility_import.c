@@ -347,12 +347,14 @@ static void test_source_evidence(void)
     printf("  Source evidence citations...\n");
     const char *e = dm2_v1_new_game_source_evidence();
     CHECK(e != NULL && strlen(e) > 10, "Source evidence is non-empty");
-    CHECK(strstr(e, "CHAMPION.C F0280") != NULL,
-          "F0280 cited in source evidence");
-    CHECK(strstr(e, "SKULL.ASM T520") != NULL,
-          "SKULL.ASM T520 cited");
-    CHECK(strstr(e, "CHAMPRST.C F0278") != NULL,
-          "F0278 cited");
+    CHECK(strstr(e, "sksvgame.cpp::DM2_GAME_LOAD") != NULL,
+          "GAME_LOAD cited in source evidence");
+    CHECK(strstr(e, "DM2_LOAD_NEW_DUNGEON") != NULL,
+          "new-dungeon branch cited");
+    CHECK(strstr(e, "skhero.cpp::DM2_SELECT_CHAMPION") != NULL,
+          "champion selection cited");
+    CHECK(strstr(e, "DM2_ADD_ITEM_TO_PLAYER") != NULL,
+          "source item placement cited");
 }
 
 /* ── Test 9: Session size constant ── */
