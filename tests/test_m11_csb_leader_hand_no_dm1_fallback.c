@@ -932,6 +932,27 @@ int main(void)
         check(state.world.projectiles.count == 0,
               "CSB Ven potion THROW does not allocate into DM1 M11 projectile list");
 
+        /* C509 is the source HEAD slot, raw C02 in M516.Champion.Slots[].
+         * Exercise M11's inverse map through a real inventory pickup: the
+         * former simplified belt/pack mapping had no inverse for HEAD and
+         * rejected this click before the GAMEBLOCK write. */
+        M11_GameView_ClearV1LeaderHandObject(&state);
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_HEAD] = chest;
+        profile.runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_HEAD] = chest;
+        check(M11_GameView_GetV1InventorySourceSlotBoxZone(
+                  10, &sx, &sy, &sw, &sh),
+              "C509 head slot zone is available for CSB inventory click");
+        check(M11_GameView_HandlePointerButton(
+                  &state,
+                  sx + sw / 2,
+                  33 + sy + sh / 2,
+                  M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW,
+              "CSB C509 head-slot click picks the source object into leader hand");
+        check(state.world.party.champions[0].inventory[CHAMPION_SLOT_HEAD] ==
+                  THING_NONE &&
+                  profile.runtime.party_state.Champions[0]
+                      .Slots[CSB_V1_SLOT_HEAD] == THING_NONE,
+              "CSB C509 writes raw C02 head slot rather than a belt/pack slot");
         M11_GameView_ClearV1LeaderHandObject(&state);
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             chest;
