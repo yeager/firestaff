@@ -128,9 +128,9 @@ _Static_assert(sizeof(CSB_V1_SaveHeader) == 512,
     "UNABLE TO SAVE GAME!"
 #define CSB_V1_SAVE_MSG_CANT_LOAD \
     "CAN'T FIND SAVED GAME!"
-#define CSB_V1_SAVE_MSG_DAMAGED \
-    /* Atari ST 2.1 disassembly csb.s string table at $43a(a4):\n+     * \"SAVED GAME DAMAGED!\" */ \
-    "SAVED GAME DAMAGED!"
+/* Atari ST 2.1 disassembly csb.s string table at $43a(a4):
+ * "SAVED GAME DAMAGED!" */
+#define CSB_V1_SAVE_MSG_DAMAGED "SAVED GAME DAMAGED!"
 #define CSB_V1_SAVE_MSG_DIFFERENT \
     "THAT'S NOT THE SAME GAME"
 

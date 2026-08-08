@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct { int calls; } Probe;
+typedef struct {
+    int calls;
+    int x;
+    int y;
+} Probe;
 
 static void put_le16(unsigned char *p, int off, unsigned short v)
 { p[off] = (unsigned char)v; p[off + 1] = (unsigned char)(v >> 8); }
@@ -15,9 +19,13 @@ static int draw_real_c14(void *user,
 {
     Probe *probe = (Probe *)user;
     if (!probe || !blit || !pixels || stride < 320 || blit->graphic_index != 487 ||
-        !blit->uses_f0791_blit || blit->transparent_color != 10) return 0;
+        !blit->uses_f0791_blit || blit->transparent_color != 10 ||
+        blit->x < 0 || blit->x >= 224 || blit->y < 0 || blit->y >= 136) return 0;
     ++probe->calls;
-    pixels[33 * stride + 112] = 0x5a;
+    probe->x = blit->x;
+    probe->y = blit->y;
+    /* ReDMCSB DUNVIEW.C F0128 supplies the F0115 drawer an aperture origin. */
+    pixels[blit->y * stride + blit->x] = 0x5a;
     return 1;
 }
 
@@ -68,7 +76,9 @@ int main(void)
     binding.projectile_sprite_user = &probe;
     if (!csb_v1_boot_render_viewport_frame_pc34(&profile, frame, 320, 200,
                                                  &binding, &counts) ||
-        probe.calls != 1 || frame[33 * 320 + 112] != 0x5a ||
+        probe.calls != 1 || probe.x < 0 || probe.x >= 224 ||
+        probe.y < 0 || probe.y >= 136 ||
+        frame[(33 + probe.y) * 320 + 48 + probe.x] != 0x5a ||
         counts.projectile_marker_drawn_count != 0) {
         fputs("boot startup frame did not consume C14 as a real F0115 blit\n", stderr);
         return 1;

@@ -10,6 +10,12 @@
   session carries the source-owned C001–C005/C017/C040 identity, geometry and
   transparency required by the terminal contract. This prevents a
   pointer-only fixture from weakening the real-material handoff gate.
+- ✅ Repaired two follow-up source-contract regressions: the opening-door
+  receipt fixture now proves the asymmetric C002 (105×161), C003 (128×161)
+  and C004 geometry from `GRAPHICS.DAT`; the C14 F0115 test now writes through
+  the real F0128 viewport aperture instead of assuming full-frame callback
+  coordinates. This preserves the terminal handoff checks rather than
+  loosening them.
 - ✅ Verification: real CSB corpus scan found the eight supported editions;
   focused save, title/entrance, viewport-door, DSA-save and Phase A probes
   passed. Source anchors: ReDMCSB `SAVEHEAD.C` F0429/F0430, `TITLE.C` F0437,
