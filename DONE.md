@@ -1554,6 +1554,19 @@
 - ✅ Verifierat både från den delade DM2-dataroten och från det direkta
   originalarkivet med `test_dm2_fmtowns_m11_title_real_media`.
 
+# DM2 FM Towns engelska GDAT-transaktion (2026-08-08)
+
+- ✅ Den valda PC-DOS-kompanjonens texttabell byggs nu privat och publiceras
+  först när varje verifierad GDAT-textpost har avkodats. Ett avbrutet läs- eller
+  minnesfel lämnar den tidigare språkägaren helt orörd.
+- ✅ Den verkliga save-dialogens M11-konsument använder samma
+  `DM2_QUERY_GDAT_TEXT`-brygga för `SAVE` och `CANCEL`. TITLE, SWOOSH och END
+  ligger kvar som sina autentiska japanska rasterbilder; ingen översättning
+  eller ersättningsgrafik skapas.
+- ✅ Verifierat med den hashverifierade PC-DOS-korpusen och FM Towns
+  HME-242-arkivet i minnet genom `test_dm2_v1_i18n_real_data`,
+  `test_dm2_v1_i18n` och `test_dm2_fmtowns_m12_real_media`.
+
 # DM2 startmeny: källkoordinater (2026-08-08)
 
 - ✅ SDL:s huvudslinga normaliserar fönsterklick till originalets 320×200-

@@ -51,6 +51,7 @@ int dm2_v1_i18n_load_english_overlay(DM2_V1_I18nContext *ctx,
                                      const uint8_t *pc_gdat_data,
                                      size_t pc_gdat_size) {
     DM2_V1_AssetLoader loader;
+    DM2_V1_I18nContext candidate;
     DM2_V1_GdatEntryIterator iter;
     DM2_V1_GdatEntryQueryReceipt receipt;
     uint16_t flag_word = 0;
@@ -58,6 +59,17 @@ int dm2_v1_i18n_load_english_overlay(DM2_V1_I18nContext *ctx,
     uint16_t count = 0;
 
     if (!ctx || !pc_gdat_data || pc_gdat_size == 0) return 0;
+
+    /* The selected PC GRAPHICS.DAT is an all-or-nothing language owner for
+     * a Japanese FM Towns session.  Building directly in `ctx` used to leave
+     * a partly populated overlay behind after an allocation or decode
+     * failure.  Such a context can make a later keyed lookup look like a
+     * source fallback, which is Japanese text in an advertised English
+     * session.  Stage every authenticated GDAT text member privately, then
+     * publish it in one assignment only after every entry is present.
+     * Source: SKULLWIN/c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT. */
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.active_locale = ctx->active_locale;
 
     if (dm2_v1_asset_loader_init(&loader, pc_gdat_data, pc_gdat_size) != 0)
         return 0;
@@ -113,6 +125,12 @@ int dm2_v1_i18n_load_english_overlay(DM2_V1_I18nContext *ctx,
             if (dup) continue;
             if (unique >= alloc_count) break;
 
+            if (receipt.raw_length == 0u ||
+                receipt.raw_length > UINT32_MAX - pool_estimate) {
+                free(entries);
+                dm2_v1_asset_loader_free(&loader);
+                return 0;
+            }
             entries[unique].category = receipt.category;
             entries[unique].index = receipt.index;
             entries[unique].field = receipt.field;
@@ -122,13 +140,18 @@ int dm2_v1_i18n_load_english_overlay(DM2_V1_I18nContext *ctx,
             unique++;
         }
 
-        ctx->entries = entries;
-        ctx->entry_count = unique;
-
-        if (!i18n_ensure_pool(ctx, pool_estimate)) {
+        if (unique == 0u || pool_estimate == 0u) {
             free(entries);
-            ctx->entries = NULL;
-            ctx->entry_count = 0;
+            dm2_v1_asset_loader_free(&loader);
+            return 0;
+        }
+        candidate.entries = entries;
+        candidate.entry_count = unique;
+
+        if (!i18n_ensure_pool(&candidate, pool_estimate)) {
+            free(entries);
+            candidate.entries = NULL;
+            dm2_v1_asset_loader_free(&loader);
             return 0;
         }
 
@@ -137,26 +160,34 @@ int dm2_v1_i18n_load_english_overlay(DM2_V1_I18nContext *ctx,
             DM2_V1_DirectGdatTextReceipt text_receipt;
             size_t text_size = 0;
             const uint8_t *raw = dm2_v1_direct_query_gdat_text_receipt(
-                &loader, entries[j].category, entries[j].index,
-                entries[j].field, &text_size, &text_receipt);
+                &loader, candidate.entries[j].category, candidate.entries[j].index,
+                candidate.entries[j].field, &text_size, &text_receipt);
 
-            entries[j].text_offset = ctx->text_pool_size;
-            entries[j].text_length = (uint16_t)text_size;
-
-            if (raw && text_size > 0) {
-                if (!i18n_ensure_pool(ctx, (uint32_t)text_size)) break;
-                if (encrypted)
-                    decode_text(raw, text_size,
-                                ctx->text_pool + ctx->text_pool_size);
-                else
-                    memcpy(ctx->text_pool + ctx->text_pool_size, raw, text_size);
-                ctx->text_pool_size += (uint32_t)text_size;
+            if (!raw || text_size == 0u || text_size > UINT16_MAX ||
+                text_size != candidate.entries[j].text_length ||
+                !i18n_ensure_pool(&candidate, (uint32_t)text_size)) {
+                dm2_v1_i18n_destroy(&candidate);
+                dm2_v1_asset_loader_free(&loader);
+                return 0;
             }
+            candidate.entries[j].text_offset = candidate.text_pool_size;
+            candidate.entries[j].text_length = (uint16_t)text_size;
+
+            if (encrypted)
+                decode_text(raw, text_size,
+                            candidate.text_pool + candidate.text_pool_size);
+            else
+                memcpy(candidate.text_pool + candidate.text_pool_size, raw,
+                       text_size);
+            candidate.text_pool_size += (uint32_t)text_size;
         }
     }
 
-    ctx->valid = 1;
-    ctx->text_encrypted = 0;
+    dm2_v1_asset_loader_free(&loader);
+    candidate.valid = 1;
+    candidate.text_encrypted = 0;
+    dm2_v1_i18n_destroy(ctx);
+    *ctx = candidate;
     return 1;
 }
 

@@ -2176,6 +2176,14 @@
   are not sufficient evidence; do not revive the fixture tile table or its
   fallback geometry.
 
+- **DM2-FMTOWNS-TEXT-CONSUMERS:** The authenticated PC-English companion
+  now atomically owns every keyed FM Towns GDAT text override and the
+  source-owned save-dialogue consumer renders its SAVE/CANCEL labels through
+  that bridge. Do not route other native HME-242 raster text (TITLE, SWOOSH
+  or END) through it: those pictures own Japanese glyphs in their verified
+  media. Bind further runtime text only after its original
+  `DM2_QUERY_GDAT_TEXT` caller and source font/rect owner are live.
+
 - **DM2-PLATFORM-MEDIA:** Keep the DOS, FM Towns and Amiga boot paths
   the original quit route. The 1+2+14 SD records and their SO scheduling are
   retained in the source streams, but no Amiga mixer is connected yet.
