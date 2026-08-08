@@ -7,7 +7,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 -
 + static FILE *theron_cd_register_trace = NULL;
 + static unsigned theron_cd_register_trace_count = 0;
-+ if((physAddr & 0xf) <= 4 && theron_cd_register_trace_count < 4096)
++ if((physAddr & 0xf) <= 4 && theron_cd_register_trace_count < 32)
 + {
 +  if(!theron_cd_register_trace)
 +  {
@@ -24,9 +24,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +  }
 +  if(theron_cd_register_trace)
 +  {
-+   fprintf(theron_cd_register_trace,
-+           "pce_cd_register_write cpu_pc=%04x physical=%08x data=%02x\n",
-+           HuCPU.GetRegister(HuC6280::GSREG_PC), physAddr, data);
++   fprintf(theron_cd_register_trace, "pce_cd_register_write physical=%08x data=%02x\n", physAddr, data);
 +   fflush(theron_cd_register_trace);
 +   theron_cd_register_trace_count++;
 +  }

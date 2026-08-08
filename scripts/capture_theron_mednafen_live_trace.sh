@@ -88,9 +88,10 @@ capture_host_code_for_mapping() {
         down:22) printf '%s' 1 ;;
         left:4) printf '%s' 0 ;;
         right:7) printf '%s' 2 ;;
-        # The normal macOS home uses number-row 3/2 and arrow keys.
-        i:29) printf '%s' 20 ;;
-        ii:27) printf '%s' 19 ;;
+        # The normal macOS home may use number-row 3/2 and arrow keys.
+        # Mednafen stores SDL scancodes: 3 is 32 and 2 is 31.
+        i:32) printf '%s' 20 ;;
+        ii:31) printf '%s' 19 ;;
         up:82) printf '%s' 126 ;;
         down:81) printf '%s' 125 ;;
         left:80) printf '%s' 123 ;;
@@ -531,7 +532,7 @@ require_instrumented_mednafen_binary() {
     # run: an empty trace is not capture evidence. The runtime needs both the
     # general CPU/CD producer, main-RAM control-flow producer, and the
     # game-owned main-RAM consumer-read producer.
-    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE; do
+    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE FIRESTAFF_THERON_RNG_CONSUMER_TRACE; do
         if ! grep -aFq "$marker" "$binary" 2>/dev/null; then
             printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation; build it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
             return 1
@@ -607,6 +608,7 @@ main_ram_consumer_trace="${trace}.main-ram-consumer"
 main_ram_target_trace="${trace}.main-ram-target"
 spawn_consumer_trace="${trace}.spawn-consumer"
 spawn_register_trace="${trace}.spawn-registers"
+rng_consumer_trace="${trace}.rng-consumer"
 vram_snapshot="${trace}.vram"
 vce_snapshot="${trace}.vce"
 transition_receipt="${trace}.transition"
@@ -622,7 +624,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$vram_snapshot" "$vce_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$vram_snapshot" "$vce_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
@@ -681,6 +683,7 @@ launch=(
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \
+    FIRESTAFF_THERON_RNG_CONSUMER_TRACE="$rng_consumer_trace" \
     FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot" \
     FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
@@ -847,7 +850,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$spawn_consumer_trace" "$spawn_register_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -891,6 +894,7 @@ transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$m
 transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "$main_ram_target_trace")
 transition_spawn_consumer_read_count=$(trace_count '^spawn_consumer_read ' "$spawn_consumer_trace")
 transition_spawn_register_sample_count=$(trace_count '^spawn_consumer_registers ' "$spawn_register_trace")
+transition_rng_consumer_sample_count=$(trace_count '^rng_consumer_window ' "$rng_consumer_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
@@ -932,6 +936,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_target_writes=%s\n' "$transition_main_ram_target_write_count"
     printf 'spawn_consumer_reads=%s\n' "$transition_spawn_consumer_read_count"
     printf 'spawn_register_samples=%s\n' "$transition_spawn_register_sample_count"
+    printf 'rng_consumer_samples=%s\n' "$transition_rng_consumer_sample_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'
     printf 'vce_palette_snapshot_bytes=1024\n'

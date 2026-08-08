@@ -56,6 +56,15 @@ if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$buil
     printf 'FAIL: capture must retain bounded main-RAM e009 register-write provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'mednafen_1.32.1_theron_rng_consumer_trace.patch' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_CONSUMER_TRACE="$rng_consumer_trace"' "$script" ||
+   ! grep -Fq 'rng_consumer_samples=%s' "$script" ||
+   ! grep -Fq 'rng_consumer_window sequence=%u step=%u pc=%04x physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'logical_pc == 0x5d64' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'logical_pc == 0x5d6a' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"; then
+    printf 'FAIL: capture build must retain a bounded raw RNG-consumer execution window\n' >&2
+    exit 1
+fi
 if [[ ! -f "$irq2_patch" ]] ||
    ! grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\n", trace);' "$irq2_patch" ||
    grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\\n", trace);' "$irq2_patch" ||
@@ -205,9 +214,11 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'does not retain a supported %s mapping' "$script" ||
    ! grep -Fq 'capture_host_code_for_mapping()' "$script" ||
    ! grep -Fq 'i:91) printf' "$script" ||
-   ! grep -Fq 'i:29) printf' "$script" ||
+   ! grep -Fq 'i:32) printf' "$script" ||
+   grep -Fq 'i:29) printf' "$script" ||
    ! grep -Fq 'ii:90) printf' "$script" ||
-   ! grep -Fq 'ii:27) printf' "$script" ||
+   ! grep -Fq 'ii:31) printf' "$script" ||
+   grep -Fq 'ii:27) printf' "$script" ||
    ! grep -Fq 'i:54) printf' "$script" ||
    ! grep -Fq 'i:55) printf' "$script" ||
    ! grep -Fq 'ii:54) printf' "$script" ||
