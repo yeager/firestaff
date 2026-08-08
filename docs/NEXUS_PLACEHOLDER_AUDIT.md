@@ -59,6 +59,14 @@ command-to-VRAM-korridorer, men deras source-span har ännu ingen exakt
 bindning till retail-MNS, DGN, ITEM, MENU, TITLE eller CLUT. Reset-capture
 bevisar inte startup eller meny.
 
+`writer-code.trace` och `vdp1-writes.trace` är dessutom separata, externa
+diagnostikartefakter. De får inte kopplas till en `runtime-vdp12.raw` från en
+annan körning bara för att PC, VRAM-adress eller byteprefix råkar sammanfalla.
+Det aktuella writer-kvittot (`PC=0x06013098`, `VRAM=0x47c00`) har därför
+fortsatt `runtime_code_source_identity=unbound`; samma-körningsidentitet,
+relokerad/dekomprimerad kodägare och retail-asset måste först visas i ett
+gemensamt capturepaket.
+
 ## Verifieringskommandon
 
 ```sh
