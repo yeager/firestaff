@@ -140,6 +140,12 @@
   utanför källbilden är alltså aldrig skäl att behålla ett halvfärdigt
   touch-tillstånd inför nästa CSB-kommando.
 
+- ✅ Första CSB-kommandot efter C040/C017-handoff accepterar nu även C004/C006
+  sidosteg, precis som ReDMCSB `COMMAND.C` F0361:s källrader. Den verkliga
+  Atari `MINI.DAT`-kallresumen bevisar C004 genom den levande GAMEBLOCK-kön;
+  den autentiska dungeonen avgör fortsatt om steget går att utföra eller
+  blockeras. Ingen testkarta eller ersatt partystatus används.
+
 - ✅ En obunden CSB-runtime startar nu med noll champions, precis som
   ReDMCSB `BASE.C` G0305 före F0435:s sparåterställning eller CEDT/HoC:s
   championval. Det tidigare modellvärdet tre kunde få en runtime utan

@@ -603,6 +603,12 @@ int main(void)
               input.first_post_c040_input &&
               input.command == CSB_V1_STARTUP_SESSION_MOVEMENT_FORWARD_PC34,
           "first post-C040 input enters movement through the next live HUD tick");
+    check(csb_v1_startup_session_first_input_receipt_pc34(
+              &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_RIGHT_PC34,
+              session.source_tick, session.generation, &input) && input.valid &&
+              input.first_post_c040_input &&
+              input.command == CSB_V1_STARTUP_SESSION_MOVEMENT_RIGHT_PC34,
+          "first post-C040 side-step enters the same live HUD movement route");
     check(!csb_v1_startup_session_first_input_receipt_pc34(
                &session, &live_hud, CSB_V1_STARTUP_SESSION_MOVEMENT_NONE_PC34,
                session.source_tick, session.generation, &input),

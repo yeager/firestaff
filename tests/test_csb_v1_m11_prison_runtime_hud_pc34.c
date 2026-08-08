@@ -507,6 +507,18 @@ int main(void)
                     if (resumed_profile) {
                         int resumed_direction = resumed_profile->runtime.party_dir;
 
+                        /* ReDMCSB COMMAND.C F0361 lines 677-684 accepts the
+                         * C004 side-step keyboard row alongside forward and
+                         * turns.  MINI.DAT supplies the live GAMEBLOCK; only
+                         * its authentic dungeon decides whether this attempt
+                         * advances or is blocked. */
+                        CHECK(M11_GameView_HandleInput(
+                                  &resumed_view,
+                                  M12_MENU_INPUT_STRAFE_RIGHT) ==
+                                  M11_GAME_INPUT_REDRAW &&
+                                  resumed_profile->runtime.last_input_dispatch.command ==
+                                      DM1_V1_COMMAND_MOVE_RIGHT,
+                              "cold Atari resume admits first C004 side-step through the live command queue");
                         CHECK(M11_GameView_HandleInput(
                                   &resumed_view,
                                   M12_MENU_INPUT_TURN_RIGHT) ==
