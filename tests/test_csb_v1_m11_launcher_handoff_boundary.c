@@ -1740,6 +1740,8 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         M11_GameViewState view;
         M12_LaunchIntent intent;
         unsigned char framebuffer[320 * 200];
+        const M12_AssetVersionStatus *selected_version;
+        char selected_cache_marker[80];
         const int requested = requested_modes[mode_index];
         int tick;
         unsigned int last_vbl = 0u;
@@ -1783,6 +1785,19 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         }
         expect_true(intent.valid == 1 && intent.presentationMode == requested,
                     "M12 retains the requested Atari ST CSB presentation mode");
+        selected_cache_marker[0] = '\0';
+        selected_version = intent.options.versionIndex >= 0
+            ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                         (size_t)intent.options.versionIndex)
+            : NULL;
+        expect_true(selected_version && selected_version->matched &&
+                        selected_version->versionId && intent.versionId &&
+                        strcmp(selected_version->versionId, intent.versionId) == 0 &&
+                        snprintf(selected_cache_marker,
+                                 sizeof(selected_cache_marker),
+                                 "csb-%s/GRAPHICS.DAT",
+                                 selected_version->versionId) > 0,
+                    "M12 binds the available Atari ST version into its launch intent");
         M11_GameView_Init(&view);
         expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                     "M11 opens the Atari ST CSB package through M12");
@@ -1792,9 +1807,10 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
             expect_true(profile != NULL &&
                             (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
                              profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+                            selected_version && selected_version->versionId &&
                             strstr(profile->graphics_path,
-                                   "csb-st20-21-en/GRAPHICS.DAT") != NULL,
-                        "M11 uses the M12-selected Atari ST package cache");
+                                   selected_cache_marker) != NULL,
+                        "M11 uses the effective M12-selected Atari ST package cache");
         }
         for (tick = 0; tick < 800 && view.csbState.startup_title_active;
              ++tick) {

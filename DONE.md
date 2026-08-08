@@ -1,3 +1,13 @@
+# CSB Atari ST effective-version launcher receipt (2026-08-08)
+
+- ✅ Atari ST:s riktiga hårddiskutgåva väljs nu och kontrolleras som den
+  effektiva M12-versionen i launcherregressionen. Provet kräver inte längre
+  felaktigt cachemappen för 2.0/2.1 när M12 korrekt faller tillbaka till den
+  enda hashverifierade `st20-21-hd-en`-utgåvan.
+- ✅ Verifierat genom den verkliga `GRAPHICS.DAT`/`DUNGEON.DAT`-,
+  `ANIMATE.SCR`-, HUD- och viewportvägen från Atari-hårddiskmedian (1 499
+  kontroller, inga fel). Inga testtillgångar används i körningen.
+
 # DM2 GAME_LOAD load-flow gate (2026-08-08)
 
 - ✅ Den publika Resume-vägen har samma källgrind som Nytt spel. Saknad
