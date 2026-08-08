@@ -67,7 +67,10 @@
   källstavad SKSave-katalog under den hashskannade dataroten och skannar den
   därefter i originalets direkta slotordning. Detta är bara inventering:
   Resume är fortsatt spärrad tills den kompletta `GAME_LOAD`-ägaren finns,
-  och ingen rå SKSAVE importeras eller skrivs.
+  och ingen rå SKSAVE importeras eller skrivs. 2026-08-08: även den tidigare
+  separata specialtimerläsaren är borttagen ur M10; produktionsgränsen avvisar
+  fasen tills hela originaltransaktionen äger den. Den finns kvar endast i
+  sitt explicita läsartest och får inte användas för att publicera en session.
 
 - **DM2-FILE-HEADER-LOCALLEVEL-OWNER:** The callback-shaped
   `DM2_LOAD_LOCALLEVEL_DYN` translation is now explicitly blocked unless a

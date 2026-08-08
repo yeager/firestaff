@@ -11,6 +11,19 @@
   `GRAPHICS.DAT`-hash. Amiga- och PC-startvägar förblir separata enligt
   ReDMCSB `COMPILE.H` och `APPA.C`.
 
+# DM2 SKSAVE-produktionsspärr (2026-08-08)
+
+- ✅ M10 länkar inte längre den callback-baserade specialtimerläsaren
+  `dm2_v1_save_read_record_checkcode_pc34_compat.c`. Den isolerade
+  källtranskriptionen finns enbart i sitt eget testmål.
+- ✅ `dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains` avvisar
+  utan att läsa eller bygga någon record- eller timerkedja. SKProject
+  `DM2_GAME_LOAD` måste först återställa karta, recordpooler, heroes, timers
+  och DYN som en gemensam originalägd transaktion.
+- ✅ Verifierat med M11:s uppstartsprofilgrind mot hashverifierad PC-DOS-data,
+  utility/import-proben (73/73), läsarens egna test och kontroll av att M10
+  saknar referenser till den testbegränsade läsaren.
+
 # DM2 startmeny: källkoordinater (2026-08-08)
 
 - ✅ SDL:s huvudslinga normaliserar fönsterklick till originalets 320×200-

@@ -323,6 +323,10 @@ typedef struct {
     uint8_t next_stream_current_byte;
 } DM2_V1_SksaveSpecialTimerReceipt;
 
+/* Production currently rejects this partial phase.  SKProject's
+ * DM2_GAME_LOAD owns it only alongside the complete map/record/hero/timer/DYN
+ * transaction; the callback reader itself is test-only until that owner is
+ * available. */
 int dm2_v1_record_pool_preflight_raw_sksave_special_timer_chains(
     const uint8_t *raw_body,
     size_t raw_body_size,
