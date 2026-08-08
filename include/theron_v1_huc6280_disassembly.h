@@ -28,6 +28,14 @@ typedef struct {
     int stage2_resource_handler_verified;
     int stage2_resource_bank_table_population_verified;
     int stage2_resource_destination_registers_verified;
+    /* US raw-BIN regular-spawn helper at HuC6280 $4667.  This is a static
+     * call-contract receipt only; its RAM-loaded $5d64/$5d6a callees and
+     * runtime RNG state remain unresolved. */
+    int spawn_rng_helper_verified;
+    uint16_t spawn_rng_helper_address;
+    uint16_t spawn_rng_helper_bytes;
+    uint32_t spawn_rng_helper_file_offset;
+    uint32_t spawn_rng_helper_fnv1a;
     /* Static palette consumer from the retail HuC6280 bank. The routine
      * proves the VCE write contract only; its dynamic $27c4/$27c5 source
      * pointer is not a Track 02 palette binding by itself. */

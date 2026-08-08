@@ -97,6 +97,14 @@
   combat/drop consumers open; the legacy one-seed diagnostic helper is not
   treated as original-runtime proof.
 
+# Theron `$4667` helper contract (2026-08-08)
+
+- ✅ Added the exact 25-byte US raw-BIN `$4667` helper span at file offset
+  `$9c4e7` with FNV-1a `$b9075b31`; all seven repeated dungeon-bank copies
+  agree.
+- ✅ The receipt records the `$5d6a/$5d64` call contract while keeping those
+  RAM-loaded callees and the runtime RNG state unbound until dynamic capture.
+
 # DM2 SKSAVE bitstream-order repair (2026-08-08)
 
 - ✅ Added the source in-place reader for resident DB0–DB3 map chains. It

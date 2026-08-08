@@ -7,6 +7,9 @@
 - Theron: the raw US spawn body is now source-locked at HuC6280 $B0E5,
   including its L4644/L4667 call sites and HP clamp. Recover the external RNG
   and helper consumers before replacing the old diagnostic formula helper.
+- Theron: the static US `$4667` helper contract is now byte-verified at raw
+  BIN offset `$9c4e7`; recover its RAM-loaded `$5d6a/$5d64` bodies and dynamic
+  RNG state before promoting it into live spawn logic.
 - Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - Theron: world snapshots now have endian-stable scalar envelopes and bounds checks, but still carry raw host structs for progression, objects and timers; a portable field-by-field wire format needs additional source-owned layout evidence.
 

@@ -48,6 +48,15 @@ static void verify(const char *env_name, const char *name, int variant,
     } else {
         assert(!receipt.vce_palette_consumer_verified);
     }
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        assert(receipt.spawn_rng_helper_verified);
+        assert(receipt.spawn_rng_helper_address == 0x4667u);
+        assert(receipt.spawn_rng_helper_bytes == 25u);
+        assert(receipt.spawn_rng_helper_file_offset == 0x9c4e7u);
+        assert(receipt.spawn_rng_helper_fnv1a == 0xb9075b31u);
+    } else {
+        assert(!receipt.spawn_rng_helper_verified);
+    }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);
     assert(receipt.fragment_bytes == 134u);
