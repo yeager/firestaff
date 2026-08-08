@@ -12694,6 +12694,10 @@ as line/circle coordinates or promote them into movement geometry.
 - 🔧 2026-08-08 Theron object-record admission: source object binding now
   requires a loaded, header-verified level and in-map coordinates. Full T900
   ownership/equip/use/stack semantics remain pending the original consumer.
+- 🔧 2026-08-08 Theron monster-record admission: valid category-4 records now
+  require a source creature type, group count 0..3, and in-map coordinates.
+  RNG publication remains blocked until the dynamic `$4644/$4667` return
+  contract is captured.
 - 🔧 2026-08-08 CSB inventory: the live GAMEBLOCK-to-M11 C00..C29 slot map
   is now source-locked. Remaining HUD work is source-raster coverage and
   complete interaction behavior, not an inferred slot-order translation.

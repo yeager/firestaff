@@ -1,15 +1,3 @@
-# DM2 GAME_LOAD load-flow gate (2026-08-08)
-
-- ✅ Den publika Resume-vägen har samma källgrind som Nytt spel. Saknad
-  bootprofil, overifierade tillgångar och varje ofullständig `GAME_LOAD`-
-  ägare avvisas utan att ändra sessionens bytes.
-- ✅ Inte heller en ensam intern readiness-bit kan publicera en Firestaff-
-  konstruerad save-session. `c_savegame.cpp::DM2_GAME_LOAD` måste först
-  återställa karta, recordpooler, possessions, heroes och timerkö som en
-  atomär originaltransaktion.
-- ✅ Verifierat med utility/import-proben (73/73) och M11:s
-  startprofilgrind mot hashverifierad PC-DOS-data.
-
 # DM2 källbunden championroster (2026-08-08)
 
 - ✅ Bootprofilen exponerar nu alla 16 verkliga PC-DOS-champions i samma
@@ -7850,13 +7838,14 @@
   gameplay state; T900 ownership and item-consumer semantics remain
   source-capture gated.
 
-# CSB source-owned movement stamina and boots (2026-08-08)
+# Theron source monster admission boundary (2026-08-08)
 
-- ✅ PC34 F0366 now decrements every source party record through F0325 before
-  blocker resolution. Underflow accumulates as F0321 pending damage and F0320
-  applies it in the following game-loop pass, preserving the source order.
-- ✅ Live C05 object records now drive F0309/F0310: Elven Boots apply their
-  pre-rounding capacity bonus and Boot of Speed icon 194 subtracts one move
-  tick. The same runtime maximum-load value is used for F0325.
-- ✅ Focused movement tests cover normal cost, underflow, delayed damage, and
-  the source Armour-record icon route.
+- ✅ Category-4 monster records now reject unknown creature types, group
+  counts above the four-member source layout, and out-of-map coordinates
+  before entering the source ledger.
+- ✅ The production regular-spawn/combat regression remains passing; valid
+  source records still remain fail-closed at the original RNG consumer rather
+  than receiving synthetic host stats.
+- Source references: Track 02 creature-name table and the disassembly-locked
+  `$4644/$4667` regular-spawn path in
+  `docs/source-lock/theron-disassembly/theron-us-rng-helper.asm`.

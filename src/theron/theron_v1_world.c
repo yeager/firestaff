@@ -1287,6 +1287,10 @@ int theron_v1_world_bind_track02_monster(
     if (!world || !health || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        type >= THERON_TRACK02_CREATURE_TYPE_COUNT ||
+        x < 0 || x >= THERON_MAX_MAP_SIZE ||
+        y < 0 || y >= THERON_MAX_MAP_SIZE ||
+        number > 3u ||
         !world->level_loaded[dungeon_id - 1][level_index] ||
         !world->levels[dungeon_id - 1][level_index].source_header_verified ||
         world->source_monster_count >= THERON_MAX_SOURCE_MONSTERS)

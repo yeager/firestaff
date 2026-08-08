@@ -39,7 +39,12 @@ int main(void) {
           "verified level header without a source monster stays blocked");
     {
         CHECK(theron_v1_world_bind_track02_monster(
-                  &world, 1, 0, 0x1200u, 0x0042u, 1, 1, 0x0eu, 0u,
+                  &world, 1, 0, 0x1200u, 0x0042u, 1, 1, 0x07u, 4u,
+                  health, 4u, 0u, 0x0020u, 0x1200u) == -1 &&
+                  world.source_monster_count == 0,
+              "invalid source monster type/count cannot enter the ledger");
+        CHECK(theron_v1_world_bind_track02_monster(
+                  &world, 1, 0, 0x1200u, 0x0042u, 1, 1, 0u, 0u,
                   health, 1u, 0u, 0x0020u, 0x1200u) == 0,
               "authentic source monster ledger entry binds");
     }
@@ -115,7 +120,7 @@ int main(void) {
     world.levels[0][0].dungeon_seed = 0x0108e938u;
     {
         CHECK(theron_v1_world_bind_track02_monster(
-                  &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0x0eu, 0u,
+                  &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0u, 0u,
                   health, 1u, 0u, 0x0020u, 0x1200u) == 0,
               "second source monster ledger entry binds");
     }
