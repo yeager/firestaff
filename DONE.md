@@ -1,3 +1,13 @@
+# CSB Amiga native dungeon real-media admission (2026-08-08)
+
+- ✅ Repaired the Amiga dungeon probe so it consumes only an explicitly
+  configured, materialized `FIRESTAFF_CSB_AMIGA_DUNGEON` file. It now verifies
+  the original A31/A35 digest before exercising the FTL decompressor and
+  big-endian dungeon loader, and reports an unavailable corpus as a CTest
+  skip rather than a successful empty probe.
+- ✅ Verified against the local hash-verified A31 `DUNGEON.DAT`: 2 levels,
+  initial party pose `0,9,0,2`, and source FTL header `0x8104`.
+
 # Theron static monster-group admission (2026-08-08)
 
 - ✅ Bound authenticated Track 02 category-4 monster-group records to the

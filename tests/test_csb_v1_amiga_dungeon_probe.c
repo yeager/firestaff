@@ -2,25 +2,18 @@
  * test_csb_v1_amiga_dungeon_probe.c — verify CSB Amiga Dungeon.DAT
  * loads through the FTL decompressor and big-endian byte-swap path.
  *
- * Requires: ~/.firestaff/data/csb-amiga/Dungeon.DAT
- *           (CSB Amiga v3.3 French, MD5 6695d2acebce49f95db1d8f3a5c733de)
+ * Requires FIRESTAFF_CSB_AMIGA_DUNGEON to name the materialized DUNGEON.DAT
+ * selected from a hash-verified A31/A35 package.  A test must never quietly
+ * replace that source proof with a developer-specific home-directory file.
  */
 
+#include "asset_find_by_hash.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static const char *amiga_dungeon_path(void)
-{
-    static char path[1024];
-    const char *home = getenv("HOME");
-    if (!home) return NULL;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/csb-amiga/Dungeon.DAT", home);
-    return path;
-}
 
 static uint8_t *read_file(const char *path, long *out_size)
 {
@@ -41,15 +34,24 @@ static uint8_t *read_file(const char *path, long *out_size)
     return buf;
 }
 
-static void test_compressed_header(void)
+static void test_compressed_header(const char *path)
 {
-    const char *path = amiga_dungeon_path();
+    char md5[33];
     long size = 0;
     uint8_t *dat;
 
-    if (!path) { puts("  SKIP: no HOME"); return; }
     dat = read_file(path, &size);
-    if (!dat) { puts("  SKIP: Amiga Dungeon.DAT not found"); return; }
+    if (!dat) {
+        fprintf(stderr, "FAIL: cannot read configured Amiga Dungeon.DAT: %s\n",
+                path);
+        assert(dat != NULL);
+    }
+
+    /* ReDMCSB COMPILE.H's A31/A35 media use this original CSB dungeon
+     * payload.  Retain the digest gate so an arbitrary FTL-shaped fixture
+     * cannot become evidence for the native startup route. */
+    assert(asset_file_md5_hex(path, md5));
+    assert(strcmp(md5, "6695d2acebce49f95db1d8f3a5c733de") == 0);
 
     assert(size >= 8);
     assert(dat[0] == 0x81);
@@ -65,16 +67,17 @@ static void test_compressed_header(void)
     free(dat);
 }
 
-static void test_ftl_decompress_and_load(void)
+static void test_ftl_decompress_and_load(const char *path)
 {
-    const char *path = amiga_dungeon_path();
     CSB_V1_DungeonData dungeon;
-
-    if (!path) { puts("  SKIP: no HOME"); return; }
 
     memset(&dungeon, 0, sizeof(dungeon));
     int rc = csb_v1_dungeon_load_from_file(&dungeon, path);
-    if (rc != 0) { puts("  SKIP: Amiga Dungeon.DAT not loadable"); return; }
+    if (rc != 0) {
+        fprintf(stderr, "FAIL: configured Amiga Dungeon.DAT is not loadable: %s\n",
+                path);
+        assert(rc == 0);
+    }
 
     printf("  levels: %d\n", dungeon.level_count);
     /* v3.3 French (Meynaf hack) has only 2 levels; original has 12.
@@ -103,9 +106,15 @@ static void test_ftl_decompress_and_load(void)
 
 int main(void)
 {
+    const char *path = getenv("FIRESTAFF_CSB_AMIGA_DUNGEON");
+
+    if (!path || !path[0]) {
+        puts("skip: FIRESTAFF_CSB_AMIGA_DUNGEON is not set");
+        return 77;
+    }
     puts("test_csb_v1_amiga_dungeon_probe:");
-    test_compressed_header();
-    test_ftl_decompress_and_load();
+    test_compressed_header(path);
+    test_ftl_decompress_and_load(path);
     puts("ok: CSB Amiga dungeon probe");
     return 0;
 }

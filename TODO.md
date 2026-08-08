@@ -26,8 +26,9 @@
   than replaying that PC34 session. Continue with a native `TITL.DAT`/APPA.C
   application handoff; do not reuse PC34 title, entrance, HUD or viewport
   receipts for that platform. The selected A31 7z→ADF core is now explicitly
-  materialized and hash-checked before this boundary; preserve that exact
-  package identity throughout the native handoff.
+  materialized and hash-checked before this boundary. Its native TITL.DAT and
+  DUNGEON.DAT evidence is separately real-media gated; preserve those exact
+  package identities throughout the native handoff.
 
 - **NEXUS-VDP2-WRITER-CANDIDATE-OWNERSHIP:** The authentic 64-window VDP2
   code receipt now has a bounded partial-match analyzer. The primary writer
