@@ -71,6 +71,11 @@
   Revert återställer exakt originalbytes från MINI.DAT i den aktiva sessionen.
   Redigeringen skrivs medvetet inte till disk förrän C06:s riktiga filväljare
   och save-transaktion är verifierade.
+- ✅ Den kommande C06-filväljaren har nu en verklig datakälla: `PORTRAIT/`
+  under det valda F31-mediet skannas som CMP-poster och varje rad valideras
+  genom PORTRAIT.C:s header- och F7251-avkodning. Den lokala retailskivan ger
+  24 källposter; katalogen kan aldrig ersätta saknade filer med påhittade
+  namn eller porträtt.
 
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 

@@ -24,7 +24,8 @@
   nu CEDTDATA/F7040/F7043. Enkelt porträttpenseldrag och Revert följer nu
   F7037/F7044/F7045 samt den verkliga F7251/F7252-byteomvandlingen i den
   receiptsbundna sessionen, men filtransaktioner är fortsatt spärrade. Kvar
-  är filtransaktionsägaren.
+  är C06-filväljarens dialogyta, val och skrivtransaktionsägaren. Den verkliga
+  `PORTRAIT/`-katalogen är nu inläst och formatvaliderad, utan utfyllnadsrader.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,
   bytekorrekt FM Towns-sparning/återupptagning (F0433/F0435:s obfuskerade
   femdelarsformat med porträtt), full action/spell/item- och cursorsemantik

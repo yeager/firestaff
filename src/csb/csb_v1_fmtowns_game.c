@@ -7,6 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
+
 enum {
     CSB_V1_FMTOWNS_CHTWE_SIZE = 283936u,
     CSB_V1_FMTOWNS_CHTWJ_SIZE = 284416u,
@@ -1360,6 +1366,133 @@ int csb_v1_fmtowns_utility_font_open(
     out_receipt->source_fnv1a = CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_FNV1A;
     out_receipt->source_evidence =
         "ReDMCSB CEDT019.C G1103 lines 18-35; CEDTFNT.C F7337 lines 43-94";
+    return 1;
+}
+
+static int csb_v1_fmtowns_game_cmp_filename_is_valid(const char *filename)
+{
+    size_t length;
+    if (!filename) return 0;
+    length = strlen(filename);
+    if (length < 5u || length >= CSB_V1_FMTOWNS_UTILITY_PORTRAIT_FILENAME_CAPACITY)
+        return 0;
+    return filename[length - 4u] == '.' &&
+        (filename[length - 3u] == 'C' || filename[length - 3u] == 'c') &&
+        (filename[length - 2u] == 'M' || filename[length - 2u] == 'm') &&
+        (filename[length - 1u] == 'P' || filename[length - 1u] == 'p');
+}
+
+static int csb_v1_fmtowns_game_portrait_catalog_entry_compare(
+    const void *left, const void *right)
+{
+    const CSB_V1_FmtownsUtilityPortraitCatalogEntry *a = left;
+    const CSB_V1_FmtownsUtilityPortraitCatalogEntry *b = right;
+    return strcmp(a->filename, b->filename);
+}
+
+static int csb_v1_fmtowns_game_portrait_catalog_add(
+    CSB_V1_FmtownsUtilityPortraitCatalog *catalog, const char *filename)
+{
+    CSB_V1_FmtownsUtilityPortraitCatalogEntry *entry;
+    uint8_t bytes[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+    int written;
+
+    if (!catalog || !filename) return 0;
+    /* Directory entries such as . and .. are not candidates, not scan
+     * failures. Only a .CMP record is subject to native PORTRAIT admission. */
+    if (!csb_v1_fmtowns_game_cmp_filename_is_valid(filename)) return 1;
+    if (catalog->entry_count >= CSB_V1_FMTOWNS_UTILITY_PORTRAIT_CATALOG_CAPACITY) {
+        ++catalog->rejected_entry_count;
+        return 1;
+    }
+    entry = &catalog->entries[catalog->entry_count];
+    written = snprintf(entry->source_path, sizeof(entry->source_path), "%s/%s",
+                       catalog->source_directory, filename);
+    if (written < 0 || (size_t)written >= sizeof(entry->source_path) ||
+        !csb_v1_fmtowns_game_read_span(entry->source_path, 0u, bytes,
+                                        sizeof(bytes)) ||
+        !csb_v1_fmtowns_portrait_decode(bytes, sizeof(bytes),
+                                        (uint8_t[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT]){0},
+                                        CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT,
+                                        &entry->portrait)) {
+        ++catalog->rejected_entry_count;
+        memset(entry, 0, sizeof(*entry));
+        return 1;
+    }
+    memcpy(entry->filename, filename, strlen(filename) + 1u);
+    entry->source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(bytes, sizeof(bytes));
+    ++catalog->entry_count;
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_portrait_catalog_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog)
+{
+    int written;
+
+    if (!out_catalog) return 0;
+    memset(out_catalog, 0, sizeof(*out_catalog));
+    /* Admission ties the catalogue to the same language-owned C06 program
+     * selected by SWITCHTW before scanning any user-visible source files. */
+    if (!profile || !profile->asset_root[0] ||
+        (language != CSB_FMTOWNS_SWITCH_ENGLISH &&
+         language != CSB_FMTOWNS_SWITCH_JAPANESE)) return 0;
+    {
+        CSB_V1_FmtownsUtilityHandoffReceipt handoff;
+        memset(&handoff, 0, sizeof(handoff));
+        if (!csb_v1_fmtowns_utility_handoff_open(profile, language, &handoff))
+            return 0;
+    }
+    written = snprintf(out_catalog->source_directory,
+                       sizeof(out_catalog->source_directory), "%s/PORTRAIT",
+                       profile->asset_root);
+    if (written < 0 || (size_t)written >= sizeof(out_catalog->source_directory))
+        return 0;
+#if defined(_WIN32)
+    {
+        WIN32_FIND_DATAA data;
+        char pattern[sizeof(out_catalog->source_directory) + 8u];
+        HANDLE handle;
+        written = snprintf(pattern, sizeof(pattern), "%s\\*.CMP",
+                           out_catalog->source_directory);
+        if (written < 0 || (size_t)written >= sizeof(pattern)) return 0;
+        handle = FindFirstFileA(pattern, &data);
+        if (handle == INVALID_HANDLE_VALUE) return 0;
+        do {
+            if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0u &&
+                !csb_v1_fmtowns_game_portrait_catalog_add(out_catalog,
+                                                           data.cFileName)) {
+                FindClose(handle);
+                return 0;
+            }
+        } while (FindNextFileA(handle, &data) != 0);
+        FindClose(handle);
+    }
+#else
+    {
+        DIR *directory = opendir(out_catalog->source_directory);
+        struct dirent *entry;
+        if (!directory) return 0;
+        while ((entry = readdir(directory)) != NULL) {
+            if (!csb_v1_fmtowns_game_portrait_catalog_add(out_catalog,
+                                                           entry->d_name)) {
+                closedir(directory);
+                return 0;
+            }
+        }
+        closedir(directory);
+    }
+#endif
+    qsort(out_catalog->entries, out_catalog->entry_count,
+          sizeof(out_catalog->entries[0]),
+          csb_v1_fmtowns_game_portrait_catalog_entry_compare);
+    out_catalog->valid = 1;
+    out_catalog->language = language;
+    out_catalog->source_evidence =
+        "ReDMCSB CEDT008.C FILE_PICKER / CEDT001.C F7002_ReadCMP; "
+        "PORTRAIT.C F7251";
     return 1;
 }
 

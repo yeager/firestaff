@@ -68,6 +68,7 @@ int main(void)
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityFontReceipt utility_font;
+    CSB_V1_FmtownsUtilityPortraitCatalog utility_portrait_catalog;
     CSB_V1_FmtownsUtilityRenderReceipt utility_render;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
@@ -380,6 +381,15 @@ int main(void)
                   (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x150d8u :
                                                            0x15140u),
           "C06 interface font is read from the selected retail utility image");
+    memset(&utility_portrait_catalog, 0, sizeof(utility_portrait_catalog));
+    CHECK(csb_v1_fmtowns_utility_portrait_catalog_open(
+              (const CSB_V1_BootProfile *)view.csbBootProfile, language,
+              &utility_portrait_catalog) && utility_portrait_catalog.valid &&
+              utility_portrait_catalog.entry_count == 24u &&
+              utility_portrait_catalog.rejected_entry_count == 0u &&
+              strcmp(utility_portrait_catalog.entries[0].filename, "ALEX.CMP") == 0 &&
+              utility_portrait_catalog.entries[0].portrait.valid,
+          "F31 C06 FILE_PICKER catalogues only real admitted PORTRAIT CMP files");
     CHECK(csb_v1_fmtowns_utility_menu_action_at(
               &utility_menu,
               language == CSB_FMTOWNS_SWITCH_ENGLISH ? 102 : 98,

@@ -6,6 +6,7 @@
 
 #include "csb_v1_boot.h"
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_switch.h"
 
 #ifdef __cplusplus
@@ -30,6 +31,8 @@ extern "C" {
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT 4u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES 464u
+#define CSB_V1_FMTOWNS_UTILITY_PORTRAIT_CATALOG_CAPACITY 24u
+#define CSB_V1_FMTOWNS_UTILITY_PORTRAIT_FILENAME_CAPACITY 13u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
 typedef enum CSB_V1_FmtownsUtilityMenuAction {
@@ -242,6 +245,27 @@ typedef struct CSB_V1_FmtownsUtilityFontReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityFontReceipt;
 
+/* The F31 CD ships actual selectable C06 .CMP portraits in PORTRAIT/. The
+ * catalogue records only files that pass PORTRAIT.C's native header/pixel
+ * admission; an absent or untrusted directory produces no invented rows. */
+typedef struct CSB_V1_FmtownsUtilityPortraitCatalogEntry {
+    char filename[CSB_V1_FMTOWNS_UTILITY_PORTRAIT_FILENAME_CAPACITY];
+    char source_path[512];
+    uint32_t source_fnv1a;
+    CSB_V1_FmtownsPortraitReceipt portrait;
+} CSB_V1_FmtownsUtilityPortraitCatalogEntry;
+
+typedef struct CSB_V1_FmtownsUtilityPortraitCatalog {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    uint16_t entry_count;
+    uint16_t rejected_entry_count;
+    char source_directory[512];
+    CSB_V1_FmtownsUtilityPortraitCatalogEntry
+        entries[CSB_V1_FMTOWNS_UTILITY_PORTRAIT_CATALOG_CAPACITY];
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityPortraitCatalog;
+
 /* Admit precisely the F31E/F31J executable selected by SWITCHTW.  A valid
  * CSB profile alone is deliberately insufficient: this gate also checks the
  * exact retail program identity before the entrance/HUD session is opened. */
@@ -313,6 +337,14 @@ int csb_v1_fmtowns_utility_font_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityFontReceipt *out_receipt);
+
+/* Enumerate genuine F31 C06 portrait records under the selected CD root.
+ * This is a read-only FILE_PICKER catalogue; it cannot create a .CMP file
+ * and does not treat a filename as provenance. */
+int csb_v1_fmtowns_utility_portrait_catalog_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog);
 
 /* Decode the original C06 mouse target in its 320x200 source coordinate
  * space. ReDMCSB CEDTDATA.C lines 128-165 defines these F31E/F31J boxes,
