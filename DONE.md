@@ -7,6 +7,13 @@
   coverage exercises the real US-map maximum of 14 generators and preserves
   the source-bound fail-closed generator consumer.
 
+# 2026-08-08 Theron regular-spawn source-type boundary
+
+- ✅ The production regular-spawn admission now joins dungeon, level,
+  coordinate and the zero-based raw Track 02 monster type before it can
+  proceed to the unresolved RNG consumer. Invalid group counts and empty
+  source HP slots are rejected as well; no synthetic creature is published.
+
 # Theron authentic SDL2 capture runtime (2026-08-08)
 
 # 2026-08-08 Theron source-property pickup gate

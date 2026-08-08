@@ -15,29 +15,39 @@
 
 #include <string.h>
 
-static int theron_v1_source_monster_record_at(
+static const Theron_V1_SourceMonsterRecord *
+theron_v1_source_monster_record_at(
     const Theron_V1_World *world,
+    Theron_CreatureType type,
     int dungeon_id,
     int level,
     int x,
     int y) {
     unsigned int i;
-    if (!world) return 0;
+    uint8_t raw_type;
+    if (!world || type < THERON_CREATURE_AKUTUBA ||
+        type > THERON_CREATURE_DEMON) return NULL;
+    /* Track 02 stores creature names/types zero-based (AKUTUBA=0), while
+     * the live API reserves zero for NONE.  This is the same explicit
+     * source-record -> live-creature boundary used by the static loader. */
+    raw_type = (uint8_t)(type - THERON_CREATURE_AKUTUBA);
     for (i = 0; i < world->source_monster_count; ++i) {
         const Theron_V1_SourceMonsterRecord *record =
             &world->source_monsters[i];
         if (record->dungeon_id == dungeon_id && record->level == level &&
-            record->x == x && record->y == y) {
-            return 1;
+            record->x == x && record->y == y &&
+            record->type == raw_type) {
+            return record;
         }
     }
-    return 0;
+    return NULL;
 }
 
 int theron_v1_creature_spawn(Theron_V1_World *world,
                              Theron_CreatureType type,
                              int dungeon_id, int level, int x, int y) {
     Theron_V1_Level *source_level;
+    const Theron_V1_SourceMonsterRecord *source_record;
 
     /* Only a loaded, source-header-verified level and a matching authentic
      * Track 02 monster occurrence may create a creature. A header alone is
@@ -45,7 +55,7 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
      * THQUEST.ASM T500's scripted Thief/Demon encounters have no spawn-data
      * pointer and remain rejected. */
     if (!world || type < THERON_CREATURE_AKUTUBA ||
-        type > THERON_CREATURE_SHADO || dungeon_id < 1 ||
+        type > THERON_CREATURE_DEMON || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT || level < 0 ||
         level >= THERON_MAX_LEVELS_PER_DUNGEON ||
         world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL) {
@@ -53,8 +63,13 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     }
     source_level = &world->levels[dungeon_id - 1][level];
     if (!world->level_loaded[dungeon_id - 1][level] ||
-        !source_level->source_header_verified ||
-        !theron_v1_source_monster_record_at(world, dungeon_id, level, x, y)) {
+        !source_level->source_header_verified) {
+        return -1;
+    }
+    source_record = theron_v1_source_monster_record_at(
+        world, type, dungeon_id, level, x, y);
+    if (!source_record || source_record->number > 3u ||
+        source_record->health[0] == 0u) {
         return -1;
     }
     /* The source ledger is real, but the PCE bank-switched RNG call used by

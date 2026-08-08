@@ -45,6 +45,10 @@ int main(void) {
                                    1, 0, 1, 1) == -1 &&
               world.source_monster_count == 1 && world.creature_count == 0,
           "real source monster remains retained while unknown RNG blocks spawn");
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_DRATOR,
+                                   1, 0, 1, 1) == -1 &&
+              world.creature_count == 0,
+          "a source monster cannot be retyped through the regular-spawn API");
     creature = theron_v1_creature_by_id(&world, 1);
     CHECK(creature == NULL && theron_v1_creature_at(&world, 0, 1, 1) == NULL &&
               theron_v1_creature_count(&world, 1, 0) == 0,
