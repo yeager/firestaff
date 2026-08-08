@@ -4407,7 +4407,13 @@ and real community-save corpus round-trip evidence.
     the installed original `DUNGEON.DAT`. Like the earlier first save, it has
     zero C13 and active-group entries, so it adds real interop coverage but
     does not close the C13 requirement.
-
+  - 2026-08-08 scope decision: intentionally skipped for this pass. HoC is
+    the Hall of Champions startup/presentation path, not a source of C13
+    records; C13 remains the dungeon-timeline Vi Altar rebirth event. The two
+    PC34 `DMSAVE.DAT` files found in `~/Downloads` are duplicates of the
+    existing operator saves (`26ccd159…` and `ab7bb4a3…`) and both report
+    `c13_events=0`. Do not synthesize or promote a replacement. Reopen this
+    gate only when an operator-owned C13-bearing PC34 save is available.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
@@ -4454,4 +4460,8 @@ and real community-save corpus round-trip evidence.
     successful roundtrips and never treats a resume-parent directory or a
     synthetic fixture as external corpus evidence. The actual M11 selected-
     save path remains the backing-aware authority.
-
+  - 2026-07-31 local recheck: the two operator-owned `Downloads/DMSAVE*.DAT`
+    files completed `dm1_v1_original_save_pc34_backed_corpus_roundtrip` when
+    explicitly bound to the installed original `DUNGEON.DAT`. This confirms
+    the backing-aware route for the currently available real saves only; it
+    does not replace the required broader, provenance-attested corpus.
