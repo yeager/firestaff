@@ -19,28 +19,16 @@ int csb_v1_fmtowns_portrait_probe(const uint8_t *data, size_t size) {
     return id == CSB_FMTOWNS_PORTRAIT_IDENTIFIER;
 }
 
-int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
-                                    uint8_t *indexed_pixels,
-                                    size_t pixel_capacity,
-                                    CSB_V1_FmtownsPortraitReceipt *receipt) {
-    const uint8_t *img;
+int csb_v1_fmtowns_portrait_decode_planar(const uint8_t *img,
+                                           size_t planar_size,
+                                           uint8_t *indexed_pixels,
+                                           size_t pixel_capacity) {
     unsigned int x;
     unsigned int y;
 
-    if (receipt) memset(receipt, 0, sizeof(*receipt));
-    if (!csb_v1_fmtowns_portrait_probe(data, size)) return 0;
-    if (!indexed_pixels ||
+    if (!img || planar_size != CSB_FMTOWNS_PORTRAIT_DATA_SIZE ||
+        !indexed_pixels ||
         pixel_capacity < CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT) return 0;
-
-    /* Extract name and title */
-    if (receipt) {
-        receipt->valid = 1;
-        receipt->identifier = (uint16_t)(data[0] | ((uint16_t)data[1] << 8));
-        memcpy(receipt->name, data + 16, CSB_FMTOWNS_PORTRAIT_NAME_LEN);
-        receipt->name[CSB_FMTOWNS_PORTRAIT_NAME_LEN] = '\0';
-        memcpy(receipt->title, data + 24, CSB_FMTOWNS_PORTRAIT_TITLE_LEN);
-        receipt->title[CSB_FMTOWNS_PORTRAIT_TITLE_LEN] = '\0';
-    }
 
     /* ReDMCSB PORTRAIT.C F7251 (MEDIA670_F31E_F31J): each 16-pixel
      * group is four big-endian Atari ST plane words. The converter writes
@@ -48,7 +36,6 @@ int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
      * the high nibble (the final nibble swap in F7251). Decode directly to
      * one byte per source pixel, preserving the F7276 even/odd convention
      * in CEDTINCO.C:180-190. */
-    img = data + CSB_FMTOWNS_PORTRAIT_HEADER_SIZE;
     for (y = 0u; y < CSB_FMTOWNS_PORTRAIT_HEIGHT; ++y) {
         for (x = 0u; x < CSB_FMTOWNS_PORTRAIT_WIDTH; ++x) {
             const size_t plane_group =
@@ -70,7 +57,27 @@ int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
         }
     }
 
+    return 1;
+}
+
+int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
+                                    uint8_t *indexed_pixels,
+                                    size_t pixel_capacity,
+                                    CSB_V1_FmtownsPortraitReceipt *receipt) {
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!csb_v1_fmtowns_portrait_probe(data, size) ||
+        !csb_v1_fmtowns_portrait_decode_planar(
+            data + CSB_FMTOWNS_PORTRAIT_HEADER_SIZE,
+            CSB_FMTOWNS_PORTRAIT_DATA_SIZE, indexed_pixels, pixel_capacity)) {
+        return 0;
+    }
     if (receipt) {
+        receipt->valid = 1;
+        receipt->identifier = (uint16_t)(data[0] | ((uint16_t)data[1] << 8));
+        memcpy(receipt->name, data + 16, CSB_FMTOWNS_PORTRAIT_NAME_LEN);
+        receipt->name[CSB_FMTOWNS_PORTRAIT_NAME_LEN] = '\0';
+        memcpy(receipt->title, data + 24, CSB_FMTOWNS_PORTRAIT_TITLE_LEN);
+        receipt->title[CSB_FMTOWNS_PORTRAIT_TITLE_LEN] = '\0';
         receipt->pixel_fnv1a = fnv1a(indexed_pixels,
                                      CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT);
     }

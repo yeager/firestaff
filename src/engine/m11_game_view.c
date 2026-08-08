@@ -32,6 +32,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_fmtowns_utility_render.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
@@ -6889,19 +6890,51 @@ static int m11_csb_bind_fmtowns_switch(
 static int m11_csb_enter_fmtowns_utility(
     M11_GameViewState *state, CSB_V1_FmtownsSwitchLanguage language)
 {
-    /*
-     * C06 is a separate UTILE/UTILJ Phar Lap program.  The previous M11
-     * path redrew its empty editor from guessed rectangles and the PC34 M653
-     * font.  Those are not C06-owned pixels: the F31 executable's EGB text
-     * and editor consumers have not been recovered.  The authentic program,
-     * menu pool and C09 palette remain available to the admission APIs, but
-     * no host-composed page may stand in for the native executable.
-     *
-     * ReDMCSB: SWITCH.C F2279; CEDT006.C F7042/F7043; CEDT018.C.
-     */
-    (void)state;
-    (void)language;
-    return 0;
+    CSB_V1_FmtownsUtilityHandoffReceipt utility;
+    CSB_V1_FmtownsUtilityMenuReceipt menu;
+    CSB_V1_FmtownsUtilityFontReceipt font;
+    CSB_V1_FmtownsGameHandoffReceipt game;
+    CSB_V1_FmtownsStartupPortraitReceipt portraits;
+    CSB_V1_PartyState party;
+    CSB_V1_FmtownsUtilityRenderReceipt rendered;
+    const CSB_V1_BootProfile *profile;
+
+    /* C06 is its own Phar Lap program.  F31E can now reproduce F7042 from
+     * UTILE, MINI.DAT and the C06 font/IMG2 streams.  F31J remains closed:
+     * CEDT030 delegates its Shift-JIS text to the Towns native consumer and
+     * host text would be a synthetic replacement. */
+    if (!state || language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        !state->csbBootProfile) return 0;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    memset(&utility, 0, sizeof(utility));
+    memset(&menu, 0, sizeof(menu));
+    memset(&font, 0, sizeof(font));
+    memset(&game, 0, sizeof(game));
+    memset(&portraits, 0, sizeof(portraits));
+    memset(&party, 0, sizeof(party));
+    memset(&rendered, 0, sizeof(rendered));
+    if (!csb_v1_fmtowns_utility_handoff_open(profile, language, &utility) ||
+        !csb_v1_fmtowns_utility_menu_open(profile, language, &menu) ||
+        !csb_v1_fmtowns_utility_font_open(profile, language, &font) ||
+        !csb_v1_fmtowns_game_handoff_open(profile, language, &game) ||
+        !csb_v1_fmtowns_game_load_startup_party(&game, &party) ||
+        !csb_v1_fmtowns_game_load_startup_portraits(&game, &portraits) ||
+        !csb_v1_fmtowns_utility_icon_palette_rgb6(
+            &menu, state->csbFmtownsUtilityPaletteRgb6) ||
+        !csb_v1_fmtowns_utility_render_initial(
+            &utility, &menu, &font, &party, &portraits,
+            state->csbFmtownsUtilityPixels,
+            sizeof(state->csbFmtownsUtilityPixels), &rendered)) {
+        memset(state->csbFmtownsUtilityPixels, 0,
+               sizeof(state->csbFmtownsUtilityPixels));
+        memset(state->csbFmtownsUtilityPaletteRgb6, 0,
+               sizeof(state->csbFmtownsUtilityPaletteRgb6));
+        return 0;
+    }
+    state->csbFmtownsUtilityBound = 1;
+    /* AUTOEXEC.BAT has transferred ownership from SWITCHTW to C06. */
+    state->csbFmtownsSwitchBound = 0;
+    return 1;
 }
 
 /* ------------------------------------------------------------------ */
@@ -7044,6 +7077,9 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
         return 0;
+    state->csbFmtownsUtilityBound = 0;
+    memset(state->csbFmtownsUtilityPixels, 0,
+           sizeof(state->csbFmtownsUtilityPixels));
     m11_csb_release_fmtowns_switch(state);
     if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
@@ -7100,6 +7136,25 @@ static int m11_csb_present_fmtowns_switch(M11_GameViewState *state,
     }
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
     m11_csb_present_startup_raster(state->csbFmtownsSwitchPixels, framebuffer,
+                                   framebuffer_width, framebuffer_height);
+    return 1;
+}
+
+static int m11_csb_present_fmtowns_utility(M11_GameViewState *state,
+                                           unsigned char *framebuffer,
+                                           int framebuffer_width,
+                                           int framebuffer_height)
+{
+    uint8_t rgb6[256][3];
+    int color;
+    if (!state || !framebuffer || !state->csbFmtownsUtilityBound) return 0;
+    for (color = 0; color < 256; ++color) {
+        rgb6[color][0] = (uint8_t)(state->csbFmtownsUtilityPaletteRgb6[color & 15][0] << 2u);
+        rgb6[color][1] = (uint8_t)(state->csbFmtownsUtilityPaletteRgb6[color & 15][1] << 2u);
+        rgb6[color][2] = (uint8_t)(state->csbFmtownsUtilityPaletteRgb6[color & 15][2] << 2u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    m11_csb_present_startup_raster(state->csbFmtownsUtilityPixels, framebuffer,
                                    framebuffer_width, framebuffer_height);
     return 1;
 }
@@ -7182,6 +7237,37 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
     /* Utility still leaves SWITCHTW through AUTOEXEC.BAT into its separate
      * C06_CEDT owner. Game above consumes its distinct C03_GAME receipt;
      * neither route may fall through into a PC3.4 command rectangle. */
+    return M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
+    M11_GameViewState *state, int x, int y, int button_mask)
+{
+    CSB_V1_FmtownsUtilityMenuReceipt menu;
+    CSB_V1_FmtownsUtilityMenuHitBox hit;
+    const CSB_V1_BootProfile *profile;
+    if (!state || !state->csbFmtownsUtilityBound ||
+        (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 ||
+        !state->csbBootProfile) return M11_GAME_INPUT_REDRAW;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    memset(&menu, 0, sizeof(menu));
+    memset(&hit, 0, sizeof(hit));
+    if (!csb_v1_fmtowns_utility_menu_open(
+            profile, CSB_FMTOWNS_SWITCH_ENGLISH, &menu) ||
+        !csb_v1_fmtowns_utility_menu_action_at(&menu, (int16_t)x, (int16_t)y,
+                                               &hit)) return M11_GAME_INPUT_REDRAW;
+    if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT) {
+        /* CEDT006 returns to AUTOEXEC's F31E loop.  Rebind the original
+         * SWITCHTW page; no made-up post-editor page is kept on screen. */
+        state->csbFmtownsUtilityBound = 0;
+        memset(state->csbFmtownsUtilityPixels, 0,
+               sizeof(state->csbFmtownsUtilityPixels));
+        if (!m11_csb_bind_fmtowns_switch(state, CSB_FMTOWNS_SWITCH_ENGLISH))
+            return M11_GAME_INPUT_IGNORED;
+    }
+    /* Load/save/new/revert/undo require CEDT006's authentic file/edit
+     * transactions. They remain modal and fail closed until that owner is
+     * recovered; they never receive a synthetic host implementation. */
     return M11_GAME_INPUT_REDRAW;
 }
 
@@ -22697,6 +22783,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
          * a stale host overlay pause an authenticated DM1 V1 simulation. */
         state->mapOverlayActive = 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbFmtownsUtilityBound) {
+        /* C06 owns its modal editor loop. Do not advance a PC34/entrance
+         * tick behind a source-owned utility page. */
+        return M11_GAME_INPUT_IGNORED;
+    }
     mouthRedraw = m11_tick_v1_mouth_animation(state);
     /* F31 does not continue through PC34 ENDGAME.C's fuse replay once
      * STARTUP2.C F0750 has handed victory to the Towns animation program. */
@@ -27673,9 +27765,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
         if (m11_csb_is_fmtowns_profile(csb_profile) &&
             state->csbState.startup_title_active &&
-            state->csbFmtownsSwitchBound) {
-            return m11_csb_handle_fmtowns_switch_pointer(state, x, y,
-                                                         buttonMask);
+            (state->csbFmtownsSwitchBound || state->csbFmtownsUtilityBound)) {
+            return state->csbFmtownsUtilityBound
+                ? m11_csb_handle_fmtowns_utility_pointer(state, x, y, buttonMask)
+                : m11_csb_handle_fmtowns_switch_pointer(state, x, y, buttonMask);
         }
         if (m11_csb_boot_runtime_startup_pointer_dispatch(
                 state,
@@ -54887,7 +54980,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
         if ((state->csbState.startup_title_active ||
              state->csbFmtownsEndingActive) &&
-            (m11_csb_present_fmtowns_switch(csb_state, framebuffer,
+            (m11_csb_present_fmtowns_utility(csb_state, framebuffer,
+                                             framebufferWidth, framebufferHeight) ||
+             m11_csb_present_fmtowns_switch(csb_state, framebuffer,
                                             framebufferWidth, framebufferHeight) ||
              m11_csb_present_fmtowns_title(csb_state, framebuffer,
                                            framebufferWidth, framebufferHeight))) {

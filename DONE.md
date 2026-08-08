@@ -17,6 +17,23 @@
   PRS3-CLUT-bindning. VDP1/VDP2, placering och faktisk menyritning kräver
   fortfarande autentisk capture.
 
+# CSB FM Towns F31E C06-editor återges från originaldata (2026-08-08)
+
+- ✅ SWITCHTW:s engelska Utility-utgång öppnar nu C06:s första editorbild i
+  M11. Bilden består uteslutande av hashverifierade UTILE- och MINI.DAT-bytes:
+  C09_ICON-paletten, menysträngarna, 420-bytesfonten, IMG2-spegeln samt de
+  planära porträtten. Ingen PC34-font, översatt etikett eller placeholderbild
+  deltar.
+- ✅ Återgivaren följer ReDMCSB `CEDT006.C` F7030/F7031/F7032/F7033/F7034/F7042,
+  `CEDT018.C` F0689, `CEDT019.C` F2124 och `CEDT030.C` F7338. Quit återbinder
+  den autentiska SWITCHTW-sidan och dess 60 VBlank-väntan.
+- ✅ Load, Save, Make New Adventure, Revert och Undo är fortsatt modala och
+  fail-closed tills C06:s riktiga fil- och redigeringstransaktioner kan
+  verifieras. F31J förblir spärrad, eftersom dess Shift-JIS/EGB-glyphväg ännu
+  saknar runtimebevis.
+- ✅ Verifierat mot verklig F31E-media i `test_csb_v1_fmtowns_m11_game_handoff`
+  och med CSB/DM2:s källåsningskontroll.
+
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 
 - ✅ F31:s fyra C06-porträtt läses nu som sina exakta, planära 464-byteblock

@@ -56,6 +56,7 @@
 #include "csb_v1_fmtowns_anm.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
+#include "csb_v1_fmtowns_utility_render.h"
 #include "dm2_v1_fmtowns_anim_stream.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
@@ -1588,6 +1589,12 @@ typedef struct {
     CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchReturnLanguage;
     uint16_t csbFmtownsSwitchVblanksRemaining;
     int csbFmtownsSwitchBound;
+    /* C06_CEDT's first editor page stays separate from SWITCHTW and uses
+     * the verified C09_ICON palette from the selected retail utility image. */
+    uint8_t csbFmtownsUtilityPixels[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
+    uint8_t csbFmtownsUtilityPaletteRgb6
+        [CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
+    int csbFmtownsUtilityBound;
     /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
      * Retain its verified identity alongside the launch gate so M11 can open
      * the source-owned entrance session only after CHTWE/CHTWJ admission. */

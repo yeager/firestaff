@@ -17,8 +17,10 @@
   C06:s interfacefont är nu också bunden direkt till det valda
   UTILE/UTILJ-originalprogrammet, liksom spegel- och
   filväljarbilddata. MINI.DAT:s fyra planära originalporträtt har också en
-  receiptsbunden råinläsning. Den värdritade Utility-sidan är fortsatt spärrad
-  tills hela EGB-ytan och filtransaktionsägaren är verifierade.
+  receiptsbunden råinläsning. F31E:s första C06-editorbild visas nu från
+  dessa originalbytes via CEDT006/CEDT018/CEDT019/CEDT030:s faktiska
+  konverterings- och ritvägar; F31J är fortsatt spärrad tills dess verkliga
+  Shift-JIS/EGB-konsument är fångad. Kvar är filtransaktionsägaren.
   Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,
   bytekorrekt FM Towns-sparning/återupptagning (F0433/F0435:s obfuskerade
   femdelarsformat med porträtt), full action/spell/item- och cursorsemantik
@@ -1284,12 +1286,11 @@
   remaining Nexus Saturn page/tilemap/VDP2 gap and do not bypass either with
   synthetic data.
 
-- **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** The F31E empty editor frame now
-  no longer reaches M11 as a host reconstruction. The prior page combined
-  C06 coordinates and string/palette bytes with guessed rectangles and the
-  unrelated PC34 M653 renderer. Utility now remains on the real SWITCHTW
-  page until UTILE/UTILJ's native EGB text and editor consumers are bound.
-  Recover the F31J Shift-JIS glyph consumer and the original
+- **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** F31E:s första C06-editorbild är
+  nu bunden till UTILE:s verifierade IMG2-/font-/meny-/C09-byte samt
+  MINI.DAT:s planära porträtt. Den använder inte längre gissade rektanglar,
+  PC34 M653 eller värdtext, och Quit går tillbaka genom originalets SWITCHTW
+  VBlank-väntan. Återställ F31J Shift-JIS-glyphkonsumenten och de ursprungliga
   file-picker/save/portrait-edit transaction owners before exposing those
   commands; a C06 hit rectangle must not mutate a Firestaff save or
   manufacture a champion. 2026-08-06 follow-up: verified

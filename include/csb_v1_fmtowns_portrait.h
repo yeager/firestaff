@@ -58,6 +58,15 @@ int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
                                     size_t pixel_capacity,
                                     CSB_V1_FmtownsPortraitReceipt *receipt);
 
+/* Decode the exact 464-byte planar portrait payload used by F31 MINI.DAT.
+ * MINI.DAT has no .CMP header, so callers must not manufacture one merely to
+ * reuse the file decoder.  This is the F7251 conversion shared by PORTRAIT.C
+ * and CEDT019.C, operating directly on source-owned bytes. */
+int csb_v1_fmtowns_portrait_decode_planar(const uint8_t *planar_bytes,
+                                           size_t planar_size,
+                                           uint8_t *indexed_pixels,
+                                           size_t pixel_capacity);
+
 #ifdef __cplusplus
 }
 #endif

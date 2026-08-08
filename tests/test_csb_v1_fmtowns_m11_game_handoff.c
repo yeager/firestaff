@@ -11,6 +11,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
+#include "csb_v1_fmtowns_utility_render.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
@@ -66,6 +67,7 @@ int main(void)
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityFontReceipt utility_font;
+    CSB_V1_FmtownsUtilityRenderReceipt utility_render;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     DM1_V1_ChampionStatusRectPc34 champion_name_rect;
@@ -73,6 +75,7 @@ int main(void)
     uint8_t music_track;
     unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
+    uint8_t utility_frame[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
 
     if (language_name && strcmp(language_name, "ja") == 0) {
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
@@ -397,20 +400,47 @@ int main(void)
           "C06 retains its source-owned C09_ICON six-bit palette");
 
     if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        memset(&utility_render, 0, sizeof(utility_render));
+        memset(utility_frame, 0, sizeof(utility_frame));
+        CHECK(csb_v1_fmtowns_utility_render_initial(
+                  &utility_handoff, &utility_menu, &utility_font, &mini_party,
+                  &mini_portraits, utility_frame, sizeof(utility_frame),
+                  &utility_render) && utility_render.valid &&
+                  utility_render.rendered_champion_count == 1u &&
+                  utility_render.pixel_fnv1a != 0u &&
+                  utility_frame[9u * 320u + 6u] == 9u &&
+                  utility_frame[186u * 320u + 2u] == 0u &&
+                  utility_frame[188u * 320u + 4u] == 2u &&
+                  utility_frame[43u * 320u + 286u] == 2u &&
+                  utility_frame[51u * 320u + 286u] == 1u,
+              "F31E C06 initial editor frame uses only verified source pixels");
+    }
+
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
         /* SWITCH.C button two exits with status five and AUTOEXEC.BAT opens
-         * UTILE.EXP.  The verified C06 program is intentionally not
-         * redrawn through guessed rectangles or the PC34 M653 font: its
-         * native EGB/editor consumer has not yet been recovered. */
+         * UTILE.EXP. The recovered C06 F7042 page consumes only UTILE and
+         * MINI.DAT bytes; it must not keep SWITCHTW as a synthetic backdrop. */
         result = M11_GameView_HandlePointerButton(
             &view, 57, 59, DM1_V1_MOUSE_MASK_LEFT_PC34);
-        CHECK(result == M11_GAME_INPUT_IGNORED && view.csbFmtownsSwitchBound &&
-                  !view.csbState.startup_entrance_active,
-              "F31E Utility stays fail-closed until its native C06 owner runs");
+        CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsUtilityBound &&
+                  !view.csbFmtownsSwitchBound && !view.csbState.startup_entrance_active,
+              "F31E Utility opens its verified C06 initial editor owner");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(memcmp(framebuffer, view.csbFmtownsSwitchPixels,
-                     sizeof(framebuffer)) == 0,
-              "F31E Utility cannot replace the real SWITCHTW page with host pixels");
+                     sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
+              "F31E Utility presents its C06-owned source raster, not SWITCHTW");
+        result = M11_GameView_HandlePointerButton(
+            &view, 300, 8, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsSwitchBound &&
+                  !view.csbFmtownsUtilityBound,
+              "F31E C06 Quit returns through AUTOEXEC to SWITCHTW");
+        for (tick = 0u; tick < 80u && view.csbFmtownsSwitchVblanksRemaining != 0u;
+             ++tick) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        CHECK(view.csbFmtownsSwitchVblanksRemaining == 0u,
+              "F31E C06 return observes SWITCHTW's source VBlank wait");
     }
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */
