@@ -91,9 +91,11 @@ static void init_dungeon(CSB_V1_DungeonData *dungeon,
     dungeon->thing_type_counts[THING_TYPE_WEAPON] = 2;
     dungeon->thing_type_counts[THING_TYPE_SCROLL] = 2;
     dungeon->thing_type_counts[THING_TYPE_JUNK] = 1;
+    dungeon->thing_type_counts[THING_TYPE_ARMOUR] = 1;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
     dungeon->thing_data_bases[THING_TYPE_SCROLL] = 16;
     dungeon->thing_data_bases[THING_TYPE_JUNK] = 32;
+    dungeon->thing_data_bases[THING_TYPE_ARMOUR] = 40;
 }
 
 int main(void)
@@ -106,6 +108,7 @@ int main(void)
     uint16_t scroll_open = (uint16_t)((THING_TYPE_SCROLL << 10) | 0u);
     uint16_t scroll_closed = (uint16_t)((THING_TYPE_SCROLL << 10) | 1u);
     uint16_t compass = (uint16_t)((THING_TYPE_JUNK << 10) | 0u);
+    uint16_t boot_of_speed = (uint16_t)((THING_TYPE_ARMOUR << 10) | 0u);
 
     memset(&profile, 0, sizeof(profile));
     init_dungeon(&dungeon, raw, sizeof(raw));
@@ -122,12 +125,23 @@ int main(void)
     write_u16(raw + 22, 1u << 10);                  /* closed scroll */
     write_u16(raw + 32, THING_ENDOFLIST);
     write_u16(raw + 34, 0u);                        /* compass */
+    write_u16(raw + 40, THING_ENDOFLIST);
+    write_u16(raw + 42, 56u);                       /* object info 125 -> icon 194 */
 
     check_int("dagger icon", csb_v1_runtime_object_icon_index(&profile, dagger), 32);
     check_int("lit torch charge icon", csb_v1_runtime_object_icon_index(&profile, lit_torch), 7);
     check_int("open scroll icon", csb_v1_runtime_object_icon_index(&profile, scroll_open), 30);
     check_int("closed scroll icon", csb_v1_runtime_object_icon_index(&profile, scroll_closed), 31);
     check_int("compass follows party direction", csb_v1_runtime_object_icon_index(&profile, compass), 2);
+    check_int("Boot of Speed icon", csb_v1_runtime_object_icon_index(&profile, boot_of_speed), 194);
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].CurrentStamina = 100;
+    profile.party_state.Champions[0].MaximumStamina = 100;
+    profile.party_state.Champions[0].Slots[CSB_V1_SLOT_FEET] = boot_of_speed;
+    check_int("Boot of Speed reduces runtime F0310",
+              (int)csb_v1_runtime_champion_movement_ticks_pc34_compat(&profile, 0), 1);
     check_int("empty thing has no icon", csb_v1_runtime_object_icon_index(&profile, THING_NONE), -1);
     check_int("out-of-range thing has no icon",
               csb_v1_runtime_object_icon_index(

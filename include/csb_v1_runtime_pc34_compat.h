@@ -1310,6 +1310,10 @@ int csb_v1_runtime_recompute_party_loads_pc34_compat(
  * world tables. */
 int csb_v1_runtime_party_movement_ticks_pc34_compat(
     const CSB_V1_RuntimeProfile *profile);
+unsigned int csb_v1_runtime_champion_maximum_load_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile, int champion_index);
+unsigned int csb_v1_runtime_champion_movement_ticks_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile, int champion_index);
 int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled);
 int csb_v1_runtime_get_load_bonus_dungeon(

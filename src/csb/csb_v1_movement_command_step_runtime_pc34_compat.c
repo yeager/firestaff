@@ -63,7 +63,8 @@ static void csb_v1_step_decrement_party_stamina(
         CSB_V1_Champion *champion =
             &profile->party_state.Champions[champion_index];
         unsigned int maximum_load =
-            csb_v1_champion_get_maximum_load(champion);
+            csb_v1_runtime_champion_maximum_load_pc34_compat(
+                profile, champion_index);
         int cost;
         int stamina_after;
 

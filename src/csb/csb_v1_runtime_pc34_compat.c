@@ -12777,11 +12777,79 @@ int csb_v1_runtime_party_movement_ticks_pc34_compat(
         if (champion->CurrentHealth <= 0) {
             continue;
         }
-        champion_ticks = (int)csb_v1_champion_get_movement_ticks(champion);
+        champion_ticks = (int)csb_v1_runtime_champion_movement_ticks_pc34_compat(
+            profile, champion_index);
         if (champion_ticks > ticks) {
             ticks = champion_ticks;
         }
     }
+    return ticks;
+}
+
+unsigned int csb_v1_runtime_champion_maximum_load_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile, int champion_index)
+{
+    const CSB_V1_Champion *champion;
+    int32_t maximum_load;
+    int16_t half_max;
+    int icon_index;
+
+    if (!profile || !profile->party_state_valid || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) return 0u;
+    champion = &profile->party_state.Champions[champion_index];
+    maximum_load = ((int32_t)champion->Statistics[CSB_V1_STAT_STR]
+                                      [CSB_V1_STAT_CUR] << 3) + 100;
+    half_max = (int16_t)(champion->MaximumStamina >> 1);
+    if (half_max > 0 && champion->CurrentStamina < half_max) {
+        int32_t half_value = maximum_load >> 1;
+        maximum_load = half_value +
+            (half_value * champion->CurrentStamina) / half_max;
+    }
+    if (champion->Wounds) {
+        maximum_load -= maximum_load >>
+            ((champion->Wounds & 0x0010u) ? 2 : 3);
+    }
+    icon_index = csb_v1_runtime_object_icon_index(
+        profile, champion->Slots[CSB_V1_SLOT_FEET]);
+    /* ReDMCSB CHAMPION.C F0309:1169-1174 uses C119 Elven Boots before
+     * rounding the exact maximum load to a ten-unit boundary. */
+    if (icon_index == 119) maximum_load += maximum_load >> 4;
+    if (maximum_load < 0) maximum_load = 0;
+    maximum_load += 9;
+    maximum_load -= maximum_load % 10;
+    return (unsigned int)maximum_load;
+}
+
+unsigned int csb_v1_runtime_champion_movement_ticks_pc34_compat(
+    const CSB_V1_RuntimeProfile *profile, int champion_index)
+{
+    const CSB_V1_Champion *champion;
+    unsigned int maximum_load;
+    unsigned int ticks;
+    unsigned int wound_ticks;
+
+    if (!profile || !profile->party_state_valid || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) return 2u;
+    champion = &profile->party_state.Champions[champion_index];
+    maximum_load = csb_v1_runtime_champion_maximum_load_pc34_compat(
+        profile, champion_index);
+    if (maximum_load == 0u) return 4u;
+    if (maximum_load > champion->Load) {
+        ticks = 2u;
+        if (((unsigned long long)champion->Load << 3) >
+            (unsigned long long)maximum_load * 5u) ticks++;
+        wound_ticks = 1u;
+    } else {
+        ticks = 4u + (((unsigned int)champion->Load - maximum_load) * 4u) /
+            maximum_load;
+        wound_ticks = 2u;
+    }
+    if (champion->Wounds & 0x0020u) ticks += wound_ticks;
+    /* ReDMCSB CHAMPION.C F0310:1210 tests C194 Boot of Speed in C05. */
+    if (csb_v1_runtime_object_icon_index(profile,
+            champion->Slots[CSB_V1_SLOT_FEET]) == 194 && ticks > 0u) ticks--;
     return ticks;
 }
 
