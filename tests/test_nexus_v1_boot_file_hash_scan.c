@@ -695,7 +695,11 @@ int main(void) {
          * ITEM.IBS -> Structure1F item declarations -> floor registry) on a
          * level with known retail item records; it must not synthesize loot
          * from empty cells or an unverified catalog. */
-        if (data_root[0] != '\0' && local_file_exists(data_root)) {
+        /* The root was already validated through TITLE.CG above.  Do not
+         * call fopen() on the directory itself: macOS may reject that even
+         * when the real corpus is present, silently skipping the production
+         * handoff assertions. */
+        if (data_root[0] != '\0') {
             Nexus_V1_Engine item_engine;
             int declared_items = 0;
             int i;
