@@ -171,10 +171,11 @@
   `DM2_PROCEED_TIMERS` har i `sktimprc.cpp:4283–4327`. Realdatatestet väljer en
   befintlig klass-3-ruta ur hashverifierad `DUNGEON.DAT`; ingen testkarta,
   recordpool eller speltimer skapas.
-- ✅ WALL, FLOOR, PIT, DOOR, TELEPORTER och TRICKWALL avvisas utan mutation.
-  PIT och TELEPORTER måste alltid följa FLOOR_MECHA, dörren behöver DB0 och en
-  typ-1-timer och trickväggen behöver party/CAII. Grinden förhindrar därför en
-  koordinatbaserad ersättningsmekanik innan den kompletta originalkedjan finns.
+- ✅ En FLOOR-kedja som enbart innehåller autentiska DB2-textposter kan nu
+  ändra originalets TextVisibility-bit privat. Blandade FLOOR-kedjor och nya
+  partyhints avbryts atomärt, eftersom deras följdhanterare ännu saknar samma
+  ägare. WALL, PIT, DOOR, TELEPORTER och TRICKWALL avvisas fortsatt utan
+  mutation; de kräver bland annat DB0, CAII, följdtimers och UI-/ljudvägar.
 
 # Nexus SDDRVS full jump-table receipt hardening (2026-08-08)
 
@@ -9778,8 +9779,13 @@
   byte 100206, använder den verkliga 40×25-blockytan (320×200 pixlar) och
   10416×8-mikrosekunders klocka. `INTRO` har 217 och `END` 600
   videopresentationer.
-- ✅ Detta är en källsäker avkodargrund, inte en falsk videopresentation.
-  MVE:s bildblock och ljudexpansion är fortfarande öppna arbete.
+- ✅ Den privata PAL8-avkodaren tolkar nu kodkarta `0x0f` och video `0x11/v3`
+  med tre RAM-buffertar om 320×200 pixlar och originalets RGB6-palettutvidgning.
+  Den avvisar okänd blockkodning och `0x06`, som inte förekommer i den
+  verifierade korpusen.
+- ✅ Riktiga bildkontroller bekräftar avkodade indexpixlar för `INTRO` bild
+  0, 108 och 216 samt `END` bild 0, 299 och 599. Ingen extern avkodare,
+  värdskapad bild eller extraherad filmfil används.
 - ✅ Bilditeratorn bevarar nu varje presentation som originalpayload i RAM:
   500-byte kodkarta, 0x11/v3-videoblock, palett, ljudblock och den återkommande
   132-byte 0x13-posten. Den accepterar endast den verifierade DOS-korpusens

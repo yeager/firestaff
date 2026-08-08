@@ -56,9 +56,11 @@
   clickordning. Originalets equip-bonusläge och startvikt är nu tillämpade
   privat mot GDAT. Hela championrosterens DYN4-
   råblock är materialiserade i samma privata ägare. 0x04-konsumenten läser nu
-  verkliga File_header-rutor och genomför originalets klass-3-no-op; WALL,
-  FLOOR, PIT, DOOR, TELEPORTER och TRICKWALL avvisas utan mutation tills deras
-  kompletta följdkedjor har samma ägare. DYN-konsumenterna och sessionens
+  verkliga File_header-rutor och genomför originalets klass-3-no-op. En
+  hel DB2-textkedja på FLOOR kan nu ändra synlighetsbit privat, men blandade
+  FLOOR-kedjor, partyhints, WALL, PIT, DOOR, TELEPORTER och TRICKWALL avvisas
+  utan mutation tills deras kompletta följdkedjor har samma ägare.
+  DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.
 
@@ -2143,11 +2145,10 @@
   full GAME_LOAD/runtime ownership remains separately gated. **2026-08-08
 
 - **DM2-DOS-MVE-PLAYBACK:** `INTRO` och `END` har nu en strikt,
-  minnesbaserad bilditerator som släpper fram endast den hashverifierade
-  PC-DOS-korpusens MVE-grammatik och originalpayloads. Nästa steg är en egen
-  indexed-8-bit-avkodare med två 320×200-buffertar för kodkarta 0x0f och
-  video 0x11/v3, följd av originalets PCM- och IBMIOP-tidsväg. Ingen extern
-  avkodare, värdgenererad bild eller extraherad filmfil får bli produktväg.
+  minnesbaserad bilditerator och en verifierad PAL8-avkodare för kodkarta
+  0x0f och video 0x11/v3. Nästa steg är MVE:s riktiga PCM-ljud och
+  IBMIOP:s tids- och presentationsväg. Ingen extern avkodare, värdgenererad
+  bild eller extraherad filmfil får bli produktväg.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   **2026-08-07 real-corpus census:** all eight supplied PC-DOS
