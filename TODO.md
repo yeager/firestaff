@@ -340,8 +340,8 @@
 
 - **NEXUS-CAPTURE-INVENTORY:** `analyze_nexus_capture_inventory.py` now
   inventories the complete external raw-witness directory without treating
-  hardware state as a screen label. The current 35 valid captures contain
-  9 reset/no-layer frames, 14 RBG0-only CD-player frames, 100 NBG1-only
+  hardware state as a screen label. The current 37 valid captures contain
+  11 reset/no-layer frames, 14 RBG0-only CD-player frames, 100 NBG1-only
   dungeon frames and 14 other active VDP2 frames. The new frame-0 startup
   attempt is reset-only. It also accepts a single operator run as the capture
   root, so a fresh witness cannot be silently omitted before corpus merge. No

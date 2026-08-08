@@ -24,6 +24,17 @@
   `csb-amiga-a35m-appb`-fasen. En PC34-title- eller entréfas kan därför inte
   felaktigt publiceras för den Amiga-specifika språkväljaren.
 
+# Nexus operator launcher verified against European reset capture (2026-08-08)
+
+- ✅ The external-only raw Saturn launcher completed its real BIOS/disc hash
+  checks, instrumented-hook check, manifest write and operator launch using
+  the European BIOS plus the French Nexus data cue. The external witness is
+  `run-launcher-e-reset-20260808-1/runtime-vdp12.raw`; its validator reports
+  one valid reset frame and `semantic_admission=blocked`.
+- ✅ No BIOS, disc, manifest or raw capture was added to Git. The external
+  corpus now inventories 37 valid capture files; reset/no-layer remains a
+  hardware-state observation, not startup/menu evidence.
+
 # Nexus raw-capture launcher accepts Python validators (2026-08-08)
 
 - ✅ The operator-only Saturn raw-capture launcher now accepts a validator
