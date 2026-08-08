@@ -1173,6 +1173,21 @@ static void theron_v1_startup_runtime_entry_capture_failure_route(
         out_result->track02_media = *media_receipt;
     }
     if (verified_track02_request) {
+        /* Research/playability escape hatch.  The bytes are authenticated and
+         * the source loader may still provide the real map/object records, but
+         * the original CD consumer has not been captured.  Keep the default
+         * fail-closed route; callers may explicitly opt into a clearly
+         * non-parity source-data session for investigation. */
+        if (getenv("FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK") &&
+            strcmp(getenv("FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK"),
+                   "1") == 0) {
+            out_result->runtime_level_source =
+                THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_MEDIA;
+            out_result->fallback_visuals_blocked = 0;
+            out_result->structured_runtime_route = 1;
+            out_result->runtime_receipt_text_route = 1;
+            return;
+        }
         out_result->runtime_level_source =
             THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED;
         out_result->fallback_visuals_blocked = 1;
