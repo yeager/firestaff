@@ -1657,7 +1657,6 @@ typedef struct {
     uint16_t csbAmigaTitlAppliedDeltaCount;
     int csbAmigaTitlClockStarted;
     int csbAmigaTitlFrameBound;
-    int csbAmigaTitlRuntimeHandoffComplete;
     uint8_t csbAmigaTitlPixels[320 * 200];
     uint8_t csbAmigaTitlPalette[16][3];
     struct {
