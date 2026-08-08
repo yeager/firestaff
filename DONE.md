@@ -72,6 +72,15 @@
   recordpooler, timerkö och miljö samtidigt. Isolerade regressionsstudier
   behåller sina egna testvägar, men kan inte bli M11-beteende av misstag.
 
+# DM2 Nytt spel återställer sessionägaren (2026-08-08)
+
+- ✅ `DM2_LOAD_NEW_DUNGEON` nollställer nu tidigare `GAME_LOAD`-readiness
+  samtidigt som originalets party- och LeaderPossession-rensning. En gammal
+  Resume-session kan därmed inte få den nyladdade G1-världen att framstå som
+  spelbar innan recordpooler, heroes, timerkö och aktuatorer har återställts.
+- ✅ Verifierat mot FM Towns originalskiva i minnet. Ingen ny party eller
+  ersättningsstate skapas.
+
 # DM2 SKSAVE-produktionsspärr (2026-08-08)
 
 - ✅ M10 länkar inte längre den callback-baserade specialtimerläsaren

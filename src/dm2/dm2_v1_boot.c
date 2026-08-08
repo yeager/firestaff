@@ -2662,6 +2662,13 @@ int dm2_v1_boot_load_new_dungeon(
         dm2_v1_dungeon_free(&candidate);
         return 0;
     }
+    /* DM2_LOAD_NEW_DUNGEON is the beginning of a new GAME_LOAD
+     * transaction, not its completion.  A previous resume may have had a
+     * complete party/session owner, but that owner is invalid as soon as the
+     * source clears party.heros_in_party and LeaderPossession.  The later
+     * c_savegame.cpp GAME_LOAD stages alone may publish readiness again,
+     * after they restore records, heroes, timers and actuators together. */
+    profile->source_game_load_session_ready = 0;
     receipt.source_party_reset_applied = 1;
     receipt.source_leader_hand_reset_applied = 1;
     game->party_x = candidate.initial_party_x;

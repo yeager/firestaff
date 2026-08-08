@@ -86,7 +86,9 @@
   `assets_verified` flag or a caller-supplied rescan path. It requires the
   M12/M11-mounted, hash-selected graphics and File_header dungeon pair, but
   still stops before `DM2_GAME_LOAD` creates the missing party/record/timer
-  graph.
+  graph. `DM2_LOAD_NEW_DUNGEON` also clears a prior session-readiness bit
+  when it clears party and LeaderPossession; only the later complete original
+  transaction may publish it again.
 
 - **DM2-SKSAVE-CORPUS-INVENTORY:** Startmenyn kan nu hitta en verklig,
   källstavad SKSave-katalog under den hashskannade dataroten och skannar den
