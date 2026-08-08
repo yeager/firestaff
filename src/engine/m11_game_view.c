@@ -4142,6 +4142,13 @@ static int m11_csb_is_amiga_a35e_profile(const CSB_V1_BootProfile *profile)
     return profile && profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN;
 }
 
+static int m11_csb_is_amiga_profile(const CSB_V1_BootProfile *profile)
+{
+    return m11_csb_is_amiga_a31_profile(profile) ||
+           m11_csb_is_amiga_a35e_profile(profile) ||
+           m11_csb_is_amiga_a35m_profile(profile);
+}
+
 /* ReDMCSB COMPILE.H:274-280 assigns A35E APPB.FTL directly to C03_GAME;
  * BJELoad_R is its separate C02 launcher.  Unlike A31M/A35M there is no
  * C08 language page or C05 title program to emulate between those two
@@ -4180,7 +4187,7 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
     return 1;
 }
 
-/* A35E's APPB.FTL enters C03_GAME directly, so it cannot use the PC3.4
+/* The Amiga APPB/KAOS routes enter C03_GAME outside the PC3.4
  * C017/C040 runtime-session consumer below.  The first independently-bound
  * live game surface is C013: PANEL.C F0395 calls MENUDRAW.C F0021/F0660 to
  * place that 87x45 source record in C009_ZONE_MOVEMENT_ARROWS.  Read the
@@ -4194,7 +4201,7 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
  * This is deliberately a bounded C013-only consumer.  No unbound Amiga
  * viewport, champion HUD, or synthetic replacement is exposed as a game
  * page while their native owners remain unavailable. */
-static int m11_csb_present_amiga_a35e_runtime_c013(
+static int m11_csb_present_amiga_runtime_c013(
     const M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
 {
@@ -4220,7 +4227,7 @@ static int m11_csb_present_amiga_a35e_runtime_c013(
     if (!state || !framebuffer || framebuffer_width < 320 ||
         framebuffer_height < 200 ||
         !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
-        !m11_csb_is_amiga_a35e_profile(profile) ||
+        !m11_csb_is_amiga_profile(profile) ||
         profile->runtime.state != CSB_STATE_GAME ||
         !profile->graphics_verified || !profile->graphics_path[0] ||
         !dm1_v1_movement_arrows_outer_rect_pc34(&outer_rect) ||
@@ -4233,8 +4240,8 @@ static int m11_csb_present_amiga_a35e_runtime_c013(
         csb_v1_amiga_graphics_receipt(bytes, (size_t)length,
                                       &graphics_receipt) != 0 ||
         !graphics_receipt.is_amiga ||
-        graphics_receipt.version != CSB_AMIGA_VER_3_5 ||
-        graphics_receipt.lang != CSB_AMIGA_LANG_EN ||
+        graphics_receipt.version == CSB_AMIGA_VER_UNKNOWN ||
+        graphics_receipt.lang == CSB_AMIGA_LANG_UNKNOWN ||
         !(pixels = (uint8_t *)malloc((size_t)graphic_rect.w *
                                      (size_t)graphic_rect.h)) ||
         !csb_v1_amiga_graphics_decode_item(
@@ -55754,7 +55761,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
-        if (m11_csb_present_amiga_a35e_runtime_c013(
+        if (m11_csb_present_amiga_runtime_c013(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
