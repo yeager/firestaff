@@ -1763,6 +1763,7 @@ int main(void) {
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
+    const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
     DM2_V1_TimerEntry new_game_actuate_timer;
@@ -2407,6 +2408,16 @@ int main(void) {
                     !dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner),
                 "M11 refuses to replay an already materialized source champion selection");
+    expect_true(profile &&
+                    dm2_v1_boot_retain_new_game_world(profile, party_selections, 2) &&
+                    (profile_new_game_owner = (const DM2_V1_GameLoadWorldOwner *)
+                        dm2_v1_boot_new_game_world_readonly(profile)) != NULL &&
+                    profile_new_game_owner->prepared &&
+                    profile_new_game_owner->champion_selection_materialized &&
+                    profile_new_game_owner->selected_party.heros_in_party == 2 &&
+                    !profile_new_game_owner->committed &&
+                    !profile->source_game_load_session_ready,
+                "M11 retains the complete source New Game candidate in the boot profile without publishing a session");
     if (profile && source_transaction.possessions.placed_item_count > 0) {
         const DM2_V1_BootNewGamePossession *first_source_item =
             &source_transaction.possessions.possessions[0];

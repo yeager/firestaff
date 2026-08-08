@@ -536,6 +536,10 @@ typedef struct {
     /* ── Runtime references (set after boot) ──────────────── */
     void   *dm2_state;         /* DM2_V1_GameState* — set by dm2_v1_boot_enter_game() */
     void   *dungeon_data;      /* DM2_V1_DungeonData* — parsed dungeon */
+    /* Opaque, RAM-only New Game transaction candidate.  It owns a clone of
+     * the admitted File_header world and is destroyed before this profile's
+     * media.  It never implies source_game_load_session_ready. */
+    void   *game_load_world_owner;
     void   *graphics_dat;      /* graphics data handle */
     /* Only a complete original GAME_LOAD transaction may set this.  A parsed
      * File_header or an observational SKSAVE receipt is deliberately not a
@@ -543,6 +547,16 @@ typedef struct {
      * until party, record pools, possessions and timers share one owner. */
     int     source_game_load_session_ready;
 } DM2_V1_BootProfile;
+
+/* Retain one complete source-ordered New Game candidate in this profile.
+ * This runs LOAD_NEW_DUNGEON, the fresh-game actuator generator, map context
+ * and the selected authentic mirror clicks entirely in RAM.  It is not a
+ * gameplay publication and leaves source_game_load_session_ready clear. */
+int dm2_v1_boot_retain_new_game_world(DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartySelection *selections, int selection_count);
+
+/* Read-only access for a later atomic runtime handoff. */
+const void *dm2_v1_boot_new_game_world_readonly(const DM2_V1_BootProfile *profile);
 
 /* Returns the original hash-verified DOS INTRO executable retained by this
  * profile, or zero when the selected media is absent, invalid or not PC

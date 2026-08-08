@@ -396,6 +396,16 @@
   aktiverar originalets RAND16-väg och avvisas därför utan mutation tills
   random state och full session har samma ägare.
 
+# DM2 beständig New Game-kandidat (2026-08-09)
+
+- ✅ En hashad New Game-värld kan nu behållas av `BootProfile` genom hela
+  bootens livscykel. Den äger sin RAM-klon av File_header, recordpooler,
+  dynamisk c_tim-kö, mapkontext och autentiserade mirrorval.
+- ✅ Kandidaten byggs i originalordning och ersätts först efter att en ny
+  kandidat lyckats helt. Boot-cleanup frigör den före sina lånade medier.
+  Realdatatestet bevisar att den fortfarande inte sätter `committed` eller
+  `source_game_load_session_ready`.
+
 # DM2 PushButtonSwitch direkt DB0-atom (2026-08-08)
 
 - ✅ `PUSH_BUTTON_SWITCH` följer nu `skevent.cpp:2010–2028`: den använder

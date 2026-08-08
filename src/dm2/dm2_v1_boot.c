@@ -28,6 +28,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_game.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_random_pc34_compat.h"
@@ -13577,6 +13578,52 @@ void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels)
 
 /* ── Cleanup ─────────────────────────────────────────────────────────── */
 
+int dm2_v1_boot_retain_new_game_world(
+    DM2_V1_BootProfile *profile,
+    const DM2_V1_BootNewGamePartySelection *selections,
+    int selection_count)
+{
+    DM2_V1_GameLoadWorldOwner *candidate;
+    DM2_V1_GameLoadWorldOwner *previous;
+
+    if (!profile || !selections || selection_count < 1 ||
+        selection_count > DM2_MAX_HEROES || !profile->assets_verified ||
+        !profile->dungeon_data || profile->source_game_load_session_ready) {
+        return 0;
+    }
+    candidate = (DM2_V1_GameLoadWorldOwner *)calloc(1, sizeof(*candidate));
+    if (!candidate || !dm2_v1_game_load_world_owner_init_new_game(candidate,
+            profile, selections, selection_count) ||
+        !dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+            candidate, NULL) ||
+        !dm2_v1_game_load_world_owner_materialize_source_map_context(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_champion_selection(candidate)) {
+        if (candidate) {
+            dm2_v1_game_load_world_owner_free(candidate);
+            free(candidate);
+        }
+        return 0;
+    }
+    previous = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
+    profile->game_load_world_owner = candidate;
+    if (previous) {
+        dm2_v1_game_load_world_owner_free(previous);
+        free(previous);
+    }
+    return 1;
+}
+
+const void *dm2_v1_boot_new_game_world_readonly(
+    const DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_GameLoadWorldOwner *owner;
+    if (!profile || !profile->game_load_world_owner ||
+        profile->source_game_load_session_ready) return NULL;
+    owner = (const DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
+    return dm2_v1_game_load_world_owner_is_prepared(owner) &&
+           owner->champion_selection_materialized ? owner : NULL;
+}
+
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     if (!profile) return;
     /* The runtime borrows this profile's source-owned GDAT and disc buffers.
@@ -13586,6 +13633,13 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     /* The sound singleton borrows the loader stored in graphics_dat. */
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
     dm2_v1_sound_bind_runtime_queue(NULL);
+    if (profile->game_load_world_owner) {
+        DM2_V1_GameLoadWorldOwner *owner =
+            (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
+        dm2_v1_game_load_world_owner_free(owner);
+        free(owner);
+        profile->game_load_world_owner = NULL;
+    }
     dm2_v1_dos_intro_mve_owner_destroy(profile->dos_intro_mve_owner);
     profile->dos_intro_mve_owner = NULL;
     if (profile->graphics_dat) {

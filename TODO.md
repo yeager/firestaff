@@ -190,6 +190,10 @@
   DYN-konsumenterna och sessionens
   atomära commit återstår. Den gamla 32-posters kön används inte. Ingen party,
   HUD eller timer får publiceras före hela den transaktionen.
+  Den kompletta privata New Game-kandidaten är nu dessutom profilägd genom
+  bootens livscykel, i stället för att bara leva i ett startup-anrop. Nästa
+  handoff måste fortfarande flytta den tillsammans med runtime, inte läsa ut
+  enskilda fält som en ersättningssession.
 
 - 🔧 DM2 SKSAVE GAME_LOAD: en privat RAM-ägare behåller nu de källordnade
   fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
