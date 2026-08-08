@@ -146,6 +146,18 @@ Theron screenshot promotion is controlled by the source-bound readiness and
 promotion gates in [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
 No image is promoted while the gate reports `NO_README_PROMOTION_PERMITTED`.
 
+For source-data investigation, an explicit authenticated fallback can load
+real Track 02 map/object records even when the original CD handoff has not
+been captured:
+
+```bash
+FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK=1 ./build/firestaff
+```
+
+This mode is clearly non-parity: it does not claim the original RNG, AI,
+T700/T900 consumers, runtime palette/tile ownership, or sound event routing.
+The default launch remains fail-closed until those consumers are authenticated.
+
 The cross-game status and evidence boundary are kept in
 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Presentation work follows
 the same order for every game: startup, menu, HUD, then viewport.
