@@ -23,6 +23,9 @@
   Firestaff-convenience-sessionen är nu uttryckligen diagnostisk och får
   inte användas som SKSAVE- eller GAME_LOAD-ersättning; nästa ägare ska
   fortsätta direkt från SKProjects `DM2_LOAD_NEW_DUNGEON`/`DM2_GAME_LOAD`.
+  Käll-DATAs samtliga DB3-generatorindata och kontrollbit 2 finns nu i samma
+  läsande transaktion, men `DM2_PROCESS_ACTUATOR_TICK_GENERATOR` får inte
+  ändra ett record eller skapa en timer förrän den fullständiga ägaren finns.
 
 - 🔧 Theron: lossless rårecord-provenance är nu bevarad genom inventory och
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder

@@ -1408,6 +1408,14 @@ int dm2_v1_boot_new_game_transaction_receipt(
         !candidate.world_interactions.valid ||
         !candidate.world_interactions.incomplete_world ||
         candidate.world_interactions.map_count <= candidate.entrance.map ||
+        !dm2_v1_boot_file_header_actuator_generator_receipt(
+            profile, &candidate.actuator_generators) ||
+        !candidate.actuator_generators.valid ||
+        !candidate.actuator_generators.incomplete_game_load ||
+        candidate.actuator_generators.map_count !=
+            candidate.world_interactions.map_count ||
+        candidate.actuator_generators.actuator_count !=
+            candidate.world_interactions.total_actuators ||
         !dm2_v1_boot_file_header_runtime_map_receipt(
             profile, candidate.entrance.map, &candidate.entrance_map) ||
         !candidate.entrance_map.committed ||
@@ -1487,6 +1495,14 @@ int dm2_v1_boot_new_game_transaction_receipt(
         candidate.transaction_hash, candidate.entrance.receipt_hash);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, candidate.world_interactions.interaction_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash, candidate.actuator_generators.candidate_hash);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash,
+        (uint32_t)candidate.actuator_generators.tick_generator_candidate_count);
+    candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
+        candidate.transaction_hash,
+        (uint32_t)candidate.actuator_generators.control_bit2_set_count);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
         candidate.transaction_hash, candidate.entrance_map.map_data_hash);
     candidate.transaction_hash = dm2_v1_boot_packaged_capture_hash_step(
@@ -1927,6 +1943,81 @@ int dm2_v1_boot_file_header_world_interaction_receipt(
     if (candidate.total_records <= 0 || candidate.total_tiles <= 0 ||
         candidate.interaction_hash == 0u) return 0;
     candidate.incomplete_world = 1;
+    candidate.valid = 1;
+    *out_receipt = candidate;
+    return 1;
+}
+
+int dm2_v1_boot_file_header_actuator_generator_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_FileHeaderActuatorGeneratorReceipt *out_receipt)
+{
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_FileHeaderActuatorGeneratorReceipt candidate;
+    int map;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!profile || !profile->assets_verified || !profile->dungeon_data)
+        return 0;
+    dungeon = (const DM2_V1_DungeonData *)profile->dungeon_data;
+    if (dungeon->level_count <= 0 || dungeon->level_count > DM2_V1_MAX_LEVELS)
+        return 0;
+
+    /* SKProject sktimprc.cpp::DM2_PROCESS_ACTUATOR_TICK_GENERATOR
+     * lines 4395-4460 walks the complete loaded-map record graph after
+     * DM2_GAME_LOAD/DM2_LOAD_NEW_DUNGEON.  The type family is 0x1e and
+     * 0x33..0x37; byte offset four's bit 2 decides whether the original
+     * clears the raw flag or changes map and activates the generator.
+     * File_header is our immutable source owner here, not a replacement for
+     * the later mutable c_map/c_record allocation. */
+    candidate.candidate_hash = 0x41475452u; /* "AGTR" receipt domain. */
+    candidate.map_count = dungeon->level_count;
+    for (map = 0; map < dungeon->level_count; ++map) {
+        DM2_V1_G1RuntimeMapActuatorReceipt actuators;
+        int index;
+
+        memset(&actuators, 0, sizeof(actuators));
+        if (!dm2_v1_boot_file_header_map_actuators_receipt(
+                profile, map, &actuators) || !actuators.committed ||
+            !actuators.incomplete_world ||
+            actuators.actuator_record_reads != actuators.actuator_root_count) {
+            return 0;
+        }
+        candidate.actuator_count += actuators.actuator_root_count;
+        for (index = 0; index < actuators.actuator_root_count; ++index) {
+            const DM2_V1_G1DirectActuatorRoot *actuator =
+                &actuators.actuators[index];
+            const uint8_t type = actuator->actuator_type;
+
+            if (type != 0x1eu && (type < 0x33u || type > 0x37u))
+                continue;
+            ++candidate.tick_generator_candidate_count;
+            if ((actuator->control_word & 0x0004u) != 0u)
+                ++candidate.control_bit2_set_count;
+            else
+                ++candidate.control_bit2_clear_count;
+            candidate.candidate_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.candidate_hash, (uint32_t)map);
+            candidate.candidate_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.candidate_hash, actuator->object_id);
+            candidate.candidate_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.candidate_hash, actuator->attributes);
+            candidate.candidate_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.candidate_hash, actuator->control_word);
+            candidate.candidate_hash = dm2_v1_boot_packaged_capture_hash_step(
+                candidate.candidate_hash, actuator->target_word);
+        }
+    }
+    if (candidate.actuator_count <= 0 ||
+        candidate.tick_generator_candidate_count <= 0 ||
+        candidate.control_bit2_set_count + candidate.control_bit2_clear_count !=
+            candidate.tick_generator_candidate_count ||
+        candidate.candidate_hash == 0u) {
+        return 0;
+    }
+    candidate.incomplete_game_load = 1;
     candidate.valid = 1;
     *out_receipt = candidate;
     return 1;

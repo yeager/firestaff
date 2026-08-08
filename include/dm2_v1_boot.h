@@ -220,6 +220,23 @@ typedef struct {
     uint32_t interaction_hash;
 } DM2_V1_FileHeaderWorldInteractionReceipt;
 
+/* Read-only source census for the inputs consumed by
+ * DM2_PROCESS_ACTUATOR_TICK_GENERATOR after DM2_LOAD_NEW_DUNGEON.  The
+ * generator iterates the loaded map records and tests the raw DB3 type plus
+ * control-word bit 2 before it clears that bit or activates a timer.  Keep
+ * those source facts distinct from a live timer queue: no record is changed
+ * and no generator is activated by this receipt. */
+typedef struct {
+    int valid;
+    int incomplete_game_load;
+    int map_count;
+    int actuator_count;
+    int tick_generator_candidate_count;
+    int control_bit2_set_count;
+    int control_bit2_clear_count;
+    uint32_t candidate_hash;
+} DM2_V1_FileHeaderActuatorGeneratorReceipt;
+
 /* One original champion-selection root joined to its exact CHAMPIONS Raw8
  * and text template. This is an observational receipt for the
  * c_hero.cpp::DM2_SELECT_CHAMPION precondition; it neither revives a hero nor
@@ -364,6 +381,7 @@ typedef struct {
     int incomplete_game_load;
     int hero_count;
     DM2_V1_FileHeaderWorldInteractionReceipt world_interactions;
+    DM2_V1_FileHeaderActuatorGeneratorReceipt actuator_generators;
     DM2_V1_FileHeaderRuntimeMapReceipt entrance_map;
     DM2_V1_FileHeaderRuntimeSceneCensus entrance_scene;
     DM2_V1_FileHeaderRuntimeTileCensus entrance_tiles;
@@ -1741,6 +1759,13 @@ int dm2_v1_boot_file_header_runtime_map_receipt(
 int dm2_v1_boot_file_header_world_interaction_receipt(
     const DM2_V1_BootProfile *profile,
     DM2_V1_FileHeaderWorldInteractionReceipt *out_receipt);
+
+/* Retains all File_header DB3 inputs to the original post-load actuator
+ * generator. This is evidence only; the source mutation/timer transaction
+ * remains unavailable until the complete GAME_LOAD owner exists. */
+int dm2_v1_boot_file_header_actuator_generator_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_FileHeaderActuatorGeneratorReceipt *out_receipt);
 
 /* Join File_header::w8's original map-0 start pose to the mounted
  * File_header ground-stack chain. It is a New Game admission receipt, not

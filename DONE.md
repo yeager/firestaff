@@ -75,6 +75,11 @@
   och produktionsvägarna är fortsatt spärrade från att använda den som en
   original-SKSAVE eller spelbar GAME_LOAD-session. Regressionstestet låser
   den faktiska DM2-källkedjan.
+- ✅ New Game-transaktionen bevarar nu alla källbundna DB3-indata för
+  `DM2_PROCESS_ACTUATOR_TICK_GENERATOR` över samtliga 44 File_header-kartor:
+  generator-typ, komplett control/target-ord och exakt kontrollbit 2. Den är
+  verifierad mot den verkliga PC-DOS-korpusen, men är läsande och kan varken
+  starta en generator eller publicera en timerkö.
 
 - ✅ Ett gemensamt, läsande GAME_LOAD-kvitto binder nu den verifierade
   File_header-entrén med dess scenrekord, tilecensus, DB2-text/markörposter,

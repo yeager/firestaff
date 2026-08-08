@@ -1543,6 +1543,17 @@ int main(void) {
                     source_transaction.world_interactions.valid &&
                     source_transaction.world_interactions.map_count == 44 &&
                     source_transaction.world_interactions.interaction_hash != 0u &&
+                    source_transaction.actuator_generators.valid &&
+                    source_transaction.actuator_generators.incomplete_game_load &&
+                    source_transaction.actuator_generators.map_count ==
+                        source_transaction.world_interactions.map_count &&
+                    source_transaction.actuator_generators.actuator_count ==
+                        source_transaction.world_interactions.total_actuators &&
+                    source_transaction.actuator_generators.tick_generator_candidate_count > 0 &&
+                    source_transaction.actuator_generators.control_bit2_set_count +
+                        source_transaction.actuator_generators.control_bit2_clear_count ==
+                        source_transaction.actuator_generators.tick_generator_candidate_count &&
+                    source_transaction.actuator_generators.candidate_hash != 0u &&
                     source_transaction.entrance_map.committed &&
                     source_transaction.entrance_map.map ==
                         source_transaction.entrance.map &&
@@ -1580,7 +1591,7 @@ int main(void) {
                     source_transaction.transaction_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "M11 joins entrance interactions, map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
+                "M11 joins entrance interactions, raw actuator-generator inputs, map, DYN4 roster, selected heroes and source possessions before any live GAME_LOAD publication");
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,
