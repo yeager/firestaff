@@ -255,6 +255,10 @@ typedef struct DM2_V1_RuntimeMusicMapReceipt {
     int map_index;
     int selected_track;
     int source_songlist_verified;
+    /* A mounted File_header map is not a restored gameplay session.  Keep
+     * this explicit so a map-default cue cannot be mistaken for a permitted
+     * startup/menu cue before DM2_GAME_LOAD has installed party ownership. */
+    int blocked_no_session;
     int queue_result;
     int source_stream_resolved;
     int playback_started;

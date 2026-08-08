@@ -340,16 +340,24 @@ static void test_songlist_real_data_routing(void)
               track == -1,
           "SONGLIST.DAT's first no-music selector rejects");
     CHECK(dm2_v1_boot_enter_game(&p) == 0,
-          "real PC assets enter before source music-map dispatch");
+          "real PC assets enter before the GAME_LOAD-owned music-map dispatch");
+    dm2_v1_sound_stop_music();
     dm2_v1_runtime_init(&p);
     memset(&music, 0, sizeof(music));
     CHECK(dm2_v1_runtime_last_music_map_receipt(&music) == 1 &&
-              music.map_index == 0 && music.selected_track == 2 &&
+              music.map_index == 0 && music.selected_track == -1 &&
               music.source_songlist_verified == 1 &&
-              music.source_stream_resolved == 1 &&
-              music.queue_result == DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE &&
+              music.blocked_no_session == 1 &&
+              music.source_stream_resolved == 0 &&
+              music.queue_result == 0 &&
               music.playback_started == 0,
-          "runtime map 0 dispatches original track 02 without claiming playback");
+          "runtime blocks map 0 music until GAME_LOAD owns the party and map transition");
+    {
+        DM2_V1_MusicScheduleReceipt schedule;
+        memset(&schedule, 0, sizeof(schedule));
+        CHECK(dm2_v1_sound_schedule_music(0u, &schedule) == 0,
+              "blocked map music leaves no pre-GAME_LOAD MIDI event queue");
+    }
     dm2_v1_boot_cleanup(&p);
 }
 

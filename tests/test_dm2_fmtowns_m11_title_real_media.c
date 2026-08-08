@@ -7,6 +7,7 @@
 #include "asset_status_m12.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,6 +89,14 @@ int main(void)
     M11_GameView_Init(&view);
     expect(M11_GameView_Start(&view, &spec) == 1,
            "selected HME-242 archive enters the DM2 M11 path");
+    {
+        DM2_V1_RuntimeMusicMapReceipt music;
+        memset(&music, 0, sizeof(music));
+        expect(dm2_v1_runtime_last_music_map_receipt(&music) == 1 &&
+                   music.valid && music.blocked_no_session &&
+                   music.selected_track == -1 && music.queue_result == 0,
+               "HME-242 does not probe CD.DAT or queue CDDA before GAME_LOAD owns party position");
+    }
     expect(view.dm2FmtownsTitleBound && view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitlePalette.valid &&
                view.dm2FmtownsTitleFrameReceipt.valid &&

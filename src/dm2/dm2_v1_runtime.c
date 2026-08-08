@@ -1104,6 +1104,22 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     if (!rt || !rt->boot) return;
     music_system = dm2_v1_platform_music_system(rt->boot->platform);
     receipt.source_songlist_verified = rt->boot->songlist_verified ? 1 : 0;
+    /* SKProject's DM2_GAME_LOAD restores party pose, c_hero, timers and the
+     * dungeon graph before its post-load movement/map path can select a
+     * level cue (sksvgame.cpp::DM2_GAME_LOAD lines 1415-1574;
+     * c_sound.cpp::DM2_SOUND2 lines 465-499).  A boot-mounted File_header
+     * supplies neither party ownership nor a live map transition.  Do not
+     * let its default level zero queue HMP/CDDA merely because real media is
+     * available; SHOW_MENU_SCREEN owns its distinct source menu cue.
+     *
+     * This is deliberately before the FM Towns coordinate lookup: probing
+     * its default (0,0) cell would turn an unowned host pose into CDDA. */
+    if (!rt->boot->source_game_load_session_ready) {
+        receipt.valid = 1;
+        receipt.blocked_no_session = 1;
+        rt->music_map_receipt = receipt;
+        return;
+    }
     /* DMWeb's 40-byte CD.DAT format is a level/X/Y trigger table, not a
      * map-default playlist.  A missing live party owner must therefore
      * produce no CDDA request instead of probing the synthetic (0,0) cell.

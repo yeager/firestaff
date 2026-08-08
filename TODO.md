@@ -8285,6 +8285,11 @@ that its exact runtime path is not already source-locked and tested.
     not padding; `0xff` remains the only no-music value. Runtime
     map-context refresh now dispatches that verified selector and exposes a
     receipt that remains `playback_started = 0` until real decoding succeeds.
+    **2026-08-08 session-ownership correction:** map-context refresh now
+    stops before selector dispatch until `DM2_GAME_LOAD` owns the party pose,
+    map transition and timer graph. This also prevents the FM Towns CD.DAT
+    coordinate table from probing a default host position. The separate
+    source-owned startup cue remains available.
     **2026-08-05 inventory update:** removed the unused invented per-track
     labels (such as "Dungeon Ambient" and "Boss Encounter") from the active
     sound module. DMWeb proves only the `0x00..0x1c` HMP identities and their

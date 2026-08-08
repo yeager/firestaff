@@ -24,6 +24,18 @@
   utility/import-proben (73/73), läsarens egna test och kontroll av att M10
   saknar referenser till den testbegränsade läsaren.
 
+# DM2 nivåmusik kräver GAME_LOAD (2026-08-08)
+
+- ✅ Runtimeinitieringen kan inte längre använda den monterade kartans
+  standardspår för att köa HMP eller FM Towns CDDA före `DM2_GAME_LOAD`.
+  Den saknade sessionen markeras i ett strukturerat kvitto och lämnar ingen
+  MIDI-kö eller CD.DAT-koordinatfråga efter sig.
+- ✅ Startmenyns egen, källstyrda musikväg är oförändrad. Den är separat från
+  nivåmusik och får fortfarande använda sin verifierade originalmedia.
+- ✅ Verifierat mot PC-DOS `SONGLIST.DAT` och FM Towns HME-242-arkivet genom
+  bootprofil- respektive M11-startsekvensprovet. Ingen ljuddata skapas,
+  ersätts eller packas upp.
+
 # DM2 championvalsproduktionsspärr (2026-08-08)
 
 - ✅ Den callback-baserade transkriptionen av `DM2_SELECT_CHAMPION` och
