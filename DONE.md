@@ -30,6 +30,16 @@
   Saturn VDP1/VDP2 no-draw boundary is unchanged; no synthetic pixels or
   unverified presentation consumer was admitted.
 
+# DM2 File_header-objekt behåller källadresser (2026-08-08)
+
+- ✅ DB5–DB15 i varje File_header-kedja samlas nu som exakta
+  originaladresser med recordstorlek, typ, index, riktning och kartposition.
+  API:t skapar ingen item- eller scenmodell; konsumenter måste fortfarande
+  läsa de ursprungliga bytesen från den monterade dungeonägaren.
+- ✅ 44-kartorsregressionen återkopplar varje adress till sitt faktiska record
+  i den laddade originaldatan. Kontroll och produktionsspärr passerar utan
+  syntetisk spelstate.
+
 # Theron T900 proof boundary (2026-08-08)
 
 - ✅ Real US/JP object records and the 66-row item-property tables are now

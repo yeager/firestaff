@@ -134,6 +134,9 @@
   DB3- och DB4-receipts fält för fält mot de faktiska recordposterna. Den
   bevarar nu även DB0:s hela `w2`, DB1:s hela `w4`, DB3:s hela `w2`/`w4`/`w6`
   och DB4:s båda statusbyten. Den bevisar läsningen, inte en spelbar session.
+  DB5–DB15 har nu också exakta källadresser, storlekar, typer och riktningar
+  från samma kedja. Bind dem till originalens inventory-, scen- och
+  projektilkonsumenter innan någon värdmodell får materialiseras.
 
 - **DM2-CREATURE-POSSESSION-RUNTIME:** DB4-ägd possessionslänk och varje
   verklig underkedja är nu verifierade utan mutation. Återställ därefter

@@ -462,6 +462,31 @@ typedef struct {
     int record_count;
     int type_count[16];
 } DM2_V1_FileHeaderRuntimeSceneCensus;
+
+/* Source-addressed DB5..DB15 entries in a File_header map chain.  This is a
+ * record locator rather than an invented item model: consumers must read the
+ * exact bytes from `record_offset` under the already mounted dungeon owner. */
+typedef struct {
+    int x;
+    int y;
+    uint16_t object_id;
+    uint16_t index;
+    uint8_t type;
+    uint8_t direction;
+    int record_offset;
+    int record_size;
+} DM2_V1_FileHeaderObjectRecord;
+
+#define DM2_V1_FILE_HEADER_RUNTIME_MAX_OBJECT_RECORDS 512
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int map;
+    int object_record_count;
+    int object_record_reads;
+    DM2_V1_FileHeaderObjectRecord
+        objects[DM2_V1_FILE_HEADER_RUNTIME_MAX_OBJECT_RECORDS];
+} DM2_V1_FileHeaderRuntimeObjectReceipt;
 typedef struct {
     int committed;
     int incomplete_world;
@@ -1687,6 +1712,9 @@ int dm2_v1_dungeon_walk_file_header_runtime_map(
 int dm2_v1_dungeon_collect_file_header_runtime_map_scene_census(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeSceneCensus *out);
+int dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeObjectReceipt *out);
 int dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeTileCensus *out);

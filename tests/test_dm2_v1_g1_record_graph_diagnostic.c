@@ -93,6 +93,7 @@ int main(void) {
     int door_record_total = 0;
     int teleporter_record_total = 0;
     int actuator_record_total = 0;
+    int object_record_total = 0;
     FileHeaderWalkTrace map0_walk;
 
     paths[0] = env;
@@ -154,6 +155,7 @@ int main(void) {
         DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
         DM2_V1_FileHeaderRuntimeSceneCensus scene_census;
         DM2_V1_FileHeaderRuntimeTileCensus tile_census;
+        DM2_V1_FileHeaderRuntimeObjectReceipt objects;
         FileHeaderWalkTrace map_walk;
         DM2_V1_FileHeaderRuntimeTextReceipt texts;
         DM2_V1_FileHeaderRuntimeCreatureReceipt creatures;
@@ -164,6 +166,7 @@ int main(void) {
         memset(&map_receipt, 0, sizeof(map_receipt));
         memset(&scene_census, 0, sizeof(scene_census));
         memset(&tile_census, 0, sizeof(tile_census));
+        memset(&objects, 0, sizeof(objects));
         memset(&map_walk, 0, sizeof(map_walk));
         if (!dm2_v1_dungeon_validate_file_header_runtime_map(
                 &d, map, &map_receipt) || !map_receipt.committed ||
@@ -180,6 +183,31 @@ int main(void) {
             scene_census.record_count != map_receipt.record_count) {
             printf("FAIL: File_header map-%d scene census was not retained\n", map);
             ++failures;
+        }
+        if (!dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+                &d, map, &objects) || !objects.committed ||
+            objects.object_record_reads != objects.object_record_count) {
+            printf("FAIL: File_header map-%d object records were not retained\n", map);
+            ++failures;
+        } else {
+            object_record_total += objects.object_record_count;
+            for (int object_index = 0;
+                 object_index < objects.object_record_count; ++object_index) {
+                const DM2_V1_FileHeaderObjectRecord *object =
+                    &objects.objects[object_index];
+                const uint8_t *record = NULL;
+                if (!receipt_record(&d, object->object_id, object->type, &record) ||
+                    object->type < 5 || object->index !=
+                        (object->object_id & 0x03ffu) ||
+                    object->direction != (uint8_t)(object->object_id >> 14) ||
+                    object->record_offset != (int)(record - d.raw_data) ||
+                    object->record_size <= 0 ||
+                    object->record_offset + object->record_size > d.raw_size) {
+                    printf("FAIL: File_header map-%d object address differs\n", map);
+                    ++failures;
+                    break;
+                }
+            }
         }
         if (!dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
                 &d, map, &tile_census) || !tile_census.committed ||
@@ -411,8 +439,8 @@ int main(void) {
         ++failures;
     }
     if (door_record_total <= 0 || teleporter_record_total <= 0 ||
-        actuator_record_total <= 0) {
-        printf("FAIL: canonical File_header lacks chained DB0/DB1/DB3 records\n");
+        actuator_record_total <= 0 || object_record_total <= 0) {
+        printf("FAIL: canonical File_header lacks chained DB0/DB1/DB3/object records\n");
         ++failures;
     }
     memset(&doors, 0, sizeof(doors));

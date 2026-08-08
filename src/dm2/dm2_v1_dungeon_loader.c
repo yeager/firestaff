@@ -3154,6 +3154,65 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_scene_census(
     return 1;
 }
 
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_FileHeaderRuntimeObjectReceipt *receipt;
+} DM2_V1_FileHeaderObjectCollector;
+
+static int dm2_v1_file_header_collect_object_record(
+    void *user, uint16_t thing, int type, int index, const uint8_t *record,
+    int record_size, int level, int x, int y)
+{
+    DM2_V1_FileHeaderObjectCollector *collector =
+        (DM2_V1_FileHeaderObjectCollector *)user;
+    DM2_V1_FileHeaderRuntimeObjectReceipt *receipt =
+        collector ? collector->receipt : NULL;
+    DM2_V1_FileHeaderObjectRecord *object;
+
+    /* SKProject c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN walks the same
+     * GenericRecord::w0 chain. DB5..DB15 need their original record bytes
+     * for item, projectile and scene consumers, so retain only source
+     * addresses here rather than constructing a host object model. */
+    if (!collector || !collector->dungeon || !collector->dungeon->raw_data ||
+        !receipt || type < 5 || type >= DM2_THING_TYPE_COUNT) return 0;
+    if (!record || record_size < 2 || index < 0 ||
+        receipt->object_record_count >=
+            DM2_V1_FILE_HEADER_RUNTIME_MAX_OBJECT_RECORDS) return -1;
+    object = &receipt->objects[receipt->object_record_count++];
+    object->x = x;
+    object->y = y;
+    object->object_id = thing;
+    object->index = (uint16_t)index;
+    object->type = (uint8_t)type;
+    object->direction = (uint8_t)((unsigned int)thing >> 14);
+    object->record_offset = (int)(record - collector->dungeon->raw_data);
+    object->record_size = record_size;
+    ++receipt->object_record_reads;
+    (void)level;
+    return 0;
+}
+
+int dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_FileHeaderRuntimeObjectReceipt *out)
+{
+    DM2_V1_FileHeaderRuntimeObjectReceipt candidate;
+    DM2_V1_FileHeaderObjectCollector collector;
+
+    if (!out || !d || !d->raw_data) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    candidate.map = map;
+    collector.dungeon = d;
+    collector.receipt = &candidate;
+    if (dm2_v1_dungeon_walk_file_header_runtime_map(
+            d, map, dm2_v1_file_header_collect_object_record, &collector) < 0 ||
+        candidate.object_record_reads != candidate.object_record_count) return 0;
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_collect_file_header_runtime_map_tile_census(
     const DM2_V1_DungeonData *d, int map,
     DM2_V1_FileHeaderRuntimeTileCensus *out)
