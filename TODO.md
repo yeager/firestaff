@@ -62,9 +62,9 @@
   startkvittomotor kan inte längre ticka samma A31-bild en andra gång.
   När den verkliga 606-VBL-strömmen har löpt klart stannar M11 på den sista
   autentiska bilden. A31M:s `APPB.FTL` språkvalsyta avkodas nu från samma
-  hashverifierade program. Dess engelska klickruta följer nu `SWITCH.C`
-  F1288:s releaseväg till `KAOS.FTL`; franska och tyska förblir spärrade
-  tills deras egna runtime-media är verifierade. A31:s senare meny-, Prison-
+  hashverifierade program. Dess språkval följer nu `SWITCH.C` F1288:s
+  releaseväg till samma hashverifierade `KAOS.FTL`, med APPA.C:s autentiska
+  parameter 0/1/2 för engelska, franska respektive tyska. A31:s senare meny-, Prison-
   och Utility-ytor saknar fortfarande autentisk capture.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
@@ -86,8 +86,8 @@
   autentiska konsumenter. C026-porträttet har nu en avgränsad native
   kandidat-/statusboxkonsument, inklusive C027:s källägda namnändringsyta,
   men inte hela den interaktiva panelkedjan.
-  Franska/tyska och den återstående
-  A35M-runtimen saknar fortfarande egen verifierad konsumentväg. Atari ST:s redan
+  Den återstående A35M-runtimen saknar fortfarande egen verifierad
+  konsumentväg. Atari ST:s redan
   separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.
 

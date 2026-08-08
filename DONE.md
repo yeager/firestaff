@@ -148,6 +148,11 @@
 - ✅ Kandidatens namnändringsfas använder nu den separata Amiga-C027-posten
   på samma C101-yta som C040. `REVIVE.C` F0281:s C04-cyantransparens bevarar
   C017 under panelen; den får aldrig ersättas av PC34:s namnändringsruta.
+- ✅ A31M och A35M släpper nu APPB:s autentiska franska och tyska val till
+  samma hashverifierade `KAOS.FTL` som engelskan, med ReDMCSB `APPA.C`:
+  ENGL/FNCH/GRMN-parametrarna 0/1/2. Realtidsprovet öppnar varje väg från
+  originalpaketet och kontrollerar att språkparametern når C03_GAME utan en
+  PC34-övergång.
 
 # CSB Amiga C013-runtimenyta från originaldata (2026-08-08)
 

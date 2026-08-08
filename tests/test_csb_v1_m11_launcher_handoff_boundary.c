@@ -2144,6 +2144,41 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     expect_amiga_candidate_c026_source_frame(
         &view, "A31M candidate route presents original Amiga C026 without a PC34 portrait");
     M11_GameView_Shutdown(&view);
+    {
+        static const struct {
+            int x;
+            int y;
+            unsigned int language_index;
+        } language_choices[] = {
+            { 99, 50, 1u },
+            { 99, 150, 2u }
+        };
+        size_t language_choice;
+
+        for (language_choice = 0u;
+             language_choice < sizeof(language_choices) /
+                 sizeof(language_choices[0]);
+             ++language_choice) {
+            M11_GameView_Init(&view);
+            expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                        "A31M reopens its authentic APPA/TITL chain for each language");
+            while (view.csbState.startup_title_active &&
+                   view.csbAmigaTitlVbl < 606u) {
+                (void)M11_GameView_AdvanceIdleTick(&view);
+            }
+            profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+            expect_true(M11_GameView_HandlePointerButtonRelease(
+                            &view, language_choices[language_choice].x,
+                            language_choices[language_choice].y,
+                            DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                        profile != NULL &&
+                        profile->amiga_language_index ==
+                            language_choices[language_choice].language_index &&
+                        profile->runtime.state == CSB_STATE_GAME,
+                        "A31M APPB passes the selected native language to KAOS.FTL");
+            M11_GameView_Shutdown(&view);
+        }
+    }
     M12_StartupMenu_Destroy(&menu);
 }
 
@@ -2214,6 +2249,37 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
     expect_amiga_candidate_c026_source_frame(
         &view, "A35M candidate route presents original Amiga C026 without a PC34 portrait");
     M11_GameView_Shutdown(&view);
+    {
+        static const struct {
+            int x;
+            int y;
+            unsigned int language_index;
+        } language_choices[] = {
+            { 154, 147, 1u },
+            { 210, 102, 2u }
+        };
+        size_t language_choice;
+
+        for (language_choice = 0u;
+             language_choice < sizeof(language_choices) /
+                 sizeof(language_choices[0]);
+             ++language_choice) {
+            M11_GameView_Init(&view);
+            expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                        "A35M reopens its authentic APPB selector for each language");
+            profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+            expect_true(M11_GameView_HandlePointerButtonRelease(
+                            &view, language_choices[language_choice].x,
+                            language_choices[language_choice].y,
+                            DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                        profile != NULL &&
+                        profile->amiga_language_index ==
+                            language_choices[language_choice].language_index &&
+                        profile->runtime.state == CSB_STATE_GAME,
+                        "A35M APPB passes the selected native language to KAOS.FTL");
+            M11_GameView_Shutdown(&view);
+        }
+    }
     M12_StartupMenu_Destroy(&menu);
 }
 

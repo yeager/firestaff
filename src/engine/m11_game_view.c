@@ -4643,13 +4643,15 @@ static int m11_csb_prepare_amiga_a35m_appb_selection(M11_GameViewState *state)
     return 1;
 }
 
-static int m11_csb_complete_amiga_appb_english_handoff(M11_GameViewState *state)
+static int m11_csb_complete_amiga_appb_language_handoff(M11_GameViewState *state,
+                                                         uint8_t language_index)
 {
     CSB_V1_BootProfile *profile;
     char path[FSP_PATH_MAX];
     char md5[33];
 
-    if (!state || !state->csbBootProfile || !state->csbAmigaAppbSelectionActive) {
+    if (!state || !state->csbBootProfile || !state->csbAmigaAppbSelectionActive ||
+        language_index > 2u) {
         return 0;
     }
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
@@ -4663,10 +4665,11 @@ static int m11_csb_complete_amiga_appb_english_handoff(M11_GameViewState *state)
                     : "dbb79832c9cc3db82886ba8d3f72748a") != 0) {
         return 0;
     }
-    /* APPA.C:71-74 maps ENGL to KAOS with language parameter zero. The
-     * selected package already owns the A31M dungeon/runtime allocation, so
-     * cross that same C03_GAME boundary without a PC34 entrance session. */
-    profile->amiga_language_index = 0u;
+    /* ReDMCSB APPA.C:71-80 maps ENGL/FNCH/GRMN to the same KAOS executable
+     * with parameter 0/1/2.  KAOS.FTL is therefore the authenticated native
+     * continuation for all three A31M/A35M selector results, not an English
+     * substitute.  Cross that C03_GAME boundary without a PC34 session. */
+    profile->amiga_language_index = language_index;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;
     state->csbState.startup_entrance_active = 0;
@@ -4688,19 +4691,32 @@ static int m11_csb_handle_amiga_appb_pointer_release(
     if (state->csbBootProfile && m11_csb_is_amiga_a35m_profile(
             (const CSB_V1_BootProfile *)state->csbBootProfile)) {
         if (x >= 122 && x <= 154 && y >= 62 && y <= 85) {
-            return m11_csb_complete_amiga_appb_english_handoff(state) ? 1 : -1;
+            return m11_csb_complete_amiga_appb_language_handoff(state, 0u) ?
+                1 : -1;
         }
-        if ((x >= 138 && x <= 170 && y >= 136 && y <= 159) ||
-            (x >= 194 && x <= 226 && y >= 91 && y <= 114)) return -1;
+        if (x >= 138 && x <= 170 && y >= 136 && y <= 159) {
+            return m11_csb_complete_amiga_appb_language_handoff(state, 1u) ?
+                1 : -1;
+        }
+        if (x >= 194 && x <= 226 && y >= 91 && y <= 114) {
+            return m11_csb_complete_amiga_appb_language_handoff(state, 2u) ?
+                1 : -1;
+        }
         return 0;
     }
     if (x < 68 || x > 130) return 0;
     if (y >= 79 && y <= 123) {
-        return m11_csb_complete_amiga_appb_english_handoff(state) ? 1 : -1;
+        return m11_csb_complete_amiga_appb_language_handoff(state, 0u) ?
+            1 : -1;
     }
-    /* The selected corpus has only the verified English KAOS continuation.
-     * Do not send French/German through English media or fabricate a marker. */
-    if ((y >= 28 && y <= 72) || (y >= 130 && y <= 174)) return -1;
+    if (y >= 28 && y <= 72) {
+        return m11_csb_complete_amiga_appb_language_handoff(state, 1u) ?
+            1 : -1;
+    }
+    if (y >= 130 && y <= 174) {
+        return m11_csb_complete_amiga_appb_language_handoff(state, 2u) ?
+            1 : -1;
+    }
     return 0;
 }
 
