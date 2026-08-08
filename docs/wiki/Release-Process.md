@@ -8,9 +8,17 @@ Firestaff uses semantic versioning: `MAJOR.MINOR.PATCH` (e.g., `3.0.282`). The v
 project(Firestaff VERSION 3.0.282 LANGUAGES C)
 ```
 
-## Creating a Release
+## Release notes format
 
-1. **Bump version** in `CMakeLists.txt`
+Every version block in `RELEASE_NOTES.md` is grouped by game. It contains
+`DM1`, `DM2`, `CSB`, `Nexus` and `Theron`; each game contains `Added`,
+`Changed` and `Removed`. A category with no change contains exactly `None.`.
+Non-empty bullets name the affected function, subsystem, command, screen or
+feature in backticks.
+
+## Creating a release
+
+1. **Bump version** in `CMakeLists.txt`.
 2. **Write release notes** in `RELEASE_NOTES.md` (add a section headed
    `# Firestaff vX.Y.Z`). The section must contain exactly these functional
    delta categories, each with concrete bullets:
@@ -18,14 +26,45 @@ project(Firestaff VERSION 3.0.282 LANGUAGES C)
    ```markdown
    # Firestaff vX.Y.Z
 
-   ## Added
-   - `FunctionOrFeature`: what was added and the user-visible or runtime effect.
+   ## DM1
+   ### Added
+   - None.
+   ### Changed
+   - `dm1_feature`: describe the concrete change.
+   ### Removed
+   - None.
 
-   ## Changed
-   - `FunctionOrFeature`: what changed and the resulting behavior.
+   ## DM2
+   ### Added
+   - None.
+   ### Changed
+   - None.
+   ### Removed
+   - None.
 
-   ## Removed
-   - None. No functions or public features were removed.
+   ## CSB
+   ### Added
+   - None.
+   ### Changed
+   - None.
+   ### Removed
+   - None.
+
+   ## Nexus
+   ### Added
+   - None.
+   ### Changed
+   - None.
+   ### Removed
+   - None.
+
+   ## Theron
+   ### Added
+   - None.
+   ### Changed
+   - None.
+   ### Removed
+   - None.
    ```
 
    Name the affected function, subsystem, command, screen or feature in every
@@ -33,12 +72,15 @@ project(Firestaff VERSION 3.0.282 LANGUAGES C)
    generic release summaries. A release with no delta in a category must say
    `None.` explicitly. The release workflow rejects notes that do not meet this
    contract.
-3. **Update TODO.md and DONE.md** as needed
-4. **Commit** the version bump
-5. **Tag** with `v` prefix: `git tag v3.0.282`
-6. **Push** with tags: `git push --tags`
+3. **Update TODO.md and DONE.md** as needed.
+4. **Commit** the version bump and documentation.
+5. **Tag** with `v` prefix only when a release is explicitly requested.
+6. **Push** the tag only for that release.
 
 The GitHub Actions release workflow triggers automatically on `v*` tags.
+
+Ordinary documentation and code work is pushed to `main` without creating a
+tag or GitHub Release.
 
 ## CI/CD Pipeline
 

@@ -1,6 +1,6 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-08-06.** Firestaff has five active game targets.
+> **Status reviewed 2026-08-08.** Firestaff has five active game targets.
 > DM1 V1 is the strongest playable route; CSB, DM2, Nexus and Theron are
 > documented as source-locked or real-data bring-up work where the end-to-end
 > boundary is still open. See [Project status](../PROJECT_STATUS.md) and the
@@ -26,6 +26,18 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - [iOS](Platform-iOS) — AltStore Classic sideloading, SideStore, game data via Files app
 - [Android](Platform-Android) — APK sideloading, game data transfer
 
+## By audience
+
+- **Players:** start with the repository [README](../../README.md),
+  [game-data setup](../DATA_SETUP.md) and [project status](../PROJECT_STATUS.md).
+- **Developers:** read [architecture](Architecture-Overview),
+  [building and installing](Building-and-Installing), the per-game TODO files
+  and [missing functions by game](../MISSING_FUNCTIONS_BY_GAME.md).
+- **Reverse-engineering researchers:** use the [reverse-engineering index](Reverse-Engineering-Index),
+  source-lock pages and [parity evidence](Parity-Evidence).
+- **Preservation researchers:** start with [preservation and provenance](Preservation),
+  [verified hashes](../VERIFIED_HASHES.md) and [game-data setup](../DATA_SETUP.md).
+
 ## Reverse Engineering
 
 - [Reverse Engineering Index](Reverse-Engineering-Index) — overview of all RE documentation, cross-game formats, parity evidence
@@ -41,6 +53,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - [Architecture Overview](Architecture-Overview) — layer model, module layout, data ownership
 - [Release Process](Release-Process) — versioning, CI/CD, release artifacts
 - [Parity Evidence](Parity-Evidence) — how source-lock documents work
+- [Preservation](Preservation) — provenance, evidence levels, captures and data boundaries
 - [Game Data](Game-Data) — what original data files are needed and where to place them
 - [Documentation Index](../DOCUMENTATION_INDEX) — complete cross-game status and page map
 

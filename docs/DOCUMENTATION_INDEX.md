@@ -1,6 +1,6 @@
 # Firestaff documentation
 
-This is the documentation map for the complete Firestaff project. It covers
+This is the documentation map for the Firestaff project. It covers
 all five supported games, the shared launcher and engine layers, data setup,
 CI, source-lock evidence and release packaging.
 
@@ -30,6 +30,9 @@ handoff is not proven.
 - [CI guide](CI.md) — GitHub Actions checks and local reproduction
 - [Verified hashes](VERIFIED_HASHES.md) — canonical data identities
 - [Gap list](FIRESTAFF_GAP_LIST.md) — active technical boundaries
+- [Missing functions by game](MISSING_FUNCTIONS_BY_GAME.md) — code, data and verification gaps
+- [Synthetic data by game](SYNTHETIC_DATA_BY_GAME.md) — fixtures, placeholders and real-data replacements
+- [Preservation and provenance](wiki/Preservation.md) — evidence levels, capture manifests and external data rules
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 
@@ -72,4 +75,4 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-08-06.
+**Last reviewed:** 2026-08-08.

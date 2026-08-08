@@ -1,6 +1,6 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
-> **Status reviewed 2026-08-06.** DM2 has substantial skproject-anchored and
+> **Status reviewed 2026-08-08.** DM2 has substantial skproject-anchored and
 > real-data slices, while V1 dungeon/render/mechanics parity remains active.
 
 ## Scope
@@ -50,10 +50,9 @@ The work continues as continuous lanes
 - **Lane A — SkWinCore symbol audit.** Closes `MISSING` rows in
   `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` in small
   batches, source-locking each `skproject`/`SKULLWIN` symbol against
-  `SKWIN/SkWinCore.cpp` and `SkGlobal.cpp` before implementation. Backlog was
-  1021+ rows historically; as of cycle 16 batch 17, 851 `MISSING` rows
-  remain. `SYMBOL_DISPOSITIONS.tsv` tracks each symbol's final disposition
-  (`IMPLEMENTED_NARROW`, source-locked helper, etc.).
+  `SKWIN/SkWinCore.cpp` and `SkGlobal.cpp` before implementation. The current
+  disposition is the TSV itself; do not copy a historical row count into a
+  status summary.
 - **Lane B — Audible playback backend.** `dm2_v1_sound_bind_gdat_loader()`
   wires `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and `DM2_QUERY_SND_ENTRY_INDEX`
   to real GDAT sound data with an SDL3 mixing backend (6000 Hz U8 mono

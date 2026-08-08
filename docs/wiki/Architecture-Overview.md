@@ -86,11 +86,11 @@ Shared M10 engine with game-specific V1 modules. CSB adds DSA execution, extende
 
 Separate runtime path with GDAT-based material resolution. G1 byte-square format with record graphs instead of linked Thing chains. Independent creature occupancy grid, combat drops, and PCM sound decode.
 
-### Theron's Quest (No Reference Source)
+### Theron's Quest (No Reconstructed Source)
 
 Record-based PC Engine CD layout. Evidence-driven: Track 02 IPL/stage-two/stage-three handoff chain proved from binary analysis. Multi-level object tables, SRM save boundary, and transactional Continue.
 
-### DM Nexus (No Reference Source)
+### DM Nexus (No Reconstructed Source)
 
 Saturn DMDF/DGN data family. Structure1B geometry, Structure3 face topology,
 MNS static materials, bounded PRS3 byte decoding, SLEV scripts, and SAL/MAP

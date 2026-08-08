@@ -7,6 +7,10 @@ built from scratch in portable C. **The only currently available playable
 game is Dungeon Master v1 (PC DOS 3.4).** CSB, DM2, Theron's Quest and DM
 Nexus are development targets and are not presented as finished games.
 
+Status reviewed 2026-08-08. For the exact boundary, see
+[project status](docs/PROJECT_STATUS.md); for missing functions and evidence,
+see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
+
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -26,15 +30,15 @@ Nexus are development targets and are not presented as finished games.
 | **DM Nexus** | Sega Saturn data | Saturn disassembly | Development only |
 | **Theron's Quest** | PC Engine CD data | PC Engine disassembly | Development only |
 
-## Screenshots
+## Evidence and screenshots
 
-**Coming soon.** Theron's Quest has no README-eligible screenshot yet. The
-promotion gate remains locked until a current, hash-verified runtime capture
-proves the source-owned VDC/VCE route. No generated, placeholder or synthetic
-image is presented as game evidence.
+Public screenshots are promoted only when the source-owned runtime route and
+the capture provenance are verified. Generated, placeholder or synthetic
+images are never presented as game evidence.
 
-Further runtime captures for DM1 v1, CSB, DM2 and DM Nexus will be added as
-their source-locked presentation paths clear verification.
+The [parity-evidence capture index](parity-evidence/) and the per-game status
+pages record what is verified today. A missing screenshot is an evidence gap,
+not proof that a feature does not exist.
 
 ## Why Firestaff?
 
@@ -67,10 +71,10 @@ source-reference boundaries for all five games.
 
 ## Quick Start
 
-1. **Download** from [GitHub Releases](https://github.com/yeager/firestaff/releases/latest).
-2. **Run once** so the data directory is created.
-3. **Drop your game files** anywhere under the data directory.
-4. **Launch.** The scanner finds your data and shows which games are ready.
+1. Use a published package when one is available, or [build from source](docs/wiki/Building-and-Installing.md).
+2. Run Firestaff once so the data directory is created.
+3. Copy or keep your legally owned game media under the data directory.
+4. Run `--scan-data` and launch only a game whose required source set is accepted.
 
 | Platform | Status | Data directory |
 |----------|--------|---------------|
@@ -96,8 +100,8 @@ original files for every game, including disc-image and archive media.
 
 ## In-game runtime panel
 
-Press **F10** in any game to open the compact runtime graphics and cheats
-panel. Change presentation, filters, effects, FPS overlay, window settings and
+Where the runtime panel is enabled, press **F10** to open the compact graphics
+and cheats panel. Change presentation, filters, effects, FPS overlay, window settings and
 the implemented shared cheat controls while the game is running; changes are
 applied and saved immediately. Use **Up/Down** plus **Left/Right** or the
 mouse, **Tab** for pages and **Esc** to close. See the [runtime panel guide](docs/runtime_graphics_and_cheats.md)
@@ -105,7 +109,7 @@ for the complete control list and source-data boundaries.
 
 ## Download
 
-The current playable scope is **DM1 v1 on macOS**. Linux, Windows and Steam
+The current verified playable scope is **DM1 v1 on macOS**. Linux, Windows and Steam
 Deck are build/package targets whose final packaged runtime verification is
 still pending. A package does not imply that CSB, DM2, Theron's Quest or DM
 Nexus is playable. iOS and Android packages are not currently available.
@@ -163,6 +167,9 @@ The cross-game status and evidence boundary are kept in
 the same order for every game: startup, menu, HUD, then viewport.
 The complete documentation map is in
 [`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md).
+Preservation rules and capture provenance are in
+[`docs/wiki/Preservation.md`](docs/wiki/Preservation.md). The synthetic-data
+inventory is in [`docs/SYNTHETIC_DATA_BY_GAME.md`](docs/SYNTHETIC_DATA_BY_GAME.md).
 
 ## Graphics Modes
 

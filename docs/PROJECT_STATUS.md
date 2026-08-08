@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last reviewed: 2026-08-06.** This page is the concise status source for the
+**Last reviewed: 2026-08-08.** This page is the concise status source for the
 README and wiki. The full documentation map is in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -9,11 +9,11 @@ source audits and capture receipts remain in the linked game documentation.
 
 | Game | Current status | What is verified | Main open boundary |
 |---|---|---|---|
-| Dungeon Master 1 | Playable/source-locked V1 | PC 3.4 runtime, viewport, HUD, input, combat, saves and original-data gates | Continued visual capture and V2 polish |
-| Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and utility/import paths | End-to-end real-data runtime proof |
-| Dungeon Master II: Skullkeep | Active hardening | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement and controller slices | V1 dungeon/render/mechanics parity with real assets |
-| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Positive real-asset runtime handoff and full playability |
-| Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, authenticated US descriptor receipt, rendering, mechanics, progression, save/load and capture instrumentation | Game-owned Track 02 dungeon handoff, object records, semantic level decoding and real bitmap/palette bindings |
+| Dungeon Master 1 | Playable/source-locked V1 | PC 3.4 runtime, viewport, HUD, input, combat, saves and original-data gates | C13 save corpus, broader original-vs-Firestaff capture and V2 material |
+| Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and utility/import paths | DSA/save corpus, wider real-data runtime, HUD/viewport and pixel evidence |
+| Dungeon Master II: Skullkeep | Active hardening | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement and controller slices | SKSAVE ownership, V1 dungeon/render/mechanics parity and live material/audio routes |
+| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, event/audio playback and full playability |
+| Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, level framing, mechanics, progression and capture instrumentation | Full Track 02 handoff, save body semantics, bitmap/palette binding and JP capture |
 
 ## Shared presentation priority
 

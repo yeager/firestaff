@@ -1,6 +1,6 @@
 # Reverse Engineering Index
 
-> **Status reviewed 2026-08-06.** This index separates source-locked facts,
+> **Status reviewed 2026-08-08.** This index separates source-locked facts,
 > real-data receipts, runtime milestones and open handoff boundaries. Counts
 > are not feature-completeness claims; see the [documentation index](../DOCUMENTATION_INDEX.md).
 
@@ -10,9 +10,9 @@ This section documents all functions, data structures, file formats, and other t
 
 | Game | Platform | Reference Source | RE Page | Functions | Modules | Parity Evidence |
 |------|----------|-----------------|---------|-----------|---------|-----------------|
-| [Dungeon Master (DM1)](DM1-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB | [DM1 RE](DM1-Reverse-Engineering) | 1388 F-numbered | 1558 unique IDs | 764 pass documents |
-| [Chaos Strikes Back (CSB)](CSB-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB + CSBWin | [CSB RE](CSB-Reverse-Engineering) | 1058 shared with DM1 | 28+ CSB-specific | 28 pass documents |
-| [Dungeon Master II (DM2)](DM2-Reverse-Engineering) | DOS | skproject | [DM2 RE](DM2-Reverse-Engineering) | 97+ named | 271 source files | 58 pass documents |
+| [Dungeon Master (DM1)](DM1-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB | [DM1 RE](DM1-Reverse-Engineering) | F-number registry and PC34 format work | Source maps and focused receipts | See repository corpus |
+| [Chaos Strikes Back (CSB)](CSB-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB + CSBWin | [CSB RE](CSB-Reverse-Engineering) | Shared engine plus CSB DSA/save work | CSB-specific modules and receipts | See repository corpus |
+| [Dungeon Master II (DM2)](DM2-Reverse-Engineering) | DOS | skproject | [DM2 RE](DM2-Reverse-Engineering) | skproject module and symbol audit | GDAT, records and runtime receipts | See repository corpus |
 | [Theron's Quest](Therons-Quest-Reverse-Engineering) | PC Engine CD | PC Engine disassembly and CD analysis | [Theron RE](Therons-Quest-Reverse-Engineering) | HuC6280 disassembly + retail media receipts | Track 02 loader and level-frame work | runtime handoff open |
 | [DM Nexus](Nexus-Reverse-Engineering) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Nexus RE](Nexus-Reverse-Engineering) | SH-2/VDP/SCSP receipts | DGN/MNS/PRS3/SAL/MAP work | full runtime handoff open |
 
@@ -26,9 +26,9 @@ ReDMCSB is the primary behavioral reference but is not FTL's original source. It
 
 ### skproject (DM2)
 
-skproject is the reconstructed source for Dungeon Master II: Skullkeep. The two central reference files are `SkWinCore.cpp` and `SkGlobal.cpp`. The per-module sources follow the `c_*.cpp` naming pattern (56 files covering AI, combat, graphics, records, events, movement, etc.). Firestaff's DM2 symbol audit tracks 1021+ symbols, with 851 still marked `MISSING` as of the current cycle.
+skproject is the reconstructed source for Dungeon Master II: Skullkeep. The two central reference files are `SkWinCore.cpp` and `SkGlobal.cpp`. The per-module sources follow the `c_*.cpp` naming pattern. Current symbol dispositions are maintained in `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`; historical counts must not be copied into status prose.
 
-### No Reference Source (Theron's Quest, DM Nexus)
+### No Reconstructed Source (Theron's Quest, DM Nexus)
 
 Theron's Quest (PC Engine CD) and DM Nexus (Sega Saturn) have no reconstructed source code available. All reverse engineering is performed directly from disc images and binary analysis. This makes their RE documentation particularly valuable for preservation — the structures and formats documented here may not exist anywhere else.
 
@@ -115,12 +115,12 @@ These documents are machine-checkable receipts, not narrative documentation. A s
 
 | Game | Pass Documents | Coverage Areas |
 |------|---------------|----------------|
-| DM1 | 764 | Viewport, movement, inventory, combat, champions, saves, startup |
-| DM2 | 58 | GDAT rendering, creature AI, combat, records |
-| CSB | 28 | DSA opcodes, viewport, startup, saves |
-| Theron's Quest | 7 | Track 02 loader, level handoff |
-| DM Nexus | 5 | DGN geometry, BPK surfaces, startup |
-| Other/shared | 209 | Cross-game modules |
+| DM1 | Repository corpus | Viewport, movement, inventory, combat, champions, saves, startup |
+| DM2 | Repository corpus | GDAT rendering, creature AI, combat, records |
+| CSB | Repository corpus | DSA opcodes, viewport, startup, saves |
+| Theron's Quest | Repository corpus | Track 02 loader, level handoff |
+| DM Nexus | Repository corpus | DGN geometry, BPK surfaces, startup |
+| Other/shared | Repository corpus | Cross-game modules |
 
 ## How to Use This Documentation
 
@@ -130,4 +130,4 @@ These documents are machine-checkable receipts, not narrative documentation. A s
 
 **For reimplementers**: The F-number function registry (DM1/CSB) and skproject module map (DM2) provide a complete cross-reference between the reconstructed source and Firestaff's implementation.
 
-**For verifiers**: The parity evidence system provides 1071 independently testable claims, each anchored to a specific source location. Run `ctest --test-dir build -j4` to verify all claims.
+**For verifiers**: The parity evidence system provides independently testable claims, each anchored to a source location or binary offset. The corpus changes as work lands; use the repository files and CTest discovery rather than a copied count.
