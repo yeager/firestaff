@@ -23,7 +23,9 @@
   animationen genom APPA.C → ANIM.C:s första bild och 30 kompletta DL-steg.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
-  allocationscapture finns. A35 och efterföljande Amiga-programhandoff
+  allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
+  mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35
+  och efterföljande Amiga-programhandoff
   (titel till meny/entré/Utility) är fortsatt spärrade; ingen PC34-yta får
   ersätta dem. Atari ST:s redan separata ANIMATE.SCR/ANIMATE.DAT-väg behöver
   fortfarande full runtime-/menyhandoff efter animationsprogrammet.

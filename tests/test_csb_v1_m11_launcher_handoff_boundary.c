@@ -1979,6 +1979,7 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
 
 int main(void) {
     const char *atari_only = getenv("FIRESTAFF_CSB_ATARI_ST_ONLY");
+    const char *amiga31_only = getenv("FIRESTAFF_CSB_AMIGA31_ONLY");
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
                 "CSB launcher startup sequence contract is source-ordered");
@@ -1992,14 +1993,16 @@ int main(void) {
     /* A supplied Atari-only corpus deliberately has no PC34 package.  Keep
      * the source-specific ANIMATE.SCR regression lane independently runnable
      * instead of making the PC34 assertions dereference a failed launch. */
-    if (!atari_only || !atari_only[0]) {
+    if (amiga31_only && amiga31_only[0]) {
+        run_real_amiga31_selected_package_handoff_if_available();
+    } else if (!atari_only || !atari_only[0]) {
         run_empty_launcher_boundary();
         run_real_launcher_handoff_if_available();
         run_real_v2_launcher_handoffs_if_available();
-    }
-    run_real_atari_st_launcher_handoffs_if_available();
-    if (!atari_only || !atari_only[0]) {
+        run_real_atari_st_launcher_handoffs_if_available();
         run_real_amiga31_selected_package_handoff_if_available();
+    } else {
+        run_real_atari_st_launcher_handoffs_if_available();
     }
 
     printf("\nCSB V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
