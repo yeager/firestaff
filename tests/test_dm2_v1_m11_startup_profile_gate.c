@@ -2113,6 +2113,12 @@ int main(void) {
                     "M11 DM2 obtains the NEW GAME click rectangle from verified GDAT");
         source_x = pointer_layout.new_game.x + pointer_layout.new_game.w / 2;
         source_y = pointer_layout.new_game.y + pointer_layout.new_game.h / 2;
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view, source_x, source_y,
+                        DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+                        M11_GAME_INPUT_IGNORED &&
+                        view.dm2State.startup_menu_active == 1,
+                    "M11 DM2 source NEW rectangle rejects the secondary mouse event");
         /* SKProject startend.cpp HANDLE_UI_EVENT: event 0xD7 is NEW GAME.
          * Exercise the real GDAT-derived source coordinate through the
          * public M11 pointer route.  No save or menu fixture is admitted. */

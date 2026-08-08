@@ -28442,6 +28442,16 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
      * source coordinate as a host-window coordinate, moving a valid click on
      * scaled presentations.  Keep this boundary source-coordinate-only;
      * direct callers have the same public HandlePointerButton contract. */
+    /* The SHOW_MENU_SCREEN RAW4 table installs 0xD7/0xD9 as primary-mouse
+     * actions.  c_tmouse keeps the secondary press as a distinct event
+     * (button 2 / event 1), whereas a left press becomes event 2.  Credits
+     * deliberately uses its common 0xEF dismissal route above, but a
+     * secondary press must not be reinterpreted as NEW or RESUME here.
+     * Source: SKProject c_tmouse.cpp::command_interpreter and
+     * SkWinCore.cpp::SHOW_MENU_SCREEN/HANDLE_UI_EVENT. */
+    if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     if (!m11_dm2_boot_runtime_startup_pointer(
             state, x, y, &execution, &action_receipt)) {
         /* The original SHOW_MENU_SCREEN input table owns the only admissible

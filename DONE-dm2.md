@@ -3074,6 +3074,15 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   table. Regression coverage verifies re-entering credits and dismissing it
   with the secondary button against the hash-verified PC English data.
 
+- ✅ 2026-08-08 DM2 title-menu primary-button gate: corrected the M11
+  startup dispatcher so the verified `0xD7` New Game and `0xD9` Resume
+  GDAT rectangles reject a secondary mouse event. `c_tmouse` emits a
+  distinct right-button event, while `SHOW_MENU_SCREEN` binds these title
+  actions to the primary route. The separate credits `0xEF` dismissal is
+  unchanged and still accepts both source buttons. The hash-verified
+  real-data M11 startup gate now exercises a secondary click in the genuine
+  New Game rectangle and proves that the title screen remains active.
+
 - ✅ 2026-07-31 DM2 unattached stairs-front fallback removal: removed the
   public no-draw receipt helper, its hard-coded substitute field/rectangle
   tables, and its isolated test target. No M11 production caller existed; a
