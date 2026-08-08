@@ -506,15 +506,14 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     free(bytes);
 }
 
-/* The CSB Hall's C127 mirrors are real dungeon poses, not test fixtures.  The
- * native Amiga startup cases above used to stop after proving that C013/C017
- * and the C026/C040 pixels were drawable.  That left a material gap: a
- * PC34-only party could still have been substituted after APPB/KAOS handed
- * control to the game.  ReDMCSB DUNGEON.C F0172 publishes the C127 owner,
- * REVIVE.C F0280/F0282 move it into M516_CHAMPIONS and COMMAND.C F0361 then
- * consumes C002 from that same GAMEBLOCK.  Exercise those three source
- * boundaries with the selected ADF data before accepting a native handoff. */
-static unsigned short amiga_handoff_next_thing(
+/* The CSB Hall's C127 mirrors are real dungeon poses, not test fixtures.  A
+ * native title or ANIM.C handoff that only drew platform material could still
+ * substitute a PC34 party before control reaches the dungeon.  ReDMCSB
+ * DUNGEON.C F0172 publishes C127's owner, MOVESENS.C:1501-1503 dispatches it
+ * to REVIVE.C F0280/F0282, and COMMAND.C F0361 then consumes C002 from that
+ * same GAMEBLOCK.  Exercise those boundaries with the selected original
+ * package before accepting a native handoff. */
+static unsigned short native_handoff_next_thing(
     const struct DungeonThings_Compat *things, unsigned short thing)
 {
     const unsigned char *raw;
@@ -536,12 +535,14 @@ static unsigned short amiga_handoff_next_thing(
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
 
-static int amiga_handoff_find_live_c127_pose(M11_GameViewState *view,
-                                             int *out_ordinal)
+static int native_handoff_find_live_c127_pose(M11_GameViewState *view,
+                                              int *out_ordinal)
 {
     const struct DungeonMapDesc_Compat *map;
+    int map_index;
     int x;
     int y;
+    int c127_sensor_count = 0;
 
     if (out_ordinal) *out_ordinal = -1;
     if (!view || !view->world.dungeon || !view->world.things ||
@@ -549,48 +550,61 @@ static int amiga_handoff_find_live_c127_pose(M11_GameViewState *view,
         !view->world.things->sensors) {
         return 0;
     }
-    map = &view->world.dungeon->maps[0];
-    for (x = 0; x < (int)map->width; ++x) {
-        for (y = 0; y < (int)map->height; ++y) {
-            unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-                view->world.dungeon, view->world.things, 0, x, y);
-            int safety = 0;
+    for (map_index = 0; map_index < view->world.things->sensorCount;
+         ++map_index) {
+        if (view->world.things->sensors[map_index].sensorType == 127) {
+            ++c127_sensor_count;
+        }
+    }
+    if (c127_sensor_count == 0) {
+        return 0;
+    }
+    for (map_index = 0;
+         map_index < (int)view->world.dungeon->header.mapCount;
+         ++map_index) {
+        map = &view->world.dungeon->maps[map_index];
+        for (x = 0; x < (int)map->width; ++x) {
+            for (y = 0; y < (int)map->height; ++y) {
+                unsigned short thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    view->world.dungeon, view->world.things, map_index, x, y);
+                int safety = 0;
 
-            while (thing != THING_NONE && thing != THING_ENDOFLIST &&
-                   safety++ < 64) {
-                if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
-                    const int sensor_index = (int)THING_GET_INDEX(thing);
-                    const int wall_cell = (int)THING_GET_CELL(thing);
-                    const int direction = (wall_cell + 2) & 3;
-                    static const int step_x[4] = { 0, 1, 0, -1 };
-                    static const int step_y[4] = { -1, 0, 1, 0 };
-                    const int party_x = x - step_x[direction];
-                    const int party_y = y - step_y[direction];
+                while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+                       safety++ < 64) {
+                    if (THING_GET_TYPE(thing) == THING_TYPE_SENSOR) {
+                        const int sensor_index = (int)THING_GET_INDEX(thing);
+                        const int wall_cell = (int)THING_GET_CELL(thing);
+                        const int direction = (wall_cell + 2) & 3;
+                        static const int step_x[4] = { 0, 1, 0, -1 };
+                        static const int step_y[4] = { -1, 0, 1, 0 };
+                        const int party_x = x - step_x[direction];
+                        const int party_y = y - step_y[direction];
 
-                    if (sensor_index >= 0 &&
-                        sensor_index < view->world.things->sensorCount &&
-                        view->world.things->sensors[sensor_index].sensorType == 127 &&
-                        party_x >= 0 && party_x < (int)map->width &&
-                        party_y >= 0 && party_y < (int)map->height) {
-                        view->world.party.mapIndex = 0;
-                        view->world.party.mapX = party_x;
-                        view->world.party.mapY = party_y;
-                        view->world.party.direction = direction;
-                        if (out_ordinal) {
-                            *out_ordinal =
-                                (int)view->world.things->sensors[sensor_index].sensorData;
+                        if (sensor_index >= 0 &&
+                            sensor_index < view->world.things->sensorCount &&
+                            view->world.things->sensors[sensor_index].sensorType == 127 &&
+                            party_x >= 0 && party_x < (int)map->width &&
+                            party_y >= 0 && party_y < (int)map->height) {
+                            view->world.party.mapIndex = map_index;
+                            view->world.party.mapX = party_x;
+                            view->world.party.mapY = party_y;
+                            view->world.party.direction = direction;
+                            if (out_ordinal) {
+                                *out_ordinal =
+                                    (int)view->world.things->sensors[sensor_index].sensorData;
+                            }
+                            return 1;
                         }
-                        return 1;
                     }
+                    thing = native_handoff_next_thing(view->world.things, thing);
                 }
-                thing = amiga_handoff_next_thing(view->world.things, thing);
             }
         }
     }
     return 0;
 }
 
-static void expect_amiga_live_mirror_and_command_handoff(
+static void expect_native_live_mirror_and_command_handoff(
     M11_GameViewState *view, const char *label)
 {
     CSB_V1_BootProfile *profile;
@@ -604,25 +618,34 @@ static void expect_amiga_live_mirror_and_command_handoff(
         expect_true(0, label);
         return;
     }
+    expect_true(view->world.dungeon != NULL && view->world.things != NULL &&
+                    view->world.things->sensors != NULL &&
+                    view->mirrorCatalogAvailable,
+                "native handoff retains a verified M11 dungeon mirror query world");
+    if (!view->world.dungeon || !view->world.things ||
+        !view->world.things->sensors || !view->mirrorCatalogAvailable) {
+        return;
+    }
     mirror_ordinal = -1;
-    found_pose = amiga_handoff_find_live_c127_pose(view, &mirror_ordinal);
+    found_pose = native_handoff_find_live_c127_pose(view, &mirror_ordinal);
     front_ordinal = found_pose ? M11_GameView_GetFrontMirrorOrdinal(view) : -1;
     selection_result = front_ordinal == mirror_ordinal
         ? M11_GameView_SelectFrontMirrorCandidate(view) : 0;
     expect_true(profile->runtime.dungeon_handle != NULL &&
-                    profile->runtime.state == CSB_STATE_GAME &&
-                    found_pose &&
-                    mirror_ordinal >= 0 &&
-                    front_ordinal == mirror_ordinal &&
-                    selection_result == 1 &&
-                    view->candidateMirrorPanelActive &&
+                    profile->runtime.state == CSB_STATE_GAME && found_pose &&
+                    mirror_ordinal >= 0,
+                "native handoff finds a linked original C127 pose");
+    expect_true(front_ordinal == mirror_ordinal,
+                "native handoff maps C127 sensor data to its front mirror ordinal");
+    expect_true(selection_result == 1 && view->candidateMirrorPanelActive &&
                     view->candidateMirrorOrdinal == mirror_ordinal &&
-                    view->candidateMirrorPartyIndex == 0 &&
-                    view->world.party.championCount == 1 &&
+                    view->candidateMirrorPartyIndex == 0,
+                "native handoff selects C127 through the source candidate route");
+    expect_true(view->world.party.championCount == 1 &&
                     profile->runtime.party_state_valid &&
                     profile->runtime.party_state.ChampionCount == 1 &&
                     profile->runtime.party_state.Champions[0].Name[0] != '\0',
-                label);
+                "native handoff transfers the selected C127 champion to GAMEBLOCK");
     if (!view->candidateMirrorPanelActive ||
         view->candidateMirrorPartyIndex != 0 ||
         view->world.party.championCount != 1 ||
@@ -642,7 +665,7 @@ static void expect_amiga_live_mirror_and_command_handoff(
                     profile->runtime.party_dir ==
                         ((initial_direction + 1) & 3) &&
                     view->csbState.party_dir == profile->runtime.party_dir,
-                "Amiga C127/C160 candidate and C002 turn stay in the native GAMEBLOCK");
+                label);
 }
 
 static int frame_matches_source_rect(const unsigned char* frame,
@@ -2265,6 +2288,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST source frame does not publish diagnostic chrome");
         expect_true(view.presentationMode == requested,
                     "Atari ST runtime retains the requested presentation mode");
+        expect_native_live_mirror_and_command_handoff(
+            &view,
+            "Atari ST ANIM.C handoff reaches a live native C127 mirror");
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
     }
@@ -2405,7 +2431,7 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
         &view, "A31M inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
         &view, "A31M candidate route presents original Amiga C026 without a PC34 portrait");
-    expect_amiga_live_mirror_and_command_handoff(
+    expect_native_live_mirror_and_command_handoff(
         &view, "A31M APPB handoff reaches a live native C127 mirror");
     M11_GameView_Shutdown(&view);
     {
@@ -2514,7 +2540,7 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
         &view, "A35M inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
         &view, "A35M candidate route presents original Amiga C026 without a PC34 portrait");
-    expect_amiga_live_mirror_and_command_handoff(
+    expect_native_live_mirror_and_command_handoff(
         &view, "A35M APPB handoff reaches a live native C127 mirror");
     M11_GameView_Shutdown(&view);
     {
@@ -2621,7 +2647,7 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
         &view, "A35E inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
         &view, "A35E candidate route presents original Amiga C026 without a PC34 portrait");
-    expect_amiga_live_mirror_and_command_handoff(
+    expect_native_live_mirror_and_command_handoff(
         &view, "A35E direct APPB handoff reaches a live native C127 mirror");
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);
