@@ -7,6 +7,7 @@
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
+#include "csb_v1_fmtowns_game.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
@@ -2281,8 +2282,54 @@ int csb_v1_boot_apply_startup_handoff_pc34(
     const char *import_dm1_save_path,
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 *out_receipt)
 {
+    CSB_V1_FmtownsGameHandoffReceipt fmtowns_game;
+    CSB_V1_FmtownsStartupState fmtowns_state;
+    CSB_V1_FmtownsUserSaveReceipt fmtowns_save;
+
     if (!profile) {
         return 0;
+    }
+    /* FM Towns CHTWE/CHTWJ owns F31's C5 header, five keyed parts and
+     * dungeon tail.  It is not an Atari/Amiga GAMEBLOCK nor a CSBWin
+     * CSBGAME container, so the shared original-save classifier below must
+     * not reject it before STARTUP1.C F0435's native reader sees it.
+     *
+     * ReDMCSB: STARTUP1.C:163; LOADSAVE.C F0435; CEDTINC8.C G2297. */
+    if (save_path && save_path[0] != '\0' &&
+        (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+         profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA)) {
+        memset(&fmtowns_game, 0, sizeof(fmtowns_game));
+        memset(&fmtowns_state, 0, sizeof(fmtowns_state));
+        memset(&fmtowns_save, 0, sizeof(fmtowns_save));
+        if (!csb_v1_fmtowns_game_handoff_open(
+                profile,
+                profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN
+                    ? CSB_FMTOWNS_SWITCH_ENGLISH
+                    : CSB_FMTOWNS_SWITCH_JAPANESE,
+                &fmtowns_game) ||
+            !csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                profile, &fmtowns_game, save_path, &fmtowns_save) ||
+            !csb_v1_fmtowns_game_load_user_save_state(&fmtowns_save,
+                                                       &fmtowns_state) ||
+            !csb_v1_fmtowns_game_apply_startup_state(&fmtowns_state,
+                                                      &profile->runtime)) {
+            csb_v1_fmtowns_game_startup_state_free(&fmtowns_state);
+            if (out_receipt) {
+                csb_v1_runtime_startup_handoff_receipt_init_pc34(out_receipt);
+                out_receipt->kind = CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34;
+                out_receipt->status_scope = "BOOT";
+                out_receipt->status = "CSB FM TOWNS SAVE INVALID";
+            }
+            return 0;
+        }
+        csb_v1_fmtowns_game_startup_state_free(&fmtowns_state);
+        if (!out_receipt) return 0;
+        csb_v1_runtime_startup_handoff_receipt_init_pc34(out_receipt);
+        out_receipt->kind = CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34;
+        out_receipt->direct_resume_loaded = 1;
+        out_receipt->status_scope = "BOOT";
+        out_receipt->status = "CSB RESUMED";
+        return 1;
     }
     if (save_path && save_path[0] != '\0' &&
         !csb_v1_runtime_can_load_resume_path(save_path)) {

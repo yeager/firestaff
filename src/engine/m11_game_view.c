@@ -9784,6 +9784,9 @@ static int m11_csb_bind_verified_dungeon_world_snapshot(
     return 1;
 }
 
+static int m11_csb_fmtowns_load_user_save_path(M11_GameViewState *state,
+                                               const char *path);
+
 static int m11_csb_apply_boot_runtime_receipt(
     M11_GameViewState *state,
     const M11_GameLaunchSpec *spec,
@@ -9910,6 +9913,35 @@ static int m11_csb_apply_boot_runtime_receipt(
     }
     if (spec->savePath && spec->savePath[0] != '\0') {
         CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
+
+        if (m11_csb_is_fmtowns_profile(receipt->profile)) {
+            CSB_V1_FmtownsSwitchLanguage language =
+                receipt->profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN
+                    ? CSB_FMTOWNS_SWITCH_ENGLISH
+                    : CSB_FMTOWNS_SWITCH_JAPANESE;
+
+            /* The boot layer has already applied F31's complete native
+             * F0435 transaction.  Bind the source Game program's receipt
+             * and then reload the same verified slot through M11's F31
+             * handoff so its retained game/portrait state owns the live
+             * view.  This intentionally bypasses TITLE.ANM/SWITCHTW's UI,
+             * matching direct LOAD's CHTWE/CHTWJ -> F0435 -> GAMELOOP path.
+             * ReDMCSB STARTUP1.C:163; LOADSAVE.C F0435. */
+            state->csbStartupExpectedPackageIdentity =
+                package_identity ? package_identity : 1u;
+            if (!m11_csb_bind_fmtowns_switch(state, language) ||
+                !m11_csb_enter_fmtowns_game(state, language) ||
+                !m11_csb_fmtowns_load_user_save_path(state, spec->savePath)) {
+                m11_set_status(state, "CSB FM TOWNS", "SAVE HANDOFF FAILED");
+                return 0;
+            }
+            state->csbState.startup_title_active = 0;
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            state->csbState.startup_entrance_credits_active = 0;
+            state->csbState.startup_entrance_opening_active = 0;
+            return 1;
+        }
 
         /* The boot handoff has already admitted this path through the
          * original-container gate. Bind its F0435 provenance to the M11
@@ -24550,6 +24582,44 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     return 1;
 }
 
+static int m11_csb_fmtowns_load_user_save_path(M11_GameViewState *state,
+                                               const char *path) {
+    CSB_V1_FmtownsUserSaveReceipt user_save;
+    CSB_V1_FmtownsStartupState startup_state;
+    CSB_V1_BootProfile *profile;
+
+    if (!state || !path || !path[0] || !state->csbBootProfile) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    memset(&user_save, 0, sizeof(user_save));
+    memset(&startup_state, 0, sizeof(startup_state));
+    /* ReDMCSB STARTUP1.C F0435 and LOADSAVE.C F0435 validate the F31 C5
+     * header, five obfuscated save parts and dungeon tail as one
+     * transaction.  A genuine user slot can therefore resume, while F0433
+     * remains closed until byte-correct native writing is proven. */
+    if (!csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+            profile, &state->csbFmtownsGameHandoffReceipt, path, &user_save) ||
+        !csb_v1_fmtowns_game_load_user_save_state(&user_save, &startup_state) ||
+        !csb_v1_fmtowns_game_apply_startup_state(&startup_state,
+                                                  &profile->runtime)) {
+        csb_v1_fmtowns_game_startup_state_free(&startup_state);
+        m11_set_status(state, "LOAD", "FM TOWNS SAVE INVALID");
+        return 0;
+    }
+    csb_v1_fmtowns_game_startup_state_free(&startup_state);
+    m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+    state->loadGameTick = profile->runtime.game_time;
+    state->lastSaveTick = profile->runtime.game_time;
+    m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "CSB RESTORED");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "TICK %u RELOADED FROM %s",
+             (unsigned int)profile->runtime.game_time, path);
+    M12_Config_SetLastSavePath(path);
+    return 1;
+}
+
 int M11_GameView_QuickLoad(M11_GameViewState* state) {
     char path[M11_GAME_VIEW_PATH_CAPACITY];
 
@@ -24590,41 +24660,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         }
         if (m11_csb_is_fmtowns_profile(
                 (const CSB_V1_BootProfile *)state->csbBootProfile)) {
-            CSB_V1_FmtownsUserSaveReceipt user_save;
-            CSB_V1_FmtownsStartupState startup_state;
-            CSB_V1_BootProfile *profile =
-                (CSB_V1_BootProfile *)state->csbBootProfile;
-
-            /* ReDMCSB STARTUP1.C F0435 and LOADSAVE.C F0435 validate the
-             * F31 C5 header, five obfuscated save parts and dungeon tail as
-             * one transaction.  A genuine user slot can therefore resume,
-             * while F0433 remains closed until byte-correct native writing
-             * is proven; no private M11 envelope is accepted here. */
-            memset(&user_save, 0, sizeof(user_save));
-            memset(&startup_state, 0, sizeof(startup_state));
-            if (!csb_v1_fmtowns_game_user_save_open_or_restore_backup(
-                    profile, &state->csbFmtownsGameHandoffReceipt, path,
-                    &user_save) ||
-                !csb_v1_fmtowns_game_load_user_save_state(&user_save,
-                                                            &startup_state) ||
-                !csb_v1_fmtowns_game_apply_startup_state(
-                    &startup_state, &profile->runtime)) {
-                csb_v1_fmtowns_game_startup_state_free(&startup_state);
-                m11_set_status(state, "LOAD", "FM TOWNS SAVE INVALID");
-                return 0;
-            }
-            csb_v1_fmtowns_game_startup_state_free(&startup_state);
-            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-            state->loadGameTick = profile->runtime.game_time;
-            state->lastSaveTick = profile->runtime.game_time;
-            m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
-            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
-                     "CSB RESTORED");
-            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                     "TICK %u RELOADED FROM %s",
-                     (unsigned int)profile->runtime.game_time, path);
-            M12_Config_SetLastSavePath(path);
-            return 1;
+            return m11_csb_fmtowns_load_user_save_path(state, path);
         }
         /* ReDMCSB LOADSAVE.C F0435 restores CSB live globals from the save
          * file after the dungeon/profile is available.  M11 already owns

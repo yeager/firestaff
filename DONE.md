@@ -444,6 +444,9 @@ rendering remain blocked.
   CSB-sessionen. Den godtas först när rätt språkägda C03-program har
   verifierats och F7061-headern, samtliga fem F7057-delar samt F7063:s
   dungeon-tail har klarat originalets kontroller.
+- ✅ Direktstart med `--save` går samma CHTWE/CHTWJ → F0435 → GAMELOOP-väg:
+  den autentiska F31-sparningens party, karta och championantal binds utan
+  titelrepetition eller felaktig Atari/CSBWin-tolkning.
 - ✅ F0433-skrivning är fortfarande spärrad. Firestaff skriver alltså inte en
   privat eller delvis rekonstruerad fil över en äkta FM Towns-save innan
   bytekorrekt write-back och backupflöde har verifierats mot ett verkligt

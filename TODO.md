@@ -726,12 +726,13 @@
   uppskjutet), bytekorrekt originalskrivning och den kompletta filväljarytan.
 
 - 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT- och
-  användarsparningar från `CSBGAME.DAT`: F31 C5-header, fem checksummade
-  save-delar, porträtt och dungeon-tail verifieras och överlämnas atomärt
-  till M11. Prison-sparningar med C12 accepteras separat från MINI.DAT:s
-  C13-bootstrap. F0435 återställer också en validerad original-`CSBGAME.BAK`
-  till den kanoniska `CSBGAME.DAT`-slotten innan runtime muteras; godtyckliga
-  filnamn får ingen påhittad backupregel. Kvar är bytekorrekt F0433-skrivning,
+  användarsparningar från `CSBGAME.DAT`, även vid direktstart med `--save`:
+  F31 C5-header, fem checksummade save-delar, porträtt och dungeon-tail
+  verifieras och överlämnas atomärt till M11 utan att TITLE.ANM spelas om.
+  Prison-sparningar med C12 accepteras separat från MINI.DAT:s C13-bootstrap.
+  F0435 återställer också en validerad original-`CSBGAME.BAK` till den
+  kanoniska `CSBGAME.DAT`-slotten innan runtime muteras; godtyckliga filnamn
+  får ingen påhittad backupregel. Kvar är bytekorrekt F0433-skrivning,
   autentisk Utility Disk-filväljare, extern app-capture och bred fysisk
   touch-/hjälpmedelsverifiering på varje plattform.
 

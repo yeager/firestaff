@@ -351,6 +351,10 @@ int main(void)
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
     if (user_save_path && user_save_path[0]) {
+        M11_GameLaunchSpec resume_spec;
+        M11_GameViewState resumed_view;
+        M11_BootProbeReceipt resumed_probe;
+
         memset(&user_save, 0, sizeof(user_save));
         CHECK(csb_v1_fmtowns_game_user_save_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile,
@@ -375,6 +379,24 @@ int main(void)
                   user_save_state.dungeon.raw_data != NULL,
               "F31 F0435 transfers the authentic user save and appended dungeon atomically");
         csb_v1_fmtowns_game_startup_state_free(&user_save_state);
+        /* Direct CLI resume takes the same M11 start boundary as this spec:
+         * CHTWE/CHTWJ owns F0435, then GAMELOOP owns the saved F31 state.
+         * It must not route the Towns bytes through the Atari/CSBWin reader
+         * or replay TITLE.ANM before the resumed live dungeon. */
+        resume_spec = spec;
+        resume_spec.savePath = user_save_path;
+        M11_GameView_Init(&resumed_view);
+        result = M11_GameView_Start(&resumed_view, &resume_spec);
+        memset(&resumed_probe, 0, sizeof(resumed_probe));
+        CHECK(result && M11_GameView_GetBootProbeReceipt(&resumed_view,
+                                                           &resumed_probe) &&
+                  !resumed_probe.startupActive && resumed_probe.levelLoaded &&
+                  resumed_probe.mapIndex == user_save.party_map_index &&
+                  resumed_probe.partyX == user_save.party_map_x &&
+                  resumed_probe.partyY == user_save.party_map_y &&
+                  resumed_probe.championCount == user_save.party_champion_count,
+              "direct F31 resume enters CHTWE/CHTWJ GAMELOOP without title replay");
+        M11_GameView_Shutdown(&resumed_view);
         memset(&external_save_handoff, 0, sizeof(external_save_handoff));
         CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile, language,
