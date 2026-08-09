@@ -46,6 +46,10 @@
 - `m11_platform_override`: Fix explicit `--platform auto` so it clears a
   stale persisted edition choice and selects the authenticated DM1 version
   found in the requested data directory.
+- `dm1_v1_startup_save_census`: Fix startup data discovery so an authentic
+  PC34 save corpus is not reported as failed merely because the census has no
+  original `DUNGEON.DAT` backing; backed runtime roundtrip proof remains
+  explicitly unverified until that route runs.
 
 ## CSB
 
