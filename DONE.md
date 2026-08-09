@@ -24,9 +24,8 @@
 
 - ✅ Dokumenterat att `SDL_AUDIODRIVER=dummy` vidarebefordras till Mednafen-
   barnprocessen för headless Saturn-capture på macOS. Dokumentationen skiljer
-  korrekt mellan SDL:s dummy-ljudbackend och Cocoa/OpenGL-videovägen och
-  beskriver varför dummy-audio inte räcker som startup-, meny-, HUD- eller
-  viewportbevis.
+  korrekt mellan SDL:s miljövariabel och Cocoa/OpenGL-videovägen och noterar
+  att den aktuella SexyAL-loggen inte bevisar att dummy-ljudet faktiskt valts.
 
 # Nexus launcher forwards SDL audio backend (2026-08-09)
 
@@ -592,6 +591,41 @@
 - ✅ Källordningen är låst i realdatatestet. Karta 0 och pose `(1,8,0)` blir
   privata statefält först efter generatorpasset, medan M11, HUD och
   `source_game_load_session_ready` fortfarande är noll.
+
+# DM2 File_header-karta till viewporttyp (2026-08-09)
+
+- ✅ GAME_LOAD-projektionen översätter nu PC-DOS/File_headers råa
+  `tileTypeIndex` vid den explicita G1-bryggan innan den når viewporten:
+  `0=vägg`, `1=golv` och `4=dörr`. Den fick inte jämföras direkt med
+  `DM2_SquareType`, vars enumvärden skiljer sig. Realdatatestet bekräftar
+  fortsatt File_header-projektion utan M11-, HUD- eller sessionspublicering.
+
+# DM2 New Game privat vridning före spegelval (2026-08-09)
+
+- ✅ Event 1 och 2 följer nu `DM2_PERFORM_TURN_SQUAD` i den privata,
+  tomma GAME_LOAD-ägaren: riktningen uppdateras, File_headers riktiga
+  teleporter-/absdir-kontext räknas om och sedan byggs terrängvy samt
+  viewportkvitto om i källordning. DB-recordrötter i synfältet bevaras och
+  kräver ingen syntetisk tomruta.
+- ✅ Realdatatestet vrider startposen från `(1,8,0)` till väster och bevisar
+  att party, HUD, tick och `source_game_load_session_ready` fortfarande är
+  opublicerade.
+- ✅ En direkt teleporter på den aktuella rutan avvisas före vridning, precis
+  som `DM2_PERFORM_TURN_SQUAD` som då går till `DM2_map_3BF83`. Ingen
+  värdskapad riktning eller delvis kartövergång tillåts före sessionsägaren.
+
+# DM2 New Game privat framåtruta före spegelval (2026-08-09)
+
+- ✅ Den privata GAME_LOAD-ägaren följer nu `DM2_PERFORM_MOVE` för dess enda
+  kompletta tomma-party-gren: en autentisk G1-golvruta utan 0x10-recordkedja
+  och utan direktteleporter blir nästa pose, varefter samma
+  `DM2_move_2fcf_0b8b`-kontext, terrängvy och viewport räknas om atomärt.
+  Originalets DUNGEON.DAT ändras inte och ingen partyrecord, timer, HUD eller
+  spelbar session skapas.
+- ✅ Realdatatestet går från startposen `(1,8,0)` till den verkliga tomma
+  golvrutan `(1,7,0)` efter en källbunden vänster/höger-sekvens. Dörrar,
+  teleportörer, varelser, gropar och alla 0x10-kedjor avvisas före mutation,
+  eftersom de fortsätter till oägda `c_moverec`-/kartövergångsvägar.
 
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 

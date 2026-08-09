@@ -92,6 +92,19 @@
   ägda kartans riktning, främre ruta och DB3-post. Startposen har ingen sådan
   spegel, så urvalet är korrekt spärrat tills källbunden rörelse och den
   verkliga `0x50`-vägen från viewport finns.
+  PC-DOS/File_headers råa tileklass översätts nu vid den enda tillåtna
+  viewportbryggan (`0=vägg`, `1=golv`, `4=dörr`) innan den används som
+  `DM2_SquareType`; inga råa G1-värden får längre tolkas som renderarens enum.
+  Originalets vänster-/högervridning kan nu köras privat före championvalet
+  och bygger om teleporter-/absdir-kvitto, terrängvy och viewport från samma
+  File_header-värld. Den är ännu inte kopplad till M11:s mus, tangentbord
+  eller handkontroll före en full sessionsägare; en direktteleporter följer
+  originalets kartövergångsgren och är därför spärrad tills den ägaren finns.
+  Den första källtrogna framåtrutan kan också materialiseras privat när den
+  är ett verkligt tomt G1-golv utan 0x10-kedja eller teleporter. Dörrar,
+  gropar, varelser, objekt och kartövergångar avvisas före mutation tills
+  deras kompletta `DM2_PERFORM_MOVE`-ägare finns; den får inte bli en
+  allmän M11-rörelseväg ännu.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

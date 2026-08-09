@@ -2,9 +2,8 @@
 
 ## Dummy-audio och Cocoa/OpenGL
 
-Vid headless eller tidsbegränsad Saturn-capture kan macOS ljudbackend blockera
-Mednafen innan den instrumenterade VDP2-frame-hooken hinner skriva raw-data.
-Sätt därför SDL:s ljudbackend till `dummy` i capture-processens miljö:
+Vid headless eller tidsbegränsad Saturn-capture kan man prova SDL:s dummy-
+ljudbackend i capture-processens miljö:
 
 ```sh
 SDL_AUDIODRIVER=dummy \
@@ -22,15 +21,19 @@ SDL_AUDIODRIVER=dummy \
 ```
 
 Launchern vidarebefordrar `SDL_AUDIODRIVER` explicit till den Mednafen-
-process som startas. Det gör körningen reproducerbar även när launchern körs
-från ett annat shell eller på extern disk. BIOS, disc-image och capture-byte
-ska ligga utanför repot och anges med lokala sökvägar.
+process som startas. BIOS, disc-image och capture-byte ska ligga utanför repot
+och anges med lokala sökvägar.
 
-`SDL_AUDIODRIVER=dummy` betyder endast att SDL inte öppnar någon fysisk
-ljudenhet. Det väljer inte macOS Cocoa som videobackend. På macOS kan
-Mednafen fortfarande använda SDL:s Cocoa-fönster och OpenGL-videoväg medan
-ljudet är dummy. Inställningen ändrar inte Saturnens CD-DA, SCSP, SAL eller
-SFX-semantik och ska inte användas som produktionsljudläge.
+`SDL_AUDIODRIVER=dummy` väljer SDL:s dummy-backend om den ljudväg som används
+respekterar SDL:s miljövariabel. Det väljer inte macOS Cocoa som videobackend.
+På macOS kan Mednafen fortfarande använda SDL:s Cocoa-fönster och
+OpenGL-videoväg. Den aktuella Mednafen-körningen måste ändå läsas i loggen:
+den rapporterade `Using "SDL" audio driver with SexyAL's default device
+selection`, så dummy-ljudets faktiska effekt är inte verifierad i den
+instrumenterade Saturn-binära filen.
+
+Inställningen ändrar inte Saturnens CD-DA, SCSP, SAL eller SFX-semantik och
+ska inte användas som produktionsljudläge.
 
 ## Verifiering
 
@@ -49,7 +52,8 @@ autentiserad VDP1/VDP2-komposition och source-/asset-consumer-bindning.
 
 Den verifierade macOS-observationen är därför:
 
-- dummy-audio kan användas för en reproducerbar extern Mednafen-capture,
+- `SDL_AUDIODRIVER=dummy` vidarebefordras reproducerbart till extern Mednafen-
+  capture, men dess faktiska SexyAL-effekt måste verifieras i loggen,
 - Cocoa/OpenGL-videovägen är fortfarande separat från ljudinställningen,
 - aktiv VDP1-draw-lista och semantisk meny/HUD/viewport-admission är fortsatt
   capture-gated tills samma runtime-session binder dessa konsumenter.

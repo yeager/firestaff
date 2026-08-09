@@ -390,6 +390,23 @@ int dm2_v1_game_load_world_owner_materialize_preselection_view(
 int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
     DM2_V1_GameLoadWorldOwner *owner);
 
+/* Apply source input event 1 (left turn) or 2 (right turn) before the first
+ * mirror selection.  It rotates only the private empty-party owner, then
+ * recomputes the source map's teleporter/display context and view receipts.
+ * It never publishes M11 input, a tick, framebuffer or playable session.
+ * Source: SKProject uiinput.cpp events 1/2 and
+ * skhero.cpp::DM2_PERFORM_TURN_SQUAD. */
+int dm2_v1_game_load_world_owner_turn_preselection(
+    DM2_V1_GameLoadWorldOwner *owner, int source_event);
+
+/* Advance the private, empty source party one square before the first mirror
+ * selection.  This is only DM2_PERFORM_MOVE's complete no-record floor
+ * branch: a real G1 floor with no ground-stack flag or direct teleporter.
+ * Doors, pits, creatures, records and map transitions remain blocked until
+ * their full mutable session owners are present. */
+int dm2_v1_game_load_world_owner_advance_preselection(
+    DM2_V1_GameLoadWorldOwner *owner);
+
 typedef struct {
     int valid;
     uint16_t candidate_count;

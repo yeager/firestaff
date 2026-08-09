@@ -1001,6 +1001,13 @@ int M11_Audio_Init(M11_AudioState* state) {
             return 1;
         }
 
+#ifdef __APPLE__
+        /* Use Apple's playback category for game audio. The default ambient
+         * category can route SDL's mono stream through CoreAudio's
+         * head-tracking session; macOS 26 has crashed in that session while
+         * the Firestaff render thread is presenting a frame. */
+        SDL_SetHint(SDL_HINT_AUDIO_CATEGORY, "playback");
+#endif
         if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
             /* Audio init failed — stay in fallback mode */
             state->backend = M11_AUDIO_BACKEND_NONE;
