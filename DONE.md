@@ -20,6 +20,13 @@
   därför endast source-bound transport, inte `$2600`-objectkonsument eller
   RNG-, spawn-, AI-, combat-, T700- eller T900-semantik.
 
+# Nexus preserves VDP1 receipts on frame-capture failure (2026-08-09)
+
+- ✅ Launchern sparar nu exit-status och SHA-256 för VDP1-write- och
+  writer-code-trace även när VDP2-frame-hooken inte producerar raw-data.
+  Regressionstestet passerar; detta bevarar VDP1-bevis utan att öppna
+  semantisk startup-, meny-, HUD- eller viewport-admission.
+
 # Nexus macOS dummy-audio capture documentation (2026-08-09)
 
 - ✅ Dokumenterat att `SDL_AUDIODRIVER=dummy` vidarebefordras till Mednafen-

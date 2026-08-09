@@ -50,6 +50,11 @@ minst det begärda antalet frames. En reset-frame är inte automatiskt en
 startup-, meny-, HUD- eller viewport-capture. Sådana påståenden kräver fortsatt
 autentiserad VDP1/VDP2-komposition och source-/asset-consumer-bindning.
 
+Launchern skriver dessutom `capture_exit_status` samt SHA-256-fält för VDP1-
+write-trace och writer-code-trace till manifestet även om VDP2-capturen avbryts.
+Det gör ett negativt frame-resultat granskningsbart utan att uppgradera det till
+ett raw- eller skärmbevis.
+
 Den verifierade macOS-observationen är därför:
 
 - `SDL_AUDIODRIVER=dummy` vidarebefordras reproducerbart till extern Mednafen-
