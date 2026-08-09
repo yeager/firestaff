@@ -107,6 +107,7 @@ static int theron_v1_publish_source_group(
         creature->flags = THERON_CF_ACTIVE;
         creature->source_ref = record->source_ref;
         creature->source_index = record->source_index;
+        creature->source_chested = record->chested;
         creature->source_position = record->position;
         creature->source_cell = (uint8_t)((record->position >> (slot * 2u)) & 0x03u);
         creature->source_slot = (uint8_t)slot;

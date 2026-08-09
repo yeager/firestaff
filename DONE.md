@@ -2,8 +2,10 @@
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga
   monsterrecorden från Track 02-dekodning till source-monsterledger, levande
-  creature och save/load-version 9. Tester verifierar både US/JP-loaderns
-  sourcebindning och roundtrip. Fältet tolkas inte som T900-regel.
+  creature och save/load-version 9. Både dungeon-loadern och den source-gatade
+  creature-admissionen kopierar fältet. Tester verifierar US/JP-loaderns
+  sourcebindning, dynamisk admission och roundtrip. Fältet tolkas inte som
+  T900-regel.
 
 # Theron: source monsterrecordets `chested`-fält (2026-08-09)
 
