@@ -20,8 +20,9 @@
   tills samma körning visar hela källkedjan.
 
 - ⏳ Nexus completion accounting is now split into implementation coverage and
-  gated production admission. Current implementation coverage is 35,8 %
-  overall and 28,3 % for the prioritized startup→menu→HUD/viewport chain;
+  gated production admission. The corrected table arithmetic is 39,2 %
+  overall (`235/600`) and 30,5 % for the prioritized startup→menu→HUD/viewport
+  chain (`50×0,30 + 35×0,35 + 15×0,35`);
   production admission remains 0 % until a matching-region Saturn witness
   binds the real consumers. See `docs/NEXUS_COMPLETION.md`.
 

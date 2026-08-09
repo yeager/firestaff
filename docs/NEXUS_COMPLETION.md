@@ -16,16 +16,20 @@ regionmatchad Saturn-kedja.
 | HUD/viewport | 15 % | 0 % | Layout/adaptrar finns, men ingen autentiserad VDP1/VDP2-pixelhandoff till produktionen |
 | SLEV/SAL/SDDRVS | 25 % | 0 % | Korpus och driverinventering finns; selector, codec, MAP-bindning och playback är obevisade |
 
-Det aritmetiska medelvärdet för implementeringstäckningen är 35,8 %.
+Det aritmetiska medelvärdet för implementeringstäckningen är
+`(50 + 35 + 45 + 65 + 15 + 25) / 6 = 39,2 %`.
 För den prioriterade kedjan uppstart → meny → HUD/viewport, med vikterna
-30/35/35, är implementeringstäckningen 28,3 %. Produktionsgraden är 0 % för
-båda måtten just nu: den levererade region-J-skivan saknar ett matchande
-J-BIOS, och den befintliga E-BIOS-capturen får därför inte öppna semantiska
-runtimekonsumenter. Siffrorna ska inte medelvärdesbildas.
+30/35/35, är implementeringstäckningen
+`50 × 0,30 + 35 × 0,35 + 15 × 0,35 = 30,5 %`.
+Produktionsgraden är 0 % för båda måtten just nu: den levererade region-J-
+skivan saknar ett matchande J-BIOS, och den befintliga E-BIOS-capturen får
+därför inte öppna semantiska runtimekonsumenter. Siffrorna ska inte
+medelvärdesbildas mellan modellerna.
 
 ## Räkneregel
 
-Implementeringstäckningen är medelvärdet av tabellens sex områden.
+Implementeringstäckningen är medelvärdet av tabellens sex områden, avrundat
+till en decimal.
 Produktionsgrad är däremot en spärrad mätning: originaldata,
 Saturn-runtimeägare, korrekt BIOS/media-region och produktionskonsument måste
 vara bundna i samma verifierade witness. Parser, hash, statisk disassembly,

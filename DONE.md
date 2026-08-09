@@ -27,8 +27,9 @@
 # Nexus: korrigerad färdighetsberäkning (2026-08-09)
 
 - ✅ Implementeringstäckning och spärrad produktionsgrad redovisas nu
-  separat. Nexus ligger på 35,8 % implementeringstäckning totalt och 28,3 %
-  för uppstart→meny→HUD/viewport. Produktionsgraden är 0 % tills ett
+  separat. Nexus-tabellen är omräknad till 39,2 % implementeringstäckning
+  totalt (`235/600`) och 30,5 % för uppstart→meny→HUD/viewport
+  (`50×0,30 + 35×0,35 + 15×0,35`). Produktionsgraden är 0 % tills ett
   matchande BIOS/media-par ger en giltig Saturn-witness.
 
 # Nexus: fransk MENU.BPK-revision och PALT/PRS3-regression (2026-08-09)
