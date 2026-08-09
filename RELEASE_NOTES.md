@@ -1,11 +1,83 @@
 # Firestaff v3.0.306
 
-## Fixed
+## Firestaff
+
+### Changed
+
+- `M12_StartupMenu`: Change the visible default language policy to `AUTO` and
+  resolve the active locale from the system language until the user selects a
+  language explicitly.
+- `M11_startup_input`: Change startup-menu touch input to use the same hit
+  testing and selection path as mouse input on SDL2 and SDL3.
+
+### Fixed
 
 - `send_theron_macos_quartz_keypair.swift`: Remove the undefined
   `activationAccepted` reference so the macOS Quartz input helper type-checks.
+- `M12_StartupMenu`: Apply a language selection once at confirmation instead
+  of repeatedly reloading locale state while the popup is active.
+- `M12_StartupMenu`: Suppress the empty-data warning while the deferred real
+  asset scan is still pending.
 - `verify.yml`: Prevent rapid `main` integrations from canceling an
   already-started cross-platform verification matrix.
+
+## DM2
+
+### Changed
+
+- `dm2_v1_game_load_world_owner`: Change the new-game handoff to retain
+  source-owned entrance doors, objects,
+  text, teleporters, actuators, creatures, view projection and static scene
+  records per map instead of losing them during the new-game handoff.
+- `dm2_v1_game_load_world_owner`: Change possession scanning to preserve source
+  creature-possession chains
+  and explicitly mark empty scans so absence is not mistaken for synthetic
+  content.
+- `dm2_v1_boot`: Change new-game boot to materialize the authenticated entrance
+  owner and retain the
+  source mirror roster for later selection.
+
+### Fixed
+
+- `dm2_v1_boot`: Change mirror selection to block mapless ownership and keep
+  loose asset handoff scoped to the authenticated owner.
+
+## Theron's Quest
+
+### Changed
+
+- `theron_v1_track02_item_properties`: Bind inventory properties from
+  authenticated source rows.
+- `theron_v1_track02_campaign_ledgers`: Change reload handling to preserve
+  authentic campaign ledgers
+  across reloads and scope object, mechanic and creature consumers to the
+  active dungeon.
+- `theron_v1_track02_capture`: Change capture admission to preserve
+  byte-faithful HuC6280 resource lifts,
+  authenticated VDC/VCE captures, native Mednafen input-grab evidence and
+  bounded RAM-loader provenance.
+
+### Fixed
+
+- `theron_v1_runtime_admission`: Change admission to reject an unavailable
+  authenticated capture core and keep unbound portraits and regular spawns
+  unavailable.
+- `theron_v1_rng_consumer_trace`: Validate the consumer trace boundary before
+  admitting runtime results.
+
+## Nexus
+
+### Changed
+
+- `nexus_v1_vdp1_capture`: Change capture tracing to forward targeted VDP1
+  writer traces and range
+  controls, bind helper traces to captured regions and record the targeted
+  capture boundary.
+
+### Fixed
+
+- `nexus_v1_capture_loop`: Remove the no-waiting capture loop so trace polling
+  respects the source capture boundary.
 
 ## Firestaff v3.0.305
 
@@ -32,10 +104,11 @@
 
 ## Status note
 
-Äldre releaseposter beskriver tidigare ändringar. De ska inte läsas som att
-Nexus Saturn-runtime är färdig: ITEM-loot/use, MENU/TEXT/PRS3-presentation,
-VDP1/VDP2-komposition och SLEV/MAP/SAL→SDDRVS-event/playback är fortfarande
-capture-gated enligt `TODO-nexus.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
+Older release entries describe historical changes. They do not mean that the
+Nexus Saturn runtime is complete: ITEM loot/use, MENU/TEXT/PRS3 presentation,
+VDP1/VDP2 composition and SLEV/MAP/SAL-to-SDDRVS event playback remain
+capture-gated according to `TODO-nexus.md` and
+`docs/NEXUS_PLACEHOLDER_AUDIT.md`.
 
 # Firestaff v3.0.304
 
@@ -4539,7 +4612,7 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 
 ## What's New
 
-- **CSB V2 Phase 0**: V1 compatibility lock before V2 work. `csb_v2_phase_gate_pc34.h` defines 13 domain compile gates (V1-source-locked vs V2-presentation-berättigade). Stub hooks for all V2-only functions. C11 `_Static_assert` for V1 struct sizes. Source-lock: COMMAND.C, DUNGEON.C, CSBWin champion/resurrect.
+- **CSB V2 Phase 0**: V1 compatibility lock before V2 work. `csb_v2_phase_gate_pc34.h` defines 13 domain compile gates (V1-source-locked vs V2-presentation-eligible). Stub hooks for all V2-only functions. C11 `_Static_assert` for V1 struct sizes. Source-lock: COMMAND.C, DUNGEON.C, CSBWin champion/resurrect.
 - **CSB V2 Phase 1**: Launch/profile separation. `CSB_V2_PHASE_DOMAIN_LAUNCH` and `CSB_V2_PHASE_DOMAIN_PROFILE` compile gates with CSB-hash-katalog (DUNGEON.DAT `6695d2a`, GRAPHICS.DAT `61fbfd5`). LAUNCH-before-PROFILE pattern enforced. Source-lock: ENTRANCE.C F0806, PROFILE.C F0401.
 - **DM2 V2 Phase 5**: Smooth movement runtime integration. `DM2_V2_MoveCallback`/`DM2_V2_TurnCallback`/`DM2_V2_StairsCallback` registered from `dm2_v2_runtime.c` into `dm2_v1_runtime`. Pre-move position stored, turn-only detection fires turn_callback without move_callback. Source-lock: ReDMCSB DUNGEON.C G0306/G0307.
 - **Nexus V1 Launcher**: Full `nexus_v1_launcher.h/.c` engine handoff. Singleton owns `Nexus_V1_Engine` lifecycle. `M11_GameView_StartNexus` now calls `launcher_init` + `launcher_load_level(0)` and stores engine pointer. `firestaff_nexus_v1_launch_smoke_probe` validates full init→load→tick→render cycle (6/6 headless). Source-lock: NEXUS.C/NEXUS2.C engine lifecycle, DMWeb Saturn DGN/DMDF format.
