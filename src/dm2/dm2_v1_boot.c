@@ -13716,6 +13716,7 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
     DM2_V1_BootChampionSelectionCensus roster;
     DM2_V1_BootChampionSelectionCandidate resolved;
     DM2_V1_BootNewGamePartySelection selection;
+    const DM2_V1_GameLoadPreselectionViewCell *front = NULL;
     int i;
 
     if (!profile || mirror_object_id == 0u ||
@@ -13729,6 +13730,15 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
         !dm2_v1_boot_prepared_new_game_mirror_roster(profile, &roster)) {
         return 0;
     }
+    for (i = 0; i < owner->preselection_view.cell_count; ++i) {
+        const DM2_V1_GameLoadPreselectionViewCell *cell =
+            &owner->preselection_view.cells[i];
+        if (cell->view_square == DM2_SQ_D0C && cell->source_available) {
+            front = cell;
+            break;
+        }
+    }
+    if (!front) return 0;
 
     for (i = 0; i < roster.candidate_count; ++i) {
         const DM2_V1_BootChampionSelectionCandidate *candidate =
@@ -13743,7 +13753,11 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
          * live movement owner exists, this is the exact File_header pose
          * retained by DM2_move_2fcf_0b8b, not a host-panel direction.
          * SKProject: skevents.cpp around 3C7E5; skhero.cpp:1054-1101. */
-        if (candidate->mirror.map != owner->source_party_map) {
+        if (candidate->mirror.map != owner->source_party_map ||
+            candidate->mirror.x != front->map_x ||
+            candidate->mirror.y != front->map_y ||
+            candidate->mirror.direction !=
+                ((owner->source_party_direction + 2u) & 3u)) {
             return 0;
         }
         memset(&resolved, 0, sizeof(resolved));

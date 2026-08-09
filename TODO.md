@@ -76,8 +76,9 @@
   fördröjningsfält samt DB4-varelsernas position, HP och kompletta
   possessionskedjor. M11 kan nu läsa den autentiska mirrorlistan från denna
   privata ägare. Ett ObjectID kan bara bli ett privat championval via den
-  ägda kartans riktning, ruta och DB3-post. Panelritning och den verkliga
-  `0x50`-vägen från viewport saknas ännu.
+  ägda kartans riktning, främre ruta och DB3-post. Startposen har ingen sådan
+  spegel, så urvalet är korrekt spärrat tills källbunden rörelse och den
+  verkliga `0x50`-vägen från viewport finns.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.
