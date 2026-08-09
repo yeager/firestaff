@@ -23,6 +23,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   half-applied resume state. The remaining resume work is authentic C13 and
   original-pixel evidence, not another save-state fallback.
 
+- 2026-08-09 mixed-root resolver correction is complete: when the real DM1
+  root contains both extracted DOS PC 3.4 files and archive members for other
+  editions, the runtime now selects the hash-verified loose DOS `DATA` pair
+  before recursive archive lookup. This prevents a virtual sibling edition
+  from owning a PC34 launch; no data is copied or synthesized by this route.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.

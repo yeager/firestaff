@@ -11814,6 +11814,36 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                             return 1;
                         }
                     }
+                    /* The real DM1 root commonly contains the extracted DOS
+                     * PC 3.4 tree below `dos_extract/` alongside archive
+                     * members for other editions.  Prefer that ordinary,
+                     * hash-verified DUNGEON.DAT before the broad recursive
+                     * finder can select a virtual archive member.  The
+                     * sibling GRAPHICS.DAT is resolved from the same DATA
+                     * directory by the runtime asset owner. */
+                    {
+                        static const char *const pc34Suffixes[] = {
+                            "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT",
+                            "dos_extract/Dungeon-Master_DOS_EN_Version-34/DUNGEON.DAT",
+                            "DATA/DUNGEON.DAT"
+                        };
+                        size_t suffixIndex;
+                        for (suffixIndex = 0U;
+                             suffixIndex < sizeof(pc34Suffixes) /
+                                 sizeof(pc34Suffixes[0]);
+                             ++suffixIndex) {
+                            if (FSP_JoinPath(directPath,
+                                             sizeof(directPath),
+                                             dataDir,
+                                             pc34Suffixes[suffixIndex]) &&
+                                asset_file_matches_md5(directPath,
+                                                       expectedMd5)) {
+                                strncpy(out, directPath, outSize - 1U);
+                                out[outSize - 1U] = '\0';
+                                return 1;
+                            }
+                        }
+                    }
                 }
                 if (strcmp(gameId, "csb") == 0) {
                     char directPath[M11_GAME_VIEW_PATH_CAPACITY];
