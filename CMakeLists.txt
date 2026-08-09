@@ -9994,6 +9994,8 @@ add_executable(firestaff_csb_v1_real_asset_launch_probe
     src/csb/csb_v1_cmp_import_pc34_compat.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -10036,6 +10038,8 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
@@ -10059,6 +10063,8 @@ endif()
 add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
