@@ -62,7 +62,8 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
     bmpna = read_be16(input->vdp2_registers + 0x2cU);
     if ((bgon & 0x0002U) == 0U || (chctla & 0x0200U) == 0U ||
         ((chctla >> 10U) & 3U) != 0U || ((chctla >> 12U) & 3U) != 1U ||
-        (bmpna & 0x0007U) != 0U ||
+        /* NBG1 owns BMPNA bits 8..10; bits 0..2 belong to NBG0. */
+        ((bmpna >> 8U) & 0x0007U) != 0U ||
         memcmp(input->capture_bitmap, input->source_bitmap,
                NEXUS_V1_VDP2_NBG1_BITMAP_BYTES) != 0 ||
         memcmp(input->capture_cram, input->source_palette,

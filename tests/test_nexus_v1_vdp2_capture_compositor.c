@@ -68,6 +68,15 @@ int main(void)
         free(cram);
         return 1;
     }
+    input.original_saturn_capture_verified = 1;
+    wb16(registers + 0x2c, 0x0100);
+    if (nexus_v1_vdp2_capture_composite_nbg1_bitmap(
+            &viewport.fb, &input, &receipt) || receipt.renderer_permitted) {
+        fprintf(stderr, "FAIL: NBG0 palette bits were treated as NBG1\n");
+        free(bitmap);
+        free(cram);
+        return 1;
+    }
     free(bitmap);
     free(cram);
     puts("test_nexus_v1_vdp2_capture_compositor: PASS");
