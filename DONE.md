@@ -602,6 +602,9 @@
 - ✅ Realdatatestet vrider startposen från `(1,8,0)` till väster och bevisar
   att party, HUD, tick och `source_game_load_session_ready` fortfarande är
   opublicerade.
+- ✅ En direkt teleporter på den aktuella rutan avvisas före vridning, precis
+  som `DM2_PERFORM_TURN_SQUAD` som då går till `DM2_map_3BF83`. Ingen
+  värdskapad riktning eller delvis kartövergång tillåts före sessionsägaren.
 
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 

@@ -92,7 +92,8 @@
   Originalets vänster-/högervridning kan nu köras privat före championvalet
   och bygger om teleporter-/absdir-kvitto, terrängvy och viewport från samma
   File_header-värld. Den är ännu inte kopplad till M11:s mus, tangentbord
-  eller handkontroll före en full sessionsägare.
+  eller handkontroll före en full sessionsägare; en direktteleporter följer
+  originalets kartövergångsgren och är därför spärrad tills den ägaren finns.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

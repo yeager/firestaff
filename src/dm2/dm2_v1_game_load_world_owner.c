@@ -1639,6 +1639,7 @@ int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
 int dm2_v1_game_load_world_owner_turn_preselection(
     DM2_V1_GameLoadWorldOwner *owner, int source_event)
 {
+    DM2_V1_SkprojectTeleporterDetail direct_teleporter;
     DM2_V1_GameLoadPreselectionViewReceipt old_view;
     DM2_V1_GameLoadPreselectionViewportReceipt old_viewport;
     const int map = owner ? owner->source_party_map : -1;
@@ -1676,6 +1677,16 @@ int dm2_v1_game_load_world_owner_turn_preselection(
         map < 0 || map >= owner->dungeon.level_count ||
         x < 0 || y < 0 || old_direction < 0 || old_direction > 3 ||
         square_type != DM2_SQUARE_FLOOR) {
+        return 0;
+    }
+
+    /* DM2_PERFORM_TURN_SQUAD asks GET_TELEPORTER_DETAIL before the first
+     * moverec/rotate call.  A positive result invokes DM2_map_3BF83 and
+     * returns instead of turning.  That map transition needs the complete
+     * mutable session owner, so preserve this source branch by rejecting it
+     * before any private pose or receipt mutation. */
+    if (dm2_v1_game_load_owner_get_teleporter_detail(owner, map, x, y,
+                                                      &direct_teleporter)) {
         return 0;
     }
 
