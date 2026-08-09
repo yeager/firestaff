@@ -654,3 +654,87 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
     if (out_direct_receipt) *out_direct_receipt = direct;
     return 0;
 }
+
+int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out_sequence_receipt,
+    Nexus_V1_Vdp1CaptureCompositeReceipt *out_composite_receipt,
+    uint32_t *out_command_byte_offset)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp1CommandSequenceReceipt sequence;
+    Nexus_V1_Vdp1CaptureCompositeReceipt composite;
+    Nexus_V1_Vdp1CommandSequenceInput sequence_input;
+    int i;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&sequence, 0, sizeof(sequence));
+    memset(&composite, 0, sizeof(composite));
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_sequence_receipt) *out_sequence_receipt = sequence;
+    if (out_composite_receipt) *out_composite_receipt = composite;
+    if (out_command_byte_offset) *out_command_byte_offset = 0U;
+    if (!framebuffer || !capture_bytes || !resolve_material ||
+        !nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp1_state_valid || !frame.vdp1_state_present ||
+        !frame.vdp1_vram || frame.vdp1_vram_size != NEXUS_V1_VDP1_VRAM_BYTES) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
+    sequence_input.vdp1_vram = frame.vdp1_vram;
+    sequence_input.vdp1_vram_size = (int)frame.vdp1_vram_size;
+    sequence_input.copr_word = frame.copr_word;
+    if (!nexus_v1_vdp1_command_sequence_frame(&sequence_input, &sequence) ||
+        !sequence.valid || !sequence.complete ||
+        !sequence.display_origin_verified || sequence.draw_count <= 0) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_sequence_receipt) *out_sequence_receipt = sequence;
+        return 0;
+    }
+    for (i = 0; i < sequence.command_count; ++i) {
+        Nexus_V1_Vdp1TextureCommand parsed;
+        Nexus_V1_Vdp1CaptureCompositeInput input;
+        uint32_t offset = sequence.command_byte_offsets[i];
+        uint32_t palette_offset;
+        const uint8_t *command = frame.vdp1_vram + offset;
+
+        if (nexus_v1_vdp1_texture_command_parse(
+                command, NEXUS_V1_VDP1_COMMAND_BYTES, &parsed) != 0 ||
+            !parsed.texture_command || parsed.colour_mode != 1U ||
+            !parsed.texture_source_range_valid ||
+            parsed.texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES) continue;
+        palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 3U);
+        if (palette_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U) continue;
+        memset(&input, 0, sizeof(input));
+        if (!resolve_material(frame.vdp1_vram, (int)frame.vdp1_vram_size,
+                              command, NEXUS_V1_VDP1_COMMAND_BYTES, &parsed,
+                              offset, &input, resolver_context)) continue;
+        input.command = command;
+        input.command_size = NEXUS_V1_VDP1_COMMAND_BYTES;
+        input.texture_span = frame.vdp1_vram +
+            parsed.texture_source_byte_offset;
+        input.texture_span_size = (int)parsed.texture_byte_count;
+        input.palette_state = frame.vdp1_vram + palette_offset;
+        input.palette_state_size = 32;
+        input.original_saturn_capture_verified = 1;
+        input.screen_origin_x = sequence.display_origin_x;
+        input.screen_origin_y = sequence.display_origin_y;
+        if (!nexus_v1_vdp1_capture_composite_mode1(
+                framebuffer, &input, &composite)) continue;
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_sequence_receipt) *out_sequence_receipt = sequence;
+        if (out_composite_receipt) *out_composite_receipt = composite;
+        if (out_command_byte_offset) *out_command_byte_offset = offset;
+        return 1;
+    }
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_sequence_receipt) *out_sequence_receipt = sequence;
+    if (out_composite_receipt) *out_composite_receipt = composite;
+    return 0;
+}

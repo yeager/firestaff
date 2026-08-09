@@ -1,4 +1,5 @@
 #include "nexus_v1_vdp1_capture_compositor.h"
+#include "nexus_v1_vdp1_dgn_material_resolver.h"
 #include "nexus_v1_viewport.h"
 
 #include <stdio.h>
@@ -94,6 +95,75 @@ static int run_external_direct_color_capture(void)
         receipt.command_byte_offset != 0U;
     free(capture);
     return found;
+}
+
+static int run_external_dgn_mode1_capture(void)
+{
+    const char *capture_path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
+    const char *dgn_path = getenv("FIRESTAFF_NEXUS_DGN_SOURCE");
+    const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+    FILE *capture_file;
+    FILE *dgn_file;
+    long capture_size;
+    long dgn_size;
+    uint8_t *capture;
+    uint8_t *dgn;
+    Nexus_V1_Vdp1DgnMaterialResolverInput resolver;
+    Nexus_Framebuffer framebuffer;
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp1CommandSequenceReceipt sequence;
+    Nexus_V1_Vdp1CaptureCompositeReceipt composite;
+    uint32_t command_offset;
+    unsigned int frame_index;
+    int ok;
+
+    if (!capture_path || !*capture_path || !dgn_path || !*dgn_path ||
+        !frame_text || !*frame_text) return 1;
+    frame_index = (unsigned int)strtoul(frame_text, NULL, 0);
+    capture_file = fopen(capture_path, "rb");
+    dgn_file = fopen(dgn_path, "rb");
+    if (!capture_file || !dgn_file || fseek(capture_file, 0, SEEK_END) != 0 ||
+        (capture_size = ftell(capture_file)) <= 0 ||
+        fseek(capture_file, 0, SEEK_SET) != 0 ||
+        fseek(dgn_file, 0, SEEK_END) != 0 || (dgn_size = ftell(dgn_file)) <= 0 ||
+        fseek(dgn_file, 0, SEEK_SET) != 0) {
+        if (capture_file) fclose(capture_file);
+        if (dgn_file) fclose(dgn_file);
+        return 0;
+    }
+    capture = (uint8_t *)malloc((size_t)capture_size);
+    dgn = (uint8_t *)malloc((size_t)dgn_size);
+    if (!capture || !dgn || fread(capture, 1U, (size_t)capture_size,
+                                  capture_file) != (size_t)capture_size ||
+        fread(dgn, 1U, (size_t)dgn_size, dgn_file) != (size_t)dgn_size) {
+        free(capture);
+        free(dgn);
+        fclose(capture_file);
+        fclose(dgn_file);
+        return 0;
+    }
+    fclose(capture_file);
+    fclose(dgn_file);
+    memset(&resolver, 0, sizeof(resolver));
+    resolver.dgn_bytes = dgn;
+    resolver.dgn_byte_count = (int)dgn_size;
+    resolver.source_hash_verified = 1;
+    nexus_fb_init(&framebuffer);
+    nexus_fb_clear(&framebuffer);
+    memset(&frame, 0, sizeof(frame));
+    memset(&sequence, 0, sizeof(sequence));
+    memset(&composite, 0, sizeof(composite));
+    command_offset = 0U;
+    ok = nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
+        &framebuffer, capture, (size_t)capture_size, frame_index,
+        nexus_v1_vdp1_dgn_material_resolver, &resolver, &frame, &sequence,
+        &composite, &command_offset) && frame.valid && sequence.valid &&
+        sequence.complete && composite.valid &&
+        composite.source_join_verified && composite.palette_join_verified &&
+        composite.original_saturn_capture_verified && command_offset != 0U;
+    free(capture);
+    free(dgn);
+    return ok;
 }
 
 int main(void)
@@ -364,8 +434,14 @@ int main(void)
     free(vdp1_vram);
     if (getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE") &&
         getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
+        !getenv("FIRESTAFF_NEXUS_DGN_SOURCE") &&
         !run_external_direct_color_capture()) {
         fprintf(stderr, "FAIL: external direct-color capture decode\n");
+        return 1;
+    }
+    if (getenv("FIRESTAFF_NEXUS_DGN_SOURCE") &&
+        !run_external_dgn_mode1_capture()) {
+        fprintf(stderr, "FAIL: external DGN mode-1 capture replay\n");
         return 1;
     }
     puts("test_nexus_v1_vdp1_capture_compositor: PASS");

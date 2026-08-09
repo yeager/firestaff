@@ -56,6 +56,15 @@
 - ✅ Extern J/J frame 500 passerar; den helt transparenta bitmap-spanen
   registreras som giltig capture-state utan att uppfinna pixels eller öppna
   renderer-admission.
+
+# Nexus DGN mode-1 capture replay (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material()` går igenom
+  en autentiserad VDP1-command-list och lämnar den första mode-1-draw vars
+  bild/CLUT-resolver lyckas till den source-bundna kompositorn.
+- ✅ EU frame 760 passerar med den hashverifierade `LEV00.DGN`: extern analys
+  visar 227/231 byteexakta mode-1-bild- och CLUT-joins, och C-testet återger en
+  verifierad draw. Full scenägare, transform och culling är fortsatt stängda.
 # CSB Atari ST: exakt C007-toppradsinmatning (2026-08-09)
 
 - ✅ Den inbyggda Atari ST-runtimen använder nu CSB 2.x:s egna G0447-rutor

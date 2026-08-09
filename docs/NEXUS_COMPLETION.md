@@ -120,6 +120,16 @@ och returnerar command-offset i receiptet. API:t är fortfarande uttryckligen
 capture-only; det skapar varken menyidentitet, materialägare eller
 produktionskonsument.
 
+För gameplay-witnessen finns nu även
+`nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material()`. Den följer
+frame:ns kompletta COPR-kedja, provar bara mode-1-draws och lämnar en draw till
+den verifierade DGN-bild/CLUT-resolvern när båda spannen matchar exakt. Extern
+EU-capture frame 760 passerar med `LEV00.DGN`: analysen visar 227 av 231
+mode-1-draws med bild- och palettmatch och 198 med Structure3-faceägare; C-testet
+återger en sådan draw genom samma runtime-API. Detta är ännu inte en full
+scene-renderer: Saturns face-selection, kameratransform, culling och den
+fullständiga draw-listans scenägare är fortsatt spärrade.
+
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
 externa capture-validatorn: `RawRegs → VRAM → CRAM`. C-läsaren och

@@ -194,4 +194,19 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
     Nexus_V1_Vdp1CommandSequenceReceipt *out_sequence_receipt,
     Nexus_V1_Vdp1DirectColorCaptureReceipt *out_direct_receipt);
 
+/* Resolve and replay the first authenticated colour-mode-1 draw whose
+ * material callback succeeds. The result is a source-bound capture replay of
+ * one command, not a complete DGN scene: camera transform, face selection,
+ * culling and command-list scene ownership remain caller-visible facts. */
+int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out_sequence_receipt,
+    Nexus_V1_Vdp1CaptureCompositeReceipt *out_composite_receipt,
+    uint32_t *out_command_byte_offset);
+
 #endif

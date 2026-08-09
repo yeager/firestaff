@@ -204,6 +204,11 @@
   MENU.BPK/FONT256 owner; keep it out of menu/HUD/viewport production until
   source and layer ownership are proven.
 
+- ⏳ Nexus DGN mode-1 har nu en autentiserad enskild-draw-replay mot LEV00.DGN.
+  Den fullständiga command-listan innehåller fortfarande fyra omatchade draws
+  i frame 760, och face-selection, kameratransform, culling samt HUD/viewport-
+  komposition får därför inte öppnas ännu.
+
 - 🔧 Nexus VDP1 command-list framing is now independently reproducible from
   the authenticated 300-frame European witness: 290 active CMDLINK chains
   reach END and 10 frames are explicit idle END observations. The verifier
