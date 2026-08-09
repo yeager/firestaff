@@ -53,6 +53,11 @@
   SCSP-registerkorridor. Receipten lämnar eventselector, SAL-codec och
   playback stängda; en rå mailboxskrivning är inte en gameplayhändelse.
 
+- ⏳ SAL-directoryn är nu bunden till den autentiska post-skip-positionen
+  `0x11040` och alla 16 retailbanker profilerar DMWebs directorymetadata.
+  Host-PCM, sample-rate, loop- och SLEV→MAP-eventsemantik är fortfarande
+  spärrade tills SDDRVS/SCSP-konsumenten är bunden.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

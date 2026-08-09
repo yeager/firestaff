@@ -74,6 +74,14 @@
   Den externa gameplay-tracen passerar; event→MAP, SAL-dekodning och
   playback förblir uttryckligen blockerade.
 
+# Nexus: rättad retail SAL-directory-position (2026-08-09)
+
+- ✅ SAL-parsern söker nu DMWeb-directoryn efter de två första MAP-regionerna
+  och post-skip-kursorn, i stället för att använda den senare sample-regionens
+  SAL-offset. Den autentiska nivå-0-witnessen binder `0x540 + 0xAC0 +
+  0x10040 = 0x11040`; hela den externa 16-nivåskorpusen profilerar därefter
+  directoryn utan att öppna host-PCM eller playback.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga

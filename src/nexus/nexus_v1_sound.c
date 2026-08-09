@@ -478,14 +478,21 @@ static void parse_sal_tone_bank_directory(Nexus_SoundEngine *eng) {
         const Nexus_SoundMapWindow *r = &eng->map_records[i];
         if (r->sal_size <= 0 || cursor > eng->sal_size - r->sal_size)
             return;
-        if (r->data_id == 0 && tone_offset < 0) {
-            tone_offset = cursor;
-            tone_bytes = r->sal_size;
-        }
         cursor += r->sal_size;
         if (first_part) {
             cursor = (cursor <= INT_MAX - 2752) ? cursor + 2752 : INT_MAX;
             first_part = 0;
+        }
+        /* DMWeb's SNDLEVxx MAP decoder consumes the first two mapped regions
+         * before the directory.  The directory is therefore at the post-skip
+         * cursor, not at the SAL offset of the later sample region.
+         * Retail level 0 is the byte-level witness: 0x540 + 0xAC0 + 0x10040
+         * = 0x11040, whose first BE16 is 0x0062 (49 entries).  The same MAP
+         * prefix is present in all sixteen authenticated level files. */
+        if (i == 1 && tone_offset < 0) {
+            tone_offset = cursor;
+            tone_bytes = eng->sal_size - tone_offset;
+            break;
         }
     }
     if (tone_offset < 0 || tone_bytes < 2 ||

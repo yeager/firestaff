@@ -19,6 +19,12 @@ sample payload metadata. This is still not an audio route: the MAP selector
 and attribute have no asserted Saturn event meaning, and no playback is
 requested from this result.
 
+The directory cursor is the post-skip cursor after the first two mapped SAL
+regions. For the level-0 retail witness this is `0x540 + 0xAC0 + 0x10040 =
+0x11040`; the first directory word there is `0x0062`, i.e. 49 offset-table
+entries. The later MAP region beginning at `0x1c040` is sample material and
+must not be used as the directory base.
+
 ## Host-Side Event Dispatch (Still Unmapped)
 
 `nexus_sound_set_event_selector()` lets the host engine bind a
