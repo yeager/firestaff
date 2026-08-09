@@ -17053,6 +17053,54 @@ static int m11_creature_try_move_with_directions(
     return 0;
 }
 
+/* ReDMCSB GROUP.C F0209 label T0209094_FleeFromTarget: a frightened group
+ * (F0190 set DM1_BEHAVIOR_FLEE via F0821) moves along the OPPOSITE of the
+ * toward-party primary/secondary pair rather than approaching.  Before this
+ * route existed the M11 tick loop kept walking a fleeing group at the party,
+ * so F0821's fear outcome had no visible effect.  F0820 owns the direction
+ * inversion; this helper only supplies the toward-party pair and reuses the
+ * shared step/walkability path. */
+static int m11_creature_try_flee(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupX,
+    int groupY,
+    int* outNewX,
+    int* outNewY) {
+    struct DM1GroupBehaviorContext_Compat ctx;
+    int towardPrimary = 0;
+    int towardSecondary = 1;
+    int fleePrimary = 0;
+    int fleeSecondary = 1;
+
+    if (outNewX) *outNewX = groupX;
+    if (outNewY) *outNewY = groupY;
+    if (!state) return 0;
+    if (!m11_creature_compute_primary_secondary_dirs(
+            state, groupX, groupY, state->world.party.mapX,
+            state->world.party.mapY, &towardPrimary, &towardSecondary)) {
+        return 0;
+    }
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.currentGroupMapX = groupX;
+    ctx.currentGroupMapY = groupY;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.currentMapIndex = state->world.party.mapIndex;
+    ctx.currentGroupPrimaryDirToParty = towardPrimary;
+    ctx.currentGroupSecondaryDirToParty = towardSecondary;
+
+    if (!F0820_DM1_GROUP_GetFleeDirection_Compat(
+            &ctx, &fleePrimary, &fleeSecondary)) {
+        return 0;
+    }
+    return m11_creature_try_move_with_directions(
+        state, groupThing, groupX, groupY, fleePrimary, fleeSecondary,
+        outNewX, outNewY);
+}
+
 /* Visible-party movement has no precomputed direction plan.  F0201's
  * smell route does, and calls the direction-taking form above so the F0228
  * RNG draw is neither duplicated nor replaced by a display-derived vector. */
@@ -17841,6 +17889,29 @@ static void m11_process_one_creature_group(
         return;
     }
 
+    /* ReDMCSB GROUP.C F0209 T0209094_FleeFromTarget: a group that F0190/F0821
+     * frightened into DM1_BEHAVIOR_FLEE retreats instead of approaching or
+     * attacking.  This branch must precede both the same-square attack and
+     * the approach routes; without it a fleeing group walked back at the
+     * party and F0821's outcome was invisible in the live runtime. */
+    if ((int)group->behavior == DM1_BEHAVIOR_FLEE) {
+        int fleeX, fleeY;
+        if (profile->movementTicks > 0 &&
+            (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u) {
+            return;
+        }
+        if (m11_creature_try_flee(state, groupThing, groupX, groupY,
+                                  &fleeX, &fleeY)) {
+            m11_audio_emit_creature_movement_sound(
+                state, group->creatureType, fleeX, fleeY);
+            m11_log_event(state, M11_COLOR_LIGHT_CYAN,
+                          "T%u: %s FLEES",
+                          (unsigned int)state->world.gameTick,
+                          m11_creature_name(group->creatureType));
+        }
+        return;
+    }
+
     /* If on same square as party: attack */
     if (groupX == state->world.party.mapX && groupY == state->world.party.mapY) {
         /* Attack cadence: only attack every attackTicks ticks */
@@ -17903,6 +17974,23 @@ static void m11_process_one_creature_group(
             }
         }
     }
+}
+
+int M11_GameView_ProbeCreatureFleeStep(M11_GameViewState* state,
+                                       unsigned short groupThing,
+                                       int groupMapX,
+                                       int groupMapY,
+                                       int* outNewX,
+                                       int* outNewY) {
+    int localX = groupMapX;
+    int localY = groupMapY;
+    int moved;
+    if (!state) return 0;
+    moved = m11_creature_try_flee(state, groupThing, groupMapX, groupMapY,
+                                  &localX, &localY);
+    if (outNewX) *outNewX = localX;
+    if (outNewY) *outNewY = localY;
+    return moved;
 }
 
 int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,

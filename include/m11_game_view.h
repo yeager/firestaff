@@ -2368,6 +2368,19 @@ int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
                                                       int groupMapX,
                                                       int groupMapY);
 
+/* Probe-visible creature flee hook (ReDMCSB GROUP.C F0209
+ * T0209094_FleeFromTarget).  Drives the same F0820-owned retreat branch the
+ * tick loop takes for a DM1_BEHAVIOR_FLEE group: it inverts the toward-party
+ * primary/secondary direction pair and attempts one move.  Returns 1 when the
+ * group actually relocated, writing the new square to outNewX/outNewY (which
+ * receive the unchanged origin when no retreat square was walkable). */
+int M11_GameView_ProbeCreatureFleeStep(M11_GameViewState* state,
+                                       unsigned short groupThing,
+                                       int groupMapX,
+                                       int groupMapY,
+                                       int* outNewX,
+                                       int* outNewY);
+
 /* Probe the DM1 V1 creature fixed-possession materialization bridge.
  * Mirrors GROUP.C F0186 allocation through F0166-style unused object slots
  * and F0267-style placement from CM1_MAPX_NOT_ON_A_SQUARE onto the target
