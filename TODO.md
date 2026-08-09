@@ -27,6 +27,11 @@
   surfaces to expose indexed 8-bit output after decode. VDP2 source ownership,
   FONT256 text consumption and screen placement remain capture-gated.
 
+- 🔧 Nexus har nu en capture-only-adapter för en exakt indexerad `MENU.BPK`-
+  yta. Den binder DMWeb-kompatibla PRS3-pixlar, rå PALT/CRAM-byteordning och
+  uttrycklig destination mot samma fångade crop. Den bevisar inte menysemantik,
+  VDP2-lagerägare eller produktionsväg; en regionmatchad Saturn-witness krävs.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

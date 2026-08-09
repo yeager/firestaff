@@ -23,6 +23,16 @@
   162 PRS3-ytor efter DMWeb-avkodning är indexerade 8-bitarsytor. VDP2-
   konsument och menyplacering är fortfarande uttryckligt capture-gated.
 
+# Nexus: capture-gated PRS3/PALT surface join (2026-08-09)
+
+- ✅ En ny capture-only-adapter spelar tillbaka en uttryckligt angiven
+  indexerad `MENU.BPK`-yta. Den kräver verifierad BPK-identitet, autentiserad
+  Saturn-capture och verifierad transparent index 0, jämför varje PRS3-rad
+  med fångad pixeldata samt alla 256 råa PALT/CRAM-ord och skriver endast inom
+  angiven destination. Regressionen verifierar också att felaktig capture eller
+  felaktig pixelcrop stängs. Menysemantik, VDP2-lagerägare och normal
+  produktion är fortfarande stängda.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga
