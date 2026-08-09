@@ -607,6 +607,9 @@ static void test_fmtowns_game_program_handoff(void)
         CHECK(csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 2u, 0u,
                                                   &music_track) &&
                   music_track == 7u &&
+                  csb_v1_fmtowns_game_entrance_music_track(&receipt,
+                                                             &music_track) &&
+                  music_track == CSB_V1_FMTOWNS_GAME_ENTRANCE_CDDA_TRACK &&
                   csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 0u, 0u,
                                                       &music_track) &&
                   music_track == 0u &&

@@ -1900,3 +1900,23 @@ int csb_v1_fmtowns_game_music_track_at(
     *out_track = track;
     return 1;
 }
+
+int csb_v1_fmtowns_game_entrance_music_track(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    uint8_t *out_track)
+{
+    if (out_track) *out_track = 0u;
+    if (!receipt || !out_track || !receipt->valid ||
+        !receipt->executable_verified || !receipt->language_matches_profile ||
+        !receipt->game_program_is_c03_game ||
+        (receipt->variant_id != CSB_V1_VARIANT_FMTOWNS_EN &&
+         receipt->variant_id != CSB_V1_VARIANT_FMTOWNS_JA)) {
+        return 0;
+    }
+    /* ReDMCSB MUSIC.C:385, F31E/F31J G2038_auc_MusicIndexToMusicTrack =
+     * { 2, 0, 0, 17 }; ENTRANCE.C:733/836 passes C0_MUSIC_ENTRANCE (0) to
+     * F0741. F0719 subtracts two only for G4084's compacted timing table:
+     * cdr_mtplay itself starts physical CD-DA track 02. */
+    *out_track = CSB_V1_FMTOWNS_GAME_ENTRANCE_CDDA_TRACK;
+    return 1;
+}

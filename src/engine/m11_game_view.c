@@ -9468,6 +9468,7 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
     CSB_V1_BootProfile *profile;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 gate;
+    uint8_t entrance_track = 0u;
 
     if (!state || !state->csbBootProfile ||
         state->csbStartupRuntimeAssetSession ||
@@ -9554,6 +9555,16 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
     state->csbFmtownsGameMusicPlayingTrack = -1;
     state->csbFmtownsGameMusicCountdown = -1;
     state->csbFmtownsGameMusicPending = 0;
+    /* F31 does not inherit the standalone TITLE.ANM soundtrack. After
+     * CHTWE/CHTWJ's F0435 load, ENTRANCE.C F0806/F0807 calls
+     * F0741(C0_MUSIC_ENTRANCE); the admitted Game executable maps that to
+     * physical CD-DA track 02. Dispatch only that F31-owned Red Book span;
+     * a missing or malformed CUE/IMG remains silent rather than borrowing
+     * another platform's music. */
+    if (state->dm1MusicOn &&
+        csb_v1_fmtowns_game_entrance_music_track(&handoff, &entrance_track)) {
+        m11_csb_dispatch_fmtowns_cdda_track(state, entrance_track);
+    }
     m11_csb_release_fmtowns_switch(state);
     /* ReDMCSB STARTUP1.C enters F0441 before its F0435 loop. The FM Towns
      * game executable therefore starts on the closed C004 entrance page;

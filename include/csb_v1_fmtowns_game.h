@@ -21,6 +21,11 @@ extern "C" {
      CSB_V1_FMTOWNS_GAME_MUSIC_MAP_WIDTH * \
     CSB_V1_FMTOWNS_GAME_MUSIC_MAP_HEIGHT)
 
+/* ReDMCSB MUSIC.C's F31E/F31J G2038 table maps C0_MUSIC_ENTRANCE to the
+ * physical first audio track.  This is distinct from the per-square G4099
+ * music map. */
+#define CSB_V1_FMTOWNS_GAME_ENTRANCE_CDDA_TRACK 2u
+
 #define CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT 6u
 #define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
@@ -449,6 +454,13 @@ int csb_v1_fmtowns_game_music_track_at(
     uint32_t map_index,
     uint32_t map_x,
     uint32_t map_y,
+    uint8_t *out_track);
+
+/* Resolve ENTRANCE.C F0806/F0807's C0_MUSIC_ENTRANCE through the admitted
+ * F31 Game executable. It never borrows a PC/Amiga cue or returns a track
+ * for an unverified handoff. */
+int csb_v1_fmtowns_game_entrance_music_track(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     uint8_t *out_track);
 
 #ifdef __cplusplus
