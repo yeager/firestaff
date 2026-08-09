@@ -14,6 +14,12 @@
   backing-aware round-trip and are byte-identical. Their `c13` directory name
   is not evidence of C13 content: decoding finds zero C13 events, so the
   files remain C03/C04 evidence only.
+- ✅ Real resume runtime check: the external-disk save from
+  `dm1-resume-c13-diskette.Y0dbXx` now launches through explicit `--platform
+  auto` with the real PC34 data, reaches `dm1-runtime`, restores map 1,
+  party `(6,2,2)` and runtime tick 1674, and does not remain in the entrance
+  menu. This proves the generic resume handoff, not C13 content or original
+  Mac-window capture.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 

@@ -4436,6 +4436,13 @@ and real community-save corpus round-trip evidence.
     contain zero C13 events; they are therefore C03/C04 evidence only and do
     not close the C13 requirement.
 
+  - 2026-08-09 runtime verification: the external-disk save from
+    `dm1-resume-c13-diskette.Y0dbXx` passes a real headless M11 resume with
+    `--platform auto`, restores map 1 / party `(6,2,2)` at tick 1674 and
+    reaches `dm1-runtime` without the entrance-menu stall. The remaining
+    save gap is specifically an authenticated C13-bearing file, not the
+    generic resume handoff.
+
   - 2026-07-31 DOSBox-X corpus follow-up: a second operator-owned PC34
     DMSAVE.DAT (48,561 bytes) restored map 1, party (6,2,2), tick 1664,
     15 active groups, and 15 live C03 records (types C32, C37 and C38),
