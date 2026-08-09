@@ -50,6 +50,9 @@
   attributes from the authenticated raw ARMOUR Thing record instead of a
   parallel M11 subtype table; missing or malformed source data now fails
   closed.
+- `DM1 tick orchestrator F0143`: Apply the same raw ARMOUR Thing ownership to
+  the live combat tick path, removing its duplicate subtype table and keeping
+  malformed source records fail-closed.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects
