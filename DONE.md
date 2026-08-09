@@ -141,6 +141,15 @@
   E-BIOS/French-session gav samma SHA-256 och samma obundna VDP2-state. Det
   visar att knappmaskbytet inte producerade ett verifierbart menyfönster.
 
+# Nexus: capture-tidsfönster som explicit provenance-gate (2026-08-09)
+
+- ✅ `firestaff_nexus_v1_saturn_raw_capture_launcher.sh` stöder nu
+  `--require-input-window`. Den kräver att hela den aktiva knappintervallet
+  ryms i den fångade ramen och avvisar annars planen innan Mednafen startas.
+- ✅ `tests/test_nexus_v1_saturn_raw_capture_launcher.sh` täcker både ett
+  accepterat 560-ramarsfönster och ett avvisat 128-ramarsfönster för samma
+  runtime-input.
+
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns

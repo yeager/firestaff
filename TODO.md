@@ -23,6 +23,11 @@
   autentiska BIOS-/medieprofilen eller fånga längre efter handoff, inte bara
   återupprepa samma knappmask.
 
+- ✅ Capture-launchern har nu `--require-input-window`, som avvisar en plan
+  där hela knapptrycket hamnar utanför råfilens ramintervall. Detta är en
+  provenance-gate för framtida startup-/menyförsök och öppnar ingen
+  presentations- eller gameplaysemantik.
+
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
   closed until the same Saturn trace supplies display-origin,
