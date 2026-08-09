@@ -1,3 +1,12 @@
+# CSB: dokumenterad plattformsstatus synkad med realdataproven (2026-08-09)
+
+- ✅ Release notes och den historiska bootstrap-scouten beskriver nu A31E:s
+  verifierade `BJELoad_R` → `APPB.FTL` C03-kedja i stället för den tidigare
+  spärren. A31M, A35M, A35E och A31E:s respektive realmedia-handofftester
+  passerar 47/0, 34/0, 29/0 och 20/0.
+- ✅ Återstående Amiga-arbete är uttryckligen full dungeonviewport,
+  champion-HUD och interaktion; inte en saknad program- eller startkedja.
+
 # Nexus VDP2 raw-layout correction (2026-08-09)
 
 Verifierat mot Mednafen-patch, Python-validator och extern frame 80: C läser
