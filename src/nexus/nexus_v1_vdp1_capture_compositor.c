@@ -400,3 +400,45 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     *out_receipt = receipt;
     return 1;
 }
+
+int nexus_v1_vdp1_capture_replay_runtime_frame(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_replay_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
+    Nexus_V1_Vdp1CaptureVramSequenceInput input;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&replay, 0, sizeof(replay));
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_replay_receipt) *out_replay_receipt = replay;
+    if (!nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp1_state_valid || !frame.vdp1_state_present ||
+        !frame.vdp1_vram || !resolve_material) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.vdp1_vram = frame.vdp1_vram;
+    input.vdp1_vram_size = (int)frame.vdp1_vram_size;
+    input.copr_word = frame.copr_word;
+    input.original_saturn_capture_verified = 1;
+    input.resolve_material = resolve_material;
+    input.resolver_context = resolver_context;
+    if (!nexus_v1_vdp1_capture_replay_vram_sequence(
+            framebuffer, &input, &replay)) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_replay_receipt) *out_replay_receipt = replay;
+        return 0;
+    }
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_replay_receipt) *out_replay_receipt = replay;
+    return 1;
+}

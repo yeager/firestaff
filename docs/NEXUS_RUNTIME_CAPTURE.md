@@ -22,11 +22,14 @@ The raw Saturn launcher uses a non-quiet string scan for this check because
 `set -o pipefail` makes `strings | grep -q` report a false failure when grep
 closes the pipe after the first match.
 
-The BIOS/media region must also be compatible. The current external audit
-reports `SGAREA=J` for the supplied Nexus ISO, while the only BIOS staged on
-the capture disk is the European `E` BIOS. Stock Mednafen rejects that pair as
-a wrong BIOS/region combination; any resulting corrupted desktop frame is
-not a valid startup/menu witness and must not be admitted to Firestaff.
+The BIOS/media region must also be compatible. The supplied English merged
+disc reports `SGAREA=J`; the external capture disk now contains the matching
+Japanese BIOS 1.01 (SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`). The
+European E-BIOS remains a separate, valid pairing for the French
+`SGAREA=E` data-only disc. Stock Mednafen or a mismatched pair is still
+rejected; any resulting corrupted desktop frame is not a valid startup/menu
+witness and must not be admitted to Firestaff.
 
 The external Mednafen 1.32.1 build also advertises the `NXSLSC01` SLEV/SAL
 producer. Its hook records only authenticated SH-2 WorkRAM writes, both SH-2

@@ -7,6 +7,12 @@ implementerad och CTest-verifierad. Den kräver fortfarande en explicit
 source/CLUT-resolver per draw; komplett DGN-sceneägarskap, transform, culling
 och produktionskonsument är fortsatt öppna.
 
+2026-08-09: Den autentiserade `FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1`
+raw-envelope kan nu läsas i C. VDP1-VRAM, VDP1-state/COPR och VDP2-span pekas
+direkt in i capture-lanen, med semantic admission fortsatt spärrad. Extern
+J-resetwitness och DGN frame 760 passerar parsern; detta bevisar inte
+startup→meny, DGN-face-selection eller produktionsraster.
+
 ## Nexus Structure1G Material Follow-up (2026-07-11)
 
 2026-07-12 update: original `SN_FLOOR.MNS` and `SN_WALL.MNS` now feed the

@@ -9,7 +9,7 @@ regionmatchad Saturn-kedja.
 
 | Område | Verifierade grindar | Implementeringstäckning | Produktionsgrad | Huvudspärr |
 |---|---:|---:|---:|---|
-| Uppstart | 3/6 | 50,0 % | 0 % | E-BIOS är region E, medan den levererade skivan identifierar sig som J; ingen giltig startup→meny-witness |
+| Uppstart | 3/6 | 50,0 % | 0 % | J-BIOS/media-paret är nu tillgängligt och en reset-frame är validerad, men ingen giltig startup→meny-witness |
 | Meny | 3/8 | 37,5 % | 0 % | PRS3-byteavkodning och källinventering finns, men VDP2-källägare, FONT256-konsument och faktisk komposition saknas |
 | DGN face/mesh/textur | 3/7 | 42,9 % | 0 % | Format, mesh-topologi och materialägare är bundna, men textursemantik, runtime-transform, culling och rasterisering saknas |
 | Saturn VDP1-capture | 8/11 | 72,7 % | 0 % | Råcapture, command-framing, material/CLUT-join, atomisk replay, flerkommando-sekvens och display-origin är verifierade; scenägare, Saturn face-selection, transform/culling och produktionskonsument saknas |
@@ -24,10 +24,10 @@ bara för att det har fler delgrindar.
 För den prioriterade kedjan uppstart → meny → HUD/viewport, med vikterna
 30/35/35, är implementeringstäckningen
 `50,0 × 0,30 + 37,5 × 0,35 + 14,3 × 0,35 = 33,1 %`.
-Produktionsgraden är 0 % för båda måtten just nu: den levererade region-J-
-skivan saknar ett matchande J-BIOS, och den befintliga E-BIOS-capturen får
-därför inte öppna semantiska runtimekonsumenter. Siffrorna ska inte
-medelvärdesbildas mellan modellerna.
+Produktionsgraden är 0 % för båda måtten just nu: den validerade J-capturen
+är en reset-/transportwitness utan startup→meny-identitet, och den befintliga
+E-BIOS/French-capturen öppnar inte heller semantiska runtimekonsumenter.
+Siffrorna ska inte medelvärdesbildas mellan modellerna.
 
 ## Räkneregel
 
@@ -69,7 +69,9 @@ source/CLUT-joins och 198 Structure3 face-owner-joins. Fyra draws (offsets
 frame ett capture-only-bevis; den får inte användas som komplett scene replay
 eller som bevis för Saturns face-selection, transform, culling eller
 produktionsrasterisering. C-adaptern
-`nexus_v1_vdp1_capture_replay_vram_sequence()` kan nu bygga samma bounded
-drawlista från en autentiserad VRAM/CMDLINK-snapshot, men den kräver fortfarande
-en separat, exakt DGN source/CLUT-resolver för varje draw och lämnar därför
-vanlig produktion spärrad.
+`nexus_v1_saturn_runtime_capture_frame()` läser nu samma autentiserade
+VDP1/VDP2-raw-envelope i C, och
+`nexus_v1_vdp1_capture_replay_runtime_frame()` lämnar VDP1-VRAM/COPR direkt
+till den bounded replay-kedjan. Den kräver fortfarande en separat, exakt DGN
+source/CLUT-resolver för varje draw och lämnar därför vanlig produktion
+spärrad.

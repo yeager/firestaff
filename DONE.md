@@ -11648,3 +11648,17 @@ rendering remain blocked.
   Firestaff med lokal hashverifierad A31-media och kräver den egna
   `csb-amiga-a31-titl`/`TITL.DAT`-fasen före runtime. Den använder inga
   testresurser eller en PC34-fallback och passerar lokalt mot riktig data.
+# Nexus: C-import av autentiserad Saturn raw-frame (2026-08-09)
+
+- ✅ Lade till en bounds-kontrollerad C-parser för den instrumenterade
+  `FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1`-envelopen. Den exponerar VDP1
+  VRAM, framebuffer-span, VDP1-state/COPR och VDP2 CRAM/VRAM/register-span med
+  pekare till användarens capture-buffer.
+- ✅ Kopplade `nexus_v1_vdp1_capture_replay_runtime_frame()` till den befintliga
+  VDP1-VRAM/CMDLINK-replayadaptern. Saknad resolver eller saknad VDP1-state
+  stoppar vägen utan framebuffer-mutation och utan semantic admission.
+- ✅ Verifierat syntetiskt med CTest och mot extern användarägd capture:
+  J-resetwitness frame 0 samt DGN-kandidaten frame 760 parsas korrekt.
+- ⚠️ Detta öppnar inte meny, HUD, viewport, DGN-transform, face-selection eller
+  rasterproduktion. Den exakta DGN source/CLUT-resolvern per draw är fortfarande
+  nästa källbundna steg.

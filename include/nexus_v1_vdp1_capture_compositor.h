@@ -4,6 +4,7 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_vdp1_command_sequence.h"
+#include "nexus_v1_saturn_runtime_capture.h"
 
 /* A narrowly scoped host presentation of one authenticated Saturn VDP1
  * command. It is not a DGN renderer: source image/palette joins and the
@@ -133,5 +134,17 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     Nexus_Framebuffer *framebuffer,
     const Nexus_V1_Vdp1CaptureVramSequenceInput *input,
     Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_receipt);
+
+/* Parse one authenticated Saturn raw frame and feed its VDP1 VRAM/COPR
+ * directly into the bounded replay lane. VDP2 data is exposed by the frame
+ * receipt but is not silently composed here. */
+int nexus_v1_vdp1_capture_replay_runtime_frame(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_replay_receipt);
 
 #endif
