@@ -416,5 +416,8 @@ neither word receives task, target, callback, or dispatch semantics.
     och avkodar native-little-endian TVMD=0x8000 korrekt. Den nya
     `nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap()` kräver explicita
     källbytes- och VRAM-offset-attester och passerar med en bounded tilemap-
-    fixture samt extern frame 760 som råtransport. Menyägare, FONT256-bindning,
+    fixture samt extern frame 760 som råtransport. En separat frame-80-audit
+    visar NBG1 character mode och en oförändrad tvåords-PND-span runt 0x5c000,
+    men ingen exakt FONT256 Page/CG/Palette- eller MENU.BPK/PRS3-bindning.
+    Menyägare, FONT256-bindning,
     karta och autentiserad startup→meny-identitet återstår.

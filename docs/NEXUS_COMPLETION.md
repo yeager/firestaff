@@ -98,6 +98,18 @@ avvisas. Joinen sätter inte textkod→tile, page-PND, placering eller
 lagerägarskap; den är källproveniens, inte en upplåsning av FONT256-runtime
 eller startup→meny.
 
+### Frame 80: NBG1-ägare fortfarande obunden
+
+En separat bytejämförelse av den autentiserade långkörningens frame 80 visar
+`BGON=0x0003`, `CHCTLA=0x1013` och NBG1 i character mode. NBG1:s synliga råspan
+ligger i VDP2-VRAM kring `0x5c000` och består av tvåords-PND-mönster; den är
+oförändrad mellan frame 78 och 80. Ingen exakt byteföljd för FONT256.S2D:s
+Page-, Character Generator- eller Palette-region återfinns där, och ingen
+MENU.BPK/PRS3-källa binder samma span. Detta är negativt proveniensbevis:
+frame 80 får inte tillskrivas FONT256 eller MENU.BPK och får inte ännu matas
+igenom produktionskompositorn. Menygrinden ligger därför kvar på 3/8 och
+produktionsgrad 0 %.
+
 ### SLEV/SAL/SDDRVS-tracegrind
 
 `nexus_v1_scsp_write_trace_parse()` och den separata main-SH-2-parsern sparar
