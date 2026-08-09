@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron RNG-consumer: den nya parsern validerar den autentiska
+  `source=mednafen-pce-instrumented-rng-consumer`-sidecaren med sekvens-,
+  steg-, PC- och entrykontroller, men extern-disken innehåller ännu ingen
+  sådan sidecar från en körning som når `$5D64/$5D6A`. Returvärde, caller,
+  RAM-ägare och spelsemantik är därför fortfarande spärrade. Nästa capture
+  måste använda en binär/runtime som faktiskt passerar uppstartens CD-handoff;
+  den misslyckade 47-pollningskörningen får inte blandas med äldre captures.
+
 - 🔧 Theron: den autentiserade VDC/VCE-screen-capturen når nu bootfacadens
   source-only-presenter och M11 installerar den fångade VCE-paletten innan
   indexed blit. Detta låser inte upp genererade tiles, square-to-tile-

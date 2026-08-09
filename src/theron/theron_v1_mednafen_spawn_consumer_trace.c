@@ -253,6 +253,128 @@ int theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
     return parse_spawn_register_trace_file(path, out, 0);
 }
 
+int theron_v1_mednafen_rng_consumer_trace_parse_file(
+    const char *path, Theron_V1RngConsumerTraceReceipt *out) {
+    FILE *file;
+    char line[768];
+    char entry[16];
+    unsigned int expected_step = 0u;
+    unsigned int previous_sequence = 0u;
+    int saw_record = 0;
+    int previous_window_complete = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->status = THERON_V1_SPAWN_CONSUMER_TRACE_UNAVAILABLE;
+    out->semantic_publication_allowed = 0;
+    if (!path || !path[0]) return 0;
+    snprintf(out->source_trace_path, sizeof(out->source_trace_path), "%s", path);
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (!read_line(file, line, sizeof(line)) ||
+        strcmp(line, "source=mednafen-pce-instrumented-rng-consumer") != 0) {
+        fclose(file);
+        out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+        return 0;
+    }
+    out->source_header_verified = 1;
+    out->sequence_verified = 1;
+    out->step_verified = 1;
+    out->physical_pc_bounds_verified = 1;
+    out->boundary_flags_verified = 1;
+
+    while (read_line(file, line, sizeof(line))) {
+        unsigned int sequence, step, pc, physical_pc;
+        unsigned int a, x, y, sp, p, mpr0;
+        unsigned int b3, b4, b5, b6, b8, ba, bb;
+        int consumed = 0;
+        int is_target_5d64, is_target_5d6a;
+        int sequence_ok, step_ok, entry_ok;
+
+        if (sscanf(line,
+                   "rng_consumer_window sequence=%u step=%u pc=%x physical_pc=%x entry=%15s a=%x x=%x y=%x sp=%x p=%x mpr0=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x%n",
+                   &sequence, &step, &pc, &physical_pc, entry, &a, &x, &y,
+                   &sp, &p, &mpr0, &b3, &b4, &b5, &b6, &b8, &ba, &bb,
+                   &consumed) != 18 || line[consumed] != '\0' ||
+            sequence == 0u || step >= 192u || pc > 0xffffu ||
+            physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
+            y > 0xffu || sp > 0xffu || p > 0xffu || mpr0 > 0xffu ||
+            b3 > 0xffu || b4 > 0xffu || b5 > 0xffu || b6 > 0xffu ||
+            b8 > 0xffu || ba > 0xffu || bb > 0xffu) {
+            out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+            fclose(file);
+            return 0;
+        }
+
+        is_target_5d64 = pc == 0x5d64u;
+        is_target_5d6a = pc == 0x5d6au;
+        entry_ok = (is_target_5d64 && strcmp(entry, "5d64") == 0) ||
+                   (is_target_5d6a && strcmp(entry, "5d6a") == 0) ||
+                   (!is_target_5d64 && !is_target_5d6a &&
+                    strcmp(entry, "window") == 0);
+        if (!saw_record) {
+            sequence_ok = sequence == 1u;
+            step_ok = step == 0u;
+        } else if (sequence == previous_sequence) {
+            sequence_ok = 1;
+            step_ok = step == expected_step;
+        } else {
+            sequence_ok = sequence == previous_sequence + 1u;
+            step_ok = step == 0u && previous_window_complete;
+        }
+        if (!sequence_ok || !step_ok || !entry_ok) {
+            out->sequence_verified &= sequence_ok;
+            out->step_verified &= step_ok;
+            out->boundary_flags_verified &= entry_ok;
+            out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+            fclose(file);
+            return 0;
+        }
+
+        if (!saw_record) {
+            out->first_sequence = sequence;
+            out->first_step = step;
+            out->first_pc = pc;
+            out->first_physical_pc = physical_pc;
+            out->window_count = 1u;
+            saw_record = 1;
+        } else if (sequence != previous_sequence) {
+            out->window_count++;
+        }
+        out->last_sequence = sequence;
+        out->last_step = step;
+        out->last_pc = pc;
+        out->last_physical_pc = physical_pc;
+        out->last_a = (uint8_t)a;
+        out->last_x = (uint8_t)x;
+        out->last_y = (uint8_t)y;
+        out->last_sp = (uint8_t)sp;
+        out->last_p = (uint8_t)p;
+        out->last_mpr0 = (uint8_t)mpr0;
+        out->last_b3 = (uint8_t)b3;
+        out->last_b4 = (uint8_t)b4;
+        out->last_b5 = (uint8_t)b5;
+        out->last_b6 = (uint8_t)b6;
+        out->last_b8 = (uint8_t)b8;
+        out->last_ba = (uint8_t)ba;
+        out->last_bb = (uint8_t)bb;
+        out->sample_count++;
+        out->target_5d64_seen |= is_target_5d64;
+        out->target_5d6a_seen |= is_target_5d6a;
+        expected_step = step + 1u;
+        previous_sequence = sequence;
+        previous_window_complete = step == 191u;
+        out->complete_window_seen |= previous_window_complete;
+    }
+    fclose(file);
+    if (!saw_record || (!out->target_5d64_seen && !out->target_5d6a_seen)) {
+        out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+        return 0;
+    }
+    out->status = THERON_V1_SPAWN_CONSUMER_TRACE_READY;
+    return 1;
+}
+
 int theron_v1_mednafen_spawn_capture_correlate_files(
     const char *consumer_path,
     const char *register_path,

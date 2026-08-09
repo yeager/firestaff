@@ -1,3 +1,14 @@
+# Theron RNG-consumer receipt boundary (2026-08-09)
+
+- ✅ En strikt parser och regressionstest validerar nu den autentiska
+  Mednafen-sidecaren för disassemblyns `$5D64/$5D6A`-konsumentfönster.
+  Den kontrollerar källa, sekvens, 192-stegs fönsterordning, entryetiketter,
+  PC-gränser och registerformat utan att göra något värde till RNG-resultat.
+- ✅ Receipten behåller observerade register- och RAM-byte samt skiljer på
+  ett komplett 192-stegsfönster och ett avbrutet fönster. Semantisk
+  publicering är fortsatt spärrad tills caller, returvärde och RAM-ägare är
+  autentiserade i samma runtimecapture.
+
 # Nexus VDP1 writer-trace forwarding fixed (2026-08-09)
 
 - ✅ Saturn-launchern vidarebefordrar nu de valfria, läsande VDP1-writer-code-

@@ -87,6 +87,50 @@ int theron_v1_mednafen_spawn_register_trace_parse_file(
 int theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
     const char *path, Theron_V1SpawnRegisterTraceReceipt *out);
 
+/* Raw execution-window provenance for the two RAM-loaded RNG consumers
+ * identified by the US disassembly.  The sidecar records register/RAM
+ * snapshots only; it does not identify a returned random value, caller,
+ * or semantic consumer. */
+typedef struct {
+    Theron_V1SpawnConsumerTraceStatus status;
+    int source_header_verified;
+    int sequence_verified;
+    int step_verified;
+    int physical_pc_bounds_verified;
+    int boundary_flags_verified;
+    int target_5d64_seen;
+    int target_5d6a_seen;
+    int complete_window_seen;
+    int semantic_publication_allowed;
+    uint32_t sample_count;
+    uint32_t window_count;
+    uint32_t first_sequence;
+    uint32_t last_sequence;
+    uint32_t first_step;
+    uint32_t last_step;
+    uint32_t first_pc;
+    uint32_t last_pc;
+    uint32_t first_physical_pc;
+    uint32_t last_physical_pc;
+    uint8_t last_a;
+    uint8_t last_x;
+    uint8_t last_y;
+    uint8_t last_sp;
+    uint8_t last_p;
+    uint8_t last_mpr0;
+    uint8_t last_b3;
+    uint8_t last_b4;
+    uint8_t last_b5;
+    uint8_t last_b6;
+    uint8_t last_b8;
+    uint8_t last_ba;
+    uint8_t last_bb;
+    char source_trace_path[THERON_V1_SPAWN_CONSUMER_TRACE_PATH_CAPACITY];
+} Theron_V1RngConsumerTraceReceipt;
+
+int theron_v1_mednafen_rng_consumer_trace_parse_file(
+    const char *path, Theron_V1RngConsumerTraceReceipt *out);
+
 /* Correlates the two sidecars emitted by one instrumented run.  This is a
  * stronger capture handoff than either parser alone, but it deliberately
  * remains non-semantic: the dynamic RAM-loaded callees and return ownership
