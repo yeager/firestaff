@@ -679,8 +679,10 @@
   användarsparningar från `CSBGAME.DAT`: F31 C5-header, fem checksummade
   save-delar, porträtt och dungeon-tail verifieras och överlämnas atomärt
   till M11. Prison-sparningar med C12 accepteras separat från MINI.DAT:s
-  C13-bootstrap. Kvar är bytekorrekt F0433-skrivning med backup, autentisk
-  Utility Disk-filväljare, extern app-capture och bred fysisk
+  C13-bootstrap. F0435 återställer också en validerad original-`CSBGAME.BAK`
+  till den kanoniska `CSBGAME.DAT`-slotten innan runtime muteras; godtyckliga
+  filnamn får ingen påhittad backupregel. Kvar är bytekorrekt F0433-skrivning,
+  autentisk Utility Disk-filväljare, extern app-capture och bred fysisk
   touch-/hjälpmedelsverifiering på varje plattform.
 
 - 🔧 Theron real Track 02 loading now retains reserved category-4 monster

@@ -22,7 +22,46 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 static int failures;
+
+static int copy_file(const char *source_path, const char *destination_path)
+{
+    unsigned char buffer[4096];
+    FILE *source = fopen(source_path, "rb");
+    FILE *destination = NULL;
+    size_t count;
+    int ok = 0;
+
+    if (!source) return 0;
+    destination = fopen(destination_path, "wb");
+    if (!destination) {
+        fclose(source);
+        return 0;
+    }
+    while ((count = fread(buffer, 1u, sizeof(buffer), source)) != 0u) {
+        if (fwrite(buffer, 1u, count, destination) != count) goto done;
+    }
+    ok = !ferror(source) && fclose(destination) == 0;
+    destination = NULL;
+done:
+    if (destination) fclose(destination);
+    fclose(source);
+    return ok;
+}
+
+static int write_damaged_file(const char *path)
+{
+    static const unsigned char damaged[] = { 'b', 'a', 'd' };
+    FILE *file = fopen(path, "wb");
+    int ok;
+    if (!file) return 0;
+    ok = fwrite(damaged, 1u, sizeof(damaged), file) == sizeof(damaged);
+    return fclose(file) == 0 && ok;
+}
 
 static int test_set_env(const char *name, const char *value)
 {
@@ -75,6 +114,7 @@ int main(void)
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
     CSB_V1_FmtownsUserSaveReceipt user_save;
+    CSB_V1_FmtownsUserSaveReceipt recovered_user_save;
     CSB_V1_FmtownsStartupState user_save_state;
     CSB_V1_FmtownsGameHandoffReceipt external_save_handoff;
     CSB_V1_PartyState mini_party;
@@ -341,6 +381,41 @@ int main(void)
                   external_save_handoff.startup_mini_header_dungeon_id == 12u &&
                   external_save_handoff.startup_mini_dungeon_tail_verified,
               "legacy F31 handoff also admits the authentic Prison save");
+#ifndef _WIN32
+        {
+            char recovery_dir[] = "/tmp/firestaff-f31-recovery-XXXXXX";
+            char selected_path[512];
+            char backup_path[512];
+            const char *base_name = strrchr(user_save_path, '/');
+
+            base_name = base_name ? base_name + 1 : user_save_path;
+            CHECK(strcmp(base_name, "CSBGAME.DAT") == 0 &&
+                      strlen(user_save_path) >= 4u &&
+                      mkdtemp(recovery_dir) != NULL &&
+                      snprintf(selected_path, sizeof(selected_path),
+                               "%s/CSBGAME.DAT", recovery_dir) > 0 &&
+                      snprintf(backup_path, sizeof(backup_path),
+                               "%s/CSBGAME.BAK", recovery_dir) > 0 &&
+                      copy_file(user_save_path, backup_path) &&
+                      write_damaged_file(selected_path),
+                  "real F31 save corpus and damaged primary are staged in isolation");
+            /* The original disk's older BAK is itself retained as corpus but
+             * cannot be promoted unless it validates.  A byte-for-byte copy
+             * of the genuine current save models F0433's prior slot rotation
+             * without fabricating a save body. */
+            memset(&recovered_user_save, 0, sizeof(recovered_user_save));
+            CHECK(csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                      (const CSB_V1_BootProfile *)view.csbBootProfile,
+                      &direct_handoff, selected_path, &recovered_user_save) &&
+                      recovered_user_save.valid &&
+                      recovered_user_save.recovered_from_backup &&
+                      strcmp(recovered_user_save.source_path, selected_path) == 0,
+                  "F31 F0435 restores validated CSBGAME.BAK to its canonical slot");
+            remove(selected_path);
+            remove(backup_path);
+            rmdir(recovery_dir);
+        }
+#endif
     }
     memset(&external_save_handoff, 0, sizeof(external_save_handoff));
     memset(&external_save_state, 0, sizeof(external_save_state));

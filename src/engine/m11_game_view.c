@@ -23954,7 +23954,7 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
              * is proven; no private M11 envelope is accepted here. */
             memset(&user_save, 0, sizeof(user_save));
             memset(&startup_state, 0, sizeof(startup_state));
-            if (!csb_v1_fmtowns_game_user_save_open(
+            if (!csb_v1_fmtowns_game_user_save_open_or_restore_backup(
                     profile, &state->csbFmtownsGameHandoffReceipt, path,
                     &user_save) ||
                 !csb_v1_fmtowns_game_load_user_save_state(&user_save,

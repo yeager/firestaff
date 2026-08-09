@@ -11512,3 +11512,14 @@ rendering remain blocked.
 - ⏳ The run still has no `$B0E5` entry or dynamic `$C96B/$CC4C` return, so
   RNG, AI, attack, damage, loot, generator timing, T700 and T900 remain
   source-locked rather than inferred.
+
+# CSB: FM Towns F0435 backupåterställning (2026-08-09)
+
+- ✅ En skadad eller saknad original-`CSBGAME.DAT` återställs nu enbart från
+  en fullständigt validerad `CSBGAME.BAK`, och först till den kanoniska slotten
+  enligt ReDMCSB `LOADSAVE.C F0435:2906-2907`. F31-header, fem checksummade
+  delar, porträtt och dungeon-tail granskas före filbytet och ingen runtime
+  muteras om återställningen inte kan genomföras.
+- ✅ Regressionen använder den verkliga FM Towns-användarsparningen från
+  Tsugaru och provar en byteidentisk backupkopia i en isolerad temporär
+  katalog. Inga sparbytes skapas av testet.

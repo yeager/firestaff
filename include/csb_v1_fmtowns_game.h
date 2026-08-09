@@ -193,6 +193,7 @@ typedef struct CSB_V1_FmtownsUserSaveReceipt {
     uint32_t dungeon_tail_offset;
     uint32_t dungeon_tail_size;
     uint16_t dungeon_tail_checksum;
+    int recovered_from_backup;
     const char *source_evidence;
 } CSB_V1_FmtownsUserSaveReceipt;
 
@@ -376,6 +377,16 @@ int csb_v1_fmtowns_game_apply_startup_state(
  * platform, dungeon identity, exact part extent and portrait extent must
  * validate before it can affect a runtime. */
 int csb_v1_fmtowns_game_user_save_open(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path,
+    CSB_V1_FmtownsUserSaveReceipt *out_receipt);
+
+/* F0435 recovery for the original F31 save-disk slot only.  When the
+ * selected CSBGAME.DAT cannot pass the complete native reader, a validated
+ * sibling CSBGAME.BAK is renamed back to the canonical slot before it is
+ * admitted.  Arbitrary user filenames never receive an invented .BAK rule. */
+int csb_v1_fmtowns_game_user_save_open_or_restore_backup(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
     const char *save_path,

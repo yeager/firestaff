@@ -1014,6 +1014,57 @@ int csb_v1_fmtowns_game_user_save_open(
     return 1;
 }
 
+static int csb_v1_fmtowns_game_original_backup_path(const char *path,
+                                                     char *out,
+                                                     size_t out_size)
+{
+    const char *name;
+    static const char original_name[] = "CSBGAME.DAT";
+    size_t index;
+
+    if (!path || !out || out_size == 0u) return 0;
+    name = strrchr(path, '/');
+    name = name ? name + 1 : path;
+    for (index = 0u; name[index] != '\0' && original_name[index] != '\0'; ++index) {
+        char actual = name[index];
+        if (actual >= 'a' && actual <= 'z') actual = (char)(actual - ('a' - 'A'));
+        if (actual != original_name[index]) return 0;
+    }
+    if (name[index] != '\0' || original_name[index] != '\0') return 0;
+    {
+        size_t prefix_length = strlen(path) - 4u;
+        int written = snprintf(out, out_size, "%.*s.BAK", (int)prefix_length, path);
+        return written >= 0 && (size_t)written < out_size;
+    }
+}
+
+int csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path,
+    CSB_V1_FmtownsUserSaveReceipt *out_receipt)
+{
+    char backup_path[1024];
+    CSB_V1_FmtownsUserSaveReceipt backup_receipt;
+
+    if (csb_v1_fmtowns_game_user_save_open(profile, game_receipt, save_path,
+                                            out_receipt)) return 1;
+    if (!out_receipt ||
+        !csb_v1_fmtowns_game_original_backup_path(save_path, backup_path,
+                                                   sizeof(backup_path))) return 0;
+    memset(&backup_receipt, 0, sizeof(backup_receipt));
+    if (!csb_v1_fmtowns_game_user_save_open(profile, game_receipt, backup_path,
+                                            &backup_receipt)) return 0;
+    /* ReDMCSB LOADSAVE.C F0435:2906-2907: do not bind a valid backup as an
+     * alternate runtime source.  It first becomes the selected canonical
+     * slot, and only then may F0435 mutate the live game. */
+    if (remove(save_path) != 0 || rename(backup_path, save_path) != 0) return 0;
+    if (!csb_v1_fmtowns_game_user_save_open(profile, game_receipt, save_path,
+                                            out_receipt)) return 0;
+    out_receipt->recovered_from_backup = 1;
+    return 1;
+}
+
 int csb_v1_fmtowns_game_load_user_save_state(
     const CSB_V1_FmtownsUserSaveReceipt *receipt,
     CSB_V1_FmtownsStartupState *out_state)
