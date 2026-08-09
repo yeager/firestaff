@@ -49,7 +49,14 @@ static void test_cedt004_wrappers_read_loaded_raw_thing_data(void)
     things.thingCounts[THING_TYPE_WEAPON] = 2;
 
     weapon_records[2] = 2;  /* OBJECT_INFO 23 + 2 -> torch icon family. */
-    weapon_records[3] = 0x90u; /* Source torch charge variant: lit stage 3. */
+    /* DEFS.H:1382-1388 MEDIA016 (I34E/PC34) packs WEAPON as Type:7,
+     * DoNotDiscard:1, Cursed:1, Poisoned:1, ChargeCount:4, Broken:1, Lit:1
+     * LSB-first, so ChargeCount is bits 10..13 of the little-endian property
+     * word -- raw byte 3 bits 2..5 -- and Lit is bit 15, raw byte 3 bit 7.
+     * 0x90 sets Lit with ChargeCount 4, which maps to torch stage 2 (icon 6),
+     * not the stage 3 this fixture intends. 0xA0 sets Lit with ChargeCount 8,
+     * the first charge that maps to stage 3 and therefore icon 4 + 3 = 7. */
+    weapon_records[3] = 0xA0u; /* Lit, ChargeCount 8 -> torch stage 3. */
 
     weapon_records[4 + 2] = 10; /* OBJECT_INFO 23 + 10 -> weapon icon 33. */
 
