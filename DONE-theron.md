@@ -4,14 +4,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — MPR-/destinationstrace i capture-builden
 
-- ✅ `scripts/build_mednafen_theron_irq2_trace.sh` applicerar nu den redan
-  källgranskade `main_ram_loader_write`-patchen efter loader-control-flow-
-  patchen. Därmed kan en framtida samma-capture-join kontrollera game-owned
-  byte-skrivningar med logisk destination, aktiv MPR/fysisk destination och
-  writer-PC. `bash tests/test_theron_v1_mednafen_live_capture_script.sh`,
-  `bash -n` och `git diff --check` passerar. Ingen runtime-semantik har
-  publicerats; Mednafen-källträdet saknas lokalt för en ny instrumenterad
-  binär.
+- ✅ Capture-builden applicerar nu en post-patch `v3`-hook som loggar
+  game-owned byte-skrivningar med logisk destination, MPR-beräknad fysisk
+  destination, värde och writer-PC. En ren Mednafen 1.32.1-build kompilerade
+  hooken och binären innehåller receiptformatet. `bash
+  tests/test_theron_v1_mednafen_live_capture_script.sh`, `bash -n` och
+  `git diff --check` passerar.
+- 🔒 Receiptens `dispatch_sequence=unbound` är avsiktlig: writern är
+  game-owned men ännu inte bunden till ett E009-/CD-sektorreturkontrakt.
+  Ingen level-, tile-, object-, RNG-, AI-, T700- eller T900-semantik har
+  publicerats. Den lokala runtime-verifieraren stoppade fortsatt capture-
+  binären eftersom maskinen bara exponerar `sdl2-compat`.
 
 ## 2026-08-09 — byte-faithful HuC6280-resourcekärna
 

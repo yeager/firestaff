@@ -4,10 +4,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — loader-write instrumentation
 
-- 🔧 Capture-builden applicerar nu även den befintliga
-  `main_ram_loader_write`-patchen. En riktig Mednafen-körning återstår när
-  Mednafen 1.32.1-källträdet finns tillgängligt; tills dess är detta bara ett
-  verifierat build-/scriptkrav, inte ett runtimebevis.
+- 🔧 Capture-builden applicerar nu en post-patch `v3`
+  `main_ram_loader_write`-hook. En ny riktig Mednafen-körning med en native
+  SDL2-runtime återstår; den kompilerade lokala binären är därför ännu inte
+  ett runtimebevis.
 
 ## 2026-08-09 — efter byte-dekomprimeringslyftet
 

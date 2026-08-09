@@ -1,0 +1,58 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -16,5 +16,6 @@
+ void TheronPCECDTraceMainRAMConsumerWrite(uint16 logical_address,
+                                           uint32 physical_address, uint8 value,
+                                           uint16 writer_pc, uint32 writer_physical_pc);
++void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
+ 
+ class alignas(128) HuC6280
+@@ -438,6 +439,12 @@
+ 	 uint8 wmpr = MPR[address >> 13];
+ 
+ 	 LastLogicalWriteAddr = address;
++	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
++	 const uint16 writer_pc = GetRegister(GSREG_PC);
++	 const uint8 writer_mpr = MPR[writer_pc >> 13];
++	 const uint32 writer_physical_pc = (writer_mpr << 13) | (writer_pc & 0x1FFF);
++	 TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
++	                                   writer_physical_pc);
+ 
+-	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
++	 WriteMap[wmpr](physical_address, V);
+ 	}
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -133,4 +133,6 @@
+ static unsigned TheronPCECDMainRAMConsumerTraceCount;
+ static FILE *TheronPCECDMainRAMTargetTrace;
+ static unsigned TheronPCECDMainRAMTargetTraceCount;
++static FILE *TheronPCECDMainRAMLoaderWriteTrace;
++static unsigned TheronPCECDMainRAMLoaderWriteTraceCount;
+ static FILE *TheronPCECDSpawnConsumerTrace;
+@@ -260,3 +262,25 @@
+  fflush(TheronPCECDMainRAMTargetTrace);
+ }
++void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination,
++                                        uint32 physical_destination, uint8 value,
++                                        uint16 writer_pc, uint32 writer_physical_pc)
++{
++ if(writer_physical_pc < 0x1f0000 || writer_physical_pc >= 0x1f8000 ||
++    TheronPCECDMainRAMLoaderWriteTraceCount >= 4096)
++  return;
++ if(!TheronPCECDMainRAMLoaderWriteTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE");
++  if(!path || !*path)
++   return;
++  TheronPCECDMainRAMLoaderWriteTrace = fopen(path, "a");
++  if(!TheronPCECDMainRAMLoaderWriteTrace)
++   return;
++ }
++ fprintf(TheronPCECDMainRAMLoaderWriteTrace,
++         "main_ram_loader_write sequence=%u dispatch_sequence=unbound logical_destination=%04x physical_destination=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++         TheronPCECDMainRAMLoaderWriteTraceCount++, logical_destination,
++         physical_destination, value, writer_pc, writer_physical_pc);
++ fflush(TheronPCECDMainRAMLoaderWriteTrace);
++}
+ static void TheronTracePCECDState(const char *format, ...)

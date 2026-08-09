@@ -59,10 +59,6 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_caller_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch"
-# Keep the byte-level destination writes alongside the loader control-flow
-# trace.  The MPR/source join cannot be authenticated from TII/RTS rows alone.
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_window_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -81,6 +77,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch"
 
 # The FIFO-origin extension is capture-only. It carries raw LBA/offset/FIFO
 # provenance into the CD-transfer receipt; it does not assign level, object,

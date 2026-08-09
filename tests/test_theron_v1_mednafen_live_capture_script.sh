@@ -9,6 +9,7 @@ build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 state_autoload_patch=$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch
 irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 consumer_read_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
+loader_write_v3_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 
 if [[ ! -x "$script" ]]; then
@@ -40,10 +41,17 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_write_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
+    exit 1
+fi
+if [[ ! -f "$loader_write_v3_patch" ]] ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$loader_write_v3_patch" ||
+   ! grep -Fq 'dispatch_sequence=unbound' "$loader_write_v3_patch" ||
+   ! grep -Fq 'writer_physical_pc' "$loader_write_v3_patch"; then
+    printf 'FAIL: loader-write capture must retain explicit unbound MPR/source provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_vram_vce_snapshot.patch' "$build_script" ||

@@ -37,9 +37,10 @@ entry remain required before any semantic runtime promotion.
 
 ## 2026-08-09 capture-build boundary
 
-The Theron Mednafen build now also applies the source-locked
-`main_ram_loader_write` hook. It records game-owned writes with logical
-destination, active-MPR-derived physical destination, value, and writer PC in
-the same bounded loader window. This closes an instrumentation gap for the
-future source/MPR/destination join; it does not itself prove that any write is
-a level, tile, palette, object, HUD, or creature record.
+The Theron Mednafen build now also applies a post-patch loader-write hook. It
+records game-owned writes with logical destination, MPR-derived physical
+destination, value, and writer PC. The receipt deliberately carries
+`dispatch_sequence=unbound`: it is writer provenance, not yet a same-call
+E009/CD-sector join. This closes an instrumentation gap for the future
+source/MPR/destination join; it does not itself prove that any write is a
+level, tile, palette, object, HUD, or creature record.

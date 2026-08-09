@@ -88,11 +88,12 @@ runtime bank snapshot is supplied, but no decoded output is promoted to map,
 tile, bitmap, palette, or object semantics until the stage-2 MPR and post-CD
 consumer join is captured.
 
-The capture build now includes the bounded `main_ram_loader_write` trace as
+The capture build now includes the post-patch `main_ram_loader_write` trace as
 well. That hook records game-owned byte writes together with logical and
 MPR-derived physical destinations and the writer PC, which is required for
-the pending source/destination join. It is provenance only; it does not turn
-those writes into semantic game data.
+the pending source/destination join. Its `dispatch_sequence=unbound` marker
+keeps the E009/CD-sector ownership boundary explicit. It is provenance only;
+it does not turn those writes into semantic game data.
 
 ## Stage-2 bank and destination contract
 
