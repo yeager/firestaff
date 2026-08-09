@@ -11808,3 +11808,15 @@ rendering remain blocked.
 - Counted the verified VDP1 mode-5 direct-color pixel decoder as its own implementation gate.
 - Kept production completion at 0% because the external capture still lacks an authenticated DGN material owner, scene ordering, and production consumer.
 - Recalculated Nexus implementation coverage to 21/48 named gates (43.8% checksum) and 40.8% unweighted area mean; priority startup → menu → HUD/viewport remains 33.1%.
+
+# Theron: bounded RNG execution-window capture (2026-08-09)
+
+- ✅ Capturepatchen accepterar nu en explicit, begränsad sample-gräns via
+  `THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT`/`FIRESTAFF_THERON_RNG_CONSUMER_SAMPLE_LIMIT`
+  och skriver gränsen i sidecar-headern.
+- ✅ Parsern kräver och validerar headern, testar exakt fönstergräns och lämnar
+  fortsatt `semantic_publication_allowed=0`.
+- ✅ Lokal CTest, capture-scriptkontroll, extern Mednafen-build och en riktig
+  US Track 02/System Card/.mc0-replay verifierades. 4 096 steg fångades, men
+  ingen game-owned return-/CD-join observerades; RNG/spawn/T700/T900 öppnas
+  därför inte.

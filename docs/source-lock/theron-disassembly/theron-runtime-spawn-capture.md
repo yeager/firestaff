@@ -275,3 +275,24 @@ source-owned T700/T900 read. The sidecar therefore remains transport/runtime
 evidence only. It must not be converted into RNG, creature AI, attack, loot,
 generator timing or stat semantics, and it is not merged with the `.mc0`
 save-state run above.
+
+## 2026-08-09 extended `.mc0` RNG window
+
+The external-disk replay was repeated with the same hash-verified US Track 02,
+System Card, authenticated `.mc0` state and checked-in PCE replay plan, using
+the new `THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT=4096` bound. The sidecar
+declared `rng_consumer_sample_limit=4096` and contains exactly 4,096 samples;
+the raw `$5D64` window and one source-byte-correlated code window were observed.
+
+This run is still not a semantic handoff. It recorded 50 `$B0E5` register
+entries, but no `$4667` helper entry, no game-owned CD→RAM receipt, no
+`$C96B/$CC4C` return boundary and no stack-derived return boundary. The
+instrumentation observed `return_pc=0001` throughout this state-autoload
+window, so the capture does not prove ownership of an RNG return value. The
+parser and runtime admission therefore keep RNG, spawn, creature, AI, loot,
+generator, T700 and T900 semantics closed. The 4,096-step file is retained
+only as external-disk diagnostic provenance and is not tracked as game data.
+
+The sidecar limit is now mandatory and bounded to 512..65,536 samples. This
+prevents an unlabelled or unbounded diagnostic file from being mistaken for a
+complete execution witness; it does not relax any semantic gate.

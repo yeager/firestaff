@@ -41,6 +41,7 @@ host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
+rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -58,6 +59,11 @@ if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; th
 fi
 if [[ ! -x "$mednafen_bin" || ! -f "$cue" || ! -f "$system_card" ]]; then
     printf '%s\n' 'FAIL: Mednafen, US CUE, or System Card path is unavailable' >&2
+    exit 1
+fi
+if [[ ! "$rng_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
+   (( rng_consumer_sample_limit < 512 || rng_consumer_sample_limit > 65536 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT must be an integer from 512 through 65536' >&2
     exit 1
 fi
 
@@ -850,6 +856,7 @@ launch=(
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT="${THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT:-65536}" \
     FIRESTAFF_THERON_RNG_CONSUMER_TRACE="$rng_consumer_trace" \
+    FIRESTAFF_THERON_RNG_CONSUMER_SAMPLE_LIMIT="$rng_consumer_sample_limit" \
     FIRESTAFF_THERON_RNG_CODE_TRACE="$rng_code_trace" \
     FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot" \
     FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot" \
@@ -1177,6 +1184,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'spawn_helper_4667_special_branch_samples=%s\n' "$transition_spawn_helper_4667_special_count"
     printf 'spawn_entry_b0e5_samples=%s\n' "$transition_spawn_entry_b0e5_count"
     printf 'rng_consumer_samples=%s\n' "$transition_rng_consumer_sample_count"
+    printf 'rng_consumer_sample_limit=%s\n' "$rng_consumer_sample_limit"
     printf 'rng_code_windows=%s\n' "$transition_rng_code_window_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'

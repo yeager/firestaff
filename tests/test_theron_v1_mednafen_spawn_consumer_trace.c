@@ -50,6 +50,7 @@ static void write_rng_fixture(const char *path, int bad_step) {
     FILE *file = fopen(path, "wb");
     assert(file);
     fputs("source=mednafen-pce-instrumented-rng-consumer\n", file);
+    fputs("rng_consumer_sample_limit=512\n", file);
     fprintf(file,
             "rng_consumer_window sequence=1 step=0 pc=5d64 physical_pc=114d64 entry=5d64 a=01 x=02 y=03 sp=fe p=04 mpr0=1f b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 entry_sp=fe return_pc=5d90 return_boundary=0\n");
     fprintf(file,
@@ -181,6 +182,7 @@ int main(void) {
         assert(rng.source_header_verified && rng.sequence_verified);
         assert(rng.step_verified && rng.physical_pc_bounds_verified);
         assert(rng.boundary_flags_verified && rng.target_5d64_seen);
+        assert(rng.sample_limit == 512u);
         assert(rng.sample_count == 2u && rng.window_count == 1u);
         assert(rng.return_boundary_seen && rng.last_return_pc == 0x5d90u);
         assert(rng.last_pc == 0x5d70u && rng.last_bb == 0x71u);
@@ -188,6 +190,21 @@ int main(void) {
         write_rng_fixture(path, 1);
         assert(!theron_v1_mednafen_rng_consumer_trace_parse_file(path, &rng));
         assert(rng.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
+    }
+    {
+        const char *real_rng = getenv("THERON_REAL_RNG_CONSUMER_TRACE");
+        if (real_rng && real_rng[0]) {
+            Theron_V1RngConsumerTraceReceipt rng;
+            assert(theron_v1_mednafen_rng_consumer_trace_parse_file(
+                real_rng, &rng));
+            assert(rng.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
+            assert(rng.source_header_verified && rng.sequence_verified);
+            assert(rng.step_verified && rng.physical_pc_bounds_verified);
+            assert(rng.boundary_flags_verified && rng.target_5d64_seen);
+            assert(rng.sample_limit >= 512u && rng.sample_limit <= 65536u);
+            assert(rng.sample_count == rng.sample_limit);
+            assert(!rng.semantic_publication_allowed);
+        }
     }
     {
         const char *real_code = getenv("THERON_REAL_RNG_CODE_TRACE");

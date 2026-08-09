@@ -1557,3 +1557,11 @@ required before semantic promotion.
   baseline and never publishes a session. The mounted workspace has no raw
   SKSAVE corpus, so this positive path remains compile/test-gated until one is
   supplied.
+
+- **THERON-RNG-RETURN-OWNER:** The external-disk `.mc0` replay now captures a
+  declared 4,096-step `$5D64` execution window, but the state reaches no
+  `$4667` helper or game-owned CD→RAM join and exposes `return_pc=0001` rather
+  than an authenticated caller return. Keep RNG, spawn, creature AI, loot,
+  generator, T700 and T900 admission closed. The next required witness is one
+  same-session state or live replay that joins `$4667` → `$5D6A/$5D64` → return
+  value to the authenticated Track 02 payload and consumer.

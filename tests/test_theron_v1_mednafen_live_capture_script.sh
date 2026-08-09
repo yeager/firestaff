@@ -78,6 +78,7 @@ if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$buil
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_rng_consumer_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_RNG_CONSUMER_TRACE="$rng_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_CONSUMER_SAMPLE_LIMIT="$rng_consumer_sample_limit"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_RNG_CODE_TRACE="$rng_code_trace"' "$script" ||
    ! grep -Fq 'rng_consumer_samples=%s' "$script" ||
    ! grep -Fq 'rng_code_windows=%s' "$script" ||
@@ -87,6 +88,12 @@ if ! grep -Fq 'mednafen_1.32.1_theron_rng_consumer_trace.patch' "$build_script" 
    ! grep -Fq 'logical_pc == 0x5d64' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'logical_pc == 0x5d6a' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"; then
     printf 'FAIL: capture build must retain a bounded raw RNG-consumer execution window\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT' "$script" ||
+   ! grep -Fq 'rng_consumer_sample_limit=%u' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'rng_consumer_sample_limit=' "$repo/src/theron/theron_v1_mednafen_spawn_consumer_trace.c"; then
+    printf '%s\n' 'FAIL: RNG capture must declare and validate its bounded sample limit' >&2
     exit 1
 fi
 if [[ ! -f "$irq2_patch" ]] ||

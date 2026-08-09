@@ -269,6 +269,8 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
     char entry[16];
     unsigned int expected_step = 0u;
     unsigned int previous_sequence = 0u;
+    unsigned int sample_limit = 0u;
+    int sample_limit_consumed = 0;
     int saw_record = 0;
     int previous_window_complete = 0;
 
@@ -287,6 +289,16 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         return 0;
     }
     out->source_header_verified = 1;
+    if (!read_line(file, line, sizeof(line)) ||
+        sscanf(line, "rng_consumer_sample_limit=%u%n", &sample_limit,
+               &sample_limit_consumed) != 1 ||
+        line[sample_limit_consumed] != '\0' || sample_limit < 512u ||
+        sample_limit > 65536u) {
+        out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+        fclose(file);
+        return 0;
+    }
+    out->sample_limit = sample_limit;
     out->sequence_verified = 1;
     out->step_verified = 1;
     out->physical_pc_bounds_verified = 1;
@@ -306,7 +318,8 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
                    &sequence, &step, &pc, &physical_pc, entry, &a, &x, &y,
                    &sp, &p, &mpr0, &b3, &b4, &b5, &b6, &b8, &ba, &bb,
                    &entry_sp, &return_pc, &return_boundary, &consumed) != 21 ||
-            line[consumed] != '\0' || sequence == 0u || step >= 512u ||
+            line[consumed] != '\0' || sequence == 0u ||
+            step >= out->sample_limit ||
             pc > 0xffffu || return_pc > 0xffffu || entry_sp > 0xffu ||
             return_boundary > 1u ||
             physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
@@ -377,7 +390,7 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         out->target_5d6a_seen |= is_target_5d6a;
         expected_step = step + 1u;
         previous_sequence = sequence;
-        previous_window_complete = step == 511u;
+        previous_window_complete = step + 1u == out->sample_limit;
         out->complete_window_seen |= previous_window_complete;
         out->return_boundary_seen |= return_boundary != 0u;
     }

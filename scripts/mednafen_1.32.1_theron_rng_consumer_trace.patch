@@ -1,19 +1,21 @@
 diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -175,3 +175,11 @@
+@@ -175,3 +175,13 @@
  static FILE *TheronIrq2TraceSpawnRegisters;
  static unsigned TheronIrq2TraceSpawnRegisterSamples;
 +static FILE *TheronIrq2TraceRngConsumer;
 +static unsigned TheronIrq2TraceRngWindowSequence;
 +static unsigned TheronIrq2TraceRngWindowStep;
 +static unsigned TheronIrq2TraceRngWindowRemaining;
++static unsigned TheronIrq2TraceRngSampleLimit = 512;
++static bool TheronIrq2TraceRngSampleLimitInitialized;
 +static unsigned TheronIrq2TraceRngEntrySP;
 +static unsigned TheronIrq2TraceRngReturnPC;
 +static FILE *TheronIrq2TraceRngCode;
 +static bool TheronIrq2TraceRngCodeSeen[2];
  static void FlushTheronIrq2Trace(void)
-@@ -200,3 +204,93 @@
+@@ -200,3 +204,104 @@
   const RegGroupType *trace_regs = (*CurGame->Debugger->RegGroups)[0];
   const uint32 logical_pc = trace_regs->GetRegister(trace_regs->Regs[0].id, NULL, 0) & 0xffff;
 + const bool rng_entry = logical_pc == 0x5d64 || logical_pc == 0x5d6a;
@@ -48,7 +50,16 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +  }
 +  TheronIrq2TraceRngWindowSequence++;
 +  TheronIrq2TraceRngWindowStep = 0;
-+  TheronIrq2TraceRngWindowRemaining = 512;
++  if(!TheronIrq2TraceRngSampleLimitInitialized)
++  {
++   const char *limit_text = getenv("FIRESTAFF_THERON_RNG_CONSUMER_SAMPLE_LIMIT");
++   unsigned parsed_limit = 0;
++   if(limit_text && sscanf(limit_text, "%u", &parsed_limit) == 1 &&
++      parsed_limit >= 512u && parsed_limit <= 65536u)
++    TheronIrq2TraceRngSampleLimit = parsed_limit;
++   TheronIrq2TraceRngSampleLimitInitialized = true;
++  }
++  TheronIrq2TraceRngWindowRemaining = TheronIrq2TraceRngSampleLimit;
 +  TheronIrq2TraceRngEntrySP = trace_regs->GetRegister(
 +   trace_regs->Regs[4].id, NULL, 0) & 0xff;
 +  const uint32 return_low = CurGame->Debugger->MemPeek(
@@ -86,8 +97,10 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +   {
 +    TheronIrq2TraceRngConsumer = fopen(path, "w");
 +    if(TheronIrq2TraceRngConsumer)
-+     fputs("source=mednafen-pce-instrumented-rng-consumer\n",
-+           TheronIrq2TraceRngConsumer);
++     fprintf(TheronIrq2TraceRngConsumer,
++             "source=mednafen-pce-instrumented-rng-consumer\n"
++             "rng_consumer_sample_limit=%u\n",
++             TheronIrq2TraceRngSampleLimit);
 +   }
 +  }
 +  if(TheronIrq2TraceRngConsumer)
