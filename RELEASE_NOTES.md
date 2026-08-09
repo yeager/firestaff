@@ -36,6 +36,10 @@
   real PC34 `DUNGEON.DAT` for provenance-attested Downloads saves, including an
   empty C03/C04 layout and a distinct save with 15 active groups and 15 live
   C03 records.
+- `dm1_v1_original_save_pc34_backed_corpus`: Fix corpus documentation to
+  distinguish three additional byte-identical, provenance-attested external
+  saves from C13 evidence; their decoded C13 count is zero despite a `c13`
+  directory name.
 - `dm1_v2_screenshot_gates`: Fix source-preserving V2.0 and the
   unauthenticated V2.2 placeholder as explicit non-claims, while requiring
   V2.1 variation without admitting synthetic filter or art pixels.

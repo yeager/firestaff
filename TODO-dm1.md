@@ -4429,6 +4429,13 @@ and real community-save corpus round-trip evidence.
     closes the current local C03/C04 corpus gap. Broader independently
     collected layouts remain open.
 
+  - 2026-08-09 external-disk audit: three additional provenance-attested
+    `DMSAVE.DAT` files under `/Volumes/Extern-disk/Documents/Firestaff/
+    dm1-resume-*` are byte-identical and pass the same backing-aware
+    round-trip. Their directory names include `c13`, but the decoded files
+    contain zero C13 events; they are therefore C03/C04 evidence only and do
+    not close the C13 requirement.
+
   - 2026-07-31 DOSBox-X corpus follow-up: a second operator-owned PC34
     DMSAVE.DAT (48,561 bytes) restored map 1, party (6,2,2), tick 1664,
     15 active groups, and 15 live C03 records (types C32, C37 and C38),

@@ -9,6 +9,11 @@
   save with 15 active groups and 15 live C03 records. No generated save or
   repository game-data payload was added. C13 remains open because neither
   save contains a C13 event.
+- ✅ External-disk audit: three additional provenance-attested saves under
+  `/Volumes/Extern-disk/Documents/Firestaff/dm1-resume-*` pass the same
+  backing-aware round-trip and are byte-identical. Their `c13` directory name
+  is not evidence of C13 content: decoding finds zero C13 events, so the
+  files remain C03/C04 evidence only.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
