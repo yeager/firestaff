@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — kvarvarande source-semantik efter dungeon-lookup-fix
+
+- 🔒 Dungeon-aware source-creature lookup är verifierad. Den stora spärren
+  kvarstår: originalets `$B0E5`/`$4644`/`$4667`-RNG/spawnretur, T500/T600-AI
+  och attack/skada/loot, T700-statkonsument samt T900 object/inventory-ägare
+  har ännu inget komplett autentiserat runtime-bevis och får därför inte
+  ersättas med hostdata.
+
 ## 2026-08-09 — kvarvarande startupspärr efter InputGrab-bevis
 
 - 🔒 Den nya v15-capture-binären bekräftar Mednafen-ägda

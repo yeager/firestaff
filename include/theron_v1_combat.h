@@ -185,6 +185,11 @@ int  theron_v1_creature_kill(Theron_V1_World *world, int creature_id);
 int  theron_v1_creature_remove(Theron_V1_World *world, int creature_id);
 Theron_V1_Creature *theron_v1_creature_at(Theron_V1_World *world,
                                            int level, int x, int y);
+/* Source-bound lookup for live Track 02 creatures.  Dungeon identity is part
+ * of the original record address; callers handling a world transition must
+ * not match a same-coordinate creature from another dungeon. */
+Theron_V1_Creature *theron_v1_creature_at_in_dungeon(
+    Theron_V1_World *world, int dungeon_id, int level, int x, int y);
 Theron_V1_Creature *theron_v1_creature_by_id(Theron_V1_World *world, int id);
 
 int  theron_v1_creature_count(const Theron_V1_World *world,

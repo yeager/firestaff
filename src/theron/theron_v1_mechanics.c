@@ -208,7 +208,9 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         if (tile == THERON_SQUARE_FLOOR || tile == THERON_SQUARE_DOOR) {
             /* Attack creature at that square */
             Theron_V1_Creature *cr =
-                theron_v1_creature_at(world, world->current_level, x, y);
+                theron_v1_creature_at_in_dungeon(
+                    world, world->current_dungeon, world->current_level,
+                    x, y);
             if (cr) {
                 return theron_v1_champion_attack(world,
                         world->party.active_slot, cr->id);
@@ -295,7 +297,8 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     /* ── Creature collision (combat) ── */
     {
         Theron_V1_Creature *cr =
-            theron_v1_creature_at(world, world->current_level, nx, ny);
+            theron_v1_creature_at_in_dungeon(
+                world, world->current_dungeon, world->current_level, nx, ny);
         if (cr && (cr->flags & THERON_CF_ACTIVE)) {
             int killed = theron_v1_champion_attack(world,
                                                    world->party.active_slot,

@@ -120,7 +120,8 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
         source_record->health[0] == 0u) {
         return -1;
     }
-    if (theron_v1_creature_at(world, level, x, y)) return -1;
+    if (theron_v1_creature_at_in_dungeon(world, dungeon_id, level, x, y))
+        return -1;
     /* This API is also used for an explicit source occurrence.  Publish the
      * authenticated group bytes directly; this is not the random generator
      * path.  The latter still requires the original HuC6280 RNG return
@@ -165,6 +166,22 @@ Theron_V1_Creature *theron_v1_creature_at(Theron_V1_World *world,
     for (i = 0; i < world->creature_count; ++i) {
         Theron_V1_Creature *creature = &world->creatures[i];
         if ((creature->flags & THERON_CF_ACTIVE) &&
+            creature->level == level && creature->x == x &&
+            creature->y == y) {
+            return creature;
+        }
+    }
+    return NULL;
+}
+
+Theron_V1_Creature *theron_v1_creature_at_in_dungeon(
+    Theron_V1_World *world, int dungeon_id, int level, int x, int y) {
+    int i;
+    if (!world) return NULL;
+    for (i = 0; i < world->creature_count; ++i) {
+        Theron_V1_Creature *creature = &world->creatures[i];
+        if ((creature->flags & THERON_CF_ACTIVE) &&
+            creature->dungeon_id == dungeon_id &&
             creature->level == level && creature->x == x &&
             creature->y == y) {
             return creature;

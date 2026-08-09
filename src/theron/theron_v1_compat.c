@@ -209,6 +209,20 @@ Theron_V1_Creature *theron_v1_creature_at(Theron_V1_World *world,
     return NULL;
 }
 
+Theron_V1_Creature *theron_v1_creature_at_in_dungeon(
+    Theron_V1_World *world, int dungeon_id, int level, int x, int y) {
+    if (!world) return NULL;
+    for (int i = 0; i < world->creature_count; i++) {
+        Theron_V1_Creature *c = &world->creatures[i];
+        if ((c->flags & THERON_CF_ACTIVE) &&
+            c->dungeon_id == dungeon_id && c->level == level &&
+            c->x == x && c->y == y) {
+            return c;
+        }
+    }
+    return NULL;
+}
+
 Theron_V1_Creature *theron_v1_creature_by_id(Theron_V1_World *world, int id) {
     if (!world || id <= 0) return NULL;
     for (int i = 0; i < world->creature_count; i++) {

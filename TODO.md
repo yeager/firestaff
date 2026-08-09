@@ -5,7 +5,9 @@
   detta är ännu inte en game-owned `$2600`/level/object/tile-consumercapture.
   Nästa beviskrav är därför fortfarande originalets RNG/spawn/AI/combat/loot,
   generatoråteraktivering, T700-tick och T900-regler. Den externa
-  Mednafen-profilen använder `,`/`.` för PCE I/II.
+  Mednafen-profilen använder layoutstabila `Z`/`X` för PCE Button I/II;
+  komma/punkt är inte standard och får bara användas när de uttryckligen
+  finns i den lokala `mednafen.cfg`.
 
 - 🔧 DM2-inmatning: den verifierade PC-DOS-tabellen kan nu bara aktiveras av
   BootProfiles hashadmitterade `GRAPHICS.DAT` och ger de riktiga viewport- och

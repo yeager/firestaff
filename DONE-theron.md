@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — dungeon-aware source-creature lookup
+
+- ✅ Productionens source-record → live-creature-brygga matchar nu alltid
+  `dungeon_id`, level och koordinat. Den tidigare lookupen kunde blanda två
+  autentiska records med samma koordinat i olika dungeons när en transition
+  eller ett direkt source-anrop lämnade båda i poolen.
+- ✅ Motsvarande kompatibilitets-API finns kvar för fixture-tester, medan
+  produktionsmekanikens attack-, collision- och spawnvägar använder den nya
+  dungeon-aware funktionen. Regressionstestet passerar med samma koordinat i
+  dungeon 1 och 2, både US/JP source-record laddning och befintliga combat-/
+  item-gates är oförändrade.
+
 ## 2026-08-09 — Mednafen InputGrab och layoutstabil Button I/II
 
 - ✅ Capture-profilen på extern disken använder nu `Z = Button I`,

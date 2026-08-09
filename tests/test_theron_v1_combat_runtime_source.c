@@ -60,6 +60,19 @@ int main(void) {
     CHECK(creature != NULL && creature->source_ref == 0x1200u &&
               theron_v1_creature_count(&world, 1, 0) == 2,
           "published live creatures retain their authentic source identity");
+    world.level_loaded[1][0] = 1;
+    world.levels[1][0].source_header_verified = 1;
+    CHECK(theron_v1_world_bind_track02_monster(
+              &world, 2, 0, 0x1201u, 0x0043u, 1, 1, 0u, 0u,
+              health, 0u, 0u, 0x0021u, 0x1201u) == 0,
+          "same-coordinate source monster in second dungeon binds");
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
+                                   2, 0, 1, 1) > 0 &&
+              theron_v1_creature_count(&world, 2, 0) == 1 &&
+              theron_v1_creature_at_in_dungeon(&world, 2, 0, 1, 1) != NULL,
+          "dungeon-aware lookup keeps same-coordinate records separate");
+    CHECK(theron_v1_creature_at_in_dungeon(&world, 1, 0, 1, 1) == creature,
+          "dungeon-aware lookup returns the first dungeon record");
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_DEMON,
                                    1, 0, 2, 1) == -1,
           "scripted Demon remains blocked without a spawn record");
