@@ -52919,7 +52919,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
                 0,
                 state->world.disabledMovementTicks,
                 state->world.projectileDisabledMovementTicks,
-                -1,
+                state->world.lastProjectileDisabledMovementDirection,
                 &bridge) < 0) {
             m11_set_status(state, "CSB", "INPUT REJECTED");
             return M11_GAME_INPUT_IGNORED;

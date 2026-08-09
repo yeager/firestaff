@@ -440,6 +440,27 @@ int main(void)
                       profile->runtime.party_state.Champions[0]
                           .SymbolStep == 0u,
             "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
+            /* ReDMCSB COMMAND.C F0380 tests G0311 together with the
+             * projectile's absolute launch direction before it dequeues a
+             * C003..C006 movement command.  The live M11 route must pass
+             * the throw/shoot producer's retained G0310 direction through
+             * to that queue; an old literal -1 bypassed this gate.  Keep the
+             * test on the authentic MINI.DAT handoff rather than a
+             * caller-built dungeon profile. */
+            view.world.projectileDisabledMovementTicks = 2;
+            view.world.lastProjectileDisabledMovementDirection =
+                profile->runtime.party_dir;
+            CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      profile->runtime.last_input_dispatch.movementDisabledGate &&
+                      profile->runtime.input_command_queue.count == 1u,
+                  "real Atari MINI.DAT preserves the projectile-direction movement gate");
+            /* Drain neither a test-only blocked command nor a stale throw
+             * lock into the later save/resume assertions.  F0380 leaves the
+             * command queued while its movement gate is active. */
+            profile->runtime.input_command_queue.count = 0u;
+            view.world.projectileDisabledMovementTicks = 0;
+            view.world.lastProjectileDisabledMovementDirection = -1;
             if (quicksave_path && quicksave_path[0]) {
                 uint32_t saved_game_time = profile->runtime.game_time;
                 int save_path_bound = set_test_quicksave_path(quicksave_path);
