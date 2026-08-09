@@ -786,7 +786,8 @@ int main(void)
          * dungeon tail.  MINI.DAT is a real source-native F31 candidate here,
          * not generated test data. */
         CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH",
-                           direct_handoff.startup_mini_path),
+                           user_save_path && user_save_path[0]
+                               ? user_save_path : direct_handoff.startup_mini_path),
               "F31 resume test selects the authentic native save candidate");
         CHECK(!M11_GameView_QuickSave(&view) &&
                   strcmp(view.lastAction, "SAVE") == 0 &&
@@ -812,9 +813,14 @@ int main(void)
         CHECK(result,
               "F31 live session restores a native F0435 candidate");
         CHECK(live_profile && live_profile->runtime.game_time ==
-                  direct_handoff.startup_mini_game_time &&
-                  live_profile->runtime.party_x == 22 &&
-                  live_profile->runtime.party_y == 18,
+                  (user_save_path && user_save_path[0]
+                       ? user_save.game_time : direct_handoff.startup_mini_game_time) &&
+                  live_profile->runtime.party_x ==
+                      (user_save_path && user_save_path[0]
+                           ? user_save.party_map_x : 22) &&
+                  live_profile->runtime.party_y ==
+                      (user_save_path && user_save_path[0]
+                           ? user_save.party_map_y : 18),
               "F31 native resume restores the saved source-owned party state");
         (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
     }
@@ -822,7 +828,7 @@ int main(void)
      * The atomic F31 resume owns map 4 and its saved pose, so query the
      * matching retail selector instead of retaining the old map-0 fixture
      * expectation. */
-    CHECK(csb_v1_fmtowns_game_music_track_at(
+    if (!user_save_path || !user_save_path[0]) CHECK(csb_v1_fmtowns_game_music_track_at(
               &direct_handoff,
               (uint32_t)((const CSB_V1_BootProfile *)view.csbBootProfile)
                   ->runtime.current_level,
@@ -832,13 +838,13 @@ int main(void)
                   ->runtime.party_y,
               &expected_game_music_track) && expected_game_music_track != 0u,
           "F31 resumed party pose selects a nonzero retail F0743 music byte");
-    for (tick = 0u; tick < 101u; ++tick) {
+    for (tick = 0u; (!user_save_path || !user_save_path[0]) && tick < 101u; ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
     game_music_started = view.csbFmtownsGameMusicPlayingTrack ==
                              expected_game_music_track &&
                          !view.csbFmtownsGameMusicPending;
-    CHECK(game_music_started,
+    if (!user_save_path || !user_save_path[0]) CHECK(game_music_started,
           "F31 live map music waits 100 F0743 updates then selects its retail CUE track");
 
     M11_GameView_Shutdown(&view);
