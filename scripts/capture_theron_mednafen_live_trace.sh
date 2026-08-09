@@ -13,10 +13,10 @@ capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
 # run when investigating BIOS/CD initialization.  This flag changes only the
 # emulator's audio output path; it never promotes media bytes to game state.
 capture_sound=${THERON_CAPTURE_SOUND:-0}
-# Mednafen exposes two HuC6280 CD cores. Keep the source-compatible `pce`
-# default, but allow an explicitly requested `pce_fast` capture when the
-# authenticated media stalls in the BIOS before its first sector read.
-# This only changes the emulator core; it never changes admitted media bytes.
+# Mednafen exposes two HuC6280 CD cores in some builds. Keep the
+# source-compatible `pce` default, and allow `pce_fast` only when Mednafen's
+# own module list advertises it. This only changes the emulator core; it never
+# changes admitted media bytes.
 capture_mednafen_module=${THERON_CAPTURE_MEDNAFEN_MODULE:-pce}
 capture_arcadecard_setting=pce.arcadecard
 capture_cdbios_setting=pce.cdbios
@@ -303,8 +303,9 @@ require_mednafen_module() {
 
     # Some instrumented 1.32.1 macOS builds omit the module-list block from
     # -help even though the compiled PCE core is present and selectable. Keep
-    # the module gate strict by requiring the core's stable PCE signatures;
-    # runtime invocation, media hashes, and all semantic gates still run below.
+    # the source-compatible `pce` fallback, but never infer `pce_fast` from a
+    # string in the binary: its command-line settings differ and a string
+    # match can accept a build that rejects -force_module pce_fast.
     case "$requested" in
         pce)
             if grep -aFq 'PC Engine (CD)/TurboGrafx 16 (CD)/SuperGrafx' "$mednafen_bin" &&
@@ -313,9 +314,7 @@ require_mednafen_module() {
             fi
             ;;
         pce_fast)
-            if grep -aFq 'pce_fast.input.port1' "$mednafen_bin"; then
-                return 0
-            fi
+            # No help-less fallback is safe for pce_fast.
             ;;
     esac
     printf 'FAIL: MEDNAFEN_BIN does not expose the requested emulation module: %s\n' \

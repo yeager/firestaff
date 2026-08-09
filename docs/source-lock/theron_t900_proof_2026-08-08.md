@@ -141,16 +141,14 @@ READ. Den nya GUI-körningen ovan ersätter den gamla negativa slutsatsen för
 startup-handoffens del. RNG-, AI-, T700- och T900-konsumenterna är fortfarande
 inte bevisade.
 
-Capture-scriptet kan dessutom välja den andra officiella HuC6280-kärnan med
-`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast`; standarden är fortsatt `pce`.
-Detta gör kärnbytesförsöket reproducerbart utan att byta System Card, CUE,
-Track 02-bytes eller att lägga in hostdata. Den externa `pce_fast`-körningen
-med samma autentiserade US ISO gav också noll spelägda sektor-/RAM-konsumenter.
-Kärnvalet löser alltså capture-infrastrukturen, men ger inte i sig någon
-spelägd `$2600`-konsument eller semantik. En extern CPU-trace visar dessutom samma BIOS-loop
-`$E4E1–$E503` i `pce_fast`: den läser `$2227`, gör ingen SCSI READ och lämnar
-inte BIOS-handoffens statusväg. Det är ett reproducerat negativt bevis för
-den andra kärnan, inte en licens att hoppa över originalets CD/FIFO-konsument.
+Capture-scriptet kan välja den andra officiella HuC6280-kärnan med
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` endast när Mednafen själv annonserar
+modulen i `-help`; standarden är fortsatt `pce`. En tidigare extern körning
+visade att binären kan innehålla `pce_fast`-strängar utan att acceptera
+`-force_module pce_fast`. Den vägen avvisas nu direkt, före capture, i stället
+för att skapa en tom eller missvisande receipt. En faktisk `pce_fast`-modul
+måste därför först bevisas av Mednafen:s modulista och får därefter samma
+System Card-, CUE-, Track 02- och semantikgrindar som `pce`.
 
 ## Verifiering
 

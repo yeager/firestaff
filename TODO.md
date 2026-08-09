@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Ny cold-start med samma autentiserade media gav 256 CD→RAM-originreceipts,
+  26 `$E009`, 33 `$4644` och 96 `$4667`, men noll `$B0E5`/RNG. Detta är
+  kombinerat transportbevis men öppnar ingen spawn-, AI-, T700- eller
+  T900-semantik; nästa witness måste fortfarande innehålla hela kedjan.
+
 - ⏳ Råkodsidecaren från den autentiserade `$5D64`-körningen är nu
   byteverifierad mot sju källkopior i riktiga US `TQUS02.bin`. Det är en
   source-byte-join, inte ett RNG-resultat; samma-körnings returägare,

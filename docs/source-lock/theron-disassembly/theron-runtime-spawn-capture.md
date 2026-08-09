@@ -236,6 +236,26 @@ inte ett påstående om vilken kopia som var mappad i körningen.
 RNG-returvärde, caller, spawnkategori, creature, AI och T900-regler är fortsatt
 stängda tills den autentiserade körningen visar deras verkliga konsumentkedja.
 
+### 2026-08-09 — samma cold-start, fortfarande ingen spawnretur
+
+En ny bounded cold-start med samma autentiserade US Track 02, System Card och
+instrumenterade Mednafen gav i en och samma session:
+
+```text
+authenticated_cd_ram_receipts=256
+game_main_ram_e009_dispatches=26
+spawn_preconsumer_4644_samples=33
+spawn_helper_4667_samples=96
+spawn_entry_b0e5_samples=0
+rng_consumer_samples=0
+rng_code_windows=0
+```
+
+Detta är ett kombinerat transport-/förkonsumentbevis, men inte ett positivt
+RNG- eller spawnbevis. `$4644`/`$4667` med `B3=$FF` visar inte den specialgren
+som disassemblyn kräver, och utan `$B0E5` i samma session får ingen RNG-,
+creature-, AI-, generator-, T700- eller T900-semantik öppnas.
+
 ## 2026-08-09 fresh cold-start window trace
 
 The same real US CUE/BIN and external System Card were replayed with the

@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — kombinerad cold-start fortfarande utan spawnretur
+
+- 🔒 En ny bounded cold-start på autentisk US Track 02 gav 256 verifierade
+  CD→RAM-originreceipts, 26 `$E009`, 33 `$4644` och 96 `$4667` i samma
+  session, men noll `$B0E5`, RNG-samples och `.rng-code`-windows. De
+  förkonsumenterna är därför inte en RNG-retur eller spawnhändelse.
+- 🔧 Capture-scriptets `pce_fast`-gate avvisar nu builds som bara innehåller
+  `pce_fast`-strängar men inte annonserar modulen i Mednafen:s egen modulista.
+
 ## 2026-08-09 — råkodens source-byte-join verifierad
 
 - ✅ Parsern för `.rng-code` kräver nu sidecar-header, korrekt `$5D64/$5D6A`,

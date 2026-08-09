@@ -166,9 +166,13 @@ if ! grep -Fq -- '-force_module "$capture_mednafen_module"' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'PC Engine (CD)/TurboGrafx 16 (CD)/SuperGrafx' "$script" ||
-   ! grep -Fq "grep -aFq 'pce_fast.input.port1'" "$script" ||
    ! grep -Fq 'Some instrumented 1.32.1 macOS builds omit the module-list block' "$script"; then
     printf 'FAIL: capture module gate must retain the authenticated help-less PCE fallback\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'No help-less fallback is safe for pce_fast' "$script" ||
+   ! grep -Fq 'never infer `pce_fast` from a' "$script"; then
+    printf 'FAIL: capture module gate must reject an unadvertised pce_fast string match\n' >&2
     exit 1
 fi
 if ! grep -Fq 'capture_split_iso_cache=' "$script" ||
