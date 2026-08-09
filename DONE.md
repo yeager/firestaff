@@ -40,6 +40,14 @@
   felaktig pixelcrop stängs. Menysemantik, VDP2-lagerägare och normal
   produktion är fortfarande stängda.
 
+# Nexus: capture-gated STABG HUD surface join (2026-08-09)
+
+- ✅ Den verkliga DMWeb-avkodningen av `STABG.BIN`/STMP karta 0 kan nu bindas
+  mot en explicit Saturn-capture-crop på 320×168 med exakt pixel- och
+  palettebytejämförelse. Regressionen använder samma avkodare för sitt positiva
+  facit och visar att en ändrad crop stängs. VDP2-lagerägare och vanlig HUD-
+  rendering är fortfarande inte bevisade.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga

@@ -32,6 +32,12 @@
   uttrycklig destination mot samma fångade crop. Den bevisar inte menysemantik,
   VDP2-lagerägare eller produktionsväg; en regionmatchad Saturn-witness krävs.
 
+- 🔧 Nexus har nu också en capture-only-adapter för den verkliga DMWeb-
+  avkodningen av `STABG.BIN`/STMP-karta 0 (320×168). Den jämför varje HUD-pixel
+  och alla 256 råa paletteord med en explicit Saturn-capture-crop innan den
+  skriver till framebuffer. VDP2-lagerägare och normal HUD-presentering är
+  fortfarande spärrade tills en giltig regionmatchad witness finns.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

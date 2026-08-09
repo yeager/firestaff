@@ -268,6 +268,13 @@ word-swapped position in captured VDP2 CRAM. This is bounded negative evidence
 for the captured gameplay/intro state, not proof of another source owner.
 Dungeon bitmap and CLUT joins remain open.
 
+The source-side STABG work also has a separate capture-only join adapter.
+Given an explicitly identified Saturn crop, it compares the DMWeb first-map
+decode row by row and all 512 raw STABG palette bytes before writing the
+320×168 indexed surface to a framebuffer. This strengthens the source/capture
+join for a future HUD witness, but does not reinterpret the negative gameplay
+capture above or open VDP2 layer ownership and normal HUD presentation.
+
 The VDP2 bitmap comparator now also validates every nonzero 32-byte palette
 anchor in the canonical LEV00–LEV15 Structure2 descriptors. The real corpus
 contains 1,266 such anchors. Neither the European frame-1 witness nor the
