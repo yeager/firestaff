@@ -1,10 +1,38 @@
 # Firestaff Completion Matrix
 
-Last updated: 2026-06-30
+Last updated: 2026-08-09
 
 This is a conservative 100-point parity-completion model. A point is counted only when the repo has source, runtime, or CI evidence for that criterion. `completionPercent` is therefore a verified evidence score, not optimism, effort spent, or pass count.
 
 Public wording should stay honest: these numbers describe verified Firestaff evidence coverage, not a claim that every listed game is fully playable.
+
+## Current roll-up
+
+The matrix currently contains **9 runtime targets** and **41 recognised
+version profiles**. A version profile is an asset-admission identity; it is
+not an independent parity implementation. The percentages below therefore
+remain target-level evidence scores. They must not be multiplied by the
+number of hashes or presented as 41 separately verified ports.
+
+| Game family | Runtime targets | Version profiles | Mean runtime evidence | Version-profile scope |
+|---|---:|---:|---:|---|
+| DM1 | 2 | 16 | 64.5% | PC 3.4 is the source-locked playable route; other profiles are catalogued/admitted where their data gates pass. |
+| CSB | 2 | 9 | 37.0% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
+| DM2 | 2 | 7 | 26.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised, but V1 live parity remains open. |
+| DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
+| Theron's Quest | 1 | 4 | 72.0% | JP/US Track 02 identities include BIN/ISO forms; positive full-media launch remains open. |
+| **Total** | **9** | **41** | **42.7%** | Unweighted mean of the 9 runtime targets: 384/900. |
+
+The tempting alternative, 57.6%, is the version-weighted mean obtained by
+copying each family score onto every recognised profile. That number is not a
+parity claim because most profiles do not yet have independent runtime and
+original-overlay evidence, so it is intentionally not used as the project
+completion percentage.
+
+The latest authentic Nexus Saturn captures remain evidence additions, not a
+score promotion: VDP1 command-to-DGN pixel/CLUT joins are verified for selected
+frames, while menu/FONT256 ownership, complete VDP1 scene ordering, HUD/VDP2
+composition and SLEV/SAL/SDDRVS playback remain blocked.
 
 ## Scoring criteria
 
