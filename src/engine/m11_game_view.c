@@ -10284,9 +10284,25 @@ static void m11_csb_startup_apply_entrance_action_state_receipt(
     M11_GameViewState *state,
     const CSB_V1_StartupEntranceHostActionReceipt_PC34 *receipt)
 {
+    const CSB_V1_BootProfile *profile;
+    int entering_dungeon;
+
     if (!state || !receipt || !receipt->handled) {
         return;
     }
+    /* ReDMCSB ENTRANCE.C:906-935 runs the real C01 switch sample before
+     * the 20-tick pre-door delay.  The startup receipt used to carry only
+     * the visual command state, leaving a verified PC3.4 Prison entry
+     * silent even though GRAPHICS.DAT is already the selected package.
+     *
+     * Keep this intentionally narrow: PC34's DATA.C sound table maps C01
+     * to the authenticated GRAPHICS.DAT record consumed by the regular
+     * CSB PCM transport.  Native A31/A35 and F31 have their own F0709
+     * volume domains, so they remain fail-closed until those exact startup
+     * volume semantics are carried in their native receipts. */
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    entering_dungeon = !state->csbState.startup_entrance_opening_active &&
+        receipt->state_receipt.opening_active;
     state->csbState.startup_entrance_last_command =
         receipt->command_receipt.command_id;
     if (receipt->sync_profile_state) {
@@ -10295,6 +10311,12 @@ static void m11_csb_startup_apply_entrance_action_state_receipt(
     m11_csb_startup_command_state_receipt_to_m11(
         state,
         &receipt->state_receipt);
+    if (entering_dungeon && profile &&
+        (profile->variant_id == CSB_V1_VARIANT_PC34_EN ||
+         profile->variant_id == CSB_V1_VARIANT_PC34_MULTI)) {
+        m11_audio_emit_source_sound_with_volume(
+            state, CSB_V1_SOUND_SWITCH, 3, M11_AUDIO_MARKER_NONE);
+    }
     /* ReDMCSB ENTRANCE.C F0441/F0806 leaves the Utility wait loop before
      * it starts C002/C003 prison-door opening (or completes a resume).
      * Keep the imported party in the runtime, but retire the startup-only

@@ -1473,6 +1473,12 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 CSB launcher entrance accepts explicit Enter command");
+    expect_true(view.audioState.csbPc34RuntimeSoundAccepted &&
+                    view.audioState.csbPc34RuntimeSoundByteCount > 0 &&
+                    view.audioState.csbPc34RuntimeSoundTimerDivisor == 112 &&
+                    view.audioState.csbPc34RuntimeSoundHash != 0u &&
+                    view.audioState.csbPc34RuntimeSoundSourceVolume == 3,
+                "M11 CSB Prison Enter plays the authenticated PC34 C01 switch sample before the door delay");
     for (int i = 0;
          i < csb_v1_startup_entrance_pre_open_delay_ticks_pc34() + 1 &&
          view.csbState.startup_entrance_active &&
