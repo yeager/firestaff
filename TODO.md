@@ -3365,6 +3365,15 @@ that its exact runtime path is not already source-locked and tested.
     memory or invent a value.
 
 24. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
+    2026-08-09: the authenticated CSBWin source-tree `csbgame2.dat` is now a
+    skip-safe real-corpus regression. Its original big-endian GAMEBLOCK1/body
+    proves the untagged 10-byte TIMER form (2 champions, 436 timers, 60
+    ITEM16 records). The loader probes every source-defined legacy width and
+    admits the body only after all section checksums pass. Its remaining
+    32,655-byte tail is CSBWin `SaveGame.cpp`'s raw dungeon stream, not
+    EXPOOL nor the newer dungeon-tail prefix, so production explicitly
+    rejects it before runtime/world import. DSA remains unproven: the file
+    has no Extended Features/DSA prefix.
     2026-07-29: the export now also writes the documented, already-decoded
     champion fields in each 800-byte original record (identity, pose/action,
     vital stats, skills/experience, slots, load and shield), re-encrypting

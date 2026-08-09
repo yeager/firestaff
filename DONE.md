@@ -7,6 +7,15 @@
 - ✅ Originalets MSA (`10` sektorer/spår, två sidor, 80 spår) verifieras både
   som transportformat och via UTIO.C-identiteten. Inga spel- eller sparbytes
   skapas eller ändras av kontrollen. Källa: ReDMCSB `UTIO.C` F1991.
+# CSBWin: verifierad legacy-GAMEBLOCK-kropp, fail-closed dungeonstream (2026-08-09)
+
+- ✅ Den autentiska `CSBWin/Game/CSB/csbgame2.dat` kör nu genom en opt-in
+  regression. GAMEBLOCK1 och hela krypterade kroppen autentiseras med CSB-
+  nyckeln, big-endian-ordning och originalets 10-bytes TIMER-poster.
+- ✅ Prefixlösa CSBWin-sparningar väljer inte längre en godtycklig timerbredd:
+  10/12/16 provas endast genom komplett checksummaverifiering. Sparningen
+   saknar Extended Features/DSA, och dess legacy-dungeonstream hålls spärrad
+   före world-import tills `SaveGame.cpp`-formatet är komplett tolkat.
 
 # Nexus VDP1 mode-5 direct-color capture lane (2026-08-09)
 

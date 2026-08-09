@@ -62,10 +62,13 @@
 static uint16_t csb_v1_runtime_csbwin_timer_record_size(
     const CSB_V1_CSBWinExtendedFeaturesReport *features)
 {
-    /* Legacy/no-preamble saves use Firestaff's existing current CSBWin
-     * layout.  Only an authenticated Extended Features block may select an
-     * older 10- or 12-byte stream layout. */
-    if (!features || !features->valid) return 16u;
+    /* CSBWin SaveGame.cpp writes the original TIMER layout when there is no
+     * Extended Features preamble.  The authenticated CSBGAME2.DAT bundled
+     * with the CSBWin source tree has that exact legacy form: its GAMEBLOCK1
+     * and all body checksums validate only with 10-byte TIMER records.
+     * ReDMCSB's original save path likewise has no Extended Features block.
+     * Only a verified preamble may opt into sequenced/extended records. */
+    if (!features || !features->valid) return 10u;
     if ((features->extended_flags &
          CSB_V1_CSBWIN_EXTENDED_FLAG_EXTENDED_TIMERS) != 0u) {
         return 16u;
@@ -21718,9 +21721,30 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         return -1;
     }
     memset(&report, 0, sizeof(report));
-    rc = csb_v1_csbwin_512_verify_save_body(
-        bytes + core_offset, file_size - core_offset,
-        csb_v1_runtime_csbwin_timer_record_size(&features), &report);
+    if (!features.valid) {
+        /* Pre-Extended-Features CSBWin saves do not serialize a TIMER
+         * record-width tag.  Admit one only after its complete authenticated
+         * body validates at a source-defined legacy width.  This preserves
+         * both the 10-byte original CSBGAME2.DAT corpus and existing 16-byte
+         * CSBWin saves, without guessing from an unverified body field. */
+        static const uint16_t legacy_timer_sizes[] = { 10u, 12u, 16u };
+        size_t timer_index;
+
+        rc = CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
+        for (timer_index = 0u;
+             timer_index < sizeof(legacy_timer_sizes) / sizeof(legacy_timer_sizes[0]);
+             ++timer_index) {
+            memset(&report, 0, sizeof(report));
+            rc = csb_v1_csbwin_512_verify_save_body(
+                bytes + core_offset, file_size - core_offset,
+                legacy_timer_sizes[timer_index], &report);
+            if (rc == CSB_V1_CSBWIN_512_OK) break;
+        }
+    } else {
+        rc = csb_v1_csbwin_512_verify_save_body(
+            bytes + core_offset, file_size - core_offset,
+            csb_v1_runtime_csbwin_timer_record_size(&features), &report);
+    }
     if (rc != CSB_V1_CSBWIN_512_OK) {
         free(bytes);
         return -1;

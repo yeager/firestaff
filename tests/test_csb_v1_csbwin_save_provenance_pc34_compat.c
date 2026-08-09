@@ -53,62 +53,61 @@ static int files_equal(const char *left_path, const char *right_path)
     return equal;
 }
 
-static int flip_last_byte(const char *path)
-{
-    FILE *fp = fopen(path, "r+b");
-    long size;
-    int byte;
-
-    if (!fp || fseek(fp, 0L, SEEK_END) != 0 || (size = ftell(fp)) <= 0 ||
-        fseek(fp, size - 1L, SEEK_SET) != 0 || (byte = fgetc(fp)) == EOF ||
-        fseek(fp, size - 1L, SEEK_SET) != 0) {
-        if (fp) fclose(fp);
-        return 0;
-    }
-    if (fputc(byte ^ 0x01, fp) == EOF) {
-        fclose(fp);
-        return 0;
-    }
-    return fclose(fp) == 0;
-}
-
 static void test_staged_real_csbwin_save(void)
 {
     const char *path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
-    const char *copy = "firestaff-csbwin-real-copy.sav";
+    FILE *file;
+    long size_long = 0L;
+    size_t size;
+    uint8_t *bytes;
+    CSB_V1_CSBWin512BodyReport body;
     CSB_V1_RuntimeProfile runtime;
-    CSB_V1_CSBWinSaveProvenance_PC34 provenance;
 
     if (!path || path[0] == '\0') {
         printf("SKIP: FIRESTAFF_CSBWIN_REAL_SAVE is not staged\n");
         return;
     }
-
-    csb_v1_runtime_init(&runtime, NULL);
-    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&runtime, path, 0u) == 0,
-          "staged CSBWin save completes the production resume handoff");
-    CHECK(csb_v1_runtime_get_csbwin_save_provenance(&runtime, &provenance) == 0 &&
-          provenance.valid && provenance.source_size > provenance.core_offset &&
-          provenance.core_offset > 0u &&
-          provenance.key_verdict == CSB_V1_CSBWIN_512_VERDICT_CSB &&
-          strcmp(provenance.source_path, path) == 0,
-          "staged CSBWin resume preserves the authenticated prefix/core provenance");
-    CHECK(runtime.csbwin_extended_features_valid &&
-          runtime.party_state_valid && runtime.csbwin_body_runtime_summary_valid,
-          "staged CSBWin save publishes Extended Features and source body state");
-    CHECK(csb_v1_runtime_export_csbwin_source_save_to_path(&runtime, copy) == 0 &&
-          files_equal(path, copy),
-          "staged CSBWin save exports byte-identically through its authenticated core");
-    CHECK(flip_last_byte(copy),
-          "corrupts only the staged CSBWin terminal dungeon-tail checksum");
-    {
-        CSB_V1_RuntimeProfile rejected;
-        csb_v1_runtime_init(&rejected, NULL);
-        CHECK(csb_v1_runtime_apply_csbwin_resume_file(&rejected, copy, 0u) != 0,
-              "production resume rejects a bad CSBWin dungeon-tail checksum");
-        csb_v1_runtime_cleanup(&rejected);
+    file = fopen(path, "rb");
+    CHECK(file != NULL, "opens staged CSBWin save corpus");
+    if (!file) return;
+    CHECK(fseek(file, 0L, SEEK_END) == 0 && (size_long = ftell(file)) > 0L &&
+          fseek(file, 0L, SEEK_SET) == 0,
+          "measures staged CSBWin save corpus");
+    if (size_long <= 0L) {
+        fclose(file);
+        return;
     }
-    remove(copy);
+    size = (size_t)size_long;
+    bytes = (uint8_t *)malloc(size);
+    CHECK(bytes != NULL, "allocates staged CSBWin save corpus buffer");
+    if (!bytes) {
+        fclose(file);
+        return;
+    }
+    CHECK(fread(bytes, 1u, size, file) == size,
+          "reads staged CSBWin save corpus");
+    fclose(file);
+    memset(&body, 0, sizeof(body));
+    CHECK(csb_v1_csbwin_512_verify_save_body(bytes, size, 10u, &body) ==
+              CSB_V1_CSBWIN_512_OK &&
+          body.header_valid && body.header.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB &&
+          body.header.byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN &&
+          body.num_character == 2u && body.max_timers == 436u &&
+          body.timer_record_size == 10u && body.appended_size == 32655u,
+          "legacy CSBGAME2 body authenticates with original 10-byte timers");
+    free(bytes);
+
+    /* CSBWin SaveGame.cpp:1239-1335 appends a raw legacy dungeon stream,
+     * not an EXPOOL page nor the newer CSBWin dungeon-tail prefix.  Until
+     * that source-owned stream has a full parser, production must refuse it
+     * before it mutates runtime world state. */
+    csb_v1_runtime_init(&runtime, NULL);
+    runtime.game_time = 919u;
+    runtime.party_x = 7;
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&runtime, path, 0u) != 0 &&
+          runtime.game_time == 919u && runtime.party_x == 7 &&
+          !runtime.csbwin_save_provenance.valid,
+          "legacy CSBGAME2 dungeon stream fails closed before runtime import");
     csb_v1_runtime_cleanup(&runtime);
 }
 
