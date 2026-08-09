@@ -172,6 +172,15 @@
 - ✅ Ingen partyrörelse, kartväxling, rotation eller ljudbegäran sker från
   denna receipt innan c_moverec- och sessionskedjan finns.
 
+# DM2 New Game privata File_header-aktuatorer (2026-08-09)
+
+- ✅ Aktuella kartans direkta DB3-aktuatorer behålls nu med originalens
+  typ-, data-, fördröjnings-, effekt- och målfält. Realdatatestet jämför varje
+  post med en ny validerad läsning av DUNGEON.DAT-klonen.
+- ✅ Receiptet ersätter inte aktuatorkön och kör ingen sensor, timer eller
+  målmutation. De vägarna behöver samma levande record-, party- och
+  eventköägare.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte

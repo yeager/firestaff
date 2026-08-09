@@ -269,6 +269,10 @@ typedef struct {
     /* Direct DB1 Teleporter payloads on the current File_header map.  They
      * are retained without applying a party transition or sound request. */
     DM2_V1_FileHeaderRuntimeTeleporterReceipt preselection_map_teleporters;
+    /* Direct DB3 Actuator fields on the current File_header map.  The
+     * generator pass owns only its separately proved mutations; this receipt
+     * grants no generic actuator dispatch. */
+    DM2_V1_G1RuntimeMapActuatorReceipt preselection_map_actuators;
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -333,6 +337,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
 /* Retain current-map direct DB1 Teleporter fields for the later c_moverec
  * transition owner. */
 int dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map direct DB3 Actuator payloads for the later source timer
+ * and sensor owner. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light
