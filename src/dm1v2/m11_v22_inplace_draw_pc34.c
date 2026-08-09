@@ -84,12 +84,17 @@ static int              g_v22_bitmap_count = 0;
 /* ── Variant -> asset_id mapping ───────────────────────────────── */
 
 /* Only identifiers included in the reviewed finished-art manifest can
- * replace V1 pixels. Unreviewed material classes retain their source frame. */
-static const char* v22_wall_asset_id  = "wall_d3_carved_hero_01";
+ * replace V1 pixels. Unreviewed material classes retain their source frame.
+ *
+ * A mapping is admissible only when it is 1:1 -- the asset depicts the exact
+ * source cell. The wall and creature ids below are deliberately unused: the
+ * first-cut pack has a single image for each class, so wiring them up drew
+ * every creature as a demon and every wall and door as the same carved
+ * stone. They are retained as the names a future per-variant reviewed pack
+ * must supply, not as active routes. */
 static const char* v22_floor_plain_id = "floor_plain_hero_01";
 static const char* v22_floor_pit_id = "floor_pit_hero_01";
 static const char* v22_field_teleporter_id = "field_teleporter_hero_01";
-static const char* v22_creature_asset_id = "creature_demon_hero_01";
 
 static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
     if (!m11_v22_shape_cache_active(depth, lateral)) return NULL;
@@ -102,11 +107,15 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
     M11_V22_ShapeType t = r->params.type;
     switch (t) {
         case M11_V22_SHAPE_FLOOR_PLAIN:
-        case M11_V22_SHAPE_CEILING_PLAIN:
             return v22_floor_plain_id;
+        case M11_V22_SHAPE_CEILING_PLAIN:
         case M11_V22_SHAPE_FLOOR_CRACKED:
         case M11_V22_SHAPE_FLOOR_MOSSY:
-            return v22_floor_plain_id;
+            /* No reviewed ceiling/cracked/mossy material is installed.
+             * Painting the plain-floor image over them would present one
+             * surface as another; return NULL so the source-owned V1 pixels
+             * stay, matching the item case below. */
+            return NULL;
         case M11_V22_SHAPE_FLOOR_PIT:
             return v22_floor_pit_id;
         case M11_V22_SHAPE_FLOOR_STAIRS_UP:
@@ -123,7 +132,11 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
             return NULL;
         case M11_V22_SHAPE_CREATURE:
         case M11_V22_SHAPE_CREATURE_PROJECTILE:
-            return v22_creature_asset_id;
+            /* The pack ships a single demon image, so this drew every
+             * creature in the game as a demon -- a wrong-sprite
+             * substitution, not modern art for the creature actually there.
+             * Return NULL until per-creature reviewed material exists. */
+            return NULL;
         case M11_V22_SHAPE_ITEM:
         case M11_V22_SHAPE_ITEM_FLOOR:
         case M11_V22_SHAPE_ITEM_PROJECTILE:
@@ -132,8 +145,13 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
              * item pixels intact in the in-place pass. */
             return NULL;
         default:
-            /* Walls and doors use the first-cut carved-stone asset. */
-            return v22_wall_asset_id;
+            /* This bucket holds every wall AND door variant, and the pack
+             * ships one carved-stone image, so a door rendered as a wall and
+             * all wall variants rendered identically. That is asset
+             * substitution rather than a modern rendering of the source
+             * cell; leave the V1 pixels until per-variant material is
+             * reviewed and installed. */
+            return NULL;
     }
 }
 

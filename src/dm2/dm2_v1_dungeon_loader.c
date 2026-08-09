@@ -98,6 +98,25 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 #define DM2_HDR_GROUND_STACK_COUNT_OFFSET   10
 #define DM2_HDR_RECORD_COUNTS_OFFSET        12
 
+/* File_header field offsets, SKWIN/DME.h:93-101 (mirrored by the section
+ * order in docs/dm2_save_format.md):
+ *     0  w0            random seed
+ *     2  cbMapData     map data size in bytes
+ *     4  nMaps         map count (U8)
+ *     6  cwTextData    text data size in words
+ *     8  w8            starting party position
+ *    10  cwListSize    object list size in words
+ *    12  nRecords[16]  per-pool record counts
+ * Verified against the real PC and FM Towns DUNGEON.DAT: both hold 0x2c = 44
+ * at offset 4, map descriptors 0..43 are well-formed with monotonically
+ * increasing map-data offsets, and the column index table begins at
+ * 44 + 44*16 = 748. The value 28 at offset 6 is cwTextData, not a map
+ * count. */
+#define DM2_FH_MAP_COUNT_OFFSET    4
+#define DM2_FH_TEXT_WORDS_OFFSET   6
+#define DM2_FH_LIST_SIZE_OFFSET   10
+#define DM2_FH_RECORD_COUNTS_OFFSET 12
+
 /* DUNGEON_HEADER size = 44 (ReDMCSB DEFS.H:985) */
 #define DM2_DUNGEON_HEADER_SIZE  44
 
@@ -269,7 +288,7 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
 
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
 
-    map_count = dat[4];
+    map_count = dat[DM2_FH_MAP_COUNT_OFFSET];
     if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
     if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
         return 0;
@@ -419,6 +438,15 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->text_data_base = -1;
     out->g1_extension_base = -1;
     out->g1_extension_size = 0;
+    /* NOTE: this variant reads map count at 6, text words at 8 and the pool
+     * table at 14 -- two bytes past the File_header fields the real PC and
+     * FM Towns files use (see DM2_FH_* above). That is deliberate here: the
+     * G1 fixtures in test_dm2_v1_dungeon_loader_first_map_gate are built to
+     * this layout, and dm2_v1_try_load_skproject_layout (which does use the
+     * reference offsets) runs first and claims every real file, so this
+     * path never decodes retail media. Do not "correct" these offsets
+     * without re-deriving the fixture layout: doing so breaks 15 gate
+     * checks. The real defect is that the two variants disagree at all. */
     out->square_first_thing_count =
         (int)RD16(dat + DM2_LEGACY_G1_GROUND_STACK_COUNT_OFFSET);
     out->text_word_count =

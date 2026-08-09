@@ -113,9 +113,15 @@ int fs_dm1_load_palette_from_file(const char *gfx_path) {
     data = (uint8_t *)malloc((size_t)size);
     if (!data) { fclose(f); return -1; }
     got = fread(data, 1u, (size_t)size, f);
-    if (got != (size_t)size || ferror(f) || fclose(f) != 0) {
-        free(data);
-        return -1;
+    {
+        /* A short read (truncated GRAPHICS.DAT) short-circuited before
+         * fclose() and leaked the handle. */
+        int io_failed = (got != (size_t)size) || ferror(f) != 0;
+        if (fclose(f) != 0) io_failed = 1;
+        if (io_failed) {
+            free(data);
+            return -1;
+        }
     }
     r = fs_extract_vga_palette(data, (int)size, g_full_vga_palette);
     free(data);

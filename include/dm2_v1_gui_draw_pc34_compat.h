@@ -113,6 +113,10 @@ typedef struct DM2_V1_GuiDrawCallbacks {
     void (*drawings_completed)(void *ctx);
 
     /* ---- Rect / layout queries ---- */
+    /* DM2_QUERY_EXPANDED_RECT (c_gui_draw.cpp:1171): the rect's full,
+     * unscaled extent. A bar with an extra colour draws its background over
+     * this rect and fills the span past the bar's end with the extra
+     * colour. */
     DM2_V1_Rect *(*query_expanded_rect)(void *ctx, int16_t id,
                                          DM2_V1_Rect *out);
     DM2_V1_Rect *(*query_blit_rect)(void *ctx, void *bmp, DM2_V1_Rect *out,

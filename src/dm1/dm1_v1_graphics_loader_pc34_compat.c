@@ -109,10 +109,16 @@ static int lzw_read_code(DM1_V1_GFX_LZWStatePc34* lzw,
     return result;
 }
 
-/* Decode a code to bytes, pushing onto decode_stack; return count */
+/* Decode a code to bytes, pushing onto decode_stack; return count.
+ *
+ * The walk is capped at MAX_CODE-1 so the unconditional terminal store
+ * below stays inside decode_stack[MAX_CODE]. A malformed stream can build
+ * a self-referencing dictionary entry (dict_prefix[c] == c), which makes
+ * the walk non-terminating; the cap turns that into a bounded truncation
+ * instead of a one-past-the-end write into the adjacent next_code field. */
 static int lzw_decode_string(DM1_V1_GFX_LZWStatePc34* lzw, uint16_t code) {
     int count = 0;
-    while (code >= DM1_GFX_LZW_FIRST_CODE && count < DM1_GFX_LZW_MAX_CODE) {
+    while (code >= DM1_GFX_LZW_FIRST_CODE && count < DM1_GFX_LZW_MAX_CODE - 1) {
         lzw->decode_stack[count++] = lzw->dict_append[code];
         code = lzw->dict_prefix[code];
     }
@@ -138,7 +144,15 @@ int DM1_V1_GFX_LzwDecompressPc34Compat(DM1_V1_GFX_LZWStatePc34* lzw,
     lzw->next_code = DM1_GFX_LZW_FIRST_CODE;
     lzw->code_bits = 9;
 
-    /* First code */
+    /* First code. In a valid stream the code that opens the stream, and the
+     * code that follows every CLEAR, is a root literal (0..255): the
+     * dictionary holds nothing else at that point. Accepting a >=258 code
+     * here would seed old_code with an undefined entry, and the dictionary
+     * write further down would then store dict_prefix[next_code] == old_code
+     * == next_code -- a self-referencing entry that makes lzw_decode_string
+     * walk a cycle. lzw_reset_dict deliberately leaves the stale table in
+     * place (it only rewinds next_code), so this check is what keeps the
+     * post-CLEAR state consistent. */
     old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
     if (old_code < 0) return 0;
     if (old_code == DM1_GFX_LZW_CLEAR_CODE) {
@@ -146,6 +160,7 @@ int DM1_V1_GFX_LzwDecompressPc34Compat(DM1_V1_GFX_LZWStatePc34* lzw,
         old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
         if (old_code < 0) return 0;
     }
+    if (old_code >= DM1_GFX_LZW_CLEAR_CODE) return 0;
     if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
 
     while (out_pos < out_size) {
@@ -156,6 +171,8 @@ int DM1_V1_GFX_LzwDecompressPc34Compat(DM1_V1_GFX_LZWStatePc34* lzw,
             lzw_reset_dict(lzw);
             old_code = lzw_read_code(lzw, input, in_size, NULL, lzw->code_bits);
             if (old_code < 0) break;
+            /* Same root-literal rule as the stream-opening code above. */
+            if (old_code >= DM1_GFX_LZW_CLEAR_CODE) break;
             if (out_pos < out_size) output[out_pos++] = (uint8_t)old_code;
             continue;
         }

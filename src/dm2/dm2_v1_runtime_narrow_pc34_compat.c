@@ -995,6 +995,19 @@ int32_t dm2_v1_creature_attacks_creature(
     return dmg;
 }
 
+/* item_class is (item & 0x3f), so it spans 0..0x3d. handle_mask used to be
+ * 32 bits, which made the shift undefined for every class >= 32: on x86-64
+ * the count wrapped (1u << 41 silently tested bit 9) and on AArch64 it
+ * yielded 0. The moneybox class 0x29 == 41 hit this on every already-opened
+ * query, and classes 32..61 had no representable bit at all. The mask is now
+ * 64-bit so the whole class space is expressible and the shift is defined;
+ * the range check stays as the guard for a malformed class. */
+static int dm2_handle_mask_has_class(uint64_t handle_mask, int item_class)
+{
+    if (item_class < 0 || item_class >= 64) return 0;
+    return (handle_mask & ((uint64_t)1 << item_class)) != 0;
+}
+
 int32_t dm2_v1_creature_can_handle_it(
     const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
     const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
@@ -1008,11 +1021,11 @@ int32_t dm2_v1_creature_can_handle_it(
     if (item_class == 0x29 && cb && cb->is_container_moneybox &&
         cb->is_container_moneybox(ctx, item)) {
         if (cb->moneybox_already_opened && cb->moneybox_already_opened(ctx, item))
-            return (caps->handle_mask & (1u << item_class)) != 0;
+            return dm2_handle_mask_has_class(caps->handle_mask, item_class);
         return (flags & 0x80) != 0;
     }
 
-    return (caps->handle_mask & ((uint32_t)1 << item_class)) != 0;
+    return dm2_handle_mask_has_class(caps->handle_mask, item_class);
 }
 
 int32_t dm2_v1_creature_cast_spell(

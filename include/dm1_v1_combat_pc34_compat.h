@@ -173,6 +173,9 @@ typedef struct {
     int skillThrow;
     int skillShoot;
     int skillNinja;
+    /* C07_SKILL_PARRY. F0230 subtracts (parry << 1) from the incoming
+     * creature melee attack (ReDMCSB PROJEXPL.C:1392). */
+    int skillParry;
     int poisonEventCount; /* active poison chains for UI overlay */  /* C01_SKILL_NINJA — used in SELF defense (BUG-021) */
 } DM1_ChampionCombat;
 

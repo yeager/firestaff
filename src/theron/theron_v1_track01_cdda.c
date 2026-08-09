@@ -77,7 +77,13 @@ int theron_v1_track01_cdda_stream_start(
         info = ov_info(vorbis, -1);
         if (!info || info->rate != THERON_TRACK01_CDDA_SAMPLE_RATE ||
             info->channels != THERON_TRACK01_CDDA_CHANNELS) {
+            /* ov_clear() releases the decoder's internals (and the FILE* it
+             * took ownership of), but not the OggVorbis_File allocation
+             * itself -- matching the stop path, which does ov_clear then
+             * free. Without this the whole struct leaked on every title
+             * start whose Track 01 OGG was not 44100 Hz stereo. */
             ov_clear(vorbis);
+            free(vorbis);
             SDL_DestroyAudioStream(sdl_stream);
             SDL_QuitSubSystem(SDL_INIT_AUDIO);
             return 0;

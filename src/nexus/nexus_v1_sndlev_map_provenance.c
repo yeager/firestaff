@@ -44,7 +44,10 @@ int nexus_v1_sndlev_map_provenance_from_direct_identity(const Nexus_V1_SlevSalDi
     uint8_t bytes[NEXUS_V1_SNDLEV_MAP_HEADER_BYTES+NEXUS_V1_SNDLEV_MAP_MAX_RECORDS*NEXUS_V1_SNDLEV_MAP_RECORD_BYTES+2U]; FILE *f; size_t n;
     if (!out) return 0; if (!id || !id->valid || id->byte_count>sizeof(bytes) || !nexus_v1_slev_sal_direct_identity_still_matches(id) || !(f=fopen(id->direct_path,"rb"))) { memset(out,0,sizeof(*out)); return 0; }
     n=fread(bytes,1U,(size_t)id->byte_count,f);
-    if (ferror(f) || fclose(f)!=0 || n!=(size_t)id->byte_count) { memset(out,0,sizeof(*out)); return 0; }
+    /* fclose() runs unconditionally; behind ferror() in a || chain it leaked
+     * one descriptor per scanned MAP file. */
+    { int io_failed=ferror(f)!=0; if (fclose(f)!=0) io_failed=1;
+      if (io_failed || n!=(size_t)id->byte_count) { memset(out,0,sizeof(*out)); return 0; } }
     return nexus_v1_sndlev_map_provenance_parse(bytes,id->byte_count,id->fnv1a64,out);
 }
 
@@ -93,10 +96,13 @@ int nexus_v1_sndlev_map_row_provenance_from_direct_identity(
         return 0;
     }
     count = fread(bytes, 1U, (size_t)identity->byte_count, file);
-    if (ferror(file) || fclose(file) != 0 ||
-        count != (size_t)identity->byte_count) {
-        memset(out, 0, sizeof(*out));
-        return 0;
+    {
+        int io_failed = ferror(file) != 0;
+        if (fclose(file) != 0) io_failed = 1;
+        if (io_failed || count != (size_t)identity->byte_count) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
     }
     return nexus_v1_sndlev_map_row_provenance_parse(
         bytes, identity->byte_count, identity->fnv1a64, row, out);

@@ -519,6 +519,15 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;
     fs = (struct MemoryGraphicsDatState_Compat*)loader->fileState;
 
+    /* runtimeState is NULL for a loader brought up by
+     * M11_AssetLoader_InitDecodedOnly (the CSB Atari ST ST20/ST21 path),
+     * which sets only initialized = 1. M11_AssetLoader_QuerySize already
+     * guards this; without the same check here the first cold-cache lookup
+     * dereferences NULL. */
+    if (!rt) {
+        return NULL;
+    }
+
     if (graphicIndex >= rt->graphicCount) {
         return NULL;
     }

@@ -272,12 +272,20 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
     title->loaded = 1;
 
     {
-        uint8_t *mapd = nexus_v1_read_file(engine, "TITLE.BIN", &size);
+        /* TITLE.BIN's length needs its own local: reading it into `size`
+         * clobbered TITLE.CG's length, and `data` (the TITLE.CG buffer) was
+         * then passed with TITLE.BIN's length. With retail assets that made
+         * the decoder's entry guard trip so all five title maps silently
+         * failed, and it is a heap over-read whenever TITLE.BIN is the larger
+         * file. The cached-surface branch above already uses a separate
+         * cg_size for the same reason. */
+        int mapd_size = 0;
+        uint8_t *mapd = nexus_v1_read_file(engine, "TITLE.BIN", &mapd_size);
         (void)nexus_v1_title_decode_mapd(
-                                      mapd && size > (int)0x0e278U
+                                      mapd && mapd_size > (int)0x0e278U
                                           ? mapd + 0x0e278U : NULL,
-                                      size > (int)0x0e278U
-                                          ? (size_t)size - 0x0e278U : 0U,
+                                      mapd_size > (int)0x0e278U
+                                          ? (size_t)mapd_size - 0x0e278U : 0U,
                                       data, (size_t)size,
                                       title);
         free(mapd);

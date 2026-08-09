@@ -292,7 +292,16 @@ int dm2_v1_read_record_checkcode(
             uint8_t cont_byte = 0;
             uint8_t cont_mask = 3;
             if (read_suppress(session, &cont_byte, &cont_mask, 1)) return 1;
-            rec_data[4] = (uint8_t)((cont_byte << 1) & 0x03u);
+            /* The writer stores bits 1..2 of word_04 as a 2-bit field
+             * ((word_04 << 13) >> 14), so restoring them means shifting the
+             * 2-bit value back up by one: (cont_byte & 3) << 1, giving
+             * 0/2/4/6. Masking with 0x03 after the shift instead collapsed
+             * the result to only 0 or 2, so a stored value of 3 (on-disk
+             * byte_04 & 6 == 6) decoded as 2 and took the map-container
+             * branch while the writer had taken the normal-container one --
+             * a different body mask and a different bit count, desyncing the
+             * rest of the shared stream. */
+            rec_data[4] = (uint8_t)((cont_byte & 0x03u) << 1);
             if ((rec_data[4] & 0x06u) == 0x02u) {
                 mask = dm2_v1_save_record_mask_container_map();
                 is_map_or_nested = 1;

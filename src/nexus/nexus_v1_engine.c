@@ -5226,9 +5226,15 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
                        (unsigned long long)target.palette_payload_candidate_fnv1a64,
                        target.palette_payload_candidate_bound,
                        target.shared_image_palette_payload_anchor) >= 0;
-    if (!write_ok || fclose(file) != 0 || rename(temporary_path, path) != 0) {
-        remove(temporary_path);
-        return 0;
+    {
+        /* A failed fprintf short-circuited past fclose(), so remove() then
+         * ran against a still-open handle. Close first, then rename. */
+        int io_failed = !write_ok;
+        if (fclose(file) != 0) io_failed = 1;
+        if (io_failed || rename(temporary_path, path) != 0) {
+            remove(temporary_path);
+            return 0;
+        }
     }
     *out_target = target;
     return 1;
@@ -10397,6 +10403,14 @@ int nexus_v1_engine_level_change(Nexus_V1_Engine *engine, int *out_new_level) {
      * caller cannot bypass it and load a synthetic retail transition. */
     if (engine->source != NEXUS_SRC_NONE &&
         !nexus_v1_action_semantics_proven()) {
+        *out_new_level = -1;
+        return -1;
+    }
+    /* mechanics is NULL before nexus_v1_init and again after
+     * nexus_v1_shutdown; both leave source == NEXUS_SRC_NONE, which the gate
+     * above lets through. The tick path guards every other use of this
+     * field. */
+    if (!engine->mechanics) {
         *out_new_level = -1;
         return -1;
     }

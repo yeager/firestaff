@@ -386,8 +386,44 @@ static void test_engage_command(void)
     printf("test_engage_command OK\n");
 }
 
+/* handle_mask is 64-bit because item_class is (item & 0x3f), i.e. 0..0x3d.
+ * A 32-bit mask made the shift undefined for every class >= 32 -- notably
+ * the moneybox class 0x29 == 41 -- and could not represent those classes
+ * at all. */
+static void test_creature_can_handle_it_class_above_31(void)
+{
+    DM2_V1_CreatureHandleCaps caps;
+
+    /* Class 41 (0x29) set, nothing else. */
+    caps.handle_mask = (uint64_t)1 << 41;
+    /* item low six bits select the class; 0x1429 & 0x3f == 0x29. */
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0, NULL, NULL) != 0);
+
+    /* Bit 9 must NOT answer for class 41: that is exactly the aliasing the
+     * old 32-bit shift produced on x86-64 (1u << 41 == 1u << 9). */
+    caps.handle_mask = (uint64_t)1 << 9;
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1429, 0, NULL, NULL) == 0);
+
+    /* Highest reachable class, 0x3d == 61. */
+    caps.handle_mask = (uint64_t)1 << 61;
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143d, 0, NULL, NULL) != 0);
+
+    /* 0x3e and 0x3f stay rejected outright. */
+    caps.handle_mask = ~(uint64_t)0;
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143e, 0, NULL, NULL) == 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x143f, 0, NULL, NULL) == 0);
+
+    /* A low class still works. */
+    caps.handle_mask = (uint64_t)1 << 3;
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1403, 0, NULL, NULL) != 0);
+    assert(dm2_v1_creature_can_handle_it(&caps, 0x1404, 0, NULL, NULL) == 0);
+
+    printf("test_creature_can_handle_it_class_above_31 OK\n");
+}
+
 int main(void)
 {
+    test_creature_can_handle_it_class_above_31();
     test_wound_player();
     test_adjust_skills();
     test_revive_player_skill_layout();

@@ -59,20 +59,33 @@ static void test_fmtowns_load(const char *path) {
     assert(result == 0);
     printf("  PASS: FM Towns DUNGEON.DAT loaded successfully\n");
 
-    /* 28 maps, same as PC */
-    assert(dungeon.level_count == 28);
-    printf("  PASS: 28 maps\n");
+    /* File_header.nMaps is the byte at offset 4 (SKWIN/DME.h:93-101,
+     * mirrored by docs/dm2_save_format.md's section order). Both the PC and
+     * FM Towns releases store 0x2c = 44 there. The old expectation of 28 was
+     * reading offset 6, which is cwTextData -- verified against the real
+     * files: map descriptors 0..43 are all well-formed with monotonically
+     * increasing map-data offsets (0x0000..0x2ff0 inside the 12615-byte
+     * cbMapData region), and the 45th 16-byte slot is already the column
+     * index table. */
+    assert(dungeon.level_count == 44);
+    printf("  PASS: 44 maps\n");
 
     /* Byte-sized squares */
     assert(dungeon.square_bytes == 1);
     printf("  PASS: byte squares\n");
 
-    /* Thing type counts from header */
-    assert(dungeon.thing_type_counts[0] == 209);  /* doors */
-    assert(dungeon.thing_type_counts[1] == 448);  /* teleporters */
-    assert(dungeon.thing_type_counts[2] == 1020); /* text */
-    assert(dungeon.thing_type_counts[3] == 280);  /* actuators */
-    assert(dungeon.thing_type_counts[4] == 169);  /* creatures */
+    /* File_header.nRecords[16] starts at offset 12 (SKWIN/DME.h:101), so
+     * thing_type_counts[0] is the first DB pool. The old expectations began
+     * at 209, which is nRecords[1]: they were written against the shifted
+     * header offsets in dm2_v1_try_load_pc_g1_byte_layout, which reads the
+     * pool table from offset 14. The real FM Towns header holds
+     * 53, 209, 448, 1020, 280, 169 at offsets 12, 14, 16, 18, 20, 22. */
+    assert(dungeon.thing_type_counts[0] == 53);
+    assert(dungeon.thing_type_counts[1] == 209);
+    assert(dungeon.thing_type_counts[2] == 448);
+    assert(dungeon.thing_type_counts[3] == 1020);
+    assert(dungeon.thing_type_counts[4] == 280);
+    assert(dungeon.thing_type_counts[5] == 169);
     printf("  PASS: thing type counts match header\n");
 
     /* Verify some map data was parsed — raw_map_data_base should be set */

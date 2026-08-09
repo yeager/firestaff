@@ -116,13 +116,31 @@ void dm2_v1_click_vwpt(
     const DM2_V1_ClickVwptCallbacks *cb, void *ctx);
 
 /* ---- DM2_CLICK_MAGICAL_MAP_RUNE (c_events.cpp:395) ----
- * Toggle a rune on the magical map spell panel. */
+ * Toggle a rune on the magical map spell panel.
+ *
+ * Placing a rune costs the active champion rune_table[index] mana. The
+ * source checks affordability BEFORE any mutation and returns without
+ * toggling when the cost exceeds curMP, so an unaffordable rune must not
+ * appear on the panel. Removing a rune does not refund mana to the
+ * champion; it only subtracts the cost from the running composed-spell
+ * total in v1e0b4e. */
+
+/* c_hero::heroflag bit set when a rune is placed (c_events.cpp:417). */
+#define DM2_HEROFLAG_RUNE_PLACED 0x800
+
 typedef struct {
     const int16_t *rune_table;   /* table1d67fe[9] */
     int16_t *v1e0b62;           /* current rune mask */
     void (*add_rune)(void *ctx, int16_t rune_mask);
     void (*remove_rune)(void *ctx, int16_t rune_mask);
     void (*queue_noise)(void *ctx, int16_t cat, int16_t idx);
+    /* Active champion is party.hero[party.curacthero - 1]. Both accessors
+     * are required to place a rune: without them affordability cannot be
+     * established and the placement is refused rather than granted free. */
+    int16_t (*get_active_hero_mp)(void *ctx);
+    void (*set_active_hero_mp)(void *ctx, int16_t mp);
+    void (*set_active_hero_flag)(void *ctx, int16_t flag_bits);
+    int16_t *v1e0b4e;           /* running composed-spell cost */
 } DM2_V1_ClickMagicalMapRuneCallbacks;
 
 void dm2_v1_click_magical_map_rune(
@@ -225,6 +243,12 @@ typedef struct {
     void (*redraw_viewport)(void *ctx);
     const int16_t *dx_table;
     const int16_t *dy_table;
+    /* c_events.cpp:579 publishes the sub-zone's turn mode here before
+     * DM2_PERFORM_MOVE; c_move.cpp:332 then feeds it to
+     * DM2_PERFORM_TURN_SQUAD, which is a no-op for 0, rotates the party by
+     * dir+3 for 1 and dir+1 for 2. Without it the diagonal push/pull zones
+     * shove the body but leave the party facing the old way. */
+    int16_t *v1e0538;
 } DM2_V1_PushPullRigidBodyCallbacks;
 
 typedef struct {
@@ -232,6 +256,8 @@ typedef struct {
     int pushed;
     int16_t target_x;
     int16_t target_y;
+    /* The turn mode handed to DM2_PERFORM_TURN_SQUAD (0 = no turn). */
+    int16_t turn_mode;
 } DM2_V1_PushPullRigidBodyReceipt;
 
 void dm2_v1_push_pull_rigid_body(
@@ -514,6 +540,9 @@ typedef struct {
         int16_t zone_b0a, int16_t tile_x, int16_t tile_y,
         int16_t record, int16_t zone_b0b, int argl3);
     int (*is_container_moneybox)(void *ctx, int16_t record);
+    /* Clears bit 2 (0x04) of the record's byte 7 once a moneybox has been
+     * picked up: c_events.cpp:1042 and8(location(record + 7), 0xfffffffb). */
+    void (*clear_moneybox_record_flag)(void *ctx, int16_t record);
     void (*move_record_to)(void *ctx, int16_t record, int16_t x, int16_t y,
                             int16_t dest, int16_t param);
     void (*take_object)(void *ctx, int16_t record, int mode);
@@ -676,9 +705,14 @@ void dm2_v1_events_3c1e5(
  * Adjust a UI event index based on hand cooldowns and item
  * activability. For idx 116-123 (action hand clicks): checks
  * the hero's hand cooldown timer and whether the wielded item
- * is activable; clears idx to 0 if not available. For idx
- * 95-98 (movement arrows): checks player position validity
- * and hand cooldown. */
+ * is activable; clears idx to 0 if not available.
+ *
+ * For idx 95-98 (movement arrows) the source splits each arrow cell into a
+ * move half and a turn half by comparing the click's distance to the
+ * horizontal vs vertical edge of the event rect (c_input.cpp:126-148):
+ * when the horizontal distance wins it is a move, otherwise idx -= 79
+ * rewrites 95..98 into the turn commands 16..19. That rewrite drives mouse
+ * turning, so the rect below is required for those indices. */
 typedef struct {
     int16_t (*get_curacthero)(void *ctx);
     int16_t (*get_hero_curHP)(void *ctx, int hero);
@@ -687,6 +721,15 @@ typedef struct {
     int (*is_item_activable)(void *ctx, int16_t item);
     int16_t (*get_player_position)(void *ctx, int hero);
     int16_t v1e0288;
+    /* Party facing, used to map an arrow cell to a party slot. */
+    int16_t v1e0258;
+    /* DM2_GET_PLAYER_AT_POSITION: party slot -> hero index, or < 0. */
+    int16_t (*get_player_at_position)(void *ctx, int16_t position);
+    /* The clicked event's rect, in the same space as the x/y arguments. */
+    int16_t rect_x;
+    int16_t rect_y;
+    int16_t rect_w;
+    int16_t rect_h;
 } DM2_V1_AdjustUiEventCallbacks;
 
 typedef struct {
@@ -694,6 +737,8 @@ typedef struct {
     int16_t original_idx;
     int16_t adjusted_idx;
     int suppressed;
+    /* Set when a movement arrow resolved to its turn half (idx -= 79). */
+    int turned;
 } DM2_V1_AdjustUiEventReceipt;
 
 void dm2_v1_adjust_ui_event(

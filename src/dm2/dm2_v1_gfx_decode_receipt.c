@@ -389,7 +389,7 @@ static int dm2_decode_img9_mode1_into(const uint8_t *data,
     s.decodew4 = 9;
     s.decodew1 = 0x1ff;
 
-    memset(wptrrg6, 0, 0x200);
+    memset(wptrrg6, 0, 0x1000u * sizeof(wptrrg6[0])); /* clear the whole 0..0xfff code space, not 256 entries */
     for (int vw_14 = 0x100; vw_14 >= 0; --vw_14) {
         pb_04[vw_14] = (uint8_t)vw_14;
     }
@@ -424,7 +424,14 @@ static int dm2_decode_img9_mode1_into(const uint8_t *data,
 
         if (wordrg1 != 0x100) {
             vw_0c = (unsigned)wordrg1;
-            if (wordrg1 >= s.decodew3) {
+            /* Only code == decodew3 is the legal forward (KwKwK) reference.
+             * Accepting anything above it let the dictionary write below
+             * store wptrrg6[decodew3] = vw_10 with vw_10 > decodew3, i.e. a
+             * forward- or self-referencing entry, which makes the chain walk
+             * below non-terminating. */
+            if (wordrg1 > s.decodew3) return 0;
+            if (wordrg1 == s.decodew3) {
+                if (xptrrg2 >= stack + DM2_DECODE_IMG9_STACK_SIZE) return 0;
                 *xptrrg2++ = vb_18;
                 vw_14 = (int)vw_10;
             }
@@ -432,7 +439,15 @@ static int dm2_decode_img9_mode1_into(const uint8_t *data,
             for (;;) {
                 long longrg12 = (long)vw_14;
                 uint8_t *ebppb = xptrrg2 + 1;
-                const uint8_t *xptrrg51 = pb_04 + longrg12;
+                const uint8_t *xptrrg51;
+                /* The chain length is bounded by the stack buffer: a
+                 * malformed stream can still form a cycle, and this loop had
+                 * no bound at all, writing past stack[] indefinitely. */
+                if (xptrrg2 >= stack + DM2_DECODE_IMG9_STACK_SIZE) return 0;
+                /* wptrrg6 is int16_t, so a stored value can be negative and
+                 * the code space only reaches 0x1000. */
+                if (longrg12 < 0 || longrg12 >= 0x1000) return 0;
+                xptrrg51 = pb_04 + longrg12;
                 if (longrg12 < 0x100) {
                     vb_18 = *xptrrg51;
                     *xptrrg2 = vb_18;
@@ -488,7 +503,7 @@ static int dm2_decode_img9_mode1_into(const uint8_t *data,
             }
             vw_10 = vw_0c;
         } else {
-            memset(wptrrg6, 0, 0x200);
+            memset(wptrrg6, 0, 0x1000u * sizeof(wptrrg6[0])); /* clear the whole 0..0xfff code space, not 256 entries */
             s.decodew2 = 1;
             s.decodew3 = 0x100;
         }

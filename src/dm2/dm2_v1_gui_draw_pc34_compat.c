@@ -902,11 +902,38 @@ void dm2_v1_guidraw_24a5_0e82(
         cb->scale_rect(ctx, (int16_t)rectid, (int16_t)ratio, 10000, &bar_rc) : NULL;
     if (!scaled) return;
 
-    /* Draw background and bar */
-    int16_t border = cb->get_v1d2748 ? cb->get_v1d2748(ctx) : 0;
+    /* c_gui_draw.cpp:1167-1210.
+     *   extra_color == 0 -> background rect is the bar rect itself
+     *   extra_color != 0 -> background rect is the rect's full expanded
+     *                       extent, and the span from the bar's end to that
+     *                       rect's end is filled with extra_color; when the
+     *                       bar already reaches the end there is no
+     *                       remainder and the extra fill is dropped.
+     * Both of those were missing: the background was always drawn at bar
+     * width, and the remainder segment was never drawn at all, so item stat
+     * bars rendered with no remainder and a too-small background. */
+    DM2_V1_Rect full_rc;
+    DM2_V1_Rect remainder_rc;
+    int draw_remainder = 0;
     DM2_V1_Rect bg_rc = bar_rc;
-    bg_rc.x += border;
-    bg_rc.y += border;
+
+    if (extra_color != 0 && cb->query_expanded_rect &&
+        cb->query_expanded_rect(ctx, (int16_t)rectid, &full_rc)) {
+        int32_t bar_end = (int32_t)bar_rc.x + bar_rc.w;
+        int32_t full_end = (int32_t)full_rc.x + full_rc.w;
+
+        bg_rc = full_rc;
+        if (bar_end - 1 != full_end - 1) {
+            remainder_rc = full_rc;
+            remainder_rc.w = (int16_t)((full_end - 1) - (bar_end - 1));
+            remainder_rc.x = (int16_t)bar_end;
+            draw_remainder = 1;
+        }
+    }
+
+    int16_t border = cb->get_v1d2748 ? cb->get_v1d2748(ctx) : 0;
+    bg_rc.x = (int16_t)(bg_rc.x + border);
+    bg_rc.y = (int16_t)(bg_rc.y + border);
 
     uint8_t col00 = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, 0) : 0;
     if (cb->fill_backbuff_rect)
@@ -916,9 +943,10 @@ void dm2_v1_guidraw_24a5_0e82(
     if (cb->fill_backbuff_rect)
         cb->fill_backbuff_rect(ctx, &bar_rc, (int32_t)bar_col);
 
-    if (extra_color != 0 && cb->fill_backbuff_rect) {
-        uint8_t ext_col = cb->palette_to_ui8 ? cb->palette_to_ui8(ctx, extra_color) : 0;
-        /* Draw extra segment (simplified) */
+    if (draw_remainder && cb->fill_backbuff_rect) {
+        uint8_t ext_col = cb->palette_to_ui8
+            ? cb->palette_to_ui8(ctx, extra_color) : 0;
+        cb->fill_backbuff_rect(ctx, &remainder_rc, (int32_t)ext_col);
     }
 }
 

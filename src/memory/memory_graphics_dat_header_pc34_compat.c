@@ -170,6 +170,17 @@ struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
                         return 0;
                 }
         }
+        /* An empty archive has no last entry, so the fileSize computation
+         * below would index compressedByteCounts[graphicCount - 1] at -1 and
+         * pass 0xFFFFFFFF to F0467 as the graphic index. The legacy path
+         * already rejects this via legacy_graphics_dat_extent_matches; the
+         * format-1 path reads graphicCount straight from the file, so reject
+         * it here for both. calloc(0, n) may also return a non-NULL pointer,
+         * so the allocation check below cannot stand in for this. */
+        if (header->graphicCount == 0) {
+                F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
+                return 0;
+        }
         header->compressedByteCounts = (unsigned short*)calloc(header->graphicCount, sizeof(unsigned short));
         header->decompressedByteCounts = (unsigned short*)calloc(header->graphicCount, sizeof(unsigned short));
         header->widthHeight = (struct GraphicWidthHeight_Compat*)calloc(header->graphicCount, sizeof(struct GraphicWidthHeight_Compat));

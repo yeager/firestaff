@@ -3622,6 +3622,11 @@ static int external_archive_commit_entry(const char *archivePath,
                                          int *hasMatch) {
     char hex[33];
     if (!archivePath || !expectedMd5 || !entryName || !bestName || !hasMatch) return 0;
+    /* entryName is a line read from the external archive lister into a
+     * 1024-byte buffer, while bestName is ASSET_PATH_MAX (512). Reject an
+     * over-long entry outright: truncating it would yield a path that does
+     * not name the entry we hashed. */
+    if (strlen(entryName) >= ASSET_PATH_MAX) return 0;
     if (entryName[0] == '\0' || strcmp(entryName, archivePath) == 0 ||
         entryName[strlen(entryName) - 1U] == '/' ||
         (entrySize != UINT32_MAX &&
@@ -3830,7 +3835,11 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
                 }
                 char hex[33];
                 int matchIndex;
-                if (!diskImageOnly &&
+                /* line is a 1024-byte lister line; bestNames rows are
+                 * ASSET_PATH_MAX (512). Reject an over-long entry rather
+                 * than truncating it into a path that no longer names the
+                 * hashed entry. */
+                if (!diskImageOnly && strlen(line) < ASSET_PATH_MAX &&
                     external_archive_entry_may_match_md5_list(line, md5List,
                                                               md5Count) &&
                     external_entry_md5(archivePath, line, hex)) {
@@ -4758,6 +4767,16 @@ static int scan_external_adf_by_md5(const char *archive_path,
     if (!image) return 0;
     memset(&match, 0, sizeof(match));
     match.expected_md5 = expected_md5;
+    /* The visitor caches each inner filesystem digest through
+     * external_adf_cache_store_file(match->archive, match->adf, ...). Those
+     * two fields were left NULL by the memset above, so every store call
+     * failed its own argument check and silently cached nothing -- only the
+     * @firestaff-adf-complete-v1 marker was written. The next lookup then
+     * found the marker with no matching inner entry and returned "not here"
+     * instead of the cached hit, forcing the whole solid 7z to be
+     * decompressed again on every query. */
+    match.archive = archive_path;
+    match.adf = adf_entry;
     result = firestaff_amiga_adf_visit_ofs_files(
         image, image_size, external_adf_find_single_cache_visitor, &match);
     free(image);

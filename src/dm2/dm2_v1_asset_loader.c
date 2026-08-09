@@ -246,7 +246,12 @@ static int dm2_gdat_parse_ent1(DM2_V1_AssetLoader *loader) {
         entry_offsets[DM2_GDAT_EP_DATA] == UINT32_MAX) {
         return -1;
     }
-    if (pos + ((uint32_t)entry_count * stride) > loader->raw_sizes[0]) {
+    /* entry_count is a file word and stride is the sum of file-supplied
+     * length bytes, so their product overflows uint32 for large values and
+     * the truncated result passed this bound check -- letting the row loop
+     * below index far past the block. Compute the extent in 64-bit. */
+    if ((uint64_t)pos + (uint64_t)entry_count * (uint64_t)stride >
+        (uint64_t)loader->raw_sizes[0]) {
         return -1;
     }
 

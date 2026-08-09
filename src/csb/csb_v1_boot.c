@@ -176,6 +176,7 @@ static int csb_v1_boot_copy_file_pc34(const char *source, const char *target)
     FILE *in;
     FILE *out;
     size_t count;
+    int failed;
 
     if (!source || !target) return 0;
     in = fopen(source, "rb");
@@ -192,8 +193,14 @@ static int csb_v1_boot_copy_file_pc34(const char *source, const char *target)
             return 0;
         }
     }
-    if (ferror(in) || fclose(in) != 0 || fclose(out) != 0) return 0;
-    return 1;
+    /* Both handles must be closed unconditionally: putting fclose() inside a
+     * short-circuiting || chain meant a read error on `in` skipped both
+     * closes, and a failing fclose(in) skipped fclose(out) -- leaving the
+     * destination open and unflushed on every failed CSB launch. */
+    failed = ferror(in) != 0;
+    if (fclose(in) != 0) failed = 1;
+    if (fclose(out) != 0) failed = 1;
+    return failed ? 0 : 1;
 }
 
 static int csb_v1_boot_materialize_runtime_pair_pc34(CSB_V1_BootProfile *profile)
@@ -314,9 +321,18 @@ int csb_v1_boot_load_swoosh_source_pc34(CSB_V1_BootProfile *profile)
             if (written <= 0 || (size_t)written >= sizeof(path)) continue;
             file = fopen(path, "rb");
             if (!file) continue;
+            int trailing_bytes;
+            int close_failed;
+
             read_count = fread(profile->swoosh_source_bytes, 1u,
                                sizeof(profile->swoosh_source_bytes), file);
-            if (fgetc(file) != EOF || fclose(file) != 0 ||
+            /* fclose() must run before the || chain can short-circuit: a
+             * candidate larger than swoosh_source_bytes makes the fgetc test
+             * true, and the old form then leaked one handle per rejected
+             * candidate across all 4 directories x 5 names. */
+            trailing_bytes = (fgetc(file) != EOF);
+            close_failed = (fclose(file) != 0);
+            if (trailing_bytes || close_failed ||
                 read_count != sizeof(profile->swoosh_source_bytes)) {
                 continue;
             }

@@ -24,6 +24,7 @@ static int direct_file_identity(const char *path, uint64_t *out_size,
     uint64_t hash = UINT64_C(1469598103934665603);
     FILE *file;
     size_t count;
+    int io_failed;
 
     if (!path || !out_size || !out_fnv1a64 || strstr(path, "::") ||
         !(file = fopen(path, "rb"))) return 0;
@@ -35,7 +36,12 @@ static int direct_file_identity(const char *path, uint64_t *out_size,
         total += count;
         hash = fnv1a64_update(hash, buffer, count);
     }
-    if (ferror(file) || fclose(file) != 0 || total == 0U || hash == 0U)
+    /* fclose() must not sit behind ferror() in a || chain: a read error on a
+     * corpus file would skip the close, leaking one descriptor per scanned
+     * file rather than one overall. */
+    io_failed = ferror(file) != 0;
+    if (fclose(file) != 0) io_failed = 1;
+    if (io_failed || total == 0U || hash == 0U)
         return 0;
     *out_size = total;
     *out_fnv1a64 = hash;

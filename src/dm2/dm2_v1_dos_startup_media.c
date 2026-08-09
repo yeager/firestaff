@@ -156,8 +156,14 @@ static int dm2_v1_dos_startup_read_verified(const char *root,
         }
         total += got;
     }
-    if (ferror(stream) || fclose(stream) != 0 || total != expected->size_bytes) {
-        return 0;
+    {
+        /* Close before judging: a read error short-circuited past fclose()
+         * and leaked the handle. */
+        int io_failed = ferror(stream) != 0;
+        if (fclose(stream) != 0) io_failed = 1;
+        if (io_failed || total != expected->size_bytes) {
+            return 0;
+        }
     }
     /* Re-read only for the digest, never materialise a decoded movie. */
     stream = fopen(path, "rb");

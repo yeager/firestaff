@@ -439,11 +439,22 @@ int csb_v1_save_export_write_envelope(const char *path,
         return CSB_V1_SAVE_EXPORT_ERR_IO;
     }
     got = fwrite(envelope, 1u, envelope_len, f);
-    if (got != envelope_len || fflush(f) != 0 ||
-        csb_v1_save_export_fsync_pc34(fd) != 0 || fclose(f) != 0) {
-        unlink(temporary_path);
-        free(temporary_path);
-        return CSB_V1_SAVE_EXPORT_ERR_IO;
+    {
+        /* fclose() owns the fd from fdopen(), so it must run on every path.
+         * In the old || chain a short write, a failed flush, or a failed
+         * fsync short-circuited before it -- leaking both the FILE* and its
+         * descriptor, and then unlinking the temp path while it was still
+         * open. Disk-full during save is the realistic trigger. fsync stays
+         * ahead of fclose because it needs a live descriptor. */
+        int io_failed = (got != envelope_len);
+        if (fflush(f) != 0) io_failed = 1;
+        if (csb_v1_save_export_fsync_pc34(fd) != 0) io_failed = 1;
+        if (fclose(f) != 0) io_failed = 1;
+        if (io_failed) {
+            unlink(temporary_path);
+            free(temporary_path);
+            return CSB_V1_SAVE_EXPORT_ERR_IO;
+        }
     }
     if (rename(temporary_path, path) != 0) {
         unlink(temporary_path);

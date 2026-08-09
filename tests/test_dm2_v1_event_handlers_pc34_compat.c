@@ -16,6 +16,23 @@ static int16_t mock_v1e0288 = 0;
 static int16_t mock_v1e0b6c = 0;
 static int16_t mock_v1e0254 = 0;
 
+/* Active champion's mana for the magical-map rune handler. */
+static int16_t mock_active_hero_mp = 0;
+static int16_t mock_active_hero_flags = 0;
+
+static int16_t get_active_hero_mp(void *ctx __attribute__((unused)))
+{
+    return mock_active_hero_mp;
+}
+static void set_active_hero_mp(void *ctx __attribute__((unused)), int16_t mp)
+{
+    mock_active_hero_mp = mp;
+}
+static void set_active_hero_flag(void *ctx __attribute__((unused)), int16_t bits)
+{
+    mock_active_hero_flags = (int16_t)(mock_active_hero_flags | bits);
+}
+
 static int hide_mouse_calls = 0;
 static int show_mouse_calls = 0;
 static int remove_hand_calls = 0;
@@ -152,31 +169,123 @@ static void test_click_item_slot_dead_hero_rejected(void)
     printf("test_click_item_slot_dead_hero_rejected OK\n");
 }
 
+/* c_events.cpp:395 DM2_CLICK_MAGICAL_MAP_RUNE.
+ * Placing a rune costs rune_table[index] mana from the active champion and
+ * is refused outright when unaffordable; removing one subtracts the cost
+ * from the running total in v1e0b4e but does not refund the champion. */
+static DM2_V1_ClickMagicalMapRuneCallbacks make_rune_cb(const int16_t *table,
+                                                        int16_t *mask,
+                                                        int16_t *total)
+{
+    DM2_V1_ClickMagicalMapRuneCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.rune_table = table;
+    cb.v1e0b62 = mask;
+    cb.v1e0b4e = total;
+    cb.get_active_hero_mp = get_active_hero_mp;
+    cb.set_active_hero_mp = set_active_hero_mp;
+    cb.set_active_hero_flag = set_active_hero_flag;
+    return cb;
+}
+
 static void test_click_magical_map_rune_toggle(void)
 {
     reset_mock_state();
     int16_t rune_table[9] = {5, 10, 15, 20, 25, 30, 35, 40, 45};
     int16_t mask = 0;
-    int add_calls = 0;
-    int remove_calls = 0;
+    int16_t total = 0;
 
-    /* Can't use nested functions portably, so test via direct state */
+    mock_active_hero_mp = 100;
+    mock_active_hero_flags = 0;
+    DM2_V1_ClickMagicalMapRuneCallbacks cb =
+        make_rune_cb(rune_table, &mask, &total);
+
+    /* Toggle rune 2 on: costs 15 mana, sets the rune-placed heroflag. */
+    dm2_v1_click_magical_map_rune(2, &cb, NULL);
+    assert((mask & (1 << 2)) != 0);
+    assert(mock_active_hero_mp == 85);
+    assert((mock_active_hero_flags & DM2_HEROFLAG_RUNE_PLACED) != 0);
+    assert(total == 15);
+
+    /* Toggle rune 2 off: the running total drops back, but the champion is
+     * NOT refunded (c_events.cpp:420 negates the cost for v1e0b4e only). */
+    dm2_v1_click_magical_map_rune(2, &cb, NULL);
+    assert((mask & (1 << 2)) == 0);
+    assert(mock_active_hero_mp == 85);
+    assert(total == 0);
+
+    printf("test_click_magical_map_rune_toggle OK\n");
+}
+
+static void test_click_magical_map_rune_insufficient_mana(void)
+{
+    reset_mock_state();
+    int16_t rune_table[9] = {5, 10, 15, 20, 25, 30, 35, 40, 45};
+    int16_t mask = 0;
+    int16_t total = 0;
+
+    /* 14 mana cannot pay for rune 2's cost of 15. */
+    mock_active_hero_mp = 14;
+    mock_active_hero_flags = 0;
+    DM2_V1_ClickMagicalMapRuneCallbacks cb =
+        make_rune_cb(rune_table, &mask, &total);
+
+    dm2_v1_click_magical_map_rune(2, &cb, NULL);
+    /* The source returns before any mutation: no toggle, no spend, no flag. */
+    assert((mask & (1 << 2)) == 0);
+    assert(mock_active_hero_mp == 14);
+    assert(mock_active_hero_flags == 0);
+    assert(total == 0);
+
+    /* Exactly affordable is allowed (the test is cost > mp, not >=). */
+    mock_active_hero_mp = 15;
+    dm2_v1_click_magical_map_rune(2, &cb, NULL);
+    assert((mask & (1 << 2)) != 0);
+    assert(mock_active_hero_mp == 0);
+
+    printf("test_click_magical_map_rune_insufficient_mana OK\n");
+}
+
+static void test_click_magical_map_rune_index_bounds(void)
+{
+    reset_mock_state();
+    int16_t rune_table[9] = {5, 10, 15, 20, 25, 30, 35, 40, 45};
+    int16_t mask = 0;
+    int16_t total = 0;
+
+    mock_active_hero_mp = 100;
+    DM2_V1_ClickMagicalMapRuneCallbacks cb =
+        make_rune_cb(rune_table, &mask, &total);
+
+    /* rune_table is table1d67fe[9]; anything outside 0..8 is rejected
+     * rather than read past the table or shifted by >= 31. */
+    dm2_v1_click_magical_map_rune(-1, &cb, NULL);
+    dm2_v1_click_magical_map_rune(9, &cb, NULL);
+    dm2_v1_click_magical_map_rune(31, &cb, NULL);
+    assert(mask == 0);
+    assert(mock_active_hero_mp == 100);
+    assert(total == 0);
+
+    printf("test_click_magical_map_rune_index_bounds OK\n");
+}
+
+/* Without MP accessors affordability cannot be established, so placement is
+ * refused rather than granted for free. */
+static void test_click_magical_map_rune_requires_mp_accessors(void)
+{
+    reset_mock_state();
+    int16_t rune_table[9] = {5, 10, 15, 20, 25, 30, 35, 40, 45};
+    int16_t mask = 0;
+
     DM2_V1_ClickMagicalMapRuneCallbacks cb;
     memset(&cb, 0, sizeof(cb));
     cb.rune_table = rune_table;
     cb.v1e0b62 = &mask;
 
-    /* Toggle rune 2 on */
     dm2_v1_click_magical_map_rune(2, &cb, NULL);
-    assert((mask & (1 << 2)) != 0);
+    assert(mask == 0);
 
-    /* Toggle rune 2 off */
-    dm2_v1_click_magical_map_rune(2, &cb, NULL);
-    assert((mask & (1 << 2)) == 0);
-
-    printf("test_click_magical_map_rune_toggle OK\n");
-    (void)add_calls;
-    (void)remove_calls;
+    printf("test_click_magical_map_rune_requires_mp_accessors OK\n");
 }
 
 static void test_click_inventory_eye(void)
@@ -386,6 +495,9 @@ int main(void)
     test_click_item_slot_swap();
     test_click_item_slot_dead_hero_rejected();
     test_click_magical_map_rune_toggle();
+    test_click_magical_map_rune_insufficient_mana();
+    test_click_magical_map_rune_index_bounds();
+    test_click_magical_map_rune_requires_mp_accessors();
     test_click_inventory_eye();
     test_push_pull_rigid_body_null_safety();
     test_player_testing_wall_null_safety();

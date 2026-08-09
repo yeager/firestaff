@@ -130,12 +130,13 @@ const char *csb_v1_save_get_default_save_path(int slot)
 const char *csb_v1_save_get_backup_path(const char *path)
 {
     static char buf[512];
-    size_t len;
     if (!path) return NULL;
-    snprintf(buf, sizeof(buf), "%s", path);
-    len = strlen(buf);
-    if (len + 6 < sizeof(buf)) {
-        snprintf(buf + len, sizeof(buf) - len, ".backup");
+    /* Report truncation instead of silently returning the save path itself:
+     * callers treat the result as the backup location, so aliasing it onto
+     * the original made "restore backup" copy the file over itself while
+     * reporting success. */
+    if (snprintf(buf, sizeof(buf), "%s.backup", path) >= (int)sizeof(buf)) {
+        return NULL;
     }
     return buf;
 }
@@ -634,14 +635,18 @@ int csb_v1_save_backup(const char *path)
     size_t n;
     char backup_path[512];
 
+    int failed;
+
     if (!path) return -1;
-    snprintf(backup_path, sizeof(backup_path), "%s", path);
-    {
-        size_t lp = strlen(backup_path);
-        if (lp + 8 < sizeof(backup_path)) {
-            snprintf(backup_path + lp, 8, ".backup");
-        }
+    /* Truncation here used to be silent: for a path >= 504 bytes the
+     * ".backup" suffix was dropped and backup_path stayed byte-identical to
+     * path, so the fopen(..., "wb") below truncated the live save it was
+     * supposed to be protecting. Fail instead of aliasing onto the source. */
+    if (snprintf(backup_path, sizeof(backup_path), "%s.backup", path) >=
+        (int)sizeof(backup_path)) {
+        return -1;
     }
+    if (strcmp(backup_path, path) == 0) return -1;
 
     src = fopen(path, "rb");
     if (!src) return -1;
@@ -652,12 +657,24 @@ int csb_v1_save_backup(const char *path)
         return -1;
     }
 
+    /* Every write must be checked. This used to ignore fwrite, ferror and
+     * fclose and unconditionally report success, so a disk-full backup was
+     * silently truncated -- and the caller then reopened the original for
+     * writing, losing both copies. */
+    failed = 0;
     while ((n = fread(buf, 1, sizeof(buf), src)) > 0) {
-        fwrite(buf, 1, n, dst);
+        if (fwrite(buf, 1, n, dst) != n) {
+            failed = 1;
+            break;
+        }
     }
-
+    if (ferror(src)) failed = 1;
     fclose(src);
-    fclose(dst);
+    if (fclose(dst) != 0) failed = 1;
+    if (failed) {
+        remove(backup_path);
+        return -1;
+    }
     return 0;
 }
 

@@ -606,6 +606,78 @@ static void test_creature_melee_attack(void) {
     PASS();
 }
 
+/* ── Test: parry reduces incoming creature melee ─────────────────── */
+/* ReDMCSB PROJEXPL.C:1392 (F0230_GROUP_GetChampionDamage):
+ *   Attack = (RANDOM(16) + CreatureInfo.Attack + DoubledMapDifficulty)
+ *            - (F0303_CHAMPION_GetSkillLevel(champion, C07_SKILL_PARRY) << 1)
+ * The parry term was absent, so the skill gave no mitigation at all. Because
+ * the attack then runs through >>1, +random, >>2, dropping it roughly
+ * doubled late-game melee damage taken.
+ *
+ * Damage is NOT monotonic in parry for a fixed seed: the staged terms call
+ * random(atk), so changing atk changes which RNG values the rest of the
+ * formula consumes. Aggregate over many seeds instead. */
+static int parry_fixture_damage(unsigned seed, int parry) {
+    DM1_CombatState s;
+    DM1_CreatureGroup g;
+    dm1_combat_seed_rng(seed);
+    dm1_combat_init(&s);
+    s.championCount = 1;
+    dm1_combat_init_champion(&s.champions[0]);
+    s.champions[0].currentHealth = 500;
+    s.champions[0].maxHealth = 500;
+    s.champions[0].dexterity = 8;
+    s.champions[0].strength = 40;
+    s.champions[0].vitality = 40;
+    s.champions[0].hasArmor[DM1_WOUND_IDX_TORSO] = 1;
+    s.champions[0].armor[DM1_WOUND_IDX_TORSO].defense = 24;
+    s.champions[0].armor[DM1_WOUND_IDX_TORSO].sharpDefense = 6;
+    s.champions[0].skillParry = parry;
+    s.partyShieldDefense = 6;
+    dm1_combat_init_group(&g);
+    g.info.attack = 70;
+    g.info.defense = 10;
+    g.info.dexterity = 40;
+    g.info.attackType = DM1_ATTACK_SHARP;
+    g.info.woundProbHead = 15;
+    g.info.woundProbTorso = 15;
+    g.info.woundProbLegs = 15;
+    g.info.woundProbFeet = 15;
+    g.count = 0;
+    g.creatures[0].health = 50;
+    return dm1_creature_attack_champion(&s, &g, 0, 0);
+}
+
+static void test_creature_melee_parry_reduces_damage(void) {
+    TEST(creature_melee_parry_reduces_damage);
+
+    long total_no_parry = 0;
+    long total_parry = 0;
+    long total_high_parry = 0;
+    unsigned seed;
+
+    /* The parry-0 fixture must still resolve to the pinned value. */
+    CHECK(parry_fixture_damage(456, 0) == 37,
+          "parry 0 must still resolve to the pinned 37");
+
+    for (seed = 1; seed <= 400u; ++seed) {
+        total_no_parry   += parry_fixture_damage(seed, 0);
+        total_parry      += parry_fixture_damage(seed, 8);
+        total_high_parry += parry_fixture_damage(seed, 20);
+    }
+
+    /* parry 8 removes 16 from the pre-staged attack, parry 20 removes 40. */
+    CHECK(total_parry < total_no_parry,
+          "parry 8 must reduce total incoming melee damage across 400 seeds");
+    CHECK(total_high_parry < total_parry,
+          "parry 20 must reduce it further than parry 8");
+    /* Before the fix all three totals were identical -- the skill did nothing. */
+    CHECK(total_no_parry - total_high_parry > total_no_parry / 10,
+          "parry 20 must cut total damage by more than 10 percent");
+
+    PASS();
+}
+
 /* ── Test: champion melee action ─────────────────────────────────── */
 static void test_champion_melee_action(void) {
     TEST(champion_melee_action);
@@ -997,6 +1069,7 @@ int main(void) {
     test_damage_all_champions_zero_attack();
     test_pending_damage_applies_wounds_before_damage_guard();
     test_creature_melee_attack();
+    test_creature_melee_parry_reduces_damage();
     test_champion_melee_action();
     test_non_material_melee_requires_vorpal_or_disrupt();
     test_material_melee_does_not_require_non_material_gate();

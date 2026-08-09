@@ -2,6 +2,7 @@
 #include "firestaff_graphics_dat_reader.h"
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 
 /* GRAPHICS.DAT format (PC-34):
  * Offset 0: uint16 graphic_count
@@ -216,19 +217,32 @@ int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
     if (compressed_size <= 0 || data_off + compressed_size > gfx->raw_size)
         return -1;
 
+    /* w and h come straight from the archive header as unsigned 16-bit
+     * fields, so w*h in int arithmetic overflows for large values (65535 *
+     * 65535 does not fit in a 32-bit int). A negative product used to pass
+     * the "< sizeof(decomp_buf)" clamp below and then reach
+     * fs_gfx_decompress_lzw, which casts its int dst_size to size_t --
+     * turning the cap into ~2^64 and letting the decoder write without
+     * bound into the 64 KB stack buffer. Compute the extent in long and
+     * fail closed: an entry that cannot fit the packed buffer is rejected
+     * rather than decoded into a truncated (and therefore fabricated)
+     * surface. */
+    long pixel_count = (long)w * (long)h;
+    long packed_bytes = (pixel_count + 1) / 2;
+
+    if (packed_bytes > (long)sizeof(decomp_buf)) return -1;
+    if (pixel_count > (long)INT_MAX) return -1;
+
     /* LZW decompression: output is 4bpp packed = (w*h+1)/2 bytes */
-    {
-        int expected_decomp = (w * h + 1) / 2;
-        decomp_size = fs_gfx_decompress_lzw(
-            gfx->raw_data + data_off, compressed_size,
-            decomp_buf, expected_decomp < (int)sizeof(decomp_buf) ? expected_decomp : (int)sizeof(decomp_buf));
-    }
+    decomp_size = fs_gfx_decompress_lzw(
+        gfx->raw_data + data_off, compressed_size,
+        decomp_buf, (int)packed_bytes);
 
     if (decomp_size <= 0) return -1;
 
     /* Check if data is 4bpp packed */
-    int expected_4bpp = (w * h + 1) / 2;
-    int expected_8bpp = w * h;
+    int expected_4bpp = (int)packed_bytes;
+    int expected_8bpp = (int)pixel_count;
 
     /* A source bitmap is admitted only after the complete packed payload
      * has decoded.  Returning a short buffer here makes callers paint a

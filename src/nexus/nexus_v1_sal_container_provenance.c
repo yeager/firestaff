@@ -80,11 +80,18 @@ int nexus_v1_sal_container_provenance_from_direct_identity(
         if (start < count) payload = fnv1a64_update(payload, buffer + start, count - start);
         total += count;
     }
-    if (ferror(file) || fclose(file) != 0 || total != identity->byte_count ||
-        full != identity->fnv1a64 || header_count != sizeof(header) ||
-        total <= sizeof(header) || memcmp(header, sal_magic, sizeof(header)) != 0) {
-        *out_receipt = receipt;
-        return 0;
+    {
+        /* Close before evaluating the rest: a read error would otherwise
+         * short-circuit past fclose() and leak a descriptor per SAL file. */
+        int io_failed = ferror(file) != 0;
+        if (fclose(file) != 0) io_failed = 1;
+        if (io_failed || total != identity->byte_count ||
+            full != identity->fnv1a64 || header_count != sizeof(header) ||
+            total <= sizeof(header) ||
+            memcmp(header, sal_magic, sizeof(header)) != 0) {
+            *out_receipt = receipt;
+            return 0;
+        }
     }
     receipt.valid = 1;
     memcpy(receipt.magic, header, sizeof(header));

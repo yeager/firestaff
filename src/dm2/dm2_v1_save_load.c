@@ -1940,12 +1940,31 @@ void dm2_suppress_champion_mask(uint8_t mask[261])
     }
 }
 
+/* The on-disk champion record is 261 bytes, but DM2_ChampionRecord is a
+ * 220-byte host-side view. Casting it straight to a byte pointer read 41
+ * bytes past the struct on encode and wrote 41 past it on decode. Staging
+ * through a correctly sized buffer removes both.
+ *
+ * PARITY GAP: the two layouts still do not line up field-for-field --
+ * cur_hp sits at offset 28 where the mask assumes 27, attributes at 42 vs
+ * 41, inventory at 96 vs 91 -- so every field after squad_position is
+ * masked at the wrong offset. Byte-identical champion round-tripping needs
+ * DM2_ChampionRecord replaced by, or explicitly marshalled to, the real
+ * 261-byte record; this change only stops the out-of-bounds access. */
+#define DM2_CHAMPION_RECORD_BYTES 261u
+
 int dm2_suppress_encode_champion(const DM2_ChampionRecord *c,
                                   const uint8_t *mask,
                                   uint8_t *out, size_t out_sz)
 {
-    if (!c || !mask || !out || out_sz < 261) return -1;
-    return dm2_suppress_encode((const uint8_t *)c, mask, 261, out, out_sz);
+    uint8_t record[DM2_CHAMPION_RECORD_BYTES];
+    size_t copy = sizeof(*c) < sizeof(record) ? sizeof(*c) : sizeof(record);
+
+    if (!c || !mask || !out || out_sz < DM2_CHAMPION_RECORD_BYTES) return -1;
+    memset(record, 0, sizeof(record));
+    memcpy(record, c, copy);
+    return dm2_suppress_encode(record, mask, DM2_CHAMPION_RECORD_BYTES,
+                               out, out_sz);
 }
 
 int dm2_suppress_decode_champion(const uint8_t *in, size_t in_sz,
@@ -1959,7 +1978,21 @@ int dm2_suppress_decode_champion(const uint8_t *in, size_t in_sz,
      * into selected source bits. dm2_suppress_decode detects bit-underflow, so only
      * the empty-input case is rejected here. */
     if (in_sz == 0) return -1;
-    return dm2_suppress_decode(in, in_sz, mask, 261, (uint8_t *)c, fill);
+    {
+        uint8_t record[DM2_CHAMPION_RECORD_BYTES];
+        size_t copy = sizeof(*c) < sizeof(record) ? sizeof(*c) : sizeof(record);
+        int rc;
+
+        memset(record, 0, sizeof(record));
+        rc = dm2_suppress_decode(in, in_sz, mask, DM2_CHAMPION_RECORD_BYTES,
+                                 record, fill);
+        if (rc < 0) return rc;
+        /* Decoding into the 220-byte struct directly overran it by 41
+         * bytes; copy back only what the struct holds. See the layout gap
+         * noted above the encoder. */
+        memcpy(c, record, copy);
+        return rc;
+    }
 }
 
 /* ════════════════════════════════════════════════════════════════

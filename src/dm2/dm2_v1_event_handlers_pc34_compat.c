@@ -134,21 +134,44 @@ void dm2_v1_click_magical_map_rune(
     if (!cb || !cb->rune_table || !cb->v1e0b62)
         return;
 
+    /* rune_table is table1d67fe[9], so rune_index must name one of its nine
+     * entries. It arrives unvalidated from the caller: without this bound a
+     * negative or large index read past the table and shifted by >= 31,
+     * which is undefined. */
+    if (rune_index < 0 || rune_index > 8)
+        return;
+
     rune_cost = cb->rune_table[rune_index];
     rune_mask = (int16_t)(1 << rune_index);
     current_mask = *cb->v1e0b62;
 
     if ((current_mask & rune_mask) == 0) {
-        /* Adding rune — costs MP */
+        /* Adding. c_events.cpp:412-418 reads the active champion's curMP and
+         * returns *before* any mutation when the rune costs more than that,
+         * so an unaffordable rune must not appear on the panel. */
+        int16_t mp;
+        if (!cb->get_active_hero_mp || !cb->set_active_hero_mp)
+            return; /* affordability cannot be established -> refuse */
+        mp = cb->get_active_hero_mp(ctx);
+        if (rune_cost > mp)
+            return;
+        cb->set_active_hero_mp(ctx, (int16_t)(mp - rune_cost));
+        if (cb->set_active_hero_flag)
+            cb->set_active_hero_flag(ctx, (int16_t)DM2_HEROFLAG_RUNE_PLACED);
         if (cb->add_rune)
             cb->add_rune(ctx, rune_mask);
     } else {
-        /* Removing rune — refunds MP */
+        /* Removing. c_events.cpp:420 negates the cost for the running total
+         * only -- the champion is NOT refunded the mana. */
+        rune_cost = (int16_t)(-rune_cost);
         if (cb->remove_rune)
             cb->remove_rune(ctx, rune_mask);
     }
 
-    *cb->v1e0b62 ^= rune_mask;
+    /* c_events.cpp:422-423 */
+    *cb->v1e0b62 = (int16_t)(*cb->v1e0b62 ^ rune_mask);
+    if (cb->v1e0b4e)
+        *cb->v1e0b4e = (int16_t)(*cb->v1e0b4e + rune_cost);
 }
 
 /* ---- DM2_CLICK_INVENTORY_EYE (c_events.cpp:1846) ---- */
@@ -763,8 +786,12 @@ void dm2_v1_events_121e_013a(
         cb->move_record_to(ctx, result, tile_x, tile_y, -1, param);
         if (cb->v1e0ff6) *cb->v1e0ff6 = 1;
 
-        if (cb->is_container_moneybox(ctx, result)) {
-            /* Clear bit 2 in record byte 7 */
+        /* c_events.cpp:1040-1043 clears bit 2 of the record's byte 7 once a
+         * moneybox has been taken. The block was empty, so the bit stayed
+         * set after pickup. */
+        if (cb->is_container_moneybox(ctx, result) &&
+            cb->clear_moneybox_record_flag) {
+            cb->clear_moneybox_record_flag(ctx, result);
         }
 
         cb->take_object(ctx, result, 1);
@@ -789,7 +816,20 @@ int16_t dm2_v1_eventa_121e_0222(
     int16_t record = cb->remove_object_from_hand(ctx);
     if (record == -1) return 0;
 
-    cb->move_record_to(ctx, record, x, y, -1, -1);
+    /* c_events.cpp:1115 (mirrored at 1157) packs the clicked sub-tile
+     * quadrant into the top two bits of the record word before handing it to
+     * DM2_MOVE_RECORD_TO:
+     *     RG4Bhi &= 0x3f;                      -- record & 0x3fff
+     *     RG1L = (vl_04 << 0xe | RG4L) & 0xffff;
+     * The raw record was passed instead, so the quadrant was dropped and a
+     * dropped or thrown object always landed in the same corner of the tile
+     * no matter where in it the player clicked. The unpacked record is still
+     * what this function reports back to its caller. */
+    {
+        int16_t placed = (int16_t)((((int)dir & 3) << 14) |
+                                   ((int)record & 0x3fff));
+        cb->move_record_to(ctx, placed, x, y, -1, -1);
+    }
     if (cb->v1e0488) *cb->v1e0488 = 1;
 
     return record;
@@ -841,7 +881,10 @@ int dm2_v1_events_32cb_0287(
     int result = 0;
     void *saved_ptr = cb->ptr1e1044 ? *cb->ptr1e1044 : NULL;
 
-    if (cb->alloc_lobigpool)
+    /* ptr1e1044 is checked on both the line above and the restore below, so
+     * a partial callback table with alloc_lobigpool set but ptr1e1044 NULL is
+     * an expected shape; without this guard it wrote through NULL. */
+    if (cb->alloc_lobigpool && cb->ptr1e1044)
         *cb->ptr1e1044 = cb->alloc_lobigpool(ctx, 0x48);
 
     int16_t vw_14 = cb->v1e12cc;
@@ -1264,6 +1307,14 @@ void dm2_v1_push_pull_rigid_body(
     if (record == -1)
         return;
 
+    /* c_events.cpp:579 stores the sub-zone's turn mode in v1e0538 *before*
+     * DM2_PERFORM_MOVE runs; c_move.cpp:332 reads it back after a successful
+     * move and calls DM2_PERFORM_TURN_SQUAD with it. The value was computed
+     * here and then dropped, so the diagonal push/pull zones (params 1, 2, 4
+     * and 5) shoved the body without ever rotating the party. */
+    if (cb->v1e0538)
+        *cb->v1e0538 = mode;
+
     /* Move the record */
     if (cb->move_record)
         cb->move_record(ctx, record, target_x, target_y, dest_x, dest_y);
@@ -1278,6 +1329,7 @@ void dm2_v1_push_pull_rigid_body(
     r.pushed = 1;
     r.target_x = dest_x;
     r.target_y = dest_y;
+    r.turn_mode = mode;
     if (receipt) *receipt = r;
 }
 
@@ -1327,28 +1379,58 @@ void dm2_v1_adjust_ui_event(
             }
         }
     } else if (*idx >= 95 && *idx <= 98) {
-        /* Movement arrows (idx 95-98).
-         * Check player position and hand cooldown. */
-        if (cb->v1e0288 != 0) {
-            *idx = 0;
-            r.suppressed = 1;
-        } else {
-            int16_t curacthero = cb->get_curacthero(ctx);
-            if (curacthero != 0) {
-                int16_t hero = (int16_t)(curacthero - 1);
-                int16_t pos = cb->get_player_position(ctx, hero);
-                if (pos < 0) {
-                    *idx = 0;
-                    r.suppressed = 1;
-                } else {
-                    int16_t cd0 = cb->get_hero_hand_cooldown(ctx, hero, 0);
-                    int16_t cd1 = cb->get_hero_hand_cooldown(ctx, hero, 1);
-                    if (cd0 > 0 || cd1 > 0) {
-                        *idx = 0;
-                        r.suppressed = 1;
+        /* Movement arrows (idx 95-98), c_input.cpp:119-148.
+         *
+         * The source picks the party slot from the arrow cell itself
+         * ((idx - 95 + v1e0258) & 3), then splits the cell into a move half
+         * and a turn half by comparing the click's distance to the rect's
+         * horizontal edge (w3) against its vertical edge (w2):
+         *   w3 > w2 -> move, allowed only while handcooldown[2] is clear
+         *   else    -> idx -= 79, rewriting 95..98 into turn commands 16..19
+         * Anything that does not reach one of those two outcomes falls to
+         * `if (!skip00195) idx = 0;` at c_input.cpp:170.
+         *
+         * The previous version used curacthero rather than the arrow-derived
+         * slot, checked hand cooldowns 0 and 1 instead of 2, and never
+         * performed the idx -= 79 rewrite -- so the turn halves of the arrow
+         * cluster were dead and mouse turning did not work at all. */
+        int accepted = 0;
+
+        if (cb->v1e0288 == 0 && cb->get_player_at_position) {
+            int16_t slot = (int16_t)(((*idx - 95) + cb->v1e0258) & 3);
+            int16_t hero = cb->get_player_at_position(ctx, slot);
+            if (hero >= 0) {
+                int16_t w2;
+                int16_t w3;
+
+                if (*idx > 96)
+                    w2 = (int16_t)(y - cb->rect_y);
+                else
+                    w2 = (int16_t)(cb->rect_h + cb->rect_y - 1 - y);
+
+                if (*idx != 96 && *idx != 97)
+                    w3 = (int16_t)(cb->rect_x + cb->rect_w - 1 - x);
+                else
+                    w3 = (int16_t)(x - cb->rect_x);
+
+                if (w3 > w2) {
+                    /* Move half: gated on the third hand-cooldown slot. */
+                    if (cb->get_hero_hand_cooldown &&
+                        cb->get_hero_hand_cooldown(ctx, hero, 2) == 0) {
+                        accepted = 1;
                     }
+                } else {
+                    /* Turn half: 95..98 -> 16..19. */
+                    *idx = (int16_t)(*idx - 79);
+                    r.turned = 1;
+                    accepted = 1;
                 }
             }
+        }
+
+        if (!accepted) {
+            *idx = 0;
+            r.suppressed = 1;
         }
     }
 

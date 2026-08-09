@@ -10,8 +10,14 @@ int dm2_v1_write_possession_indices(
     int count)
 {
     if (!session || !cb || !cb->resolve_possession_index) return -1;
+    if (count > 0 && !possession_links) return -1;
 
-    for (int i = count - 1; i >= 0; i--) {
+    /* DM2_WRITE_POSSESSION_INDICES (sksvgame.cpp:1690-1695) walks the link
+     * array forward (`*wptrrg5++`), and so does its reader DM2_2066_062b
+     * (:1013-1019) and dm2_v1_read_record_checkcode. Emitting them in
+     * reverse bound every 10-bit continuation value to the wrong record on
+     * round-trip -- fully reversed when every entry is type 9 or 0xE. */
+    for (int i = 0; i < count; i++) {
         uint16_t link = possession_links[i];
         int record_type = (link & 0x3C00) >> 10;
 

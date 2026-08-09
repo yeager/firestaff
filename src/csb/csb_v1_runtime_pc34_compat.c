@@ -300,8 +300,16 @@ int csb_v1_runtime_write_original_atari_save_to_path(
         return -1;
     }
     fp = fopen(temporary_path, "wb");
-    if (fp && fwrite(output, 1u, size, fp) == size && fclose(fp) == 0) {
+    if (fp) {
+        /* fclose() must run exactly once and fp must be cleared regardless of
+         * its result. The old condition put fclose() inside the && chain and
+         * set fp = NULL only in the true branch, so a nonzero fclose (a
+         * deferred flush failure on a full or network volume) left fp
+         * non-NULL and the cleanup below closed the same stream twice. */
+        int write_ok = (fwrite(output, 1u, size, fp) == size);
+        if (fclose(fp) != 0) write_ok = 0;
         fp = NULL;
+        if (write_ok) {
         if (csb_v1_runtime_original_atari_backup_path(destination_path,
                                                        backup_path,
                                                        sizeof(backup_path))) {
@@ -322,6 +330,7 @@ int csb_v1_runtime_write_original_atari_save_to_path(
             result = 0;
         } else if (backup_created) {
             (void)rename(backup_path, destination_path);
+        }
         }
     }
     if (fp) fclose(fp);

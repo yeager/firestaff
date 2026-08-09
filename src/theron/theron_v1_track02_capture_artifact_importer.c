@@ -141,8 +141,13 @@ int theron_v1_track02_capture_artifact_import(
             fclose(bundle); goto rejected;
         }
     }
-    if (fgets(line, sizeof(line), bundle) || fclose(bundle) != 0 ||
-        !m12_file_md5_hex(request->bundle_path, final_bundle_md5) || strcmp(bundle_md5, final_bundle_md5)) goto rejected;
+    /* Trailing content in the bundle short-circuited past fclose() and
+     * leaked the handle; close unconditionally first. */
+    { int io_failed = (fgets(line, sizeof(line), bundle) != NULL);
+      if (fclose(bundle) != 0) io_failed = 1;
+      if (io_failed ||
+          !m12_file_md5_hex(request->bundle_path, final_bundle_md5) ||
+          strcmp(bundle_md5, final_bundle_md5)) goto rejected; }
     receipt.status = THERON_V1_TRACK02_CAPTURE_ARTIFACT_READY;
     receipt.bundle_md5_verified = 1; receipt.mednafen_trace_md5_verified = 1;
     receipt.complete_route_set_consumed = receipt.opaque_envelope_verified = 1;

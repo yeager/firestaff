@@ -984,6 +984,31 @@ int dm2_v1_original_raw_sksave_tile_record_link(
     return 1;
 }
 
+/* GAME_LOAD's three fixed globals sections (sksvgame.cpp:1512-1514):
+ * (1 x 8), (1 x 0x40) and (2 x 0x40) = 8, 64 and 128 bytes, matching the
+ * writer at :2235-2239. dm2_suppress_reader_read indexes mask[i] for
+ * i < count, so count is a byte total and the mask must be that long; the
+ * all-ones mask here is 2 bytes, so the sections are read element by element
+ * exactly as the writer emits them. */
+static int dm2_new_game_read_fixed_globals(
+    DM2_SuppressReader *reader, const uint8_t *full_mask,
+    uint8_t *v1e0104, size_t v1e0104_len,
+    uint8_t *globalb, size_t globalb_len,
+    uint8_t *globalw, size_t globalw_len)
+{
+    size_t i;
+    for (i = 0u; i < v1e0104_len; ++i)
+        if (dm2_suppress_reader_read(reader, full_mask, 1u, v1e0104 + i, 0u))
+            return 1;
+    for (i = 0u; i < globalb_len; ++i)
+        if (dm2_suppress_reader_read(reader, full_mask, 1u, globalb + i, 0u))
+            return 1;
+    for (i = 0u; i + 1u < globalw_len; i += 2u)
+        if (dm2_suppress_reader_read(reader, full_mask, 2u, globalw + i, 0u))
+            return 1;
+    return 0;
+}
+
 int dm2_v1_original_raw_sksave_fixed_state_receipt(
     const uint8_t *buf, size_t buf_size,
     DM2_V1_OriginalRawSaveStateReceipt *out_receipt)
@@ -1075,9 +1100,15 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     memset(v1e0104, 0, sizeof(v1e0104));
     memset(globalb, 0, sizeof(globalb));
     memset(globalw, 0, sizeof(globalw));
-    if (dm2_suppress_reader_read(&reader, full_mask, 1u, v1e0104, 0u) != 0 ||
-        dm2_suppress_reader_read(&reader, full_mask, 1u, globalb, 0u) != 0 ||
-        dm2_suppress_reader_read(&reader, full_mask, 2u, globalw, 0u) != 0) {
+    /* sksvgame.cpp:1512-1514 reads (1 x 8), (1 x 0x40) and (2 x 0x40) = 8,
+     * 64 and 128 bytes. Passing the element sizes as the count read only the
+     * first element of each section, leaving the stream 1568 bits short.
+     * dm2_suppress_reader_read indexes mask[i] for i < count, so the totals
+     * cannot be passed either -- loop per element, like the writer. */
+    if (dm2_new_game_read_fixed_globals(&reader, full_mask,
+                                        v1e0104, sizeof(v1e0104),
+                                        globalb, sizeof(globalb),
+                                        globalw, sizeof(globalw)) != 0) {
         return 0;
     }
     candidate.v1e0104_hash = dm2_v1_raw_sksave_hash(v1e0104, sizeof(v1e0104));
@@ -1184,9 +1215,13 @@ int dm2_v1_original_raw_sksave_materialize_heroes(
     if (dm2_suppress_reader_read(&reader,
                                  dm2_v1_save_mask_savegame_buffer(),
                                  60u, discard, 0u) != 0 ||
-        dm2_suppress_reader_read(&reader, full_mask, 1u, discard, 0u) != 0 ||
-        dm2_suppress_reader_read(&reader, full_mask, 1u, discard, 0u) != 0 ||
-        dm2_suppress_reader_read(&reader, full_mask, 2u, discard, 0u) != 0) {
+        /* Same three sections as sksvgame.cpp:1512-1514. They are skipped
+         * rather than retained, but must still be *consumed* in full or the
+         * hero reads below start 1568 bits early. */
+        dm2_new_game_read_fixed_globals(&reader, full_mask,
+                                        discard, 8u,
+                                        discard, 64u,
+                                        discard, 128u) != 0) {
         return 0;
     }
     for (i = 0u; i < state_receipt->champion_count; ++i) {

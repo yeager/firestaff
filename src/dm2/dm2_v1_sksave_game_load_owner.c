@@ -207,6 +207,39 @@ int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
     return 1;
 }
 
+/* GAME_LOAD's three fixed globals sections, sksvgame.cpp:1512-1514:
+ *     SUPPRESS_READER(v1e0104, mask, 1, 0x8)
+ *     SUPPRESS_READER(globalb, mask, 1, 0x40)
+ *     SUPPRESS_READER(globalw, mask, 2, 0x40)
+ * i.e. 8, 64 and 128 bytes, matching the writer at :2235-2239 and the
+ * orchestrator's ORCH_SUPPRESS(data, mask, elem, count) loops.
+ *
+ * dm2_suppress_reader_read indexes mask[i] for i < count, so count is a byte
+ * total AND the mask must be that long. Passing the element sizes (1, 1, 2)
+ * read only the first element of each section -- 4 bytes where the writer
+ * emitted 200, leaving the stream 1568 bits short so heroes, savegames1,
+ * timers and the record-link stream all decoded from the wrong offset.
+ * Passing the totals instead would have run off the end of the 2-byte mask.
+ * Loop per element, exactly like the writer. */
+static int dm2_sksave_read_fixed_globals(
+    DM2_SuppressReader *reader, const uint8_t *full_mask,
+    uint8_t *v1e0104, size_t v1e0104_len,
+    uint8_t *globalb, size_t globalb_len,
+    uint8_t *globalw, size_t globalw_len)
+{
+    size_t i;
+    for (i = 0u; i < v1e0104_len; ++i)
+        if (dm2_suppress_reader_read(reader, full_mask, 1u, v1e0104 + i, 0u))
+            return 1;
+    for (i = 0u; i < globalb_len; ++i)
+        if (dm2_suppress_reader_read(reader, full_mask, 1u, globalb + i, 0u))
+            return 1;
+    for (i = 0u; i + 1u < globalw_len; i += 2u)
+        if (dm2_suppress_reader_read(reader, full_mask, 2u, globalw + i, 0u))
+            return 1;
+    return 0;
+}
+
 static int dm2_v1_sksave_owner_decode_fixed(
     DM2_V1_SksaveGameLoadOwner *owner, const uint8_t *raw_body,
     size_t raw_body_size)
@@ -232,9 +265,10 @@ static int dm2_v1_sksave_owner_decode_fixed(
         raw_body_size - owner->state.dungeon.suppress_state_offset);
     if (dm2_suppress_reader_read(&reader, dm2_v1_save_mask_savegame_buffer(),
             sizeof(owner->savegame_buffer), owner->savegame_buffer, 0u) ||
-        dm2_suppress_reader_read(&reader, full_mask, 1u, owner->v1e0104, 0u) ||
-        dm2_suppress_reader_read(&reader, full_mask, 1u, owner->globalb, 0u) ||
-        dm2_suppress_reader_read(&reader, full_mask, 2u, owner->globalw, 0u))
+        dm2_sksave_read_fixed_globals(&reader, full_mask,
+                                      owner->v1e0104, sizeof(owner->v1e0104),
+                                      owner->globalb, sizeof(owner->globalb),
+                                      owner->globalw, sizeof(owner->globalw)))
         return 0;
     /* The downstream materializer repeats the exact hero/timer stream into
      * its source-owned owners. These reads establish the retained fixed

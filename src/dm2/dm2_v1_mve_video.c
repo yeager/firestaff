@@ -172,8 +172,11 @@ void dm2_v1_mve_video_init(DM2_V1_MveVideo *video)
 int dm2_v1_mve_video_decode_presentation(DM2_V1_MveVideo *v,const DM2_V1_MvePresentation *p,const uint8_t *bytes,size_t n)
 {
     DM2_MveReader r; uint16_t gridx,gridy; unsigned block, x, y; uint8_t opcode;
-    if(!v||!p||!bytes||!v->initialized||!p->valid||p->code_map_size!=500u||p->video_version!=3u||p->video_data_size<14u||p->code_map_offset>n-p->code_map_size||p->video_data_offset>n-p->video_data_size)return 0;
-    if(p->palette_size){uint16_t start,count;size_t i;if(p->palette_offset>n-p->palette_size||p->palette_size<4u)return 0;start=(uint16_t)(bytes[p->palette_offset]|((uint16_t)bytes[p->palette_offset+1u]<<8u));count=(uint16_t)(bytes[p->palette_offset+2u]|((uint16_t)bytes[p->palette_offset+3u]<<8u));if((size_t)count*3u+4u!=p->palette_size||(unsigned)start+(unsigned)count>256u)return 0;for(i=0u;i<count*3u;++i){uint8_t q=bytes[p->palette_offset+4u+i];v->palette_rgb[(size_t)start*3u+i]=(uint8_t)((q<<2u)|(q>>4u));}}
+    /* n<size is tested before n-size: both operands promote to size_t, so a
+     * short buffer would otherwise wrap the subtraction to a huge value and
+     * let the offset check pass, giving an out-of-bounds read below. */
+    if(!v||!p||!bytes||!v->initialized||!p->valid||p->code_map_size!=500u||p->video_version!=3u||p->video_data_size<14u||n<p->code_map_size||p->code_map_offset>n-p->code_map_size||n<p->video_data_size||p->video_data_offset>n-p->video_data_size)return 0;
+    if(p->palette_size){uint16_t start,count;size_t i;if(p->palette_size<4u||n<p->palette_size||p->palette_offset>n-p->palette_size)return 0;start=(uint16_t)(bytes[p->palette_offset]|((uint16_t)bytes[p->palette_offset+1u]<<8u));count=(uint16_t)(bytes[p->palette_offset+2u]|((uint16_t)bytes[p->palette_offset+3u]<<8u));if((size_t)count*3u+4u!=p->palette_size||(unsigned)start+(unsigned)count>256u)return 0;for(i=0u;i<count*3u;++i){uint8_t q=bytes[p->palette_offset+4u+i];v->palette_rgb[(size_t)start*3u+i]=(uint8_t)((q<<2u)|(q>>4u));}}
     gridx=(uint16_t)(bytes[p->video_data_offset+8u]|((uint16_t)bytes[p->video_data_offset+9u]<<8u));gridy=(uint16_t)(bytes[p->video_data_offset+10u]|((uint16_t)bytes[p->video_data_offset+11u]<<8u));
     if(gridx!=40u||gridy!=25u)return 0;
     r.data=bytes+p->video_data_offset+14u;r.size=p->video_data_size-14u;r.at=0u;

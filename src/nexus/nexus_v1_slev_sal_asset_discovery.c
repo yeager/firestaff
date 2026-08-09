@@ -52,7 +52,13 @@ static int direct_identity(const char *data_dir, const char *name,
         total += count;
         hash = fnv1a64_update(hash, buffer, count);
     }
-    if (ferror(file) || fclose(file) != 0 || !total || !hash) return 0;
+    /* Close unconditionally; a read error must not short-circuit past it and
+     * leak a descriptor per scanned corpus file. */
+    {
+        int io_failed = ferror(file) != 0;
+        if (fclose(file) != 0) io_failed = 1;
+        if (io_failed || !total || !hash) return 0;
+    }
     identity.valid = 1;
     snprintf(identity.direct_path, sizeof(identity.direct_path), "%s", path);
     snprintf(identity.canonical_name, sizeof(identity.canonical_name), "%s", name);
@@ -197,7 +203,11 @@ int nexus_v1_slev_sal_direct_identity_still_matches(
             total += count;
             hash = fnv1a64_update(hash, buffer, count);
         }
-        if (ferror(file) || fclose(file) != 0) return 0;
+        {
+            int io_failed = ferror(file) != 0;
+            if (fclose(file) != 0) io_failed = 1;
+            if (io_failed) return 0;
+        }
         return total == identity->byte_count && hash == identity->fnv1a64;
     }
 }

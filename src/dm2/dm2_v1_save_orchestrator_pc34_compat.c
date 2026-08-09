@@ -306,9 +306,12 @@ int dm2_v1_save_orchestrate(
         int poss_count = cb->get_sgwords_field(cb->ctx, 0x0f);
         /* Possession links buffer is managed by caller via possession_cb. */
 
-        /* The actual call needs the possession link array — but the
-         * orchestrator doesn't own it. The possession callback resolves
-         * indices directly. For the orchestrator, we pass through. */
+        /* The orchestrator does not own the possession link array, but
+         * dm2_v1_write_possession_indices indexes it directly. Passing NULL
+         * with a non-zero count was a null dereference during save for any
+         * dungeon with type-0xF records; the callee now rejects that pair,
+         * so this fails closed with a diagnostic instead. Emitting the
+         * section for real needs the link array threaded through to here. */
         rc = dm2_v1_write_possession_indices(&wrs, &pcb, NULL, poss_count);
         if (rc != 0) { result->error = 14; return -1; }
 

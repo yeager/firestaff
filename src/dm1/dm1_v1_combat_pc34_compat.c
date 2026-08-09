@@ -904,7 +904,15 @@ int dm1_creature_attack_champion(DM1_CombatState* s, const DM1_CreatureGroup* gr
         (ci->woundProbFeet & 0x0F);
     allowedWounds = dm1_f0230_allowed_wound_pc34(woundTest, woundProbabilities);
 
-    atk = dm1_combat_random(16) + ci->attack;
+    /* ReDMCSB PROJEXPL.C:1392 —
+     *   Attack = (RANDOM(16) + CreatureInfo.Attack + DoubledMapDifficulty)
+     *            - (F0303_CHAMPION_GetSkillLevel(champion, C07_SKILL_PARRY) << 1)
+     * The parry term was missing, so the skill gave no mitigation at all:
+     * because the attack then runs through >>1, +random, >>2, dropping the
+     * subtraction roughly doubled late-game melee damage taken by a
+     * high-Parry champion. DoubledMapDifficulty stays 0 here, as documented
+     * above — this wrapper has no current-map global context. */
+    atk = dm1_combat_random(16) + ci->attack - (ch->skillParry << 1);
     if (atk <= 1) {
         if (dm1_combat_random(2) != 0) {
             return 0;

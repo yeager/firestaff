@@ -48,14 +48,24 @@ static int parse_dir_record(const uint8_t *data, int offset, int buf_size,
     return rec_len;
 }
 
+/* The directory extents below come from the disc image, so a crafted or
+ * corrupt one can point a subdirectory at its own LBA (or build a longer
+ * cycle). Directory records never increment *count, so the max_files guard
+ * cannot break such a loop, and every frame holds a 2048-byte sector buffer
+ * -- roughly 4000 frames exhaust an 8 MB stack. ISO 9660 itself limits
+ * hierarchies to 8 levels, so cap the depth. */
+#define NEXUS_ISO_MAX_DIR_DEPTH 8
+
 /* Recursively parse directory tree */
-static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
+static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
     int sector_size, int data_offset,
-    Nexus_ISOFile *files, int *count, int max_files)
+    Nexus_ISOFile *files, int *count, int max_files, int depth)
 {
     uint8_t sector_buf[NEXUS_ISO_DATA_SIZE];
     int sectors = (dir_size + NEXUS_ISO_DATA_SIZE - 1) / NEXUS_ISO_DATA_SIZE;
     int s, offset;
+
+    if (depth > NEXUS_ISO_MAX_DIR_DEPTH) return 0;
 
     for (s = 0; s < sectors; s++) {
         if (read_sector_payload(fp, dir_lba + s, sector_size, data_offset,
@@ -72,17 +82,27 @@ static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
                 if (!entry.is_dir) {
                     files[*count] = entry;
                     (*count)++;
-                } else if (strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
+                } else if (strcmp(entry.name, ".") != 0 &&
+                           strcmp(entry.name, "..") != 0 &&
+                           entry.lba != dir_lba) {
                     /* Recurse into subdirectory */
-                    parse_directory(fp, entry.lba, entry.size,
-                                    sector_size, data_offset,
-                                    files, count, max_files);
+                    parse_directory_depth(fp, entry.lba, entry.size,
+                                          sector_size, data_offset,
+                                          files, count, max_files, depth + 1);
                 }
             }
             offset += rec_len;
         }
     }
     return 0;
+}
+
+static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
+    int sector_size, int data_offset,
+    Nexus_ISOFile *files, int *count, int max_files)
+{
+    return parse_directory_depth(fp, dir_lba, dir_size, sector_size,
+                                 data_offset, files, count, max_files, 0);
 }
 
 int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {

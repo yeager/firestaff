@@ -20,12 +20,25 @@ static void copy_strA(char *dst, const uint8_t *src, int len) {
         dst[i] = '\0';
 }
 
-static int scan_directory(const uint8_t *image, size_t image_size,
-                          uint32_t dir_lba, uint32_t dir_size,
-                          DM2_V1_FmtownsDiscReceipt *out) {
+/* An ISO 9660 directory record is a 33-byte fixed header followed by
+ * name_len name bytes, so the shortest legal record is 34 bytes. */
+#define DM2_FMTOWNS_DIR_RECORD_HEADER 33u
+#define DM2_FMTOWNS_DIR_RECORD_MIN    (DM2_FMTOWNS_DIR_RECORD_HEADER + 1u)
+
+/* The "DATA" recursion below follows an LBA taken from the image, so a
+ * crafted image can point two directories at each other. Cap the depth:
+ * the real layout only nests one level. */
+#define DM2_FMTOWNS_DIR_MAX_DEPTH 8
+
+static int scan_directory_depth(const uint8_t *image, size_t image_size,
+                                uint32_t dir_lba, uint32_t dir_size,
+                                DM2_V1_FmtownsDiscReceipt *out, int depth) {
     uint8_t dirbuf[2048];
     uint32_t sectors_read = 0;
     uint32_t pos = 0;
+
+    if (depth > DM2_FMTOWNS_DIR_MAX_DEPTH)
+        return -1;
 
     if ((uint64_t)dir_lba * DM2_FMTOWNS_SECTOR_SIZE +
         DM2_FMTOWNS_SECTOR_SIZE > image_size)
@@ -51,10 +64,20 @@ static int scan_directory(const uint8_t *image, size_t image_size,
             size_t bare_len;
 
             if (rec_len == 0) break;
+            /* rec_len must cover the fixed 33-byte header before any of the
+             * fields below are read; a short record would otherwise let
+             * dirbuf[pos + 32] and the name copy run past the sector. */
+            if (rec_len < DM2_FMTOWNS_DIR_RECORD_MIN) break;
             if (pos + rec_len > DM2_FMTOWNS_SECTOR_DATA_SIZE) break;
 
             name_len = dirbuf[pos + 32];
             if (name_len < 1 || name_len > 63) { pos += rec_len; continue; }
+            /* The name must also lie inside this record, not merely inside
+             * the sector. */
+            if ((uint32_t)DM2_FMTOWNS_DIR_RECORD_HEADER + name_len > rec_len) {
+                pos += rec_len;
+                continue;
+            }
 
             memcpy(name, dirbuf + pos + 33, name_len);
             name[name_len] = '\0';
@@ -72,7 +95,8 @@ static int scan_directory(const uint8_t *image, size_t image_size,
                 /* Directory — recurse into DATA/ */
                 if ((strcmp(name, "DATA") == 0 || strcmp(name, "data") == 0) &&
                     file_lba != dir_lba) {
-                    scan_directory(image, image_size, file_lba, file_size, out);
+                    scan_directory_depth(image, image_size, file_lba,
+                                         file_size, out, depth + 1);
                 }
             } else {
                 DM2_V1_FmtownsIsoEntry ent;
@@ -118,6 +142,12 @@ static int scan_directory(const uint8_t *image, size_t image_size,
         }
     }
     return 0;
+}
+
+static int scan_directory(const uint8_t *image, size_t image_size,
+                          uint32_t dir_lba, uint32_t dir_size,
+                          DM2_V1_FmtownsDiscReceipt *out) {
+    return scan_directory_depth(image, image_size, dir_lba, dir_size, out, 0);
 }
 
 int dm2_v1_fmtowns_disc_probe(const uint8_t *image, size_t image_size,

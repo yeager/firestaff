@@ -212,6 +212,12 @@ int dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
         }
         if (*out_size == file_size) return 1;
         uint32_t fat_offset = cluster + cluster / 2u;
+        /* fat[] holds only the 4 FAT sectors read above, so the FAT12 entry
+         * for a high cluster number lies past it. The loop bound
+         * (cluster < 0xff8) allows clusters far beyond what 2048 bytes cover,
+         * so a crafted image could read ~1 KB off the end of this stack
+         * buffer. Reject rather than read out of bounds. */
+        if (fat_offset + 1u >= sizeof(fat)) return 0;
         uint32_t next = (cluster & 1u) == 0u
             ? (fat[fat_offset] | ((fat[fat_offset + 1u] & 0x0fu) << 8))
             : ((fat[fat_offset] >> 4) | (fat[fat_offset + 1u] << 4));

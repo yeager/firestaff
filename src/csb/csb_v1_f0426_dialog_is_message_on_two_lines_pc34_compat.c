@@ -22,8 +22,17 @@ int csb_v1_f0426_dialog_is_message_on_two_lines_pc34_compat(
     }
     strcpy(part1, message);
     splitPosition = stringLength >> 1;
-    while ((part1[splitPosition] != ' ') && splitPosition < stringLength) {
+    /* The bound must be tested before the subscript. In the old order the
+     * loop read part1[splitPosition] first, so a message with no space in
+     * its second half exited with splitPosition == stringLength and the
+     * strcpy below started at part1[stringLength + 1] -- one past the
+     * terminator, and past the caller's buffer for a full-length message. */
+    while (splitPosition < stringLength && part1[splitPosition] != ' ') {
         splitPosition++;
+    }
+    if (splitPosition >= stringLength) {
+        /* No split point exists, so this is not a two-line message. */
+        return 0;
     }
     part1[splitPosition] = '\0';
     strcpy(part2, &part1[splitPosition + 1U]);

@@ -82,7 +82,15 @@ static void test_ai_name_table(void)
             named++;
         }
     }
-    PROBE_ASSERT(named >= 30, "at least 30 named AI entries (got %d)", named);
+    /* Fixed Skullkeep AI records have no text owner: SKProject's getAIName()
+     * is compiled as DEBUG_HELPER, not original UI data, so
+     * dm2_v1_creature_ai_name deliberately returns NULL for every index
+     * (src/dm2/dm2_v1_creature.c:71-77). Exposing those developer labels --
+     * or guessed ones -- as game text would be fabricated content. This
+     * probe previously required >= 30 names, i.e. the retired behaviour. */
+    PROBE_ASSERT(named == 0,
+                 "no AI names are exposed without a source text owner "
+                 "(got %d)", named);
 }
 
 /* ── AI spec access ─────────────────────────────────────────────────── */
@@ -252,14 +260,19 @@ static void test_sound(void)
     PROBE_ASSERT(dm2_v1_sound_play_music(28) < 0, "music track 28 out of range");
     PROBE_ASSERT(dm2_v1_sound_stop_music() == 0, "stop_music returns 0");
 
-    PROBE_ASSERT(strcmp(dm2_v1_sound_name(DM2_SOUND_CATEGORY_STANDARD, 0x81), "Explosion") == 0,
-                 "sound_name(Explosion) correct");
-    PROBE_ASSERT(strcmp(dm2_v1_sound_name(DM2_SOUND_CATEGORY_CHAMPION, 0x82), "Champion Gethit") == 0,
-                 "sound_name(Champion Gethit) correct");
-    PROBE_ASSERT(strcmp(dm2_v1_sound_name(DM2_SOUND_CATEGORY_CREATURE, 0x11), "Creature Death") == 0,
-                 "sound_name(Creature Death) correct");
-    PROBE_ASSERT(strcmp(dm2_v1_sound_name(DM2_SOUND_CATEGORY_STANDARD, 0xFF), "?") == 0,
-                 "unknown sound returns '?'");
+    /* dm2_v1_sound_name returns NULL for every id
+     * (src/dm2/dm2_v1_sound.c:1813-1817): the Skullkeep sound ids have no
+     * source text owner, so labels like "Explosion" would be host-invented
+     * game text. These four checks previously strcmp'd that NULL against
+     * such labels, which segfaulted the probe outright. */
+    PROBE_ASSERT(dm2_v1_sound_name(DM2_SOUND_CATEGORY_STANDARD, 0x81) == NULL,
+                 "no standard sound name without a source text owner");
+    PROBE_ASSERT(dm2_v1_sound_name(DM2_SOUND_CATEGORY_CHAMPION, 0x82) == NULL,
+                 "no champion sound name without a source text owner");
+    PROBE_ASSERT(dm2_v1_sound_name(DM2_SOUND_CATEGORY_CREATURE, 0x11) == NULL,
+                 "no creature sound name without a source text owner");
+    PROBE_ASSERT(dm2_v1_sound_name(DM2_SOUND_CATEGORY_STANDARD, 0xFF) == NULL,
+                 "unknown sound id is also unnamed");
 }
 
 /* ── Source evidence ─────────────────────────────────────────────────── */

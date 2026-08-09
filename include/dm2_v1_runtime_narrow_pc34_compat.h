@@ -688,7 +688,11 @@ int32_t dm2_v1_creature_attacks_creature(
  * (flags & 0x80, i.e. a forced pickpocket/steal), otherwise the regular
  * per-type handle_mask bit for the item's class decides. */
 typedef struct {
-    uint32_t handle_mask;   /* bit N set => creature type can handle class N */
+    /* bit N set => creature type can handle class N.
+     * 64-bit because item_class is (item & 0x3f), i.e. 0..0x3d: classes 32
+     * and above -- including the moneybox class 0x29 -- are not
+     * representable in a 32-bit mask, and shifting by them is undefined. */
+    uint64_t handle_mask;
 } DM2_V1_CreatureHandleCaps;
 
 typedef struct {

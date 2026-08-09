@@ -360,13 +360,20 @@ static int theron_v1_track02_media_materialize_us_split(
     if (snprintf(temp_path, sizeof(temp_path), "%s.tmp-%ld", cache_path,
                  (long)THERON_V1_TRACK02_GETPID()) >= (int)sizeof(temp_path) ||
         !(out = fopen(temp_path, "wb"))) return 0;
-    if (!theron_v1_track02_media_copy_file(out, head) ||
-        !theron_v1_track02_media_copy_file(out, tail) || fclose(out) != 0 ||
-        !m12_file_md5_hex(temp_path, image_md5) ||
-        strcmp(image_md5, THERON_TRACK02_MD5_US_ISO) != 0 ||
-        rename(temp_path, cache_path) != 0) {
-        remove(temp_path);
-        return 0;
+    {
+        /* A failed copy short-circuited past fclose(), so the digest and
+         * remove() below ran against a still-open handle (which fails
+         * outright on Windows). Close before anything reads the path. */
+        int io_failed = !theron_v1_track02_media_copy_file(out, head);
+        if (!io_failed && !theron_v1_track02_media_copy_file(out, tail)) io_failed = 1;
+        if (fclose(out) != 0) io_failed = 1;
+        if (io_failed ||
+            !m12_file_md5_hex(temp_path, image_md5) ||
+            strcmp(image_md5, THERON_TRACK02_MD5_US_ISO) != 0 ||
+            rename(temp_path, cache_path) != 0) {
+            remove(temp_path);
+            return 0;
+        }
     }
     snprintf(payload_path, THERON_V1_TRACK02_MEDIA_PATH_CAPACITY, "%s", cache_path);
     return 1;

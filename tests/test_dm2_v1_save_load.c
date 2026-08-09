@@ -707,6 +707,121 @@ static int test_suppress_self_test(void)
 
 /* ── Test 9: Champion mask table ──────────────────────────── */
 
+/* GAME_LOAD's three fixed globals sections are emitted by the save
+ * orchestrator as (1 x 8), (1 x 0x40) and (2 x 0x40) -- 8, 64 and 128 bytes,
+ * matching sksvgame.cpp:2235-2239 and its reader at :1512-1514.
+ *
+ * dm2_suppress_reader_read takes that product as a single byte count. The
+ * load paths passed the element sizes (1, 1, 2) instead, consuming 4 bytes
+ * where the writer had produced 200 -- 1568 bits short. Everything after
+ * (heroes, savegames1, timers, the record-link stream) then decoded from the
+ * wrong bit offset.
+ *
+ * No existing test caught this: the load path's own
+ * `reader.position == record_link_bitstream_offset` check compares against an
+ * offset derived from the *same* read sequence, so both sides were
+ * consistently wrong and agreed. This test is deliberately independent of
+ * that receipt -- it pins the reader against the writer directly. */
+static int test_globals_sections_writer_reader_widths(void)
+{
+    printf("  GAME_LOAD fixed globals: writer/reader width cross-check...\n");
+    {
+        enum { V1E0104_BYTES = 8, GLOBALB_BYTES = 64, GLOBALW_BYTES = 128 };
+        const size_t total = V1E0104_BYTES + GLOBALB_BYTES + GLOBALW_BYTES;
+        uint8_t full_mask[2] = { 0xffu, 0xffu };
+        uint8_t src[200];
+        uint8_t enc[512];
+        uint8_t v1e0104[V1E0104_BYTES];
+        uint8_t globalb[GLOBALB_BYTES];
+        uint8_t globalw[GLOBALW_BYTES];
+        DM2_SuppressWriter writer;
+        DM2_SuppressReader reader;
+        size_t out_pos = 0, w = 0;
+        size_t i;
+        int rc;
+
+        for (i = 0; i < total; i++) src[i] = (uint8_t)(i * 7u + 3u);
+
+        /* Emit exactly as dm2_v1_save_orchestrator_pc34_compat.c:173-190. */
+        dm2_suppress_writer_init(&writer);
+        for (i = 0; i < V1E0104_BYTES; i++) {
+            rc = dm2_suppress_writer_write(&writer, src + i, full_mask, 1,
+                                           enc + out_pos, sizeof(enc) - out_pos, &w);
+            if (rc != 0) { printf("    FAIL: v1e0104 write\n"); return 0; }
+            out_pos += w;
+        }
+        for (i = 0; i < GLOBALB_BYTES; i++) {
+            rc = dm2_suppress_writer_write(&writer, src + V1E0104_BYTES + i,
+                                           full_mask, 1,
+                                           enc + out_pos, sizeof(enc) - out_pos, &w);
+            if (rc != 0) { printf("    FAIL: globalb write\n"); return 0; }
+            out_pos += w;
+        }
+        for (i = 0; i < GLOBALW_BYTES / 2; i++) {
+            rc = dm2_suppress_writer_write(&writer,
+                    src + V1E0104_BYTES + GLOBALB_BYTES + i * 2,
+                    full_mask, 2,
+                    enc + out_pos, sizeof(enc) - out_pos, &w);
+            if (rc != 0) { printf("    FAIL: globalw write\n"); return 0; }
+            out_pos += w;
+        }
+        rc = dm2_suppress_writer_flush(&writer, enc + out_pos,
+                                       sizeof(enc) - out_pos, &w);
+        if (rc != 0) { printf("    FAIL: flush\n"); return 0; }
+        out_pos += w;
+
+        /* Read back at the widths the GAME_LOAD path uses. */
+        memset(v1e0104, 0, sizeof(v1e0104));
+        memset(globalb, 0, sizeof(globalb));
+        memset(globalw, 0, sizeof(globalw));
+        /* Element-wise, exactly as the writer emitted them: the reader
+         * indexes mask[i] for i < count, so count is a byte total AND the
+         * mask must be that long. The all-ones mask is 2 bytes. */
+        dm2_suppress_reader_init(&reader, enc, out_pos);
+        for (i = 0; i < V1E0104_BYTES; i++)
+            if (dm2_suppress_reader_read(&reader, full_mask, 1u,
+                                         v1e0104 + i, 0u)) {
+                printf("    FAIL: v1e0104 read\n"); return 0;
+            }
+        for (i = 0; i < GLOBALB_BYTES; i++)
+            if (dm2_suppress_reader_read(&reader, full_mask, 1u,
+                                         globalb + i, 0u)) {
+                printf("    FAIL: globalb read\n"); return 0;
+            }
+        for (i = 0; i + 1 < GLOBALW_BYTES; i += 2)
+            if (dm2_suppress_reader_read(&reader, full_mask, 2u,
+                                         globalw + i, 0u)) {
+                printf("    FAIL: globalw read\n"); return 0;
+            }
+
+        if (memcmp(v1e0104, src, V1E0104_BYTES) != 0) {
+            printf("    FAIL: v1e0104 did not round-trip\n"); return 0;
+        }
+        if (memcmp(globalb, src + V1E0104_BYTES, GLOBALB_BYTES) != 0) {
+            printf("    FAIL: globalb did not round-trip\n"); return 0;
+        }
+        if (memcmp(globalw, src + V1E0104_BYTES + GLOBALB_BYTES,
+                   GLOBALW_BYTES) != 0) {
+            printf("    FAIL: globalw did not round-trip\n"); return 0;
+        }
+
+        /* The decisive assertion: every mask bit is set, so the 200 source
+         * bytes encode to exactly 200 stream bytes and the reader must have
+         * consumed all of them. With the old (1, 1, 2) widths it reads only
+         * the first element of each section -- 4 bytes -- and every later
+         * section (heroes, savegames1, timers, record links) then decodes
+         * 1568 bits too early. */
+        if (reader.position != total) {
+            printf("    FAIL: reader consumed %zu of %zu globals bytes "
+                   "(stream desynced)\n", reader.position, total);
+            return 0;
+        }
+        printf("    PASS: 200 globals bytes round-trip and the reader ends "
+               "where the writer did\n");
+    }
+    return 1;
+}
+
 static int test_champion_mask(void)
 {
     printf("  Champion SUPPRESS mask (261 bytes, source-bit selectors)...\n");
@@ -3530,6 +3645,7 @@ int main(void)
     RUN(8,  test_last_session_backup_fallback);
     RUN(9,  test_cross_version_diagnostics);
     RUN(10, test_suppress_self_test);
+    RUN(11, test_globals_sections_writer_reader_widths);
     RUN(11, test_champion_mask);
     RUN(12, test_db_handle_roundtrip);
     RUN(13, test_invalid_slot_header_rejected);
