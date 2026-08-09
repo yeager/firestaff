@@ -3541,6 +3541,7 @@ static void test_orch_projectile_champion_hit_uses_equipped_armour_defense(void)
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junks[2];
     struct DungeonArmour_Compat armours[2];
+    unsigned char rawArmourData[2 * 4];
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
@@ -3556,10 +3557,23 @@ static void test_orch_projectile_champion_hit_uses_equipped_armour_defense(void)
 
     init_world(&world, &things, weapons, junks);
     memset(armours, 0, sizeof(armours));
+    memset(rawArmourData, 0, sizeof(rawArmourData));
     things.armours = armours;
     things.armourCount = 2;
+    things.thingCounts[THING_TYPE_ARMOUR] = 2;
     armours[0].type = 39;  /* ReDMCSB DUNGEON.C G0239: TORSO PLATE, defense 65. */
     armours[0].next = THING_ENDOFLIST;
+    /* F0143 resolves ARMOUR.Type from the authenticated raw record (byte 2,
+     * bits 0..6), not from the decoded mirror — a decoded-only fixture is
+     * correctly refused and yields defense 0.  Supply the source bytes so
+     * this gate actually exercises the equipped-armour defense path. */
+    rawArmourData[0] = (unsigned char)(armours[0].next & 0xffu);
+    rawArmourData[1] = (unsigned char)(armours[0].next >> 8);
+    rawArmourData[2] = (unsigned char)(armours[0].type & 0x7fu);
+    things.rawThingData[THING_TYPE_ARMOUR] = rawArmourData;
+    /* dm1_v1_dungeon_get_thing_data_pc34 refuses every raw lookup while
+     * things.loaded is 0; init_world leaves it clear. */
+    things.loaded = 1;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
@@ -3631,6 +3645,7 @@ static void test_orch_projectile_champion_hit_uses_hand_shield_strength(void) {
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junks[2];
     struct DungeonArmour_Compat armours[2];
+    unsigned char rawArmourData[2 * 4];
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
@@ -3646,10 +3661,22 @@ static void test_orch_projectile_champion_hit_uses_hand_shield_strength(void) {
 
     init_world(&world, &things, weapons, junks);
     memset(armours, 0, sizeof(armours));
+    memset(rawArmourData, 0, sizeof(rawArmourData));
     things.armours = armours;
     things.armourCount = 2;
+    things.thingCounts[THING_TYPE_ARMOUR] = 2;
     armours[0].type = 52;  /* ReDMCSB DUNGEON.C G0239: Shield of Darc. */
     armours[0].next = THING_ENDOFLIST;
+    /* F0143 resolves ARMOUR.Type from the authenticated raw record (byte 2,
+     * bits 0..6), and dm1_v1_dungeon_get_thing_data_pc34 refuses every raw
+     * lookup while things.loaded is 0 (init_world leaves it clear).  A
+     * decoded-only fixture is therefore correctly refused and contributes no
+     * shield defense at all. */
+    rawArmourData[0] = (unsigned char)(armours[0].next & 0xffu);
+    rawArmourData[1] = (unsigned char)(armours[0].next >> 8);
+    rawArmourData[2] = (unsigned char)(armours[0].type & 0x7fu);
+    things.rawThingData[THING_TYPE_ARMOUR] = rawArmourData;
+    things.loaded = 1;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
