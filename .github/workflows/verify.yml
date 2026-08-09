@@ -19,6 +19,13 @@ env:
   SDL3_TAG: release-3.2.14
 
 jobs:
+  repository-media-policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Reject BIOS, firmware and original game media
+        run: bash scripts/verify_no_original_media_tracked.sh
+
   release-notes-policy:
     runs-on: ubuntu-24.04
     steps:

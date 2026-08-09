@@ -11347,3 +11347,6 @@
   viewport stays fail-closed.
 - ✅ Regression coverage exercises both compositor and viewport adapter; the
   full CMake build passes.
+- ✅ Repository policy now rejects tracked BIOS, firmware and original
+  game-media payloads in CI, with matching local `.gitignore` protection and
+  README/Theron capture documentation. No such payload is tracked on `main`.

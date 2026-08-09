@@ -85,6 +85,10 @@ firestaff --data-dir /path/to/games --scan-data
 See [game-data setup](docs/DATA_SETUP.md) for the accepted media and the role
 of optional files for each game.
 
+Original BIOS/firmware and game media are never bundled with Firestaff or
+stored in this repository. Supply your own legally obtained files through the
+local data directory; repository CI enforces this boundary.
+
 ## Running Firestaff
 
 Build from source when a suitable package is not available:

@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
+  lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
+  repot; den nya Git-spärren måste fortsätta vara grön.
+
 - ⏳ VDP2-analysen identifierar nu per frame vilken av de två autentiserade
   Mednafen-registerserialiseringarna som används (äldre big-endian witness
   och nyare native little-endian witness). Detta rättar lagerinventeringen

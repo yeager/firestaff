@@ -1,5 +1,14 @@
 # Theron Capture Readiness
 
+## Local media boundary
+
+Theron capture uses user-supplied BIOS, CUE/BIN and other original media only
+from local paths such as `~/.mednafen/firmware/` and
+`~/.firestaff/data/theron/`. None of those payloads may be committed to
+GitHub. The repository check is
+`scripts/verify_no_original_media_tracked.sh`, and `.gitignore` provides the
+same protection for normal local work.
+
 **Update 2026-08-09:** an authenticated VDC/VCE pair now reaches the
 production Theron boot presenter. M11 installs the captured VCE palette before
 presenting the indexed frame, and the boot facade admits this source-only
