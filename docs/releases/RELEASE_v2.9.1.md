@@ -80,7 +80,7 @@ batches 1–4 have `hasAlpha: no`** — the model has been silently ignoring
 the transparent parameter this entire time. `docs/v22-asset-style-prompt.md`
 now documents this explicitly:
 
-- `Background: opaque` for ALL assets (no longer "transparent för
+- `Background: opaque` for ALL assets (no longer "transparent for
   creatures/items").
 - `aspectRatio` is silently ignored by `gpt-image-2` (use `size` instead).
 - Output filenames get a UUID suffix (basename preserved).
