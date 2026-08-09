@@ -17,6 +17,12 @@
   och produktions-viewporten ska därför fortsatt vara spärrade tills en
   positiv source-join finns.
 
+- ⏳ Samma tidsfönster med Saturn A (`0x20`) i stället för Start (`0x10`)
+  gav identisk 512-ramars SHA-256 och ingen ny VDP2-konsument eller
+  retail-source-join. Nästa inputexperiment måste därför ändra den
+  autentiska BIOS-/medieprofilen eller fånga längre efter handoff, inte bara
+  återupprepa samma knappmask.
+
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
   closed until the same Saturn trace supplies display-origin,

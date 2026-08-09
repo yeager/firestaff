@@ -105,6 +105,11 @@ but no `MENU.BPK`/`FONT256`/`TITLE`/`STABG` exact source join is found. This
 is positive input/transition evidence, not menu, HUD, or text-consumer
 admission, so semantic admission remains blocked.
 
+A parallel 512-frame run with Saturn A (`0x20`) instead of START (`0x10`)
+produced the same raw SHA-256 and the same unbound VDP2 state. The button-mask
+change therefore did not produce a verifiable menu window; this is not a
+reason to open the host text consumer or to infer a menu route.
+
 The validator also accepts `--require-vdp1-activity` for a V2 witness. This
 requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer
 payload. It is only an active-engine observation. It does not prove which

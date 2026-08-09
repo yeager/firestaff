@@ -135,6 +135,9 @@
   `decf7dbd3a327cb5623fe7c12b4820f5037dc0e977c50ec3aac38645fc353d30`.
   Source-comparatorn hittar noll exakta retail-joins, så semantic admission
   förblir korrekt spärrad.
+- ✅ Ett parallellt 512-ramarsfönster med A (`0x20`) i samma autentiserade
+  E-BIOS/French-session gav samma SHA-256 och samma obundna VDP2-state. Det
+  visar att knappmaskbytet inte producerade ett verifierbart menyfönster.
 
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
