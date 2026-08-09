@@ -59,18 +59,23 @@ CLUT at `((COLR & ~3) << 2) = 0xca90` also exactly matches that descriptor's
 
 This is the first source-plus-CLUT material receipt for the live Nexus
 viewport. Reproduce it with
-`scripts/analyze_nexus_vdp1_dgn_material_join.py`. It still does not prove
-command placement, mesh/face ownership, VDP2 composition, or startup/menu/HUD
-identity; the script therefore reports `semantic_admission=blocked` and the
-production renderer remains fail-closed.
+`scripts/analyze_nexus_vdp1_dgn_material_join.py`. The same receipt now also
+matches the canonical raw `fill_selector` face rows in `LEV00.DGN` Structure3:
+Structure2=72 is owned by entry 15 face 1. This is source-level face/mesh
+provenance, not proof of runtime face selection, command ordering, transform,
+culling, or complete scene assembly. The script therefore reports
+`semantic_admission=blocked` and the production renderer remains fail-closed.
 
 The same frame also contains four additional type-2 draws. Their exact
 word-swapped sources and CLUTs bind to `LEV00.DGN` Structure2=60, 64, 68 and
 71, plus Structure2=36 for the fifth draw. The observed VDP1 quadrilaterals
-are reported as eight signed Saturn coordinates per command. This proves
-hardware destination coordinates for those captured commands, but not yet
-which DGN face/mesh record produced them or how the complete scene command
-list is assembled by the game.
+are reported as eight signed Saturn coordinates per command. Their source
+materials now also have canonical `LEV00.DGN` Structure3 raw selector owners:
+60 → entries 11/13 faces 5/9, 64 → faces 6/10, 68 → faces 7/11, 71 → entry 14
+face 0, and 36 → entries 8/9 faces 0..6. This closes the source-level
+material-to-face-selector join and proves hardware destination coordinates for
+the captured commands, but not runtime face selection, command ordering,
+transform/culling, or complete scene assembly.
 
 An input-free pre-Start run at runtime frame 10000 independently captured
 active VDP2 NBG1 bitmap mode (`BGON=0x0002`, `CHCTLA=0x1211`) with stable VRAM

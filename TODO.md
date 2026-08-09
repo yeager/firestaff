@@ -14,6 +14,12 @@
   avlästa. Det binder hårdvarans draw-destination, men ännu inte DGN
   face/mesh-ägare eller komplett scen-/meny-/HUD-komposition.
 
+- 🔧 Nexus: de sex autentiserade VDP1-materialen 36/60/64/68/71/72 är nu också
+  bundna till kanoniska `LEV00.DGN` Structure3-face-rader via exakt rå
+  `fill_selector`. Det sluter source-level material→face-länken, men inte
+  runtime face-urval, draw-order, transform/culling, VDP2-komposition eller
+  produktionsrendering; `semantic_admission` förblir spärrad.
+
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
   finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
