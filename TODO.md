@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron capture-intag: `THERON_CAPTURE_AUTOLOAD_STATE` avvisar nu
+  autentiska 2 KiB `HUBM`-SRAM-filer innan Mednafen startas. En sådan fil är
+  inte en Mednafen-savestate, och ingen fullständig, autentiserad savestate
+  med spelägd återupptagning finns ännu på extern-disken. RNG-, spawn-, AI-,
+  T700- och T900-semantik är därför fortsatt spärrad.
+
 - 🔧 Nexus: en autentisk reset-frame är validerad med rena VDP2/VDP1-bytes,
   men aktiv VDP1-draw-lista från `skip=300` saknas ännu. Mednafen lämnar inte
   frame-hooken före launcher-timeout; nästa steg är att få signal-/framevägen

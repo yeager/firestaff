@@ -76,13 +76,16 @@ dessutom 64 KiB VDC-VRAM och 1 KiB VCE-palette snapshots. Den nådde dock inte
 en godkänd spelägd `$2600–$27FF`-läsning eller state-skrivning; RNG, AI, T700
 och T900 förblir därför fail-closed.
 
-Den reproducerbara externa capturevägen stöder nu även
-`THERON_CAPTURE_AUTOLOAD_STATE` för en autentisk Mednafen-savestate. På
-extern-disken autoloadades den hashmatchande US-savestaten utan fel, men den
-återupptog inte en körande spelägd HuC6280-loop. En frame-bunden replay med
-äkta Track 02/System Card gav 47 inputtransaktioner och 2 CD-IRQ, men 0
-icke-System-Card-CD-anrop och 0 `$2600–$27FF`-konsumentläsningar. Det är en
-negativ capturegräns, inte ett tillstånd att aktivera RNG, AI, T700 eller T900.
+Capturevägen stöder `THERON_CAPTURE_AUTOLOAD_STATE`, men den kandidat som
+fanns på extern-disken var inte en Mednafen-savestate. Den är en 2 KiB
+`HUBM`-SRAM-fil, vilket tidigare gav ett missvisande Mednafenfel om
+`Unexpected EOF`. Capture-scriptet avvisar nu filen före emulatorstart med en
+tydlig signaturkontroll. Någon fullständig, autentiserad Mednafen-savestate
+med spelägd återupptagning är därför ännu inte tillgänglig eller bevisad.
+En separat frame-bunden replay med äkta Track 02/System Card gav 47
+inputtransaktioner och 2 CD-IRQ, men 0 icke-System-Card-CD-anrop och 0
+`$2600–$27FF`-konsumentläsningar. Det är en negativ capturegräns, inte ett
+tillstånd att aktivera RNG, AI, T700 eller T900.
 
 Captureinfrastrukturen är nu också verifierad med en native SDL 2.30.9-build
 på extern-disken och Cocoa som faktisk macOS-videobackend. En körning med

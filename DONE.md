@@ -1,3 +1,12 @@
+# Theron savestate-intag (2026-08-09)
+
+- ✅ Capture-scriptet känner nu igen `HUBM`-signaturen och nekar en 2 KiB
+  SRAM-fil som `THERON_CAPTURE_AUTOLOAD_STATE`. Det förhindrar att HuBM-
+  save-data felaktigt presenteras som en Mednafen-savestate.
+- ✅ Regressionstestet täcker både den nya signaturkontrollen och det exakta
+  felmeddelandet. Den riktiga externa `HUBM`-filen avvisades före emulatorstart;
+  ingen semantik eller runtimeägare låstes upp.
+
 # Theron authenticated CD→RAM transport admission (2026-08-09)
 
 - ✅ Capture-gaten räknar nu byte-exakta `pce_cd_*origin*_ram_receipt`-poster

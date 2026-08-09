@@ -316,6 +316,13 @@ if [[ -n "$autoload_state" && ! -f "$autoload_state" ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE must name an existing Mednafen state file' >&2
     exit 1
 fi
+if [[ -n "$autoload_state" ]]; then
+    autoload_state_magic=$(dd if="$autoload_state" bs=1 count=4 2>/dev/null || true)
+    if [[ "$autoload_state_magic" == 'HUBM' ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE points to HUBM SRAM, not a Mednafen savestate' >&2
+        exit 1
+    fi
+fi
 if [[ -n "$autoload_movie" && ! -f "$autoload_movie" ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' >&2
     exit 1
