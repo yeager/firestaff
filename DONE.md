@@ -11803,3 +11803,8 @@ rendering remain blocked.
 - 🔒 Ingen gameplay- eller presentationssemantik öppnades. Den externa
   capture-sessionen saknar fortfarande game-owned FIFO-consumer och är därför
   korrekt fail-closed.
+# 2026-08-09 — Nexus completion accounting corrected
+
+- Counted the verified VDP1 mode-5 direct-color pixel decoder as its own implementation gate.
+- Kept production completion at 0% because the external capture still lacks an authenticated DGN material owner, scene ordering, and production consumer.
+- Recalculated Nexus implementation coverage to 21/48 named gates (43.8% checksum) and 40.8% unweighted area mean; priority startup → menu → HUD/viewport remains 33.1%.

@@ -12,13 +12,13 @@ regionmatchad Saturn-kedja.
 | Uppstart | 3/6 | 50,0 % | 0 % | J-BIOS/media-paret är nu tillgängligt och en reset-frame är validerad, men ingen giltig startup→meny-witness |
 | Meny | 3/8 | 37,5 % | 0 % | PRS3-byteavkodning, NBG1-konsument och separat FONT256 CG/palette-join finns, men page/textkod-mappning och faktisk menykomposition saknas |
 | DGN face/mesh/textur | 3/7 | 42,9 % | 0 % | Format, mesh-topologi och materialägare är bundna, men textursemantik, runtime-transform, culling och rasterisering saknas |
-| Saturn VDP1-capture | 8/11 | 72,7 % | 0 % | Råcapture, command-framing, material/CLUT-join, atomisk replay, flerkommando-sekvens och display-origin är verifierade; scenägare, Saturn face-selection, transform/culling och produktionskonsument saknas |
+| Saturn VDP1-capture | 9/12 | 75,0 % | 0 % | Råcapture, command-framing, material/CLUT-join, atomisk replay, flerkommando-sekvens, display-origin och separat direct-color-pixelavkodning är verifierade; scenägare, Saturn face-selection, transform/culling och produktionskonsument saknas |
 | HUD/viewport | 1/7 | 14,3 % | 0 % | Layout/adaptrar och capture-only-komposition finns, men ingen autentiserad VDP1/VDP2-pixelhandoff till produktionen |
 | SLEV/SAL/SDDRVS | 2/8 | 25,0 % | 0 % | Korpus, driver- och write-traces finns; selector, codec, MAP-bindning, event-dispatch och faktisk playback är obevisade |
 
 Det aritmetiska medelvärdet för implementeringstäckningen är
-`(50,0 + 37,5 + 42,9 + 72,7 + 14,3 + 25,0) / 6 = 40,4 %`.
-Som kontrollsumma är de namngivna grindarna `20/47 = 42,6 %`; den siffran
+`(50,0 + 37,5 + 42,9 + 75,0 + 14,3 + 25,0) / 6 = 40,8 %`.
+Som kontrollsumma är de namngivna grindarna `21/48 = 43,8 %`; den siffran
 ersätter inte områdesmedelvärdet, eftersom ett område annars skulle väga mer
 bara för att det har fler delgrindar.
 För den prioriterade kedjan uppstart → meny → HUD/viewport, med vikterna
@@ -41,8 +41,9 @@ capture, startidentitet, startup→meny; meny = BPK, PRS3, källrad,
 pixel-/mode-semantik, palette, VDP2-map, FONT256, meny-capture; DGN = DGN-
 format, mesh-topologi, face/materialägare, textursemantik, transform, culling,
 produktionsraster; VDP1 = råtransport, autentiserad frame, VDP1-state,
-command-framing, texture/CLUT-join, atomisk replay, flerkommando-sekvens,
-display-origin, scenägare, face-selection, transform/culling; HUD/viewport =
+command-framing, texture/CLUT-join, direct-color-pixelavkodning, atomisk
+replay, flerkommando-sekvens, display-origin, scenägare, face-selection,
+transform/culling; HUD/viewport =
 layout, HUD-källa, VDP2-källa, VDP1-källa, pixelhandoff, komposition,
 produktionskonsument; SLEV/SAL/SDDRVS = korpus, driver, trace, selector,
 codec, MAP-bindning, event-dispatch, playback.
