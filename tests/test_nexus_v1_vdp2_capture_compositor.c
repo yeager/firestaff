@@ -68,6 +68,15 @@ int main(void)
         free(cram);
         return 1;
     }
+    wb16(registers + 0x2c, 0x0000);
+    wb16(registers + NEXUS_V1_VDP2_CRAOFA_OFFSET, 0x0010);
+    if (nexus_v1_vdp2_capture_composite_nbg1_bitmap(
+            &viewport.fb, &input, &receipt) || receipt.renderer_permitted) {
+        fprintf(stderr, "FAIL: unbound NBG1 CRAM offset was admitted\n");
+        free(bitmap);
+        free(cram);
+        return 1;
+    }
     input.original_saturn_capture_verified = 1;
     wb16(registers + 0x2c, 0x0100);
     if (nexus_v1_vdp2_capture_composite_nbg1_bitmap(

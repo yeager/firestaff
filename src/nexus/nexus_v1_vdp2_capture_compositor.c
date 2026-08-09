@@ -31,6 +31,7 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
     uint16_t bgon;
     uint16_t chctla;
     uint16_t bmpna;
+    uint16_t craofa;
     int x;
     int y;
 
@@ -60,10 +61,14 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
     bgon = read_be16(input->vdp2_registers + 0x20U);
     chctla = read_be16(input->vdp2_registers + 0x28U);
     bmpna = read_be16(input->vdp2_registers + 0x2cU);
+    craofa = read_be16(input->vdp2_registers +
+                       NEXUS_V1_VDP2_CRAOFA_OFFSET);
     if ((bgon & 0x0002U) == 0U || (chctla & 0x0200U) == 0U ||
         ((chctla >> 10U) & 3U) != 0U || ((chctla >> 12U) & 3U) != 1U ||
         /* NBG1 owns BMPNA bits 8..10; bits 0..2 belong to NBG0. */
         ((bmpna >> 8U) & 0x0007U) != 0U ||
+        /* Mednafen maps CRAOFA bits 4..6 to NBG1's 0x100-entry offset. */
+        ((craofa >> 4U) & 0x0007U) != 0U ||
         memcmp(input->capture_bitmap, input->source_bitmap,
                NEXUS_V1_VDP2_NBG1_BITMAP_BYTES) != 0 ||
         memcmp(input->capture_cram, input->source_palette,

@@ -6,6 +6,7 @@
 #define NEXUS_V1_VDP2_NBG1_BITMAP_BYTES (512U * 256U)
 #define NEXUS_V1_VDP2_NBG1_PALETTE_BYTES (256U * 2U)
 #define NEXUS_V1_VDP2_REGISTERS_BYTES 0xe8U
+#define NEXUS_V1_VDP2_CRAOFA_OFFSET 0xe4U
 
 /* One source-bound NBG1 bitmap plane. The source and capture spans must be
  * exact byte matches; placement is explicit because registers alone do not
