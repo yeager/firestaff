@@ -1,3 +1,15 @@
+# DM2 New Game: teleporterbunden ljus- och ljudkontext (2026-08-09)
+
+- ✅ `CHECK_RECOMPUTE_LIGHT` skapar nu alltid den primära, nollställda
+  `v1e08cc`-ytan, men skapar `v1e08c8` endast när originalets
+  `move_2fcf_0b8b` har funnit en alternativ teleporter-karta. Den tidigare
+  implicita kart-noll-ytan togs bort: `c_dm2data::init` är för tidig och är
+  inte ett giltigt GAME_LOAD-värde efter teleporterproben.
+- ✅ Den privata SOUND9-ägaren behåller nu `c_sfx` verkliga aktuella, hörbara
+  och alternativa karta samt MapOffsetX/Y. Den köar, mixar eller spelar inte
+  ljud; partyposition, riktning, synlighet och timerkonsumtion är fortsatt
+  separata källkrav.
+
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
 - ✅ En riktig Mednafen 1.32.1-session med US Track 02 nådde originalets

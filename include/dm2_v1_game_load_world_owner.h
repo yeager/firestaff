@@ -81,6 +81,19 @@ typedef struct {
     int sound_enabled;
     int master_sfx_volume;
     int runtime_queue_initialized;
+    /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO and c_sfx.cpp's positional
+     * branch. These values are extracted from File_header Map_definitions,
+     * not inferred from host coordinates. They remain unusable while the
+     * c_light walk-path buffers are pending. */
+    int spatial_context_valid;
+    int16_t spatial_current_map;
+    int16_t spatial_audible_map;
+    int16_t spatial_alternate_map;
+    uint8_t spatial_current_origin_x;
+    uint8_t spatial_current_origin_y;
+    uint8_t spatial_audible_origin_x;
+    uint8_t spatial_audible_origin_y;
+    uint32_t spatial_context_hash;
 } DM2_V1_GameLoadSoundOwner;
 
 /* Private result of the three writes in DM2_LOAD_NEW_DUNGEON immediately
@@ -455,6 +468,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light(
  * FIND_WALK_PATH calls. This does not make visibility, positional sound or
  * a viewport live. */
 int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain c_sfx's source map/origin facts after move_2fcf_0b8b has established
+ * the private display map. No noise is queued by this function. */
+int dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Copy the current map's authentic LOAD_LOCALLEVEL graphics lists. This is

@@ -1777,11 +1777,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
 {
     DM2_V1_GameLoadLightVisibilityOwner candidate;
     const int primary_map = owner ? owner->source_party_map : -1;
-    /* c_dm2data::init sets v1e027c to map zero.  GAME_LOAD's fresh
-     * LOAD_NEW_DUNGEON branch does not replace it before move_2fcf_0b8b;
-     * retain that source value rather than deriving an alternate map from
-     * the party pose. */
-    const int secondary_map = 0;
+    /* move_2fcf_0b8b first writes v1e027c=-1, then replaces it only when
+     * the real teleporter probe finds an alternate display map.  c_light
+     * uses exactly that post-probe value for its optional second surface;
+     * c_dm2data::init's earlier map-zero value is not a GAME_LOAD input. */
+    const int secondary_map = owner ? owner->source_teleporter_map : -2;
     int primary_width;
     int primary_height;
     int secondary_width;
@@ -1796,26 +1796,33 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
         owner->champion_selection_materialized ||
         owner->preselection_light_visibility.valid ||
         primary_map < 0 || primary_map >= owner->dungeon.level_count ||
-        secondary_map >= owner->dungeon.level_count) {
+        secondary_map < -1 || secondary_map >= owner->dungeon.level_count) {
         return 0;
     }
     primary_width = owner->dungeon.level_widths[primary_map];
     primary_height = owner->dungeon.level_heights[primary_map];
-    secondary_width = owner->dungeon.level_widths[secondary_map];
-    secondary_height = owner->dungeon.level_heights[secondary_map];
+    secondary_width = secondary_map >= 0 ?
+        owner->dungeon.level_widths[secondary_map] : 0;
+    secondary_height = secondary_map >= 0 ?
+        owner->dungeon.level_heights[secondary_map] : 0;
     /* c_light indexes `x << 5 | y`; DUNGEON's File_header dimensions are
      * bounded to that same 32-column stride. */
     if (primary_width <= 0 || primary_width > 32 || primary_height <= 0 ||
-        primary_height > 32 || secondary_width <= 0 || secondary_width > 32 ||
-        secondary_height <= 0 || secondary_height > 32) {
+        primary_height > 32 ||
+        (secondary_map >= 0 &&
+         (secondary_width <= 0 || secondary_width > 32 ||
+          secondary_height <= 0 || secondary_height > 32))) {
         return 0;
     }
     primary_bytes = (size_t)primary_width * 32u;
-    secondary_bytes = (size_t)secondary_width * 32u;
+    secondary_bytes = secondary_map >= 0 ?
+        (size_t)secondary_width * 32u : 0u;
     memset(&candidate, 0, sizeof(candidate));
     candidate.primary_cells = calloc(primary_bytes, 1u);
-    candidate.secondary_cells = calloc(secondary_bytes, 1u);
-    if (!candidate.primary_cells || !candidate.secondary_cells) {
+    if (secondary_bytes != 0u)
+        candidate.secondary_cells = calloc(secondary_bytes, 1u);
+    if (!candidate.primary_cells ||
+        (secondary_bytes != 0u && !candidate.secondary_cells)) {
         dm2_v1_game_load_owner_light_visibility_free(&candidate);
         return 0;
     }
@@ -1848,6 +1855,67 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
     candidate.source_state_hash = hash;
     candidate.valid = 1;
     owner->preselection_light_visibility = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadSoundOwner *sound;
+    const int current_map = owner ? owner->current_map : -1;
+    const int audible_map = owner && owner->source_teleporter_map >= 0 ?
+        owner->source_teleporter_map : (owner ? owner->source_party_map : -1);
+    const int alternate_map = owner ? owner->source_teleporter_map : -1;
+    uint32_t hash = 0x53504154u; /* "SPAT" */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized || owner->committed ||
+        owner->champion_selection_materialized || !owner->sound_owner.valid ||
+        !owner->sound_owner.runtime_queue_initialized ||
+        owner->sound_owner.spatial_context_valid ||
+        current_map < 0 || current_map >= owner->dungeon.level_count ||
+        audible_map < 0 || audible_map >= owner->dungeon.level_count ||
+        alternate_map < -1 || alternate_map >= owner->dungeon.level_count ||
+        owner->dungeon.map_offset_x[current_map] < 0 ||
+        owner->dungeon.map_offset_x[current_map] > UINT8_MAX ||
+        owner->dungeon.map_offset_y[current_map] < 0 ||
+        owner->dungeon.map_offset_y[current_map] > UINT8_MAX ||
+        owner->dungeon.map_offset_x[audible_map] < 0 ||
+        owner->dungeon.map_offset_x[audible_map] > UINT8_MAX ||
+        owner->dungeon.map_offset_y[audible_map] < 0 ||
+        owner->dungeon.map_offset_y[audible_map] > UINT8_MAX) {
+        return 0;
+    }
+    sound = &owner->sound_owner;
+    /* Map_definitions::MapOffsetX/Y are b6/b7, represented by the parsed
+     * File_header fields below. c_sfx.cpp translates a noise by exactly
+     * current-origin minus audible-origin before its direction transform. */
+    sound->spatial_current_map = (int16_t)current_map;
+    sound->spatial_audible_map = (int16_t)audible_map;
+    sound->spatial_alternate_map = (int16_t)alternate_map;
+    sound->spatial_current_origin_x =
+        (uint8_t)owner->dungeon.map_offset_x[current_map];
+    sound->spatial_current_origin_y =
+        (uint8_t)owner->dungeon.map_offset_y[current_map];
+    sound->spatial_audible_origin_x =
+        (uint8_t)owner->dungeon.map_offset_x[audible_map];
+    sound->spatial_audible_origin_y =
+        (uint8_t)owner->dungeon.map_offset_y[audible_map];
+    hash = dm2_v1_game_load_owner_hash_step(hash, sound->receipt_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)current_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)audible_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)(uint16_t)alternate_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_current_origin_x);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_current_origin_y);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_audible_origin_x);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_audible_origin_y);
+    if (hash == 0u) return 0;
+    sound->spatial_context_hash = hash;
+    sound->spatial_context_valid = 1;
     return 1;
 }
 

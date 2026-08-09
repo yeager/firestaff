@@ -2870,6 +2870,34 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 restores the private New Game map and teleporter context from the real File_header only after actuator generators");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.sound_owner.spatial_context_valid &&
+                    new_game_world_owner.sound_owner.spatial_current_map ==
+                        new_game_world_owner.current_map &&
+                    new_game_world_owner.sound_owner.spatial_audible_map ==
+                        (new_game_world_owner.source_teleporter_map >= 0 ?
+                             new_game_world_owner.source_teleporter_map :
+                             new_game_world_owner.source_party_map) &&
+                    new_game_world_owner.sound_owner.spatial_alternate_map ==
+                        new_game_world_owner.source_teleporter_map &&
+                    new_game_world_owner.sound_owner.spatial_current_origin_x ==
+                        (uint8_t)new_game_world_owner.dungeon.map_offset_x[
+                            new_game_world_owner.current_map] &&
+                    new_game_world_owner.sound_owner.spatial_current_origin_y ==
+                        (uint8_t)new_game_world_owner.dungeon.map_offset_y[
+                            new_game_world_owner.current_map] &&
+                    new_game_world_owner.sound_owner.spatial_audible_origin_x ==
+                        (uint8_t)new_game_world_owner.dungeon.map_offset_x[
+                            new_game_world_owner.sound_owner.spatial_audible_map] &&
+                    new_game_world_owner.sound_owner.spatial_audible_origin_y ==
+                        (uint8_t)new_game_world_owner.dungeon.map_offset_y[
+                            new_game_world_owner.sound_owner.spatial_audible_map] &&
+                    new_game_world_owner.sound_owner.spatial_context_hash != 0u &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "DM2 retains c_sfx's real current, audible and alternate map origins without queuing an inferred sound");
     memset(new_game_expected_wall_gfx, 0, sizeof(new_game_expected_wall_gfx));
     memset(new_game_expected_floor_gfx, 0, sizeof(new_game_expected_floor_gfx));
     memset(new_game_expected_door_ornate_gfx, 0,
@@ -2940,23 +2968,37 @@ int main(void) {
                         &new_game_world_owner) &&
                     new_game_world_owner.preselection_light_visibility.valid &&
                     new_game_world_owner.preselection_light_visibility.primary_map == 0 &&
-                    new_game_world_owner.preselection_light_visibility.secondary_map == 0 &&
+                    new_game_world_owner.preselection_light_visibility.secondary_map ==
+                        new_game_world_owner.source_teleporter_map &&
                     new_game_world_owner.preselection_light_visibility.primary_width ==
                         new_game_world_owner.dungeon.level_widths[0] &&
                     new_game_world_owner.preselection_light_visibility.primary_height ==
                         new_game_world_owner.dungeon.level_heights[0] &&
                     new_game_world_owner.preselection_light_visibility.primary_cell_bytes ==
                         (size_t)new_game_world_owner.dungeon.level_widths[0] * 32u &&
-                    new_game_world_owner.preselection_light_visibility.secondary_cell_bytes ==
-                        (size_t)new_game_world_owner.dungeon.level_widths[0] * 32u &&
+                    (new_game_world_owner.source_teleporter_map < 0 ?
+                         (new_game_world_owner.preselection_light_visibility.secondary_width == 0u &&
+                          new_game_world_owner.preselection_light_visibility.secondary_height == 0u &&
+                          new_game_world_owner.preselection_light_visibility.secondary_cell_bytes == 0u &&
+                          new_game_world_owner.preselection_light_visibility.secondary_cells == NULL) :
+                         (new_game_world_owner.preselection_light_visibility.secondary_width ==
+                              new_game_world_owner.dungeon.level_widths[
+                                  new_game_world_owner.source_teleporter_map] &&
+                          new_game_world_owner.preselection_light_visibility.secondary_height ==
+                              new_game_world_owner.dungeon.level_heights[
+                                  new_game_world_owner.source_teleporter_map] &&
+                          new_game_world_owner.preselection_light_visibility.secondary_cell_bytes ==
+                              (size_t)new_game_world_owner.dungeon.level_widths[
+                                  new_game_world_owner.source_teleporter_map] * 32u)) &&
                     new_game_world_owner.preselection_light_visibility.dirty_flags_before_check == 2u &&
                     new_game_world_owner.preselection_light_visibility.walk_path_pending &&
                     dm2_test_bytes_are_zero(
                         new_game_world_owner.preselection_light_visibility.primary_cells,
                         new_game_world_owner.preselection_light_visibility.primary_cell_bytes) &&
-                    dm2_test_bytes_are_zero(
-                        new_game_world_owner.preselection_light_visibility.secondary_cells,
-                        new_game_world_owner.preselection_light_visibility.secondary_cell_bytes) &&
+                    (new_game_world_owner.preselection_light_visibility.secondary_cell_bytes == 0u ||
+                     dm2_test_bytes_are_zero(
+                         new_game_world_owner.preselection_light_visibility.secondary_cells,
+                         new_game_world_owner.preselection_light_visibility.secondary_cell_bytes)) &&
                     new_game_world_owner.preselection_light_visibility.source_state_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
