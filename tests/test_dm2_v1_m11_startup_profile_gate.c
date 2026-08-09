@@ -2417,6 +2417,26 @@ int main(void) {
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 retains original c_light inputs for the real entrance without inventing a party or viewport");
     expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_scene(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.preselection_scene_materialized &&
+                    new_game_world_owner.preselection_scene_plan.valid &&
+                    new_game_world_owner.preselection_scene_plan.graphicsset ==
+                        new_game_world_owner.preselection_light.graphicsset &&
+                    new_game_world_owner.preselection_scene_plan.commands[0].pixels != NULL &&
+                    new_game_world_owner.preselection_scene_plan.commands[1].pixels != NULL &&
+                    new_game_world_owner.preselection_scene_plan.commands[0].material_receipt_hash != 0u &&
+                    new_game_world_owner.preselection_scene_plan.commands[1].material_receipt_hash != 0u &&
+                    new_game_world_owner.preselection_scene_light.valid &&
+                    new_game_world_owner.preselection_c_light.valid &&
+                    new_game_world_owner.preselection_c_light.dynamic_map == 0u &&
+                    new_game_world_owner.preselection_c_light.light_level == 1u &&
+                    new_game_world_owner.preselection_c_light.source_state_hash ==
+                        new_game_world_owner.preselection_light.source_state_hash &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 materializes the original entrance floor, ceiling and c_light receipt only in the private New Game owner");
+    expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner) &&
                     new_game_world_owner.champion_selection_materialized &&

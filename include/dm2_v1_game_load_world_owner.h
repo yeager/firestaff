@@ -151,10 +151,17 @@ typedef struct {
     uint8_t source_party_absdir;
     int source_display_pose_valid;
     int16_t source_last_moved_record;
-    /* c_light is dynamic on the real entrance map.  This receipt owns the
+    /* c_light inputs for the real entrance map. This receipt owns the
      * source initialisation inputs only; it is not a fabricated light level
      * and does not make a viewport or a party visible. */
     DM2_V1_GameLoadPreselectionLightReceipt preselection_light;
+    /* Material is decoded from the admitted GDAT only after the source map
+     * has supplied v1d6c02. The c_light receipt remains private and is
+     * available only for a branch whose complete inputs are owned here. */
+    int preselection_scene_materialized;
+    DM2_V1_GdatSceneM11CommandPlan preselection_scene_plan;
+    DM2_V1_GdatSceneLightM11Receipt preselection_scene_light;
+    DM2_V1_CLightM11Receipt preselection_c_light;
     /* Borrowed only while this private owner exists; it is the same
      * hash-admitted profile that owns asset_loader. */
     const DM2_V1_BootProfile *boot_profile;
@@ -212,6 +219,12 @@ int dm2_v1_game_load_world_owner_select_champion(
 /* Retain the source c_light inputs for the established fresh-game map before
  * any mirror click.  This has no renderer/session side effect. */
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Decode the real entrance floor/ceiling material and build its c_light
+ * result only when the preceding private light inputs cover the source
+ * branch. It deliberately has no renderer or M11 publication. */
+int dm2_v1_game_load_world_owner_materialize_preselection_scene(
     DM2_V1_GameLoadWorldOwner *owner);
 
 typedef struct {

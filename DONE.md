@@ -63,6 +63,14 @@
   från DOS-korpuset och att ingen HUD, viewport eller spelbar session
   publiceras.
 
+# DM2 New Game privat entréscen (2026-08-09)
+
+- ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
+  GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
+  File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte
+  kopplat till M11:s globala runtime och kan därför inte råka visa en
+  syntetisk eller delvis ägd viewport.
+
 - ✅ Linux production linking no longer pulls the focused
   `dm2_v1_predicate_helpers.c` study into `firestaff_dm2` alongside the
   source-owned champion-HUD implementation, which exported the same two

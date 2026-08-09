@@ -636,6 +636,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     for (i = 0; i < DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES; ++i) {
         dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
     }
+    dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
     free(owner->timer_indices);
     free(owner->timer_entries);
@@ -1059,6 +1060,62 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light(
     candidate.source_state_hash = hash;
     candidate.valid = 1;
     owner->preselection_light = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_scene(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GdatSceneM11CommandPlan scene_plan;
+    DM2_V1_GdatSceneLightM11Receipt scene_light;
+    DM2_V1_CLightSourceState source_light;
+    DM2_V1_CLightM11Receipt c_light;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_light.valid ||
+        owner->preselection_scene_materialized ||
+        owner->champion_selection_materialized || owner->committed ||
+        !owner->asset_loader || !owner->asset_loader->loaded ||
+        owner->preselection_light.graphicsset > 15u) {
+        return 0;
+    }
+    /* The source entrance descriptor has difficulty zero, so c_light takes
+     * its fixed-map branch: level one, then v1e0978 and clamp.  The preceding
+     * receipt retains every terminal field and guards against accidentally
+     * applying that branch to a dynamic map. Source: sklight.cpp:24-198. */
+    if (owner->preselection_light.map_descriptor.dynamic_light ||
+        owner->preselection_light.v1e0978 > 12u) {
+        return 0;
+    }
+    memset(&scene_plan, 0, sizeof(scene_plan));
+    memset(&scene_light, 0, sizeof(scene_light));
+    memset(&source_light, 0, sizeof(source_light));
+    memset(&c_light, 0, sizeof(c_light));
+    if (!dm2_v1_gdat_scene_m11_command_plan_build(owner->asset_loader,
+            owner->preselection_light.graphicsset, &scene_plan) ||
+        !scene_plan.valid ||
+        scene_plan.graphicsset != owner->preselection_light.graphicsset ||
+        !dm2_v1_gdat_scene_light_m11_receipt(&scene_plan, &scene_light) ||
+        !scene_light.valid) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+        return 0;
+    }
+    source_light.valid = 1;
+    source_light.dynamic_map = 0u;
+    source_light.base_light = 1u;
+    source_light.darkness_offset = (uint8_t)owner->preselection_light.v1e0978;
+    source_light.source_state_hash = owner->preselection_light.source_state_hash;
+    if (!dm2_v1_c_light_m11_receipt_build_for_map(&scene_light,
+            &owner->preselection_light.map_descriptor, &source_light,
+            &c_light) || !c_light.valid || c_light.light_level != 1u) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+        return 0;
+    }
+    owner->preselection_scene_plan = scene_plan;
+    owner->preselection_scene_light = scene_light;
+    owner->preselection_c_light = c_light;
+    owner->preselection_scene_materialized = 1;
     return 1;
 }
 
