@@ -44,6 +44,8 @@
 - `DM1 C13 Vi Altar`: Fix the click route to require the current map's
   authenticated Vi-Altar ornament from G0192/F0174; ordinary and arched
   alcoves no longer start champion rebirth.
+- `DM1 C13 save identity`: Fix the post-drop world hash so an immediate save
+  includes the newly scheduled rebirth event rather than the pre-event state.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects

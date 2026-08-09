@@ -33330,6 +33330,12 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                     }
                                     return M11_GAME_INPUT_IGNORED;
                                 }
+                                /* The drop helper refreshed the hash before
+                                 * this source-owned C13 timeline receipt was
+                                 * appended. Publish the complete transaction
+                                 * so an immediate save cannot retain a hash
+                                 * for the pre-event world. */
+                                m11_refresh_hash(state);
                             }
                             return M11_GAME_INPUT_REDRAW;
                         }

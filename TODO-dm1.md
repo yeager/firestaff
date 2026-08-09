@@ -19,6 +19,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   The authentic C13-bearing save and original launcher/panel capture gates
   remain open.
 
+- 2026-08-09 C13 save-identity correction is complete: the world hash is now
+  republished after the source-owned rebirth event is appended, closing the
+  immediate-save window between the bones drop and the next tick. Authentic
+  C13-save and original pixel-capture gates remain open.
+
 - 2026-08-09 C012 receipt correction is complete: the generator's source icon
   index now survives F0275 result initialization and reaches the authentic
   F0167 allocator. A focused regression covers both the positive empty-hand
