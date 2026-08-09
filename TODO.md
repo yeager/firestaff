@@ -5,6 +5,12 @@
   closed until the same Saturn trace supplies display-origin,
   system-clip/local-coordinate and multi-command ordering evidence.
 
+- ⏳ Nexus now has a capture-only VDP2 NBG1 bitmap/CRAM replay adapter. It
+  requires the authenticated NBG1 register tuple, exact 512×256 bitmap and
+  256-entry CRAM joins, and an explicit source crop/destination rectangle.
+  No current European witness has an exact retail MENU/TITLE/STABG/DGN/CLUT
+  join, so startup/menu/HUD composition remains closed.
+
 - 🔧 Nexus: en autentiserad europeisk gameplay-capture binder nu VDP1-draw
   `0x0e180` (`colour_mode=1`, `COLR=0x32a4`, källa `0x4c580`) till exakt
   ordväxlad pixeldata och 16-entry CLUT för `LEV00.DGN` Structure2=72.

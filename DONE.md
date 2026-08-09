@@ -11098,6 +11098,15 @@
   viewport stays fail-closed.
 - ✅ Regression coverage exercises both compositor and viewport adapter; the
   full CMake build passes.
+
+# Nexus VDP2 NBG1 capture replay boundary (2026-08-09)
+
+- ✅ The viewport now exposes a separate capture-only NBG1 bitmap/CRAM replay
+  lane. It verifies `BGON`, NBG1 bitmap mode, 256-colour geometry, exact
+  512×256 bitmap bytes, exact 256-entry palette bytes and explicit crop/
+  destination coordinates before writing pixels.
+- ✅ The regression rejects unauthenticated input and passes together with the
+  VDP1 capture compositor and strict C11 compilation.
 # Nexus VDP1 capture replay adapter (2026-08-09)
 
 - ✅ `Nexus_Viewport` now exposes the capture-only mode-1 compositor through
