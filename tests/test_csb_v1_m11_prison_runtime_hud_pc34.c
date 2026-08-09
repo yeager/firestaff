@@ -998,6 +998,71 @@ int main(void)
             }
         }
     }
+    {
+        /* Real PC I34 C161 evidence: use an authenticated mirror record
+         * decoded from this GRAPHICS/DUNGEON pair, append it through F0280's
+         * GAMEBLOCK bridge, then require F0282 to consume the profile's live
+         * G0349 stream. This is deliberately after the save transaction: it
+         * must not alter the real Prison save/resume assertion above. */
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile *)view.csbBootProfile;
+        CSB_V1_PartyState party;
+        uint32_t seed = UINT32_C(0x13579bdf);
+        uint32_t expected_seed = seed;
+        unsigned int before[CSB_V1_STAT_COUNT];
+        unsigned int increments[CSB_V1_STAT_COUNT] = {0};
+        int candidate_index;
+        int stat;
+        int appended = 0;
+
+        CHECK(profile && view.mirrorCatalog.count > 0,
+              "real PC3.4 Prison exposes a source mirror for C161 runtime proof");
+        if (profile && view.mirrorCatalog.count > 0) {
+            profile->runtime.csbwin_random_seed_valid = 1;
+            profile->runtime.csbwin_random_seed = seed;
+            candidate_index = profile->runtime.party_state_valid
+                ? profile->runtime.party_state.ChampionCount : 0;
+            appended = csb_v1_runtime_append_mirror_candidate_source_compat(
+                      &profile->runtime,
+                      &view.mirrorCatalog.records[0].champion) == 0;
+            CHECK(appended,
+                  "F0280 bridge appends the real PC3.4 mirror candidate");
+            if (appended) {
+            CHECK(csb_v1_runtime_get_party_state(&profile->runtime, &party) >= 0 &&
+                      party.ChampionCount == candidate_index + 1,
+                  "real C161 candidate is the final contiguous GAMEBLOCK entry");
+            for (stat = 0; stat < CSB_V1_STAT_COUNT; ++stat) {
+                before[stat] = party.Champions[candidate_index]
+                    .Statistics[stat][CSB_V1_STAT_CUR];
+            }
+            for (tick = 0; tick < 12; ++tick) {
+                uint16_t raw;
+                expected_seed = expected_seed * UINT32_C(0xbb40e62d) +
+                    UINT32_C(11);
+                raw = (uint16_t)(expected_seed >> 8);
+                ++increments[raw % CSB_V1_STAT_COUNT];
+            }
+            CHECK(csb_v1_runtime_reincarnate_pending_mirror_candidate_source_compat(
+                      &profile->runtime, candidate_index),
+                  "C161 finalizes against the live PC3.4 G0349 stream");
+            CHECK(csb_v1_runtime_get_party_state(&profile->runtime, &party) >= 0 &&
+                      profile->runtime.csbwin_random_seed == expected_seed,
+                  "C161 advances G0349 exactly twelve F0027 calls");
+            for (stat = 0; stat < CSB_V1_STAT_COUNT; ++stat) {
+                CHECK(party.Champions[candidate_index].Statistics[stat]
+                          [CSB_V1_STAT_CUR] == before[stat] + increments[stat] &&
+                          party.Champions[candidate_index].Statistics[stat]
+                          [CSB_V1_STAT_MAX] == before[stat] + increments[stat],
+                      "PC3.4 C161 applies source F0027 boosts including Luck");
+            }
+            CHECK(party.Champions[candidate_index].Skills[0] == 0 &&
+                      party.Champions[candidate_index].SkillExperience[0] == 0 &&
+                      party.Champions[candidate_index]
+                          .SkillTemporaryExperience[0] == 0,
+                  "C161 clears source-owned skill state before its boosts");
+            }
+        }
+    }
     M11_GameView_Shutdown(&view);
     if (relaunch_save_available) {
         M11_GameLaunchSpec resumed_spec = spec;

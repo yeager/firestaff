@@ -2347,6 +2347,14 @@ int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
 int csb_v1_runtime_disable_front_mirror_sensor_source_compat(
     CSB_V1_RuntimeProfile *profile);
 
+/* ReDMCSB REVIVE.C F0282 C161 finalizer for the candidate appended by
+ * F0280.  It consumes the live BASE.C F0027 G0349 random stream, rather
+ * than creating a host RNG sequence, and commits only the final contiguous
+ * M516/GAMEBLOCK party entry.  The caller has already completed F0281's
+ * rename modal and disabled the mirror sensor. */
+int csb_v1_runtime_reincarnate_pending_mirror_candidate_source_compat(
+    CSB_V1_RuntimeProfile *profile, int champion_index);
+
 /* Move one existing ordinary object through ReDMCSB MOVESENS.C F0267 using
  * only the loaded PC34 DUNGEON.DAT image.  The thing must already be linked
  * at the supplied source square; legacy fixture maps, detached records,

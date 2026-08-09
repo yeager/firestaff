@@ -11996,6 +11996,107 @@ int csb_v1_runtime_disable_front_mirror_sensor_source_compat(
     return 0;
 }
 
+int csb_v1_runtime_reincarnate_pending_mirror_candidate_source_compat(
+    CSB_V1_RuntimeProfile *profile, int champion_index)
+{
+    CSB_V1_Champion *champion;
+    uint32_t random_state;
+    int statistic_index;
+    int counter;
+    int halve_vitals = 0;
+    int quarter_vitals = 0;
+    int reduce_statistics = 0;
+
+    if (!profile || !profile->party_state_valid ||
+        !profile->csbwin_random_seed_valid ||
+        champion_index < 0 ||
+        champion_index != profile->party_state.ChampionCount - 1 ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return 0;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+
+    /* ReDMCSB REVIVE.C F0282 is compiled per original package. PC I34 has
+     * the original C161 behaviour (clear skills + twelve F0027 boosts); ST
+     * adds CHANGE7_24's one-eighth/half rule, while the Amiga and FM Towns
+     * builds use their documented quarter-vital variant. */
+    switch (profile->variant_id) {
+        case CSB_V1_VARIANT_ST20_EN:
+        case CSB_V1_VARIANT_ST21_EN:
+            halve_vitals = 1;
+            reduce_statistics = 1;
+            break;
+        case CSB_V1_VARIANT_AMIGA31_EN:
+        case CSB_V1_VARIANT_AMIGA31_MULTI:
+        case CSB_V1_VARIANT_AMIGA35_EN:
+        case CSB_V1_VARIANT_AMIGA35_MULTI:
+        case CSB_V1_VARIANT_FMTOWNS_EN:
+        case CSB_V1_VARIANT_FMTOWNS_JA:
+            quarter_vitals = 1;
+            reduce_statistics = 1;
+            break;
+        case CSB_V1_VARIANT_PC34_EN:
+        case CSB_V1_VARIANT_PC34_MULTI:
+            break;
+        default:
+            return 0;
+    }
+
+    if (reduce_statistics) {
+        for (statistic_index = CSB_V1_STAT_STR;
+             statistic_index <= CSB_V1_STAT_ANTIFIRE;
+             ++statistic_index) {
+            uint16_t current = champion->Statistics[statistic_index]
+                [CSB_V1_STAT_CUR];
+            uint16_t minimum = champion->Statistics[statistic_index]
+                [CSB_V1_STAT_MIN];
+            uint16_t reduced = (uint16_t)(current - (current >> 3));
+            if (reduced < minimum) reduced = minimum;
+            champion->Statistics[statistic_index][CSB_V1_STAT_CUR] = reduced;
+            champion->Statistics[statistic_index][CSB_V1_STAT_MAX] = reduced;
+        }
+    }
+    if (quarter_vitals) {
+        champion->CurrentHealth >>= 2;
+        champion->MaximumHealth >>= 2;
+        champion->CurrentStamina >>= 2;
+        champion->MaximumStamina >>= 2;
+        champion->CurrentMana >>= 2;
+        champion->MaximumMana >>= 2;
+    } else if (halve_vitals) {
+        champion->CurrentHealth >>= 1;
+        champion->MaximumHealth >>= 1;
+        champion->CurrentStamina >>= 1;
+        champion->MaximumStamina >>= 1;
+        champion->CurrentMana >>= 1;
+        champion->MaximumMana >>= 1;
+    }
+
+    /* F0008_MAIN_ClearBytes(M516[...].Skills, sizeof Skills).  The compact
+     * level array and the full CSBWin-compatible XP rows are both views of
+     * that source-owned skill state, so neither may survive C161. */
+    memset(champion->Skills, 0, sizeof(champion->Skills));
+    memset(champion->SkillExperience, 0, sizeof(champion->SkillExperience));
+    memset(champion->SkillTemporaryExperience, 0,
+           sizeof(champion->SkillTemporaryExperience));
+    champion->SkillExperienceValid = 1u;
+
+    /* REVIVE.C:831-835: exactly twelve M002_RANDOM(7) increments. BASE.C
+     * F0027 advances G0349 then returns its high 16 bits; do not use the
+     * legacy character-layer LCG, game tick, or a synthetic fixed seed. */
+    random_state = profile->csbwin_random_seed;
+    for (counter = 0; counter < 12; ++counter) {
+        uint16_t raw;
+        random_state = random_state * UINT32_C(0xbb40e62d) + UINT32_C(11);
+        raw = (uint16_t)(random_state >> 8);
+        statistic_index = (int)(raw % CSB_V1_STAT_COUNT);
+        champion->Statistics[statistic_index][CSB_V1_STAT_CUR]++;
+        champion->Statistics[statistic_index][CSB_V1_STAT_MAX]++;
+    }
+    profile->csbwin_random_seed = random_state;
+    return csb_v1_runtime_set_party_state(profile, &profile->party_state) == 0;
+}
+
 static int csb_v1_runtime_scan_thing_chain_for_object_type(
     const CSB_V1_DungeonData *dungeon,
     uint16_t thing,

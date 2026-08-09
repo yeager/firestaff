@@ -27389,13 +27389,6 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorRenameActive || state->candidateMirrorOrdinal < 0) {
         return 0;
     }
-    if (reincarnate && m11_source_is_csb(state)) {
-        /* Keep the public probe API on the same fail-closed C161 boundary as
-         * the live panel.  REVIVE.C F0282's RNG sequence is not DM1's host
-         * helper and must not be substituted into a CSB GAMEBLOCK. */
-        m11_set_status(state, "MIRROR", "CSB REINCARNATE NOT YET SOURCE-BOUND");
-        return 0;
-    }
     /* The C127 owner belongs to the selection receipt. The modal can remain
      * open while the view changes, but C160/C161 must still clear the sensor
      * that admitted this candidate rather than re-scanning a new front cell. */
@@ -27439,7 +27432,36 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                               mirrorName, sizeof(mirrorName));
     m11_repair_mirror_candidate_survival_fields(state, championIndex);
     if (reincarnate) {
-        m11_apply_reincarnation_to_candidate(state, championIndex);
+        if (m11_source_is_csb(state)) {
+            CSB_V1_BootProfile* profile =
+                (CSB_V1_BootProfile*)state->csbBootProfile;
+            CSB_V1_PartyState party;
+
+            /* F0281 completed its rename into M11's edit buffer.  Commit
+             * those validated bytes to the authoritative appended M516
+             * entry before F0282 clears skills and consumes G0349. */
+            if (!profile ||
+                csb_v1_runtime_get_party_state(&profile->runtime, &party) < 0 ||
+                championIndex != party.ChampionCount - 1) {
+                m11_set_status(state, "MIRROR", "CSB C161 CANDIDATE STALE");
+                return 0;
+            }
+            memcpy(party.Champions[championIndex].Name,
+                   state->world.party.champions[championIndex].name,
+                   sizeof(party.Champions[championIndex].Name));
+            memcpy(party.Champions[championIndex].Title,
+                   state->world.party.champions[championIndex].title,
+                   sizeof(party.Champions[championIndex].Title));
+            if (csb_v1_runtime_set_party_state(&profile->runtime, &party) != 0 ||
+                !csb_v1_runtime_reincarnate_pending_mirror_candidate_source_compat(
+                    &profile->runtime, championIndex)) {
+                m11_set_status(state, "MIRROR", "CSB C161 SOURCE STATE STALE");
+                return 0;
+            }
+            m11_sync_csb_state_from_boot_profile(state, profile);
+        } else {
+            m11_apply_reincarnation_to_candidate(state, championIndex);
+        }
     } else {
         /* ReDMCSB REVIVE.C F0282 C160 resurrect path.  A fresh mirror
          * candidate materialized by F0280 already carries the source
@@ -27504,13 +27526,6 @@ int M11_GameView_BeginMirrorCandidateReincarnateRename(M11_GameViewState* state)
 
     if (!state || !state->active || !state->candidateMirrorPanelActive ||
         state->candidateMirrorOrdinal < 0) {
-        return 0;
-    }
-    if (m11_source_is_csb(state)) {
-        /* F0282 C161 consumes source RNG while changing every statistic.
-         * PC34's C160 and C162 are runtime-bound below, but do not apply
-         * DM1's deterministic host approximation to a CSB GAMEBLOCK. */
-        m11_set_status(state, "MIRROR", "CSB REINCARNATE NOT YET SOURCE-BOUND");
         return 0;
     }
     championIndex = state->candidateMirrorPartyIndex;
