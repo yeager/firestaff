@@ -40,19 +40,42 @@ static int file_exists(const char* path) {
     return 1;
 }
 
+static int is_pc34_data_dir(const char* path) {
+    char graphicsPath[512];
+    char dungeonPath[512];
+    if (!path || !path[0]) {
+        return 0;
+    }
+    snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", path);
+    snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", path);
+    return file_exists(graphicsPath) && file_exists(dungeonPath);
+}
+
 static const char* narrow_dm1_data_dir(const char* dataDir,
                                        char* out,
                                        size_t outSize) {
-    char graphicsPath[512];
-    char dungeonPath[512];
+    static const char* const pc34RelativePaths[] = {
+        "DATA",
+        "dm1/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA"
+    };
+    size_t i;
     if (!dataDir || !out || outSize == 0U) {
         return dataDir;
     }
-    snprintf(graphicsPath, sizeof(graphicsPath), "%s/dm1/GRAPHICS.DAT", dataDir);
-    snprintf(dungeonPath, sizeof(dungeonPath), "%s/dm1/DUNGEON.DAT", dataDir);
-    if (file_exists(graphicsPath) && file_exists(dungeonPath)) {
-        snprintf(out, outSize, "%s/dm1", dataDir);
+    if (is_pc34_data_dir(dataDir)) {
+        snprintf(out, outSize, "%s", dataDir);
         return out;
+    }
+    for (i = 0; i < sizeof(pc34RelativePaths) / sizeof(pc34RelativePaths[0]); ++i) {
+        char candidate[512];
+        snprintf(candidate, sizeof(candidate), "%s/%s", dataDir,
+                 pc34RelativePaths[i]);
+        if (is_pc34_data_dir(candidate)) {
+            snprintf(out, outSize, "%s", candidate);
+            return out;
+        }
     }
     return dataDir;
 }
@@ -133,13 +156,25 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    /* DM1's C015 is not backed by the host telemetry ring.  Seed the
+     * source-owned TEXT.C state directly, then leave the host log populated
+     * with telemetry that must remain suppressed by the DM1 renderer. */
+    dm1_v1_text_clear_all_rows(&game.dm1V1TextMessage);
+    dm1_v1_text_move_cursor(&game.dm1V1TextMessage, 0, 0);
+    dm1_v1_text_print_message(&game.dm1V1TextMessage, PROBE_YELLOW,
+                              "DOOR OPENING");
+    dm1_v1_text_move_cursor(&game.dm1V1TextMessage, 0, 1);
+    dm1_v1_text_print_message(&game.dm1V1TextMessage, PROBE_YELLOW,
+                              "IT IS LOCKED.");
+    dm1_v1_text_move_cursor(&game.dm1V1TextMessage, 0, 2);
+    dm1_v1_text_print_message(&game.dm1V1TextMessage, PROBE_YELLOW,
+                              "OUCH.");
+    dm1_v1_text_move_cursor(&game.dm1V1TextMessage, 0, 3);
+    dm1_v1_text_print_message(&game.dm1V1TextMessage, PROBE_YELLOW,
+                              "HEADS.");
     memset(&game.messageLog, 0, sizeof(game.messageLog));
-    M11_MessageLog_Push(&game.messageLog, "DOOR OPENING", PROBE_YELLOW);
-    M11_MessageLog_Push(&game.messageLog, "IT IS LOCKED.", PROBE_YELLOW);
     M11_MessageLog_Push(&game.messageLog, "PARTY MOVED", PROBE_RED);
     M11_MessageLog_Push(&game.messageLog, "SCREAMER REACHES THE PARTY!", PROBE_ORANGE);
-    M11_MessageLog_Push(&game.messageLog, "OUCH.", PROBE_YELLOW);
-    M11_MessageLog_Push(&game.messageLog, "HEADS.", PROBE_YELLOW);
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);

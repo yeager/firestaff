@@ -94,6 +94,11 @@
   for authentic gameplay frames with the cyan movement controls, while still
   rejecting ENTER/RESUME/QUIT controls over the dungeon viewport as an
   entrance-menu state.
+- `DM1 real-data path resolution`: Recognize the authenticated DOS PC 3.4
+  `DATA` tree from both a per-game root and the broad `~/.firestaff/data` root,
+  before recursive archive lookup. The C015 bottom-row runtime probe now uses
+  source-owned DM1 text state against that real nested data path and confirms
+  host telemetry remains suppressed.
 - Restored the pass76 Firestaff route-state evidence at its current
   `parity-evidence/verification` path and updated the pass608/live-row gates
   and citations after the historical verification archive move.

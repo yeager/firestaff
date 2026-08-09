@@ -1663,7 +1663,18 @@ static int m12_path_tail_equals(const char* path, const char* name) {
 }
 
 static const char* const* m12_fast_candidate_subdirs_for_game(const char* gameId) {
-    static const char* const dm1Subdirs[] = {"dm1", "dm1-multilingual", "", NULL};
+    static const char* const dm1Subdirs[] = {
+        "dm1",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34",
+        "dm1/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34",
+        "DATA",
+        "dm1-multilingual",
+        "",
+        NULL
+    };
     static const char* const csbSubdirs[] = {"csb", "", NULL};
     static const char* const dm2Subdirs[] = {"dm2", "", NULL};
     static const char* const nexusSubdirs[] = {"nexus", "", NULL};
