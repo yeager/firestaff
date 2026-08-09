@@ -1,3 +1,19 @@
+# Theron autentisk `.mc0`-replay och PCE-knappar (2026-08-09)
+
+- ✅ En extern Mednafen-savestate verifierades som gzip-fil med dekomprimerad
+  `MDFNSVST`-payload, separat från 2 KiB `HUBM`-SRAM. Den laddades av den
+  instrumenterade Mednafen-
+  binären mot äkta US Track 02 och System Card utan syntetiskt speldata.
+- ✅ Replayens fyra PCE-inputtransaktioner och 2 048 registerprover är
+  autentiska; proverna täcker `$C96B-$CA69` och `$CC4C-$CD13`. Den svagare
+  execution-window-gaten passerar, medan den strikta spawn-gaten korrekt
+  nekar eftersom samma körning saknar `$4644`, `$4667`, `$B0E5`, game-owned
+  CD-read och RNG-return. Ingen RNG-, spawn-, AI-, loot-, T700- eller
+  T900-semantik har publicerats.
+- ✅ Mednafenprofilen verifierar PCE Button I/1 = `Z` och Button II/2 = `X`.
+  Komma/punkt är inte en säker standardbindning på macOS; de måste mappas
+  uttryckligen i den lokala `mednafen.cfg` om de ska användas.
+
 # Theron savestate-intag (2026-08-09)
 
 - ✅ Capture-scriptet känner nu igen `HUBM`-signaturen och nekar en 2 KiB

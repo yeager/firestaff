@@ -81,3 +81,21 @@ spawn, creature, AI, loot, T700 or T900 behavior.
 
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.
+
+## 2026-08-09 authenticated `.mc0` replay
+
+The external capture campaign also verified a real Mednafen state, distinct
+from the HuBM SRAM files: the state is a 240,789-byte gzip file whose
+decompressed payload begins with `MDFNSVST`. It was loaded against
+the hash-verified US Track 02 and System Card and replayed with four scripted
+PCE transactions. The resulting receipt contains 2,048 source-bound register
+samples across `$C96B-$CA69` and `$CC4C-$CD13`; it contains no `$4644`,
+`$4667`, or `$B0E5` sample, no game-owned CD-sector read, and no RNG-consumer
+sidecar. The execution-only parser accepts the window, but the strict
+correlation gate remains closed. These observations are from one authentic
+run and are not merged with other captures.
+
+The capture profile binds PCE Button I/1 to `Z` and Button II/2 to `X`.
+Comma/period are not assumed as portable macOS bindings; they require an
+explicit local Mednafen input-map entry. This control choice is capture
+metadata only and does not claim a game-owned Button I/II semantic consumer.
