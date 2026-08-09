@@ -33238,7 +33238,29 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                         ? m11_object_icon_index_for_thing(state, state->world.things, dropThing)
                         : -1;
                     if (dropIcon == 147) { /* C147_ICON_JUNK_CHAMPION_BONES */
-                        if (m11_c080_drop_leader_hand(state, 4)) {
+                        int dropIndex = THING_GET_INDEX(dropThing);
+                        int championIndex = -1;
+                        const struct DungeonJunk_Compat* bones = NULL;
+                        if (THING_GET_TYPE(dropThing) == THING_TYPE_JUNK &&
+                            state->world.things && state->world.things->junks &&
+                            dropIndex >= 0 && dropIndex < state->world.things->junkCount) {
+                            bones = &state->world.things->junks[dropIndex];
+                            if (bones->type == DM1_JUNK_TYPE_BONES &&
+                                bones->doNotDiscard &&
+                                bones->chargeCount < CHAMPION_MAX_PARTY &&
+                                bones->chargeCount < state->world.party.championCount &&
+                                state->world.party.champions[bones->chargeCount].present) {
+                                championIndex = bones->chargeCount;
+                            }
+                        }
+                        /* F0255 owns the C13 transition only when the
+                         * dropped record carries its authentic champion
+                         * owner.  An icon alone is insufficient: imported
+                         * or stale JUNK must remain on the ordinary drop
+                         * path rather than creating an ownerless event. */
+                        if (championIndex >= 0 &&
+                            state->world.timeline.count < TIMELINE_QUEUE_CAPACITY &&
+                            m11_c080_drop_leader_hand(state, 4)) {
                             m11_set_status(state, "ALTAR", "CHAMPION BONES PLACED — REBIRTH");
                             /* ReDMCSB CLIKVIEW.C F0374: dropping bones at Vi Altar
                              * schedules C13_EVENT_VI_ALTAR_REBIRTH at gameTick + 1.
@@ -33250,9 +33272,27 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                 rebirthEvent.mapIndex = state->world.party.mapIndex;
                                 rebirthEvent.mapX = frontCell.mapX;
                                 rebirthEvent.mapY = frontCell.mapY;
-                                rebirthEvent.kind = 13; /* DM1_EVENT_VI_ALTAR_REBIRTH */
-                                (void)F0721_TIMELINE_Schedule_Compat(
-                                    &state->world.timeline, &rebirthEvent);
+                                rebirthEvent.cell = (int)THING_GET_CELL(dropThing);
+                                rebirthEvent.kind = TIMELINE_EVENT_VI_ALTAR_REBIRTH;
+                                rebirthEvent.aux0 = DM1_EVENT_VI_ALTAR_REBIRTH;
+                                rebirthEvent.aux1 = 2;
+                                rebirthEvent.aux4 = championIndex;
+                                if (!F0721_TIMELINE_Schedule_Compat(
+                                        &state->world.timeline, &rebirthEvent)) {
+                                    /* Do not leave the hand item consumed if
+                                     * the source timeline cannot accept the
+                                     * transition. */
+                                    if (m11_unlink_thing_from_square(
+                                            &state->world,
+                                            state->world.party.mapIndex,
+                                            frontCell.mapX, frontCell.mapY,
+                                            dropThing)) {
+                                        (void)DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(
+                                            state, dropThing);
+                                        m11_refresh_hash(state);
+                                    }
+                                    return M11_GAME_INPUT_IGNORED;
+                                }
                             }
                             return M11_GAME_INPUT_REDRAW;
                         }

@@ -37,6 +37,10 @@
   and leader hand atomically, with rollback when a link or allocation fails.
 - `DM1 F0275 C012 receipt`: Fix the generator receipt so its source icon index
   survives result initialization and reaches the authentic F0167 allocator.
+- `DM1 C13 Vi Altar`: Fix live champion-bones drops so the rebirth timeline
+  carries the authenticated Thing cell, champion owner, and F0255 step-2
+  fields. Reject stale or ownerless bones for the special route and restore
+  the hand item if the source timeline cannot accept the event.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects
