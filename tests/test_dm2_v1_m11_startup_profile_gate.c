@@ -4273,6 +4273,23 @@ int main(void) {
                     view.dm2State.leader_hand_object == 0u,
                     "DM2 rejects an authentic but non-front mirror until the source viewport and movement owner reach it");
     }
+    expect_true(profile &&
+                    dm2_v1_boot_materialize_startend_first_champion(profile) &&
+                    (profile_new_game_owner =
+                        (const DM2_V1_GameLoadWorldOwner *)
+                            dm2_v1_boot_new_game_world_readonly(profile)) != NULL &&
+                    profile_new_game_owner->selected_mirror_count == 1u &&
+                    profile_new_game_owner->selected_mirrors[0].map == 0 &&
+                    profile_new_game_owner->selected_mirrors[0].x == 0 &&
+                    profile_new_game_owner->selected_mirrors[0].y == 0 &&
+                    profile_new_game_owner->selected_mirrors[0].direction == 0 &&
+                    profile_new_game_owner->selected_party.heros_in_party == 1 &&
+                    profile_new_game_owner->selected_party.hero[0].partypos == 0 &&
+                    profile_new_game_owner->selected_party.hero[0].absdir == 0 &&
+                    profile_new_game_owner->champion_selection_materialized &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0,
+                "DM2 materializes the original scripted first champion from startend's (0,0) DB3 chain privately");
     /* The following runtime/save assertions exercise resume separately. A
      * New Game may not create the former fixture party merely to enter this
      * block; GAME_LOAD owns that source transition. */

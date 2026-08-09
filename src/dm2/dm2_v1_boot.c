@@ -13681,6 +13681,53 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
     return 1;
 }
 
+int dm2_v1_boot_materialize_startend_first_champion(
+    DM2_V1_BootProfile *profile)
+{
+    DM2_V1_GameLoadWorldOwner *owner;
+    DM2_V1_BootNewGamePartySelection selection;
+    const DM2_V1_BootChampionSelectionCandidate *first = NULL;
+    int i;
+
+    if (!profile || profile->source_game_load_session_ready ||
+        !(owner = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner) ||
+        !dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->source_map_context_materialized || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->selected_mirror_count != 0u ||
+        !owner->preselection_mirror_roster.valid ||
+        owner->preselection_mirror_roster.candidate_count <= 0) {
+        return 0;
+    }
+
+    /* DM2_2f3f_0789 is not a player viewport click: fresh GAME_LOAD walks
+     * GET_TILE_RECORD_LINK(0,0) on ddat.v1e0266 and selects the first DB3
+     * subtype-0x7e marker through DM2_SELECT_CHAMPION(0,1,0,map).  The
+     * roster was collected in that same map/x/y/chain order from the owned
+     * File_header image, so admit only its first matching source marker.
+     * SKProject: SKULLWIN/startend.cpp:1138-1167; c_hero.cpp:1052-1157. */
+    for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
+        const DM2_V1_BootChampionSelectionCandidate *candidate =
+            &owner->preselection_mirror_roster.candidates[i];
+        if (!candidate->valid || candidate->mirror.map != owner->current_map ||
+            candidate->mirror.x != 0 || candidate->mirror.y != 0) {
+            continue;
+        }
+        first = candidate;
+        break;
+    }
+    if (!first || first->mirror.object_id == 0u) return 0;
+
+    memset(&selection, 0, sizeof(selection));
+    selection.map = first->mirror.map;
+    selection.x = first->mirror.x;
+    selection.y = first->mirror.y;
+    selection.direction = 0;
+    selection.mirror_object_id = first->mirror.object_id;
+    return dm2_v1_boot_select_new_game_champion(profile, &selection);
+}
+
 int dm2_v1_boot_select_new_game_champion(
     DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selection)
