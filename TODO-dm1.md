@@ -35,6 +35,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   orphaned source explosion. The focused F0213/F0220, F0248, and F0190
   runtime checks pass.
 
+- 2026-08-09 conditional top-row material correction is complete: active
+  F0659 shield borders and F0662 invisibility remaps now fail closed when
+  their real GRAPHICS.DAT material is absent; ordinary frames do not require
+  either conditional surface. This prevents an incomplete HUD frame from
+  being admitted as parity-complete.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
