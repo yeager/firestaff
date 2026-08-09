@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: VDP1-traceintervallet vidarebefordras nu av launchern. En ny
+  komplett raw-capture från den externa Mednafen-binären saknas fortfarande;
+  dess producerproblem måste lösas innan manifestbunden `0x10a00`-PC kan
+  jämföras mot MENU.BPK/FONT256/DGN.
+
 - 🔧 Nexus: nya captures kan nu manifestbinda raw, VDP1-write-trace och
   writer-code-trace. Den befintliga capture:n saknar trace-hashfält och ska
   därför köras om innan `0x10a00` får någon sessionsägd consumer-identifiering.

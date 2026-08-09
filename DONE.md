@@ -1,3 +1,10 @@
+# Nexus launcher forwards VDP1 trace range controls (2026-08-09)
+
+- ✅ VDP1 write-trace range and record-limit variables följer nu med till den
+  externa Mednafen-processen tillsammans med tracefilerna. Det förhindrar att
+  en riktad `0x10a00`-capture råkar köras utan det intervall som aktiverar
+  writer-code-hooken.
+
 # Nexus capturemanifest binder VDP1-hjälptraces (2026-08-09)
 
 - ✅ Saturn-launchern vidarebefordrar nu VDP1-write-trace och writer-code-
