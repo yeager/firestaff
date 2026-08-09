@@ -234,25 +234,22 @@ int nexus_v1_dgn_package_host_consumer_gate(
         !out_receipt->static_selectors_within_structure2_descriptors ||
         !out_receipt->structure2_descriptor_route_bound ||
         !out_receipt->selector_bindings_complete) {
+        out_receipt->material_receipt_ready = 0;
+        /* Route metadata is not a separate admission stage: without the
+         * complete original-render witness this remains a material block. */
         out_receipt->status =
-            NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_ROUTE;
+            NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_MATERIAL;
         return 0;
     }
 
+    /* The host route has no original Saturn frame, command-list witness, or
+     * pixel/CLUT receipt in this ABI.  A source-complete material receipt is
+     * therefore still a blocked material boundary; it must not become a
+     * READY_NO_DRAW receipt by promoting host raster input. */
+    out_receipt->material_receipt_ready = 0;
     out_receipt->status =
-        NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_READY_NO_DRAW;
-    out_receipt->source_route_consumed_by_host = 1;
-    out_receipt->real_dgn_source_consumed_by_host = 1;
-    out_receipt->structure2_structure3_admission_bound = 1;
-    out_receipt->package_host_route_bound = 1;
-    out_receipt->original_saturn_rendering_proven = 1;
-    out_receipt->material_semantics_proven = 1;
-    out_receipt->material_pixel_promotion_blocked = 0;
-    out_receipt->can_submit_raster_input = 1;
-    out_receipt->fallback_visuals_permitted = 1;
-    out_receipt->blocks_real_dgn_mesh_render = 0;
-    out_receipt->no_draw_only = 0;
-    return 1;
+        NEXUS_V1_DGN_PACKAGE_HOST_CONSUMER_BLOCKED_MATERIAL;
+    return 0;
 }
 
 int nexus_v1_dgn_menu_prs3_route_gate(

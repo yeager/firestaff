@@ -66,8 +66,8 @@ int main(void)
                receipt.selector_bindings_complete &&
                !receipt.material_semantics_proven &&
                receipt.package_host_route_bound &&
-               !receipt.no_draw_only &&
-               !receipt.blocks_real_dgn_mesh_render &&
+               receipt.no_draw_only &&
+               receipt.blocks_real_dgn_mesh_render &&
                receipt.original_saturn_capture_required &&
                !receipt.original_saturn_capture_available &&
                !receipt.can_submit_raster_input &&
@@ -145,7 +145,7 @@ int main(void)
                receipt.structure2_descriptor_route_bound &&
                receipt.selector_bindings_complete &&
                !receipt.material_semantics_proven &&
-               !receipt.blocks_real_dgn_mesh_render &&
+               receipt.blocks_real_dgn_mesh_render &&
                !receipt.can_submit_raster_input &&
                !receipt.permits_fallback_visuals,
            "Structure2/Structure3 binding proof is not drawable material semantics");

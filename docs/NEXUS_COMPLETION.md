@@ -7,20 +7,23 @@ Implementeringstäckning mäter byggt format-, analys- och capture-stöd.
 Produktionsgrad mäter vad som faktiskt får användas i en spelbar,
 regionmatchad Saturn-kedja.
 
-| Område | Implementeringstäckning | Produktionsgrad | Huvudspärr |
-|---|---:|---:|---|
-| Uppstart | 50 % | 0 % | E-BIOS är region E, medan den levererade skivan identifierar sig som J; ingen giltig startup→meny-witness |
-| Meny | 35 % | 0 % | PRS3 är avkodat, men VDP2-källägare, FONT256-konsument och faktisk komposition saknas |
-| DGN face/mesh/textur | 45 % | 0 % | Format/material är bundna, men runtime-transform, culling och rasterisering är inte upptagna från giltig capture |
-| Saturn VDP1-capture | 65 % | 0 % | Transport, framing och capture-only replay finns; semantisk scenägare och display-origin saknas |
-| HUD/viewport | 15 % | 0 % | Layout/adaptrar finns, men ingen autentiserad VDP1/VDP2-pixelhandoff till produktionen |
-| SLEV/SAL/SDDRVS | 25 % | 0 % | Korpus och driverinventering finns; selector, codec, MAP-bindning och playback är obevisade |
+| Område | Verifierade grindar | Implementeringstäckning | Produktionsgrad | Huvudspärr |
+|---|---:|---:|---:|---|
+| Uppstart | 3/6 | 50,0 % | 0 % | E-BIOS är region E, medan den levererade skivan identifierar sig som J; ingen giltig startup→meny-witness |
+| Meny | 3/8 | 37,5 % | 0 % | PRS3-byteavkodning och källinventering finns, men VDP2-källägare, FONT256-konsument och faktisk komposition saknas |
+| DGN face/mesh/textur | 3/7 | 42,9 % | 0 % | Format, mesh-topologi och materialägare är bundna, men textursemantik, runtime-transform, culling och rasterisering saknas |
+| Saturn VDP1-capture | 8/11 | 72,7 % | 0 % | Råcapture, command-framing, material/CLUT-join, atomisk replay, flerkommando-sekvens och display-origin är verifierade; scenägare, face-selection, transform/culling och produktionskonsument saknas |
+| HUD/viewport | 1/7 | 14,3 % | 0 % | Layout/adaptrar och capture-only-komposition finns, men ingen autentiserad VDP1/VDP2-pixelhandoff till produktionen |
+| SLEV/SAL/SDDRVS | 2/8 | 25,0 % | 0 % | Korpus, driver- och write-traces finns; selector, codec, MAP-bindning, event-dispatch och faktisk playback är obevisade |
 
 Det aritmetiska medelvärdet för implementeringstäckningen är
-`(50 + 35 + 45 + 65 + 15 + 25) / 6 = 39,2 %`.
+`(50,0 + 37,5 + 42,9 + 72,7 + 14,3 + 25,0) / 6 = 40,4 %`.
+Som kontrollsumma är de namngivna grindarna `20/47 = 42,6 %`; den siffran
+ersätter inte områdesmedelvärdet, eftersom ett område annars skulle väga mer
+bara för att det har fler delgrindar.
 För den prioriterade kedjan uppstart → meny → HUD/viewport, med vikterna
 30/35/35, är implementeringstäckningen
-`50 × 0,30 + 35 × 0,35 + 15 × 0,35 = 30,5 %`.
+`50,0 × 0,30 + 37,5 × 0,35 + 14,3 × 0,35 = 33,1 %`.
 Produktionsgraden är 0 % för båda måtten just nu: den levererade region-J-
 skivan saknar ett matchande J-BIOS, och den befintliga E-BIOS-capturen får
 därför inte öppna semantiska runtimekonsumenter. Siffrorna ska inte
@@ -28,8 +31,22 @@ medelvärdesbildas mellan modellerna.
 
 ## Räkneregel
 
-Implementeringstäckningen är medelvärdet av tabellens sex områden, avrundat
-till en decimal.
+Implementeringstäckningen är antalet verifierade grindar dividerat med
+områdets namngivna grindar; medelvärdet av tabellens sex områden avrundas till
+en decimal. En parser, hash eller no-op får bara räkna på den grind den
+faktiskt verifierar.
+
+Grindarna är fasta i denna revision: uppstart = data/BIOS, region, input,
+capture, startidentitet, startup→meny; meny = BPK, PRS3, källrad,
+pixel-/mode-semantik, palette, VDP2-map, FONT256, meny-capture; DGN = DGN-
+format, mesh-topologi, face/materialägare, textursemantik, transform, culling,
+produktionsraster; VDP1 = råtransport, autentiserad frame, VDP1-state,
+command-framing, texture/CLUT-join, atomisk replay, flerkommando-sekvens,
+display-origin, scenägare, face-selection, transform/culling; HUD/viewport =
+layout, HUD-källa, VDP2-källa, VDP1-källa, pixelhandoff, komposition,
+produktionskonsument; SLEV/SAL/SDDRVS = korpus, driver, trace, selector,
+codec, MAP-bindning, event-dispatch, playback.
+
 Produktionsgrad är däremot en spärrad mätning: originaldata,
 Saturn-runtimeägare, korrekt BIOS/media-region och produktionskonsument måste
 vara bundna i samma verifierade witness. Parser, hash, statisk disassembly,

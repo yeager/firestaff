@@ -44,10 +44,13 @@
 # Nexus: korrigerad färdighetsberäkning (2026-08-09)
 
 - ✅ Implementeringstäckning och spärrad produktionsgrad redovisas nu
-  separat. Nexus-tabellen är omräknad till 39,2 % implementeringstäckning
-  totalt (`235/600`) och 30,5 % för uppstart→meny→HUD/viewport
-  (`50×0,30 + 35×0,35 + 15×0,35`). Produktionsgraden är 0 % tills ett
-  matchande BIOS/media-par ger en giltig Saturn-witness.
+  separat med fasta, namngivna verifieringsgrindar. Områdesmedelvärdet är
+  40,4 % och kontrollsumman för alla grindar är 20/47 = 42,6 %; den
+  prioriterade kedjan uppstart→meny→HUD/viewport är 33,1 %. VDP1 räknas nu
+  till 8/11 eftersom autentiserad command-framing, CLUT/material-join,
+  atomisk replay, flerkommando-sekvens och display-origin är verifierade.
+  Produktionsgraden är fortfarande 0 % tills ett matchande BIOS/media-par
+  och en komplett semantisk Saturn-witness finns.
 
 # Nexus: atomisk VDP1-capture och återställd DGN-spärr (2026-08-09)
 
