@@ -2,6 +2,7 @@
 set -eu
 
 runtime_test="${1:?Atari M11 runtime test executable is required}"
+firestaff_cli="${2:-}"
 data_dir="${FIRESTAFF_CSB_ATARI_DATA:-$HOME/.firestaff/data/csb}"
 archive="${FIRESTAFF_CSB_ATARI_ARCHIVE:-$data_dir/Game,Chaos_Strikes_Back,Atari_ST,Software.7z}"
 
@@ -50,4 +51,26 @@ FIRESTAFF_CSB_DATA_DIR="$tmp_dir" \
 FIRESTAFF_CSB_ATARI_MINI="$tmp_dir/MINI.DAT" \
 FIRESTAFF_CSB_TEST_QUICKSAVE_PATH="$tmp_dir/CSBGAME.DAT" \
     "$runtime_test"
+
+# `--save` is an explicit original-container request.  It must survive the
+# M12 launch intent and bypass ANIM.C: ReDMCSB LOADSAVE.C F0435 restores the
+# GAMEBLOCK directly rather than replaying ANIMATE.SCR.  This uses only the
+# extracted original MINI.DAT and keeps the archive test skip-safe.
+if [ -x "$firestaff_cli" ]; then
+    probe_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --game csb --data-dir "$tmp_dir" --platform atari-st \
+        --save "$tmp_dir/MINI.DAT" --boot-probe \
+        --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 2>&1)" || {
+        printf '%s\n' "$probe_output" >&2
+        exit 1
+    }
+    case "$probe_output" in
+        *"phase=inactive"*"startupActive=0"*"levelLoaded=1"*) ;;
+        *)
+            echo "FAIL: Atari MINI.DAT CLI resume did not reach live runtime" >&2
+            printf '%s\n' "$probe_output" >&2
+            exit 1
+            ;;
+    esac
+fi
 echo "PASS: original CSB Atari MINI.DAT runtime/save archive corpus"

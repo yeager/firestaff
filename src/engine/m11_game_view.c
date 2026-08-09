@@ -9749,6 +9749,36 @@ static int m11_csb_apply_boot_runtime_receipt(
         }
         state->csbOriginalSaveRuntimeReceipt = original_save_receipt;
         state->csbOriginalSaveRuntimeReceiptRequired = 1;
+
+        /* ReDMCSB LOADSAVE.C F0435 restores the GAMEBLOCK and enters the
+         * live loop.  A valid original resume must not be routed back through
+         * the selected platform's title program: on ST that used to replay
+         * ANIMATE.SCR despite MINI.DAT already being live.  The same rule
+         * applies to the Amiga and FM Towns native title paths. */
+        if (receipt->receipts.handoff.direct_resume_loaded) {
+            /* F0435 returns to the live GAMELOOP, rather than leaving the
+             * boot profile in its title-program state.  The platform-native
+             * C232/C0128 consumers below require that same post-load state
+             * as a normal ANIMATE.SCR -> GAME hand-off. */
+            ((CSB_V1_BootProfile *)state->csbBootProfile)->runtime.state =
+                CSB_STATE_GAME;
+            /* Dynamic C232/F0128 records are package-scoped just like the
+             * normal Atari hand-off below.  A direct F0435 load bypasses
+             * ANIMATE.SCR, not GRAPHICS.DAT provenance. */
+            state->csbStartupExpectedPackageIdentity =
+                package_identity ? package_identity : 1u;
+            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            state->csbState.startup_title_active = 0;
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            state->csbState.startup_entrance_credits_active = 0;
+            state->csbState.startup_entrance_opening_active = 0;
+            if (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+                state->csbAtariStRuntimeHandoffComplete = 1;
+            }
+            return 1;
+        }
     }
     if (receipt->load_original_font_from_graphics) {
         unsigned char *font_pixels = NULL;

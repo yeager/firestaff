@@ -10,6 +10,16 @@
 - ✅ Regression coverage passes for duplicate admission and retirement, while
   combat, AI, loot, generators, T700 and T900 remain fail-closed as documented.
 
+# CSB Atari ST: direkt F0435-återupptagning från CLI (2026-08-09)
+
+- ✅ En uttrycklig `--save` med en autentisk Atari ST `MINI.DAT` förs nu genom
+  M12:s launch-intent till den källägda F0435-läsaren. Den går direkt till
+  GAMELOOP i stället för att spela om `ANIMATE.SCR`.
+- ✅ Den direkta hand-offen behåller paketidentiteten för Atari
+  `GRAPHICS.DAT`, så C232-HUD och F0128-viewport fortsätter använda samma
+  verifierade originalmaterial. CTest kör den riktiga hårddiskarkivets
+  `MINI.DAT` och CLI-boot-probet till en aktiv karta 4-session.
+
 # CSB: native C010 Climb Down-rörelse (2026-08-09)
 
 - ✅ CSB:s `CLIMB DOWN` går nu från `MENU.C F0407` direkt till den liveägda
