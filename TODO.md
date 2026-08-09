@@ -70,7 +70,8 @@
   verkliga recordadresser, och DB2-textfält samt DB1-teleportörposter från
   samma kedjor är bevarade, liksom DB3-aktuatorernas riktiga mål- och
   fördröjningsfält samt DB4-varelsernas position, HP och kompletta
-  possessionskedjor.
+  possessionskedjor. M11 kan nu läsa den autentiska mirrorlistan från denna
+  privata ägare, men saknar ännu panelritning och source-routad klickning.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

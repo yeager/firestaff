@@ -13737,6 +13737,30 @@ const void *dm2_v1_boot_prepared_new_game_world_readonly(
            owner->preselection_view.valid ? owner : NULL;
 }
 
+int dm2_v1_boot_prepared_new_game_mirror_roster(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionSelectionCensus *out_roster)
+{
+    const DM2_V1_GameLoadWorldOwner *owner;
+
+    if (!out_roster) return 0;
+    memset(out_roster, 0, sizeof(*out_roster));
+    if (!profile || profile->source_game_load_session_ready ||
+        !(owner = (const DM2_V1_GameLoadWorldOwner *)
+            profile->game_load_world_owner) ||
+        !dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->preselection_mirror_roster.valid ||
+        !owner->preselection_mirror_roster.incomplete_game_load ||
+        owner->preselection_mirror_roster.candidate_count <= 0 ||
+        owner->preselection_mirror_roster.candidate_count >
+            DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) {
+        return 0;
+    }
+    *out_roster = owner->preselection_mirror_roster;
+    return 1;
+}
+
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     if (!profile) return;
     /* The runtime borrows this profile's source-owned GDAT and disc buffers.

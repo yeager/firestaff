@@ -573,6 +573,13 @@ const void *dm2_v1_boot_new_game_world_readonly(const DM2_V1_BootProfile *profil
 const void *dm2_v1_boot_prepared_new_game_world_readonly(
     const DM2_V1_BootProfile *profile);
 
+/* Returns the private GAME_LOAD owner's canonical mirror candidates for a
+ * source-rendered selection panel. It never selects a champion or exposes a
+ * fallback roster when the File_header world is incomplete. */
+int dm2_v1_boot_prepared_new_game_mirror_roster(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionSelectionCensus *out_roster);
+
 /* Returns the original hash-verified DOS INTRO executable retained by this
  * profile, or zero when the selected media is absent, invalid or not PC
  * English.  The returned bytes are profile-owned and read-only to callers. */
