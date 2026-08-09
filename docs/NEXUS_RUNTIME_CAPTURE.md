@@ -106,6 +106,15 @@ This is a bounded replay consumer, not permission to use the ordinary DGN
 mesh route: complete command-list order, local/system clipping, dynamic face
 selection and VDP2 composition remain separate gates.
 
+The capture compositor is atomic at both levels: a single command that is
+fully off-screen or otherwise produces no pixel cannot publish its palette or
+partial framebuffer, and a failed first VDP1 pass in the VDP2-over-VDP1
+composition restores the complete viewport. The retail DGN face/material
+receipt likewise keeps `no_draw_only=1` and
+`blocks_real_dgn_mesh_render=1` on its successful source-bound state; these
+flags describe a validated source boundary and do not authorize normal
+rendering.
+
 An input-free pre-Start run at runtime frame 10000 independently captured
 active VDP2 NBG1 bitmap mode (`BGON=0x0002`, `CHCTLA=0x1211`) with stable VRAM
 and CRAM. Its decoded `MENU.BPK`, `FONT256.S2D`, `TITLE`, and `STABG` source

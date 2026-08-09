@@ -131,6 +131,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
     Nexus_V1_Vdp1CaptureCompositeReceipt *out_receipt)
 {
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
+    Nexus_Framebuffer *working;
     Nexus_V1_Vdp1TextureCommand command;
     uint16_t palette[16];
     float xy[4][2];
@@ -162,6 +163,16 @@ int nexus_v1_vdp1_capture_composite_mode1(
         *out_receipt = receipt;
         return 0;
     }
+    /* Keep a single-command replay atomic as well as the sequence replay.
+     * A valid command can still produce no visible pixel when its captured
+     * coordinates are outside the host framebuffer; palette and pixels must
+     * not be published for that failed receipt. */
+    working = (Nexus_Framebuffer *)malloc(sizeof(*working));
+    if (!working) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    *working = *framebuffer;
     receipt.command_framed = 1;
     receipt.mode1_lookup = 1;
     receipt.coordinate_words_framed = command.coordinate_words_framed;
@@ -174,7 +185,7 @@ int nexus_v1_vdp1_capture_composite_mode1(
 
     for (index = 0; index < 16; ++index) {
         palette[index] = read_le16(input->palette_state + index * 2);
-        framebuffer->palette[input->palette_slot_base + index] =
+        working->palette[input->palette_slot_base + index] =
             bgr555_to_rgba(palette[index]);
     }
     xy[0][0] = (float)input->screen_origin_x + (float)command.xa;
@@ -186,21 +197,24 @@ int nexus_v1_vdp1_capture_composite_mode1(
     xy[3][0] = (float)input->screen_origin_x + (float)command.xd;
     xy[3][1] = (float)input->screen_origin_y + (float)command.yd;
     if (xy[0][0] == xy[1][0] && xy[0][1] == xy[1][1]) {
+        free(working);
         *out_receipt = receipt;
         return 0;
     }
-    (void)composite_triangle(framebuffer, xy, 0, 1, 2,
+    (void)composite_triangle(working, xy, 0, 1, 2,
         input->texture_span, command.texture_width, command.texture_height,
         input->palette_slot_base, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_rows);
-    (void)composite_triangle(framebuffer, xy, 0, 2, 3,
+    (void)composite_triangle(working, xy, 0, 2, 3,
         input->texture_span, command.texture_width, command.texture_height,
         input->palette_slot_base, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_rows);
     receipt.valid = receipt.written_pixels > 0;
     receipt.renderer_permitted = receipt.valid;
+    if (receipt.valid) *framebuffer = *working;
+    free(working);
     *out_receipt = receipt;
     return receipt.valid;
 }

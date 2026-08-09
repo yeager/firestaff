@@ -70,6 +70,7 @@ int main(void)
     Nexus_V1_Vdp12CaptureCompositionInput composition;
     Nexus_V1_Vdp12CaptureCompositionReceipt receipt;
     Nexus_V1_StabgCaptureInput stabg_input;
+    Nexus_Framebuffer before_failed_composition;
     uint8_t *stabg;
     uint8_t stabg_pixels[320U * 168U];
     uint8_t stabg_palette[512];
@@ -199,6 +200,18 @@ int main(void)
         fprintf(stderr, "FAIL: authenticated VDP1→VDP2 composition\n");
         return 1;
     }
+    /* The VDP2-over-VDP1 branch validates VDP1 first. A failed VDP1 source
+     * must still roll the viewport back atomically. */
+    before_failed_composition = viewport.fb;
+    vdp1.original_saturn_capture_verified = 0;
+    if (nexus_viewport_replay_vdp12_capture_composition(
+            &viewport, &composition, &receipt) != 0 ||
+        memcmp(&before_failed_composition, &viewport.fb,
+               sizeof(viewport.fb)) != 0) {
+        fprintf(stderr, "FAIL: failed VDP1→VDP2 composition mutated framebuffer\n");
+        return 1;
+    }
+    vdp1.original_saturn_capture_verified = 1;
     composition.vdp1_over_vdp2 = 1;
     if (nexus_viewport_replay_vdp12_capture_composition(
             &viewport, &composition, &receipt) != 0 || receipt.valid) {

@@ -152,6 +152,7 @@ int nexus_viewport_replay_vdp12_capture_composition(
         vp->last_vdp1_sequence_receipt = vdp1_receipt;
         receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
         if (!vdp1_ok) {
+            vp->fb = *saved;
             *out_receipt = receipt;
             free(saved);
             return 0;

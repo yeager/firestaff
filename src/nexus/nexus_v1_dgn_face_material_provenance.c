@@ -97,6 +97,13 @@ int nexus_v1_dgn_face_material_validate(
     out_receipt->original_saturn_capture_required = 1;
     out_receipt->original_saturn_capture_available = 0;
     out_receipt->can_submit_raster_input = 0;
+    /* A READY receipt is a validated source boundary, not a draw admission.
+     * Keep the fail-closed flags explicit after the success fields are
+     * populated; zero-initialising them would make callers mistake the
+     * receipt for an admissible raster route. */
+    out_receipt->no_draw_only = 1;
+    out_receipt->blocks_real_dgn_mesh_render = 1;
+    out_receipt->permits_fallback_visuals = 0;
     return 1;
 }
 

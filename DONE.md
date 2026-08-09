@@ -32,6 +32,16 @@
   (`50×0,30 + 35×0,35 + 15×0,35`). Produktionsgraden är 0 % tills ett
   matchande BIOS/media-par ger en giltig Saturn-witness.
 
+# Nexus: atomisk VDP1-capture och återställd DGN-spärr (2026-08-09)
+
+- ✅ En misslyckad eller helt utanför bildrutan VDP1-capture kan inte längre
+  lämna palette eller framebuffer delvis muterad. VDP1/VDP2-kompositionen
+  återställer också viewporten när den första VDP1-passagen fallerar.
+- ✅ Den autentiska 16-level DGN face/material-receipten behåller nu explicit
+  `no_draw_only=1` och `blocks_real_dgn_mesh_render=1` efter lyckad
+  källbindning. Alla 16 nivåer och den låsta censusen 17 821 texturerade faces
+  passerar igen.
+
 # Nexus: fransk MENU.BPK-revision och PALT/PRS3-regression (2026-08-09)
 
 - ✅ Den SHA/MD5-attesterade franska `MENU.BPK`-revisionen på 87 820 byte är

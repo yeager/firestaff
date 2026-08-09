@@ -23,6 +23,7 @@ int main(void)
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
     Nexus_V1_Vdp1CaptureSequenceInput sequence_input;
     Nexus_V1_Vdp1CaptureSequenceReceipt sequence_receipt;
+    Nexus_Framebuffer before_failed_replay;
     int i;
 
     /* 16x4 mode-1 quad, signed coordinates around the Saturn display
@@ -108,6 +109,33 @@ int main(void)
         return 1;
     }
     input.original_saturn_capture_verified = 1;
+    /* A valid but fully off-screen command must not publish its palette or
+     * leave partial pixels behind when the bounded replay returns failure. */
+    before_failed_replay = framebuffer;
+    wl16(command + 12, 0x0100U);
+    wl16(command + 14, 0x0100U);
+    wl16(command + 16, 0x0110U);
+    wl16(command + 18, 0x0100U);
+    wl16(command + 20, 0x0110U);
+    wl16(command + 22, 0x0110U);
+    wl16(command + 24, 0x0100U);
+    wl16(command + 26, 0x0110U);
+    if (nexus_v1_vdp1_capture_composite_mode1(
+            &framebuffer, &input, &receipt) ||
+        memcmp(&before_failed_replay, &framebuffer,
+               sizeof(framebuffer)) != 0) {
+        fprintf(stderr, "FAIL: failed VDP1 replay mutated framebuffer\n");
+        return 1;
+    }
+    /* Restore the in-frame command before exercising sequence composition. */
+    wl16(command + 12, 0xfff0U);
+    wl16(command + 14, 0xfff0U);
+    wl16(command + 16, 0x0010U);
+    wl16(command + 18, 0xfff0U);
+    wl16(command + 20, 0x0010U);
+    wl16(command + 22, 0x0010U);
+    wl16(command + 24, 0xfff0U);
+    wl16(command + 26, 0x0010U);
     memset(&sequence_input, 0, sizeof(sequence_input));
     sequence_input.commands = &input;
     sequence_input.command_count = 1;
