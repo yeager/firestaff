@@ -709,8 +709,10 @@
   autentiska konsumenter. C026-porträttet har nu en avgränsad native
   kandidat-/statusboxkonsument, inklusive C027:s källägda namnändringsyta,
   men inte hela den interaktiva panelkedjan.
-  Den återstående A35M-runtimen saknar fortfarande egen verifierad
-  konsumentväg. Atari ST:s separata ANIMATE.SCR/ANIMATE.DAT-väg är
+  A35M:s verifierade APPB → KAOS → C03-startväg och C013/C017/C026/C127-
+  konsumenter är nu täckta av den äkta ADF-korpusen. Kvar är bredare
+  dungeonviewport, champion-HUD och övrig interaktion, inte en saknad
+  A35M-start- eller programkonsument. Atari ST:s separata ANIMATE.SCR/ANIMATE.DAT-väg är
   däremot bunden hela vägen till den källägda FTLCODE-runtimen: slutlig
   50 Hz-VBL-överlämning, C232-HUD, 022e-viewport, originalpalett och
   GAMEBLOCK-inmatning används utan PC34-surface-ersättning. Kvar för

@@ -117,9 +117,9 @@
 
 ### Changed
 
-- `CSB platform selection`: Change selection to use a launchable Amiga A31M/A35 profile when
-  it is present, while keeping the independently scanned A31E route blocked
-  until its native APPB handoff is verified.
+- `CSB platform selection`: Prefer a launchable Amiga profile when one is
+  present. A31E now follows its own verified `BJELoad_R` → `APPB.FTL` C03
+  handoff; it no longer borrows A31M title or language media.
 - `CSB F0128 viewport`: Bind the source viewport to its 224×136 screen
   rectangle at `(48, 33)`, preserving the HUD and chrome outside that area.
 - `CSB FM Towns Utility`: Change the C06 editor renderer to retain the
@@ -138,6 +138,12 @@
   that recovery cannot complete.
 - `CSB Atari save handoff`: Fix write-back to preserve the authenticated GAMEBLOCK2 random seed
   when a native save is written back.
+- `CSB Amiga A31E startup`: Materialize and verify the edition-private C02
+  launcher and C03 program before entering the native game route. Missing or
+  mismatched program files still block launch.
+- `CSB FM Towns resume`: Admit authenticated F31 user saves and restore a
+  valid original backup before runtime handoff. F31 write-back remains closed
+  until its complete source-owned serializer is verified.
 
 ## DM2
 
