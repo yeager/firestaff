@@ -54,6 +54,10 @@ typedef struct {
     int spawn_entry_b0e5_seen;
     int preconsumer_4644_seen;
     int helper_4667_seen;
+    /* THQUEST.ASM L4667 takes its RAM-loaded RNG path only when
+     * ($B3 & $07) == $04. Seeing the helper entry alone is not evidence
+     * that this branch ran or that a returned random value was consumed. */
+    int helper_4667_special_branch_seen;
     int semantic_publication_allowed;
     uint32_t sample_count;
     uint32_t first_pc;

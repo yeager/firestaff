@@ -82,6 +82,21 @@ spawn, creature, AI, loot, T700 or T900 behavior.
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.
 
+## 2026-08-09 extended cold-start replay
+
+An additional cold-start replay was run from the hash-verified US Track 02 BIN
+and System Card, with input delivered by Mednafen's checked-in PCE replay
+producer. It produced 133 register samples in one execution, including
+dynamic `$4644` and `$4667` entries while the game was being moved through the
+dungeon. The observed `$4667` samples all had `$B3 & $07 != $04`, so the
+special RAM-loaded branch at `L4667` was not taken. The run still had no
+`$B0E5` entry and no dynamic return-value receipt.
+
+This is useful negative evidence: a helper call is not the same thing as an
+RNG result. The parser now records `helper_4667_special_branch_seen`
+separately and leaves RNG, regular spawn, creature, AI, loot, T700 and T900
+publication closed for this capture.
+
 ## 2026-08-09 authenticated `.mc0` replay
 
 The external capture campaign also verified a real Mednafen state, distinct

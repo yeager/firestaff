@@ -228,6 +228,8 @@ static int parse_spawn_register_trace_file(
         out->cc4c_window_seen |= expected_cc4c;
         out->preconsumer_4644_seen |= expected_preconsumer;
         out->helper_4667_seen |= expected_helper;
+        if (expected_helper && ((b3 & 0x07u) == 0x04u))
+            out->helper_4667_special_branch_seen = 1;
         out->spawn_entry_b0e5_seen |= expected_spawn_entry;
         expected_sequence++;
     }
