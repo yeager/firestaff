@@ -4,6 +4,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 real nested-data resolution is complete: the runtime and launcher
+  asset-status fast path recognize the authenticated DOS PC 3.4 `DATA` tree
+  below both `/Users/bosse/.firestaff/data` and a per-game DM1 root. The C015
+  bottom-row probe now narrows to that real data path, feeds source-owned DM1
+  text state, and verifies that host message telemetry is not rendered. This
+  closes a data-discovery defect; it does not close the authentic C13-save or
+  original-pixel capture gates.
+
 - 2026-08-09 verification-path repair is complete: pass76 route-state JSON is
   stored under `parity-evidence/verification`, and pass608/live-row checks no
   longer depend on the removed historical `verification-m11` path. This fixes

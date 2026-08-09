@@ -11914,6 +11914,9 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                      * directory by the runtime asset owner. */
                     {
                         static const char *const pc34Suffixes[] = {
+                            "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT",
+                            "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DUNGEON.DAT",
+                            "dm1/DATA/DUNGEON.DAT",
                             "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT",
                             "dos_extract/Dungeon-Master_DOS_EN_Version-34/DUNGEON.DAT",
                             "DATA/DUNGEON.DAT"

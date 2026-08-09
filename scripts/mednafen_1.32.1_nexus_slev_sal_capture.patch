@@ -1,0 +1,103 @@
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -127,0 +128,1 @@
++ void FirestaffTraceSlevSalCapture(uint32 address, uint32 value);
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -379,0 +380,1 @@
++ FirestaffTraceSlevSalCapture(A, DB);
+@@ -475,0 +476,94 @@
++static uint64 FirestaffSlevSalCaptureParseU64(const char *name)
++{
++ const char *text = getenv(name);
++ return text && *text ? strtoull(text, NULL, 0) : 0;
++}
++
++static void FirestaffSlevSalCapturePutBE32(uint8 *out, uint32 value)
++{
++ out[0] = (uint8)(value >> 24);
++ out[1] = (uint8)(value >> 16);
++ out[2] = (uint8)(value >> 8);
++ out[3] = (uint8)value;
++}
++
++static void FirestaffSlevSalCapturePutBE64(uint8 *out, uint64 value)
++{
++ FirestaffSlevSalCapturePutBE32(out, (uint32)(value >> 32));
++ FirestaffSlevSalCapturePutBE32(out + 4, (uint32)value);
++}
++
++static uint64 FirestaffSlevSalCaptureFNV1a(uint64 hash, const uint8 *data, size_t size)
++{
++ size_t index;
++ for(index = 0; index < size; ++index)
++ {
++  hash ^= data[index];
++  hash *= UINT64_C(0x100000001b3);
++ }
++ return hash;
++}
++
++static FILE *FirestaffSlevSalCaptureFile;
++static uint32 FirestaffSlevSalCaptureCount;
++static uint32 FirestaffSlevSalCaptureLimit;
++static uint32 FirestaffSlevSalCapturePayloadBytes;
++static uint64 FirestaffSlevSalCapturePayloadHash;
++static bool FirestaffSlevSalCaptureConfigured;
++
++static void FirestaffSlevSalCaptureWriteHeader(void)
++{
++ uint8 header[96] = {0};
++ if(!FirestaffSlevSalCaptureFile) return;
++ memcpy(header, "NXSLSC01", 8);
++ FirestaffSlevSalCapturePutBE32(header + 8, 1);
++ FirestaffSlevSalCapturePutBE32(header + 12, 96);
++ FirestaffSlevSalCapturePutBE64(header + 16, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_ROUTE_EPOCH"));
++ FirestaffSlevSalCapturePutBE64(header + 24, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_PACKAGE_FNV1A64"));
++ FirestaffSlevSalCapturePutBE64(header + 32, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_CARD_FNV1A64"));
++ FirestaffSlevSalCapturePutBE64(header + 40, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_TASK_TRACE_FNV1A64"));
++ FirestaffSlevSalCapturePutBE64(header + 48, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_SAL_DESCRIPTOR_FNV1A64"));
++ FirestaffSlevSalCapturePutBE64(header + 56, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_MAP_TABLE_FNV1A64"));
++ FirestaffSlevSalCapturePutBE64(header + 64, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_SDDRVS_FNV1A64"));
++ FirestaffSlevSalCapturePutBE32(header + 72, 96);
++ FirestaffSlevSalCapturePutBE32(header + 76, FirestaffSlevSalCapturePayloadBytes);
++ FirestaffSlevSalCapturePutBE64(header + 80, FirestaffSlevSalCapturePayloadHash);
++ FirestaffSlevSalCapturePutBE64(header + 88, FirestaffSlevSalCaptureParseU64("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_TASK_SOURCE_FNV1A64"));
++ fseek(FirestaffSlevSalCaptureFile, 0, SEEK_SET);
++ fwrite(header, 1, sizeof(header), FirestaffSlevSalCaptureFile);
++ fflush(FirestaffSlevSalCaptureFile);
++ fseek(FirestaffSlevSalCaptureFile, 0, SEEK_END);
++}
++
++void FirestaffTraceSlevSalCapture(uint32 address, uint32 value)
++{
++ const char *path;
++ uint8 record[16];
++ if(!FirestaffSlevSalCaptureConfigured)
++ {
++  const char *limit = getenv("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_LIMIT");
++  FirestaffSlevSalCaptureLimit = limit && *limit ? strtoul(limit, NULL, 10) : 65536U;
++  FirestaffSlevSalCaptureConfigured = true;
++ }
++ path = getenv("FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_OUTPUT");
++ if(!path || !*path || FirestaffSlevSalCaptureCount >= FirestaffSlevSalCaptureLimit ||
++    address < 0x06000000 || address >= 0x08000000)
++  return;
++ if(!FirestaffSlevSalCaptureFile)
++ {
++  FirestaffSlevSalCaptureFile = fopen(path, "wb+");
++  if(!FirestaffSlevSalCaptureFile) return;
++  FirestaffSlevSalCapturePayloadHash = UINT64_C(0xcbf29ce484222325);
++  FirestaffSlevSalCaptureWriteHeader();
++ }
++ FirestaffSlevSalCapturePutBE32(record, address);
++ FirestaffSlevSalCapturePutBE32(record + 4, value);
++ FirestaffSlevSalCapturePutBE32(record + 8, FirestaffGetSH2PC(0));
++ FirestaffSlevSalCapturePutBE32(record + 12, FirestaffGetSH2PC(1));
++ fwrite(record, 1, sizeof(record), FirestaffSlevSalCaptureFile);
++ FirestaffSlevSalCapturePayloadHash = FirestaffSlevSalCaptureFNV1a(
++   FirestaffSlevSalCapturePayloadHash, record, sizeof(record));
++ FirestaffSlevSalCapturePayloadBytes += (uint32)sizeof(record);
++ FirestaffSlevSalCaptureCount++;
++ FirestaffSlevSalCaptureWriteHeader();
++}

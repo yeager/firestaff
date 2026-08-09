@@ -2445,6 +2445,7 @@ int main(void) {
     DM2_V1_GameLoadWorldOwner static_caii_world_owner;
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
+    DM2_V1_GameLoadRuntimeSessionCandidate runtime_session_candidate;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
     DM2_V1_GameLoadWorldOwner *profile_preselection_turn_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
@@ -2453,6 +2454,7 @@ int main(void) {
     DM2_V1_GameLoadDoorStepReceipt new_game_door_step;
     DM2_V1_GameLoadTimerProcessReceipt new_game_timer_process;
     DM2_V1_TimerEntry new_game_door_step_timer;
+    uint32_t runtime_candidate_source_hash_before;
     int new_game_generators_result;
     int new_game_owner_initialized;
     int new_game_noop_map = -1;
@@ -4848,6 +4850,47 @@ int main(void) {
                     profile_new_game_owner->source_startend_first_champion_released &&
                     !profile->source_game_load_session_ready,
                 "DM2 rebuilds a fresh source entrance and privately runs startend before input");
+    memset(&runtime_session_candidate, 0, sizeof(runtime_session_candidate));
+    runtime_candidate_source_hash_before = profile_new_game_owner &&
+        profile_new_game_owner->dungeon.raw_data ? dm2_test_fnv1a(
+            profile_new_game_owner->dungeon.raw_data,
+            (size_t)profile_new_game_owner->dungeon.raw_size) : 0u;
+    expect_true(profile_new_game_owner && runtime_candidate_source_hash_before != 0u &&
+                    dm2_v1_game_load_runtime_session_candidate_init(
+                        &runtime_session_candidate, profile_new_game_owner) &&
+                    runtime_session_candidate.valid &&
+                    runtime_session_candidate.dungeon.raw_data !=
+                        profile_new_game_owner->dungeon.raw_data &&
+                    runtime_session_candidate.record_pools.pools[4].bytes !=
+                        profile_new_game_owner->record_pools.pools[4].bytes &&
+                    runtime_session_candidate.timer_entries !=
+                        profile_new_game_owner->timer_entries &&
+                    runtime_session_candidate.timer_indices !=
+                        profile_new_game_owner->timer_indices &&
+                    runtime_session_candidate.caii_slots.slots !=
+                        profile_new_game_owner->caii_slots.slots &&
+                    runtime_session_candidate.sound_owner.queue_entries !=
+                        profile_new_game_owner->sound_owner.queue_entries &&
+                    runtime_session_candidate.party.heros_in_party == 1 &&
+                    runtime_session_candidate.event_queue.event_heroidx ==
+                        profile_new_game_owner->source_event_hero_index &&
+                    runtime_session_candidate.source_party_x == 1u &&
+                    runtime_session_candidate.source_party_y == 8u &&
+                    dm2_test_fnv1a(profile_new_game_owner->dungeon.raw_data,
+                        (size_t)profile_new_game_owner->dungeon.raw_size) ==
+                        runtime_candidate_source_hash_before &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0,
+                "DM2 clones the complete source-owned GAME_LOAD RAM candidate without publishing M11 state");
+    dm2_v1_game_load_runtime_session_candidate_free(&runtime_session_candidate);
+    memset(&runtime_session_candidate, 0xA5, sizeof(runtime_session_candidate));
+    expect_true(!dm2_v1_game_load_runtime_session_candidate_init(
+                        &runtime_session_candidate, NULL) &&
+                    !runtime_session_candidate.valid &&
+                    runtime_session_candidate.dungeon.raw_data == NULL &&
+                    runtime_session_candidate.timer_entries == NULL &&
+                    runtime_session_candidate.sound_owner.queue_entries == NULL,
+                "DM2 rejects an incomplete runtime-session source atomically without retained RAM");
     expect_true(profile &&
                     !dm2_v1_boot_materialize_startend_first_champion(profile) &&
                     (profile_new_game_owner =

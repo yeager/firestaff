@@ -20,7 +20,22 @@
   capturen, äldre negativa körningar och scripted replay som emulatorintern
   inputväg utan fysisk macOS-input.
 
+# Nexus: extern SLEV/SAL capture-producent (2026-08-09)
+
+- ✅ Mednafen 1.32.1 byggs reproducerbart på extern disk med en read-only
+  `NXSLSC01`-hook för autentiska SH-2 WorkRAM-skrivningar, SH-2-PC-proveniens
+  och inkrementell payload-hash. Hooken är uttryckligen opak och öppnar inte
+  event-dispatch, SAL-dekodning eller host-uppspelning.
+
 # Theron: atomic source-group admission (2026-08-09)
+
+# DM2: privat GAME_LOAD-runtimekandidat (2026-08-09)
+
+- ✅ En atomär, RAM-endast `GameLoadRuntimeSessionCandidate` kan nu byggas
+  från den verifierade DOS-världen först efter originalets privata
+  championval. Den kopierar c_map/File_header, recordpooler, party/hand,
+  c_tim/eventqueue, CAII/RNG och den GDAT-bundna ljudkön utan att ändra
+  källbytes eller publicera sessionen till M11.
 
 - ✅ Source-bound Track 02 monster groups are now admitted transactionally:
   capacity is checked for every non-zero HP member before the live-creature

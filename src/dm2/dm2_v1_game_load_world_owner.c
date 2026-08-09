@@ -1332,6 +1332,156 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     memset(owner, 0, sizeof(*owner));
 }
 
+static void dm2_v1_game_load_runtime_candidate_sound_free(
+    DM2_V1_GameLoadSoundOwner *sound)
+{
+    if (!sound) return;
+    free(sound->queue_entries);
+    free(sound->sample_bindings);
+    memset(sound, 0, sizeof(*sound));
+}
+
+static int dm2_v1_game_load_runtime_candidate_sound_clone(
+    DM2_V1_GameLoadSoundOwner *out, const DM2_V1_GameLoadSoundOwner *source)
+{
+    DM2_V1_GameLoadSoundOwner candidate;
+
+    if (!out || !source || !source->valid ||
+        !source->runtime_queue_initialized ||
+        (source->queue_entry_count > source->queue_capacity) ||
+        (source->sample_binding_count > source->sample_capacity) ||
+        (source->queue_capacity != 0u && !source->queue_entries) ||
+        (source->sample_capacity != 0u && !source->sample_bindings)) return 0;
+    candidate = *source;
+    candidate.queue_entries = NULL;
+    candidate.sample_bindings = NULL;
+    if (source->queue_capacity != 0u) {
+        candidate.queue_entries = calloc(source->queue_capacity,
+                                         sizeof(*candidate.queue_entries));
+        if (!candidate.queue_entries) goto fail;
+        memcpy(candidate.queue_entries, source->queue_entries,
+               (size_t)source->queue_capacity * sizeof(*candidate.queue_entries));
+    }
+    if (source->sample_capacity != 0u) {
+        candidate.sample_bindings = calloc(source->sample_capacity,
+                                           sizeof(*candidate.sample_bindings));
+        if (!candidate.sample_bindings) goto fail;
+        memcpy(candidate.sample_bindings, source->sample_bindings,
+               (size_t)source->sample_capacity * sizeof(*candidate.sample_bindings));
+    }
+    *out = candidate;
+    return 1;
+fail:
+    dm2_v1_game_load_runtime_candidate_sound_free(&candidate);
+    return 0;
+}
+
+void dm2_v1_game_load_runtime_session_candidate_free(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    if (!candidate) return;
+    dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+    dm2_v1_caii_array_free(&candidate->caii_slots);
+    free(candidate->timer_indices);
+    free(candidate->timer_entries);
+    dm2_v1_record_pool_set_free(&candidate->record_pools);
+    dm2_v1_dungeon_free(&candidate->dungeon);
+    memset(candidate, 0, sizeof(*candidate));
+}
+
+/* This is deliberately a clone, not RESET_CAII/FILL_CAII replay.  Those
+ * source functions have already established the exact private state in the
+ * preceding owner.  Replaying either against the source owner would rewrite
+ * DB4 byte@5 and consume its timer/RNG transaction. */
+int dm2_v1_game_load_runtime_session_candidate_init(
+    DM2_V1_GameLoadRuntimeSessionCandidate *out,
+    const DM2_V1_GameLoadWorldOwner *source)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate candidate;
+    uint32_t hash = 0x47534c44u; /* "GSLD" */
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_game_load_world_owner_is_prepared(source) ||
+        source->committed || !source->source_map_context_materialized ||
+        !source->champion_selection_materialized ||
+        !source->source_startend_first_champion_released ||
+        source->selected_party.heros_in_party <= 0 ||
+        source->selected_party.heros_in_party > DM2_MAX_HEROES ||
+        source->selected_party.curactevhero < 0 ||
+        source->selected_party.curactevhero >= source->selected_party.heros_in_party ||
+        !source->record_pools.valid || !source->dungeon.raw_data ||
+        source->dungeon.raw_size <= 0 || !source->dungeon.record_graph_complete ||
+        !source->timer_entries || !source->timer_indices || source->timer_capacity == 0u ||
+        source->timer_queue.entries != source->timer_entries ||
+        source->timer_queue.indices != source->timer_indices ||
+        source->timer_queue.max_timers != (int16_t)source->timer_capacity ||
+        !source->caii_slots.valid || source->caii_slots.capacity <= 0 ||
+        !source->caii_slots.slots || !source->caii_rng_initialized ||
+        !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
+        return 0;
+    }
+    if (dm2_v1_dungeon_load(&candidate.dungeon, source->dungeon.raw_data,
+                            source->dungeon.raw_size) != 0 ||
+        !candidate.dungeon.record_graph_complete ||
+        !dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools,
+                                                   &candidate.dungeon) ||
+        !candidate.record_pools.valid ||
+        !candidate.record_pools.record_graph_complete) goto fail;
+    candidate.timer_entries = calloc(source->timer_capacity,
+                                     sizeof(*candidate.timer_entries));
+    candidate.timer_indices = calloc(source->timer_capacity,
+                                     sizeof(*candidate.timer_indices));
+    if (!candidate.timer_entries || !candidate.timer_indices) goto fail;
+    memcpy(candidate.timer_entries, source->timer_entries,
+           (size_t)source->timer_capacity * sizeof(*candidate.timer_entries));
+    memcpy(candidate.timer_indices, source->timer_indices,
+           (size_t)source->timer_capacity * sizeof(*candidate.timer_indices));
+    candidate.timer_queue = source->timer_queue;
+    candidate.timer_queue.entries = candidate.timer_entries;
+    candidate.timer_queue.indices = candidate.timer_indices;
+    candidate.timer_capacity = source->timer_capacity;
+    dm2_v1_caii_array_init(&candidate.caii_slots, source->caii_slots.capacity);
+    if (!candidate.caii_slots.valid || !candidate.caii_slots.slots) goto fail;
+    memcpy(candidate.caii_slots.slots, source->caii_slots.slots,
+           (size_t)source->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE);
+    candidate.caii_slots.alloc_count = source->caii_slots.alloc_count;
+    if (!dm2_v1_game_load_runtime_candidate_sound_clone(&candidate.sound_owner,
+                                                         &source->sound_owner)) goto fail;
+    candidate.party = source->selected_party;
+    candidate.leader_hand_record = source->load_new_dungeon_reset.leader_hand_record;
+    dm2_v1_eventqueue_init(&candidate.event_queue);
+    candidate.event_queue.event_heroidx = source->source_event_hero_index;
+    candidate.caii_rng = source->caii_rng;
+    candidate.caii_rng_initialized = 1;
+    candidate.current_map = source->current_map;
+    candidate.source_party_map = source->source_party_map;
+    candidate.source_party_x = source->source_party_x;
+    candidate.source_party_y = source->source_party_y;
+    candidate.source_party_direction = source->source_party_direction;
+    candidate.source_party_absdir = source->source_party_absdir;
+    candidate.source_last_moved_record = source->source_last_moved_record;
+    candidate.source_transaction_hash = source->source_transaction_hash;
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        (uint32_t)source->dungeon.raw_size);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        (uint32_t)source->dungeon.level_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, source->sound_owner.receipt_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, source->caii_source.source_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.timer_capacity);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)candidate.party.heros_in_party);
+    if (hash == 0u) goto fail;
+    candidate.candidate_hash = hash;
+    candidate.valid = 1;
+    *out = candidate;
+    return 1;
+fail:
+    dm2_v1_game_load_runtime_session_candidate_free(&candidate);
+    return 0;
+}
+
 /* Build the source-owned half of GAME_LOAD that precedes the mirror event
  * loop.  The receipts here are deliberately selection-free: a title click
  * must never turn the first roster entry into an invented party choice.

@@ -32,7 +32,9 @@ require_saturn_disc_container() {
 
 require_capture_hook() {
   local marker=$1
-  strings "$mednafen" | grep -Fq "$marker" || {
+  # Do not use grep -q here: strings may receive SIGPIPE on a large binary
+  # under pipefail even when the marker is present.
+  strings "$mednafen" | grep -F "$marker" >/dev/null || {
     echo "ERROR: Mednafen binary does not advertise the Firestaff capture hook: $marker" >&2
     echo "       stock Mednafen cannot produce NXSLSC01; use an instrumented build" >&2
     return 1
