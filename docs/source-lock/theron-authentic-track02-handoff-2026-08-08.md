@@ -49,3 +49,21 @@ The corresponding tracked image is
 `verification-screens/theron-quest-us-main-menu.png`. Its README caption
 identifies it as an original-media Mednafen capture so it cannot be confused
 with a completed Firestaff runtime screenshot.
+
+## Additional original-media dungeon capture
+
+**Verified: 2026-08-09.** A second real Mednafen session used the extracted US
+CUE/BIN set and the same verified System Card. After the authentic file-select
+and title/menu route, the game reached the original dungeon view. The tracked
+864×696 RGBA crop is:
+
+| Artifact | Identity |
+|---|---|
+| US CUE used for the session | MD5 `63dbd2fab613b2e8030ff4e44b978a39` |
+| System Card 3.0 | MD5 `ff1a674273fe3540ccef576376407d1d` |
+| Mednafen | 1.32.1 |
+| Tracked dungeon image | SHA-256 `0ae87857bdd33dadc2881f2ff5ca00007df6b9b406f124f10115f2fa589ae540` |
+
+This is original-game evidence only. It does not promote the Firestaff
+runtime screenshot gate or prove square-to-tile, HUD, creature, T700, T900,
+or other unresolved semantic consumers.

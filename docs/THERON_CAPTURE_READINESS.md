@@ -20,6 +20,13 @@ game capture, not a Firestaff frame. Its complete hashes and narrow evidence
 boundary are recorded in
 [`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`](source-lock/theron-authentic-track02-handoff-2026-08-08.md).
 
+The same real US CD route now also supplies the original-media dungeon frame
+in `verification-screens/theron-quest-us-dungeon-mednafen.png`. It is a
+reference image from Mednafen after the file-select/title route, not a
+Firestaff-rendered parity capture. The host pointer visible in that image is
+not a PC Engine mouse input; the verified local profile uses WASD as alternate
+PCE directional keys, `Z`/`X` for Button I/II, and `Return` for Run.
+
 The Firestaff runtime still has no `README_ELIGIBLE` Theron row. The current
 public status should stay clear:
 Firestaff can hash-verify JP/US Track 02 data, lock

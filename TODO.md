@@ -17,6 +17,13 @@
   materialiserar inte RNG, spawnstatistik, AI, attacker, loot, generator-tick,
   T700 eller T900.
 
+- 🔧 Theron original-media capture: en riktig US Track 02-dungeonbild från
+  Mednafen är nu spårad i `verification-screens/` och README. Den är ett
+  referenswitness från originalspelet, inte en Firestaff-renderad paritybild.
+  Den lokala Mednafen-profilen har dessutom verifierade WASD-alternativ för
+  PCE:s upp/ned/vänster/höger; `Z`/`X` är fortfarande Button I/II och
+  `Return` är Run. Firestaffs egen screenshot-gate och spelsemantik är kvar.
+
 - 🔧 Nexus: VDP1-transporten är nu validerad genom en separat same-session
   snapshot vid `0x10a00`, med bundna write- och writer-code-traces. VDP2-
   frame-hooken saknas fortfarande i den aktiva körningen; nästa steg är att
@@ -62,8 +69,8 @@
 - 🔧 Theron: den autentiserade VDC/VCE-screen-capturen når nu bootfacadens
   source-only-presenter och M11 installerar den fångade VCE-paletten innan
   indexed blit. Detta låser inte upp genererade tiles, square-to-tile-
-  perspektiv eller README-publicering. Den autentiska CD/ADPCM-traceparsern
-  godkänner nu hela den
+  perspektiv eller Firestaffs README-publicering. En separat original-media-
+  capture är nu publicerad som referens.
 
 - 🔧 Nexus: launchern kan nu föra vidare en adressbegränsad VDP1-writer-code-
   trace. Den riktade E-BIOS/franska körningen nådde inte ett nytt validerat
@@ -459,9 +466,11 @@
 
 - 🔧 Theron media audit 2026-08-08 confirms the real US/JP Track 02 bitmap and
   palette bytes, but no authenticated VDC/VCE snapshot is present locally.
-  Keep startup presentation and README screenshot publication blocked until a
-  System Card-backed capture joins FIFO/RAM to the VCE/VDC destination. Never
-  fill this gap with generated or guessed media.
+  Keep Firestaff startup presentation and Firestaff-rendered README screenshot
+  publication blocked until a System Card-backed capture joins FIFO/RAM to the
+  VCE/VDC destination. The original-media Mednafen capture is separately
+  published and must not be confused with that parity gate. Never fill this
+  gap with generated or guessed media.
 
 - 🔧 Theron `.spawn-registers` sidecars now have a strict parser tied to the
   authentic `$4644`, `$4667`, `$C96B-$CA69` and `$CC4C-$CD13` disassembly
@@ -620,10 +629,11 @@
 - Theron: runtime VRAM/VCE file admission is now byte-identified by the authenticated capture FNV receipts; the remaining presentation gap is the original square/material/perspective consumer and a source-owned HUD/text/portrait route.
 
 - Theron: an earlier Track 02 screen-space artifact was withdrawn from README
-  after the current promotion gate rejected it. Publish the first real image
-  only after an authenticated runtime receipt proves the VDC/VCE route; then
-  replace the capture-only path with the T520/T600 square, perspective and HUD
-  consumers when their runtime ownership is recovered.
+  after the current promotion gate rejected it. The first published real image
+  is now explicitly an original-media Mednafen capture; keep it separate from
+  the Firestaff runtime gate, then replace the capture-only path with the
+  T520/T600 square, perspective and HUD consumers when their runtime ownership
+  is recovered.
 
 - Theron: world snapshot version 5 now preserves all 64 source-generator runtime slots and reads version 4's five-slot tail; bind the original T700 generator consumer, cadence and reactivation semantics before making those records executable.
 

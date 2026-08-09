@@ -1,3 +1,19 @@
+# Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
+
+- ✅ En riktig Mednafen 1.32.1-session med US Track 02 nådde originalets
+  dungeon-vy efter filväljaren och titelmenyn. Den verifierade 864×696-bilden
+  finns i `verification-screens/theron-quest-us-dungeon-mednafen.png` med
+  SHA-256 `0ae87857bdd33dadc2881f2ff5ca00007df6b9b406f124f10115f2fa589ae540`.
+  Inga pixlar är genererade eller syntetiska.
+- ✅ Den lokala Mednafen-profilen använder nu `W/A/S/D` som alternativ till
+  PCE:s upp/ned/vänster/höger. `Z`/`X` är Button I/II och `Return` är Run.
+  Konfigurationen laddades i en omstartad aktiv Mednafen-process och riktiga
+  Quartz-tangenthändelser skickades till den processen.
+- ✅ README och Theron-capturedokumentationen skiljer uttryckligen mellan
+  original-mediareferensen och Firestaffs fortfarande låsta runtime-
+  screenshot/parity-gate. Muspekaren är dokumenterad som värdpekare, inte som
+  emulerad PC Engine-mus.
+
 # DM2 New Game: dynamisk privat SND-kö (2026-08-09)
 
 - ✅ GAME_LOAD:s ljudägare behåller nu originalets privata sfx-, delayed- och

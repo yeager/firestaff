@@ -40,6 +40,14 @@ authenticated VDC/VCE replay route, but the runtime screenshot promotion gate
 remains closed until square-to-tile viewport semantics and the full Track 02
 consumer proof are available. See the [capture receipt](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).*
 
+![Authentic Theron's Quest US dungeon capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
+
+*Authentic original Theron's Quest US Track 02 dungeon frame captured from
+Mednafen 1.32.1 after a real file-select/title route. The image uses the real
+US CD image and System Card; it is original-game evidence, not a claim that
+Firestaff's Theron renderer has reached parity. The visible pointer is the
+host pointer and is not a PC Engine mouse control.*
+
 Public screenshots are promoted only when the source-owned runtime route and
 the capture provenance are verified. Generated, placeholder or synthetic
 images are never presented as game evidence.
@@ -163,9 +171,9 @@ The authenticated media inventory and placeholder boundary are tracked in
 Firestaff-rendered Theron screenshot promotion is controlled by the
 source-bound readiness and promotion gates in
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md). The
-The source-only VDC/VCE replay is diagnostic evidence, not a README screenshot;
-the README image above is explicitly an original-media capture and does not
-claim that the Firestaff promotion gate has passed.
+source-only VDC/VCE replay remains diagnostic evidence, not a Firestaff
+runtime screenshot; the images above are explicitly original-media captures
+and do not claim that the Firestaff promotion gate has passed.
 
 For source-data investigation, an explicit authenticated fallback can load
 real Track 02 map/object records even when the original CD handoff has not
