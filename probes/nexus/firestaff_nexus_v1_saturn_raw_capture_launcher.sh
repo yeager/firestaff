@@ -134,6 +134,7 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT:-}" \
+  FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITES:-}" \
     "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 else
@@ -147,6 +148,7 @@ else
   FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT:-}" \
+  FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITES:-}" \
     "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 fi
@@ -181,3 +183,13 @@ trap - INT TERM EXIT
 run_validator "$trace" --require-frames "$frame_limit"
 raw_bytes=$(wc -c < "$trace" | tr -d '[:space:]')
 printf 'raw_sha256=%s\nraw_bytes=%s\n' "$(lower "$(hash_file "$trace")")" "$raw_bytes" >> "$manifest"
+if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITES:-}" &&
+      -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES" ]]; then
+  printf 'vdp1_write_trace_sha256=%s\n' \
+    "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES")")" >> "$manifest"
+fi
+if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" &&
+      -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE" ]]; then
+  printf 'vdp1_writer_code_trace_sha256=%s\n' \
+    "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE")")" >> "$manifest"
+fi

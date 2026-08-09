@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
 import re
 from pathlib import Path
 
@@ -63,10 +64,27 @@ def source_spans(frame: dict[str, bytes], state: str) -> list[tuple[int, int, in
     return spans
 
 
+def manifest_trace_binding(manifest: Path, raw: Path, write_trace: Path) -> str:
+    try:
+        fields = {
+            key: value for key, value in
+            (line.split("=", 1) for line in manifest.read_text(encoding="utf-8").splitlines()
+             if "=" in line)
+        }
+        raw_ok = fields.get("raw_sha256", "").lower() == hashlib.sha256(
+            raw.read_bytes()).hexdigest()
+        trace_ok = fields.get("vdp1_write_trace_sha256", "").lower() == hashlib.sha256(
+            write_trace.read_bytes()).hexdigest()
+    except (OSError, UnicodeError, ValueError):
+        return "invalid"
+    return "verified" if raw_ok and trace_ok else "unbound"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
     parser.add_argument("write_trace", type=Path)
+    parser.add_argument("--manifest", type=Path)
     parser.add_argument("--capture-frames", type=int, default=2)
     parser.add_argument("--frame", type=int, default=-1,
                         help="join one frame; default joins every captured frame")
@@ -83,7 +101,9 @@ def main() -> int:
 
     frame_indexes = [args.frame] if args.frame >= 0 else range(len(frames))
     print(f"capture_frames={len(frames)} write_records={len(writes)}")
-    print("capture_writer_session_identity=unbound")
+    identity = (manifest_trace_binding(args.manifest, args.capture, args.write_trace)
+                if args.manifest else "unbound")
+    print(f"capture_writer_session_identity={identity}")
     for frame_index in frame_indexes:
         for command_offset, command_type, colour_mode, source_offset, source_size in source_spans(
                 frames[frame_index], states[frame_index]):

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: nya captures kan nu manifestbinda raw, VDP1-write-trace och
+  writer-code-trace. Den befintliga capture:n saknar trace-hashfält och ska
+  därför köras om innan `0x10a00` får någon sessionsägd consumer-identifiering.
+  MENU.BPK/FONT256/DGN-match, CLUT/placering och startup-/meny-/HUD-/viewport-
+  admission är fortsatt blockerade.
+
 - 🔧 Theron: den autentiserade VDC/VCE-screen-capturen når nu bootfacadens
   source-only-presenter och M11 installerar den fångade VCE-paletten innan
   indexed blit. Detta låser inte upp genererade tiles, square-to-tile-
