@@ -17,6 +17,7 @@
 #include "firestaff_dungeon_query.h"
 #include "dm1_v2_anim_timing.h"
 #include "csb_v1_viewport_pc34_compat.h"
+#include "csb_v1_viewport_surface_pc34_compat.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.h"
@@ -69,8 +70,8 @@ FS_InputQueue *fs_g_input_queue_get(void) {
 #define FS_FB_H 200
 #define FS_VP_W 224
 #define FS_VP_H 136
-#define FS_VP_X 0
-#define FS_VP_Y 0
+#define FS_VP_X CSB_V1_VIEWPORT_SCREEN_X_PC34
+#define FS_VP_Y CSB_V1_VIEWPORT_SCREEN_Y_PC34
 
 static uint8_t g_framebuffer[FS_FB_W * FS_FB_H];
 static uint32_t g_rgba_buffer[FS_FB_W * 4 * FS_FB_H * 4]; /* up to 4x */
@@ -113,8 +114,11 @@ static void fs_game_render_viewport(FS_GameState *state) {
          * The viewport occupies rows [DM1_VIEWPORT_SCREEN_Y..168]
          * within the 320×200 screen: rows 33..168 inclusive. */
         CSB_V1_ViewportConfig *cv = &state->csb_viewport;
-        cv->viewport_pixels = g_framebuffer;
-        cv->viewport_stride  = FS_FB_W;  /* 320 bytes/row */
+        if (!csb_v1_viewport_screen_surface_pc34(
+                g_framebuffer, sizeof(g_framebuffer), FS_FB_W, FS_FB_H,
+                &cv->viewport_pixels, &cv->viewport_stride)) {
+            return;
+        }
 
         /* Wire the loader-owned dungeon grid for wall/door decisions.
          * ReDMCSB F0128 draws from the active dungeon; a missing handoff
