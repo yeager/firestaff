@@ -15,6 +15,7 @@ from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
 from analyze_nexus_vdp1_command_window import command_window
+from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
 REG = {
@@ -24,10 +25,6 @@ REG = {
     "BMPNA": 0x2C,
 }
 STATE_RE = re.compile(r"ptmr:([0-9a-f]+),edsr:([0-9a-f]+)")
-
-
-def u16(data: bytes, offset: int) -> int:
-    return int.from_bytes(data[offset : offset + 2], "big")
 
 
 def classify(tvmd: int, bgon: int) -> str:
@@ -136,10 +133,11 @@ def main() -> int:
         vdp1_draw_sources: list[str] = []
         for frame, state in zip(frames, states):
             registers = frame["vdp2-regs"]
-            tvmd = u16(registers, REG["TVMD"])
-            bgon = u16(registers, REG["BGON"])
-            chctla = u16(registers, REG["CHCTLA"])
-            bmpna = u16(registers, REG["BMPNA"])
+            byte_order = detect_byte_order(registers)
+            tvmd = read_u16(registers, REG["TVMD"], byte_order)
+            bgon = read_u16(registers, REG["BGON"], byte_order)
+            chctla = read_u16(registers, REG["CHCTLA"], byte_order)
+            bmpna = read_u16(registers, REG["BMPNA"], byte_order)
             label = classify(tvmd, bgon)
             labels.append(label)
             match = STATE_RE.search(state)
@@ -163,7 +161,8 @@ def main() -> int:
             if len(labels) == 1:
                 first = (
                     f"tvmd=0x{tvmd:04x},bgon=0x{bgon:04x},"
-                    f"chctla=0x{chctla:04x},bmpna=0x{bmpna:04x}"
+                    f"chctla=0x{chctla:04x},bmpna=0x{bmpna:04x},"
+                    f"register_byte_order={byte_order}"
                 )
         distinct = ",".join(sorted(set(labels)))
         print(

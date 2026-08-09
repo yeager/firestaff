@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Decode bounded VDP2 composition registers from an authentic raw witness.
 
-The register values are an original Saturn observation.  The external
-Mednafen capture stores its native ``uint16`` words in host order; on the
-supported capture host this is little-endian.  They identify the
+The register values are an original Saturn observation.  Retained external
+Mednafen witnesses use two authenticated register serializations; the helper
+selects the plausible order per frame.  They identify the
 enabled VDP2 layer and hardware configuration for the captured frame, but do
 not identify the retail asset that filled VRAM or authorize host composition.
 """
@@ -14,6 +14,7 @@ import argparse
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
+from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
 REGISTERS = {
@@ -46,10 +47,6 @@ REGISTERS = {
     0xFA: "PRINB",
     0xFC: "PRIR",
 }
-
-
-def read_u16(registers: bytes, offset: int) -> int:
-    return int.from_bytes(registers[offset : offset + 2], "little")
 
 
 def enabled_layers(bgon: int) -> list[str]:
@@ -100,8 +97,9 @@ def main() -> int:
         return 1
 
     registers = frames[args.frame]["vdp2-regs"]
+    byte_order = detect_byte_order(registers)
     values = {
-        name: read_u16(registers, offset)
+        name: read_u16(registers, offset, byte_order)
         for offset, name in REGISTERS.items()
         if offset + 2 <= len(registers)
     }
@@ -110,6 +108,7 @@ def main() -> int:
     nbg1_mode, nbg1_colour, nbg1_size, _ = nbg_mode(values["CHCTLA"], 1)
     nbg1_palette = (values["BMPNA"] >> 8) & 7
     print(f"frame={args.frame}")
+    print(f"register_byte_order={byte_order}")
     print("registers=" + ",".join(f"{name}=0x{value:04x}" for name, value in values.items()))
     print("enabled_layers=" + (",".join(layers) if layers else "none"))
     print(

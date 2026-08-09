@@ -1,10 +1,11 @@
-# Nexus: korrekt VDP2-registertolkning (2026-08-09)
+# Nexus: självidentifierande VDP2-registertolkning (2026-08-09)
 
-- ✅ `analyze_nexus_vdp2_composition.py` tolkar nu den externa Mednafen-
-  runtime-capturens native little-endian VDP2-registerord korrekt. Verifierat
-  mot autentisk Nexus-menywindow; `BGON` och aktiva NBG-lager matchar den
-  observerade Saturn-state. Ändringen påverkar endast diagnostik och lämnar
-  source-join/host-composition-gaten stängd.
+- ✅ `nexus_vdp2_registers.py` identifierar per autentiserad frame den äldre
+  big-endian-serialiseringen respektive den nyare native little-endian-
+  serialiseringen. Composition-, bitmap- och capture-inventoryverktygen
+  använder samma detektering. Verifierat mot startup-witnessen (`NBG1`)
+  och den franska menywindow-witnessen (`NBG0/NBG1/NBG2`). Ändringen påverkar
+  endast diagnostik och lämnar source-join/host-composition-gaten stängd.
 
 # Lokal macOS-runbook för SDL2, Mednafen och Tsugaru (2026-08-09)
 

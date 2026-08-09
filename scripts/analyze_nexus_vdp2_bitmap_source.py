@@ -16,6 +16,7 @@ from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
+from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
 ASSET_HASHES = {
@@ -281,9 +282,10 @@ def main() -> int:
 
     frame = frames[args.frame]
     registers = frame["vdp2-regs"]
-    bgon = int.from_bytes(registers[0x20:0x22], "big")
-    chctla = int.from_bytes(registers[0x28:0x2A], "big")
-    bmpna = int.from_bytes(registers[0x2C:0x2E], "big")
+    byte_order = detect_byte_order(registers)
+    bgon = read_u16(registers, 0x20, byte_order)
+    chctla = read_u16(registers, 0x28, byte_order)
+    bmpna = read_u16(registers, 0x2C, byte_order)
     if not (bgon & 0x02) or not (chctla & 0x0200):
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: NBG1 bitmap mode is not active")
         return 1
@@ -291,14 +293,15 @@ def main() -> int:
     if ((chctla >> 10) & 3) != 0 or ((chctla >> 12) & 3) != 1:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: unsupported NBG1 geometry")
         return 1
-    map_offset = (int.from_bytes(registers[0x3C:0x3E], "big") >> 4) & 7
+    map_offset = (read_u16(registers, 0x3C, byte_order) >> 4) & 7
     byte_offset = map_offset * 0x20000
     bitmap = frame["vdp2-vram"][byte_offset:byte_offset + bitmap_size]
     if len(bitmap) != bitmap_size:
         print("NEXUS_VDP2_BITMAP_SOURCE_INVALID: bitmap span outside VRAM")
         return 1
 
-    print(f"frame={args.frame} NBG1_bitmap_offset=0x{byte_offset:06x} bytes={len(bitmap)}")
+    print(f"frame={args.frame} register_byte_order={byte_order} "
+          f"NBG1_bitmap_offset=0x{byte_offset:06x} bytes={len(bitmap)}")
     print(f"NBG1_bmpna=0x{bmpna:04x} colour_code=1 bitmap_size_code=0")
     exact = 0
     ranked: list[tuple[int, str, int, int]] = []
