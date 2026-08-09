@@ -4499,6 +4499,117 @@ static int m11_csb_is_amiga_profile(const CSB_V1_BootProfile *profile)
            m11_csb_is_amiga_a35m_profile(profile);
 }
 
+/* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M gives this native
+ * GRAPHICS.DAT layout directly: M644=78, M646=86 and M647=40.  F0094/F0095
+ * select those records before F0128 draws the same 224x136 dungeon aperture
+ * used by the other version-3 runtimes.  This provider deliberately admits
+ * only those source-selected records through the authenticated DMCSB2/IMG1
+ * loader; a missing overlay has no host-made replacement. */
+static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
+                                                    int graphic_index,
+                                                    const uint8_t **out_pixels,
+                                                    int *out_width,
+                                                    int *out_height)
+{
+    enum {
+        CSB_AMIGA_M644_FIRST_FLOOR_SET = 78,
+        CSB_AMIGA_M646_FIRST_WALL_SET = 86,
+        CSB_AMIGA_M647_WALL_SET_GRAPHIC_COUNT = 40,
+        CSB_AMIGA_WALL_SURFACE_OFFSET = 7,
+        CSB_AMIGA_M633_FIRST_DOOR_SET = 246,
+        CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT = 385
+    };
+    M11_GameViewState *state = (M11_GameViewState *)user_data;
+    const CSB_V1_BootProfile *profile;
+    const M11_AssetSlot *asset;
+    int floor_set;
+    int wall_set;
+    unsigned int source_graphic;
+
+    if (!out_pixels || !out_width || !out_height || !state ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !m11_csb_is_amiga_profile(profile) || !state->assetsAvailable ||
+        !state->assetLoader.csbAmiga || !profile->runtime.dungeon_handle ||
+        profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >=
+            profile->runtime.dungeon_handle->level_count) return 0;
+    floor_set = profile->runtime.dungeon_handle->map_floor_set[
+        profile->runtime.current_level];
+    wall_set = profile->runtime.dungeon_handle->map_wall_set[
+        profile->runtime.current_level];
+    if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15) {
+        return 0;
+    }
+    if (graphic_index == -1) {
+        source_graphic = CSB_AMIGA_M644_FIRST_FLOOR_SET +
+            (unsigned int)floor_set * 2u;
+    } else if (graphic_index == -2) {
+        source_graphic = CSB_AMIGA_M644_FIRST_FLOOR_SET +
+            (unsigned int)floor_set * 2u + 1u;
+    } else if (graphic_index >= 86 && graphic_index <= 92) {
+        source_graphic = CSB_AMIGA_M646_FIRST_WALL_SET +
+            (unsigned int)wall_set * CSB_AMIGA_M647_WALL_SET_GRAPHIC_COUNT +
+            (unsigned int)(graphic_index - 86);
+    } else if (graphic_index >= 93 && graphic_index <= 107) {
+        source_graphic = CSB_AMIGA_M646_FIRST_WALL_SET +
+            (unsigned int)wall_set * CSB_AMIGA_M647_WALL_SET_GRAPHIC_COUNT +
+            CSB_AMIGA_WALL_SURFACE_OFFSET + (unsigned int)(graphic_index - 93);
+    } else if (graphic_index >= CSB_AMIGA_M633_FIRST_DOOR_SET &&
+               graphic_index < CSB_AMIGA_M633_FIRST_DOOR_SET + 12) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT) {
+        source_graphic = (unsigned int)graphic_index;
+    } else {
+        return 0;
+    }
+    asset = M11_AssetLoader_Load(&state->assetLoader, source_graphic);
+    if (!asset || !asset->loaded || !asset->pixels || asset->width == 0u ||
+        asset->height == 0u) return 0;
+    *out_pixels = asset->pixels;
+    *out_width = (int)asset->width;
+    *out_height = (int)asset->height;
+    return 1;
+}
+
+/* ReDMCSB GAMELOOP.C calls F0128 each native Amiga game tick after F0094/
+ * F0095 have loaded the active MAP.C floor and wall sets.  The PC34 terminal
+ * receipt is intentionally not involved: A31/A35 have their own DMCSB2
+ * GRAPHICS.DAT owner.  Render into a candidate page so an unsupported source
+ * record cannot leak a partial host frame. */
+static int m11_csb_render_amiga_runtime_viewport(const M11_GameViewState *state,
+                                                  unsigned char *framebuffer,
+                                                  int framebuffer_width,
+                                                  int framebuffer_height)
+{
+    CSB_V1_ViewportRuntimeDrawerBinding binding;
+    CSB_V1_ViewportRuntimeDrawCounts counts;
+    unsigned char *candidate;
+    size_t byte_count;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 ||
+        (size_t)framebuffer_width > (size_t)-1 / (size_t)framebuffer_height) {
+        return 0;
+    }
+    byte_count = (size_t)framebuffer_width * (size_t)framebuffer_height;
+    if (!(candidate = (unsigned char *)malloc(byte_count))) return 0;
+    memcpy(candidate, framebuffer, byte_count);
+    memset(&binding, 0, sizeof(binding));
+    binding.real_graphics_session = 1;
+    binding.graphic_provider_callback = m11_csb_amiga_viewport_graphic_provider;
+    binding.graphic_provider_user_data = (void *)state;
+    memset(&counts, 0, sizeof(counts));
+    if (!csb_v1_boot_render_viewport_frame_pc34((void *)state->csbBootProfile,
+            candidate, framebuffer_width, framebuffer_height, &binding,
+            &counts) || memcmp(candidate, framebuffer, byte_count) == 0) {
+        free(candidate);
+        return 0;
+    }
+    memcpy(framebuffer, candidate, byte_count);
+    free(candidate);
+    return 1;
+}
+
 /* ReDMCSB COMPILE.H:274-280 assigns A35E APPB.FTL directly to C03_GAME;
  * BJELoad_R is its separate C02 launcher.  Unlike A31M/A35M there is no
  * C08 language page or C05 title program to emulate between those two
@@ -4687,6 +4798,15 @@ static int m11_csb_present_amiga_runtime_surface(
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) goto done;
     memset(framebuffer, 0, (size_t)framebuffer_width *
                            (size_t)framebuffer_height);
+    if (!state->inventoryPanelActive && !state->candidateMirrorPanelActive &&
+        !state->candidateMirrorRenameActive) {
+        /* GAMELOOP.C reaches F0128 before MENUDRAW.C restores C013/C010.
+         * A failed viewport transaction leaves the native HUD fragment
+         * available but never retains a partial candidate page. */
+        (void)m11_csb_render_amiga_runtime_viewport(state, framebuffer,
+                                                     framebuffer_width,
+                                                     framebuffer_height);
+    }
     if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
         for (row = 0; row < 136; ++row) {
             memcpy(framebuffer + (size_t)(33 + row) *

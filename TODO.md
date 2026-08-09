@@ -719,14 +719,16 @@
   PC34-laddaren och dess fontkonsument får inte tolka samma bytes. De verifierade
   Amiga-utgåvornas storlekstabeller är direktlagrade och följer F0474, inte
   Atari ST:s LZW-väg; icke-IMG1-poster avvisas tills de har egen konsument.
-  Återstående Amiga-dungeonviewport, champion-HUD och övriga
-  statusboxöverlägg samt inventarie-/kandidatinmatning saknar dock egna
+  Den grundläggande liveviewporten går nu genom `GAMELOOP.C` → F0128 med
+  Amiga MEDIA720:s autentiska M644/M646/M647-material. Återstående bredare
+  viewportparitet, champion-HUD och övriga statusboxöverlägg samt
+  inventarie-/kandidatinmatning saknar dock egna
   autentiska konsumenter. C026-porträttet har nu en avgränsad native
   kandidat-/statusboxkonsument, inklusive C027:s källägda namnändringsyta,
   men inte hela den interaktiva panelkedjan.
   A35M:s verifierade APPB → KAOS → C03-startväg och C013/C017/C026/C127-
   konsumenter är nu täckta av den äkta ADF-korpusen. Kvar är bredare
-  dungeonviewport, champion-HUD och övrig interaktion, inte en saknad
+  dungeonviewportparitet, champion-HUD och övrig interaktion, inte en saknad
   A35M-start- eller programkonsument. Atari ST:s separata ANIMATE.SCR/ANIMATE.DAT-väg är
   däremot bunden hela vägen till den källägda FTLCODE-runtimen: slutlig
   50 Hz-VBL-överlämning, C232-HUD, 022e-viewport, originalpalett och

@@ -117,6 +117,18 @@
 - ✅ Katalogtestet och den opt-in-bundna original-ADF-regressionen verifierar
   både det valbara urvalet och den egna programkvittensen.
 
+# CSB Amiga: native F0128-basviewport från ADF-data (2026-08-09)
+
+- ✅ A31/A35:s levande dungeonapertur använder nu `GAMELOOP.C` → F0128 med
+  MEDIA720:s dokumenterade `M644=78`, `M646=86` och 40-poster per wallset.
+  Floor, ceiling, vägg- och dörrramsposter avkodas enbart via den valda
+  Amiga-utgåvans hashverifierade DMCSB2/IMG1-`GRAPHICS.DAT`.
+- ✅ Original-ADF-regressionerna för A31E och A35E passerar och kräver en
+  icke-tom 224×136 F0128-apertur samtidigt som C013-rörelseytan kvarstår.
+- ⛔ Varelser, objekt, projektiler, effekter och komplett champion-HUD är
+  fortfarande avgränsade tills deras Amiga-specifika raster-/runtimeägare
+  är verifierade.
+
 # Nexus VDP1 CMDCOLR byteoffset and reusable DGN CLUT join (2026-08-09)
 
 - ✅ VDP1 capture-kompositorn och DGN-materialresolvern använder nu Saturns

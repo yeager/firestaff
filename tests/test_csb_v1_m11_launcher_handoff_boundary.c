@@ -349,7 +349,13 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
                     count_nonzero_region(framebuffer, 320, movement.x,
                                          movement.y, movement.w,
                                          movement.h) > 0 &&
-                    frame_rect_is_color(framebuffer, 0, 0, 320, 124, 0u),
+                    /* ReDMCSB GAMELOOP.C reaches F0128 before MENUDRAW.C
+                     * restores C013.  The A31/A35 MEDIA720 M644/M646
+                     * records must therefore occupy the live 224x136
+                     * aperture; the old blank-page assertion only proved
+                     * that the native game had no dungeon surface. */
+                    count_nonzero_region(framebuffer, 320, 48, 33,
+                                         224, 136) > 0,
                 label);
     expect_amiga_dungeon_palette(
         "Amiga C013 publishes the original G0021 dungeon palette");
