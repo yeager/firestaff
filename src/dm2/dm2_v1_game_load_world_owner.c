@@ -283,6 +283,34 @@ fail:
     return 0;
 }
 
+/* Reserve exactly the source-sized c_creature array before the later
+ * RESET_CAII transaction.  Resetting DB4 byte@5 and assigning candidates
+ * must include both static 09db and dynamic 0a48 paths, so doing either here
+ * would invent a partial GAME_LOAD state.
+ * Source: SKProject SKULLWIN/startend.cpp::DM2_RESET_CAII (1033-1070),
+ * c_random.cpp::c_randomdata::init (7-13). */
+static int dm2_v1_game_load_owner_materialize_caii_storage(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    if (!owner || !owner->caii_capacity.valid ||
+        owner->caii_capacity.source_capacity == 0u ||
+        owner->caii_slots.valid || owner->caii_rng_initialized) {
+        return 0;
+    }
+    dm2_v1_caii_array_init(&owner->caii_slots,
+                           (int)owner->caii_capacity.source_capacity);
+    if (!owner->caii_slots.valid ||
+        owner->caii_slots.capacity !=
+            (int)owner->caii_capacity.source_capacity ||
+        owner->caii_slots.alloc_count != 0) {
+        dm2_v1_caii_array_free(&owner->caii_slots);
+        return 0;
+    }
+    dm2_v1_drops_rng_init(&owner->caii_rng);
+    owner->caii_rng_initialized = 1;
+    return 1;
+}
+
 static int dm2_v1_game_load_owner_validate_possessions(
     const DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -880,6 +908,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     }
     dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
+    dm2_v1_caii_array_free(&owner->caii_slots);
     dm2_v1_caii_source_owner_free(&owner->caii_source);
     free(owner->caii_map_candidates);
     free(owner->timer_indices);
@@ -985,6 +1014,7 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
         !dm2_v1_game_load_owner_materialize_caii_capacity(&candidate) ||
         !dm2_v1_game_load_owner_materialize_caii_map_candidates(&candidate) ||
+        !dm2_v1_game_load_owner_materialize_caii_storage(&candidate) ||
         !dm2_v1_game_load_owner_validate_world_maps(&candidate) ||
         !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate) ||
         !dm2_v1_game_load_owner_materialize_dyn4(&candidate) ||

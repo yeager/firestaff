@@ -15,6 +15,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_caii_source_owner.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
@@ -234,13 +235,22 @@ typedef struct {
     DM2_V1_DungeonData dungeon;
     DM2_V1_RecordPoolSet record_pools;
     /* Read-only AIDefinition/DB4 source bytes plus DM2_1c9a_3c30's exact
-     * capacity calculation. Slots remain absent until RESET_CAII and the
-     * complete all-map FILL_ORPHAN_CAII branches share dynamic c_tim, CCM
-     * and animation owners. */
+     * capacity calculation. Candidate records remain unmodified until the
+     * complete all-map RESET_CAII transaction owns dynamic c_tim, CCM and
+     * animation branches. */
     DM2_V1_CaiiSourceOwner caii_source;
     DM2_V1_GameLoadCaiiCapacityReceipt caii_capacity;
     DM2_V1_GameLoadCaiiMapReceipt caii_map_receipt;
     DM2_V1_GameLoadCaiiMapCandidate *caii_map_candidates;
+    /* DM2_RESET_CAII first allocates/clears c_creature slots and then
+     * traverses maps. Keep that storage and the exact c_randomdata start
+     * state privately, but do not assign a slot or rewrite DB4 byte@5 until
+     * the complete 09db/0cf7/0a48 mutation can commit atomically.
+     * Source: SKProject SKULLWIN/startend.cpp::DM2_RESET_CAII (1033-1070),
+     * c_random.cpp::c_randomdata::init (7-13). */
+    DM2_V1_CaiiArray caii_slots;
+    DM2_V1_DropRng caii_rng;
+    int caii_rng_initialized;
     /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
      * before it allocates the original 12-byte c_tim array and index heap.
      * They are allocation limits, not invented queued timers. */

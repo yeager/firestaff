@@ -1,10 +1,19 @@
+# DM2 New Game: privat CAII-resetlagring (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu den källberäknade `c_creature`-arrayen med
+  samtliga slottar fria (`word@0 = 0xffff`) samt `c_randomdata.random = 0`.
+  Båda finns endast i RAM och kommer från originalets initiering.
+- ✅ Inget DB4-ägarskap, ingen varelse, ingen CAII-timer och ingen CCM-körning
+  publiceras av denna lagring. Den kompletta `RESET_CAII`-transaktionen måste
+  fortfarande utföra statisk `09db` och dynamisk `0a48` tillsammans.
+
 # DM2 New Game: källberäknad CAII-kapacitet (2026-08-09)
 
 - ✅ GAME_LOAD-ägaren behåller nu de hashverifierade AIDefinition-raderna och
   exakt `DM2_1c9a_3c30`-kapacitet från hela DB4-poolen. Den räknar endast
   icke-statiska varelser och begränsar resultatet till det verkliga
   DB4-antalet.
-- ✅ Detta skapar inga CAII-slottar, varelser eller timers. `RESET_CAII` och
+- ✅ Detta skapar inga CAII-varelser eller timers. `RESET_CAII` och
   `FILL_ORPHAN_CAII` väntar fortsatt på en gemensam ägare för all-karts
   traversal, CCM/animationer och den dynamiska originalkön.
 - ✅ Ägaren bevarar också den verkliga `FILL_CAII_CUR_MAP`-ordningen från alla

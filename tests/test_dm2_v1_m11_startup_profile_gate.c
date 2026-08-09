@@ -382,6 +382,25 @@ static int dm2_test_caii_map_candidates_match_owner(
     return 1;
 }
 
+static int dm2_test_caii_storage_is_source_reset_ready(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int index;
+
+    if (!owner || !owner->caii_capacity.valid || !owner->caii_slots.valid ||
+        !owner->caii_rng_initialized || owner->caii_rng.random != 0u ||
+        owner->caii_slots.capacity !=
+            (int)owner->caii_capacity.source_capacity ||
+        owner->caii_slots.alloc_count != 0) {
+        return 0;
+    }
+    for (index = 0; index < owner->caii_slots.capacity; ++index) {
+        const uint8_t *slot = dm2_v1_caii_slot(&owner->caii_slots, index);
+        if (!slot || slot[0] != 0xffu || slot[1] != 0xffu) return 0;
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -2616,6 +2635,8 @@ int main(void) {
                     new_game_world_owner.caii_map_receipt.source_hash != 0u &&
                     new_game_world_owner.caii_map_candidates != NULL &&
                     dm2_test_caii_map_candidates_match_owner(
+                        &new_game_world_owner) &&
+                    dm2_test_caii_storage_is_source_reset_ready(
                         &new_game_world_owner) &&
                     new_game_world_owner.validated_map_count == 44u &&
                     new_game_world_owner.validated_world_hash != 0u &&
