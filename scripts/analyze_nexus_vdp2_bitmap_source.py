@@ -20,19 +20,36 @@ from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
 ASSET_HASHES = {
-    "MENU.BPK": "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
     "FONT256.S2D": "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb",
     "TITLE.BIN": "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44",
     "TITLE.CG": "fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580",
     "STABG.BIN": "7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913",
 }
 
+# DMWeb/verified manifest admits both European retail menu revisions.  The
+# English and French archives have different MENU.BPK sizes and hashes; a
+# capture must be compared with the revision it actually booted.
+MENU_BPK_SHA256 = frozenset({
+    "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
+    "c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543",
+})
+
 
 def read_asset(data_dir: Path, name: str) -> bytes:
     data = (data_dir / name).read_bytes()
-    if hashlib.sha256(data).hexdigest() != ASSET_HASHES[name]:
+    digest = hashlib.sha256(data).hexdigest()
+    accepted = MENU_BPK_SHA256 if name == "MENU.BPK" else {ASSET_HASHES[name]}
+    if digest not in accepted:
         raise ValueError(f"{name} hash mismatch")
     return data
+
+
+def read_optional_asset(data_dir: Path, name: str) -> bytes | None:
+    """Read an admitted comparison source when this retail extraction has it."""
+    try:
+        return read_asset(data_dir, name)
+    except FileNotFoundError:
+        return None
 
 
 def decode_prs3(stream: bytes, target: int) -> bytes | None:
@@ -267,15 +284,22 @@ def main() -> int:
         frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
         menu = read_asset(args.data_dir, "MENU.BPK")
         font = read_asset(args.data_dir, "FONT256.S2D")
-        title_bin = read_asset(args.data_dir, "TITLE.BIN")
-        title_cg = read_asset(args.data_dir, "TITLE.CG")
-        title, title_palette = title_maps(title_bin, title_cg)
-        stabg = read_asset(args.data_dir, "STABG.BIN")
-        stabg_pixels, stabg_palette = stabg_first_map(stabg)
+        title_bin = read_optional_asset(args.data_dir, "TITLE.BIN")
+        title_cg = read_optional_asset(args.data_dir, "TITLE.CG")
+        title = []
+        title_palette = b""
+        if title_bin is not None and title_cg is not None:
+            title, title_palette = title_maps(title_bin, title_cg)
+        stabg = read_optional_asset(args.data_dir, "STABG.BIN")
+        stabg_pixels = b""
+        stabg_palette = b""
+        if stabg is not None:
+            stabg_pixels, stabg_palette = stabg_first_map(stabg)
         menu_sources, menu_palette = menu_surfaces(menu)
         dgn_palettes = dgn_structure2_palettes(args.data_dir)
         sources = menu_sources + font_tiles(font) + title
-        sources.append(("STABG.BIN[map=0]", stabg_pixels))
+        if stabg_pixels:
+            sources.append(("STABG.BIN[map=0]", stabg_pixels))
     except (OSError, ValueError) as error:
         print(f"NEXUS_VDP2_BITMAP_SOURCE_INVALID: {error}")
         return 1
@@ -318,16 +342,16 @@ def main() -> int:
     cram = frame["vdp2-cram"]
     palette_swap = b"".join(title_palette[offset:offset + 2][::-1]
                              for offset in range(0, len(title_palette), 2))
-    print(f"title_palette_cram_match={cram.find(title_palette)}")
-    print(f"title_palette_cram_word_swap_match={cram.find(palette_swap)}")
+    print(f"title_palette_cram_match={cram.find(title_palette) if title_palette else -1}")
+    print(f"title_palette_cram_word_swap_match={cram.find(palette_swap) if title_palette else -1}")
     menu_palette_swap = b"".join(menu_palette[offset:offset + 2][::-1]
                                   for offset in range(0, len(menu_palette), 2))
     print(f"menu_palette_cram_match={cram.find(menu_palette)}")
     print(f"menu_palette_cram_word_swap_match={cram.find(menu_palette_swap)}")
     stabg_palette_swap = b"".join(stabg_palette[offset:offset + 2][::-1]
                                    for offset in range(0, len(stabg_palette), 2))
-    print(f"stabg_palette_cram_match={cram.find(stabg_palette)}")
-    print(f"stabg_palette_cram_word_swap_match={cram.find(stabg_palette_swap)}")
+    print(f"stabg_palette_cram_match={cram.find(stabg_palette) if stabg_palette else -1}")
+    print(f"stabg_palette_cram_word_swap_match={cram.find(stabg_palette_swap) if stabg_palette else -1}")
     dgn_exact = [(name, cram.find(palette)) for name, palette in dgn_palettes
                  if cram.find(palette) >= 0]
     dgn_word_swap_exact = []
@@ -345,6 +369,8 @@ def main() -> int:
            if dgn_word_swap_exact else "none"))
     print(f"dgn_structure2_palettes={len(dgn_palettes)}")
     print(f"decoded_sources={len(sources)}")
+    missing = [name for name in ("TITLE.CG",) if not (args.data_dir / name).is_file()]
+    print("optional_source_assets_missing=" + ("|".join(missing) if missing else "none"))
     print(f"exact_source_matches={exact}")
     print("source_join=verified" if exact else "source_join=unbound")
     print("semantic_admission=blocked")

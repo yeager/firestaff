@@ -6,6 +6,18 @@
   creature-, AI-, loot-, T700- och T900-publicering ska därför förbli stängd
   tills samma körning visar hela källkedjan.
 
+- ⏳ Nexus completion accounting is now evidence-weighted rather than based on
+  source-file/test counts. The current requested startup→menu→HUD/viewport
+  chain is approximately 35–40% source-faithfully proven; see
+  `docs/NEXUS_COMPLETION.md`. The remaining percentage is blocked on positive
+  Saturn consumer witnesses, not on more parser scaffolding.
+
+- 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
+  European `MENU.BPK` hashes and reports missing optional comparison assets
+  separately. A French capture with no `TITLE.CG` is therefore a bounded
+  negative source-join result rather than an invalid-corpus result; semantic
+  admission remains blocked.
+
 - ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
   lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
   repot; den nya Git-spärren måste fortsätta vara grön.

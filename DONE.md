@@ -6,6 +6,19 @@
   Dokumentationen håller därför semantikgaten stängd. BIOS, System Card,
   spelmedia och capturefiler ligger kvar utanför GitHub.
 
+# Nexus: verifierad färdigställandegrad och europeisk VDP2-källgrind (2026-08-09)
+
+- ✅ Added `docs/NEXUS_COMPLETION.md` with an evidence-weighted accounting:
+  the requested startup→menu→HUD/viewport chain is approximately 35–40%
+  source-faithfully proven. Parser counts and no-op/capture-only lanes are not
+  presented as playable completion.
+- ✅ `scripts/analyze_nexus_vdp2_bitmap_source.py` now accepts both authenticated
+  English and French European `MENU.BPK` hashes. Missing optional comparison
+  inputs such as `TITLE.CG` are reported explicitly while the source join and
+  semantic-admission gates remain fail-closed. A French frame-0 witness was
+  rechecked: 405 bounded decoded sources, zero exact bitmap joins, and
+  `semantic_admission=blocked`.
+
 # Nexus: VDP1 command-list framing (2026-08-09)
 
 - ✅ `scripts/analyze_nexus_vdp1_command_sequence.py` now follows the
