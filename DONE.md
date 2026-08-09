@@ -114,6 +114,17 @@
 - ✅ VDP1-, VDP2-bitmap- och VDP2-tilemap-regressionerna samt strikt C99-
   kompilering passerar.
 
+# Nexus: sammanhängande efter-Start-capture (2026-08-09)
+
+- ✅ En autentiserad E-BIOS/French-session fångade 128 råa VDP1/VDP2-ramar
+  över både före- och efter-Start-fönstret. Alla 128 ramar har aktiv
+  VDP1-observation; ramar 0–19 har `BGON=0x0002`, `CHCTLA=0x1211` och aktiv
+  NBG1 bitmap, medan ramar 20–127 har avstängda VDP2-lager.
+- ✅ Capturen valideras strukturellt som 128 ramar och har SHA-256
+  `f8f6a131fb8120271184591e00b94e2cd63519f13b89eead49eb2b740094ed722`.
+  Source-comparatorn hittar noll exakta retail-joins, så semantic admission
+  förblir korrekt spärrad.
+
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns

@@ -7,6 +7,15 @@
   generator timing, T700 and T900 semantics remain blocked until an
   authenticated runtime capture binds their consumers.
 
+- ⏳ Nexus efter-Start-fönstret är nu fångat i en autentiserad 128-ramars
+  europeisk session (`run-codex-menu-window-20260809-e`). Ramar 0–19 visar
+  aktiv NBG1 bitmap och VDP1; ramar 20–127 har inga aktiva VDP2-lager efter
+  Start. Ingen `MENU.BPK`/`FONT256`/`TITLE`/`STABG`-källbindning hittades.
+  Detta bekräftar övergången men inte menyn. Startup-textkonsumenten,
+  HUD-kompositionen och produktions-viewporten ska därför fortsatt vara
+  spärrade tills en längre eller annorlunda autentisk konsumentfångst ger
+  positiv source-join.
+
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
   closed until the same Saturn trace supplies display-origin,
