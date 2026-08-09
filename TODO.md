@@ -8,10 +8,11 @@
   capture-gated.
 
 - 🔒 EU-capturens frame 100 har autentiserad NBG1 character-mode och tre
-  aktiva VDP2-lager, men en exakt bytejämförelse hittar varken `TITLE.CG`-
-  eller `FONT256.S2D`-kedjan i den fångade VDP2-VRAM:en. Detta är ett
-  reproducerbart negativt source-join-resultat; FONT256-text och menyplacering
-  får inte härledas från registerläget ensamt.
+  aktiva VDP2-lager. En regionmatchad kontroll mot franska ISO:ns
+  `FONT256.S2D` och `MENU.BPK` hittar ingen full eller 256-byte-kedja i den
+  fångade VDP2-VRAM:en. Detta är ett reproducerbart negativt source-join-
+  resultat; FONT256-text och menyplacering får inte härledas från registerläget
+  ensamt.
 
 - ✅ Nexus Mednafen-capture injicerar nu knappmasken exakt en gång per
   Saturn-videoram i `SMPC_UpdateInput`, efter host-inputuppdateringen; den

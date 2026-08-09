@@ -23,9 +23,10 @@
 
 - ✅ EU-capture frame 100 verifierades som NBG1 character-mode med tre aktiva
   VDP2-lager.
-- ✅ Exact byte search i den fångade VDP2-VRAM:en fann varken `TITLE.CG` eller
-  `FONT256.S2D`. Registerobservationen får därför inte användas som bevis för
-  menytext, FONT256-konsument eller placering.
+- ✅ En regionmatchad kontroll mot franska ISO:ns `FONT256.S2D` och `MENU.BPK`
+  fann ingen full eller 256-byte-kedja i den fångade VDP2-VRAM:en.
+  Registerobservationen får därför inte användas som bevis för menytext,
+  FONT256-konsument eller placering.
 
 # Theron: kontextbunden ADPCM-capturebuild (2026-08-09)
 
