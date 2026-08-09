@@ -20,6 +20,14 @@
  * the single owner of the candidate list so a layout that works for one
  * probe works for all of them.
  *
+ * Measured effect when this landed: the four probes whose lists were too
+ * short -- dialog_choice_overlay_fit, fullscreen_map_font_scale_fit,
+ * utility_panel_font_scale_fit and inventory_panel_font_scale_fit -- went
+ * from red to green, because they could finally locate the extracted DOS
+ * data.  (The consolidation commit reported them as still failing; that
+ * measurement was taken against stale binaries that had not yet been rebuilt
+ * against this header.)
+ *
  * The resolver never invents data: it only selects a directory that actually
  * contains both GRAPHICS.DAT and DUNGEON.DAT, and returns the caller's
  * original argument unchanged when no candidate qualifies, leaving the
