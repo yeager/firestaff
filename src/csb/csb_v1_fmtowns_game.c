@@ -1058,7 +1058,18 @@ int csb_v1_fmtowns_game_user_save_open_or_restore_backup(
     /* ReDMCSB LOADSAVE.C F0435:2906-2907: do not bind a valid backup as an
      * alternate runtime source.  It first becomes the selected canonical
      * slot, and only then may F0435 mutate the live game. */
-    if (remove(save_path) != 0 || rename(backup_path, save_path) != 0) return 0;
+#if defined(_WIN32)
+    /* MoveFileEx is the Win32 replacement form of POSIX rename().  Do not
+     * remove the selected path first: a failed replacement must leave the
+     * validated .BAK intact and cannot turn a load failure into data loss. */
+    if (!MoveFileExA(backup_path, save_path, MOVEFILE_REPLACE_EXISTING)) return 0;
+#else
+    /* POSIX rename atomically replaces a regular destination.  This has the
+     * source-visible end state of F0435:2906-2907 while keeping either the
+     * old selected slot or the validated backup if the filesystem refuses
+     * the transition. */
+    if (rename(backup_path, save_path) != 0) return 0;
+#endif
     if (!csb_v1_fmtowns_game_user_save_open(profile, game_receipt, save_path,
                                             out_receipt)) return 0;
     out_receipt->recovered_from_backup = 1;

@@ -23,6 +23,7 @@
 #include <string.h>
 
 #ifndef _WIN32
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -419,6 +420,15 @@ int main(void)
                       strcmp(external_save_handoff.startup_mini_path,
                              selected_path) == 0,
                   "F31 legacy handoff keeps backup recovery on its canonical slot");
+            remove(selected_path);
+            CHECK(mkdir(selected_path, 0700) == 0 &&
+                      copy_file(user_save_path, backup_path) &&
+                      !csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &direct_handoff, selected_path, &recovered_user_save) &&
+                      access(backup_path, F_OK) == 0,
+                  "F31 failed canonical replacement retains the validated backup");
+            rmdir(selected_path);
             remove(selected_path);
             remove(backup_path);
             rmdir(recovery_dir);

@@ -11532,3 +11532,7 @@ rendering remain blocked.
 - ✅ Regressionen använder den verkliga FM Towns-användarsparningen från
   Tsugaru och provar en byteidentisk backupkopia i en isolerad temporär
   katalog. Inga sparbytes skapas av testet.
+- ✅ Återställningsbytet är transaktionellt: POSIX använder ersättande
+  `rename()` och Windows `MoveFileEx(..., MOVEFILE_REPLACE_EXISTING)`. Om
+  målslotten inte kan ersättas bevaras den validerade backupen och live-
+  runtime lämnas orörd.
