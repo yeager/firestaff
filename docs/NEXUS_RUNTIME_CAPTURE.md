@@ -64,6 +64,20 @@ command placement, mesh/face ownership, VDP2 composition, or startup/menu/HUD
 identity; the script therefore reports `semantic_admission=blocked` and the
 production renderer remains fail-closed.
 
+The same frame also contains four additional type-2 draws. Their exact
+word-swapped sources and CLUTs bind to `LEV00.DGN` Structure2=60, 64, 68 and
+71, plus Structure2=36 for the fifth draw. The observed VDP1 quadrilaterals
+are reported as eight signed Saturn coordinates per command. This proves
+hardware destination coordinates for those captured commands, but not yet
+which DGN face/mesh record produced them or how the complete scene command
+list is assembled by the game.
+
+An input-free pre-Start run at runtime frame 10000 independently captured
+active VDP2 NBG1 bitmap mode (`BGON=0x0002`, `CHCTLA=0x1211`) with stable VRAM
+and CRAM. Its decoded `MENU.BPK`, `FONT256.S2D`, `TITLE`, and `STABG` source
+join is negative, so it is hardware-layer evidence only and is not called a
+menu capture.
+
 The validator also accepts `--require-vdp1-activity` for a V2 witness. This
 requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer
 payload. It is only an active-engine observation. It does not prove which

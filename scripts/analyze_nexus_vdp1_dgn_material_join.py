@@ -111,10 +111,18 @@ def main() -> int:
         matches = [m for m in materials if swapped_words(m[1]) == source]
         clut_word = (words[3] & ~0x3) << 2
         captured_palette = vram[clut_word * 2:clut_word * 2 + 32]
+        coordinates = tuple(
+            struct.unpack("<h", struct.pack("<H", words[index]))[0]
+            for index in range(6, 14)
+        )
         print(
             f"command_offset=0x{offset:05x} colour_mode={mode} "
             f"colr=0x{words[3]:04x} clut_word=0x{clut_word:05x} "
-            f"source_sha256={hashlib.sha256(source).hexdigest()}"
+            f"source_sha256={hashlib.sha256(source).hexdigest()} "
+            f"xy={coordinates[0]},{coordinates[1]};"
+            f"{coordinates[2]},{coordinates[3]};"
+            f"{coordinates[4]},{coordinates[5]};"
+            f"{coordinates[6]},{coordinates[7]}"
         )
         if not matches:
             print("dgn_material=none")
@@ -123,6 +131,7 @@ def main() -> int:
             palette_match = captured_palette == swapped_words(palette)
             print(f"dgn_material={name}")
             print(f"dgn_palette_match={'verified' if palette_match else 'none'}")
+            print("vdp1_coordinates_observed=verified")
         print("source_clut_join=verified" if any(
             captured_palette == swapped_words(palette) for _, _, palette in matches
         ) else "source_clut_join=unbound")

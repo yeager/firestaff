@@ -8,6 +8,12 @@
   eller startup/meny/HUD; `semantic_admission` och produktionsrenderingen
   ska därför fortsatt vara spärrade.
 
+- 🔧 Nexus: samma frame innehåller nu fem separata type-2 VDP1-material vars
+  ordväxlade pixels och 16-entry CLUT matchar LEV00 Structure2=60, 64, 68,
+  71 och 36. Åtta signerade Saturn-koordinater per kommando är också
+  avlästa. Det binder hårdvarans draw-destination, men ännu inte DGN
+  face/mesh-ägare eller komplett scen-/meny-/HUD-komposition.
+
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
   finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
