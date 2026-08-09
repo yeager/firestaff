@@ -2,6 +2,7 @@
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
+#include "dm1_v1_vblank_timing.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -46,27 +47,32 @@ int main(void) {
         fprintf(stderr, "FAIL: CSB title must not batch invisible catch-up frames\n");
         ++failures;
     }
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                    DM1_V1_VGA_VBLANK_MS,
                     "CSB PRESENTS keeps its PC34 source cadence");
 
     view.csbState.startup_title_source_step = 2;
     view.csbState.startup_title_frame = 60;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 220u,
-                    "CSB first CHAOS zoom raster remains visible for four PC34 slots");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                    DM1_V1_VGA_VBLANK_MS,
+                    "CSB first CHAOS zoom raster advances at one VGA VBlank");
 
     view.csbState.startup_title_source_step = 21;
     view.csbState.startup_title_frame = 79;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 220u,
-                    "CSB final CHAOS zoom raster retains the visible four-slot hold");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                    DM1_V1_VGA_VBLANK_MS,
+                    "CSB final CHAOS zoom raster advances at one VGA VBlank");
 
     view.csbState.startup_title_frame = 80;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
-                    "CSB source Delay(20) keeps its own cadence after the zoom");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                    DM1_V1_VGA_VBLANK_MS,
+                    "CSB source Delay(20) remains on the VGA VBlank clock");
 
     view.csbState.startup_title_source_step = 22;
     view.csbState.startup_title_frame = 100;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
-                    "CSB STRIKES BACK keeps TITLE.C's two-tick source hold");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                    DM1_V1_VGA_VBLANK_MS,
+                    "CSB STRIKES BACK keeps TITLE.C's two-VBlank hold");
 
     view.csbState.startup_title_active = 0;
     view.csbState.startup_entrance_active = 1;
@@ -74,7 +80,8 @@ int main(void) {
         fprintf(stderr, "FAIL: CSB entrance must not batch invisible catch-up frames\n");
         ++failures;
     }
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 55u,
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400),
+                    DM1_V1_VGA_VBLANK_MS,
                     "CSB entrance startup does not inherit QoL game speed");
 
     {
@@ -86,13 +93,15 @@ int main(void) {
         view.csbState.startup_entrance_active = 0;
         view.csbState.startup_title_source_step = 2;
         view.csbState.startup_title_frame = 60;
-        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 244u,
-                        "CSB CHAOS hold scales from the authenticated profile cadence");
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                        DM1_V1_VGA_VBLANK_MS,
+                        "CSB CHAOS hold ignores gameplay tick cadence");
         view.csbState.startup_title_active = 0;
         view.csbState.startup_entrance_active = 1;
         view.csbState.startup_title_source_step = 0;
-        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 61u,
-                        "CSB startup consumes the authenticated profile cadence");
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100),
+                        DM1_V1_VGA_VBLANK_MS,
+                        "CSB entrance ignores gameplay tick cadence");
         profile.variant_id = CSB_V1_VARIANT_FMTOWNS_EN;
         view.csbState.startup_title_active = 1;
         view.csbState.startup_entrance_active = 0;
