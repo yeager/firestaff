@@ -2049,6 +2049,9 @@ int csb_v1_boot_runtime_trigger_front_wall_ornament_click_pc34(
     CSB_V1_BootProfile *profile,
     unsigned short leader_hand_thing,
     unsigned short *out_leader_hand_thing);
+int csb_v1_boot_runtime_trigger_front_door_button_click_pc34(
+    CSB_V1_BootProfile *profile,
+    unsigned short leader_hand_thing);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

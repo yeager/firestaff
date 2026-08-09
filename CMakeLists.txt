@@ -15094,6 +15094,26 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0275_original_dungeon_c013_storage_pc34_compat
     )
 
+    add_executable(test_csb_v1_original_dungeon_front_door_button_pc34_compat
+        tests/test_csb_v1_original_dungeon_front_door_button_pc34_compat.c
+        src/csb/csb_v1_boot.c
+    )
+    target_include_directories(test_csb_v1_original_dungeon_front_door_button_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_original_dungeon_front_door_button_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_original_dungeon_front_door_button_pc34_compat
+            PRIVATE -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME csb_v1_original_dungeon_front_door_button_pc34_compat
+        COMMAND test_csb_v1_original_dungeon_front_door_button_pc34_compat
+    )
+
     add_executable(test_csb_v1_f0276_party_c008_leader_hand_pc34_compat
         tests/test_csb_v1_f0276_party_c008_leader_hand_pc34_compat.c
     )
@@ -54513,6 +54533,7 @@ set(FIRESTAFF_CSB_BOOT_FMTOWNS_HANDOFF_TARGETS
     test_csb_v1_required_complete_launches
     test_csb_v1_boot_title_import_ui_gate_pc34_compat
     test_csb_v1_f0275_original_dungeon_c013_storage_pc34_compat
+    test_csb_v1_original_dungeon_front_door_button_pc34_compat
     test_csb_v1_boot_f0247_post_teleport_frame_pc34_compat
     test_csb_v1_boot_viewport_render_gate
     test_csb_v1_runtime_champion_load_attrs

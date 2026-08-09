@@ -33679,6 +33679,22 @@ static M11_GameInputResult m11_process_csb_v1_c080_click(M11_GameViewState* stat
         !state->csbBootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
+    /* ReDMCSB CLIKVIEW.C F0377 publishes the D1C F0110 button rectangle as
+     * C05.  Firestaff's admitted PC34 button material is ordinal 1, whose
+     * rendered source zone is 160..175,44..52.  Do not inspect M11's DM1
+     * shaped world snapshot here: the runtime bridge validates the loaded
+     * CSB roomDOOR and DOOR.Button record before it can queue C10. */
+    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE) {
+        static const int kCsbDoorButtonD1CBox[4] = { 160, 175, 44, 52 };
+        if (m11_point_in_source_box(localX, localY, kCsbDoorButtonD1CBox) &&
+            csb_v1_boot_runtime_trigger_front_door_button_click_pc34(
+                (CSB_V1_BootProfile *)state->csbBootProfile,
+                THING_NONE)) {
+            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            m11_set_status(state, "CSB", "DOOR SWITCH");
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
     if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
         localY >= 14 && localY <= 69) {
         unsigned short throwThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);

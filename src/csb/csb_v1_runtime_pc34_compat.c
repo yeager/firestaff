@@ -19886,6 +19886,77 @@ int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
     return dm1v1_event_add(&profile->timeline_queue, event);
 }
 
+/* ReDMCSB CLIKVIEW.C F0377 lines 350-390: the visible C05 door-button
+ * click is not a generic sensor.  It first obtains the source front square,
+ * requires G0411 and an empty G4055 hand, then reads DOOR.Button and queues
+ * C10 EVENT_DOOR / C02_EFFECT_TOGGLE for G0313+1.  Keep this in the runtime
+ * owner: M11's presentation snapshot is not an authority for CSB things. */
+int csb_v1_runtime_trigger_front_door_button_click_pc34(
+    CSB_V1_RuntimeProfile *profile)
+{
+    CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    struct DM1_Event_V1 event;
+    CsbV1AudioRequest sound;
+    int dx = 0;
+    int dy = 0;
+    int x;
+    int y;
+    int raw_square;
+    int thing;
+    int thing_type;
+    int thing_size;
+    uint16_t word2;
+
+    if (!profile || !profile->dungeon_handle ||
+        csb_v1_dungeon_get_current() != profile->dungeon_handle ||
+        csb_v1_dungeon_get_current_level() != profile->current_level ||
+        profile->leader_index < 0 ||
+        profile->leader_index >= profile->champion_count ||
+        profile->party_state.LeaderHandThing != 0xffffu) {
+        return 0;
+    }
+    dungeon = (CSB_V1_DungeonData *)profile->dungeon_handle;
+    switch (profile->party_dir & 3) {
+    case 0: dy = -1; break;
+    case 1: dx = 1; break;
+    case 2: dy = 1; break;
+    default: dx = -1; break;
+    }
+    x = profile->party_x + dx;
+    y = profile->party_y + dy;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon, profile->current_level, x, y);
+    if (raw_square < 0 || ((raw_square >> 5) & 7) != 4 ||
+        (raw_square & 7) == 5) {
+        return 0;
+    }
+    thing = csb_v1_dungeon_get_first_thing(
+        dungeon, profile->current_level, x, y);
+    if (thing < 0 || thing == 0xfffe || thing == 0xffff) return 0;
+    record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                              &thing_type, NULL, &thing_size);
+    if (!record || thing_type != 0 || thing_size < 4) return 0;
+    word2 = csb_v1_runtime_read_u16(record + 2);
+    if ((word2 & 0x0040u) == 0u) return 0; /* DOOR.Button */
+
+    memset(&sound, 0, sizeof(sound));
+    sound.soundIndex = CSB_V1_SOUND_SWITCH;
+    sound.mapX = (int16_t)profile->party_x;
+    sound.mapY = (int16_t)profile->party_y;
+    sound.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+    (void)csb_v1_runtime_request_source_sound(profile, &sound);
+
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE((uint32_t)profile->current_level,
+                                       profile->game_time + 1u);
+    event.type = DM1_EVENT_DOOR;
+    event.b_mapX = (uint8_t)x;
+    event.b_mapY = (uint8_t)y;
+    event.c_effect = DM1_EFFECT_TOGGLE;
+    return csb_v1_runtime_add_timeline_event(profile, &event) >= 0;
+}
+
 int csb_v1_runtime_get_last_timeline_dispatch(
     const CSB_V1_RuntimeProfile *profile,
     struct DM1_TickDispatchResult_V1 *out_result)

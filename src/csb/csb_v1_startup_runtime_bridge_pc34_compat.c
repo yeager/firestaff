@@ -611,3 +611,17 @@ int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
     }
     return queued;
 }
+
+int csb_v1_runtime_trigger_front_door_button_click_from_boot_profile_pc34(
+    void *boot_profile,
+    unsigned short leader_hand_thing)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    if (!profile) return 0;
+    /* G4055 is authoritative for the F0377 empty-hand gate.  The bridge
+     * receives the M11 hand only to keep that transient input synchronized. */
+    profile->runtime.party_state.LeaderHandThing = leader_hand_thing;
+    return csb_v1_runtime_trigger_front_door_button_click_pc34(
+        &profile->runtime);
+}
