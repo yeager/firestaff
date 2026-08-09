@@ -670,10 +670,13 @@
   datafri CI. Kvar är autentiska CSB-sparningar och DSA (uttryckligen
   uppskjutet), bytekorrekt originalskrivning och den kompletta filväljarytan.
 
-- 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT-party-, dungeon-,
-  som mus/tangentbord. Kvar är extern app-capture och bred fysisk
+- 🔧 CSB:s FM Towns-väg återupptar nu verkliga MINI.DAT- och
+  användarsparningar från `CSBGAME.DAT`: F31 C5-header, fem checksummade
+  save-delar, porträtt och dungeon-tail verifieras och överlämnas atomärt
+  till M11. Prison-sparningar med C12 accepteras separat från MINI.DAT:s
+  C13-bootstrap. Kvar är bytekorrekt F0433-skrivning med backup, autentisk
+  Utility Disk-filväljare, extern app-capture och bred fysisk
   touch-/hjälpmedelsverifiering på varje plattform.
-  Kvar för en komplett plattformsväg är autentisk Utility Disk-filväljare,
 
 - 🔧 Theron real Track 02 loading now retains reserved category-4 monster
   bytes as source records while admitting only the authenticated 0..6 roster
