@@ -14,7 +14,11 @@
 
 - 🔧 DM2 New Game: ett NEW GAME-val bygger nu först den verkliga, tomma
   File_header-/recordpool-/DYN4-/timerägaren och originalets
-  aktuatortick-/kartkontext i RAM. Varje efterföljande mirror-klick kan
+  aktuatortick-/kartkontext i RAM. Entréns `c_light`-inmatningar är också
+  privata och härledda från originalets initiering och File_header-karta.
+  Dess riktiga GDAT-golv-, tak- och ljuskvitton är nu RAM-ägda, men de är
+  ännu inte en renderad viewport. De autentiska lokala vägg-, golv- och
+  dörrornamentlistorna följer också med samma karta. Varje efterföljande mirror-klick kan
   materialiseras i källordning utan automatiskt championval. M11 saknar ännu
   den riktiga mirrorskärmen och den kompletta sessionscommitten för
   c_eventqueue, handcontainer, timerkö och fortlöpande map-/recordmutationer.

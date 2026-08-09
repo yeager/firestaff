@@ -636,6 +636,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     for (i = 0; i < DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES; ++i) {
         dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
     }
+    dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
     free(owner->timer_indices);
     free(owner->timer_entries);
@@ -993,6 +994,186 @@ int dm2_v1_game_load_world_owner_materialize_source_map_context(
     owner->source_party_direction = (uint8_t)owner->dungeon.initial_party_dir;
     if (!dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(owner)) return 0;
     owner->source_map_context_materialized = 1;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadLocalLevelGraphicsReceipt candidate;
+    int wall_count;
+    int floor_count;
+    int ornate_count;
+    uint32_t hash = 0x4c4c4758u; /* "LLGX": local-level graphics. */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        owner->preselection_local_graphics.valid ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    wall_count = dm2_v1_dungeon_get_map_wall_gfx_list(&owner->dungeon,
+        owner->source_party_map, candidate.wall_gfx,
+        (int)sizeof(candidate.wall_gfx));
+    floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(&owner->dungeon,
+        owner->source_party_map, candidate.floor_gfx,
+        (int)sizeof(candidate.floor_gfx));
+    ornate_count = dm2_v1_dungeon_get_map_door_ornate_list(&owner->dungeon,
+        owner->source_party_map, candidate.door_ornate_gfx,
+        (int)sizeof(candidate.door_ornate_gfx));
+    if (wall_count < 0 || floor_count < 0 || ornate_count < 0 ||
+        wall_count > (int)sizeof(candidate.wall_gfx) ||
+        floor_count > (int)sizeof(candidate.floor_gfx) ||
+        ornate_count > (int)sizeof(candidate.door_ornate_gfx)) {
+        return 0;
+    }
+    /* c_loadlevel.cpp walks current-map lists directly after map change.
+     * Retain the exact list lengths as part of the owner identity, including
+     * valid source maps where a list is empty. */
+    candidate.map = owner->source_party_map;
+    candidate.wall_count = (uint8_t)wall_count;
+    candidate.floor_count = (uint8_t)floor_count;
+    candidate.door_ornate_count = (uint8_t)ornate_count;
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)candidate.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.wall_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.floor_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.door_ornate_count);
+    for (int i = 0; i < candidate.wall_count; ++i)
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate.wall_gfx[i]);
+    for (int i = 0; i < candidate.floor_count; ++i)
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate.floor_gfx[i]);
+    for (int i = 0; i < candidate.door_ornate_count; ++i)
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                 candidate.door_ornate_gfx[i]);
+    if (hash == 0u) return 0;
+    candidate.source_list_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_local_graphics = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_light(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadPreselectionLightReceipt candidate;
+    int graphicsset;
+    uint32_t hash = 0x4c495447u; /* "LITG": c_light GAME_LOAD inputs. */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || !owner->actuator_generators_processed ||
+        !owner->source_map_context_materialized ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->preselection_light.valid || owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count) {
+        return 0;
+    }
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(&owner->dungeon,
+                                                          owner->source_party_map);
+    if (graphicsset < 0 || graphicsset > UINT8_MAX) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_dungeon_c_light_map_descriptor_receipt(
+            &owner->dungeon, owner->source_party_map,
+            &candidate.map_descriptor) ||
+        !candidate.map_descriptor.valid ||
+        candidate.map_descriptor.level != owner->source_party_map ||
+        candidate.map_descriptor.descriptor_hash == 0u) {
+        return 0;
+    }
+    /* c_dm2data initialises every field below before DM2_GAME_LOAD.  LOAD_NEW_DUNGEON
+     * then establishes a zero-hero party and OBJECT_NULL leader hand; only
+     * LOAD_LOCALLEVEL_DYN derives v1d6c02 from this map descriptor.  Keep
+     * these terminal source inputs explicit instead of accepting a host's
+     * zero-filled struct as equivalent dynamic illumination. */
+    candidate.map = owner->source_party_map;
+    candidate.graphicsset = (uint8_t)graphicsset;
+    candidate.party_count = 0u;
+    candidate.leader_hand_record = DM2_V1_RECORD_HANDLE_NULL;
+    candidate.savegame_light = 0u;
+    candidate.v1e0974 = 0u;
+    candidate.v1e0978 = 0u;
+    candidate.weather_active = 0u;
+    candidate.weather_index = 0u;
+    candidate.weather_delta = 0u;
+    candidate.weather_darkness_active = 0u;
+
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        candidate.map_descriptor.descriptor_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)candidate.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.graphicsset);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.party_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.leader_hand_record);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.savegame_light);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.v1e0974);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.v1e0978);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.weather_active);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.weather_index);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.weather_delta);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             candidate.weather_darkness_active);
+    if (hash == 0u) return 0;
+    candidate.source_state_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_light = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_scene(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GdatSceneM11CommandPlan scene_plan;
+    DM2_V1_GdatSceneLightM11Receipt scene_light;
+    DM2_V1_CLightSourceState source_light;
+    DM2_V1_CLightM11Receipt c_light;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_light.valid ||
+        owner->preselection_scene_materialized ||
+        owner->champion_selection_materialized || owner->committed ||
+        !owner->asset_loader || !owner->asset_loader->loaded ||
+        owner->preselection_light.graphicsset > 15u) {
+        return 0;
+    }
+    /* The source entrance descriptor has difficulty zero, so c_light takes
+     * its fixed-map branch: level one, then v1e0978 and clamp.  The preceding
+     * receipt retains every terminal field and guards against accidentally
+     * applying that branch to a dynamic map. Source: sklight.cpp:24-198. */
+    if (owner->preselection_light.map_descriptor.dynamic_light ||
+        owner->preselection_light.v1e0978 > 12u) {
+        return 0;
+    }
+    memset(&scene_plan, 0, sizeof(scene_plan));
+    memset(&scene_light, 0, sizeof(scene_light));
+    memset(&source_light, 0, sizeof(source_light));
+    memset(&c_light, 0, sizeof(c_light));
+    if (!dm2_v1_gdat_scene_m11_command_plan_build(owner->asset_loader,
+            owner->preselection_light.graphicsset, &scene_plan) ||
+        !scene_plan.valid ||
+        scene_plan.graphicsset != owner->preselection_light.graphicsset ||
+        !dm2_v1_gdat_scene_light_m11_receipt(&scene_plan, &scene_light) ||
+        !scene_light.valid) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+        return 0;
+    }
+    source_light.valid = 1;
+    source_light.dynamic_map = 0u;
+    source_light.base_light = 1u;
+    source_light.darkness_offset = (uint8_t)owner->preselection_light.v1e0978;
+    source_light.source_state_hash = owner->preselection_light.source_state_hash;
+    if (!dm2_v1_c_light_m11_receipt_build_for_map(&scene_light,
+            &owner->preselection_light.map_descriptor, &source_light,
+            &c_light) || !c_light.valid || c_light.light_level != 1u) {
+        dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+        return 0;
+    }
+    owner->preselection_scene_plan = scene_plan;
+    owner->preselection_scene_light = scene_light;
+    owner->preselection_c_light = c_light;
+    owner->preselection_scene_materialized = 1;
     return 1;
 }
 

@@ -1813,6 +1813,12 @@ int main(void) {
     int new_game_cross_map_target_x = -1;
     int new_game_cross_map_target_y = -1;
     uint8_t new_game_cross_map_target_direction = 0u;
+    uint8_t new_game_expected_wall_gfx[16];
+    uint8_t new_game_expected_floor_gfx[16];
+    uint8_t new_game_expected_door_ornate_gfx[16];
+    int new_game_expected_wall_count = -1;
+    int new_game_expected_floor_count = -1;
+    int new_game_expected_door_ornate_count = -1;
     int new_game_cross_map_count = 0;
     int new_game_cross_map_found = 0;
     int new_game_counter_map = -1;
@@ -2392,6 +2398,91 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 restores the private New Game map and teleporter context from the real File_header only after actuator generators");
+    memset(new_game_expected_wall_gfx, 0, sizeof(new_game_expected_wall_gfx));
+    memset(new_game_expected_floor_gfx, 0, sizeof(new_game_expected_floor_gfx));
+    memset(new_game_expected_door_ornate_gfx, 0,
+           sizeof(new_game_expected_door_ornate_gfx));
+    new_game_expected_wall_count = dm2_v1_dungeon_get_map_wall_gfx_list(
+        &new_game_world_owner.dungeon, 0, new_game_expected_wall_gfx,
+        (int)sizeof(new_game_expected_wall_gfx));
+    new_game_expected_floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(
+        &new_game_world_owner.dungeon, 0, new_game_expected_floor_gfx,
+        (int)sizeof(new_game_expected_floor_gfx));
+    new_game_expected_door_ornate_count =
+        dm2_v1_dungeon_get_map_door_ornate_list(
+            &new_game_world_owner.dungeon, 0,
+            new_game_expected_door_ornate_gfx,
+            (int)sizeof(new_game_expected_door_ornate_gfx));
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
+                        &new_game_world_owner) &&
+                    new_game_expected_wall_count >= 0 &&
+                    new_game_expected_floor_count >= 0 &&
+                    new_game_expected_door_ornate_count >= 0 &&
+                    new_game_world_owner.preselection_local_graphics.valid &&
+                    new_game_world_owner.preselection_local_graphics.map == 0 &&
+                    new_game_world_owner.preselection_local_graphics.wall_count ==
+                        (uint8_t)new_game_expected_wall_count &&
+                    new_game_world_owner.preselection_local_graphics.floor_count ==
+                        (uint8_t)new_game_expected_floor_count &&
+                    new_game_world_owner.preselection_local_graphics.door_ornate_count ==
+                        (uint8_t)new_game_expected_door_ornate_count &&
+                    memcmp(new_game_world_owner.preselection_local_graphics.wall_gfx,
+                           new_game_expected_wall_gfx,
+                           sizeof(new_game_expected_wall_gfx)) == 0 &&
+                    memcmp(new_game_world_owner.preselection_local_graphics.floor_gfx,
+                           new_game_expected_floor_gfx,
+                           sizeof(new_game_expected_floor_gfx)) == 0 &&
+                    memcmp(new_game_world_owner.preselection_local_graphics.door_ornate_gfx,
+                           new_game_expected_door_ornate_gfx,
+                           sizeof(new_game_expected_door_ornate_gfx)) == 0 &&
+                    new_game_world_owner.preselection_local_graphics.source_list_hash != 0u &&
+                    !profile->source_game_load_session_ready,
+                "M11 retains the authentic File_header wall, floor and door graphics lists for the entrance map");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_light(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.preselection_light.valid &&
+                    new_game_world_owner.preselection_light.map == 0 &&
+                    new_game_world_owner.preselection_light.graphicsset ==
+                        dm2_v1_dungeon_get_map_graphics_style(
+                            &new_game_world_owner.dungeon, 0) &&
+                    new_game_world_owner.preselection_light.party_count == 0u &&
+                    new_game_world_owner.preselection_light.leader_hand_record ==
+                        (uint16_t)DM2_V1_RECORD_HANDLE_NULL &&
+                    new_game_world_owner.preselection_light.savegame_light == 0u &&
+                    new_game_world_owner.preselection_light.v1e0974 == 0u &&
+                    new_game_world_owner.preselection_light.v1e0978 == 0u &&
+                    new_game_world_owner.preselection_light.weather_active == 0u &&
+                    new_game_world_owner.preselection_light.weather_index == 0u &&
+                    new_game_world_owner.preselection_light.weather_delta == 0u &&
+                    new_game_world_owner.preselection_light.weather_darkness_active == 0u &&
+                    new_game_world_owner.preselection_light.map_descriptor.valid &&
+                    !new_game_world_owner.preselection_light.map_descriptor.dynamic_light &&
+                    new_game_world_owner.preselection_light.source_state_hash != 0u &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 retains original c_light inputs for the real entrance without inventing a party or viewport");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_scene(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.preselection_scene_materialized &&
+                    new_game_world_owner.preselection_scene_plan.valid &&
+                    new_game_world_owner.preselection_scene_plan.graphicsset ==
+                        new_game_world_owner.preselection_light.graphicsset &&
+                    new_game_world_owner.preselection_scene_plan.commands[0].pixels != NULL &&
+                    new_game_world_owner.preselection_scene_plan.commands[1].pixels != NULL &&
+                    new_game_world_owner.preselection_scene_plan.commands[0].material_receipt_hash != 0u &&
+                    new_game_world_owner.preselection_scene_plan.commands[1].material_receipt_hash != 0u &&
+                    new_game_world_owner.preselection_scene_light.valid &&
+                    new_game_world_owner.preselection_c_light.valid &&
+                    new_game_world_owner.preselection_c_light.dynamic_map == 0u &&
+                    new_game_world_owner.preselection_c_light.light_level == 1u &&
+                    new_game_world_owner.preselection_c_light.source_state_hash ==
+                        new_game_world_owner.preselection_light.source_state_hash &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 materializes the original entrance floor, ceiling and c_light receipt only in the private New Game owner");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner) &&
