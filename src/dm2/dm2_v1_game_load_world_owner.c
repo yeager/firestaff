@@ -996,6 +996,72 @@ int dm2_v1_game_load_world_owner_materialize_source_map_context(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_light(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadPreselectionLightReceipt candidate;
+    int graphicsset;
+    uint32_t hash = 0x4c495447u; /* "LITG": c_light GAME_LOAD inputs. */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || !owner->actuator_generators_processed ||
+        !owner->source_map_context_materialized ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->preselection_light.valid || owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count) {
+        return 0;
+    }
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(&owner->dungeon,
+                                                          owner->source_party_map);
+    if (graphicsset < 0 || graphicsset > UINT8_MAX) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_dungeon_c_light_map_descriptor_receipt(
+            &owner->dungeon, owner->source_party_map,
+            &candidate.map_descriptor) ||
+        !candidate.map_descriptor.valid ||
+        candidate.map_descriptor.level != owner->source_party_map ||
+        candidate.map_descriptor.descriptor_hash == 0u) {
+        return 0;
+    }
+    /* c_dm2data initialises every field below before DM2_GAME_LOAD.  LOAD_NEW_DUNGEON
+     * then establishes a zero-hero party and OBJECT_NULL leader hand; only
+     * LOAD_LOCALLEVEL_DYN derives v1d6c02 from this map descriptor.  Keep
+     * these terminal source inputs explicit instead of accepting a host's
+     * zero-filled struct as equivalent dynamic illumination. */
+    candidate.map = owner->source_party_map;
+    candidate.graphicsset = (uint8_t)graphicsset;
+    candidate.party_count = 0u;
+    candidate.leader_hand_record = DM2_V1_RECORD_HANDLE_NULL;
+    candidate.savegame_light = 0u;
+    candidate.v1e0974 = 0u;
+    candidate.v1e0978 = 0u;
+    candidate.weather_active = 0u;
+    candidate.weather_index = 0u;
+    candidate.weather_delta = 0u;
+    candidate.weather_darkness_active = 0u;
+
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        candidate.map_descriptor.descriptor_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)candidate.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.graphicsset);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.party_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.leader_hand_record);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.savegame_light);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.v1e0974);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.v1e0978);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.weather_active);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.weather_index);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.weather_delta);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             candidate.weather_darkness_active);
+    if (hash == 0u) return 0;
+    candidate.source_state_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_light = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner)
 {

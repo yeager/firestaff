@@ -15,6 +15,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_sound.h"
@@ -77,6 +78,32 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GameLoadNewDungeonResetReceipt;
 
+/* Source-owned c_light inputs immediately after DM2_GAME_LOAD establishes
+ * the initial map, but before the mirror event loop creates a c_party.
+ * Every zero here is an original DM2 data-initialiser value, not a host
+ * default: retain the complete branch inputs so later presentation may not
+ * replace the dynamic-map calculation with a static scene value.
+ * Source: SKWINSPX/src/v5/dm2data.cpp::c_dm2data (1130-1454),
+ *         sksvgame.cpp::DM2_GAME_LOAD (1546-1565),
+ *         sklodlvl.cpp::DM2_LOAD_LOCALLEVEL_DYN (714-730),
+ *         sklight.cpp::DM2_RECALC_LIGHT_LEVEL (24-198). */
+typedef struct {
+    int valid;
+    int map;
+    uint8_t graphicsset;
+    uint8_t party_count;
+    uint16_t leader_hand_record;
+    uint16_t savegame_light;
+    uint16_t v1e0974;
+    uint16_t v1e0978;
+    uint8_t weather_active;
+    uint8_t weather_index;
+    uint8_t weather_delta;
+    uint8_t weather_darkness_active;
+    DM2_V1_CLightMapDescriptorReceipt map_descriptor;
+    uint32_t source_state_hash;
+} DM2_V1_GameLoadPreselectionLightReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -124,6 +151,10 @@ typedef struct {
     uint8_t source_party_absdir;
     int source_display_pose_valid;
     int16_t source_last_moved_record;
+    /* c_light is dynamic on the real entrance map.  This receipt owns the
+     * source initialisation inputs only; it is not a fabricated light level
+     * and does not make a viewport or a party visible. */
+    DM2_V1_GameLoadPreselectionLightReceipt preselection_light;
     /* Borrowed only while this private owner exists; it is the same
      * hash-admitted profile that owns asset_loader. */
     const DM2_V1_BootProfile *boot_profile;
@@ -177,6 +208,11 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
 int dm2_v1_game_load_world_owner_select_champion(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_BootNewGamePartySelection *selection);
+
+/* Retain the source c_light inputs for the established fresh-game map before
+ * any mirror click.  This has no renderer/session side effect. */
+int dm2_v1_game_load_world_owner_materialize_preselection_light(
+    DM2_V1_GameLoadWorldOwner *owner);
 
 typedef struct {
     int valid;

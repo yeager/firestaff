@@ -54,6 +54,15 @@
   Det hålls i den privata GAME_LOAD-världen och lämnar M11:s party, HUD och
   session tomma tills den fullständiga handoffen finns.
 
+# DM2 New Game privat ljusstart (2026-08-09)
+
+- ✅ GameLoadWorldOwner behåller nu `c_light`-inmatningarna för den riktiga
+  File_header-entrén efter aktuatorkön och kartväxlingen: graphics set,
+  kartdescriptor, tom party, null-ledarhand samt originalets initierade
+  ljus- och väderfält. Realdatatestet kontrollerar att tillståndet kommer
+  från DOS-korpuset och att ingen HUD, viewport eller spelbar session
+  publiceras.
+
 - ✅ Linux production linking no longer pulls the focused
   `dm2_v1_predicate_helpers.c` study into `firestaff_dm2` alongside the
   source-owned champion-HUD implementation, which exported the same two
