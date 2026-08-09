@@ -4687,6 +4687,49 @@ done:
     return ok;
 }
 
+/* ReDMCSB ENTRANCE.C F0442 (MEDIA746_A31E/A31M/A35E/A35M) expands C005
+ * straight onto the Amiga screen, then fades to G0019's credits palette.
+ * C005 is an IMG1 record in the authenticated DMCSB2 GRAPHICS.DAT bank;
+ * never route it through the PC34 startup-session decoder or synthesize a
+ * text page.  DATA.C's G0019 table is shared by these Amiga releases (the
+ * later Atari-specific alternative is deliberately not used here). */
+static int m11_csb_present_amiga_entrance_credits(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    const CSB_V1_BootProfile *profile;
+    const M11_AssetSlot *credits;
+    uint8_t rgb6[256][3];
+    int color;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !m11_csb_is_amiga_profile(profile) ||
+        !state->csbState.startup_entrance_credits_active ||
+        !state->assetsAvailable || !state->assetLoader.csbAmiga ||
+        !(credits = M11_AssetLoader_Load(
+              (M11_AssetLoader *)&state->assetLoader, 5u)) ||
+        credits->width != 320u || credits->height != 200u) {
+        return 0;
+    }
+    for (color = 0; color < 256; ++color) {
+        const unsigned int rgb12 = (unsigned int)dm1_v1_palette_credits_pc34(
+            color & 15);
+        rgb6[color][0] = (uint8_t)(((rgb12 >> 8) & 0x0fu) << 2);
+        rgb6[color][1] = (uint8_t)(((rgb12 >> 4) & 0x0fu) << 2);
+        rgb6[color][2] = (uint8_t)((rgb12 & 0x0fu) << 2);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) {
+        return 0;
+    }
+    memset(framebuffer, 0, (size_t)framebuffer_width *
+           (size_t)framebuffer_height);
+    M11_AssetLoader_Blit(credits, framebuffer, framebuffer_width,
+                         framebuffer_height, 0, 0, -1);
+    return 1;
+}
+
 /* ReDMCSB APPA.C:51-53 starts SWSH and passes FTL_TITL to ANIM.C.  A31's
  * TITL.DAT is a separate application surface, so neither PC TITLE.C nor a
  * reconstructed bitmap may stand in for it.  The final DL stream is known
@@ -27894,6 +27937,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        /* ENTRANCE.C F0442 owns all input while its C005 page is visible.
+         * The native Amiga route has no PC34 capture session, so consume the
+         * dismissal here instead of allowing C080/C083 live commands behind
+         * the original credits page. */
+        if (m11_csb_is_amiga_profile(csb_profile) &&
+            state->csbState.startup_entrance_credits_active) {
+            if (input != M12_MENU_INPUT_NONE) {
+                state->csbState.startup_entrance_credits_active = 0;
+                state->csbState.startup_entrance_credits_remaining_ticks = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         M11_GameInputResult fmtowns_result =
             m11_csb_handle_fmtowns_game_entrance_input(state, input);
         if (fmtowns_result != M11_GAME_INPUT_IGNORED) {
@@ -29391,6 +29449,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         const CSB_V1_BootProfile *csb_profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
+        if (m11_csb_is_amiga_profile(csb_profile) &&
+            state->csbState.startup_entrance_credits_active) {
+            if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+                state->csbState.startup_entrance_credits_active = 0;
+                state->csbState.startup_entrance_credits_remaining_ticks = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (m11_csb_is_fmtowns_profile(csb_profile) &&
             state->csbState.startup_title_active &&
             (state->csbFmtownsSwitchBound || state->csbFmtownsUtilityBound)) {
@@ -56807,6 +56874,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_csb_present_amiga_titl_startup(csb_state, framebuffer,
                                                framebufferWidth,
                                                framebufferHeight)) {
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
+        if (m11_csb_present_amiga_entrance_credits(
+                state, framebuffer, framebufferWidth, framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;

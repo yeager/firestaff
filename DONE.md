@@ -1,3 +1,11 @@
+# CSB Amiga: C005 credits från originaldata (2026-08-09)
+
+- ✅ A31, A35 multilingual och A35 English presenterar nu ENTRANCE.C F0442:s
+  C005 direkt från respektive verifierade `GRAPHICS.DAT` med G0019:s
+  Amiga-creditspalett. Creditsidan äger inmatning tills den avfärdas; ingen
+  PC34-yta eller genererad text används. Riktade realmediatester passerar
+  för alla tre startvägar.
+
 # Theron: operator-supplied original gameplay/HUD captures (2026-08-09)
 
 - ✅ Två riktiga US Theron's Quest/Mednafen-captures har lagts till som

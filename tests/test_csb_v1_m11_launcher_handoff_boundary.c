@@ -355,6 +355,58 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
         "Amiga C013 publishes the original G0021 dungeon palette");
 }
 
+/* ENTRANCE.C F0442 expands C005 directly and fades to DATA.C G0019.  The
+ * A31/A35 runtime intentionally has no PC34 startup session, so exercise
+ * the native C005 owner from an authenticated ADF rather than accepting a
+ * host-written credits page. */
+static void expect_amiga_c005_credits_source_frame(M11_GameViewState *view,
+                                                    const char *label)
+{
+    static const uint8_t expected_palette[16][3] = {
+        {  0u,  0u, 36u }, {  0u, 40u, 40u }, { 60u, 60u, 24u },
+        { 32u, 16u,  0u }, { 60u, 60u, 32u }, {  0u,  0u,  0u },
+        {  0u, 32u,  0u }, { 40u,  0u,  0u }, { 48u, 32u, 16u },
+        { 60u, 60u, 40u }, { 60u, 32u, 16u }, { 60u, 48u,  0u },
+        { 60u, 40u,  0u }, {  0u,  0u,  0u }, { 24u,  8u,  0u },
+        { 60u, 60u, 48u }
+    };
+    unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *c005;
+    uint8_t palette[256][3];
+    int palette_matches;
+    int color;
+
+    if (!view) {
+        expect_true(0, label);
+        return;
+    }
+    view->csbState.startup_entrance_credits_active = 1;
+    view->csbState.startup_entrance_credits_remaining_ticks = 1800;
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    c005 = M11_AssetLoader_Load(&view->assetLoader, 5u);
+    palette_matches = M11_Render_CopyIndexedPaletteRgb6(palette) ? 1 : 0;
+    for (color = 0; color < 16 && palette_matches; ++color) {
+        if (memcmp(palette[color], expected_palette[color],
+                   sizeof(expected_palette[color])) != 0 ||
+            memcmp(palette[color + 16], expected_palette[color],
+                   sizeof(expected_palette[color])) != 0) {
+            palette_matches = 0;
+        }
+    }
+    expect_true(c005 && c005->loaded && c005->pixels &&
+                    c005->width == 320u && c005->height == 200u &&
+                    frame_region_matches_bitmap(framebuffer, 320, 0, 0,
+                                                c005->pixels, 320u, 200u) &&
+                    palette_matches,
+                label);
+    expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    !view->csbState.startup_entrance_credits_active &&
+                    view->csbState.startup_entrance_credits_remaining_ticks == 0,
+                "Amiga C005 consumes dismissal before live C080 input");
+}
+
 /* ReDMCSB PANEL.C F0347 expands C017 into the 224x136 viewport rectangle
  * when the inventory command is active.  Amiga C03 has no PC34 terminal
  * session, so this must come directly from its own big-endian GRAPHICS.DAT. */
@@ -2460,6 +2512,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                 "A31M English APPB release hands off through KAOS.FTL to C03_GAME");
     expect_amiga_c013_source_frame(
         &view, "A31M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c005_credits_source_frame(
+        &view, "A31M presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
         &view, "A31M inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
@@ -2569,6 +2623,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
                 "A35M English APPB release hands off through KAOS.FTL to C03_GAME");
     expect_amiga_c013_source_frame(
         &view, "A35M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c005_credits_source_frame(
+        &view, "A35M presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
         &view, "A35M inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
@@ -2676,6 +2732,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
                 "A35E reaches C03_GAME without an A31/A35M/PC34 replacement screen");
     expect_amiga_c013_source_frame(
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c005_credits_source_frame(
+        &view, "A35E presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
         &view, "A35E inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(
