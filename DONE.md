@@ -924,6 +924,18 @@
   teleportörer, varelser, gropar och alla 0x10-kedjor avvisas före mutation,
   eftersom de fortsätter till oägda `c_moverec`-/kartövergångsvägar.
 
+# DM2 M11-inmatning till privat GAME_LOAD-värld (2026-08-09)
+
+- ✅ M11 vidarebefordrar nu endast de källverifierade dungeonhändelserna
+  `1..6` efter NEW GAME har byggt sin privata File_header-ägare:
+  vänster/höger blir `DM2_PERFORM_TURN_SQUAD` och framåt/höger/bakåt/vänster
+  blir `DM2_PERFORM_MOVE` med originalets relativa riktning. Alla andra
+  token avvisas och kan inte falla tillbaka till titelmenyn eller live-runtime.
+- ✅ Den verkliga DOS-regressionen går genom M11, vrider `0→3→0` och går
+  från `(1,8)` till `(1,7)`. Den bevisar samtidigt att M11:s partyposition,
+  riktning och tick är orörda, att ingen HUD eller framebuffer publiceras
+  och att `source_game_load_session_ready` fortfarande är noll.
+
 # DM2 New Game skriptad första champion (2026-08-09)
 
 - ✅ `DM2_2f3f_0789` kan nu materialisera sin autentiska första
