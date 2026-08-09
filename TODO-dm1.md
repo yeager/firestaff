@@ -4,6 +4,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 F0143 source-ownership correction is complete: the live M11
+  armour-defense path now resolves G0239 values through the authenticated raw
+  ARMOUR Thing record from DUNGEON.DAT. A missing or malformed record no
+  longer falls through to a parallel M11 table. Original C13-save and
+  original launcher/panel pixel-capture gates remain open.
+
 - 2026-08-09 live C13 producer correction is complete: Vi Altar drops now
   derive the rebirth owner from the authenticated bones JUNK record, preserve
   its Thing cell, and publish the F0255 step-2 fields (`aux0`, `aux1`, and

@@ -46,6 +46,10 @@
   alcoves no longer start champion rebirth.
 - `DM1 C13 save identity`: Fix the post-drop world hash so an immediate save
   includes the newly scheduled rebirth event rather than the pre-event state.
+- `M11 DM1 F0143 armour defense`: Read armour weight, defense, and shield
+  attributes from the authenticated raw ARMOUR Thing record instead of a
+  parallel M11 subtype table; missing or malformed source data now fails
+  closed.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects

@@ -44157,60 +44157,34 @@ static int m11_maybe_heal_black_flame_from_fireball(
     return 1;
 }
 
-struct M11ArmourInfoPc34 {
-    unsigned char weight;
-    unsigned char defense;
-    unsigned char attributes;
-};
-
-static const struct M11ArmourInfoPc34 s_m11_dm1_armour_info_pc34[58] = {
-    /* ReDMCSB DUNGEON.C G0239 lines 309-369: { Weight, Defense,
-     * Attributes, Unreferenced }.  F0313 shield defense also asks F0312
-     * for hand strength, and F0312 depends on held-object weight. */
-    {   3,   5, 0x01 }, {   4,  10, 0x01 }, {   3,   4, 0x01 }, {   6,   5, 0x02 },
-    {  16,  25, 0x04 }, {   4,   5, 0x00 }, {   4,   5, 0x00 }, {   3,   7, 0x01 },
-    {   3,   7, 0x01 }, {   4,   6, 0x01 }, {   2,   4, 0x00 }, {   4,   5, 0x01 },
-    {   5,   7, 0x01 }, {   3,  11, 0x02 }, {   3,  13, 0x02 }, {   4,  13, 0x02 },
-    {   6,  17, 0x03 }, {   8,  20, 0x03 }, {  14,  20, 0x03 }, {   6,  12, 0x02 },
-    {   5,   9, 0x01 }, {   5,   8, 0x01 }, {   5,   9, 0x01 }, {   4,   1, 0x04 },
-    {   6,   5, 0x04 }, {  11,  12, 0x05 }, {  14,  17, 0x05 }, {  15,  20, 0x05 },
-    {  11,  22, 0x85 }, {  10,  16, 0x82 }, {  14,  20, 0x83 }, {  21,  35, 0x84 },
-    {  65,  35, 0x05 }, {  53,  35, 0x05 }, {  52,  70, 0x07 }, {  41,  55, 0x07 },
-    {  16,  25, 0x06 }, {  16,  30, 0x06 }, {  19,  40, 0x07 }, { 120,  65, 0x04 },
-    {  80,  56, 0x04 }, {  28,  37, 0x05 }, {  34,  56, 0x84 }, {  17,  62, 0x05 },
-    { 108, 125, 0x04 }, {  72,  90, 0x04 }, {  24,  50, 0x05 }, {  30,  85, 0x84 },
-    {  35,  76, 0x04 }, { 141, 160, 0x04 }, {  90, 101, 0x04 }, {  31,  60, 0x05 },
-    {  40, 100, 0x84 }, {  14,  54, 0x06 }, {  57,  60, 0x07 }, {  81,  88, 0x04 },
-    {   3,  16, 0x02 }, {   2,   3, 0x03 }
-};
-
-static int m11_dm1_armour_defense_f0143(int armourType,
+static int m11_dm1_armour_defense_f0143(
+                                        const struct GameWorld_Compat* world,
+                                        unsigned short armourThing,
                                         int useSharpDefense,
                                         int* outDefense,
                                         int* outIsShield,
                                         int* outWeight)
 {
+    DM1_ArmourInfoPc34 info;
     int defense;
-    int attributes;
     if (!outDefense) return 0;
     *outDefense = 0;
     if (outIsShield) *outIsShield = 0;
     if (outWeight) *outWeight = 0;
-    if (armourType < 0 ||
-        armourType >= (int)(sizeof(s_m11_dm1_armour_info_pc34) /
-                            sizeof(s_m11_dm1_armour_info_pc34[0]))) {
+    if (!world || !world->things ||
+        !dm1_v1_dungeon_get_armour_info_pc34(world->things, armourThing,
+                                             &info)) {
         return 0;
     }
-    defense = (int)s_m11_dm1_armour_info_pc34[armourType].defense;
-    attributes = (int)s_m11_dm1_armour_info_pc34[armourType].attributes;
+    defense = info.defense;
     if (useSharpDefense) {
         /* ReDMCSB DUNGEON.C F0143 lines 1240-1244:
          * F0030_MAIN_GetScaledProduct(Defense, 3, sharp + 4). */
-        defense = (defense * ((attributes & 0x07) + 4)) >> 3;
+        defense = (defense * ((info.attributes & 0x07) + 4)) >> 3;
     }
     *outDefense = defense;
-    if (outIsShield) *outIsShield = (attributes & 0x80) ? 1 : 0;
-    if (outWeight) *outWeight = (int)s_m11_dm1_armour_info_pc34[armourType].weight;
+    if (outIsShield) *outIsShield = (info.attributes & 0x80) ? 1 : 0;
+    if (outWeight) *outWeight = info.weight;
     return 1;
 }
 
@@ -44236,7 +44210,6 @@ static int m11_defender_armour_defense_for_thing(
     int* outWeight)
 {
     int thingIndex;
-    int armourType;
 
     if (outDefense) *outDefense = 0;
     if (outIsShield) *outIsShield = 0;
@@ -44253,9 +44226,8 @@ static int m11_defender_armour_defense_for_thing(
     if (thingIndex < 0 || thingIndex >= world->things->armourCount) {
         return 0;
     }
-    armourType = (int)world->things->armours[thingIndex].type;
     return m11_dm1_armour_defense_f0143(
-        armourType, useSharpDefense, outDefense, outIsShield, outWeight);
+        world, thing, useSharpDefense, outDefense, outIsShield, outWeight);
 }
 
 static int m11_f0312_stamina_adjusted_value(
