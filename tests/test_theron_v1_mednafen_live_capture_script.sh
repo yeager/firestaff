@@ -213,6 +213,7 @@ if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit"' "$script" ||
    ! grep -Fq 'main_ram_loader_tii_transfers=%s' "$script" ||
    ! grep -Fq 'continuation_tii_source_3c80=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_rts=%s' "$script" ||
@@ -234,6 +235,7 @@ if [[ ! -f "$consumer_read_patch" ]] ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerRead' "$consumer_read_patch" ||
    ! grep -Fq 'physical_address >= 0x1f0000 && physical_address < 0x1f8000' "$consumer_read_patch" ||
    ! grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
+   ! grep -Fq 'TheronPCECDMainRAMConsumerTraceLimit' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerWrite' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_target_write sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||

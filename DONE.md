@@ -1,3 +1,13 @@
+# Theron: förlängt autentiserat RAM-konsumentfönster (2026-08-09)
+
+- ✅ Mednafen-capture stöder nu `THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT`
+  från 4 096 till 1 048 576 poster; standarden är 65 536. Den tidigare
+  uppstartsgränsen kunde annars fylla receiptet innan senare spelkod nåddes.
+- ✅ Två nya kalla US Track 02-captures med äkta System Card och Cocoa/global
+  HID verifierar 254 CD→RAM-originreceipts och 65 536 RAM-läsningar. De visar
+  fortfarande `spawn_consumer_reads=0`, `$B0E5=0` och RNG-konsument `=0`, så
+  creature-, AI-, T700- och T900-semantik är fortsatt fail-closed.
+
 # Theron: verifiera aktuell CD→RAM-receiptform (2026-08-09)
 
 - ✅ `verify_theron_origin_ram_receipt.pl` accepterar nu den autentiska

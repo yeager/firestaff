@@ -45,7 +45,7 @@
  	}
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -108,5 +108,11 @@
+@@ -108,5 +108,22 @@
  static uint16 TheronPCECDMainRAME009ReturnPC;
  static unsigned TheronPCECDMainRAME009Sequence;
  static unsigned TheronPCECDCriticalTraceCount;
@@ -55,6 +55,17 @@
 +static unsigned TheronPCECDMainRAMTargetTraceCount;
 +static FILE *TheronPCECDSpawnConsumerTrace;
 +static unsigned TheronPCECDSpawnConsumerTraceCount;
++static unsigned TheronPCECDMainRAMConsumerTraceLimit(void)
++{
++ static unsigned limit;
++ if(!limit)
++ {
++  const char *text = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT");
++  unsigned long parsed = text && *text ? strtoul(text, NULL, 10) : 4096;
++  limit = parsed >= 4096 && parsed <= 1048576 ? (unsigned)parsed : 4096;
++ }
++ return limit;
++}
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
 @@ -140,2 +141,103 @@
@@ -114,7 +125,7 @@
 +   fflush(TheronPCECDMainRAMTargetTrace);
 +  }
 + }
-+ if(TheronPCECDMainRAMConsumerTraceCount >= 4096)
++ if(TheronPCECDMainRAMConsumerTraceCount >= TheronPCECDMainRAMConsumerTraceLimit())
 +  return;
 + if(!TheronPCECDMainRAMConsumerTrace)
 + {

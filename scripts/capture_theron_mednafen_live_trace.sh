@@ -43,6 +43,7 @@ replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
+main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -65,6 +66,11 @@ fi
 if [[ ! "$rng_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
    (( rng_consumer_sample_limit < 512 || rng_consumer_sample_limit > 65536 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT must be an integer from 512 through 65536' >&2
+    exit 1
+fi
+if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
+   (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
     exit 1
 fi
 
@@ -856,6 +862,7 @@ launch=(
     FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \
     FIRESTAFF_THERON_SPAWN_CONSUMER_TRACE="$spawn_consumer_trace" \
     FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace" \

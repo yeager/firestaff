@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Det förlängda RAM-konsumentfönstret är verifierat på äkta US Track 02,
+  men även den riktade förflyttningscapturen gav noll `$B0E5`, noll
+  RNG-konsument och noll spawn-consumer-rader. Nästa capture måste starta från
+  en användarskapad save-state precis före ett verkligt monster eller objekt;
+  utan den får inga creature-, AI-, T700- eller T900-regler aktiveras.
+
 - ⏳ Ny cold-start med samma autentiserade media gav 256 CD→RAM-originreceipts,
   26 `$E009`, 33 `$4644` och 96 `$4667`, men noll `$B0E5`/RNG. Detta är
   kombinerat transportbevis men öppnar ingen spawn-, AI-, T700- eller
