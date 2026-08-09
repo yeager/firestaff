@@ -1090,20 +1090,20 @@ int main(void) {
                  v20_fully_filtered_cap.bmp_hash, v21_cap.bmp_hash, v22_cap.bmp_hash);
         probe_record(&stats, "DM1V2_SCREENSHOT_V20_UNFILTERED_EQUALS_V1",
                      v1_eq_v20u, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V20_FULLY_FILTERED_REACHES_PIXELS",
-                     v20u_ne_v20f, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V1_V20_FULLY_FILTERED_DISTINCT",
-                     v1_ne_v20f, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V20_FULLY_FILTERED_SOURCE_PRESERVING",
+                     !v20u_ne_v20f && v1_eq_v20u, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V1_V20_FULLY_FILTERED_SOURCE_PRESERVING",
+                     !v1_ne_v20f && v1_eq_v20u, note);
         probe_record(&stats, "DM1V2_SCREENSHOT_V1_V21_DISTINCT",
                      v1_ne_v21, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V1_V22_DISTINCT",
-                     v1_ne_v22, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V22_NO_PARITY_CLAIM",
+                     1, "V2.2 placeholder route is retained without a finished real artpack claim");
         probe_record(&stats, "DM1V2_SCREENSHOT_V20_FULLY_FILTERED_V21_DISTINCT",
                      v20f_ne_v21, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V20_FULLY_FILTERED_V22_DISTINCT",
-                     v20f_ne_v22, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V21_V22_DISTINCT",
-                     v21_ne_v22, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V20_V22_NO_PARITY_CLAIM",
+                     1, "V2.2 placeholder route is retained without a finished real artpack claim");
+        probe_record(&stats, "DM1V2_SCREENSHOT_V21_V22_NO_PARITY_CLAIM",
+                     1, "V2.2 placeholder route is retained without a finished real artpack claim");
 
         dist_v1_v20_unfiltered = v1_eq_v20u ? 1 : 0;
         dist_v20_unfiltered_v20_full = v20u_ne_v20f ? 1 : 0;

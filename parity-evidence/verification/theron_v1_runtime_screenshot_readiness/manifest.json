@@ -13,7 +13,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260807-172550.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260807-172550.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260809-110202.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260809-110202.bmp",
         "stdout": "[TQR] Verified Track 02 accepted: <canonical_pcengine_root-data-dir>/TQUS02.bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
@@ -26,7 +26,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260807-172550.bmp",
+          "name": "firestaff-presented-20260809-110202.bmp",
           "non_black_pixels": 0,
           "sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
           "size": 1555254,
@@ -75,7 +75,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260807-172550.bmp",
+          "name": "firestaff-20260809-110202.bmp",
           "non_black_pixels": 0,
           "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
@@ -111,7 +111,7 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-08-07T15:25:48.765999+00:00",
+  "generated_at": "2026-08-09T09:01:59.796073+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",

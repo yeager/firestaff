@@ -50,6 +50,22 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 - ✅ CSB V2 Phase 4/5/6 combined runtime wire-up (2026-06-17): three new modules — `csb_v2_lighting_runtime.c/h` (V1→V2 lighting bridge wrapping `csb_v2_light_tick` + `csb_v2_light_update_flicker`), `csb_v2_smooth_movement_runtime.c/h` (V1→V2 smooth bridge wrapping `csb_v2_smooth_init` + walk/turn/stairs triggers), `csb_v2_touch_runtime.c/h` (V1→V2 input bridge routing through `csb_v2_touch_controller_affordance_route(v2_enabled, aff)` then translating `DM1_V2_MovementCommand` → `Dm1V1QueuedCommandPc34Compat`). All three use the unified CSB_V2_PhaseGateConfig gate (`v2PresentationEnabled` + `v2ConfigPersistenceEnabled`). Glob picks up all three new sources automatically. Source-locked against ReDMCSB LIGHT.C F0380 (lighting), GROUP.C:1695-1770 (smooth movement), COMMAND.C:108-113/254-291 + CLIKMENU.C:142/180 + GAMELOOP.C:164-219 (touch input), CSBWin/resurrect/CsbV2* (CSBWin reimpl), sibling dm2_v2_*_runtime.c + nexus_v2_*_runtime.c patterns. Combined headless probe `firestaff_csb_v2_runtime_wireup_probe` passes 60/60 (lighting init/shutdown + V2 off no-op + V2 enabled tick + partial-gate rejection + force_active bypass + V1 invariant + toggle cycles + post-shutdown rejection + source evidence; smooth init/shutdown + V2 off no-op + walk/turn/stairs triggers gated on V2 + partial-gate rejection + force_active bypass + V1 invariant + toggle cycles + post-shutdown rejection + source evidence; touch init/shutdown + V2 off no-op + V2 partial no-op + NONE rejection + 6 movement affordances translate to correct DM1_V1_COMMAND_* + count monotonic + coordinate pass-through incl. negative + null out rejection + force_active bypass + V1 invariant + toggle cycles + post-shutdown rejection + source evidence).
 
+## 2026-08-09 CSB viewport D0L/D0R + F0109 + F0110 (commit 7be579a7d)
+
+- ✅ D0L/D0R side wall rendering (F0125/F0126): view squares 9/10, depth 0,
+  32x136 source frames, C10 transparency. Uses existing wallset enums.
+- ✅ F0109 door ornament rendering: bridges CSB viewport to DM1
+  `dm1_v1_door_ornament_info_for_ordinal_pc34()`. D1 native 48x88, D2/D3
+  scaled with palette remap (G0200/G0201). G0207 coordinate set table.
+- ✅ F0110 door button rendering: bridges to DM1 door button frame and
+  palette remap. G0208 coordinate sets for D3R/D3C/D2C/D1C positions.
+  D1C native with clickable box C05, D2/D3 scaled.
+
+## 2026-08-09 CSB ABI fixes (commit 0158bdd54)
+
+- ✅ Movement tick counters G0310/G0311 corrected from int to uint16_t.
+- ✅ Thing handle sentinel corrected to 0xFFFF (DOS 16-bit ABI).
+
 ## 2026-07-28 CSB Entrance palette
 
 - Corrected CSB's real Entrance palette from DM `C07/G8148` to the distinct

@@ -14,6 +14,30 @@
   screenshot/parity-gate. Muspekaren är dokumenterad som värdpekare, inte som
   emulerad PC Engine-mus.
 
+# CSB native Amiga-val, Entrance-input och savebackup (2026-08-09)
+
+- ✅ Startmenyn och CLI:t väljer nu A31M eller A35 när de finns, i stället
+  för den skanningsbara men ännu spärrade A31E-vägen. Verifiering med den
+  lokala A31M-ADF:en når `csb-amiga-a31-titl` med den ursprungliga
+  TITL/APPA-kedjan.
+- ✅ CSB Entrance äger nu pekarinmatningen tills C03_GAME tar över. Högerklick
+  kan inte längre tolkas som vänsterklick och starta C200/dörrkedjan från
+  Prison.
+- ✅ Atari- och Amiga-återupptagning avvisar nu en `.BAK` när den inte kan
+  återställas atomärt till sitt kanoniska save-slotnamn. Runtime muteras först
+  efter lyckad återställning. ReDMCSB `LOADSAVE.C` F0435:2906-2907.
+
+# DM2 New Game: statisk RESET_CAII-mutation (2026-08-09)
+
+- ✅ Den privata, hashverifierade File_header-världen utför nu
+  `DM2_RESET_CAII`:s verkliga DB4 byte@5-nollställning och den statiska
+  `DM2_1c9a_09db`-grenen i originalets karta/ruta/record-ordning. Den bevarar
+  `0x0060` och `0x8001` i Creature word@0xA enligt källan.
+- ✅ Mutationerna är transaktionella över hela DB4-poolen. Verifiering mot
+  DOS-korpuset kontrollerar alla 299 poster, varje statisk animationsordning,
+  oförändrad RNG och helt fria CAII-slottar. Ingen timer, dynamisk varelse,
+  CCM-körning eller M11-session publiceras.
+
 # DM2 New Game: dynamisk privat SND-kö (2026-08-09)
 
 - ✅ GAME_LOAD:s ljudägare behåller nu originalets privata sfx-, delayed- och
@@ -42,6 +66,13 @@
 - ✅ Inget DB4-ägarskap, ingen varelse, ingen CAII-timer och ingen CCM-körning
   publiceras av denna lagring. Den kompletta `RESET_CAII`-transaktionen måste
   fortfarande utföra statisk `09db` och dynamisk `0a48` tillsammans.
+
+# CSB viewport D0L/D0R + F0109 + F0110 + ABI fixes (2026-08-09)
+
+- ✅ D0L/D0R side walls (F0125/F0126), F0109 door ornament rendering with
+  depth scaling and palette remap, F0110 door button rendering with G0208
+  coordinate sets. Three ABI fixes: G0310/G0311 uint16_t, thing handle
+  0xFFFF. See DONE-csb.md for details.
 
 # DM2 New Game: källberäknad CAII-kapacitet (2026-08-09)
 
@@ -1694,6 +1725,10 @@
   genom PORTRAIT.C:s header- och F7251-avkodning. Den lokala retailskivan ger
   24 källposter; katalogen kan aldrig ersätta saknade filer med påhittade
   namn eller porträtt.
+- ✅ Zoomrutan behåller nu det valda MINI.DAT-porträttet separat från F7033:s
+  toppradsiteration. En realdatakontroll väljer en pixel där två av skivans
+  ursprungliga porträtt skiljer sig och verifierar att F7031 förstorar rätt
+  källa, även när C06-visningen innehåller flera kämpar.
 
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 

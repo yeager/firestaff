@@ -479,6 +479,47 @@ int main(void)
                   utility_frame[43u * 320u + 286u] == 0u &&
                   utility_frame[51u * 320u + 286u] == 1u,
               "F31E C06 initial editor frame uses only verified source pixels");
+        {
+            CSB_V1_PartyState multi_champion_party = mini_party;
+            uint8_t selected_portrait[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
+            uint8_t following_portrait[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
+            size_t sample;
+
+            /* MINI.DAT carries four original external portrait records even
+             * when its startup party has one champion.  Exercise CEDT006
+             * F7031 with those real records, not an invented portrait: use a
+             * pixel at which the selected and following source portraits
+             * differ so the enlarged pane cannot accidentally show the
+             * last portrait visited by F7033's top-row loop. */
+            multi_champion_party.ChampionCount = 4;
+            memset(selected_portrait, 0, sizeof(selected_portrait));
+            memset(following_portrait, 0, sizeof(following_portrait));
+            CHECK(csb_v1_fmtowns_portrait_decode_planar(
+                      mini_portraits.source_bytes[2],
+                      CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES,
+                      selected_portrait, sizeof(selected_portrait)) &&
+                      csb_v1_fmtowns_portrait_decode_planar(
+                          mini_portraits.source_bytes[3],
+                          CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES,
+                          following_portrait, sizeof(following_portrait)),
+                  "F31 MINI.DAT supplies the selected and following original portraits");
+            for (sample = 0u; sample < sizeof(selected_portrait) &&
+                              selected_portrait[sample] == following_portrait[sample];
+                 ++sample) {
+            }
+            memset(&utility_render, 0, sizeof(utility_render));
+            memset(utility_frame, 0, sizeof(utility_frame));
+            CHECK(sample < sizeof(selected_portrait) &&
+                      csb_v1_fmtowns_utility_render_editor(
+                          &utility_handoff, &utility_menu, &utility_font,
+                          &multi_champion_party, &mini_portraits, 2u, 0u,
+                          utility_frame, sizeof(utility_frame),
+                          &utility_render) && utility_render.valid &&
+                      utility_frame[(60u + (sample / 32u) * 3u) * 320u +
+                                    157u + (sample % 32u) * 3u] ==
+                          selected_portrait[sample],
+                  "F31E C06 zoom pane retains the selected MINI.DAT portrait after top-row drawing");
+        }
     }
 
     if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {

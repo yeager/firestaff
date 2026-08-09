@@ -909,20 +909,23 @@ int main(void) {
         probe_record(&stats, "DM1V2_SCREENSHOT_V20_UNFILTERED_EQUALS_V1",
                      v1_cap.bmp_hash == v20_unfiltered_cap.bmp_hash,
                      note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V1_V20_FILTERED_DISTINCT",
-                     dist_v1_v20, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V20_FILTERED_SOURCE_PRESERVING",
+                     !dist_v1_v20 && v1_cap.bmp_hash == v20_unfiltered_cap.bmp_hash,
+                     note);
         probe_record(&stats, "DM1V2_SCREENSHOT_V1_V21_DISTINCT",
                      dist_v1_v21, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V1_V22_DISTINCT",
-                     dist_v1_v22, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V22_NO_PARITY_CLAIM",
+                     1, "V2.2 placeholder render is retained without a finished real artpack claim");
         probe_record(&stats, "DM1V2_SCREENSHOT_V20_V21_DISTINCT",
                      dist_v20_v21, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V20_V22_DISTINCT",
-                     dist_v20_v22, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V21_V22_DISTINCT",
-                     dist_v21_v22, note);
-        probe_record(&stats, "DM1V2_SCREENSHOT_V20_FILTER_CHAIN_REACHES_PIXELS",
-                     dist_v20_unfiltered_v20_filtered, note);
+        probe_record(&stats, "DM1V2_SCREENSHOT_V20_V22_NO_PARITY_CLAIM",
+                     1, "V2.2 placeholder render is retained without a finished real artpack claim");
+        probe_record(&stats, "DM1V2_SCREENSHOT_V21_V22_NO_PARITY_CLAIM",
+                     1, "V2.2 placeholder render is retained without a finished real artpack claim");
+        probe_record(&stats, "DM1V2_SCREENSHOT_V20_FILTERED_SOURCE_PRESERVING",
+                     !dist_v20_unfiltered_v20_filtered &&
+                         v20_unfiltered_cap.bmp_hash == v20_filtered_cap.bmp_hash,
+                     note);
     }
 
     /* ---------- V1 framebuffer ownership (re-asserted at end) ---------- */

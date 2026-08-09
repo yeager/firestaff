@@ -787,6 +787,19 @@ int main(void)
     for (tick = 0; tick < 120; ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
+    /* M11 has already converted SDL mouse buttons to PC34 masks.  The
+     * generic Entrance compatibility boundary also accepts raw SDL-left
+     * mask 0x0001, which is M11's right button.  A real Prison frame must
+     * therefore leave C200 untouched on a right click in its source box.
+     * ReDMCSB COMMAND.C G0445/F0358; ENTRANCE.C F0441/F0806. */
+    CHECK(view.csbState.startup_entrance_active &&
+              !view.csbState.startup_entrance_opening_active &&
+              M11_GameView_HandlePointerButton(
+                  &view, 245, 46, M11_DM1_MOUSE_MASK_RIGHT) ==
+                  M11_GAME_INPUT_IGNORED &&
+              view.csbState.startup_entrance_active &&
+              !view.csbState.startup_entrance_opening_active,
+          "real Prison entrance right click cannot masquerade as C200 left input");
     CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
               M11_GAME_INPUT_REDRAW,
           "original Enter route accepts Prison handoff");

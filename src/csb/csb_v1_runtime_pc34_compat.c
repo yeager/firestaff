@@ -2092,19 +2092,20 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
          * before it replaces the unavailable/corrupt slot. */
         if (csb_v1_runtime_original_atari_backup_path(path, backup_path,
                                                        sizeof(backup_path)) &&
-            csb_v1_runtime_try_load_original_atari_save_file(profile,
-                                                              backup_path) ==
-                CSB_V1_LOAD_OK) {
-            (void)remove(path);
-            if (rename(backup_path, path) == 0) {
-                /* The successful recovery is now the selected source. Keep
-                 * F0433's later template check pointed at that restored
-                 * filename, rather than the name that was just renamed. */
-                snprintf(profile->original_atari_save_source_path,
-                         sizeof(profile->original_atari_save_source_path),
-                         "%s", path);
+            csb_v1_runtime_is_original_atari_save_file(backup_path)) {
+            /* ReDMCSB LOADSAVE.C F0435:2906-2907 only resumes after its
+             * selected .BAK has become the canonical save filename.  Do the
+             * filesystem transition before mutating the live profile: a
+             * backup that is valid in isolation is not a resumable slot when
+             * the replacement cannot be completed. */
+            if (remove(path) != 0 || rename(backup_path, path) != 0) {
+                return result;
             }
-            return CSB_V1_LOAD_OK;
+            if (csb_v1_runtime_try_load_original_atari_save_file(profile,
+                                                                  path) ==
+                CSB_V1_LOAD_OK) {
+                return CSB_V1_LOAD_OK;
+            }
         }
         return result;
     }

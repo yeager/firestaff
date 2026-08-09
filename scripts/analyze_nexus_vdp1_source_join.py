@@ -189,7 +189,12 @@ def main() -> int:
         source_offset = words[4] * 8
         source_size = (width * height * bits_per_pixel) // 8
         source_end = source_offset + source_size
-        if source_size <= 0 or source_end > len(vram):
+        # VDP1 command lists may contain zero-sized control/system records
+        # with a normal command-type nibble. They are not texture sources;
+        # ignore them rather than rejecting the complete authenticated list.
+        if source_size <= 0:
+            continue
+        if source_end > len(vram):
             print("NEXUS_VDP1_SOURCE_JOIN_INVALID: source span outside VDP1 VRAM")
             return 1
         draws.append((offset, colour_mode, source_offset, vram[source_offset:source_end]))

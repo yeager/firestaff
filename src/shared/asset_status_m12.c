@@ -6212,6 +6212,19 @@ const char* M12_Architecture_ShortLabel(int architecture) {
     }
 }
 
+static int m12_version_is_launchable(const char *gameId,
+                                     const M12_VersionSpec *version)
+{
+    /* ReDMCSB COMPILE.H:199-213 assigns A31E directly to APPB.C03, while
+     * A31M uses TITL/APPA/APPB.C08 (lines 246-269).  A31E is deliberately
+     * catalogued for scanning, but has no verified C03 program handoff yet.
+     * Do not let catalogue order select it ahead of an independently
+     * launchable A31M/A35 package on the same Amiga platform. */
+    return gameId && version && version->versionId &&
+           !(strcmp(gameId, "csb") == 0 &&
+             strcmp(version->versionId, "amiga31-en") == 0);
+}
+
 int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     const M12_AssetStatus* status, const char* gameId, int architecture) {
     const M12_GameVersionSpec* spec;
@@ -6237,7 +6250,8 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             for (i = 0U; i < spec->versionCount; ++i) {
                 if (spec->versions[i].architecture == autoPriority[p] &&
                     i < M12_ASSET_MAX_VERSIONS_PER_GAME &&
-                    status->versions[gameIndex][i].matched) {
+                    status->versions[gameIndex][i].matched &&
+                    m12_version_is_launchable(gameId, &spec->versions[i])) {
                     return (int)i;
                 }
             }
@@ -6248,7 +6262,8 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     for (i = 0U; i < spec->versionCount; ++i) {
         if (spec->versions[i].architecture == architecture &&
             i < M12_ASSET_MAX_VERSIONS_PER_GAME &&
-            status->versions[gameIndex][i].matched) {
+            status->versions[gameIndex][i].matched &&
+            m12_version_is_launchable(gameId, &spec->versions[i])) {
             return (int)i;
         }
     }

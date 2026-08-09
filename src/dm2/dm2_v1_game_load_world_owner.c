@@ -4,6 +4,7 @@
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_door_mechanics.h"
+#include "dm2_v1_creature_something_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
 
 #include <limits.h>
@@ -309,6 +310,109 @@ static int dm2_v1_game_load_owner_materialize_caii_storage(
     dm2_v1_drops_rng_init(&owner->caii_rng);
     owner->caii_rng_initialized = 1;
     return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_static_caii(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_RecordPool *db4;
+    uint8_t *snapshot;
+    size_t db4_bytes;
+    uint32_t hash = 0x43535441u; /* "CSTA" */
+    int index;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->caii_source.valid || !owner->caii_map_receipt.valid ||
+        !owner->caii_map_candidates || !owner->caii_slots.valid ||
+        !owner->caii_rng_initialized || owner->caii_static_animation.valid ||
+        owner->caii_map_receipt.static_candidate_count == 0u) {
+        return 0;
+    }
+    db4 = &owner->record_pools.pools[4];
+    if (!db4->bytes || db4->record_size < 14 || db4->record_count <= 0 ||
+        db4->record_count > UINT16_MAX ||
+        (size_t)db4->record_count > SIZE_MAX / (size_t)db4->record_size) {
+        return 0;
+    }
+    db4_bytes = (size_t)db4->record_count * (size_t)db4->record_size;
+    snapshot = (uint8_t *)malloc(db4_bytes);
+    if (!snapshot) return 0;
+    memcpy(snapshot, db4->bytes, db4_bytes);
+
+    /* RESET_CAII clears the owner byte on every DB4 record before
+     * FILL_ORPHAN_CAII begins its map traversal.  This is source state, not
+     * a replacement creature allocation. */
+    for (index = 0; index < db4->record_count; ++index)
+        db4->bytes[(size_t)index * (size_t)db4->record_size + 5u] = 0xffu;
+
+    for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[index];
+        const DM2_AIDefinition *ai = NULL;
+        uint8_t *record;
+        const uint8_t *animation = NULL;
+        uint16_t adjacent_base;
+        int16_t animation_word;
+        uint16_t old_word;
+        uint16_t merged_word;
+        DM2_V1_CreatureAnimFrameReceipt frame_receipt;
+
+        if (!candidate->static_ai) continue;
+        record = dm2_v1_record_pool_address_mut(&owner->record_pools,
+                                                candidate->record_handle);
+        if (!record || record[4] != candidate->creature_type ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) ||
+            !ai || (ai->w0AIFlags & 1u) == 0u) {
+            goto rollback;
+        }
+        old_word = (uint16_t)record[10] | ((uint16_t)record[11] << 8);
+        if (old_word != candidate->record_word_a) goto rollback;
+        adjacent_base = (uint16_t)record[8] | ((uint16_t)record[9] << 8);
+        animation_word = (int16_t)old_word;
+        memset(&frame_receipt, 0, sizeof(frame_receipt));
+        if (dm2_v1_creature_get_animation_frame_with_ai_spec(
+                owner->asset_loader, &owner->caii_rng, ai, record[4], 0x11,
+                &adjacent_base, &animation_word, &animation,
+                candidate->packed_position, &frame_receipt) != 1 ||
+            !frame_receipt.valid || !frame_receipt.static_path ||
+            animation != NULL || (uint16_t)animation_word !=
+                candidate->static_animation_frame) {
+            goto rollback;
+        }
+        /* c_1c9a.cpp:9944-9957: 09db writes the animation word, then the
+         * caller preserves bits 0x0060 from the pre-animation record and
+         * restores the 0x8001 sentinel shape when applicable. */
+        merged_word = (uint16_t)animation_word;
+        merged_word |= (uint16_t)((old_word ^ merged_word) & 0x0060u);
+        if ((old_word & 0x803fu) == 0x8001u)
+            merged_word = (uint16_t)((merged_word & 0x7fc0u) | 0x8001u);
+        record[10] = (uint8_t)merged_word;
+        record[11] = (uint8_t)(merged_word >> 8);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                 (uint16_t)candidate->map);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                 candidate->record_handle);
+        hash = dm2_v1_game_load_owner_hash_step(hash, old_word);
+        hash = dm2_v1_game_load_owner_hash_step(hash, merged_word);
+    }
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)db4->record_count);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, owner->caii_map_receipt.static_candidate_count);
+    if (hash == 0u || owner->caii_rng.random != 0u) goto rollback;
+    owner->caii_static_animation.valid = 1;
+    owner->caii_static_animation.db4_slot_reset_count =
+        (uint16_t)db4->record_count;
+    owner->caii_static_animation.static_animation_count =
+        owner->caii_map_receipt.static_candidate_count;
+    owner->caii_static_animation.source_hash = hash;
+    free(snapshot);
+    return 1;
+
+rollback:
+    memcpy(db4->bytes, snapshot, db4_bytes);
+    free(snapshot);
+    return 0;
 }
 
 static int dm2_v1_game_load_owner_validate_possessions(

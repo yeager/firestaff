@@ -25,6 +25,21 @@
 - `verify.yml`: Prevent rapid `main` integrations from canceling an
   already-started cross-platform verification matrix.
 
+## DM1
+
+### Fixed
+
+- `m11_game_view`: Keep authenticated FM Towns `DUNGEON.DAT` on its native
+  runtime path and bind its legacy `GRAPHICS.DAT` before the PC34 loader, so
+  direct DM1 launch no longer rejects valid FM Towns data.
+- `dm1_v1_original_save_pc34_backed_corpus`: Fix verification by using the
+  real PC34 `DUNGEON.DAT` for provenance-attested Downloads saves, including an
+  empty C03/C04 layout and a distinct save with 15 active groups and 15 live
+  C03 records.
+- `dm1_v2_screenshot_gates`: Fix source-preserving V2.0 and the
+  unauthenticated V2.2 placeholder as explicit non-claims, while requiring
+  V2.1 variation without admitting synthetic filter or art pixels.
+
 ## DM2
 
 ### Changed

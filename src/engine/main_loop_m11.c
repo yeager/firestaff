@@ -3034,6 +3034,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         m11_set_launch_failed_message(menuState);
         return 0;
     }
+    /* FM Towns owns a native EDM/JDM title/menu path.  The PC34
+     * source-visible transaction is only for the DOS launcher and would
+     * incorrectly force the native edition through the entrance handoff. */
+    if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
+        dm1RouteReceipt.use_dm1_transaction = 0;
+        dm1RouteReceipt.use_generic_launch = 1;
+    }
     if (dm1RouteReceipt.use_dm1_transaction) {
         int oldFastForward = g_m11_intro_delay_fast_forward;
         g_m11_intro_delay_fast_forward = bootProbe ? 1 : oldFastForward;
@@ -3350,22 +3357,20 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
         size_t count = M12_AssetStatus_GetVersionCount(id);
         size_t versionIndex;
         int first = -1;
-        int matched = -1;
+        int matched;
         for (versionIndex = 0U; versionIndex < count; ++versionIndex) {
             if (M12_AssetStatus_GetVersionArchitecture(id, versionIndex) !=
                 architecture) {
                 continue;
             }
             if (first < 0) first = (int)versionIndex;
-            {
-                const M12_AssetVersionStatus* version =
-                    M12_AssetStatus_GetVersion(&menuState->assetStatus,
-                                               id, versionIndex);
-                if (matched < 0 && version && version->matched) {
-                    matched = (int)versionIndex;
-                }
-            }
         }
+        /* Version discovery order is not a launch policy. In particular,
+         * CSB A31E is scanner-visible but intentionally lacks its native
+         * APPB.C03 handoff; the status policy selects a verified A31M/A35
+         * sibling when one exists. */
+        matched = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &menuState->assetStatus, id, architecture);
         if (first < 0) continue;
         menuState->gameOptions[gameIndex].architectureIndex = architecture;
         menuState->gameOptions[gameIndex].versionIndex =

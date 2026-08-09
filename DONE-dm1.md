@@ -1,5 +1,15 @@
 # Firestaff DONE - DM1
 
+## 2026-08-09
+
+- ✅ Backing-aware PC34 save corpus verification: the two authentic,
+  provenance-attested saves currently in `/Users/bosse/Downloads` both pass
+  the production F0435 -> F0433 -> F0435 round-trip against the real PC34
+  `DUNGEON.DAT`. The corpus includes the empty C03/C04 layout and a distinct
+  save with 15 active groups and 15 live C03 records. No generated save or
+  repository game-data payload was added. C13 remains open because neither
+  save contains a C13 event.
+
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 ## Dungeon Master (DM1)
@@ -14788,4 +14798,3 @@ Verification: `firestaff_m11` Ninja build.
   all-dungeon receipt inspection. The indexed viewport-only render facade can
   present without an asset bundle; supplied V1 bundles still require original
   tile/palette data. No synthetic artwork or object route is admitted.
-

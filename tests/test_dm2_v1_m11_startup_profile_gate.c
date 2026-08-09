@@ -448,6 +448,47 @@ static int dm2_test_owner_static_gaf_uses_private_ai(
     return 0;
 }
 
+static int dm2_test_static_caii_materialization(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    const DM2_V1_RecordPool *db4;
+    int index;
+
+    if (!owner || !owner->caii_static_animation.valid ||
+        !owner->caii_map_candidates || !owner->caii_slots.valid ||
+        owner->caii_rng.random != 0u || owner->caii_slots.alloc_count != 0 ||
+        owner->caii_static_animation.db4_slot_reset_count != 299u ||
+        owner->caii_static_animation.static_animation_count !=
+            owner->caii_map_receipt.static_candidate_count ||
+        owner->caii_static_animation.source_hash == 0u) {
+        return 0;
+    }
+    db4 = &owner->record_pools.pools[4];
+    if (!db4->bytes || db4->record_size < 14 || db4->record_count != 299)
+        return 0;
+    for (index = 0; index < db4->record_count; ++index) {
+        if (db4->bytes[(size_t)index * (size_t)db4->record_size + 5u] != 0xffu)
+            return 0;
+    }
+    for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[index];
+        const uint8_t *record;
+        uint16_t expected;
+        if (!candidate->static_ai) continue;
+        record = dm2_v1_record_pool_address(&owner->record_pools,
+                                            candidate->record_handle);
+        if (!record) return 0;
+        expected = candidate->static_animation_frame;
+        expected |= (uint16_t)((candidate->record_word_a ^ expected) & 0x0060u);
+        if ((candidate->record_word_a & 0x803fu) == 0x8001u)
+            expected = (uint16_t)((expected & 0x7fc0u) | 0x8001u);
+        if (((uint16_t)record[10] | ((uint16_t)record[11] << 8)) != expected)
+            return 0;
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -2128,6 +2169,7 @@ int main(void) {
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_GameLoadWorldOwner incremental_new_game_world_owner;
+    DM2_V1_GameLoadWorldOwner static_caii_world_owner;
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
@@ -2599,6 +2641,7 @@ int main(void) {
     memset(&new_game_world_owner, 0, sizeof(new_game_world_owner));
     memset(&incremental_new_game_world_owner, 0,
            sizeof(incremental_new_game_world_owner));
+    memset(&static_caii_world_owner, 0, sizeof(static_caii_world_owner));
     memset(&tampered_new_game_world_owner, 0,
            sizeof(tampered_new_game_world_owner));
     memset(&timer_process_world_owner, 0, sizeof(timer_process_world_owner));
@@ -2753,6 +2796,18 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 materializes an isolated File_header, DYN4 sound allocation and DB-pool world from original bytes without publishing a party, timer or playback session");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_prepare_new_game(
+                        &static_caii_world_owner, profile) &&
+                    dm2_v1_game_load_world_owner_materialize_static_caii(
+                        &static_caii_world_owner) &&
+                    dm2_test_static_caii_materialization(
+                        &static_caii_world_owner) &&
+                    !static_caii_world_owner.committed &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "DM2 applies RESET_CAII's real static DB4 animation branch only in its private File_header owner");
+    dm2_v1_game_load_world_owner_free(&static_caii_world_owner);
     memset(&new_game_generators, 0, sizeof(new_game_generators));
     new_game_generators_result = profile &&
         dm2_v1_game_load_world_owner_process_actuator_tick_generators(
