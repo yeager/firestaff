@@ -18,7 +18,7 @@ output=$(PYTHONPATH="$root/scripts${PYTHONPATH:+:$PYTHONPATH}" \
   --capture-frames "$frames")
 
 grep -Fx "frame=$frame chain_records=220" <<<"$output" >/dev/null
-grep -Fx "textured_draws=209 source_matches=204 palette_matches=204 face_selector_matches=175" <<<"$output" >/dev/null
+grep -Fx "textured_draws=209 source_matches=204 palette_matches=204 face_owner_matches=175" <<<"$output" >/dev/null
 grep -Fx "sequence_dgn_material_join=unbound" <<<"$output" >/dev/null
 grep -Fx "semantic_admission=blocked" <<<"$output" >/dev/null
 echo "nexus VDP1 DGN command-sequence join: PASS (bounded evidence; production remains blocked)"

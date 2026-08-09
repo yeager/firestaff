@@ -106,7 +106,10 @@ def main() -> int:
     textured = 0
     source_matches = 0
     palette_matches = 0
-    face_matches = 0
+    # This receipt proves only that a matched Structure2 image has at least
+    # one canonical Structure3 owner.  It does not prove the Saturn SH-2
+    # face-selection call or its selected face index.
+    face_owner_matches = 0
     bounded_failures = 0
     unmatched_offsets = []
     rows = []
@@ -134,16 +137,16 @@ def main() -> int:
             image_id = int(name.split("Structure2=", 1)[1].split(" ", 1)[0])
             owners.extend(dgn_structure3_face_owners(args.data_dir, marker, image_id))
         if owners:
-            face_matches += 1
+            face_owner_matches += 1
         rows.append((record.offset, names, owners, material["source_offset"],
                      material["source_size"], material["clut_word"]))
 
     complete = (textured > 0 and source_matches == textured and
-                palette_matches == textured and face_matches == textured and
+                palette_matches == textured and face_owner_matches == textured and
                 bounded_failures == 0)
     print(f"frame={args.frame} chain_records={len(chain)}")
     print(f"textured_draws={textured} source_matches={source_matches} "
-          f"palette_matches={palette_matches} face_selector_matches={face_matches}")
+          f"palette_matches={palette_matches} face_owner_matches={face_owner_matches}")
     print(f"bounded_failures={bounded_failures} unmatched_offsets=" +
           (",".join(f"0x{x:05x}" for x in unmatched_offsets) or "none"))
     for offset, names, owners, source_offset, source_size, clut_word in rows:

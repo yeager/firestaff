@@ -73,6 +73,16 @@
   Produktionsgraden är fortfarande 0 % tills ett matchande BIOS/media-par
   och en komplett semantisk Saturn-witness finns.
 
+# Nexus: korrekt benämning och bättre VDP1-kandidat (2026-08-09)
+
+- ✅ VDP1-DGN-joinens rapportering säger nu `face_owner_matches`: den tidigare
+  benämningen `face_selector_matches` överdrev vad bytejoinen bevisar. Den
+  visar Structure3-ägarskap, inte Saturns SH-2 face-selection-anrop.
+- ✅ Den autentiserade long-capture-korpusen har dessutom en starkare kandidat
+  i frame 760: 242 records, 231 mode-1-draws, 227 source/CLUT-joins och 198
+  Structure3-ägare. Fyra draws saknar DGN-materialrad och 33 saknar ägare;
+  scene replay och produktion förblir därför spärrade.
+
 # Nexus: atomisk VDP1-capture och återställd DGN-spärr (2026-08-09)
 
 - ✅ En misslyckad eller helt utanför bildrutan VDP1-capture kan inte längre
@@ -220,7 +230,7 @@ rendering remain blocked.
   authenticated full VDP1 chain to canonical DGN Structure2 source+CLUT
   materials and reports Structure3 face-selector owners. The 900-frame
   European witness at frame 899 contains 220 records and 209 textured draws;
-  204 source+CLUT joins and 175 face-selector joins are verified. Five source
+  204 source+CLUT joins and 175 Structure3 face-owner joins are verified. Five source
   spans and selector-less material uses remain visible gaps. No production
   renderer admission was opened: transform/culling, display origin, HUD/menu
   ownership and VDP2 composition remain unproven.
