@@ -3873,6 +3873,11 @@ int main(void) {
                     profile_new_game_owner->source_preselection_ready &&
                     profile_new_game_owner->actuator_generators_processed &&
                     profile_new_game_owner->source_map_context_materialized &&
+                    profile_new_game_owner->preselection_local_graphics.valid &&
+                    profile_new_game_owner->preselection_light.valid &&
+                    profile_new_game_owner->preselection_scene_materialized &&
+                    profile_new_game_owner->preselection_scene_plan.valid &&
+                    profile_new_game_owner->preselection_c_light.valid &&
                     !profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
                     !profile->source_game_load_session_ready,

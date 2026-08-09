@@ -78,6 +78,14 @@
   med den hashadmitterade dungeonbilden, så framtida objekt- och
   viewportmaterial inte kan lånas från fel karta.
 
+# DM2 New Game entréägare kopplad till BootProfile (2026-08-09)
+
+- ✅ M11:s verkliga NEW GAME-väg materialiserar nu atomärt samma privata
+  entrékarta, lokala grafiklistor, GDAT-scen och `c_light`-resultat som
+  realdatatestet använder. Ett fel i någon länk avvisar övergången och
+  lämnar startupmenyn aktiv; ingen global runtime-session eller reservbild
+  publiceras.
+
 - ✅ Linux production linking no longer pulls the focused
   `dm2_v1_predicate_helpers.c` study into `firestaff_dm2` alongside the
   source-owned champion-HUD implementation, which exported the same two

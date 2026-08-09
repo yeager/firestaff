@@ -18,7 +18,8 @@
   privata och härledda från originalets initiering och File_header-karta.
   Dess riktiga GDAT-golv-, tak- och ljuskvitton är nu RAM-ägda, men de är
   ännu inte en renderad viewport. De autentiska lokala vägg-, golv- och
-  dörrornamentlistorna följer också med samma karta. Varje efterföljande mirror-klick kan
+  dörrornamentlistorna följer också med samma karta och byggs nu i den
+  verkliga M11 NEW GAME-vägen. Varje efterföljande mirror-klick kan
   materialiseras i källordning utan automatiskt championval. M11 saknar ännu
   den riktiga mirrorskärmen och den kompletta sessionscommitten för
   c_eventqueue, handcontainer, timerkö och fortlöpande map-/recordmutationer.
