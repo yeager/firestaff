@@ -16669,17 +16669,14 @@ void M11_GameView_ProbeCheckPartyDeath(M11_GameViewState* state) {
 }
 
 /* ================================================================
- * Creature AI simulation (M11-layer)
+ * Creature AI compatibility fallback (M11-layer)
  *
- * The M10 tick orchestrator treats TIMELINE_EVENT_CREATURE_TICK as a
- * no-op (v1 stub). This M11-layer simulation provides simple creature
- * behavior so the game feels alive:
- *   - Creatures within sight range move toward the party (one step per
- *     movementTicks interval).
- *   - Creatures on the party square deal autonomous damage.
- *   - Creature death removes the group from the map.
- * All manipulation happens on M11-owned world state — no M10 files
- * are modified.
+ * Authentic DM1 sessions are owned by M10's source-ordered
+ * TIMELINE_EVENT_CREATURE_TICK / F0209 dispatch. The routines below remain
+ * available for isolated diagnostic worlds that do not have an admitted
+ * source timeline; they must never become a second live DM1 simulation.
+ * When used diagnostically they provide bounded movement, attack, and group
+ * removal behavior without changing the M10 source owner.
  * ================================================================ */
 
 /* Find a creature group thing on a specific square. */

@@ -106,6 +106,9 @@
   nested broad-data and per-game roots before starting the launcher scan. The
   real-data no-creature-AI guard now passes from the same broad data directory
   used by the application.
+- `DM1 creature AI ownership`: Correct the M11 documentation so the
+  source-ordered M10 F0209 timeline is explicitly the live DM1 owner; the M11
+  creature routine is diagnostic-only when no source timeline is admitted.
 - Restored the pass76 Firestaff route-state evidence at its current
   `parity-evidence/verification` path and updated the pass608/live-row gates
   and citations after the historical verification archive move.

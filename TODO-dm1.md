@@ -29,6 +29,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   probe passes 4/4; this removes a false discovery/scan failure and does not
   claim C13 or original-pixel parity.
 
+- 2026-08-09 creature-AI ownership wording is corrected: live DM1 behavior is
+  owned by the M10 source-ordered F0209 timeline; the M11 map-scan routine is
+  retained only for isolated diagnostic worlds without an admitted source
+  timeline. This removes a misleading "M10 no-op" description and does not
+  claim broader creature-combat parity.
+
 - 2026-08-09 verification-path repair is complete: pass76 route-state JSON is
   stored under `parity-evidence/verification`, and pass608/live-row checks no
   longer depend on the removed historical `verification-m11` path. This fixes
