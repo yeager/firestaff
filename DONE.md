@@ -15,9 +15,8 @@
 
 - ✅ Dokumenterat att `SDL_AUDIODRIVER=dummy` vidarebefordras till Mednafen-
   barnprocessen för headless Saturn-capture på macOS. Dokumentationen skiljer
-  korrekt mellan SDL:s dummy-ljudbackend och Cocoa/OpenGL-videovägen och
-  beskriver varför dummy-audio inte räcker som startup-, meny-, HUD- eller
-  viewportbevis.
+  korrekt mellan SDL:s miljövariabel och Cocoa/OpenGL-videovägen och noterar
+  att den aktuella SexyAL-loggen inte bevisar att dummy-ljudet faktiskt valts.
 
 # Nexus launcher forwards SDL audio backend (2026-08-09)
 
