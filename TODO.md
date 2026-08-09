@@ -89,6 +89,10 @@
   PC-DOS/File_headers råa tileklass översätts nu vid den enda tillåtna
   viewportbryggan (`0=vägg`, `1=golv`, `4=dörr`) innan den används som
   `DM2_SquareType`; inga råa G1-värden får längre tolkas som renderarens enum.
+  Originalets vänster-/högervridning kan nu köras privat före championvalet
+  och bygger om teleporter-/absdir-kvitto, terrängvy och viewport från samma
+  File_header-värld. Den är ännu inte kopplad till M11:s mus, tangentbord
+  eller handkontroll före en full sessionsägare.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

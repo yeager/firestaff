@@ -2029,6 +2029,7 @@ int main(void) {
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
+    DM2_V1_GameLoadWorldOwner *profile_preselection_turn_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
     DM2_V1_TimerEntry new_game_actuate_timer;
@@ -4215,6 +4216,19 @@ int main(void) {
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
                     !profile->source_game_load_session_ready,
                 "M11 NEW GAME retains the real post-GAME_LOAD pre-mirror owner without choosing a champion");
+    profile_preselection_turn_owner =
+        (DM2_V1_GameLoadWorldOwner *)(void *)profile_new_game_owner;
+    expect_true(profile_preselection_turn_owner &&
+                    dm2_v1_game_load_world_owner_turn_preselection(
+                        profile_preselection_turn_owner, 1) &&
+                    profile_preselection_turn_owner->source_party_direction == 3u &&
+                    profile_preselection_turn_owner->selected_party.heros_in_party == 0 &&
+                    !profile_preselection_turn_owner->champion_selection_materialized &&
+                    dm2_test_preselection_view_matches_owner(
+                        profile_preselection_turn_owner) &&
+                    profile_preselection_turn_owner->preselection_viewport.valid &&
+                    !profile->source_game_load_session_ready,
+                "DM2 applies the source left-turn before mirror selection in its private real-data owner");
     expect_true(profile &&
                     dm2_v1_boot_prepared_new_game_mirror_roster(
                         profile, &prepared_mirror_roster) &&

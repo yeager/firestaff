@@ -1636,6 +1636,85 @@ int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_turn_preselection(
+    DM2_V1_GameLoadWorldOwner *owner, int source_event)
+{
+    DM2_V1_GameLoadPreselectionViewReceipt old_view;
+    DM2_V1_GameLoadPreselectionViewportReceipt old_viewport;
+    const int map = owner ? owner->source_party_map : -1;
+    const int x = owner ? owner->source_party_x : -1;
+    const int y = owner ? owner->source_party_y : -1;
+    const int old_direction = owner ? owner->source_party_direction : -1;
+    const int tile_class = owner ? dm2_v1_dungeon_get_square_type(
+        &owner->dungeon, map, x, y) : -1;
+    const int square_type = tile_class < 0 ? -1 :
+        dm2_v1_viewport_g1_tile_class_to_square_type((uint8_t)tile_class);
+    const int8_t old_staircase_flag = owner ? owner->source_staircase_flag : 0;
+    const int8_t old_teleporter_map = owner ? owner->source_teleporter_map : -1;
+    const int16_t old_display_x = owner ? owner->source_display_x : 0;
+    const int16_t old_display_y = owner ? owner->source_display_y : 0;
+    const uint8_t old_absdir = owner ? owner->source_party_absdir : 0u;
+    const int8_t old_probe_direction = owner ?
+        owner->source_teleporter_probe_direction : -1;
+    const uint8_t old_source_direction = owner ?
+        owner->source_teleporter_source_direction : 0u;
+    const uint8_t old_destination_direction = owner ?
+        owner->source_teleporter_destination_direction : 0u;
+    const uint8_t old_display_pose_valid = owner ?
+        owner->source_display_pose_valid : 0u;
+    const int16_t old_last_moved_record = owner ?
+        owner->source_last_moved_record : -1;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_view.valid ||
+        !owner->preselection_viewport.valid || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->selected_mirror_count != 0u ||
+        (source_event != 1 && source_event != 2) ||
+        map < 0 || map >= owner->dungeon.level_count ||
+        x < 0 || y < 0 || old_direction < 0 || old_direction > 3 ||
+        square_type != DM2_SQUARE_FLOOR) {
+        return 0;
+    }
+
+    /* Before SELECT_CHAMPION, RESET_SQUAD_DIR and party.rotate have no hero
+     * fields to mutate.  The rest is the source event's orientation change
+     * and DM2_move_2fcf_0b8b's read-only teleporter/display probe against the
+     * owned File_header map and record pools. */
+    old_view = owner->preselection_view;
+    old_viewport = owner->preselection_viewport;
+    owner->source_party_direction = (uint8_t)((old_direction +
+        (source_event == 2 ? 1 : 3)) & 3);
+    if (!dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(owner)) {
+        goto rollback;
+    }
+    memset(&owner->preselection_view, 0, sizeof(owner->preselection_view));
+    memset(&owner->preselection_viewport, 0,
+           sizeof(owner->preselection_viewport));
+    if (dm2_v1_game_load_world_owner_materialize_preselection_view(owner) &&
+        dm2_v1_game_load_world_owner_materialize_preselection_viewport(owner)) {
+        return 1;
+    }
+
+rollback:
+    owner->source_party_direction = (uint8_t)old_direction;
+    owner->source_staircase_flag = old_staircase_flag;
+    owner->source_teleporter_map = old_teleporter_map;
+    owner->source_display_x = old_display_x;
+    owner->source_display_y = old_display_y;
+    owner->source_party_absdir = old_absdir;
+    owner->source_teleporter_probe_direction = old_probe_direction;
+    owner->source_teleporter_source_direction = old_source_direction;
+    owner->source_teleporter_destination_direction = old_destination_direction;
+    owner->source_display_pose_valid = old_display_pose_valid;
+    owner->source_last_moved_record = old_last_moved_record;
+    owner->preselection_view = old_view;
+    owner->preselection_viewport = old_viewport;
+    return 0;
+}
+
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner)
 {

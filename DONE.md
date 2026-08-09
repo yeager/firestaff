@@ -592,6 +592,17 @@
   `DM2_SquareType`, vars enumvärden skiljer sig. Realdatatestet bekräftar
   fortsatt File_header-projektion utan M11-, HUD- eller sessionspublicering.
 
+# DM2 New Game privat vridning före spegelval (2026-08-09)
+
+- ✅ Event 1 och 2 följer nu `DM2_PERFORM_TURN_SQUAD` i den privata,
+  tomma GAME_LOAD-ägaren: riktningen uppdateras, File_headers riktiga
+  teleporter-/absdir-kontext räknas om och sedan byggs terrängvy samt
+  viewportkvitto om i källordning. DB-recordrötter i synfältet bevaras och
+  kräver ingen syntetisk tomruta.
+- ✅ Realdatatestet vrider startposen från `(1,8,0)` till väster och bevisar
+  att party, HUD, tick och `source_game_load_session_ready` fortfarande är
+  opublicerade.
+
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 
 - ✅ Den privata kartkontexten porterar nu hela den läsande
