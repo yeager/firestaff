@@ -11734,6 +11734,16 @@ rendering remain blocked.
   målslotten inte kan ersättas bevaras den validerade backupen och live-
   runtime lämnas orörd.
 
+# CSB: Atari/Amiga F0435 saknad slot-återställning (2026-08-09)
+
+- ✅ Atari-/Amiga-originalkorpusen återställer nu en validerad
+  `CSBGAMEx.BAK` även när den valda `CSBGAMEx.DAT` saknas helt. Det följer
+  ReDMCSB `LOADSAVE.C F0435:2906-2907` direktanrop till `M570_RenameFile`,
+  i stället för att kräva en värdskapad förhandsradering.
+- ✅ Regressionen använder den autentiska Atari ST `MINI.DAT`-korpusen och
+  bevisar byteidentisk återställning, kanonisk slotbindning och aktuell
+  provenance-receipt för både skadad och helt frånvarande `.DAT`.
+
 # CSB: Amiga Prison-entréns källzoner (2026-08-09)
 
 - ✅ Amiga A31/A35 använder nu ReDMCSB `COMMAND.C` G0445/F0358:s egna

@@ -175,6 +175,31 @@ int main(void)
             csb_v1_runtime_cleanup(&runtime);
             return 1;
         }
+        /* LOADSAVE.C F0435 restores with M570_RenameFile rather than a
+         * prerequisite delete.  A user can therefore have the authentic
+         * CSBGAMEx.BAK while the selected .DAT is absent entirely; it must
+         * remain a real resumable slot, not be rejected as a host-only
+         * missing-path edge case. */
+        free(written);
+        written = NULL;
+        written_size = 0u;
+        remove(written_path);
+        if (!write_file(backup_path, backup, backup_size) ||
+            !csb_v1_runtime_can_load_resume_path(written_path) ||
+            csb_v1_runtime_load_game_from_path(&runtime, written_path) !=
+                CSB_V1_LOAD_OK ||
+            strcmp(csb_v1_runtime_original_atari_save_source_path(&runtime),
+                   written_path) != 0 ||
+            !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
+            !read_file(written_path, &written, &written_size) ||
+            written_size != backup_size ||
+            memcmp(written, backup, backup_size) != 0) {
+            free(written);
+            free(backup);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
         /* F0435 only treats the backup as resumed after it has been renamed
          * back to the selected canonical slot.  A valid source backup must
          * not yield LOAD_OK if that replacement is impossible.  The MINI.DAT

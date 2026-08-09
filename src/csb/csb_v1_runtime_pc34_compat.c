@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stddef.h>
+#include <errno.h>
 #include <sys/stat.h>
 
 /* CSBWin/CSB.h EXTENDEDFEATURESBLOCK::EXTENDEDFLAGS.  SaveGame.cpp chooses
@@ -2107,7 +2108,21 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
              * filesystem transition before mutating the live profile: a
              * backup that is valid in isolation is not a resumable slot when
              * the replacement cannot be completed. */
-            if (remove(path) != 0 || rename(backup_path, path) != 0) {
+            /* ReDMCSB LOADSAVE.C F0435:2906-2907 calls M570_RenameFile
+             * directly.  A save slot that is absent is therefore just as
+             * recoverable as a corrupt one: the validated backup becomes
+             * its canonical .DAT name.  The earlier remove()-then-rename()
+             * translation incorrectly rejected ENOENT and stranded a real
+             * CSBGAMEx.BAK whenever the selected file had disappeared. */
+#if defined(_WIN32)
+            /* C rename() cannot replace an existing target on Windows.
+             * Preserve the source transition there while still accepting a
+             * missing canonical slot. */
+            if ((remove(path) != 0 && errno != ENOENT) ||
+                rename(backup_path, path) != 0) {
+#else
+            if (rename(backup_path, path) != 0) {
+#endif
                 return result;
             }
             if (csb_v1_runtime_try_load_original_atari_save_file(profile,
