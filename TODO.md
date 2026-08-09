@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- ✅ Den lokala retailkorpusen `/Users/bosse/.firestaff/data/nexus` är nu
+  återfunnen och körd mot real-data-gates: TITLE.BIN/TITLE.CG MAPD/TIBG,
+  MENU.BPK PRS3/PALT, FONT256.S2D, alla 16 DGN face/mesh-nivåer, ITEM.IBS
+  samt SLEV/SAL/MAP. Dessa verifierar byte- och provenance-lager; Saturns
+  startup/menu-pixelkonsument och produktionsrasterisering är fortfarande
+  capture-gated.
+
 - ✅ Nexus Mednafen-capture injicerar nu knappmasken exakt en gång per
   Saturn-videoram i `SMPC_UpdateInput`, efter host-inputuppdateringen; den
   tidigare register-write-kroken kunde räkna fel och skriva över input.

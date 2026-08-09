@@ -8,6 +8,17 @@
   VDP1/VDP2-ramar. Detta är transportbevis; meny-, HUD- och viewport-
   semantik förblir korrekt fail-closed utan source-join.
 
+# Nexus: återfunnen retailkorpus och real-data startup/menu-regression (2026-08-09)
+
+- ✅ `/Users/bosse/.firestaff/data/nexus` innehåller nu den autentiserade
+  retailkorpusen som används av verifieringen.
+- ✅ Real-data-gates passerar för TITLE.BIN/TITLE.CG MAPD/TIBG, MENU.BPK med
+  162 PRS3-ytor och PALT, FONT256.S2D admission/section corpus, alla 16 DGN
+  face/mesh-nivåer, ITEM.IBS samt SLEV/SAL/MAP-proveniens.
+- ✅ Startup-menyn initierar och läser riktiga ytor och FONT256-sektioner utan
+  fallback. Saturns pixelkonsument, VDP2-lagerägare och produktionsraster är
+  fortsatt korrekt stängda tills en matchande autentiserad capture join finns.
+
 # Theron: kontextbunden ADPCM-capturebuild (2026-08-09)
 
 - ✅ Capturebyggaren använder nu en separat kontextbunden ADPCM FIFO/RAM-patch.
