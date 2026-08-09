@@ -84,8 +84,8 @@ size_t theron_v1_track02_item_property_count(void) {
     return THERON_TRACK02_ITEM_PROPERTY_COUNT;
 }
 
-int theron_v1_track02_item_properties_match_source(
-    const uint8_t *ud_data, size_t ud_size, int jp_bin) {
+static int find_source_property_table(
+    const uint8_t *ud_data, size_t ud_size, int jp_bin, size_t *out_offset) {
     static const size_t us_offsets[] = { 0x099825u };
     static const size_t jp_offsets[] = {
         0x0990a2u, 0x119d4du, 0x15955du, 0x1d91d9u, 0x219b13u
@@ -97,13 +97,39 @@ int theron_v1_track02_item_properties_match_source(
     const uint8_t *source = (const uint8_t *)g_properties;
     const size_t source_bytes = sizeof(g_properties);
 
+    if (out_offset) *out_offset = 0u;
     if (!ud_data || ud_size == 0u) return 0;
     for (size_t i = 0u; i < offset_count; ++i) {
         size_t offset = offsets[i];
         if (offset <= ud_size && source_bytes <= ud_size - offset &&
             memcmp(ud_data + offset, source, source_bytes) == 0) {
+            if (out_offset) *out_offset = offset;
             return 1;
         }
     }
     return 0;
+}
+
+int theron_v1_track02_item_properties_match_source(
+    const uint8_t *ud_data, size_t ud_size, int jp_bin) {
+    return find_source_property_table(ud_data, ud_size, jp_bin, NULL);
+}
+
+int theron_v1_track02_item_property_source_row(
+    const uint8_t *ud_data, size_t ud_size, int jp_bin,
+    unsigned int index, uint8_t out[THERON_TRACK02_ITEM_PROPERTY_SIZE],
+    size_t *source_offset) {
+    size_t table_offset;
+
+    if (!out || index >= THERON_TRACK02_ITEM_PROPERTY_COUNT ||
+        !find_source_property_table(ud_data, ud_size, jp_bin, &table_offset))
+        return 0;
+
+    /* The full-table match above is the authenticity gate.  Read the row
+     * from the caller's real Track 02 bytes, not from g_properties. */
+    memcpy(out, ud_data + table_offset +
+           (size_t)index * THERON_TRACK02_ITEM_PROPERTY_SIZE,
+           THERON_TRACK02_ITEM_PROPERTY_SIZE);
+    if (source_offset) *source_offset = table_offset;
+    return 1;
 }

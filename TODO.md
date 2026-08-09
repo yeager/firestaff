@@ -284,6 +284,12 @@
   save/load. Nästa krav är en autentisk `$2600`-konsumentcapture som binder
   T900:s equip/use/stack/loot-regler; gissade mutationer ska fortsatt nekas.
 
+- 🔧 Theron: propertyrader för source-bundna föremål kopieras nu direkt från
+  den verifierade US/JP-Track 02-tabellen och load-receipten behåller dess
+  normaliserade UD-offset. Nästa steg är fortfarande den autentiska T900-
+  konsumenten som avgör vilka övriga objectrecords som får ägarskap i
+  inventory; okända kategorier får inte marknadsföras som itemsemantik.
+
 - 🔧 Theron: source-spawnkategorin följer nu autentiska live creatures och
   save/load. När `$4667`/`$5D64`/`$5D6A` fångas ska den kopplas till originalets
   RNG-resultat, utan att kategorin i sig används som gissad gameplaystatistik.

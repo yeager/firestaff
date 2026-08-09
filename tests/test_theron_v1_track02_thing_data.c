@@ -234,6 +234,16 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
 
     assert(theron_v1_track02_item_properties_match_source(
         ud, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN));
+    {
+        uint8_t source_row[THERON_TRACK02_ITEM_PROPERTY_SIZE];
+        size_t source_offset = 0u;
+        assert(theron_v1_track02_item_property_source_row(
+            ud, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN, 4u,
+            source_row, &source_offset));
+        assert(source_offset != 0u);
+        assert(memcmp(source_row, theron_v1_track02_item_property(4u),
+                      sizeof(source_row)) == 0);
+    }
     printf("  %s Track 02 item property table matches source bytes OK\n",
            label);
 

@@ -283,6 +283,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.raw_only_item_refs == 0);
         assert(result.source_objects_materialized > 0);
         assert(result.source_item_properties_bound > 0);
+        assert(result.source_property_table_verified == 1);
+        assert(result.source_property_table_offset == 0x099825u);
         assert(result.source_text_data_count <= THERON_TRACK02_SOURCE_TEXT_MAX);
         if (d == 0)
             assert(result.source_text_data_count == 0x013C);
@@ -451,6 +453,12 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_records_decoded > 0);
         assert(result.raw_only_item_refs == 0);
         assert(result.source_item_properties_bound > 0);
+        assert(result.source_property_table_verified == 1);
+        assert(result.source_property_table_offset == 0x0990a2u ||
+               result.source_property_table_offset == 0x119d4du ||
+               result.source_property_table_offset == 0x15955du ||
+               result.source_property_table_offset == 0x1d91d9u ||
+               result.source_property_table_offset == 0x219b13u);
         assert(result.source_text_data_count == 0);
         assert(result.source_object_count ==
                (unsigned int)result.source_occurrences_decoded);

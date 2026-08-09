@@ -1,3 +1,22 @@
+# Theron source-bound property rows (2026-08-09)
+
+- ✅ Track 02-loadern kräver fortsatt en byteverifierad 66×6-byte propertytabell
+  och kopierar nu varje bunden row direkt från den autentiska US/JP-
+  user-data-bufferten. En kompilerad propertytabell används endast som
+  verifieringsreferens, aldrig som ersättning för saknade källbytes.
+- ✅ Load-resultatet bevarar dessutom den verifierade tabellens normaliserade
+  UD-offset. Real-data-regressionen passerar för både `TQUS02.bin` och
+  `TQJP02.bin` över alla sju dungeonblock; ofullständig propertyprovenance
+  fortsätter att neka inventory-bindning.
+
+# Theron external movie capture boundary (2026-08-09)
+
+- ✅ En autentisk Mednafen-film från extern-disken kördes mot US Track 02 och
+  System Card 3.0. Den gav HuC6280-bank-/registerobservationer i `$CC4C`, men
+  ingen spelägd CD-read, `$2600`-konsument eller verifierad semantisk handoff.
+  Resultatet är därför ett negativt capturebevis; RNG, AI, T700, T900 och loot
+  förblir fail-closed.
+
 # Theron RNG-consumer receipt boundary (2026-08-09)
 
 - ✅ En strikt parser och regressionstest validerar nu den autentiska

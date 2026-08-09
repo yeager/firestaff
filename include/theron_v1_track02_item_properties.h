@@ -35,6 +35,16 @@ size_t theron_v1_track02_item_property_count(void);
 int theron_v1_track02_item_properties_match_source(
     const uint8_t *ud_data, size_t ud_size, int jp_bin);
 
+/* Copy one property row from the authenticated source table itself.  The
+ * complete table must match before a row is returned; this prevents a
+ * compiled fallback row from being mistaken for an original object payload.
+ * source_offset, when non-NULL, receives the normalized UD offset of the
+ * matched 66-row table. */
+int theron_v1_track02_item_property_source_row(
+    const uint8_t *ud_data, size_t ud_size, int jp_bin,
+    unsigned int index, uint8_t out[THERON_TRACK02_ITEM_PROPERTY_SIZE],
+    size_t *source_offset);
+
 #ifdef __cplusplus
 }
 #endif

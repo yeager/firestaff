@@ -54,6 +54,8 @@ typedef struct {
     int raw_only_item_refs;
     int source_objects_materialized;
     int source_item_properties_bound;
+    int source_property_table_verified;
+    size_t source_property_table_offset;
     /* Raw text codons from the authenticated dungeon block.  They remain
      * source data until the original HuC6280 text consumer resolves control
      * codes; no host string is implied by this field. */

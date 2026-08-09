@@ -66,6 +66,9 @@ static int materialize_source_item(
     size_t raw_size,
     const Theron_Track02ItemRecord *record,
     int property_table_verified,
+    const uint8_t *property_source_data,
+    size_t property_source_size,
+    int property_source_jp,
     int *property_bound)
 {
     if (!object || !raw || !record || raw_size > sizeof(object->source_raw) ||
@@ -150,16 +153,15 @@ static int materialize_source_item(
         if (expected != 0u &&
             theron_v1_track02_item_category((unsigned int)object->item_index) ==
                 expected) {
-            const Theron_ItemPropertyRecord *property =
-                theron_v1_track02_item_property((unsigned int)object->item_index);
+            uint8_t source_property[THERON_TRACK02_ITEM_PROPERTY_SIZE];
+            if (!theron_v1_track02_item_property_source_row(
+                    property_source_data, property_source_size, property_source_jp,
+                    (unsigned int)object->item_index, source_property, NULL))
+                return 0;
             object->source_item_category = expected;
             object->source_property_valid = 1;
-            object->source_property[0] = property->b0;
-            object->source_property[1] = property->b1;
-            object->source_property[2] = property->b2;
-            object->source_property[3] = property->b3;
-            object->source_property[4] = property->b4;
-            object->source_property[5] = property->b5;
+            memcpy(object->source_property, source_property,
+                   sizeof(object->source_property));
             if (property_bound) *property_bound = 1;
         }
     }
@@ -259,11 +261,20 @@ int theron_v1_track02_load_full_dungeon_for_variant(
 
     unsigned int di = (unsigned int)(dungeon_id - 1);
     int property_table_verified;
+    size_t property_table_offset = 0u;
     memset(result, 0, sizeof(*result));
 
     property_table_verified =
         theron_v1_track02_item_properties_match_source(
             ud_data, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN);
+    if (property_table_verified) {
+        (void)theron_v1_track02_item_property_source_row(
+            ud_data, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN,
+            0u, (uint8_t[THERON_TRACK02_ITEM_PROPERTY_SIZE]){0},
+            &property_table_offset);
+    }
+    result->source_property_table_verified = property_table_verified;
+    result->source_property_table_offset = property_table_offset;
 
     Theron_DungeonData dd;
     if (!theron_v1_track02_dungeon_map_load_for_variant(
@@ -496,6 +507,8 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     materialize_source_item(&obj, cat, pos, ref, id, raw,
                                              theron_item_bytes[cat], &source_record,
                                              property_table_verified,
+                                             ud_data, ud_size,
+                                             variant == THERON_TRACK02_VARIANT_JP_BIN,
                                              &property_bound)) {
                     place = 1;
                     result->items_placed++;
