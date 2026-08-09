@@ -2,32 +2,37 @@
 
 Det finns ingen meningsfull procent baserad på antal C-filer eller tester. Den
 redovisningen skulle räkna parserkod och no-op-grind som färdig runtime.
-Tabellen nedan räknar i stället endast källtroget frånvaro/ närvaro av den
-produktionskedja som användaren efterfrågat.
+Här skiljer vi därför på implementeringstäckning och produktionsgrad.
+Implementeringstäckning mäter byggt format-, analys- och capture-stöd.
+Produktionsgrad mäter vad som faktiskt får användas i en spelbar,
+regionmatchad Saturn-kedja.
 
-| Område | Verifierat | Saknas för produktion | Lägesvärde |
-|---|---|---|---:|
-| Uppstart | Saturn E-BIOS/media, filhashar, tidsbunden input och VDP1/VDP2-råcapture | positivt startup→meny-konsumentbevis | 50 % |
-| Meny | `MENU.BPK` PRS3: 162/162 ytor avkodade; engelsk och fransk hash accepterade | VDP2-källägare, FONT256/TEXT4-layout och faktisk menykomposition | 35 % |
-| DGN face/mesh/textur | alla 16 DGN-korpusar och bounded material/CLUT; 175 face-selector-ägare i witness | runtime face-val, transform, culling och rasterisering | 45 % |
-| Saturn VDP1-capture | komplett CMDLINK-framing och 204/209 source+CLUT-joins i full kedja | allmän semantisk scenkonsument och display-origin | 65 % |
-| HUD/viewport | capture-only VDP1/VDP2-adaptrar och verifierad rå viewportaktivitet | produktionskomposition, HUD-ägare och pixelhand-off | 15 % |
-| SLEV/SAL/SDDRVS | 16 SLEV/MAP/SAL-korpusar och statisk driverinventering | event-selector, SAL-codec, MAP-row-bindning och SCSP/host playback | 25 % |
+| Område | Implementeringstäckning | Produktionsgrad | Huvudspärr |
+|---|---:|---:|---|
+| Uppstart | 50 % | 0 % | E-BIOS är region E, medan den levererade skivan identifierar sig som J; ingen giltig startup→meny-witness |
+| Meny | 35 % | 0 % | PRS3 är avkodat, men VDP2-källägare, FONT256-konsument och faktisk komposition saknas |
+| DGN face/mesh/textur | 45 % | 0 % | Format/material är bundna, men runtime-transform, culling och rasterisering är inte upptagna från giltig capture |
+| Saturn VDP1-capture | 65 % | 0 % | Transport, framing och capture-only replay finns; semantisk scenägare och display-origin saknas |
+| HUD/viewport | 15 % | 0 % | Layout/adaptrar finns, men ingen autentiserad VDP1/VDP2-pixelhandoff till produktionen |
+| SLEV/SAL/SDDRVS | 25 % | 0 % | Korpus och driverinventering finns; selector, codec, MAP-bindning och playback är obevisade |
 
-Lägesvärdena är delmål, inte färdig spelbarhet. För den prioriterade kedjan
-uppstart → meny → HUD/viewport är den källtroget bevisade nivån därför ungefär
-35–40 %, inte 70–90 %. Den körbara Nexus-produktionen är fortsatt spärrad så
-länge de återstående konsumentbevisen saknas.
+Det aritmetiska medelvärdet för implementeringstäckningen är 35,8 %.
+För den prioriterade kedjan uppstart → meny → HUD/viewport, med vikterna
+30/35/35, är implementeringstäckningen 28,3 %. Produktionsgraden är 0 % för
+båda måtten just nu: den levererade region-J-skivan saknar ett matchande
+J-BIOS, och den befintliga E-BIOS-capturen får därför inte öppna semantiska
+runtimekonsumenter. Siffrorna ska inte medelvärdesbildas.
 
 ## Räkneregel
 
-Ett område får bara full poäng när originaldata, Saturn-runtimeägare och
-produktionskonsument är bundna i samma verifierade witness. Parser, hash,
-statisk disassembly, capture-only adapter och no-op räknas som delpoäng men
-inte som spelbar funktion. Saknad extern råcapture räknas som 0 för den
-semantiska delen, även om motsvarande filformat är helt avkodat.
+Implementeringstäckningen är medelvärdet av tabellens sex områden.
+Produktionsgrad är däremot en spärrad mätning: originaldata,
+Saturn-runtimeägare, korrekt BIOS/media-region och produktionskonsument måste
+vara bundna i samma verifierade witness. Parser, hash, statisk disassembly,
+capture-only adapter och no-op räknas som delpoäng i implementeringstäckningen
+men som 0 i produktionsgraden.
 
-Den europeiska VDP2-källjämföraren accepterar nu både den autentiserade engelska
+Den europeiska VDP2-källjämföraren accepterar både den autentiserade engelska
 och franska `MENU.BPK`. Saknade valfria källor, exempelvis `TITLE.CG` i en
 partiell extern extraction, redovisas separat och gör inte hela råwitnessen
 ogiltig; de öppnar inte semantic admission.

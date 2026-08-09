@@ -11,11 +11,11 @@
   creature-, AI-, loot-, T700- och T900-publicering ska därför förbli stängd
   tills samma körning visar hela källkedjan.
 
-- ⏳ Nexus completion accounting is now evidence-weighted rather than based on
-  source-file/test counts. The current requested startup→menu→HUD/viewport
-  chain is approximately 35–40% source-faithfully proven; see
-  `docs/NEXUS_COMPLETION.md`. The remaining percentage is blocked on positive
-  Saturn consumer witnesses, not on more parser scaffolding.
+- ⏳ Nexus completion accounting is now split into implementation coverage and
+  gated production admission. Current implementation coverage is 35,8 %
+  overall and 28,3 % for the prioritized startup→menu→HUD/viewport chain;
+  production admission remains 0 % until a matching-region Saturn witness
+  binds the real consumers. See `docs/NEXUS_COMPLETION.md`.
 
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets

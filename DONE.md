@@ -1,3 +1,10 @@
+# Nexus: korrigerad färdighetsberäkning (2026-08-09)
+
+- ✅ Implementeringstäckning och spärrad produktionsgrad redovisas nu
+  separat. Nexus ligger på 35,8 % implementeringstäckning totalt och 28,3 %
+  för uppstart→meny→HUD/viewport. Produktionsgraden är 0 % tills ett
+  matchande BIOS/media-par ger en giltig Saturn-witness.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga
