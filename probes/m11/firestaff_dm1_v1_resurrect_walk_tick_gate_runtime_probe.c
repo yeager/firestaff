@@ -80,9 +80,16 @@ static const char* narrow_dm1_data_dir(const char* dataDir,
 }
 
 static void set_halk_pose(M11_GameViewState* game) {
+    /* HALK is mirror ordinal 1.  On the real PC 3.4 DUNGEON.DAT his C127
+     * portrait sensor sits on the wall north of (7, 9), so that is the only
+     * pose from which M11_GameView_GetFrontMirrorOrdinal resolves him.  The
+     * previous (1, 2) pose faces a wall carrying no portrait sensor at all,
+     * so the front-cell receipt was empty and every downstream resurrect
+     * assertion failed. Verified by sweeping all map-0 poses against the
+     * shipped DOS 3.4 dungeon: ordinal 1 appears only at (7, 9, NORTH). */
     game->world.party.mapIndex = 0;
-    game->world.party.mapX = 1;
-    game->world.party.mapY = 2;
+    game->world.party.mapX = 7;
+    game->world.party.mapY = 9;
     game->world.party.direction = DIR_NORTH;
     game->showDebugHUD = 0;
     game->inventoryPanelActive = 0;
