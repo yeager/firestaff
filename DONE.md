@@ -11609,3 +11609,13 @@ rendering remain blocked.
   `rename()` och Windows `MoveFileEx(..., MOVEFILE_REPLACE_EXISTING)`. Om
   målslotten inte kan ersättas bevaras den validerade backupen och live-
   runtime lämnas orörd.
+
+# CSB: Amiga Prison-entréns källzoner (2026-08-09)
+
+- ✅ Amiga A31/A35 använder nu ReDMCSB `COMMAND.C` G0445/F0358:s egna
+  C407- och C411-zoner: endast Enter startar C002/C003-dörrkedjan och endast
+  Credits öppnar den autentiska C005-rutan.
+- ✅ C409 Resume är fortfarande fail-closed utan en autentisk originalsave;
+  den kan inte längre av misstag behandlas som ett nytt spel.
+- ✅ Hand-off-regressionen kördes mot användarens hash-verifierade A31,
+  A35 multilingual och A35 English-data: 45/0, 32/0 respektive 27/0.

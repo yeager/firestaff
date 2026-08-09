@@ -46,6 +46,7 @@
 #include "csb_v1_input_command_bridge_pc34_compat.h"
 #include "csb_v1_magic_rune_cost_pc34_compat.h"
 #include "csb_v1_command_input_geometry_pc34_compat.h"
+#include "csb_touch_click_zone_matrix_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -29597,11 +29598,26 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
         if (m11_csb_is_amiga_profile(csb_profile) &&
             state->csbState.startup_entrance_active) {
+            CsbTouchClickZonePc34Compat entrance_zone;
             if (!state->csbState.startup_entrance_opening_active &&
-                (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
-                state->csbState.startup_entrance_opening_active = 1;
-                state->csbState.startup_entrance_opening_step = 1;
-                return M11_GAME_INPUT_REDRAW;
+                CSB_TOUCHCLICK_Compat_HitTestInView(
+                    CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, x, y,
+                    (unsigned int)buttonMask, &entrance_zone)) {
+                /* ReDMCSB COMMAND.C G0445 / F0358 maps the native Amiga
+                 * C407 and C411 zones to C200 (Enter) and M567 (Credits).
+                 * C409 (Resume) is deliberately not treated as New Game:
+                 * F0441 reaches F0435 for it and needs an authenticated
+                 * original save corpus before it may mutate this runtime. */
+                if (entrance_zone.commandId == 203u) {
+                    state->csbState.startup_entrance_credits_active = 1;
+                    state->csbState.startup_entrance_credits_remaining_ticks = 0;
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                if (entrance_zone.commandId == 200u) {
+                    state->csbState.startup_entrance_opening_active = 1;
+                    state->csbState.startup_entrance_opening_step = 1;
+                    return M11_GAME_INPUT_REDRAW;
+                }
             }
             return M11_GAME_INPUT_IGNORED;
         }

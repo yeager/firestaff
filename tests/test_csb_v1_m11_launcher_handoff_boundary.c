@@ -429,11 +429,21 @@ static void expect_amiga_prison_entrance_handoff(M11_GameViewState *view,
                     c003 && c003->width >= 127u && c003->height >= 161u &&
                     count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
                 label);
+    expect_true(M11_GameView_HandlePointerButton(
+                    view, 250, 190, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view->csbState.startup_entrance_credits_active,
+                "Amiga C411 Credits click opens original C005 only in its source zone");
     expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    !view->csbState.startup_entrance_credits_active,
+                "Amiga C005 consumes dismissal before Prison input");
+    expect_true(M11_GameView_HandlePointerButton(
+                    view, 250, 50, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW &&
                     view->csbState.startup_entrance_opening_active &&
                     view->csbState.startup_entrance_opening_step == 1,
-                "Amiga Prison accepts Enter through native F0441");
+                "Amiga C407 Enter click starts native F0441 Prison animation");
     while (view->csbState.startup_entrance_active && ticks++ < 64) {
         (void)M11_GameView_AdvanceIdleTick(view);
     }
