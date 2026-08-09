@@ -5,6 +5,10 @@
   witness. Nästa capture ska binda samma källa till tile/palette/HUD-
   konsumenterna och får inte använda dessa bilder som semantisk fallback.
 
+- ⏳ De senaste dungeonbilderna visar ett föremål på marken och i en
+  väggnisch. De är visuella originalreferenser; en autentiserad
+  object-/lootkonsument krävs fortfarande innan detta får öppna T900-regler.
+
 - ⏳ Therons savegame-capture når fortfarande inte den autentiserade
   spelägda `$2600`-konsumenten. Creature-AI, spawn/RNG, T700 och T900 ska
   därför förbli fail-closed även när en lokal Mednafen-state finns.
@@ -23,6 +27,11 @@
   `$B0E5`, specialgrenen och ett dynamiskt RNG-returkvittens. Spawn-, RNG-,
   creature-, AI-, loot-, T700- och T900-publicering ska därför förbli stängd
   tills samma körning visar hela källkedjan.
+
+- ⏳ Den nya stackbundna returreceipten är byggd och testad, men den senaste
+  autentiska scripted-replayen producerade ingen `$5D64/$5D6A`-entry alls.
+  Nästa fångst måste visa entry, stackrekonstruerad retur och efterföljande
+  källbunden konsument i samma körning innan RNG/spawn får påverka Theron.
 
 - ⏳ Nexus completion accounting is now split into implementation coverage and
   gated production admission. The corrected table arithmetic is 39,2 %

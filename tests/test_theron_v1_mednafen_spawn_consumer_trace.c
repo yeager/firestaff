@@ -51,9 +51,9 @@ static void write_rng_fixture(const char *path, int bad_step) {
     assert(file);
     fputs("source=mednafen-pce-instrumented-rng-consumer\n", file);
     fprintf(file,
-            "rng_consumer_window sequence=1 step=0 pc=5d64 physical_pc=114d64 entry=5d64 a=01 x=02 y=03 sp=fe p=04 mpr0=1f b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70\n");
+            "rng_consumer_window sequence=1 step=0 pc=5d64 physical_pc=114d64 entry=5d64 a=01 x=02 y=03 sp=fe p=04 mpr0=1f b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 entry_sp=fe return_pc=5d90 return_boundary=0\n");
     fprintf(file,
-            "rng_consumer_window sequence=1 step=%u pc=5d70 physical_pc=114d70 entry=window a=11 x=12 y=13 sp=fd p=05 mpr0=1f b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71\n",
+            "rng_consumer_window sequence=1 step=%u pc=5d70 physical_pc=114d70 entry=window a=11 x=12 y=13 sp=fd p=05 mpr0=1f b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 entry_sp=fe return_pc=5d90 return_boundary=1\n",
             bad_step ? 2u : 1u);
     fclose(file);
 }
@@ -182,6 +182,7 @@ int main(void) {
         assert(rng.step_verified && rng.physical_pc_bounds_verified);
         assert(rng.boundary_flags_verified && rng.target_5d64_seen);
         assert(rng.sample_count == 2u && rng.window_count == 1u);
+        assert(rng.return_boundary_seen && rng.last_return_pc == 0x5d90u);
         assert(rng.last_pc == 0x5d70u && rng.last_bb == 0x71u);
         assert(!rng.semantic_publication_allowed);
         write_rng_fixture(path, 1);

@@ -94,7 +94,8 @@ int theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
 /* Raw execution-window provenance for the two RAM-loaded RNG consumers
  * identified by the US disassembly.  The sidecar records register/RAM
  * snapshots only; it does not identify a returned random value, caller,
- * or semantic consumer. */
+ * or semantic consumer. The stack-derived return boundary is retained as
+ * provenance and is not itself semantic publication. */
 typedef struct {
     Theron_V1SpawnConsumerTraceStatus status;
     int source_header_verified;
@@ -105,6 +106,7 @@ typedef struct {
     int target_5d64_seen;
     int target_5d6a_seen;
     int complete_window_seen;
+    int return_boundary_seen;
     int semantic_publication_allowed;
     uint32_t sample_count;
     uint32_t window_count;
@@ -129,6 +131,8 @@ typedef struct {
     uint8_t last_b8;
     uint8_t last_ba;
     uint8_t last_bb;
+    uint8_t last_entry_sp;
+    uint16_t last_return_pc;
     char source_trace_path[THERON_V1_SPAWN_CONSUMER_TRACE_PATH_CAPACITY];
 } Theron_V1RngConsumerTraceReceipt;
 

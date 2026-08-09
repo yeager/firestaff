@@ -95,6 +95,27 @@ spawn, creature, AI, loot, T700 or T900 behavior.
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.
 
+## 2026-08-09 — stack-derived RNG return-boundary instrumentation
+
+The US RNG-consumer sidecar now retains the HuC6280 stack snapshot at entry
+(`entry_sp`), the return PC reconstructed from the two stack bytes
+(`return_pc`) and a `return_boundary` flag when the restored stack and PC
+match. The bounded execution window is 512 instructions, rather than 192,
+so a real return cannot be discarded merely because the helper body is longer
+than the earlier diagnostic window. The C receipt exposes this only as
+`return_boundary_seen`; `semantic_publication_allowed` remains zero and no A,
+X or Y value is classified as RNG output.
+
+The corresponding patch is
+`scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch`, and the parser
+regression covers both the stack-derived fields and a positive boundary
+fixture. A fresh replay with the real US Track 02 medium and System Card
+verified 161 raw sector spans, 32 game-main-RAM `$E009` dispatches, two
+byte-exact CD-to-RAM receipts and four scripted PCE input events, but emitted
+no `$5D64/$5D6A` RNG sidecar records. Therefore no return boundary, RNG
+consumer, spawn, creature, AI, loot, T700 or T900 meaning is published from
+that run.
+
 ## 2026-08-09 fresh cold-start replay receipt
 
 The latest clean replay used the external instrumented Mednafen build, the

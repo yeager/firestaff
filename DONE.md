@@ -10,10 +10,24 @@
 
 - ✅ Två riktiga US Theron's Quest/Mednafen-captures har lagts till som
   original-media referensbilder: AKUTUBA-vyn och inventory/HUD-vyn.
+- ✅ Två ytterligare operatorbilder visar dungeon-HUD med föremål på marken
+  respektive i en väggnisch. De nya bilagorna var byte-identiska, så en enda
+  hashad kopia är spårad.
   Hashar och den smala evidensgränsen finns i
   `docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`.
 - ✅ README visar nu dessa captures som originalspel-referens. De används
   inte som bevis för att Firestaffs egna Theron-runtime har semantic parity.
+
+# Theron: stackbunden RNG-returreceipt (2026-08-09)
+
+- ✅ Mednafen-receipten sparar nu RNG-hjälparens entry-SP, stackrekonstruerade
+  retur-PC och återställd stack/PC-gräns över ett 512-instruktionsfönster.
+  C-parsern och regressionstestet verifierar fälten utan att publicera något
+  RNG-värde eller gameplaysemantik.
+- ✅ En autentisk scripted PCE-replay verifierade 161 råa sektorintervall,
+  32 `$E009`-dispatchar, två CD→RAM-originreceipts och fyra input-events.
+  Den nådde `$4644/$4667` men ingen `$5D64/$5D6A`-RNG-entry, så ingen
+  returgräns eller spawnsemantik öppnades.
 
 # Repository: hårdare BIOS- och originalmediespärr (2026-08-09)
 

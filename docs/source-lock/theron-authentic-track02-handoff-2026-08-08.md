@@ -80,9 +80,12 @@ as original-media reference captures, not generated Firestaff frames:
 | `verification-screens/theron-quest-us-inventory-original-capture.png` | 841×611 | `3d9bbd84eeb05d9e35bc9e9dfef9d38c3a5c8effa2642b5190528ece7c344c4f` | champion portrait, equipment layout, health/stamina/mana and food/water HUD |
 | `verification-screens/theron-quest-us-dungeon-hud-original-capture.png` | 847×602 | `dbc654b10d3a8b163b5c0d6cea76131f1334707c8cbc58f540a030168cbd3b63` | dungeon perspective, two-champion HUD and source control panel |
 | `verification-screens/theron-quest-us-dungeon-item-ground-original-capture.png` | 853×573 | `96c82861c0183563f07574bddb36abb6059bd82bd4622114e04bd9bd097c2447` | dungeon perspective with a ground item |
+| `verification-screens/theron-quest-us-dungeon-niche-item-original-capture.png` | 847×625 | `ddd063e7ea584d6f06ee2a02f5ad6d5a3539aaea3bfcd65bd6c333cd5b0b9318` | dungeon perspective with an item in a wall niche |
 
 These images are useful visual evidence for the source presentation and for
 the README reference gallery. The screenshots alone do not prove the
 underlying RNG, AI, attack, damage, loot, generator, T700 or T900 consumers;
 those still require a same-run runtime receipt or a complete source-bound
-static consumer proof.
+static consumer proof. The two latest supplied files had the same
+`ddd063e7ea584d6f06ee2a02f5ad6d5a3539aaea3bfcd65bd6c333cd5b0b9318` hash, so
+only one copy is tracked.

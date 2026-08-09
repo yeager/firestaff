@@ -54,6 +54,11 @@ description is kept in [project status](docs/PROJECT_STATUS.md).
 </p>
 <p align="center"><em>Original-game dungeon reference with a ground item visible; item ownership and T900 drop semantics remain under source/runtime review.</em></p>
 
+<p align="center">
+  <img src="verification-screens/theron-quest-us-dungeon-niche-item-original-capture.png" alt="Original US Theron's Quest dungeon capture with an item in a wall niche" width="847">
+</p>
+<p align="center"><em>Original-game dungeon reference with an item in a wall niche. The two supplied files were byte-identical; one copy is tracked, and this image remains presentation evidence rather than proof of T900 semantics.</em></p>
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder

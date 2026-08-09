@@ -288,17 +288,20 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
     while (read_line(file, line, sizeof(line))) {
         unsigned int sequence, step, pc, physical_pc;
         unsigned int a, x, y, sp, p, mpr0;
-        unsigned int b3, b4, b5, b6, b8, ba, bb;
+        unsigned int b3, b4, b5, b6, b8, ba, bb, entry_sp, return_pc;
+        unsigned int return_boundary;
         int consumed = 0;
         int is_target_5d64, is_target_5d6a;
         int sequence_ok, step_ok, entry_ok;
 
         if (sscanf(line,
-                   "rng_consumer_window sequence=%u step=%u pc=%x physical_pc=%x entry=%15s a=%x x=%x y=%x sp=%x p=%x mpr0=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x%n",
+                   "rng_consumer_window sequence=%u step=%u pc=%x physical_pc=%x entry=%15s a=%x x=%x y=%x sp=%x p=%x mpr0=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x entry_sp=%x return_pc=%x return_boundary=%u%n",
                    &sequence, &step, &pc, &physical_pc, entry, &a, &x, &y,
                    &sp, &p, &mpr0, &b3, &b4, &b5, &b6, &b8, &ba, &bb,
-                   &consumed) != 18 || line[consumed] != '\0' ||
-            sequence == 0u || step >= 192u || pc > 0xffffu ||
+                   &entry_sp, &return_pc, &return_boundary, &consumed) != 21 ||
+            line[consumed] != '\0' || sequence == 0u || step >= 512u ||
+            pc > 0xffffu || return_pc > 0xffffu || entry_sp > 0xffu ||
+            return_boundary > 1u ||
             physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
             y > 0xffu || sp > 0xffu || p > 0xffu || mpr0 > 0xffu ||
             b3 > 0xffu || b4 > 0xffu || b5 > 0xffu || b6 > 0xffu ||
@@ -360,13 +363,16 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         out->last_b8 = (uint8_t)b8;
         out->last_ba = (uint8_t)ba;
         out->last_bb = (uint8_t)bb;
+        out->last_entry_sp = (uint8_t)entry_sp;
+        out->last_return_pc = (uint16_t)return_pc;
         out->sample_count++;
         out->target_5d64_seen |= is_target_5d64;
         out->target_5d6a_seen |= is_target_5d6a;
         expected_step = step + 1u;
         previous_sequence = sequence;
-        previous_window_complete = step == 191u;
+        previous_window_complete = step == 511u;
         out->complete_window_seen |= previous_window_complete;
+        out->return_boundary_seen |= return_boundary != 0u;
     }
     fclose(file);
     if (!saw_record || (!out->target_5d64_seen && !out->target_5d6a_seen)) {
