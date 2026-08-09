@@ -605,6 +605,19 @@
   som `DM2_PERFORM_TURN_SQUAD` som då går till `DM2_map_3BF83`. Ingen
   värdskapad riktning eller delvis kartövergång tillåts före sessionsägaren.
 
+# DM2 New Game privat framåtruta före spegelval (2026-08-09)
+
+- ✅ Den privata GAME_LOAD-ägaren följer nu `DM2_PERFORM_MOVE` för dess enda
+  kompletta tomma-party-gren: en autentisk G1-golvruta utan 0x10-recordkedja
+  och utan direktteleporter blir nästa pose, varefter samma
+  `DM2_move_2fcf_0b8b`-kontext, terrängvy och viewport räknas om atomärt.
+  Originalets DUNGEON.DAT ändras inte och ingen partyrecord, timer, HUD eller
+  spelbar session skapas.
+- ✅ Realdatatestet går från startposen `(1,8,0)` till den verkliga tomma
+  golvrutan `(1,7,0)` efter en källbunden vänster/höger-sekvens. Dörrar,
+  teleportörer, varelser, gropar och alla 0x10-kedjor avvisas före mutation,
+  eftersom de fortsätter till oägda `c_moverec`-/kartövergångsvägar.
+
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 
 - ✅ Den privata kartkontexten porterar nu hela den läsande

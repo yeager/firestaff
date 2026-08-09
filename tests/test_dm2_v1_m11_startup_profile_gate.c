@@ -4229,6 +4229,22 @@ int main(void) {
                     profile_preselection_turn_owner->preselection_viewport.valid &&
                     !profile->source_game_load_session_ready,
                 "DM2 applies the source left-turn before mirror selection in its private real-data owner");
+    expect_true(profile_preselection_turn_owner &&
+                    dm2_v1_game_load_world_owner_turn_preselection(
+                        profile_preselection_turn_owner, 2) &&
+                    profile_preselection_turn_owner->source_party_direction == 0u &&
+                    dm2_v1_game_load_world_owner_advance_preselection(
+                        profile_preselection_turn_owner) &&
+                    profile_preselection_turn_owner->source_party_map == 0 &&
+                    profile_preselection_turn_owner->source_party_x == 1u &&
+                    profile_preselection_turn_owner->source_party_y == 7u &&
+                    profile_preselection_turn_owner->selected_party.heros_in_party == 0 &&
+                    !profile_preselection_turn_owner->champion_selection_materialized &&
+                    dm2_test_preselection_view_matches_owner(
+                        profile_preselection_turn_owner) &&
+                    profile_preselection_turn_owner->preselection_viewport.valid &&
+                    !profile->source_game_load_session_ready,
+                "DM2 advances only the original empty-party no-record floor branch before mirror selection");
     expect_true(profile &&
                     dm2_v1_boot_prepared_new_game_mirror_roster(
                         profile, &prepared_mirror_roster) &&

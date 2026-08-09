@@ -1726,6 +1726,112 @@ rollback:
     return 0;
 }
 
+int dm2_v1_game_load_world_owner_advance_preselection(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    static const int8_t direction_x[4] = { 0, 1, 0, -1 };
+    static const int8_t direction_y[4] = { -1, 0, 1, 0 };
+    DM2_V1_SkprojectTeleporterDetail target_teleporter;
+    DM2_V1_GameLoadPreselectionViewReceipt old_view;
+    DM2_V1_GameLoadPreselectionViewportReceipt old_viewport;
+    const int map = owner ? owner->source_party_map : -1;
+    const int x = owner ? owner->source_party_x : -1;
+    const int y = owner ? owner->source_party_y : -1;
+    const int direction = owner ? owner->source_party_direction : -1;
+    const int target_x = direction < 0 || direction > 3 ? -1 :
+        x + direction_x[direction];
+    const int target_y = direction < 0 || direction > 3 ? -1 :
+        y + direction_y[direction];
+    const int raw_tile = owner ? dm2_v1_dungeon_get_tile_raw(
+        &owner->dungeon, map, target_x, target_y) : -1;
+    const int tile_class = raw_tile < 0 ? -1 : (raw_tile >> 5) & 7;
+    const int first_thing = raw_tile < 0 ? -2 :
+        dm2_v1_dungeon_get_first_thing(&owner->dungeon, map,
+                                       target_x, target_y);
+    const uint8_t old_x = owner ? owner->source_party_x : 0u;
+    const uint8_t old_y = owner ? owner->source_party_y : 0u;
+    const int8_t old_staircase_flag = owner ? owner->source_staircase_flag : 0;
+    const int8_t old_teleporter_map = owner ? owner->source_teleporter_map : -1;
+    const int16_t old_display_x = owner ? owner->source_display_x : 0;
+    const int16_t old_display_y = owner ? owner->source_display_y : 0;
+    const uint8_t old_absdir = owner ? owner->source_party_absdir : 0u;
+    const int8_t old_probe_direction = owner ?
+        owner->source_teleporter_probe_direction : -1;
+    const uint8_t old_source_direction = owner ?
+        owner->source_teleporter_source_direction : 0u;
+    const uint8_t old_destination_direction = owner ?
+        owner->source_teleporter_destination_direction : 0u;
+    const uint8_t old_display_pose_valid = owner ?
+        owner->source_display_pose_valid : 0u;
+    const int16_t old_last_moved_record = owner ?
+        owner->source_last_moved_record : -1;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_view.valid ||
+        !owner->preselection_viewport.valid || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->selected_mirror_count != 0u || map < 0 ||
+        map >= owner->dungeon.level_count || x < 0 || y < 0 ||
+        direction < 0 || direction > 3 || raw_tile < 0 ||
+        /* c_querydb.cpp::DM2_IS_TILE_BLOCKED accepts the tile type one
+         * floor branch.  c_move.cpp::DM2_12b4_0881 may then reach its
+         * no-creature result 6.  Retain only that exact no-record path;
+         * a set 0x10 flag would require c_moverec/record ownership. */
+        tile_class != 1 || (raw_tile & 0x10) != 0 || first_thing != -1) {
+        return 0;
+    }
+
+    /* DM2_PERFORM_MOVE calls GET_TELEPORTER_DETAIL on the destination after
+     * its no-creature path.  A positive detail enters DM2_map_3BF83 rather
+     * than a plain coordinate step, so do not approximate that transition
+     * in the pre-session owner. */
+    if (dm2_v1_game_load_owner_get_teleporter_detail(owner, map, target_x,
+                                                      target_y,
+                                                      &target_teleporter)) {
+        return 0;
+    }
+
+    old_view = owner->preselection_view;
+    old_viewport = owner->preselection_viewport;
+    /* DM2_PERFORM_MOVE's no-creature exit calls MOVE_RECORD_TO with
+     * OBJECT_NULL and then establishes the new c_map pose.  The private
+     * owner has no party record to cut or insert, so the source-visible
+     * mutation here is exactly its authenticated pose; no tile/DB byte is
+     * fabricated or changed.  Source: SKProject c_move.cpp:389-427,
+     * 505-516. */
+    owner->source_party_x = (int8_t)target_x;
+    owner->source_party_y = (int8_t)target_y;
+    if (!dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(owner)) {
+        goto rollback;
+    }
+    memset(&owner->preselection_view, 0, sizeof(owner->preselection_view));
+    memset(&owner->preselection_viewport, 0,
+           sizeof(owner->preselection_viewport));
+    if (dm2_v1_game_load_world_owner_materialize_preselection_view(owner) &&
+        dm2_v1_game_load_world_owner_materialize_preselection_viewport(owner)) {
+        return 1;
+    }
+
+rollback:
+    owner->source_party_x = old_x;
+    owner->source_party_y = old_y;
+    owner->source_staircase_flag = old_staircase_flag;
+    owner->source_teleporter_map = old_teleporter_map;
+    owner->source_display_x = old_display_x;
+    owner->source_display_y = old_display_y;
+    owner->source_party_absdir = old_absdir;
+    owner->source_teleporter_probe_direction = old_probe_direction;
+    owner->source_teleporter_source_direction = old_source_direction;
+    owner->source_teleporter_destination_direction = old_destination_direction;
+    owner->source_display_pose_valid = old_display_pose_valid;
+    owner->source_last_moved_record = old_last_moved_record;
+    owner->preselection_view = old_view;
+    owner->preselection_viewport = old_viewport;
+    return 0;
+}
+
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner)
 {

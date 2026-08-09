@@ -94,6 +94,11 @@
   File_header-värld. Den är ännu inte kopplad till M11:s mus, tangentbord
   eller handkontroll före en full sessionsägare; en direktteleporter följer
   originalets kartövergångsgren och är därför spärrad tills den ägaren finns.
+  Den första källtrogna framåtrutan kan också materialiseras privat när den
+  är ett verkligt tomt G1-golv utan 0x10-kedja eller teleporter. Dörrar,
+  gropar, varelser, objekt och kartövergångar avvisas före mutation tills
+  deras kompletta `DM2_PERFORM_MOVE`-ägare finns; den får inte bli en
+  allmän M11-rörelseväg ännu.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.
