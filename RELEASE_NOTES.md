@@ -16,6 +16,9 @@
   `activationAccepted` reference so the macOS Quartz input helper type-checks.
 - `M12_StartupMenu`: Apply a language selection once at confirmation instead
   of repeatedly reloading locale state while the popup is active.
+- `M12_StartupMenu`: Stop freeing SDL3's library-owned `SDL_GetBasePath()`
+  result while resolving the Swedish startup catalog; this removes the
+  macOS invalid-free crash when switching from English.
 - `M12_StartupMenu`: Suppress the empty-data warning while the deferred real
   asset scan is still pending.
 - `M11_Audio_Init`: Select macOS's `playback` audio category before opening
