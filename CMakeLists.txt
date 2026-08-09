@@ -39907,6 +39907,9 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_csb_v1_cmp_import.c
         src/csb/csb_v1_cmp_import_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
+        # csb_v1_character_pc34_compat.c validates original Atari Utility
+        # MSA media through csb_v1_util_check_disk().
+        src/csb/csb_v1_atari_msa.c
         src/shared/firestaff_cmp_decode.c
     )
     target_include_directories(test_csb_v1_cmp_import PRIVATE
