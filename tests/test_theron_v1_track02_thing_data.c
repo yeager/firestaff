@@ -142,7 +142,7 @@ static void test_source_projectile_records(void) {
 
 static void test_source_control_record_fields(void) {
     const uint8_t door[] = {0x34, 0x12, 0x61, 0x00};
-    const uint8_t teleporter[] = {0x78, 0x56, 0xE1, 0xA4, 0x2B, 0x00};
+    const uint8_t teleporter[] = {0x78, 0x56, 0xE1, 0xA4, 0x2B, 0x01};
     const uint8_t text[] = {0x34, 0x12, 0x2D, 0x5A};
     const uint8_t actuator[] = {0x34, 0x12, 0x81, 0x01, 0x9D, 0xF2,
                                 0x00, 0xA0};
@@ -161,7 +161,9 @@ static void test_source_control_record_fields(void) {
            record.value.teleporter.rotation == 1u &&
            record.value.teleporter.absolute == 0u &&
            record.value.teleporter.scope == 1u &&
-           record.value.teleporter.sound == 1u);
+           record.value.teleporter.sound == 1u &&
+           record.value.teleporter.ldest == 1u &&
+           record.value.teleporter.unused == 0u);
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_TEXT, text, sizeof(text), &record));
     assert(record.value.text.visible == 1u && record.value.text.flag2 == 0u &&

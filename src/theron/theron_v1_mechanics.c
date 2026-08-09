@@ -608,8 +608,45 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
             }
         }
         if (!target) {
-            /* A missing target is an incomplete object record.  Do not turn
-             * that data error into a successful move at the clicked square. */
+            if (o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) {
+                /* Track 02 teleporter records are coordinate destinations.
+                 * DMBUILDER6/src/dms.h:98-108 stores xdest/ydest/ldest in
+                 * the record itself; the destination need not have a second
+                 * object record.  The old object-only gate made authentic
+                 * US destinations such as AKUTUBA M0 (0,0)->(2,3)
+                 * unreachable. */
+                int dungeon_slot = world->current_dungeon - 1;
+                Theron_V1_Level *destination = NULL;
+                if (dungeon_slot < 0 || dungeon_slot >= THERON_DUNGEON_COUNT ||
+                    target_level < 0 ||
+                    target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                    !world->level_loaded[dungeon_slot][target_level])
+                    return -1;
+                destination = &world->levels[dungeon_slot][target_level];
+                if (target_x < 0 || target_x >= destination->width ||
+                    target_y < 0 || target_y >= destination->height)
+                    return -1;
+                if (destination->squares[target_y][target_x] ==
+                    THERON_SQUARE_WALL)
+                    return -1;
+                /* A teleporter square still needs its source-owned record so
+                 * a malformed/incomplete directory cannot silently land on
+                 * an unbound pad. */
+                if (destination->squares[target_y][target_x] ==
+                        THERON_SQUARE_TELEPORTER)
+                    return -1;
+                world->transition_spawn_x = target_x;
+                world->transition_spawn_y = target_y;
+                world->transition_pending = 1;
+                world->transition_type = THERON_TRANSITION_TELEPORTER;
+                world->transition_target_level = target_level;
+                world->party.leader_x = target_x;
+                world->party.leader_y = target_y;
+                theron_v1_play_sound(THERON_SOUND_TELEPORT);
+                return 0;
+            }
+            /* A non-Track-02 object link without an endpoint is incomplete.
+             * Keep the fixture/object-id route fail-closed. */
             return -1;
         }
         if (target->type == THERON_OBJTYPE_TELEPORTER) {

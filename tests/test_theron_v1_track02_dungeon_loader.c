@@ -782,6 +782,35 @@ static void test_object_binding_rejects_unverified_locations(void) {
     assert(world.source_object_count == 1);
 }
 
+static void test_authentic_coordinate_teleporter_without_endpoint(
+    const uint8_t *ud, size_t ud_size) {
+    Theron_V1_World world;
+    Theron_DungeonLoadResult result;
+
+    theron_v1_world_init(&world);
+    world.current_dungeon = 1;
+    world.current_level = 0;
+    assert(theron_v1_track02_load_full_dungeon(
+               &world, 1, ud, ud_size, &result) == 0);
+
+    assert(theron_v1_object_at_in_dungeon(
+               &world, 1, 0, 0, 0)->type == THERON_OBJTYPE_TELEPORTER);
+
+    /* Authentic US AKUTUBA M0 teleporter record 0 is at (0,0) and points to
+     * (2,3) on M0.  (2,3) is a real floor square without a second object
+     * record, so requiring an endpoint object would reject source data. */
+    assert(theron_v1_teleporter_resolve(&world, 0, 0) == 0);
+    assert(world.transition_pending == 1);
+    assert(world.transition_target_level == 0);
+    assert(world.transition_spawn_x == 2);
+    assert(world.transition_spawn_y == 3);
+    assert(theron_v1_transition_execute(&world) == 0);
+    assert(world.current_level == 0);
+    assert(world.party.leader_x == 2);
+    assert(world.party.leader_y == 3);
+    printf("  authentic Track 02 coordinate teleporter lands on floor OK\n");
+}
+
 int main(void) {
     printf("test_theron_v1_track02_dungeon_loader\n");
 
@@ -800,6 +829,7 @@ int main(void) {
         return 0;
     }
     test_all_dungeons(ud, ud_size);
+    test_authentic_coordinate_teleporter_without_endpoint(ud, ud_size);
     test_real_bank_reload_clears_stale_levels(ud, ud_size);
     test_real_source_ledgers_survive_other_dungeon_reload(ud, ud_size);
     test_real_campaign_source_capacity(ud, ud_size);

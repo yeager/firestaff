@@ -3,3 +3,14 @@
 
 # Ephemeral corpora emitted by DM1 PC34 capture tests.
 firestaff_dm1_pc34_corpus_*/
+
+# User-supplied firmware and optical-disc/game media never belong in Git.
+*.pce
+*.rom
+*.bin
+*.cue
+*.iso
+*.mdf
+*.mds
+/bios/
+/firmware/

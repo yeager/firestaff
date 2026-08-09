@@ -75,8 +75,11 @@ int theron_v1_track02_item_record_decode(
         out->value.teleporter.absolute = (uint8_t)((w0 >> 12) & 1u);
         out->value.teleporter.scope = (uint8_t)((w0 >> 13) & 3u);
         out->value.teleporter.sound = (uint8_t)((w0 >> 15) & 1u);
-        out->value.teleporter.ldest = (uint8_t)(w1 & 0x3Fu);
-        out->value.teleporter.unused = (uint8_t)((w1 >> 6) & 3u);
+        /* DMBUILDER6/src/dms.h:98-108: the second word is
+         * unused8:8, ldest:6, unused4:2.  The destination level is
+         * therefore bits 8..13, not bits 0..5. */
+        out->value.teleporter.ldest = (uint8_t)((w1 >> 8) & 0x3Fu);
+        out->value.teleporter.unused = (uint8_t)((w1 >> 14) & 3u);
         break;
     }
     case THERON_CAT_TEXT: {

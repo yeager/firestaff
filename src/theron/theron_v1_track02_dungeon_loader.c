@@ -388,7 +388,7 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 Theron_Door door;
                 theron_v1_track02_door_decode(
                     &td->items[cat][id * theron_item_bytes[cat]], &door);
-                obj.type = 0x01;
+                obj.type = THERON_OBJTYPE_DOOR;
                 obj.state = door.type;
                 obj.quantity = door.ornate;
                 obj.flags = (uint32_t)pos |
@@ -404,7 +404,7 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 Theron_Teleporter tp;
                 theron_v1_track02_teleporter_decode(
                     &td->items[cat][id * theron_item_bytes[cat]], &tp);
-                obj.type = 0x02;
+                obj.type = THERON_OBJTYPE_TELEPORTER;
                 obj.state = tp.scope;
                 obj.quantity = tp.rotation;
                 obj.flags = (uint32_t)pos |

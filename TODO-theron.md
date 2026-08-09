@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — kvarvarande Theron-semantik efter teleporterfix
+
+- 🔒 RNG-return, levande creature-AI, attacker/skada/loot, generatorernas
+  timing, T700-statistik och T900-regler är fortfarande spärrade tills samma
+  autentiserade runtime-capture binder deras riktiga konsumenter.
+- 🔒 Dungeonmaterialbank, perspektiv/square-to-tile, VCE-palettägare,
+  bitmapdekomprimering, US-textconsumer, JP-porträtt och ljud/ADPCM/SFX-
+  konsument är fortfarande separata source-join-gates.
+
 ## 2026-08-09 — native SDL-capture verifierad men semantik fortsatt spärrad
 
 - ✅ Capture-scriptet accepterar nu en autentiserad instrumenterad Mednafen-

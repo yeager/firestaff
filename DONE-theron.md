@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — Track 02 teleporter/object-ID correction
+
+- ✅ Den autentiska Track 02-teleporterpostens `ldest` läses nu från rätt
+  bits 8–13 enligt `DMBUILDER6/src/dms.h:98-108`.
+- ✅ Riktiga dörr- och teleporterrecords får nu Firestaffs faktiska interna
+  objekttyper, så source-bound runtime-dispatch når rätt konsument.
+- ✅ En teleporter får landa på en validerad source-bound koordinat även när
+  destinationsrutan saknar ett separat objectrecord. AKUTUBA M0 `(0,0) →
+  (2,3)` verifieras med den riktiga US Track 02-BIN:en.
+- ✅ BIOS, System Card, BIN/CUE/ISO och annan spelmedia ligger kvar lokalt på
+  extern disk och är dessutom ignorerade av Git.
+
 ## 2026-08-09 — Firestaff Theron WASD, mus och touch
 
 - ✅ Therons Firestaff-ingång använder nu en source-specifik PC Engine-karta:

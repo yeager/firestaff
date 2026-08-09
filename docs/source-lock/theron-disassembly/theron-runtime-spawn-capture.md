@@ -17,6 +17,19 @@ included in the transition receipt as `spawn_consumer_reads`. A zero count is
 valid evidence that the capture did not reach the disassembly-owned consumer;
 host-generated data must not replace it.
 
+## 2026-08-09 — authenticated Track 02 teleporter handoff correction
+
+The source-bound object loader now follows `DMBUILDER6/src/dms.h:98-108` for
+the Track 02 teleporter word: `ldest` is bits 8..13 of the second word, with
+the two top bits reserved. The prior decoder read the low six bits. The loader
+also emits `THERON_OBJTYPE_DOOR` and `THERON_OBJTYPE_TELEPORTER` instead of
+the unrelated low compatibility IDs. Runtime resolution accepts a valid
+source-owned coordinate destination without requiring a second object record;
+an unbound destination teleporter, invalid level, wall or out-of-range square
+still fails closed. The real US AKUTUBA M0 record `(0,0) -> (2,3)` is covered
+by the data-backed dungeon-loader test. This does not open RNG, AI, T700 or
+T900 semantics.
+
 `theron_v1_mednafen_spawn_consumer_trace_parse_file()` is the admission gate
 for this sidecar. It rejects malformed headers, non-contiguous sequences,
 non-bank coordinates, mismatched boundary flags and unrelated reads. Even a
