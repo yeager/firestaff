@@ -203,6 +203,10 @@
   med varje källkandidats verkliga hero- och föremålsförutsättningar. Den
   korskontrolleras mot samma DYN4-selectorroster.
 - ✅ M11 ritar ännu inte panelen och väljer därför ingen champion automatiskt.
+- ✅ Ett privat mirror-klick kräver nu också att den aktuella File_header-
+  kartans dörr-, objekt-, text-, teleporter-, aktuator- och varelseägare är
+  materialiserade. Det förhindrar en hero-/inventorymutation mot en partiell
+  kartbild.
 
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
