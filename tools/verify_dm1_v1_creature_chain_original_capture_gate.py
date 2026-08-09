@@ -239,7 +239,14 @@ def audit_firestaff_source_lock() -> dict[str, Any]:
     render = read_text(CREATURE_RENDER)
     test = read_text(CREATURE_TEST)
     checks = [
-        ("render_has_trolin_aspect", "{ 51, 687, 0x04, 0x65, 0x0680 }" in render),
+        # Verified against ReDMCSB: DUNVIEW.C G0219_as_Graphic558_CreatureAspects
+        # row 16 gives firstNative 51, coordinate/transparent 0x04 and
+        # replacement sets 0x65; DUNGEON.C G0243 CreatureInfo row 16 gives
+        # GraphicInfo 0xA038.  firstDerived 862 follows the I34E
+        # M539_DERIVED_BITMAP_FIRST_CREATURE base of 762 documented in the
+        # render table.  The previous expectation (687 / 0x0680) matched
+        # neither reference table.
+        ("render_has_trolin_aspect", "{ 51, 862, 0x04, 0x65, 0xA038 }" in render),
         ("render_cites_f0115", "F0115 creature draw section" in render),
         ("test_checks_creature_render_source_lock", "DM1 V1 Creature Viewport Rendering source lock" in test),
         ("test_checks_trolin_name", '"Trolin"' in render),

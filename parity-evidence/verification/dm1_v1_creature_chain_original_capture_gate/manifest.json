@@ -9,7 +9,7 @@
       "coordinateSet": 0,
       "firstNativeBitmapRelativeIndex": 51,
       "frontNativeBitmapIndex": 635,
-      "graphicInfo": "0x0680",
+      "graphicInfo": "0xA038",
       "name": "Trolin",
       "replacementColorSetIndices": "0x65",
       "transparentColor": 4,
@@ -216,5 +216,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_DM1_V1_CREATURE_CHAIN_ORIGINAL_CAPTURE_GATE_LOCKED",
-  "timestampUtc": "2026-06-15T04:43:03.291822+00:00"
+  "timestampUtc": "2026-08-09T18:35:40.690877+00:00"
 }
