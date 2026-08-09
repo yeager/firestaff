@@ -1,5 +1,6 @@
 /* CSBWin SaveGame.cpp original-save provenance and DB11 admission test. */
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_csbwin_dungeon_tail.h"
 #include "csbwin_resume_fixture.h"
 
 #include <stdio.h>
@@ -61,6 +62,8 @@ static void test_staged_real_csbwin_save(void)
     size_t size;
     uint8_t *bytes;
     CSB_V1_CSBWin512BodyReport body;
+    CSB_V1_CSBWinDungeonTailPrefix tail_prefix;
+    CSB_V1_CSBWinDungeonTailDatabaseLayout tail_databases;
     CSB_V1_RuntimeProfile runtime;
 
     if (!path || path[0] == '\0') {
@@ -95,12 +98,43 @@ static void test_staged_real_csbwin_save(void)
           body.num_character == 2u && body.max_timers == 436u &&
           body.timer_record_size == 10u && body.appended_size == 32655u,
           "legacy CSBGAME2 body authenticates with original 10-byte timers");
+
+    /* ReDMCSB has no CSBWin GAMEBLOCK1 wrapper, but CSBWin's write/read
+     * symmetry is explicit: SaveGame.cpp:1239-1335 writes this exact raw
+     * dungeon sequence and SaveGame.cpp:2512-2841 reads it through
+     * ReadDatabases().  The verified body gives the only safe tail boundary;
+     * the parser must consume the whole legacy stream and its terminal
+     * WriteAndChecksum word.  This remains read-only evidence: no decoded
+     * database record enters RuntimeProfile until a world-owner handoff is
+     * source-locked separately. */
+    memset(&tail_prefix, 0, sizeof(tail_prefix));
+    memset(&tail_databases, 0, sizeof(tail_databases));
+    CHECK(body.appended_offset + body.appended_size == size &&
+          body.appended_truncated &&
+          body.appended_preserved_size ==
+              CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES &&
+          csb_v1_csbwin_dungeon_tail_parse_prefix(
+              bytes + body.appended_offset, body.appended_size, 0u,
+              &tail_prefix) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          tail_prefix.valid && tail_prefix.level_count == 11u &&
+          tail_prefix.text_word_count == 333u &&
+          tail_prefix.object_list_length == 1961u &&
+          tail_prefix.legacy_cell_flag_bytes == 8763u,
+          "legacy CSBGAME2 tail prefix is source-sized from verified body boundary");
+    CHECK(csb_v1_csbwin_dungeon_tail_parse_databases(
+              bytes + body.appended_offset, body.appended_size,
+              &tail_prefix, CSB_V1_CSBWIN_LEGACY_FEATURE_VERSION, 0u, 0u,
+              &tail_databases) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          tail_databases.valid && tail_databases.database_bytes == 18490u &&
+          tail_databases.cell_flag_bytes == 8763u &&
+          tail_databases.checksum_offset + 2u == body.appended_size &&
+          tail_databases.computed_checksum == tail_databases.stored_checksum,
+          "legacy CSBGAME2 tail DB0-DB15 spans and checksum authenticate");
     free(bytes);
 
-    /* CSBWin SaveGame.cpp:1239-1335 appends a raw legacy dungeon stream,
-     * not an EXPOOL page nor the newer CSBWin dungeon-tail prefix.  Until
-     * that source-owned stream has a full parser, production must refuse it
-     * before it mutates runtime world state. */
+    /* The complete legacy stream is now structurally verified above, but
+     * applying its DB records to Firestaff's active world remains intentionally
+     * closed until the source-owned record conversion and atomic handoff exist. */
     csb_v1_runtime_init(&runtime, NULL);
     runtime.game_time = 919u;
     runtime.party_x = 7;
