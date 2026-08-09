@@ -1,0 +1,181 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -118,6 +118,26 @@
+ static int32 lastts;
+ static int32 scsicd_ne;
+FIRESTAFF_PATCH_BLANK_CONTEXT
++static bool TheronPCECDAdpcmDMAReadActive;
++static bool TheronPCECDAdpcmWriteOriginValid;
++static uint32 TheronPCECDAdpcmWriteOriginLBA;
++static uint16 TheronPCECDAdpcmWriteOriginOffset;
++static uint64 TheronPCECDAdpcmWriteOriginFifoSequence;
++static bool TheronPCECDAdpcmReadBufferOriginValid;
++static uint32 TheronPCECDAdpcmReadBufferOriginLBA;
++static uint16 TheronPCECDAdpcmReadBufferOriginOffset;
++static uint64 TheronPCECDAdpcmReadBufferOriginFifoSequence;
++struct TheronPCECDAdpcmOrigin
++{
++ bool valid;
++ uint32 lba;
++ uint16 offset;
++ uint64 fifo_sequence;
++};
++static TheronPCECDAdpcmOrigin TheronPCECDAdpcmOrigins[65536];
++static FILE *TheronPCECDAdpcmTrace;
++static unsigned TheronPCECDAdpcmTraceCount;
++
+ // ADPCM variables and whatnot
+ #define ADPCM_DEBUG(x, ...) {  /*printf("[Half=%d, End=%d, Playing=%d] "x, ADPCM.HalfReached, ADPCM.EndReached, ADPCM.Playing, ## __VA_ARGS__);*/  }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+@@ -202,6 +222,28 @@
+   ret = ADPCM.ReadPending;
+FIRESTAFF_PATCH_BLANK_CONTEXT
+  return(ret);
++}
++
++static void TheronTracePCECDAdpcm(const char *format, ...)
++{
++ va_list args;
++ if(TheronPCECDAdpcmTraceCount >= 4096)
++  return;
++ if(!TheronPCECDAdpcmTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++  if(!path || !*path)
++   return;
++  TheronPCECDAdpcmTrace = fopen(path, "a");
++  if(!TheronPCECDAdpcmTrace)
++   return;
++  fputs("source=mednafen-pce-instrumented-adpcm-fifo\n", TheronPCECDAdpcmTrace);
++ }
++ va_start(args, format);
++ vfprintf(TheronPCECDAdpcmTrace, format, args);
++ va_end(args);
++ fflush(TheronPCECDAdpcmTrace);
++ TheronPCECDAdpcmTraceCount++;
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ static int32 CalcNextEvent(int32 base)
+@@ -394,6 +436,24 @@
+   {
+    if(SCSICD_GetIO())
+    {
++    if(TheronPCECDAdpcmDMAReadActive)
++    {
++     uint32 source_lba;
++     uint16 source_offset;
++     uint64 fifo_sequence;
++     TheronPCECDAdpcmWriteOriginValid = SCSICD_GetLastDataOrigin(
++         &source_lba, &source_offset, &fifo_sequence);
++     if(TheronPCECDAdpcmWriteOriginValid)
++     {
++      TheronPCECDAdpcmWriteOriginLBA = source_lba;
++      TheronPCECDAdpcmWriteOriginOffset = source_offset;
++      TheronPCECDAdpcmWriteOriginFifoSequence = fifo_sequence;
++      TheronTracePCECDAdpcm(
++          "pce_cd_fifo_read transport=adpcm source_lba=%u source_offset=%u fifo_sequence=%llu adpcm_address=%04x data=%02x\n",
++          source_lba, source_offset, (unsigned long long)fifo_sequence,
++          ADPCM.WriteAddr, ret);
++     }
++    }
+     SCSICD_SetACK(true);
+     ACKStatus = true;
+     scsicd_ne = SCSICD_Run(timestamp);
+@@ -608,6 +668,33 @@
+     }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+     ret = ADPCM.ReadBuffer;
++
++    if(!PeekMode)
++    {
++     TheronPCECDDataReadPending = false;
++     TheronPCECDDataReadHasOrigin = false;
++     if(TheronPCECDAdpcmReadBufferOriginValid)
++     {
++      TheronPCECDDataReadPending = true;
++      TheronPCECDDataReadPC = HuCPU.GetRegister(HuC6280::GSREG_PC);
++      TheronPCECDDataReadPhysicalPC =
++          (HuCPU.GetRegister(HuC6280::GSREG_MPR0 +
++                             (TheronPCECDDataReadPC >> 13)) << 13) |
++          (TheronPCECDDataReadPC & 0x1fff);
++      TheronPCECDDataReadValue = ret;
++      TheronPCECDDataReadHasOrigin = true;
++      TheronPCECDDataReadLBA = TheronPCECDAdpcmReadBufferOriginLBA;
++      TheronPCECDDataReadOffset = TheronPCECDAdpcmReadBufferOriginOffset;
++      TheronPCECDDataReadFifoSequence =
++          TheronPCECDAdpcmReadBufferOriginFifoSequence;
++      TheronTracePCECDAdpcm(
++          "pce_cd_adpcm_cpu_read source_lba=%u source_offset=%u fifo_sequence=%llu cpu_pc=%04x physical_pc=%06x data=%02x\n",
++          TheronPCECDDataReadLBA, TheronPCECDDataReadOffset,
++          (unsigned long long)TheronPCECDDataReadFifoSequence,
++          TheronPCECDDataReadPC, TheronPCECDDataReadPhysicalPC, ret);
++      TheronPCECDAdpcmReadBufferOriginValid = false;
++     }
++    }
+FIRESTAFF_PATCH_BLANK_CONTEXT
+     break;
+FIRESTAFF_PATCH_BLANK_CONTEXT
+@@ -1150,7 +1237,25 @@
+    if(!(ADPCM.LastCmd & 0x10) && ADPCM.LengthCount < 0xFFFF)
+     ADPCM.LengthCount++;
+FIRESTAFF_PATCH_BLANK_CONTEXT
++   const uint16 adpcm_address = ADPCM.WriteAddr;
+    ADPCM.RAM[ADPCM.WriteAddr++] = ADPCM.WritePendingValue;
++   TheronPCECDAdpcmOrigins[adpcm_address].valid =
++       TheronPCECDAdpcmWriteOriginValid;
++   if(TheronPCECDAdpcmWriteOriginValid)
++   {
++    TheronPCECDAdpcmOrigins[adpcm_address].lba =
++        TheronPCECDAdpcmWriteOriginLBA;
++    TheronPCECDAdpcmOrigins[adpcm_address].offset =
++        TheronPCECDAdpcmWriteOriginOffset;
++    TheronPCECDAdpcmOrigins[adpcm_address].fifo_sequence =
++        TheronPCECDAdpcmWriteOriginFifoSequence;
++    TheronTracePCECDAdpcm(
++        "pce_cd_adpcm_ram_write source_lba=%u source_offset=%u fifo_sequence=%llu adpcm_address=%04x data=%02x\n",
++        TheronPCECDAdpcmWriteOriginLBA, TheronPCECDAdpcmWriteOriginOffset,
++        (unsigned long long)TheronPCECDAdpcmWriteOriginFifoSequence,
++        adpcm_address, ADPCM.WritePendingValue);
++   }
++   TheronPCECDAdpcmWriteOriginValid = false;
+    ADPCM.WritePending = 0;
+   }
+  }
+@@ -1164,7 +1269,9 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+    if(!SCSICD_GetCD() && SCSICD_GetIO() && SCSICD_GetREQ() && !SCSICD_GetACK())
+    {
++    TheronPCECDAdpcmDMAReadActive = true;
+     ADPCM.WritePendingValue = read_1808(timestamp, false); //read_1801();
++    TheronPCECDAdpcmDMAReadActive = false;
+     ADPCM.WritePending = 10 * 3;
+    }
+   }
+@@ -1175,7 +1282,26 @@
+   ADPCM.ReadPending -= clocks;
+   if(ADPCM.ReadPending <= 0)
+   {
+-   ADPCM.ReadBuffer = ADPCM.RAM[ADPCM.ReadAddr];
++   const uint16 adpcm_address = ADPCM.ReadAddr;
++   ADPCM.ReadBuffer = ADPCM.RAM[adpcm_address];
++   TheronPCECDAdpcmReadBufferOriginValid =
++       TheronPCECDAdpcmOrigins[adpcm_address].valid;
++   if(TheronPCECDAdpcmReadBufferOriginValid)
++   {
++    TheronPCECDAdpcmReadBufferOriginLBA =
++        TheronPCECDAdpcmOrigins[adpcm_address].lba;
++    TheronPCECDAdpcmReadBufferOriginOffset =
++        TheronPCECDAdpcmOrigins[adpcm_address].offset;
++    TheronPCECDAdpcmReadBufferOriginFifoSequence =
++        TheronPCECDAdpcmOrigins[adpcm_address].fifo_sequence;
++    TheronPCECDAdpcmOrigins[adpcm_address].valid = false;
++    TheronTracePCECDAdpcm(
++        "pce_cd_adpcm_ram_read_prepare source_lba=%u source_offset=%u fifo_sequence=%llu adpcm_address=%04x data=%02x\n",
++        TheronPCECDAdpcmReadBufferOriginLBA,
++        TheronPCECDAdpcmReadBufferOriginOffset,
++        (unsigned long long)TheronPCECDAdpcmReadBufferOriginFifoSequence,
++        adpcm_address, ADPCM.ReadBuffer);
++   }
+    ADPCM.ReadAddr = (ADPCM.ReadAddr + 1) & 0xFFFF;
+    ADPCM.ReadPending = 0;
+FIRESTAFF_PATCH_BLANK_CONTEXT

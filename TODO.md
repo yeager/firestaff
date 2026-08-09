@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Den kontextbundna ADPCM-capturebyggaren är verifierad och kan nu användas
+  för nästa autentiserade runtime-witness. Den bevisar ännu inte ljudägare,
+  creature-, RNG-, AI-, T700- eller T900-semantik; nästa körning måste fortfarande
+  innehålla ett verkligt monster/objekt och rätt source-owned konsument.
+
 - ⏳ Det förlängda RAM-konsumentfönstret är verifierat på äkta US Track 02,
   men även den riktade förflyttningscapturen gav noll `$B0E5`, noll
   RNG-konsument och noll spawn-consumer-rader. Nästa capture måste starta från

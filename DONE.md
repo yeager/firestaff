@@ -1,3 +1,16 @@
+# Theron: kontextbunden ADPCM-capturebuild (2026-08-09)
+
+- ✅ Capturebyggaren använder nu en separat kontextbunden ADPCM FIFO/RAM-patch.
+  Den tidigare patchen hade radlösa hunks som kunde hamna inne i fel funktion
+  efter main-RAM-instrumenteringen; den nya kedjan bygger från ren Mednafen
+  1.32.1-källa, renderar synliga blank-context-token till unified-diff-byte,
+  applicerar vid faktiska ADPCM-symboler och kompilerades med äkta SDL2-runtime
+  på extern disken.
+- ✅ `tests/test_theron_v1_mednafen_live_capture_script.sh` låser den nya
+  patchordningen och avvisar den gamla stale line-only-patchen i byggskriptet.
+  Detta ändrar inte semantik: ADPCM-origin förblir capture-only och öppnar inte
+  RNG, creatures, AI, T700 eller T900.
+
 # Theron: första README-capture (2026-08-09)
 
 - ✅ README visar nu den spårade, verkliga PC Engine-dungeon-capturen

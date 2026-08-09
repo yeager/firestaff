@@ -67,12 +67,17 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch"
+adpcm_context_patch="$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch"
+adpcm_context_rendered="$build_root/theron-adpcm-fifo-ram-trace.rendered.patch"
+# The checked-in patch uses a visible token for unified-diff blank context so
+# the repository's trailing-whitespace gate cannot erase the context byte.
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$adpcm_context_patch" > "$adpcm_context_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$adpcm_context_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch"
 patch -d "$build_root/source" -p1 --batch --forward \

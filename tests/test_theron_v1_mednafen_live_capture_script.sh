@@ -7,6 +7,7 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+adpcm_context_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch
 state_autoload_patch=$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch
 irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 consumer_read_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
@@ -48,6 +49,17 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
+    exit 1
+fi
+if [[ ! -f "$adpcm_context_patch" ]] ||
+   ! grep -Fq 'static void TheronTracePCECDAdpcm(const char *format, ...)' "$adpcm_context_patch" ||
+   ! grep -Fq 'ADPCM.ReadBuffer = ADPCM.RAM[adpcm_address];' "$adpcm_context_patch" ||
+   ! grep -Fq 'FIRESTAFF_PATCH_BLANK_CONTEXT' "$adpcm_context_patch" ||
+   ! grep -Fq 'adpcm_context_rendered=' "$build_script" ||
+   ! grep -Fq 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch' "$build_script" ||
+   grep -Fq '< "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch"' "$build_script"; then
+    printf 'FAIL: the capture build must use the context-bound ADPCM patch, not stale line-only hunks\n' >&2
     exit 1
 fi
 if [[ ! -f "$input_grab_patch" ]] ||

@@ -17,6 +17,18 @@ included in the transition receipt as `spawn_consumer_reads`. A zero count is
 valid evidence that the capture did not reach the disassembly-owned consumer;
 host-generated data must not replace it.
 
+## 2026-08-09 — context-bound ADPCM patch order
+
+The build helper now renders the visible `FIRESTAFF_PATCH_BLANK_CONTEXT` tokens
+in `mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch` and applies the
+result before the main-RAM consumer patch. It uses source context around
+`ADPCM_ClocksToNextEvent`, `read_1808`, `PCECD_Read` and `ADPCM_Run`; the older
+line-only ADPCM patch is retained as historical provenance but is not part of
+the build chain. A clean 1.32.1 source tree compiled successfully with the real
+SDL2 runtime on the external disk. This fixes capture-build integrity only: an
+ADPCM receipt still proves transport/origin evidence, not sound ownership or
+RNG, creature, AI, T700 or T900 semantics.
+
 ## 2026-08-09 — authenticated Track 02 teleporter handoff correction
 
 The source-bound object loader now follows `DMBUILDER6/src/dms.h:98-108` for
