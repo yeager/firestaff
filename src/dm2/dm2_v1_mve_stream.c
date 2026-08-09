@@ -50,7 +50,7 @@ static int mve_iterator_validate_opcode(uint8_t opcode, uint8_t version,
     case 0x04u: return version == 0u && size == 0u;
     case 0x05u: return version == 2u && size == 8u;
     case 0x07u: return version == 1u && size == 6u;
-    case 0x08u: return version == 0u && size >= 4u;
+    case 0x08u: return version == 0u && size >= 6u;
     case 0x09u: return version == 0u && size == 6u;
     case 0x0au: return version == 0u && size == 6u;
     case 0x0cu: return version == 0u && size == 766u;

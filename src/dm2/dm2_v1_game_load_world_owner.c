@@ -2067,8 +2067,8 @@ int dm2_v1_game_load_world_owner_advance_preselection(
      * mutation here is exactly its authenticated pose; no tile/DB byte is
      * fabricated or changed.  Source: SKProject c_move.cpp:389-427,
      * 505-516. */
-    owner->source_party_x = (int8_t)target_x;
-    owner->source_party_y = (int8_t)target_y;
+    owner->source_party_x = (uint8_t)target_x;
+    owner->source_party_y = (uint8_t)target_y;
     if (!dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(owner)) {
         goto rollback;
     }

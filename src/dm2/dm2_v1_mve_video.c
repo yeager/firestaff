@@ -146,7 +146,7 @@ static int mve_decode_block(DM2_V1_MveVideo *v, DM2_MveReader *r, uint8_t op, un
     case 0u:return mve_copy(v,v->last,bx,by,0,0);
     case 1u:return mve_copy(v,v->second_last,bx,by,0,0);
     case 2u:if(!mve_get8(r,&b))return 0;return b<56u?mve_copy(v,v->second_last,bx,by,8+(b%7u),b/7u):mve_copy(v,v->second_last,bx,by,-14+((b-56u)%29u),8+((b-56u)/29u));
-    case 3u:if(!mve_get8(r,&b))return 0;return b<56u?mve_copy(v,v->current,bx,by,-(8+(b%7u)),-(int)(b/7u)):mve_copy(v,v->current,bx,by,-(-14+(int)((b-56u)%29u)),-(8+(int)((b-56u)/29u)));
+    case 3u:if(!mve_get8(r,&b))return 0;return b<56u?mve_copy(v,v->current,bx,by,-(int)(8+(b%7u)),-(int)(b/7u)):mve_copy(v,v->current,bx,by,-(-14+(int)((b-56u)%29u)),-(8+(int)((b-56u)/29u)));
     case 4u:if(!mve_get8(r,&b))return 0;return mve_copy(v,v->last,bx,by,-8+(b&15u),-8+(b>>4u));
     case 5u:if(!mve_get8(r,&a)||!mve_get8(r,&b))return 0;return mve_copy(v,v->last,bx,by,(int)(int8_t)a,(int)(int8_t)b);
     case 6u:return 0;

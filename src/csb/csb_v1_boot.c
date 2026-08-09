@@ -2699,15 +2699,28 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         session->generation == 0u ||
         !session->surfaces.valid || !session->surfaces.hud_surfaces_ready ||
         !session->hud_assets_bound || !session->hud_inventory_binding.verified ||
-        !session->hud_resurrect_binding.verified ||
-        session->hud_inventory_binding.source !=
-            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
-        session->hud_resurrect_binding.source !=
-            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
         session->hud_inventory_binding.graphic_index != 17u ||
-        session->hud_resurrect_binding.graphic_index != 40u ||
-        strcmp(session->hud_inventory_binding.path, profile->graphics_path) != 0 ||
-        strcmp(session->hud_resurrect_binding.path, profile->graphics_path) != 0) {
+        strcmp(session->hud_inventory_binding.path, profile->graphics_path) != 0) {
+        return 0;
+    }
+    if (session->hud_inventory_binding.source !=
+            CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
+        session->hud_inventory_binding.source !=
+            CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34) {
+        return 0;
+    }
+    if (session->hud_resurrect_binding.verified) {
+        if (session->hud_resurrect_binding.graphic_index != 40u ||
+            strcmp(session->hud_resurrect_binding.path,
+                   profile->graphics_path) != 0 ||
+            (session->hud_resurrect_binding.source !=
+                 CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
+             session->hud_resurrect_binding.source !=
+                 CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34)) {
+            return 0;
+        }
+    } else if (session->hud_inventory_binding.source !=
+                   CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34) {
         return 0;
     }
 
@@ -2726,16 +2739,22 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
     resurrect = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-    return inventory->valid && inventory->pixels &&
-        inventory->source_asset_id == 17 &&
-        inventory->width == CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 &&
-        inventory->height == CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 &&
-        inventory->transparent_color == -1 && resurrect->valid &&
-        resurrect->pixels && resurrect->source_asset_id == 40 &&
-        resurrect->width == CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 &&
-        resurrect->height == CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 &&
-        resurrect->transparent_color ==
-            CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34;
+    if (!inventory->valid || !inventory->pixels ||
+        inventory->source_asset_id != 17 ||
+        inventory->width != CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 ||
+        inventory->height != CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34 ||
+        inventory->transparent_color != -1) {
+        return 0;
+    }
+    if (resurrect->valid && resurrect->pixels && resurrect->height > 0) {
+        return resurrect->source_asset_id == 40 &&
+            resurrect->width == CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 &&
+            resurrect->height == CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34 &&
+            resurrect->transparent_color ==
+                CSB_V1_STARTUP_HUD_RESURRECT_TRANSPARENT_COLOR_PC34;
+    }
+    return session->hud_inventory_binding.source ==
+        CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34;
 }
 
 int csb_v1_boot_startup_door_runtime_handoff_from_snapshot_pc34(
