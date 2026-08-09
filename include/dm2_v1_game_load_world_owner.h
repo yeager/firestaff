@@ -255,6 +255,10 @@ typedef struct {
     DM2_V1_FileHeaderWorldInteractionReceipt preselection_world_interactions;
     DM2_V1_FileHeaderActuatorGeneratorReceipt preselection_actuator_generators;
     DM2_V1_FileHeaderRuntimeMapReceipt preselection_entrance_map;
+    /* Direct DB0 Door payloads for the File_header map currently owned by
+     * c_map.  This is an address-only receipt; it has no timer, collision or
+     * presentation side effect. */
+    DM2_V1_G1RuntimeMapDoorReceipt preselection_map_doors;
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -298,6 +302,12 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light(
  * intentionally before GDAT resource consumption and has no renderer/UI
  * side effect. */
 int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain the current File_header map's direct DB0 Door payloads before the
+ * entrance projection consumes a visible door.  Source: SKWIN/DME.h::Door;
+ * c_map.cpp::GET_ADDRESS_OF_TILE_RECORD. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

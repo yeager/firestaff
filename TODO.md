@@ -65,8 +65,9 @@
   spegel, dörr eller sensor. Den globala runtime-renderaren binder nu sin
   statiska GRAPHICSSET-scen till exakt map-token. Den privata
   entréviewporten håller nu de elva källrutornas terräng och
-  scen-/ljusidentitet, men saknar fortfarande dörr-, objekt- och
-  inputkonsumenterna före faktisk ritning. Den privata
+  scen-/ljusidentitet samt mappegna direkta DB0-dörrar med verkligt
+  tillstånd, paneltyp och ornament. Den saknar fortfarande dörrknappar,
+  objekt- och inputkonsumenterna före faktisk ritning. Den privata
   kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får
   inte göra dem till en synlig eller styrbar partystatus före sessioncommit.
 

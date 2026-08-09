@@ -133,6 +133,17 @@
 
 # DM2 New Game privat entréscen (2026-08-09)
 
+# DM2 New Game privata File_header-dörrar (2026-08-09)
+
+- ✅ Entréviewportens privata värld behåller nu den aktuella File_header-
+  kartans direkta DB0-dörrrötter och fyller synliga dörrrutor med originalets
+  tillstånd, öppningsgrad, paneltyp, knapp- och ornamentfält. Karta och
+  recordpayload kontrolleras mot en ny läsning av samma autentiserade
+  DUNGEON.DAT-klon.
+- ✅ Detta är fortfarande bara RAM-ägd förberedelse. Dörrknappar, animation,
+  ljud, kollisionshantering och M11-ritning väntar på den fullständiga
+  sessionsägaren.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte
