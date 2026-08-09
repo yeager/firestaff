@@ -414,6 +414,27 @@ static void test_object_lookup_is_dungeon_scoped(void) {
                   &w, THERON_DUNGEON_2_DRATOR, 0, 4, 4)->type ==
                   THERON_OBJTYPE_CHEST,
           "dungeon 2 returns only its object");
+
+    {
+        Theron_V1_World movement_world;
+        Theron_V1_Object foreign_door = {0};
+        make_world(&movement_world);
+        movement_world.party.leader_x = 3;
+        movement_world.party.leader_y = 4;
+        movement_world.party.leader_dir = THERON_DIR_EAST;
+        movement_world.levels[0][0].squares[4][4] = THERON_SQUARE_DOOR;
+        foreign_door.type = THERON_OBJTYPE_DOOR;
+        foreign_door.dungeon_id = THERON_DUNGEON_2_DRATOR;
+        foreign_door.level = 0;
+        foreign_door.x = 4;
+        foreign_door.y = 4;
+        foreign_door.state = THERON_DOOR_STATE_OPEN;
+        CHECK_INT("foreign door placement succeeds",
+                  theron_v1_object_place(&movement_world, &foreign_door), 0);
+        CHECK_INT("move query ignores foreign-dungeon door",
+                  theron_v1_get_move_result(&movement_world, THERON_DIR_EAST),
+                  THERON_MOVE_BLOCKED);
+    }
 }
 
 static void test_door_mechanics(void) {

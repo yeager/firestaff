@@ -5,11 +5,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 ## 2026-08-09 — object lookup scoped to authenticated dungeon
 
 - ✅ Produktionsmekanikens object-, dörr-, teleport-, altar-, pool- och
-  triggerlookup matchar nu `dungeon_id`, level och koordinat. Den äldre
+  triggerlookup matchar nu `dungeon_id`, level och koordinat. Även den
+  fristående dörrfrågan före rörelse, teleportermål, alarmets generatorloop
+  och triggerlänkar är scopeade till aktiv dungeon. Den äldre
   `theron_v1_object_at()` finns kvar för äldre fixture-anrop som uttryckligen
   saknar dungeon-scope.
 - ✅ Regressionstestet placerar två objekt på samma level/koordinat i dungeon
-  1 och 2 och verifierar att varje source-scope bara ser sitt eget objekt.
+  1 och 2 och verifierar att varje source-scope bara ser sitt eget objekt;
+  dessutom ignorerar movement-queryn en öppen dörr från fel dungeon.
 
 ## 2026-08-09 — senare-level resource-chain: negativt verifieringskvitto
 

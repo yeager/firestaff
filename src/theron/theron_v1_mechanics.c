@@ -248,7 +248,8 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         const Theron_V1_Object *door = NULL;
         for (int i = 0; i < world->object_count; ++i) {
             const Theron_V1_Object *candidate = &world->objects[i];
-            if (candidate->level == world->current_level &&
+            if (candidate->dungeon_id == world->current_dungeon &&
+                candidate->level == world->current_level &&
                 candidate->x == nx && candidate->y == ny &&
                 candidate->type == THERON_OBJTYPE_DOOR) {
                 door = candidate;
@@ -592,6 +593,7 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
         Theron_V1_Object *target = NULL;
         for (int i = 0; i < world->object_count; i++) {
             if ((o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
+                world->objects[i].dungeon_id == world->current_dungeon &&
                 world->objects[i].level == target_level &&
                 world->objects[i].x == target_x &&
                 world->objects[i].y == target_y) {
@@ -871,7 +873,9 @@ int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
      * Goblin or any other creature here; leave materialization fail-closed. */
     for (int i = 0; i < world->object_count; i++) {
         Theron_V1_Object *o = &world->objects[i];
-        if (o->type == THERON_OBJTYPE_CREATURE_SPAWNER) {
+        if (o->dungeon_id == world->current_dungeon &&
+            o->level == world->current_level &&
+            o->type == THERON_OBJTYPE_CREATURE_SPAWNER) {
             o->flags |= THERON_OBJ_F_ACTIVATED;
         }
     }
@@ -892,7 +896,8 @@ int theron_v1_trigger_activate(Theron_V1_World *world, int x, int y) {
     /* Activate linked objects */
     int link = t->linked_id;
     for (int i = 0; i < world->object_count; i++) {
-        if (world->objects[i].id == link) {
+        if (world->objects[i].dungeon_id == world->current_dungeon &&
+            world->objects[i].id == link) {
             world->objects[i].flags |= THERON_OBJ_F_ACTIVATED;
         }
     }
