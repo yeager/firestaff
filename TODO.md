@@ -69,6 +69,14 @@
   ownership. The production DGN route remains capture-gated for display origin,
   face/mesh ownership, transform/culling and complete material composition.
 
+- 🔧 Nexus now has a full-chain DGN join receipt for the longer European
+  gameplay witness: frame 899 contains 220 VDP1 records and 209 colour-mode-1
+  draws; 204 source+CLUT spans match canonical `LEV00.DGN` Structure2 and 175
+  have Structure3 face-selector owners. Five source spans and 34 selector-less
+  uses remain explicit gaps. This proves bounded material/order evidence only;
+  transform/culling, display origin, HUD/menu ownership and VDP2 composition
+  keep production admission closed.
+
 - ⏳ Nexus now has a capture-only VDP2 NBG1 bitmap/CRAM replay adapter. It
   requires the authenticated NBG1 register tuple, exact 512×256 bitmap and
   256-entry CRAM joins, and an explicit source crop/destination rectangle.

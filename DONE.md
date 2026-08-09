@@ -7,7 +7,18 @@
   scenes. The external 300-frame European witness verifies 290 active chains
   and 10 idle END frames; every frame is covered. This is hardware framing
   evidence only, so startup/menu/HUD/viewport ownership and production DGN
-  rendering remain blocked.
+rendering remain blocked.
+
+# Nexus: full gameplay-chain DGN join (2026-08-09)
+
+- ✅ `scripts/analyze_nexus_vdp1_dgn_command_sequence_join.py` joins an
+  authenticated full VDP1 chain to canonical DGN Structure2 source+CLUT
+  materials and reports Structure3 face-selector owners. The 900-frame
+  European witness at frame 899 contains 220 records and 209 textured draws;
+  204 source+CLUT joins and 175 face-selector joins are verified. Five source
+  spans and selector-less material uses remain visible gaps. No production
+  renderer admission was opened: transform/culling, display origin, HUD/menu
+  ownership and VDP2 composition remain unproven.
 
 # Nexus: självidentifierande VDP2-registertolkning (2026-08-09)
 

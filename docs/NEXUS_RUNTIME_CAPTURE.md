@@ -367,6 +367,22 @@ with 153 records, 147 draws, two User Clip records, no System Clip record and
 three Local Coordinate records. This is hardware command-order evidence only;
 it does not identify the chain as startup, menu, HUD or a DGN scene.
 
+## Full gameplay-chain DGN join
+
+The longer European E-BIOS/French-data-only witness
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw`
+has 900 captured frames and SHA-256
+`cd167dabeaedd02f8555a4e1d4eaa1818b51b5fb6ebb3479c9a2869faf6bbdc9`.
+At frame 899 the authenticated chain contains 220 records, including 209
+colour-mode-1 textured draws. `scripts/analyze_nexus_vdp1_dgn_command_sequence_join.py`
+matches 204/209 captured source spans and CLUTs to canonical `LEV00.DGN`
+Structure2 materials; 175 of those matches also have Structure3 face-selector
+owners. The five unmatched source spans and 34 selector-less material uses are
+reported, not replaced by guessed HUD/menu assets. This closes a bounded
+gameplay material/order receipt while leaving the unresolved cases visible.
+Transform/culling, display origin, HUD/menu ownership and VDP2 composition are
+still unproven, so `semantic_admission` remains blocked.
+
 The runtime writer/source join is reproducible with
 `scripts/analyze_nexus_vdp1_runtime_writer_join.py`. On the authenticated
 European `DM.BIN`/`TM.BIN` pair, the captured writer window beginning at
