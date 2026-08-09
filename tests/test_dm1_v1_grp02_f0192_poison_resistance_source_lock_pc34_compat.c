@@ -56,34 +56,46 @@
  *
  * Drawn directly from the ReDMCSB source-lock comment in
  * memory_combat_pc34_compat.c. */
+/* Poison resistance nibble per creature, M061_POISON_RESISTANCE(Resistances)
+ * = (Resistances >> 8) & 0xF, taken from ReDMCSB DUNGEON.C
+ * G0243_as_Graphic559_CreatureInfo. Verified entry-by-entry against that
+ * initialiser: 26 of 27 extracted programmatically and matched exactly, and
+ * C26 Grey Lord is separately pinned as immune by T3 below.
+ *
+ * The previous table here (C00=2, C10=5, C15=1, ...) matched no nibble of any
+ * real Resistances word and disagreed with the runtime for most creatures; it
+ * also drove the wrong expectations in
+ * test_dm1_v1_monster_poison_cloud_overlap_tick_pc34_compat. 15 means
+ * C15_IMMUNE_TO_POISON, which GROUP.C F0192 short-circuits to 0. Note C17
+ * Giant Wasp legitimately carries 0 — no poison resistance at all. */
 static const unsigned char kG0243_PoisonResistance[27] = {
-    /* C00 Giant Scorpion  */  2,
-    /* C01 Swamp Slime     */  3,
-    /* C02 Giggler         */  7,
-    /* C03 Wizard Eye      */  9,
-    /* C04 Pain Rat        */  5,
-    /* C05 Ruster          */  4,
-    /* C06 Screamer        */  1,
-    /* C07 Rockpile        */  2,
-    /* C08 Ghost           */  4,
-    /* C09 Stone Golem     */  3,
-    /* C10 Mummy           */  5,
-    /* C11 Black Flame     */  5,
-    /* C12 Skeleton        */  6,
-    /* C13 Couatl          */  5,
-    /* C14 Vexirk          */  9,
-    /* C15 Magenta Worm    */  1,
-    /* C16 Trolin          */  2,
-    /* C17 Giant Wasp      */  1,
-    /* C18 Animated Armour */  7,
-    /* C19 Materializer    */ 10,
-    /* C20 Water Elemental */  7,
-    /* C21 Oitu            */  6,
-    /* C22 Demon           */ 11,
-    /* C23 Lord Chaos      */ 15,
-    /* C24 Red Dragon      */ 11,
-    /* C25 Lord Order      */ 15,
-    /* C26 Grey Lord       */ 15,
+    /* C00 Giant Scorpion     */  8,  /* Resistances -> 0x8 */
+    /* C01 Swamp Slime        */ 14,  /* Resistances -> 0xE */
+    /* C02 Giggler            */  2,  /* Resistances -> 0x2 */
+    /* C03 Wizard Eye         */ 11,  /* Resistances -> 0xB */
+    /* C04 Pain Rat           */ 10,  /* Resistances -> 0xA */
+    /* C05 Ruster             */  5,  /* Resistances -> 0x5 */
+    /* C06 Screamer           */  7,  /* Resistances -> 0x7 */
+    /* C07 Rockpile           */  6,  /* Resistances -> 0x6 */
+    /* C08 Ghost              */ 15,  /* Resistances -> 0xF */
+    /* C09 Stone Golem        */ 15,  /* Resistances -> 0xF */
+    /* C10 Mummy              */ 15,  /* Resistances -> 0xF */
+    /* C11 Black Flame        */ 15,  /* Resistances -> 0xF */
+    /* C12 Skeleton           */ 15,  /* Resistances -> 0xF */
+    /* C13 Couatl             */  6,  /* Resistances -> 0x6 */
+    /* C14 Vexirk             */  3,  /* Resistances -> 0x3 */
+    /* C15 Magenta Worm       */ 11,  /* Resistances -> 0xB */
+    /* C16 Trolin             */  3,  /* Resistances -> 0x3 */
+    /* C17 Giant Wasp         */  0,  /* Resistances -> 0x0 */
+    /* C18 Animated Armour    */ 15,  /* Resistances -> 0xF */
+    /* C19 Materializer       */ 15,  /* Resistances -> 0xF */
+    /* C20 Water Elemental    */ 14,  /* Resistances -> 0xE */
+    /* C21 Oitu               */  8,  /* Resistances -> 0x8 */
+    /* C22 Demon              */ 10,  /* Resistances -> 0xA */
+    /* C23 Lord Chaos         */ 15,  /* Resistances -> 0xF */
+    /* C24 Red Dragon         */  6,  /* Resistances -> 0x6 */
+    /* C25 Lord Order         */ 15,  /* Resistances -> 0xF */
+    /* C26 Grey Lord          */ 15,  /* Resistances -> 0xF */
 };
 
 int main(void) {
@@ -93,8 +105,11 @@ int main(void) {
     /* T1: All 27 creatures have non-zero resistance (including
      * immune = 0xF, which is non-zero). */
     for (i = 0; i < 27; ++i) {
-        CHECK(kG0243_PoisonResistance[i] > 0,
-              "T1: every creature has non-zero poison resistance");
+        /* M061_POISON_RESISTANCE yields a 4-bit field.  C17 Giant Wasp
+         * legitimately carries 0, so a "non-zero" claim is not a source
+         * invariant; the real one is the nibble range. */
+        CHECK(kG0243_PoisonResistance[i] <= 15,
+              "T1: poison resistance is a 4-bit M061 nibble");
     }
 
     /* T2: F0192_GROUP_GetPoisonResistance_Compat returns the
@@ -116,9 +131,14 @@ int main(void) {
     CHECK(F0192_GROUP_GetPoisonResistance_Compat(26) == 15,
           "T3: Grey Lord is immune (0xF)");
 
-    /* T4: Magenta Worm has resistance 1 (low — most vulnerable). */
-    CHECK(F0192_GROUP_GetPoisonResistance_Compat(15) == 1,
-          "T4: Magenta Worm has resistance 1 (most vulnerable)");
+    /* T4: C17 Giant Wasp carries Resistances nibble 0 — the genuinely most
+     * poison-vulnerable creature.  The old claim that C15 Magenta Worm was
+     * "most vulnerable at 1" came from the fabricated table; its real
+     * Resistances word is 0x0B93, i.e. nibble 11. */
+    CHECK(F0192_GROUP_GetPoisonResistance_Compat(17) == 0,
+          "T4: Giant Wasp has resistance 0 (most vulnerable)");
+    CHECK(F0192_GROUP_GetPoisonResistance_Compat(15) == 11,
+          "T4: Magenta Worm resistance is the real 0x0B93 nibble (11)");
 
     /* T5: Out-of-range returns -1. */
     CHECK(F0192_GROUP_GetPoisonResistance_Compat(-1) == -1,
@@ -157,21 +177,20 @@ int main(void) {
         CHECK(adjusted == 0, "T6: Grey Lord immune -> adjusted 0");
     }
 
-    /* T7: Magenta Worm (C15, resistance 1) takes more damage than
-     * Vexirk (C14, resistance 9).  With poisonAttack=10 and
-     * fixed RNG, the resistance factor is deterministic. */
+    /* T7: lower resistance takes more poison.  Real nibbles are C14 Vexirk
+     * 3 (Resistances 0x035B) and C15 Magenta Worm 11 (0x0B93), so Vexirk is
+     * the more vulnerable of the pair — the reverse of the old assertion,
+     * which was derived from the fabricated table.  F0192 gives
+     * ((10 + RANDOM(4)) << 3) / (resistance + 1): Vexirk divides by 4,
+     * Magenta Worm by 12. */
     {
         struct RngState_Compat rngA, rngB;
-        int adjA = -1, adjB = -1;
+        int adjWorm = -1, adjVexirk = -1;
         rngA.seed = 0xC0FFEEu; rngB.seed = 0xC0FFEEu;
-        F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(15, 10, &rngA, &adjA);
-        F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(14, 10, &rngB, &adjB);
-        /* Magenta Worm has resistance 1, so the formula gives
-         * (10 + RANDOM(4)) << 3 / 2 = between 40 and 56.
-         * Vexirk has resistance 9, so it gives
-         * (10 + RANDOM(4)) << 3 / 10 = between 8 and 11.
-         * Worm takes more. */
-        CHECK(adjA > adjB, "T7: Magenta Worm takes more poison than Vexirk");
+        F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(15, 10, &rngA, &adjWorm);
+        F0192_GROUP_GetResistanceAdjustedPoisonAttack_Compat(14, 10, &rngB, &adjVexirk);
+        CHECK(adjVexirk > adjWorm,
+              "T7: Vexirk (r=3) takes more poison than Magenta Worm (r=11)");
     }
 
     printf("PASS: GRP-02 F0192 poison resistance source-lock pin (7 scenarios)\n");

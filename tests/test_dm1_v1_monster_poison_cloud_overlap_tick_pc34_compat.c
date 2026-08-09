@@ -52,7 +52,7 @@ static void test_single_monster_cloud_tick_boundary(void)
     digest.destMapX = 10;
     digest.destMapY = 11;
     digest.destHasCreatureGroup = 1;
-    digest.destCreatureType = 10;
+    digest.destCreatureType = 2;   /* C02 Giggler, Resistances 0x0235 -> r=2 */
     digest.destCreatureCellMask = 0x04;
 
     /* ReDMCSB source-lock:
@@ -116,12 +116,12 @@ static void test_single_monster_cloud_tick_boundary(void)
     CHECK_EQ(tick.outActionGroup.targetMapY, 11, "group damage y");
     CHECK_EQ(tick.outActionGroup.targetCell, 0,
              "centered cloud targets centered group cell");
-    CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 10,
+    CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 2,
              "group damage preserves monster type");
     CHECK_EQ(tick.outActionGroup.scheduleDelayTicks, 0,
              "group damage resolves on boundary tick");
-    CHECK_EQ(tick.outActionGroup.rawAttackValue, 4,
-             "attack 96 → base 3 → F0192 resistance-adjusted for C10 (r=5): 3*8/6 = 4");
+    CHECK_EQ(tick.outActionGroup.rawAttackValue, 8,
+             "attack 96 -> base 3 -> F0192 for C02 (r=2): 3*8/3 = 8");
     CHECK_EQ(tick.despawn, 0, "cloud remains live");
     CHECK_EQ(next.attack, 93, "cloud attack decays by 3");
     CHECK_EQ(next.currentFrame, 1, "cloud frame increments once");
@@ -194,8 +194,8 @@ static void test_cloud_square_overlap_ignores_quarter_cell_mask(void)
              "off-cell cloud preserves explosion cell metadata");
     CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 15,
              "off-cell cloud preserves creature type");
-    CHECK_EQ(tick.outActionGroup.rawAttackValue, 8,
-             "attack 64 -> base 2 -> F0192 for C15 (r=1): 2*8/2 = 8");
+    CHECK_EQ(tick.outActionGroup.rawAttackValue, 1,
+             "attack 64 -> base 2 -> F0192 for C15 (r=11): 2*8/12 = 1");
     CHECK_EQ(tick.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME,
              "off-cell cloud advances one persistent frame");
     CHECK_EQ(tick.despawn, 0, "off-cell cloud remains live");
@@ -253,20 +253,15 @@ static void test_final_low_attack_cloud_damages_before_expiry(void)
              1, "advance final weak cloud on monster tile");
     CHECK_EQ(tick.emittedCombatActionPartyCount, 0,
              "final weak cloud emits no party action");
-    CHECK_EQ(tick.emittedCombatActionGroupCount, 1,
-             "final weak cloud still emits group action");
-    CHECK_EQ(tick.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP,
-             "final weak cloud group damage action kind");
-    CHECK_EQ(tick.outActionGroup.targetMapX, 16,
-             "final weak cloud target x");
-    CHECK_EQ(tick.outActionGroup.targetMapY, 4,
-             "final weak cloud target y");
-    CHECK_EQ(tick.outActionGroup.targetCell, 0,
-             "final weak centered cloud targets centered group cell");
-    CHECK_EQ(tick.outActionGroup.defenderSlotOrCreatureIndex, 15,
-             "final weak cloud preserves creature type");
-    CHECK_EQ(tick.outActionGroup.rawAttackValue, 4,
-             "attack 5 -> base 1 -> F0192 for C15 (r=1): 1*8/2 = 4");
+    /* GROUP.C F0192 returns ((attack + RANDOM(4)) << 3) / (resistance + 1).
+     * C15 Magenta Worm carries Resistances 0x0B93, so M061_POISON_RESISTANCE
+     * is 0xB = 11 and the divisor is 12.  F0823 clamps this 5-attack cloud's
+     * base to 1, and (1 << 3) / 12 truncates to 0 — the cloud is too weak to
+     * land any poison on a creature this resistant, so F0822 emits NO group
+     * action.  The previous expectations assumed r=1 (divisor 2) and a
+     * damage action; both contradict the byte-verified resistance word. */
+    CHECK_EQ(tick.emittedCombatActionGroupCount, 0,
+             "weak cloud lands no poison on a resistant creature");
     CHECK_EQ(tick.resultKind, EXPLOSION_RESULT_ONE_SHOT,
              "final weak cloud expires after damage");
     CHECK_EQ(tick.despawn, 1, "final weak cloud despawns");

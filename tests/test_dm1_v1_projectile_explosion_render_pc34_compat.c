@@ -1571,7 +1571,12 @@ static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
     digest.destMapX = 10;
     digest.destMapY = 11;
     digest.destHasCreatureGroup = 1;
-    digest.destCreatureType = 10;
+    /* C10 Mummy carries Resistances 0x0F15, i.e. M061 nibble 0xF =
+     * C15_IMMUNE_TO_POISON, and GROUP.C F0192 short-circuits immunity to 0 —
+     * a poison cloud emits NO group action against it.  Use C02 Giggler
+     * (0x0235 -> r=2) so this gate still covers the damage path.  The old
+     * "C10 (r=5)" expectation came from a fabricated resistance table. */
+    digest.destCreatureType = 2;
     digest.destCreatureCellMask = 0x04;
 
     /* ReDMCSB source-lock:
@@ -1587,8 +1592,8 @@ static void test_poison_cloud_single_monster_overlap_tick_boundary(void) {
     ASSERT_EQ(result.outActionGroup.kind, COMBAT_ACTION_APPLY_DAMAGE_GROUP, "monster overlap group damage kind");
     ASSERT_EQ(result.outActionGroup.targetMapX, 10, "monster overlap group target x");
     ASSERT_EQ(result.outActionGroup.targetMapY, 11, "monster overlap group target y");
-    ASSERT_EQ(result.outActionGroup.defenderSlotOrCreatureIndex, 10, "monster overlap preserves creature type");
-    ASSERT_EQ(result.outActionGroup.rawAttackValue, 4, "poison cloud attack 96 >> 5 = 3, F0192 resistance-adjusted for C10 (r=5): 3*8/6 = 4");
+    ASSERT_EQ(result.outActionGroup.defenderSlotOrCreatureIndex, 2, "monster overlap preserves creature type");
+    ASSERT_EQ(result.outActionGroup.rawAttackValue, 8, "poison cloud attack 96 >> 5 = 3, F0192 for C02 (r=2): 3*8/3 = 8");
     ASSERT_EQ(result.resultKind, EXPLOSION_RESULT_ADVANCED_FRAME, "monster overlap cloud continues");
     ASSERT_EQ(result.despawn, 0, "monster overlap cloud remains live");
     ASSERT_EQ(next.attack, 93, "monster overlap cloud decays by 3 at boundary");
