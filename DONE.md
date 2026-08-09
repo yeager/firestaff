@@ -1,3 +1,12 @@
+# README: tydlig originalplattform och mindre brus (2026-08-09)
+
+- ✅ README beskriver nu vilka originalutgåvor som skannern känner igen,
+  inklusive Atari ST, Amiga och FM Towns för Dungeon Master och Chaos Strikes
+  Back. Den skiljer tydligt mellan igenkänd media och färdig spelbar väg.
+- ✅ Irrelevanta originalemulatorbilder, capture-resonemang och intern
+  verifieringsjargong har tagits bort från README. Detaljerad teknisk
+  dokumentation finns kvar i dokumentationsindexet.
+
 # CSB FM Towns: säker F31-återupptagning (2026-08-09)
 
 - ✅ En användarvald FM Towns F31-sparfil kan nu återupptas från den aktiva

@@ -1,108 +1,74 @@
 # Firestaff
 
-**Five Dungeon Master games. One engine. Your original data.**
+Firestaff is a clean-room engine project for the Dungeon Master family of
+games. It reads original game media supplied by the player, identifies it by
+content hash and keeps platform-specific behaviour tied to the best available
+source and format references.
 
-Firestaff is a source-faithful reimplementation of Dungeon Master engines,
-built from scratch in portable C. **The only currently available playable
-game is Dungeon Master v1 (PC DOS 3.4).** CSB, DM2, Theron's Quest and DM
-Nexus are development targets and are not presented as finished games.
-
-Status reviewed 2026-08-09. For the exact boundary, see
-[project status](docs/PROJECT_STATUS.md); for missing functions and evidence,
-see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
+Dungeon Master for PC DOS 3.4 is the current playable route. Chaos Strikes
+Back, Dungeon Master II, DM Nexus and Theron's Quest are under active
+development. Their presence in the launcher means that the supplied media was
+recognised, not that every campaign path is complete.
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Current game](https://img.shields.io/badge/current%20game-DM1%20v1-blue)]()
 
 <p align="center">
-  <img src="assets/branding/firestaff-logo.png" alt="Firestaff logo" width="360">
+  <img src="assets/branding/firestaff-logo.png" alt="Firestaff" width="360">
 </p>
 
-## Supported Games
+## What you can use today
 
-| Game | Original data | Reference Source | Status |
-|------|---------------|-----------------|--------|
-| **Dungeon Master v1** | PC DOS 3.4 | ReDMCSB / DMWeb | **Playable V1; parity work remains** |
-| **Chaos Strikes Back** | PC DOS 3.4 data | ReDMCSB / CSBWin | Active hardening |
-| **Dungeon Master II: Skullkeep** | DOS data | skproject | Active hardening |
-| **DM Nexus** | Sega Saturn data | Saturn disassembly | Active real-data bring-up |
-| **Theron's Quest** | PC Engine CD data | PC Engine disassembly | Active real-media bring-up |
+| Game | Current state |
+|---|---|
+| Dungeon Master | Playable, source-locked PC DOS 3.4 route with original-data startup, dungeon, HUD, input and saves. |
+| Chaos Strikes Back | Active real-data work. The launcher, data scanner, startup, utility, dungeon, HUD and save paths are being brought together across the original editions. Do not treat it as a finished campaign yet. |
+| Dungeon Master II: Skullkeep | Active real-data work on boot, utility, presentation and runtime systems. |
+| DM Nexus | Active Saturn-data bring-up. |
+| Theron's Quest | Active PC Engine CD-data bring-up. |
 
-## Evidence and screenshots
+The concise, current boundary for every game is in
+[Project status](docs/PROJECT_STATUS.md). The data required for each route is
+listed in [Game-data setup](docs/DATA_SETUP.md).
 
-![Authentic Theron's Quest US title screen](verification-screens/theron-quest-us-main-menu.png)
+## Original editions
 
-*Authentic original Theron's Quest US Track 02 title/menu capture through
-Mednafen, with the real System Card and CD media. This is original-game media
-evidence, not a Firestaff-rendered frame. Firestaff now has a source-only
-authenticated VDC/VCE replay route, but the runtime screenshot promotion gate
-remains closed until square-to-tile viewport semantics and the full Track 02
-consumer proof are available. See the [capture receipt](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).*
+Firestaff scans recursively. Keep your files in the layout that suits your
+collection: loose files, supported archives and supported disc images can all
+be discovered without renaming them. Required files are matched by hash, so a
+name alone never enables a launch.
 
-![Authentic Theron's Quest US dungeon capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
+| Game | Original editions recognised by the data scanner | Notes |
+|---|---|---|
+| Dungeon Master | PC DOS 3.4, Atari ST, Amiga and FM Towns | PC DOS 3.4 is the playable route. The other editions are retained as real media sources for their own startup, graphics and format work. |
+| Chaos Strikes Back | PC DOS 3.4, Atari ST 2.0/2.1, Amiga A31/A35 and FM Towns | PC DOS 3.4 is the main runtime route. Atari, Amiga and FM Towns each have distinct files, startup programs and save formats; Firestaff does not substitute one platform's assets for another's. |
+| Dungeon Master II: Skullkeep | DOS, PC-9801/9821, FM Towns and Amiga editions covered by the catalog | Recognition and runtime coverage vary by edition. |
+| DM Nexus | Sega Saturn media | Keep the complete disc image and associated data together. |
+| Theron's Quest | PC Engine CD Japanese and US Track 02 media | Keep the original CUE/BIN set together when available. |
 
-*Authentic original Theron's Quest US Track 02 dungeon frame captured from
-Mednafen 1.32.1 after a real file-select/title route. The image uses the real
-US CD image and System Card; it is original-game evidence, not a claim that
-Firestaff's Theron renderer has reached parity. The visible pointer is the
-host pointer and is not a PC Engine mouse control.*
+For Chaos Strikes Back, FM Towns has separate English and Japanese Game and
+Utility programs. Its native F31 save reader accepts only a verified original
+save container. Atari and Amiga saves remain their own native formats. This
+is deliberate: copying a PC save or graphic into another edition would hide a
+compatibility error rather than preserve the game.
 
-Public screenshots are promoted only when the source-owned runtime route and
-the capture provenance are verified. Generated, placeholder or synthetic
-images are never presented as game evidence.
+## Getting started
 
-The [parity-evidence capture index](parity-evidence/) and the per-game status
-pages record what is verified today. A missing screenshot is an evidence gap,
-not proof that a feature does not exist.
+1. Obtain original media that you own legally.
+2. Start Firestaff once, then place the media under its data directory or
+   choose another directory in the launcher.
+3. Run a scan. A game is available only when the required hashes form a valid
+   matching set.
 
-## Why Firestaff?
+The default data directory is:
 
-**Source-faithful, not guesswork.** Every gameplay-critical path is anchored to
-the best available reference source code. DM1 and CSB are locked against
-ReDMCSB. DM2 is locked against skproject. Nexus and Theron's Quest are verified
-through Saturn SH-2 disassembly and PC Engine CD analysis respectively. The
-codebase cites original source files and function names in comments so you can
-trace any behavior back to its reference.
-
-**Your data, verified.** Firestaff scans your game files by cryptographic hash,
-not by filename. Put files anywhere — loose, in ZIPs, in ISO/BIN disc images —
-and the scanner finds them. The checked-in hash catalog covers original assets
-across all five games and their documented variants. Games with missing
-required data cannot launch; there is no guessing or silent fallback.
-
-**Two presentation paths.** Games with a verified runtime route offer
-pixel-perfect **Original** rendering at the native resolution and selectable
-**Custom** presentation modes with filtered, upscaled and modern targets up to
-3840×2160. Custom always runs on top of the same source-locked engine — it
-never bypasses collision, timing, combat or inventory logic. A game that has
-not passed its launch gate is documented as bring-up work, not as a finished
-playable target.
-
-**Preservation-grade documentation.** Thousands of parity-evidence receipts,
-focused tests and a [complete documentation index](docs/DOCUMENTATION_INDEX.md)
-with a [comprehensive wiki](https://github.com/yeager/firestaff/wiki) covering
-file formats, hardware architecture, reverse engineering details and
-source-reference boundaries for all five games.
-
-## Quick Start
-
-1. Use a published package when one is available, or [build from source](docs/wiki/Building-and-Installing.md).
-2. Run Firestaff once so the data directory is created.
-3. Copy or keep your legally owned game media under the data directory.
-4. Run `--scan-data` and launch only a game whose required source set is accepted.
-
-| Platform | Status | Data directory |
-|----------|--------|---------------|
-| macOS | **DM1 v1 playable; Apple Silicon runtime-verified** | `~/.firestaff/data/` |
-| Linux | Build target; packaged DM1 v1 runtime verification pending | `~/.firestaff/data/` |
-| Windows | Build target; packaged DM1 v1 runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
-| Steam Deck | Linux/AppImage target; packaged DM1 v1 verification pending | `~/.firestaff/data/` |
-| iOS / Android | Not supported today | No current target |
-
-Suggested layout:
-
+```text
+~/.firestaff/data/
 ```
+
+A convenient layout is:
+
+```text
 ~/.firestaff/data/
   dm1/
   csb/
@@ -111,254 +77,117 @@ Suggested layout:
   theron/
 ```
 
-See [game-data setup](docs/DATA_SETUP.md) for the exact required and optional
-original files for every game, including disc-image and archive media. In the
-development checkout, the authenticated corpus is kept outside Git under the
-user's `.firestaff/data/` directory; do not copy original game data into this
-repository.
-
-## In-game runtime panel
-
-Where the runtime panel is enabled, press **F10** to open the compact graphics
-and cheats panel. Change presentation, filters, effects, FPS overlay, window settings and
-the implemented shared cheat controls while the game is running; changes are
-applied and saved immediately. Use **Up/Down** plus **Left/Right** or the
-mouse, **Tab** for pages and **Esc** to close. See the [runtime panel guide](docs/runtime_graphics_and_cheats.md)
-for the complete control list and source-data boundaries.
-
-## Download
-
-The current verified playable scope is **DM1 v1 on macOS**. Linux, Windows and
-Steam Deck are build targets whose packaged runtime verification is still
-pending. No release or package implies that CSB, DM2, Theron's Quest or DM
-Nexus is playable. iOS and Android are not supported today.
-
-## Game Status
-
-### Dungeon Master (PC 3.4)
-
-Available and source-locked against ReDMCSB for the PC DOS 3.4 data path.
-The current runtime includes the title/entrance route, dungeon viewport,
-movement, HUD, Hall of Champions and original-data asset loading. Save corpus
-coverage and broader original-vs-Firestaff capture verification remain active
-work. In particular, an authenticated C13 save and complete pixel-pair
-coverage for viewport, creature-chain, champion HUD, panels, launcher, effects
-and Mac/app execution are still open. This README does not claim complete
-parity.
-
-### Chaos Strikes Back (PC 3.4)
-
-The source and runtime work is active, but CSB is not currently available as a
-finished playable release. No completed-playability claim is made here.
-
-### Dungeon Master II: Skullkeep
-
-DM2 bring-up work references skproject. It is not currently available as a
-finished playable release.
-
-### DM Nexus (Sega Saturn)
-
-DM Nexus analysis and runtime bring-up are active. It is not currently
-available as a finished playable release.
-
-### Theron's Quest (PC Engine)
-
-Theron's Quest analysis and Track 02 bring-up are active. It is not currently
-available as a finished playable release. See
-[`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
-The authenticated media inventory and placeholder boundary are tracked in
-[`docs/THERON_REALDATA_INVENTORY.md`](docs/THERON_REALDATA_INVENTORY.md).
-Firestaff-rendered Theron screenshot promotion is controlled by the
-source-bound readiness and promotion gates in
-[`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md). The
-source-only VDC/VCE replay remains diagnostic evidence, not a Firestaff
-runtime screenshot; the images above are explicitly original-media captures
-and do not claim that the Firestaff promotion gate has passed.
-
-When the Firestaff Theron route is active, use **W**/**S** to move forward and
-backward and **A**/**D** to turn left and right. Mouse button 1 is PC Engine
-Button I and mouse button 2 is Button II. On touch screens, a short touch is
-Button I and a long touch is Button II. These are host-input bindings only;
-they do not promote the still-gated original Theron runtime semantics.
-
-For source-data investigation, an explicit authenticated fallback can load
-real Track 02 map/object records even when the original CD handoff has not
-been captured:
-
-```bash
-FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK=1 ./build/firestaff
-```
-
-This mode is clearly non-parity: it does not claim the original RNG, AI,
-T700/T900 consumers, runtime palette/tile ownership, or sound event routing.
-The default launch remains fail-closed until those consumers are authenticated.
-
-The cross-game status and evidence boundary are kept in
-[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Presentation work follows
-the same order for every game: startup, menu, HUD, then viewport.
-The complete documentation map is in
-[`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md). Historical
-verification output is kept outside the repository in the
-[external preservation archive](docs/PRESERVATION_ARCHIVE.md); active CTest
-verifiers and explicit synthetic fixtures remain in the tree where the build
-uses them.
-Preservation rules and capture provenance are in
-[`docs/wiki/Preservation.md`](docs/wiki/Preservation.md). The synthetic-data
-inventory is in [`docs/SYNTHETIC_DATA_BY_GAME.md`](docs/SYNTHETIC_DATA_BY_GAME.md).
-
-## Graphics Modes
-
-| Mode | Resolution | Description |
-|------|-----------|-------------|
-| **Original** | 320×200 | Pixel-faithful rendering at the original cadence and palette |
-| **Custom** filtered | 640×400 – 3840×2160 | CRT-style scanlines, palette correction and sharpening |
-| **Custom** upscaled | 640×400 – 3840×2160 | Clean modern output preserving the original look |
-| **Custom** modern | 640×400 – 3840×2160 | New art and UI experiments |
-
-## Command-Line Options
-
-```
-firestaff [options]
-  --game <id>           Pre-select dm1, csb, dm2, nexus or theron
-  --scale-mode <n>      1=Original, 2=Custom enhanced, 3=Custom modern
-  --data-dir <path>     Game-data root directory
-  --scan-data           Scan and report found/missing game files
-  --fullscreen          Run fullscreen
-  --no-vsync            Disable vertical sync
-  --fps                 Show FPS counter
-  --duration <ms>       Run for a fixed duration (-1 = run until exit)
-  --width <px>          Window width
-  --height <px>         Window height
-  --script <cmds>       Comma-separated input script
-  --version             Print version and exit
-  --help, -h            Print help
-```
-
-Examples:
+The subdirectories are optional. Firestaff searches below the selected root.
+Never add game files, save files or disc images to this repository.
 
 ```bash
 firestaff --scan-data
-firestaff --game dm1 --scale-mode 1
-firestaff --data-dir ~/Games/DM --fullscreen
+firestaff --data-dir /path/to/games --scan-data
+firestaff --game dm1
 ```
 
-## Building from Source
+The scanner reports missing requirements clearly and blocks an incomplete or
+mismatched launch. Optional title, animation, utility and save files can add
+capabilities to an edition, but they do not replace its required graphics and
+dungeon data.
 
-Requirements: CMake 3.20+, a C11 compiler, SDL3, Ninja.
+## Platforms and presentation
+
+Firestaff builds for macOS, Windows and Linux. The packaged and runtime-tested
+scope differs by game, so use the game status above rather than assuming that
+a package makes every original edition playable.
+
+The engine offers the original 320×200 presentation where the source route is
+ready, plus optional filtered, upscaled and modern presentation modes. Those
+modes sit on top of the same game state and data gates; they are not a
+replacement for the original media.
+
+## Controls and launcher
+
+The launcher lets you select a game, graphics mode and data directory. It
+also reports which editions it found before a launch is attempted. In a live
+game, F10 opens the runtime panel for presentation options and the shared
+controls that are implemented for that route.
+
+Command-line options:
+
+```text
+firestaff [options]
+  --game <id>           Select dm1, csb, dm2, nexus or theron
+  --data-dir <path>     Game-data root
+  --scan-data           Scan recognised original media
+  --scale-mode <n>      Select presentation mode
+  --fullscreen          Run fullscreen
+  --no-vsync            Disable vertical sync
+  --fps                 Show the frame-rate counter
+  --duration <ms>       Run for a fixed duration
+  --width <px>          Window width
+  --height <px>         Window height
+  --script <cmds>       Comma-separated input script
+  --version             Print the version
+  --help, -h            Show help
+```
+
+## Build from source
+
+Firestaff is C11 with CMake and SDL3.
 
 ```bash
-brew install sdl3          # macOS
 git clone https://github.com/yeager/firestaff.git
 cd firestaff
-cmake -S . -B build -DCMAKE_C_COMPILER=cc -G Ninja
-ninja -C build
-./build/firestaff --help
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel
+./build/firestaff --scan-data
 ```
 
-Run the test suite:
+On macOS, SDL3 is available through Homebrew:
 
 ```bash
-ctest --test-dir build -j4 --output-on-failure
+brew install sdl3
 ```
 
-Some tests require original game data to pass.
+Run tests with:
 
-### Continuous integration
-
-Every push to `main` runs strict warnings, asset hygiene, native CMake builds
-on Ubuntu, macOS and Windows, headless probes and cross-platform determinism.
-The workflow cancels an older `main` run when a newer commit is pushed. A
-cancelled run is not a failed test; inspect the newest run before debugging
-CI. See [`docs/CI.md`](docs/CI.md) for the checks and common failure
-signatures.
-
-## Architecture
-
-```
-Launcher UI (M12)
-  └─ Game engine, render loop, input and audio (M11)
-       └─ Data layer, dungeon state, combat and timeline (M10)
-            └─ Original game files supplied by the player
+```bash
+ctest --test-dir build --output-on-failure
 ```
 
-| Directory | Purpose |
-|-----------|---------|
-| `src/engine/` | SDL3 loop, game view, rendering, input, save/load, audio |
-| `src/ui/` | Launcher, menu state, rendering, hit-testing |
-| `src/shared/` | Asset loading, hash validation, palette, config, localization |
-| `src/frontend/` | Title screens, entrance sequences, boot presentation |
-| `src/memory/` | Dungeon, movement, combat, sensors, timeline, savegame model |
-| `src/dm1/` | DM1 source-locked runtime |
-| `src/csb/` | Chaos Strikes Back runtime |
-| `src/dm2/` | Dungeon Master II runtime |
-| `src/nexus/` | DM Nexus Saturn runtime |
-| `src/tqr/` | Theron's Quest runtime |
-| `src/dm1v2/` | DM1 Custom presentation |
-| `tests/` | Thousands of integration tests and source-lock gates |
-| `parity-evidence/` | Thousands of verification documents |
+Some integration tests require a local, legally owned original-data corpus.
+Continuous integration checks warnings, build configurations, headless probes
+and determinism without committing game data to the repository.
 
-## The Engine in Numbers
+## How the project is built
 
-| Metric | Count |
-|--------|-------|
-| Lines of C | 1,000,000+ |
-| Source files | 2,600+ |
-| Headers | 2,500+ |
-| Test files | 3,200+ |
-| Automated checks | Thousands |
-| Parity-evidence documents | Thousands |
-| Verified game-data hashes | Cross-game catalog |
-| Currently verified game-language scope | DM1 v1 English only |
+```text
+M12  launcher and game-data selection
+M11  game view, rendering, input and audio
+M10  dungeon data, movement, combat, sensors and timeline
+      original files supplied by the player
+```
 
-## Source References
+DM1 and CSB work is cross-referenced against ReDMCSB. CSBWin, DMWeb and
+Greatstone are used for additional CSB and file-format evidence. DM2 work
+uses skproject, while Nexus and Theron's Quest are tied to their respective
+original-media and hardware references. Source comments identify the relevant
+function or format boundary where that helps future maintenance.
 
-- [ReDMCSB](http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z) — reconstructed C source for DM1 and CSB (PC 3.4)
-- [CSBWin](https://github.com/BeipDev/CSBWin) — Chaos Strikes Back reimplementation
-- [skproject](https://github.com/gbsphenx/skproject) — reconstructed C source for DM2
-- [Greatstone](http://greatstone.free.fr/dm/) — dungeon maps, data notes, graphics atlas
-- [DMWeb](http://dmweb.free.fr/) — community documentation, file format specs, tools
+Useful documentation:
 
-## Languages
-
-The only currently playable game is **DM1 v1**, and its verified runtime
-language is **English**. The launcher has UTF-8/gettext catalog and
-language-selection plumbing, including Swedish, but that does not yet mean
-that every menu, runtime message, font and game asset is fully translated.
-Swedish and other languages remain development targets until complete runtime
-verification is available. CSB, DM2, Theron's Quest and DM Nexus have no
-playable language/runtime claim yet.
-
-| Language | Current status |
-|----------|----------------|
-| English | **Verified for the DM1 v1 playable path on macOS** |
-| Swedish | Launcher/catalog plumbing present; full DM1 v1 runtime verification pending |
-| Other languages | Catalog and complete runtime verification pending |
-
-## Wiki
-
-The [Firestaff Wiki](https://github.com/yeager/firestaff/wiki) has detailed
-documentation for users, developers and preservationists:
-
-The repository's [project status](docs/PROJECT_STATUS.md) is the canonical
-short summary; the wiki expands each game's formats, hardware and reverse-
-engineering evidence without changing the playability claims.
-
-- Per-platform install guides (macOS, Windows, Linux, iOS AltStore, Android sideload)
-- Reverse engineering documentation for all five games (function registries, file formats, data structures)
-- File format specifications: DUNGEON.DAT, GRAPHICS.DAT (IMG3/IMG1/GDAT), save formats
-- Technical references and source-lock architecture
-- Deep internals: DM1 PC34, CSB DSA, DM2 GDAT, Nexus DGN/PRS3/Saturn hardware, Theron's Quest Track 02
-- Preservation worklists for ReDMCSB, CSBWin and skproject
+- [Project status](docs/PROJECT_STATUS.md)
+- [Game-data setup](docs/DATA_SETUP.md)
+- [CI notes](docs/CI.md)
+- [Documentation index](docs/DOCUMENTATION_INDEX.md)
+- [Firestaff wiki](https://github.com/yeager/firestaff/wiki)
 
 ## Legal
 
-Firestaff is a clean-room engine reimplementation. You need original game files
-that you legally own. No copyrighted game data is included.
+Firestaff contains no copyrighted game data. You need original files that you
+own legally.
 
-Dungeon Master, Chaos Strikes Back and Dungeon Master II are trademarks of FTL
-Games. DM Nexus is a trademark of Victor Interactive Software. Theron's Quest is
-a trademark of Working Designs / Victor Interactive Software.
+Dungeon Master, Chaos Strikes Back and Dungeon Master II are trademarks of
+FTL Games. DM Nexus is a trademark of Victor Interactive Software. Theron's
+Quest is associated with Working Designs and Victor Interactive Software.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE).
