@@ -23668,12 +23668,45 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         }
         if (m11_csb_is_fmtowns_profile(
                 (const CSB_V1_BootProfile *)state->csbBootProfile)) {
-            /* See the matching F0433 gate in QuickSave.  F0435 validates
-             * F31 platform identity plus the native obfuscated parts; it
-             * must not accept a private PC34-style snapshot as if it were
-             * original FM Towns media. */
-            m11_set_status(state, "LOAD", "FM TOWNS NATIVE SAVE REQUIRED");
-            return 0;
+            CSB_V1_FmtownsGameHandoffReceipt handoff;
+            CSB_V1_FmtownsStartupState startup_state;
+            CSB_V1_BootProfile *profile =
+                (CSB_V1_BootProfile *)state->csbBootProfile;
+
+            /* ReDMCSB STARTUP1.C F0435 and LOADSAVE.C F0435 validate the
+             * F31 C5 header, five obfuscated save parts and dungeon tail as
+             * one transaction.  A genuine user slot can therefore resume,
+             * while F0433 remains closed until byte-correct native writing
+             * is proven; no private M11 envelope is accepted here. */
+            memset(&handoff, 0, sizeof(handoff));
+            memset(&startup_state, 0, sizeof(startup_state));
+            if (!csb_v1_fmtowns_game_user_save_handoff_open(
+                    /* SWITCHTW has already been released when CHTWE/CHTWJ
+                     * enters C004, so retain the language from the admitted
+                     * Game program rather than consulting its cleared UI
+                     * selector. */
+                    profile, state->csbFmtownsGameHandoffReceipt.language, path,
+                    &handoff) ||
+                !csb_v1_fmtowns_game_load_startup_state(&handoff,
+                                                         &startup_state) ||
+                !csb_v1_fmtowns_game_apply_startup_state(
+                    &startup_state, &profile->runtime)) {
+                csb_v1_fmtowns_game_startup_state_free(&startup_state);
+                m11_set_status(state, "LOAD", "FM TOWNS SAVE INVALID");
+                return 0;
+            }
+            csb_v1_fmtowns_game_startup_state_free(&startup_state);
+            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            state->loadGameTick = profile->runtime.game_time;
+            state->lastSaveTick = profile->runtime.game_time;
+            m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     "CSB RESTORED");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "TICK %u RELOADED FROM %s",
+                     (unsigned int)profile->runtime.game_time, path);
+            M12_Config_SetLastSavePath(path);
+            return 1;
         }
         /* ReDMCSB LOADSAVE.C F0435 restores CSB live globals from the save
          * file after the dungeon/profile is available.  M11 already owns

@@ -24,6 +24,16 @@
 
 static int failures;
 
+static int test_set_env(const char *name, const char *value)
+{
+#ifdef _WIN32
+    return _putenv_s(name, value ? value : "") == 0;
+#else
+    if (value) return setenv(name, value, 1) == 0;
+    return unsetenv(name) == 0;
+#endif
+}
+
 #define CHECK(condition, message) do { \
     if (!(condition)) { \
         fprintf(stderr, "FAIL: %s\n", (message)); \
@@ -63,9 +73,11 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
+    CSB_V1_FmtownsGameHandoffReceipt external_save_handoff;
     CSB_V1_PartyState mini_party;
     CSB_V1_FmtownsStartupPortraitReceipt mini_portraits;
     CSB_V1_FmtownsStartupState mini_state;
+    CSB_V1_FmtownsStartupState external_save_state;
     CSB_V1_DungeonData mini_dungeon;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
@@ -76,6 +88,7 @@ int main(void)
     CSB_V1_FmtownsItemDecodeReceipt utility_arrows_decode;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     DM1_V1_ChampionStatusRectPc34 champion_name_rect;
+    DM1_V1_EntranceMenuRouteReceiptPc34 hoc_menu_route;
     const CSB_V1_FmtownsSwitchButton *story_button;
     uint8_t music_track;
     unsigned int mini_active_index;
@@ -293,6 +306,22 @@ int main(void)
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
+    memset(&external_save_handoff, 0, sizeof(external_save_handoff));
+    memset(&external_save_state, 0, sizeof(external_save_state));
+    CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
+              (const CSB_V1_BootProfile *)view.csbBootProfile, language,
+              direct_handoff.startup_mini_path, &external_save_handoff) &&
+              external_save_handoff.valid &&
+              external_save_handoff.startup_mini_header_verified &&
+              external_save_handoff.startup_mini_save_parts_verified &&
+              external_save_handoff.startup_mini_dungeon_tail_verified &&
+              csb_v1_fmtowns_game_load_startup_state(
+                  &external_save_handoff, &external_save_state) &&
+              external_save_state.game_time == direct_handoff.startup_mini_game_time &&
+              external_save_state.party.PartyMapX == 22 &&
+              external_save_state.party.PartyMapY == 18,
+          "F31 F0435 admits an external native save candidate without a retail hash");
+    csb_v1_fmtowns_game_startup_state_free(&external_save_state);
     memset(&mini_party, 0, sizeof(mini_party));
     CHECK(csb_v1_fmtowns_game_load_startup_party(&direct_handoff, &mini_party) &&
               mini_party.ChampionCount == 1 &&
@@ -722,13 +751,40 @@ int main(void)
                   DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
                   !view.inventoryPanelActive,
               "F31 live pointer closes that inventory through C007");
-        /* A user save must be the original F31 F0433/F0435 container.  No
-         * authentic FM Towns corpus is available here, so the live session
-         * must reject the generic Firestaff snapshot rather than manufacture
-         * a file and present it as a native save. */
-        CHECK(!M11_GameView_QuickSave(&view) &&
-                  !M11_GameView_QuickLoad(&view),
-              "F31 live session refuses a non-native save envelope");
+        /* F0433 stays closed: Firestaff must never write a private envelope
+         * over a native F31 slot.  F0435, however, may resume the selected
+         * authentic save after verifying its C5 header, five save parts and
+         * dungeon tail.  MINI.DAT is a real source-native F31 candidate here,
+         * not generated test data. */
+        CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH",
+                           direct_handoff.startup_mini_path),
+              "F31 resume test selects the authentic native save candidate");
+        CHECK(!M11_GameView_QuickSave(&view),
+              "F31 live session never writes a private envelope");
+        memset(&external_save_handoff, 0, sizeof(external_save_handoff));
+        CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
+                  (const CSB_V1_BootProfile *)view.csbBootProfile, language,
+                  direct_handoff.startup_mini_path, &external_save_handoff),
+              "F31 live profile continues to admit the selected native save");
+        memset(&external_save_state, 0, sizeof(external_save_state));
+        CHECK(csb_v1_fmtowns_game_load_startup_state(
+                  &external_save_handoff, &external_save_state),
+              "F31 live profile decodes the selected native save state");
+        csb_v1_fmtowns_game_startup_state_free(&external_save_state);
+        memset(&hoc_menu_route, 0, sizeof(hoc_menu_route));
+        CHECK(!M11_GameView_GetDm1HocMenuRouteReceipt(&view, &hoc_menu_route) ||
+                  (!hoc_menu_route.showChampionPanel &&
+                   !hoc_menu_route.showResurrectReincarnateChoices),
+              "F31 native resume is not hidden behind an active mirror panel");
+        result = M11_GameView_QuickLoad(&view);
+        CHECK(result,
+              "F31 live session restores a native F0435 candidate");
+        CHECK(live_profile && live_profile->runtime.game_time ==
+                  direct_handoff.startup_mini_game_time &&
+                  live_profile->runtime.party_x == 22 &&
+                  live_profile->runtime.party_y == 18,
+              "F31 native resume restores the saved source-owned party state");
+        (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
     }
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
      * The atomic F31 resume owns map 4 and its saved pose, so query the

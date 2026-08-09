@@ -278,6 +278,17 @@ int csb_v1_fmtowns_game_handoff_open(
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsGameHandoffReceipt *out_receipt);
 
+/* Admit an external, user-selected F31 C5 save after the matching retail
+ * C03 program has already passed csb_v1_fmtowns_game_handoff_open().  Unlike
+ * the bundled MINI.DAT seed, a user save has no fixed retail hash: F7061,
+ * all five F7057 parts and F7063 must therefore validate it as one native
+ * F0435 candidate.  This is load-only; it does not claim F0433 write-back. */
+int csb_v1_fmtowns_game_user_save_handoff_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    const char *save_path,
+    CSB_V1_FmtownsGameHandoffReceipt *out_receipt);
+
 /* Copy only the F7063-verified dungeon bytes, excluding the trailing F7059
  * checksum word. This does not transfer ownership to a runtime or imply that
  * F31 save restoration is complete. */

@@ -1,3 +1,14 @@
+# CSB FM Towns: säker F31-återupptagning (2026-08-09)
+
+- ✅ En användarvald FM Towns F31-sparfil kan nu återupptas från den aktiva
+  CSB-sessionen. Den godtas först när rätt språkägda C03-program har
+  verifierats och F7061-headern, samtliga fem F7057-delar samt F7063:s
+  dungeon-tail har klarat originalets kontroller.
+- ✅ F0433-skrivning är fortfarande spärrad. Firestaff skriver alltså inte en
+  privat eller delvis rekonstruerad fil över en äkta FM Towns-save innan
+  bytekorrekt write-back och backupflöde har verifierats mot ett verkligt
+  användarsparat corpus.
+
 # Theron: Firestaff WASD, mus och touch (2026-08-09)
 
 - ✅ Firestaffs aktiva Theron-route använder W/S för framåt/bakåt och A/D för
