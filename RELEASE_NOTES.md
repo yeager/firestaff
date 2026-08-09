@@ -1,4 +1,4 @@
-# Firestaff v3.0.306
+# Firestaff v3.0.307
 
 ## Firestaff
 
@@ -46,6 +46,29 @@
 - `m11_platform_override`: Fix explicit `--platform auto` so it clears a
   stale persisted edition choice and selects the authenticated DM1 version
   found in the requested data directory.
+
+## CSB
+
+### Changed
+
+- `CSB platform selection`: Change selection to use a launchable Amiga A31M/A35 profile when
+  it is present, while keeping the independently scanned A31E route blocked
+  until its native APPB handoff is verified.
+- `CSB F0128 viewport`: Bind the source viewport to its 224×136 screen
+  rectangle at `(48, 33)`, preserving the HUD and chrome outside that area.
+- `CSB FM Towns Utility`: Change the C06 editor renderer to retain the
+  selected authentic `MINI.DAT` portrait in its zoom panel.
+
+### Fixed
+
+- `CSB Entrance input`: Fix pointer dispatch to keep ownership with the title and entrance
+  route until C03_GAME takes over, so a right-click cannot start the Prison
+  door sequence.
+- `CSB native save recovery`: Restore an Atari or Amiga `.BAK` to its
+  canonical slot before applying it to runtime state, and reject the load if
+  that recovery cannot complete.
+- `CSB Atari save handoff`: Fix write-back to preserve the authenticated GAMEBLOCK2 random seed
+  when a native save is written back.
 
 ## DM2
 
