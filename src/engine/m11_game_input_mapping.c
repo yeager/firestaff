@@ -115,7 +115,12 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
 M12_MenuInput M11_TheronMouseButtonToInput(int button)
 {
     if (button == SDL_BUTTON_LEFT) return M12_MENU_INPUT_ACCEPT;
-    if (button == SDL_BUTTON_RIGHT) return M12_MENU_INPUT_ACTION;
+    /* The user-facing Theron contract is mouse button 1/2.  SDL numbers
+     * those physical buttons as LEFT=1 and MIDDLE=2; RIGHT=3 remains a
+     * useful secondary-button alias for two-button mice and trackpads. */
+    if (button == SDL_BUTTON_MIDDLE || button == SDL_BUTTON_RIGHT) {
+        return M12_MENU_INPUT_ACTION;
+    }
     return M12_MENU_INPUT_NONE;
 }
 

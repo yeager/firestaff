@@ -67,6 +67,8 @@
 - ✅ Firestaffs aktiva Theron-route använder W/S för framåt/bakåt och A/D för
   vänster/höger vändning. Musknapp 1/2 är Button I/II och kort/lång touch är
   samma Button I/II-par.
+- ✅ SDL:s fysiska knapp 2 (`SDL_BUTTON_MIDDLE`) går nu faktiskt till Button
+  II; högerknappen finns kvar som kompatibilitetsalias för tvåknappsmöss.
 
 # DM2 New Game: teleporterbunden ljus- och ljudkontext (2026-08-09)
 

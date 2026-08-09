@@ -106,10 +106,13 @@ int main(void) {
           M12_MENU_INPUT_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
+    /* SDL's physical mouse button 2 is SDL_BUTTON_MIDDLE.  Theron exposes
+     * the PC Engine Button II contract as mouse button 2; RIGHT is retained
+     * as a compatibility alias for conventional two-button mice. */
+    CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
+          M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
           M12_MENU_INPUT_ACTION);
-    CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
-          M12_MENU_INPUT_NONE);
     CHECK(M11_TheronTouchButtonInput(0) == M12_MENU_INPUT_ACCEPT);
     CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_ACTION);
 

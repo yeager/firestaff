@@ -4840,7 +4840,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         }
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
             gameView && gameView->active &&
-            (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
+            (ev.button.button == SDL_BUTTON_LEFT ||
+             ev.button.button == SDL_BUTTON_MIDDLE ||
+             ev.button.button == SDL_BUTTON_RIGHT)) {
             if (m11_game_view_is_theron(gameView)) {
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
@@ -5347,7 +5349,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         }
         if (ev.type == SDL_MOUSEBUTTONDOWN &&
             gameView && gameView->active &&
-            (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
+            (ev.button.button == SDL_BUTTON_LEFT ||
+             ev.button.button == SDL_BUTTON_MIDDLE ||
+             ev.button.button == SDL_BUTTON_RIGHT)) {
             if (m11_game_view_is_theron(gameView)) {
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
