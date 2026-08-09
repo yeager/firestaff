@@ -220,6 +220,10 @@ static void print_scan_game(const M12_AssetStatus* status,
         printf("\n");
     }
     if (strcmp(gameId, "csb") == 0) {
+        const char* blockReason = M12_AssetStatus_GetCSBLaunchBlockReason(status);
+        if (!ready && blockReason[0] != '\0') {
+            printf("  Launch blocked: %s\n", blockReason);
+        }
         print_csb_verified_editions(status);
         print_csb_verified_source_media(status);
     }

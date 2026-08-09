@@ -4112,6 +4112,45 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
     }
 }
 
+/* ReDMCSB COMPILE.H:199-213 gives A31E its own C03_GAME APPB.FTL program.
+ * It is not A31M: COMPILE.H:246-269 gives A31M a C08_LANG APPB followed by
+ * KAOS, and APPA.C:51-85 owns its TITL/ANIM loop.  The authenticated A31E
+ * GRAPHICS.DAT/DUNGEON.DAT pair is useful discovery evidence, but we do not
+ * have a hash-verified A31E APPB program or a native C03 handoff yet.  Do
+ * not advertise that lone package as launchable and then fail in M11 after
+ * materialisation.  Other independently launchable CSB editions in the same
+ * root remain available. */
+static void m12_apply_csb_a31e_native_handoff_gate(M12_AssetStatus* status,
+                                                    int gameIndex) {
+    int a31eIndex;
+    size_t i;
+    int otherEditionMatched = 0;
+    M12_AssetVersionStatus* a31e;
+
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) {
+        return;
+    }
+    a31eIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    if (a31eIndex < 0) return;
+    a31e = &status->versions[gameIndex][a31eIndex];
+    if (!a31e->matched) return;
+    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+        const M12_AssetVersionStatus* candidate =
+            &status->versions[gameIndex][i];
+        if (candidate->matched && candidate != a31e) {
+            otherEditionMatched = 1;
+            break;
+        }
+    }
+    if (otherEditionMatched) return;
+    status->csbAvailable = 0;
+    m12_copy_string(status->csbLaunchBlockReason,
+                    sizeof(status->csbLaunchBlockReason),
+                    "Amiga 3.1 English requires a hash-verified native "
+                    "APPB.FTL C03 handoff; A31M TITL/APPA is incompatible.");
+}
+
 static int m12_materialize_csb_fmtowns_runtime_cache(
     M12_AssetStatus* status, int gameIndex,
     const M12_AssetVersionStatus* version, const char* gameCacheDir,
@@ -5413,6 +5452,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         if (!m12_materialize_runtime_cache_for_game(status, i)) {
             m12_apply_required_game_availability(status, i, 0);
         }
+        m12_apply_csb_a31e_native_handoff_gate(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
     }
     if (!m12_scan_progress_update(&progressCtx,
@@ -5679,6 +5719,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (!m12_materialize_runtime_cache_for_game(status, gameIndex)) {
         m12_apply_required_game_availability(status, gameIndex, 0);
     }
+    m12_apply_csb_a31e_native_handoff_gate(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
@@ -5724,6 +5765,14 @@ int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
         return status->theronAvailable;
     }
     return 0;
+}
+
+const char* M12_AssetStatus_GetCSBLaunchBlockReason(
+    const M12_AssetStatus* status) {
+    if (!status || status->csbLaunchBlockReason[0] == '\0') {
+        return "";
+    }
+    return status->csbLaunchBlockReason;
 }
 
 int M12_AssetStatus_HasOriginalFileCandidate(const M12_AssetStatus* status) {

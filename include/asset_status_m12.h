@@ -99,6 +99,11 @@ typedef struct {
     int nexusAvailable;
     int theronAvailable;
 
+    /* A base hash pair is not by itself a promise that every platform
+     * executable family can enter the game.  This records the explicit CSB
+     * platform gate used by both the launcher and --scan-data. */
+    char csbLaunchBlockReason[160];
+
     int originalFileCandidateFound;
 
     /* V2.2 Modern Graphics asset pack — set to 1 if
@@ -147,6 +152,11 @@ const M12_AssetScanProgress* M12_AssetStatus_GetScanProgress(
 void M12_AssetStatus_RequestCancel(M12_AssetStatus* status);
 int M12_AssetStatus_GameAvailable(const M12_AssetStatus* status,
                                   const char* gameId);
+/* Empty unless CSB's discovered source media is intentionally blocked from
+ * launch.  The returned text is a stable diagnostic, not a translated UI
+ * string. */
+const char* M12_AssetStatus_GetCSBLaunchBlockReason(
+    const M12_AssetStatus* status);
 int M12_AssetStatus_HasOriginalFileCandidate(const M12_AssetStatus* status);
 int M12_AssetStatus_GameHasCompleteHashSet(const char* gameId);
 size_t M12_AssetStatus_GameKnownHashCount(const char* gameId);
