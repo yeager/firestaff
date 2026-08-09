@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: VDP1-transporten är nu validerad genom en separat same-session
+  snapshot vid `0x10a00`, med bundna write- och writer-code-traces. VDP2-
+  frame-hooken saknas fortfarande i den aktiva körningen; nästa steg är att
+  binda snapshotten till komplett draw-lista, CLUT och VDP2-komposition utan
+  att godkänna den som meny eller viewport.
+
 - 🔧 Theron capture-intag: `THERON_CAPTURE_AUTOLOAD_STATE` avvisar nu
   autentiska 2 KiB `HUBM`-SRAM-filer innan Mednafen startas. En riktig extern
   Mednafen-savestate (`*.mc0`, gzip/`MDFNSVST`) är nu verifierad och kan
@@ -10,10 +16,6 @@
   använder `Z`/`X` för PCE Button I/II; komma/punkt ska inte antas fungera
   utan en uttrycklig lokal Mednafen-mappning.
 
-- 🔧 Nexus: en autentisk reset-frame är validerad med rena VDP2/VDP1-bytes,
-  men aktiv VDP1-draw-lista från `skip=300` saknas ännu. Mednafen lämnar inte
-  frame-hooken före launcher-timeout; nästa steg är att få signal-/framevägen
-  att slutföra utan att godkänna reset som meny eller viewport.
 
 - 🔧 Nexus: den rena VDP1-patch-smoken är nu korrekt, men den nya externa
   builden gav ännu inget raw-vittne inom timeout. Writer-PC, VRAM-källa och

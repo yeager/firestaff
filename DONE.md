@@ -13,6 +13,16 @@
 - ✅ Mednafenprofilen verifierar PCE Button I/1 = `Z` och Button II/2 = `X`.
   Komma/punkt är inte en säker standardbindning på macOS; de måste mappas
   uttryckligen i den lokala `mednafen.cfg` om de ska användas.
+# Nexus VDP1 same-session snapshot witness (2026-08-09)
+
+- ✅ Den externa Mednafen-binären producerar nu en separat VDP1-snapshot vid
+  den autentiserade källskrivningen `0x10a00`. Snapshotten valideras till
+  `FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1`, `ptmr=0x02`, `edsr=0x03` och 1 048 577
+  bytes VDP1-payload. Manifestet binder snapshot, VDP1-write-trace och
+  writer-code-trace från samma session.
+- ✅ VDP1-transportmålet är uppnått. CLUT, komplett draw-lista och semantisk
+  startup-/meny-/HUD-/viewport-komposition är fortfarande spärrade tills en
+  senare snapshot binder dessa konsumenter.
 
 # Theron savestate-intag (2026-08-09)
 

@@ -55,6 +55,31 @@ write-trace och writer-code-trace till manifestet även om VDP2-capturen avbryts
 Det gör ett negativt frame-resultat granskningsbart utan att uppgradera det till
 ett raw- eller skärmbevis.
 
+## Fristående VDP1-snapshot
+
+När VDP1-writes når en känd källadress kan den instrumenterade binären även
+skriva `FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1` till fil. Följande miljövariabler
+används av den externa launchern:
+
+```sh
+FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT=/extern/nexus-capture/run/vdp1-snapshot.raw
+FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT_AT=0x10a00
+```
+
+Snapshotten valideras med:
+
+```sh
+python3 scripts/validate_nexus_vdp1_snapshot.py \
+  /extern/nexus-capture/run/vdp1-snapshot.raw
+```
+
+Den validerade körningen på extern disk gav VDP1-state `ptmr=0x02`,
+`edsr=0x03`, en 1 048 577-byte VDP1-payload och writer-code vid `0x10a00` i
+samma session. Detta uppnår VDP1-transportbeviset. Snapshotten tas dock vid
+den första matchande källskrivningen; den är därför inte i sig bevis på en
+komplett draw-lista, CLUT-bindning eller startup-/meny-/HUD-/viewport-
+komposition.
+
 Den verifierade macOS-observationen är därför:
 
 - `SDL_AUDIODRIVER=dummy` vidarebefordras reproducerbart till extern Mednafen-

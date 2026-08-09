@@ -56,10 +56,13 @@ os.chmod(sys.argv[1], 0o755)
 PY
 write_trace="$tmp_dir/vdp1-writes.trace"
 writer_code_trace="$tmp_dir/writer-code.trace"
+snapshot="$tmp_dir/vdp1-snapshot.raw"
 printf 'write-receipt' > "$write_trace"
 printf 'writer-code-receipt' > "$writer_code_trace"
+printf 'snapshot-receipt' > "$snapshot"
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="$write_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="$writer_code_trace" \
+FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT="$snapshot" \
 "$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
@@ -69,6 +72,7 @@ grep -Fq 'raw_sha256=' "$tmp_dir/manifest-real.txt"
 grep -Fq 'raw_bytes=24' "$tmp_dir/manifest-real.txt"
 grep -Fq "vdp1_write_trace_sha256=$(shasum -a 256 "$write_trace" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
 grep -Fq "vdp1_writer_code_trace_sha256=$(shasum -a 256 "$writer_code_trace" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
+grep -Fq "vdp1_snapshot_sha256=$(shasum -a 256 "$snapshot" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
 if "$launcher" --operator-only --launch --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
