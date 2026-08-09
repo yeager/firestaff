@@ -22,21 +22,27 @@ for this sidecar. It rejects malformed headers, non-contiguous sequences,
 non-bank coordinates, mismatched boundary flags and unrelated reads. Even a
 ready receipt has `semantic_publication_allowed == 0`.
 
-The companion `.spawn-registers` sidecar records A/X/Y/SP/P, MPR0, the
-disassembly-relevant `$B3-$BB` RAM bytes, logical PC and physical PC at
-`$4644`, `$4667`, `$C96B` and `$CC4C` boundary samples. Register-sidecar
-physical PCs are validated against the complete 21-bit HuC6280 bank address
-space; they are not required to be in the `$1Fxxxx` game-main-RAM window.
+The companion `.spawn-registers` sidecar is versioned as
+`source=mednafen-pce-instrumented-spawn-registers-v2`. It records A/X/Y/SP/P,
+MPR0, the selected instruction-page MPR (`mpr_pc`), the disassembly-relevant
+`$B3-$BB` RAM bytes, logical PC and physical PC at `$4644`, `$4667`, `$C96B`
+and `$CC4C` boundary samples. The parser requires
+`physical_pc == (mpr_pc << 13) | (pc & $1FFF)` and rejects the old unversioned
+sidecar format. This prevents a logical PC copied into `physical_pc` from
+being mistaken for authentic HuC6280 bank provenance.
 
 `theron_v1_mednafen_spawn_register_trace_parse_execution_window_file()` is a
 deliberately weaker admission path for an execution-only receipt. It requires
 both byte-locked consumer windows, contiguous records, valid bank coordinates
 and matching boundary flags, but does not require the `$4644` preconsumer or
-`$4667` helper. A genuine external-disk state capture produced 2,048 samples:
-2,035 in `$C96B-$CA69` and 13 in `$CC4C-$CD13`, with neither `$4644` nor
-`$4667` observed. The strict parser therefore rejects it as a complete spawn
-capture, while the execution-only parser records the authentic window entry
-without publishing RNG, creature, AI, loot or T700 semantics.
+`$4667` helper. A fresh external-disk state-autoload with the hash-verified US
+Track 02 medium produced 2,048 v2 samples: 2,035 in `$C96B-$CA69` and 13 in
+`$CC4C-$CD13`, with neither `$4644` nor `$4667` observed. The strict parser
+therefore rejects it as a complete spawn capture, while the execution-only
+parser records the authentic window entry without publishing RNG, creature,
+AI, loot or T700 semantics. Its transition receipt still reports zero
+game-owned CD-sector reads, so no later semantic gate is opened by this
+capture.
 
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.

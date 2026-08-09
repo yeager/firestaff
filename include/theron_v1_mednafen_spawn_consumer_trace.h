@@ -59,6 +59,7 @@ typedef struct {
     uint32_t last_pc;
     uint32_t first_physical_pc;
     uint32_t last_physical_pc;
+    uint8_t last_mpr_pc;
     uint8_t last_a;
     uint8_t last_x;
     uint8_t last_y;

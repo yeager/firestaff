@@ -139,7 +139,7 @@ static int parse_spawn_register_trace_file(
     file = fopen(path, "rb");
     if (!file) return 0;
     if (!read_line(file, line, sizeof(line)) ||
-        strcmp(line, "source=mednafen-pce-instrumented-spawn-registers") != 0) {
+        strcmp(line, "source=mednafen-pce-instrumented-spawn-registers-v2") != 0) {
         fclose(file);
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         return 0;
@@ -151,7 +151,7 @@ static int parse_spawn_register_trace_file(
 
     while (read_line(file, line, sizeof(line))) {
         unsigned int sequence, pc, physical_pc;
-        unsigned int a, x, y, sp, p, mpr0;
+        unsigned int a, x, y, sp, p, mpr0, mpr_pc;
         unsigned int b3, b4, b5, b6, b8, ba, bb;
         unsigned int c96b, cc4c, preconsumer, helper;
         int consumed = 0;
@@ -159,13 +159,14 @@ static int parse_spawn_register_trace_file(
         int expected_preconsumer, expected_helper;
 
         if (sscanf(line,
-                   "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u%n",
+                   "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x mpr_pc=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u%n",
                    &sequence, &pc, &physical_pc, &a, &x, &y, &sp, &p,
-                   &mpr0, &b3, &b4, &b5, &b6, &b8, &ba, &bb, &c96b,
-                   &cc4c, &preconsumer, &helper, &consumed) != 20 ||
+                   &mpr0, &mpr_pc, &b3, &b4, &b5, &b6, &b8, &ba, &bb, &c96b,
+                   &cc4c, &preconsumer, &helper, &consumed) != 21 ||
             line[consumed] != '\0' || pc > 0xffffu ||
-            physical_pc > 0xffffffffu || a > 0xffu || x > 0xffu ||
+            physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
             y > 0xffu || sp > 0xffu || p > 0xffu || mpr0 > 0xffu ||
+            mpr_pc > 0xffu ||
             b3 > 0xffu || b4 > 0xffu || b5 > 0xffu || b6 > 0xffu ||
             b8 > 0xffu || ba > 0xffu || bb > 0xffu) {
             out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
@@ -178,6 +179,7 @@ static int parse_spawn_register_trace_file(
         expected_helper = pc == 0x4667u;
         if (sequence != expected_sequence ||
             !huc6280_physical_address(physical_pc) ||
+            physical_pc != ((mpr_pc << 13u) | (pc & 0x1fffu)) ||
             c96b != (unsigned int)expected_c96b ||
             cc4c != (unsigned int)expected_cc4c ||
             preconsumer != (unsigned int)expected_preconsumer ||
@@ -203,6 +205,7 @@ static int parse_spawn_register_trace_file(
         }
         out->last_pc = pc;
         out->last_physical_pc = physical_pc;
+        out->last_mpr_pc = (uint8_t)mpr_pc;
         out->last_a = (uint8_t)a;
         out->last_x = (uint8_t)x;
         out->last_y = (uint8_t)y;

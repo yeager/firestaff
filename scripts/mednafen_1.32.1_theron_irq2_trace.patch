@@ -187,15 +187,15 @@ index 347482c4..61d4758e 100644
 +   {
 +    TheronIrq2TraceSpawnRegisters = fopen(path, "w");
 +    if(TheronIrq2TraceSpawnRegisters)
-+     fputs("source=mednafen-pce-instrumented-spawn-registers\n",
++     fputs("source=mednafen-pce-instrumented-spawn-registers-v2\n",
 +           TheronIrq2TraceSpawnRegisters);
 +   }
 +  }
 +  if(TheronIrq2TraceSpawnRegisters)
 +  {
-+   fprintf(TheronIrq2TraceSpawnRegisters, "spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u\n",
++   fprintf(TheronIrq2TraceSpawnRegisters, "spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr_pc=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u\n",
 +     TheronIrq2TraceSpawnRegisterSamples++, logical_pc, trace_physical_pc, reg_a, reg_x,
-+     reg_y, reg_sp, reg_p, reg_mpr0, ram_b3, ram_b4, ram_b5, ram_b6,
++     reg_y, reg_sp, reg_p, reg_mpr0, trace_mpr, ram_b3, ram_b4, ram_b5, ram_b6,
 +     ram_b8, ram_ba, ram_bb, logical_pc >= 0xc96b && logical_pc <= 0xca69,
 +     logical_pc >= 0xcc4c && logical_pc <= 0xcd13, logical_pc == 0x4644,
 +     logical_pc == 0x4667);

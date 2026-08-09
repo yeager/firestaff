@@ -4,6 +4,15 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — macOS global-HID receipt correction
 
+- ✅ Spawn-registersidecaren är nu versionerad till v2 och binder varje fysisk
+  PC till den MPR som faktiskt valdes för den logiska 8 KiB-sidan. Den gamla
+  versionslösa sidecaren kan inte längre passera parsern.
+- ✅ En ny headless state-autoload på extern disk med den hashverifierade US
+  Track 02-mediet producerade 2 048 v2-prover. Varje prov innehåller vald
+  `mpr_pc`, och parsern godkänner de autentiska `$C96B–$CA69`/`$CC4C–$CD13`
+  execution-window-kvittona; inga semantiska RNG-/creature-/AI-/T700-/T900-
+  regler öppnades eftersom kvittot fortfarande saknar spelägd CD-läsning och
+  `$4644`/`$4667`-returnkedjan.
 - ✅ Quartz-hjälparen kompilerar nu på riktigt: en kvarvarande referens till
   den obefintliga variabeln `activationAccepted` är borttagen. Capture-testet
   type-checkar hjälparen när `swiftc` finns, så komma/punkt-bindningar kan inte
