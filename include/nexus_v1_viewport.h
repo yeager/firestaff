@@ -187,6 +187,7 @@ typedef struct Nexus_Viewport {
      * the normal DGN mesh renderer and remains unused until the caller has
      * captured display-origin/system-clip state as part of the same trace. */
     Nexus_V1_Vdp1CaptureCompositeReceipt last_vdp1_capture_receipt;
+    Nexus_V1_Vdp1CaptureSequenceReceipt last_vdp1_sequence_receipt;
     Nexus_V1_Vdp2CaptureCompositeReceipt last_vdp2_capture_receipt;
     Nexus_V1_Vdp2TilemapCaptureReceipt last_vdp2_tilemap_capture_receipt;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
@@ -204,6 +205,11 @@ int nexus_viewport_replay_vdp1_capture(
     Nexus_Viewport *vp,
     const Nexus_V1_Vdp1CaptureCompositeInput *input,
     Nexus_V1_Vdp1CaptureCompositeReceipt *out_receipt);
+
+int nexus_viewport_replay_vdp1_capture_sequence(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp1CaptureSequenceInput *input,
+    Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt);
 
 int nexus_viewport_replay_vdp2_nbg1_capture(
     Nexus_Viewport *vp,

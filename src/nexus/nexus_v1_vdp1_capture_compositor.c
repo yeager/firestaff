@@ -1,5 +1,6 @@
 #include "nexus_v1_vdp1_capture_compositor.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static uint16_t read_le16(const uint8_t *p)
@@ -198,6 +199,65 @@ int nexus_v1_vdp1_capture_composite_mode1(
         input->palette_slot_base, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_rows);
+    receipt.valid = receipt.written_pixels > 0;
+    receipt.renderer_permitted = receipt.valid;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int nexus_v1_vdp1_capture_composite_mode1_sequence(
+    Nexus_Framebuffer *framebuffer,
+    const Nexus_V1_Vdp1CaptureSequenceInput *input,
+    Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1CaptureSequenceReceipt receipt;
+    Nexus_Framebuffer *working;
+    int i;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_receipt) return 0;
+    if (!framebuffer || !input || !input->commands ||
+        input->command_count <= 0 || input->command_count > 256 ||
+        !input->system_clip_state_verified ||
+        !input->local_coordinate_state_verified ||
+        !input->command_order_verified || !input->end_record_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    working = (Nexus_Framebuffer *)malloc(sizeof(*working));
+    if (!working) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    *working = *framebuffer;
+    receipt.sequence_state_verified = 1;
+    receipt.command_count = input->command_count;
+    receipt.command_order_verified = 1;
+    receipt.end_record_verified = 1;
+    for (i = 0; i < input->command_count; ++i) {
+        Nexus_V1_Vdp1CaptureCompositeReceipt command_receipt;
+        if (!nexus_v1_vdp1_capture_composite_mode1(
+                working, &input->commands[i], &command_receipt)) {
+            free(working);
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.command_frames_verified += command_receipt.command_framed;
+        receipt.source_joins_verified += command_receipt.source_join_verified;
+        receipt.palette_joins_verified += command_receipt.palette_join_verified;
+        receipt.written_pixels += command_receipt.written_pixels;
+        receipt.transparent_pixels += command_receipt.transparent_pixels;
+        receipt.end_code_pixels += command_receipt.end_code_pixels;
+    }
+    if (receipt.command_frames_verified != input->command_count ||
+        receipt.source_joins_verified != input->command_count ||
+        receipt.palette_joins_verified != input->command_count) {
+        free(working);
+        *out_receipt = receipt;
+        return 0;
+    }
+    *framebuffer = *working;
+    free(working);
     receipt.valid = receipt.written_pixels > 0;
     receipt.renderer_permitted = receipt.valid;
     *out_receipt = receipt;

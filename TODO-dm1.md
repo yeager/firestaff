@@ -29,6 +29,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   before recursive archive lookup. This prevents a virtual sibling edition
   from owning a PC34 launch; no data is copied or synthesized by this route.
 
+- 2026-08-09 C15/C25 ownership cleanup is complete: if an authenticated
+  persistent C25 update loses its source C15 record, the stale C15 is removed
+  before C25 despawn. This prevents a later F0115 scan from exposing an
+  orphaned source explosion. The focused F0213/F0220, F0248, and F0190
+  runtime checks pass.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
