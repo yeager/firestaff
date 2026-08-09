@@ -1971,6 +1971,7 @@ int theron_v1_world_runtime_media_bind_level_data_block(
 
 uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
     uint64_t h = THERON_HASH_FNV_OFFSET;
+    if (!world) return 0;
 
     /* Seed: party state */
     h = fnv64_word(h, THERON_HASH_SEED_PARTY);

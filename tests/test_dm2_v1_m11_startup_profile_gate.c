@@ -18,6 +18,7 @@
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_door_mechanics.h"
+#include "dm2_v1_creature_something_pc34_compat.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_new_game.h"
@@ -399,6 +400,52 @@ static int dm2_test_caii_storage_is_source_reset_ready(
         if (!slot || slot[0] != 0xffu || slot[1] != 0xffu) return 0;
     }
     return 1;
+}
+
+static int dm2_test_owner_static_gaf_uses_private_ai(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int index;
+
+    if (!owner || !owner->asset_loader || !owner->caii_source.valid ||
+        !owner->caii_map_candidates || !owner->caii_rng_initialized) {
+        return 0;
+    }
+    for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[index];
+        const DM2_AIDefinition *ai = NULL;
+        const uint8_t *record;
+        const uint8_t *anim = NULL;
+        DM2_V1_DropRng rng;
+        DM2_V1_CreatureAnimFrameReceipt receipt;
+        uint16_t adj_base;
+        int16_t frame_word;
+
+        if (!candidate->static_ai) continue;
+        record = dm2_v1_record_pool_address(&owner->record_pools,
+                                            candidate->record_handle);
+        if (!record ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) ||
+            !ai || (ai->w0AIFlags & 1u) == 0u) {
+            return 0;
+        }
+        adj_base = (uint16_t)record[8] | ((uint16_t)record[9] << 8);
+        frame_word = (int16_t)((uint16_t)record[10] |
+                               ((uint16_t)record[11] << 8));
+        rng = owner->caii_rng;
+        if (dm2_v1_creature_get_animation_frame_with_ai_spec(
+                owner->asset_loader, &rng, ai, record[4], 0x11,
+                &adj_base, &frame_word, &anim, candidate->packed_position,
+                &receipt) != 1 || !receipt.valid || !receipt.static_path ||
+            anim != NULL || rng.random != owner->caii_rng.random ||
+            (uint16_t)frame_word != candidate->static_animation_frame) {
+            return 0;
+        }
+        return 1;
+    }
+    return 0;
 }
 
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
@@ -2638,6 +2685,8 @@ int main(void) {
                         &new_game_world_owner) &&
                     dm2_test_caii_storage_is_source_reset_ready(
                         &new_game_world_owner) &&
+                    dm2_test_owner_static_gaf_uses_private_ai(
+                        &new_game_world_owner) &&
                     new_game_world_owner.validated_map_count == 44u &&
                     new_game_world_owner.validated_world_hash != 0u &&
                     new_game_world_owner.dyn4_materialized &&
@@ -2660,6 +2709,14 @@ int main(void) {
                     new_game_world_owner.sound_owner.sample_binding_count > 0u &&
                     new_game_world_owner.sound_owner.queue_entries != NULL &&
                     new_game_world_owner.sound_owner.sample_bindings != NULL &&
+                    new_game_world_owner.sound_owner.runtime_queue_initialized &&
+                    new_game_world_owner.sound_owner.positional_count == 0u &&
+                    new_game_world_owner.sound_owner.immediate_count == 0u &&
+                    new_game_world_owner.sound_owner.sound_enabled == 1 &&
+                    new_game_world_owner.sound_owner.master_sfx_volume == 7 &&
+                    new_game_world_owner.sound_owner.sample_slots[0] == -1 &&
+                    new_game_world_owner.sound_owner.sample_slots[
+                        DM2_V1_SOUND_SAMPLE_SLOT_COUNT - 1u] == -1 &&
                     new_game_world_owner.sound_owner.queue_entries[0].w_00 >= 0 &&
                     new_game_world_owner.sound_owner.queue_entries[0].w_05 >= 0 &&
                     new_game_world_owner.sound_owner.sample_bindings[0].raw_length > 0u &&
