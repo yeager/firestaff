@@ -12,6 +12,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   closes a data-discovery defect; it does not close the authentic C13-save or
   original-pixel capture gates.
 
+- 2026-08-09 Downloads audit found two distinct authentic PC 3.4 `DMSAVE.DAT`
+  files (both checksum-valid and F7057-envelope-valid). The second completes
+  a 15-event/15-active-group in-memory compatibility roundtrip. Neither file
+  has an adjacent operator provenance sidecar, and no C13 event count is
+  promoted from this discovery; the authenticated C13-save gate remains open.
+
+- 2026-08-09 release-capture validation now rejects negative, zero, and
+  overflowing framebuffer dimensions with a 64-bit size check. This closes a
+  metadata-safety defect only; it does not create or admit missing original
+  pixels.
+
 - 2026-08-09 verification-path repair is complete: pass76 route-state JSON is
   stored under `parity-evidence/verification`, and pass608/live-row checks no
   longer depend on the removed historical `verification-m11` path. This fixes

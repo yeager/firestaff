@@ -99,6 +99,9 @@
   before recursive archive lookup. The C015 bottom-row runtime probe now uses
   source-owned DM1 text state against that real nested data path and confirms
   host telemetry remains suppressed.
+- `DM1 release capture manifest`: Reject negative, zero, and overflowing
+  framebuffer dimensions before calculating the required byte span. Invalid
+  external capture metadata can no longer pass the release-evidence gate.
 - Restored the pass76 Firestaff route-state evidence at its current
   `parity-evidence/verification` path and updated the pass608/live-row gates
   and citations after the historical verification archive move.
