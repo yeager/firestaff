@@ -10290,10 +10290,11 @@ static void m11_csb_startup_apply_entrance_action_state_receipt(
     if (!state || !receipt || !receipt->handled) {
         return;
     }
-    /* ReDMCSB ENTRANCE.C:906-935 runs the real C01 switch sample before
-     * the 20-tick pre-door delay.  The startup receipt used to carry only
-     * the visual command state, leaving a verified PC3.4 Prison entry
-     * silent even though GRAPHICS.DAT is already the selected package.
+    /* ReDMCSB ENTRANCE.C:906-935 calls SOUND.C F0060 with C01 at period 112
+     * and source volume 1 before the 20-tick pre-door delay. The startup
+     * receipt used to carry only the visual command state, leaving a
+     * verified PC3.4 Prison entry silent even though GRAPHICS.DAT is already
+     * the selected package.
      *
      * Keep this intentionally narrow: PC34's DATA.C sound table maps C01
      * to the authenticated GRAPHICS.DAT record consumed by the regular
@@ -10315,7 +10316,7 @@ static void m11_csb_startup_apply_entrance_action_state_receipt(
         (profile->variant_id == CSB_V1_VARIANT_PC34_EN ||
          profile->variant_id == CSB_V1_VARIANT_PC34_MULTI)) {
         m11_audio_emit_source_sound_with_volume(
-            state, CSB_V1_SOUND_SWITCH, 3, M11_AUDIO_MARKER_NONE);
+            state, CSB_V1_SOUND_SWITCH, 1, M11_AUDIO_MARKER_NONE);
     }
     /* ReDMCSB ENTRANCE.C F0441/F0806 leaves the Utility wait loop before
      * it starts C002/C003 prison-door opening (or completes a resume).

@@ -1477,7 +1477,7 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.audioState.csbPc34RuntimeSoundByteCount > 0 &&
                     view.audioState.csbPc34RuntimeSoundTimerDivisor == 112 &&
                     view.audioState.csbPc34RuntimeSoundHash != 0u &&
-                    view.audioState.csbPc34RuntimeSoundSourceVolume == 3,
+                    view.audioState.csbPc34RuntimeSoundSourceVolume == 1,
                 "M11 CSB Prison Enter plays the authenticated PC34 C01 switch sample before the door delay");
     for (int i = 0;
          i < csb_v1_startup_entrance_pre_open_delay_ticks_pc34() + 1 &&
