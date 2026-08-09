@@ -20,10 +20,11 @@
   runtime face-urval, draw-order, transform/culling, VDP2-komposition eller
   produktionsrendering; `semantic_admission` förblir spärrad.
 
-- 🔧 Nexus: VDP1 mode-1 LUT-avkodaren är nu korrigerad till Saturns
-  `((CMDCOLR & ~3) << 2)`-adress och verifierad mot den autentiska
-  `COLR=0x3278 → 0xc9e0`-formen. Full runtime-presentation kräver fortfarande
-  capture-bunden draw-order, transform/culling och VDP1/VDP2-composition.
+- 🔧 Nexus: VDP1 mode-1 LUT-avkodaren använder nu Saturns ordadress
+  `((CMDCOLR & ~3) << 2)` med korrekt bytebuffer-omvandling. Den autentiska
+  formen `COLR=0x3278 → ord 0xc9e0 → byte 0x193c0` är verifierad. Full
+  runtime-presentation kräver fortfarande capture-bunden draw-order,
+  transform/culling och VDP1/VDP2-composition.
 
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`

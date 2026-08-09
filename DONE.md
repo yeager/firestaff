@@ -12,10 +12,11 @@
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns
-  dokumenterade/Mednafen-verifierade adress `((CMDCOLR & ~3) << 2)`.
-  Den autentiska Nexus-capture-exempeladressen `COLR=0x3278 → 0xc9e0` kan
-  därför inte längre misstolkas som ett åttabyte-steg. Lookup-testet och de
-  relevanta Nexus-regressionstesterna passerar.
+  dokumenterade/Mednafen-verifierade ordadress `((CMDCOLR & ~3) << 2)` och
+  omvandlar den uttryckligen till byteoffset för C:s bytebuffer. Den
+  autentiska Nexus-capture-exempeladressen `COLR=0x3278 → ord 0xc9e0 → byte
+  0x193c0` är därmed entydig. Lookup-testet och de relevanta Nexus-
+  regressionstesterna passerar.
 
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
