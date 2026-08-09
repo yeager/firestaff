@@ -144,6 +144,7 @@ int csb_v1_fmtowns_utility_render_editor(
     };
     uint8_t mirror[48u * 41u];
     uint8_t portrait[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
+    uint8_t selected_portrait[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
     CSB_V1_FmtownsItemDecodeReceipt decoded;
     unsigned int index, champion_count;
     size_t max_bytes;
@@ -171,7 +172,8 @@ int csb_v1_fmtowns_utility_render_editor(
                          CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES ||
         !csb_v1_fmtowns_portrait_decode_planar(
             portraits->source_bytes[selected_champion_index],
-            CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES, portrait, sizeof(portrait)))
+            CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES, selected_portrait,
+            sizeof(selected_portrait)))
         return 0;
 
     memset(pixels, C00_BLACK, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
@@ -199,11 +201,15 @@ int csb_v1_fmtowns_utility_render_editor(
              portrait_boxes[index].top, -1, pixels);
     }
     blit(mirror, 48, 41, 77, 56, -1, pixels);
-    blit(portrait, 32, 29, 83, 62, C01_DARK_GRAY, pixels);
+    /* ReDMCSB CEDT006.C F7031/F7033 keeps the selected portrait distinct
+     * from the top-row iteration.  Reusing the latter's scratch buffer here
+     * made the zoom pane show the final champion whenever the party held
+     * more than one original MINI.DAT portrait. */
+    blit(selected_portrait, 32, 29, 83, 62, C01_DARK_GRAY, pixels);
     for (index = 0u; index < 32u; ++index) {
         unsigned int y;
         for (y = 0u; y < 29u; ++y) {
-            uint8_t color = portrait[y * 32u + index];
+            uint8_t color = selected_portrait[y * 32u + index];
             fill((C06_Box){157 + (int)index * 3, 159 + (int)index * 3,
                             60 + (int)y * 3, 62 + (int)y * 3}, color, pixels);
         }

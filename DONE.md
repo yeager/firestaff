@@ -1696,6 +1696,10 @@
   genom PORTRAIT.C:s header- och F7251-avkodning. Den lokala retailskivan ger
   24 källposter; katalogen kan aldrig ersätta saknade filer med påhittade
   namn eller porträtt.
+- ✅ Zoomrutan behåller nu det valda MINI.DAT-porträttet separat från F7033:s
+  toppradsiteration. En realdatakontroll väljer en pixel där två av skivans
+  ursprungliga porträtt skiljer sig och verifierar att F7031 förstorar rätt
+  källa, även när C06-visningen innehåller flera kämpar.
 
 # CSB FM Towns MINI.DAT-porträtt bevaras från originaldata (2026-08-08)
 
