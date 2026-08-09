@@ -7,6 +7,13 @@ static int main_ram_address(uint32_t address) {
     return address >= 0x1f0000u && address < 0x1f8000u;
 }
 
+/* HuC6280 physical code can execute from any 8-bit MPR bank.  The
+ * $1fxxxx-only check belongs to data reads in the game main-RAM window, not
+ * to the register sidecar's disassembly PC. */
+static int huc6280_physical_address(uint32_t address) {
+    return address <= 0x1fffffu;
+}
+
 static int c96b_window(uint32_t pc) {
     return pc >= 0xc96bu && pc <= 0xca69u;
 }
@@ -115,8 +122,9 @@ int theron_v1_mednafen_spawn_consumer_trace_parse_file(
     return 1;
 }
 
-int theron_v1_mednafen_spawn_register_trace_parse_file(
-    const char *path, Theron_V1SpawnRegisterTraceReceipt *out) {
+static int parse_spawn_register_trace_file(
+    const char *path, Theron_V1SpawnRegisterTraceReceipt *out,
+    int require_runtime_edges) {
     FILE *file;
     char line[768];
     unsigned int expected_sequence = 0u;
@@ -168,7 +176,8 @@ int theron_v1_mednafen_spawn_register_trace_parse_file(
         expected_cc4c = cc4c_window(pc);
         expected_preconsumer = pc == 0x4644u;
         expected_helper = pc == 0x4667u;
-        if (sequence != expected_sequence || !main_ram_address(physical_pc) ||
+        if (sequence != expected_sequence ||
+            !huc6280_physical_address(physical_pc) ||
             c96b != (unsigned int)expected_c96b ||
             cc4c != (unsigned int)expected_cc4c ||
             preconsumer != (unsigned int)expected_preconsumer ||
@@ -176,7 +185,8 @@ int theron_v1_mednafen_spawn_register_trace_parse_file(
             !(expected_c96b || expected_cc4c || expected_preconsumer ||
               expected_helper)) {
             out->sequence_verified = sequence == expected_sequence;
-            out->bank_coordinates_verified = main_ram_address(physical_pc);
+            out->bank_coordinates_verified =
+                huc6280_physical_address(physical_pc);
             out->boundary_flags_verified =
                 c96b == (unsigned int)expected_c96b &&
                 cc4c == (unsigned int)expected_cc4c &&
@@ -215,12 +225,23 @@ int theron_v1_mednafen_spawn_register_trace_parse_file(
     }
     fclose(file);
     if (!saw_record || !out->c96b_window_seen || !out->cc4c_window_seen ||
-        !out->preconsumer_4644_seen || !out->helper_4667_seen) {
+        (require_runtime_edges &&
+         (!out->preconsumer_4644_seen || !out->helper_4667_seen))) {
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         return 0;
     }
     out->status = THERON_V1_SPAWN_CONSUMER_TRACE_READY;
     return 1;
+}
+
+int theron_v1_mednafen_spawn_register_trace_parse_file(
+    const char *path, Theron_V1SpawnRegisterTraceReceipt *out) {
+    return parse_spawn_register_trace_file(path, out, 1);
+}
+
+int theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
+    const char *path, Theron_V1SpawnRegisterTraceReceipt *out) {
+    return parse_spawn_register_trace_file(path, out, 0);
 }
 
 int theron_v1_mednafen_spawn_capture_correlate_files(

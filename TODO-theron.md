@@ -4,6 +4,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- ✅ En separat execution-window-parser godkänner nu den riktiga state-capturens
+  2 048 registerprover i `$C96B–$CA69`/`$CC4C–$CD13` även när `$4644` och
+  `$4667` saknas. Register-PC:n valideras mot HuC6280:s fulla 21-bitars
+  bankadressrymd i stället för felaktigt enbart `$1fxxxx`.
+- 🔒 Den strikta spawn-parsern och korrelationsgaten kräver fortfarande
+  `$4644`-preconsumer, `$4667`-helper och dynamiskt returkontrakt. Den nya
+  receipt-vägen publicerar inga RNG-, creature-, AI-, loot-, T700- eller
+  T900-regler.
 - ✅ Macens Mednafen-profil har nu en fungerande input-grab-genväg på
   `Ctrl+Shift+G`; standardens `Ctrl+Shift+Menu` fungerar inte på tangentbord
   utan Menu-tangent. Därmed kan explicit konfigurerade komma/punkt-bindningar

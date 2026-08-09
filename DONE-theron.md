@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — autentiserat execution-window-kvitto
+
+- ✅ Register-sidecaren från en riktig extern-disk state-capture kan nu
+  valideras separat genom båda disassembly-låsta konsumentfönstren: 2 048
+  prover totalt, 2 035 i `$C96B–$CA69` och 13 i `$CC4C–$CD13`.
+- ✅ Register-PC valideras mot HuC6280:s hela 21-bitars fysiska bankrymd;
+  `$0dxxxx`-kod från den autentiska capturen förväxlas inte med game-main-RAM.
+- 🔒 Capturen saknar fortfarande `$4644`/`$4667`-kanterna och return-ägarskap.
+  Den strikta spawn-gaten förblir stängd, liksom RNG, AI, T700, T900, loot och
+  senare spelsemantik.
+
 ## 2026-08-09 — macOS Mednafen input grabbing
 
 - ✅ Den lokala Mednafen-profilen på extern disk och användarens aktiva profil

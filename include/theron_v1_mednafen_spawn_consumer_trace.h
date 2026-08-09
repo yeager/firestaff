@@ -78,6 +78,13 @@ typedef struct {
 int theron_v1_mednafen_spawn_register_trace_parse_file(
     const char *path, Theron_V1SpawnRegisterTraceReceipt *out);
 
+/* Authenticated execution-window receipt for a real register sidecar. This
+ * admits less than the strict parser above: observing both disassembly bodies
+ * is useful evidence, but without the $4644 preconsumer and $4667 helper
+ * edges it is not a runtime RNG/spawn contract. */
+int theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
+    const char *path, Theron_V1SpawnRegisterTraceReceipt *out);
+
 /* Correlates the two sidecars emitted by one instrumented run.  This is a
  * stronger capture handoff than either parser alone, but it deliberately
  * remains non-semantic: the dynamic RAM-loaded callees and return ownership
