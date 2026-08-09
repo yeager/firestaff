@@ -84,6 +84,73 @@ static uint32_t dm2_test_fnv1a(const uint8_t *bytes, size_t byte_count) {
     return hash;
 }
 
+static int dm2_test_preselection_view_matches_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    static const struct {
+        uint8_t view_square;
+        int8_t forward;
+        int8_t lateral;
+    } expected[DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT] = {
+        { DM2_SQ_D0C, 1,  0 }, { DM2_SQ_D1C, 2,  0 },
+        { DM2_SQ_D2C, 3,  0 }, { DM2_SQ_D0L, 0, -1 },
+        { DM2_SQ_D0R, 0,  1 }, { DM2_SQ_D1L, 1, -1 },
+        { DM2_SQ_D1R, 1,  1 }, { DM2_SQ_D2L, 2, -1 },
+        { DM2_SQ_D2R, 2,  1 }, { DM2_SQ_D3L, 5, -2 },
+        { DM2_SQ_D3R, 5,  2 },
+    };
+    const DM2_V1_GameLoadPreselectionViewReceipt *view;
+    int direction;
+    int i;
+
+    if (!owner || !owner->preselection_view.valid ||
+        owner->preselection_view.map != owner->source_party_map ||
+        owner->preselection_view.party_x != owner->source_party_x ||
+        owner->preselection_view.party_y != owner->source_party_y ||
+        owner->preselection_view.party_direction != owner->source_party_direction ||
+        owner->preselection_view.cell_count !=
+            DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT ||
+        owner->preselection_view.source_view_hash == 0u) {
+        return 0;
+    }
+    direction = owner->source_party_direction;
+    view = &owner->preselection_view;
+    for (i = 0; i < DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT; ++i) {
+        const int x = (int)owner->source_party_x +
+            dx[direction] * expected[i].forward -
+            dy[direction] * expected[i].lateral;
+        const int y = (int)owner->source_party_y +
+            dy[direction] * expected[i].forward +
+            dx[direction] * expected[i].lateral;
+        const int raw = dm2_v1_dungeon_get_tile_raw(&owner->dungeon,
+            owner->source_party_map, x, y);
+        const int type = dm2_v1_dungeon_get_square_type(&owner->dungeon,
+            owner->source_party_map, x, y);
+        const int root = dm2_v1_dungeon_get_first_thing(&owner->dungeon,
+            owner->source_party_map, x, y);
+        if (view->cells[i].view_square != expected[i].view_square ||
+            view->cells[i].map_x != x || view->cells[i].map_y != y) {
+            return 0;
+        }
+        if (raw < 0 || type < 0 || root < INT16_MIN || root > UINT16_MAX) {
+            if (view->cells[i].source_available != 0u ||
+                view->cells[i].raw_tile != 0u ||
+                view->cells[i].square_type != 0u ||
+                view->cells[i].ground_stack_root != 0u) return 0;
+            continue;
+        }
+        if (view->cells[i].source_available != 1u ||
+            view->cells[i].raw_tile != (uint16_t)raw ||
+            view->cells[i].square_type != (uint8_t)type ||
+            view->cells[i].ground_stack_root != (uint16_t)root) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -2484,6 +2551,14 @@ int main(void) {
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 materializes the original entrance floor, ceiling and c_light receipt only in the private New Game owner");
     expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_view(
+                        &new_game_world_owner) &&
+                    dm2_test_preselection_view_matches_owner(
+                        &new_game_world_owner) &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "M11 retains every visible entrance cell from the real File_header map without publishing a viewport");
+    expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner) &&
                     new_game_world_owner.champion_selection_materialized &&
@@ -3878,6 +3953,9 @@ int main(void) {
                     profile_new_game_owner->preselection_scene_materialized &&
                     profile_new_game_owner->preselection_scene_plan.valid &&
                     profile_new_game_owner->preselection_c_light.valid &&
+                    profile_new_game_owner->preselection_view.valid &&
+                    dm2_test_preselection_view_matches_owner(
+                        profile_new_game_owner) &&
                     !profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
                     !profile->source_game_load_session_ready,

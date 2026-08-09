@@ -1,3 +1,12 @@
+# DM2 New Game källbunden entréprojektion (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu den exakta D0–D3-projektionen från
+  File_header-entrén: koordinat, rå tile, square type och ground-stack-root
+  för varje källbar ruta. Rutor utanför kartans gräns är uttryckligen
+  no-draw i stället för ersättningsväggar eller golv. DOS-realdatatestet
+  kontrollerar samtliga rutor mot den hashverifierade dungeonbilden och
+  bevisar att ingen viewport eller session publiceras.
+
 # DM2 Amiga valt editionsflöde i M11 (2026-08-09)
 
 - ✅ Amiga-starttestet följer nu samma hashverifierade editionsval som

@@ -13601,6 +13601,7 @@ int dm2_v1_boot_retain_new_game_world(
             candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_champion_selection(candidate)) {
         if (candidate) {
             dm2_v1_game_load_world_owner_free(candidate);
@@ -13633,7 +13634,8 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
         !dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
             candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate)) {
+        !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate)) {
         if (candidate) {
             dm2_v1_game_load_world_owner_free(candidate);
             free(candidate);
@@ -13664,7 +13666,8 @@ int dm2_v1_boot_select_new_game_champion(
         !owner->source_map_context_materialized ||
         !owner->preselection_local_graphics.valid ||
         !owner->preselection_light.valid ||
-        !owner->preselection_scene_materialized) return 0;
+        !owner->preselection_scene_materialized ||
+        !owner->preselection_view.valid) return 0;
     return dm2_v1_game_load_world_owner_select_champion(owner, selection);
 }
 
@@ -13692,7 +13695,8 @@ const void *dm2_v1_boot_prepared_new_game_world_readonly(
            owner->source_map_context_materialized &&
            owner->preselection_local_graphics.valid &&
            owner->preselection_light.valid &&
-           owner->preselection_scene_materialized ? owner : NULL;
+           owner->preselection_scene_materialized &&
+           owner->preselection_view.valid ? owner : NULL;
 }
 
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {

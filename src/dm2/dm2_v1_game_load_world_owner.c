@@ -1177,6 +1177,101 @@ int dm2_v1_game_load_world_owner_materialize_preselection_scene(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_view(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    static const struct {
+        uint8_t view_square;
+        int8_t forward;
+        int8_t lateral;
+    } source_cells[DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT] = {
+        { DM2_SQ_D0C, 1,  0 }, { DM2_SQ_D1C, 2,  0 },
+        { DM2_SQ_D2C, 3,  0 }, { DM2_SQ_D0L, 0, -1 },
+        { DM2_SQ_D0R, 0,  1 }, { DM2_SQ_D1L, 1, -1 },
+        { DM2_SQ_D1R, 1,  1 }, { DM2_SQ_D2L, 2, -1 },
+        { DM2_SQ_D2R, 2,  1 }, { DM2_SQ_D3L, 5, -2 },
+        { DM2_SQ_D3R, 5,  2 },
+    };
+    DM2_V1_GameLoadPreselectionViewReceipt candidate;
+    const int map = owner ? owner->source_party_map : -1;
+    const int direction = owner ? owner->source_party_direction : -1;
+    uint32_t hash = 0x56494557u; /* "VIEW" */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        !owner->preselection_light.valid ||
+        !owner->preselection_scene_materialized ||
+        owner->preselection_view.valid || owner->champion_selection_materialized ||
+        owner->committed || map < 0 || map >= owner->dungeon.level_count ||
+        direction < 0 || direction > 3 ||
+        owner->preselection_local_graphics.map != map ||
+        owner->preselection_light.map != map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = map;
+    candidate.party_x = owner->source_party_x;
+    candidate.party_y = owner->source_party_y;
+    candidate.party_direction = (uint8_t)direction;
+    candidate.cell_count = DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT;
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.party_x);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.party_y);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.party_direction);
+
+    for (int i = 0; i < DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT; ++i) {
+        DM2_V1_GameLoadPreselectionViewCell *cell = &candidate.cells[i];
+        const int map_x = (int)owner->source_party_x +
+            dx[direction] * source_cells[i].forward -
+            dy[direction] * source_cells[i].lateral;
+        const int map_y = (int)owner->source_party_y +
+            dy[direction] * source_cells[i].forward +
+            dx[direction] * source_cells[i].lateral;
+        const int raw = dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map,
+                                                      map_x, map_y);
+        const int square_type = dm2_v1_dungeon_get_square_type(
+            &owner->dungeon, map, map_x, map_y);
+        const int ground_stack = dm2_v1_dungeon_get_first_thing(
+            &owner->dungeon, map, map_x, map_y);
+
+        if (map_x < INT16_MIN || map_x > INT16_MAX ||
+            map_y < INT16_MIN || map_y > INT16_MAX) return 0;
+        cell->view_square = source_cells[i].view_square;
+        cell->map_x = (int16_t)map_x;
+        cell->map_y = (int16_t)map_y;
+        /* Out-of-map cells are part of the original projection.  Mark them
+         * unavailable rather than supplying a wall or floor that the map did
+         * not own.  A later renderer must preserve this no-draw state. */
+        if (raw < 0 || square_type < 0 || ground_stack < INT16_MIN ||
+            ground_stack > UINT16_MAX) {
+            hash = dm2_v1_game_load_owner_hash_step(hash, cell->view_square);
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)cell->map_x);
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)cell->map_y);
+            hash = dm2_v1_game_load_owner_hash_step(hash, 0u);
+            continue;
+        }
+        cell->source_available = 1u;
+        cell->raw_tile = (uint16_t)raw;
+        cell->ground_stack_root = (uint16_t)ground_stack;
+        cell->square_type = (uint8_t)square_type;
+        hash = dm2_v1_game_load_owner_hash_step(hash, cell->view_square);
+        hash = dm2_v1_game_load_owner_hash_step(hash, cell->source_available);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)cell->map_x);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)cell->map_y);
+        hash = dm2_v1_game_load_owner_hash_step(hash, cell->raw_tile);
+        hash = dm2_v1_game_load_owner_hash_step(hash, cell->ground_stack_root);
+        hash = dm2_v1_game_load_owner_hash_step(hash, cell->square_type);
+    }
+    if (hash == 0u) return 0;
+    candidate.source_view_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_view = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner)
 {

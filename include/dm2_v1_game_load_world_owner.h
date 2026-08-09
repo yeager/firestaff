@@ -20,6 +20,7 @@
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_timer_queue_pc34_compat.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -120,6 +121,37 @@ typedef struct {
     uint32_t source_list_hash;
 } DM2_V1_GameLoadLocalLevelGraphicsReceipt;
 
+/* The source viewport queries this exact pre-mirror projection from the
+ * current c_map.  It is deliberately a map receipt rather than a renderer
+ * state: every coordinate, raw tile word and ground-stack root comes from
+ * the authenticated File_header clone, so no default floor/wall can leak
+ * into the entrance before a complete session exists.
+ *
+ * Source: SKProject SKULLWIN/c_gui_vp.cpp view-cell traversal; the same
+ * D0..D3 projection is used by the bounded runtime bridge. */
+#define DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT 11
+typedef struct {
+    uint8_t view_square;
+    uint8_t source_available;
+    int16_t map_x;
+    int16_t map_y;
+    uint16_t raw_tile; /* zero only when source_available is zero */
+    uint16_t ground_stack_root;
+    uint8_t square_type;
+} DM2_V1_GameLoadPreselectionViewCell;
+
+typedef struct {
+    int valid;
+    int map;
+    uint8_t party_x;
+    uint8_t party_y;
+    uint8_t party_direction;
+    uint8_t cell_count;
+    DM2_V1_GameLoadPreselectionViewCell
+        cells[DM2_V1_GAME_LOAD_PRESELECTION_VIEW_CELL_COUNT];
+    uint32_t source_view_hash;
+} DM2_V1_GameLoadPreselectionViewReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -179,6 +211,7 @@ typedef struct {
     DM2_V1_GdatSceneM11CommandPlan preselection_scene_plan;
     DM2_V1_GdatSceneLightM11Receipt preselection_scene_light;
     DM2_V1_CLightM11Receipt preselection_c_light;
+    DM2_V1_GameLoadPreselectionViewReceipt preselection_view;
     /* Borrowed only while this private owner exists; it is the same
      * hash-admitted profile that owns asset_loader. */
     const DM2_V1_BootProfile *boot_profile;
@@ -248,6 +281,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
  * result only when the preceding private light inputs cover the source
  * branch. It deliberately has no renderer or M11 publication. */
 int dm2_v1_game_load_world_owner_materialize_preselection_scene(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Materialize only the real source cells visible from the entry pose.  This
+ * has no framebuffer, input, HUD or runtime-session side effect. */
+int dm2_v1_game_load_world_owner_materialize_preselection_view(
     DM2_V1_GameLoadWorldOwner *owner);
 
 typedef struct {
