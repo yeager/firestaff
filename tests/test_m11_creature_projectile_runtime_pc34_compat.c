@@ -290,7 +290,11 @@ static void test_live_tick_moves_authenticated_group_and_ai_position(void) {
     state.world.creatureAI[0].groupMapIndex = 1;
     state.world.creatureAI[0].groupMapX = 2;
     state.world.creatureAI[0].groupMapY = 0;
-    state.world.gameTick = 11; /* M11's C24 profile moves on tick 12. */
+    /* C24 Red Dragon has movementTicks 13 (DUNGEON.C G0243[24], PC 3.4
+     * byte-verified), so the movement cadence (gameTick % movementTicks == 0)
+     * admits tick 13, not tick 12.  Start at 12 so AdvanceIdleTick lands on
+     * the first admitting tick. */
+    state.world.gameTick = 12;
 
     {
         M11_GameInputResult tickRes = M11_GameView_AdvanceIdleTick(&state);
@@ -360,7 +364,10 @@ static void test_live_tick_uses_f0201_direct_smell_route(void) {
     things.rawThingData[THING_TYPE_DOOR] = rawDoor;
     map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
                                    DUNGEON_SQUARE_MASK_THING_LIST | 4u);
-    state.world.gameTick = 11;
+    /* Same C24 movementTicks 13 cadence as the sibling movement gate: the
+     * smell route still has to clear (gameTick % movementTicks == 0), which
+     * admits tick 13, not tick 12. */
+    state.world.gameTick = 12;
 
     {
         unsigned short sftAtSource, sftAtDest;

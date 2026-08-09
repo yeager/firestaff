@@ -18295,13 +18295,20 @@ static void m11_process_one_creature_group(
         int newX;
         int newY;
 
+        int smelledParty;
+
         memset(&smellPlan, 0, sizeof(smellPlan));
+        /* F0201 draws from masterRng, so it must keep being evaluated FIRST
+         * and unconditionally, exactly as the original short-circuit did.
+         * Gating the cadence ahead of it would skip those draws on
+         * off-cadence ticks and desynchronise every later RNG consumer. */
+        smelledParty = m11_group_smell_party_direction_f0201(
+            state, groupThing, group, groupX, groupY, &smellPlan);
         if (profile->movementTicks > 0 &&
             (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u) {
             return;
         }
-        if (!m11_group_smell_party_direction_f0201(
-                state, groupThing, group, groupX, groupY, &smellPlan)) {
+        if (!smelledParty) {
             /* ReDMCSB GROUP.C F0209 WANDER: a group that can neither see nor
              * smell the party wanders instead of standing still.  F0810 owns
              * the 50% move roll, direction pick and F0811 validation. */
