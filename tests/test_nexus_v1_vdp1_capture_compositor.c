@@ -161,8 +161,9 @@ static int run_external_dgn_mode1_capture(void)
         replay.skipped_non_draw_commands == 7 &&
         replay.replay.valid && replay.replay.source_joins_verified == 218 &&
         replay.replay.palette_joins_verified == 218 &&
-        replay.system_clip_state_missing &&
-        !replay.replay.renderer_permitted;
+        !replay.system_clip_state_missing &&
+        replay.system_clip_state_verified && replay.system_clip_x == 319 &&
+        replay.system_clip_y == 223 && replay.replay.renderer_permitted;
     free(capture);
     free(dgn);
     return ok;

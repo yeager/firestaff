@@ -55,6 +55,7 @@ static uint32_t bgr555_to_rgba(uint16_t word)
 static int direct_color_triangle(
     Nexus_V1_Vdp1DirectColorFramebuffer *fb, const float xy[4][2],
     int ia, int ib, int ic, const uint8_t *tex, int width, int height,
+    int system_clip_state_verified, int system_clip_x, int system_clip_y,
     uint16_t draw_mode, int *written, int *transparent)
 {
     float area;
@@ -72,6 +73,14 @@ static int direct_color_triangle(
         if (xy[index][0] > max_x) max_x = xy[index][0];
         if (xy[index][1] < min_y) min_y = xy[index][1];
         if (xy[index][1] > max_y) max_y = xy[index][1];
+    }
+    /* Mednafen 1.32.1 src/ss/vdp1.cpp::CMD_SetSystemClip and
+     * src/ss/vdp1_common.h::PBODY apply the live system clip as the
+     * inclusive (0..SysClipX, 0..SysClipY) destination envelope. */
+    if (system_clip_state_verified) {
+        if (system_clip_x < 0 || system_clip_y < 0) return 0;
+        if (max_x > (float)system_clip_x) max_x = (float)system_clip_x;
+        if (max_y > (float)system_clip_y) max_y = (float)system_clip_y;
     }
     if (max_x < 0.0f || min_x >= (float)NEXUS_FB_W ||
         max_y < 0.0f || min_y >= (float)NEXUS_FB_H) return 0;
@@ -94,6 +103,8 @@ static int direct_color_triangle(
             uint16_t word;
 
             if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
+            if (system_clip_state_verified &&
+                (x > system_clip_x || y > system_clip_y)) continue;
             u = w0 * (ia == 0 ? 0.0f : 1.0f) +
                 w1 * (ib == 0 ? 0.0f : 1.0f) +
                 w2 * (ic == 0 ? 0.0f : 1.0f);
@@ -174,10 +185,14 @@ int nexus_v1_vdp1_capture_decode_direct_color(
         return 0;
     }
     (void)direct_color_triangle(working, xy, 0, 1, 2, input->texture_span,
-        command.texture_width, command.texture_height, command.draw_mode,
+        command.texture_width, command.texture_height,
+        input->system_clip_state_verified, input->system_clip_x,
+        input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels);
     (void)direct_color_triangle(working, xy, 0, 2, 3, input->texture_span,
-        command.texture_width, command.texture_height, command.draw_mode,
+        command.texture_width, command.texture_height,
+        input->system_clip_state_verified, input->system_clip_x,
+        input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels);
     receipt.valid = receipt.written_pixels > 0;
     /* No DGN owner/material receipt is accepted by this API. */
@@ -193,6 +208,8 @@ static int composite_triangle(Nexus_Framebuffer *fb,
                               int ia, int ib, int ic,
                               const uint8_t *tex, int width, int height,
                               int palette_base,
+                              int system_clip_state_verified,
+                              int system_clip_x, int system_clip_y,
                               uint16_t draw_mode, int *written,
                               int *transparent, int *end_code,
                               uint8_t end_rows[256])
@@ -215,6 +232,12 @@ static int composite_triangle(Nexus_Framebuffer *fb,
         if (xy[index][1] < min_y) min_y = xy[index][1];
         if (xy[index][1] > max_y) max_y = xy[index][1];
     }
+    /* Keep the indexed mode-1 capture lane on the same live VDP1 envelope. */
+    if (system_clip_state_verified) {
+        if (system_clip_x < 0 || system_clip_y < 0) return 0;
+        if (max_x > (float)system_clip_x) max_x = (float)system_clip_x;
+        if (max_y > (float)system_clip_y) max_y = (float)system_clip_y;
+    }
     if (max_x < 0.0f || min_x >= (float)NEXUS_FB_W ||
         max_y < 0.0f || min_y >= (float)NEXUS_FB_H) return 0;
     if (min_x < 0.0f) min_x = 0.0f;
@@ -236,6 +259,8 @@ static int composite_triangle(Nexus_Framebuffer *fb,
             uint8_t texel;
 
             if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
+            if (system_clip_state_verified &&
+                (x > system_clip_x || y > system_clip_y)) continue;
             u = w0 * (ia == 0 ? 0.0f : ia == 1 ? 1.0f : 1.0f) +
                 w1 * (ib == 0 ? 0.0f : ib == 1 ? 1.0f : 1.0f) +
                 w2 * (ic == 0 ? 0.0f : ic == 1 ? 1.0f : 1.0f);
@@ -372,12 +397,14 @@ int nexus_v1_vdp1_capture_composite_mode1(
     }
     (void)composite_triangle(working, xy, 0, 1, 2,
         input->texture_span, command.texture_width, command.texture_height,
-        input->palette_slot_base, command.draw_mode,
+        input->palette_slot_base, input->system_clip_state_verified,
+        input->system_clip_x, input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_rows);
     (void)composite_triangle(working, xy, 0, 2, 3,
         input->texture_span, command.texture_width, command.texture_height,
-        input->palette_slot_base, command.draw_mode,
+        input->palette_slot_base, input->system_clip_state_verified,
+        input->system_clip_x, input->system_clip_y, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_rows);
     receipt.valid = receipt.written_pixels > 0 ||
@@ -422,6 +449,9 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     receipt.display_origin_y = input->display_origin_y;
     receipt.command_order_verified = 1;
     receipt.end_record_verified = 1;
+    receipt.system_clip_state_verified = input->system_clip_state_verified;
+    receipt.system_clip_x = input->system_clip_x;
+    receipt.system_clip_y = input->system_clip_y;
     for (i = 0; i < input->command_count; ++i) {
         Nexus_V1_Vdp1CaptureCompositeReceipt command_receipt;
         if (!nexus_v1_vdp1_capture_composite_mode1(
@@ -473,6 +503,12 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     receipt.valid = receipt.written_pixels > 0 ||
         (input->command_count > 0 && receipt.capture_gap_commands > 0);
     receipt.renderer_permitted = receipt.written_pixels > 0;
+    /* The authenticated Saturn envelope can exceed Firestaff's 320x224 V1
+     * destination. Preserve the replay receipt, but never present that host
+     * crop as a production-equivalent Saturn framebuffer. */
+    if (input->system_clip_x >= NEXUS_FB_W ||
+        input->system_clip_y >= NEXUS_FB_H)
+        receipt.renderer_permitted = 0;
     *out_receipt = receipt;
     return receipt.valid;
 }
@@ -498,7 +534,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         !input->original_saturn_capture_verified || !input->resolve_material ||
         !nexus_v1_vdp1_command_sequence_frame(
             &(Nexus_V1_Vdp1CommandSequenceInput){
-                input->vdp1_vram, input->vdp1_vram_size, input->copr_word},
+                input->vdp1_vram, input->vdp1_vram_size, input->copr_word,
+                input->system_clip_state_present, input->system_clip_x,
+                input->system_clip_y},
             &receipt.command_sequence) ||
         !receipt.command_sequence.valid || !receipt.command_sequence.complete ||
         !receipt.command_sequence.display_origin_verified ||
@@ -593,6 +631,11 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         resolved->capture_allow_zero_pixel_command = input->mode1_only_capture;
         resolved->screen_origin_x = receipt.command_sequence.display_origin_x;
         resolved->screen_origin_y = receipt.command_sequence.display_origin_y;
+        resolved->system_clip_state_verified = input->system_clip_state_present;
+        resolved->system_clip_x = input->system_clip_state_present
+            ? (int)input->system_clip_x : 0;
+        resolved->system_clip_y = input->system_clip_state_present
+            ? (int)input->system_clip_y : 0;
     }
     if ((input->mode1_only_capture &&
          receipt.draw_commands_seen + receipt.skipped_non_draw_commands !=
@@ -610,7 +653,16 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     replay_input.commands = commands;
     replay_input.command_count = receipt.draw_commands_resolved;
     replay_input.system_clip_state_verified =
-        receipt.command_sequence.system_clip_count > 0;
+        receipt.command_sequence.system_clip_state_verified;
+    replay_input.system_clip_x = input->system_clip_state_present
+        ? (int)input->system_clip_x
+        : (int)receipt.command_sequence.system_clip_x;
+    replay_input.system_clip_y = input->system_clip_state_present
+        ? (int)input->system_clip_y
+        : (int)receipt.command_sequence.system_clip_y;
+    receipt.system_clip_state_verified = input->system_clip_state_present;
+    receipt.system_clip_x = (int)input->system_clip_x;
+    receipt.system_clip_y = (int)input->system_clip_y;
     replay_input.local_coordinate_state_verified =
         receipt.command_sequence.local_coordinate_count > 0;
     replay_input.display_origin_state_verified =
@@ -672,6 +724,9 @@ int nexus_v1_vdp1_capture_replay_runtime_frame(
     input.vdp1_vram = frame.vdp1_vram;
     input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     input.copr_word = frame.copr_word;
+    input.system_clip_state_present = frame.vdp1_system_clip_state_present;
+    input.system_clip_x = frame.system_clip_x;
+    input.system_clip_y = frame.system_clip_y;
     input.original_saturn_capture_verified = 1;
     input.resolve_material = resolve_material;
     input.resolver_context = resolver_context;
@@ -715,6 +770,9 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
     input.vdp1_vram = frame.vdp1_vram;
     input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     input.copr_word = frame.copr_word;
+    input.system_clip_state_present = frame.vdp1_system_clip_state_present;
+    input.system_clip_x = frame.system_clip_x;
+    input.system_clip_y = frame.system_clip_y;
     input.original_saturn_capture_verified = 1;
     input.resolve_material = resolve_material;
     input.resolver_context = resolver_context;
@@ -761,9 +819,14 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
         if (out_frame_receipt) *out_frame_receipt = frame;
         return 0;
     }
+    memset(&sequence_input, 0, sizeof(sequence_input));
     sequence_input.vdp1_vram = frame.vdp1_vram;
     sequence_input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     sequence_input.copr_word = frame.copr_word;
+    sequence_input.system_clip_state_present =
+        frame.vdp1_system_clip_state_present;
+    sequence_input.system_clip_x = frame.system_clip_x;
+    sequence_input.system_clip_y = frame.system_clip_y;
     if (!nexus_v1_vdp1_command_sequence_frame(&sequence_input, &sequence) ||
         !sequence.valid || !sequence.complete ||
         !sequence.display_origin_verified || sequence.draw_count <= 0) {
@@ -788,6 +851,10 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
         input.original_saturn_capture_verified = 1;
         input.screen_origin_x = sequence.display_origin_x;
         input.screen_origin_y = sequence.display_origin_y;
+        input.system_clip_state_verified =
+            frame.vdp1_system_clip_state_present;
+        input.system_clip_x = (int)frame.system_clip_x;
+        input.system_clip_y = (int)frame.system_clip_y;
         if (nexus_v1_vdp1_capture_decode_direct_color(
                 framebuffer, &input, &direct)) {
             direct.command_byte_offset = offset;
@@ -836,9 +903,14 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         if (out_frame_receipt) *out_frame_receipt = frame;
         return 0;
     }
+    memset(&sequence_input, 0, sizeof(sequence_input));
     sequence_input.vdp1_vram = frame.vdp1_vram;
     sequence_input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     sequence_input.copr_word = frame.copr_word;
+    sequence_input.system_clip_state_present =
+        frame.vdp1_system_clip_state_present;
+    sequence_input.system_clip_x = frame.system_clip_x;
+    sequence_input.system_clip_y = frame.system_clip_y;
     if (!nexus_v1_vdp1_command_sequence_frame(&sequence_input, &sequence) ||
         !sequence.valid || !sequence.complete ||
         !sequence.display_origin_verified || sequence.draw_count <= 0) {
@@ -874,6 +946,10 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         input.original_saturn_capture_verified = 1;
         input.screen_origin_x = sequence.display_origin_x;
         input.screen_origin_y = sequence.display_origin_y;
+        input.system_clip_state_verified =
+            frame.vdp1_system_clip_state_present;
+        input.system_clip_x = (int)frame.system_clip_x;
+        input.system_clip_y = (int)frame.system_clip_y;
         if (!nexus_v1_vdp1_capture_composite_mode1(
                 framebuffer, &input, &composite)) continue;
         if (out_frame_receipt) *out_frame_receipt = frame;

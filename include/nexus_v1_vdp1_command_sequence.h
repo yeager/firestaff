@@ -16,6 +16,10 @@ typedef struct {
     int vdp1_vram_size;
     /* Raw VDP1 COPR value from the captured state line. */
     uint32_t copr_word;
+    /* Optional live SysClip registers from the same authenticated frame. */
+    int system_clip_state_present;
+    uint32_t system_clip_x;
+    uint32_t system_clip_y;
 } Nexus_V1_Vdp1CommandSequenceInput;
 
 typedef struct {
@@ -32,6 +36,9 @@ typedef struct {
     int draw_count;
     int user_clip_count;
     int system_clip_count;
+    int system_clip_state_verified;
+    uint32_t system_clip_x;
+    uint32_t system_clip_y;
     int local_coordinate_count;
     int display_origin_x;
     int display_origin_y;

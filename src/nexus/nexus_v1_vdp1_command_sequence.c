@@ -113,7 +113,9 @@ int nexus_v1_vdp1_command_sequence_frame(
     receipt.semantic_admission_blocked = 1;
     if (!input || !input->vdp1_vram ||
         input->vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
-        input->copr_word > (uint32_t)NEXUS_V1_VDP1_VRAM_BYTES / 8U) {
+        input->copr_word > (uint32_t)NEXUS_V1_VDP1_VRAM_BYTES / 8U ||
+        (input->system_clip_state_present &&
+         (input->system_clip_x > 0x1fffU || input->system_clip_y > 0x1fffU))) {
         *out_receipt = receipt;
         return 0;
     }
@@ -140,7 +142,8 @@ int nexus_v1_vdp1_command_sequence_frame(
                               start, copr, candidate, &count, &draws,
                               &user_clips, &system_clips, &locals,
                               &has_copr) || !has_copr || draws <= 0 ||
-            user_clips + system_clips <= 0 || locals <= 0) continue;
+            (user_clips + system_clips <= 0 &&
+             !input->system_clip_state_present) || locals <= 0) continue;
         score_length = -count;
         if (draws > best_score_draws ||
             (draws == best_score_draws && score_length > -best_score_length)) {
@@ -167,6 +170,12 @@ int nexus_v1_vdp1_command_sequence_frame(
     receipt.draw_count = best_draws;
     receipt.user_clip_count = best_user_clips;
     receipt.system_clip_count = best_system_clips;
+    receipt.system_clip_state_verified = best_system_clips > 0 ||
+        input->system_clip_state_present;
+    if (input->system_clip_state_present) {
+        receipt.system_clip_x = input->system_clip_x;
+        receipt.system_clip_y = input->system_clip_y;
+    }
     receipt.local_coordinate_count = best_locals;
     receipt.command_order_verified = 1;
     receipt.end_record_verified =

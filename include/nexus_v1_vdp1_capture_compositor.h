@@ -35,6 +35,9 @@ typedef struct {
     int capture_allow_zero_pixel_command;
     int screen_origin_x;
     int screen_origin_y;
+    int system_clip_state_verified;
+    int system_clip_x;
+    int system_clip_y;
     int palette_slot_base;
 } Nexus_V1_Vdp1CaptureCompositeInput;
 
@@ -96,6 +99,8 @@ typedef struct {
     int display_origin_y;
     int command_order_verified;
     int end_record_verified;
+    int system_clip_x;
+    int system_clip_y;
 } Nexus_V1_Vdp1CaptureSequenceInput;
 
 typedef struct {
@@ -116,6 +121,9 @@ typedef struct {
     int written_pixels;
     int transparent_pixels;
     int end_code_pixels;
+    int system_clip_state_verified;
+    int system_clip_x;
+    int system_clip_y;
 } Nexus_V1_Vdp1CaptureSequenceReceipt;
 
 /* Resolves one command's captured VDP1 source/CLUT spans to the canonical
@@ -138,6 +146,9 @@ typedef struct {
     /* Permit a bounded mode-1-only replay to skip non-mode-1 draws whose
      * owner belongs to a separate capture lane (for example direct RGB). */
     int mode1_only_capture;
+    int system_clip_state_present;
+    uint32_t system_clip_x;
+    uint32_t system_clip_y;
 } Nexus_V1_Vdp1CaptureVramSequenceInput;
 
 typedef struct {
@@ -151,6 +162,9 @@ typedef struct {
     int unowned_mode1_draw_commands;
     int skipped_non_draw_commands;
     int system_clip_state_missing;
+    int system_clip_state_verified;
+    int system_clip_x;
+    int system_clip_y;
     int semantic_admission_blocked;
 } Nexus_V1_Vdp1CaptureVramSequenceReceipt;
 

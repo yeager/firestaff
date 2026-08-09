@@ -4539,18 +4539,19 @@ authenticated BPK). The remaining work is a Saturn executable or capture
 
 - ⏳ C-lanen återspelar 218 exakta DGN image/CLUT-joins över 242 command
   records och håller 16 oägda mode-1-poster samt en oägd icke-mode-1-post
-  utanför materialägarskapet. `system clip` saknas i capture-witnessen,
-  därför är replayet fortsatt capture-only och `renderer_permitted=0`.
+  utanför materialägarskapet. Runtime-state för systemklippningen konsumeras
+  nu när den finns; full scene ownership och production consumer saknas.
 
 # Nexus VDP1 system-clip consumer (2026-08-09)
 
-- 🔧 Runtime-capture innehåller nu separat, autentiserad `SysClipX/SysClipY`;
-  frame 760 visar `(319,255)` trots noll typ-9 command-list-records. Lägg in
-  exakt Saturn-system-clip i capture-replay/rasterizern och bevara skillnaden
-  mellan 256-raders Saturn-klippning och Firestaffs 224-raders V1-yta.
-- 🔒 Öppna inte `renderer_permitted`, HUD eller viewport-komposition förrän
-  clip-konsumenten är verifierad mot samma frame och inga host-bounds används
-  som ersättning.
+- ✅ Runtime-capture innehåller separat, autentiserad `SysClipX/SysClipY`;
+  gameplay-frame 760 visar `(319,223)` trots noll typ-9 command-list-records.
+  Capture-replay och VDP12-viewport-komposition använder nu samma inkluderande
+  `(0..SysClipX, 0..SysClipY)`-envelope.
+- 🔧 En frame med `SysClipY=255` bevarar replay receipt men får fortsatt
+  `renderer_permitted=0`, eftersom den nuvarande destinationen är 224 rader.
+  Full HUD/viewport-produktion kräver därför en verifierad Saturn 256-raders
+  destination eller en källbunden display-window-transform.
 
 # Theron next authenticated semantic capture
 

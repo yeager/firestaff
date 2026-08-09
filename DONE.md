@@ -11973,3 +11973,16 @@ rendering remain blocked.
   224-raders host-framebuffer är inte en byteexakt Saturn 256-raders
   system-clipyta. VDP1 sequence-replay och `renderer_permitted` förblir
   därför fail-closed tills den faktiska clip-konsumenten är implementerad.
+
+# Nexus: VDP1 system-clip consumer och VDP12 receipt (2026-08-09)
+
+- ✅ Capture-replayens mode-1 och direct-colour rasterbanor använder nu den
+  autentiserade, inkluderande Saturn-envelope `(0..SysClipX, 0..SysClipY)`.
+  Gameplay-frame 760 `(319,223)` passerar med samma 320×224-destination;
+  en 256-raders capture kan inte felaktigt presenteras som produktionsyta.
+- ✅ `nexus_viewport_replay_vdp12_capture_composition()` propagerar nu
+  delrutornas `renderer_permitted` i stället för att alltid sätta receiptet
+  till tillåtet. Layer-order och framebuffer-rollback förblir atomiska.
+- ⚠️ Detta öppnar endast den verifierade VDP1-delmängden. 16 mode-1-poster,
+  en icke-mode-1-post, Saturns fulla scene ownership och autentisk HUD-
+  provenance är fortfarande öppna gaps.

@@ -114,6 +114,8 @@ int nexus_viewport_replay_vdp12_capture_composition(
     int vdp2_source_count;
     int vdp1_over_vdp2;
     int vdp2_over_vdp1;
+    int vdp1_renderer_permitted = 0;
+    int vdp2_renderer_permitted = 0;
 
     memset(&receipt, 0, sizeof(receipt));
     if (!out_receipt) return 0;
@@ -151,6 +153,7 @@ int nexus_viewport_replay_vdp12_capture_composition(
             &vp->fb, input->vdp1_sequence, &vdp1_receipt);
         vp->last_vdp1_sequence_receipt = vdp1_receipt;
         receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
+        vdp1_renderer_permitted = vdp1_receipt.renderer_permitted;
         if (!vdp1_ok) {
             vp->fb = *saved;
             *out_receipt = receipt;
@@ -165,6 +168,7 @@ int nexus_viewport_replay_vdp12_capture_composition(
             &vp->fb, input->vdp2_stabg, &stabg_receipt);
         vp->last_stabg_capture_receipt = stabg_receipt;
         receipt.vdp2_written_pixels = stabg_receipt.written_pixels;
+        vdp2_renderer_permitted = stabg_receipt.renderer_permitted;
         receipt.vdp2_source_stabg = 1;
     } else if (input->vdp2_is_tilemap) {
         Nexus_V1_Vdp2TilemapCaptureReceipt tilemap_receipt;
@@ -172,12 +176,14 @@ int nexus_viewport_replay_vdp12_capture_composition(
             &vp->fb, input->vdp2_tilemap, &tilemap_receipt);
         vp->last_vdp2_tilemap_capture_receipt = tilemap_receipt;
         receipt.vdp2_written_pixels = tilemap_receipt.written_pixels;
+        vdp2_renderer_permitted = tilemap_receipt.renderer_permitted;
     } else {
         Nexus_V1_Vdp2CaptureCompositeReceipt bitmap_receipt;
         vdp2_ok = nexus_v1_vdp2_capture_composite_nbg1_bitmap(
             &vp->fb, input->vdp2_bitmap, &bitmap_receipt);
         vp->last_vdp2_capture_receipt = bitmap_receipt;
         receipt.vdp2_written_pixels = bitmap_receipt.written_pixels;
+        vdp2_renderer_permitted = bitmap_receipt.renderer_permitted;
     }
     if (!vdp2_ok) {
         vp->fb = *saved;
@@ -192,6 +198,7 @@ int nexus_viewport_replay_vdp12_capture_composition(
             &vp->fb, input->vdp1_sequence, &vdp1_receipt);
         vp->last_vdp1_sequence_receipt = vdp1_receipt;
         receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
+        vdp1_renderer_permitted = vdp1_receipt.renderer_permitted;
         if (!vdp1_ok) {
             vp->fb = *saved;
             *out_receipt = receipt;
@@ -202,7 +209,9 @@ int nexus_viewport_replay_vdp12_capture_composition(
     }
     receipt.vdp1_over_vdp2 = vdp1_over_vdp2;
     receipt.vdp2_over_vdp1 = vdp2_over_vdp1;
-    receipt.valid = receipt.renderer_permitted = 1;
+    receipt.valid = receipt.vdp1_verified && receipt.vdp2_verified;
+    receipt.renderer_permitted = vdp1_renderer_permitted &&
+        vdp2_renderer_permitted;
     *out_receipt = receipt;
     free(saved);
     return 1;

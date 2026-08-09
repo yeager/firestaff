@@ -136,18 +136,22 @@ igenom hela den autentiserade command-listan i frame 760 och återspelar den
 source-bound mode-1-delmängden atomiskt. C-verifieringen räknar 242 command
 records, 235 drawposter, 218 exacta DGN image/CLUT-joins, 16 oägda mode-1-
 poster och en oägd icke-mode-1-post; sju kontrollposter hålls separata. Den
-saknade `system clip`-posten markeras i receiptet och stänger
-`renderer_permitted`. Detta är därför ett starkare VDP1-capture-replay-bevis,
-men inte en full Saturn-scen eller produktionskompositör.
+saknade typ-9 `system clip`-posten markeras separat i receiptet och får inte
+ersättas med user-clip eller host-bounds. När autentiserad runtime-state finns
+använder replayen i stället dess live `SysClipX/SysClipY` som inkluderande
+raster-envelope. Detta är fortfarande inte en full Saturn-scen eller
+produktionskompositör, eftersom scene ownership och flera draw-poster saknas.
 
 Med den instrumenterade Mednafen-källan fångas nu även VDP1:s separata
 `SysClipX/SysClipY`-state. I en ny 800-frame EU-capture är frame 760:s värden
 `0x013f/0x00ff` (319×255), trots att command-listan har noll typ-9
 system-clip-records. C-parsern accepterar både gamla och nya capture-rader och
-markerar state-proveniensen explicit. Detta löser evidensgapet, men inte
-konsumentgapet: hostens 224-raders framebuffer får inte ersätta Saturns
-256-raders system-klippning. `renderer_permitted`, HUD och viewport förblir
-därför fail-closed tills den exakta clip-konsumenten är verifierad.
+markerar state-proveniensen explicit. Gameplay-frame 760 med `(319,223)
+passerar nu den källbundna VDP1-delmängden med clip-konsumenten aktiv. En
+capture med `SysClipY=255` bevarar receiptet men stänger `renderer_permitted`
+mot den 224-raders host-ytan. VDP12-kompositionen propagerar detta till
+viewport-receiptet; HUD och full viewport-produktion förblir stängda tills
+scene ownership och display-window-transform är verifierade.
 
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
