@@ -19,7 +19,16 @@ require_file_hash() {
   [[ "$(lower "$actual")" == "$(lower "$expected")" ]]
 }
 
-require_fnv() { [[ "$1" =~ ^[[:xdigit:]]{1,16}$ && "$1" != 0 ]]; }
+require_fnv() {
+  local value
+  value=$(lower "$1")
+  [[ "$value" =~ ^[[:xdigit:]]{16}$ && "$value" != 0000000000000000 ]] || return 1
+  case "$value" in
+    1111111111111111|2222222222222222|3333333333333333|4444444444444444|5555555555555555|6666666666666666|7777777777777777|8888888888888888|9999999999999999|aaaaaaaaaaaaaaaa|bbbbbbbbbbbbbbbb|cccccccccccccccc|dddddddddddddddd|eeeeeeeeeeeeeeee|ffffffffffffffff)
+      echo "ERROR: repeated-nibble FNV is synthetic placeholder metadata" >&2
+      return 1 ;;
+  esac
+}
 
 require_saturn_disc_container() {
   case "${1##*/}" in

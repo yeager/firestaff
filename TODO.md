@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ SLEV/SAL-captureplanen avvisar nu nollvärden, korta FNV-värden och
+  upprepade nibblevärden som `1111…`/`aaaa…`; sådana värden var tidigare
+  syntetiska testmetadata. Positiv source-join för task-trace, selector och
+  SDDRVS behöver fortfarande fångas från samma Saturn-route.
+
 - ⏳ Nexus har nu en byggd extern Mednafen 1.32.1-producent för `NXSLSC01`.
   Hooken fångar endast autentiska SH-2 WorkRAM-skrivningar med båda SH-2-PC:n
   och skriver en hashad, opak payload. Den bevisar inte SLEV-selector,

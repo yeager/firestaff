@@ -20,7 +20,12 @@
   capturen, äldre negativa körningar och scripted replay som emulatorintern
   inputväg utan fysisk macOS-input.
 
-# Nexus: extern SLEV/SAL capture-producent (2026-08-09)
+# Nexus: SLEV/SAL-metadata och extern capture-producent (2026-08-09)
+
+- ✅ SLEV/SAL-capturelaunchern och artefaktverifieraren avvisar nu uppenbara
+  syntetiska FNV-metadata (noll, korta värden och upprepade nibblemönster).
+  Regressionstesterna använder icke-syntetiska formatvärden och passerar;
+  ändringen bevisar inte event-dispatch eller ljuduppspelning.
 
 - ✅ Mednafen 1.32.1 byggs reproducerbart på extern disk med en read-only
   `NXSLSC01`-hook för autentiska SH-2 WorkRAM-skrivningar, SH-2-PC-proveniens
