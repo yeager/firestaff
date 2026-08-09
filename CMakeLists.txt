@@ -16631,6 +16631,7 @@ endif()
         NAME csb_v1_atari_mini_f0435_recovery_archive
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"
             "$<TARGET_FILE:test_csb_v1_m11_f0435_f9_reload>"
+            "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_atari_mini_f0435_recovery_archive PROPERTIES
         LABELS "tier2;csb;atari;save;recovery;real_data;archive;skip_safe"
@@ -16673,6 +16674,7 @@ endif()
         NAME csb_v1_atari_mini_runtime_archive
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"
             "$<TARGET_FILE:test_csb_v1_m11_prison_runtime_hud_pc34>"
+            "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_atari_mini_runtime_archive PROPERTIES
         LABELS "tier2;csb;atari;save;runtime;real_data;archive;skip_safe"

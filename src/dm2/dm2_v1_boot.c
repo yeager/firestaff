@@ -13681,6 +13681,62 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
     return 1;
 }
 
+static int dm2_v1_boot_startend_first_mirror_from_file_header(
+    const DM2_V1_GameLoadWorldOwner *owner, uint16_t *out_object_id)
+{
+    int thing;
+    int steps = 0;
+    int record_limit = 0;
+
+    if (out_object_id) *out_object_id = 0u;
+    if (!owner || !out_object_id || owner->current_map < 0 ||
+        owner->current_map >= owner->dungeon.level_count ||
+        !owner->dungeon.record_graph_complete) {
+        return 0;
+    }
+    for (int type = 0;
+         type < (int)(sizeof(owner->dungeon.thing_type_counts) /
+                      sizeof(owner->dungeon.thing_type_counts[0]));
+         ++type) {
+        if (owner->dungeon.thing_type_counts[type] < 0) return 0;
+        record_limit += owner->dungeon.thing_type_counts[type];
+    }
+    if (record_limit <= 0) return 0;
+
+    /* startend.cpp::DM2_2f3f_0789 calls GET_TILE_RECORD_LINK(0,0) and
+     * walks its GenericRecord::w0 sequence. The selected DB3 is not merely
+     * a roster entry at that coordinate: it must occur in this exact live
+     * File_header-owned chain. */
+    thing = dm2_v1_dungeon_get_first_thing(&owner->dungeon,
+                                           owner->current_map, 0, 0);
+    if (thing < 0 || thing == (int)DM2_THING_NULL_MARKER) return 0;
+    while (thing != (int)DM2_THING_END_MARKER) {
+        const uint8_t *record;
+        int type = -1;
+        int record_size = 0;
+        uint16_t w2;
+
+        if (++steps > record_limit ||
+            !(record = dm2_v1_dungeon_get_thing_record(
+                  &owner->dungeon, (uint16_t)thing, &type, NULL,
+                  &record_size))) {
+            return 0;
+        }
+        if (type == 3) {
+            if (record_size < 8) return 0;
+            w2 = dm2_v1_boot_read_le16(record + 2);
+            if ((w2 & 0x007fu) == 0x007eu) {
+                *out_object_id = (uint16_t)thing;
+                return 1;
+            }
+        }
+        thing = dm2_v1_dungeon_get_next_thing(&owner->dungeon,
+                                               (uint16_t)thing);
+        if (thing < 0) return 0;
+    }
+    return 0;
+}
+
 int dm2_v1_boot_materialize_startend_first_champion(
     DM2_V1_BootProfile *profile)
 {
@@ -13694,6 +13750,7 @@ int dm2_v1_boot_materialize_startend_first_champion(
     int old_released;
     uint32_t old_release_tick;
     uint16_t old_release_object;
+    uint16_t source_first_mirror_object;
     int i;
 
     if (!profile || profile->source_game_load_session_ready ||
@@ -13717,13 +13774,19 @@ int dm2_v1_boot_materialize_startend_first_champion(
      * GET_TILE_RECORD_LINK(0,0) on ddat.v1e0266 and selects the first DB3
      * subtype-0x7e marker through DM2_SELECT_CHAMPION(0,1,0,map).  The
      * roster was collected in that same map/x/y/chain order from the owned
-     * File_header image, so admit only its first matching source marker.
+     * File_header image. Verify the actual (0,0) chain first, then admit
+     * only its matching roster marker.
      * SKProject: SKULLWIN/startend.cpp:1138-1167; c_hero.cpp:1052-1157. */
+    if (!dm2_v1_boot_startend_first_mirror_from_file_header(
+            owner, &source_first_mirror_object)) {
+        return 0;
+    }
     for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
         const DM2_V1_BootChampionSelectionCandidate *candidate =
             &owner->preselection_mirror_roster.candidates[i];
         if (!candidate->valid || candidate->mirror.map != owner->current_map ||
-            candidate->mirror.x != 0 || candidate->mirror.y != 0) {
+            candidate->mirror.x != 0 || candidate->mirror.y != 0 ||
+            candidate->mirror.object_id != source_first_mirror_object) {
             continue;
         }
         first = candidate;

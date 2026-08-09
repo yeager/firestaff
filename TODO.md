@@ -7,6 +7,22 @@
   generator timing, T700 and T900 semantics remain blocked until an
   authenticated runtime capture binds their consumers.
 
+- ⏳ Nexus startup/menu-window-capture är nu tidsmässigt korrekt fångad i en
+  autentiserad 512-ramars europeisk session
+  (`run-codex-menu-window-20260809-f`): råram 500 motsvarar runtime-ram
+  10500, där Start injiceras. VDP2 ändrar därefter från den aktiva NBG1-
+  witnessen till en annan, fortfarande obunden state; ingen
+  `MENU.BPK`/`FONT256`/`TITLE`/`STABG`-källbindning hittades. Detta bekräftar
+  input/övergång men inte menyn. Startup-textkonsumenten, HUD-kompositionen
+  och produktions-viewporten ska därför fortsatt vara spärrade tills en
+  positiv source-join finns.
+
+- ⏳ Samma tidsfönster med Saturn A (`0x20`) i stället för Start (`0x10`)
+  gav identisk 512-ramars SHA-256 och ingen ny VDP2-konsument eller
+  retail-source-join. Nästa inputexperiment måste därför ändra den
+  autentiska BIOS-/medieprofilen eller fånga längre efter handoff, inte bara
+  återupprepa samma knappmask.
+
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
   closed until the same Saturn trace supplies display-origin,
@@ -227,7 +243,10 @@
   `startend.cpp::DM2_2f3f_0789`-grenens första, skriptade championval från
   karta 0/ruta `(0,0)` samt dess privata `DM2_events_2f3f_04ea(...,0x92)`
   finns nu som en separat atom och är spärrad till den autentiska entréposen;
-  den kan inte felaktigt köras efter en privat förflyttning. HUD-uppdateringen
+  den kan inte felaktigt köras efter en privat förflyttning. Den kräver nu
+  dessutom den faktiska `GET_TILE_RECORD_LINK(0,0)`-kedjan och dess DB3
+  subtype `0x7e`; en rosterpost med bara samma koordinat räcker inte.
+  HUD-uppdateringen
   och sessioncommit återstår
   och får inte ersättas med ett automatiskt värdval.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,

@@ -93,6 +93,23 @@ and CRAM. Its decoded `MENU.BPK`, `FONT256.S2D`, `TITLE`, and `STABG` source
 join is negative, so it is hardware-layer evidence only and is not called a
 menu capture.
 
+A time-corrected authenticated E-BIOS/French session at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-window-20260809-f/runtime-vdp12.raw`
+captured 512 consecutive frames with `skip_frames=10000`, so raw frame 500
+corresponds to runtime frame 10500, where the real START input is injected.
+Its SHA-256 is
+`decf7dbd3a327cb5623fe7c12b4820f5037dc0e977c50ec3aac38645fc353d30`.
+All 512 frames have VDP1 activity. The first frame retains the active NBG1
+bitmap tuple; after the input window VDP2 changes to other register states,
+but no `MENU.BPK`/`FONT256`/`TITLE`/`STABG` exact source join is found. This
+is positive input/transition evidence, not menu, HUD, or text-consumer
+admission, so semantic admission remains blocked.
+
+A parallel 512-frame run with Saturn A (`0x20`) instead of START (`0x10`)
+produced the same raw SHA-256 and the same unbound VDP2 state. The button-mask
+change therefore did not produce a verifiable menu window; this is not a
+reason to open the host text consumer or to infer a menu route.
+
 The validator also accepts `--require-vdp1-activity` for a V2 witness. This
 requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer
 payload. It is only an active-engine observation. It does not prove which

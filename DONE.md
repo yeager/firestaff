@@ -10,6 +10,16 @@
 - ✅ Regression coverage passes for duplicate admission and retirement, while
   combat, AI, loot, generators, T700 and T900 remain fail-closed as documented.
 
+# CSB Atari ST: direkt F0435-återupptagning från CLI (2026-08-09)
+
+- ✅ En uttrycklig `--save` med en autentisk Atari ST `MINI.DAT` förs nu genom
+  M12:s launch-intent till den källägda F0435-läsaren. Den går direkt till
+  GAMELOOP i stället för att spela om `ANIMATE.SCR`.
+- ✅ Den direkta hand-offen behåller paketidentiteten för Atari
+  `GRAPHICS.DAT`, så C232-HUD och F0128-viewport fortsätter använda samma
+  verifierade originalmaterial. CTest kör den riktiga hårddiskarkivets
+  `MINI.DAT` och CLI-boot-probet till en aktiv karta 4-session.
+
 # CSB: native C010 Climb Down-rörelse (2026-08-09)
 
 - ✅ CSB:s `CLIMB DOWN` går nu från `MENU.C F0407` direkt till den liveägda
@@ -115,6 +125,21 @@
   samma lane och sparar ett separat sekvenskvitto.
 - ✅ VDP1-, VDP2-bitmap- och VDP2-tilemap-regressionerna samt strikt C99-
   kompilering passerar.
+
+# Nexus: tidsmässigt korrekt startup/menu-window-capture (2026-08-09)
+
+- ✅ En autentiserad E-BIOS/French-session fångade 512 råa VDP1/VDP2-ramar
+  med `skip_frames=10000`; råram 500 motsvarar därmed den injicerade Start-
+  inputen vid runtime-ram 10500. Alla 512 ramar har aktiv VDP1-observation.
+  Den första ramen har `BGON=0x0002`, `CHCTLA=0x1211` och aktiv NBG1 bitmap;
+  efter inputen ändras VDP2 till andra registerlägen utan bunden konsument.
+- ✅ Capturen valideras strukturellt som 512 ramar och har SHA-256
+  `decf7dbd3a327cb5623fe7c12b4820f5037dc0e977c50ec3aac38645fc353d30`.
+  Source-comparatorn hittar noll exakta retail-joins, så semantic admission
+  förblir korrekt spärrad.
+- ✅ Ett parallellt 512-ramarsfönster med A (`0x20`) i samma autentiserade
+  E-BIOS/French-session gav samma SHA-256 och samma obundna VDP2-state. Det
+  visar att knappmaskbytet inte producerade ett verifierbart menyfönster.
 
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
@@ -960,11 +985,23 @@
 
 # DM2 New Game skriptad första champion (2026-08-09)
 
+- ✅ DOS File_header-provet läser nu den hashadmitterade råheadern och
+  map-0-deskriptorn i testet: `nMaps`, relativ map-offset, dimensioner och
+  den lokala `w8`-posen härleds från samma bytes som laddaren använder.
+  Realdatatestet söker även normalt i `~/.firestaff/data/dm2` när ingen
+  testvariabel satts, så den lokala verkliga korpusen kan inte ge ett grönt
+  resultat genom att hoppa över assertions; okänd eller saknad data är
+  fortsatt skip-safe.
+
 - ✅ `DM2_2f3f_0789` kan nu materialisera sin autentiska första
   championövergång privat: samma File_header-ägare söker först DB3 subtype
   `0x7e` i karta 0:s ruta `(0,0)` och återspelar exakt
   `DM2_SELECT_CHAMPION(0,1,0,map)`. Det väljer den verkliga DYN4-/GDAT- och
   itemkedjan, med `partypos=0` och `absdir=0`, utan en syntetisk champion.
+- ✅ Startend-grenen validerar nu dessutom den exakta levande
+  `GET_TILE_RECORD_LINK(0,0)`-kedjan innan rosterposten får användas. Den
+  accepterar bara DB3 subtype `0x7e` som verkligen nås från den begärda
+  lokala länken och avvisar en frikopplad eller senare matchande rosterpost.
 - ✅ Realdatatestet bevisar den privata en-hjälteägaren och att M11-party,
   HUD, timerdrift samt `source_game_load_session_ready` fortfarande är
   opublicerade.

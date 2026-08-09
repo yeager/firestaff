@@ -4,6 +4,25 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 live C13 producer correction is complete: Vi Altar drops now
+  derive the rebirth owner from the authenticated bones JUNK record, preserve
+  its Thing cell, and publish the F0255 step-2 fields (`aux0`, `aux1`, and
+  `aux4`). Ownerless/stale icon matches stay on the normal drop path, and a
+  full or rejecting timeline restores the hand item. This fixes the runtime
+  producer; the authentic C13-bearing save and original launcher/panel capture
+  gates remain open.
+
+- 2026-08-09 C012 receipt correction is complete: the generator's source icon
+  index now survives F0275 result initialization and reaches the authentic
+  F0167 allocator. A focused regression covers both the positive empty-hand
+  route and the occupied-hand rejection.
+
+- 2026-08-09 F0275 wall-object mutation is complete: C012 generators, C013
+  storage take/store, and C016 exchangers now update the real Thing chain and
+  leader hand transactionally. Failed links or allocations roll back and do
+  not publish a remote effect. The authentic C13-bearing save and original
+  launcher/panel pixel-capture gates remain open.
+
 - 2026-08-09 real-data root audit: the complete `/Users/bosse/.firestaff/data`
   scan reports all five games `READY`, and DM1 auto-launch reaches runtime
   from authenticated FM Towns English data. The archive-backed scan can take

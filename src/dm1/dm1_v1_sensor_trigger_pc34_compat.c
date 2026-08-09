@@ -442,6 +442,14 @@ int F0723_SENSOR_EvaluateWall_Compat(
     outResult->wallObjectTypeTaken = -1;
     outResult->wallObjectTypeStored = -1;
 
+    /* F0167 consumes the C012 icon index when the empty leader hand is
+     * refilled. Carry it through the completed trigger receipt so the live
+     * M11 owner can allocate the matching original Thing record. */
+    if (sensorType == DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE) {
+        outResult->leaderHandObjectReceived = 1;
+        outResult->leaderHandObjectTypeReceived = (int)sensor->sensorData;
+    }
+
     /* Source: F0275 lines 1527-1531.  C004/C011/C017 key-slot
      * sensors consume the leader hand object only after the wall sensor
      * actually triggers; C003 is a non-consuming specific-object click. */

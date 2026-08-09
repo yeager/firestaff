@@ -85,6 +85,64 @@ static uint32_t dm2_test_fnv1a(const uint8_t *bytes, size_t byte_count) {
     return hash;
 }
 
+static uint16_t dm2_test_read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+/* The supported DOS member is hash-admitted before this test reaches M11.
+ * Do not preserve a hand-copied map count or entrance pose here: derive both
+ * from that member's File_header and map-0 Map_definitions bytes.  SKProject
+ * SKWIN/DME.h File_header::nMaps/w8 and Map_definitions::w8; SkWinCore.cpp
+ * READ_DUNGEON_STRUCTURE assigns w8 directly after map zero is current. */
+static int dm2_test_dos_file_header_pose_matches_loaded(
+    const DM2_V1_BootProfile *profile,
+    const DM2_V1_DungeonData *dungeon)
+{
+    const uint8_t *raw;
+    const uint8_t *map0;
+    uint16_t start_pose;
+    uint16_t map0_w8;
+    int source_x;
+    int source_y;
+    int source_dir;
+    int map0_width;
+    int map0_height;
+
+    if (!profile || !profile->assets_verified || !dungeon ||
+        !dungeon->raw_data || dungeon->raw_size < 60 ||
+        strcmp(profile->dungeon_md5,
+               "6caccd7875009e82fe2e28e7f6d6adc0") != 0) {
+        return 0;
+    }
+    raw = dungeon->raw_data;
+    if (dm2_test_read_le16(raw + 2) != 0x3147u ||
+        dm2_test_read_le16(raw + 4) != 44u) {
+        return 0;
+    }
+    /* File_header is 44 bytes. Map-0 follows it; its relative map-data
+     * offset is deliberately read rather than assumed by a fixture. */
+    map0 = raw + 44;
+    start_pose = dm2_test_read_le16(raw + 8);
+    map0_w8 = dm2_test_read_le16(map0 + 8);
+    source_x = (int)(start_pose & 0x1fu);
+    source_y = (int)((start_pose >> 5) & 0x1fu);
+    source_dir = (int)((start_pose >> 10) & 0x03u);
+    map0_width = (int)((map0_w8 >> 6) & 0x1fu) + 1;
+    map0_height = (int)((map0_w8 >> 11) & 0x1fu) + 1;
+
+    return raw[4] == (uint8_t)dungeon->level_count &&
+           dungeon->level_offsets[0] == (int)dm2_test_read_le16(map0) &&
+           dungeon->level_widths[0] == map0_width &&
+           dungeon->level_heights[0] == map0_height &&
+           source_x >= 0 && source_x < map0_width &&
+           source_y >= 0 && source_y < map0_height &&
+           dungeon->initial_party_pose_valid &&
+           dungeon->initial_party_x == source_x &&
+           dungeon->initial_party_y == source_y &&
+           dungeon->initial_party_dir == source_dir;
+}
+
 static int dm2_test_bytes_are_zero(const uint8_t *bytes, size_t byte_count)
 {
     size_t index;
@@ -2170,6 +2228,7 @@ static void check_incomplete_required_files_block_m11(const char* label,
 
 static const char* dm2_data_dir(void) {
     const char* data_dir = getenv("FIRESTAFF_DM2_V1_DATA_DIR");
+    static char default_data_dir[PATH_MAX];
     if (!data_dir || !data_dir[0]) {
         data_dir = getenv("FIRESTAFF_DM2_CANONICAL_DIR");
     }
@@ -2182,7 +2241,20 @@ static const char* dm2_data_dir(void) {
     if (data_dir && data_dir[0]) {
         return data_dir;
     }
-    return NULL;
+    /* A local original-data install is not a fixture.  Discover the normal
+     * Firestaff data root so this real-data regression actually executes in
+     * developer builds; hash admission below still rejects everything else
+     * and CI without user data remains skip-safe. */
+    {
+        const char *home = getenv("HOME");
+        int written;
+        if (!home || !home[0]) return NULL;
+        written = snprintf(default_data_dir, sizeof(default_data_dir),
+                           "%s/.firestaff/data/dm2", home);
+        if (written <= 0 || (size_t)written >= sizeof(default_data_dir))
+            return NULL;
+    }
+    return default_data_dir;
 }
 
 static int dm2_data_dir_is_explicit(void) {
@@ -2537,6 +2609,7 @@ int main(void) {
                 "M11 source id is dm2");
     expect_true(view.dm2BootProfile != NULL,
                 "M11 stores a DM2 boot profile");
+    profile = (DM2_V1_BootProfile *)view.dm2BootProfile;
     expect_true(view.dm2World != NULL,
                 "M11 stores the DM2 V1 world pointer");
     expect_true(view.dm2State.level_loaded == 0,
@@ -2552,18 +2625,25 @@ int main(void) {
     }
     expect_true(dm2_v1_sound_playback_backend_bound(),
                 "M11 DM2 binds playback only after the verified boot profile");
-    /* File_header::w8 is 0x0101, directly yielding the map-0 (1,8,0)
-     * pose. Do not retain the former +10 fixture word as an entrance.
-     * SKProject SkWinCore.cpp:39936-39943. */
+    /* File_header::w8 is the only source pose owner.  The assertion below
+     * derives it from the mounted hash-admitted bytes, including map-0's
+     * real descriptor bounds; it never relies on a copied test pose. */
     expect_true(view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
                 view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0,
                 "M11 DM2 does not expose a source pose as a live party before GAME_LOAD");
     expect_true(dm2_v1_runtime_has_dungeon_data() == 1,
                 "DM2 V1 runtime singleton has the boot profile");
-    expect_true(dm2_v1_runtime_get_party_x() == 1 &&
-                dm2_v1_runtime_get_party_y() == 8 &&
-                dm2_v1_runtime_get_party_dir() == 0,
-                "DM2 V1 parser retains the File_header pose without publishing a live M11 party");
+    expect_true(profile && profile->dungeon_data &&
+                    dm2_test_dos_file_header_pose_matches_loaded(
+                        profile,
+                        (const DM2_V1_DungeonData *)profile->dungeon_data) &&
+                    dm2_v1_runtime_get_party_x() ==
+                        ((const DM2_V1_DungeonData *)profile->dungeon_data)->initial_party_x &&
+                    dm2_v1_runtime_get_party_y() ==
+                        ((const DM2_V1_DungeonData *)profile->dungeon_data)->initial_party_y &&
+                    dm2_v1_runtime_get_party_dir() ==
+                        ((const DM2_V1_DungeonData *)profile->dungeon_data)->initial_party_dir,
+                "DM2 V1 parser retains the raw File_header/map-0 entrance pose without publishing a live M11 party");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
     expect_true(view.dm2State.startup_menu_active == 1,
@@ -2610,9 +2690,14 @@ int main(void) {
     expect_true(view.dm2State.startup_title_animation_tick == 0,
                 "M11 DM2 startup never manufactures a title tick");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
-    expect_true(profile != NULL && profile->deterministic.max_levels == 44u &&
+    expect_true(profile != NULL && profile->dungeon_data &&
+                    dm2_test_dos_file_header_pose_matches_loaded(
+                        profile,
+                        (const DM2_V1_DungeonData *)profile->dungeon_data) &&
+                    profile->deterministic.max_levels ==
+                        (uint8_t)((const DM2_V1_DungeonData *)profile->dungeon_data)->level_count &&
                     profile->deterministic.dungeon_seed == 0u,
-                "M11 DM2 launch retains the PC-DOS File_header map count and seed");
+                "M11 DM2 launch retains the raw PC-DOS File_header map count and seed");
     expect_true(profile != NULL && profile->dos_startup_media_verified &&
                     profile->dos_startup_media.valid &&
                     profile->dos_startup_media.intro_has_interplay_mve &&
