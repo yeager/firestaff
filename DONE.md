@@ -1,3 +1,12 @@
+# CI: CSB FM Towns-probens länkberoenden (2026-08-09)
+
+- ✅ De tre CSB-prober som länkar `csb_v1_boot.c` inkluderar nu de befintliga
+  FM Towns-implementationerna `csb_v1_fmtowns_game.c` och
+  `csb_v1_fmtowns_portrait.c`. Det eliminerar macOS arm64- och Linux-länkfel
+  utan att lägga till speldata, BIOS eller syntetiska resurser.
+- ✅ Alla tre mål bygger i en extern macOS-build efter fixen; den nya GitHub
+  Actions-matrisen körs mot committen `f307f28465`.
+
 # CSB Atari ST: Utility Disk MSA-mediaidentitet (2026-08-09)
 
 - ✅ Den hashverifierade Atari ST 2.0 Utility Disk-kopian i MSA-format
