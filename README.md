@@ -1,7 +1,7 @@
 # Firestaff
 
-Firestaff is a clean-room engine project for the Dungeon Master games. It
-uses game files you already own, identifies them by content hash and keeps the
+Firestaff is a clean-room engine project for the Dungeon Master games. It uses
+game files you already own, identifies them by content hash and keeps the
 original files separate from the engine.
 
 Dungeon Master for PC DOS 3.4 is the current playable route. Work on Chaos
