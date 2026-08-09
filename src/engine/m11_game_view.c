@@ -11355,6 +11355,23 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         return 0;
     }
 
+    /* Build the host-facing receipt while the candidate world is still
+     * isolated.  The receipt contract is deterministic for a validated DM1
+     * source, so any future validation failure must happen before the live
+     * world is replaced.  This keeps an unsuccessful resume atomic. */
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = path;
+    resumeRequest.gameTick = (uint32_t)loadedWorld.gameTick;
+    resumeRequest.musicOn = saveHeader.musicOn;
+    resumeRequest.usedBackup = usedBackup;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !resumeReceipt.allowed || !resumeReceipt.loadSucceeded) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+
     if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
             &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&loadedWorld);
@@ -11375,16 +11392,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
     m11_mark_explored(state);
-    memset(&resumeRequest, 0, sizeof(resumeRequest));
-    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
-    resumeRequest.sourceId = state->sourceId;
-    resumeRequest.path = path;
-    resumeRequest.gameTick = (uint32_t)state->world.gameTick;
-    resumeRequest.worldHash = state->lastWorldHash;
-    resumeRequest.musicOn = saveHeader.musicOn;
-    resumeRequest.usedBackup = usedBackup;
-    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
-        !m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
+    if (!m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
         return 0;
     }
     if (outUsedBackup) {
@@ -11424,6 +11432,21 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
         F0883_WORLD_Free_Compat(&loadedWorld);
         return 0;
     }
+
+    /* Prepare the receipt before adoption for the same atomicity guarantee as
+     * the file-based resume path.  The byte route has no native save header,
+     * so it keeps the existing default music state. */
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = sourcePath ? sourcePath : "original-pc34-snapshot";
+    resumeRequest.gameTick = (uint32_t)loadedWorld.gameTick;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !resumeReceipt.allowed || !resumeReceipt.loadSucceeded) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+
     if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
             &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&loadedWorld);
@@ -11438,14 +11461,7 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
     m11_mark_explored(state);
-    memset(&resumeRequest, 0, sizeof(resumeRequest));
-    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
-    resumeRequest.sourceId = state->sourceId;
-    resumeRequest.path = sourcePath ? sourcePath : "original-pc34-snapshot";
-    resumeRequest.gameTick = (uint32_t)state->world.gameTick;
-    resumeRequest.worldHash = state->lastWorldHash;
-    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
-        !m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
+    if (!m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
         return 0;
     }
     return 1;

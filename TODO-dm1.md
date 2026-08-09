@@ -17,6 +17,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   owner. Keep the backed PC34 roundtrip and remaining C13/original-capture
   gates open until their real evidence is present.
 
+- 2026-08-09 resume atomicity correction is complete: file and byte imports
+  validate the DM1 resume receipt while the candidate world is still isolated.
+  A rejected receipt therefore cannot replace the active world or leave a
+  half-applied resume state. The remaining resume work is authentic C13 and
+  original-pixel evidence, not another save-state fallback.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.

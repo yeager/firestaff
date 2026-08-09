@@ -32,6 +32,9 @@
 
 ### Fixed
 
+- `M11_GameView`: Validate DM1 file and byte resume receipts before adopting
+  the candidate world, so a rejected resume cannot leave the live session
+  partially replaced.
 - `m11_game_view`: Keep authenticated FM Towns `DUNGEON.DAT` on its native
   runtime path and bind its legacy `GRAPHICS.DAT` before the PC34 loader, so
   direct DM1 launch no longer rejects valid FM Towns data.
