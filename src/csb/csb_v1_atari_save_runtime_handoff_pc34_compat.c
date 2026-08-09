@@ -54,6 +54,13 @@ int csb_v1_atari_save_handoff_runtime_pc34_compat(
     profile->party_dir = info.party_direction & 3;
     profile->game_time = info.game_time;
     profile->timeline_queue.gameTick = info.game_time;
+    /* ReDMCSB LOADSAVE.C F0435 restores GAMEBLOCK2's random state together
+     * with the party pose before play resumes.  The native Atari/Amiga
+     * writer uses the common runtime random-state mirror, so retain the
+     * authenticated source value here rather than falling back to the
+     * dungeon seed during a later F0433 write-back. */
+    profile->csbwin_random_seed_valid = 1;
+    profile->csbwin_random_seed = info.random_seed;
     csb_v1_dungeon_set_current_level(profile->current_level);
     if (out_info) *out_info = info;
     return CSB_V1_ATARI_RUNTIME_OK;

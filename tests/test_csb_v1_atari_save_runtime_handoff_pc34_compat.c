@@ -111,6 +111,7 @@ int main(void)
                                                   &written_info) !=
                 CSB_V1_ATARI_SAVE_OK ||
             written_info.game_time != runtime.game_time ||
+            written_info.random_seed != info.random_seed ||
             written_info.dungeon_size != info.dungeon_size ||
             memcmp(written + written_info.dungeon_offset,
                    bytes + info.dungeon_offset, info.dungeon_size) != 0) {
