@@ -179,3 +179,11 @@ markeras endast ordningen mailbox → handler → röstregister när den faktisk
 finns i samma råtrace. Två separata tracefiler saknar gemensam tidsbas och får
 därför inte användas för att påstå eventägare, SAL-codec, MAP-bindning eller
 playback.
+
+Den externa `NXSLSC01`-artefakten har inventerats med
+`scripts/analyze_nexus_slev_capture_envelope.py`: header och payload är
+strukturellt giltiga, 65 536 av 65 536 poster är SH-2-skrivningar, men ingen
+av de fyra retail-FNV-identiteterna för `SLEV00.BIN`, `SNDLEV00.SAL`,
+`SNDLEV00.MAP` och `SDDRVS.TSK` matchar. Den är därför runtime-observation,
+inte source-bound capture. SLEV/SAL/SDDRVS-grinden är kvar på 2/8 och
+produktionsgraden 0 %.

@@ -1,3 +1,9 @@
+# Nexus SLEV/SAL/SDDRVS capture-envelope inventory (2026-08-09)
+
+- ✅ NXSLSC01-header, payload-hash och 65 536 SH-2-skrivposter är verifierade.
+- ✅ Retail-FNV-jämförelse av SLEV00/SAL/MAP/SDDRVS avvisar alla fyra identiteter;
+  selector, SAL-codec, dispatch och playback förblir spärrade.
+
 # CI: CSB FM Towns-probens länkberoenden (2026-08-09)
 
 - ✅ De tre CSB-prober som länkar `csb_v1_boot.c` inkluderar nu de befintliga

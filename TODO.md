@@ -4525,6 +4525,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   records are not retail Saturn title/menu/VDP1 parity. Do not reintroduce
   “3D animated logo”, options or host polygon rendering as implemented until
   the consumer capture is source-joined.
+# Nexus NXSLSC01 capture-provenance gap (2026-08-09)
+
+- ⏳ Den externa 1 MiB-capturen har giltig header, 65 536 SH-2-skrivposter
+  och observerad runtime-aktivitet, men ingen av dess fyra retail-FNV-
+  identiteter matchar SLEV00/SAL/MAP/SDDRVS. Den får därför inte öppna
+  SLEV-selector, SAL-codec eller playback. Nästa capture måste skrivas med
+  samma source-bound identities som den faktiskt laddade retail-kedjan.
+
 # Theron next authenticated semantic capture
 
 - 🔒 Continue from the positive CD→RAM→HuC6280 receipt at the next verified
