@@ -163,6 +163,15 @@
 - ✅ Textindex blir inte en gissad sträng och synlighet muteras inte. Den
   riktiga QUERY_MESSAGE_TEXT-, sensor- och UI-kedjan återstår.
 
+# DM2 New Game privata File_header-teleportörer (2026-08-09)
+
+- ✅ Den privata entrévärlden behåller nu aktuella kartans direkta DB1-
+  teleportörposter med destination, räckvidd, rotation och ljudflagga.
+  Realdatatestet jämför varje fält med en ny validerad läsning av samma
+  DUNGEON.DAT-klon.
+- ✅ Ingen partyrörelse, kartväxling, rotation eller ljudbegäran sker från
+  denna receipt innan c_moverec- och sessionskedjan finns.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte

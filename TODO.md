@@ -67,8 +67,9 @@
   entréviewporten håller nu de elva källrutornas terräng och
   scen-/ljusidentitet samt mappegna direkta DB0-dörrar med verkligt
   tillstånd, paneltyp och ornament. Kartans DB5–DB15-objekt har också sina
-  verkliga recordadresser, och DB2-textfält från samma kedjor är bevarade.
-  De saknar ännu placering, GDAT-material, textpresentation och
+  verkliga recordadresser, och DB2-textfält samt DB1-teleportörposter från
+  samma kedjor är bevarade. De saknar ännu placering, GDAT-material, verklig
+  teleporterförflyttning, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.
   Den privata
   kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får

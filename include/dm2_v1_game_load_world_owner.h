@@ -266,6 +266,9 @@ typedef struct {
     /* DB2 Text payloads reached by the same validated map walk.  Visibility,
      * message lookup and special-marker effects stay uncommitted. */
     DM2_V1_FileHeaderRuntimeTextReceipt preselection_map_texts;
+    /* Direct DB1 Teleporter payloads on the current File_header map.  They
+     * are retained without applying a party transition or sound request. */
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt preselection_map_teleporters;
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -325,6 +328,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
 /* Retain current-map DB2 Text fields for later source-owned UI/sensor
  * consumers.  This does not decode a host string or change visibility. */
 int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map direct DB1 Teleporter fields for the later c_moverec
+ * transition owner. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

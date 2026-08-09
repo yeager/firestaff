@@ -1154,6 +1154,35 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_teleporters.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* c_moverec consumes the direct DME.h::Teleporter payload.  The map
+     * owner only preserves those bytes; changing the party map, coordinates,
+     * facing or playing teleporter sound requires the missing live session. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.teleporter_record_reads != candidate.teleporter_root_count) {
+        return 0;
+    }
+    owner->preselection_map_teleporters = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {
