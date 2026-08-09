@@ -318,6 +318,7 @@ static int dm2_test_preselection_creature_possessions_match_owner(
     int i;
 
     if (!owner || !owner->preselection_map_creatures.committed ||
+        !owner->preselection_creature_possessions_materialized ||
         owner->preselection_creature_possession_count !=
             (uint16_t)owner->preselection_map_creatures.creature_record_count) {
         return 0;

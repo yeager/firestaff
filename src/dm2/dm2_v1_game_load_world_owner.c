@@ -1251,7 +1251,7 @@ int dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->preselection_map_creatures.committed ||
-        owner->preselection_creature_possession_count != 0u ||
+        owner->preselection_creature_possessions_materialized ||
         owner->champion_selection_materialized || owner->committed) {
         return 0;
     }
@@ -1285,6 +1285,7 @@ int dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
     memcpy(owner->preselection_creature_possessions, candidate,
            (size_t)count * sizeof(candidate[0]));
     owner->preselection_creature_possession_count = (uint16_t)count;
+    owner->preselection_creature_possessions_materialized = 1u;
     return 1;
 }
 

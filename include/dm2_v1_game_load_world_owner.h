@@ -286,6 +286,7 @@ typedef struct {
     /* DB4 creature records reached through the current File_header map's
      * complete chains. CAII slots, movement and drops remain absent. */
     DM2_V1_FileHeaderRuntimeCreatureReceipt preselection_map_creatures;
+    uint8_t preselection_creature_possessions_materialized;
     uint16_t preselection_creature_possession_count;
     DM2_V1_GameLoadCreaturePossessionReceipt
         preselection_creature_possessions[
