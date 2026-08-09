@@ -1,6 +1,13 @@
 # Theron Capture Readiness
 
-**Last verified: 2026-08-08.** The fresh authentic US Track 02 capture used
+**Update 2026-08-09:** an authenticated VDC/VCE pair now reaches the
+production Theron boot presenter. M11 installs the captured VCE palette before
+presenting the indexed frame, and the boot facade admits this source-only
+screen replay without unlocking generated tiles or unproven square-to-tile
+semantics. The resulting frame remains diagnostic evidence: it is not yet a
+README-eligible gameplay screenshot.
+
+**Last verified: 2026-08-09.** The fresh authentic US Track 02 capture used
 the real CUE/BIN and a real SDL2 Mednafen build. It observed 161 raw sectors,
 51 SCSI read commands and 25 CD IRQ callbacks, but zero game-owned `$E009`
 data reads. This is a useful negative boundary: the transport is real, while

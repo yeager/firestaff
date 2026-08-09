@@ -10614,3 +10614,14 @@
   (`runtime-vdp12.raw`, 1,577,645 bytes). It contains no VDP1 draw command and
   is therefore retained as startup boundary evidence only; menu, HUD and
   viewport ownership remain blocked.
+- # Theron authenticated VDC/VCE capture reaches boot presenter (2026-08-09)
+
+- ✅ Bootfacaden skiljer nu på en autentiserad screen-space VDC/VCE-replay och
+  ett ännu obundet Track 02-grafikpaket. Capture-frames kan presenteras utan
+  att genererade tiles eller square-to-tile-semantik låses upp.
+- ✅ M11 installerar capture-parets riktiga VCE-palett före indexed
+  framebuffer-presentering. Regressionsprovet verifierar source-pixels genom
+  både viewport- och bootfacad.
+- ⏳ Capture-bilden är fortfarande diagnostisk och inte README-eligible; den
+  saknar ännu bevisad dungeon-materialbank, perspektivkonsument och komplett
+  Track 02 semantic handoff.

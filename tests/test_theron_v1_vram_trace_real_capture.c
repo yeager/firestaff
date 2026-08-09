@@ -1,4 +1,6 @@
 #include "theron_v1_vram_trace_loader.h"
+#include "theron_v1_boot.h"
+#include "theron_v1_world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +70,7 @@ int main(void) {
     unsigned char m11_framebuffer[320u * 200u] = {0};
     size_t preview_nonzero;
     size_t presented_nonzero;
+    size_t boot_presented_nonzero;
     size_t vram_nonzero;
     size_t vce_nonzero;
 
@@ -123,6 +126,35 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
+
+    /* Regression for the production boot facade: an authenticated capture
+     * is permitted to reach the source-only presenter even when the real
+     * Track 02 bundle has no decoded generated tile/material bank.  This
+     * must not reopen synthetic square-to-tile semantics. */
+    {
+        Theron_V1_World world;
+        TrAssetBundle assets;
+        unsigned char boot_framebuffer[320u * 200u] = {0};
+
+        theron_v1_world_init(&world);
+        memset(&assets, 0, sizeof(assets));
+        if (!theron_v1_boot_runtime_render_frame(
+                &world, &viewport, &assets, 0, 0,
+                boot_framebuffer, 320, 200)) {
+            fprintf(stderr,
+                    "FAIL: authenticated capture was blocked by boot facade\n");
+            theron_vp_free(&viewport);
+            return 1;
+        }
+        boot_presented_nonzero = nonzero_bytes(boot_framebuffer,
+                                                sizeof(boot_framebuffer));
+        if (boot_presented_nonzero == 0u) {
+            fprintf(stderr,
+                    "FAIL: boot facade presented an empty capture frame\n");
+            theron_vp_free(&viewport);
+            return 1;
+        }
+    }
     if (getenv("THERON_VRAM_CAPTURE_BMP") &&
         !write_source_bmp(getenv("THERON_VRAM_CAPTURE_BMP"), &viewport)) {
         fprintf(stderr, "FAIL: requested source-backed BMP could not be written\n");
@@ -130,10 +162,11 @@ int main(void) {
         return 1;
     }
     printf("PASS: vram_nonzero=%zu vce_nonzero=%zu bat_tiles=%d "
-           "preview_cells=%d preview_nonzero=%zu presented_nonzero=%zu palette_entries=512 "
+           "preview_cells=%d preview_nonzero=%zu presented_nonzero=%zu "
+           "boot_presented_nonzero=%zu palette_entries=512 "
            "pixels=source_only\n",
            vram_nonzero, vce_nonzero, loaded, preview_cells, preview_nonzero,
-           presented_nonzero);
+           presented_nonzero, boot_presented_nonzero);
     theron_vp_free(&viewport);
     return 0;
 }

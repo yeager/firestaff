@@ -1,6 +1,10 @@
 # Firestaff TODO - Open Work
 
-- 🔧 Theron: den autentiska CD/ADPCM-traceparsern godkänner nu hela den
+- 🔧 Theron: den autentiserade VDC/VCE-screen-capturen når nu bootfacadens
+  source-only-presenter och M11 installerar den fångade VCE-paletten innan
+  indexed blit. Detta låser inte upp genererade tiles, square-to-tile-
+  perspektiv eller README-publicering. Den autentiska CD/ADPCM-traceparsern
+  godkänner nu hela den
   externa Mednafen-transportcapturen och två source-origin-RAM-kvitton, men
   detta är ännu inte en game-owned `$2600`/level/object/tile-consumercapture.
   Nästa beviskrav är därför fortfarande originalets RNG/spawn/AI/combat/loot,

@@ -5922,6 +5922,9 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
                                         int framebuffer_width,
                                         int framebuffer_height)
 {
+    const int authenticated_viewport_capture =
+        viewport && viewport->vram_trace_loaded;
+
     if (!world || !viewport || !assets || !framebuffer ||
         framebuffer_width <= 0 || framebuffer_height <= 0) {
         return 0;
@@ -5935,7 +5938,15 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
         viewport,
         assets->synthetic_rendering_blocked &&
             !tr_asset_generated_v1_rendering_allowed(assets));
-    if (!theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
+    /* A verified screen-space VDC/VCE replay is a separate source-owned
+     * render route.  It does not make the Track 02 asset bundle's unbound
+     * tile/material bank usable; it only permits the capture consumer to
+     * copy its authenticated BAT frame into the host framebuffer.
+     *
+     * Source: THQUEST.ASM T400/T520 graphics-bank boundary; HuC6270 BAT
+     * replay receipt from the authenticated Mednafen capture pair. */
+    if (!authenticated_viewport_capture &&
+        !theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
         return 0;
     }
     /* When the runtime owns an asset bundle with decoded tiles, make the
@@ -5943,7 +5954,9 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
      * copy of tile metadata; the asset bundle retains ownership of the
      * underlying Track 02/03 bytes. Source: THQUEST.ASM T400 tile bank load
      * followed by T520 viewport tile selection. */
-    theron_vp_set_palette(viewport, &assets->palette);
+    if (!authenticated_viewport_capture) {
+        theron_vp_set_palette(viewport, &assets->palette);
+    }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
      * optional V2 HUD overlay before M11 presents the indexed viewport. */
     theron_vp_render_dungeon(viewport, world);

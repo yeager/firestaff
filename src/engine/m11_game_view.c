@@ -55830,6 +55830,32 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     }
 }
 
+/* Install the palette that belongs to an authenticated VDC/VCE capture
+ * before M11 presents its indexed framebuffer.  The viewport capture loader
+ * already verifies the complete VRAM/VCE pair; this is only the host-side
+ * palette handoff for those source-owned indices.  Do not call this for the
+ * unbound Track 02 atlas or the default viewport palette.
+ *
+ * Source: HuC6260/HuC6270 VCE BGR333 snapshot contract and the captured
+ * Mednafen Theron screen route (VRAM 55c10e28, VCE ea83f117). */
+static int m11_theron_install_authenticated_vce_palette(
+    const Theron_V1_Viewport *viewport) {
+    uint8_t rgb6[256][3];
+    int i;
+
+    if (!viewport || !viewport->vram_trace_loaded) {
+        return 0;
+    }
+    memset(rgb6, 0, sizeof(rgb6));
+    for (i = 0; i < 256; ++i) {
+        const uint32_t rgba = viewport->palette.entries[i].rgba;
+        rgb6[i][0] = (uint8_t)((rgba >> 18) & 0x3fu);
+        rgb6[i][1] = (uint8_t)((rgba >> 10) & 0x3fu);
+        rgb6[i][2] = (uint8_t)((rgba >> 2) & 0x3fu);
+    }
+    return M11_Render_SetIndexedPaletteRgb6(rgb6) == M11_RENDER_OK;
+}
+
 void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -56235,6 +56261,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
+        /* The authenticated VDC/VCE replay is indexed all the way through
+         * the viewport presenter.  Install its real VCE colors before M11
+         * converts that indexed surface to the user-visible screenshot;
+         * otherwise a valid capture is presented through the cleared host
+         * palette and becomes an apparently black frame. */
+        (void)m11_theron_install_authenticated_vce_palette(viewport);
         if (!theron_v1_boot_runtime_render_frame(
                 world,
                 viewport,

@@ -7,7 +7,7 @@ built from scratch in portable C. **The only currently available playable
 game is Dungeon Master v1 (PC DOS 3.4).** CSB, DM2, Theron's Quest and DM
 Nexus are development targets and are not presented as finished games.
 
-Status reviewed 2026-08-08. For the exact boundary, see
+Status reviewed 2026-08-09. For the exact boundary, see
 [project status](docs/PROJECT_STATUS.md); for missing functions and evidence,
 see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
 
@@ -35,9 +35,10 @@ see [the per-game gap list](docs/MISSING_FUNCTIONS_BY_GAME.md).
 
 *Authentic original Theron's Quest US Track 02 title/menu capture through
 Mednafen, with the real System Card and CD media. This is original-game media
-evidence, not a Firestaff-rendered frame; the Firestaff runtime screenshot
-promotion gate remains closed until its own semantic VDC/VCE and Track 02
-consumer proof is available. See the [capture receipt](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).*
+evidence, not a Firestaff-rendered frame. Firestaff now has a source-only
+authenticated VDC/VCE replay route, but the runtime screenshot promotion gate
+remains closed until square-to-tile viewport semantics and the full Track 02
+consumer proof are available. See the [capture receipt](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).*
 
 Public screenshots are promoted only when the source-owned runtime route and
 the capture provenance are verified. Generated, placeholder or synthetic
@@ -162,8 +163,9 @@ The authenticated media inventory and placeholder boundary are tracked in
 Firestaff-rendered Theron screenshot promotion is controlled by the
 source-bound readiness and promotion gates in
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md). The
-README image above is explicitly an original-media capture and does not claim
-that the Firestaff promotion gate has passed.
+The source-only VDC/VCE replay is diagnostic evidence, not a README screenshot;
+the README image above is explicitly an original-media capture and does not
+claim that the Firestaff promotion gate has passed.
 
 For source-data investigation, an explicit authenticated fallback can load
 real Track 02 map/object records even when the original CD handoff has not
