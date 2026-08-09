@@ -1,3 +1,14 @@
+# Nexus VDP1 writer-trace forwarding fixed (2026-08-09)
+
+- ✅ Saturn-launchern vidarebefordrar nu de valfria, läsande VDP1-writer-code-
+  variablerna till den externa Mednafen-processen. Trace-hooken kan dessutom
+  begränsas till en observerad VRAM-adress via
+  `FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT`, utan att andra adresser eller
+  källägarskap antas.
+- ✅ `bash -n`, capture-launchertestet och patch-smoke passerar. En riktad
+  europeisk BIOS/fransk retail-körning gav inget nytt validerat raw-vittne
+  inom timeout; MENU.BPK/FONT256/HUD/viewport är därför fortsatt låsta.
+
 # DM2 runtime: statisk GRAPHICSSET-bild ägs per karta (2026-08-09)
 
 # DM2 New Game: privat entréviewport (2026-08-09)

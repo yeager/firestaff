@@ -132,6 +132,8 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
   FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
   FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
+  FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" \
+  FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT:-}" \
     "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 else
@@ -143,6 +145,8 @@ else
   FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME="$press_start_frame" \
   FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH="$press_start_length" \
   FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK="$press_button_mask" \
+  FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" \
+  FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_AT:-}" \
     "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 fi

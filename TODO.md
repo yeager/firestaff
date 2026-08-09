@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: launchern kan nu föra vidare en adressbegränsad VDP1-writer-code-
+  trace. Den riktade E-BIOS/franska körningen nådde inte ett nytt validerat
+  raw-vittne inom timeout. Nästa capture måste binda `0x10a00` till runtime-
+  PC och därefter till ett hashverifierat MENU.BPK/FONT256/DGN-consumerflöde;
+  ingen startup-, meny-, HUD- eller viewport-admission får härledas från den
+  befintliga 256×4-remsan.
+
 - 🔧 Theron: den autentiska CD/ADPCM-traceparsern godkänner nu hela den
   externa Mednafen-transportcapturen och två source-origin-RAM-kvitton, men
   detta är ännu inte en game-owned `$2600`/level/object/tile-consumercapture.
