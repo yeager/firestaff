@@ -57,6 +57,32 @@ typedef struct {
     int semantic_admission_blocked;
 } Nexus_V1_SaturnRuntimeCaptureFrameReceipt;
 
+typedef enum {
+    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN = 0,
+    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG = 1,
+    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE = 2
+} Nexus_V1_SaturnVdp2RegisterByteOrder;
+
+/* Hardware-state receipt for one already parsed frame. These are raw VDP2
+ * register observations only; BGON/NBG1 bits do not identify a menu, asset,
+ * text owner, or production compositor. */
+typedef struct {
+    int valid;
+    Nexus_V1_SaturnVdp2RegisterByteOrder byte_order;
+    uint16_t tvmd;
+    uint16_t bgon;
+    uint16_t chctla;
+    uint16_t chctlb;
+    uint16_t bmpna;
+    uint16_t pncn1;
+    uint16_t craofa;
+    int nbg1_enabled;
+    int nbg1_bitmap_mode;
+    int nbg1_16x16_character_mode;
+    int nbg1_colour_code;
+    int semantic_admission_blocked;
+} Nexus_V1_SaturnVdp2RegisterReceipt;
+
 /* Parse exactly one frame from an authenticated producer artifact. All
  * returned spans point into capture_bytes and remain valid only while that
  * buffer remains alive. V1 frames are accepted as transport evidence but do
@@ -65,5 +91,9 @@ int nexus_v1_saturn_runtime_capture_frame(
     const uint8_t *capture_bytes, size_t capture_byte_count,
     unsigned int frame_index,
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_receipt);
+
+int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+    const Nexus_V1_SaturnRuntimeCaptureFrameReceipt *frame,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_receipt);
 
 #endif

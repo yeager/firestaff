@@ -80,7 +80,13 @@ face-selection, transform, culling och vanlig produktion spärrade.
 
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
-externa capture-validatorn. `nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap()`
+externa capture-validatorn: `RawRegs → VRAM → CRAM`. C-läsaren och
+`nexus_v1_saturn_runtime_capture_vdp2_register_receipt()` använder nu samma
+ordning och väljer registerbyteordning deterministiskt. Den autentiserade
+engelska långkörningen visar vid frame 80 `TVMD=0x8000`, `BGON=0x0003` och
+aktiv NBG1 i character mode; detta är en hårdvarustate-observation, inte en
+menyägare eller textbindning.
+`nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap()`
 kan mata en autentiserad raw frame till NBG1-tilemap-kompositorn när en caller
 redan har attesterat källans namn-tabell, character-generator, CRAM och exakta
 VRAM-offsets. Den gissar inte MENU.BPK/FONT256-ägare eller placering; därför

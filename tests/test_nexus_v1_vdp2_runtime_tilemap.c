@@ -41,8 +41,8 @@ int main(void)
     memcpy(blob + offset, NEXUS_V1_SATURN_VDP2_RAW_MAGIC, vdp2_marker);
     offset += vdp2_marker;
     vdp2_payload = blob + offset;
-    vdp2_vram = vdp2_payload + NEXUS_V1_SATURN_VDP2_CRAM_BYTES;
-    vdp2_regs = vdp2_vram + NEXUS_V1_SATURN_VDP2_VRAM_BYTES;
+    vdp2_regs = vdp2_payload;
+    vdp2_vram = vdp2_payload + NEXUS_V1_SATURN_VDP2_REG_BYTES;
     le16(vdp2_regs + 0x00, 0x8020U);
     le16(vdp2_regs + 0x20, 0x0002U);
     le16(vdp2_regs + 0x28, 0x1000U);
@@ -53,10 +53,11 @@ int main(void)
         source_character[i] = 0x11U;
         vdp2_vram[0x100 + i] = 0x11U;
     }
-    le16(vdp2_payload + 0, 0x8000U);
+    le16(vdp2_vram + 0, 0U);
+    memcpy(source_cram,
+           vdp2_vram + NEXUS_V1_SATURN_VDP2_VRAM_BYTES,
+           sizeof(source_cram));
     memset(&binding, 0, sizeof(binding));
-    memset(source_cram, 0, sizeof(source_cram));
-    memcpy(source_cram, vdp2_payload, sizeof(source_cram));
     binding.capture_name_table_offset = 0U;
     binding.capture_character_generator_offset = 0x100U;
     binding.capture_character_generator_size = sizeof(source_character);

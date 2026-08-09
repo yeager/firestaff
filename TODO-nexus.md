@@ -25,6 +25,12 @@ ordningsflagga. Main-SH-2-tracen behåller första producerade kommando-offset.
 Extern fransk trace passerar; separata tracefiler saknar gemensam tidsbas, så
 eventägare, SAL-codec, MAP-bindning och playback är fortsatt spärrade.
 
+2026-08-09: C-capture-lanen korrigerad till producentens verkliga VDP2-ordning
+`RawRegs → VRAM → CRAM` (tidigare felaktigt pekade C på CRAM först). Ny
+registerreceipt verifierar byteordning och NBG1-state; extern engelskspråkig
+frame 80 läses korrekt som `TVMD=0x8000`, `BGON=0x0003`, NBG1 character mode.
+Menyägare, FONT256-textkod och faktisk presentation är fortfarande spärrade.
+
 ## Nexus Structure1G Material Follow-up (2026-07-11)
 
 2026-07-12 update: original `SN_FLOOR.MNS` and `SN_WALL.MNS` now feed the

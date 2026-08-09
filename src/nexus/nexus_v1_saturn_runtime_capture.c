@@ -3,6 +3,41 @@
 #include <stdio.h>
 #include <string.h>
 
+static uint16_t read_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8U) | p[1]);
+}
+
+static uint16_t read_le16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[1] << 8U) | p[0]);
+}
+
+static int vdp2_score(const uint8_t *registers, int little)
+{
+    uint16_t tvmd = little ? read_le16(registers) : read_be16(registers);
+    uint16_t bgon = little ? read_le16(registers + 0x20U) :
+        read_be16(registers + 0x20U);
+    uint16_t chctla = little ? read_le16(registers + 0x28U) :
+        read_be16(registers + 0x28U);
+    int score = 0;
+    if (tvmd & 0x8000U) score += 3;
+    if (bgon & 0x001fU) score += 4;
+    if ((bgon & ~0x1f3fU) == 0U) score += 1;
+    if (bgon & 0x0002U) {
+        score += 2;
+        if (chctla & 0x0200U) score += 1;
+    }
+    return score;
+}
+
+static uint16_t vdp2_read16(const uint8_t *registers, size_t offset,
+                            Nexus_V1_SaturnVdp2RegisterByteOrder order)
+{
+    return order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
+        ? read_le16(registers + offset) : read_be16(registers + offset);
+}
+
 static int has_bytes(const uint8_t *base, size_t size, size_t offset,
                      size_t count)
 {
@@ -160,9 +195,13 @@ int nexus_v1_saturn_runtime_capture_frame(
                 NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES;
             receipt.vdp1_draw_which = receipt.vdp1_framebuffer_1 +
                 NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES;
-            receipt.vdp2_cram = vdp2_payload;
-            receipt.vdp2_vram = vdp2_payload + NEXUS_V1_SATURN_VDP2_CRAM_BYTES;
-            receipt.vdp2_registers = receipt.vdp2_vram +
+            /* Producer order is RawRegs, VRAM, CRAM. Keep these pointers
+             * aligned with scripts/mednafen_1.32.1_nexus_saturn_capture.patch
+             * and validate them through the external frame witness. */
+            receipt.vdp2_registers = vdp2_payload;
+            receipt.vdp2_vram = vdp2_payload +
+                NEXUS_V1_SATURN_VDP2_REG_BYTES;
+            receipt.vdp2_cram = receipt.vdp2_vram +
                 NEXUS_V1_SATURN_VDP2_VRAM_BYTES;
             receipt.vdp1_vram_size = NEXUS_V1_SATURN_VDP1_VRAM_BYTES;
             receipt.vdp1_framebuffer_size =
@@ -183,4 +222,48 @@ int nexus_v1_saturn_runtime_capture_frame(
     }
     *out_receipt = receipt;
     return 0;
+}
+
+int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+    const Nexus_V1_SaturnRuntimeCaptureFrameReceipt *frame,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_receipt)
+{
+    Nexus_V1_SaturnVdp2RegisterReceipt receipt;
+    int big_score;
+    int little_score;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.semantic_admission_blocked = 1;
+    if (!out_receipt) return 0;
+    if (!frame || !frame->valid || !frame->vdp2_registers ||
+        frame->vdp2_register_size < 0x2aU) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    big_score = vdp2_score(frame->vdp2_registers, 0);
+    little_score = vdp2_score(frame->vdp2_registers, 1);
+    receipt.byte_order = little_score >= big_score
+        ? NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
+        : NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
+    receipt.tvmd = vdp2_read16(frame->vdp2_registers, 0x00U,
+                               receipt.byte_order);
+    receipt.bgon = vdp2_read16(frame->vdp2_registers, 0x20U,
+                               receipt.byte_order);
+    receipt.chctla = vdp2_read16(frame->vdp2_registers, 0x28U,
+                                 receipt.byte_order);
+    receipt.chctlb = vdp2_read16(frame->vdp2_registers, 0x2aU,
+                                 receipt.byte_order);
+    receipt.bmpna = vdp2_read16(frame->vdp2_registers, 0x2cU,
+                                receipt.byte_order);
+    receipt.pncn1 = vdp2_read16(frame->vdp2_registers, 0x32U,
+                                receipt.byte_order);
+    receipt.craofa = vdp2_read16(frame->vdp2_registers, 0xe4U,
+                                 receipt.byte_order);
+    receipt.nbg1_enabled = (receipt.bgon & 0x0002U) != 0U;
+    receipt.nbg1_bitmap_mode = (receipt.chctla & 0x0200U) != 0U;
+    receipt.nbg1_16x16_character_mode = (receipt.chctla & 0x0100U) != 0U;
+    receipt.nbg1_colour_code = (receipt.chctla >> 12U) & 3U;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
 }

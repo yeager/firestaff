@@ -1,3 +1,10 @@
+# Nexus VDP2 raw-layout correction (2026-08-09)
+
+Verifierat mot Mednafen-patch, Python-validator och extern frame 80: C läser
+nu VDP2-payloaden i ordningen `RawRegs → VRAM → CRAM`. Den nya register-
+receipten rapporterar korrekt `TVMD=0x8000`, `BGON=0x0003` och aktiv NBG1
+character mode. Detta öppnar ingen assetägare eller produktionskomposition.
+
 # Nexus SLEV/SAL/SDDRVS trace receipt (2026-08-09)
 
 Verifierat: första råbyte-offsetar för main-producerat mailbox-kommando,
