@@ -1,3 +1,16 @@
+# CSB native Amiga-val, Entrance-input och savebackup (2026-08-09)
+
+- ✅ Startmenyn och CLI:t väljer nu A31M eller A35 när de finns, i stället
+  för den skanningsbara men ännu spärrade A31E-vägen. Verifiering med den
+  lokala A31M-ADF:en når `csb-amiga-a31-titl` med den ursprungliga
+  TITL/APPA-kedjan.
+- ✅ CSB Entrance äger nu pekarinmatningen tills C03_GAME tar över. Högerklick
+  kan inte längre tolkas som vänsterklick och starta C200/dörrkedjan från
+  Prison.
+- ✅ Atari- och Amiga-återupptagning avvisar nu en `.BAK` när den inte kan
+  återställas atomärt till sitt kanoniska save-slotnamn. Runtime muteras först
+  efter lyckad återställning. ReDMCSB `LOADSAVE.C` F0435:2906-2907.
+
 # DM2 New Game: statisk RESET_CAII-mutation (2026-08-09)
 
 - ✅ Den privata, hashverifierade File_header-världen utför nu
