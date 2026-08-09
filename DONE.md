@@ -7,6 +7,9 @@
 - ✅ Detta skapar inga CAII-slottar, varelser eller timers. `RESET_CAII` och
   `FILL_ORPHAN_CAII` väntar fortsatt på en gemensam ägare för all-karts
   traversal, CCM/animationer och den dynamiska originalkön.
+- ✅ Ägaren bevarar också den verkliga `FILL_CAII_CUR_MAP`-ordningen från alla
+  44 kartor. Varje DB4-post kontrolleras mot samma tilekedja, AIDefinition och
+  råa animationsfält innan senare CAII-mutation får börja.
 
 # Theron autentiserad US spawn-/pointertabell (2026-08-09)
 

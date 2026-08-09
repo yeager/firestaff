@@ -134,6 +134,10 @@
   från synliga varelser eller en fast värdgräns. Själva `RESET_CAII` och
   `FILL_ORPHAN_CAII` är fortfarande spärrade tills deras all-karts traversal,
   CCM/animationsgren och dynamiska `c_tim` kan atomärt ägas tillsammans.
+  Traversalen är nu själv verifierad och behåller varje verklig DB4-post i
+  `FILL_CAII_CUR_MAP`-ordning med karta, ruta, record, AI-klass och råa
+  animationsfält. Nästa mutation måste använda just denna lista och återställa
+  hela listans DB4-/CAII-/timerändringar om någon källa saknas.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår

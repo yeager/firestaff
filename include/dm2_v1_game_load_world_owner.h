@@ -190,6 +190,30 @@ typedef struct {
     uint32_t source_hash;
 } DM2_V1_GameLoadCaiiCapacityReceipt;
 
+/* One source DB4 encounter in FILL_CAII_CUR_MAP order. The record remains
+ * unmodified; this is the all-map traversal prerequisite for RESET_CAII.
+ * Source: SKProject SKULLWIN/c_1c9a.cpp::DM2_FILL_CAII_CUR_MAP
+ * (9896-9994). */
+typedef struct {
+    int16_t map;
+    uint8_t x;
+    uint8_t y;
+    int16_t record_handle;
+    uint8_t creature_type;
+    uint8_t static_ai;
+    uint16_t record_word_a;
+    uint16_t packed_position;
+} DM2_V1_GameLoadCaiiMapCandidate;
+
+typedef struct {
+    int valid;
+    uint16_t map_count;
+    uint16_t candidate_count;
+    uint16_t static_candidate_count;
+    uint16_t dynamic_candidate_count;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiMapReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -211,6 +235,8 @@ typedef struct {
      * and animation owners. */
     DM2_V1_CaiiSourceOwner caii_source;
     DM2_V1_GameLoadCaiiCapacityReceipt caii_capacity;
+    DM2_V1_GameLoadCaiiMapReceipt caii_map_receipt;
+    DM2_V1_GameLoadCaiiMapCandidate *caii_map_candidates;
     /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
      * before it allocates the original 12-byte c_tim array and index heap.
      * They are allocation limits, not invented queued timers. */
