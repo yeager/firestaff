@@ -584,7 +584,12 @@ int main(void) {
     check_int(M12_AssetStatus_GameAvailable(&status, "dm1"),
               "DM1 should be available when both required hashes are "
               "matched by ZIP-backed deflated entries");
-    version = M12_AssetStatus_GetVersion(&status, "dm1", 1U);
+    /* FM Towns EN/JP occupy the first two catalogue slots.  Resolve the
+     * multilanguage PC profile by identity so this provenance assertion does
+     * not silently follow catalogue reordering. */
+    version = M12_AssetStatus_GetVersion(
+        &status, "dm1",
+        (size_t)M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi"));
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, kZipName,
                                      kGraphicsEntry),
