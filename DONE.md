@@ -1,3 +1,15 @@
+# Theron: atomic source-group admission (2026-08-09)
+
+- ✅ Source-bound Track 02 monster groups are now admitted transactionally:
+  capacity is checked for every non-zero HP member before the live-creature
+  pool is mutated, so a failed admission cannot leave a partial group.
+- ✅ The runtime remembers the authenticated `source_ref/source_index` pair
+  for every admitted group and rejects duplicate admission, including after a
+  kill. This prevents an invented respawn while the original respawn
+  consumer is still unavailable.
+- ✅ Regression coverage passes for duplicate admission and retirement, while
+  combat, AI, loot, generators, T700 and T900 remain fail-closed as documented.
+
 # CSB: native C010 Climb Down-rörelse (2026-08-09)
 
 - ✅ CSB:s `CLIMB DOWN` går nu från `MENU.C F0407` direkt till den liveägda

@@ -60,6 +60,10 @@ int main(void) {
     CHECK(creature != NULL && creature->source_ref == 0x1200u &&
               theron_v1_creature_count(&world, 1, 0) == 2,
           "published live creatures retain their authentic source identity");
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
+                                   1, 0, 1, 1) == -1 &&
+              world.creature_count == 2,
+          "the same source group cannot be admitted twice");
     world.level_loaded[1][0] = 1;
     world.levels[1][0].source_header_verified = 1;
     CHECK(theron_v1_world_bind_track02_monster(
@@ -148,6 +152,10 @@ int main(void) {
           "spell behavior stays blocked without the source consumer");
     CHECK(creature != NULL && theron_v1_creature_kill(&world, creature->id) == 0,
           "source-backed live creature can be retired without synthetic loot");
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
+                                   1, 0, 1, 1) == -1 &&
+              world.creature_count == 2,
+          "a killed static source group stays retired without captured respawn semantics");
     CHECK(theron_v1_drop_loot(&world, 1, 1, 1) == -1,
           "production drop publication stays blocked");
     CHECK(theron_v1_sound_is_valid(THERON_SOUND_SWORD_SWING) == 0,

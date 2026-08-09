@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron source-group admission is now atomic and source-identity aware:
+  a real Track 02 category-4 group is either fully materialized or not at all,
+  and an inactive static group cannot be reintroduced as an invented respawn.
+  The original respawn consumer, RNG return contract, AI, attacks, loot,
+  generator timing, T700 and T900 semantics remain blocked until an
+  authenticated runtime capture binds their consumers.
+
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
   closed until the same Saturn trace supplies display-origin,

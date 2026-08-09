@@ -43,21 +43,54 @@ theron_v1_source_monster_record_at(
     return NULL;
 }
 
+static int theron_v1_source_group_already_admitted(
+    const Theron_V1_World *world,
+    int dungeon_id,
+    int level,
+    const Theron_V1_SourceMonsterRecord *record) {
+    int i;
+
+    if (!world || !record) return 0;
+    for (i = 0; i < world->creature_count; ++i) {
+        const Theron_V1_Creature *creature = &world->creatures[i];
+        if (creature->dungeon_id == dungeon_id &&
+            creature->level == level &&
+            creature->source_ref == record->source_ref &&
+            creature->source_index == record->source_index) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int theron_v1_publish_source_group(
     Theron_V1_World *world,
     const Theron_V1_SourceMonsterRecord *record,
     int dungeon_id,
     int level) {
     unsigned int members;
+    unsigned int live_members = 0;
     unsigned int slot;
 
     if (!world || !record || record->number > 3u) return -1;
     members = (unsigned int)record->number + 1u;
     for (slot = 0; slot < members; ++slot) {
+        if (record->health[slot] != 0u) ++live_members;
+    }
+    /* Admission is transactional.  A source group is one authenticated
+     * record, so never expose a partially materialized group when the live
+     * pool cannot hold all of its non-zero HP members. */
+    if (live_members == 0u ||
+        world->creature_count < 0 ||
+        world->creature_count > THERON_MAX_CREATURES_PER_LEVEL ||
+        live_members > (unsigned int)THERON_MAX_CREATURES_PER_LEVEL ||
+        live_members > (unsigned int)THERON_MAX_CREATURES_PER_LEVEL -
+                          (unsigned int)world->creature_count) {
+        return -1;
+    }
+    for (slot = 0; slot < members; ++slot) {
         Theron_V1_Creature *creature;
         if (record->health[slot] == 0u) continue;
-        if (world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL)
-            return -1;
         creature = &world->creatures[world->creature_count++];
         memset(creature, 0, sizeof(*creature));
         creature->id = ((int)record->source_ref << 2) | (int)slot;
@@ -115,6 +148,14 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
         world, type, dungeon_id, level, x, y);
     if (!source_record || source_record->number > 3u ||
         source_record->health[0] == 0u) {
+        return -1;
+    }
+    /* A static source occurrence has a stable source identity.  Until the
+     * original respawn consumer is captured, re-admitting an inactive copy
+     * would invent a respawn event and could duplicate the same Track 02
+     * group after a kill. */
+    if (theron_v1_source_group_already_admitted(
+            world, dungeon_id, level, source_record)) {
         return -1;
     }
     if (theron_v1_creature_at_in_dungeon(world, dungeon_id, level, x, y))
