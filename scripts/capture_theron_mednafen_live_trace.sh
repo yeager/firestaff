@@ -50,6 +50,7 @@ if [[ -n "$host_key" || -n "$host_key_sequence" ]]; then
     host_input_requested=1
 fi
 quartz_keypair_script="$script_dir/send_theron_macos_quartz_keypair.swift"
+quartz_grab_script="$script_dir/send_theron_macos_quartz_chord.swift"
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
@@ -365,7 +366,8 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY=return requires macOS osascript accessibility input' >&2
         exit 1
     fi
-    if [[ ! -f "$quartz_keypair_script" ]] || ! command -v swift >/dev/null 2>&1; then
+    if [[ ! -f "$quartz_keypair_script" || ! -f "$quartz_grab_script" ]] ||
+       ! command -v swift >/dev/null 2>&1; then
         printf '%s\n' 'FAIL: host input requires Swift and the checked-in Quartz keypair helper' >&2
         exit 1
     fi
@@ -900,6 +902,49 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: Mednafen did not produce an instrumented trace before host-input scheduling' >&2
         exit 1
     fi
+    # Mednafen does not deliver emulated keyboard state until input grab is
+    # active. The checked-in macOS profile uses Ctrl+Shift+G because the
+    # default Menu-key shortcut is unavailable on most Mac keyboards.
+    grab_quartz_arguments=("$mednafen_ui_pid")
+    if [[ "$input_route" == global_hid ]]; then
+        grab_quartz_arguments+=(--global-hid)
+    fi
+    grab_receipt=$(swift "$quartz_grab_script" "${grab_quartz_arguments[@]}" 2>/dev/null) || {
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: Quartz helper could not activate Mednafen input grabbing' >&2
+        exit 1
+    }
+    expected_grab_route=quartz_chord=posted_to_pid
+    if [[ "$input_route" == global_hid ]]; then
+        expected_grab_route=quartz_chord=posted_to_global_hid
+    fi
+    if [[ "$grab_receipt" != *$'quartz_event_access=granted'* ||
+          "$grab_receipt" != *"$expected_grab_route"* ||
+          "$grab_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
+          "$grab_receipt" != *'quartz_chord_keys=ctrl+shift+g'* ]]; then
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: Quartz helper did not attest input-grab activation' >&2
+        exit 1
+    fi
+    printf 'host_input_grab_chord route=%s target_pid=%s keys=ctrl+shift+g\n' \
+        "${input_route}" "$mednafen_ui_pid" >>"$input_trace"
+    grab_trace_ready=0
+    for ((grab_attempt = 0; grab_attempt < 40; ++grab_attempt)); do
+        if grep -Fq 'input_grab_state enabled=1' "$input_trace"; then
+            grab_trace_ready=1
+            break
+        fi
+        sleep 0.25
+    done
+    if [[ "$grab_trace_ready" != 1 ]]; then
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: Mednafen did not attest InputGrab=1 after the Quartz chord' >&2
+        exit 1
+    fi
+    sleep 0.2
     host_key_schedule_seconds=$SECONDS
     # Send real Quartz key-down/up pairs after PID-bound focus.
     # The old AppleScript tap never consumed THERON_CAPTURE_HOST_KEY_HOLD, so
@@ -1003,6 +1048,7 @@ transition_host_key_count=$(trace_count '^host_key_event ' "$input_trace")
 transition_host_sdl_event_count=$(trace_count '^host_sdl_event ' "$input_trace")
 transition_host_window_event_count=$(trace_count '^host_window_event ' "$input_trace")
 transition_host_focus_state_count=$(trace_count '^host_focus_state ' "$input_trace")
+transition_input_grab_chord_count=$(trace_count '^host_input_grab_chord ' "$input_trace")
 transition_host_sdl_event_types=$(trace_event_types "$input_trace")
 transition_irq_count=$(trace_count '^pce_cd_irq cpu_pc=' "$cd_trace")
 transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace")
@@ -1052,6 +1098,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'host_sdl_event_types=%s\n' "$transition_host_sdl_event_types"
     printf 'host_window_events=%s\n' "$transition_host_window_event_count"
     printf 'host_focus_state_events=%s\n' "$transition_host_focus_state_count"
+    printf 'input_grab_chord_events=%s\n' "$transition_input_grab_chord_count"
     printf 'cd_irq_callbacks=%s\n' "$transition_irq_count"
     printf 'non_system_card_pcecd_reads=%s\n' "$transition_non_system_card_count"
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"

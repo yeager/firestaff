@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — kvarvarande startupspärr efter InputGrab-bevis
+
+- 🔒 Den nya v15-capture-binären bekräftar Mednafen-ägda
+  `input_grab_state enabled=1` efter den riktiga macOS-
+  `Ctrl+Shift+G`-chorden. `Z`/`X` levereras som SDL-scancode 29/27 och
+  Run som 40, men den autentiska US Track 02-körningen står fortfarande i
+  System Card/BIOS: 47 PCE-inputtransaktioner, 2 IRQ2-callbacks, 0 råa
+  sektorer och alla PCE-läsningar returnerar `0x3f`. Nästa steg är därför
+  startup-/CD-frame progression med autentisk runtime, inte fler host-
+  tangentbindningar. Ingen RNG-, creature-, AI-, T700- eller T900-semantik
+  får öppnas från denna negativa capture.
+
 ## 2026-08-09 — loader-write instrumentation
 
 - 🔧 Capture-builden applicerar nu en post-patch `v3`

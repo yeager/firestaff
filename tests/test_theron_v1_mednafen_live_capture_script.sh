@@ -4,12 +4,14 @@ set -euo pipefail
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
+quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 state_autoload_patch=$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch
 irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 consumer_read_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 loader_write_v3_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch
+input_grab_patch=$repo/scripts/mednafen_1.32.1_theron_input_grab_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 
 if [[ ! -x "$script" ]]; then
@@ -39,6 +41,7 @@ fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_input_grab_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch' "$build_script" ||
@@ -46,6 +49,14 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
+fi
+if [[ ! -f "$input_grab_patch" ]] ||
+   ! grep -Fq 'input_grab_state enabled=%u' "$input_grab_patch" ||
+   ! grep -Fq 'TheronTraceHostInput' "$input_grab_patch" ||
+   ! grep -Fq 'input_grab_state enabled=1' "$script" ||
+   ! grep -Fq 'did not attest InputGrab=1' "$script"; then
+   printf 'FAIL: capture must require Mednafen-owned InputGrab=1 provenance\n' >&2
+   exit 1
 fi
 if [[ ! -f "$loader_write_v3_patch" ]] ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$loader_write_v3_patch" ||
@@ -102,6 +113,20 @@ if [[ ! -f "$quartz_helper" ]] ||
    printf 'FAIL: capture script must retain the checked-in Quartz keypair helper\n' >&2
    exit 1
 fi
+if [[ ! -f "$quartz_grab_helper" ]] ||
+   ! grep -Fq 'Ctrl+Shift+G' "$quartz_grab_helper" ||
+   ! grep -Fq 'quartz_chord_keys=ctrl+shift+g' "$quartz_grab_helper" ||
+   ! grep -Fq 'postToPid(targetPid)' "$quartz_grab_helper" ||
+   ! grep -Fq 'quartz_chord=posted_to_global_hid' "$quartz_grab_helper"; then
+   printf 'FAIL: capture must activate Mednafen input grabbing through the checked-in Quartz chord helper\n' >&2
+   exit 1
+fi
+if ! grep -Fq 'quartz_grab_script=' "$script" ||
+   ! grep -Fq 'could not activate Mednafen input grabbing' "$script" ||
+   ! grep -Fq 'input_grab_chord_events=%s' "$script"; then
+   printf 'FAIL: capture must attest input-grab activation before host input\n' >&2
+   exit 1
+fi
 if ! grep -Fq 'expected_quartz_activation=quartz_activation=not_required' "$script" ||
    ! grep -Fq 'expected_quartz_activation=quartz_activation=accepted' "$script" ||
    ! grep -Fq 'Quartz global HID delivery requires Mednafen to own the foreground' "$script" ||
@@ -117,6 +142,10 @@ if grep -Fq 'activationAccepted' "$quartz_helper"; then
 fi
 if command -v swiftc >/dev/null 2>&1 && ! swiftc -typecheck "$quartz_helper" >/dev/null 2>&1; then
     printf 'FAIL: Quartz helper does not type-check\n' >&2
+    exit 1
+fi
+if command -v swiftc >/dev/null 2>&1 && ! swiftc -typecheck "$quartz_grab_helper" >/dev/null 2>&1; then
+    printf 'FAIL: Quartz input-grab helper does not type-check\n' >&2
     exit 1
 fi
 if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then

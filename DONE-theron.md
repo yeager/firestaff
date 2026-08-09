@@ -2,6 +2,21 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — Mednafen InputGrab och layoutstabil Button I/II
+
+- ✅ Capture-profilen på extern disken använder nu `Z = Button I`,
+  `X = Button II`, `Return = Run` och `Tab = Select`; komma/punkt är inte
+  längre standardvägen för macOS. Capture-scriptet skickar den autentiska
+  `Ctrl+Shift+G`-chorden före host-input.
+- ✅ Mednafen-builden innehåller en bounded host-input receipt som endast
+  godkänner fortsättning när emulatorns egen `InputGrab`-flagga skriver
+  `input_grab_state enabled=1`. v15 bygger och länkar mot native SDL2.
+- 🔒 En riktig US Track 02-körning bekräftade både `InputGrab=1` och SDL
+  key-events, men BIOS gjorde ingen frameprogression: PCE läste fortsatt
+  `0x3f`, inga råa sektorer levererades och ingen spelägd konsument nåddes.
+  Detta är ett verifierat startup-/CD-handoff-gap, inte ett semantiskt
+  RNG-, creature-, AI-, T700- eller T900-bevis.
+
 ## 2026-08-09 — MPR-/destinationstrace i capture-builden
 
 - ✅ Capture-builden applicerar nu en post-patch `v3`-hook som loggar

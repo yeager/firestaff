@@ -1,0 +1,11 @@
+diff --git a/src/drivers/input.cpp b/src/drivers/input.cpp
+--- a/src/drivers/input.cpp
++++ b/src/drivers/input.cpp
+@@ -1733,6 +1733,7 @@ void Input_Update(bool force_update)
+   if(CK_Check(CK_TOGGLE_GRAB))
+   {
+    InputGrab = !InputGrab;
++   TheronTraceHostInput("input_grab_state enabled=%u\n", InputGrab ? 1 : 0);
+ 
+   MDFN_Notify(MDFN_NOTICE_STATUS, _("Input grabbing: %s"), InputGrab ? _("On") : _("Off"));
+   }
