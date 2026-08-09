@@ -11641,3 +11641,10 @@ rendering remain blocked.
   A35 multilingual och A35 English-data: 47/0, 34/0 respektive 29/0. Den
   täcker även att klick utanför entrézonerna och C409 Resume lämnar Prison
   orörd när ingen autentisk originalsave är tillgänglig.
+
+# CSB: Amiga CLI-start (2026-08-09)
+
+- ✅ Den skip-safe CTest-kontrollen `csb_v1_amiga_native_cli_boot` startar
+  Firestaff med lokal hashverifierad A31-media och kräver den egna
+  `csb-amiga-a31-titl`/`TITL.DAT`-fasen före runtime. Den använder inga
+  testresurser eller en PC34-fallback och passerar lokalt mot riktig data.
