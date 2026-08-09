@@ -759,8 +759,11 @@ int main(void)
         CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH",
                            direct_handoff.startup_mini_path),
               "F31 resume test selects the authentic native save candidate");
-        CHECK(!M11_GameView_QuickSave(&view),
-              "F31 live session never writes a private envelope");
+        CHECK(!M11_GameView_QuickSave(&view) &&
+                  strcmp(view.lastAction, "SAVE") == 0 &&
+                  strcmp(view.lastOutcome,
+                         "FM TOWNS NATIVE WRITEBACK REQUIRED") == 0,
+              "F31 live session blocks unproven write-back before foreign save checks");
         memset(&external_save_handoff, 0, sizeof(external_save_handoff));
         CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile, language,

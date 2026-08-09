@@ -23366,6 +23366,18 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         m11_dm2_clear_unbound_feedback(state);
         return 1;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile && m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile)) {
+        /* ReDMCSB LOADSAVE.C F0433 owns the F31 header, five obfuscated
+         * parts, portraits, backup and rename transaction.  Do this check
+         * before resolving a host save path or testing PC/Atari provenance:
+         * an F31 session must neither create a Firestaff save directory nor
+         * report a stale foreign receipt when native write-back is the real
+         * outstanding requirement. */
+        m11_set_status(state, "SAVE", "FM TOWNS NATIVE WRITEBACK REQUIRED");
+        return 0;
+    }
     if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "SAVE", "SAVE PATH TOO LONG");
         return 0;
@@ -23389,16 +23401,6 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
             return 0;
         }
         profile = (CSB_V1_BootProfile *)state->csbBootProfile;
-        if (m11_csb_is_fmtowns_profile(profile)) {
-            /* ReDMCSB LOADSAVE.C F0433/F0435 uses the native F31 save
-             * header, five obfuscated save parts and four portrait payloads
-             * (MEDIA551/F31E,F31J).  The generic CSB snapshot is a
-             * Firestaff-private envelope and is not an FM Towns save.  Until
-             * that source container is implemented and checked against an
-             * authentic F31 corpus, never write a misleading substitute. */
-            m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE REQUIRED");
-            return 0;
-        }
         original_atari_source =
             csb_v1_runtime_original_atari_save_source_path(&profile->runtime);
         if (original_atari_source) {

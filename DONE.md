@@ -17,6 +17,9 @@
   privat eller delvis rekonstruerad fil över en äkta FM Towns-save innan
   bytekorrekt write-back och backupflöde har verifierats mot ett verkligt
   användarsparat corpus.
+- ✅ Spara-kommandot stoppar nu före värdsökväg och PC/Atari-kontroller i en
+  FM Towns-session. Det visar att just F31:s native write-back saknas, i
+  stället för att felaktigt rapportera en gammal främmande sparkvittens.
 
 # Theron: Firestaff WASD, mus och touch (2026-08-09)
 
