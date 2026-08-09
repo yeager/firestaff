@@ -70,5 +70,14 @@ dynamic return from the `$C96B/$CC4C` consumer windows. The result is a
 verified negative handoff, not a spawn record, and cannot be combined with a
 different execution to fabricate one.
 
+The follow-up clean replay used
+`run@8:60,i@480:30,i@900:30,i@1320:30,i@1800:30`. The five scripted events
+were independently verified as Run=`0x0008` and Button I=`0x0001`; the trace
+contained 5,943 input samples, 161 raw Track 02 sectors and 87 MPR-bound
+spawn-register samples. It still contained no `$B0E5` entry, no game-owned
+dynamic CD read and no dynamic consumer return. This is stronger input-path
+evidence, but it remains a negative semantic handoff and cannot publish RNG,
+spawn, creature, AI, loot, T700 or T900 behavior.
+
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.

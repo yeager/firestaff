@@ -4,6 +4,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- 🔒 Den senaste rena v3-capturen använde replayen
+  `run@8:60,i@480:30,i@900:30,i@1320:30,i@1800:30` på äkta US Track 02.
+  Alla fem scripted events verifierades på PCE-bussen: Run=`0x0008` och
+  Button I=`0x0001`. Capturen producerade 5 943 inputprover, 161 råa sektorer
+  och 87 MPR-bundna spawnregisterprover. Den nådde fortfarande inte `$B0E5`,
+  någon spelägd dynamisk CD-läsning eller ett dynamiskt returkontrakt; RNG,
+  creatures, AI, loot, T700 och T900 förblir därför spärrade.
+
 - 🔒 En ny 120-sekunders v3-capture med replayen `run@8:60,i@480:30,i@900:30`
   använder nu den korrekta startupsekvensen Run följt av Button I på äkta US
   Track 02-media. Den verifierade PCE-inputreceipten innehåller 10 145

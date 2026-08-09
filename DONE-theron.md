@@ -4,6 +4,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — v3 strict regular-spawn provenance gate
 
+- ✅ En ren v3-replay på äkta US Track 02 använde
+  `run@8:60,i@480:30,i@900:30,i@1320:30,i@1800:30`. Capture-verifieringen
+  bekräftade fem scripted PCE-inputevents med Run=`0x0008` och Button I=`0x0001`,
+  5 943 inputprover, 161 råa sektorer och 87 MPR-bundna spawnregisterprover.
+  Eftersom samma körning saknade `$B0E5`, spelägd dynamisk CD-läsning och
+  dynamiskt consumer-returkontrakt aktiverades ingen syntetisk RNG-, creature-,
+  AI-, loot-, T700- eller T900-semantik.
+
 - ✅ Den korrigerade startupreplayen `run@8:60,i@480:30,i@900:30` är
   verifierad mot den äkta US Track 02-kedjan. Den gav 10 145 inputprover med
   PCE-wiremaskerna Button I=`0x0001` och Run=`0x0008`, 161 råa sektorer och
