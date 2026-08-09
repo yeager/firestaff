@@ -4286,6 +4286,13 @@ int main(void) {
                     profile_new_game_owner->selected_party.heros_in_party == 1 &&
                     profile_new_game_owner->selected_party.hero[0].partypos == 0 &&
                     profile_new_game_owner->selected_party.hero[0].absdir == 0 &&
+                    (profile_new_game_owner->selected_party.hero[0].heroflag &
+                        0x4000) != 0 &&
+                    profile_new_game_owner->source_next_champion_number == 0 &&
+                    profile_new_game_owner->source_startend_first_champion_released &&
+                    profile_new_game_owner->source_startend_first_champion_tick == 0u &&
+                    profile_new_game_owner->source_startend_first_champion_object_id ==
+                        profile_new_game_owner->selected_mirrors[0].mirror_object_id &&
                     profile_new_game_owner->champion_selection_materialized &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,

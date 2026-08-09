@@ -636,8 +636,12 @@
   itemkedjan, med `partypos=0` och `absdir=0`, utan en syntetisk champion.
 - ✅ Realdatatestet bevisar den privata en-hjälteägaren och att M11-party,
   HUD, timerdrift samt `source_game_load_session_ready` fortfarande är
-  opublicerade. `DM2_events_2f3f_04ea` och sessionens UI-hand-off är avsiktligt
-  kvar som nästa källaägda atom.
+  opublicerade.
+- ✅ Samma atom följer också `DM2_events_2f3f_04ea(...,0x92)` i dess enda
+  kompletta startend-gren: DB3-postens bit 2 rensas privat,
+  `v1e0288` återställs till noll, första-release-ticken behålls som noll och
+  `c_party::set_hero_flags` körs. Inget handobjekt, hint eller HUD skapas,
+  eftersom originalet håller `v1d6a2d=1` just i detta anrop.
 
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 
