@@ -1124,6 +1124,36 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeTextReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_texts.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* QUERY_MESSAGE_TEXT and special floor markers use DME.h::Text::w2
+     * through the original c_map -> c_record chain.  Keep those exact
+     * fields in RAM, but do not turn text indices into translated strings or
+     * mutate TextVisibility before the relevant source consumers are owned. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.text_record_reads != candidate.text_record_count) {
+        return 0;
+    }
+    owner->preselection_map_texts = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {

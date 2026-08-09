@@ -263,6 +263,9 @@ typedef struct {
      * File_header chains.  It deliberately remains a locator receipt until
      * DRAW_STATIC_OBJECT/DRAW_ITEM have a complete placement owner. */
     DM2_V1_FileHeaderRuntimeObjectReceipt preselection_map_objects;
+    /* DB2 Text payloads reached by the same validated map walk.  Visibility,
+     * message lookup and special-marker effects stay uncommitted. */
+    DM2_V1_FileHeaderRuntimeTextReceipt preselection_map_texts;
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -317,6 +320,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
 /* Retain the current File_header map's DB5..DB15 object record addresses.
  * The result is not an item inventory or a rendered sprite list. */
 int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map DB2 Text fields for later source-owned UI/sensor
+ * consumers.  This does not decode a host string or change visibility. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

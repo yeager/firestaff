@@ -154,6 +154,15 @@
   locatorlista. Det arbetet kräver originalets DRAW_STATIC_OBJECT/DRAW_ITEM-
   och sessionägare.
 
+# DM2 New Game privata File_header-texter (2026-08-09)
+
+- ✅ Entrévärlden behåller nu också DB2 Text-fältens ObjectID, position,
+  riktning, synlighet, läge och index från den aktuella validerade
+  File_header-kedjan. Realdatatestet jämför varje post mot en ny läsning av
+  den RAM-ägda DUNGEON.DAT-klonen.
+- ✅ Textindex blir inte en gissad sträng och synlighet muteras inte. Den
+  riktiga QUERY_MESSAGE_TEXT-, sensor- och UI-kedjan återstår.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte
