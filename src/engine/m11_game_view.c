@@ -44929,6 +44929,13 @@ static void m11_advance_explosions_v1(M11_GameViewState* state) {
                 !m11_sync_source_explosion_owner(
                     state, e, newState.attack, 0,
                     &newState.sourceC15Fingerprint)) {
+                /* The C25 slot cannot survive without its authenticated
+                 * C15 owner.  If the update failed because the source record
+                 * drifted or disappeared, remove the stale C15 from the
+                 * square before despawning C25; otherwise the next F0115
+                 * scan can expose an orphan source explosion. */
+                (void)m11_sync_source_explosion_owner(
+                    state, e, 0, 1, NULL);
                 F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
                 continue;
             }
