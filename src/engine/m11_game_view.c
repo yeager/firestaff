@@ -874,10 +874,10 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
                                         int framebufferHeight);
-static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
-                                           unsigned char* framebuffer,
-                                           int framebufferWidth,
-                                           int framebufferHeight);
+static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight);
 static int m11_build_dm1_spell_area_overlay_plan(
     const M11_GameViewState* state,
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34* outPlan);
@@ -49652,6 +49652,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         int framebufferHeight) {
     int arrowX, arrowY, arrowW, arrowH;
     int outerX, outerY, outerW, outerH;
+    int drewMovementPanel;
     DM1_V1_MovementArrowRectPc34 outerRect;
     DM1_V1_MovementArrowRectPc34 arrowRect;
     if (!state || !framebuffer || state->showDebugHUD ||
@@ -49687,7 +49688,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
      * C009_ZONE_MOVEMENT_ARROWS, no transparency); the layout-696
      * C068..C073 arrow hit rectangles sit one pixel inside this
      * 87×45 source panel. */
-    (void)m11_blit_panel_asset_native(state,
+    drewMovementPanel = m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)dm1_v1_movement_arrows_graphic_id_pc34(),
         arrowW, arrowH, arrowX, arrowY);
@@ -49695,7 +49696,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
      * hatch/cyan keyboard cue below is an M11 affordance, not a CSBWin or
      * ReDMCSB framebuffer operation; CSB therefore keeps C013 unchanged
      * until a source-owned pressed-arrow state is available. */
-    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+    if (drewMovementPanel && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         m11_draw_v1_movement_arrow_visual_feedback(
             state, framebuffer, framebufferWidth, framebufferHeight);
     }
@@ -49774,10 +49775,10 @@ static int m11_build_dm1_spell_area_overlay_plan(
         outPlan->drew_available_symbols && outPlan->drew_champion_symbols;
 }
 
-static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
-                                           unsigned char* framebuffer,
-                                           int framebufferWidth,
-                                           int framebufferHeight) {
+static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
+                                          unsigned char* framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight) {
     int spellW, spellH;
     int i;
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
@@ -49786,7 +49787,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     DM1_V1_ActionSpellM11BlitPlanPc34 blitPlan;
     if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled(state) ||
         m11_v2_vertical_slice_enabled(state)) {
-        return;
+        return 0;
     }
     {
         /* CASTER.C F0394 clears DATA.C G0000 in every exit path. Keep this
@@ -49798,7 +49799,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
                           M11_COLOR_BLACK);
-            return;
+            return 1;
         }
     }
     {
@@ -49807,7 +49808,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
          * into the C013 zone at 233,42.  spellX/spellY/spellW/spellH
          * track the C009 blit rect; clears use the G0000 box. */
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
-        if (!DM1_V1_SPELL_AREA_ZONE_ID_PC34) return;
+        if (!DM1_V1_SPELL_AREA_ZONE_ID_PC34) return 0;
         spellW = spell.w;
         spellH = spell.h;
     }
@@ -49841,12 +49842,12 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
                       M11_COLOR_BLACK);
-        return;
+        return 0;
     }
     if (!dm1_v1_action_spell_m11_blit_plan_build_pc34(
             DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34, 0,
             &blitPlan) || !blitPlan.accepted || blitPlan.blitCount != 3) {
-        return;
+        return 0;
     }
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   blitPlan.clearX, blitPlan.clearY,
@@ -49859,7 +49860,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         (unsigned int)blitPlan.blits[0].graphicId,
         blitPlan.blits[0].sourceW, blitPlan.blits[0].sourceH,
         blitPlan.blits[0].destinationX, blitPlan.blits[0].destinationY)) {
-        return;
+        return 0;
     }
     if (!m11_blit_panel_asset_region_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
@@ -49877,7 +49878,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         blitPlan.blits[2].sourceX, blitPlan.blits[2].sourceY,
         blitPlan.blits[2].sourceW, blitPlan.blits[2].sourceH,
         blitPlan.blits[2].destinationX, blitPlan.blits[2].destinationY)) {
-        return;
+        return 0;
     }
     /* SPELDRAW.C F0393 inverts only the living caster tab after C009 has
      * materialized it. The plan supplies the original inclusive box, so the
@@ -49917,6 +49918,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
             DM1_V1_CPSAO_LINE3_X1_PC34 - DM1_V1_CPSAO_LINE3_X0_PC34 + 1,
             DM1_V1_CPSAO_LINE3_Y1_PC34 - DM1_V1_CPSAO_LINE3_Y0_PC34 + 1);
     }
+    return 1;
 }
 
 /* ReDMCSB F0407/F0412 presentation is admitted as source commands before
@@ -50347,8 +50349,13 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
             return -1;
         }
     } else {
-        m11_draw_v1_spell_area_overlay(state, framebuffer,
-                                       framebufferWidth, framebufferHeight);
+        if (!m11_draw_v1_spell_area_overlay(
+                state, framebuffer, framebufferWidth, framebufferHeight)) {
+            m11_clear_dm1_v1_action_spell_receipt_region(
+                presentation.presentationKind, framebuffer,
+                framebufferWidth, framebufferHeight);
+            return -1;
+        }
     }
     materialFNV1a ^= finalRender.commandFingerprint;
     materialFNV1a *= 16777619u;
