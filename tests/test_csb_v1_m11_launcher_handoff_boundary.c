@@ -363,12 +363,12 @@ static void expect_amiga_c005_credits_source_frame(M11_GameViewState *view,
                                                     const char *label)
 {
     static const uint8_t expected_palette[16][3] = {
-        {  0u,  0u, 36u }, {  0u, 40u, 40u }, { 60u, 60u, 24u },
-        { 32u, 16u,  0u }, { 60u, 60u, 32u }, {  0u,  0u,  0u },
-        {  0u, 32u,  0u }, { 40u,  0u,  0u }, { 48u, 32u, 16u },
-        { 60u, 60u, 40u }, { 60u, 32u, 16u }, { 60u, 48u,  0u },
-        { 60u, 40u,  0u }, {  0u,  0u,  0u }, { 24u,  8u,  0u },
-        { 60u, 60u, 48u }
+        {  0u,  0u,  0u }, { 48u, 24u,  8u }, { 28u, 16u,  4u },
+        { 40u, 20u,  8u }, { 60u,  0u,  0u }, { 44u,  0u,  0u },
+        {  0u,  0u, 44u }, {  0u,  0u, 60u }, { 20u, 20u, 20u },
+        { 28u, 28u, 28u }, { 44u, 44u, 44u }, { 52u, 52u, 52u },
+        { 32u, 24u, 16u }, { 40u, 32u, 20u }, { 48u, 36u, 24u },
+        { 56u, 40u, 28u }
     };
     unsigned char framebuffer[320 * 200];
     const M11_AssetSlot *c005;

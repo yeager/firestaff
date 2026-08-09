@@ -4688,15 +4688,19 @@ done:
 }
 
 /* ReDMCSB ENTRANCE.C F0442 (MEDIA746_A31E/A31M/A35E/A35M) expands C005
- * straight onto the Amiga screen, then fades to G0019's credits palette.
+ * straight onto the Amiga screen, then fades to G0019's native palette.
  * C005 is an IMG1 record in the authenticated DMCSB2 GRAPHICS.DAT bank;
  * never route it through the PC34 startup-session decoder or synthesize a
- * text page.  DATA.C's G0019 table is shared by these Amiga releases (the
- * later Atari-specific alternative is deliberately not used here). */
+ * text page. DATA.C's MEDIA626 A31E/A31M/A35E/A35M initializer is distinct
+ * from both PC34 and Atari G0019, so retain its exact RGB4 registers here. */
 static int m11_csb_present_amiga_entrance_credits(
     const M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
 {
+    static const uint16_t amiga_credits_palette_rgb4[16] = {
+        0x000u, 0xc62u, 0x741u, 0xa52u, 0xf00u, 0xb00u, 0x00bu, 0x00fu,
+        0x555u, 0x777u, 0xbbbu, 0xdddu, 0x864u, 0xa85u, 0xc96u, 0xea7u
+    };
     const CSB_V1_BootProfile *profile;
     const M11_AssetSlot *credits;
     uint8_t rgb6[256][3];
@@ -4714,8 +4718,7 @@ static int m11_csb_present_amiga_entrance_credits(
         return 0;
     }
     for (color = 0; color < 256; ++color) {
-        const unsigned int rgb12 = (unsigned int)dm1_v1_palette_credits_pc34(
-            color & 15);
+        const unsigned int rgb12 = amiga_credits_palette_rgb4[color & 15];
         rgb6[color][0] = (uint8_t)(((rgb12 >> 8) & 0x0fu) << 2);
         rgb6[color][1] = (uint8_t)(((rgb12 >> 4) & 0x0fu) << 2);
         rgb6[color][2] = (uint8_t)((rgb12 & 0x0fu) << 2);
