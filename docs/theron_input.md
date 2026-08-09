@@ -52,6 +52,13 @@ only when the active `mednafen.cfg` explicitly assigns their SDL scancodes to
 capture helper resolves the host key from that profile instead of assuming a
 character key.
 
+Mednafen's emulated keyboard input must also be grabbed before these keys can
+reach the PCE pad. Most Mac keyboards have no `Menu` key, so the Theron macOS
+profile binds `command.toggle_grab` to SDL scancode `10`: press
+`Ctrl+Shift+G` once after the game window is focused. With grabbing enabled,
+comma is SDL scancode `54` and period is `55`; they work as Button I/II only
+when the profile assigns those scancodes to the corresponding PCE buttons.
+
 The PCE wire-state masks used by the replay helper follow Mednafen's device
 vector order (`I`, `II`, `SELECT`, `RUN`, `UP`, `RIGHT`, `DOWN`, `LEFT`), not
 the numeric `ConfigOrder` values shown in Mednafen's source.

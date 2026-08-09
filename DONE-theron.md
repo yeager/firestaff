@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — macOS Mednafen input grabbing
+
+- ✅ Den lokala Mednafen-profilen på extern disk och användarens aktiva profil
+  använder nu `Ctrl+Shift+G` för `command.toggle_grab` i stället för den
+  macOS-obrukbara `Menu`-tangenten. Med input grabbing aktivt fungerar
+  uttryckliga SDL-bindningar för komma (`54`) och punkt (`55`) som Button I/II;
+  den source-bound PCE-wiremasken ändras inte.
+
 ## 2026-08-09 — autentiserad PCE-inputmaskkontroll
 
 - ✅ `capture_theron_mednafen_live_trace.sh` avvisar nu en scripted

@@ -4,6 +4,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- ✅ Macens Mednafen-profil har nu en fungerande input-grab-genväg på
+  `Ctrl+Shift+G`; standardens `Ctrl+Shift+Menu` fungerar inte på tangentbord
+  utan Menu-tangent. Därmed kan explicit konfigurerade komma/punkt-bindningar
+  för Button I/II nå den emulerade PCE-handkontrollen.
 - 🔧 Capture-scriptet verifierar nu själva PCE-wiremaskerna i varje scripted
   input-receipt: Button I `0x0001`, Button II `0x0002`, Select `0x0004`, Run
   `0x0008` och riktningsbitarna `0x0010..0x0080`. En gammal eller felbyggd
