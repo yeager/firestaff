@@ -90,6 +90,14 @@
   Producenten binds endast till mailboxkorridoren; event, MAP, SAL-codec,
   SCSP-voice och playback förblir spärrade.
 
+# Nexus: samlad SLEV/SAL/SCSP runtime-join (2026-08-09)
+
+- ✅ Ett nytt C-test binder den autentiska ljud-CPU-tracen, SH-2-producertracen,
+  SDDRVS-disassembly-receipten och en verklig `SNDLEV00.SAL`/`.MAP`-load i
+  samma kontroll. Testet kräver source-bound directory/MAP-data och passerar
+  med `status=blocked-unsupported-decode`; ingen event- eller playbackväg
+  öppnas.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga

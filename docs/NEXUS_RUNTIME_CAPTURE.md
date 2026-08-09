@@ -348,6 +348,12 @@ the data. The receipt therefore reports
 `event_selector_semantics=unproven`, `sal_codec=unproven` and
 `host_playback=blocked`.
 
+The C integration test `nexus_v1_slev_scsp_runtime_join` now requires the
+same two trace streams, the authenticated `SDDRVS.TSK` corridor, and a real
+`SNDLEV00.SAL`/`.MAP` load in one receipt. It passes only with the source
+directory present and still requires `blocked-unsupported-decode`; this joins
+provenance without turning mailbox values into event or sample identities.
+
 The external capture inventory is reproducible with
 `scripts/analyze_nexus_capture_inventory.py`. The current operator corpus has
 34 valid raw witnesses and 136 frame observations: 8 reset/no-layer frames,

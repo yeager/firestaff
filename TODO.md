@@ -63,6 +63,10 @@
   producer/driver-korridor; ingen gameplayhändelse, MAP-rad eller playback
   får härledas från värdena.
 
+- ⏳ Den samlade C-joinen verifierar nu riktig SAL/MAP-load tillsammans med
+  båda SCSP-traces och SDDRVS-korridoren. Den öppnar inte semantic admission;
+  eventselector, SAL-codec och playback är fortsatt stängda.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

@@ -42101,6 +42101,29 @@ add_test(
     NAME nexus_v1_scsp_trace
     COMMAND test_nexus_v1_scsp_trace
 )
+add_executable(test_nexus_v1_slev_scsp_runtime_join
+    tests/test_nexus_v1_slev_scsp_runtime_join.c
+)
+target_link_libraries(test_nexus_v1_slev_scsp_runtime_join PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(test_nexus_v1_slev_scsp_runtime_join PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_slev_scsp_runtime_join PRIVATE
+        -std=c99 -Wall -Wextra -Werror -pedantic -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_slev_scsp_runtime_join
+    COMMAND test_nexus_v1_slev_scsp_runtime_join
+)
+set_tests_properties(nexus_v1_slev_scsp_runtime_join PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_SCSP_TRACE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/scsp-writes.trace;FIRESTAFF_NEXUS_MAIN_SCSP_TRACE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/main-scsp-writes.trace"
+    LABELS "tier4;nexus;audio;scsp;runtime;join"
+    SKIP_RETURN_CODE 77
+)
 set_tests_properties(nexus_v1_sound_runtime_receipt PROPERTIES
     LABELS "tier4;nexus;audio;runtime;receipt"
 )
