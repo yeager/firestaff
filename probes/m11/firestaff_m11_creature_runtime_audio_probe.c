@@ -96,9 +96,33 @@ static int setup_creature_runtime_view(M11_GameViewState* state,
         dungeon->tiles[m].squareData = (unsigned char*)calloc((size_t)squaresPerMap, sizeof(unsigned char));
         if (!dungeon->tiles[m].squareData) return 0;
         for (i = 0; i < squaresPerMap; ++i) {
-            dungeon->tiles[m].squareData[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+            /* Flag every square as carrying a thing list.  The runtime
+             * resolves a square's first-thing slot through the compact PC34
+             * layout (cumulative per-column counts over THING_LIST-flagged
+             * squares), not a flat array; with every square flagged that
+             * layout degenerates to the probe's existing flat square_index,
+             * so both agree.  Without the flag and the cumulative table below
+             * the raw square lookup failed, the group never authenticated,
+             * and the tick loop skipped it entirely. */
+            dungeon->tiles[m].squareData[i] =
+                (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                DUNGEON_SQUARE_MASK_THING_LIST);
         }
     }
+
+    /* Columns run consecutively across maps: map 0 owns columns 0..4, map 1
+     * owns 5..9.  Every square is flagged, so column c is preceded by
+     * c * height flagged squares. */
+    dungeon->dungeonColumnCount = mapCount * 5;
+    dungeon->columnsCumulativeSquareFirstThingCount =
+        (uint16_t*)calloc((size_t)(dungeon->dungeonColumnCount + 1),
+                          sizeof(uint16_t));
+    if (!dungeon->columnsCumulativeSquareFirstThingCount) return 0;
+    for (i = 0; i <= dungeon->dungeonColumnCount; ++i) {
+        dungeon->columnsCumulativeSquareFirstThingCount[i] =
+            (uint16_t)(i * 5);
+    }
+    dungeon->header.squareFirstThingCount = (uint16_t)squareCount;
 
     things->squareFirstThings = (unsigned short*)calloc((size_t)squareCount, sizeof(unsigned short));
     things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*things->groups));
@@ -125,6 +149,26 @@ static int setup_creature_runtime_view(M11_GameViewState* state,
     things->groups[0].health[0] = 200;
     things->groups[0].count = 0;
     things->groups[0].direction = 0;
+
+    /* Authenticate the C04 record.  m11_group_live_position_matches_source
+     * validates the decoded group against these raw bytes, and a record
+     * carrying only Next left every non-zero creatureType (red dragon C24)
+     * unauthenticated, so the tick loop skipped the group entirely and it
+     * never moved or emitted a sound.  Layout per DUNGEON.C C04:
+     * [0..1]=Next, [2..3]=Slot, [4]=Type, [5]=Cells, [6..7]=Health[0],
+     * [14]=Behavior|Count<<5, [15]=Direction. */
+    {
+        unsigned char* raw = things->rawThingData[THING_TYPE_GROUP];
+        raw[2] = (unsigned char)(things->groups[0].slot & 0xffu);
+        raw[3] = (unsigned char)(things->groups[0].slot >> 8);
+        raw[4] = things->groups[0].creatureType;
+        raw[5] = things->groups[0].cells;
+        raw[6] = (unsigned char)(things->groups[0].health[0] & 0xffu);
+        raw[7] = (unsigned char)(things->groups[0].health[0] >> 8);
+        raw[14] = (unsigned char)((things->groups[0].behavior & 0x0fu) |
+                                  ((things->groups[0].count & 0x03u) << 5));
+        raw[15] = (unsigned char)(things->groups[0].direction & 0x03u);
+    }
 
     things->squareFirstThings[square_index(dungeon, activeMapIndex, groupX, groupY)] =
         make_thing(THING_TYPE_GROUP, 0);
@@ -186,7 +230,10 @@ static void run_movement_runtime_probe(ProbeTally* tally) {
     record(tally, "INV_CREATURE_AUDIO_MOVE_SETUP",
            setup_creature_runtime_view(&state, DM1_CREATURE_RED_DRAGON, 2, 3, 2, 1, 0),
            "synthetic M11 red-dragon movement state initializes");
-    state.world.gameTick = 11;
+    /* C24 Red Dragon carries movementTicks 13 (DUNGEON.C G0243[24]), so the
+     * M11 movement cadence (gameTick % movementTicks == 0) admits tick 13,
+     * not tick 12.  Start at 12 so AdvanceIdleTick lands on it. */
+    state.world.gameTick = 12;
     record(tally, "INV_CREATURE_AUDIO_MOVE_RUNTIME",
            M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW && group_is_at(&state, 2, 2),
            "idle tick moves creature through M11 runtime path");
@@ -205,7 +252,10 @@ static void run_resting_gate_probe(ProbeTally* tally) {
     record(tally, "INV_CREATURE_AUDIO_REST_SETUP",
            setup_creature_runtime_view(&state, DM1_CREATURE_RED_DRAGON, 2, 3, 2, 1, 1),
            "synthetic resting movement state initializes");
-    state.world.gameTick = 11;
+    /* C24 Red Dragon carries movementTicks 13 (DUNGEON.C G0243[24]), so the
+     * M11 movement cadence (gameTick % movementTicks == 0) admits tick 13,
+     * not tick 12.  Start at 12 so AdvanceIdleTick lands on it. */
+    state.world.gameTick = 12;
     record(tally, "INV_CREATURE_AUDIO_REST_RUNTIME",
            M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW && group_is_at(&state, 2, 2),
            "creature still moves while party-resting sound gate is tested");
