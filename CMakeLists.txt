@@ -56880,6 +56880,17 @@ target_link_libraries(test_csb_v1_amiga_asset_probe PRIVATE firestaff_m10)
 add_test(NAME csb_v1_amiga_asset_probe COMMAND test_csb_v1_amiga_asset_probe)
 set_tests_properties(csb_v1_amiga_asset_probe PROPERTIES LABELS "csb;amiga")
 
+add_executable(test_csb_a31e_native_handoff_gate
+    tests/test_csb_a31e_native_handoff_gate.c)
+target_include_directories(test_csb_a31e_native_handoff_gate PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_a31e_native_handoff_gate PRIVATE
+    firestaff_m12 firestaff_m10 SDL3::SDL3)
+add_test(NAME csb_a31e_native_handoff_gate
+    COMMAND test_csb_a31e_native_handoff_gate)
+set_tests_properties(csb_a31e_native_handoff_gate PROPERTIES LABELS "csb;amiga")
+set_tests_properties(csb_a31e_native_handoff_gate PROPERTIES SKIP_RETURN_CODE 77)
+
 add_executable(test_csb_v1_amiga_titl_dat
     tests/test_csb_v1_amiga_titl_dat.c
     src/csb/csb_v1_amiga_titl_dat.c)
