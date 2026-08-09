@@ -34,6 +34,8 @@
 
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
+- `M11 DM1 champion top row`: Prevent active shield or invisibility effects
+  from being presented without their authenticated F0659/F0662 source pixels.
 - `M11 DM1 data resolver`: Prevent recursive archive lookup from selecting a
   sibling edition by binding the hash-verified extracted DOS PC 3.4
   `DATA/DUNGEON.DAT` and its matching loose `GRAPHICS.DAT` first.

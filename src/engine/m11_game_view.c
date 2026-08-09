@@ -52736,6 +52736,21 @@ static int m11_draw_dm1_v1_top_row_receipt(
     invisibilityMaterialReady = m11_dm1_v1_f0662_invisibility_material_ready(
         state, &invisibilityMaterial);
 
+    /* BASE.C F0659/F0662 are conditional source consumers.  Their material
+     * is not needed on an ordinary frame, but an active shield or invisibility
+     * count makes the corresponding original pixels part of this frame's
+     * contract.  Do not publish a superficially valid top row with those
+     * effects silently omitted. */
+    if (((state->world.magic.fireShieldDefense > 0 ||
+          state->world.magic.spellShieldDefense > 0 ||
+          state->world.magic.partyShieldDefense > 0) &&
+         !shieldMaterialReady) ||
+        (frame.invisibilityCount > 0 && !invisibilityMaterialReady)) {
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+
     /* Validate the complete F0355/F0293 handoff before any presentation.
      * The ordered handoff retains both the F0292 top row and F0320/F0345
      * overlays, so one missing original material rejects the entire frame. */
@@ -52883,9 +52898,6 @@ static int m11_draw_dm1_v1_top_row_receipt(
                 /* CHAMDRAW.C F0622 applies F0662 to C028 only for an
                  * invisible party. Without C028/M653 and the exact source
                  * palette table, leave its original background clear. */
-                if (frame.invisibilityCount > 0 && !invisibilityMaterialReady) {
-                    break;
-                }
                 M11_AssetLoader_BlitRegion(slot,
                     operation->sourceX, operation->sourceY,
                     operation->width, operation->height,
