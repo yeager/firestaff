@@ -145,3 +145,23 @@ The capture profile binds PCE Button I/1 to `Z` and Button II/2 to `X`.
 Comma/period are not assumed as portable macOS bindings; they require an
 explicit local Mednafen input-map entry. This control choice is capture
 metadata only and does not claim a game-owned Button I/II semantic consumer.
+
+## 2026-08-09 fresh cold-start window trace
+
+The same real US CUE/BIN and external System Card were replayed with the
+instrumented Mednafen build extended with bounded physical reads of the
+control window `$1F01F7-$1F01FB`, parameter window `$1F01E5-$1F01E7`, and game
+window `$1F1000-$1F1007`. This run delivered one host Run key through the
+Quartz route and recorded 40 raw sector spans, 10 SCSI read commands, 25 CD
+IRQ callbacks, seven game-main-RAM `$E009` dispatches, nine `$4644`
+preconsumer entries and 32 `$4667` helper entries. The window sidecar also
+recorded one eight-byte read of the game window by physical PC `$002B22`;
+there were no parameter-window reads.
+
+The receipt is useful because it proves the authentic CD-to-main-RAM-to-code
+route and identifies the next consumer boundary. It still has no `$B0E5`
+entry, no `$C96B/$CC4C` dynamic return, no byte-exact RNG result and no
+source-owned T700/T900 read. The sidecar therefore remains transport/runtime
+evidence only. It must not be converted into RNG, creature AI, attack, loot,
+generator timing or stat semantics, and it is not merged with the `.mc0`
+save-state run above.

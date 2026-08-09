@@ -11493,3 +11493,14 @@ rendering remain blocked.
 - ✅ Repository policy now rejects tracked BIOS, firmware and original
   game-media payloads in CI, with matching local `.gitignore` protection and
   README/Theron capture documentation. No such payload is tracked on `main`.
+# Theron CD-to-RAM runtime window receipt (2026-08-09)
+
+- ✅ A fresh external-disk cold-start replay with the real US Track 02 and
+  System Card reached seven game-main-RAM `$E009` dispatches, nine `$4644`
+  preconsumer entries and 32 `$4667` helper entries after 40 raw-sector
+  spans. The result is documented as positive transport/runtime evidence.
+- ✅ The four focused real-data Theron tests pass: dungeon loader,
+  production creature bridge, spawn-source decoder and boot runtime input.
+- ⏳ The run still has no `$B0E5` entry or dynamic `$C96B/$CC4C` return, so
+  RNG, AI, attack, damage, loot, generator timing, T700 and T900 remain
+  source-locked rather than inferred.

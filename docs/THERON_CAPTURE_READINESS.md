@@ -45,6 +45,15 @@ the M11 Theron runtime, but per-entry semantic Track 02 dungeon-table binding,
 broader loader parity, runtime playability proof, and reviewed screenshot
 promotion are still active work.
 
+The latest external-disk cold-start capture adds a bounded raw window receipt:
+the real US route reached seven game-main-RAM `$E009` dispatches, nine
+`$4644` preconsumer entries and 32 `$4667` helper entries after 40 raw-sector
+spans. This is positive CD→RAM→HuC6280 runtime evidence. It did not reach
+`$B0E5`, a dynamic `$C96B/$CC4C` return or a source-owned T700/T900 consumer,
+so it does not unlock RNG, AI, attack, damage, loot, generator timing or
+statistic semantics. The full boundary is recorded in
+[`docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md`](source-lock/theron-disassembly/theron-runtime-spawn-capture.md).
+
 The loader sidecar importer accepts the literal `\\n` record separators found
 in the early local Mednafen artifact. Normalization is parser-only: the source
 file is still hashed as-is, and the receipt remains limited to loader

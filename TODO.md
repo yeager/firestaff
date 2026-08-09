@@ -4443,3 +4443,9 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   records are not retail Saturn title/menu/VDP1 parity. Do not reintroduce
   “3D animated logo”, options or host polygon rendering as implemented until
   the consumer capture is source-joined.
+# Theron next authenticated semantic capture
+
+- 🔒 Continue from the positive CD→RAM→HuC6280 receipt at the next verified
+  `$B0E5` regular-spawn entry and capture the matching `$C96B/$CC4C` return
+  contract in one execution. Do not merge it with the `.mc0` control-loop
+  state or publish RNG/AI/T700/T900 semantics before that join.
