@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Den nya Windows CMake-parallellismen är begränsad till tre jobb efter en
+  fastnad obegränsad runner-körning. Huvudkörningen för `ec7fb18490` måste
+  fortfarande slutföras innan CI-fixen är runtime-verifierad.
+
 - ✅ Den lokala retailkorpusen `/Users/bosse/.firestaff/data/nexus` är nu
   återfunnen och körd mot real-data-gates: TITLE.BIN/TITLE.CG MAPD/TIBG,
   MENU.BPK PRS3/PALT, FONT256.S2D, alla 16 DGN face/mesh-nivåer, ITEM.IBS

@@ -1,3 +1,10 @@
+# CI: bounded Windows CMake build (2026-08-09)
+
+- ✅ Windows/MSYS2/Ninja använder nu tre parallella CMake-jobb i `verify.yml`,
+  i linje med macOS-körningen. Den tidigare obegränsade Windows-körningen
+  fastnade i över två timmar; ändringen är YAML-, pre-commit- och push-
+  verifierad och nästa huvudkörning ska ge den slutliga runtime-verifieringen.
+
 # Nexus Saturn: frame-korrekt input i autentiserad capture (2026-08-09)
 
 - ✅ Mednafen-patchen flyttar capture-input från SMPC-registerskrivningar till
