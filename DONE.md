@@ -153,6 +153,15 @@
   E-BIOS/French-session gav samma SHA-256 och samma obundna VDP2-state. Det
   visar att knappmaskbytet inte producerade ett verifierbart menyfönster.
 
+# Nexus: capture-tidsfönster som explicit provenance-gate (2026-08-09)
+
+- ✅ `firestaff_nexus_v1_saturn_raw_capture_launcher.sh` stöder nu
+  `--require-input-window`. Den kräver att hela den aktiva knappintervallet
+  ryms i den fångade ramen och avvisar annars planen innan Mednafen startas.
+- ✅ `tests/test_nexus_v1_saturn_raw_capture_launcher.sh` täcker både ett
+  accepterat 560-ramarsfönster och ett avvisat 128-ramarsfönster för samma
+  runtime-input.
+
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns
@@ -996,6 +1005,16 @@
   och att `source_game_load_session_ready` fortfarande är noll.
 
 # DM2 New Game skriptad första champion (2026-08-09)
+
+- ✅ `INIT_CHAMPIONS`/`DM2_2f3f_0789` kör nu på sin rätta plats i privat
+  New Game-förberedelse, före varje M11-input. Den installerade kandidaten
+  ersätts atomärt endast när `(0,0)` har den verifierade DB3 subtype `0x7e`-
+  kedjan och den befintliga Thoram-atomen lyckas; annars återställs förra
+  privata ägaren. M11-party, HUD, tick, framebuffer och session förblir
+  opublicerade.
+- ✅ Den gamla partylösa vidarebefordran av event `1..6` avvisas nu efter
+  det privata valet. Originalets senare `PERFORM_MOVE` kräver c_party och
+  c_moverec; den kan inte emuleras med bara en File_header-pose.
 
 - ✅ DOS File_header-provet läser nu den hashadmitterade råheadern och
   map-0-deskriptorn i testet: `nMaps`, relativ map-offset, dimensioner och

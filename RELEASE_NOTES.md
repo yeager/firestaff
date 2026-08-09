@@ -41,6 +41,18 @@
   carries the authenticated Thing cell, champion owner, and F0255 step-2
   fields. Reject stale or ownerless bones for the special route and restore
   the hand item if the source timeline cannot accept the event.
+- `DM1 C13 Vi Altar`: Fix the click route to require the current map's
+  authenticated Vi-Altar ornament from G0192/F0174; ordinary and arched
+  alcoves no longer start champion rebirth.
+- `DM1 C13 save identity`: Fix the post-drop world hash so an immediate save
+  includes the newly scheduled rebirth event rather than the pre-event state.
+- `M11 DM1 F0143 armour defense`: Read armour weight, defense, and shield
+  attributes from the authenticated raw ARMOUR Thing record instead of a
+  parallel M11 subtype table; missing or malformed source data now fails
+  closed.
+- `DM1 tick orchestrator F0143`: Apply the same raw ARMOUR Thing ownership to
+  the live combat tick path, removing its duplicate subtype table and keeping
+  malformed source records fail-closed.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects

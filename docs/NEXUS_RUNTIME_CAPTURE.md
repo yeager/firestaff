@@ -32,6 +32,12 @@ VDP memory, host pixels, or a guessed menu. A resulting menu/HUD/viewport claim
 still requires the corresponding source identity and VDP1/VDP2 consumer
 artifact.
 
+When the input must be observed inside the raw capture, pass
+`--require-input-window`. The launcher then rejects a plan unless the complete
+button interval lies between `skip_frames` and
+`skip_frames + frame_limit`; this prevents a pre-input witness from being
+mistaken for a post-input menu capture.
+
 For long operator-only scans, the capture patch also accepts the inherited
 `FIRESTAFF_NEXUS_NO_WAITING=1` environment flag. It requests Mednafen's
 no-wait scheduler path only; it does not alter the Saturn input, VDP or SCSP

@@ -23,6 +23,11 @@
   autentiska BIOS-/medieprofilen eller fånga längre efter handoff, inte bara
   återupprepa samma knappmask.
 
+- ✅ Capture-launchern har nu `--require-input-window`, som avvisar en plan
+  där hela knapptrycket hamnar utanför råfilens ramintervall. Detta är en
+  provenance-gate för framtida startup-/menyförsök och öppnar ingen
+  presentations- eller gameplaysemantik.
+
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
   closed until the same Saturn trace supplies display-origin,
@@ -227,12 +232,10 @@
   PC-DOS/File_headers råa tileklass översätts nu vid den enda tillåtna
   viewportbryggan (`0=vägg`, `1=golv`, `4=dörr`) innan den används som
   `DM2_SquareType`; inga råa G1-värden får längre tolkas som renderarens enum.
-  Originalets vänster-/högervridning och de fyra rörelsehändelserna kan nu
-  köras privat före championvalet och bygger om teleporter-/absdir-kvitto,
-  terrängvy och viewport från samma File_header-värld. M11 kan vidarebefordra
-  just de autentiska eventen 1–6 från tangentbord och styrning till den
-  privata ägaren, men publicerar inte party, HUD, tick, framebuffer eller
-  session. Musens riktiga dungeonruta och den fullständiga `c_input`-
+  Originalets `INIT_CHAMPIONS` kör nu före input och materialiserar Thoram
+  från den riktiga `(0,0)`-kedjan privat. De tidigare partylösa eventen 1–6
+  är därför spärrade efter valet: de kan inte låtsas vara `PERFORM_MOVE` utan
+  c_party/c_moverec. Musens riktiga dungeonruta och den fullständiga `c_input`-
   konsumenten saknas ännu; en direktteleporter följer originalets
   kartövergångsgren och är därför spärrad tills den ägaren finns. Den första
   källtrogna framåtrutan kan också materialiseras privat när den är ett

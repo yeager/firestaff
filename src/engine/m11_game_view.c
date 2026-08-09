@@ -205,6 +205,7 @@
 #include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_stairs_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
@@ -31863,6 +31864,39 @@ static int m11_dm1_front_wall_is_fountain(
     return 0;
 }
 
+/* ReDMCSB DUNVIEW.C G0192 orders the three alcove ornaments as square
+ * alcove, Vi Altar, and arched alcove.  Resolve the current map's global
+ * ornament through the loaded DUNGEON.DAT table and require both the exact
+ * G0192 Vi-Altar entry and the F0174-wired alcove membership. */
+static int m11_dm1_front_wall_is_vi_altar(
+    M11_GameViewState* state,
+    const M11_ViewportCell* frontCell) {
+    int mapIndex;
+    int localOrdinal;
+    int globalIndex;
+
+    if (!state || !frontCell || !frontCell->valid ||
+        frontCell->elementType != DUNGEON_ELEMENT_WALL ||
+        frontCell->wallOrnamentOrdinal <= 0) {
+        return 0;
+    }
+    mapIndex = state->world.party.mapIndex;
+    localOrdinal = frontCell->wallOrnamentOrdinal - 1;
+    if (mapIndex < 0 || mapIndex >= 32 || localOrdinal < 0 ||
+        localOrdinal >= 16) {
+        return 0;
+    }
+    m11_ensure_ornament_cache(state, mapIndex);
+    if (!state->world.dungeon || !state->world.dungeon->maps ||
+        !state->ornamentCacheLoaded[mapIndex] ||
+        localOrdinal >= (int)state->world.dungeon->maps[mapIndex].wallOrnamentCount) {
+        return 0;
+    }
+    globalIndex = state->wallOrnamentIndices[mapIndex][localOrdinal];
+    return globalIndex == dm1_v1_g0192_get_pc34(1) &&
+           dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+}
+
 /* Apply the source-locked CLIKVIEW.C fountain path to the actual loaded
  * Thing record.  This deliberately does not infer a fountain from a graphic
  * id or a generic ornament fallback. */
@@ -32823,6 +32857,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     int localX;
     int localY;
     int facingAlcove;
+    int facingViAltar;
     int facingWall;
     int alcoveItemHit;
 
@@ -32851,6 +32886,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                    frontCell.wallOrnamentOrdinal >= 0 &&
                    dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
                        frontCell.wallOrnamentOrdinal);
+    facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
     facingWall = frontCell.valid &&
                  frontCell.elementType == DUNGEON_ELEMENT_WALL;
     alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(x, y);
@@ -33237,7 +33273,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     int dropIcon = (dropThing != THING_NONE)
                         ? m11_object_icon_index_for_thing(state, state->world.things, dropThing)
                         : -1;
-                    if (dropIcon == 147) { /* C147_ICON_JUNK_CHAMPION_BONES */
+                    if (facingViAltar &&
+                        dropIcon == 147) { /* C147_ICON_JUNK_CHAMPION_BONES */
                         int dropIndex = THING_GET_INDEX(dropThing);
                         int championIndex = -1;
                         const struct DungeonJunk_Compat* bones = NULL;
@@ -33293,6 +33330,12 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                     }
                                     return M11_GAME_INPUT_IGNORED;
                                 }
+                                /* The drop helper refreshed the hash before
+                                 * this source-owned C13 timeline receipt was
+                                 * appended. Publish the complete transaction
+                                 * so an immediate save cannot retain a hash
+                                 * for the pre-event world. */
+                                m11_refresh_hash(state);
                             }
                             return M11_GAME_INPUT_REDRAW;
                         }
@@ -44114,60 +44157,34 @@ static int m11_maybe_heal_black_flame_from_fireball(
     return 1;
 }
 
-struct M11ArmourInfoPc34 {
-    unsigned char weight;
-    unsigned char defense;
-    unsigned char attributes;
-};
-
-static const struct M11ArmourInfoPc34 s_m11_dm1_armour_info_pc34[58] = {
-    /* ReDMCSB DUNGEON.C G0239 lines 309-369: { Weight, Defense,
-     * Attributes, Unreferenced }.  F0313 shield defense also asks F0312
-     * for hand strength, and F0312 depends on held-object weight. */
-    {   3,   5, 0x01 }, {   4,  10, 0x01 }, {   3,   4, 0x01 }, {   6,   5, 0x02 },
-    {  16,  25, 0x04 }, {   4,   5, 0x00 }, {   4,   5, 0x00 }, {   3,   7, 0x01 },
-    {   3,   7, 0x01 }, {   4,   6, 0x01 }, {   2,   4, 0x00 }, {   4,   5, 0x01 },
-    {   5,   7, 0x01 }, {   3,  11, 0x02 }, {   3,  13, 0x02 }, {   4,  13, 0x02 },
-    {   6,  17, 0x03 }, {   8,  20, 0x03 }, {  14,  20, 0x03 }, {   6,  12, 0x02 },
-    {   5,   9, 0x01 }, {   5,   8, 0x01 }, {   5,   9, 0x01 }, {   4,   1, 0x04 },
-    {   6,   5, 0x04 }, {  11,  12, 0x05 }, {  14,  17, 0x05 }, {  15,  20, 0x05 },
-    {  11,  22, 0x85 }, {  10,  16, 0x82 }, {  14,  20, 0x83 }, {  21,  35, 0x84 },
-    {  65,  35, 0x05 }, {  53,  35, 0x05 }, {  52,  70, 0x07 }, {  41,  55, 0x07 },
-    {  16,  25, 0x06 }, {  16,  30, 0x06 }, {  19,  40, 0x07 }, { 120,  65, 0x04 },
-    {  80,  56, 0x04 }, {  28,  37, 0x05 }, {  34,  56, 0x84 }, {  17,  62, 0x05 },
-    { 108, 125, 0x04 }, {  72,  90, 0x04 }, {  24,  50, 0x05 }, {  30,  85, 0x84 },
-    {  35,  76, 0x04 }, { 141, 160, 0x04 }, {  90, 101, 0x04 }, {  31,  60, 0x05 },
-    {  40, 100, 0x84 }, {  14,  54, 0x06 }, {  57,  60, 0x07 }, {  81,  88, 0x04 },
-    {   3,  16, 0x02 }, {   2,   3, 0x03 }
-};
-
-static int m11_dm1_armour_defense_f0143(int armourType,
+static int m11_dm1_armour_defense_f0143(
+                                        const struct GameWorld_Compat* world,
+                                        unsigned short armourThing,
                                         int useSharpDefense,
                                         int* outDefense,
                                         int* outIsShield,
                                         int* outWeight)
 {
+    DM1_ArmourInfoPc34 info;
     int defense;
-    int attributes;
     if (!outDefense) return 0;
     *outDefense = 0;
     if (outIsShield) *outIsShield = 0;
     if (outWeight) *outWeight = 0;
-    if (armourType < 0 ||
-        armourType >= (int)(sizeof(s_m11_dm1_armour_info_pc34) /
-                            sizeof(s_m11_dm1_armour_info_pc34[0]))) {
+    if (!world || !world->things ||
+        !dm1_v1_dungeon_get_armour_info_pc34(world->things, armourThing,
+                                             &info)) {
         return 0;
     }
-    defense = (int)s_m11_dm1_armour_info_pc34[armourType].defense;
-    attributes = (int)s_m11_dm1_armour_info_pc34[armourType].attributes;
+    defense = info.defense;
     if (useSharpDefense) {
         /* ReDMCSB DUNGEON.C F0143 lines 1240-1244:
          * F0030_MAIN_GetScaledProduct(Defense, 3, sharp + 4). */
-        defense = (defense * ((attributes & 0x07) + 4)) >> 3;
+        defense = (defense * ((info.attributes & 0x07) + 4)) >> 3;
     }
     *outDefense = defense;
-    if (outIsShield) *outIsShield = (attributes & 0x80) ? 1 : 0;
-    if (outWeight) *outWeight = (int)s_m11_dm1_armour_info_pc34[armourType].weight;
+    if (outIsShield) *outIsShield = (info.attributes & 0x80) ? 1 : 0;
+    if (outWeight) *outWeight = info.weight;
     return 1;
 }
 
@@ -44193,7 +44210,6 @@ static int m11_defender_armour_defense_for_thing(
     int* outWeight)
 {
     int thingIndex;
-    int armourType;
 
     if (outDefense) *outDefense = 0;
     if (outIsShield) *outIsShield = 0;
@@ -44210,9 +44226,8 @@ static int m11_defender_armour_defense_for_thing(
     if (thingIndex < 0 || thingIndex >= world->things->armourCount) {
         return 0;
     }
-    armourType = (int)world->things->armours[thingIndex].type;
     return m11_dm1_armour_defense_f0143(
-        armourType, useSharpDefense, outDefense, outIsShield, outWeight);
+        world, thing, useSharpDefense, outDefense, outIsShield, outWeight);
 }
 
 static int m11_f0312_stamina_adjusted_value(

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 usage() {
-  echo "usage: $0 [--operator-only --launch] --mednafen PATH --bios PATH --bios-sha256 HEX --bios-region us|jp|eu --disc PATH --disc-sha256 HEX --trace PATH --validator PATH --manifest PATH [--mednafen-home PATH] [--no-waiting] [--timeout-seconds DEC] [--skip-frames DEC] [--frame-limit DEC] [--press-start-frame DEC] [--press-start-length DEC] [--press-button-mask DEC/HEX]" >&2
+  echo "usage: $0 [--operator-only --launch] --mednafen PATH --bios PATH --bios-sha256 HEX --bios-region us|jp|eu --disc PATH --disc-sha256 HEX --trace PATH --validator PATH --manifest PATH [--mednafen-home PATH] [--no-waiting] [--require-input-window] [--timeout-seconds DEC] [--skip-frames DEC] [--frame-limit DEC] [--press-start-frame DEC] [--press-start-length DEC] [--press-button-mask DEC/HEX]" >&2
 }
 
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
@@ -74,6 +74,7 @@ press_button_mask=0x10
 timeout_seconds=0
 mednafen_home=
 no_waiting=0
+require_input_window=0
 bios_region=eu
 while (($#)); do
   case "$1" in
@@ -83,6 +84,7 @@ while (($#)); do
       (($# >= 2)) || { usage; exit 2; }
       key=${1#--}; key=${key//-/_}; printf -v "$key" '%s' "$2"; shift 2 ;;
     --no-waiting) no_waiting=1; shift ;;
+    --require-input-window) require_input_window=1; shift ;;
     *) usage; exit 2 ;;
   esac
 done
@@ -106,6 +108,11 @@ esac
    "$timeout_seconds" =~ ^[0-9]+$ &&
    "$press_start_frame" =~ ^[0-9]+$ && "$press_start_length" =~ ^[1-9][0-9]*$ &&
    "$press_button_mask" =~ ^(0[xX])?[0-9a-fA-F]+$ ]] || exit 1
+if ((require_input_window)) && ((press_start_frame < skip_frames ||
+    press_start_frame + press_start_length > skip_frames + frame_limit)); then
+  echo "ERROR: requested input window is outside the captured frame window" >&2
+  exit 1
+fi
 [[ ! -e "$trace" && ! -e "$manifest" && "$trace" != "$manifest" ]] || exit 1
 [[ -d "$(dirname "$trace")" && -d "$(dirname "$manifest")" ]] || exit 1
 if ((launch)); then
@@ -122,7 +129,7 @@ umask 077
   printf 'FIRESTAFF_NEXUS_SATURN_RAW_CAPTURE_PLAN_V1\n'
   printf 'bios_sha256=%s\nbios_region=%s\ndisc_sha256=%s\nskip_frames=%s\nframe_limit=%s\npress_start_frame=%s\npress_start_length=%s\npress_button_mask=%s\n' \
     "$(lower "$bios_sha256")" "$bios_region" "$(lower "$disc_sha256")" "$skip_frames" "$frame_limit" "$press_start_frame" "$press_start_length" "$press_button_mask"
-  printf 'mednafen_home=%s\nno_waiting=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$no_waiting" "$timeout_seconds"
+  printf 'mednafen_home=%s\nno_waiting=%s\nrequire_input_window=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$no_waiting" "$require_input_window" "$timeout_seconds"
   printf 'capture_magic=FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n'
 } > "$manifest_tmp"
 mv "$manifest_tmp" "$manifest"

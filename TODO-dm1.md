@@ -4,6 +4,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 F0143 source-ownership correction is complete: the live M11
+  armour-defense path now resolves G0239 values through the authenticated raw
+  ARMOUR Thing record from DUNGEON.DAT. A missing or malformed record no
+  longer falls through to a parallel M11 table. Original C13-save and
+  original launcher/panel pixel-capture gates remain open.
+
+- 2026-08-09 tick-orchestrator F0143 source-ownership correction is complete:
+  the live combat tick now uses the same raw ARMOUR Thing record and no longer
+  carries a second subtype table. Original C13-save and original
+  launcher/panel pixel-capture gates remain open.
+
 - 2026-08-09 live C13 producer correction is complete: Vi Altar drops now
   derive the rebirth owner from the authenticated bones JUNK record, preserve
   its Thing cell, and publish the F0255 step-2 fields (`aux0`, `aux1`, and
@@ -11,6 +22,18 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   full or rejecting timeline restores the hand item. This fixes the runtime
   producer; the authentic C13-bearing save and original launcher/panel capture
   gates remain open.
+
+- 2026-08-09 C13 trigger classification correction is complete: the live
+  click route now resolves the current map's wall ornament through the
+  authenticated DUNGEON.DAT table and G0192 ordering before allowing a Vi
+  Altar rebirth. Square and arched alcoves remain ordinary storage targets.
+  The authentic C13-bearing save and original launcher/panel capture gates
+  remain open.
+
+- 2026-08-09 C13 save-identity correction is complete: the world hash is now
+  republished after the source-owned rebirth event is appended, closing the
+  immediate-save window between the bones drop and the next tick. Authentic
+  C13-save and original pixel-capture gates remain open.
 
 - 2026-08-09 C012 receipt correction is complete: the generator's source icon
   index now survives F0275 result initialization and reaches the authentic

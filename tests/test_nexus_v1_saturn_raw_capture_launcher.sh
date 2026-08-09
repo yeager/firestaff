@@ -42,6 +42,25 @@ grep -Fq 'press_start_frame=1000' "$tmp_dir/manifest-custom.txt"
 grep -Fq 'press_start_length=60' "$tmp_dir/manifest-custom.txt"
 grep -Fq 'press_button_mask=0x30' "$tmp_dir/manifest-custom.txt"
 
+"$launcher" --operator-only --mednafen /usr/bin/true \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-window.raw" --validator "$validator" \
+  --manifest "$tmp_dir/manifest-window.txt" --skip-frames 10000 \
+  --frame-limit 560 --press-start-frame 10500 --press-start-length 60 \
+  --require-input-window >/dev/null
+grep -Fq 'require_input_window=1' "$tmp_dir/manifest-window.txt"
+if "$launcher" --operator-only --mednafen /usr/bin/true \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-window-reject.raw" --validator "$validator" \
+  --manifest "$tmp_dir/manifest-window-reject.txt" --skip-frames 10000 \
+  --frame-limit 128 --press-start-frame 10500 --press-start-length 60 \
+  --require-input-window >/dev/null 2>&1; then
+  echo "expected input-window rejection" >&2
+  exit 1
+fi
+
 python3 - "$tmp_dir/fake-mednafen" <<'PY'
 import os
 import sys
