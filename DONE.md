@@ -13,6 +13,14 @@
   PC34-yta eller genererad text används. Riktade realmediatester passerar
   för alla tre startvägar.
 
+# Theron: längre autentiserad runtime-capture (2026-08-09)
+
+- ✅ Den externa Mednafen-patchen och capture-scriptet stöder nu ett explicit
+  registerfönster upp till 1 048 576 prover. En riktig `.mc0`-körning nådde
+  `$B0E5` och `$5D64`; en separat US cold-start verifierade 161 sektorspann,
+  två CD→RAM-originreceipts, 32 main-RAM-dispatchar, 18 `$4644` och 64
+  `$4667`. Körningarna slås inte ihop och öppnar ingen gameplaysemantik.
+
 # Theron: korrekt tangentbordsgräns för sparning (2026-08-09)
 
 - ✅ F5/F9 i Theron vägrar nu den generiska DM1-world-serialiseringen och visar

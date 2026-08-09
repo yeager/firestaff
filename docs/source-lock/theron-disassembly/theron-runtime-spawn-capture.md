@@ -95,6 +95,27 @@ spawn, creature, AI, loot, T700 or T900 behavior.
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.
 
+## 2026-08-09 — bounded long-window capture and clean cold-start join
+
+The instrumented external Mednafen build now accepts
+`FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT`. The capture script supplies
+65536 by default, with a hard upper bound of 1048576; the patch-level default
+remains 2048. This only prevents a diagnostic sidecar from stopping before a
+later execution edge and does not relax any parser or semantic gate.
+
+An authenticated `.mc0` replay reached `$B0E5` 50 times and entered `$5D64`
+with a complete 512-step raw execution window. It had no CD→RAM receipt, so
+those observations are not joined to a level/object payload and do not open
+RNG or spawn semantics.
+
+A separate clean US cold-start replay verified the full transport boundary:
+Track 02 MD5 `f23601102138f87c33025877767ebf76`, System Card MD5
+`ff1a674273fe3540ccef576376407d1d`, 161 raw-sector spans, 2 authenticated
+CD→RAM-origin receipts, 32 game-main-RAM `$E009` dispatches, 18 `$4644`
+preconsumer entries and 64 `$4667` helper entries. The same run had no
+`$B0E5`, no `$C96B/$CC4C` dynamic return and no RNG sidecar. The two runs are
+kept separate; merging them would fabricate a semantic spawn witness.
+
 ## 2026-08-09 — stack-derived RNG return-boundary instrumentation
 
 The US RNG-consumer sidecar now retains the HuC6280 stack snapshot at entry

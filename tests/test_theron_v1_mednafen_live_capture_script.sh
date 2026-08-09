@@ -234,6 +234,7 @@ if ! grep -Fq 'spawn_consumer_read sequence=%u logical_address=%04x physical_add
 fi
 if ! grep -Fq 'spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x' "$irq2_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT=' "$script" ||
    ! grep -Fq 'spawn_register_samples=%s' "$script"; then
     printf 'FAIL: capture must retain disassembly-bound spawn register samples\n' >&2
     exit 1

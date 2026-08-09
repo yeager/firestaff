@@ -326,3 +326,20 @@ Tracebasen ligger utanför repot på extern-disken:
 
 Den äldre körningen utan autentiserade CD→RAM-receipts ska inte blandas med
 denna körning; capture-sessioner hålls separata.
+
+### Förlängt spawn-registerfönster
+
+Capture-scriptet skickar som standard
+`FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT=65536` till den externa,
+instrumenterade Mednafen-binären. Gränsen är explicit och valideras till
+`1..1048576`; den ändrar inte emulatordata eller semantik. Den kan sänkas vid
+diagnostik med `THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT`, medan patchens
+råa standardgräns fortfarande är 2048.
+
+Den senaste rena US-boot-körningen använde Track 02 MD5
+`f23601102138f87c33025877767ebf76` och System Card MD5
+`ff1a674273fe3540ccef576376407d1d`. Den verifierade 161 råa sektorspann,
+två autentiserade CD→RAM-originreceipts, 32 game-main-RAM-dispatchar och 89
+registerprover, varav 18 `$4644` och 64 `$4667`. Den saknade fortfarande
+`$B0E5` och en dynamisk RNG-retur; därför öppnar den inte spawn-, AI-, T700-
+eller T900-semantik.

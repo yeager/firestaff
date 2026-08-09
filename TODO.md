@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Den förlängda registerfångsten visar nu `$B0E5`/`$5D64` i en autentisk
+  save-state-körning och full CD→RAM-transport i en separat cold-start. De får
+  inte slås ihop: nästa witness måste visa source-owned dynamik och RNG-retur
+  i samma körning innan spawn/creature/AI/T700/T900 öppnas.
+
 - ⏳ Theron har nu en fail-closed tangentbordsgräns: F5/F9 skapar eller läser
   inte längre Firestaffs generiska DM-save mitt i en bana. Den autentiska
   stage-clear-sparningen och startmenyns slotväljare måste fortfarande bindas

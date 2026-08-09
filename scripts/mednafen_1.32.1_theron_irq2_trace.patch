@@ -140,6 +140,7 @@ index 347482c4..61d4758e 100644
 +static unsigned TheronIrq2TraceGameMainRamE009DispatchCount;
 +static FILE *TheronIrq2TraceSpawnRegisters;
 +static unsigned TheronIrq2TraceSpawnRegisterSamples;
++static unsigned TheronIrq2TraceSpawnRegisterSampleLimit = 2048;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -166,7 +167,7 @@ index 347482c4..61d4758e 100644
 +     (logical_pc >= 0xca00 && logical_pc <= 0xca69) ||
 +     (logical_pc >= 0xccf0 && logical_pc <= 0xcd13) ||
 +     logical_pc == 0xb0e5) &&
-+    TheronIrq2TraceSpawnRegisterSamples < 2048)
++    TheronIrq2TraceSpawnRegisterSamples < TheronIrq2TraceSpawnRegisterSampleLimit)
 + {
 +  const uint32 reg_a = trace_regs->GetRegister(trace_regs->Regs[1].id, NULL, 0) & 0xff;
 +  const uint32 reg_x = trace_regs->GetRegister(trace_regs->Regs[2].id, NULL, 0) & 0xff;
@@ -934,6 +935,15 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TraceRawCDRegisterStoreCount = 0;
 +	  TheronIrq2TraceRawControllerResultStoreCount = 0;
 +	  TheronIrq2TraceSpawnRegisterSamples = 0;
++	  TheronIrq2TraceSpawnRegisterSampleLimit = 2048;
++	  if(const char* limit_text = getenv("FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT"))
++	  {
++	   char* limit_end = NULL;
++	   const unsigned long parsed_limit = strtoul(limit_text, &limit_end, 10);
++	   if(limit_end != limit_text && *limit_end == '\0' && parsed_limit > 0 &&
++	      parsed_limit <= 1048576ul)
++	    TheronIrq2TraceSpawnRegisterSampleLimit = (unsigned)parsed_limit;
++	  }
 +	  TheronIrq2TraceSpawnRegisters = NULL;
 +	  memset(TheronIrq2TraceReturnWindowSeen, 0, sizeof(TheronIrq2TraceReturnWindowSeen));
 +	  TheronIrq2TraceReturnTransferPending = false;

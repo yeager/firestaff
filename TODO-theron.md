@@ -4,6 +4,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — kvarvarande Theron-semantik efter teleporterfix
 
+- 🔧 Den externa Mednafen-capturen har nu en explicit förlängd, begränsad
+  registergräns. En autentiserad `.mc0`-körning nådde `$B0E5` och `$5D64`,
+  medan en separat cold-start bevisade CD→RAM-transport och `$4644`/`$4667`.
+  Sessionerna hålls separata; inget RNG-, spawn-, AI-, T700- eller T900-
+  resultat publiceras från dem.
+
 - 🔒 RNG-return, levande creature-AI, attacker/skada/loot, generatorernas
   timing, T700-statistik och T900-regler är fortfarande spärrade tills samma
   autentiserade runtime-capture binder deras riktiga konsumenter.
