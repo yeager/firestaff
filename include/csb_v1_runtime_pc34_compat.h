@@ -2173,6 +2173,18 @@ int csb_v1_runtime_process_input_queue(
     int last_projectile_disabled_movement_direction,
     CSB_V1_InputCommandRuntimeResult *out_result);
 
+/* ReDMCSB MENU.C F0407 C010_ACTION_CLIMB_DOWN invokes MOVESENS.C F0267
+ * directly, rather than routing through CLIKMENU.C F0366.  This native
+ * action bridge therefore performs the one permitted forward pit entry
+ * without the ordinary movement-command stamina/timing path.  A closed pit
+ * is intentionally admitted (BUG0_77); F0267 then decides whether an open
+ * pit causes a level transition.  Returns 1 when the action moved the party,
+ * 0 when the front square is not an unoccupied pit, and -1 for malformed
+ * runtime state. */
+int csb_v1_runtime_perform_climb_down_action(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *out_result);
+
 /* Boot the CSB dungeon and initialize Chaos Magic.
  * Finds DUNGEON.DAT by hash (csb_v1_runtime_find_dungeon), loads the
  * dungeon data into the current dungeon context
@@ -3095,6 +3107,9 @@ int csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
     void *boot_profile,
     int champion_index,
     int action_index);
+int csb_v1_runtime_perform_climb_down_action_from_boot_profile_pc34(
+    void *boot_profile,
+    CSB_V1_InputCommandRuntimeResult *out_result);
 int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
     void *boot_profile,
     unsigned short leader_hand_thing,

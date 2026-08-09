@@ -1,3 +1,13 @@
+# CSB: native C010 Climb Down-rörelse (2026-08-09)
+
+- ✅ CSB:s `CLIMB DOWN` går nu från `MENU.C F0407` direkt till den liveägda
+  `MOVESENS.C F0267`-motsvarigheten. Den använder inte längre M11:s
+  query-värld för partyflytt, gropar, teleportörer eller sensorer.
+- ✅ Den särskilda originalregeln för ett rep framför en stängd grop bevaras:
+  partiet får kliva in på gropen utan den vanliga rörelsevägens extra
+  stamina- och tidskostnad. Öppen grop fortsätter genom native
+  konsekvenskedja, och M11 synkas efteråt från CSB-runtimen.
+
 # README: tydlig originalplattform och mindre brus (2026-08-09)
 
 - ✅ README beskriver nu vilka originalutgåvor som skannern känner igen,

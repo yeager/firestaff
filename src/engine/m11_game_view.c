@@ -45372,8 +45372,29 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * post-move environment path decides whether the party then
              * falls through it. */
             int cancelDisable = 0;
-            int performed =
-                m11_perform_climb_down_f0407(state, &cancelDisable);
+            int performed;
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                CSB_V1_InputCommandRuntimeResult runtime_result;
+
+                memset(&runtime_result, 0, sizeof(runtime_result));
+                performed =
+                    csb_v1_runtime_perform_climb_down_action_from_boot_profile_pc34(
+                        state->csbBootProfile, &runtime_result) > 0;
+                /* MENU.C F0407 cancels only the action-disable timer when
+                 * no unoccupied pit is in front.  The action's common
+                 * stamina/experience tail remains source-owned below. */
+                cancelDisable = performed ? 0 : 1;
+                if (performed) {
+                    /* The C010→F0267 transaction may have crossed a pit or
+                     * teleporter.  Refresh the visible party from the live
+                     * CSB GAMEBLOCK; never commit the query-only M11 world. */
+                    m11_sync_csb_state_from_boot_profile(
+                        state, state->csbBootProfile);
+                }
+            } else {
+                performed =
+                    m11_perform_climb_down_f0407(state, &cancelDisable);
+            }
             if (outCancelActionDisable) {
                 *outCancelActionDisable = cancelDisable;
             }

@@ -559,6 +559,17 @@ int csb_v1_runtime_perform_melee_action_from_boot_profile_pc34(
                    : 0;
 }
 
+int csb_v1_runtime_perform_climb_down_action_from_boot_profile_pc34(
+    void *boot_profile,
+    CSB_V1_InputCommandRuntimeResult *out_result)
+{
+    CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
+
+    return profile ? csb_v1_runtime_perform_climb_down_action(
+                         &profile->runtime, out_result)
+                   : -1;
+}
+
 int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
     void *boot_profile,
     unsigned short leader_hand_thing,
