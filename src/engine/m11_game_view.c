@@ -205,6 +205,7 @@
 #include "dm1_v1_side_door_render_pc34_compat.h"
 #include "dm1_v1_stairs_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
@@ -31863,6 +31864,39 @@ static int m11_dm1_front_wall_is_fountain(
     return 0;
 }
 
+/* ReDMCSB DUNVIEW.C G0192 orders the three alcove ornaments as square
+ * alcove, Vi Altar, and arched alcove.  Resolve the current map's global
+ * ornament through the loaded DUNGEON.DAT table and require both the exact
+ * G0192 Vi-Altar entry and the F0174-wired alcove membership. */
+static int m11_dm1_front_wall_is_vi_altar(
+    M11_GameViewState* state,
+    const M11_ViewportCell* frontCell) {
+    int mapIndex;
+    int localOrdinal;
+    int globalIndex;
+
+    if (!state || !frontCell || !frontCell->valid ||
+        frontCell->elementType != DUNGEON_ELEMENT_WALL ||
+        frontCell->wallOrnamentOrdinal <= 0) {
+        return 0;
+    }
+    mapIndex = state->world.party.mapIndex;
+    localOrdinal = frontCell->wallOrnamentOrdinal - 1;
+    if (mapIndex < 0 || mapIndex >= 32 || localOrdinal < 0 ||
+        localOrdinal >= 16) {
+        return 0;
+    }
+    m11_ensure_ornament_cache(state, mapIndex);
+    if (!state->world.dungeon || !state->world.dungeon->maps ||
+        !state->ornamentCacheLoaded[mapIndex] ||
+        localOrdinal >= (int)state->world.dungeon->maps[mapIndex].wallOrnamentCount) {
+        return 0;
+    }
+    globalIndex = state->wallOrnamentIndices[mapIndex][localOrdinal];
+    return globalIndex == dm1_v1_g0192_get_pc34(1) &&
+           dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+}
+
 /* Apply the source-locked CLIKVIEW.C fountain path to the actual loaded
  * Thing record.  This deliberately does not infer a fountain from a graphic
  * id or a generic ornament fallback. */
@@ -32823,6 +32857,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     int localX;
     int localY;
     int facingAlcove;
+    int facingViAltar;
     int facingWall;
     int alcoveItemHit;
 
@@ -32851,6 +32886,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                    frontCell.wallOrnamentOrdinal >= 0 &&
                    dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
                        frontCell.wallOrnamentOrdinal);
+    facingViAltar = m11_dm1_front_wall_is_vi_altar(state, &frontCell);
     facingWall = frontCell.valid &&
                  frontCell.elementType == DUNGEON_ELEMENT_WALL;
     alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(x, y);
@@ -33237,7 +33273,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                     int dropIcon = (dropThing != THING_NONE)
                         ? m11_object_icon_index_for_thing(state, state->world.things, dropThing)
                         : -1;
-                    if (dropIcon == 147) { /* C147_ICON_JUNK_CHAMPION_BONES */
+                    if (facingViAltar &&
+                        dropIcon == 147) { /* C147_ICON_JUNK_CHAMPION_BONES */
                         int dropIndex = THING_GET_INDEX(dropThing);
                         int championIndex = -1;
                         const struct DungeonJunk_Compat* bones = NULL;

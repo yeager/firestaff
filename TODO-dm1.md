@@ -12,6 +12,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   producer; the authentic C13-bearing save and original launcher/panel capture
   gates remain open.
 
+- 2026-08-09 C13 trigger classification correction is complete: the live
+  click route now resolves the current map's wall ornament through the
+  authenticated DUNGEON.DAT table and G0192 ordering before allowing a Vi
+  Altar rebirth. Square and arched alcoves remain ordinary storage targets.
+  The authentic C13-bearing save and original launcher/panel capture gates
+  remain open.
+
 - 2026-08-09 C012 receipt correction is complete: the generator's source icon
   index now survives F0275 result initialization and reaches the authentic
   F0167 allocator. A focused regression covers both the positive empty-hand

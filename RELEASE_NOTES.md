@@ -41,6 +41,9 @@
   carries the authenticated Thing cell, champion owner, and F0255 step-2
   fields. Reject stale or ownerless bones for the special route and restore
   the hand item if the source timeline cannot accept the event.
+- `DM1 C13 Vi Altar`: Fix the click route to require the current map's
+  authenticated Vi-Altar ornament from G0192/F0174; ordinary and arched
+  alcoves no longer start champion rebirth.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects
