@@ -2368,6 +2368,17 @@ int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
                                                       int groupMapX,
                                                       int groupMapY);
 
+/* Probe-visible Giggler steal hook (ReDMCSB GROUP.C F0193
+ * GROUP_StealFromChampion).  Drives the same F0822-owned route the tick loop
+ * takes when a C02 Giggler shares the party square: it resolves the steal
+ * receipt, moves each stolen thing from the champion's inventory into the
+ * group's GROUP.Slot possession chain, and adopts the returned flee
+ * behaviour.  Returns 1 when the receipt resolved (even if nothing was
+ * taken), 0 when the group is not a Giggler or the inputs are invalid. */
+int M11_GameView_ProbeGigglerStealFromChampion(M11_GameViewState* state,
+                                               int groupIndex,
+                                               int championIndex);
+
 /* Probe-visible creature flee hook (ReDMCSB GROUP.C F0209
  * T0209094_FleeFromTarget).  Drives the same F0820-owned retreat branch the
  * tick loop takes for a DM1_BEHAVIOR_FLEE group: it inverts the toward-party

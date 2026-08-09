@@ -17409,6 +17409,126 @@ void M11_GameView_GetCameraOffset(const M11_GameViewState* state,
     if (outFacingDir) *outFacingDir = state->camera_interpolated_facing;
 }
 
+/* Shared alive-champion picker.  ReDMCSB GROUP.C:1793 picks the target by
+ * cell; M11's melee loop has always used this round-robin over the alive
+ * champions instead, and the Giggler steal route must use the SAME rule so
+ * both attack forms agree on who is targeted. */
+static int m11_pick_alive_champion_index(const M11_GameViewState* state,
+                                         int rotation) {
+    int aliveCount = 0;
+    int pick;
+    int j;
+    if (!state) return -1;
+    for (j = 0; j < state->world.party.championCount; ++j) {
+        if (state->world.party.champions[j].present &&
+            state->world.party.champions[j].hp.current > 0) {
+            ++aliveCount;
+        }
+    }
+    if (aliveCount <= 0) return -1;
+    if (rotation < 0) rotation = -rotation;
+    pick = rotation % aliveCount;
+    for (j = 0; j < state->world.party.championCount; ++j) {
+        if (state->world.party.champions[j].present &&
+            state->world.party.champions[j].hp.current > 0) {
+            if (pick == 0) return j;
+            --pick;
+        }
+    }
+    return -1;
+}
+
+/* Defined with the other GROUP.Slot possession helpers further down. */
+static int m11_attach_thing_to_group_slot_chain(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    unsigned short associatedThing);
+
+/*
+ * ReDMCSB GROUP.C F0193_GROUP_StealFromChampion.
+ *
+ * A Giggler (C02) does not resolve an ordinary melee attack: it attempts to
+ * steal from the target champion and then flees on success.  F0822 owns the
+ * source decision — the dexterity duel, the G0025
+ * Graphic562_StealFromSlotIndices slot walk (DATA.C:244-251) with its
+ * counter and RANDOM(17) backpack expansion, and the resulting flee
+ * behaviour and delay.  This runtime applies that receipt: it moves each
+ * stolen thing out of the champion's inventory into the group's GROUP.Slot
+ * possession chain through the same F0215/F0163 tail-link policy the
+ * projectile route uses, then adopts the returned flee behaviour so the new
+ * F0820 retreat branch takes over on the next tick.
+ *
+ * Returns 1 when the steal receipt resolved (whether or not anything was
+ * actually taken), 0 when the group is not a Giggler or inputs are invalid.
+ */
+static int m11_giggler_steal_from_champion(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    int championIndex) {
+    struct ChampionState_Compat* champ;
+    struct DM1GigglerStealResult_Compat steal;
+    uint32_t occupiedMask = 0u;
+    uint32_t remainingMask;
+    int dexterity;
+    int slot;
+    int stolen = 0;
+    char champName[16];
+
+    if (!state || !group || !state->world.things) return 0;
+    if ((int)group->creatureType != DM1_CREATURE_TYPE_GIGGLER) return 0;
+    if (championIndex < 0 || championIndex >= state->world.party.championCount) {
+        return 0;
+    }
+    champ = &state->world.party.champions[championIndex];
+    if (!champ->present) return 0;
+
+    /* F0193 considers only occupied slots; slot indices above 31 cannot be
+     * expressed in the source mask word. */
+    for (slot = 0; slot < CHAMPION_SLOT_COUNT && slot < 32; ++slot) {
+        unsigned short thing = champ->inventory[slot];
+        if (thing != THING_NONE && thing != THING_ENDOFLIST) {
+            occupiedMask |= (uint32_t)1u << slot;
+        }
+    }
+
+    dexterity = (int)champ->attributes[CHAMPION_ATTR_DEXTERITY];
+
+    memset(&steal, 0, sizeof(steal));
+    if (!F0822_DM1_GIGGLER_ResolveStealAttempt_Compat(
+            dexterity, occupiedMask, 0, &state->world.masterRng, &steal)) {
+        return 0;
+    }
+
+    remainingMask = steal.stolenSlotMask;
+    for (slot = 0; slot < CHAMPION_SLOT_COUNT && slot < 32 &&
+                   remainingMask != 0u; ++slot) {
+        uint32_t slotMask = (uint32_t)1u << slot;
+        unsigned short stolenThing;
+        if ((remainingMask & slotMask) == 0u) continue;
+        remainingMask &= ~slotMask;
+        stolenThing = champ->inventory[slot];
+        if (stolenThing == THING_NONE || stolenThing == THING_ENDOFLIST) continue;
+        if (m11_attach_thing_to_group_slot_chain(state, group, stolenThing)) {
+            champ->inventory[slot] = THING_NONE;
+            ++stolen;
+        }
+    }
+
+    if (stolen > 0) {
+        m11_format_champion_name(champ->name, champName, sizeof(champName));
+        m11_log_event(state, M11_COLOR_YELLOW,
+                      "T%u: GIGGLER STEALS FROM %s",
+                      (unsigned int)state->world.gameTick, champName);
+    }
+
+    /* F0193 sets the flee behaviour on a successful steal; the F0820 branch
+     * in the tick loop then carries the retreat. */
+    if (steal.shouldFlee) {
+        group->behavior = (unsigned char)(steal.newBehavior & 0x0f);
+    }
+    return 1;
+}
+
 static void m11_creature_attack_party(
     M11_GameViewState* state,
     const struct DungeonGroup_Compat* group,
@@ -17445,28 +17565,10 @@ static void m11_creature_attack_party(
         struct CombatResult_Compat result;
         if (group->health[i] <= 0) continue;
 
-        /* Pick target: random alive champion (ReDMCSB picks by cell) */
-        targetChamp = -1;
-        {
-            int aliveCount = 0;
-            int j;
-            for (j = 0; j < state->world.party.championCount; ++j) {
-                if (state->world.party.champions[j].present &&
-                    state->world.party.champions[j].hp.current > 0)
-                    aliveCount++;
-            }
-            if (aliveCount <= 0) return;
-            {
-                int pick = (int)(state->world.gameTick + (unsigned)i) % aliveCount;
-                for (j = 0; j < state->world.party.championCount; ++j) {
-                    if (state->world.party.champions[j].present &&
-                        state->world.party.champions[j].hp.current > 0) {
-                        if (pick == 0) { targetChamp = j; break; }
-                        pick--;
-                    }
-                }
-            }
-        }
+        /* Pick target: round-robin alive champion (ReDMCSB picks by cell).
+         * Shared with the Giggler steal route so both attack forms agree. */
+        targetChamp = m11_pick_alive_champion_index(
+            state, (int)(state->world.gameTick + (unsigned)i));
         if (targetChamp < 0) return;
         champ = &state->world.party.champions[targetChamp];
 
@@ -17917,6 +18019,23 @@ static void m11_process_one_creature_group(
         /* Attack cadence: only attack every attackTicks ticks */
         if (profile->attackTicks > 0 &&
             (state->world.gameTick % (uint32_t)profile->attackTicks) == 0u) {
+            /* ReDMCSB GROUP.C F0193: a Giggler steals instead of resolving
+             * an ordinary melee attack.  Without this branch DM1's C02 dealt
+             * plain damage and never took an item, even though F0822 was
+             * source-locked. */
+            if ((int)group->creatureType == DM1_CREATURE_TYPE_GIGGLER) {
+                int target = m11_pick_alive_champion_index(
+                    state, (int)state->world.gameTick);
+                if (target >= 0 &&
+                    m11_giggler_steal_from_champion(
+                        state,
+                        &state->world.things->groups[groupIndex],
+                        target)) {
+                    m11_audio_emit_creature_attack_sound(
+                        state, group->creatureType, groupX, groupY);
+                    return;
+                }
+            }
             m11_creature_attack_party(state, group, groupX, groupY);
         }
         return;
@@ -17974,6 +18093,15 @@ static void m11_process_one_creature_group(
             }
         }
     }
+}
+
+int M11_GameView_ProbeGigglerStealFromChampion(M11_GameViewState* state,
+                                               int groupIndex,
+                                               int championIndex) {
+    if (!state || !state->world.things) return 0;
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount) return 0;
+    return m11_giggler_steal_from_champion(
+        state, &state->world.things->groups[groupIndex], championIndex);
 }
 
 int M11_GameView_ProbeCreatureFleeStep(M11_GameViewState* state,
@@ -44140,6 +44268,60 @@ static int m11_projectile_associated_weapon_type(
         return -1;
     }
     return raw[2] & 0x7f;
+}
+
+/* Attach one arbitrary thing to a group's GROUP.Slot possession chain
+ * through the source-locked F0215/F0163 receipt.  Both the projectile
+ * delete-target route (PROJEXPL.C F0217) and the Giggler steal route
+ * (GROUP.C F0193) end in this same tail-link policy, so neither may
+ * open-code it. */
+static int m11_attach_thing_to_group_slot_chain(
+    M11_GameViewState* state,
+    struct DungeonGroup_Compat* group,
+    unsigned short associatedThing) {
+    DM1_ProjectileGroupSlotAttachReceiptPc34 attachReceipt;
+    unsigned short chainThings[64];
+    unsigned short current;
+    int chainCount = 0;
+    if (!state || !group || !state->world.things) return 0;
+    if (associatedThing == THING_NONE || associatedThing == THING_ENDOFLIST) return 0;
+
+    current = group->slot;
+    while (current != THING_NONE &&
+           current != THING_ENDOFLIST &&
+           chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+        current = m11_get_raw_next_thing(state->world.things, current);
+        if (current == THING_NONE || current == THING_ENDOFLIST) {
+            current = m11_get_decoded_next_thing(
+                state->world.things, chainThings[chainCount - 1]);
+        }
+    }
+    if (chainCount < (int)(sizeof(chainThings) / sizeof(chainThings[0]))) {
+        chainThings[chainCount++] = current;
+    }
+
+    memset(&attachReceipt, 0, sizeof(attachReceipt));
+    if (!dm1_v1_projectile_group_slot_attach_receipt_f0215_pc34(
+            associatedThing, group->slot, chainThings, chainCount,
+            &attachReceipt) ||
+        !attachReceipt.valid ||
+        !attachReceipt.shouldSetAssociatedNextEnd ||
+        attachReceipt.chainOverflow) {
+        return 0;
+    }
+    m11_set_next_thing(state->world.things, attachReceipt.associatedThing,
+                       THING_ENDOFLIST);
+    if (attachReceipt.shouldSetGroupSlotHead) {
+        group->slot = attachReceipt.associatedThing;
+        return 1;
+    }
+    if (attachReceipt.shouldAppendAfterTail && attachReceipt.foundTail) {
+        m11_set_next_thing(state->world.things, attachReceipt.tailThing,
+                           attachReceipt.associatedThing);
+        return 1;
+    }
+    return 0;
 }
 
 static int m11_attach_projectile_associated_thing_to_group(
