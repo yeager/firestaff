@@ -2709,6 +2709,14 @@ int main(void) {
                     new_game_world_owner.sound_owner.sample_binding_count > 0u &&
                     new_game_world_owner.sound_owner.queue_entries != NULL &&
                     new_game_world_owner.sound_owner.sample_bindings != NULL &&
+                    new_game_world_owner.sound_owner.runtime_queue_initialized &&
+                    new_game_world_owner.sound_owner.positional_count == 0u &&
+                    new_game_world_owner.sound_owner.immediate_count == 0u &&
+                    new_game_world_owner.sound_owner.sound_enabled == 1 &&
+                    new_game_world_owner.sound_owner.master_sfx_volume == 7 &&
+                    new_game_world_owner.sound_owner.sample_slots[0] == -1 &&
+                    new_game_world_owner.sound_owner.sample_slots[
+                        DM2_V1_SOUND_SAMPLE_SLOT_COUNT - 1u] == -1 &&
                     new_game_world_owner.sound_owner.queue_entries[0].w_00 >= 0 &&
                     new_game_world_owner.sound_owner.queue_entries[0].w_05 >= 0 &&
                     new_game_world_owner.sound_owner.sample_bindings[0].raw_length > 0u &&

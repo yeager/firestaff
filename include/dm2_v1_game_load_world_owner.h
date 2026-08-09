@@ -67,6 +67,20 @@ typedef struct {
     uint16_t sample_binding_count;
     uint32_t materialized_raw_hash;
     uint32_t receipt_hash;
+    /* The s_ssound table above is dynamically sized from c_dballoc.  The
+     * remaining c_sound/c_sfx runtime state has fixed source capacities and
+     * is retained privately for later QUEUE_NOISE_GEN1.  Do not substitute
+     * DM2_V1_SoundQueueState here: its legacy 64-entry ssound array cannot
+     * represent the admitted GAME_LOAD table. */
+    DM2_V1_SoundSfx positional[DM2_V1_SOUND_POSITIONAL_CAP];
+    uint16_t positional_count;
+    DM2_V1_SoundSfx immediate[DM2_V1_SOUND_IMMEDIATE_CAP];
+    uint16_t immediate_count;
+    DM2_V1_SoundDelayedSlot delayed[DM2_V1_SOUND_DELAYED_SLOT_COUNT];
+    int32_t sample_slots[DM2_V1_SOUND_SAMPLE_SLOT_COUNT];
+    int sound_enabled;
+    int master_sfx_volume;
+    int runtime_queue_initialized;
 } DM2_V1_GameLoadSoundOwner;
 
 /* Private result of the three writes in DM2_LOAD_NEW_DUNGEON immediately

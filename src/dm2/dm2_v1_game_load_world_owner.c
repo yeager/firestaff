@@ -572,6 +572,30 @@ static void dm2_v1_game_load_owner_sound_free(
     memset(sound, 0, sizeof(*sound));
 }
 
+/* c_sound::init owns the fixed sfx tables, while c_dballoc owns the dynamic
+ * xsndptr2 capacity.  Preserve both shapes: allocating a 64-entry substitute
+ * for xsndptr2 would silently discard hash-admitted SOUND9 rows.
+ * Source: SKProject SKULLWIN/c_sound.cpp::c_sound::init (32-63),
+ * c_gdatfile.cpp::DM2_dballoc_3e74_24b8 (273-333). */
+static int dm2_v1_game_load_owner_sound_init_runtime_state(
+    DM2_V1_GameLoadSoundOwner *sound)
+{
+    uint16_t slot;
+
+    if (!sound || !sound->queue_entries || sound->queue_capacity == 0u ||
+        sound->queue_entry_count == 0u || sound->runtime_queue_initialized ||
+        sound->positional_count != 0u || sound->immediate_count != 0u) {
+        return 0;
+    }
+    for (slot = 0u; slot < DM2_V1_SOUND_SAMPLE_SLOT_COUNT; ++slot) {
+        sound->sample_slots[slot] = -1;
+    }
+    sound->sound_enabled = 1;
+    sound->master_sfx_volume = 7;
+    sound->runtime_queue_initialized = 1;
+    return 1;
+}
+
 /* Private c_dballoc/c_sound/c_gdatfile hand-off.  The capacity is the real
  * DM2_dballoc_3e74_24b8 census (292 rows in the admitted PC corpus), so it
  * must not be squeezed into Firestaff's old 64-entry gameplay queue.  Only
@@ -708,7 +732,8 @@ static int dm2_v1_game_load_owner_materialize_sound(
     candidate.receipt_hash = dm2_v1_game_load_owner_hash_step(
         candidate.receipt_hash, candidate.materialized_raw_hash);
     candidate.valid = candidate.receipt_hash != 0u;
-    if (!candidate.valid) goto fail;
+    if (!candidate.valid ||
+        !dm2_v1_game_load_owner_sound_init_runtime_state(&candidate)) goto fail;
     owner->sound_owner = candidate;
     return 1;
 

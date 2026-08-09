@@ -1,3 +1,13 @@
+# DM2 New Game: dynamisk privat SND-kö (2026-08-09)
+
+- ✅ GAME_LOAD:s ljudägare behåller nu originalets privata sfx-, delayed- och
+  sample-slot-state tillsammans med den dynamiskt dimensionerade SOUND9-
+  tabellen. Den behåller därmed den verifierade 292-posterskapaciteten utan
+  den gamla 64-postersbegränsningen.
+- ✅ Kön är inte global och startar inte uppspelning. `QUEUE_NOISE_GEN1` ska
+  bindas till denna ägare först när dess kompletta karta-, party- och
+  timerförutsättningar kan finnas i samma transaktion.
+
 # DM2 New Game: owner-bunden CAII-animation (2026-08-09)
 
 - ✅ `DM2_GET_CREATURE_ANIMATION_FRAME` och `DM2_CREATURE_SOMETHING_1c9a_0a48`
