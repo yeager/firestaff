@@ -9,6 +9,13 @@
   och alternativa karta samt MapOffsetX/Y. Den köar, mixar eller spelar inte
   ljud; partyposition, riktning, synlighet och timerkonsumtion är fortsatt
   separata källkrav.
+# Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns
+  dokumenterade/Mednafen-verifierade adress `((CMDCOLR & ~3) << 2)`.
+  Den autentiska Nexus-capture-exempeladressen `COLR=0x3278 → 0xc9e0` kan
+  därför inte längre misstolkas som ett åttabyte-steg. Lookup-testet och de
+  relevanta Nexus-regressionstesterna passerar.
 
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 

@@ -40,7 +40,7 @@ int main(void) {
     /* CMDPMOD mode 1, CMDCOLR table at 0x20, CMDSRCA texture at 0x40,
      * CMDSIZE = 8x1. Sega VDP1 User's Manual 6.3--6.6. */
     wl16(command + 4, 1U << 3);
-    wl16(command + 6, 4U);
+    wl16(command + 6, 8U);
     wl16(command + 8, 8U);
     wl16(command + 10, 0x0101U);
     memcpy(vram + 0x40, texture, sizeof(texture));
@@ -73,7 +73,7 @@ int main(void) {
     memset(colour_ram, 0, sizeof(colour_ram));
     memset(vdp2_registers, 0, sizeof(vdp2_registers));
     wl16(command + 4, 1U << 3); /* mode 1; SPD/ECD both enabled (zero). */
-    wl16(command + 6, 4U);
+    wl16(command + 6, 8U);
     wl16(command + 8, 8U);
     wl16(command + 10, 0x0101U);
     vram[0x40] = 0x01U;

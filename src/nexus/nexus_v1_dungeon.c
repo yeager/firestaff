@@ -7031,7 +7031,11 @@ int nexus_v1_vdp1_decode_mode1_lookup_texture(
         *out_receipt = receipt;
         return 0;
     }
-    lookup_offset = (uint32_t)parsed.colour_control * 8U;
+    /* Sega VDP1 User's Manual, mode-1 LUT addressing; corroborated by
+     * Mednafen VDP1::CMD_Draw/TexFetch(): CMDCOLR is a 4-byte-unit colour
+     * base with the low two bits ignored, not an eight-byte-unit address.
+     * The authenticated Nexus capture uses COLR=0x3278 -> 0xc9e0. */
+    lookup_offset = ((uint32_t)parsed.colour_control & ~3U) << 2U;
     pixel_count = (uint32_t)parsed.texture_width *
         (uint32_t)parsed.texture_height;
     if (lookup_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U ||
