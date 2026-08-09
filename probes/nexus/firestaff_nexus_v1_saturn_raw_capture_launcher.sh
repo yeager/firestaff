@@ -9,6 +9,20 @@ usage() {
 
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
+append_trace_receipts() {
+  if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITES:-}" &&
+        -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES" ]] &&
+     ! grep -q '^vdp1_write_trace_sha256=' "$manifest"; then
+    printf 'vdp1_write_trace_sha256=%s\n' \
+      "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES")")" >> "$manifest"
+  fi
+  if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" &&
+        -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE" ]] &&
+     ! grep -q '^vdp1_writer_code_trace_sha256=' "$manifest"; then
+    printf 'vdp1_writer_code_trace_sha256=%s\n' \
+      "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE")")" >> "$manifest"
+  fi
+}
 require_hash() {
   [[ -f "$1" && "${#2}" -eq 64 && "$2" =~ ^[[:xdigit:]]+$ ]] || return 1
   [[ "$(lower "$(hash_file "$1")")" == "$(lower "$2")" ]]
@@ -186,18 +200,10 @@ fi
 capture_timeout_pid=
 capture_child_pid=
 trap - INT TERM EXIT
+printf 'capture_exit_status=%s\n' "$capture_status" >> "$manifest"
+append_trace_receipts
 ((capture_status == 0)) || exit "$capture_status"
 [[ -s "$trace" ]] || exit 1
 run_validator "$trace" --require-frames "$frame_limit"
 raw_bytes=$(wc -c < "$trace" | tr -d '[:space:]')
 printf 'raw_sha256=%s\nraw_bytes=%s\n' "$(lower "$(hash_file "$trace")")" "$raw_bytes" >> "$manifest"
-if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITES:-}" &&
-      -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES" ]]; then
-  printf 'vdp1_write_trace_sha256=%s\n' \
-    "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES")")" >> "$manifest"
-fi
-if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE:-}" &&
-      -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE" ]]; then
-  printf 'vdp1_writer_code_trace_sha256=%s\n' \
-    "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE")")" >> "$manifest"
-fi
