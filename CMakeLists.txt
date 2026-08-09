@@ -39298,6 +39298,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_save_export_import_pc34_compat.c
         src/csb/csb_v1_save_import_path_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_atari_msa.c
         src/csb/csb_v1_save_load_pc34_compat.c
         src/shared/fs_portable_compat.c
     )

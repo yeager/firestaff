@@ -14,6 +14,8 @@
   arm64-länkfel i den fulla CMake-matrisen utan att lägga till media.
 - ✅ Samma källa är nu explicit länkad av CSBWin save-loader-gaten, som annars
   fallerade senare i samma macOS-build med identiskt undefined-symbol-fel.
+- ✅ Export/import-gaten använder nu också den explicita länken; de övriga
+  save-proven som använder `firestaff_m10` behöver ingen dubbelregistrering.
 
 # CSB Atari ST: Utility Disk MSA-mediaidentitet (2026-08-09)
 
