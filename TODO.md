@@ -17,6 +17,12 @@
   production admission remains 0 % until a matching-region Saturn witness
   binds the real consumers. See `docs/NEXUS_COMPLETION.md`.
 
+- 🔧 Nexus MENU.BPK real-data coverage now includes the authenticated French
+  retail revision (87 820 bytes, final directory offset `0x154A8`). The test
+  also verifies its 256-entry PALT byte order and requires all 162 PRS3
+  surfaces to expose indexed 8-bit output after decode. VDP2 source ownership,
+  FONT256 text consumption and screen placement remain capture-gated.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

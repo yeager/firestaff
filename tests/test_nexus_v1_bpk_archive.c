@@ -176,6 +176,9 @@ static void test_optional_local_menu_bpk(void) {
     Nexus_V1_BpkModeDistribution dist;
     Nexus_V1_BpkEntryPrefix prefix;
     Nexus_V1_BpkPrs3Info prs3;
+    Nexus_V1_BpkPaletteTrailerReceipt palette_trailer;
+    uint16_t palette_words[NEXUS_V1_BPK_PALT_ENTRY_COUNT];
+    uint64_t palette_fnv = 0U;
     uint32_t prs3_seen;
     uint32_t pix_matches;
     uint32_t decoded_seen = 0U;
@@ -208,10 +211,12 @@ static void test_optional_local_menu_bpk(void) {
 
     expect(nexus_v1_bpk_archive_parse(data, size, &info) == 0,
            "local MENU.BPK BPPK/BMPD directory parses");
-    /* The verified corpus contains the 89,060-byte capture revision and the
-     * 87,684-byte European revision. Their directory grammar is identical;
-     * the final candidate offset is the only framing value that differs. */
-    expect(info.outer_size == 89060U || info.outer_size == 87684U,
+    /* The verified corpus contains the 89,060-byte capture revision, the
+     * 87,684-byte English European revision, and the 87,820-byte French
+     * European revision. Their directory grammar is identical; only the
+     * outer size and final candidate offset differ. */
+    expect(info.outer_size == 89060U || info.outer_size == 87684U ||
+               info.outer_size == 87820U,
            "local MENU.BPK outer size is a verified retail revision");
     expect(info.bmpd_size == info.outer_size - 536U,
            "local MENU.BPK BMPD size follows verified framing");
@@ -224,8 +229,19 @@ static void test_optional_local_menu_bpk(void) {
     expect(info.first_candidate_offset == 0x29CU,
            "local MENU.BPK first candidate offset");
     expect(info.last_candidate_offset ==
-               (info.outer_size == 87684U ? 0x15420U : 0x15980U),
+               (info.outer_size == 87684U ? 0x15420U :
+                (info.outer_size == 87820U ? 0x154A8U : 0x15980U)),
            "local MENU.BPK last candidate offset");
+
+    expect(nexus_v1_bpk_archive_inspect_palette_trailer(
+               data, size, &palette_trailer) == 0 && palette_trailer.valid &&
+               palette_trailer.entry_count == 256U &&
+               palette_trailer.entry_bytes == 512U,
+           "local MENU.BPK PALT trailer is bounded at 256 BE16 entries");
+    expect(nexus_v1_bpk_archive_copy_palette_words_be16(
+               data, size, palette_words, &palette_fnv) == 0 &&
+               palette_fnv == UINT64_C(0x0ec4e98ca3a18f85),
+           "local MENU.BPK PALT words retain their authenticated byte order");
 
     expect(nexus_v1_bpk_archive_get_entry(data, size, 1, &entry) == 0,
            "local MENU.BPK first PRS3 entry readable");
@@ -324,7 +340,12 @@ static void test_optional_local_menu_bpk(void) {
                     data, size, i, decoded, output_size, &surface,
                     &written) == NEXUS_V1_BPK_DECODE_OK &&
                 written == output_size &&
-                surface.pixel_count == output_size) {
+                surface.pixel_count == output_size &&
+                surface.layout.bpp == 1U &&
+                surface.layout.rowstride == surface.width &&
+                surface.layout.surface_bytes == output_size &&
+                surface.layout.surface_class ==
+                    NEXUS_V1_BPK_SURFACE_INDEXED_8BPP) {
                 ++decoded_seen;
                 decoded_pixels += (uint64_t)written;
             } else {

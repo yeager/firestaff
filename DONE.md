@@ -5,6 +5,14 @@
   för uppstart→meny→HUD/viewport. Produktionsgraden är 0 % tills ett
   matchande BIOS/media-par ger en giltig Saturn-witness.
 
+# Nexus: fransk MENU.BPK-revision och PALT/PRS3-regression (2026-08-09)
+
+- ✅ Den SHA/MD5-attesterade franska `MENU.BPK`-revisionen på 87 820 byte är
+  nu fullt med i real-data-testet, inklusive katalogoffset `0x154A8`.
+  Testet verifierar också 256 råa PALT-ord i rätt byteordning och att alla
+  162 PRS3-ytor efter DMWeb-avkodning är indexerade 8-bitarsytor. VDP2-
+  konsument och menyplacering är fortfarande uttryckligt capture-gated.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga
