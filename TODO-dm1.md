@@ -4,6 +4,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 F0275 wall-object mutation is complete: C012 generators, C013
+  storage take/store, and C016 exchangers now update the real Thing chain and
+  leader hand transactionally. Failed links or allocations roll back and do
+  not publish a remote effect. The authentic C13-bearing save and original
+  launcher/panel pixel-capture gates remain open.
+
 - 2026-08-09 real-data root audit: the complete `/Users/bosse/.firestaff/data`
   scan reports all five games `READY`, and DM1 auto-launch reaches runtime
   from authenticated FM Towns English data. The archive-backed scan can take

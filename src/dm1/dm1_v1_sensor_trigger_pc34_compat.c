@@ -345,6 +345,13 @@ int F0723_SENSOR_EvaluateWall_Compat(
          * doNotTrigger = !leaderEmptyHanded; */
         if (ctx->sensorCountInCell > 0) return 1;
         doNotTrigger = !ctx->leaderEmptyHanded;
+        if (!doNotTrigger) {
+            /* F0167 consumes the C012 icon index when the empty leader hand
+             * is refilled. Carry it through the trigger receipt so the live
+             * M11 owner can allocate the matching original Thing record. */
+            outResult->leaderHandObjectReceived = 1;
+            outResult->leaderHandObjectTypeReceived = (int)sensor->sensorData;
+        }
         break;
 
     case DM1_SENSOR_WALL_SINGLE_OBJECT_STORAGE_ROTATE:

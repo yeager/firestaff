@@ -14905,6 +14905,130 @@ static unsigned short m11_find_first_item_on_square(
     return THING_NONE;
 }
 
+/* ReDMCSB F0162 returns the first floor object whose source icon/type matches
+ * the wall-storage sensor. Keep the lookup on the loaded Thing chain; a
+ * decoded icon without a matching live record is not a valid transfer target.
+ */
+static unsigned short m11_find_item_with_icon_on_square(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int iconIndex) {
+    unsigned short thing;
+    int safety = 0;
+
+    if (!state || !state->world.things || iconIndex < 0) return THING_NONE;
+    thing = m11_square_chain_head(&state->world, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (dm1_v1_thing_type_is_floor_item_pc34(THING_GET_TYPE(thing)) &&
+            M11_GameView_GetObjectIconIndexForThing(state, thing) == iconIndex) {
+            return thing;
+        }
+        thing = m11_raw_next_thing(state->world.things, thing);
+    }
+    return THING_NONE;
+}
+
+/* Apply one F0275 wall-object transaction against the authentic M11 Thing
+ * chain. Each branch is atomic from the caller's point of view: if a link or
+ * hand update fails, the original chain and leader hand are restored. */
+static int m11_apply_wall_sensor_object_transfer(
+    M11_GameViewState* state,
+    int mapX,
+    int mapY,
+    const struct SensorTriggerResult_Compat* result) {
+    unsigned short hand;
+    unsigned short item;
+
+    if (!state || !result) return 0;
+    hand = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+
+    if (result->wallStorageObjectTaken) {
+        if (hand != THING_NONE && hand != THING_ENDOFLIST) return 0;
+        item = m11_find_item_with_icon_on_square(
+            state, state->world.party.mapIndex, mapX, mapY,
+            result->wallStorageObjectType);
+        if (item == THING_NONE ||
+            !m11_unlink_thing_from_square(&state->world,
+                                           state->world.party.mapIndex,
+                                           mapX, mapY, item) ||
+            !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item)) {
+            if (item != THING_NONE) {
+                (void)m11_prepend_thing_to_square(
+                    &state->world, state->world.party.mapIndex,
+                    mapX, mapY, item);
+            }
+            return 0;
+        }
+        return 1;
+    }
+
+    if (result->wallStorageObjectStored) {
+        if (hand == THING_NONE || hand == THING_ENDOFLIST ||
+            M11_GameView_GetObjectIconIndexForThing(state, hand) !=
+                result->wallStorageObjectType) {
+            return 0;
+        }
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+        if (!m11_prepend_thing_to_square(&state->world,
+                                         state->world.party.mapIndex,
+                                         mapX, mapY, hand)) {
+            (void)DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, hand);
+            return 0;
+        }
+        return 1;
+    }
+
+    if (result->wallObjectTaken && result->wallObjectStored) {
+        if (hand == THING_NONE || hand == THING_ENDOFLIST) return 0;
+        item = m11_find_first_item_on_square(
+            &state->world, state->world.party.mapIndex, mapX, mapY);
+        if (item == THING_NONE ||
+            (result->wallObjectTypeTaken >= 0 &&
+             M11_GameView_GetObjectIconIndexForThing(state, item) !=
+                 result->wallObjectTypeTaken) ||
+            !m11_unlink_thing_from_square(&state->world,
+                                           state->world.party.mapIndex,
+                                           mapX, mapY, item)) {
+            return 0;
+        }
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+        if (!m11_prepend_thing_to_square(&state->world,
+                                         state->world.party.mapIndex,
+                                         mapX, mapY, hand) ||
+            !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item)) {
+            (void)m11_unlink_thing_from_square(
+                &state->world, state->world.party.mapIndex, mapX, mapY, hand);
+            (void)m11_prepend_thing_to_square(
+                &state->world, state->world.party.mapIndex, mapX, mapY, item);
+            (void)DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, hand);
+            return 0;
+        }
+        return 1;
+    }
+
+    if (result->leaderHandObjectReceived &&
+        !result->wallStorageObjectTaken && !result->wallObjectTaken) {
+        unsigned short generated =
+            F0517_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator_Compat(
+                state->world.things,
+                (unsigned short)result->leaderHandObjectTypeReceived,
+                NULL, NULL);
+        if (generated == THING_NONE ||
+            !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, generated)) {
+            if (generated != THING_NONE) {
+                m11_set_object_drop_next(state->world.things, generated,
+                                         THING_NONE);
+            }
+            return 0;
+        }
+        return 1;
+    }
+
+    return 1;
+}
+
 /* ReDMCSB CLIKVIEW.C F0373 takes G0292_aT_PileTopObject[viewCell], not an
  * arbitrary object from the square's chain.  The packed THING cell is the
  * source identity of that rendered pile. */
@@ -32947,11 +33071,13 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                         struct SensorEffectList_Compat effects;
                         int ri;
                         int anyAudible = 0;
+                        int objectMutation = 0;
                         memset(&effects, 0, sizeof(effects));
                         for (ri = 0; ri < trigResults.count &&
                              effects.count < SENSOR_EFFECT_LIST_MAX_COUNT; ++ri) {
                             const struct SensorTriggerResult_Compat* tr =
                                 &trigResults.results[ri];
+                            int resultObjectMutation = 0;
                             if (!tr->triggered) continue;
 
                             /* ReDMCSB F0275: C127 champion portrait. */
@@ -32971,48 +33097,28 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                              * C01_SOUND_SWITCH. */
                             if (tr->audible) anyAudible = 1;
 
-                            /* ReDMCSB F0275 lines 1527-1531: C004/C011/C017
-                             * consume the leader hand object on trigger. */
-                            if (tr->leaderHandObjectRemoved) {
+                            /* ReDMCSB F0275: C012/C013/C016 mutate the live
+                             * Thing chain and leader hand as one transaction.
+                             * Do not disable the sensor or publish its remote
+                             * effect when the authenticated mutation fails. */
+                            if (tr->leaderHandObjectReceived ||
+                                tr->wallStorageObjectTaken ||
+                                tr->wallStorageObjectStored ||
+                                tr->wallObjectTaken ||
+                                tr->wallObjectStored) {
+                                if (!m11_apply_wall_sensor_object_transfer(
+                                        state, frontCell.mapX, frontCell.mapY, tr)) {
+                                    continue;
+                                }
+                                resultObjectMutation = 1;
+                                objectMutation = 1;
+                            }
+
+                            /* C004/C011/C017 consume the leader hand object
+                             * after the trigger, except where the transaction
+                             * above already consumed it. */
+                            if (tr->leaderHandObjectRemoved && !resultObjectMutation) {
                                 DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
-                            }
-
-                            /* ReDMCSB F0275 lines 1534-1536: C012 generates
-                             * an object into the leader hand when empty. */
-                            if (tr->leaderHandObjectReceived &&
-                                !tr->wallStorageObjectTaken &&
-                                !tr->wallObjectTaken) {
-                                /* Object generator: F0167 creates a new
-                                 * unused object.  Fail-closed if the dungeon
-                                 * lacks an unused pool entry. */
-                            }
-
-                            /* ReDMCSB F0275: C013 storage take — take a
-                             * matching object from the wall cell. */
-                            if (tr->wallStorageObjectTaken &&
-                                tr->leaderHandObjectReceived) {
-                                /* Storage sensor take: the evaluation layer
-                                 * confirmed the cell has a matching object.
-                                 * Object list mutation is deferred to the
-                                 * caller until the dungeon mutation API is
-                                 * fully wired for live wall-cell operations.
-                                 * The remote-target toggle still fires. */
-                            }
-
-                            /* ReDMCSB F0275: C013 storage store — place
-                             * the hand object into the wall cell. */
-                            if (tr->wallStorageObjectStored &&
-                                tr->leaderHandObjectRemoved) {
-                                /* Hand object already cleared above; linking
-                                 * into the wall cell deferred until dungeon
-                                 * mutation API is wired for live wall ops. */
-                            }
-
-                            /* ReDMCSB F0275: C016 exchanger — swap hand
-                             * object with the first square object. */
-                            if (tr->wallObjectTaken && tr->wallObjectStored) {
-                                /* Exchange: both objects need dungeon list
-                                 * mutation; deferred until fully wired. */
                             }
 
                             /* ReDMCSB F0275: onceOnly sensors are disabled
@@ -33042,6 +33148,9 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                             }
                         }
                         m11_apply_sensor_effects(state, &effects);
+                        if (objectMutation) {
+                            m11_refresh_hash(state);
+                        }
                         if (anyAudible) {
                             m11_audio_emit_source_sound(state, 1,
                                                       M11_AUDIO_MARKER_DOOR);
