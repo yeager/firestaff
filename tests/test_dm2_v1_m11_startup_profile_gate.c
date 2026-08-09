@@ -373,7 +373,9 @@ static int dm2_test_caii_map_candidates_match_owner(
                 candidate->packed_position ||
             !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
                                                    record[4], &ai) || !ai ||
-            candidate->static_ai != (uint8_t)((ai->w0AIFlags & 1u) != 0u)) {
+            candidate->static_ai != (uint8_t)((ai->w0AIFlags & 1u) != 0u) ||
+            (candidate->static_ai && candidate->static_animation_frame == 0xffffu) ||
+            (!candidate->static_ai && candidate->static_animation_frame != 0xffffu)) {
             return 0;
         }
     }

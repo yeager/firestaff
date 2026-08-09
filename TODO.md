@@ -136,7 +136,9 @@
   CCM/animationsgren och dynamiska `c_tim` kan atomärt ägas tillsammans.
   Traversalen är nu själv verifierad och behåller varje verklig DB4-post i
   `FILL_CAII_CUR_MAP`-ordning med karta, ruta, record, AI-klass och råa
-  animationsfält. Nästa mutation måste använda just denna lista och återställa
+  animationsfält. Statiska poster har dessutom sin exakta RAW8/RAW7-baserade
+  bildram för kommando `0x11`; dynamiska poster går fortsatt inte genom en
+  ersättningsram utan inväntar sin RNG- och CCM-ägare. Nästa mutation måste använda just denna lista och återställa
   hela listans DB4-/CAII-/timerändringar om någon källa saknas.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan

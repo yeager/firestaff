@@ -117,6 +117,53 @@ static int dm2_v1_game_load_owner_materialize_caii_capacity(
     return 1;
 }
 
+/* Static creatures take the deterministic GAF branch in
+ * DM2_GET_CREATURE_ANIMATION_FRAME: find command 0x11 in RAW8/0xfb, count
+ * RAW7/0xfc rows through the terminator, then encode the record's packed
+ * coordinate. Dynamic creatures take 4FCC and may consume c_random, so they
+ * are intentionally not approximated here.
+ * Source: SKProject SKULLWIN/c_creature.cpp:3217-3278. */
+static int dm2_v1_game_load_owner_static_caii_animation_frame(
+    const DM2_V1_AssetLoader *loader, uint8_t creature_type,
+    uint16_t packed_position, uint16_t *out_frame)
+{
+    const uint8_t *attribution;
+    const uint8_t *info;
+    size_t attribution_size = 0u;
+    size_t info_size = 0u;
+    size_t row;
+    uint16_t base;
+    uint32_t count = 0u;
+
+    if (!loader || !out_frame) return 0;
+    *out_frame = 0xffffu;
+    attribution = dm2_v1_asset_load_typed_sized(loader,
+        DM2_GDAT_CATEGORY_CREATURES, creature_type, DM2_GDAT_ENTRY_TYPE_RAW8,
+        DM2_GDAT_CREATURE_ANIM_ATTRIBUTION, &attribution_size);
+    if (!attribution || attribution_size < 4u) return 0;
+    for (row = 0u; row * 4u + 3u < attribution_size; ++row) {
+        const uint16_t command = (uint16_t)attribution[row * 4u] |
+            ((uint16_t)attribution[row * 4u + 1u] << 8);
+        if (command == 0xffffu || command == 0x0011u) break;
+    }
+    if (row * 4u + 3u >= attribution_size) return 0;
+    base = (uint16_t)attribution[row * 4u + 2u] |
+        ((uint16_t)attribution[row * 4u + 3u] << 8);
+    info = dm2_v1_asset_load_typed_sized(loader,
+        DM2_GDAT_CATEGORY_CREATURES, creature_type, DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE, &info_size);
+    if (!info || info_size < 4u) return 0;
+    for (;;) {
+        const size_t index = (size_t)base + count;
+        if (index * 4u + 1u >= info_size || count >= 0x3fffu) return 0;
+        ++count;
+        if ((info[index * 4u + 1u] & 0xf0u) == 0u) break;
+    }
+    *out_frame = (uint16_t)(count | (packed_position == 0u ? 0x9000u :
+        (((uint32_t)packed_position & 0x3fu) << 6) | 0x8000u));
+    return 1;
+}
+
 static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
     DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -185,8 +232,18 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                             ((uint16_t)record[11] << 8);
                         candidate->packed_position = (uint16_t)record[12] |
                             ((uint16_t)record[13] << 8);
-                        if (candidate->static_ai) ++receipt.static_candidate_count;
-                        else ++receipt.dynamic_candidate_count;
+                        candidate->static_animation_frame = 0xffffu;
+                        if (candidate->static_ai) {
+                            if (!dm2_v1_game_load_owner_static_caii_animation_frame(
+                                    owner->asset_loader, record[4],
+                                    candidate->packed_position,
+                                    &candidate->static_animation_frame)) {
+                                goto fail;
+                            }
+                            ++receipt.static_candidate_count;
+                        } else {
+                            ++receipt.dynamic_candidate_count;
+                        }
                         hash = dm2_v1_game_load_owner_hash_step(hash,
                                                                  (uint16_t)map);
                         hash = dm2_v1_game_load_owner_hash_step(hash,
@@ -198,6 +255,8 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                         hash = dm2_v1_game_load_owner_hash_step(hash, record[4]);
                         hash = dm2_v1_game_load_owner_hash_step(hash,
                                                                  ai->w0AIFlags);
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                            candidate->static_animation_frame);
                     }
                     link = next;
                 }

@@ -10,6 +10,10 @@
 - ✅ Ägaren bevarar också den verkliga `FILL_CAII_CUR_MAP`-ordningen från alla
   44 kartor. Varje DB4-post kontrolleras mot samma tilekedja, AIDefinition och
   råa animationsfält innan senare CAII-mutation får börja.
+- ✅ Den deterministiska statiska grenen läser nu sin faktiska `RAW8/0xfb`-
+  och `RAW7/0xfc`-sekvens och beräknar originalets bildram för kommando
+  `0x11`. Dynamiska varelser får ingen ersättningsram; de kräver fortsatt
+  källans RNG- och CCM-ägare.
 
 # Theron autentiserad US spawn-/pointertabell (2026-08-09)
 

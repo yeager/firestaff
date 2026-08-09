@@ -203,6 +203,10 @@ typedef struct {
     uint8_t static_ai;
     uint16_t record_word_a;
     uint16_t packed_position;
+    /* DM2_GET_CREATURE_ANIMATION_FRAME(type, 0x11, ..., packed_position)
+     * for static AI only. Dynamic AI requires the later c_random/CCM owner
+     * and remains 0xffff here. */
+    uint16_t static_animation_frame;
 } DM2_V1_GameLoadCaiiMapCandidate;
 
 typedef struct {
