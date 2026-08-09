@@ -52,6 +52,14 @@ den fullständiga råa itemrecorden följer med utöver propertyraden och de
 namngivna tillståndsfälten. Detta är ett källbytebevarande, inte ett påstående
 om att Firestaff har återfunnit T900:s equip/use/stack-regler.
 
+En källavvikelse i kategori 4 är nu rättad: enligt
+`DMBUILDER6/src/dms.h:145-157` är monsterrecordets första ord det signerade
+`chested`-fältet. Det låg tidigare felaktigt under den generiska dekoderns
+`next_ref`-namn. Firestaff dekoder och test bevarar nu `chested` separat,
+medan den övergripande source-object-occurrence fortfarande behåller de råa
+16 bytesen. Detta förbättrar monster- och lootprovenansen men öppnar inte
+T900:s runtime-konsument.
+
 ## Vad T900-bevis skulle behöva innehålla
 
 En godkänd capture måste samtidigt visa:

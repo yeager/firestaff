@@ -180,6 +180,26 @@ static void test_source_control_record_fields(void) {
     printf("  source door/teleporter/text/actuator fields OK\n");
 }
 
+static void test_source_monster_chested_field(void) {
+    const uint8_t monster[] = {
+        0xFE, 0xFF, /* chested = -2, not a next reference */
+        0x03, 0xA1, /* type, packed position */
+        0x0A, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x60, 0x00, /* flags: number = 3 */
+        0x07, 0x04  /* source direction byte is high byte */
+    };
+    Theron_Track02ItemRecord record;
+
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_MONSTER, monster, sizeof(monster), &record));
+    assert(record.value.monster.chested == -2);
+    assert(record.value.monster.type == 3u);
+    assert(record.value.monster.position == 0xA1u);
+    assert(record.value.monster.number == 3u);
+    assert(record.value.monster.direction_flags == 0x04u);
+    printf("  source monster chested field layout OK\n");
+}
+
 static void test_real_item_records(const Theron_ThingData *td,
                                    unsigned int dungeon_index,
                                    int require_us_counts) {
@@ -219,8 +239,13 @@ static void test_real_item_records(const Theron_ThingData *td,
                 assert(theron_v1_track02_item_record_decode(
                     cat, raw, theron_item_bytes[cat], &record));
                 assert(record.category == cat);
-                assert(record.next_ref ==
-                       ((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)));
+                if (cat == THERON_CAT_MONSTER)
+                    assert(record.value.monster.chested ==
+                           (int16_t)((uint16_t)raw[0] |
+                                     ((uint16_t)raw[1] << 8)));
+                else
+                    assert(record.next_ref ==
+                           ((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)));
             }
         }
     }
@@ -307,6 +332,7 @@ int main(void) {
     test_source_category_layout();
     test_source_projectile_records();
     test_source_control_record_fields();
+    test_source_monster_chested_field();
 
     const char *path = find_track02_variant(THERON_TRACK02_VARIANT_US_BIN);
     if (!path) {

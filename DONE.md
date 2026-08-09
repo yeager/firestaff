@@ -1,3 +1,11 @@
+# Theron: source monsterrecordets `chested`-fält (2026-08-09)
+
+- ✅ Kategori 4:s första ord dekoderas nu som source-owned signed `chested`
+  enligt `DMBUILDER6/src/dms.h:145-157`. Ett nytt test verifierar bitlayouten
+  mot en rå monsterrecord och den lokala riktiga Track 02-tabellen. Detta är
+  förbättrad provenance; T900:s runtimekonsument och lootregler är fortfarande
+  fail-closed.
+
 # Theron: explicit runtime-capture counts (2026-08-09)
 
 - ✅ Capturekvittot räknar nu separat autentiska `$4644`-förkonsumenter,

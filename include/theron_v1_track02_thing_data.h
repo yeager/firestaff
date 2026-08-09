@@ -93,7 +93,11 @@ typedef struct {
 } Theron_Track02ActuatorRecord;
 
 typedef struct {
-    uint16_t next_ref;
+    /* DMBUILDER6/src/dms.h:145-157: category 4 starts with the signed
+     * chested field, unlike the linked-list records in most other
+     * categories. Keep it distinct so a future T900 loot consumer cannot
+     * mistake containment state for a reference link. */
+    int16_t chested;
     uint8_t type;
     uint8_t position;
     uint16_t health[4];

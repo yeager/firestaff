@@ -114,7 +114,9 @@ int theron_v1_track02_item_record_decode(
     case THERON_CAT_MONSTER: {
         uint16_t flags;
         uint16_t unknown;
-        out->value.monster.next_ref = out->next_ref;
+        /* DMBUILDER6/src/dms.h:145-157: the first word is `chested`, not
+         * the generic linked-list next reference. */
+        out->value.monster.chested = (int16_t)read_le16(raw);
         out->value.monster.type = raw[2];
         out->value.monster.position = raw[3];
         for (unsigned int i = 0; i < 4u; ++i)
