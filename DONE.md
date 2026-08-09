@@ -9,6 +9,22 @@
   publicering är fortsatt spärrad tills caller, returvärde och RAM-ägare är
   autentiserade i samma runtimecapture.
 
+# Nexus launcher forwards VDP1 trace range controls (2026-08-09)
+
+- ✅ VDP1 write-trace range and record-limit variables följer nu med till den
+  externa Mednafen-processen tillsammans med tracefilerna. Det förhindrar att
+  en riktad `0x10a00`-capture råkar köras utan det intervall som aktiverar
+  writer-code-hooken.
+
+# Nexus capturemanifest binder VDP1-hjälptraces (2026-08-09)
+
+- ✅ Saturn-launchern vidarebefordrar nu VDP1-write-trace och writer-code-
+  trace till den externa processen och skriver deras SHA-256 i samma manifest
+  som raw-capturen när de faktiskt finns.
+- ✅ `analyze_nexus_vdp1_source_write_join.py --manifest` kräver både raw- och
+  VDP1-trace-hash. Äldre captures utan dessa fält rapporteras fortsatt som
+  `unbound`; ingen retroaktiv proveniens eller semantic admission öppnas.
+
 # Nexus VDP1 writer-trace forwarding fixed (2026-08-09)
 
 - ✅ Saturn-launchern vidarebefordrar nu de valfria, läsande VDP1-writer-code-
