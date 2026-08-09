@@ -51,6 +51,14 @@ no polygon data. Rendering: SDL blit with scaling.
 
 ## 3. Nexus V1 Graphics System: source and runtime boundary
 
+The authenticated VDP1 mode-1 capture compositor is reachable through the
+explicit `nexus_viewport_replay_vdp1_capture()` adapter. It replays one
+capture-bound quad only after exact DGN image/palette joins, command framing,
+original-Saturn attestation and a caller-supplied display origin. This is a
+capture witness path, not a general DGN mesh renderer; local-coordinate /
+system-clip state, command ordering and VDP2 composition still require the
+same-run Saturn capture before the normal viewport route can open.
+
 The retail files contain polygon/texture candidates, and Firestaff has bounded
 parsers and host raster primitives. That is not proof that the host pipeline
 matches Saturn VDP1 or that the route is production-renderable.

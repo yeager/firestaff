@@ -5,6 +5,7 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_vdp1_capture_compositor.h"
 
 /* Render the 3D dungeon viewport from party position.
  * View distance: 4 squares ahead (like DM1 D0-D3).
@@ -180,6 +181,10 @@ typedef struct Nexus_Viewport {
         structure1f2_face_adjacency_transform;
     Nexus_V1_DgnStructure1CSourcePacket structure1c_source_packet;
     Nexus_V1_DgnStructure2PayloadAnchorPacket structure2_payload_anchor_packet;
+    /* Capture replay is an explicit authenticated lane. It never supplies
+     * the normal DGN mesh renderer and remains unused until the caller has
+     * captured display-origin/system-clip state as part of the same trace. */
+    Nexus_V1_Vdp1CaptureCompositeReceipt last_vdp1_capture_receipt;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 
@@ -187,6 +192,14 @@ void nexus_viewport_init(Nexus_Viewport *vp);
 
 /* Render one frame */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine);
+
+/* Replay one already-authenticated Saturn VDP1 mode-1 command into the
+ * viewport framebuffer. The input must carry an explicit captured display
+ * origin; this is not a coordinate inference or a production mesh route. */
+int nexus_viewport_replay_vdp1_capture(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp1CaptureCompositeInput *input,
+    Nexus_V1_Vdp1CaptureCompositeReceipt *out_receipt);
 
 /* Convert indexed framebuffer to RGBA for SDL presentation */
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);

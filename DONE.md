@@ -11078,3 +11078,19 @@
 - ⏳ Capture-bilden är fortfarande diagnostisk och inte README-eligible; den
   saknar ännu bevisad dungeon-materialbank, perspektivkonsument och komplett
   Track 02 semantic handoff.
+# Nexus VDP1 capture replay adapter (2026-08-09)
+
+- ✅ `Nexus_Viewport` now exposes the capture-only mode-1 compositor through
+  an explicit replay function and receipt. Exact DGN image/palette joins,
+  command framing and Saturn attestation remain enforced; the normal DGN
+  viewport stays fail-closed.
+- ✅ Regression coverage exercises both compositor and viewport adapter; the
+  full CMake build passes.
+# Nexus VDP1 capture replay adapter (2026-08-09)
+
+- ✅ `Nexus_Viewport` now exposes the capture-only mode-1 compositor through
+  an explicit replay function and receipt. Exact DGN image/palette joins,
+  command framing and Saturn attestation remain enforced; the normal DGN
+  viewport stays fail-closed.
+- ✅ Regression coverage exercises both compositor and viewport adapter; the
+  full CMake build passes.

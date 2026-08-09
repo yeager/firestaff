@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
+  explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
+  closed until the same Saturn trace supplies display-origin,
+  system-clip/local-coordinate and multi-command ordering evidence.
+
 - 🔧 Nexus: en autentiserad europeisk gameplay-capture binder nu VDP1-draw
   `0x0e180` (`colour_mode=1`, `COLR=0x32a4`, källa `0x4c580`) till exakt
   ordväxlad pixeldata och 16-entry CLUT för `LEV00.DGN` Structure2=72.

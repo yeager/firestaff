@@ -1,4 +1,5 @@
 #include "nexus_v1_vdp1_capture_compositor.h"
+#include "nexus_v1_viewport.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,7 @@ int main(void)
     uint8_t palette_state[32] = {0};
     uint8_t dgn_palette[32];
     Nexus_Framebuffer framebuffer;
+    Nexus_Viewport viewport;
     Nexus_V1_Vdp1CaptureCompositeInput input;
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
     int i;
@@ -73,6 +75,15 @@ int main(void)
         !receipt.renderer_permitted || receipt.written_pixels <= 0 ||
         framebuffer.color_buffer[112 * NEXUS_FB_W + 160] != 33U) {
         fprintf(stderr, "FAIL: authenticated VDP1 capture composite\n");
+        return 1;
+    }
+    nexus_viewport_init(&viewport);
+    memset(&receipt, 0, sizeof(receipt));
+    if (!nexus_viewport_replay_vdp1_capture(&viewport, &input, &receipt) ||
+        !receipt.valid || receipt.written_pixels <= 0 ||
+        viewport.last_vdp1_capture_receipt.written_pixels !=
+            receipt.written_pixels) {
+        fprintf(stderr, "FAIL: viewport VDP1 capture replay adapter\n");
         return 1;
     }
     /* ECD is active in this command: an F texel ends its source row. */
