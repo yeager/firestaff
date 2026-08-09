@@ -395,6 +395,14 @@
 - ✅ Realdataregressionen kontrollerar två riktiga mirrorsval från DOS-data
   och att den privata ägaren fortfarande lämnar M11:s sessionsgrind stängd.
 
+# DM2 startend-entrépose (2026-08-09)
+
+- ✅ Den privata `DM2_2f3f_0789`-grenen för den första championen kräver nu
+  åter den hashverifierade File_header-entréposen. Den kan inte längre köras
+  efter ett privat vrid- eller förflyttningsprov och därmed blanda en
+  startsekvens med vanlig rörelse. Realtidstestet bekräftar både spärren och
+  en ny, ren GAME_LOAD-förberedelse före den riktiga grenen.
+
 # DM2 DOS-MVE PCM/display-tidslinje (2026-08-08)
 
 - ✅ Tillagd minnesbaserad, verifierad join mellan varje original opcode-0x08
