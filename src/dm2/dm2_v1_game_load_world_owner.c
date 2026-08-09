@@ -2553,8 +2553,8 @@ rollback:
     return 0;
 }
 
-int dm2_v1_game_load_world_owner_advance_preselection(
-    DM2_V1_GameLoadWorldOwner *owner)
+int dm2_v1_game_load_world_owner_move_preselection(
+    DM2_V1_GameLoadWorldOwner *owner, int source_event)
 {
     static const int8_t direction_x[4] = { 0, 1, 0, -1 };
     static const int8_t direction_y[4] = { -1, 0, 1, 0 };
@@ -2564,7 +2564,11 @@ int dm2_v1_game_load_world_owner_advance_preselection(
     const int map = owner ? owner->source_party_map : -1;
     const int x = owner ? owner->source_party_x : -1;
     const int y = owner ? owner->source_party_y : -1;
-    const int direction = owner ? owner->source_party_direction : -1;
+    const int party_direction = owner ? owner->source_party_direction : -1;
+    const int direction = party_direction < 0 || party_direction > 3 ? -1 :
+        (party_direction + (source_event == 4 ? 1 :
+                            source_event == 5 ? 2 :
+                            source_event == 6 ? 3 : 0)) & 3;
     const int target_x = direction < 0 || direction > 3 ? -1 :
         x + direction_x[direction];
     const int target_y = direction < 0 || direction > 3 ? -1 :
@@ -2601,7 +2605,8 @@ int dm2_v1_game_load_world_owner_advance_preselection(
         owner->champion_selection_materialized ||
         owner->selected_mirror_count != 0u || map < 0 ||
         map >= owner->dungeon.level_count || x < 0 || y < 0 ||
-        direction < 0 || direction > 3 || raw_tile < 0 ||
+        party_direction < 0 || party_direction > 3 ||
+        (source_event < 3 || source_event > 6) || raw_tile < 0 ||
         /* c_querydb.cpp::DM2_IS_TILE_BLOCKED accepts the tile type one
          * floor branch.  c_move.cpp::DM2_12b4_0881 may then reach its
          * no-creature result 6.  Retain only that exact no-record path;
@@ -2657,6 +2662,12 @@ rollback:
     owner->preselection_view = old_view;
     owner->preselection_viewport = old_viewport;
     return 0;
+}
+
+int dm2_v1_game_load_world_owner_advance_preselection(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    return dm2_v1_game_load_world_owner_move_preselection(owner, 3);
 }
 
 int dm2_v1_game_load_world_owner_is_prepared(

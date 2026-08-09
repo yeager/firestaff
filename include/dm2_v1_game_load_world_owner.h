@@ -612,6 +612,15 @@ int dm2_v1_game_load_world_owner_turn_preselection(
 int dm2_v1_game_load_world_owner_advance_preselection(
     DM2_V1_GameLoadWorldOwner *owner);
 
+/* Execute only the original source movement events 3..6 against the private
+ * empty-party owner (forward, right, back, left).  It retains exactly the
+ * same no-record-floor restriction as advance_preselection; every other
+ * c_move branch remains unavailable until a complete session owner exists.
+ * Source: SKProject uiinput.cpp::DM2_HANDLE_UI_EVENT events 3..6 and
+ * c_move.cpp::DM2_PERFORM_MOVE. */
+int dm2_v1_game_load_world_owner_move_preselection(
+    DM2_V1_GameLoadWorldOwner *owner, int source_event);
+
 /* Apply only RESET_CAII's deterministic static-AI branch to the private
  * File_header DB4 pool.  The operation resets every Creature byte@5, then
  * reproduces FILL_CAII_CUR_MAP's 09db word@0xA merge for source-static

@@ -560,6 +560,13 @@ int dm2_v1_boot_retain_new_game_world(DM2_V1_BootProfile *profile,
  * a champion or publishes a session. */
 int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile);
 
+/* Dispatch only source UI events 1..6 to the retained pre-mirror GAME_LOAD
+ * owner. Events 1/2 turn and events 3..6 attempt the matching relative move;
+ * no other UI event, M11 state, session tick or party handoff is admitted.
+ * Source: SKProject uiinput.cpp::DM2_HANDLE_UI_EVENT. */
+int dm2_v1_boot_prepared_new_game_input(
+    DM2_V1_BootProfile *profile, int source_event);
+
 /* Materialize the scripted first champion from DM2_2f3f_0789.  The source
  * walks the current map's `(0,0)` record chain, finds the first DB3 subtype
  * 0x7e marker and calls DM2_SELECT_CHAMPION from `(0,1)` facing direction 0.

@@ -2495,6 +2495,66 @@ static int m11_dm2_boot_runtime_startup_pointer(
         out_receipt);
 }
 
+/* After NEW GAME has retained File_header's selection-free GAME_LOAD world,
+ * the title menu must no longer consume a movement key as another 0xd7
+ * launch request.  uiinput.cpp sends 1/2 to DM2_PERFORM_TURN_SQUAD and 3..6
+ * to DM2_PERFORM_MOVE; preserve those exact source event identities at this
+ * private boundary.  The boot facade retains only view receipts, so this
+ * never synchronizes an M11 party, HUD, tick, framebuffer or session.
+ * Source: SKProject uiinput.cpp::DM2_HANDLE_UI_EVENT. */
+static int m11_dm2_preselection_input_active(const M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !state->dm2State.startup_menu_active ||
+        !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        profile->source_game_load_session_ready) {
+        return 0;
+    }
+    return dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL;
+}
+
+static M11_GameInputResult m11_dm2_handle_preselection_input(
+    M11_GameViewState *state, M12_MenuInput input)
+{
+    int source_event = 0;
+
+    if (!m11_dm2_preselection_input_active(state)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    switch (input) {
+    case M12_MENU_INPUT_TURN_LEFT:
+    case M12_MENU_INPUT_LEFT:
+        source_event = 1;
+        break;
+    case M12_MENU_INPUT_TURN_RIGHT:
+    case M12_MENU_INPUT_RIGHT:
+        source_event = 2;
+        break;
+    case M12_MENU_INPUT_UP:
+        source_event = 3;
+        break;
+    case M12_MENU_INPUT_STRAFE_RIGHT:
+        source_event = 4;
+        break;
+    case M12_MENU_INPUT_DOWN:
+        source_event = 5;
+        break;
+    case M12_MENU_INPUT_STRAFE_LEFT:
+        source_event = 6;
+        break;
+    default:
+        /* A private owner cannot accept a source action, viewport click,
+         * save command or title-menu command in place of the unimplemented
+         * champion-selection/session transition. */
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return dm2_v1_boot_prepared_new_game_input(
+               (DM2_V1_BootProfile *)state->dm2BootProfile, source_event)
+           ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+}
+
 static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
@@ -27667,6 +27727,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         input != M12_MENU_INPUT_NONE) {
         M11_GameView_AcknowledgeSessionTimerReminder(state);
         return M11_GAME_INPUT_REDRAW;
+    }
+
+    /* Keep the selection-free DM2 GAME_LOAD owner ahead of generic arrow
+     * highlighting and title-menu dispatch. Its accepted events update only
+     * private File_header receipts; no host visual state may be published. */
+    if (m11_dm2_preselection_input_active(state)) {
+        return m11_dm2_handle_preselection_input(state, input);
     }
 
     if (!state->gameWon && !state->mapOverlayActive &&

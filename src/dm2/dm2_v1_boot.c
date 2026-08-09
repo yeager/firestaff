@@ -13817,6 +13817,35 @@ int dm2_v1_boot_select_new_game_champion(
     return dm2_v1_game_load_world_owner_select_champion(owner, selection);
 }
 
+int dm2_v1_boot_prepared_new_game_input(
+    DM2_V1_BootProfile *profile, int source_event)
+{
+    DM2_V1_GameLoadWorldOwner *owner;
+
+    if (!profile || profile->source_game_load_session_ready ||
+        !(owner = (DM2_V1_GameLoadWorldOwner *)
+            profile->game_load_world_owner) ||
+        !dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->source_map_context_materialized || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->selected_mirror_count != 0u) {
+        return 0;
+    }
+    /* uiinput.cpp routes exactly 1/2 to DM2_PERFORM_TURN_SQUAD and 3..6
+     * to DM2_PERFORM_MOVE.  These two private atoms reject every source
+     * branch whose mutable party/session ownership is not yet present. */
+    if (source_event == 1 || source_event == 2) {
+        return dm2_v1_game_load_world_owner_turn_preselection(
+            owner, source_event);
+    }
+    if (source_event >= 3 && source_event <= 6) {
+        return dm2_v1_game_load_world_owner_move_preselection(
+            owner, source_event);
+    }
+    return 0;
+}
+
 int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
     DM2_V1_BootProfile *profile, uint16_t mirror_object_id)
 {

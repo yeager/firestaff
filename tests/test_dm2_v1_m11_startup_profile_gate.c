@@ -4682,22 +4682,38 @@ int main(void) {
     profile_preselection_turn_owner =
         (DM2_V1_GameLoadWorldOwner *)(void *)profile_new_game_owner;
     expect_true(profile_preselection_turn_owner &&
-                    dm2_v1_game_load_world_owner_turn_preselection(
-                        profile_preselection_turn_owner, 1) &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_LEFT) ==
+                        M11_GAME_INPUT_REDRAW &&
                     profile_preselection_turn_owner->source_party_direction == 3u &&
                     profile_preselection_turn_owner->selected_party.heros_in_party == 0 &&
                     !profile_preselection_turn_owner->champion_selection_materialized &&
                     dm2_test_preselection_view_matches_owner(
                         profile_preselection_turn_owner) &&
                     profile_preselection_turn_owner->preselection_viewport.valid &&
+                    view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
+                    view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0 &&
                     !profile->source_game_load_session_ready,
-                "DM2 applies the source left-turn before mirror selection in its private real-data owner");
+                "M11 routes only the source left-turn to the private real-data GAME_LOAD owner");
     expect_true(profile_preselection_turn_owner &&
-                    dm2_v1_game_load_world_owner_turn_preselection(
-                        profile_preselection_turn_owner, 2) &&
-                    profile_preselection_turn_owner->source_party_direction == 0u &&
-                    dm2_v1_game_load_world_owner_advance_preselection(
-                        profile_preselection_turn_owner) &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    profile_preselection_turn_owner->source_party_direction == 0u,
+                "M11 routes the source right-turn to the private GAME_LOAD owner");
+    expect_true(profile_preselection_turn_owner &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_STRAFE_LEFT) ==
+                        M11_GAME_INPUT_IGNORED &&
+                    profile_preselection_turn_owner->source_party_x == 1u &&
+                    profile_preselection_turn_owner->source_party_y == 8u,
+                "M11 leaves the unowned source event 6 wall branch unchanged");
+    expect_true(profile_preselection_turn_owner &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                        M11_GAME_INPUT_IGNORED &&
+                    profile_preselection_turn_owner->source_party_x == 1u &&
+                    profile_preselection_turn_owner->source_party_y == 8u,
+                "M11 leaves an unowned source event 5 record chain unchanged");
+    expect_true(profile_preselection_turn_owner &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                        M11_GAME_INPUT_REDRAW &&
                     profile_preselection_turn_owner->source_party_map == 0 &&
                     profile_preselection_turn_owner->source_party_x == 1u &&
                     profile_preselection_turn_owner->source_party_y == 7u &&
@@ -4706,8 +4722,16 @@ int main(void) {
                     dm2_test_preselection_view_matches_owner(
                         profile_preselection_turn_owner) &&
                     profile_preselection_turn_owner->preselection_viewport.valid &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_STRAFE_RIGHT) ==
+                        M11_GAME_INPUT_IGNORED &&
+                    profile_preselection_turn_owner->source_party_x == 1u &&
+                    profile_preselection_turn_owner->source_party_y == 7u &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
+                        M11_GAME_INPUT_IGNORED &&
+                    view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
+                    view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0 &&
                     !profile->source_game_load_session_ready,
-                "DM2 advances only the original empty-party no-record floor branch before mirror selection");
+                "M11 routes source event 3 and keeps all other private GAME_LOAD input inert");
     expect_true(profile &&
                     !dm2_v1_boot_materialize_startend_first_champion(profile) &&
                     !profile->source_game_load_session_ready,
