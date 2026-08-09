@@ -30935,6 +30935,90 @@ int csb_v1_runtime_process_input_queue(
     return 1;
 }
 
+int csb_v1_runtime_perform_climb_down_action(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_InputCommandRuntimeResult *out_result)
+{
+    CSB_V1_InputCommandRuntimeResult local_result;
+    const CSB_V1_DungeonData *dungeon;
+    static const int step_east[4] = { 0, 1, 0, -1 };
+    static const int step_north[4] = { -1, 0, 1, 0 };
+    int level;
+    int destination_x;
+    int destination_y;
+    int raw_square;
+    int square_type;
+
+    memset(&local_result, 0, sizeof(local_result));
+    if (!profile || !profile->party_state_valid || !profile->dungeon_handle) {
+        if (out_result) *out_result = local_result;
+        return -1;
+    }
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    level = profile->current_level;
+    if (!dungeon->raw_data || level < 0 || level >= dungeon->level_count) {
+        if (out_result) *out_result = local_result;
+        return -1;
+    }
+
+    local_result.old_party_x = profile->party_x;
+    local_result.old_party_y = profile->party_y;
+    local_result.old_party_dir = profile->party_dir & 3;
+    local_result.old_party_level = level;
+    local_result.new_party_x = profile->party_x;
+    local_result.new_party_y = profile->party_y;
+    local_result.new_party_dir = profile->party_dir & 3;
+    local_result.new_party_level = level;
+    destination_x = profile->party_x + step_east[profile->party_dir & 3];
+    destination_y = profile->party_y + step_north[profile->party_dir & 3];
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon, level, destination_x, destination_y);
+    if (raw_square < 0) {
+        if (out_result) *out_result = local_result;
+        return 0;
+    }
+    square_type = dungeon->square_bytes == 1
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    if (square_type != 2 ||
+        csb_v1_runtime_square_has_group(dungeon, level,
+                                        destination_x, destination_y)) {
+        if (out_result) *out_result = local_result;
+        return 0;
+    }
+
+    /* ReDMCSB MENU.C F0407:1548-1561 calls F0267 directly after setting
+     * G0402_B_UseRopeToClimbDownPit.  In particular it does not pass through
+     * CLIKMENU.C F0366, which would consume a second movement stamina/timing
+     * transaction.  The runtime owns the resulting source dungeon state. */
+    profile->party_x = destination_x;
+    profile->party_y = destination_y;
+    profile->party_state.PartyMapX = destination_x;
+    profile->party_state.PartyMapY = destination_y;
+    local_result.movement_command_handled = 1;
+    local_result.movement_step_attempted = 1;
+    local_result.movement_step_applied = 1;
+    local_result.movement_destination_x = destination_x;
+    local_result.movement_destination_y = destination_y;
+    local_result.movement_destination_raw_square = raw_square;
+    local_result.movement_destination_square_type = square_type;
+    csb_v1_runtime_apply_destination_chain(profile, &local_result);
+    csb_v1_runtime_mark_deferred_new_party_map_index(&local_result);
+    csb_v1_runtime_apply_party_floor_sensor_consequences(profile,
+                                                          &local_result);
+    local_result.new_party_x = profile->party_x;
+    local_result.new_party_y = profile->party_y;
+    local_result.new_party_dir = profile->party_dir & 3;
+    local_result.new_party_level = profile->current_level;
+    local_result.runtime_state_changed =
+        (local_result.old_party_x != local_result.new_party_x) ||
+        (local_result.old_party_y != local_result.new_party_y) ||
+        (local_result.old_party_level != local_result.new_party_level) ||
+        local_result.pit_fall_applied || local_result.teleporter_transition_applied;
+    if (out_result) *out_result = local_result;
+    return 1;
+}
+
 void csb_v1_runtime_cleanup(CSB_V1_RuntimeProfile *profile) {
     if (!profile) return;
     /*

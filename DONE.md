@@ -1,3 +1,13 @@
+# CSB: native C010 Climb Down-rörelse (2026-08-09)
+
+- ✅ CSB:s `CLIMB DOWN` går nu från `MENU.C F0407` direkt till den liveägda
+  `MOVESENS.C F0267`-motsvarigheten. Den använder inte längre M11:s
+  query-värld för partyflytt, gropar, teleportörer eller sensorer.
+- ✅ Den särskilda originalregeln för ett rep framför en stängd grop bevaras:
+  partiet får kliva in på gropen utan den vanliga rörelsevägens extra
+  stamina- och tidskostnad. Öppen grop fortsätter genom native
+  konsekvenskedja, och M11 synkas efteråt från CSB-runtimen.
+
 # README: tydlig originalplattform och mindre brus (2026-08-09)
 
 # Theron: robust WASD-ingång (2026-08-09)
@@ -14,6 +24,17 @@
 - ✅ Irrelevanta originalemulatorbilder, capture-resonemang och intern
   verifieringsjargong har tagits bort från README. Detaljerad teknisk
   dokumentation finns kvar i dokumentationsindexet.
+
+# DM2 FM Towns: riktig SKULL-menystart utan party (2026-08-09)
+
+- ✅ M11 rensar nu enbart sin generiska presentationsspegel när originalets
+  `SHOW_MENU_SCREEN` tar över. HME-242:s TITLE → SKULL-handoff visar därmed
+  inte en värdskapad party före `DM2_GAME_LOAD`.
+- ✅ De verkliga GDAT-händelserna `0xD7` (New Game) och `0xD9` (Resume)
+  behåller startmenyn tills den kompletta källägda laddningskedjan finns.
+  Ingen party, sparsession eller ersättningsbild skapas.
+- ✅ Verifierat med FM Towns HME-242-arkivet och autentisk PC-engelsk
+  kompanjon i RAM genom M12- och M11-realdatatesterna.
 
 # CSB FM Towns: säker F31-återupptagning (2026-08-09)
 

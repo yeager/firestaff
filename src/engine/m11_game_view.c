@@ -2227,6 +2227,17 @@ static int m11_dm2_apply_boot_runtime_receipt(
              receipt->dungeon_path);
     state->dm2BootProfile = receipt->profile;
     state->dm2World = receipt->dm2_state;
+    /* SHOW_MENU_SCREEN is reached before SKProject's GAME_LOAD creates or
+     * restores c_hero ownership.  M11_GameView_Init has generic-world
+     * defaults for the other games; retaining that presentation mirror here
+     * made FM Towns TITLE -> SKULL appear to have a party before either
+     * source menu event 0xD7 (new) or 0xD9 (resume) could be admitted.
+     * Clear it at the original startup boundary, independently of later
+     * DUNGEON.DAT reload support for this platform.  This creates no party
+     * or session: only a complete GAME_LOAD owner may publish either. */
+    if (!m11_dm2_clear_new_game_party_state(state)) {
+        return 0;
+    }
     /* READ_DUNGEON_STRUCTURE has mounted verified source data at this point,
      * but SHOW_MENU_SCREEN runs before GAME_LOAD has created or restored a
      * source party.  Do not publish the File_header start word as a live
@@ -11355,6 +11366,23 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
         return 0;
     }
 
+    /* Build the host-facing receipt while the candidate world is still
+     * isolated.  The receipt contract is deterministic for a validated DM1
+     * source, so any future validation failure must happen before the live
+     * world is replaced.  This keeps an unsuccessful resume atomic. */
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = path;
+    resumeRequest.gameTick = (uint32_t)loadedWorld.gameTick;
+    resumeRequest.musicOn = saveHeader.musicOn;
+    resumeRequest.usedBackup = usedBackup;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !resumeReceipt.allowed || !resumeReceipt.loadSucceeded) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+
     if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
             &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&loadedWorld);
@@ -11375,16 +11403,7 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
     m11_mark_explored(state);
-    memset(&resumeRequest, 0, sizeof(resumeRequest));
-    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
-    resumeRequest.sourceId = state->sourceId;
-    resumeRequest.path = path;
-    resumeRequest.gameTick = (uint32_t)state->world.gameTick;
-    resumeRequest.worldHash = state->lastWorldHash;
-    resumeRequest.musicOn = saveHeader.musicOn;
-    resumeRequest.usedBackup = usedBackup;
-    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
-        !m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
+    if (!m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
         return 0;
     }
     if (outUsedBackup) {
@@ -11424,6 +11443,21 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
         F0883_WORLD_Free_Compat(&loadedWorld);
         return 0;
     }
+
+    /* Prepare the receipt before adoption for the same atomicity guarantee as
+     * the file-based resume path.  The byte route has no native save header,
+     * so it keeps the existing default music state. */
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = sourcePath ? sourcePath : "original-pc34-snapshot";
+    resumeRequest.gameTick = (uint32_t)loadedWorld.gameTick;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !resumeReceipt.allowed || !resumeReceipt.loadSucceeded) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+
     if (dm1_v1_original_save_pc34_handoff_adopt_runtime_world(
             &state->world, &loadedWorld) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&loadedWorld);
@@ -11438,14 +11472,7 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
     m11_mark_explored(state);
-    memset(&resumeRequest, 0, sizeof(resumeRequest));
-    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
-    resumeRequest.sourceId = state->sourceId;
-    resumeRequest.path = sourcePath ? sourcePath : "original-pc34-snapshot";
-    resumeRequest.gameTick = (uint32_t)state->world.gameTick;
-    resumeRequest.worldHash = state->lastWorldHash;
-    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
-        !m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
+    if (!m11_apply_dm1_save_resume_receipt(state, &resumeReceipt)) {
         return 0;
     }
     return 1;
@@ -11785,6 +11812,36 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                             strncpy(out, directPath, outSize - 1);
                             out[outSize - 1] = '\0';
                             return 1;
+                        }
+                    }
+                    /* The real DM1 root commonly contains the extracted DOS
+                     * PC 3.4 tree below `dos_extract/` alongside archive
+                     * members for other editions.  Prefer that ordinary,
+                     * hash-verified DUNGEON.DAT before the broad recursive
+                     * finder can select a virtual archive member.  The
+                     * sibling GRAPHICS.DAT is resolved from the same DATA
+                     * directory by the runtime asset owner. */
+                    {
+                        static const char *const pc34Suffixes[] = {
+                            "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT",
+                            "dos_extract/Dungeon-Master_DOS_EN_Version-34/DUNGEON.DAT",
+                            "DATA/DUNGEON.DAT"
+                        };
+                        size_t suffixIndex;
+                        for (suffixIndex = 0U;
+                             suffixIndex < sizeof(pc34Suffixes) /
+                                 sizeof(pc34Suffixes[0]);
+                             ++suffixIndex) {
+                            if (FSP_JoinPath(directPath,
+                                             sizeof(directPath),
+                                             dataDir,
+                                             pc34Suffixes[suffixIndex]) &&
+                                asset_file_matches_md5(directPath,
+                                                       expectedMd5)) {
+                                strncpy(out, directPath, outSize - 1U);
+                                out[outSize - 1U] = '\0';
+                                return 1;
+                            }
                         }
                     }
                 }
@@ -45345,8 +45402,29 @@ static int m11_perform_non_melee_action(M11_GameViewState* state,
              * post-move environment path decides whether the party then
              * falls through it. */
             int cancelDisable = 0;
-            int performed =
-                m11_perform_climb_down_f0407(state, &cancelDisable);
+            int performed;
+            if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                CSB_V1_InputCommandRuntimeResult runtime_result;
+
+                memset(&runtime_result, 0, sizeof(runtime_result));
+                performed =
+                    csb_v1_runtime_perform_climb_down_action_from_boot_profile_pc34(
+                        state->csbBootProfile, &runtime_result) > 0;
+                /* MENU.C F0407 cancels only the action-disable timer when
+                 * no unoccupied pit is in front.  The action's common
+                 * stamina/experience tail remains source-owned below. */
+                cancelDisable = performed ? 0 : 1;
+                if (performed) {
+                    /* The C010→F0267 transaction may have crossed a pit or
+                     * teleporter.  Refresh the visible party from the live
+                     * CSB GAMEBLOCK; never commit the query-only M11 world. */
+                    m11_sync_csb_state_from_boot_profile(
+                        state, state->csbBootProfile);
+                }
+            } else {
+                performed =
+                    m11_perform_climb_down_f0407(state, &cancelDisable);
+            }
             if (outCancelActionDisable) {
                 *outCancelActionDisable = cancelDisable;
             }
