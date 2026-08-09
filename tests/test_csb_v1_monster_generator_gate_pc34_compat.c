@@ -62,11 +62,24 @@ static int test_deterministic_csb_generator_state(void)
                      F0860_RUNTIME_HandleGroupGenerator_Compat(
                          &ctx, &rng, 4000u, &out), 1);
 
+    /* These fixtures were re-recorded against the corrected combat RNG.
+     * They were first written on 2026-06-11, while ff4d15003 (2026-08-07)
+     * replaced the placeholder LCG (1103515245/12345, extract (seed>>16) &
+     * 0x7FFF) with the source one from CEDT002.C F0027 (0xBB40E62D/11,
+     * extract (seed>>8) & 0xFFFF).  Every value below follows from that
+     * stream on seed 0x0BADF00D, not from reading back the runtime:
+     *   draw 1  random(4) = 0  -> 0-based count 0, i.e. a single creature
+     *   draw 2  random(4) = 2  -> spawn direction 2
+     *   single groups take no cell draw and use the centred sentinel
+     *   draw 3  random((110>>2)+1) = 24 -> health 110*4 + 24 = 464
+     * which is three draws and leaves the seed at 0xFF3E8C6E.  The old
+     * stream drew 1 and 1 here, giving two creatures, a cell draw and two
+     * health draws -- the previous 5-call, 0x06-cell, 446/441 fixture. */
     ok &= expect_int("spawned", out.spawned, 1);
     ok &= expect_int("creature type", out.spawnedCreatureType, 1);
     ok &= expect_int("randomized 0-based creature count",
-                     out.spawnedCreatureCount, 1);
-    ok &= expect_int("spawn direction", out.spawnedDirection, 1);
+                     out.spawnedCreatureCount, 0);
+    ok &= expect_int("spawn direction", out.spawnedDirection, 2);
     ok &= expect_int("map difficulty health multiplier",
                      out.spawnedHealthMultiplier, 4);
     ok &= expect_int("sensor disabled for cooldown", out.sensorDisabled, 1);
@@ -75,10 +88,12 @@ static int test_deterministic_csb_generator_state(void)
     ok &= expect_int("audible generator requests sound", out.soundRequested, 1);
     ok &= expect_int("suppression reason", out.suppressionReason,
                      GENERATOR_SUPPRESSION_NONE);
-    ok &= expect_int("rng call count", out.rngCallCount, 5);
-    ok &= expect_int("source-style packed cells", out.spawnedGroupCells, 0x06);
-    ok &= expect_int("health[0]", out.spawnedGroupHealth[0], 446);
-    ok &= expect_int("health[1]", out.spawnedGroupHealth[1], 441);
+    ok &= expect_int("rng call count", out.rngCallCount, 3);
+    ok &= expect_int("single-creature group is centered",
+                     out.spawnedGroupCells,
+                     RUNTIME_GROUP_CELLS_SINGLE_CENTERED);
+    ok &= expect_int("health[0]", out.spawnedGroupHealth[0], 464);
+    ok &= expect_int("health[1] unused", out.spawnedGroupHealth[1], 0);
     ok &= expect_int("health[2] unused", out.spawnedGroupHealth[2], 0);
     ok &= expect_int("health[3] unused", out.spawnedGroupHealth[3], 0);
 
@@ -94,7 +109,7 @@ static int test_deterministic_csb_generator_state(void)
     ok &= expect_int("re-enable aux1 carries sensor index",
                      out.reEnableEvent.aux1, 17);
     ok &= expect_u32("rng seed after generator sequence", rng.seed,
-                     0xA8CD720Eu);
+                     0xFF3E8C6Eu);
 
     return ok ? 0 : 1;
 }
