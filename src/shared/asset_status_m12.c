@@ -2153,6 +2153,23 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* versionId,
         if (strcmp(label, "VDEO.FTL") == 0) return "d86f045085481448f6ae3db8d3d640d2";
         return NULL;
     }
+    /* ReDMCSB COMPILE.H:199-243 assigns A31E APPB.FTL directly to C03_GAME
+     * and BJELoad_R to C02.  These are the original English-only A31E disk
+     * members (not the similarly named A31M programs). */
+    if (strcmp(versionId, "amiga31-en") == 0) {
+        if (strcmp(label, "ANIM.FTL") == 0) return "60ffbbe31830f2fe262cb8dee862b7fc";
+        if (strcmp(label, "APPA.FTL") == 0) return "50f9e544dc59e400f53cb6f6b63d3bc5";
+        if (strcmp(label, "APPB.FTL") == 0) return "af50ff33c61c22e20784d74266d81d1e";
+        if (strcmp(label, "BJELoad_R") == 0) return "2788ef63f246b4d3c74c64dff9dcdbde";
+        if (strcmp(label, "CNFG.FTL") == 0) return "00dae1fcfe37b5bcb3ef1c59c9c0afca";
+        if (strcmp(label, "ENDA.DAT") == 0) return "9f2b73ff73ad0032810d79021c900ca9";
+        if (strcmp(label, "GRF1.FTL") == 0) return "b6991c6c24ae458261c2ae697e0f0972";
+        if (strcmp(label, "MEM1.FTL") == 0) return "383bd296e025a1eb2ee941cf5eb6ee29";
+        if (strcmp(label, "SWSH.FTL") == 0) return "ff3872baaed8ee4e83ee3c0684b2eeec";
+        if (strcmp(label, "USIO.FTL") == 0) return "a2d74b774e850e6153fa8413bc82372b";
+        if (strcmp(label, "VDEO.FTL") == 0) return "eaee4e768a1ecac7ecb8e350fd697142";
+        return NULL;
+    }
     if (strcmp(versionId, "amiga31-multi") != 0) {
         return NULL;
     }
@@ -2173,6 +2190,27 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* versionId,
     if (strcmp(label, "USIO.FTL") == 0) return "65a18a7d553186df1206241abbd1560e";
     if (strcmp(label, "VDEO.FTL") == 0) return "a237ff4ba7523f9a02cb992d60056fc8";
     return NULL;
+}
+
+static int m12_csb_amiga_a31e_program_receipt_ready(const char* gameCacheDir) {
+    static const struct {
+        const char* name;
+        const char* md5;
+    } programs[] = {
+        { "APPB.FTL", "af50ff33c61c22e20784d74266d81d1e" },
+        { "BJELoad_R", "2788ef63f246b4d3c74c64dff9dcdbde" }
+    };
+    size_t i;
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    char md5[M12_ASSET_MD5_CAPACITY];
+    if (!gameCacheDir || !gameCacheDir[0]) return 0;
+    for (i = 0U; i < sizeof(programs) / sizeof(programs[0]); ++i) {
+        if (!FSP_JoinPath(path, sizeof(path), gameCacheDir, programs[i].name) ||
+            !m12_file_md5_hex(path, md5) || strcmp(md5, programs[i].md5) != 0) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static int m12_materialize_authenticated_csb_amiga_sidecar(
@@ -4123,45 +4161,6 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
     }
 }
 
-/* ReDMCSB COMPILE.H:199-213 gives A31E its own C03_GAME APPB.FTL program.
- * It is not A31M: COMPILE.H:246-269 gives A31M a C08_LANG APPB followed by
- * KAOS, and APPA.C:51-85 owns its TITL/ANIM loop.  The authenticated A31E
- * GRAPHICS.DAT/DUNGEON.DAT pair is useful discovery evidence, but we do not
- * have a hash-verified A31E APPB program or a native C03 handoff yet.  Do
- * not advertise that lone package as launchable and then fail in M11 after
- * materialisation.  Other independently launchable CSB editions in the same
- * root remain available. */
-static void m12_apply_csb_a31e_native_handoff_gate(M12_AssetStatus* status,
-                                                    int gameIndex) {
-    int a31eIndex;
-    size_t i;
-    int otherEditionMatched = 0;
-    M12_AssetVersionStatus* a31e;
-
-    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
-        strcmp(g_games[gameIndex].gameId, "csb") != 0) {
-        return;
-    }
-    a31eIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
-    if (a31eIndex < 0) return;
-    a31e = &status->versions[gameIndex][a31eIndex];
-    if (!a31e->matched) return;
-    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
-        const M12_AssetVersionStatus* candidate =
-            &status->versions[gameIndex][i];
-        if (candidate->matched && candidate != a31e) {
-            otherEditionMatched = 1;
-            break;
-        }
-    }
-    if (otherEditionMatched) return;
-    status->csbAvailable = 0;
-    m12_copy_string(status->csbLaunchBlockReason,
-                    sizeof(status->csbLaunchBlockReason),
-                    "Amiga 3.1 English requires a hash-verified native "
-                    "APPB.FTL C03 handoff; A31M TITL/APPA is incompatible.");
-}
-
 static int m12_materialize_csb_fmtowns_runtime_cache(
     M12_AssetStatus* status, int gameIndex,
     const M12_AssetVersionStatus* version, const char* gameCacheDir,
@@ -5463,7 +5462,6 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         if (!m12_materialize_runtime_cache_for_game(status, i)) {
             m12_apply_required_game_availability(status, i, 0);
         }
-        m12_apply_csb_a31e_native_handoff_gate(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
     }
     if (!m12_scan_progress_update(&progressCtx,
@@ -5730,7 +5728,6 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (!m12_materialize_runtime_cache_for_game(status, gameIndex)) {
         m12_apply_required_game_availability(status, gameIndex, 0);
     }
-    m12_apply_csb_a31e_native_handoff_gate(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
@@ -5945,7 +5942,8 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
      * materialized from the same ADF receipt.  Selecting the first matching
      * required-file row could otherwise cross-bind a different CSB package.
      * ReDMCSB COMPILE.H:199-243 keeps those media families distinct. */
-    if (strcmp(versionId, "amiga31-multi") == 0) {
+    if (strcmp(versionId, "amiga31-en") == 0 ||
+        strcmp(versionId, "amiga31-multi") == 0) {
         static const char* const dungeonNames[] = {
             "Dungeon.DAT", "dungeon.dat", NULL
         };
@@ -5970,8 +5968,12 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 m12_file_md5_hex(dungeonPath, copiedMd5) &&
                 strcmp(copiedMd5, expectedDungeonMd5) == 0) {
                 m12_materialize_csb_startup_optional_cache(version->matchedPath,
-                                                           outPath,
-                                                           "amiga31-multi", 0);
+                                                           outPath, versionId, 0);
+                if (strcmp(versionId, "amiga31-en") == 0 &&
+                    !m12_csb_amiga_a31e_program_receipt_ready(outPath)) {
+                    outPath[0] = '\0';
+                    return 0;
+                }
                 return 1;
             }
             (void)remove(dungeonPath);

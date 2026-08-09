@@ -684,8 +684,9 @@
   en fullständig Amiga-konsument och corpusbevis.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
-  allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
-  mediefamiljen i den valda originaldisken och är fortsatt fail-closed. A35M:s
+  allocationscapture finns. A31E har ingen TITL/APPA-kedja: dess egen,
+  hashverifierade `BJELoad_R`-C02 → `APPB.FTL`-C03-handoff når nu direkt
+  spelruntimen. A35M:s
   verkliga APPB-språkval och engelska KAOS-handoff är nu bundna till sina
   ADF-hashar och exponeras som en egen M11-capturefas. A35E:s separata,
   engelska `APPB.FTL`-C03-handoff och `BJELoad_R`-C02-launcher är nu också

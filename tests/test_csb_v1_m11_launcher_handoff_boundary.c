@@ -2811,12 +2811,88 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
     M12_StartupMenu_Destroy(&menu);
 }
 
+/* A31E is a direct APPB C03 program, unlike the separate A31M TITL/APPA/
+ * C08/KAOS sequence. ReDMCSB COMPILE.H EXEID 20-21, lines 199-213. */
+static void run_real_amiga31_english_direct_handoff_if_available(void) {
+    const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_EN_DATA_DIR");
+    M12_StartupMenuState menu;
+    M11_GameViewState view;
+    const M12_MenuEntry *entry;
+    const M12_AssetVersionStatus *amiga_version;
+    const CSB_V1_BootProfile *profile;
+    char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    char md5[33];
+    int version_index;
+
+    if (!data_dir || !data_dir[0]) {
+        expect_skip("FIRESTAFF_CSB_AMIGA31_EN_DATA_DIR not set");
+        return;
+    }
+    init_menu_without_gallery(&menu, data_dir, "csb");
+    dismiss_initial_message(&menu);
+    entry = M12_StartupMenu_GetEntry(&menu, 1);
+    version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    amiga_version = version_index >= 0
+        ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                     (size_t)version_index)
+        : NULL;
+    if (!entry || !entry->available || version_index < 0 ||
+        !amiga_version || !amiga_version->matched) {
+        expect_skip("no verified Amiga 3.1 English CSB package at requested data root");
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+    memset(runtime_dir, 0, sizeof(runtime_dir));
+    expect_true(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                    &menu.assetStatus, "amiga31-en", runtime_dir,
+                    sizeof(runtime_dir)) == 1 &&
+                    snprintf(path, sizeof(path), "%s/APPB.FTL", runtime_dir) > 0 &&
+                    asset_file_md5_hex(path, md5) &&
+                    strcmp(md5, "af50ff33c61c22e20784d74266d81d1e") == 0 &&
+                    snprintf(path, sizeof(path), "%s/BJELoad_R", runtime_dir) > 0 &&
+                    asset_file_md5_hex(path, md5) &&
+                    strcmp(md5, "2788ef63f246b4d3c74c64dff9dcdbde") == 0,
+                "A31E cache retains its direct C03 game and C02 launcher programs");
+    menu.selectedIndex = 1;
+    menu.activatedIndex = 1;
+    menu.launchRequested = 1;
+    menu.gameOptions[1].versionIndex = version_index;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "M11 opens Amiga 3.1 English through direct APPB C03");
+    profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+    expect_true(view.active == 1 && profile != NULL &&
+                    profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN &&
+                    view.assetsAvailable && view.assetLoader.fileState == NULL &&
+                    view.assetLoader.runtimeState == NULL &&
+                    profile->runtime.dungeon_handle != NULL &&
+                    profile->runtime.state == CSB_STATE_GAME &&
+                    !view.csbState.startup_title_active &&
+                    !view.csbState.startup_entrance_active &&
+                    !view.csbAmigaAppbSelectionActive &&
+                    view.csbAmigaTitlBytes == NULL,
+                "A31E reaches C03_GAME without an A31M/A35M/PC34 replacement screen");
+    expect_amiga_c013_source_frame(
+        &view, "A31E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c017_inventory_source_frame(
+        &view, "A31E inventory presents original Amiga C017 without a PC34 panel");
+    expect_amiga_candidate_c026_source_frame(
+        &view, "A31E candidate route presents original Amiga C026 without a PC34 portrait");
+    expect_native_live_mirror_and_command_handoff(
+        &view, "A31E direct APPB handoff reaches a live native C127 mirror");
+    M11_GameView_Shutdown(&view);
+    M12_StartupMenu_Destroy(&menu);
+}
+
 int main(void) {
     const char *atari_only = getenv("FIRESTAFF_CSB_ATARI_ST_ONLY");
     const char *amiga31_only = getenv("FIRESTAFF_CSB_AMIGA31_ONLY");
     const char *amiga35_only = getenv("FIRESTAFF_CSB_AMIGA35_ONLY");
     const char *amiga35_english_only =
         getenv("FIRESTAFF_CSB_AMIGA35_EN_ONLY");
+    const char *amiga31_english_only =
+        getenv("FIRESTAFF_CSB_AMIGA31_EN_ONLY");
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
                 "CSB launcher startup sequence contract is source-ordered");
@@ -2830,12 +2906,15 @@ int main(void) {
     /* A supplied Atari-only corpus deliberately has no PC34 package.  Keep
      * the source-specific ANIMATE.SCR regression lane independently runnable
      * instead of making the PC34 assertions dereference a failed launch. */
-    if (amiga35_english_only && amiga35_english_only[0]) {
+    if (amiga31_english_only && amiga31_english_only[0]) {
+        run_real_amiga31_english_direct_handoff_if_available();
+    } else if (amiga35_english_only && amiga35_english_only[0]) {
         run_real_amiga35_english_direct_handoff_if_available();
     } else if (amiga35_only && amiga35_only[0]) {
         run_real_amiga35_selected_package_handoff_if_available();
     } else if (amiga31_only && amiga31_only[0]) {
         run_real_amiga31_selected_package_handoff_if_available();
+        run_real_amiga31_english_direct_handoff_if_available();
     } else if (!atari_only || !atari_only[0]) {
         run_empty_launcher_boundary();
         run_real_launcher_handoff_if_available();

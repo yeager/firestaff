@@ -4477,6 +4477,11 @@ static int m11_csb_is_amiga_a31_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI);
 }
 
+static int m11_csb_is_amiga_a31e_profile(const CSB_V1_BootProfile *profile)
+{
+    return profile && profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN;
+}
+
 static int m11_csb_is_amiga_a35m_profile(const CSB_V1_BootProfile *profile)
 {
     return profile && profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI;
@@ -4530,6 +4535,45 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
     state->csbState.startup_entrance_dismissed = 0;
     state->csbState.startup_entrance_opening_active = 0;
     state->csbState.startup_entrance_opening_step = 0;
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    return 1;
+}
+
+/* ReDMCSB COMPILE.H:199-213: A31E's APPB.FTL is C03_GAME and BJELoad_R is
+ * C02_LAUNCHER.  It must therefore take the same direct program boundary as
+ * A35E, but only after its own original bytes have been materialized and
+ * verified.  A31M's similarly named files remain a TITL -> C08 -> KAOS
+ * route and never enter this branch. */
+static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
+{
+    CSB_V1_BootProfile *profile;
+    static const struct {
+        const char *name;
+        const char *md5;
+    } required_programs[] = {
+        { "APPB.FTL", "af50ff33c61c22e20784d74266d81d1e" },
+        { "BJELoad_R", "2788ef63f246b4d3c74c64dff9dcdbde" }
+    };
+    char path[FSP_PATH_MAX];
+    char md5[33];
+    size_t index;
+
+    if (!state || !state->csbBootProfile) return 0;
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_a31e_profile(profile) || !profile->asset_root[0] ||
+        !profile->runtime.dungeon_handle) return 0;
+    for (index = 0u; index < sizeof(required_programs) /
+             sizeof(required_programs[0]); ++index) {
+        if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
+                     required_programs[index].name) <= 0 ||
+            strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+            strcmp(md5, required_programs[index].md5) != 0) return 0;
+    }
+    profile->amiga_language_index = 0u;
+    profile->runtime.state = CSB_STATE_GAME;
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_dismissed = 1;
     m11_sync_csb_state_from_boot_profile(state, profile);
     return 1;
 }
@@ -10000,6 +10044,16 @@ static int m11_csb_apply_boot_runtime_receipt(
             state, &receipt->receipts.init_state);
         if (m11_csb_complete_amiga_a35e_direct_handoff(state)) return 1;
         m11_set_status(state, "CSB AMIGA", "A35E C03 HANDOFF FAILED");
+        return 0;
+    }
+    if (m11_csb_is_amiga_a31e_profile(receipt->profile)) {
+        state->csbStartupExpectedPackageIdentity =
+            package_identity ? package_identity : 1u;
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state, &receipt->receipts.init_state);
+        if (m11_csb_complete_amiga_a31e_direct_handoff(state)) return 1;
+        m11_set_status(state, "CSB AMIGA", "A31E C03 HANDOFF FAILED");
         return 0;
     }
     if (m11_csb_is_amiga_a31_profile(receipt->profile)) {

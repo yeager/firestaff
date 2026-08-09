@@ -1913,6 +1913,15 @@ rendering remain blocked.
   title/entrance-session. Amiga-HUD och viewport från `GRAPHICS.DAT` är
   fortfarande separat capture- och konsumentarbete.
 
+# CSB Amiga 3.1 English direkt C03-handoff (2026-08-09)
+
+- ✅ A31E:s original-ADF materialiseras nu med sina egna hashverifierade
+  `APPB.FTL`- och `BJELoad_R`-program, enligt ReDMCSB `COMPILE.H:199–213`
+  (EXEID 20–21). Den kan inte låna A31M:s TITL/APPA/KAOS-kedja.
+- ✅ M12→M11 går från A31E:s C02-launcher till dess direkta C03-spelprogram
+  och binder den verkliga Amiga-dungeonen samt C013, C017, C026 och C127.
+  Realdatatestet körs mot original-ADF och kräver båda programhasharna.
+
 # CSB PC34 Utility-import från original DM1-sparning (2026-08-08)
 
 - ✅ Den opt-in-bundna PC34-regressionen klassificerar nu en verklig
