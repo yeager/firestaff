@@ -61,5 +61,14 @@ the strict parser and correlation gate therefore reject it. This is the
 intended result: raw sectors and preconsumer/helper windows are not enough to
 publish a T900 spawn record.
 
+The corrected startup replay `run@8:60,i@480:30,i@900:30` was then repeated
+against the same hash-verified US Track 02 medium. Its input receipt contains
+10,145 samples, with Button I on PCE wire bit `0x0001` and Run on `0x0008`;
+the capture also reached 161 raw sectors and 215 MPR-bound register samples.
+It still produced no `$B0E5` sample, no game-owned dynamic CD read, and no
+dynamic return from the `$C96B/$CC4C` consumer windows. The result is a
+verified negative handoff, not a spawn record, and cannot be combined with a
+different execution to fabricate one.
+
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.

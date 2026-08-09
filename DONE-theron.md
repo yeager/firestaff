@@ -4,6 +4,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — v3 strict regular-spawn provenance gate
 
+- ✅ Den korrigerade startupreplayen `run@8:60,i@480:30,i@900:30` är
+  verifierad mot den äkta US Track 02-kedjan. Den gav 10 145 inputprover med
+  PCE-wiremaskerna Button I=`0x0001` och Run=`0x0008`, 161 råa sektorer och
+  215 MPR-bundna spawnregisterprover. Den nådde inte `$B0E5`, någon
+  spelägd dynamisk CD-läsning eller ett dynamiskt spawnreturkontrakt; därför
+  publicerades inga syntetiska monster-, RNG-, AI-, loot-, T700- eller
+  T900-semantiker.
 - ✅ Register-sidecaren är nu versionerad till `v3` och markerar den exakta
   disassembly-entrén `LB0E5` som `spawn_entry_b0e5=1`; fysisk PC måste fortsatt
   stämma med vald HuC6280-MPR.

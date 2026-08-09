@@ -4,6 +4,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- 🔒 En ny 120-sekunders v3-capture med replayen `run@8:60,i@480:30,i@900:30`
+  använder nu den korrekta startupsekvensen Run följt av Button I på äkta US
+  Track 02-media. Den verifierade PCE-inputreceipten innehåller 10 145
+  inputprover, `I=0x0001` och `Run=0x0008`, samt 161 råa sektorer och 215
+  spawnregisterprover. Capturen saknar fortfarande `$B0E5`, spelägd dynamisk
+  CD-läsning och `$C96B/$CC4C`-konsumentretur; den avvisas därför fortsatt av
+  den strikta grinden och får inte driva T900, RNG, AI, loot eller T700.
 - 🔒 Den nya v3-sidecaren är nu strikt: en semantisk spawn-korrelation måste
   observera `LB0E5` (`$B0E5`) i samma körning som `$4644`/`$4667`, konsument-
   fönstren och det dynamiska returkontraktet. En v3-capture nådde 161 äkta
