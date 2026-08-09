@@ -11,6 +11,28 @@
   därför endast source-bound transport, inte `$2600`-objectkonsument eller
   RNG-, spawn-, AI-, combat-, T700- eller T900-semantik.
 
+# Nexus macOS dummy-audio capture documentation (2026-08-09)
+
+- ✅ Dokumenterat att `SDL_AUDIODRIVER=dummy` vidarebefordras till Mednafen-
+  barnprocessen för headless Saturn-capture på macOS. Dokumentationen skiljer
+  korrekt mellan SDL:s dummy-ljudbackend och Cocoa/OpenGL-videovägen och
+  beskriver varför dummy-audio inte räcker som startup-, meny-, HUD- eller
+  viewportbevis.
+
+# Nexus launcher forwards SDL audio backend (2026-08-09)
+
+- ✅ Launcherns barnprocess får nu explicit `SDL_AUDIODRIVER` när operatören
+  sätter den. Det gör dummy-audio-körningar reproducerbara på extern disk;
+  en autentisk reset-frame validerades, medan aktiv VDP1-frame fortfarande
+  kräver en separat godkänd capture.
+
+# Nexus VDP1 writer-code patch hunk fixed (2026-08-09)
+
+- ✅ Ren hunk-smoke avslöjade att writer-code-patchen deklarerade fel antal
+  tillagda rader. Det kunde lämna VDP1-funktionen utan avslut och stoppa en
+  ren extern build. Hunkstorlek och målposition är nu korrigerade; funktionen
+  och `FirestaffTraceVramWriterCode(address)` placeras verifierat.
+
 # Theron source-bound property rows (2026-08-09)
 
 - ✅ Track 02-loadern kräver fortsatt en byteverifierad 66×6-byte propertytabell
@@ -545,6 +567,12 @@
 - ✅ Realdatatestet kör mot den lokala PC-DOS-profilen och bevisar att detta
   inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
   skapades eller ändrades.
+- ✅ Prepared-mirror-ingressen kräver nu verkligt DB3-ObjectID, aktuell
+  File_header-karta, främre ruta och originalets formationsriktning innan
+  `DM2_SELECT_CHAMPION` ens kan återvalideras. Realdatatestet visar att den
+  autentiska rosterposten vid start avvisas eftersom den inte finns framför
+  partyt. Ett panelindex eller en värdskapad riktning kan inte välja en
+  champion.
 
 # DM2 New Game privat kartkontext efter aktuatorkön (2026-08-08)
 

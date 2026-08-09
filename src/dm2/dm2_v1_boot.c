@@ -13709,6 +13709,82 @@ int dm2_v1_boot_select_new_game_champion(
     return dm2_v1_game_load_world_owner_select_champion(owner, selection);
 }
 
+int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
+    DM2_V1_BootProfile *profile, uint16_t mirror_object_id)
+{
+    DM2_V1_GameLoadWorldOwner *owner;
+    DM2_V1_BootChampionSelectionCensus roster;
+    DM2_V1_BootChampionSelectionCandidate resolved;
+    DM2_V1_BootNewGamePartySelection selection;
+    const DM2_V1_GameLoadPreselectionViewCell *front = NULL;
+    int i;
+
+    if (!profile || mirror_object_id == 0u ||
+        profile->source_game_load_session_ready ||
+        !(owner = (DM2_V1_GameLoadWorldOwner *)
+            profile->game_load_world_owner) ||
+        !dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->source_map_context_materialized ||
+        owner->committed || owner->source_party_direction > 3u ||
+        !dm2_v1_boot_prepared_new_game_mirror_roster(profile, &roster)) {
+        return 0;
+    }
+    for (i = 0; i < owner->preselection_view.cell_count; ++i) {
+        const DM2_V1_GameLoadPreselectionViewCell *cell =
+            &owner->preselection_view.cells[i];
+        if (cell->view_square == DM2_SQ_D0C && cell->source_available) {
+            front = cell;
+            break;
+        }
+    }
+    if (!front) return 0;
+
+    for (i = 0; i < roster.candidate_count; ++i) {
+        const DM2_V1_BootChampionSelectionCandidate *candidate =
+            &roster.candidates[i];
+
+        if (!candidate->valid || candidate->mirror.object_id !=
+                mirror_object_id) {
+            continue;
+        }
+        /* The event dispatcher reaches a subtype-0x7e record from the
+         * presently loaded map and passes ddat.v1e0258 as ebxl.  Before a
+         * live movement owner exists, this is the exact File_header pose
+         * retained by DM2_move_2fcf_0b8b, not a host-panel direction.
+         * SKProject: skevents.cpp around 3C7E5; skhero.cpp:1054-1101. */
+        if (candidate->mirror.map != owner->source_party_map ||
+            candidate->mirror.x != front->map_x ||
+            candidate->mirror.y != front->map_y ||
+            candidate->mirror.direction !=
+                ((owner->source_party_direction + 2u) & 3u)) {
+            return 0;
+        }
+        memset(&resolved, 0, sizeof(resolved));
+        if (!dm2_v1_boot_champion_selection_candidate(
+                profile, candidate->mirror.map, candidate->mirror.x,
+                candidate->mirror.y, owner->source_party_direction,
+                &resolved) ||
+            !resolved.valid || !resolved.incomplete_game_load ||
+            resolved.mirror.object_id != candidate->mirror.object_id ||
+            resolved.mirror.map != candidate->mirror.map ||
+            resolved.mirror.x != candidate->mirror.x ||
+            resolved.mirror.y != candidate->mirror.y ||
+            resolved.revive_data.hero_type !=
+                candidate->revive_data.hero_type) {
+            return 0;
+        }
+        memset(&selection, 0, sizeof(selection));
+        selection.map = resolved.mirror.map;
+        selection.x = resolved.mirror.x;
+        selection.y = resolved.mirror.y;
+        selection.direction = resolved.selection_direction;
+        selection.mirror_object_id = resolved.mirror.object_id;
+        return dm2_v1_boot_select_new_game_champion(profile, &selection);
+    }
+    return 0;
+}
+
 const void *dm2_v1_boot_new_game_world_readonly(
     const DM2_V1_BootProfile *profile)
 {

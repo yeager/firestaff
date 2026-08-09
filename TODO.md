@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: en autentisk reset-frame är validerad med rena VDP2/VDP1-bytes,
+  men aktiv VDP1-draw-lista från `skip=300` saknas ännu. Mednafen lämnar inte
+  frame-hooken före launcher-timeout; nästa steg är att få signal-/framevägen
+  att slutföra utan att godkänna reset som meny eller viewport.
+
+- 🔧 Nexus: den rena VDP1-patch-smoken är nu korrekt, men den nya externa
+  builden gav ännu inget raw-vittne inom timeout. Writer-PC, VRAM-källa och
+  MENU.BPK/FONT256/DGN-consumer är därför fortfarande inte bundna.
+
 - 🔧 Theron RNG-consumer: den nya parsern validerar den autentiska
   `source=mednafen-pce-instrumented-rng-consumer`-sidecaren med sekvens-,
   steg-, PC- och entrykontroller, men extern-disken innehåller ännu ingen
@@ -73,7 +82,10 @@
   samma kedjor är bevarade, liksom DB3-aktuatorernas riktiga mål- och
   fördröjningsfält samt DB4-varelsernas position, HP och kompletta
   possessionskedjor. M11 kan nu läsa den autentiska mirrorlistan från denna
-  privata ägare, men saknar ännu panelritning och source-routad klickning.
+  privata ägare. Ett ObjectID kan bara bli ett privat championval via den
+  ägda kartans riktning, främre ruta och DB3-post. Startposen har ingen sådan
+  spegel, så urvalet är korrekt spärrat tills källbunden rörelse och den
+  verkliga `0x50`-vägen från viewport finns.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

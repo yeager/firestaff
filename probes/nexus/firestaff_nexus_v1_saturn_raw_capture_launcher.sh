@@ -138,6 +138,7 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MIN="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MIN:-}" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MAX="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MAX:-}" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_LIMIT="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_LIMIT:-}" \
+  SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
     "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 else
@@ -155,6 +156,7 @@ else
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MIN="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MIN:-}" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MAX="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_MAX:-}" \
   FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_LIMIT="${FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_LIMIT:-}" \
+  SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
     "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 fi

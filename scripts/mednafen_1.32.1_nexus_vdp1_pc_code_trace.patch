@@ -1,6 +1,6 @@
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1251,0 +1251,25 @@
+@@ -1251,0 +1251,27 @@
 +static FILE *FirestaffVramCodeTraceFile;
 +static bool FirestaffVramCodeTraceWritten;
 +
@@ -28,7 +28,7 @@
 + fflush(FirestaffVramCodeTraceFile);
 + FirestaffVramCodeTraceWritten = true;
 +}
-@@ -1290,7 +1290,8 @@
+@@ -1290,7 +1317,8 @@
   if(FirestaffVramWriteTraceMax <= FirestaffVramWriteTraceMin ||
      value == 0 ||
      address < FirestaffVramWriteTraceMin ||

@@ -4489,6 +4489,39 @@ static int m11_map_window_to_launcher(int wx, int wy,
     return 1;
 }
 
+static int m11_route_launcher_touch(M12_StartupMenuState* menuState,
+                                     int useModernLauncher,
+                                     float normalizedX,
+                                     float normalizedY,
+                                     int clicked,
+                                     int* menuPointerChanged) {
+    int windowWidth;
+    int windowHeight;
+    int lx;
+    int ly;
+    int changed;
+    if (!menuState || !useModernLauncher) {
+        return 0;
+    }
+    windowWidth = M11_Render_GetWindowWidth();
+    windowHeight = M11_Render_GetWindowHeight();
+    if (windowWidth <= 0 || windowHeight <= 0 ||
+        normalizedX < 0.0f || normalizedX > 1.0f ||
+        normalizedY < 0.0f || normalizedY > 1.0f) {
+        return 0;
+    }
+    if (!m11_map_window_to_launcher((int)(normalizedX * windowWidth),
+                                    (int)(normalizedY * windowHeight),
+                                    1, &lx, &ly)) {
+        return 0;
+    }
+    changed = M12_ModernMenu_HandlePointer(menuState, lx, ly, clicked, NULL);
+    if (changed && menuPointerChanged) {
+        *menuPointerChanged = 1;
+    }
+    return 1;
+}
+
 static int m11_dm1_rename_text_input_active(const M11_GameViewState* gameView) {
     return gameView &&
            dm1_v1_resurrection_rename_ui_gate_host_active_pc34(
@@ -4664,6 +4697,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                        gameView && gameView->active);
             if (gpadInput != M12_MENU_INPUT_NONE) {
                 return gpadInput;
+            }
+            continue;
+        }
+        if ((ev.type == SDL_EVENT_FINGER_DOWN ||
+             ev.type == SDL_EVENT_FINGER_MOTION ||
+             ev.type == SDL_EVENT_FINGER_UP ||
+             ev.type == SDL_EVENT_FINGER_CANCELED) &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active)) {
+            int clicked = ev.type == SDL_EVENT_FINGER_DOWN ? 1 : 0;
+            if (ev.type != SDL_EVENT_FINGER_CANCELED) {
+                (void)m11_route_launcher_touch(menuState,
+                                                useModernLauncher,
+                                                ev.tfinger.x,
+                                                ev.tfinger.y,
+                                                clicked,
+                                                menuPointerChanged);
             }
             continue;
         }
@@ -5153,6 +5203,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                        gameView && gameView->active);
             if (gpadInput != M12_MENU_INPUT_NONE) {
                 return gpadInput;
+            }
+            continue;
+        }
+        if ((ev.type == SDL_FINGERDOWN ||
+             ev.type == SDL_FINGERMOTION ||
+             ev.type == SDL_FINGERUP ||
+             ev.type == SDL_FINGERCANCEL) &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active)) {
+            int clicked = ev.type == SDL_FINGERDOWN ? 1 : 0;
+            if (ev.type != SDL_FINGERCANCEL) {
+                (void)m11_route_launcher_touch(menuState,
+                                                useModernLauncher,
+                                                ev.tfinger.x,
+                                                ev.tfinger.y,
+                                                clicked,
+                                                menuPointerChanged);
             }
             continue;
         }
