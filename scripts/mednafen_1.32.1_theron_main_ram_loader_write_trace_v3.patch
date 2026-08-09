@@ -7,16 +7,19 @@
 +void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
  
  class alignas(128) HuC6280
-@@ -438,6 +439,12 @@
+@@ -438,6 +439,15 @@
  	 uint8 wmpr = MPR[address >> 13];
  
  	 LastLogicalWriteAddr = address;
 +	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
-+	 const uint16 writer_pc = GetRegister(GSREG_PC);
-+	 const uint8 writer_mpr = MPR[writer_pc >> 13];
-+	 const uint32 writer_physical_pc = (writer_mpr << 13) | (writer_pc & 0x1FFF);
-+	 TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
-+	                                   writer_physical_pc);
++	 if(physical_address >= 0x1f0000 && physical_address < 0x1f8000)
++	 {
++	  const uint16 writer_pc = GetRegister(GSREG_PC);
++	  const uint8 writer_mpr = MPR[writer_pc >> 13];
++	  const uint32 writer_physical_pc = (writer_mpr << 13) | (writer_pc & 0x1FFF);
++	  TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
++	                                      writer_physical_pc);
++	 }
  
 -	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
 +	 WriteMap[wmpr](physical_address, V);
