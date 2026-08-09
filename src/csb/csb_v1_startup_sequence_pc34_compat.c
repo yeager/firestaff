@@ -1037,22 +1037,24 @@ int csb_v1_startup_entrance_action_for_input_pc34(
     int credits_active,
     CSB_V1_StartupInput_PC34 input)
 {
-    /* ReDMCSB ENTRANCE.C F0441 lines ~857-883 owns the interactive entrance
-     * loop: Return/Enter sets C001_MODE_LOAD_DUNGEON, credits redraw loops
-     * back to the entrance, and other queued commands can leave via the saved
-     * game/menu paths. This maps Firestaff's bounded startup input tokens onto
-     * those source-owned entrance outcomes. */
+    /* ReDMCSB ENTRANCE.C:850-883 is the PC/F20 authority here.  It flushes
+     * old input, then polls Cconis/Crawcin itself; the only keyboard value it
+     * recognizes is carriage return, which sets C001_MODE_LOAD_DUNGEON.
+     * Unlike the Amiga branch at 876-879, this path does not feed Ctrl-S,
+     * controller ACTION, or the generic COMMAND.C keyboard table through
+     * F0361 while Prison is on screen.  Resume remains the genuine C409
+     * pointer route (or an authenticated launch-save handoff), never a
+     * synthetic disk-menu shortcut at the entrance. */
     if (credits_active) {
         return CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34;
     }
     switch (input) {
         case CSB_V1_STARTUP_INPUT_ACCEPT_PC34:
-        case CSB_V1_STARTUP_INPUT_ACTION_PC34:
             return CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34;
         case CSB_V1_STARTUP_INPUT_BACK_PC34:
             return CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34;
+        case CSB_V1_STARTUP_INPUT_ACTION_PC34:
         case CSB_V1_STARTUP_INPUT_DISK_MENU_PC34:
-            return CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34;
         case CSB_V1_STARTUP_INPUT_NONE_PC34:
         default:
             return CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34;

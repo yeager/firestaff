@@ -1155,7 +1155,7 @@ int main(void)
               csb_v1_startup_entrance_command_for_input_pc34(
                   0,
                   CSB_V1_STARTUP_INPUT_DISK_MENU_PC34) ==
-                  CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34 &&
+                  CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34 &&
               csb_v1_startup_entrance_command_for_input_pc34(
                   0,
                   CSB_V1_STARTUP_INPUT_BACK_PC34) ==

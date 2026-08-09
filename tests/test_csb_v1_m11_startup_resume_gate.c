@@ -1180,21 +1180,21 @@ int main(void) {
     expect_true(csb_v1_startup_entrance_action_for_input_pc34(
                     0,
                     CSB_V1_STARTUP_INPUT_ACCEPT_PC34) ==
-                    CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34 &&
-                    csb_v1_startup_entrance_action_for_input_pc34(
-                        0,
-                        CSB_V1_STARTUP_INPUT_ACTION_PC34) ==
-                        CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34,
-                "CSB startup entrance input maps Accept/Action to dungeon entry");
+                    CSB_V1_STARTUP_ENTRANCE_ACTION_ENTER_DUNGEON_PC34,
+                "CSB PC34 entrance accepts only Return/Enter for dungeon entry");
     expect_true(csb_v1_startup_entrance_action_for_input_pc34(
                     0,
                     CSB_V1_STARTUP_INPUT_DISK_MENU_PC34) ==
-                    CSB_V1_STARTUP_ENTRANCE_ACTION_RESUME_PC34 &&
+                    CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34 &&
+                    csb_v1_startup_entrance_action_for_input_pc34(
+                        0,
+                        CSB_V1_STARTUP_INPUT_ACTION_PC34) ==
+                        CSB_V1_STARTUP_ENTRANCE_ACTION_NONE_PC34 &&
                     csb_v1_startup_entrance_action_for_input_pc34(
                         0,
                         CSB_V1_STARTUP_INPUT_BACK_PC34) ==
                         CSB_V1_STARTUP_ENTRANCE_ACTION_QUIT_PC34,
-                "CSB startup entrance input maps Disk/Back to resume/quit");
+                "CSB PC34 entrance rejects Action/Ctrl-S but retains host Back");
     expect_true(csb_v1_startup_entrance_action_for_input_pc34(
                     1,
                     CSB_V1_STARTUP_INPUT_BACK_PC34) ==
