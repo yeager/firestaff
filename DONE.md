@@ -11858,3 +11858,9 @@ rendering remain blocked.
   US Track 02/System Card/.mc0-replay verifierades. 4 096 steg fångades, men
   ingen game-owned return-/CD-join observerades; RNG/spawn/T700/T900 öppnas
   därför inte.
+
+# 2026-08-09 — Nexus J/J startup provenance witness
+
+- Verified an external-disk Saturn J BIOS 1.01 plus J-regionerad English Nexus disc capture.
+- Hash-bound 560-frame raw witness and reset write-trace; VDP1 source `0x63e00` is written through SH-2 corridor `pc0=0x0601307c`.
+- Kept startup→menu identity and production admission closed because no exact MENU/TITLE/FONT256/STABG source consumer was found.

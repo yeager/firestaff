@@ -61,6 +61,20 @@ ogiltig; de öppnar inte semantic admission.
 
 ## Senaste autentiserade VDP1-fönster
 
+## Regionmatchad J/J-startup-witness
+
+På extern disk finns nu en separat, hashbunden capture med japansk Saturn
+BIOS 1.01 och den japanska-regionerade engelska Nexus-discen. Mednafen
+rapporterar `SGAREA=J`, och launcher-manifestet binder BIOS- och CUE-hash till
+560 frames. Vid det riktade resetfönstret skrivs VDP1-källan `0x63e00` av den
+observerade SH-2-korridoren (`pc0=0x0601307c`); samma session har en rå VDP1-
+snapshot och en verifierad write-trace. Detta är starkare startup-/writer-
+proveniens än E/French-körningarna, men källspannen saknar fortfarande
+byteexakt träff i MENU.BPK, TITLE.BIN/TITLE.CG, FONT256.S2D eller STABG.BIN.
+NBG1 bitmap-state (`TVMD=0x0080`, `BGON=0x0002`, `CHCTLA=0x1211`) och VDP1
+direct-color-kommandot är därför capture-evidens utan menyidentitet eller
+produktionskonsument.
+
 I den lokala, användarägda capture-korpusen
 `run-codex-menu-long-20260809f/runtime-vdp12.raw` är frame 760 den bästa
 undersökta DGN-kandidaten. C:s command-chain-adapter binder 242 records och
