@@ -1,5 +1,11 @@
 # DM2 runtime: statisk GRAPHICSSET-bild ägs per karta (2026-08-09)
 
+# DM2 New Game: privat entréviewport (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren materialiserar nu en rendererformad entréyta från de
+  elva autentiska File_header-rutorna och samma scen- och ljusidentitet.
+  Dörrar, objekt, HUD och input publiceras inte utan sina egna originalägare.
+
 # DM2 New Game: riktig teleporterorientering (2026-08-09)
 
 - ✅ Den privata `DM2_move_2fcf_0b8b`-porten använder nu teleporterpostens

@@ -29,8 +29,10 @@
   fyller än så länge bara in en redan ritad dörrknapp. Övriga autentiska
   scenmål och `c_input`-konsumenten måste finnas innan `0x50` kan nå en
   spegel, dörr eller sensor. Den globala runtime-renderaren binder nu sin
-  statiska GRAPHICSSET-scen till exakt map-token; motsvarande privata
-  viewportägare saknas fortfarande för entréns mirrorfas. Den privata
+  statiska GRAPHICSSET-scen till exakt map-token. Den privata
+  entréviewporten håller nu de elva källrutornas terräng och
+  scen-/ljusidentitet, men saknar fortfarande dörr-, objekt- och
+  inputkonsumenterna före faktisk ritning. Den privata
   kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får
   inte göra dem till en synlig eller styrbar partystatus före sessioncommit.
 

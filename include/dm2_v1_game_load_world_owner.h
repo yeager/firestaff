@@ -21,6 +21,7 @@
 #include "dm2_v1_sound.h"
 #include "dm2_v1_timer_queue_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_world_model.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,6 +153,20 @@ typedef struct {
     uint32_t source_view_hash;
 } DM2_V1_GameLoadPreselectionViewReceipt;
 
+/* Renderer-shaped, but still private, entrance terrain state.  D3C has no
+ * source GRAPHICSSET field and therefore remains explicitly absent; all
+ * other cells are copied from the authenticated projection above. */
+typedef struct {
+    int valid;
+    int map;
+    uint32_t map_data_hash;
+    uint32_t scene_control_hash;
+    uint32_t c_light_hash;
+    uint8_t source_cell_count;
+    DM2_ViewSquare squares[DM2_SQ_COUNT];
+    uint32_t source_viewport_hash;
+} DM2_V1_GameLoadPreselectionViewportReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -219,6 +234,7 @@ typedef struct {
     DM2_V1_GdatSceneLightM11Receipt preselection_scene_light;
     DM2_V1_CLightM11Receipt preselection_c_light;
     DM2_V1_GameLoadPreselectionViewReceipt preselection_view;
+    DM2_V1_GameLoadPreselectionViewportReceipt preselection_viewport;
     /* Borrowed only while this private owner exists; it is the same
      * hash-admitted profile that owns asset_loader. */
     const DM2_V1_BootProfile *boot_profile;
@@ -293,6 +309,9 @@ int dm2_v1_game_load_world_owner_materialize_preselection_scene(
 /* Materialize only the real source cells visible from the entry pose.  This
  * has no framebuffer, input, HUD or runtime-session side effect. */
 int dm2_v1_game_load_world_owner_materialize_preselection_view(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
     DM2_V1_GameLoadWorldOwner *owner);
 
 typedef struct {

@@ -1285,6 +1285,66 @@ int dm2_v1_game_load_world_owner_materialize_preselection_view(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadPreselectionViewportReceipt candidate;
+    uint32_t hash = 0x56505254u; /* "VPRT" */
+    int i;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->preselection_view.valid ||
+        !owner->preselection_scene_materialized ||
+        !owner->preselection_scene_plan.valid ||
+        !owner->preselection_c_light.valid ||
+        owner->preselection_viewport.valid || owner->committed) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = owner->preselection_view.map;
+    candidate.map_data_hash = owner->preselection_entrance_map.map_data_hash;
+    candidate.scene_control_hash = owner->preselection_c_light.scene_control_hash;
+    candidate.c_light_hash = owner->preselection_c_light.receipt_hash;
+    if (candidate.map != owner->source_party_map ||
+        candidate.map_data_hash == 0u || candidate.scene_control_hash == 0u ||
+        candidate.c_light_hash == 0u) return 0;
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)candidate.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.map_data_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.scene_control_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.c_light_hash);
+    for (i = 0; i < owner->preselection_view.cell_count; ++i) {
+        const DM2_V1_GameLoadPreselectionViewCell *source =
+            &owner->preselection_view.cells[i];
+        DM2_ViewSquare *square;
+        if (source->view_square >= DM2_SQ_COUNT) return 0;
+        hash = dm2_v1_game_load_owner_hash_step(hash, source->view_square);
+        hash = dm2_v1_game_load_owner_hash_step(hash, source->source_available);
+        if (!source->source_available) continue;
+        square = &candidate.squares[source->view_square];
+        square->square_type = source->square_type;
+        square->light_level = owner->preselection_c_light.light_level;
+        square->sprite_depth = (int16_t)source->view_square;
+        if (source->square_type == DM2_SQUARE_WALL) {
+            square->flags = DM2_SQF_HAS_WALL;
+        } else if (source->square_type == DM2_SQUARE_FLOOR ||
+                   source->square_type == DM2_SQUARE_TELEPORTER) {
+            square->flags = DM2_SQF_NONE;
+        } else {
+            /* Door, pit and trick-wall rendering needs the complete direct
+             * record chain. Do not turn a raw tile byte into a drawable
+             * surface in this pre-session owner. */
+            return 0;
+        }
+        ++candidate.source_cell_count;
+        hash = dm2_v1_game_load_owner_hash_step(hash, source->raw_tile);
+        hash = dm2_v1_game_load_owner_hash_step(hash, source->ground_stack_root);
+        hash = dm2_v1_game_load_owner_hash_step(hash, source->square_type);
+    }
+    if (candidate.source_cell_count == 0u || hash == 0u) return 0;
+    candidate.source_viewport_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_viewport = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner)
 {

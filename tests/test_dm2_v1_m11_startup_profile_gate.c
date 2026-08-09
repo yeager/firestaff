@@ -3966,6 +3966,13 @@ int main(void) {
                     profile_new_game_owner->preselection_scene_plan.valid &&
                     profile_new_game_owner->preselection_c_light.valid &&
                     profile_new_game_owner->preselection_view.valid &&
+                    profile_new_game_owner->preselection_viewport.valid &&
+                    profile_new_game_owner->preselection_viewport.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_viewport.map_data_hash ==
+                        profile_new_game_owner->preselection_entrance_map.map_data_hash &&
+                    profile_new_game_owner->preselection_viewport.source_cell_count > 0u &&
+                    profile_new_game_owner->preselection_viewport.source_viewport_hash != 0u &&
                     dm2_test_preselection_view_matches_owner(
                         profile_new_game_owner) &&
                     !profile_new_game_owner->champion_selection_materialized &&

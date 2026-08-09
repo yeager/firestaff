@@ -13602,6 +13602,7 @@ int dm2_v1_boot_retain_new_game_world(
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_viewport(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_champion_selection(candidate)) {
         if (candidate) {
             dm2_v1_game_load_world_owner_free(candidate);
@@ -13635,7 +13636,8 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
             candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate)) {
+        !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_viewport(candidate)) {
         if (candidate) {
             dm2_v1_game_load_world_owner_free(candidate);
             free(candidate);
