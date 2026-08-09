@@ -187,11 +187,12 @@ def verify_row(receipt_dir: Path, row: dict[str, Any]) -> tuple[bool, list[str],
 
 
 def verify_cross_mode_invariants(rows: list[dict[str, Any]]) -> tuple[bool, list[str]]:
-    """Cross-check the per-direction distinctness the probe asserts.
+    """Cross-check the per-direction source-preserving mode policy.
 
-    Each direction must yield distinct hashes for every authenticated mode.
-    V2.2 is optional until a finished real artpack and reviewer receipt exist;
-    an absent V2.2 row is honest no-claim evidence, not a failure.
+    V2.0 is intentionally source-preserving until source-owned filter material
+    is authenticated, so it must equal V1. V2.1 must differ. V2.2 is optional
+    until a finished real artpack and reviewer receipt exist; an absent V2.2
+    row is honest no-claim evidence, not a failure.
     E and W may legitimately match because the V2 composition renderer
     does not draw DOOR_SIDE elements. We require N, S, and at least one
     of {E, W} to be pairwise distinct (matching the probe's own invariants).
@@ -222,9 +223,14 @@ def verify_cross_mode_invariants(rows: list[dict[str, Any]]) -> tuple[bool, list
                 f"direction {d} missing some authenticated modes: {sorted(h.keys())}"
             )
             continue
-        if len(set(h.values())) != len(h):
+        if h["v1"] != h["v20"] or h["v1"] == h["v21"]:
             errors.append(
-                f"direction {d} modes not pairwise distinct: "
+                f"direction {d} source-preserving mode policy invalid: "
+                + ", ".join(f"{m}=0x{v:08x}" for m, v in h.items())
+            )
+        if "v22" in h and (h["v22"] == h["v1"] or h["v22"] == h["v21"]):
+            errors.append(
+                f"direction {d} authenticated V2.2 is not distinct: "
                 + ", ".join(f"{m}=0x{v:08x}" for m, v in h.items())
             )
 

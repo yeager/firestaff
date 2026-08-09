@@ -910,36 +910,36 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* Invariant 1: cross-mode distinctness PER DIRECTION. V2.2 participates
-     * only when its real pack was authenticated; no absent mode is fabricated
-     * from the V1 framebuffer. */
+    /* Invariant 1: authenticated mode policy PER DIRECTION. V2.0 is
+     * source-preserving until real source-owned filter material is admitted;
+     * V2.1 must still be distinct. V2.2 participates only when its real pack
+     * was authenticated; no absent mode is fabricated from V1. */
     {
-        int perDirDistinct = 1;
+        int perDirPolicy = 1;
         int perDirNote = 0;
         char note[260];
         for (d = 0; d < 4; ++d) {
-            uint32_t hashes[4];
-            int mode_i;
-            int distinct = 1;
-            for (mode_i = 0; mode_i < modeCount; ++mode_i) {
-                hashes[mode_i] = receipts[d * modeCount + mode_i].fnv1a;
-                for (int previous = 0; previous < mode_i; ++previous) {
-                    if (hashes[previous] == hashes[mode_i]) distinct = 0;
-                }
+            uint32_t v1 = receipts[d * modeCount + 0].fnv1a;
+            uint32_t v20 = receipts[d * modeCount + 1].fnv1a;
+            uint32_t v21 = receipts[d * modeCount + 2].fnv1a;
+            int valid = (v1 == v20) && (v1 != v21);
+            if (hasV22RealPack) {
+                uint32_t v22 = receipts[d * modeCount + 3].fnv1a;
+                valid = valid && (v1 != v22) && (v21 != v22);
             }
-            if (!distinct) {
-                perDirDistinct = 0;
+            if (!valid) {
+                perDirPolicy = 0;
                 fprintf(stderr,
-                        "FAIL: direction %d modes are not distinct (modeCount=%d)\n",
-                        d, modeCount);
+                        "FAIL: direction %d mode policy invalid (V1=0x%08x V20=0x%08x V21=0x%08x modeCount=%d)\n",
+                        d, v1, v20, v21, modeCount);
             }
             perDirNote = d;
         }
         snprintf(note, sizeof(note),
-                 "last dir=%d authenticated modes distinct (count=%d)",
+                 "last dir=%d: V2.0 preserves V1, V2.1 is distinct (authenticated count=%d)",
                  perDirNote, modeCount);
-        probe_record(&stats, "DM1V2_SOURCE_OWNED_PER_DIR_MODES_DISTINCT",
-                     perDirDistinct, note);
+        probe_record(&stats, "DM1V2_SOURCE_OWNED_PER_DIR_MODE_POLICY",
+                     perDirPolicy, note);
     }
 
     /* Invariant 2: cross-direction distinctness PER MODE. For each of the

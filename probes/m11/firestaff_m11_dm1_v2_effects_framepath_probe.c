@@ -42,9 +42,11 @@ static void seed_short_lived_particle(void)
     v2_particle_set_seed(1u);
     emitter = v2_particle_emitter_create(
         10.0f, 12.0f, 1.0f, 0.0f, 0.001f, 1.0f, 0.0f, 0x00ff00ffu, 1);
-    CHECK(emitter == 0, "emitter created");
+    CHECK(emitter == -1,
+          "no generic particle emitter is admitted without source material");
     v2_particle_emit(emitter, 10.0f, 12.0f);
-    CHECK(v2_particle_active_count() == 1, "particle initially alive");
+    CHECK(v2_particle_active_count() == 0,
+          "unbound particle runtime remains empty");
 }
 
 static void seed_visible_particle(void)
@@ -54,9 +56,11 @@ static void seed_visible_particle(void)
     v2_particle_set_seed(1u);
     emitter = v2_particle_emitter_create(
         10.0f, 12.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0x00ff00ffu, 1);
-    CHECK(emitter == 0, "visible emitter created");
+    CHECK(emitter == -1,
+          "no visible particle emitter is admitted without source material");
     v2_particle_emit(emitter, 10.0f, 12.0f);
-    CHECK(v2_particle_active_count() == 1, "visible particle initially alive");
+    CHECK(v2_particle_active_count() == 0,
+          "unbound visible particle runtime remains empty");
 }
 
 static void init_dm1_state(M11_GameViewState* state, int presentationMode)
@@ -201,20 +205,20 @@ int main(void)
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
     draw_once(&state, framebuffer);
-    CHECK(v2_particle_active_count() == 1,
-          "V1 original draw does not tick V2 particles");
+    CHECK(v2_particle_active_count() == 0,
+          "V1 original draw does not create unbound V2 particles");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
     draw_once(&state, framebuffer);
-    CHECK(v2_particle_active_count() == 1,
-          "V2.0 draw leaves unbound V2 particles untouched");
+    CHECK(v2_particle_active_count() == 0,
+          "V2.0 draw leaves the unbound particle runtime empty");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V22_MODERN);
     draw_once(&state, framebuffer);
-    CHECK(v2_particle_active_count() == 1,
-          "V2.2 draw leaves unbound V2 particles untouched");
+    CHECK(v2_particle_active_count() == 0,
+          "V2.2 draw leaves the unbound particle runtime empty");
 
     seed_visible_particle();
     init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
