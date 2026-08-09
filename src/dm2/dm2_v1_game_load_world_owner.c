@@ -1094,6 +1094,36 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeObjectReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_objects.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* LOAD_LOCALLEVEL_DYN reaches DB5..DB15 through c_map's validated
+     * ground stacks and GenericRecord::w0.  Preserve those exact source
+     * addresses first; constructing an inventory or a placement list here
+     * would lose the source-owned record-chain semantics. */
+    if (!dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.object_record_reads != candidate.object_record_count) {
+        return 0;
+    }
+    owner->preselection_map_objects = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {

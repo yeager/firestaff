@@ -144,6 +144,16 @@
   ljud, kollisionshantering och M11-ritning väntar på den fullständiga
   sessionsägaren.
 
+# DM2 New Game privata File_header-objekt (2026-08-09)
+
+- ✅ Den privata entrévärlden behåller nu aktuella kartans verkliga
+  DB5–DB15-recordadresser från File_header-kedjorna. Testet jämför varje
+  ObjectID, position, riktning, typ och rå recordslice med en ny validerad
+  läsning av samma DUNGEON.DAT-klon.
+- ✅ Ingen inventering, placering eller sprite har skapats från denna
+  locatorlista. Det arbetet kräver originalets DRAW_STATIC_OBJECT/DRAW_ITEM-
+  och sessionägare.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte

@@ -259,6 +259,10 @@ typedef struct {
      * c_map.  This is an address-only receipt; it has no timer, collision or
      * presentation side effect. */
     DM2_V1_G1RuntimeMapDoorReceipt preselection_map_doors;
+    /* Source-addressed DB5..DB15 entries reached from this map's complete
+     * File_header chains.  It deliberately remains a locator receipt until
+     * DRAW_STATIC_OBJECT/DRAW_ITEM have a complete placement owner. */
+    DM2_V1_FileHeaderRuntimeObjectReceipt preselection_map_objects;
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -308,6 +312,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
  * entrance projection consumes a visible door.  Source: SKWIN/DME.h::Door;
  * c_map.cpp::GET_ADDRESS_OF_TILE_RECORD. */
 int dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain the current File_header map's DB5..DB15 object record addresses.
+ * The result is not an item inventory or a rendered sprite list. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

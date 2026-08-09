@@ -66,8 +66,10 @@
   statiska GRAPHICSSET-scen till exakt map-token. Den privata
   entréviewporten håller nu de elva källrutornas terräng och
   scen-/ljusidentitet samt mappegna direkta DB0-dörrar med verkligt
-  tillstånd, paneltyp och ornament. Den saknar fortfarande dörrknappar,
-  objekt- och inputkonsumenterna före faktisk ritning. Den privata
+  tillstånd, paneltyp och ornament. Kartans DB5–DB15-objekt har också sina
+  verkliga recordadresser, men saknar ännu placering, GDAT-material och
+  inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.
+  Den privata
   kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får
   inte göra dem till en synlig eller styrbar partystatus före sessioncommit.
 

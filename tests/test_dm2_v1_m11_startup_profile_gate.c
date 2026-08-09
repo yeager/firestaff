@@ -177,6 +177,33 @@ static int dm2_test_preselection_doors_match_owner(
     return 1;
 }
 
+static int dm2_test_preselection_objects_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeObjectReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_objects.committed ||
+        owner->preselection_map_objects.map != owner->source_party_map ||
+        !dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.object_record_count !=
+            owner->preselection_map_objects.object_record_count ||
+        expected.object_record_reads != expected.object_record_count ||
+        expected.object_record_reads !=
+            owner->preselection_map_objects.object_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.object_record_count; ++i) {
+        const DM2_V1_FileHeaderObjectRecord *a = &expected.objects[i];
+        const DM2_V1_FileHeaderObjectRecord *b =
+            &owner->preselection_map_objects.objects[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -3990,6 +4017,9 @@ int main(void) {
                     profile_new_game_owner->preselection_map_doors.committed &&
                     profile_new_game_owner->preselection_map_doors.map ==
                         profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_map_objects.committed &&
+                    profile_new_game_owner->preselection_map_objects.map ==
+                        profile_new_game_owner->source_party_map &&
                     profile_new_game_owner->preselection_light.valid &&
                     profile_new_game_owner->preselection_scene_materialized &&
                     profile_new_game_owner->preselection_scene_plan.valid &&
@@ -4005,6 +4035,8 @@ int main(void) {
                     dm2_test_preselection_view_matches_owner(
                         profile_new_game_owner) &&
                     dm2_test_preselection_doors_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_objects_match_owner(
                         profile_new_game_owner) &&
                     !profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
