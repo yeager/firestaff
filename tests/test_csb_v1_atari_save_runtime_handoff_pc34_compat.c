@@ -4,6 +4,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32) || defined(_WIN64)
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
+
+static int make_directory(const char *path)
+{
+#if defined(_WIN32) || defined(_WIN64)
+    return _mkdir(path);
+#else
+    return mkdir(path, 0700);
+#endif
+}
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
 {
@@ -59,6 +73,8 @@ int main(void)
     if (corpus_path && corpus_path[0]) {
         const char *written_path = "/tmp/CSBGAME2.DAT";
         const char *backup_path = "/tmp/CSBGAME2.BAK";
+        const char *blocked_dir = "/tmp/CSBGAME3.DAT";
+        const char *blocked_backup = "/tmp/CSBGAME3.BAK";
         CSB_V1_AtariSaveInfo written_info;
         uint8_t *written = NULL;
         uint8_t *backup = NULL;
@@ -159,6 +175,32 @@ int main(void)
             csb_v1_runtime_cleanup(&runtime);
             return 1;
         }
+        /* F0435 only treats the backup as resumed after it has been renamed
+         * back to the selected canonical slot.  A valid source backup must
+         * not yield LOAD_OK if that replacement is impossible.  The MINI.DAT
+         * bytes are authentic Atari CSB data; only the deliberately blocked
+         * destination exercises the host filesystem failure boundary. */
+        remove(blocked_backup);
+        remove(blocked_dir);
+        if (make_directory(blocked_dir) != 0 ||
+            !write_file("/tmp/CSBGAME3.DAT/keep", (const uint8_t *)"x", 1u) ||
+            !write_file(blocked_backup, backup, backup_size) ||
+            csb_v1_runtime_load_game_from_path(&runtime, blocked_dir) ==
+                CSB_V1_LOAD_OK ||
+            !read_file(blocked_backup, &written, &written_size) ||
+            written_size != backup_size ||
+            memcmp(written, backup, backup_size) != 0) {
+            free(written);
+            free(backup);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        free(written);
+        written = NULL;
+        remove("/tmp/CSBGAME3.DAT/keep");
+        remove(blocked_dir);
+        remove(blocked_backup);
         remove(written_path);
         remove(backup_path);
         free(written);
