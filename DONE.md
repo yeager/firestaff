@@ -47,6 +47,20 @@
   transparent/end-code-regler. Saknad capture-attestering eller källmatchning
   ger ingen bild. Testet täcker också end-code-radstopp.
 
+# Nexus: capture-only VDP2 NBG1-tilemapkonsument (2026-08-09)
+
+- ✅ `nexus_v1_vdp2_capture_composite_nbg1_tilemap()` följer Mednafen-
+  verifierade NBG1-fält för tilemap, 8×8-tecken, tvåords namnposter,
+  4/8bpp, h/v-flip och NBG1 CRAM-offset. Den kräver exakt namnlista-, CG-
+  och full-CRAM-join från samma autentiserade Saturn-capture och vägrar
+  PNDSize=1, 16×16-celler, okänd crop eller saknad index-0-transparens.
+- ✅ VDP2-tilemapbanan är exponerad genom `Nexus_Viewport` men är fortsatt
+  capture-only. Den sätter inte `startup_menu_text_consumer_capture_verified`:
+  ingen nuvarande europeisk witness binder ännu FONT256/TEXT4/TABL till en
+  faktisk menybild eller VDP2-placering.
+- ✅ Regressionsproben `test_nexus_v1_vdp2_tilemap_capture_compositor` och
+  strikt C99-kompilering med `-Wall -Wextra -Werror -pedantic` passerar.
+
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns

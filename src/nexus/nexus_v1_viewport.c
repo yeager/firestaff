@@ -55,6 +55,29 @@ int nexus_viewport_replay_vdp2_nbg1_capture(
     return 1;
 }
 
+int nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp2TilemapCaptureInput *input,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt)
+{
+    Nexus_V1_Vdp2TilemapCaptureReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!vp || !input) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_vdp2_capture_composite_nbg1_tilemap(
+            &vp->fb, input, &receipt)) {
+        vp->last_vdp2_tilemap_capture_receipt = receipt;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    vp->last_vdp2_tilemap_capture_receipt = receipt;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 static int viewport_count_written_pixels(const Nexus_Framebuffer *fb)
 {
     int i;

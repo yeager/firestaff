@@ -348,6 +348,16 @@ bytes as PRS3, TITLE.CG, MENU.BPK, STABG, FACE, or DGN material.
 
 ## Artifact families
 
+The capture consumer now also has a bounded VDP2 NBG1 tilemap lane. It admits
+only an exact name-table/character-generator/full-CRAM join, the observed
+NBG1 tilemap register tuple, 8x8 cells and two-word name entries. Mednafen's
+verified fields are used directly: `PNDSize=0`, `palno=tmp&0x7f`, flip bits
+`0x4000/0x8000`, `charno=pnd[1]&0x7fff`, and the 4/8bpp CG addressing used by
+`TileFetcher::Fetch`. This is a source-bound replay primitive, not a general
+VDP2 emulator. It does not admit PNDSize=1, 16x16 cells, inferred source-map
+crops or a host text layout. A positive FONT256/TEXT4/TABL consumer capture
+is still required before the startup/menu text gate can change.
+
 | Route | Magic | Evidence still required |
 |---|---|---|
 | PRS3/menu replay | `NXSPRS3M` | source stream, SH-2 execution trace, PALT/VDP1 consumer and frame identity |
