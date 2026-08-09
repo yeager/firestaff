@@ -41,6 +41,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   either conditional surface. This prevents an incomplete HUD frame from
   being admitted as parity-complete.
 
+- 2026-08-09 top-row atomicity correction is complete: a rejected source
+  receipt now clears the DM1 HUD zones and stops; it cannot fall through to
+  the legacy partial painter. Status-bar receipt failure is treated the same
+  way, so an incomplete source frame is never published as a valid HUD.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
