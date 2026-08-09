@@ -32,10 +32,9 @@
 
 ### Fixed
 
-- `M11 DM1 data resolver`: Resolve a mixed real-data root by preferring the
-  hash-verified extracted DOS PC 3.4 `DATA/DUNGEON.DAT` before recursive
-  archive lookup, keeping the matching loose `GRAPHICS.DAT` as the runtime
-  owner.
+- `M11 DM1 data resolver`: Prevent recursive archive lookup from selecting a
+  sibling edition by binding the hash-verified extracted DOS PC 3.4
+  `DATA/DUNGEON.DAT` and its matching loose `GRAPHICS.DAT` first.
 - `M11_GameView`: Validate DM1 file and byte resume receipts before adopting
   the candidate world, so a rejected resume cannot leave the live session
   partially replaced.
