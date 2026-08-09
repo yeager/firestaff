@@ -2458,6 +2458,17 @@ int main(void) {
                     new_game_world_owner.source_staircase_flag ==
                         new_game_world_owner.source_display_pose_valid &&
                     new_game_world_owner.source_party_absdir <= 3u &&
+                    (!new_game_world_owner.source_display_pose_valid ||
+                     (new_game_world_owner.source_teleporter_probe_direction >= -1 &&
+                      new_game_world_owner.source_teleporter_probe_direction <= 3 &&
+                      new_game_world_owner.source_teleporter_source_direction <= 3u &&
+                      new_game_world_owner.source_teleporter_destination_direction <= 3u &&
+                      new_game_world_owner.source_party_absdir ==
+                          (uint8_t)((new_game_world_owner
+                                        .source_teleporter_destination_direction +
+                                     6 - new_game_world_owner
+                                             .source_teleporter_source_direction +
+                                     new_game_world_owner.source_party_direction) & 3))) &&
                     new_game_world_owner.source_last_moved_record == -1 &&
                     (!new_game_world_owner.source_display_pose_valid ||
                      (new_game_world_owner.source_teleporter_map >= 0 &&

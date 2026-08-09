@@ -30,7 +30,9 @@
   scenmål och `c_input`-konsumenten måste finnas innan `0x50` kan nå en
   spegel, dörr eller sensor. Den globala runtime-renderaren binder nu sin
   statiska GRAPHICSSET-scen till exakt map-token; motsvarande privata
-  viewportägare saknas fortfarande för entréns mirrorfas.
+  viewportägare saknas fortfarande för entréns mirrorfas. Den privata
+  kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får
+  inte göra dem till en synlig eller styrbar partystatus före sessioncommit.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår

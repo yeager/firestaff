@@ -1,5 +1,12 @@
 # DM2 runtime: statisk GRAPHICSSET-bild ägs per karta (2026-08-09)
 
+# DM2 New Game: riktig teleporterorientering (2026-08-09)
+
+- ✅ Den privata `DM2_move_2fcf_0b8b`-porten använder nu teleporterpostens
+  käll- och målriktning för `party.absdir` även när den hittar teleporter på
+  en angränsande ruta. Destinationskartan används inte längre felaktigt som
+  riktning. Realtidstestet sparar och kontrollerar de tre källvärdena.
+
 - ✅ Den levande DM2-renderaren binder nu den verifierade map-tokenen till
   samma GRAPHICSSET-scen, ljus, palettkontroller samt golv-, tak-, vägg- och
   dörrramsmaterial som originalets `LOAD_LOCALLEVEL_DYN` har valt. Ett

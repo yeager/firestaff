@@ -589,6 +589,9 @@ static int dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(
     owner->source_display_x = 0;
     owner->source_display_y = 0;
     owner->source_party_absdir = 0;
+    owner->source_teleporter_probe_direction = -1;
+    owner->source_teleporter_source_direction = 0;
+    owner->source_teleporter_destination_direction = 0;
     owner->source_display_pose_valid = 0;
     if (dm2_v1_game_load_owner_get_teleporter_detail(owner, map, x, y,
                                                       &detail)) {
@@ -596,6 +599,8 @@ static int dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(
         owner->source_teleporter_map = detail.b_04;
         owner->source_display_x = detail.b_02;
         owner->source_display_y = detail.b_03;
+        owner->source_teleporter_source_direction = detail.b_00;
+        owner->source_teleporter_destination_direction = detail.b_01;
         owner->source_party_absdir = (uint8_t)((detail.b_01 - detail.b_00 +
                                                  direction) & 3);
         owner->source_display_pose_valid = 1;
@@ -618,7 +623,12 @@ static int dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(
                                                  direction_x[display_direction]);
             owner->source_display_y = (int16_t)(detail.b_03 +
                                                  direction_y[display_direction]);
-            owner->source_party_absdir = (uint8_t)((detail.b_04 + direction) & 3);
+            owner->source_teleporter_probe_direction =
+                (int8_t)probe_direction;
+            owner->source_teleporter_source_direction = detail.b_00;
+            owner->source_teleporter_destination_direction = detail.b_01;
+            owner->source_party_absdir = (uint8_t)((detail.b_01 + 6 -
+                                                     detail.b_00 + direction) & 3);
             owner->source_display_pose_valid = 1;
             break;
         }

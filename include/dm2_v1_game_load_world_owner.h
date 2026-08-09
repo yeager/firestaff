@@ -197,6 +197,13 @@ typedef struct {
     int16_t source_display_x;
     int16_t source_display_y;
     uint8_t source_party_absdir;
+    /* DM2_move_2fcf_0b8b derives absdir from the two bytes returned by
+     * GET_TELEPORTER_DETAIL. Preserve them with the selected direct (-1) or
+     * neighbouring (0..3) probe so a later presentation owner cannot use
+     * the destination map byte as a direction. */
+    int8_t source_teleporter_probe_direction;
+    uint8_t source_teleporter_source_direction;
+    uint8_t source_teleporter_destination_direction;
     int source_display_pose_valid;
     int16_t source_last_moved_record;
     DM2_V1_GameLoadLocalLevelGraphicsReceipt preselection_local_graphics;
