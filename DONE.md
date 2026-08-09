@@ -19,6 +19,14 @@
   fallback. Saturns pixelkonsument, VDP2-lagerägare och produktionsraster är
   fortsatt korrekt stängda tills en matchande autentiserad capture join finns.
 
+# Nexus: negativ VDP2-startup/menu source-join (2026-08-09)
+
+- ✅ EU-capture frame 100 verifierades som NBG1 character-mode med tre aktiva
+  VDP2-lager.
+- ✅ Exact byte search i den fångade VDP2-VRAM:en fann varken `TITLE.CG` eller
+  `FONT256.S2D`. Registerobservationen får därför inte användas som bevis för
+  menytext, FONT256-konsument eller placering.
+
 # Theron: kontextbunden ADPCM-capturebuild (2026-08-09)
 
 - ✅ Capturebyggaren använder nu en separat kontextbunden ADPCM FIFO/RAM-patch.
