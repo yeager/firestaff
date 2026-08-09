@@ -2085,6 +2085,30 @@ static void test_csb_object_visibility_filter_contracts(void)
                csb_v1_viewport_get_object_visibility_spec_for_square(999) == NULL);
 }
 
+static void test_csb_f0115_native_object_graphic_mapping(void)
+{
+    /* ReDMCSB DUNGEON.C G0237 rows 2..22 and 127..179 select an
+     * ObjectAspectIndex. DUNVIEW.C G0209 then adds its
+     * FirstNativeBitmapRelativeIndex to M612 (498). These regressions cover
+     * the previously shifted potion family and JUNK subtype 25, which are
+     * visible both as floor objects and as F0142 positive projectile objects. */
+    check_int("csb.f0115.native.potion.mon",
+              csb_v1_viewport_f0115_object_native_graphic_pc34(
+                  THING_TYPE_POTION, 0, 0), 566);
+    check_int("csb.f0115.native.potion.ros",
+              csb_v1_viewport_f0115_object_native_graphic_pc34(
+                  THING_TYPE_POTION, 6, 0), 501);
+    check_int("csb.f0115.native.potion.kath_bomb",
+              csb_v1_viewport_f0115_object_native_graphic_pc34(
+                  THING_TYPE_POTION, 16, 0), 567);
+    check_int("csb.f0115.native.potion.empty_flask",
+              csb_v1_viewport_f0115_object_native_graphic_pc34(
+                  THING_TYPE_POTION, 20, 0), 579);
+    check_int("csb.f0115.native.junk.subtype25",
+              csb_v1_viewport_f0115_object_native_graphic_pc34(
+                  THING_TYPE_JUNK, 25, 0), 575);
+}
+
 static void test_csb_f0115_object_blit_contracts(void)
 {
     static const struct {
@@ -4206,6 +4230,7 @@ int main(void)
     test_csb_f0108_floor_ornament_bitmap_blit_contracts();
     test_csb_thing_pass_order_contracts();
     test_csb_object_visibility_filter_contracts();
+    test_csb_f0115_native_object_graphic_mapping();
     test_csb_f0115_object_blit_contracts();
     test_csb_f0115_projectile_blit_contracts();
     test_csb_creature_visibility_zone_contracts();

@@ -28,16 +28,19 @@ static const int armour_graphics[58] = {
 static const int junk_graphics[53] = {
     533, 505, 514, 514, 539, 540, 503, 582, 503, 517, 517, 517,
     517, 517, 517, 517, 517, 561, 561, 561, 561, 561, 561, 561,
-    561, 502, 559, 560, 526, 527, 524, 525, 570, 569, 504, 565,
+    561, 575, 559, 560, 526, 527, 524, 525, 570, 569, 504, 565,
     514, 514, 557, 558, 558, 578, 562, 563, 571, 572, 573, 574,
     576, 577, 573, 540, 539
 };
 
 static const int potion_graphics[21] = {
-    565, 565, 565, 565, 565, 565,
-    500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
-    566, 566, 566, 566,
-    578
+    /* ReDMCSB DUNGEON.C G0237 rows 2..22 -> DUNVIEW.C G0209:
+     * M612 (498) + FirstNativeBitmapRelativeIndex.  These are viewport
+     * images, not the adjacent icon-family entries. */
+    566, 566, 566, 566, 566, 566,
+    501, 501, 501, 501, 501, 501, 501, 501, 501, 501,
+    567, 567, 567, 567,
+    579
 };
 
 int csb_v1_viewport_f0115_object_native_graphic_pc34(
