@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — aktuell kalla capture har endast transportbevis
+
+- ✅ Den autentiska US-körningen når `transition=observed` och ger fyra
+  byteidentiska source-backed CD→RAM-receipts som nu kan verifieras i båda
+  receiptformaten.
+- 🔒 Samma körning har inga `pce_cd_fifo_origin_main_ram_consumer`-rader och
+  ingen RNG-return/spawn-entry. Originalets creature-, T700-, T900-, item-,
+  grafik- och ljudsemantik får därför fortfarande inte implementeras från
+  denna transport-only evidens.
+
 ## 2026-08-09 — nästa capture kräver aktiv dungeon
 
 - 🔧 Capture-scriptets macOS-input-grab är nu retry-säkert och väntar på både

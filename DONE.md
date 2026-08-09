@@ -1,3 +1,12 @@
+# Theron: verifiera aktuell CD→RAM-receiptform (2026-08-09)
+
+- ✅ `verify_theron_origin_ram_receipt.pl` accepterar nu den autentiska
+  instrumenterade Mednafen-formen med FIFO-sekvens, fysisk destination samt
+  `read_value`/`stored_value`, samtidigt som den äldre receiptformen behålls.
+- ✅ Den externa kalla US-capturen verifierar fyra source-backed
+  CD→RAM-receipts med äkta Track 02; verifieringen öppnar inte original-
+  consumer, RNG, spawn, AI, T700 eller T900.
+
 # Nexus SLEV/SAL/SDDRVS capture-envelope inventory (2026-08-09)
 
 - ✅ NXSLSC01-header, payload-hash och 65 536 SH-2-skrivposter är verifierade.
