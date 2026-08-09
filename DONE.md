@@ -5,6 +5,15 @@
   skalvalidering och GitHub-workflowens befintliga steg är fortsatt gröna.
   Alla BIOS-, firmware- och BIN/CUE/ISO-filer ligger kvar lokalt utanför Git.
 
+# Theron: kistor hålls utanför T900-itemtabellen (2026-08-09)
+
+- ✅ Riktiga kategori-9 `dm_chest`-records binder inte längre `data1` som ett
+  globalt item-id. En regression över US/JP Track 02-data kräver att kistor
+  behåller chest-typen och saknar item-property-row.
+- ✅ Alarm- och trigger-fixturelogik muterar inte längre source-header-verifierade
+  nivåer. T500/T900-konsumenterna förblir spärrade tills en autentiserad
+  runtime-capture visar originalets semantik.
+
 # Theron: autentisk US-rostertext i forcefield-handoff (2026-08-09)
 
 - ✅ Den riktiga US-Track-02-rostertexten läses från `TQUS02.bin`, placeras i

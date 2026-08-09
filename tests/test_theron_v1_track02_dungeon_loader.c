@@ -271,6 +271,23 @@ static void assert_real_item_roundtrip(Theron_V1_World *world) {
     assert(found);
 }
 
+static void assert_real_chests_are_not_itemrecords(
+    const Theron_V1_World *world, unsigned int expected_chests) {
+    unsigned int chest_count = 0;
+
+    for (int i = 0; i < world->object_count; ++i) {
+        const Theron_V1_Object *object = &world->objects[i];
+        if (object->source_category != THERON_CAT_CHEST) continue;
+        ++chest_count;
+        assert(object->type == THERON_OBJTYPE_CHEST);
+        assert(object->source_property_valid == 0);
+        assert(object->source_item_category == 0);
+        assert(object->source_item_type == 0);
+    }
+    /* This is a real-data regression guard, not a synthetic chest fixture. */
+    assert(chest_count == expected_chests);
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA","DRATOR","FORMICIA","SARMON","SHADODAN","THIEVES","DEMON"
@@ -509,6 +526,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(world->object_count == result.total_things_placed);
         if (d == 0)
             assert_real_item_roundtrip(world);
+            assert_real_chests_are_not_itemrecords(
+                world, result.source_category_counts[THERON_CAT_CHEST]);
 
         free(world);
     }
@@ -557,6 +576,8 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
         }
         if (d == 0)
             assert_real_item_roundtrip(world);
+            assert_real_chests_are_not_itemrecords(
+                world, result.source_category_counts[THERON_CAT_CHEST]);
         free(world);
     }
     printf("  JP Track 02: all dungeon object records OK\n");

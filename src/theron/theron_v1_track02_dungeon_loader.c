@@ -146,8 +146,10 @@ static int materialize_source_item(
         case THERON_CAT_WEAPON:   expected = THERON_ITEM_CAT_WEAPON; break;
         case THERON_CAT_CLOTHING: expected = THERON_ITEM_CAT_ARMOR; break;
         case THERON_CAT_SCROLL:
-        case THERON_CAT_POTION:
-        case THERON_CAT_CHEST:    expected = THERON_ITEM_CAT_CONSUMABLE; break;
+        case THERON_CAT_POTION:   expected = THERON_ITEM_CAT_CONSUMABLE; break;
+        /* DMBUILDER6/src/dms.h: category-9 dm_chest stores chested/data1
+         * and has no global item-id field.  Binding its data1 byte through
+         * the 66-entry item table would invent a T900 inventory identity. */
         default: break;
         }
         if (expected != 0u &&

@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Therons savegame-capture når fortfarande inte den autentiserade
+  spelägda `$2600`-konsumenten. Creature-AI, spawn/RNG, T700 och T900 ska
+  därför förbli fail-closed även när en lokal Mednafen-state finns.
+
 - ⏳ Den autentiska US-rostertexten är nu verifierad i forcefield-handoffens
   mirror→roster-bindning. JP-porträtt, roster-titlar och övrig full
   presentation kräver fortfarande egna källbundna konsumentbevis.

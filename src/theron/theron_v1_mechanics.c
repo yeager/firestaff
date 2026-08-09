@@ -901,6 +901,9 @@ int theron_v1_pool_use(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
+    /* THQUEST.ASM T500's source generator consumer is not authenticated.
+     * Never apply the fixture spawner mutation to a real Track 02 level. */
+    if (theron_v1_source_level_needs_stat_consumer(world)) return -1;
     Theron_V1_Object *a = theron_v1_object_at_in_dungeon(
         world, world->current_dungeon, world->current_level, x, y);
     if (!a || a->type != THERON_OBJTYPE_ALARM) return -1;
@@ -927,6 +930,9 @@ int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_trigger_activate(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
+    /* The source actuator/linked-object consumer remains capture-gated.
+     * Fixture trigger semantics must not mutate authenticated source state. */
+    if (theron_v1_source_level_needs_stat_consumer(world)) return -1;
     Theron_V1_Object *t = theron_v1_object_at_in_dungeon(
         world, world->current_dungeon, world->current_level, x, y);
     if (!t || t->type != THERON_OBJTYPE_TRIGGER) return -1;
