@@ -499,6 +499,147 @@ static int dm2_test_static_caii_materialization(
     return 1;
 }
 
+/* The source corpus supplies the DB4 record, map and coordinate. The test
+ * creates only the private c_creature ownership relation that 0cf7 receives
+ * after the allocator has already chosen a slot; it never invents game media
+ * or a timer ticket. */
+static int dm2_test_caii_0cf7_uses_owner_timer_heap(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    int index;
+    const DM2_V1_GameLoadCaiiMapCandidate *candidate = NULL;
+    uint8_t *record;
+    uint8_t *slot;
+    uint8_t record_before[16];
+    uint8_t slot_before[DM2_V1_CAII_SLOT_SIZE];
+    DM2_V1_TimerEntry *entries_before;
+    int16_t *indices_before;
+    DM2_V1_TimerQueue queue_before;
+    DM2_V1_GameLoadCaiiThinkReceipt receipt;
+    int result = 0;
+
+    if (!owner || !owner->caii_static_animation.valid ||
+        !owner->caii_slots.valid || !owner->timer_entries ||
+        !owner->timer_indices || owner->timer_capacity == 0u) return 0;
+    for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *probe =
+            &owner->caii_map_candidates[index];
+        const uint8_t *bytes = dm2_v1_record_pool_address(
+            &owner->record_pools, probe->record_handle);
+        if (!probe->static_ai && bytes &&
+            ((uint16_t)bytes[8] | ((uint16_t)bytes[9] << 8)) != 0xffffu) {
+            candidate = probe;
+            break;
+        }
+    }
+    /* The installed retail corpus need not contain this group shape. This is
+     * a skip-safe positive seam, not a reason to manufacture a creature. */
+    if (!candidate) return 1;
+    record = dm2_v1_record_pool_address_mut(&owner->record_pools,
+                                            candidate->record_handle);
+    if (!record || owner->caii_slots.capacity <= 0) return 0;
+    entries_before = malloc((size_t)owner->timer_capacity * sizeof(*entries_before));
+    indices_before = malloc((size_t)owner->timer_capacity * sizeof(*indices_before));
+    if (!entries_before || !indices_before) goto done;
+    slot = owner->caii_slots.slots;
+    memcpy(record_before, record, sizeof(record_before));
+    memcpy(slot_before, slot, sizeof(slot_before));
+    memcpy(entries_before, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*entries_before));
+    memcpy(indices_before, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*indices_before));
+    queue_before = owner->timer_queue;
+    /* Source-shaped post-allocation state: DB4 byte@5 owns slot 0 and its
+     * c_creature word@0 is the DB4 record index; word@2 starts at -1. */
+    record[5] = 0u;
+    slot[0] = (uint8_t)((uint16_t)candidate->record_handle & 0xffu);
+    slot[1] = (uint8_t)(((uint16_t)candidate->record_handle >> 8) & 0x03u);
+    slot[2] = 0xffu;
+    slot[3] = 0xffu;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_game_load_world_owner_schedule_caii_think(
+            owner, candidate->record_handle, candidate->map, candidate->x,
+            candidate->y, &receipt) || !receipt.valid ||
+        receipt.timer_slot < 0 || receipt.timer_type != 0x22u ||
+        receipt.due_tick != (uint32_t)(queue_before.gametick + 1) ||
+        owner->timer_entries[receipt.timer_slot].ttype != 0x22u ||
+        owner->timer_entries[receipt.timer_slot].actor != record[4] ||
+        owner->timer_entries[receipt.timer_slot].xA != (int8_t)candidate->x ||
+        owner->timer_entries[receipt.timer_slot].yA != (int8_t)candidate->y ||
+        ((uint16_t)slot[2] | ((uint16_t)slot[3] << 8)) !=
+            (uint16_t)receipt.timer_slot) goto restore;
+    result = 1;
+restore:
+    memcpy(record, record_before, sizeof(record_before));
+    memcpy(slot, slot_before, sizeof(slot_before));
+    memcpy(owner->timer_entries, entries_before,
+           (size_t)owner->timer_capacity * sizeof(*entries_before));
+    memcpy(owner->timer_indices, indices_before,
+           (size_t)owner->timer_capacity * sizeof(*indices_before));
+    owner->timer_queue = queue_before;
+done:
+    free(indices_before);
+    free(entries_before);
+    return result;
+}
+
+static int dm2_test_dynamic_caii_preflight_is_atomic(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_RecordPool *db4;
+    uint8_t *db4_before;
+    uint8_t *slots_before;
+    DM2_V1_TimerEntry *entries_before;
+    int16_t *indices_before;
+    DM2_V1_TimerQueue queue_before;
+    DM2_V1_DropRng rng_before;
+    DM2_V1_GameLoadCaiiDynamicReceipt receipt;
+    size_t db4_size;
+    int result = 0;
+
+    if (!owner || !owner->caii_static_animation.valid ||
+        owner->caii_map_receipt.dynamic_candidate_count == 0u ||
+        !owner->caii_slots.valid || !owner->timer_entries ||
+        !owner->timer_indices) return 0;
+    db4 = &owner->record_pools.pools[4];
+    db4_size = (size_t)db4->record_count * (size_t)db4->record_size;
+    db4_before = malloc(db4_size);
+    slots_before = malloc((size_t)owner->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE);
+    entries_before = malloc((size_t)owner->timer_capacity * sizeof(*entries_before));
+    indices_before = malloc((size_t)owner->timer_capacity * sizeof(*indices_before));
+    if (!db4_before || !slots_before || !entries_before || !indices_before) goto done;
+    memcpy(db4_before, db4->bytes, db4_size);
+    memcpy(slots_before, owner->caii_slots.slots,
+           (size_t)owner->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE);
+    memcpy(entries_before, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*entries_before));
+    memcpy(indices_before, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*indices_before));
+    queue_before = owner->timer_queue;
+    rng_before = owner->caii_rng;
+    memset(&receipt, 0, sizeof(receipt));
+    if (dm2_v1_game_load_world_owner_materialize_dynamic_caii(owner, &receipt) ||
+        !receipt.valid || !receipt.blocked_unowned_0a48 ||
+        receipt.dynamic_candidate_count !=
+            owner->caii_map_receipt.dynamic_candidate_count ||
+        memcmp(db4_before, db4->bytes, db4_size) != 0 ||
+        memcmp(slots_before, owner->caii_slots.slots,
+               (size_t)owner->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE) != 0 ||
+        memcmp(entries_before, owner->timer_entries,
+               (size_t)owner->timer_capacity * sizeof(*entries_before)) != 0 ||
+        memcmp(indices_before, owner->timer_indices,
+               (size_t)owner->timer_capacity * sizeof(*indices_before)) != 0 ||
+        memcmp(&queue_before, &owner->timer_queue, sizeof(queue_before)) != 0 ||
+        memcmp(&rng_before, &owner->caii_rng, sizeof(rng_before)) != 0) goto done;
+    result = 1;
+done:
+    free(indices_before);
+    free(entries_before);
+    free(slots_before);
+    free(db4_before);
+    return result;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -2813,10 +2954,14 @@ int main(void) {
                         &static_caii_world_owner) &&
                     dm2_test_static_caii_materialization(
                         &static_caii_world_owner) &&
+                    dm2_test_caii_0cf7_uses_owner_timer_heap(
+                        &static_caii_world_owner) &&
+                    dm2_test_dynamic_caii_preflight_is_atomic(
+                        &static_caii_world_owner) &&
                     !static_caii_world_owner.committed &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "DM2 applies RESET_CAII's real static DB4 animation branch only in its private File_header owner");
+                "DM2 keeps static CAII and the dynamic 0cf7 admission private, with authentic dynamic candidates blocking atomically before unowned 0a48");
     dm2_v1_game_load_world_owner_free(&static_caii_world_owner);
     memset(&new_game_generators, 0, sizeof(new_game_generators));
     new_game_generators_result = profile &&

@@ -282,6 +282,33 @@ typedef struct {
     uint32_t source_hash;
 } DM2_V1_GameLoadCaiiStaticReceipt;
 
+/* Private source-shaped result of DM2_1c9a_0cf7.  A timer handle here is a
+ * c_tim slot, never a synthetic ticket: slot zero is valid in the original
+ * timer array. Source: SKProject SKULLWIN/c_1c9a.cpp (5695-5732). */
+typedef struct {
+    int valid;
+    int replaced_pending_timer;
+    int16_t record_handle;
+    int16_t caii_slot;
+    int16_t timer_slot;
+    uint8_t timer_type;
+    uint8_t creature_type;
+    int16_t map;
+    uint8_t x;
+    uint8_t y;
+    uint32_t due_tick;
+} DM2_V1_GameLoadCaiiThinkReceipt;
+
+/* The complete dynamic half cannot run until 0a48's local-creature,
+ * animation and noise owners are present. This receipt makes that admission
+ * explicit and proves the preflight did not partially reset DB4/CAII/c_tim.
+ * Source: SKProject SKULLWIN/c_1c9a.cpp (5772-5894). */
+typedef struct {
+    int valid;
+    int blocked_unowned_0a48;
+    uint16_t dynamic_candidate_count;
+} DM2_V1_GameLoadCaiiDynamicReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -555,6 +582,21 @@ int dm2_v1_game_load_world_owner_advance_preselection(
  * dynamic CAII slot, queues a timer, consumes RNG or publishes a session. */
 int dm2_v1_game_load_world_owner_materialize_static_caii(
     DM2_V1_GameLoadWorldOwner *owner);
+
+/* Exact private c_tim producer used by DM2_ALLOC_CAII_TO_CREATURE after the
+ * source slot has been initialized. This does not allocate a slot or run
+ * 0a48; it is intentionally available so the later all-map transaction can
+ * use the same dynamic GAME_LOAD heap. */
+int dm2_v1_game_load_world_owner_schedule_caii_think(
+    DM2_V1_GameLoadWorldOwner *owner, int16_t record_handle, int map,
+    int x, int y, DM2_V1_GameLoadCaiiThinkReceipt *out_receipt);
+
+/* Admission gate for RESET_CAII's dynamic branch. While any real dynamic
+ * candidate needs unowned DM2_CREATURE_SOMETHING_1c9a_0a48, the whole atom is
+ * rejected before DB4, CAII, c_tim or c_randomdata can change. */
+int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadCaiiDynamicReceipt *out_receipt);
 
 typedef struct {
     int valid;

@@ -18,6 +18,18 @@
   0x193c0` är därmed entydig. Lookup-testet och de relevanta Nexus-
   regressionstesterna passerar.
 
+# DM2 New Game: privat CAII 0cf7-admission (2026-08-09)
+
+- ✅ `DM2_1c9a_0cf7` finns nu som en privat producent mot GAME_LOAD-ägarens
+  verkliga 12-byte `c_tim`-heap. Den sparar den riktiga timer-slotten i
+  `c_creature word@2`, inklusive originalets `0x21`/`0x22`-val från DB4:s
+  gruppord och `gametick + 1`.
+- ✅ Den dynamiska CAII-transaktionen räknar hela den autentiska all-kartslistan
+  före första ändring. När en kandidat behöver den ännu oägda `0a48`- och
+  `QUEUE_NOISE_GEN1`-kedjan avvisas den atomärt. DOS-korpustestet verifierar
+  att DB4, CAII-slottar, timerheap, indexheap och RNG då är byteidentiska.
+  Detta startar ingen varelse, CCM, ljudkö eller M11-session.
+
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
 - ✅ En riktig Mednafen 1.32.1-session med US Track 02 nådde originalets
