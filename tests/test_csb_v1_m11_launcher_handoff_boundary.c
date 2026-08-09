@@ -355,6 +355,43 @@ static void expect_amiga_c013_source_frame(M11_GameViewState *view,
         "Amiga C013 publishes the original G0021 dungeon palette");
 }
 
+/* ReDMCSB ACTIDRAW.C F0387 replaces C013 with C010 while a champion is
+ * acting.  Exercise the native IMG1 records directly: this must not fall
+ * back to the PC34 action chrome just because C010 and C013 share 87x45
+ * dimensions. */
+static void expect_amiga_c010_action_menu_source_frame(M11_GameViewState *view,
+                                                        const char *label)
+{
+    unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *c010;
+    const M11_AssetSlot *c013;
+    DM1_V1_ActionAreaRectPc34 action;
+
+    if (!view) {
+        expect_true(0, label);
+        return;
+    }
+    action = dm1_v1_action_area_rect_pc34();
+    view->actingChampionOrdinal = 1u;
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    c010 = M11_AssetLoader_Load(&view->assetLoader, 10u);
+    c013 = M11_AssetLoader_Load(&view->assetLoader, 13u);
+    expect_true(c010 && c010->loaded && c010->pixels &&
+                    c010->width == 87u && c010->height == 45u &&
+                    c013 && c013->loaded && c013->pixels &&
+                    frame_region_matches_bitmap(framebuffer, 320,
+                                                action.x, action.y,
+                                                c010->pixels, c010->width,
+                                                c010->height) &&
+                    !frame_region_matches_bitmap(framebuffer, 320,
+                                                 action.x, action.y,
+                                                 c013->pixels, c013->width,
+                                                 c013->height),
+                label);
+    view->actingChampionOrdinal = 0u;
+}
+
 /* ENTRANCE.C F0442 expands C005 directly and fades to DATA.C G0019.  The
  * A31/A35 runtime intentionally has no PC34 startup session, so exercise
  * the native C005 owner from an authenticated ADF rather than accepting a
@@ -2574,6 +2611,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
         &view, "A31M enters native C004 Prison after KAOS.FTL");
     expect_amiga_c013_source_frame(
         &view, "A31M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c010_action_menu_source_frame(
+        &view, "A31M action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c005_credits_source_frame(
         &view, "A31M presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
@@ -2688,6 +2727,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
         &view, "A35M enters native C004 Prison after APPB/KAOS.FTL");
     expect_amiga_c013_source_frame(
         &view, "A35M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c010_action_menu_source_frame(
+        &view, "A35M action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c005_credits_source_frame(
         &view, "A35M presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
@@ -2799,6 +2840,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
         &view, "A35E enters native C004 Prison after its direct C03 handoff");
     expect_amiga_c013_source_frame(
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c010_action_menu_source_frame(
+        &view, "A35E action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c005_credits_source_frame(
         &view, "A35E presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
@@ -2875,6 +2918,8 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
                 "A31E reaches C03_GAME without an A31M/A35M/PC34 replacement screen");
     expect_amiga_c013_source_frame(
         &view, "A31E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_c010_action_menu_source_frame(
+        &view, "A31E action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c017_inventory_source_frame(
         &view, "A31E inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(

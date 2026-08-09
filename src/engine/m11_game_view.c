@@ -4618,7 +4618,14 @@ static int m11_csb_present_amiga_runtime_surface(
 
     const unsigned int graphic_index = state && state->candidateMirrorRenameActive
         ? 27u : state && state->candidateMirrorPanelActive
-        ? 40u : state && state->inventoryPanelActive ? 17u : 13u;
+        ? 40u : state && state->inventoryPanelActive ? 17u :
+        /* ReDMCSB ACTIDRAW.C F0387 switches C009's idle movement-arrows
+         * surface to C010 when MENU.C has selected an acting champion.
+         * The native Amiga route used to keep showing C013 here, leaving
+         * the source-owned action-menu input surface visually stale.  Both
+         * C010 and C013 are independently decoded IMG1 records in the
+         * authenticated Amiga GRAPHICS.DAT; do not borrow PC34 chrome. */
+        state && state->actingChampionOrdinal != 0u ? 10u : 13u;
     /* ReDMCSB COORD.C G2067/G2068 places the 224x136 viewport at (0,33).
      * PANEL.C F0347 fills that viewport with C017.  F0346 and REVIVE.C
      * F0281 then target C101: layout record C101 is centered at (152,89),
@@ -4630,7 +4637,8 @@ static int m11_csb_present_amiga_runtime_surface(
         state && state->inventoryPanelActive ? 0 : 233;
     const int target_y = state && (state->candidateMirrorPanelActive ||
                                    state->candidateMirrorRenameActive) ? 85 :
-        state && state->inventoryPanelActive ? 33 : 124;
+        state && state->inventoryPanelActive ? 33 :
+        graphic_index == 10u ? 77 : 124;
     const int expected_width = state && (state->candidateMirrorPanelActive ||
                                          state->candidateMirrorRenameActive) ? 144 :
         state && state->inventoryPanelActive ? 224 : 87;
