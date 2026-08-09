@@ -13,6 +13,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   execution-window-kvittona; inga semantiska RNG-/creature-/AI-/T700-/T900-
   regler öppnades eftersom kvittot fortfarande saknar spelägd CD-läsning och
   `$4644`/`$4667`-returnkedjan.
+- ✅ En separat autentisk nyspelsreplay på samma US Track 02-media producerade
+  87 MPR-bundna prover, 16 `$4644`-preconsumer- och 64 `$4667`-helperträffar.
+  Den bekräftar även 161 råa Track 02-sektorläsningar och 2 048 ADPCM-FIFO-
+  läsningar, men inga `$C96B`-träffar eller `spawn_consumer`-RAM-läsningar;
+  därför är detta fortfarande inte ett publicerbart RNG-/creature-kvitto.
 - ✅ Quartz-hjälparen kompilerar nu på riktigt: en kvarvarande referens till
   den obefintliga variabeln `activationAccepted` är borttagen. Capture-testet
   type-checkar hjälparen när `swiftc` finns, så komma/punkt-bindningar kan inte

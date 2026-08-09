@@ -44,5 +44,12 @@ AI, loot or T700 semantics. Its transition receipt still reports zero
 game-owned CD-sector reads, so no later semantic gate is opened by this
 capture.
 
+A separate authenticated new-game replay on the same US Track 02 medium
+produced 87 v2 register samples, including 16 `$4644` preconsumer entries and
+64 `$4667` helper entries. It also observed 161 raw Track 02 sector reads and
+2,048 ADPCM FIFO reads, but no `$C96B` samples and no `spawn_consumer_read`
+RAM receipts. The two captures must not be merged: doing so would manufacture
+a spawn record from separate executions.
+
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.

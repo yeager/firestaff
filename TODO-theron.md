@@ -20,6 +20,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   `$4644`-preconsumer, `$4667`-helper och dynamiskt returkontrakt. Den nya
   receipt-vägen publicerar inga RNG-, creature-, AI-, loot-, T700- eller
   T900-regler.
+- 🔧 Förena i en och samma autentiserade körning `$4644`/`$4667`, hela
+  `$C96B–$CA69`-konsumentfönstret och de RAM-läsningar som instrumenteras som
+  `spawn_consumer_read`. Nyspelsreplay bevisar nu preconsumer/helper, medan
+  state-autoload bevisar `$C96B`-fönstret; två separata körningar får inte
+  blandas till ett syntetiskt spawnrecord.
 - ✅ Macens Mednafen-profil har nu en fungerande input-grab-genväg på
   `Ctrl+Shift+G`; standardens `Ctrl+Shift+Menu` fungerar inte på tangentbord
   utan Menu-tangent. Därmed kan explicit konfigurerade komma/punkt-bindningar
