@@ -58,6 +58,10 @@ profile binds `command.toggle_grab` to SDL scancode `10`: press
 `Ctrl+Shift+G` once after the game window is focused. With grabbing enabled,
 comma is SDL scancode `54` and period is `55`; they work as Button I/II only
 when the profile assigns those scancodes to the corresponding PCE buttons.
+If punctuation still does not arrive, use the layout-stable fallback: `Z` is
+Button I and `X` is Button II. The capture helper type-checks before posting
+Quartz events, so a broken helper cannot silently make either binding look
+unresponsive.
 
 The PCE wire-state masks used by the replay helper follow Mednafen's device
 vector order (`I`, `II`, `SELECT`, `RUN`, `UP`, `RIGHT`, `DOWN`, `LEFT`), not

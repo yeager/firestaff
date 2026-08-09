@@ -4,6 +4,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- 🔒 Om komma/punkt inte reagerar i en native Mac-körning ska fångsten först
+  ha ett godkänt Quartz-hjälparbygge och Mednafen måste ha input-grab aktivt.
+  `Z`/`X` är den layoutstabila Button I/II-fallbacken. Detta påverkar inte
+  spärren för spelägd CD-läsning eller den senare RNG/AI/T700/T900-semantiken.
 - 🔧 macOS global-HID-hjälparen rapporterar nu den observerade frontmost-PID:n
   och använder den som fokusbevis. En lokal körning stoppades fortfarande när
   macOS höll ett annat fönster frontmost; detta är ännu inte ett spelägt

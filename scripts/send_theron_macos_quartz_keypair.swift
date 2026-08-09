@@ -37,7 +37,7 @@ if globalHid {
     Thread.sleep(forTimeInterval: 0.2)
     let observedPid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
     guard observedPid == targetPid else {
-        fputs("quartz_target_not_frontmost activation=\(activationAccepted ? 1 : 0) expected=\(targetPid) observed=\(observedPid)\\n", stderr)
+        fputs("quartz_target_not_frontmost activation=0 expected=\(targetPid) observed=\(observedPid)\\n", stderr)
         exit(1)
     }
     frontmostPid = observedPid

@@ -102,6 +102,14 @@ if ! grep -Fq 'expected_quartz_activation=quartz_activation=not_required' "$scri
     printf 'FAIL: capture must attest that the target owns the foreground\n' >&2
     exit 1
 fi
+if grep -Fq 'activationAccepted' "$quartz_helper"; then
+    printf 'FAIL: Quartz helper must not reference an undefined activation result\n' >&2
+    exit 1
+fi
+if command -v swiftc >/dev/null 2>&1 && ! swiftc -typecheck "$quartz_helper" >/dev/null 2>&1; then
+    printf 'FAIL: Quartz helper does not type-check\n' >&2
+    exit 1
+fi
 if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then
     printf 'FAIL: Quartz helper accepted a non-positive target PID\n' >&2
     exit 1

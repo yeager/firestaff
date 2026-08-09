@@ -4,6 +4,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — macOS global-HID receipt correction
 
+- ✅ Quartz-hjälparen kompilerar nu på riktigt: en kvarvarande referens till
+  den obefintliga variabeln `activationAccepted` är borttagen. Capture-testet
+  type-checkar hjälparen när `swiftc` finns, så komma/punkt-bindningar kan inte
+  längre falla bort på grund av ett oupptäckt hjälparfel.
 - ✅ Quartz-hjälparen skriver nu `quartz_frontmost_pid` och låter den faktiskt
   observerade frontmost-processen vara fokusbeviset. `activate()`-returvärdet
   används inte längre ensamt, eftersom det kan vara `false` när rätt process
