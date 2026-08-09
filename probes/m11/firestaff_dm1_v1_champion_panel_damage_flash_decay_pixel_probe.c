@@ -11,35 +11,44 @@
  * expires. It does not claim original DOS screenshot parity.
  *
  * KNOWN FAILURE (diagnosed 2026-08-09, not yet fixed):
- *   The C015 banner IS implemented -- m11_game_view.c draws it via
- *   dm1_v1_graphic_champion_damage_small_pc34(), placing it with
- *   dm1_v1_champion_damage_indicator_rect_pc34() and blitting with
- *   M11_COLOR_FLESH transparency, matching CHAMPION.C F0320.  It is simply
- *   never reached on this probe's path.
+ *   This is NOT a missing feature and NOT a parity gap.  The C015 banner is
+ *   implemented twice over:
+ *     - the legacy champion-panel painter draws it via
+ *       dm1_v1_graphic_champion_damage_small_pc34(), placed with
+ *       dm1_v1_champion_damage_indicator_rect_pc34() and blitted with
+ *       M11_COLOR_FLESH, matching CHAMPION.C F0320; and
+ *     - the source-owned top-row receipt path draws it as a
+ *       DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34 operation together with the
+ *       F0320 damage number.
+ *   The receipt chain is wired too: m11_dm1_v1_party_inventory_handoff_from_frame
+ *   populates redrawState.pendingDamage/pendingDamageAmount straight from
+ *   state->championDamageTimer/championDamageAmount.
  *
- *   m11_dm1_v1_top_row_receipt_required() is satisfied here
- *   (M11_GAME_SOURCE_BUILTIN_CATALOG counts as a DM1 source kind, debug HUD
- *   off, V1 chrome mode on, no V2 slice), so the champion-panel draw takes
- *   m11_draw_dm1_v1_top_row_receipt() and returns early.  The panel body,
- *   and the damage banner inside it, never execute -- the indicator zone
- *   comes back as 315 pixels of colour 0, and the three PC34 damage-number
- *   origin checks fail with it.
+ *   What actually happens here: m11_dm1_v1_top_row_receipt_required() is
+ *   satisfied on this probe's path (M11_GAME_SOURCE_BUILTIN_CATALOG is a DM1
+ *   source kind, debug HUD off, V1 chrome mode on, no V2 slice), so the
+ *   source-owned atomic top row governs.  Its receipt then REJECTS, and the
+ *   caller deliberately blanks the top-row and status-bar zones and returns
+ *   rather than let the legacy painter republish a partial HUD -- see the
+ *   "A source-owned top row is atomic" comment in m11_game_view.c.  The
+ *   315-pixel all-zero indicator zone this probe reports IS that documented
+ *   fail-closed blanking, working as designed.
+ *
+ *   The open question is therefore narrower than it looked: which material
+ *   receipt rejects in this probe's environment, and whether the probe should
+ *   be satisfying it or should assert the fail-closed blank instead.
  *
  *   Ruled out while diagnosing: geometry (this probe's
  *   M11_GameView_GetV1DamageIndicatorZone is an inline wrapper around the
- *   very same rect function the draw uses) and asset/font availability
- *   (assetsAvailable and originalFontAvailable are both 1).
+ *   very same rect function the legacy draw uses) and asset/font
+ *   availability (assetsAvailable and originalFontAvailable are both 1).
  *
- *   ReDMCSB CHAMPION.C:1762 draws this banner over the champion name in the
- *   status box -- i.e. in the top row -- so the top-row receipt path should
- *   render it.  That makes this a parity gap in the receipt path rather
- *   than a defect in this probe.
- *
- *   Correcting the record: commit 9e4fffcc8 claimed the banner was "simply
- *   not implemented".  That was wrong; it was based on grepping for the
- *   unused M11_GFX_DAMAGE_TO_CHAMPION_SMALL enum, which is dead code
- *   sitting alongside a working implementation that uses a different
- *   accessor.
+ *   Correcting the record twice over: commit 9e4fffcc8 claimed the banner was
+ *   "simply not implemented" (wrong -- that came from grepping the unused
+ *   M11_GFX_DAMAGE_TO_CHAMPION_SMALL enum, dead code beside a working
+ *   implementation), and the follow-up called the residual failure a parity
+ *   gap in the receipt path (also wrong -- that path implements the banner;
+ *   the blanking is intentional atomicity).
  *
  * Source evidence:
  *   ReDMCSB CHAMDRAW.C F0623 lines 680-699 chooses C015/C167 for a
