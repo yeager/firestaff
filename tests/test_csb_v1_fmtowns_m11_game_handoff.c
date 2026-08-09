@@ -334,6 +334,13 @@ int main(void)
                   user_save_state.dungeon.raw_data != NULL,
               "F31 F0435 transfers the authentic user save and appended dungeon atomically");
         csb_v1_fmtowns_game_startup_state_free(&user_save_state);
+        memset(&external_save_handoff, 0, sizeof(external_save_handoff));
+        CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
+                  (const CSB_V1_BootProfile *)view.csbBootProfile, language,
+                  user_save_path, &external_save_handoff) &&
+                  external_save_handoff.startup_mini_header_dungeon_id == 12u &&
+                  external_save_handoff.startup_mini_dungeon_tail_verified,
+              "legacy F31 handoff also admits the authentic Prison save");
     }
     memset(&external_save_handoff, 0, sizeof(external_save_handoff));
     memset(&external_save_state, 0, sizeof(external_save_state));

@@ -1375,9 +1375,7 @@ int csb_v1_fmtowns_game_user_save_handoff_open(
     CSB_V1_FmtownsGameHandoffReceipt *out_receipt)
 {
     CSB_V1_FmtownsGameHandoffReceipt retail;
-    uint32_t save_size = 0u;
-    uint32_t save_hash;
-    uint16_t expected_platform;
+    CSB_V1_FmtownsUserSaveReceipt user_save;
 
     if (!out_receipt || !save_path || !save_path[0]) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -1388,28 +1386,40 @@ int csb_v1_fmtowns_game_user_save_handoff_open(
     memset(&retail, 0, sizeof(retail));
     if (!csb_v1_fmtowns_game_handoff_open(profile, language, &retail))
         return 0;
-    expected_platform = retail.startup_mini_header_platform;
-    save_hash = csb_v1_fmtowns_game_file_fnv1a(save_path, &save_size);
-    if (save_size < CSB_V1_FMTOWNS_SAVE_HEADER_BYTES || save_hash == 0u ||
-        snprintf(retail.startup_mini_path,
-                 sizeof(retail.startup_mini_path), "%s", save_path) < 0 ||
-        strlen(retail.startup_mini_path) >= sizeof(retail.startup_mini_path)) {
-        return 0;
-    }
-
-    retail.startup_mini_size = save_size;
-    retail.startup_mini_fnv1a = save_hash;
-    /* This flag means that the selected candidate passed F7061/F7057/F7063,
-     * not that it equals the immutable retail bootstrap hash. */
+    memset(&user_save, 0, sizeof(user_save));
+    if (!csb_v1_fmtowns_game_user_save_open(profile, &retail, save_path,
+                                             &user_save)) return 0;
+    /* Preserve this legacy receipt API for callers which then use the
+     * existing F0435 state loader.  The source path and all decoded bounds
+     * now come from the real user-save validator, so C12 Prison is not
+     * accidentally constrained by MINI.DAT's C13 bootstrap identity. */
+    retail.startup_mini_size = user_save.source_size;
+    retail.startup_mini_fnv1a = user_save.source_fnv1a;
+    snprintf(retail.startup_mini_path, sizeof(retail.startup_mini_path), "%s",
+             user_save.source_path);
     retail.startup_mini_verified = 1;
-    retail.startup_mini_header_verified = 0;
-    retail.startup_mini_save_parts_verified = 0;
-    retail.startup_mini_dungeon_tail_verified = 0;
-    if (!csb_v1_fmtowns_game_startup_mini_header_open(
-            retail.startup_mini_path, expected_platform, &retail)) {
-        memset(&retail, 0, sizeof(retail));
-        return 0;
-    }
+    retail.startup_mini_header_verified = 1;
+    retail.startup_mini_header_key = user_save.header_key;
+    retail.startup_mini_header_format_id = CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5;
+    retail.startup_mini_header_platform = user_save.platform;
+    retail.startup_mini_header_dungeon_id = user_save.dungeon_id;
+    retail.startup_mini_save_parts_verified = 1;
+    retail.startup_mini_party_champion_count = user_save.party_champion_count;
+    retail.startup_mini_event_count = user_save.event_count;
+    retail.startup_mini_first_unused_event_index = user_save.first_unused_event_index;
+    retail.startup_mini_current_active_group_count = user_save.current_active_group_count;
+    retail.startup_mini_event_maximum_count = user_save.event_maximum_count;
+    retail.startup_mini_active_group_capacity = user_save.active_group_capacity;
+    retail.startup_mini_game_time = user_save.game_time;
+    retail.startup_mini_party_map_x = user_save.party_map_x;
+    retail.startup_mini_party_map_y = user_save.party_map_y;
+    retail.startup_mini_party_direction = user_save.party_direction;
+    retail.startup_mini_party_map_index = user_save.party_map_index;
+    retail.startup_mini_verified_save_body_offset = user_save.portraits_offset;
+    retail.startup_mini_dungeon_tail_verified = 1;
+    retail.startup_mini_dungeon_tail_offset = user_save.dungeon_tail_offset;
+    retail.startup_mini_dungeon_tail_size = user_save.dungeon_tail_size;
+    retail.startup_mini_dungeon_tail_checksum = user_save.dungeon_tail_checksum;
     retail.source_evidence =
         "ReDMCSB STARTUP1.C F0435 line 163; LOADSAVE.C F0435; "
         "CEDTINCD.C F7051/F7057; CEDTINCA.C F7063";
