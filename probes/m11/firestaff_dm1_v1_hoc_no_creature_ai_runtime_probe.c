@@ -52,19 +52,46 @@ static int file_exists(const char* path) {
     return 1;
 }
 
+static int is_pc34_data_dir(const char* path) {
+    char graphicsPath[512];
+    char dungeonPath[512];
+    if (!path || !path[0]) {
+        return 0;
+    }
+    snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", path);
+    snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", path);
+    return file_exists(graphicsPath) && file_exists(dungeonPath);
+}
+
 static const char* narrow_dm1_data_dir(const char* dataDir,
                                        char* out,
                                        size_t outSize) {
-    char graphicsPath[512];
-    char dungeonPath[512];
+    static const char* const pc34RelativePaths[] = {
+        "DATA",
+        "dm1/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34",
+        NULL
+    };
+    size_t i;
+
     if (!dataDir || !out || outSize == 0U) {
         return dataDir;
     }
-    snprintf(graphicsPath, sizeof(graphicsPath), "%s/dm1/GRAPHICS.DAT", dataDir);
-    snprintf(dungeonPath, sizeof(dungeonPath), "%s/dm1/DUNGEON.DAT", dataDir);
-    if (file_exists(graphicsPath) && file_exists(dungeonPath)) {
-        snprintf(out, outSize, "%s/dm1", dataDir);
+    if (is_pc34_data_dir(dataDir)) {
+        snprintf(out, outSize, "%s", dataDir);
         return out;
+    }
+    for (i = 0; pc34RelativePaths[i] != NULL; ++i) {
+        char candidate[512];
+        snprintf(candidate, sizeof(candidate), "%s/%s", dataDir,
+                 pc34RelativePaths[i]);
+        if (is_pc34_data_dir(candidate)) {
+            snprintf(out, outSize, "%s", candidate);
+            return out;
+        }
     }
     return dataDir;
 }

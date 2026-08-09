@@ -1,3 +1,11 @@
+# Nexus: korrekt VDP2-registertolkning (2026-08-09)
+
+- ✅ `analyze_nexus_vdp2_composition.py` tolkar nu den externa Mednafen-
+  runtime-capturens native little-endian VDP2-registerord korrekt. Verifierat
+  mot autentisk Nexus-menywindow; `BGON` och aktiva NBG-lager matchar den
+  observerade Saturn-state. Ändringen påverkar endast diagnostik och lämnar
+  source-join/host-composition-gaten stängd.
+
 # Lokal macOS-runbook för SDL2, Mednafen och Tsugaru (2026-08-09)
 
 - ✅ Tsugaru-delen är nu konkret för macOS: korrekt `gui/src`-build med
@@ -20,7 +28,12 @@
   capturen, äldre negativa körningar och scripted replay som emulatorintern
   inputväg utan fysisk macOS-input.
 
-# Nexus: extern SLEV/SAL capture-producent (2026-08-09)
+# Nexus: SLEV/SAL-metadata och extern capture-producent (2026-08-09)
+
+- ✅ SLEV/SAL-capturelaunchern och artefaktverifieraren avvisar nu uppenbara
+  syntetiska FNV-metadata (noll, korta värden och upprepade nibblemönster).
+  Regressionstesterna använder icke-syntetiska formatvärden och passerar;
+  ändringen bevisar inte event-dispatch eller ljuduppspelning.
 
 - ✅ Mednafen 1.32.1 byggs reproducerbart på extern disk med en read-only
   `NXSLSC01`-hook för autentiska SH-2 WorkRAM-skrivningar, SH-2-PC-proveniens

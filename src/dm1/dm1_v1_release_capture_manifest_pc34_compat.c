@@ -1,13 +1,19 @@
 #include "dm1_v1_release_capture_manifest_pc34_compat.h"
 
+#include <stdint.h>
 #include <string.h>
 
 static int dm1_v1_release_capture_frame_valid_pc34(
     const DM1_V1_ReleaseCaptureFramePc34 *frame) {
+    uint64_t required_bytes;
+
     return frame && frame->capturedFromMacWindow &&
            frame->capturedFromReleaseApp && frame->width >= 320 &&
            frame->height >= 200 &&
-           frame->byteCount >= frame->width * frame->height * 4 &&
+           frame->byteCount > 0 &&
+           (required_bytes = (uint64_t)(unsigned int)frame->width *
+                             (uint64_t)(unsigned int)frame->height * 4u,
+            (uint64_t)(unsigned int)frame->byteCount >= required_bytes) &&
            frame->framebufferHash != 0u;
 }
 

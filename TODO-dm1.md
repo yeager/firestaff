@@ -12,6 +12,29 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   closes a data-discovery defect; it does not close the authentic C13-save or
   original-pixel capture gates.
 
+- 2026-08-09 Downloads audit found two distinct authentic PC 3.4 `DMSAVE.DAT`
+  files (both checksum-valid and F7057-envelope-valid). The second completes
+  a 15-event/15-active-group in-memory compatibility roundtrip. Neither file
+  has an adjacent operator provenance sidecar, and no C13 event count is
+  promoted from this discovery; the authenticated C13-save gate remains open.
+
+- 2026-08-09 release-capture validation now rejects negative, zero, and
+  overflowing framebuffer dimensions with a 64-bit size check. This closes a
+  metadata-safety defect only; it does not create or admit missing original
+  pixels.
+
+- 2026-08-09 HoC runtime-probe path resolution is complete: the no-creature-AI
+  guard now selects the authenticated DOS PC 3.4 `DATA` tree from a broad
+  `/Users/bosse/.firestaff/data` root and from a per-game root. The real-data
+  probe passes 4/4; this removes a false discovery/scan failure and does not
+  claim C13 or original-pixel parity.
+
+- 2026-08-09 creature-AI ownership wording is corrected: live DM1 behavior is
+  owned by the M10 source-ordered F0209 timeline; the M11 map-scan routine is
+  retained only for isolated diagnostic worlds without an admitted source
+  timeline. This removes a misleading "M10 no-op" description and does not
+  claim broader creature-combat parity.
+
 - 2026-08-09 verification-path repair is complete: pass76 route-state JSON is
   stored under `parity-evidence/verification`, and pass608/live-row checks no
   longer depend on the removed historical `verification-m11` path. This fixes
@@ -4540,10 +4563,12 @@ and real community-save corpus round-trip evidence.
     gate only when an operator-owned C13-bearing PC34 save is available.
 ## DM1 C03/C04 runtime identity follow-up
 
-- [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
-  contain different C03 timer/event and C04 heap layouts. Stage/adopt now
-  preserve their raw identities; generated saves remain invalid as positive
-  corpus evidence.
+- [x] The current local fixture-free PC34 corpus gate is verified with
+  operator-owned saves that contain both empty and non-empty C03/C04 runtime
+  layouts. The backing-aware production route preserves their raw identities;
+  generated saves remain invalid as positive corpus evidence. Broader,
+  independently collected layouts remain an evidence-expansion task, not a
+  blocker for the current local C03/C04 route.
 
   - 2026-08-09 verification: the two provenance-attested saves in
     `/Users/bosse/Downloads` were run through the backing-aware production
@@ -4576,9 +4601,9 @@ and real community-save corpus round-trip evidence.
     shared F0435/F0145/F0146/F0147/F0196 handoff now admits both original
     raw and legacy encoded forms while resolving only the loaded GROUP table.
     V1/V2.0/V2.1/V2.2 --game dm1 --save boot probes passed against the
-    second save. The standalone corpus preflight remains open because this
-    authentic save has no dungeon tail; it must be staged against its real
-    DUNGEON.DAT before F0435 -> F0433 -> F0435 can certify the full route.
+    second save. The older standalone corpus preflight is inapplicable because
+    this authentic save has no dungeon tail; the backing-aware route above is
+    the authority and stages it against the real DUNGEON.DAT.
 
   - 2026-07-31 backed-runtime update: both operator-owned DOSBox saves now
     a live C03/C04 save must never be certified without its matching dungeon

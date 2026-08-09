@@ -74,6 +74,17 @@ int main(void) {
     CHECK(dm1_v1_release_capture_manifest_build_pc34(&input, &manifest));
     CHECK(!manifest.ready && !manifest.titleReceiptConsumed);
 
+    title.suppress_synthetic_fallback = 1;
+    input.hudFrame.width = -1;
+    CHECK(dm1_v1_release_capture_manifest_build_pc34(&input, &manifest));
+    CHECK(!manifest.ready && !manifest.hudFrameCaptured);
+
+    input.hudFrame = frame(0x33445566u);
+    input.hudFrame.width = 2147483647;
+    input.hudFrame.height = 2147483647;
+    CHECK(dm1_v1_release_capture_manifest_build_pc34(&input, &manifest));
+    CHECK(!manifest.ready && !manifest.hudFrameCaptured);
+
     printf("dm1 release capture manifest: %d failure(s)\n", failures);
     return failures ? 1 : 0;
 }
