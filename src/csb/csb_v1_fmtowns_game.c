@@ -1438,8 +1438,11 @@ int csb_v1_fmtowns_game_user_save_handoff_open(
     if (!csb_v1_fmtowns_game_handoff_open(profile, language, &retail))
         return 0;
     memset(&user_save, 0, sizeof(user_save));
-    if (!csb_v1_fmtowns_game_user_save_open(profile, &retail, save_path,
-                                             &user_save)) return 0;
+    /* Keep the legacy F0435 handoff on the same canonical-slot recovery
+     * route as M11.  Utility/file-picker callers must not bypass a validated
+     * CSBGAME.BAK merely because they consume the older receipt shape. */
+    if (!csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+            profile, &retail, save_path, &user_save)) return 0;
     /* Preserve this legacy receipt API for callers which then use the
      * existing F0435 state loader.  The source path and all decoded bounds
      * now come from the real user-save validator, so C12 Prison is not

@@ -411,6 +411,14 @@ int main(void)
                       recovered_user_save.recovered_from_backup &&
                       strcmp(recovered_user_save.source_path, selected_path) == 0,
                   "F31 F0435 restores validated CSBGAME.BAK to its canonical slot");
+            memset(&external_save_handoff, 0, sizeof(external_save_handoff));
+            CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
+                      (const CSB_V1_BootProfile *)view.csbBootProfile, language,
+                      selected_path, &external_save_handoff) &&
+                      external_save_handoff.valid &&
+                      strcmp(external_save_handoff.startup_mini_path,
+                             selected_path) == 0,
+                  "F31 legacy handoff keeps backup recovery on its canonical slot");
             remove(selected_path);
             remove(backup_path);
             rmdir(recovery_dir);
