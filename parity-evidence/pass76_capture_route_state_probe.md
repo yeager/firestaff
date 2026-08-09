@@ -21,13 +21,13 @@ Generated with:
 ```sh
 ./build/firestaff_m11_capture_route_state_probe \
   verification-screens/dm1-dosbox-capture/DungeonMasterPC34/DATA \
-  verification-m11/capture-route-state
+  parity-evidence/verification
 ```
 
 Outputs:
 
-- `verification-m11/capture-route-state/pass76_capture_route_state_probe.md`
-- `verification-m11/capture-route-state/pass76_capture_route_state_probe.json`
+- `parity-evidence/pass76_capture_route_state_probe.md`
+- `parity-evidence/verification/pass76_capture_route_state_probe.json`
 
 ## Locked fixture route
 
