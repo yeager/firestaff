@@ -4302,7 +4302,17 @@ int M12_StartupMenu_TextEditCancel(M12_StartupMenuState* state) {
 }
 
 static const char* m12_settings_value_language(const M12_StartupMenuState* state) {
-    return g_languages[state->settings.languageIndex];
+    if (!state) {
+        return "AUTO";
+    }
+    /* languageIndex is the currently resolved system locale when AUTO is
+     * active.  Keep that implementation detail out of the settings row so
+     * the default is visibly and persistently AUTO. */
+    if (!state->languageExplicit) {
+        return m12_tr(state, "AUTO");
+    }
+    return g_languages[m12_clamp_index(state->settings.languageIndex,
+                                       M12_UI_LANGUAGE_COUNT)];
 }
 
 static const char* m12_game_value_language_name(const M12_StartupMenuState* state,
@@ -5209,10 +5219,9 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
     }
     switch (state->settingsSelectedIndex) {
         case M12_SETTINGS_ROW_LANGUAGE:
-            state->settings.languageIndex = m12_cycle_index(
-                state->settings.languageIndex,
-                delta,
-                M12_UI_LANGUAGE_COUNT);
+            state->languagePopupSelectedIndex = m12_cycle_index(
+                state->settings.languageIndex, delta, M12_UI_LANGUAGE_COUNT);
+            state->settings.languageIndex = state->languagePopupSelectedIndex;
             m12_sync_l10n_language(state);
             state->languageExplicit = 1;
             {
@@ -6260,8 +6269,22 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     return;
                 case M12_MENU_INPUT_ACCEPT:
                     state->settingsSelectedIndex = M12_SETTINGS_ROW_LANGUAGE;
-                    while (state->settings.languageIndex != state->languagePopupSelectedIndex) {
-                        m12_cycle_setting(state, 1);
+                    /* Apply the selected language once. Repeatedly cycling
+                     * the live setting here reloads a runtime PO catalog
+                     * while the input/render state still points at strings
+                     * from the previous locale, which made a real EN -> SV
+                     * selection crash the macOS frontend. */
+                    state->languagePopupSelectedIndex = m12_clamp_index(
+                        state->languagePopupSelectedIndex, M12_UI_LANGUAGE_COUNT);
+                    state->settings.languageIndex = state->languagePopupSelectedIndex;
+                    m12_sync_l10n_language(state);
+                    state->languageExplicit = 1;
+                    {
+                        int gi;
+                        for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+                            state->gameOptions[gi].languageIndex =
+                                state->settings.languageIndex;
+                        }
                     }
                     state->languagePopupOpen = 0;
                     return;

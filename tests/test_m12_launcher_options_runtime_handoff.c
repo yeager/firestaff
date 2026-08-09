@@ -60,6 +60,9 @@ static void seed_dm1_state(M12_StartupMenuState* state) {
 
     state->assetStatus.dm1Available = 1;
     state->gameOptions[0].versionIndex = 0;
+    /* Keep this unit test independent of a config left by an earlier run;
+     * the production default is asserted explicitly below. */
+    state->languageExplicit = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
     state->view = M12_MENU_VIEW_MAIN;
@@ -172,6 +175,12 @@ static void test_global_language_and_preference_rows(void) {
 
     memset(&state, 0, sizeof(state));
     seed_dm1_state(&state);
+    check(state.languageExplicit == 0,
+          "default language policy is AUTO");
+    check(strcmp(M12_StartupMenu_GetSettingsValue(
+                     &state, M12_STARTUP_SETTINGS_ROW_LANGUAGE),
+                 "AUTO") == 0,
+          "AUTO is shown instead of the resolved system language");
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_LANGUAGE;
     expectedLanguage = (state.settings.languageIndex + 1) %
@@ -184,6 +193,8 @@ static void test_global_language_and_preference_rows(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     check(state.settings.languageIndex == expectedLanguage,
           "global language advances in picker");
+    check(state.languageExplicit == 1,
+          "confirmed language selection becomes explicit");
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         check(state.gameOptions[i].languageIndex == state.settings.languageIndex,
               "global language propagates to game slot");

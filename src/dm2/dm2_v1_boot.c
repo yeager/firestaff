@@ -13695,6 +13695,14 @@ int dm2_v1_boot_select_new_game_champion(
         !owner->actuator_generators_processed ||
         !owner->source_map_context_materialized ||
         !owner->preselection_local_graphics.valid ||
+        !owner->preselection_map_doors.committed ||
+        !owner->preselection_map_objects.committed ||
+        !owner->preselection_map_texts.committed ||
+        !owner->preselection_map_teleporters.committed ||
+        !owner->preselection_map_actuators.committed ||
+        !owner->preselection_map_creatures.committed ||
+        !owner->preselection_creature_possessions_materialized ||
+        !owner->preselection_mirror_roster.valid ||
         !owner->preselection_light.valid ||
         !owner->preselection_scene_materialized ||
         !owner->preselection_view.valid) return 0;

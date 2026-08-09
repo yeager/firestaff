@@ -4151,6 +4151,11 @@ int main(void) {
                             dm2_v1_boot_prepared_new_game_world_readonly(
                                 profile)) != NULL &&
                     profile_new_game_owner->source_preselection_ready &&
+                    profile_new_game_owner->preselection_mirror_roster.valid &&
+                    profile_new_game_owner->preselection_mirror_roster.incomplete_game_load &&
+                    profile_new_game_owner->preselection_mirror_roster.candidate_count > 0 &&
+                    profile_new_game_owner->preselection_mirror_roster.candidate_count ==
+                        profile_new_game_owner->preselection_dyn4_roster.selector_count &&
                     profile_new_game_owner->actuator_generators_processed &&
                     profile_new_game_owner->source_map_context_materialized &&
                     profile_new_game_owner->preselection_local_graphics.valid &&

@@ -293,6 +293,10 @@ typedef struct {
             DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS];
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
+    /* Canonical DB3 mirror order and each source candidate's real hero/item
+     * preconditions. This is the only roster a future M11 mirror panel may
+     * expose; it is not a default party order. */
+    DM2_V1_BootChampionSelectionCensus preselection_mirror_roster;
     uint32_t preselection_hash;
     DM2_V1_BootNewGameTransactionReceipt transaction;
     DM2_V1_BootNewGamePartySelection selected_mirrors[DM2_MAX_HEROES];
