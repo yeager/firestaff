@@ -297,6 +297,12 @@ exact retail-source joins. This extends animation-state observation only; it
 does not turn a frame into menu, HUD or viewport evidence.
 
 The same producer has an independent SCSP trace patch for the audio lane.
+
+Firestaff now has a C receipt for the emitted
+`FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1` schema. It validates the raw trace hash,
+mailbox writes, the `SDDRVS.TSK` command-handler PC `0x3224`, and the SCSP
+voice-register corridor. The real external trace passes this structural
+receipt, while event→MAP semantics, SAL decoding, and playback remain false.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at
 `0x1000`; the main SH-2 trace observed `0x06001652 -> 0x100400 = 0x02`.

@@ -66,6 +66,14 @@
   Detta är fortfarande capture-only och öppnar inte normal runtime utan en
   regionmatchad Saturn-witness.
 
+# Nexus: C-receipt för autentisk SCSP-write trace (2026-08-09)
+
+- ✅ `FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1` valideras nu i C med exakt
+  `addr/size/value/pc`-schema och råtrace-FNV. Receipten räknar mailbox-
+  skrivningar, råvärde `0x02`, SDDRVS-PC `0x3224` och SCSP-registerfönstret.
+  Den externa gameplay-tracen passerar; event→MAP, SAL-dekodning och
+  playback förblir uttryckligen blockerade.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga

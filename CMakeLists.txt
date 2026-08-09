@@ -42084,6 +42084,23 @@ add_test(
     NAME nexus_v1_sound_runtime_receipt
     COMMAND test_nexus_v1_sound_runtime_receipt
 )
+
+add_executable(test_nexus_v1_scsp_trace
+    tests/test_nexus_v1_scsp_trace.c
+    src/nexus/nexus_v1_scsp_trace.c
+)
+target_include_directories(test_nexus_v1_scsp_trace PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_scsp_trace PRIVATE
+        -std=c99 -Wall -Wextra -Werror -pedantic -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_scsp_trace
+    COMMAND test_nexus_v1_scsp_trace
+)
 set_tests_properties(nexus_v1_sound_runtime_receipt PROPERTIES
     LABELS "tier4;nexus;audio;runtime;receipt"
 )

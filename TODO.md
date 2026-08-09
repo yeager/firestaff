@@ -48,6 +48,11 @@
   call-order. Positivt receipt kräver fortfarande autentiserade källjoins och
   en sammanhängande capture.
 
+- 🔧 Den externa `FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1`-källan kan nu läsas av
+  en C-receipt som binder råtrace-hash, mailboxvärden, SDDRVS-PC `0x3224` och
+  SCSP-registerkorridor. Receipten lämnar eventselector, SAL-codec och
+  playback stängda; en rå mailboxskrivning är inte en gameplayhändelse.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded
