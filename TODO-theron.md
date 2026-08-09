@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — nästa capture kräver aktiv dungeon
+
+- 🔧 Capture-scriptets macOS-input-grab är nu retry-säkert och väntar på både
+  Quartz-kvitto och Mednafen-gjord `InputGrab=1` innan sekvensen skickas.
+- 🔒 Nästa autentiserade körning måste använda den verifierade startupkedjan
+  till Akutuba och därefter nå aktiv dungeon; den tidigare bounded-körningen
+  stannade före game-owned CD→RAM-consumer. RNG, spawn, AI, T700, T900 och
+  presentation är fortsatt spärrade tills samma körning binder konsumenterna.
+
 ## 2026-08-09 — summary-only original-consumer admission stängd
 
 - ✅ Runtime-admission kräver nu råa, exakt sammanfogade

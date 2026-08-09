@@ -1,8 +1,8 @@
 # Nexus SLEV/SAL/SDDRVS capture-envelope inventory (2026-08-09)
 
 - ✅ NXSLSC01-header, payload-hash och 65 536 SH-2-skrivposter är verifierade.
-- ✅ Retail-FNV-jämförelse av SLEV00/SAL/MAP/SDDRVS avvisar alla fyra identiteter;
-  selector, SAL-codec, dispatch och playback förblir spärrade.
+- ✅ Retail-FNV-jämförelse av SLEV00/SAL/MAP/SDDRVS avvisar alla fyra
+  identiteter; selector, SAL-codec, dispatch och playback förblir spärrade.
 
 # Nexus VDP1 full mode-1 capture replay (2026-08-09)
 
@@ -10,6 +10,15 @@
   non-mode-1 and unresolved draws. External EU frame 760 passes with 242
   command records, 218 exact DGN joins, 16 unowned mode-1 draws and one
   unowned non-mode-1 draw; missing system-clip state keeps production closed.
+
+# Theron: robust macOS input-grab handshake (2026-08-09)
+
+- ✅ Den externa Mednafen-capturehjälpen väntar nu på macOS-fokus och försöker
+  om Quartz-chordet tills både helper-kvittot och Mednafen loggar
+  `input_grab_state enabled=1`. Inga gameplay-tangenter skickas före den
+  dubbla attesteringen.
+- ✅ Källtestet kräver samma retry- och attestationskontrakt. Äkta speldata,
+  BIOS och savestates ligger kvar utanför repot.
 
 # CI: CSB FM Towns-probens länkberoenden (2026-08-09)
 

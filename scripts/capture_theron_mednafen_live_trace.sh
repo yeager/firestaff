@@ -38,6 +38,7 @@ host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 host_key_delays=${THERON_CAPTURE_HOST_KEY_DELAYS:-}
 host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
+capture_input_grab_delay=${THERON_CAPTURE_INPUT_GRAB_DELAY:-2}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
@@ -416,6 +417,10 @@ if [[ "$host_input_requested" == 1 ]]; then
     fi
     if [[ ! "$host_key_repeats" =~ ^[1-9][0-9]*$ ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' >&2
+        exit 1
+    fi
+    if [[ ! "$capture_input_grab_delay" =~ ^[1-9][0-9]*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_GRAB_DELAY must be a positive integer' >&2
         exit 1
     fi
     if [[ "$input_route" == global_hid ]]; then
@@ -923,8 +928,10 @@ if [[ "$host_input_requested" == 1 ]]; then
             exit 1
         fi
         # Cocoa activation is asynchronous; wait until the activated process
-        # owns the foreground before using the global HID route.
-        sleep 1
+        # owns the foreground before using the global HID route.  The delay is
+        # configurable because macOS can restore another SDL window while the
+        # System Card is still opening the CD title.
+        sleep "$capture_input_grab_delay"
     fi
     # The CPU trace is stdio-buffered until shutdown. The input producer is
     # flushed per capture event and is the safe readiness boundary for
@@ -944,41 +951,43 @@ if [[ "$host_input_requested" == 1 ]]; then
     if [[ "$input_route" == global_hid ]]; then
         grab_quartz_arguments+=(--global-hid)
     fi
-    grab_receipt=$(swift "$quartz_grab_script" "${grab_quartz_arguments[@]}" 2>/dev/null) || {
-        kill "$mednafen_pid" 2>/dev/null || true
-        wait "$mednafen_pid" 2>/dev/null || true
-        printf '%s\n' 'FAIL: Quartz helper could not activate Mednafen input grabbing' >&2
-        exit 1
-    }
     expected_grab_route=quartz_chord=posted_to_pid
     if [[ "$input_route" == global_hid ]]; then
         expected_grab_route=quartz_chord=posted_to_global_hid
     fi
-    if [[ "$grab_receipt" != *$'quartz_event_access=granted'* ||
-          "$grab_receipt" != *"$expected_grab_route"* ||
-          "$grab_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
-          "$grab_receipt" != *'quartz_chord_keys=ctrl+shift+g'* ]]; then
-        kill "$mednafen_pid" 2>/dev/null || true
-        wait "$mednafen_pid" 2>/dev/null || true
-        printf '%s\n' 'FAIL: Quartz helper did not attest input-grab activation' >&2
-        exit 1
-    fi
-    printf 'host_input_grab_chord route=%s target_pid=%s keys=ctrl+shift+g\n' \
-        "${input_route}" "$mednafen_ui_pid" >>"$input_trace"
     grab_trace_ready=0
-    for ((grab_attempt = 0; grab_attempt < 40; ++grab_attempt)); do
-        if grep -Fq 'input_grab_state enabled=1' "$input_trace"; then
-            grab_trace_ready=1
-            break
+    grab_receipt_valid=0
+    # A foreground SDL window can be replaced by another app between the
+    # activation receipt and the first chord. Retry only this reversible input
+    # handshake, and require both Quartz's receipt and Mednafen's own
+    # input_grab_state marker before sending any gameplay keys.
+    for ((grab_attempt = 1; grab_attempt <= 4; ++grab_attempt)); do
+        grab_receipt=$(swift "$quartz_grab_script" "${grab_quartz_arguments[@]}" 2>/dev/null || true)
+        if [[ "$grab_receipt" == *$'quartz_event_access=granted'* &&
+              "$grab_receipt" == *"$expected_grab_route"* &&
+              "$grab_receipt" == *"quartz_target_pid=$mednafen_ui_pid"* &&
+              "$grab_receipt" == *'quartz_chord_keys=ctrl+shift+g'* ]]; then
+            grab_receipt_valid=1
+            for ((grab_wait = 0; grab_wait < 40; ++grab_wait)); do
+                if grep -Fq 'input_grab_state enabled=1' "$input_trace"; then
+                    grab_trace_ready=1
+                    break
+                fi
+                sleep 0.25
+            done
+            [[ "$grab_trace_ready" == 1 ]] && break
         fi
-        sleep 0.25
+        sleep 1
     done
-    if [[ "$grab_trace_ready" != 1 ]]; then
+    if [[ "$grab_receipt_valid" != 1 || "$grab_trace_ready" != 1 ]]; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true
-        printf '%s\n' 'FAIL: Mednafen did not attest InputGrab=1 after the Quartz chord' >&2
+        printf 'FAIL: Mednafen did not attest InputGrab=1 after Quartz chord retries (receipt=%s trace=%s)\n' \
+            "$grab_receipt_valid" "$grab_trace_ready" >&2
         exit 1
     fi
+    printf 'host_input_grab_chord route=%s target_pid=%s keys=ctrl+shift+g attempts=%s\n' \
+        "${input_route}" "$mednafen_ui_pid" "$grab_attempt" >>"$input_trace"
     sleep 0.2
     host_key_schedule_seconds=$SECONDS
     # Send real Quartz key-down/up pairs after PID-bound focus.

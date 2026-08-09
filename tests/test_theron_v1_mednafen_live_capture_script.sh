@@ -133,7 +133,8 @@ if [[ ! -f "$quartz_grab_helper" ]] ||
    exit 1
 fi
 if ! grep -Fq 'quartz_grab_script=' "$script" ||
-   ! grep -Fq 'could not activate Mednafen input grabbing' "$script" ||
+   ! grep -Fq 'Quartz chord retries' "$script" ||
+   ! grep -Fq 'input_grab_state enabled=1' "$script" ||
    ! grep -Fq 'input_grab_chord_events=%s' "$script"; then
    printf 'FAIL: capture must attest input-grab activation before host input\n' >&2
    exit 1
