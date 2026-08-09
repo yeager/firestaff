@@ -383,6 +383,39 @@ static void test_object_table_apply_to_world(void) {
           "key object placed at (8,9)");
 }
 
+static void test_object_lookup_is_dungeon_scoped(void) {
+    printf("[test:object_lookup_is_dungeon_scoped]\n");
+    Theron_V1_World w;
+    Theron_V1_Object first = {0};
+    Theron_V1_Object second = {0};
+
+    make_world(&w);
+    first.type = THERON_OBJTYPE_DOOR;
+    first.dungeon_id = THERON_DUNGEON_1_AKUTUBA;
+    first.level = 0;
+    first.x = 4;
+    first.y = 4;
+    second.type = THERON_OBJTYPE_CHEST;
+    second.dungeon_id = THERON_DUNGEON_2_DRATOR;
+    second.level = 0;
+    second.x = 4;
+    second.y = 4;
+    CHECK_INT("first object placement succeeds", theron_v1_object_place(&w, &first), 0);
+    CHECK_INT("second object placement succeeds", theron_v1_object_place(&w, &second), 0);
+    CHECK(theron_v1_object_at_in_dungeon(
+              &w, THERON_DUNGEON_1_AKUTUBA, 0, 4, 4) != NULL &&
+              theron_v1_object_at_in_dungeon(
+                  &w, THERON_DUNGEON_1_AKUTUBA, 0, 4, 4)->type ==
+                  THERON_OBJTYPE_DOOR,
+          "dungeon 1 returns only its object");
+    CHECK(theron_v1_object_at_in_dungeon(
+              &w, THERON_DUNGEON_2_DRATOR, 0, 4, 4) != NULL &&
+              theron_v1_object_at_in_dungeon(
+                  &w, THERON_DUNGEON_2_DRATOR, 0, 4, 4)->type ==
+                  THERON_OBJTYPE_CHEST,
+          "dungeon 2 returns only its object");
+}
+
 static void test_door_mechanics(void) {
     printf("[test:door_mechanics]\n");
     Theron_V1_World w;
@@ -691,6 +724,7 @@ static void test_source_item_pickup_provenance(void) {
     memset(&unbound, 0, sizeof(unbound));
     unbound.type = THERON_OBJTYPE_WEAPON;
     unbound.item_index = 6;
+    unbound.dungeon_id = w.current_dungeon;
     unbound.level = 0;
     unbound.x = 1;
     unbound.y = 1;
@@ -701,6 +735,7 @@ static void test_source_item_pickup_provenance(void) {
     memset(&object, 0, sizeof(object));
     object.type = THERON_OBJTYPE_WEAPON;
     object.item_index = 6;
+    object.dungeon_id = w.current_dungeon;
     object.level = 0;
     object.x = 1;
     object.y = 2;
@@ -714,6 +749,7 @@ static void test_source_item_pickup_provenance(void) {
     memset(&object, 0, sizeof(object));
     object.type = THERON_OBJTYPE_WEAPON;
     object.item_index = 6;
+    object.dungeon_id = w.current_dungeon;
     object.quantity = 3;
     object.level = 0;
     object.x = 2;
@@ -767,6 +803,7 @@ int main(void) {
     test_creature_drop_loot();
     test_hp_modification_clamps();
     test_object_table_apply_to_world();
+    test_object_lookup_is_dungeon_scoped();
     test_door_mechanics();
     test_pit_mechanics();
     test_teleporter_mechanics();

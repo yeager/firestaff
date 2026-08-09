@@ -864,6 +864,19 @@ Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world,
     return NULL;
 }
 
+Theron_V1_Object *theron_v1_object_at_in_dungeon(
+    Theron_V1_World *world, int dungeon_id, int level, int x, int y) {
+    if (!world) return NULL;
+    for (int i = 0; i < world->object_count; i++) {
+        Theron_V1_Object *o = &world->objects[i];
+        if (o->dungeon_id == dungeon_id && o->level == level &&
+            o->x == x && o->y == y) {
+            return o;
+        }
+    }
+    return NULL;
+}
+
 Theron_V1_Object *theron_v1_object_by_id(Theron_V1_World *world, int id) {
     if (!world || id <= 0) return NULL;
     for (int i = 0; i < world->object_count; i++) {

@@ -46,9 +46,12 @@ static const uint32_t g_shared_prologue_fnv1a = 0xa6268637u;
  *   - 8 bytes: per-level metadata (bytes 0xE8-0xEF)
  *   - Compressed level data starting at offset 0xF0
  *
- * Compression algorithm: the exact variable-width HuC6280 routine is
- * byte-locked in bank-$1f at $23AD-$252A.  Its stage-2 MPR setup and the
- * later level/object consumer remain separate runtime-admission gates. */
+ * Compression algorithm: the exact variable-width HuC6280 helper is
+ * byte-locked in bank-$1f at $23AD-$252A. The helper recursively advances
+ * through framed resources at $23DC -> $23AD before it emits the pointer
+ * table used by the back-reference path. This reader records one bounded
+ * frame only; stage-2 MPR setup, the complete frame chain and the later
+ * level/object consumer remain separate runtime-admission gates. */
 
 static const Theron_LevelDataBlockDesc g_level_blocks[THERON_TRACK02_LEVEL_COUNT] = {
     /* Level 1 */ { 0x09F000, { 0x07, 0x87, 0x18, 0x10, 0x10, 0x10, 0x10, 0x20 } },

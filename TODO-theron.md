@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — verifierad spärr för senare-nivåns frame-chain
+
+- 🔒 Äkta US/JP senare-nivåblock och deras sexbytesframing är hashverifierade,
+  men ett direkt försök att köra US nivå 1 genom den platta host-liften
+  stannar vid `DECODE_POINTER_TABLE`, även när den gemensamma `$E8`-prologen
+  endast används som diagnostiskt seed. Det är ett negativt bevis, inte en
+  anledning att skapa en tabell.
+- 🔧 Nästa capture måste binda rekursionen `$23DC -> $23AD`, frame-chainens
+  slut, destinationspekaren, MPR-tabellen `$3B7E-$3B85` och den efterföljande
+  `$2600`-konsumenten i samma autentiserade körning. Fram till dess är
+  bitmap/tileatlas, square-to-tile, perspektiv, VCE-palett och objektsemantic
+  fortsatt stängda.
+
 ## 2026-08-09 — kvarvarande source-semantik efter dungeon-lookup-fix
 
 - 🔒 Dungeon-aware source-creature lookup är verifierad. Den stora spärren

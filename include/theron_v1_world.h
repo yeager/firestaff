@@ -608,6 +608,11 @@ void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir);
 int theron_v1_object_place(Theron_V1_World *world, Theron_V1_Object *object);
 int theron_v1_object_remove(Theron_V1_World *world, int id);
 Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world, int level, int x, int y);
+/* Production lookup: an object belongs to the selected dungeon as well as
+ * its level and square.  The legacy object_at() remains for fixture callers
+ * that intentionally omit dungeon scope. */
+Theron_V1_Object *theron_v1_object_at_in_dungeon(
+    Theron_V1_World *world, int dungeon_id, int level, int x, int y);
 Theron_V1_Object *theron_v1_object_by_id(Theron_V1_World *world, int id);
 const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
     const Theron_V1_World *world, int champion_slot, int inventory_slot);

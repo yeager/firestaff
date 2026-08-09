@@ -127,7 +127,8 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         return (int)tile;
     case THERON_CMD_USE: {
         /* Check for any object at (x,y) that can be used */
-        Theron_V1_Object *o = theron_v1_object_at(world,
+        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
+                                world, world->current_dungeon,
                                 world->current_level, x, y);
         if (o && o->type == THERON_OBJTYPE_DOOR) {
             /* Door found — open it (handles locked auto-unlock) */
@@ -136,7 +137,8 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         return -1;
     }
     case THERON_CMD_TAKE: {
-        Theron_V1_Object *o = theron_v1_object_at(world,
+        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
+                                world, world->current_dungeon,
                                 world->current_level, x, y);
         Theron_V1_Champion *champion;
         int item_id;
@@ -319,7 +321,8 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     if (tile == THERON_SQUARE_DOOR) {
         /* Doors block movement unless already open or quarter-open.
          * Block if locked or fully closed. */
-        Theron_V1_Object *d = theron_v1_object_at(world,
+        Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
+                                world, world->current_dungeon,
                                 world->current_level, nx, ny);
         if (d && d->type == THERON_OBJTYPE_DOOR) {
             if (d->state == THERON_DOOR_STATE_CLOSED &&
@@ -402,7 +405,8 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     /* TQ altar squares are stored in the object map, not a tile type.
      * When a dead party member steps onto an altar square, T900 kicks in. */
     {
-        Theron_V1_Object *o = theron_v1_object_at(world,
+        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
+                                world, world->current_dungeon,
                                 world->current_level, nx, ny);
         if (o && o->type == THERON_OBJTYPE_ALTAR_VI) {
             theron_v1_altar_of_vi_resurrect(world, nx, ny);
@@ -411,7 +415,8 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* Handle decoded sound-trigger objects (one-shot or ambient). */
     {
-        Theron_V1_Object *o = theron_v1_object_at(world,
+        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
+                                world, world->current_dungeon,
                                 world->current_level, nx, ny);
         if (o && o->type == THERON_OBJTYPE_SOUND) {
             theron_v1_play_sound((Theron_SoundID)o->quantity);
@@ -438,7 +443,8 @@ int theron_v1_turn_party(Theron_V1_World *world, int turn) {
 
 int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
-    Theron_V1_Object *d = theron_v1_object_at(world, world->current_level, x, y);
+    Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
     if (d->state >= THERON_DOOR_STATE_OPEN) return 0; /* already open */
     if (d->flags & THERON_DOOR_F_BROKEN) return -1;
@@ -468,7 +474,8 @@ int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_door_close(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
-    Theron_V1_Object *d = theron_v1_object_at(world, world->current_level, x, y);
+    Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
     if (d->state == THERON_DOOR_STATE_DESTROYED) return -1;
     d->state = THERON_DOOR_STATE_CLOSED;
@@ -479,8 +486,9 @@ int theron_v1_door_close(Theron_V1_World *world, int x, int y) {
 int theron_v1_door_is_open(const Theron_V1_World *world, int x, int y) {
     if (!world) return 0;
     const Theron_V1_Object *d = (const Theron_V1_Object *)
-        theron_v1_object_at((Theron_V1_World *)world,
-                              world->current_level, x, y);
+        theron_v1_object_at_in_dungeon((Theron_V1_World *)world,
+                                       world->current_dungeon,
+                                       world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return 0;
     return d->state >= THERON_DOOR_STATE_QUARTER_OPEN;
 }
@@ -488,8 +496,9 @@ int theron_v1_door_is_open(const Theron_V1_World *world, int x, int y) {
 int theron_v1_door_is_locked(const Theron_V1_World *world, int x, int y) {
     if (!world) return 0;
     const Theron_V1_Object *d = (const Theron_V1_Object *)
-        theron_v1_object_at((Theron_V1_World *)world,
-                              world->current_level, x, y);
+        theron_v1_object_at_in_dungeon((Theron_V1_World *)world,
+                                       world->current_dungeon,
+                                       world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return 0;
     return (d->flags & THERON_DOOR_F_LOCKED) != 0;
 }
@@ -498,7 +507,8 @@ int theron_v1_door_unlock_with_key(Theron_V1_World *world,
                                       int x, int y, int key_item) {
     if (!world) return -1;
     if (key_item != THERON_ITEM_KEY) return -1;
-    Theron_V1_Object *d = theron_v1_object_at(world, world->current_level, x, y);
+    Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
     d->flags &= ~THERON_DOOR_F_LOCKED;
     return theron_v1_door_open(world, x, y);
@@ -565,7 +575,8 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
     int current_level = world->current_level;
 
     while (iteration < THERON_TELEPORTER_CHAIN_MAX) {
-        Theron_V1_Object *o = theron_v1_object_at(world, current_level, cx, cy);
+        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
+            world, world->current_dungeon, current_level, cx, cy);
         if (!o || o->type != THERON_OBJTYPE_TELEPORTER) break;
 
         /* Find the teleporter's target */
@@ -645,8 +656,9 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
          * the source T900 altar consumer is joined to the real object row. */
         return -1;
     }
-    Theron_V1_Object *altar = theron_v1_object_at(world,
-                                     world->current_level, altar_x, altar_y);
+    Theron_V1_Object *altar = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level,
+        altar_x, altar_y);
     if (!altar || altar->type != THERON_OBJTYPE_ALTAR_VI) return -1;
     if (altar->state == THERON_OBJ_F_DESTROYED) return -1;
 
@@ -823,7 +835,8 @@ int theron_v1_pool_use(Theron_V1_World *world, int x, int y) {
          * do not let the fixture's max-stamina shortcut run on real data. */
         return -1;
     }
-    Theron_V1_Object *p = theron_v1_object_at(world, world->current_level, x, y);
+    Theron_V1_Object *p = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level, x, y);
     if (!p || p->type != THERON_OBJTYPE_POOL) return -1;
 
     for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
@@ -848,7 +861,8 @@ int theron_v1_pool_use(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
-    Theron_V1_Object *a = theron_v1_object_at(world, world->current_level, x, y);
+    Theron_V1_Object *a = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level, x, y);
     if (!a || a->type != THERON_OBJTYPE_ALARM) return -1;
 
     /* Activate every creature spawner on the current level.  Source:
@@ -871,7 +885,8 @@ int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_trigger_activate(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
-    Theron_V1_Object *t = theron_v1_object_at(world, world->current_level, x, y);
+    Theron_V1_Object *t = theron_v1_object_at_in_dungeon(
+        world, world->current_dungeon, world->current_level, x, y);
     if (!t || t->type != THERON_OBJTYPE_TRIGGER) return -1;
 
     /* Activate linked objects */

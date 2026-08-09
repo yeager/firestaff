@@ -13,11 +13,12 @@ extern "C" {
  * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a), and the direct ISO
  * projections TQUS19.iso/TQJP19.iso (hash-gated by their media receipts).
  *
- * 7 per-level graphics/tile banks (~256KB each = one PCE HuCard bank).
- * Identified by byte-exact 232-byte shared prologue signature.
- * Each block starts with a 0xF0-byte prologue (0xE8 bytes shared resource
- * table + 8 bytes per-level metadata), followed by level-specific tile
- * pattern data for the PCE VDC (4bpp 8x8 tiles).
+ * 7 per-level later-level resource banks (~256KB each = one PCE HuCard
+ * bank). Identified by a byte-exact 232-byte shared prologue signature.
+ * Each block starts with a 0xF0-byte framing window (0xE8 bytes shared
+ * resource bytes + 8 bytes per-level metadata), followed by level-specific
+ * compressed bytes. The PCE VDC/4bpp tile interpretation is not admitted:
+ * the stage-2 MPR setup, frame chain and consumer are still unbound.
  *
  * These are NOT the dungeon map layout (wall/floor topology) — that data
  * format is still unidentified within Track 02.

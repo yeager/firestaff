@@ -2,6 +2,25 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — object lookup scoped to authenticated dungeon
+
+- ✅ Produktionsmekanikens object-, dörr-, teleport-, altar-, pool- och
+  triggerlookup matchar nu `dungeon_id`, level och koordinat. Den äldre
+  `theron_v1_object_at()` finns kvar för äldre fixture-anrop som uttryckligen
+  saknar dungeon-scope.
+- ✅ Regressionstestet placerar två objekt på samma level/koordinat i dungeon
+  1 och 2 och verifierar att varje source-scope bara ser sitt eget objekt.
+
+## 2026-08-09 — senare-level resource-chain: negativt verifieringskvitto
+
+- ✅ Dokumenterade den autentiska US nivå 1-probens stopp vid
+  `DECODE_POINTER_TABLE` när den gemensamma prologen felaktigt prövades som
+  pointer-table seed. Det hindrar en falsk full-dekomprimering från att bli
+  produktionsdata.
+- ✅ Källan och den nya source-lock-sidan binder nästa krav till
+  `$23DC -> $23AD`, `$3B7E-$3B85`, destination och `$2600`-konsument. Ingen
+  syntetisk bitmap, tileatlas, palette, map eller objectsemantik skapades.
+
 ## 2026-08-09 — dungeon-aware source-creature lookup
 
 - ✅ Productionens source-record → live-creature-brygga matchar nu alltid
