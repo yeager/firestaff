@@ -22,6 +22,13 @@ The raw Saturn launcher uses a non-quiet string scan for this check because
 `set -o pipefail` makes `strings | grep -q` report a false failure when grep
 closes the pipe after the first match.
 
+The external Mednafen 1.32.1 build also advertises the `NXSLSC01` SLEV/SAL
+producer. Its hook records only authenticated SH-2 WorkRAM writes, both SH-2
+program counters, and an incremental payload hash. The payload is deliberately
+opaque: this producer does not establish the SLEV selector, SAL codec, MAP-row
+ownership, or host playback. A real capture must still be imported and joined
+to the source-owned runtime corridor before any event or audio behavior opens.
+
 For startup/input experiments the launcher can request an operator-owned
 controller window with `--press-start-frame N --press-start-length N` and
 choose the active-low Saturn button mask with `--press-button-mask`. The

@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Nexus har nu en byggd extern Mednafen 1.32.1-producent för `NXSLSC01`.
+  Hooken fångar endast autentiska SH-2 WorkRAM-skrivningar med båda SH-2-PC:n
+  och skriver en hashad, opak payload. Den bevisar inte SLEV-selector,
+  SAL-dekodning eller host-uppspelning; positiv retail-capture återstår.
+
 - 🔧 Theron source-group admission is now atomic and source-identity aware:
   a real Track 02 category-4 group is either fully materialized or not at all,
   and an inactive static group cannot be reintroduced as an invented respawn.

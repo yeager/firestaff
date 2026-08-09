@@ -15,6 +15,13 @@
   capturen, äldre negativa körningar och scripted replay som emulatorintern
   inputväg utan fysisk macOS-input.
 
+# Nexus: extern SLEV/SAL capture-producent (2026-08-09)
+
+- ✅ Mednafen 1.32.1 byggs reproducerbart på extern disk med en read-only
+  `NXSLSC01`-hook för autentiska SH-2 WorkRAM-skrivningar, SH-2-PC-proveniens
+  och inkrementell payload-hash. Hooken är uttryckligen opak och öppnar inte
+  event-dispatch, SAL-dekodning eller host-uppspelning.
+
 # Theron: atomic source-group admission (2026-08-09)
 
 - ✅ Source-bound Track 02 monster groups are now admitted transactionally:
