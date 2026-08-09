@@ -29,6 +29,23 @@ static void check(int condition, const char *label)
     }
 }
 
+static int csb_timeline_contains_event_type(const CSB_V1_RuntimeProfile *runtime,
+                                            int event_type)
+{
+    int i;
+
+    if (!runtime) return 0;
+    for (i = 0; i < runtime->timeline_queue.eventCount; ++i) {
+        unsigned short event_index = runtime->timeline_queue.timeline[i];
+        if (event_index < DM1_EVENT_MAX_COUNT &&
+            runtime->timeline_queue.events[event_index].type ==
+                (unsigned char)event_type) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void write_u16(unsigned char *p, unsigned int value)
 {
     p[0] = (unsigned char)(value & 0xffu);
@@ -741,6 +758,10 @@ int main(void)
               "CSB THROW step energy is source-bounded");
         check(profile.runtime.timeline_queue.eventCount > 0,
               "CSB THROW schedules first projectile movement event");
+        check(csb_timeline_contains_event_type(
+                  &profile.runtime,
+                  DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS),
+              "CSB F0407 THROW publishes owned C48, not launcher C49");
         state.actionDisabledTicks[0] = 0;
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             dagger;
@@ -833,6 +854,10 @@ int main(void)
               "CSB FIREBALL writes mana cost back to runtime");
         check(state.world.projectiles.count == 0,
               "CSB FIREBALL does not allocate into DM1 M11 projectile list");
+        check(csb_timeline_contains_event_type(
+                  &profile.runtime,
+                  DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS),
+              "CSB F0407 projectile spells retain their owned C48 receipt");
         state.actionDisabledTicks[0] = 0;
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             bow;
@@ -880,6 +905,10 @@ int main(void)
               "CSB SHOOT clears runtime ready-hand slot");
         check(state.world.projectiles.count == 0,
               "CSB SHOOT does not allocate into DM1 M11 projectile list");
+        check(csb_timeline_contains_event_type(
+                  &profile.runtime,
+                  DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS),
+              "CSB F0407 SHOOT retains C48 until its first GAMELOOP tick");
         check(state.pendingShootReadyHandRefill[0] == 1u,
               "CSB SHOOT arms delayed ready-hand refill");
         {

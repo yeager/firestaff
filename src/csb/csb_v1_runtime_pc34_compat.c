@@ -17125,6 +17125,7 @@ static void csb_v1_runtime_schedule_projectile_move_event(
     const struct TimelineEvent_Compat *event)
 {
     struct DM1_Event_V1 dm1_event;
+    const struct ProjectileInstance_Compat *projectile;
 
     if (!profile || !event) return;
     if (event->kind != TIMELINE_EVENT_PROJECTILE_MOVE) return;
@@ -17134,7 +17135,19 @@ static void csb_v1_runtime_schedule_projectile_move_event(
     dm1_event.map_time = DM1_MAP_TIME_MAKE(
         event->mapIndex,
         event->fireAtTick);
-    dm1_event.type = DM1_EVENT_MOVE_PROJECTILE;
+    projectile = &profile->projectiles.entries[event->aux0];
+    /* ReDMCSB PROJEXPL.C F0212:80-92 is the ownership boundary for the
+     * first C14 move.  F0407/CHAMPION.C-created projectiles publish C48 at
+     * GameTime+1, while F0247 launcher projectiles publish C49.  F0219 then
+     * turns that exact C48 receipt into C49 before it advances the C14.
+     *
+     * Do not infer this from the current event source or suppress every
+     * projectile in GAMELOOP: a concurrently queued launcher C49 must still
+     * impact/decrement on the same tick.  The live C14's first-move flag is
+     * the only state F0810 owns for the F0407/CHAMPION route. */
+    dm1_event.type = projectile->firstMoveGraceFlag
+        ? DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS
+        : DM1_EVENT_MOVE_PROJECTILE;
     dm1_event.priority = (uint8_t)event->aux0;
     dm1_event.b_mapX = (uint8_t)event->mapX;
     dm1_event.b_mapY = (uint8_t)event->mapY;

@@ -2694,10 +2694,11 @@ static void test_c38_red_dragon_launches_source_projectile(void)
               profile.projectiles.entries[0].firstMoveGraceFlag == 1 &&
               profile.projectiles.entries[0].attack > 0,
           "C38 C14 uses CSB monster missile cadence and source attack");
-    CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 1 &&
+    CHECK(count_queued_event_type(
+              &profile, DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS) == 1 &&
               count_queued_event_type(&profile,
                   DM1_EVENT_UPDATE_ASPECT_CREATURE_0) == 1,
-          "C38 projectile queues C49 movement and C33/C38 source cadence");
+          "C38 projectile queues owned C48 movement and C33/C38 source cadence");
     CHECK(profile.party_state.Champions[0].CurrentHealth == 500,
           "ranged C38 does not substitute an immediate melee hit");
 }
