@@ -217,6 +217,25 @@ bankens ägarskap, monsterrecordets konsument, AI, loot, T700 eller T900.
 Körningen får därför inte släppa de semantiska grindarna, och den får inte
 blandas med den separata cold-start-körningen som hade CD→RAM-receipts.
 
+### 2026-08-09 — source-byte join för råkodfönstret
+
+De första 64 byte i det autentiserade `$5D64`-fönstret matchar exakt i den
+riktiga US Track 02-filen på sju offsetar:
+
+```text
+0x975c4, 0xe0dc4, 0x12a5c4, 0x173dc4,
+0x1bd5c4, 0x206dc4, 0x2505c4
+```
+
+Det är `0x975c4 + n*0x49800`, `n = 0..6`, i den hashverifierade US-filen
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). Parsern verifierar nu
+hela 256-byte-fönstret mot dessa källkopior, tillsammans med sidecar-header,
+PC-fält, 8 104 992-byte filstorlek och hexlängd. Detta är en källbyte-join,
+inte ett påstående om vilken kopia som var mappad i körningen.
+
+RNG-returvärde, caller, spawnkategori, creature, AI och T900-regler är fortsatt
+stängda tills den autentiserade körningen visar deras verkliga konsumentkedja.
+
 ## 2026-08-09 fresh cold-start window trace
 
 The same real US CUE/BIN and external System Card were replayed with the

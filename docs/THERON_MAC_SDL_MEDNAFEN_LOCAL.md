@@ -360,3 +360,17 @@ Track 02, System Card och Mednafen hade respektive MD5
 och `3ee7c8df8aad7b87ef0ecc05aaa29d8d`. Körningen saknade CD→RAM-receipts,
 så den öppnar inte RNG-, spawn-, AI-, T700- eller T900-semantik och får inte
 slås ihop med en annan session.
+
+Parsern kan dessutom göra source-byte-joinen lokalt utan att speldata läggs i
+repot:
+
+```sh
+THERON_REAL_RNG_CODE_TRACE=/Volumes/Extern-disk/theron-auth-capture-mc0-rngcode-long-20260809.trace.rng-code \
+THERON_REAL_US_TRACK02=/Users/bosse/.firestaff/data/theron/TQUS02.bin \
+ctest --test-dir /Volumes/Extern-disk/firestaff-theron-active2-build \
+  -R theron_v1_mednafen_spawn_consumer_trace --output-on-failure
+```
+
+Godkänd receipt kräver den riktiga 8 104 992-byte US-filen och exakt match mot
+en av `0x975c4 + n*0x49800`, `n = 0..6`. En syntetisk trace eller ett
+syntetiskt RNG-byte räcker inte.

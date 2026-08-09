@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — råkodens source-byte-join verifierad
+
+- ✅ Parsern för `.rng-code` kräver nu sidecar-header, korrekt `$5D64/$5D6A`,
+  256 byte hexkod, HuC6280-adressgräns och den riktiga 8 104 992-byte US
+  Track 02-filen. Den jämför hela fönstret mot de sju observerade offsetarna
+  `0x975c4 + n*0x49800` och körs med den riktiga externa capture-receipten.
+- 🔒 Det här bevisar byteproveniens men inte mappad bank, RNG-returvärde,
+  caller, spawnkategori eller gameplaysemantik. Nästa witness måste fortfarande
+  binda samma körning till den riktiga retur- och spawnkonsumenten.
+
 ## 2026-08-09 — rå RNG-kod fångad, semantiken fortfarande spärrad
 
 - 🔧 Capture-scriptet och den reproducerbara Mednafen-patchkedjan skriver nu

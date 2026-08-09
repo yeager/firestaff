@@ -139,6 +139,39 @@ typedef struct {
 int theron_v1_mednafen_rng_consumer_trace_parse_file(
     const char *path, Theron_V1RngConsumerTraceReceipt *out);
 
+/* Source-byte join for the raw code sidecar.  The US Track 02 layout has
+ * seven authenticated copies of the 256-byte RAM-loaded $5D64 window at
+ * 0x975c4 + n*0x49800.  This receipt proves only that the capture bytes occur
+ * in the supplied hash-verified source image; it does not identify which
+ * copy was mapped at runtime and it never publishes RNG or spawn semantics. */
+typedef struct {
+    Theron_V1SpawnConsumerTraceStatus status;
+    int source_header_verified;
+    int format_verified;
+    int logical_pc_verified;
+    int physical_pc_verified;
+    int track02_size_verified;
+    int source_bytes_match_verified;
+    int target_5d64_seen;
+    int target_5d6a_seen;
+    int semantic_publication_allowed;
+    uint32_t window_count;
+    uint32_t source_match_count;
+    uint32_t first_source_offset;
+    uint32_t last_source_offset;
+    uint32_t first_logical_pc;
+    uint32_t last_logical_pc;
+    uint32_t first_physical_pc;
+    uint32_t last_physical_pc;
+    char source_trace_path[THERON_V1_SPAWN_CONSUMER_TRACE_PATH_CAPACITY];
+    char track02_path[THERON_V1_SPAWN_CONSUMER_TRACE_PATH_CAPACITY];
+} Theron_V1RngCodeSourceCorrelationReceipt;
+
+int theron_v1_mednafen_rng_code_correlate_us_track02_file(
+    const char *rng_code_trace_path,
+    const char *track02_path,
+    Theron_V1RngCodeSourceCorrelationReceipt *out);
+
 /* Correlates the two sidecars emitted by one instrumented run.  This is a
  * stronger capture handoff than either parser alone, but it deliberately
  * remains non-semantic: the dynamic RAM-loaded callees and return ownership

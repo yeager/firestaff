@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Råkodsidecaren från den autentiserade `$5D64`-körningen är nu
+  byteverifierad mot sju källkopior i riktiga US `TQUS02.bin`. Det är en
+  source-byte-join, inte ett RNG-resultat; samma-körnings returägare,
+  spawnkonsument, creature-AI, T700 och T900 är fortfarande spärrade.
+
 - ⏳ Den autentiserade `.mc0`-capturen producerar nu en separat `.rng-code`
   sidecar med 256 faktiska byte vid `$5D64` och korrekt MPR-härledd fysisk PC.
   Det är starkare disassemblybevis, men samma körning saknar CD→RAM-origin;

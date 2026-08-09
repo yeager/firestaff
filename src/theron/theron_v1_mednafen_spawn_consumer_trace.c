@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#define THERON_US_TRACK02_BYTES 8104992u
+#define THERON_US_RNG_CODE_OFFSET 0x975c4u
+#define THERON_US_RNG_CODE_STRIDE 0x49800u
+#define THERON_US_RNG_CODE_COPIES 7u
+#define THERON_RNG_CODE_BYTES 256u
+#define THERON_RNG_CODE_HEX_BYTES (THERON_RNG_CODE_BYTES * 2u)
+
 static int main_ram_address(uint32_t address) {
     return address >= 0x1f0000u && address < 0x1f8000u;
 }
@@ -381,6 +388,130 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
     }
     out->status = THERON_V1_SPAWN_CONSUMER_TRACE_READY;
     return 1;
+}
+
+static int hex_digit(unsigned char value) {
+    if (value >= (unsigned char)'0' && value <= (unsigned char)'9')
+        return (int)(value - (unsigned char)'0');
+    if (value >= (unsigned char)'a' && value <= (unsigned char)'f')
+        return (int)(value - (unsigned char)'a') + 10;
+    if (value >= (unsigned char)'A' && value <= (unsigned char)'F')
+        return (int)(value - (unsigned char)'A') + 10;
+    return -1;
+}
+
+static int parse_hex_window(const char *hex,
+                            unsigned char out[THERON_RNG_CODE_BYTES]) {
+    size_t i;
+    if (!hex || strlen(hex) != THERON_RNG_CODE_HEX_BYTES) return 0;
+    for (i = 0u; i < THERON_RNG_CODE_BYTES; ++i) {
+        int high = hex_digit((unsigned char)hex[i * 2u]);
+        int low = hex_digit((unsigned char)hex[i * 2u + 1u]);
+        if (high < 0 || low < 0) return 0;
+        out[i] = (unsigned char)((high << 4) | low);
+    }
+    return 1;
+}
+
+static int source_window_matches(
+    FILE *track02, const unsigned char window[THERON_RNG_CODE_BYTES],
+    uint32_t *out_offset) {
+    unsigned int copy;
+    unsigned char source[THERON_RNG_CODE_BYTES];
+    for (copy = 0u; copy < THERON_US_RNG_CODE_COPIES; ++copy) {
+        uint32_t offset = THERON_US_RNG_CODE_OFFSET +
+                          (uint32_t)copy * THERON_US_RNG_CODE_STRIDE;
+        if (fseek(track02, (long)offset, SEEK_SET) != 0 ||
+            fread(source, 1u, sizeof(source), track02) != sizeof(source)) {
+            return 0;
+        }
+        if (memcmp(source, window, sizeof(source)) == 0) {
+            if (out_offset) *out_offset = offset;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int theron_v1_mednafen_rng_code_correlate_us_track02_file(
+    const char *rng_code_trace_path,
+    const char *track02_path,
+    Theron_V1RngCodeSourceCorrelationReceipt *out) {
+    FILE *trace = NULL;
+    FILE *track02 = NULL;
+    char line[1024];
+    int saw_window = 0;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->status = THERON_V1_SPAWN_CONSUMER_TRACE_UNAVAILABLE;
+    out->semantic_publication_allowed = 0;
+    if (!rng_code_trace_path || !rng_code_trace_path[0] ||
+        !track02_path || !track02_path[0]) return 0;
+    snprintf(out->source_trace_path, sizeof(out->source_trace_path), "%s",
+             rng_code_trace_path);
+    snprintf(out->track02_path, sizeof(out->track02_path), "%s", track02_path);
+    trace = fopen(rng_code_trace_path, "rb");
+    track02 = fopen(track02_path, "rb");
+    if (!trace || !track02) goto rejected;
+    if (!read_line(trace, line, sizeof(line)) ||
+        strcmp(line, "source=mednafen-pce-instrumented-rng-code-v1") != 0) {
+        goto rejected;
+    }
+    out->source_header_verified = 1;
+    out->format_verified = 1;
+    if (fseek(track02, 0L, SEEK_END) != 0 ||
+        ftell(track02) != (long)THERON_US_TRACK02_BYTES) goto rejected;
+    out->track02_size_verified = 1;
+
+    while (read_line(trace, line, sizeof(line))) {
+        char entry[16];
+        char hex[THERON_RNG_CODE_HEX_BYTES + 1u];
+        unsigned int logical_pc, physical_pc, byte_count;
+        unsigned char window[THERON_RNG_CODE_BYTES];
+        uint32_t source_offset = 0u;
+        int consumed = 0;
+        int logical_ok;
+
+        if (sscanf(line,
+                   "rng_code_window entry=%15s logical_pc=%x physical_pc=%x bytes=%u hex=%512s%n",
+                   entry, &logical_pc, &physical_pc, &byte_count, hex,
+                   &consumed) != 5 || line[consumed] != '\0' ||
+            logical_pc > 0xffffu || physical_pc > 0x1fffffu ||
+            byte_count != THERON_RNG_CODE_BYTES ||
+            !parse_hex_window(hex, window)) goto rejected;
+        logical_ok = (logical_pc == 0x5d64u && strcmp(entry, "5d64") == 0) ||
+                     (logical_pc == 0x5d6au && strcmp(entry, "5d6a") == 0);
+        if (!logical_ok ||
+            !source_window_matches(track02, window, &source_offset)) goto rejected;
+        if (!saw_window) {
+            out->first_source_offset = source_offset;
+            out->first_logical_pc = logical_pc;
+            out->first_physical_pc = physical_pc;
+            saw_window = 1;
+        }
+        out->last_source_offset = source_offset;
+        out->last_logical_pc = logical_pc;
+        out->last_physical_pc = physical_pc;
+        out->window_count++;
+        out->source_match_count++;
+        out->target_5d64_seen |= logical_pc == 0x5d64u;
+        out->target_5d6a_seen |= logical_pc == 0x5d6au;
+    }
+    if (!saw_window) goto rejected;
+    out->logical_pc_verified = 1;
+    out->physical_pc_verified = 1;
+    out->source_bytes_match_verified = out->source_match_count == out->window_count;
+    out->status = THERON_V1_SPAWN_CONSUMER_TRACE_READY;
+    fclose(trace);
+    fclose(track02);
+    return 1;
+
+rejected:
+    if (trace) fclose(trace);
+    if (track02) fclose(track02);
+    out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+    return 0;
 }
 
 int theron_v1_mednafen_spawn_capture_correlate_files(

@@ -189,6 +189,23 @@ int main(void) {
         assert(!theron_v1_mednafen_rng_consumer_trace_parse_file(path, &rng));
         assert(rng.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
     }
+    {
+        const char *real_code = getenv("THERON_REAL_RNG_CODE_TRACE");
+        const char *real_track02 = getenv("THERON_REAL_US_TRACK02");
+        if (real_code && real_code[0] && real_track02 && real_track02[0]) {
+            Theron_V1RngCodeSourceCorrelationReceipt source;
+            assert(theron_v1_mednafen_rng_code_correlate_us_track02_file(
+                real_code, real_track02, &source));
+            assert(source.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
+            assert(source.source_header_verified && source.format_verified);
+            assert(source.track02_size_verified &&
+                   source.source_bytes_match_verified);
+            assert(source.target_5d64_seen && source.window_count == 1u);
+            assert(source.source_match_count == 1u);
+            assert(source.first_source_offset == 0x975c4u);
+            assert(!source.semantic_publication_allowed);
+        }
+    }
     unlink(path);
     unlink(path2);
     puts("PASS: disassembly-bound spawn receipts validate provenance and block semantics");
