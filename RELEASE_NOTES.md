@@ -40,6 +40,8 @@
   through to the legacy partial HUD painter.
 - `M11 DM1 movement arrows`: Prevent keyboard/controller feedback from being
   drawn when the authenticated C013 panel blit was unavailable.
+- `M11 DM1 action/spell capture`: Prevent an active spell frame from reaching
+  capture admission when its authenticated C009/C011 blits failed.
 - `M11 DM1 data resolver`: Prevent recursive archive lookup from selecting a
   sibling edition by binding the hash-verified extracted DOS PC 3.4
   `DATA/DUNGEON.DAT` and its matching loose `GRAPHICS.DAT` first.

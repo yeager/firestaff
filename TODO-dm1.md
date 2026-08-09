@@ -50,6 +50,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   feedback cue is now emitted only after the original C013 movement-arrow
   surface has been loaded and blitted. Missing source material remains black.
 
+- 2026-08-09 action/spell paint correction is complete: the active F0394
+  spell route now reports C009/C011 blit failure to the final-paint gate;
+  runtime capture cannot be admitted for a frame whose original panel was
+  not actually painted. The 33 focused action/spell lifecycle and material
+  tests pass.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
