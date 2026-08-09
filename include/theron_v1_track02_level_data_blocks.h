@@ -38,8 +38,9 @@ typedef struct {
 } Theron_LevelDataBlockDesc;
 
 /* Exact later-level byte window from the authenticated user-data image. The
- * compressed payload is borrowed from the caller's buffer and remains opaque
- * until the original HuC6280 decompressor is bound. */
+ * compressed payload is borrowed from the caller's buffer; its byte-level
+ * HuC6280 lift is available below, while level/object/tile meaning remains
+ * runtime-capture gated. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -58,6 +59,50 @@ typedef struct {
     const uint8_t *compressed;
     const uint8_t *resource_bitstream;
 } Theron_LevelDataBlockReceipt;
+
+/* The retail helper is a HuC6280 variable-width bit reader plus a pointer
+ * table of output addresses.  The stage-2 handler supplies the HuC6280 MPR
+ * mappings around that helper; this logical lift deliberately takes the
+ * already-flattened source resource and destination window as arguments.
+ * It therefore decodes bytes without inventing a level/map/tile meaning. */
+typedef enum {
+    THERON_HUC6280_DECODE_UNAVAILABLE = 0,
+    THERON_HUC6280_DECODE_READY = 1,
+    THERON_HUC6280_DECODE_INVALID_ARGUMENT = 2,
+    THERON_HUC6280_DECODE_TRUNCATED = 3,
+    THERON_HUC6280_DECODE_POINTER_TABLE = 4,
+    THERON_HUC6280_DECODE_DESTINATION = 5,
+    THERON_HUC6280_DECODE_UNSUPPORTED = 6
+} Theron_Huc6280DecodeStatus;
+
+typedef struct {
+    Theron_Huc6280DecodeStatus status;
+    uint16_t resource_length;
+    size_t resource_bitstream_bytes;
+    size_t bits_consumed;
+    size_t output_bytes;
+    size_t pointer_entries;
+    size_t tokens;
+    size_t literal_tokens;
+    size_t backreference_tokens;
+    size_t width_markers;
+    uint8_t final_bit_width;
+} Theron_Huc6280DecodeReceipt;
+
+/* Decode one authentic $23ad resource frame. `resource` starts at the six
+ * bytes read by the retail routine: the little-endian length word is at
+ * +2, and the bitstream starts at +6. `destination_address` is the CPU
+ * address corresponding to destination[0]. `pointer_table` contains the
+ * output-address entries used by the $2496 back-reference path; entries
+ * supplied by the caller before the call are preserved until the retail
+ * loop overwrites them. */
+int theron_v1_huc6280_decode_resource(
+    const uint8_t *resource, size_t resource_bytes,
+    uint8_t *destination, size_t destination_capacity,
+    uint16_t destination_address,
+    uint16_t *pointer_table, size_t pointer_table_capacity,
+    size_t pointer_table_seed_count,
+    Theron_Huc6280DecodeReceipt *out);
 
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block(unsigned int level);
 

@@ -32,6 +32,22 @@ those words with the produced-byte count. This is an authenticated output-size
 contract for the helper, but it still does not identify the caller's input
 block, destination bank, or level/object meaning.
 
+## 2026-08-09 byte-level lift
+
+The previously truncated source-lock listing now includes the complete
+back-reference tail through `$252A`, including the two pointer reads, unsigned
+length subtraction, low-byte copy, high-byte `TII` path, and output-pointer
+advance. `theron_v1_huc6280_decode_resource()` is a bounded C lift of that
+byte-level contract. It accepts the authentic six-byte resource frame, a
+caller-owned flattened destination window, and a caller-owned pointer table;
+it reports literal/back-reference counts and rejects truncated input, missing
+pointer entries, destination overflow, and unsupported address wrapping.
+
+This is deliberately a decompression boundary, not a semantic promotion. The
+stage-2 MPR values and the post-CD `$2600` consumer still have to be captured
+in the same runtime before the decoded bytes can be called a level record,
+bitmap, tile atlas, object table, or palette.
+
 ## What the fragment proves
 
 The `$2386–$23A3` caller measures the output pointer delta in

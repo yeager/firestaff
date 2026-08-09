@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — byte-faithful HuC6280-resourcekärna
+
+- ✅ `da65` verifierade den fullständiga retail-rutinen `$23AD–$252A` från
+  hashlåst US ISO; den tidigare avkortade backreference-delen i source-lock-
+  listningen är kompletterad genom `$252A`.
+- ✅ `theron_v1_huc6280_decode_resource()` följer den verifierade
+  variable-bit-läsaren, `$0100`-breddning, pointer-table-backreferences,
+  literalflöde och low/high-byte-kopieringsväg. Kärnan är fail-closed för
+  trunkering, tabellbrist, destinationsöverflöde och adresswrap.
+- ✅ Äkta US/JP Track 02 BIN/ISO-prologer, resursramar, hashes, source-lock-
+  receipt och Theron-biblioteket passerar fokuserad C11-verifiering. Ingen
+  syntetisk speldata eller semantisk tile/map/object-promotering har lagts in.
+
 ## 2026-08-09 — v3 strict regular-spawn provenance gate
 
 - ✅ En ren v3-replay på äkta US Track 02 använde

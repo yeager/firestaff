@@ -193,4 +193,57 @@ L2496:  sec
         cly
         lda     ($36),y
         sta     $02
-        brk
+        iny
+        lda     ($36),y
+        sta     $03
+        sec
+        iny
+        lda     ($36),y
+        sbc     $02
+        sta     $04
+        iny
+        lda     ($36),y
+        sbc     $03
+        sta     $05
+        lda     $02
+        sta     $36
+        lda     $03
+        sta     $37
+        bsr     L246E
+        ldx     $04
+        beq     L2502
+        cly
+L24E4:  lda     ($36),y
+        sta     ($30),y
+        iny
+        dex
+        bne     L24E4
+        clc
+        lda     $36
+        adc     $04
+        sta     $36
+        bcc     L24F7
+        inc     $37
+L24F7:  clc
+        lda     $30
+        adc     $04
+        sta     $30
+        bcc     L2502
+        inc     $31
+L2502:  ldx     $05
+        beq     L252A
+        lda     $36
+        sta     $3D1E
+        lda     $37
+        sta     $3D1F
+        lda     $30
+        sta     $3D20
+        lda     $31
+        sta     $3D21
+        stx     $3D23
+        tii     $00,$00,$0000
+        clc
+        txa
+        adc     $31
+        sta     $31
+L252A:  rts

@@ -78,6 +78,16 @@ two header bytes are deliberately still opaque:
 the static caller has not proven them to be a destination address or level
 identifier, and no map/tile/palette semantics are promoted from that shape.
 
+The static HuC6280 lift is now byte-complete through `$252A`. The C boundary
+`theron_v1_huc6280_decode_resource()` follows the retail variable-width reader,
+`$0100` width markers, pointer-table backreferences, low-byte copy, and the
+high-byte `TII` continuation. It requires caller-owned source/destination
+windows and pointer entries, so it cannot silently invent MPR mappings. The
+authentic resource bytes can therefore be decoded as bytes when a matching
+runtime bank snapshot is supplied, but no decoded output is promoted to map,
+tile, bitmap, palette, or object semantics until the stage-2 MPR and post-CD
+consumer join is captured.
+
 ## Stage-2 bank and destination contract
 
 The authenticated US and JP retail projections also contain the same generic

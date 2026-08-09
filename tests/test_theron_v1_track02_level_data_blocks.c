@@ -203,7 +203,45 @@ static void verify_real_iso_level_blocks(const char *env_name,
            label);
 }
 
+static void verify_huc6280_decoder_lift(void) {
+    /* One authentic $23A4 framing shape with a bounded literal token.  This
+     * is an algorithm-boundary fixture only; no game asset is produced from
+     * it.  The real Track 02 resource receipts are still the only accepted
+     * source for runtime data. */
+    const uint8_t resource[8] = {
+        0x20u, 0x00u, 0x07u, 0x00u, 0x00u, 0x00u, 0x20u, 0x80u
+    };
+    uint8_t destination[16] = {0};
+    uint16_t pointer_table[8] = {0};
+    Theron_Huc6280DecodeReceipt receipt;
+
+    assert(theron_v1_huc6280_decode_resource(
+        resource, sizeof(resource), destination, sizeof(destination),
+        0x6000u, pointer_table, 8u, 0u, &receipt));
+    assert(receipt.status == THERON_HUC6280_DECODE_READY);
+    assert(receipt.resource_length == 7u);
+    assert(receipt.resource_bitstream_bytes == 2u);
+    assert(receipt.output_bytes == 1u);
+    assert(receipt.literal_tokens == 1u);
+    assert(receipt.backreference_tokens == 0u);
+    assert(receipt.pointer_entries == 1u);
+    assert(receipt.tokens == 1u);
+    assert(destination[0] == 0x41u);
+
+    {
+        Theron_Huc6280DecodeReceipt rejected;
+        const uint8_t truncated[6] = {0x20u, 0x00u, 0x08u, 0x00u,
+                                      0x00u, 0x00u};
+        assert(!theron_v1_huc6280_decode_resource(
+            truncated, sizeof(truncated), destination, sizeof(destination),
+            0x6000u, pointer_table, 8u, 0u, &rejected));
+        assert(rejected.status == THERON_HUC6280_DECODE_TRUNCATED);
+    }
+    puts("PASS: HuC6280 $23AD variable-bit decoder boundary");
+}
+
 int main(void) {
+    verify_huc6280_decoder_lift();
     /* 7 levels */
     assert(THERON_TRACK02_LEVEL_COUNT == 7);
 

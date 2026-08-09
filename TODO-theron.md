@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — efter byte-dekomprimeringslyftet
+
+- 🔒 Den fullständiga retailrutinen `$23AD–$252A` är nu lyft på byte-nivå och
+  testad med säkra gränser. Nästa nödvändiga bevis är samma-capture MPR-tabell,
+  destination och pointer-table-state från stage-2 för en verklig senare nivå.
+  Utan den får de autentiska avkodade bytesen inte kallas tileatlas, bitmap,
+  dungeonmap eller objektrecord.
+- 🔧 Bind `theron_v1_huc6280_decode_resource()` till en sådan autentiserad
+  runtime-window och kontrollera resultatets längd/hash mot spelkonsumentens
+  CD-sektor och `$2600`-RAM. Därefter kan atlasbindning och square-to-tile-
+  mappning tas vidare; RNG/AI/T700/T900 förblir separata capture-gates.
+
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
 - 🔒 Den senaste rena v3-capturen använde replayen

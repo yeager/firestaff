@@ -46,9 +46,9 @@ static const uint32_t g_shared_prologue_fnv1a = 0xa6268637u;
  *   - 8 bytes: per-level metadata (bytes 0xE8-0xEF)
  *   - Compressed level data starting at offset 0xF0
  *
- * Compression algorithm: under investigation (not standard Okumura LZSS).
- * The decompression routine is in Track 02 code banks (not Track 01,
- * which is CD-DA audio). */
+ * Compression algorithm: the exact variable-width HuC6280 routine is
+ * byte-locked in bank-$1f at $23AD-$252A.  Its stage-2 MPR setup and the
+ * later level/object consumer remain separate runtime-admission gates. */
 
 static const Theron_LevelDataBlockDesc g_level_blocks[THERON_TRACK02_LEVEL_COUNT] = {
     /* Level 1 */ { 0x09F000, { 0x07, 0x87, 0x18, 0x10, 0x10, 0x10, 0x10, 0x20 } },
@@ -202,4 +202,236 @@ int theron_v1_track02_level_data_block_read(
                       THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE,
                   block->per_level_meta,
                   sizeof(block->per_level_meta)) == 0;
+}
+
+static void theron_huc6280_receipt_init(Theron_Huc6280DecodeReceipt *out) {
+    if (out) memset(out, 0, sizeof(*out));
+}
+
+static int theron_huc6280_read_bits(const uint8_t *bits, size_t bit_count,
+                                    size_t *bit_cursor, unsigned int width,
+                                    uint16_t *value) {
+    uint16_t result = 0u;
+    unsigned int i;
+
+    if (!bits || !bit_cursor || !value || width == 0u || width > 16u ||
+        *bit_cursor > bit_count || width > bit_count - *bit_cursor) {
+        return 0;
+    }
+    for (i = 0u; i < width; ++i) {
+        size_t bit = *bit_cursor;
+        result = (uint16_t)((result << 1u) |
+                            ((bits[bit / 8u] >> (7u - (bit % 8u))) & 1u));
+        *bit_cursor = bit + 1u;
+    }
+    *value = result;
+    return 1;
+}
+
+static int theron_huc6280_address_to_offset(uint16_t address,
+                                            uint16_t destination_address,
+                                            size_t capacity, size_t *offset) {
+    uint32_t delta;
+
+    if (!offset || address < destination_address) return 0;
+    delta = (uint32_t)address - (uint32_t)destination_address;
+    if ((size_t)delta >= capacity) return 0;
+    *offset = (size_t)delta;
+    return 1;
+}
+
+static int theron_huc6280_emit_token(
+    uint16_t token, uint8_t *destination, size_t destination_capacity,
+    uint16_t destination_address, uint16_t *pointer_table,
+    size_t pointer_table_capacity, size_t pointer_table_available,
+    size_t *output_offset,
+    Theron_Huc6280DecodeReceipt *receipt) {
+    uint8_t high = (uint8_t)(token >> 8u);
+
+    if (!destination || !pointer_table || !output_offset || !receipt) return 0;
+    if (*output_offset >= destination_capacity ||
+        *output_offset > 0xFFFFu - (size_t)destination_address) {
+        receipt->status = THERON_HUC6280_DECODE_DESTINATION;
+        return 0;
+    }
+    if (high == 0u || (high & 0x80u) != 0u) {
+        destination[*output_offset] = (uint8_t)token;
+        ++*output_offset;
+        ++receipt->literal_tokens;
+        return 1;
+    }
+
+    /* $2496: (token - 1) << 1 indexes the output-address table rooted at
+     * $32/$33.  The table is passed separately because the stage-2 MPR
+     * projection is not equivalent to a host pointer. */
+    {
+        size_t index = (size_t)token - 1u;
+        uint16_t source_address;
+        uint16_t next_address;
+        uint16_t length;
+        size_t source_offset;
+        size_t i;
+
+        if (index + 1u >= pointer_table_capacity ||
+            index + 1u >= pointer_table_available) {
+            receipt->status = THERON_HUC6280_DECODE_POINTER_TABLE;
+            return 0;
+        }
+        source_address = pointer_table[index];
+        next_address = pointer_table[index + 1u];
+        length = (uint16_t)(next_address - source_address);
+        if (length == 0u) {
+            /* The retail routine accepts a zero-length TII/copy. */
+            ++receipt->backreference_tokens;
+            return 1;
+        }
+        if (!theron_huc6280_address_to_offset(source_address,
+                                               destination_address,
+                                               destination_capacity,
+                                               &source_offset) ||
+            (size_t)length > destination_capacity - *output_offset ||
+            source_offset > destination_capacity - (size_t)length) {
+            receipt->status = THERON_HUC6280_DECODE_DESTINATION;
+            return 0;
+        }
+        /* The HuC6280 copy path is allowed to cross the low-byte boundary;
+         * byte-at-a-time copying preserves its already-produced source and
+         * is safe for the overlapping form of a back-reference. */
+        for (i = 0u; i < (size_t)length; ++i) {
+            destination[*output_offset + i] = destination[source_offset + i];
+        }
+        *output_offset += (size_t)length;
+        ++receipt->backreference_tokens;
+    }
+    return 1;
+}
+
+int theron_v1_huc6280_decode_resource(
+    const uint8_t *resource, size_t resource_bytes,
+    uint8_t *destination, size_t destination_capacity,
+    uint16_t destination_address,
+    uint16_t *pointer_table, size_t pointer_table_capacity,
+    size_t pointer_table_seed_count,
+    Theron_Huc6280DecodeReceipt *out) {
+    uint16_t resource_length;
+    size_t bitstream_bytes;
+    const uint8_t *bitstream;
+    size_t bit_count;
+    size_t bit_cursor = 0u;
+    size_t output_offset = 0u;
+    size_t pointer_entries = 0u;
+    unsigned int width = 9u;
+    size_t token_count = 0u;
+    size_t pointer_table_available;
+
+    theron_huc6280_receipt_init(out);
+    if (!out) return 0;
+    if (!resource || !destination || !pointer_table || resource_bytes < 6u ||
+        destination_capacity == 0u || pointer_table_capacity < 2u ||
+        pointer_table_seed_count > pointer_table_capacity) {
+        out->status = THERON_HUC6280_DECODE_INVALID_ARGUMENT;
+        return 0;
+    }
+    resource_length = (uint16_t)(resource[2] |
+                                 ((uint16_t)resource[3] << 8u));
+    if (resource_length < 5u) {
+        out->status = THERON_HUC6280_DECODE_TRUNCATED;
+        return 0;
+    }
+    bitstream_bytes = (size_t)resource_length - 5u;
+    if (bitstream_bytes > resource_bytes - 6u) {
+        out->status = THERON_HUC6280_DECODE_TRUNCATED;
+        return 0;
+    }
+    if (destination_capacity > 0x10000u - (size_t)destination_address) {
+        out->status = THERON_HUC6280_DECODE_UNSUPPORTED;
+        return 0;
+    }
+    bitstream = resource + 6u;
+    bit_count = bitstream_bytes * 8u;
+    pointer_table_available = pointer_table_seed_count;
+    out->resource_length = resource_length;
+    out->resource_bitstream_bytes = bitstream_bytes;
+
+    /* $0F=$01 and $14=$09 come from the authenticated $23A4 helper.  The
+     * first pointer entry is written before the first token; two tokens are
+     * consumed per L23DE/L240D output group, with marker tokens only widening
+     * the reader. */
+    while (bit_cursor < bit_count) {
+        uint16_t token;
+
+        if (pointer_entries >= pointer_table_capacity) {
+            out->status = THERON_HUC6280_DECODE_POINTER_TABLE;
+            return 0;
+        }
+        pointer_table[pointer_entries++] =
+            (uint16_t)((uint32_t)destination_address +
+                       (uint32_t)output_offset);
+        if (pointer_table_available < pointer_entries) {
+            pointer_table_available = pointer_entries;
+        }
+
+        do {
+            if (!theron_huc6280_read_bits(bitstream, bit_count, &bit_cursor,
+                                          width, &token)) {
+                out->status = THERON_HUC6280_DECODE_TRUNCATED;
+                return 0;
+            }
+            if (token == 0x0100u) {
+                if (width == 16u) {
+                    out->status = THERON_HUC6280_DECODE_UNSUPPORTED;
+                    return 0;
+                }
+                ++width;
+                ++out->width_markers;
+            }
+        } while (token == 0x0100u);
+        if (!theron_huc6280_emit_token(
+                token, destination, destination_capacity, destination_address,
+                pointer_table, pointer_table_capacity, pointer_table_available,
+                &output_offset, out)) {
+            return 0;
+        }
+        ++token_count;
+
+        {
+            int second_token_read = 1;
+            do {
+                if (!theron_huc6280_read_bits(bitstream, bit_count,
+                                              &bit_cursor, width, &token)) {
+                    /* The retail helper tests the byte countdown after this
+                     * second read and returns before emitting an incomplete
+                     * trailing token. */
+                    second_token_read = 0;
+                    break;
+                }
+                if (token == 0x0100u) {
+                    if (width == 16u) {
+                        out->status = THERON_HUC6280_DECODE_UNSUPPORTED;
+                        return 0;
+                    }
+                    ++width;
+                    ++out->width_markers;
+                }
+            } while (token == 0x0100u);
+            if (!second_token_read || bit_cursor >= bit_count ||
+                token == 0x0100u) break;
+            if (!theron_huc6280_emit_token(
+                    token, destination, destination_capacity,
+                    destination_address, pointer_table,
+                    pointer_table_capacity, pointer_table_available,
+                    &output_offset, out)) {
+                return 0;
+            }
+            ++token_count;
+        }
+    }
+
+    out->status = THERON_HUC6280_DECODE_READY;
+    out->bits_consumed = bit_cursor;
+    out->output_bytes = output_offset;
+    out->pointer_entries = pointer_entries;
+    out->tokens = token_count;
+    out->final_bit_width = (uint8_t)width;
+    return 1;
 }
