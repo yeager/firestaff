@@ -358,6 +358,14 @@ VDP2 emulator. It does not admit PNDSize=1, 16x16 cells, inferred source-map
 crops or a host text layout. A positive FONT256/TEXT4/TABL consumer capture
 is still required before the startup/menu text gate can change.
 
+VDP1 replay also has an atomic sequence lane for a complete bounded command
+window. Every mode-1 command must pass the existing exact DGN image/CLUT join;
+the sequence additionally requires captured system-clip state, local-coordinate
+state, command order and an observed END record. Replay is staged into a
+temporary framebuffer and published only after all commands pass. This closes
+the single-command-to-command-list handoff mechanically, but does not claim
+that the current European traces are a complete retail viewport scene.
+
 | Route | Magic | Evidence still required |
 |---|---|---|
 | PRS3/menu replay | `NXSPRS3M` | source stream, SH-2 execution trace, PALT/VDP1 consumer and frame identity |

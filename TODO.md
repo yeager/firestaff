@@ -18,6 +18,12 @@
   source-map crops and menu/FONT256 ownership remain closed until a positive
   Saturn text-consumer trace supplies them.
 
+- ⏳ Nexus VDP1 now has an atomic multi-command replay lane exposed through
+  the viewport. It still requires one authenticated command window with
+  system-clip, local-coordinate, command-order and END-record evidence for
+  every command; the current European startup/gameplay traces do not bind a
+  complete retail scene, so ordinary DGN mesh rendering remains closed.
+
 - 🔧 Nexus: en autentiserad europeisk gameplay-capture binder nu VDP1-draw
   `0x0e180` (`colour_mode=1`, `COLR=0x32a4`, källa `0x4c580`) till exakt
   ordväxlad pixeldata och 16-entry CLUT för `LEV00.DGN` Structure2=72.

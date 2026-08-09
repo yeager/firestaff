@@ -21,6 +21,8 @@ int main(void)
     Nexus_Viewport viewport;
     Nexus_V1_Vdp1CaptureCompositeInput input;
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
+    Nexus_V1_Vdp1CaptureSequenceInput sequence_input;
+    Nexus_V1_Vdp1CaptureSequenceReceipt sequence_receipt;
     int i;
 
     /* 16x4 mode-1 quad, signed coordinates around the Saturn display
@@ -103,6 +105,35 @@ int main(void)
     if (nexus_v1_vdp1_capture_composite_mode1(
             &framebuffer, &input, &receipt) || receipt.renderer_permitted) {
         fprintf(stderr, "FAIL: unauthenticated VDP1 composite was admitted\n");
+        return 1;
+    }
+    input.original_saturn_capture_verified = 1;
+    memset(&sequence_input, 0, sizeof(sequence_input));
+    sequence_input.commands = &input;
+    sequence_input.command_count = 1;
+    sequence_input.system_clip_state_verified = 1;
+    sequence_input.local_coordinate_state_verified = 1;
+    sequence_input.command_order_verified = 1;
+    sequence_input.end_record_verified = 1;
+    memset(&sequence_receipt, 0, sizeof(sequence_receipt));
+    if (!nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &framebuffer, &sequence_input, &sequence_receipt) ||
+        !sequence_receipt.valid || !sequence_receipt.sequence_state_verified ||
+        sequence_receipt.command_frames_verified != 1) {
+        fprintf(stderr, "FAIL: authenticated VDP1 sequence composite\n");
+        return 1;
+    }
+    nexus_viewport_init(&viewport);
+    if (!nexus_viewport_replay_vdp1_capture_sequence(
+            &viewport, &sequence_input, &sequence_receipt) ||
+        viewport.last_vdp1_sequence_receipt.command_count != 1) {
+        fprintf(stderr, "FAIL: viewport VDP1 sequence replay adapter\n");
+        return 1;
+    }
+    sequence_input.end_record_verified = 0;
+    if (nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &framebuffer, &sequence_input, &sequence_receipt)) {
+        fprintf(stderr, "FAIL: incomplete VDP1 sequence admitted\n");
         return 1;
     }
     puts("test_nexus_v1_vdp1_capture_compositor: PASS");

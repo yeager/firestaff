@@ -32,6 +32,29 @@ int nexus_viewport_replay_vdp1_capture(
     return 1;
 }
 
+int nexus_viewport_replay_vdp1_capture_sequence(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp1CaptureSequenceInput *input,
+    Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1CaptureSequenceReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!vp || !input) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &vp->fb, input, &receipt)) {
+        vp->last_vdp1_sequence_receipt = receipt;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    vp->last_vdp1_sequence_receipt = receipt;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int nexus_viewport_replay_vdp2_nbg1_capture(
     Nexus_Viewport *vp,
     const Nexus_V1_Vdp2CaptureCompositeInput *input,

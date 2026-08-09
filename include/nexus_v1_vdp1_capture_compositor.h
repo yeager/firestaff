@@ -49,6 +49,33 @@ typedef struct {
     int screen_origin_y;
 } Nexus_V1_Vdp1CaptureCompositeReceipt;
 
+/* A complete, bounded replay lane for one captured VDP1 command window.
+ * The per-command source joins remain explicit; these additional facts bind
+ * the state that one command cannot establish by itself. */
+typedef struct {
+    const Nexus_V1_Vdp1CaptureCompositeInput *commands;
+    int command_count;
+    int system_clip_state_verified;
+    int local_coordinate_state_verified;
+    int command_order_verified;
+    int end_record_verified;
+} Nexus_V1_Vdp1CaptureSequenceInput;
+
+typedef struct {
+    int valid;
+    int sequence_state_verified;
+    int command_count;
+    int command_frames_verified;
+    int source_joins_verified;
+    int palette_joins_verified;
+    int command_order_verified;
+    int end_record_verified;
+    int renderer_permitted;
+    int written_pixels;
+    int transparent_pixels;
+    int end_code_pixels;
+} Nexus_V1_Vdp1CaptureSequenceReceipt;
+
 /* Composite one source-bound mode-1 quad in command order. The operation is
  * capture replay only; no source bytes are decoded unless both exact DGN
  * joins and the original-capture attestation are present. */
@@ -56,5 +83,12 @@ int nexus_v1_vdp1_capture_composite_mode1(
     Nexus_Framebuffer *framebuffer,
     const Nexus_V1_Vdp1CaptureCompositeInput *input,
     Nexus_V1_Vdp1CaptureCompositeReceipt *out_receipt);
+
+/* Replay a complete authenticated VDP1 window atomically. On any failed
+ * command or missing state fact, the destination framebuffer is unchanged. */
+int nexus_v1_vdp1_capture_composite_mode1_sequence(
+    Nexus_Framebuffer *framebuffer,
+    const Nexus_V1_Vdp1CaptureSequenceInput *input,
+    Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt);
 
 #endif

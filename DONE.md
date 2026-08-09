@@ -82,6 +82,18 @@
 - ✅ Regressionsproben `test_nexus_v1_vdp2_tilemap_capture_compositor` och
   strikt C99-kompilering med `-Wall -Wextra -Werror -pedantic` passerar.
 
+# Nexus: atomisk VDP1-komposition över fångad kommandolista (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_capture_composite_mode1_sequence()` återspelar en hel,
+  begränsad VDP1-window endast när varje mode-1-kommando har exakt DGN-
+  image/CLUT-join och samma capture-attestering, samtidigt som system-clip,
+  local-coordinate, ordning och END-record är explicit verifierade.
+- ✅ Sekvensen är atomisk: vid saknad state eller ett enda underkänt kommando
+  förblir destinationens framebuffer oförändrad. `Nexus_Viewport` exponerar
+  samma lane och sparar ett separat sekvenskvitto.
+- ✅ VDP1-, VDP2-bitmap- och VDP2-tilemap-regressionerna samt strikt C99-
+  kompilering passerar.
+
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns
