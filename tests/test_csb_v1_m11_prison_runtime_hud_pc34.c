@@ -410,8 +410,8 @@ int main(void)
                   "real Atari MINI.DAT F1 closes inventory through the same GAMEBLOCK route");
             /* CSB 2.x Atari's G0447 shifts the left edge of each visible
              * C007..C010 bar-graph toggle one pixel right (44, 113, 182,
-             * 251).  Pixel 43 belongs to C012's adjacent status surface,
-             * not to C007.  ReDMCSB COMMAND.C:92-100. */
+             * 251). Pixel 43 is the inert seam after C012's adjacent status
+             * surface, not part of C007. ReDMCSB COMMAND.C:92-100. */
             CHECK(M11_GameView_HandlePointerButton(
                       &view, 43, 14, M11_DM1_MOUSE_MASK_LEFT) ==
                       M11_GAME_INPUT_IGNORED && !view.inventoryPanelActive,
