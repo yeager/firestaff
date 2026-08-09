@@ -11630,4 +11630,6 @@ rendering remain blocked.
 - ✅ C409 Resume är fortfarande fail-closed utan en autentisk originalsave;
   den kan inte längre av misstag behandlas som ett nytt spel.
 - ✅ Hand-off-regressionen kördes mot användarens hash-verifierade A31,
-  A35 multilingual och A35 English-data: 45/0, 32/0 respektive 27/0.
+  A35 multilingual och A35 English-data: 47/0, 34/0 respektive 29/0. Den
+  täcker även att klick utanför entrézonerna och C409 Resume lämnar Prison
+  orörd när ingen autentisk originalsave är tillgänglig.

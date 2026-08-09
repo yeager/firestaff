@@ -430,6 +430,18 @@ static void expect_amiga_prison_entrance_handoff(M11_GameViewState *view,
                     count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
                 label);
     expect_true(M11_GameView_HandlePointerButton(
+                    view, 10, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_IGNORED &&
+                    !view->csbState.startup_entrance_opening_active &&
+                    !view->csbState.startup_entrance_credits_active,
+                "Amiga Prison ignores pointer input outside native entrance zones");
+    expect_true(M11_GameView_HandlePointerButton(
+                    view, 250, 80, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_IGNORED &&
+                    !view->csbState.startup_entrance_opening_active &&
+                    !view->csbState.startup_entrance_credits_active,
+                "Amiga C409 Resume stays closed without an authenticated save");
+    expect_true(M11_GameView_HandlePointerButton(
                     view, 250, 190, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW &&
                     view->csbState.startup_entrance_credits_active,
