@@ -111,9 +111,7 @@ static int run_external_dgn_mode1_capture(void)
     Nexus_V1_Vdp1DgnMaterialResolverInput resolver;
     Nexus_Framebuffer framebuffer;
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
-    Nexus_V1_Vdp1CommandSequenceReceipt sequence;
-    Nexus_V1_Vdp1CaptureCompositeReceipt composite;
-    uint32_t command_offset;
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
     unsigned int frame_index;
     int ok;
 
@@ -151,16 +149,20 @@ static int run_external_dgn_mode1_capture(void)
     nexus_fb_init(&framebuffer);
     nexus_fb_clear(&framebuffer);
     memset(&frame, 0, sizeof(frame));
-    memset(&sequence, 0, sizeof(sequence));
-    memset(&composite, 0, sizeof(composite));
-    command_offset = 0U;
-    ok = nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
+    memset(&replay, 0, sizeof(replay));
+    ok = nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
         &framebuffer, capture, (size_t)capture_size, frame_index,
-        nexus_v1_vdp1_dgn_material_resolver, &resolver, &frame, &sequence,
-        &composite, &command_offset) && frame.valid && sequence.valid &&
-        sequence.complete && composite.valid &&
-        composite.source_join_verified && composite.palette_join_verified &&
-        composite.original_saturn_capture_verified && command_offset != 0U;
+        nexus_v1_vdp1_dgn_material_resolver, &resolver, &frame, &replay) &&
+        frame.valid && replay.valid && replay.command_sequence.valid &&
+        replay.draw_commands_seen == 235 &&
+        replay.draw_commands_resolved == 218 &&
+        replay.unowned_non_mode1_draw_commands == 1 &&
+        replay.unowned_mode1_draw_commands == 16 &&
+        replay.skipped_non_draw_commands == 7 &&
+        replay.replay.valid && replay.replay.source_joins_verified == 218 &&
+        replay.replay.palette_joins_verified == 218 &&
+        replay.system_clip_state_missing &&
+        !replay.replay.renderer_permitted;
     free(capture);
     free(dgn);
     return ok;

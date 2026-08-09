@@ -4533,6 +4533,13 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   SLEV-selector, SAL-codec eller playback. Nästa capture måste skrivas med
   samma source-bound identities som den faktiskt laddade retail-kedjan.
 
+# Nexus VDP1 frame-760 mode-1 sequence replay (2026-08-09)
+
+- ⏳ C-lanen återspelar 218 exakta DGN image/CLUT-joins över 242 command
+  records och håller 16 oägda mode-1-poster samt en oägd icke-mode-1-post
+  utanför materialägarskapet. `system clip` saknas i capture-witnessen,
+  därför är replayet fortsatt capture-only och `renderer_permitted=0`.
+
 # Theron next authenticated semantic capture
 
 - 🔒 Continue from the positive CD→RAM→HuC6280 receipt at the next verified

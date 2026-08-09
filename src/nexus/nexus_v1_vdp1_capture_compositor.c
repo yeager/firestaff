@@ -8,6 +8,15 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+static int bytes_all_zero(const uint8_t *bytes, int size)
+{
+    int i;
+    if (!bytes || size <= 0) return 0;
+    for (i = 0; i < size; ++i)
+        if (bytes[i] != 0U) return 0;
+    return 1;
+}
+
 static int swapped_words_equal(const uint8_t *capture, int capture_size,
                                const uint8_t *source, int source_size)
 {
@@ -278,24 +287,32 @@ int nexus_v1_vdp1_capture_composite_mode1(
     memset(&receipt, 0, sizeof(receipt));
     receipt.fallback_visuals_permitted = 0;
     if (!framebuffer || !input || !input->command || !input->texture_span ||
-        !input->palette_state || !input->dgn_image || !input->dgn_palette ||
+        (!input->transparent_capture_noop_verified &&
+         (!input->palette_state || !input->dgn_image || !input->dgn_palette)) ||
         input->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
-        input->palette_state_size != 32 || input->dgn_palette_size != 32 ||
-        input->texture_span_size <= 0 || input->dgn_image_size <= 0 ||
+        (!input->transparent_capture_noop_verified &&
+         (input->palette_state_size != 32 || input->dgn_palette_size != 32 ||
+          input->dgn_image_size <= 0)) ||
+        input->texture_span_size <= 0 ||
         input->screen_origin_x < 0 || input->screen_origin_x >= NEXUS_FB_W ||
         input->screen_origin_y < 0 || input->screen_origin_y >= NEXUS_FB_H ||
         input->palette_slot_base < 0 || input->palette_slot_base > 240 ||
-        !input->dgn_source_hash_verified ||
+        (!input->transparent_capture_noop_verified &&
+         !input->dgn_source_hash_verified) ||
         !input->original_saturn_capture_verified ||
         nexus_v1_vdp1_texture_command_parse(input->command,
             input->command_size, &command) != 0 || !command.texture_command ||
         command.colour_mode != 1U || !command.texture_source_range_valid ||
         command.texture_byte_count != (uint32_t)input->texture_span_size ||
-        input->texture_span_size != input->dgn_image_size ||
-        !swapped_words_equal(input->texture_span, input->texture_span_size,
-                             input->dgn_image, input->dgn_image_size) ||
-        !swapped_words_equal(input->palette_state, input->palette_state_size,
-                             input->dgn_palette, input->dgn_palette_size)) {
+        (!input->transparent_capture_noop_verified &&
+         (input->texture_span_size != input->dgn_image_size ||
+          !swapped_words_equal(input->texture_span, input->texture_span_size,
+                               input->dgn_image, input->dgn_image_size) ||
+          !swapped_words_equal(input->palette_state, input->palette_state_size,
+                               input->dgn_palette, input->dgn_palette_size))) ||
+        (input->transparent_capture_noop_verified &&
+         ((command.draw_mode & UINT16_C(0x0040)) != 0U ||
+          !bytes_all_zero(input->texture_span, input->texture_span_size)))) {
         *out_receipt = receipt;
         return 0;
     }
@@ -313,12 +330,21 @@ int nexus_v1_vdp1_capture_composite_mode1(
     receipt.mode1_lookup = 1;
     receipt.coordinate_words_framed = command.coordinate_words_framed;
     receipt.original_saturn_capture_verified = 1;
-    receipt.source_join_verified = 1;
-    receipt.palette_join_verified = 1;
+    receipt.source_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
+    receipt.palette_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
+    receipt.transparent_noop_verified = input->transparent_capture_noop_verified ? 1 : 0;
     receipt.palette_slot_base = input->palette_slot_base;
     receipt.screen_origin_x = input->screen_origin_x;
     receipt.screen_origin_y = input->screen_origin_y;
 
+    if (input->transparent_capture_noop_verified) {
+        receipt.transparent_pixels = command.texture_width * command.texture_height;
+        receipt.valid = 1;
+        receipt.renderer_permitted = 0;
+        free(working);
+        *out_receipt = receipt;
+        return 1;
+    }
     for (index = 0; index < 16; ++index) {
         palette[index] = read_le16(input->palette_state + index * 2);
         working->palette[input->palette_slot_base + index] =
@@ -333,6 +359,13 @@ int nexus_v1_vdp1_capture_composite_mode1(
     xy[3][0] = (float)input->screen_origin_x + (float)command.xd;
     xy[3][1] = (float)input->screen_origin_y + (float)command.yd;
     if (xy[0][0] == xy[1][0] && xy[0][1] == xy[1][1]) {
+        if (input->capture_allow_zero_pixel_command) {
+            receipt.valid = 1;
+            receipt.renderer_permitted = 0;
+            free(working);
+            *out_receipt = receipt;
+            return 1;
+        }
         free(working);
         *out_receipt = receipt;
         return 0;
@@ -347,8 +380,9 @@ int nexus_v1_vdp1_capture_composite_mode1(
         input->palette_slot_base, command.draw_mode,
         &receipt.written_pixels, &receipt.transparent_pixels,
         &receipt.end_code_pixels, end_rows);
-    receipt.valid = receipt.written_pixels > 0;
-    receipt.renderer_permitted = receipt.valid;
+    receipt.valid = receipt.written_pixels > 0 ||
+        input->capture_allow_zero_pixel_command;
+    receipt.renderer_permitted = receipt.written_pixels > 0;
     if (receipt.valid) *framebuffer = *working;
     free(working);
     *out_receipt = receipt;
@@ -392,12 +426,24 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         Nexus_V1_Vdp1CaptureCompositeReceipt command_receipt;
         if (!nexus_v1_vdp1_capture_composite_mode1(
                 working, &input->commands[i], &command_receipt)) {
+            receipt.command_frames_verified += command_receipt.command_framed;
+            receipt.source_joins_verified += command_receipt.source_join_verified;
+            receipt.palette_joins_verified += command_receipt.palette_join_verified;
+            receipt.transparent_pixels += command_receipt.transparent_pixels;
+            if (input->commands[i].capture_allow_zero_pixel_command) {
+                ++receipt.capture_gap_commands;
+                continue;
+            }
             free(working);
             *out_receipt = receipt;
             return 0;
         }
         if (input->commands[i].screen_origin_x != input->display_origin_x ||
             input->commands[i].screen_origin_y != input->display_origin_y) {
+            if (input->commands[i].capture_allow_zero_pixel_command) {
+                ++receipt.capture_gap_commands;
+                continue;
+            }
             free(working);
             *out_receipt = receipt;
             return 0;
@@ -408,18 +454,25 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         receipt.written_pixels += command_receipt.written_pixels;
         receipt.transparent_pixels += command_receipt.transparent_pixels;
         receipt.end_code_pixels += command_receipt.end_code_pixels;
+        receipt.transparent_noop_commands +=
+            command_receipt.transparent_noop_verified;
     }
-    if (receipt.command_frames_verified != input->command_count ||
-        receipt.source_joins_verified != input->command_count ||
-        receipt.palette_joins_verified != input->command_count) {
+    if (receipt.command_frames_verified + receipt.capture_gap_commands !=
+            input->command_count ||
+        receipt.source_joins_verified + receipt.transparent_noop_commands +
+            receipt.capture_gap_commands != input->command_count ||
+        receipt.palette_joins_verified + receipt.transparent_noop_commands +
+            receipt.capture_gap_commands !=
+            input->command_count) {
         free(working);
         *out_receipt = receipt;
         return 0;
     }
     *framebuffer = *working;
     free(working);
-    receipt.valid = receipt.written_pixels > 0;
-    receipt.renderer_permitted = receipt.valid;
+    receipt.valid = receipt.written_pixels > 0 ||
+        (input->command_count > 0 && receipt.capture_gap_commands > 0);
+    receipt.renderer_permitted = receipt.written_pixels > 0;
     *out_receipt = receipt;
     return receipt.valid;
 }
@@ -465,32 +518,65 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
 
         if (nexus_v1_vdp1_texture_command_parse(
                 command, NEXUS_V1_VDP1_COMMAND_BYTES, &parsed) != 0) {
+            if (input->mode1_only_capture) {
+                ++receipt.skipped_non_draw_commands;
+                continue;
+            }
             *out_receipt = receipt;
             return 0;
         }
-        if (!parsed.texture_command || parsed.end_command) continue;
+        if (!parsed.texture_command || parsed.end_command) {
+            if (input->mode1_only_capture)
+                ++receipt.skipped_non_draw_commands;
+            continue;
+        }
         ++receipt.draw_commands_seen;
         if (receipt.draw_commands_seen >
-                NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS ||
-            !parsed.texture_source_range_valid ||
-            parsed.texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES) {
+                NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS) {
             ++receipt.unresolved_draw_commands;
             *out_receipt = receipt;
             return 0;
+        }
+        if (!parsed.texture_source_range_valid ||
+            parsed.texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES) {
+            if (input->mode1_only_capture) {
+                ++receipt.unowned_mode1_draw_commands;
+                continue;
+            }
+            ++receipt.unresolved_draw_commands;
+            *out_receipt = receipt;
+            return 0;
+        }
+        if (parsed.colour_mode != 1U) {
+            if (!input->mode1_only_capture) {
+                ++receipt.unresolved_draw_commands;
+                *out_receipt = receipt;
+                return 0;
+            }
+            ++receipt.unowned_non_mode1_draw_commands;
+            continue;
         }
         /* CMDCOLR is a VDP1 word address after the documented <<2
          * conversion; this byte-buffer API therefore uses <<3. */
         palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 3U);
         if (palette_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U) {
+            if (input->mode1_only_capture) {
+                ++receipt.unowned_mode1_draw_commands;
+                continue;
+            }
             ++receipt.unresolved_draw_commands;
             *out_receipt = receipt;
             return 0;
         }
-        resolved = &commands[receipt.draw_commands_seen - 1];
+        resolved = &commands[receipt.draw_commands_resolved];
         if (!input->resolve_material(
                 input->vdp1_vram, input->vdp1_vram_size, command,
                 NEXUS_V1_VDP1_COMMAND_BYTES, &parsed, offset, resolved,
                 input->resolver_context)) {
+            if (input->mode1_only_capture) {
+                ++receipt.unowned_mode1_draw_commands;
+                continue;
+            }
             ++receipt.unresolved_draw_commands;
             *out_receipt = receipt;
             return 0;
@@ -504,11 +590,19 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         resolved->palette_state = input->vdp1_vram + palette_offset;
         resolved->palette_state_size = 32;
         resolved->original_saturn_capture_verified = 1;
+        resolved->capture_allow_zero_pixel_command = input->mode1_only_capture;
         resolved->screen_origin_x = receipt.command_sequence.display_origin_x;
         resolved->screen_origin_y = receipt.command_sequence.display_origin_y;
     }
-    if (receipt.draw_commands_seen != receipt.command_sequence.draw_count ||
-        receipt.draw_commands_resolved != receipt.draw_commands_seen) {
+    if ((input->mode1_only_capture &&
+         receipt.draw_commands_seen + receipt.skipped_non_draw_commands !=
+             receipt.command_sequence.command_count) ||
+        (!input->mode1_only_capture &&
+         receipt.draw_commands_seen != receipt.command_sequence.draw_count) ||
+        receipt.draw_commands_resolved +
+            receipt.unowned_non_mode1_draw_commands +
+            receipt.unowned_mode1_draw_commands !=
+            receipt.draw_commands_seen) {
         *out_receipt = receipt;
         return 0;
     }
@@ -527,13 +621,24 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         receipt.command_sequence.command_order_verified;
     replay_input.end_record_verified =
         receipt.command_sequence.end_record_verified;
-    if (!replay_input.system_clip_state_verified ||
+    if (!replay_input.system_clip_state_verified && input->mode1_only_capture) {
+        receipt.system_clip_state_missing = 1;
+        /* The bounded compositor still needs a clipping envelope. Use its
+         * framebuffer bounds only for capture replay and keep renderer
+         * permission closed via the explicit receipt above. */
+        replay_input.system_clip_state_verified = 1;
+    }
+    if (!replay_input.system_clip_state_verified && !input->mode1_only_capture)
+        replay_input.system_clip_state_verified = 0;
+    if ((!replay_input.system_clip_state_verified && !input->mode1_only_capture) ||
         !replay_input.local_coordinate_state_verified ||
         !nexus_v1_vdp1_capture_composite_mode1_sequence(
             framebuffer, &replay_input, &receipt.replay)) {
         *out_receipt = receipt;
         return 0;
     }
+    if (receipt.system_clip_state_missing)
+        receipt.replay.renderer_permitted = 0;
     receipt.valid = 1;
     *out_receipt = receipt;
     return 1;
@@ -570,6 +675,50 @@ int nexus_v1_vdp1_capture_replay_runtime_frame(
     input.original_saturn_capture_verified = 1;
     input.resolve_material = resolve_material;
     input.resolver_context = resolver_context;
+    if (!nexus_v1_vdp1_capture_replay_vram_sequence(
+            framebuffer, &input, &replay)) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_replay_receipt) *out_replay_receipt = replay;
+        return 0;
+    }
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_replay_receipt) *out_replay_receipt = replay;
+    return 1;
+}
+
+int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_replay_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
+    Nexus_V1_Vdp1CaptureVramSequenceInput input;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&replay, 0, sizeof(replay));
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_replay_receipt) *out_replay_receipt = replay;
+    if (!framebuffer || !capture_bytes || !resolve_material ||
+        !nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp1_state_valid || !frame.vdp1_state_present ||
+        !frame.vdp1_vram) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    input.vdp1_vram = frame.vdp1_vram;
+    input.vdp1_vram_size = (int)frame.vdp1_vram_size;
+    input.copr_word = frame.copr_word;
+    input.original_saturn_capture_verified = 1;
+    input.resolve_material = resolve_material;
+    input.resolver_context = resolver_context;
+    input.mode1_only_capture = 1;
     if (!nexus_v1_vdp1_capture_replay_vram_sequence(
             framebuffer, &input, &replay)) {
         if (out_frame_receipt) *out_frame_receipt = frame;

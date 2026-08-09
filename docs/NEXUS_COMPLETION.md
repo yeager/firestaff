@@ -130,6 +130,16 @@ mode-1-draws med bild- och palettmatch och 198 med Structure3-faceägare; C-test
 scene-renderer: Saturns face-selection, kameratransform, culling och den
 fullständiga draw-listans scenägare är fortsatt spärrade.
 
+Den separata
+`nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence()`-lanen går nu
+igenom hela den autentiserade command-listan i frame 760 och återspelar den
+source-bound mode-1-delmängden atomiskt. C-verifieringen räknar 242 command
+records, 235 drawposter, 218 exacta DGN image/CLUT-joins, 16 oägda mode-1-
+poster och en oägd icke-mode-1-post; sju kontrollposter hålls separata. Den
+saknade `system clip`-posten markeras i receiptet och stänger
+`renderer_permitted`. Detta är därför ett starkare VDP1-capture-replay-bevis,
+men inte en full Saturn-scen eller produktionskompositör.
+
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
 externa capture-validatorn: `RawRegs → VRAM → CRAM`. C-läsaren och

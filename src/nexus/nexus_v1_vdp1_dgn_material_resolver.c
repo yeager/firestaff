@@ -26,6 +26,15 @@ static int swapped_words_equal(const uint8_t *capture, int capture_size,
     return 1;
 }
 
+static int bytes_all_zero(const uint8_t *bytes, int size)
+{
+    int i;
+    if (!bytes || size <= 0) return 0;
+    for (i = 0; i < size; ++i)
+        if (bytes[i] != 0U) return 0;
+    return 1;
+}
+
 static void clear_receipt(Nexus_V1_Vdp1DgnMaterialResolverReceipt *receipt)
 {
     if (receipt) memset(receipt, 0, sizeof(*receipt));
@@ -128,9 +137,19 @@ int nexus_v1_vdp1_dgn_material_resolver(
             matched_palette = palette;
         }
     }
-    if (!terminator_found || image_matches != 1 || palette_matches != 1 ||
-        !matched_image ||
-        !matched_palette || !out_input) return 0;
+    if (!terminator_found || !out_input) return 0;
+    if (image_matches == 0 &&
+        bytes_all_zero(vdp1_vram + parsed->texture_source_byte_offset,
+                       (int)parsed->texture_byte_count) &&
+        (parsed->draw_mode & UINT16_C(0x0040)) == 0U) {
+        /* Four frame-760 draws are identical all-zero mode-1 clear sprites.
+         * They have no DGN image owner; retain them as capture evidence only. */
+        memset(out_input, 0, sizeof(*out_input));
+        out_input->transparent_capture_noop_verified = 1;
+        return 1;
+    }
+    if (image_matches != 1 || palette_matches != 1 || !matched_image ||
+        !matched_palette) return 0;
     memset(out_input, 0, sizeof(*out_input));
     out_input->dgn_image = matched_image;
     out_input->dgn_image_size = (int)parsed->texture_byte_count;

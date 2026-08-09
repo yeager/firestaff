@@ -4,6 +4,13 @@
 - ✅ Retail-FNV-jämförelse av SLEV00/SAL/MAP/SDDRVS avvisar alla fyra identiteter;
   selector, SAL-codec, dispatch och playback förblir spärrade.
 
+# Nexus VDP1 full mode-1 capture replay (2026-08-09)
+
+- ✅ Added a bounded frame-level mode-1 replay lane with explicit gaps for
+  non-mode-1 and unresolved draws. External EU frame 760 passes with 242
+  command records, 218 exact DGN joins, 16 unowned mode-1 draws and one
+  unowned non-mode-1 draw; missing system-clip state keeps production closed.
+
 # CI: CSB FM Towns-probens länkberoenden (2026-08-09)
 
 - ✅ De tre CSB-prober som länkar `csb_v1_boot.c` inkluderar nu de befintliga

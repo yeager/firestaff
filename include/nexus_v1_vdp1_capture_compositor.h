@@ -28,6 +28,11 @@ typedef struct {
     int dgn_palette_size;
     int dgn_source_hash_verified;
     int original_saturn_capture_verified;
+    /* A captured mode-1 source whose every texel is index zero and whose
+     * draw mode keeps index zero transparent. This is a bounded clear/no-op
+     * observation, not a DGN material owner. */
+    int transparent_capture_noop_verified;
+    int capture_allow_zero_pixel_command;
     int screen_origin_x;
     int screen_origin_y;
     int palette_slot_base;
@@ -46,6 +51,7 @@ typedef struct {
     int written_pixels;
     int transparent_pixels;
     int end_code_pixels;
+    int transparent_noop_verified;
     int palette_slot_base;
     int screen_origin_x;
     int screen_origin_y;
@@ -99,6 +105,8 @@ typedef struct {
     int command_frames_verified;
     int source_joins_verified;
     int palette_joins_verified;
+    int transparent_noop_commands;
+    int capture_gap_commands;
     int display_origin_verified;
     int display_origin_x;
     int display_origin_y;
@@ -127,6 +135,9 @@ typedef struct {
     int original_saturn_capture_verified;
     Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material;
     void *resolver_context;
+    /* Permit a bounded mode-1-only replay to skip non-mode-1 draws whose
+     * owner belongs to a separate capture lane (for example direct RGB). */
+    int mode1_only_capture;
 } Nexus_V1_Vdp1CaptureVramSequenceInput;
 
 typedef struct {
@@ -136,6 +147,10 @@ typedef struct {
     int draw_commands_seen;
     int draw_commands_resolved;
     int unresolved_draw_commands;
+    int unowned_non_mode1_draw_commands;
+    int unowned_mode1_draw_commands;
+    int skipped_non_draw_commands;
+    int system_clip_state_missing;
     int semantic_admission_blocked;
 } Nexus_V1_Vdp1CaptureVramSequenceReceipt;
 
@@ -175,6 +190,17 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
  * directly into the bounded replay lane. VDP2 data is exposed by the frame
  * receipt but is not silently composed here. */
 int nexus_v1_vdp1_capture_replay_runtime_frame(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_replay_receipt);
+
+/* Replay every source-bound mode-1 draw in one authenticated frame, retaining
+ * non-mode-1 draws as explicitly unowned capture gaps. */
+int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
     Nexus_Framebuffer *framebuffer,
     const uint8_t *capture_bytes, size_t capture_byte_count,
     unsigned int frame_index,
