@@ -497,7 +497,8 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                         source_record.value.monster.number,
                         source_record.value.monster.direction_flags,
                         source_record.value.monster.flags_word,
-                        source_record.value.monster.unknown_word) != 0) {
+                        source_record.value.monster.unknown_word,
+                        source_record.value.monster.chested) != 0) {
                     free(pos_table);
                     free(td);
                     return -1;

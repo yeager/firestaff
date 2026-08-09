@@ -60,6 +60,10 @@ medan den övergripande source-object-occurrence fortfarande behåller de råa
 16 bytesen. Detta förbättrar monster- och lootprovenansen men öppnar inte
 T900:s runtime-konsument.
 
+Fältet följer nu också den source-bundna monsterrecorden till live creature
+och save/load-version 9. Det är en lossless state-bindning av ett verkligt
+källfält, inte en tolkning av vad T900 gör med det.
+
 ## Vad T900-bevis skulle behöva innehålla
 
 En godkänd capture måste samtidigt visa:

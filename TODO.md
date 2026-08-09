@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Therons autentiska kategori-4-record har nu `chested` hela vägen från
+  Track 02-dekodning via source-monsterrecord och live creature till save
+  version 9. Fältet är fortfarande provenance; T900:s betydelse måste bevisas
+  av originalets object-/inventorykonsument innan det får påverka gameplay.
+
 - ⏳ Therons senaste rena US Track 02-replay bekräftar autentiska `$4644`- och
   `$4667`-anrop med korrekt HuC6280-bankmappning, men saknar fortfarande
   `$B0E5`, specialgrenen och ett dynamiskt RNG-returkvittens. Spawn-, RNG-,

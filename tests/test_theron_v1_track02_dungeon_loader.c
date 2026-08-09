@@ -395,6 +395,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->source_ref != 0u);
             assert(source != NULL);
             assert(creature->type == (uint8_t)(source->type + 1u));
+            assert(creature->source_chested == source->chested);
             assert(creature->type >= THERON_CREATURE_AKUTUBA &&
                    creature->type <= THERON_CREATURE_DEMON);
             assert(creature->source_cell ==

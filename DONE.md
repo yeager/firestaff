@@ -1,3 +1,10 @@
+# Theron: chested-fält genom creature och save (2026-08-09)
+
+- ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga
+  monsterrecorden från Track 02-dekodning till source-monsterledger, levande
+  creature och save/load-version 9. Tester verifierar både US/JP-loaderns
+  sourcebindning och roundtrip. Fältet tolkas inte som T900-regel.
+
 # Theron: source monsterrecordets `chested`-fält (2026-08-09)
 
 - ✅ Kategori 4:s första ord dekoderas nu som source-owned signed `chested`

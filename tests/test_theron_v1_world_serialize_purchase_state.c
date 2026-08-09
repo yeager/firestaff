@@ -129,6 +129,7 @@ static void seed_world(Theron_V1_World *world) {
     world->creatures[0].flags = THERON_CF_ACTIVE | THERON_CF_ALERTED;
     world->creatures[0].source_ref = 0x3456;
     world->creatures[0].source_index = 0x0012;
+    world->creatures[0].source_chested = -2;
     world->creatures[0].source_position = 0x39;
     world->creatures[0].source_cell = 2;
     world->creatures[0].source_slot = 1;
@@ -265,6 +266,7 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.creatures[0].ai == THERON_AI_GUARD &&
                 restored.creatures[0].primary_attack == THERON_ATTACK_SLASH &&
                 restored.creatures[0].source_ref == 0x3456 &&
+                restored.creatures[0].source_chested == -2 &&
                 restored.creatures[0].source_cell == 2 &&
                 restored.creatures[0].source_slot == 1 &&
                 restored.creatures[0].source_flags_word == 0x4567 &&

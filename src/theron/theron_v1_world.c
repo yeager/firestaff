@@ -96,6 +96,7 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_TIMER_WIRE_BYTES 24u
 #define THERON_CREATURE_WIRE_BYTES_V7 87u
 #define THERON_CREATURE_WIRE_BYTES_V8 88u
+#define THERON_CREATURE_WIRE_BYTES_V9 90u
 #define THERON_GENERATOR_WIRE_BYTES 32u
 #define THERON_GENERATOR_WIRE_BYTES_V6 36u
 
@@ -104,7 +105,8 @@ static size_t theron_generator_wire_size(void) {
 }
 
 static size_t theron_creature_wire_size_for_version(uint16_t version) {
-    return version >= 8u ? THERON_CREATURE_WIRE_BYTES_V8
+    return version >= 9u ? THERON_CREATURE_WIRE_BYTES_V9
+                         : version >= 8u ? THERON_CREATURE_WIRE_BYTES_V8
                          : THERON_CREATURE_WIRE_BYTES_V7;
 }
 
@@ -303,6 +305,7 @@ static uint8_t *theron_creature_write(uint8_t *out,
     ww32(out, (uint32_t)creature->link_id); out += 4;
     ww16(out, creature->source_ref); out += 2;
     ww16(out, creature->source_index); out += 2;
+    ww16(out, (uint16_t)creature->source_chested); out += 2;
     *out++ = creature->source_position;
     *out++ = creature->source_cell;
     *out++ = creature->source_slot;
@@ -340,6 +343,8 @@ static const uint8_t *theron_creature_read(
     creature->link_id = (int32_t)rw32(in); in += 4;
     creature->source_ref = rw16(in); in += 2;
     creature->source_index = rw16(in); in += 2;
+    creature->source_chested = version >= 9u ? (int16_t)rw16(in) : 0;
+    if (version >= 9u) in += 2;
     creature->source_position = *in++;
     creature->source_cell = *in++;
     creature->source_slot = *in++;
@@ -1391,6 +1396,7 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             creature->flags = THERON_CF_ACTIVE;
             creature->source_ref = record->source_ref;
             creature->source_index = record->source_index;
+            creature->source_chested = record->chested;
             creature->source_position = record->position;
             creature->source_cell =
                 (uint8_t)((record->position >> (slot * 2u)) & 0x03u);
@@ -1461,7 +1467,8 @@ int theron_v1_world_bind_track02_monster(
     uint8_t number,
     uint8_t direction_flags,
     uint16_t flags_word,
-    uint16_t unknown_word)
+    uint16_t unknown_word,
+    int16_t chested)
 {
     /* Keep every real category-4 source record, including reserved or
      * sentinel type bytes. spawn_level_creatures() admits only the
@@ -1486,6 +1493,7 @@ int theron_v1_world_bind_track02_monster(
     out->y = y;
     out->source_ref = source_ref;
     out->source_index = source_index;
+    out->chested = chested;
     out->type = type;
     out->position = position;
     out->number = number;
@@ -2196,7 +2204,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
 
     uint16_t ver = rw16(in);
     if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
-        ver != 6u && ver != 7u &&
+        ver != 6u && ver != 7u && ver != 8u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;

@@ -346,6 +346,9 @@ typedef struct {
     int y;
     uint16_t source_ref;
     uint16_t source_index;
+    /* DMBUILDER6/src/dms.h:145-157: signed category-4 `chested` word.
+     * This is source provenance only; T900 ownership semantics remain gated. */
+    int16_t chested;
     uint8_t type;
     uint8_t position;
     uint8_t number;
@@ -702,7 +705,8 @@ int theron_v1_world_bind_track02_monster(
     uint8_t number,
     uint8_t direction_flags,
     uint16_t flags_word,
-    uint16_t unknown_word);
+    uint16_t unknown_word,
+    int16_t chested);
 int theron_v1_world_bind_track02_generator(
     Theron_V1_World *world,
     int dungeon_id,
@@ -814,7 +818,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Binary serialization ─────────────────────────────────────────── */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 8
+#define THERON_WORLD_SAVE_VERSION 9
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

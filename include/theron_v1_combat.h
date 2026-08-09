@@ -149,6 +149,9 @@ typedef struct {
      * DungeonGroup layout, THQUEST thing-list category 4. */
     uint16_t   source_ref;
     uint16_t   source_index;
+    /* Signed category-4 source word from DMBUILDER6/src/dms.h:145-157.
+     * It is carried as provenance, not interpreted as T900 behavior. */
+    int16_t    source_chested;
     uint8_t    source_position;
     /* The source group stores four two-bit creature-cell ordinals in
      * source_position. Keep the member's exact packed ordinal alongside the
