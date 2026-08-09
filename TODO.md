@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: en autentiserad europeisk gameplay-capture binder nu VDP1-draw
+  `0x0e180` (`colour_mode=1`, `COLR=0x32a4`, källa `0x4c580`) till exakt
+  ordväxlad pixeldata och 16-entry CLUT för `LEV00.DGN` Structure2=72.
+  `scripts/analyze_nexus_vdp1_dgn_material_join.py` reproducerar kvittot.
+  Detta bevisar ännu inte placering, DGN face/mesh-ägare, VDP2-komposition
+  eller startup/meny/HUD; `semantic_admission` och produktionsrenderingen
+  ska därför fortsatt vara spärrade.
+
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
   finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den

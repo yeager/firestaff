@@ -44,6 +44,26 @@ adjacent frames. This proves observed runtime change in the producer without
 identifying a menu, HUD, viewport, CLUT, or consumer; the tool always keeps
 semantic admission blocked.
 
+## Authenticated VDP1 DGN material join
+
+The external European run
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-window-20260809/runtime-vdp12.raw`
+has SHA-256
+`685ae90896cf72deeac0a98de5fb1fb4f0bd90e89ace73c5e7631daf44b8faa7`.
+In frame 0, the real command at `0x0e180` is a VDP1 colour-mode-1 draw with
+`COLR=0x32a4`, source offset `0x4c580`, and 1,952 source bytes. The
+word-swapped source is an exact match for the hash-verified
+`LEV00.DGN` Structure2 descriptor 72 (`64x61`). The captured 16-word VDP1
+CLUT at `((COLR & ~3) << 2) = 0xca90` also exactly matches that descriptor's
+16-entry big-endian BGR555 palette after the capture's word order is restored.
+
+This is the first source-plus-CLUT material receipt for the live Nexus
+viewport. Reproduce it with
+`scripts/analyze_nexus_vdp1_dgn_material_join.py`. It still does not prove
+command placement, mesh/face ownership, VDP2 composition, or startup/menu/HUD
+identity; the script therefore reports `semantic_admission=blocked` and the
+production renderer remains fail-closed.
+
 The validator also accepts `--require-vdp1-activity` for a V2 witness. This
 requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer
 payload. It is only an active-engine observation. It does not prove which
