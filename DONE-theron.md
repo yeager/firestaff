@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — autentiserad PCE-inputmaskkontroll
+
+- ✅ `capture_theron_mednafen_live_trace.sh` avvisar nu en scripted
+  Mednafen-capture om den observerade Button I/II-, Select-, Run- eller
+  riktningsmasken inte exakt motsvarar PCE:ns wire-layout. Det förhindrar att
+  gamla binärer med felaktiga Button I/II- eller Run-bitar används som
+  runtimebevis.
+- ✅ En ren ombyggnad av den instrumenterade Mednafen 1.32.1 på extern disk
+  gav på riktig US Track 02: I=`0001`, II=`0002`, Run=`0008`. Capture-vägen
+  nådde autentiska sektorer och stoppade därefter korrekt på den kvarvarande
+  frånvaron av spelägd CD-läsning; inga RNG-, AI-, T700- eller T900-regler
+  aktiverades.
+
 ## Theron's Quest
 
 ### 2026-08-08 — HuC6280 runtime physical-PC provenance correction

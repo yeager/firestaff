@@ -462,6 +462,59 @@ trace_event_types() {
     ' "$file"
 }
 
+scripted_input_expected_mask() {
+    case "$1" in
+        i) printf '%04x' 1 ;;
+        ii) printf '%04x' 2 ;;
+        select) printf '%04x' 4 ;;
+        run) printf '%04x' 8 ;;
+        up) printf '%04x' 16 ;;
+        right) printf '%04x' 32 ;;
+        down) printf '%04x' 64 ;;
+        left) printf '%04x' 128 ;;
+        *) return 1 ;;
+    esac
+}
+
+verify_scripted_input_masks() {
+    local entry expected_key expected_mask actual_key actual_mask
+    local event_index=0
+    local expected_entries=()
+
+    [[ -n "$replay_input_script" ]] || return 0
+    IFS=',' read -r -a expected_entries <<< "$replay_input_script"
+    while IFS= read -r event_line; do
+        [[ -n "$event_line" ]] || continue
+        if (( event_index >= ${#expected_entries[@]} )); then
+            printf '%s\n' 'BLOCKED: Mednafen emitted more scripted PCE input events than requested' >&2
+            return 1
+        fi
+        entry=${expected_entries[$event_index]}
+        expected_key=${entry%@*}
+        expected_mask=$(scripted_input_expected_mask "$expected_key") || {
+            printf 'BLOCKED: unsupported scripted PCE input key in capture plan: %s\n' "$expected_key" >&2
+            return 1
+        }
+        actual_key=$(printf '%s\n' "$event_line" |
+            sed -n 's/.* key=\([^ ]*\) mask=\([^ ]*\) hold=.*/\1/p')
+        actual_mask=$(printf '%s\n' "$event_line" |
+            sed -n 's/.* key=\([^ ]*\) mask=\([^ ]*\) hold=.*/\2/p')
+        if [[ "$actual_key" != "$expected_key" ||
+              "$actual_mask" != "$expected_mask" ]]; then
+            printf 'BLOCKED: scripted PCE input mask mismatch for %s: got key=%s mask=%s expected key=%s mask=%s\n' \
+                "$expected_key" "$actual_key" "$actual_mask" "$expected_key" "$expected_mask" >&2
+            return 1
+        fi
+        event_index=$((event_index + 1))
+    done < <(awk '/^scripted_pce_input_event / { print }' "$input_trace")
+
+    if (( event_index != ${#expected_entries[@]} )); then
+        printf 'BLOCKED: Mednafen emitted %s scripted PCE input events; expected %s\n' \
+            "$event_index" "${#expected_entries[@]}" >&2
+        return 1
+    fi
+}
+
 trace_input_order_receipt() {
     local file=$1
 
@@ -1046,6 +1099,9 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
         printf '%s\n' 'transition=missing'
     fi
 } >"$transition_receipt"
+if ! verify_scripted_input_masks; then
+    exit 1
+fi
 if [[ "$host_input_requested" == 1 && "$transition_host_key_count" -eq 0 ]]; then
     printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch; sdl_events=%s window_events=%s focus_events=%s (exit=%s)\n' "$transition_host_sdl_event_count" "$transition_host_window_event_count" "$transition_host_focus_state_count" "$status"
     exit 1

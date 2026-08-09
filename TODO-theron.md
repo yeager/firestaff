@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — fortsatt autentisk runtimecapture
+
+- 🔧 Capture-scriptet verifierar nu själva PCE-wiremaskerna i varje scripted
+  input-receipt: Button I `0x0001`, Button II `0x0002`, Select `0x0004`, Run
+  `0x0008` och riktningsbitarna `0x0010..0x0080`. En gammal eller felbyggd
+  Mednafen-binär stoppas i stället för att kunna ge ett falskt positivt
+  inputunderlag. Den nya rena instrumenteringen passerar maskkontrollen med
+  riktig US Track 02-media; spelägd CD-läsning är fortfarande nästa spärr.
+
 ## 2026-08-08 — nästa T900-bevis
 
 - 🔧 Inputtransporten är nu verifierad med riktiga PCE-wiremasker och lokal
