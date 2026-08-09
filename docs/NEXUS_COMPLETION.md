@@ -72,6 +72,8 @@ produktionsrasterisering. C-adaptern
 `nexus_v1_saturn_runtime_capture_frame()` läser nu samma autentiserade
 VDP1/VDP2-raw-envelope i C, och
 `nexus_v1_vdp1_capture_replay_runtime_frame()` lämnar VDP1-VRAM/COPR direkt
-till den bounded replay-kedjan. Den kräver fortfarande en separat, exakt DGN
-source/CLUT-resolver för varje draw och lämnar därför vanlig produktion
-spärrad.
+till den bounded replay-kedjan. Den nya
+`nexus_v1_vdp1_dgn_material_resolver()` kopplar nu en verifierad LEV-fil till
+en unik mode-1-bild och CLUT med byteidentisk Saturn-ordning; tvetydiga eller
+oattesterade källor avvisas. Den är fortfarande capture-only och lämnar därför
+face-selection, transform, culling och vanlig produktion spärrade.

@@ -38170,6 +38170,27 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp1_capture_compositor
     )
 
+    # Exact canonical-DGN Structure2 image/CLUT consumer for the capture-only
+    # VDP1 lane. It never admits face, transform, culling or production draw.
+    add_executable(test_nexus_v1_vdp1_dgn_material_resolver
+        tests/test_nexus_v1_vdp1_dgn_material_resolver.c
+    )
+    target_include_directories(test_nexus_v1_vdp1_dgn_material_resolver PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp1_dgn_material_resolver PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp1_dgn_material_resolver PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp1_dgn_material_resolver
+        COMMAND test_nexus_v1_vdp1_dgn_material_resolver
+    )
+
     # Parse the authenticated Saturn raw frame envelope in C. This remains a
     # transport gate; no DGN, menu, HUD or viewport semantic admission occurs.
     add_executable(test_nexus_v1_saturn_runtime_capture

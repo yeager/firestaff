@@ -386,3 +386,9 @@ neither word receives task, target, callback, or dispatch semantics.
   and rejection across NULL arguments, size/identity drift, gap
 
 ### Nexus V2.0 / V2.1 / V2.2
+  - 2026-08-09 VDP1/DGN materialresolver: `nexus_v1_vdp1_dgn_material_resolver()`
+    konsumerar en hashattesterad LEV*.DGN-Structure2 och kräver en unik
+    byteidentisk mode-1-bild samt 16-ords CLUT-join mot samma VDP1-VRAM-frame.
+    Positiv fixture och avvisning utan source-attest passerar. Resolvern
+    tilldelar inte face, mesh-transform, culling eller produktionsägarskap;
+    verklig long-frame-handoff till canonical LEV-korpus återstår.

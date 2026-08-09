@@ -11662,3 +11662,11 @@ rendering remain blocked.
 - ⚠️ Detta öppnar inte meny, HUD, viewport, DGN-transform, face-selection eller
   rasterproduktion. Den exakta DGN source/CLUT-resolvern per draw är fortfarande
   nästa källbundna steg.
+# Nexus: strikt VDP1/DGN-materialresolver (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_dgn_material_resolver()` kopplar en verifierad LEV*.DGN
+  Structure2-deskriptor till fångad mode-1-bild och CLUT endast vid unik,
+  byteidentisk Saturn-ordningsmatchning. Oattesterad DGN-källa och tvetydiga
+  joins avvisas. CTest passerar tillsammans med råcapture-, command-sequence-,
+  capture-compositor-, VDP2- och DGN face/mesh-regressionerna. Face-selection,
+  transform, culling och produktionsrasterisering är fortsatt spärrade.
