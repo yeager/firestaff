@@ -326,18 +326,28 @@ static int combat_champion_is_lucky(
         return 0;
     }
     if (outRngCalls) *outRngCalls = 0;
-    /* 50% short-circuit (CHAMPION.C:1138). */
+    /* CHAMPION.C:1140 is a single short-circuit conditional:
+     *   if (M005_RANDOM(2) && (M002_RANDOM(100) > Percentage)) return TRUE;
+     * Only that combined condition returns early, and it returns WITHOUT
+     * touching the luck statistic.  When the M005 draw hits but the
+     * percentage comparison fails, control FALLS THROUGH to the luck branch
+     * below, which may draw again and always rewrites Luck.
+     *
+     * This previously treated a non-zero M005 draw as terminal, deriving the
+     * result from the percentage roll alone and skipping the luck branch
+     * entirely.  That diverged from the source in both the returned verdict
+     * and the luck-statistic side effect on the (M005 hit, percentage miss)
+     * path. */
     randShort = F0732_COMBAT_RngRandom_Compat(rng, 2);
     if (outRngCalls) *outRngCalls += 1;
     if (randShort != 0) {
         randPct = F0732_COMBAT_RngRandom_Compat(rng, 100);
         if (outRngCalls) *outRngCalls += 1;
         if (randPct > (unsigned int)percentage) {
-            isLucky = 1;
-        } else {
-            isLucky = 0;
+            return 1;  /* early TRUE; luck statistic is left untouched */
         }
-    } else {
+    }
+    {
         luckCur = champ->statisticLuck;
         luckMin = champ->statisticLuckMin;
         luckMax = champ->statisticLuckMax;
