@@ -45,6 +45,18 @@
   att DB4, CAII-slottar, timerheap, indexheap och RNG då är byteidentiska.
   Detta startar ingen varelse, CCM, ljudkö eller M11-session.
 
+# DM2 New Game: privat dynamisk lokal-creature-identitet (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren bevarar nu den autentiska DOS-korpusens dynamiska
+  DB4-kandidater som privata `PREPARE_LOCAL_CREATURE_VAR`-kontexter:
+  record/AI, aktuell karta och position, home-map, timergren samt
+  `DM2_query_1c9a_02c3`-parets ägaroffset och källnollställda startvärden.
+- ✅ Ingen `QUEUE_NOISE_GEN1`-begäran skapas med en sentinel eller påhittat
+  GDAT-index. Kontexten markerar endast beroendet tills den verkliga
+  animationraden, 0a48, CCM och SOUND9 kan dela en atomär rollback.
+  DOS-korpustestet bekräftar att detta inte publicerar ljud, timer eller
+  dynamisk CAII.
+
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
 - ✅ En riktig Mednafen 1.32.1-session med US Track 02 nådde originalets

@@ -41,11 +41,15 @@
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
   finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
   verkliga statiska all-kartslistan, men är inte en spelbar session. Den
-  Den källformade `DM2_1c9a_0cf7`-producenten använder nu samma dynamiska
+  källformade `DM2_1c9a_0cf7`-producenten använder nu samma dynamiska
   `c_tim`-heap och verkliga slots som GAME_LOAD, men den kompletta dynamiska
   transaktionen avvisas före mutation när en riktig kandidat kräver den ännu
-  oägda `0a48`/`QUEUE_NOISE_GEN1`-grenen. Återstående atom måste fortfarande
-  omfatta `DM2_ALLOC_CAII_TO_CREATURE`, recycler, lokal-creature-state,
+  oägda `0a48`/`QUEUE_NOISE_GEN1`-grenen. Den privata ägaren behåller nu
+  varje verklig dynamisk kandidats `PREPARE_LOCAL_CREATURE_VAR`-identitet
+  (DB4/AI, karta/position, home-map och den källnollställda adj-parets
+  ägaroffset), men markerar ljudet som beroende i stället för att skapa en
+  begäran utan GDAT-animationrad. Återstående atom måste fortfarande omfatta
+  `DM2_ALLOC_CAII_TO_CREATURE`, recycler, komplett lokal-creature-state,
   `0a48`/CCM och rollback. Ingen del får publiceras eller ersättas med en fast kö. GAME_LOAD:s dynamiska
   SND-kö har full SOUND9-kapacitet; `QUEUE_NOISE_GEN1` saknar ännu komplett
   karta-, party- och timerägarskap. Källordningen är viktig:
