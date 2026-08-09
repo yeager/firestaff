@@ -92,6 +92,7 @@ typedef enum {
 /* Matches DM1 champion equipment slots: WEAPON, ARMOR, SHIELD, HELM,
  * BOOTS, AMULET, GAUNTLETS, RING1, RING2 (9 slots). */
 #define THERON_EQUIP_SLOT_COUNT   9
+#define THERON_PORTRAIT_UNAVAILABLE 0xffu
 typedef enum {
     THERON_ESLOT_WEAPON   = 0,
     THERON_ESLOT_ARMOR    = 1,
@@ -110,7 +111,7 @@ typedef enum {
 typedef struct {
     /* Identity */
     char     name[24];               /* null-terminated champion name */
-    uint8_t  portrait_index;        /* portrait sprite index */
+    uint8_t  portrait_index;        /* sprite index, or unavailable sentinel */
     Theron_ChampionClass primary_class;
     uint8_t  alive;                 /* 1 = alive, 0 = dead */
 

@@ -60,7 +60,7 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
      * startup fixture/asset path may fill this field after its own evidence
      * gate; the source-bound roster path keeps it unavailable. */
     (void)slot;
-    c->portrait_index = 0u;
+    c->portrait_index = THERON_PORTRAIT_UNAVAILABLE;
     c->alive          = 1;
 
     c->health      = (int16_t)rec->hp;

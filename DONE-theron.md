@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — ingen obestyrkt portraitägare i source-bound roster
+
+- ✅ Source-bound US/JP rosterinitiering markerar nu portrait-ID som
+  `THERON_PORTRAIT_UNAVAILABLE` (`0xff`) tills riktiga porträttbytes och
+  deras konsument är bundna. Index `0` används inte längre som falsk
+  porträttreferens.
+- ✅ JP-rosterregressionen läser fortsatt de åtta riktiga Track 02-posterna
+  och verifierar att source-initierade championposter inte publicerar ett
+  påhittat portrait-ID.
+
 ## 2026-08-09 — sista legacy-ID-grenen i teleporterkedjan scopead
 
 - ✅ Teleporterupplösningens fixture-/legacy-ID-länk kräver nu också aktiv

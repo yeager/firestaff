@@ -73,6 +73,14 @@ static void verify_real_jp_roster_receipt(void) {
 
 int main(void) {
     verify_real_jp_roster_receipt();
+    {
+        Theron_V1_Party party;
+        theron_v1_party_init(&party, 1);
+        assert(party.champions[0].portrait_index ==
+               THERON_PORTRAIT_UNAVAILABLE);
+        assert(party.champions[1].portrait_index ==
+               THERON_PORTRAIT_UNAVAILABLE);
+    }
     assert(theron_v1_track02_us_champion_count() == 8);
     assert(theron_v1_track02_us_champion(8) == NULL);
 
