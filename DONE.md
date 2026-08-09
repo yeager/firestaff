@@ -31,6 +31,16 @@
 - ✅ Mednafenprofilen verifierar PCE Button I/1 = `Z` och Button II/2 = `X`.
   Komma/punkt är inte en säker standardbindning på macOS; de måste mappas
   uttryckligen i den lokala `mednafen.cfg` om de ska användas.
+# Nexus VDP1 same-session snapshot witness (2026-08-09)
+
+- ✅ Den externa Mednafen-binären producerar nu en separat VDP1-snapshot vid
+  den autentiserade källskrivningen `0x10a00`. Snapshotten valideras till
+  `FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1`, `ptmr=0x02`, `edsr=0x03` och 1 048 577
+  bytes VDP1-payload. Manifestet binder snapshot, VDP1-write-trace och
+  writer-code-trace från samma session.
+- ✅ VDP1-transportmålet är uppnått. CLUT, komplett draw-lista och semantisk
+  startup-/meny-/HUD-/viewport-komposition är fortfarande spärrade tills en
+  senare snapshot binder dessa konsumenter.
 
 # Theron savestate-intag (2026-08-09)
 
@@ -412,6 +422,14 @@
   eventkö, input, HUD eller session.
 - ✅ Realdataregressionen kontrollerar två riktiga mirrorsval från DOS-data
   och att den privata ägaren fortfarande lämnar M11:s sessionsgrind stängd.
+
+# DM2 startend-entrépose (2026-08-09)
+
+- ✅ Den privata `DM2_2f3f_0789`-grenen för den första championen kräver nu
+  åter den hashverifierade File_header-entréposen. Den kan inte längre köras
+  efter ett privat vrid- eller förflyttningsprov och därmed blanda en
+  startsekvens med vanlig rörelse. Realtidstestet bekräftar både spärren och
+  en ny, ren GAME_LOAD-förberedelse före den riktiga grenen.
 
 # DM2 DOS-MVE PCM/display-tidslinje (2026-08-08)
 

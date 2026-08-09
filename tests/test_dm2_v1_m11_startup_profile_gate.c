@@ -4246,6 +4246,10 @@ int main(void) {
                     !profile->source_game_load_session_ready,
                 "DM2 advances only the original empty-party no-record floor branch before mirror selection");
     expect_true(profile &&
+                    !dm2_v1_boot_materialize_startend_first_champion(profile) &&
+                    !profile->source_game_load_session_ready,
+                "DM2 refuses startend's scripted champion after the private pose left its source entrance");
+    expect_true(profile &&
                     dm2_v1_boot_prepared_new_game_mirror_roster(
                         profile, &prepared_mirror_roster) &&
                     prepared_mirror_roster.valid &&
@@ -4273,6 +4277,21 @@ int main(void) {
                     view.dm2State.leader_hand_object == 0u,
                     "DM2 rejects an authentic but non-front mirror until the source viewport and movement owner reach it");
     }
+    /* startend.cpp::DM2_2f3f_0789 is a fresh GAME_LOAD path, not a movement
+     * continuation.  Rebuild the hash-admitted File_header owner before
+     * testing that explicit source branch; no party, HUD or timer is carried
+     * across the discarded private preselection probe. */
+    expect_true(profile && dm2_v1_boot_prepare_new_game_world(profile) &&
+                    (profile_new_game_owner =
+                        (const DM2_V1_GameLoadWorldOwner *)
+                            dm2_v1_boot_prepared_new_game_world_readonly(profile)) != NULL &&
+                    profile_new_game_owner->source_party_x ==
+                        profile_new_game_owner->preselection_entrance.x &&
+                    profile_new_game_owner->source_party_y ==
+                        profile_new_game_owner->preselection_entrance.y &&
+                    !profile_new_game_owner->champion_selection_materialized &&
+                    !profile->source_game_load_session_ready,
+                "DM2 rebuilds a fresh source entrance before startend's scripted branch");
     expect_true(profile &&
                     dm2_v1_boot_materialize_startend_first_champion(profile) &&
                     (profile_new_game_owner =

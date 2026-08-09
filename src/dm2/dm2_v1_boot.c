@@ -13705,6 +13705,8 @@ int dm2_v1_boot_materialize_startend_first_champion(
         owner->selected_mirror_count != 0u ||
         owner->source_startend_first_champion_released ||
         owner->source_party_map != owner->current_map ||
+        owner->source_party_x != owner->preselection_entrance.x ||
+        owner->source_party_y != owner->preselection_entrance.y ||
         owner->source_party_direction != owner->preselection_entrance.direction ||
         !owner->preselection_mirror_roster.valid ||
         owner->preselection_mirror_roster.candidate_count <= 0) {
