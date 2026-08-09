@@ -1,3 +1,15 @@
+# Lokal macOS-runbook för SDL2, Mednafen och Tsugaru (2026-08-09)
+
+- ✅ `docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md` beskriver de fasta externa
+  sökvägarna, hur riktig Cocoa-SDL2 byggs och verifieras, hur den
+  instrumenterade Mednafen-capturen körs och hur Tsugaru används separat för
+  FM Towns/TownsOS.
+- ✅ Den lokala Mednafen-binärens SDL2-länk är verifierad mot den riktiga
+  externa SDL2-prefixen; `sdl2-compat` godtas inte som capturebevis.
+- ✅ En autentisk US Track 02/System Card-körning dokumenterades som negativt
+  resultat: CD-IRQ fanns, men dynamiska och autentiserade CD→RAM-receipts
+  saknades. Ingen Theron-semantik öppnades på grundval av den körningen.
+
 # Theron: atomic source-group admission (2026-08-09)
 
 - ✅ Source-bound Track 02 monster groups are now admitted transactionally:
