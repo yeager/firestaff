@@ -35,5 +35,24 @@ int main(void)
         }
     }
     puts("PASS: AUTO selects a verified FM Towns corpus for DM1, CSB and DM2");
+    {
+        int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+        int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
+        int selected;
+        memset(&status, 0, sizeof(status));
+        if (a31e < 0 || a31m < 0) {
+            fprintf(stderr, "FAIL: missing CSB Amiga catalogue identities\n");
+            return 1;
+        }
+        status.versions[1][a31e].matched = 1;
+        status.versions[1][a31m].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "csb", M12_ARCH_AMIGA);
+        if (selected != a31m) {
+            fprintf(stderr, "FAIL: Amiga selected unlaunchable A31E before A31M\n");
+            return 1;
+        }
+    }
+    puts("PASS: CSB Amiga selection skips unproven A31E in favour of A31M");
     return 0;
 }
