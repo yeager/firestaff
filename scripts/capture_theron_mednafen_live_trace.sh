@@ -280,6 +280,29 @@ if [[ "$capture_mednafen_module" != pce && "$capture_mednafen_module" != pce_fas
     printf '%s\n' 'FAIL: THERON_CAPTURE_MEDNAFEN_MODULE must be pce or pce_fast' >&2
     exit 1
 fi
+require_mednafen_module() {
+    local requested=$1
+    local help_output
+
+    # Fail before media setup when the selected binary does not actually
+    # contain the requested core. Some macOS builds expose only `pce`; passing
+    # `pce_fast` to those builds otherwise leaves an expensive, empty capture
+    # with no trustworthy runtime receipt.
+    help_output=$("$mednafen_bin" -help 2>&1 || true)
+    if ! printf '%s\n' "$help_output" |
+         awk -v requested="$requested" '
+             /^ Emulation modules:/ {
+                 for (i = 3; i <= NF; ++i)
+                     if ($i == requested) found = 1
+             }
+             END { exit(found ? 0 : 1) }
+         '; then
+        printf 'FAIL: MEDNAFEN_BIN does not expose the requested emulation module: %s\n' \
+            "$requested" >&2
+        exit 1
+    fi
+}
+require_mednafen_module "$capture_mednafen_module"
 if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SHUTDOWN_SIGNAL must be INT or TERM' >&2
     exit 1
