@@ -47,6 +47,15 @@
   vald mode-5-command. Extern J/J frame 500 passerar genom produktions-API:t;
   receiptet lämnar command-offset och håller fortsatt renderer-admission
   spärrad utan source-owner/material-join.
+
+# Nexus VDP2 NBG1 raw bitmap capture lane (2026-08-09)
+
+- ✅ `nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap()` avkodar
+  autentiserad NBG1 512×256/8bpp-VRAM och CRAM till en separat RGBA-capture-yta
+  med verifierad registerbyteordning och BMPNA/CRAOFA-adressering.
+- ✅ Extern J/J frame 500 passerar; den helt transparenta bitmap-spanen
+  registreras som giltig capture-state utan att uppfinna pixels eller öppna
+  renderer-admission.
 # CSB Atari ST: exakt C007-toppradsinmatning (2026-08-09)
 
 - ✅ Den inbyggda Atari ST-runtimen använder nu CSB 2.x:s egna G0447-rutor

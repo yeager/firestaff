@@ -19,6 +19,7 @@ static uint16_t read_register16(const uint8_t *registers, size_t offset)
 
     /* Real captures use Saturn's TVMD display-enable bit 0x8000. Keep the
      * older 0x0080 fixture witness as a compatibility serialization. */
+    if (big == 0x0080U) return read_be16(registers + offset);
     if ((little & 0x8000U) != 0U && (big & 0x8000U) == 0U)
         return read_le16(registers + offset);
     if (big != 0x0080U && little == 0x0080U)
@@ -128,5 +129,97 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
     receipt.valid = receipt.written_pixels > 0;
     receipt.renderer_permitted = receipt.valid;
     *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
+    Nexus_V1_Vdp2BitmapCaptureFramebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_register_receipt,
+    Nexus_V1_Vdp2BitmapCaptureReceipt *out_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_SaturnVdp2RegisterReceipt registers;
+    Nexus_V1_Vdp2BitmapCaptureReceipt receipt;
+    uint16_t bmpna;
+    uint16_t craofa;
+    uint32_t bitmap_offset;
+    int i;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&registers, 0, sizeof(registers));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.renderer_permitted = 0;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_register_receipt) *out_register_receipt = registers;
+    if (out_receipt) *out_receipt = receipt;
+    if (!framebuffer || !capture_bytes ||
+        !nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
+        !frame.vdp2_registers ||
+        frame.vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        frame.vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        frame.vdp2_register_size < NEXUS_V1_SATURN_VDP2_REG_BYTES ||
+        !nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+            &frame, &registers) || !registers.valid ||
+        !registers.nbg1_enabled || !registers.nbg1_bitmap_mode ||
+        registers.nbg1_colour_code != 1) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    bmpna = read_register16(frame.vdp2_registers, 0x2cU);
+    craofa = read_register16(frame.vdp2_registers,
+                             NEXUS_V1_VDP2_CRAOFA_OFFSET);
+    /* This bounded lane follows the 512x256, 8bpp source geometry used by
+     * the authenticated frame analyzer. NBG1 BMPNA and CRAOFA non-zero
+     * variants need their own Saturn address proof before admission. */
+    if (((registers.chctla >> 10U) & 3U) != 0U ||
+        ((registers.chctla >> 12U) & 3U) != 1U ||
+        ((bmpna >> 8U) & 7U) != 0U || ((craofa >> 4U) & 7U) != 0U) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    bitmap_offset = (((uint32_t)read_register16(
+        frame.vdp2_registers, 0x3cU) >> 4U) & 7U) * UINT32_C(0x20000);
+    if (bitmap_offset > frame.vdp2_vram_size -
+            NEXUS_V1_VDP2_NBG1_BITMAP_BYTES) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    receipt.layer_registers_verified = 1;
+    receipt.nbg1_bitmap_mode = 1;
+    receipt.colour_code_256 = 1;
+    receipt.bitmap_span_framed = 1;
+    receipt.cram_span_framed = 1;
+    receipt.cram_word_order_verified = 1;
+    receipt.original_saturn_capture_verified = 1;
+    receipt.bitmap_vram_offset = bitmap_offset;
+    receipt.cram_offset = 0U;
+    for (i = 0; i < (int)(NEXUS_V1_VDP2_NBG1_BITMAP_WIDTH *
+                          NEXUS_V1_VDP2_NBG1_BITMAP_HEIGHT); ++i) {
+        uint8_t index = frame.vdp2_vram[bitmap_offset + (uint32_t)i];
+        if (index == 0U) {
+            framebuffer->rgba_buffer[i] = 0U;
+            ++receipt.transparent_pixels;
+        } else {
+            framebuffer->rgba_buffer[i] = cram_to_rgba(
+                frame.vdp2_cram + (size_t)index * 2U);
+            ++receipt.written_pixels;
+        }
+    }
+    /* A fully transparent captured plane is still a valid VDP2 state/span
+     * witness; absence of non-zero pixels must not turn hardware capture into
+     * a parse failure. */
+    receipt.valid = 1;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_register_receipt) *out_register_receipt = registers;
+    if (out_receipt) *out_receipt = receipt;
     return receipt.valid;
 }

@@ -140,6 +140,14 @@ avvisas. Joinen sätter inte textkod→tile, page-PND, placering eller
 lagerägarskap; den är källproveniens, inte en upplåsning av FONT256-runtime
 eller startup→meny.
 
+VDP2 har dessutom en fristående råcapture-konsument,
+`nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap()`. Den avkodar den
+autentiserade frame:ns NBG1 512×256/8bpp-span och CRAM till en separat RGBA-yta
+och verifierar registerbyteordning, BMPNA/CRAOFA-adressering och samma
+frame-envelope. J/J frame 500 passerar denna lane; spanen är helt transparent,
+vilket bevaras som `valid=1, written_pixels=0` i stället för att fabricera en
+menybild. API:t lämnar fortsatt produktionskonsument och asset-owner spärrade.
+
 ### Frame 80: NBG1-ägare fortfarande obunden
 
 En separat bytejämförelse av den autentiserade långkörningens frame 80 visar

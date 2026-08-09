@@ -199,6 +199,11 @@
   to menu/HUD/viewport rendering until its retail source owner and
   scene/material handoff are byte-authenticated.
 
+- ⏳ Nexus VDP2 NBG1 raw bitmap capture is now decoded into a separate
+  capture-only RGBA surface. The J/J witness is transparent and has no exact
+  MENU.BPK/FONT256 owner; keep it out of menu/HUD/viewport production until
+  source and layer ownership are proven.
+
 - 🔧 Nexus VDP1 command-list framing is now independently reproducible from
   the authenticated 300-frame European witness: 290 active CMDLINK chains
   reach END and 10 frames are explicit idle END observations. The verifier

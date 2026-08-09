@@ -17,6 +17,50 @@ static void wl16(uint8_t *p, unsigned int value)
     p[1] = (uint8_t)(value >> 8U);
 }
 
+static int run_external_bitmap_capture(void)
+{
+    const char *path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
+    const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+    FILE *file;
+    long file_size;
+    uint8_t *capture;
+    Nexus_V1_Vdp2BitmapCaptureFramebuffer framebuffer;
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_SaturnVdp2RegisterReceipt registers;
+    Nexus_V1_Vdp2BitmapCaptureReceipt receipt;
+    unsigned int frame_index;
+    int ok;
+
+    if (!path || !*path || !frame_text || !*frame_text) return 1;
+    frame_index = (unsigned int)strtoul(frame_text, NULL, 0);
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    capture = (uint8_t *)malloc((size_t)file_size);
+    if (!capture || fread(capture, 1U, (size_t)file_size, file) !=
+            (size_t)file_size) {
+        free(capture);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    memset(&framebuffer, 0, sizeof(framebuffer));
+    memset(&frame, 0, sizeof(frame));
+    memset(&registers, 0, sizeof(registers));
+    memset(&receipt, 0, sizeof(receipt));
+    ok = nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
+        &framebuffer, capture, (size_t)file_size, frame_index, &frame,
+        &registers, &receipt) && receipt.valid && receipt.capture_only &&
+        receipt.nbg1_bitmap_mode && receipt.colour_code_256 &&
+        receipt.bitmap_vram_offset == 0U && receipt.transparent_pixels > 0 &&
+        !receipt.renderer_permitted;
+    free(capture);
+    return ok;
+}
+
 int main(void)
 {
     uint8_t *bitmap = (uint8_t *)calloc(1, NEXUS_V1_VDP2_NBG1_BITMAP_BYTES);
@@ -113,6 +157,12 @@ int main(void)
     }
     free(bitmap);
     free(cram);
+    if (getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE") &&
+        getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
+        !run_external_bitmap_capture()) {
+        fprintf(stderr, "FAIL: external VDP2 NBG1 bitmap capture decode\n");
+        return 1;
+    }
     puts("test_nexus_v1_vdp2_capture_compositor: PASS");
     return 0;
 }
