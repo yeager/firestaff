@@ -2227,6 +2227,17 @@ static int m11_dm2_apply_boot_runtime_receipt(
              receipt->dungeon_path);
     state->dm2BootProfile = receipt->profile;
     state->dm2World = receipt->dm2_state;
+    /* SHOW_MENU_SCREEN is reached before SKProject's GAME_LOAD creates or
+     * restores c_hero ownership.  M11_GameView_Init has generic-world
+     * defaults for the other games; retaining that presentation mirror here
+     * made FM Towns TITLE -> SKULL appear to have a party before either
+     * source menu event 0xD7 (new) or 0xD9 (resume) could be admitted.
+     * Clear it at the original startup boundary, independently of later
+     * DUNGEON.DAT reload support for this platform.  This creates no party
+     * or session: only a complete GAME_LOAD owner may publish either. */
+    if (!m11_dm2_clear_new_game_party_state(state)) {
+        return 0;
+    }
     /* READ_DUNGEON_STRUCTURE has mounted verified source data at this point,
      * but SHOW_MENU_SCREEN runs before GAME_LOAD has created or restored a
      * source party.  Do not publish the File_header start word as a live

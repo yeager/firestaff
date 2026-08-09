@@ -7,6 +7,17 @@
   verifieringsjargong har tagits bort från README. Detaljerad teknisk
   dokumentation finns kvar i dokumentationsindexet.
 
+# DM2 FM Towns: riktig SKULL-menystart utan party (2026-08-09)
+
+- ✅ M11 rensar nu enbart sin generiska presentationsspegel när originalets
+  `SHOW_MENU_SCREEN` tar över. HME-242:s TITLE → SKULL-handoff visar därmed
+  inte en värdskapad party före `DM2_GAME_LOAD`.
+- ✅ De verkliga GDAT-händelserna `0xD7` (New Game) och `0xD9` (Resume)
+  behåller startmenyn tills den kompletta källägda laddningskedjan finns.
+  Ingen party, sparsession eller ersättningsbild skapas.
+- ✅ Verifierat med FM Towns HME-242-arkivet och autentisk PC-engelsk
+  kompanjon i RAM genom M12- och M11-realdatatesterna.
+
 # CSB FM Towns: säker F31-återupptagning (2026-08-09)
 
 - ✅ En användarvald FM Towns F31-sparfil kan nu återupptas från den aktiva
