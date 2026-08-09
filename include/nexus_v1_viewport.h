@@ -193,6 +193,29 @@ typedef struct Nexus_Viewport {
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 
+/* One authenticated VDP2-plane + VDP1-command-window composition. The
+ * caller supplies the layer order explicitly; no Saturn layer placement is
+ * inferred from host draw order. The operation is capture-only and atomic. */
+typedef struct {
+    const Nexus_V1_Vdp2CaptureCompositeInput *vdp2_bitmap;
+    const Nexus_V1_Vdp2TilemapCaptureInput *vdp2_tilemap;
+    const Nexus_V1_Vdp1CaptureSequenceInput *vdp1_sequence;
+    int vdp2_is_tilemap;
+    int vdp1_over_vdp2;
+    int layer_order_verified;
+} Nexus_V1_Vdp12CaptureCompositionInput;
+
+typedef struct {
+    int valid;
+    int layer_order_verified;
+    int vdp2_verified;
+    int vdp1_verified;
+    int vdp1_over_vdp2;
+    int renderer_permitted;
+    int vdp2_written_pixels;
+    int vdp1_written_pixels;
+} Nexus_V1_Vdp12CaptureCompositionReceipt;
+
 void nexus_viewport_init(Nexus_Viewport *vp);
 
 /* Render one frame */
@@ -220,6 +243,14 @@ int nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
     Nexus_Viewport *vp,
     const Nexus_V1_Vdp2TilemapCaptureInput *input,
     Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt);
+
+/* Compose one authenticated VDP2 NBG1 plane with one authenticated VDP1
+ * command window. On any missing join or failed sub-route, the framebuffer is
+ * unchanged and the receipt remains non-rendering. */
+int nexus_viewport_replay_vdp12_capture_composition(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp12CaptureCompositionInput *input,
+    Nexus_V1_Vdp12CaptureCompositionReceipt *out_receipt);
 
 /* Convert indexed framebuffer to RGBA for SDL presentation */
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);

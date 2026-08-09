@@ -1,5 +1,6 @@
 
 #include "nexus_v1_viewport.h"
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -98,6 +99,72 @@ int nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
     }
     vp->last_vdp2_tilemap_capture_receipt = receipt;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int nexus_viewport_replay_vdp12_capture_composition(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp12CaptureCompositionInput *input,
+    Nexus_V1_Vdp12CaptureCompositionReceipt *out_receipt)
+{
+    Nexus_V1_Vdp12CaptureCompositionReceipt receipt;
+    Nexus_Framebuffer *saved;
+    int vdp2_ok;
+    int vdp1_ok;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!out_receipt) return 0;
+    if (!vp || !input || !input->vdp1_sequence ||
+        !input->layer_order_verified || !input->vdp1_over_vdp2 ||
+        (input->vdp2_is_tilemap ? !input->vdp2_tilemap :
+                                   !input->vdp2_bitmap)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    saved = (Nexus_Framebuffer *)malloc(sizeof(*saved));
+    if (!saved) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    *saved = vp->fb;
+    receipt.layer_order_verified = 1;
+    if (input->vdp2_is_tilemap) {
+        Nexus_V1_Vdp2TilemapCaptureReceipt tilemap_receipt;
+        vdp2_ok = nexus_v1_vdp2_capture_composite_nbg1_tilemap(
+            &vp->fb, input->vdp2_tilemap, &tilemap_receipt);
+        vp->last_vdp2_tilemap_capture_receipt = tilemap_receipt;
+        receipt.vdp2_written_pixels = tilemap_receipt.written_pixels;
+    } else {
+        Nexus_V1_Vdp2CaptureCompositeReceipt bitmap_receipt;
+        vdp2_ok = nexus_v1_vdp2_capture_composite_nbg1_bitmap(
+            &vp->fb, input->vdp2_bitmap, &bitmap_receipt);
+        vp->last_vdp2_capture_receipt = bitmap_receipt;
+        receipt.vdp2_written_pixels = bitmap_receipt.written_pixels;
+    }
+    if (!vdp2_ok) {
+        *out_receipt = receipt;
+        free(saved);
+        return 0;
+    }
+    receipt.vdp2_verified = 1;
+    {
+        Nexus_V1_Vdp1CaptureSequenceReceipt vdp1_receipt;
+        vdp1_ok = nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &vp->fb, input->vdp1_sequence, &vdp1_receipt);
+        vp->last_vdp1_sequence_receipt = vdp1_receipt;
+        receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
+    }
+    if (!vdp1_ok) {
+        vp->fb = *saved;
+        *out_receipt = receipt;
+        free(saved);
+        return 0;
+    }
+    receipt.vdp1_verified = 1;
+    receipt.vdp1_over_vdp2 = 1;
+    receipt.valid = receipt.renderer_permitted = 1;
+    *out_receipt = receipt;
+    free(saved);
     return 1;
 }
 

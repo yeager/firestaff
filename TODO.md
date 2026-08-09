@@ -24,6 +24,12 @@
   explicit placement and capture attestation remain required; no inferred
   FONT256 text consumer or production HUD/menu route is opened.
 
+- 🔧 Nexus now has an atomic capture-only VDP2→VDP1 viewport composition
+  adapter. It requires an exact authenticated VDP2 bitmap/tilemap join, an
+  authenticated ordered VDP1 command window, and explicit VDP1-over-VDP2
+  layer order; failed subroutes restore the framebuffer. A real menu/HUD
+  owner is still needed before this can become the normal production route.
+
 - ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
   lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
   repot; den nya Git-spärren måste fortsätta vara grön.

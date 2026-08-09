@@ -32,6 +32,11 @@
   The existing source-bound 8×8 tilemap test passes in both forms, while its
   exact-span, explicit-placement and no-fallback gates remain unchanged.
 
+- ✅ Added `nexus_viewport_replay_vdp12_capture_composition()`, an atomic
+  capture-only VDP2→VDP1 composition lane. It preserves the framebuffer on a
+  failed VDP1/VDP2 subroute, records explicit layer order, and passes a
+  source-bound bitmap plus ordered VDP1 command-window regression.
+
 # Nexus: VDP1 command-list framing (2026-08-09)
 
 - ✅ `scripts/analyze_nexus_vdp1_command_sequence.py` now follows the
