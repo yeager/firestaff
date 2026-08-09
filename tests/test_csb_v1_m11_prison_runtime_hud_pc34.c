@@ -408,6 +408,21 @@ int main(void)
                       &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
                       M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
                   "real Atari MINI.DAT F1 closes inventory through the same GAMEBLOCK route");
+            /* CSB 2.x Atari's G0447 shifts the left edge of each visible
+             * C007..C010 bar-graph toggle one pixel right (44, 113, 182,
+             * 251).  Pixel 43 belongs to C012's adjacent status surface,
+             * not to C007.  ReDMCSB COMMAND.C:92-100. */
+            CHECK(M11_GameView_HandlePointerButton(
+                      &view, 43, 14, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_IGNORED && !view.inventoryPanelActive,
+                  "real Atari MINI.DAT keeps the C007 left-edge gap out of inventory input");
+            CHECK(M11_GameView_HandlePointerButton(
+                      &view, 44, 14, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
+                      M11_GameView_HandlePointerButton(
+                          &view, 44, 14, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+                  "real Atari MINI.DAT uses the native C007 bar-graph input box");
             CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
                       M11_GAME_INPUT_REDRAW && view.spellPanelOpen &&
                       M11_GameView_HandleInput(

@@ -6,6 +6,24 @@
   `renderer_permitted=0` tills DGN-ägare/material är autentiserade.
 - ✅ Syntetisk regression och extern gameplay-capture passerar; en
   frame-760-post med oattesterad källa/ogiltig placering förblir spärrad.
+# CSB Atari ST: exakt C007-toppradsinmatning (2026-08-09)
+
+- ✅ Den inbyggda Atari ST-runtimen använder nu CSB 2.x:s egna G0447-rutor
+  för C007–C010: inventariebalkarna startar vid x=44/113/182/251 och
+  enradssemmarna förblir inerta. Statusytan och inventariebalken kan därmed
+  inte längre blandas ihop av den generella PC-rutten.
+- ✅ Verifierat med originalets Atari-hårddiskpaket och autentisk `MINI.DAT`
+  genom ANIM→FTLCODE, C232-HUD, 022e-viewport och F0433/F0435 kallresume.
+  Källa: ReDMCSB `COMMAND.C` G0447, rader 82–100.
+
+# CSB Amiga: A31E är valbar i CLI och startmeny (2026-08-09)
+
+- ✅ Den hashverifierade A31E-utgåvan är inte längre felaktigt undantagen av
+  den gamla katalogpolicyn. När dess egna `BJELoad_R` och `APPB.FTL` finns
+  väljs den före A31M, med sin direkta C02 → C03-handoff och utan korsbunden
+  Amiga- eller PC34-media.
+- ✅ Katalogtestet och den opt-in-bundna original-ADF-regressionen verifierar
+  både det valbara urvalet och den egna programkvittensen.
 
 # Nexus VDP1 CMDCOLR byteoffset and reusable DGN CLUT join (2026-08-09)
 

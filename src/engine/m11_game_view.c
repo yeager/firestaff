@@ -30030,6 +30030,55 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     return M11_GAME_INPUT_REDRAW;
 }
 
+/* CSB 2.x Atari ST keeps G0447's status clicks and C007..C010 inventory
+ * bars as adjacent, but distinct, primary-mouse zones. The bar graphics
+ * begin at 44/113/182/251 rather than the PC rows' 43/112/181/250, leaving
+ * one physical pixel between a status box and its bar. The common M11 HUD
+ * route deliberately makes a whole painted status tile convenient to click;
+ * that wider host route is not source-faithful for the native ST page.
+ *
+ * ReDMCSB COMMAND.C:82-100, G0447_as_Graphic561_PrimaryMouseInput_Interface:
+ * the Atari comments document both the +1 left edges and separate C012..C015
+ * versus C007..C010 command ownership. */
+static int m11_csb_atari_st_top_row_pointer(
+    M11_GameViewState *state, int x, int y, int button_mask,
+    M11_GameInputResult *out_result)
+{
+    static const int status_left[CHAMPION_MAX_PARTY] = { 0, 69, 138, 207 };
+    static const int bar_left[CHAMPION_MAX_PARTY] = { 44, 113, 182, 251 };
+    const CSB_V1_BootProfile *profile;
+    int slot;
+
+    if (out_result) *out_result = M11_GAME_INPUT_IGNORED;
+    if (!state || !out_result || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 || y < 0 || y > 28) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!profile || (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+                     profile->variant_id != CSB_V1_VARIANT_ST21_EN)) {
+        return 0;
+    }
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        if (x >= status_left[slot] && x <= status_left[slot] + 42) {
+            *out_result = m11_set_active_champion(state, slot)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            return 1;
+        }
+        if (x >= bar_left[slot] && x <= bar_left[slot] + 22) {
+            *out_result = m11_toggle_champion_inventory(state, slot);
+            return 1;
+        }
+    }
+    /* The four one-pixel seams are deliberately inert. */
+    if (x == 43 || x == 112 || x == 181 || x == 250 ||
+        x == 67 || x == 68 || x == 136 || x == 137 ||
+        x == 205 || x == 206 || x == 274) {
+        return 1;
+    }
+    return 0;
+}
+
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
@@ -30213,6 +30262,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * movement, champion, action, or spell hit testing. */
     if (m11_source_is_csb(state) && state->csbBootProfile) {
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+    }
+
+    {
+        M11_GameInputResult atari_top_row_result;
+        if (m11_csb_atari_st_top_row_pointer(state, x, y, buttonMask,
+                                             &atari_top_row_result)) {
+            return atari_top_row_result;
+        }
     }
 
     /* CSB's live mouse route is the same source-owned G0448 command surface

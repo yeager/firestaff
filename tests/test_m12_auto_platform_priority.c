@@ -48,11 +48,11 @@ int main(void)
         status.versions[1][a31m].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, "csb", M12_ARCH_AMIGA);
-        if (selected != a31m) {
-            fprintf(stderr, "FAIL: Amiga selected unlaunchable A31E before A31M\n");
+        if (selected != a31e) {
+            fprintf(stderr, "FAIL: Amiga did not select verified A31E before A31M\n");
             return 1;
         }
     }
-    puts("PASS: CSB Amiga selection skips unproven A31E in favour of A31M");
+    puts("PASS: CSB Amiga selection admits verified native A31E");
     return 0;
 }

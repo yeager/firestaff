@@ -6228,14 +6228,13 @@ const char* M12_Architecture_ShortLabel(int architecture) {
 static int m12_version_is_launchable(const char *gameId,
                                      const M12_VersionSpec *version)
 {
-    /* ReDMCSB COMPILE.H:199-213 assigns A31E directly to APPB.C03, while
-     * A31M uses TITL/APPA/APPB.C08 (lines 246-269).  A31E is deliberately
-     * catalogued for scanning, but has no verified C03 program handoff yet.
-     * Do not let catalogue order select it ahead of an independently
-     * launchable A31M/A35 package on the same Amiga platform. */
-    return gameId && version && version->versionId &&
-           !(strcmp(gameId, "csb") == 0 &&
-             strcmp(version->versionId, "amiga31-en") == 0);
+    /* A version is selectable only after the scanner has verified its own
+     * required media.  A31E is no longer an exception: COMPILE.H:199-213
+     * gives it the distinct BJELoad_R -> APPB.FTL C03_GAME route, which M11
+     * now binds from its version-private ADF materialisation.  Catalogue
+     * order may therefore select A31E without borrowing A31M media.
+     * ReDMCSB COMPILE.H:199-213, 246-269. */
+    return gameId && version && version->versionId;
 }
 
 int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
