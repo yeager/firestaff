@@ -109,6 +109,10 @@ also reports which editions it found before a launch is attempted. In a live
 game, F10 opens the runtime panel for presentation options and the shared
 controls that are implemented for that route.
 
+Theron's Quest controls are documented in
+[Theron input](docs/theron_input.md): W/S move forward/back, A/D turn, mouse
+buttons 1/2 are Button I/II, and short/long touch uses the same pair.
+
 Command-line options:
 
 ```text

@@ -148,6 +148,7 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
    W/S are forward/backward, A/D are turn-left/turn-right, mouse button 1/2
    are Button I/II, and a short/long touch is the same Button I/II pair. */
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
+M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronMouseButtonToInput(int button);
 M12_MenuInput M11_TheronTouchButtonInput(int longPress);
 

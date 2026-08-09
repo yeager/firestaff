@@ -1,5 +1,13 @@
 # README: tydlig originalplattform och mindre brus (2026-08-09)
 
+# Theron: robust WASD-ingång (2026-08-09)
+
+- ✅ Therons host-ingång accepterar nu både SDL-scancode och SDL-keycode för
+  W/A/S/D. Det täcker macOS/SDL-vägar där scancode-fältet saknas och använder
+  samma runtime-fasad som fysisk tangentbordsingång.
+- ✅ Knapp- och touchkontraktet är oförändrat och verifierat: mus 1/2 samt
+  kort/lång touch går till Button I/II.
+
 - ✅ README beskriver nu vilka originalutgåvor som skannern känner igen,
   inklusive Atari ST, Amiga och FM Towns för Dungeon Master och Chaos Strikes
   Back. Den skiljer tydligt mellan igenkänd media och färdig spelbar väg.

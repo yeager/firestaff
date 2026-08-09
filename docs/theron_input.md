@@ -1,6 +1,8 @@
 # Theron's Quest — Keyboard Controls
 
 Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
+Firestaff's Theron route accepts both SDL scancodes and keycodes, so W/A/S/D
+also work on macOS layouts or input paths that do not populate scancodes.
 
 ## PC Engine button mapping
 
@@ -43,7 +45,8 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
   Button I; a long touch emits Button II, including during startup.
 - Run and Select have no keyboard binding (no gameplay use currently).
-- Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons).
+- Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
+  the selected input mode permits gamepad events.
 - F5 = quick save, F9 = quick load, F12 = screenshot (engine-global).
 
 ## Mednafen macOS capture profile

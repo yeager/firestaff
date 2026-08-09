@@ -4119,6 +4119,13 @@ static M12_MenuInput m11_boot_probe_key_input(const M11_GameViewState* gameView,
         m11_csb_sdl_key_to_menu_input(keycode, 0, &csbInput)) {
         return csbInput;
     }
+    if (m11_game_view_is_theron(gameView)) {
+        M12_MenuInput theronInput =
+            M11_TheronNavigationInputFromKeycode(keycode);
+        if (theronInput != M12_MENU_INPUT_NONE) {
+            return theronInput;
+        }
+    }
     switch (keycode) {
         case SDLK_UP: return M12_MENU_INPUT_UP;
         case SDLK_DOWN: return M12_MENU_INPUT_DOWN;
@@ -5005,6 +5012,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 if (m11_game_view_is_theron(gameView)) {
                     mappedInput = M11_TheronNavigationInputFromScancode(
                         (int)ev.key.scancode);
+                    if (mappedInput == M12_MENU_INPUT_NONE) {
+                        mappedInput = M11_TheronNavigationInputFromKeycode(
+                            (int)ev.key.key);
+                    }
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
                     }
@@ -5507,6 +5518,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 if (m11_game_view_is_theron(gameView)) {
                     mappedInput = M11_TheronNavigationInputFromScancode(
                         (int)ev.key.keysym.scancode);
+                    if (mappedInput == M12_MENU_INPUT_NONE) {
+                        mappedInput = M11_TheronNavigationInputFromKeycode(
+                            (int)ev.key.keysym.sym);
+                    }
                     if (mappedInput != M12_MENU_INPUT_NONE) {
                         return mappedInput;
                     }

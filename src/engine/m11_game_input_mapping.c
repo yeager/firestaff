@@ -96,6 +96,22 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
     }
 }
 
+M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
+{
+    /* SDL normally supplies both fields.  Keep a keycode fallback for
+     * macOS/SDL event sources that leave scancode unset, and for the
+     * keycode-driven boot-probe path.  This is a host ingress fallback only;
+     * the normalized M12 token still enters the same Theron runtime facade.
+     */
+    switch ((SDL_Keycode)keycode) {
+        case SDLK_W: return M12_MENU_INPUT_UP;
+        case SDLK_S: return M12_MENU_INPUT_DOWN;
+        case SDLK_A: return M12_MENU_INPUT_LEFT;
+        case SDLK_D: return M12_MENU_INPUT_RIGHT;
+        default: return M12_MENU_INPUT_NONE;
+    }
+}
+
 M12_MenuInput M11_TheronMouseButtonToInput(int button)
 {
     if (button == SDL_BUTTON_LEFT) return M12_MENU_INPUT_ACCEPT;
