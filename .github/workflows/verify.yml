@@ -54,7 +54,10 @@ jobs:
             shell: msys2 {0}
             generator: Ninja
             exe: '.exe'
-            build_parallel: ''
+            # Keep MSYS2/Ninja memory use bounded on the Windows runner.
+            # The unrestricted build has previously stalled for hours while
+            # the equivalent macOS build completes with three workers.
+            build_parallel: '3'
 
     runs-on: ${{ matrix.os }}
     defaults:
