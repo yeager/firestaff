@@ -102,6 +102,10 @@
 - `DM1 release capture manifest`: Reject negative, zero, and overflowing
   framebuffer dimensions before calculating the required byte span. Invalid
   external capture metadata can no longer pass the release-evidence gate.
+- `DM1 HoC runtime probe`: Resolve the authenticated PC 3.4 `DATA` tree from
+  nested broad-data and per-game roots before starting the launcher scan. The
+  real-data no-creature-AI guard now passes from the same broad data directory
+  used by the application.
 - Restored the pass76 Firestaff route-state evidence at its current
   `parity-evidence/verification` path and updated the pass608/live-row gates
   and citations after the historical verification archive move.

@@ -23,6 +23,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   metadata-safety defect only; it does not create or admit missing original
   pixels.
 
+- 2026-08-09 HoC runtime-probe path resolution is complete: the no-creature-AI
+  guard now selects the authenticated DOS PC 3.4 `DATA` tree from a broad
+  `/Users/bosse/.firestaff/data` root and from a per-game root. The real-data
+  probe passes 4/4; this removes a false discovery/scan failure and does not
+  claim C13 or original-pixel parity.
+
 - 2026-08-09 verification-path repair is complete: pass76 route-state JSON is
   stored under `parity-evidence/verification`, and pass608/live-row checks no
   longer depend on the removed historical `verification-m11` path. This fixes
