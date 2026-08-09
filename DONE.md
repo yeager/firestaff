@@ -1,3 +1,11 @@
+# Nexus: korrekt VDP2-registertolkning (2026-08-09)
+
+- ✅ `analyze_nexus_vdp2_composition.py` tolkar nu den externa Mednafen-
+  runtime-capturens native little-endian VDP2-registerord korrekt. Verifierat
+  mot autentisk Nexus-menywindow; `BGON` och aktiva NBG-lager matchar den
+  observerade Saturn-state. Ändringen påverkar endast diagnostik och lämnar
+  source-join/host-composition-gaten stängd.
+
 # Lokal macOS-runbook för SDL2, Mednafen och Tsugaru (2026-08-09)
 
 - ✅ Tsugaru-delen är nu konkret för macOS: korrekt `gui/src`-build med

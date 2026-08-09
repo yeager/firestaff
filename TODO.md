@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ VDP2-kompositionsanalysen läser nu Mednafen-capture-registernas native
+  little-endian `uint16`-ord korrekt. Detta rättar lagerinventeringen men
+  öppnar inte asset-consumer/source-join eller host-komposition; dessa är
+  fortfarande capture-gatade.
+
 - ⏳ SLEV/SAL-captureplanen avvisar nu nollvärden, korta FNV-värden och
   upprepade nibblevärden som `1111…`/`aaaa…`; sådana värden var tidigare
   syntetiska testmetadata. Positiv source-join för task-trace, selector och

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Decode bounded VDP2 composition registers from an authentic raw witness.
 
-The register values are an original Saturn observation.  They identify the
+The register values are an original Saturn observation.  The external
+Mednafen capture stores its native ``uint16`` words in host order; on the
+supported capture host this is little-endian.  They identify the
 enabled VDP2 layer and hardware configuration for the captured frame, but do
 not identify the retail asset that filled VRAM or authorize host composition.
 """
@@ -47,7 +49,7 @@ REGISTERS = {
 
 
 def read_u16(registers: bytes, offset: int) -> int:
-    return int.from_bytes(registers[offset : offset + 2], "big")
+    return int.from_bytes(registers[offset : offset + 2], "little")
 
 
 def enabled_layers(bgon: int) -> list[str]:
