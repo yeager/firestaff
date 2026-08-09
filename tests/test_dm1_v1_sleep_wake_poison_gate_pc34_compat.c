@@ -168,22 +168,35 @@ static void test_creature_melee_f0230_late_reduction_fixture(void)
         defender.woundDefense[i] = 5;
     }
 
-    CHECK(F0730_COMBAT_RngInit_Compat(&rng, 4u) == 1,
+    /* Re-recorded 2026-08-09 against the corrected RNG stream.  Two parity
+     * fixes this session changed how many draws F0230 consumes:
+     *   - the wound test is one M006_RANDOM(65536) draw, not a synthesised
+     *     32768+2 pair (PROJEXPL.C:1372, DEFS.H:5);
+     *   - F0308 falls through to the luck branch when the M005 draw hits but
+     *     the percentage check fails (CHAMPION.C:1140).
+     * Every draw site in F0736 was then checked individually against the
+     * reference (dexterity gate, F0308, wound test, staged attack, F0313
+     * incl. its wounded-slot -8+M004(4) guard, F0321 scale, poison gate) and
+     * all match, so the current stream is source-correct and these pinned
+     * values -- which were recorded under the older, extra-draw stream -- are
+     * the stale side.  The seed is re-chosen to keep each scenario
+     * exercising its intended path rather than degenerating into a miss. */
+    CHECK(F0730_COMBAT_RngInit_Compat(&rng, 10u) == 1,
           "rng initialises for F0230 late-reduction fixture");
     CHECK(F0736_COMBAT_ResolveCreatureMelee_Compat(
               &attacker, &defender, &rng, &result) == 1,
           "F0230 late-reduction fixture resolves");
     CHECK(result.outcome == COMBAT_OUTCOME_HIT_DAMAGE,
           "F0230 fixture lands damage");
-    CHECK_EQ_INT(result.damageApplied, 37,
+    CHECK_EQ_INT(result.damageApplied, 25,
                  "F0230 fixture applies exact F0321 armor+defense scale");
-    CHECK(result.rawAttackRoll == 25,
+    CHECK(result.rawAttackRoll == 29,
           "F0230 fixture keeps exact dodge random term");
     CHECK(result.woundMaskAdded == COMBAT_WOUND_FEET,
           "F0230 fixture selects exact wound mask");
-    CHECK_EQ_INT(result.rngCallCount, 12,
+    CHECK_EQ_INT(result.rngCallCount, 11,
                  "F0230 fixture consumes late reduction random term");
-    CHECK_EQ_U32(rng.seed, 0x8a798588u,
+    CHECK_EQ_U32(rng.seed, 0x0b71c8b7u,
                  "F0230 fixture leaves exact rng seed");
 }
 
@@ -248,11 +261,11 @@ static void test_creature_melee_f0321_armor_defense_scale_fixture(void)
           "F0321 fixture lands damage");
     CHECK(result.woundMaskAdded == COMBAT_WOUND_FEET,
           "F0230 F0308 order selects FEET wound slot for F0313 lookup");
-    CHECK_EQ_INT(result.damageApplied, 22,
+    CHECK_EQ_INT(result.damageApplied, 26,
                  "F0321 fixture applies exact (130 - defense) / 64 scale");
-    CHECK_EQ_INT(result.rngCallCount, 12,
+    CHECK_EQ_INT(result.rngCallCount, 13,
                  "F0230 F0308 adds its exact zero-Luck RNG gate");
-    CHECK_EQ_U32(rng.seed, 0x5912bbd9u,
+    CHECK_EQ_U32(rng.seed, 0x4ee53118u,
                  "F0230 fixture leaves exact F0308-adjusted rng seed");
 }
 
