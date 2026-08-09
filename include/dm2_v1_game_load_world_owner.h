@@ -122,6 +122,16 @@ typedef struct {
     uint32_t source_list_hash;
 } DM2_V1_GameLoadLocalLevelGraphicsReceipt;
 
+/* One DB4 Creature::possession outcome.  A null root is source data and is
+ * kept as `has_possession == 0`; it is not an error and must not become an
+ * empty synthetic item chain. */
+typedef struct {
+    int valid;
+    uint16_t creature_object_id;
+    uint8_t has_possession;
+    DM2_V1_FileHeaderCreaturePossessionReceipt receipt;
+} DM2_V1_GameLoadCreaturePossessionReceipt;
+
 /* The source viewport queries this exact pre-mirror projection from the
  * current c_map.  It is deliberately a map receipt rather than a renderer
  * state: every coordinate, raw tile word and ground-stack root comes from
@@ -276,6 +286,10 @@ typedef struct {
     /* DB4 creature records reached through the current File_header map's
      * complete chains. CAII slots, movement and drops remain absent. */
     DM2_V1_FileHeaderRuntimeCreatureReceipt preselection_map_creatures;
+    uint16_t preselection_creature_possession_count;
+    DM2_V1_GameLoadCreaturePossessionReceipt
+        preselection_creature_possessions[
+            DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS];
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -350,6 +364,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
 /* Retain current-map DB4 creature placement, HP and possession-root fields
  * before any CAII/timer/runtime consumer is published. */
 int dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain each current-map Creature::possession chain (or its authentic null
+ * root) without moving, equipping or dropping any record. */
+int dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

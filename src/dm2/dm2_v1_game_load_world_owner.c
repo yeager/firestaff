@@ -1241,6 +1241,53 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadCreaturePossessionReceipt candidate[
+        DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS];
+    int count;
+    int i;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->preselection_map_creatures.committed ||
+        owner->preselection_creature_possession_count != 0u ||
+        owner->champion_selection_materialized || owner->committed) {
+        return 0;
+    }
+    count = owner->preselection_map_creatures.creature_record_count;
+    if (count < 0 || count > DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS)
+        return 0;
+    memset(candidate, 0, sizeof(candidate));
+    for (i = 0; i < count; ++i) {
+        const DM2_V1_FileHeaderCreatureRecord *creature =
+            &owner->preselection_map_creatures.creatures[i];
+        DM2_V1_GameLoadCreaturePossessionReceipt *entry = &candidate[i];
+
+        entry->valid = 1;
+        entry->creature_object_id = creature->object_id;
+        if (creature->possession_object_id == DM2_THING_NULL_MARKER) {
+            /* DME.h::Creature::GetPossessionObject has an authentic null
+             * root. Keep it distinct from OBJECT_END and a zero-length list. */
+            entry->has_possession = 0u;
+            continue;
+        }
+        if (!dm2_v1_dungeon_collect_file_header_creature_possession_chain(
+                &owner->dungeon, &owner->preselection_map_creatures, i,
+                &entry->receipt) || !entry->receipt.committed ||
+            entry->receipt.map != owner->source_party_map ||
+            entry->receipt.creature_object_id != creature->object_id ||
+            entry->receipt.possession_root != creature->possession_object_id) {
+            return 0;
+        }
+        entry->has_possession = 1u;
+    }
+    memcpy(owner->preselection_creature_possessions, candidate,
+           (size_t)count * sizeof(candidate[0]));
+    owner->preselection_creature_possession_count = (uint16_t)count;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {

@@ -189,6 +189,14 @@
 - ✅ CAII-slottar, rörelse, kollision, drops och possessionsmutation är inte
   aktiverade utan den gemensamma runtimeägaren.
 
+# DM2 New Game privata varelsepossessions (2026-08-09)
+
+- ✅ Varje aktuellt kartägd DB4-varelse behåller nu sin verkliga
+  `Creature::possession`-kedja, inklusive autentiska nullrötter. Ingen tom
+  kedja eller något föremål konstrueras när originalposten saknar possessions.
+- ✅ Realdatatestet kontrollerar ägaren, roten och varje commitsstatus. Att
+  flytta, utrusta eller tappa dessa records är fortsatt spärrat.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte

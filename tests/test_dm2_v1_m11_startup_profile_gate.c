@@ -312,6 +312,37 @@ static int dm2_test_preselection_creatures_match_owner(
     return 1;
 }
 
+static int dm2_test_preselection_creature_possessions_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int i;
+
+    if (!owner || !owner->preselection_map_creatures.committed ||
+        owner->preselection_creature_possession_count !=
+            (uint16_t)owner->preselection_map_creatures.creature_record_count) {
+        return 0;
+    }
+    for (i = 0; i < owner->preselection_map_creatures.creature_record_count;
+         ++i) {
+        const DM2_V1_FileHeaderCreatureRecord *creature =
+            &owner->preselection_map_creatures.creatures[i];
+        const DM2_V1_GameLoadCreaturePossessionReceipt *entry =
+            &owner->preselection_creature_possessions[i];
+        if (!entry->valid || entry->creature_object_id != creature->object_id)
+            return 0;
+        if (creature->possession_object_id == DM2_THING_NULL_MARKER) {
+            if (entry->has_possession) return 0;
+        } else if (!entry->has_possession || !entry->receipt.committed ||
+                   entry->receipt.creature_object_id != creature->object_id ||
+                   entry->receipt.possession_root !=
+                       creature->possession_object_id ||
+                   entry->receipt.map != owner->source_party_map) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -4140,6 +4171,8 @@ int main(void) {
                     profile_new_game_owner->preselection_map_creatures.committed &&
                     profile_new_game_owner->preselection_map_creatures.map ==
                         profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_creature_possession_count ==
+                        (uint16_t)profile_new_game_owner->preselection_map_creatures.creature_record_count &&
                     profile_new_game_owner->preselection_light.valid &&
                     profile_new_game_owner->preselection_scene_materialized &&
                     profile_new_game_owner->preselection_scene_plan.valid &&
@@ -4165,6 +4198,8 @@ int main(void) {
                     dm2_test_preselection_actuators_match_owner(
                         profile_new_game_owner) &&
                     dm2_test_preselection_creatures_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_creature_possessions_match_owner(
                         profile_new_game_owner) &&
                     !profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
