@@ -35,6 +35,13 @@
   layer order; failed subroutes restore the framebuffer. A real menu/HUD
   owner is still needed before this can become the normal production route.
 
+- ⏳ The latest stock-Mednafen audit identifies the supplied Nexus ISO as
+  Saturn region `J`, while the only BIOS currently present on the external
+  capture disk is the European `E` BIOS. Mednafen rejects that pairing as a
+  wrong BIOS/region combination; the resulting corrupted screenshot is not a
+  valid startup/menu witness. A matching user-owned `J` BIOS (or a genuinely
+  European disc image) is required before a new menu capture can be admitted.
+
 - ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
   lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
   repot; den nya Git-spärren måste fortsätta vara grön.
