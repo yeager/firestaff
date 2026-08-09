@@ -52,15 +52,15 @@ SOURCE_RANGES = [
     },
     {
         "file": "src/engine/m11_game_view.c",
-        "start": 40562,
-        "end": 40661,
+        "start": 55223,
+        "end": 55334,
         "function": "m11_draw_inv_slot",
         "assertion": "Firestaff occupied slots draw 16x16 DM object icons inside original 18x18 slot boxes when assets are available.",
     },
     {
         "file": "src/engine/m11_game_view.c",
-        "start": 41194,
-        "end": 41818,
+        "start": 56207,
+        "end": 56849,
         "function": "m11_draw_inventory_panel",
         "assertion": "Firestaff normal V1 inventory path draws source slot boxes 8..37, overlays champion objects by source slot-box zone, and returns before the debug/freehand layout.",
     },
@@ -150,7 +150,12 @@ def require_in_order(body: str, markers: Iterable[tuple[str, str]], label: str) 
 
 def require_excerpt(rel: str, start: int, end: int, needles: list[str]) -> None:
     path = (REDMCSB_ROOT / rel) if rel.endswith(".C") else (ROOT / rel)
-    lines = read_text(path).splitlines()
+    # Split on "\n" only, to stay consistent with line_no() above.  The
+    # .c sources are read as latin-1, where a UTF-8 multi-byte char can
+    # expose a 0x85 (NEL) byte that str.splitlines() treats as a line
+    # break but line_no() does not -- that mismatch shifted every excerpt
+    # span past the first such char in the file.
+    lines = read_text(path).split("\n")
     if len(lines) < end:
         raise AssertionError(f"{path} has only {len(lines)} lines, need {end}")
     excerpt = "\n".join(lines[start - 1 : end])
@@ -247,7 +252,7 @@ def verify_redmcsb() -> list[str]:
 
 def verify_firestaff() -> list[str]:
     text = read_text(FIRESTAFF_SRC)
-    slot_start, _slot_end, slot_body = find_function(text, "m11_draw_inv_slot")
+    slot_start, slot_end, slot_body = find_function(text, "m11_draw_inv_slot")
     slot_markers = require_in_order(
         slot_body,
         [
@@ -282,8 +287,27 @@ def verify_firestaff() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot branch",
     )
-    require_excerpt("src/engine/m11_game_view.c", 40562, 40661, ["m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 41328, 41500, ["for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)", "m11_v1_inventory_slot_icon_index_for_thing", "return;"])
+    # Anchor the excerpt spans to the functions located above instead of to
+    # absolute line numbers.  The needles are unchanged, so the gate still
+    # proves the draw call lives inside m11_draw_inv_slot and inside the
+    # normal V1 source-slot branch; only the drift of hard-coded line numbers
+    # as m11_game_view.c grows is removed.
+    require_excerpt(
+        "src/engine/m11_game_view.c",
+        line_no(text, slot_start),
+        line_no(text, slot_end),
+        ["m11_draw_dm_object_icon_index"],
+    )
+    require_excerpt(
+        "src/engine/m11_game_view.c",
+        line_no(text, panel_start + normal_idx),
+        line_no(text, panel_start + normal_return_idx),
+        [
+            "for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox)",
+            "m11_v1_inventory_slot_icon_index_for_thing",
+            "return;",
+        ],
+    )
 
     return [
         f"Firestaff m11_draw_inv_slot starts at {FIRESTAFF_SRC}:{line_no(text, slot_start)}",

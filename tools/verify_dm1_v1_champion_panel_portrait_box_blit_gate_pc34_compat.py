@@ -69,7 +69,12 @@ def read_text(path: Path) -> str:
 
 def slice_text(path: Path, span: str) -> tuple[int, str]:
     first, last = (int(part) for part in span.split("-", 1))
-    lines = read_text(path).splitlines()
+    # Split on "\n" only, to stay consistent with line_no().  The .c
+    # sources are read as latin-1, where a UTF-8 multi-byte char can
+    # expose a 0x85 (NEL) byte that str.splitlines() treats as a line
+    # break but line_no() does not -- that mismatch shifted every excerpt
+    # span past the first such char in the file.
+    lines = read_text(path).split("\n")
     return first, "\n".join(lines[first - 1:last])
 
 

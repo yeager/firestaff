@@ -19,9 +19,9 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "start": 498, "end": 631},
     {"file": "CHEST.C", "start": 2, "end": 46},
     {"file": "CHAMPION.C", "start": 587, "end": 640},
-    {"file": "src/engine/m11_game_view.c", "start": 35372, "end": 35395},
-    {"file": "src/engine/m11_game_view.c", "start": 40562, "end": 40661},
-    {"file": "src/engine/m11_game_view.c", "start": 41194, "end": 41818},
+    {"file": "src/engine/m11_game_view.c", "start": 48157, "end": 48180},
+    {"file": "src/engine/m11_game_view.c", "start": 55223, "end": 55334},
+    {"file": "src/engine/m11_game_view.c", "start": 56207, "end": 56849},
 ]
 
 
@@ -72,7 +72,12 @@ def require_in_order(body: str, markers: Iterable[tuple[str, str]], label: str) 
 
 def require_excerpt(rel: str, start: int, end: int, needles: list[str]) -> None:
     path = source_path(rel)
-    lines = read_text(path).splitlines()
+    # Split on "\n" only, to stay consistent with line_no() above.  The
+    # .c sources are read as latin-1, where a UTF-8 multi-byte char can
+    # expose a 0x85 (NEL) byte that str.splitlines() treats as a line
+    # break but line_no() does not -- that mismatch shifted every excerpt
+    # span past the first such char in the file.
+    lines = read_text(path).split("\n")
     if len(lines) < end:
         raise AssertionError(f"{path} has only {len(lines)} lines, need {end}")
     excerpt = "\n".join(lines[start - 1 : end])
@@ -145,7 +150,7 @@ def verify_redmcsb() -> list[str]:
 
 def verify_firestaff_seam() -> list[str]:
     text = read_text(FIRESTAFF_SRC)
-    helper_start, _helper_end, helper_body = find_source_window(text, "m11_v1_inventory_slot_icon_index_for_thing")
+    helper_start, helper_end, helper_body = find_source_window(text, "m11_v1_inventory_slot_icon_index_for_thing")
     helper_markers = require_in_order(
         helper_body,
         [
@@ -158,7 +163,7 @@ def verify_firestaff_seam() -> list[str]:
         ],
         "Firestaff action-hand chest icon helper",
     )
-    slot_start, _slot_end, slot_body = find_source_window(text, "m11_draw_inv_slot")
+    slot_start, slot_end, slot_body = find_source_window(text, "m11_draw_inv_slot")
     slot_markers = require_in_order(
         slot_body,
         [
@@ -168,7 +173,7 @@ def verify_firestaff_seam() -> list[str]:
         ],
         "Firestaff occupied inventory slot seam",
     )
-    panel_start, _panel_end, panel_body = find_source_window(text, "m11_draw_inventory_panel")
+    panel_start, panel_end, panel_body = find_source_window(text, "m11_draw_inventory_panel")
     panel_markers = require_in_order(
         panel_body,
         [
@@ -181,9 +186,12 @@ def verify_firestaff_seam() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot seam",
     )
-    require_excerpt("src/engine/m11_game_view.c", 35372, 35395, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "DM1_V1_M11Runtime_GetOpenChestThingPc34Compat", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
-    require_excerpt("src/engine/m11_game_view.c", 40638, 40648, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 41384, 41399, ["dm1_v1_inventory_source_slot_box_for_champion_slot_pc34", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    # Anchor each excerpt span to the window located above rather than to
+    # absolute line numbers, so the needles keep proving the same seams as
+    # m11_game_view.c grows.
+    require_excerpt("src/engine/m11_game_view.c", line_no(text, helper_start), line_no(text, helper_end), ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "DM1_V1_M11Runtime_GetOpenChestThingPc34Compat", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
+    require_excerpt("src/engine/m11_game_view.c", line_no(text, slot_start), line_no(text, slot_end), ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", line_no(text, panel_start), line_no(text, panel_end), ["dm1_v1_inventory_source_slot_box_for_champion_slot_pc34", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
     return [
         f"Firestaff m11_v1_inventory_slot_icon_index_for_thing starts at {FIRESTAFF_SRC}:{line_no(text, helper_start)}",
         *(f"Firestaff action-hand helper {name}: line {line_no(text, helper_start + pos)}" for name, pos in helper_markers),

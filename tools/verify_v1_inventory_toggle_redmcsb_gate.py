@@ -83,7 +83,8 @@ def verify_redmcsb() -> list[str]:
 
 def verify_firestaff() -> list[str]:
     path=ROOT/"src/engine/m11_game_view.c"; text=read(path); notes=[]
-    s,w = window(text, "if (input == M12_MENU_INPUT_INVENTORY_TOGGLE) {\n        state->mapOverlayActive = 0;", "/* While an overlay is open")
+    route_s,route_w = window(text, "if (input == M12_MENU_INPUT_INVENTORY_TOGGLE) {\n        state->mapOverlayActive = 0;", "/* While an overlay is open")
+    s,w = route_s,route_w
     if "showDebugHUD" in w: raise AssertionError("inventory toggle route should not branch on showDebugHUD")
     for n,p in require_order(w,"Firestaff input route",[("input","M12_MENU_INPUT_INVENTORY_TOGGLE"),("clear map","state->mapOverlayActive = 0"),("toggle","M11_GameView_ToggleInventoryPanel(state)"),("redraw","return M11_GAME_INPUT_REDRAW")]): notes.append(f"Firestaff input {n}: {path}:{line_no(text,s+p)}")
     s,w = func(text,"M11_GameView_ToggleInventoryPanel")
@@ -91,8 +92,11 @@ def verify_firestaff() -> list[str]:
     for n,p in require_order(w,"Firestaff toggle state",[("null guard","if (!state) return 0"),("flip active","state->inventoryPanelActive = !state->inventoryPanelActive"),("open branch","if (state->inventoryPanelActive)"),("reset slot","state->inventorySelectedSlot = 0"),("return active","return state->inventoryPanelActive")]): notes.append(f"Firestaff toggle {n}: {path}:{line_no(text,s+p)}")
     hdr=read(ROOT/"include/m11_game_view.h")
     if "int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state);" not in hdr: raise AssertionError("missing public toggle declaration")
-    excerpt("src/engine/m11_game_view.c",19274,19278,["M12_MENU_INPUT_INVENTORY_TOGGLE","mapOverlayActive = 0","M11_GameView_ToggleInventoryPanel"])
-    excerpt("src/engine/m11_game_view.c",43909,43934,["M11_GameView_ToggleInventoryPanel","inventoryPanelActive","inventorySelectedSlot = 0"])
+    # Anchor both excerpt spans to the window/function located above rather
+    # than to absolute line numbers, so the needles keep proving the same
+    # input route and toggle body as m11_game_view.c grows.
+    excerpt("src/engine/m11_game_view.c",line_no(text,route_s),line_no(text,route_s+len(route_w)),["M12_MENU_INPUT_INVENTORY_TOGGLE","mapOverlayActive = 0","M11_GameView_ToggleInventoryPanel"])
+    excerpt("src/engine/m11_game_view.c",line_no(text,s),line_no(text,s+len(w)),["M11_GameView_ToggleInventoryPanel","inventoryPanelActive","inventorySelectedSlot = 0"])
     return notes
 
 def verify_json():

@@ -70,18 +70,24 @@ def verify_firestaff() -> list[str]:
     fp=ROOT/"src/frontend/entrance_frontend_pc34_compat.c"; ft=read(fp)
     kp=ROOT/"src/frontend/entrance_keyboard_routes_pc34_compat.c"; kt=read(kp)
     notes=[]
-    s,w=func(ft,"entrance_event_line")
+    ev_s,ev_w=func(ft,"entrance_event_line")
+    s,w=ev_s,ev_w
     for name,pos in require_order(w,"Firestaff entrance event evidence",[("wait event","ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT"),("wait citation","ENTRANCE.C:850-883 draw entrance, discard input, wait on VBlank loop until command"),("switch citation","ENTRANCE.C:906-934 plays switch sound after Enter/command"),("delay citation","ENTRANCE.C:935 waits F0022_MAIN_Delay(20), then hides pointer")]): notes.append(f"Firestaff entrance evidence {name}: {fp}:{line_no(ft,s+pos)}")
-    s,w=func(ft,"ENTRANCE_Compat_GetSourceAnimationStep")
+    st_s,st_w=func(ft,"ENTRANCE_Compat_GetSourceAnimationStep")
+    s,w=st_s,st_w
     for name,pos in require_order(w,"Firestaff entrance source sequence",[("step 4","sourceStepOrdinal == 4u"),("wait kind","ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT"),("wait vblank","step.vblankLoopCount = 1u"),("step 5","sourceStepOrdinal == 5u"),("switch kind","ENTRANCE_COMPAT_SOURCE_EVENT_SWITCH_SOUND"),("step 6","sourceStepOrdinal == 6u"),("delay ticks","step.delayTicks = 20u"),("doors","sourceStepOrdinal >= 7u && sourceStepOrdinal <= 37u")]): notes.append(f"Firestaff entrance sequence {name}: {fp}:{line_no(ft,s+pos)}")
-    s,w=func(ft,"ENTRANCE_Compat_GetSourceAnimationEvidence")
+    su_s,su_w=func(ft,"ENTRANCE_Compat_GetSourceAnimationEvidence")
+    s,w=su_s,su_w
     for name,pos in require_order(w,"Firestaff entrance summary",[("wait summary","wait on VBlank/input loop"),("delay summary","F0022_MAIN_Delay(20)"),("door summary","F0438 opens doors")]): notes.append(f"Firestaff entrance summary {name}: {fp}:{line_no(ft,s+pos)}")
     for needle in ["COMMAND.C:551-577","C200_COMMAND_ENTRANCE_ENTER_DUNGEON","C216_COMMAND_QUIT"]:
         if needle not in kt: raise AssertionError(f"missing keyboard evidence marker {needle!r}")
     notes.append(f"Firestaff entrance keyboard evidence: {kp}:2")
-    excerpt("src/frontend/entrance_frontend_pc34_compat.c",166,186,["ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT","ENTRANCE.C:850-883","ENTRANCE.C:935"])
-    excerpt("src/frontend/entrance_frontend_pc34_compat.c",192,227,["sourceStepOrdinal == 4u","step.vblankLoopCount = 1u","step.delayTicks = 20u"])
-    excerpt("src/frontend/entrance_frontend_pc34_compat.c",357,359,["wait on VBlank/input loop","F0022_MAIN_Delay(20)","F0438 opens doors"])
+    # Anchor each excerpt span to the function located above rather than to
+    # absolute line numbers, so the needles keep proving the same entrance
+    # wait/step/summary bodies as the frontend file grows.
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",line_no(ft,ev_s),line_no(ft,ev_s+len(ev_w)),["ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT","ENTRANCE.C:850-883","ENTRANCE.C:935"])
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",line_no(ft,st_s),line_no(ft,st_s+len(st_w)),["sourceStepOrdinal == 4u","step.vblankLoopCount = 1u","step.delayTicks = 20u"])
+    excerpt("src/frontend/entrance_frontend_pc34_compat.c",line_no(ft,su_s),line_no(ft,su_s+len(su_w)),["wait on VBlank/input loop","F0022_MAIN_Delay(20)","F0438 opens doors"])
     excerpt("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3,["COMMAND.C:551-577","C200_COMMAND_ENTRANCE_ENTER_DUNGEON","C216_COMMAND_QUIT"])
     return notes
 

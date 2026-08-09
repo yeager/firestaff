@@ -79,7 +79,12 @@ def require_in_order(body: str, markers: Iterable[tuple[str, str]], label: str) 
 
 
 def require_excerpt(path: Path, rel: str, start: int, end: int, needles: list[str]) -> None:
-    lines = read_text(path).splitlines()
+    # Split on "\n" only, to stay consistent with line_no().  The .c
+    # sources are read as latin-1, where a UTF-8 multi-byte char can
+    # expose a 0x85 (NEL) byte that str.splitlines() treats as a line
+    # break but line_no() does not -- that mismatch shifted every excerpt
+    # span past the first such char in the file.
+    lines = read_text(path).split("\n")
     if len(lines) < end:
         raise AssertionError(f"{path} has only {len(lines)} lines, need {end}")
     excerpt = "\n".join(lines[start - 1:end])
@@ -155,7 +160,7 @@ def verify_redmcsb() -> list[dict[str, int | str]]:
 
 def verify_firestaff() -> list[dict[str, int | str]]:
     text = read_text(FIRESTAFF_SRC)
-    start, _end, body = find_function(text, "m11_draw_party_panel")
+    start, end, body = find_function(text, "m11_draw_party_panel")
     markers = require_in_order(
         body,
         [
@@ -170,7 +175,10 @@ def verify_firestaff() -> list[dict[str, int | str]]:
         ],
         "Firestaff m11_draw_party_panel V1 status refresh order",
     )
-    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 39799, 40335, [
+    # Anchor the excerpt span to the function located above rather than to
+    # absolute line numbers, so the needles keep proving the same draw
+    # order as m11_game_view.c grows.
+    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", line_no(text, start), line_no(text, end), [
         "V1 source status-box background",
         "before top-row",
         "V1 champion name/title status text",

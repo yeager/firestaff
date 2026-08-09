@@ -124,7 +124,12 @@ def compact(text: str) -> str:
 
 
 def source_window(path: Path, spec: str) -> str:
-    lines = read_text(path).splitlines()
+    # Split on "\n" only, to stay consistent with line_no().  The .c
+    # sources are read as latin-1, where a UTF-8 multi-byte char can
+    # expose a 0x85 (NEL) byte that str.splitlines() treats as a line
+    # break but line_no() does not -- that mismatch shifted every excerpt
+    # span past the first such char in the file.
+    lines = read_text(path).split("\n")
     out: list[str] = []
     for part in spec.split(","):
         first_s, last_s = part.split("-", 1) if "-" in part else (part, part)

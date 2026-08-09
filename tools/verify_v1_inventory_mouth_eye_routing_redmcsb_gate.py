@@ -76,7 +76,12 @@ def require_in_order(body: str, markers: Iterable[tuple[str, str]], label: str) 
 
 def require_excerpt(rel: str, start: int, end: int, needles: list[str]) -> None:
     path = source_path(rel)
-    lines = read_text(path).splitlines()
+    # Split on "\n" only, to stay consistent with line_no().  The .c
+    # sources are read as latin-1, where a UTF-8 multi-byte char can
+    # expose a 0x85 (NEL) byte that str.splitlines() treats as a line
+    # break but line_no() does not -- that mismatch shifted every excerpt
+    # span past the first such char in the file.
+    lines = read_text(path).split("\n")
     if len(lines) < end:
         raise AssertionError(f"{path} has only {len(lines)} lines, need {end}")
     excerpt = "\n".join(lines[start - 1:end])

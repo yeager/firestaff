@@ -32,15 +32,15 @@
     },
     {
       "file": "src/engine/m11_game_view.c",
-      "start": 40562,
-      "end": 40661,
+      "start": 55223,
+      "end": 55334,
       "function": "m11_draw_inv_slot",
       "assertion": "Firestaff slot helper draws original 18x18 slot boxes and occupied 16x16 DM object icons."
     },
     {
       "file": "src/engine/m11_game_view.c",
-      "start": 41194,
-      "end": 41818,
+      "start": 56207,
+      "end": 56849,
       "function": "m11_draw_inventory_panel",
       "assertion": "Firestaff normal V1 inventory branch draws source slot boxes 8..37 and returns before debug/freehand layout."
     }
