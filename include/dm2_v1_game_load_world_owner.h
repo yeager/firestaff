@@ -104,6 +104,22 @@ typedef struct {
     uint32_t source_state_hash;
 } DM2_V1_GameLoadPreselectionLightReceipt;
 
+/* Exact per-map lists consumed by LOAD_LOCALLEVEL_DYN before it resolves
+ * wall, floor and door-decoration GDAT. The lists are copied from the
+ * authenticated File_header map payload, never inferred from a graphics
+ * set or re-used from another level. */
+typedef struct {
+    int valid;
+    int map;
+    uint8_t wall_count;
+    uint8_t floor_count;
+    uint8_t door_ornate_count;
+    uint8_t wall_gfx[16];
+    uint8_t floor_gfx[16];
+    uint8_t door_ornate_gfx[16];
+    uint32_t source_list_hash;
+} DM2_V1_GameLoadLocalLevelGraphicsReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -151,6 +167,7 @@ typedef struct {
     uint8_t source_party_absdir;
     int source_display_pose_valid;
     int16_t source_last_moved_record;
+    DM2_V1_GameLoadLocalLevelGraphicsReceipt preselection_local_graphics;
     /* c_light inputs for the real entrance map. This receipt owns the
      * source initialisation inputs only; it is not a fabricated light level
      * and does not make a viewport or a party visible. */
@@ -219,6 +236,12 @@ int dm2_v1_game_load_world_owner_select_champion(
 /* Retain the source c_light inputs for the established fresh-game map before
  * any mirror click.  This has no renderer/session side effect. */
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Copy the current map's authentic LOAD_LOCALLEVEL graphics lists. This is
+ * intentionally before GDAT resource consumption and has no renderer/UI
+ * side effect. */
+int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

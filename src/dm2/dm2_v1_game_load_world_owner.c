@@ -997,6 +997,64 @@ int dm2_v1_game_load_world_owner_materialize_source_map_context(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadLocalLevelGraphicsReceipt candidate;
+    int wall_count;
+    int floor_count;
+    int ornate_count;
+    uint32_t hash = 0x4c4c4758u; /* "LLGX": local-level graphics. */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        owner->preselection_local_graphics.valid ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    wall_count = dm2_v1_dungeon_get_map_wall_gfx_list(&owner->dungeon,
+        owner->source_party_map, candidate.wall_gfx,
+        (int)sizeof(candidate.wall_gfx));
+    floor_count = dm2_v1_dungeon_get_map_floor_gfx_list(&owner->dungeon,
+        owner->source_party_map, candidate.floor_gfx,
+        (int)sizeof(candidate.floor_gfx));
+    ornate_count = dm2_v1_dungeon_get_map_door_ornate_list(&owner->dungeon,
+        owner->source_party_map, candidate.door_ornate_gfx,
+        (int)sizeof(candidate.door_ornate_gfx));
+    if (wall_count < 0 || floor_count < 0 || ornate_count < 0 ||
+        wall_count > (int)sizeof(candidate.wall_gfx) ||
+        floor_count > (int)sizeof(candidate.floor_gfx) ||
+        ornate_count > (int)sizeof(candidate.door_ornate_gfx)) {
+        return 0;
+    }
+    /* c_loadlevel.cpp walks current-map lists directly after map change.
+     * Retain the exact list lengths as part of the owner identity, including
+     * valid source maps where a list is empty. */
+    candidate.map = owner->source_party_map;
+    candidate.wall_count = (uint8_t)wall_count;
+    candidate.floor_count = (uint8_t)floor_count;
+    candidate.door_ornate_count = (uint8_t)ornate_count;
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)candidate.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.wall_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.floor_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.door_ornate_count);
+    for (int i = 0; i < candidate.wall_count; ++i)
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate.wall_gfx[i]);
+    for (int i = 0; i < candidate.floor_count; ++i)
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate.floor_gfx[i]);
+    for (int i = 0; i < candidate.door_ornate_count; ++i)
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                 candidate.door_ornate_gfx[i]);
+    if (hash == 0u) return 0;
+    candidate.source_list_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_local_graphics = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {
