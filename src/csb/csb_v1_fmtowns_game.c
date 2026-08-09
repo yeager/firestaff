@@ -331,8 +331,6 @@ int csb_v1_fmtowns_game_load_startup_party(
         champion_count = 4u,
         party_offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES +
             CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES,
-        champion_part_offset = party_offset +
-            CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES * 60u,
         name_offset = 0u,
         name_bytes = 8u,
         title_offset = 8u,
@@ -357,6 +355,7 @@ int csb_v1_fmtowns_game_load_startup_party(
     };
     unsigned char bytes[CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES];
     unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
+    uint32_t champion_part_offset;
     uint32_t champion_index;
     uint16_t key;
     uint16_t checksum;
@@ -370,16 +369,22 @@ int csb_v1_fmtowns_game_load_startup_party(
         !receipt->startup_mini_save_parts_verified ||
         receipt->startup_mini_party_champion_count == 0u ||
         receipt->startup_mini_party_champion_count > CSB_V1_MAX_CHAMPIONS ||
-        receipt->startup_mini_active_group_capacity != 60u ||
+        receipt->startup_mini_active_group_capacity == 0u ||
+        receipt->startup_mini_active_group_capacity >
+            CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY ||
         !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path, 0u,
                                         header, sizeof(header)) ||
         !redmcsb_f7061_is_read_save_header_successful_pc34(
-            header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX) ||
-        !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
-                                        champion_part_offset, bytes,
-                                        sizeof(bytes))) {
+            header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX)) {
         return 0;
     }
+    champion_part_offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES +
+        CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES +
+        (uint32_t)receipt->startup_mini_active_group_capacity *
+            CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES;
+    if (!csb_v1_fmtowns_game_read_span(receipt->startup_mini_path,
+                                        champion_part_offset, bytes,
+                                        sizeof(bytes))) return 0;
     key = csb_v1_fmtowns_game_read_le16(
         header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + 4u);
     checksum = csb_v1_fmtowns_game_read_le16(
@@ -535,6 +540,7 @@ int csb_v1_fmtowns_game_load_startup_state(
     uint32_t event_offset;
     uint32_t timeline_offset;
     uint32_t index;
+    uint32_t current_file_size;
     uint16_t keys[5];
     uint16_t checksums[5];
 
@@ -544,7 +550,7 @@ int csb_v1_fmtowns_game_load_startup_state(
         !receipt->startup_mini_save_parts_verified ||
         receipt->startup_mini_active_group_capacity == 0u ||
         receipt->startup_mini_active_group_capacity >
-            CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY ||
+            CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY ||
         receipt->startup_mini_event_maximum_count == 0u ||
         receipt->startup_mini_event_maximum_count > DM1_EVENT_MAX_COUNT ||
         receipt->startup_mini_event_count >
@@ -553,6 +559,12 @@ int csb_v1_fmtowns_game_load_startup_state(
             receipt->startup_mini_event_maximum_count ||
         receipt->startup_mini_current_active_group_count >
             receipt->startup_mini_active_group_capacity ||
+        receipt->startup_mini_size == 0u ||
+        receipt->startup_mini_fnv1a == 0u ||
+        csb_v1_fmtowns_game_file_fnv1a(receipt->startup_mini_path,
+                                        &current_file_size) !=
+            receipt->startup_mini_fnv1a ||
+        current_file_size != receipt->startup_mini_size ||
         !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path, 0u,
                                         header, sizeof(header)) ||
         !redmcsb_f7061_is_read_save_header_successful_pc34(
@@ -1094,6 +1106,7 @@ int csb_v1_fmtowns_game_load_user_save_state(
     compat.variant_id = receipt->variant_id;
     compat.startup_mini_verified = 1;
     compat.startup_mini_size = receipt->source_size;
+    compat.startup_mini_fnv1a = receipt->source_fnv1a;
     snprintf(compat.startup_mini_path, sizeof(compat.startup_mini_path), "%s",
              receipt->source_path);
     compat.startup_mini_header_verified = 1;

@@ -34,7 +34,9 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_STREAM_BYTES 290u
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
 /* F31 retail user saves may retain the live F0196 allocation, which is
- * larger than the MINI.DAT bootstrap allocation. */
+ * larger than the MINI.DAT bootstrap allocation.  ReDMCSB GROUP.C F0196
+ * reserves 110 entries; do not let the MINI.DAT's 60-entry seed cap an
+ * otherwise authenticated user campaign. */
 #define CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY 110u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT 4u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES 464u
@@ -146,7 +148,7 @@ typedef struct CSB_V1_FmtownsStartupState {
     int16_t party_map_index;
     uint16_t active_group_capacity;
     uint16_t active_group_count;
-    uint8_t active_groups[CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY][16];
+    uint8_t active_groups[CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY][16];
     /* F0183/F0184 address groups by their C04 table index, not a THING
      * handle. Resolve every nonnegative saved index back to exactly one
      * original C04 square before a future runtime install may use it. */
@@ -158,7 +160,7 @@ typedef struct CSB_V1_FmtownsStartupState {
         int map_index;
         int map_x;
         int map_y;
-    } active_group_owners[CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY];
+    } active_group_owners[CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY];
     struct DM1_EventQueue_V1 timeline_queue;
     CSB_V1_DungeonData dungeon;
 } CSB_V1_FmtownsStartupState;

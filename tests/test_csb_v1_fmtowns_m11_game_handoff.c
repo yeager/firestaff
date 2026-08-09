@@ -115,6 +115,9 @@ int main(void)
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
     CSB_V1_FmtownsUserSaveReceipt user_save;
+#ifndef _WIN32
+    CSB_V1_FmtownsUserSaveReceipt stale_user_save;
+#endif
     CSB_V1_FmtownsUserSaveReceipt recovered_user_save;
     CSB_V1_FmtownsStartupState user_save_state;
     CSB_V1_FmtownsGameHandoffReceipt external_save_handoff;
@@ -371,6 +374,12 @@ int main(void)
                   user_save.dungeon_tail_offset + user_save.dungeon_tail_size + 2u ==
                       user_save.source_size,
               "F31 F0435 admits the authentic user CSBGAME.DAT and its four portraits");
+        CHECK(user_save.active_group_capacity <=
+                  CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY &&
+                  sizeof(user_save_state.active_groups) /
+                      sizeof(user_save_state.active_groups[0]) ==
+                      CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY,
+              "F31 user resume retains the source F0196 110-entry allocation envelope");
         memset(&user_save_state, 0, sizeof(user_save_state));
         CHECK(csb_v1_fmtowns_game_load_user_save_state(
                   &user_save, &user_save_state) && user_save_state.valid &&
@@ -379,6 +388,30 @@ int main(void)
                   user_save_state.dungeon.raw_data != NULL,
               "F31 F0435 transfers the authentic user save and appended dungeon atomically");
         csb_v1_fmtowns_game_startup_state_free(&user_save_state);
+#ifndef _WIN32
+        {
+            char stale_dir[] = "/tmp/firestaff-f31-stale-XXXXXX";
+            char stale_path[512];
+            CSB_V1_FmtownsStartupState stale_state;
+
+            memset(&stale_user_save, 0, sizeof(stale_user_save));
+            memset(&stale_state, 0, sizeof(stale_state));
+            CHECK(mkdtemp(stale_dir) != NULL &&
+                      snprintf(stale_path, sizeof(stale_path),
+                               "%s/CSBGAME.DAT", stale_dir) > 0 &&
+                      copy_file(user_save_path, stale_path) &&
+                      csb_v1_fmtowns_game_user_save_open(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &direct_handoff, stale_path, &stale_user_save) &&
+                      write_damaged_file(stale_path) &&
+                      !csb_v1_fmtowns_game_load_user_save_state(
+                          &stale_user_save, &stale_state),
+                  "F31 resume rejects a user slot changed after F0435 admission");
+            csb_v1_fmtowns_game_startup_state_free(&stale_state);
+            remove(stale_path);
+            rmdir(stale_dir);
+        }
+#endif
         /* Direct CLI resume takes the same M11 start boundary as this spec:
          * CHTWE/CHTWJ owns F0435, then GAMELOOP owns the saved F31 state.
          * It must not route the Towns bytes through the Atari/CSBWin reader
