@@ -15,6 +15,7 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_caii_source_owner.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -177,6 +178,18 @@ typedef struct {
     uint32_t source_viewport_hash;
 } DM2_V1_GameLoadPreselectionViewportReceipt;
 
+/* The CAII array is not stored in DUNGEON.DAT. DM2_INIT derives its exact
+ * capacity from the authenticated DB4 records and AIDefinition flags before
+ * it allocates any c_creature slots. Source: SKProject
+ * SKULLWIN/startend.cpp::DM2_1c9a_3c30 (462-501). */
+typedef struct {
+    int valid;
+    uint16_t db4_record_count;
+    uint16_t nonstatic_creature_count;
+    uint16_t source_capacity;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiCapacityReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -192,6 +205,12 @@ typedef struct {
     uint32_t source_transaction_hash;
     DM2_V1_DungeonData dungeon;
     DM2_V1_RecordPoolSet record_pools;
+    /* Read-only AIDefinition/DB4 source bytes plus DM2_1c9a_3c30's exact
+     * capacity calculation. Slots remain absent until RESET_CAII and the
+     * complete all-map FILL_ORPHAN_CAII branches share dynamic c_tim, CCM
+     * and animation owners. */
+    DM2_V1_CaiiSourceOwner caii_source;
+    DM2_V1_GameLoadCaiiCapacityReceipt caii_capacity;
     /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
      * before it allocates the original 12-byte c_tim array and index heap.
      * They are allocation limits, not invented queued timers. */

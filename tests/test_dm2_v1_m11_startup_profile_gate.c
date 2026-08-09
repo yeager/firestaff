@@ -2564,6 +2564,13 @@ int main(void) {
                     new_game_world_owner.dungeon.initial_party_dir == 0 &&
                     new_game_world_owner.record_pools.valid &&
                     new_game_world_owner.record_pools.record_graph_complete &&
+                    new_game_world_owner.caii_source.valid &&
+                    new_game_world_owner.caii_capacity.valid &&
+                    new_game_world_owner.caii_capacity.db4_record_count == 299u &&
+                    new_game_world_owner.caii_capacity.source_capacity > 0u &&
+                    new_game_world_owner.caii_capacity.source_capacity <=
+                        new_game_world_owner.caii_capacity.db4_record_count &&
+                    new_game_world_owner.caii_capacity.source_hash != 0u &&
                     new_game_world_owner.validated_map_count == 44u &&
                     new_game_world_owner.validated_world_hash != 0u &&
                     new_game_world_owner.dyn4_materialized &&

@@ -129,6 +129,11 @@
   Den privata
   kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får
   inte göra dem till en synlig eller styrbar partystatus före sessioncommit.
+  GAME_LOAD-ägaren behåller nu även DM2_INIT:s verkliga CAII-kapacitet från
+  hela DB4-poolen och de hashadmitterade AIDefinition-raderna. Den skapas inte
+  från synliga varelser eller en fast värdgräns. Själva `RESET_CAII` och
+  `FILL_ORPHAN_CAII` är fortfarande spärrade tills deras all-karts traversal,
+  CCM/animationsgren och dynamiska `c_tim` kan atomärt ägas tillsammans.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår

@@ -1,3 +1,13 @@
+# DM2 New Game: källberäknad CAII-kapacitet (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu de hashverifierade AIDefinition-raderna och
+  exakt `DM2_1c9a_3c30`-kapacitet från hela DB4-poolen. Den räknar endast
+  icke-statiska varelser och begränsar resultatet till det verkliga
+  DB4-antalet.
+- ✅ Detta skapar inga CAII-slottar, varelser eller timers. `RESET_CAII` och
+  `FILL_ORPHAN_CAII` väntar fortsatt på en gemensam ägare för all-karts
+  traversal, CCM/animationer och den dynamiska originalkön.
+
 # Theron autentiserad US spawn-/pointertabell (2026-08-09)
 
 - ✅ `theron_v1_track02_decode_spawn_source()` läser pointertabellen vid

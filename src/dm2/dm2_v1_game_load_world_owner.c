@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
+                                                  uint32_t value);
+
 static int dm2_v1_game_load_owner_prepare_timer_capacity(
     DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -48,6 +51,69 @@ static int dm2_v1_game_load_owner_prepare_timer_capacity(
                             owner->timer_indices, (int16_t)capacity);
     owner->timer_capacity = (uint16_t)capacity;
     owner->fresh_game_mode = 1;
+    return 1;
+}
+
+static int dm2_v1_game_load_owner_materialize_caii_capacity(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    const DM2_V1_RecordPool *db4;
+    DM2_V1_GameLoadCaiiCapacityReceipt candidate;
+    uint32_t hash = 0x43414949u; /* "CAII" */
+    int index;
+    int nonstatic_count = 0;
+
+    if (!owner || !owner->asset_loader || !owner->asset_loader->loaded ||
+        owner->caii_source.valid || owner->caii_capacity.valid ||
+        !owner->record_pools.valid) return 0;
+    db4 = &owner->record_pools.pools[4];
+    if (!db4->bytes || db4->record_size < 6 || db4->record_count <= 0 ||
+        db4->record_count > UINT16_MAX ||
+        !dm2_v1_caii_source_owner_init(&owner->caii_source,
+                                       owner->asset_loader, &owner->dungeon)) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    for (index = 0; index < db4->record_count; ++index) {
+        const uint8_t *record = db4->bytes +
+            (size_t)index * (size_t)db4->record_size;
+        const DM2_AIDefinition *ai = NULL;
+        const uint16_t record_word = (uint16_t)record[0] |
+            ((uint16_t)record[1] << 8);
+
+        if (record_word == 0xffffu) continue;
+        if (!dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) || !ai) {
+            dm2_v1_caii_source_owner_free(&owner->caii_source);
+            return 0;
+        }
+        /* DM2_1c9a_3c30 counts only AIDefinition rows with flag bit 0
+         * clear. This is a capacity calculation, not a creature activation. */
+        if ((ai->w0AIFlags & 1u) == 0u) ++nonstatic_count;
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)index);
+        hash = dm2_v1_game_load_owner_hash_step(hash, record[4]);
+        hash = dm2_v1_game_load_owner_hash_step(hash, ai->w0AIFlags);
+    }
+    if (nonstatic_count > INT_MAX - 0x64) {
+        dm2_v1_caii_source_owner_free(&owner->caii_source);
+        return 0;
+    }
+    candidate.db4_record_count = (uint16_t)db4->record_count;
+    candidate.nonstatic_creature_count = (uint16_t)nonstatic_count;
+    candidate.source_capacity = (uint16_t)((nonstatic_count + 0x64 <
+        db4->record_count) ? nonstatic_count + 0x64 : db4->record_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.db4_record_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                            candidate.nonstatic_creature_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_capacity);
+    hash = dm2_v1_game_load_owner_hash_step(hash, owner->caii_source.source_hash);
+    if (hash == 0u || candidate.source_capacity == 0u) {
+        dm2_v1_caii_source_owner_free(&owner->caii_source);
+        return 0;
+    }
+    candidate.source_hash = hash;
+    candidate.valid = 1;
+    owner->caii_capacity = candidate;
     return 1;
 }
 
@@ -648,6 +714,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     }
     dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
+    dm2_v1_caii_source_owner_free(&owner->caii_source);
     free(owner->timer_indices);
     free(owner->timer_entries);
     dm2_v1_record_pool_set_free(&owner->record_pools);
@@ -749,6 +816,7 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     candidate.source_transaction_hash = hash;
     candidate.source_preselection_ready = 1;
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
+        !dm2_v1_game_load_owner_materialize_caii_capacity(&candidate) ||
         !dm2_v1_game_load_owner_validate_world_maps(&candidate) ||
         !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate) ||
         !dm2_v1_game_load_owner_materialize_dyn4(&candidate) ||
