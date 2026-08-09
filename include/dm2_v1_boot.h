@@ -560,6 +560,14 @@ int dm2_v1_boot_retain_new_game_world(DM2_V1_BootProfile *profile,
  * a champion or publishes a session. */
 int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile);
 
+/* Materialize the scripted first champion from DM2_2f3f_0789.  The source
+ * walks the current map's `(0,0)` record chain, finds the first DB3 subtype
+ * 0x7e marker and calls DM2_SELECT_CHAMPION from `(0,1)` facing direction 0.
+ * It then retains the matching private 0x92 release-event record mutation.
+ * HUD and playable-session handoff remain separately gated. */
+int dm2_v1_boot_materialize_startend_first_champion(
+    DM2_V1_BootProfile *profile);
+
 /* Deliver one authenticated mirror click to the retained pre-mirror world.
  * The selection is re-resolved against the profile's original File_header
  * and GDAT before any private hero or inventory state changes. */

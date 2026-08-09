@@ -109,6 +109,10 @@
   gropar, varelser, objekt och kartövergångar avvisas före mutation tills
   deras kompletta `DM2_PERFORM_MOVE`-ägare finns; den får inte bli en
   allmän M11-rörelseväg ännu.
+  `startend.cpp::DM2_2f3f_0789`-grenens första, skriptade championval från
+  karta 0/ruta `(0,0)` samt dess privata `DM2_events_2f3f_04ea(...,0x92)`
+  finns nu som en separat atom. HUD-uppdateringen och sessioncommit återstår
+  och får inte ersättas med ett automatiskt värdval.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

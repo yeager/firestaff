@@ -643,6 +643,22 @@
   teleportörer, varelser, gropar och alla 0x10-kedjor avvisas före mutation,
   eftersom de fortsätter till oägda `c_moverec`-/kartövergångsvägar.
 
+# DM2 New Game skriptad första champion (2026-08-09)
+
+- ✅ `DM2_2f3f_0789` kan nu materialisera sin autentiska första
+  championövergång privat: samma File_header-ägare söker först DB3 subtype
+  `0x7e` i karta 0:s ruta `(0,0)` och återspelar exakt
+  `DM2_SELECT_CHAMPION(0,1,0,map)`. Det väljer den verkliga DYN4-/GDAT- och
+  itemkedjan, med `partypos=0` och `absdir=0`, utan en syntetisk champion.
+- ✅ Realdatatestet bevisar den privata en-hjälteägaren och att M11-party,
+  HUD, timerdrift samt `source_game_load_session_ready` fortfarande är
+  opublicerade.
+- ✅ Samma atom följer också `DM2_events_2f3f_04ea(...,0x92)` i dess enda
+  kompletta startend-gren: DB3-postens bit 2 rensas privat,
+  `v1e0288` återställs till noll, första-release-ticken behålls som noll och
+  `c_party::set_hero_flags` körs. Inget handobjekt, hint eller HUD skapas,
+  eftersom originalet håller `v1d6a2d=1` just i detta anrop.
+
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 
 - ✅ Den privata kartkontexten porterar nu hela den läsande

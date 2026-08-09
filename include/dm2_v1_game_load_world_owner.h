@@ -310,6 +310,12 @@ typedef struct {
      * because the UI/event queue is not yet a session owner. */
     int16_t source_next_champion_number;
     int16_t source_event_hero_index;
+    /* startend.cpp::DM2_2f3f_0789 calls events_2f3f_04ea with 0x92 directly
+     * after the scripted first selection.  These source fields retain its
+     * private record-bit/hero release transition; they are not UI state. */
+    int source_startend_first_champion_released;
+    uint32_t source_startend_first_champion_tick;
+    uint16_t source_startend_first_champion_object_id;
     DM2_V1_GameLoadChampionSelectionReceipt champion_selection_receipt;
     DM2_V1_SksaveItemBonusReceipt champion_item_bonus;
     DM2_V1_Party selected_party;

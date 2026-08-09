@@ -13681,6 +13681,112 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
     return 1;
 }
 
+int dm2_v1_boot_materialize_startend_first_champion(
+    DM2_V1_BootProfile *profile)
+{
+    DM2_V1_GameLoadWorldOwner *owner;
+    DM2_V1_BootNewGamePartySelection selection;
+    const DM2_V1_BootChampionSelectionCandidate *first = NULL;
+    uint8_t *record;
+    uint8_t old_record4;
+    DM2_V1_Party old_party;
+    int16_t old_next_champion_number;
+    int old_released;
+    uint32_t old_release_tick;
+    uint16_t old_release_object;
+    int i;
+
+    if (!profile || profile->source_game_load_session_ready ||
+        !(owner = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner) ||
+        !dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready ||
+        !owner->source_map_context_materialized || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->selected_mirror_count != 0u ||
+        owner->source_startend_first_champion_released ||
+        owner->source_party_map != owner->current_map ||
+        owner->source_party_direction != owner->preselection_entrance.direction ||
+        !owner->preselection_mirror_roster.valid ||
+        owner->preselection_mirror_roster.candidate_count <= 0) {
+        return 0;
+    }
+
+    /* DM2_2f3f_0789 is not a player viewport click: fresh GAME_LOAD walks
+     * GET_TILE_RECORD_LINK(0,0) on ddat.v1e0266 and selects the first DB3
+     * subtype-0x7e marker through DM2_SELECT_CHAMPION(0,1,0,map).  The
+     * roster was collected in that same map/x/y/chain order from the owned
+     * File_header image, so admit only its first matching source marker.
+     * SKProject: SKULLWIN/startend.cpp:1138-1167; c_hero.cpp:1052-1157. */
+    for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
+        const DM2_V1_BootChampionSelectionCandidate *candidate =
+            &owner->preselection_mirror_roster.candidates[i];
+        if (!candidate->valid || candidate->mirror.map != owner->current_map ||
+            candidate->mirror.x != 0 || candidate->mirror.y != 0) {
+            continue;
+        }
+        first = candidate;
+        break;
+    }
+    if (!first || first->mirror.object_id == 0u) return 0;
+
+    memset(&selection, 0, sizeof(selection));
+    selection.map = first->mirror.map;
+    selection.x = first->mirror.x;
+    selection.y = first->mirror.y;
+    selection.direction = 0;
+    selection.mirror_object_id = first->mirror.object_id;
+    if (!(record = dm2_v1_record_pool_address_mut(
+            &owner->record_pools, (int16_t)first->mirror.object_id)) ||
+        !dm2_v1_boot_select_new_game_champion(profile, &selection) ||
+        owner->selected_party.heros_in_party != 1 ||
+        owner->source_next_champion_number != 1) {
+        return 0;
+    }
+
+    /* In this exact startend branch v1d6a2d is set to one before
+     * DM2_events_2f3f_04ea(0,1,0,map,0x92): the hand is source-null, lever
+     * and hint branches are skipped, `v1e0288` becomes zero, and the
+     * destination's subtype-0x7e Actuator byte+4 loses bit 2.  Its only
+     * remaining visible-state mutation is c_party::set_hero_flags.  Keep it
+     * private and roll it back if the authenticated selection ceases to
+     * describe exactly that first hero.  Source: SKULLWIN/c_events.cpp
+     * 1996-2104; startend.cpp 1148-1162. */
+    old_record4 = record[4];
+    old_party = owner->selected_party;
+    old_next_champion_number = owner->source_next_champion_number;
+    old_released = owner->source_startend_first_champion_released;
+    old_release_tick = owner->source_startend_first_champion_tick;
+    old_release_object = owner->source_startend_first_champion_object_id;
+    record[4] &= (uint8_t)~0x04u;
+    owner->selected_party.hero[0].absdir =
+        (int8_t)owner->source_party_direction;
+    owner->selected_party.hero[0].partypos =
+        (int8_t)owner->source_party_direction;
+    dm2_v1_party_state_set_hero_flags(&owner->selected_party);
+    owner->source_next_champion_number = 0;
+    owner->source_startend_first_champion_released = 1;
+    /* c_timerdata::init establishes gametick zero for a fresh DUNGEON; no
+     * timer is queued by this 0x92 path. */
+    owner->source_startend_first_champion_tick = 0u;
+    owner->source_startend_first_champion_object_id = first->mirror.object_id;
+    if (owner->selected_party.hero[0].partypos !=
+            (int8_t)owner->preselection_entrance.direction ||
+        owner->selected_party.hero[0].absdir !=
+            (int8_t)owner->preselection_entrance.direction ||
+        (owner->selected_party.hero[0].heroflag & 0x4000) == 0 ||
+        owner->source_next_champion_number != 0 ||
+        !owner->source_startend_first_champion_released) {
+        record[4] = old_record4;
+        owner->selected_party = old_party;
+        owner->source_next_champion_number = old_next_champion_number;
+        owner->source_startend_first_champion_released = old_released;
+        owner->source_startend_first_champion_tick = old_release_tick;
+        owner->source_startend_first_champion_object_id = old_release_object;
+        return 0;
+    }
+    return 1;
+}
+
 int dm2_v1_boot_select_new_game_champion(
     DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selection)
