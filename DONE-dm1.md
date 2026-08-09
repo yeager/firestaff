@@ -20,6 +20,15 @@
   party `(6,2,2)` and runtime tick 1674, and does not remain in the entrance
   menu. This proves the generic resume handoff, not C13 content or original
   Mac-window capture.
+- ✅ Full user-data-root scan: the real `/Users/bosse/.firestaff/data` root
+  reports DM1, CSB, DM2, Nexus and Theron's Quest as `READY`. DM1's automatic
+  selection resolves to the authenticated FM Towns English archive member and
+  a direct boot reaches `dm1-runtime` with `levelLoaded=1`. The scan is
+  archive-backed and can take tens of seconds on the complete preservation
+  root; an interim launcher scan view must not be treated as missing data.
+  This confirms data discovery and launchability only. The boot receipt still
+  correctly leaves complete-support false until the required original HoC/
+  Mac capture gates and an authenticated C13-bearing save exist.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 

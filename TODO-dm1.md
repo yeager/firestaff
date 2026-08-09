@@ -4,6 +4,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 real-data root audit: the complete `/Users/bosse/.firestaff/data`
+  scan reports all five games `READY`, and DM1 auto-launch reaches runtime
+  from authenticated FM Towns English data. The archive-backed scan can take
+  tens of seconds; an intermediate `SCANNING GAME DATA` screen is not a
+  missing-data result. Remaining DM1 completion gates are source/capture
+  requirements, notably original HoC/Mac pixel capture and an authenticated
+  C13-bearing PC34 save.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
