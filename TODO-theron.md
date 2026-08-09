@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — native SDL-capture verifierad men semantik fortsatt spärrad
+
+- ✅ Capture-scriptet accepterar nu en autentiserad instrumenterad Mednafen-
+  PCE-binär även när dess `-help` saknar modul-listan. Fallbacken kräver
+  binärsignaturerna för PCE CD-kärnan och lämnar media-, runtime- och
+  semantikgates oförändrade.
+- 🔒 En riktig körning med native SDL 2.32.10, USA Track 02, System Card och
+  savestate producerade VDC/VCE-snapshots och autentiserade input/CD-start-
+  receipts, men nådde inte game-owned CD→RAM-consumer: `host_keys=0`,
+  `authenticated_cd_ram=0` och inga dynamiska RNG/creature/AI/T700/T900-
+  receipts. Ingen semantik får därför öppnas från denna körning.
+
 ## 2026-08-09 — verifierad spärr för senare-nivåns frame-chain
 
 - 🔒 Äkta US/JP senare-nivåblock och deras sexbytesframing är hashverifierade,

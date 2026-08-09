@@ -290,18 +290,37 @@ require_mednafen_module() {
     # `pce_fast` to those builds otherwise leaves an expensive, empty capture
     # with no trustworthy runtime receipt.
     help_output=$("$mednafen_bin" -help 2>&1 || true)
-    if ! printf '%s\n' "$help_output" |
-         awk -v requested="$requested" '
-             /^ Emulation modules:/ {
-                 for (i = 3; i <= NF; ++i)
-                     if ($i == requested) found = 1
-             }
-             END { exit(found ? 0 : 1) }
-         '; then
-        printf 'FAIL: MEDNAFEN_BIN does not expose the requested emulation module: %s\n' \
-            "$requested" >&2
-        exit 1
+    if printf '%s\n' "$help_output" |
+       awk -v requested="$requested" '
+           /^ Emulation modules:/ {
+               for (i = 3; i <= NF; ++i)
+                   if ($i == requested) found = 1
+           }
+           END { exit(found ? 0 : 1) }
+       '; then
+        return 0
     fi
+
+    # Some instrumented 1.32.1 macOS builds omit the module-list block from
+    # -help even though the compiled PCE core is present and selectable. Keep
+    # the module gate strict by requiring the core's stable PCE signatures;
+    # runtime invocation, media hashes, and all semantic gates still run below.
+    case "$requested" in
+        pce)
+            if grep -aFq 'PC Engine (CD)/TurboGrafx 16 (CD)/SuperGrafx' "$mednafen_bin" &&
+               grep -aFq '.pce' "$mednafen_bin"; then
+                return 0
+            fi
+            ;;
+        pce_fast)
+            if grep -aFq 'pce_fast.input.port1' "$mednafen_bin"; then
+                return 0
+            fi
+            ;;
+    esac
+    printf 'FAIL: MEDNAFEN_BIN does not expose the requested emulation module: %s\n' \
+        "$requested" >&2
+    exit 1
 }
 require_mednafen_module "$capture_mednafen_module"
 if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then

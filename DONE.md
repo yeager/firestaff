@@ -11078,3 +11078,13 @@
 - ⏳ Capture-bilden är fortfarande diagnostisk och inte README-eligible; den
   saknar ännu bevisad dungeon-materialbank, perspektivkonsument och komplett
   Track 02 semantic handoff.
+
+# Theron native SDL capture module gate (2026-08-09)
+
+- ✅ `capture_theron_mednafen_live_trace.sh` now accepts a verified
+  instrumented PCE binary whose `-help` output omits the module list, using
+  stable compiled PCE signatures as a bounded fallback.
+- ✅ The external native-SDL run produced authentic VDC VRAM/VCE snapshots and
+  line-delimited HuC/CD/input receipts from the real USA Track 02 media.
+- ⏳ The run did not produce game-owned CD-to-RAM consumer evidence, so the
+  original RNG, creature, AI, T700 and T900 semantic gates remain closed.
