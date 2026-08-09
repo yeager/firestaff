@@ -1,4 +1,13 @@
-# Firestaff v3.0.305
+# Firestaff v3.0.306
+
+## Fixed
+
+- Theron’s macOS Quartz input helper now compiles correctly in the shipped
+  build, keeping the current main branch releasable on Apple platforms.
+- GitHub Actions now lets an already-started cross-platform verification
+  matrix finish, preserving a complete CI receipt during rapid integrations.
+
+## Firestaff v3.0.305
 
 ## DM1
 

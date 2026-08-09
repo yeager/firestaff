@@ -7,12 +7,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A later commit supersedes a queued or running matrix for the same branch.
-# Keep one current receipt per ref so rapid verified main pushes do not spend
-# every hosted runner slot building obsolete revisions.
+# A later commit supersedes a queued matrix for the same branch, but never a
+# matrix that has already started.  A completed cross-platform receipt is
+# required before a release can be cut; canceling active matrices during a
+# burst of verified main integrations made that receipt impossible to obtain.
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   SDL3_TAG: release-3.2.14
