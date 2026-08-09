@@ -33,6 +33,11 @@ description is kept in [project status](docs/PROJECT_STATUS.md).
 | DM Nexus | Saturn real-data bring-up in progress. |
 | Theron's Quest | PC Engine real-media bring-up in progress. |
 
+<p align="center">
+  <img src="verification-screens/theron-quest-us-dungeon-mednafen.png" alt="Original US Theron's Quest dungeon capture in Mednafen" width="864">
+</p>
+<p align="center"><em>Theron's Quest, US original-media dungeon capture. The game image is a real runtime capture; no BIOS or game media is stored in the repository.</em></p>
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder
