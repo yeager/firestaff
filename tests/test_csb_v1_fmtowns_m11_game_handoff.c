@@ -144,6 +144,9 @@ int main(void)
     uint8_t utility_arrows[32u * 75u];
     uint8_t portrait_pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
     uint8_t portrait_roundtrip[CSB_FMTOWNS_PORTRAIT_DATA_SIZE];
+    uint8_t utility_portrait_before[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
+    int utility_fill_x = -1;
+    int utility_fill_y = -1;
 
     if (language_name && strcmp(language_name, "ja") == 0) {
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
@@ -757,6 +760,41 @@ int main(void)
                   view.csbFmtownsUtilitySelectedColor == 3u &&
                   framebuffer[68u * 320u + 287u] == 15u,
               "F31E C06 palette selection redraws the original selected swatch");
+        /* CEDT006.C F7046 is the source C06 right-button path. Choose an
+         * actual MINI.DAT pixel that is not colour 3, rather than arranging a
+         * fixture pattern, then prove the active native portrait changes. */
+        memcpy(utility_portrait_before,
+               view.csbFmtownsUtilityPortraitReceipt.source_bytes[0],
+               sizeof(utility_portrait_before));
+        CHECK(csb_v1_fmtowns_portrait_decode_planar(
+                  utility_portrait_before, sizeof(utility_portrait_before),
+                  portrait_pixels, sizeof(portrait_pixels)),
+              "F31E C06 flood-fill source portrait decodes from actual MINI.DAT");
+        for (tick = 0u; tick < sizeof(portrait_pixels); ++tick) {
+            if (portrait_pixels[tick] != 3u) {
+                utility_fill_x = (int)(tick % 32u);
+                utility_fill_y = (int)(tick / 32u);
+                break;
+            }
+        }
+        result = M11_GameView_HandlePointerButton(
+            &view, 157 + utility_fill_x * 3, 60 + utility_fill_y * 3,
+            DM1_V1_MOUSE_MASK_RIGHT_PC34);
+        CHECK(utility_fill_x >= 0 && utility_fill_y >= 0 &&
+                  result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityPortraitModified[0] != 0u &&
+                  memcmp(view.csbFmtownsUtilityPortraitReceipt.source_bytes[0],
+                         utility_portrait_before,
+                         sizeof(utility_portrait_before)) != 0,
+              "F31E C06 right-click flood fill updates a connected real MINI.DAT area");
+        result = M11_GameView_HandlePointerButton(
+            &view, 230, 160, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityPortraitModified[0] == 0u &&
+                  memcmp(view.csbFmtownsUtilityPortraitReceipt.source_bytes[0],
+                         utility_portrait_before,
+                         sizeof(utility_portrait_before)) == 0,
+              "F31E C06 Undo restores the source-format flood-fill backup");
         result = M11_GameView_HandlePointerButton(
             &view, 157, 60, DM1_V1_MOUSE_MASK_LEFT_PC34);
         memset(framebuffer, 0, sizeof(framebuffer));

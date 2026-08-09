@@ -8076,6 +8076,85 @@ static int m11_csb_fmtowns_utility_draw_portrait_pixel(
     return m11_csb_redraw_fmtowns_utility(state);
 }
 
+/* ReDMCSB CEDT006.C F7046 (F31 C06): right-click fills the connected
+ * same-colour area in the selected 32x29 portrait.  Keep this wholly in the
+ * source-format MINI.DAT portrait buffer: the editor does not manufacture a
+ * host bitmap or commit a save-file write.  F7046 allocates an int16 point
+ * stack and calls F7044 for each point; marking a point when it is queued is
+ * the equivalent final raster operation while bounding the modern stack to
+ * the exact native portrait area. */
+static int m11_csb_fmtowns_utility_flood_fill_portrait(
+    M11_GameViewState *state, int source_x, int source_y)
+{
+    enum { F31_PORTRAIT_PIXELS = 32 * 29 };
+    uint8_t chunky[F31_PORTRAIT_PIXELS];
+    int stack_x[F31_PORTRAIT_PIXELS];
+    int stack_y[F31_PORTRAIT_PIXELS];
+    uint16_t champion;
+    uint8_t target;
+    uint8_t replacement;
+    int stack_count = 0;
+
+    if (!state || source_x < 0 || source_x >= 32 ||
+        source_y < 0 || source_y >= 29) return 0;
+    champion = state->csbFmtownsUtilitySelectedChampion;
+    if (champion >= state->csbFmtownsUtilityParty.ChampionCount ||
+        !csb_v1_fmtowns_portrait_decode_planar(
+            state->csbFmtownsUtilityPortraitReceipt.source_bytes[champion],
+            CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES, chunky, sizeof(chunky))) {
+        return 0;
+    }
+    target = chunky[(size_t)source_y * 32u + (size_t)source_x];
+    replacement = state->csbFmtownsUtilitySelectedColor;
+    /* F7046 performs no F7044 draw when the selected colour already matches.
+     * It nevertheless has a valid modal result and must not create a dirty
+     * portrait merely because a user right-clicked it. */
+    if (target == replacement) return m11_csb_redraw_fmtowns_utility(state);
+
+    memcpy(state->csbFmtownsUtilityUndoPortrait,
+           state->csbFmtownsUtilityPortraitReceipt.source_bytes[champion],
+           sizeof(state->csbFmtownsUtilityUndoPortrait));
+    state->csbFmtownsUtilityUndoModified =
+        state->csbFmtownsUtilityPortraitModified[champion];
+    state->csbFmtownsUtilityUndoAvailable = 1;
+
+    stack_x[stack_count] = source_x;
+    stack_y[stack_count++] = source_y;
+    chunky[(size_t)source_y * 32u + (size_t)source_x] = replacement;
+    while (stack_count > 0) {
+        int x;
+        int y;
+        int nx[4];
+        int ny[4];
+        int neighbor;
+
+        --stack_count;
+        x = stack_x[stack_count];
+        y = stack_y[stack_count];
+        nx[0] = x;     ny[0] = y - 1;
+        nx[1] = x;     ny[1] = y + 1;
+        nx[2] = x - 1; ny[2] = y;
+        nx[3] = x + 1; ny[3] = y;
+        for (neighbor = 0; neighbor < 4; ++neighbor) {
+            size_t offset;
+            if (nx[neighbor] < 0 || nx[neighbor] >= 32 ||
+                ny[neighbor] < 0 || ny[neighbor] >= 29) continue;
+            offset = (size_t)ny[neighbor] * 32u + (size_t)nx[neighbor];
+            if (chunky[offset] != target) continue;
+            chunky[offset] = replacement;
+            if (stack_count >= F31_PORTRAIT_PIXELS) return 0;
+            stack_x[stack_count] = nx[neighbor];
+            stack_y[stack_count++] = ny[neighbor];
+        }
+    }
+    if (!csb_v1_fmtowns_portrait_encode_planar(
+            chunky, sizeof(chunky),
+            state->csbFmtownsUtilityPortraitReceipt.source_bytes[champion],
+            CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES)) return 0;
+    state->csbFmtownsUtilityPortraitModified[champion] = 1u;
+    return m11_csb_redraw_fmtowns_utility(state);
+}
+
 static int m11_csb_fmtowns_utility_revert_portrait(M11_GameViewState *state)
 {
     uint16_t champion;
@@ -8443,7 +8522,8 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     CSB_V1_FmtownsUtilityMenuHitBox hit;
     int champion;
     if (!state || !state->csbFmtownsUtilityBound ||
-        (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 ||
+        (button_mask & (DM1_V1_MOUSE_MASK_LEFT_PC34 |
+                        DM1_V1_MOUSE_MASK_RIGHT_PC34)) == 0 ||
         !state->csbBootProfile) return M11_GAME_INPUT_REDRAW;
     memset(&hit, 0, sizeof(hit));
     /* CEDTDATA.C G2272_MouseInputs[0..3] and F7050 first select only an
@@ -8453,7 +8533,8 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
                x >= 71 && x <= 115 ? 1 :
                x >= 138 && x <= 182 ? 2 :
                x >= 205 && x <= 249 ? 3 : -1;
-    if (champion >= 0 && y >= 3 && y <= 42) {
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+        champion >= 0 && y >= 3 && y <= 42) {
         if (champion < state->csbFmtownsUtilityParty.ChampionCount) {
             state->csbFmtownsUtilitySelectedChampion = (uint16_t)champion;
             if (!m11_csb_redraw_fmtowns_utility(state))
@@ -8463,7 +8544,8 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     }
     /* CEDTDATA.C G2272_MouseInputs[6] and CEDT006.C F7043 derive the
      * source colour from (y - 43) / 8. */
-    if (x >= 286 && x <= 303 && y >= 43 && y <= 169) {
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+        x >= 286 && x <= 303 && y >= 43 && y <= 169) {
         state->csbFmtownsUtilitySelectedColor = (uint8_t)((y - 43) / 8);
         if (!m11_csb_redraw_fmtowns_utility(state))
             return M11_GAME_INPUT_IGNORED;
@@ -8472,13 +8554,23 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     /* CEDTDATA.C G2272_MouseInputs[4] and CEDT006.C F7045 convert the
      * 3x source zoom rectangle back to one F31 portrait pixel. */
     if (x >= 157 && x <= 252 && y >= 60 && y <= 146) {
+        if ((button_mask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
+            if (!m11_csb_fmtowns_utility_flood_fill_portrait(
+                    state, (x - 157) / 3, (y - 60) / 3)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
+            return M11_GAME_INPUT_REDRAW;
         if (!m11_csb_fmtowns_utility_draw_portrait_pixel(
                 state, (x - 157) / 3, (y - 60) / 3)) {
             return M11_GAME_INPUT_IGNORED;
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    if (!csb_v1_fmtowns_utility_menu_action_at(
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 ||
+        !csb_v1_fmtowns_utility_menu_action_at(
             &state->csbFmtownsUtilityMenuReceipt, (int16_t)x, (int16_t)y,
             &hit)) return M11_GAME_INPUT_REDRAW;
     if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT) {

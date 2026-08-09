@@ -11810,6 +11810,15 @@ rendering remain blocked.
   målslotten inte kan ersättas bevaras den validerade backupen och live-
   runtime lämnas orörd.
 
+# CSB: FM Towns C06 porträtt-fyllning (2026-08-09)
+
+- ✅ F31E:s riktiga C06-redigerare accepterar nu `CEDT006.C F7046`-högerklick
+  för sammanhängande färgfyllning i det autentiska `MINI.DAT`-porträttet.
+  Ångra behåller den ursprungliga 464-bytes planära backupen och ingen
+  filväljare, genererad porträttdata eller sparskrivning införs.
+- ✅ Den verkliga FM Towns M11-regressionen väljer en befintlig originalpixel,
+  provar fyllning och ångrar den igen mot det materialiserade F31E-mediet.
+
 # CSB: Atari/Amiga F0435 saknad slot-återställning (2026-08-09)
 
 - ✅ Atari-/Amiga-originalkorpusen återställer nu en validerad
