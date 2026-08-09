@@ -20521,6 +20521,38 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
             out->runtimeTick = 0;
             return 1;
         }
+        /* F31's TITLE.ANM is owned by ANIMTOWN.C/F2275, outside the PC34
+         * TITLE.C host-view protocol.  The title is nevertheless live until
+         * that source stream returns to SWITCHTW.  Report its authenticated
+         * frame receipt directly so a CLI boot probe cannot mistake a bound
+         * native title for an already-running dungeon.
+         *
+         * ReDMCSB ANIMTOWN.C F2275 and AUTOEXEC.BAT: TITLE.ANM finishes
+         * before SWITCHTW starts; it never falls through TITLE.C. */
+        if (m11_csb_is_fmtowns_profile(csb_profile) &&
+            state->csbFmtownsTitleBound &&
+            state->csbState.startup_title_active &&
+            state->csbFmtownsTitleFrameReceipt.valid) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "csb-fmtowns-title");
+            snprintf(out->startupAnimation,
+                     sizeof(out->startupAnimation), "%s", "title-anm");
+            out->startupActive = 1;
+            out->startupFrame =
+                (int)state->csbFmtownsTitleFrameReceipt.frame_index;
+            out->startupAnimationActive = 1;
+            out->startupTitleFrame =
+                (int)state->csbFmtownsTitleFrameReceipt.frame_index;
+            out->startupTitleReady = 1;
+            out->levelLoaded = 0;
+            out->mapIndex = -1;
+            out->partyX = -1;
+            out->partyY = -1;
+            out->partyDir = -1;
+            out->championCount = -1;
+            out->runtimeTick = 0;
+            return 1;
+        }
         /* Amiga A31 is likewise a standalone APPA.C/ANIM.C program. Its
          * VBlank counter reports only the real TITL.DAT schedule; it must
          * not be described as a PC34 title-session frame. */
@@ -29622,7 +29654,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * rather than re-enable the DM1 viewport heuristic. */
             return M11_GAME_INPUT_IGNORED;
         }
-        if (m11_v1_chrome_mode_enabled(state) && !state->showDebugHUD) {
+        if ((m11_v1_chrome_mode_enabled(state) ||
+             state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
+            !state->showDebugHUD) {
             int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
             int zoneId = 0;
             int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
@@ -29635,9 +29669,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 /* ReDMCSB COMMAND.C G0448 maps a left-click in C007_ZONE_VIEWPORT
                  * to C080_COMMAND_CLICK_IN_DUNGEON_VIEW.  The source then enters
                  * CLIKVIEW.C F0377/F0372/F0275 to test front-wall sensors,
-                 * champion mirrors, door buttons and wall ornaments.  Do not use
-                 * Firestaff's procedural left/right viewport steering shortcuts in
-                 * V1 chrome mode; movement is owned by the original arrow zones. */
+                 * champion mirrors, door buttons and wall ornaments.  CSB retains
+                 * this source command surface in every presentation mode: V2 may
+                 * filter the raster, but it never replaces COMMAND.C input with
+                 * Firestaff's procedural left/right viewport steering shortcuts.
+                 * Movement remains owned by C068..C073. */
                 return m11_process_v1_c080_click(state, x, y);
             }
             return M11_GAME_INPUT_IGNORED;

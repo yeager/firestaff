@@ -865,6 +865,23 @@ int main(void)
                       DM1_V1_COMMAND_MOVE_FORWARD &&
                   profile->runtime.last_input_dispatch.dispatchedMove,
               "live Prison C003 pointer reaches the real dungeon movement dispatcher");
+        /* Presentation V2 only changes the CSB raster.  G0448 still owns
+         * every C007 viewport click, so a left-edge click must enter C080
+         * rather than the old host-only left-third turn shortcut.  Prison's
+         * real front square has no matching click sensor here; irrespective
+         * of whether the source click redraws, it must not rotate or move
+         * the GAMEBLOCK party.  ReDMCSB COMMAND.C:403 and :2322. */
+        if (spec.presentationMode != M12_PRESENTATION_V1_ORIGINAL) {
+            int viewport_direction = profile ? profile->runtime.party_dir : -1;
+            int viewport_x = profile ? profile->runtime.party_x : -1;
+            int viewport_y = profile ? profile->runtime.party_y : -1;
+            (void)M11_GameView_HandlePointerButton(
+                &view, 52, 40, M11_DM1_MOUSE_MASK_LEFT);
+            CHECK(profile && profile->runtime.party_dir == viewport_direction &&
+                      profile->runtime.party_x == viewport_x &&
+                      profile->runtime.party_y == viewport_y,
+                  "CSB V2 viewport click retains source C080 instead of host steering");
+        }
     }
     if (quicksave_path && quicksave_path[0]) {
         const CSB_V1_BootProfile *profile =
