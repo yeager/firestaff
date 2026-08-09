@@ -2088,6 +2088,10 @@ static void m12_apply_completed_asset_scan(M12_StartupMenuState* state) {
                          (unsigned int)time(NULL));
     m12_probe_quick_resume(state);
     m12_save_config(state);
+    if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+        !m12_show_missing_archive_tool_popup(state)) {
+        m12_show_no_game_data_popup(state);
+    }
 }
 
 static void m12_update_data_dir_scan_message(M12_StartupMenuState* state) {
@@ -4154,7 +4158,12 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     state->dataDirScanCancelled = 0;
     memset(&state->dataDirScanProgress, 0, sizeof(state->dataDirScanProgress));
     state->dataDirScanJob = NULL;
-    if (!m12_show_missing_archive_tool_popup(state)) {
+    /* With deferred startup scanning the initial asset status is deliberately
+     * empty. Do not show a false "NO GAME DATA FOUND" message while the real
+     * scan is still pending; the completion path above reports it only after
+     * an actual empty scan. */
+    if (!(options && options->skipAssetScan) &&
+        !m12_show_missing_archive_tool_popup(state)) {
         m12_show_no_game_data_popup(state);
     }
     state->frameTick = 0;
