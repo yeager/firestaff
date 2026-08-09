@@ -23660,6 +23660,7 @@ endif()
         tests/test_csb_v1_champion_transfer_field_gate_pc34_compat.c
         src/csb/csb_v1_save_import_path_pc34_compat.c
         src/csb/csb_v1_character_pc34_compat.c
+        src/csb/csb_v1_atari_msa.c
     )
     target_include_directories(test_csb_v1_champion_transfer_field_gate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

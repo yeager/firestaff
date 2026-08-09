@@ -7,6 +7,12 @@
 - ✅ Alla tre mål bygger i en extern macOS-build efter fixen; den nya GitHub
   Actions-matrisen körs mot committen `f307f28465`.
 
+# CI: CSB champion-transfer-testets Atari MSA-beroende (2026-08-09)
+
+- ✅ Champion-transfer-gaten länkar nu den befintliga Atari MSA-läsaren som
+  dess `csb_v1_atari_msa_read_sector`-konsument kräver. Det stänger ett
+  arm64-länkfel i den fulla CMake-matrisen utan att lägga till media.
+
 # CSB Atari ST: Utility Disk MSA-mediaidentitet (2026-08-09)
 
 - ✅ Den hashverifierade Atari ST 2.0 Utility Disk-kopian i MSA-format
