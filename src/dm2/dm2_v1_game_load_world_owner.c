@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
+                                                  uint32_t value);
+
 static int dm2_v1_game_load_owner_prepare_timer_capacity(
     DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -48,6 +51,263 @@ static int dm2_v1_game_load_owner_prepare_timer_capacity(
                             owner->timer_indices, (int16_t)capacity);
     owner->timer_capacity = (uint16_t)capacity;
     owner->fresh_game_mode = 1;
+    return 1;
+}
+
+static int dm2_v1_game_load_owner_materialize_caii_capacity(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    const DM2_V1_RecordPool *db4;
+    DM2_V1_GameLoadCaiiCapacityReceipt candidate;
+    uint32_t hash = 0x43414949u; /* "CAII" */
+    int index;
+    int nonstatic_count = 0;
+
+    if (!owner || !owner->asset_loader || !owner->asset_loader->loaded ||
+        owner->caii_source.valid || owner->caii_capacity.valid ||
+        !owner->record_pools.valid) return 0;
+    db4 = &owner->record_pools.pools[4];
+    if (!db4->bytes || db4->record_size < 6 || db4->record_count <= 0 ||
+        db4->record_count > UINT16_MAX ||
+        !dm2_v1_caii_source_owner_init(&owner->caii_source,
+                                       owner->asset_loader, &owner->dungeon)) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    for (index = 0; index < db4->record_count; ++index) {
+        const uint8_t *record = db4->bytes +
+            (size_t)index * (size_t)db4->record_size;
+        const DM2_AIDefinition *ai = NULL;
+        const uint16_t record_word = (uint16_t)record[0] |
+            ((uint16_t)record[1] << 8);
+
+        if (record_word == 0xffffu) continue;
+        if (!dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) || !ai) {
+            dm2_v1_caii_source_owner_free(&owner->caii_source);
+            return 0;
+        }
+        /* DM2_1c9a_3c30 counts only AIDefinition rows with flag bit 0
+         * clear. This is a capacity calculation, not a creature activation. */
+        if ((ai->w0AIFlags & 1u) == 0u) ++nonstatic_count;
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)index);
+        hash = dm2_v1_game_load_owner_hash_step(hash, record[4]);
+        hash = dm2_v1_game_load_owner_hash_step(hash, ai->w0AIFlags);
+    }
+    if (nonstatic_count > INT_MAX - 0x64) {
+        dm2_v1_caii_source_owner_free(&owner->caii_source);
+        return 0;
+    }
+    candidate.db4_record_count = (uint16_t)db4->record_count;
+    candidate.nonstatic_creature_count = (uint16_t)nonstatic_count;
+    candidate.source_capacity = (uint16_t)((nonstatic_count + 0x64 <
+        db4->record_count) ? nonstatic_count + 0x64 : db4->record_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.db4_record_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                            candidate.nonstatic_creature_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_capacity);
+    hash = dm2_v1_game_load_owner_hash_step(hash, owner->caii_source.source_hash);
+    if (hash == 0u || candidate.source_capacity == 0u) {
+        dm2_v1_caii_source_owner_free(&owner->caii_source);
+        return 0;
+    }
+    candidate.source_hash = hash;
+    candidate.valid = 1;
+    owner->caii_capacity = candidate;
+    return 1;
+}
+
+/* Static creatures take the deterministic GAF branch in
+ * DM2_GET_CREATURE_ANIMATION_FRAME: find command 0x11 in RAW8/0xfb, count
+ * RAW7/0xfc rows through the terminator, then encode the record's packed
+ * coordinate. Dynamic creatures take 4FCC and may consume c_random, so they
+ * are intentionally not approximated here.
+ * Source: SKProject SKULLWIN/c_creature.cpp:3217-3278. */
+static int dm2_v1_game_load_owner_static_caii_animation_frame(
+    const DM2_V1_AssetLoader *loader, uint8_t creature_type,
+    uint16_t packed_position, uint16_t *out_frame)
+{
+    const uint8_t *attribution;
+    const uint8_t *info;
+    size_t attribution_size = 0u;
+    size_t info_size = 0u;
+    size_t row;
+    uint16_t base;
+    uint32_t count = 0u;
+
+    if (!loader || !out_frame) return 0;
+    *out_frame = 0xffffu;
+    attribution = dm2_v1_asset_load_typed_sized(loader,
+        DM2_GDAT_CATEGORY_CREATURES, creature_type, DM2_GDAT_ENTRY_TYPE_RAW8,
+        DM2_GDAT_CREATURE_ANIM_ATTRIBUTION, &attribution_size);
+    if (!attribution || attribution_size < 4u) return 0;
+    for (row = 0u; row * 4u + 3u < attribution_size; ++row) {
+        const uint16_t command = (uint16_t)attribution[row * 4u] |
+            ((uint16_t)attribution[row * 4u + 1u] << 8);
+        if (command == 0xffffu || command == 0x0011u) break;
+    }
+    if (row * 4u + 3u >= attribution_size) return 0;
+    base = (uint16_t)attribution[row * 4u + 2u] |
+        ((uint16_t)attribution[row * 4u + 3u] << 8);
+    info = dm2_v1_asset_load_typed_sized(loader,
+        DM2_GDAT_CATEGORY_CREATURES, creature_type, DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE, &info_size);
+    if (!info || info_size < 4u) return 0;
+    for (;;) {
+        const size_t index = (size_t)base + count;
+        if (index * 4u + 1u >= info_size || count >= 0x3fffu) return 0;
+        ++count;
+        if ((info[index * 4u + 1u] & 0xf0u) == 0u) break;
+    }
+    *out_frame = (uint16_t)(count | (packed_position == 0u ? 0x9000u :
+        (((uint32_t)packed_position & 0x3fu) << 6) | 0x8000u));
+    return 1;
+}
+
+static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadCaiiMapCandidate *candidates;
+    DM2_V1_GameLoadCaiiMapReceipt receipt;
+    const DM2_V1_RecordPool *db4;
+    uint32_t hash = 0x43414d50u; /* "CAMP" */
+    int capacity;
+    int count = 0;
+    int map;
+
+    if (!owner || !owner->caii_source.valid || !owner->caii_capacity.valid ||
+        owner->caii_map_receipt.valid || owner->caii_map_candidates ||
+        !owner->record_pools.valid || owner->dungeon.level_count <= 0) return 0;
+    db4 = &owner->record_pools.pools[4];
+    if (!db4->bytes || db4->record_size < 14 || db4->record_count <= 0 ||
+        db4->record_count > UINT16_MAX) return 0;
+    capacity = db4->record_count;
+    candidates = (DM2_V1_GameLoadCaiiMapCandidate *)calloc((size_t)capacity,
+                                                             sizeof(*candidates));
+    if (!candidates) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    for (map = 0; map < owner->dungeon.level_count; ++map) {
+        int x;
+        const int width = owner->dungeon.level_widths[map];
+        const int height = owner->dungeon.level_heights[map];
+        if (width <= 0 || height <= 0) goto fail;
+        for (x = 0; x < width; ++x) {
+            int y;
+            for (y = 0; y < height; ++y) {
+                const int raw = dm2_v1_dungeon_get_tile_raw(&owner->dungeon,
+                                                             map, x, y);
+                int16_t link;
+                int chain_count = 0;
+                int16_t next;
+                if (raw < 0) goto fail;
+                /* c_1c9a.cpp:9916 tests this exact ground-stack flag before
+                 * walking the tile record chain. */
+                if (((uint16_t)raw & 0x10u) == 0u) continue;
+                link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &owner->dungeon, map, x, y);
+                while (link != DM2_V1_RECORD_HANDLE_END) {
+                    uint8_t *record;
+                    const DM2_AIDefinition *ai = NULL;
+                    if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                        chain_count++ >= capacity ||
+                        !dm2_v1_record_pool_next_link(&owner->record_pools,
+                                                      link, &next)) goto fail;
+                    if (dm2_v1_record_handle_pool(link) == 4) {
+                        DM2_V1_GameLoadCaiiMapCandidate *candidate;
+                        if (count >= capacity ||
+                            !(record = dm2_v1_record_pool_address_mut(
+                                &owner->record_pools, link)) ||
+                            !dm2_v1_caii_source_owner_ai_spec_def(
+                                &owner->caii_source, record[4], &ai) || !ai) {
+                            goto fail;
+                        }
+                        candidate = &candidates[count++];
+                        candidate->map = (int16_t)map;
+                        candidate->x = (uint8_t)x;
+                        candidate->y = (uint8_t)y;
+                        candidate->record_handle = link;
+                        candidate->creature_type = record[4];
+                        candidate->static_ai = (uint8_t)((ai->w0AIFlags & 1u) != 0u);
+                        candidate->record_word_a = (uint16_t)record[10] |
+                            ((uint16_t)record[11] << 8);
+                        candidate->packed_position = (uint16_t)record[12] |
+                            ((uint16_t)record[13] << 8);
+                        candidate->static_animation_frame = 0xffffu;
+                        if (candidate->static_ai) {
+                            if (!dm2_v1_game_load_owner_static_caii_animation_frame(
+                                    owner->asset_loader, record[4],
+                                    candidate->packed_position,
+                                    &candidate->static_animation_frame)) {
+                                goto fail;
+                            }
+                            ++receipt.static_candidate_count;
+                        } else {
+                            ++receipt.dynamic_candidate_count;
+                        }
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                                 (uint16_t)map);
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                                 (uint16_t)x);
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                                 (uint16_t)y);
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                                 (uint16_t)link);
+                        hash = dm2_v1_game_load_owner_hash_step(hash, record[4]);
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                                 ai->w0AIFlags);
+                        hash = dm2_v1_game_load_owner_hash_step(hash,
+                            candidate->static_animation_frame);
+                    }
+                    link = next;
+                }
+            }
+        }
+    }
+    receipt.map_count = (uint16_t)owner->dungeon.level_count;
+    receipt.candidate_count = (uint16_t)count;
+    if (receipt.candidate_count == 0u ||
+        receipt.candidate_count != receipt.static_candidate_count +
+            receipt.dynamic_candidate_count) goto fail;
+    hash = dm2_v1_game_load_owner_hash_step(hash, receipt.map_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, receipt.candidate_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, receipt.static_candidate_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, receipt.dynamic_candidate_count);
+    if (hash == 0u) goto fail;
+    receipt.source_hash = hash;
+    receipt.valid = 1;
+    owner->caii_map_candidates = candidates;
+    owner->caii_map_receipt = receipt;
+    return 1;
+fail:
+    free(candidates);
+    return 0;
+}
+
+/* Reserve exactly the source-sized c_creature array before the later
+ * RESET_CAII transaction.  Resetting DB4 byte@5 and assigning candidates
+ * must include both static 09db and dynamic 0a48 paths, so doing either here
+ * would invent a partial GAME_LOAD state.
+ * Source: SKProject SKULLWIN/startend.cpp::DM2_RESET_CAII (1033-1070),
+ * c_random.cpp::c_randomdata::init (7-13). */
+static int dm2_v1_game_load_owner_materialize_caii_storage(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    if (!owner || !owner->caii_capacity.valid ||
+        owner->caii_capacity.source_capacity == 0u ||
+        owner->caii_slots.valid || owner->caii_rng_initialized) {
+        return 0;
+    }
+    dm2_v1_caii_array_init(&owner->caii_slots,
+                           (int)owner->caii_capacity.source_capacity);
+    if (!owner->caii_slots.valid ||
+        owner->caii_slots.capacity !=
+            (int)owner->caii_capacity.source_capacity ||
+        owner->caii_slots.alloc_count != 0) {
+        dm2_v1_caii_array_free(&owner->caii_slots);
+        return 0;
+    }
+    dm2_v1_drops_rng_init(&owner->caii_rng);
+    owner->caii_rng_initialized = 1;
     return 1;
 }
 
@@ -648,6 +908,9 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     }
     dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
+    dm2_v1_caii_array_free(&owner->caii_slots);
+    dm2_v1_caii_source_owner_free(&owner->caii_source);
+    free(owner->caii_map_candidates);
     free(owner->timer_indices);
     free(owner->timer_entries);
     dm2_v1_record_pool_set_free(&owner->record_pools);
@@ -749,6 +1012,9 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     candidate.source_transaction_hash = hash;
     candidate.source_preselection_ready = 1;
     if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
+        !dm2_v1_game_load_owner_materialize_caii_capacity(&candidate) ||
+        !dm2_v1_game_load_owner_materialize_caii_map_candidates(&candidate) ||
+        !dm2_v1_game_load_owner_materialize_caii_storage(&candidate) ||
         !dm2_v1_game_load_owner_validate_world_maps(&candidate) ||
         !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate) ||
         !dm2_v1_game_load_owner_materialize_dyn4(&candidate) ||

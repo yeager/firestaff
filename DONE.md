@@ -1,3 +1,39 @@
+# DM2 New Game: owner-bunden CAII-animation (2026-08-09)
+
+- ✅ `DM2_GET_CREATURE_ANIMATION_FRAME` och `DM2_CREATURE_SOMETHING_1c9a_0a48`
+  har nu owner-bundna ingångar som tar AIDefinition från samma verifierade
+  GAME_LOAD-ägare. Den äldre vägen behåller sin ursprungliga globala
+  kompatibilitetsordning.
+- ✅ Den nya vägen faller inte tillbaka till en annan sessions GDAT-tabell.
+  Den är ännu inte en aktivering av varelser eller CCM; den används först när
+  hela `RESET_CAII`-transaktionen kan återställas atomärt.
+
+# DM2 New Game: privat CAII-resetlagring (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu den källberäknade `c_creature`-arrayen med
+  samtliga slottar fria (`word@0 = 0xffff`) samt `c_randomdata.random = 0`.
+  Båda finns endast i RAM och kommer från originalets initiering.
+- ✅ Inget DB4-ägarskap, ingen varelse, ingen CAII-timer och ingen CCM-körning
+  publiceras av denna lagring. Den kompletta `RESET_CAII`-transaktionen måste
+  fortfarande utföra statisk `09db` och dynamisk `0a48` tillsammans.
+
+# DM2 New Game: källberäknad CAII-kapacitet (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu de hashverifierade AIDefinition-raderna och
+  exakt `DM2_1c9a_3c30`-kapacitet från hela DB4-poolen. Den räknar endast
+  icke-statiska varelser och begränsar resultatet till det verkliga
+  DB4-antalet.
+- ✅ Detta skapar inga CAII-varelser eller timers. `RESET_CAII` och
+  `FILL_ORPHAN_CAII` väntar fortsatt på en gemensam ägare för all-karts
+  traversal, CCM/animationer och den dynamiska originalkön.
+- ✅ Ägaren bevarar också den verkliga `FILL_CAII_CUR_MAP`-ordningen från alla
+  44 kartor. Varje DB4-post kontrolleras mot samma tilekedja, AIDefinition och
+  råa animationsfält innan senare CAII-mutation får börja.
+- ✅ Den deterministiska statiska grenen läser nu sin faktiska `RAW8/0xfb`-
+  och `RAW7/0xfc`-sekvens och beräknar originalets bildram för kommando
+  `0x11`. Dynamiska varelser får ingen ersättningsram; de kräver fortsatt
+  källans RNG- och CCM-ägare.
+
 # Theron autentiserad US spawn-/pointertabell (2026-08-09)
 
 - ✅ `theron_v1_track02_decode_spawn_source()` läser pointertabellen vid

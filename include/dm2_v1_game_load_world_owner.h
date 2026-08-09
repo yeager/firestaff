@@ -15,6 +15,8 @@
  */
 
 #include "dm2_v1_boot.h"
+#include "dm2_v1_caii_alloc_pc34_compat.h"
+#include "dm2_v1_caii_source_owner.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -177,6 +179,46 @@ typedef struct {
     uint32_t source_viewport_hash;
 } DM2_V1_GameLoadPreselectionViewportReceipt;
 
+/* The CAII array is not stored in DUNGEON.DAT. DM2_INIT derives its exact
+ * capacity from the authenticated DB4 records and AIDefinition flags before
+ * it allocates any c_creature slots. Source: SKProject
+ * SKULLWIN/startend.cpp::DM2_1c9a_3c30 (462-501). */
+typedef struct {
+    int valid;
+    uint16_t db4_record_count;
+    uint16_t nonstatic_creature_count;
+    uint16_t source_capacity;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiCapacityReceipt;
+
+/* One source DB4 encounter in FILL_CAII_CUR_MAP order. The record remains
+ * unmodified; this is the all-map traversal prerequisite for RESET_CAII.
+ * Source: SKProject SKULLWIN/c_1c9a.cpp::DM2_FILL_CAII_CUR_MAP
+ * (9896-9994). */
+typedef struct {
+    int16_t map;
+    uint8_t x;
+    uint8_t y;
+    int16_t record_handle;
+    uint8_t creature_type;
+    uint8_t static_ai;
+    uint16_t record_word_a;
+    uint16_t packed_position;
+    /* DM2_GET_CREATURE_ANIMATION_FRAME(type, 0x11, ..., packed_position)
+     * for static AI only. Dynamic AI requires the later c_random/CCM owner
+     * and remains 0xffff here. */
+    uint16_t static_animation_frame;
+} DM2_V1_GameLoadCaiiMapCandidate;
+
+typedef struct {
+    int valid;
+    uint16_t map_count;
+    uint16_t candidate_count;
+    uint16_t static_candidate_count;
+    uint16_t dynamic_candidate_count;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiMapReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -192,6 +234,23 @@ typedef struct {
     uint32_t source_transaction_hash;
     DM2_V1_DungeonData dungeon;
     DM2_V1_RecordPoolSet record_pools;
+    /* Read-only AIDefinition/DB4 source bytes plus DM2_1c9a_3c30's exact
+     * capacity calculation. Candidate records remain unmodified until the
+     * complete all-map RESET_CAII transaction owns dynamic c_tim, CCM and
+     * animation branches. */
+    DM2_V1_CaiiSourceOwner caii_source;
+    DM2_V1_GameLoadCaiiCapacityReceipt caii_capacity;
+    DM2_V1_GameLoadCaiiMapReceipt caii_map_receipt;
+    DM2_V1_GameLoadCaiiMapCandidate *caii_map_candidates;
+    /* DM2_RESET_CAII first allocates/clears c_creature slots and then
+     * traverses maps. Keep that storage and the exact c_randomdata start
+     * state privately, but do not assign a slot or rewrite DB4 byte@5 until
+     * the complete 09db/0cf7/0a48 mutation can commit atomically.
+     * Source: SKProject SKULLWIN/startend.cpp::DM2_RESET_CAII (1033-1070),
+     * c_random.cpp::c_randomdata::init (7-13). */
+    DM2_V1_CaiiArray caii_slots;
+    DM2_V1_DropRng caii_rng;
+    int caii_rng_initialized;
     /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
      * before it allocates the original 12-byte c_tim array and index heap.
      * They are allocation limits, not invented queued timers. */

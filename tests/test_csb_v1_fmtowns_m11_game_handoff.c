@@ -51,6 +51,7 @@ int main(void)
     M12_AssetStatus asset_status;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
+    M11_BootProbeReceipt boot_probe;
     unsigned char framebuffer[320 * 200];
     unsigned int tick;
     int result;
@@ -170,6 +171,16 @@ int main(void)
           "verified F31 M653 raw interface font is bound before title playback");
     CHECK(view.csbFmtownsTitleBound && !view.csbStartupRuntimeAssetSession,
           "FM Towns title remains separate from the Game entrance session");
+    memset(&boot_probe, 0, sizeof(boot_probe));
+    CHECK(M11_GameView_GetBootProbeReceipt(&view, &boot_probe) &&
+              strcmp(boot_probe.startupPhase, "csb-fmtowns-title") == 0 &&
+              strcmp(boot_probe.startupAnimation, "title-anm") == 0 &&
+              boot_probe.startupActive && boot_probe.startupAnimationActive &&
+              boot_probe.startupTitleReady && !boot_probe.levelLoaded &&
+              boot_probe.mapIndex == -1 && boot_probe.partyX == -1 &&
+              boot_probe.partyY == -1 && boot_probe.partyDir == -1 &&
+              boot_probe.championCount == -1 && boot_probe.runtimeTick == 0,
+          "boot probe retains the standalone F31 TITLE.ANM phase");
 
     /* TITLE.ANM has 606 Timer-A ticks. Timer A expires at 18*(1024-100) us,
      * not once per 16 ms M11 wake. At 629 wakes only 605 source ticks have

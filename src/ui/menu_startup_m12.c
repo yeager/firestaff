@@ -3542,14 +3542,25 @@ static void m12_save_config(M12_StartupMenuState* state) {
      * view aligned with the durable path too; otherwise the config is fixed
      * on disk while the Settings row continues to show '.'. */
     if (m12_data_directory_dialog_token_is_placeholder(
-            M12_AssetStatus_GetDataDir(&state->assetStatus)) &&
-        m12_canonicalize_data_directory(config.dataDir,
-                                        canonicalDataDir,
-                                        sizeof(canonicalDataDir))) {
-        snprintf(state->assetStatus.dataDir,
-                 sizeof(state->assetStatus.dataDir),
-                 "%s",
-                 canonicalDataDir);
+            M12_AssetStatus_GetDataDir(&state->assetStatus))) {
+        /* A scanner/backend may leave a relative token in the live status
+         * even though the persisted path is already valid.  Prefer that
+         * durable path verbatim (preserving the user's selected spelling),
+         * then fall back to physical canonicalization only when needed. */
+        if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
+            FSP_DirExists(config.dataDir)) {
+            snprintf(state->assetStatus.dataDir,
+                     sizeof(state->assetStatus.dataDir),
+                     "%s",
+                     config.dataDir);
+        } else if (m12_canonicalize_data_directory(config.dataDir,
+                                                   canonicalDataDir,
+                                                   sizeof(canonicalDataDir))) {
+            snprintf(state->assetStatus.dataDir,
+                     sizeof(state->assetStatus.dataDir),
+                     "%s",
+                     canonicalDataDir);
+        }
     }
 }
 

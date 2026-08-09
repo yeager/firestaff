@@ -346,6 +346,61 @@ static int dm2_test_preselection_creature_possessions_match_owner(
     return 1;
 }
 
+static int dm2_test_caii_map_candidates_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int i;
+
+    if (!owner || !owner->caii_source.valid || !owner->caii_map_receipt.valid ||
+        !owner->caii_map_candidates ||
+        owner->caii_map_receipt.candidate_count == 0u) return 0;
+    for (i = 0; i < owner->caii_map_receipt.candidate_count; ++i) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[i];
+        const uint8_t *record;
+        const DM2_AIDefinition *ai = NULL;
+        const int raw = dm2_v1_dungeon_get_tile_raw(&owner->dungeon,
+            candidate->map, candidate->x, candidate->y);
+        if (candidate->map < 0 || candidate->map >= owner->dungeon.level_count ||
+            raw < 0 || ((uint16_t)raw & 0x10u) == 0u ||
+            dm2_v1_record_handle_pool(candidate->record_handle) != 4 ||
+            !(record = dm2_v1_record_pool_address(&owner->record_pools,
+                                                   candidate->record_handle)) ||
+            record[4] != candidate->creature_type ||
+            ((uint16_t)record[10] | ((uint16_t)record[11] << 8)) !=
+                candidate->record_word_a ||
+            ((uint16_t)record[12] | ((uint16_t)record[13] << 8)) !=
+                candidate->packed_position ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) || !ai ||
+            candidate->static_ai != (uint8_t)((ai->w0AIFlags & 1u) != 0u) ||
+            (candidate->static_ai && candidate->static_animation_frame == 0xffffu) ||
+            (!candidate->static_ai && candidate->static_animation_frame != 0xffffu)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int dm2_test_caii_storage_is_source_reset_ready(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int index;
+
+    if (!owner || !owner->caii_capacity.valid || !owner->caii_slots.valid ||
+        !owner->caii_rng_initialized || owner->caii_rng.random != 0u ||
+        owner->caii_slots.capacity !=
+            (int)owner->caii_capacity.source_capacity ||
+        owner->caii_slots.alloc_count != 0) {
+        return 0;
+    }
+    for (index = 0; index < owner->caii_slots.capacity; ++index) {
+        const uint8_t *slot = dm2_v1_caii_slot(&owner->caii_slots, index);
+        if (!slot || slot[0] != 0xffu || slot[1] != 0xffu) return 0;
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -2564,6 +2619,25 @@ int main(void) {
                     new_game_world_owner.dungeon.initial_party_dir == 0 &&
                     new_game_world_owner.record_pools.valid &&
                     new_game_world_owner.record_pools.record_graph_complete &&
+                    new_game_world_owner.caii_source.valid &&
+                    new_game_world_owner.caii_capacity.valid &&
+                    new_game_world_owner.caii_capacity.db4_record_count == 299u &&
+                    new_game_world_owner.caii_capacity.source_capacity > 0u &&
+                    new_game_world_owner.caii_capacity.source_capacity <=
+                        new_game_world_owner.caii_capacity.db4_record_count &&
+                    new_game_world_owner.caii_capacity.source_hash != 0u &&
+                    new_game_world_owner.caii_map_receipt.valid &&
+                    new_game_world_owner.caii_map_receipt.map_count == 44u &&
+                    new_game_world_owner.caii_map_receipt.candidate_count > 0u &&
+                    new_game_world_owner.caii_map_receipt.candidate_count ==
+                        new_game_world_owner.caii_map_receipt.static_candidate_count +
+                        new_game_world_owner.caii_map_receipt.dynamic_candidate_count &&
+                    new_game_world_owner.caii_map_receipt.source_hash != 0u &&
+                    new_game_world_owner.caii_map_candidates != NULL &&
+                    dm2_test_caii_map_candidates_match_owner(
+                        &new_game_world_owner) &&
+                    dm2_test_caii_storage_is_source_reset_ready(
+                        &new_game_world_owner) &&
                     new_game_world_owner.validated_map_count == 44u &&
                     new_game_world_owner.validated_world_hash != 0u &&
                     new_game_world_owner.dyn4_materialized &&

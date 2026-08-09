@@ -64,7 +64,7 @@ int main(void)
          between_has(select, draw,
              "m11_dm1_hoc_publish_runtime_frame_admission(state)") &&
          between_has(draw, inventory,
-             "m11_dm1_hoc_runtime_frame_admission_current(state,") &&
+             "m11_dm1_hoc_runtime_frame_admission_current(") &&
          between_has(draw, inventory,
              "m11_clear_dm1_hoc_runtime_frame_zones(");
     free(source);

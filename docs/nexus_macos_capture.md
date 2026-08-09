@@ -73,12 +73,30 @@ python3 scripts/validate_nexus_vdp1_snapshot.py \
   /extern/nexus-capture/run/vdp1-snapshot.raw
 ```
 
+För en snapshot som utlöses av en känd kommandolisteadress kan den bundna
+VDP1-payloaden granskas utan att lita på snapshotens transport-COPR:
+
+```sh
+python3 scripts/analyze_nexus_vdp1_command_window.py \
+  /extern/nexus-capture/run/runtime-vdp12.raw \
+  --capture-frames 1 --command-offset 0x47c0 --command-count 8 --require-end
+```
+
+`--command-offset` är endast till för en adress som observerats i samma
+runtime-session. Verktyget beskriver VDP1-kommandon och källbytes-hashar, men
+godkänner inte startup, meny, HUD, viewport, CLUT eller asset-ägarskap.
+
 Den validerade körningen på extern disk gav VDP1-state `ptmr=0x02`,
 `edsr=0x03`, en 1 048 577-byte VDP1-payload och writer-code vid `0x10a00` i
 samma session. Detta uppnår VDP1-transportbeviset. Snapshotten tas dock vid
 den första matchande källskrivningen; den är därför inte i sig bevis på en
 komplett draw-lista, CLUT-bindning eller startup-/meny-/HUD-/viewport-
 komposition.
+
+En senare samma-session-snapshot efter observerad adress `0x0485c` gav fem
+polygon-/texturposter följda av ett VDP1-end-record vid `0x04860`; den
+transportbundna kommandosekvensen kan därför granskas, men saknar fortfarande
+VDP2-frame-hook och konsumentbindning för skärmidentitet.
 
 Den verifierade macOS-observationen är därför:
 

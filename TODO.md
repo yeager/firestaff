@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- 🔧 DM2 GAME_LOAD: den privata CAII-arrayen och den källinitierade
+  slumptalsströmmen finns nu, men `RESET_CAII` saknar ännu den enda atomära
+  all-karts-mutationen för DB4 byte@5, statisk `DM2_1c9a_09db`, dynamisk
+  `DM2_ALLOC_CAII_TO_CREATURE`, `DM2_1c9a_0cf7` och `0a48`/CCM. Ingen del får
+  publiceras eller ersättas med en fast kö. Den owner-bundna animationsvägen
+  finns, men måste ingå i samma transaktion.
+
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och
   rosterkontroll och kopplas i den råa startup-handoffens world-state före
@@ -131,6 +138,17 @@
   Den privata
   kartkontexten bevarar nu teleporterpostens riktningar och probeväg, men får
   inte göra dem till en synlig eller styrbar partystatus före sessioncommit.
+  GAME_LOAD-ägaren behåller nu även DM2_INIT:s verkliga CAII-kapacitet från
+  hela DB4-poolen och de hashadmitterade AIDefinition-raderna. Den skapas inte
+  från synliga varelser eller en fast värdgräns. Själva `RESET_CAII` och
+  `FILL_ORPHAN_CAII` är fortfarande spärrade tills deras all-karts traversal,
+  CCM/animationsgren och dynamiska `c_tim` kan atomärt ägas tillsammans.
+  Traversalen är nu själv verifierad och behåller varje verklig DB4-post i
+  `FILL_CAII_CUR_MAP`-ordning med karta, ruta, record, AI-klass och råa
+  animationsfält. Statiska poster har dessutom sin exakta RAW8/RAW7-baserade
+  bildram för kommando `0x11`; dynamiska poster går fortsatt inte genom en
+  ersättningsram utan inväntar sin RNG- och CCM-ägare. Nästa mutation måste använda just denna lista och återställa
+  hela listans DB4-/CAII-/timerändringar om någon källa saknas.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår
@@ -143,7 +161,6 @@
   GDAT tills sista MVE-bilden har presenterats och M11 har stängt sin kö.
   Återstår: originalets fullständiga IBMIOP-avbrotts- och avbrytningsvägar;
   ljudtid får inte härledas ur paketlängd eller värdlatens.
-
 - 🔧 DM2 Amiga-start: den äkta SWSH → TITL-bildkedjan går nu vidare till
   Amiga-GDAT-menyn efter sista TITL-bilden. FM Towns särskilda SKULL.EXP-grind
   får inte längre fånga Amiga-input. Källägda ENDA och Amiga SD/SO-ljud väntar

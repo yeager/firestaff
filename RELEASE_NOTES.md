@@ -20,6 +20,8 @@
   asset scan is still pending.
 - `M11_Audio_Init`: Select macOS's `playback` audio category before opening
   SDL3 streams to avoid the CoreAudio head-tracking crash path.
+- `M12_StartupMenu`: Restore the durable data-directory state when a platform
+  folder backend reports a transient `.` display token.
 - `verify.yml`: Prevent rapid `main` integrations from canceling an
   already-started cross-platform verification matrix.
 
