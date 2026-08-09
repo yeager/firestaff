@@ -122,5 +122,6 @@
 + }
 + FirestaffInputFrame++;
 +}
-@@ -784,0 +785,1 @@
-+ FirestaffUpdateCaptureInput();
+@@ -776,0 +777,2 @@
+ if(time_elapsed == 0)
+  FirestaffUpdateCaptureInput();
