@@ -1,3 +1,14 @@
+# Nexus VDP1 CMDCOLR byteoffset and reusable DGN CLUT join (2026-08-09)
+
+- ✅ VDP1 capture-kompositorn och DGN-materialresolvern använder nu Saturns
+  dokumenterade CMDCOLR-ordadress med korrekt bytekonvertering (`<<3`).
+- ✅ DGN-materialjoinen tillåter en unik återanvändbar Structure2-palette även
+  när capture-bilden och paletteägaren ligger på olika descriptors i samma
+  hash-verifierade LEV-fil.
+- ✅ Syntetiska VDP1-kompositor- och materialresolver-regressioner passerar.
+- ⛔ Full extern frame-760 replay är fortsatt spärrad av den första
+  direct-color-drawen, vars källa inte matchar en autentiserad retail-span.
+
 # CSB: dokumenterad plattformsstatus synkad med realdataproven (2026-08-09)
 
 - ✅ Release notes och den historiska bootstrap-scouten beskriver nu A31E:s

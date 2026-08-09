@@ -342,7 +342,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
             *out_receipt = receipt;
             return 0;
         }
-        palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 2U);
+        /* CMDCOLR is a VDP1 word address after the documented <<2
+         * conversion; this byte-buffer API therefore uses <<3. */
+        palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 3U);
         if (palette_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U) {
             ++receipt.unresolved_draw_commands;
             *out_receipt = receipt;

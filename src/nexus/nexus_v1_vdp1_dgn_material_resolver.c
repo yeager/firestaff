@@ -69,7 +69,9 @@ int nexus_v1_vdp1_dgn_material_resolver(
     if (base > (uint32_t)input->dgn_byte_count ||
         useful > (uint32_t)input->dgn_byte_count - base ||
         useful < 22U) return 0;
-    palette_offset = (((uint32_t)parsed->colour_control & ~UINT32_C(3)) << 2U);
+    /* CMDCOLR's documented <<2 result is a VDP1 word address; this buffer
+     * uses byte offsets, so the conversion is <<3. */
+    palette_offset = (((uint32_t)parsed->colour_control & ~UINT32_C(3)) << 3U);
     if (palette_offset > (uint32_t)vdp1_vram_size - 32U) return 0;
 
     for (cursor = 0U; cursor + 20U <= useful; cursor += 20U) {
@@ -113,10 +115,16 @@ int nexus_v1_vdp1_dgn_material_resolver(
             (int)parsed->texture_byte_count, image, (int)image_size);
         palette_match = swapped_words_equal(
             vdp1_vram + palette_offset, 32, palette, 32);
-        if (image_match) ++image_matches;
-        if (image_match && palette_match) {
-            ++palette_matches;
+        if (image_match) {
+            ++image_matches;
             matched_image = image;
+        }
+        /* Nexus may reuse a canonical DGN palette for a different image
+         * descriptor. CMDCOLR is a frame-local CLUT selection, so image and
+         * palette ownership must be joined independently within the same
+         * hash-verified DGN rather than forced to one descriptor. */
+        if (palette_match) {
+            ++palette_matches;
             matched_palette = palette;
         }
     }

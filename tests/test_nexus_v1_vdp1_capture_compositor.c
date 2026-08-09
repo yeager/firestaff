@@ -236,7 +236,7 @@ int main(void)
     wl16(vdp1_vram + 46, 112U);
     wl16(vdp1_vram + 64, 0x0002U);      /* mode-1 draw */
     wl16(vdp1_vram + 68, 1U << 3);
-    wl16(vdp1_vram + 70, 0x0080U);      /* CLUT at 0x200 */
+    wl16(vdp1_vram + 70, 0x0040U);      /* CLUT at 0x200 (byte offset) */
     wl16(vdp1_vram + 72, 0x0020U);      /* texture at 0x100 */
     wl16(vdp1_vram + 74, 0x0101U);      /* 8x1 */
     wl16(vdp1_vram + 76, 0xfffcU);

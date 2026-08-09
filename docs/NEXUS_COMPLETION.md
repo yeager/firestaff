@@ -62,21 +62,26 @@ ogiltig; de öppnar inte semantic admission.
 
 I den lokala, användarägda capture-korpusen
 `run-codex-menu-long-20260809f/runtime-vdp12.raw` är frame 760 den bästa
-undersökta DGN-kandidaten: 242 command-records, 231 mode-1-draws, 227 exakta
-source/CLUT-joins och 198 Structure3 face-owner-joins. Fyra draws (offsets
-`0x0d900`, `0x0cee0`, `0x0cfe0`, `0x0de20`) har ingen unik DGN-materialrad och
-33 av de matchade materialen saknar Structure3-ägare. Därför är även denna
-frame ett capture-only-bevis; den får inte användas som komplett scene replay
-eller som bevis för Saturns face-selection, transform, culling eller
+undersökta DGN-kandidaten. C:s command-chain-adapter binder 242 records och
+verifierar order, clip, local-coordinate och END-state, men den första
+textured drawen är direct-color (mode 5, källa `0x5ad68`, 130320 byte) och
+matchar ingen byteexakt span i den hashverifierade retail-korpusen. En separat
+mode-1-observation vid `0x0e160` matchar LEV00 Structure2-bild 49, men är inte
+ensam tillräcklig för att ersätta den fulla kedjans obevisade draw. Därför är
+frame 760 ett capture-only-bevis; den får inte användas som komplett scene
+replay eller som bevis för Saturns face-selection, transform, culling eller
 produktionsrasterisering. C-adaptern
 `nexus_v1_saturn_runtime_capture_frame()` läser nu samma autentiserade
 VDP1/VDP2-raw-envelope i C, och
 `nexus_v1_vdp1_capture_replay_runtime_frame()` lämnar VDP1-VRAM/COPR direkt
 till den bounded replay-kedjan. Den nya
 `nexus_v1_vdp1_dgn_material_resolver()` kopplar nu en verifierad LEV-fil till
-en unik mode-1-bild och CLUT med byteidentisk Saturn-ordning; tvetydiga eller
-oattesterade källor avvisas. Den är fortfarande capture-only och lämnar därför
-face-selection, transform, culling och vanlig produktion spärrade.
+en unik mode-1-bild och en unik återanvändbar CLUT med byteidentisk Saturn-
+ordning; paletteägarskapet behöver alltså inte ligga på samma Structure2-
+descriptor som bilden. CMDCOLR konverteras från Saturns ordadress till korrekt
+byteoffset (`<<3`). Tvetydiga eller oattesterade källor avvisas. Den är
+fortfarande capture-only och lämnar därför face-selection, transform, culling,
+direct-color-material och vanlig produktion spärrade.
 
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den

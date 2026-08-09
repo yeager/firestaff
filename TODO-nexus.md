@@ -406,10 +406,12 @@ neither word receives task, target, callback, or dispatch semantics.
 ### Nexus V2.0 / V2.1 / V2.2
   - 2026-08-09 VDP1/DGN materialresolver: `nexus_v1_vdp1_dgn_material_resolver()`
     konsumerar en hashattesterad LEV*.DGN-Structure2 och kräver en unik
-    byteidentisk mode-1-bild samt 16-ords CLUT-join mot samma VDP1-VRAM-frame.
-    Positiv fixture och avvisning utan source-attest passerar. Resolvern
-    tilldelar inte face, mesh-transform, culling eller produktionsägarskap;
-    verklig long-frame-handoff till canonical LEV-korpus återstår.
+    byteidentisk mode-1-bild samt en unik återanvändbar 16-ords CLUT-join mot
+    samma VDP1-VRAM-frame. CMDCOLR:s Saturn-ordadress konverteras till korrekt
+    byteoffset (`<<3`). Positiv fixture och avvisning utan source-attest
+    passerar. Resolvern tilldelar inte face, mesh-transform, culling eller
+    produktionsägarskap; verklig full replay återstår. En frame-760-audit visar
+    dessutom en första direct-color-draw utan byteexakt retailägare.
 
   - 2026-08-09 VDP2 raw-layout och NBG1-handoff: C använder nu capture-formatets
     verkliga VDP2-layout (CRAM 0x2000, VRAM 0x80000, registerfönster 0x200)

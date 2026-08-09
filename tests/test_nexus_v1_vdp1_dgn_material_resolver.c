@@ -52,7 +52,7 @@ int main(void)
         dgn[0x800 + 22 + i] = 0x12U;
         dgn[0x800 + 54 + i] = 0x80U;
         vram[0x100 + i] = 0x12U;
-        vram[0xc9e0 + i] = 0x80U;
+        vram[0x193c0 + i] = 0x80U;
     }
     le16(command + 0, 0x1002U);
     le16(command + 4, 1U << 3U);
