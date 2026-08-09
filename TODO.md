@@ -18,6 +18,12 @@
   negative source-join result rather than an invalid-corpus result; semantic
   admission remains blocked.
 
+- 🔧 Nexus VDP2 tilemap capture replay now normalizes both authenticated
+  big-endian and native little-endian register serializations using TVMD as
+  the order witness. Exact name-table/character-generator/CRAM joins,
+  explicit placement and capture attestation remain required; no inferred
+  FONT256 text consumer or production HUD/menu route is opened.
+
 - ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
   lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
   repot; den nya Git-spärren måste fortsätta vara grön.

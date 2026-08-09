@@ -54,6 +54,16 @@ int main(void)
         fprintf(stderr, "unauthenticated tilemap replay admitted\n");
         return 1;
     }
+    /* Native little-endian register serialization is also present in the
+     * authenticated Mednafen witness; the source spans stay byte-identical. */
+    regs[0x00] = 0x80; regs[0x01] = 0x00;
+    regs[0x20] = 0x02; regs[0x21] = 0x00;
+    input.original_saturn_capture_verified = 1;
+    if (!nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
+            &viewport, &input, &receipt) || !receipt.valid) {
+        fprintf(stderr, "little-endian tilemap register replay rejected\n");
+        return 1;
+    }
     puts("test_nexus_v1_vdp2_tilemap_capture_compositor: PASS");
     return 0;
 }

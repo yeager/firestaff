@@ -19,6 +19,11 @@
   rechecked: 405 bounded decoded sources, zero exact bitmap joins, and
   `semantic_admission=blocked`.
 
+- ✅ The VDP2 NBG1 tilemap capture compositor now reads both authenticated
+  register serializations (TVMD-backed big-endian and native little-endian).
+  The existing source-bound 8×8 tilemap test passes in both forms, while its
+  exact-span, explicit-placement and no-fallback gates remain unchanged.
+
 # Nexus: VDP1 command-list framing (2026-08-09)
 
 - ✅ `scripts/analyze_nexus_vdp1_command_sequence.py` now follows the

@@ -7,6 +7,21 @@ static uint16_t read_be16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[0] << 8U) | p[1]);
 }
 
+static uint16_t read_le16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[1] << 8U) | p[0]);
+}
+
+static uint16_t read_register16(const uint8_t *registers, size_t offset)
+{
+    /* TVMD is 0x0080 in both authenticated serializations. A zero TVMD is
+     * retained for the existing source-bound fixture lane. */
+    if (read_be16(registers) != 0x0080U &&
+        read_le16(registers) == 0x0080U)
+        return read_le16(registers + offset);
+    return read_be16(registers + offset);
+}
+
 static uint8_t expand5(uint16_t value, unsigned shift)
 {
     uint8_t result = (uint8_t)(((value >> shift) & 0x1fU) << 3U);
@@ -58,11 +73,11 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
         *out_receipt = receipt;
         return 0;
     }
-    bgon = read_be16(input->vdp2_registers + 0x20U);
-    chctla = read_be16(input->vdp2_registers + 0x28U);
-    bmpna = read_be16(input->vdp2_registers + 0x2cU);
-    craofa = read_be16(input->vdp2_registers +
-                       NEXUS_V1_VDP2_CRAOFA_OFFSET);
+    bgon = read_register16(input->vdp2_registers, 0x20U);
+    chctla = read_register16(input->vdp2_registers, 0x28U);
+    bmpna = read_register16(input->vdp2_registers, 0x2cU);
+    craofa = read_register16(input->vdp2_registers,
+                             NEXUS_V1_VDP2_CRAOFA_OFFSET);
     if ((bgon & 0x0002U) == 0U || (chctla & 0x0200U) == 0U ||
         ((chctla >> 10U) & 3U) != 0U || ((chctla >> 12U) & 3U) != 1U ||
         /* NBG1 owns BMPNA bits 8..10; bits 0..2 belong to NBG0. */

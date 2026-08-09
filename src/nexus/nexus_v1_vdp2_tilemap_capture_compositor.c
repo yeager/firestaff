@@ -7,6 +7,24 @@ static uint16_t read_be16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[0] << 8U) | p[1]);
 }
 
+static uint16_t read_le16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[1] << 8U) | p[0]);
+}
+
+static uint16_t read_register16(const uint8_t *registers, size_t offset)
+{
+    uint16_t tvmd = read_be16(registers + 0x00U);
+
+    /* The external producer has both historical big-endian and native
+     * little-endian serializations. TVMD is the stable 0x0080 witness;
+     * synthetic fixtures with a zero TVMD retain the original big-endian
+     * contract. */
+    if (tvmd != 0x0080U && read_le16(registers) == 0x0080U)
+        return read_le16(registers + offset);
+    return read_be16(registers + offset);
+}
+
 static uint8_t expand5(uint16_t value, unsigned shift)
 {
     uint8_t result = (uint8_t)(((value >> shift) & 0x1fU) << 3U);
@@ -63,10 +81,14 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
     }
 
     map_bytes = input->map_columns * input->map_rows * 4;
-    bgon = read_be16(input->vdp2_registers + NEXUS_V1_VDP2_TILEMAP_BGON_OFFSET);
-    chctla = read_be16(input->vdp2_registers + NEXUS_V1_VDP2_TILEMAP_CHCTLA_OFFSET);
-    pncn1 = read_be16(input->vdp2_registers + NEXUS_V1_VDP2_TILEMAP_PNCN1_OFFSET);
-    craofa = read_be16(input->vdp2_registers + NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
+    bgon = read_register16(input->vdp2_registers,
+                           NEXUS_V1_VDP2_TILEMAP_BGON_OFFSET);
+    chctla = read_register16(input->vdp2_registers,
+                             NEXUS_V1_VDP2_TILEMAP_CHCTLA_OFFSET);
+    pncn1 = read_register16(input->vdp2_registers,
+                            NEXUS_V1_VDP2_TILEMAP_PNCN1_OFFSET);
+    craofa = read_register16(input->vdp2_registers,
+                             NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
     /* CHCTLA bit 9 is NBG1 bitmap enable; clear means tilemap. Bit 8 is
      * 8x8/16x16 character size; only 8x8 is admitted by this bounded lane. */
     bpp = ((chctla >> 12U) & 3U) == 0U ? 4 :
