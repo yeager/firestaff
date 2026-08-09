@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — rå RNG-kod fångad, semantiken fortfarande spärrad
+
+- 🔧 Capture-scriptet och den reproducerbara Mednafen-patchkedjan skriver nu
+  `.rng-code` med 256 faktiska byte vid `$5D64/$5D6A`, logisk PC och fysisk
+  HuC6280-adress. En autentiserad `.mc0`-körning gav `$5D64`, 50 `$B0E5`-
+  entries och 512 instruktionsprover.
+- 🔒 Körningen saknade CD→RAM-originreceipts och visade ingen verifierad
+  RNG-returägare. Råkodsidecaren får därför inte användas för att hitta på
+  RNG-värden, monsterstats, AI, loot, T700 eller T900.
+
 ## 2026-08-09 — kvarvarande Theron-semantik efter teleporterfix
 
 - 🔧 Den externa Mednafen-capturen har nu en explicit förlängd, begränsad

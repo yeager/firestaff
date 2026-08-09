@@ -1,7 +1,7 @@
 diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -175,3 +175,9 @@
+@@ -175,3 +175,11 @@
  static FILE *TheronIrq2TraceSpawnRegisters;
  static unsigned TheronIrq2TraceSpawnRegisterSamples;
 +static FILE *TheronIrq2TraceRngConsumer;
@@ -10,13 +10,42 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +static unsigned TheronIrq2TraceRngWindowRemaining;
 +static unsigned TheronIrq2TraceRngEntrySP;
 +static unsigned TheronIrq2TraceRngReturnPC;
++static FILE *TheronIrq2TraceRngCode;
++static bool TheronIrq2TraceRngCodeSeen[2];
  static void FlushTheronIrq2Trace(void)
-@@ -200,3 +204,66 @@
+@@ -200,3 +204,93 @@
   const RegGroupType *trace_regs = (*CurGame->Debugger->RegGroups)[0];
   const uint32 logical_pc = trace_regs->GetRegister(trace_regs->Regs[0].id, NULL, 0) & 0xffff;
 + const bool rng_entry = logical_pc == 0x5d64 || logical_pc == 0x5d6a;
 + if(rng_entry)
 + {
++  const unsigned code_slot = logical_pc == 0x5d64 ? 0u : 1u;
++  const uint32 code_mpr = trace_regs->GetRegister(
++   trace_regs->Regs[6 + (logical_pc >> 13)].id, NULL, 0) & 0xff;
++  if(!TheronIrq2TraceRngCode)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_RNG_CODE_TRACE");
++   if(path && *path)
++   {
++    TheronIrq2TraceRngCode = fopen(path, "w");
++    if(TheronIrq2TraceRngCode)
++     fputs("source=mednafen-pce-instrumented-rng-code-v1\n",
++           TheronIrq2TraceRngCode);
++   }
++  }
++  if(TheronIrq2TraceRngCode && !TheronIrq2TraceRngCodeSeen[code_slot])
++  {
++   fprintf(TheronIrq2TraceRngCode,
++           "rng_code_window entry=%s logical_pc=%04x physical_pc=%08x bytes=256 hex=",
++           code_slot == 0u ? "5d64" : "5d6a", logical_pc,
++           (code_mpr << 13) | (logical_pc & 0x1fff));
++   for(unsigned code_offset = 0; code_offset < 256; ++code_offset)
++    fprintf(TheronIrq2TraceRngCode, "%02x",
++            CurGame->Debugger->MemPeek(logical_pc + code_offset, 1, true, true) & 0xff);
++   fputc('\n', TheronIrq2TraceRngCode);
++   fflush(TheronIrq2TraceRngCode);
++   TheronIrq2TraceRngCodeSeen[code_slot] = true;
++  }
 +  TheronIrq2TraceRngWindowSequence++;
 +  TheronIrq2TraceRngWindowStep = 0;
 +  TheronIrq2TraceRngWindowRemaining = 512;

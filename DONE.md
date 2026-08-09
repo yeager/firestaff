@@ -1,3 +1,15 @@
+# Theron: byteexakt RNG-kodsidecar (2026-08-09)
+
+- ✅ Den externa Mednafen-instrumenteringen skriver nu en separat `.rng-code`
+  sidecar när `$5D64` eller `$5D6A` faktiskt exekveras. Varje kodfönster
+  innehåller 256 råa byte, logisk PC och MPR-härledd fysisk PC.
+- ✅ En autentiserad `.mc0`-körning producerade ett `$5D64`-fönster, 50
+  `$B0E5`-entries och 512 RNG-instruktionsprover. Patchkedja, capture-script
+  och riktat script-test passerar.
+- 🔒 CD→RAM-origin saknades i just denna körning. Ingen RNG-retur, spawn-, AI-,
+  loot-, T700- eller T900-semantik öppnas; råkodsidecaren är endast
+  disassemblybevis.
+
 # CSB Amiga: native Prison och dörröppning (2026-08-09)
 
 - ✅ A31, A35 multilingual och A35 English går nu från sin verifierade

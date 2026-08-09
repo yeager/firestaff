@@ -78,8 +78,12 @@ if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$buil
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_rng_consumer_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_RNG_CONSUMER_TRACE="$rng_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_CODE_TRACE="$rng_code_trace"' "$script" ||
    ! grep -Fq 'rng_consumer_samples=%s' "$script" ||
+   ! grep -Fq 'rng_code_windows=%s' "$script" ||
    ! grep -Fq 'rng_consumer_window sequence=%u step=%u pc=%04x physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_CODE_TRACE' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'rng_code_window entry=%s logical_pc=%04x physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'logical_pc == 0x5d64' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'logical_pc == 0x5d6a' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"; then
     printf 'FAIL: capture build must retain a bounded raw RNG-consumer execution window\n' >&2

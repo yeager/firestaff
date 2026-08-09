@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Den autentiserade `.mc0`-capturen producerar nu en separat `.rng-code`
+  sidecar med 256 faktiska byte vid `$5D64` och korrekt MPR-härledd fysisk PC.
+  Det är starkare disassemblybevis, men samma körning saknar CD→RAM-origin;
+  RNG-retur, spawn, AI, T700 och T900 får därför fortfarande inte publiceras.
+
 - ⏳ Den förlängda registerfångsten visar nu `$B0E5`/`$5D64` i en autentisk
   save-state-körning och full CD→RAM-transport i en separat cold-start. De får
   inte slås ihop: nästa witness måste visa source-owned dynamik och RNG-retur

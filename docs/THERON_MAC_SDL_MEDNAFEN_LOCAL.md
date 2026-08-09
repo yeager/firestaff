@@ -343,3 +343,20 @@ två autentiserade CD→RAM-originreceipts, 32 game-main-RAM-dispatchar och 89
 registerprover, varav 18 `$4644` och 64 `$4667`. Den saknade fortfarande
 `$B0E5` och en dynamisk RNG-retur; därför öppnar den inte spawn-, AI-, T700-
 eller T900-semantik.
+
+### Råkodsidecar vid `$5D64/$5D6A`
+
+När en autentiserad körning når RNG-ingången skriver capture-scriptet även
+`${THERON_LIVE_TRACE_OUTPUT}.rng-code`. Mednafen markerar filen med
+`source=mednafen-pce-instrumented-rng-code-v1` och skriver 256 byte från den
+faktiska HuC6280-adressen tillsammans med logisk och fysisk PC. Sidecaren ska
+inte tolkas som en färdig RNG-implementation; den är ett rått
+disassemblyunderlag.
+
+Den verifierade `.mc0`-körningen från 2026-08-09 gav 50 `$B0E5`-entries, ett
+512-stegs RNG-fönster och ett kodfönster vid `$5D64` (`physical_pc=$000D1D64`).
+Track 02, System Card och Mednafen hade respektive MD5
+`f23601102138f87c33025877767ebf76`, `ff1a674273fe3540ccef576376407d1d`
+och `3ee7c8df8aad7b87ef0ecc05aaa29d8d`. Körningen saknade CD→RAM-receipts,
+så den öppnar inte RNG-, spawn-, AI-, T700- eller T900-semantik och får inte
+slås ihop med en annan session.

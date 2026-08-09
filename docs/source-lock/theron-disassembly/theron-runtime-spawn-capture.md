@@ -188,6 +188,35 @@ Comma/period are not assumed as portable macOS bindings; they require an
 explicit local Mednafen input-map entry. This control choice is capture
 metadata only and does not claim a game-owned Button I/II semantic consumer.
 
+## 2026-08-09 — råkodsidecar för RNG-ingången
+
+Den instrumenterade Mednafen-kedjan skriver nu en separat `.rng-code`
+sidecar när HuC6280 faktiskt börjar exekvera vid `$5D64` eller `$5D6A`.
+Sidecaren har den fasta markören
+`source=mednafen-pce-instrumented-rng-code-v1` och innehåller, per entry, den
+logiska PC:n, den MPR-härledda fysiska PC:n samt 256 byte rå instruktionsminne.
+Den hålls separat från `.rng-consumer`; den råa kodbilden är inte ett RNG-värde
+och parsern får inte göra den till en spawn- eller statstabell.
+
+Den autentiserade `.mc0`-körningen producerade följande lokala receipt:
+
+```text
+Track 02 MD5:       f23601102138f87c33025877767ebf76
+System Card MD5:    ff1a674273fe3540ccef576376407d1d
+Mednafen MD5:       3ee7c8df8aad7b87ef0ecc05aaa29d8d
+B0E5 samples:       50
+RNG window samples: 512
+RNG code windows:   1 (entry $5D64, physical PC $000D1D64)
+CD->RAM receipts:   0
+RNG code MD5:       bb890a377b3d17e96384b15d0255c14b
+```
+
+Detta är nu byteexakt runtimebevis för vilken kod som körs vid `$5D64` i den
+autentiserade körningen. Det bevisar fortfarande inte RNG-returvärdet,
+bankens ägarskap, monsterrecordets konsument, AI, loot, T700 eller T900.
+Körningen får därför inte släppa de semantiska grindarna, och den får inte
+blandas med den separata cold-start-körningen som hade CD→RAM-receipts.
+
 ## 2026-08-09 fresh cold-start window trace
 
 The same real US CUE/BIN and external System Card were replayed with the

@@ -936,6 +936,8 @@ index 347482c4..61d4758e 100644
 +	  TheronIrq2TraceRawControllerResultStoreCount = 0;
 +	  TheronIrq2TraceSpawnRegisterSamples = 0;
 +	  TheronIrq2TraceSpawnRegisterSampleLimit = 2048;
++	  TheronIrq2TraceRngCode = NULL;
++	  memset(TheronIrq2TraceRngCodeSeen, 0, sizeof(TheronIrq2TraceRngCodeSeen));
 +	  if(const char* limit_text = getenv("FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT"))
 +	  {
 +	   char* limit_end = NULL;
