@@ -19,7 +19,9 @@ static int test_escaped_newline_normalization(void) {
         "source=mednafen-pce-instrumented-main-ram-loader\\n"
         "main_ram_loader_block_transfer logical_pc=2286 physical_pc=1f0286 operation=tia source=c800 destination=0404 length=80\\n"
         "main_ram_loader_rts logical_pc=228d physical_pc=1f028d\\n"
-        "main_ram_loader_post_rts source_logical_pc=228d source_physical_pc=1f028d logical_pc=2286 physical_pc=1f0286 opcode=e3\\n";
+        "main_ram_loader_post_rts source_logical_pc=228d source_physical_pc=1f028d logical_pc=2286 physical_pc=1f0286 opcode=e3\\n"
+        "main_ram_loader_write sequence=0 dispatch_sequence=unbound logical_destination=3084 physical_destination=1f1084 value=00 writer_pc=318b writer_physical_pc=1f118b\\n"
+        "_pc=1f118b\\n";
     Theron_V1MednafenMainRamTraceReceipt receipt;
     int fd = mkstemp(path);
     FILE *file;

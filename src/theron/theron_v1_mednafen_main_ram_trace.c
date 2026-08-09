@@ -13,7 +13,7 @@
 #define THERON_V1_MAIN_RAM_LSTAT lstat
 #endif
 
-#define THERON_V1_MAIN_RAM_TRACE_MAX_BYTES (256u * 1024u)
+#define THERON_V1_MAIN_RAM_TRACE_MAX_BYTES (4u * 1024u * 1024u)
 
 static int read_line(FILE *file, char *line, size_t capacity) {
     size_t length;
@@ -146,6 +146,11 @@ int theron_v1_mednafen_main_ram_trace_parse_file(
         uint32_t rts_logical_pc, rts_physical_pc;
         uint32_t post_source_logical_pc, post_source_physical_pc;
         uint32_t post_logical_pc, post_physical_pc, opcode;
+        uint32_t write_sequence, write_logical_destination,
+            write_physical_destination, write_value, write_pc,
+            write_physical_pc;
+        uint32_t auxiliary_physical_pc;
+        char dispatch_sequence[32];
         char operation[16];
 
         if (first_line) {
@@ -234,6 +239,48 @@ int theron_v1_mednafen_main_ram_trace_parse_file(
             }
             saw_post_rts = 1;
             receipt.post_rts_count++;
+            continue;
+        }
+        if (sscanf(line, "_pc=%x%n", &auxiliary_physical_pc, &consumed) == 1 &&
+            line[consumed] == '\0') {
+            /* The writer emits this continuation record when a bounded
+             * write's physical PC is carried across a trace chunk. */
+            if (auxiliary_physical_pc < 0x1f0000u ||
+                auxiliary_physical_pc >= 0x1f8000u) {
+                fclose(file);
+                return reject(&receipt);
+            }
+            continue;
+        }
+        if (sscanf(line,
+                   "main_ram_loader_write sequence=%u dispatch_sequence=%31s "
+                   "logical_destination=%x physical_destination=%x value=%x "
+                   "writer_pc=%x writer_physical_pc=%x%n",
+                   &write_sequence, dispatch_sequence,
+                   &write_logical_destination, &write_physical_destination,
+                   &write_value, &write_pc, &write_physical_pc, &consumed) == 7 &&
+            line[consumed] == '\0') {
+            /* ReDMCSB does not define Theron's retail banked loader, so this
+             * receipt is deliberately structural: the instrumented trace
+             * supplies the exact RAM address, physical MPR-derived address,
+             * byte and writer PC.  No write becomes an object/state meaning.
+             * The `$2600-$27FF` flag is retained as a negative admission gate
+             * for the future T900 consumer capture. */
+            if (write_logical_destination > 0xffffu ||
+                write_physical_destination < 0x1f0000u ||
+                write_physical_destination >= 0x1f8000u ||
+                write_value > 0xffu || write_pc > 0xffffu ||
+                write_physical_pc < 0x1f0000u ||
+                write_physical_pc >= 0x1f8000u ||
+                dispatch_sequence[0] == '\0') {
+                fclose(file);
+                return reject(&receipt);
+            }
+            if (write_logical_destination >= 0x2600u &&
+                write_logical_destination <= 0x27ffu) {
+                receipt.target_2600_bytes_present = 1;
+            }
+            (void)write_sequence;
             continue;
         }
         /* The capture sidecar also records bounded branch/call context. It

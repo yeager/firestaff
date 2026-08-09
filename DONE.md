@@ -1,3 +1,16 @@
+# Theron authenticated CD→RAM transport admission (2026-08-09)
+
+- ✅ Capture-gaten räknar nu byte-exakta `pce_cd_*origin*_ram_receipt`-poster
+  som den autentiserade CD/FIFO→RAM-transporten. Den gamla räknaren för ett
+  snävt lågt CPU-adressintervall finns kvar endast som diagnostik och kan inte
+  längre avvisa en giltig bankad HuC6280-väg.
+- ✅ En ny extern-disk-körning mot äkta US Track 02/System Card passerar med
+  råsektorer, SCSI-bindningar, input, CDIRQ och två origin-RAM-kvitton. Samma
+  körning gav 32 game-main-RAM-dispatcher och 4 096 konsumentläsningar.
+- ✅ High-level CD-/VCE-markörerna saknas fortfarande. Den nya vägen bevisar
+  därför endast source-bound transport, inte `$2600`-objectkonsument eller
+  RNG-, spawn-, AI-, combat-, T700- eller T900-semantik.
+
 # Theron source-bound property rows (2026-08-09)
 
 - ✅ Track 02-loadern kräver fortsatt en byteverifierad 66×6-byte propertytabell

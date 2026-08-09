@@ -1051,6 +1051,13 @@ transition_host_focus_state_count=$(trace_count '^host_focus_state ' "$input_tra
 transition_input_grab_chord_count=$(trace_count '^host_input_grab_chord ' "$input_trace")
 transition_host_sdl_event_types=$(trace_event_types "$input_trace")
 transition_irq_count=$(trace_count '^pce_cd_irq cpu_pc=' "$cd_trace")
+# The low-PC register-read counter is retained as a diagnostic, but it is not
+# a valid ownership test: the retail CD path may reach the FIFO through a
+# banked HuC6280 routine outside that narrow address expression.  The
+# authenticated ownership boundary is instead a byte-exact CD/FIFO -> RAM
+# origin receipt.  See docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md
+# and docs/source-lock/theron-fifo-origin-capture-2026-08-06.md.  This admits
+# transport only; the RNG/AI/T700/T900 consumers remain fail-closed elsewhere.
 transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} ' "$cd_trace")
 transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trace")
 transition_scsi_read_command_count=$(trace_count '^scsi_read_command ' "$cd_trace")
@@ -1061,6 +1068,7 @@ transition_adpcm_ram_write_count=$(trace_count '^pce_cd_adpcm_ram_write ' "$cd_t
 transition_adpcm_ram_read_prepare_count=$(trace_count '^pce_cd_adpcm_ram_read_prepare ' "$cd_trace")
 transition_adpcm_cpu_read_count=$(trace_count '^pce_cd_adpcm_cpu_read ' "$cd_trace")
 transition_origin_ram_receipt_count=$(trace_count '^pce_cd_origin_ram_receipt ' "$cd_trace")
+transition_authenticated_cd_ram_count=$(trace_count '^pce_cd_(origin_ram_receipt|fifo_origin_ram_receipt|origin_main_ram_receipt|fifo_origin_main_ram_receipt) ' "$cd_trace")
 transition_game_main_ram_e009_count=$(trace_count '^game_main_ram_e009_dispatch ' "$trace")
 transition_main_ram_loader_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii ' "$main_ram_loader_trace")
 transition_continuation_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii source=3c80 ' "$main_ram_loader_trace")
@@ -1110,6 +1118,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'adpcm_ram_read_prepares=%s\n' "$transition_adpcm_ram_read_prepare_count"
     printf 'adpcm_cpu_reads=%s\n' "$transition_adpcm_cpu_read_count"
     printf 'byte_exact_origin_ram_receipts=%s\n' "$transition_origin_ram_receipt_count"
+    printf 'authenticated_cd_ram_receipts=%s\n' "$transition_authenticated_cd_ram_count"
     printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"
     printf 'main_ram_loader_tii_transfers=%s\n' "$transition_main_ram_loader_tii_count"
     printf 'continuation_tii_source_3c80=%s\n' "$transition_continuation_tii_count"
@@ -1165,7 +1174,8 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
         printf 'scripted_pce_input_plan=%s\n' "$replay_input_script"
     fi
     if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
-          "$transition_non_system_card_count" -gt 0 && "$transition_sector_count" -gt 0 ]]; then
+          "$transition_authenticated_cd_ram_count" -gt 0 && "$transition_sector_count" -gt 0 &&
+          "$transition_scsi_read_command_count" -gt 0 && "$transition_scsi_sector_binding_count" -gt 0 ]]; then
         printf '%s\n' 'transition=observed'
     else
         printf '%s\n' 'transition=missing'
@@ -1182,37 +1192,50 @@ if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_controller_state ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=' "$trace" ||
    ! grep -Fq 'dynamic_huc6260_palette_store ' "$trace"; then
-    if [[ "$transition_sector_count" -gt 0 ]]; then
-        printf 'BLOCKED: loader reached authentic raw sectors but no game-owned PCE-CD data read was observed; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s raw_sectors=%s main_ram_e009_dispatches=%s main_ram_e009_enters=%s main_ram_e009_data_reads=%s main_ram_e009_register_writes=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$transition_sector_count" "$transition_main_ram_loader_e009_dispatch_count" "$transition_main_ram_e009_enter_count" "$transition_main_ram_e009_data_read_count" "$transition_main_ram_e009_register_write_count" "$status"
+    # Some authentic runs expose the retail CD/FIFO transfer as an origin
+    # receipt without the optional high-level dynamic-CD markers.  Do not
+    # reject that lower-level, source-bound transport evidence merely because
+    # the marker-producing probe was not active.
+    if [[ "$transition_sector_count" -gt 0 &&
+          "$transition_scsi_read_command_count" -gt 0 &&
+          "$transition_scsi_sector_binding_count" -gt 0 &&
+          "$transition_authenticated_cd_ram_count" -gt 0 &&
+          "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 ]]; then
+        printf 'INFO: high-level dynamic markers absent; accepting authenticated CD->RAM origin receipts as transport evidence (main_ram_e009_dispatches=%s main_ram_consumer_reads=%s)\n' "$transition_game_main_ram_e009_count" "$transition_main_ram_consumer_read_count" >&2
+    else
+        if [[ "$transition_sector_count" -gt 0 ]]; then
+            printf 'BLOCKED: loader reached authentic raw sectors but no authenticated CD->RAM origin receipt was observed; host_keys=%s input=%s irq=%s authenticated_cd_ram=%s raw_sectors=%s main_ram_e009_dispatches=%s main_ram_e009_enters=%s main_ram_e009_data_reads=%s main_ram_e009_register_writes=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_authenticated_cd_ram_count" "$transition_sector_count" "$transition_main_ram_loader_e009_dispatch_count" "$transition_main_ram_e009_enter_count" "$transition_main_ram_e009_data_read_count" "$transition_main_ram_e009_register_write_count" "$status"
+            exit 1
+        fi
+        if grep -Fqx 'post_latch_cd_baseline_pc=c897 cd_1800=d0 cd_1801=00 cd_1802=00 cd_1803=02 cd_1804=00' "$trace" &&
+           grep -Eq '^c860_window_pc=c8c4 .*instruction=LDA \$222D  @ \$222D = \$00( |$)' "$trace" &&
+           grep -Eq '^c860_window_pc=c8c7 .*instruction=CMP #\$08' "$trace" &&
+           grep -Eq '^c860_window_pc=c8cb .*instruction=CMP #\$04' "$trace" &&
+           grep -Eq '^c860_window_pc=c8cd .*instruction=BNE \$C897' "$trace"; then
+            printf 'BLOCKED: System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s authenticated_cd_ram=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$(awk -F= '/^pce_input_transactions_after_first_host=/{print $2}' "$transition_receipt")" "$transition_irq_count" "$transition_authenticated_cd_ram_count" "$status"
+            exit 1
+        fi
+        printf 'BLOCKED: dynamic receipts absent; host_keys=%s input=%s irq=%s authenticated_cd_ram=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_authenticated_cd_ram_count" "$status"
         exit 1
     fi
-    if grep -Fqx 'post_latch_cd_baseline_pc=c897 cd_1800=d0 cd_1801=00 cd_1802=00 cd_1803=02 cd_1804=00' "$trace" &&
-       grep -Eq '^c860_window_pc=c8c4 .*instruction=LDA \$222D  @ \$222D = \$00( |$)' "$trace" &&
-       grep -Eq '^c860_window_pc=c8c7 .*instruction=CMP #\$08' "$trace" &&
-       grep -Eq '^c860_window_pc=c8cb .*instruction=CMP #\$04' "$trace" &&
-       grep -Eq '^c860_window_pc=c8cd .*instruction=BNE \$C897' "$trace"; then
-        printf 'BLOCKED: System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$(awk -F= '/^pce_input_transactions_after_first_host=/{print $2}' "$transition_receipt")" "$transition_irq_count" "$transition_non_system_card_count" "$status"
-        exit 1
-    fi
-    printf 'BLOCKED: dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$status"
-    exit 1
 fi
 if ! grep -Eq '^cd_interface_raw_sector_read lba=[0-9]+ bytes=2352 sector_fnv1a=[0-9a-f]{8} span_offset=0 span_bytes=32 span_fnv1a=[0-9a-f]{8}$' "$cd_trace"; then
     printf 'BLOCKED: dynamic CPU receipts lack a complete authentic raw-sector receipt (exit=%s)\n' "$status"
     exit 1
 fi
+if [[ "$transition_input_count" -eq 0 || "$transition_irq_count" -eq 0 ||
+      "$transition_authenticated_cd_ram_count" -eq 0 ]]; then
+    printf 'BLOCKED: raw sector span lacks input, CDIRQ, and authenticated CD->RAM origin receipts (exit=%s)\n' "$status"
+    exit 1
+fi
 if ! awk '
-    /^pce_input_(read|write) / { saw_input = 1 }
-    /^pce_cd_irq cpu_pc=/ { saw_irq = 1 }
-    /^pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3} / { saw_non_system_card = 1 }
-    /^cd_interface_raw_sector_read / {
-        reached_sector = 1
-        passed = saw_input && saw_irq && saw_non_system_card
-        exit
+    /^cd_interface_raw_sector_read / { reached_sector = 1 }
+    /^pce_cd_(origin_ram_receipt|fifo_origin_ram_receipt|origin_main_ram_receipt|fifo_origin_main_ram_receipt) / {
+        if (reached_sector) saw_origin = 1
     }
-    END { exit !(reached_sector && passed) }
+    END { exit !(reached_sector && saw_origin) }
 ' "$cd_trace"; then
-    printf 'BLOCKED: raw sector span lacks prior input, CDIRQ, and non-System-Card PCECD caller receipts (exit=%s)\n' "$status"
+    printf 'BLOCKED: raw sector span lacks a following authenticated CD->RAM origin receipt (exit=%s)\n' "$status"
     exit 1
 fi
 

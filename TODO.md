@@ -5,8 +5,10 @@
   steg-, PC- och entrykontroller, men extern-disken innehåller ännu ingen
   sådan sidecar från en körning som når `$5D64/$5D6A`. Returvärde, caller,
   RAM-ägare och spelsemantik är därför fortfarande spärrade. Nästa capture
-  måste använda en binär/runtime som faktiskt passerar uppstartens CD-handoff;
-  den misslyckade 47-pollningskörningen får inte blandas med äldre captures.
+  måste använda en binär/runtime som faktiskt passerar uppstartens CD-handoff
+  och fångar RNG-fönstret. Den nya transportadmissionen passerar nu äkta
+  CD→RAM-originreceipts, men den misslyckade 47-pollningskörningen får inte
+  blandas med äldre captures och bevisar inte RNG-consumern.
 
 - 🔧 Nexus: VDP1-traceintervallet vidarebefordras nu av launchern. En ny
   komplett raw-capture från den externa Mednafen-binären saknas fortfarande;

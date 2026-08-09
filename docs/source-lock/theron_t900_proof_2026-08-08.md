@@ -7,6 +7,20 @@ bevisat är den autentiska datan och den statiska loadern runt den. Att kalla
 detta full T900 skulle vara att lägga till spelbetydelse som inte finns i
 bevismaterialet.
 
+## Senaste transportcapture (2026-08-09)
+
+Capture-gaten godkänner nu den lägre, source-bundna CD/FIFO→RAM-vägen även när
+de valfria high-level-markörerna saknas. En extern-disk-körning med äkta US
+Track 02 och System Card producerade 161 råsektorspaner, 51 SCSI READ-kommandon,
+161 sektorbindningar, 25 CDIRQ-kvitton och två byte-exakta
+`pce_cd_origin_ram_receipt`-poster. Den loggade dessutom 32
+`game_main_ram_e009_dispatch`-poster och 4 096 main-RAM-konsumentläsningar.
+
+Detta är ett godkänt transportkvitto, inte ett T900- eller level/object-bevis:
+ingen `$2600`-konsument, RNG-retur, spawn-/AI-/combat-/loot-kedja eller
+T700-tick publiceras från capturen. De semantiska spärrarna förblir därför
+oförändrade.
+
 ## Beviskedja
 
 | Led | Autentiskt bevis | Resultat |

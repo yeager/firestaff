@@ -334,9 +334,10 @@ if ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=3
     printf 'FAIL: capture script must require the dynamic CD_READ destination-RAM receipt\n' >&2
     exit 1
 fi
-if ! grep -Fq 'raw sector span lacks prior input, CDIRQ, and non-System-Card PCECD caller receipts' "$script" ||
-   ! grep -Fq 'pce_cd_register_read cpu_pc=[0-9a-b][0-9a-f]{3}' "$script"; then
-    printf 'FAIL: capture script must gate raw sectors on observed non-System-Card caller evidence\n' >&2
+if ! grep -Fq 'raw sector span lacks input, CDIRQ, and authenticated CD->RAM origin receipts' "$script" ||
+   ! grep -Fq 'authenticated_cd_ram_receipts=%s' "$script" ||
+   ! grep -Fq 'pce_cd_(origin_ram_receipt|fifo_origin_ram_receipt|origin_main_ram_receipt|fifo_origin_main_ram_receipt)' "$script"; then
+    printf 'FAIL: capture script must gate raw sectors on authenticated CD->RAM origin evidence\n' >&2
     exit 1
 fi
 if ! grep -Fq 'host_key_events=%s' "$script" ||
@@ -364,11 +365,11 @@ if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'adpcm_cpu_reads=%s' "$script" ||
    ! grep -Fq 'byte_exact_origin_ram_receipts=%s' "$script" ||
    ! grep -Fq 'game_main_ram_e009_dispatches=%s' "$script" ||
-   ! grep -Fq 'System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s non_system_card_pcecd=%s' "$script" ||
-   ! grep -Fq 'loader reached authentic raw sectors but no game-owned PCE-CD data read was observed' "$script" ||
+   ! grep -Fq 'System Card wait; host_keys=%s input=%s input_after_first_host=%s irq=%s authenticated_cd_ram=%s' "$script" ||
+   ! grep -Fq 'loader reached authentic raw sectors but no authenticated CD->RAM origin receipt was observed' "$script" ||
    ! grep -Fq 'main_ram_e009_dispatches=%s' "$script" ||
    ! grep -Fq 'main_ram_e009_register_writes=%s' "$script" ||
-   ! grep -Fq 'dynamic receipts absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s' "$script"; then
+   ! grep -Fq 'dynamic receipts absent; host_keys=%s input=%s irq=%s authenticated_cd_ram=%s' "$script"; then
     printf 'FAIL: capture script must report missing transition evidence counts\n' >&2
     exit 1
 fi
