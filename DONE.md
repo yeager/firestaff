@@ -11,10 +11,17 @@
   bytes på US-offseten. Den avvisas därför medvetet tills JP:s egna
   pointer-/spawnoffset har autentiserats; ingen US-tabell återanvänds som
   syntetisk JP-data.
-- ✅ Källan är kopplad till pointer-/spawnrecord-typen och kan användas av
-  framtida live-creature-admission. RNG-return, random spawn, AI, combat,
-  loot, generatoråteraktivering, T700 och T900 förblir fail-closed eftersom
-  den autentiska runtime-capturen ännu inte bevisar deras konsumenter.
+- ✅ Den råa startup-runtime-vägen binder nu den hashverifierade
+  `Theron_Track02SpawnSource` till world-state före MODE1/2048-konverteringen.
+  Live-creature-admission läser den bundna US-zonen för
+  `source_spawn_category`; den äldre tabellen används bara som kompatibilitet
+  för direkta user-data-testfixtures utan rå BIN. JP markeras som separat
+  variant och publicerar ingen US-kategori.
+- ✅ Regression mot den riktiga US-BINen verifierar pointer-/zonkopian och
+  att den riktiga JP-BINen inte kan gå genom US-dekodern. RNG-return, random
+  spawn, AI, combat, loot, generatoråteraktivering, T700 och T900 förblir
+  fail-closed eftersom den autentiska runtime-capturen ännu inte bevisar
+  deras konsumenter.
 
 # Theron autentisk `.mc0`-replay och PCE-knappar (2026-08-09)
 

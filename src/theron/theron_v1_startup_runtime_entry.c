@@ -4,6 +4,7 @@
 #include "theron_v1_track02_dungeon_loader.h"
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_creature_spawn.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,7 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
     char *receipt, size_t receipt_cap) {
     Theron_Track02Variant variant;
     Theron_DungeonLoadResult load_result;
+    Theron_Track02SpawnSource spawn_source;
     uint8_t *user_data;
     size_t sectors, user_size, i;
     int loaded;
@@ -40,6 +42,24 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
         variant != THERON_TRACK02_VARIANT_US_BIN) return 0;
+    /* Bind the raw US spawn records before converting the BIN into a
+     * user-data view.  This is the source-record -> live-world boundary;
+     * RNG, AI, combat, generator, T700 and T900 consumers remain separate
+     * gates.  JP is marked as a different layout and intentionally remains
+     * unbound here. */
+    memset(&spawn_source, 0, sizeof(spawn_source));
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        if (!theron_v1_track02_decode_spawn_source(
+                track02, track02_size,
+                THERON_V1_TRACK02_VARIANT_US_BIN, &spawn_source) ||
+            !theron_v1_world_bind_track02_spawn_source(
+                world, &spawn_source, (int)variant))
+            return 0;
+    } else {
+        /* Mark the JP layout without copying the US-offset record shape. */
+        (void)theron_v1_world_bind_track02_spawn_source(
+            world, NULL, (int)variant);
+    }
     sectors = track02_size / THERON_TRACK02_RAW_SECTOR_BYTES;
     if (!sectors || sectors > SIZE_MAX / THERON_TRACK02_RAW_USER_DATA_BYTES) return 0;
     user_size = sectors * THERON_TRACK02_RAW_USER_DATA_BYTES;

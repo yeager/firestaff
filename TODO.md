@@ -2,9 +2,11 @@
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och
-  rosterkontroll. JP-BINen är en separat layout och avvisas på US-offseten
-  tills dess egna pointer-/spawnoffset är bevisade. Detta materialiserar inte
-  RNG, spawnstatistik, AI, attacker, loot, generator-tick, T700 eller T900.
+  rosterkontroll och kopplas i den råa startup-handoffens world-state före
+  user-data-laddningen. JP-BINen är en separat layout och avvisas på
+  US-offseten tills dess egna pointer-/spawnoffset är bevisade. Detta
+  materialiserar inte RNG, spawnstatistik, AI, attacker, loot, generator-tick,
+  T700 eller T900.
 
 - 🔧 Nexus: VDP1-transporten är nu validerad genom en separat same-session
   snapshot vid `0x10a00`, med bundna write- och writer-code-traces. VDP2-

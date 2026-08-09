@@ -37,6 +37,81 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     return ud;
 }
 
+static uint8_t *load_raw_bytes(const char *path, size_t *out_size) {
+    FILE *fp;
+    long file_size;
+    uint8_t *raw;
+
+    if (!path || !out_size) return NULL;
+    fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    if (fseek(fp, 0, SEEK_END) != 0 ||
+        (file_size = ftell(fp)) <= 0 ||
+        fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    raw = (uint8_t *)malloc((size_t)file_size);
+    if (!raw || fread(raw, 1u, (size_t)file_size, fp) != (size_t)file_size) {
+        free(raw);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    *out_size = (size_t)file_size;
+    return raw;
+}
+
+static void test_authenticated_world_spawn_binding(
+    const char *us_path, const char *jp_path) {
+    size_t raw_size = 0u;
+    uint8_t *raw = load_raw_bytes(us_path, &raw_size);
+    Theron_Track02SpawnSource source;
+    Theron_V1_World world;
+
+    assert(raw != NULL);
+    memset(&source, 0, sizeof(source));
+    assert(theron_v1_track02_decode_spawn_source(
+               raw, raw_size, THERON_V1_TRACK02_VARIANT_US_BIN,
+               &source) == 1);
+    theron_v1_world_init(&world);
+    assert(theron_v1_world_bind_track02_spawn_source(
+               &world, &source, THERON_V1_TRACK02_VARIANT_US_BIN) == 1);
+    assert(world.track02_spawn_source.authenticated == 1);
+    assert(world.track02_spawn_source.variant ==
+           THERON_V1_TRACK02_VARIANT_US_BIN);
+    for (unsigned int i = 0u; i < THERON_TRACK02_SPAWN_ZONE_COUNT; ++i) {
+        const Theron_SpawnZoneDesc *zone = theron_v1_track02_spawn_zone(i);
+        assert(zone != NULL);
+        assert(world.track02_spawn_source.zones[i].map_width == zone->map_width);
+        assert(world.track02_spawn_source.zones[i].map_height == zone->map_height);
+        assert(theron_v1_world_track02_spawn_category(&world, i) ==
+               world.track02_spawn_source.zones[i].category);
+    }
+    assert(theron_v1_world_track02_spawn_category(
+               &world, THERON_TRACK02_SPAWN_ZONE_COUNT) == 0xffu);
+    free(raw);
+
+    if (jp_path) {
+        raw = load_raw_bytes(jp_path, &raw_size);
+        assert(raw != NULL);
+        memset(&source, 0, sizeof(source));
+        assert(theron_v1_track02_decode_spawn_source(
+                   raw, raw_size, THERON_V1_TRACK02_VARIANT_JP_BIN,
+                   &source) == 0);
+        theron_v1_world_init(&world);
+        assert(theron_v1_world_bind_track02_spawn_source(
+                   &world, NULL,
+                   THERON_V1_TRACK02_VARIANT_JP_BIN) == 0);
+        assert(world.track02_spawn_source.authenticated == 0);
+        assert(world.track02_spawn_source_variant ==
+               THERON_V1_TRACK02_VARIANT_JP_BIN);
+        assert(theron_v1_world_track02_spawn_category(&world, 0u) == 0xffu);
+        free(raw);
+    }
+    printf("  authenticated Track 02 spawn source reaches world binding\n");
+}
+
 static const char *find_track02(void) {
     const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     const char *home = getenv("HOME");
@@ -728,9 +803,10 @@ int main(void) {
     test_real_bank_reload_clears_stale_levels(ud, ud_size);
     test_real_source_ledgers_survive_other_dungeon_reload(ud, ud_size);
     test_real_campaign_source_capacity(ud, ud_size);
-    free(ud);
 
     const char *jp_path = find_jp_track02();
+    test_authenticated_world_spawn_binding(path, jp_path);
+    free(ud);
     if (jp_path) {
         size_t jp_ud_size = 0;
         uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);

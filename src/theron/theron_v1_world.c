@@ -530,6 +530,9 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
     world->object_count              = 0;
     world->creature_count            = 0;
     world->source_monster_count      = 0;
+    memset(&world->track02_spawn_source, 0,
+           sizeof(world->track02_spawn_source));
+    world->track02_spawn_source_variant = 0;
     world->source_generator_count    = 0;
     world->source_object_count       = 0;
     world->timer_count               = 0;
@@ -1396,14 +1399,52 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             creature->source_direction_flags = record->direction_flags;
             creature->source_flags_word = record->flags_word;
             creature->source_unknown_word = record->unknown_word;
-            {
-                const Theron_SpawnZoneDesc *zone =
-                    theron_v1_track02_spawn_zone(record->type);
-                creature->source_spawn_category = zone ? zone->category : 0xffu;
-            }
+            creature->source_spawn_category =
+                theron_v1_world_track02_spawn_category(world, record->type);
         }
     }
     return 0;
+}
+
+int theron_v1_world_bind_track02_spawn_source(
+    Theron_V1_World *world,
+    const Theron_Track02SpawnSource *source,
+    int variant) {
+    if (!world) return 0;
+    memset(&world->track02_spawn_source, 0,
+           sizeof(world->track02_spawn_source));
+    if (variant != THERON_V1_TRACK02_VARIANT_JP_BIN &&
+        variant != THERON_V1_TRACK02_VARIANT_US_BIN) {
+        world->track02_spawn_source_variant = 0;
+        return 0;
+    }
+    world->track02_spawn_source_variant = variant;
+    if (variant != THERON_V1_TRACK02_VARIANT_US_BIN || !source ||
+        !source->authenticated || source->variant != variant)
+        return 0;
+    world->track02_spawn_source = *source;
+    return 1;
+}
+
+uint8_t theron_v1_world_track02_spawn_category(
+    const Theron_V1_World *world,
+    unsigned int creature_index) {
+    const Theron_SpawnZoneDesc *zone;
+    if (!world || creature_index >= THERON_TRACK02_CREATURE_TYPE_COUNT)
+        return 0xffu;
+    /* JP is deliberately not interpreted through the US disassembly offsets.
+     * The source decoder must acquire a JP-specific layout before this path
+     * can publish a regular-spawn category. */
+    if (world->track02_spawn_source_variant ==
+            THERON_V1_TRACK02_VARIANT_JP_BIN &&
+        !world->track02_spawn_source.authenticated)
+        return 0xffu;
+    if (world->track02_spawn_source.authenticated &&
+        creature_index < THERON_TRACK02_SPAWN_ZONE_COUNT)
+        zone = &world->track02_spawn_source.zones[creature_index];
+    else
+        zone = theron_v1_track02_spawn_zone(creature_index);
+    return zone ? zone->category : 0xffu;
 }
 
 int theron_v1_world_bind_track02_monster(

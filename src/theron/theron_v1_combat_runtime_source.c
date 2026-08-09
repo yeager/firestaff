@@ -81,11 +81,8 @@ static int theron_v1_publish_source_group(
         creature->source_direction_flags = record->direction_flags;
         creature->source_flags_word = record->flags_word;
         creature->source_unknown_word = record->unknown_word;
-        {
-            const Theron_SpawnZoneDesc *zone =
-                theron_v1_track02_spawn_zone(record->type);
-            creature->source_spawn_category = zone ? zone->category : 0xffu;
-        }
+        creature->source_spawn_category =
+            theron_v1_world_track02_spawn_category(world, record->type);
     }
     return world->creature_count > 0 ?
         world->creatures[world->creature_count - 1].id : -1;

@@ -20,6 +20,7 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
 
 #include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
+#include "theron_v1_track02_spawn_binding.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -513,6 +514,12 @@ struct Theron_V1_World {
      * dungeon.  These are source data, not yet live creatures. */
     Theron_V1_SourceMonsterRecord source_monsters[THERON_MAX_SOURCE_MONSTERS];
     unsigned int source_monster_count;
+    /* The US raw Track 02 pointer/zone records are copied here only after
+     * the complete BIN hash and roster marker pass.  A zero/JP variant keeps
+     * regular-spawn category publication gated because the US offsets are not
+     * valid for JP. */
+    Theron_Track02SpawnSource track02_spawn_source;
+    int track02_spawn_source_variant;
     Theron_V1_SourceGeneratorRecord
         source_generators[THERON_MAX_SOURCE_GENERATORS];
     unsigned int source_generator_count;
@@ -674,6 +681,13 @@ void theron_v1_timers_clear_level(Theron_V1_World *world, int level);
 Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world, int x, int y);
 int theron_v1_transition_execute(Theron_V1_World *world);
 int theron_v1_world_spawn_level_creatures(Theron_V1_World *world);
+int theron_v1_world_bind_track02_spawn_source(
+    Theron_V1_World *world,
+    const Theron_Track02SpawnSource *source,
+    int variant);
+uint8_t theron_v1_world_track02_spawn_category(
+    const Theron_V1_World *world,
+    unsigned int creature_index);
 int theron_v1_world_bind_track02_monster(
     Theron_V1_World *world,
     int dungeon_id,

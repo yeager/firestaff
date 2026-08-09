@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "theron_v1_dungeon_handoff.h"
+#include "theron_v1_track02_spawn_binding.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,18 +21,6 @@ extern "C" {
  *
  * Spawn code at UD 0x0870E5 (PCE $B0E5), identical across all 7 dungeon
  * banks.  HP capped at 900 (0x0384), same as DM1. */
-
-/* Spawn zone descriptor — one per creature type that has regular spawns.
- * From UD 0x274058 (AKUTUBA) through UD 0x274150 (SHADO).
- * THIEF and DEMON have no spawn zones (scripted encounters). */
-typedef struct {
-    uint16_t map_width;
-    uint16_t map_height;
-    uint8_t  category;       /* combat category 0-3 */
-    uint8_t  count;          /* max creatures per zone */
-    uint8_t  param1;         /* scaling parameter */
-    uint8_t  param2;         /* secondary parameter */
-} Theron_SpawnZoneDesc;
 
 #define THERON_CREATURE_SPAWN_CATEGORY_COUNT  4
 #define THERON_CREATURE_HP_CAP                900
@@ -52,15 +41,6 @@ const Theron_SpawnZoneDesc *theron_v1_track02_spawn_zone(unsigned int creature_i
 const Theron_SpawnCategoryFormula *theron_v1_track02_spawn_formula(unsigned int category);
 size_t theron_v1_track02_spawn_zone_count(void);
 
-/* Creature pointer table entry (UD 0x274018, 8 bytes each).
- * sprite_desc_offset and spawn_data_offset are relative to UD 0x274000. */
-typedef struct {
-    uint16_t sprite_desc_offset;
-    uint16_t constant_278a;
-    uint16_t spawn_data_offset;
-    uint16_t constant_016b;
-} Theron_CreaturePointerEntry;
-
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index);
 
 /* Authenticated source decode for the pointer/regular-spawn records.  The
@@ -69,16 +49,6 @@ const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned i
  * US Track 02 MD5 before it reads the source bytes at UD 0x274000. The JP BIN
  * has a different layout at these addresses and is rejected until its own
  * source offsets are authenticated. */
-#define THERON_TRACK02_SPAWN_POINTER_COUNT 8u
-#define THERON_TRACK02_SPAWN_ZONE_COUNT 5u
-
-typedef struct {
-    int authenticated;
-    Theron_V1Track02Variant variant;
-    Theron_CreaturePointerEntry pointers[THERON_TRACK02_SPAWN_POINTER_COUNT];
-    Theron_SpawnZoneDesc zones[THERON_TRACK02_SPAWN_ZONE_COUNT];
-} Theron_Track02SpawnSource;
-
 /* Returns 1 only for a complete, hash-verified retail BIN whose pointer and
  * regular-spawn records can be read safely.  The output is cleared on every
  * failure.  This binds source records only; it does not authorize RNG,
