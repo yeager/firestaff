@@ -4465,3 +4465,600 @@ and real community-save corpus round-trip evidence.
     explicitly bound to the installed original `DUNGEON.DAT`. This confirms
     the backing-aware route for the currently available real saves only; it
     does not replace the required broader, provenance-attested corpus.
+
+## ReDMCSB DM1 Reference Boundaries (2026-07-13)
+
+These are reference limits, not claims that ReDMCSB logic is wrong. Each item
+marks a place where a Firestaff PC34 claim needs evidence in addition to the
+ReDMCSB WIP 2021-02-06 source tree.
+
+- REDMCSB-DM1-GAP-001 — **ReDMCSB `Documentation/Readme.htm`, scope and
+  terminology sections.** The project states that it is reverse engineered,
+  not FTL's original source, and that names are reconstructed from binaries
+  and secondary material. **Firestaff risk:** a plausible identifier or C
+  expression can be mistaken for a proven PC34 ABI, byte layout, or side
+  effect. **Required independent evidence:** a hash-identified original PC
+  3.4 executable/disassembly and a minimal runtime trace for every ABI or
+  save-layout assertion that depends on reconstructed naming.
+
+- REDMCSB-DM1-GAP-002 — **ReDMCSB `Documentation/Readme.htm`, Accuracy /
+  Atari ST.** The supplied Megamax 1.1 rebuilds are deliberately only
+  near-identical to FTL's Atari binaries and fail some copy-protection checks;
+  the original compiler/linker is unavailable. **Firestaff risk:** source
+  control-flow is not binary proof for checksums, address-sensitive code, or
+  instruction timing. **Required independent evidence:** the original PC34
+  executable plus DOS/emulator execution trace; do not use a ReDMCSB rebuild
+  as a checksum or timing oracle.
+
+- REDMCSB-DM1-GAP-003 — **ReDMCSB `Documentation/Engine.htm:10` and
+  `Documentation/Readme.htm`, Accuracy / Other platforms.** The engine page
+  is explicitly written from Atari ST source, while the other-platform
+  accuracy section is marked "TO BE COMPLETED". **Firestaff risk:** an ST
+  render, palette, disk, or input branch can be silently promoted to PC34.
+  **Required independent evidence:** PC 3.4 English media, executable
+  disassembly, and frame/input captures; cross-platform branches are
+  explanatory only until those agree.
+
+- REDMCSB-DM1-GAP-004 — **ReDMCSB `DUNVIEW.C` F0115 setup, around line 2464
+  original-PC custom-dungeon capture remains the blocker for the legacy
+  memory-limit behavior.
+  the documented platform-memory gap: an original-PC custom-dungeon capture is
+
+- REDMCSB-DM1-GAP-005 — **ReDMCSB `CHAMPION.C` F0306/F0319/F0320/F0321.**
+  Firestaff now locks the PC34 F0306 compiler-order branch and M11 owns the
+  F0319 one-shot death record: inventory/bones are not duplicated across host
+  ticks or an original-save reload that already has its bones record, poison
+  lifecycle records clear with the champion, and the champion direction plus
+  C026 portrait record remain source-backed. M11 creature melee now publishes
+  the actual F0320 C015/C016 champion-damage receipt after its F0321 result.
+  **Still required independent evidence:** PC34 executable capture covering
+  nonlethal F0321 damage, death, save/reload, bones pickup, and resurrection,
+  with recorded portrait/HUD frames and save bytes.
+
+- REDMCSB-DM1-GAP-006 — **ReDMCSB `DUNGEON.C` thing allocation, around line
+  2099 (`BUG0_10`).** The reserved champion-bones type uses bit 15 and the
+  legacy compiler's shift happens to discard it before indexing; the source
+  documents that a normal compiler can index out of bounds. **Firestaff risk:**
+  source-shaped C alone cannot define the PC34 allocation semantics for dead
+  champion bones. **Required independent evidence:** real PC34 saves and
+  runtime traces covering party death, bone allocation, pickup, save, load,
+  and export byte comparison.
+
+- REDMCSB-DM1-GAP-007 — **ReDMCSB `LOADSAVE.C` load branch around
+  lines 2860-2895.** The code documents a broken historical DM/CSB dungeon
+  detector and format/header changes that make older saves impossible to load.
+  **Firestaff risk:** ReDMCSB's broad multi-platform loader is not a complete
+  PC34 interchange specification, especially for damaged, backup, and
+  version-mismatched files. **Required independent evidence:** provenance
+  recorded PC34 save corpus spanning new game, HoC selection, deaths/bones,
+  active groups, pending events, backup, and rejected/corrupt files, with
+  original-load and byte round-trip results.
+
+  - 2026-07-13 update: external-PC34 corpus discovery and per-file receipts
+    now retain the exact F7057 five-part envelope endpoint and the untouched
+    trailing-byte count that F0435 must consume as portraits/dungeon tail.
+    This distinguishes a valid envelope with a later corrupt suffix from a
+    malformed F7057 body without decoding or promoting tail bytes. Remaining
+    evidence is a provenance-recorded real PC34 corpus across the listed
+    gameplay states and original executable load results.
+
+  - 2026-07-13 update: corpus certification now validates the populated
+    receipt itself: header/part shape, F7057 boundary, atomic C3 EVENT bytes,
+    raw C4 TIMELINE bytes, and the optional F0433 dungeon tail. C13/C24/C25
+    are subtype receipts only when source rows exist, so an absent optional
+    subtype cannot block independent C3/C4/tail evidence.
+
+  - 2026-07-13 update: PC34 import now rejects any active C3 EVENT omitted
+    from C4 before runtime materialization. The focused C13 regression keeps
+    a valid rebirth EVENT but substitutes a different active C4 index, proving
+    exact rollback provenance instead of silently losing the timer. Remaining
+    evidence is still a provenance-recorded real PC34 corpus and original
+    executable load results.
+
+  - 2026-07-13 update: corpus discovery and F0435 import now bind to the
+    same reclassified byte snapshot. A DMSAVE.DAT replaced after recursive
+    discovery is rejected with a diagnostic instead of inheriting stale
+    header/envelope provenance. This is transaction hardening only; it does
+    not replace the required original PC34 corpus.
+
+  - 2026-07-14 update: `dm1_v1_original_save_pc34_external_corpus` is a
+    fixture-free admission target for an explicitly staged corpus. It reports
+    each admitted file's source/export hashes, F7057 envelope boundary,
+    trailing-tail size, and no-fallback runtime-stage/adoption results; an
+    unset corpus root is a non-promoting skip. Remaining evidence is still
+    provenance-recorded original PC34 saves and original executable results.
+
+  - 2026-07-14 update: fixture-free external-corpus promotion now requires
+    every qualified PC34 candidate to stage an owned F0435 dungeon and adopt
+    its EVENTS/TIMELINE queue before it is called runtime-admitted. A
+    tail-less byte roundtrip remains diagnostic-only; it cannot borrow a host
+    dungeon or satisfy the corpus runtime gate.
+
+  - 2026-07-14 update: the external HoC runtime gate now requires the live
+    M11 runtime to retain the `ORIGINAL_SAVE_PC34` viewport origin and emit a
+    nonblank, byte-stable 224x136 PC34 viewport crop. HUD chrome cannot
+    satisfy this rendering receipt. This records Firestaff consumption of an
+    admitted save's live dungeon state; it remains neither a DOS pixel-parity
+    claim nor a replacement for provenance-recorded original executable runs.
+
+  - 2026-07-14 update: the same fixture-free HoC runtime gate now requires
+    M11's canonical post-adoption world hash to match an independently staged
+    F0435 world from the identical external save snapshot. This binds the
+    live handoff to its restored party, active state, timeline, and
+    dungeon-backed runtime rather than only its pose or viewport. It remains
+    host-runtime evidence, not original-PC execution or pixel-parity proof.
+
+  - 2026-07-13 update: F0435 tail validation now verifies the persisted
+    per-column cumulative SquareFirstThings table against raw-map thing-list
+    flags before M10 can reconstruct its lookup. The remaining requirement is
+    still provenance-recorded original PC34 saves and original executable
+    results, not a different tail format.
+
+- REDMCSB-DM1-GAP-008 — **ReDMCSB `LOADSAVE.C`
+  F1057/F0433/F1059 and `COMMAND.C` save-command checksum gates.** Save
+  control flow is wrapped by platform-specific checksum/copy-protection
+  helpers such as F0464; the ReDMCSB accuracy note says non-identical rebuilt
+  Atari binaries have incorrect checksum values. **Firestaff risk:** source
+  call order does not prove original PC34 save UI acceptance, protection, or
+  failure presentation. **Required independent evidence:** original PC34
+  executable and save-media corpus with recorded save command, produced bytes,
+  reload result, and dialog/frame capture.
+
+- REDMCSB-DM1-GAP-009 — **ReDMCSB `MEMORY.C` graphic loading calls to
+  F0497_LZW_Decompress and `Documentation/Readme.htm`, graphics compression
+  and caching.** The source explains the codec and cache policy, but carries
+  no Firestaff-owned proof that a particular PC34 `GRAPHICS.DAT` bitmap,
+  palette, title, or sound entry has the assumed identity. **Firestaff risk:**
+  valid decoding can still select the wrong asset, palette, frame, or cached
+  representation. **Required independent evidence:** hash-identified PC34
+  `GRAPHICS.DAT` plus asset-offset/decoded-pixel corpus and original frame
+  captures for title, entrance, HoC, HUD, inscriptions, and dungeon cells.
+
+- REDMCSB-DM1-GAP-010 — **ReDMCSB `GRF1.C`, `IBMIO.C`, `IO.C`
+  S0075/S0076, and `SOUND.C` F0061.** Low-level graphics, input interrupts,
+  mouse state, and sound routes include platform assembly/system calls or
+  platform-specific tables. **Firestaff risk:** the high-level source cannot
+  prescribe SDL event coalescing, audio scheduling, palette latch timing, or
+  host frame presentation. **Required independent evidence:** PC34 DOS/emulator
+  input/audio/frame capture with tick markers, then Mac/SDL packaged-app
+  comparison; no synthetic timing or sound substitute may be promoted.
+
+  - 2026-07-14 IBMIO.C F8099/F8100/F8111/F8112 now have a source-locked
+    PC34 state adapter for lock depth, cursor coordinates and formatted button
+    state. Host interrupt scheduling, SDL event coalescing and cursor drawing
+    timing remain outside this narrow implementation and still require the
+    recorded PC34 evidence above.
+
+  - 2026-07-14 IBMIO.C F8101/F8108/F8109 now preserve handler registration,
+    72-byte pointer-slot registration and visible-pointer transition ordering.
+    The DOS interrupt, deferred mouse history and host video drawing remain
+    callback boundaries and still require the recorded PC34 evidence above.
+
+  - 2026-07-14 IBMIO.C F8123/F8124 now preserve the empty CD-track route and
+    the device-specific raw sound-progress query. F8128 remains unavailable:
+    its hardware/ISR polling has no portable progress contract without the
+    PC34 timing evidence required above.
+
+  - 2026-07-14 IBMIO.C F8129/F8130 now preserve the defined device-type table
+    and three-attempt first-sector probe through host I/O callbacks. The DOS
+    IOCTL/BIOS transports and source-undefined device types outside 0–7 remain
+    external evidence boundaries.
+
+  - 2026-07-14 IBMIO.C F8131/F8132/F8133 now preserve FAT-label filtering,
+    DOS-time `DX` seed packing and the empty floppy route. DOS FCB/DTA lookup
+    and clock provenance remain host callback boundaries requiring PC34 proof.
+
+  - 2026-07-14 IBMIO.C F8134 now preserves the defined DOS EXEC command-tail
+    prefix and normal-termination result. Program loading and DOS exit status
+    remain callback boundaries requiring PC34 proof.
+
+  - 2026-07-14 NEC816.C F8137 now preserves the MEDIA457_P20JA 4bpp packed
+    nibble fill, including odd/even start and bounded write behavior. The
+    MEDIA472 byte-per-pixel path and the live framebuffer consumer remain
+    separate, unproven work.
+
+  - 2026-07-14 NEC816.C F8140/F8162 now preserve the PC 3.4 source-defined
+    overlap-copy direction and 160-byte-stride multi-plane message-area
+    transfer. Binding those logical planes to the live Mac/SDL framebuffer
+    remains a separate presentation/capture task; no hardware aperture is
+    claimed by this narrow adapter.
+
+  - 2026-07-14 VIDEODRV.C/NEC816.C F8151 now preserves the PC 3.4 C25
+    source-bitmap-to-aperture rectangle path, including source/destination
+    even strides, transparency and vertical flip. C25 F0681/F0683 are empty,
+    so horizontal flip deliberately remains a source-defined no-op. The F8143
+    C25 aperture-to-bitmap primitive is now separately ported; live framebuffer
+    presentation remains unproven.
+
+  - 2026-07-14 VIDEODRV.C F8152 now preserves the PC 3.4 C25 inclusive
+    rectangle fill through F8137, including fixed 320-byte rows and the
+    viewport color-index offset. The live SDL/Mac aperture binding remains
+    separate.
+
+  - 2026-07-14 VIDEODRV.C F8143 now preserves the PC 3.4 C25 aperture-to-
+    packed-bitmap readback with low-nibble extraction and retained opposite
+    boundary nibbles. It is a standalone aperture primitive until the live
+    host framebuffer supplies the C25 surface.
+
+  - 2026-07-14 VIDEODRV.C F8154 now preserves the PC 3.4 C25 inclusive
+    aperture inversion rectangle, XORing exactly `0x04` at `(y * 320) + x`.
+    Its live Mac/SDL aperture consumer remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8155 now preserves the PC 3.4 C25 hatch box:
+    `((x ^ y) & 1) == 0` aperture pixels clear to zero and the others are
+    retained. Live Mac/SDL aperture consumption remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8167/F8168 now preserve the C25 mouse-pointer
+    background lifecycle: a real aperture snapshot clamped to 18x18 and the
+    screen edge, then direct F8166 restoration. Live mouse compositing and
+    host framebuffer binding remain separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8169 now preserves the C25 blackening animation's
+    real 16-bit LFSR order, including its explicit final write to pixel zero
+    and `G8177 | black` aperture value. The live host framebuffer consumer
+    and frame pacing remain separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8163 now preserves the C25 caller-bitmap transfer:
+    the original packed 4bpp source indices and destination aperture indices
+    flow unchanged into F0680. Binding that aperture to the live SDL/Mac
+    framebuffer remains separately unproven.
+
+   - 2026-07-14 VIDEODRV.C F8213 now preserves C25's direct one-byte aperture
+    write: `G8177 | color` goes to the requested `G8134` pixel index. Binding
+    this logical aperture to live SDL/Mac presentation remains separately
+    unproven.
+
+  - 2026-07-14 VIDEODRV.C F8153 now preserves C25's two-phase 0x3DA vertical
+    blank poll: leave an active blank, then wait for the following one. The
+    live SDL/Mac VBlank-status provider and frame presentation remain
+    separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8139 now preserves C25's direct packed-4bpp
+    source-to-aperture loop, including source parity and bytewise G8177 OR.
+    Binding the logical aperture to live SDL/Mac presentation remains
+    separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8137 now has its C25 VGA aperture-fill variant:
+    direct `G8177 | color` bytes over the real 320x200-compatible aperture.
+    Its runtime call-site consumption and live capture remain separately
+    unproven.
+
+  - 2026-07-14 IMAGE3.C F0684 now preserves the PC 3.4 C25 packed-bitmap
+    source-to-aperture route for all four flip modes and transparency. It
+    consumes the direct 320x200 host-compatible aperture; live game call-site
+    capture remains separately unproven.
+
+  - 2026-07-14 DUNVIEW.C F0675 now preserves native/derived/temporary bitmap selection before real F0129 scaling; M11 call-site binding remains unproven.
+
+  - 2026-07-14 VIDEODRV.C F8216 now preserves C25's forward aperture copy
+    from one 320-byte row above, including its source-visible propagation for
+    spans larger than a row. Binding this logical aperture effect to live
+    SDL/Mac rendering remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8230 now preserves the C25 single-colour palette
+    mutation: real RGB4 components become `(component << 2) + 3` RGB6 bytes,
+    then publish through F8156 only while the curtain is active. The live
+    SDL/Mac DAC consumer remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8166 now consumes the real C25 F8165 aperture
+    snapshot format directly: three 16-bit prefix words and raw 320-stride
+    rows are replayed without palette conversion. Binding the host aperture to
+    the live SDL/Mac framebuffer remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8165 now preserves C25's real aperture snapshot
+    layout: a 6-byte partial-box prefix followed by raw byte-per-pixel rows at
+    the original 320-byte stride. The capture source is still an explicit host
+    aperture; live SDL/Mac framebuffer binding remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8156/F8157 now preserve the PC 3.4 C25 RGB6
+    palette bytes: F8157 updates only terminated table entries whose index is
+    below 32, and F8156 publishes all 32 rows only after a host VBlank gate
+    when the curtain is active. This does not fabricate a VBlank or a palette:
+    M11/SDL consumption of the verified DAC rows remains separate work.
+
+  - 2026-07-14 VIDEODRV.C F8159 now preserves the PC 3.4 C25 RGB6 curtain:
+    black waits at the caller-owned VBlank boundary and writes 32 zero rows;
+    normal restores verified source RGB6 bytes through F8156. SDL/Mac DAC
+    consumption remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8160 now preserves the PC 3.4 C25 creature palette
+    mutation: six existing palette-table rows receive only the RGB6 bytes from
+    one real `G8175_CREAT_PAL` set. Publishing that altered logical palette to
+    the live SDL/Mac DAC remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8161 now preserves the PC 3.4 C25 viewport
+    source-to-aperture consumption: it applies the original `0x10` RGB bank
+    only to an opaque, unflipped `224 -> 320` F8151 blit. Binding this logical
+    aperture to the live SDL/Mac framebuffer remains separately unproven.
+
+  - 2026-07-14 VIDEODRV.C F8158 is not a PC 3.4 C25 task: its source body is
+    guarded to EGA/Tandy builds only, so no C25 behavior is invented.
+
+  - 2026-07-14 DM1 V1 spell HUD now routes only through CASTER.C/MENUDRAW.C
+    C009/C011/C013 with real GRAPHICS.DAT and original-font gates. Palette
+    capture parity remains subject to the PC34 evidence requirement above.
+
+- REDMCSB-DM1-GAP-011 — **ReDMCSB `GAMELOOP.C` lines 171-181 and `IO.C`
+  mouse interrupt path.** The source records a platform/version race fix for
+  eye/mouth press state between interrupt and command-queue processing.
+  **Firestaff risk:** polling SDL input can look correct while diverging on
+  press/release ordering, dialogs, chest panels, or save-menu entry. **Required
+  independent evidence:** original PC34 input traces for click/hold/release
+  around eye, mouth, chest, scroll, resurrection and save commands, plus the
+  same scripted sequence through the packaged host app.
+
+- REDMCSB-DM1-GAP-012 — **ReDMCSB `ENTRANCE.C`
+  F0438_STARTEND_OpenEntranceDoors, `TITLE.C` F0437, and platform headers.**
+  The common source supplies control flow but timing, bitmap presentation,
+  palette behavior, and sound backend are selected by platform conditionals.
+  **Firestaff risk:** copying the sequence can produce a visually plausible
+  but wrong PC34 title/swoosh/entrance cadence or palette. **Required
+  independent evidence:** frame-numbered, audio-synchronised PC34 startup
+  captures and raw title/animation asset corpus, compared against the packaged
+  Firestaff frame stream.
+
+- REDMCSB-DM1-GAP-013 — **ReDMCSB's documented bugs are observations, not a
+  modern-engine policy.** `Documentation/BugsAndChanges.htm` records original
+  behaviors such as object cloning, timeline exhaustion, and malformed custom
+  dungeon crashes, but does not establish whether a safe host should emulate,
+  contain, or reject each failure. **Firestaff risk:** either erasing a
+  source-visible PC34 behavior or reproducing memory corruption under C11.
+  **Required independent evidence:** a PC34 reproduction for the claimed
+  release and an explicit per-route emulate/guard/reject decision backed by a
+  regression; without it, keep the input bounded and mark the route
+  unavailable rather than synthesising a result.
+
+- REDMCSB-DM1-GAP-014 — **Copy-protection and physical-media behavior is not
+  a portable game contract.** `CopyProtection.htm`, `GRAPH21.C`, and platform
+  disk/I/O paths expose fuzzy-sector and protection control flow, but do not
+  provide an authentic PC disk signal, DOS driver timing, or a normalised
+  failure contract for a modern filesystem. **Firestaff risk:** a fabricated
+  success/failure result can alter startup, free memory, event scheduling, or
+  endgame presentation. **Required independent evidence:** an archived
+  original PC media image with emulator/real-machine trace; otherwise the
+  protection branch remains explicitly unavailable and cannot be replaced by
+  synthetic state.
+
+- 2026-07-13 CSBWin restored `TT_FALSEWALL` follow-up: authenticated SET now
+  and DSA-free CLEAR/TOGGLE now update the original falsewall cell flag.
+  Portrait/DSA-owned squares and parameter-message payloads remain fail-closed.
+  CLEAR and the open-wall TOGGLE branch defer only where the saved timer's
+  party/nonmaterial-group owner can be retained.
+
+- 2026-07-13 CSBWin restored `TT_24` follow-up: exact saved-object removal
+  and free are live only for a validated source Thing chain. Timer-owned
+  clouds, source sound/party effects, malformed chains, and all broader
+  object-lifetime routes remain fail-closed until their CSBWin owners exist.
+
+- 2026-07-13 CSBWin restored `TT_13` follow-up: the exact final Vi Altar life
+  stage and the old-save no-EXPOOL DB10-bones state-1 handoff are live. The
+  `packedState` 2 cloud and Wings state-1 branches remain fail-closed until
+  those original owners are retained by the imported runtime record. The
+  current-save `EDT_ChampionBones` EXPOOL state-1 branch is complete and
+  tracked in DONE.
+
+- 2026-07-13 CSBWin restored `TT_53` follow-up: live runtime now retains the
+  exact saved watchdog TIMER/queue owner while requeueing its source `+300`
+  level-zero successor. Broader watchdog diagnostics remain blocked without
+  their complete CSBWin runtime state.
+
+- 2026-07-13 CSBWin restored `TT_65` follow-up: the live queue now restores
+  only the saved generator's exact `timerObj8` actuator identity, retaining
+  CSBWin's documented first-disabled-actuator fallback for old saves. Broader
+  C65 sensor execution and generator materialization remain blocked unless
+  their complete CSBWin timer ownership is preserved.
+
+- 2026-07-13 CSBWin restored `TT_75` follow-up: exact saved 8-bit poison
+attacks now enter the existing source C75 damage and `+36` requeue chain.
+2026-07-14 update: the live event-slot receipt now retains the complete
+16-bit `timerWord6` through every `+36` continuation, clearing only when its
+exact event is consumed. Source panel redraws and candidate-champion UI
+effects remain blocked without a restored HUD owner.
+
+- 2026-07-13 CSBWin restored `TT_78`/`TT_79` follow-up: Fire Shield and
+  Magic Footprints now consume exact saved timer queue/event identities and
+  update only their authenticated character-tail counters. Portrait redraw,
+  footprint cleanup, and visual footprint material stay blocked without their
+  corresponding CSBWin runtime/HUD owners.
+
+- 2026-07-13 CSBWin restored `TT_77` follow-up: live dispatch now expires an
+  exact saved Spell Shield receipt only for a positive, non-underflowing
+  signed defense delta. The source all-portrait redraw remains blocked without
+  a restored M11 HUD owner.
+
+- 2026-07-13 CSBWin restored `TT_74` follow-up: live dispatch now expires an
+  exact saved Party Shield receipt only for a positive, non-underflowing
+  signed defense delta. The source all-portrait redraw remains blocked without
+  a restored M11 HUD owner; timer families needing omitted object identity
+  remain blocked pending a source-backed timer-record expansion.
+
+- 2026-07-13 CSBWin restored `TT_73` follow-up: live dispatch now expires an
+  exact saved Thieves' Eye receipt only while its imported party count is
+  positive. Timer families requiring unpreserved object-word identity remain
+  blocked pending a source-backed timer-record expansion.
+
+- 2026-07-13 CSBWin restored `TT_72` follow-up: live dispatch now applies an
+  exact saved champion-shield expiry only when its imported champion and
+  unsigned defense delta are coherent. Underflowing records and the source
+  status-panel redraw remain blocked; timers requiring omitted `timerWord8`
+  object identity remain blocked as well.
+
+- 2026-07-13 CSBWin restored `TT_71` follow-up: live dispatch now expires an
+  exact saved invisibility receipt only while its imported party count is
+  positive. The source inventory/status redraw has no restored UI owner, and
+  timer families requiring omitted `timerWord8` object identity remain blocked.
+
+- 2026-07-13 CSBWin restored `TT_1` timer follow-up: collision-free original
+  door stepping and saved-owner requeue are live. Party damage, material-group
+  damage/reaction, source sound data, malformed Thing chains, and nonterminal
+  collision ownership remain blocked until their complete saved runtime state
+  is source-backed.
+
+- 2026-07-13 DM2 viewport source-material follow-up: source-required wall and
+  door passes now reject a decoded GDAT image when its own IMG3 local-palette
+  receipt is absent. Extend that same per-image ownership rule to remaining
+  map-chip consumers only with proven skproject lookup and palette evidence;
+  do not borrow `INTERFACE_GENERAL` colors or fabricate a fallback plane.
+
+  - 2026-07-13 update: direct G1 DB2 Text and DB3 Actuator `WALL_GFX` routes
+    now carry `dtImage/1` metadata plus the matching
+    `QUERY_GDAT_IMAGE_LOCALPAL` receipt into `DRAW_DEFAULT_DOOR_BUTTON`.
+    The source-required viewport fetches that exact IMG3 before comparing its
+    palette hash and blocks any absent/mismatched ornate/button. The lookup
+    now also consumes skproject's real `MISCELLANEOUS/FE/FE` GDAT default
+    palette when an otherwise valid source image lacks a four-bit tail. This covers
+    only the proven field-1 button route; broader ornate placement and other
+    fields remain unavailable rather than inferred.
+
+- 2026-07-13 DM2 viewport material follow-up: source-required creature,
+  floor-object, projectile, carried-item, possession, and CHAMPIONS portrait
+  GDAT drawing, plus T600 outdoor sky and ground planes, now require decoded
+  IMG3 pixels and their exact local-palette receipts. Weather now verifies its
+  GRAPHICSSET environment IMG3 address and local palette and carries its
+  receipt into live frame ownership, but remains no-draw until skproject proves
+  the destination clip; do not borrow interface colors or synthesize
+  replacement art.
+
+  - 2026-07-13 update: PC G1 DB4 creature map-chip receipts now bind the
+    exact `CREATURES/type/F9` local palette alongside the decoded image. The
+    viewport rejects a palette-hash mismatch; this does not infer animation,
+    clipping, or a new draw route.
+
+  - 2026-07-13 update: weather ENVIRONMENT commands now additionally require
+    a bounded decoded IMG3 pixel receipt that matches their metadata and local
+    palette. The decoded material remains no-draw until its complete source
+    `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` execution route is consumed.
+
+  - 2026-07-13 update: the DM2 runtime now carries the verified indoor
+    floor/ceiling required and consumed masks into its M11 handoff receipt.
+    A source-required indoor frame is invalid unless both GRAPHICSSET planes
+    completed their renderer-owned material transactions; an incomplete plane
+    is not presented through a substitute surface.
+
+  - 2026-07-13 update: source-required `DM2_DRAW_DOOR` now prebinds every
+    visible panel, ornament/destroyed-mask, frame, and button IMG3 together
+    with its local palette before the first door blit. A missing component
+    blocks the complete door pass instead of leaving partial or fallback door
+    pixels. Remaining door work is exact source placement/clipping breadth.
+
+  - 2026-07-13 update: source-required skproject T600 now prebinds both
+    active `GRAPHICSSET` sky and ground IMG3s with their own local palettes
+    before either outdoor scene plane is drawn. Weather stays no-draw because
+    its real `DRAW_TEMP_PICST` image/destination route remains unproven.
+
+- 2026-07-13 CSBWin saved-DSA parameter-message follow-up: the bounded
+  `TT_ParameterMessage` runtime path now owns authenticated EXPOOL payloads
+  through the 26-word stack ABI for source stone/open-room dispatch. Larger
+  source records, non-DSA timer effects, master-state persistence, and DSA
+  world/filter opcodes remain intentionally unavailable until each has an
+  independently source-owned runtime surface; do not truncate parameters or
+  route a timer by inferred room state.
+
+- 2026-07-13 CSBWin saved-DSA LocalState follow-up: normal saved queue
+  entries now execute source `LocalState=2` only when compact DB3 `ParameterB`
+  has no widened high bits. Widened ParameterB values, slave-master routing,
+  master-state writes, timer cell effects, and all world/filter opcodes remain
+  blocked pending complete source-owned runtime records; do not coerce a
+  compact actuator into a widened state value.
+
+- 2026-07-13 CSBWin saved-DSA tick follow-up: restored timer queue entries
+  remain save-owned after the tick. It still skips without an explicit original
+  package and does not create a substitute save, DSA, or timer fixture.
+  inventory/status-panel redraw branches remain blocked until their live
+
+- 2026-07-13 CSB F0282 probe follow-up: keep the repaired probe-local C040
+  candidate-panel receipt fail-closed as additional real-save variants are
+  staged. Do not reintroduce the removed M11 diagnostic export or admit any
+  state beyond source-proven F0280/F0282 panel facts.
+
+- 2026-07-13 DM1 F0407 action-enable receipts: `THROW` and the real
+  action-hand `SWING` route now complete through their F0330 C11 owners.
+  Other F0407 action families still require separate source-owned live
+  receipt work; do not generalize C11 scheduling from a UI cooldown or add a
+  fallback timer. In particular, a delayed SWING C11 must remain locked until
+  the authentic receipt reaches F0253. C11 receipts must retain their
+  original ordinal and be rejected once their live owner is consumed.
+
+- 🔧 2026-07-13 Nexus Structure3 follow-up: documented `0x800`-byte block
+  requires an unavailable original Saturn capture and continues to block
+  normal-plane, transform, texture/palette, and draw behavior.
+  semantics remain unproved. The documented entry-local
+  1,144 entries / 18,478 pairs. Next remains original Saturn evidence for
+
+  - 2026-07-14 update: Structure1A byte 0 now reaches the DGN handoff and
+    render-plan receipts only through complete Structure1F owner relations.
+    Its raw reuse is counted, but its grammar remains unassigned; it cannot
+    select a face, model, transform, mesh, material, or draw route.
+
+  - 2026-07-14 update: the renderer-facing DGN plan now retains the same
+    bounded Structure3 texture-selector and face/normal ordinal receipts as
+    the handoff, including the complete retail LEV00--LEV15 selector joins.
+    This remains no-draw provenance: original Saturn capture/executable
+    evidence must still establish payload/palette decode, transforms, and
+    VDP1 ordering before any mesh command can render.
+
+  - 2026-07-14 update: those bounded face selectors now retain per-level
+    unique/reused occurrence accounting for both Structure2 and Structure1G
+    joins. This records raw source selector reuse only; it does not assign
+    payload contents, texture dimensions, UVs, palette semantics, animation,
+    transforms, or a draw route.
+
+  - 2026-07-14 update: the hash-verified LEV00--LEV15 corpus now exercises
+    the Structure3 capture binder for every retail level with source-only
+    input. All 16 remain explicitly blocked before candidate framing, source
+    binding, or renderer handoff. This is a no-draw regression guard, not
+    Saturn capture evidence; texture/palette decoding, transforms, and VDP1
+    draw ordering still require an authenticated original executable trace or
+    capture containing every bound span.
+
+  - 2026-07-14 update: the bounded Structure3 grammar now has a caller-owned,
+    source-hash-checked typed entry extractor for documented signed-16.16
+    vertex/normal rows and entry-local face rows. It rejects partial buffers
+    and mutated payloads, retains raw byte 9 without assigning it a role, and
+    never grants transform, palette, texture, VDP1, or draw semantics. The
+    retail LEV00--LEV15 corpus extracts every 1,144 entries while preserving
+    the 18,478 face/normal totals. Next remains original Saturn evidence for
+    payload/palette decoding and VDP1 ordering, not fallback visuals.
+
+  - 2026-07-14 update: hash-verified retail Structure1A/Structure1F records
+    now bind their documented Structure3 model and face selectors to one
+    bounded entry-local face row and its same-ordinal normal row. Any
+    out-of-range model or face selector rejects the complete attachment
+    receipt. This does not establish placement, transform, normal-plane use,
+    texture/palette behavior, culling, VDP1 state, or a draw route. The next
+    boundary remains original Saturn execution/capture evidence for those
+    behaviors; do not promote the attachment receipt into rendering.
+
+  - 2026-07-17 update: the parser now exposes source-bound opaque 12-byte
+    ordinal rows for all three counted Structure3 entry regions, plus
+    face-indexed first-region rows, source-order face-index sets,
+    same-ordinal third-region rows, and raw face prefix/tail slices. Each
+    admission rechecks the direct DGN identity, entry/region FNV, and row
+    bounds; it grants no coordinate, topology, normal, material, texture,
+    geometry, or draw semantics. The next concrete intake must be a separately
+    evidenced raw relation, while original Saturn evidence remains required
+    before any geometry or renderer promotion.
+
+  - 2026-07-17 update: a 0x21-tagged Structure1F wall-decoration record can
+    now join its already-admitted raw selector byte to one admitted Structure3
+    second-region row ordinal. The join rechecks direct identity, package and
+    retained record/entry/region/row FNV witnesses and rejects selector or
+    offset drift. It is an opaque equality witness only, not a face, owner,
+    topology, geometry, material, texture, placement, or draw relation.
+
+  - 2026-07-17 update: the equivalent 0x20 Structure1F alcove selector path
+    is now admitted against the same bounded Structure3 second-region row
+    ordinal. Its independent record FNV, source tag, selector byte, direct
+    identity, entry/region/row witnesses, and offset all fail closed. This is
+    not portal, face, owner, topology, geometry, material, texture, placement,
+    or draw evidence; floor-decoration and floor-sensor payload bytes remain
+    unlinked until a separate source-backed relation exists.
+
+  - 2026-07-17 update: Structure1F directory evidence now gives each 0x11
+    floor-decoration and 0x12 floor-sensor opaque payload tail a strict source
+    owner: family, tag, record ordinal/span/FNV, payload span/FNV, and direct
+    package identity. Other families reject, and the receipt cannot grant a
+    Structure3 relation or object, sensor, placement, geometry, material,
+    texture, or draw semantics. A future relation requires separate source
+    evidence rather than payload-byte inference.
+

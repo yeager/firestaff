@@ -4485,10 +4485,6 @@ int main(void)
                                runtime_receipt.startup_assets.title_route_ready == 1,
                            "Nexus launcher accepts TITLE.CG but blocks the original menu route");
                 } else {
-                    /* Retail LEV00 is present, but a Saturn start pose is not
-                     * admitted from the available source evidence. Keep this
-                     * local-data check fail-closed instead of treating a
-                     * blocked level boot as a title/capture failure. */
                     expect(runtime_receipt.startup_receipt.host_receipt.status &&
                                strcmp(runtime_receipt.startup_receipt.host_receipt.status,
                                       "NEXUS LEVEL ERROR") == 0,

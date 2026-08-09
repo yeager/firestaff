@@ -38,6 +38,13 @@
   publiceras av denna lagring. Den kompletta `RESET_CAII`-transaktionen måste
   fortfarande utföra statisk `09db` och dynamisk `0a48` tillsammans.
 
+# CSB viewport D0L/D0R + F0109 + F0110 + ABI fixes (2026-08-09)
+
+- ✅ D0L/D0R side walls (F0125/F0126), F0109 door ornament rendering with
+  depth scaling and palette remap, F0110 door button rendering with G0208
+  coordinate sets. Three ABI fixes: G0310/G0311 uint16_t, thing handle
+  0xFFFF. See DONE-csb.md for details.
+
 # DM2 New Game: källberäknad CAII-kapacitet (2026-08-09)
 
 - ✅ GAME_LOAD-ägaren behåller nu de hashverifierade AIDefinition-raderna och
