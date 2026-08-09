@@ -321,6 +321,12 @@ Source: theron_v1_dungeon_progression.c:103-114
 **No in-dungeon saves.** Between-dungeon saves store Theron's stats and quest
 progress. Champion roster resets per dungeon.
 
+Firestaff's keyboard quicksave keys follow this boundary as well: while a
+Theron Track 02 dungeon is active, F5/F9 do not route through the generic DM1
+world serializer. They report that saving belongs after stage clear and that
+loading belongs at the start-menu file selector. This is a safety boundary,
+not proof that Firestaff's stage-clear writer or slot selector is complete.
+
 Source: Phase 0 provenance gate §3.3 · theron_v1_dungeon_progression.c:22-28
 
 ### 5.2 Champion Record Format

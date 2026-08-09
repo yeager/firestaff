@@ -257,6 +257,25 @@ static void run_track02_startup_overlay_regression(void) {
     M11_GameView_Shutdown(&view);
 }
 
+static void run_theron_keyboard_save_boundary_regression(void) {
+    M11_GameViewState view;
+
+    M11_GameView_Init(&view);
+    view.active = 1;
+    view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+
+    expect_true(M11_GameView_QuickSave(&view) == 0 &&
+                    strcmp(view.lastAction, "SAVE") == 0 &&
+                    strcmp(view.lastOutcome, "THERON SAVES AFTER STAGE CLEAR") == 0,
+                "Theron F5 boundary rejects generic in-dungeon quicksave");
+    expect_true(M11_GameView_QuickLoad(&view) == 0 &&
+                    strcmp(view.lastAction, "LOAD") == 0 &&
+                    strcmp(view.lastOutcome, "THERON LOADS AT START MENU") == 0,
+                "Theron F9 boundary rejects generic in-dungeon quickload");
+
+    M11_GameView_Shutdown(&view);
+}
+
 static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenuState menu;
     M12_LaunchIntent intent;
@@ -607,6 +626,7 @@ int main(void) {
 
     run_empty_launcher_boundary();
     run_track02_startup_overlay_regression();
+    run_theron_keyboard_save_boundary_regression();
     run_explicit_real_cue_campaign_if_available();
     run_production_forcefield_transition_without_roster();
     run_keyboard_arrow_forcefield_focus_regression();

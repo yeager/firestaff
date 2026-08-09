@@ -13,6 +13,13 @@
   PC34-yta eller genererad text används. Riktade realmediatester passerar
   för alla tre startvägar.
 
+# Theron: korrekt tangentbordsgräns för sparning (2026-08-09)
+
+- ✅ F5/F9 i Theron vägrar nu den generiska DM1-world-serialiseringen och visar
+  i stället att originalet sparar efter stage clear respektive laddar från
+  startmenyn. Regressionstestet passerar; den autentiska save-writern är
+  fortfarande separat arbete.
+
 # Theron: operator-supplied original gameplay/HUD captures (2026-08-09)
 
 - ✅ Två riktiga US Theron's Quest/Mednafen-captures har lagts till som

@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Theron har nu en fail-closed tangentbordsgräns: F5/F9 skapar eller läser
+  inte längre Firestaffs generiska DM-save mitt i en bana. Den autentiska
+  stage-clear-sparningen och startmenyns slotväljare måste fortfarande bindas
+  till originalets saveformat innan någon riktig Theron-save får publiceras.
+
 - ⏳ De nya AKUTUBA- och inventory/HUD-captures visar originalets
   presentation, men saknar fortfarande en sammanhängande Firestaff-runtime-
   witness. Nästa capture ska binda samma källa till tile/palette/HUD-

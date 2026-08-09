@@ -23743,6 +23743,15 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     if (!state || !state->active) {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        /* THQUEST.ASM T080 owns the original save boundary: Theron's Quest
+         * writes progress when a stage is cleared and offers no in-dungeon
+         * save transaction. Do not pass the opaque Theron world through the
+         * generic DM1 serializer; that would create a host file which looks
+         * like a quicksave but cannot restore a source-owned Theron state. */
+        m11_set_status(state, "SAVE", "THERON SAVES AFTER STAGE CLEAR");
+        return 0;
+    }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         DM2_V1_BootProfile *profile =
             (DM2_V1_BootProfile *)state->dm2BootProfile;
@@ -24043,6 +24052,13 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     char path[M11_GAME_VIEW_PATH_CAPACITY];
 
     if (!state || !state->active) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        /* T080 loads from the between-stage file selector at startup. There
+         * is no in-dungeon F9 route in the original game, so reject the
+         * generic world envelope rather than adopting unrelated DM state. */
+        m11_set_status(state, "LOAD", "THERON LOADS AT START MENU");
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
