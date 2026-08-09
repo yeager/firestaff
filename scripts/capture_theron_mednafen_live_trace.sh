@@ -1117,6 +1117,9 @@ transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "
 transition_spawn_consumer_read_count=$(trace_count '^spawn_consumer_read ' "$spawn_consumer_trace")
 transition_spawn_register_sample_count=$(trace_count '^spawn_consumer_registers ' "$spawn_register_trace")
 transition_spawn_entry_b0e5_count=$(trace_count '^spawn_consumer_registers .*spawn_entry_b0e5=1$' "$spawn_register_trace")
+transition_spawn_preconsumer_4644_count=$(trace_count '^spawn_consumer_registers .*preconsumer_4644=1' "$spawn_register_trace")
+transition_spawn_helper_4667_count=$(trace_count '^spawn_consumer_registers .*helper_4667=1' "$spawn_register_trace")
+transition_spawn_helper_4667_special_count=$(perl -ne 'if (/^spawn_consumer_registers .*helper_4667=1/ && / b3=([0-9a-fA-F]+)/ && ((hex($1) & 7) == 4)) { $count++ } END { print $count || 0 }' "$spawn_register_trace" 2>/dev/null || printf '0')
 transition_rng_consumer_sample_count=$(trace_count '^rng_consumer_window ' "$rng_consumer_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
@@ -1166,6 +1169,9 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_target_writes=%s\n' "$transition_main_ram_target_write_count"
     printf 'spawn_consumer_reads=%s\n' "$transition_spawn_consumer_read_count"
     printf 'spawn_register_samples=%s\n' "$transition_spawn_register_sample_count"
+    printf 'spawn_preconsumer_4644_samples=%s\n' "$transition_spawn_preconsumer_4644_count"
+    printf 'spawn_helper_4667_samples=%s\n' "$transition_spawn_helper_4667_count"
+    printf 'spawn_helper_4667_special_branch_samples=%s\n' "$transition_spawn_helper_4667_special_count"
     printf 'spawn_entry_b0e5_samples=%s\n' "$transition_spawn_entry_b0e5_count"
     printf 'rng_consumer_samples=%s\n' "$transition_rng_consumer_sample_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"

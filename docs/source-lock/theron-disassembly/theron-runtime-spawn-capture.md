@@ -95,6 +95,24 @@ spawn, creature, AI, loot, T700 or T900 behavior.
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.
 
+## 2026-08-09 fresh cold-start replay receipt
+
+The latest clean replay used the external instrumented Mednafen build, the
+hash-verified US Track 02 medium and the external System Card. Its input plan
+was `run@480:30,run@900:30,i@1320:30,run@1800:30,up@2100:120,right@2400:120`.
+The trace independently verifies six scripted PCE input events, 159 raw
+sector spans and 32 game-main-RAM `$E009` dispatches. The v3 register sidecar
+contains 88 samples: `$4644` was entered 24 times and `$4667` 24 times, with
+correct physical HuC6280 PC derivation. It contains no `$B0E5` sample, no
+`$C96B`/`$CC4C` consumer boundary sample, no special `$4667` branch and no
+dynamic RNG return receipt. The transition receipt now records these three
+helper/preconsumer counts explicitly.
+
+This is positive runtime evidence for the authentic preconsumer/helper path
+and negative evidence for the regular-spawn/RNG contract. It does not justify
+publishing monster, AI, loot, T700 or T900 semantics, and it is not merged
+with any other execution.
+
 ## 2026-08-09 extended cold-start replay
 
 An additional cold-start replay was run from the hash-verified US Track 02 BIN

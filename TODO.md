@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Therons senaste rena US Track 02-replay bekräftar autentiska `$4644`- och
+  `$4667`-anrop med korrekt HuC6280-bankmappning, men saknar fortfarande
+  `$B0E5`, specialgrenen och ett dynamiskt RNG-returkvittens. Spawn-, RNG-,
+  creature-, AI-, loot-, T700- och T900-publicering ska därför förbli stängd
+  tills samma körning visar hela källkedjan.
+
 - ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
   lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
   repot; den nya Git-spärren måste fortsätta vara grön.

@@ -1,3 +1,11 @@
+# Theron: explicit runtime-capture counts (2026-08-09)
+
+- ✅ Capturekvittot räknar nu separat autentiska `$4644`-förkonsumenter,
+  `$4667`-hjälpare och `$4667`-specialgrenar från register-sidecaren. Den
+  senaste körningen visar 24, 24 respektive 0; `$B0E5` och RNG-retur saknas.
+  Dokumentationen håller därför semantikgaten stängd. BIOS, System Card,
+  spelmedia och capturefiler ligger kvar utanför GitHub.
+
 # Nexus: VDP1 command-list framing (2026-08-09)
 
 - ✅ `scripts/analyze_nexus_vdp1_command_sequence.py` now follows the
