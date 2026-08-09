@@ -43,6 +43,9 @@
 - `dm1_v2_screenshot_gates`: Fix source-preserving V2.0 and the
   unauthenticated V2.2 placeholder as explicit non-claims, while requiring
   V2.1 variation without admitting synthetic filter or art pixels.
+- `m11_platform_override`: Fix explicit `--platform auto` so it clears a
+  stale persisted edition choice and selects the authenticated DM1 version
+  found in the requested data directory.
 
 ## DM2
 
