@@ -1212,6 +1212,35 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeCreatureReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_creatures.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* DME.h::Creature data stays record-owned here.  In particular, do not
+     * turn its info slot into a host CAII slot or traverse possession roots
+     * as drops before c_record/c_tim/CAII share one live session owner. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.creature_record_reads != candidate.creature_record_count) {
+        return 0;
+    }
+    owner->preselection_map_creatures = candidate;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {

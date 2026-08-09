@@ -181,6 +181,14 @@
   målmutation. De vägarna behöver samma levande record-, party- och
   eventköägare.
 
+# DM2 New Game privata File_header-varelser (2026-08-09)
+
+- ✅ Aktuella kartans DB4-varelser behålls med verklig position, riktning,
+  HP-fält och possessionsrot. Realdatatestet jämför varje recordpost mot en
+  ny validerad läsning av DUNGEON.DAT-klonen.
+- ✅ CAII-slottar, rörelse, kollision, drops och possessionsmutation är inte
+  aktiverade utan den gemensamma runtimeägaren.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte

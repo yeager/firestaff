@@ -273,6 +273,9 @@ typedef struct {
      * generator pass owns only its separately proved mutations; this receipt
      * grants no generic actuator dispatch. */
     DM2_V1_G1RuntimeMapActuatorReceipt preselection_map_actuators;
+    /* DB4 creature records reached through the current File_header map's
+     * complete chains. CAII slots, movement and drops remain absent. */
+    DM2_V1_FileHeaderRuntimeCreatureReceipt preselection_map_creatures;
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -342,6 +345,11 @@ int dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
 /* Retain current-map direct DB3 Actuator payloads for the later source timer
  * and sensor owner. */
 int dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map DB4 creature placement, HP and possession-root fields
+ * before any CAII/timer/runtime consumer is published. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

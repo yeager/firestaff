@@ -13609,6 +13609,8 @@ int dm2_v1_boot_retain_new_game_world(
             candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
             candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
+            candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
@@ -13653,6 +13655,8 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
         !dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
             candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
+            candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
             candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
