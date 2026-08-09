@@ -5448,6 +5448,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     DM2_V1_OutdoorWeatherM11Receipt weather_m11;
     int map_offset_x = 0;
     int map_offset_y = 0;
+    uint32_t scene_map_token = 0u;
     static const int forward_dx[4] = { 0, 1, 0, -1 };
     static const int forward_dy[4] = { -1, 0, 1, 0 };
 
@@ -5621,6 +5622,47 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_misty_map,
         rt->gdat_thunder_position,
         rt->gdat_ambient_darkness);
+    /* UPDATE_GFXSET binds the current map and its decoded GRAPHICSSET
+     * records as one transaction.  The renderer's static-scene gates already
+     * model that source contract, but a live DM2 frame previously supplied
+     * the records without installing the matching map token.  That left the
+     * otherwise authentic floor/ceiling/wall plans unable to prove their
+     * ownership.  Bind every static record against this exact current map;
+     * any failed binding rejects the frame instead of drawing a fallback.
+     * Source: SKWINSPX/src/v5/c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN,
+     *         SKULLWIN/c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT. */
+    if (rt->gdat_scene_control_ready) {
+        scene_map_token = dm2_v1_runtime_g1_scene_map_token(
+            rt->dungeon_level, rt->map_graphics_style, rt->outdoor);
+        dm2_v1_viewport_set_scene_map_load_token(&viewport, scene_map_token);
+        if (scene_map_token == 0u ||
+            !dm2_v1_viewport_bind_static_graphicsset_scene_record(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_light_control(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_ambient_light_control(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_ambient_darkness_control(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_flags_control(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_colorkey_control(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_floor_material(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_ceiling_material(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_all_wall_materials(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_door_frame_material(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_door_frame_d1c_material(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash) ||
+            !dm2_v1_viewport_bind_static_scene_door_frame_d2c_material(
+                &viewport, scene_map_token, rt->gdat_scene_control_hash)) {
+            return -1;
+        }
+    }
     /* A raw PC runtime/save bridge may publish this only after it has
      * authenticated the `c_light.cpp` inputs. Passing the zero receipt here
      * explicitly clears any stale viewport result across a frame handoff. */

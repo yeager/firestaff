@@ -1,3 +1,11 @@
+# DM2 runtime: statisk GRAPHICSSET-bild ägs per karta (2026-08-09)
+
+- ✅ Den levande DM2-renderaren binder nu den verifierade map-tokenen till
+  samma GRAPHICSSET-scen, ljus, palettkontroller samt golv-, tak-, vägg- och
+  dörrramsmaterial som originalets `LOAD_LOCALLEVEL_DYN` har valt. Ett
+  misslyckat delsteg blockerar ramen. Realtidstestet bekräftar att M11-ramen
+  bär både scen- och ljusägarskap från den aktuella källkartan.
+
 # DM2 New Game källbunden entréprojektion (2026-08-09)
 
 - ✅ GAME_LOAD-ägaren behåller nu den exakta D0–D3-projektionen från

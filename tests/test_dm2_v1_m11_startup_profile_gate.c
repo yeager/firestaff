@@ -1816,6 +1816,7 @@ int main(void) {
     DM2_V1_BootStartupHostFrameReceipt host_frame_receipt;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership_receipt;
     DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
+    DM2_V1_ViewportM11FrameReceipt dm2_frame_receipt;
     DM2_V1_BootProfile* profile;
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     DM2_V1_BootChampionDyn4RosterReceipt champion_dyn4_roster;
@@ -4048,6 +4049,14 @@ int main(void) {
                         view.lastOutcome[0] == '\0',
                     "M11 DM2 runtime presents a real GDAT frame without host status text");
     }
+
+    memset(&dm2_frame_receipt, 0, sizeof(dm2_frame_receipt));
+    expect_true(dm2_v1_runtime_last_m11_frame_receipt(&dm2_frame_receipt) &&
+                    dm2_frame_receipt.composition.scene_record_owned &&
+                    dm2_frame_receipt.composition.scene_light_owned &&
+                    dm2_frame_receipt.composition.map_load_token != 0u &&
+                    dm2_frame_receipt.composition.scene_control_hash != 0u,
+                "DM2 V1 frame binds static GRAPHICSSET scene records to its verified map token");
 
     /* Retained decoder-fixture notes only: these paths construct D2RS
      * sessions and cannot stand in for SKProject's original save writer. */

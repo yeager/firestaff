@@ -28,7 +28,9 @@
   Viewportägaren har nu originalets 13-posters `v1e02f0`-form, men renderaren
   fyller än så länge bara in en redan ritad dörrknapp. Övriga autentiska
   scenmål och `c_input`-konsumenten måste finnas innan `0x50` kan nå en
-  spegel, dörr eller sensor.
+  spegel, dörr eller sensor. Den globala runtime-renderaren binder nu sin
+  statiska GRAPHICSSET-scen till exakt map-token; motsvarande privata
+  viewportägare saknas fortfarande för entréns mirrorfas.
 
 - 🔧 DM2 DOS-MVE: källtidslinjen behåller nu den exakta byteordningen mellan
   opcode-0x08 och opcode-0x07 för INTRO och END: tolv PCM-paket föregår
