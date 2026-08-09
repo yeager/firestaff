@@ -5281,13 +5281,11 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
     if (!receipt->bind_graphics_dat) {
         return 1;
     }
-    /* The source-visible DM1 path owns GRAPHICS.DAT. Try file-based loading
-     * first, then fall back to in-memory FM Towns disc image buffer. */
-    if (!M11_AssetLoader_Init(&state->assetLoader,
-                              receipt->graphics_dat_path)) {
-        /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
-         * never reinterpret it as PC34 IMG3.  The loader validates the full
-         * record tables and selects endian order from the platform probe. */
+    /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
+     * recognise that source format before trying the PC34 IMG3 loader.
+     * Otherwise a permissive PC34 header match can hide the legacy binding
+     * and prevent the native title/menu owner from starting. */
+    {
         int legacyLoaded =
             M11_AssetLoader_InitDm1LegacyFromFile(
                 &state->assetLoader, receipt->graphics_dat_path, 0) ||
@@ -5295,17 +5293,21 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
                 &state->assetLoader, receipt->graphics_dat_path, 1) ||
             M11_AssetLoader_InitDm1AtariStFromFile(
                 &state->assetLoader, receipt->graphics_dat_path);
-        if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
-            if (!legacyLoaded && !M11_AssetLoader_InitFromBuffer(&state->assetLoader,
-                    state->fmtownsGraphicsDat,
-                    (long)state->fmtownsGraphicsDatSize) &&
-                !M11_AssetLoader_InitDm1LegacyFromBuffer(
-                    &state->assetLoader, state->fmtownsGraphicsDat,
-                    (long)state->fmtownsGraphicsDatSize, 0)) {
+        if (!legacyLoaded &&
+            !M11_AssetLoader_Init(&state->assetLoader,
+                                   receipt->graphics_dat_path)) {
+            if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
+                if (!M11_AssetLoader_InitFromBuffer(&state->assetLoader,
+                        state->fmtownsGraphicsDat,
+                        (long)state->fmtownsGraphicsDatSize) &&
+                    !M11_AssetLoader_InitDm1LegacyFromBuffer(
+                        &state->assetLoader, state->fmtownsGraphicsDat,
+                        (long)state->fmtownsGraphicsDatSize, 0)) {
+                    return 0;
+                }
+            } else {
                 return 0;
             }
-        } else if (!legacyLoaded) {
-            return 0;
         }
     }
     state->assetsAvailable = 1;
@@ -19776,22 +19778,44 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
         DM1_V1_StartupDungeonPathFacts_PC34 facts;
         DM1_V1_StartupDungeonPathReceipt_PC34 receipt;
+        int dm1FmtownsPath = 0;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         facts.game_id = spec->gameId;
         facts.data_dir = spec->dataDir;
         facts.explicit_dungeon_path = spec->dungeonPath;
         facts.source_kind = (int)spec->sourceKind;
-        if (!dm1_v1_startup_dungeon_path_receipt_pc34(&facts, &receipt) ||
-            !receipt.handled) {
+        /* M12 materializes authenticated FM Towns DM1 members into a
+         * concrete runtime directory.  Its DUNGEON.DAT is intentionally
+         * not the PC34 hash, so the PC34 recursive resolver must not reject
+         * it or fall through to the entrance-menu failure path.  Admit only
+         * the language-specific, source-locked member hash selected by M12. */
+        if (spec->dm1Fmtowns && spec->dataDir && spec->dataDir[0] != '\0') {
+            static const char *const fmtownsDungeonMd5[] = {
+                "3dc0a932d0e0adfe59878f07c51700c5",
+                "fe098f70ce83cfe3f2333565093daf35"
+            };
+            if (FSP_JoinPath(dungeonPath, sizeof(dungeonPath),
+                             spec->dataDir, "DUNGEON.DAT") &&
+                asset_file_matches_md5(
+                    dungeonPath,
+                    fmtownsDungeonMd5[spec->dm1FmtownsJapanese ? 1 : 0])) {
+                dm1FmtownsPath = 1;
+                dm1_dungeon_path_hash_resolved = 1;
+                facts.explicit_dungeon_path = dungeonPath;
+            }
+        }
+        if (!dm1FmtownsPath &&
+            (!dm1_v1_startup_dungeon_path_receipt_pc34(&facts, &receipt) ||
+             !receipt.handled)) {
             return 0;
         }
-        if (receipt.use_explicit_path) {
+        if (!dm1FmtownsPath && receipt.use_explicit_path) {
             snprintf(dungeonPath,
                      sizeof(dungeonPath),
                      "%s",
                      receipt.explicit_dungeon_path);
-        } else {
+        } else if (!dm1FmtownsPath) {
             if (!receipt.resolve_builtin_path ||
                 !spec->dataDir || spec->dataDir[0] == '\0' ||
                 !m11_resolve_builtin_dungeon_path(dungeonPath,
@@ -19818,6 +19842,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
         dm1_dungeon_path_hash_resolved &&
+        !spec->dm1Fmtowns &&
         !m11_materialize_dm1_virtual_pair(dungeonPath,
                                           sizeof(dungeonPath))) {
         return 0;
@@ -20109,6 +20134,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     return 0;
                 }
                 spec.dataDir = selectedDm1RuntimeDataDir;
+                spec.dm1Fmtowns = 1;
                 spec.dm1FmtownsJapanese =
                     strcmp(version->versionId, "fmtowns-ja") == 0;
             }

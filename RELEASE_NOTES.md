@@ -25,6 +25,14 @@
 - `verify.yml`: Prevent rapid `main` integrations from canceling an
   already-started cross-platform verification matrix.
 
+## DM1
+
+### Fixed
+
+- `m11_game_view`: Keep authenticated FM Towns `DUNGEON.DAT` on its native
+  runtime path and bind its legacy `GRAPHICS.DAT` before the PC34 loader, so
+  direct DM1 launch no longer rejects valid FM Towns data.
+
 ## DM2
 
 ### Changed

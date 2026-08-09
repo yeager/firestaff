@@ -3034,6 +3034,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         m11_set_launch_failed_message(menuState);
         return 0;
     }
+    /* FM Towns owns a native EDM/JDM title/menu path.  The PC34
+     * source-visible transaction is only for the DOS launcher and would
+     * incorrectly force the native edition through the entrance handoff. */
+    if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
+        dm1RouteReceipt.use_dm1_transaction = 0;
+        dm1RouteReceipt.use_generic_launch = 1;
+    }
     if (dm1RouteReceipt.use_dm1_transaction) {
         int oldFastForward = g_m11_intro_delay_fast_forward;
         g_m11_intro_delay_fast_forward = bootProbe ? 1 : oldFastForward;

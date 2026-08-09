@@ -572,6 +572,7 @@ typedef struct {
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
     const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
     const char* artpackPath; /* Optional M12-selected .fsart package. */
+    int dm1Fmtowns;         /* Selected DM1 FM Towns edition. */
     int dm1FmtownsJapanese; /* Selected DM1 FM Towns language family. */
     uint32_t csbSaveCandidateIdentity; /* M12-selected CSB save discovery identity. */
     int languageIndex;
