@@ -40,6 +40,9 @@ typedef struct {
     uint32_t copr_word;
     uint32_t ret;
     uint32_t framebuffer_select;
+    int vdp1_system_clip_state_present;
+    uint32_t system_clip_x;
+    uint32_t system_clip_y;
     int vdp1_payload_nonzero;
     int vdp1_execution_active;
     const uint8_t *vdp1_vram;

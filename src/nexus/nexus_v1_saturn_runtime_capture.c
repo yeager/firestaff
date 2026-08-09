@@ -63,6 +63,10 @@ static int parse_state(const uint8_t *line, size_t line_size,
 {
     char text[192];
     unsigned int fb;
+    unsigned int system_clip_x;
+    unsigned int system_clip_y;
+    int consumed = 0;
+    int suffix_consumed = 0;
     int parsed;
 
     if (!line || !receipt || line_size == 0U || line_size >= sizeof(text)) {
@@ -71,11 +75,19 @@ static int parse_state(const uint8_t *line, size_t line_size,
     memcpy(text, line, line_size);
     text[line_size] = '\0';
     parsed = sscanf(text,
-        "state=tvmr:%x,fbcr:%x,ptmr:%x,edsr:%x,lopr:%x,copr:%x,ret:%x,fb:%u",
+        "state=tvmr:%x,fbcr:%x,ptmr:%x,edsr:%x,lopr:%x,copr:%x,ret:%x,fb:%u%n",
         &receipt->tvmr, &receipt->fbcr, &receipt->ptmr, &receipt->edsr,
-        &receipt->lopr, &receipt->copr_word, &receipt->ret, &fb);
+        &receipt->lopr, &receipt->copr_word, &receipt->ret, &fb, &consumed);
     if (parsed != 8 || fb > 1U) return 0;
     receipt->framebuffer_select = fb;
+    if (text[consumed] != '\0') {
+        if (sscanf(text + consumed, ",sysclipx:%x,sysclipy:%x%n",
+                   &system_clip_x, &system_clip_y, &suffix_consumed) != 2 ||
+            text[consumed + suffix_consumed] != '\0') return 0;
+        receipt->vdp1_system_clip_state_present = 1;
+        receipt->system_clip_x = system_clip_x;
+        receipt->system_clip_y = system_clip_y;
+    }
     receipt->vdp1_state_present = 1;
     receipt->vdp1_state_valid = 1;
     return 1;

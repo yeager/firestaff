@@ -11958,3 +11958,18 @@ rendering remain blocked.
 - Verified an external-disk Saturn J BIOS 1.01 plus J-regionerad English Nexus disc capture.
 - Hash-bound 560-frame raw witness and reset write-trace; VDP1 source `0x63e00` is written through SH-2 corridor `pc0=0x0601307c`.
 - Kept startup→menu identity and production admission closed because no exact MENU/TITLE/FONT256/STABG source consumer was found.
+
+# Nexus: autentiserad VDP1 system-clip-state (2026-08-09)
+
+- ✅ Den externa Mednafen-capturepatchen skriver nu VDP1:s separata runtime-
+  state `SysClipX/SysClipY` tillsammans med COPR-state. C-parsern accepterar
+  både det äldre V2-formatet och den utökade raden utan att anta clip-värden.
+- ✅ En 800-frame EU-capture med retail Nexus-media visar vid samma frame 760
+  som command-sequence-witnessen `sysclipx=0x013f` och `sysclipy=0x00ff`
+  (319×255), medan command-listan fortfarande har noll typ-9 system-clip-
+  records. Detta är explicit runtime-state-proveniens, inte en feltolkning
+  av user-clip eller host-framebuffer.
+- ⚠️ System-clip-state är ännu inte kopplad till produktion: Firestaffs
+  224-raders host-framebuffer är inte en byteexakt Saturn 256-raders
+  system-clipyta. VDP1 sequence-replay och `renderer_permitted` förblir
+  därför fail-closed tills den faktiska clip-konsumenten är implementerad.

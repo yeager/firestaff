@@ -4542,6 +4542,16 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   utanför materialägarskapet. `system clip` saknas i capture-witnessen,
   därför är replayet fortsatt capture-only och `renderer_permitted=0`.
 
+# Nexus VDP1 system-clip consumer (2026-08-09)
+
+- 🔧 Runtime-capture innehåller nu separat, autentiserad `SysClipX/SysClipY`;
+  frame 760 visar `(319,255)` trots noll typ-9 command-list-records. Lägg in
+  exakt Saturn-system-clip i capture-replay/rasterizern och bevara skillnaden
+  mellan 256-raders Saturn-klippning och Firestaffs 224-raders V1-yta.
+- 🔒 Öppna inte `renderer_permitted`, HUD eller viewport-komposition förrän
+  clip-konsumenten är verifierad mot samma frame och inga host-bounds används
+  som ersättning.
+
 # Theron next authenticated semantic capture
 
 - 🔒 Continue from the positive CD→RAM→HuC6280 receipt at the next verified

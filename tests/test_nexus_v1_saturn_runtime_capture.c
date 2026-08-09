@@ -21,7 +21,7 @@ static size_t append_frame(uint8_t *blob, size_t offset, unsigned int index,
     if (with_state) {
         static const char state[] =
             "state=tvmr:00,fbcr:00,ptmr:02,edsr:03,lopr:0000,"
-            "copr:000374,ret:ffffffff,fb:0\n";
+            "copr:000374,ret:ffffffff,fb:0,sysclipx:013f,sysclipy:00df\n";
         offset = append_bytes(blob, offset, NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V2,
                               sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V2) - 1U);
         offset = append_bytes(blob, offset, state, sizeof(state) - 1U);
@@ -72,7 +72,7 @@ int main(void)
 {
     static const char test_state[] =
         "state=tvmr:00,fbcr:00,ptmr:02,edsr:03,lopr:0000,"
-        "copr:000374,ret:ffffffff,fb:0\n";
+        "copr:000374,ret:ffffffff,fb:0,sysclipx:013f,sysclipy:00df\n";
     const size_t frame0_size = strlen("frame=0\n") +
         (sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V1) - 1U) +
         NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES +
@@ -104,6 +104,8 @@ int main(void)
                                                &receipt) ||
         !receipt.valid || !receipt.vdp1_state_present ||
         !receipt.vdp1_state_valid || receipt.copr_word != 0x374U ||
+        !receipt.vdp1_system_clip_state_present ||
+        receipt.system_clip_x != 0x13fU || receipt.system_clip_y != 0xdfU ||
         !receipt.vdp1_execution_active || receipt.vdp1_vram_size !=
             NEXUS_V1_SATURN_VDP1_VRAM_BYTES || !receipt.vdp2_registers ||
         receipt.vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
@@ -139,9 +141,11 @@ int main(void)
             fprintf(stderr, "FAIL: external Saturn raw frame parser\n");
             return 1;
         }
-        printf("external_frame=%u state=%d active=%d copr=0x%x\n", frame,
+        printf("external_frame=%u state=%d active=%d copr=0x%x "
+               "sysclip_present=%d sysclip=(%u,%u)\n", frame,
                receipt.vdp1_state_present, receipt.vdp1_execution_active,
-               receipt.copr_word);
+               receipt.copr_word, receipt.vdp1_system_clip_state_present,
+               receipt.system_clip_x, receipt.system_clip_y);
         printf("external_vdp2_order=%d tvmd=0x%04x bgon=0x%04x nbg1=%d bitmap=%d\n",
                register_receipt.byte_order, register_receipt.tvmd,
                register_receipt.bgon, register_receipt.nbg1_enabled,

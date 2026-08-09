@@ -140,6 +140,15 @@ saknade `system clip`-posten markeras i receiptet och stänger
 `renderer_permitted`. Detta är därför ett starkare VDP1-capture-replay-bevis,
 men inte en full Saturn-scen eller produktionskompositör.
 
+Med den instrumenterade Mednafen-källan fångas nu även VDP1:s separata
+`SysClipX/SysClipY`-state. I en ny 800-frame EU-capture är frame 760:s värden
+`0x013f/0x00ff` (319×255), trots att command-listan har noll typ-9
+system-clip-records. C-parsern accepterar både gamla och nya capture-rader och
+markerar state-proveniensen explicit. Detta löser evidensgapet, men inte
+konsumentgapet: hostens 224-raders framebuffer får inte ersätta Saturns
+256-raders system-klippning. `renderer_permitted`, HUD och viewport förblir
+därför fail-closed tills den exakta clip-konsumenten är verifierad.
+
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
 externa capture-validatorn: `RawRegs → VRAM → CRAM`. C-läsaren och

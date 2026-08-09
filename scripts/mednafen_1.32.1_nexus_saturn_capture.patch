@@ -22,10 +22,11 @@
 + FILE *file = (FILE *)opaque;
 + if(!file) return;
 + fputs("FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2\n", file);
-+ fprintf(file, "state=tvmr:%02x,fbcr:%02x,ptmr:%02x,edsr:%02x,lopr:%04x,copr:%06x,ret:%08x,fb:%u\n",
++ fprintf(file, "state=tvmr:%02x,fbcr:%02x,ptmr:%02x,edsr:%02x,lopr:%04x,copr:%06x,ret:%08x,fb:%u,sysclipx:%04x,sysclipy:%04x\n",
 +  (unsigned)TVMR, (unsigned)FBCR, (unsigned)PTMR, (unsigned)EDSR,
 +  (unsigned)LOPR, (unsigned)(CurCommandAddr >> 2),
-+  (unsigned)(uint32_t)RetCommandAddr, (unsigned)FBDrawWhich);
++  (unsigned)(uint32_t)RetCommandAddr, (unsigned)FBDrawWhich,
++  (unsigned)SysClipX, (unsigned)SysClipY);
 + fwrite(VRAM, sizeof(VRAM[0]), sizeof(VRAM) / sizeof(VRAM[0]), file);
 + fwrite(FB[0], sizeof(FB[0][0]), sizeof(FB[0]) / sizeof(FB[0][0]), file);
 + fwrite(FB[1], sizeof(FB[1][0]), sizeof(FB[1]) / sizeof(FB[1][0]), file);
