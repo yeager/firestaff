@@ -11691,3 +11691,10 @@ rendering remain blocked.
   källor och exakta VRAM-offsets. Fixture, VDP2-regressioner och extern frame
   760-parserkontroll passerar; meny-/FONT256-ägarskap och produktionshandoff är
   fortsatt spärrade.
+# Nexus: FONT256 till VDP2 source join (2026-08-09)
+
+- ✅ `nexus_v1_font256_vdp2_capture_join()` verifierar att fångad VDP2
+  character-generator och 256-färgspalett är byteidentiska med samma
+  hashattesterade FONT256.S2D-regioner. Ändrad palette avvisas. Joinen bevisar
+  inte textkod→tile, page-PND, SLEV/TABL-ägarskap, placering eller produktion;
+  de spärrarna ligger kvar.

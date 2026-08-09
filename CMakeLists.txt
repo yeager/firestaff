@@ -38351,6 +38351,25 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp2_runtime_tilemap
     )
 
+    add_executable(test_nexus_v1_font256_vdp2_capture_join
+        tests/test_nexus_v1_font256_vdp2_capture_join.c
+    )
+    target_include_directories(test_nexus_v1_font256_vdp2_capture_join PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_font256_vdp2_capture_join PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_font256_vdp2_capture_join PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_font256_vdp2_capture_join
+        COMMAND test_nexus_v1_font256_vdp2_capture_join
+    )
+
     add_executable(test_nexus_v1_vdp12_capture_composition
         tests/test_nexus_v1_vdp12_capture_composition.c
     )

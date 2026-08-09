@@ -13,6 +13,12 @@ direkt in i capture-lanen, med semantic admission fortsatt spärrad. Extern
 J-resetwitness och DGN frame 760 passerar parsern; detta bevisar inte
 startup→meny, DGN-face-selection eller produktionsraster.
 
+2026-08-09: `nexus_v1_font256_vdp2_capture_join()` kräver byteidentisk
+character-generator- och 256-färgs palette-span mot samma hashattesterade
+FONT256.S2D. Positiv/ändrad-palette-fixture passerar. Textkod→tile, page-PND,
+SLEV/TABL-ägarskap och faktisk menyplacering är fortfarande obevisade; no-draw
+kvarstår.
+
 ## Nexus Structure1G Material Follow-up (2026-07-11)
 
 2026-07-12 update: original `SN_FLOOR.MNS` and `SN_WALL.MNS` now feed the
