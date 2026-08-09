@@ -7031,7 +7031,12 @@ int nexus_v1_vdp1_decode_mode1_lookup_texture(
         *out_receipt = receipt;
         return 0;
     }
-    lookup_offset = (uint32_t)parsed.colour_control * 8U;
+    /* Sega VDP1 User's Manual, mode-1 LUT addressing; corroborated by
+     * Mednafen VDP1::CMD_Draw/TexFetch(): CMDCOLR addresses VDP1 words at
+     * ((CMDCOLR & ~3) << 2). This API indexes a byte buffer, so multiply the
+     * word address by two. The authenticated Nexus capture uses
+     * COLR=0x3278 -> word address 0xc9e0 -> byte offset 0x193c0. */
+    lookup_offset = ((uint32_t)parsed.colour_control & ~3U) << 3U;
     pixel_count = (uint32_t)parsed.texture_width *
         (uint32_t)parsed.texture_height;
     if (lookup_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U ||

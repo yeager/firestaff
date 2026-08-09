@@ -3380,6 +3380,39 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
     return applied;
 }
 
+static int m11_apply_auto_architecture_override(M12_StartupMenuState* menuState,
+                                                const char* gameId) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    int gameIndex;
+    int matchedVersion;
+
+    if (!menuState || !gameId || gameId[0] == '\0') {
+        return 0;
+    }
+    for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
+        if (strcmp(gameIds[gameIndex], gameId) == 0) {
+            break;
+        }
+    }
+    if (gameIndex >= M12_CONFIG_GAME_COUNT) {
+        return 0;
+    }
+    matchedVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        &menuState->assetStatus, gameId, M12_ARCH_AUTO);
+    if (matchedVersion < 0) {
+        return 0;
+    }
+    /* An explicit AUTO command is a policy reset.  Do not retain a stale
+     * persisted FM Towns/PC choice after the user selects a different data
+     * directory.  The asset scan has already chosen the authenticated
+     * version according to the game's AUTO priority. */
+    menuState->gameOptions[gameIndex].architectureIndex = M12_ARCH_AUTO;
+    menuState->gameOptions[gameIndex].versionIndex = matchedVersion;
+    return 1;
+}
+
 static int m11_script_next_token(const char** cursor,
                                  const char** outStart,
                                  size_t* outLen) {
@@ -5781,7 +5814,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->gameId,
                                         &menuInitOptions);
     }
-    if (o->architectureOverride > M12_ARCH_AUTO) {
+    if (o->architectureOverride == M12_ARCH_AUTO) {
+        if (!m11_apply_auto_architecture_override(&menuState, o->gameId)) {
+            fprintf(stderr,
+                    "firestaff: requested platform auto has no matched version for %s\n",
+                    o->gameId ? o->gameId : "(null)");
+            free(launcherFramebuffer);
+            M11_Render_Shutdown();
+            return 2;
+        }
+    } else if (o->architectureOverride > M12_ARCH_AUTO) {
         if (!m11_apply_architecture_override(&menuState,
                                              o->gameId,
                                              o->architectureOverride)) {

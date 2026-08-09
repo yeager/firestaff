@@ -64,6 +64,26 @@ int main(void) {
                decoded, 8U, expected, 8U),
            "high then low texture nibbles select exact VDP1 lookup words");
 
+    /* The live Nexus command uses COLR=0x3278. Mednafen reports the LUT in
+     * VDP1 words at 0xc9e0; this byte-buffer API must therefore inspect
+     * 0x193c0, not 0xc9e0. */
+    memset(command, 0, sizeof(command));
+    memset(vram, 0, sizeof(vram));
+    wl16(command + 4, 1U << 3);
+    wl16(command + 6, 0x3278U);
+    wl16(command + 8, 0x0400U);
+    wl16(command + 10, 0x0101U);
+    memcpy(vram + 0x2000, texture, sizeof(texture));
+    for (index = 0; index < 16; ++index)
+        wl16(vram + 0x193c0 + index * 2, 0xa000U + (unsigned int)index);
+    memset(&receipt, 0, sizeof(receipt));
+    expect(nexus_v1_vdp1_decode_mode1_lookup_texture(
+               command, sizeof(command), vram, sizeof(vram), vram + 0x2000,
+               sizeof(texture), decoded, 8U, &receipt) == 1 &&
+           receipt.valid && receipt.lookup_table_byte_offset == 0x193c0U &&
+           decoded[0] == 0xa001U && decoded[7] == 0xa008U,
+           "authentic Nexus COLR word address converts to VDP1 byte offset");
+
     /* A complete captured VDP2 CRAM/register state is mandatory for palette
      * resolution. Texture 0 is transparent, texture F ends this scanline,
      * index 1 uses direct RGB555, and index 2 uses the captured SPCAOS CRAM

@@ -9,6 +9,17 @@
   save with 15 active groups and 15 live C03 records. No generated save or
   repository game-data payload was added. C13 remains open because neither
   save contains a C13 event.
+- ✅ External-disk audit: three additional provenance-attested saves under
+  `/Volumes/Extern-disk/Documents/Firestaff/dm1-resume-*` pass the same
+  backing-aware round-trip and are byte-identical. Their `c13` directory name
+  is not evidence of C13 content: decoding finds zero C13 events, so the
+  files remain C03/C04 evidence only.
+- ✅ Real resume runtime check: the external-disk save from
+  `dm1-resume-c13-diskette.Y0dbXx` now launches through explicit `--platform
+  auto` with the real PC34 data, reaches `dm1-runtime`, restores map 1,
+  party `(6,2,2)` and runtime tick 1674, and does not remain in the entrance
+  menu. This proves the generic resume handoff, not C13 content or original
+  Mac-window capture.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
@@ -13218,7 +13229,18 @@ indexed pixels and source special VGA palettes remain unchanged. Verification:
   original-save boot probes pass in V1, V2.0, V2.1 and V2.2. The separate,
   tail-less corpus roundtrip remains open because it must bind the original
   DUNGEON.DAT backing before it can certify F0435 -> F0433 -> F0435.
-- ✅ 2026-07-30 CSB F0142/G0209 thrown-object viewport binding: a live C14
+  - ✅ 2026-08-09 DM1 original PC34 resume capture route: the stale option-4
+    Alt+numeric-keypad path was rejected because it left the original selector
+    on the entrance wall. The live plan now uses the source-documented PC34
+    mouse mode (option 1) and a real `C409_ZONE_ENTRANCE_RESUME` click. The
+    operator-owned raw capture
+    `/Volumes/Extern-disk/Documents/Firestaff/dm1-original-resume-c13-mouse1.v7hhJs`
+    reaches stable `dungeon_gameplay` frames and records the follow-up
+    forward-click and keypad movement fallback. This closes the capture
+    harness stall only; the save is not C13-bearing and is not promoted as
+    C13 evidence.
+
+  - ✅ 2026-07-30 CSB F0142/G0209 thrown-object viewport binding: a live C14
   projectile now reads its associated original C05--C0B record, preserves
   M066 weapon projectile-aspect selection, and routes a positive F0142
   result through the source M612/G0209 bitmap and C2900 geometry. M11

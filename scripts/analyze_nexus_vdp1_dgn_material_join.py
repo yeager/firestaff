@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import struct
 from pathlib import Path
 
@@ -73,6 +74,43 @@ def dgn_materials(data_dir: Path) -> list[tuple[str, bytes, bytes]]:
     return materials
 
 
+def dgn_structure3_face_owners(
+    data_dir: Path, level_name: str, image_id: int
+) -> list[str]:
+    """Return one canonical level's faces whose raw selector is image_id."""
+    owners: list[str] = []
+    name = level_name
+    data = (data_dir / name).read_bytes()
+    if hashlib.sha256(data).hexdigest() != DISC_HASH[name]:
+        raise ValueError(f"{name} is not the canonical retail DGN")
+    structure3_block = be16(data, 0x1C)
+    structure3_blocks = be16(data, 0x1E)
+    base = structure3_block * 0x800
+    size = structure3_blocks * 0x800
+    if (structure3_block == 0 or structure3_blocks == 0 or
+            base > len(data) or size > len(data) - base or size < 4):
+        return owners
+    entry_count = be32(data, base)
+    directory_end = 4 + entry_count * 4
+    if entry_count > 4096 or directory_end > size:
+        raise ValueError(f"{name} Structure3 directory is invalid")
+    for entry in range(entry_count):
+        entry_offset = be32(data, base + 4 + entry * 4)
+        entry_end = (be32(data, base + 4 + (entry + 1) * 4)
+                     if entry + 1 < entry_count else size)
+        if (entry_offset + 24 > entry_end or entry_end > size):
+            raise ValueError(f"{name} Structure3 entry is invalid")
+        face_count = be16(data, base + entry_offset + 6)
+        face_offset = be32(data, base + entry_offset + 16)
+        if face_offset > size or face_count > (size - face_offset) // 12:
+            raise ValueError(f"{name} Structure3 faces are invalid")
+        for face in range(face_count):
+            row = base + face_offset + face * 12
+            if be16(data, row + 10) == image_id:
+                owners.append(f"{name}[Structure3-entry={entry},face={face}]")
+    return owners
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -132,6 +170,17 @@ def main() -> int:
             print(f"dgn_material={name}")
             print(f"dgn_palette_match={'verified' if palette_match else 'none'}")
             print("vdp1_coordinates_observed=verified")
+            image_match = re.search(r"Structure2=(\d+)", name)
+            image_id = int(image_match.group(1)) if image_match else -1
+            level_match = re.match(r"(LEV\d\d\.DGN)", name)
+            level_name = level_match.group(1) if level_match else ""
+            owners = dgn_structure3_face_owners(
+                args.data_dir, level_name, image_id
+            ) if level_name else []
+            print("dgn_structure3_face_owners=" +
+                  ("|".join(owners) if owners else "none"))
+            print("dgn_face_selector_join=" +
+                  ("verified" if owners else "unbound"))
         print("source_clut_join=verified" if any(
             captured_palette == swapped_words(palette) for _, _, palette in matches
         ) else "source_clut_join=unbound")

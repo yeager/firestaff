@@ -4376,6 +4376,16 @@ and real community-save corpus round-trip evidence.
     no F0433/panel capture was promoted. This is a host DOSBox-X event-ingest
     blocker, not a missing save, path, or Firestaff save-runtime fallback.
 
+  - 2026-08-09 capture-route correction: the failed option-4 runs above are
+    retained as rejected evidence. The live resume plan now selects the
+    source-documented PC34 mouse mode (option 1) and dispatches the real
+    `C409_ZONE_ENTRANCE_RESUME` click. A new operator-owned raw capture at
+    `/Volumes/Extern-disk/Documents/Firestaff/dm1-original-resume-c13-mouse1.v7hhJs`
+    reaches stable `dungeon_gameplay` frames and records the subsequent
+    forward-click plus keypad fallback. This closes the capture harness's
+    entrance-menu stall; it does not prove C13, and its save remains excluded
+    from the C13 corpus until the decoded file contains a C13 event.
+
 ## DM1 C13 F0435 stale-fence follow-up
 
 - [ ] Run the fixture-free PC34 C13 corpus target with operator-owned saves
@@ -4428,6 +4438,20 @@ and real community-save corpus round-trip evidence.
     C03 records while the first supplies the empty-layout comparison. This
     closes the current local C03/C04 corpus gap. Broader independently
     collected layouts remain open.
+
+  - 2026-08-09 external-disk audit: three additional provenance-attested
+    `DMSAVE.DAT` files under `/Volumes/Extern-disk/Documents/Firestaff/
+    dm1-resume-*` are byte-identical and pass the same backing-aware
+    round-trip. Their directory names include `c13`, but the decoded files
+    contain zero C13 events; they are therefore C03/C04 evidence only and do
+    not close the C13 requirement.
+
+  - 2026-08-09 runtime verification: the external-disk save from
+    `dm1-resume-c13-diskette.Y0dbXx` passes a real headless M11 resume with
+    `--platform auto`, restores map 1 / party `(6,2,2)` at tick 1674 and
+    reaches `dm1-runtime` without the entrance-menu stall. The remaining
+    save gap is specifically an authenticated C13-bearing file, not the
+    generic resume handoff.
 
   - 2026-07-31 DOSBox-X corpus follow-up: a second operator-owned PC34
     DMSAVE.DAT (48,561 bytes) restored map 1, party (6,2,2), tick 1664,

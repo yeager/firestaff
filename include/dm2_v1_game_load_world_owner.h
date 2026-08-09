@@ -81,6 +81,19 @@ typedef struct {
     int sound_enabled;
     int master_sfx_volume;
     int runtime_queue_initialized;
+    /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO and c_sfx.cpp's positional
+     * branch. These values are extracted from File_header Map_definitions,
+     * not inferred from host coordinates. They remain unusable while the
+     * c_light walk-path buffers are pending. */
+    int spatial_context_valid;
+    int16_t spatial_current_map;
+    int16_t spatial_audible_map;
+    int16_t spatial_alternate_map;
+    uint8_t spatial_current_origin_x;
+    uint8_t spatial_current_origin_y;
+    uint8_t spatial_audible_origin_x;
+    uint8_t spatial_audible_origin_y;
+    uint32_t spatial_context_hash;
 } DM2_V1_GameLoadSoundOwner;
 
 /* Private result of the three writes in DM2_LOAD_NEW_DUNGEON immediately
@@ -121,6 +134,30 @@ typedef struct {
     DM2_V1_CLightMapDescriptorReceipt map_descriptor;
     uint32_t source_state_hash;
 } DM2_V1_GameLoadPreselectionLightReceipt;
+
+/* RAM-owned portion of c_light::DM2_CHECK_RECOMPUTE_LIGHT.  LOAD_LOCALLEVEL_DYN
+ * sets dirty bit 2, then CHECK_RECOMPUTE_LIGHT selects the party map and
+ * zeroes one byte per source square at x*32+y.  FIND_WALK_PATH subsequently
+ * fills those bytes.  Keep allocation and its pre-walk bytes separate: an
+ * all-zero buffer is original initial state, never a completed visibility
+ * result. Source: SKProject SKULLWIN/c_loadlevel.cpp:1363 and
+ * c_light.cpp:490-529. */
+typedef struct {
+    int valid;
+    int16_t primary_map;
+    int16_t secondary_map;
+    uint8_t primary_width;
+    uint8_t primary_height;
+    uint8_t secondary_width;
+    uint8_t secondary_height;
+    uint8_t dirty_flags_before_check;
+    uint8_t walk_path_pending;
+    uint8_t *primary_cells;
+    uint8_t *secondary_cells;
+    size_t primary_cell_bytes;
+    size_t secondary_cell_bytes;
+    uint32_t source_state_hash;
+} DM2_V1_GameLoadLightVisibilityOwner;
 
 /* Exact per-map lists consumed by LOAD_LOCALLEVEL_DYN before it resolves
  * wall, floor and door-decoration GDAT. The lists are copied from the
@@ -245,6 +282,33 @@ typedef struct {
     uint32_t source_hash;
 } DM2_V1_GameLoadCaiiStaticReceipt;
 
+/* Private source-shaped result of DM2_1c9a_0cf7.  A timer handle here is a
+ * c_tim slot, never a synthetic ticket: slot zero is valid in the original
+ * timer array. Source: SKProject SKULLWIN/c_1c9a.cpp (5695-5732). */
+typedef struct {
+    int valid;
+    int replaced_pending_timer;
+    int16_t record_handle;
+    int16_t caii_slot;
+    int16_t timer_slot;
+    uint8_t timer_type;
+    uint8_t creature_type;
+    int16_t map;
+    uint8_t x;
+    uint8_t y;
+    uint32_t due_tick;
+} DM2_V1_GameLoadCaiiThinkReceipt;
+
+/* The complete dynamic half cannot run until 0a48's local-creature,
+ * animation and noise owners are present. This receipt makes that admission
+ * explicit and proves the preflight did not partially reset DB4/CAII/c_tim.
+ * Source: SKProject SKULLWIN/c_1c9a.cpp (5772-5894). */
+typedef struct {
+    int valid;
+    int blocked_unowned_0a48;
+    uint16_t dynamic_candidate_count;
+} DM2_V1_GameLoadCaiiDynamicReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -322,6 +386,7 @@ typedef struct {
      * source initialisation inputs only; it is not a fabricated light level
      * and does not make a viewport or a party visible. */
     DM2_V1_GameLoadPreselectionLightReceipt preselection_light;
+    DM2_V1_GameLoadLightVisibilityOwner preselection_light_visibility;
     /* Material is decoded from the admitted GDAT only after the source map
      * has supplied v1d6c02. The c_light receipt remains private and is
      * available only for a branch whose complete inputs are owned here. */
@@ -426,6 +491,17 @@ int dm2_v1_game_load_world_owner_select_champion(
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner);
 
+/* Retain c_light's source-sized, zeroed visibility buffers before its
+ * FIND_WALK_PATH calls. This does not make visibility, positional sound or
+ * a viewport live. */
+int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain c_sfx's source map/origin facts after move_2fcf_0b8b has established
+ * the private display map. No noise is queued by this function. */
+int dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
+    DM2_V1_GameLoadWorldOwner *owner);
+
 /* Copy the current map's authentic LOAD_LOCALLEVEL graphics lists. This is
  * intentionally before GDAT resource consumption and has no renderer/UI
  * side effect. */
@@ -506,6 +582,21 @@ int dm2_v1_game_load_world_owner_advance_preselection(
  * dynamic CAII slot, queues a timer, consumes RNG or publishes a session. */
 int dm2_v1_game_load_world_owner_materialize_static_caii(
     DM2_V1_GameLoadWorldOwner *owner);
+
+/* Exact private c_tim producer used by DM2_ALLOC_CAII_TO_CREATURE after the
+ * source slot has been initialized. This does not allocate a slot or run
+ * 0a48; it is intentionally available so the later all-map transaction can
+ * use the same dynamic GAME_LOAD heap. */
+int dm2_v1_game_load_world_owner_schedule_caii_think(
+    DM2_V1_GameLoadWorldOwner *owner, int16_t record_handle, int map,
+    int x, int y, DM2_V1_GameLoadCaiiThinkReceipt *out_receipt);
+
+/* Admission gate for RESET_CAII's dynamic branch. While any real dynamic
+ * candidate needs unowned DM2_CREATURE_SOMETHING_1c9a_0a48, the whole atom is
+ * rejected before DB4, CAII, c_tim or c_randomdata can change. */
+int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadCaiiDynamicReceipt *out_receipt);
 
 typedef struct {
     int valid;

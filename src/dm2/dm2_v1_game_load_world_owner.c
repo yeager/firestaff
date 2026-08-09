@@ -14,6 +14,17 @@
 static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
                                                   uint32_t value);
 
+static uint16_t dm2_v1_game_load_owner_read_u16le(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static void dm2_v1_game_load_owner_write_u16le(uint8_t *bytes, uint16_t value)
+{
+    bytes[0] = (uint8_t)value;
+    bytes[1] = (uint8_t)(value >> 8);
+}
+
 static int dm2_v1_game_load_owner_prepare_timer_capacity(
     DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -415,6 +426,173 @@ rollback:
     return 0;
 }
 
+int dm2_v1_game_load_world_owner_schedule_caii_think(
+    DM2_V1_GameLoadWorldOwner *owner, int16_t record_handle, int map,
+    int x, int y, DM2_V1_GameLoadCaiiThinkReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCaiiThinkReceipt receipt;
+    DM2_V1_RecordPool *db4;
+    uint8_t *record;
+    uint8_t *slot;
+    uint8_t slot_backup[DM2_V1_CAII_SLOT_SIZE];
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_DropRng rng_backup;
+    int16_t prior_timer;
+    int16_t queued_timer;
+    int slot_index;
+    DM2_V1_TimerEntry timer;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.timer_slot = -1;
+    receipt.caii_slot = -1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->caii_slots.valid || !owner->caii_rng_initialized ||
+        !owner->timer_entries || !owner->timer_indices ||
+        !owner->caii_map_candidates ||
+        owner->timer_capacity == 0u || map < 0 || map > 0xff ||
+        x < 0 || x > 0x1f || y < 0 || y > 0x1f ||
+        dm2_v1_record_handle_pool(record_handle) != 4) return 0;
+
+    db4 = &owner->record_pools.pools[4];
+    record = dm2_v1_record_pool_address_mut(&owner->record_pools, record_handle);
+    if (!db4->bytes || db4->record_size < 14 || !record || record[5] == 0xffu)
+        return 0;
+    slot_index = (int)record[5];
+    if (slot_index < 0 || slot_index >= owner->caii_slots.capacity ||
+        !(slot = owner->caii_slots.slots +
+            (size_t)slot_index * DM2_V1_CAII_SLOT_SIZE) ||
+        (int16_t)dm2_v1_game_load_owner_read_u16le(slot) < 0 ||
+        (dm2_v1_game_load_owner_read_u16le(slot) & 0x03ffu) !=
+            ((uint16_t)record_handle & 0x03ffu)) return 0;
+
+    /* 0cf7 operates on the creature actually residing at the supplied cell.
+     * The future all-map caller already has the source traversal candidate;
+     * retain that guard here so no coordinate-only timer can be fabricated. */
+    {
+        int found = 0;
+        int i;
+        for (i = 0; i < owner->caii_map_receipt.candidate_count; ++i) {
+            const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+                &owner->caii_map_candidates[i];
+            if (candidate->record_handle == record_handle && candidate->map == map &&
+                candidate->x == (uint8_t)x && candidate->y == (uint8_t)y) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) return 0;
+    }
+
+    timer_backup = (DM2_V1_TimerEntry *)malloc((size_t)owner->timer_capacity *
+                                                sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc((size_t)owner->timer_capacity *
+                                     sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto rollback;
+    memcpy(slot_backup, slot, sizeof(slot_backup));
+    memcpy(timer_backup, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*index_backup));
+    queue_backup = owner->timer_queue;
+    rng_backup = owner->caii_rng;
+
+    /* SKProject c_1c9a.cpp::DM2_1c9a_0cf7 (5695-5728): cancel the old
+     * pending think timer, then queue tick+1 with the DB4 group-dependent
+     * 0x21/0x22 type and save the actual c_tim slot at c_creature word@2. */
+    prior_timer = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 2u);
+    if (prior_timer >= 0) {
+        if (prior_timer >= owner->timer_capacity ||
+            owner->timer_entries[prior_timer].ttype == 0u) goto rollback;
+        dm2_v1_timer_delete(&owner->timer_queue, prior_timer);
+        receipt.replaced_pending_timer = 1;
+    }
+    dm2_v1_timer_entry_init(&timer);
+    dm2_v1_timer_set_mticks(&timer, (int16_t)map,
+                             owner->timer_queue.gametick + 1);
+    timer.ttype = dm2_v1_game_load_owner_read_u16le(record + 8u) != 0xffffu
+        ? 0x22u : 0x21u;
+    timer.actor = record[4];
+    timer.xA = (int8_t)x;
+    timer.yA = (int8_t)y;
+    queued_timer = dm2_v1_timer_queue(&owner->timer_queue, &timer);
+    if (queued_timer < 0) goto rollback;
+    dm2_v1_game_load_owner_write_u16le(slot + 2u, (uint16_t)queued_timer);
+    if (owner->caii_rng.random != rng_backup.random) goto rollback;
+
+    receipt.valid = 1;
+    receipt.record_handle = record_handle;
+    receipt.caii_slot = (int16_t)slot_index;
+    receipt.timer_slot = queued_timer;
+    receipt.timer_type = timer.ttype;
+    receipt.creature_type = record[4];
+    receipt.map = (int16_t)map;
+    receipt.x = (uint8_t)x;
+    receipt.y = (uint8_t)y;
+    receipt.due_tick = (uint32_t)dm2_v1_timer_get_ticks(&timer);
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+rollback:
+    if (timer_backup && index_backup) {
+        memcpy(owner->timer_entries, timer_backup,
+               (size_t)owner->timer_capacity * sizeof(*timer_backup));
+        memcpy(owner->timer_indices, index_backup,
+               (size_t)owner->timer_capacity * sizeof(*index_backup));
+        owner->timer_queue = queue_backup;
+        memcpy(slot, slot_backup, sizeof(slot_backup));
+        owner->caii_rng = rng_backup;
+    }
+    free(index_backup);
+    free(timer_backup);
+    return 0;
+}
+
+int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
+    DM2_V1_GameLoadWorldOwner *owner,
+    DM2_V1_GameLoadCaiiDynamicReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCaiiDynamicReceipt receipt;
+    int index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) *out_receipt = receipt;
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->caii_static_animation.valid || !owner->caii_slots.valid ||
+        !owner->caii_rng_initialized || !owner->caii_map_candidates ||
+        !owner->timer_entries || !owner->timer_indices) return 0;
+
+    receipt.valid = 1;
+
+    /* Do the full admission scan before RESET_CAII can touch a byte. Every
+     * dynamic candidate reaches 0a48 after allocation unless its complete
+     * local-creature group state is owned. That state and QUEUE_NOISE_GEN1
+     * are intentionally absent, therefore an authentic dynamic candidate
+     * blocks the entire transaction rather than leaving a half-live world. */
+    for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[index];
+        if (!candidate->static_ai) {
+            ++receipt.dynamic_candidate_count;
+            receipt.blocked_unowned_0a48 = 1;
+        }
+    }
+    if (receipt.dynamic_candidate_count !=
+        owner->caii_map_receipt.dynamic_candidate_count) return 0;
+    if (receipt.blocked_unowned_0a48) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    /* There is currently no product corpus with zero dynamic candidates, and
+     * success would require the full allocator/recycler branch. Keep that
+     * future boundary explicit instead of reporting a vacuous materialisation. */
+    return 0;
+}
+
 static int dm2_v1_game_load_owner_validate_possessions(
     const DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -674,6 +852,15 @@ static void dm2_v1_game_load_owner_sound_free(
     free(sound->queue_entries);
     free(sound->sample_bindings);
     memset(sound, 0, sizeof(*sound));
+}
+
+static void dm2_v1_game_load_owner_light_visibility_free(
+    DM2_V1_GameLoadLightVisibilityOwner *visibility)
+{
+    if (!visibility) return;
+    free(visibility->primary_cells);
+    free(visibility->secondary_cells);
+    memset(visibility, 0, sizeof(*visibility));
 }
 
 /* c_sound::init owns the fixed sfx tables, while c_dballoc owns the dynamic
@@ -1036,6 +1223,8 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
         dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
     }
     dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
+    dm2_v1_game_load_owner_light_visibility_free(
+        &owner->preselection_light_visibility);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
     dm2_v1_caii_array_free(&owner->caii_slots);
     dm2_v1_caii_source_owner_free(&owner->caii_source);
@@ -1758,6 +1947,153 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light(
     candidate.source_state_hash = hash;
     candidate.valid = 1;
     owner->preselection_light = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadLightVisibilityOwner candidate;
+    const int primary_map = owner ? owner->source_party_map : -1;
+    /* move_2fcf_0b8b first writes v1e027c=-1, then replaces it only when
+     * the real teleporter probe finds an alternate display map.  c_light
+     * uses exactly that post-probe value for its optional second surface;
+     * c_dm2data::init's earlier map-zero value is not a GAME_LOAD input. */
+    const int secondary_map = owner ? owner->source_teleporter_map : -2;
+    int primary_width;
+    int primary_height;
+    int secondary_width;
+    int secondary_height;
+    size_t primary_bytes;
+    size_t secondary_bytes;
+    uint32_t hash = 0x4c564953u; /* "LVIS" */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || !owner->source_map_context_materialized ||
+        !owner->preselection_light.valid || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->preselection_light_visibility.valid ||
+        primary_map < 0 || primary_map >= owner->dungeon.level_count ||
+        secondary_map < -1 || secondary_map >= owner->dungeon.level_count) {
+        return 0;
+    }
+    primary_width = owner->dungeon.level_widths[primary_map];
+    primary_height = owner->dungeon.level_heights[primary_map];
+    secondary_width = secondary_map >= 0 ?
+        owner->dungeon.level_widths[secondary_map] : 0;
+    secondary_height = secondary_map >= 0 ?
+        owner->dungeon.level_heights[secondary_map] : 0;
+    /* c_light indexes `x << 5 | y`; DUNGEON's File_header dimensions are
+     * bounded to that same 32-column stride. */
+    if (primary_width <= 0 || primary_width > 32 || primary_height <= 0 ||
+        primary_height > 32 ||
+        (secondary_map >= 0 &&
+         (secondary_width <= 0 || secondary_width > 32 ||
+          secondary_height <= 0 || secondary_height > 32))) {
+        return 0;
+    }
+    primary_bytes = (size_t)primary_width * 32u;
+    secondary_bytes = secondary_map >= 0 ?
+        (size_t)secondary_width * 32u : 0u;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.primary_cells = calloc(primary_bytes, 1u);
+    if (secondary_bytes != 0u)
+        candidate.secondary_cells = calloc(secondary_bytes, 1u);
+    if (!candidate.primary_cells ||
+        (secondary_bytes != 0u && !candidate.secondary_cells)) {
+        dm2_v1_game_load_owner_light_visibility_free(&candidate);
+        return 0;
+    }
+    candidate.primary_map = (int16_t)primary_map;
+    candidate.secondary_map = (int16_t)secondary_map;
+    candidate.primary_width = (uint8_t)primary_width;
+    candidate.primary_height = (uint8_t)primary_height;
+    candidate.secondary_width = (uint8_t)secondary_width;
+    candidate.secondary_height = (uint8_t)secondary_height;
+    candidate.primary_cell_bytes = primary_bytes;
+    candidate.secondary_cell_bytes = secondary_bytes;
+    /* LOAD_LOCALLEVEL_DYN sets bit 2 before CHECK_RECOMPUTE_LIGHT.  The
+     * later GAME_LOAD tail's 3 is deliberately not used as this call's
+     * input: CHECK_RECOMPUTE_LIGHT clears its dirty state before returning. */
+    candidate.dirty_flags_before_check = 2u;
+    candidate.walk_path_pending = 1u;
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        owner->preselection_light.source_state_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)primary_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)secondary_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)primary_width);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)primary_height);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)secondary_width);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)secondary_height);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.dirty_flags_before_check);
+    if (hash == 0u) {
+        dm2_v1_game_load_owner_light_visibility_free(&candidate);
+        return 0;
+    }
+    candidate.source_state_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_light_visibility = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadSoundOwner *sound;
+    const int current_map = owner ? owner->current_map : -1;
+    const int audible_map = owner && owner->source_teleporter_map >= 0 ?
+        owner->source_teleporter_map : (owner ? owner->source_party_map : -1);
+    const int alternate_map = owner ? owner->source_teleporter_map : -1;
+    uint32_t hash = 0x53504154u; /* "SPAT" */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized || owner->committed ||
+        owner->champion_selection_materialized || !owner->sound_owner.valid ||
+        !owner->sound_owner.runtime_queue_initialized ||
+        owner->sound_owner.spatial_context_valid ||
+        current_map < 0 || current_map >= owner->dungeon.level_count ||
+        audible_map < 0 || audible_map >= owner->dungeon.level_count ||
+        alternate_map < -1 || alternate_map >= owner->dungeon.level_count ||
+        owner->dungeon.map_offset_x[current_map] < 0 ||
+        owner->dungeon.map_offset_x[current_map] > UINT8_MAX ||
+        owner->dungeon.map_offset_y[current_map] < 0 ||
+        owner->dungeon.map_offset_y[current_map] > UINT8_MAX ||
+        owner->dungeon.map_offset_x[audible_map] < 0 ||
+        owner->dungeon.map_offset_x[audible_map] > UINT8_MAX ||
+        owner->dungeon.map_offset_y[audible_map] < 0 ||
+        owner->dungeon.map_offset_y[audible_map] > UINT8_MAX) {
+        return 0;
+    }
+    sound = &owner->sound_owner;
+    /* Map_definitions::MapOffsetX/Y are b6/b7, represented by the parsed
+     * File_header fields below. c_sfx.cpp translates a noise by exactly
+     * current-origin minus audible-origin before its direction transform. */
+    sound->spatial_current_map = (int16_t)current_map;
+    sound->spatial_audible_map = (int16_t)audible_map;
+    sound->spatial_alternate_map = (int16_t)alternate_map;
+    sound->spatial_current_origin_x =
+        (uint8_t)owner->dungeon.map_offset_x[current_map];
+    sound->spatial_current_origin_y =
+        (uint8_t)owner->dungeon.map_offset_y[current_map];
+    sound->spatial_audible_origin_x =
+        (uint8_t)owner->dungeon.map_offset_x[audible_map];
+    sound->spatial_audible_origin_y =
+        (uint8_t)owner->dungeon.map_offset_y[audible_map];
+    hash = dm2_v1_game_load_owner_hash_step(hash, sound->receipt_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)current_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)audible_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)(uint16_t)alternate_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_current_origin_x);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_current_origin_y);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_audible_origin_x);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        sound->spatial_audible_origin_y);
+    if (hash == 0u) return 0;
+    sound->spatial_context_hash = hash;
+    sound->spatial_context_valid = 1;
     return 1;
 }
 

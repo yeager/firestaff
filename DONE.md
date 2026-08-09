@@ -3,8 +3,47 @@
 - ✅ Firestaffs aktiva Theron-route använder W/S för framåt/bakåt och A/D för
   vänster/höger vändning. Musknapp 1/2 är Button I/II och kort/lång touch är
   samma Button I/II-par.
-- ✅ Mappingen är source-specifik, held-input är gated till laddad dungeon,
-  och SDL3/SDL2, Theron-fasad samt Firestaff-bygget är verifierade.
+
+# DM2 New Game: teleporterbunden ljus- och ljudkontext (2026-08-09)
+
+- ✅ `CHECK_RECOMPUTE_LIGHT` skapar nu alltid den primära, nollställda
+  `v1e08cc`-ytan, men skapar `v1e08c8` endast när originalets
+  `move_2fcf_0b8b` har funnit en alternativ teleporter-karta. Den tidigare
+  implicita kart-noll-ytan togs bort: `c_dm2data::init` är för tidig och är
+  inte ett giltigt GAME_LOAD-värde efter teleporterproben.
+- ✅ Den privata SOUND9-ägaren behåller nu `c_sfx` verkliga aktuella, hörbara
+  och alternativa karta samt MapOffsetX/Y. Den köar, mixar eller spelar inte
+  ljud; partyposition, riktning, synlighet och timerkonsumtion är fortsatt
+  separata källkrav.
+# Nexus: capture-only VDP1 mode-1-kompositör (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_capture_compositor` kan nu lägga en autentiserad Saturn
+  VDP1 mode-1-quad på hostens 320×224 framebuffer när texture-span och
+  palette-state ordväxlat matchar kanonisk DGN Structure2-data. Den använder
+  signerade command-koordinater, explicit fångad display-origin och VDP1:s
+  transparent/end-code-regler. Saknad capture-attestering eller källmatchning
+  ger ingen bild. Testet täcker också end-code-radstopp.
+
+# Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns
+  dokumenterade/Mednafen-verifierade ordadress `((CMDCOLR & ~3) << 2)` och
+  omvandlar den uttryckligen till byteoffset för C:s bytebuffer. Den
+  autentiska Nexus-capture-exempeladressen `COLR=0x3278 → ord 0xc9e0 → byte
+  0x193c0` är därmed entydig. Lookup-testet och de relevanta Nexus-
+  regressionstesterna passerar.
+
+# DM2 New Game: privat CAII 0cf7-admission (2026-08-09)
+
+- ✅ `DM2_1c9a_0cf7` finns nu som en privat producent mot GAME_LOAD-ägarens
+  verkliga 12-byte `c_tim`-heap. Den sparar den riktiga timer-slotten i
+  `c_creature word@2`, inklusive originalets `0x21`/`0x22`-val från DB4:s
+  gruppord och `gametick + 1`.
+- ✅ Den dynamiska CAII-transaktionen räknar hela den autentiska all-kartslistan
+  före första ändring. När en kandidat behöver den ännu oägda `0a48`- och
+  `QUEUE_NOISE_GEN1`-kedjan avvisas den atomärt. DOS-korpustestet verifierar
+  att DB4, CAII-slottar, timerheap, indexheap och RNG då är byteidentiska.
+  Detta startar ingen varelse, CCM, ljudkö eller M11-session.
 
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
@@ -74,6 +113,15 @@
 - ✅ Inget DB4-ägarskap, ingen varelse, ingen CAII-timer och ingen CCM-körning
   publiceras av denna lagring. Den kompletta `RESET_CAII`-transaktionen måste
   fortfarande utföra statisk `09db` och dynamisk `0a48` tillsammans.
+
+# DM2 New Game: källägd c_light-synlighetslagring (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu originalets källstorleksanpassade,
+  nollställda `v1e08cc`- och `v1e08c8`-ytor i RAM, med kartidentitet och
+  `x * 32 + y`-layout från File_header-kartorna.
+- ✅ Ytorna är uttryckligen märkta före `FIND_WALK_PATH`. De kan därför inte
+  förväxlas med synlighet, positionsljud eller en live viewport innan den
+  verkliga vägsökningen och dess karta-/partyägare finns i samma transaktion.
 
 # CSB viewport D0L/D0R + F0109 + F0110 + ABI fixes (2026-08-09)
 

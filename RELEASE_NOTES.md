@@ -1,4 +1,4 @@
-# Firestaff v3.0.306
+# Firestaff v3.0.307
 
 ## Firestaff
 
@@ -36,9 +36,39 @@
   real PC34 `DUNGEON.DAT` for provenance-attested Downloads saves, including an
   empty C03/C04 layout and a distinct save with 15 active groups and 15 live
   C03 records.
+- `dm1_v1_original_save_pc34_backed_corpus`: Fix corpus documentation to
+  distinguish three additional byte-identical, provenance-attested external
+  saves from C13 evidence; their decoded C13 count is zero despite a `c13`
+  directory name.
 - `dm1_v2_screenshot_gates`: Fix source-preserving V2.0 and the
   unauthenticated V2.2 placeholder as explicit non-claims, while requiring
   V2.1 variation without admitting synthetic filter or art pixels.
+- `m11_platform_override`: Fix explicit `--platform auto` so it clears a
+  stale persisted edition choice and selects the authenticated DM1 version
+  found in the requested data directory.
+
+## CSB
+
+### Changed
+
+- `CSB platform selection`: Change selection to use a launchable Amiga A31M/A35 profile when
+  it is present, while keeping the independently scanned A31E route blocked
+  until its native APPB handoff is verified.
+- `CSB F0128 viewport`: Bind the source viewport to its 224×136 screen
+  rectangle at `(48, 33)`, preserving the HUD and chrome outside that area.
+- `CSB FM Towns Utility`: Change the C06 editor renderer to retain the
+  selected authentic `MINI.DAT` portrait in its zoom panel.
+
+### Fixed
+
+- `CSB Entrance input`: Fix pointer dispatch to keep ownership with the title and entrance
+  route until C03_GAME takes over, so a right-click cannot start the Prison
+  door sequence.
+- `CSB native save recovery`: Restore an Atari or Amiga `.BAK` to its
+  canonical slot before applying it to runtime state, and reject the load if
+  that recovery cannot complete.
+- `CSB Atari save handoff`: Fix write-back to preserve the authenticated GAMEBLOCK2 random seed
+  when a native save is written back.
 
 ## DM2
 

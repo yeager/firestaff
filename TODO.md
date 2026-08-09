@@ -14,13 +14,34 @@
   avlästa. Det binder hårdvarans draw-destination, men ännu inte DGN
   face/mesh-ägare eller komplett scen-/meny-/HUD-komposition.
 
+- 🔧 Nexus: de sex autentiserade VDP1-materialen 36/60/64/68/71/72 är nu också
+  bundna till kanoniska `LEV00.DGN` Structure3-face-rader via exakt rå
+  `fill_selector`. Det sluter source-level material→face-länken, men inte
+  runtime face-urval, draw-order, transform/culling, VDP2-komposition eller
+  produktionsrendering; `semantic_admission` förblir spärrad.
+
+- 🔧 Nexus: VDP1 mode-1 LUT-avkodaren använder nu Saturns ordadress
+  `((CMDCOLR & ~3) << 2)` med korrekt bytebuffer-omvandling. Den autentiska
+  formen `COLR=0x3278 → ord 0xc9e0 → byte 0x193c0` är verifierad. Full
+  runtime-presentation kräver fortfarande capture-bunden draw-order,
+  transform/culling och VDP1/VDP2-composition.
+
+- 🔧 Nexus: en capture-only VDP1 mode-1-kompositör finns nu och kräver exakt
+  ordväxlad DGN image/palette-join, autentiserad Saturn-capture och explicit
+  display-origin. Den är ännu inte huvudviewportens generella route: komplett
+  command-lista, local/system-clip-state, draw-order över hela scenen och
+  VDP2-komposition måste fortfarande bindas innan produktion kan öppnas.
+
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
   finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
   verkliga statiska all-kartslistan, men är inte en spelbar session. Den
-  återstående atomära dynamiska delen måste fortfarande omfatta
-  `DM2_ALLOC_CAII_TO_CREATURE`, `DM2_1c9a_0cf7` och `0a48`/CCM med rollback.
-  Ingen del får publiceras eller ersättas med en fast kö. GAME_LOAD:s dynamiska
+  Den källformade `DM2_1c9a_0cf7`-producenten använder nu samma dynamiska
+  `c_tim`-heap och verkliga slots som GAME_LOAD, men den kompletta dynamiska
+  transaktionen avvisas före mutation när en riktig kandidat kräver den ännu
+  oägda `0a48`/`QUEUE_NOISE_GEN1`-grenen. Återstående atom måste fortfarande
+  omfatta `DM2_ALLOC_CAII_TO_CREATURE`, recycler, lokal-creature-state,
+  `0a48`/CCM och rollback. Ingen del får publiceras eller ersättas med en fast kö. GAME_LOAD:s dynamiska
   SND-kö har full SOUND9-kapacitet; `QUEUE_NOISE_GEN1` saknar ännu komplett
   karta-, party- och timerägarskap. Källordningen är viktig:
   `DM2_move_2fcf_0b8b` kan genom `LOAD_LOCALLEVEL_DYN` köra
@@ -28,6 +49,14 @@
   `v1e0390 = 3`-skrivningen i `DM2_GAME_LOAD`. Den privata implementeringen
   måste därför äga karta, ljus och CAII i samma lokala laddningsfas och får
   inte behandla den sena GAME_LOAD-kvittensen som en ersättning för den.
+  CHECK_RECOMPUTE_LIGHT:s primära RAM-yta (`v1e08cc`) och, endast när
+  `move_2fcf_0b8b` faktiskt har en alternativ teleporter-karta, den sekundära
+  ytan (`v1e08c8`) är källstorleksallokerade och nollställda i GAME_LOAD-
+  ägaren. De är medvetet markerade som väntande på `FIND_WALK_PATH`; en
+  nollställd yta är inte ett synlighetsresultat och får inte användas för
+  positionsljud eller viewport. c_sfx:s aktuella, hörbara och alternativa
+  karta med autentiska MapOffsetX/Y finns nu privat, men saknar fortfarande
+  partyposition, riktning, synlighet och timerkonsumtion för QUEUE_NOISE_GEN1.
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och
