@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- ✅ Nexus Mednafen-capture injicerar nu knappmasken exakt en gång per
+  Saturn-videoram i `SMPC_UpdateInput`, efter host-inputuppdateringen; den
+  tidigare register-write-kroken kunde räkna fel och skriva över input.
+  Den autentiserade EU-capturen `run-codex-eu-french-menu-fixed-input2-20260809`
+  validerar 300 råa VDP1/VDP2-ramar. Detta bekräftar transport och timing,
+  inte en meny-/HUD-/viewport-konsument; semantisk admission förblir spärrad.
+
 - ⏳ Den kontextbundna ADPCM-capturebyggaren är verifierad och kan nu användas
   för nästa autentiserade runtime-witness. Den bevisar ännu inte ljudägare,
   creature-, RNG-, AI-, T700- eller T900-semantik; nästa körning måste fortfarande

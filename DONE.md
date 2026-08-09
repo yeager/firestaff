@@ -1,3 +1,13 @@
+# Nexus Saturn: frame-korrekt input i autentiserad capture (2026-08-09)
+
+- ✅ Mednafen-patchen flyttar capture-input från SMPC-registerskrivningar till
+  `SMPC_UpdateInput(time_elapsed == 0)`, vilket ger exakt en injektion per
+  Saturn-videoram efter host-inputuppdateringen.
+- ✅ Den region- och mediebundna EU-capturen
+  `run-codex-eu-french-menu-fixed-input2-20260809` validerar 300 råa
+  VDP1/VDP2-ramar. Detta är transportbevis; meny-, HUD- och viewport-
+  semantik förblir korrekt fail-closed utan source-join.
+
 # Theron: kontextbunden ADPCM-capturebuild (2026-08-09)
 
 - ✅ Capturebyggaren använder nu en separat kontextbunden ADPCM FIFO/RAM-patch.
