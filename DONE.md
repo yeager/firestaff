@@ -1,3 +1,12 @@
+# DM2 Amiga valt editionsflöde i M11 (2026-08-09)
+
+- ✅ Amiga-starttestet följer nu samma hashverifierade editionsval som
+  startmenyn. En delad DM2-datarot kan därför fortsätta prioritera FM Towns
+  automatiskt, medan ett uttryckligt Amiga-val överlämnar originalets
+  ZIP/LZX-källa till M11 utan uppackning på disk. Testet verifierar både den
+  delade roten och det enskilda Amiga-arkivet genom SWSH, TITL och den
+  källägda GDAT-menyn.
+
 # Theron autentisk CD/ADPCM-traceparser (2026-08-09)
 
 - ✅ Parsern accepterar nu hela den verkliga Mednafen-capturen, inklusive

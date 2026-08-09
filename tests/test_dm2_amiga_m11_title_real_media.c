@@ -7,6 +7,7 @@
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_startup_menu.h"
+#include "asset_status_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +42,8 @@ int main(void)
     const char *root = getenv("FIRESTAFF_DM2_AMIGA_ROOT");
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
+    M12_AssetStatus asset_status;
+    char selected_runtime[M12_ASSET_DATA_DIR_CAPACITY];
     unsigned char framebuffer[M11_FB_BYTES];
     int step;
 
@@ -48,11 +51,24 @@ int main(void)
         puts("SKIP: FIRESTAFF_DM2_AMIGA_ROOT is not set");
         return 0;
     }
+    /* A shared DM2 root intentionally auto-prefers FM Towns.  This test is
+     * specifically about the selected Amiga edition, so reproduce M12's
+     * version-picker handoff instead of relying on the scanner's default.
+     * The resolver retains the original ZIP as the runtime source; it does
+     * not unpack GRAPHICS.DAT or DUNGEON.DAT onto disk. */
+    memset(&asset_status, 0, sizeof(asset_status));
+    memset(selected_runtime, 0, sizeof(selected_runtime));
+    M12_AssetStatus_ScanGame(&asset_status, root, "dm2");
+    expect(M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+               &asset_status, "dm2", "amiga-en", selected_runtime,
+               sizeof(selected_runtime)),
+           "the selected Amiga edition retains its verified archive handoff");
+    if (failures != 0) return 1;
     memset(&spec, 0, sizeof(spec));
     spec.gameId = "dm2";
     spec.sourceId = "dm2";
     spec.title = "DUNGEON MASTER II";
-    spec.dataDir = root;
+    spec.dataDir = selected_runtime;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.presentationWidth = M11_FB_WIDTH;
     spec.presentationHeight = M11_FB_HEIGHT;
