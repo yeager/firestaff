@@ -1,3 +1,11 @@
+# Nexus macOS dummy-audio capture documentation (2026-08-09)
+
+- ✅ Dokumenterat att `SDL_AUDIODRIVER=dummy` vidarebefordras till Mednafen-
+  barnprocessen för headless Saturn-capture på macOS. Dokumentationen skiljer
+  korrekt mellan SDL:s dummy-ljudbackend och Cocoa/OpenGL-videovägen och
+  beskriver varför dummy-audio inte räcker som startup-, meny-, HUD- eller
+  viewportbevis.
+
 # Nexus launcher forwards SDL audio backend (2026-08-09)
 
 - ✅ Launcherns barnprocess får nu explicit `SDL_AUDIODRIVER` när operatören
