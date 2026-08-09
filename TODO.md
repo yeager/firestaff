@@ -667,8 +667,11 @@
   autentiska bilden. A31M:s `APPB.FTL` språkvalsyta avkodas nu från samma
   hashverifierade program. Dess språkval följer nu `SWITCH.C` F1288:s
   releaseväg till samma hashverifierade `KAOS.FTL`, med APPA.C:s autentiska
-  parameter 0/1/2 för engelska, franska respektive tyska. A31:s senare meny-, Prison-
-  och Utility-ytor saknar fortfarande autentisk capture.
+  parameter 0/1/2 för engelska, franska respektive tyska. Den autentiska
+  C004-Prison-ytan, C002/C003-dörrkedjan, C005-credits och C407/C411-klickzonerna
+  är nu bundna till A31/A35:s egna data; C409 Resume är fortsatt stängd utan
+  en verifierad originalsave. Utility-diskens filväljare saknar däremot ännu
+  en fullständig Amiga-konsument och corpusbevis.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E saknar den här verifierade TITL/APPA-
