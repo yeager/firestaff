@@ -50,6 +50,11 @@
   `no_draw_only=1` och `blocks_real_dgn_mesh_render=1` efter lyckad
   källbindning. Alla 16 nivåer och den låsta censusen 17 821 texturerade faces
   passerar igen.
+- ✅ VDP1:s bounded CMDLINK-följning finns nu även i C och kräver samma
+  verifierade local-coordinate-origin för varje command i sequence replay.
+  Den autentiska frame 899-snapshoten passerar med 220 records, 215 draws,
+  två User Clip, två Local Coordinate och origin `(160,112)`; mesh-transform,
+  face selection och culling är fortsatt spärrade.
 
 # Nexus: fransk MENU.BPK-revision och PALT/PRS3-regression (2026-08-09)
 

@@ -480,6 +480,14 @@ temporary framebuffer and published only after all commands pass. This closes
 the single-command-to-command-list handoff mechanically, but does not claim
 that the current European traces are a complete retail viewport scene.
 
+`nexus_v1_vdp1_command_sequence_frame()` now performs the same bounded
+CMDLINK traversal in C. On the authenticated European frame 899 snapshot it
+reports 220 records, 215 draw records, two User Clip records, two
+Local-Coordinate records and the first display origin `(160,112)`. The origin
+is carried into the sequence compositor and every command must match it.
+This proves command-list framing and display-origin state only; mesh camera
+transform, face selection and culling remain blocked.
+
 | Route | Magic | Evidence still required |
 |---|---|---|
 | PRS3/menu replay | `NXSPRS3M` | source stream, SH-2 execution trace, PALT/VDP1 consumer and frame identity |

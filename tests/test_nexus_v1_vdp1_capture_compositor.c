@@ -141,6 +141,9 @@ int main(void)
     sequence_input.command_count = 1;
     sequence_input.system_clip_state_verified = 1;
     sequence_input.local_coordinate_state_verified = 1;
+    sequence_input.display_origin_state_verified = 1;
+    sequence_input.display_origin_x = 160;
+    sequence_input.display_origin_y = 112;
     sequence_input.command_order_verified = 1;
     sequence_input.end_record_verified = 1;
     memset(&sequence_receipt, 0, sizeof(sequence_receipt));
@@ -158,6 +161,13 @@ int main(void)
         fprintf(stderr, "FAIL: viewport VDP1 sequence replay adapter\n");
         return 1;
     }
+    sequence_input.display_origin_x = 159;
+    if (nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &framebuffer, &sequence_input, &sequence_receipt)) {
+        fprintf(stderr, "FAIL: VDP1 sequence accepted mismatched origin\n");
+        return 1;
+    }
+    sequence_input.display_origin_x = 160;
     sequence_input.end_record_verified = 0;
     if (nexus_v1_vdp1_capture_composite_mode1_sequence(
             &framebuffer, &sequence_input, &sequence_receipt)) {

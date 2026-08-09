@@ -234,6 +234,7 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         input->command_count <= 0 || input->command_count > 256 ||
         !input->system_clip_state_verified ||
         !input->local_coordinate_state_verified ||
+        !input->display_origin_state_verified ||
         !input->command_order_verified || !input->end_record_verified) {
         *out_receipt = receipt;
         return 0;
@@ -246,12 +247,21 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     *working = *framebuffer;
     receipt.sequence_state_verified = 1;
     receipt.command_count = input->command_count;
+    receipt.display_origin_verified = 1;
+    receipt.display_origin_x = input->display_origin_x;
+    receipt.display_origin_y = input->display_origin_y;
     receipt.command_order_verified = 1;
     receipt.end_record_verified = 1;
     for (i = 0; i < input->command_count; ++i) {
         Nexus_V1_Vdp1CaptureCompositeReceipt command_receipt;
         if (!nexus_v1_vdp1_capture_composite_mode1(
                 working, &input->commands[i], &command_receipt)) {
+            free(working);
+            *out_receipt = receipt;
+            return 0;
+        }
+        if (input->commands[i].screen_origin_x != input->display_origin_x ||
+            input->commands[i].screen_origin_y != input->display_origin_y) {
             free(working);
             *out_receipt = receipt;
             return 0;

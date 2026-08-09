@@ -57,6 +57,9 @@ typedef struct {
     int command_count;
     int system_clip_state_verified;
     int local_coordinate_state_verified;
+    int display_origin_state_verified;
+    int display_origin_x;
+    int display_origin_y;
     int command_order_verified;
     int end_record_verified;
 } Nexus_V1_Vdp1CaptureSequenceInput;
@@ -68,6 +71,9 @@ typedef struct {
     int command_frames_verified;
     int source_joins_verified;
     int palette_joins_verified;
+    int display_origin_verified;
+    int display_origin_x;
+    int display_origin_y;
     int command_order_verified;
     int end_record_verified;
     int renderer_permitted;

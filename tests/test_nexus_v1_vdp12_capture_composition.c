@@ -117,6 +117,9 @@ int main(void)
     sequence.commands = &vdp1; sequence.command_count = 1;
     sequence.system_clip_state_verified = 1;
     sequence.local_coordinate_state_verified = 1;
+    sequence.display_origin_state_verified = 1;
+    sequence.display_origin_x = 160;
+    sequence.display_origin_y = 112;
     sequence.command_order_verified = 1;
     sequence.end_record_verified = 1;
     bitmap[0] = 1;
