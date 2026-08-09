@@ -1251,6 +1251,9 @@ int dm2_v1_game_load_world_owner_materialize_preselection_view(
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)cell->map_x);
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)cell->map_y);
             hash = dm2_v1_game_load_owner_hash_step(hash, 0u);
+            hash = dm2_v1_game_load_owner_hash_step(hash, 0u);
+            hash = dm2_v1_game_load_owner_hash_step(hash, 0u);
+            hash = dm2_v1_game_load_owner_hash_step(hash, 0u);
             continue;
         }
         cell->source_available = 1u;
