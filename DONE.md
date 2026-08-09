@@ -1,3 +1,10 @@
+# Nexus launcher forwards SDL audio backend (2026-08-09)
+
+- ✅ Launcherns barnprocess får nu explicit `SDL_AUDIODRIVER` när operatören
+  sätter den. Det gör dummy-audio-körningar reproducerbara på extern disk;
+  en autentisk reset-frame validerades, medan aktiv VDP1-frame fortfarande
+  kräver en separat godkänd capture.
+
 # Nexus VDP1 writer-code patch hunk fixed (2026-08-09)
 
 - ✅ Ren hunk-smoke avslöjade att writer-code-patchen deklarerade fel antal

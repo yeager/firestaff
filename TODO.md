@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: en autentisk reset-frame är validerad med rena VDP2/VDP1-bytes,
+  men aktiv VDP1-draw-lista från `skip=300` saknas ännu. Mednafen lämnar inte
+  frame-hooken före launcher-timeout; nästa steg är att få signal-/framevägen
+  att slutföra utan att godkänna reset som meny eller viewport.
+
 - 🔧 Nexus: den rena VDP1-patch-smoken är nu korrekt, men den nya externa
   builden gav ännu inget raw-vittne inom timeout. Writer-PC, VRAM-källa och
   MENU.BPK/FONT256/DGN-consumer är därför fortfarande inte bundna.
