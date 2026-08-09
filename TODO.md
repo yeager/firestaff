@@ -59,7 +59,8 @@
 
 - ⏳ Therons BIOS-, firmware- och originalmediafiler är uttryckligen
   lokala. Runtime-semantik och capturearbete får inte lägga sådana filer i
-  repot; den nya Git-spärren måste fortsätta vara grön.
+  repot; Git-spärren måste fortsätta vara grön även för filer utan
+  filändelse, till exempel `syscard3`.
 
 - ⏳ VDP2-analysen identifierar nu per frame vilken av de två autentiserade
   Mednafen-registerserialiseringarna som används (äldre big-endian witness

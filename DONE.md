@@ -1,3 +1,10 @@
+# Repository: hårdare BIOS- och originalmediespärr (2026-08-09)
+
+- ✅ `scripts/verify_no_original_media_tracked.sh` avvisar nu både kända
+  originalmedieändelser och BIOS/System Card-namn utan filändelse. Kontroll,
+  skalvalidering och GitHub-workflowens befintliga steg är fortsatt gröna.
+  Alla BIOS-, firmware- och BIN/CUE/ISO-filer ligger kvar lokalt utanför Git.
+
 # Theron: autentisk US-rostertext i forcefield-handoff (2026-08-09)
 
 - ✅ Den riktiga US-Track-02-rostertexten läses från `TQUS02.bin`, placeras i
