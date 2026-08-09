@@ -11,6 +11,12 @@ static void wb16(uint8_t *p, unsigned int value)
     p[1] = (uint8_t)value;
 }
 
+static void wl16(uint8_t *p, unsigned int value)
+{
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8U);
+}
+
 int main(void)
 {
     uint8_t *bitmap = (uint8_t *)calloc(1, NEXUS_V1_VDP2_NBG1_BITMAP_BYTES);
@@ -68,6 +74,25 @@ int main(void)
         free(cram);
         return 1;
     }
+    /* The same source-bound bitmap lane must accept the native
+     * little-endian register serialization used by later frames. */
+    memset(registers, 0, sizeof(registers));
+    wl16(registers + 0x00, 0x0080);
+    wl16(registers + 0x20, 0x0002);
+    wl16(registers + 0x28, 0x1211);
+    wl16(registers + 0x2c, 0x0000);
+    input.original_saturn_capture_verified = 1;
+    if (!nexus_v1_vdp2_capture_composite_nbg1_bitmap(
+            &viewport.fb, &input, &receipt) || !receipt.valid) {
+        fprintf(stderr, "FAIL: little-endian VDP2 NBG1 replay\n");
+        free(bitmap);
+        free(cram);
+        return 1;
+    }
+    memset(registers, 0, sizeof(registers));
+    wb16(registers + 0x20, 0x0002);
+    wb16(registers + 0x28, 0x1211);
+    wb16(registers + 0x2c, 0x0000);
     wb16(registers + 0x2c, 0x0000);
     wb16(registers + NEXUS_V1_VDP2_CRAOFA_OFFSET, 0x0010);
     if (nexus_v1_vdp2_capture_composite_nbg1_bitmap(
