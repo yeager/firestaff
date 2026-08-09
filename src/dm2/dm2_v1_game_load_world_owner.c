@@ -593,6 +593,101 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
     return 0;
 }
 
+int dm2_v1_game_load_world_owner_materialize_caii_local_context(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadCaiiLocalContext *contexts;
+    DM2_V1_GameLoadCaiiLocalContextReceipt receipt;
+    const int home_map = owner ? owner->preselection_entrance.map : -1;
+    uint32_t hash = 0x30413438u; /* "0A48" */
+    int index;
+    int count = 0;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->caii_source.valid || !owner->caii_map_receipt.valid ||
+        !owner->caii_map_candidates || !owner->sound_owner.valid ||
+        !owner->sound_owner.runtime_queue_initialized ||
+        owner->caii_local_contexts || owner->caii_local_context_receipt.valid ||
+        home_map < 0 || home_map >= owner->dungeon.level_count ||
+        owner->caii_map_receipt.dynamic_candidate_count == 0u) return 0;
+    contexts = calloc(owner->caii_map_receipt.dynamic_candidate_count,
+                      sizeof(*contexts));
+    if (!contexts) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+
+    for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[index];
+        const DM2_AIDefinition *ai = NULL;
+        const uint8_t *record;
+        DM2_V1_GameLoadCaiiLocalContext *context;
+
+        if (candidate->static_ai) continue;
+        if (count >= owner->caii_map_receipt.dynamic_candidate_count ||
+            !(record = dm2_v1_record_pool_address(&owner->record_pools,
+                                                   candidate->record_handle)) ||
+            record[4] != candidate->creature_type || record[5] != 0xffu ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) || !ai ||
+            (ai->w0AIFlags & 1u) != 0u) {
+            free(contexts);
+            return 0;
+        }
+        context = &contexts[count++];
+        context->record_handle = candidate->record_handle;
+        context->map = candidate->map;
+        context->x = candidate->x;
+        context->y = candidate->y;
+        context->creature_type = record[4];
+        context->ai_flags = ai->w0AIFlags;
+        context->record_word_a = dm2_v1_game_load_owner_read_u16le(record + 10u);
+        context->packed_position = dm2_v1_game_load_owner_read_u16le(record + 12u);
+        context->initial_timer_type =
+            dm2_v1_game_load_owner_read_u16le(record + 8u) == 0xffffu ?
+                0x21u : 0x22u;
+        context->home_map = (int16_t)home_map;
+        /* DM2_query_1c9a_02c3 identifies the two-word c_creature sequence
+         * pair used by 0a48. Dynamic candidates obtain that pair only after
+         * original slot allocation has zeroed it, so this context owns the
+         * identity and source initial values but no fabricated slot. */
+        context->adj_owner_offset = 8u;
+        context->adj_base_before = 0u;
+        context->adj_frame_before = 0u;
+        /* c_1c9a.cpp:5539-5561 forms QUEUE_NOISE_GEN1 only after the real
+         * GAF row yields byte@0. Retain a pending requirement, never a
+         * request with a sentinel animation index. */
+        context->noise_request_pending = 1;
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+            (uint16_t)context->record_handle);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)context->map);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->x);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->y);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->creature_type);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->ai_flags);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->record_word_a);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->packed_position);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->initial_timer_type);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)context->home_map);
+        hash = dm2_v1_game_load_owner_hash_step(hash, context->adj_owner_offset);
+        context->source_hash = hash;
+        context->valid = 1;
+        ++receipt.noise_request_pending_count;
+    }
+    if (count != owner->caii_map_receipt.dynamic_candidate_count || hash == 0u)
+        goto fail;
+    receipt.context_count = (uint16_t)count;
+    receipt.source_hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                            receipt.context_count);
+    if (receipt.source_hash == 0u) goto fail;
+    receipt.valid = 1;
+    owner->caii_local_contexts = contexts;
+    owner->caii_local_context_receipt = receipt;
+    return 1;
+fail:
+    free(contexts);
+    return 0;
+}
+
 static int dm2_v1_game_load_owner_validate_possessions(
     const DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -1229,6 +1324,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     dm2_v1_caii_array_free(&owner->caii_slots);
     dm2_v1_caii_source_owner_free(&owner->caii_source);
     free(owner->caii_map_candidates);
+    free(owner->caii_local_contexts);
     free(owner->timer_indices);
     free(owner->timer_entries);
     dm2_v1_record_pool_set_free(&owner->record_pools);

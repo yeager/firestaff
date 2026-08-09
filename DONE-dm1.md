@@ -29,6 +29,11 @@
   This confirms data discovery and launchability only. The boot receipt still
   correctly leaves complete-support false until the required original HoC/
   Mac capture gates and an authenticated C13-bearing save exist.
+- ✅ Startup save-census correction: configured authentic PC34 saves are now
+  reported from classifier facts without running an unbacked byte-roundtrip.
+  Startup therefore no longer reports real saves as failed merely because it
+  has no original `DUNGEON.DAT` owner; backed runtime proof remains explicit
+  and the real external corpus still passes the dedicated three-save test.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 

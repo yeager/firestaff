@@ -1176,6 +1176,56 @@ int csb_v1_fmtowns_game_handoff_open(
     return 1;
 }
 
+int csb_v1_fmtowns_game_user_save_handoff_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    const char *save_path,
+    CSB_V1_FmtownsGameHandoffReceipt *out_receipt)
+{
+    CSB_V1_FmtownsGameHandoffReceipt retail;
+    uint32_t save_size = 0u;
+    uint32_t save_hash;
+    uint16_t expected_platform;
+
+    if (!out_receipt || !save_path || !save_path[0]) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    /* ReDMCSB STARTUP1.C F0435 reaches the C5 save reader only after the
+     * language-owned C03 program is selected.  Keep that retail-program
+     * admission separate from the variable bytes of a user-created slot. */
+    memset(&retail, 0, sizeof(retail));
+    if (!csb_v1_fmtowns_game_handoff_open(profile, language, &retail))
+        return 0;
+    expected_platform = retail.startup_mini_header_platform;
+    save_hash = csb_v1_fmtowns_game_file_fnv1a(save_path, &save_size);
+    if (save_size < CSB_V1_FMTOWNS_SAVE_HEADER_BYTES || save_hash == 0u ||
+        snprintf(retail.startup_mini_path,
+                 sizeof(retail.startup_mini_path), "%s", save_path) < 0 ||
+        strlen(retail.startup_mini_path) >= sizeof(retail.startup_mini_path)) {
+        return 0;
+    }
+
+    retail.startup_mini_size = save_size;
+    retail.startup_mini_fnv1a = save_hash;
+    /* This flag means that the selected candidate passed F7061/F7057/F7063,
+     * not that it equals the immutable retail bootstrap hash. */
+    retail.startup_mini_verified = 1;
+    retail.startup_mini_header_verified = 0;
+    retail.startup_mini_save_parts_verified = 0;
+    retail.startup_mini_dungeon_tail_verified = 0;
+    if (!csb_v1_fmtowns_game_startup_mini_header_open(
+            retail.startup_mini_path, expected_platform, &retail)) {
+        memset(&retail, 0, sizeof(retail));
+        return 0;
+    }
+    retail.source_evidence =
+        "ReDMCSB STARTUP1.C F0435 line 163; LOADSAVE.C F0435; "
+        "CEDTINCD.C F7051/F7057; CEDTINCA.C F7063";
+    retail.valid = 1;
+    *out_receipt = retail;
+    return 1;
+}
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,

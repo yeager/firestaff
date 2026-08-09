@@ -16,6 +16,9 @@
   `activationAccepted` reference so the macOS Quartz input helper type-checks.
 - `M12_StartupMenu`: Apply a language selection once at confirmation instead
   of repeatedly reloading locale state while the popup is active.
+- `M12_StartupMenu`: Stop freeing SDL3's library-owned `SDL_GetBasePath()`
+  result while resolving the Swedish startup catalog; this removes the
+  macOS invalid-free crash when switching from English.
 - `M12_StartupMenu`: Suppress the empty-data warning while the deferred real
   asset scan is still pending.
 - `M11_Audio_Init`: Select macOS's `playback` audio category before opening
@@ -46,6 +49,10 @@
 - `m11_platform_override`: Fix explicit `--platform auto` so it clears a
   stale persisted edition choice and selects the authenticated DM1 version
   found in the requested data directory.
+- `dm1_v1_startup_save_census`: Fix startup data discovery so an authentic
+  PC34 save corpus is not reported as failed merely because the census has no
+  original `DUNGEON.DAT` backing; backed runtime roundtrip proof remains
+  explicitly unverified until that route runs.
 
 ## CSB
 

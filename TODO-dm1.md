@@ -12,6 +12,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   requirements, notably original HoC/Mac pixel capture and an authenticated
   C13-bearing PC34 save.
 
+- 2026-08-09 startup save-census correction is complete: classifier discovery
+  no longer emits false roundtrip failures without an original `DUNGEON.DAT`
+  owner. Keep the backed PC34 roundtrip and remaining C13/original-capture
+  gates open until their real evidence is present.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.

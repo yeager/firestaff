@@ -1,3 +1,26 @@
+# README: tydlig originalplattform och mindre brus (2026-08-09)
+
+- ✅ README beskriver nu vilka originalutgåvor som skannern känner igen,
+  inklusive Atari ST, Amiga och FM Towns för Dungeon Master och Chaos Strikes
+  Back. Den skiljer tydligt mellan igenkänd media och färdig spelbar väg.
+- ✅ Irrelevanta originalemulatorbilder, capture-resonemang och intern
+  verifieringsjargong har tagits bort från README. Detaljerad teknisk
+  dokumentation finns kvar i dokumentationsindexet.
+
+# CSB FM Towns: säker F31-återupptagning (2026-08-09)
+
+- ✅ En användarvald FM Towns F31-sparfil kan nu återupptas från den aktiva
+  CSB-sessionen. Den godtas först när rätt språkägda C03-program har
+  verifierats och F7061-headern, samtliga fem F7057-delar samt F7063:s
+  dungeon-tail har klarat originalets kontroller.
+- ✅ F0433-skrivning är fortfarande spärrad. Firestaff skriver alltså inte en
+  privat eller delvis rekonstruerad fil över en äkta FM Towns-save innan
+  bytekorrekt write-back och backupflöde har verifierats mot ett verkligt
+  användarsparat corpus.
+- ✅ Spara-kommandot stoppar nu före värdsökväg och PC/Atari-kontroller i en
+  FM Towns-session. Det visar att just F31:s native write-back saknas, i
+  stället för att felaktigt rapportera en gammal främmande sparkvittens.
+
 # Theron: Firestaff WASD, mus och touch (2026-08-09)
 
 - ✅ Firestaffs aktiva Theron-route använder W/S för framåt/bakåt och A/D för
@@ -44,6 +67,18 @@
   `QUEUE_NOISE_GEN1`-kedjan avvisas den atomärt. DOS-korpustestet verifierar
   att DB4, CAII-slottar, timerheap, indexheap och RNG då är byteidentiska.
   Detta startar ingen varelse, CCM, ljudkö eller M11-session.
+
+# DM2 New Game: privat dynamisk lokal-creature-identitet (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren bevarar nu den autentiska DOS-korpusens dynamiska
+  DB4-kandidater som privata `PREPARE_LOCAL_CREATURE_VAR`-kontexter:
+  record/AI, aktuell karta och position, home-map, timergren samt
+  `DM2_query_1c9a_02c3`-parets ägaroffset och källnollställda startvärden.
+- ✅ Ingen `QUEUE_NOISE_GEN1`-begäran skapas med en sentinel eller påhittat
+  GDAT-index. Kontexten markerar endast beroendet tills den verkliga
+  animationraden, 0a48, CCM och SOUND9 kan dela en atomär rollback.
+  DOS-korpustestet bekräftar att detta inte publicerar ljud, timer eller
+  dynamisk CAII.
 
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
@@ -11078,7 +11113,6 @@
 - ⏳ Capture-bilden är fortfarande diagnostisk och inte README-eligible; den
   saknar ännu bevisad dungeon-materialbank, perspektivkonsument och komplett
   Track 02 semantic handoff.
-
 # Theron native SDL capture module gate (2026-08-09)
 
 - ✅ `capture_theron_mednafen_live_trace.sh` now accepts a verified
@@ -11088,3 +11122,29 @@
   line-delimited HuC/CD/input receipts from the real USA Track 02 media.
 - ⏳ The run did not produce game-owned CD-to-RAM consumer evidence, so the
   original RNG, creature, AI, T700 and T900 semantic gates remain closed.
+
+# Nexus VDP1 capture replay adapter (2026-08-09)
+
+- ✅ `Nexus_Viewport` now exposes the capture-only mode-1 compositor through
+  an explicit replay function and receipt. Exact DGN image/palette joins,
+  command framing and Saturn attestation remain enforced; the normal DGN
+  viewport stays fail-closed.
+- ✅ Regression coverage exercises both compositor and viewport adapter; the
+  full CMake build passes.
+
+# Nexus VDP2 NBG1 capture replay boundary (2026-08-09)
+
+- ✅ The viewport now exposes a separate capture-only NBG1 bitmap/CRAM replay
+  lane. It verifies `BGON`, NBG1 bitmap mode, 256-colour geometry, exact
+  512×256 bitmap bytes, exact 256-entry palette bytes and explicit crop/
+  destination coordinates before writing pixels.
+- ✅ The regression rejects unauthenticated input and passes together with the
+  VDP1 capture compositor and strict C11 compilation.
+# Nexus VDP1 capture replay adapter (2026-08-09)
+
+- ✅ `Nexus_Viewport` now exposes the capture-only mode-1 compositor through
+  an explicit replay function and receipt. Exact DGN image/palette joins,
+  command framing and Saturn attestation remain enforced; the normal DGN
+  viewport stays fail-closed.
+- ✅ Regression coverage exercises both compositor and viewport adapter; the
+  full CMake build passes.

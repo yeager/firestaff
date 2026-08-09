@@ -499,6 +499,56 @@ static int dm2_test_static_caii_materialization(
     return 1;
 }
 
+/* The retail corpus supplies every DB4 candidate. This checks that the
+ * private context retains only PREPARE_LOCAL_CREATURE_VAR identity and does
+ * not turn an unresolved animation row into a fake sound event. */
+static int dm2_test_caii_local_contexts(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int candidate_index;
+    int context_index = 0;
+
+    if (!owner || !owner->caii_local_context_receipt.valid ||
+        !owner->caii_local_contexts || !owner->sound_owner.valid ||
+        owner->sound_owner.positional_count != 0u ||
+        owner->sound_owner.immediate_count != 0u ||
+        owner->caii_local_context_receipt.context_count !=
+            owner->caii_map_receipt.dynamic_candidate_count ||
+        owner->caii_local_context_receipt.noise_request_pending_count !=
+            owner->caii_map_receipt.dynamic_candidate_count) return 0;
+    for (candidate_index = 0;
+         candidate_index < owner->caii_map_receipt.candidate_count;
+         ++candidate_index) {
+        const DM2_V1_GameLoadCaiiMapCandidate *candidate =
+            &owner->caii_map_candidates[candidate_index];
+        const uint8_t *record;
+        const DM2_V1_GameLoadCaiiLocalContext *context;
+        if (candidate->static_ai) continue;
+        if (context_index >= owner->caii_local_context_receipt.context_count)
+            return 0;
+        record = dm2_v1_record_pool_address(&owner->record_pools,
+                                            candidate->record_handle);
+        context = &owner->caii_local_contexts[context_index++];
+        if (!record || !context->valid ||
+            context->record_handle != candidate->record_handle ||
+            context->map != candidate->map || context->x != candidate->x ||
+            context->y != candidate->y ||
+            context->creature_type != record[4] ||
+            context->record_word_a !=
+                ((uint16_t)record[10] | ((uint16_t)record[11] << 8)) ||
+            context->packed_position !=
+                ((uint16_t)record[12] | ((uint16_t)record[13] << 8)) ||
+            context->initial_timer_type !=
+                ((((uint16_t)record[8] | ((uint16_t)record[9] << 8)) ==
+                  0xffffu) ? 0x21u : 0x22u) ||
+            context->home_map != owner->preselection_entrance.map ||
+            context->adj_owner_offset != 8u || context->adj_base_before != 0u ||
+            context->adj_frame_before != 0u || !context->noise_request_pending ||
+            context->source_hash == 0u) return 0;
+    }
+    return context_index == owner->caii_local_context_receipt.context_count;
+}
+
 /* The source corpus supplies the DB4 record, map and coordinate. The test
  * creates only the private c_creature ownership relation that 0cf7 receives
  * after the allocator has already chosen a slot; it never invents game media
@@ -2954,6 +3004,10 @@ int main(void) {
                         &static_caii_world_owner) &&
                     dm2_test_static_caii_materialization(
                         &static_caii_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_caii_local_context(
+                        &static_caii_world_owner) &&
+                    dm2_test_caii_local_contexts(
+                        &static_caii_world_owner) &&
                     dm2_test_caii_0cf7_uses_owner_timer_heap(
                         &static_caii_world_owner) &&
                     dm2_test_dynamic_caii_preflight_is_atomic(
@@ -2961,7 +3015,7 @@ int main(void) {
                     !static_caii_world_owner.committed &&
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
-                "DM2 keeps static CAII and the dynamic 0cf7 admission private, with authentic dynamic candidates blocking atomically before unowned 0a48");
+                "DM2 preserves private source-bound 0a48 context while authentic dynamic candidates still block atomically before unowned CCM and sound ownership");
     dm2_v1_game_load_world_owner_free(&static_caii_world_owner);
     memset(&new_game_generators, 0, sizeof(new_game_generators));
     new_game_generators_result = profile &&

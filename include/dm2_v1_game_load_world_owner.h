@@ -309,6 +309,38 @@ typedef struct {
     uint16_t dynamic_candidate_count;
 } DM2_V1_GameLoadCaiiDynamicReceipt;
 
+/* Minimal, private PREPARE_LOCAL_CREATURE_VAR identity for a dynamic DB4
+ * candidate. It deliberately retains no fabricated c_creature slot and no
+ * mutable CCM state. `noise_request_pending` is not an event: 0a48 can only
+ * form QUEUE_NOISE_GEN1 after a real GDAT animation row supplies its index.
+ * Source:
+ * SKProject SKULLWIN/c_ai.cpp (5817-5892), c_1c9a.cpp (5434-5561). */
+typedef struct {
+    int valid;
+    int16_t record_handle;
+    int16_t map;
+    uint8_t x;
+    uint8_t y;
+    uint8_t creature_type;
+    uint16_t ai_flags;
+    uint16_t record_word_a;
+    uint16_t packed_position;
+    uint8_t initial_timer_type;
+    int16_t home_map;
+    uint16_t adj_owner_offset;
+    uint16_t adj_base_before;
+    uint16_t adj_frame_before;
+    int noise_request_pending;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiLocalContext;
+
+typedef struct {
+    int valid;
+    uint16_t context_count;
+    uint16_t noise_request_pending_count;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiLocalContextReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -342,6 +374,11 @@ typedef struct {
     DM2_V1_DropRng caii_rng;
     int caii_rng_initialized;
     DM2_V1_GameLoadCaiiStaticReceipt caii_static_animation;
+    /* Read-only local-creature contexts for each real dynamic candidate.
+     * They are the source data predecessor of 0a48, not an active s350 or a
+     * permission to allocate CAII slots. */
+    DM2_V1_GameLoadCaiiLocalContext *caii_local_contexts;
+    DM2_V1_GameLoadCaiiLocalContextReceipt caii_local_context_receipt;
     /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
      * before it allocates the original 12-byte c_tim array and index heap.
      * They are allocation limits, not invented queued timers. */
@@ -597,6 +634,14 @@ int dm2_v1_game_load_world_owner_schedule_caii_think(
 int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
     DM2_V1_GameLoadWorldOwner *owner,
     DM2_V1_GameLoadCaiiDynamicReceipt *out_receipt);
+
+/* Preserve every real dynamic candidate's local-creature identity and mark
+ * its 0a48 noise dependency pending. No QUEUE_NOISE_GEN1 request exists
+ * until the real animation row supplies its index; slot allocation, CCM and
+ * sound queue insertion remain unavailable until they share one rollback
+ * transaction. */
+int dm2_v1_game_load_world_owner_materialize_caii_local_context(
+    DM2_V1_GameLoadWorldOwner *owner);
 
 typedef struct {
     int valid;
