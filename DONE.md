@@ -1,3 +1,14 @@
+# DM2 New Game: statisk RESET_CAII-mutation (2026-08-09)
+
+- ✅ Den privata, hashverifierade File_header-världen utför nu
+  `DM2_RESET_CAII`:s verkliga DB4 byte@5-nollställning och den statiska
+  `DM2_1c9a_09db`-grenen i originalets karta/ruta/record-ordning. Den bevarar
+  `0x0060` och `0x8001` i Creature word@0xA enligt källan.
+- ✅ Mutationerna är transaktionella över hela DB4-poolen. Verifiering mot
+  DOS-korpuset kontrollerar alla 299 poster, varje statisk animationsordning,
+  oförändrad RNG och helt fria CAII-slottar. Ingen timer, dynamisk varelse,
+  CCM-körning eller M11-session publiceras.
+
 # DM2 New Game: dynamisk privat SND-kö (2026-08-09)
 
 - ✅ GAME_LOAD:s ljudägare behåller nu originalets privata sfx-, delayed- och

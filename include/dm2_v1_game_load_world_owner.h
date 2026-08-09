@@ -233,6 +233,18 @@ typedef struct {
     uint32_t source_hash;
 } DM2_V1_GameLoadCaiiMapReceipt;
 
+/* The deterministic static half of RESET_CAII.  It is deliberately a
+ * private staging receipt: dynamic creatures still need the complete
+ * c_creature/timer/CCM transaction before GAME_LOAD can be published.
+ * Source: SKProject SKULLWIN/startend.cpp::DM2_RESET_CAII (1033-1070),
+ * c_1c9a.cpp::DM2_FILL_CAII_CUR_MAP (9896-9994). */
+typedef struct {
+    int valid;
+    uint16_t db4_slot_reset_count;
+    uint16_t static_animation_count;
+    uint32_t source_hash;
+} DM2_V1_GameLoadCaiiStaticReceipt;
+
 typedef struct {
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
@@ -265,6 +277,7 @@ typedef struct {
     DM2_V1_CaiiArray caii_slots;
     DM2_V1_DropRng caii_rng;
     int caii_rng_initialized;
+    DM2_V1_GameLoadCaiiStaticReceipt caii_static_animation;
     /* c_savegame.cpp::DM2_READ_DUNGEON_STRUCTURE computes these capacities
      * before it allocates the original 12-byte c_tim array and index heap.
      * They are allocation limits, not invented queued timers. */
@@ -484,6 +497,14 @@ int dm2_v1_game_load_world_owner_turn_preselection(
  * Doors, pits, creatures, records and map transitions remain blocked until
  * their full mutable session owners are present. */
 int dm2_v1_game_load_world_owner_advance_preselection(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Apply only RESET_CAII's deterministic static-AI branch to the private
+ * File_header DB4 pool.  The operation resets every Creature byte@5, then
+ * reproduces FILL_CAII_CUR_MAP's 09db word@0xA merge for source-static
+ * creatures in x/y/map order.  It is transactional and never assigns a
+ * dynamic CAII slot, queues a timer, consumes RNG or publishes a session. */
+int dm2_v1_game_load_world_owner_materialize_static_caii(
     DM2_V1_GameLoadWorldOwner *owner);
 
 typedef struct {

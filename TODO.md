@@ -1,12 +1,13 @@
 # Firestaff TODO - Open Work
 
-- 🔧 DM2 GAME_LOAD: den privata CAII-arrayen och den källinitierade
-  slumptalsströmmen finns nu, men `RESET_CAII` saknar ännu den enda atomära
-  all-karts-mutationen för DB4 byte@5, statisk `DM2_1c9a_09db`, dynamisk
-  `DM2_ALLOC_CAII_TO_CREATURE`, `DM2_1c9a_0cf7` och `0a48`/CCM. Ingen del får
-  publiceras eller ersättas med en fast kö. Den owner-bundna animationsvägen
-  finns, men måste ingå i samma transaktion. GAME_LOAD:s dynamiska SND-kö är
-  nu lagrad med full SOUND9-kapacitet; `QUEUE_NOISE_GEN1` saknar ännu komplett
+- 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
+  slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
+  finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
+  verkliga statiska all-kartslistan, men är inte en spelbar session. Den
+  återstående atomära dynamiska delen måste fortfarande omfatta
+  `DM2_ALLOC_CAII_TO_CREATURE`, `DM2_1c9a_0cf7` och `0a48`/CCM med rollback.
+  Ingen del får publiceras eller ersättas med en fast kö. GAME_LOAD:s dynamiska
+  SND-kö har full SOUND9-kapacitet; `QUEUE_NOISE_GEN1` saknar ännu komplett
   karta-, party- och timerägarskap.
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
