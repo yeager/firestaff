@@ -458,7 +458,8 @@ int main(void)
             /* Drain neither a test-only blocked command nor a stale throw
              * lock into the later save/resume assertions.  F0380 leaves the
              * command queued while its movement gate is active. */
-            profile->runtime.input_command_queue.count = 0u;
+            ((CSB_V1_BootProfile *)view.csbBootProfile)
+                ->runtime.input_command_queue.count = 0u;
             view.world.projectileDisabledMovementTicks = 0;
             view.world.lastProjectileDisabledMovementDirection = -1;
             if (quicksave_path && quicksave_path[0]) {
