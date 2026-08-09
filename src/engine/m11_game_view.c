@@ -29076,11 +29076,22 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 ? m11_csb_handle_fmtowns_utility_pointer(state, x, y, buttonMask)
                 : m11_csb_handle_fmtowns_switch_pointer(state, x, y, buttonMask);
         }
+        /* M11 already normalizes SDL buttons to the PC34 mouse masks: left
+         * is 0x0002 and right is 0x0001.  The standalone Entrance boundary
+         * also accepts SDL's raw left-button bit (0x0001), but forwarding
+         * M11's right-button mask to that compatibility adapter made a
+         * right-click indistinguishable from Enter Dungeon.  Preserve the
+         * original C200/C201 mouse table only for M11's source left button.
+         * ReDMCSB COMMAND.C G0445/F0358, ENTRANCE.C F0441/F0806. */
         if (m11_csb_boot_runtime_startup_pointer_dispatch(
                 state,
                 x,
                 y,
-                (unsigned int)buttonMask,
+                (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34)
+                    ? ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT
+                    : ((buttonMask & ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT)
+                        ? ENTRANCE_MOUSE_BUTTON_BONUS_DUNGEON_COMPAT
+                        : 0u),
                 &dispatch_receipt) &&
             dispatch_receipt.valid &&
             dispatch_receipt.startup_active &&
@@ -29088,6 +29099,16 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return m11_csb_startup_apply_host_input_dispatch_receipt(
                 state,
                 &dispatch_receipt);
+        }
+        /* The title/Entrance loop owns the entire pointer surface until it
+         * has released C03_GAME.  In particular C083 is a live full-screen
+         * right-button route; letting it run here toggles an inventory panel
+         * behind Prison, while the raw-mask compatibility bug above could
+         * instead start C200.  Neither live command exists during F0441's
+         * startup wait. */
+        if (state->csbState.startup_title_active ||
+            state->csbState.startup_entrance_active) {
+            return M11_GAME_INPUT_IGNORED;
         }
     }
 
