@@ -4,6 +4,18 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 verification-path repair is complete: pass76 route-state JSON is
+  stored under `parity-evidence/verification`, and pass608/live-row checks no
+  longer depend on the removed historical `verification-m11` path. This fixes
+  the gate wiring only; it does not promote original-vs-Firestaff parity.
+
+- 2026-08-09 original-frame classifier correction is complete: authentic
+  gameplay with the source cyan movement strip is no longer misclassified as
+  the entrance menu, while green ENTER/RESUME/QUIT controls over the same
+  corridor remain blocked. This improves capture diagnosis only; it does not
+  promote duplicate or semantically incomplete original frames. Authentic
+  C13-save and full original pixel-capture gates remain open.
+
 - 2026-08-09 F0143 source-ownership correction is complete: the live M11
   armour-defense path now resolves G0239 values through the authenticated raw
   ARMOUR Thing record from DUNGEON.DAT. A missing or malformed record no

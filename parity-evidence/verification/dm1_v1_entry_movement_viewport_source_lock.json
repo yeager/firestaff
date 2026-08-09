@@ -622,7 +622,7 @@
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "route_evidence_checks": [
     {
-      "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:01_ingame_start_latest",
+      "citation": "parity-evidence/verification/pass76_capture_route_state_probe.json:01_ingame_start_latest",
       "observed": {
         "action": "start",
         "direction": 2,
@@ -636,7 +636,7 @@
       "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
     },
     {
-      "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:02_ingame_turn_right_latest",
+      "citation": "parity-evidence/verification/pass76_capture_route_state_probe.json:02_ingame_turn_right_latest",
       "observed": {
         "action": "right",
         "direction": 3,
@@ -650,7 +650,7 @@
       "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
     },
     {
-      "citation": "verification-m11/capture-route-state/pass76_capture_route_state_probe.json:03_ingame_move_forward_latest",
+      "citation": "parity-evidence/verification/pass76_capture_route_state_probe.json:03_ingame_move_forward_latest",
       "observed": {
         "action": "up",
         "direction": 2,

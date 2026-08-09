@@ -23,7 +23,7 @@ REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 RED = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
 DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
 FIRESTAFF_CAPTURE_MANIFEST = ROOT / "verification-screens/capture_manifest_sha256.tsv"
-FIRESTAFF_STATE_PROBE = ROOT / "verification-m11/capture-route-state-pass195/pass76_capture_route_state_probe.json"
+FIRESTAFF_STATE_PROBE = ROOT / "parity-evidence/verification/pass76_capture_route_state_probe.json"
 EXPECTED_ORIGINAL = {
     "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",

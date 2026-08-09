@@ -154,6 +154,21 @@ def classify(regions: dict[str, RegionStats], dims: tuple[int, int]) -> tuple[st
     if viewport.nonblack_ratio < 0.40 and right_col.nonblack_ratio > 0.70 and right_col.color_ratio > 0.20:
         return "title_or_menu", "sparse viewport plus colorful/right-column title-menu art"
 
+    # The normal original gameplay frame may include the cyan movement-arrow
+    # strip in the right column.  That strip makes the whole column dense and
+    # colorful, but its action region stays dark; the entrance menu instead
+    # paints ENTER/RESUME/QUIT across that same region.  Check this before the
+    # broad entrance-menu guard so a real dungeon frame is not rejected merely
+    # because its source movement controls are visible.
+    if (
+        viewport.nonblack_ratio > 0.85
+        and viewport.color_ratio < 0.02
+        and viewport.unique_colors <= 8
+        and viewport.luma_stddev >= 45.0
+        and right_action.color_ratio < 0.20
+    ):
+        return "dungeon_gameplay", "dense low-color dungeon viewport with dark action region and source movement strip"
+
     # The original entrance/menu view overlays ENTER/RESUME/QUIT controls in
     # the right column while the dungeon entrance/hallway is already visible.
     # Keep it separate from both title art and gameplay so route audits do not
@@ -290,6 +305,26 @@ def run_self_test() -> int:
         "inventory_extent": _stats(0.784, 0.0, 6, 68.96),
     })
     cases.append(("low-color corridor gameplay", corridor, "dungeon_gameplay"))
+
+    cyan_controls = dict(base)
+    cyan_controls.update({
+        "viewport": _stats(0.925, 0.0, 6, 57.48),
+        "right_column": _stats(0.965, 0.899, 16, 42.36),
+        "right_action": _stats(0.016, 0.0, 16, 27.6),
+        "spell_area": _stats(0.0, 0.0, 1),
+        "inventory_extent": _stats(0.784, 0.0, 6, 68.96),
+    })
+    cases.append(("gameplay with source cyan movement controls", cyan_controls, "dungeon_gameplay"))
+
+    menu_over_corridor = dict(base)
+    menu_over_corridor.update({
+        "viewport": _stats(0.925, 0.0, 6, 57.48),
+        "right_column": _stats(0.965, 0.899, 16, 42.36),
+        "right_action": _stats(0.950, 0.935, 13, 45.24),
+        "spell_area": _stats(0.960, 0.946, 12, 41.09),
+        "inventory_extent": _stats(0.784, 0.0, 6, 68.96),
+    })
+    cases.append(("entrance controls over dungeon corridor", menu_over_corridor, "entrance_menu"))
 
     inventory = dict(base)
     inventory.update({

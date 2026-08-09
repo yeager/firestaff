@@ -90,6 +90,13 @@
   PC34 save corpus is not reported as failed merely because the census has no
   original `DUNGEON.DAT` backing; backed runtime roundtrip proof remains
   explicitly unverified until that route runs.
+- `pass80_original_frame_classifier`: Fix original DM1 capture classification
+  for authentic gameplay frames with the cyan movement controls, while still
+  rejecting ENTER/RESUME/QUIT controls over the dungeon viewport as an
+  entrance-menu state.
+- Restored the pass76 Firestaff route-state evidence at its current
+  `parity-evidence/verification` path and updated the pass608/live-row gates
+  and citations after the historical verification archive move.
 
 ## CSB
 

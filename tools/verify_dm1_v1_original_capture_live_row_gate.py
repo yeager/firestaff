@@ -157,7 +157,7 @@ PREFLIGHT = TOOLS_DIR / "dosbox_capture_preflight.py"
 ROW_BUILDER = TOOLS_DIR / "dosbox_capture_events_row_builder.py"
 TRANSCRIPT_WRITER = TOOLS_DIR / "dosbox_capture_transcript_writer.py"
 FIRESTAFF_CAPTURE_MANIFEST = REPO_ROOT / "verification-screens" / "capture_manifest_sha256.tsv"
-FIRESTAFF_STATE_PROBE = REPO_ROOT / "verification-m11" / "capture-route-state-pass195" / "pass76_capture_route_state_probe.json"
+FIRESTAFF_STATE_PROBE = REPO_ROOT / "parity-evidence" / "verification" / "pass76_capture_route_state_probe.json"
 REAL_PASS623_FIXTURE = (
     REPO_ROOT
     / "parity-evidence"
