@@ -46,14 +46,6 @@ static int map_square_base(const struct DungeonDatState_Compat* dungeon, int map
     return base;
 }
 
-static int square_index(const struct DungeonDatState_Compat* dungeon, int mapIndex, int x, int y) {
-    int base = map_square_base(dungeon, mapIndex);
-    const struct DungeonMapDesc_Compat* map;
-    if (base < 0) return -1;
-    map = &dungeon->maps[mapIndex];
-    return base + x * (int)map->height + y;
-}
-
 static int setup_creature_runtime_view(M11_GameViewState* state,
                                        int creatureType,
                                        int groupX,
@@ -96,32 +88,24 @@ static int setup_creature_runtime_view(M11_GameViewState* state,
         dungeon->tiles[m].squareData = (unsigned char*)calloc((size_t)squaresPerMap, sizeof(unsigned char));
         if (!dungeon->tiles[m].squareData) return 0;
         for (i = 0; i < squaresPerMap; ++i) {
-            /* Flag every square as carrying a thing list.  The runtime
-             * resolves a square's first-thing slot through the compact PC34
-             * layout (cumulative per-column counts over THING_LIST-flagged
-             * squares), not a flat array; with every square flagged that
-             * layout degenerates to the probe's existing flat square_index,
-             * so both agree.  Without the flag and the cumulative table below
-             * the raw square lookup failed, the group never authenticated,
-             * and the tick loop skipped it entirely. */
-            dungeon->tiles[m].squareData[i] =
-                (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
-                                DUNGEON_SQUARE_MASK_THING_LIST);
+            dungeon->tiles[m].squareData[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         }
     }
 
-    /* Columns run consecutively across maps: map 0 owns columns 0..4, map 1
-     * owns 5..9.  Every square is flagged, so column c is preceded by
-     * c * height flagged squares. */
+    /* Compact PC34 first-thing layout.  Only squares that actually hold a
+     * thing carry DUNGEON_SQUARE_MASK_THING_LIST; F0514 relies on that
+     * invariant, appending to an existing chain on a flagged square and
+     * inserting a fresh slot (memmove + cumulative-count fixup) for an
+     * unflagged one.  Flagging every square instead leaves flagged-but-empty
+     * squares, which is not a state the source can produce and which F0514
+     * rejects outright — the group could then never link into its
+     * destination.  Spare slots must read THING_NONE so F0514's insert path
+     * has room to shift into. */
     dungeon->dungeonColumnCount = mapCount * 5;
     dungeon->columnsCumulativeSquareFirstThingCount =
         (uint16_t*)calloc((size_t)(dungeon->dungeonColumnCount + 1),
                           sizeof(uint16_t));
     if (!dungeon->columnsCumulativeSquareFirstThingCount) return 0;
-    for (i = 0; i <= dungeon->dungeonColumnCount; ++i) {
-        dungeon->columnsCumulativeSquareFirstThingCount[i] =
-            (uint16_t)(i * 5);
-    }
     dungeon->header.squareFirstThingCount = (uint16_t)squareCount;
 
     things->squareFirstThings = (unsigned short*)calloc((size_t)squareCount, sizeof(unsigned short));
@@ -133,7 +117,7 @@ static int setup_creature_runtime_view(M11_GameViewState* state,
     }
 
     for (i = 0; i < squareCount; ++i) {
-        things->squareFirstThings[i] = THING_ENDOFLIST;
+        things->squareFirstThings[i] = THING_NONE;
     }
 
     things->loaded = 1;
@@ -170,8 +154,21 @@ static int setup_creature_runtime_view(M11_GameViewState* state,
         raw[15] = (unsigned char)(things->groups[0].direction & 0x03u);
     }
 
-    things->squareFirstThings[square_index(dungeon, activeMapIndex, groupX, groupY)] =
-        make_thing(THING_TYPE_GROUP, 0);
+    /* The group's square is the only occupied one, so it is the only flagged
+     * square and therefore compact slot 0; every column at or after it is
+     * preceded by that single flagged square. */
+    dungeon->tiles[activeMapIndex]
+        .squareData[groupX * dungeon->maps[activeMapIndex].height + groupY] |=
+        DUNGEON_SQUARE_MASK_THING_LIST;
+    things->squareFirstThings[0] = make_thing(THING_TYPE_GROUP, 0);
+    {
+        int firstCol = activeMapIndex * 5;
+        int c;
+        for (c = 0; c <= dungeon->dungeonColumnCount; ++c) {
+            dungeon->columnsCumulativeSquareFirstThingCount[c] =
+                (uint16_t)((c > firstCol + groupX) ? 1 : 0);
+        }
+    }
 
     state->world.dungeon = dungeon;
     state->world.things = things;
@@ -199,10 +196,15 @@ static int setup_creature_runtime_view(M11_GameViewState* state,
 }
 
 static int group_is_at(const M11_GameViewState* state, int x, int y) {
-    int idx;
     if (!state || !state->world.dungeon || !state->world.things) return 0;
-    idx = square_index(state->world.dungeon, state->world.party.mapIndex, x, y);
-    return state->world.things->squareFirstThings[idx] == make_thing(THING_TYPE_GROUP, 0);
+    /* Resolve through the source accessor rather than a flat array index:
+     * the fixture uses the compact PC34 first-thing layout, where a square's
+     * slot is derived from the per-column cumulative counts over flagged
+     * squares and is NOT the flat (x * height + y) offset. */
+    return F0511_DUNGEON_GetSquareFirstThing_Compat(
+               state->world.dungeon, state->world.things,
+               state->world.party.mapIndex, x, y) ==
+           make_thing(THING_TYPE_GROUP, 0);
 }
 
 static void run_attack_runtime_probe(ProbeTally* tally) {
@@ -218,9 +220,18 @@ static void run_attack_runtime_probe(ProbeTally* tally) {
     record(tally, "INV_CREATURE_AUDIO_ATTACK_INDEX",
            state.audioState.lastSoundIndex == DM1_SND_ATTACK_SCORPION,
            "scorpion attack emits source sound index 20");
+    /* DM1 deliberately emits NO generated fallback marker.
+     * m11_audio_emit_source_sound_with_volume routes every DM1 source kind
+     * through M11_Audio_EmitSourceSoundIndex, which carries the SND3 event
+     * index alone: "A missing or malformed source record is silent; a
+     * generated marker would make an unverified effect sound plausible while
+     * being wrong" (ReDMCSB SOUND.C F0060). Asserting a CREATURE marker here
+     * would demand exactly the synthetic cue that rule forbids, so the gate
+     * now pins the real contract — the source index fires and no procedural
+     * marker is substituted. */
     record(tally, "INV_CREATURE_AUDIO_ATTACK_MARKER",
-           state.audioState.lastMarker == M11_AUDIO_MARKER_CREATURE,
-           "attack source index uses creature fallback marker, not generic combat");
+           state.audioState.lastMarker == M11_AUDIO_MARKER_NONE,
+           "attack emits the source SND3 index with no generated marker cue");
     M11_GameView_Shutdown(&state);
 }
 
@@ -240,9 +251,10 @@ static void run_movement_runtime_probe(ProbeTally* tally) {
     record(tally, "INV_CREATURE_AUDIO_MOVE_INDEX",
            state.audioState.lastSoundIndex == DM1_SND_MOVE_RED_DRAGON,
            "red dragon movement emits source sound index 33");
+    /* Same DM1 no-synthetic-marker rule as the attack gate above. */
     record(tally, "INV_CREATURE_AUDIO_MOVE_MARKER",
-           state.audioState.lastMarker == M11_AUDIO_MARKER_CREATURE,
-           "movement source index uses creature marker, not party footstep");
+           state.audioState.lastMarker == M11_AUDIO_MARKER_NONE,
+           "movement emits the source SND3 index with no generated marker cue");
     M11_GameView_Shutdown(&state);
 }
 
