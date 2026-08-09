@@ -460,10 +460,9 @@ static void test_utility_disk(void)
     remove(amiga_path);
 }
 
-/* Opt-in real-media regression.  The repository never carries a Utility
- * Disk image, but a caller can point this at an extracted original ADF (for
- * example the local English release 3 corpus) and prove the same UTIO.C
- * identity branch used by the runtime. */
+/* Opt-in real-media regression. The repository never carries a Utility Disk
+ * image, but a caller can point this at an extracted original Amiga ADF or
+ * Atari ST MSA and prove the same UTIO.C identity branch used by runtime. */
 static void test_real_utility_disk_if_supplied(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_UTILITY_DISK");

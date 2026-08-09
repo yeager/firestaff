@@ -34,4 +34,13 @@ int csb_v1_atari_msa_extract_root_file(const uint8_t *msa, size_t msa_size,
                                        size_t *out_size,
                                        CSB_V1_AtariMsaReceipt *out_receipt);
 
+/* Read one 512-byte logical sector from a complete MSA image.  This keeps
+ * source-owned Atari ST media checks (such as UTIO.C's sector-7 identity)
+ * on the decoded floppy surface rather than treating the MSA transport bytes
+ * as a raw disk image. */
+int csb_v1_atari_msa_read_sector(const uint8_t *msa, size_t msa_size,
+                                 uint32_t sector_index,
+                                 uint8_t out_sector[512],
+                                 CSB_V1_AtariMsaReceipt *out_receipt);
+
 #endif /* FIRESTAFF_CSB_V1_ATARI_MSA_H */

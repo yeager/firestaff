@@ -89,10 +89,10 @@ static const char *const g_csb_dungeon_hashes[] = {
     NULL
 };
 
-/* Original Amiga CSB Utility Disk ADFs observed in the local corpus.  The
- * utility-flow checker validates the AmigaDOS root block afterwards, so an
- * archive entry must satisfy both its known original identity and the
- * source-defined F0452-style disk signature. */
+/* Original CSB Utility Disk images observed in the local corpus.  The
+ * utility-flow checker validates the platform's source-defined media
+ * signature after discovery: AmigaDOS root volume for ADF, UTIO.C sector 7
+ * after MSA track decoding for Atari ST. */
 static const char *const g_csb_utility_disk_hashes[] = {
     "4ea453b460ae38a756585bd2e8d8a0a1", /* English release 1 */
     "23596a959e983beeb607c90c9bf27b1f", /* English release 2 */
@@ -100,6 +100,7 @@ static const char *const g_csb_utility_disk_hashes[] = {
     "c415b842d81ba120b9ef2126a209e891", /* French */
     "d954871dbb2f4e74966234117f2c50b0", /* German release 1 */
     "29bdaaf3c41e4e785603f3250f0e5b6c", /* German release 2 */
+    "c63674df22825072cdfaa2e9a4454c43", /* Atari ST 2.0 English MSA */
     NULL
 };
 

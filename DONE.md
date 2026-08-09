@@ -1,3 +1,13 @@
+# CSB Atari ST: Utility Disk MSA-mediaidentitet (2026-08-09)
+
+- ✅ Den hashverifierade Atari ST 2.0 Utility Disk-kopian i MSA-format
+  (`c63674df22825072cdfaa2e9a4454c43`) kan nu användas i samma Utility-import-
+  väg som ett rått ST-medium. MSA-spåren packas upp innan exakt sektor 7
+  kontrolleras mot originalets `copyright`- och `Chaos Strikes Back`-strängar.
+- ✅ Originalets MSA (`10` sektorer/spår, två sidor, 80 spår) verifieras både
+  som transportformat och via UTIO.C-identiteten. Inga spel- eller sparbytes
+  skapas eller ändras av kontrollen. Källa: ReDMCSB `UTIO.C` F1991.
+
 # Nexus VDP1 mode-5 direct-color capture lane (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_capture_decode_direct_color()` följer Mednafen

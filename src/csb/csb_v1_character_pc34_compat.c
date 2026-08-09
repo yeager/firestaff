@@ -19,6 +19,7 @@
  */
 
 #include "csb_v1_character_pc34_compat.h"
+#include "csb_v1_atari_msa.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include <stdio.h>
@@ -742,6 +743,7 @@ int csb_v1_util_check_disk(const char *drive_path)
 {
     FILE *f;
     uint8_t sector[512];
+    uint8_t *msa = NULL;
     uint8_t amiga_name[32];
     long size;
     size_t name_bytes;
@@ -767,6 +769,26 @@ int csb_v1_util_check_disk(const char *drive_path)
         fclose(f);
         return 0;
     }
+    /* Original Atari ST CSB Utility media is commonly preserved as an MSA
+     * container. UTIO.C F1991 still reads sector 7 after the floppy driver
+     * has expanded that transport, so verify the same two source strings on
+     * the decoded sector rather than looking for them in compressed bytes.
+     *
+     * ReDMCSB UTIO.C F1991; Atari MSA specification (big-endian track RLE). */
+    if (size > 0L && (unsigned long)size <= 4u * 1024u * 1024u &&
+        fseek(f, 0L, SEEK_SET) == 0 &&
+        (msa = (uint8_t *)malloc((size_t)size)) != NULL &&
+        fread(msa, 1u, (size_t)size, f) == (size_t)size &&
+        csb_v1_atari_msa_read_sector(msa, (size_t)size, 6u, sector, NULL) &&
+        memcmp(sector, k_csb_v1_util_st_copyright,
+               sizeof(k_csb_v1_util_st_copyright)) == 0 &&
+        memcmp(sector + 128u, k_csb_v1_util_st_title,
+               sizeof(k_csb_v1_util_st_title)) == 0) {
+        free(msa);
+        fclose(f);
+        return 0;
+    }
+    free(msa);
     if ((unsigned long)size == CSB_V1_UTIL_AMIGA_ADF_BYTES &&
         fseek(f, (long)(CSB_V1_UTIL_AMIGA_ROOT_BLOCK_OFFSET +
                          CSB_V1_UTIL_AMIGA_VOLUME_NAME_OFFSET), SEEK_SET) == 0 &&

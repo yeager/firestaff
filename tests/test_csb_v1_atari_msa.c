@@ -29,6 +29,7 @@ int main(void) {
     CSB_V1_AtariMsaReceipt receipt;
     unsigned char *disk = image + 12;
     const char *real_path = getenv("FIRESTAFF_CSB_ATARI_MSA");
+    const char *utility_path = getenv("FIRESTAFF_CSB_ATARI_UTILITY_MSA");
 
     memset(image, 0, sizeof(image));
     put_be16(image, 0x0e0f); put_be16(image + 2, 9); put_be16(image + 4, 0);
@@ -77,6 +78,40 @@ int main(void) {
         }
         free(real);
         puts("PASS: original Atari CSB save disk MSA decodes to 720 KiB");
+    }
+    if (utility_path && utility_path[0]) {
+        static const char copyright[] =
+            "copyright (c) 1987, Software Heaven, Inc.";
+        static const char title[] = "Chaos Strikes Back";
+        FILE *fp = fopen(utility_path, "rb");
+        long file_size;
+        unsigned char *utility;
+        unsigned char sector[512];
+
+        if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
+            (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0 ||
+            !(utility = malloc((size_t)file_size)) ||
+            fread(utility, 1u, (size_t)file_size, fp) != (size_t)file_size) {
+            if (fp) fclose(fp);
+            return 1;
+        }
+        fclose(fp);
+        if (!csb_v1_atari_msa_read_sector(utility, (size_t)file_size, 6u,
+                                           sector, &receipt) ||
+            receipt.sectors_per_track != 10u || receipt.side_count != 2u ||
+            receipt.first_track != 0u || receipt.last_track != 79u ||
+            receipt.decoded_disk_bytes != 819200u ||
+            memcmp(sector, copyright, sizeof(copyright)) != 0 ||
+            memcmp(sector + 128u, title, sizeof(title)) != 0) {
+            fprintf(stderr, "real utility MSA rejected: sectors=%u sides=%u first=%u last=%u bytes=%u\n",
+                    receipt.sectors_per_track, receipt.side_count,
+                    receipt.first_track, receipt.last_track,
+                    receipt.decoded_disk_bytes);
+            free(utility);
+            return 1;
+        }
+        free(utility);
+        puts("PASS: original Atari CSB Utility Disk MSA exposes UTIO.C sector 7");
     }
     puts("test_csb_v1_atari_msa: PASS");
     return 0;

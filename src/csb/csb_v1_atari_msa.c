@@ -123,6 +123,27 @@ int csb_v1_atari_msa_probe(const uint8_t *msa, size_t msa_size,
     return 1;
 }
 
+int csb_v1_atari_msa_read_sector(const uint8_t *msa, size_t msa_size,
+                                 uint32_t sector_index,
+                                 uint8_t out_sector[512],
+                                 CSB_V1_AtariMsaReceipt *out_receipt)
+{
+    uint8_t *disk = NULL;
+    size_t disk_size = 0u;
+    CSB_V1_AtariMsaReceipt receipt;
+
+    if (!out_sector || !msa_decode(msa, msa_size, &disk, &disk_size,
+                                   &receipt) || disk_size < 512u ||
+        (size_t)sector_index >= disk_size / 512u) {
+        free(disk);
+        return 0;
+    }
+    memcpy(out_sector, disk + (size_t)sector_index * 512u, 512u);
+    if (out_receipt) *out_receipt = receipt;
+    free(disk);
+    return 1;
+}
+
 int csb_v1_atari_msa_extract_root_file(const uint8_t *msa, size_t msa_size,
                                        const char *name, uint8_t *out_bytes,
                                        size_t out_capacity, size_t *out_size,

@@ -23700,6 +23700,13 @@ endif()
         tests/test_csb_v1_boot_runtime_handoff.c
         tests/csb_v1_csbwin_save_loader_boundary_fixture.c
         src/csb/csb_v1_boot.c
+        # csb_v1_boot_apply_startup_handoff_pc34() owns the F31 direct-save
+        # branch too; keep this standalone boot target link-complete after
+        # that source-owned handoff was added.
+        src/csb/csb_v1_fmtowns_game.c
+        src/csb/csb_v1_fmtowns_portrait.c
+        src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+        src/csb/redmcsb_f7061_save_header_pc34_compat.c
         src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
