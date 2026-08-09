@@ -35,6 +35,7 @@ enum {
     CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET = 0x138u,
     CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET = 0x158u,
     CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5 = 5u,
+    CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_PRISON = 12u,
     CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_GAME = 13u,
     CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES = 128u,
     CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES = 16u,
@@ -92,7 +93,9 @@ enum {
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size);
 static uint32_t csb_v1_fmtowns_game_bytes_fnv1a(const unsigned char *bytes,
-                                                 size_t size);
+                                                  size_t size);
+static uint32_t csb_v1_fmtowns_game_file_fnv1a(const char *path,
+                                                 uint32_t *out_size);
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
 static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes);
 
@@ -568,7 +571,6 @@ int csb_v1_fmtowns_game_load_startup_state(
     }
     if (!redmcsb_f7057_read_save_part_with_checksum_pc34(
             global_data, sizeof(global_data), keys[0], checksums[0])) return 0;
-
     active_offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES +
         CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES;
     party_offset = active_offset +
@@ -868,6 +870,196 @@ static int csb_v1_fmtowns_game_startup_mini_header_open(
     receipt->startup_mini_header_verified = 1;
     return csb_v1_fmtowns_game_startup_mini_save_parts_open(
         path, receipt->startup_mini_size, header, receipt);
+}
+
+int csb_v1_fmtowns_game_user_save_open(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path,
+    CSB_V1_FmtownsUserSaveReceipt *out_receipt)
+{
+    unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
+    unsigned char global_data[CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES];
+    unsigned char *part = NULL;
+    uint16_t keys[5];
+    uint16_t checksums[5];
+    uint32_t part_sizes[5];
+    uint32_t offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES;
+    uint32_t index;
+    uint16_t expected_platform;
+    uint32_t actual_size;
+    CSB_V1_FmtownsGameHandoffReceipt tail_receipt;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !game_receipt || !game_receipt->valid || !save_path ||
+        !save_path[0] || !profile->dungeon_verified ||
+        !profile->dungeon_path[0]) return 0;
+    expected_platform = game_receipt->language == CSB_FMTOWNS_SWITCH_ENGLISH
+        ? 7u : game_receipt->language == CSB_FMTOWNS_SWITCH_JAPANESE ? 8u : 0u;
+    if (expected_platform == 0u ||
+        !(out_receipt->source_fnv1a = csb_v1_fmtowns_game_file_fnv1a(
+              save_path, &actual_size)) ||
+        actual_size < CSB_V1_FMTOWNS_SAVE_HEADER_BYTES ||
+        !csb_v1_fmtowns_game_read_span(save_path, 0u, header, sizeof(header))) return 0;
+    if (!redmcsb_f7061_is_read_save_header_successful_pc34(
+            header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX) ||
+        header[CSB_V1_FMTOWNS_SAVE_HEADER_USELESS_OFFSET] != 1u ||
+        header[CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET] !=
+            CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5 ||
+        csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_PLATFORM_OFFSET) !=
+            expected_platform ||
+        (csb_v1_fmtowns_game_read_le16(
+             header + CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET) !=
+             CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_PRISON &&
+         csb_v1_fmtowns_game_read_le16(
+             header + CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET) !=
+             CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_GAME) ||
+        !csb_v1_fmtowns_game_read_span(save_path, offset, global_data,
+                                        sizeof(global_data))) return 0;
+    for (index = 0u; index < 5u; ++index) {
+        keys[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u);
+        checksums[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET + index * 2u);
+    }
+    if (!redmcsb_f7057_read_save_part_with_checksum_pc34(
+            global_data, sizeof(global_data), keys[0], checksums[0])) return 0;
+    part_sizes[0] = sizeof(global_data);
+    part_sizes[1] = (uint32_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_ACTIVE_GROUP_CAPACITY_OFFSET) *
+        CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES;
+    part_sizes[2] = CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES;
+    part_sizes[3] = (uint32_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET) *
+        CSB_V1_FMTOWNS_EVENT_BYTES;
+    part_sizes[4] = (uint32_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET) *
+        CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES;
+    if (part_sizes[1] == 0u || part_sizes[3] == 0u ||
+        part_sizes[1] > CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY *
+                            CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES ||
+        part_sizes[3] / CSB_V1_FMTOWNS_EVENT_BYTES > DM1_EVENT_MAX_COUNT) return 0;
+    offset += part_sizes[0];
+    for (index = 1u; index < 5u; ++index) {
+        if (offset > actual_size || part_sizes[index] > actual_size - offset ||
+            !(part = (unsigned char *)malloc(part_sizes[index])) ||
+            !csb_v1_fmtowns_game_read_span(save_path, offset, part,
+                                            part_sizes[index]) ||
+            !redmcsb_f7057_read_save_part_with_checksum_pc34(
+                part, part_sizes[index], keys[index], checksums[index])) {
+            free(part);
+            return 0;
+        }
+        free(part);
+        part = NULL;
+        offset += part_sizes[index];
+    }
+    if (offset > actual_size ||
+        CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_BYTES *
+            CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_COUNT > actual_size - offset) return 0;
+    memset(&tail_receipt, 0, sizeof(tail_receipt));
+    tail_receipt.startup_mini_verified_save_body_offset = offset;
+    tail_receipt.startup_mini_party_map_x = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_X_OFFSET);
+    tail_receipt.startup_mini_party_map_y = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_Y_OFFSET);
+    tail_receipt.startup_mini_party_direction = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_DIRECTION_OFFSET);
+    tail_receipt.startup_mini_party_map_index = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_INDEX_OFFSET);
+    if (!csb_v1_fmtowns_game_startup_mini_dungeon_tail_open(
+            save_path, actual_size, &tail_receipt)) return 0;
+    out_receipt->valid = 1;
+    out_receipt->language = game_receipt->language;
+    out_receipt->variant_id = game_receipt->variant_id;
+    out_receipt->source_size = actual_size;
+    out_receipt->header_key = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX * 2u);
+    out_receipt->platform = expected_platform;
+    out_receipt->dungeon_id = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET);
+    out_receipt->party_champion_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_CHAMPION_COUNT_OFFSET);
+    out_receipt->event_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_EVENT_COUNT_OFFSET);
+    out_receipt->first_unused_event_index = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_FIRST_UNUSED_EVENT_INDEX_OFFSET);
+    out_receipt->current_active_group_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_CURRENT_ACTIVE_GROUP_COUNT_OFFSET);
+    out_receipt->event_maximum_count = (uint16_t)(part_sizes[3] /
+        CSB_V1_FMTOWNS_EVENT_BYTES);
+    out_receipt->active_group_capacity = (uint16_t)(part_sizes[1] /
+        CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES);
+    out_receipt->game_time = csb_v1_fmtowns_game_read_le32(global_data);
+    out_receipt->party_map_x = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_X_OFFSET);
+    out_receipt->party_map_y = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_Y_OFFSET);
+    out_receipt->party_direction = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_DIRECTION_OFFSET);
+    out_receipt->party_map_index = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_INDEX_OFFSET);
+    out_receipt->portraits_offset = offset;
+    out_receipt->dungeon_tail_offset = tail_receipt.startup_mini_dungeon_tail_offset;
+    out_receipt->dungeon_tail_size = tail_receipt.startup_mini_dungeon_tail_size;
+    out_receipt->dungeon_tail_checksum = tail_receipt.startup_mini_dungeon_tail_checksum;
+    snprintf(out_receipt->source_path, sizeof(out_receipt->source_path), "%s", save_path);
+    snprintf(out_receipt->dungeon_path, sizeof(out_receipt->dungeon_path), "%s",
+             profile->dungeon_path);
+    out_receipt->source_evidence =
+        "ReDMCSB LOADSAVE.C F0435 lines 2700-2890; CEDTINC6.C F7057/F7061; "
+        "F31E F0435 opens CDATA/DUNGEON.DAT after the save parts.";
+    return 1;
+}
+
+int csb_v1_fmtowns_game_load_user_save_state(
+    const CSB_V1_FmtownsUserSaveReceipt *receipt,
+    CSB_V1_FmtownsStartupState *out_state)
+{
+    CSB_V1_FmtownsGameHandoffReceipt compat;
+
+    if (!receipt || !out_state || !receipt->valid || !receipt->source_path[0] ||
+        receipt->source_size == 0u || receipt->portraits_offset == 0u ||
+        receipt->dungeon_tail_size == 0u ||
+        receipt->dungeon_tail_offset != receipt->portraits_offset +
+            CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_BYTES *
+                CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_COUNT) return 0;
+    memset(&compat, 0, sizeof(compat));
+    compat.valid = 1;
+    compat.language = receipt->language;
+    compat.variant_id = receipt->variant_id;
+    compat.startup_mini_verified = 1;
+    compat.startup_mini_size = receipt->source_size;
+    snprintf(compat.startup_mini_path, sizeof(compat.startup_mini_path), "%s",
+             receipt->source_path);
+    compat.startup_mini_header_verified = 1;
+    compat.startup_mini_header_key = receipt->header_key;
+    compat.startup_mini_header_format_id = CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5;
+    compat.startup_mini_header_platform = receipt->platform;
+    compat.startup_mini_header_dungeon_id = receipt->dungeon_id;
+    compat.startup_mini_save_parts_verified = 1;
+    compat.startup_mini_party_champion_count = receipt->party_champion_count;
+    compat.startup_mini_event_count = receipt->event_count;
+    compat.startup_mini_first_unused_event_index = receipt->first_unused_event_index;
+    compat.startup_mini_current_active_group_count = receipt->current_active_group_count;
+    compat.startup_mini_event_maximum_count = receipt->event_maximum_count;
+    compat.startup_mini_active_group_capacity = receipt->active_group_capacity;
+    compat.startup_mini_game_time = receipt->game_time;
+    compat.startup_mini_party_map_x = receipt->party_map_x;
+    compat.startup_mini_party_map_y = receipt->party_map_y;
+    compat.startup_mini_party_direction = receipt->party_direction;
+    compat.startup_mini_party_map_index = receipt->party_map_index;
+    compat.startup_mini_verified_save_body_offset = receipt->portraits_offset;
+    compat.startup_mini_dungeon_tail_verified = 1;
+    compat.startup_mini_dungeon_tail_offset = receipt->dungeon_tail_offset;
+    compat.startup_mini_dungeon_tail_size = receipt->dungeon_tail_size;
+    compat.startup_mini_dungeon_tail_checksum = receipt->dungeon_tail_checksum;
+    /* F0435 keeps the accepted save file open while F0434 consumes its
+     * appended dungeon. Reuse the same checksum-checked transfer, not a
+     * MINI.DAT or host snapshot substitution. */
+    return csb_v1_fmtowns_game_load_startup_state(&compat, out_state);
 }
 
 static int csb_v1_fmtowns_utility_icon_palette_open(

@@ -33,6 +33,9 @@ extern "C" {
  * and must not be treated as image commands. */
 #define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_STREAM_BYTES 290u
 #define CSB_V1_FMTOWNS_STARTUP_ACTIVE_GROUP_CAPACITY 60u
+/* F31 retail user saves may retain the live F0196 allocation, which is
+ * larger than the MINI.DAT bootstrap allocation. */
+#define CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY 110u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT 4u
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES 464u
 #define CSB_V1_FMTOWNS_UTILITY_PORTRAIT_CATALOG_CAPACITY 24u
@@ -159,6 +162,39 @@ typedef struct CSB_V1_FmtownsStartupState {
     struct DM1_EventQueue_V1 timeline_queue;
     CSB_V1_DungeonData dungeon;
 } CSB_V1_FmtownsStartupState;
+
+/* A user-created FM Towns CSBGAME.DAT is deliberately distinct from the
+ * CD's MINI.DAT bootstrap image.  F0435 reads the five obfuscated parts and
+ * four portrait rasters from the save disk, then opens CDATA/CJDATA's
+ * DUNGEON.DAT; it never treats a user save as a self-contained dungeon. */
+typedef struct CSB_V1_FmtownsUserSaveReceipt {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t source_size;
+    uint32_t source_fnv1a;
+    char source_path[512];
+    char dungeon_path[512];
+    uint16_t header_key;
+    uint16_t platform;
+    uint16_t dungeon_id;
+    uint16_t party_champion_count;
+    uint16_t event_count;
+    uint16_t first_unused_event_index;
+    uint16_t current_active_group_count;
+    uint16_t event_maximum_count;
+    uint16_t active_group_capacity;
+    uint32_t game_time;
+    int16_t party_map_x;
+    int16_t party_map_y;
+    int16_t party_direction;
+    int16_t party_map_index;
+    uint32_t portraits_offset;
+    uint32_t dungeon_tail_offset;
+    uint32_t dungeon_tail_size;
+    uint16_t dungeon_tail_checksum;
+    const char *source_evidence;
+} CSB_V1_FmtownsUserSaveReceipt;
 
 /* Four raw external F31 portraits immediately follow F0435's five verified
  * MINI.DAT save parts.  CEDT019.C F2124 converts these original planar bytes
@@ -334,6 +370,20 @@ void csb_v1_fmtowns_game_startup_state_free(
  * saved ACTIVE_GROUP owner are all present. */
 int csb_v1_fmtowns_game_apply_startup_state(
     CSB_V1_FmtownsStartupState *state, CSB_V1_RuntimeProfile *runtime);
+
+/* F0435 user-save admission and state transfer.  The file has no expected
+ * retail hash: each real save differs.  All five native checksums, format,
+ * platform, dungeon identity, exact part extent and portrait extent must
+ * validate before it can affect a runtime. */
+int csb_v1_fmtowns_game_user_save_open(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path,
+    CSB_V1_FmtownsUserSaveReceipt *out_receipt);
+
+int csb_v1_fmtowns_game_load_user_save_state(
+    const CSB_V1_FmtownsUserSaveReceipt *receipt,
+    CSB_V1_FmtownsStartupState *out_state);
 
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,

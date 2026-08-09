@@ -47,6 +47,7 @@ int main(void)
     const char *archive_data_dir =
         getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE_DATA_DIR");
     const char *language_name = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE");
+    const char *user_save_path = getenv("FIRESTAFF_CSB_FMTOWNS_USER_SAVE");
     const char *version_id;
     const char *expected_program;
     const char *expected_utility_program;
@@ -73,6 +74,8 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
+    CSB_V1_FmtownsUserSaveReceipt user_save;
+    CSB_V1_FmtownsStartupState user_save_state;
     CSB_V1_FmtownsGameHandoffReceipt external_save_handoff;
     CSB_V1_PartyState mini_party;
     CSB_V1_FmtownsStartupPortraitReceipt mini_portraits;
@@ -306,6 +309,32 @@ int main(void)
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
+    if (user_save_path && user_save_path[0]) {
+        memset(&user_save, 0, sizeof(user_save));
+        CHECK(csb_v1_fmtowns_game_user_save_open(
+                  (const CSB_V1_BootProfile *)view.csbBootProfile,
+                  &direct_handoff, user_save_path, &user_save) &&
+                  user_save.valid && user_save.language == language &&
+                  user_save.variant_id == direct_handoff.variant_id &&
+                  user_save.platform == expected_mini_header_platform &&
+                  (user_save.dungeon_id == 12u || user_save.dungeon_id == 13u) &&
+                  user_save.source_size > 512u &&
+                  user_save.event_maximum_count > 0u &&
+                  user_save.active_group_capacity > 0u &&
+                  user_save.dungeon_tail_size > 0u &&
+                  user_save.dungeon_tail_offset > user_save.portraits_offset &&
+                  user_save.dungeon_tail_offset + user_save.dungeon_tail_size + 2u ==
+                      user_save.source_size,
+              "F31 F0435 admits the authentic user CSBGAME.DAT and its four portraits");
+        memset(&user_save_state, 0, sizeof(user_save_state));
+        CHECK(csb_v1_fmtowns_game_load_user_save_state(
+                  &user_save, &user_save_state) && user_save_state.valid &&
+                  user_save_state.game_time == user_save.game_time &&
+                  user_save_state.party_map_index == user_save.party_map_index &&
+                  user_save_state.dungeon.raw_data != NULL,
+              "F31 F0435 transfers the authentic user save and appended dungeon atomically");
+        csb_v1_fmtowns_game_startup_state_free(&user_save_state);
+    }
     memset(&external_save_handoff, 0, sizeof(external_save_handoff));
     memset(&external_save_state, 0, sizeof(external_save_state));
     CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
