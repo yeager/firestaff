@@ -691,6 +691,13 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
             &candidate.preselection_entrance_map) ||
         !candidate.preselection_entrance_map.committed ||
         !candidate.preselection_entrance_map.incomplete_world ||
+        !dm2_v1_boot_champion_selection_census(
+            profile, &candidate.preselection_mirror_roster) ||
+        !candidate.preselection_mirror_roster.valid ||
+        !candidate.preselection_mirror_roster.incomplete_game_load ||
+        candidate.preselection_mirror_roster.candidate_count <= 0 ||
+        candidate.preselection_mirror_roster.candidate_count >
+            DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES ||
         !dm2_v1_boot_champion_dyn4_roster_receipt(
             profile, &candidate.preselection_dyn4_roster) ||
         !candidate.preselection_dyn4_roster.valid ||
@@ -701,6 +708,8 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
         candidate.preselection_actuator_generators.map_count != source->level_count ||
         candidate.preselection_entrance_map.map !=
             candidate.preselection_entrance.map ||
+        candidate.preselection_mirror_roster.candidate_count !=
+            candidate.preselection_dyn4_roster.selector_count ||
         dm2_v1_dungeon_load(&candidate.dungeon, source->raw_data,
                             source->raw_size) != 0 ||
         !candidate.dungeon.record_graph_complete ||
@@ -727,6 +736,8 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
         hash, candidate.preselection_entrance_map.map_data_hash);
     hash = dm2_v1_game_load_owner_hash_step(
         hash, candidate.preselection_dyn4_roster.selector_roster_hash);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, candidate.preselection_mirror_roster.roster_hash);
     if (hash == 0u) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;

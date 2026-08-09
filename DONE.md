@@ -197,6 +197,13 @@
 - ✅ Realdatatestet kontrollerar ägaren, roten och varje commitsstatus. Att
   flytta, utrusta eller tappa dessa records är fortsatt spärrat.
 
+# DM2 New Game privat mirrorroster (2026-08-09)
+
+- ✅ GameLoadWorldOwner behåller nu originalets kanoniska DB3-mirrorordning
+  med varje källkandidats verkliga hero- och föremålsförutsättningar. Den
+  korskontrolleras mot samma DYN4-selectorroster.
+- ✅ M11 ritar ännu inte panelen och väljer därför ingen champion automatiskt.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte
