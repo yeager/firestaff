@@ -203,6 +203,8 @@
   med varje källkandidats verkliga hero- och föremålsförutsättningar. Den
   korskontrolleras mot samma DYN4-selectorroster.
 - ✅ M11 ritar ännu inte panelen och väljer därför ingen champion automatiskt.
+- ✅ En läsbar boot-handoff lämnar endast denna retained roster till en senare
+  M11-panel; den exponerar inte en fallbacklista och kan inte välja en hero.
 - ✅ Ett privat mirror-klick kräver nu också att den aktuella File_header-
   kartans dörr-, objekt-, text-, teleporter-, aktuator- och varelseägare är
   materialiserade. Det förhindrar en hero-/inventorymutation mot en partiell

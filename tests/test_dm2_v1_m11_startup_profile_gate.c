@@ -2013,6 +2013,7 @@ int main(void) {
     DM2_V1_BootProfile* profile;
     DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     DM2_V1_BootChampionDyn4RosterReceipt champion_dyn4_roster;
+    DM2_V1_BootChampionSelectionCensus prepared_mirror_roster;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_BootChampionSelectionCandidate champion_candidate;
     DM2_V1_BootNewGameChampionAdmissionReceipt champion_admission;
@@ -4145,6 +4146,7 @@ int main(void) {
                         0, CHAMPION_SLOT_HEAD) == 0u,
                 "M11 DM2 new game clears stale save party ownership before source mirror selection");
     profile = (DM2_V1_BootProfile *)view.dm2BootProfile;
+    memset(&prepared_mirror_roster, 0, sizeof(prepared_mirror_roster));
     expect_true(profile &&
                     (profile_new_game_owner =
                         (const DM2_V1_GameLoadWorldOwner *)
@@ -4211,6 +4213,15 @@ int main(void) {
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&
                     !profile->source_game_load_session_ready,
                 "M11 NEW GAME retains the real post-GAME_LOAD pre-mirror owner without choosing a champion");
+    expect_true(profile &&
+                    dm2_v1_boot_prepared_new_game_mirror_roster(
+                        profile, &prepared_mirror_roster) &&
+                    prepared_mirror_roster.valid &&
+                    profile_new_game_owner &&
+                    memcmp(&prepared_mirror_roster,
+                           &profile_new_game_owner->preselection_mirror_roster,
+                           sizeof(prepared_mirror_roster)) == 0,
+                "M11 can obtain only the retained source mirror roster");
     if (profile && source_transaction.party.admissions[0].valid) {
         const DM2_V1_BootChampionSelectionCandidate *source_selection =
             &source_transaction.party.admissions[0].selection;
