@@ -4,6 +4,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- 🔧 macOS global-HID-hjälparen rapporterar nu den observerade frontmost-PID:n
+  och använder den som fokusbevis. En lokal körning stoppades fortfarande när
+  macOS höll ett annat fönster frontmost; detta är ännu inte ett spelägt
+  input- eller CD-handoffbevis.
 - ✅ En separat execution-window-parser godkänner nu den riktiga state-capturens
   2 048 registerprover i `$C96B–$CA69`/`$CC4C–$CD13` även när `$4644` och
   `$4667` saknas. Register-PC:n valideras mot HuC6280:s fulla 21-bitars

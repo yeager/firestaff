@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — macOS global-HID receipt correction
+
+- ✅ Quartz-hjälparen skriver nu `quartz_frontmost_pid` och låter den faktiskt
+  observerade frontmost-processen vara fokusbeviset. `activate()`-returvärdet
+  används inte längre ensamt, eftersom det kan vara `false` när rätt process
+  redan är frontmost. En ny körning måste fortfarande få Mednafen frontmost
+  innan global-HID kan godkännas.
+
 ## 2026-08-09 — autentiserat execution-window-kvitto
 
 - ✅ Register-sidecaren från en riktig extern-disk state-capture kan nu
