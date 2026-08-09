@@ -11,6 +11,13 @@
   No current European witness has an exact retail MENU/TITLE/STABG/DGN/CLUT
   join, so startup/menu/HUD composition remains closed.
 
+- ⏳ Nexus has a capture-only VDP2 NBG1 tilemap consumer for the verified
+  8×8, two-word name-entry path. It requires exact name-table, character-
+  generator and full-CRAM joins, NBG1 tilemap registers, explicit 8×8 map
+  extent/destination and capture attestation. PNDSize=1, 16×16 cells,
+  source-map crops and menu/FONT256 ownership remain closed until a positive
+  Saturn text-consumer trace supplies them.
+
 - 🔧 Nexus: en autentiserad europeisk gameplay-capture binder nu VDP1-draw
   `0x0e180` (`colour_mode=1`, `COLR=0x32a4`, källa `0x4c580`) till exakt
   ordväxlad pixeldata och 16-entry CLUT för `LEV00.DGN` Structure2=72.

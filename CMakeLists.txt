@@ -38166,6 +38166,26 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp2_capture_compositor
     )
 
+    add_executable(test_nexus_v1_vdp2_tilemap_capture_compositor
+        tests/test_nexus_v1_vdp2_tilemap_capture_compositor.c
+        src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_tilemap_capture_compositor PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_tilemap_capture_compositor PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_tilemap_capture_compositor PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_tilemap_capture_compositor
+        COMMAND test_nexus_v1_vdp2_tilemap_capture_compositor
+    )
+
     # Packages a pre-recorded Mednafen debugger trace with one exact atomic
     # owner/Structure3/Structure2 request. It deliberately has no emulator,
     # decoder, or render dependency and cannot fabricate a capture.

@@ -7,6 +7,7 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_vdp1_capture_compositor.h"
 #include "nexus_v1_vdp2_capture_compositor.h"
+#include "nexus_v1_vdp2_tilemap_capture_compositor.h"
 
 /* Render the 3D dungeon viewport from party position.
  * View distance: 4 squares ahead (like DM1 D0-D3).
@@ -187,6 +188,7 @@ typedef struct Nexus_Viewport {
      * captured display-origin/system-clip state as part of the same trace. */
     Nexus_V1_Vdp1CaptureCompositeReceipt last_vdp1_capture_receipt;
     Nexus_V1_Vdp2CaptureCompositeReceipt last_vdp2_capture_receipt;
+    Nexus_V1_Vdp2TilemapCaptureReceipt last_vdp2_tilemap_capture_receipt;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 
@@ -207,6 +209,11 @@ int nexus_viewport_replay_vdp2_nbg1_capture(
     Nexus_Viewport *vp,
     const Nexus_V1_Vdp2CaptureCompositeInput *input,
     Nexus_V1_Vdp2CaptureCompositeReceipt *out_receipt);
+
+int nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
+    Nexus_Viewport *vp,
+    const Nexus_V1_Vdp2TilemapCaptureInput *input,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt);
 
 /* Convert indexed framebuffer to RGBA for SDL presentation */
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);
