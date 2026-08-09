@@ -51,6 +51,31 @@ typedef struct {
     int screen_origin_y;
 } Nexus_V1_Vdp1CaptureCompositeReceipt;
 
+/* VDP1 colour mode 5 is not a CLUT texture.  It is a 16-bit, 32K-colour
+ * source stream.  Keep this capture-only surface separate from the indexed
+ * Nexus framebuffer: publishing a host palette for mode 5 would lose the
+ * Saturn word semantics and could accidentally authorize an unowned DGN
+ * material.  Mednafen 1.32.1 src/ss/vdp1.cpp::TexFetch<*> documents the
+ * direct RGB fetch and its ECD transparency code. */
+typedef struct {
+    uint32_t rgba_buffer[NEXUS_FB_W * NEXUS_FB_H];
+    int clear_color;
+} Nexus_V1_Vdp1DirectColorFramebuffer;
+
+typedef struct {
+    int valid;
+    int capture_only;
+    int command_framed;
+    int direct_color_mode;
+    int source_word_order_verified;
+    int coordinate_words_framed;
+    int original_saturn_capture_verified;
+    int renderer_permitted;
+    int fallback_visuals_permitted;
+    int written_pixels;
+    int transparent_pixels;
+} Nexus_V1_Vdp1DirectColorCaptureReceipt;
+
 /* A complete, bounded replay lane for one captured VDP1 command window.
  * The per-command source joins remain explicit; these additional facts bind
  * the state that one command cannot establish by itself. */
@@ -120,6 +145,16 @@ int nexus_v1_vdp1_capture_composite_mode1(
     Nexus_Framebuffer *framebuffer,
     const Nexus_V1_Vdp1CaptureCompositeInput *input,
     Nexus_V1_Vdp1CaptureCompositeReceipt *out_receipt);
+
+/* Decode one authenticated mode-5 command into an RGBA capture surface.
+ * VDP1 VRAM is a little-endian word image; each source word is decoded as
+ * Saturn 32K RGB.  This is deliberately capture-only: no DGN owner is
+ * inferred and renderer_permitted remains zero until a separately verified
+ * owner/material handoff exists. */
+int nexus_v1_vdp1_capture_decode_direct_color(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const Nexus_V1_Vdp1CaptureCompositeInput *input,
+    Nexus_V1_Vdp1DirectColorCaptureReceipt *out_receipt);
 
 /* Replay a complete authenticated VDP1 window atomically. On any failed
  * command or missing state fact, the destination framebuffer is unchanged. */

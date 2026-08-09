@@ -43,6 +43,142 @@ static uint32_t bgr555_to_rgba(uint16_t word)
         (uint32_t)expand5(word, 10U);
 }
 
+static int direct_color_triangle(
+    Nexus_V1_Vdp1DirectColorFramebuffer *fb, const float xy[4][2],
+    int ia, int ib, int ic, const uint8_t *tex, int width, int height,
+    uint16_t draw_mode, int *written, int *transparent)
+{
+    float area;
+    float min_x, max_x, min_y, max_y;
+    int x, y;
+
+    area = edge(xy[ia][0], xy[ia][1], xy[ib][0], xy[ib][1],
+                xy[ic][0], xy[ic][1]);
+    if (area == 0.0f) return 0;
+    min_x = max_x = xy[ia][0];
+    min_y = max_y = xy[ia][1];
+    for (x = 0; x < 3; ++x) {
+        int index = x == 0 ? ia : (x == 1 ? ib : ic);
+        if (xy[index][0] < min_x) min_x = xy[index][0];
+        if (xy[index][0] > max_x) max_x = xy[index][0];
+        if (xy[index][1] < min_y) min_y = xy[index][1];
+        if (xy[index][1] > max_y) max_y = xy[index][1];
+    }
+    if (max_x < 0.0f || min_x >= (float)NEXUS_FB_W ||
+        max_y < 0.0f || min_y >= (float)NEXUS_FB_H) return 0;
+    if (min_x < 0.0f) min_x = 0.0f;
+    if (min_y < 0.0f) min_y = 0.0f;
+    if (max_x > (float)(NEXUS_FB_W - 1)) max_x = (float)(NEXUS_FB_W - 1);
+    if (max_y > (float)(NEXUS_FB_H - 1)) max_y = (float)(NEXUS_FB_H - 1);
+
+    for (y = (int)min_y; y <= (int)max_y; ++y) {
+        for (x = (int)min_x; x <= (int)max_x; ++x) {
+            float px = (float)x + 0.5f;
+            float py = (float)y + 0.5f;
+            float w0 = edge(xy[ib][0], xy[ib][1], xy[ic][0], xy[ic][1],
+                            px, py) / area;
+            float w1 = edge(xy[ic][0], xy[ic][1], xy[ia][0], xy[ia][1],
+                            px, py) / area;
+            float w2 = 1.0f - w0 - w1;
+            float u, v;
+            int tx, ty, pixel;
+            uint16_t word;
+
+            if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
+            u = w0 * (ia == 0 ? 0.0f : 1.0f) +
+                w1 * (ib == 0 ? 0.0f : 1.0f) +
+                w2 * (ic == 0 ? 0.0f : 1.0f);
+            v = w0 * (ia == 0 || ia == 1 ? 0.0f : 1.0f) +
+                w1 * (ib == 0 || ib == 1 ? 0.0f : 1.0f) +
+                w2 * (ic == 0 || ic == 1 ? 0.0f : 1.0f);
+            tx = (int)(u * (float)width);
+            ty = (int)(v * (float)height);
+            if (tx < 0) tx = 0;
+            if (ty < 0) ty = 0;
+            if (tx >= width) tx = width - 1;
+            if (ty >= height) ty = height - 1;
+            pixel = ty * width + tx;
+            word = read_le16(tex + pixel * 2);
+            /* Mednafen src/ss/vdp1.cpp::TexFetch, colour mode 5. */
+            if ((draw_mode & 0x0080U) == 0U &&
+                (word & UINT16_C(0xc000)) == UINT16_C(0x4000)) {
+                ++*transparent;
+                continue;
+            }
+            fb->rgba_buffer[y * NEXUS_FB_W + x] = bgr555_to_rgba(word);
+            ++*written;
+        }
+    }
+    return 1;
+}
+
+int nexus_v1_vdp1_capture_decode_direct_color(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const Nexus_V1_Vdp1CaptureCompositeInput *input,
+    Nexus_V1_Vdp1DirectColorCaptureReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1DirectColorCaptureReceipt receipt;
+    Nexus_V1_Vdp1DirectColorFramebuffer *working;
+    Nexus_V1_Vdp1TextureCommand command;
+    float xy[4][2];
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    receipt.fallback_visuals_permitted = 0;
+    if (!out_receipt) return 0;
+    if (!framebuffer || !input || !input->command || !input->texture_span ||
+        input->command_size != NEXUS_V1_VDP1_COMMAND_BYTES ||
+        input->texture_span_size <= 0 || input->screen_origin_x < 0 ||
+        input->screen_origin_x >= NEXUS_FB_W || input->screen_origin_y < 0 ||
+        input->screen_origin_y >= NEXUS_FB_H ||
+        !input->original_saturn_capture_verified ||
+        nexus_v1_vdp1_texture_command_parse(input->command,
+            input->command_size, &command) != 0 || !command.texture_command ||
+        command.colour_mode != 5U || !command.texture_source_range_valid ||
+        command.texture_byte_count != (uint32_t)input->texture_span_size ||
+        (input->texture_span_size & 1) != 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    working = (Nexus_V1_Vdp1DirectColorFramebuffer *)malloc(sizeof(*working));
+    if (!working) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    *working = *framebuffer;
+    receipt.command_framed = 1;
+    receipt.direct_color_mode = 1;
+    receipt.source_word_order_verified = 1;
+    receipt.coordinate_words_framed = command.coordinate_words_framed;
+    receipt.original_saturn_capture_verified = 1;
+    xy[0][0] = (float)input->screen_origin_x + (float)command.xa;
+    xy[0][1] = (float)input->screen_origin_y + (float)command.ya;
+    xy[1][0] = (float)input->screen_origin_x + (float)command.xb;
+    xy[1][1] = (float)input->screen_origin_y + (float)command.yb;
+    xy[2][0] = (float)input->screen_origin_x + (float)command.xc;
+    xy[2][1] = (float)input->screen_origin_y + (float)command.yc;
+    xy[3][0] = (float)input->screen_origin_x + (float)command.xd;
+    xy[3][1] = (float)input->screen_origin_y + (float)command.yd;
+    if (xy[0][0] == xy[1][0] && xy[0][1] == xy[1][1]) {
+        free(working);
+        *out_receipt = receipt;
+        return 0;
+    }
+    (void)direct_color_triangle(working, xy, 0, 1, 2, input->texture_span,
+        command.texture_width, command.texture_height, command.draw_mode,
+        &receipt.written_pixels, &receipt.transparent_pixels);
+    (void)direct_color_triangle(working, xy, 0, 2, 3, input->texture_span,
+        command.texture_width, command.texture_height, command.draw_mode,
+        &receipt.written_pixels, &receipt.transparent_pixels);
+    receipt.valid = receipt.written_pixels > 0;
+    /* No DGN owner/material receipt is accepted by this API. */
+    receipt.renderer_permitted = 0;
+    if (receipt.valid) *framebuffer = *working;
+    free(working);
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
 static int composite_triangle(Nexus_Framebuffer *fb,
                               const float xy[4][2],
                               int ia, int ib, int ic,

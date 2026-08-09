@@ -83,6 +83,21 @@ byteoffset (`<<3`). Tvetydiga eller oattesterade källor avvisas. Den är
 fortfarande capture-only och lämnar därför face-selection, transform, culling,
 direct-color-material och vanlig produktion spärrade.
 
+### Direct-color-lane
+
+VDP1 mode 5 är nu semantiskt avkodad i den separata capture-only-lanen
+`nexus_v1_vdp1_capture_decode_direct_color()`. Den följer Mednafen 1.32.1
+`src/ss/vdp1.cpp::TexFetch` för 16-bitars 32K-RGB-ord och ECD:s
+transparenskod `(word & 0xc000) == 0x4000`, och skriver till en separat
+RGBA-yta i stället för att kvantisera färgen till Nexus indexframebuffer.
+Syntetiskt test och en extern gameplay-capture passerar. Lanan sätter
+fortfarande alltid `renderer_permitted=0`: den bevisar VDP1-pixelsemantik,
+inte DGN-ägare, face-selection, transform eller produktionsrasterisering.
+Den höjer därför inte produktionsgrad eller Nexus V1:s målpoäng. Frame 760:s
+första mode-5-post har fortfarande ingen byteexakt retailägare; dess
+command-chain-koppling saknar dessutom tillräckliga giltiga skärmkoordinater
+för att öppna en full replay.
+
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
 externa capture-validatorn: `RawRegs → VRAM → CRAM`. C-läsaren och

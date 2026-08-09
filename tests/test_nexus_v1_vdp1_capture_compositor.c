@@ -54,10 +54,84 @@ static int resolve_sequence_material(
     return 1;
 }
 
+static int run_external_direct_color_capture(void)
+{
+    const char *path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
+    const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+    FILE *file;
+    long file_size;
+    uint8_t *capture;
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp1CommandSequenceReceipt sequence;
+    Nexus_V1_Vdp1DirectColorFramebuffer framebuffer;
+    Nexus_V1_Vdp1DirectColorCaptureReceipt receipt;
+    Nexus_V1_Vdp1CaptureCompositeInput input;
+    unsigned int frame_index;
+    int i;
+    int found = 0;
+
+    if (!path || !*path || !frame_text || !*frame_text) return 1;
+    frame_index = (unsigned int)strtoul(frame_text, NULL, 0);
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    capture = (uint8_t *)malloc((size_t)file_size);
+    if (!capture || fread(capture, 1U, (size_t)file_size, file) !=
+            (size_t)file_size) {
+        free(capture);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    memset(&frame, 0, sizeof(frame));
+    memset(&sequence, 0, sizeof(sequence));
+    if (!nexus_v1_saturn_runtime_capture_frame(
+            capture, (size_t)file_size, frame_index, &frame) ||
+        !frame.valid || !frame.vdp1_state_valid || !frame.vdp1_vram ||
+        !nexus_v1_vdp1_command_sequence_frame(
+            &(Nexus_V1_Vdp1CommandSequenceInput){
+                frame.vdp1_vram, (int)frame.vdp1_vram_size, frame.copr_word},
+            &sequence) || !sequence.valid || !sequence.complete) {
+        free(capture);
+        return 0;
+    }
+    memset(&input, 0, sizeof(input));
+    for (i = 0; i < sequence.command_count; ++i) {
+        Nexus_V1_Vdp1TextureCommand command;
+        uint32_t offset = sequence.command_byte_offsets[i];
+        if (nexus_v1_vdp1_texture_command_parse(
+                frame.vdp1_vram + offset,
+                NEXUS_V1_VDP1_COMMAND_BYTES, &command) != 0 ||
+            !command.texture_command || command.colour_mode != 5U) continue;
+        memset(&input, 0, sizeof(input));
+        input.command = frame.vdp1_vram + offset;
+        input.command_size = NEXUS_V1_VDP1_COMMAND_BYTES;
+        input.texture_span = frame.vdp1_vram + command.texture_source_byte_offset;
+        input.texture_span_size = (int)command.texture_byte_count;
+        input.original_saturn_capture_verified = 1;
+        input.screen_origin_x = sequence.display_origin_x;
+        input.screen_origin_y = sequence.display_origin_y;
+        memset(&framebuffer, 0, sizeof(framebuffer));
+        memset(&receipt, 0, sizeof(receipt));
+        found = nexus_v1_vdp1_capture_decode_direct_color(
+            &framebuffer, &input, &receipt) && receipt.valid &&
+            receipt.capture_only && receipt.direct_color_mode &&
+            receipt.source_word_order_verified &&
+            !receipt.renderer_permitted && receipt.written_pixels > 0;
+        break;
+    }
+    free(capture);
+    return found;
+}
+
 int main(void)
 {
     uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES] = {0};
     uint8_t texture[32] = {0};
+    uint8_t direct_texture[128] = {0};
     uint8_t dgn_image[32];
     uint8_t palette_state[32] = {0};
     uint8_t dgn_palette[32];
@@ -65,6 +139,8 @@ int main(void)
     Nexus_Viewport viewport;
     Nexus_V1_Vdp1CaptureCompositeInput input;
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
+    Nexus_V1_Vdp1DirectColorFramebuffer direct_framebuffer;
+    Nexus_V1_Vdp1DirectColorCaptureReceipt direct_receipt;
     Nexus_V1_Vdp1CaptureSequenceInput sequence_input;
     Nexus_V1_Vdp1CaptureSequenceReceipt sequence_receipt;
     Nexus_V1_Vdp1CaptureVramSequenceInput vram_sequence_input;
@@ -129,6 +205,39 @@ int main(void)
         fprintf(stderr, "FAIL: authenticated VDP1 capture composite\n");
         return 1;
     }
+    /* Mode 5 is a direct 16-bit RGB stream, not a CLUT texture.  Its
+     * capture decoder must preserve the word semantics but remain capture-
+     * only until a DGN owner/material receipt exists. */
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2)
+        wl16(direct_texture + i, (i < 32) ? 0x4000U : 0x001fU);
+    wl16(command + 4, 5U << 3);
+    input.texture_span = direct_texture;
+    input.texture_span_size = sizeof(direct_texture);
+    memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
+    memset(&direct_receipt, 0, sizeof(direct_receipt));
+    if (!nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        !direct_receipt.valid || !direct_receipt.capture_only ||
+        !direct_receipt.direct_color_mode ||
+        !direct_receipt.source_word_order_verified ||
+        direct_receipt.renderer_permitted ||
+        direct_receipt.written_pixels <= 0 ||
+        direct_receipt.transparent_pixels <= 0) {
+        fprintf(stderr, "FAIL: authenticated direct-color capture decode\n");
+        return 1;
+    }
+    input.original_saturn_capture_verified = 0;
+    if (nexus_v1_vdp1_capture_decode_direct_color(
+            &direct_framebuffer, &input, &direct_receipt) ||
+        direct_receipt.renderer_permitted) {
+        fprintf(stderr, "FAIL: unauthenticated direct-color capture admitted\n");
+        return 1;
+    }
+    input.original_saturn_capture_verified = 1;
+    /* Restore the indexed mode-1 fixture for the remaining compositor tests. */
+    wl16(command + 4, 1U << 3);
+    input.texture_span = texture;
+    input.texture_span_size = sizeof(texture);
     nexus_viewport_init(&viewport);
     memset(&receipt, 0, sizeof(receipt));
     if (!nexus_viewport_replay_vdp1_capture(&viewport, &input, &receipt) ||
@@ -284,6 +393,12 @@ int main(void)
         return 1;
     }
     free(vdp1_vram);
+    if (getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE") &&
+        getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
+        !run_external_direct_color_capture()) {
+        fprintf(stderr, "FAIL: external direct-color capture decode\n");
+        return 1;
+    }
     puts("test_nexus_v1_vdp1_capture_compositor: PASS");
     return 0;
 }

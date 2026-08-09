@@ -1,3 +1,12 @@
+# Nexus VDP1 mode-5 direct-color capture lane (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_capture_decode_direct_color()` följer Mednafen
+  `src/ss/vdp1.cpp::TexFetch` för 16-bitars 32K-RGB och ECD-transparenskoden.
+- ✅ Dekodern använder en separat RGBA-capture-yta och lämnar alltid
+  `renderer_permitted=0` tills DGN-ägare/material är autentiserade.
+- ✅ Syntetisk regression och extern gameplay-capture passerar; en
+  frame-760-post med oattesterad källa/ogiltig placering förblir spärrad.
+
 # Nexus VDP1 CMDCOLR byteoffset and reusable DGN CLUT join (2026-08-09)
 
 - ✅ VDP1 capture-kompositorn och DGN-materialresolvern använder nu Saturns
