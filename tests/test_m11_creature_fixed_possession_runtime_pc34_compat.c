@@ -210,6 +210,14 @@ static void test_red_dragon_steaks_materialize_as_junk(void) {
     seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
                     weapons, armours, junks, squareFirstThings,
                     weaponRaw, armourRaw, junkRaw);
+    /* G0253's red-dragon row (GROUP.C F0186 / DUNGEON.C G0253) is 8
+     * unconditional DRAGON STEAK entries plus 2 carrying
+     * MASK0x8000_RANDOM_DROP, which F0186 skips on M005_RANDOM(2) != 0.  A
+     * full ten-steak drop is therefore seed-dependent, and this gate asserts
+     * that maximum, so pin the draw that admits both flagged entries.  The
+     * shared fixture seed admits only one, which left the chain one short and
+     * shifted every later cell/index expectation by a position. */
+    state.world.masterRng.seed = 2;
 
     ASSERT_EQ(M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
                   &state, DM1_CREATURE_TYPE_RED_DRAGON, 2, 0, 0, 0),
@@ -281,6 +289,9 @@ static void test_fixed_drops_use_compact_square_first_things(void) {
     seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
                     weapons, armours, junks, squareFirstThings,
                     weaponRaw, armourRaw, junkRaw);
+    /* Same G0253 RANDOM_DROP pin as the sibling red-dragon gates: 8
+     * unconditional steaks plus 2 admitted only on M005_RANDOM(2) == 0. */
+    state.world.masterRng.seed = 2;
     dungeon.columnsCumulativeSquareFirstThingCount = columns;
     dungeon.dungeonColumnCount = 1;
     /* F0514 consumes the sole trailing NONE and marks this source square. */
@@ -331,7 +342,16 @@ static void test_fixed_drops_do_not_append_when_pool_exhausted(void) {
 }
 
 static void test_dead_group_runtime_materializes_and_removes_group(void) {
-    static const int expectedCells[10] = {2, 2, 2, 1, 2, 3, 2, 2, 2, 2};
+    /* Cell per drop under the pinned seed-2 draw.  GROUP.C F0186 (MEDIA016
+     * / PC34) computes each cell as
+     *   ((Cell == C0xFF_SINGLE_CENTERED_CREATURE) || !M004_RANDOM(4))
+     *       ? M004_RANDOM(4) : Cell
+     * and fixed_possession_cell reproduces that exactly, including the ||
+     * short-circuit that skips the first draw for a centred creature.  The
+     * algorithm is source-verified; this array only records the resulting
+     * sequence for this seed, and was re-derived when the seed was pinned to
+     * admit both MASK0x8000_RANDOM_DROP entries. */
+    static const int expectedCells[10] = {3, 2, 1, 2, 2, 2, 2, 2, 2, 2};
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -354,6 +374,14 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
     seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
                     weapons, armours, junks, squareFirstThings,
                     weaponRaw, armourRaw, junkRaw);
+    /* G0253's red-dragon row (GROUP.C F0186 / DUNGEON.C G0253) is 8
+     * unconditional DRAGON STEAK entries plus 2 carrying
+     * MASK0x8000_RANDOM_DROP, which F0186 skips on M005_RANDOM(2) != 0.  A
+     * full ten-steak drop is therefore seed-dependent, and this gate asserts
+     * that maximum, so pin the draw that admits both flagged entries.  The
+     * shared fixture seed admits only one, which left the chain one short and
+     * shifted every later cell/index expectation by a position. */
+    state.world.masterRng.seed = 2;
     memset(groups, 0, sizeof(groups));
     memset(groupRaw, 0, sizeof(groupRaw));
     groups[0].next = THING_ENDOFLIST;
@@ -457,8 +485,15 @@ static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void)
               1, "dead trolin runtime death/drop path accepted");
 
     fixedClub = (unsigned short)((1u << 14) | (THING_TYPE_WEAPON << 10) | 0);
-    ASSERT_EQ(things.squareFirstThings[0], carriedJunk,
-              "group slot possession is first after group removal");
+    /* ReDMCSB GROUP.C F0188:728 re-cells EVERY carried possession with a
+     * fresh M004_RANDOM(4) before F0267 moves it onto the square:
+     *   L0365_T_CurrentThing =
+     *       M015_THING_WITH_NEW_CELL(L0365_T_CurrentThing, M004_RANDOM(4));
+     * so the raw THING word cannot be compared against the fixture's
+     * original cell bits.  Compare identity (type + index) and let the
+     * source own the cell. */
+    ASSERT_TRUE(same_thing_identity(things.squareFirstThings[0], carriedJunk),
+                "group slot possession is first after group removal");
     ASSERT_EQ(raw_next_for_thing(&things, carriedJunk), existingFloorJunk,
               "carried possession links to pre-existing floor object");
     ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), fixedClub,
@@ -536,8 +571,10 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
                   &state, groupThing, 0, 0, 0),
               1, "dead mummy runtime death/drop path accepted");
 
-    ASSERT_EQ(things.squareFirstThings[0], carriedTail,
-              "second carried object is first after source-order prepends");
+    /* Same GROUP.C F0188:728 re-cell as above — compare identity, not the
+     * raw THING word with its fixture cell bits. */
+    ASSERT_TRUE(same_thing_identity(things.squareFirstThings[0], carriedTail),
+                "second carried object is first after source-order prepends");
     ASSERT_TRUE(same_thing_identity(raw_next_for_thing(&things, carriedTail),
                                     carriedHead),
                 "second carried object links to original carried head");
