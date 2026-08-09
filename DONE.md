@@ -970,11 +970,23 @@
 
 # DM2 New Game skriptad första champion (2026-08-09)
 
+- ✅ DOS File_header-provet läser nu den hashadmitterade råheadern och
+  map-0-deskriptorn i testet: `nMaps`, relativ map-offset, dimensioner och
+  den lokala `w8`-posen härleds från samma bytes som laddaren använder.
+  Realdatatestet söker även normalt i `~/.firestaff/data/dm2` när ingen
+  testvariabel satts, så den lokala verkliga korpusen kan inte ge ett grönt
+  resultat genom att hoppa över assertions; okänd eller saknad data är
+  fortsatt skip-safe.
+
 - ✅ `DM2_2f3f_0789` kan nu materialisera sin autentiska första
   championövergång privat: samma File_header-ägare söker först DB3 subtype
   `0x7e` i karta 0:s ruta `(0,0)` och återspelar exakt
   `DM2_SELECT_CHAMPION(0,1,0,map)`. Det väljer den verkliga DYN4-/GDAT- och
   itemkedjan, med `partypos=0` och `absdir=0`, utan en syntetisk champion.
+- ✅ Startend-grenen validerar nu dessutom den exakta levande
+  `GET_TILE_RECORD_LINK(0,0)`-kedjan innan rosterposten får användas. Den
+  accepterar bara DB3 subtype `0x7e` som verkligen nås från den begärda
+  lokala länken och avvisar en frikopplad eller senare matchande rosterpost.
 - ✅ Realdatatestet bevisar den privata en-hjälteägaren och att M11-party,
   HUD, timerdrift samt `source_game_load_session_ready` fortfarande är
   opublicerade.

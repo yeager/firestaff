@@ -87,9 +87,16 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
     return hash ? hash : 1u;
 }
 
-/* DUNGEON_HEADER field offsets */
-#define DM2_HDR_MAP_COUNT_OFFSET   6
-#define DM2_HDR_SEED_OFFSET       8
+/* File_header fields. SKProject SKWIN/DME.h places nMaps at byte 4,
+ * cwTextData at 6, w8 (the initial 5/5/2 pose) at 8, the ground-stack
+ * table count at 10 and DB pool counts at 12. Do not shift these by the
+ * preceding 16-bit field: the canonical PC member is hash-admitted against
+ * this exact byte layout. */
+#define DM2_HDR_MAP_COUNT_OFFSET            4
+#define DM2_HDR_TEXT_WORD_COUNT_OFFSET      6
+#define DM2_HDR_START_POSE_OFFSET            8
+#define DM2_HDR_GROUND_STACK_COUNT_OFFSET   10
+#define DM2_HDR_RECORD_COUNTS_OFFSET        12
 
 /* DUNGEON_HEADER size = 44 (ReDMCSB DEFS.H:985) */
 #define DM2_DUNGEON_HEADER_SIZE  44
@@ -108,17 +115,22 @@ static uint16_t rd16be(const uint8_t *p) {
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
 }
 
-/* TILE DATA START = DUNGEON_HEADER(44) + MAP_DESCRIPTORS(28*16) = 492 */
+/* Legacy synthetic-fixture reader only; authenticated File_header media
+ * computes its map-data base from the parsed map count. */
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
 #define DM2_MAP_DESC_SIZE 16
 #define DM2_THING_TYPE_COUNT 16
 
-/* Legacy non-File_header byte-layout fallback: its 256-byte continuation
- * follows 28 Map_definitions. The canonical PC-DOS File_header has 44 maps
- * and takes the source-locked SKProject route above; it must never be
- * reclassified through this fallback. */
+/* Legacy byte-layout fallback: its observed 256-byte continuation is only
+ * considered after the source File_header fields have been parsed. The
+ * canonical PC-DOS member has 44 Map_definitions and takes the source-locked
+ * SKProject route above; it must never be reclassified through this fallback. */
 #define DM2_PC_G1_MAP_EXTENSION_BYTES       256
-#define DM2_PC_G1_GROUND_STACK_COUNT_OFFSET 10
+#define DM2_LEGACY_G1_MAP_COUNT_OFFSET      6
+#define DM2_LEGACY_G1_TEXT_WORD_COUNT_OFFSET 8
+#define DM2_LEGACY_G1_GROUND_STACK_COUNT_OFFSET 10
+#define DM2_LEGACY_G1_RECORD_COUNTS_OFFSET  14
+#define DM2_LEGACY_G1_START_POSE_OFFSET     10
 #define DM2_PC_G1_DB3_EXTENDED_COUNT        1024
 #define DM2_PC_G1_DB4_EXTENDED_COUNT        300
 #define DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES 9
@@ -273,12 +285,15 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
     out->g1_extension_size = 0;
     out->column_index_base = DM2_DUNGEON_HEADER_SIZE +
                              map_count * DM2_MAP_DESC_SIZE;
-    out->square_first_thing_count = (int)RD16(dat + 10);
-    out->text_word_count = (int)RD16(dat + 6);
+    out->square_first_thing_count =
+        (int)RD16(dat + DM2_HDR_GROUND_STACK_COUNT_OFFSET);
+    out->text_word_count =
+        (int)RD16(dat + DM2_HDR_TEXT_WORD_COUNT_OFFSET);
 
     for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
         out->thing_data_bases[i] = -1;
-        out->thing_type_counts[i] = (int)RD16(dat + 12 + i * 2);
+        out->thing_type_counts[i] =
+            (int)RD16(dat + DM2_HDR_RECORD_COUNTS_OFFSET + i * 2);
     }
 
     for (int i = 0; i < map_count; ++i) {
@@ -315,7 +330,7 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
      * READ_DUNGEON_STRUCTURE lines 39936-39943 assigns w8 directly after
      * CHANGE_CURRENT_MAP_TO(0). */
     {
-        uint16_t start = RD16(dat + 8);
+        uint16_t start = RD16(dat + DM2_HDR_START_POSE_OFFSET);
         int x = (int)(start & 0x1fu);
         int y = (int)((start >> 5) & 0x1fu);
         if (x < out->level_widths[0] && y < out->level_heights[0]) {
@@ -390,7 +405,7 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
         return 0;
 
-    map_count = (int)dat[DM2_HDR_MAP_COUNT_OFFSET];
+    map_count = (int)dat[DM2_LEGACY_G1_MAP_COUNT_OFFSET];
     if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
     if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
         return 0;
@@ -405,11 +420,13 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     out->g1_extension_base = -1;
     out->g1_extension_size = 0;
     out->square_first_thing_count =
-        (int)RD16(dat + DM2_PC_G1_GROUND_STACK_COUNT_OFFSET);
-    out->text_word_count = (int)RD16(dat + 8);
+        (int)RD16(dat + DM2_LEGACY_G1_GROUND_STACK_COUNT_OFFSET);
+    out->text_word_count =
+        (int)RD16(dat + DM2_LEGACY_G1_TEXT_WORD_COUNT_OFFSET);
     for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
         out->thing_data_bases[i] = -1;
-        out->thing_type_counts[i] = (int)RD16(dat + 14 + i * 2);
+        out->thing_type_counts[i] =
+            (int)RD16(dat + DM2_LEGACY_G1_RECORD_COUNTS_OFFSET + i * 2);
     }
 
     for (int i = 0; i < map_count; ++i) {
@@ -440,11 +457,11 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
         total_columns += w;
     }
 
-    /* File_header stores the start pose in 5/5/2 bits; Map_definitions
-     * supplies the map origin.  Admit only the wrapped local coordinate
-     * when it is owned by map 0, never a fixed boot position. */
+    /* This legacy fallback is only retained for the isolated diagnostic
+     * corpus. Authenticated File_header members have already taken the
+     * source-locked route above and use w8 directly. */
     {
-        uint16_t start = RD16(dat + 10);
+        uint16_t start = RD16(dat + DM2_LEGACY_G1_START_POSE_OFFSET);
         int x = ((int)(start & 0x1fu) - (out->map_offset_x[0] & 0x1f)) & 0x1f;
         int y = ((int)((start >> 5) & 0x1fu) -
                  (out->map_offset_y[0] & 0x1f)) & 0x1f;
@@ -592,7 +609,7 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
         return 0;
 
-    map_count = (int)rd16be(dat + 6);
+    map_count = (int)dat[DM2_HDR_MAP_COUNT_OFFSET];
     if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
     if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
         return 0;
@@ -607,11 +624,13 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     out->g1_extension_base = -1;
     out->g1_extension_size = 0;
     out->square_first_thing_count =
-        (int)rd16be(dat + DM2_PC_G1_GROUND_STACK_COUNT_OFFSET);
-    out->text_word_count = (int)rd16be(dat + 8);
+        (int)rd16be(dat + DM2_HDR_GROUND_STACK_COUNT_OFFSET);
+    out->text_word_count =
+        (int)rd16be(dat + DM2_HDR_TEXT_WORD_COUNT_OFFSET);
     for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
         out->thing_data_bases[i] = -1;
-        out->thing_type_counts[i] = (int)rd16be(dat + 14 + i * 2);
+        out->thing_type_counts[i] =
+            (int)rd16be(dat + DM2_HDR_RECORD_COUNTS_OFFSET + i * 2);
     }
 
     for (int i = 0; i < map_count; ++i) {
@@ -643,10 +662,9 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     }
 
     {
-        uint16_t start = rd16be(dat + 10);
-        int x = ((int)(start & 0x1fu) - (out->map_offset_x[0] & 0x1f)) & 0x1f;
-        int y = ((int)((start >> 5) & 0x1fu) -
-                 (out->map_offset_y[0] & 0x1f)) & 0x1f;
+        uint16_t start = rd16be(dat + DM2_HDR_START_POSE_OFFSET);
+        int x = (int)(start & 0x1fu);
+        int y = (int)((start >> 5) & 0x1fu);
         if (x < out->level_widths[0] && y < out->level_heights[0]) {
             out->initial_party_pose_valid = 1;
             out->initial_party_x = x;
@@ -758,7 +776,7 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
     uint8_t mc;
     int i;
 
-    mc = dat[DM2_HDR_MAP_COUNT_OFFSET];
+    mc = dat[DM2_LEGACY_G1_MAP_COUNT_OFFSET];
     if (mc < 1 || mc > DM2_V1_MAX_LEVELS)
         return -1;
     if (size < DM2_TILE_DATA_START)
