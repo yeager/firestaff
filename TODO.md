@@ -58,6 +58,11 @@
   Host-PCM, sample-rate, loop- och SLEV→MAP-eventsemantik är fortfarande
   spärrade tills SDDRVS/SCSP-konsumenten är bunden.
 
+- ⏳ Den separata autentiska SH-2→SCSP-mailboxtracen valideras nu i C med
+  `0x02` och `0x0200` som råa producentvärden. Den är fortfarande endast en
+  producer/driver-korridor; ingen gameplayhändelse, MAP-rad eller playback
+  får härledas från värdena.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

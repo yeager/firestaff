@@ -71,6 +71,60 @@ int main(void)
             free(raw);
         }
     }
+    {
+        const char *path = getenv("FIRESTAFF_NEXUS_MAIN_SCSP_TRACE");
+        if (path && *path) {
+            FILE *file = fopen(path, "rb");
+            long length;
+            uint8_t *raw = NULL;
+            Nexus_V1_MainScspTraceReceipt main_receipt;
+            int external_ok = file != NULL;
+            if (external_ok) external_ok = fseek(file, 0L, SEEK_END) == 0;
+            length = external_ok ? ftell(file) : -1L;
+            if (external_ok) external_ok = length > 0L;
+            if (external_ok) external_ok = fseek(file, 0L, SEEK_SET) == 0;
+            if (external_ok) raw = (uint8_t *)malloc((size_t)length);
+            if (external_ok) external_ok = raw != NULL;
+            if (external_ok)
+                external_ok = fread(raw, 1U, (size_t)length, file) ==
+                    (size_t)length;
+            if (file) fclose(file);
+            if (external_ok)
+                external_ok = nexus_v1_main_scsp_write_trace_parse(
+                    raw, (size_t)length, &main_receipt);
+            if (!external_ok || !main_receipt.valid ||
+                !main_receipt.producer_command_observed ||
+                main_receipt.mailbox_value_02_count == 0U ||
+                main_receipt.mailbox_value_0200_count == 0U ||
+                !main_receipt.blocks_real_sfx_playback) {
+                free(raw);
+                fprintf(stderr, "FAIL: external main SCSP trace receipt\n");
+                return 1;
+            }
+            free(raw);
+        }
+    }
+    {
+        static const char main_trace[] =
+            NEXUS_V1_MAIN_SCSP_WRITE_TRACE_MAGIC "\n"
+            "addr=0x00100400 size=1 value=0x00000002 "
+            "pc0=0x06001652 pc1=0x00000000\n"
+            "addr=0x00100400 size=2 value=0x00000200 "
+            "pc0=0x06014eb2 pc1=0x00000000\n";
+        Nexus_V1_MainScspTraceReceipt main_receipt;
+        if (!nexus_v1_main_scsp_write_trace_parse(
+                (const uint8_t *)main_trace, sizeof(main_trace) - 1U,
+                &main_receipt) ||
+            !main_receipt.valid || !main_receipt.header_valid ||
+            main_receipt.record_count != 2U ||
+            main_receipt.mailbox_value_02_count != 1U ||
+            main_receipt.mailbox_value_0200_count != 1U ||
+            !main_receipt.producer_command_observed ||
+            !main_receipt.blocks_real_sfx_playback) {
+            fprintf(stderr, "FAIL: main SCSP trace receipt\n");
+            return 1;
+        }
+    }
     puts("test_nexus_v1_scsp_trace: PASS");
     return 0;
 }

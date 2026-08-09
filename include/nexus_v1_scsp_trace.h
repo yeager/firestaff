@@ -6,6 +6,8 @@
 
 #define NEXUS_V1_SCSP_WRITE_TRACE_MAGIC \
     "FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1"
+#define NEXUS_V1_MAIN_SCSP_WRITE_TRACE_MAGIC \
+    "FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1"
 
 /* Bounded receipt for the supported Mednafen sound-CPU write trace. It
  * records exactly what the trace contains; it never assigns a gameplay event
@@ -31,11 +33,34 @@ typedef struct {
     int blocks_real_sfx_playback;
 } Nexus_V1_ScspTraceReceipt;
 
+/* The main SH-2 producer is a separate trace stream. Keep its mailbox facts
+ * separate from the sound-CPU trace so a producer write is never confused
+ * with SDDRVS ownership or a decoded SFX event. */
+typedef struct {
+    int valid;
+    int header_valid;
+    int parse_complete;
+    size_t raw_trace_byte_count;
+    uint64_t raw_trace_fnv1a64;
+    uint32_t record_count;
+    uint32_t mailbox_write_count;
+    uint32_t mailbox_nonzero_count;
+    uint32_t mailbox_value_02_count;
+    uint32_t mailbox_value_0200_count;
+    int producer_command_observed;
+    int blocks_real_sfx_playback;
+} Nexus_V1_MainScspTraceReceipt;
+
 /* Parse one complete sound-CPU trace. All records must use the exact
  * addr/size/value/pc schema emitted by scripts/mednafen_1.32.1_nexus_slev_scsp_trace.patch. */
 int nexus_v1_scsp_write_trace_parse(
     const uint8_t *raw_trace,
     size_t raw_trace_size,
     Nexus_V1_ScspTraceReceipt *out_receipt);
+
+int nexus_v1_main_scsp_write_trace_parse(
+    const uint8_t *raw_trace,
+    size_t raw_trace_size,
+    Nexus_V1_MainScspTraceReceipt *out_receipt);
 
 #endif

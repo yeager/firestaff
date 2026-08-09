@@ -303,6 +303,12 @@ Firestaff now has a C receipt for the emitted
 mailbox writes, the `SDDRVS.TSK` command-handler PC `0x3224`, and the SCSP
 voice-register corridor. The real external trace passes this structural
 receipt, while event→MAP semantics, SAL decoding, and playback remain false.
+The C receipt also accepts the producer-side
+`FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1` schema as a separate receipt. It
+keeps the SH-2 mailbox values `0x02` and `0x0200` distinct from the sound-CPU
+trace and requires both on the authenticated external producer trace. This
+joins the producer observation to the mailbox corridor only; it still does
+not assign a gameplay event, MAP row, SAL sample, SCSP voice, or playback.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at
 `0x1000`; the main SH-2 trace observed `0x06001652 -> 0x100400 = 0x02`.

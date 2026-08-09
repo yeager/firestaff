@@ -82,6 +82,14 @@
   0x10040 = 0x11040`; hela den externa 16-nivåskorpusen profilerar därefter
   directoryn utan att öppna host-PCM eller playback.
 
+# Nexus: separat SH-2 SCSP-producerreceipt (2026-08-09)
+
+- ✅ C-receipten validerar nu den autentiska
+  `FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1`-tracen separat från ljud-CPU-
+  tracen och kräver de observerade mailboxvärdena `0x02` och `0x0200`.
+  Producenten binds endast till mailboxkorridoren; event, MAP, SAL-codec,
+  SCSP-voice och playback förblir spärrade.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga
