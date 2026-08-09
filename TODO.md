@@ -5,6 +5,13 @@
   och skriver en hashad, opak payload. Den bevisar inte SLEV-selector,
   SAL-dekodning eller host-uppspelning; positiv retail-capture återstår.
 
+- ⏳ DM2:s privata `GameLoadRuntimeSessionCandidate` äger nu en atomär
+  RAM-klon av File_header/c_map, recordpooler, valda hjältar, c_tim,
+  eventqueue, CAII, RNG och SND-kö efter källägd championval. Den publiceras
+  inte till M11 och är inte spelbar: nästa arbete är att importera hela
+  c_map/moverec/CAII/0A48-transaktionen ovanpå kandidaten, med rollback för
+  varje senare muterande branch.
+
 - 🔧 Theron source-group admission is now atomic and source-identity aware:
   a real Track 02 category-4 group is either fully materialized or not at all,
   and an inactive static group cannot be reintroduced as an invented respawn.

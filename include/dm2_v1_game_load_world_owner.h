@@ -17,6 +17,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_caii_source_owner.h"
+#include "dm2_v1_eventqueue_pc34_compat.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -508,6 +509,49 @@ typedef struct {
     DM2_V1_SksaveItemBonusReceipt champion_item_bonus;
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
+
+/* A private, all-RAM candidate for the state which DM2_GAME_LOAD has made
+ * mutable by the time the first champion has been selected.  It is a
+ * transaction staging area, not a live game: no field is installed in M11,
+ * the process-global runtime, audio backend or input dispatcher.
+ *
+ * Source order: sksvgame.cpp::DM2_GAME_LOAD (1415-1565), startend.cpp::
+ * DM2_RESET_CAII (1111-1145), SK1C9A.cpp::DM2_FILL_CAII_CUR_MAP
+ * (9896-10012), skhero.cpp::DM2_SELECT_CHAMPION (1119-1168). */
+typedef struct {
+    int valid;
+    uint32_t source_transaction_hash;
+    uint32_t candidate_hash;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_RecordPoolSet record_pools;
+    DM2_V1_Party party;
+    int16_t leader_hand_record;
+    DM2_V1_EventQueue event_queue;
+    DM2_V1_TimerEntry *timer_entries;
+    int16_t *timer_indices;
+    DM2_V1_TimerQueue timer_queue;
+    uint16_t timer_capacity;
+    DM2_V1_CaiiArray caii_slots;
+    DM2_V1_DropRng caii_rng;
+    int caii_rng_initialized;
+    DM2_V1_GameLoadSoundOwner sound_owner;
+    int current_map;
+    int source_party_map;
+    uint8_t source_party_x;
+    uint8_t source_party_y;
+    uint8_t source_party_direction;
+    uint8_t source_party_absdir;
+    int16_t source_last_moved_record;
+} DM2_V1_GameLoadRuntimeSessionCandidate;
+
+/* Clone every already-owned mutable GAME_LOAD predecessor atomically.  On
+ * failure `out` remains zeroed and the source owner and source media are
+ * unchanged.  The candidate is deliberately not publishable. */
+int dm2_v1_game_load_runtime_session_candidate_init(
+    DM2_V1_GameLoadRuntimeSessionCandidate *out,
+    const DM2_V1_GameLoadWorldOwner *source);
+void dm2_v1_game_load_runtime_session_candidate_free(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate);
 
 /* Build the source-owned GAME_LOAD predecessor without selecting a champion.
  * It clones only the authenticated File_header, DB pools, DYN4 and timer
