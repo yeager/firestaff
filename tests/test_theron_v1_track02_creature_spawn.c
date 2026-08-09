@@ -1,6 +1,76 @@
 #include "theron_v1_track02_creature_spawn.h"
 #include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+static uint8_t *read_file(const char *path, size_t *size_out) {
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+
+    if (size_out) *size_out = 0u;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0) {
+        if (file) fclose(file);
+        return NULL;
+    }
+    size = ftell(file);
+    if (size <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    if (size_out) *size_out = (size_t)size;
+    return bytes;
+}
+
+static void assert_decoded_real_bin(const char *path,
+                                    Theron_V1Track02Variant variant) {
+    Theron_Track02SpawnSource source;
+    size_t size;
+    uint8_t *bytes = read_file(path, &size);
+
+    if (!bytes) return;
+    assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
+                                                 &source) == 1);
+    assert(source.authenticated == 1);
+    assert(source.variant == variant);
+    for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
+        const Theron_CreaturePointerEntry *expected =
+            theron_v1_track02_creature_pointer(i);
+        assert(memcmp(&source.pointers[i], expected, sizeof(*expected)) == 0);
+    }
+    for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_ZONE_COUNT; ++i) {
+        const Theron_SpawnZoneDesc *expected =
+            theron_v1_track02_spawn_zone(i);
+        assert(memcmp(&source.zones[i], expected, sizeof(*expected)) == 0);
+    }
+    bytes[0x2d157fu] ^= 1u;
+    assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
+                                                 &source) == 0);
+    assert(source.authenticated == 0);
+    free(bytes);
+}
+
+static void assert_real_bin_rejected(const char *path,
+                                     Theron_V1Track02Variant variant) {
+    Theron_Track02SpawnSource source;
+    size_t size;
+    uint8_t *bytes = read_file(path, &size);
+
+    if (!bytes) return;
+    assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
+                                                 &source) == 0);
+    assert(source.authenticated == 0);
+    free(bytes);
+}
 
 int main(void) {
     assert(theron_v1_track02_spawn_zone_count() == 5);
@@ -97,6 +167,30 @@ int main(void) {
         Theron_SpawnStats s = { 9, 9, 9 };
         assert(theron_v1_track02_compute_spawn_stats(4, 14, 2, 255, &s) == 0);
         assert(s.hp == 0 && s.attack == 0 && s.defense == 0);
+    }
+
+    /* The production table must also be recoverable from the authentic raw
+     * BIN.  These paths are user-supplied data and are intentionally
+     * skip-safe for CI machines without the copyrighted game files. */
+    {
+        const char *us = getenv("THERON_TRACK02_US_BIN");
+        const char *jp = getenv("THERON_TRACK02_JP_BIN");
+        if (!us) us = "/Users/bosse/.firestaff/data/theron/TQUS02.bin";
+        if (!jp) jp = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
+        FILE *us_file = fopen(us, "rb");
+        FILE *jp_file = fopen(jp, "rb");
+        if (!us_file || !jp_file) {
+            if (us_file) fclose(us_file);
+            if (jp_file) fclose(jp_file);
+            puts("SKIP: authentic Theron Track 02 BINs not present");
+            return 77;
+        }
+        fclose(us_file);
+        fclose(jp_file);
+        assert_decoded_real_bin(us, THERON_V1_TRACK02_VARIANT_US_BIN);
+        /* JP is a real, hash-verified asset, but its pointer table is not at
+         * the US disassembly offsets.  Do not silently reinterpret it. */
+        assert_real_bin_rejected(jp, THERON_V1_TRACK02_VARIANT_JP_BIN);
     }
 
     printf("PASS: theron_v1_track02_creature_spawn\n");

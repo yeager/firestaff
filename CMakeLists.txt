@@ -6694,6 +6694,7 @@ if(THERON_SOURCES)
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_track02_item_properties.c
         src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_creature_spawn_source.c
         src/theron/theron_v1_track02_item_categories.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v22_shapes_runtime_noop.c
@@ -50099,6 +50100,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spa
     add_executable(test_theron_v1_track02_creature_spawn
         tests/test_theron_v1_track02_creature_spawn.c
         src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_creature_spawn_source.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_include_directories(test_theron_v1_track02_creature_spawn PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -50109,6 +50112,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spa
         NAME theron_v1_track02_creature_spawn
         COMMAND test_theron_v1_track02_creature_spawn
     )
+    set_tests_properties(theron_v1_track02_creature_spawn PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 # Theron Track 02 action params (action/spell parameter table from UD)

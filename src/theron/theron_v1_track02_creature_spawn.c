@@ -1,5 +1,7 @@
 #include "theron_v1_track02_creature_spawn.h"
 
+#include <string.h>
+
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
  *
  * Spawn zones from UD 0x274058-0x274150 (5 of 7 creatures have zones).

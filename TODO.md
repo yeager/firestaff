@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
+  dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och
+  rosterkontroll. JP-BINen är en separat layout och avvisas på US-offseten
+  tills dess egna pointer-/spawnoffset är bevisade. Detta materialiserar inte
+  RNG, spawnstatistik, AI, attacker, loot, generator-tick, T700 eller T900.
+
 - 🔧 Theron capture-intag: `THERON_CAPTURE_AUTOLOAD_STATE` avvisar nu
   autentiska 2 KiB `HUBM`-SRAM-filer innan Mednafen startas. En riktig extern
   Mednafen-savestate (`*.mc0`, gzip/`MDFNSVST`) är nu verifierad och kan

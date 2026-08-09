@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "theron_v1_dungeon_handoff.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,6 +62,32 @@ typedef struct {
 } Theron_CreaturePointerEntry;
 
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index);
+
+/* Authenticated source decode for the pointer/regular-spawn records.  The
+ * input is the complete raw MODE1/2352 US Track 02 BIN, not a host-generated
+ * table and not a stripped user-data buffer.  The decoder verifies the exact
+ * US Track 02 MD5 before it reads the source bytes at UD 0x274000. The JP BIN
+ * has a different layout at these addresses and is rejected until its own
+ * source offsets are authenticated. */
+#define THERON_TRACK02_SPAWN_POINTER_COUNT 8u
+#define THERON_TRACK02_SPAWN_ZONE_COUNT 5u
+
+typedef struct {
+    int authenticated;
+    Theron_V1Track02Variant variant;
+    Theron_CreaturePointerEntry pointers[THERON_TRACK02_SPAWN_POINTER_COUNT];
+    Theron_SpawnZoneDesc zones[THERON_TRACK02_SPAWN_ZONE_COUNT];
+} Theron_Track02SpawnSource;
+
+/* Returns 1 only for a complete, hash-verified retail BIN whose pointer and
+ * regular-spawn records can be read safely.  The output is cleared on every
+ * failure.  This binds source records only; it does not authorize RNG,
+ * creature AI, combat, generator timing, T700, or T900 semantics. */
+int theron_v1_track02_decode_spawn_source(
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    Theron_V1Track02Variant variant,
+    Theron_Track02SpawnSource *out);
 
 /* Reserved result shape for a future captured spawn consumer.  No host seed
  * may stand in for the original RNG.  Until the HuC6280 RNG return contract

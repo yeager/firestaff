@@ -1,3 +1,21 @@
+# Theron autentiserad US spawn-/pointertabell (2026-08-09)
+
+- ✅ `theron_v1_track02_decode_spawn_source()` läser pointertabellen vid
+  user-data `0x274018` och de fem regular-spawnrecords vid `0x274058`,
+  `0x2740d7`, `0x274102`, `0x274129` och `0x274150` direkt ur den råa
+  MODE1/2352-BINen.
+- ✅ Bindningen kräver hela, hashverifierade US Track 02 (`f236011...`) och
+  den autentiska roster-markören vid `0x2741ef`; ett muterat BIN avvisas.
+  Regressionen passerar mot den riktiga US-BINen på extern disken.
+- ✅ JP Track 02 (`b7afb3...`) är verifierad som äkta media men har inte samma
+  bytes på US-offseten. Den avvisas därför medvetet tills JP:s egna
+  pointer-/spawnoffset har autentiserats; ingen US-tabell återanvänds som
+  syntetisk JP-data.
+- ✅ Källan är kopplad till pointer-/spawnrecord-typen och kan användas av
+  framtida live-creature-admission. RNG-return, random spawn, AI, combat,
+  loot, generatoråteraktivering, T700 och T900 förblir fail-closed eftersom
+  den autentiska runtime-capturen ännu inte bevisar deras konsumenter.
+
 # Theron autentisk `.mc0`-replay och PCE-knappar (2026-08-09)
 
 - ✅ En extern Mednafen-savestate verifierades som gzip-fil med dekomprimerad
