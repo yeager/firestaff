@@ -35,6 +35,8 @@
 - `M11 DM1 F0275 wall sensors`: Fix C012/C013/C016 object-generator,
   storage, and exchanger transactions to mutate the authenticated Thing chain
   and leader hand atomically, with rollback when a link or allocation fails.
+- `DM1 F0275 C012 receipt`: Fix the generator receipt so its source icon index
+  survives result initialization and reaches the authentic F0167 allocator.
 - `M11 DM1 C15/C25 ownership`: Prevent a failed persistent C25 source update
   from leaving its authenticated C15 record orphaned on the square.
 - `M11 DM1 champion top row`: Prevent active shield or invisibility effects

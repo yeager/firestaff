@@ -1229,6 +1229,36 @@ static void test_wall_single_object_storage_rotate(void) {
 }
 
 /* ----------------------------------------------------------------
+ *  Test F0723: Wall sensor C012 object generator receipt
+ *  Source: MOVESENS.C F0275 case C012 -> F0167
+ * ---------------------------------------------------------------- */
+static void test_wall_object_generator_receipt(void) {
+    struct DungeonSensor_Compat sensor;
+    struct WallSensorContext_Compat ctx;
+    struct SensorTriggerResult_Compat result;
+
+    sensor = make_sensor(DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE,
+                         23, DM1_EFFECT_SET, 0, 0, 0, 0, 0, 5, 6, 0);
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.leaderIndex = 0;
+    ctx.leaderEmptyHanded = 1;
+    ctx.sensorCountInCell = 0;
+    memset(&result, 0xA5, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 1, "Wall C012: empty hand triggers generator");
+    CHECK(result.leaderHandObjectReceived == 1,
+          "Wall C012: generated object enters leader hand");
+    CHECK(result.leaderHandObjectTypeReceived == 23,
+          "Wall C012: generator preserves the source icon index");
+
+    ctx.leaderEmptyHanded = 0;
+    memset(&result, 0, sizeof(result));
+    F0723_SENSOR_EvaluateWall_Compat(&sensor, &ctx, &result);
+    CHECK(result.triggered == 0,
+          "Wall C012: occupied hand does not trigger generator");
+}
+
+/* ----------------------------------------------------------------
  *  Test F0723: Wall sensor C016 object exchanger
  *  Source: MOVESENS.C F0275 lines 1489-1499
  * ---------------------------------------------------------------- */
@@ -1911,6 +1941,7 @@ int main(void) {
     test_wall_click_specific_object_removed();
     test_wall_keyhole_wrong_object_noop();
     test_wall_single_object_storage_rotate();
+    test_wall_object_generator_receipt();
     test_wall_object_exchanger();
     test_wall_champion_portrait();
     test_wall_event_triggered_skip();

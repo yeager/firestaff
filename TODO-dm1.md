@@ -4,6 +4,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Current DM1 Follow-up
 
+- 2026-08-09 C012 receipt correction is complete: the generator's source icon
+  index now survives F0275 result initialization and reaches the authentic
+  F0167 allocator. A focused regression covers both the positive empty-hand
+  route and the occupied-hand rejection.
+
 - 2026-08-09 F0275 wall-object mutation is complete: C012 generators, C013
   storage take/store, and C016 exchangers now update the real Thing chain and
   leader hand transactionally. Failed links or allocations roll back and do
