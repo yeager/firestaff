@@ -49652,6 +49652,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         int framebufferHeight) {
     int arrowX, arrowY, arrowW, arrowH;
     int outerX, outerY, outerW, outerH;
+    int drewMovementPanel;
     DM1_V1_MovementArrowRectPc34 outerRect;
     DM1_V1_MovementArrowRectPc34 arrowRect;
     if (!state || !framebuffer || state->showDebugHUD ||
@@ -49687,7 +49688,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
      * C009_ZONE_MOVEMENT_ARROWS, no transparency); the layout-696
      * C068..C073 arrow hit rectangles sit one pixel inside this
      * 87×45 source panel. */
-    (void)m11_blit_panel_asset_native(state,
+    drewMovementPanel = m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)dm1_v1_movement_arrows_graphic_id_pc34(),
         arrowW, arrowH, arrowX, arrowY);
@@ -49695,7 +49696,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
      * hatch/cyan keyboard cue below is an M11 affordance, not a CSBWin or
      * ReDMCSB framebuffer operation; CSB therefore keeps C013 unchanged
      * until a source-owned pressed-arrow state is available. */
-    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+    if (drewMovementPanel && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         m11_draw_v1_movement_arrow_visual_feedback(
             state, framebuffer, framebufferWidth, framebufferHeight);
     }

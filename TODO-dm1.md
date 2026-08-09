@@ -46,6 +46,10 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the legacy partial painter. Status-bar receipt failure is treated the same
   way, so an incomplete source frame is never published as a valid HUD.
 
+- 2026-08-09 movement-panel material correction is complete: the host input
+  feedback cue is now emitted only after the original C013 movement-arrow
+  surface has been loaded and blitted. Missing source material remains black.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.
