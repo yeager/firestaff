@@ -19,6 +19,12 @@ FONT256.S2D. Positiv/ändrad-palette-fixture passerar. Textkod→tile, page-PND,
 SLEV/TABL-ägarskap och faktisk menyplacering är fortfarande obevisade; no-draw
 kvarstår.
 
+2026-08-09: SLEV/SCSP-parsern behåller nu råbyte-offsetar för första mailbox-,
+SDDRVS-handler- och SCSP-röstregisterobservation samt en strikt intra-trace-
+ordningsflagga. Main-SH-2-tracen behåller första producerade kommando-offset.
+Extern fransk trace passerar; separata tracefiler saknar gemensam tidsbas, så
+eventägare, SAL-codec, MAP-bindning och playback är fortsatt spärrade.
+
 ## Nexus Structure1G Material Follow-up (2026-07-11)
 
 2026-07-12 update: original `SN_FLOOR.MNS` and `SN_WALL.MNS` now feed the

@@ -91,3 +91,13 @@ för en exakt CG-span och 256-färgspalett-span. En ändrad källa eller capture
 avvisas. Joinen sätter inte textkod→tile, page-PND, placering eller
 lagerägarskap; den är källproveniens, inte en upplåsning av FONT256-runtime
 eller startup→meny.
+
+### SLEV/SAL/SDDRVS-tracegrind
+
+`nexus_v1_scsp_write_trace_parse()` och den separata main-SH-2-parsern sparar
+nu de första råbyte-offsetarna för producerat mailbox-kommando,
+sound-CPU-mailbox, SDDRVS-handler och SCSP-röstregister. För sound-CPU-tracen
+markeras endast ordningen mailbox → handler → röstregister när den faktiskt
+finns i samma råtrace. Två separata tracefiler saknar gemensam tidsbas och får
+därför inte användas för att påstå eventägare, SAL-codec, MAP-bindning eller
+playback.

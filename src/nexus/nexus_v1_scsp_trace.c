@@ -79,11 +79,13 @@ int nexus_v1_scsp_write_trace_parse(
     receipt.header_valid = 1;
 
     while (next) {
+        size_t raw_offset;
         unsigned long address;
         unsigned long size;
         unsigned long value;
         unsigned long pc;
         line = next;
+        raw_offset = (size_t)(line - text);
         next = strchr(line, '\n');
         if (next) *next++ = '\0';
         if (*line == '\0') continue;
@@ -96,18 +98,25 @@ int nexus_v1_scsp_write_trace_parse(
         }
         ++receipt.record_count;
         if (address == UINT32_C(0x100400)) {
+            if (receipt.mailbox_write_count == 0U)
+                receipt.first_mailbox_raw_offset = raw_offset;
             ++receipt.mailbox_write_count;
             if (value != 0U) ++receipt.mailbox_nonzero_count;
             if (value == 2U) ++receipt.mailbox_value_02_count;
             if (value == 2U) receipt.mailbox_command_observed = 1;
         }
         if (pc == UINT32_C(0x3224)) {
+            if (!receipt.driver_command_handler_observed)
+                receipt.first_handler_raw_offset = raw_offset;
             ++receipt.command_handler_pc_3224_count;
             receipt.driver_command_handler_observed = 1;
         }
         if (address >= UINT32_C(0x100700) &&
-            address < UINT32_C(0x100800))
+            address < UINT32_C(0x100800)) {
+            if (receipt.scsp_voice_register_write_count == 0U)
+                receipt.first_voice_raw_offset = raw_offset;
             ++receipt.scsp_voice_register_write_count;
+        }
     }
     free(text);
     receipt.parse_complete = 1;
@@ -119,6 +128,12 @@ int nexus_v1_scsp_write_trace_parse(
     receipt.sal_codec_proven = 0;
     receipt.playback_permitted = 0;
     receipt.blocks_real_sfx_playback = 1;
+    receipt.intra_trace_observation_order_proven =
+        receipt.mailbox_command_observed &&
+        receipt.driver_command_handler_observed &&
+        receipt.scsp_voice_register_write_count != 0U &&
+        receipt.first_mailbox_raw_offset <= receipt.first_handler_raw_offset &&
+        receipt.first_handler_raw_offset <= receipt.first_voice_raw_offset;
     *out_receipt = receipt;
     return receipt.valid;
 }
@@ -162,12 +177,14 @@ int nexus_v1_main_scsp_write_trace_parse(
     receipt.header_valid = 1;
 
     while (next) {
+        size_t raw_offset;
         unsigned long address;
         unsigned long size;
         unsigned long value;
         unsigned long pc0;
         unsigned long pc1;
         line = next;
+        raw_offset = (size_t)(line - text);
         next = strchr(line, '\n');
         if (next) *next++ = '\0';
         if (*line == '\0') continue;
@@ -187,6 +204,8 @@ int nexus_v1_main_scsp_write_trace_parse(
             if (value == UINT32_C(0x200)) ++receipt.mailbox_value_0200_count;
             if (value == 2U || value == UINT32_C(0x200))
                 receipt.producer_command_observed = 1;
+            if (receipt.first_producer_command_raw_offset == 0U)
+                receipt.first_producer_command_raw_offset = raw_offset;
         }
     }
     free(text);

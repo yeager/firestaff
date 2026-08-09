@@ -1,11 +1,10 @@
-# Theron: source-byte-join för autentiserad RNG-råkod (2026-08-09)
+# Nexus SLEV/SAL/SDDRVS trace receipt (2026-08-09)
 
-- ✅ Den byteexakta `.rng-code`-sidecaren verifieras nu mot riktig US
-  `TQUS02.bin`: hela 256-byte-fönstret måste matcha en av de sju observerade
-  källkopiorna `0x975c4 + n*0x49800`, med korrekt filstorlek och sidecarformat.
-- ✅ Riktat test kördes mot den externa, hashverifierade capture-receipten.
-  Parsern publicerar fortfarande inget RNG-värde, spawnrecord, creature, AI,
-  T700 eller T900-semantik.
+Verifierat: första råbyte-offsetar för main-producerat mailbox-kommando,
+sound-CPU-mailbox, SDDRVS-handler och SCSP-röstregister sparas. Intra-trace-
+ordningen mailbox → handler → röstregister passerar fixture och användarens
+externa franska trace. Ingen eventsemantik, SAL-avkodning eller playback har
+öppnats.
 
 # Theron: byteexakt RNG-kodsidecar (2026-08-09)
 

@@ -27,6 +27,10 @@ typedef struct {
     uint32_t scsp_voice_register_write_count;
     int mailbox_command_observed;
     int driver_command_handler_observed;
+    size_t first_mailbox_raw_offset;
+    size_t first_handler_raw_offset;
+    size_t first_voice_raw_offset;
+    int intra_trace_observation_order_proven;
     int event_selector_semantics_proven;
     int sal_codec_proven;
     int playback_permitted;
@@ -48,6 +52,7 @@ typedef struct {
     uint32_t mailbox_value_02_count;
     uint32_t mailbox_value_0200_count;
     int producer_command_observed;
+    size_t first_producer_command_raw_offset;
     int blocks_real_sfx_playback;
 } Nexus_V1_MainScspTraceReceipt;
 

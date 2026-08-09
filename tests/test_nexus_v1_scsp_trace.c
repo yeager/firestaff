@@ -24,6 +24,7 @@ int main(void)
         receipt.scsp_voice_register_write_count != 2U ||
         !receipt.mailbox_command_observed ||
         !receipt.driver_command_handler_observed ||
+        !receipt.intra_trace_observation_order_proven ||
         receipt.event_selector_semantics_proven || receipt.sal_codec_proven ||
         receipt.playback_permitted || !receipt.blocks_real_sfx_playback) {
         fprintf(stderr, "FAIL: SCSP trace receipt\n");
@@ -61,6 +62,8 @@ int main(void)
             if (external_ok)
                 external_ok = receipt.valid && receipt.mailbox_nonzero_count > 0U &&
                     receipt.driver_command_handler_observed &&
+                    receipt.first_mailbox_raw_offset != 0U &&
+                    receipt.first_handler_raw_offset != 0U &&
                     !receipt.event_selector_semantics_proven &&
                     !receipt.sal_codec_proven && !receipt.playback_permitted;
             if (!external_ok) {
@@ -96,7 +99,8 @@ int main(void)
                 !main_receipt.producer_command_observed ||
                 main_receipt.mailbox_value_02_count == 0U ||
                 main_receipt.mailbox_value_0200_count == 0U ||
-                !main_receipt.blocks_real_sfx_playback) {
+                !main_receipt.blocks_real_sfx_playback ||
+                main_receipt.first_producer_command_raw_offset == 0U) {
                 free(raw);
                 fprintf(stderr, "FAIL: external main SCSP trace receipt\n");
                 return 1;
