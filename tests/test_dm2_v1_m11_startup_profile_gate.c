@@ -85,6 +85,16 @@ static uint32_t dm2_test_fnv1a(const uint8_t *bytes, size_t byte_count) {
     return hash;
 }
 
+static int dm2_test_bytes_are_zero(const uint8_t *bytes, size_t byte_count)
+{
+    size_t index;
+    if (!bytes || byte_count == 0u) return 0;
+    for (index = 0u; index < byte_count; ++index) {
+        if (bytes[index] != 0u) return 0;
+    }
+    return 1;
+}
+
 static int dm2_test_preselection_view_matches_owner(
     const DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -2925,6 +2935,32 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 retains original c_light inputs for the real entrance without inventing a party or viewport");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
+                        &new_game_world_owner) &&
+                    new_game_world_owner.preselection_light_visibility.valid &&
+                    new_game_world_owner.preselection_light_visibility.primary_map == 0 &&
+                    new_game_world_owner.preselection_light_visibility.secondary_map == 0 &&
+                    new_game_world_owner.preselection_light_visibility.primary_width ==
+                        new_game_world_owner.dungeon.level_widths[0] &&
+                    new_game_world_owner.preselection_light_visibility.primary_height ==
+                        new_game_world_owner.dungeon.level_heights[0] &&
+                    new_game_world_owner.preselection_light_visibility.primary_cell_bytes ==
+                        (size_t)new_game_world_owner.dungeon.level_widths[0] * 32u &&
+                    new_game_world_owner.preselection_light_visibility.secondary_cell_bytes ==
+                        (size_t)new_game_world_owner.dungeon.level_widths[0] * 32u &&
+                    new_game_world_owner.preselection_light_visibility.dirty_flags_before_check == 2u &&
+                    new_game_world_owner.preselection_light_visibility.walk_path_pending &&
+                    dm2_test_bytes_are_zero(
+                        new_game_world_owner.preselection_light_visibility.primary_cells,
+                        new_game_world_owner.preselection_light_visibility.primary_cell_bytes) &&
+                    dm2_test_bytes_are_zero(
+                        new_game_world_owner.preselection_light_visibility.secondary_cells,
+                        new_game_world_owner.preselection_light_visibility.secondary_cell_bytes) &&
+                    new_game_world_owner.preselection_light_visibility.source_state_hash != 0u &&
+                    !profile->source_game_load_session_ready &&
+                    dm2_v1_runtime_get_tick_count() == 0,
+                "DM2 retains CHECK_RECOMPUTE_LIGHT's source-sized zeroed visibility storage before pathfinding");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_materialize_preselection_scene(
                         &new_game_world_owner) &&

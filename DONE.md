@@ -67,6 +67,15 @@
   publiceras av denna lagring. Den kompletta `RESET_CAII`-transaktionen måste
   fortfarande utföra statisk `09db` och dynamisk `0a48` tillsammans.
 
+# DM2 New Game: källägd c_light-synlighetslagring (2026-08-09)
+
+- ✅ GAME_LOAD-ägaren behåller nu originalets källstorleksanpassade,
+  nollställda `v1e08cc`- och `v1e08c8`-ytor i RAM, med kartidentitet och
+  `x * 32 + y`-layout från File_header-kartorna.
+- ✅ Ytorna är uttryckligen märkta före `FIND_WALK_PATH`. De kan därför inte
+  förväxlas med synlighet, positionsljud eller en live viewport innan den
+  verkliga vägsökningen och dess karta-/partyägare finns i samma transaktion.
+
 # CSB viewport D0L/D0R + F0109 + F0110 + ABI fixes (2026-08-09)
 
 - ✅ D0L/D0R side walls (F0125/F0126), F0109 door ornament rendering with

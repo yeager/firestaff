@@ -676,6 +676,15 @@ static void dm2_v1_game_load_owner_sound_free(
     memset(sound, 0, sizeof(*sound));
 }
 
+static void dm2_v1_game_load_owner_light_visibility_free(
+    DM2_V1_GameLoadLightVisibilityOwner *visibility)
+{
+    if (!visibility) return;
+    free(visibility->primary_cells);
+    free(visibility->secondary_cells);
+    memset(visibility, 0, sizeof(*visibility));
+}
+
 /* c_sound::init owns the fixed sfx tables, while c_dballoc owns the dynamic
  * xsndptr2 capacity.  Preserve both shapes: allocating a 64-entry substitute
  * for xsndptr2 would silently discard hash-admitted SOUND9 rows.
@@ -1036,6 +1045,8 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
         dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
     }
     dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
+    dm2_v1_game_load_owner_light_visibility_free(
+        &owner->preselection_light_visibility);
     dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
     dm2_v1_caii_array_free(&owner->caii_slots);
     dm2_v1_caii_source_owner_free(&owner->caii_source);
@@ -1758,6 +1769,85 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light(
     candidate.source_state_hash = hash;
     candidate.valid = 1;
     owner->preselection_light = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadLightVisibilityOwner candidate;
+    const int primary_map = owner ? owner->source_party_map : -1;
+    /* c_dm2data::init sets v1e027c to map zero.  GAME_LOAD's fresh
+     * LOAD_NEW_DUNGEON branch does not replace it before move_2fcf_0b8b;
+     * retain that source value rather than deriving an alternate map from
+     * the party pose. */
+    const int secondary_map = 0;
+    int primary_width;
+    int primary_height;
+    int secondary_width;
+    int secondary_height;
+    size_t primary_bytes;
+    size_t secondary_bytes;
+    uint32_t hash = 0x4c564953u; /* "LVIS" */
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || !owner->source_map_context_materialized ||
+        !owner->preselection_light.valid || owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->preselection_light_visibility.valid ||
+        primary_map < 0 || primary_map >= owner->dungeon.level_count ||
+        secondary_map >= owner->dungeon.level_count) {
+        return 0;
+    }
+    primary_width = owner->dungeon.level_widths[primary_map];
+    primary_height = owner->dungeon.level_heights[primary_map];
+    secondary_width = owner->dungeon.level_widths[secondary_map];
+    secondary_height = owner->dungeon.level_heights[secondary_map];
+    /* c_light indexes `x << 5 | y`; DUNGEON's File_header dimensions are
+     * bounded to that same 32-column stride. */
+    if (primary_width <= 0 || primary_width > 32 || primary_height <= 0 ||
+        primary_height > 32 || secondary_width <= 0 || secondary_width > 32 ||
+        secondary_height <= 0 || secondary_height > 32) {
+        return 0;
+    }
+    primary_bytes = (size_t)primary_width * 32u;
+    secondary_bytes = (size_t)secondary_width * 32u;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.primary_cells = calloc(primary_bytes, 1u);
+    candidate.secondary_cells = calloc(secondary_bytes, 1u);
+    if (!candidate.primary_cells || !candidate.secondary_cells) {
+        dm2_v1_game_load_owner_light_visibility_free(&candidate);
+        return 0;
+    }
+    candidate.primary_map = (int16_t)primary_map;
+    candidate.secondary_map = (int16_t)secondary_map;
+    candidate.primary_width = (uint8_t)primary_width;
+    candidate.primary_height = (uint8_t)primary_height;
+    candidate.secondary_width = (uint8_t)secondary_width;
+    candidate.secondary_height = (uint8_t)secondary_height;
+    candidate.primary_cell_bytes = primary_bytes;
+    candidate.secondary_cell_bytes = secondary_bytes;
+    /* LOAD_LOCALLEVEL_DYN sets bit 2 before CHECK_RECOMPUTE_LIGHT.  The
+     * later GAME_LOAD tail's 3 is deliberately not used as this call's
+     * input: CHECK_RECOMPUTE_LIGHT clears its dirty state before returning. */
+    candidate.dirty_flags_before_check = 2u;
+    candidate.walk_path_pending = 1u;
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        owner->preselection_light.source_state_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)primary_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)secondary_map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)primary_width);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)primary_height);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)secondary_width);
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)secondary_height);
+    hash = dm2_v1_game_load_owner_hash_step(hash, candidate.dirty_flags_before_check);
+    if (hash == 0u) {
+        dm2_v1_game_load_owner_light_visibility_free(&candidate);
+        return 0;
+    }
+    candidate.source_state_hash = hash;
+    candidate.valid = 1;
+    owner->preselection_light_visibility = candidate;
     return 1;
 }
 

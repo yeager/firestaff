@@ -122,6 +122,30 @@ typedef struct {
     uint32_t source_state_hash;
 } DM2_V1_GameLoadPreselectionLightReceipt;
 
+/* RAM-owned portion of c_light::DM2_CHECK_RECOMPUTE_LIGHT.  LOAD_LOCALLEVEL_DYN
+ * sets dirty bit 2, then CHECK_RECOMPUTE_LIGHT selects the party map and
+ * zeroes one byte per source square at x*32+y.  FIND_WALK_PATH subsequently
+ * fills those bytes.  Keep allocation and its pre-walk bytes separate: an
+ * all-zero buffer is original initial state, never a completed visibility
+ * result. Source: SKProject SKULLWIN/c_loadlevel.cpp:1363 and
+ * c_light.cpp:490-529. */
+typedef struct {
+    int valid;
+    int16_t primary_map;
+    int16_t secondary_map;
+    uint8_t primary_width;
+    uint8_t primary_height;
+    uint8_t secondary_width;
+    uint8_t secondary_height;
+    uint8_t dirty_flags_before_check;
+    uint8_t walk_path_pending;
+    uint8_t *primary_cells;
+    uint8_t *secondary_cells;
+    size_t primary_cell_bytes;
+    size_t secondary_cell_bytes;
+    uint32_t source_state_hash;
+} DM2_V1_GameLoadLightVisibilityOwner;
+
 /* Exact per-map lists consumed by LOAD_LOCALLEVEL_DYN before it resolves
  * wall, floor and door-decoration GDAT. The lists are copied from the
  * authenticated File_header map payload, never inferred from a graphics
@@ -322,6 +346,7 @@ typedef struct {
      * source initialisation inputs only; it is not a fabricated light level
      * and does not make a viewport or a party visible. */
     DM2_V1_GameLoadPreselectionLightReceipt preselection_light;
+    DM2_V1_GameLoadLightVisibilityOwner preselection_light_visibility;
     /* Material is decoded from the admitted GDAT only after the source map
      * has supplied v1d6c02. The c_light receipt remains private and is
      * available only for a branch whose complete inputs are owned here. */
@@ -424,6 +449,12 @@ int dm2_v1_game_load_world_owner_select_champion(
 /* Retain the source c_light inputs for the established fresh-game map before
  * any mirror click.  This has no renderer/session side effect. */
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain c_light's source-sized, zeroed visibility buffers before its
+ * FIND_WALK_PATH calls. This does not make visibility, positional sound or
+ * a viewport live. */
+int dm2_v1_game_load_world_owner_materialize_preselection_light_visibility(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Copy the current map's authentic LOAD_LOCALLEVEL graphics lists. This is

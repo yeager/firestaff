@@ -28,6 +28,10 @@
   `v1e0390 = 3`-skrivningen i `DM2_GAME_LOAD`. Den privata implementeringen
   måste därför äga karta, ljus och CAII i samma lokala laddningsfas och får
   inte behandla den sena GAME_LOAD-kvittensen som en ersättning för den.
+  CHECK_RECOMPUTE_LIGHT:s två RAM-ytor (`v1e08cc`/`v1e08c8`) är nu
+  källstorleksallokerade och nollställda i GAME_LOAD-ägaren. De är medvetet
+  markerade som väntande på `FIND_WALK_PATH`; en nollställd yta är inte ett
+  synlighetsresultat och får inte användas för positionsljud eller viewport.
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och
