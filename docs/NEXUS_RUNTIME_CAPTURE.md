@@ -343,8 +343,29 @@ DGN, HUD or viewport record owns the command stream.
 `scripts/analyze_nexus_vdp1_command_window.py` can then inspect the bounded
 record window ending at the captured `COPR`. It reports raw command words and
 requires an observed END record when requested. Its output is still a state
-receipt: command type `0x09`, `0x0A`, or END does not establish a game-asset
-owner or authorize a host draw.
+receipt: command type `0x08` (User Clip), `0x09` (System Clip), `0x0A`
+(Local Coordinate), or END does not establish a game-asset owner or authorize
+a host draw.
+
+## Authenticated VDP1 command-list framing
+
+`scripts/analyze_nexus_vdp1_command_sequence.py` follows the captured
+`CMDLINK` chain instead of treating the live `COPR` cursor as the end of the
+list. It distinguishes User Clip, System Clip and Local Coordinate records,
+handles a cursor captured during an active draw, and accepts reset/idle frames
+as idle observations rather than pretending they contain a scene.
+
+Against the external 300-frame European witness
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-long-menu-20260809b/runtime-vdp12.raw`
+(manifest SHA-256
+`6ba86952b3fe1cbf9e2ebbf20f52345e7df15c270a90e00e09867a7fff0c9611`), the
+verifier covers all 300 frames: 290 active command chains and 10 idle END
+frames. Every active chain reaches an observed END and contains draw records
+plus a clip-state record and Local Coordinate state. The witness uses both
+VDP1 command buffers; for example, frame 104 resolves `0x0c3c0`→`0x0d6c0`
+with 153 records, 147 draws, two User Clip records, no System Clip record and
+three Local Coordinate records. This is hardware command-order evidence only;
+it does not identify the chain as startup, menu, HUD or a DGN scene.
 
 The runtime writer/source join is reproducible with
 `scripts/analyze_nexus_vdp1_runtime_writer_join.py`. On the authenticated
@@ -390,8 +411,9 @@ is still required before the startup/menu text gate can change.
 
 VDP1 replay also has an atomic sequence lane for a complete bounded command
 window. Every mode-1 command must pass the existing exact DGN image/CLUT join;
-the sequence additionally requires captured system-clip state, local-coordinate
-state, command order and an observed END record. Replay is staged into a
+the sequence additionally requires captured clip state (User Clip or System
+Clip), local-coordinate state, command order and an observed END record. Replay
+is staged into a
 temporary framebuffer and published only after all commands pass. This closes
 the single-command-to-command-list handoff mechanically, but does not claim
 that the current European traces are a complete retail viewport scene.

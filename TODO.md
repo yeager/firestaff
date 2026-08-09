@@ -53,8 +53,17 @@
 
 - ⏳ Nexus VDP1 capture replay is exposed through the viewport only as an
   explicit authenticated mode-1 lane. Keep the ordinary DGN mesh route
-  closed until the same Saturn trace supplies display-origin,
-  system-clip/local-coordinate and multi-command ordering evidence.
+  closed until the same Saturn trace supplies display-origin, clip-state
+  (User Clip/System Clip), local-coordinate and multi-command ordering
+  evidence.
+
+- 🔧 Nexus VDP1 command-list framing is now independently reproducible from
+  the authenticated 300-frame European witness: 290 active CMDLINK chains
+  reach END and 10 frames are explicit idle END observations. The verifier
+  distinguishes User Clip (0x08), System Clip (0x09), Local Coordinate (0x0A)
+  and draw records; it does not promote a chain to startup/menu/HUD/viewport
+  ownership. The production DGN route remains capture-gated for display origin,
+  face/mesh ownership, transform/culling and complete material composition.
 
 - ⏳ Nexus now has a capture-only VDP2 NBG1 bitmap/CRAM replay adapter. It
   requires the authenticated NBG1 register tuple, exact 512×256 bitmap and

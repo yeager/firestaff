@@ -40783,6 +40783,13 @@ add_test(
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_vdp1_capture_launcher.sh
 )
 add_test(
+    NAME nexus_v1_vdp1_command_sequence_capture
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_command_sequence.sh
+)
+set_tests_properties(nexus_v1_vdp1_command_sequence_capture PROPERTIES
+    SKIP_RETURN_CODE 77
+)
+add_test(
     NAME nexus_v1_saturn_raw_capture_launcher
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_saturn_raw_capture_launcher.sh
 )

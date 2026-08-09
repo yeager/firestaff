@@ -1,3 +1,14 @@
+# Nexus: VDP1 command-list framing (2026-08-09)
+
+- ✅ `scripts/analyze_nexus_vdp1_command_sequence.py` now follows the
+  authenticated Saturn VDP1 `CMDLINK` graph, handles a live `COPR` cursor,
+  separates User Clip (0x08), System Clip (0x09), Local Coordinate (0x0A),
+  draw and END records, and reports idle frames without treating them as
+  scenes. The external 300-frame European witness verifies 290 active chains
+  and 10 idle END frames; every frame is covered. This is hardware framing
+  evidence only, so startup/menu/HUD/viewport ownership and production DGN
+  rendering remain blocked.
+
 # Nexus: självidentifierande VDP2-registertolkning (2026-08-09)
 
 - ✅ `nexus_vdp2_registers.py` identifierar per autentiserad frame den äldre
