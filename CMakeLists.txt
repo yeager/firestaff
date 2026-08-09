@@ -9994,8 +9994,11 @@ add_executable(firestaff_csb_v1_real_asset_launch_probe
     src/csb/csb_v1_cmp_import_pc34_compat.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    # F31 direct-resume is compiled by csb_v1_boot.c even in this PC probe.
     src/csb/csb_v1_fmtowns_game.c
     src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -10040,6 +10043,8 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_fmtowns_game.c
     src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
@@ -10065,6 +10070,8 @@ add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_fmtowns_game.c
     src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -10090,6 +10097,10 @@ endif()
 add_executable(firestaff_csb_v1_pc_package_presentation_probe
     probes/csb/firestaff_csb_v1_pc_package_presentation_probe.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -10126,6 +10137,10 @@ add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
     probes/csb/firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -10182,6 +10197,10 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -10239,6 +10258,10 @@ add_executable(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_ornament_blit_probe.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_fmtowns_game.c
+    src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+    src/csb/redmcsb_f7061_save_header_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -54475,6 +54498,37 @@ add_executable(test_csb_v1_viewport_d1l_d1r_wall_pc34_compat
 target_include_directories(test_csb_v1_viewport_d1l_d1r_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_viewport_d1l_d1r_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_d1l_d1r_wall_pc34_compat COMMAND test_csb_v1_viewport_d1l_d1r_wall_pc34_compat)
+
+# csb_v1_boot.c owns the FM Towns F31 direct-resume branch.  Several probes
+# deliberately compile that file outside firestaff_m11, so make those narrow
+# binaries link the source-owned F31 handoff rather than leaving an unresolved
+# optional platform path.  Keep the list explicit: targets already supplied
+# by firestaff_m11 or with their own F31 sources are intentionally excluded.
+set(FIRESTAFF_CSB_BOOT_FMTOWNS_HANDOFF_TARGETS
+    firestaff_csb_v1_csbgraphics_palette_boot_probe
+    firestaff_csb_v1_viewport_declaration_manifest_probe
+    test_csb_v1_boot_csbgraphics_inventory_receipt
+    test_csb_v1_required_complete_launches
+    test_csb_v1_boot_title_import_ui_gate_pc34_compat
+    test_csb_v1_f0275_original_dungeon_c013_storage_pc34_compat
+    test_csb_v1_boot_f0247_post_teleport_frame_pc34_compat
+    test_csb_v1_boot_viewport_render_gate
+    test_csb_v1_runtime_champion_load_attrs
+    test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
+    test_csb_v1_runtime_route_first_frame_movement_utility_gate
+    test_csb_v1_phase7_verification
+    test_csb_v1_viewport_d1l_d1r_wall_pc34_compat
+)
+foreach(firestaff_csb_boot_target IN LISTS FIRESTAFF_CSB_BOOT_FMTOWNS_HANDOFF_TARGETS)
+    if(TARGET ${firestaff_csb_boot_target})
+        target_sources(${firestaff_csb_boot_target} PRIVATE
+            src/csb/csb_v1_fmtowns_game.c
+            src/csb/csb_v1_fmtowns_portrait.c
+            src/csb/redmcsb_f7055_saveutil_pc34_compat.c
+            src/csb/redmcsb_f7061_save_header_pc34_compat.c
+        )
+    endif()
+endforeach()
 
 add_executable(test_csb_v1_viewport_d2c_f0095_floor_ornament_pc34_compat tests/test_csb_v1_viewport_d2c_f0095_floor_ornament_pc34_compat.c)
 target_include_directories(test_csb_v1_viewport_d2c_f0095_floor_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
