@@ -152,6 +152,70 @@
 
 # DM2 New Game privat entréscen (2026-08-09)
 
+# DM2 New Game privata File_header-dörrar (2026-08-09)
+
+- ✅ Entréviewportens privata värld behåller nu den aktuella File_header-
+  kartans direkta DB0-dörrrötter och fyller synliga dörrrutor med originalets
+  tillstånd, öppningsgrad, paneltyp, knapp- och ornamentfält. Karta och
+  recordpayload kontrolleras mot en ny läsning av samma autentiserade
+  DUNGEON.DAT-klon.
+- ✅ Detta är fortfarande bara RAM-ägd förberedelse. Dörrknappar, animation,
+  ljud, kollisionshantering och M11-ritning väntar på den fullständiga
+  sessionsägaren.
+
+# DM2 New Game privata File_header-objekt (2026-08-09)
+
+- ✅ Den privata entrévärlden behåller nu aktuella kartans verkliga
+  DB5–DB15-recordadresser från File_header-kedjorna. Testet jämför varje
+  ObjectID, position, riktning, typ och rå recordslice med en ny validerad
+  läsning av samma DUNGEON.DAT-klon.
+- ✅ Ingen inventering, placering eller sprite har skapats från denna
+  locatorlista. Det arbetet kräver originalets DRAW_STATIC_OBJECT/DRAW_ITEM-
+  och sessionägare.
+
+# DM2 New Game privata File_header-texter (2026-08-09)
+
+- ✅ Entrévärlden behåller nu också DB2 Text-fältens ObjectID, position,
+  riktning, synlighet, läge och index från den aktuella validerade
+  File_header-kedjan. Realdatatestet jämför varje post mot en ny läsning av
+  den RAM-ägda DUNGEON.DAT-klonen.
+- ✅ Textindex blir inte en gissad sträng och synlighet muteras inte. Den
+  riktiga QUERY_MESSAGE_TEXT-, sensor- och UI-kedjan återstår.
+
+# DM2 New Game privata File_header-teleportörer (2026-08-09)
+
+- ✅ Den privata entrévärlden behåller nu aktuella kartans direkta DB1-
+  teleportörposter med destination, räckvidd, rotation och ljudflagga.
+  Realdatatestet jämför varje fält med en ny validerad läsning av samma
+  DUNGEON.DAT-klon.
+- ✅ Ingen partyrörelse, kartväxling, rotation eller ljudbegäran sker från
+  denna receipt innan c_moverec- och sessionskedjan finns.
+
+# DM2 New Game privata File_header-aktuatorer (2026-08-09)
+
+- ✅ Aktuella kartans direkta DB3-aktuatorer behålls nu med originalens
+  typ-, data-, fördröjnings-, effekt- och målfält. Realdatatestet jämför varje
+  post med en ny validerad läsning av DUNGEON.DAT-klonen.
+- ✅ Receiptet ersätter inte aktuatorkön och kör ingen sensor, timer eller
+  målmutation. De vägarna behöver samma levande record-, party- och
+  eventköägare.
+
+# DM2 New Game privata File_header-varelser (2026-08-09)
+
+- ✅ Aktuella kartans DB4-varelser behålls med verklig position, riktning,
+  HP-fält och possessionsrot. Realdatatestet jämför varje recordpost mot en
+  ny validerad läsning av DUNGEON.DAT-klonen.
+- ✅ CAII-slottar, rörelse, kollision, drops och possessionsmutation är inte
+  aktiverade utan den gemensamma runtimeägaren.
+
+# DM2 New Game privata varelsepossessions (2026-08-09)
+
+- ✅ Varje aktuellt kartägd DB4-varelse behåller nu sin verkliga
+  `Creature::possession`-kedja, inklusive autentiska nullrötter. Ingen tom
+  kedja eller något föremål konstrueras när originalposten saknar possessions.
+- ✅ Realdatatestet kontrollerar ägaren, roten och varje commitsstatus. Att
+  flytta, utrusta eller tappa dessa records är fortsatt spärrat.
+
 - ✅ Efter den källägda kart- och ljusinitieringen avkodas entréns riktiga
   GDAT-golv och tak i RAM. Den fasta `c_light`-grenen bekräftas mot samma
   File_header-descriptor och hålls i GameLoadWorldOwner. Resultatet är inte

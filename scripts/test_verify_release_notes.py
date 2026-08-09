@@ -11,16 +11,14 @@ ROOT = Path(__file__).resolve().parents[1]
 VERIFY = ROOT / "scripts" / "verify_release_notes.py"
 
 
-GAMES = ("DM1", "DM2", "CSB", "Nexus", "Theron")
-
-
 def note(added: str, changed: str, removed: str) -> str:
-    blocks = []
-    for game in GAMES:
-        blocks.append(
-            f"## {game}\n\n### Added\n{added}\n\n### Changed\n{changed}\n\n### Removed\n{removed}"
-        )
-    return "# Firestaff v9.8.7\n\n" + "\n\n".join(blocks) + "\n"
+    return (
+        "# Firestaff v9.8.7\n\n"
+        "## DM2\n\n"
+        f"### Added\n{added}\n\n"
+        f"### Changed\n{changed}\n\n"
+        f"### Removed\n{removed}\n"
+    )
 
 
 def run_case(contents: str, expected: int) -> None:
@@ -44,33 +42,38 @@ def main() -> None:
         note(
             "- `dm2_v1_boot_load`: Adds FM Towns SKULL.EXP validation.",
             "- `dm2_runtime_refresh_music_map_trigger`: Uses the committed party coordinates.",
-            "- None.",
+            "- `dm2_v1_legacy_boot_path`: Remove the obsolete fallback.",
         ),
         0,
     )
     run_case(
         note(
             "- `DM2`: Various improvements.",
-            "- None.",
-            "- None.",
+            "- `dm2_runtime_refresh_music_map_trigger`: Uses the committed party coordinates.",
+            "- `dm2_v1_legacy_boot_path`: Remove the obsolete fallback.",
         ),
         1,
     )
     run_case(
         note(
             "- `dm2_v1_boot_load`: FM Towns SKULL.EXP validation is available.",
-            "- None.",
-            "- None.",
+            "- `dm2_runtime_refresh_music_map_trigger`: Uses the committed party coordinates.",
+            "- `dm2_v1_legacy_boot_path`: Remove the obsolete fallback.",
         ),
         1,
     )
     run_case(
         note(
             "- None.",
-            "- None.",
-            "- None. No removal was made.",
+            "- `dm2_runtime_refresh_music_map_trigger`: Uses the committed party coordinates.",
+            "- `dm2_v1_legacy_boot_path`: Remove the obsolete fallback.",
         ),
         1,
+    )
+    run_case(
+        "# Firestaff v9.8.7\n\n## Fixed\n\n"
+        "- `verify.yml`: Prevent started verification matrices from being canceled.\n",
+        0,
     )
     print("release-notes verifier regression checks: PASS")
 

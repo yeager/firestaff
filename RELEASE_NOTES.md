@@ -2,54 +2,12 @@
 
 ## Fixed
 
-- Theron’s macOS Quartz input helper now compiles correctly in the shipped
-  build, keeping the current main branch releasable on Apple platforms.
-- GitHub Actions now lets an already-started cross-platform verification
-  matrix finish, preserving a complete CI receipt during rapid integrations.
+- `send_theron_macos_quartz_keypair.swift`: Remove the undefined
+  `activationAccepted` reference so the macOS Quartz input helper type-checks.
+- `verify.yml`: Prevent rapid `main` integrations from canceling an
+  already-started cross-platform verification matrix.
 
 ## Firestaff v3.0.305
-
-## DM1
-
-### Added
-
-- None.
-
-### Changed
-
-- None.
-
-### Removed
-
-- None.
-
-## DM2
-
-### Added
-
-- None.
-
-### Changed
-
-- None.
-
-### Removed
-
-- None.
-
-## CSB
-
-### Added
-
-- None.
-
-### Changed
-
-- None.
-
-### Removed
-
-- None.
 
 ## Nexus
 
@@ -71,20 +29,6 @@
 ### Removed
 
 - `nexus_v1_spell_effects.c`: Remove the production source exclusion.
-
-## Theron
-
-### Added
-
-- None.
-
-### Changed
-
-- None.
-
-### Removed
-
-- None.
 
 ## Status note
 
@@ -196,15 +140,7 @@ capture-gated enligt `TODO-nexus.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
 - `F0027 RNG`: fix to use real PC 3.4 LCG constants (was using wrong multiplier/increment).
 - `fmtowns_ext_v1`: fix ext_v1 payload accounting; add ext_v4/v5 GRAPHICS.DAT per-record walker.
 
-## Removed
-
-- None.
-
 # Firestaff v3.0.297
-
-## Added
-
-- None.
 
 ## Changed
 
@@ -214,10 +150,6 @@ capture-gated enligt `TODO-nexus.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
 - `test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat`: fix link error by adding `dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c` so `_default_input` and `_resolve` resolve.
 - `test_dm1_v1_f0099_in_place_row_flip_pc34_compat`: fix link error by adding d0l2/d0r2 and d1l2/d1r2 `f0108_floor_ceiling_ornament` sibling sources so the flip-row helpers resolve.
 - `test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat`: fix link error by adding `viewport_f0107_wall_ornament_alcove_pc34_compat.c` so `_alcove_cases_pc34` resolves; same fix for the `_d2l_d2r_` variant.
-
-## Removed
-
-- None.
 
 # Firestaff v3.0.296
 
@@ -239,23 +171,11 @@ capture-gated enligt `TODO-nexus.md` och `docs/NEXUS_PLACEHOLDER_AUDIT.md`.
 - `M11 CORRIDOR target handling`: change to support all three effect types (SET/CLEAR/TOGGLE), not just CLEAR.
 - `M11 teleporter toggle`: change to route through `m11_apply_dm1_square_actuator` instead of inline bit manipulation, consistent with PIT, FAKEWALL, WALL and CORRIDOR.
 
-## Removed
-
-- None.
-
 # Firestaff v3.0.295
-
-## Added
-
-- None.
 
 ## Changed
 
 - `dm1_actuator_dispatch`: change to handle all six ReDMCSB target square types (DOOR, PIT, FAKEWALL, WALL, TELEPORTER, CORRIDOR); previously WALL, TELEPORTER and CORRIDOR targets silently returned 0. 26 tests pass (was 18).
-
-## Removed
-
-- None.
 
 # Firestaff v3.0.294
 

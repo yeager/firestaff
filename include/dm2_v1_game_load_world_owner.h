@@ -122,6 +122,16 @@ typedef struct {
     uint32_t source_list_hash;
 } DM2_V1_GameLoadLocalLevelGraphicsReceipt;
 
+/* One DB4 Creature::possession outcome.  A null root is source data and is
+ * kept as `has_possession == 0`; it is not an error and must not become an
+ * empty synthetic item chain. */
+typedef struct {
+    int valid;
+    uint16_t creature_object_id;
+    uint8_t has_possession;
+    DM2_V1_FileHeaderCreaturePossessionReceipt receipt;
+} DM2_V1_GameLoadCreaturePossessionReceipt;
+
 /* The source viewport queries this exact pre-mirror projection from the
  * current c_map.  It is deliberately a map receipt rather than a renderer
  * state: every coordinate, raw tile word and ground-stack root comes from
@@ -255,6 +265,32 @@ typedef struct {
     DM2_V1_FileHeaderWorldInteractionReceipt preselection_world_interactions;
     DM2_V1_FileHeaderActuatorGeneratorReceipt preselection_actuator_generators;
     DM2_V1_FileHeaderRuntimeMapReceipt preselection_entrance_map;
+    /* Direct DB0 Door payloads for the File_header map currently owned by
+     * c_map.  This is an address-only receipt; it has no timer, collision or
+     * presentation side effect. */
+    DM2_V1_G1RuntimeMapDoorReceipt preselection_map_doors;
+    /* Source-addressed DB5..DB15 entries reached from this map's complete
+     * File_header chains.  It deliberately remains a locator receipt until
+     * DRAW_STATIC_OBJECT/DRAW_ITEM have a complete placement owner. */
+    DM2_V1_FileHeaderRuntimeObjectReceipt preselection_map_objects;
+    /* DB2 Text payloads reached by the same validated map walk.  Visibility,
+     * message lookup and special-marker effects stay uncommitted. */
+    DM2_V1_FileHeaderRuntimeTextReceipt preselection_map_texts;
+    /* Direct DB1 Teleporter payloads on the current File_header map.  They
+     * are retained without applying a party transition or sound request. */
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt preselection_map_teleporters;
+    /* Direct DB3 Actuator fields on the current File_header map.  The
+     * generator pass owns only its separately proved mutations; this receipt
+     * grants no generic actuator dispatch. */
+    DM2_V1_G1RuntimeMapActuatorReceipt preselection_map_actuators;
+    /* DB4 creature records reached through the current File_header map's
+     * complete chains. CAII slots, movement and drops remain absent. */
+    DM2_V1_FileHeaderRuntimeCreatureReceipt preselection_map_creatures;
+    uint8_t preselection_creature_possessions_materialized;
+    uint16_t preselection_creature_possession_count;
+    DM2_V1_GameLoadCreaturePossessionReceipt
+        preselection_creature_possessions[
+            DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS];
     DM2_V1_BootNewGameEntranceReceipt preselection_entrance;
     DM2_V1_BootChampionDyn4RosterReceipt preselection_dyn4_roster;
     uint32_t preselection_hash;
@@ -298,6 +334,42 @@ int dm2_v1_game_load_world_owner_materialize_preselection_light(
  * intentionally before GDAT resource consumption and has no renderer/UI
  * side effect. */
 int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain the current File_header map's direct DB0 Door payloads before the
+ * entrance projection consumes a visible door.  Source: SKWIN/DME.h::Door;
+ * c_map.cpp::GET_ADDRESS_OF_TILE_RECORD. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain the current File_header map's DB5..DB15 object record addresses.
+ * The result is not an item inventory or a rendered sprite list. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map DB2 Text fields for later source-owned UI/sensor
+ * consumers.  This does not decode a host string or change visibility. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map direct DB1 Teleporter fields for the later c_moverec
+ * transition owner. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map direct DB3 Actuator payloads for the later source timer
+ * and sensor owner. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain current-map DB4 creature placement, HP and possession-root fields
+ * before any CAII/timer/runtime consumer is published. */
+int dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Retain each current-map Creature::possession chain (or its authentic null
+ * root) without moving, equipping or dropping any record. */
+int dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Decode the real entrance floor/ceiling material and build its c_light

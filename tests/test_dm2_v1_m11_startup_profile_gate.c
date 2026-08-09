@@ -151,6 +151,199 @@ static int dm2_test_preselection_view_matches_owner(
     return 1;
 }
 
+static int dm2_test_preselection_doors_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_G1RuntimeMapDoorReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_doors.committed ||
+        owner->preselection_map_doors.map != owner->source_party_map ||
+        !dm2_v1_dungeon_materialize_file_header_runtime_map_doors(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.door_root_count !=
+            owner->preselection_map_doors.door_root_count ||
+        expected.door_record_reads !=
+            owner->preselection_map_doors.door_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.door_root_count; ++i) {
+        const DM2_V1_G1DirectDoorRoot *a = &expected.doors[i];
+        const DM2_V1_G1DirectDoorRoot *b =
+            &owner->preselection_map_doors.doors[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
+static int dm2_test_preselection_objects_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeObjectReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_objects.committed ||
+        owner->preselection_map_objects.map != owner->source_party_map ||
+        !dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.object_record_count !=
+            owner->preselection_map_objects.object_record_count ||
+        expected.object_record_reads != expected.object_record_count ||
+        expected.object_record_reads !=
+            owner->preselection_map_objects.object_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.object_record_count; ++i) {
+        const DM2_V1_FileHeaderObjectRecord *a = &expected.objects[i];
+        const DM2_V1_FileHeaderObjectRecord *b =
+            &owner->preselection_map_objects.objects[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
+static int dm2_test_preselection_texts_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeTextReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_texts.committed ||
+        owner->preselection_map_texts.map != owner->source_party_map ||
+        !dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.text_record_count !=
+            owner->preselection_map_texts.text_record_count ||
+        expected.text_record_reads != expected.text_record_count ||
+        expected.text_record_reads !=
+            owner->preselection_map_texts.text_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.text_record_count; ++i) {
+        const DM2_V1_FileHeaderTextRecord *a = &expected.texts[i];
+        const DM2_V1_FileHeaderTextRecord *b =
+            &owner->preselection_map_texts.texts[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
+static int dm2_test_preselection_teleporters_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_teleporters.committed ||
+        owner->preselection_map_teleporters.map != owner->source_party_map ||
+        !dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.teleporter_root_count !=
+            owner->preselection_map_teleporters.teleporter_root_count ||
+        expected.teleporter_record_reads != expected.teleporter_root_count ||
+        expected.teleporter_record_reads !=
+            owner->preselection_map_teleporters.teleporter_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.teleporter_root_count; ++i) {
+        const DM2_V1_G1DirectTeleporterRoot *a = &expected.teleporters[i];
+        const DM2_V1_G1DirectTeleporterRoot *b =
+            &owner->preselection_map_teleporters.teleporters[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
+static int dm2_test_preselection_actuators_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_G1RuntimeMapActuatorReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_actuators.committed ||
+        owner->preselection_map_actuators.map != owner->source_party_map ||
+        !dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.actuator_root_count !=
+            owner->preselection_map_actuators.actuator_root_count ||
+        expected.actuator_record_reads != expected.actuator_root_count ||
+        expected.actuator_record_reads !=
+            owner->preselection_map_actuators.actuator_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.actuator_root_count; ++i) {
+        const DM2_V1_G1DirectActuatorRoot *a = &expected.actuators[i];
+        const DM2_V1_G1DirectActuatorRoot *b =
+            &owner->preselection_map_actuators.actuators[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
+static int dm2_test_preselection_creatures_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeCreatureReceipt expected;
+    int i;
+
+    if (!owner || !owner->preselection_map_creatures.committed ||
+        owner->preselection_map_creatures.map != owner->source_party_map ||
+        !dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
+            &owner->dungeon, owner->source_party_map, &expected) ||
+        !expected.committed ||
+        expected.creature_record_count !=
+            owner->preselection_map_creatures.creature_record_count ||
+        expected.creature_record_reads != expected.creature_record_count ||
+        expected.creature_record_reads !=
+            owner->preselection_map_creatures.creature_record_reads) {
+        return 0;
+    }
+    for (i = 0; i < expected.creature_record_count; ++i) {
+        const DM2_V1_FileHeaderCreatureRecord *a = &expected.creatures[i];
+        const DM2_V1_FileHeaderCreatureRecord *b =
+            &owner->preselection_map_creatures.creatures[i];
+        if (memcmp(a, b, sizeof(*a)) != 0) return 0;
+    }
+    return 1;
+}
+
+static int dm2_test_preselection_creature_possessions_match_owner(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int i;
+
+    if (!owner || !owner->preselection_map_creatures.committed ||
+        !owner->preselection_creature_possessions_materialized ||
+        owner->preselection_creature_possession_count !=
+            (uint16_t)owner->preselection_map_creatures.creature_record_count) {
+        return 0;
+    }
+    for (i = 0; i < owner->preselection_map_creatures.creature_record_count;
+         ++i) {
+        const DM2_V1_FileHeaderCreatureRecord *creature =
+            &owner->preselection_map_creatures.creatures[i];
+        const DM2_V1_GameLoadCreaturePossessionReceipt *entry =
+            &owner->preselection_creature_possessions[i];
+        if (!entry->valid || entry->creature_object_id != creature->object_id)
+            return 0;
+        if (creature->possession_object_id == DM2_THING_NULL_MARKER) {
+            if (entry->has_possession) return 0;
+        } else if (!entry->has_possession || !entry->receipt.committed ||
+                   entry->receipt.creature_object_id != creature->object_id ||
+                   entry->receipt.possession_root !=
+                       creature->possession_object_id ||
+                   entry->receipt.map != owner->source_party_map) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /* Select an existing File_header square from verified DUNGEON.DAT.  The
  * message below is a test transport for that authentic coordinate, not a
  * replacement map, record or timer corpus. */
@@ -3961,6 +4154,26 @@ int main(void) {
                     profile_new_game_owner->actuator_generators_processed &&
                     profile_new_game_owner->source_map_context_materialized &&
                     profile_new_game_owner->preselection_local_graphics.valid &&
+                    profile_new_game_owner->preselection_map_doors.committed &&
+                    profile_new_game_owner->preselection_map_doors.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_map_objects.committed &&
+                    profile_new_game_owner->preselection_map_objects.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_map_texts.committed &&
+                    profile_new_game_owner->preselection_map_texts.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_map_teleporters.committed &&
+                    profile_new_game_owner->preselection_map_teleporters.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_map_actuators.committed &&
+                    profile_new_game_owner->preselection_map_actuators.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_map_creatures.committed &&
+                    profile_new_game_owner->preselection_map_creatures.map ==
+                        profile_new_game_owner->source_party_map &&
+                    profile_new_game_owner->preselection_creature_possession_count ==
+                        (uint16_t)profile_new_game_owner->preselection_map_creatures.creature_record_count &&
                     profile_new_game_owner->preselection_light.valid &&
                     profile_new_game_owner->preselection_scene_materialized &&
                     profile_new_game_owner->preselection_scene_plan.valid &&
@@ -3974,6 +4187,20 @@ int main(void) {
                     profile_new_game_owner->preselection_viewport.source_cell_count > 0u &&
                     profile_new_game_owner->preselection_viewport.source_viewport_hash != 0u &&
                     dm2_test_preselection_view_matches_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_doors_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_objects_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_texts_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_teleporters_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_actuators_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_creatures_match_owner(
+                        profile_new_game_owner) &&
+                    dm2_test_preselection_creature_possessions_match_owner(
                         profile_new_game_owner) &&
                     !profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 0 &&

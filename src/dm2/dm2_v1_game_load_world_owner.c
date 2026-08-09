@@ -1065,6 +1065,230 @@ int dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
     return 1;
 }
 
+int dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_G1RuntimeMapDoorReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_doors.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* This reads only direct DB0 roots after the File_header map validator
+     * has admitted the clone.  It does not follow GenericRecord links, so a
+     * visible door cannot acquire a guessed owner from a neighbouring chain.
+     * Source: SKWIN/DME.h::Door; c_map.cpp::GET_ADDRESS_OF_TILE_RECORD. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_doors(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map) {
+        return 0;
+    }
+    owner->preselection_map_doors = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeObjectReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_objects.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* LOAD_LOCALLEVEL_DYN reaches DB5..DB15 through c_map's validated
+     * ground stacks and GenericRecord::w0.  Preserve those exact source
+     * addresses first; constructing an inventory or a placement list here
+     * would lose the source-owned record-chain semantics. */
+    if (!dm2_v1_dungeon_collect_file_header_runtime_map_objects(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.object_record_reads != candidate.object_record_count) {
+        return 0;
+    }
+    owner->preselection_map_objects = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeTextReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_texts.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* QUERY_MESSAGE_TEXT and special floor markers use DME.h::Text::w2
+     * through the original c_map -> c_record chain.  Keep those exact
+     * fields in RAM, but do not turn text indices into translated strings or
+     * mutate TextVisibility before the relevant source consumers are owned. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.text_record_reads != candidate.text_record_count) {
+        return 0;
+    }
+    owner->preselection_map_texts = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_teleporters.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* c_moverec consumes the direct DME.h::Teleporter payload.  The map
+     * owner only preserves those bytes; changing the party map, coordinates,
+     * facing or playing teleporter sound requires the missing live session. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.teleporter_record_reads != candidate.teleporter_root_count) {
+        return 0;
+    }
+    owner->preselection_map_teleporters = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_G1RuntimeMapActuatorReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_actuators.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* DME.h::Actuator w2/w4/w6 belongs to the validated File_header map
+     * chain.  Preserve its source target and timing fields but never invoke
+     * it through an incomplete event queue or substitute a host callback. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_actuators(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.actuator_record_reads != candidate.actuator_root_count) {
+        return 0;
+    }
+    owner->preselection_map_actuators = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_FileHeaderRuntimeCreatureReceipt candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_map_context_materialized ||
+        !owner->preselection_local_graphics.valid ||
+        owner->preselection_map_creatures.committed ||
+        owner->champion_selection_materialized || owner->committed ||
+        owner->source_party_map < 0 ||
+        owner->source_party_map >= owner->dungeon.level_count ||
+        owner->preselection_local_graphics.map != owner->source_party_map) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    /* DME.h::Creature data stays record-owned here.  In particular, do not
+     * turn its info slot into a host CAII slot or traverse possession roots
+     * as drops before c_record/c_tim/CAII share one live session owner. */
+    if (!dm2_v1_dungeon_materialize_file_header_runtime_map_creatures(
+            &owner->dungeon, owner->source_party_map, &candidate) ||
+        !candidate.committed || candidate.map != owner->source_party_map ||
+        candidate.creature_record_reads != candidate.creature_record_count) {
+        return 0;
+    }
+    owner->preselection_map_creatures = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_GameLoadCreaturePossessionReceipt candidate[
+        DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS];
+    int count;
+    int i;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->preselection_map_creatures.committed ||
+        owner->preselection_creature_possessions_materialized ||
+        owner->champion_selection_materialized || owner->committed) {
+        return 0;
+    }
+    count = owner->preselection_map_creatures.creature_record_count;
+    if (count < 0 || count > DM2_V1_FILE_HEADER_RUNTIME_MAX_CREATURE_RECORDS)
+        return 0;
+    memset(candidate, 0, sizeof(candidate));
+    for (i = 0; i < count; ++i) {
+        const DM2_V1_FileHeaderCreatureRecord *creature =
+            &owner->preselection_map_creatures.creatures[i];
+        DM2_V1_GameLoadCreaturePossessionReceipt *entry = &candidate[i];
+
+        entry->valid = 1;
+        entry->creature_object_id = creature->object_id;
+        if (creature->possession_object_id == DM2_THING_NULL_MARKER) {
+            /* DME.h::Creature::GetPossessionObject has an authentic null
+             * root. Keep it distinct from OBJECT_END and a zero-length list. */
+            entry->has_possession = 0u;
+            continue;
+        }
+        if (!dm2_v1_dungeon_collect_file_header_creature_possession_chain(
+                &owner->dungeon, &owner->preselection_map_creatures, i,
+                &entry->receipt) || !entry->receipt.committed ||
+            entry->receipt.map != owner->source_party_map ||
+            entry->receipt.creature_object_id != creature->object_id ||
+            entry->receipt.possession_root != creature->possession_object_id) {
+            return 0;
+        }
+        entry->has_possession = 1u;
+    }
+    memcpy(owner->preselection_creature_possessions, candidate,
+           (size_t)count * sizeof(candidate[0]));
+    owner->preselection_creature_possession_count = (uint16_t)count;
+    owner->preselection_creature_possessions_materialized = 1u;
+    return 1;
+}
+
 int dm2_v1_game_load_world_owner_materialize_preselection_light(
     DM2_V1_GameLoadWorldOwner *owner)
 {
@@ -1294,6 +1518,7 @@ int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->preselection_view.valid ||
+        !owner->preselection_map_doors.committed ||
         !owner->preselection_scene_materialized ||
         !owner->preselection_scene_plan.valid ||
         !owner->preselection_c_light.valid ||
@@ -1327,6 +1552,48 @@ int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
         } else if (source->square_type == DM2_SQUARE_FLOOR ||
                    source->square_type == DM2_SQUARE_TELEPORTER) {
             square->flags = DM2_SQF_NONE;
+        } else if (source->square_type == DM2_SQUARE_DOOR) {
+            const DM2_V1_G1DirectDoorRoot *door = NULL;
+            int door_state = (int)(source->raw_tile & 7u);
+
+            if (!dm2_v1_g1_runtime_map_door_at(
+                    &owner->preselection_map_doors, source->map_x,
+                    source->map_y, &door) || !door ||
+                door->door_type > 1u) {
+                return 0;
+            }
+            if (door_state > 5) door_state = 4;
+            square->flags = DM2_SQF_HAS_DOOR | DM2_SQF_HAS_WALL;
+            /* The renderer uses this bit as an authenticated direct-DB0
+             * presence marker.  File_header has the same Door payload, not
+             * a G1 fallback. */
+            square->door_direct_g1_root = 1u;
+            square->door_button = door->button;
+            square->door_button_state = door->button_state;
+            square->door_record_type = door->door_type;
+            square->door_opening_dir = door->opening_dir;
+            square->ornament_index = door->ornate_index;
+            square->door_state = (uint8_t)door_state;
+            square->door_open_pct = (uint8_t)(
+                door_state == 5 ? 100 : (4 - door_state) * 25);
+            if (owner->dungeon.map_use_door0[candidate.map] &&
+                door->door_type == 0u) {
+                square->door_gfx_index = (uint8_t)(
+                    owner->dungeon.map_door_set0[candidate.map] & 0xff);
+                square->door_gfx_admitted = 1u;
+            } else if (owner->dungeon.map_use_door1[candidate.map] &&
+                       door->door_type == 1u) {
+                square->door_gfx_index = (uint8_t)(
+                    owner->dungeon.map_door_set1[candidate.map] & 0xff);
+                square->door_gfx_admitted = 1u;
+            }
+            if (door->ornate_index > 0u &&
+                door->ornate_index <=
+                    owner->preselection_local_graphics.door_ornate_count) {
+                square->door_ornate_gfx_index =
+                    owner->preselection_local_graphics.door_ornate_gfx[
+                        door->ornate_index - 1u];
+            }
         } else {
             /* Door, pit and trick-wall rendering needs the complete direct
              * record chain. Do not turn a raw tile byte into a drawable
@@ -1337,6 +1604,17 @@ int dm2_v1_game_load_world_owner_materialize_preselection_viewport(
         hash = dm2_v1_game_load_owner_hash_step(hash, source->raw_tile);
         hash = dm2_v1_game_load_owner_hash_step(hash, source->ground_stack_root);
         hash = dm2_v1_game_load_owner_hash_step(hash, source->square_type);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->flags);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_gfx_index);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_gfx_admitted);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->ornament_index);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_ornate_gfx_index);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_button);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_button_state);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_record_type);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_opening_dir);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_state);
+        hash = dm2_v1_game_load_owner_hash_step(hash, square->door_open_pct);
     }
     if (candidate.source_cell_count == 0u || hash == 0u) return 0;
     candidate.source_viewport_hash = hash;
