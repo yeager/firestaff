@@ -65,10 +65,8 @@ static int run_external_direct_color_capture(void)
     Nexus_V1_Vdp1CommandSequenceReceipt sequence;
     Nexus_V1_Vdp1DirectColorFramebuffer framebuffer;
     Nexus_V1_Vdp1DirectColorCaptureReceipt receipt;
-    Nexus_V1_Vdp1CaptureCompositeInput input;
     unsigned int frame_index;
-    int i;
-    int found = 0;
+    int found;
 
     if (!path || !*path || !frame_text || !*frame_text) return 1;
     frame_index = (unsigned int)strtoul(frame_text, NULL, 0);
@@ -86,43 +84,14 @@ static int run_external_direct_color_capture(void)
         return 0;
     }
     fclose(file);
-    memset(&frame, 0, sizeof(frame));
-    memset(&sequence, 0, sizeof(sequence));
-    if (!nexus_v1_saturn_runtime_capture_frame(
-            capture, (size_t)file_size, frame_index, &frame) ||
-        !frame.valid || !frame.vdp1_state_valid || !frame.vdp1_vram ||
-        !nexus_v1_vdp1_command_sequence_frame(
-            &(Nexus_V1_Vdp1CommandSequenceInput){
-                frame.vdp1_vram, (int)frame.vdp1_vram_size, frame.copr_word},
-            &sequence) || !sequence.valid || !sequence.complete) {
-        free(capture);
-        return 0;
-    }
-    memset(&input, 0, sizeof(input));
-    for (i = 0; i < sequence.command_count; ++i) {
-        Nexus_V1_Vdp1TextureCommand command;
-        uint32_t offset = sequence.command_byte_offsets[i];
-        if (nexus_v1_vdp1_texture_command_parse(
-                frame.vdp1_vram + offset,
-                NEXUS_V1_VDP1_COMMAND_BYTES, &command) != 0 ||
-            !command.texture_command || command.colour_mode != 5U) continue;
-        memset(&input, 0, sizeof(input));
-        input.command = frame.vdp1_vram + offset;
-        input.command_size = NEXUS_V1_VDP1_COMMAND_BYTES;
-        input.texture_span = frame.vdp1_vram + command.texture_source_byte_offset;
-        input.texture_span_size = (int)command.texture_byte_count;
-        input.original_saturn_capture_verified = 1;
-        input.screen_origin_x = sequence.display_origin_x;
-        input.screen_origin_y = sequence.display_origin_y;
-        memset(&framebuffer, 0, sizeof(framebuffer));
-        memset(&receipt, 0, sizeof(receipt));
-        found = nexus_v1_vdp1_capture_decode_direct_color(
-            &framebuffer, &input, &receipt) && receipt.valid &&
-            receipt.capture_only && receipt.direct_color_mode &&
-            receipt.source_word_order_verified &&
-            !receipt.renderer_permitted && receipt.written_pixels > 0;
-        break;
-    }
+    memset(&framebuffer, 0, sizeof(framebuffer));
+    memset(&receipt, 0, sizeof(receipt));
+    found = nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
+        &framebuffer, capture, (size_t)file_size, frame_index, &frame,
+        &sequence, &receipt) && receipt.valid && receipt.capture_only &&
+        receipt.direct_color_mode && receipt.source_word_order_verified &&
+        !receipt.renderer_permitted && receipt.written_pixels > 0 &&
+        receipt.command_byte_offset != 0U;
     free(capture);
     return found;
 }

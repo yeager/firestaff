@@ -74,6 +74,7 @@ typedef struct {
     int fallback_visuals_permitted;
     int written_pixels;
     int transparent_pixels;
+    uint32_t command_byte_offset;
 } Nexus_V1_Vdp1DirectColorCaptureReceipt;
 
 /* A complete, bounded replay lane for one captured VDP1 command window.
@@ -181,5 +182,16 @@ int nexus_v1_vdp1_capture_replay_runtime_frame(
     void *resolver_context,
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
     Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_replay_receipt);
+
+/* Decode the first authenticated colour-mode-5 draw in one raw Saturn frame.
+ * This is capture-only: material ownership and renderer permission remain
+ * deliberately absent until an exact source-owner handoff is verified. */
+int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
+    Nexus_V1_Vdp1DirectColorFramebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out_sequence_receipt,
+    Nexus_V1_Vdp1DirectColorCaptureReceipt *out_direct_receipt);
 
 #endif

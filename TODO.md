@@ -194,6 +194,11 @@
   (User Clip/System Clip), local-coordinate and multi-command ordering
   evidence.
 
+- ⏳ Nexus mode-5 direct-color capture now has a production runtime-frame
+  adapter, but it remains capture-only. Do not promote the first mode-5 draw
+  to menu/HUD/viewport rendering until its retail source owner and
+  scene/material handoff are byte-authenticated.
+
 - 🔧 Nexus VDP1 command-list framing is now independently reproducible from
   the authenticated 300-frame European witness: 290 active CMDLINK chains
   reach END and 10 frames are explicit idle END observations. The verifier

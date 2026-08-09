@@ -34,6 +34,11 @@
   `renderer_permitted=0` tills DGN-ägare/material är autentiserade.
 - ✅ Syntetisk regression och extern gameplay-capture passerar; en
   frame-760-post med oattesterad källa/ogiltig placering förblir spärrad.
+- ✅ `nexus_v1_vdp1_capture_decode_direct_color_runtime_frame()` binder nu
+  samma autentiserade rå-frame till COPR/command-list, display-origin och
+  vald mode-5-command. Extern J/J frame 500 passerar genom produktions-API:t;
+  receiptet lämnar command-offset och håller fortsatt renderer-admission
+  spärrad utan source-owner/material-join.
 # CSB Atari ST: exakt C007-toppradsinmatning (2026-08-09)
 
 - ✅ Den inbyggda Atari ST-runtimen använder nu CSB 2.x:s egna G0447-rutor

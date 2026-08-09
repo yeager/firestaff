@@ -113,6 +113,13 @@ första mode-5-post har fortfarande ingen byteexakt retailägare; dess
 command-chain-koppling saknar dessutom tillräckliga giltiga skärmkoordinater
 för att öppna en full replay.
 
+Den autentiserade rå-frame-kedjan finns nu också som
+`nexus_v1_vdp1_capture_decode_direct_color_runtime_frame()`. Den binder frame,
+COPR/command-list, display-origin och vald mode-5-command till samma råcapture
+och returnerar command-offset i receiptet. API:t är fortfarande uttryckligen
+capture-only; det skapar varken menyidentitet, materialägare eller
+produktionskonsument.
+
 VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
 524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
 externa capture-validatorn: `RawRegs → VRAM → CRAM`. C-läsaren och
