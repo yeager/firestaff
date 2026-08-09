@@ -792,9 +792,16 @@ int main(void)
     CHECK(M11_GameView_GetPresentationSpecialPalette(&view) ==
               VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE,
           "F31 C004 uses the source-owned entrance palette");
-    CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-              M11_GAME_INPUT_REDRAW,
-          "F31 Game accepts the source-owned Prison command");
+    /* CHTWE/CHTWJ reaches the native C004 Entrance page without the PC
+     * TITLE.C session.  Its C407 box is nevertheless the original C200
+     * primary-mouse command (COMMAND.C:342; layout-696 (244,45) 55x14).
+     * Exercise the real F31E/F31J Game handoff through that visible box,
+     * rather than using a host-only keyboard shortcut. */
+    result = M11_GameView_HandlePointerButton(&view, 250, 50,
+                                              DM1_V1_MOUSE_MASK_LEFT_PC34);
+    CHECK(result == M11_GAME_INPUT_REDRAW &&
+              view.csbState.startup_entrance_opening_active,
+          "F31 Game C407 pointer command enters the source-owned Prison transition");
     for (tick = 0u; tick < 240u && view.csbState.startup_entrance_active;
          ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);

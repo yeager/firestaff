@@ -16,6 +16,15 @@
   genom ANIM→FTLCODE, C232-HUD, 022e-viewport och F0433/F0435 kallresume.
   Källa: ReDMCSB `COMMAND.C` G0447, rader 82–100.
 
+# CSB FM Towns: C407-musväg till Prison (2026-08-09)
+
+- ✅ Den äkta F31E/F31J `CHTWE/CHTWJ` → `C004`-entrén accepterar nu ett
+  vänsterklick i originalets C407-ruta (`244,45`, `55×14`) och skickar det
+  genom samma C200/F0806-handoff som tangentbordets Return.
+- ✅ Realdata-testet öppnar `SWITCHTW`, laddar `MINI.DAT`, jämför C004-rastret
+  och går genom klickdriven C002/C003-dörröppning till den levande dungeonen.
+  Övriga C004-rutor är fortsatt stängda tills deras Towns-ägare är verifierad.
+
 # CSB Amiga: A31E är valbar i CLI och startmeny (2026-08-09)
 
 - ✅ Den hashverifierade A31E-utgåvan är inte längre felaktigt undantagen av

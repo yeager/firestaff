@@ -30228,6 +30228,36 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 ? m11_csb_handle_fmtowns_utility_pointer(state, x, y, buttonMask)
                 : m11_csb_handle_fmtowns_switch_pointer(state, x, y, buttonMask);
         }
+        if (m11_csb_is_fmtowns_profile(csb_profile) &&
+            state->csbState.startup_entrance_active) {
+            CsbTouchClickZonePc34Compat entrance_zone;
+
+            /* CHTWE/CHTWJ hands C004 to the same F0806 Entrance wait loop
+             * after its native Game program has loaded MINI.DAT.  The
+             * program boundary is Towns-specific, but C200 remains the
+             * source C407 primary-mouse command: COMMAND.C:342 and
+             * layout-696 fix it at (244,45), 55x14.  Previously this
+             * verified Towns C004 surface accepted only keyboard Return.
+             * Consume only C407 with a real left button through the same
+             * source-owned pointer dispatcher used by the PC entrance;
+             * F0806 owns the resulting handoff. Other C004 clicks remain
+             * inert until their native command owner is recovered. */
+            if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+                CSB_TOUCHCLICK_Compat_HitTestInView(
+                    CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, x, y,
+                    (unsigned int)buttonMask, &entrance_zone) &&
+                entrance_zone.commandId == 200u) {
+                if (m11_csb_boot_runtime_startup_pointer_dispatch(
+                        state, x, y, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT,
+                        &dispatch_receipt) && dispatch_receipt.valid &&
+                    dispatch_receipt.startup_active &&
+                    dispatch_receipt.pointer_button_relevant) {
+                    return m11_csb_startup_apply_host_input_dispatch_receipt(
+                        state, &dispatch_receipt);
+                }
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         /* M11 already normalizes SDL buttons to the PC34 mouse masks: left
          * is 0x0002 and right is 0x0001.  The standalone Entrance boundary
          * also accepts SDL's raw left-button bit (0x0001), but forwarding
