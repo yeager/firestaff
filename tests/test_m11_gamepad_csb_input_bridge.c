@@ -44,6 +44,7 @@ int main(void) {
      * controller axis emits only one SDL motion event while it remains held. */
     CHECK(M11_InputSourceSupportsHeldMotion("dm1", 1) == 1);
     CHECK(M11_InputSourceSupportsHeldMotion("csb", 1) == 1);
+    CHECK(M11_InputSourceSupportsHeldMotion("theron", 1) == 1);
     CHECK(M11_InputSourceSupportsHeldMotion("csb", 0) == 0);
     /* DM2's public movement bridge is gated behind its complete GAME_LOAD
      * session and has no imported held-input scheduler.  M11 must not reuse
@@ -83,6 +84,26 @@ int main(void) {
     CHECK(M11_GamepadAxisToMenuInput(SDL_GAMEPAD_AXIS_LEFTY,
                                      M12_AXIS_ROLE_MOVE, 15999, 1) ==
           M12_MENU_INPUT_NONE);
+
+    /* Theron has the PC Engine's four-way pad, not the DM strafe pair.
+     * Keep this host mapping source-specific so DM1/CSB retain their
+     * existing A/D strafe bindings. */
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_W) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_S) ==
+          M12_MENU_INPUT_DOWN);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_A) ==
+          M12_MENU_INPUT_LEFT);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_D) ==
+          M12_MENU_INPUT_RIGHT);
+    CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
+          M12_MENU_INPUT_ACCEPT);
+    CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
+          M12_MENU_INPUT_ACTION);
+    CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
+          M12_MENU_INPUT_NONE);
+    CHECK(M11_TheronTouchButtonInput(0) == M12_MENU_INPUT_ACCEPT);
+    CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_ACTION);
 
     if (failures) return 1;
     puts("PASS: m11_gamepad_csb_input_bridge");

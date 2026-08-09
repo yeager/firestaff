@@ -1,3 +1,11 @@
+# Theron: Firestaff WASD, mus och touch (2026-08-09)
+
+- ✅ Firestaffs aktiva Theron-route använder W/S för framåt/bakåt och A/D för
+  vänster/höger vändning. Musknapp 1/2 är Button I/II och kort/lång touch är
+  samma Button I/II-par.
+- ✅ Mappingen är source-specifik, held-input är gated till laddad dungeon,
+  och SDL3/SDL2, Theron-fasad samt Firestaff-bygget är verifierade.
+
 # Theron: autentisk US-dungeonbild och WASD-profil (2026-08-09)
 
 - ✅ En riktig Mednafen 1.32.1-session med US Track 02 nådde originalets

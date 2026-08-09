@@ -73,6 +73,41 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
     return M12_MENU_INPUT_NONE;
 }
 
+M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
+{
+    /* THQUEST.ASM T520/T560/T600/T700 consumes a four-way PCE pad and has no
+     * strafe command.  This host-only bridge keeps that source boundary
+     * separate from the DM1/CSB A/D strafe convenience mapping. */
+    switch ((SDL_Scancode)scancode) {
+        case SDL_SCANCODE_UP:
+        case SDL_SCANCODE_W:
+            return M12_MENU_INPUT_UP;
+        case SDL_SCANCODE_DOWN:
+        case SDL_SCANCODE_S:
+            return M12_MENU_INPUT_DOWN;
+        case SDL_SCANCODE_LEFT:
+        case SDL_SCANCODE_A:
+            return M12_MENU_INPUT_LEFT;
+        case SDL_SCANCODE_RIGHT:
+        case SDL_SCANCODE_D:
+            return M12_MENU_INPUT_RIGHT;
+        default:
+            return M12_MENU_INPUT_NONE;
+    }
+}
+
+M12_MenuInput M11_TheronMouseButtonToInput(int button)
+{
+    if (button == SDL_BUTTON_LEFT) return M12_MENU_INPUT_ACCEPT;
+    if (button == SDL_BUTTON_RIGHT) return M12_MENU_INPUT_ACTION;
+    return M12_MENU_INPUT_NONE;
+}
+
+M12_MenuInput M11_TheronTouchButtonInput(int longPress)
+{
+    return longPress ? M12_MENU_INPUT_ACTION : M12_MENU_INPUT_ACCEPT;
+}
+
 int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled)
 {
     if (!configuredEnabled) return 0;
@@ -91,7 +126,8 @@ int M11_InputSourceSupportsHeldMotion(const char* sourceId, int active)
      * accidentally left out of M11's held-device sampler, which made a held
      * stick or key depend on SDL axis motion or OS key-repeat after its first
      * command. */
-    return strcmp(sourceId, "dm1") == 0 || strcmp(sourceId, "csb") == 0;
+    return strcmp(sourceId, "dm1") == 0 || strcmp(sourceId, "csb") == 0 ||
+           strcmp(sourceId, "theron") == 0;
 }
 
 int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,

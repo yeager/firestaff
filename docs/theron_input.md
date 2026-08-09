@@ -8,10 +8,10 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 |------------|-------------------|----------------|
 | D-pad Up   | Up Arrow          | W              |
 | D-pad Down | Down Arrow        | S              |
-| D-pad Left | Left Arrow        | Home, Q        |
-| D-pad Right| Right Arrow       | End, E         |
-| Button I   | Z                 | Return, Space  |
-| Button II  | X                 | Escape         |
+| D-pad Left | Left Arrow, A     | Home, Q        |
+| D-pad Right| Right Arrow, D    | End, E         |
+| Button I   | Mouse 1, short touch | Z, Return, Space |
+| Button II  | Mouse 2, long touch  | X, Escape         |
 | Run        | Return            |                |
 | Select     | —                 |                |
 
@@ -32,13 +32,16 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 |----------------|-----------------------------------|
 | Move forward   | Up Arrow, W                       |
 | Move backward  | Down Arrow, S                     |
-| Turn left      | Left Arrow, Home, Q               |
-| Turn right     | Right Arrow, End, E               |
+| Turn left      | Left Arrow, A, Home, Q            |
+| Turn right     | Right Arrow, D, End, E            |
 | Wait (tick)    | Return, Space                     |
 
 ## Notes
 
-- A/D are mapped to strafe in the engine but Theron ignores strafe input.
+- Theron has no strafe action: Firestaff maps A/D to the PC Engine
+  left/right direction buttons, which the source runtime consumes as turns.
+- Mouse button 1/2 are direct Button I/II bindings. A short touch emits
+  Button I; a long touch emits Button II, including during startup.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons).
 - F5 = quick save, F9 = quick load, F12 = screenshot (engine-global).

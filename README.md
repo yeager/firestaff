@@ -175,6 +175,12 @@ source-only VDC/VCE replay remains diagnostic evidence, not a Firestaff
 runtime screenshot; the images above are explicitly original-media captures
 and do not claim that the Firestaff promotion gate has passed.
 
+When the Firestaff Theron route is active, use **W**/**S** to move forward and
+backward and **A**/**D** to turn left and right. Mouse button 1 is PC Engine
+Button I and mouse button 2 is Button II. On touch screens, a short touch is
+Button I and a long touch is Button II. These are host-input bindings only;
+they do not promote the still-gated original Theron runtime semantics.
+
 For source-data investigation, an explicit authenticated fallback can load
 real Track 02 map/object records even when the original CD handoff has not
 been captured:

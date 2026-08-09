@@ -3916,6 +3916,11 @@ static int m11_game_view_is_dm1(const M11_GameViewState* gameView) {
                                                 gameView->sourceId);
 }
 
+static int m11_game_view_is_theron(const M11_GameViewState* gameView) {
+    return gameView && gameView->active &&
+           gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02;
+}
+
 static int m11_game_view_supports_held_motion_input(
     const M11_GameViewState* gameView) {
     if (!gameView || !M11_InputSourceSupportsHeldMotion(gameView->sourceId,
@@ -3925,6 +3930,11 @@ static int m11_game_view_supports_held_motion_input(
     /* TITLE/ENTRANCE have their own source dispatch.  GAMELOOP.C's held
      * command wait begins only after F0441/F0435 has entered the dungeon, so
      * a held controller must not repeatedly advance startup commands. */
+    if (m11_game_view_is_theron(gameView)) {
+        return gameView->theronState.startup_phase ==
+                   THERON_STARTUP_PHASE_IN_DUNGEON &&
+               gameView->theronState.level_loaded;
+    }
     return !m11_game_view_is_csb(gameView) ||
            (!gameView->csbState.startup_title_active &&
             !gameView->csbState.startup_entrance_active);
@@ -4431,7 +4441,9 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
         int sc = (int)preferred[i];
         if (sc >= 0 && sc < count && keys[sc]) {
             M12_MenuInput input =
-                m11_game_view_is_dm1(gameView)
+                m11_game_view_is_theron(gameView)
+                    ? M11_TheronNavigationInputFromScancode((int)preferred[i])
+                    : m11_game_view_is_dm1(gameView)
                     ? M11_DM1V1_NavigationInputFromScancode((int)preferred[i])
                     : M12_MENU_INPUT_NONE;
             if (input == M12_MENU_INPUT_NONE) {
@@ -4789,6 +4801,26 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
             gameView && gameView->active &&
             (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
+            if (m11_game_view_is_theron(gameView)) {
+                M12_MenuInput buttonInput =
+                    M11_TheronMouseButtonToInput(ev.button.button);
+                if (gameViewResult) {
+                    if (m11_map_window_pointer_to_game_source(
+                            gameView, (int)ev.button.x, (int)ev.button.y,
+                            &mappedX, &mappedY)) {
+                        (void)M11_GameView_HandlePointerMove(
+                            gameView, mappedX, mappedY);
+                    }
+                    *gameViewResult = M11_GameView_HandleInput(
+                        gameView, buttonInput);
+                    if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                        return M12_MENU_INPUT_NONE;
+                    }
+                } else if (buttonInput != M12_MENU_INPUT_NONE) {
+                    return buttonInput;
+                }
+                continue;
+            }
             if (gameViewResult &&
                 m11_map_window_pointer_to_game_source(gameView,
                                                        (int)ev.button.x,
@@ -4916,7 +4948,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 m11_game_view_supports_held_motion_input(gameView) &&
                 ev.key.repeat) {
                 M12_MenuInput repeatInput =
-                    M11_DM1V1_NavigationInputFromScancode((int)ev.key.scancode);
+                    m11_game_view_is_theron(gameView)
+                        ? M11_TheronNavigationInputFromScancode(
+                              (int)ev.key.scancode)
+                        : M11_DM1V1_NavigationInputFromScancode(
+                              (int)ev.key.scancode);
                 if (repeatInput == M12_MENU_INPUT_NONE) {
                     repeatInput =
                         m11_motion_input_from_scancode(ev.key.scancode);
@@ -4933,7 +4969,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
-                if (m11_game_view_is_dm1(gameView)) {
+                if (m11_game_view_is_theron(gameView)) {
+                    mappedInput = M11_TheronNavigationInputFromScancode(
+                        (int)ev.key.scancode);
+                    if (mappedInput != M12_MENU_INPUT_NONE) {
+                        return mappedInput;
+                    }
+                } else if (m11_game_view_is_dm1(gameView)) {
                     if (m11_dm1_sdl_key_to_menu_input(
                             (int)ev.key.key,
                             (ev.key.mod & SDL_KMOD_CTRL) != 0,
@@ -5262,6 +5304,26 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
         if (ev.type == SDL_MOUSEBUTTONDOWN &&
             gameView && gameView->active &&
             (ev.button.button == SDL_BUTTON_LEFT || ev.button.button == SDL_BUTTON_RIGHT)) {
+            if (m11_game_view_is_theron(gameView)) {
+                M12_MenuInput buttonInput =
+                    M11_TheronMouseButtonToInput(ev.button.button);
+                if (gameViewResult) {
+                    if (m11_map_window_pointer_to_game_source(
+                            gameView, ev.button.x, ev.button.y,
+                            &mappedX, &mappedY)) {
+                        (void)M11_GameView_HandlePointerMove(
+                            gameView, mappedX, mappedY);
+                    }
+                    *gameViewResult = M11_GameView_HandleInput(
+                        gameView, buttonInput);
+                    if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                        return M12_MENU_INPUT_NONE;
+                    }
+                } else if (buttonInput != M12_MENU_INPUT_NONE) {
+                    return buttonInput;
+                }
+                continue;
+            }
             if (gameViewResult &&
                 m11_map_window_pointer_to_game_source(gameView,
                                                        ev.button.x,
@@ -5391,7 +5453,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 m11_game_view_supports_held_motion_input(gameView) &&
                 ev.key.repeat) {
                 M12_MenuInput repeatInput =
-                    M11_DM1V1_NavigationInputFromScancode((int)ev.key.keysym.scancode);
+                    m11_game_view_is_theron(gameView)
+                        ? M11_TheronNavigationInputFromScancode(
+                              (int)ev.key.keysym.scancode)
+                        : M11_DM1V1_NavigationInputFromScancode(
+                              (int)ev.key.keysym.scancode);
                 if (repeatInput == M12_MENU_INPUT_NONE) {
                     repeatInput =
                         m11_motion_input_from_scancode(ev.key.keysym.scancode);
@@ -5405,7 +5471,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
-                if (m11_game_view_is_dm1(gameView)) {
+                if (m11_game_view_is_theron(gameView)) {
+                    mappedInput = M11_TheronNavigationInputFromScancode(
+                        (int)ev.key.keysym.scancode);
+                    if (mappedInput != M12_MENU_INPUT_NONE) {
+                        return mappedInput;
+                    }
+                } else if (m11_game_view_is_dm1(gameView)) {
                     if (m11_dm1_sdl_key_to_menu_input(
                             (int)ev.key.keysym.sym,
                             (ev.key.keysym.mod & KMOD_CTRL) != 0,

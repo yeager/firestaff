@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — Firestaff Theron WASD, mus och touch
+
+- ✅ Therons Firestaff-ingång använder nu en source-specifik PC Engine-karta:
+  W/S går framåt/bakåt och A/D vänder vänster/höger. Den globala DM1/CSB-
+  strafe-kartan ändras inte.
+- ✅ Musknapp 1 skickar Button I och musknapp 2 skickar Button II. Kort touch
+  skickar Button I och lång touch skickar Button II via samma befintliga
+  startup-/dungeonfacad; inga syntetiska spelrecords eller semantiker skapas.
+- ✅ Held-input är spärrad under Therons uppstart och aktiveras först när den
+  riktiga dungeonfasen är laddad. Mapping-, SDL3-, SDL2- och fullständigt
+  Firestaff-bygge verifierades.
+
 ## 2026-08-09 — ingen obestyrkt portraitägare i source-bound roster
 
 - ✅ Source-bound US/JP rosterinitiering markerar nu portrait-ID som

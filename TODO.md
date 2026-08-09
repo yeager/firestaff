@@ -42,7 +42,9 @@
   referenswitness från originalspelet, inte en Firestaff-renderad paritybild.
   Den lokala Mednafen-profilen har dessutom verifierade WASD-alternativ för
   PCE:s upp/ned/vänster/höger; `Z`/`X` är fortfarande Button I/II och
-  `Return` är Run. Firestaffs egen screenshot-gate och spelsemantik är kvar.
+  `Return` är Run. Firestaffs egen screenshot-gate och källsemantik är kvar,
+  men Firestaffs hostkontroller använder nu W/S/A/D, musknapp 1/2 och kort/
+  lång touch för Button I/II.
 
 - 🔧 Nexus: VDP1-transporten är nu validerad genom en separat same-session
   snapshot vid `0x10a00`, med bundna write- och writer-code-traces. VDP2-

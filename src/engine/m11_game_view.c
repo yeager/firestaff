@@ -28865,12 +28865,24 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
      * UI rectangles.  A stationary finger therefore remains a real source
      * click, including CSB's startup/HUD/viewport route. */
     if (gesture == FS_GG_GESTURE_TAP) {
+        if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+            /* Theron host contract: short touch is authentic PC Engine
+             * Button I, including startup actions and dungeon ticks. */
+            return M11_GameView_HandleInput(
+                state, M11_TheronTouchButtonInput(0));
+        }
         return M11_GameView_HandlePointer(state, x, y, 1);
     }
     /* INPUT.C:641-664 forwards the secondary button independently.  The
      * existing gesture table documents a stationary long press as that
      * source-owned right-button affordance (for example C083). */
     if (gesture == FS_GG_GESTURE_LONG_PRESS) {
+        if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+            /* Theron host contract: long touch is authentic PC Engine
+             * Button II; no synthetic pointer-zone action is introduced. */
+            return M11_GameView_HandleInput(
+                state, M11_TheronTouchButtonInput(1));
+        }
         return M11_GameView_HandlePointerButton(
             state, x, y, DM1_V1_MOUSE_MASK_RIGHT_PC34);
     }
