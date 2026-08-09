@@ -407,6 +407,43 @@ static void expect_amiga_c005_credits_source_frame(M11_GameViewState *view,
                 "Amiga C005 consumes dismissal before live C080 input");
 }
 
+static void expect_amiga_prison_entrance_handoff(M11_GameViewState *view,
+                                                 const char *label)
+{
+    unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *c004;
+    const M11_AssetSlot *c002;
+    const M11_AssetSlot *c003;
+    const CSB_V1_BootProfile *profile;
+    int ticks = 0;
+
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    c004 = M11_AssetLoader_Load(&view->assetLoader, 4u);
+    c002 = M11_AssetLoader_Load(&view->assetLoader, 2u);
+    c003 = M11_AssetLoader_Load(&view->assetLoader, 3u);
+    expect_true(view && view->csbState.startup_entrance_active &&
+                    !view->csbState.startup_entrance_opening_active &&
+                    c004 && c004->width == 320u && c004->height == 200u &&
+                    c002 && c002->width >= 105u && c002->height >= 161u &&
+                    c003 && c003->width >= 127u && c003->height >= 161u &&
+                    count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
+                label);
+    expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW &&
+                    view->csbState.startup_entrance_opening_active &&
+                    view->csbState.startup_entrance_opening_step == 1,
+                "Amiga Prison accepts Enter through native F0441");
+    while (view->csbState.startup_entrance_active && ticks++ < 64) {
+        (void)M11_GameView_AdvanceIdleTick(view);
+    }
+    profile = (const CSB_V1_BootProfile *)view->csbBootProfile;
+    expect_true(ticks < 64 && profile && profile->runtime.state == CSB_STATE_GAME &&
+                    !view->csbState.startup_entrance_active &&
+                    view->csbState.startup_entrance_dismissed,
+                "Amiga F0438 completes all native door frames before C03_GAME");
+}
+
 /* ReDMCSB PANEL.C F0347 expands C017 into the 224x136 viewport rectangle
  * when the inventory command is active.  Amiga C03 has no PC34 terminal
  * session, so this must come directly from its own big-endian GRAPHICS.DAT. */
@@ -2507,9 +2544,12 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                     M11_GAME_INPUT_REDRAW &&
                 !view.csbState.startup_title_active &&
                 !view.csbAmigaAppbSelectionActive &&
+                view.csbState.startup_entrance_active &&
                 profile->amiga_language_index == 0u &&
                 profile->runtime.state == CSB_STATE_GAME,
                 "A31M English APPB release hands off through KAOS.FTL to C03_GAME");
+    expect_amiga_prison_entrance_handoff(
+        &view, "A31M enters native C004 Prison after KAOS.FTL");
     expect_amiga_c013_source_frame(
         &view, "A31M C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c005_credits_source_frame(
@@ -2618,9 +2658,12 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
                     M11_GAME_INPUT_REDRAW &&
                 !view.csbState.startup_title_active &&
                 !view.csbAmigaAppbSelectionActive &&
+                view.csbState.startup_entrance_active &&
                 profile->amiga_language_index == 0u &&
                 profile->runtime.state == CSB_STATE_GAME,
                 "A35M English APPB release hands off through KAOS.FTL to C03_GAME");
+    expect_amiga_prison_entrance_handoff(
+        &view, "A35M enters native C004 Prison after APPB/KAOS.FTL");
     expect_amiga_c013_source_frame(
         &view, "A35M C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c005_credits_source_frame(
@@ -2726,10 +2769,12 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
                     profile->runtime.dungeon_handle != NULL &&
                     profile->runtime.state == CSB_STATE_GAME &&
                     !view.csbState.startup_title_active &&
-                    !view.csbState.startup_entrance_active &&
+                    view.csbState.startup_entrance_active &&
                     !view.csbAmigaAppbSelectionActive &&
                     view.csbAmigaTitlBytes == NULL,
                 "A35E reaches C03_GAME without an A31/A35M/PC34 replacement screen");
+    expect_amiga_prison_entrance_handoff(
+        &view, "A35E enters native C004 Prison after its direct C03 handoff");
     expect_amiga_c013_source_frame(
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c005_credits_source_frame(

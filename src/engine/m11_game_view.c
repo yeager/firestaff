@@ -4525,8 +4525,10 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
     profile->amiga_language_index = 0u;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;
-    state->csbState.startup_entrance_active = 0;
-    state->csbState.startup_entrance_dismissed = 1;
+    state->csbState.startup_entrance_active = 1;
+    state->csbState.startup_entrance_dismissed = 0;
+    state->csbState.startup_entrance_opening_active = 0;
+    state->csbState.startup_entrance_opening_step = 0;
     m11_sync_csb_state_from_boot_profile(state, profile);
     return 1;
 }
@@ -4730,6 +4732,86 @@ static int m11_csb_present_amiga_entrance_credits(
            (size_t)framebuffer_height);
     M11_AssetLoader_Blit(credits, framebuffer, framebuffer_width,
                          framebuffer_height, 0, 0, -1);
+    return 1;
+}
+
+/* Native A31/A35 F0441/F0438 entrance composition. DATA.C MEDIA626 gives
+ * these releases their own G0020 register 5; C004 supplies the screen and
+ * C002/C003 own the closed and moving door strips at y=28. */
+static int m11_csb_present_amiga_entrance(M11_GameViewState *state,
+                                          unsigned char *framebuffer,
+                                          int framebuffer_width,
+                                          int framebuffer_height)
+{
+    static const uint16_t amiga_entrance_palette_rgb4[16] = {
+        0x000u, 0x666u, 0x888u, 0x840u, 0xca8u, 0x422u, 0x080u, 0x0a0u,
+        0x864u, 0xf00u, 0xa86u, 0x642u, 0x444u, 0xaaau, 0x620u, 0xfffu
+    };
+    const CSB_V1_BootProfile *profile;
+    const M11_AssetSlot *screen;
+    const M11_AssetSlot *left;
+    const M11_AssetSlot *right;
+    uint8_t rgb6[256][3];
+    int color;
+    int step;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !m11_csb_is_amiga_profile(profile) ||
+        !state->csbState.startup_entrance_active ||
+        state->csbState.startup_entrance_credits_active ||
+        !state->assetsAvailable || !state->assetLoader.csbAmiga ||
+        !(screen = M11_AssetLoader_Load(&state->assetLoader, 4u)) ||
+        !(left = M11_AssetLoader_Load(&state->assetLoader, 2u)) ||
+        !(right = M11_AssetLoader_Load(&state->assetLoader, 3u)) ||
+        screen->width != 320u || screen->height != 200u ||
+        left->width < 105u || left->height < 161u ||
+        right->width < 127u || right->height < 161u) {
+        return 0;
+    }
+    for (color = 0; color < 256; ++color) {
+        const unsigned int rgb12 = amiga_entrance_palette_rgb4[color & 15];
+        rgb6[color][0] = (uint8_t)(((rgb12 >> 8) & 15u) << 2);
+        rgb6[color][1] = (uint8_t)(((rgb12 >> 4) & 15u) << 2);
+        rgb6[color][2] = (uint8_t)((rgb12 & 15u) << 2);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    memset(framebuffer, 0, (size_t)framebuffer_width * (size_t)framebuffer_height);
+    M11_AssetLoader_Blit(screen, framebuffer, framebuffer_width,
+                         framebuffer_height, 0, 0, -1);
+    if (!state->csbState.startup_entrance_opening_active) {
+        M11_AssetLoader_BlitRegion(left, 0, 0, 105, 161, framebuffer,
+                                   framebuffer_width, framebuffer_height,
+                                   0, 28, -1);
+        M11_AssetLoader_BlitRegion(right, 0, 0, 127, 161, framebuffer,
+                                   framebuffer_width, framebuffer_height,
+                                   105, 28, -1);
+        return 1;
+    }
+    step = state->csbState.startup_entrance_opening_step;
+    if (step < 1 || step >= 32) return 1;
+    {
+        const int left_width = 101 - 4 * (step - 1);
+        const int right_x = 109 + 4 * (step - 1);
+        if (left_width > 0) {
+            const int source_x = (step & 0xfcu) << 2;
+            if (source_x >= 0 && source_x + left_width <= (int)left->width) {
+                M11_AssetLoader_BlitRegion(left, source_x, 0, left_width, 161,
+                                           framebuffer, framebuffer_width,
+                                           framebuffer_height, 0, 28, -1);
+            }
+        }
+        if (right_x <= 231) {
+            const int right_width = 232 - right_x;
+            const int source_x = (step & 3) << 2;
+            if (source_x >= 0 && source_x + right_width <= (int)right->width) {
+                M11_AssetLoader_BlitRegion(right, source_x, 0, right_width, 161,
+                                           framebuffer, framebuffer_width,
+                                           framebuffer_height, right_x, 28, -1);
+            }
+        }
+    }
     return 1;
 }
 
@@ -4971,8 +5053,10 @@ static int m11_csb_complete_amiga_appb_language_handoff(M11_GameViewState *state
     profile->amiga_language_index = language_index;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;
-    state->csbState.startup_entrance_active = 0;
-    state->csbState.startup_entrance_dismissed = 1;
+    state->csbState.startup_entrance_active = 1;
+    state->csbState.startup_entrance_dismissed = 0;
+    state->csbState.startup_entrance_opening_active = 0;
+    state->csbState.startup_entrance_opening_step = 0;
     state->csbAmigaAppbSelectionActive = 0;
     m11_sync_csb_state_from_boot_profile(state, profile);
     return 1;
@@ -24450,6 +24534,30 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             }
             return M11_GAME_INPUT_REDRAW;
         }
+        if (m11_csb_is_amiga_profile(csb_profile) &&
+            state->csbState.startup_entrance_active) {
+            /* ReDMCSB ENTRANCE.C F0438 waits two VBlanks between each of
+             * the 31 C002/C003 door composites on A31/A35. M11's native
+             * scheduler is millisecond based, so carry the sub-frame debt
+             * in the otherwise entrance-local delay field rather than
+             * advancing one visual door frame per host idle call. */
+            if (state->csbState.startup_entrance_opening_active) {
+                int elapsed = state->csbState.startup_entrance_opening_delay_ticks +
+                    (int)csb_profile->tick_ms;
+                while (elapsed >= 40 &&
+                       state->csbState.startup_entrance_opening_step < 32) {
+                    elapsed -= 40;
+                    ++state->csbState.startup_entrance_opening_step;
+                }
+                state->csbState.startup_entrance_opening_delay_ticks = elapsed;
+                if (state->csbState.startup_entrance_opening_step >= 32) {
+                    state->csbState.startup_entrance_opening_active = 0;
+                    state->csbState.startup_entrance_active = 0;
+                    state->csbState.startup_entrance_dismissed = 1;
+                }
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         /* Usually EMIT_GAME_WON enters this route immediately. Retain this
          * state-derived guard for a restored/captured F31 runtime whose
          * source game-won flag became visible at the M11 boundary first. */
@@ -27955,6 +28063,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_IGNORED;
         }
+        if (m11_csb_is_amiga_profile(csb_profile) &&
+            state->csbState.startup_entrance_active) {
+            if (!state->csbState.startup_entrance_opening_active &&
+                (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION)) {
+                state->csbState.startup_entrance_opening_active = 1;
+                state->csbState.startup_entrance_opening_step = 1;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         M11_GameInputResult fmtowns_result =
             m11_csb_handle_fmtowns_game_entrance_input(state, input);
         if (fmtowns_result != M11_GAME_INPUT_IGNORED) {
@@ -29457,6 +29575,16 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
                 state->csbState.startup_entrance_credits_active = 0;
                 state->csbState.startup_entrance_credits_remaining_ticks = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_csb_is_amiga_profile(csb_profile) &&
+            state->csbState.startup_entrance_active) {
+            if (!state->csbState.startup_entrance_opening_active &&
+                (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+                state->csbState.startup_entrance_opening_active = 1;
+                state->csbState.startup_entrance_opening_step = 1;
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -56886,6 +57014,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
         if (m11_csb_present_amiga_entrance_credits(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
+        if (m11_csb_present_amiga_entrance(csb_state, framebuffer,
+                                           framebufferWidth, framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;

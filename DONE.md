@@ -1,3 +1,10 @@
+# CSB Amiga: native Prison och dörröppning (2026-08-09)
+
+- ✅ A31, A35 multilingual och A35 English går nu från sin verifierade
+  APPA/APPB/KAOS-start till F0441:s C004 Prison-sida, tar originalets
+  C002/C003-dörrsteg med två VBlank per steg och släpper först därefter C03.
+  Verifierat med respektive riktiga ADF-paket; ingen PC34-startsession används.
+
 # CSB Amiga: C005 credits från originaldata (2026-08-09)
 
 - ✅ A31, A35 multilingual och A35 English presenterar nu ENTRANCE.C F0442:s
