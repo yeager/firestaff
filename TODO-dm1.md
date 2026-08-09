@@ -4376,6 +4376,16 @@ and real community-save corpus round-trip evidence.
     no F0433/panel capture was promoted. This is a host DOSBox-X event-ingest
     blocker, not a missing save, path, or Firestaff save-runtime fallback.
 
+  - 2026-08-09 capture-route correction: the failed option-4 runs above are
+    retained as rejected evidence. The live resume plan now selects the
+    source-documented PC34 mouse mode (option 1) and dispatches the real
+    `C409_ZONE_ENTRANCE_RESUME` click. A new operator-owned raw capture at
+    `/Volumes/Extern-disk/Documents/Firestaff/dm1-original-resume-c13-mouse1.v7hhJs`
+    reaches stable `dungeon_gameplay` frames and records the subsequent
+    forward-click plus keypad fallback. This closes the capture harness's
+    entrance-menu stall; it does not prove C13, and its save remains excluded
+    from the C13 corpus until the decoded file contains a C13 event.
+
 ## DM1 C13 F0435 stale-fence follow-up
 
 - [ ] Run the fixture-free PC34 C13 corpus target with operator-owned saves

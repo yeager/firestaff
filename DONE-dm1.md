@@ -13229,7 +13229,18 @@ indexed pixels and source special VGA palettes remain unchanged. Verification:
   original-save boot probes pass in V1, V2.0, V2.1 and V2.2. The separate,
   tail-less corpus roundtrip remains open because it must bind the original
   DUNGEON.DAT backing before it can certify F0435 -> F0433 -> F0435.
-- ✅ 2026-07-30 CSB F0142/G0209 thrown-object viewport binding: a live C14
+  - ✅ 2026-08-09 DM1 original PC34 resume capture route: the stale option-4
+    Alt+numeric-keypad path was rejected because it left the original selector
+    on the entrance wall. The live plan now uses the source-documented PC34
+    mouse mode (option 1) and a real `C409_ZONE_ENTRANCE_RESUME` click. The
+    operator-owned raw capture
+    `/Volumes/Extern-disk/Documents/Firestaff/dm1-original-resume-c13-mouse1.v7hhJs`
+    reaches stable `dungeon_gameplay` frames and records the follow-up
+    forward-click and keypad movement fallback. This closes the capture
+    harness stall only; the save is not C13-bearing and is not promoted as
+    C13 evidence.
+
+  - ✅ 2026-07-30 CSB F0142/G0209 thrown-object viewport binding: a live C14
   projectile now reads its associated original C05--C0B record, preserves
   M066 weapon projectile-aspect selection, and routes a positive F0142
   result through the source M612/G0209 bitmap and C2900 geometry. M11
