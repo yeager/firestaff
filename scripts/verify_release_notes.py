@@ -9,7 +9,7 @@ from pathlib import Path
 
 HEADER_RE = re.compile(r"^# Firestaff v([^\s]+)\s*$")
 GAME_NAMES = ("DM1", "DM2", "CSB", "Nexus", "Theron")
-SECTION_NAMES = ("Added", "Changed", "Removed")
+SECTION_NAMES = ("Added", "Changed", "Removed", "Fixed")
 GENERIC_TERMS = (
     "various",
     "miscellaneous",
@@ -42,6 +42,17 @@ ACTION_WORDS = {
         "count",
     ),
     "Removed": ("remove", "delete", "drop", "retire", "disable", "unregister"),
+    "Fixed": (
+        "fix",
+        "correct",
+        "prevent",
+        "remove",
+        "restore",
+        "reject",
+        "block",
+        "bind",
+        "update",
+    ),
 }
 
 
@@ -65,12 +76,11 @@ def selected_section(notes: str, version: str) -> list[str]:
     return lines[start:end]
 
 
-def verify_category(lines: list[str], game: str, name: str) -> None:
-    heading = f"### {name}"
+def verify_category(lines: list[str], heading: str, name: str) -> int:
     try:
         start = lines.index(heading) + 1
     except ValueError:
-        fail(f"missing required {heading!r} category under {game}")
+        return 0
 
     end = len(lines)
     for i in range(start, len(lines)):
@@ -89,7 +99,7 @@ def verify_category(lines: list[str], game: str, name: str) -> None:
         else:
             fail(f"{heading!r} may contain only bullet entries")
     if not entries:
-        fail(f"{heading!r} must explicitly state its functional delta or 'None.'")
+        fail(f"{heading!r} must contain a concrete functional delta")
 
     for entry in entries:
         body = entry[2:]
@@ -97,9 +107,9 @@ def verify_category(lines: list[str], game: str, name: str) -> None:
         if any(term in lower for term in GENERIC_TERMS):
             fail(f"{heading!r} contains generic wording: {entry!r}")
         if body == "None.":
-            continue
+            fail(f"{heading!r} must be omitted when it has no delta")
         if body.startswith("None."):
-            fail(f"{heading!r} must use exactly 'None.' when there is no delta")
+            fail(f"{heading!r} must be omitted when it has no delta")
         if not re.match(r"`[^`]+`:\s+\S", body):
             fail(
                 f"{heading!r} must name the changed function or feature in backticks: "
@@ -111,14 +121,15 @@ def verify_category(lines: list[str], game: str, name: str) -> None:
                 f"{heading!r} must state what changed, not only its result: "
                 f"{entry!r}"
             )
+    return len(entries)
 
 
-def verify_game(lines: list[str], game: str) -> None:
+def verify_game(lines: list[str], game: str) -> int:
     heading = f"## {game}"
     try:
         start = lines.index(heading) + 1
     except ValueError:
-        fail(f"missing required game section {heading!r}")
+        return 0
 
     end = len(lines)
     for i in range(start, len(lines)):
@@ -126,8 +137,12 @@ def verify_game(lines: list[str], game: str) -> None:
             end = i
             break
     game_lines = lines[start:end]
+    entry_count = 0
     for name in SECTION_NAMES:
-        verify_category(game_lines, game, name)
+        entry_count += verify_category(game_lines, f"### {name}", name)
+    if entry_count == 0:
+        fail(f"{heading!r} must be omitted when it has no delta")
+    return entry_count
 
 
 def main() -> None:
@@ -142,8 +157,13 @@ def main() -> None:
         fail(f"cannot read {args.notes}: {exc}")
 
     section = selected_section(notes, args.version)
+    entry_count = 0
     for game in GAME_NAMES:
-        verify_game(section, game)
+        entry_count += verify_game(section, game)
+    for name in SECTION_NAMES:
+        entry_count += verify_category(section, f"## {name}", name)
+    if entry_count == 0:
+        fail("must contain at least one concrete functional delta")
 
     print(f"release notes: {args.notes} v{args.version} has concrete functional deltas")
 
