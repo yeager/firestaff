@@ -3,6 +3,7 @@
 
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_vdp1_command_sequence.h"
 
 /* A narrowly scoped host presentation of one authenticated Saturn VDP1
  * command. It is not a DGN renderer: source image/palette joins and the
@@ -82,6 +83,35 @@ typedef struct {
     int end_code_pixels;
 } Nexus_V1_Vdp1CaptureSequenceReceipt;
 
+/* Resolves one command's captured VDP1 source/CLUT spans to the canonical
+ * DGN bytes that own them. Returning zero rejects the complete frame. */
+typedef int (*Nexus_V1_Vdp1CaptureSequenceMaterialResolver)(
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *command, int command_size,
+    const Nexus_V1_Vdp1TextureCommand *parsed,
+    uint32_t command_byte_offset,
+    Nexus_V1_Vdp1CaptureCompositeInput *out_input,
+    void *context);
+
+typedef struct {
+    const uint8_t *vdp1_vram;
+    int vdp1_vram_size;
+    uint32_t copr_word;
+    int original_saturn_capture_verified;
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material;
+    void *resolver_context;
+} Nexus_V1_Vdp1CaptureVramSequenceInput;
+
+typedef struct {
+    int valid;
+    Nexus_V1_Vdp1CommandSequenceReceipt command_sequence;
+    Nexus_V1_Vdp1CaptureSequenceReceipt replay;
+    int draw_commands_seen;
+    int draw_commands_resolved;
+    int unresolved_draw_commands;
+    int semantic_admission_blocked;
+} Nexus_V1_Vdp1CaptureVramSequenceReceipt;
+
 /* Composite one source-bound mode-1 quad in command order. The operation is
  * capture replay only; no source bytes are decoded unless both exact DGN
  * joins and the original-capture attestation are present. */
@@ -96,5 +126,12 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     Nexus_Framebuffer *framebuffer,
     const Nexus_V1_Vdp1CaptureSequenceInput *input,
     Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt);
+
+/* Parse and replay one complete authenticated VDP1 VRAM command sequence.
+ * Every textured draw must be resolved by an exact DGN source/CLUT join. */
+int nexus_v1_vdp1_capture_replay_vram_sequence(
+    Nexus_Framebuffer *framebuffer,
+    const Nexus_V1_Vdp1CaptureVramSequenceInput *input,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_receipt);
 
 #endif

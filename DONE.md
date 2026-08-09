@@ -90,6 +90,18 @@
   Structure3-ägare. Fyra draws saknar DGN-materialrad och 33 saknar ägare;
   scene replay och produktion förblir därför spärrade.
 
+# Nexus: VDP1-VRAM till atomisk capture-replay-adapter (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_capture_replay_vram_sequence()` följer nu den
+  autentiserade VDP1-VRAM/CMDLINK-kedjan, extraherar draw-records och deras
+  bounded texture/CLUT-spans och skickar dem till den atomiska sekvens-
+  kompositorn. Varje draw måste få en explicit DGN source/CLUT-resolver;
+  okänd eller saknad ägare avvisar hela frame och lämnar framebuffer orörd.
+- ✅ Regressionen täcker komplett system-clip/local-coordinate/END-kedja,
+  display-origin, positiv replay och fail-closed vid saknad materialägare.
+  Adaptern är capture-only och öppnar inte vanlig DGN-transform, culling eller
+  produktionsrasterisering.
+
 # Nexus: atomisk VDP1-capture och återställd DGN-spärr (2026-08-09)
 
 - ✅ En misslyckad eller helt utanför bildrutan VDP1-capture kan inte längre

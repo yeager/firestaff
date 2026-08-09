@@ -2,12 +2,56 @@
 #include "nexus_v1_viewport.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void wl16(uint8_t *p, unsigned int value)
 {
     p[0] = (uint8_t)value;
     p[1] = (uint8_t)(value >> 8);
+}
+
+typedef struct {
+    uint8_t dgn_image[4];
+    uint8_t dgn_palette[32];
+    int reject;
+} SequenceMaterialFixture;
+
+static int resolve_sequence_material(
+    const uint8_t *vdp1_vram, int vdp1_vram_size,
+    const uint8_t *command, int command_size,
+    const Nexus_V1_Vdp1TextureCommand *parsed,
+    uint32_t command_byte_offset,
+    Nexus_V1_Vdp1CaptureCompositeInput *out_input,
+    void *context)
+{
+    SequenceMaterialFixture *fixture = (SequenceMaterialFixture *)context;
+    int i;
+
+    (void)command;
+    (void)command_size;
+    (void)command_byte_offset;
+    if (!fixture || fixture->reject || !vdp1_vram ||
+        vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES || !parsed ||
+        !out_input || parsed->colour_mode != 1U ||
+        parsed->texture_byte_count != sizeof(fixture->dgn_image) ||
+        parsed->texture_source_byte_offset != 0x100U) return 0;
+    for (i = 0; i < (int)sizeof(fixture->dgn_image); i += 2) {
+        fixture->dgn_image[i] = vdp1_vram[0x100 + i + 1];
+        fixture->dgn_image[i + 1] = vdp1_vram[0x100 + i];
+    }
+    for (i = 0; i < (int)sizeof(fixture->dgn_palette); i += 2) {
+        fixture->dgn_palette[i] = vdp1_vram[0x200 + i + 1];
+        fixture->dgn_palette[i + 1] = vdp1_vram[0x200 + i];
+    }
+    memset(out_input, 0, sizeof(*out_input));
+    out_input->dgn_image = fixture->dgn_image;
+    out_input->dgn_image_size = sizeof(fixture->dgn_image);
+    out_input->dgn_palette = fixture->dgn_palette;
+    out_input->dgn_palette_size = sizeof(fixture->dgn_palette);
+    out_input->dgn_source_hash_verified = 1;
+    out_input->palette_slot_base = 16;
+    return 1;
 }
 
 int main(void)
@@ -23,6 +67,11 @@ int main(void)
     Nexus_V1_Vdp1CaptureCompositeReceipt receipt;
     Nexus_V1_Vdp1CaptureSequenceInput sequence_input;
     Nexus_V1_Vdp1CaptureSequenceReceipt sequence_receipt;
+    Nexus_V1_Vdp1CaptureVramSequenceInput vram_sequence_input;
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt vram_sequence_receipt;
+    SequenceMaterialFixture material_fixture;
+    Nexus_Framebuffer before_rejected_vram_replay;
+    uint8_t *vdp1_vram;
     Nexus_Framebuffer before_failed_replay;
     int i;
 
@@ -174,6 +223,67 @@ int main(void)
         fprintf(stderr, "FAIL: incomplete VDP1 sequence admitted\n");
         return 1;
     }
+
+    /* The production-facing adapter builds the replay inputs from one
+     * authenticated VRAM/CMDLINK chain. The resolver is deliberately the
+     * only owner of DGN source bytes; an unresolved draw must not mutate the
+     * framebuffer. */
+    vdp1_vram = (uint8_t *)calloc(1U, NEXUS_V1_VDP1_VRAM_BYTES);
+    if (!vdp1_vram) return 1;
+    wl16(vdp1_vram + 0, 0x0009U);       /* system clip */
+    wl16(vdp1_vram + 32, 0x000aU);      /* local coordinate */
+    wl16(vdp1_vram + 44, 160U);
+    wl16(vdp1_vram + 46, 112U);
+    wl16(vdp1_vram + 64, 0x0002U);      /* mode-1 draw */
+    wl16(vdp1_vram + 68, 1U << 3);
+    wl16(vdp1_vram + 70, 0x0080U);      /* CLUT at 0x200 */
+    wl16(vdp1_vram + 72, 0x0020U);      /* texture at 0x100 */
+    wl16(vdp1_vram + 74, 0x0101U);      /* 8x1 */
+    wl16(vdp1_vram + 76, 0xfffcU);
+    wl16(vdp1_vram + 78, 0xfffcU);
+    wl16(vdp1_vram + 80, 0x0004U);
+    wl16(vdp1_vram + 82, 0xfffcU);
+    wl16(vdp1_vram + 84, 0x0004U);
+    wl16(vdp1_vram + 86, 0x0004U);
+    wl16(vdp1_vram + 88, 0xfffcU);
+    wl16(vdp1_vram + 90, 0x0004U);
+    wl16(vdp1_vram + 96, 0x8000U);      /* END */
+    memset(vdp1_vram + 0x100, 0x11, 4);
+    for (i = 0; i < 16; ++i) wl16(vdp1_vram + 0x200 + i * 2,
+                                   0x8000U + (unsigned)i);
+    memset(&material_fixture, 0, sizeof(material_fixture));
+    memset(&vram_sequence_input, 0, sizeof(vram_sequence_input));
+    vram_sequence_input.vdp1_vram = vdp1_vram;
+    vram_sequence_input.vdp1_vram_size = NEXUS_V1_VDP1_VRAM_BYTES;
+    vram_sequence_input.copr_word = 12U;
+    vram_sequence_input.original_saturn_capture_verified = 1;
+    vram_sequence_input.resolve_material = resolve_sequence_material;
+    vram_sequence_input.resolver_context = &material_fixture;
+    nexus_fb_init(&framebuffer);
+    nexus_fb_clear(&framebuffer);
+    memset(&vram_sequence_receipt, 0, sizeof(vram_sequence_receipt));
+    if (!nexus_v1_vdp1_capture_replay_vram_sequence(
+            &framebuffer, &vram_sequence_input, &vram_sequence_receipt) ||
+        !vram_sequence_receipt.valid ||
+        vram_sequence_receipt.draw_commands_seen != 1 ||
+        vram_sequence_receipt.draw_commands_resolved != 1 ||
+        vram_sequence_receipt.replay.valid <= 0) {
+        free(vdp1_vram);
+        fprintf(stderr, "FAIL: VDP1 VRAM sequence adapter\n");
+        return 1;
+    }
+    before_rejected_vram_replay = framebuffer;
+    material_fixture.reject = 1;
+    if (nexus_v1_vdp1_capture_replay_vram_sequence(
+            &framebuffer, &vram_sequence_input, &vram_sequence_receipt) ||
+        memcmp(&before_rejected_vram_replay, &framebuffer,
+               sizeof(framebuffer)) != 0 ||
+        vram_sequence_receipt.unresolved_draw_commands != 1) {
+        free(vdp1_vram);
+        fprintf(stderr, "FAIL: unresolved VDP1 draw was admitted\n");
+        return 1;
+    }
+    free(vdp1_vram);
     puts("test_nexus_v1_vdp1_capture_compositor: PASS");
     return 0;
 }

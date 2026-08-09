@@ -2,6 +2,11 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-09: VDP1-VRAM/CMDLINK till atomisk capture-replay-adapter är nu
+implementerad och CTest-verifierad. Den kräver fortfarande en explicit
+source/CLUT-resolver per draw; komplett DGN-sceneägarskap, transform, culling
+och produktionskonsument är fortsatt öppna.
+
 ## Nexus Structure1G Material Follow-up (2026-07-11)
 
 2026-07-12 update: original `SN_FLOOR.MNS` and `SN_WALL.MNS` now feed the

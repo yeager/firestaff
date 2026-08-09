@@ -287,3 +287,116 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
     *out_receipt = receipt;
     return receipt.valid;
 }
+
+int nexus_v1_vdp1_capture_replay_vram_sequence(
+    Nexus_Framebuffer *framebuffer,
+    const Nexus_V1_Vdp1CaptureVramSequenceInput *input,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_receipt)
+{
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt receipt;
+    Nexus_V1_Vdp1CaptureSequenceInput replay_input;
+    Nexus_V1_Vdp1CaptureCompositeInput commands[
+        NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.semantic_admission_blocked = 1;
+    memset(&replay_input, 0, sizeof(replay_input));
+    memset(commands, 0, sizeof(commands));
+    if (!framebuffer || !input || !input->vdp1_vram ||
+        input->vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
+        !input->original_saturn_capture_verified || !input->resolve_material ||
+        !nexus_v1_vdp1_command_sequence_frame(
+            &(Nexus_V1_Vdp1CommandSequenceInput){
+                input->vdp1_vram, input->vdp1_vram_size, input->copr_word},
+            &receipt.command_sequence) ||
+        !receipt.command_sequence.valid || !receipt.command_sequence.complete ||
+        !receipt.command_sequence.display_origin_verified ||
+        receipt.command_sequence.draw_count <= 0 ||
+        receipt.command_sequence.draw_count >
+            NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    for (i = 0; i < receipt.command_sequence.command_count; ++i) {
+        uint32_t offset = receipt.command_sequence.command_byte_offsets[i];
+        uint32_t palette_offset;
+        Nexus_V1_Vdp1TextureCommand parsed;
+        const uint8_t *command = input->vdp1_vram + offset;
+        Nexus_V1_Vdp1CaptureCompositeInput *resolved;
+
+        if (nexus_v1_vdp1_texture_command_parse(
+                command, NEXUS_V1_VDP1_COMMAND_BYTES, &parsed) != 0) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        if (!parsed.texture_command || parsed.end_command) continue;
+        ++receipt.draw_commands_seen;
+        if (receipt.draw_commands_seen >
+                NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS ||
+            !parsed.texture_source_range_valid ||
+            parsed.texture_source_byte_end > NEXUS_V1_VDP1_VRAM_BYTES) {
+            ++receipt.unresolved_draw_commands;
+            *out_receipt = receipt;
+            return 0;
+        }
+        palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 2U);
+        if (palette_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U) {
+            ++receipt.unresolved_draw_commands;
+            *out_receipt = receipt;
+            return 0;
+        }
+        resolved = &commands[receipt.draw_commands_seen - 1];
+        if (!input->resolve_material(
+                input->vdp1_vram, input->vdp1_vram_size, command,
+                NEXUS_V1_VDP1_COMMAND_BYTES, &parsed, offset, resolved,
+                input->resolver_context)) {
+            ++receipt.unresolved_draw_commands;
+            *out_receipt = receipt;
+            return 0;
+        }
+        ++receipt.draw_commands_resolved;
+        resolved->command = command;
+        resolved->command_size = NEXUS_V1_VDP1_COMMAND_BYTES;
+        resolved->texture_span = input->vdp1_vram +
+            parsed.texture_source_byte_offset;
+        resolved->texture_span_size = (int)parsed.texture_byte_count;
+        resolved->palette_state = input->vdp1_vram + palette_offset;
+        resolved->palette_state_size = 32;
+        resolved->original_saturn_capture_verified = 1;
+        resolved->screen_origin_x = receipt.command_sequence.display_origin_x;
+        resolved->screen_origin_y = receipt.command_sequence.display_origin_y;
+    }
+    if (receipt.draw_commands_seen != receipt.command_sequence.draw_count ||
+        receipt.draw_commands_resolved != receipt.draw_commands_seen) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    replay_input.commands = commands;
+    replay_input.command_count = receipt.draw_commands_resolved;
+    replay_input.system_clip_state_verified =
+        receipt.command_sequence.system_clip_count > 0;
+    replay_input.local_coordinate_state_verified =
+        receipt.command_sequence.local_coordinate_count > 0;
+    replay_input.display_origin_state_verified =
+        receipt.command_sequence.display_origin_verified;
+    replay_input.display_origin_x = receipt.command_sequence.display_origin_x;
+    replay_input.display_origin_y = receipt.command_sequence.display_origin_y;
+    replay_input.command_order_verified =
+        receipt.command_sequence.command_order_verified;
+    replay_input.end_record_verified =
+        receipt.command_sequence.end_record_verified;
+    if (!replay_input.system_clip_state_verified ||
+        !replay_input.local_coordinate_state_verified ||
+        !nexus_v1_vdp1_capture_composite_mode1_sequence(
+            framebuffer, &replay_input, &receipt.replay)) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}

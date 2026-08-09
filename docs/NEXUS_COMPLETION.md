@@ -68,4 +68,8 @@ source/CLUT-joins och 198 Structure3 face-owner-joins. Fyra draws (offsets
 33 av de matchade materialen saknar Structure3-ägare. Därför är även denna
 frame ett capture-only-bevis; den får inte användas som komplett scene replay
 eller som bevis för Saturns face-selection, transform, culling eller
-produktionsrasterisering.
+produktionsrasterisering. C-adaptern
+`nexus_v1_vdp1_capture_replay_vram_sequence()` kan nu bygga samma bounded
+drawlista från en autentiserad VRAM/CMDLINK-snapshot, men den kräver fortfarande
+en separat, exakt DGN source/CLUT-resolver för varje draw och lämnar därför
+vanlig produktion spärrad.
