@@ -18,6 +18,8 @@
   of repeatedly reloading locale state while the popup is active.
 - `M12_StartupMenu`: Suppress the empty-data warning while the deferred real
   asset scan is still pending.
+- `M11_Audio_Init`: Select macOS's `playback` audio category before opening
+  SDL3 streams to avoid the CoreAudio head-tracking crash path.
 - `verify.yml`: Prevent rapid `main` integrations from canceling an
   already-started cross-platform verification matrix.
 
