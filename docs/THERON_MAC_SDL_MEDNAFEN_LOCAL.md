@@ -156,42 +156,119 @@ till den riktiga SDL2-prefixen ovan och bygg om Mednafen.
 
 Tsugaru gäller Firestaffs FM Towns-spår, inte Theron's Quest på PC Engine.
 Theron Track 02 och dess HuC6280/System Card-capture körs med Mednafen ovan.
-Tsugaru används för att starta verkliga FM Towns-medier och för den separata
-TownsOS/TBIOS-undersökningen.
+Tsugaru används för verkliga FM Towns-CD-bilder, originalets TownsOS/TBIOS
+och den separata FM Towns-körningen för DM1, CSB och DM2.
 
-På den här maskinen hittades ingen installerad Tsugaru-binär i `/Applications`
-eller på extern-disken vid den senaste kontrollen. Använd därför explicita
-lokala variabler i stället för att anta att `Tsugaru` finns i `PATH`:
-
-```bash
-TSUGARU_BIN=/Volumes/Extern-disk/TOWNSEMU/build/Tsugaru
-FMT_F20_ROM=/Volumes/Extern-disk/FirestaffUserData/firmware/FMT_F20.ROM
-TOWNS_DISC=/Volumes/Extern-disk/FirestaffUserData/data/fm-towns/track01.iso
-```
-
-Om källan inte redan finns kan den hållas separat på extern-disken. Klona inte
-in den i Firestaff-repot och lägg inte BIOS eller spelmedia i Git:
+Tsugaru använder en katalog med FM Towns-ROM-filer som första argument. Det är
+inte samma sak som Firestaffs enskilda `FMT_F20.ROM` för TBIOS-shimmen. Håll
+emulator, BIOS och spelmedia på extern-disken och lägg aldrig in dem i Git:
 
 ```bash
-git clone https://github.com/captainys/TOWNSEMU.git \
-  /Volumes/Extern-disk/TOWNSEMU
-cmake -S /Volumes/Extern-disk/TOWNSEMU \
-  -B /Volumes/Extern-disk/TOWNSEMU/build \
-  -DCMAKE_BUILD_TYPE=Release
-cmake --build /Volumes/Extern-disk/TOWNSEMU/build --parallel
+TOWNS_ROOT=/Volumes/Extern-disk/TOWNSEMU
+TSUGARU_GUI="$TOWNS_ROOT/gui/build/main_gui/Tsugaru_GUI.app"
+TSUGARU_CUI="$TOWNS_ROOT/gui/build/main_cui/Tsugaru_CUI.app/Contents/MacOS/Tsugaru_CUI"
+TOWNS_ROM_DIR=/Volumes/Extern-disk/FirestaffUserData/firmware/fm-towns-rom
+TOWNS_DISC=/Volumes/Extern-disk/FirestaffUserData/data/dm1/fmtowns_extract/Dungeon-Master_FM-Towns_JA-EN/track01.iso
 ```
 
-Tsugaru ska först konfigureras med en riktig `FMT_F20.ROM` i dess BIOS-/ROM-
-inställning. När BIOS är valt öppnas ett riktigt FM Towns-discimage från
-kommandoraden så här:
+I den lokala datakatalogen finns även riktiga FM Towns-medier för CSB och DM2;
+byt bara `TOWNS_DISC` till respektive `track01.iso` eller `.cue`. En ISO är
+lämplig för data-only-test. För en skiva med CD-audio ska originalets kompletta
+`.cue`/`.bin` eller `.mds`/`.mdf` användas. Tsugaru stöder ISO, CUE och MDS,
+men upstream rekommenderar MDS när ljudspår finns eftersom CUE kan vara
+tvetydig kring PREGAP/INDEX 00.
+
+### Bygg Tsugaru från extern-disken
+
+Detta är den verifierade macOS-layouten från Tsugarus upstream-repo. `public`
+ska ligga under `gui/src`; bygg inte direkt från repositoryroten:
 
 ```bash
-"$TSUGARU_BIN" -DISC "$TOWNS_DISC"
+git clone https://github.com/captainys/TOWNSEMU.git "$TOWNS_ROOT"
+git -C "$TOWNS_ROOT/gui/src" clone https://github.com/captainys/public.git public
+cmake -S "$TOWNS_ROOT/gui/src" -B "$TOWNS_ROOT/gui/build"
+cmake --build "$TOWNS_ROOT/gui/build" --config Release --parallel
+
+# Tsugarus macOS-GUI behöver CUI-programmet i samma appmiljö.
+cp "$TOWNS_ROOT/gui/build/main_cui/Tsugaru_CUI.app/Contents/MacOS/Tsugaru_CUI" \
+   "$TOWNS_ROOT/gui/build/main_gui/Tsugaru_GUI.app/Contents/MacOS/"
 ```
 
-Om den lokala Tsugaru-builden använder en annan binärsökväg, kontrollera den
-med `find /Volumes/Extern-disk/TOWNSEMU -type f -perm -111` och ändra bara
-`TSUGARU_BIN`; ändra inte discimage eller BIOS till en syntetisk ersättning.
+Om källtree eller build redan finns, kör inte `git clone` igen. Kontrollera i
+stället att följande filer finns:
+
+```bash
+test -x "$TSUGARU_CUI"
+test -d "$TSUGARU_GUI"
+test -d "$TOWNS_ROM_DIR"
+```
+
+### Starta GUI
+
+På macOS startas appbunten `Tsugaru_GUI`. Första gången väljs den riktiga
+Towns-ROM-katalogen i Tsugarus inställningar och därefter öppnas discimagen
+via File/Open. Starta från Terminal om appbunten inte syns i Finder:
+
+```bash
+open "$TSUGARU_GUI"
+```
+
+Om macOS stoppar en lokalt byggd app, öppna den en gång med Ctrl-klick → Open
+och godkänn den lokala utvecklingsbuilden. Använd inte en nedladdad BIOS- eller
+spelersättning för att komma runt problemet.
+
+### Starta CUI reproducerbart
+
+Detta är den användbara kommandoraden för Firestaffs lokala FM Towns-media:
+
+```bash
+"$TSUGARU_CUI" \
+  "$TOWNS_ROM_DIR" \
+  -CD "$TOWNS_DISC" \
+  -GAMEPORT0 KEY \
+  -SCALE 160
+```
+
+Visa alla lokala flaggor med:
+
+```bash
+"$TSUGARU_CUI" -HELP
+```
+
+`-TOWNSTYPE MARTY` används endast tillsammans med en riktig Marty-ROM och ska
+inte sättas för en full FM Towns-ROM. `-CMOS /sökväg/CMOS.BIN` kan läggas till
+om en separat CMOS-profil ska sparas. Stäng emulatorn med dess normala Quit-
+kommando så att CMOS kan skrivas; tvångsstängning kan lämna den osparad.
+
+### Kontroller
+
+Med `-GAMEPORT0 KEY` använder Tsugaru tangentbordsemulering för gamepad 0:
+
+```text
+Riktningar: piltangenter
+Action A:   A
+Action B:   S
+Action C:   Z
+Action D:   X
+```
+
+Detta är Tsugarus FM Towns-kontroller och ska inte blandas ihop med Firestaffs
+Theron-bindning `WASD` + musknapp 1/2. För en fysisk handkontroll används
+`PHYS0`–`PHYS3`; om riktningarna rapporteras som analog spak används
+`ANA0`–`ANA3` i stället för `KEY`.
+
+### Vad Tsugaru bevisar — och inte bevisar
+
+Tsugaru är rätt verktyg för FM Towns-originalets TownsOS/TBIOS, BIOS-ROM,
+keyboard-I/O och native `TMENU.EXP`/`EDM.EXP`-körning. Det bevisar inte
+automatiskt Firestaffs egna FM Towns-renderare eller en Theron-semantik.
+Firestaffs separata C-brygga är fortfarande fail-closed tills en riktig
+Tsugaru-wrapper binder TBIOS-, timing- och I/O-anrop. För källhänvisning och
+denna gräns, se `docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md`.
+
+Källan för kommandorad, ROM-katalog, CD-flaggan, kontrollmappningen och CUE-
+begränsningarna är Tsugarus officiella README:
+<https://github.com/captainys/TOWNSEMU#starting-the-command-line-program>.
 
 ### Firestaffs Tsugaru-gräns
 

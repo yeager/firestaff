@@ -80,8 +80,11 @@ Two options:
 
 ### Option A — Firestaff hosts Tsugaru as a subprocess
 
-Firestaff launches Tsugaru with `-DISC track01.iso` and the
-loaded FMT_F20.ROM. Tsugaru runs the real TMENU.EXP + EDM.EXP.
+Firestaff launches Tsugaru with the FM Towns ROM directory as the first
+argument and `-CD track01.iso` (or the original `.cue`/`.mds`). Tsugaru runs
+the real TMENU.EXP + EDM.EXP. The `FMT_F20.ROM` path used by Firestaff's
+fail-closed TBIOS shim is a separate BIOS input and must not be confused with
+Tsugaru's ROM-directory argument.
 Firestaff's role reduces to input/screen bridging (SDL3 to
 Tsugaru's I/O bus).
 

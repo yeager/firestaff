@@ -1,5 +1,10 @@
 # Lokal macOS-runbook för SDL2, Mednafen och Tsugaru (2026-08-09)
 
+- ✅ Tsugaru-delen är nu konkret för macOS: korrekt `gui/src`-build med
+  `public`-beroendet, GUI-appbunt, `Tsugaru_CUI`, ROM-katalog, `-CD`, CMOS,
+  FM Towns-kontroller och skillnaden mellan Tsugarus ROM-input och Firestaffs
+  separata `FMT_F20.ROM`-shim är dokumenterade. Den felaktiga `-DISC`-flaggan
+  är borttagen.
 - ✅ `docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md` beskriver de fasta externa
   sökvägarna, hur riktig Cocoa-SDL2 byggs och verifieras, hur den
   instrumenterade Mednafen-capturen körs och hur Tsugaru används separat för
