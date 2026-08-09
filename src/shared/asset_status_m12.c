@@ -3962,6 +3962,71 @@ static void m12_prefer_dm2_loose_graphics_runtime_dir(M12_AssetStatus* status,
     if (strcmp(gameSpec->gameId, "dm2") != 0) {
         return;
     }
+    {
+        static const char* const pcGraphicsMd5 =
+            "25247ede4dabb6a71e5dabdfbcd5907d";
+        static const char* const pcDungeonMd5 =
+            "6caccd7875009e82fe2e28e7f6d6adc0";
+        const char* rootsToProbe[4] = { status->dataDir, NULL, NULL, NULL };
+        char candidates[3][M12_ASSET_DATA_DIR_CAPACITY];
+        char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char graphicsMd5[33];
+        char dungeonMd5[33];
+        size_t probeCount = 1U;
+        size_t probeIndex;
+        if (status->dataDir[0] != '\0' &&
+            FSP_JoinPath(candidates[0], sizeof(candidates[0]),
+                         status->dataDir, "dos_extract/data")) {
+            rootsToProbe[probeCount++] = candidates[0];
+        }
+        if (status->dataDir[0] != '\0' &&
+            FSP_JoinPath(candidates[1], sizeof(candidates[1]),
+                         status->dataDir, "data")) {
+            rootsToProbe[probeCount++] = candidates[1];
+        }
+        if (status->dataDir[0] != '\0' &&
+            FSP_JoinPath(candidates[2], sizeof(candidates[2]),
+                         status->dataDir, "dm2/dos_extract/data")) {
+            rootsToProbe[probeCount++] = candidates[2];
+        }
+        for (probeIndex = 0U; probeIndex < probeCount; ++probeIndex) {
+            if (!rootsToProbe[probeIndex] ||
+                !FSP_JoinPath(graphicsPath, sizeof(graphicsPath),
+                              rootsToProbe[probeIndex], "graphics.dat") ||
+                !FSP_JoinPath(dungeonPath, sizeof(dungeonPath),
+                              rootsToProbe[probeIndex], "dungeon.dat") ||
+                !m12_file_md5_hex(graphicsPath, graphicsMd5) ||
+                !m12_file_md5_hex(dungeonPath, dungeonMd5) ||
+                strcmp(graphicsMd5, pcGraphicsMd5) != 0 ||
+                strcmp(dungeonMd5, pcDungeonMd5) != 0) {
+                continue;
+            }
+            m12_copy_string(status->runtimeDataDirs[gameIndex],
+                            sizeof(status->runtimeDataDirs[gameIndex]),
+                            rootsToProbe[probeIndex]);
+            return;
+        }
+    }
+    /* Required-file matching is the authoritative owner selection.  A DOS
+     * install may have a verified GRAPHICS.DAT/DUNGEON.DAT pair while the
+     * version inventory also reports a package archive first.  Do not let
+     * that unrelated archive replace the loose directory handed to the boot
+     * owner. */
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        const M12_AssetRequiredFileStatus* candidate =
+            &status->requiredFiles[gameIndex][i];
+        char assetDir[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!candidate->matched || !candidate->matchedPath[0] ||
+            m12_path_is_virtual_asset(candidate->matchedPath) ||
+            !candidate->roleId || strcmp(candidate->roleId, "graphics") != 0 ||
+            !FSP_ParentDir(assetDir, sizeof(assetDir), candidate->matchedPath)) {
+            continue;
+        }
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]), assetDir);
+        return;
+    }
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         const M12_AssetRequiredFileStatus* candidate =
             &status->requiredFiles[gameIndex][i];
@@ -4004,6 +4069,14 @@ static void m12_normalize_dm2_runtime_owner(M12_AssetStatus* status,
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm2") != 0 ||
         m12_path_is_virtual_asset(status->runtimeDataDirs[gameIndex])) {
+        return;
+    }
+    /* Preserve the authenticated logical owner when it still exists.  The
+     * DM2 boot profile accepts that path and resolves the symlink only when
+     * the logical directory is unavailable.  Resolving it unconditionally
+     * made M12 hand M11 a different string from the boot owner's asset_root
+     * for the normal ~/.firestaff symlinked data tree. */
+    if (FSP_FileExists(status->runtimeDataDirs[gameIndex])) {
         return;
     }
     /* Cache admission compares the original logical matched paths first.
