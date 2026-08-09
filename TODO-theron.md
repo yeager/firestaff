@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — loader-write instrumentation
+
+- 🔧 Capture-builden applicerar nu även den befintliga
+  `main_ram_loader_write`-patchen. En riktig Mednafen-körning återstår när
+  Mednafen 1.32.1-källträdet finns tillgängligt; tills dess är detta bara ett
+  verifierat build-/scriptkrav, inte ett runtimebevis.
+
 ## 2026-08-09 — efter byte-dekomprimeringslyftet
 
 - 🔒 Den fullständiga retailrutinen `$23AD–$252A` är nu lyft på byte-nivå och

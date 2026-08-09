@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — MPR-/destinationstrace i capture-builden
+
+- ✅ `scripts/build_mednafen_theron_irq2_trace.sh` applicerar nu den redan
+  källgranskade `main_ram_loader_write`-patchen efter loader-control-flow-
+  patchen. Därmed kan en framtida samma-capture-join kontrollera game-owned
+  byte-skrivningar med logisk destination, aktiv MPR/fysisk destination och
+  writer-PC. `bash tests/test_theron_v1_mednafen_live_capture_script.sh`,
+  `bash -n` och `git diff --check` passerar. Ingen runtime-semantik har
+  publicerats; Mednafen-källträdet saknas lokalt för en ny instrumenterad
+  binär.
+
 ## 2026-08-09 — byte-faithful HuC6280-resourcekärna
 
 - ✅ `da65` verifierade den fullständiga retail-rutinen `$23AD–$252A` från

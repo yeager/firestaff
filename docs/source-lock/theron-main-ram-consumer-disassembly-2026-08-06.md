@@ -34,3 +34,12 @@ HuC6280 instruction window after code has been loaded into main RAM. It still
 does not identify the window as a dungeon record, object table, tile bank,
 palette or HUD route. The source-LBA/FIFO join and the subsequent consumer
 entry remain required before any semantic runtime promotion.
+
+## 2026-08-09 capture-build boundary
+
+The Theron Mednafen build now also applies the source-locked
+`main_ram_loader_write` hook. It records game-owned writes with logical
+destination, active-MPR-derived physical destination, value, and writer PC in
+the same bounded loader window. This closes an instrumentation gap for the
+future source/MPR/destination join; it does not itself prove that any write is
+a level, tile, palette, object, HUD, or creature record.

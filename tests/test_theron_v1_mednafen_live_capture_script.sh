@@ -40,6 +40,7 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_write_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2

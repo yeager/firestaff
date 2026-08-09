@@ -59,6 +59,10 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_caller_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch"
+# Keep the byte-level destination writes alongside the loader control-flow
+# trace.  The MPR/source join cannot be authenticated from TII/RTS rows alone.
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_window_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
