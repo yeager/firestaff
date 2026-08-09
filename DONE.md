@@ -12063,3 +12063,12 @@ rendering remain blocked.
 - ⚠️ Detta öppnar endast den verifierade VDP1-delmängden. 16 mode-1-poster,
   en icke-mode-1-post, Saturns fulla scene ownership och autentisk HUD-
   provenance är fortfarande öppna gaps.
+## Theron: kall cold-start-capture verifierad (2026-08-09)
+
+- Kontextbunden Mednafen-build körd mot autentiserad US Track 02 och System
+  Card 3.0.
+- Samma session gav 161 råsektorer, 2 CD→RAM-receipts, 32 `$E009`-dispatchar,
+  16 `$4644`-entries och 64 `$4667`-entries.
+- Ingen `$B0E5`-entry, RNG-return eller `spawn_consumer_read` syntes; därför
+  förblev RNG, levande spawn, AI, generator, T700, loot och T900 stängda.
+- Savestate-körningen blandades inte in eftersom den saknade CD→RAM-händelse.

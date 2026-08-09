@@ -4598,3 +4598,12 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   `$B0E5` regular-spawn entry and capture the matching `$C96B/$CC4C` return
   contract in one execution. Do not merge it with the `.mc0` control-loop
   state or publish RNG/AI/T700/T900 semantics before that join.
+## Theron: nästa autentiserade runtime-vittne (2026-08-09)
+
+- Få en och samma Mednafen-session att nå ett riktigt monster efter Track
+  02-laddningen och fånga `$B0E5` → `$4644`/`$4667` → RNG-retur tillsammans
+  med CD→RAM-receipt.
+- Alternativt lämna en Mednafen `.mc0` precis före ett monster eller en
+  generator och kör den med instrumenterad build; en state som redan har
+  laddat allt utan CD-event räcker inte för semantic handoff.
+- BIOS och spelmedia ska stanna lokalt/extern disk och får inte läggas i git.

@@ -17,6 +17,24 @@ included in the transition receipt as `spawn_consumer_reads`. A zero count is
 valid evidence that the capture did not reach the disassembly-owned consumer;
 host-generated data must not replace it.
 
+## 2026-08-09 — fresh cold-start transport receipt
+
+The context-bound instrumented Mednafen build was replayed from a clean boot
+against the authenticated US Track 02 medium (`f23601102138f87c33025877767ebf76`)
+and System Card 3.0 (`ff1a674273fe3540ccef576376407d1d`). The run delivered six
+checked scripted PCE input events and observed 161 raw sector spans, two
+byte-exact CD-to-RAM origin receipts, 32 game-main-RAM `$E009` dispatches and
+65,536 bounded main-RAM consumer samples. The spawn-register sidecar contained
+16 `$4644` preconsumer entries and 64 `$4667` helper entries.
+
+The same execution contained no `$B0E5` entry, no `$C96B`/`$CC4C` dynamic
+consumer return, no `spawn_consumer_read`, no RNG-code window and no identified
+target read. This is positive evidence for the authenticated transport and
+helper path only. It does not publish an RNG value, creature spawn, AI,
+combat, generator, loot, T700 or T900 rule. The separate savestate replay was
+kept out of this receipt because it had no CD-to-RAM event; joining the two
+would manufacture a semantic witness.
+
 ## 2026-08-09 — context-bound ADPCM patch order
 
 The build helper now renders the visible `FIRESTAFF_PATCH_BLANK_CONTEXT` tokens
