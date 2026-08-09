@@ -7,6 +7,14 @@
   delade roten och det enskilda Amiga-arkivet genom SWSH, TITL och den
   källägda GDAT-menyn.
 
+# DM2 sourceägd dörrknapp i viewportens klicklista (2026-08-09)
+
+- ✅ En dörrknapp från originalmaterial lägger nu först efter lyckad ritning
+  in SKProjects `c_rwbb`-metadata: bildrektangel, null-ObjectID, visningscell
+  och måltyp 4. Endast originalets rektangelnummer 3 och 4 tas med. Listan
+  nollställs för varje ny bildruta, så en tidigare dörrbild kan inte lämna en
+  klickbar värdrektangel efter att den försvunnit.
+
 # Theron autentisk CD/ADPCM-traceparser (2026-08-09)
 
 - ✅ Parsern accepterar nu hela den verkliga Mednafen-capturen, inklusive

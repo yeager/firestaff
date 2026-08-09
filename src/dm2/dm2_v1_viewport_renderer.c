@@ -1250,6 +1250,18 @@ static void dm2_v1_fill_rect(uint8_t *fb,
 
 /* ── Initialization ───────────────────────────────────────────────── */
 
+static void dm2_v1_viewport_reset_source_click_targets(
+    DM2_V1_ViewportState *s)
+{
+    if (!s) return;
+    s->source_click_target_count = 0u;
+    for (int i = 0; i < DM2_V1_VIEWPORT_CLICK_TARGET_COUNT; ++i) {
+        memset(&s->source_click_targets[i], 0,
+               sizeof(s->source_click_targets[i]));
+        s->source_click_targets[i].object_id = -1;
+    }
+}
+
 void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
                           uint8_t *framebuffer,
                           int      fb_stride)
@@ -1274,9 +1286,7 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
      * c_rwbb entries before rendering. A newly allocated Firestaff viewport
      * has no rendered source frame, so retain the complete 13-slot shape but
      * expose zero targets and the source null ObjectID. */
-    for (int i = 0; i < DM2_V1_VIEWPORT_CLICK_TARGET_COUNT; ++i) {
-        s->source_click_targets[i].object_id = -1;
-    }
+    dm2_v1_viewport_reset_source_click_targets(s);
 
     /* Initialize all view squares to empty */
     for (int i = 0; i < DM2_SQ_COUNT; i++) {
@@ -1293,6 +1303,36 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     s->carried_item_present = 0;
     s->projectile_count = 0;
 
+}
+
+/* SKProject skguivwp.cpp::DM2_DRAW_DEFAULT_DOOR_BUTTON appends one c_rwbb
+ * entry only after drawing a source door button whose table1d6ed3 rectno is
+ * 3 or 4.  Its b_0b is 4, b_0a is the rendered view cell and w_08 is -1.
+ * Keep that exact metadata beside the rendered Firestaff surface; it is not
+ * a permission to route 0x50 until the GAME_LOAD c_input consumer exists. */
+static void dm2_v1_viewport_append_source_door_button_target(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_DoorRender *door,
+    const DM2_V1_ViewportRect *rect)
+{
+    DM2_V1_ViewportClickTarget *target;
+    const int rectno = door
+        ? dm2_v1_viewport_door_button_rectno_for_square(door->view_square)
+        : 0;
+
+    if (!s || !door || !rect || rect->w <= 0 || rect->h <= 0 ||
+        (rectno != 3 && rectno != 4) ||
+        s->source_click_target_count >= DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) {
+        return;
+    }
+    target = &s->source_click_targets[s->source_click_target_count++];
+    target->x = (int16_t)rect->x;
+    target->y = (int16_t)rect->y;
+    target->w = (int16_t)rect->w;
+    target->h = (int16_t)rect->h;
+    target->object_id = -1; /* source c_rwbb::w_08 */
+    target->view_slot = (uint8_t)door->view_square; /* source b_0a */
+    target->target_kind = 4u; /* source b_0b */
 }
 
 int dm2_v1_viewport_bind_surface(DM2_V1_ViewportState *s, uint8_t *framebuffer,
@@ -6961,6 +7001,10 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
                         button_stride > 0 ? button_stride : button_w;
                     button_drawn_asset = 1;
                     if (s->source_materials_required) {
+                        dm2_v1_viewport_append_source_door_button_target(
+                            s, door, &blit.dst_rect);
+                    }
+                    if (s->source_materials_required) {
                         materials[i][DM2_DOOR_MATERIAL_BUTTON].consumed = 1;
                     }
                     if (direct_g1_wall_button_material) {
@@ -8636,6 +8680,10 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
      * For Phase 3, always render when called (dirty flag tracking
      * is wired but full optimization deferred to Phase 4). */
     if (!s->dirty && !s->framebuffer) return;
+    /* DRAW_VIEWPORT rebuilds c_rwbb for the current source frame.  Do not
+     * retain a clickable rectangle after its original material was no longer
+     * drawn on a later frame. */
+    dm2_v1_viewport_reset_source_click_targets(s);
     s->asset_floor_ceiling_drawn_count = 0;
     s->fallback_floor_ceiling_drawn_count = 0;
     s->asset_teleporter_drawn_count = 0;

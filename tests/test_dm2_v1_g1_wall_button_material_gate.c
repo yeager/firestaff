@@ -172,7 +172,13 @@ int main(void)
     dm2_v1_render_doors(&viewport);
     CHECK("verified text WALL_GFX receipt reaches the button asset consumer",
           custom_button_fetches == 1 &&
-              viewport.asset_door_button_drawn_count == 1);
+              viewport.asset_door_button_drawn_count == 1 &&
+              viewport.source_click_target_count == 1u &&
+              viewport.source_click_targets[0].object_id == -1 &&
+              viewport.source_click_targets[0].view_slot == DM2_SQ_D0C &&
+              viewport.source_click_targets[0].target_kind == 4u &&
+              viewport.source_click_targets[0].w > 0 &&
+              viewport.source_click_targets[0].h > 0);
 
     {
         static const uint8_t direct_pixels[4] = { 1, 2, 3, 4 };
