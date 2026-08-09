@@ -361,6 +361,60 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
+static int probe_file_exists(const char* path) {
+    FILE* f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
+
+static int probe_is_pc34_data_dir(const char* path) {
+    char graphicsPath[512];
+    char dungeonPath[512];
+    if (!path || !path[0]) return 0;
+    snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", path);
+    snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", path);
+    return probe_file_exists(graphicsPath) && probe_file_exists(dungeonPath);
+}
+
+/* Resolve the PC 3.4 data directory the way the sibling HoC probes already
+ * do.  ctest passes the documented workspace root (~/.firestaff/data/dm1),
+ * which holds the distribution archives and an extracted dos_extract/ tree
+ * rather than loose DAT files.  This probe used that argument verbatim, so
+ * the dungeon never loaded and every pixel assertion ran against an empty
+ * D1C rect.  The probe logic itself was already correct: pointed at the
+ * extracted DATA directory by hand it passes 40/40. */
+static const char* narrow_dm1_data_dir(const char* dataDir,
+                                       char* out,
+                                       size_t outSize) {
+    static const char* const pc34RelativePaths[] = {
+        "DATA",
+        "dm1/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dos_extract/Dungeon-Master_DOS_EN_Version-34",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
+        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34",
+        NULL
+    };
+    size_t i;
+
+    if (!dataDir || !out || outSize == 0U) return dataDir;
+    if (probe_is_pc34_data_dir(dataDir)) {
+        snprintf(out, outSize, "%s", dataDir);
+        return out;
+    }
+    for (i = 0; pc34RelativePaths[i] != NULL; ++i) {
+        char candidate[512];
+        snprintf(candidate, sizeof(candidate), "%s/%s", dataDir,
+                 pc34RelativePaths[i]);
+        if (probe_is_pc34_data_dir(candidate)) {
+            snprintf(out, outSize, "%s", candidate);
+            return out;
+        }
+    }
+    return dataDir;
+}
+
 /* Park the party at the (1,2) D1C front-mirror route facing
  * NORTH.  Same pose as the cancel_reopen and leave_and_reenter
  * probes so the three slices share a common baseline. */
@@ -381,6 +435,7 @@ int main(int argc, char** argv) {
     M11_GameViewState state;
     const M11_AssetSlot* portraits;
     const char* dataDir;
+    char narrowedDataDir[512];
     int ordinal6Opaque;
     int ordinal6Vs5;
     int ordinal6Vs7;
@@ -404,6 +459,8 @@ int main(int argc, char** argv) {
 
     if (argc > 1) dataDir = argv[1];
     else          dataDir = getenv("FIRESTAFF_DATA");
+    dataDir = narrow_dm1_data_dir(dataDir, narrowedDataDir,
+                                  sizeof(narrowedDataDir));
     if (!dataDir || dataDir[0] == '\0') {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
