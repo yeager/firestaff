@@ -1,3 +1,11 @@
+# Theron: första README-capture (2026-08-09)
+
+- ✅ README visar nu den spårade, verkliga PC Engine-dungeon-capturen
+  `verification-screens/theron-quest-us-dungeon-mednafen.png` (SHA-256
+  `0ae87857bdd33dadc2881f2ff5ca00007df6b9b406f124f10115f2fa589ae540`).
+  Bildtexten anger uttryckligen att detta är bring-up och inte full creature-,
+  combat-, save- eller senare-nivåparitet.
+
 # Theron: förlängt autentiserat RAM-konsumentfönster (2026-08-09)
 
 - ✅ Mednafen-capture stöder nu `THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT`
