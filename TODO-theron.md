@@ -4,6 +4,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## 2026-08-09 — fortsatt autentisk runtimecapture
 
+- 🔒 Den nya v3-sidecaren är nu strikt: en semantisk spawn-korrelation måste
+  observera `LB0E5` (`$B0E5`) i samma körning som `$4644`/`$4667`, konsument-
+  fönstren och det dynamiska returkontraktet. En v3-capture nådde 161 äkta
+  Track 02-sektorer och 87 registerprover men saknade `$B0E5`; den avvisas
+  därför korrekt och får inte driva T900, RNG, AI, loot eller T700.
+
 - 🔒 Om komma/punkt inte reagerar i en native Mac-körning ska fångsten först
   ha ett godkänt Quartz-hjälparbygge och Mednafen måste ha input-grab aktivt.
   `Z`/`X` är den layoutstabila Button I/II-fallbacken. Detta påverkar inte
@@ -16,7 +22,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   2 048 registerprover i `$C96B–$CA69`/`$CC4C–$CD13` även när `$4644` och
   `$4667` saknas. Register-PC:n valideras mot HuC6280:s fulla 21-bitars
   bankadressrymd i stället för felaktigt enbart `$1fxxxx`.
-- 🔒 Den strikta spawn-parsern och korrelationsgaten kräver fortfarande
+- 🔒 Den strikta semantikgrinden kräver fortfarande `$B0E5`-spawnentry,
   `$4644`-preconsumer, `$4667`-helper och dynamiskt returkontrakt. Den nya
   receipt-vägen publicerar inga RNG-, creature-, AI-, loot-, T700- eller
   T900-regler.

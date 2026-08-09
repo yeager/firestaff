@@ -20,25 +20,29 @@ static void write_fixture(const char *path, int bad_flags) {
     fclose(file);
 }
 
-static void write_register_fixture(const char *path, int bad_flags) {
+static void write_register_fixture(const char *path, int bad_flags,
+                                   int include_spawn_entry) {
     FILE *file = fopen(path, "wb");
     assert(file);
-    fputs("source=mednafen-pce-instrumented-spawn-registers-v2\n", file);
+    fputs("source=mednafen-pce-instrumented-spawn-registers-v3\n", file);
     fprintf(file,
-            "spawn_consumer_registers sequence=0 pc=4644 physical_pc=114644 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=8a b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 c96b_window=0 cc4c_window=0 preconsumer_4644=%d helper_4667=0\n",
+            "spawn_consumer_registers sequence=0 pc=4644 physical_pc=114644 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=8a b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 c96b_window=0 cc4c_window=0 preconsumer_4644=%d helper_4667=0 spawn_entry_b0e5=0\n",
             bad_flags ? 0 : 1);
-    fputs("spawn_consumer_registers sequence=1 pc=4667 physical_pc=114667 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=8a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=1\n", file);
-    fputs("spawn_consumer_registers sequence=2 pc=c96b physical_pc=13496b a=21 x=22 y=23 sp=fc p=06 mpr0=1f mpr_pc=9a b3=12 b4=22 b5=32 b6=42 b8=52 ba=62 bb=72 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0\n", file);
-    fputs("spawn_consumer_registers sequence=3 pc=cc4c physical_pc=134c4c a=31 x=32 y=33 sp=fb p=07 mpr0=1f mpr_pc=9a b3=13 b4=23 b5=33 b6=43 b8=53 ba=63 bb=73 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0\n", file);
+    fputs("spawn_consumer_registers sequence=1 pc=4667 physical_pc=114667 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=8a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=1 spawn_entry_b0e5=0\n", file);
+    fputs("spawn_consumer_registers sequence=2 pc=c96b physical_pc=13496b a=21 x=22 y=23 sp=fc p=06 mpr0=1f mpr_pc=9a b3=12 b4=22 b5=32 b6=42 b8=52 ba=62 bb=72 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
+    fputs("spawn_consumer_registers sequence=3 pc=cc4c physical_pc=134c4c a=31 x=32 y=33 sp=fb p=07 mpr0=1f mpr_pc=9a b3=13 b4=23 b5=33 b6=43 b8=53 ba=63 bb=73 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
+    if (include_spawn_entry) {
+        fputs("spawn_consumer_registers sequence=4 pc=b0e5 physical_pc=1130e5 a=41 x=42 y=43 sp=fa p=08 mpr0=1f mpr_pc=89 b3=14 b4=24 b5=34 b6=44 b8=54 ba=64 bb=74 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=1\n", file);
+    }
     fclose(file);
 }
 
 static void write_execution_window_fixture(const char *path) {
     FILE *file = fopen(path, "wb");
     assert(file);
-    fputs("source=mednafen-pce-instrumented-spawn-registers-v2\n", file);
-    fputs("spawn_consumer_registers sequence=0 pc=ca00 physical_pc=0d4a00 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=6a b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0\n", file);
-    fputs("spawn_consumer_registers sequence=1 pc=cd00 physical_pc=0d4d00 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=6a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0\n", file);
+    fputs("source=mednafen-pce-instrumented-spawn-registers-v3\n", file);
+    fputs("spawn_consumer_registers sequence=0 pc=ca00 physical_pc=0d4a00 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=6a b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
+    fputs("spawn_consumer_registers sequence=1 pc=cd00 physical_pc=0d4d00 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=6a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
     fclose(file);
 }
 
@@ -68,17 +72,18 @@ int main(void) {
     assert(!theron_v1_mednafen_spawn_consumer_trace_parse_file(path, &receipt));
     assert(receipt.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
 
-    write_register_fixture(path, 0);
+    write_register_fixture(path, 0, 1);
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
         assert(theron_v1_mednafen_spawn_register_trace_parse_file(
             path, &registers));
         assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
-        assert(registers.sample_count == 4u);
+        assert(registers.sample_count == 5u);
         assert(registers.c96b_window_seen && registers.cc4c_window_seen);
         assert(registers.preconsumer_4644_seen && registers.helper_4667_seen);
-        assert(registers.last_a == 0x31u && registers.last_bb == 0x73u);
-        assert(registers.last_mpr_pc == 0x9au);
+        assert(registers.last_a == 0x41u && registers.last_bb == 0x74u);
+        assert(registers.last_mpr_pc == 0x89u);
+        assert(registers.spawn_entry_b0e5_seen);
         assert(!registers.semantic_publication_allowed);
     }
     {
@@ -88,7 +93,7 @@ int main(void) {
             path2, path, &correlation));
         assert(correlation.ready && correlation.source_windows_paired);
         assert(correlation.consumer_read_count == 2u &&
-               correlation.register_sample_count == 4u);
+               correlation.register_sample_count == 5u);
         assert(!correlation.dynamic_return_contract_verified &&
                !correlation.semantic_publication_allowed);
         assert(theron_v1_mednafen_spawn_capture_correlate_files(
@@ -98,9 +103,22 @@ int main(void) {
     }
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
+        /* The helper/window edges alone are insufficient: the exact regular
+         * spawn entry must be observed in the same run. */
+        write_register_fixture(path, 0, 0);
+        assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
+            path, &registers));
+        assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
+        assert(theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
+            path, &registers));
+        assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
+        assert(!registers.spawn_entry_b0e5_seen);
+    }
+    {
+        Theron_V1SpawnRegisterTraceReceipt registers;
         FILE *legacy = fopen(path, "wb");
         assert(legacy);
-        fputs("source=mednafen-pce-instrumented-spawn-registers\n", legacy);
+        fputs("source=mednafen-pce-instrumented-spawn-registers-v2\n", legacy);
         fclose(legacy);
         assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
             path, &registers));
@@ -135,7 +153,7 @@ int main(void) {
             assert(!registers.semantic_publication_allowed);
         }
     }
-    write_register_fixture(path, 1);
+    write_register_fixture(path, 1, 1);
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
         assert(!theron_v1_mednafen_spawn_register_trace_parse_file(

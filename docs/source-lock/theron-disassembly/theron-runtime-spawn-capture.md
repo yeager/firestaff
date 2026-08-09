@@ -23,10 +23,14 @@ non-bank coordinates, mismatched boundary flags and unrelated reads. Even a
 ready receipt has `semantic_publication_allowed == 0`.
 
 The companion `.spawn-registers` sidecar is versioned as
-`source=mednafen-pce-instrumented-spawn-registers-v2`. It records A/X/Y/SP/P,
+`source=mednafen-pce-instrumented-spawn-registers-v3`. It records A/X/Y/SP/P,
 MPR0, the selected instruction-page MPR (`mpr_pc`), the disassembly-relevant
-`$B3-$BB` RAM bytes, logical PC and physical PC at `$4644`, `$4667`, `$C96B`
-and `$CC4C` boundary samples. The parser requires
+`$B3-$BB` RAM bytes, logical PC and physical PC at `$4644`, `$4667`, `$B0E5`,
+`$C96B` and `$CC4C` boundary samples. The v3 sidecar additionally marks
+`spawn_entry_b0e5=1` exactly at the disassembly's regular-spawn entry `LB0E5`;
+the strict runtime parser requires that entry in the same run as the consumer
+windows; the execution-only parser may omit it. This is still an entry
+observation only and does not publish a spawn. The parser requires
 `physical_pc == (mpr_pc << 13) | (pc & $1FFF)` and rejects the old unversioned
 sidecar format. This prevents a logical PC copied into `physical_pc` from
 being mistaken for authentic HuC6280 bank provenance.
@@ -50,6 +54,12 @@ produced 87 v2 register samples, including 16 `$4644` preconsumer entries and
 2,048 ADPCM FIFO reads, but no `$C96B` samples and no `spawn_consumer_read`
 RAM receipts. The two captures must not be merged: doing so would manufacture
 a spawn record from separate executions.
+
+The corresponding v3 instrumented replay preserves those observations and
+adds the exact `LB0E5` marker. It still observed no `$B0E5` entry in that run;
+the strict parser and correlation gate therefore reject it. This is the
+intended result: raw sectors and preconsumer/helper windows are not enough to
+publish a T900 spawn record.
 
 The sidecar remains an execution snapshot only; it does not turn any register
 or RAM byte into an RNG value or spawn record.

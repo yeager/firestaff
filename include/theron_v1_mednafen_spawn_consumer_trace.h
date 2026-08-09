@@ -51,6 +51,7 @@ typedef struct {
     int boundary_flags_verified;
     int c96b_window_seen;
     int cc4c_window_seen;
+    int spawn_entry_b0e5_seen;
     int preconsumer_4644_seen;
     int helper_4667_seen;
     int semantic_publication_allowed;

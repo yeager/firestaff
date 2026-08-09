@@ -2,9 +2,23 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — v3 strict regular-spawn provenance gate
+
+- ✅ Register-sidecaren är nu versionerad till `v3` och markerar den exakta
+  disassembly-entrén `LB0E5` som `spawn_entry_b0e5=1`; fysisk PC måste fortsatt
+  stämma med vald HuC6280-MPR.
+- ✅ Den strikta runtime-parsern kräver `$B0E5` i samma körning som
+  `$4644`/`$4667` och båda konsumentfönstren; den semantiska publiceringen
+  kräver dessutom senare returbevis. Execution-only-parsern är uttryckligen
+  svagare och förblir diagnostisk.
+- ✅ En ny v3-capture på det äkta US Track 02-mediet nådde 161 råa sektorer
+  och 87 registerprover, men ingen `$B0E5`; verifieraren avvisar därför
+  semantisk publicering. Inga syntetiska monster-, RNG-, AI-, loot-, T700-
+  eller T900-records skapades.
+
 ## 2026-08-09 — macOS global-HID receipt correction
 
-- ✅ Spawn-registersidecaren är nu versionerad till v2 och binder varje fysisk
+- ✅ Den historiska v2-spawn-registersidecaren band varje fysisk
   PC till den MPR som faktiskt valdes för den logiska 8 KiB-sidan. Den gamla
   versionslösa sidecaren kan inte längre passera parsern.
 - ✅ En ny headless state-autoload på extern disk med den hashverifierade US

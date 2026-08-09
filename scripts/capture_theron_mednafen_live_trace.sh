@@ -1013,6 +1013,7 @@ transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$m
 transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "$main_ram_target_trace")
 transition_spawn_consumer_read_count=$(trace_count '^spawn_consumer_read ' "$spawn_consumer_trace")
 transition_spawn_register_sample_count=$(trace_count '^spawn_consumer_registers ' "$spawn_register_trace")
+transition_spawn_entry_b0e5_count=$(trace_count '^spawn_consumer_registers .*spawn_entry_b0e5=1$' "$spawn_register_trace")
 transition_rng_consumer_sample_count=$(trace_count '^rng_consumer_window ' "$rng_consumer_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
@@ -1060,6 +1061,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_target_writes=%s\n' "$transition_main_ram_target_write_count"
     printf 'spawn_consumer_reads=%s\n' "$transition_spawn_consumer_read_count"
     printf 'spawn_register_samples=%s\n' "$transition_spawn_register_sample_count"
+    printf 'spawn_entry_b0e5_samples=%s\n' "$transition_spawn_entry_b0e5_count"
     printf 'rng_consumer_samples=%s\n' "$transition_rng_consumer_sample_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'

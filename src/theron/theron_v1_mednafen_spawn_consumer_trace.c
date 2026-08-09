@@ -139,7 +139,7 @@ static int parse_spawn_register_trace_file(
     file = fopen(path, "rb");
     if (!file) return 0;
     if (!read_line(file, line, sizeof(line)) ||
-        strcmp(line, "source=mednafen-pce-instrumented-spawn-registers-v2") != 0) {
+        strcmp(line, "source=mednafen-pce-instrumented-spawn-registers-v3") != 0) {
         fclose(file);
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         return 0;
@@ -153,16 +153,16 @@ static int parse_spawn_register_trace_file(
         unsigned int sequence, pc, physical_pc;
         unsigned int a, x, y, sp, p, mpr0, mpr_pc;
         unsigned int b3, b4, b5, b6, b8, ba, bb;
-        unsigned int c96b, cc4c, preconsumer, helper;
+        unsigned int c96b, cc4c, preconsumer, helper, spawn_entry;
         int consumed = 0;
-        int expected_c96b, expected_cc4c;
+        int expected_c96b, expected_cc4c, expected_spawn_entry;
         int expected_preconsumer, expected_helper;
 
         if (sscanf(line,
-                   "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x mpr_pc=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u%n",
+                   "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x mpr_pc=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u%n",
                    &sequence, &pc, &physical_pc, &a, &x, &y, &sp, &p,
                    &mpr0, &mpr_pc, &b3, &b4, &b5, &b6, &b8, &ba, &bb, &c96b,
-                   &cc4c, &preconsumer, &helper, &consumed) != 21 ||
+                   &cc4c, &preconsumer, &helper, &spawn_entry, &consumed) != 22 ||
             line[consumed] != '\0' || pc > 0xffffu ||
             physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
             y > 0xffu || sp > 0xffu || p > 0xffu || mpr0 > 0xffu ||
@@ -175,6 +175,8 @@ static int parse_spawn_register_trace_file(
         }
         expected_c96b = c96b_window(pc);
         expected_cc4c = cc4c_window(pc);
+        /* THQUEST.ASM: regular spawn entry LB0E5 at PCE $B0E5. */
+        expected_spawn_entry = pc == 0xb0e5u;
         expected_preconsumer = pc == 0x4644u;
         expected_helper = pc == 0x4667u;
         if (sequence != expected_sequence ||
@@ -184,8 +186,9 @@ static int parse_spawn_register_trace_file(
             cc4c != (unsigned int)expected_cc4c ||
             preconsumer != (unsigned int)expected_preconsumer ||
             helper != (unsigned int)expected_helper ||
+            spawn_entry != (unsigned int)expected_spawn_entry ||
             !(expected_c96b || expected_cc4c || expected_preconsumer ||
-              expected_helper)) {
+              expected_helper || expected_spawn_entry)) {
             out->sequence_verified = sequence == expected_sequence;
             out->bank_coordinates_verified =
                 huc6280_physical_address(physical_pc);
@@ -193,7 +196,8 @@ static int parse_spawn_register_trace_file(
                 c96b == (unsigned int)expected_c96b &&
                 cc4c == (unsigned int)expected_cc4c &&
                 preconsumer == (unsigned int)expected_preconsumer &&
-                helper == (unsigned int)expected_helper;
+                helper == (unsigned int)expected_helper &&
+                spawn_entry == (unsigned int)expected_spawn_entry;
             out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
             fclose(file);
             return 0;
@@ -224,12 +228,14 @@ static int parse_spawn_register_trace_file(
         out->cc4c_window_seen |= expected_cc4c;
         out->preconsumer_4644_seen |= expected_preconsumer;
         out->helper_4667_seen |= expected_helper;
+        out->spawn_entry_b0e5_seen |= expected_spawn_entry;
         expected_sequence++;
     }
     fclose(file);
     if (!saw_record || !out->c96b_window_seen || !out->cc4c_window_seen ||
         (require_runtime_edges &&
-         (!out->preconsumer_4644_seen || !out->helper_4667_seen))) {
+         (!out->spawn_entry_b0e5_seen ||
+          !out->preconsumer_4644_seen || !out->helper_4667_seen))) {
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         return 0;
     }
@@ -279,6 +285,7 @@ int theron_v1_mednafen_spawn_capture_correlate_files(
         consumer.boundary_flags_verified && registers.boundary_flags_verified &&
         consumer.c96b_window_seen && consumer.cc4c_window_seen &&
         registers.c96b_window_seen && registers.cc4c_window_seen &&
+        registers.spawn_entry_b0e5_seen &&
         registers.preconsumer_4644_seen && registers.helper_4667_seen;
     out->ready = out->source_windows_paired;
     return out->ready;
