@@ -22,20 +22,36 @@ STATE_RE = re.compile(r"copr:([0-9a-fA-F]+)")
 COMMAND_BYTES = 32
 
 
-def command_window(vram: bytes, state: str) -> list[tuple[int, tuple[int, ...]]]:
-    match = STATE_RE.search(state)
-    if not match:
-        raise ValueError("VDP1 state has no COPR")
-    copr = int(match.group(1), 16)
-    # Mednafen's CurCommandAddr indexes uint16 VDP1 words and COPR is
-    # CurCommandAddr >> 2, so the observed COPR maps to a byte offset * 8.
-    end_offset = copr * 8
-    if end_offset > len(vram) or end_offset % COMMAND_BYTES:
-        raise ValueError(f"COPR does not identify a bounded command boundary: {copr}")
-    first = max(0, end_offset - (COMMAND_BYTES * 4))
+def command_window(
+    vram: bytes,
+    state: str,
+    command_offset: int | None = None,
+    command_count: int = 5,
+) -> list[tuple[int, tuple[int, ...]]]:
+    if command_offset is None:
+        match = STATE_RE.search(state)
+        if not match:
+            raise ValueError("VDP1 state has no COPR")
+        copr = int(match.group(1), 16)
+        # Mednafen's CurCommandAddr indexes uint16 VDP1 words and COPR is
+        # CurCommandAddr >> 2, so the observed COPR maps to a byte offset * 8.
+        end_offset = copr * 8
+        if end_offset > len(vram) or end_offset % COMMAND_BYTES:
+            raise ValueError(f"COPR does not identify a bounded command boundary: {copr}")
+        first = max(0, end_offset - (COMMAND_BYTES * 4))
+        last = end_offset + COMMAND_BYTES
+    else:
+        if command_offset < 0 or command_offset % COMMAND_BYTES:
+            raise ValueError("explicit VDP1 command offset is not 32-byte aligned")
+        if command_count <= 0:
+            raise ValueError("explicit VDP1 command count must be positive")
+        first = command_offset
+        last = command_offset + command_count * COMMAND_BYTES
+    if last > len(vram):
+        raise ValueError("VDP1 command window exceeds captured VRAM")
     return [
         (offset, struct.unpack_from("<16H", vram, offset))
-        for offset in range(first, end_offset + COMMAND_BYTES, COMMAND_BYTES)
+        for offset in range(first, last, COMMAND_BYTES)
     ]
 
 
@@ -44,13 +60,24 @@ def main() -> int:
     parser.add_argument("capture", type=Path)
     parser.add_argument("--frame", type=int, default=0)
     parser.add_argument("--capture-frames", type=int, default=2)
+    parser.add_argument(
+        "--command-offset",
+        type=lambda value: int(value, 0),
+        help="decode from an explicitly observed VDP1 VRAM command offset",
+    )
+    parser.add_argument("--command-count", type=int, default=5)
     parser.add_argument("--require-end", action="store_true")
     args = parser.parse_args()
     try:
         frames, states = frame_regions(args.capture.read_bytes(), args.capture_frames)
         if args.frame >= len(frames):
             raise ValueError("frame index outside capture")
-        records = command_window(frames[args.frame]["vdp1-vram"], states[args.frame])
+        records = command_window(
+            frames[args.frame]["vdp1-vram"],
+            states[args.frame],
+            args.command_offset,
+            args.command_count,
+        )
     except (OSError, ValueError, struct.error) as error:
         print(f"NEXUS_VDP1_COMMAND_WINDOW_INVALID: {error}")
         return 1
@@ -62,7 +89,7 @@ def main() -> int:
         end = bool(control & 0x8000)
         end_seen |= end
         source_detail = ""
-        if command_type <= 2 and not end:
+        if command_type in (0, 1, 2) and not end:
             colour_mode = (words[2] >> 3) & 0x7
             width = (words[5] & 0x003F) * 8
             height = (words[5] >> 8) & 0x00FF
@@ -85,6 +112,8 @@ def main() -> int:
             f"colr=0x{words[3]:04x} srca=0x{words[4]:04x} "
             f"size=0x{words[5]:04x}{source_detail}"
         )
+        if end:
+            break
     print("semantic_admission=blocked")
     if args.require_end and not end_seen:
         print("required_end_record=missing")

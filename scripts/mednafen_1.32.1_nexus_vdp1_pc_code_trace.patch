@@ -1,6 +1,6 @@
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1251,0 +1251,43 @@
+@@ -1251,0 +1251,50 @@
 +static FILE *FirestaffVramCodeTraceFile;
 +static bool FirestaffVramCodeTraceWritten;
 +
@@ -29,6 +29,7 @@
 + FirestaffVramCodeTraceWritten = true;
 +}
 +static bool FirestaffVdp1SnapshotWritten;
++static bool FirestaffVdp1SnapshotPending;
 +
 +static void FirestaffTraceVdp1Snapshot(uint32 address)
 +{
@@ -36,7 +37,13 @@
 + const char *target_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT_AT");
 + const uint32 target = target_text && *target_text ? strtoul(target_text, NULL, 0) : 0xFFFFFFFFU;
 + FILE *file;
-+ if(!path || !*path || FirestaffVdp1SnapshotWritten || address != target) return;
++ if(!path || !*path || FirestaffVdp1SnapshotWritten) return;
++ if(!FirestaffVdp1SnapshotPending)
++ {
++  if(address != target) return;
++  FirestaffVdp1SnapshotPending = true;
++  return;
++ }
 + file = fopen(path, "wb");
 + if(!file) return;
 + fputs("FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1\n", file);
@@ -44,7 +51,7 @@
 + fclose(file);
 + FirestaffVdp1SnapshotWritten = true;
 +}
-@@ -1290,7 +1317,9 @@
+@@ -1290,7 +1324,9 @@
   if(FirestaffVramWriteTraceMax <= FirestaffVramWriteTraceMin ||
      value == 0 ||
      address < FirestaffVramWriteTraceMin ||
