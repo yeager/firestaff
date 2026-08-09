@@ -77,6 +77,16 @@ material-to-face-selector join and proves hardware destination coordinates for
 the captured commands, but not runtime face selection, command ordering,
 transform/culling, or complete scene assembly.
 
+The code now contains a separate capture-only VDP1 mode-1 compositor in
+`nexus_v1_vdp1_capture_compositor.c`. It accepts one command only when its
+texture span and 32-byte palette state exactly match the canonical DGN image
+and palette after Saturn word-order restoration, and when the caller supplies
+an authenticated original-capture receipt plus the display origin. It applies
+the documented high-nibble-first texel order and transparent/end-code rules.
+This is a bounded replay consumer, not permission to use the ordinary DGN
+mesh route: complete command-list order, local/system clipping, dynamic face
+selection and VDP2 composition remain separate gates.
+
 An input-free pre-Start run at runtime frame 10000 independently captured
 active VDP2 NBG1 bitmap mode (`BGON=0x0002`, `CHCTLA=0x1211`) with stable VRAM
 and CRAM. Its decoded `MENU.BPK`, `FONT256.S2D`, `TITLE`, and `STABG` source

@@ -9,6 +9,15 @@
   och alternativa karta samt MapOffsetX/Y. Den köar, mixar eller spelar inte
   ljud; partyposition, riktning, synlighet och timerkonsumtion är fortsatt
   separata källkrav.
+# Nexus: capture-only VDP1 mode-1-kompositör (2026-08-09)
+
+- ✅ `nexus_v1_vdp1_capture_compositor` kan nu lägga en autentiserad Saturn
+  VDP1 mode-1-quad på hostens 320×224 framebuffer när texture-span och
+  palette-state ordväxlat matchar kanonisk DGN Structure2-data. Den använder
+  signerade command-koordinater, explicit fångad display-origin och VDP1:s
+  transparent/end-code-regler. Saknad capture-attestering eller källmatchning
+  ger ingen bild. Testet täcker också end-code-radstopp.
+
 # Nexus: korrigerad VDP1 mode-1 LUT-adressering (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_decode_mode1_lookup_texture()` använder nu Saturns

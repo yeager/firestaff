@@ -26,6 +26,12 @@
   runtime-presentation kräver fortfarande capture-bunden draw-order,
   transform/culling och VDP1/VDP2-composition.
 
+- 🔧 Nexus: en capture-only VDP1 mode-1-kompositör finns nu och kräver exakt
+  ordväxlad DGN image/palette-join, autentiserad Saturn-capture och explicit
+  display-origin. Den är ännu inte huvudviewportens generella route: komplett
+  command-lista, local/system-clip-state, draw-order över hela scenen och
+  VDP2-komposition måste fortfarande bindas innan produktion kan öppnas.
+
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
   slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
   finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
