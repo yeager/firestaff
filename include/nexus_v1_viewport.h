@@ -8,6 +8,7 @@
 #include "nexus_v1_vdp1_capture_compositor.h"
 #include "nexus_v1_vdp2_capture_compositor.h"
 #include "nexus_v1_vdp2_tilemap_capture_compositor.h"
+#include "nexus_v1_stabg_capture_compositor.h"
 
 /* Render the 3D dungeon viewport from party position.
  * View distance: 4 squares ahead (like DM1 D0-D3).
@@ -190,6 +191,7 @@ typedef struct Nexus_Viewport {
     Nexus_V1_Vdp1CaptureSequenceReceipt last_vdp1_sequence_receipt;
     Nexus_V1_Vdp2CaptureCompositeReceipt last_vdp2_capture_receipt;
     Nexus_V1_Vdp2TilemapCaptureReceipt last_vdp2_tilemap_capture_receipt;
+    Nexus_V1_StabgCaptureReceipt last_stabg_capture_receipt;
     Nexus_V1_DgnViewportRenderReceipt last_dgn_render_receipt;
 } Nexus_Viewport;
 
@@ -199,9 +201,12 @@ typedef struct Nexus_Viewport {
 typedef struct {
     const Nexus_V1_Vdp2CaptureCompositeInput *vdp2_bitmap;
     const Nexus_V1_Vdp2TilemapCaptureInput *vdp2_tilemap;
+    const Nexus_V1_StabgCaptureInput *vdp2_stabg;
     const Nexus_V1_Vdp1CaptureSequenceInput *vdp1_sequence;
     int vdp2_is_tilemap;
+    int vdp2_is_stabg;
     int vdp1_over_vdp2;
+    int vdp2_over_vdp1;
     int layer_order_verified;
 } Nexus_V1_Vdp12CaptureCompositionInput;
 
@@ -211,6 +216,8 @@ typedef struct {
     int vdp2_verified;
     int vdp1_verified;
     int vdp1_over_vdp2;
+    int vdp2_over_vdp1;
+    int vdp2_source_stabg;
     int renderer_permitted;
     int vdp2_written_pixels;
     int vdp1_written_pixels;

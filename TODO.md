@@ -38,6 +38,12 @@
   skriver till framebuffer. VDP2-lagerägare och normal HUD-presentering är
   fortfarande spärrade tills en giltig regionmatchad witness finns.
 
+- 🔧 VDP1/VDP2-capturekompositionen accepterar nu explicit `STABG` som VDP2-
+  källa och båda uttryckliga lagerordningarna. Den kan därmed beskriva HUD över
+  viewport eller viewport över HUD utan att välja ordning från hostens
+  call-order. Positivt receipt kräver fortfarande autentiserade källjoins och
+  en sammanhängande capture.
+
 - 🔧 Nexus VDP2 bitmap source comparison now accepts both authenticated
   European `MENU.BPK` hashes and reports missing optional comparison assets
   separately. A French capture with no `TITLE.CG` is therefore a bounded

@@ -48,6 +48,15 @@
   facit och visar att en ändrad crop stängs. VDP2-lagerägare och vanlig HUD-
   rendering är fortfarande inte bevisade.
 
+# Nexus: explicit HUD/viewport layer composition (2026-08-09)
+
+- ✅ Den atomära VDP1/VDP2-capturekompositorn stöder nu den riktiga STABG-
+  ytan som VDP2-källa och kräver att caller uttryckligen väljer antingen
+  `VDP1 över VDP2` eller `VDP2 över VDP1`. Regressionen verifierar båda
+  ordningarna, STABG HUD över viewport och att tvetydig ordning avvisas.
+  Detta är fortfarande capture-only och öppnar inte normal runtime utan en
+  regionmatchad Saturn-witness.
+
 # Theron: chested-fält genom creature och save (2026-08-09)
 
 - ✅ Det signerade kategori-4-fältet `chested` följer nu den riktiga

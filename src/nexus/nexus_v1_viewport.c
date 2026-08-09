@@ -111,13 +111,30 @@ int nexus_viewport_replay_vdp12_capture_composition(
     Nexus_Framebuffer *saved;
     int vdp2_ok;
     int vdp1_ok;
+    int vdp2_source_count;
+    int vdp1_over_vdp2;
+    int vdp2_over_vdp1;
 
     memset(&receipt, 0, sizeof(receipt));
     if (!out_receipt) return 0;
     if (!vp || !input || !input->vdp1_sequence ||
-        !input->layer_order_verified || !input->vdp1_over_vdp2 ||
-        (input->vdp2_is_tilemap ? !input->vdp2_tilemap :
-                                   !input->vdp2_bitmap)) {
+        !input->layer_order_verified) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    vdp2_source_count = (input->vdp2_bitmap != NULL) +
+        (input->vdp2_tilemap != NULL) + (input->vdp2_stabg != NULL);
+    vdp1_over_vdp2 = input->vdp1_over_vdp2 ? 1 : 0;
+    vdp2_over_vdp1 = input->vdp2_over_vdp1 ? 1 : 0;
+    if (vdp2_source_count != 1 || vdp1_over_vdp2 == vdp2_over_vdp1 ||
+        (input->vdp2_is_tilemap && input->vdp2_is_stabg) ||
+        (input->vdp2_is_tilemap && !input->vdp2_tilemap) ||
+        (input->vdp2_is_stabg && !input->vdp2_stabg) ||
+        (!input->vdp2_is_tilemap && !input->vdp2_is_stabg &&
+         !input->vdp2_bitmap) ||
+        (input->vdp2_is_tilemap && input->vdp2_bitmap) ||
+        (input->vdp2_is_tilemap && input->vdp2_stabg) ||
+        (input->vdp2_is_stabg && input->vdp2_bitmap)) {
         *out_receipt = receipt;
         return 0;
     }
@@ -128,7 +145,27 @@ int nexus_viewport_replay_vdp12_capture_composition(
     }
     *saved = vp->fb;
     receipt.layer_order_verified = 1;
-    if (input->vdp2_is_tilemap) {
+    if (vdp2_over_vdp1) {
+        Nexus_V1_Vdp1CaptureSequenceReceipt vdp1_receipt;
+        vdp1_ok = nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &vp->fb, input->vdp1_sequence, &vdp1_receipt);
+        vp->last_vdp1_sequence_receipt = vdp1_receipt;
+        receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
+        if (!vdp1_ok) {
+            *out_receipt = receipt;
+            free(saved);
+            return 0;
+        }
+        receipt.vdp1_verified = 1;
+    }
+    if (input->vdp2_is_stabg) {
+        Nexus_V1_StabgCaptureReceipt stabg_receipt;
+        vdp2_ok = nexus_v1_stabg_capture_composite(
+            &vp->fb, input->vdp2_stabg, &stabg_receipt);
+        vp->last_stabg_capture_receipt = stabg_receipt;
+        receipt.vdp2_written_pixels = stabg_receipt.written_pixels;
+        receipt.vdp2_source_stabg = 1;
+    } else if (input->vdp2_is_tilemap) {
         Nexus_V1_Vdp2TilemapCaptureReceipt tilemap_receipt;
         vdp2_ok = nexus_v1_vdp2_capture_composite_nbg1_tilemap(
             &vp->fb, input->vdp2_tilemap, &tilemap_receipt);
@@ -142,26 +179,28 @@ int nexus_viewport_replay_vdp12_capture_composition(
         receipt.vdp2_written_pixels = bitmap_receipt.written_pixels;
     }
     if (!vdp2_ok) {
-        *out_receipt = receipt;
-        free(saved);
-        return 0;
-    }
-    receipt.vdp2_verified = 1;
-    {
-        Nexus_V1_Vdp1CaptureSequenceReceipt vdp1_receipt;
-        vdp1_ok = nexus_v1_vdp1_capture_composite_mode1_sequence(
-            &vp->fb, input->vdp1_sequence, &vdp1_receipt);
-        vp->last_vdp1_sequence_receipt = vdp1_receipt;
-        receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
-    }
-    if (!vdp1_ok) {
         vp->fb = *saved;
         *out_receipt = receipt;
         free(saved);
         return 0;
     }
-    receipt.vdp1_verified = 1;
-    receipt.vdp1_over_vdp2 = 1;
+    receipt.vdp2_verified = 1;
+    if (vdp1_over_vdp2) {
+        Nexus_V1_Vdp1CaptureSequenceReceipt vdp1_receipt;
+        vdp1_ok = nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &vp->fb, input->vdp1_sequence, &vdp1_receipt);
+        vp->last_vdp1_sequence_receipt = vdp1_receipt;
+        receipt.vdp1_written_pixels = vdp1_receipt.written_pixels;
+        if (!vdp1_ok) {
+            vp->fb = *saved;
+            *out_receipt = receipt;
+            free(saved);
+            return 0;
+        }
+        receipt.vdp1_verified = 1;
+    }
+    receipt.vdp1_over_vdp2 = vdp1_over_vdp2;
+    receipt.vdp2_over_vdp1 = vdp2_over_vdp1;
     receipt.valid = receipt.renderer_permitted = 1;
     *out_receipt = receipt;
     free(saved);

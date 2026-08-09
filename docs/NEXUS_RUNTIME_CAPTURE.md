@@ -275,6 +275,12 @@ decode row by row and all 512 raw STABG palette bytes before writing the
 join for a future HUD witness, but does not reinterpret the negative gameplay
 capture above or open VDP2 layer ownership and normal HUD presentation.
 
+The atomic VDP1/VDP2 composition lane now accepts that STABG receipt as its
+VDP2 source and records either explicitly attested order (`VDP1 over VDP2` or
+`VDP2 over VDP1`). It rejects an ambiguous order and restores the framebuffer
+on a failed subroute. This establishes the handoff contract needed for HUD
+over viewport, not the missing Saturn frame that would select the order.
+
 The VDP2 bitmap comparator now also validates every nonzero 32-byte palette
 anchor in the canonical LEV00–LEV15 Structure2 descriptors. The real corpus
 contains 1,266 such anchors. Neither the European frame-1 witness nor the
