@@ -524,6 +524,37 @@ static void test_teleporter_mechanics(void) {
     CHECK_INT("teleporter move returns TELEPORT", moved, THERON_MOVE_TELEPORT);
     CHECK_INT("teleporter lands at target x", w.party.leader_x, 12);
     CHECK_INT("teleporter lands at target y", w.party.leader_y, 12);
+
+    /* Legacy ID links are still valid for fixtures, but they must not cross
+     * an authenticated dungeon boundary when both dungeons are resident. */
+    {
+        Theron_V1_World scoped;
+        Theron_V1_Object foreign_target = {0};
+        Theron_V1_Object scoped_teleporter = {0};
+        int result;
+
+        make_world(&scoped);
+        foreign_target.type = THERON_OBJTYPE_KEY;
+        foreign_target.x = 14;
+        foreign_target.y = 14;
+        foreign_target.level = 0;
+        foreign_target.dungeon_id = 2;
+        theron_v1_object_place(&scoped, &foreign_target);
+
+        scoped_teleporter.type = THERON_OBJTYPE_TELEPORTER;
+        scoped_teleporter.x = 9;
+        scoped_teleporter.y = 8;
+        scoped_teleporter.level = 0;
+        scoped_teleporter.dungeon_id = 1;
+        scoped_teleporter.linked_id = foreign_target.id;
+        theron_v1_object_place(&scoped, &scoped_teleporter);
+
+        result = theron_v1_teleporter_resolve(&scoped, 9, 8);
+        CHECK_INT("foreign-dungeon legacy teleporter target rejected",
+                  result, -1);
+        CHECK_INT("foreign-dungeon teleporter leaves transition clear",
+                  scoped.transition_pending, 0);
+    }
 }
 
 static void test_altar_resurrect_mechanics(void) {

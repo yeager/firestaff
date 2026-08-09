@@ -2,6 +2,31 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — sista legacy-ID-grenen i teleporterkedjan scopead
+
+- ✅ Teleporterupplösningens fixture-/legacy-ID-länk kräver nu också aktiv
+  `dungeon_id`; tidigare var bara Track 02:s packade koordinatlänk scopead.
+  Ett främmande objekt med samma ID kan därför inte bli destination när flera
+  autentiska dungeons finns residenta.
+- ✅ `test_theron_v1_combat_mechanics` täcker den negativa cross-dungeon-
+  destinationen och passerar 116/116.
+
+## 2026-08-09 — source-ledger och objektpool för hela Track 02-kampanjen
+
+- ✅ `theron_v1_world_load_track02_dungeon()` ersätter nu endast den valda
+  dungeonens nivåer, source-monster, generatorer, source-objekt och placerade
+  objekt. Äkta records från redan laddade dungeons överlever därför en senare
+  nivå-/bankladdning, medan en omladdning av samma dungeon tar bort gamla
+  records utan att duplicera dem.
+- ✅ Objekt-ID:n allokeras ovanför högsta kvarvarande ID, så dungeon-lokal
+  rensning inte kan aliasera ett bevarat objekt från en annan dungeon.
+  Poolgränserna rymmer nu hela den verifierade US Track 02-kampanjen: 4 096
+  placerade objekt och 256 category-4 monsterrecords.
+- ✅ Riktig-data-regressionen laddar AKUTUBA, DRATOR och DRATOR igen från
+  `TQUS02.bin`, kontrollerar dungeon-scope för monster/generator/source-objekt,
+  objektantal och unika ID:n. `test_theron_v1_track02_dungeon_loader` samt den
+  fokuserade CTest-sviten passerar 7/7.
+
 ## 2026-08-09 — object lookup scoped to authenticated dungeon
 
 - ✅ Produktionsmekanikens object-, dörr-, teleport-, altar-, pool- och

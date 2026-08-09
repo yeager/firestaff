@@ -26,6 +26,7 @@
 #include "theron_v1_track02_creature_spawn.h"
 #include "theron_v1_track02_text_decode.h"
 #include <string.h>
+#include <limits.h>
 
 #define THERON_LEGACY_GENERATOR_RUNTIME_SLOTS 5u
 #include <stdio.h>
@@ -637,6 +638,70 @@ static uint8_t track02_tile_to_square(uint8_t tile_byte) {
     return THERON_SQUARE_WALL;
 }
 
+/* A Track 02 bank is replaceable per dungeon, not a replacement for the
+ * complete campaign source ledger.  Keep records from every other dungeon
+ * when a bank is reloaded, then append the selected dungeon's fresh records
+ * below.  This matters for Continue/late-level routes, where the world can
+ * retain multiple authenticated dungeon banks at once. */
+static void theron_v1_remove_source_records_for_dungeon(
+    Theron_V1_World *world, int dungeon_id) {
+    unsigned int write_index;
+
+    if (!world) return;
+
+    write_index = 0;
+    for (unsigned int i = 0; i < world->source_monster_count; ++i) {
+        if (world->source_monsters[i].dungeon_id == dungeon_id) continue;
+        if (write_index != i)
+            world->source_monsters[write_index] = world->source_monsters[i];
+        ++write_index;
+    }
+    for (unsigned int i = write_index; i < world->source_monster_count; ++i)
+        memset(&world->source_monsters[i], 0,
+               sizeof(world->source_monsters[i]));
+    world->source_monster_count = write_index;
+
+    write_index = 0;
+    for (unsigned int i = 0; i < world->source_generator_count; ++i) {
+        if (world->source_generators[i].dungeon_id == dungeon_id) continue;
+        if (write_index != i)
+            world->source_generators[write_index] = world->source_generators[i];
+        ++write_index;
+    }
+    for (unsigned int i = write_index; i < world->source_generator_count; ++i)
+        memset(&world->source_generators[i], 0,
+               sizeof(world->source_generators[i]));
+    world->source_generator_count = write_index;
+
+    write_index = 0;
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        if (world->source_objects[i].dungeon_id == dungeon_id) continue;
+        if (write_index != i)
+            world->source_objects[write_index] = world->source_objects[i];
+        ++write_index;
+    }
+    for (unsigned int i = write_index; i < world->source_object_count; ++i)
+        memset(&world->source_objects[i], 0,
+               sizeof(world->source_objects[i]));
+    world->source_object_count = write_index;
+}
+
+static void theron_v1_remove_objects_for_dungeon(
+    Theron_V1_World *world, int dungeon_id) {
+    int write_index;
+
+    if (!world) return;
+    write_index = 0;
+    for (int i = 0; i < world->object_count; ++i) {
+        if (world->objects[i].dungeon_id == dungeon_id) continue;
+        if (write_index != i) world->objects[write_index] = world->objects[i];
+        ++write_index;
+    }
+    for (int i = write_index; i < world->object_count; ++i)
+        memset(&world->objects[i], 0, sizeof(world->objects[i]));
+    world->object_count = write_index;
+}
+
 int theron_v1_world_load_track02_dungeon(
     Theron_V1_World *world,
     int dungeon_id,
@@ -655,12 +720,8 @@ int theron_v1_world_load_track02_dungeon(
     memset(world->levels[slot], 0, sizeof(world->levels[slot]));
     memset(world->level_loaded[slot], 0, sizeof(world->level_loaded[slot]));
 
-    world->source_monster_count = 0;
-    world->source_generator_count = 0;
-    world->source_object_count = 0;
-    memset(world->source_monsters, 0, sizeof(world->source_monsters));
-    memset(world->source_generators, 0, sizeof(world->source_generators));
-    memset(world->source_objects, 0, sizeof(world->source_objects));
+    theron_v1_remove_source_records_for_dungeon(world, dungeon_id);
+    theron_v1_remove_objects_for_dungeon(world, dungeon_id);
 
     memcpy(world->source_thing_descriptor_sizes[slot],
            dd->thing_descriptor_sizes,
@@ -748,11 +809,25 @@ void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir) {
  * ══════════════════════════════════════════════════════════════════════ */
 
 int theron_v1_object_place(Theron_V1_World *world, Theron_V1_Object *object) {
+    int id = 0;
+
     if (!world || !object) return -1;
     if (world->object_count >= THERON_MAX_OBJECTS) return -1;
     Theron_V1_Object *o = &world->objects[world->object_count++];
     *o = *object;
-    o->id = world->object_count;
+    /* Object removal/reload can leave holes in the ID space.  Allocate above
+     * the highest retained ID instead of deriving it from object_count,
+     * otherwise a dungeon-local reload can alias a preserved object from a
+     * different dungeon. */
+    for (int i = 0; i < world->object_count - 1; ++i)
+        if (world->objects[i].id > id) id = world->objects[i].id;
+    if (id == INT_MAX) {
+        --world->object_count;
+        memset(o, 0, sizeof(*o));
+        return -1;
+    }
+    ++id;
+    o->id = id;
     object->id = o->id;
     return 0;
 }

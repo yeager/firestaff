@@ -330,13 +330,13 @@ typedef struct {
     uint8_t  source_property[6];
 } Theron_V1_Object;
 
-#define THERON_MAX_OBJECTS 512
+#define THERON_MAX_OBJECTS 4096
 
 /* A decoded source monster remains available as provenance even after its
  * static group members are admitted to the live creature pool.  The live
  * admission copies only fields present in the record; combat/AI consumers
  * still refuse to invent missing attack, drop or sound semantics. */
-#define THERON_MAX_SOURCE_MONSTERS 128
+#define THERON_MAX_SOURCE_MONSTERS 256
 
 typedef struct {
     int dungeon_id;

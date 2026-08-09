@@ -601,6 +601,7 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
                 break;
             }
             if (!(o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
+                world->objects[i].dungeon_id == world->current_dungeon &&
                 world->objects[i].id == link_id) {
                 target = &world->objects[i];
                 break;

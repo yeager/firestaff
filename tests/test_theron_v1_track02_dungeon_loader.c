@@ -508,6 +508,155 @@ static void test_real_bank_reload_clears_stale_levels(
     printf("  US Track 02: real bank reload clears stale level records\n");
 }
 
+static unsigned int count_objects_in_dungeon(
+    const Theron_V1_World *world, int dungeon_id) {
+    unsigned int count = 0;
+    for (int i = 0; i < world->object_count; ++i)
+        if (world->objects[i].dungeon_id == dungeon_id) ++count;
+    return count;
+}
+
+static void assert_object_ids_unique(const Theron_V1_World *world) {
+    for (int i = 0; i < world->object_count; ++i) {
+        assert(world->objects[i].id > 0);
+        for (int j = i + 1; j < world->object_count; ++j)
+            assert(world->objects[i].id != world->objects[j].id);
+    }
+}
+
+static void test_real_source_ledgers_survive_other_dungeon_reload(
+    const uint8_t *ud, size_t ud_size) {
+    Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
+    Theron_DungeonLoadResult first;
+    Theron_DungeonLoadResult second;
+    Theron_DungeonLoadResult reloaded;
+    unsigned int first_monsters;
+    unsigned int first_generators;
+    unsigned int first_source_objects;
+    unsigned int first_placed_objects;
+    unsigned int second_monsters;
+    unsigned int second_generators;
+    unsigned int second_source_objects;
+
+    assert(world);
+    theron_v1_world_init(world);
+    world->current_dungeon = 1;
+    assert(theron_v1_track02_load_full_dungeon_for_variant(
+               world, 1, ud, ud_size, THERON_TRACK02_VARIANT_US_BIN,
+               &first) == 0);
+    first_monsters = world->source_monster_count;
+    first_generators = world->source_generator_count;
+    first_source_objects = world->source_object_count;
+    first_placed_objects = count_objects_in_dungeon(world, 1);
+    assert(first_monsters > 0);
+    assert(first_generators > 0);
+    assert(first_source_objects > 0);
+    assert(first_placed_objects == (unsigned int)first.total_things_placed);
+
+    /* Loading dungeon 2 must replace only dungeon 2's records.  Dungeon 1
+     * remains source-authenticated so a later Continue/return route does not
+     * silently lose its monster, generator, or object consumers. */
+    world->current_dungeon = 2;
+    world->current_level = 0;
+    assert(theron_v1_track02_load_full_dungeon_for_variant(
+               world, 2, ud, ud_size, THERON_TRACK02_VARIANT_US_BIN,
+               &second) == 0);
+    assert(world->source_monster_count > first_monsters);
+    assert(world->source_generator_count > first_generators);
+    assert(world->source_object_count > first_source_objects);
+    assert(count_objects_in_dungeon(world, 1) == first_placed_objects);
+    assert(count_objects_in_dungeon(world, 2) ==
+           (unsigned int)second.total_things_placed);
+    second_monsters = world->source_monster_count - first_monsters;
+    second_generators = world->source_generator_count - first_generators;
+    second_source_objects = world->source_object_count - first_source_objects;
+    assert(second_monsters == second.source_category_counts[THERON_CAT_MONSTER]);
+    assert(second_generators > 0);
+    assert(second_source_objects == (unsigned int)second.unbound_item_refs);
+    for (unsigned int i = 0; i < world->source_monster_count; ++i)
+        assert(world->source_monsters[i].dungeon_id == 1 ||
+               world->source_monsters[i].dungeon_id == 2);
+    for (unsigned int i = 0; i < world->source_generator_count; ++i)
+        assert(world->source_generators[i].dungeon_id == 1 ||
+               world->source_generators[i].dungeon_id == 2);
+    for (unsigned int i = 0; i < world->source_object_count; ++i)
+        assert(world->source_objects[i].dungeon_id == 1 ||
+               world->source_objects[i].dungeon_id == 2);
+    assert_object_ids_unique(world);
+
+    /* A second load of the same dungeon must not duplicate its records or
+     * objects, while the untouched dungeon-1 ledger remains unchanged. */
+    assert(theron_v1_track02_load_full_dungeon_for_variant(
+               world, 2, ud, ud_size, THERON_TRACK02_VARIANT_US_BIN,
+               &reloaded) == 0);
+    assert(world->source_monster_count == first_monsters + second_monsters);
+    assert(world->source_generator_count == first_generators + second_generators);
+    assert(world->source_object_count == first_source_objects +
+           second_source_objects);
+    assert(count_objects_in_dungeon(world, 1) == first_placed_objects);
+    assert(count_objects_in_dungeon(world, 2) ==
+           (unsigned int)reloaded.total_things_placed);
+    assert_object_ids_unique(world);
+
+    free(world);
+    printf("  US Track 02: dungeon-scoped source ledgers survive reload\n");
+}
+
+static void test_real_campaign_source_capacity(
+    const uint8_t *ud, size_t ud_size) {
+    static const unsigned int expected_generators[THERON_DUNGEON_COUNT] =
+        {3u, 7u, 9u, 2u, 1u, 14u, 10u};
+    Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
+    unsigned int expected_monsters = 0;
+    unsigned int expected_generators_total = 0;
+    unsigned int expected_source_objects = 0;
+    unsigned int expected_placed_objects = 0;
+
+    assert(world);
+    theron_v1_world_init(world);
+    for (int dungeon = 1; dungeon <= THERON_DUNGEON_COUNT; ++dungeon) {
+        Theron_DungeonLoadResult result;
+        unsigned int previous_monsters = world->source_monster_count;
+        unsigned int previous_generators = world->source_generator_count;
+        unsigned int previous_source_objects = world->source_object_count;
+
+        world->current_dungeon = dungeon;
+        world->current_level = 0;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   world, dungeon, ud, ud_size,
+                   THERON_TRACK02_VARIANT_US_BIN, &result) == 0);
+        assert(world->source_monster_count > previous_monsters);
+        assert(world->source_generator_count > previous_generators);
+        assert(world->source_object_count > previous_source_objects);
+        assert(world->source_monster_count - previous_monsters ==
+               result.source_category_counts[THERON_CAT_MONSTER]);
+        assert(world->source_generator_count - previous_generators ==
+               expected_generators[dungeon - 1]);
+        assert(world->source_object_count - previous_source_objects ==
+               (unsigned int)result.unbound_item_refs);
+        assert(count_objects_in_dungeon(world, dungeon) ==
+               (unsigned int)result.total_things_placed);
+
+        expected_monsters += result.source_category_counts[THERON_CAT_MONSTER];
+        expected_generators_total += expected_generators[dungeon - 1];
+        expected_source_objects += (unsigned int)result.unbound_item_refs;
+        expected_placed_objects += (unsigned int)result.total_things_placed;
+    }
+
+    assert(world->source_monster_count == expected_monsters);
+    assert(world->source_generator_count == expected_generators_total);
+    assert(world->source_object_count == expected_source_objects);
+    assert(world->object_count == (int)expected_placed_objects);
+    assert(expected_monsters == 165u);
+    assert(expected_generators_total == 46u);
+    assert(expected_source_objects == 640u);
+    assert(expected_placed_objects == 2189u);
+    assert_object_ids_unique(world);
+
+    free(world);
+    printf("  US Track 02: all seven dungeon ledgers fit and remain distinct\n");
+}
+
 static void test_generator_binding_rejects_non_source_records(void) {
     Theron_V1_World world;
     memset(&world, 0, sizeof(world));
@@ -569,6 +718,8 @@ int main(void) {
     }
     test_all_dungeons(ud, ud_size);
     test_real_bank_reload_clears_stale_levels(ud, ud_size);
+    test_real_source_ledgers_survive_other_dungeon_reload(ud, ud_size);
+    test_real_campaign_source_capacity(ud, ud_size);
     free(ud);
 
     const char *jp_path = find_jp_track02();
