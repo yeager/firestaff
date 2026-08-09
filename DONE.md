@@ -10550,6 +10550,19 @@
   Mednafen Saturn initialization, but timed out before producing a raw
   VDP1/VDP2 trace. No startup, menu, HUD or viewport admission was promoted.
 
+# Nexus no-waiting capture loop corrected (2026-08-09)
+
+- ✅ `FIRESTAFF_NEXUS_NO_WAITING` is now applied inside Mednafen's
+  `GameLoop` body. The earlier patch placed it between `while` and `{`, which
+  prevented emulation from advancing whenever the capture launcher enabled
+  no-waiting mode.
+- ✅ A rebuilt external E-BIOS/French session now produced four validated raw
+  Saturn frames plus VDP1 VRAM-write and writer-PC traces in the same session.
+  The source-span join reaches 100 % coverage for the observed commands.
+- ⏳ The capture proves authentic VDP1 production and active VDP2 state, but
+  does not identify MENU.BPK, HUD or viewport ownership; semantic admission
+  remains fail-closed until those consumer joins are bound.
+
 # Nexus VDP1 trace producer is in the reproducible external build (2026-08-09)
 
 - ✅ `scripts/build_mednafen_nexus_saturn_capture.sh` now applies the existing

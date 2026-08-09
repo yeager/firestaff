@@ -7,8 +7,8 @@
 +++ src/drivers/main.cpp
 @@ -32,0 +33,1 @@
 +#include <stdlib.h>
-@@ -1281,0 +1282,1 @@
-+ if(getenv("FIRESTAFF_NEXUS_NO_WAITING")) NoWaiting = 1;
+@@ -1282,0 +1283,1 @@
++	 if(getenv("FIRESTAFF_NEXUS_NO_WAITING")) NoWaiting = 1;
 
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp

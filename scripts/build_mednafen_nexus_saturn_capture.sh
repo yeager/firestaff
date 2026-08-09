@@ -38,7 +38,7 @@ if [[ ! -f "$source_dir/configure" ]]; then
   fi
 fi
 marker="$source_dir/.firestaff-nexus-capture-patched"
-patch_id='FIRESTAFF_NEXUS_SATURN_CAPTURE_PATCH_V3_FRAME_INPUT'
+patch_id='FIRESTAFF_NEXUS_SATURN_CAPTURE_PATCH_V4_FRAME_INPUT_LOOP'
 if [[ ! -f "$marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"
   printf '%s\n' "$patch_id" > "$marker"
