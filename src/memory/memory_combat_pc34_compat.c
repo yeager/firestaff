@@ -1004,10 +1004,16 @@ int F0736_COMBAT_ResolveCreatureMelee_Compat(
     }
 
     if (shouldAttemptDamage) {
-        /* Wound mask roll (PROJEXPL.C:1372). */
-        woundTest = (uint32_t)F0732_COMBAT_RngRandom_Compat(rng, 32768);
-        out->rngCallCount++;
-        woundTest = (woundTest << 1) | ((uint32_t)(F0732_COMBAT_RngRandom_Compat(rng, 2)) & 1u);
+        /* Wound mask roll (PROJEXPL.C:1372): AL0559_ui_WoundTest =
+         * M006_RANDOM(65536).  DEFS.H:5 defines
+         *   #define M006_RANDOM(value) F0027_MAIN_Get16bitRandomNumber()
+         * i.e. exactly ONE draw of the full unmasked 16-bit value.  This used
+         * to synthesise it from two draws (32768 then 2), which consumed an
+         * extra RNG step per wound test and desynchronised the whole
+         * subsequent stream against the original game.  F0732 already yields
+         * ((raw >> 8) & 0xFFFF), so modulus 65536 is the identity and one
+         * call reproduces M006 exactly. */
+        woundTest = (uint32_t)F0732_COMBAT_RngRandom_Compat(rng, 65536);
         out->rngCallCount++;
 
         if (woundTest & 0x0070u) {
