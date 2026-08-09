@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- 🔧 Nexus: den rena VDP1-patch-smoken är nu korrekt, men den nya externa
+  builden gav ännu inget raw-vittne inom timeout. Writer-PC, VRAM-källa och
+  MENU.BPK/FONT256/DGN-consumer är därför fortfarande inte bundna.
+
 - 🔧 Theron RNG-consumer: den nya parsern validerar den autentiska
   `source=mednafen-pce-instrumented-rng-consumer`-sidecaren med sekvens-,
   steg-, PC- och entrykontroller, men extern-disken innehåller ännu ingen

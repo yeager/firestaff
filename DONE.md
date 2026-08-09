@@ -1,3 +1,10 @@
+# Nexus VDP1 writer-code patch hunk fixed (2026-08-09)
+
+- ✅ Ren hunk-smoke avslöjade att writer-code-patchen deklarerade fel antal
+  tillagda rader. Det kunde lämna VDP1-funktionen utan avslut och stoppa en
+  ren extern build. Hunkstorlek och målposition är nu korrigerade; funktionen
+  och `FirestaffTraceVramWriterCode(address)` placeras verifierat.
+
 # Theron source-bound property rows (2026-08-09)
 
 - ✅ Track 02-loadern kräver fortsatt en byteverifierad 66×6-byte propertytabell
