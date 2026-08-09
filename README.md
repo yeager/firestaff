@@ -44,6 +44,16 @@ description is kept in [project status](docs/PROJECT_STATUS.md).
 </p>
 <p align="center"><em>Additional operator-supplied original-game captures: the AKUTUBA encounter frame and the inventory/HUD frame. These are reference captures from the original game, not claims that Firestaff's native Theron runtime has reached semantic parity.</em></p>
 
+<p align="center">
+  <img src="verification-screens/theron-quest-us-dungeon-hud-original-capture.png" alt="Original US Theron's Quest dungeon and HUD capture" width="847">
+</p>
+<p align="center"><em>Original-game dungeon/HUD reference with two champions and the source control panel.</em></p>
+
+<p align="center">
+  <img src="verification-screens/theron-quest-us-dungeon-item-ground-original-capture.png" alt="Original US Theron's Quest dungeon capture with a ground item" width="853">
+</p>
+<p align="center"><em>Original-game dungeon reference with a ground item visible; item ownership and T900 drop semantics remain under source/runtime review.</em></p>
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder

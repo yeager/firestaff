@@ -78,6 +78,8 @@ as original-media reference captures, not generated Firestaff frames:
 |---|---:|---|---|
 | `verification-screens/theron-quest-us-akutuba-original-capture.png` | 819×657 | `13b0795054dea2a37c32392fbc2a6f212d1695f236fce394bbff824be929b718` | AKUTUBA scene/roster presentation |
 | `verification-screens/theron-quest-us-inventory-original-capture.png` | 841×611 | `3d9bbd84eeb05d9e35bc9e9dfef9d38c3a5c8effa2642b5190528ece7c344c4f` | champion portrait, equipment layout, health/stamina/mana and food/water HUD |
+| `verification-screens/theron-quest-us-dungeon-hud-original-capture.png` | 847×602 | `dbc654b10d3a8b163b5c0d6cea76131f1334707c8cbc58f540a030168cbd3b63` | dungeon perspective, two-champion HUD and source control panel |
+| `verification-screens/theron-quest-us-dungeon-item-ground-original-capture.png` | 853×573 | `96c82861c0183563f07574bddb36abb6059bd82bd4622114e04bd9bd097c2447` | dungeon perspective with a ground item |
 
 These images are useful visual evidence for the source presentation and for
 the README reference gallery. The screenshots alone do not prove the
