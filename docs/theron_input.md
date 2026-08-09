@@ -47,7 +47,12 @@ also work on macOS layouts or input paths that do not populate scancodes.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
-- F5 = quick save, F9 = quick load, F12 = screenshot (engine-global).
+- F12 = screenshot (engine-global).
+- Theron currently has no usable Firestaff save command in the dungeon:
+  `Ctrl+S` and `F5` report `THERON SAVE HANDOFF NOT READY`, and `F9` cannot
+  restore a Theron runtime. This is intentional until the authenticated
+  between-dungeon T080 save writer/restore handoff is connected; do not rely
+  on a `.tqsv` file being written from the live dungeon.
 
 ## Mednafen macOS capture profile
 

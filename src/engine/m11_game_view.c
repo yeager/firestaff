@@ -24246,12 +24246,12 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
-        /* THQUEST.ASM T080 owns the original save boundary: Theron's Quest
-         * writes progress when a stage is cleared and offers no in-dungeon
-         * save transaction. Do not pass the opaque Theron world through the
-         * generic DM1 serializer; that would create a host file which looks
-         * like a quicksave but cannot restore a source-owned Theron state. */
-        m11_set_status(state, "SAVE", "THERON SAVES AFTER STAGE CLEAR");
+        /* THQUEST.ASM T080 owns a between-dungeon save boundary.  The
+         * original runtime save writer and the live champion/progression
+         * serialization handoff are not connected here yet.  Do not pass
+         * Theron through the generic DM1 world envelope: that would create a
+         * file that looks like a save but cannot restore a Theron session. */
+        m11_set_status(state, "SAVE", "THERON SAVE HANDOFF NOT READY");
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
@@ -24557,10 +24557,10 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
-        /* T080 loads from the between-stage file selector at startup. There
-         * is no in-dungeon F9 route in the original game, so reject the
-         * generic world envelope rather than adopting unrelated DM state. */
-        m11_set_status(state, "LOAD", "THERON LOADS AT START MENU");
+        /* T080 permits resume only at the original between-dungeon boundary.
+         * Startup slot enumeration exists, but M11 has no authenticated live
+         * Theron save writer/restore transaction yet. */
+        m11_set_status(state, "LOAD", "THERON SAVE HANDOFF NOT READY");
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
@@ -28773,6 +28773,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
         if (!world) {
             return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_SAVE_GAME) {
+            /* Ctrl+S is deliberately visible to the player, but cannot
+             * invent a mid-dungeon save or route through the DM1 disk menu. */
+            m11_set_status(state, "SAVE", "THERON SAVE HANDOFF NOT READY");
+            return M11_GAME_INPUT_REDRAW;
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
