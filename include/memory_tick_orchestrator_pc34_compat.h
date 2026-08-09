@@ -101,6 +101,7 @@
 
 struct DM1ActiveGroup_Compat;
 struct DM1GroupBehaviorContext_Compat;
+struct DM1GroupMovementFacts_Compat;
 struct DM1GroupSmellDirectionPlan_Compat;
 
 /* ================================================================
@@ -724,5 +725,22 @@ int F0890f_ORCH_GetActiveGroupVisibleDistance_Compat(
     struct GameWorld_Compat* world,
     const struct DM1GroupBehaviorContext_Compat* context,
     const struct DM1ActiveGroup_Compat* activeGroup);
+
+/* ReDMCSB GROUP.C F0202 destination-square snapshot.  F0811's pure
+ * movement-possibility test fail-closes unless the live owner supplies these
+ * loaded-tile and occupancy facts, so every runtime that drives F0810/F0811
+ * must build them from the same decoded DUNGEON bits.  M10's tick
+ * orchestrator and M11's creature tick loop share this one builder rather
+ * than each open-coding the square/door/Thing-chain walk.
+ *
+ * Returns 1 and fills outFacts (with available = 1) for a readable in-bounds
+ * square; returns 0 with outFacts zeroed for out-of-bounds, unreadable, or
+ * malformed squares, which F0811 then treats as blocked. */
+int F0890g_ORCH_BuildGroupMovementFacts_Compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct DM1GroupMovementFacts_Compat* outFacts);
 
 #endif /* REDMCSB_MEMORY_TICK_ORCHESTRATOR_PC34_COMPAT_H */

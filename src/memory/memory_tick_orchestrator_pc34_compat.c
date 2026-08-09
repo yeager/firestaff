@@ -5770,6 +5770,20 @@ malformed:
     return 0;
 }
 
+/* Exported form of the F0202 fact builder.  See the header for the contract;
+ * M11's creature tick loop drives F0810/F0811 through this same snapshot. */
+int F0890g_ORCH_BuildGroupMovementFacts_Compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct DM1GroupMovementFacts_Compat* outFacts)
+{
+    return orch_build_group_movement_facts_compat(
+        world, mapIndex, mapX, mapY, outFacts);
+}
+
+
 /* MOVESENS.C F0267 consumes the C01 record that is physically linked to
  * the open C08 square.  A decoded DungeonTeleporter cache is useful for
  * routing, but it is not an authority: imports and live mutations can leave

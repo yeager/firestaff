@@ -2368,6 +2368,21 @@ int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
                                                       int groupMapX,
                                                       int groupMapY);
 
+/* Probe-visible creature wander hook (ReDMCSB GROUP.C F0209 WANDER branch,
+ * reached through F0810_DM1_GROUP_DispatchBehavior_Compat).  Drives the same
+ * route the tick loop takes when a group can neither see nor smell the
+ * party: F0810 rolls the 50% move chance, picks a direction and validates it
+ * with F0811, and this applies the returned DM1_ACTION_MOVE.  Returns 1 when
+ * the group relocated, writing the new square to outNewX/outNewY (which
+ * receive the unchanged origin when the group stayed put). */
+int M11_GameView_ProbeCreatureWanderStep(M11_GameViewState* state,
+                                         unsigned short groupThing,
+                                         int groupIndex,
+                                         int groupMapX,
+                                         int groupMapY,
+                                         int* outNewX,
+                                         int* outNewY);
+
 /* Probe-visible Giggler steal hook (ReDMCSB GROUP.C F0193
  * GROUP_StealFromChampion).  Drives the same F0822-owned route the tick loop
  * takes when a C02 Giggler shares the party square: it resolves the steal

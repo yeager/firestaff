@@ -17101,6 +17101,198 @@ static int m11_creature_try_flee(
         outNewX, outNewY);
 }
 
+/* Both defined further down; the wander route needs them here. */
+static int m11_creature_source_info_i34(int creatureType,
+                                        struct DM1CreatureInfo_Compat* out);
+static int m11_find_creature_ai_on_square(const M11_GameViewState* state,
+                                          int mapIndex, int mapX, int mapY);
+
+/* Move a group exactly one step in one already-decided direction.  F0810's
+ * WANDER branch has already run the source F0811 movement-possibility test
+ * and chosen this direction, so the caller must not re-open the candidate
+ * fan-out (which would consume extra RNG and could override the source
+ * choice with its opposite). */
+static int m11_creature_step_in_exact_direction(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    int groupX,
+    int groupY,
+    int direction,
+    int* outNewX,
+    int* outNewY) {
+    int mapIdx;
+    int stepX = 0;
+    int stepY = 0;
+    int destX;
+    int destY;
+
+    if (outNewX) *outNewX = groupX;
+    if (outNewY) *outNewY = groupY;
+    if (!state || direction < 0 || direction > 3) return 0;
+    mapIdx = state->world.party.mapIndex;
+    if (!m11_group_live_position_matches_source(
+            state, groupThing, mapIdx, groupX, groupY)) {
+        return 0;
+    }
+
+    m11_creature_step_for_dir(direction, &stepX, &stepY);
+    destX = groupX + stepX;
+    destY = groupY + stepY;
+
+    if (!m11_square_walkable_for_creature(&state->world, mapIdx, destX, destY)) {
+        return 0;
+    }
+    /* A wandering group must not walk onto another group, and must not
+     * walk onto the party square: reaching the party is the APPROACH /
+     * ATTACK behaviour's job, not WANDER's. */
+    if (m11_find_group_on_square(&state->world, mapIdx, destX, destY) !=
+        THING_NONE) {
+        return 0;
+    }
+    if (destX == state->world.party.mapX && destY == state->world.party.mapY) {
+        return 0;
+    }
+    if (!m11_unlink_thing_from_square(&state->world, mapIdx, groupX, groupY,
+                                      groupThing)) {
+        return 0;
+    }
+    if (!m11_prepend_thing_to_square(&state->world, mapIdx, destX, destY,
+                                     groupThing)) {
+        m11_prepend_thing_to_square(&state->world, mapIdx, groupX, groupY,
+                                    groupThing);
+        return 0;
+    }
+    if (outNewX) *outNewX = destX;
+    if (outNewY) *outNewY = destY;
+    m11_update_group_ai_position(state, THING_GET_INDEX(groupThing), mapIdx,
+                                 groupX, groupY, destX, destY);
+    return 1;
+}
+
+/*
+ * ReDMCSB GROUP.C F0209 WANDER branch (behavior == C0), reached through
+ * F0810_DM1_GROUP_DispatchBehavior_Compat.
+ *
+ * A group that can neither see nor smell the party wanders: the source rolls
+ * RANDOM(2) for a 50% move chance, picks a starting direction with
+ * RANDOM(4), rejects a step back onto the prior square unless a further
+ * RANDOM(4) permits it, and validates each candidate with F0811 before
+ * settling.  M11's tick loop previously just returned in this case, so an
+ * unaware DM1 creature stood perfectly still forever.
+ *
+ * F0810 owns every one of those decisions and their RNG order; this runtime
+ * only supplies the context and applies the returned DM1_ACTION_MOVE.
+ */
+static int m11_creature_try_wander(
+    M11_GameViewState* state,
+    unsigned short groupThing,
+    const struct DungeonGroup_Compat* group,
+    int groupX,
+    int groupY,
+    int* outNewX,
+    int* outNewY) {
+    struct DM1GroupBehaviorContext_Compat ctx;
+    struct DM1ActiveGroup_Compat activeGroup;
+    struct DM1BehaviorResult_Compat behavior;
+    struct DM1CreatureInfo_Compat sourceInfo;
+    int aiIndex;
+    int ticksSinceLastMove = 0;
+
+    if (outNewX) *outNewX = groupX;
+    if (outNewY) *outNewY = groupY;
+    if (!state || !group) return 0;
+    if (!m11_creature_source_info_i34((int)group->creatureType, &sourceInfo)) {
+        return 0;
+    }
+
+    aiIndex = m11_find_creature_ai_on_square(
+        state, state->world.party.mapIndex, groupX, groupY);
+    /* F0209 defers a wander step while (movementTicks >> 1) has not yet
+     * elapsed since the group last moved, because the source drives itself
+     * from its own scheduled events.  M11 instead gates this whole route on
+     * the (gameTick % movementTicks == 0) cadence in the tick loop, so by the
+     * time we are called a full movement period HAS elapsed.  Reporting that
+     * is the correct translation of the source's precondition; deriving the
+     * value from lastSeenPartyTick instead (which tracks party sightings, not
+     * moves) left the delay permanently unexpired and the group frozen. */
+    ticksSinceLastMove = (sourceInfo.movementTicks > 0)
+        ? sourceInfo.movementTicks : 1;
+
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.currentGroupMapX = groupX;
+    ctx.currentGroupMapY = groupY;
+    ctx.currentMapIndex = state->world.party.mapIndex;
+    ctx.partyMapIndex = state->world.party.mapIndex;
+    ctx.partyMapX = state->world.party.mapX;
+    ctx.partyMapY = state->world.party.mapY;
+    ctx.partyChampionCount = state->world.party.championCount;
+    ctx.creatureType = (int)group->creatureType;
+    /* The caller reaches this route only after F0200 and F0201 both failed,
+     * so the source sees neither a visible nor a smelled party. */
+    ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+    ctx.distanceToVisibleParty = 0;
+    ctx.smelledPartyDirectionOrdinal = 0;
+    ctx.creatureCount = (int)group->count;
+    ctx.creatureSize = sourceInfo.attributes & DM1_ATTR_SIZE_MASK;
+    ctx.isArchenemy =
+        (sourceInfo.attributes & CREATURE_ATTR_MASK_ARCHENEMY) ? 1 : 0;
+    ctx.movementTicks = sourceInfo.movementTicks > 0 ? sourceInfo.movementTicks : 1;
+    ctx.ticksSinceLastMove = ticksSinceLastMove;
+    ctx.currentTickLow = (int)(state->world.gameTick & 0xFFu);
+    ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ctx.eventTicks = (int)state->world.gameTick;
+    ctx.creatureInfo = sourceInfo;
+
+    /* F0811 fail-closes on every direction whose F0202 destination snapshot
+     * is absent, so the live owner must supply all four.  Share M10's
+     * builder rather than open-coding a second square/door/Thing-chain walk;
+     * a direction the builder rejects correctly keeps available == 0 and
+     * stays blocked. */
+    {
+        int direction;
+        for (direction = 0; direction < 4; ++direction) {
+            int stepX = 0;
+            int stepY = 0;
+            m11_creature_step_for_dir(direction, &stepX, &stepY);
+            (void)F0890g_ORCH_BuildGroupMovementFacts_Compat(
+                &state->world, state->world.party.mapIndex,
+                groupX + stepX, groupY + stepY,
+                &ctx.groupMovementFacts[direction]);
+        }
+    }
+
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    activeGroup.groupThingIndex = THING_GET_INDEX(groupThing);
+    activeGroup.directions = (int)group->direction;
+    activeGroup.cells = (int)group->cells;
+    activeGroup.homeMapX = groupX;
+    activeGroup.homeMapY = groupY;
+    /* F0209 discourages an immediate step back onto the group's PRIOR
+     * square (and only then draws the extra RANDOM(4) that can override the
+     * refusal).  CreatureAIState_Compat is a size-pinned, serialized 18-int
+     * record with no prior-square field, so M11 cannot supply that history
+     * without a save-format change.  Passing the current square keeps the
+     * comparison well-defined and the RNG order stable — dest always differs
+     * from prior, so the source short-circuits before the extra draw — but it
+     * does leave the anti-backtracking rule inert.  This route therefore
+     * reproduces F0209's wander MOVEMENT, not its full path-history bias;
+     * closing that gap needs a prior-square field first. */
+    activeGroup.priorMapX = groupX;
+    activeGroup.priorMapY = groupY;
+
+    memset(&behavior, 0, sizeof(behavior));
+    if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
+            &ctx, &activeGroup, &state->world.masterRng, &behavior)) {
+        return 0;
+    }
+    if (behavior.actionKind != DM1_ACTION_MOVE || behavior.moveDirection < 0) {
+        return 0;
+    }
+    return m11_creature_step_in_exact_direction(
+        state, groupThing, groupX, groupY, behavior.moveDirection,
+        outNewX, outNewY);
+}
+
 /* Visible-party movement has no precomputed direction plan.  F0201's
  * smell route does, and calls the direction-taking form above so the F0228
  * RNG draw is neither duplicated nor replaced by a display-derived vector. */
@@ -18050,10 +18242,20 @@ static void m11_process_one_creature_group(
         int newY;
 
         memset(&smellPlan, 0, sizeof(smellPlan));
+        if (profile->movementTicks > 0 &&
+            (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u) {
+            return;
+        }
         if (!m11_group_smell_party_direction_f0201(
-                state, groupThing, group, groupX, groupY, &smellPlan) ||
-            (profile->movementTicks > 0 &&
-             (state->world.gameTick % (uint32_t)profile->movementTicks) != 0u)) {
+                state, groupThing, group, groupX, groupY, &smellPlan)) {
+            /* ReDMCSB GROUP.C F0209 WANDER: a group that can neither see nor
+             * smell the party wanders instead of standing still.  F0810 owns
+             * the 50% move roll, direction pick and F0811 validation. */
+            if (m11_creature_try_wander(state, groupThing, group,
+                                        groupX, groupY, &newX, &newY)) {
+                m11_audio_emit_creature_movement_sound(
+                    state, group->creatureType, newX, newY);
+            }
             return;
         }
         if (m11_creature_try_move_with_directions(
@@ -18093,6 +18295,28 @@ static void m11_process_one_creature_group(
             }
         }
     }
+}
+
+int M11_GameView_ProbeCreatureWanderStep(M11_GameViewState* state,
+                                         unsigned short groupThing,
+                                         int groupIndex,
+                                         int groupMapX,
+                                         int groupMapY,
+                                         int* outNewX,
+                                         int* outNewY) {
+    int localX = groupMapX;
+    int localY = groupMapY;
+    int moved;
+    if (outNewX) *outNewX = groupMapX;
+    if (outNewY) *outNewY = groupMapY;
+    if (!state || !state->world.things) return 0;
+    if (groupIndex < 0 || groupIndex >= state->world.things->groupCount) return 0;
+    moved = m11_creature_try_wander(
+        state, groupThing, &state->world.things->groups[groupIndex],
+        groupMapX, groupMapY, &localX, &localY);
+    if (outNewX) *outNewX = localX;
+    if (outNewY) *outNewY = localY;
+    return moved;
 }
 
 int M11_GameView_ProbeGigglerStealFromChampion(M11_GameViewState* state,
