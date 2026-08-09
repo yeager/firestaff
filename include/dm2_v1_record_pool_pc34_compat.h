@@ -84,6 +84,19 @@ typedef struct {
     uint8_t *map_tiles;
     size_t map_tiles_size;
     uint16_t map_tile_offsets[DM2_RAW_SKSAVE_MAX_MAPS];
+    /* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD's per-DB
+     * round-robin scan cursor (ddat.v1e0426). dm2data.cpp:1343 zero-inits
+     * all 18 entries; c_record.cpp:779 and :1072 write back the map the
+     * scan stopped on so the next recycle for that DB resumes there rather
+     * than repeatedly consuming the same map. Only DB 0..15 are reachable
+     * from a record handle's four-bit pool number; the source array is 18
+     * entries, so keep its width to stay byte-comparable.
+     *
+     * The recycler's other map state is already available: v1e03e4[map]
+     * (the per-map column base) is the prefix sum of map_widths, which
+     * dm2_v1_sksave_map_owner_ground_index computes inline, and map_widths
+     * already carries the source's ((w8 >> 6) & 0x1f) + 1. */
+    uint8_t recycle_scan_map[18];
     int current_map;
     int valid;
     int dynamic_records_detached;
