@@ -155,6 +155,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "firestaff_dm1_probe_data_dir.h"
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -377,43 +378,6 @@ static int probe_is_pc34_data_dir(const char* path) {
     return probe_file_exists(graphicsPath) && probe_file_exists(dungeonPath);
 }
 
-/* Resolve the PC 3.4 data directory the way the sibling HoC probes already
- * do.  ctest passes the documented workspace root (~/.firestaff/data/dm1),
- * which holds the distribution archives and an extracted dos_extract/ tree
- * rather than loose DAT files.  This probe used that argument verbatim, so
- * the dungeon never loaded and every pixel assertion ran against an empty
- * D1C rect.  The probe logic itself was already correct: pointed at the
- * extracted DATA directory by hand it passes 40/40. */
-static const char* narrow_dm1_data_dir(const char* dataDir,
-                                       char* out,
-                                       size_t outSize) {
-    static const char* const pc34RelativePaths[] = {
-        "DATA",
-        "dm1/DATA",
-        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
-        "dos_extract/Dungeon-Master_DOS_EN_Version-34",
-        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
-        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34",
-        NULL
-    };
-    size_t i;
-
-    if (!dataDir || !out || outSize == 0U) return dataDir;
-    if (probe_is_pc34_data_dir(dataDir)) {
-        snprintf(out, outSize, "%s", dataDir);
-        return out;
-    }
-    for (i = 0; pc34RelativePaths[i] != NULL; ++i) {
-        char candidate[512];
-        snprintf(candidate, sizeof(candidate), "%s/%s", dataDir,
-                 pc34RelativePaths[i]);
-        if (probe_is_pc34_data_dir(candidate)) {
-            snprintf(out, outSize, "%s", candidate);
-            return out;
-        }
-    }
-    return dataDir;
-}
 
 /* Park the party at the (1,2) D1C front-mirror route facing
  * NORTH.  Same pose as the cancel_reopen and leave_and_reenter
@@ -459,7 +423,7 @@ int main(int argc, char** argv) {
 
     if (argc > 1) dataDir = argv[1];
     else          dataDir = getenv("FIRESTAFF_DATA");
-    dataDir = narrow_dm1_data_dir(dataDir, narrowedDataDir,
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowedDataDir,
                                   sizeof(narrowedDataDir));
     if (!dataDir || dataDir[0] == '\0') {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);

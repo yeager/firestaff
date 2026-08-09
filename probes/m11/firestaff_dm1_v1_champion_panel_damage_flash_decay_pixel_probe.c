@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "firestaff_dm1_probe_data_dir.h"
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -316,40 +317,6 @@ static int probe_is_pc34_data_dir(const char* path) {
     return probe_file_exists(graphicsPath) && probe_file_exists(dungeonPath);
 }
 
-/* ctest passes FIRESTAFF_DM1_WORKSPACE_DATA_DIR (~/.firestaff/data/dm1),
- * the documented workspace root, which holds the distribution archives and
- * an extracted dos_extract/ tree rather than loose DAT files.  Walk the same
- * candidate list the sibling HoC probes use and pick the first directory
- * that really contains GRAPHICS.DAT and DUNGEON.DAT. */
-static const char* narrow_dm1_data_dir(const char* dataDir,
-                                       char* out,
-                                       size_t outSize) {
-    static const char* const pc34RelativePaths[] = {
-        "DATA",
-        "dm1/DATA",
-        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
-        "dos_extract/Dungeon-Master_DOS_EN_Version-34",
-        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
-        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34",
-        NULL
-    };
-    size_t i;
-    if (!dataDir || !out || outSize == 0U) return dataDir;
-    if (probe_is_pc34_data_dir(dataDir)) {
-        snprintf(out, outSize, "%s", dataDir);
-        return out;
-    }
-    for (i = 0; pc34RelativePaths[i] != NULL; ++i) {
-        char candidate[512];
-        snprintf(candidate, sizeof(candidate), "%s/%s", dataDir,
-                 pc34RelativePaths[i]);
-        if (probe_is_pc34_data_dir(candidate)) {
-            snprintf(out, outSize, "%s", candidate);
-            return out;
-        }
-    }
-    return dataDir;
-}
 
 int main(int argc, char** argv) {
     const char* dataDir;
@@ -365,7 +332,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
-    dataDir = narrow_dm1_data_dir(argv[1], narrowedDataDir,
+    dataDir = firestaff_dm1_probe_narrow_data_dir(argv[1], narrowedDataDir,
                                  sizeof(narrowedDataDir));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);

@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "firestaff_dm1_probe_data_dir.h"
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -63,38 +64,6 @@ static int is_pc34_data_dir(const char* path) {
     return file_exists(graphicsPath) && file_exists(dungeonPath);
 }
 
-static const char* narrow_dm1_data_dir(const char* dataDir,
-                                       char* out,
-                                       size_t outSize) {
-    static const char* const pc34RelativePaths[] = {
-        "DATA",
-        "dm1/DATA",
-        "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
-        "dos_extract/Dungeon-Master_DOS_EN_Version-34",
-        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",
-        "dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34",
-        NULL
-    };
-    size_t i;
-
-    if (!dataDir || !out || outSize == 0U) {
-        return dataDir;
-    }
-    if (is_pc34_data_dir(dataDir)) {
-        snprintf(out, outSize, "%s", dataDir);
-        return out;
-    }
-    for (i = 0; pc34RelativePaths[i] != NULL; ++i) {
-        char candidate[512];
-        snprintf(candidate, sizeof(candidate), "%s/%s", dataDir,
-                 pc34RelativePaths[i]);
-        if (is_pc34_data_dir(candidate)) {
-            snprintf(out, outSize, "%s", candidate);
-            return out;
-        }
-    }
-    return dataDir;
-}
 
 static unsigned short raw_next_thing(const struct DungeonThings_Compat* things,
                                      unsigned short thing) {
@@ -204,7 +173,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
-    dataDir = narrow_dm1_data_dir(root, narrowed, sizeof(narrowed));
+    dataDir = firestaff_dm1_probe_narrow_data_dir(root, narrowed, sizeof(narrowed));
 
     printf("=== DM1 V1 HoC no-creature-AI runtime probe ===\n");
     printf("dataDir=%s\n", dataDir);
