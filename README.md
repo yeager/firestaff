@@ -1,8 +1,8 @@
 # Firestaff
 
-Firestaff is a clean-room engine project for the Dungeon Master games. It uses
-game files you already own, identifies them by content hash and keeps the
-original files separate from the engine.
+Firestaff is a clean-room engine for the Dungeon Master games. It reads the
+original files you own, identifies each edition by its content hash and keeps
+that data separate from the program.
 
 Dungeon Master for PC DOS 3.4 is the current playable route. Work on Chaos
 Strikes Back, Dungeon Master II, DM Nexus and Theron's Quest is active, but
@@ -15,49 +15,23 @@ those games are not described here as finished releases.
   <img src="assets/branding/firestaff-logo.png" alt="Firestaff logo" width="360">
 </p>
 
-## What works today
+## Current state
 
-The PC DOS 3.4 version of Dungeon Master has the most complete route: startup,
-menus, dungeon view, HUD, controls, combat and save handling run from original
-data. It is still being checked against original captures and save material.
+Dungeon Master for PC DOS 3.4 is the most complete route: startup, menus,
+dungeon view, HUD, controls, combat and save handling use original data.
 
-The other games have real-data scanners, source references and individual
-runtime paths, but their remaining boundaries matter. The concise, current
-description is kept in [project status](docs/PROJECT_STATUS.md).
+The other games are active development routes. Firestaff detects their real
+media and exposes only paths with a verified handoff; it never borrows data
+from another edition to fill a gap. The detailed status is kept in
+[project status](docs/PROJECT_STATUS.md).
 
 | Game | Current scope |
 |---|---|
 | Dungeon Master | Playable PC DOS 3.4 route; further parity work continues. |
-| Chaos Strikes Back | Real-data startup, dungeon, utility, input and rendering work is under active hardening. |
+| Chaos Strikes Back | PC DOS 3.4 is the main route. Atari ST, Amiga and FM Towns have native media detection and platform-specific startup paths; campaign parity is still being completed. |
 | Dungeon Master II: Skullkeep | Engine and data work in progress. |
 | DM Nexus | Saturn real-data bring-up in progress. |
 | Theron's Quest | PC Engine real-media bring-up in progress. |
-
-<p align="center">
-  <img src="verification-screens/theron-quest-us-dungeon-mednafen.png" alt="Original US Theron's Quest dungeon capture in Mednafen" width="864">
-</p>
-<p align="center"><em>Theron's Quest, US original-media dungeon capture. The game image is a real runtime capture; no BIOS or game media is stored in the repository.</em></p>
-
-<p align="center">
-  <img src="verification-screens/theron-quest-us-akutuba-original-capture.png" alt="Original US Theron's Quest AKUTUBA capture in Mednafen" width="819">
-  <img src="verification-screens/theron-quest-us-inventory-original-capture.png" alt="Original US Theron's Quest inventory and HUD capture in Mednafen" width="841">
-</p>
-<p align="center"><em>Additional operator-supplied original-game captures: the AKUTUBA encounter frame and the inventory/HUD frame. These are reference captures from the original game, not claims that Firestaff's native Theron runtime has reached semantic parity.</em></p>
-
-<p align="center">
-  <img src="verification-screens/theron-quest-us-dungeon-hud-original-capture.png" alt="Original US Theron's Quest dungeon and HUD capture" width="847">
-</p>
-<p align="center"><em>Original-game dungeon/HUD reference with two champions and the source control panel.</em></p>
-
-<p align="center">
-  <img src="verification-screens/theron-quest-us-dungeon-item-ground-original-capture.png" alt="Original US Theron's Quest dungeon capture with a ground item" width="853">
-</p>
-<p align="center"><em>Original-game dungeon reference with a ground item visible; item ownership and T900 drop semantics remain under source/runtime review.</em></p>
-
-<p align="center">
-  <img src="verification-screens/theron-quest-us-dungeon-niche-item-original-capture.png" alt="Original US Theron's Quest dungeon capture with an item in a wall niche" width="847">
-</p>
-<p align="center"><em>Original-game dungeon reference with an item in a wall niche. The two supplied files were byte-identical; one copy is tracked, and this image remains presentation evidence rather than proof of T900 semantics.</em></p>
 
 ## Chaos Strikes Back editions
 
@@ -133,10 +107,6 @@ through Homebrew:
 ```bash
 brew install sdl3
 ```
-
-Den lokala Mac-rutinen för SDL, Mednafen och Tsugaru, inklusive spärren mot
-BIOS- och spelmediefiler i repot, finns i
-[docs/LOCAL_MAC_EMULATOR_WORKFLOW.md](docs/LOCAL_MAC_EMULATOR_WORKFLOW.md).
 
 Useful command-line options:
 

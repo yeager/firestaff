@@ -127,6 +127,9 @@
 
 ### Fixed
 
+- `CSB Amiga entrance`: Route Prison and Credits clicks through the original
+  C407/C411 zones. Resume remains unavailable until an authenticated original
+  save can be loaded, rather than treating an arbitrary click as New Game.
 - `CSB Entrance input`: Fix pointer dispatch to keep ownership with the title and entrance
   route until C03_GAME takes over, so a right-click cannot start the Prison
   door sequence.
