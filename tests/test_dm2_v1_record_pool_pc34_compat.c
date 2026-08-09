@@ -55,6 +55,88 @@ static int16_t mk_handle(int pool, int index)
     return (int16_t)((pool << 10) | (index & 0x3ff));
 }
 
+
+/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD traversal half.
+ * Selection is not ported yet, so the scan must always report "nothing
+ * taken" while still walking the map ring correctly: it starts at the
+ * per-DB cursor, skips the current map and the second protected map, and
+ * writes the resume cursor back (source :779/:1072). */
+static void test_recycle_scan_traversal(void)
+{
+    DM2_V1_OriginalRawDungeonReceipt dungeon;
+    DM2_V1_SksaveMapOwner owner;
+    DM2_V1_RecordPoolSet set;
+    DM2_V1_SksaveRecycleScanReceipt receipt;
+    uint16_t link = 0u;
+    uint16_t ground[8];
+    /* Every tile has bit 0x10 clear, so ground_index reports "no ground
+     * stack here" and the walk proceeds without needing column indices. */
+    uint8_t tiles[4];
+    int rc;
+
+    build_synthetic(&set);
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.valid = 1;
+    dungeon.map_count = 4;
+    for (int i = 0; i < 4; ++i) {
+        dungeon.map_widths[i] = 1;
+        dungeon.map_heights[i] = 1;
+    }
+
+    memset(&owner, 0, sizeof(owner));
+    memset(ground, 0xff, sizeof(ground));   /* every stack empty (END) */
+    owner.valid = 1;
+    /* ground_index requires the immutable source body pointer. */
+    owner.raw_body = tiles;
+    owner.raw_body_size = sizeof(tiles);
+    owner.dungeon = &dungeon;
+    owner.ground_stack_links = ground;
+    owner.ground_stack_count = 8u;
+    memset(tiles, 0, sizeof(tiles));
+    owner.map_tiles = tiles;
+    owner.map_tiles_size = sizeof(tiles);
+    for (int i = 0; i < 4; ++i) owner.map_tile_offsets[i] = (uint16_t)i;
+    owner.current_map = 1;
+
+    /* db 0x0f is rejected outright by the source. */
+    rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 15, -1,
+                                              &receipt, &link);
+    CHECK(rc == 0 && receipt.valid == 0,
+          "recycle scan rejects db 0x0f like the source");
+
+    /* Cursor starts at 0; current_map 1 and protected map 3 are skipped, so
+     * only maps 0 and 2 are walked. */
+    owner.recycle_scan_map[4] = 0;
+    rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 4, 3,
+                                              &receipt, &link);
+    CHECK(rc == 0, "recycle scan takes nothing while selection is unported");
+    CHECK(receipt.valid == 1 && receipt.eligibility_ported == 0,
+          "receipt reports the unported selection half");
+    CHECK(receipt.maps_scanned == 2,
+          "current map and the second protected map are both skipped");
+    CHECK(link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
+          "no record handle is produced");
+
+    /* The cursor resumes where the ring stopped, per c_record.cpp:779. */
+    CHECK(owner.recycle_scan_map[4] == receipt.resume_map,
+          "scan cursor is written back for this db");
+
+    /* A cursor past the map count wraps rather than reading out of range. */
+    owner.recycle_scan_map[5] = 200;
+    rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 5, -1,
+                                              &receipt, &link);
+    CHECK(rc == 0 && receipt.valid == 1 && receipt.maps_scanned == 3,
+          "an out-of-range cursor wraps and skips only the current map");
+
+    /* Per-DB cursors are independent. */
+    CHECK(owner.recycle_scan_map[4] != 200,
+          "each db keeps its own cursor");
+
+    dm2_v1_record_pool_set_free(&set);
+    printf("  recycle scan traversal OK\n");
+}
+
 int main(void)
 {
     DM2_V1_RecordPoolSet set;
@@ -197,6 +279,8 @@ int main(void)
     memset(&set, 0, sizeof(set));
     CHECK(!dm2_v1_record_pool_set_init_from_world(&set, NULL),
           "init from NULL world fails closed");
+
+    test_recycle_scan_traversal();
 
     CHECK(strstr(dm2_v1_record_pool_source_evidence(), "c_record.cpp") != NULL,
           "source evidence cites c_record.cpp");

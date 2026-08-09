@@ -102,6 +102,30 @@ typedef struct {
     int dynamic_records_detached;
 } DM2_V1_SksaveMapOwner;
 
+/* A ground-stack chain can never be longer than the whole pool set. */
+#define DM2_V1_SKSAVE_RECYCLE_MAX_STEPS 65536
+
+typedef struct {
+    int valid;
+    uint16_t maps_scanned;      /* maps actually walked (protected ones skipped) */
+    uint32_t records_examined;  /* ground-stack entries visited */
+    uint8_t resume_map;         /* cursor written back to recycle_scan_map[db] */
+    int eligibility_ported;     /* 0 until the per-type take rules are ported */
+} DM2_V1_SksaveRecycleScanReceipt;
+
+/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, traversal half only.
+ * Walks the map ring from recycle_scan_map[db], skipping current_map and
+ * `protected_map_b` (pass -1 for none), visiting every tile's ground stack.
+ * Selection is not implemented, so this always returns 0 and the caller
+ * keeps failing closed; the receipt reports what was walked. */
+int dm2_v1_sksave_map_owner_recycle_scan(
+    DM2_V1_SksaveMapOwner *owner,
+    const DM2_V1_RecordPoolSet *set,
+    int db,
+    int protected_map_b,
+    DM2_V1_SksaveRecycleScanReceipt *out_receipt,
+    uint16_t *out_link);
+
 /* The map-facing portion of the eventual single GAME_LOAD transaction. It
  * binds exactly one mutable c_map owner to exactly one c_record pool set;
  * callers must not substitute either member after stream consumption begins. */

@@ -497,6 +497,105 @@ int dm2_v1_sksave_map_owner_tile_record_link(
     return 1;
 }
 
+/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, map/tile traversal only
+ * (source lines 577-790).
+ *
+ * DM2_ALLOC_NEW_RECORD calls the recycler once a DB pool holds no
+ * OBJECT_NULL slot (c_record.cpp:1117). On the retail PC-DOS corpus that is
+ * the normal case at load: all 53 DB0 slots carry OBJECT_END_MARKER, so
+ * without a recycler the first direct-root allocation fails and GAME_LOAD
+ * aborts.
+ *
+ * This is the traversal half. The source walks maps in a ring starting at
+ * the per-DB cursor v1e0426[db], skipping the current map (v1e0266) and the
+ * second protected map (v1e027c when v1e0234 is set), and within each map
+ * walks every tile's ground stack. Which record may then be taken is a
+ * separate body of per-type rules (source lines 800-1070: table1d324c
+ * actuator classes, itemspec lookups, the +/-5 tile guard around the party,
+ * creature and missile deletion). Those are NOT implemented here, so
+ * `eligible` rejects every candidate and the caller still fails closed
+ * exactly as before.
+ *
+ * Returns 1 and writes *out_link when a record was selected, 0 when the walk
+ * completed without one. The cursor is written back on both paths, matching
+ * c_record.cpp:779 and :1072. */
+int dm2_v1_sksave_map_owner_recycle_scan(
+    DM2_V1_SksaveMapOwner *owner,
+    const DM2_V1_RecordPoolSet *set,
+    int db,
+    int protected_map_b,
+    DM2_V1_SksaveRecycleScanReceipt *out_receipt,
+    uint16_t *out_link)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    int map_count;
+    int scanned_maps = 0;
+    int visited;
+    int map;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (out_link) *out_link = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    /* Source: db 0x0f is rejected outright (c_record.cpp:577). */
+    if (!owner || !owner->valid || !owner->dungeon || !set || !set->valid ||
+        db < 0 || db >= 15) {
+        return 0;
+    }
+    dungeon = owner->dungeon;
+    map_count = (int)dungeon->map_count;
+    if (map_count <= 0 || map_count > DM2_RAW_SKSAVE_MAX_MAPS) return 0;
+
+    map = (int)owner->recycle_scan_map[db];
+    if (map >= map_count) map = 0;
+
+    for (visited = 0; visited < map_count; ++visited) {
+        int skip = (map == owner->current_map) ||
+                   (protected_map_b >= 0 && map == protected_map_b);
+        if (!skip) {
+            int x;
+            ++scanned_maps;
+            for (x = 0; x < (int)dungeon->map_widths[map]; ++x) {
+                int y;
+                for (y = 0; y < (int)dungeon->map_heights[map]; ++y) {
+                    size_t ground_index;
+                    int16_t current;
+                    size_t steps = 0u;
+                    int rc = dm2_v1_sksave_map_owner_ground_index(
+                        owner, map, x, y, &ground_index);
+                    if (rc < 0) continue;   /* tile carries no ground stack */
+                    if (rc == 0) return 0;  /* malformed owner */
+                    current = (int16_t)owner->ground_stack_links[ground_index];
+                    while (current != DM2_V1_RECORD_HANDLE_END &&
+                           current != DM2_V1_RECORD_HANDLE_NULL) {
+                        int16_t next;
+                        int pool = dm2_v1_record_handle_pool(current);
+                        /* The chain length can never exceed the pool set. */
+                        if (++steps > (size_t)DM2_V1_SKSAVE_RECYCLE_MAX_STEPS ||
+                            pool < 0 || pool >= DM2_V1_RECORD_POOL_COUNT ||
+                            !dm2_v1_record_pool_next_link(set, current, &next)) {
+                            return 0;
+                        }
+                        if (out_receipt) ++out_receipt->records_examined;
+                        /* Eligibility (source lines 800-1070) is not ported
+                         * yet; nothing is ever taken. */
+                        current = next;
+                    }
+                }
+            }
+        }
+        map = (map + 1 < map_count) ? map + 1 : 0;
+    }
+
+    /* c_record.cpp:779/:1072 store the map the scan stopped on. */
+    owner->recycle_scan_map[db] = (uint8_t)map;
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->maps_scanned = (uint16_t)scanned_maps;
+        out_receipt->resume_map = (uint8_t)map;
+        out_receipt->eligibility_ported = 0;
+    }
+    return 0;
+}
+
 int dm2_v1_sksave_map_owner_detach_dynamic_records(
     DM2_V1_SksaveMapOwner *owner, DM2_V1_RecordPoolSet *set,
     uint32_t *out_detached_count)
