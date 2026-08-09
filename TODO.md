@@ -75,7 +75,9 @@
   samma kedjor är bevarade, liksom DB3-aktuatorernas riktiga mål- och
   fördröjningsfält samt DB4-varelsernas position, HP och kompletta
   possessionskedjor. M11 kan nu läsa den autentiska mirrorlistan från denna
-  privata ägare, men saknar ännu panelritning och source-routad klickning.
+  privata ägare. Ett ObjectID kan bara bli ett privat championval via den
+  ägda kartans riktning, ruta och DB3-post. Panelritning och den verkliga
+  `0x50`-vägen från viewport saknas ännu.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

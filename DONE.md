@@ -539,6 +539,11 @@
 - ✅ Realdatatestet kör mot den lokala PC-DOS-profilen och bevisar att detta
   inte publicerar party, HUD, timer eller GAME_LOAD-session. Inga speldata
   skapades eller ändrades.
+- ✅ En förberedd spegel väljs nu med sitt verkliga DB3-ObjectID. Ägaren
+  härleder aktuell karta, ruta och formationsriktning från File_header-
+  GAME_LOAD-kontexten och återvaliderar `DM2_SELECT_CHAMPION` mot GDAT innan
+  den privata hjälten materialiseras. Ett panelindex eller en värdskapad
+  riktning kan inte välja en champion.
 
 # DM2 New Game privat kartkontext efter aktuatorkön (2026-08-08)
 

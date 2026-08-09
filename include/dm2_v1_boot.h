@@ -566,6 +566,19 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile);
 int dm2_v1_boot_select_new_game_champion(DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selection);
 
+/* Admit one prepared New Game mirror by its real DB3 ObjectID.  The helper
+ * obtains map, square and formation direction from the private File_header
+ * GAME_LOAD owner; callers cannot replace those source values with a panel
+ * ordinal, a host position or a guessed facing.  It is deliberately limited
+ * to the current source map, because c_input invokes DM2_SELECT_CHAMPION on
+ * the map that is currently loaded.  It still only materialises the private
+ * pre-session owner and never publishes a party, HUD, timer queue or M11
+ * runtime session.  Source: SKProject skevents.cpp's DB3 subtype-0x7e
+ * event branch and skhero.cpp::DM2_SELECT_CHAMPION.
+ */
+int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
+    DM2_V1_BootProfile *profile, uint16_t mirror_object_id);
+
 /* Read-only access for a later atomic runtime handoff. */
 const void *dm2_v1_boot_new_game_world_readonly(const DM2_V1_BootProfile *profile);
 
