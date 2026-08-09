@@ -93,16 +93,17 @@ and CRAM. Its decoded `MENU.BPK`, `FONT256.S2D`, `TITLE`, and `STABG` source
 join is negative, so it is hardware-layer evidence only and is not called a
 menu capture.
 
-A longer authenticated E-BIOS/French session at
-`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-window-20260809-e/runtime-vdp12.raw`
-captured 128 consecutive frames across the same input window. Its SHA-256 is
-`f8f6a131fb8120271184591e00b94e2cd63519f13b89eead49eb2b740094ed722`.
-Frames 0–19 retain the active NBG1 bitmap tuple and VDP1 activity; frames
-20–127 show the post-Start transition with all VDP2 layers disabled. The
-`MENU.BPK`/`FONT256`/`TITLE`/`STABG` comparator finds zero exact source joins
-in the active frames. This is positive input/transition evidence, but it is
-not a menu, HUD, or text-consumer admission and leaves semantic admission
-blocked.
+A time-corrected authenticated E-BIOS/French session at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-window-20260809-f/runtime-vdp12.raw`
+captured 512 consecutive frames with `skip_frames=10000`, so raw frame 500
+corresponds to runtime frame 10500, where the real START input is injected.
+Its SHA-256 is
+`decf7dbd3a327cb5623fe7c12b4820f5037dc0e977c50ec3aac38645fc353d30`.
+All 512 frames have VDP1 activity. The first frame retains the active NBG1
+bitmap tuple; after the input window VDP2 changes to other register states,
+but no `MENU.BPK`/`FONT256`/`TITLE`/`STABG` exact source join is found. This
+is positive input/transition evidence, not menu, HUD, or text-consumer
+admission, so semantic admission remains blocked.
 
 The validator also accepts `--require-vdp1-activity` for a V2 witness. This
 requires a non-idle `PTMR`/`EDSR` state and a nonzero VDP1 VRAM or framebuffer

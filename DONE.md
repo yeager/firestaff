@@ -114,14 +114,15 @@
 - ✅ VDP1-, VDP2-bitmap- och VDP2-tilemap-regressionerna samt strikt C99-
   kompilering passerar.
 
-# Nexus: sammanhängande efter-Start-capture (2026-08-09)
+# Nexus: tidsmässigt korrekt startup/menu-window-capture (2026-08-09)
 
-- ✅ En autentiserad E-BIOS/French-session fångade 128 råa VDP1/VDP2-ramar
-  över både före- och efter-Start-fönstret. Alla 128 ramar har aktiv
-  VDP1-observation; ramar 0–19 har `BGON=0x0002`, `CHCTLA=0x1211` och aktiv
-  NBG1 bitmap, medan ramar 20–127 har avstängda VDP2-lager.
-- ✅ Capturen valideras strukturellt som 128 ramar och har SHA-256
-  `f8f6a131fb8120271184591e00b94e2cd63519f13b89eead49eb2b740094ed722`.
+- ✅ En autentiserad E-BIOS/French-session fångade 512 råa VDP1/VDP2-ramar
+  med `skip_frames=10000`; råram 500 motsvarar därmed den injicerade Start-
+  inputen vid runtime-ram 10500. Alla 512 ramar har aktiv VDP1-observation.
+  Den första ramen har `BGON=0x0002`, `CHCTLA=0x1211` och aktiv NBG1 bitmap;
+  efter inputen ändras VDP2 till andra registerlägen utan bunden konsument.
+- ✅ Capturen valideras strukturellt som 512 ramar och har SHA-256
+  `decf7dbd3a327cb5623fe7c12b4820f5037dc0e977c50ec3aac38645fc353d30`.
   Source-comparatorn hittar noll exakta retail-joins, så semantic admission
   förblir korrekt spärrad.
 
