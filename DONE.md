@@ -584,6 +584,14 @@
   privata statefält först efter generatorpasset, medan M11, HUD och
   `source_game_load_session_ready` fortfarande är noll.
 
+# DM2 File_header-karta till viewporttyp (2026-08-09)
+
+- ✅ GAME_LOAD-projektionen översätter nu PC-DOS/File_headers råa
+  `tileTypeIndex` vid den explicita G1-bryggan innan den når viewporten:
+  `0=vägg`, `1=golv` och `4=dörr`. Den fick inte jämföras direkt med
+  `DM2_SquareType`, vars enumvärden skiljer sig. Realdatatestet bekräftar
+  fortsatt File_header-projektion utan M11-, HUD- eller sessionspublicering.
+
 # DM2 New Game privat teleporterstartkontext (2026-08-08)
 
 - ✅ Den privata kartkontexten porterar nu hela den läsande

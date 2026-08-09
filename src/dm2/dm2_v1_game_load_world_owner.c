@@ -1477,8 +1477,10 @@ int dm2_v1_game_load_world_owner_materialize_preselection_view(
             dx[direction] * source_cells[i].lateral;
         const int raw = dm2_v1_dungeon_get_tile_raw(&owner->dungeon, map,
                                                       map_x, map_y);
-        const int square_type = dm2_v1_dungeon_get_square_type(
+        const int tile_class = dm2_v1_dungeon_get_square_type(
             &owner->dungeon, map, map_x, map_y);
+        const int square_type = tile_class < 0 ? -1 :
+            dm2_v1_viewport_g1_tile_class_to_square_type((uint8_t)tile_class);
         const int ground_stack = dm2_v1_dungeon_get_first_thing(
             &owner->dungeon, map, map_x, map_y);
 

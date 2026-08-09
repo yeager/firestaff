@@ -86,6 +86,9 @@
   ägda kartans riktning, främre ruta och DB3-post. Startposen har ingen sådan
   spegel, så urvalet är korrekt spärrat tills källbunden rörelse och den
   verkliga `0x50`-vägen från viewport finns.
+  PC-DOS/File_headers råa tileklass översätts nu vid den enda tillåtna
+  viewportbryggan (`0=vägg`, `1=golv`, `4=dörr`) innan den används som
+  `DM2_SquareType`; inga råa G1-värden får längre tolkas som renderarens enum.
   De saknar ännu placering, GDAT-material, verklig teleporterförflyttning,
   aktuatordispatch, CAII, textpresentation och
   inputkonsumenter före faktisk ritning. Dörrknappar är fortfarande öppna.

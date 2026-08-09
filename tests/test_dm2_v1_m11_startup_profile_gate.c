@@ -126,8 +126,10 @@ static int dm2_test_preselection_view_matches_owner(
             dx[direction] * expected[i].lateral;
         const int raw = dm2_v1_dungeon_get_tile_raw(&owner->dungeon,
             owner->source_party_map, x, y);
-        const int type = dm2_v1_dungeon_get_square_type(&owner->dungeon,
+        const int tile_class = dm2_v1_dungeon_get_square_type(&owner->dungeon,
             owner->source_party_map, x, y);
+        const int type = tile_class < 0 ? -1 :
+            dm2_v1_viewport_g1_tile_class_to_square_type((uint8_t)tile_class);
         const int root = dm2_v1_dungeon_get_first_thing(&owner->dungeon,
             owner->source_party_map, x, y);
         if (view->cells[i].view_square != expected[i].view_square ||
