@@ -904,6 +904,33 @@ int main(void)
                       (user_save_path && user_save_path[0]
                            ? user_save.party_map_y : 18),
               "F31 native resume restores the saved source-owned party state");
+#ifndef _WIN32
+        if (user_save_path && user_save_path[0]) {
+            char recovery_dir[] = "/tmp/firestaff-f31-m11-recovery-XXXXXX";
+            char selected_path[512];
+            char backup_path[512];
+
+            CHECK(mkdtemp(recovery_dir) != NULL &&
+                      snprintf(selected_path, sizeof(selected_path),
+                               "%s/CSBGAME.DAT", recovery_dir) > 0 &&
+                      snprintf(backup_path, sizeof(backup_path),
+                               "%s/CSBGAME.BAK", recovery_dir) > 0 &&
+                      copy_file(user_save_path, backup_path) &&
+                      write_damaged_file(selected_path) &&
+                      test_set_env("FIRESTAFF_QUICKSAVE_PATH", selected_path),
+                  "F31 M11 backup-recovery slot is staged from real save bytes");
+            result = M11_GameView_QuickLoad(&view);
+            CHECK(result && live_profile &&
+                      live_profile->runtime.game_time == user_save.game_time &&
+                      strcmp(view.lastOutcome, "CSB QUICKSAVE RESTORED") == 0 &&
+                      access(selected_path, F_OK) == 0 &&
+                      access(backup_path, F_OK) != 0,
+                  "F31 M11 F9 restores the canonical slot before binding live runtime");
+            remove(selected_path);
+            remove(backup_path);
+            rmdir(recovery_dir);
+        }
+#endif
         (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
     }
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
