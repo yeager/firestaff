@@ -75,6 +75,17 @@ NBG1 bitmap-state (`TVMD=0x0080`, `BGON=0x0002`, `CHCTLA=0x1211`) och VDP1
 direct-color-kommandot är därför capture-evidens utan menyidentitet eller
 produktionskonsument.
 
+Den regionmatchade J/J-sessionen
+`run-codex-j-menu-long-20260809/runtime-vdp12.raw` är nu verifierad med 1 200
+ramar, BIOS J 1.01, full merged-disc och Start-handoff. VDP1-state rapporterar
+`SysClipX=319, SysClipY=223` genom fönstret. VDP1-VRAM ändras, men den
+undersökta frame 500-posten är en mode-5 direct-color draw från `0x63e00`
+(33 280 byte) utan exakt match i den hashverifierade retailkorpusen. VDP2 är
+oförändrad i register/VRAM/CRAM-konfigurationen och förblir en ensam NBG1
+bitmap-observation utan MENU.BPK/FONT256/TITLE/STABG-join. Sessionen är därför
+ett negativt, autentiserat bevis för transport/state — inte ett startup→meny-
+eller HUD/viewport-bevis. Produktionsspärren ligger kvar.
+
 I den lokala, användarägda capture-korpusen
 `run-codex-menu-long-20260809f/runtime-vdp12.raw` är frame 760 den bästa
 undersökta DGN-kandidaten. C:s command-chain-adapter binder 242 records och

@@ -6,6 +6,13 @@
   en användarskapad save-state precis före ett verkligt monster eller objekt;
   utan den får inga creature-, AI-, T700- eller T900-regler aktiveras.
 
+- 🔒 J/J long capture (`run-codex-j-menu-long-20260809`) är klar och
+  fail-closed: 1 200 ramar, autentiserad BIOS/media/input, stabil NBG1
+  bitmap-state och ingen exakt VDP1 mode-5- eller VDP2 bitmap/CRAM-join till
+  den hashverifierade retail-startkorpusen. Den får inte öppnas som meny/HUD-
+  ägare; nästa positiva mål är fortfarande en source-joined startup/menu-
+  konsument.
+
 - ⏳ Ny cold-start med samma autentiserade media gav 256 CD→RAM-originreceipts,
   26 `$E009`, 33 `$4644` och 96 `$4667`, men noll `$B0E5`/RNG. Detta är
   kombinerat transportbevis men öppnar ingen spawn-, AI-, T700- eller

@@ -11925,6 +11925,22 @@ rendering remain blocked.
   källor och exakta VRAM-offsets. Fixture, VDP2-regressioner och extern frame
   760-parserkontroll passerar; meny-/FONT256-ägarskap och produktionshandoff är
   fortsatt spärrade.
+
+# Nexus: J/J startup→menu capture audit (2026-08-09)
+
+- ✅ Körde en ny 1 200-ramars autentiserad japansk Saturn-session på extern
+  disk med BIOS J 1.01 och den hashverifierade fulla engelska merged-discen.
+  Start-handoffet passerar och varje frame bär VDP1-state med
+  `SysClipX=319, SysClipY=223`.
+- ✅ VDP2-observationen är stabil över hela fönstret: endast NBG1 bitmap mode
+  med samma registerkonfiguration. VDP1-VRAM ändras under körningen, men den
+  undersökta draw-posten (frame 500, mode 5, source `0x63e00`, 33 280 byte)
+  saknar byteexakt join mot hashverifierad MNS/DGN/MENU/FONT256/TITLE/STABG-
+  källa. VDP2 bitmap- och CRAM-jämförelsen ger noll retailträffar.
+- 🔒 Detta är verifierat negativt bevis, inte ett menybevis: autentiserad
+  VDP1/VDP2-transport och system clipping är öppna som capture-lager, medan
+  startup→meny, asset owner, HUD/viewport-produktionskonsument och
+  produktionstillstånd förblir stängda.
 # Nexus: FONT256 till VDP2 source join (2026-08-09)
 
 - ✅ `nexus_v1_font256_vdp2_capture_join()` verifierar att fångad VDP2
