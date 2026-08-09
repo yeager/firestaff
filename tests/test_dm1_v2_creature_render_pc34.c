@@ -50,7 +50,12 @@ int main(void) {
     require(file_contains("src/dm1/dm1_v1_group_active_state_pc34_compat.c", "F0179"), "V1 aspect timing remains source-locked");
 
     require(file_contains("assets-v2/manifests/firestaff-v2-wave1-creatures.manifest.json", "fs.v2.creature.demon.front-near"), "creature manifest still exposes demon front-near id");
-    require(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.starter.empty-hand"), "item starter manifest contains empty-hand id");
+    /* The items-starter manifest was migrated off the invented "fs.v2.*"
+     * naming onto real ReDMCSB identifiers; the empty-hand action icon is
+     * C201_ICON_ACTION_ICON_EMPTY_HAND (DEFS.H:1952). Assert the source id
+     * rather than the superseded synthetic one. The wave1 creature manifests
+     * still carry fs.v2.* ids and are checked as such on the line above. */
+    require(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "C201_ICON_ACTION_ICON_EMPTY_HAND"), "item starter manifest contains the source empty-hand icon id");
     require(file_contains("assets-v2/items/wave1/specs/starter-icons.md", "DUNVIEW.C"), "item spec cites DUNVIEW.C object rendering audit");
     return 0;
 }
