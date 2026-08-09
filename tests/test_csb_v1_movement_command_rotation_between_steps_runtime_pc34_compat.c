@@ -173,7 +173,16 @@ static void test_forward_rotate_forward_uses_post_rotation_facing(void)
              "queue empty flag after step 2 is true");
     CHECK_EQ(result.step2_result.party_state_changed, 1,
              "step 2 reports party coordinate mutation");
-    CHECK_EQ(result.step2_result.disabled_movement_ticks_after, 1,
+    /* This expectation was 1 while the party delay was still a stub.  2e286d0ca
+     * wired CLIKMENU.C F0366:342-351, which seeds the delay at one and then
+     * takes the maximum F0310_CHAMPION_GetMovementTicks over the living party.
+     * For this fixture F0310 resolves to exactly 2: the champions carry no
+     * Load, so maximum_load = (STR << 3) + 100 exceeds it and the unloaded
+     * branch starts at 2; Load << 3 does not exceed maximum_load * 5, so the
+     * heavy-load increment does not apply; no champion has the 0x0020 wound;
+     * and no feet slot holds C194 Boot of Speed to decrement it.  So the
+     * party maximum is 2, not the stub's 1. */
+    CHECK_EQ(result.step2_result.disabled_movement_ticks_after, 2,
              "step 2 records movement timing gate");
 
     check_champion_snapshots(&result);
