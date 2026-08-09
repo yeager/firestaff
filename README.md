@@ -113,6 +113,10 @@ through Homebrew:
 brew install sdl3
 ```
 
+Den lokala Mac-rutinen för SDL, Mednafen och Tsugaru, inklusive spärren mot
+BIOS- och spelmediefiler i repot, finns i
+[docs/LOCAL_MAC_EMULATOR_WORKFLOW.md](docs/LOCAL_MAC_EMULATOR_WORKFLOW.md).
+
 Useful command-line options:
 
 ```text

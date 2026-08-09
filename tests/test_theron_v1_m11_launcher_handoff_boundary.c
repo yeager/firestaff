@@ -27,6 +27,7 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_startup_media.h"
 #include "theron_v1_startup_flow.h"
 
 #include <stdio.h>
@@ -96,6 +97,31 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
         }
     }
     return nonzero;
+}
+
+static unsigned char* read_binary_file(const char* path, size_t* out_bytes) {
+    FILE* file;
+    long bytes;
+    unsigned char* data;
+
+    if (!path || !out_bytes || !(file = fopen(path, "rb"))) {
+        return NULL;
+    }
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (bytes = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    data = (unsigned char*)malloc((size_t)bytes);
+    if (!data || fread(data, 1u, (size_t)bytes, file) != (size_t)bytes) {
+        free(data);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_bytes = (size_t)bytes;
+    return data;
 }
 
 static int startup_rows_contain(
@@ -513,6 +539,69 @@ static void run_production_forcefield_binds_selected_records_without_names(void)
                 "production roster handoff keeps unavailable text names empty");
 }
 
+static void run_real_us_roster_text_forcefield_handoff_if_available(void) {
+    Theron_StartupMediaStateReceipt receipt;
+    Theron_StartupFlow flow;
+    Theron_DungeonProgression progression;
+    Theron_V1_Party party;
+    const char* roster_name_ptrs[THERON_STARTUP_MEDIA_ROSTER_CAPACITY];
+    unsigned char* track02;
+    size_t track02_bytes = 0u;
+    char path[512];
+    const char* home = getenv("HOME");
+
+    if (!home || !home[0]) {
+        expect_skip("HOME is unset; no real US roster handoff source path");
+        return;
+    }
+    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+    track02 = read_binary_file(path, &track02_bytes);
+    if (!track02) {
+        expect_skip("real US Track 02 is absent; roster-text handoff remains skip-safe");
+        return;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    theron_v1_startup_media_capture_track02_state_receipt(
+        track02, track02_bytes, THERON_TRACK02_MD5_US_BIN, &receipt);
+    expect_true(receipt.track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+                    receipt.startup_roster_name_status == THERON_TRACK02_SIGNAL_OK &&
+                    receipt.startup_roster_name_count == 8,
+                "real US Track 02 produces the authenticated eight-name roster receipt");
+    if (receipt.startup_roster_name_status != THERON_TRACK02_SIGNAL_OK ||
+        receipt.startup_roster_name_count != 8) {
+        free(track02);
+        return;
+    }
+    for (int i = 0; i < receipt.startup_roster_name_count; ++i) {
+        roster_name_ptrs[i] = receipt.startup_roster_names[i];
+    }
+
+    theron_v1_startup_flow_init(&flow);
+    theron_v1_dungeon_progression_init(&progression);
+    expect_true(theron_v1_startup_choose_stage(
+                    &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
+                    THERON_STARTUP_OK,
+                "real US roster handoff enters the source-bound AKUTUBA startup path");
+    expect_true(theron_v1_startup_select_mirror(&flow, 6) ==
+                    THERON_STARTUP_OK &&
+                    theron_v1_startup_select_mirror(&flow, 2) ==
+                    THERON_STARTUP_OK,
+                "real US roster handoff selects two Soul Room mirrors");
+    memset(&party, 0, sizeof(party));
+    expect_true(theron_v1_startup_enter_forcefield_with_roster(
+                    &flow, &party,
+                    roster_name_ptrs,
+                    receipt.startup_roster_name_count) == THERON_STARTUP_OK,
+                "real US roster text reaches production forcefield handoff");
+    expect_true(strcmp(party.champions[1].name,
+                       receipt.startup_roster_names[7]) == 0 &&
+                    strcmp(party.champions[2].name,
+                           receipt.startup_roster_names[5]) == 0,
+                "forcefield binds names by authentic mirror-to-roster mapping, not menu labels");
+    free(track02);
+}
+
 int main(void) {
     printf("=== Theron V1 M12/M11 launcher handoff boundary ===\n");
 
@@ -522,6 +611,7 @@ int main(void) {
     run_production_forcefield_transition_without_roster();
     run_keyboard_arrow_forcefield_focus_regression();
     run_production_forcefield_binds_selected_records_without_names();
+    run_real_us_roster_text_forcefield_handoff_if_available();
     run_real_launcher_handoff_if_available();
 
     printf("\nTheron V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",

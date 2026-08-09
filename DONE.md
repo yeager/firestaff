@@ -1,3 +1,13 @@
+# Theron: autentisk US-rostertext i forcefield-handoff (2026-08-09)
+
+- ✅ Den riktiga US-Track-02-rostertexten läses från `TQUS02.bin`, placeras i
+  explicita radpekare och binds nu verifierat till produktionens forcefield
+  via mirror→roster-index. Testet täcker `PENTAI` och `TIRAN` utan statiska
+  menynamn; saknad användardata ger skip i stället för syntetiskt godkännande.
+- ✅ Lokal Mac-dokumentation för SDL3, Mednafen och Tsugaru har lagts till.
+  Den beskriver externa data-/firmwarevägar och spärrar uttryckligen BIOS,
+  System Card, BIN/CUE/ISO och andra originalpayloads från GitHub.
+
 # Nexus: korrigerad färdighetsberäkning (2026-08-09)
 
 - ✅ Implementeringstäckning och spärrad produktionsgrad redovisas nu

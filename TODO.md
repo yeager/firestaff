@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- ⏳ Den autentiska US-rostertexten är nu verifierad i forcefield-handoffens
+  mirror→roster-bindning. JP-porträtt, roster-titlar och övrig full
+  presentation kräver fortfarande egna källbundna konsumentbevis.
+
 - ⏳ Therons autentiska kategori-4-record har nu `chested` hela vägen från
   Track 02-dekodning via source-monsterrecord och live creature till save
   version 9. Fältet är fortfarande provenance; T900:s betydelse måste bevisas
