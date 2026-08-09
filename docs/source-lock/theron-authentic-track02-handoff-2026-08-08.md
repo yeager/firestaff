@@ -67,3 +67,20 @@ and title/menu route, the game reached the original dungeon view. The tracked
 This is original-game evidence only. It does not promote the Firestaff
 runtime screenshot gate or prove square-to-tile, HUD, creature, T700, T900,
 or other unresolved semantic consumers.
+
+## Operator-supplied gameplay and inventory captures
+
+**Verified: 2026-08-09.** The operator supplied two additional screenshots
+from the same original US Theron's Quest/Mednafen workflow. They are tracked
+as original-media reference captures, not generated Firestaff frames:
+
+| Artifact | Dimensions | SHA-256 | Narrow evidence |
+|---|---:|---|---|
+| `verification-screens/theron-quest-us-akutuba-original-capture.png` | 819×657 | `13b0795054dea2a37c32392fbc2a6f212d1695f236fce394bbff824be929b718` | AKUTUBA scene/roster presentation |
+| `verification-screens/theron-quest-us-inventory-original-capture.png` | 841×611 | `3d9bbd84eeb05d9e35bc9e9dfef9d38c3a5c8effa2642b5190528ece7c344c4f` | champion portrait, equipment layout, health/stamina/mana and food/water HUD |
+
+These images are useful visual evidence for the source presentation and for
+the README reference gallery. The screenshots alone do not prove the
+underlying RNG, AI, attack, damage, loot, generator, T700 or T900 consumers;
+those still require a same-run runtime receipt or a complete source-bound
+static consumer proof.

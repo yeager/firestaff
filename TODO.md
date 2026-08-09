@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ⏳ De nya AKUTUBA- och inventory/HUD-captures visar originalets
+  presentation, men saknar fortfarande en sammanhängande Firestaff-runtime-
+  witness. Nästa capture ska binda samma källa till tile/palette/HUD-
+  konsumenterna och får inte använda dessa bilder som semantisk fallback.
+
 - ⏳ Therons savegame-capture når fortfarande inte den autentiserade
   spelägda `$2600`-konsumenten. Creature-AI, spawn/RNG, T700 och T900 ska
   därför förbli fail-closed även när en lokal Mednafen-state finns.

@@ -38,6 +38,12 @@ description is kept in [project status](docs/PROJECT_STATUS.md).
 </p>
 <p align="center"><em>Theron's Quest, US original-media dungeon capture. The game image is a real runtime capture; no BIOS or game media is stored in the repository.</em></p>
 
+<p align="center">
+  <img src="verification-screens/theron-quest-us-akutuba-original-capture.png" alt="Original US Theron's Quest AKUTUBA capture in Mednafen" width="819">
+  <img src="verification-screens/theron-quest-us-inventory-original-capture.png" alt="Original US Theron's Quest inventory and HUD capture in Mednafen" width="841">
+</p>
+<p align="center"><em>Additional operator-supplied original-game captures: the AKUTUBA encounter frame and the inventory/HUD frame. These are reference captures from the original game, not claims that Firestaff's native Theron runtime has reached semantic parity.</em></p>
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder

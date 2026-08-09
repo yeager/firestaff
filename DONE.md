@@ -1,3 +1,12 @@
+# Theron: operator-supplied original gameplay/HUD captures (2026-08-09)
+
+- ✅ Två riktiga US Theron's Quest/Mednafen-captures har lagts till som
+  original-media referensbilder: AKUTUBA-vyn och inventory/HUD-vyn.
+  Hashar och den smala evidensgränsen finns i
+  `docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`.
+- ✅ README visar nu dessa captures som originalspel-referens. De används
+  inte som bevis för att Firestaffs egna Theron-runtime har semantic parity.
+
 # Repository: hårdare BIOS- och originalmediespärr (2026-08-09)
 
 - ✅ `scripts/verify_no_original_media_tracked.sh` avvisar nu både kända
