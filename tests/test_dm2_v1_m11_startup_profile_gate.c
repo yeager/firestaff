@@ -4760,67 +4760,51 @@ int main(void) {
                         profile_new_game_owner) &&
                     dm2_test_preselection_creature_possessions_match_owner(
                         profile_new_game_owner) &&
-                    !profile_new_game_owner->champion_selection_materialized &&
-                    profile_new_game_owner->selected_party.heros_in_party == 0 &&
+                    profile_new_game_owner->champion_selection_materialized &&
+                    profile_new_game_owner->selected_mirror_count == 1u &&
+                    profile_new_game_owner->selected_mirrors[0].map == 0 &&
+                    profile_new_game_owner->selected_mirrors[0].x == 0 &&
+                    profile_new_game_owner->selected_mirrors[0].y == 0 &&
+                    profile_new_game_owner->selected_mirrors[0].mirror_object_id != 0u &&
+                    profile_new_game_owner->selected_party.heros_in_party == 1 &&
+                    profile_new_game_owner->source_startend_first_champion_released &&
+                    profile_new_game_owner->source_startend_first_champion_tick == 0u &&
+                    profile_new_game_owner->source_startend_first_champion_object_id ==
+                        profile_new_game_owner->selected_mirrors[0].mirror_object_id &&
                     !profile->source_game_load_session_ready,
-                "M11 NEW GAME retains the real post-GAME_LOAD pre-mirror owner without choosing a champion");
+                "M11 NEW GAME privately runs INIT_CHAMPIONS from the real (0,0) DB3 chain before input");
     profile_preselection_turn_owner =
         (DM2_V1_GameLoadWorldOwner *)(void *)profile_new_game_owner;
     expect_true(profile_preselection_turn_owner &&
                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_LEFT) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    profile_preselection_turn_owner->source_party_direction == 3u &&
-                    profile_preselection_turn_owner->selected_party.heros_in_party == 0 &&
-                    !profile_preselection_turn_owner->champion_selection_materialized &&
-                    dm2_test_preselection_view_matches_owner(
-                        profile_preselection_turn_owner) &&
-                    profile_preselection_turn_owner->preselection_viewport.valid &&
+                        M11_GAME_INPUT_IGNORED &&
+                    profile_preselection_turn_owner->source_party_x == 1u &&
+                    profile_preselection_turn_owner->source_party_y == 8u &&
+                    profile_preselection_turn_owner->source_party_direction == 0u &&
                     view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
                     view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0 &&
                     !profile->source_game_load_session_ready,
-                "M11 routes only the source left-turn to the private real-data GAME_LOAD owner");
+                "M11 rejects the former partylösa turn route after private INIT_CHAMPIONS");
     expect_true(profile_preselection_turn_owner &&
                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    profile_preselection_turn_owner->source_party_direction == 0u,
-                "M11 routes the source right-turn to the private GAME_LOAD owner");
-    expect_true(profile_preselection_turn_owner &&
+                        M11_GAME_INPUT_IGNORED &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                        M11_GAME_INPUT_IGNORED &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_STRAFE_RIGHT) ==
+                        M11_GAME_INPUT_IGNORED &&
+                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                        M11_GAME_INPUT_IGNORED &&
                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_STRAFE_LEFT) ==
                         M11_GAME_INPUT_IGNORED &&
                     profile_preselection_turn_owner->source_party_x == 1u &&
-                    profile_preselection_turn_owner->source_party_y == 8u,
-                "M11 leaves the unowned source event 6 wall branch unchanged");
-    expect_true(profile_preselection_turn_owner &&
-                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
-                        M11_GAME_INPUT_IGNORED &&
-                    profile_preselection_turn_owner->source_party_x == 1u &&
-                    profile_preselection_turn_owner->source_party_y == 8u,
-                "M11 leaves an unowned source event 5 record chain unchanged");
-    expect_true(profile_preselection_turn_owner &&
-                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    profile_preselection_turn_owner->source_party_map == 0 &&
-                    profile_preselection_turn_owner->source_party_x == 1u &&
-                    profile_preselection_turn_owner->source_party_y == 7u &&
-                    profile_preselection_turn_owner->selected_party.heros_in_party == 0 &&
-                    !profile_preselection_turn_owner->champion_selection_materialized &&
-                    dm2_test_preselection_view_matches_owner(
-                        profile_preselection_turn_owner) &&
-                    profile_preselection_turn_owner->preselection_viewport.valid &&
-                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_STRAFE_RIGHT) ==
-                        M11_GAME_INPUT_IGNORED &&
-                    profile_preselection_turn_owner->source_party_x == 1u &&
-                    profile_preselection_turn_owner->source_party_y == 7u &&
-                    M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
-                        M11_GAME_INPUT_IGNORED &&
+                    profile_preselection_turn_owner->source_party_y == 8u &&
+                    profile_preselection_turn_owner->source_party_direction == 0u &&
+                    profile_preselection_turn_owner->selected_party.heros_in_party == 1 &&
+                    profile_preselection_turn_owner->champion_selection_materialized &&
                     view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
                     view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0 &&
                     !profile->source_game_load_session_ready,
-                "M11 routes source event 3 and keeps all other private GAME_LOAD input inert");
-    expect_true(profile &&
-                    !dm2_v1_boot_materialize_startend_first_champion(profile) &&
-                    !profile->source_game_load_session_ready,
-                "DM2 refuses startend's scripted champion after the private pose left its source entrance");
+                "M11 rejects all former partylösa source events 1–6 after private INIT_CHAMPIONS");
     expect_true(profile &&
                     dm2_v1_boot_prepared_new_game_mirror_roster(
                         profile, &prepared_mirror_roster) &&
@@ -4841,18 +4825,16 @@ int main(void) {
                     (profile_new_game_owner =
                         (const DM2_V1_GameLoadWorldOwner *)
                             dm2_v1_boot_prepared_new_game_world_readonly(profile)) != NULL &&
-                    profile_new_game_owner->selected_mirror_count == 0u &&
-                    profile_new_game_owner->selected_party.heros_in_party == 0 &&
-                    !profile_new_game_owner->champion_selection_materialized &&
+                    profile_new_game_owner->selected_mirror_count == 1u &&
+                    profile_new_game_owner->selected_party.heros_in_party == 1 &&
+                    profile_new_game_owner->champion_selection_materialized &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0 &&
                     view.dm2State.leader_hand_object == 0u,
-                    "DM2 rejects an authentic but non-front mirror until the source viewport and movement owner reach it");
+                    "DM2 keeps further mirror selection blocked until the full source click owner exists");
     }
-    /* startend.cpp::DM2_2f3f_0789 is a fresh GAME_LOAD path, not a movement
-     * continuation.  Rebuild the hash-admitted File_header owner before
-     * testing that explicit source branch; no party, HUD or timer is carried
-     * across the discarded private preselection probe. */
+    /* startend.cpp::DM2_2f3f_0789 is part of fresh GAME_LOAD and therefore
+     * runs while rebuilding the hash-admitted owner, before input. */
     expect_true(profile && dm2_v1_boot_prepare_new_game_world(profile) &&
                     (profile_new_game_owner =
                         (const DM2_V1_GameLoadWorldOwner *)
@@ -4861,11 +4843,13 @@ int main(void) {
                         profile_new_game_owner->preselection_entrance.x &&
                     profile_new_game_owner->source_party_y ==
                         profile_new_game_owner->preselection_entrance.y &&
-                    !profile_new_game_owner->champion_selection_materialized &&
+                    profile_new_game_owner->champion_selection_materialized &&
+                    profile_new_game_owner->selected_party.heros_in_party == 1 &&
+                    profile_new_game_owner->source_startend_first_champion_released &&
                     !profile->source_game_load_session_ready,
-                "DM2 rebuilds a fresh source entrance before startend's scripted branch");
+                "DM2 rebuilds a fresh source entrance and privately runs startend before input");
     expect_true(profile &&
-                    dm2_v1_boot_materialize_startend_first_champion(profile) &&
+                    !dm2_v1_boot_materialize_startend_first_champion(profile) &&
                     (profile_new_game_owner =
                         (const DM2_V1_GameLoadWorldOwner *)
                             dm2_v1_boot_new_game_world_readonly(profile)) != NULL &&
@@ -4887,7 +4871,7 @@ int main(void) {
                     profile_new_game_owner->champion_selection_materialized &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
-                "DM2 materializes the original scripted first champion from startend's (0,0) DB3 chain privately");
+                "DM2 retains the original scripted first champion from startend's (0,0) DB3 chain privately");
     /* The following runtime/save assertions exercise resume separately. A
      * New Game may not create the former fixture party merely to enter this
      * block; GAME_LOAD owns that source transition. */

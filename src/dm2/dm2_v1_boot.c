@@ -13672,8 +13672,19 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
         }
         return 0;
     }
+    /* INIT_CHAMPIONS / DM2_2f3f_0789 is part of fresh GAME_LOAD, before
+     * HANDLE_UI_EVENT can consume movement. Install the candidate only long
+     * enough for its existing File_header-rooted Thoram atom to resolve; on
+     * any missing DB3-0x7e proof restore the previous private owner intact.
+     * SKProject SkWinCore.cpp:26367-26492. */
     previous = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
     profile->game_load_world_owner = candidate;
+    if (!dm2_v1_boot_materialize_startend_first_champion(profile)) {
+        profile->game_load_world_owner = previous;
+        dm2_v1_game_load_world_owner_free(candidate);
+        free(candidate);
+        return 0;
+    }
     if (previous) {
         dm2_v1_game_load_world_owner_free(previous);
         free(previous);
