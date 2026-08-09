@@ -6,9 +6,14 @@
   FM Towns/TownsOS.
 - ✅ Den lokala Mednafen-binärens SDL2-länk är verifierad mot den riktiga
   externa SDL2-prefixen; `sdl2-compat` godtas inte som capturebevis.
-- ✅ En autentisk US Track 02/System Card-körning dokumenterades som negativt
-  resultat: CD-IRQ fanns, men dynamiska och autentiserade CD→RAM-receipts
-  saknades. Ingen Theron-semantik öppnades på grundval av den körningen.
+- ✅ Den senaste full-CUE-körningen med autentiserat US Track 02/System Card
+  gav 161 råa sektorspann, 51 SCSI-läsningar, 161 sektorbindningar, två
+  autentiserade CD→RAM-origin-kvitton och 4096 main-RAM-konsumentläsningar.
+  Detta låser transporten, men inte nivå-, objekt-, tile-, RNG-, spawn-, AI-,
+  T700- eller T900-semantik; `$B0E5` och RNG-sidecar saknas fortfarande.
+- ✅ Runbooken skiljer nu uttryckligen på den nya autentiserade transport-
+  capturen, äldre negativa körningar och scripted replay som emulatorintern
+  inputväg utan fysisk macOS-input.
 
 # Theron: atomic source-group admission (2026-08-09)
 

@@ -217,8 +217,35 @@ Mednafen-capturekedjan för Theron.
 ## Senast verifierade Mednafen-körning
 
 2026-08-09 kördes den instrumenterade binären med den riktiga SDL2-prefixen,
-US Track 02 (`TQUS02.bin`) och System Card 3.0. Körningen gav en riktig
-HuC6280-CD-IRQ, men verifieraren stoppade resultatet eftersom den inte gav
-några dynamiska receipts eller autentiserade CD→RAM-receipts. Den körningen
-är därför ett reproducerbart negativt capture-resultat, inte bevis för RNG,
-spawn, AI, T700, T900 eller andra spelkonsumenter.
+hela USA-CUE:n, verifierat US Track 02 (`TQUS02.bin`) och System Card 3.0.
+Den bounded scripted replay-körningen gav följande source-bound transport-
+receipt:
+
+```text
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+raw_sector_spans=161
+scsi_read_commands=51
+scsi_read_sector_bindings=161
+authenticated_cd_ram_receipts=2
+main_ram_consumer_reads=4096
+vce_palette_snapshot_bytes=1024
+spawn_entry_b0e5_samples=0
+rng_consumer_samples=0
+transition=observed
+```
+
+Detta bevisar CD-sektor/FIFO → RAM-transport och en observerad main-RAM-
+konsument, men inte vilken nivå-, objekt-, tile- eller creatureägare som läser
+bytesen. Körningen får därför inte öppna RNG, spawn, AI, attack, skada, loot,
+generatorer, T700 eller T900. Scripted replay är dessutom en
+emulatorintern inputväg, inte fysisk macOS-input.
+
+Tracebasen ligger utanför repot på extern-disken:
+
+```text
+/Volumes/Extern-disk/theron-auth-capture-full-scripted-20260809.trace
+```
+
+Den äldre körningen utan autentiserade CD→RAM-receipts ska inte blandas med
+denna körning; capture-sessioner hålls separata.
