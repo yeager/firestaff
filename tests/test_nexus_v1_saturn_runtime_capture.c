@@ -105,6 +105,8 @@ int main(void)
         !receipt.vdp1_state_valid || receipt.copr_word != 0x374U ||
         !receipt.vdp1_execution_active || receipt.vdp1_vram_size !=
             NEXUS_V1_SATURN_VDP1_VRAM_BYTES || !receipt.vdp2_registers ||
+        receipt.vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        receipt.vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
         !receipt.semantic_admission_blocked ||
         nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 2U,
                                                &receipt)) {

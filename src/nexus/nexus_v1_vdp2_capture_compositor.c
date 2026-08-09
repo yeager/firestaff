@@ -14,10 +14,14 @@ static uint16_t read_le16(const uint8_t *p)
 
 static uint16_t read_register16(const uint8_t *registers, size_t offset)
 {
-    /* TVMD is 0x0080 in both authenticated serializations. A zero TVMD is
-     * retained for the existing source-bound fixture lane. */
-    if (read_be16(registers) != 0x0080U &&
-        read_le16(registers) == 0x0080U)
+    uint16_t big = read_be16(registers);
+    uint16_t little = read_le16(registers);
+
+    /* Real captures use Saturn's TVMD display-enable bit 0x8000. Keep the
+     * older 0x0080 fixture witness as a compatibility serialization. */
+    if ((little & 0x8000U) != 0U && (big & 0x8000U) == 0U)
+        return read_le16(registers + offset);
+    if (big != 0x0080U && little == 0x0080U)
         return read_le16(registers + offset);
     return read_be16(registers + offset);
 }

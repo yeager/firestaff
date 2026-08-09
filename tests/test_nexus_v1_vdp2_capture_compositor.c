@@ -77,7 +77,7 @@ int main(void)
     /* The same source-bound bitmap lane must accept the native
      * little-endian register serialization used by later frames. */
     memset(registers, 0, sizeof(registers));
-    wl16(registers + 0x00, 0x0080);
+    wl16(registers + 0x00, 0x8020);
     wl16(registers + 0x20, 0x0002);
     wl16(registers + 0x28, 0x1211);
     wl16(registers + 0x2c, 0x0000);

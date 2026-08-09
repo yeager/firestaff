@@ -14,13 +14,14 @@ static uint16_t read_le16(const uint8_t *p)
 
 static uint16_t read_register16(const uint8_t *registers, size_t offset)
 {
-    uint16_t tvmd = read_be16(registers + 0x00U);
+    uint16_t big = read_be16(registers);
+    uint16_t little = read_le16(registers);
 
-    /* The external producer has both historical big-endian and native
-     * little-endian serializations. TVMD is the stable 0x0080 witness;
-     * synthetic fixtures with a zero TVMD retain the original big-endian
-     * contract. */
-    if (tvmd != 0x0080U && read_le16(registers) == 0x0080U)
+    /* Real captures use Saturn's TVMD display-enable bit 0x8000. Keep the
+     * older 0x0080 fixture witness as a compatibility serialization. */
+    if ((little & 0x8000U) != 0U && (big & 0x8000U) == 0U)
+        return read_le16(registers + offset);
+    if (big != 0x0080U && little == 0x0080U)
         return read_le16(registers + offset);
     return read_be16(registers + offset);
 }
@@ -168,4 +169,73 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
     receipt.renderer_permitted = receipt.valid;
     *out_receipt = receipt;
     return receipt.valid;
+}
+
+int nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    const Nexus_V1_Vdp2RuntimeTilemapBinding *binding,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_Vdp2TilemapCaptureInput input;
+    int map_bytes;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&input, 0, sizeof(input));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!framebuffer || !binding || !binding->source_name_table ||
+        !binding->source_character_generator ||
+        !binding->source_cram ||
+        binding->capture_character_generator_size <= 0 ||
+        binding->map_columns <= 0 || binding->map_rows <= 0 ||
+        !nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
+        !frame.vdp2_registers || frame.vdp2_cram_size != 4096U ||
+        frame.vdp2_register_size < NEXUS_V1_VDP2_TILEMAP_REGISTERS_BYTES) {
+        return 0;
+    }
+    map_bytes = binding->map_columns * binding->map_rows * 4;
+    if (binding->map_columns > 1024 || binding->map_rows > 1024 ||
+        binding->source_name_table_size != map_bytes ||
+        binding->capture_name_table_offset > frame.vdp2_vram_size ||
+        (size_t)map_bytes > frame.vdp2_vram_size -
+            binding->capture_name_table_offset ||
+        binding->capture_character_generator_offset > frame.vdp2_vram_size ||
+        (size_t)binding->capture_character_generator_size >
+            frame.vdp2_vram_size - binding->capture_character_generator_offset ||
+        binding->source_character_generator_size !=
+            binding->capture_character_generator_size) return 0;
+    input.capture_name_table = frame.vdp2_vram +
+        binding->capture_name_table_offset;
+    input.capture_name_table_size = map_bytes;
+    input.capture_character_generator = frame.vdp2_vram +
+        binding->capture_character_generator_offset;
+    input.capture_character_generator_size =
+        binding->capture_character_generator_size;
+    input.capture_cram = frame.vdp2_cram;
+    input.capture_cram_size = (int)frame.vdp2_cram_size;
+    input.vdp2_registers = frame.vdp2_registers;
+    input.vdp2_registers_size = (int)frame.vdp2_register_size;
+    input.source_name_table = binding->source_name_table;
+    input.source_name_table_size = binding->source_name_table_size;
+    input.source_character_generator = binding->source_character_generator;
+    input.source_character_generator_size =
+        binding->source_character_generator_size;
+    input.source_cram = binding->source_cram;
+    input.source_cram_size = binding->source_cram_size;
+    input.map_columns = binding->map_columns;
+    input.map_rows = binding->map_rows;
+    input.source_tile_x = binding->source_tile_x;
+    input.source_tile_y = binding->source_tile_y;
+    input.destination_x = binding->destination_x;
+    input.destination_y = binding->destination_y;
+    input.source_hash_verified = binding->source_hash_verified;
+    input.original_saturn_capture_verified = 1;
+    input.transparent_index_zero_verified =
+        binding->transparent_index_zero_verified;
+    return nexus_v1_vdp2_capture_composite_nbg1_tilemap(
+        framebuffer, &input, out_receipt);
 }

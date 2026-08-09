@@ -38331,6 +38331,26 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp2_tilemap_capture_compositor
     )
 
+    add_executable(test_nexus_v1_vdp2_runtime_tilemap
+        tests/test_nexus_v1_vdp2_runtime_tilemap.c
+        src/nexus/nexus_v1_vdp2_tilemap_capture_compositor.c
+    )
+    target_include_directories(test_nexus_v1_vdp2_runtime_tilemap PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp2_runtime_tilemap PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp2_runtime_tilemap PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp2_runtime_tilemap
+        COMMAND test_nexus_v1_vdp2_runtime_tilemap
+    )
+
     add_executable(test_nexus_v1_vdp12_capture_composition
         tests/test_nexus_v1_vdp12_capture_composition.c
     )

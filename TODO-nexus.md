@@ -392,3 +392,11 @@ neither word receives task, target, callback, or dispatch semantics.
     Positiv fixture och avvisning utan source-attest passerar. Resolvern
     tilldelar inte face, mesh-transform, culling eller produktionsägarskap;
     verklig long-frame-handoff till canonical LEV-korpus återstår.
+
+  - 2026-08-09 VDP2 raw-layout och NBG1-handoff: C använder nu capture-formatets
+    verkliga VDP2-layout (CRAM 0x2000, VRAM 0x80000, registerfönster 0x200)
+    och avkodar native-little-endian TVMD=0x8000 korrekt. Den nya
+    `nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap()` kräver explicita
+    källbytes- och VRAM-offset-attester och passerar med en bounded tilemap-
+    fixture samt extern frame 760 som råtransport. Menyägare, FONT256-bindning,
+    karta och autentiserad startup→meny-identitet återstår.

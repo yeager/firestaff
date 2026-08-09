@@ -11682,3 +11682,12 @@ rendering remain blocked.
   joins avvisas. CTest passerar tillsammans med råcapture-, command-sequence-,
   capture-compositor-, VDP2- och DGN face/mesh-regressionerna. Face-selection,
   transform, culling och produktionsrasterisering är fortsatt spärrade.
+# Nexus: korrekt VDP2-raw-layout och NBG1 runtime-handoff (2026-08-09)
+
+- ✅ Saturn-capture parsern använder nu 4096 byte VDP2 CRAM, 524288 byte VDP2
+  VRAM och 512 byte registerfönster, vilket matchar den externa validatorn.
+  Native-little-endian `TVMD=0x8000` avkodas korrekt. En ny C-adapter matar en
+  autentiserad raw frame till NBG1-tilemap-kompositorn med caller-attesterade
+  källor och exakta VRAM-offsets. Fixture, VDP2-regressioner och extern frame
+  760-parserkontroll passerar; meny-/FONT256-ägarskap och produktionshandoff är
+  fortsatt spärrade.

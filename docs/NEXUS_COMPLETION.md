@@ -10,7 +10,7 @@ regionmatchad Saturn-kedja.
 | Område | Verifierade grindar | Implementeringstäckning | Produktionsgrad | Huvudspärr |
 |---|---:|---:|---:|---|
 | Uppstart | 3/6 | 50,0 % | 0 % | J-BIOS/media-paret är nu tillgängligt och en reset-frame är validerad, men ingen giltig startup→meny-witness |
-| Meny | 3/8 | 37,5 % | 0 % | PRS3-byteavkodning och källinventering finns, men VDP2-källägare, FONT256-konsument och faktisk komposition saknas |
+| Meny | 3/8 | 37,5 % | 0 % | PRS3-byteavkodning och en capture-only NBG1-konsument finns, men VDP2-källägare, FONT256-bindning och faktisk menykomposition saknas |
 | DGN face/mesh/textur | 3/7 | 42,9 % | 0 % | Format, mesh-topologi och materialägare är bundna, men textursemantik, runtime-transform, culling och rasterisering saknas |
 | Saturn VDP1-capture | 8/11 | 72,7 % | 0 % | Råcapture, command-framing, material/CLUT-join, atomisk replay, flerkommando-sekvens och display-origin är verifierade; scenägare, Saturn face-selection, transform/culling och produktionskonsument saknas |
 | HUD/viewport | 1/7 | 14,3 % | 0 % | Layout/adaptrar och capture-only-komposition finns, men ingen autentiserad VDP1/VDP2-pixelhandoff till produktionen |
@@ -77,3 +77,11 @@ till den bounded replay-kedjan. Den nya
 en unik mode-1-bild och CLUT med byteidentisk Saturn-ordning; tvetydiga eller
 oattesterade källor avvisas. Den är fortfarande capture-only och lämnar därför
 face-selection, transform, culling och vanlig produktion spärrade.
+
+VDP2-råformatet är nu också korrekt bundet i C: varje frame har 4096 byte CRAM,
+524288 byte VRAM och 512 byte registerfönster, i samma ordning som den
+externa capture-validatorn. `nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap()`
+kan mata en autentiserad raw frame till NBG1-tilemap-kompositorn när en caller
+redan har attesterat källans namn-tabell, character-generator, CRAM och exakta
+VRAM-offsets. Den gissar inte MENU.BPK/FONT256-ägare eller placering; därför
+förblir meny- och produktionsgraden oförändrad.
