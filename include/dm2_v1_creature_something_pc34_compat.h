@@ -147,6 +147,23 @@ int dm2_v1_creature_get_animation_frame(
     int32_t argl1,
     DM2_V1_CreatureAnimFrameReceipt *receipt);
 
+/* Owner-bound form of DM2_GET_CREATURE_ANIMATION_FRAME.  The caller supplies
+ * the already admitted AIDefinition row instead of consulting the legacy
+ * process-global creature table.  This is required by private GAME_LOAD and
+ * SKSAVE owners, which may not borrow another session's GDAT state.
+ * Source: SKProject SKULLWIN/c_creature.cpp:3217-3278. */
+int dm2_v1_creature_get_animation_frame_with_ai_spec(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DropRng *rng,
+    const DM2_AIDefinition *ai_spec,
+    int creature_type,
+    int command,
+    uint16_t *io_adj_base,
+    int16_t *io_frame_word,
+    const uint8_t **out_anim_row,
+    int32_t argl1,
+    DM2_V1_CreatureAnimFrameReceipt *receipt);
+
 /*
  * Standalone DM2_4FCC (skproject/SKULLWIN/c_creature.cpp:3285-3378) —
  * the same frame walk GAF runs on its dynamic tail, exposed for the
@@ -216,6 +233,30 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
     DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_CaiiArray *caii,
     const DM2_V1_AssetLoader *loader,
+    DM2_V1_DropRng *rng,
+    int16_t record_handle,
+    int16_t *adj,
+    const uint8_t **anim_row_io,
+    int map_current,
+    int map_home,
+    int32_t v1e0238,
+    int savegame_b03,
+    int v1e0584,
+    int timer_x,
+    int timer_y,
+    unsigned long game_tick,
+    DM2_V1_CreatureSomethingReceipt *receipt);
+
+/* Owner-bound 0a48 form.  `ai_spec` must be resolved from the same
+ * hash-admitted loader and record pool as the caller; it never falls back to
+ * global runtime state.  The legacy entry point above retains compatibility
+ * by resolving its existing global table first.
+ * Source: SKProject SKULLWIN/c_1c9a.cpp:5434-5672. */
+int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    const DM2_V1_AssetLoader *loader,
+    const DM2_AIDefinition *ai_spec,
     DM2_V1_DropRng *rng,
     int16_t record_handle,
     int16_t *adj,

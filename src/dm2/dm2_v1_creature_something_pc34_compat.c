@@ -199,9 +199,10 @@ int dm2_v1_creature_anim_4fcc(
     return walk;
 }
 
-int dm2_v1_creature_get_animation_frame(
+int dm2_v1_creature_get_animation_frame_with_ai_spec(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_DropRng *rng,
+    const DM2_AIDefinition *ai_spec,
     int creature_type,
     int command,
     uint16_t *io_adj_base,
@@ -212,7 +213,6 @@ int dm2_v1_creature_get_animation_frame(
 {
     const uint8_t *attribution;
     const uint8_t *info;
-    const DM2_AIDefinition *def;
     size_t attribution_size = 0u;
     size_t info_size = 0u;
     size_t row;
@@ -277,13 +277,18 @@ int dm2_v1_creature_get_animation_frame(
         if (receipt) *receipt = rc;
         return 0;
     }
-    if (!dm2_v1_creature_ai_spec_def(creature_type, &def) || !def) {
+    if (!ai_spec && !dm2_v1_creature_ai_spec_def(creature_type, &ai_spec)) {
+        rc.aidef_unknown = 1;
+        if (receipt) *receipt = rc;
+        return 0;
+    }
+    if (!ai_spec) {
         rc.aidef_unknown = 1;
         if (receipt) *receipt = rc;
         return 0;
     }
 
-    if (def->w0AIFlags & 0x1u) {
+    if (ai_spec->w0AIFlags & 0x1u) {
         /* c_creature.cpp:3257-3277 — static path: count rows up to and
          * including the first byte@1-high-nibble-0 row, then encode. */
         uint32_t count = 0u;
@@ -341,10 +346,27 @@ int dm2_v1_creature_get_animation_frame(
     return ret;
 }
 
-int32_t dm2_v1_creature_something_1c9a_0a48(
+int dm2_v1_creature_get_animation_frame(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DropRng *rng,
+    int creature_type,
+    int command,
+    uint16_t *io_adj_base,
+    int16_t *io_frame_word,
+    const uint8_t **out_anim_row,
+    int32_t argl1,
+    DM2_V1_CreatureAnimFrameReceipt *receipt)
+{
+    return dm2_v1_creature_get_animation_frame_with_ai_spec(
+        loader, rng, NULL, creature_type, command, io_adj_base,
+        io_frame_word, out_anim_row, argl1, receipt);
+}
+
+int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
     DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_CaiiArray *caii,
     const DM2_V1_AssetLoader *loader,
+    const DM2_AIDefinition *ai_spec,
     DM2_V1_DropRng *rng,
     int16_t record_handle,
     int16_t *adj,
@@ -362,7 +384,6 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
     static const uint8_t zero_row[4] = { 0, 0, 0, 0 };
     uint8_t *rec;
     uint8_t *slot;
-    const DM2_AIDefinition *def;
     const uint8_t *anim;
     uint16_t vw_04;
     uint16_t vw_08;
@@ -410,7 +431,11 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
     receipt->command = (int)(int8_t)slot[0x1a];
 
     /* s350.v1e0552 (the AIDefinition row, c_ai.cpp:5867) data-backed. */
-    if (!dm2_v1_creature_ai_spec_def(rec[4], &def) || !def) {
+    if (!ai_spec && !dm2_v1_creature_ai_spec_def(rec[4], &ai_spec)) {
+        receipt->aidef_unknown = 1;
+        return 0;
+    }
+    if (!ai_spec) {
         receipt->aidef_unknown = 1;
         return 0;
     }
@@ -423,7 +448,7 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
     }
 
     {
-        uint8_t vb_10 = ((const uint8_t *)def)[9]; /* aidef byte@9 */
+        uint8_t vb_10 = ((const uint8_t *)ai_spec)[9]; /* aidef byte@9 */
         vw_04 = (uint16_t)adj[0];
         vw_08 = (uint16_t)adj[1];
         anim = *anim_row_io;
@@ -431,12 +456,12 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
         if (!anim) {
             /* c_1c9a.cpp:5462-5477 — fetch through GAF. */
             int32_t parl01 =
-                (def->w0AIFlags & 0x1u) ? (int32_t)rd16(rec + 0xc) : 0;
+                (ai_spec->w0AIFlags & 0x1u) ? (int32_t)rd16(rec + 0xc) : 0;
             uint16_t adj_base = vw_04;
             int16_t frame_word = (int16_t)vw_08;
             DM2_V1_CreatureAnimFrameReceipt grc;
-            receipt->gaf_return = dm2_v1_creature_get_animation_frame(
-                loader, rng, rec[4], receipt->command, &adj_base,
+            receipt->gaf_return = dm2_v1_creature_get_animation_frame_with_ai_spec(
+                loader, rng, ai_spec, rec[4], receipt->command, &adj_base,
                 &frame_word, &anim, parl01, &grc);
             receipt->anim_fetched = 1;
             draws += grc.rand_draws;
@@ -534,7 +559,7 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
             d += (int32_t)((anim[3] & 0xf0u) >> 4);
 
             if (receipt->command == 0x13 && savegame_b03 != 0) {
-                if (((const uint8_t *)def)[1] & 0x10u) {
+                if (((const uint8_t *)ai_spec)[1] & 0x10u) {
                     skip00533 = 1;
                 } else {
                     d *= 3;
@@ -606,4 +631,28 @@ int32_t dm2_v1_creature_something_1c9a_0a48(
     receipt->result = delta + (int32_t)game_tick;
     receipt->valid = 1;
     return receipt->result;
+}
+
+int32_t dm2_v1_creature_something_1c9a_0a48(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DropRng *rng,
+    int16_t record_handle,
+    int16_t *adj,
+    const uint8_t **anim_row_io,
+    int map_current,
+    int map_home,
+    int32_t v1e0238,
+    int savegame_b03,
+    int v1e0584,
+    int timer_x,
+    int timer_y,
+    unsigned long game_tick,
+    DM2_V1_CreatureSomethingReceipt *receipt)
+{
+    return dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+        pool_set, caii, loader, NULL, rng, record_handle, adj,
+        anim_row_io, map_current, map_home, v1e0238, savegame_b03,
+        v1e0584, timer_x, timer_y, game_tick, receipt);
 }

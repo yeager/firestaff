@@ -1,3 +1,13 @@
+# DM2 New Game: owner-bunden CAII-animation (2026-08-09)
+
+- ✅ `DM2_GET_CREATURE_ANIMATION_FRAME` och `DM2_CREATURE_SOMETHING_1c9a_0a48`
+  har nu owner-bundna ingångar som tar AIDefinition från samma verifierade
+  GAME_LOAD-ägare. Den äldre vägen behåller sin ursprungliga globala
+  kompatibilitetsordning.
+- ✅ Den nya vägen faller inte tillbaka till en annan sessions GDAT-tabell.
+  Den är ännu inte en aktivering av varelser eller CCM; den används först när
+  hela `RESET_CAII`-transaktionen kan återställas atomärt.
+
 # DM2 New Game: privat CAII-resetlagring (2026-08-09)
 
 - ✅ GAME_LOAD-ägaren behåller nu den källberäknade `c_creature`-arrayen med
