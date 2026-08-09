@@ -1466,7 +1466,10 @@ static int m12_resolve_catalog_path(int localeIndex, char* out, size_t outSize) 
     if (basePath) {
         int found = snprintf(path, sizeof(path), "%s../po/%s", basePath,
                              filename) > 0 && FSP_FileExists(path);
+#if !SDL_VERSION_ATLEAST(3, 0, 0)
+        /* SDL2 allocates the base path; SDL3 returns a library-owned path. */
         SDL_free((void*)basePath);
+#endif
         if (found) {
             m12_copy_string(out, outSize, path);
             return 1;

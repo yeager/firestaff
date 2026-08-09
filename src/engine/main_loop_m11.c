@@ -526,7 +526,10 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
         (void)M12_StartupIntro_LoadBackground(resourcePath);
         snprintf(resourcePath, sizeof(resourcePath), "%s../share/firestaff/firestaff-startup-intro.ppm", basePath);
         (void)M12_StartupIntro_LoadBackground(resourcePath);
+#if !SDL_VERSION_ATLEAST(3, 0, 0)
+        /* SDL2 allocates the base path; SDL3 returns a library-owned path. */
         SDL_free((void*)basePath);
+#endif
     }
     (void)M12_StartupIntro_LoadBackground("/usr/share/firestaff/firestaff-startup-intro.ppm");
 #ifdef FIRESTAFF_SOURCE_DIR
