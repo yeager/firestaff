@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-09 — summary-only original-consumer admission stängd
+
+- ✅ Runtime-admission kräver nu råa, exakt sammanfogade
+  `pce_cd_fifo_origin_main_ram_receipt`/`...consumer`-rader i samma capture
+  för palett-, non-startup- och object-table-offsetarna. Ett sammanfattnings-
+  kvitto utan dessa rows öppnar inte längre original-consumersemantik.
+- 🔒 Den riktiga externa US-sessionen är fortfarande korrekt blockerad: den
+  har två CD→RAM-originreceipts men ingen game-owned FIFO-consumer. Nästa
+  steg är en ny autentiserad session som faktiskt producerar dessa rader;
+  RNG, spawn, AI, T700, T900, rendering och save förblir stängda tills dess.
+
 ## 2026-08-09 — kombinerad cold-start fortfarande utan spawnretur
 
 - 🔒 En ny bounded cold-start på autentisk US Track 02 gav 256 verifierade

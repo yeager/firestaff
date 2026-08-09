@@ -11760,3 +11760,16 @@ rendering remain blocked.
   hashattesterade FONT256.S2D-regioner. Ändrad palette avvisas. Joinen bevisar
   inte textkod→tile, page-PND, SLEV/TABL-ägarskap, placering eller produktion;
   de spärrarna ligger kvar.
+# Theron: summary-only consumer admission closed (2026-08-09)
+
+- ✅ Runtime-admission kräver nu byteexakta FIFO-origin- och
+  game-owned-consumer-rader i samma autentiserade capture för palett-,
+  non-startup- och object-table-offsetarna. FIFO-sekvens, LBA/offset,
+  RAM-cell och bytevärde måste sammanfalla; läsaren måste ligga i HuC6280:s
+  autentiserade main-RAM-fönster.
+- ✅ Regressionstestet täcker en komplett men rådatatom sammanfattning och
+  verifierar att den avvisas. Theron-admission-proben och riktade capture-
+  tester passerar.
+- 🔒 Ingen gameplay- eller presentationssemantik öppnades. Den externa
+  capture-sessionen saknar fortfarande game-owned FIFO-consumer och är därför
+  korrekt fail-closed.

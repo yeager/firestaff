@@ -1317,6 +1317,164 @@ static int theron_v1_runtime_trace_read_size(
     return 1;
 }
 
+/* A summary receipt is not a runtime witness.  Keep the original-consumer
+ * gate closed unless the same capture text contains the byte-exact
+ * CD/FIFO->main-RAM receipt and its game-owned reader.  The field values in a
+ * summary are intentionally not trusted as a substitute for these rows.
+ *
+ * ReDMCSB: THQUEST.ASM T080/T081 and the Track 02 post-loader path remain the
+ * source lock for this boundary.  This helper proves transport provenance
+ * only; it does not assign level, object, tile, palette, HUD, or creature
+ * meaning to any byte.
+ */
+static int theron_v1_runtime_trace_has_raw_consumer_provenance(
+    const char *trace,
+    const Theron_V1RuntimeTrack02OriginalDataBindingGapReceipt *gap) {
+    typedef struct {
+        uint32_t generation;
+        uint32_t source_lba;
+        uint32_t source_offset;
+        unsigned long long fifo_sequence;
+        uint32_t physical_destination;
+        uint32_t value;
+        int role;
+    } Origin;
+    Origin origins[16];
+    size_t origin_count = 0u;
+    unsigned seen_roles = 0u;
+    const char *cursor;
+    const uint64_t raw_offsets[3] = {
+        gap ? (uint64_t)gap->palette_raw_offset : 0u,
+        gap ? (uint64_t)gap->first_nonstartup_raw_offset : 0u,
+        gap ? (uint64_t)gap->first_container_raw_offset : 0u
+    };
+    uint32_t expected_lba[3];
+    uint32_t expected_offset[3];
+    size_t role;
+
+    if (!trace || !gap ||
+        !strstr(trace, "source=mednafen-pce-instrumented")) {
+        return 0;
+    }
+    for (role = 0u; role < 3u; ++role) {
+        expected_lba[role] = (uint32_t)(raw_offsets[role] / 2352u + 3009u);
+        expected_offset[role] = (uint32_t)(raw_offsets[role] % 2352u);
+    }
+
+    cursor = trace;
+    while (*cursor) {
+        char line[768];
+        const char *end = strchr(cursor, '\n');
+        size_t length = end ? (size_t)(end - cursor) : strlen(cursor);
+        int consumed = 0;
+
+        if (length >= sizeof(line)) {
+            return 0;
+        }
+        memcpy(line, cursor, length);
+        line[length] = '\0';
+
+        {
+            unsigned generation;
+            unsigned source_lba;
+            unsigned source_offset;
+            unsigned long long fifo_sequence;
+            unsigned reader_pc;
+            unsigned logical_destination;
+            unsigned physical_destination;
+            unsigned writer_pc;
+            unsigned writer_physical_pc;
+            unsigned value;
+            int fields = sscanf(
+                line,
+                "pce_cd_fifo_origin_main_ram_receipt generation=%u "
+                "source_lba=%u source_offset=%u fifo_sequence=%llu "
+                "reader_pc=%x logical_destination=%x "
+                "physical_destination=%x writer_pc=%x "
+                "writer_physical_pc=%x value=%x%n",
+                &generation, &source_lba, &source_offset, &fifo_sequence,
+                &reader_pc, &logical_destination, &physical_destination,
+                &writer_pc, &writer_physical_pc, &value, &consumed);
+            (void)reader_pc;
+            (void)logical_destination;
+            (void)writer_pc;
+            (void)writer_physical_pc;
+            if (fields == 10 && line[consumed] == '\0' &&
+                source_lba <= 0xffffffffu && source_offset <= 0xffffffffu &&
+                physical_destination >= 0x1f0000u &&
+                physical_destination < 0x1f8000u && value <= 0xffu) {
+                int matched_role = -1;
+                for (role = 0u; role < 3u; ++role) {
+                    if (source_lba == expected_lba[role] &&
+                        source_offset == expected_offset[role]) {
+                        matched_role = (int)role;
+                        break;
+                    }
+                }
+                if (matched_role >= 0 && origin_count < 16u) {
+                    origins[origin_count].generation = generation;
+                    origins[origin_count].source_lba = source_lba;
+                    origins[origin_count].source_offset = source_offset;
+                    origins[origin_count].fifo_sequence = fifo_sequence;
+                    origins[origin_count].physical_destination =
+                        physical_destination;
+                    origins[origin_count].value = value;
+                    origins[origin_count].role = matched_role;
+                    ++origin_count;
+                }
+            }
+        }
+
+        {
+            unsigned sequence;
+            unsigned generation;
+            unsigned source_lba;
+            unsigned source_offset;
+            unsigned long long fifo_sequence;
+            unsigned logical_address;
+            unsigned physical_address;
+            unsigned value;
+            unsigned reader_pc;
+            unsigned reader_physical_pc;
+            int fields = sscanf(
+                line,
+                "pce_cd_fifo_origin_main_ram_consumer sequence=%u "
+                "generation=%u source_lba=%u source_offset=%u "
+                "fifo_sequence=%llu logical_address=%x "
+                "physical_address=%x value=%x reader_pc=%x "
+                "reader_physical_pc=%x%n",
+                &sequence, &generation, &source_lba, &source_offset,
+                &fifo_sequence, &logical_address, &physical_address, &value,
+                &reader_pc, &reader_physical_pc, &consumed);
+            (void)sequence;
+            (void)logical_address;
+            (void)reader_pc;
+            if (fields == 10 && line[consumed] == '\0' &&
+                physical_address >= 0x1f0000u &&
+                physical_address < 0x1f8000u &&
+                reader_physical_pc >= 0x1f0000u &&
+                reader_physical_pc < 0x1f8000u && value <= 0xffu) {
+                for (role = 0u; role < origin_count; ++role) {
+                    Origin *origin = &origins[role];
+                    if (origin->generation == generation &&
+                        origin->source_lba == source_lba &&
+                        origin->source_offset == source_offset &&
+                        origin->fifo_sequence == fifo_sequence &&
+                        origin->physical_destination == physical_address &&
+                        origin->value == value) {
+                        seen_roles |= 1u << (unsigned)origin->role;
+                        break;
+                    }
+                }
+            }
+        }
+
+        cursor = end ? end + 1 : cursor + length;
+    }
+
+    return seen_roles == 0x7u;
+}
+
 int theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
     const Theron_V1RuntimeTrack02ConsumerSemanticReceipt *consumer,
     const Theron_Track02LevelRouteReceipt *level_route,
@@ -5278,7 +5436,9 @@ int theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
         !theron_v1_runtime_trace_has(
             capture_trace, "fallback_visuals_observed=0") ||
         !theron_v1_runtime_trace_has(
-            capture_trace, "fallback_visuals_allowed=0")) {
+            capture_trace, "fallback_visuals_allowed=0") ||
+        !theron_v1_runtime_trace_has_raw_consumer_provenance(
+            capture_trace, gap)) {
         return 0;
     }
 

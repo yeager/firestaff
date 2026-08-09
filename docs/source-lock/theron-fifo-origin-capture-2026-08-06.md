@@ -54,3 +54,20 @@ This longer replay therefore strengthens the negative capture boundary only.
 It does not authorize a runtime mapping or a synthetic replacement. The next
 Theron handoff remains blocked on an authenticated game-owned consumer trace
 or a source-equivalent disassembly of the post-CD level/object path.
+
+## Admission hardening (2026-08-09)
+
+The runtime admission path no longer accepts a self-authored summary receipt
+as proof of an original consumer. A positive receipt must contain, in the
+same capture text, byte-exact `pce_cd_fifo_origin_main_ram_receipt` rows and
+matching `pce_cd_fifo_origin_main_ram_consumer` rows for the palette,
+non-startup level, and object-table raw offsets. The consumer must also be a
+HuC6280 reader executing from the authenticated main-RAM window, and the
+FIFO sequence, source LBA/offset, destination cell, and byte value must join
+exactly.
+
+This is still transport provenance only. It does not open dungeon, tile,
+palette, HUD, creature, RNG, AI, T700, T900, or save semantics. The real
+2026-08-09 external captures remain correctly blocked because they contain
+CD→RAM transport and loader-adjacent reads but no game-owned FIFO-origin
+consumer rows.

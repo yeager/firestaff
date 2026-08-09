@@ -1190,6 +1190,50 @@ static int probe_real_track02_capture_producer(
         trace_facts.consumer_trace_checksum != 0u) {
         ok = 0;
     }
+    {
+        char forged_summary[4096];
+        int forged_summary_length = snprintf(
+            forged_summary, sizeof(forged_summary),
+            "source=mednafen-pce-instrumented\n"
+            "main_ram_loader_e009_dispatch sequence=7\n"
+            "theron_track02_original_consumer_trace\n"
+            "authenticated_original_trace=1\n"
+            "post_3800_execution_observed=1\n"
+            "same_capture_as_loader_payload=1\n"
+            "track02_variant=us_bin\n"
+            "record=1156\n"
+            "loader_record_user_data_offset=276\n"
+            "loader_destination=14336\n"
+            "loader_payload_bytes=2048\n"
+            "payload_checksum=257\n"
+            "level_envelope_checksum=514\n"
+            "post_envelope_checksum=771\n"
+            "palette_raw_offset=%zu\n"
+            "nonstartup_level_raw_offset=%zu\n"
+            "object_table_raw_offset=%zu\n"
+            "palette_consumer_observed=1\n"
+            "dungeon_record_consumer_observed=1\n"
+            "object_table_consumer_observed=1\n"
+            "bitmap_consumer_observed=1\n"
+            "synthetic_dungeon_promoted=0\n"
+            "synthetic_object_table_promoted=0\n"
+            "synthetic_bitmap_promoted=0\n"
+            "synthetic_palette_promoted=0\n"
+            "fallback_visuals_observed=0\n"
+            "fallback_visuals_allowed=0\n",
+            gap.palette_raw_offset,
+            gap.first_nonstartup_raw_offset,
+            gap.first_container_raw_offset);
+        if (forged_summary_length < 0 ||
+            (size_t)forged_summary_length >= sizeof(forged_summary) ||
+            theron_v1_runtime_track02_original_consumer_trace_facts_from_capture(
+                forged_summary, &gap, 1156u, 0x101u, 0x202u, 0x303u,
+                &trace_facts) ||
+            trace_facts.authenticated_original_trace ||
+            trace_facts.consumer_trace_checksum != 0u) {
+            ok = 0;
+        }
+    }
     if (!probe_optional_original_consumer_trace_corpus(&gap)) {
         ok = 0;
     }
