@@ -18,12 +18,15 @@ RUNTIME_MAGIC = b"FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n"
 VDP1_MAGIC = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V1\n"
 VDP1_MAGIC_V2 = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2\n"
 VDP2_MAGIC = b"VDP2_RAW\n"
-VDP1_PAYLOAD_BYTES = 0x40000 * 2 + 0x20000 * 2 + 0x20000 * 2 + 1
+# VDP1::FirestaffCaptureRaw() writes VRAM and both framebuffers.  The
+# framebuffer selector is already represented by the V2 state line; the
+# emitted payload is exactly 0x100000 bytes in the retail capture patch.
+VDP1_PAYLOAD_BYTES = 0x40000 * 2 + 0x20000 * 2 + 0x20000 * 2
 VDP2_PAYLOAD_BYTES = 0x100 * 2 + 0x40000 * 2 + 0x800 * 2
 VDP1_STATE_RE = re.compile(
     rb"^state=tvmr:[0-9a-f]+,fbcr:[0-9a-f]+,ptmr:([0-9a-f]+),"
     rb"edsr:([0-9a-f]+),lopr:[0-9a-f]+,copr:[0-9a-f]+,"
-    rb"ret:[0-9a-f]+,fb:[01]$"
+    rb"ret:[0-9a-f]+,fb:[01],sysclipx:[0-9a-f]+,sysclipy:[0-9a-f]+$"
 )
 
 

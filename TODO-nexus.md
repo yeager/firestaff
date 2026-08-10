@@ -4,6 +4,15 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## SLEV/SAL/SDDRVS runtime corridor (2026-08-10)
 
+2026-08-10: En ny samma-session-capture på extern disk
+`run-codex-same-session-scsp-20260810/` innehåller 1 200 VDP1/VDP2-frame-
+block samt separata main-/sound-SCSP-traces från samma Mednafen-process.
+Rålayouten passerar med 1 033 observerade icke-idle VDP1-frame states. Den
+source-bundna SCSP-joinen förblir korrekt blockerad: denna körning visar inte
+en verifierad voice-registerföljd tillsammans med producent/event-semantik.
+Detta är capture-infrastruktur och negativt runtime-bevis, inte tillstånd för
+HUD, viewport eller ljuduppspelning.
+
 `nexus_v1_scsp_runtime_join()` binder nu ihop hashbundna SLEV/SAL/MAP/SDDRVS-
 identiteter med separata autentiserade main- och sound-CPU-traces samt den
 source-bundna SDDRVS-disassemblyn. En partiell trace utan SCSP-voice-write i

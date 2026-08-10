@@ -114,6 +114,15 @@ elif [[ "$(cat "$slev_sal_capture_marker" 2>/dev/null)" != "$slev_sal_capture_pa
   echo "ERROR: external Mednafen source has an older or unknown SLEV/SAL capture patch; use a fresh build directory" >&2
   exit 2
 fi
+scsp_trace_marker="$source_dir/.firestaff-nexus-slev-scsp-trace-patched"
+scsp_trace_patch_id='FIRESTAFF_NEXUS_SLEV_SCSP_TRACE_V1_MAIN_AND_SOUND_CPU'
+if [[ ! -f "$scsp_trace_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_slev_scsp_trace.patch"
+  printf '%s\n' "$scsp_trace_patch_id" > "$scsp_trace_marker"
+elif [[ "$(cat "$scsp_trace_marker" 2>/dev/null)" != "$scsp_trace_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown SCSP trace patch; use a fresh build directory" >&2
+  exit 2
+fi
 profile_marker="$source_dir/.firestaff-nexus-saturn-only"
 profile_id='FIRESTAFF_NEXUS_MEDNAFEN_PROFILE_V2_SATURN_ONLY'
 if [[ ! -f "$profile_marker" || "$(cat "$profile_marker" 2>/dev/null)" != "$profile_id" ]]; then
@@ -136,5 +145,9 @@ strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_OUTPUT' >/dev/null
 strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_SLEV_SAL_CAPTURE_OUTPUT' >/dev/null
+strings "$capture_bin" | grep -F \
+  'FIRESTAFF_NEXUS_TRACE_SCSP_WRITES' >/dev/null
+strings "$capture_bin" | grep -F \
+  'FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITES' >/dev/null
 printf 'instrumented_mednafen=%s\n' "$capture_bin"
 printf 'source_patch=%s\n' "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"

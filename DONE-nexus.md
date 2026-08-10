@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus same-session VDP1/VDP2 + SCSP capture pipeline
+
+- Mednafen-byggscriptet applicerar nu SCSP main-/sound-CPU-spårningen och
+  launcher-scriptet propagaterar samt hashnoterar trace-filerna.
+- En extern kallstart med J-BIOS 1.01 och hashbunden English/Merged-disc gav
+  1 200 råa VDP1/VDP2-frame-block och 1 033 icke-idle VDP1-observationer.
+- Validatorn följer den faktiska V2-state-raden och payload-storleken från
+  capture-patchen. Event-selector, SAL-codec, voice-route och playback är
+  fortfarande blockerade där samma-session-bevis saknas.
+
 ## 2026-08-10 - Nexus SLEV/SAL/SDDRVS runtime-corridor binder
 
 - `nexus_v1_scsp_runtime_join()` binder nu separat verifierad main-SCSP-
