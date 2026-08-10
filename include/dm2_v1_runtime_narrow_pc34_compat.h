@@ -1000,22 +1000,6 @@ void dm2_v1_moverec_3ce7d(
     int32_t record, int16_t x, int16_t y, int32_t kind, int32_t flags,
     const DM2_V1_Moverec3ce7dCallbacks *cb, void *ctx);
 
-/* =====================================================================
- * c_record.cpp — record pool management
- * ===================================================================== */
-
-/* ---- DM2_RECYCLE_A_RECORD_FROM_THE_WORLD (c_record.cpp:544) ----
- * Reclaim the oldest/least-important world record for reuse.
- * Returns the recycled record index, or -1 if none available. */
-typedef struct {
-    int record_count;
-    int (*get_record_importance)(void *ctx, int idx);
-    void (*free_record)(void *ctx, int idx);
-} DM2_V1_RecycleRecordCallbacks;
-
-int32_t dm2_v1_recycle_a_record_from_the_world(
-    int32_t requested_kind, const DM2_V1_RecycleRecordCallbacks *cb, void *ctx);
-
 /* ---- DM2_DELETE_MISSILE_RECORD (c_record.cpp:1427) ----
  * Remove a missile projectile record from the world. */
 typedef struct {

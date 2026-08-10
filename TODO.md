@@ -760,6 +760,9 @@
   map-text-spärr och får inte återanvända någon textpost.
   DB0 returnerar ett källvalt record till `ALLOC_NEW_RECORD`, medan DB4 och
   DB14 har creature-/missile-svansar och andra DB-vägar kan flytta record.
+  Den gamla callbackbaserade ”lägst importance”-studien är borttagen; den
+  ersatte felaktigt originalets karta- och recordkedjetraversering och får
+  inte återinföras som allocatorfallback.
   Alla tre kräver fortfarande samma kompletta recyclerägare: tvåpass-
   karttraversering, skyddad karta, statiska varelsers possessions, cursor,
   c_map och respektive mutation innan en allokering får publiceras.

@@ -14,7 +14,6 @@
 
 /* ---- hero category: DM2_WOUND_PLAYER ---- */
 
-static int g_defeated_hero = -1;
 static int16_t g_accumulated_damage = 0;
 
 static int wp_hero_exists(void *ctx, int hero_idx) { (void)ctx; (void)hero_idx; return 1; }
@@ -29,7 +28,6 @@ static void wp_add_body_status(void *ctx, int hero_idx, uint16_t s)
 { (void)ctx; (void)hero_idx; (void)s; }
 static void wp_accumulate(void *ctx, int hero_idx, int16_t wound)
 { (void)ctx; (void)hero_idx; g_accumulated_damage += wound; }
-static void wp_defeated(void *ctx, int hero_idx) { (void)ctx; g_defeated_hero = hero_idx; }
 
 static void test_wound_player(void)
 {
@@ -43,8 +41,6 @@ static void test_wound_player(void)
     int16_t applied = dm2_v1_wound_player(2, &hero, 4, 0, &cb, NULL);
     assert(applied == 4);
     assert(g_accumulated_damage == 4);
-    assert(g_defeated_hero == -1);
-
     g_accumulated_damage = 0;
     applied = dm2_v1_wound_player(2, &hero, 100, 0, &cb, NULL);
     assert(applied == 100);
@@ -325,26 +321,6 @@ static void test_try_push_object_to(void)
     printf("test_try_push_object_to OK\n");
 }
 
-/* ---- record category: DM2_RECYCLE_A_RECORD_FROM_THE_WORLD ---- */
-
-static int rr_importance(void *ctx, int idx)
-{
-    (void)ctx;
-    static const int importance[3] = { 5, 1, 9 };
-    return importance[idx];
-}
-static int g_freed_record = -1;
-static void rr_free(void *ctx, int idx) { (void)ctx; g_freed_record = idx; }
-
-static void test_recycle_record(void)
-{
-    DM2_V1_RecycleRecordCallbacks cb = { 3, rr_importance, rr_free };
-    int32_t idx = dm2_v1_recycle_a_record_from_the_world(0, &cb, NULL);
-    assert(idx == 1);
-    assert(g_freed_record == 1);
-    printf("test_recycle_record OK\n");
-}
-
 /* ---- light category: DM2_CHECK_RECOMPUTE_LIGHT ---- */
 
 static int g_light_dirty = 1;
@@ -431,7 +407,6 @@ int main(void)
     test_creature_attacks_player();
     test_move_item_to();
     test_try_push_object_to();
-    test_recycle_record();
     test_check_recompute_light();
     test_engage_command();
     printf("All dm2_v1_runtime_narrow tests passed.\n");

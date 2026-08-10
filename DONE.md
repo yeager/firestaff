@@ -1,5 +1,11 @@
 # Firestaff: diskformatering lämnas till originalspel och emulator (2026-08-10)
 
+- ✅ DM2/SKSAVE: tog bort den callbackbaserade recycler-studien som valde
+  lägsta “importance”. Den motsvarar inte originalets karta- och
+  recordkedjescanner. Enda kvarvarande vägen är den verkliga, läsande
+  DB0-kandidaten i den privata SKSAVE-ägaren; den muterar inget och öppnar
+  inte Resume.
+
 # Theron: authenticated File-select replay receipt (2026-08-10)
 
 - ✅ Komplett US Track 02-CUE med originalets File-val och rörelse gav 28

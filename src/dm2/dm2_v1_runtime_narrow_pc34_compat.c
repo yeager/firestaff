@@ -1412,31 +1412,6 @@ void dm2_v1_moverec_3ce7d(
     (void)cb->dispatch(ctx, record, x, y, kind, flags);
 }
 
-/* =====================================================================
- * c_record.cpp
- * ===================================================================== */
-
-int32_t dm2_v1_recycle_a_record_from_the_world(
-    int32_t requested_kind, const DM2_V1_RecycleRecordCallbacks *cb, void *ctx)
-{
-    (void)requested_kind;
-    if (!cb)
-        return -1;
-    int best_idx = -1;
-    int best_importance = 0x7FFFFFFF;
-    for (int i = 0; i < cb->record_count; i++) {
-        int importance = cb->get_record_importance(ctx, i);
-        if (importance < best_importance) {
-            best_importance = importance;
-            best_idx = i;
-        }
-    }
-    if (best_idx < 0)
-        return -1;
-    cb->free_record(ctx, best_idx);
-    return best_idx;
-}
-
 void dm2_v1_delete_missile_record(
     int32_t record, int16_t x, int16_t y,
     const DM2_V1_DeleteMissileRecordCallbacks *cb, void *ctx)
