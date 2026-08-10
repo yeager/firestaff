@@ -188,6 +188,7 @@ int main(void)
     uint8_t utility_arrows[32u * 75u];
     uint8_t portrait_pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
     uint8_t portrait_roundtrip[CSB_FMTOWNS_PORTRAIT_DATA_SIZE];
+    unsigned char fmtowns_actions[3];
     uint8_t utility_portrait_before[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
     int utility_fill_x = -1;
     int utility_fill_y = -1;
@@ -1064,6 +1065,20 @@ int main(void)
                   live_profile->runtime.last_input_dispatch.dequeued &&
                   live_profile->runtime.last_input_dispatch.dispatchedMove,
               "F31 live viewport routes C003 through the dungeon command queue");
+        /* FMTOWNS.H aliases F0387/F0391 to DRAW_DMENU/DYNAMENU, whose first
+         * action row is x=232..318/y=77..83.  CHTWE/CHTWJ must use that
+         * source rectangle even though it has no DM1 startup receipt.  This
+         * uses the admitted F31 MINI.DAT champion/action list; no action
+         * fixture or synthetic menu state is introduced. */
+        memset(fmtowns_actions, 0xff, sizeof(fmtowns_actions));
+        CHECK(M11_GameView_SetActingChampion(&view, 0) &&
+                  M11_GameView_GetActingActionIndices(&view, fmtowns_actions) &&
+                  fmtowns_actions[0] != 0xffu &&
+                  M11_GameView_HandlePointerButton(
+                      &view, 240, 79, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                      M11_GAME_INPUT_REDRAW &&
+                  view.actingChampionOrdinal == 0u,
+              "F31 CHTW Game action row uses DRAW_DMENU geometry, not PC34 C113 geometry");
         /* F31 G0447 keeps C012 (status selection) separate from C007
          * (inventory): a named status rectangle must never inherit the
          * convenient host inventory behavior.  C187's adjacent source bar

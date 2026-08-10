@@ -31437,7 +31437,20 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * with three 7-pixel-tall text rows starting at y=77.
              * Hit-test directly against the source-locked geometry
              * instead of the PC34 route table. */
-            if (actionCount > 0 && state->dm1FmtownsStartupReceiptValid) {
+            /* FMTOWNS.H maps the common F0387/F0391 action path to
+             * DRAW_DMENU/DYNAMENU for both DM1 and CSB.  CSB's CHTWE/CHTWJ
+             * Game handoff deliberately does not populate DM1's startup
+             * receipt, so using that receipt as the sole F31 discriminator
+             * sent a real CSB F31 action panel through PC34 C113..C115
+             * geometry.  The recovered F31 geometry below is the durable
+             * input owner; its panel pixels remain separately fail-closed
+             * until the CHTW* DRAW_DMENU raster consumer is recovered.
+             * ReDMCSB FMTOWNS.H:76,498,650; MENU.C F0391. */
+            if (actionCount > 0 &&
+                (state->dm1FmtownsStartupReceiptValid ||
+                 (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                  m11_csb_is_fmtowns_profile(
+                      (const CSB_V1_BootProfile *)state->csbBootProfile)))) {
                 int fmx1 = 232, fmy1 = 77, fmx2 = 318;
                 if (x >= fmx1 && x <= fmx2 && y >= fmy1 &&
                     y < fmy1 + (int)(actionCount * DM1_V1_FMTOWNS_CHAR_Y_HYT)) {
@@ -31454,6 +31467,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * carries C112/C113/C114/C115 and is cross-checked against the
              * source touch matrix; do not derive a command from pixels here. */
             if (actionCount > 0 && !state->dm1FmtownsStartupReceiptValid &&
+                !(state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                  m11_csb_is_fmtowns_profile(
+                      (const CSB_V1_BootProfile *)state->csbBootProfile)) &&
                 action_area_routes_GetTouchMatrixInvariant() &&
                 action_area_routes_ResolveNameMenuClick(
                     x, y, (unsigned int)actionCount, &sourceRoute)) {
