@@ -1649,6 +1649,10 @@ typedef struct {
         CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS][4096];
     uint8_t csbAtariStAnimationPixels[320 * 200];
     uint8_t csbAtariStAnimationPalette[16][3];
+    /* Atari ST 2.x G0447 also exposes C125..C128.  F0070 keeps the
+     * picked-up formation icon outside GAMEBLOCK while the GEM cursor owns
+     * its transient raster, so retain only its ordinal here. */
+    unsigned int csbAtariStHeldChampionIconOrdinal;
     /* Amiga A31 owns its title through APPA.C -> ANIM.C and TITL.DAT.
      * Keep the selected, verified source member alive while GRF1 applies its
      * real delta records; this is deliberately independent of PC TITLE.C. */

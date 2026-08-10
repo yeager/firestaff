@@ -11,6 +11,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
+#include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
 #include "gamepad_config_m12.h"
 #include "main_loop_m11.h"
@@ -489,6 +490,33 @@ int main(void)
                       &view, 67, 14, M11_DM1_MOUSE_MASK_RIGHT) ==
                       M11_GAME_INPUT_IGNORED && !view.inventoryPanelActive,
                   "real Atari MINI.DAT keeps the C007 right-button gap inert");
+            /* Atari ST 2.x retains G0447 C125..C128 at
+             * 274..299/301..319, not the PC action-icon surface. IO.C
+             * F0070 owns the durable GAMEBLOCK mutation; GEM owns only the
+             * transient cursor bitmap. */
+            ((CSB_V1_BootProfile *)view.csbBootProfile)
+                ->runtime.party_state.PartyDirection = 0;
+            ((CSB_V1_BootProfile *)view.csbBootProfile)
+                ->runtime.party_state.Champions[0].Cell = 0;
+            ((CSB_V1_BootProfile *)view.csbBootProfile)
+                ->runtime.party_state.Champions[0].Direction = 0;
+            ((CSB_V1_BootProfile *)view.csbBootProfile)
+                ->runtime.party_state.Champions[0].Attributes = 0;
+            view.csbAtariStHeldChampionIconOrdinal = 0u;
+            CHECK(M11_GameView_HandlePointerButton(
+                      &view, 280, 10, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      view.csbAtariStHeldChampionIconOrdinal == 1u &&
+                      profile->runtime.party_state.Champions[0].Cell == 0,
+                  "real Atari MINI.DAT C125 picks up the native F0070 formation icon");
+            CHECK(M11_GameView_HandlePointerButton(
+                      &view, 310, 20, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_REDRAW &&
+                      view.csbAtariStHeldChampionIconOrdinal == 0u &&
+                      profile->runtime.party_state.Champions[0].Cell == 2 &&
+                      (profile->runtime.party_state.Champions[0].Attributes &
+                       CSB_V1_F0070_ATTRIBUTE_ICON_DIRTY_PC34) != 0,
+                  "real Atari MINI.DAT C127 releases through native F0070");
             CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
                       M11_GAME_INPUT_REDRAW && view.spellPanelOpen &&
                       M11_GameView_HandleInput(

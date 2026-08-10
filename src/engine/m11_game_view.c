@@ -30809,6 +30809,10 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
  * ReDMCSB COMMAND.C:82-100, G0447_as_Graphic561_PrimaryMouseInput_Interface:
  * the Atari comments document both the +1 left edges and separate C012..C015
  * versus C007..C010 command ownership. */
+static int m11_csb_native_champion_icon_pointer(
+    M11_GameViewState *state, int icon_index, unsigned int *held_icon_ordinal,
+    int platform_kind, M11_GameInputResult *out_result);
+
 static int m11_csb_atari_st_top_row_pointer(
     M11_GameViewState *state, int x, int y, int button_mask,
     M11_GameInputResult *out_result)
@@ -30829,6 +30833,18 @@ static int m11_csb_atari_st_top_row_pointer(
         return 0;
     }
     if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        int icon_index = -1;
+        /* COMMAND.C G0447 keeps C125..C128 on ST 2.x.  GEM owns the cursor
+         * raster; IO.C F0070 owns the durable GAMEBLOCK transaction. */
+        if (x >= 274 && x <= 299 && y <= 13) icon_index = 0;
+        else if (x >= 301 && x <= 319 && y <= 13) icon_index = 1;
+        else if (x >= 301 && x <= 319 && y >= 15) icon_index = 2;
+        else if (x >= 274 && x <= 299 && y >= 15) icon_index = 3;
+        if (icon_index >= 0) {
+            return m11_csb_native_champion_icon_pointer(
+                state, icon_index, &state->csbAtariStHeldChampionIconOrdinal,
+                3, out_result);
+        }
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
             if (x >= status_left[slot] && x <= status_left[slot] + 42) {
                 *out_result = m11_set_active_champion(state, slot)
@@ -30846,6 +30862,8 @@ static int m11_csb_atari_st_top_row_pointer(
             x == 205 || x == 206 || x == 274) {
             return 1;
         }
+        /* G0447 owns its icon-grid gaps too; they are inert, not PC hits. */
+        if (x >= 274 && x <= 319) return 1;
     } else if ((button_mask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
         /* ReDMCSB COMMAND.C G0447:97-100 (MEDIA413): Atari ST 2.x
          * installs a second C007..C010 set for the right button.  Unlike
@@ -30881,7 +30899,7 @@ static int m11_csb_atari_st_top_row_pointer(
  * owned by the platform cursor layer and is never synthesized by M11. */
 static int m11_csb_native_champion_icon_pointer(
     M11_GameViewState *state, int icon_index, unsigned int *held_icon_ordinal,
-    int is_amiga, M11_GameInputResult *out_result)
+    int platform_kind, M11_GameInputResult *out_result)
 {
     CSB_V1_BootProfile *profile;
     CsbV1F0070ChampionFormationStatePc34 formation;
@@ -30896,8 +30914,11 @@ static int m11_csb_native_champion_icon_pointer(
     }
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
     if (!profile ||
-        (is_amiga ? !m11_csb_is_amiga_profile(profile)
-                  : !m11_csb_is_fmtowns_profile(profile)) ||
+        (platform_kind == 1 ? !m11_csb_is_amiga_profile(profile)
+         : platform_kind == 2 ? !m11_csb_is_fmtowns_profile(profile)
+         : platform_kind == 3 ? !(profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                                  profile->variant_id == CSB_V1_VARIANT_ST21_EN)
+                              : 1) ||
         !profile->runtime.party_state_valid) {
         return 0;
     }
@@ -31033,7 +31054,7 @@ static int m11_csb_fmtowns_top_row_pointer(
         if (icon_index >= 0) {
             return m11_csb_native_champion_icon_pointer(
                 state, icon_index, &state->csbFmtownsHeldChampionIconOrdinal,
-                0, out_result);
+                2, out_result);
         }
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
             if (x >= bar_left[slot] && x <= bar_left[slot] + 23) {
