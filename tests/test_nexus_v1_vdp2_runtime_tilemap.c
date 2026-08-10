@@ -10,6 +10,12 @@ static void le16(uint8_t *p, unsigned int value)
     p[1] = (uint8_t)(value >> 8U);
 }
 
+static void be16(uint8_t *p, unsigned int value)
+{
+    p[0] = (uint8_t)(value >> 8U);
+    p[1] = (uint8_t)value;
+}
+
 static int run_external_tilemap_capture(void)
 {
     const char *path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
@@ -70,6 +76,7 @@ int main(void)
     uint8_t source_cram[NEXUS_V1_SATURN_VDP2_CRAM_BYTES];
     Nexus_V1_Vdp2RuntimeTilemapBinding binding;
     Nexus_V1_Vdp2TilemapCaptureReceipt receipt;
+    Nexus_V1_SaturnVdp2RegisterReceipt registers;
     Nexus_Framebuffer framebuffer;
     size_t offset = 0U;
     size_t vdp2_marker_offset;
@@ -146,6 +153,32 @@ int main(void)
         receipt.renderer_permitted || framebuffer.color_buffer[
             35 * NEXUS_FB_W + 25] != 0x11U) {
         fprintf(stderr, "FAIL: raw Saturn VDP2 tilemap capture decode\n");
+        free(blob);
+        return 1;
+    }
+    /* The upstream Mednafen candidate serializes every Saturn word in
+     * big-endian bus order. Exercise the same capture-only decoder with that
+     * representation so the local little-endian fixture cannot mask a
+     * producer-order regression. */
+    be16(vdp2_regs + 0x00, 0x8020U);
+    be16(vdp2_regs + 0x20, 0x0002U);
+    be16(vdp2_regs + 0x28, 0x1000U);
+    be16(vdp2_regs + 0xe4, 0x0000U);
+    be16(vdp2_regs + 0x3c, 0x0000U);
+    be16(vdp2_regs + 0x44, 0x0000U);
+    be16(vdp2_regs + 0x46, 0x0000U);
+    be16(vdp2_vram + 0, 0U);
+    be16(vdp2_vram + 2, 4U);
+    nexus_fb_clear(&framebuffer);
+    memset(&registers, 0, sizeof(registers));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, blob, blob_size, 0U, 0, 0, 1, 1, 26, 36,
+            NULL, &registers, &receipt) || !receipt.valid ||
+        registers.byte_order != NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+        !registers.nbg1_enabled || receipt.renderer_permitted ||
+        framebuffer.color_buffer[36 * NEXUS_FB_W + 26] != 0x11U) {
+        fprintf(stderr, "FAIL: big-endian Mednafen VDP2 tilemap capture decode\n");
         free(blob);
         return 1;
     }
