@@ -626,6 +626,14 @@ Theron_V1_Object *theron_v1_object_at_in_dungeon(
 Theron_V1_Object *theron_v1_object_by_id(Theron_V1_World *world, int id);
 const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
     const Theron_V1_World *world, int champion_slot, int inventory_slot);
+/* Provenance-preserving storage operation. This moves a compact inventory ID
+ * together with its complete authenticated Track 02 source record. It is not
+ * an assertion of the original T900 equip/use/stack command grammar. */
+int theron_v1_swap_inventory_source_slots(
+    Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot_a,
+    int inventory_slot_b);
 /* Source-backed inventory roundtrip.  This is deliberately an explicit
  * provenance API, not an assertion of the original T900 drop command. */
 int theron_v1_drop_inventory_source_item(

@@ -907,6 +907,50 @@ static int theron_v1_inventory_source_record_matches(
     }
 }
 
+int theron_v1_swap_inventory_source_slots(
+    Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot_a,
+    int inventory_slot_b) {
+    Theron_V1_Champion *champion;
+    Theron_V1_InventorySourceRecord *a;
+    Theron_V1_InventorySourceRecord *b;
+    uint8_t item_id;
+
+    if (!world || champion_slot < 0 || champion_slot >= THERON_MAX_CHAMPIONS ||
+        inventory_slot_a < 0 || inventory_slot_a >= THERON_INVENTORY_SLOTS ||
+        inventory_slot_b < 0 || inventory_slot_b >= THERON_INVENTORY_SLOTS ||
+        inventory_slot_a == inventory_slot_b)
+        return -1;
+    champion = &world->party.champions[champion_slot];
+    a = &world->inventory_source[champion_slot][inventory_slot_a];
+    b = &world->inventory_source[champion_slot][inventory_slot_b];
+    if (theron_v1_world_source_level_verified(world)) {
+        /* Real levels may only move a complete source-backed occurrence or an
+         * empty slot. Never carry a compact ID without its authenticated row. */
+        if ((champion->inventory[inventory_slot_a] != THERON_ITEM_NONE &&
+             !theron_v1_inventory_source_record_matches(a)) ||
+            (champion->inventory[inventory_slot_b] != THERON_ITEM_NONE &&
+             !theron_v1_inventory_source_record_matches(b)) ||
+            (champion->inventory[inventory_slot_a] == THERON_ITEM_NONE &&
+             a->valid) ||
+            (champion->inventory[inventory_slot_b] == THERON_ITEM_NONE &&
+             b->valid))
+            return -1;
+    }
+    item_id = champion->inventory[inventory_slot_a];
+    champion->inventory[inventory_slot_a] =
+        champion->inventory[inventory_slot_b];
+    champion->inventory[inventory_slot_b] = item_id;
+    {
+        Theron_V1_InventorySourceRecord source = *a;
+        *a = *b;
+        *b = source;
+    }
+    theron_v1_party_recalculate_loads(&world->party);
+    return 0;
+}
+
 int theron_v1_drop_inventory_source_item(
     Theron_V1_World *world,
     int champion_slot,

@@ -1,3 +1,13 @@
+# Theron: source-bound inventoryslotbyte (2026-08-10)
+
+- ✅ Ett inventoryslotbyte flyttar nu compact-ID och hela autentiska Track 02-
+  provenanceposten som en atomisk operation. På verifierade nivåer nekas
+  tomma slots med kvarvarande provenance och occupied slots utan matchande
+  rårecord.
+- ✅ Combat-regressionen passerar 121/121 och den riktiga US Track 02-loadern
+  passerar med alla sju dungeonledgers. Equip/use/consume/stack-reglerna är
+  uttryckligen fortsatt stängda tills originalets T900-konsument fångas.
+
 # DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
 
 - ✅ Vädertimerregressionen följer nu den faktiska runtimegränsen: utan

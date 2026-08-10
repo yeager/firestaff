@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔒 Source-bound inventoryslotbyte är nu atomiskt och flyttar både compact-ID
+  och hela råa Track 02-proveniensen, men originalets equip/use/consume/stack-
+  konsument är fortfarande inte fångad. Nästa T900-capture måste visa samma
+  source-record genom en verklig inventorytransaktion och dess state-skrivning.
+
 - 🔒 State-replayen nådde `$B0E5` 50 gånger, men A-registret var `0x2c/0x85`
   och därmed utanför disassemblyns regular-spawn-kategorier `0..3`. Parsern
   räknar detta inte längre som en spawn-entry. En ny capture måste fortfarande

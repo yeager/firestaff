@@ -840,11 +840,17 @@ static void test_source_item_pickup_provenance(void) {
     CHECK(carried && carried->source_raw_size == 4u &&
               carried->source_raw[2] == 0x86u,
           "inventory keeps exact source item bytes");
-    w.inventory_source[0][0].source_raw[2] ^= 0x01u;
+    CHECK_INT("source inventory slot swap succeeds",
+              theron_v1_swap_inventory_source_slots(&w, 0, 0, 1), 0);
+    CHECK_INT("swapped compact inventory id", w.party.champions[0].inventory[1], 6);
+    carried = theron_v1_inventory_source_at(&w, 0, 1);
+    CHECK(carried && carried->valid && carried->source_raw[2] == 0x86u,
+          "swapped slot retains exact source item bytes");
+    w.inventory_source[0][1].source_raw[2] ^= 0x01u;
     CHECK_INT("tampered source item drop rejected",
-              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
-    w.inventory_source[0][0].source_raw[2] = 0x86u;
-    CHECK(theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4) > 0,
+              theron_v1_drop_inventory_source_item(&w, 0, 1, 3, 4), -1);
+    w.inventory_source[0][1].source_raw[2] = 0x86u;
+    CHECK(theron_v1_drop_inventory_source_item(&w, 0, 1, 3, 4) > 0,
           "source item drop succeeds");
     CHECK_INT("dropped source item id", w.objects[w.object_count - 1].item_index,
               6);
