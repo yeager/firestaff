@@ -3,10 +3,10 @@
 ## Status
 
 Firestaff has a working external Mednafen 1.32.1 witness that captures
-authentic Saturn VDP1/VDP2 state. The current Firestaff patches are a
-verification instrument, not an upstream-ready patch: they contain
-Firestaff-specific environment variables, input automation, CD/SH-2 tracing,
-and Nexus-oriented output names.
+authentic Saturn VDP1/VDP2 state. The upstream candidate is now separated from
+the Firestaff probe: it uses two non-persistent Saturn settings, serializes
+16-bit values explicitly in big-endian order, and contains no Nexus, BIOS,
+disc, input-automation, CD, or SH-2 tracing code.
 
 The upstreamable part is a small, opt-in Saturn frame-dump facility. It must
 not depend on a game, BIOS, disc image, Firestaff, or a particular asset
@@ -15,23 +15,21 @@ format.
 ## Proposed upstream change
 
 Add an optional Saturn debug capture setting to the Mednafen Saturn core. When
-enabled, one or more completed frames are written to a versioned binary stream
-after the normal VDP2 end-of-frame composition has run.
+enabled, one or more completed frames are written to a versioned stream at the
+top-blanking boundary, before the next frame's renderer work begins.
 
 Each frame record should contain:
 
-- VDP1 command-RAM state needed to identify the command-list boundary;
 - VDP1 VRAM and both framebuffer pages;
-- VDP1 execution state (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, and
-  system-clip state);
 - the raw VDP2 register image;
 - VDP2 VRAM and CRAM;
-- the visible-frame number and capture geometry.
+- the visible-frame number and draw-buffer selector.
 
-The format should use explicit little-endian integer serialization and a
-header containing a format version, record size, and payload sizes. A reader
-must be able to skip unknown records. Capture is disabled by default and must
-not alter emulation output, timing, input, save states, or normal logging.
+The current candidate uses explicit big-endian 16-bit serialization to retain
+the Saturn bus representation. Capture is disabled by default and must not
+alter emulation output, timing, input, save states, or normal logging. The
+format remains a review candidate until Mednafen maintainers choose whether
+the final public interface should be a setting or a debugger command.
 
 ## Deliberately excluded
 
@@ -51,11 +49,11 @@ useful to emulator developers.
 ## Acceptance criteria for the PR
 
 1. A stock Saturn title runs unchanged with capture disabled.
-2. Capture enabled produces the same VDP1/VDP2 state as the existing
-   renderer at the chosen post-render boundary.
+2. Capture enabled produces the same VDP1/VDP2 memory state as the existing
+   renderer at the chosen frame boundary.
 3. Two runs with identical inputs produce byte-identical frame records.
-4. The capture path is bounded by an explicit frame/size limit and handles
-   file-open and short-write failures without terminating emulation.
+4. The capture path is bounded by an explicit frame limit and handles
+   file-open failures without terminating emulation.
 5. The format and option are documented in Mednafen's Saturn documentation.
 6. A small host-side reader or test fixture validates header, record sizes,
    and endianness without requiring copyrighted game data.
