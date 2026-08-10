@@ -1,4 +1,7 @@
-/* AUTO platform selection must be a media policy, not catalogue order. */
+/* AUTO platform selection must be a media policy, not catalogue order.
+ * The catalogue intentionally lists FM Towns before PC for all three games;
+ * the launcher must nevertheless recover to the verified PC route whenever
+ * an AUTO version needs to be selected again. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 

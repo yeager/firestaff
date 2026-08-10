@@ -8411,22 +8411,16 @@ const char* M12_StartupMenu_GetEntryCaptureProofLabel(
 static int m12_first_matched_version_index_for_game(
     const M12_StartupMenuState* state,
     const char* gameId) {
-    size_t vc;
-    size_t vi;
     if (!state || !gameId || gameId[0] == '\0') {
         return -1;
     }
-    vc = M12_AssetStatus_GetVersionCount(gameId);
-    for (vi = 0; vi < vc; ++vi) {
-        const M12_AssetVersionStatus* vs = M12_AssetStatus_GetVersion(
-            &state->assetStatus,
-            gameId,
-            vi);
-        if (vs && vs->matched) {
-            return (int)vi;
-        }
-    }
-    return -1;
+    /* This is the recovery path for a stale or unavailable persisted version.
+     * It must use the same architecture policy as normal AUTO selection.
+     * Catalogue order intentionally starts with FM Towns for several games,
+     * so returning the first hash match here would bypass the PC-first AUTO
+     * contract after a scan or data-directory change. */
+    return M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        &state->assetStatus, gameId, M12_ARCH_AUTO);
 }
 
 static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot) {

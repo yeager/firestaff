@@ -3115,6 +3115,17 @@ rendering remain blocked.
   `GRAPHICS.DAT`-hash. Amiga- och PC-startvägar förblir separata enligt
   ReDMCSB `COMPILE.H` och `APPA.C`.
 
+# Startmenyns Auto-plattform väljer PC-rutten konsekvent (2026-08-10)
+
+- ✅ Auto använder nu samma verifierade PC-först-policy även när en sparad
+  version saknas eller inte längre kan startas. Det förhindrar att katalogens
+  FM Towns-poster blir en oavsiktlig reservväg för Dungeon Master, Chaos
+  Strikes Back eller Dungeon Master II efter en omskanning.
+- ✅ Ett uttryckligt plattformsval lämnas orört. FM Towns, Amiga och Atari ST
+  startas alltså fortfarande från sin valda och hashverifierade originalmedia.
+- ✅ Policyn är verifierad för alla tre spel med samtidigt matchande PC- och
+  FM Towns-profiler.
+
 # DM2 Amiga-arkivets ägaridentitet (2026-08-08)
 
 - ✅ Bootprofilen behåller nu den exakta, av användaren valda sökvägen till
@@ -3133,10 +3144,9 @@ rendering remain blocked.
   `--platform amiga`), och verifierad DM2 Amiga English når startup-menyn
   från originalets ZIP/ADF/LZX-media helt i RAM. Startmenyn respekterar
   samma val utan att falla tillbaka till en syskoninstallation.
-- ✅ Med Auto vald prioriteras verifierad FM Towns-data före PC, Amiga och
-  Atari ST för Dungeon Master, Chaos Strikes Back och Dungeon Master II.
-  Ett sparat PC-versionindex kan därmed inte maskera en senare verifierad
-  FM Towns-installation; ett uttryckligt plattformsval ändras aldrig.
+- ✅ Den dåvarande FM Towns-först-policyn har ersatts av PC-först för Auto.
+  FM Towns kan alltid väljas uttryckligen och behåller då sin egen
+  hashverifierade startväg.
 
 # DM2 Amiga originaluppstart i RAM (2026-08-08)
 
