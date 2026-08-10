@@ -10,14 +10,20 @@
 + static unsigned count;
 + static bool configured;
 + static unsigned limit = 100000;
++ static uint32 minimum_lba;
++ static uint32 maximum_lba;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_CD_READS");
 + if(!configured)
 + {
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_READ_LIMIT");
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA");
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  minimum_lba = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
++  maximum_lba = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0xFFFFFFFF;
 +  configured = true;
 + }
-+ if(!path || !*path || count >= limit) return;
++ if(!path || !*path || lba < minimum_lba || lba > maximum_lba || count >= limit) return;
 + if(!file)
 + {
 +  file = fopen(path, "wb");

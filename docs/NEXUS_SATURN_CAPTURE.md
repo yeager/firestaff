@@ -173,6 +173,11 @@ export FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_PC=0x0601184c
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES="$run/vdp2-writes.trace"
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT="$run/post.snapshot"
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=80
+export FIRESTAFF_NEXUS_TRACE_CD_READS="$run/cd-reads.trace"
+export FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA=1
+export FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITES="$run/sh2-source-writes.trace"
+export FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MIN=0x06000000
+export FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MAX=0x08000000
 
 probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
   --operator-only --launch --no-waiting \
@@ -203,6 +208,17 @@ python3 scripts/analyze_nexus_vdp2_post_write_snapshot.py \
   --asset TM.BIN --source-file-offset 0x1a0c0 \
   --destination-start 0x100400 --minimum-writes 64
 ```
+
+För att följa skivdata till SH-2-buffer används dessutom `cd-reads.trace` och
+`sh2-source-writes.trace`. `FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA=1` filtrerar
+bort BIOS/boot-sektorns upprepade LBA 0-läsningar. Source-tracen loggar både
+byte-, ord- och långordsaccesser; tidigare versioner loggade bara långord och
+missade därför den bytevisa kopieringen till runtimebufferten.
+
+De här spåren bevisar transportkedjan först när en icke-noll LBA, den aktiva
+CS2-läsningen och motsvarande destination kan sammanfogas i samma körning.
+Enbart en `0x05890008`-läsning eller en matchande runtime-adress är inte
+tillräckligt för källbindning.
 
 En lyckad transportkontroll räcker inte för semantic admission. Om
 `FONT256`-spannen, textkod→glyph-mappningen eller den faktiska menyägaren inte

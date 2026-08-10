@@ -8,10 +8,10 @@
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
 @@ -361,0 +362,2 @@
-+ if(!IsWrite && sizeof(T) == 4)
++ if(!IsWrite)
 +  FirestaffTraceSH2SourceRead(A, DB);
 @@ -375,0 +378,2 @@
-+ if(IsWrite && sizeof(T) == 4)
++ if(IsWrite)
 +  FirestaffTraceSH2RAMSourceWrite(A, DB);
 @@ -467,0 +471,5 @@
 +
