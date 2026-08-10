@@ -1,5 +1,16 @@
 # Firestaff: diskformatering lämnas till originalspel och emulator (2026-08-10)
 
+# Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
+
+- ✅ Den autentiserade externa cold-start-capturen med VRAM-FNV `4a2186a2`
+  och VCE-FNV `aa11c4f2` är nu bunden till produktionsviewportens riktiga
+  bitmap- och palettbank.
+- ✅ `test_theron_v1_vram_trace_real_capture` passerar med 22 850 icke-noll
+  VRAM-byte, 144 icke-noll VCE-byte, 280 BAT-tilebindningar och en 18 734
+  pixel source-only frame.
+- 🔒 Detta är inte ett gameplay- eller square-mapping-bevis; de semantiska
+  Theron-konsumenterna är fortsatt fail-closed.
+
 - ✅ DM2/SKSAVE: tog bort den callbackbaserade recycler-studien som valde
   lägsta “importance”. Den motsvarar inte originalets karta- och
   recordkedjescanner. Enda kvarvarande vägen är den verkliga, läsande

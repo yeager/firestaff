@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## Theron: corrected cold-start VDC/VCE media pair admitted (2026-08-10)
+
+- ✅ Produktionsviewporten känner nu igen det autentiserade externa paret
+  `VRAM=4a2186a2` och `VCE=aa11c4f2` och binder dess riktiga tile-bytes och
+  BGR333-palett.
+- 🔒 Paret är endast source-bound mediaevidens. Square-to-tile-mappning,
+  perspektiv, HUD, creatures, RNG, AI, combat, loot, generatorer, T700 och
+  T900 förblir stängda eftersom samma replay saknar deras spelägda consumer.
+
 ## Theron: corrected cold-start replay proves loader transport, not gameplay ownership (2026-08-10)
 
 - ✅ En separat Run-puls efter BIOS-uppstart nådde en autentiserad Track 02-

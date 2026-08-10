@@ -1,5 +1,18 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-10 — corrected cold-start VDC/VCE pair admitted as source media
+
+The corrected cold-start replay produced an exact raw VDC snapshot (64 KiB,
+FNV-1a `4a2186a2`) and VCE snapshot (1 KiB, FNV-1a `aa11c4f2`) from the
+authenticated US Track 02/System Card session. The production viewport now
+admits this exact pair for source-bound tile bytes and VCE palette entries.
+
+This is a media-bank admission only. The replay still reports no `$B0E5`
+spawn entry, no dynamic RNG consumer and no identified level/object/tile
+consumer, so it does not unlock square-to-tile mapping, perspective, HUD,
+creature AI, combat, loot, generator, T700 or T900 semantics. The raw pair
+remains on the external disk and no game data is committed to the repository.
+
 ## 2026-08-10 — complete File-select and dungeon-input replay remains pre-spawn
 
 The external-disk run used the complete raw MODE1/2352 US CUE and the
