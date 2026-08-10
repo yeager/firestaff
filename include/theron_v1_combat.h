@@ -255,7 +255,8 @@ int theron_v1_drop_loot(Theron_V1_World *world,
 /*
  * Sound backend is platform-specific.  Each platform provides:
  *   int firestaff_tqr_play_sound(Theron_SoundID id);
- * If not provided, these functions are no-ops (stubbed below).
+ * If not provided, the production source bridge returns -1/0 and never
+ * claims that an unproven gameplay sound was played.
  */
 int theron_v1_play_sound(Theron_SoundID id);
 int theron_v1_sound_is_valid(Theron_SoundID id);

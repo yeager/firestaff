@@ -12261,3 +12261,13 @@ rendering remain blocked.
 - ✅ `test_theron_v1_track02_champion_roster` och
   `test_theron_v1_startup_media_palette_bind` passerar mot lokal riktig
   US/JP-media. Ingen syntetisk text eller porträttbindning har lagts till.
+
+## Theron: ljudtriggern rapporterar inte falsk framgång (2026-08-10)
+
+- ✅ Produktions-API:t `theron_v1_play_sound` returnerar nu `-1` tills en
+  source-bound spelhändelse faktiskt är bevisad som ljudkonsument.
+- ✅ Den autentiserade capture-körningen visar ADPCM FIFO→RAM-transport, men
+  ingen CPU-/eventläsning som äger ett spelhändelseljud. CDDA-handoff finns
+  kvar som separat transportbevis.
+- ⚠️ Ljud-/ADPCM-/effektkonsumenten är fortfarande ett öppet gap; ingen
+  syntetisk ljudbindning har lagts till.

@@ -161,6 +161,8 @@ int main(void) {
           "production drop publication stays blocked");
     CHECK(theron_v1_sound_is_valid(THERON_SOUND_SWORD_SWING) == 0,
           "unbound sound record stays invalid");
+    CHECK(theron_v1_play_sound(THERON_SOUND_SWORD_SWING) == -1,
+          "unbound sound trigger reports blocked instead of false success");
     CHECK(strstr(theron_v1_combat_source_evidence(), "regular") != NULL &&
               strstr(theron_v1_combat_source_evidence(), "blocked") != NULL,
           "production evidence names the narrow blocked regular-spawn boundary");

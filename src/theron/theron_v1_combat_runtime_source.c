@@ -313,7 +313,15 @@ int theron_v1_drop_loot(Theron_V1_World *world, int creature_id, int x, int y) {
     (void)world; (void)creature_id; (void)x; (void)y; return -1;
 }
 
-int theron_v1_play_sound(Theron_SoundID id) { (void)id; return 0; }
+int theron_v1_play_sound(Theron_SoundID id) {
+    /*
+     * The authenticated full capture proves ADPCM FIFO -> RAM transport,
+     * but no CPU/event read owns a gameplay sound yet.  Do not report a
+     * successful play until a source-bound event consumer is identified.
+     */
+    (void)id;
+    return -1;
+}
 
 int theron_v1_sound_is_valid(Theron_SoundID id) {
     (void)id; return 0;
