@@ -8,6 +8,13 @@
 - 🔒 The category-0..3 spawn caller, generator timing, AI, combat, T700 and
   T900 owners still require a same-session level/object consumer witness.
 
+# Theron: spawn-helper overlay capture widened (2026-08-11)
+
+- ✅ The external-disk Mednafen capture patch now records the raw execution
+  windows for `$5A76`, `$5B8F`, `$5BA5` and `$D23A` in addition to `$45E3`.
+- ✅ The windows are hash-recorded in the source-lock note and remain separate
+  from gameplay publication until their return values join a real spawn.
+
 # DM2: source-correct event queue flush (2026-08-11)
 
 - ✅ `c_eventqueue::event_1031_098e` compacts retained 0x04/0x40/0x60

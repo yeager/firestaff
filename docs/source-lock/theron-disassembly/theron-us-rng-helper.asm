@@ -21,6 +21,14 @@
 ; decoding this RNG transition does not by itself authorize spawn, AI, loot,
 ; T700 or T900 publication.
 ;
+; The same bounded real capture also admitted raw overlay windows for helper
+; callers reached from $B0E5: $5A76 (FNV-1a $6869c445), $5B8F
+; ($88078c02), $5BA5 ($2c323453), and $D23A ($c63dc0fe), each 256 bytes at
+; physical PCs $000d1a76, $000d1b8f, $000d1ba5 and $000d723a.  These windows
+; are preserved as disassembly evidence only; their table/state owners are
+; not promoted until the same execution binds their return values to a real
+; category-0..3 spawn record.
+;
 ; Adjacent preconsumer L4644 is locked separately at raw file offset $9c4c4,
 ; 27 bytes, FNV-1a $a3c3f7eb. It prepares the arguments and calls the
 ; consumers at $C96B/$CC4C. Their US-BIN byte spans are now statically

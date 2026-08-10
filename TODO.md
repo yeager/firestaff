@@ -8,6 +8,9 @@
 - 🔒 Do not seed this state from `dungeon_seed` or use it for spawning until
   the original `$28B7` owner and a same-session category/object consumer are
   proven. Spawn formulas, AI, T700 and T900 remain gated.
+- 🔒 Decode the newly captured `$5A76/$5B8F/$5BA5/$D23A` return contracts and
+  join them to one real category-0..3 spawn record before enabling HP/stat
+  materialization.
 
 ## Theron: desktop pointer controls landed (2026-08-11)
 
