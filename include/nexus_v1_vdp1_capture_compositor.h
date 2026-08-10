@@ -27,6 +27,8 @@ typedef struct {
     const uint8_t *dgn_palette;
     int dgn_palette_size;
     int dgn_source_hash_verified;
+    int dgn_structure3_face_owner_count;
+    int dgn_structure3_face_owner_verified;
     /* Optional canonical DGN Structure2 encoding 28h source-owner witness
      * for VDP1 colour mode 5. */
     const uint8_t *dgn_direct_image;
@@ -50,6 +52,7 @@ typedef struct {
     int valid;
     int source_join_verified;
     int palette_join_verified;
+    int structure3_face_owner_join_verified;
     int command_framed;
     int mode1_lookup;
     int coordinate_words_framed;
@@ -116,6 +119,7 @@ typedef struct {
     int command_frames_verified;
     int source_joins_verified;
     int palette_joins_verified;
+    int structure3_face_owner_joins_verified;
     int transparent_noop_commands;
     int capture_gap_commands;
     int display_origin_verified;

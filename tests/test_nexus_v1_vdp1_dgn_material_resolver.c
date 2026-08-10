@@ -27,7 +27,7 @@ static void le16(uint8_t *p, unsigned int value)
 int main(void)
 {
     uint8_t *vram = (uint8_t *)calloc(1, NEXUS_V1_VDP1_VRAM_BYTES);
-    uint8_t *dgn = (uint8_t *)calloc(1, 0x900U);
+    uint8_t *dgn = (uint8_t *)calloc(1, 0x1800U);
     uint8_t *dgn_direct = (uint8_t *)calloc(1, 0x900U);
     uint8_t command[NEXUS_V1_VDP1_COMMAND_BYTES] = {0};
     Nexus_V1_Vdp1TextureCommand parsed;
@@ -49,6 +49,13 @@ int main(void)
     be32(dgn + 0x80c, 22U);
     be32(dgn + 0x810, 54U);
     be16(dgn + 0x814, 0xffffU);
+    be16(dgn + 0x1c, 2U);
+    be16(dgn + 0x1e, 1U);
+    be32(dgn + 0x1000, 1U);
+    be32(dgn + 0x1004, 8U);
+    be16(dgn + 0x1000 + 8U + 6U, 1U);
+    be32(dgn + 0x1000 + 8U + 16U, 32U);
+    be16(dgn + 0x1000 + 32U + 10U, 0U);
     for (i = 0; i < 32; ++i) {
         dgn[0x800 + 22 + i] = 0x12U;
         dgn[0x800 + 54 + i] = 0x80U;
@@ -68,7 +75,7 @@ int main(void)
     }
     memset(&context, 0, sizeof(context));
     context.dgn_bytes = dgn;
-    context.dgn_byte_count = 0x900;
+    context.dgn_byte_count = 0x1800;
     context.source_hash_verified = 1;
     context.palette_slot_base = 16;
     memset(&envelope, 0, sizeof(envelope));
@@ -82,7 +89,9 @@ int main(void)
             vram, NEXUS_V1_VDP1_VRAM_BYTES, command, sizeof(command), &parsed,
             0x300U, &resolved, &context) ||
         resolved.dgn_image_size != 32 || resolved.dgn_palette_size != 32 ||
-        !resolved.dgn_source_hash_verified || resolved.palette_slot_base != 16) {
+        !resolved.dgn_source_hash_verified || resolved.palette_slot_base != 16 ||
+        resolved.dgn_structure3_face_owner_count != 1 ||
+        !resolved.dgn_structure3_face_owner_verified) {
         fprintf(stderr, "FAIL: unique source/CLUT resolver join src=%u bytes=%u colr=%04x range=%d\n",
                 parsed.texture_source_byte_offset, parsed.texture_byte_count,
                 parsed.colour_control, parsed.texture_source_range_valid);

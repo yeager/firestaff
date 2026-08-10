@@ -24,6 +24,11 @@ capture-dekodern för frames 0–9. Samma frames kunde inte bindas till
 `LEV01.DGN` via mode-1-sekvensen; capture-materialet är därför inte ett
 level-face-witness och får inte användas för att hävda retail viewport-paritet.
 
+VDP1-resolvern räknar nu också exakt de Structure3-rader som äger en matchad
+Structure2-bild och skickar detta som capture-receipt. Det är en starkare
+bytebunden ägarrelation, men inte Saturns runtime face-selection: en draw kan
+fortfarande ha flera möjliga Structure3-ägare och transform/culling är öppna.
+
 2026-08-10: Engine-API:t kan nu läsa en vald, hashbunden MENU.BPK-PRS3-yta
 som exakta indexpixlar. Detta är source-pixelåtkomst, inte PALT-färgdekodning,
 VDP1-upload eller menyplacering; Saturn-konsumentgrinden är fortsatt öppen.

@@ -21,6 +21,8 @@ typedef struct {
     int image_matches;
     int palette_matches;
     int unique_join;
+    int structure3_face_owner_count;
+    int structure3_face_owner_verified;
     uint16_t structure2_image_id;
     uint16_t structure2_encoding;
     uint16_t structure2_width;

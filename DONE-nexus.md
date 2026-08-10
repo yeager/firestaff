@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus VDP1 Structure3 owner receipt
+
+- VDP1:s DGN-materialresolver traverserar nu den hashbundna Structure3-
+  directory/face-tabellen och räknar exakta face-rader vars råa fill-selector
+  matchar den bytejoinade Structure2-bilden.
+- `Nexus_V1_Vdp1CaptureCompositeReceipt` och sekvensreceiptet behåller denna
+  owner-join separat från bild/CLUT-joinen. Tvetydiga nollträffar öppnar inte
+  renderer eller scenägarskap.
+- Retail-kedjans frame-/transform-/culling-semantik förblir capture-gated;
+  focused VDP1 build och resolver/compositor-tester passerar.
+
 ## 2026-08-10 - Nexus VDP1 direct-colour DGN owner join
 
 - VDP1 colour mode 5 kan nu bindas till en unik DGN Structure2 encoding

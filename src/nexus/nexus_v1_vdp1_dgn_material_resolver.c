@@ -40,6 +40,45 @@ static void clear_receipt(Nexus_V1_Vdp1DgnMaterialResolverReceipt *receipt)
     if (receipt) memset(receipt, 0, sizeof(*receipt));
 }
 
+static int structure3_face_owner_count(
+    const uint8_t *data, int size, uint16_t image_id)
+{
+    uint32_t base;
+    uint32_t bytes;
+    uint32_t entry_count;
+    uint32_t entry;
+    int owners = 0;
+
+    if (!data || size < 0x20) return 0;
+    base = (uint32_t)read_be16(data + 0x1c) * 0x800U;
+    bytes = (uint32_t)read_be16(data + 0x1e) * 0x800U;
+    if (base == 0U || bytes < 4U || base > (uint32_t)size ||
+        bytes > (uint32_t)size - base) return 0;
+    entry_count = read_be32(data + base);
+    if (entry_count == 0U || entry_count > 4096U ||
+        entry_count > (bytes - 4U) / 4U) return 0;
+    for (entry = 0U; entry < entry_count; ++entry) {
+        uint32_t entry_offset = read_be32(
+            data + base + 4U + entry * 4U);
+        uint32_t entry_end = entry + 1U < entry_count
+            ? read_be32(data + base + 4U + (entry + 1U) * 4U) : bytes;
+        uint16_t face_count;
+        uint32_t face_offset;
+        uint32_t face;
+        if (entry_offset > entry_end || entry_end > bytes ||
+            entry_end - entry_offset < 24U) return 0;
+        face_count = read_be16(data + base + entry_offset + 6U);
+        face_offset = read_be32(data + base + entry_offset + 16U);
+        if (face_offset < entry_offset || face_offset > entry_end ||
+            (uint32_t)face_count > (entry_end - face_offset) / 12U) return 0;
+        for (face = 0U; face < face_count; ++face) {
+            const uint8_t *row = data + base + face_offset + face * 12U;
+            if (read_be16(row + 10U) == image_id) ++owners;
+        }
+    }
+    return owners;
+}
+
 int nexus_v1_vdp1_dgn_material_resolver(
     const uint8_t *vdp1_vram, int vdp1_vram_size,
     const uint8_t *command, int command_size,
@@ -61,6 +100,7 @@ int nexus_v1_vdp1_dgn_material_resolver(
     int palette_matches = 0;
     const uint8_t *matched_image = NULL;
     const uint8_t *matched_palette = NULL;
+    uint16_t matched_image_id = 0;
 
     (void)command;
     (void)command_size;
@@ -136,6 +176,7 @@ int nexus_v1_vdp1_dgn_material_resolver(
         if (image_match) {
             ++image_matches;
             matched_image = image;
+            matched_image_id = image_id;
         }
         /* Nexus may reuse a canonical DGN palette for a different image
          * descriptor. CMDCOLR is a frame-local CLUT selection, so image and
@@ -173,6 +214,11 @@ int nexus_v1_vdp1_dgn_material_resolver(
     out_input->dgn_palette = matched_palette;
     out_input->dgn_palette_size = 32;
     out_input->dgn_source_hash_verified = 1;
+    out_input->dgn_structure3_face_owner_count =
+        structure3_face_owner_count(data, input->dgn_byte_count,
+                                     matched_image_id);
+    out_input->dgn_structure3_face_owner_verified =
+        out_input->dgn_structure3_face_owner_count > 0;
     out_input->palette_slot_base = input->palette_slot_base;
     return 1;
 }

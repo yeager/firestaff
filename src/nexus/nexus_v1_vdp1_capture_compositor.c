@@ -371,6 +371,8 @@ int nexus_v1_vdp1_capture_composite_mode1(
     receipt.original_saturn_capture_verified = 1;
     receipt.source_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
     receipt.palette_join_verified = input->transparent_capture_noop_verified ? 0 : 1;
+    receipt.structure3_face_owner_join_verified =
+        input->dgn_structure3_face_owner_verified ? 1 : 0;
     receipt.transparent_noop_verified = input->transparent_capture_noop_verified ? 1 : 0;
     receipt.palette_slot_base = input->palette_slot_base;
     receipt.screen_origin_x = input->screen_origin_x;
@@ -473,6 +475,8 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
             receipt.command_frames_verified += command_receipt.command_framed;
             receipt.source_joins_verified += command_receipt.source_join_verified;
             receipt.palette_joins_verified += command_receipt.palette_join_verified;
+            receipt.structure3_face_owner_joins_verified +=
+                command_receipt.structure3_face_owner_join_verified;
             receipt.transparent_pixels += command_receipt.transparent_pixels;
             if (input->commands[i].capture_allow_zero_pixel_command) {
                 ++receipt.capture_gap_commands;
@@ -495,6 +499,8 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         receipt.command_frames_verified += command_receipt.command_framed;
         receipt.source_joins_verified += command_receipt.source_join_verified;
         receipt.palette_joins_verified += command_receipt.palette_join_verified;
+        receipt.structure3_face_owner_joins_verified +=
+            command_receipt.structure3_face_owner_join_verified;
         receipt.written_pixels += command_receipt.written_pixels;
         receipt.transparent_pixels += command_receipt.transparent_pixels;
         receipt.end_code_pixels += command_receipt.end_code_pixels;
