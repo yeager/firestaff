@@ -178,5 +178,6 @@ if [[ -e "$tmp_dir/trace-timeout.raw" ]]; then
   echo "timed-out capture must not leave a raw witness" >&2
   exit 1
 fi
+grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-timeout.txt"
 
 echo "nexus Saturn raw capture launcher: PASS"

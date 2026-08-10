@@ -1,3 +1,10 @@
+# Nexus: capture-launcher status integrity (2026-08-10)
+
+- ✅ Saturn-launchern markerar nu en körning som misslyckad när Mednafen
+  returnerar 0 efter SIGTERM men ingen komplett råcapture faktiskt skrivits.
+  Regressionstestet verifierar både timeout, utebliven råfil och
+  `capture_exit_status=1`; detta hindrar en tom witness från att se lyckad ut.
+
 # Nexus: cold-start-transport före Saturn-handoff (2026-08-10)
 
 - ✅ En extern EU-capture från frame 0 med regionmatchad fransk retail-media

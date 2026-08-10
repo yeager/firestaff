@@ -217,6 +217,12 @@ fi
 capture_timeout_pid=
 capture_child_pid=
 trap - INT TERM EXIT
+# Mednafen's signal handler can return success after SIGTERM even when the
+# capture hook never reached its first complete frame. The raw witness is
+# the authoritative completion condition; never publish success without it.
+if ((capture_status == 0)) && [[ ! -s "$trace" ]]; then
+  capture_status=1
+fi
 printf 'capture_exit_status=%s\n' "$capture_status" >> "$manifest"
 append_trace_receipts
 ((capture_status == 0)) || exit "$capture_status"
