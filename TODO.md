@@ -669,9 +669,9 @@
   Nästa steg är originalets specialtimer-, kart-, possessions- och
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD`-ägare i samma beständiga transaktion;
   Resume ska fortsätta vara spärrad tills hela kedjan kan publiceras atomärt.
-  DB2/Text-grenens källägda recyclerurval är nu portat över den privata
-  c_map- och recordpoolägaren. Den följer originalets cursor, aktuatorkedje-
-  spärr och skyddade map-text, och återanvänder ingen värdskapad reservpost.
+  DB2/Text-grenen är verifierad som en källägd kedjespärr, inte ett
+  recyclerurval: den följer originalets aktuatorkedje- och skyddade
+  map-text-spärr och får inte återanvända någon textpost.
   Återstående DB0-, DB4- och DB14-grenar kräver fortfarande sina kompletta
   creature-, missile- och recordflyttägare.
   Den privata importägaren behåller nu den autentiserade sparade kartan,
@@ -761,8 +761,8 @@
 - 🔧 DM2 SKSAVE GAME_LOAD: en privat RAM-ägare behåller nu de källordnade
   fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
   först efter att hela den befintliga återställningskedjan lyckats. Den
-  verkliga DOS-korpusen använder nu DB2/Text-recyclern i ett
-  primär-/backuppar och når därefter en senare autentisk kartgräns.
+  verkliga DOS-korpusen når den autentiska recyclergränsen; DB2/Text är
+  uttryckligen spärrad som kedjegräns och får inte maskera DB0/DB4/DB14.
   `READ_RECORD_CHECKCODE` bevarar dessutom
   `ALLOC_NEW_RECORD`-postens `OBJECT_END`-länk före maskad body-dekodning;
   ingen recordkedja får skrivas tillbaka med en nollad länk. Ingen fil har

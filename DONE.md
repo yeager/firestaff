@@ -149,8 +149,9 @@
   fält orört; den tidigare nollade temporära kroppen kunde annars göra
   importerade kedjor till länkar mot ObjectID 0 vid återkopiering.
 - ✅ Round-trip-regressionen och den autentiska PC-DOS SKSAVE-korpusen
-  passerar. Två filer når fortsatt den riktiga DB2-recyclergränsen och är
-  spärrade från Resume; ingen syntetisk recycler eller session publiceras.
+  passerar. DB2/Text är nu verifierad som en recycler-kedjegräns, inte en
+  återanvändbar post; samtliga filer är spärrade från Resume utan syntetisk
+  recycler eller session.
 # Theron: JP-roster till startup-party (2026-08-10)
 
 - ✅ Startup kan nu konsumera den autentiserade JP Track 02-rosterreceipten
@@ -290,9 +291,9 @@
   använder den autentiska `s_savegamebuffer`-leadern, precis som
   `c_savegame.cpp:1206–1224`, i stället för ett värdskapat `E_NOHERO`.
   Två identiska primär-/backupfiler når därmed den första riktiga
-  DB2-recyclergränsen. Samtliga åtta är fortsatt spärrade från Resume tills
-  recycler och komplett sessionägare finns. Inga speldata skrivs eller packas
-  upp.
+  recyclergränsen. DB2/Text får inte återanvändas som genväg. Samtliga åtta
+  är fortsatt spärrade från Resume tills recycler och komplett sessionägare
+  finns. Inga speldata skrivs eller packas upp.
 
 # Launcher: vald DM1-utgåva äger sin runtimekatalog (2026-08-10)
 

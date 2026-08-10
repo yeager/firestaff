@@ -499,7 +499,7 @@ int dm2_v1_sksave_map_owner_tile_record_link(
 }
 
 /* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, map/tile traversal and
- * its isolated DB2/Text selection rule (source lines 577-1072).
+ * its DB2/Text chain barrier (source lines 577-1072).
  *
  * DM2_ALLOC_NEW_RECORD calls the recycler once a DB pool holds no
  * OBJECT_NULL slot (c_record.cpp:1117). On the retail PC-DOS corpus that is
@@ -511,16 +511,16 @@ int dm2_v1_sksave_map_owner_tile_record_link(
  * the per-DB cursor v1e0426[db], skipping the current map (v1e0266) and the
  * second protected map (v1e027c when v1e0234 is set), and within each map
  * walks every tile's ground stack. The DB2 branch has no deletion, AI,
- * missile or MOVE_RECORD_TO tail: after the two source chain exclusions it
- * returns the existing text link and DM2_ALLOC_NEW_RECORD clears that record
- * before its caller appends it. This is therefore the only pool that can be
- * admitted without inventing an unowned creature/missile transaction.
+ * missile or MOVE_RECORD_TO tail, but it is still not a selection branch:
+ * SKProject's DOS code evaluates the TextMode/extension barrier and then
+ * advances the chain. It must not return the existing text link to
+ * DM2_ALLOC_NEW_RECORD.
  *
  * DB0, DB4 and DB14 have source deletion/relocation tails and remain blocked.
  *
- * Returns 1 and writes *out_link when a DB2 record was selected, 0 when the
- * walk completed without one. The cursor is written back on both paths,
- * matching c_record.cpp:779 and :1072. */
+ * Returns zero: the full mutating DB0/DB4/DB14 paths are not owned here.
+ * The cursor is written back when the traversal completes, matching
+ * c_record.cpp:779 and :1072. */
 int dm2_v1_sksave_map_owner_recycle_scan(
     DM2_V1_SksaveMapOwner *owner,
     const DM2_V1_RecordPoolSet *set,
@@ -599,17 +599,6 @@ int dm2_v1_sksave_map_owner_recycle_scan(
                                 break;
                             }
                         }
-                        if (db == 2 && pool == 2) {
-                            owner->recycle_scan_map[db] = (uint8_t)map;
-                            if (out_receipt) {
-                                out_receipt->valid = 1;
-                                out_receipt->maps_scanned = (uint16_t)scanned_maps;
-                                out_receipt->resume_map = (uint8_t)map;
-                                out_receipt->eligibility_ported = 1;
-                            }
-                            if (out_link) *out_link = (uint16_t)current;
-                            return 1;
-                        }
                         current = next;
                     }
                 }
@@ -624,7 +613,7 @@ int dm2_v1_sksave_map_owner_recycle_scan(
         out_receipt->valid = 1;
         out_receipt->maps_scanned = (uint16_t)scanned_maps;
         out_receipt->resume_map = (uint8_t)map;
-        out_receipt->eligibility_ported = db == 2;
+        out_receipt->eligibility_ported = 0;
     }
     return 0;
 }
@@ -831,9 +820,9 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
      * mutable DB0..DB3 record into an existing OBJECT_NULL slot even though
      * the resident DB0..DB3 chains were not globally cleared beforehand.
      * Do not invent a side pool: allocate only an authenticated vacant
-     * source slot.  A full DB2 pool may use the isolated source Text recycler
-     * below. Other full pools remain a load failure until their source-owned
-     * deletion/relocation paths are retained. */
+     * source slot. A full pool remains a load failure until its complete
+     * source-owned deletion/relocation path is retained. DB2/Text is a
+     * chain barrier in the original recycler, not a recyclable source slot. */
     if (!ctx || !ctx->set || record_type < 0 || record_type >= 16) {
         return 0xfffeu;
     }
@@ -846,31 +835,11 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
             return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)index);
         }
     }
-    if (record_type == 2 && ctx->map_owner && ctx->map_owner->valid) {
-        DM2_V1_SksaveRecycleScanReceipt receipt;
-        uint16_t recycled = (uint16_t)DM2_V1_RECORD_HANDLE_END;
-        memset(&receipt, 0, sizeof(receipt));
-        /* dm2data.cpp initializes v1e0234 to zero before GAME_LOAD.  Thus
-         * this pre-session READ_SKSAVE_DUNGEON pass has no second protected
-         * display map (c_record.cpp:581-588); current_map is still skipped
-         * by the owner scan. */
-        if (dm2_v1_sksave_map_owner_recycle_scan(
-                ctx->map_owner, ctx->set, record_type, -1,
-                &receipt, &recycled) == 1 && receipt.valid &&
-            receipt.eligibility_ported &&
-            dm2_v1_record_handle_pool((int16_t)recycled) == record_type &&
-            dm2_v1_record_pool_address_mut(ctx->set, (int16_t)recycled)) {
-            uint8_t *record = dm2_v1_record_pool_address_mut(
-                ctx->set, (int16_t)recycled);
-            /* c_record.cpp:1134-1143 clears a recycled record before it is
-             * appended and its SUPPRESS body is restored. */
-            memset(record, 0, (size_t)pool->record_size);
-            dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_END);
-            if (ctx->recycle_db2_count != UINT16_MAX)
-                ++ctx->recycle_db2_count;
-            return recycled;
-        }
-    }
+    /* SKProject SKWINDOS/dm2byg.cpp::SKW_RECYCLE_A_RECORD_FROM_THE_WORLD
+     * 0CEE:10EC-112A takes DB2 through its TextMode/SimpleTextExtUsage
+     * barrier, then advances the chain. Never promote a text record to an
+     * allocator fallback just because the full DB0/DB4/DB14 paths are not
+     * retained. */
     ctx->recycle_required_db = (int16_t)record_type;
     return 0xfffeu;
 }

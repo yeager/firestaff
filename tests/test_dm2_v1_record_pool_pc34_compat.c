@@ -63,8 +63,8 @@ static int16_t mk_handle(int pool, int index)
 
 /* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD traversal. It starts at
  * the per-DB cursor, skips the current map and the second protected map, and
- * writes the resume cursor back (source :779/:1072). DB2 selection is tested
- * below; all other DBs remain intentionally unported. */
+ * writes the resume cursor back (source :779/:1072). DB2 is a source chain
+ * barrier and is tested below; no DB remains recyclable in this bounded API. */
 static void test_recycle_scan_traversal(void)
 {
     DM2_V1_OriginalRawDungeonReceipt dungeon;
@@ -140,9 +140,9 @@ static void test_recycle_scan_traversal(void)
     CHECK(owner.recycle_scan_map[4] != 200,
           "each db keeps its own cursor");
 
-    /* c_record.cpp:850-861 admits an ordinary DB2 Text record. The map
-     * cursor becomes the selected map, rather than the map after a failed
-     * full ring walk. */
+    /* SKWINDOS/dm2byg.cpp 0CEE:10EC-112A treats ordinary DB2 Text as a
+     * chain barrier, then advances to the next record. It must never be
+     * returned as an allocation candidate. */
     tiles[0] = 0x10u;
     ground[0] = (uint16_t)mk_handle(2, 0);
     wr16(set.pools[2].bytes, (int16_t)DM2_V1_RECORD_HANDLE_END);
@@ -150,11 +150,10 @@ static void test_recycle_scan_traversal(void)
     owner.recycle_scan_map[2] = 0;
     rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 2, -1,
                                               &receipt, &link);
-    CHECK(rc == 1 && receipt.valid == 1 && receipt.eligibility_ported == 1,
-          "DB2 recycler applies the source Text eligibility branch");
-    CHECK(link == (uint16_t)mk_handle(2, 0) &&
-          owner.recycle_scan_map[2] == 0u && receipt.resume_map == 0u,
-          "DB2 recycler returns the source Text handle and selected-map cursor");
+    CHECK(rc == 0 && receipt.valid == 1 && receipt.eligibility_ported == 0,
+          "DB2 Text remains a source recycler chain barrier");
+    CHECK(link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
+          "DB2 Text is never returned as a recycler handle");
 
     /* Text mode with extension 4 is the source-protected case and skips the
      * entire tile chain instead of recycling that record. */

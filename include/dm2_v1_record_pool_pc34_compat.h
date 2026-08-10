@@ -120,18 +120,19 @@ typedef struct {
     uint32_t records_examined;  /* ground-stack entries visited */
     uint8_t resume_map;         /* cursor written back to recycle_scan_map[db] */
     /* One means that the requested DB's source eligibility rule was applied.
-     * At present only DB2/Text is implemented; DB0/DB4/DB14 still require
-     * their source creature, missile and relocation owners. */
+     * DB2/Text is a source chain barrier, not a recycler candidate. DB0,
+     * DB4 and DB14 still require their source creature, missile and
+     * relocation owners. */
     int eligibility_ported;
 } DM2_V1_SksaveRecycleScanReceipt;
 
 /* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, map traversal plus the
- * DB2/Text take rule.
+ * DB2/Text chain barrier.
  * Walks the map ring from recycle_scan_map[db], skipping current_map and
  * `protected_map_b` (pass -1 for none), visiting every tile's ground stack.
  * For DB2 it applies c_record.cpp's table1d324c actuator-chain skip and the
- * Text::w2 mode/ext=4 exclusion, then returns the exact source link. Other
- * DBs remain fail-closed. */
+ * Text::w2 mode/ext=4 exclusion, then continues the source record chain.
+ * Text is never returned as a recycler link. Other DBs remain fail-closed. */
 int dm2_v1_sksave_map_owner_recycle_scan(
     DM2_V1_SksaveMapOwner *owner,
     const DM2_V1_RecordPoolSet *set,
@@ -425,9 +426,8 @@ typedef struct {
     int16_t map_failure_record_type;
     int16_t map_failure_record_reason;
     int16_t recycle_required_db;
-    /* Number of source DB2/Text recycler selections completed before this
-     * receipt's terminal phase. This is evidence only; it never admits a
-     * partial owner as a Resume session. */
+    /* Reserved source field. DB2/Text is a recycler chain barrier, so this
+     * remains zero; it never admits a partial owner as a Resume session. */
     uint16_t recycle_db2_count;
     uint32_t possession_link_count;
     uint32_t possession_continuation_count;

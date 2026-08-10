@@ -1120,10 +1120,8 @@ static void test_real_raw_save(const char *path, const char *root,
                   special_timers.recycle_required_db ==
                       special_timers.map_failure_record_type,
                   "real map chains reach the original recycler boundary after c_map insertion");
-            CHECK((special_timers.recycle_required_db == 2 &&
-                   special_timers.recycle_db2_count > 0u) ||
-                  special_timers.recycle_required_db != 2,
-                  "a real DB2 boundary records each completed source Text recycle");
+            CHECK(special_timers.recycle_db2_count == 0u,
+                  "DB2 Text is a source recycler chain barrier, never a recycled slot");
         } else {
             CHECK(special_timers.recycle_required_db == -1,
                   "pre-map source failure does not invent a recycler DB");
@@ -1321,8 +1319,9 @@ int main(void)
           "the supplied PC-DOS SKSave corpus has no source type-0x0D resurrection timers");
     /* c_savegame.cpp:1206-1224 gives the leader hand its actual active
      * event-hero, not E_NOHERO.  Two source-identical primary/backup saves
-     * therefore complete their local c_record owner and advance to the
-     * first DB2 recycler request.  They remain non-session owners: every
+     * therefore complete their local c_record owner and advance to a
+     * source recycler request. DB2 Text cannot be reused as a shortcut.
+     * They remain non-session owners: every
      * corpus member must still be blocked before the missing recycler and
      * complete GAME_LOAD handoff. */
     CHECK(direct_roots.pool_owner_restored == 2u &&
