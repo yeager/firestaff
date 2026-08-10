@@ -130,6 +130,8 @@ int main(void)
     const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
     const char *archive_data_dir =
         getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE_DATA_DIR");
+    const char *loose_data_dir =
+        getenv("FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR");
     const char *language_name = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE");
     const char *user_save_path = getenv("FIRESTAFF_CSB_FMTOWNS_USER_SAVE");
     const char *version_id;
@@ -222,7 +224,18 @@ int main(void)
     }
     memset(materialized_data_dir, 0, sizeof(materialized_data_dir));
     memset(&asset_status, 0, sizeof(asset_status));
-    if (archive_data_dir && archive_data_dir[0]) {
+    if (loose_data_dir && loose_data_dir[0]) {
+        M12_AssetStatus_ScanGame(&asset_status, loose_data_dir, "csb");
+        if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                &asset_status, version_id, materialized_data_dir,
+                sizeof(materialized_data_dir)) ||
+            strcmp(materialized_data_dir, loose_data_dir) != 0) {
+            fprintf(stderr, "SKIP: verified loose FM Towns %s CD root unavailable\n",
+                    version_id);
+            return 0;
+        }
+        data_dir = materialized_data_dir;
+    } else if (archive_data_dir && archive_data_dir[0]) {
         M12_AssetStatus_ScanGame(&asset_status, archive_data_dir, "csb");
         if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 &asset_status, version_id, materialized_data_dir,
@@ -234,7 +247,8 @@ int main(void)
         data_dir = materialized_data_dir;
     }
     if (!data_dir || !data_dir[0]) {
-        puts("SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR or "
+        puts("SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR, "
+             "FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR or "
              "FIRESTAFF_CSB_FMTOWNS_ARCHIVE_DATA_DIR not set");
         return 0;
     }

@@ -4592,6 +4592,33 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
                             sizeof(status->runtimeDataDirs[gameIndex]), cacheRoot);
             return 1;
         }
+        if (strcmp(gameId, "csb") == 0 && selectedVersion &&
+            selectedVersion->versionId &&
+            (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
+             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
+            !m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
+            char dataDirectory[M12_ASSET_DATA_DIR_CAPACITY];
+            char discRoot[M12_ASSET_DATA_DIR_CAPACITY];
+            char programPath[M12_ASSET_DATA_DIR_CAPACITY];
+            const char *programName =
+                strcmp(selectedVersion->versionId, "fmtowns-en") == 0
+                    ? "CHTWE.EXP" : "CHTWJ.EXP";
+            /* A directly extracted original ISO keeps GRAPHICS.DAT in
+             * CDATA/CJDATA but owns F31E/F31J, TITLE.ANM and PORTRAIT at the
+             * disc root.  Do not flatten only the two DAT files and lose the
+             * source program handoff. ReDMCSB FMTOWNS.H / COMPILE.H F31E,F31J. */
+            if (FSP_ParentDir(dataDirectory, sizeof(dataDirectory),
+                              selectedVersion->matchedPath) &&
+                FSP_ParentDir(discRoot, sizeof(discRoot), dataDirectory) &&
+                FSP_JoinPath(programPath, sizeof(programPath), discRoot,
+                             programName) && FSP_FileExists(programPath)) {
+                m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                sizeof(status->runtimeDataDirs[gameIndex]),
+                                discRoot);
+                return 1;
+            }
+            return 0;
+        }
     }
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* fileStatus = &status->requiredFiles[gameIndex][i];
@@ -5942,6 +5969,28 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     }
     if (strcmp(versionId, "fmtowns-en") == 0 ||
         strcmp(versionId, "fmtowns-ja") == 0) {
+        if (!m12_path_is_virtual_asset(version->matchedPath)) {
+            char dataDirectory[M12_ASSET_DATA_DIR_CAPACITY];
+            char discRoot[M12_ASSET_DATA_DIR_CAPACITY];
+            char programPath[M12_ASSET_DATA_DIR_CAPACITY];
+            const char *programName = strcmp(versionId, "fmtowns-en") == 0
+                ? "CHTWE.EXP" : "CHTWJ.EXP";
+            /* This version-private path is used by direct CLI selection as
+             * well as M12.  Return the authenticated original CD root, not
+             * its CDATA/CJDATA child, so native title and portrait owners
+             * remain available. ReDMCSB COMPILE.H F31E/F31J. */
+            if (!FSP_ParentDir(dataDirectory, sizeof(dataDirectory),
+                               version->matchedPath) ||
+                !FSP_ParentDir(discRoot, sizeof(discRoot), dataDirectory) ||
+                !FSP_JoinPath(programPath, sizeof(programPath), discRoot,
+                              programName) || !FSP_FileExists(programPath) ||
+                snprintf(outPath, outPathSize, "%s", discRoot) >=
+                    (int)outPathSize) {
+                outPath[0] = '\0';
+                return 0;
+            }
+            return 1;
+        }
         return m12_materialize_csb_fmtowns_runtime_cache(
             (M12_AssetStatus*)status, gameIndex, version, outPath, 0);
     }
