@@ -1,3 +1,13 @@
+# Nexus: VDP2 character-mode FONT256 source-joindiagnostik (2026-08-10)
+
+- ✅ `scripts/analyze_nexus_vdp2_char_source_join.py` läser den hashverifierade
+  FONT256.S2D Page/Character Generator/Palette/Attributes-korpusen och söker
+  exakta eller ordväxlade spaner i autentiserad VDP2-VRAM/CRAM.
+- ✅ Körning mot `run-codex-j-menu-text-20260810`, frame 300/600, är reproducerbar:
+  endast Attributes-spannet matchar (`0x5584`); Page, Character Generator och
+  Palette saknar match. Därför förblir textkonsument och semantisk rendering
+  spärrade. Ingen syntetisk glyph- eller menybindning infördes.
+
 # Nexus/launcher: fullständiga namn i skanningsstatus och same-session-ljudkorridor (2026-08-10)
 
 - ✅ Startmenyns skanningsstatus använder nu den lokaliserade fullnamnsvägen
