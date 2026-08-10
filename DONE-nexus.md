@@ -5092,3 +5092,11 @@ tool does not launch an emulator, generate trace bytes, or attest original
 Saturn provenance. The atomic target now includes the Structure2 opaque-payload
 fingerprint required by that route. Verification:
 `test_nexus_v1_dgn_geometry_readiness` and direct collector compilation.
+2026-08-10 - Nexus J/English cold-start witness inventory
+
+En separat autentiserad 1 200-frames Mednafen-witness med J-BIOS 1.01 och
+English/Merged-discen validerades på extern disk. `SGAREA=J`, raw VDP1/VDP2-
+layout och frame-envelope passerar; jämförelse mot hashbundna MENU.BPK,
+FONT256.S2D, TITLE och DGN lämnar startup→meny-ägarskapet obundet. Resultatet
+är sparat som negativt proveniensbevis och öppnar ingen placeholder- eller
+fallback-rendering.

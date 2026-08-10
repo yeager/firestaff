@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-10: En ny kallstart-witness på extern disk
+`run-codex-j-coldstart-20260810/runtime-vdp12.raw` innehåller 1 200 frames från
+J-BIOS 1.01 och den hashbundna English/Merged-discen. Mednafen rapporterar
+`SGAREA=J` och rå-envelope-validatorn passerar. Den undersökta kedjan visar
+fortsatt ingen byteexakt `MENU.BPK`, `FONT256.S2D`, `TITLE` eller DGN-ägare i
+VDP1/VDP2; detta är negativt startup-bevis och får inte ersättas med en
+syntetisk menyidentitet. Witnessen ligger kvar utanför repot på extern disk.
+
 2026-08-10: Produktionsobjektet behåller nu även de autentiserade FONT256
 Page-, Palette- och Attribute-orden (4096/256/242). Detta är fortfarande en
 source-retention-grind: Saturns glyph-code→tile-mapping, VDP2 page/PND-
