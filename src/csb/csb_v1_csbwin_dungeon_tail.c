@@ -1,5 +1,6 @@
 #include "csb_v1_csbwin_dungeon_tail.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static uint16_t read_be16(const uint8_t *p)
@@ -26,6 +27,87 @@ static int multiply_size(size_t left, size_t right, size_t *out)
 {
     if (!out || (left != 0u && right > (size_t)-1 / left)) return 0;
     *out = left * right;
+    return 1;
+}
+
+static void swap16(uint8_t *p)
+{
+    uint8_t byte;
+    byte = p[0];
+    p[0] = p[1];
+    p[1] = byte;
+}
+
+static void swap32(uint8_t *p)
+{
+    uint8_t byte;
+    byte = p[0]; p[0] = p[3]; p[3] = byte;
+    byte = p[1]; p[1] = p[2]; p[2] = byte;
+}
+
+static void swap_record_words(uint8_t *record, const size_t *offsets,
+                              size_t offset_count)
+{
+    size_t i;
+    if (!record || !offsets) return;
+    for (i = 0u; i < offset_count; ++i) swap16(record + offsets[i]);
+}
+
+static int swap_legacy_database(uint8_t *bytes,
+                                const CSB_V1_CSBWinDungeonTailDatabaseSpan *span)
+{
+    static const size_t db0[] = { 0u, 2u };
+    static const size_t db1[] = { 0u, 2u, 4u };
+    static const size_t db2[] = { 0u, 2u };
+    static const size_t db3[] = { 0u, 2u, 4u, 6u };
+    static const size_t db4[] = { 0u, 2u, 6u, 8u, 10u, 12u, 14u };
+    static const size_t db5[] = { 0u, 2u };
+    static const size_t db7[] = { 0u, 2u };
+    static const size_t db9[] = { 0u, 2u, 4u };
+    static const size_t db14[] = { 0u, 2u, 6u };
+    const size_t *offsets = NULL;
+    size_t offset_count = 0u;
+    size_t entry;
+
+    if (!bytes || !span || span->source_entry_bytes == 0u) return 0;
+    switch (span->database_number) {
+    case 0u: offsets = db0; offset_count = sizeof(db0) / sizeof(db0[0]); break;
+    case 1u: offsets = db1; offset_count = sizeof(db1) / sizeof(db1[0]); break;
+    case 2u: offsets = db2; offset_count = sizeof(db2) / sizeof(db2[0]); break;
+    case 3u: offsets = db3; offset_count = sizeof(db3) / sizeof(db3[0]); break;
+    case 4u: offsets = db4; offset_count = sizeof(db4) / sizeof(db4[0]); break;
+    case 5u:
+    case 6u:
+    case 8u:
+    case 10u:
+    case 15u: offsets = db5; offset_count = sizeof(db5) / sizeof(db5[0]); break;
+    case 7u: offsets = db7; offset_count = sizeof(db7) / sizeof(db7[0]); break;
+    case 9u: offsets = db9; offset_count = sizeof(db9) / sizeof(db9[0]); break;
+    case 11u:
+        if (span->source_entry_bytes != 256u) return 0;
+        for (entry = 0u; entry < span->entry_count; ++entry) {
+            uint8_t *record = bytes + span->offset +
+                entry * span->source_entry_bytes;
+            size_t word;
+            swap16(record + 0u);
+            swap16(record + 2u);
+            for (word = 4u; word < 256u; word += 4u) swap32(record + word);
+        }
+        return 1;
+    case 12u:
+    case 13u:
+        return span->source_entry_bytes == 2u;
+    case 14u: offsets = db14; offset_count = sizeof(db14) / sizeof(db14[0]); break;
+    default: return 0;
+    }
+    for (entry = 0u; entry < span->entry_count; ++entry) {
+        uint8_t *record = bytes + span->offset + entry * span->source_entry_bytes;
+        size_t index;
+        for (index = 0u; index < offset_count; ++index) {
+            if (offsets[index] + 2u > span->source_entry_bytes) return 0;
+        }
+        swap_record_words(record, offsets, offset_count);
+    }
     return 1;
 }
 
@@ -232,9 +314,102 @@ int csb_v1_csbwin_dungeon_tail_validate_checksum(
     return computed == stored ? 1 : 0;
 }
 
+int csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
+    const uint8_t *tail,
+    size_t tail_size,
+    const CSB_V1_CSBWinDungeonTailPrefix *prefix,
+    const CSB_V1_CSBWinDungeonTailDatabaseLayout *databases,
+    CSB_V1_DungeonData *out)
+{
+    uint8_t *normalized;
+    size_t level;
+    size_t column;
+    size_t object;
+    size_t database;
+    int rc;
+
+    if (!tail || !prefix || !databases || !out || !prefix->valid ||
+        !databases->valid || prefix->indirect_text ||
+        databases->extended_features_version !=
+            CSB_V1_CSBWIN_LEGACY_FEATURE_VERSION ||
+        databases->big_actuators || databases->legacy_scroll_records == 0 ||
+        databases->checksum_offset + 2u != tail_size ||
+        databases->checksum_offset > tail_size ||
+        databases->cell_flags_offset > databases->checksum_offset ||
+        csb_v1_csbwin_dungeon_tail_validate_checksum(tail, tail_size,
+                                                      NULL, NULL) != 1) {
+        if (out) memset(out, 0, sizeof(*out));
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    if (prefix->level_count > CSB_V1_MAX_LEVELS ||
+        prefix->object_list_index_offset > databases->database_offset ||
+        prefix->object_list_offset > databases->database_offset ||
+        prefix->text_offset > databases->database_offset) {
+        memset(out, 0, sizeof(*out));
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+
+    /* Do not copy the terminal WriteAndChecksum word into DUNGEON.DAT.
+     * CSBWin ReadDatabases() consumes it after all source structures. */
+    normalized = (uint8_t *)malloc(databases->checksum_offset);
+    if (!normalized) {
+        memset(out, 0, sizeof(*out));
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TRUNCATED;
+    }
+    memcpy(normalized, tail, databases->checksum_offset);
+
+    /* DUNGEONDATINDEX::Swap() (data.cpp:1778-1790). */
+    /* word4's high byte is NumLevel.  ReDMCSB/Firestaff's compressed-source
+     * ingress deliberately leaves bytes 4..5 unswapped for that byte owner;
+     * mirror csb_swap_big_endian_dungeon_words(), rather than treating every
+     * DUNGEONDATINDEX field as a host u16. */
+    for (column = 0u; column < CSB_V1_CSBWIN_DUNGEON_INDEX_BYTES;
+         column += 2u) {
+        if (column == 4u) continue;
+        swap16(normalized + column);
+    }
+    /* SaveGame.cpp swapLevelDescriptors() only converts words 0/8/10/12/14;
+     * bytes 4..7 remain byte fields in LEVELDESC. */
+    for (level = 0u; level < prefix->level_count; ++level) {
+        uint8_t *descriptor = normalized + prefix->level_descriptors_offset +
+            level * CSB_V1_CSBWIN_LEVEL_DESC_BYTES;
+        swap16(descriptor + 0u);
+        swap16(descriptor + 8u);
+        swap16(descriptor + 10u);
+        swap16(descriptor + 12u);
+        swap16(descriptor + 14u);
+    }
+    /* SaveGame.cpp swapPointer10454()/swapPRN10464(). */
+    for (column = 0u; column < prefix->column_pointer_count; ++column) {
+        swap16(normalized + prefix->object_list_index_offset + column * 2u);
+    }
+    for (object = 0u; object < prefix->object_list_length; ++object) {
+        swap16(normalized + prefix->object_list_offset + object * 2u);
+    }
+    /* Legacy text is a packed byte stream. ReadDatabases() does not swap it
+     * before ConvertToIndirectText(), so neither do we. */
+    for (database = 0u; database < CSB_V1_CSBWIN_DATABASE_COUNT; ++database) {
+        if (!swap_legacy_database(normalized, &databases->database[database])) {
+            free(normalized);
+            memset(out, 0, sizeof(*out));
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+    }
+
+    rc = csb_v1_dungeon_load_source_bytes(out, normalized,
+                                           (int)databases->checksum_offset);
+    free(normalized);
+    if (rc != 0) {
+        memset(out, 0, sizeof(*out));
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void)
 {
-    return "CSBWin SaveGame.cpp:1236-1337,2285-2411,2536-2859; "
+    return "CSBWin SaveGame.cpp:1236-1337,2285-2411,2536-2896; "
+           "CSBWin SaveGame.cpp:533-545,619-632; "
            "CSBWin CSB.h:DUNGEONDATINDEX,LEVELDESC,DB0-DB15; "
-           "CSBWin data.cpp:395-413";
+           "CSBWin data.cpp:1166-1185,1287-1495,1778-1790";
 }

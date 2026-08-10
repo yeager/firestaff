@@ -85,12 +85,12 @@ static void check_staged_real_save(void)
     FILE *file;
     long length;
     uint8_t *bytes;
-    CSB_V1_CSBWinExtendedTailReport extension;
-    CSB_V1_CSBWinExtendedDSAReport dsa;
-    CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_CSBWin512BodyReport body;
     CSB_V1_CSBWinDungeonTailPrefix prefix;
     CSB_V1_CSBWinDungeonTailDatabaseLayout databases;
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_DungeonData rejected;
+    uint8_t *before = NULL;
     uint16_t computed;
     uint16_t stored;
 
@@ -117,35 +117,50 @@ static void check_staged_real_save(void)
     }
     CHECK(fread(bytes, 1u, (size_t)length, file) == (size_t)length);
     fclose(file);
-    memset(&extension, 0, sizeof(extension));
-    memset(&dsa, 0, sizeof(dsa));
-    memset(&features, 0, sizeof(features));
     memset(&body, 0, sizeof(body));
-    CHECK(csb_v1_csbwin_512_inspect_extended_tail(bytes, (size_t)length,
-              &extension, &dsa, &features) == CSB_V1_CSBWIN_EXTENDED_OK);
-    CHECK(extension.valid);
-    CHECK(csb_v1_csbwin_512_verify_save_body(bytes + extension.next_payload_offset,
-              (size_t)length - extension.next_payload_offset, 12u, &body) ==
+    CHECK(csb_v1_csbwin_512_verify_save_body(bytes, (size_t)length, 10u, &body) ==
           CSB_V1_CSBWIN_512_OK);
     CHECK(body.appended_size > CSB_V1_CSBWIN_DUNGEON_INDEX_BYTES);
     CHECK(csb_v1_csbwin_dungeon_tail_parse_prefix(
-              bytes + extension.next_payload_offset + body.appended_offset,
-              body.appended_size, features.flags, &prefix) == 0);
+              bytes + body.appended_offset, body.appended_size, 0u, &prefix) == 0);
     CHECK(prefix.valid && prefix.level_count > 0u);
     CHECK(prefix.next_database_offset < body.appended_size);
     CHECK(csb_v1_csbwin_dungeon_tail_parse_databases(
-              bytes + extension.next_payload_offset + body.appended_offset,
-              body.appended_size, &prefix, features.version, features.flags,
-              features.cell_flag_array_size, &databases) ==
+              bytes + body.appended_offset, body.appended_size, &prefix,
+              CSB_V1_CSBWIN_LEGACY_FEATURE_VERSION, 0u, 0u, &databases) ==
           CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
     CHECK(databases.valid);
     CHECK(databases.database[0].entry_count == prefix.database_entries[0]);
     CHECK(databases.database[15].entry_count == prefix.database_entries[15]);
     CHECK(databases.checksum_offset + 2u == body.appended_size);
     CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(
-              bytes + extension.next_payload_offset + body.appended_offset,
+              bytes + body.appended_offset,
               body.appended_size, &computed, &stored) == 1);
     CHECK(computed == stored);
+    before = (uint8_t *)malloc(body.appended_size);
+    CHECK(before != NULL);
+    if (before) {
+        memcpy(before, bytes + body.appended_offset,
+               body.appended_size);
+        memset(&dungeon, 0, sizeof(dungeon));
+        CHECK(csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
+                  bytes + body.appended_offset,
+                  body.appended_size, &prefix, &databases, &dungeon) ==
+              CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
+        CHECK(dungeon.raw_data != NULL && dungeon.level_count == prefix.level_count &&
+              dungeon.square_bytes == 1);
+        CHECK(memcmp(before,
+                     bytes + body.appended_offset,
+                     body.appended_size) == 0);
+        csb_v1_dungeon_free(&dungeon);
+        memset(&rejected, 0xa5, sizeof(rejected));
+        before[body.appended_size - 1u] ^= 1u;
+        CHECK(csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
+                  before, body.appended_size, &prefix, &databases,
+                  &rejected) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
+        CHECK(rejected.raw_data == NULL && rejected.level_count == 0);
+        free(before);
+    }
     free(bytes);
 }
 

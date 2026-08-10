@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_dungeon_loader_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -121,6 +123,31 @@ int csb_v1_csbwin_dungeon_tail_validate_checksum(
     size_t tail_size,
     uint16_t *out_computed,
     uint16_t *out_stored);
+
+/* Materialize a legacy CSBWin saved-dungeon tail into the normal source
+ * dungeon reader without publishing it to the global dungeon context.
+ *
+ * CSBWin SaveGame.cpp writes DUNGEONDATINDEX, LEVELDESC, pointer tables and
+ * DB0..DB15 in big-endian source order; ReadDatabases() applies the narrowly
+ * defined swaps in data.cpp before ownership is published.  This function
+ * reproduces precisely those field swaps into a private temporary buffer and
+ * invokes Firestaff's source-byte dungeon loader.  The terminal checksum is
+ * not part of DUNGEON.DAT and is never passed through.  The caller must have
+ * validated `prefix` and `databases` against the same immutable tail.
+ *
+ * Only the legacy (non-Extended-Features) tail is admitted.  In particular,
+ * indirect text and big actuators have no byte-for-byte equivalence with the
+ * legacy DUNGEON.DAT consumer and remain fail-closed.  On failure `out` is
+ * zeroed; `tail` is never modified and no global dungeon is changed.
+ *
+ * Source: CSBWin SaveGame.cpp:1236-1337,2512-2896;
+ * data.cpp:DUNGEONDATINDEX::Swap/DATABASES::swap; CSB.h DB0..DB15. */
+int csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
+    const uint8_t *tail,
+    size_t tail_size,
+    const CSB_V1_CSBWinDungeonTailPrefix *prefix,
+    const CSB_V1_CSBWinDungeonTailDatabaseLayout *databases,
+    CSB_V1_DungeonData *out);
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void);
 

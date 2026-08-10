@@ -39287,6 +39287,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_csbwin_dungeon_tail PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_csbwin_dungeon_tail PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_csbwin_dungeon_tail PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
