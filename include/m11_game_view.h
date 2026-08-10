@@ -1659,6 +1659,10 @@ typedef struct {
     uint16_t csbAmigaTitlAppliedDeltaCount;
     int csbAmigaTitlClockStarted;
     int csbAmigaTitlFrameBound;
+    /* IO.C F0070 keeps the picked-up formation icon outside GAMEBLOCK while
+     * the original Amiga cursor owns its transient raster.  Retain only the
+     * ordinal here; the next native C125..C128 click consumes it. */
+    unsigned int csbAmigaHeldChampionIconOrdinal;
     /* APPB.FTL follows A31M's 606-VBL TITL sequence. This flag has a
      * separate owner because SWITCH.C F1288 waits for mouse-button release
      * before APPA.C chooses the KAOS program. */

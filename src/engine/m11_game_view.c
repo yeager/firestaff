@@ -46,6 +46,7 @@
 #include "csb_v1_input_command_bridge_pc34_compat.h"
 #include "csb_v1_magic_rune_cost_pc34_compat.h"
 #include "csb_v1_command_input_geometry_pc34_compat.h"
+#include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "csb_touch_click_zone_matrix_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
@@ -30412,8 +30413,64 @@ static int m11_csb_atari_st_top_row_pointer(
  *
  * ReDMCSB COMMAND.C G0447:82-103 (MEDIA413 A31E/A31M/A35E/A35M) gives the
  * literal inclusive boxes below; F0380:2158-2184 sends C012..C015 to F0367
- * and C007..C010 to PANEL.C F0355.  Keep C125..C128 fail-closed: their
- * separate icon raster/pointer owner is F0070 and is not inferred here. */
+ * and C007..C010 to PANEL.C F0355. C125..C128 use F0070's durable
+ * GAMEBLOCK formation transaction; its transient cursor raster remains
+ * owned by the platform cursor layer and is never synthesized by M11. */
+static int m11_csb_amiga_champion_icon_pointer(
+    M11_GameViewState *state, int icon_index,
+    M11_GameInputResult *out_result)
+{
+    CSB_V1_BootProfile *profile;
+    CsbV1F0070ChampionFormationStatePc34 formation;
+    CsbV1F0070ChampionFormationReceiptPc34 receipt;
+    int champion;
+
+    if (out_result) *out_result = M11_GAME_INPUT_IGNORED;
+    if (!state || !out_result || icon_index < 0 || icon_index >= 4 ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!profile || !m11_csb_is_amiga_profile(profile) ||
+        !profile->runtime.party_state_valid) {
+        return 0;
+    }
+    memset(&formation, 0, sizeof(formation));
+    formation.champion_count = profile->runtime.party_state.ChampionCount;
+    formation.party_direction = profile->runtime.party_state.PartyDirection;
+    formation.held_icon_ordinal = state->csbAmigaHeldChampionIconOrdinal;
+    for (champion = 0;
+         champion < formation.champion_count && champion < 4;
+         ++champion) {
+        const CSB_V1_Champion *source =
+            &profile->runtime.party_state.Champions[champion];
+        formation.cell[champion] = source->Cell;
+        formation.direction[champion] = source->Direction;
+        formation.attributes[champion] = source->Attributes;
+    }
+    /* ReDMCSB COMMAND.C G0447:88-91 gives the literal A31/A35 C125..C128
+     * rectangles; F0380:2164-2170 dispatches them solely to IO.C F0070.
+     * F0070:2395-2647 owns the GAMEBLOCK Cell/Direction/ICON transaction.
+     * This M11 route deliberately retains no invented cursor pixels. */
+    if (!csb_v1_f0070_champion_formation_click_pc34(
+            &formation, icon_index, &receipt)) {
+        return 1; /* The native command was consumed but made no mutation. */
+    }
+    state->csbAmigaHeldChampionIconOrdinal = formation.held_icon_ordinal;
+    for (champion = 0;
+         champion < formation.champion_count && champion < 4;
+         ++champion) {
+        CSB_V1_Champion *destination =
+            &profile->runtime.party_state.Champions[champion];
+        destination->Cell = formation.cell[champion];
+        destination->Direction = formation.direction[champion];
+        destination->Attributes = formation.attributes[champion];
+    }
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    *out_result = M11_GAME_INPUT_REDRAW;
+    return 1;
+}
+
 static int m11_csb_amiga_top_row_pointer(
     M11_GameViewState *state, int x, int y, int button_mask,
     M11_GameInputResult *out_result)
@@ -30432,6 +30489,17 @@ static int m11_csb_amiga_top_row_pointer(
     if (!m11_csb_is_amiga_profile(profile)) return 0;
 
     if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        int icon_index = -1;
+        /* The native A31/A35 icon grid is 26/19 pixels wide rather than
+         * I34E's 19-pixel grid. Its one-pixel row/column gaps are inert. */
+        if (x >= 274 && x <= 299 && y <= 13) icon_index = 0;
+        else if (x >= 301 && x <= 319 && y <= 13) icon_index = 1;
+        else if (x >= 301 && x <= 319 && y >= 15) icon_index = 2;
+        else if (x >= 274 && x <= 299 && y >= 15) icon_index = 3;
+        if (icon_index >= 0) {
+            return m11_csb_amiga_champion_icon_pointer(
+                state, icon_index, out_result);
+        }
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
             if (x >= status_left[slot] && x <= status_left[slot] + 42) {
                 *out_result = m11_set_active_champion(state, slot)
@@ -30443,8 +30511,7 @@ static int m11_csb_amiga_top_row_pointer(
                 return 1;
             }
         }
-        /* C125..C128 occupy (274..319, 0..28).  Do not allow the generic
-         * PC geometry to reinterpret their still-unbound icon grid. */
+        /* C125..C128's native gaps must not reach PC geometry. */
         if (x >= 274 && x <= 319) return 1;
         return 0;
     }
@@ -30704,9 +30771,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
-    /* C125..C128 are consumed by m11_csb_amiga_top_row_pointer above until
-     * their native F0070 icon/pointer raster is bound.  C012..C015 and
-     * C007..C010 now use their actual A31/A35 G0447 boxes there. */
+    /* Native A31/A35 C125..C128 formation clicks, C012..C015 status clicks,
+     * and C007..C010 bar clicks are resolved above with their G0447 boxes. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 && y >= 0 && y <= 28) {
         const CSB_V1_BootProfile *csb_profile =

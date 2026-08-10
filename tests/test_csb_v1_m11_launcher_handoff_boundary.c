@@ -27,6 +27,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -885,8 +886,7 @@ static void expect_native_live_mirror_and_command_handoff(
         /* A31/A35 G0447 has a distinct 24x29 C007 bar at x=43..66;
          * this is not the PC34 inherited hit box.  Confirm the native
          * original GRAPHICS.DAT/GAMEBLOCK handoff reaches C017 through the
-         * real Amiga left-click command.  C125 remains fail-closed until
-         * its independent F0070 icon raster owner is present. */
+         * real Amiga left-click command. */
         expect_true(M11_GameView_HandlePointerButton(
                         view, 43, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW && view->inventoryPanelActive &&
@@ -894,10 +894,28 @@ static void expect_native_live_mirror_and_command_handoff(
                             view, 43, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW && !view->inventoryPanelActive,
                     "Amiga C007 bar opens and closes C017 through native G0447 geometry");
+        /* COMMAND.C G0447's A31/A35 C125 literal is x=274..299/y=0..13,
+         * not the PC34 C113 zone. Exercise its real F0070 durable
+         * GAMEBLOCK transaction on this source-loaded native profile. */
+        profile->runtime.party_state.PartyDirection = 0;
+        profile->runtime.party_state.Champions[0].Cell = 0;
+        profile->runtime.party_state.Champions[0].Direction = 0;
+        profile->runtime.party_state.Champions[0].Attributes = 0;
+        view->csbAmigaHeldChampionIconOrdinal = 0;
         expect_true(M11_GameView_HandlePointerButton(
                         view, 280, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
-                        M11_GAME_INPUT_IGNORED && !view->inventoryPanelActive,
-                    "Amiga C125 icon grid stays fail-closed without its F0070 raster owner");
+                        M11_GAME_INPUT_REDRAW &&
+                        view->csbAmigaHeldChampionIconOrdinal == 1 &&
+                        profile->runtime.party_state.Champions[0].Cell == 0,
+                    "Amiga C125 picks up the source GAMEBLOCK formation icon");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 310, 20, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view->csbAmigaHeldChampionIconOrdinal == 0 &&
+                        profile->runtime.party_state.Champions[0].Cell == 2 &&
+                        (profile->runtime.party_state.Champions[0].Attributes &
+                         CSB_V1_F0070_ATTRIBUTE_ICON_DIRTY_PC34) != 0,
+                    "Amiga C127 releases the picked icon through native F0070");
     }
     expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) ==
                     M11_GAME_INPUT_REDRAW &&
