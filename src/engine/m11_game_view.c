@@ -241,6 +241,7 @@ static int m11_csb_dsa_overlay_material_current(
 static int m11_csb_original_save_runtime_receipt_current(
     const M11_GameViewState *state);
 static int m11_csb_activate_fmtowns_ending(M11_GameViewState *state);
+static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile);
 
 /* Extract only the assets referenced by CSB's reviewed V2.2 route table.
  * The archive stays user-owned and immutable; its MD5 becomes the cache key.
@@ -3147,6 +3148,91 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     return 1;
 }
 
+/* F31E/F31J are MEDIA720, so their F0128 static record families have the
+ * same numeric identities as the Amiga v3 layout.  They are nevertheless
+ * IMAGE2.C F0689 IMG2 streams, not PC34 IMG3 records.  Keep this provider
+ * deliberately to the source-selected scenery families: F31 object/group/
+ * projectile/cloud callbacks have not yet acquired their native raster
+ * evidence and must make the candidate frame fail closed rather than enter
+ * through the PC decoder.
+ *
+ * ReDMCSB DEFS.H MEDIA720 (M644/M646/M645/M633/M615/M616), DUNVIEW.C
+ * F0094--F0098 and F0128. */
+static int m11_csb_fmtowns_viewport_graphic_provider(
+    void *user_data, int graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    enum {
+        F31_M644_FIRST_FLOOR_SET = 78,
+        F31_M646_FIRST_WALL_SET = 86,
+        F31_M647_WALL_SET_GRAPHIC_COUNT = 40,
+        F31_WALL_SURFACE_OFFSET = 7,
+        F31_M645_FIRST_STAIRS = 108,
+        F31_M633_FIRST_DOOR_SET = 246,
+        F31_M615_FIRST_WALL_ORNAMENT = 259,
+        F31_M616_FIRST_FLOOR_ORNAMENT = 385,
+        F31_M649_DOOR_MASK_DESTROYED = 439
+    };
+    M11_GameViewState *state = (M11_GameViewState *)user_data;
+    const CSB_V1_BootProfile *profile;
+    const M11_AssetSlot *asset;
+    unsigned int source_graphic;
+    int floor_set;
+    int wall_set;
+
+    if (!state || !out_pixels || !out_width || !out_height ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !m11_csb_is_fmtowns_profile(profile) || !state->assetsAvailable ||
+        !state->assetLoader.csbFmtowns || !profile->runtime.dungeon_handle ||
+        profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >=
+            profile->runtime.dungeon_handle->level_count) return 0;
+    floor_set = profile->runtime.dungeon_handle->map_floor_set[
+        profile->runtime.current_level];
+    wall_set = profile->runtime.dungeon_handle->map_wall_set[
+        profile->runtime.current_level];
+    if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15)
+        return 0;
+    if (graphic_index == -1) {
+        source_graphic = F31_M644_FIRST_FLOOR_SET + (unsigned int)floor_set * 2u;
+    } else if (graphic_index == -2) {
+        source_graphic = F31_M644_FIRST_FLOOR_SET + (unsigned int)floor_set * 2u + 1u;
+    } else if (graphic_index >= 86 && graphic_index <= 92) {
+        source_graphic = F31_M646_FIRST_WALL_SET +
+            (unsigned int)wall_set * F31_M647_WALL_SET_GRAPHIC_COUNT +
+            (unsigned int)(graphic_index - 86);
+    } else if (graphic_index >= 93 && graphic_index <= 107) {
+        source_graphic = F31_M646_FIRST_WALL_SET +
+            (unsigned int)wall_set * F31_M647_WALL_SET_GRAPHIC_COUNT +
+            F31_WALL_SURFACE_OFFSET + (unsigned int)(graphic_index - 93);
+    } else if (graphic_index >= F31_M645_FIRST_STAIRS &&
+               graphic_index < F31_M633_FIRST_DOOR_SET) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= F31_M633_FIRST_DOOR_SET &&
+               graphic_index < F31_M633_FIRST_DOOR_SET + 12) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if ((graphic_index >= 49 && graphic_index <= 69) ||
+               graphic_index == 41 ||
+               (graphic_index >= 70 && graphic_index <= 77)) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= F31_M615_FIRST_WALL_ORNAMENT &&
+               graphic_index < F31_M616_FIRST_FLOOR_ORNAMENT) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= F31_M616_FIRST_FLOOR_ORNAMENT &&
+               graphic_index < F31_M649_DOOR_MASK_DESTROYED) {
+        source_graphic = (unsigned int)graphic_index;
+    } else {
+        return 0;
+    }
+    asset = M11_AssetLoader_Load(&state->assetLoader, source_graphic);
+    if (!asset || !asset->loaded || !asset->pixels || asset->width == 0u ||
+        asset->height == 0u) return 0;
+    *out_pixels = asset->pixels;
+    *out_width = (int)asset->width;
+    *out_height = (int)asset->height;
+    return 1;
+}
+
 /* The shared M11 loader understands the common PC34 container, but CSB's
  * GRAPHICS.DAT has its own IMG3/LZW ownership.  Runtime F0115/F0114 sprites
  * must therefore enter the cache through the same CSB decoder as the boot,
@@ -3988,12 +4074,14 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     CSB_V1_ViewportRuntimeDrawCounts draw_counts;
     CSB_V1_FirstLiveDungeonFrameReceipt_PC34 live_receipt;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
+    const CSB_V1_BootProfile *profile;
     size_t framebuffer_bytes;
     unsigned char *candidate_page;
 
     if (!state || !state->csbBootProfile || !framebuffer) {
         return 0;
     }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     state->csbState.runtime_viewport_source_session_ready = 0;
     state->csbState.runtime_viewport_source_session_generation = 0u;
     state->csbState.runtime_viewport_source_tick = 0u;
@@ -4024,30 +4112,32 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     runtime_sprite_context.framebuffer_width = framebufferWidth;
     runtime_sprite_context.framebuffer_height = framebufferHeight;
     memset(&drawer_binding, 0, sizeof(drawer_binding));
-    drawer_binding.projectile_sprite_drawer =
-        m11_csb_viewport_projectile_sprite_drawer;
-    drawer_binding.projectile_sprite_user = &runtime_sprite_context;
-    drawer_binding.projectile_sprite_drawer_source_bound = 1;
-    drawer_binding.projectile_object_sprite_drawer =
-        m11_csb_viewport_projectile_object_sprite_drawer;
-    drawer_binding.projectile_object_sprite_user = &runtime_sprite_context;
-    drawer_binding.explosion_sprite_drawer =
-        m11_csb_viewport_explosion_sprite_drawer;
-    drawer_binding.explosion_sprite_user = &runtime_sprite_context;
-    drawer_binding.object_sprite_drawer =
-        m11_csb_viewport_object_sprite_drawer;
-    drawer_binding.object_sprite_user = &runtime_sprite_context;
-    /* DUNVIEW.C F0115 owns the perspective object bitmap.  If M11 cannot
-     * decode that active CSB GRAPHICS.DAT record, the viewport must not fall
-     * back to the icon atlas or a diagnostic marker. */
-    drawer_binding.object_sprite_drawer_source_bound = 1;
-    drawer_binding.object_icon_drawer =
-        m11_csb_viewport_object_icon_drawer;
-    drawer_binding.object_icon_user = &runtime_sprite_context;
-    drawer_binding.group_sprite_drawer =
-        m11_csb_viewport_group_sprite_drawer;
-    drawer_binding.group_sprite_user = &runtime_sprite_context;
-    drawer_binding.group_sprite_drawer_source_bound = 1;
+    if (!m11_csb_is_fmtowns_profile(profile)) {
+        drawer_binding.projectile_sprite_drawer =
+            m11_csb_viewport_projectile_sprite_drawer;
+        drawer_binding.projectile_sprite_user = &runtime_sprite_context;
+        drawer_binding.projectile_sprite_drawer_source_bound = 1;
+        drawer_binding.projectile_object_sprite_drawer =
+            m11_csb_viewport_projectile_object_sprite_drawer;
+        drawer_binding.projectile_object_sprite_user = &runtime_sprite_context;
+        drawer_binding.explosion_sprite_drawer =
+            m11_csb_viewport_explosion_sprite_drawer;
+        drawer_binding.explosion_sprite_user = &runtime_sprite_context;
+        drawer_binding.object_sprite_drawer =
+            m11_csb_viewport_object_sprite_drawer;
+        drawer_binding.object_sprite_user = &runtime_sprite_context;
+        /* DUNVIEW.C F0115 owns the perspective object bitmap.  If M11 cannot
+         * decode that active CSB GRAPHICS.DAT record, the viewport must not fall
+         * back to the icon atlas or a diagnostic marker. */
+        drawer_binding.object_sprite_drawer_source_bound = 1;
+        drawer_binding.object_icon_drawer =
+            m11_csb_viewport_object_icon_drawer;
+        drawer_binding.object_icon_user = &runtime_sprite_context;
+        drawer_binding.group_sprite_drawer =
+            m11_csb_viewport_group_sprite_drawer;
+        drawer_binding.group_sprite_user = &runtime_sprite_context;
+        drawer_binding.group_sprite_drawer_source_bound = 1;
+    }
     drawer_binding.runtime_overlay_source_required =
         state->csbDsaSaveRuntimeRouteRequired ? 1 : 0;
     drawer_binding.runtime_overlay_source_admitted =
