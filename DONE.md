@@ -1,3 +1,13 @@
+# Theron: normal host mouse routing for startup and dungeon controls (2026-08-11)
+
+- ✅ Startup/menu clicks now use the ordinary source-space pointer dispatcher;
+  clicks in letterbox margins are ignored rather than converted to Button I/II.
+- ✅ In the dungeon, left/right mouse clicks remain source-facing Button I/II,
+  while mouse motion only updates the free host pointer and never hops between
+  objects.
+- ✅ WASD, arrow keys and keypad navigation remain paced by the Theron runtime
+  tick; focused input and Phase A probes pass.
+
 # Firestaff: diskformatering lämnas till originalspel och emulator (2026-08-10)
 
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)

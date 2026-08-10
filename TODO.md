@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## Theron: desktop pointer controls landed (2026-08-11)
+
+- ✅ Startup/menu mouse clicks now follow source-space hit-testing; dungeon
+  Button I/II and free pointer motion remain separate.
+- 🔒 Real dungeon object interaction still requires the authenticated Theron
+  object consumer; no synthetic object hit-test was added.
+
 ## Theron: inventory property-row validation strengthened (2026-08-11)
 
 - ✅ TAKE/DROP/source-slot validation now rejects any six-byte property row

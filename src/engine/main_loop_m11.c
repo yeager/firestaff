@@ -4939,6 +4939,34 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                             &mappedX, &mappedY)) {
                         (void)M11_GameView_HandlePointerMove(
                             gameView, mappedX, mappedY);
+                        /* Theron startup owns real screen-space hit zones.
+                         * Route those clicks through the ordinary pointer
+                         * dispatcher so the host cursor behaves like DM1/CSB.
+                         * Once the dungeon is live, the PC Engine Button I/II
+                         * facade remains the source-correct action path. */
+                        if (gameView->theronState.startup_phase !=
+                                THERON_STARTUP_PHASE_IN_DUNGEON ||
+                            !gameView->theronState.level_loaded) {
+                            *gameViewResult =
+                                M11_GameView_HandlePointerButton(
+                                    gameView,
+                                    mappedX,
+                                    mappedY,
+                                    ev.button.button == SDL_BUTTON_LEFT
+                                        ? DM1_V1_MOUSE_MASK_LEFT_PC34
+                                        : DM1_V1_MOUSE_MASK_RIGHT_PC34);
+                            if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                                return M12_MENU_INPUT_NONE;
+                            }
+                            continue;
+                        }
+                    }
+                    if (gameView->theronState.startup_phase !=
+                            THERON_STARTUP_PHASE_IN_DUNGEON ||
+                        !gameView->theronState.level_loaded) {
+                        /* Letterbox clicks have no source-space coordinate;
+                         * never turn one into a synthetic Button I/II. */
+                        continue;
                     }
                     *gameViewResult = M11_GameView_HandleInput(
                         gameView, buttonInput);
@@ -5448,6 +5476,32 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                             &mappedX, &mappedY)) {
                         (void)M11_GameView_HandlePointerMove(
                             gameView, mappedX, mappedY);
+                        /* Keep startup/menu hit-testing on the normal host
+                         * pointer route. Dungeon input still exposes the
+                         * source's Button I/II semantics. */
+                        if (gameView->theronState.startup_phase !=
+                                THERON_STARTUP_PHASE_IN_DUNGEON ||
+                            !gameView->theronState.level_loaded) {
+                            *gameViewResult =
+                                M11_GameView_HandlePointerButton(
+                                    gameView,
+                                    mappedX,
+                                    mappedY,
+                                    ev.button.button == SDL_BUTTON_LEFT
+                                        ? DM1_V1_MOUSE_MASK_LEFT_PC34
+                                        : DM1_V1_MOUSE_MASK_RIGHT_PC34);
+                            if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                                return M12_MENU_INPUT_NONE;
+                            }
+                            continue;
+                        }
+                    }
+                    if (gameView->theronState.startup_phase !=
+                            THERON_STARTUP_PHASE_IN_DUNGEON ||
+                        !gameView->theronState.level_loaded) {
+                        /* Do not dispatch a source button for a click in the
+                         * window margin where no source point exists. */
+                        continue;
                     }
                     *gameViewResult = M11_GameView_HandleInput(
                         gameView, buttonInput);
