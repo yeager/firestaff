@@ -66,7 +66,11 @@ void dm2_v1_mve_audio_sdl_owner_close(DM2_V1_MveAudioSdlOwner *owner)
     if (!owner) return;
     if (owner->sdl_stream)
         SDL_DestroyAudioStream((SDL_AudioStream *)owner->sdl_stream);
-    if (owner->owns_audio_subsystem)
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+    /* Do NOT call SDL_QuitSubSystem(SDL_INIT_AUDIO) here even though we
+     * ref-took it via SDL_InitSubSystem above.  See the same comment in
+     * audio_sdl_m11.c and dm2_v1_sound_sdl_backend.c: Firestaff runs
+     * several audio owners per launch, and SDL_QuitAudio's hash-table
+     * iteration segfaults on macOS 26 when the subsystem is bounced
+     * repeatedly.  Process SDL_Quit() at exit handles the subsystem. */
     memset(owner, 0, sizeof(*owner));
 }

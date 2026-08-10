@@ -168,7 +168,12 @@ static void dm2_v1_sdl_backend_close(void *ctx)
     if (g_dm2_sdl_stream) {
         SDL_DestroyAudioStream(g_dm2_sdl_stream);
         g_dm2_sdl_stream = NULL;
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        /* Do NOT call SDL_QuitSubSystem(SDL_INIT_AUDIO) here -- see the
+         * same comment in audio_sdl_m11.c.  Firestaff Init/Shutdown
+         * cycles the audio subsystem several times per launch, and
+         * SDL_QuitAudio's device-hash iteration segfaults on macOS 26
+         * under that pattern.  The stream itself is destroyed; process
+         * SDL_Quit() at exit handles the subsystem. */
     }
     memset(g_dm2_sdl_voices, 0, sizeof(g_dm2_sdl_voices));
     g_dm2_sdl_ready = 0;

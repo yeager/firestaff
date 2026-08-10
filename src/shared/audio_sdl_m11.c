@@ -1081,7 +1081,19 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (state->sdlStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->sdlStream);
         state->sdlStream = NULL;
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        /* Do NOT call SDL_QuitSubSystem(SDL_INIT_AUDIO) here.  Firestaff
+         * runs several audio owners in sequence during a single launch:
+         * the SWSH intro, the title-screen music, the M11 game view, and
+         * DM2 module owners each Init/Shutdown their own audio state.
+         * On macOS 26 CoreAudio, tearing the audio subsystem down and
+         * bringing it up repeatedly races DestroyLogicalAudioDevice in
+         * SDL_QuitAudio's hash-table iteration and segfaults there --
+         * this is the crash in 3.0.307's shutdown path.  The individual
+         * audio streams above are destroyed correctly; the subsystem
+         * itself is cleaned up once by SDL_Quit() at process exit (see
+         * firestaff_sdl_bridge.c:53).  This costs at most one idle
+         * CoreAudio device reference for the rest of the process
+         * lifetime, which is bounded and correct. */
     }
 #endif
 
