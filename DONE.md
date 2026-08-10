@@ -12907,3 +12907,17 @@ rendering remain blocked.
 - ✅ Detta är en värdlivscykelgrind kring den källbundna transaktionen, inte
   ny speldata eller en GAME_LOAD-genväg. SKProject/DMWeb-provenansen för
   File_header- och recordpoolägarna är oförändrad.
+
+# DM2: SKSAVE-skrivarens possessionslista (2026-08-10)
+
+- ✅ Den källbundna skrivartransaktionen samlar nu originalets högst 100
+  `ddat.savegamep3`-ObjectID:n i exakt `WRITE_RECORD_CHECKCODE`-ordning och
+  lämnar dem till `DM2_WRITE_POSSESSION_INDICES`. DB15-poolens antal används
+  inte längre som ersättning för listlängden.
+- ✅ Regressionen bevisar en verklig map-containerlänk, dess registrerade
+  ObjectID och resolutionsvärde, samt att det tidigare irrelevanta
+  `warr_00[0xf]` inte läses. `test_dm2_v1_save_orchestrator` passerar 6/6;
+  hel appbyggnad och produktions-placeholdergrinden passerar.
+- ⚠️ Detta publicerar ingen sparfil eller session. Riktig SKSAVE-skrivning
+  kräver fortfarande en komplett, muterbar GAME_LOAD-ägare för timer-, karta-
+  och recordgrafen.

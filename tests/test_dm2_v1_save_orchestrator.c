@@ -13,6 +13,12 @@ static uint8_t g_globalw[128];
 static uint8_t g_v1e0104[8];
 static uint8_t g_save_state[6];
 static uint8_t g_timer_data[32];
+static int g_possession_case;
+static int g_possession_add_count;
+static int g_possession_resolve_count;
+static int g_sgwords_field_count;
+static uint16_t g_possession_added_link;
+static uint8_t g_possession_record[8];
 
 static int mock_write_raw(void *ctx, const uint8_t *data, size_t size)
 {
@@ -121,6 +127,7 @@ static size_t mock_get_timer_entry_size(void *ctx)
 static uint16_t mock_get_hero_item_link(void *ctx, int hero_idx, int slot)
 {
     (void)ctx; (void)hero_idx; (void)slot;
+    if (g_possession_case && hero_idx == 0 && slot == 0) return 0x2400u;
     return DM2_RECORD_LINK_END;
 }
 
@@ -133,13 +140,26 @@ static uint16_t mock_get_wpc_link(void *ctx)
 static uint16_t mock_get_sgwords_field(void *ctx, int idx)
 {
     (void)ctx; (void)idx;
-    return 0;
+    ++g_sgwords_field_count;
+    /* DB15 capacity is unrelated to savegamep3's possession list. A value
+     * here must not influence WRITE_POSSESSION_INDICES. */
+    return g_possession_case ? 0xffffu : 0u;
 }
 
 /* Write record callbacks (no-op since all links are END). */
 static int mock_get_record(void *ctx, uint16_t link, DM2_WriteRecordData *out)
 {
-    (void)ctx; (void)link; (void)out;
+    (void)ctx;
+    if (g_possession_case && link == 0x2400u && out) {
+        memset(out, 0, sizeof(*out));
+        out->data = g_possession_record;
+        out->size = sizeof(g_possession_record);
+        out->word_00 = DM2_RECORD_LINK_END;
+        out->word_02 = 1u; /* source-owned non-empty map-container marker */
+        out->byte_04 = 0x02u;
+        out->word_04 = 0x0002u;
+        return 0;
+    }
     return -1;
 }
 
@@ -165,7 +185,9 @@ static int mock_is_container_moneybox(void *ctx, uint16_t link)
 }
 static void mock_add_possession_index(void *ctx, uint16_t link)
 {
-    (void)ctx; (void)link;
+    (void)ctx;
+    ++g_possession_add_count;
+    g_possession_added_link = link;
 }
 
 /* Dungeon callbacks (minimal — 0 maps). */
@@ -196,8 +218,9 @@ static int mock_init_suppress(void *ctx)
 /* Possession callbacks (no-op). */
 static int mock_resolve_poss(void *ctx, uint16_t link)
 {
-    (void)ctx; (void)link;
-    return 0;
+    (void)ctx;
+    ++g_possession_resolve_count;
+    return link == 0x2400u ? 0x2a7 : -1;
 }
 
 static DM2_SaveOrchestratorCallbacks make_callbacks(void)
@@ -337,13 +360,43 @@ static void test_suppress_output_nonzero(void)
     printf("  PASS: suppress_output_nonzero\n");
 }
 
+static void test_possession_list_is_collected_in_source_order(void)
+{
+    uint8_t suppress_buf[8192];
+    DM2_SaveOrchestratorCallbacks cb = make_callbacks();
+    DM2_SaveOrchestratorResult result;
+
+    g_raw_pos = 0u;
+    g_possession_case = 1;
+    g_possession_add_count = 0;
+    g_possession_resolve_count = 0;
+    g_sgwords_field_count = 0;
+    g_possession_added_link = DM2_RECORD_LINK_NONE;
+    memset(g_possession_record, 0, sizeof(g_possession_record));
+    g_possession_record[0] = 0xffu;
+    g_possession_record[1] = 0xffu;
+    g_possession_record[2] = 1u;
+    g_possession_record[4] = 2u;
+    assert(dm2_v1_save_orchestrate(&cb, suppress_buf, sizeof(suppress_buf),
+                                   &result) == 0);
+    assert(g_possession_add_count == 1);
+    assert(g_possession_added_link == 0x2400u);
+    assert(g_possession_resolve_count == 1);
+    assert(g_sgwords_field_count == 0);
+    assert(result.error == 0);
+    g_possession_case = 0;
+
+    printf("  PASS: possession_list_is_collected_in_source_order\n");
+}
+
 int main(void) {
     test_null_safety();
     test_incomplete_source_graph_rejected();
     test_empty_save();
     test_raw_header_contents();
     test_suppress_output_nonzero();
+    test_possession_list_is_collected_in_source_order();
 
-    printf("PASS: dm2_v1_save_orchestrator (5 tests)\n");
+    printf("PASS: dm2_v1_save_orchestrator (6 tests)\n");
     return 0;
 }

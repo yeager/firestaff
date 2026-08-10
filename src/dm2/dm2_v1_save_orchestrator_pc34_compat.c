@@ -24,6 +24,97 @@
  * Source: dm2data.cpp:1154 — v1d6316 initialized to {0xFF, 0xFF, 0xFF, 0xFF}. */
 static const uint8_t s_full_mask[4] = {0xFF, 0xFF, 0xFF, 0xFF};
 
+/* c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON and DM2_GAME_SAVE_MENU allocate
+ * ddat.savegamep3 with 0xc8 bytes: exactly 100 source ObjectIDs.  The list
+ * is populated in WRITE_RECORD_CHECKCODE and consumed only by
+ * WRITE_POSSESSION_INDICES; it is not the DB15 pool count. */
+enum { DM2_V1_SAVE_POSSESSION_LINK_CAPACITY = 100 };
+
+typedef struct {
+    const DM2_WriteRecordCallbacks *source;
+    uint16_t *links;
+    size_t capacity;
+    size_t count;
+    int overflow;
+} DM2_V1_SavePossessionCollector;
+
+static int dm2_v1_save_collect_get_record(
+    void *ctx, uint16_t link, DM2_WriteRecordData *out)
+{
+    DM2_V1_SavePossessionCollector *collector =
+        (DM2_V1_SavePossessionCollector *)ctx;
+    return !collector || !collector->source || !collector->source->get_record
+        ? -1 : collector->source->get_record(collector->source->ctx, link, out);
+}
+
+static uint16_t dm2_v1_save_collect_get_next(void *ctx, uint16_t link)
+{
+    DM2_V1_SavePossessionCollector *collector =
+        (DM2_V1_SavePossessionCollector *)ctx;
+    return !collector || !collector->source || !collector->source->get_next_link
+        ? DM2_RECORD_LINK_NONE
+        : collector->source->get_next_link(collector->source->ctx, link);
+}
+
+static int dm2_v1_save_collect_query_ai(void *ctx, uint16_t link)
+{
+    DM2_V1_SavePossessionCollector *collector =
+        (DM2_V1_SavePossessionCollector *)ctx;
+    return !collector || !collector->source ||
+        !collector->source->query_creature_ai_spec_flags ? 0
+        : collector->source->query_creature_ai_spec_flags(collector->source->ctx,
+                                                            link);
+}
+
+static int dm2_v1_save_collect_is_container_map(void *ctx, uint16_t link)
+{
+    DM2_V1_SavePossessionCollector *collector =
+        (DM2_V1_SavePossessionCollector *)ctx;
+    return !collector || !collector->source || !collector->source->is_container_map
+        ? 0 : collector->source->is_container_map(collector->source->ctx, link);
+}
+
+static int dm2_v1_save_collect_is_moneybox(void *ctx, uint16_t link)
+{
+    DM2_V1_SavePossessionCollector *collector =
+        (DM2_V1_SavePossessionCollector *)ctx;
+    return !collector || !collector->source ||
+        !collector->source->is_container_moneybox ? 0
+        : collector->source->is_container_moneybox(collector->source->ctx, link);
+}
+
+static void dm2_v1_save_collect_possession(void *ctx, uint16_t link)
+{
+    DM2_V1_SavePossessionCollector *collector =
+        (DM2_V1_SavePossessionCollector *)ctx;
+
+    if (!collector || !collector->source) return;
+    if (collector->count >= collector->capacity) {
+        collector->overflow = 1;
+    } else {
+        collector->links[collector->count++] = link;
+    }
+    if (collector->source->add_possession_index) {
+        collector->source->add_possession_index(collector->source->ctx, link);
+    }
+}
+
+static void dm2_v1_save_collect_callbacks(
+    DM2_WriteRecordCallbacks *out,
+    DM2_V1_SavePossessionCollector *collector,
+    const DM2_WriteRecordCallbacks *source)
+{
+    memset(out, 0, sizeof(*out));
+    collector->source = source;
+    out->get_record = dm2_v1_save_collect_get_record;
+    out->get_next_link = dm2_v1_save_collect_get_next;
+    out->query_creature_ai_spec_flags = dm2_v1_save_collect_query_ai;
+    out->is_container_map = dm2_v1_save_collect_is_container_map;
+    out->is_container_moneybox = dm2_v1_save_collect_is_moneybox;
+    out->add_possession_index = dm2_v1_save_collect_possession;
+    out->ctx = collector;
+}
+
 /* DM2_GAME_SAVE_MENU has no source-owned optional section.  A missing
  * callback is therefore an incomplete save graph, not an empty block.  Keep
  * the transaction fail-closed before the first header byte is emitted.
@@ -37,7 +128,7 @@ static int dm2_v1_save_orchestrator_callbacks_valid(
            cb->get_v1e0104 && cb->get_globalw && cb->get_hero_data &&
            cb->get_hero_count && cb->get_save_state && cb->get_timer_array &&
            cb->get_timer_entry_size && cb->get_hero_item_link &&
-           cb->get_wpc_link && cb->get_sgwords_field &&
+           cb->get_wpc_link &&
            cb->write_record_cb.get_record &&
            cb->write_record_cb.get_next_link &&
            cb->write_record_cb.query_creature_ai_spec_flags &&
@@ -57,6 +148,9 @@ int dm2_v1_save_orchestrate(
     uint8_t *out_buf, size_t out_cap,
     DM2_SaveOrchestratorResult *result)
 {
+    DM2_V1_SavePossessionCollector possession_collector;
+    DM2_WriteRecordCallbacks record_callbacks;
+    uint16_t possession_links[DM2_V1_SAVE_POSSESSION_LINK_CAPACITY];
     if (!cb || !out_buf || !result) return -1;
     memset(result, 0, sizeof(*result));
 
@@ -64,6 +158,12 @@ int dm2_v1_save_orchestrate(
         result->error = 100; /* source graph/output owner unavailable */
         return -1;
     }
+    memset(&possession_collector, 0, sizeof(possession_collector));
+    possession_collector.links = possession_links;
+    possession_collector.capacity = sizeof(possession_links) /
+        sizeof(possession_links[0]);
+    dm2_v1_save_collect_callbacks(&record_callbacks, &possession_collector,
+                                  &cb->write_record_cb);
 
     const uint8_t *record_sizes = dm2_v1_save_record_sizes();
     int rc;
@@ -246,13 +346,15 @@ int dm2_v1_save_orchestrate(
         wrs.writer = writer;
 
         int hero_count = cb->get_hero_count(cb->ctx);
-        DM2_WriteRecordCallbacks wcb = cb->write_record_cb;
+        DM2_WriteRecordCallbacks wcb = record_callbacks;
 
         for (int h = 0; h < hero_count; h++) {
             for (int slot = 0; slot < DM2_SAVE_HERO_ITEM_SLOTS; slot++) {
                 uint16_t link = cb->get_hero_item_link(cb->ctx, h, slot);
                 rc = dm2_v1_write_record_checkcode(&wrs, &wcb, link, 0, 0);
-                if (rc != 0) { result->error = 11; return -1; }
+                if (rc != 0 || possession_collector.overflow) {
+                    result->error = 11; return -1;
+                }
             }
         }
 
@@ -260,7 +362,9 @@ int dm2_v1_save_orchestrate(
         {
             uint16_t wpc = cb->get_wpc_link(cb->ctx);
             rc = dm2_v1_write_record_checkcode(&wrs, &wcb, wpc, 0, 0);
-            if (rc != 0) { result->error = 12; return -1; }
+            if (rc != 0 || possession_collector.overflow) {
+                result->error = 12; return -1;
+            }
         }
 
         out_pos += wrs.out_written;
@@ -280,11 +384,13 @@ int dm2_v1_save_orchestrate(
             NULL, 0);
         wrs.writer = writer;
 
-        DM2_WriteRecordCallbacks wcb = cb->write_record_cb;
+        DM2_WriteRecordCallbacks wcb = record_callbacks;
         DM2_StoreExtraDungeonCallbacks dcb = cb->dungeon_cb;
 
         rc = dm2_v1_store_extra_dungeon_data(&wrs, &wcb, &dcb, -1);
-        if (rc != 0) { result->error = 13; return -1; }
+        if (rc != 0 || possession_collector.overflow) {
+            result->error = 13; return -1;
+        }
 
         out_pos += wrs.out_written;
         writer = wrs.writer;
@@ -302,17 +408,11 @@ int dm2_v1_save_orchestrate(
 
         DM2_WritePossessionCallbacks pcb = cb->possession_cb;
 
-        /* Count is from sgwords warr_00[0xf] (type 0xF record count). */
-        int poss_count = cb->get_sgwords_field(cb->ctx, 0x0f);
-        /* Possession links buffer is managed by caller via possession_cb. */
-
-        /* The orchestrator does not own the possession link array, but
-         * dm2_v1_write_possession_indices indexes it directly. Passing NULL
-         * with a non-zero count was a null dereference during save for any
-         * dungeon with type-0xF records; the callee now rejects that pair,
-         * so this fails closed with a diagnostic instead. Emitting the
-         * section for real needs the link array threaded through to here. */
-        rc = dm2_v1_write_possession_indices(&wrs, &pcb, NULL, poss_count);
+        /* Source writes the ordered savegamep3 list accumulated by the two
+         * preceding WRITE_RECORD_CHECKCODE passes. `warr_00[0xf]` is merely
+         * the DB15 pool capacity and is unrelated to this list. */
+        rc = dm2_v1_write_possession_indices(&wrs, &pcb, possession_links,
+            (int)possession_collector.count);
         if (rc != 0) { result->error = 14; return -1; }
 
         out_pos += wrs.out_written;

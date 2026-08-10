@@ -3403,8 +3403,9 @@
   original `sksave0..3.dat/.bak` files (51,521–51,574 bytes). The real-data
   suite passes 126/126 and confirms the source raw prefix, fixed SUPPRESS
   order, timer boundary, DB-pool receipts and fail-closed runtime handoff;
-  the focused source-order orchestrator passes 5/5. These are diagnostic
-  proofs only: no live writer owner exists yet for the complete graph.
+  the focused source-order orchestrator passes 6/6. Its writer transaction
+  now retains the source-ordered `savegamep3` possession list; a live writer
+  owner for the complete graph is still missing.
 
 ## Active DM1/CSB Symbol Queue
 
