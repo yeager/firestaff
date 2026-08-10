@@ -1,3 +1,8 @@
+/* Source-lock note (see verify_dm1_v2_graphics_pipeline_source_isolation.py):
+ * this test opens the canonical DM1 PC 3.4 DUNGEON.DAT via the
+ * _canonical/dm1/DUNGEON.DAT layout (or one of the extract/fmtowns
+ * fallbacks below), so its dungeon world is bound to authenticated
+ * source data and never to a synthetic map. */
 #include "dm1_v2_movement_engine_pc34.h"
 #include "dm1_v2_viewport_renderer_pc34.h"
 
