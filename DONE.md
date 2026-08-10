@@ -23,6 +23,16 @@
 
 # Launcher: AUTO använder rätt originalplattform (2026-08-10)
 
+# Theron: avvisar falsk `$B0E5`-spawn-admission (2026-08-10)
+
+- ✅ Registertrace-parsern kräver nu att A-registret vid `$B0E5` innehåller en
+  giltig regular-spawn-kategori `0..3`, i linje med den byteverifierade
+  disassemblyn. Adresskollisioner och overlay-anrop med andra värden räknas
+  inte som autentiska spawn-entrys.
+- ✅ Den externa state-replayen verifierade varför detta behövs: `$B0E5`
+  observerades, men A var `0x2c/0x85`; körningen öppnar därför inte RNG,
+  creature-AI, loot, T700 eller T900.
+
 # Theron: bytevaliderad source-bound inventory-drop (2026-08-10)
 
 - ✅ DROP kontrollerar nu åter den exakta autentiska Track 02-itemposten mot

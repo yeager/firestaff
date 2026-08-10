@@ -182,8 +182,11 @@ static int parse_spawn_register_trace_file(
         }
         expected_c96b = c96b_window(pc);
         expected_cc4c = cc4c_window(pc);
-        /* THQUEST.ASM: regular spawn entry LB0E5 at PCE $B0E5. */
-        expected_spawn_entry = pc == 0xb0e5u;
+        /* THQUEST.ASM: regular spawn entry LB0E5 at PCE $B0E5.  The
+         * disassembly dispatches only categories 0..3 here; an address hit
+         * with another A value is a same-address overlay/caller observation,
+         * not an authenticated regular-spawn invocation. */
+        expected_spawn_entry = pc == 0xb0e5u && a <= 3u;
         expected_preconsumer = pc == 0x4644u;
         expected_helper = pc == 0x4667u;
         if (sequence != expected_sequence ||

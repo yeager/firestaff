@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔒 State-replayen nådde `$B0E5` 50 gånger, men A-registret var `0x2c/0x85`
+  och därmed utanför disassemblyns regular-spawn-kategorier `0..3`. Parsern
+  räknar detta inte längre som en spawn-entry. En ny capture måste fortfarande
+  visa giltig kategori, `$4667`/RNG-retur och efterföljande source-consumer i
+  samma autentiserade session.
+
 - 🔒 Source-bound inventory roundtrip är nu bytevaliderad även vid DROP: en
   autentisk Track 02-itempost måste fortfarande matcha de råa bytesen efter
   pickup/save/load. Equip, use, konsumtion, loot och T900:s ursprungliga

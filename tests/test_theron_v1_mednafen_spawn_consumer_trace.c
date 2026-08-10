@@ -21,7 +21,8 @@ static void write_fixture(const char *path, int bad_flags) {
 }
 
 static void write_register_fixture(const char *path, int bad_flags,
-                                   int include_spawn_entry) {
+                                   int include_spawn_entry,
+                                   unsigned int spawn_category) {
     FILE *file = fopen(path, "wb");
     assert(file);
     fputs("source=mednafen-pce-instrumented-spawn-registers-v3\n", file);
@@ -32,7 +33,7 @@ static void write_register_fixture(const char *path, int bad_flags,
     fputs("spawn_consumer_registers sequence=2 pc=c96b physical_pc=13496b a=21 x=22 y=23 sp=fc p=06 mpr0=1f mpr_pc=9a b3=12 b4=22 b5=32 b6=42 b8=52 ba=62 bb=72 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
     fputs("spawn_consumer_registers sequence=3 pc=cc4c physical_pc=134c4c a=31 x=32 y=33 sp=fb p=07 mpr0=1f mpr_pc=9a b3=13 b4=23 b5=33 b6=43 b8=53 ba=63 bb=73 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
     if (include_spawn_entry) {
-        fputs("spawn_consumer_registers sequence=4 pc=b0e5 physical_pc=1130e5 a=41 x=42 y=43 sp=fa p=08 mpr0=1f mpr_pc=89 b3=14 b4=24 b5=34 b6=44 b8=54 ba=64 bb=74 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=1\n", file);
+        fprintf(file, "spawn_consumer_registers sequence=4 pc=b0e5 physical_pc=1130e5 a=%02x x=42 y=43 sp=fa p=08 mpr0=1f mpr_pc=89 b3=14 b4=24 b5=34 b6=44 b8=54 ba=64 bb=74 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=1\n", spawn_category);
     }
     fclose(file);
 }
@@ -91,7 +92,7 @@ int main(void) {
     assert(!theron_v1_mednafen_spawn_consumer_trace_parse_file(path, &receipt));
     assert(receipt.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
 
-    write_register_fixture(path, 0, 1);
+    write_register_fixture(path, 0, 1, 1u);
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
         assert(theron_v1_mednafen_spawn_register_trace_parse_file(
@@ -101,7 +102,7 @@ int main(void) {
         assert(registers.c96b_window_seen && registers.cc4c_window_seen);
         assert(registers.preconsumer_4644_seen && registers.helper_4667_seen);
         assert(registers.helper_4667_special_branch_seen);
-        assert(registers.last_a == 0x41u && registers.last_bb == 0x74u);
+        assert(registers.last_a == 0x01u && registers.last_bb == 0x74u);
         assert(registers.last_mpr_pc == 0x89u);
         assert(registers.spawn_entry_b0e5_seen);
         assert(!registers.semantic_publication_allowed);
@@ -123,9 +124,18 @@ int main(void) {
     }
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
+        /* A same-address overlay with an out-of-range category is not the
+         * LB0E5 regular-spawn consumer, even when its sidecar flag says so. */
+        write_register_fixture(path, 0, 1, 0x2cu);
+        assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
+            path, &registers));
+        assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
+    }
+    {
+        Theron_V1SpawnRegisterTraceReceipt registers;
         /* The helper/window edges alone are insufficient: the exact regular
          * spawn entry must be observed in the same run. */
-        write_register_fixture(path, 0, 0);
+        write_register_fixture(path, 0, 0, 0u);
         assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
             path, &registers));
         assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
@@ -173,7 +183,7 @@ int main(void) {
             assert(!registers.semantic_publication_allowed);
         }
     }
-    write_register_fixture(path, 1, 1);
+    write_register_fixture(path, 1, 1, 1u);
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
         assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
