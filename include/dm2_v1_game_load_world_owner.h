@@ -543,6 +543,29 @@ typedef struct {
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
 
+/* Fresh-game values owned by c_move/c_input before the first player movement.
+ * These are not host defaults: dm2data.cpp initializes each field before
+ * DM2_GAME_LOAD, and c_move.cpp reads and later mutates them while handling
+ * delayed movement, creature interaction and input suppression.  Retaining
+ * them in the private candidate gives a later c_moverec transaction the
+ * source state it must consume; it does not make movement executable yet.
+ *
+ * Source: SKULLWIN/dm2data.cpp (1063, 1107-1109, 1254, 1326-1332, 1383),
+ *         c_move.cpp::DM2_PERFORM_MOVE (197-612), c_input.cpp (289-312). */
+typedef struct {
+    int valid;
+    int16_t delayed_move_ticks;       /* ddat.v1e025c */
+    int16_t delayed_target_x;         /* ddat.v1e026a */
+    int16_t delayed_target_y;         /* ddat.v1e0268 */
+    int16_t delayed_direction;        /* ddat.v1e0278 */
+    int16_t delayed_command;          /* ddat.v1e0256 */
+    int16_t move_clock;               /* ddat.v1e026e */
+    int16_t move_event;               /* ddat.v1e025e */
+    int16_t move_event_direction;     /* ddat.v1e0274 */
+    int16_t pending_creature;         /* ddat.v1d4000: OBJECT_END */
+    int command_in_progress;          /* ddat.v1e0488 */
+} DM2_V1_GameLoadMovementState;
+
 /* A private, all-RAM candidate for a complete mutable DM2_GAME_LOAD state.
  * It is a transaction staging area, not a live game: no field is installed
  * in M11, the process-global runtime, audio backend or input dispatcher.
@@ -570,6 +593,7 @@ typedef struct {
     DM2_V1_RecordPoolSet record_pools;
     DM2_V1_Party party;
     int16_t leader_hand_record;
+    DM2_V1_GameLoadMovementState movement;
     /* c_eventqueue::init followed by the real first mirror/leader selection.
      * This remains private and receives no host input before a complete
      * session owner exists. */

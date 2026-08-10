@@ -5030,9 +5030,21 @@ int main(void) {
                         profile_new_game_owner->source_transaction_hash &&
                     profile_runtime_candidate->record_pools.pools[4].bytes !=
                         profile_new_game_owner->record_pools.pools[4].bytes &&
+                    profile_runtime_candidate->movement.valid &&
+                    profile_runtime_candidate->movement.delayed_move_ticks == 0 &&
+                    profile_runtime_candidate->movement.delayed_target_x == 0 &&
+                    profile_runtime_candidate->movement.delayed_target_y == 0 &&
+                    profile_runtime_candidate->movement.delayed_direction == 0 &&
+                    profile_runtime_candidate->movement.delayed_command == 0 &&
+                    profile_runtime_candidate->movement.move_clock == 0 &&
+                    profile_runtime_candidate->movement.move_event == 0 &&
+                    profile_runtime_candidate->movement.move_event_direction == 0 &&
+                    profile_runtime_candidate->movement.pending_creature ==
+                        DM2_V1_RECORD_HANDLE_END &&
+                    !profile_runtime_candidate->movement.command_in_progress &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
-                "DM2 retains the complete private GAME_LOAD clone without publishing a session");
+                "DM2 retains source-initialized c_move state privately without publishing a session");
     }
     memset(&runtime_session_candidate, 0, sizeof(runtime_session_candidate));
     runtime_candidate_source_hash_before = profile_new_game_owner &&

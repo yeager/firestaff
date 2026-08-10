@@ -228,6 +228,12 @@
 
 # DM2: privat rörelseklassificering över GAME_LOAD-kandidaten (2026-08-10)
 
+- ✅ GAME_LOAD-kandidaten behåller nu även originalets färska `c_move`-/
+  `c_input`-fält: fördröjd rörelse, målruta/riktning/kommando,
+  rörelseklocka/event, pending-creature-sentinel och command-flagga. Värdena
+  kommer direkt från `dm2data.cpp` och är inte värdskapade standardvärden.
+  De är fortsatt privata tills samma transaktion äger hela `c_moverec`-
+  dispatchen.
 - ✅ `GameLoadRuntimeSessionCandidate` kan nu köra
   `DM2_12b4_0881` läsande mot den klonade File_header-kartan: originalets
   stair-back/stair/blockerade mål, direkta DB4-träff, AI-flaggord och

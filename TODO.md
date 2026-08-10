@@ -1092,7 +1092,9 @@
   original `w2` destination, scope, sound and rotation fields, plus `w4`
   destination map across every File_header chain. Bind `c_moverec` map
   changes, party/session ownership, collision and sound before allowing a
-  transition.
+  transition. Fresh `c_move` state is now retained in the private GAME_LOAD
+  candidate; bind its delayed-command, stamina, moverec and timer branches
+  only in that same rollback transaction.
 
 - Keep `docs/DATA_SETUP.md` aligned with every change to a game's hash-gated
   launch roles or optional original-media routes. Do not turn optional media

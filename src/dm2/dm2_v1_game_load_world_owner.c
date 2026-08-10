@@ -44,6 +44,18 @@ static int dm2_v1_game_load_runtime_candidate_is_initialized(
 static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
                                                   uint32_t value);
 
+/* These are c_dm2data's explicit fresh-game writes, not inferred values.
+ * Keep this separate from c_move execution: DM2_PERFORM_MOVE also requires
+ * c_moverec, timer, actuator and creature dispatch ownership. */
+static void dm2_v1_game_load_runtime_candidate_init_movement_state(
+    DM2_V1_GameLoadMovementState *movement)
+{
+    if (!movement) return;
+    memset(movement, 0, sizeof(*movement));
+    movement->pending_creature = DM2_V1_RECORD_HANDLE_END;
+    movement->valid = 1;
+}
+
 static uint16_t dm2_v1_game_load_owner_read_u16le(const uint8_t *bytes)
 {
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
@@ -2241,6 +2253,7 @@ int dm2_v1_game_load_runtime_session_candidate_init(
                                                          &source->sound_owner)) goto fail;
     candidate.party = source->selected_party;
     candidate.leader_hand_record = source->load_new_dungeon_reset.leader_hand_record;
+    dm2_v1_game_load_runtime_candidate_init_movement_state(&candidate.movement);
     candidate.event_queue = source->source_event_queue;
     candidate.source_event_hero_index = source->source_event_hero_index;
     candidate.caii_rng = source->caii_rng;
