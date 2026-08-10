@@ -3,6 +3,34 @@
 Detta är arbetsflödet för att skapa en källtrogen VDP1/VDP2-capture utan att
 lägga BIOS, disc-image eller dumpade runtime-bytes i repot.
 
+## Vad som kan skickas till Mednafen
+
+Ja, men inte hela Firestaff-instrumenteringen som den ser ut i dag. Den
+nuvarande kedjan är ett verifieringsverktyg för Nexus och innehåller
+Firestaff-specifika miljövariabler, källspårning och analysformat. Det är bra
+för att bevisa en assetkedja, men för stort och för specialiserat som en
+upstream-ändring.
+
+Den planerade Mednafen-PR:n ska därför vara en liten, fristående
+diagnostikförändring:
+
+- valfri rå VDP1/VDP2-frame-capture bakom en tydlig konfigurationsflagga,
+- valfri VDP2-register-, VRAM- och CRAM-snapshot efter frame-renderingen,
+- deterministiskt binärformat med versionssignatur och endian-definition,
+- ingen BIOS-, disc- eller Firestaff-data i Mednafen-källträdet,
+- inga spel- eller Nexus-specifika antaganden i emulatorkärnan.
+
+Writer-PC, source-register, CD-läsning, SLEV/SAL och Firestaffs
+assetverifiering hör kvar i det separata capturelagret. De kan användas i
+PR-beskrivningen som reproduktionsbevis, men ska inte bli hårdkodad
+Nexus-logik i Mednafen.
+
+Nuvarande status är alltså: vi har en fungerande lokal proof-of-concept och
+en verifierad dumpningsmetod, men ingen färdig upstream-PR ännu. Nästa steg
+är att extrahera den generiska snapshotdelen, lägga till ett litet test för
+formatet och skicka den som en separat förändring med ett reproducerbart
+Saturn-testfall.
+
 ## Förutsättningar
 
 - En användarägd Saturn BIOS-fil på extern disk. Kontrollera SHA-256 före körning.
@@ -37,6 +65,55 @@ Patchkedjan instrumenterar:
 Alla producerade tracefiler är diagnostiska bevis. De får inte användas för
 semantic admission utan att asset-identitet, ordningsföljd och samma snapshot
 är verifierade.
+
+## Så görs själva dumpningen
+
+Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
+
+1. Packa upp BIOS lokalt på den externa disken och beräkna SHA-256. BIOS-filen
+   kopieras inte till repot.
+2. Kontrollera SHA-256 för Nexus CUE och tillhörande binärfiler. Starta inte
+   en capture om identiteten saknas.
+3. Bygg den patchade Mednafen-kopian i en separat katalog på extern disk.
+4. Skapa en ny körkatalog och sätt miljövariablerna för rådump, registerspår,
+   VDP2-write-spår och post-write-snapshot.
+5. Starta Saturn-profilen genom
+   `firestaff_nexus_v1_saturn_raw_capture_launcher.sh`. Launchern validerar
+   BIOS och disc, startar Mednafen, väntar tills körningen är klar och skriver
+   manifestet.
+6. Kör analysverktygen mot exakt samma körkatalog. Rådumpen, spåren,
+   snapshoten och manifestet ska ha samma sessionsnamn.
+7. Behandla resultatet som `blocked` tills både skrivordning och källbytes
+   identitet är verifierade. En tekniskt giltig VDP2-snapshot är inte i sig
+   bevis för att bytesen är menytext, FONT256 eller HUD.
+
+Minimal extern körning:
+
+```sh
+run=/Volumes/Extern-disk/nexus-saturn-capture/run-menu-$(date +%Y%m%d-%H%M%S)
+mkdir -p "$run"
+export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES="$run/vdp2-writes.trace"
+export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT="$run/post.snapshot"
+export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=64
+
+probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
+  --operator-only --launch --no-waiting \
+  --frame-limit 301 --timeout-seconds 120 \
+  --mednafen /Volumes/Extern-disk/nexus-saturn-capture/mednafen-prefix/bin/mednafen \
+  --mednafen-home /Volumes/Extern-disk/nexus-saturn-capture/mednafen-home \
+  --bios /Volumes/Extern-disk/nexus-saturn-capture/bios-j/Sega\ Saturn\ BIOS\ \(J\)\ \(1.01\).bin \
+  --bios-sha256 <verifierad_sha256> --bios-region jp \
+  --disc "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.cue" \
+  --disc-sha256 <verifierad_sha256> \
+  --trace "$run/runtime-vdp12.raw" \
+  --validator scripts/analyze_nexus_saturn_runtime_capture.py \
+  --manifest "$run/manifest.txt" \
+  --trace-session nexus-vdp2-dump
+```
+
+Det viktiga är inte en viss frame-adress, utan att hela beviskedjan kommer
+från samma körning. Mednafen-delen fångar emulatorns observerade tillstånd;
+Firestaff-delen avgör därefter om tillståndet kan bindas till en känd källa.
 
 ## Starta en riktad capture
 
