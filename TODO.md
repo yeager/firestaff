@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- ✅ Therons held WASD-/piltangentväg är nu kopplad till egen tick-cadence och
+  vanlig muspekare hoppar inte mellan objekt. 🔒 RNG, creature-AI, T700/T900,
+  objectrecords samt source-bound grafik/ljudsemantik är fortfarande separata
+  capture-gater.
+
 - 🔒 Theron använder nu endast autentiserade Track 02 category-4-records för
   live creatures; den gamla DMWeb/DM1-tabellen är borttagen. Lägg inte tillbaka
   en ersättningstabell: nästa steg kräver samma-körningsbevis för RNG-retur,

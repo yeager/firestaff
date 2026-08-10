@@ -6519,6 +6519,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
         uint32_t tickBeforeEvents = gameView.world.gameTick;
         uint32_t tickBeforeInput = gameView.world.gameTick;
+        int theronTickBeforeInput = gameView.theronState.tick_count;
 
         /* Settings may change while the launcher is visible. Apply the
          * persisted input-mode choice before either event or held-state
@@ -6655,7 +6656,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (input == M12_MENU_INPUT_NONE &&
             pointerResult == M11_GAME_INPUT_IGNORED &&
             m11_game_view_supports_held_motion_input(&gameView) &&
-            M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
+            /* THQUEST.ASM T520/T600/T700 owns the dungeon input cadence;
+             * it does not publish DM1's VBlank stopWaitingForInput flag. */
+            (m11_game_view_is_theron(&gameView)
+                ? idleAccumulatorMs >= (uint32_t)gameTickInterval
+                : M11_GameView_Dm1V1SourceTickReadyForInput(&gameView))) {
             {
                 int pendingInput = M12_MENU_INPUT_NONE;
                 if (DM1_V1_PendingMotionQueue_PopPc34Compat(
@@ -6735,7 +6740,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         inputRedrawAfterViewportDirtyCount++;
                     }
                     lastInputRedrawAfterViewportDirty = redrawWasAfterViewportDirty;
-                    if (gameView.world.gameTick != tickBeforeInput) {
+                    if (gameView.world.gameTick != tickBeforeInput ||
+                        (m11_game_view_is_theron(&gameView) &&
+                         gameView.theronState.tick_count !=
+                             theronTickBeforeInput)) {
                         idleAccumulatorMs = 0;
                     }
                 }

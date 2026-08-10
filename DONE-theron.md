@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — held keyboard input uses Theron cadence
+
+- ✅ Hållna WASD- och piltangenter använder nu Therons egen spel-tick i
+  stället för DM1:s VBlank-flagga. En tangent fortsätter därför att gå
+  framåt/bakåt eller vrida först vid rätt runtime-gräns och kan inte rusa
+  iväg vid 60 Hz.
+- ✅ Den vanliga muspekaren lämnas source-mappad på sin aktuella position;
+  musflytt väljer inte eller hoppar mellan objekt. Musknapp 1/2, kort touch
+  och lång touch behåller Button I/II-kontraktet.
+- ✅ `test_m11_gamepad_csb_input_bridge`, `theron_v1_boot_runtime_input`
+  och fullständigt huvudbygge passerar.
+
 ## 2026-08-10 — remove unauthenticated creature/generator fallback
 
 - ✅ Removed the obsolete DMWeb/DM1-indexed Theron creature and generator

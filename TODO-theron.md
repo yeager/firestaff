@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — inputfix klar; semantikspärrar kvar
+
+- ✅ Held WASD/piltangent-input är nu kopplad till Therons egen tick-cadence.
+  Vanlig mus rör pekaren fritt utan objekt-hopp; Button I/II och touch är
+  oförändrade.
+- 🔒 Detta ändrar inte den separata spärren för originalets RNG, creature-AI,
+  T700/T900, objectrecords eller source-bound ljud/presentation.
+
 ## 2026-08-10 — remaining creature semantics are source-capture gated
 
 - ✅ Removed the unauthenticated DMWeb/DM1 creature-generator fallback; real

@@ -1,3 +1,12 @@
+# Theron: held keyboard input follows Theron cadence (2026-08-10)
+
+- ✅ Hållna WASD- och piltangenter använder Therons egen spel-tick i stället
+  för DM1:s VBlank-flagga. Muspekaren rör sig fritt i source-vyn utan att
+  välja eller hoppa mellan objekt; musknapp 1/2 och kort/lång touch behåller
+  Button I/II.
+- ✅ `test_m11_gamepad_csb_input_bridge`,
+  `theron_v1_boot_runtime_input` och huvudbygget passerar.
+
 # Nexus: post-render Saturn-capture och reproducerbar dumpdokumentation (2026-08-10)
 
 - ✅ Mednafen-capturehooken flyttas till efter `VDP2REND_EndFrame()`, vilket
