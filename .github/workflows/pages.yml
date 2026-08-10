@@ -26,6 +26,11 @@ jobs:
       - name: Preserve repository-relative documentation links
         shell: bash
         run: |
+          # Links from docs back to the repository README/LICENSE resolve
+          # inside the Pages artifact as well.
+          cp README.md docs/README.md
+          cp README.md docs/README
+          cp LICENSE docs/LICENSE
           # The Pages artifact is rooted at docs/. Markdown is intentionally
           # published as source text, so GitHub-style extensionless links must
           # have matching artifact paths instead of relying on repo rendering.
@@ -33,10 +38,6 @@ jobs:
             alias="${file%.md}"
             [ -e "$alias" ] || cp "$file" "$alias"
           done
-          # Links from docs back to the repository README/LICENSE resolve
-          # inside the Pages artifact as well.
-          cp README.md docs/README.md
-          cp LICENSE docs/LICENSE
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
