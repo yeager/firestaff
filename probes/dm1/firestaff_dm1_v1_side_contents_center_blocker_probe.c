@@ -306,10 +306,18 @@ static int verify_firestaff_guards(const char *m11)
 {
     const char *end = NULL;
     const char *body = find_function_body(m11, "m11_draw_dm1_side_contents", &end);
+    /* m11_draw_dm1_side_contents was split into an outer per-depth
+     * dispatcher and m11_draw_dm1_side_contents_at_depth. The blocking-
+     * depth computation left this pair entirely: it is now computed once
+     * higher up (via visibility.nearest_blocking_center_depth_index in
+     * m11_draw_viewport) and threaded through as the last parameter of
+     * both functions. Same "compute once, use in a for-depth loop with
+     * early-exit at nearer center" contract; only the plumbing changed.
+     * The guard-and-break sequence still needs to be present inside the
+     * per-depth worker along with the item-sprite draw fall-through. */
     const char *side_needles[] = {
-        "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
         "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
-        "break;",
+        "return;",
         "m11_draw_item_sprite"
     };
     const char *explosion_needles[] = {
@@ -324,7 +332,24 @@ static int verify_firestaff_guards(const char *m11)
     }
     if (!body_has_order(m11, body, end, "m11_draw_dm1_side_contents", side_needles,
             sizeof(side_needles) / sizeof(side_needles[0]))) {
-        return 0;
+        /* Guard + early-return moved into the per-depth worker; the item
+         * draw uses the newer F0115 floor-item helper. Retry the walk
+         * against the worker body with the corresponding item-draw needle. */
+        const char *at_depth_end = NULL;
+        const char *at_depth_body = find_function_body(
+            m11, "m11_draw_dm1_side_contents_at_depth", &at_depth_end);
+        const char *at_depth_needles[] = {
+            "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
+            "return;",
+            "m11_draw_dm1_f0115_floor_item_sprite",
+        };
+        if (!at_depth_body ||
+            !body_has_order(m11, at_depth_body, at_depth_end,
+                            "m11_draw_dm1_side_contents_at_depth",
+                            at_depth_needles,
+                            sizeof(at_depth_needles) / sizeof(at_depth_needles[0]))) {
+            return 0;
+        }
     }
 
     body = find_function_body(m11, "m11_draw_dm1_deferred_explosion_pass", &end);
