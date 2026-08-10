@@ -311,14 +311,20 @@ typedef struct {
     uint32_t due_tick;
 } DM2_V1_GameLoadCaiiThinkReceipt;
 
-/* The complete dynamic half cannot run until 0a48's local-creature,
- * animation and noise owners are present. This receipt makes that admission
- * explicit and proves the preflight did not partially reset DB4/CAII/c_tim.
- * Source: SKProject SKULLWIN/c_1c9a.cpp (5772-5894). */
+/* The dynamic half of RESET_CAII/FILL_ORPHAN_CAII. Every count is derived
+ * from authentic DB4 traversal and its one shared c_tim/c_creature/SOUND9
+ * transaction; no source candidate is silently skipped. A map-gated sound
+ * no-op is distinct from a queued positional sound.
+ * Source: SKProject SKWINSPX/src/v5/SK1C9A.cpp (5772-5894, 9896-10031). */
 typedef struct {
     int valid;
     int blocked_unowned_0a48;
     uint16_t dynamic_candidate_count;
+    uint16_t allocated_slot_count;
+    uint16_t think_timer_count;
+    uint16_t noise_queue_count;
+    uint16_t noise_map_gate_count;
+    uint32_t source_hash;
 } DM2_V1_GameLoadCaiiDynamicReceipt;
 
 /* Minimal, private PREPARE_LOCAL_CREATURE_VAR identity for a dynamic DB4
@@ -712,9 +718,12 @@ int dm2_v1_game_load_world_owner_schedule_caii_think(
     DM2_V1_GameLoadWorldOwner *owner, int16_t record_handle, int map,
     int x, int y, DM2_V1_GameLoadCaiiThinkReceipt *out_receipt);
 
-/* Admission gate for RESET_CAII's dynamic branch. While any real dynamic
- * candidate needs unowned DM2_CREATURE_SOMETHING_1c9a_0a48, the whole atom is
- * rejected before DB4, CAII, c_tim or c_randomdata can change. */
+/* Materialize RESET_CAII/FILL_ORPHAN_CAII's dynamic DB4 branch privately.
+ * It allocates source-shaped c_creature slots, queues each 0cf7 think timer,
+ * executes 0a48 with the real GDAT/AI/RNG inputs, and carries a noise only
+ * through the admitted dynamic SOUND9 owner. Any unresolved local state,
+ * class triple, sample binding or occlusion restores all DB4, CAII, timer,
+ * RNG and SFX state before returning zero. No session is published. */
 int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
     DM2_V1_GameLoadWorldOwner *owner,
     DM2_V1_GameLoadCaiiDynamicReceipt *out_receipt);

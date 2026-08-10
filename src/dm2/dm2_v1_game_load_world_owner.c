@@ -6,6 +6,7 @@
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_creature_something_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_sound_queue_pc34_compat.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -557,6 +558,22 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
     DM2_V1_GameLoadCaiiDynamicReceipt *out_receipt)
 {
     DM2_V1_GameLoadCaiiDynamicReceipt receipt;
+    DM2_V1_RecordPool *db4;
+    uint8_t *db4_snapshot = NULL;
+    uint8_t *slots_snapshot = NULL;
+    DM2_V1_TimerEntry *timers_snapshot = NULL;
+    int16_t *indices_snapshot = NULL;
+    DM2_V1_TimerQueue queue_snapshot;
+    DM2_V1_DropRng rng_snapshot;
+    DM2_V1_SoundQueueState sound_state;
+    DM2_V1_SoundSfx positional_snapshot[DM2_V1_SOUND_POSITIONAL_CAP];
+    DM2_V1_SoundSfx immediate_snapshot[DM2_V1_SOUND_IMMEDIATE_CAP];
+    DM2_V1_SoundDelayedSlot delayed_snapshot[DM2_V1_SOUND_DELAYED_SLOT_COUNT];
+    int32_t sample_slots_snapshot[DM2_V1_SOUND_SAMPLE_SLOT_COUNT];
+    uint16_t positional_count_snapshot;
+    uint16_t immediate_count_snapshot;
+    size_t db4_bytes;
+    uint32_t hash = 0x4344494eu; /* "CDIN" */
     int index;
 
     memset(&receipt, 0, sizeof(receipt));
@@ -568,28 +585,235 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
 
     receipt.valid = 1;
 
-    /* Do the full admission scan before RESET_CAII can touch a byte. Every
-     * dynamic candidate reaches 0a48 after allocation unless its complete
-     * local-creature group state is owned. That state and QUEUE_NOISE_GEN1
-     * are intentionally absent, therefore an authentic dynamic candidate
-     * blocks the entire transaction rather than leaving a half-live world. */
+    /* RESET_CAII precedes this all-map walk, so static materialisation has
+     * already reset every DB4 owner byte.  The dynamic half must now either
+     * allocate every source candidate with its 0cf7/0a48 consequences or
+     * restore every mutable owner.  A per-creature partial success would not
+     * be a GAME_LOAD state. Source: startend.cpp::DM2_RESET_CAII (1111-1145),
+     * SK1C9A.cpp::DM2_FILL_ORPHAN_CAII (10000-10031). */
+    db4 = &owner->record_pools.pools[4];
+    if (!db4->bytes || db4->record_size < 16 || db4->record_count <= 0 ||
+        !owner->caii_local_context_receipt.valid ||
+        !owner->caii_local_contexts || !owner->sound_owner.spatial_context_valid ||
+        owner->caii_local_context_receipt.context_count !=
+            owner->caii_map_receipt.dynamic_candidate_count) {
+        return 0;
+    }
+    db4_bytes = (size_t)db4->record_count * (size_t)db4->record_size;
+    db4_snapshot = malloc(db4_bytes);
+    slots_snapshot = malloc((size_t)owner->caii_slots.capacity *
+                            DM2_V1_CAII_SLOT_SIZE);
+    timers_snapshot = malloc((size_t)owner->timer_capacity *
+                             sizeof(*timers_snapshot));
+    indices_snapshot = malloc((size_t)owner->timer_capacity *
+                              sizeof(*indices_snapshot));
+    if (!db4_snapshot || !slots_snapshot || !timers_snapshot ||
+        !indices_snapshot) goto rollback;
+    memcpy(db4_snapshot, db4->bytes, db4_bytes);
+    memcpy(slots_snapshot, owner->caii_slots.slots,
+           (size_t)owner->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE);
+    memcpy(timers_snapshot, owner->timer_entries,
+           (size_t)owner->timer_capacity * sizeof(*timers_snapshot));
+    memcpy(indices_snapshot, owner->timer_indices,
+           (size_t)owner->timer_capacity * sizeof(*indices_snapshot));
+    queue_snapshot = owner->timer_queue;
+    rng_snapshot = owner->caii_rng;
+    positional_count_snapshot = owner->sound_owner.positional_count;
+    immediate_count_snapshot = owner->sound_owner.immediate_count;
+    memcpy(positional_snapshot, owner->sound_owner.positional,
+           sizeof(positional_snapshot));
+    memcpy(immediate_snapshot, owner->sound_owner.immediate,
+           sizeof(immediate_snapshot));
+    memcpy(delayed_snapshot, owner->sound_owner.delayed,
+           sizeof(delayed_snapshot));
+    memcpy(sample_slots_snapshot, owner->sound_owner.sample_slots,
+           sizeof(sample_slots_snapshot));
+
+    dm2_v1_sound_queue_state_init(&sound_state, 0u);
+    if (!dm2_v1_sound_queue_bind_entries(&sound_state,
+                                         owner->sound_owner.queue_entries,
+                                         owner->sound_owner.queue_entry_count,
+                                         owner->sound_owner.queue_capacity)) {
+        goto rollback;
+    }
+    sound_state.positional_count = owner->sound_owner.positional_count;
+    sound_state.immediate_count = owner->sound_owner.immediate_count;
+    sound_state.sound_enabled = owner->sound_owner.sound_enabled;
+    sound_state.master_sfx_volume = owner->sound_owner.master_sfx_volume;
+    memcpy(sound_state.positional, owner->sound_owner.positional,
+           sizeof(sound_state.positional));
+    memcpy(sound_state.immediate, owner->sound_owner.immediate,
+           sizeof(sound_state.immediate));
+    memcpy(sound_state.delayed, owner->sound_owner.delayed,
+           sizeof(sound_state.delayed));
+    memcpy(sound_state.sample_slots, owner->sound_owner.sample_slots,
+           sizeof(sound_state.sample_slots));
+
     for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
         const DM2_V1_GameLoadCaiiMapCandidate *candidate =
             &owner->caii_map_candidates[index];
-        if (!candidate->static_ai) {
-            ++receipt.dynamic_candidate_count;
-            receipt.blocked_unowned_0a48 = 1;
+        const DM2_AIDefinition *ai = NULL;
+        uint8_t *record;
+        uint8_t *slot = NULL;
+        int slot_index;
+        int16_t adj[2];
+        const uint8_t *animation = NULL;
+        DM2_V1_GameLoadCaiiThinkReceipt think;
+        DM2_V1_CreatureSomethingReceipt something;
+
+        if (candidate->static_ai) continue;
+        ++receipt.dynamic_candidate_count;
+        record = dm2_v1_record_pool_address_mut(&owner->record_pools,
+                                                candidate->record_handle);
+        if (!record || record[4] != candidate->creature_type ||
+            record[5] != 0xffu ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
+                                                   record[4], &ai) || !ai ||
+            (ai->w0AIFlags & 1u) != 0u) goto rollback;
+        for (slot_index = 0; slot_index < owner->caii_slots.capacity;
+             ++slot_index) {
+            slot = owner->caii_slots.slots +
+                (size_t)slot_index * DM2_V1_CAII_SLOT_SIZE;
+            if ((int16_t)dm2_v1_game_load_owner_read_u16le(slot) < 0) break;
         }
+        if (slot_index >= owner->caii_slots.capacity) goto rollback;
+        memset(slot, 0, DM2_V1_CAII_SLOT_SIZE);
+        dm2_v1_game_load_owner_write_u16le(slot,
+            (uint16_t)candidate->record_handle & 0x03ffu);
+        dm2_v1_game_load_owner_write_u16le(slot + 2u, 0xffffu);
+        slot[4] = (uint8_t)(owner->timer_queue.gametick - 0x7f);
+        slot[6] = (uint8_t)((owner->timer_queue.gametick >> 2) - 1);
+        dm2_v1_game_load_owner_write_u16le(slot + 12u,
+            (uint16_t)((candidate->x & 0x1fu) |
+                       ((candidate->y & 0x1fu) << 5) |
+                       ((candidate->map & 0x3fu) << 10)));
+        /* SK1C9A.cpp::DM2_14cd_0802, called through
+         * PREPARE_LOCAL_CREATURE_VAR before 0cf7. */
+        slot[0x12] = 0xffu;
+        slot[0x16] = 0xffu;
+        slot[0x17] = 0xffu;
+        slot[0x1a] = 0xffu;
+        record[5] = (uint8_t)slot_index;
+        ++owner->caii_slots.alloc_count;
+        ++receipt.allocated_slot_count;
+        memset(&think, 0, sizeof(think));
+        if (!dm2_v1_game_load_world_owner_schedule_caii_think(
+                owner, candidate->record_handle, candidate->map,
+                candidate->x, candidate->y, &think) || !think.valid) {
+            goto rollback;
+        }
+        ++receipt.think_timer_count;
+        slot[0x1a] = dm2_v1_game_load_owner_read_u16le(record + 8u) != 0xffffu
+            ? 0u : 0x11u;
+        /* DM2_ALLOC_CAII_TO_CREATURE sets the dynamic creature's 0x8000
+         * state and clears 0x4000 immediately before 0a48. */
+        record[11] = (uint8_t)((record[11] | 0x80u) & ~0x40u);
+        adj[0] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 8u);
+        adj[1] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 10u);
+        memset(&something, 0, sizeof(something));
+        if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+                &owner->record_pools, &owner->caii_slots, owner->asset_loader,
+                ai, &owner->caii_rng, candidate->record_handle, adj,
+                &animation, candidate->map, owner->preselection_entrance.map,
+                0, 0, 0, candidate->x, candidate->y,
+                (unsigned long)owner->timer_queue.gametick, &something) < 0 ||
+            !something.valid) {
+            goto rollback;
+        }
+        dm2_v1_game_load_owner_write_u16le(slot + 8u, (uint16_t)adj[0]);
+        dm2_v1_game_load_owner_write_u16le(slot + 10u, (uint16_t)adj[1]);
+        if (something.noise_would_queue) {
+            DM2_V1_SoundQueueEnv env;
+            DM2_V1_SoundQueueReceipt noise;
+            memset(&env, 0, sizeof(env));
+            memset(&noise, 0, sizeof(noise));
+            env.current_map = candidate->map;
+            env.gate_map_a = owner->sound_owner.spatial_audible_map;
+            env.gate_map_b = owner->sound_owner.spatial_alternate_map;
+            env.facing = owner->source_party_direction;
+            env.party_x = owner->source_party_x;
+            env.party_y = owner->source_party_y;
+            env.gametick = owner->timer_queue.gametick;
+            if (!dm2_v1_sound_queue_noise_gen1(
+                    &sound_state, 0x0f, (int8_t)record[4],
+                    (int8_t)something.noise_index, 0x46, 0x80,
+                    candidate->x, candidate->y, 1, &env, &noise)) {
+                /* A non-audible map gate is the source's normal no-op.
+                 * Missing occlusion, class triple or sample ownership is
+                 * not; preserve the whole GAME_LOAD candidate instead. */
+                if (!noise.rejected_map_gate) goto rollback;
+                ++receipt.noise_map_gate_count;
+            } else {
+                ++receipt.noise_queue_count;
+            }
+        }
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                 (uint16_t)candidate->map);
+        hash = dm2_v1_game_load_owner_hash_step(hash, candidate->record_handle);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)slot_index);
+        hash = dm2_v1_game_load_owner_hash_step(hash, think.timer_type);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                 (uint16_t)something.delta);
     }
     if (receipt.dynamic_candidate_count !=
-        owner->caii_map_receipt.dynamic_candidate_count) return 0;
-    if (receipt.blocked_unowned_0a48) {
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
+        owner->caii_map_receipt.dynamic_candidate_count) goto rollback;
+    owner->sound_owner.positional_count = sound_state.positional_count;
+    owner->sound_owner.immediate_count = sound_state.immediate_count;
+    memcpy(owner->sound_owner.positional, sound_state.positional,
+           sizeof(owner->sound_owner.positional));
+    memcpy(owner->sound_owner.immediate, sound_state.immediate,
+           sizeof(owner->sound_owner.immediate));
+    memcpy(owner->sound_owner.delayed, sound_state.delayed,
+           sizeof(owner->sound_owner.delayed));
+    memcpy(owner->sound_owner.sample_slots, sound_state.sample_slots,
+           sizeof(owner->sound_owner.sample_slots));
+    if (owner->caii_slots.alloc_count !=
+        (int)receipt.dynamic_candidate_count ||
+        receipt.allocated_slot_count != receipt.dynamic_candidate_count ||
+        receipt.think_timer_count != receipt.dynamic_candidate_count ||
+        hash == 0u) goto rollback;
+    receipt.source_hash = dm2_v1_game_load_owner_hash_step(
+        hash, receipt.noise_queue_count);
+    if (receipt.source_hash == 0u) goto rollback;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    free(indices_snapshot);
+    free(timers_snapshot);
+    free(slots_snapshot);
+    free(db4_snapshot);
+    return 1;
+
+rollback:
+    if (db4_snapshot) memcpy(db4->bytes, db4_snapshot, db4_bytes);
+    if (slots_snapshot) memcpy(owner->caii_slots.slots, slots_snapshot,
+                               (size_t)owner->caii_slots.capacity *
+                               DM2_V1_CAII_SLOT_SIZE);
+    if (timers_snapshot) memcpy(owner->timer_entries, timers_snapshot,
+                                (size_t)owner->timer_capacity *
+                                sizeof(*timers_snapshot));
+    if (indices_snapshot) memcpy(owner->timer_indices, indices_snapshot,
+                                 (size_t)owner->timer_capacity *
+                                 sizeof(*indices_snapshot));
+    if (db4_snapshot && slots_snapshot && timers_snapshot && indices_snapshot) {
+        owner->timer_queue = queue_snapshot;
+        owner->caii_rng = rng_snapshot;
+        owner->sound_owner.positional_count = positional_count_snapshot;
+        owner->sound_owner.immediate_count = immediate_count_snapshot;
+        memcpy(owner->sound_owner.positional, positional_snapshot,
+               sizeof(positional_snapshot));
+        memcpy(owner->sound_owner.immediate, immediate_snapshot,
+               sizeof(immediate_snapshot));
+        memcpy(owner->sound_owner.delayed, delayed_snapshot,
+               sizeof(delayed_snapshot));
+        memcpy(owner->sound_owner.sample_slots, sample_slots_snapshot,
+               sizeof(sample_slots_snapshot));
     }
-    /* There is currently no product corpus with zero dynamic candidates, and
-     * success would require the full allocator/recycler branch. Keep that
-     * future boundary explicit instead of reporting a vacuous materialisation. */
+    receipt.blocked_unowned_0a48 = 1;
+    if (out_receipt) *out_receipt = receipt;
+    free(indices_snapshot);
+    free(timers_snapshot);
+    free(slots_snapshot);
+    free(db4_snapshot);
     return 0;
 }
 

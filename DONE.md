@@ -7,6 +7,18 @@
   T700, T900 eller ljudhändelser. Råartefakterna ligger kvar endast på extern
   disk och inga speldata eller BIOS-filer har ändrats i repot.
 
+# DM2: privat dynamisk CAII GAME_LOAD-transaktion (2026-08-10)
+
+- ✅ Den autentiska DOS-korpusens 80 dynamiska DB4-kandidater materialiseras
+  nu atomärt i `RESET_CAII`/`FILL_ORPHAN_CAII`-ordning: sourceformade
+  34-byte `c_creature`-slottar, `0cf7`-tänkartimers och `0a48`-animation/RNG
+  körs över samma privata File_header-, recordpool-, timer- och SOUND9-ägare.
+- ✅ `QUEUE_NOISE_GEN1` kan endast använda en redan DYN4/`482b_0684`-bunden
+  klass-trippel. I den verifierade startkorpusen är alla berörda ljud
+  källans map-gated no-op; ingen reservsignal, PCM-konvertering eller
+  värdljudkö skapas. Varje oägd animation-, sample- eller occlusionväg
+  återställer hela transaktionen och publicerar inte M11-sessionen.
+
 # Theron: produktionsljud hålls explicit fail-closed (2026-08-10)
 - ✅ Produktionskontraktet dokumenterar nu att ett giltigt ljud-ID inte är en
   autentiserad sample- eller händelsebindning. Alla 26 enumvärden verifieras i

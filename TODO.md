@@ -335,23 +335,17 @@
   VDP2-komposition måste fortfarande bindas innan produktion kan öppnas.
 
 - 🔧 DM2 GAME_LOAD: den privata CAII-arrayen, den källinitierade
-  slumptalsströmmen och den deterministiska statiska delen av `RESET_CAII`
-  finns nu. Den återställer DB4 byte@5 och utför `DM2_1c9a_09db` för den
-  verkliga statiska all-kartslistan, men är inte en spelbar session. Den
-  källformade `DM2_1c9a_0cf7`-producenten använder nu samma dynamiska
-  `c_tim`-heap och verkliga slots som GAME_LOAD, men den kompletta dynamiska
-  transaktionen avvisas före mutation när en riktig kandidat kräver den ännu
-  oägda `0a48`/`QUEUE_NOISE_GEN1`-grenen. Den privata ägaren behåller nu
-  varje verklig dynamisk kandidats `PREPARE_LOCAL_CREATURE_VAR`-identitet
-  (DB4/AI, karta/position, home-map och den källnollställda adj-parets
-  ägaroffset), men markerar ljudet som beroende i stället för att skapa en
-  begäran utan GDAT-animationrad. Återstående atom måste fortfarande omfatta
-  `DM2_ALLOC_CAII_TO_CREATURE`, recycler, komplett lokal-creature-state,
-  `0a48`/CCM och rollback. Ingen del får publiceras eller ersättas med en fast kö. GAME_LOAD:s dynamiska
-  SND-kö har full SOUND9-kapacitet; `QUEUE_NOISE_GEN1` saknar ännu komplett
-  karta-, party- och timerägarskap. Varelse-död får därför inte använda
-  CREATURES lokala selector `0x11` som ett GDAT-råindex; den riktiga
-  CAII/GDAT/SOUND9-routen måste äga klass-trippeln först. Källordningen är viktig:
+  slumptalsströmmen och hela `RESET_CAII`/`FILL_ORPHAN_CAII`-transaktionen
+  finns nu i RAM. Den återställer DB4 byte@5, utför `DM2_1c9a_09db` för den
+  verkliga statiska all-kartslistan och materialiserar varje dynamisk DB4-post
+  med källformad `DM2_ALLOC_CAII_TO_CREATURE`, `0cf7`-timer, `0a48` och den
+  hashadmitterade dynamiska SOUND9-tabellen. En missad animation, klass-trippel,
+  samplebindning eller occlusion återställer DB4, CAII, timerheap, RNG och SFX
+  tillsammans. Det är fortfarande inte en spelbar/publicerad session: CCM,
+  timerdispatch, creature-rörelse/strid och den riktiga mixerbackenden återstår.
+  Varelse-död får därför inte använda CREATURES lokala selector `0x11` som ett
+  GDAT-råindex; den riktiga CAII/GDAT/SOUND9-routen måste äga klass-trippeln
+  först. Källordningen är viktig:
   `DM2_move_2fcf_0b8b` kan genom `LOAD_LOCALLEVEL_DYN` köra
   `FILL_CAII_CUR_MAP` och `CHECK_RECOMPUTE_LIGHT` före den avslutande
   `v1e0390 = 3`-skrivningen i `DM2_GAME_LOAD`. Den privata implementeringen
