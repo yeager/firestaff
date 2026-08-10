@@ -239,7 +239,9 @@
   behålls nu exakt den redan källmuterade c_map-/recordpool-/c_hero-/c_tim-
   transaktionen i RAM för läsande recycleranalys. Alla andra avbrutna faser
   kastas fortfarande helt.
-- ✅ Inspektionsägaren följer SKProjects direkta DB0/DB2-returgren och är
+- ✅ Inspektionsägaren behåller DB2-gränsen men följer endast SKProjects
+  direkta DB0-returgren. DB2 passerar enbart TextMode-spärren och fortsätter
+  sökningen, så den kan aldrig bli en återvinningskandidat. Ägaren är
   uttryckligt ogiltig som GAME_LOAD-session: den kan inte skriva cursor,
   nollställa eller append:a record, köra timers eller öppna Resume.
   Realdatakorpusen verifierar två faktiska DB2-gränser och byteoförändrat

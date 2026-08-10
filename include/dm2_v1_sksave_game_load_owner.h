@@ -29,7 +29,9 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
      * mutable c_map/c_record snapshot for read-only recycler analysis only.
      * It is deliberately distinct from `valid`: no caller may use an
      * inspection owner for Resume, timer dispatch or a game session.
-     * Source: SKProject c_record.cpp:DB88 (DB0/DB2 direct return). */
+     * Source: SKProject c_record.cpp:DB88.  Only DB0 takes the direct-return
+     * branch there; DB2 is retained solely because its exhaustion is a useful
+     * source boundary for later inspection. */
     int recycler_boundary_inspection_valid;
     /* Must remain zero until global-effect timers, timer dispatch and the
      * M11 runtime have one source-complete owner. */
@@ -112,7 +114,7 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     DM2_V1_SksaveSpecialTimerReceipt receipt;
 } DM2_V1_SksaveGameLoadOwner;
 
-/* Read-only result from the DB0/DB2 direct-return portion of
+/* Read-only result from the DB0 direct-return portion of
  * DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  `found` names a record which the
  * original allocator would subsequently clear and return; this receipt does
  * neither.  The cursor is prospective until a complete ALLOC_NEW_RECORD
@@ -188,9 +190,10 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner,
     DM2_V1_SksaveDb0RecyclerCandidate *out_candidate);
 
-/* The source's non-mutating direct-return candidates. Only DB0 and DB2 are
- * admitted: DB4/DB14 and other pools have deletion, missile or relocation
- * tails that need a complete runtime transaction. */
+/* The source's non-mutating direct-return candidate.  Only DB0 is admitted:
+ * DB2 only passes its TextMode barrier and continues scanning, while DB4,
+ * DB14 and other pools have deletion, missile or relocation tails that need
+ * a complete runtime transaction. */
 int dm2_v1_sksave_game_load_owner_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner, uint8_t requested_db,
     DM2_V1_SksaveRecyclerCandidate *out_candidate);

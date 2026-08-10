@@ -1105,15 +1105,21 @@ static void test_real_raw_save(const char *path, const char *root,
             memcpy(boundary_cursors_before,
                    recycler_boundary_owner.recycler_context.map_cursors,
                    sizeof(boundary_cursors_before));
-            CHECK(dm2_v1_sksave_game_load_owner_recycler_candidate(
-                      &recycler_boundary_owner, requested_db,
-                      &boundary_candidate) &&
-                  boundary_candidate.valid &&
-                  boundary_candidate.requested_db == requested_db &&
-                  (!boundary_candidate.found ||
-                   dm2_v1_record_handle_pool(
-                       (int16_t)boundary_candidate.selected_link) ==
-                       (int)requested_db) &&
+            CHECK((requested_db == 0u
+                       ? dm2_v1_sksave_game_load_owner_recycler_candidate(
+                             &recycler_boundary_owner, requested_db,
+                             &boundary_candidate)
+                       : !dm2_v1_sksave_game_load_owner_recycler_candidate(
+                             &recycler_boundary_owner, requested_db,
+                             &boundary_candidate)) &&
+                  (requested_db == 0u
+                       ? (boundary_candidate.valid &&
+                          boundary_candidate.requested_db == requested_db &&
+                          (!boundary_candidate.found ||
+                           dm2_v1_record_handle_pool(
+                               (int16_t)boundary_candidate.selected_link) ==
+                               (int)requested_db))
+                       : (!boundary_candidate.valid && !boundary_candidate.found)) &&
                   !recycler_boundary_owner.valid &&
                   !recycler_boundary_owner.source_game_load_session_ready &&
                   recycler_boundary_owner.map_owner.current_map ==
@@ -1123,7 +1129,7 @@ static void test_real_raw_save(const char *path, const char *root,
                          sizeof(boundary_cursors_before)) == 0 &&
                   sksave_game_load_owner_mutable_hash(&recycler_boundary_owner) ==
                       boundary_hash_before,
-                  "real direct-return recycler inspection walks the retained partial map without mutation");
+                  "real recycler inspection never promotes DB2 Text and leaves retained state unchanged");
         }
         uint16_t retained_ai_flags = 0u;
         CHECK(!owner_ok || (retained_ai_type >= 0 &&

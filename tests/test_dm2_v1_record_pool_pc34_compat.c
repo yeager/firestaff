@@ -247,6 +247,15 @@ static void test_private_db0_recycler_candidate(void)
               !game_owner.source_game_load_session_ready,
           "private DB0 recycler candidate leaves c_map, cursor and session untouched");
 
+    /* c_record.cpp:DAF9-DB2A only applies DB2's TextMode barrier.  A DB2
+     * request then follows DACC to the next link; it must never be exposed
+     * as a direct-return candidate at DB88. */
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(!dm2_v1_sksave_game_load_owner_recycler_candidate(
+              &game_owner, 2u, &candidate) && !candidate.valid &&
+              !candidate.found,
+          "private recycler rejects DB2 because source never returns Text at DB88");
+
     /* DB3 table1d324c stops the tile chain before its following DB0 link. */
     ground[0] = (uint16_t)mk_handle(3, 0);
     wr16(set.pools[3].bytes, mk_handle(0, 1));

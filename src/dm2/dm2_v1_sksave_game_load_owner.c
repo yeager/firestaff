@@ -499,9 +499,9 @@ static int dm2_v1_sksave_recycler_scan_tile(
         }
         ++candidate->records_examined;
 
-        /* DB0 reaches c_record.cpp:DB88 directly. DB2 first observes the
-         * protected-text barrier at DAF9-DB2A, then reaches DB88 only when
-         * that record is eligible. The allocator performs the later clear. */
+        /* DB0 reaches c_record.cpp:DB88 directly.  DB2 only observes the
+         * protected-text barrier at DAF9-DB2A, then advances this chain at
+         * DACC.  It never reaches DB88 for a requested DB2 allocation. */
         if (pool == 0 && requested_db == 0u) {
             candidate->found = 1;
             candidate->selected_link = (uint16_t)current & 0x3fffu;
@@ -521,14 +521,6 @@ static int dm2_v1_sksave_recycler_scan_tile(
             if ((word2 & 0x0006u) == 0x0002u &&
                 ((word2 >> 11) & 0x001fu) == 4u) {
                 break;
-            }
-            if (requested_db == 2u) {
-                candidate->found = 1;
-                candidate->selected_link = (uint16_t)current & 0x3fffu;
-                candidate->selected_map = (uint8_t)map;
-                candidate->selected_x = (uint8_t)x;
-                candidate->selected_y = (uint8_t)y;
-                return 2;
             }
         } else if (pool == 4 && !near_party &&
                    static_creature == DM2_V1_RECORD_HANDLE_END &&
@@ -584,7 +576,7 @@ int dm2_v1_sksave_game_load_owner_recycler_candidate(
     size_t pass_budget;
 
     if (out_candidate) memset(out_candidate, 0, sizeof(*out_candidate));
-    if (!owner || !out_candidate || (requested_db != 0u && requested_db != 2u) ||
+    if (!owner || !out_candidate || requested_db != 0u ||
         (!owner->valid && !owner->recycler_boundary_inspection_valid) ||
         !owner->recycler_context.valid || !owner->map_owner.valid ||
         !owner->record_pools.valid || !owner->map_owner.dungeon ||
