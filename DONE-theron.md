@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — inventory property payload is revalidated byte-for-byte
+
+- ✅ TAKE/DROP and source-slot operations now compare all six carried
+  property bytes with the authenticated Track 02 item-property row for the
+  item ID; a mutated row is rejected.
+- ✅ Real US Track 02 dungeon-loader and combat/inventory regression tests pass.
+- 🔒 This strengthens provenance only; original T900 equip/use/stack rules are
+  still not claimed without the source consumer.
+
 ## 2026-08-11 — spawn capture parser preserves overlay evidence
 
 - ✅ Current external register sidecars with `return_pc`/`caller_pc` context

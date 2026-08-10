@@ -820,8 +820,9 @@ static void test_source_item_pickup_provenance(void) {
     object.source_raw[2] = 0x86u;
     object.source_raw[3] = 0x0fu;
     object.source_property_valid = 1u;
-    object.source_property[0] = 0x09u;
-    object.source_property[1] = 0x2fu;
+    memcpy(object.source_property,
+           theron_v1_track02_item_property(6u),
+           sizeof(object.source_property));
     CHECK_INT("source weapon placed", theron_v1_object_place(&w, &object), 0);
     CHECK_INT("source weapon picked up",
               theron_v1_click_route(&w, 2, 2, THERON_CMD_TAKE), 0);
@@ -835,6 +836,10 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("inventory source charges", carried->charges, 3);
     CHECK_INT("inventory source curse", carried->cursed, 1);
     CHECK_INT("inventory source property", carried->property[1], 0x2f);
+    w.inventory_source[0][0].property[5] ^= 0x01u;
+    CHECK_INT("mutated property row rejected on drop",
+              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
+    w.inventory_source[0][0].property[5] ^= 0x01u;
 
     carried = theron_v1_inventory_source_at(&w, 0, 0);
     CHECK(carried && carried->source_raw_size == 4u &&

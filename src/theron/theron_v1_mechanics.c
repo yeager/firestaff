@@ -21,6 +21,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_world.h"
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02_item_properties.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -108,6 +109,7 @@ static int theron_v1_source_item_category_is_carryable(uint8_t category) {
 static int theron_v1_source_item_record_matches_object(
     const Theron_V1_Object *object) {
     Theron_Track02ItemRecord record;
+    const Theron_ItemPropertyRecord *property;
 
     if (!object || !theron_v1_source_item_category_is_carryable(
                        object->source_category) ||
@@ -115,7 +117,13 @@ static int theron_v1_source_item_record_matches_object(
         !theron_v1_track02_item_record_decode(
             object->source_category, object->source_raw,
             object->source_raw_size, &record) ||
-        record.next_ref != object->source_next_ref) {
+        record.next_ref != object->source_next_ref ||
+        !object->source_property_valid ||
+        object->source_item_type >= theron_v1_track02_item_property_count() ||
+        !(property = theron_v1_track02_item_property(
+                  object->source_item_type)) ||
+        memcmp(object->source_property, property,
+               sizeof(object->source_property)) != 0) {
         return 0;
     }
     switch (object->source_category) {

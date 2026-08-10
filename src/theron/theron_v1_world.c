@@ -16,6 +16,7 @@
  */
 
 #include "theron_v1_world.h"
+#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_creature_names.h"
 #include "theron_v1_combat.h"
 #include "theron_v1_track02.h"
@@ -871,13 +872,19 @@ const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
 static int theron_v1_inventory_source_record_matches(
     const Theron_V1_InventorySourceRecord *carried) {
     Theron_Track02ItemRecord record;
+    const Theron_ItemPropertyRecord *property;
 
     if (!carried || !carried->valid || carried->source_ref == 0u ||
         carried->source_raw_size == 0u ||
         !theron_v1_track02_item_record_decode(
             carried->category, carried->source_raw,
             carried->source_raw_size, &record) ||
-        record.next_ref != carried->source_next_ref) {
+        record.next_ref != carried->source_next_ref ||
+        !carried->property_valid ||
+        carried->item_type >= theron_v1_track02_item_property_count() ||
+        !(property = theron_v1_track02_item_property(carried->item_type)) ||
+        memcmp(carried->property, property,
+               sizeof(carried->property)) != 0) {
         return 0;
     }
     switch (carried->category) {

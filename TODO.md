@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## Theron: inventory property-row validation strengthened (2026-08-11)
+
+- ✅ TAKE/DROP/source-slot validation now rejects any six-byte property row
+  that differs from the authenticated Track 02 item-ID row.
+- 🔒 Full T900 equip/use/stack semantics and original item consumer remain
+  open; no host-side interpretation has been promoted.
+
 ## Theron: capture parser now retains overlay evidence (2026-08-11)
 
 - ✅ Current external register-sidecar lines with return/caller context are
