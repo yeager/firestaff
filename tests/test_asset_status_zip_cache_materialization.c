@@ -95,6 +95,15 @@ static int path_has_virtual_entry(const char* path,
            strstr(path, entryName);
 }
 
+static int paths_equal_physical(const char* left, const char* right) {
+    char leftPhysical[M12_ASSET_DATA_DIR_CAPACITY];
+    char rightPhysical[M12_ASSET_DATA_DIR_CAPACITY];
+    return left && right &&
+           FSP_ResolvePhysicalPath(leftPhysical, sizeof(leftPhysical), left) &&
+           FSP_ResolvePhysicalPath(rightPhysical, sizeof(rightPhysical), right) &&
+           strcmp(leftPhysical, rightPhysical) == 0;
+}
+
 static int prepare_entry_payload(ZipEntryFixture* entry) {
 #ifdef FIRESTAFF_HAS_ZLIB
     z_stream zs;
@@ -320,7 +329,15 @@ int main(void) {
 
     check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
               "DM2 ZIP media stays blocked without a complete in-memory PC reader");
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    {
+        int pcVersionIndex = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+        check_int(pcVersionIndex >= 0,
+                  "DM2 PC English must be addressable by stable version id");
+        version = pcVersionIndex >= 0
+                      ? M12_AssetStatus_GetVersion(&status, "dm2",
+                                                    (size_t)pcVersionIndex)
+                      : NULL;
+    }
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, "dm2-required.zip",
                                      "renamed/inside/DM2GRAPHICS.RENAMED"),
@@ -334,8 +351,8 @@ int main(void) {
               FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon),
                            cacheRoot, "dm2/DUNGEON.DAT"),
               "expected cached DM2 paths should resolve");
-    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     dataRoot) == 0,
+    check_int(paths_equal_physical(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                                   dataRoot),
               "DM2 ZIP media must not redirect the runtime to asset-cache");
 
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
@@ -355,8 +372,8 @@ int main(void) {
 
     check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
               "renamed loose DM2 files stay blocked rather than being copied");
-    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     rawDir) == 0,
+    check_int(paths_equal_physical(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                                   rawDir),
               "renamed loose DM2 files must retain their original directory");
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
     check_int(required && required->matched &&

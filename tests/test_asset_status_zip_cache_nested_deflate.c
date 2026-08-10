@@ -13,19 +13,11 @@
  *   2. The low-level `asset_extract_virtual_path()` helper, given the
  *      virtual path, inflates the deflate stream and writes a byte-
  *      identical ordinary file on disk.
- *   3. The M12 launch-time cache materialization rewrites the matched
- *      path of every required file to an ORDINARY file path inside
- *      the Firestaff asset cache
- *      (<userDataDir>/asset-cache/<gameId>/<label>), so the runtime no
- *      longer needs to understand virtual container paths.
- *   4. The DM2 launch handoff path can open the materialized files via
- *      <runtimeDataDir>/dm2/GRAPHICS.DAT and
- *      <runtimeDataDir>/dm2/DUNGEON.DAT, matching the M11 DM2 scan root.
- *   5. A later scan that still finds the version/GRAPHICS entry but loses
- *      the required DUNGEON hash must clear the launchable/cache contract:
- *      DM2 is unavailable, runtimeDataDir returns to the configured root,
- *      and the matched GRAPHICS row remains the original virtual path
- *      rather than a stale materialized cache leaf from the prior scan.
+ *   3. DM2 PC archive media remains source-owned: the scan reports virtual
+ *      container paths, does not create an asset-cache copy, and blocks
+ *      launch until a complete in-memory PC media owner exists.
+ *   4. A later partial scan keeps that same no-disk-materialization contract
+ *      while clearing the missing required-file receipt.
  *
  * The fixture packs two entries in one ZIP so DM2 (which has two
  * required-files rows, graphics + dungeon) can be reported available:
@@ -195,27 +187,13 @@ static int path_has_cache_leaf(const char* path,
            strstr(path, leaf) && !strstr(path, "::");
 }
 
-static int runtime_cache_file_matches_payload(
-    const M12_AssetStatus* status,
-    const char* gameId,
-    const char* leaf,
-    const unsigned char* payload,
-    size_t payloadSize) {
-    char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
-    char runtimePath[M12_ASSET_DATA_DIR_CAPACITY];
-    const char* runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, gameId);
-    if (!runtimeRoot || runtimeRoot[0] == '\0' || !gameId || !leaf ||
-        !payload) {
-        return 0;
-    }
-    if (snprintf(gameLeaf, sizeof(gameLeaf), "%s/%s", gameId, leaf) >=
-        (int)sizeof(gameLeaf)) {
-        return 0;
-    }
-    if (!FSP_JoinPath(runtimePath, sizeof(runtimePath), runtimeRoot, gameLeaf)) {
-        return 0;
-    }
-    return file_matches_payload(runtimePath, payload, payloadSize);
+static int paths_equal_physical(const char* left, const char* right) {
+    char leftPhysical[M12_ASSET_DATA_DIR_CAPACITY];
+    char rightPhysical[M12_ASSET_DATA_DIR_CAPACITY];
+    return left && right &&
+           FSP_ResolvePhysicalPath(leftPhysical, sizeof(leftPhysical), left) &&
+           FSP_ResolvePhysicalPath(rightPhysical, sizeof(rightPhysical), right) &&
+           strcmp(leftPhysical, rightPhysical) == 0;
 }
 
 /* Internal: deflate a payload into a freshly malloc()'d buffer and return
@@ -447,6 +425,7 @@ int main(void) {
     const M12_AssetRequiredFileStatus* required;
     const M12_AssetVersionStatus* version;
     const char* runtimeDir;
+    int pcVersionIndex;
     unsigned int graphicsCompressed = 0U;
     unsigned int dungeonCompressed = 0U;
     size_t graphicsSize = sizeof(kGraphicsPayload) - 1U;
@@ -552,16 +531,14 @@ int main(void) {
               "asset_extract_virtual_path output must be byte-identical "
               "to the original nested entry payload");
 
-    /* Layer 3: M12 cache materialization.
+    /* Layer 3: DM2 PC media is RAM-only.
      * Register the synthesized MD5 as the canonical DM2 graphics hash,
      * scan, and verify:
-     *   - DM2 is reported as available (both required files matched),
+     *   - DM2 remains blocked even though both required files match,
      *   - the version's matched path is the ORIGINAL virtual path
      *     (we want to confirm the scanner kept the nested prefix),
-     *   - the required files have been rewritten to ordinary paths under
-     *     <userDataDir>/asset-cache/dm2/<label>,
-     *   - the materialized ordinary files exist on disk and contain
-     *     exactly the bytes of the original entry. */
+     *   - the required files retain their virtual source paths, and
+     *   - no ordinary game-data cache leaves are created. */
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetDm2SyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
@@ -570,27 +547,30 @@ int main(void) {
 
     M12_AssetStatus_Scan(&status, dataRoot);
 
-    /* A complete PC-DOS archive is materialized to ordinary, hash-verified
-     * cache leaves. The version row remains virtual provenance while the
-     * launch gate and runtime root refer to the complete extracted pair. */
-    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "archive-backed DM2 is launchable after required files materialize");
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    pcVersionIndex = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+    check_int(pcVersionIndex >= 0,
+              "DM2 PC English must be addressable by stable version id");
+    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "archive-backed DM2 stays blocked without an in-memory PC owner");
+    version = pcVersionIndex >= 0
+                  ? M12_AssetStatus_GetVersion(&status, "dm2",
+                                                (size_t)pcVersionIndex)
+                  : NULL;
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, kZipName,
                                      kGraphicsEntry),
               "DM2 version rows retain their virtual source identities");
     runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "dm2");
-    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") != NULL,
-              "DM2 archive routing publishes its ordinary asset-cache runtime root");
+    check_int(paths_equal_physical(runtimeDir, dataRoot),
+              "DM2 archive routing retains the configured source root");
 
-    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "DM2 should be available when both required hashes are "
-              "matched by ZIP-backed deflated entries");
     check_int(M12_AssetStatus_GetRequiredFileCount(&status, "dm2") == 2U,
               "DM2 should expose exactly the GRAPHICS.DAT and DUNGEON.DAT "
               "required-file launch gate entries");
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    version = pcVersionIndex >= 0
+                  ? M12_AssetStatus_GetVersion(&status, "dm2",
+                                                (size_t)pcVersionIndex)
+                  : NULL;
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, kZipName,
                                      kGraphicsEntry),
@@ -605,72 +585,24 @@ int main(void) {
               FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon),
                            cacheRoot, "dm2/DUNGEON.DAT"),
               "asset cache leaf paths should resolve");
-    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     cacheRoot) == 0,
-              "DM2 runtime data root should point at the asset cache root");
+    check_int(paths_equal_physical(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                                   dataRoot),
+              "DM2 runtime data root must retain the original source root");
 
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
     check_int(required && required->matched,
               "DM2 graphics required file should be matched after scan");
-    check_int(path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "GRAPHICS.DAT"),
-              "DM2 graphics required file should be materialized into the "
-              "ordinary-file launch cache path under asset-cache/dm2/");
-    check_int(strcmp(required->matchedPath, cachedGraphics) == 0,
-              "DM2 graphics required-file path should exactly match the "
-              "runtimeDataDir/dm2/GRAPHICS.DAT launch path");
-    check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
-                                   graphicsSize),
-              "cached GRAPHICS.DAT under asset-cache/dm2/ must be "
-              "byte-identical to the original nested deflated entry "
-              "payload");
+    check_int(path_has_virtual_entry(required->matchedPath, kZipName,
+                                     kGraphicsEntry),
+              "DM2 graphics required file must retain ZIP provenance");
 
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
     check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "DUNGEON.DAT"),
-              "DM2 dungeon required file should be materialized into the "
-              "ordinary-file launch cache path under asset-cache/dm2/");
-    check_int(required && strcmp(required->matchedPath, cachedDungeon) == 0,
-              "DM2 dungeon required-file path should exactly match the "
-              "runtimeDataDir/dm2/DUNGEON.DAT launch path");
-    check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
-                                   dungeonSize),
-              "cached DUNGEON.DAT under asset-cache/dm2/ must be "
-              "byte-identical to the original deflated entry payload");
-
-    /* M11's DM2 handoff probes <runtimeDataDir>/dm2 first (see
-     * m11_game_view.c M11_GameView_StartDm2), so this asserts the cache
-     * root returned by M12 is sufficient for ordinary fopen() based launch
-     * code without any virtual-path awareness. */
-    check_int(runtime_cache_file_matches_payload(&status, "dm2",
-                                                 "GRAPHICS.DAT",
-                                                 kGraphicsPayload,
-                                                 graphicsSize),
-              "DM2 launch lookup should open runtimeDataDir/dm2/GRAPHICS.DAT "
-              "as an ordinary materialized cache file");
-    check_int(runtime_cache_file_matches_payload(&status, "dm2",
-                                                 "DUNGEON.DAT",
-                                                 kDungeonPayload,
-                                                 dungeonSize),
-              "DM2 launch lookup should open runtimeDataDir/dm2/DUNGEON.DAT "
-              "as an ordinary materialized cache file");
-
-    /* The cache leafs must NOT contain the virtual "::" separator after
-     * materialization; the runtime expects to open them like any other
-     * ordinary files. */
-    {
-        const M12_AssetRequiredFileStatus* g = M12_AssetStatus_GetRequiredFile(
-            &status, "dm2", 0U);
-        const M12_AssetRequiredFileStatus* d = M12_AssetStatus_GetRequiredFile(
-            &status, "dm2", 1U);
-        check_int(g && !strstr(g->matchedPath, "::"),
-                  "materialized GRAPHICS cache leaf must not retain the "
-                  "virtual container separator");
-        check_int(d && !strstr(d->matchedPath, "::"),
-                  "materialized DUNGEON cache leaf must not retain the "
-                  "virtual container separator");
-    }
+              path_has_virtual_entry(required->matchedPath, kZipName,
+                                     kDungeonEntry),
+              "DM2 dungeon required file must retain ZIP provenance");
+    check_int(!FSP_FileExists(cachedGraphics) && !FSP_FileExists(cachedDungeon),
+              "DM2 archive entries must never be unpacked into asset-cache");
 
     /* Layer 4: stale-cache invalidation on a partial required-file scan.
      * Keep the graphics/version hash registered but swap the DUNGEON
@@ -685,12 +617,15 @@ int main(void) {
     check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
               "partial ZIP-backed DM2 scan must clear launch availability "
               "when the required dungeon hash is missing");
-    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     dataRoot) == 0,
+    check_int(paths_equal_physical(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                                   dataRoot),
               "partial DM2 scan must not retain the stale asset-cache "
               "runtime root from the previous complete scan");
 
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    version = pcVersionIndex >= 0
+                  ? M12_AssetStatus_GetVersion(&status, "dm2",
+                                                (size_t)pcVersionIndex)
+                  : NULL;
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, kZipName,
                                      kGraphicsEntry),
@@ -723,9 +658,9 @@ int main(void) {
         return 1;
     }
 #ifdef FIRESTAFF_HAS_ZLIB
-    puts("ok: nested deflated ZIP entry virtual path + asset cache leaf");
+    puts("ok: nested deflated DM2 ZIP provenance remains RAM-only");
 #else
-    puts("ok: nested ZIP entry virtual path + asset cache leaf (stored)");
+    puts("ok: nested DM2 ZIP provenance remains RAM-only (stored)");
 #endif
     return 0;
 }

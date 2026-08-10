@@ -511,6 +511,12 @@
   rörelsehändelserna. Den ska anslutas till `c_input` först när en fullständig
   `GAME_LOAD`-session äger eventkö, party och HUD; ingen DM1-rutt får användas.
 
+- 🔧 DM2 PC-arkivmedia: ZIP- och ISO-medlemmar behåller verifierad virtuell
+  proveniens och blockeras från start tills den kompletta minnesägaren för
+  PC-media finns. De får aldrig extraheras eller kopieras till asset-cache;
+  täckningen måste fortsätta fungera oberoende av katalogordningen för FM
+  Towns, PC och Amiga.
+
 - 🔧 DM2 New Game: ett NEW GAME-val bygger nu först den verkliga, tomma
   File_header-/recordpool-/DYN4-/timerägaren och originalets
   aktuatortick-/kartkontext i RAM. Entréns `c_light`-inmatningar är också

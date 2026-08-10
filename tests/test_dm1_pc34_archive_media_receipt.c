@@ -390,12 +390,18 @@ int main(void) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, dataRoot);
 
-    version = M12_AssetStatus_GetVersion(&status, "dm1", 0U);
+    {
+        int pcVersionIndex = M12_AssetStatus_FindVersionIndex("dm1", "pc34-en");
+        check_int(pcVersionIndex >= 0,
+                  "DM1 PC 3.4 English must be addressable by stable version id");
+        version = pcVersionIndex >= 0
+                      ? M12_AssetStatus_GetVersion(&status, "dm1",
+                                                    (size_t)pcVersionIndex)
+                      : NULL;
+    }
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
-    check_int(M12_AssetStatus_FindVersionIndex("dm1", "pc34-en") == 0,
-              "DM1 PC 3.4 English should remain version slot 0");
     check_int(version && version->matched &&
                   version->versionId && strcmp(version->versionId, "pc34-en") == 0,
               "DM1 PC 3.4 English version should be matched");

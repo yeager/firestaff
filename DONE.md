@@ -12965,7 +12965,6 @@ rendering remain blocked.
 - ✅ En creature- eller containerkedja utan tillräcklig källallokerad
   indexägare avvisas före indexskrivning. Regressionen täcker grinden;
   appbygge, SKSAVE-korpus 259/0 och placeholdergrinden passerar.
-
 # Nexus: VDP2 source/value/post-write-bindning (2026-08-10)
 
 - ✅ Extern Mednafen-capture bygger nu en post-write-snapshot direkt efter
@@ -12978,3 +12977,14 @@ rendering remain blocked.
 - ✅ Metoden och råformatet är dokumenterade i `docs/NEXUS_SATURN_CAPTURE.md`.
   `semantic_admission` förblir medvetet blockerad tills samma snapshot också
   bevisar den semantiska tilemap-/FONT256-/meny-konsumenten.
+
+# CI: DM2-arkivets RAM-only-regressioner (2026-08-10)
+
+- ✅ Arkivtesterna använder nu stabila versions-id:n för PC-utgåvor i stället
+  för katalogindex. Det gör att FM Towns kan ligga först i inventeringen utan
+  att PC-testernas identitet eller Auto-prioritet ändras.
+- ✅ DM2:s deflaterade ZIP-test bevisar fortsatt hashning och minnesbaserad
+  läsning, men kräver nu korrekt att virtuella originalfiler inte kopieras
+  till asset-cache och att start spärras utan en komplett PC-medieägare.
+- ✅ Arkivsvitens fem berörda CTest-fall passerar på extern arbetsdisk;
+  macOS `/tmp` och `/private/tmp` jämförs fysiskt, inte som skilda sökvägar.
