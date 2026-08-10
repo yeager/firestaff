@@ -100,52 +100,68 @@ bool dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_returns_alcove_pc34(
 
 static void fill_lanes(DM1_V1_D0L2D0R2F0107WallOrnamentModelPc34 *m)
 {
-    m->lanes[0] = (DM1_V1_D0L2D0R2F0107LanePc34){
-        DM1_V1_D0L2_D0R2_F0107_SIDE_D0L2_PC34,
-        "D0L2",
-        "F0125_DUNGEONVIEW_DrawSquareD0L",
-        8536,
-        8537,
-        7960,
-        8062,
-        DM1_M610_VIEW_SQUARE_D0L,
-        0,
-        -1,
-        DM1_C716_ZONE_WALL_D0L,
-        DM1_C870_ZONE_CEILING_PIT_D0L,
-        DM1_M550_FIRST_THING_SLOT,
-        DM1_M551_RIGHT_WALL_ORNAMENT_SLOT,
-        DM1_M552_FRONT_WALL_ORNAMENT_SLOT,
-        DM1_M553_LEFT_WALL_ORNAMENT_SLOT,
-        8005,
-        DM1_D0L_THING_ORDER,
-        1,
-        0,
-        "DUNVIEW.C F0125:7960-8062; F0128:8536-8537"
+    /* Compound-literal struct assignment leaves padding bytes
+     * indeterminate: clang copies the temporary's uninitialized padding
+     * into the destination even after the caller memset the destination
+     * to zero.  That produced a 3-byte non-determinism between two calls
+     * to this builder, at the padding after LanePc34::side (offsets 4-7
+     * within each lane) and after LanePc34::pair_dispatch_order
+     * (offsets 92-95), and broke field.byte_stability which compares
+     * two builder outputs with memcmp.  Using a static-storage const
+     * array + memcpy -- the same shape fill_routes / fill_calls already
+     * used and neither of which diverged -- makes the whole payload
+     * byte-identical because static-storage padding is zero-initialised. */
+    static const DM1_V1_D0L2D0R2F0107LanePc34 lanes[
+        DM1_V1_D0L2_D0R2_F0107_SIDE_COUNT_PC34] = {
+        {
+            DM1_V1_D0L2_D0R2_F0107_SIDE_D0L2_PC34,
+            "D0L2",
+            "F0125_DUNGEONVIEW_DrawSquareD0L",
+            8536,
+            8537,
+            7960,
+            8062,
+            DM1_M610_VIEW_SQUARE_D0L,
+            0,
+            -1,
+            DM1_C716_ZONE_WALL_D0L,
+            DM1_C870_ZONE_CEILING_PIT_D0L,
+            DM1_M550_FIRST_THING_SLOT,
+            DM1_M551_RIGHT_WALL_ORNAMENT_SLOT,
+            DM1_M552_FRONT_WALL_ORNAMENT_SLOT,
+            DM1_M553_LEFT_WALL_ORNAMENT_SLOT,
+            8005,
+            DM1_D0L_THING_ORDER,
+            1,
+            0,
+            "DUNVIEW.C F0125:7960-8062; F0128:8536-8537"
+        },
+        {
+            DM1_V1_D0L2_D0R2_F0107_SIDE_D0R2_PC34,
+            "D0R2",
+            "F0126_DUNGEONVIEW_DrawSquareD0R",
+            8540,
+            8541,
+            8064,
+            8162,
+            DM1_M611_VIEW_SQUARE_D0R,
+            0,
+            1,
+            DM1_C717_ZONE_WALL_D0R,
+            DM1_C872_ZONE_CEILING_PIT_D0R,
+            DM1_M550_FIRST_THING_SLOT,
+            DM1_M551_RIGHT_WALL_ORNAMENT_SLOT,
+            DM1_M552_FRONT_WALL_ORNAMENT_SLOT,
+            DM1_M553_LEFT_WALL_ORNAMENT_SLOT,
+            8115,
+            DM1_D0R_THING_ORDER,
+            2,
+            1,
+            "DUNVIEW.C F0126:8064-8162; F0128:8540-8541"
+        }
     };
-    m->lanes[1] = (DM1_V1_D0L2D0R2F0107LanePc34){
-        DM1_V1_D0L2_D0R2_F0107_SIDE_D0R2_PC34,
-        "D0R2",
-        "F0126_DUNGEONVIEW_DrawSquareD0R",
-        8540,
-        8541,
-        8064,
-        8162,
-        DM1_M611_VIEW_SQUARE_D0R,
-        0,
-        1,
-        DM1_C717_ZONE_WALL_D0R,
-        DM1_C872_ZONE_CEILING_PIT_D0R,
-        DM1_M550_FIRST_THING_SLOT,
-        DM1_M551_RIGHT_WALL_ORNAMENT_SLOT,
-        DM1_M552_FRONT_WALL_ORNAMENT_SLOT,
-        DM1_M553_LEFT_WALL_ORNAMENT_SLOT,
-        8115,
-        DM1_D0R_THING_ORDER,
-        2,
-        1,
-        "DUNVIEW.C F0126:8064-8162; F0128:8540-8541"
-    };
+
+    memcpy(m->lanes, lanes, sizeof(lanes));
 }
 
 static void fill_routes(DM1_V1_D0L2D0R2F0107WallOrnamentModelPc34 *m)
@@ -193,24 +209,31 @@ static void fill_calls(DM1_V1_D0L2D0R2F0107WallOrnamentModelPc34 *m)
         for (i = 0; i < sizeof(elements) / sizeof(elements[0]); ++i) {
             const int view_wall = side == 0 ?
                 DM1_M585_VIEW_WALL_D1L_RIGHT : DM1_M586_VIEW_WALL_D1R_LEFT;
-            m->calls[call] = (DM1_V1_D0L2D0R2F0107CallPc34){
-                (int)call,
-                (int)side,
-                elements[i],
-                DM1_M552_FRONT_WALL_ORNAMENT_SLOT,
-                "M552_FRONT_WALL_ORNAMENT_ORDINAL",
-                view_wall,
-                side == 0 ? "M585_VIEW_WALL_D1L_RIGHT" : "M586_VIEW_WALL_D1R_LEFT",
-                DM1_D0_WALL_ORNAMENT_COORDINATE_SET,
+            /* Field-by-field assignment on top of the outer memset in
+             * the builder.  See fill_lanes for the reasoning; the same
+             * padding hazard applies to a struct assignment from a
+             * compound literal whose padding is indeterminate.  Cannot
+             * migrate to a static const table here because the zone
+             * value comes from a runtime function call. */
+            m->calls[call].call_index = (int)call;
+            m->calls[call].side = (int)side;
+            m->calls[call].element = elements[i];
+            m->calls[call].aspect_slot = DM1_M552_FRONT_WALL_ORNAMENT_SLOT;
+            m->calls[call].aspect_slot_name =
+                "M552_FRONT_WALL_ORNAMENT_ORDINAL";
+            m->calls[call].view_wall = view_wall;
+            m->calls[call].view_wall_name = side == 0 ?
+                "M585_VIEW_WALL_D1L_RIGHT" : "M586_VIEW_WALL_D1R_LEFT";
+            m->calls[call].coordinate_set = DM1_D0_WALL_ORNAMENT_COORDINATE_SET;
+            m->calls[call].zone =
                 dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_zone_pc34(
-                    DM1_D0_WALL_ORNAMENT_COORDINATE_SET, view_wall),
-                1,
-                1,
-                1,
-                side == 0 ?
-                    "DUNVIEW.C F0125 open-tail candidate; F0107:3502-3938" :
-                    "DUNVIEW.C F0126 open-tail candidate; F0107:3502-3938"
-            };
+                    DM1_D0_WALL_ORNAMENT_COORDINATE_SET, view_wall);
+            m->calls[call].ordinal_short_circuits = 1;
+            m->calls[call].alcove_returns_true = 1;
+            m->calls[call].uses_c10_transparency = 1;
+            m->calls[call].redmcsb_anchor = side == 0 ?
+                "DUNVIEW.C F0125 open-tail candidate; F0107:3502-3938" :
+                "DUNVIEW.C F0126 open-tail candidate; F0107:3502-3938";
             ++call;
         }
     }
