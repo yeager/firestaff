@@ -1120,9 +1120,15 @@ static void test_real_raw_save(const char *path, const char *root,
                   special_timers.recycle_required_db ==
                       special_timers.map_failure_record_type,
                   "real map chains reach the original recycler boundary after c_map insertion");
+            CHECK((special_timers.recycle_required_db == 2 &&
+                   special_timers.recycle_db2_count > 0u) ||
+                  special_timers.recycle_required_db != 2,
+                  "a real DB2 boundary records each completed source Text recycle");
         } else {
             CHECK(special_timers.recycle_required_db == -1,
                   "pre-map source failure does not invent a recycler DB");
+            CHECK(special_timers.recycle_db2_count == 0u,
+                  "pre-map source failure cannot claim a DB2 recycle");
         }
     }
     {

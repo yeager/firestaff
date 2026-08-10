@@ -38,6 +38,18 @@
   Originalets fullständiga HuC6280-textkonsument, titlar och font-/pixelägare
   är fortsatt separat capture-gated.
 
+# DM2: SKSAVE återanvänder originalets DB2-textrecords (2026-08-10)
+
+- ✅ `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` har nu sin källbundna DB2/Text-
+  gren i den privata SKSAVE-transaktionen. Den går i originalets kartcursor-
+  ordning, hoppar över skyddade aktuatorkedjor och map-text med extension 4,
+  nollställer sedan det valda recordet som `DM2_ALLOC_NEW_RECORD` före
+  återställning av SUPPRESS-kroppen.
+- ✅ Den riktade recordpoolgrinden och den autentiska PC-DOS-korpusen
+  passerar 243/243. Två filer går förbi sin första DB2-begäran och stannar
+  senare i kartströmmen. Resume förblir spärrad tills DB0/DB4/DB14 och den
+  fullständiga GAME_LOAD-sessionen kan ägas atomärt.
+
 # DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
 
 - ✅ Vädertimerregressionen följer nu den faktiska runtimegränsen: utan

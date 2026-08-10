@@ -639,13 +639,16 @@
   Nästa steg är originalets specialtimer-, kart-, possessions- och
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD`-ägare i samma beständiga transaktion;
   Resume ska fortsätta vara spärrad tills hela kedjan kan publiceras atomärt.
-  Realdatakorpusen visar nu explicit när DB2 når originalets recycler-gräns;
-  portera bara recyclern tillsammans med dess fullständiga c_map-, record-
-  och partyägare, aldrig genom en syntetisk reservpost.
+  DB2/Text-grenens källägda recyclerurval är nu portat över den privata
+  c_map- och recordpoolägaren. Den följer originalets cursor, aktuatorkedje-
+  spärr och skyddade map-text, och återanvänder ingen värdskapad reservpost.
+  Återstående DB0-, DB4- och DB14-grenar kräver fortfarande sina kompletta
+  creature-, missile- och recordflyttägare.
   Den privata importägaren behåller nu den autentiserade sparade kartan,
   kartspannen och originalets nollställda 18 recycler-markörer, men själva
-  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortfarande spärrad: den kräver
-  källtrogna delete/move-callbacks för creature-, missile- och objectkedjor.
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: DB0,
+  DB4 och DB14 kräver källtrogna delete/move-callbacks för creature-,
+  missile- och objectkedjor.
   Övriga avbrutna faser rapporterar uttryckligen att recycler saknas (`-1`)
   och får inte tolkas som ett DB0-krav.
   Den temporära c_map-ägaren kan nu infoga en verklig dynamisk ground-stack-
@@ -728,11 +731,12 @@
 - 🔧 DM2 SKSAVE GAME_LOAD: en privat RAM-ägare behåller nu de källordnade
   fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
   först efter att hela den befintliga återställningskedjan lyckats. Den
-  verkliga DOS-korpusen når nu den första DB2-recyclerbegäran i ett
-  primär-/backuppar. `READ_RECORD_CHECKCODE` bevarar dessutom
+  verkliga DOS-korpusen använder nu DB2/Text-recyclern i ett
+  primär-/backuppar och når därefter en senare autentisk kartgräns.
+  `READ_RECORD_CHECKCODE` bevarar dessutom
   `ALLOC_NEW_RECORD`-postens `OBJECT_END`-länk före maskad body-dekodning;
   ingen recordkedja får skrivas tillbaka med en nollad länk. Ingen fil har
-  ännu den kompletta kart-/recycler-kedjan.
+  ännu den kompletta kart-/recycler-kedjan för övriga recordtyper.
   Resume är fortsatt spärrad för samtliga åtta filer. Nästa steg är
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` med dess fullständiga c_map-,
   creature-/missile-delete-, record-move-, CAII- och timerägare, följt av

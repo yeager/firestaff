@@ -19,6 +19,7 @@
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_skproject_core.h"
 
@@ -497,8 +498,8 @@ int dm2_v1_sksave_map_owner_tile_record_link(
     return 1;
 }
 
-/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, map/tile traversal only
- * (source lines 577-790).
+/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, map/tile traversal and
+ * its isolated DB2/Text selection rule (source lines 577-1072).
  *
  * DM2_ALLOC_NEW_RECORD calls the recycler once a DB pool holds no
  * OBJECT_NULL slot (c_record.cpp:1117). On the retail PC-DOS corpus that is
@@ -509,16 +510,17 @@ int dm2_v1_sksave_map_owner_tile_record_link(
  * This is the traversal half. The source walks maps in a ring starting at
  * the per-DB cursor v1e0426[db], skipping the current map (v1e0266) and the
  * second protected map (v1e027c when v1e0234 is set), and within each map
- * walks every tile's ground stack. Which record may then be taken is a
- * separate body of per-type rules (source lines 800-1070: table1d324c
- * actuator classes, itemspec lookups, the +/-5 tile guard around the party,
- * creature and missile deletion). Those are NOT implemented here, so
- * `eligible` rejects every candidate and the caller still fails closed
- * exactly as before.
+ * walks every tile's ground stack. The DB2 branch has no deletion, AI,
+ * missile or MOVE_RECORD_TO tail: after the two source chain exclusions it
+ * returns the existing text link and DM2_ALLOC_NEW_RECORD clears that record
+ * before its caller appends it. This is therefore the only pool that can be
+ * admitted without inventing an unowned creature/missile transaction.
  *
- * Returns 1 and writes *out_link when a record was selected, 0 when the walk
- * completed without one. The cursor is written back on both paths, matching
- * c_record.cpp:779 and :1072. */
+ * DB0, DB4 and DB14 have source deletion/relocation tails and remain blocked.
+ *
+ * Returns 1 and writes *out_link when a DB2 record was selected, 0 when the
+ * walk completed without one. The cursor is written back on both paths,
+ * matching c_record.cpp:779 and :1072. */
 int dm2_v1_sksave_map_owner_recycle_scan(
     DM2_V1_SksaveMapOwner *owner,
     const DM2_V1_RecordPoolSet *set,
@@ -568,6 +570,7 @@ int dm2_v1_sksave_map_owner_recycle_scan(
                            current != DM2_V1_RECORD_HANDLE_NULL) {
                         int16_t next;
                         int pool = dm2_v1_record_handle_pool(current);
+                        const uint8_t *record;
                         /* The chain length can never exceed the pool set. */
                         if (++steps > (size_t)DM2_V1_SKSAVE_RECYCLE_MAX_STEPS ||
                             pool < 0 || pool >= DM2_V1_RECORD_POOL_COUNT ||
@@ -575,8 +578,38 @@ int dm2_v1_sksave_map_owner_recycle_scan(
                             return 0;
                         }
                         if (out_receipt) ++out_receipt->records_examined;
-                        /* Eligibility (source lines 800-1070) is not ported
-                         * yet; nothing is ever taken. */
+                        record = dm2_v1_record_pool_address(set, current);
+                        if (!record) return 0;
+                        /* c_record.cpp:823-832: an actuator with a nonzero
+                         * table1d324c subtype rejects this whole tile chain,
+                         * including a following DB2 candidate. */
+                        if (pool == 3) {
+                            const uint8_t subtype = record[2] & 0x7fu;
+                            if (subtype < 44u && dm2_v1_table_1d324c[subtype] != 0) {
+                                break;
+                            }
+                        }
+                        if (pool == 2) {
+                            const uint16_t word2 = (uint16_t)record[2] |
+                                ((uint16_t)record[3] << 8);
+                            /* c_record.cpp:850-861: map-text ext 4 is
+                             * protected from recycling. */
+                            if ((word2 & 0x0006u) == 0x0002u &&
+                                (((word2 >> 11) & 0x001fu) == 4u)) {
+                                break;
+                            }
+                        }
+                        if (db == 2 && pool == 2) {
+                            owner->recycle_scan_map[db] = (uint8_t)map;
+                            if (out_receipt) {
+                                out_receipt->valid = 1;
+                                out_receipt->maps_scanned = (uint16_t)scanned_maps;
+                                out_receipt->resume_map = (uint8_t)map;
+                                out_receipt->eligibility_ported = 1;
+                            }
+                            if (out_link) *out_link = (uint16_t)current;
+                            return 1;
+                        }
                         current = next;
                     }
                 }
@@ -591,7 +624,7 @@ int dm2_v1_sksave_map_owner_recycle_scan(
         out_receipt->valid = 1;
         out_receipt->maps_scanned = (uint16_t)scanned_maps;
         out_receipt->resume_map = (uint8_t)map;
-        out_receipt->eligibility_ported = 0;
+        out_receipt->eligibility_ported = db == 2;
     }
     return 0;
 }
@@ -731,6 +764,7 @@ typedef struct {
     DM2_ReadRecordCreatureAiFlagsFn ai_fn;
     void *ai_ctx;
     int16_t recycle_required_db;
+    uint16_t recycle_db2_count;
 } DM2_V1_SksavePoolRestoreContext;
 
 static uint32_t dm2_v1_sksave_hash_bytes(uint32_t hash,
@@ -797,8 +831,9 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
      * mutable DB0..DB3 record into an existing OBJECT_NULL slot even though
      * the resident DB0..DB3 chains were not globally cleared beforehand.
      * Do not invent a side pool: allocate only an authenticated vacant
-     * source slot.  A full pool must remain a load failure until the
-     * source-owned world recycler and its complete map owner are present. */
+     * source slot.  A full DB2 pool may use the isolated source Text recycler
+     * below. Other full pools remain a load failure until their source-owned
+     * deletion/relocation paths are retained. */
     if (!ctx || !ctx->set || record_type < 0 || record_type >= 16) {
         return 0xfffeu;
     }
@@ -809,6 +844,31 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
             (size_t)index * (size_t)pool->record_size;
         if (dm2_v1_rd16(record) == DM2_V1_RECORD_HANDLE_NULL) {
             return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)index);
+        }
+    }
+    if (record_type == 2 && ctx->map_owner && ctx->map_owner->valid) {
+        DM2_V1_SksaveRecycleScanReceipt receipt;
+        uint16_t recycled = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+        memset(&receipt, 0, sizeof(receipt));
+        /* dm2data.cpp initializes v1e0234 to zero before GAME_LOAD.  Thus
+         * this pre-session READ_SKSAVE_DUNGEON pass has no second protected
+         * display map (c_record.cpp:581-588); current_map is still skipped
+         * by the owner scan. */
+        if (dm2_v1_sksave_map_owner_recycle_scan(
+                ctx->map_owner, ctx->set, record_type, -1,
+                &receipt, &recycled) == 1 && receipt.valid &&
+            receipt.eligibility_ported &&
+            dm2_v1_record_handle_pool((int16_t)recycled) == record_type &&
+            dm2_v1_record_pool_address_mut(ctx->set, (int16_t)recycled)) {
+            uint8_t *record = dm2_v1_record_pool_address_mut(
+                ctx->set, (int16_t)recycled);
+            /* c_record.cpp:1134-1143 clears a recycled record before it is
+             * appended and its SUPPRESS body is restored. */
+            memset(record, 0, (size_t)pool->record_size);
+            dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_END);
+            if (ctx->recycle_db2_count != UINT16_MAX)
+                ++ctx->recycle_db2_count;
+            return recycled;
         }
     }
     ctx->recycle_required_db = (int16_t)record_type;
@@ -1767,6 +1827,7 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
         out_receipt->map_failure_record_reason =
                 (int16_t)dungeon_receipt.failed_record_reason;
         out_receipt->recycle_required_db = context.recycle_required_db;
+        out_receipt->recycle_db2_count = context.recycle_db2_count;
         }
         failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS;
         goto done;
@@ -1848,6 +1909,7 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
         out_receipt->map_failure_record_reason =
             (int16_t)dungeon_receipt.failed_record_reason;
         out_receipt->recycle_required_db = context.recycle_required_db;
+        out_receipt->recycle_db2_count = context.recycle_db2_count;
         out_receipt->possession_link_count = context.possession_link_count;
         out_receipt->possession_continuation_count =
             context.possession_continuation_count;
@@ -1896,6 +1958,7 @@ done:
         const int16_t failed_record_type = out_receipt->map_failure_record_type;
         const int16_t failed_record_reason = out_receipt->map_failure_record_reason;
         const int16_t recycle_required_db = context.recycle_required_db;
+        const uint16_t recycle_db2_count = context.recycle_db2_count;
         const int16_t retained_item_bonus_failure_hero_index =
             item_bonus_failure_hero_index;
         const int16_t retained_item_bonus_failure_slot = item_bonus_failure_slot;
@@ -1913,6 +1976,7 @@ done:
         out_receipt->map_failure_record_type = failed_record_type;
         out_receipt->map_failure_record_reason = failed_record_reason;
         out_receipt->recycle_required_db = recycle_required_db;
+        out_receipt->recycle_db2_count = recycle_db2_count;
         out_receipt->item_bonus_failure_hero_index =
             retained_item_bonus_failure_hero_index;
         out_receipt->item_bonus_failure_slot = retained_item_bonus_failure_slot;

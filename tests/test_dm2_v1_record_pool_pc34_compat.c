@@ -32,7 +32,8 @@ static void wr16(uint8_t *p, int16_t v)
     p[1] = (uint8_t)((u >> 8) & 0xffu);
 }
 
-/* Build a synthetic pool set: DB0 (4-byte records) x3, DB3 (8-byte) x2. */
+/* Small structural fixture for c_record ownership: DB0 (4-byte) x3, DB2
+ * (Text, 4-byte) x2 and DB3 (8-byte) x2. It is not game media. */
 static void build_synthetic(DM2_V1_RecordPoolSet *set)
 {
     memset(set, 0, sizeof(*set));
@@ -40,9 +41,13 @@ static void build_synthetic(DM2_V1_RecordPoolSet *set)
     set->pools[0].record_count = 3;
     set->pools[0].source_base = 0;
     set->pools[0].bytes = calloc(3, 4);
+    set->pools[2].record_size = 4;
+    set->pools[2].record_count = 2;
+    set->pools[2].source_base = 12;
+    set->pools[2].bytes = calloc(2, 4);
     set->pools[3].record_size = 8;
     set->pools[3].record_count = 2;
-    set->pools[3].source_base = 12;
+    set->pools[3].source_base = 20;
     set->pools[3].bytes = calloc(2, 8);
     set->pools[3].extension_count = 2;
     set->pools[3].extension_base = 28;
@@ -56,11 +61,10 @@ static int16_t mk_handle(int pool, int index)
 }
 
 
-/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD traversal half.
- * Selection is not ported yet, so the scan must always report "nothing
- * taken" while still walking the map ring correctly: it starts at the
- * per-DB cursor, skips the current map and the second protected map, and
- * writes the resume cursor back (source :779/:1072). */
+/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD traversal. It starts at
+ * the per-DB cursor, skips the current map and the second protected map, and
+ * writes the resume cursor back (source :779/:1072). DB2 selection is tested
+ * below; all other DBs remain intentionally unported. */
 static void test_recycle_scan_traversal(void)
 {
     DM2_V1_OriginalRawDungeonReceipt dungeon;
@@ -69,6 +73,7 @@ static void test_recycle_scan_traversal(void)
     DM2_V1_SksaveRecycleScanReceipt receipt;
     uint16_t link = 0u;
     uint16_t ground[8];
+    uint16_t columns[4] = { 0u, 1u, 2u, 3u };
     /* Every tile has bit 0x10 clear, so ground_index reports "no ground
      * stack here" and the walk proceeds without needing column indices. */
     uint8_t tiles[4];
@@ -93,6 +98,8 @@ static void test_recycle_scan_traversal(void)
     owner.dungeon = &dungeon;
     owner.ground_stack_links = ground;
     owner.ground_stack_count = 8u;
+    owner.column_indices = columns;
+    owner.column_index_count = 4u;
     memset(tiles, 0, sizeof(tiles));
     owner.map_tiles = tiles;
     owner.map_tiles_size = sizeof(tiles);
@@ -110,9 +117,9 @@ static void test_recycle_scan_traversal(void)
     owner.recycle_scan_map[4] = 0;
     rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 4, 3,
                                               &receipt, &link);
-    CHECK(rc == 0, "recycle scan takes nothing while selection is unported");
+    CHECK(rc == 0, "non-DB2 recycle scan remains fail-closed");
     CHECK(receipt.valid == 1 && receipt.eligibility_ported == 0,
-          "receipt reports the unported selection half");
+          "receipt reports the unported selection half for DB4");
     CHECK(receipt.maps_scanned == 2,
           "current map and the second protected map are both skipped");
     CHECK(link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
@@ -132,6 +139,32 @@ static void test_recycle_scan_traversal(void)
     /* Per-DB cursors are independent. */
     CHECK(owner.recycle_scan_map[4] != 200,
           "each db keeps its own cursor");
+
+    /* c_record.cpp:850-861 admits an ordinary DB2 Text record. The map
+     * cursor becomes the selected map, rather than the map after a failed
+     * full ring walk. */
+    tiles[0] = 0x10u;
+    ground[0] = (uint16_t)mk_handle(2, 0);
+    wr16(set.pools[2].bytes, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    wr16(set.pools[2].bytes + 2u, 0);
+    owner.recycle_scan_map[2] = 0;
+    rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 2, -1,
+                                              &receipt, &link);
+    CHECK(rc == 1 && receipt.valid == 1 && receipt.eligibility_ported == 1,
+          "DB2 recycler applies the source Text eligibility branch");
+    CHECK(link == (uint16_t)mk_handle(2, 0) &&
+          owner.recycle_scan_map[2] == 0u && receipt.resume_map == 0u,
+          "DB2 recycler returns the source Text handle and selected-map cursor");
+
+    /* Text mode with extension 4 is the source-protected case and skips the
+     * entire tile chain instead of recycling that record. */
+    wr16(set.pools[2].bytes + 2u, (int16_t)(0x0002u | (4u << 11)));
+    owner.recycle_scan_map[2] = 0;
+    rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 2, -1,
+                                              &receipt, &link);
+    CHECK(rc == 0 && receipt.valid == 1 &&
+          link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
+          "DB2 recycler preserves source-protected map text");
 
     dm2_v1_record_pool_set_free(&set);
     printf("  recycle scan traversal OK\n");
