@@ -3240,7 +3240,10 @@
   namespace is the sole preserved host setting. **Amiga File_header:** the
   68k-specific header offsets now admit the original 28-map installer member
   through the normal RAM-only boot path; full Amiga GAME_LOAD/runtime remains
-  a separate source-owner task.
+  a separate source-owner task. **GAME_LOAD candidate context:** the private
+  candidate now retains the complete source teleporter/display context, but
+  intentionally carries only `event_heroidx` until the full original
+  c_eventqueue owner exists; it does not invent an empty event queue.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains

@@ -55,6 +55,15 @@
   `dm2_v1_boot_enter_game()` med sina RAM-ägda `GRAPHICS.DAT`- och
   `DUNGEON.DAT`-medlemmar. Ingen data packas upp på disk.
 
+# DM2: GAME_LOAD-kandidaten behåller mappcontext (2026-08-10)
+
+- ✅ Den privata, ej publicerade GAME_LOAD-kandidaten kopierar nu
+  trapp-/teleporterval, displayposition, probeorientering och absolut
+  riktning från den källägda mapcontexten. Den lagrar bara originalets
+  `event_heroidx`, inte en påhittad tom eventkö. Kandidatens hash är nu
+  uttryckligen ett provenance-hash och får inte användas som save- eller
+  replayidentitet.
+
 # Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
 - ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
   no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar

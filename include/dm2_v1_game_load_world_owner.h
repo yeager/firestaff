@@ -521,12 +521,17 @@ typedef struct {
 typedef struct {
     int valid;
     uint32_t source_transaction_hash;
+    /* Provenance only: this binds the source transaction and retained
+     * capacities. It is not a content hash of mutable records, timers, CAII
+     * or party state and must never be used for save/replay/cache identity. */
     uint32_t candidate_hash;
     DM2_V1_DungeonData dungeon;
     DM2_V1_RecordPoolSet record_pools;
     DM2_V1_Party party;
     int16_t leader_hand_record;
-    DM2_V1_EventQueue event_queue;
+    /* Only this scalar is source-owned before the complete c_eventqueue
+     * handoff. Do not manufacture an empty event queue as session state. */
+    int16_t source_event_hero_index;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;
@@ -541,6 +546,14 @@ typedef struct {
     uint8_t source_party_y;
     uint8_t source_party_direction;
     uint8_t source_party_absdir;
+    int source_staircase_flag;
+    int16_t source_teleporter_map;
+    int16_t source_display_x;
+    int16_t source_display_y;
+    int8_t source_teleporter_probe_direction;
+    uint8_t source_teleporter_source_direction;
+    uint8_t source_teleporter_destination_direction;
+    int source_display_pose_valid;
     int16_t source_last_moved_record;
 } DM2_V1_GameLoadRuntimeSessionCandidate;
 

@@ -1451,8 +1451,7 @@ int dm2_v1_game_load_runtime_session_candidate_init(
                                                          &source->sound_owner)) goto fail;
     candidate.party = source->selected_party;
     candidate.leader_hand_record = source->load_new_dungeon_reset.leader_hand_record;
-    dm2_v1_eventqueue_init(&candidate.event_queue);
-    candidate.event_queue.event_heroidx = source->source_event_hero_index;
+    candidate.source_event_hero_index = source->source_event_hero_index;
     candidate.caii_rng = source->caii_rng;
     candidate.caii_rng_initialized = 1;
     candidate.current_map = source->current_map;
@@ -1461,6 +1460,17 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.source_party_y = source->source_party_y;
     candidate.source_party_direction = source->source_party_direction;
     candidate.source_party_absdir = source->source_party_absdir;
+    candidate.source_staircase_flag = source->source_staircase_flag;
+    candidate.source_teleporter_map = source->source_teleporter_map;
+    candidate.source_display_x = source->source_display_x;
+    candidate.source_display_y = source->source_display_y;
+    candidate.source_teleporter_probe_direction =
+        source->source_teleporter_probe_direction;
+    candidate.source_teleporter_source_direction =
+        source->source_teleporter_source_direction;
+    candidate.source_teleporter_destination_direction =
+        source->source_teleporter_destination_direction;
+    candidate.source_display_pose_valid = source->source_display_pose_valid;
     candidate.source_last_moved_record = source->source_last_moved_record;
     candidate.source_transaction_hash = source->source_transaction_hash;
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);

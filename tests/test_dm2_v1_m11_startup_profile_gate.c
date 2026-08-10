@@ -4895,10 +4895,26 @@ int main(void) {
                      runtime_session_candidate.record_pools.pools[4].bytes[4] ==
                          runtime_candidate_db4_byte_mutated) &&
                     runtime_session_candidate.party.heros_in_party == 1 &&
-                    runtime_session_candidate.event_queue.event_heroidx ==
+                    runtime_session_candidate.source_event_hero_index ==
                         profile_new_game_owner->source_event_hero_index &&
                     runtime_session_candidate.source_party_x == 1u &&
                     runtime_session_candidate.source_party_y == 8u &&
+                    runtime_session_candidate.source_staircase_flag ==
+                        profile_new_game_owner->source_staircase_flag &&
+                    runtime_session_candidate.source_teleporter_map ==
+                        profile_new_game_owner->source_teleporter_map &&
+                    runtime_session_candidate.source_display_x ==
+                        profile_new_game_owner->source_display_x &&
+                    runtime_session_candidate.source_display_y ==
+                        profile_new_game_owner->source_display_y &&
+                    runtime_session_candidate.source_teleporter_probe_direction ==
+                        profile_new_game_owner->source_teleporter_probe_direction &&
+                    runtime_session_candidate.source_teleporter_source_direction ==
+                        profile_new_game_owner->source_teleporter_source_direction &&
+                    runtime_session_candidate.source_teleporter_destination_direction ==
+                        profile_new_game_owner->source_teleporter_destination_direction &&
+                    runtime_session_candidate.source_display_pose_valid ==
+                        profile_new_game_owner->source_display_pose_valid &&
                     dm2_test_fnv1a(profile_new_game_owner->dungeon.raw_data,
                         (size_t)profile_new_game_owner->dungeon.raw_size) ==
                         runtime_candidate_source_hash_before &&
