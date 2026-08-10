@@ -30660,6 +30660,60 @@ static int m11_csb_amiga_top_row_pointer(
     return 0;
 }
 
+/* F31E/F31J use the zone-addressed G0447 table, rather than the permissive
+ * host status-tile convenience route below.  In particular a left click in
+ * C151..C154 selects its champion (C012..C015); only the adjacent C187..190
+ * 24x29 strips toggle C017.  The F31 table also has the PC/I34E 19x14 icon
+ * cells at x=281/301.  They stay consumed until the native F0070 cursor
+ * transaction is bound, so a Towns click cannot fall through to unrelated
+ * PC HUD geometry.
+ *
+ * ReDMCSB COMMAND.C:374-396 (MEDIA730 F31E / MEDIA731 F31J), especially
+ * G0447 C007..C015 and C125..C128; layout-696 C113..C116/C151..C154/
+ * C187..C190. */
+static int m11_csb_fmtowns_top_row_pointer(
+    M11_GameViewState *state, int x, int y, int button_mask,
+    M11_GameInputResult *out_result)
+{
+    static const int status_left[CHAMPION_MAX_PARTY] = { 0, 69, 138, 207 };
+    static const int bar_left[CHAMPION_MAX_PARTY] = { 43, 112, 181, 250 };
+    const CSB_V1_BootProfile *profile;
+    int slot;
+
+    if (out_result) *out_result = M11_GAME_INPUT_IGNORED;
+    if (!state || !out_result || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        y < 0 || y > 28) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile)) return 0;
+
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            if (x >= bar_left[slot] && x <= bar_left[slot] + 23) {
+                *out_result = m11_toggle_champion_inventory(state, slot);
+                return 1;
+            }
+            if (x >= status_left[slot] && x <= status_left[slot] + 42) {
+                *out_result = m11_set_active_champion(state, slot)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+                return 1;
+            }
+        }
+        /* F31's icon cells and their one-pixel seams belong to F0070. */
+        if (x >= 281 && x <= 319) return 1;
+    } else if ((button_mask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            if (x >= status_left[slot] && x <= status_left[slot] + 66) {
+                *out_result = m11_toggle_champion_inventory(state, slot);
+                return 1;
+            }
+        }
+        if (x >= 274 && x <= 319) return 1;
+    }
+    return 0;
+}
+
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
@@ -30889,6 +30943,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return amiga_top_row_result;
         }
     }
+    {
+        M11_GameInputResult fmtowns_top_row_result;
+        if (m11_csb_fmtowns_top_row_pointer(state, x, y, buttonMask,
+                                            &fmtowns_top_row_result)) {
+            return fmtowns_top_row_result;
+        }
+    }
 
     /* CSB's live mouse route is the same source-owned G0448 command surface
      * that COMMAND.C sends through F0358/F0359 into the C001..C006 queue.
@@ -30903,13 +30964,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
-    /* Native A31/A35 C125..C128 formation clicks, C012..C015 status clicks,
-     * and C007..C010 bar clicks are resolved above with their G0447 boxes. */
+    /* Native A31/A35 and F31 C125..C128 formation cells, C012..C015 status
+     * clicks, and C007..C010 bar clicks are resolved above with their G0447
+     * boxes (F31 icon transactions remain deliberately consumed/closed). */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 && y >= 0 && y <= 28) {
         const CSB_V1_BootProfile *csb_profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
-        if (m11_csb_is_amiga_profile(csb_profile)) {
+        if (m11_csb_is_amiga_profile(csb_profile) ||
+            m11_csb_is_fmtowns_profile(csb_profile)) {
             return M11_GAME_INPUT_IGNORED;
         }
     }

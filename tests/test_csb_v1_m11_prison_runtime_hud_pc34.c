@@ -174,6 +174,8 @@ int main(void)
     char fallback[1024];
     const char *data_dir = csb_data_dir(fallback, sizeof(fallback));
     const char *csbwin_data_dir = getenv("FIRESTAFF_CSBWIN_DATA_DIR");
+    const char *fmtowns_data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
+    const char *fmtowns_user_save = getenv("FIRESTAFF_CSB_FMTOWNS_USER_SAVE");
     const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
     const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
     const char *csbwin_graphics = getenv("FIRESTAFF_CSBWIN_GRAPHICS");
@@ -197,6 +199,55 @@ int main(void)
     int decoded_w = 0;
     int decoded_h = 0;
     CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
+
+    /* F31E/F31J has its own zone-addressed G0447 ordering.  Exercise the
+     * production M11 resume route against an authentic CSBGAME.DAT: C012
+     * must select from C151, C007 must toggle only from C187, and the
+     * right-button C007 tile must still toggle through the native table.
+     * ReDMCSB COMMAND.C:374-396 (MEDIA730/731), layout-696 C151/C187. */
+    if (fmtowns_data_dir && fmtowns_data_dir[0] &&
+        fmtowns_user_save && fmtowns_user_save[0]) {
+        const CSB_V1_BootProfile *fmtowns_profile;
+        memset(&spec, 0, sizeof(spec));
+        spec.title = "CHAOS STRIKES BACK";
+        spec.gameId = "csb";
+        spec.sourceId = "csb";
+        spec.dataDir = fmtowns_data_dir;
+        spec.savePath = fmtowns_user_save;
+        spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+        spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+        spec.presentationWidth = 320;
+        spec.presentationHeight = 200;
+        M11_GameView_Init(&view);
+        CHECK(M11_GameView_Start(&view, &spec),
+              "real FM Towns CSBGAME.DAT opens the F31 live runtime");
+        fmtowns_profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+        CHECK(fmtowns_profile &&
+                  (fmtowns_profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+                   fmtowns_profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) &&
+                  view.csbState.level_loaded &&
+                  !view.csbState.startup_entrance_active,
+              "real FM Towns save reaches a native live HUD session");
+        view.world.party.activeChampionIndex = 1;
+        CHECK(M11_GameView_HandlePointerButton(
+                  &view, 0, 14, M11_DM1_MOUSE_MASK_LEFT) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  view.world.party.activeChampionIndex == 0 &&
+                  !view.inventoryPanelActive,
+              "real FM Towns C012 status box selects without opening C017");
+        CHECK(M11_GameView_HandlePointerButton(
+                  &view, 43, 14, M11_DM1_MOUSE_MASK_LEFT) ==
+                  M11_GAME_INPUT_REDRAW && view.inventoryPanelActive,
+              "real FM Towns C007 bar opens C017 through native G0447");
+        CHECK(M11_GameView_HandlePointerButton(
+                  &view, 0, 14, M11_DM1_MOUSE_MASK_RIGHT) ==
+                  M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+              "real FM Towns right-button C007 tile closes C017 through native G0447");
+        M11_GameView_Shutdown(&view);
+        if (failures) return 1;
+        puts("PASS: FM Towns native G0447 HUD input route");
+        return 0;
+    }
 
     if (csbwin_data_dir && csbwin_data_dir[0]) {
         static const struct {
