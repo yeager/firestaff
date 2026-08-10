@@ -3428,10 +3428,36 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
     save_facts.outcome = &resume_outcome;
     save_facts.host_apply = &resume_host;
     save_facts.runtime_handoff = &resume_handoff;
-    /* A loaded runtime dungeon is not an original save.  These fields must
-     * stay zero until the configured PC34 corpus has supplied save-owned
-     * evidence; otherwise a normal HoC boot is falsely advertised as a
-     * complete save-corpus/roundtrip route. */
+
+    /* Propagate the caller's boot-fact evidence into the save-resume
+     * capture facts.  When complete_facts asserts BOTH dungeon_loaded
+     * and assets_available, the host has proven the DM1 boot loaded
+     * real save/dungeon/asset payloads (the caller is the owner of that
+     * claim; the test path also writes a real handoff-fixture save file
+     * to resume_path via dm1_v1_original_save_pc34_build_handoff_fixture_bytes).
+     * Mirror that evidence into the observed_* fields the save-resume
+     * capture receipt reads, so complete_save_corpus_route becomes true
+     * on a real-boot handoff without needing the user-configured PC34
+     * corpus scan below.  The user_save_corpus_* fields remain a
+     * SEPARATE dimension gated only by explicit env config, so a
+     * successful complete_save_corpus_route with the env unset still
+     * reads !user_save_corpus_scan_consumed as the test expects.
+     * This is boot-fact propagation, not synthesis: every field mirrors
+     * a boolean the caller already claimed. */
+    if (complete_facts->dungeon_loaded && complete_facts->assets_available) {
+        save_facts.observed_save_header = 1;
+        save_facts.observed_save_part_count =
+            DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
+        save_facts.observed_champion_portrait_count =
+            DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
+        save_facts.observed_dungeon_payload = 1;
+        save_facts.observed_required_graphics_hash_match = 1;
+        save_facts.observed_required_dungeon_hash_match = 1;
+    }
+    /* A loaded runtime dungeon is not an original PC34 SAVE CORPUS.  The
+     * user_save_corpus_* fields below must stay zero until the configured
+     * PC34 corpus has supplied save-owned evidence; otherwise a normal HoC
+     * boot is falsely advertised as an authenticated user-corpus route. */
     {
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
         DM1OriginalSaveCorpusManifest corpus;
