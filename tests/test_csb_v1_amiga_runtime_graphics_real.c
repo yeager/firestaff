@@ -164,6 +164,18 @@ int main(void)
             return 1;
         }
     }
+    /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M declares
+     * M616=385 and M649=439. DUNVIEW.C F0096:2733-2743 resolves each
+     * active floor ornament to M616 + ornament * 6 and F0108 draws its
+     * perspective bitmap. All 54 source records must decode natively;
+     * admitting a wall ornament is not evidence that floor glyphs and
+     * footprints are present. */
+    for (graphic = 385u; graphic < 439u; ++graphic) {
+        if (!decode_source_viewport_field_surface(path, graphic,
+                                                  "M616 floor-ornament family")) {
+            return 1;
+        }
+    }
     puts("PASS: real CSB Amiga HUD, pit, and F0113/F0127 graphics decode");
     return 0;
 }

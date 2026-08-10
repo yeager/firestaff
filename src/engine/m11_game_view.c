@@ -4761,7 +4761,8 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
         CSB_AMIGA_M645_FIRST_STAIRS = 108,
         CSB_AMIGA_M633_FIRST_DOOR_SET = 246,
         CSB_AMIGA_M615_FIRST_WALL_ORNAMENT = 259,
-        CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT = 385
+        CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT = 385,
+        CSB_AMIGA_M649_DOOR_MASK_DESTROYED = 439
     };
     M11_GameViewState *state = (M11_GameViewState *)user_data;
     const CSB_V1_BootProfile *profile;
@@ -4834,7 +4835,14 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
          * walls.  Keep the source range exact and let IMG1 decode fail
          * closed per record rather than borrowing any PC34 material. */
         source_graphic = (unsigned int)graphic_index;
-    } else if (graphic_index >= CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT) {
+    } else if (graphic_index >= CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT &&
+               graphic_index < CSB_AMIGA_M649_DOOR_MASK_DESTROYED) {
+        /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M defines
+         * M616=385 and M649=439.  F0096 assigns every active map floor
+         * ornament its six native perspective bitmaps at M616 + index * 6;
+         * F0108 subsequently draws those records into F0128's aperture.
+         * This is a closed 54-record source family, not an open-ended
+         * fallback for later door masks, buttons, projectiles or objects. */
         source_graphic = (unsigned int)graphic_index;
     } else {
         return 0;
