@@ -115,6 +115,8 @@ int main(void)
     }
     free(bytes);
 
+    unsigned int graphic;
+
     if (!decode_source_hud_surface(path, 17u, "C017 inventory") ||
         !decode_source_hud_surface(path, 40u, "C040 panel") ||
         !decode_source_viewport_field_surface(path, 41u, "C041 Thieves Eye hole") ||
@@ -128,6 +130,17 @@ int main(void)
         !decode_source_viewport_field_surface(path, 77u, "C077 fluxcage field")) {
         return 1;
     }
-    puts("PASS: real CSB Amiga HUD and F0113/F0127 graphics decode");
+    /* ReDMCSB DUNVIEW.C F0104/F0112 (lines 3128-3242/4341-4458) consumes
+     * C049--C062 floor-pit and C063--C069 ceiling-pit bitmaps for the
+     * MEDIA720 Amiga route.  Every member needs a real decoder receipt: a
+     * structurally valid field record cannot stand in for an absent pit.
+     */
+    for (graphic = 49u; graphic <= 69u; ++graphic) {
+        if (!decode_source_viewport_field_surface(path, graphic,
+                                                  "C049-C069 pit family")) {
+            return 1;
+        }
+    }
+    puts("PASS: real CSB Amiga HUD, pit, and F0113/F0127 graphics decode");
     return 0;
 }
