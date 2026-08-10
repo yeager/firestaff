@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — remove unauthenticated creature/generator fallback
+
+- ✅ Removed the obsolete DMWeb/DM1-indexed Theron creature and generator
+  table, its standalone test and its unused translation unit. It was not
+  sourced from authenticated Track 02 records and could be mistaken for live
+  game semantics.
+- ✅ The canonical path is now the real US/JP category-4 monster loader and
+  its source-record → live-creature materialization, already covered by
+  `test_theron_v1_track02_dungeon_loader`.
+- 🔒 RNG, dynamic generator timing, AI, combat, loot, T700 and T900 remain
+  fail-closed until an authenticated same-run runtime capture binds them.
+
 ## 2026-08-09 — Track 02 teleporter/object-ID correction
 
 - ✅ Den autentiska Track 02-teleporterpostens `ldest` läses nu från rätt

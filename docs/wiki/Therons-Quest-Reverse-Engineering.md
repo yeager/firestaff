@@ -51,7 +51,7 @@ include/theron_*.h              — 157 headers (bounded receipts, decoders, tab
 | **Track 02 core / variant identity** | ~6 | `theron_v1_track02.h`, `theron_v1_track02_boot_record_topology.h`, `theron_v1_track02_dynamic_cd_read_ownership.h`, `theron_v1_track02_raw_media_intake.h`, `theron_v1_track_media_availability.h`, `theron_v1_media_inventory.h` |
 | **Dungeon/level descriptors & loading** | ~12 | `theron_v1_track02_dungeon_descriptor.h`, `theron_v1_track02_dungeon_loader.h`, `theron_v1_track02_dungeon_map.h`, `theron_v1_track02_dungeon_text.h`, `theron_v1_track02_dungeon_lore.h`, `theron_v1_level_descriptor.h`, `theron_v1_track02_level_data_blocks.h`, `theron_v1_track02_level_labels.h`, `theron_v1_track02_level_object_descriptor_capture_intake.h`, `theron_v1_track02_level_object_trace_preparation.h`, `theron_v1_dungeon_handoff.h`, `theron_v1_dungeon_progression.h` |
 | **Thing/object tables** | ~10 | `theron_v1_track02_thing_data.h`, `theron_v1_track02_door.h`, `theron_v1_track02_ground_ref.h`, `theron_v1_track02_item_categories.h`, `theron_v1_track02_item_id_map.h`, `theron_v1_track02_item_names.h`, `theron_v1_track02_full_item_names.h`, `theron_v1_track02_item_properties.h`, `theron_v1_track02_dm1_item_names.h`, `theron_v1_track19_inventory.h`, `theron_v1_track19_item_names.h` |
-| **Creatures / combat / spells** | ~7 | `theron_v1_track02_creature.h`, `theron_v1_track02_creature_names.h`, `theron_v1_track02_creature_spawn.h`, `theron_v1_track02_combat_messages.h`, `theron_v1_combat.h`, `theron_v1_track02_spell_action_names.h`, `theron_v1_track02_spell_descriptors.h` |
+| **Creatures / combat / spells** | ~6 | `theron_v1_track02_creature_names.h`, `theron_v1_track02_creature_spawn.h`, `theron_v1_track02_combat_messages.h`, `theron_v1_combat.h`, `theron_v1_track02_spell_action_names.h`, `theron_v1_track02_spell_descriptors.h` |
 | **Champions / classes / experience** | ~8 | `theron_v1_champions.h`, `theron_v1_track02_champion_roster.h`, `theron_v1_track02_champion_strings.h`, `theron_v1_track02_class_base_stats.h`, `theron_v1_track02_class_skill_params.h`, `theron_v1_track02_experience_table.h`, `theron_v1_mechanics.h` |
 | **Text / strings / fonts** | ~9 | `theron_v1_track02_text_alphabet.h`, `theron_v1_track02_text_decode.h`, `theron_v1_track02_text_strings.h`, `theron_v1_track02_hud_strings.h`, `theron_v1_track02_ui_strings.h`, `theron_v1_track02_save_strings.h`, `theron_v1_track02_font_glyphs.h`, `theron_v1_save_menu_font.h`, `theron_v1_chapter_marker.h` |
 | **Bitmap / palette / VRAM capture** | ~7 | `theron_v1_palette.h`, `theron_v1_palette_runtime_admission.h`, `theron_v1_track02_palette_route.h`, `theron_v1_bitmap_capture_runtime_admission.h`, `theron_v1_track02_descriptor_bitmap_palette_capture_intake.h`, `theron_v1_vram_trace_loader.h`, `theron_v1_track02_dungeon_handoff_capture_plan_admission.h` |
@@ -245,24 +245,25 @@ typedef struct { uint16_t next_ref; uint8_t x_dest, y_dest, rotation,
 - `theron_v1_track02_item_categories.h`, `theron_v1_track02_item_id_map.h`,
   `theron_v1_track02_item_properties.h` — category and property lookups.
 
-### Creature data (`theron_v1_track02_creature.h`)
+### Creature data — real Track 02 records
 
-TQ creature types are drawn from a subset of DM1's creature type indices
-(source: DMWeb ChristopheF maps), 2–3 creature types per dungeon plus a
-generator table (`THERON_MAX_GENERATORS = 5` per dungeon):
+The former DMWeb/DM1-indexed creature and generator table was removed because
+it was not an authenticated Theron record and could be mistaken for runtime
+semantics. The canonical path is now the real Track 02 category-4 loader:
 
-| Dungeon | Creature types |
-|---|---|
-| AKUTUBA | Mummy(14), Screamer(5) |
-| DRATOR | Skeleton(11), Vexirk(9), Couatl(12) |
-| FORMICIA | Trolin(17), Oitu(22), GiantWasp(18) |
-| SARMON | PainRat(3), Ghost(7) |
-| SHADODAN | MagentaWorm(16), Worm(10), Dragon/WaterElemental(21) |
-| THIEVES | Giggler(2), GiantScorpion(0) |
-| DEMON | Materializer(20), BlackFlame(15), Demon(23) |
+- `theron_v1_track02_thing_data.c` decodes the source monster records from the
+  supplied US/JP Track 02 bytes.
+- `theron_v1_world_bind_track02_monster()` retains the raw type, count, packed
+  cell position, HP words and provenance.
+- `theron_v1_world_spawn_level_creatures()` materializes only matching,
+  source-header-verified records into live creatures.
+- `theron_v1_track02_creature_spawn.c` contains only the hash-gated US
+  pointer/zone records and disassembly-bound category constants; it does not
+  invent final stats or RNG results.
 
-Creature names in `theron_v1_track02_creature_names.h`; spawn logic in
-`theron_v1_track02_creature_spawn.h`.
+The original RNG consumer, dynamic generator timing, AI, combat, loot, T700
+and T900 object rules remain capture-gated. A fixture or cross-game DM1 table
+is not an acceptable substitute for those consumers.
 
 ### Combat messages (`theron_v1_track02_combat_messages.h`)
 

@@ -6708,7 +6708,6 @@ file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/thero
 # consumer is decoded; fixture targets add it explicitly where needed.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_source\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_creature\\.c$")
 # Theron's Quest has no authenticated BUY/SELL/SHOP consumer or price array;
 # keep the bounded shop helper fixture-only until a real Track 02 owner exists.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_shop\\.c$")
@@ -50306,23 +50305,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_decode.
     add_test(
         NAME theron_v1_track02_text_decode
         COMMAND test_theron_v1_track02_text_decode
-    )
-endif()
-
-# Theron Track 02 creature and champion decoders
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature.c")
-    add_executable(test_theron_v1_track02_creature
-        tests/test_theron_v1_track02_creature.c
-        src/theron/theron_v1_track02_dungeon_map.c
-    )
-    target_include_directories(test_theron_v1_track02_creature PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_creature PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME theron_v1_track02_creature
-        COMMAND test_theron_v1_track02_creature
     )
 endif()
 

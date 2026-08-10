@@ -21,7 +21,6 @@ fi
 # synchronized with the THERON_SOURCES exclusion block in CMakeLists.txt.
 for source in \
     theron_v1_compat.c \
-    theron_v1_track02_creature.c \
     theron_v1_shop.c \
     theron_v22_shape_cache_pc34.c \
     theron_v22_shapes.c \

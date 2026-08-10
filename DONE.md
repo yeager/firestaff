@@ -1,3 +1,13 @@
+# Theron: unauthenticated creature fallback removed (2026-08-10)
+
+- ✅ Removed the obsolete DMWeb/DM1-indexed creature and generator table,
+  standalone test and unused translation unit. Real US/JP Track 02 category-4
+  records are now the only source for live-creature materialization.
+- ✅ `test_theron_v1_track02_dungeon_loader` and
+  `test_theron_v1_track02_creature_spawn` pass against the source-bound path.
+- 🔒 RNG, dynamic generator timing, AI, combat, loot, T700 and T900 remain
+  fail-closed until an authenticated same-run runtime capture binds them.
+
 # Nexus: sekventiell TM.BIN→VDP2-CRAM source/value-join (2026-08-10)
 
 - ✅ Den nya sekvensverifieraren parar register- och write-trace rad för rad

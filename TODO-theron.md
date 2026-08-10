@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — remaining creature semantics are source-capture gated
+
+- ✅ Removed the unauthenticated DMWeb/DM1 creature-generator fallback; real
+  Track 02 category-4 records are the only source for live creature creation.
+- 🔒 Do not add replacement tables. The next implementation witness must bind
+  the original RNG return, generator reactivation/timing, AI/attack/damage/loot
+  consumers and T700/T900 state writes in one authenticated runtime.
+
 ## 2026-08-09 — aktuell kalla capture har endast transportbevis
 
 - ✅ Den autentiska US-körningen når `transition=observed` och ger fyra

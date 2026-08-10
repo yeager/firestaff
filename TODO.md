@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔒 Theron använder nu endast autentiserade Track 02 category-4-records för
+  live creatures; den gamla DMWeb/DM1-tabellen är borttagen. Lägg inte tillbaka
+  en ersättningstabell: nästa steg kräver samma-körningsbevis för RNG-retur,
+  generator-timing, AI/attack/skada/loot samt T700/T900-konsumenter.
+
 - 🔒 Extern capture 3 visar 2 048 byte-exakta ADPCM FIFO→RAM-transfer, men
   capturefilen slutar mitt i en ny CD-läsning och saknar CPU-läsning av
   ADPCM-RAM, kanalstart, ljud-ID och spelhändelseägare. En komplett
