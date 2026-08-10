@@ -75,6 +75,8 @@ int main(void)
         const char *backup_path = "/tmp/CSBGAME2.BAK";
         const char *amiga_multilingual_path = "/tmp/CSBGAMEF.DAT";
         const char *amiga_multilingual_backup_path = "/tmp/CSBGAMEF.BAK";
+        const char *amiga_windows_path = "\\\\tmp\\\\CSBGAMEG.DAT";
+        const char *amiga_windows_backup_path = "\\\\tmp\\\\CSBGAMEG.BAK";
         const char *foreign_source_path = "/tmp/CSB-FOREIGN-MINI.DAT";
         const char *blocked_dir = "/tmp/CSBGAME3.DAT";
         const char *blocked_backup = "/tmp/CSBGAME3.BAK";
@@ -289,6 +291,38 @@ int main(void)
         }
         remove(amiga_multilingual_path);
         remove(amiga_multilingual_backup_path);
+        /* The same F0745 Amiga G-language slot may arrive from M12 with a
+         * Windows path.  These are deliberately literal host filenames on
+         * POSIX: the corpus bytes remain authentic, while the test proves
+         * basename/backup selection rather than relying on the host path
+         * parser to normalize separators for us. */
+        free(written);
+        written = NULL;
+        written_size = 0u;
+        remove(amiga_windows_path);
+        remove(amiga_windows_backup_path);
+        if (!write_file(amiga_windows_backup_path, backup, backup_size) ||
+            !csb_v1_runtime_can_load_resume_path(amiga_windows_path) ||
+            csb_v1_runtime_load_game_from_path(&runtime,
+                                               amiga_windows_path) !=
+                CSB_V1_LOAD_OK ||
+            strcmp(csb_v1_runtime_original_atari_save_source_path(&runtime),
+                   amiga_windows_path) != 0 ||
+            !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
+            !read_file(amiga_windows_path, &written, &written_size) ||
+            written_size != backup_size ||
+            memcmp(written, backup, backup_size) != 0) {
+            free(written);
+            free(backup);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        free(written);
+        written = NULL;
+        written_size = 0u;
+        remove(amiga_windows_path);
+        remove(amiga_windows_backup_path);
         /* ReDMCSB LOADSAVE.C F0435 loads the complete dungeon/party handoff
          * before its final M570_RenameFile call.  A host replacement failure
          * therefore cannot undo a validated backup resume; it merely leaves

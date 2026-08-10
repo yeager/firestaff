@@ -273,8 +273,18 @@ static int csb_v1_runtime_original_atari_backup_path(const char *path,
     if (!path || !out || out_size == 0u) {
         return 0;
     }
-    name = strrchr(path, '/');
-    name = name ? name + 1 : path;
+    /* Save paths can originate in M12 on Windows as well as on POSIX hosts.
+     * F0745's CSBGAMEx naming rule applies to the basename, irrespective of
+     * which host separator reached the runtime.  Looking only for '/' made
+     * a perfectly valid Amiga CSBGAMEF.DAT backup undiscoverable when the
+     * selected path used native Windows separators. */
+    {
+        const char *slash = strrchr(path, '/');
+        const char *backslash = strrchr(path, '\\');
+        name = slash;
+        if (!name || (backslash && backslash > name)) name = backslash;
+        name = name ? name + 1 : path;
+    }
     for (index = 0u; names[index] != NULL; ++index) {
         size_t i;
         for (i = 0u; name[i] != '\0' && names[index][i] != '\0'; ++i) {
