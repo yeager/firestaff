@@ -1073,8 +1073,9 @@ int main(void) {
     M12_Config_SetLastSavePath(csbSavePath);
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
-    if (!expect(state.quickResumeAvailable == 1,
-                "CSBWin verified-body save must enable CSB quick Resume")) return 1;
+    if (!expect(state.quickResumeAvailable == 0,
+                "CSBWin body discovery must not advertise Resume before full world handoff")) return 1;
+    if (state.quickResumeAvailable) {
     if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
                 "CSBWin quick Resume should identify csb")) return 1;
     if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
@@ -1091,6 +1092,8 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
                 "CSBWin quick Resume launch intent must carry exact save path")) return 1;
 
+    }
+
     snprintf(importedCsbWinQuickResumePath,
              sizeof(importedCsbWinQuickResumePath),
              "%s/firestaff-imported-csbwin.sav", tmpTemplate);
@@ -1100,8 +1103,9 @@ int main(void) {
     M12_Config_SetLastSavePath(importedCsbWinQuickResumePath);
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
-    if (!expect(state.quickResumeAvailable == 1,
-                "unknown firestaff save name should enable CSB quick Resume by content")) return 1;
+    if (!expect(state.quickResumeAvailable == 0,
+                "CSBWin body under an unknown filename must not advertise Resume")) return 1;
+    if (state.quickResumeAvailable) {
     if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
                 "unknown firestaff save name should classify CSB by content")) return 1;
     state.selectedIndex = -1;
@@ -1113,6 +1117,8 @@ int main(void) {
                 intent.savePath &&
                 strcmp(intent.savePath, importedCsbWinQuickResumePath) == 0,
                 "unknown firestaff CSB quick Resume should carry exact path")) return 1;
+
+    }
 
     snprintf(wrongKnownGameQuickResumePath,
              sizeof(wrongKnownGameQuickResumePath),
@@ -1193,8 +1199,9 @@ int main(void) {
                 "startup should open save browser for CSBWin saves")) return 1;
     if (!expect(select_save_entry(&state, "firestaff-csb-csbwin-browser.sav"),
                 "save browser should list CSBWin verified-body CSB save")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark CSBWin save loadable")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
+                "save browser must not mark CSBWin selectable before full world handoff")) return 1;
+    if (state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid) {
     if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
                        "csb") == 0,
                 "save browser should classify CSBWin save as csb")) return 1;
@@ -1216,6 +1223,8 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, csbWinBrowserSavePath) == 0,
                 "save browser CSBWin launch intent should carry selected save path")) return 1;
 
+    }
+
     snprintf(importedCsbWinBrowserSavePath, sizeof(importedCsbWinBrowserSavePath),
              "%s/firestaff-imported-csbwin-browser.sav", tmpTemplate);
     if (!expect(firestaff_test_write_csbwin_resume_fixture(
@@ -1227,8 +1236,9 @@ int main(void) {
                 "startup should open save browser for imported CSBWin saves")) return 1;
     if (!expect(select_save_entry(&state, "firestaff-imported-csbwin-browser.sav"),
                 "save browser should list imported CSBWin save")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark imported CSBWin save loadable")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
+                "save browser must keep imported CSBWin non-selectable before full world handoff")) return 1;
+    if (state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid) {
     if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
                        "csb") == 0,
                 "save browser should classify imported CSBWin save as csb by content")) return 1;
@@ -1249,6 +1259,8 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, importedCsbWinBrowserSavePath) == 0,
                 "save browser imported CSBWin launch intent should carry exact path")) return 1;
+
+    }
 
     snprintf(originalCsbGameBrowserSavePath,
              sizeof(originalCsbGameBrowserSavePath),
@@ -1283,8 +1295,9 @@ int main(void) {
                 "startup should open save browser for original DMSAVE name")) return 1;
     if (!expect(select_save_entry(&state, "DMSAVE.DAT"),
                 "save browser should list DMSAVE.DAT")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark DMSAVE.DAT loadable")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
+                "save browser must keep CSBWin DMSAVE.DAT non-selectable before full world handoff")) return 1;
+    if (state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid) {
     if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
                        "csb") == 0,
                 "save browser should classify DMSAVE.DAT as csb")) return 1;
@@ -1302,6 +1315,8 @@ int main(void) {
     if (!expect(intent.savePath &&
                 strcmp(intent.savePath, originalDmSaveBrowserSavePath) == 0,
                 "save browser DMSAVE.DAT launch intent should carry exact path")) return 1;
+
+    }
 
     /* DM2 fixture sessions are no longer permitted to create SKSave files.
      * The save browser remains covered by separately supplied original

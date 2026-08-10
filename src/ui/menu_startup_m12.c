@@ -2910,20 +2910,17 @@ static int m12_is_valid_dm1_quicksave_path(const char* path) {
 }
 
 static int m12_is_valid_csb_quick_resume_path(const char* path) {
-    CSB_V1_RuntimeProfile profile;
-    int rc;
     if (!path || path[0] == '\0') {
         return 0;
     }
-    csb_v1_runtime_init(&profile, NULL);
-    /* ReDMCSB LOADSAVE.C F0435 restores CSB GLOBAL_DATA, party state,
-     * events, and timeline through the CSB save path.  Match the M11
-     * resume gate here by validating the unified CSB runtime payload:
-     * Firestaff-native saves, verified CSBWin GAMEBLOCK1/body saves, and
-     * raw CSBGAME roster handoffs all enter through the same loader. */
-    rc = csb_v1_runtime_load_game_from_path(&profile, path);
-    csb_v1_runtime_cleanup(&profile);
-    return rc == CSB_V1_LOAD_OK;
+    /* M11 has a second BOOT F0435 admission gate after M12 hands it a
+     * savePath.  Keep the launcher on that exact predicate: a parser may
+     * recognize a CSBWin GAMEBLOCK body for corpus inspection, but cannot
+     * offer Continue until its complete dungeon/world handoff exists.
+     * Otherwise M12 displays Resume and BOOT rejects that same selection.
+     * ReDMCSB LOADSAVE.C F0433/F0435 pairs writer and restorer as one
+     * campaign transaction. */
+    return csb_v1_runtime_can_load_resume_path(path);
 }
 
 static int m12_is_valid_nexus_quick_resume_path(const char* path) {

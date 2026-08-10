@@ -765,12 +765,16 @@ static int try_parse_csbwin_boundary_entry(M12_SaveBrowserEntry* entry) {
     }
     snprintf(entry->gameId, sizeof(entry->gameId), "csb");
     entry->expectedGameCode = SAVEGAME_PC34_GAME_CODE_CSB;
-    entry->valid = 1;
+    /* Valid body provenance is not yet a complete F0435 world restore.
+     * Keep the entry visible for import/corpus discovery, but only make it
+     * selectable when the M11 BOOT resume gate accepts it. */
+    entry->valid = csb_v1_runtime_can_load_resume_path(entry->fullPath);
     entry->mapLevel = -1;
     entry->championCount = 0;
     entry->champions[0] = '\0';
     snprintf(entry->label, SAVE_BROWSER_LABEL_MAX,
-             "%s (CSBWin save)", entry->gameId);
+             "%s (CSBWin save%s)", entry->gameId,
+             entry->valid ? "" : "; import pending");
     return 1;
 }
 
@@ -896,6 +900,13 @@ static int try_parse_csb_runtime_entry(M12_SaveBrowserEntry* entry) {
     if (!entry ||
         (entry->expectedGameCode != 0 &&
          entry->expectedGameCode != SAVEGAME_PC34_GAME_CODE_CSB)) {
+        return 0;
+    }
+
+    /* Keep Save Browser eligibility identical to M11's F0435 boot gate.
+     * A CSBWin body may be parseable enough to expose names below, but it is
+     * not a resumable campaign until its complete world conversion exists. */
+    if (!csb_v1_runtime_can_load_resume_path(entry->fullPath)) {
         return 0;
     }
 
