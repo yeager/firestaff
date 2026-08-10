@@ -113,9 +113,17 @@ int main(void)
         "static int m11_build_dm1_spell_area_overlay_plan(\n"
         "    const M11_GameViewState* state,\n"
         "    DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34* outPlan)\n{");
+    /* m11_draw_v1_spell_area_overlay switched from `static void` to
+     * `static int` when the receipt pipeline started returning success
+     * information; the plan-builder body is the same. Accept either
+     * end-marker signature. */
     spell_plan_end = spell_plan
-        ? strstr(spell_plan, "static void m11_draw_v1_spell_area_overlay(")
+        ? strstr(spell_plan, "static int m11_draw_v1_spell_area_overlay(")
         : NULL;
+    if (!spell_plan_end && spell_plan) {
+        spell_plan_end = strstr(spell_plan,
+                                "static void m11_draw_v1_spell_area_overlay(");
+    }
     if (!spell_plan || !spell_plan_end || spell_plan_end <= spell_plan ||
         !contains_between(spell_plan, spell_plan_end,
                           "active = state->dm1SpellCasting.magicCasterIndex") ||

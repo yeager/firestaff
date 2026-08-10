@@ -158,7 +158,18 @@ int main(void)
         int dist = -1;
         int smell = -1;
 
-        build_scenario(&in, CREATURE_TYPE_MUMMY, 0, 0, 0, 2, 1);
+        /* MUMMY DUNGEON.C G0243[10] Ranges = 0x1224 -> sightRange=4,
+         * smellRange=2. GROUP.C F0195 gates direct smell on
+         *   ((smellRange + 1) >> 1) >= distance
+         * so smellRange=2 yields an effective smell radius of 1. The
+         * scenario used to place the party at distance 2, where the
+         * source game cannot smell the invisible party either -- the
+         * check would only pass if the runtime were emitting a
+         * synthetic full-range smell fallback, which contradicts the
+         * "bygg inget syntetiskt" policy. Move the party to distance 1
+         * so the SEE_INVISIBLE gate blocks sight AND smell still
+         * fires, matching the invariant the check name promises. */
+        build_scenario(&in, CREATURE_TYPE_MUMMY, 0, 0, 0, 1, 1);
         in.partyInvisibility = 1;
         F0792_CREATURE_Perceive_Compat(&in, prof, &visible, &dist, &smell);
         CHECK(prof && (prof->attributes & CREATURE_ATTR_MASK_SEE_INVISIBLE) == 0 &&
