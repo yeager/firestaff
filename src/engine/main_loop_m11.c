@@ -54,6 +54,7 @@
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.h"
+#include "dm2_v1_boot.h"
 #include "fs_gesture_navigation_gate.h"
 
 #include <stdio.h>
@@ -93,6 +94,16 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
                                          int speedMultiplier) {
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         gameView->dm2State.startup_menu_active) {
+        const DM2_V1_BootProfile *profile =
+            (const DM2_V1_BootProfile *)gameView->dm2BootProfile;
+        if (profile && profile->platform == DM2_PLATFORM_AMIGA_EN &&
+            gameView->dm2FmtownsTitleBound) {
+            /* Amiga SWSH/TITL/ENDA are VBlank streams.  Unlike the Towns
+             * Timer-A path, their authentic 50 Hz period is integral in the
+             * host millisecond scheduler, so do not wake at the PC/Towns
+             * 16-ms quantum and overdrive the selected Amiga media. */
+            return 20u;
+        }
         /* DM2's IBMIOP MVE, FM Towns TWANIM and Amiga VBlank streams are
          * startup media, not the 200-ms gameplay loop.  M11 wakes at the
          * same 16-ms scheduler quantum used for the Towns Timer-A path; the

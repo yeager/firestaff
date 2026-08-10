@@ -25471,9 +25471,15 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             }
             if (state->dm2FmtownsTitleBound) {
                 /* SKWIN's 0759:06C2 Timer-A interrupt owns TWANIM's DL
-                 * waits.  Preserve its 18*(1024-100) us source step rather
-                 * than treating the stream as a 60 Hz host animation. */
-                m11_dm2_advance_fmtowns_title(state, 16667u);
+                 * waits.  The Amiga stream instead advances on its 50 Hz
+                 * VBlank.  Supply the selected original clock rather than
+                 * the former PC-like 16,667-us host delta. */
+                m11_dm2_advance_fmtowns_title(
+                    state,
+                    m11_dm2_is_amiga_profile(
+                        (const DM2_V1_BootProfile *)state->dm2BootProfile)
+                        ? M11_DM2_AMIGA_VBL_TICK_US
+                        : M11_DM2_FMTOWNS_TIMER_A_TICK_US);
                 return M11_GAME_INPUT_REDRAW;
             }
             /* SKProject's SHOW_MENU_SCREEN redraws the static dt07/4 menu

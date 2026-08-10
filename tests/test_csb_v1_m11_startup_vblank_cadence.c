@@ -2,6 +2,7 @@
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
+#include "dm2_v1_boot.h"
 #include "dm1_v1_vblank_timing.h"
 
 #include <stdio.h>
@@ -49,6 +50,17 @@ int main(void) {
                     "DM2 startup wakes for original media clocks");
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 16u,
                     "DM2 startup ignores gameplay speed multiplier");
+    {
+        DM2_V1_BootProfile profile;
+        memset(&profile, 0, sizeof(profile));
+        profile.platform = DM2_PLATFORM_AMIGA_EN;
+        view.dm2BootProfile = &profile;
+        view.dm2FmtownsTitleBound = 1;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 20u,
+                        "DM2 Amiga title uses the source 50 Hz VBlank cadence");
+        view.dm2FmtownsTitleBound = 0;
+        view.dm2BootProfile = NULL;
+    }
     view.dm2State.startup_menu_active = 0;
     if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
         fprintf(stderr, "FAIL: inactive DM2 startup must retain normal catch-up\n");

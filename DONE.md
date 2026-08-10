@@ -3206,6 +3206,14 @@ rendering remain blocked.
   verifierad PC-profil finns. Saknas en sådan profil faller Auto tillbaka till
   nästa verifierade originalplattform, utan att skapa en ersättningsruntime.
 
+# DM2 Amiga-start följer 50 Hz VBlank (2026-08-10)
+
+- ✅ Den valda Amiga-utgåvans SWSH-, TITL- och ENDA-strömmar driver nu M11:s
+  idle-scheduler med exakt 20 ms VBlank. FM Towns behåller sin separata
+  Timer-A-väg och DOS MVE sin egen presentationsklocka.
+- ✅ M11 skickar den valda plattformens källperiod till animationsackumulatorn
+  i stället för en PC-liknande 16 667 µs-delta för båda utgåvorna.
+
 # DM2 GAME_LOAD: ofullständig CAII-session spärras (2026-08-10)
 
 - ✅ En privat runtime-kandidat kan inte längre byggas efter championvalet
