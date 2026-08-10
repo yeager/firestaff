@@ -56,16 +56,21 @@ or generated art.
 Structure1G declarations, their canonical Structure2 descriptor IDs, and the
 only canonical Structure1B animated-floor binding are now validated across
 LEV00-LEV15. The 41 LEV08 cells bind animation ID 0 through a typed
-`floor -> Structure2` route. Structure2 now has a bounded
-`descriptor[20]... + FFFF + opaque payload` envelope parser, but the payload
-record grammar, offset base, image/palette encoding, and its exact
-image-to-viewport-material bridge remain unproven. The canonical material
-source is now authenticated as the hash-verified Track 1 `LEV00.DGN` through
-`LEV15.DGN` entries themselves, not `MENU.BPK`, a `FLOORS/WALLS.BPK`, or a
-DMDF family candidate. The Nexus host must continue to block that visible
-animated-material route without fallback until the retail LEV corpus proves a
-payload record grammar and host surface evidence exists. Model-face animated
-textures and animation timing/flag execution are also still open.
+`floor -> Structure2` route. DMWeb's Structure2 payload grammar is now
+decoded in the authenticated engine lane: 08h MSB-first 4bpp images resolve
+their 16-word palette (including zero-offset same-ID reuse), and 28h images
+retain exact big-endian Saturn 15-bit words. The canonical material source is
+the hash-verified Track 1 `LEV00.DGN` through `LEV15.DGN` entries themselves,
+not `MENU.BPK`, a `FLOORS/WALLS.BPK`, or a DMDF family candidate. This source
+decode does not authorize VDP1 upload, selector/UV semantics, animation
+timing, transform, culling, or viewport drawing; those remain capture-gated.
+Model-face animated textures and animation timing/flag execution are still
+open.
+
+2026-08-10: Real LEV01 engine loading now decodes every Structure2 descriptor
+into a source surface (indexed 08h or exact direct-color 28h) while retaining
+`animated_floor_material_route_valid = 0`. The viewport therefore cannot use
+the new surfaces without the existing Saturn VDP1/CLUT/transform admission.
 
 2026-07-12 update: the available hash-verified LEV00-LEV15 corpus now gives
 one bounded descriptor-to-payload correlation. Across all 16 Structure2

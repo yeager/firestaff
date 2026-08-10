@@ -2,6 +2,20 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus DGN Structure2 source decoder
+
+- Promoted the DMWeb-authenticated Structure2 decoder into the production
+  engine's source lane for canonical LEV00-LEV15 data. Encoding `08h` now
+  decodes MSB-first 4bpp pixels and resolves zero-offset palette reuse by
+  Palette ID; encoding `28h` preserves exact big-endian Saturn 15-bit words
+  in the source-only `direct_pixels` lane instead of quantizing them to a
+  guessed host palette.
+- The real LEV01 engine test confirms every descriptor decodes and that
+  `animated_floor_material_route_valid` remains disabled. Existing VDP1/CLUT,
+  transform, culling and viewport gates remain closed.
+- External-disk build and focused CTest (`dgn_geometry_readiness`,
+  `boot_file_hash_scan`): PASS.
+
 ## 2026-08-10 - Nexus FONT256 source-word retention
 
 - `Nexus_V1_FontS2dSourceWords` retains the exact big-endian Page (4096),

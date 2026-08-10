@@ -321,6 +321,9 @@ static void nexus_v1_free_structure2_surfaces(Nexus_V1_Engine *engine) {
     for (i = 0; i < NEXUS_DGN_MAX_STRUCTURE2_TEXTURES; ++i) {
         free(engine->structure2_surfaces[i].pixels);
         engine->structure2_surfaces[i].pixels = NULL;
+        free(engine->structure2_surfaces[i].direct_pixels);
+        engine->structure2_surfaces[i].direct_pixels = NULL;
+        engine->structure2_surfaces[i].direct_pixel_count = 0U;
     }
     engine->structure2_surface_count = 0;
     memset(&engine->structure2_decode_receipt, 0,
@@ -336,14 +339,11 @@ static int nexus_v1_decode_structure2_animation_materials(
     engine->animated_floor_material_route_valid = 0;
     nexus_v1_free_structure2_surfaces(engine);
 
-    /* DMWeb identifies the Structure2 descriptor envelope and bounded
-     * payload candidates, but that is not a Saturn pixel/CLUT/VDP1 capture.
-     * Do not promote the documented 08h/28h hypotheses into host surfaces
-     * while the retail source lane lacks an authenticated original capture.
-     * The non-DMWeb lane remains available for isolated compatibility
-     * fixtures. */
-    if (engine->current_level.geometry_info.dmweb_container)
-        return 0;
+    /* DMWeb documents the Structure2 pixel grammar. Decode it only after the
+     * active LEV bytes have crossed the canonical source and bounded-payload
+     * gates above. The resulting surfaces are source material for capture
+     * comparison; the viewport still requires Saturn VDP1/CLUT/transform
+     * evidence before it may draw them. */
     if (nexus_v1_current_level_decode_structure2_textures(
             engine, engine->structure2_surfaces,
             NEXUS_DGN_MAX_STRUCTURE2_TEXTURES,
@@ -5380,13 +5380,10 @@ int nexus_v1_current_level_decode_structure2_textures(
     receipt.level_index = -1;
     if (out_receipt) *out_receipt = receipt;
     if (!engine || !out_surfaces || max_surfaces <= 0) return 0;
-    /* The public helper is diagnostic/fixture-only.  A canonical retail
-     * level may expose DMWeb descriptor and payload-boundary evidence, but
-     * it cannot authorize host pixel or palette materialization without an
-     * authenticated Saturn VDP1/CLUT capture.  Keep this direct API aligned
-     * with the production LEV-load gate so callers cannot bypass it. */
-    if (engine->current_level.geometry_info.dmweb_container)
-        return 0;
+    /* This is a source-format decoder, not a Saturn presentation permission.
+     * The active level must already have passed the canonical source and
+     * Structure2 envelope gates; VDP1/CLUT/transform consumers remain
+     * separately capture-gated in the viewport. */
     if (nexus_v1_current_level_structure2_format_evidence_receipt(
             engine, &evidence) != 1 || !evidence.valid ||
         !evidence.decoder_permitted) return 0;
@@ -5426,23 +5423,42 @@ int nexus_v1_current_level_decode_structure2_textures(
             uint32_t image_bytes = (pixel_count + 1U) / 2U;
             uint32_t image_abs;
             uint32_t palette_abs;
+            uint32_t palette_rel = tex->palette_relative_offset;
             const uint8_t *src;
             const uint8_t *pal_src;
             int c;
 
+            /* DMWeb Structure2: a zero palette offset reuses the most recent
+             * non-zero offset for the same Palette ID. Never substitute
+             * palette zero or a host default when the association is absent. */
+            if (palette_rel == 0U) {
+                int previous_index;
+                for (previous_index = descriptor_index - 1;
+                     previous_index >= 0; --previous_index) {
+                    const Nexus_V1_DgnStructure2Texture *previous =
+                        &level->structure2_textures[previous_index];
+                    if (previous->palette_id == tex->palette_id &&
+                        previous->palette_relative_offset != 0U) {
+                        palette_rel = previous->palette_relative_offset;
+                        break;
+                    }
+                }
+            }
+
             /* DMWeb DMNDataFileDecoder.vbs reads both regions from the
              * Structure2 block. Validate them before forming pointers. */
             if (structure2_offset > dgn_size ||
-                tex->palette_relative_offset > dgn_size - structure2_offset ||
+                palette_rel == 0U ||
+                palette_rel > dgn_size - structure2_offset ||
                 tex->image_relative_offset > dgn_size - structure2_offset ||
                 palette_bytes > dgn_size - structure2_offset -
-                    tex->palette_relative_offset ||
+                    palette_rel ||
                 image_bytes > dgn_size - structure2_offset -
                     tex->image_relative_offset) {
                 free(indices);
                 continue;
             }
-            palette_abs = structure2_offset + tex->palette_relative_offset;
+            palette_abs = structure2_offset + palette_rel;
             image_abs = structure2_offset + tex->image_relative_offset;
             src = payload + image_abs;
             pal_src = payload + palette_abs;
@@ -5463,11 +5479,9 @@ int nexus_v1_current_level_decode_structure2_textures(
             ++receipt.encoding_0x0008_decoded;
             ++receipt.decoded_count;
         } else if (tex->encoding == 0x0028U) {
-            uint32_t palette_count = 1U;
             uint32_t image_bytes = pixel_count * 2U;
             uint32_t image_abs;
             const uint8_t *src;
-            int overflow = 0;
 
             if (structure2_offset > dgn_size ||
                 tex->image_relative_offset > dgn_size - structure2_offset ||
@@ -5478,42 +5492,21 @@ int nexus_v1_current_level_decode_structure2_textures(
             }
             image_abs = structure2_offset + tex->image_relative_offset;
             src = payload + image_abs;
-
-            memset(surface->palette, 0, sizeof(surface->palette));
+            free(indices);
+            surface->direct_pixels = (uint16_t *)malloc(
+                (size_t)pixel_count * sizeof(*surface->direct_pixels));
+            if (!surface->direct_pixels) continue;
             for (i = 0; i < pixel_count; ++i) {
-                uint16_t raw = (uint16_t)(src[i * 2] << 8 | src[i * 2 + 1]);
-                uint32_t rgba = nexus_v1_saturn_15bit_to_rgba(raw);
-                uint32_t slot;
-                int found = 0;
-
-                /* DMWeb DMNDataFileDecoder.vbs Structure2 encoding 28h:
-                 * every word is a direct 15-bit colour. Bit 15 is ignored;
-                 * it is not a transparency flag for this resource. */
-                for (slot = 1U; slot < palette_count; ++slot) {
-                    if (surface->palette[slot] == rgba) {
-                        indices[i] = (uint8_t)slot;
-                        found = 1;
-                        break;
-                    }
-                }
-                if (!found) {
-                    if (palette_count >= 256U) {
-                        overflow = 1;
-                        break;
-                    }
-                    surface->palette[palette_count] = rgba;
-                    indices[i] = (uint8_t)palette_count;
-                    ++palette_count;
-                }
+                /* DMWeb Structure2 28h is a direct big-endian Saturn
+                 * 15-bit word stream. Preserve source words exactly; do not
+                 * quantize them into a guessed host palette. */
+                surface->direct_pixels[i] = (uint16_t)(src[i * 2] << 8 |
+                                                        src[i * 2 + 1]);
             }
-            if (overflow) {
-                free(indices);
-                ++receipt.palette_overflow_count;
-                continue;
-            }
-            surface->pixels = indices;
+            surface->direct_pixel_count = pixel_count;
             surface->width = tex->width;
             surface->height = tex->height;
+            surface->direct_color = 1;
             surface->valid = 1;
             ++receipt.encoding_0x0028_decoded;
             ++receipt.decoded_count;

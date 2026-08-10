@@ -343,12 +343,12 @@ typedef struct {
     Nexus_V1_BpkArchiveInfo archive;
 } Nexus_V1_DgnMaterialContainerReceipt;
 
-/* Structure2's descriptor envelope and opaque payload live in the canonical
+/* Structure2's descriptor envelope and payload live in the canonical
  * LEV00.DGN..LEV15.DGN Track 1 entries, not in MENU.BPK or an inferred
  * FLOORS/WALLS container. This receipt authenticates that source boundary
  * only. `materialization_bound` means the loaded level's bounded payload is
- * tied to its canonical source; it never means that payload bytes are
- * decoded or renderable. */
+ * tied to its canonical source and may be decoded by the DMWeb source-format
+ * decoder; it never means that the result is renderable. */
 typedef struct {
     int level_index;
     char canonical_name[16];

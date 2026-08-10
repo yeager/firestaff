@@ -719,6 +719,8 @@ int main(void) {
         if (data_root[0] != '\0') {
             Nexus_V1_Engine item_engine;
             int declared_items = 0;
+            int decoded_indexed = 0;
+            int decoded_direct = 0;
             int i;
             memset(&item_engine, 0, sizeof(item_engine));
             check_int(nexus_v1_init(&item_engine, data_root) == 0 &&
@@ -738,6 +740,32 @@ int main(void) {
                           "real FONT256 page/palette/attribute words are retained as source bytes");
                 check_int(item_engine.font_loaded == 0,
                           "real FONT256 glyph presentation remains closed pending Saturn capture");
+                for (i = 0; i < item_engine.current_level.structure2_texture_count; ++i) {
+                    const Nexus_V1_DgnStructure2Texture *descriptor =
+                        &item_engine.current_level.structure2_textures[i];
+                    const Nexus_DMDFTextureSurface *surface =
+                        &item_engine.structure2_surfaces[i];
+                    if (descriptor->encoding == 0x0008U) {
+                        if (surface->valid && surface->pixels &&
+                            !surface->direct_color) ++decoded_indexed;
+                    } else if (descriptor->encoding == 0x0028U) {
+                        if (surface->valid && surface->direct_pixels &&
+                            surface->direct_pixel_count ==
+                                (size_t)descriptor->width * descriptor->height &&
+                            surface->direct_color) ++decoded_direct;
+                    }
+                }
+                check_int(item_engine.structure2_decode_receipt.valid == 1 &&
+                              item_engine.structure2_decode_receipt.decoded_count ==
+                                  item_engine.current_level.structure2_texture_count &&
+                              item_engine.structure2_surface_count ==
+                                  item_engine.current_level.structure2_texture_count &&
+                              decoded_indexed ==
+                                  item_engine.structure2_decode_receipt.encoding_0x0008_decoded &&
+                              decoded_direct ==
+                                  item_engine.structure2_decode_receipt.encoding_0x0028_decoded &&
+                              item_engine.animated_floor_material_route_valid == 0,
+                          "real DGN Structure2 decodes indexed and direct-color source surfaces without opening viewport rendering");
                 for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {
                     if (item_engine.current_level.structure1f_entries[i].family ==
                             NEXUS_V1_DGN_STRUCTURE1F_ITEMS) {

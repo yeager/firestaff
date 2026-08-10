@@ -1243,10 +1243,13 @@ typedef struct {
     uint32_t palette_relative_offset;
 } Nexus_V1_DgnStructure2Texture;
 
-/* The only established Structure2 payload grammar is the descriptor envelope:
- * Descriptor[20]... FFFF opaque_bytes[].  The bytes after FFFF are retained
- * as a bounded span, but are deliberately not called image or palette records
- * until the retail LEV corpus establishes their offset base and encoding. */
+/* DMWeb establishes the Structure2 payload grammar as a descriptor envelope
+ * followed by image/palette bytes: Descriptor[20]... FFFF payload[]. The
+ * offsets are relative to Structure2; encoding 08h is MSB-first 4bpp with a
+ * 16-word palette (zero offset reuses the preceding same-ID palette), and
+ * encoding 28h is a direct big-endian Saturn 15-bit word stream. The raw span
+ * counters below remain useful provenance, but no VDP1 or draw meaning is
+ * implied by the source decoder. */
 typedef struct {
     int descriptor_bytes;
     int terminator_offset;
