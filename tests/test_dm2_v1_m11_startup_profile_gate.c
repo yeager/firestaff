@@ -2980,6 +2980,20 @@ int main(void) {
             new_game_world_owner.sound_owner.sample_bindings[0].raw_index,
             &source_sound_size_before_owner);
     }
+    if (new_game_owner_initialized &&
+        new_game_world_owner.sound_owner.valid &&
+        new_game_world_owner.sound_owner.queue_entry_count > 0u &&
+        new_game_world_owner.sound_owner.queue_entries != NULL) {
+        const DM2_V1_SoundSsoundEntry *first_sound =
+            &new_game_world_owner.sound_owner.queue_entries[0];
+        /* The source-owned 292-entry DYN4 queue remains private until a
+         * complete GAME_LOAD handoff.  A verified GDAT loader by itself
+         * must not make M11's global query seam construct a legacy queue. */
+        expect_true(dm2_v1_sound_query_entry((uint8_t)first_sound->b_02,
+                                             (uint8_t)first_sound->b_03,
+                                             (uint8_t)first_sound->b_04) == -1,
+                    "DM2 startup leaves the global SOUND9 query unbound before GAME_LOAD");
+    }
     expect_true(profile && new_game_owner_initialized &&
                     dm2_v1_game_load_world_owner_is_prepared(
                         &new_game_world_owner) &&
