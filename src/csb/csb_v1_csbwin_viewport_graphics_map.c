@@ -124,6 +124,7 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
 {
     size_t index;
     const CSB_V1_CSBWinViewportProjectionRectangle *door_rectangles;
+    uint8_t switch_family;
 
     if (!out_layout) return 0;
     memset(out_layout, 0, sizeof(*out_layout));
@@ -179,6 +180,38 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     memcpy(out_layout->teleporter_rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_OFFSET,
            sizeof(out_layout->teleporter_rectangles));
+    /* CSBCode.cpp TAG004c5e uses Byte4124[0] as its switch family, then
+     * indexes Byte5094 + 24 * family + 6 * lane.  Those addresses descend
+     * inside the expanded item-0x22e image (Data.h's Byte names are native
+     * 68k addresses), so decode them explicitly rather than treating the
+     * six-byte records as ordinary forward arrays. */
+    if (3122u >= decoded_size) {
+        memset(out_layout, 0, sizeof(*out_layout));
+        return 0;
+    }
+    switch_family = decoded_graphic[3122u];
+    if (switch_family > 1u ||
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_BASE_OFFSET <
+            (size_t)switch_family * 24u) {
+        memset(out_layout, 0, sizeof(*out_layout));
+        return 0;
+    }
+    for (index = 0u;
+         index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT;
+         ++index) {
+        size_t offset = CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_BASE_OFFSET -
+            (size_t)switch_family * 24u - index * 6u;
+        CSB_V1_CSBWinViewportProjectionRectangle *rectangle =
+            &out_layout->door_switch_rectangles[index];
+        rectangle->x1 = decoded_graphic[offset + 0u];
+        rectangle->x2 = decoded_graphic[offset + 1u];
+        rectangle->y1 = decoded_graphic[offset + 2u];
+        rectangle->y2 = decoded_graphic[offset + 3u];
+        rectangle->source_stride = decoded_graphic[offset + 4u];
+        rectangle->source_height = decoded_graphic[offset + 5u];
+        rectangle->source_x = 0u;
+        rectangle->source_y = 0u;
+    }
     door_rectangles = &out_layout->door_rectangles[0][0];
     for (index = 0u; index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_FAMILY_COUNT *
             CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT; ++index) {
@@ -249,7 +282,30 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
             return 0;
         }
     }
+    for (index = 0u;
+         index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT;
+         ++index) {
+        if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                &out_layout->door_switch_rectangles[index])) {
+            memset(out_layout, 0, sizeof(*out_layout));
+            return 0;
+        }
+    }
     out_layout->valid = 1;
+    return 1;
+}
+
+int csb_v1_csbwin_viewport_door_switch_projection(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    const CSB_V1_CSBWinViewportProjectionRectangle **out_projection)
+{
+    if (out_projection) *out_projection = NULL;
+    if (!layout || !layout->valid || !out_projection ||
+        !csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout->door_switch_rectangles[0])) {
+        return 0;
+    }
+    *out_projection = &layout->door_switch_rectangles[0];
     return 1;
 }
 

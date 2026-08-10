@@ -3446,7 +3446,7 @@ static int m11_csb_atari_st_resolve_door_panel(
     const CSB_V1_DungeonData *dungeon, int level, int direction,
     int party_x, int party_y, int steps_forward, int steps_right,
     uint8_t nearness, uint8_t *out_door_state, int *out_db0_mode,
-    uint16_t *out_graphic_index)
+    int *out_has_switch, uint16_t *out_graphic_index)
 {
     const uint8_t *record;
     int map_x;
@@ -3460,8 +3460,10 @@ static int m11_csb_atari_st_resolve_door_panel(
 
     if (out_door_state) *out_door_state = 0u;
     if (out_db0_mode) *out_db0_mode = 0;
+    if (out_has_switch) *out_has_switch = 0;
     if (out_graphic_index) *out_graphic_index = 0u;
-    if (!dungeon || !out_door_state || !out_db0_mode || !out_graphic_index ||
+    if (!dungeon || !out_door_state || !out_db0_mode || !out_has_switch ||
+        !out_graphic_index ||
         level < 0 || level >= dungeon->level_count || nearness > 2u ||
         csb_v1_dungeon_f0150_get_relative_location_pc34(
             direction, steps_forward, steps_right, party_x, party_y,
@@ -3487,6 +3489,9 @@ static int m11_csb_atari_st_resolve_door_panel(
     }
     *out_door_state = (uint8_t)(raw_square & 0x07);
     *out_db0_mode = (door_word & 0x0020u) != 0u;
+    /* CSBWin CSB.h DB0::doorSwitch / CSBCode.cpp TAG004c5e: bit 6
+     * selects DrawDoorSwitch(1, lane). */
+    *out_has_switch = (door_word & 0x0040u) != 0u;
     return 1;
 }
 
@@ -3844,6 +3849,7 @@ static int m11_csb_present_atari_st_runtime_viewport(
             uint16_t panel_graphic;
             uint8_t door_state;
             int db0_mode;
+            int has_switch;
             size_t door_draw;
 
             /* CSBWin has no DoorRects family for F3L2/F3R2/F0 lanes; their
@@ -3884,7 +3890,7 @@ static int m11_csb_present_atari_st_runtime_viewport(
                     wall_locations[draw->wall].right,
                     draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_F1L1 ? 0u :
                     draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_F2L1 ? 1u : 2u,
-                    &door_state, &db0_mode, &panel_graphic)) {
+                    &door_state, &db0_mode, &has_switch, &panel_graphic)) {
                 continue;
             }
             if (!csb_v1_csbwin_viewport_door_panel_projections(
@@ -3896,6 +3902,19 @@ static int m11_csb_present_atari_st_runtime_viewport(
             if (panel_second && !m11_csb_blit_atari_st_viewport_graphic(
                     state, panel_graphic, 0, panel_second, viewport,
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            /* Viewport.cpp's F2 facing-door script calls
+             * DrawDoorSwitch(1, 0) after DrawDoor.  Its static switch
+             * bitmap is GRAPHICS.DAT item 315 and its exact destination
+             * comes from the real item-0x22e recipe.  Other depths wait
+             * for their separately verified original descriptors. */
+            if (has_switch && draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2) {
+                const CSB_V1_CSBWinViewportProjectionRectangle *switch_projection;
+                if (!csb_v1_csbwin_viewport_door_switch_projection(
+                        &layout, &switch_projection) ||
+                    !m11_csb_blit_atari_st_viewport_graphic(
+                        state, 315u, 0, switch_projection, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            }
             continue;
         }
         /* Viewport.cpp's DrawCellF* wall branch is entered only for

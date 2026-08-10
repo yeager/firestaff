@@ -301,6 +301,15 @@ static void check_real_viewport_projection_layout(const char *path)
     CHECK(layout.rectangles[9].x1 == 0u && layout.rectangles[9].x2 == 223u &&
           layout.rectangles[9].source_stride == 0u &&
           layout.rectangles[9].source_height == 0u);
+    /* CSBCode.cpp TAG004c5e DrawDoorSwitch(1, 0) takes its F2 placement
+     * directly from Byte5094. These values are from the supplied Atari ST
+     * GRAPHICS.DAT item 0x22e, not an inferred PC button rectangle. */
+    CHECK(layout.door_switch_rectangles[0].x1 == 199u &&
+          layout.door_switch_rectangles[0].x2 == 204u &&
+          layout.door_switch_rectangles[0].y1 == 41u &&
+          layout.door_switch_rectangles[0].y2 == 44u &&
+          layout.door_switch_rectangles[0].source_stride == 8u &&
+          layout.door_switch_rectangles[0].source_height == 4u);
     /* CSBWin Data.h puts DoorRectsF1R1..DoorRectsF3L1, then track/frame
      * RectPos records directly before wallRectangles.  Reading them from the
      * original 0x22e record prevents later render work from inventing door
