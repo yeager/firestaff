@@ -44,6 +44,15 @@ Button I and Button II, and mouse motion only moves the pointer. Moving the
 mouse never changes the selected object or jumps between controls. On touch
 screens, a short touch is Button I and a long touch is Button II.
 
+### Authentic Theron's Quest reference capture
+
+![Original Theron's Quest USA title/menu capture](verification-screens/theron-quest-us-main-menu.png)
+
+This is a real original-media Mednafen capture of the USA release, included
+as reference evidence. It is not a generated image and is not presented as a
+completed Firestaff runtime screenshot; see the [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
+for its media identity and scope.
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder
