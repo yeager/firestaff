@@ -4,9 +4,11 @@ Firestaff is a clean-room engine for the Dungeon Master games. It reads the
 original files you own, identifies each edition by its content hash and keeps
 that data separate from the program.
 
-Dungeon Master for PC DOS 3.4 is the current playable route. Work on Chaos
-Strikes Back, Dungeon Master II, DM Nexus and Theron's Quest is active, but
-those games are not described here as finished releases.
+Dungeon Master for PC DOS 3.4 is the current playable route. Chaos Strikes
+Back now starts from its verified native Amiga editions by default; its full
+campaign, save and presentation parity are still under active development.
+Dungeon Master II, DM Nexus and Theron's Quest are also active development
+routes, not finished releases.
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -29,20 +31,10 @@ available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 | Game | Current scope |
 |---|---|
 | Dungeon Master | Playable PC DOS 3.4 route; further parity work continues. |
-| Chaos Strikes Back | PC DOS 3.4 is the main route. Atari ST, Amiga and FM Towns have native media detection and platform-specific startup paths; campaign parity is still being completed. |
+| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. Campaign parity is still being completed. |
 | Dungeon Master II: Skullkeep | Engine and data work in progress. |
 | DM Nexus | Saturn real-data bring-up in progress. |
 | Theron's Quest | PC Engine real-media bring-up in progress. |
-
-### Theron's Quest real-media capture
-
-This is a real original-media Mednafen capture from the Theron's Quest PC
-Engine route, published as a source-reference screenshot. It is not a
-Firestaff-rendered frame and does not claim complete creature, combat, save or
-later-level parity. The capture provenance and hash are recorded in
-[`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).
-
-![Theron's Quest real dungeon capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
 
 ## Chaos Strikes Back editions
 
@@ -52,15 +44,16 @@ matching data is present:
 
 | Original family | What Firestaff does with it today |
 |---|---|
-| PC DOS 3.4 | Main CSB source-reference path and the basis for the ongoing campaign runtime work. |
-| Atari ST 2.0 and 2.1 | Scanned as native Atari media; startup, animation and original-save handoff work are covered by dedicated runtime paths. |
-| Amiga 3.1 and 3.5 | Scanned as native Amiga media; platform-specific title and presentation routes are being hardened. An edition without a verified native program handoff is blocked instead of borrowing assets from another release. |
-| FM Towns English and Japanese | Scanned as native CD installations; title, game and Utility routes use the original Towns data where the required package is available. |
+| Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. The native startup and presentation routes are being hardened against the original editions. |
+| Atari ST 2.0 and 2.1 | Native Atari media is recognised and enters a dedicated Atari startup route. |
+| FM Towns English and Japanese | Native CD installations are recognised and use their version-specific Towns packages for the available title, Game and Utility routes. |
+| PC DOS 3.4 | Recognised source-reference edition. It remains useful for format and runtime comparison, but is not selected ahead of verified native Amiga CSB media. |
 
 Recognition is deliberately separate from a playability claim. A recognised
 edition has passed the data gate; it does not imply that every screen, save
-format or gameplay path has reached parity. Firestaff does not substitute
-files from a different edition to make a route appear to work.
+format or gameplay path has reached parity. Firestaff keeps each edition on
+its own data path and never borrows files from another release to make a route
+appear to work.
 
 ## Your game data
 
