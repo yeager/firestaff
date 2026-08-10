@@ -30548,9 +30548,9 @@ static int m11_csb_atari_st_top_row_pointer(
  * and C007..C010 to PANEL.C F0355. C125..C128 use F0070's durable
  * GAMEBLOCK formation transaction; its transient cursor raster remains
  * owned by the platform cursor layer and is never synthesized by M11. */
-static int m11_csb_amiga_champion_icon_pointer(
-    M11_GameViewState *state, int icon_index,
-    M11_GameInputResult *out_result)
+static int m11_csb_native_champion_icon_pointer(
+    M11_GameViewState *state, int icon_index, unsigned int *held_icon_ordinal,
+    int is_amiga, M11_GameInputResult *out_result)
 {
     CSB_V1_BootProfile *profile;
     CsbV1F0070ChampionFormationStatePc34 formation;
@@ -30558,19 +30558,22 @@ static int m11_csb_amiga_champion_icon_pointer(
     int champion;
 
     if (out_result) *out_result = M11_GAME_INPUT_IGNORED;
-    if (!state || !out_result || icon_index < 0 || icon_index >= 4 ||
+    if (!state || !out_result || !held_icon_ordinal ||
+        icon_index < 0 || icon_index >= 4 ||
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
     profile = (CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!profile || !m11_csb_is_amiga_profile(profile) ||
+    if (!profile ||
+        (is_amiga ? !m11_csb_is_amiga_profile(profile)
+                  : !m11_csb_is_fmtowns_profile(profile)) ||
         !profile->runtime.party_state_valid) {
         return 0;
     }
     memset(&formation, 0, sizeof(formation));
     formation.champion_count = profile->runtime.party_state.ChampionCount;
     formation.party_direction = profile->runtime.party_state.PartyDirection;
-    formation.held_icon_ordinal = state->csbAmigaHeldChampionIconOrdinal;
+    formation.held_icon_ordinal = *held_icon_ordinal;
     for (champion = 0;
          champion < formation.champion_count && champion < 4;
          ++champion) {
@@ -30580,15 +30583,16 @@ static int m11_csb_amiga_champion_icon_pointer(
         formation.direction[champion] = source->Direction;
         formation.attributes[champion] = source->Attributes;
     }
-    /* ReDMCSB COMMAND.C G0447:88-91 gives the literal A31/A35 C125..C128
-     * rectangles; F0380:2164-2170 dispatches them solely to IO.C F0070.
-     * F0070:2395-2647 owns the GAMEBLOCK Cell/Direction/ICON transaction.
-     * This M11 route deliberately retains no invented cursor pixels. */
+    /* ReDMCSB COMMAND.C G0447:375-391 binds F31E/F31J C125..C128 through
+     * C113..C116, while its A31/A35 table gives the distinct literal cells.
+     * F0380:2164-2170 dispatches all of them solely to IO.C F0070.
+     * F0070:2395-2647 owns the GAMEBLOCK Cell/Direction/ICON transaction;
+     * its native Amiga sprite and F31 IODRV cursor rasters stay external. */
     if (!csb_v1_f0070_champion_formation_click_pc34(
             &formation, icon_index, &receipt)) {
         return 1; /* The native command was consumed but made no mutation. */
     }
-    state->csbAmigaHeldChampionIconOrdinal = formation.held_icon_ordinal;
+    *held_icon_ordinal = formation.held_icon_ordinal;
     for (champion = 0;
          champion < formation.champion_count && champion < 4;
          ++champion) {
@@ -30629,8 +30633,9 @@ static int m11_csb_amiga_top_row_pointer(
         else if (x >= 301 && x <= 319 && y >= 15) icon_index = 2;
         else if (x >= 274 && x <= 299 && y >= 15) icon_index = 3;
         if (icon_index >= 0) {
-            return m11_csb_amiga_champion_icon_pointer(
-                state, icon_index, out_result);
+            return m11_csb_native_champion_icon_pointer(
+                state, icon_index, &state->csbAmigaHeldChampionIconOrdinal,
+                1, out_result);
         }
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
             if (x >= status_left[slot] && x <= status_left[slot] + 42) {
@@ -30664,9 +30669,9 @@ static int m11_csb_amiga_top_row_pointer(
  * host status-tile convenience route below.  In particular a left click in
  * C151..C154 selects its champion (C012..C015); only the adjacent C187..190
  * 24x29 strips toggle C017.  The F31 table also has the PC/I34E 19x14 icon
- * cells at x=281/301.  They stay consumed until the native F0070 cursor
- * transaction is bound, so a Towns click cannot fall through to unrelated
- * PC HUD geometry.
+ * cells at x=281/301.  F31's IODRV cursor pixels are still source-owned,
+ * but its durable C125..C128 F0070 transaction mutates GAMEBLOCK exactly
+ * as in IO.C, so the pointer cells must not remain inert.
  *
  * ReDMCSB COMMAND.C:374-396 (MEDIA730 F31E / MEDIA731 F31J), especially
  * G0447 C007..C015 and C125..C128; layout-696 C113..C116/C151..C154/
@@ -30689,6 +30694,16 @@ static int m11_csb_fmtowns_top_row_pointer(
     if (!m11_csb_is_fmtowns_profile(profile)) return 0;
 
     if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        int icon_index = -1;
+        if (x >= 281 && x <= 299 && y <= 13) icon_index = 0;
+        else if (x >= 301 && x <= 319 && y <= 13) icon_index = 1;
+        else if (x >= 301 && x <= 319 && y >= 15) icon_index = 2;
+        else if (x >= 281 && x <= 299 && y >= 15) icon_index = 3;
+        if (icon_index >= 0) {
+            return m11_csb_native_champion_icon_pointer(
+                state, icon_index, &state->csbFmtownsHeldChampionIconOrdinal,
+                0, out_result);
+        }
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
             if (x >= bar_left[slot] && x <= bar_left[slot] + 23) {
                 *out_result = m11_toggle_champion_inventory(state, slot);
@@ -30700,7 +30715,7 @@ static int m11_csb_fmtowns_top_row_pointer(
                 return 1;
             }
         }
-        /* F31's icon cells and their one-pixel seams belong to F0070. */
+        /* F31's icon-grid gaps belong to G0447 but are not commands. */
         if (x >= 281 && x <= 319) return 1;
     } else if ((button_mask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
@@ -30966,7 +30981,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     /* Native A31/A35 and F31 C125..C128 formation cells, C012..C015 status
      * clicks, and C007..C010 bar clicks are resolved above with their G0447
-     * boxes (F31 icon transactions remain deliberately consumed/closed). */
+     * boxes and F0070 GAMEBLOCK transaction. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 && y >= 0 && y <= 28) {
         const CSB_V1_BootProfile *csb_profile =

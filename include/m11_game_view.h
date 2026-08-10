@@ -1663,6 +1663,10 @@ typedef struct {
      * the original Amiga cursor owns its transient raster.  Retain only the
      * ordinal here; the next native C125..C128 click consumes it. */
     unsigned int csbAmigaHeldChampionIconOrdinal;
+    /* F31E/F31J take the same durable F0070 GAMEBLOCK path, but their
+     * IODRV 32x32 cursor bitmap is a distinct source owner.  Do not share
+     * its transient pointer state with the Amiga sprite route. */
+    unsigned int csbFmtownsHeldChampionIconOrdinal;
     /* APPB.FTL follows A31M's 606-VBL TITL sequence. This flag has a
      * separate owner because SWITCH.C F1288 waits for mouse-button release
      * before APPA.C chooses the KAOS program. */

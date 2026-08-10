@@ -9,6 +9,7 @@
 #include "asset_status_m12.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_fmtowns_portrait.h"
@@ -1063,32 +1064,94 @@ int main(void)
                   live_profile->runtime.last_input_dispatch.dequeued &&
                   live_profile->runtime.last_input_dispatch.dispatchedMove,
               "F31 live viewport routes C003 through the dungeon command queue");
-        /* ReDMCSB COMMAND.C G0447/C007 and CHAMDRAW.C F0292 own this
-         * named status strip.  Use its decoded source rectangle rather than
-         * an enum shortcut or a host-invented coordinate, then click it a
-         * second time to close through the same live pointer route. */
+        /* F31 G0447 keeps C012 (status selection) separate from C007
+         * (inventory): a named status rectangle must never inherit the
+         * convenient host inventory behavior.  C187's adjacent source bar
+         * is the actual C007 left-click target. */
         memset(&champion_name_rect, 0, sizeof(champion_name_rect));
         CHECK(dm1_v1_champion_status_name_rect_pc34(0,
                                                      &champion_name_rect) &&
                   champion_name_rect.w > 0 && champion_name_rect.h > 0 &&
-                  M11_GameView_HandlePointerButton(
-                      &view,
-                      champion_name_rect.x + champion_name_rect.w / 2,
-                      champion_name_rect.y + champion_name_rect.h / 2,
-                      DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
-                  view.inventoryPanelActive && view.pointerPositionKnown &&
+                  ((void)M11_GameView_HandlePointerButton(
+                       &view,
+                       champion_name_rect.x + champion_name_rect.w / 2,
+                       champion_name_rect.y + champion_name_rect.h / 2,
+                       DM1_V1_MOUSE_MASK_LEFT_PC34), 1) &&
+                  !view.inventoryPanelActive && view.pointerPositionKnown &&
                   view.pointerX == champion_name_rect.x +
                                        champion_name_rect.w / 2 &&
                   view.pointerY == champion_name_rect.y +
                                        champion_name_rect.h / 2,
-              "F31 live pointer opens the real MINI.DAT champion inventory");
+              "F31 C012 status rectangle remains a selection-only source route");
         CHECK(M11_GameView_HandlePointerButton(
-                  &view,
-                  champion_name_rect.x + champion_name_rect.w / 2,
-                  champion_name_rect.y + champion_name_rect.h / 2,
-                  DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
-                  !view.inventoryPanelActive,
-              "F31 live pointer closes that inventory through C007");
+                  &view, 50, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                  M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
+                  M11_GameView_HandlePointerButton(
+                      &view, 50, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                  M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+              "F31 C187 bar opens and closes inventory through C007");
+        {
+            /* G0447 binds the F31 C113..C116 cells to C125..C128, and
+             * F0380 routes those commands directly to IO.C F0070.  Select
+             * the occupied source cell from the real MINI.DAT party rather
+             * than manufacturing a formation fixture, then move it to an
+             * actually empty native icon cell.  F31's 32x32 IODRV cursor
+             * is intentionally not asserted here: only F0070's durable
+             * GAMEBLOCK Cell/Direction/0x0400 transaction is portable to
+             * the M11 source runtime. */
+            CSB_V1_BootProfile *formation_profile =
+                (CSB_V1_BootProfile *)view.csbBootProfile;
+            int source_icon = -1;
+            int target_icon = -1;
+            int candidate;
+            const int icon_x[4] = { 290, 310, 310, 290 };
+            const int icon_y[4] = { 7, 7, 21, 21 };
+
+            if (formation_profile &&
+                formation_profile->runtime.party_state_valid &&
+                formation_profile->runtime.party_state.ChampionCount > 0) {
+                source_icon =
+                    ((int)formation_profile->runtime.party_state.Champions[0].Cell -
+                     formation_profile->runtime.party_state.PartyDirection) & 3;
+                for (candidate = 0; candidate < 4; ++candidate) {
+                    int champion;
+                    int occupied = 0;
+                    const int cell = (candidate +
+                                      formation_profile->runtime.party_state.PartyDirection) & 3;
+                    for (champion = 0;
+                         champion < formation_profile->runtime.party_state.ChampionCount;
+                         ++champion) {
+                        if (formation_profile->runtime.party_state.Champions[champion].Cell ==
+                            (uint8_t)cell) {
+                            occupied = 1;
+                            break;
+                        }
+                    }
+                    if (!occupied) {
+                        target_icon = candidate;
+                        break;
+                    }
+                }
+            }
+            CHECK(source_icon >= 0 && target_icon >= 0 &&
+                      M11_GameView_HandlePointerButton(
+                          &view, icon_x[source_icon], icon_y[source_icon],
+                          DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                      view.csbFmtownsHeldChampionIconOrdinal ==
+                          (unsigned int)source_icon + 1u,
+                  "F31 C125-C128 picks up the real MINI.DAT formation icon through F0070");
+            CHECK(source_icon >= 0 && target_icon >= 0 &&
+                      M11_GameView_HandlePointerButton(
+                          &view, icon_x[target_icon], icon_y[target_icon],
+                          DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                      view.csbFmtownsHeldChampionIconOrdinal == 0u &&
+                      formation_profile->runtime.party_state.Champions[0].Cell ==
+                          (uint8_t)((target_icon +
+                                     formation_profile->runtime.party_state.PartyDirection) & 3) &&
+                      (formation_profile->runtime.party_state.Champions[0].Attributes &
+                       CSB_V1_F0070_ATTRIBUTE_ICON_DIRTY_PC34) != 0u,
+                  "F31 F0070 releases the real champion into its selected source icon cell");
+        }
         /* F0433 stays closed: Firestaff must never write a private envelope
          * over a native F31 slot.  F0435, however, may resume the selected
          * authentic save after verifying its C5 header, five save parts and

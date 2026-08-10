@@ -12686,3 +12686,15 @@ rendering remain blocked.
   slotåterställningen, och först sedan flyttas den redan verifierade
   kandidaten in i runtime. Riktat test mot autentisk Atari ST `MINI.DAT`
   passerar.
+# CSB FM Towns: F0070 formationsikoner från riktig F31-media (2026-08-10)
+
+- ✅ F31E/F31J:s G0447-rutor `C113..C116` skickar nu `C125..C128` till
+  samma källbundna `IO.C F0070`-transaktion som originalet. Den uppdaterar
+  endast `GAMEBLOCK`-championens `Cell`, `Direction` och `0x0400 ICON`;
+  Towns egen 32×32 IODRV-cursor syntetiseras inte.
+- ✅ Den äkta `fmtowns_iso`-körningen med autentisk `CSBGAME.DAT` verifierar
+  pickup och release till en verkligt tom formationscell. Regressionen låser
+  också F31:s G0447-separation: `C012` väljer champion, medan `C187`/`C007`
+  öppnar inventory.
+- ✅ Källkontroll: ReDMCSB `COMMAND.C:375-391`, `F0380:2164-2170` och
+  `IO.C F0070:2395-2647`, inklusive F31:s `F2236/F2237` IODRV-cursorväg.
