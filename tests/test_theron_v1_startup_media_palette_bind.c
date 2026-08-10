@@ -56,7 +56,13 @@ static void check_real_palette(
     const char *label) {
     Theron_V1_World world;
     Theron_Track02PaletteWindowEvidence evidence;
-    size_t palette_offset = strstr(label, "JP") != NULL ?
+    Theron_Track02Variant variant =
+        theron_v1_track02_variant_for_md5(md5);
+    /* The label is diagnostic text only.  Variant ownership must come from
+     * the authenticated Track 02 identity; otherwise an environment-driven
+     * JP run was incorrectly sent to the US palette offset because its label
+     * was simply "environment". */
+    size_t palette_offset = variant == THERON_TRACK02_VARIANT_JP_BIN ?
         0x29fd70u : 0x2a06a0u;
     uint8_t *track02;
     size_t track02_bytes = 0u;
@@ -68,7 +74,9 @@ static void check_real_palette(
     }
     memset(&world, 0, sizeof(world));
     memset(&evidence, 0, sizeof(evidence));
-    CHECK(theron_v1_track02_inspect_4bpp_palette_window(
+    CHECK((variant == THERON_TRACK02_VARIANT_US_BIN ||
+           variant == THERON_TRACK02_VARIANT_JP_BIN) &&
+          theron_v1_track02_inspect_4bpp_palette_window(
         track02, track02_bytes, md5, palette_offset, &evidence) ==
         THERON_TRACK02_SIGNAL_OK);
     CHECK(evidence.format_valid && evidence.palette.valid);

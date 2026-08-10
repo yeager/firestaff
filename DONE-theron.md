@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — palette verification now follows authenticated variant
+
+- ✅ Fixed `test_theron_v1_startup_media_palette_bind`: the palette-window
+  offset is now selected from the authenticated Track 02 MD5, not from a
+  diagnostic label. Environment-driven JP runs therefore validate the real JP
+  palette window instead of being misrouted to the US offset.
+- ✅ Real `TQUS02.bin` and `TQJP02.bin` both pass the palette and roster checks;
+  no runtime palette promotion was opened by this test-only correction.
+
 ## 2026-08-10 — real Theron reference capture published
 
 - ✅ README now links a tracked, real original-US Mednafen dungeon capture as
