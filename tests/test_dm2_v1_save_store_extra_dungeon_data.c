@@ -48,9 +48,9 @@ static void mock_get_map_dims(void *ctx, int *w, int *h) {
     *h = MOCK_H;
 }
 
-static int mock_init_suppress(void *ctx) {
+static int mock_get_current_map(void *ctx) {
     (void)ctx;
-    return 0;
+    return g_current_map;
 }
 
 /* Minimal record callbacks (no records in tiles). */
@@ -82,16 +82,18 @@ int main(void) {
     dung_cb.get_teleporter_detail = mock_get_teleporter_detail;
     dung_cb.get_map_count = mock_get_map_count;
     dung_cb.get_map_dimensions = mock_get_map_dims;
-    dung_cb.init_suppress = mock_init_suppress;
+    dung_cb.get_current_map = mock_get_current_map;
 
     /* Test 1: all tiles type 0 (wall), no records. Should just write terminators. */
     memset(g_tiles, 0, sizeof(g_tiles));
     g_map_change_count = 0;
     dm2_v1_write_record_session_init(&session, buf, sizeof(buf),
         creature_idx, 16, container_idx, 16, NULL, 0);
-    int rc = dm2_v1_store_extra_dungeon_data(&session, &rec_cb, &dung_cb, 0);
+    g_current_map = 1;
+    int rc = dm2_v1_store_extra_dungeon_data(&session, &rec_cb, &dung_cb, -1);
     assert(rc == 0);
     assert(g_map_change_count == MOCK_MAPS + 1);
+    assert(g_current_map == 1);
 
     /* Test 2: tile type 2 (pit, mask=0x08) should write SUPPRESS data. */
     memset(g_tiles, 0, sizeof(g_tiles));

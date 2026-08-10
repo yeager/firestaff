@@ -3401,11 +3401,11 @@
 - **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
   **2026-08-07 corpus audit:** the supplied DOS data root contains eight
   original `sksave0..3.dat/.bak` files (51,521–51,574 bytes). The real-data
-  suite passes 126/126 and confirms the source raw prefix, fixed SUPPRESS
+  suite passes 259/259 and confirms the source raw prefix, fixed SUPPRESS
   order, timer boundary, DB-pool receipts and fail-closed runtime handoff;
-  the focused source-order orchestrator passes 6/6. Its writer transaction
-  now retains the source-ordered `savegamep3` possession list; a live writer
-  owner for the complete graph is still missing.
+  the focused source-order orchestrator passes 7/7. Its writer transaction
+  now retains the source-ordered `savegamep3` possession list and special
+  timer roots; a live writer owner for the complete graph is still missing.
 
 ## Active DM1/CSB Symbol Queue
 

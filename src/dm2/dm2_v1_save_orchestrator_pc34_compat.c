@@ -18,6 +18,7 @@
  * 14. SUPPRESS flush */
 
 #include "dm2_v1_save_orchestrator_pc34_compat.h"
+#include "dm2_v1_save_timers_pc34_compat.h"
 #include <string.h>
 
 /* All-ones mask for globalb/globalw/v1e0104 SUPPRESS sections.
@@ -29,6 +30,26 @@ static const uint8_t s_full_mask[4] = {0xFF, 0xFF, 0xFF, 0xFF};
  * is populated in WRITE_RECORD_CHECKCODE and consumed only by
  * WRITE_POSSESSION_INDICES; it is not the DB15 pool count. */
 enum { DM2_V1_SAVE_POSSESSION_LINK_CAPACITY = 100 };
+
+/* DM2_GAME_SAVE_MENU compacts the live c_tim array before serialising it.
+ * c_timer.h fixes every entry at 12 bytes; WRITE_RECORD_CHECKCODE needs just
+ * the source type and valueB fields for 0x19/0x3c/0x3d ownership. */
+static int dm2_v1_save_timer_links_from_raw(
+    const uint8_t *raw, int count, size_t entry_size,
+    DM2_WriteRecordTimer out[DM2_V1_SAVE_TIMER_MAX])
+{
+    if (count < 0 || ((count > 0) && !raw) ||
+        entry_size != DM2_V1_SAVE_TIMER_RECORD_SIZE ||
+        (unsigned)count > DM2_V1_SAVE_TIMER_MAX) return -1;
+
+    for (int i = 0; i < count; ++i) {
+        const uint8_t *entry = raw + (size_t)i * entry_size;
+        out[i].type = entry[4]; /* c_timer.h:66 ttype */
+        out[i].record_link = (uint16_t)entry[8] |
+            ((uint16_t)entry[9] << 8); /* c_timer.h:88 getB */
+    }
+    return 0;
+}
 
 typedef struct {
     const DM2_WriteRecordCallbacks *source;
@@ -139,7 +160,8 @@ static int dm2_v1_save_orchestrator_callbacks_valid(
            cb->dungeon_cb.get_record_link &&
            cb->dungeon_cb.get_teleporter_detail &&
            cb->dungeon_cb.get_map_count &&
-           cb->dungeon_cb.get_map_dimensions && cb->dungeon_cb.init_suppress &&
+           cb->dungeon_cb.get_map_dimensions &&
+           cb->dungeon_cb.get_current_map &&
            cb->possession_cb.resolve_possession_index;
 }
 
@@ -151,6 +173,10 @@ int dm2_v1_save_orchestrate(
     DM2_V1_SavePossessionCollector possession_collector;
     DM2_WriteRecordCallbacks record_callbacks;
     uint16_t possession_links[DM2_V1_SAVE_POSSESSION_LINK_CAPACITY];
+    DM2_WriteRecordTimer timer_links[DM2_V1_SAVE_TIMER_MAX];
+    const uint8_t *timer_data;
+    int timer_count = 0;
+    size_t timer_entry_size;
     if (!cb || !out_buf || !result) return -1;
     memset(result, 0, sizeof(*result));
 
@@ -164,6 +190,14 @@ int dm2_v1_save_orchestrate(
         sizeof(possession_links[0]);
     dm2_v1_save_collect_callbacks(&record_callbacks, &possession_collector,
                                   &cb->write_record_cb);
+
+    timer_data = cb->get_timer_array(cb->ctx, &timer_count);
+    timer_entry_size = cb->get_timer_entry_size(cb->ctx);
+    if (dm2_v1_save_timer_links_from_raw(timer_data, timer_count,
+            timer_entry_size, timer_links) != 0) {
+        result->error = 10;
+        return -1;
+    }
 
     const uint8_t *record_sizes = dm2_v1_save_record_sizes();
     int rc;
@@ -318,29 +352,25 @@ int dm2_v1_save_orchestrate(
     /* 2g. Timers (timer_size × num_timers, vsgame mask).
      * Source: sksvgame.cpp:2245. */
     {
-        int timer_count = 0;
-        const uint8_t *data = cb->get_timer_array(cb->ctx, &timer_count);
-        if (timer_count < 0) { result->error = 10; return -1; }
-        if (timer_count > 0 && !data) { result->error = 10; return -1; }
-        if (data && timer_count > 0) {
-            size_t entry_size = cb->get_timer_entry_size(cb->ctx);
-            if (entry_size == 0u) { result->error = 10; return -1; }
+        if (timer_data && timer_count > 0) {
             const uint8_t *mask = dm2_v1_save_mask_timer();
-            if (mask) ORCH_SUPPRESS(data, mask, entry_size, timer_count);
+            if (mask) ORCH_SUPPRESS(timer_data, mask, timer_entry_size,
+                                    timer_count);
         }
     }
 
     #undef ORCH_SUPPRESS
 
-    /* Phase 3: WRITE_RECORD_CHECKCODE for hero inventory.
-     * Source: sksvgame.cpp:2254-2274. */
+    /* Phases 3–4 share one source session: index arrays, timer view and the
+     * SUPPRESS bit state persist from hero roots through DM2_2066_0b44 and
+     * STORE_EXTRA_DUNGEON_DATA. */
     {
         int creature_indices[256], container_indices[256];
         DM2_WriteRecordSession wrs;
         dm2_v1_write_record_session_init(&wrs,
             out_buf + out_pos, out_cap - out_pos,
             creature_indices, 256, container_indices, 256,
-            NULL, 0);
+            timer_links, timer_count);
 
         /* Copy the writer state from the SUPPRESS section. */
         wrs.writer = writer;
@@ -367,33 +397,20 @@ int dm2_v1_save_orchestrate(
             }
         }
 
-        out_pos += wrs.out_written;
-        writer = wrs.writer;
-        result->creatures_written = wrs.creature_count;
-        result->containers_written = wrs.container_count;
-    }
-
-    /* Phase 4: STORE_EXTRA_DUNGEON_DATA.
-     * Source: sksvgame.cpp:2277-2278. */
-    {
-        DM2_WriteRecordSession wrs;
-        int creature_indices[256], container_indices[256];
-        dm2_v1_write_record_session_init(&wrs,
-            out_buf + out_pos, out_cap - out_pos,
-            creature_indices, 256, container_indices, 256,
-            NULL, 0);
-        wrs.writer = writer;
-
-        DM2_WriteRecordCallbacks wcb = record_callbacks;
+        /* Phase 4: DM2_2066_0b44 then STORE_EXTRA_DUNGEON_DATA.
+         * Source: c_savegame.cpp:1942-2041, 2277-2278. */
         DM2_StoreExtraDungeonCallbacks dcb = cb->dungeon_cb;
 
-        rc = dm2_v1_store_extra_dungeon_data(&wrs, &wcb, &dcb, -1);
+        rc = dm2_v1_store_extra_dungeon_data(&wrs, &wcb, &dcb,
+                                              dcb.get_current_map(dcb.ctx));
         if (rc != 0 || possession_collector.overflow) {
             result->error = 13; return -1;
         }
 
         out_pos += wrs.out_written;
         writer = wrs.writer;
+        result->creatures_written = wrs.creature_count;
+        result->containers_written = wrs.container_count;
     }
 
     /* Phase 5: WRITE_POSSESSION_INDICES.

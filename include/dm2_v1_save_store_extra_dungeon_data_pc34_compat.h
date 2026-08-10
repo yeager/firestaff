@@ -45,9 +45,9 @@ typedef struct {
     /* Get current map dimensions. Must be called after change_current_map. */
     void (*get_map_dimensions)(void *ctx, int *width, int *height);
 
-    /* Initialize SUPPRESS writer state (called once at start via 2066_0b44).
-     * Returns 0 on success, nonzero on failure. */
-    int (*init_suppress)(void *ctx);
+    /* Return the currently selected c_map index. The source saves
+     * ddat.v1d3248 before scanning every map and restores it afterwards. */
+    int (*get_current_map)(void *ctx);
 
     void *ctx;
 } DM2_StoreExtraDungeonCallbacks;

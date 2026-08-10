@@ -12921,3 +12921,17 @@ rendering remain blocked.
 - ⚠️ Detta publicerar ingen sparfil eller session. Riktig SKSAVE-skrivning
   kräver fortfarande en komplett, muterbar GAME_LOAD-ägare för timer-, karta-
   och recordgrafen.
+
+# DM2: SKSAVE-skrivarens delade record- och specialtimerpass (2026-08-10)
+
+- ✅ `DM2_GAME_SAVE_MENU` behåller nu samma `WRITE_RECORD_CHECKCODE`-session
+  från hero- och handrötterna genom `DM2_2066_0b44` och hela
+  `STORE_EXTRA_DUNGEON_DATA`. Den källägda 12-byte `c_tim`-arrayen avkodas
+  enbart till `ttype` och `wvalueB`, vilket knyter typ 0x19, 0x3c och 0x3d
+  till deras autentiska recordlänkar utan skapade timers.
+- ✅ Kartpasset återställer nu den verkliga aktuella `c_map`-rutan efter
+  genomgången. Den gamla `init_suppress`-callbacken, som saknade motsvarighet
+  i originalets `DM2_2066_0b44`, är borttagen.
+- ✅ Sju fokuserade skrivartester, record-/kartskrivartester, hel appbyggnad,
+  realdata-SKSAVE-korpusen (259/0) och produktions-placeholdergrinden
+  passerar. Ingen sparfil skrivs eller publiceras utan komplett live-ägare.

@@ -28,12 +28,27 @@ int dm2_v1_store_extra_dungeon_data(
     const DM2_StoreExtraDungeonCallbacks *dung_cb,
     int restore_map)
 {
-    if (!session || !rec_cb || !dung_cb) return -1;
+    if (!session || !rec_cb || !dung_cb || !dung_cb->change_current_map ||
+        !dung_cb->get_tile || !dung_cb->get_record_link ||
+        !dung_cb->get_map_count || !dung_cb->get_map_dimensions ||
+        !dung_cb->get_current_map || session->timer_count < 0 ||
+        (session->timer_count > 0 && !session->timers)) return -1;
 
-    if (dung_cb->init_suppress) {
-        if (dung_cb->init_suppress(dung_cb->ctx) != 0)
-            return 1;
+    /* c_savegame.cpp::DM2_2066_0b44 precedes STORE_EXTRA_DUNGEON_DATA.
+     * Special type-0x3c/0x3d timers write their valueB roots through the
+     * same record session as hero and map chains. */
+    for (int i = 0; i < session->timer_count; ++i) {
+        const DM2_WriteRecordTimer *timer = &session->timers[i];
+        if (timer->type == 0x3cu || timer->type == 0x3du) {
+            int rc = dm2_v1_write_record_checkcode(session, rec_cb,
+                timer->record_link, 0, 0);
+            if (rc != 0) return rc;
+        }
     }
+
+    if (restore_map < 0)
+        restore_map = dung_cb->get_current_map(dung_cb->ctx);
+    if (restore_map < 0) return -1;
 
     int map_count = dung_cb->get_map_count(dung_cb->ctx);
 
