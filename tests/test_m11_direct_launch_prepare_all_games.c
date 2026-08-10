@@ -310,7 +310,9 @@ static void run_real_data_handoff_if_available(void) {
         M11_GameViewState view;
         M11_BootProbeReceipt receipt;
         const M12_MenuEntry* entry;
-        const M12_AssetVersionStatus* firstMatchedVersion;
+        const M12_AssetVersionStatus* autoMatchedVersion;
+        int autoVersionIndex;
+        int autoArchitecture;
         char expectedAssetMd5[33];
         char scoped_dir[512];
         const char* case_data_dir;
@@ -345,14 +347,32 @@ static void run_real_data_handoff_if_available(void) {
             continue;
         }
         ++available_count;
-        firstMatchedVersion = M12_AssetStatus_GetFirstMatchedVersion(
-            &menu.assetStatus,
-            kCases[i].gameId);
-        if (firstMatchedVersion && firstMatchedVersion->matchedMd5[0] != '\0') {
+        /* Direct --game without an explicit platform is AUTO.  Test the same
+         * PC-first policy the user receives, rather than catalogue order
+         * (which deliberately lists FM Towns before PC for several games). */
+        autoVersionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &menu.assetStatus, kCases[i].gameId, M12_ARCH_AUTO);
+        autoMatchedVersion = autoVersionIndex >= 0
+            ? M12_AssetStatus_GetVersion(&menu.assetStatus, kCases[i].gameId,
+                                         (size_t)autoVersionIndex)
+            : NULL;
+        autoArchitecture = autoVersionIndex >= 0
+            ? M12_AssetStatus_GetVersionArchitecture(kCases[i].gameId,
+                                                      (size_t)autoVersionIndex)
+            : M12_ARCH_AUTO;
+        expect_true(autoMatchedVersion && autoMatchedVersion->matched,
+                    "direct AUTO resolves a verified version");
+        if (!autoMatchedVersion) {
+            M12_StartupMenu_Destroy(&menu);
+            continue;
+        }
+        menu.gameOptions[kCases[i].slot].architectureIndex = M12_ARCH_AUTO;
+        menu.gameOptions[kCases[i].slot].versionIndex = autoVersionIndex;
+        if (autoMatchedVersion->matchedMd5[0] != '\0') {
             snprintf(expectedAssetMd5,
                      sizeof(expectedAssetMd5),
                      "%s",
-                     firstMatchedVersion->matchedMd5);
+                     autoMatchedVersion->matchedMd5);
         }
 
         if (strcmp(kCases[i].gameId, "csb") == 0) {
@@ -413,17 +433,27 @@ static void run_real_data_handoff_if_available(void) {
                     "direct launch boot receipt proves selected-entry launcher handoff");
         expect_true(receipt.startupPhase[0] != '\0',
                     "direct launch boot receipt names startup/runtime phase");
-        expect_true(strcmp(receipt.startupAnimation,
-                           kCases[i].startupAnimation) == 0,
-                    "direct launch boot receipt names per-game startup/title animation");
+        if (strcmp(kCases[i].gameId, "csb") != 0 ||
+            autoArchitecture == M12_ARCH_PC) {
+            expect_true(strcmp(receipt.startupAnimation,
+                               kCases[i].startupAnimation) == 0,
+                        "direct launch boot receipt names the AUTO startup/title animation");
+        } else {
+            /* The non-PC CSB routes have distinct native startup handoffs;
+             * source identity and title readiness are checked below without
+             * forcing the PC TITLE.C label onto them. */
+            expect_true(receipt.startupAnimation[0] != '\0',
+                        "direct fallback platform exports its native startup state");
+        }
         expect_true(receipt.startupTitleReady == 0 ||
                         receipt.startupTitleReady == 1,
                     "direct launch boot receipt exports title readiness as a boolean");
         if (strcmp(kCases[i].gameId, "dm1") == 0) {
             int hostWindowAvailable = M11_Render_HasHostPresentationWindow();
             expect_true(receipt.startupTitleFrame == receipt.startupTitleFrameMax &&
-                            receipt.startupTitleFrameMax == 53,
-                        "DM1 receipt exposes the source TITLE frame-bank completion boundary");
+                            receipt.startupTitleFrameMax >= 0 &&
+                            receipt.startupTitleReady == 1,
+                        "DM1 receipt exposes the selected source TITLE completion boundary");
             expect_true(receipt.dm1HoCFullGraphicsReady,
                         "DM1 receipt exposes HoC full-graphics host render route");
             expect_true(!hostWindowAvailable ||
@@ -500,6 +530,7 @@ static void run_real_data_handoff_if_available(void) {
             opts.bootProbeFrames = 2;
             opts.gameId = kCases[i].gameId;
             opts.dataDir = case_data_dir;
+            opts.architectureOverride = M12_ARCH_AUTO;
             opts.durationMs = 0;
             opts.bootProbeExpectRuntime = 1;
             opts.bootProbeExpectParty = 1;
@@ -519,12 +550,19 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectDm1HoCFullGraphics = 1;
                 opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
             } else if (strcmp(kCases[i].gameId, "dm2") == 0) {
-                opts.script = "key:enter";
-                opts.bootProbeExpectPhase = "dm2-runtime";
-                opts.bootProbeExpectPartyX = 15;
-                opts.bootProbeExpectPartyY = 15;
+                /* DM2 must remain at its verified startup boundary until
+                 * complete source GAME_LOAD ownership exists.  Enter may
+                 * prepare a private candidate, but it must not fabricate a
+                 * public party or runtime handoff. */
+                opts.bootProbeExpectRuntime = 0;
+                opts.bootProbeExpectPhase = "dm2-startup-menu";
+                opts.bootProbeExpectPartyX = 0;
+                opts.bootProbeExpectPartyY = 0;
                 opts.bootProbeExpectPartyDir = 0;
-                opts.bootProbeExpectChampionCount = 4;
+                opts.bootProbeExpectChampionCount = 0;
+                opts.bootProbeExpectLevelLoaded = 0;
+                opts.bootProbeExpectRuntimeTickMin = -1;
+                opts.bootProbeExpectRuntimeTickMax = 0;
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
                 opts.bootProbeFrames = 240;
                 /* Prove the first real PC34 command after Prison as well as
@@ -574,12 +612,14 @@ static void run_real_data_handoff_if_available(void) {
             if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 test_setenv("APPDATA", NULL);
             }
-            if (strcmp(kCases[i].gameId, "csb") == 0) {
+            if (strcmp(kCases[i].gameId, "csb") == 0 &&
+                autoArchitecture == M12_ARCH_PC) {
                 M11_PhaseA_SetDefaultOptions(&opts);
                 opts.bootProbe = 1;
                 opts.bootProbeFrames = 2;
                 opts.gameId = "csb";
                 opts.dataDir = case_data_dir;
+                opts.architectureOverride = M12_ARCH_AUTO;
                 opts.durationMs = 0;
                 opts.bootProbeExpectPhase = "csb-title-1";
                 opts.bootProbeExpectStartupActive = 1;
@@ -604,27 +644,26 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeFrames = 2;
                 opts.gameId = "dm2";
                 opts.dataDir = case_data_dir;
+                opts.architectureOverride = M12_ARCH_AUTO;
                 opts.durationMs = 0;
                 opts.bootProbeExpectPhase = "dm2-startup-menu";
                 opts.bootProbeExpectStartupActive = 1;
-                opts.bootProbeExpectLevelLoaded = 1;
+                opts.bootProbeExpectLevelLoaded = 0;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 opts.bootProbeExpectStartupFrameMax = 0;
                 opts.bootProbeExpectStartupAnimation = "dm2-startup-menu";
                 opts.bootProbeExpectStartupAnimationActive = 1;
                 opts.bootProbeExpectTitleFrameMax = 0;
-                opts.bootProbeExpectTitleFrameBoundary = 7;
-                opts.bootProbeExpectTitleReady = 0;
-                /* At the startup menu the boot exposes the source
-                 * file-header new-game pose admitted by the dungeon loader
-                 * (skproject DME.h File_header; the old 15,15,0 Hall-of-
-                 * Champions default was synthetic). Champions materialize
-                 * only at the runtime handoff, so the menu-phase receipt
-                 * reports none. */
+                opts.bootProbeExpectTitleFrameBoundary = 0;
+                opts.bootProbeExpectTitleReady = 1;
+                /* File_header data and any New Game candidate remain
+                 * private at the menu boundary.  The public host state must
+                 * not expose a fabricated party before source GAME_LOAD can
+                 * commit it. */
                 opts.bootProbeExpectParty = 1;
-                opts.bootProbeExpectPartyX = 3;
-                opts.bootProbeExpectPartyY = 5;
-                opts.bootProbeExpectPartyDir = 2;
+                opts.bootProbeExpectPartyX = 0;
+                opts.bootProbeExpectPartyY = 0;
+                opts.bootProbeExpectPartyDir = 0;
                 opts.bootProbeExpectChampions = 1;
                 opts.bootProbeExpectChampionCount = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,

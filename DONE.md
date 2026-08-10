@@ -3133,6 +3133,11 @@ rendering remain blocked.
   startas alltså fortfarande från sin valda och hashverifierade originalmedia.
 - ✅ Policyn är verifierad för alla tre spel med samtidigt matchande PC- och
   FM Towns-profiler.
+- ✅ Direktstartsgrinden använder nu samma effektiva Auto-version som M12
+  och CLI, i stället för katalogens första träff. Den bevisar därför PC34
+  för Dungeon Master och Dungeon Master II, samt CSB:s verifierade Amiga-
+  utgåva när ingen PC34-version finns, utan att kräva en felaktig PC-titel
+  eller en syntetisk DM2-runtime.
 
 # DM2 GAME_LOAD: ofullständig CAII-session spärras (2026-08-10)
 
