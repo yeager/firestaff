@@ -534,6 +534,23 @@ VDP2 emulator. It does not admit PNDSize=1, 16x16 cells, inferred source-map
 crops or a host text layout. A positive FONT256/TEXT4/TABL consumer capture
 is still required before the startup/menu text gate can change.
 
+The transport-only tilemap decoder is also exercised against the authenticated
+external J-BIOS/English witness at frame 300:
+
+```sh
+cmake --build /tmp/firestaff-nexus-build \
+  --target test_nexus_v1_vdp2_runtime_tilemap -j2
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE=\
+  /Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810/runtime-vdp12.raw \
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME=300 \
+  /tmp/firestaff-nexus-build/test_nexus_v1_vdp2_runtime_tilemap
+```
+
+The test passes with NBG1 enabled in character/tilemap mode and keeps
+`renderer_permitted=0`. The same witness is not a bitmap-mode frame, so the
+separate 512x256/8bpp bitmap decoder correctly rejects it; this prevents a
+character map from being mislabeled as a bitmap or a menu surface.
+
 VDP1 replay also has an atomic sequence lane for a complete bounded command
 window. Every mode-1 command must pass the existing exact DGN image/CLUT join;
 the sequence additionally requires captured clip state (User Clip or System
