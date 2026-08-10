@@ -1,3 +1,14 @@
+# DM2: querydb behåller CAII-timerordet (2026-08-10)
+
+- ✅ `DM2_QUERY_CREATURE_5x5_POS` tar nu den riktiga DB4/CAII-kursorns
+  timerord via pekare och behåller `DM2_query_4DA3`/`DM2_query_4E26`-skrivningen.
+  Den tidigare värdeparametern tappade den mutation som originalets
+  `DM2_query_1c9a_02c3(...)+2` gör i samma RAM-ägare.
+- ✅ Källkontroll mot SKProject `SKULLWIN/c_querydb.cpp:2961,2992,3014`:
+  intervalmasken är `0xe03f`, så bit 0x1000 och övriga intervalbitar rensas
+  före nästa fråga. Core-regressionen täcker både den riktiga timer-mutationen
+  och den roterade 5×5-positionen.
+
 # DM2: CAII-riktningsbitfält från originalet (2026-08-10)
 
 - ✅ `DM2_query_1c9a_03cf` och de källbundna CAII-rutterna extraherar nu

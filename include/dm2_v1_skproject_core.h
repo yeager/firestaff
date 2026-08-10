@@ -5274,6 +5274,7 @@ int dm2_v1_skproject_query_4da3(
 typedef struct {
     int valid;
     int blocked_missing_record;
+    int blocked_missing_timer_word;
     int blocked_missing_ai_spec;
     int blocked_missing_gdat;
     int blocked_4da3_failed;
@@ -5289,7 +5290,7 @@ int dm2_v1_skproject_query_creature_5x5_pos(
     uint8_t direction,
     const DM2_V1_SkprojectCreatureAISpec *ai_spec,
     uint16_t addend_from_1c9a_02c3,
-    uint16_t timer_word_from_1c9a_02c3,
+    uint16_t *io_timer_word_from_1c9a_02c3,
     const uint8_t *gdat_4da3_data,
     uint32_t gdat_size,
     uint8_t *out_pos,

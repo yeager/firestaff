@@ -5965,6 +5965,7 @@ static void test_skwin_core_symbol_batch_cycle13(void)
     uint8_t out_bytes[8];
     uint8_t pos;
     uint16_t word;
+    uint16_t creature_timer_word;
     uint16_t word32;
     int32_t frame_class;
     int16_t wall_idx;
@@ -6005,22 +6006,25 @@ static void test_skwin_core_symbol_batch_cycle13(void)
     ai_spec.word30 = 0u;
     ai_spec.word32 = 0u;
     CHECK(!dm2_v1_skproject_query_creature_5x5_pos(
-              NULL, 0u, &ai_spec, 0u, 0u, gdat_blob, sizeof(gdat_blob), &pos,
+              NULL, 0u, &ai_spec, 0u, NULL, gdat_blob, sizeof(gdat_blob), &pos,
               &qc5x5) &&
               qc5x5.blocked_missing_record && pos == 0x0cu,
           "DM2_QUERY_CREATURE_5x5_POS fails closed without record");
+    creature_timer_word = 0x0021u;
     CHECK(!dm2_v1_skproject_query_creature_5x5_pos(
-              creature_rec, 0u, NULL, 0u, 0u, gdat_blob, sizeof(gdat_blob),
+              creature_rec, 0u, NULL, 0u, &creature_timer_word, gdat_blob, sizeof(gdat_blob),
               &pos, &qc5x5) &&
               qc5x5.blocked_missing_ai_spec,
           "DM2_QUERY_CREATURE_5x5_POS fails closed without AI spec");
     gdat_blob[4] = 0x08u; /* base 8, direction 1 rotates to 6 */
+    creature_timer_word = 0x9021u; /* query_4E26 clears source bit 0x1000 */
     CHECK(dm2_v1_skproject_query_creature_5x5_pos(
-              creature_rec, 1u, &ai_spec, 0u, 0x8020u, gdat_blob,
+              creature_rec, 1u, &ai_spec, 0u, &creature_timer_word, gdat_blob,
               sizeof(gdat_blob), &pos, &qc5x5) == 1 &&
               qc5x5.valid && qc5x5.base_pos == 0x08u &&
-              qc5x5.rotated_pos == 0x06u && pos == 0x06u,
-          "DM2_QUERY_CREATURE_5x5_POS rotates GDAT base position");
+              qc5x5.rotated_pos == 0x06u && pos == 0x06u &&
+              creature_timer_word == 0x8021u,
+          "DM2_QUERY_CREATURE_5x5_POS rotates GDAT position and retains the source timer write");
 
     /* DM2_query_0cee_0897 */
     memset(tile_values, 0, sizeof(tile_values));

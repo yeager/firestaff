@@ -12654,7 +12654,9 @@ int dm2_v1_skproject_query_4e26(
         if ((word & 0x1000u) == 0u)
             interval = (uint16_t)((word & 0x0fc0u) >> 6);
         else
-            *timer_word = (uint16_t)(word & 0xf03fu);
+            /* c_querydb.cpp:2961 `and16(..., 0xffffe03f)` clears the
+             * source 0x1fc0 interval field before the next query. */
+            *timer_word = (uint16_t)(word & 0xe03fu);
         word = *timer_word;
         receipt.cleared_timer_bits = (receipt.bit_1000 != 0u) ? 1u : 0u;
         receipt.timer_word_after = word;
@@ -13184,7 +13186,7 @@ int dm2_v1_skproject_query_creature_5x5_pos(
     uint8_t direction,
     const DM2_V1_SkprojectCreatureAISpec *ai_spec,
     uint16_t addend_from_1c9a_02c3,
-    uint16_t timer_word_from_1c9a_02c3,
+    uint16_t *io_timer_word_from_1c9a_02c3,
     const uint8_t *gdat_4da3_data,
     uint32_t gdat_size,
     uint8_t *out_pos,
@@ -13201,6 +13203,12 @@ int dm2_v1_skproject_query_creature_5x5_pos(
 
     if (!creature_record) {
         receipt.blocked_missing_record = 1;
+        if (out_pos) *out_pos = 0x0cu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!io_timer_word_from_1c9a_02c3) {
+        receipt.blocked_missing_timer_word = 1;
         if (out_pos) *out_pos = 0x0cu;
         if (out_receipt) *out_receipt = receipt;
         return 0;
@@ -13225,7 +13233,7 @@ int dm2_v1_skproject_query_creature_5x5_pos(
     }
 
     if (!dm2_v1_skproject_query_4da3(
-            creature_type, addend_from_1c9a_02c3, &timer_word_from_1c9a_02c3,
+            creature_type, addend_from_1c9a_02c3, io_timer_word_from_1c9a_02c3,
             gdat_4da3_data, gdat_size, bytes, NULL)) {
         receipt.blocked_4da3_failed = 1;
         if (out_pos) *out_pos = 0x0cu;
