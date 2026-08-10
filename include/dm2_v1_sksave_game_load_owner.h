@@ -110,6 +110,12 @@ int dm2_v1_sksave_game_load_owner_init(
 int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
     DM2_V1_SksaveGameLoadOwner *owner);
 
+/* Read only the CREATURES -> v1d296c flags retained for an actual DB4 type
+ * during this import. Missing provenance is failure, never zero flags. */
+int dm2_v1_sksave_game_load_owner_creature_ai_flags(
+    const DM2_V1_SksaveGameLoadOwner *owner, uint8_t creature_type,
+    uint16_t *out_flags);
+
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner);
 
 #ifdef __cplusplus

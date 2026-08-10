@@ -56,6 +56,8 @@
   `READ_RECORD_CHECKCODE`. Ingen senare recyclerfas behöver läsa global GDAT.
 - ✅ DOS-korpusen bevisar att minst en verklig AI-rad behålls per komplett
   ägare. Resume är fortsatt spärrad.
+- ✅ En läsande owner-accessor avvisar saknade typer i stället för att ge
+  nollflaggor och används av korpustestet utan global GDAT-status.
 
 # Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
 

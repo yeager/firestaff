@@ -354,6 +354,17 @@ int dm2_v1_sksave_game_load_owner_init(
     return 1;
 }
 
+int dm2_v1_sksave_game_load_owner_creature_ai_flags(
+    const DM2_V1_SksaveGameLoadOwner *owner, uint8_t creature_type,
+    uint16_t *out_flags)
+{
+    if (out_flags) *out_flags = 0;
+    if (!owner || !out_flags || !owner->valid ||
+        !owner->retained_creature_ai_valid[creature_type]) return 0;
+    *out_flags = owner->retained_creature_ai_flags[creature_type];
+    return 1;
+}
+
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner)
 {
     if (!owner) return;
