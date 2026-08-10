@@ -506,6 +506,17 @@ int main(void)
                       profile->runtime.party_state.Champions[0]
                           .SymbolStep == 0u,
             "real Atari MINI.DAT C107 keeps F0400's deletion in GAMEBLOCK");
+            /* Atari ST CSB uses the literal G0452 C112 pass rectangle
+             * (285..318,77..83). CLIKMENU.C F0371 calls F0391(-1) there;
+             * MENU.C F0391 always follows that with F0388, so the action
+             * menu must close without performing or spending an action. */
+            CHECK(M11_GameView_SetActingChampion(&view, 0) &&
+                      M11_GameView_GetActingChampionOrdinal(&view) == 1u &&
+                      M11_GameView_HandlePointerButton(
+                          &view, 285, 77, M11_DM1_MOUSE_MASK_LEFT) ==
+                          M11_GAME_INPUT_REDRAW &&
+                      M11_GameView_GetActingChampionOrdinal(&view) == 0u,
+                  "real Atari MINI.DAT C112 pass closes the native action menu");
             /* ReDMCSB COMMAND.C F0380 tests G0311 together with the
              * projectile's absolute launch direction before it dequeues a
              * C003..C006 movement command.  The live M11 route must pass

@@ -31481,8 +31481,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return M11_GAME_INPUT_REDRAW;
                 }
                 /* C112 is the source-owned pass zone.  PC34 F0391 returns
-                 * without committing an action here, leaving the menu live. */
+                 * without committing an action here, but it still reaches
+                 * F0388 through F0391(-1) and closes the action menu.  The
+                 * Atari ST 2.x G0452 table uses this literal C112 box too;
+                 * merely redrawing it left the native action menu latched.
+                 * ReDMCSB CLIKMENU.C F0371:529-539; MENU.C F0391:803-838. */
                 if (sourceRoute.commandId == 112u) {
+                    M11_GameView_ClearActingChampion(state);
                     return M11_GAME_INPUT_REDRAW;
                 }
             }
