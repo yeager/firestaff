@@ -77,6 +77,7 @@ typedef struct {
     M11_SoundBuffer csbAtariStPsg;
     M11_SoundBuffer csbPc34RuntimePcm;
     M11_SoundBuffer csbAmigaRuntimePcm;
+    M11_SoundBuffer csbFmtownsAnmPcm;
     M11_SoundBuffer dm2FmtownsTitlePcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
@@ -103,6 +104,13 @@ typedef struct {
     int csbAmigaRuntimeSoundSourceVolume;
     unsigned int csbAmigaRuntimeSoundHash;
     int csbAmigaRuntimeSoundQueuedCount;
+    int csbFmtownsAnmSoundAccepted;
+    int csbFmtownsAnmSoundByteCount;
+    int csbFmtownsAnmSoundSampleRateHz;
+    int csbFmtownsAnmSoundSourceVolume;
+    unsigned int csbFmtownsAnmSoundHash;
+    int csbFmtownsAnmSoundPlayCount;
+    int csbFmtownsAnmSoundQueuedCount;
     int dm2FmtownsTitleSoundAccepted;
     int dm2FmtownsTitleSoundByteCount;
     unsigned int dm2FmtownsTitleSoundHash;
@@ -197,6 +205,15 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
     int sourcePeriod,
     unsigned int sourceHash,
     int paulaVolume);
+/* F31 ANIM.C F2275 SD/SO selects a BE-length-prefixed source record. The
+ * caller passes only the source bytes selected by SO; F31 F0060 owns its
+ * fixed 5500 Hz cadence and volume 100. No fallback sound is emitted. */
+int M11_Audio_PlayCsbFmtownsAnmPcm(M11_AudioState* state,
+                                   const int8_t* source,
+                                   int sourceBytes,
+                                   int sourceRateHz,
+                                   int sourceVolume,
+                                   unsigned int sourceHash);
 /* HME-242 TWANIM TITLE's SD record owns exactly one signed 8-bit sample.
  * SKWIN 0759:0EF0 calls the native player with that buffer, argument 0xff
  * and 5,500 Hz for every SO record. This transport accepts only the retail

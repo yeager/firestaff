@@ -64,6 +64,11 @@ static void test_real_anm(void) {
     const uint32_t expected_playback_ticks[] = {606u, 10823u, 5352u};
     const uint32_t expected_cdda_requests[] = {0u, 2u, 2u};
     const uint16_t expected_first_cdda_track[] = {0u, 3u, 18u};
+    const uint32_t expected_pcm_requests[] = {0u, 16u, 3u};
+    const uint16_t expected_first_pcm_bytes[] = {0u, 4003u, 3107u};
+    const uint32_t expected_first_pcm_fnv1a[] = {
+        0u, 0xe6ce787cu, 0xad9bde8cu
+    };
     int i;
 
     if ((!anm_dir || anm_dir[0] == '\0') && !home) {
@@ -108,6 +113,9 @@ static void test_real_anm(void) {
             uint32_t playback_ticks = 0u;
             uint32_t cdda_requests = 0u;
             uint16_t first_cdda_track = 0u;
+            uint32_t pcm_requests = 0u;
+            uint16_t first_pcm_bytes = 0u;
+            uint32_t first_pcm_fnv1a = 0u;
             int step_result;
             uint32_t frame_index =
                 (uint32_t)(receipt.frame_count + receipt.delta_count - 1);
@@ -153,6 +161,21 @@ static void test_real_anm(void) {
                     if (cdda_requests == 0u) first_cdda_track = frame.cdda_track;
                     ++cdda_requests;
                 }
+                if (frame.pcm_requested) {
+                    ASSERT(frame.pcm_source_offset < size &&
+                           frame.pcm_source_bytes > 0u &&
+                           frame.pcm_source_bytes <=
+                               size - frame.pcm_source_offset,
+                           "F2275 SO stays inside the original ANM bytes");
+                    ASSERT(frame.pcm_sample_rate_hz == 5500u &&
+                           frame.pcm_source_volume == 100u,
+                           "F31 SO dispatch retains native 5500 Hz / volume 100");
+                    if (pcm_requests == 0u) {
+                        first_pcm_bytes = frame.pcm_source_bytes;
+                        first_pcm_fnv1a = frame.pcm_source_fnv1a;
+                    }
+                    ++pcm_requests;
+                }
                 ++playback_frames;
                 playback_ticks += frame.timer_a_ticks;
             }
@@ -168,6 +191,10 @@ static void test_real_anm(void) {
             ASSERT(cdda_requests == expected_cdda_requests[i] &&
                    first_cdda_track == expected_first_cdda_track[i],
                    "F2275 TD/TR matches authenticated CD-DA requests");
+            ASSERT(pcm_requests == expected_pcm_requests[i] &&
+                   first_pcm_bytes == expected_first_pcm_bytes[i] &&
+                   first_pcm_fnv1a == expected_first_pcm_fnv1a[i],
+                   "F2275 SD/SO matches authenticated F31 PCM records");
             printf("    Playback: %u frames, %u Timer-A ticks\n",
                    (unsigned int)playback_frames,
                    (unsigned int)playback_ticks);
@@ -175,6 +202,11 @@ static void test_real_anm(void) {
                 printf("    CD-DA: %u TR requests, first physical track %u\n",
                        (unsigned int)cdda_requests,
                        (unsigned int)first_cdda_track);
+            }
+            if (pcm_requests != 0u) {
+                printf("    PCM: %u SO requests, first %u source bytes\n",
+                       (unsigned int)pcm_requests,
+                       (unsigned int)first_pcm_bytes);
             }
         }
 

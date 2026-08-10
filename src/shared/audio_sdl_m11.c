@@ -1111,6 +1111,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->csbAtariStPsg);
         m11_sound_free(&state->csbPc34RuntimePcm);
         m11_sound_free(&state->csbAmigaRuntimePcm);
+        m11_sound_free(&state->csbFmtownsAnmPcm);
         m11_sound_free(&state->dm2FmtownsTitlePcm);
     }
 
@@ -1714,6 +1715,60 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
         return 0;
     }
     state->csbAmigaRuntimeSoundSourceVolume = paulaVolume;
+    return 1;
+}
+
+int M11_Audio_PlayCsbFmtownsAnmPcm(
+    M11_AudioState* state, const int8_t* source, int sourceBytes,
+    int sourceRateHz, int sourceVolume, unsigned int sourceHash)
+{
+    unsigned int outputCount;
+    unsigned int outputIndex;
+
+    /* ReDMCSB ANIM.C F2275 lines 2247-2257 selects an SD record by SO;
+     * ANIMSND.C F0060 (F31) copies its signed bytes at 5500 Hz, passing
+     * SND_pcm_play volume 100.  Resampling is host transport only. */
+    if (!state || !state->initialized || !source || sourceBytes <= 0 ||
+        sourceRateHz != 5500 || sourceVolume != 100 || sourceHash == 0u ||
+        m11_fnv1a_bytes((const unsigned char*)source, sourceBytes) != sourceHash) {
+        if (state) {
+            m11_sound_clear(&state->csbFmtownsAnmPcm);
+            state->csbFmtownsAnmSoundAccepted = 0;
+        }
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   (unsigned int)sourceRateHz - 1u) /
+                  (unsigned int)sourceRateHz;
+    if (outputCount == 0u || outputCount > 131072u ||
+        !m11_sound_reserve(&state->csbFmtownsAnmPcm, (int)outputCount)) {
+        m11_sound_clear(&state->csbFmtownsAnmPcm);
+        state->csbFmtownsAnmSoundAccepted = 0;
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex = outputIndex * (unsigned int)sourceRateHz /
+                                   M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceBytes)
+            sourceIndex = (unsigned int)sourceBytes - 1u;
+        state->csbFmtownsAnmPcm.samples[outputIndex] =
+            (float)source[sourceIndex] / 128.0f;
+    }
+    state->csbFmtownsAnmPcm.sampleCount = (int)outputCount;
+    state->csbFmtownsAnmSoundAccepted = 1;
+    state->csbFmtownsAnmSoundByteCount = sourceBytes;
+    state->csbFmtownsAnmSoundSampleRateHz = sourceRateHz;
+    state->csbFmtownsAnmSoundSourceVolume = sourceVolume;
+    state->csbFmtownsAnmSoundHash = sourceHash;
+    ++state->csbFmtownsAnmSoundPlayCount;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream &&
+        m11_sdl_queue_samples(state, state->csbFmtownsAnmPcm.samples,
+                              state->csbFmtownsAnmPcm.sampleCount,
+                              state->sfxVolume)) {
+        ++state->csbFmtownsAnmSoundQueuedCount;
+    }
+#endif
     return 1;
 }
 

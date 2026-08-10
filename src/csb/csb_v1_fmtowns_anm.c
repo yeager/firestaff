@@ -17,6 +17,7 @@ static CSB_V1_FmtownsAnmChunkType classify_chunk(uint8_t a, uint8_t b) {
     if (a == 'N' && b == 'E') return CSB_FMTOWNS_ANM_CHUNK_NE;
     if (a == 'T' && b == 'D') return CSB_FMTOWNS_ANM_CHUNK_TD;
     if (a == 'T' && b == 'R') return CSB_FMTOWNS_ANM_CHUNK_TR;
+    if (a == 'S' && b == 'O') return CSB_FMTOWNS_ANM_CHUNK_SO;
     return CSB_FMTOWNS_ANM_CHUNK_UNKNOWN;
 }
 
@@ -412,6 +413,45 @@ int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
                 attributes;
             playback->offset = next;
             break;
+        case CSB_FMTOWNS_ANM_CHUNK_SD: {
+            uint16_t sample_bytes;
+            /* F2275 stores the payload address, not a host audio object.
+             * F31 F0060 later reads its BE16 count and begins at +2.  The
+             * chunk can contain source padding after those bytes, which is
+             * deliberately not presented as PCM. */
+            if (playback->pcm_data_count >=
+                sizeof(playback->pcm_data_offset) /
+                    sizeof(playback->pcm_data_offset[0]) || bytes < 2u)
+                return -1;
+            sample_bytes = rd16be(payload);
+            if (sample_bytes == 0u || (size_t)sample_bytes > bytes - 2u)
+                return -1;
+            playback->pcm_data_offset[playback->pcm_data_count] =
+                (uint32_t)(pos + 8u);
+            playback->pcm_data_bytes[playback->pcm_data_count] =
+                sample_bytes;
+            ++playback->pcm_data_count;
+            playback->offset = next;
+            break;
+        }
+        case CSB_FMTOWNS_ANM_CHUNK_SO: {
+            uint16_t source_index = attributes;
+            uint32_t source_offset;
+            uint16_t source_bytes;
+            if (source_index == 0u || source_index > playback->pcm_data_count ||
+                playback->pcm_pending) return -1;
+            source_offset = playback->pcm_data_offset[source_index - 1u];
+            source_bytes = playback->pcm_data_bytes[source_index - 1u];
+            if (source_offset > playback->size || source_bytes == 0u ||
+                source_bytes > playback->size - source_offset) return -1;
+            playback->pending_pcm_source_offset = source_offset;
+            playback->pending_pcm_source_bytes = source_bytes;
+            playback->pending_pcm_source_fnv1a = fnv1a32(
+                playback->data + source_offset, source_bytes);
+            playback->pcm_pending = 1;
+            playback->offset = next;
+            break;
+        }
         case CSB_FMTOWNS_ANM_CHUNK_TR:
             if (attributes == 0u || attributes >
                 playback->cdda_track_table_count) return -1;
@@ -442,6 +482,18 @@ int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
             out->cdda_track_requested = playback->cdda_track_pending;
             playback->pending_cdda_track = 0u;
             playback->cdda_track_pending = 0;
+            if (playback->pcm_pending) {
+                out->pcm_source_offset = playback->pending_pcm_source_offset;
+                out->pcm_source_bytes = playback->pending_pcm_source_bytes;
+                out->pcm_sample_rate_hz = 5500u;
+                out->pcm_source_volume = 100u;
+                out->pcm_source_fnv1a = playback->pending_pcm_source_fnv1a;
+                out->pcm_requested = 1;
+                playback->pending_pcm_source_offset = 0u;
+                playback->pending_pcm_source_bytes = 0u;
+                playback->pending_pcm_source_fnv1a = 0u;
+                playback->pcm_pending = 0;
+            }
             out->source_was_delta = type == CSB_FMTOWNS_ANM_CHUNK_DL;
             out->palette_applied = playback->palette_seen;
             memcpy(out->palette, playback->palette, sizeof(out->palette));
@@ -483,7 +535,7 @@ int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
             }
             break;
         default:
-            /* AN, SD, TD, TR, WA and SO are still consumed in stream order.
+            /* AN, WA and MI are still consumed in stream order.
              * Their host audio/input owners remain separate from the visual
              * interpreter; no synthetic cue is emitted here. */
             playback->offset = next;

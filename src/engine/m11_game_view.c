@@ -8455,6 +8455,26 @@ static void m11_csb_dispatch_fmtowns_cdda(
     m11_csb_dispatch_fmtowns_cdda_track(state, frame->cdda_track);
 }
 
+static void m11_csb_dispatch_fmtowns_anm_pcm(
+    M11_GameViewState *state, const CSB_V1_FmtownsAnmFrameReceipt *frame)
+{
+    const int8_t *source;
+    if (!state || !frame || !frame->pcm_requested ||
+        !state->csbFmtownsTitleBytes || frame->pcm_source_bytes == 0u ||
+        frame->pcm_source_offset >= state->csbFmtownsTitleByteCount ||
+        frame->pcm_source_bytes > state->csbFmtownsTitleByteCount -
+                                      frame->pcm_source_offset) return;
+    /* ANIM.C F2275 SD/SO owns this event. The ANM player exposes the
+     * selected raw source span only after its BE16 length has been checked;
+     * never substitute a host cue if transport rejects it. */
+    source = (const int8_t *)(state->csbFmtownsTitleBytes +
+                              frame->pcm_source_offset);
+    (void)M11_Audio_PlayCsbFmtownsAnmPcm(
+        &state->audioState, source, (int)frame->pcm_source_bytes,
+        (int)frame->pcm_sample_rate_hz, (int)frame->pcm_source_volume,
+        frame->pcm_source_fnv1a);
+}
+
 static void m11_csb_update_fmtowns_game_music(M11_GameViewState *state)
 {
     uint8_t selected_track;
@@ -9244,6 +9264,8 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
     state->csbFmtownsEndingActive = ending_handoff ? 1 : 0;
     state->csbFmtownsEndingFinished = 0;
     m11_csb_dispatch_fmtowns_cdda(state, &state->csbFmtownsTitleFrameReceipt);
+    m11_csb_dispatch_fmtowns_anm_pcm(
+        state, &state->csbFmtownsTitleFrameReceipt);
     return 1;
 }
 
@@ -9320,6 +9342,8 @@ static void m11_csb_advance_fmtowns_title(M11_GameViewState *state,
             state->csbFmtownsTitleFrameReceipt = next_frame;
             state->csbFmtownsFrameTimerARemaining = next_frame.timer_a_ticks;
             m11_csb_dispatch_fmtowns_cdda(
+                state, &state->csbFmtownsTitleFrameReceipt);
+            m11_csb_dispatch_fmtowns_anm_pcm(
                 state, &state->csbFmtownsTitleFrameReceipt);
         } else if (state->csbFmtownsEndingActive) {
             /* STARTUP2.C F0750 returns from F2248 to RestoreTowns and
