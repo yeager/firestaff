@@ -250,7 +250,9 @@ static void check_real_viewport_wall_catalog(const char *path)
             free(pixels);
         }
     }
-    for (graphic_index = 49u; graphic_index <= 62u; ++graphic_index) {
+    /* CSBCode.cpp::CheckCeilingPit (TAG004f04) consumes C063--C068;
+     * retain a real-data decoder receipt for every native source bitmap. */
+    for (graphic_index = 49u; graphic_index <= 68u; ++graphic_index) {
         pixels = NULL;
         width = height = 0;
         memset(&receipt, 0, sizeof(receipt));
@@ -337,6 +339,21 @@ static void check_real_viewport_projection_layout(const char *path)
         CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
             &layout.floor_pit_rectangles[wall]));
     }
+    /* Data.h CeilingPit[9] is a separate predecessor family.  Its F0R1,
+     * F0 and F2L1 records prove the offset and native row/stride fields
+     * against an operator-owned Atari GRAPHICS.DAT. */
+    for (wall = 0u;
+         wall < CSB_V1_CSBWIN_LAYOUT_022E_CEILING_PIT_RECTANGLE_COUNT;
+         ++wall) {
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.ceiling_pit_rectangles[wall]));
+    }
+    CHECK(layout.ceiling_pit_rectangles[0].x1 == 208u &&
+          layout.ceiling_pit_rectangles[0].source_stride == 8u &&
+          layout.ceiling_pit_rectangles[1].x1 == 16u &&
+          layout.ceiling_pit_rectangles[1].source_stride == 96u &&
+          layout.ceiling_pit_rectangles[8].x2 == 79u &&
+          layout.ceiling_pit_rectangles[8].source_height == 5u);
     /* CSBWin Data.h's stair RectPos families follow FloorPitRect in original
      * item 0x22e. Code390e.cpp::ReadGraphicsForLevel binds their
      * source graphics from the active wall set, so retain the original

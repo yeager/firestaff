@@ -137,6 +137,8 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
             sizeof(out_layout->door_frame_rectangles) > decoded_size ||
         CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET +
             sizeof(out_layout->rectangles) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_CEILING_PIT_RECTANGLE_OFFSET +
+            sizeof(out_layout->ceiling_pit_rectangles) > decoded_size ||
         CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_OFFSET +
             sizeof(out_layout->floor_pit_rectangles) > decoded_size ||
         CSB_V1_CSBWIN_LAYOUT_022E_STAIR_EDGE_RECTANGLE_OFFSET +
@@ -159,6 +161,9 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     memcpy(out_layout->rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET,
            sizeof(out_layout->rectangles));
+    memcpy(out_layout->ceiling_pit_rectangles,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_CEILING_PIT_RECTANGLE_OFFSET,
+           sizeof(out_layout->ceiling_pit_rectangles));
     memcpy(out_layout->floor_pit_rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_OFFSET,
            sizeof(out_layout->floor_pit_rectangles));
@@ -202,6 +207,15 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     for (index = 0u; index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++index) {
         if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
                 &out_layout->rectangles[index])) {
+            memset(out_layout, 0, sizeof(*out_layout));
+            return 0;
+        }
+    }
+    for (index = 0u;
+         index < CSB_V1_CSBWIN_LAYOUT_022E_CEILING_PIT_RECTANGLE_COUNT;
+         ++index) {
+        if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                &out_layout->ceiling_pit_rectangles[index])) {
             memset(out_layout, 0, sizeof(*out_layout));
             return 0;
         }

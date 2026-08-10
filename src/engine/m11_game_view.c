@@ -3616,6 +3616,78 @@ static int m11_csb_atari_st_stair_material(
     return 1;
 }
 
+/* CSBWin CSBCode.cpp::CheckCeilingPit (TAG004f04) first performs the
+ * source MAP.C F0154 level-minus-one coordinate conversion.  An open pit
+ * there is then drawn through one of the nine Data.h CeilingPit records
+ * with C063..C068.  These are native ST material ids, not PC3.4's C063-C069
+ * compatibility family. */
+static int m11_csb_atari_st_ceiling_pit_material(
+    CSB_V1_CSBWinViewportWall wall, uint16_t *out_graphic,
+    int *out_mirrored, uint8_t *out_rect)
+{
+    static const struct {
+        uint8_t graphic, rect, mirrored;
+    } source[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+        { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+        { 0, 0, 0 },
+        /* objectDrawingLocations / CheckCeilingPit cell2* tables */
+        { 63, 8, 0 }, /* F2L1: relative cell 4 */
+        { 64, 7, 0 }, /* F2:   relative cell 3 */
+        { 63, 6, 1 }, /* F2R1: relative cell 5 */
+        { 65, 5, 0 }, /* F1L1: relative cell 7 */
+        { 66, 4, 0 }, /* F1:   relative cell 6 */
+        { 65, 3, 1 }, /* F1R1: relative cell 8 */
+        { 67, 2, 0 }, /* F0L1: relative cell 10 */
+        { 68, 1, 0 }, /* F0:   relative cell 9 */
+        { 67, 0, 1 }  /* F0R1: relative cell 11 */
+    };
+    unsigned int index = (unsigned int)wall;
+
+    if (!out_graphic || !out_mirrored || !out_rect ||
+        index >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT ||
+        source[index].graphic == 0u) return 0;
+    *out_graphic = source[index].graphic;
+    *out_mirrored = source[index].mirrored != 0u;
+    *out_rect = source[index].rect;
+    return 1;
+}
+
+static int m11_csb_atari_st_draw_ceiling_pit(
+    M11_GameViewState *state, const CSB_V1_DungeonData *dungeon,
+    int map_index, int party_direction, int party_x, int party_y,
+    CSB_V1_CSBWinViewportWall wall, int steps_forward, int steps_right,
+    const CSB_V1_CSBWinViewportLayout022e *layout, uint8_t *viewport,
+    int viewport_width, int viewport_height)
+{
+    int map_x;
+    int map_y;
+    int above_map;
+    int above_square;
+    uint16_t graphic;
+    uint8_t rect;
+    int mirrored;
+
+    if (!state || !dungeon || !layout || !viewport) return 0;
+    /* CheckCeilingPit's cell2* catalog contains only F2/F1/F0.  The F3
+     * scripts never invoke it, so an F3 material-plan lane is an intentional
+     * no-op, not a missing graphic. */
+    if (!m11_csb_atari_st_ceiling_pit_material(
+            wall, &graphic, &mirrored, &rect)) return 1;
+    if (csb_v1_dungeon_f0150_get_relative_location_pc34(
+            party_direction, steps_forward, steps_right, party_x, party_y,
+            &map_x, &map_y) != 0) return 0;
+    above_map = csb_v1_dungeon_f0154_get_location_after_level_change_pc34(
+        dungeon, map_index, -1, &map_x, &map_y);
+    if (above_map < 0) return 1; /* no upper map: source draws nothing */
+    above_square = csb_v1_dungeon_f0151_get_square_pc34(
+        dungeon, above_map, map_x, map_y);
+    if (above_square < 0 || ((above_square >> 5) & 0x07) != 2 ||
+        (above_square & 0x08) == 0) return 1;
+    return m11_csb_blit_atari_st_viewport_graphic(
+        state, graphic, mirrored, &layout->ceiling_pit_rectangles[rect],
+        viewport, viewport_width, viewport_height);
+}
+
 /* CSBWin's Viewport.cpp::FloorAndCeilingOnly builds a 224x136 packed page:
  * 29 rows ceiling, 37 rows black and 70 rows floor.  The active decoder
  * yields the same source pixels as indexed bytes, so re-pack them through
@@ -3721,6 +3793,21 @@ static int m11_csb_present_atari_st_runtime_viewport(
             wall_locations[draw->wall].forward, wall_locations[draw->wall].right,
             profile->runtime.party_x, profile->runtime.party_y);
         square_type = raw_square < 0 ? -1 : (raw_square >> 5) & 0x07;
+        /* Viewport.cpp routes CheckCeilingPit for all open/pit/stair and
+         * edge-door cells in these lanes. Door-facing and stone paths own
+         * different scripts and deliberately do not call TAG004f04. */
+        if (square_type == 1 || square_type == 2 || square_type == 3 ||
+            square_type == 5 ||
+            (square_type == 4 && !csb_v1_csbwin_viewport_door_is_facing(
+                (uint8_t)raw_square, profile->runtime.party_dir))) {
+            if (!m11_csb_atari_st_draw_ceiling_pit(
+                    state, dungeon, profile->runtime.current_level,
+                    profile->runtime.party_dir, profile->runtime.party_x,
+                    profile->runtime.party_y, draw->wall,
+                    wall_locations[draw->wall].forward,
+                    wall_locations[draw->wall].right, &layout, viewport,
+                    VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+        }
         if (square_type == 2) { /* roomPIT */
             uint16_t graphic;
             uint8_t rect;
