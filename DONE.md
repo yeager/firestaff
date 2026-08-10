@@ -12735,3 +12735,16 @@ rendering remain blocked.
 - ✅ Källkontroll: SKProject `SKULLWIN/c_move.cpp::DM2_PERFORM_MOVE` och
   `c_moverec.cpp::DM2_MOVE_RECORD_TO`; DMWebs filformatsdokumentation
   används för File_header-/recordkedjeprovenansen.
+# DM2: atomisk livscykel för privata GAME_LOAD-ägare (2026-08-10)
+
+- ✅ File_header-världen och dess privata runtime-kandidat har nu en egen
+  RAM-livscykel. En lyckad ersättning frigör den tidigare ägaren först när
+  hela nya klonen är klar; en nekad ersättning lämnar den tidigare ägaren
+  orörd. Okänd anropslagring nollställs utan att tolkas som pekare.
+- ✅ Realdatagaten bygger om både en förberedd File_header-värld och en
+  komplett privat runtime-kandidat från hashverifierad DOS-data, samt
+  bevisar att en nekad kandidatkälla bevarar den redan ägda världen. Ingen
+  party, M11-input, HUD, tick eller session publiceras.
+- ✅ Detta är en värdlivscykelgrind kring den källbundna transaktionen, inte
+  ny speldata eller en GAME_LOAD-genväg. SKProject/DMWeb-provenansen för
+  File_header- och recordpoolägarna är oförändrad.

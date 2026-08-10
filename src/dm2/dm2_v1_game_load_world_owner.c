@@ -12,6 +12,35 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum {
+    DM2_V1_GAME_LOAD_WORLD_OWNER_LIFECYCLE_TAG = 0x474c574fu, /* "GLWO" */
+    DM2_V1_GAME_LOAD_RUNTIME_CANDIDATE_LIFECYCLE_TAG = 0x47534c43u /* "GSLC" */
+};
+
+/* Constructors deliberately accept caller-owned storage that might not have
+ * been initialized yet. Inspect its first four object-representation bytes
+ * through memcpy rather than reading an indeterminate uint32_t lvalue. Both
+ * owner structs keep lifecycle_tag as their first field for this purpose. */
+static int dm2_v1_game_load_world_owner_is_initialized(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    uint32_t tag = 0u;
+
+    if (!owner) return 0;
+    memcpy(&tag, owner, sizeof(tag));
+    return tag == DM2_V1_GAME_LOAD_WORLD_OWNER_LIFECYCLE_TAG;
+}
+
+static int dm2_v1_game_load_runtime_candidate_is_initialized(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    uint32_t tag = 0u;
+
+    if (!candidate) return 0;
+    memcpy(&tag, candidate, sizeof(tag));
+    return tag == DM2_V1_GAME_LOAD_RUNTIME_CANDIDATE_LIFECYCLE_TAG;
+}
+
 static uint32_t dm2_v1_game_load_owner_hash_step(uint32_t hash,
                                                   uint32_t value);
 
@@ -1581,6 +1610,12 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
 {
     int i;
     if (!owner) return;
+    if (!dm2_v1_game_load_world_owner_is_initialized(owner)) {
+        /* Public constructors accept unknown caller storage.  Do not ever
+         * interpret arbitrary bytes as owned allocation pointers. */
+        memset(owner, 0, sizeof(*owner));
+        return;
+    }
     for (i = 0; i < DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES; ++i) {
         dm2_v1_gdat_dyn4_materialized_selection_free(&owner->dyn4_selections[i]);
     }
@@ -1647,6 +1682,10 @@ void dm2_v1_game_load_runtime_session_candidate_free(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
 {
     if (!candidate) return;
+    if (!dm2_v1_game_load_runtime_candidate_is_initialized(candidate)) {
+        memset(candidate, 0, sizeof(*candidate));
+        return;
+    }
     dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
     dm2_v1_caii_array_free(&candidate->caii_slots);
     dm2_v1_caii_source_owner_free(&candidate->caii_source);
@@ -1815,7 +1854,8 @@ int dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
     memset(&context, 0, sizeof(context));
-    if (!candidate || !candidate->valid || !io_x || !io_y || !out_handle) {
+    if (!candidate || !dm2_v1_game_load_runtime_candidate_is_initialized(candidate) ||
+        !candidate->valid || !io_x || !io_y || !out_handle) {
         receipt.blocked_invalid_candidate = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
@@ -1934,7 +1974,8 @@ int dm2_v1_game_load_runtime_session_candidate_classify_move(
     receipt.source_y = source_y;
     receipt.target_x = target_x;
     receipt.target_y = target_y;
-    if (!candidate || !candidate->valid || !candidate->map_context.valid) {
+    if (!candidate || !dm2_v1_game_load_runtime_candidate_is_initialized(candidate) ||
+        !candidate->valid || !candidate->map_context.valid) {
         receipt.blocked_invalid_candidate = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
@@ -2104,7 +2145,8 @@ static int dm2_v1_game_load_runtime_candidate_change_current_map(
 int dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int new_map)
 {
-    if (!candidate || !candidate->valid) return 0;
+    if (!candidate || !dm2_v1_game_load_runtime_candidate_is_initialized(candidate) ||
+        !candidate->valid) return 0;
     return dm2_v1_game_load_runtime_candidate_change_current_map(candidate,
                                                                    new_map, 0);
 }
@@ -2119,10 +2161,14 @@ int dm2_v1_game_load_runtime_session_candidate_init(
 {
     DM2_V1_GameLoadRuntimeSessionCandidate candidate;
     uint32_t hash = 0x47534c44u; /* "GSLD" */
+    const int out_was_initialized =
+        dm2_v1_game_load_runtime_candidate_is_initialized(out);
 
     if (!out) return 0;
-    memset(out, 0, sizeof(*out));
+    if (!out_was_initialized) memset(out, 0, sizeof(*out));
     memset(&candidate, 0, sizeof(candidate));
+    candidate.lifecycle_tag =
+        DM2_V1_GAME_LOAD_RUNTIME_CANDIDATE_LIFECYCLE_TAG;
     if (!dm2_v1_game_load_world_owner_is_prepared(source) ||
         source->committed || !source->source_map_context_materialized ||
         !source->champion_selection_materialized ||
@@ -2235,10 +2281,12 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     if (hash == 0u) goto fail;
     candidate.candidate_hash = hash;
     candidate.valid = 1;
+    dm2_v1_game_load_runtime_session_candidate_free(out);
     *out = candidate;
     return 1;
 fail:
     dm2_v1_game_load_runtime_session_candidate_free(&candidate);
+    if (!out_was_initialized) memset(out, 0, sizeof(*out));
     return 0;
 }
 
@@ -2253,10 +2301,13 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     const DM2_V1_DungeonData *source;
     DM2_V1_GameLoadWorldOwner candidate;
     uint32_t hash = 0x4e475052u; /* "NGPR": New Game preparation. */
+    const int owner_was_initialized =
+        dm2_v1_game_load_world_owner_is_initialized(owner);
 
     if (!owner) return 0;
-    memset(owner, 0, sizeof(*owner));
+    if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
+    candidate.lifecycle_tag = DM2_V1_GAME_LOAD_WORLD_OWNER_LIFECYCLE_TAG;
     if (!profile || !profile->assets_verified ||
         !(source = (const DM2_V1_DungeonData *)profile->dungeon_data) ||
         !source->raw_data || source->raw_size <= 0 ||
@@ -2348,6 +2399,7 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     }
     candidate.prepared = 1;
     candidate.committed = 0;
+    dm2_v1_game_load_world_owner_free(owner);
     *owner = candidate;
     return 1;
 }
@@ -2386,7 +2438,7 @@ int dm2_v1_game_load_world_owner_init_new_game(
      * mirror clicks have been admitted.  The selection-free preparation hash
      * remains retained separately for the title-to-entrance boundary. */
     candidate.source_transaction_hash = candidate.transaction.transaction_hash;
-    memset(owner, 0, sizeof(*owner));
+    dm2_v1_game_load_world_owner_free(owner);
     *owner = candidate;
     return 1;
 }
@@ -3617,7 +3669,9 @@ int dm2_v1_game_load_world_owner_advance_preselection(
 int dm2_v1_game_load_world_owner_is_prepared(
     const DM2_V1_GameLoadWorldOwner *owner)
 {
-    return owner != NULL && owner->prepared && !owner->committed &&
+    return owner != NULL && dm2_v1_game_load_world_owner_is_initialized(owner) &&
+        owner->prepared &&
+        !owner->committed &&
         owner->dungeon.raw_data != NULL && owner->dungeon.raw_size > 0 &&
         owner->record_pools.valid && owner->record_pools.record_graph_complete &&
         owner->dyn4_materialized && owner->dyn4_selector_count > 0u &&

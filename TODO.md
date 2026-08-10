@@ -3319,7 +3319,10 @@
   RAM-klonen behålls nu också av bootprofilen och kan bara läsas genom den
   privata handoff-seamen. It is still private: live event dispatch, input
   routing and a publishable session require the full original
-  c_eventqueue/runtime owner.
+  c_eventqueue/runtime owner. Den privata RAM-klonen kan nu också ersättas
+  atomärt: en misslyckad ny admission behåller föregående kandidat i stället
+  för att tappa dess ägda pooler/timers/CAII/SOUND9; detta öppnar fortfarande
+  ingen publicerbar session.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains

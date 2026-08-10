@@ -361,6 +361,10 @@ typedef struct {
 } DM2_V1_GameLoadCaiiLocalContextReceipt;
 
 typedef struct {
+    /* Private host-lifecycle guard. This is not original game state: it only
+     * makes replacement of a retained all-RAM owner safe without inspecting
+     * arbitrary caller bytes as allocation pointers. */
+    uint32_t lifecycle_tag;
     /* `prepared` means all source bytes have one RAM owner. `committed` is
      * deliberately zero until the later source-ordered DYN/hero/timer
      * transaction can publish every owner atomically. */
@@ -554,6 +558,8 @@ typedef struct {
  * DM2_RESET_CAII (1111-1145), SK1C9A.cpp::DM2_FILL_CAII_CUR_MAP
  * (9896-10012), skhero.cpp::DM2_SELECT_CHAMPION (1119-1168). */
 typedef struct {
+    /* See DM2_V1_GameLoadWorldOwner::lifecycle_tag. */
+    uint32_t lifecycle_tag;
     int valid;
     uint32_t source_transaction_hash;
     /* Provenance only: this binds the source transaction and retained
@@ -658,9 +664,12 @@ typedef struct {
 } DM2_V1_GameLoadMoveClassificationReceipt;
 
 /* Clone every already-owned mutable GAME_LOAD predecessor atomically, but
- * only after the complete CAII transaction has been materialized.  On
- * failure `out` remains zeroed and the source owner and source media are
- * unchanged.  The candidate is deliberately not publishable. */
+ * only after the complete CAII transaction has been materialized. An already
+ * initialized `out` is replaced only after the new clone succeeds;
+ * arbitrary/unknown storage is zeroed without dereferencing it. On failure a
+ * prior initialized candidate is unchanged, while unknown storage is zeroed;
+ * the source owner and source media are unchanged. The candidate is
+ * deliberately not publishable. */
 int dm2_v1_game_load_runtime_session_candidate_init(
     DM2_V1_GameLoadRuntimeSessionCandidate *out,
     const DM2_V1_GameLoadWorldOwner *source);
@@ -690,9 +699,11 @@ int dm2_v1_game_load_runtime_session_candidate_classify_move(
     DM2_V1_GameLoadMoveClassificationReceipt *out_receipt);
 
 /* Build the source-owned GAME_LOAD predecessor without selecting a champion.
- * It clones only the authenticated File_header, DB pools, DYN4 and timer
- * capacity. Call the generator and map-context functions in source order
- * before delivering any mirror click. */
+ * It replaces an already initialized owner only after the new owner is
+ * complete; arbitrary caller storage is instead safely zeroed. It clones only
+ * the authenticated File_header, DB pools, DYN4 and timer capacity. Call the
+ * generator and map-context functions in source order before delivering any
+ * mirror click. */
 int dm2_v1_game_load_world_owner_prepare_new_game(
     DM2_V1_GameLoadWorldOwner *owner, const DM2_V1_BootProfile *profile);
 
@@ -961,8 +972,10 @@ typedef struct {
 } DM2_V1_GameLoadTimerProcessReceipt;
 
 /* Build a source-owned, pre-selection world from one currently mounted,
- * hash-verified PC File_header/GDAT pair and exact mirror clicks.  It rejects
- * partial record graphs and never modifies profile-owned raw media. */
+ * hash-verified PC File_header/GDAT pair and exact mirror clicks. It rejects
+ * partial record graphs and never modifies profile-owned raw media. A prior
+ * initialized owner is replaced only after the new transaction is complete;
+ * unknown caller storage is safely zeroed instead. */
 int dm2_v1_game_load_world_owner_init_new_game(
     DM2_V1_GameLoadWorldOwner *owner,
     const DM2_V1_BootProfile *profile,

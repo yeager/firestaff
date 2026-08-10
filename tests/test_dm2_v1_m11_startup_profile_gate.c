@@ -2501,6 +2501,8 @@ int main(void) {
     int runtime_candidate_expected_alternate = 0;
     uint32_t runtime_candidate_clone_hash_before = 0u;
     uint32_t runtime_candidate_db4_hash_before = 0u;
+    uint32_t runtime_candidate_hash_before_reinit = 0u;
+    const uint8_t *runtime_candidate_bytes_before_failed_reinit = NULL;
     int16_t runtime_candidate_display_map_before = -1;
     int16_t runtime_candidate_display_x_before = -1;
     int16_t runtime_candidate_display_y_before = -1;
@@ -3057,6 +3059,14 @@ int main(void) {
                     !preselection_move_world_owner.champion_selection_materialized &&
                     !profile->source_game_load_session_ready,
                 "DM2 retains private source state after rejected movement");
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_prepare_new_game(
+                        &preselection_move_world_owner, profile) &&
+                    dm2_v1_game_load_world_owner_is_prepared(
+                        &preselection_move_world_owner) &&
+                    preselection_move_world_owner.source_preselection_ready &&
+                    !profile->source_game_load_session_ready,
+                "DM2 replaces an existing private File_header owner atomically");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_prepare_new_game(
                         &incremental_new_game_world_owner, profile) &&
@@ -5349,6 +5359,27 @@ int main(void) {
         ((DM2_V1_GameLoadWorldOwner *)profile_new_game_owner)->record_pools
             .pools[4].bytes[4] = runtime_candidate_db4_byte_before;
     }
+    runtime_candidate_hash_before_reinit =
+        runtime_session_candidate.candidate_hash;
+    expect_true(profile_new_game_owner && runtime_session_candidate.valid &&
+                    dm2_v1_game_load_runtime_session_candidate_init(
+                        &runtime_session_candidate, profile_new_game_owner) &&
+                    runtime_session_candidate.valid &&
+                    runtime_session_candidate.candidate_hash ==
+                        runtime_candidate_hash_before_reinit &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0,
+                "DM2 replaces an existing private runtime candidate atomically");
+    runtime_candidate_bytes_before_failed_reinit =
+        runtime_session_candidate.dungeon.raw_data;
+    expect_true(!dm2_v1_game_load_runtime_session_candidate_init(
+                        &runtime_session_candidate, NULL) &&
+                    runtime_session_candidate.valid &&
+                    runtime_session_candidate.candidate_hash ==
+                        runtime_candidate_hash_before_reinit &&
+                    runtime_session_candidate.dungeon.raw_data ==
+                        runtime_candidate_bytes_before_failed_reinit,
+                "DM2 retains a private runtime candidate when replacement admission fails");
     dm2_v1_game_load_runtime_session_candidate_free(&runtime_session_candidate);
     memset(&runtime_session_candidate, 0xA5, sizeof(runtime_session_candidate));
     expect_true(!dm2_v1_game_load_runtime_session_candidate_init(
