@@ -24,6 +24,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the later `NBG2/NBG3` composition, while VDP1 changes from the initial chain
   to the direct-colour command chain. MENU.BPK/FONT256 byte ownership is not
   yet proven for those spans, so renderer admission remains closed.
+- The same-session VDP1 writer trace records 9,260 authenticated VRAM writes.
+  The bulk data corridor is observed at SH-2 PC `0x060135e8`/`0x060135f4`,
+  while the Saturn command-list writer is observed at `0x06001782`. A code
+  snapshot at the `0x10a00` target confirms the bulk corridor, but without a
+  source-read/CD-origin join it does not identify MENU.BPK, FONT256 or a
+  DGN face; no renderer gate is opened.
 
 ## 2026-08-10 - Nexus VDP2 tilemap register-order correction
 

@@ -11,6 +11,13 @@ input-to-runtime state change, not MENU.BPK/FONT256 ownership. Keep the asset,
 VDP1 owner, text-consumer and production gates blocked until those spans are
 joined byte-exactly to retail sources.
 
+2026-08-10: Same-session VDP1 write evidence now contains 9,260 VRAM writes.
+The command-list writer is `0x06001782`; the bulk target-data corridor uses
+SH-2 PCs `0x060135e8` and `0x060135f4`. A writer-code snapshot is retained on
+the external disk. The next required witness is the same-session source-read
+or CD/RAM-origin join for the target writes; PC identity alone must not be
+promoted to MENU.BPK, FONT256 or DGN ownership.
+
 2026-08-10: VDP2 NBG1 tilemap capture har korrigerad registerordning för
 legacy big-endian `TVMD=0x0080` och native little-endian witness. Detta stänger
 en decoder-lucka, men öppnar inte meny/HUD/viewport-produktion: source-map,
