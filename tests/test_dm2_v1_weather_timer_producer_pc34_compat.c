@@ -46,7 +46,9 @@ static void test_outdoor_does_not_construct_chain(void)
     for (int tick = 0; tick < 200; tick++) {
         dm2_v1_runtime_tick();
     }
-    CHECK(dm2_v1_runtime_last_proceed_timers_receipt(&receipt) == 1 &&
+    /* Without the GAME_LOAD-owned clock and timer heap, tick() exits before
+     * dispatch. A receipt here would itself be fabricated host time. */
+    CHECK(dm2_v1_runtime_last_proceed_timers_receipt(&receipt) == 0 &&
               receipt.type_tally[DM2_V1_TIMER_UPDATE_WEATHER] == 0 &&
               dm2_v1_runtime_weather_chain_started() == 0 &&
               dm2_v1_runtime_weather_source_timer_pending() == 0 &&

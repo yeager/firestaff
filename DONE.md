@@ -1,3 +1,10 @@
+# DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
+
+- ✅ Vädertimerregressionen följer nu den faktiska runtimegränsen: utan
+  källägd GAME_LOAD-klocka och timerkö utförs ingen tickdispatch och ingen
+  0x54-kvittens kan uppstå. Utomhusflaggan ensam får inte skapa väder, regn,
+  RNG eller timerdata.
+
 # DM2: laddertesterna använder aldrig produktens fixture-parser (2026-08-10)
 
 - ✅ SKProject-kärnans och `FIND_LADDER_AROUND`-testernas lilla minnesvy
