@@ -398,9 +398,11 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out);
 
 /* Returns 1 only while the global dungeon owner is exactly the private
- * baseline observed at plan creation.  It does not publish, lock, reserve or
- * otherwise change that owner.  A future live commit must require this test
- * together with its complete GAMEBLOCK2/champion/ITEM16/timer validation. */
+ * baseline observed at plan creation and that owner's raw source bytes plus
+ * map-layout shape have not changed in place.  It does not publish, lock,
+ * reserve or otherwise change that owner.  A future live commit must require
+ * this test together with its complete GAMEBLOCK2/champion/ITEM16/timer
+ * validation. */
 int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
     const CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(

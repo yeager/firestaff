@@ -23,6 +23,15 @@ struct CSB_V1_CSBWinLegacyResumeCommitPlan {
     /* This is comparison-only provenance for the future atomic owner swap.
      * It is never returned, dereferenced or modified by this module. */
     const CSB_V1_DungeonData *expected_current_owner;
+    /* A pointer comparison alone misses an in-place level/tile edit between
+     * prepare and a future all-or-nothing adoption.  Retain a read-only
+     * snapshot of the owner shape and raw source bytes as the optimistic
+     * commit precondition.  This is not a lock: M10 must still serialize the
+     * final replacement with the rest of RuntimeProfile. */
+    const uint8_t *expected_current_raw_data;
+    int expected_current_raw_size;
+    uint64_t expected_current_raw_signature;
+    uint64_t expected_current_shape_signature;
 };
 
 /* FNV-1a is solely a stable, compact diagnostic identity.  Admission always
@@ -51,6 +60,63 @@ static uint32_t source_tail_fnv1a32(const uint8_t *bytes, size_t size)
         value ^= (uint32_t)bytes[i];
         value *= UINT32_C(16777619);
     }
+    return value;
+}
+
+/* The live dungeon is not owned here.  This compact snapshot is only an
+ * optimistic-transaction guard: it records every scalar map-layout field
+ * which affects source coordinate and material lookup, plus raw bytes below.
+ * Source: ReDMCSB DUNGEON.C F0151--F0168; a save restore cannot replace the
+ * dungeon underneath a runtime that has advanced either representation. */
+static uint64_t current_owner_shape_signature(const CSB_V1_DungeonData *d)
+{
+    uint64_t value = UINT64_C(1469598103934665603);
+    size_t i;
+#define CSBWIN_OWNER_SHAPE_MIX(v) do { \
+    uint32_t csbwin_owner_shape_value = (uint32_t)(v); \
+    value ^= (uint64_t)(csbwin_owner_shape_value & 0xffu); \
+    value *= UINT64_C(1099511628211); \
+    value ^= (uint64_t)((csbwin_owner_shape_value >> 8u) & 0xffu); \
+    value *= UINT64_C(1099511628211); \
+    value ^= (uint64_t)((csbwin_owner_shape_value >> 16u) & 0xffu); \
+    value *= UINT64_C(1099511628211); \
+    value ^= (uint64_t)((csbwin_owner_shape_value >> 24u) & 0xffu); \
+    value *= UINT64_C(1099511628211); \
+} while (0)
+
+    if (!d) return 0u;
+    CSBWIN_OWNER_SHAPE_MIX(d->level_count);
+    CSBWIN_OWNER_SHAPE_MIX(d->initial_party_location);
+    CSBWIN_OWNER_SHAPE_MIX(d->square_bytes);
+    CSBWIN_OWNER_SHAPE_MIX(d->raw_map_data_base);
+    CSBWIN_OWNER_SHAPE_MIX(d->square_first_thing_base);
+    CSBWIN_OWNER_SHAPE_MIX(d->square_first_thing_count);
+    CSBWIN_OWNER_SHAPE_MIX(d->text_data_base);
+    CSBWIN_OWNER_SHAPE_MIX(d->text_word_count);
+    CSBWIN_OWNER_SHAPE_MIX(d->dsa_count);
+    for (i = 0u; i < CSB_V1_MAX_LEVELS; ++i) {
+        CSBWIN_OWNER_SHAPE_MIX(d->level_offsets[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->level_widths[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->level_heights[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_levels[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_offset_x[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_offset_y[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_floor_set[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_wall_set[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_door_set0[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_door_set1[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_difficulty[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_experience_multiplier[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_wall_ornament_count[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_floor_ornament_count[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_random_floor_ornament_count[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->map_creature_type_count[i]);
+    }
+    for (i = 0u; i < CSB_V1_CSBWIN_DATABASE_COUNT; ++i) {
+        CSBWIN_OWNER_SHAPE_MIX(d->thing_data_bases[i]);
+        CSBWIN_OWNER_SHAPE_MIX(d->thing_type_counts[i]);
+    }
+#undef CSBWIN_OWNER_SHAPE_MIX
     return value;
 }
 
@@ -967,6 +1033,18 @@ int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
     }
     plan->transaction = transaction;
     plan->expected_current_owner = csb_v1_dungeon_get_current();
+    if (plan->expected_current_owner) {
+        plan->expected_current_raw_data =
+            plan->expected_current_owner->raw_data;
+        plan->expected_current_raw_size =
+            plan->expected_current_owner->raw_size;
+        plan->expected_current_raw_signature = source_tail_signature(
+            plan->expected_current_raw_data,
+            plan->expected_current_raw_size > 0
+                ? (size_t)plan->expected_current_raw_size : 0u);
+        plan->expected_current_shape_signature =
+            current_owner_shape_signature(plan->expected_current_owner);
+    }
     *out_plan = plan;
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
 }
@@ -1004,10 +1082,26 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
 int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
     const CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
 {
-    return plan && plan->transaction &&
-           csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
-               plan->transaction) &&
-           csb_v1_dungeon_get_current() == plan->expected_current_owner;
+    const CSB_V1_DungeonData *current;
+
+    if (!plan || !plan->transaction ||
+        !csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+            plan->transaction)) {
+        return 0;
+    }
+    current = csb_v1_dungeon_get_current();
+    if (current != plan->expected_current_owner) return 0;
+    if (!current) return 1;
+    if (current->raw_data != plan->expected_current_raw_data ||
+        current->raw_size != plan->expected_current_raw_size ||
+        current_owner_shape_signature(current) !=
+            plan->expected_current_shape_signature) {
+        return 0;
+    }
+    return source_tail_signature(current->raw_data,
+                                 current->raw_size > 0
+                                     ? (size_t)current->raw_size : 0u) ==
+        plan->expected_current_raw_signature;
 }
 
 void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
@@ -1018,6 +1112,10 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
         plan->transaction);
     plan->transaction = NULL;
     plan->expected_current_owner = NULL;
+    plan->expected_current_raw_data = NULL;
+    plan->expected_current_raw_size = 0;
+    plan->expected_current_raw_signature = 0u;
+    plan->expected_current_shape_signature = 0u;
     free(plan);
 }
 

@@ -98,6 +98,7 @@ static void check_staged_real_save(void)
     CSB_V1_CSBWinLegacyResumePrepare resume;
     CSB_V1_CSBWinLegacyResumePrepare file_resume;
     const CSB_V1_DungeonData *current_before = csb_v1_dungeon_get_current();
+    CSB_V1_DungeonData *owner_probe = NULL;
     uint16_t *item16_indices = NULL;
     uint8_t *before = NULL;
     uint16_t computed;
@@ -171,6 +172,51 @@ static void check_staged_real_save(void)
           csb_v1_dungeon_get_current_mutable() == current_before);
     csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(commit_plan);
     commit_plan = NULL;
+    /* This isolated test process has no live owner.  Give the singleton a
+     * throw-away owned dungeon solely to prove that a plan rejects in-place
+     * raw/map edits as well as pointer replacement. */
+    CHECK(current_before == NULL);
+    if (current_before == NULL) {
+        owner_probe = (CSB_V1_DungeonData *)calloc(1u, sizeof(*owner_probe));
+        CHECK(owner_probe != NULL);
+        if (owner_probe) {
+            owner_probe->raw_data = (uint8_t *)malloc(4u);
+            CHECK(owner_probe->raw_data != NULL);
+            if (owner_probe->raw_data) {
+                owner_probe->raw_data[0] = 0x41u;
+                owner_probe->raw_data[1] = 0x42u;
+                owner_probe->raw_data[2] = 0x43u;
+                owner_probe->raw_data[3] = 0x44u;
+                owner_probe->raw_size = 4;
+                owner_probe->level_count = 1;
+                owner_probe->square_bytes = 1;
+                csb_v1_dungeon_set_current(owner_probe);
+                owner_probe = NULL; /* singleton owns it now */
+                CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+                          path, 0u, &commit_plan) ==
+                      CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+                      commit_plan != NULL &&
+                      csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                          commit_plan));
+                csb_v1_dungeon_get_current_mutable()->raw_data[0] ^= 1u;
+                CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
+                csb_v1_dungeon_get_current_mutable()->raw_data[0] ^= 1u;
+                CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
+                csb_v1_dungeon_get_current_mutable()->map_wall_set[0] = 3;
+                CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
+                csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
+                    commit_plan);
+                commit_plan = NULL;
+                csb_v1_dungeon_unload();
+            } else {
+                free(owner_probe);
+                owner_probe = NULL;
+            }
+        }
+    }
     memset(&body, 0, sizeof(body));
     CHECK(csb_v1_csbwin_512_verify_save_body(bytes, (size_t)length, 10u, &body) ==
           CSB_V1_CSBWIN_512_OK);
