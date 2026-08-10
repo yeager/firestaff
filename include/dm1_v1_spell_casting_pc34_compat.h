@@ -400,6 +400,42 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
     int partyDirection,
     int partyShieldDefense,
     DM1_SpellF0412RuntimeReceipt* outReceipt);
+
+/**
+ * Source-accurate variant of the receipt builders.  ReDMCSB MENU.C
+ * F0412:1837-1841 draws a FRESH M003_RANDOM(128) per missing-level
+ * iteration of the needs-more-practice gate.  The plain rng16 signatures
+ * above share one 16-bit draw across every iteration (shifted by 4 bits
+ * per step), which changes the probability distribution and can miss a
+ * failure the reference would emit.  Pass eight pre-drawn 7-bit probes
+ * (needsPracticeProbes[i] & 0x7F is used per iteration; missingLevels
+ * cannot exceed 8 because DM1 caps requiredSkillLevel-skillLevel there)
+ * so the caller keeps the shared RNG advance discipline while the receipt
+ * builder stays pure.  needsPracticeProbes may be NULL to fall back to
+ * the rng16-shift approximation, preserving legacy callers.
+ */
+int dm1_spell_f0412RuntimeReceiptWithProbes(
+    const DM1_SpellCastingState* s,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t rng16,
+    const uint8_t* needsPracticeProbes,
+    int championDirection,
+    int partyDirection,
+    int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt);
+
+int dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
+    int spellTableIndex,
+    int powerOrdinal,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t rng16,
+    const uint8_t* needsPracticeProbes,
+    int championDirection,
+    int partyDirection,
+    int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt);
 int dm1_spell_f0412PotionReceiptForTableIndex(
     int spellTableIndex,
     int powerOrdinal,

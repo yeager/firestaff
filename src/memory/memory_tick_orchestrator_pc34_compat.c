@@ -13246,6 +13246,50 @@ cmd_attack_legacy_marker:
 
         memset(&effect, 0, sizeof(effect));
 
+        /* ReDMCSB MENU.C F0412:1837 draws a FRESH M003_RANDOM(128) inside
+         * the needs-more-practice loop, ONCE per missing-level iteration,
+         * and ONLY when the gate is entered (skillLevel < requiredSkillLevel).
+         * When the skill is already sufficient, the reference draws zero
+         * probes; drawing them unconditionally here would advance the shared
+         * RNG by up to 8 steps that the reference never spends and break
+         * every downstream spell whose materialisation reads from the same
+         * stream (Light, Darkness, Torch, area spells).  Compute the exact
+         * miss count first from the same champion stats the receipt builder
+         * would see, then draw exactly that many probes -- zero when the
+         * cast will not enter the gate. */
+        uint8_t needsPracticeProbes[8];
+        int needsPracticeProbeCount = 0;
+        {
+            DM1_ChampionSpellStats gateStats;
+            if (spell.baseRequiredSkillLevel >= 0 &&
+                orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
+                    world, champIdx, &gateStats)) {
+                int requiredLevel =
+                    spell.baseRequiredSkillLevel + powerOrd;
+                int gateSkillIndex =
+                    (spell.skillIndex >= 0 &&
+                     spell.skillIndex < DM1_TOTAL_SKILL_COUNT)
+                        ? spell.skillIndex
+                        : -1;
+                int gateSkillLevel = (gateSkillIndex >= 0)
+                    ? (int)gateStats.skillLevels[gateSkillIndex]
+                    : 0;
+                int missing = requiredLevel - gateSkillLevel;
+                if (missing < 0) missing = 0;
+                if (missing > 8) missing = 8;
+                needsPracticeProbeCount = missing;
+            }
+            for (int probeIndex = 0;
+                 probeIndex < needsPracticeProbeCount; ++probeIndex) {
+                uint32_t raw =
+                    F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
+                needsPracticeProbes[probeIndex] = (uint8_t)(raw & 0x7Fu);
+            }
+        }
+        const uint8_t* needsPracticeProbesArg =
+            needsPracticeProbeCount > 0 ? needsPracticeProbes : NULL;
+        if (getenv("CAST_DIAG")) fprintf(stderr, "CAST tableIdx=%d powerOrd=%d kind=%d base=%d skill=%d probes=%d\n", tableIdx, powerOrd, spell.kind, spell.baseRequiredSkillLevel, spell.skillIndex, needsPracticeProbeCount);
+
         switch (spell.kind) {
         case C2_SPELL_KIND_PROJECTILE_COMPAT: {
             DM1_ChampionSpellStats dm1Stats;
@@ -13262,9 +13306,10 @@ cmd_attack_legacy_marker:
 
             if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
                     world, champIdx, &dm1Stats) ||
-                !dm1_spell_f0412RuntimeReceiptForTableIndex(
+                !dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
                     tableIdx, powerOrd, champIdx, &dm1Stats,
                     (uint16_t)(spellRngRaw & 0xFFFFu),
+                    needsPracticeProbesArg,
                     world->party.champions[champIdx].direction,
                     world->party.direction,
                     world->magic.partyShieldDefense,
@@ -13360,9 +13405,10 @@ cmd_attack_legacy_marker:
 
             if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
                     world, champIdx, &dm1Stats) ||
-                !dm1_spell_f0412RuntimeReceiptForTableIndex(
+                !dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
                     tableIdx, powerOrd, champIdx, &dm1Stats,
                     (uint16_t)(spellRngRaw & 0xFFFFu),
+                    needsPracticeProbesArg,
                     world->party.champions[champIdx].direction,
                     world->party.direction,
                     world->magic.partyShieldDefense,

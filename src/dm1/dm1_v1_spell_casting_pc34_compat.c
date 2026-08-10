@@ -624,6 +624,22 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
                                   int partyShieldDefense,
                                   DM1_SpellF0412RuntimeReceipt* outReceipt)
 {
+    return dm1_spell_f0412RuntimeReceiptWithProbes(
+        s, champIdx, stats, rng16, NULL,
+        championDirection, partyDirection, partyShieldDefense, outReceipt);
+}
+
+int dm1_spell_f0412RuntimeReceiptWithProbes(
+    const DM1_SpellCastingState* s,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t rng16,
+    const uint8_t* needsPracticeProbes,
+    int championDirection,
+    int partyDirection,
+    int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
     DM1_SpellF0412RuntimeReceipt receipt;
     const DM1_Spell* spell;
     const DM1_ChampionSpellInput* inp;
@@ -691,7 +707,19 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
         int missingLevels = requiredSkillLevel - skillLevel;
         int threshold = minVal(stats->wisdom + 15, 115);
         for (int i = 0; i < missingLevels; ++i) {
-            int rngVal = (rng16 >> (i * 4)) & 0x7F;
+            /* ReDMCSB MENU.C F0412:1837 draws a FRESH M003_RANDOM(128)
+             * inside the missing-level loop.  When the caller supplies
+             * pre-drawn probes -- the source-accurate path -- use them;
+             * otherwise fall back to the historical shifting-rng16
+             * approximation for legacy callers.  Cap i at 8 so a caller
+             * that supplies a short probe buffer still fails closed to
+             * the approximation rather than reading past its buffer. */
+            int rngVal;
+            if (needsPracticeProbes && i < 8) {
+                rngVal = needsPracticeProbes[i] & 0x7F;
+            } else {
+                rngVal = (rng16 >> ((i & 3) * 4)) & 0x7F;
+            }
             if (rngVal > threshold) {
                 receipt.failureType = DM1_FAILURE_NEEDS_MORE_PRACTICE;
                 receipt.partialExperience =
@@ -822,6 +850,23 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
     int partyShieldDefense,
     DM1_SpellF0412RuntimeReceipt* outReceipt)
 {
+    return dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
+        spellTableIndex, powerOrdinal, champIdx, stats, rng16, NULL,
+        championDirection, partyDirection, partyShieldDefense, outReceipt);
+}
+
+int dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
+    int spellTableIndex,
+    int powerOrdinal,
+    int champIdx,
+    const DM1_ChampionSpellStats* stats,
+    uint16_t rng16,
+    const uint8_t* needsPracticeProbes,
+    int championDirection,
+    int partyDirection,
+    int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
     DM1_SpellCastingState s;
     const DM1_Spell* spell;
     uint32_t symbols;
@@ -860,9 +905,9 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
      * prevalidated UI input. Rebuild the exact symbol buffer here so command
      * callers still consume the F0412 receipt instead of reimplementing the
      * projectile/light/status branches from spell table metadata. */
-    return dm1_spell_f0412RuntimeReceipt(
-        &s, champIdx, stats, rng16, championDirection, partyDirection,
-        partyShieldDefense, outReceipt);
+    return dm1_spell_f0412RuntimeReceiptWithProbes(
+        &s, champIdx, stats, rng16, needsPracticeProbes,
+        championDirection, partyDirection, partyShieldDefense, outReceipt);
 }
 
 int dm1_spell_f0412PotionReceiptForTableIndex(
