@@ -4575,7 +4575,17 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         }
         if (strcmp(gameId, "csb") == 0 && selectedVersion && selectedVersion->versionId &&
             (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
-             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0)) {
+             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
+            m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
+            /* Only take the FM Towns archive-staging path when the matched
+             * GRAPHICS.DAT still lives inside its original ZIP/RAR ("::" is
+             * the virtual-path marker).  If a prior run already extracted the
+             * ISO to a loose ...\/CDATA/GRAPHICS.DAT and ...\/CJDATA/... pair
+             * on disk, the hash still identifies the version but this
+             * materializer would fail on the missing "::" and nix
+             * csbAvailable.  Fall through to the ordinary per-required-file
+             * copy path below in that case -- it handles loose files
+             * directly. */
             if (!m12_materialize_csb_fmtowns_runtime_cache(status, gameIndex,
                                                             selectedVersion, gameCacheDir,
                                                             1)) return 0;
@@ -5176,13 +5186,39 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
     return 0;
 }
 
+/* The public entry points below wrap the scan body in a single asset scan
+ * cache batch.  Without the batch, every internal asset_find_by_md5*() call
+ * opens the on-disk cache, does one lookup, then closes and rewrites it -
+ * across a full data-directory scan that is thousands of open/save cycles.
+ * With the batch open for the whole scan, unchanged files hit the in-memory
+ * cache immediately and disk I/O is bounded to one load and one save per
+ * scan. */
+static int M12_AssetStatus_ScanWithOptionsImpl(
+    M12_AssetStatus* status,
+    const char* requestedDataDir,
+    const M12_AssetStatusScanOptions* options);
+
 void M12_AssetStatus_Scan(M12_AssetStatus* status, const char* requestedDataDir) {
-    (void)M12_AssetStatus_ScanWithOptions(status, requestedDataDir, NULL);
+    asset_scan_cache_batch_begin();
+    (void)M12_AssetStatus_ScanWithOptionsImpl(status, requestedDataDir, NULL);
+    asset_scan_cache_batch_end();
 }
 
 int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                     const char* requestedDataDir,
                                     const M12_AssetStatusScanOptions* options) {
+    int result;
+    asset_scan_cache_batch_begin();
+    result = M12_AssetStatus_ScanWithOptionsImpl(status, requestedDataDir,
+                                                 options);
+    asset_scan_cache_batch_end();
+    return result;
+}
+
+static int M12_AssetStatus_ScanWithOptionsImpl(
+    M12_AssetStatus* status,
+    const char* requestedDataDir,
+    const M12_AssetStatusScanOptions* options) {
     char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
     char legacyFallbackSnapshot[M12_ASSET_DATA_DIR_CAPACITY];
     char containerParent[M12_ASSET_DATA_DIR_CAPACITY];

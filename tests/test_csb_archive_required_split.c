@@ -496,7 +496,20 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "CSB should be available when ZIP GRAPHICS and plain DUNGEON both match");
     check_int(M12_AssetStatus_GetRequiredFileCount(&status, "csb") == 2U,
               "CSB should report GRAPHICS and DUNGEON required files");
-    version = M12_AssetStatus_GetVersion(&status, "csb", 0U);
+    /* Find the version that actually matched, not blindly index 0.
+     * m12_first_matched_version() is how the runtime picks the CSB
+     * edition; pinning to index 0 here would misread the version table any
+     * time a later edition is inserted before the ZIP-backed pc34-en. */
+    version = NULL;
+    {
+        size_t vc = M12_AssetStatus_GetVersionCount("csb");
+        size_t vi;
+        for (vi = 0; vi < vc; ++vi) {
+            const M12_AssetVersionStatus* v =
+                M12_AssetStatus_GetVersion(&status, "csb", vi);
+            if (v && v->matched) { version = v; break; }
+        }
+    }
     check_int(version && version->matched &&
                   path_has_virtual_entry(version->matchedPath,
                                          "csb_graphics.zip",
@@ -725,7 +738,20 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
 
     check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 0,
               "CSB should be unavailable when archive-backed GRAPHICS is wrong");
-    version = M12_AssetStatus_GetVersion(&status, "csb", 0U);
+    /* Look up pc34-en by id -- the version this scenario is about -- rather
+     * than index 0, which drifts as new editions land in the version table. */
+    version = NULL;
+    {
+        size_t vc = M12_AssetStatus_GetVersionCount("csb");
+        size_t vi;
+        for (vi = 0; vi < vc; ++vi) {
+            const M12_AssetVersionStatus* v =
+                M12_AssetStatus_GetVersion(&status, "csb", vi);
+            if (v && v->versionId && strcmp(v->versionId, "pc34-en") == 0) {
+                version = v; break;
+            }
+        }
+    }
     check_int(version && !version->matched,
               "CSB PC 3.4 version should not match the wrong archive payload");
     graphics = required_file_by_role(&status, "graphics");
