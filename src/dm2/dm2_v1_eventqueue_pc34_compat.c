@@ -122,30 +122,41 @@ DM2_V1_QueueEventReceipt dm2_v1_eventqueue_queue_0x20(
 
 void dm2_v1_eventqueue_flush(DM2_V1_EventQueue *eq)
 {
-    /* Compact queue: keep only entries with b == 0x04, 0x40, or 0x60 */
-    DM2_V1_EventEntry kept[DM2_V1_EVENTQUEUE_LEN];
-    int16_t kept_count = 0;
+    int16_t scan;
+    int16_t write;
+    int16_t next;
 
-    /* Scan all slots in the queue.  Events are inserted at idx+1 wrapping,
-     * so the oldest entry is at (idx - entries + 1) mod LEN when out_idx
-     * has not been advanced.  Scan the entire ring to be safe. */
-    int16_t start = (int16_t)((eq->idx - eq->entries + 1 + DM2_V1_EVENTQUEUE_LEN)
-                              % DM2_V1_EVENTQUEUE_LEN);
-    for (int16_t i = 0; i < eq->entries && i < DM2_V1_EVENTQUEUE_LEN; i++) {
-        int16_t pos = (int16_t)((start + i) % DM2_V1_EVENTQUEUE_LEN);
-        int16_t b = eq->data[pos].b;
-        if (b == 0x04 || b == 0x40 || b == 0x60) {
-            kept[kept_count++] = eq->data[pos];
+    if (eq == NULL) return;
+
+    /* c_eventqueue::event_1031_098e compacts from the consumer cursor and
+     * leaves the retained entries in that same ring position. `out_idx` may
+     * no longer equal idx-entries+1 after an input consumer has advanced it;
+     * rewriting at slot zero then corrupts a wrapped source queue.
+     * Source: SKProject SKULLWIN/c_eventqueue.cpp::event_1031_098e
+     * (177-224); SKWINDOS/src/c_mouse.cpp (57-113). */
+    eq->fetch_busy = true;
+    next = (int16_t)(eq->idx + 1);
+    if (next >= DM2_V1_EVENTQUEUE_LEN) next = 0;
+    if (next != eq->out_idx) {
+        scan = eq->out_idx;
+        write = eq->out_idx;
+        eq->entries = 0;
+        for (;;) {
+            const int16_t b = eq->data[scan].b;
+            if (b == 0x04 || b == 0x40 || b == 0x60) {
+                if (write != scan) eq->data[write] = eq->data[scan];
+                ++write;
+                if (write >= DM2_V1_EVENTQUEUE_LEN) write = 0;
+                ++eq->entries;
+            }
+            if (scan == eq->idx) break;
+            ++scan;
+            if (scan >= DM2_V1_EVENTQUEUE_LEN) scan = 0;
         }
+        --write;
+        if (write < 0) write = DM2_V1_EVENTQUEUE_LEN - 1;
+        eq->idx = write;
     }
-
-    /* Rewrite queue from slot 0 */
-    for (int16_t i = 0; i < kept_count; i++)
-        eq->data[i] = kept[i];
-
-    eq->out_idx = 0;
-    eq->idx = (int16_t)(kept_count > 0 ? kept_count - 1 : 0);
-    eq->entries = kept_count;
 
     /* Reset event_unk fields */
     eq->event_unk02 = 0;
@@ -157,5 +168,8 @@ void dm2_v1_eventqueue_flush(DM2_V1_EventQueue *eq)
     eq->event_unk08 = 0;
     eq->event_unk09 = -1;
     eq->event_unk0a = 0;
-    eq->event_unk0f = false;
+    eq->fetch_busy = false;
+
+    /* SKW_GETSINGLEMOUSEEVENT runs after the semaphore is released. */
+    (void)dm2_v1_eventqueue_process_singleevent(eq);
 }

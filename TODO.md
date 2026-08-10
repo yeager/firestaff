@@ -578,7 +578,9 @@
   med de autentiska `dm2data.cpp`-tabellerna, inklusive `v1d338c` och
   `v1d39bc` som originalet laddar före STARTEND. Återstår gör den följande
   `LOAD_NEWMAP`- och `RESET_CAII`/`FILL_CAII_CUR_MAP`-committen i samma
-  sessiontransaktion.
+  sessiontransaktion. Dess eventflush använder nu originalets `out_idx`-
+  baserade ringkomprimering; den kompletta tangentbordsdräneringen och
+  UI-eventdispatchen måste fortfarande ägas av samma privata session.
   New Games privata `c_party` räknar nu vikt från samma källägda DB5–DB10-
   poster och GDAT som itembonusarna, inklusive laddningar samt DB9-
   containrars verkliga innehålls- och moneyboxkedjor. Det räcker inte för

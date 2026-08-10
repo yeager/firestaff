@@ -164,6 +164,35 @@ static void test_flush_keeps_buttons(void)
     printf("  PASS test_flush_keeps_buttons\n");
 }
 
+static void test_flush_preserves_consumer_ring_position(void)
+{
+    DM2_V1_EventQueue eq;
+
+    dm2_v1_eventqueue_init(&eq);
+    /* Model the live ring after the consumer has advanced out_idx. The
+     * retained range wraps: 8,9,10,0,1,2,3.  _1031_098e must compact into
+     * slot 8, not rewrite host slot zero. */
+    eq.out_idx = 8;
+    eq.idx = 3;
+    eq.entries = 7;
+    eq.data[8] = (DM2_V1_EventEntry){8, 80, 0x01};
+    eq.data[9] = (DM2_V1_EventEntry){9, 90, 0x04};
+    eq.data[10] = (DM2_V1_EventEntry){10, 100, 0x20};
+    eq.data[0] = (DM2_V1_EventEntry){0, 0, 0x40};
+    eq.data[1] = (DM2_V1_EventEntry){1, 10, 0x02};
+    eq.data[2] = (DM2_V1_EventEntry){2, 20, 0x60};
+    eq.data[3] = (DM2_V1_EventEntry){3, 30, 0x01};
+
+    dm2_v1_eventqueue_flush(&eq);
+    assert(eq.out_idx == 8);
+    assert(eq.idx == 10);
+    assert(eq.entries == 3);
+    assert(eq.data[8].x == 9 && eq.data[8].b == 0x04);
+    assert(eq.data[9].x == 0 && eq.data[9].b == 0x40);
+    assert(eq.data[10].x == 2 && eq.data[10].b == 0x60);
+    printf("  PASS test_flush_preserves_consumer_ring_position\n");
+}
+
 static void test_queue_overflow(void)
 {
     DM2_V1_EventQueue eq;
@@ -192,6 +221,7 @@ int main(void)
     test_queue_0x20();
     test_source_button_edge_and_keyboard_cap();
     test_flush_keeps_buttons();
+    test_flush_preserves_consumer_ring_position();
     test_queue_overflow();
     printf("All tests passed.\n");
     return 0;

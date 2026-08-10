@@ -1,3 +1,13 @@
+# DM2: source-correct event queue flush (2026-08-11)
+
+- ✅ `c_eventqueue::event_1031_098e` compacts retained 0x04/0x40/0x60
+  input events in-place from the real consumer cursor (`out_idx`), including
+  a wrapped ring, instead of rewriting a host queue from slot zero.
+- ✅ The one-entry concurrent mouse event is now consumed after the queue
+  semaphore is released, as in SKProject `c_eventqueue.cpp` and the DOS
+  reference `c_mouse.cpp`. Focused queue and real DOS startup-profile tests
+  pass.
+
 # Theron: normal host mouse routing for startup and dungeon controls (2026-08-11)
 
 - ✅ Startup/menu clicks now use the ordinary source-space pointer dispatcher;
