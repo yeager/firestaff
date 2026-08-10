@@ -684,6 +684,14 @@
   verifierade `main`-pushar avbröt alla matriser innan ett enda jobb startade.
   Varje push får nu en egen fullständig cross-platform-verifiering.
 
+# CI: DM2 extra-dungeon-test följer den aktuella callback-ytan (2026-08-10)
+
+- ✅ `test_dm2_v1_save_load_extra_dungeon_data` slutade använda den borttagna
+  testcallbacken `init_suppress` och lämnar i stället den nu obligatoriska
+  källägda `get_current_map`-åtkomsten. Det reparerar CMake-bygget på macOS,
+  Linux och Windows utan att ändra spel- eller sparformatdata. Den fokuserade
+  testsviten och en full lokal CMake-byggning passerar.
+
 # CI: bounded Windows CMake build (2026-08-09)
 
 - ✅ Windows/MSYS2/Ninja använder nu tre parallella CMake-jobb i `verify.yml`,

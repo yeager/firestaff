@@ -11,6 +11,7 @@
 /* ---- Mock dungeon: 1 map, 2x2, all floors, no records ---- */
 
 static int mock_get_map_count(void *ctx) { (void)ctx; return 1; }
+static int mock_get_current_map(void *ctx) { (void)ctx; return 0; }
 static uint8_t g_tiles[2][2];
 static void mock_get_map_dims(void *ctx, int *w, int *h)
 {
@@ -39,12 +40,6 @@ static int mock_get_tp(void *ctx, DM2_TeleporterDetail *out, int x, int y)
     memset(out, 0, sizeof(*out));
     return 0;
 }
-static int mock_init_suppress(void *ctx)
-{
-    (void)ctx;
-    return 0;
-}
-
 /* ---- Writer mock callbacks ---- */
 
 static int mock_get_record(void *ctx, uint16_t link, DM2_WriteRecordData *out)
@@ -129,7 +124,7 @@ static void test_empty_dungeon_round_trip(void)
     dcb.get_tile = mock_get_tile;
     dcb.get_record_link = mock_get_rec_link;
     dcb.get_teleporter_detail = mock_get_tp;
-    dcb.init_suppress = mock_init_suppress;
+    dcb.get_current_map = mock_get_current_map;
 
     int wrc = dm2_v1_store_extra_dungeon_data(&wr, &wcb, &dcb, 0);
     assert(wrc == 0);
@@ -208,7 +203,7 @@ static void test_tile_mask_restores_live_tile(void)
     scb.get_tile = mock_get_tile;
     scb.get_record_link = mock_get_rec_link;
     scb.get_teleporter_detail = mock_get_tp;
-    scb.init_suppress = mock_init_suppress;
+    scb.get_current_map = mock_get_current_map;
     assert(dm2_v1_store_extra_dungeon_data(&wr, &wcb, &scb, 0) == 0);
     assert(dm2_suppress_writer_flush(&wr.writer, buf + wr.out_written,
         sizeof(buf) - wr.out_written, &flushed) == 0);
