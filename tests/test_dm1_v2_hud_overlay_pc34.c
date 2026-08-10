@@ -1,3 +1,12 @@
+/* dm1_v2_hud_overlay_pc34 no-draw + presentation-state contract test.
+ *
+ * The V2 HUD overlay stores compass/action/rune presentation state and
+ * emits zero framebuffer pixels: the M653/C009/C010/C011 source HUD
+ * surfaces are the only sanctioned material. The `all_equal` guards
+ * below assert that even when the module is fed a north compass needle,
+ * a clamp high to east direction, an active action flash strip, and a
+ * cast-ready control, the framebuffer stays at its seeded value.
+ */
 #include "dm1_v2_hud_overlay_pc34.h"
 
 #include <stdio.h>

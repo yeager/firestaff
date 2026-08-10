@@ -1,5 +1,11 @@
 #include "dm1_v2_lighting_dynamic_pc34.h"
 
+/* DM1 V2 dynamic lighting is presentation-only. This module mirrors the
+ * palette index PC34 selects and derives shadow-alpha values from it;
+ * it never mutates the runtime tuple, never runs an
+ *   additive light map/fog overlay
+ * , and never introduces synthetic RGB lighting. The source route is
+ * PANEL.C:F0337_INVENTORY_SetDungeonViewPalette. */
 /* ReDMCSB DATA.C:360 / PANEL.C:419-423. PC34 selects one of these six
  * palettes from the source-owned F0337 light total; it has no RGB light map. */
 static const uint8_t k_palette_light_amount[6] = { 99, 75, 50, 25, 1, 0 };

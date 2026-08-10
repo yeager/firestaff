@@ -1,7 +1,8 @@
 /*
  * dm1_v2_hud_overlay_pc34.c
  *
- * DM1 V2 compatibility state boundary.
+ * DM1 V2 compatibility state boundary. This module is presentation-only:
+ * it does not mutate dungeon, champion, or command runtime state.
  *
  * This module used to paint a synthetic HUD made from hard-coded rectangles,
  * invented champion names and an inline 5x5 font. That is not an acceptable
@@ -9,6 +10,20 @@
  * M11 own the real HUD surfaces; until a V2 caller supplies those decoded
  * surfaces, this compatibility API records presentation state but draws
  * nothing.
+ *
+ * Source-lock anchors:
+ *   - TIMELINE.C:F0260 owns the tick-driven queue processing that produces
+ *     the acceptable HUD state; V2 mirrors it, never advances it.
+ *   - PANEL.C:F0354 owns the inventory-panel slot layout the V2 rune
+ *     overlay must not synthesize.
+ *   - CHAMDRAW.C champion status boxes (F0287/F0291/F0292) own the four
+ *     champion status frames; V2 exposes them only through recorded state.
+ *   - STATS.C F0090-F0092 own health/stamina/mana ratios that this V2 state
+ *     copies verbatim into the HUD structure.
+ *   - COMMAND.C:461-482 owns command-cadence gating (StopWaitingForPlayerInput,
+ *     G0310 disabled-movement ticks). The V2 rune overlay never signals a
+ *     command; direction is a 0..3 logical value derived from the source's
+ *     G0308_i_PartyDirection.
  */
 #include "dm1_v2_anim_timing.h"
 #include "dm1_v2_hud_overlay_pc34.h"

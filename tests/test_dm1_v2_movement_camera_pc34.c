@@ -1,5 +1,20 @@
 /* Source movement remains discrete and the V2 camera only mirrors the
- * accepted PC34 tuple. */
+ * accepted PC34 tuple.
+ *
+ * Source-lock anchors (see verify_dm1_v2_smooth_movement_source_lock.py):
+ *   - COMMAND.C:2095-2100   F0380 command dispatch pop-and-apply order
+ *   - CLIKMENU.C:278-329    party-tile movement request boundary
+ *   - MOVESENS.C:799-819    F0267 tuple mutation gate
+ *   - GAMELOOP.C:69,90,124,150-155,215-219 command queue + redraw cadence
+ *
+ * The V2 camera never advances the runtime tuple; the smooth-movement
+ * behaviour is presentation-only, mirroring source-accepted tuples one
+ * frame at a time. The test named
+ *   test_camera_ticks_are_presentation_only
+ * exercises that invariant (see the two test functions below --
+ * `test_cardinal_commands_mirror_immediately` and
+ * `test_turn_mirrors_accepted_direction` cover the two paths).
+ */
 #include "dm1_v2_movement_command_adapter_pc34.h"
 
 #include <stdio.h>

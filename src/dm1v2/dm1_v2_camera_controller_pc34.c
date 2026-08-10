@@ -21,7 +21,8 @@
  * The former controller interpolated coordinates, facing direction and turn
  * pan after a command was accepted. PC34 instead redraws F0128 from the
  * already-mutated G0308/G0306/G0307 tuple. The controller therefore mirrors
- * that tuple immediately and exposes no transient camera state or offsets. */
+ * that tuple immediately and exposes no transient camera state or offsets.
+ * The camera is presentation-only: it never mutates the runtime tuple. */
 
 void dm1_v2_camera_init(DM1_V2_CameraController* camera, const DM1_V2_PlayerPos* player) {
     if (!camera) return;

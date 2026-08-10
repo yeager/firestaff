@@ -1,3 +1,13 @@
+/* DM1 V2 dynamic lighting is presentation-only. The synthesis this test
+ * exercises stays entirely inside the compat state boundary and never
+ * reaches the runtime tuple. Two additive-model invariants are locked
+ * downstream of the palette map:
+ *   - half radius => squared falloff  (the alpha attenuation curve
+ *     halves the intensity every source-radius unit; alpha decays with
+ *     the square of distance-over-radius).
+ *   - additive overlay clamps         (RGB accumulators saturate at
+ *     255, never wrap around and never turn negative).
+ */
 #include "dm1_v2_lighting_dynamic_pc34.h"
 
 #include <stdint.h>
