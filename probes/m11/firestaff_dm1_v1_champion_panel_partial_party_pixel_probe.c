@@ -20,6 +20,7 @@
  *   to G0305_ui_PartyChampionCount << 1.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_portrait_seed.h"
 #include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -304,12 +305,14 @@ static int check_party_count(M11_GameViewState* game,
     int ok = 1;
     int slot;
     seed_party(game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, PROBE_CHAMPION_COUNT);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = partyCount; slot < PROBE_CHAMPION_COUNT; ++slot) {
         ok &= check_slot_populated_before_clear(fb, slot, partyCount);
     }
 
     seed_party(game, partyCount);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, partyCount);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
         if (slot < partyCount) {
@@ -355,6 +358,11 @@ int main(int argc, char** argv) {
     }
 
     seed_party(&game, PROBE_CHAMPION_COUNT);
+    if (!firestaff_dm1_probe_seed_original_portraits(&game, PROBE_CHAMPION_COUNT)) {
+        fprintf(stderr, "SKIP could not load DM1 champion portrait atlas from %s\n", dataDir);
+        M11_GameView_Shutdown(&game);
+        return 0;
+    }
     memset(fb, 0x0F, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
 

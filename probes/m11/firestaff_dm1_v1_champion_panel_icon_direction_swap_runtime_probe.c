@@ -33,6 +33,7 @@
  *   76x14 (4 cells * 19 wide * 14 tall).
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_portrait_seed.h"
 #include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -293,6 +294,11 @@ int main(int argc, char** argv) {
 
     /* --- Pass 1: party faces N (0), champions face N/E/S/W. --- */
     seed_party(&game, 0 /* partyDirection = DIR_NORTH */);
+    if (!firestaff_dm1_probe_seed_original_portraits(&game, PROBE_CHAMPION_COUNT)) {
+        fprintf(stderr, "SKIP could not load DM1 champion portrait atlas from %s\n", dataDir);
+        M11_GameView_Shutdown(&game);
+        return 0;
+    }
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
@@ -331,6 +337,7 @@ int main(int argc, char** argv) {
 
     /* --- Pass 2: party faces E (1), same champion facings. --- */
     seed_party(&game, 1 /* partyDirection = DIR_EAST */);
+    (void)firestaff_dm1_probe_seed_original_portraits(&game, PROBE_CHAMPION_COUNT);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
