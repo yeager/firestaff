@@ -22,6 +22,18 @@
   ändras inte.
 - ✅ Regressionstestet täcker Nexus/Theron över alla 19 startmenyspråk.
 
+# DM2: SKSAVE:s DB0-recycler väljer nu privat och läsande (2026-08-10)
+
+- ✅ Den privata SKSAVE-ägaren utför nu exakt DB0-delen av
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD`: originalets tvåpass-karttring,
+  DB3-aktuatorkedjornas stopp, skyddad DB2-text och statiska DB4-varelsers
+  possessions. AI-flaggor hämtas enbart från de under samma import
+  autentiserade DB4-raderna.
+- ✅ Resultatet är endast ett kvitto. Det skriver aldrig map-cursor, c_map,
+  recordpool, timer eller session och kan inte öppna Resume. Strukturtestet
+  täcker direkt DB0, DB3-spärr och statisk possession; DOS-korpustestet
+  bevisar att den läsande vägen inte ändrar något ägt spar-tillstånd.
+
 # DM2: SKSAVE-recyclerns DB0-gräns dokumenterad källtroget (2026-08-10)
 
 - ✅ SKProject/SKWINDOS `SKW_RECYCLE_A_RECORD_FROM_THE_WORLD` och

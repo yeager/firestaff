@@ -10,6 +10,7 @@
  */
 
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_sksave_game_load_owner.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +53,10 @@ static void build_synthetic(DM2_V1_RecordPoolSet *set)
     set->pools[3].extension_count = 2;
     set->pools[3].extension_base = 28;
     set->pools[3].extension_bytes = calloc(2, 8);
+    set->pools[4].record_size = 16;
+    set->pools[4].record_count = 1;
+    set->pools[4].source_base = 44;
+    set->pools[4].bytes = calloc(1, 16);
     set->valid = 1;
 }
 
@@ -168,6 +173,120 @@ static void test_recycle_scan_traversal(void)
 
     dm2_v1_record_pool_set_free(&set);
     printf("  recycle scan traversal OK\n");
+}
+
+/* The public map diagnostic deliberately cannot select a record. This tiny
+ * source-structural fixture exercises the retained GAME_LOAD owner's DB0
+ * candidate only: no pool, tile, map cursor or session is modified. The
+ * production regression remains the real PC-DOS SKSAVE corpus. */
+static void test_private_db0_recycler_candidate(void)
+{
+    DM2_V1_OriginalRawDungeonReceipt dungeon;
+    DM2_V1_SksaveMapOwner map_owner;
+    DM2_V1_SksaveGameLoadOwner game_owner;
+    DM2_V1_RecordPoolSet set;
+    DM2_V1_SksaveDb0RecyclerCandidate candidate;
+    uint16_t ground[4];
+    uint16_t columns[4] = { 0u, 1u, 2u, 3u };
+    uint8_t tiles[4] = { 0x10u, 0x10u, 0x10u, 0x10u };
+    uint8_t cursors_before[18];
+    uint16_t ground_before[4];
+
+    build_synthetic(&set);
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.valid = 1;
+    dungeon.map_count = 4;
+    for (int i = 0; i < 4; ++i) {
+        dungeon.map_widths[i] = 1;
+        dungeon.map_heights[i] = 1;
+    }
+    memset(&map_owner, 0, sizeof(map_owner));
+    map_owner.valid = 1;
+    map_owner.raw_body = tiles;
+    map_owner.raw_body_size = sizeof(tiles);
+    map_owner.dungeon = &dungeon;
+    map_owner.ground_stack_links = ground;
+    map_owner.ground_stack_count = 4u;
+    map_owner.column_indices = columns;
+    map_owner.column_index_count = 4u;
+    map_owner.map_tiles = tiles;
+    map_owner.map_tiles_size = sizeof(tiles);
+    for (int i = 0; i < 4; ++i) map_owner.map_tile_offsets[i] = (uint16_t)i;
+    map_owner.current_map = 1;
+
+    memset(&game_owner, 0, sizeof(game_owner));
+    game_owner.valid = 1;
+    game_owner.map_owner = map_owner;
+    game_owner.record_pools = set;
+    game_owner.recycler_context.valid = 1;
+    game_owner.recycler_context.map_count = 4u;
+    game_owner.recycler_context.current_map = 1u;
+    game_owner.recycler_context.protected_map = -1;
+    game_owner.recycler_context.party_x = 0u;
+    game_owner.recycler_context.party_y = 0u;
+
+    /* First map in the source ring owns a direct DB0 candidate. */
+    for (int i = 0; i < 4; ++i) ground[i] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    ground[0] = (uint16_t)mk_handle(0, 0);
+    wr16(set.pools[0].bytes, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    memcpy(cursors_before, game_owner.recycler_context.map_cursors,
+           sizeof(cursors_before));
+    memcpy(ground_before, ground, sizeof(ground_before));
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+              &game_owner, &candidate) && candidate.valid && candidate.found &&
+              candidate.selected_link == (uint16_t)mk_handle(0, 0) &&
+              candidate.selected_map == 0u && candidate.cursor_after == 0u &&
+              candidate.maps_scanned == 1u,
+          "private DB0 recycler returns the first source-ring candidate");
+    CHECK(memcmp(cursors_before, game_owner.recycler_context.map_cursors,
+                 sizeof(cursors_before)) == 0 &&
+              memcmp(ground_before, ground, sizeof(ground_before)) == 0 &&
+              game_owner.map_owner.current_map == 1 &&
+              !game_owner.source_game_load_session_ready,
+          "private DB0 recycler candidate leaves c_map, cursor and session untouched");
+
+    /* DB3 table1d324c stops the tile chain before its following DB0 link. */
+    ground[0] = (uint16_t)mk_handle(3, 0);
+    wr16(set.pools[3].bytes, mk_handle(0, 1));
+    wr16(set.pools[3].bytes + 2u, 1); /* table1d324c subtype 1 blocks */
+    wr16(set.pools[0].bytes + 4u, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    ground[2] = (uint16_t)mk_handle(0, 2);
+    wr16(set.pools[0].bytes + 8u, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+              &game_owner, &candidate) && candidate.found &&
+              candidate.selected_link == (uint16_t)mk_handle(0, 2) &&
+              candidate.selected_map == 2u,
+          "private DB0 recycler keeps DB3 actuator barriers ahead of DB0");
+
+    /* Protected map text similarly ends its tile chain before DB0. */
+    ground[0] = (uint16_t)mk_handle(2, 0);
+    wr16(set.pools[2].bytes, mk_handle(0, 1));
+    wr16(set.pools[2].bytes + 2u, (int16_t)(0x0002u | (4u << 11)));
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+              &game_owner, &candidate) && candidate.found &&
+              candidate.selected_link == (uint16_t)mk_handle(0, 2) &&
+              candidate.selected_map == 2u,
+          "private DB0 recycler keeps protected DB2 text ahead of DB0");
+
+    /* A static DB4 possession chain is the one DB0 descent allowed before
+     * the runtime owns DELETE_CREATURE_RECORD. */
+    ground[0] = (uint16_t)mk_handle(4, 0);
+    ground[2] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    wr16(set.pools[4].bytes, mk_handle(0, 1));
+    set.pools[4].bytes[4] = 0x42u;
+    game_owner.retained_creature_ai_valid[0x42u] = 1u;
+    game_owner.retained_creature_ai_flags[0x42u] = 1u;
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+              &game_owner, &candidate) && candidate.found &&
+              candidate.selected_link == (uint16_t)mk_handle(0, 1) &&
+              candidate.static_possession_descents == 1u,
+          "private DB0 recycler descends only retained static creature possessions");
+
+    dm2_v1_record_pool_set_free(&set);
 }
 
 int main(void)
@@ -314,6 +433,7 @@ int main(void)
           "init from NULL world fails closed");
 
     test_recycle_scan_traversal();
+    test_private_db0_recycler_candidate();
 
     CHECK(strstr(dm2_v1_record_pool_source_evidence(), "c_record.cpp") != NULL,
           "source evidence cites c_record.cpp");

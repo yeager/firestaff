@@ -1,4 +1,5 @@
 #include "dm2_v1_sksave_game_load_owner.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_save_suppress_masks_pc34_compat.h"
 
 #include <string.h>
@@ -363,6 +364,229 @@ int dm2_v1_sksave_game_load_owner_creature_ai_flags(
         !owner->retained_creature_ai_valid[creature_type]) return 0;
     *out_flags = owner->retained_creature_ai_flags[creature_type];
     return 1;
+}
+
+/* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD has one non-mutating
+ * branch which is useful before a complete runtime exists: DB0 is returned
+ * to DM2_ALLOC_NEW_RECORD, which performs the actual clear afterwards.
+ * Keep this walker here, beside the retained c_map/DB4-AI ownership, rather
+ * than teaching the generic map diagnostic to guess at GAME_LOAD state. */
+static int dm2_v1_sksave_db0_scan_tile(
+    const DM2_V1_SksaveGameLoadOwner *owner, int map, int x, int y,
+    DM2_V1_SksaveDb0RecyclerCandidate *candidate)
+{
+    uint16_t root;
+    int16_t current;
+    int16_t static_creature = DM2_V1_RECORD_HANDLE_END;
+    int16_t static_creature_next = DM2_V1_RECORD_HANDLE_END;
+    size_t steps = 0u;
+    int near_party;
+
+    if (!dm2_v1_sksave_map_owner_tile_record_link(&owner->map_owner, map,
+                                                    x, y, &root)) {
+        return 0;
+    }
+    current = (int16_t)root;
+    near_party = map == (int)owner->recycler_context.current_map &&
+        x >= (int)owner->recycler_context.party_x - 5 &&
+        x <= (int)owner->recycler_context.party_x + 5 &&
+        y >= (int)owner->recycler_context.party_y - 5 &&
+        y <= (int)owner->recycler_context.party_y + 5;
+
+    /* OBJECT_NULL is legal only in an unused pool slot, never as a tile or
+     * possession root. The original would dereference it; reject instead of
+     * silently shortening an admitted chain. */
+    if (current == DM2_V1_RECORD_HANDLE_NULL) return 0;
+    while (current != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        int16_t next;
+        const int pool = dm2_v1_record_handle_pool(current);
+
+        if (++steps > (size_t)DM2_V1_SKSAVE_RECYCLE_MAX_STEPS || pool < 0 ||
+            pool >= DM2_V1_RECORD_POOL_COUNT ||
+            !dm2_v1_record_pool_next_link(&owner->record_pools, current,
+                                           &next) ||
+            !(record = dm2_v1_record_pool_address(&owner->record_pools,
+                                                   current))) {
+            return 0;
+        }
+        ++candidate->records_examined;
+
+        /* c_record.cpp:DA34-DAF1: these records stop this tile's chain. */
+        if (pool == 3) {
+            const uint8_t subtype = record[2] & 0x7fu;
+            if (subtype < 44u && dm2_v1_table_1d324c[subtype] != 0)
+                break;
+        } else if (pool == 2) {
+            const uint16_t word2 = (uint16_t)record[2] |
+                ((uint16_t)record[3] << 8);
+            if ((word2 & 0x0006u) == 0x0002u &&
+                ((word2 >> 11) & 0x001fu) == 4u) {
+                break;
+            }
+        } else if (pool == 0) {
+            /* DB0 has no recycler deletion/move tail.  The original returns
+             * this ObjectID to ALLOC_NEW_RECORD, which is intentionally a
+             * later transaction. */
+            candidate->found = 1;
+            candidate->selected_link = (uint16_t)current & 0x3fffu;
+            candidate->selected_map = (uint8_t)map;
+            candidate->selected_x = (uint8_t)x;
+            candidate->selected_y = (uint8_t)y;
+            return 2;
+        } else if (pool == 4 && !near_party &&
+                   static_creature == DM2_V1_RECORD_HANDLE_END &&
+                   next != DM2_V1_RECORD_HANDLE_END) {
+            uint16_t ai_flags = 0u;
+            /* c_record.cpp:DB31-DB62 descends only into a static creature's
+             * possession chain. Missing retained CREATURES data is not an
+             * invitation to treat the creature as dynamic or empty. */
+            if (!dm2_v1_sksave_game_load_owner_creature_ai_flags(owner,
+                                                                  record[4],
+                                                                  &ai_flags)) {
+                return 0;
+            }
+            if ((ai_flags & 0x0001u) != 0u) {
+                static_creature = current;
+                static_creature_next = next;
+                current = next;
+                ++candidate->static_possession_descents;
+                continue;
+            }
+        }
+
+        current = next;
+        if (current == DM2_V1_RECORD_HANDLE_END &&
+            static_creature != DM2_V1_RECORD_HANDLE_END) {
+            /* c_record.cpp:DAE2-DAF0 resumes at the static creature, then
+             * advances once through its ordinary tile-chain link. */
+            current = static_creature_next;
+            static_creature = DM2_V1_RECORD_HANDLE_END;
+            static_creature_next = DM2_V1_RECORD_HANDLE_END;
+        }
+    }
+    return 1;
+}
+
+static int dm2_v1_sksave_db0_advance_map(int *map, int map_count)
+{
+    if (!map || map_count <= 0 || *map < 0 || *map >= map_count) return 0;
+    *map = *map + 1 < map_count ? *map + 1 : 0;
+    return 1;
+}
+
+int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+    const DM2_V1_SksaveGameLoadOwner *owner,
+    DM2_V1_SksaveDb0RecyclerCandidate *out_candidate)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    DM2_V1_SksaveDb0RecyclerCandidate candidate;
+    int map;
+    int anchor;
+    int protected_map;
+    int second_pass = 0;
+    size_t pass_budget;
+
+    if (out_candidate) memset(out_candidate, 0, sizeof(*out_candidate));
+    if (!owner || !out_candidate || !owner->valid ||
+        !owner->recycler_context.valid || !owner->map_owner.valid ||
+        !owner->record_pools.valid || !owner->map_owner.dungeon ||
+        owner->source_game_load_session_ready) return 0;
+    dungeon = owner->map_owner.dungeon;
+    if (!dungeon->valid || dungeon->map_count < 2u ||
+        dungeon->map_count > DM2_RAW_SKSAVE_MAX_MAPS ||
+        owner->recycler_context.map_count != dungeon->map_count ||
+        owner->recycler_context.current_map >= dungeon->map_count ||
+        owner->map_owner.current_map !=
+            (int)owner->recycler_context.current_map) return 0;
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.selected_link = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    candidate.cursor_before = owner->recycler_context.map_cursors[0];
+    map = (int)candidate.cursor_before;
+    if (map < 0 || map >= (int)dungeon->map_count) return 0;
+    protected_map = owner->recycler_context.protected_map_active ?
+        (int)owner->recycler_context.protected_map : -1;
+    if (protected_map >= (int)dungeon->map_count) return 0;
+    anchor = map;
+
+    /* c_record.cpp:D83F-D929: start outside party/protected maps. */
+    if (map == (int)owner->recycler_context.current_map ||
+        map == protected_map) {
+        do {
+            if (!dm2_v1_sksave_db0_advance_map(&map, dungeon->map_count))
+                return 0;
+            if (map == anchor) {
+                if (protected_map >= 0) {
+                    map = protected_map;
+                    protected_map = -1;
+                } else {
+                    map = (int)owner->recycler_context.current_map;
+                }
+            }
+        } while (map == (int)owner->recycler_context.current_map ||
+                 map == protected_map);
+    }
+    anchor = map;
+    pass_budget = (size_t)dungeon->map_count * 4u + 2u;
+
+    while (pass_budget-- != 0u) {
+        int x;
+        for (x = 0; x < (int)dungeon->map_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < (int)dungeon->map_heights[map]; ++y) {
+                const int scan = dm2_v1_sksave_db0_scan_tile(owner, map, x, y,
+                                                               &candidate);
+                if (scan == 0) return 0;
+                if (scan == 2) {
+                    candidate.valid = 1;
+                    candidate.cursor_after = (uint8_t)map;
+                    ++candidate.maps_scanned;
+                    *out_candidate = candidate;
+                    return 1;
+                }
+            }
+        }
+        ++candidate.maps_scanned;
+
+        if (map == (int)owner->recycler_context.current_map ||
+            dungeon->map_count <= 1u) {
+            if (second_pass) {
+                candidate.valid = 1;
+                candidate.cursor_after = (uint8_t)map;
+                *out_candidate = candidate;
+                return 1;
+            }
+            /* The source re-walks the party map after setting vbool_18.
+             * DB0 itself does not use the second-pass actuator type filter,
+             * but the extra traversal is part of the source cursor proof. */
+            second_pass = 1;
+            continue;
+        }
+
+        if (protected_map < 0) {
+            do {
+                if (!dm2_v1_sksave_db0_advance_map(&map, dungeon->map_count))
+                    return 0;
+                if (map == anchor) {
+                    map = (int)owner->recycler_context.current_map;
+                    break;
+                }
+            } while (map == (int)owner->recycler_context.current_map);
+        } else {
+            do {
+                if (!dm2_v1_sksave_db0_advance_map(&map, dungeon->map_count))
+                    return 0;
+                if (map == anchor) {
+                    map = protected_map;
+                    protected_map = -1;
+                }
+            } while (map == protected_map ||
+                     map == (int)owner->recycler_context.current_map);
+        }
+    }
+    /* A bounded source ring must always reach the party-map second pass. */
+    return 0;
 }
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner)

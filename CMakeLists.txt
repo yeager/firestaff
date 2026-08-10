@@ -20786,7 +20786,10 @@ endif()
     target_include_directories(test_dm2_v1_record_pool_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm2_v1_record_pool_pc34_compat PRIVATE m)
+    target_link_libraries(test_dm2_v1_record_pool_pc34_compat PRIVATE
+        firestaff_dm2
+        m
+    )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_record_pool_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()

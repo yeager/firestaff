@@ -69,6 +69,38 @@ static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
     return hash;
 }
 
+static uint32_t sksave_game_load_owner_mutable_hash(
+    const DM2_V1_SksaveGameLoadOwner *owner)
+{
+    uint32_t hash = 2166136261u;
+    int pool_index;
+
+    if (!owner) return 0u;
+    hash = hash_bytes(hash, owner->map_owner.map_tiles,
+                      owner->map_owner.map_tiles_size);
+    hash = hash_bytes(hash, (const uint8_t *)owner->map_owner.column_indices,
+                      owner->map_owner.column_index_count *
+                          sizeof(*owner->map_owner.column_indices));
+    hash = hash_bytes(hash,
+                      (const uint8_t *)owner->map_owner.ground_stack_links,
+                      owner->map_owner.ground_stack_count *
+                          sizeof(*owner->map_owner.ground_stack_links));
+    hash = hash_bytes(hash, (const uint8_t *)&owner->map_owner.current_map,
+                      sizeof(owner->map_owner.current_map));
+    hash = hash_bytes(hash, owner->recycler_context.map_cursors,
+                      sizeof(owner->recycler_context.map_cursors));
+    for (pool_index = 0; pool_index < DM2_V1_RECORD_POOL_COUNT; ++pool_index) {
+        const DM2_V1_RecordPool *pool = &owner->record_pools.pools[pool_index];
+        const size_t bytes = (size_t)pool->record_size *
+            (size_t)pool->record_count;
+        const size_t extension_bytes = (size_t)pool->record_size *
+            (size_t)pool->extension_count;
+        hash = hash_bytes(hash, pool->bytes, bytes);
+        hash = hash_bytes(hash, pool->extension_bytes, extension_bytes);
+    }
+    return hash;
+}
+
 static uint16_t inventory_alloc_record(void *context, int record_type)
 {
     RecordChainInventory *inventory = (RecordChainInventory *)context;
@@ -1072,6 +1104,33 @@ static void test_real_raw_save(const char *path, const char *root,
                       (uint8_t[18]){0},
                       sizeof(game_load_owner.recycler_context.map_cursors)) == 0),
               "SKSave private recycler context retains source map state while recycling remains blocked");
+        {
+            DM2_V1_SksaveDb0RecyclerCandidate db0_candidate;
+            const uint32_t mutable_hash_before = owner_ok ?
+                sksave_game_load_owner_mutable_hash(&game_load_owner) : 0u;
+            const int map_before = game_load_owner.map_owner.current_map;
+            uint8_t cursors_before[18];
+            memset(&db0_candidate, 0, sizeof(db0_candidate));
+            memcpy(cursors_before, game_load_owner.recycler_context.map_cursors,
+                   sizeof(cursors_before));
+            const int candidate_ok = !owner_ok ||
+                dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+                    &game_load_owner, &db0_candidate);
+            CHECK(candidate_ok && (!owner_ok ||
+                  (db0_candidate.valid &&
+                   db0_candidate.cursor_before == cursors_before[0] &&
+                   db0_candidate.cursor_after < receipt.map_count &&
+                   (!db0_candidate.found ||
+                    dm2_v1_record_handle_pool(
+                        (int16_t)db0_candidate.selected_link) == 0) &&
+                   !game_load_owner.source_game_load_session_ready &&
+                   game_load_owner.map_owner.current_map == map_before &&
+                   memcmp(game_load_owner.recycler_context.map_cursors,
+                          cursors_before, sizeof(cursors_before)) == 0 &&
+                   sksave_game_load_owner_mutable_hash(&game_load_owner) ==
+                       mutable_hash_before)),
+                  "SKSave DB0 recycler candidate follows source traversal without mutating the private owner");
+        }
         dm2_v1_sksave_game_load_owner_free(&game_load_owner);
         dm2_v1_asset_loader_free(&preflight_loader);
         free(preflight_graphics);

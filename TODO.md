@@ -693,9 +693,13 @@
   Den äldre läsande diagnosscannen rapporterar nu endast nästa source-cursor;
   den får inte skriva den till den behållna ägaren förrän en komplett
   recyclertransaktion kan committas.
-  Ägaren behåller nu också de autentiserade AI-flaggorna för sina faktiska
-  DB4-poster; nästa steg är att använda dem i tvåpass-kandidatens statiska
-  possessiontraversering.
+  Ägaren använder nu också de autentiserade AI-flaggorna för sina faktiska
+  DB4-poster i en läsande DB0-kandidat. Den reproducerar tvåpassringen,
+  DB3-/DB2-spärrarna och statiska varelsers possessiontraversering utan att
+  skriva cursor, karta eller pool. Nästa steg är fortfarande den enda
+  atomära `ALLOC_NEW_RECORD`-transaktionen: source-cursor, nollställning,
+  append och efterföljande record-checkcode måste committas tillsammans med
+  c_map-/CAII-/timerägarna innan Resume kan öppnas.
 
 - 🔧 DM2:s levande viewport-inmatning saknar ännu den monterade
   `c_tmouse`/`c_input`-tabellen med aktiva GDAT-rektanglar. M11 avvisar

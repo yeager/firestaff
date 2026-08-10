@@ -93,6 +93,27 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     DM2_V1_SksaveSpecialTimerReceipt receipt;
 } DM2_V1_SksaveGameLoadOwner;
 
+/* Read-only result from the DB0-only selection portion of
+ * DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  `found` names a record which the
+ * original allocator would subsequently clear and return; this receipt does
+ * neither.  The cursor is prospective until a complete ALLOC_NEW_RECORD
+ * transaction can atomically commit its c_map/record/CAII effects.
+ *
+ * Source: SKProject SKULLWIN/c_record.cpp:544-1073. */
+typedef struct {
+    int valid;
+    int found;
+    uint16_t selected_link;
+    uint8_t selected_map;
+    uint8_t selected_x;
+    uint8_t selected_y;
+    uint8_t cursor_before;
+    uint8_t cursor_after;
+    uint16_t maps_scanned;
+    uint32_t records_examined;
+    uint32_t static_possession_descents;
+} DM2_V1_SksaveDb0RecyclerCandidate;
+
 /* Materialize one fully source-walked private transaction.  `raw_body` is
  * the original SKSAVE payload after its 42-byte header; it is never modified
  * or retained.  On failure `owner` is cleared and no partial owner survives. */
@@ -115,6 +136,16 @@ int dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
 int dm2_v1_sksave_game_load_owner_creature_ai_flags(
     const DM2_V1_SksaveGameLoadOwner *owner, uint8_t creature_type,
     uint16_t *out_flags);
+
+/* Reproduce only the non-mutating DB0 candidate selection. It walks the
+ * source two-pass map ring, respects DB3 and protected DB2 chain barriers,
+ * and descends through source-static DB4 possessions using AI flags retained
+ * during SKSAVE admission. It never writes a cursor, map, pool, timer or
+ * record, and it never makes Resume playable. A missing retained AI row or
+ * malformed chain invalidates the whole receipt rather than guessing. */
+int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+    const DM2_V1_SksaveGameLoadOwner *owner,
+    DM2_V1_SksaveDb0RecyclerCandidate *out_candidate);
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner);
 
