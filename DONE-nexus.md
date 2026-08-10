@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus VDP1 direct-colour DGN owner join
+
+- VDP1 colour mode 5 kan nu bindas till en unik DGN Structure2 encoding
+  `28h`-bild med exakt Saturn little-endian VRAM ↔ canonical big-endian
+  byteordning.
+- Direct-colour capture receipt rapporterar `source_join_verified`; ingen
+  CLUT eller host-palette uppfinns och `renderer_permitted` förblir stängd.
+- Tester täcker både `28h`-ägarskapsjoin och direct-colour-capture med
+  source-join receipt. Fokuserad Nexus-build passerar.
+
 ## 2026-08-10 - Nexus FONT256 raw VDP2 Page-span join
 
 - `nexus_v1_font256_vdp2_capture_join` jämför nu den exakta råa Page-regionen

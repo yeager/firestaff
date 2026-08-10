@@ -27,6 +27,11 @@ typedef struct {
     const uint8_t *dgn_palette;
     int dgn_palette_size;
     int dgn_source_hash_verified;
+    /* Optional canonical DGN Structure2 encoding 28h source-owner witness
+     * for VDP1 colour mode 5. */
+    const uint8_t *dgn_direct_image;
+    int dgn_direct_image_size;
+    int dgn_direct_source_hash_verified;
     int original_saturn_capture_verified;
     /* A captured mode-1 source whose every texel is index zero and whose
      * draw mode keeps index zero transparent. This is a bounded clear/no-op
@@ -77,6 +82,7 @@ typedef struct {
     int command_framed;
     int direct_color_mode;
     int source_word_order_verified;
+    int source_join_verified;
     int coordinate_words_framed;
     int original_saturn_capture_verified;
     int renderer_permitted;

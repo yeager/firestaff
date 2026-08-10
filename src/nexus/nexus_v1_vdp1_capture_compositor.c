@@ -169,6 +169,20 @@ int nexus_v1_vdp1_capture_decode_direct_color(
     receipt.command_framed = 1;
     receipt.direct_color_mode = 1;
     receipt.source_word_order_verified = 1;
+    if (input->dgn_direct_image || input->dgn_direct_image_size != 0 ||
+        input->dgn_direct_source_hash_verified) {
+        if (!input->dgn_direct_image ||
+            input->dgn_direct_image_size != input->texture_span_size ||
+            !input->dgn_direct_source_hash_verified ||
+            !swapped_words_equal(input->texture_span,
+                                 input->texture_span_size,
+                                 input->dgn_direct_image,
+                                 input->dgn_direct_image_size)) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.source_join_verified = 1;
+    }
     receipt.coordinate_words_framed = command.coordinate_words_framed;
     receipt.original_saturn_capture_verified = 1;
     xy[0][0] = (float)input->screen_origin_x + (float)command.xa;

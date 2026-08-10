@@ -28,10 +28,11 @@ typedef struct {
 } Nexus_V1_Vdp1DgnMaterialResolverReceipt;
 
 /* Resolve one captured mode-1 draw to one unique Structure2 image and one
- * unique reusable Structure2 CLUT within the same DGN. DGN payload bytes
- * remain in canonical byte order; the capture compositor performs the
- * explicit Saturn word-order comparison. No face, transform, culling, or
- * camera meaning is inferred here. */
+ * unique reusable Structure2 CLUT within the same DGN. Colour mode 5 joins
+ * only Structure2 encoding 28h and returns direct-colour source bytes; no
+ * CLUT is invented for that path. DGN payload bytes remain in canonical byte
+ * order; the capture compositor performs the explicit Saturn word-order
+ * comparison. No face, transform, culling, or camera meaning is inferred. */
 int nexus_v1_vdp1_dgn_material_resolver(
     const uint8_t *vdp1_vram, int vdp1_vram_size,
     const uint8_t *command, int command_size,

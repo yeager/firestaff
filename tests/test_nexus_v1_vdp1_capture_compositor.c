@@ -175,6 +175,7 @@ int main(void)
     uint8_t texture[32] = {0};
     uint8_t direct_texture[128] = {0};
     uint8_t dgn_image[32];
+    uint8_t dgn_direct_image[128];
     uint8_t palette_state[32] = {0};
     uint8_t dgn_palette[32];
     Nexus_Framebuffer framebuffer;
@@ -252,9 +253,16 @@ int main(void)
      * only until a DGN owner/material receipt exists. */
     for (i = 0; i < (int)sizeof(direct_texture); i += 2)
         wl16(direct_texture + i, (i < 32) ? 0x4000U : 0x001fU);
+    for (i = 0; i < (int)sizeof(direct_texture); i += 2) {
+        dgn_direct_image[i] = direct_texture[i + 1];
+        dgn_direct_image[i + 1] = direct_texture[i];
+    }
     wl16(command + 4, 5U << 3);
     input.texture_span = direct_texture;
     input.texture_span_size = sizeof(direct_texture);
+    input.dgn_direct_image = dgn_direct_image;
+    input.dgn_direct_image_size = sizeof(dgn_direct_image);
+    input.dgn_direct_source_hash_verified = 1;
     memset(&direct_framebuffer, 0, sizeof(direct_framebuffer));
     memset(&direct_receipt, 0, sizeof(direct_receipt));
     if (!nexus_v1_vdp1_capture_decode_direct_color(
@@ -262,6 +270,7 @@ int main(void)
         !direct_receipt.valid || !direct_receipt.capture_only ||
         !direct_receipt.direct_color_mode ||
         !direct_receipt.source_word_order_verified ||
+        !direct_receipt.source_join_verified ||
         direct_receipt.renderer_permitted ||
         direct_receipt.written_pixels <= 0 ||
         direct_receipt.transparent_pixels <= 0) {

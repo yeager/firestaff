@@ -69,7 +69,8 @@ int nexus_v1_vdp1_dgn_material_resolver(
     if (!input || !input->dgn_bytes || input->dgn_byte_count < 0x20 ||
         input->source_hash_verified <= 0 || !vdp1_vram ||
         vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES || !parsed ||
-        !parsed->texture_command || parsed->colour_mode != 1U ||
+        !parsed->texture_command ||
+        (parsed->colour_mode != 1U && parsed->colour_mode != 5U) ||
         !parsed->texture_source_range_valid || parsed->texture_byte_count == 0U ||
         input->palette_slot_base < 0 || input->palette_slot_base > 240) return 0;
     data = input->dgn_bytes;
@@ -81,7 +82,8 @@ int nexus_v1_vdp1_dgn_material_resolver(
     /* CMDCOLR's documented <<2 result is a VDP1 word address; this buffer
      * uses byte offsets, so the conversion is <<3. */
     palette_offset = (((uint32_t)parsed->colour_control & ~UINT32_C(3)) << 3U);
-    if (palette_offset > (uint32_t)vdp1_vram_size - 32U) return 0;
+    if (parsed->colour_mode == 1U &&
+        palette_offset > (uint32_t)vdp1_vram_size - 32U) return 0;
 
     for (cursor = 0U; cursor + 20U <= useful; cursor += 20U) {
         const uint8_t *descriptor = data + base + cursor;
@@ -108,22 +110,29 @@ int nexus_v1_vdp1_dgn_material_resolver(
         height = read_be16(descriptor + 8);
         image_offset = read_be32(descriptor + 12);
         dgn_palette_offset = read_be32(descriptor + 16);
-        if (encoding != 0x0008U || width == 0U || height == 0U) continue;
-        image_size = ((uint32_t)width * (uint32_t)height + 1U) / 2U;
+        if ((parsed->colour_mode == 1U && encoding != 0x0008U) ||
+            (parsed->colour_mode == 5U && encoding != 0x0028U) ||
+            width == 0U || height == 0U) continue;
+        image_size = parsed->colour_mode == 5U
+            ? (uint32_t)width * (uint32_t)height * 2U
+            : ((uint32_t)width * (uint32_t)height + 1U) / 2U;
         if (image_size != parsed->texture_byte_count ||
             image_offset < cursor + 22U ||
             image_offset > useful || image_size > useful - image_offset ||
-            dgn_palette_offset < cursor + 22U ||
-            dgn_palette_offset > useful || 32U > useful - dgn_palette_offset) {
+            (parsed->colour_mode == 1U &&
+             (dgn_palette_offset < cursor + 22U ||
+              dgn_palette_offset > useful ||
+              32U > useful - dgn_palette_offset))) {
             continue;
         }
         image = data + base + image_offset;
-        palette = data + base + dgn_palette_offset;
+        palette = parsed->colour_mode == 1U
+            ? data + base + dgn_palette_offset : NULL;
         image_match = swapped_words_equal(
             vdp1_vram + parsed->texture_source_byte_offset,
             (int)parsed->texture_byte_count, image, (int)image_size);
-        palette_match = swapped_words_equal(
-            vdp1_vram + palette_offset, 32, palette, 32);
+        palette_match = parsed->colour_mode == 1U &&
+            swapped_words_equal(vdp1_vram + palette_offset, 32, palette, 32);
         if (image_match) {
             ++image_matches;
             matched_image = image;
@@ -138,6 +147,14 @@ int nexus_v1_vdp1_dgn_material_resolver(
         }
     }
     if (!terminator_found || !out_input) return 0;
+    if (parsed->colour_mode == 5U) {
+        if (image_matches != 1 || !matched_image) return 0;
+        memset(out_input, 0, sizeof(*out_input));
+        out_input->dgn_direct_image = matched_image;
+        out_input->dgn_direct_image_size = (int)parsed->texture_byte_count;
+        out_input->dgn_direct_source_hash_verified = 1;
+        return 1;
+    }
     if (image_matches == 0 &&
         bytes_all_zero(vdp1_vram + parsed->texture_source_byte_offset,
                        (int)parsed->texture_byte_count) &&

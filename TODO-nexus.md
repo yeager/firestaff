@@ -13,6 +13,12 @@ nu tillsammans med CG- och Palette-joinen, men får inte markeras som
 textkonsument förrän PND-fält, teckenkodsmappning, placering och layer-ägare
 är bevisade av capture.
 
+VDP1:s direct-colour-lane behöver fortsatt en riktig runtime-frame med DGN
+encoding `28h` från samma retail-LEV och en verifierad command/VRAM-join.
+Koden kan nu göra den exakta Structure2-ägarskapskontrollen och behåller
+capture-only; det är inte ännu ett bevis på DGN-face-val, kamera, culling
+eller full viewport-komposition.
+
 2026-08-10: Engine-API:t kan nu läsa en vald, hashbunden MENU.BPK-PRS3-yta
 som exakta indexpixlar. Detta är source-pixelåtkomst, inte PALT-färgdekodning,
 VDP1-upload eller menyplacering; Saturn-konsumentgrinden är fortsatt öppen.
