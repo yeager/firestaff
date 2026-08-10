@@ -217,9 +217,31 @@ def source_audit() -> dict[str, str]:
     }
 
 
+def _resolve_runtime_dir(base: Path) -> Path:
+    """Locate the directory that actually contains the runtime DATA files.
+
+    Firestaff's canonical workspace layout keeps the extracted PC 3.4 DATA
+    under `<workspace>/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA`;
+    the top-level `~/.firestaff/data` root only holds the raw archives and
+    per-game subfolders. Walk the known candidate layouts and pick the one
+    whose GRAPHICS.DAT/DUNGEON.DAT files actually exist.
+    """
+    candidates = (
+        base,
+        base / "dm1",
+        base / "dm1" / "DATA",
+        base / "dm1" / "dos_extract" / "Dungeon-Master_DOS_EN_Version-34" / "DATA",
+        base / "dos_extract" / "Dungeon-Master_DOS_EN_Version-34" / "DATA",
+    )
+    for candidate in candidates:
+        if (candidate / "GRAPHICS.DAT").exists() and (candidate / "DUNGEON.DAT").exists():
+            return candidate
+    return base
+
+
 def asset_audit() -> dict[str, dict[str, object]]:
     rows: dict[str, dict[str, object]] = {}
-    runtime_dir = Path(os.environ.get("FIRESTAFF_DATA", str(Path.home() / ".firestaff/data")))
+    runtime_dir = _resolve_runtime_dir(Path(os.environ.get("FIRESTAFF_DATA", str(Path.home() / ".firestaff/data"))))
     for name, expected in EXPECTED_HASHES.items():
         canonical = DM / name
         runtime = runtime_dir / name
