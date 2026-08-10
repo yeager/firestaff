@@ -4884,7 +4884,8 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
         CSB_AMIGA_M633_FIRST_DOOR_SET = 246,
         CSB_AMIGA_M615_FIRST_WALL_ORNAMENT = 259,
         CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT = 385,
-        CSB_AMIGA_M649_DOOR_MASK_DESTROYED = 439
+        CSB_AMIGA_M649_DOOR_MASK_DESTROYED = 439,
+        CSB_AMIGA_M634_FIRST_DOOR_BUTTON = 453
     };
     M11_GameViewState *state = (M11_GameViewState *)user_data;
     const CSB_V1_BootProfile *profile;
@@ -4965,6 +4966,14 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
          * F0108 subsequently draws those records into F0128's aperture.
          * This is a closed 54-record source family, not an open-ended
          * fallback for later door masks, buttons, projectiles or objects. */
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= CSB_AMIGA_M649_DOOR_MASK_DESTROYED &&
+               graphic_index <= CSB_AMIGA_M634_FIRST_DOOR_BUTTON) {
+        /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M: M649=439
+         * supplies the destroyed/thieves-eye masks, M617=441 supplies the
+         * twelve ornaments, and M634=453 is the native door button. F0111
+         * and F0110 use this exact IMG1 family after F0128 reaches a door;
+         * never substitute a PC34 surface if one native record is absent. */
         source_graphic = (unsigned int)graphic_index;
     } else {
         return 0;
