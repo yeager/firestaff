@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — README capture is reference-only
+
+- 🔒 The published screenshot documents the original US presentation only.
+  A Firestaff-native capture with authenticated rendering/gameplay parity is
+  still required before claiming Theron is complete.
+
 ## 2026-08-10 — BAT→VCE relation is bound; world mapping remains open
 
 - ✅ The authenticated VRAM/VCE loader now verifies BAT palette-group bits

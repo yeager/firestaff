@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — real Theron reference capture published
+
+- ✅ README now links a tracked, real original-US Mednafen dungeon capture as
+  a visual reference for the bring-up.
+- ✅ The README wording explicitly says this is not proof of Firestaff's full
+  rendering or gameplay parity.
+- ✅ The capture contains no BIOS, system-card, or game-data asset.
+
 ## 2026-08-10 — authenticated BAT→VCE palette relation receipt
 
 - ✅ The real VDC/VCE snapshot loader now publishes an explicit

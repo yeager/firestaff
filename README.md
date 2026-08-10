@@ -36,6 +36,15 @@ available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 | DM Nexus | Saturn real-data bring-up in progress. |
 | Theron's Quest | PC Engine real-media bring-up in progress. |
 
+### Theron's Quest: original reference capture
+
+This is a real in-game capture from the original US PC Engine CD release in
+Mednafen. It is included as a visual reference for the Theron bring-up; it is
+not presented as proof that Firestaff has reached full rendering or gameplay
+parity.
+
+![Original Theron's Quest US dungeon reference capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder
