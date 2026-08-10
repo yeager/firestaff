@@ -31,6 +31,13 @@ jobs:
           cp README.md docs/README.md
           cp README.md docs/README
           cp LICENSE docs/LICENSE
+          # The repository README uses docs/ paths for github.com. The Pages
+          # artifact is rooted at docs/, so rewrite only its copies to avoid
+          # publishing links that resolve to /docs/*.md and return 404.
+          sed -i \
+            -e 's#(docs/PROJECT_STATUS\.md)#(PROJECT_STATUS.md)#g' \
+            -e 's#(docs/DATA_SETUP\.md)#(DATA_SETUP.md)#g' \
+            docs/README.md docs/README
           # The Pages artifact is rooted at docs/. Markdown is intentionally
           # published as source text, so GitHub-style extensionless links must
           # have matching artifact paths instead of relying on repo rendering.
