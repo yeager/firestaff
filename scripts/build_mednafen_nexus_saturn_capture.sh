@@ -113,10 +113,11 @@ elif [[ "$(cat "$vdp2_trace_marker" 2>/dev/null)" != "$vdp2_trace_patch_id" ]]; 
   exit 2
 fi
 vdp1_trace_marker="$source_dir/.firestaff-nexus-vdp1-write-trace-patched"
-vdp1_trace_patch_id='FIRESTAFF_NEXUS_VDP1_WRITE_TRACE_V4_CODE_TARGETED_SNAPSHOT'
+vdp1_trace_patch_id='FIRESTAFF_NEXUS_VDP1_WRITE_TRACE_V5_CODE_TARGETED_SNAPSHOT_FRAME_BOUND'
 if [[ ! -f "$vdp1_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_vdp1_pc_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp1_pc_code_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp1_frame_trace.patch"
   printf '%s\n' "$vdp1_trace_patch_id" > "$vdp1_trace_marker"
 elif [[ "$(cat "$vdp1_trace_marker" 2>/dev/null)" != "$vdp1_trace_patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown VDP1-write trace patch; use a fresh build directory" >&2

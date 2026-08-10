@@ -61,10 +61,36 @@ Patchkedjan instrumenterar:
 5. en rå VDP2-snapshot direkt efter den faktiska CRAM-skrivningen.
 6. en frame-capture efter `VDP2REND_EndFrame()`, så att VDP2-register, VRAM
    och CRAM beskriver den frame som Mednafen faktiskt renderade.
+7. VDP1-VRAM-skrivningar med en framegräns vid samma capture-hook som VDP2.
 
 Alla producerade tracefiler är diagnostiska bevis. De får inte användas för
 semantic admission utan att asset-identitet, ordningsföljd och samma snapshot
 är verifierade.
+
+### VDP1-trace med framegräns
+
+Byggscriptets VDP1-kedja använder V2-formatet när framepatchen är installerad:
+
+```text
+FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2
+frame=299
+addr=0x63e00 size=2 value=0x.... pc0=0x........ pc1=0x........
+frame=300
+```
+
+En markör skrivs vid samma vertikal-blanking-hook som rådumpens frame-id.
+Skrivningar före `frame=300`-markören tillhör därför den VDP1-bild som
+fångas som frame 300; detta är en transportgräns, inte en assetägare.
+Välj en frame med:
+
+```sh
+python3 scripts/analyze_nexus_vdp1_write_trace.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run/vdp1-writes.trace \
+  --frame 300
+```
+
+V1-traces utan frame-markörer stöds fortfarande, men kan inte väljas med
+`--frame`. Saknad eller duplicerad markör gör analysen ogiltig.
 
 ## Så görs själva dumpningen
 
