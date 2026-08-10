@@ -4980,28 +4980,16 @@ static void m12_normalize_game_version_index(M12_StartupMenuState* state, int ga
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
                                                                  int gameIndex) {
     static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {"dm1", "csb", "dm2", "nexus", "theron"};
-    int versionIndex;
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return NULL;
     }
-    versionIndex = state->gameOptions[gameIndex].versionIndex;
-    /* AUTO is a platform policy, not a once-written version index.  A prior
-     * explicit Amiga/FM Towns selection may leave a still-valid version index
-     * in the config; do not let that stale value bypass the PC-first policy
-     * after the user returns to AUTO.  In particular CSB PC 3.4 must follow
-     * the same default route as DM1 and DM2 whenever its own media is found.
-     * Explicit architecture choices retain their selected version. */
-    if (state->gameOptions[gameIndex].architectureIndex == M12_ARCH_AUTO) {
-        int autoVersion =
-            M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-                &state->assetStatus, gameIds[gameIndex], M12_ARCH_AUTO);
-        if (autoVersion >= 0) {
-            versionIndex = autoVersion;
-        }
-    }
+    /* m12_apply_auto_platform_versions establishes the AUTO default after
+     * every scan.  Once a version row has been selected, however, preserve
+     * that exact matched release: forcing AUTO again here made an explicit
+     * A35M choice launch the first A31E cache instead. */
     return M12_AssetStatus_GetVersion(&state->assetStatus,
                                       gameIds[gameIndex],
-                                      (size_t)versionIndex);
+                                      (size_t)state->gameOptions[gameIndex].versionIndex);
 }
 
 static const char* m12_selected_version_label(const M12_StartupMenuState* state,
@@ -12630,13 +12618,6 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         return intent;
     }
     selectedVersionIndex = state->gameOptions[gi].versionIndex;
-    if (state->gameOptions[gi].architectureIndex == M12_ARCH_AUTO) {
-        int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-            &state->assetStatus, intent.gameId, M12_ARCH_AUTO);
-        if (autoVersion >= 0) {
-            selectedVersionIndex = autoVersion;
-        }
-    }
     version = M12_AssetStatus_GetVersion(&state->assetStatus,
                                          intent.gameId,
                                          (size_t)selectedVersionIndex);
