@@ -73,6 +73,10 @@
 - ✅ Realdatatestet verifierar den hashadmitterade DOS-kön och att den
   förblir privat. Recordtraversering, DYN4, väder och ljus är uttryckligen
   väntande; inget delresultat publiceras till M11, renderer eller ljud.
+- ✅ Samma kandidat äger nu även originalets
+  `LOAD_LOCALLEVEL_GRAPHICS_TABLE`-listor för vald File_header-karta. Testet
+  bevisar vägg-, golv- och dörrornamentdata mot den ursprungliga privata
+  receiptet utan att starta en render- eller inputväg.
 
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
 

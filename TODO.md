@@ -601,6 +601,10 @@
   kartselector och musiktyp. Den stannar medvetet före den första tile-/
   recordtraverseringen; den markerar varken DYN4, väder, ljus eller en
   spelbar lokalnivå som färdig.
+  Kandidaten äger dessutom `LOAD_LOCALLEVEL_GRAPHICS_TABLE`: vägg-, golv-
+  och dörrornamentlistorna kommer från samma File_header-map som dess
+  c_map-kvitto. De får inte användas för att rita eller ersätta den saknade
+  tile-/record- och DYN4-transaktionen.
   New Games privata `c_party` räknar nu vikt från samma källägda DB5–DB10-
   poster och GDAT som itembonusarna, inklusive laddningar samt DB9-
   containrars verkliga innehålls- och moneyboxkedjor. Det räcker inte för

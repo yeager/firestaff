@@ -651,6 +651,11 @@ typedef struct {
      * remains unpublished until the following LOAD_NEWMAP/CAII transaction
      * is source-complete. */
     DM2_V1_InitGameUiOwner init_game_ui;
+    /* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_GRAPHICS_TABLE receives these
+     * direct File_header lists immediately after selecting the current map.
+     * This copy remains private until the complete local-level transaction
+     * owns DYN4 and the post-load consumers. */
+    DM2_V1_GameLoadLocalLevelGraphicsReceipt local_level_graphics;
     DM2_V1_GameLoadLocalDynPrelude local_dyn_prelude;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;

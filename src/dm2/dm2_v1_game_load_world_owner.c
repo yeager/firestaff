@@ -2481,6 +2481,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         !source->caii_slots.slots || !source->caii_rng_initialized ||
         !source->caii_source.valid || !source->asset_loader ||
         !source->asset_loader->loaded ||
+        !source->preselection_local_graphics.valid ||
+        source->preselection_local_graphics.map != source->current_map ||
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
         return 0;
     }
@@ -2568,6 +2570,10 @@ int dm2_v1_game_load_runtime_session_candidate_init(
      * unmaterialized. */
     if (!dm2_v1_game_load_runtime_candidate_change_current_map(
             &candidate, source->current_map, 1)) goto fail;
+    /* The source receipt is built by LOAD_LOCALLEVEL_GRAPHICS_TABLE from the
+     * same map descriptor selected above.  Copy its arrays rather than
+     * regenerating a graphics set from host defaults. */
+    candidate.local_level_graphics = source->preselection_local_graphics;
     if (!dm2_v1_game_load_local_dyn_prelude_init(&candidate.local_dyn_prelude,
                                                   &candidate)) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);

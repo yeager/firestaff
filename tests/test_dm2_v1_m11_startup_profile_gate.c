@@ -5149,6 +5149,28 @@ int main(void) {
                     profile_runtime_candidate->init_game_ui.input_actions[0].w0 == 0x80d7u &&
                     profile_runtime_candidate->init_game_ui.input_actions[0].w2 == 0x001cu &&
                     profile_runtime_candidate->init_game_ui.source_table_hash != 0u &&
+                    profile_runtime_candidate->local_level_graphics.valid &&
+                    profile_runtime_candidate->local_level_graphics.map ==
+                        profile_runtime_candidate->current_map &&
+                    profile_runtime_candidate->local_level_graphics.map ==
+                        profile_new_game_owner->preselection_local_graphics.map &&
+                    profile_runtime_candidate->local_level_graphics.wall_count ==
+                        profile_new_game_owner->preselection_local_graphics.wall_count &&
+                    profile_runtime_candidate->local_level_graphics.floor_count ==
+                        profile_new_game_owner->preselection_local_graphics.floor_count &&
+                    profile_runtime_candidate->local_level_graphics.door_ornate_count ==
+                        profile_new_game_owner->preselection_local_graphics.door_ornate_count &&
+                    memcmp(profile_runtime_candidate->local_level_graphics.wall_gfx,
+                           profile_new_game_owner->preselection_local_graphics.wall_gfx,
+                           sizeof(profile_runtime_candidate->local_level_graphics.wall_gfx)) == 0 &&
+                    memcmp(profile_runtime_candidate->local_level_graphics.floor_gfx,
+                           profile_new_game_owner->preselection_local_graphics.floor_gfx,
+                           sizeof(profile_runtime_candidate->local_level_graphics.floor_gfx)) == 0 &&
+                    memcmp(profile_runtime_candidate->local_level_graphics.door_ornate_gfx,
+                           profile_new_game_owner->preselection_local_graphics.door_ornate_gfx,
+                           sizeof(profile_runtime_candidate->local_level_graphics.door_ornate_gfx)) == 0 &&
+                    profile_runtime_candidate->local_level_graphics.source_list_hash ==
+                        profile_new_game_owner->preselection_local_graphics.source_list_hash &&
                     profile_runtime_candidate->local_dyn_prelude.valid &&
                     profile_runtime_candidate->local_dyn_prelude.record_traversal_pending &&
                     profile_runtime_candidate->local_dyn_prelude.dyn4_pending &&
