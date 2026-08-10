@@ -249,6 +249,13 @@ word-swapped owner among 126 verified retail files, MNS surfaces or DGN
 Structure2 spans. It is therefore stronger startup-input transport evidence,
 not a startup/menu asset identity or production-renderer admission.
 
+The isolated rerun on 2026-08-11 keeps the same J-BIOS/English-media pair and
+captures 361 frames with `SGAREA=J` and `Region=0x1`. Its bounded VDP1 write
+trace observes 18,318 writes in `0x63e00..0x6bf80`; 18,277 carry
+`PC=0x06029e84`. This is authenticated runtime-writer evidence for the
+destination corridor, not proof of the source asset, CLUT owner or menu
+identity. The source-join and production gates therefore remain closed.
+
 The comparator also scans the extracted corpus as whole files, but admits a
 file to this scan only when its SHA-256 matches the selected retail manifest
 or the authenticated European startup-asset identity. Frames 1 and 7 each
