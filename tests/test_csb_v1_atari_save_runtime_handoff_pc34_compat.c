@@ -73,6 +73,7 @@ int main(void)
     if (corpus_path && corpus_path[0]) {
         const char *written_path = "/tmp/CSBGAME2.DAT";
         const char *backup_path = "/tmp/CSBGAME2.BAK";
+        const char *foreign_source_path = "/tmp/CSB-FOREIGN-MINI.DAT";
         const char *blocked_dir = "/tmp/CSBGAME3.DAT";
         const char *blocked_backup = "/tmp/CSBGAME3.BAK";
         CSB_V1_AtariSaveInfo written_info;
@@ -102,6 +103,20 @@ int main(void)
             csb_v1_runtime_cleanup(&runtime);
             return 1;
         }
+        /* A byte-identical copy is still not F0435's selected source slot.
+         * This verifies that write-back remains bound to the authenticated
+         * Amiga/Atari resume path, rather than accepting an arbitrary
+         * MINI.DAT template supplied after the campaign has started. */
+        remove(foreign_source_path);
+        if (!write_file(foreign_source_path, bytes, size) ||
+            csb_v1_runtime_write_original_atari_save_to_path(
+                &runtime, foreign_source_path, written_path) == 0) {
+            remove(foreign_source_path);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        remove(foreign_source_path);
         runtime.game_time += 3u;
         runtime.party_x = info.party_x;
         runtime.party_y = info.party_y;

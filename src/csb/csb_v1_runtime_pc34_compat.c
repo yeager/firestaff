@@ -266,8 +266,20 @@ int csb_v1_runtime_write_original_atari_save_to_path(
     int backup_created = 0;
     int result = -1;
 
+    /* LOADSAVE.C F0433 first rotates the exact selected source slot and
+     * then writes its replacement (lines 1477-1478).  A caller must not be
+     * able to swap in a different, independently valid Atari/Amiga
+     * MINI.DAT after F0435 has admitted the live campaign: that would splice
+     * the current party into another dungeon/timer universe.  Bind the
+     * writer to the same authenticated pathname and byte identity retained
+     * by the successful native resume handoff. */
     if (!profile || !source_path || !source_path[0] || !destination_path ||
-        !destination_path[0] || !profile->party_state_valid ||
+        !destination_path[0] ||
+        !csb_v1_runtime_original_atari_save_source_path(profile) ||
+        strcmp(source_path,
+               csb_v1_runtime_original_atari_save_source_path(profile)) != 0 ||
+        !csb_v1_runtime_original_atari_save_source_current(profile) ||
+        !profile->party_state_valid ||
         profile->current_level < 0 || profile->party_x < 0 ||
         profile->party_y < 0 || profile->party_dir < 0 ||
         profile->party_dir > 3 ||
