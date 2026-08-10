@@ -128,6 +128,7 @@ static int test_font256(void) {
         uint16_t tilemap_word = 0;
         uint16_t palette_word = 0;
         uint16_t attribute_word = 0;
+        Nexus_V1_FontS2dSourceWords source_words;
         if (nexus_v1_font_s2d_page_tilemap_word(
                 data, size, &r, 1, &tilemap_word) != 0 ||
             tilemap_word != 2U ||
@@ -143,6 +144,20 @@ static int test_font256(void) {
             return 1;
         }
         printf("  PASS DMWeb Page tilemap + palette + attribute words\n");
+        if (!nexus_v1_font_s2d_retain_source_words(
+                data, size, &r, &source_words) ||
+            !source_words.valid ||
+            source_words.page_word_count != 4096 ||
+            source_words.palette_word_count != 256 ||
+            source_words.attribute_word_count != 242 ||
+            source_words.page_words[1] != tilemap_word ||
+            source_words.palette_words[0] != palette_word ||
+            source_words.attribute_words[0] != attribute_word) {
+            printf("  FAIL retained FONT256 source word regions\n");
+            free(data);
+            return 1;
+        }
+        printf("  PASS retained FONT256 Page/Palette/Attribute source words\n");
     }
 
     for (i = 0; i < r.section_count; i++) {

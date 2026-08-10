@@ -714,6 +714,11 @@ int main(void) {
                 check_int(item_engine.font.bitmap_data != NULL &&
                               item_engine.font.char_count == 242,
                           "real FONT256 CG tiles are retained as source bytes");
+                check_int(item_engine.font_s2d_source_words.valid == 1 &&
+                              item_engine.font_s2d_source_words.page_word_count == 4096 &&
+                              item_engine.font_s2d_source_words.palette_word_count == 256 &&
+                              item_engine.font_s2d_source_words.attribute_word_count == 242,
+                          "real FONT256 page/palette/attribute words are retained as source bytes");
                 check_int(item_engine.font_loaded == 0,
                           "real FONT256 glyph presentation remains closed pending Saturn capture");
                 for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {

@@ -2,6 +2,11 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-10: Produktionsobjektet behåller nu även de autentiserade FONT256
+Page-, Palette- och Attribute-orden (4096/256/242). Detta är fortfarande en
+source-retention-grind: Saturns glyph-code→tile-mapping, VDP2 page/PND-
+placering och textkonsument kräver fortsatt capture-witness.
+
 2026-08-09: VDP1-VRAM/CMDLINK till atomisk capture-replay-adapter är nu
 implementerad och CTest-verifierad. Den kräver fortfarande en explicit
 source/CLUT-resolver per draw; komplett DGN-sceneägarskap, transform, culling

@@ -94,6 +94,44 @@ int nexus_v1_font_s2d_attribute_word(
                             out_word);
 }
 
+int nexus_v1_font_s2d_retain_source_words(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    Nexus_V1_FontS2dSourceWords *out)
+{
+    int index;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!data || data_size <= 0 || !decoded || !decoded->valid) return 0;
+    for (index = 0; index < NEXUS_V1_FONT_S2D_PAGE_WORD_COUNT; ++index) {
+        if (nexus_v1_font_s2d_page_tilemap_word(
+                data, data_size, decoded, index, &out->page_words[index]) != 0) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+    }
+    for (index = 0; index < NEXUS_V1_FONT_S2D_PALETTE_WORD_COUNT; ++index) {
+        if (nexus_v1_font_s2d_palette_word(
+                data, data_size, decoded, index, &out->palette_words[index]) != 0) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+    }
+    for (index = 0; index < NEXUS_V1_FONT_S2D_REAL_TILE_COUNT; ++index) {
+        if (nexus_v1_font_s2d_attribute_word(
+                data, data_size, decoded, index, &out->attribute_words[index]) != 0) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+    }
+    out->page_word_count = NEXUS_V1_FONT_S2D_PAGE_WORD_COUNT;
+    out->palette_word_count = NEXUS_V1_FONT_S2D_PALETTE_WORD_COUNT;
+    out->attribute_word_count = NEXUS_V1_FONT_S2D_REAL_TILE_COUNT;
+    out->valid = 1;
+    return 1;
+}
+
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out) {
     int i;

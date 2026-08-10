@@ -2,6 +2,21 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus FONT256 source-word retention
+
+- `Nexus_V1_FontS2dSourceWords` retains the exact big-endian Page (4096),
+  Palette (256), and Attribute (242) words from the authenticated
+  `FONT256.S2D` decode in the production engine object. The retention API is
+  bounded by the DMWeb SCR region helpers and does not assign glyph, palette,
+  text, VDP2 placement, or framebuffer meaning.
+- The real-data FONT256 decoder test now verifies that the retained words
+  agree with the direct source helpers. The production engine keeps
+  `font_loaded == 0`; no unsupported Saturn text route is opened.
+- Verification: external-disk targeted build of `firestaff_nexus`,
+  `test_nexus_v1_boot_file_hash_scan`, and `test_nexus_v1_font_s2d`; targeted
+  CTest 4/4 passed with the user-owned Nexus data root. `git diff --check`
+  passed.
+
 ## 2026-07-11 - Nexus FACE.BIN readiness gate
 
 - `FACE.BIN` now has a byte-evidenced descriptor: a 56-byte `FACE` header,
@@ -5021,4 +5036,3 @@ tool does not launch an emulator, generate trace bytes, or attest original
 Saturn provenance. The atomic target now includes the Structure2 opaque-payload
 fingerprint required by that route. Verification:
 `test_nexus_v1_dgn_geometry_readiness` and direct collector compilation.
-

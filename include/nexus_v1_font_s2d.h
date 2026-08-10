@@ -11,6 +11,8 @@
  * declares 256 character codes; the missing 14 code-to-tile mappings remain
  * unproven and are never filled with synthetic tiles. */
 #define NEXUS_V1_FONT_S2D_REAL_TILE_COUNT 242
+#define NEXUS_V1_FONT_S2D_PAGE_WORD_COUNT 4096
+#define NEXUS_V1_FONT_S2D_PALETTE_WORD_COUNT 256
 
 typedef struct {
     uint32_t offset;
@@ -53,6 +55,29 @@ typedef struct {
     int palette_color_count;
     uint32_t data_hash;
 } Nexus_V1_FontS2dDecodeResult;
+
+/* Source-only copy of the three bounded word regions consumed by a Saturn
+ * SCR/VDP2 path.  These are exact big-endian source words, not a glyph map,
+ * palette interpretation, or placement decision.  Keeping them with the
+ * decoded region facts lets a later capture witness bind the same source
+ * object without re-reading or reshaping FONT256.S2D bytes. */
+typedef struct {
+    int valid;
+    int page_word_count;
+    int palette_word_count;
+    int attribute_word_count;
+    uint16_t page_words[NEXUS_V1_FONT_S2D_PAGE_WORD_COUNT];
+    uint16_t palette_words[NEXUS_V1_FONT_S2D_PALETTE_WORD_COUNT];
+    uint16_t attribute_words[NEXUS_V1_FONT_S2D_REAL_TILE_COUNT];
+} Nexus_V1_FontS2dSourceWords;
+
+/* Retain the exact bounded Page, Palette, and Attribute words from an
+ * authenticated decode.  Returns 1 only when all three regions fit their
+ * documented source capacities; it authorizes no VDP2 or text draw. */
+int nexus_v1_font_s2d_retain_source_words(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    Nexus_V1_FontS2dSourceWords *out);
 
 /* DMWeb DecodeFONT256S2D: the Character Generator region contains a
  * 16-byte prefix followed by NEXUS_V1_FONT_S2D_REAL_TILE_COUNT raw 8x8,

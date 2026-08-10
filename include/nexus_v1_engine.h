@@ -2553,6 +2553,9 @@ struct Nexus_V1_Engine {
      * bounded SCR section table, but does not authorize glyph mapping,
      * VDP2 placement, or framebuffer writes. */
     Nexus_V1_FontSections font_sections;
+    /* Exact FONT256 Page/Palette/Attribute words retained as source only;
+     * glyph mapping, VDP2 placement and framebuffer presentation remain shut. */
+    Nexus_V1_FontS2dSourceWords font_s2d_source_words;
     int font_source_loaded;
     int font_loaded;
 

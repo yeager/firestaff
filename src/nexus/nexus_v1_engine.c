@@ -3215,6 +3215,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                 }
                 if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
                                                  font_size, &font_regions) > 0) {
+                    (void)nexus_v1_font_s2d_retain_source_words(
+                        font_data, font_size, &font_regions,
+                        &engine->font_s2d_source_words);
                     /* The CG bytes are now retained as source evidence in
                      * the production object.  This is not yet a text
                      * consumer: Saturn page/PND attributes, code mapping,
@@ -3224,6 +3227,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                            "(%d tiles); text consumer gated\n",
                            engine->font.char_count);
                 } else {
+                    (void)nexus_v1_font_s2d_retain_source_words(
+                        font_data, font_size, &font_regions,
+                        &engine->font_s2d_source_words);
                     printf("Nexus font: FONT256.S2D sections admitted (%d); "
                            "glyph mapping pending\n",
                            nexus_v1_font_section_count(&engine->font_sections));
