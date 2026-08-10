@@ -3215,8 +3215,13 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                 }
                 if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
                                                  font_size, &font_regions) > 0) {
-                    engine->font_loaded = 1;
-                    printf("Nexus font: FONT256.S2D loaded (%d CG tiles)\n",
+                    /* The CG bytes are now retained as source evidence in
+                     * the production object.  This is not yet a text
+                     * consumer: Saturn page/PND attributes, code mapping,
+                     * placement and VDP2 ownership remain unproven. */
+                    engine->font_loaded = 0;
+                    printf("Nexus font: FONT256.S2D CG source retained "
+                           "(%d tiles); text consumer gated\n",
                            engine->font.char_count);
                 } else {
                     printf("Nexus font: FONT256.S2D sections admitted (%d); "

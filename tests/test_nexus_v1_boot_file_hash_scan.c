@@ -711,6 +711,9 @@ int main(void) {
                 check_int(item_engine.font_source_loaded == 1 &&
                               nexus_v1_font_section_count(&item_engine.font_sections) == 4,
                           "real FONT256.S2D sections are retained as source evidence");
+                check_int(item_engine.font.bitmap_data != NULL &&
+                              item_engine.font.char_count == 242,
+                          "real FONT256 CG tiles are retained as source bytes");
                 check_int(item_engine.font_loaded == 0,
                           "real FONT256 glyph presentation remains closed pending Saturn capture");
                 for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {

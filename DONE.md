@@ -1,3 +1,10 @@
+# Nexus: behåll autentiska FONT256 CG-tiles (2026-08-10)
+- ✅ Produktionslänken behåller nu de 242 verifierade 8×8/8bpp CG-tiles från
+  `FONT256.S2D` i `Nexus_V1_Font`, med korrekt frigöring vid shutdown. Detta
+  är source-retention för framtida Saturn-konsument, inte textpresentation:
+  glyphkodning, page/PND-attribut, placering och VDP2-lager håller fortsatt
+  `font_loaded=0` tills autentisk runtime-capture binder dem.
+
 # Nexus: riktad EU startup/menu-witness verifierad (2026-08-10)
 - ✅ Extern EU-capture `run-codex-eu-targeted-menu-20260810` är hashbunden till
   BIOS/media-paret, innehåller 60 autentiserade frames (`94 656 272` byte,

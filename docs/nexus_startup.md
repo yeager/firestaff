@@ -22,7 +22,7 @@ obundna konsumenter får inte ersättas med syntetiska ytor.
 | `LOGOBG.DG2` | PP-pixlar och 256-entry BGR555-palette verifierade; lager/timing saknas |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | riktiga ytor avkodas och får bytesproveniens; presentation saknas |
 | `FACE.BIN` | 20 verkliga PRS3-porträtt, 56×56, med källpaletter; VDP1-destination saknas |
-| `FONT256.S2D` | 242 CG-tiles; Saturns page/attribute/glyph-mapping saknas |
+| `FONT256.S2D` | 242 CG-tiles behålls i produktionskällan; Saturns page/attribute/glyph-mapping saknas |
 | `MENU.BPK` | 162 PRS3-ytor avkodas till source-bound indexed bytes; menyordning, CLUT och VDP1/VDP2 saknas |
 
 ## Runtimegräns
@@ -31,6 +31,11 @@ obundna konsumenter får inte ersättas med syntetiska ytor.
 portraitplacering eller textfooter som om den vore Saturn-output. M11-handoff
 och viewport förblir fail-closed tills en autentiserad Saturn-capture binder
 resurs, palett, destination och timing.
+
+FONT256:s autentiserade Character Generator-bytes ligger nu kvar i motorns
+källobjekt för den framtida Saturn-konsumenten. Det öppnar inte glyphkodning,
+page/PND-attribut, lagerplacering eller textskrivning; `font_loaded` förblir
+stängd tills dessa delar binds av samma runtime-witness.
 
 ## Källor
 
