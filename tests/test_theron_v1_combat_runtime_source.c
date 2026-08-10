@@ -65,6 +65,22 @@ int main(void) {
                                    1, 0, 1, 1) == -1 &&
               world.creature_count == 2,
           "the same source group cannot be admitted twice");
+    {
+        Theron_V1_World sparse_world;
+        const uint16_t sparse_health[4] = { 0u, 20u, 0u, 0u };
+        memset(&sparse_world, 0, sizeof(sparse_world));
+        sparse_world.level_loaded[0][0] = 1;
+        sparse_world.levels[0][0].source_header_verified = 1;
+        CHECK(theron_v1_world_bind_track02_monster(
+                  &sparse_world, 1, 0, 0x1210u, 0x0044u, 2, 2, 0u, 0x09u,
+                  sparse_health, 2u, 0u, 0x0020u, 0x1200u, 0) == 0 &&
+                  theron_v1_creature_spawn(
+                      &sparse_world, THERON_CREATURE_AKUTUBA,
+                      1, 0, 2, 2) > 0 && sparse_world.creature_count == 1 &&
+                  sparse_world.creatures[0].source_slot == 1u &&
+                  sparse_world.creatures[0].hp == 20,
+              "sparse source group admits only its real non-zero member");
+    }
     world.level_loaded[1][0] = 1;
     world.levels[1][0].source_header_verified = 1;
     CHECK(theron_v1_world_bind_track02_monster(

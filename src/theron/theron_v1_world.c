@@ -1367,46 +1367,31 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
         if (record->dungeon_id != world->current_dungeon ||
             record->level != lvl) continue;
         if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
-        unsigned int members = (unsigned int)record->number + 1u;
-        if (members > 4u) members = 4u;
-        for (unsigned int slot = 0; slot < members; ++slot) {
-            Theron_V1_Creature *creature;
-            uint16_t hp = record->health[slot];
-            if (hp == 0u) continue; /* unused source group member */
-            creature = &world->creatures[world->creature_count++];
-            memset(creature, 0, sizeof(*creature));
-            creature->id = ((int)record->source_ref << 2) | (int)slot;
-            if (creature->id <= 0) creature->id = world->creature_count;
-            /* Track 02's authenticated creature-name table at UD $2741EF is
-             * zero-based (AKUTUBA=0..DEMON=6), while the live C API reserves
-             * zero for NONE and uses AKUTUBA=1..DEMON=7.  Preserve the raw
-             * source value in source_monsters, but translate it at the
-             * source-record -> live-creature boundary. */
-            creature->type = (uint8_t)(record->type + 1u);
-            creature->level = (uint8_t)lvl;
-            creature->dungeon_id = world->current_dungeon;
-            creature->x = record->x;
-            creature->y = record->y;
-            creature->hp = (int)hp;
-            creature->max_hp = (int)hp;
-            /* Attack, defense, AI, drops and sound are intentionally left
-             * unbound until their original consumers are captured. */
-            creature->primary_attack = THERON_ATTACK_NONE;
-            creature->secondary_attack = THERON_ATTACK_NONE;
-            creature->flags = THERON_CF_ACTIVE;
-            creature->source_ref = record->source_ref;
-            creature->source_index = record->source_index;
-            creature->source_chested = record->chested;
-            creature->source_position = record->position;
-            creature->source_cell =
-                (uint8_t)((record->position >> (slot * 2u)) & 0x03u);
-            creature->source_slot = (uint8_t)slot;
-            creature->source_group_count = (uint8_t)members;
-            creature->source_direction_flags = record->direction_flags;
-            creature->source_flags_word = record->flags_word;
-            creature->source_unknown_word = record->unknown_word;
-            creature->source_spawn_category =
-                theron_v1_world_track02_spawn_category(world, record->type);
+        {
+            unsigned int slot;
+            int has_live_member = 0;
+            for (slot = 0; slot <= record->number; ++slot) {
+                if (record->health[slot] != 0u) {
+                    has_live_member = 1;
+                    break;
+                }
+            }
+            if (!has_live_member) continue;
+        }
+        /* Track 02's authenticated creature-name table at UD $2741EF is
+         * zero-based (AKUTUBA=0..DEMON=6), while the live C API reserves
+         * zero for NONE.  Route the raw value through the same admission
+         * boundary used by explicit source occurrences so that source
+         * identity, sparse group members, cell decoding and fail-closed
+         * attack/AI/loot fields cannot diverge between the two paths.
+         *
+         * Source: THQUEST.ASM category-4 group consumer; the regular RNG
+         * overlay remains separate and is still not invoked here. */
+        if (theron_v1_creature_spawn(
+                world,
+                (Theron_CreatureType)(THERON_CREATURE_AKUTUBA + record->type),
+                world->current_dungeon, lvl, record->x, record->y) < 0) {
+            return -1;
         }
     }
     return 0;

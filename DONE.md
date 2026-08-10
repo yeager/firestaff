@@ -1,3 +1,12 @@
+# Theron: enhetlig source-record→live-creature-admission (2026-08-10)
+- ✅ Nivåstartens materialisering använder nu samma autentiserade
+  kategori-4-admission som explicit source-spawn. Riktiga monstergrupper
+  behåller source-ref, grupp/cell, HP och råa fält genom en enda kodväg;
+  även sparsamma grupper med tomma medlemsplatser publicerar bara verkliga
+  icke-noll-HP-medlemmar. RNG-vågor, AI, attacker, loot och generator-
+  konsumenter förblir uttryckligen spärrade tills originalets runtimekedja
+  är fångad.
+
 # Nexus: behåll autentiska FONT256 CG-tiles (2026-08-10)
 - ✅ Produktionslänken behåller nu de 242 verifierade 8×8/8bpp CG-tiles från
   `FONT256.S2D` i `Nexus_V1_Font`, med korrekt frigöring vid shutdown. Detta

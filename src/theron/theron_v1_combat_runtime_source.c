@@ -147,9 +147,19 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     }
     source_record = theron_v1_source_monster_record_at(
         world, type, dungeon_id, level, x, y);
-    if (!source_record || source_record->number > 3u ||
-        source_record->health[0] == 0u) {
+    if (!source_record || source_record->number > 3u) {
         return -1;
+    }
+    {
+        unsigned int slot;
+        int has_live_member = 0;
+        for (slot = 0; slot <= source_record->number; ++slot) {
+            if (source_record->health[slot] != 0u) {
+                has_live_member = 1;
+                break;
+            }
+        }
+        if (!has_live_member) return -1;
     }
     /* A static source occurrence has a stable source identity.  Until the
      * original respawn consumer is captured, re-admitting an inactive copy
