@@ -1,7 +1,8 @@
 # Theron's Quest US roster/text-consumer audit
 
 **Date:** 2026-08-06
-**Status:** US champion roster remains unavailable; no host labels promoted
+**Status:** US champion names are source-bound; titles and the executing text
+consumer remain unavailable
 
 ## Real-media result
 
@@ -9,7 +10,10 @@ The authenticated US Track 02 BIN is
 `TQUS02.bin` (`f23601102138f87c33025877767ebf76`). Its startup text marker is
 the byte-exact prompt `GO AWAY AND RESURRECT THERON` at raw offset `0xa0722`.
 The real-media catalog does not find the eight-name ASCII cluster used by the
-JP release, so the US roster receipt remains `NOT_FOUND` with zero names.
+JP release. The US release stores the ordered names in a little-endian
+three-symbol-per-word codon stream; the authenticated US roster reader finds
+all eight names there. This binds names only. It does not bind title or
+control fields, glyph destinations, or a gameplay text consumer.
 
 The authenticated US Track 19 ISO is `TQUS19.iso`
 (`51b40a17b92a30339957ba564aa0015c`, 5,984,256 bytes). Its existing source
@@ -35,6 +39,7 @@ Evidence:
 - `tests/test_theron_v1_huc6280_disassembly.c`
 - `probes/theron/firestaff_theron_v1_track02_bank_probe.c`
 
-The production rule remains: use the real prompt and real Track 19 tables
-where their byte readers prove them; keep US champion names/titles unavailable
-until a real encoded payload is joined to its original text consumer.
+The production rule remains: use the real prompt and the source-bound US
+names where their byte reader proves them; keep titles and general text
+unavailable until a real encoded payload is joined to its original text
+consumer.

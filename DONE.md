@@ -12241,3 +12241,15 @@ rendering remain blocked.
 - ✅ US/JP thing-data, ground-reference, source-property och 116
   combat/inventory-regressioner passerar. Råordet sparas fortfarande exakt
   för framtida autentiserad T900-konsumentfångst.
+
+## Theron: US/JP-rosterstatus samordnad med riktig codondata (2026-08-10)
+
+- ✅ Den autentiserade US Track 02-läsaren verifierar alla åtta namn genom
+  den little-endian-kodade tre-symbol-per-ord-strömmen. Den riktiga JP
+  ASCII-klustern verifierar samtidigt åtta namn och källtitlar.
+- ✅ Fas-2- och roster-auditdokumenten säger nu samma sak: namn är
+  source-bound, medan titlar/control codes, glyph-destination och den
+  exekverande HuC6280-textkonsumenten fortfarande är stängda.
+- ✅ `test_theron_v1_track02_champion_roster` och
+  `test_theron_v1_startup_media_palette_bind` passerar mot lokal riktig
+  US/JP-media. Ingen syntetisk text eller porträttbindning har lagts till.

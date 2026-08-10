@@ -260,14 +260,14 @@ Source: ReDMCSB DEFS.H:1887–1951 · Phase 0 provenance gate · STUB
 | Text storage | Tile index arrays in Track 02 (not ASCII) |
 | UI text | Track 02 candidate records exist; executing consumer/control codes unresolved |
 
-The authenticated US text codon stream remains available to diagnostics. Its
-ordered eight-name champion prefix is now source-bound from the real Track 02
-BIN and may feed the startup roster name receipt. The bytes following those
-names still expose brace/control values whose UI meaning is unresolved; title
-fields and general world text remain fail-closed. No candidate string is
-promoted to a plaque, scroll, HUD or translated text surface until the
-original HuC6280 text consumer is tied to the codon stream by disassembly or
-capture.
+The authenticated US text codon stream remains available to diagnostics and
+contains the real `GO AWAY AND RESURRECT THERON` prompt. Its ordered
+eight-name champion sequence is source-bound through the authenticated
+little-endian codon stream, while its following title/control fields remain
+unresolved. The JP ASCII cluster is retained by the separate JP roster
+receipt, including its source titles. Neither regional candidate is promoted
+to a plaque, scroll, HUD or translated text surface until the original
+HuC6280 text consumer is tied to the bytes by disassembly or capture.
 
 PC Engine CD-ROM uses a custom text/font path, but the exact Theron's Quest
 consumer and control-code semantics are not yet source-locked:
