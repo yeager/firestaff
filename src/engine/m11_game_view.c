@@ -42082,12 +42082,19 @@ static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex
     switch (sourceSlotBoxIndex) {
         case 0:
         case 1:  return 0xFFFFu;
-        case 8:  return 0x0200u; /* C00 ready hand */
-        /* ReDMCSB DEFS.H MASK0x0200_HANDS applies to both C00 ready-hand
-         * and C01 action-hand destinations.  0x0002 is MASK0x0002_HEAD;
-         * using it here rejected valid hand objects, including containers,
-         * during F0302 leader-hand placement. */
-        case 9:  return 0x0200u; /* C01 action hand */
+        /* ReDMCSB DATA.C G0038_ai_Graphic562_SlotMasks[0..1] = MASK0xFFFF_ANY_SLOT
+         * for both the Ready Hand and Action Hand destinations.  The reference
+         * F0302:693 check is `objectAllowedSlots & G0038[slot]` where G0038
+         * for hands is 0xFFFF, so any non-empty object may enter a hand slot.
+         * A previous revision returned 0x0200u here on the mistaken reading
+         * that MASK0x0200_HANDS was the destination-slot mask, but 0x0200 is
+         * a per-object attribute (this object is hand-holdable).  With the
+         * 0x0200 mask, junk items whose ObjectInfo AllowedSlots is 0x0500
+         * (POUCH|CONTAINER) -- Compass, Rabbit's Foot, gems and so on --
+         * were rejected from every hand-slot placement, blocking the F0302
+         * status-hand swap path onto non-inventory champions. */
+        case 8:  return 0xFFFFu; /* C00 ready hand */
+        case 9:  return 0xFFFFu; /* C01 action hand */
         case 10: return 0x0002u;
         case 11: return 0x0008u;
         case 12: return 0x0010u;

@@ -225,7 +225,14 @@ static int seed_runtime(M11_GameViewState* game,
     game->showDebugHUD = 0;
     game->inventoryPanelActive = 1;
     game->inventorySelectedSlot = 0;
-    game->candidateMirrorOrdinal = 0;
+    /* Firestaff stores "no candidate" as -1 (see m11_game_view.c:19673); a
+     * literal 0 here would name candidate ordinal 0, which the F0302 gate at
+     * m11_process_v1_status_hand_slot_box_click rejects via
+     * `candidateMirrorOrdinal >= 0`.  The reference CHAMPION.C F0302:674 uses
+     * an unsigned "0 means none" convention, and this fixture had copied it
+     * verbatim -- the check reads Firestaff's signed field, not the reference
+     * unsigned one, so it must use -1 to represent "no candidate". */
+    game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPanelActive = 0;
     game->spellPanelOpen = 0;
     game->actingChampionOrdinal = 0;
