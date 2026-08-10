@@ -23,6 +23,9 @@
 
 # Launcher: AUTO använder rätt originalplattform (2026-08-10)
 
+- ✅ CSB:s AUTO-lista är begränsad till FM Towns, Amiga och Atari ST.
+  X68000 och PC-98 kan inte bli oavsiktliga fallbackar.
+
 # Theron: avvisar falsk `$B0E5`-spawn-admission (2026-08-10)
 
 - ✅ Registertrace-parsern kräver nu att A-registret vid `$B0E5` innehåller en

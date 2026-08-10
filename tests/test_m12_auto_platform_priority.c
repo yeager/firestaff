@@ -51,6 +51,14 @@ int main(void)
             fprintf(stderr, "FAIL: CSB must not advertise a DOS catalogue row\n");
             return 1;
         }
+        if (M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &status, "csb", M12_ARCH_X68000) >= 0 ||
+            M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &status, "csb", M12_ARCH_PC98) >= 0) {
+            fprintf(stderr,
+                    "FAIL: CSB must expose only FM Towns, Amiga and Atari ST\n");
+            return 1;
+        }
         status.versions[1][fmtowns].matched = 1;
         status.versions[1][amiga].matched = 1;
         status.versions[1][atari].matched = 1;
