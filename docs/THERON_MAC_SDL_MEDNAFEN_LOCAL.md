@@ -246,7 +246,7 @@ Firestaffs Theron-runtime använder vanlig SDL-mus och tangentbord, inte en
 joystickpekare som hoppar mellan synliga objekt. Musen rapporterar sin aktuella
 position kontinuerligt i den källmappade 320x200-vyn; ett musflytt-event väljer
 inte något objekt. Musknapp 1 (vänster) är PC Engine Button I och musknapp 2
-(mitten; höger fungerar som kompatibilitetsalias) är Button II.
+(höger) är Button II. Den fysiska mittenknappen är avsiktligt obunden.
 
 I dungeon är tangentbordet:
 
