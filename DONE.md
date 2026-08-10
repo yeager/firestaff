@@ -25,6 +25,14 @@
 - ✅ Realdatatestet låser fasen mot hela PC-DOS-korpusen. Resume är fortsatt
   spärrad tills tvåpass-traverseringen och dess mutationer kan ägas atomärt.
 
+# DM2: SKSAVE-recyclerns diagnosscan muterar inte längre cursor (2026-08-10)
+
+- ✅ Den fail-closed läsande scannen behåller nu `v1e0426` orörd. Den returnerar
+  endast den prospektiva nästa kartan i sitt kvitto. Originalets cursorskrivning
+  sker först i den fullständiga recyclertransaktionen.
+- ✅ Regressionstestet bevisar att DB2-/DB4-diagnostik inte kan ändra den
+  behållna SKSAVE-ägarens cursor medan Resume fortfarande är spärrad.
+
 # Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
 
 - ✅ `scripts/analyze_nexus_vdp2_register_writer.py` verifierar att samma

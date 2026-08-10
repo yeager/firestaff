@@ -524,8 +524,9 @@ int dm2_v1_sksave_map_owner_tile_record_link(
  * owns.
  *
  * Returns zero: the full mutating DB0/DB4/DB14 paths are not owned here.
- * The cursor is written back when the traversal completes, matching
- * c_record.cpp:779 and :1072. */
+ * c_record.cpp:779/:1072 write the cursor only as part of that completed
+ * recycler transaction. This diagnostic, fail-closed walker reports the
+ * prospective cursor but must not mutate a retained GAME_LOAD owner. */
 int dm2_v1_sksave_map_owner_recycle_scan(
     DM2_V1_SksaveMapOwner *owner,
     const DM2_V1_RecordPoolSet *set,
@@ -612,11 +613,10 @@ int dm2_v1_sksave_map_owner_recycle_scan(
         map = (map + 1 < map_count) ? map + 1 : 0;
     }
 
-    /* c_record.cpp:779/:1072 store the map the scan stopped on. */
-    owner->recycle_scan_map[db] = (uint8_t)map;
     if (out_receipt) {
         out_receipt->valid = 1;
         out_receipt->maps_scanned = (uint16_t)scanned_maps;
+        /* Prospective source cursor only; no completed recycler exists. */
         out_receipt->resume_map = (uint8_t)map;
         out_receipt->eligibility_ported = 0;
     }

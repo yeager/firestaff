@@ -118,7 +118,7 @@ typedef struct {
     int valid;
     uint16_t maps_scanned;      /* maps actually walked (protected ones skipped) */
     uint32_t records_examined;  /* ground-stack entries visited */
-    uint8_t resume_map;         /* cursor written back to recycle_scan_map[db] */
+    uint8_t resume_map;         /* prospective source cursor; not committed */
     /* One means that the requested DB's source eligibility rule was applied.
      * DB2/Text is a source chain barrier, not a recycler candidate. DB0,
      * DB4 and DB14 still require their source creature, missile and
@@ -132,7 +132,9 @@ typedef struct {
  * `protected_map_b` (pass -1 for none), visiting every tile's ground stack.
  * For DB2 it applies c_record.cpp's table1d324c actuator-chain skip and the
  * Text::w2 mode/ext=4 exclusion, then continues the source record chain.
- * Text is never returned as a recycler link. Other DBs remain fail-closed. */
+ * Text is never returned as a recycler link. Other DBs remain fail-closed.
+ * Because no complete recycler transaction is committed, this function never
+ * writes owner->recycle_scan_map; inspect receipt.resume_map instead. */
 int dm2_v1_sksave_map_owner_recycle_scan(
     DM2_V1_SksaveMapOwner *owner,
     const DM2_V1_RecordPoolSet *set,

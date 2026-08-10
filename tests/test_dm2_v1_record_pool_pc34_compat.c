@@ -125,9 +125,10 @@ static void test_recycle_scan_traversal(void)
     CHECK(link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
           "no record handle is produced");
 
-    /* The cursor resumes where the ring stopped, per c_record.cpp:779. */
-    CHECK(owner.recycle_scan_map[4] == receipt.resume_map,
-          "scan cursor is written back for this db");
+    /* c_record.cpp:779 writes this only on a completed recycler transaction.
+     * The diagnostic fail-closed walk reports it without mutating the owner. */
+    CHECK(owner.recycle_scan_map[4] == 0 && receipt.resume_map < dungeon.map_count,
+          "failed recycle scan retains its cursor while reporting the source next map");
 
     /* A cursor past the map count wraps rather than reading out of range. */
     owner.recycle_scan_map[5] = 200;

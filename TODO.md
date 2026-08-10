@@ -690,6 +690,9 @@
   ningen från den fullständiga världskedjan, inte en lokal poolersättning.
   Ground-stackens storlek är begränsad till den autentiska kartans rutantal;
   ingen värdgenererad tillväxt får kringgå originalets c_map-kapacitet.
+  Den äldre läsande diagnosscannen rapporterar nu endast nästa source-cursor;
+  den får inte skriva den till den behållna ägaren förrän en komplett
+  recyclertransaktion kan committas.
 
 - 🔧 DM2:s levande viewport-inmatning saknar ännu den monterade
   `c_tmouse`/`c_input`-tabellen med aktiva GDAT-rektanglar. M11 avvisar
