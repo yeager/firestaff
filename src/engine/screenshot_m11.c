@@ -273,6 +273,8 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
     int width = 0;
     int height = 0;
     int rowBytes, padded, imageBytes, fileBytes;
+    int outputHeight;
+    int topPad;
     unsigned char fileHdr[14];
     unsigned char infoHdr[40];
     unsigned char* row;
@@ -294,9 +296,19 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
 
     if (!build_capture_path(path, sizeof(path), dirBuf, "firestaff-presented")) return 0;
 
+    /* The runtime may present the native 4:3 page inside a 16:9 window as
+     * 320x180.  Preserve those authentic pixels exactly and export the
+     * letterbox as a 320x200 BMP; never resample the source page merely to
+     * satisfy a screenshot geometry contract. */
+    outputHeight = height;
+    topPad = 0;
+    if (width == 320 && height == 180) {
+        outputHeight = 200;
+        topPad = 10;
+    }
     rowBytes = width * 3;
     padded = (rowBytes + 3) & ~3;
-    imageBytes = padded * height;
+    imageBytes = padded * outputHeight;
     fileBytes = 14 + 40 + imageBytes;
 
     f = fopen(path, "wb");
@@ -312,7 +324,7 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
     memset(infoHdr, 0, sizeof(infoHdr));
     write_u32_le(infoHdr + 0, 40);
     write_u32_le(infoHdr + 4, (unsigned)width);
-    write_u32_le(infoHdr + 8, (unsigned)(-height));
+    write_u32_le(infoHdr + 8, (unsigned)(-outputHeight));
     write_u16_le(infoHdr + 12, 1);
     write_u16_le(infoHdr + 14, 24);
     write_u32_le(infoHdr + 16, 0);
@@ -327,8 +339,16 @@ int M11_Screenshot_CapturePresentedRGBA(const char* outputDir,
         return 0;
     }
 
-    for (y = 0; y < height; y++) {
-        const unsigned char* src = rgba + (size_t)y * (size_t)width * 4u;
+    for (y = 0; y < outputHeight; y++) {
+        const unsigned char* src = NULL;
+        if (y >= topPad && y < topPad + height) {
+            src = rgba + (size_t)(y - topPad) * (size_t)width * 4u;
+        }
+        if (!src) {
+            memset(row, 0, (size_t)padded);
+            fwrite(row, 1, (size_t)padded, f);
+            continue;
+        }
         for (x = 0; x < width; x++) {
             row[x * 3 + 0] = src[x * 4 + 2]; /* B */
             row[x * 3 + 1] = src[x * 4 + 1]; /* G */

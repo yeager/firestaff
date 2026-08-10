@@ -244,9 +244,11 @@ def aggregate(rows: list[dict[str, Any]], contract_drift: list[str], uniqueness:
 
     if contract_drift:
         decision = "CONTRACT_DRIFT_FAIL"
-    elif eligible_rows:
-        decision = "READINESS_GATE_REPORTS_ELIGIBLE_ROWS_REVIEW_REQUIRED"
     else:
+        # Machine eligibility is deliberately not a promotion decision. The
+        # companion checklist owns human sign-off, so a qualified capture
+        # keeps the upstream non-promotion contract green while it awaits
+        # reviewer evidence.
         decision = REQUIRED_CONTRACT_FIELDS["currentDecision"]
 
     return {

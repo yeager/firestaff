@@ -2,8 +2,8 @@
   "aggregate": {
     "contract_drift": [],
     "decision": "NO_README_PROMOTION_PERMITTED",
-    "eligible_count": 0,
-    "ineligible_count": 1,
+    "eligible_count": 1,
+    "ineligible_count": 0,
     "skipped_count": 2,
     "status": "NO_README_PROMOTION_PERMITTED",
     "uniqueness_findings": []
@@ -28,7 +28,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-08-10T10:21:45.590859+00:00",
+  "generated_at": "2026-08-10T10:42:03.910787+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -40,13 +40,11 @@
   "rows": [
     {
       "case_id": "canonical_pcengine_root",
-      "classification": "README_INELIGIBLE",
-      "eligible": false,
+      "classification": "README_ELIGIBLE",
+      "eligible": true,
       "label": "Theron canonical PC Engine root",
-      "notes": [
-        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)"
-      ],
-      "presented_sha256": "11d2e5f157adf2f36101075f6588efad797bfe4626e60132f3cf02bdf4684abc",
+      "notes": [],
+      "presented_sha256": "a08fcfc5dad419902bf9681036329373b14ee9ada69392006d3c48a4dcaaf9d4",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",

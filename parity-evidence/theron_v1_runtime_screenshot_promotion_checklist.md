@@ -1,8 +1,8 @@
 # Theron V1 runtime screenshot promotion checklist
 
-Status: `REVIEW_CHECKLIST_NO_ROW_PROMOTED`
+Status: `REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER`
 
-Decision: **REVIEW_CHECKLIST_NO_ROW_PROMOTED**
+Decision: **REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER**
 
 This is a bounded, machine-checkable companion to the runtime
 screenshot promotion gate. It surfaces the explicit per-row
@@ -36,16 +36,16 @@ contract are satisfied for at least one row.
 
 | Case | Classification | Machine | Reviewer | Items |
 |---|---|---|---|---|
-| canonical_pcengine_root | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=PASS, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
+| canonical_pcengine_root | `MACHINE_ELIGIBLE_AWAITING_REVIEWER` | ✓ | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=PASS, presented_bmp_geometry=PASS, reviewer_signoff=PENDING_REVIEWER |
 | jp_extras_track02_bin | `SKIPPED_NO_DATA` | — | — |  |
 | us_extras_track02_bin | `SKIPPED_NO_DATA` | — | — |  |
 
 ## Aggregate
 
-- Decision: **REVIEW_CHECKLIST_NO_ROW_PROMOTED**
-- Machine-eligible rows (awaiting reviewer): **0**
+- Decision: **REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER**
+- Machine-eligible rows (awaiting reviewer): **1**
 - Reviewer-promoted rows: **0**
-- Ineligible rows: **1**
+- Ineligible rows: **0**
 - Skipped rows (no data on this host): **2**
 - Unique-source-sha256 findings: **0**
 - Contract-drift findings: **0**
