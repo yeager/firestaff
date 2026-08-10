@@ -31,6 +31,8 @@ Patchkedjan instrumenterar:
 3. källord från relevanta registerpekare.
 4. frame-id från Mednafen-capture-hooken.
 5. en rå VDP2-snapshot direkt efter den faktiska CRAM-skrivningen.
+6. en frame-capture efter `VDP2REND_EndFrame()`, så att VDP2-register, VRAM
+   och CRAM beskriver den frame som Mednafen faktiskt renderade.
 
 Alla producerade tracefiler är diagnostiska bevis. De får inte användas för
 semantic admission utan att asset-identitet, ordningsföljd och samma snapshot
@@ -77,6 +79,61 @@ CRAM    (0x1000 bytes)
 Snapshoten tas efter CRAM-tabellens skrivning, inte vid senare frame capture.
 Det är viktigt eftersom en vanlig frame-snapshot annars kan visa att samma
 CRAM-adress senare har skrivits över.
+
+Frame-hooken ligger däremot efter `VDP2REND_EndFrame()`. Det är avsiktligt:
+VDP2-registret `BGON`, tilemap/bitmap-läget i `CHCTLA`, name table, character
+generator och CRAM ska läsas efter renderkonsumenten har gjort sin frame-
+uppdatering. Byggscriptet applicerar detta som den separata patchen
+`scripts/mednafen_1.32.1_nexus_capture_post_render.patch`.
+
+En komplett dumpning på extern disk ser därför ut så här:
+
+```sh
+run=/Volumes/Extern-disk/nexus-saturn-capture/run-menu-$(date +%Y%m%d-%H%M%S)
+mkdir -p "$run"
+export FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS="$run/vdp2-writer-regs.trace"
+export FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_PC=0x0601184c
+export FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_PC=0x0601184c
+export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES="$run/vdp2-writes.trace"
+export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT="$run/post.snapshot"
+export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_PC=0x06017702
+export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=80
+
+probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
+  --operator-only --launch --no-waiting \
+  --frame-limit 600 --timeout-seconds 120 \
+  --mednafen /Volumes/Extern-disk/nexus-saturn-capture/mednafen-prefix/bin/mednafen \
+  --mednafen-home /Volumes/Extern-disk/nexus-saturn-capture/mednafen-home \
+  --bios /Volumes/Extern-disk/nexus-saturn-capture/bios-j/Sega\ Saturn\ BIOS\ \(J\)\ \(1.01\).bin \
+  --bios-sha256 <verifierad_sha256> --bios-region jp \
+  --disc "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.cue" \
+  --disc-sha256 <verifierad_sha256> \
+  --trace "$run/runtime-vdp12.raw" \
+  --validator scripts/analyze_nexus_saturn_runtime_capture.py \
+  --manifest "$run/manifest.txt" \
+  --trace-session nexus-vdp2-post-render
+```
+
+Verifiera sedan samma session, inte en annan frame eller en annan disc:
+
+```sh
+python3 scripts/analyze_nexus_vdp2_composition.py \
+  "$run/runtime-vdp12.raw" --frame 300 --capture-frames 600 --require-layer NBG1
+python3 scripts/analyze_nexus_vdp2_char_source_join.py \
+  "$run/runtime-vdp12.raw" --data-dir /Users/bosse/.firestaff/data/nexus \
+  --frame 300 --capture-frames 600 \
+  --vdp2-write-trace "$run/vdp2-writes.trace"
+python3 scripts/analyze_nexus_vdp2_post_write_snapshot.py \
+  "$run/post.snapshot" --data-dir /Users/bosse/.firestaff/data/nexus \
+  --asset TM.BIN --source-file-offset 0x1a0c0 \
+  --destination-start 0x100400 --minimum-writes 64
+```
+
+En lyckad transportkontroll räcker inte för semantic admission. Om
+`FONT256`-spannen, textkod→glyph-mappningen eller den faktiska menyägaren inte
+är bundna ska verktygen uttryckligen lämna `source_join=unbound` eller
+`semantic_admission=blocked`. Det hindrar en autentisk hårdvarudump från att
+bli en obestyrkt host-rendering.
 
 ## Verifiering
 

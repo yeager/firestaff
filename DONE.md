@@ -1,3 +1,16 @@
+# Nexus: post-render Saturn-capture och reproducerbar dumpdokumentation (2026-08-10)
+
+- ✅ Mednafen-capturehooken flyttas till efter `VDP2REND_EndFrame()`, vilket
+  gör att rå frame-data representerar den renderade VDP2-bufferten och inte
+  ett för-tidigt register-/VRAM-tillstånd.
+- ✅ Den nya 600-frame-capturen på extern disk verifierar ändrade VDP1/VDP2-
+  regioner och observerar NBG1 som 8-bitars character/tilemap (`BGON=0x000f`,
+  `CHCTLA=0x1010`). FONT256/textkonsumenten lämnas fortsatt spärrad utan
+  byte-exakt ägar- och textkodmappning.
+- ✅ `docs/NEXUS_SATURN_CAPTURE.md` beskriver BIOS/media-hashning, extern
+  dumpkatalog, tracevariabler och verifieringsordning. BIOS, disc och rådump
+  ligger kvar utanför repot.
+
 # Theron: unauthenticated creature fallback removed (2026-08-10)
 
 - ✅ Removed the obsolete DMWeb/DM1-indexed creature and generator table,

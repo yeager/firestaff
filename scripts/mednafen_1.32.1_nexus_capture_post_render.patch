@@ -1,0 +1,11 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -576,8 +576,8 @@
+ #endif
+
+   SS_RequestMLExit();
+-  FirestaffCaptureFrame();
+   VDP2REND_EndFrame();
++  FirestaffCaptureFrame();
+   //printf("Meow: %d\n", VCounter);
+  }
