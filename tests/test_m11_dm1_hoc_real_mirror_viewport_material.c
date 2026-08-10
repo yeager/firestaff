@@ -15,10 +15,24 @@ static int open_game(const char* dataDir,
 
 static int expected_backing_graphic_for_f0107_view(int viewWallIndex)
 {
-    /* DUNVIEW.C F0107 advances the 345/346 pair for every projection
-     * except the native D3 and D2 side slots 0, 1, 5 and 6. */
-    return 345 + ((viewWallIndex >= 2 && viewWallIndex != 5 &&
-                   viewWallIndex != 6) ? 1 : 0);
+    /* DUNVIEW.C:805-819 G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement
+     * for MEDIA720 (PC34/I34E) is a 14-entry table indexed by the F0107
+     * view-wall index:
+     *   D3L2/D3R2/D3L/D3R = 0
+     *   D3L/D3R front     = 0
+     *   D2L right / D2R left = 1
+     *   D2L/D2R front     = 1 / 1 / 2  (view 5..9 = 1,1,1,2,2)
+     *   D1L/D1R depth     = 3
+     *   D1L/D1R front     = 3, 4, 4
+     * For the C346 champion-mirror route the source blit selects
+     *   backingGraphicIndex = 345 + G0190[view]
+     * The prior 345/346-only formula was a stale two-value approximation
+     * that flagged every viewIndex above the D3 side pair as wrong. */
+    static const int increments[14] = {
+        0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4
+    };
+    if (viewWallIndex < 0 || viewWallIndex >= 14) return 345;
+    return 345 + increments[viewWallIndex];
 }
 
 int main(int argc, char** argv)

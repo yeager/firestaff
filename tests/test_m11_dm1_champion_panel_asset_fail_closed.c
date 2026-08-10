@@ -44,16 +44,23 @@ int main(void)
     panel_end = panel ? strstr(panel,
         "static void m11_format_front_cell_prompt(") : NULL;
     ok = panel && panel_end && panel_end > panel &&
+         /* m11_v1_chrome_mode_enabled widened from a zero-arg query to
+          * one that takes state so it can consult V2 vertical-slice mode
+          * per source kind, and a third predicate was appended to
+          * suppress the fallback while the HoC presented-frame consumer
+          * receipt is active. Substring-match only the historically
+          * pinned two predicates so future guard extensions don't drift
+          * this lock. */
          contains_between(panel, panel_end,
-            "if (!drewStatusBox && !m11_v1_chrome_mode_enabled() &&\n"
-            "                !m11_is_dm1_source_kind(state->sourceKind))") &&
+            "if (!drewStatusBox && !m11_v1_chrome_mode_enabled(state) &&\n"
+            "                !m11_is_dm1_source_kind(state->sourceKind)") &&
          contains_between(panel, panel_end,
             "/* Procedural fallback.  V1 uses the same source status-box") &&
          contains_between(panel, panel_end,
             "CHAMDRAW.C F0292's C008 dead status box is a") &&
          contains_between(panel, panel_end, "x, y, -1);") &&
          !contains_between(panel, panel_end,
-            "if (!drewStatusBox && !m11_v1_chrome_mode_enabled()) {");
+            "if (!drewStatusBox && !m11_v1_chrome_mode_enabled(state)) {");
     free(source);
     return ok ? 0 : 1;
 }
