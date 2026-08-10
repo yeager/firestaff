@@ -5,6 +5,10 @@
   ADPCM-RAM, kanalstart, ljud-ID och spelhändelseägare. En komplett
   start→spel-event-capture krävs innan Therons ljudkonsument kan öppnas.
 
+- 🔒 Cold-start-capture nådde autentiserad CD→RAM→HuC6280, 17 `$4644`- och
+  64 `$4667`-edges, men ingen giltig `$B0E5`-kategori, specialgren eller
+  RNG-retur. Nästa capture måste följa en faktisk dungeon/spawnhändelse.
+
 - 🔒 JP-Track 02:s autentiska rosterrecord når nu startup-party-state:n med
   namn, vitalvärden, attribut och skills. Porträttens bitmap-/paletteägare och
   det riktiga text-/UI-consumet är fortfarande inte bevisade; nästa media-

@@ -47,6 +47,15 @@
   hela filen korrekt avvisas som ofullständig; ingen ljudhändelse eller
   source-owned playback publiceras.
 
+# Theron: cold-start helper-edge capture (2026-08-10)
+
+- ✅ En ny autentiserad US-capture når 102 råsektorer, 28 `$E009`-dispatchar,
+  två CD→RAM-originreceipts, 17 `$4644`-edges och 64 `$4667`-edges med
+  PID-bunden input.
+- ✅ Capturen visar samtidigt noll giltiga `$B0E5`-regular-spawns, noll
+  specialgrenar och noll RNG-returkontrakt. Den öppnar därför inte någon
+  syntetisk RNG-, creature-, AI-, loot-, T700- eller T900-semantik.
+
 # Theron: ADPCM-transportreceipt från extern capture (2026-08-10)
 
 - ✅ CD-state-parsern räknar och kontrollerar nu ADPCM FIFO-läsningar mot

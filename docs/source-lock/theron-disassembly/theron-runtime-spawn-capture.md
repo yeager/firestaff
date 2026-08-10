@@ -503,3 +503,19 @@ ID, or the owner that maps a gameplay event to a sample. No event-owned audio
 consumer is therefore published, and `theron_v1_play_sound()` remains
 fail-closed. The real evidence tightens the gate; it does not justify a
 synthetic sound mapping.
+
+## 2026-08-10 — cold-start runtime edge capture
+
+An additional authenticated cold-start capture against the US Track 02 BIN
+recorded 102 raw-sector spans, 28 game `$E009` dispatches, two byte-exact
+CD→RAM origin receipts, 17 `$4644` preconsumer observations and 64 `$4667`
+helper observations. The input route was PID-bound Quartz delivery; the
+capture recorded 29 host key events and an observed startup-to-loader
+transition.
+
+The same receipt recorded zero `$B0E5` regular-spawn entries, zero helper
+special-branch samples (`B3 & 7 == 4`), zero `$C96B/$CC4C` RNG windows, zero
+spawn-consumer reads and zero RNG return contracts. The `$4667` calls therefore
+prove only that the authenticated runtime reaches the static helper edge;
+they do not authorize a host RNG, creature record, AI, loot, generator,
+T700 or T900 implementation. The raw capture remains outside GitHub.
