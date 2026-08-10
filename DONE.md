@@ -62,6 +62,16 @@
   senare `LOAD_LOCALLEVEL_DYN`-arbete väljer en annan GDAT-resurs än
   originalet. Det fokuserade testet kontrollerar hela båda resurs-id:n.
 
+# DM2: privat LOAD_LOCALLEVEL-DYN-prefix (2026-08-11)
+
+- ✅ GAME_LOAD-kandidaten äger nu den exakta fasta resursföljden före
+  `DM2_LOAD_LOCALLEVEL_DYN` börjar gå kartans tile- och recordkedjor:
+  originalets initflaggor, hi-res-markeringar, källans kartselector och
+  senare musiktyp finns i RAM. Källan är SKProject `c_loadlevel.cpp:203-327`.
+- ✅ Realdatatestet verifierar den hashadmitterade DOS-kön och att den
+  förblir privat. Recordtraversering, DYN4, väder och ljus är uttryckligen
+  väntande; inget delresultat publiceras till M11, renderer eller ljud.
+
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
 
 - ✅ Den autentiserade externa cold-start-capturen med VRAM-FNV `4a2186a2`

@@ -596,6 +596,11 @@
   `DM2_2676_008f` har nu rätt resursbyte i den testexklusiva
   LOAD_LOCALLEVEL-hjälparen; den större ägaren måste fortfarande köa hela
   tile-/record- och actuatorprefixet innan DYN4 får anropas.
+  Den privata GAME_LOAD-kandidaten behåller nu också den verkliga fasta
+  34-posters-prefixkön från `DM2_LOAD_LOCALLEVEL_DYN`, med källans aktuella
+  kartselector och musiktyp. Den stannar medvetet före den första tile-/
+  recordtraverseringen; den markerar varken DYN4, väder, ljus eller en
+  spelbar lokalnivå som färdig.
   New Games privata `c_party` räknar nu vikt från samma källägda DB5–DB10-
   poster och GDAT som itembonusarna, inklusive laddningar samt DB9-
   containrars verkliga innehålls- och moneyboxkedjor. Det räcker inte för

@@ -19,6 +19,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_creature_something_pc34_compat.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
@@ -5148,6 +5149,39 @@ int main(void) {
                     profile_runtime_candidate->init_game_ui.input_actions[0].w0 == 0x80d7u &&
                     profile_runtime_candidate->init_game_ui.input_actions[0].w2 == 0x001cu &&
                     profile_runtime_candidate->init_game_ui.source_table_hash != 0u &&
+                    profile_runtime_candidate->local_dyn_prelude.valid &&
+                    profile_runtime_candidate->local_dyn_prelude.record_traversal_pending &&
+                    profile_runtime_candidate->local_dyn_prelude.dyn4_pending &&
+                    profile_runtime_candidate->local_dyn_prelude.source_v1e13fe[0] == 0u &&
+                    profile_runtime_candidate->local_dyn_prelude.source_v1e13fe[1] == 0u &&
+                    profile_runtime_candidate->local_dyn_prelude.source_map ==
+                        profile_runtime_candidate->current_map &&
+                    profile_runtime_candidate->local_dyn_prelude.source_music_type ==
+                        dm2_v1_music_map[profile_runtime_candidate->current_map] &&
+                    profile_runtime_candidate->local_dyn_prelude.source_party_count ==
+                        profile_runtime_candidate->party.heros_in_party &&
+                    profile_runtime_candidate->local_dyn_prelude.fixed_prefix_count == 34u &&
+                    profile_runtime_candidate->local_dyn_prelude.map_selector_index == 33u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.count == 34 &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[0].cat == 0x01u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[0].type == 0xffu &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[0].sub1 == 0x02u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[0].sub2 == 0xffu &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[31].cat == 0x0fu &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[31].type == 0xffu &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[31].sub1 == 0x05u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[31].sub2 == 0x10u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[31].flags == 1 &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[32].cat == 0x0fu &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[32].type == 0xffu &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[32].sub1 == 0x05u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[32].sub2 == 0x39u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[33].cat == 0x03u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[33].type ==
+                        (uint8_t)(profile_runtime_candidate->current_map + 1) &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[33].sub1 == 0x02u &&
+                    profile_runtime_candidate->local_dyn_prelude.queue.entries[33].sub2 == 0xffu &&
+                    profile_runtime_candidate->local_dyn_prelude.source_resource_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 retains source-initialized c_move state privately without publishing a session");

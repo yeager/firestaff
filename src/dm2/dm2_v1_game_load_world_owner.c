@@ -2300,6 +2300,142 @@ int dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
                                                                    new_map, 0);
 }
 
+/* DM2_LOAD_LOCALLEVEL_DYN allocates its 400-entry c_swww table before the
+ * first tile/record walk.  Keep that prefix in the private candidate exactly
+ * as source data, but stop before the walk: its record/actuator side effects
+ * and the following DYN4/weather/light consumers require the same complete
+ * GAME_LOAD transaction.  Source: SKULLWIN/c_loadlevel.cpp (203-327). */
+static int dm2_v1_game_load_local_dyn_mark(DM2_V1_DynLoadState *queue,
+                                           int32_t resource_id)
+{
+    int16_t before;
+    if (!queue) return 0;
+    before = queue->count;
+    if (dm2_v1_mark_dyn_load(queue, resource_id).entry_index != before ||
+        queue->count != before + 1) return 0;
+    return 1;
+}
+
+static int dm2_v1_game_load_local_dyn_set_last_flags(
+    DM2_V1_DynLoadState *queue, int16_t flags)
+{
+    if (!queue || queue->count <= 0 ||
+        queue->count > DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) return 0;
+    queue->entries[queue->count - 1].flags = flags;
+    return 1;
+}
+
+static int dm2_v1_game_load_local_dyn_mark_flag(
+    DM2_V1_DynLoadState *queue, int32_t resource_id, int32_t flag)
+{
+    int16_t before;
+    if (!queue) return 0;
+    before = queue->count;
+    dm2_v1_mark_dyn_load_with_flag(queue, resource_id, flag);
+    return queue->count == before + 2;
+}
+
+static uint32_t dm2_v1_game_load_local_dyn_hash(const DM2_V1_DynLoadState *queue)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+    if (!queue || queue->count < 0 ||
+        queue->count > DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) return 0u;
+    for (i = 0; i < queue->count; ++i) {
+        const DM2_V1_DynLoadEntry *entry = &queue->entries[i];
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)entry->flags);
+        hash = dm2_v1_game_load_owner_hash_step(hash, entry->cat);
+        hash = dm2_v1_game_load_owner_hash_step(hash, entry->type);
+        hash = dm2_v1_game_load_owner_hash_step(hash, entry->sub1);
+        hash = dm2_v1_game_load_owner_hash_step(hash, entry->sub2);
+    }
+    return hash;
+}
+
+static int dm2_v1_game_load_local_dyn_prelude_init(
+    DM2_V1_GameLoadLocalDynPrelude *out,
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    DM2_V1_GameLoadLocalDynPrelude prelude;
+    int16_t map_selector_index;
+
+    if (!out || !candidate || candidate->current_map < 0 ||
+        candidate->current_map >= 64 || candidate->party.heros_in_party <= 0 ||
+        candidate->party.heros_in_party > DM2_MAX_HEROES) return 0;
+    memset(&prelude, 0, sizeof(prelude));
+    /* c_dballoc.cpp::c_dballoc (204-208): New Game starts with both entries
+     * clear.  Resume is a separate SKSAVE transaction and must not use this
+     * constructor. */
+    prelude.source_v1e13fe[0] = 0u;
+    prelude.source_v1e13fe[1] = 0u;
+    prelude.source_map = (int16_t)candidate->current_map;
+    prelude.source_music_type = dm2_v1_music_map[candidate->current_map];
+    prelude.source_party_count = (uint8_t)candidate->party.heros_in_party;
+
+    if (!dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x01ff02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x18ff02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x07ff02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d0002ffu) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue, 1) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d2f02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d7e02ffu) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue, 1) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d9f02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x10ff02ffu) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue, 1) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x15ff02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x030002ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x08fe02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x16fe02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x09fe02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0afe02ffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0fff08fbu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0fff07fcu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x01ffffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x01000400u) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue,
+                                                    DM2_V1_LOADLEVEL_DYN_FLAG_HIRES) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x01000600u) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue,
+                                                    DM2_V1_LOADLEVEL_DYN_FLAG_HIRES) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0100070au) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue,
+                                                    DM2_V1_LOADLEVEL_DYN_FLAG_HIRES) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x1a80ffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x1a81ffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0300ffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0700ffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d00ffffu) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue, 1) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d2fffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d7effffu) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue, 1) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x0d9fffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x10ffffffu) ||
+        !dm2_v1_game_load_local_dyn_set_last_flags(&prelude.queue, 1) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0x15ffffffu) ||
+        !dm2_v1_game_load_local_dyn_mark(&prelude.queue, (int32_t)0xffff01f9u) ||
+        !dm2_v1_game_load_local_dyn_mark_flag(&prelude.queue,
+                                               (int32_t)0x0fff0510u, 0x39) ||
+        prelude.queue.count < 2) return 0;
+    prelude.queue.entries[prelude.queue.count - 2].flags &=
+        (int16_t)~DM2_V1_LOADLEVEL_DYN_FLAG_HIRES;
+    map_selector_index = prelude.queue.count;
+    if (!dm2_v1_game_load_local_dyn_mark(&prelude.queue,
+        ((int32_t)(candidate->current_map + 1) << 16) | (int32_t)0x030002ffu)) {
+        return 0;
+    }
+    prelude.fixed_prefix_count = (uint16_t)prelude.queue.count;
+    prelude.map_selector_index = (uint16_t)map_selector_index;
+    prelude.record_traversal_pending = 1;
+    prelude.dyn4_pending = 1;
+    prelude.source_resource_hash = dm2_v1_game_load_local_dyn_hash(&prelude.queue);
+    if (prelude.source_resource_hash == 0u) return 0;
+    prelude.valid = 1;
+    *out = prelude;
+    return 1;
+}
+
 /* This is deliberately a clone, not RESET_CAII/FILL_CAII replay.  A future
  * source-complete owner must have established the exact private state before
  * this point. Replaying either against the source owner would rewrite DB4
@@ -2432,6 +2568,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
      * unmaterialized. */
     if (!dm2_v1_game_load_runtime_candidate_change_current_map(
             &candidate, source->current_map, 1)) goto fail;
+    if (!dm2_v1_game_load_local_dyn_prelude_init(&candidate.local_dyn_prelude,
+                                                  &candidate)) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash,
         (uint32_t)source->dungeon.raw_size);

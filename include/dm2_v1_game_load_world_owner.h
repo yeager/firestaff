@@ -21,6 +21,7 @@
 #include "dm2_v1_init_game_ui_owner.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_loadlevel_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_skproject_core.h"
@@ -589,6 +590,28 @@ typedef struct {
     int command_in_progress;          /* ddat.v1e0488 */
 } DM2_V1_GameLoadMovementState;
 
+/* The retained prefix of DM2_LOAD_LOCALLEVEL_DYN before its map-tile walk.
+ * This is not a completed dynamic load: the exact record/actuator traversal,
+ * DYN4 resolution, weather and light passes remain pending and therefore
+ * cannot be consumed by a renderer, mixer or host runtime.  Keeping this
+ * source-ordered RAM queue prevents a later world owner from reconstituting
+ * base resources with caller-authored defaults.
+ *
+ * Source: SKULLWIN/c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN (203-327). */
+typedef struct {
+    int valid;
+    int record_traversal_pending;
+    int dyn4_pending;
+    uint8_t source_v1e13fe[2];
+    int16_t source_map;
+    uint8_t source_music_type;
+    uint8_t source_party_count;
+    uint16_t fixed_prefix_count;
+    uint16_t map_selector_index;
+    DM2_V1_DynLoadState queue;
+    uint32_t source_resource_hash;
+} DM2_V1_GameLoadLocalDynPrelude;
+
 /* A private, all-RAM candidate for a complete mutable DM2_GAME_LOAD state.
  * It is a transaction staging area, not a live game: no field is installed
  * in M11, the process-global runtime, audio backend or input dispatcher.
@@ -628,6 +651,7 @@ typedef struct {
      * remains unpublished until the following LOAD_NEWMAP/CAII transaction
      * is source-complete. */
     DM2_V1_InitGameUiOwner init_game_ui;
+    DM2_V1_GameLoadLocalDynPrelude local_dyn_prelude;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;
