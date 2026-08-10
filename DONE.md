@@ -117,6 +117,15 @@
   ändras inte.
 - ✅ Regressionstestet täcker Nexus/Theron över alla 19 startmenyspråk.
 
+# DM2: SKSAVE-ägare ersätts utan RAM-läckage (2026-08-10)
+
+- ✅ Den privata SKSAVE GAME_LOAD-ägaren har nu ett explicit livscykelmärke.
+  En ny import frigör atomärt tidigare ägda c_map-/recordpoolkopior innan
+  den ersätter resultatet, även när den nya importen avvisas.
+- ✅ Regressionen bygger enbart en testlokal poolägare och verifierar att ett
+  misslyckat init lämnar utdata helt nollställd. Den autentiska DOS-korpusen
+  passerar fortsatt 259 kontroller utan att Resume öppnas.
+
 # DM2: SKSAVE:s DB0-recycler väljer nu privat och läsande (2026-08-10)
 
 - ✅ Den privata SKSAVE-ägaren utför nu exakt DB0-delen av

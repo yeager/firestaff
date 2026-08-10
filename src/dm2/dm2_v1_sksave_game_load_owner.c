@@ -4,6 +4,19 @@
 
 #include <string.h>
 
+/* Constructors accept caller storage that might not yet be initialised.
+ * Inspect the first object-representation bytes through memcpy, rather than
+ * reading an indeterminate uint32_t lvalue. */
+static int dm2_v1_sksave_game_load_owner_is_initialized(
+    const DM2_V1_SksaveGameLoadOwner *owner)
+{
+    uint32_t tag = 0u;
+
+    if (!owner) return 0;
+    memcpy(&tag, owner, sizeof(tag));
+    return tag == DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
+}
+
 static int dm2_v1_sksave_owner_hero_alive(void *ctx, int hero_index)
 {
     const DM2_V1_SksaveGameLoadOwner *owner =
@@ -324,10 +337,16 @@ int dm2_v1_sksave_game_load_owner_init(
     void *query_creature_ai_flags_ctx)
 {
     DM2_V1_SksaveGameLoadOwner candidate;
+    const int owner_was_initialized =
+        dm2_v1_sksave_game_load_owner_is_initialized(owner);
 
     if (!owner) return 0;
-    memset(owner, 0, sizeof(*owner));
+    if (owner_was_initialized)
+        dm2_v1_sksave_game_load_owner_free(owner);
+    else
+        memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
+    candidate.lifecycle_tag = DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
     candidate.timer_queue_count = -1;
     candidate.timer_free_head = -1;
     candidate.leader_hand_root = DM2_V1_RECORD_HANDLE_END;
@@ -592,6 +611,10 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner)
 {
     if (!owner) return;
+    if (!dm2_v1_sksave_game_load_owner_is_initialized(owner)) {
+        memset(owner, 0, sizeof(*owner));
+        return;
+    }
     dm2_v1_sksave_map_owner_free(&owner->map_owner);
     dm2_v1_record_pool_set_free(&owner->record_pools);
     memset(owner, 0, sizeof(*owner));

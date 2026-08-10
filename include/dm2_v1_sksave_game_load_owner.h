@@ -16,7 +16,13 @@
 extern "C" {
 #endif
 
+/* First-field lifetime marker.  Constructors must tolerate both zeroed and
+ * previously completed owners without dropping their RAM-owned map and
+ * record-pool allocations.  It is an ownership guard, never save data. */
+#define DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG 0x53474c4fu /* "SGLO" */
+
 typedef struct DM2_V1_SksaveGameLoadOwner {
+    uint32_t lifecycle_tag;
     int valid;
     /* Must remain zero until global-effect timers, timer dispatch and the
      * M11 runtime have one source-complete owner. */
@@ -116,7 +122,8 @@ typedef struct {
 
 /* Materialize one fully source-walked private transaction.  `raw_body` is
  * the original SKSAVE payload after its 42-byte header; it is never modified
- * or retained.  On failure `owner` is cleared and no partial owner survives. */
+ * or retained.  A completed owner is atomically replaced; on failure it is
+ * cleared and no partial owner survives. */
 int dm2_v1_sksave_game_load_owner_init(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,

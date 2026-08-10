@@ -289,6 +289,29 @@ static void test_private_db0_recycler_candidate(void)
     dm2_v1_record_pool_set_free(&set);
 }
 
+/* A failed replacement must release an already completed private owner before
+ * it clears the output.  This uses only the test-local synthetic pool owner;
+ * no game data or recycler selection is fabricated. */
+static void test_sksave_owner_replacement_releases_owned_pools(void)
+{
+    DM2_V1_SksaveGameLoadOwner owner;
+    DM2_V1_RecordPoolSet owned_pools;
+
+    memset(&owner, 0, sizeof(owner));
+    build_synthetic(&owned_pools);
+    owner.lifecycle_tag = DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
+    owner.valid = 1;
+    owner.record_pools = owned_pools;
+    memset(&owned_pools, 0, sizeof(owned_pools));
+
+    CHECK(!dm2_v1_sksave_game_load_owner_init(&owner, NULL, 0u, 0u,
+                                               NULL, NULL, NULL) &&
+              owner.lifecycle_tag == 0u && !owner.valid &&
+              !owner.record_pools.valid &&
+              owner.record_pools.pools[0].bytes == NULL,
+          "SKSave owner replacement releases prior RAM pools on failure");
+}
+
 int main(void)
 {
     DM2_V1_RecordPoolSet set;
@@ -434,6 +457,7 @@ int main(void)
 
     test_recycle_scan_traversal();
     test_private_db0_recycler_candidate();
+    test_sksave_owner_replacement_releases_owned_pools();
 
     CHECK(strstr(dm2_v1_record_pool_source_evidence(), "c_record.cpp") != NULL,
           "source evidence cites c_record.cpp");
