@@ -2,6 +2,22 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — save-state `$B0E5` hits are not the regular-spawn caller
+
+- ✅ Den ombyggda externa Mednafen-capturen mot den riktiga US-CUE:n loggade
+  nu även HuC6280-stackens returord vid varje `$B0E5`-träff. Den autentiserade
+  Track 02-hashen är fortsatt `f23601102138f87c33025877767ebf76` och capturen
+  gav 50 `$B0E5`-träffar.
+- 🔒 Alla 50 träffar hade A=`$2C` eller A=`$85`, inte disassemblyns spawn-
+  kategori 0–3, och ingen träff följdes av `$4667`, `$5D64` eller `$5D6A`.
+  Stackorden var dessutom `return_pc=$0002`/`$3F3F`, vilket inte är en
+  verifierad game-code caller. Detta är därför ett avvisat overlay-/state-
+  witness, inte ett RNG- eller spawnbevis. RNG, AI, generatorer, T700, T900,
+  loot och combat får inte öppnas från denna session.
+- 🔧 Nästa capture måste nå en faktisk dungeon-tick eller objektaktion och
+  samtidigt visa giltig caller, kategoriargument, RNG-retur och konsumentens
+  målskrivning i samma autentiserade session.
+
 ## 2026-08-10 — README capture is reference-only
 
 - 🔒 The published screenshot documents the original US presentation only.

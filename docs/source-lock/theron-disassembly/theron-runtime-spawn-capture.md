@@ -644,6 +644,20 @@ samma autentiserade session och binda returvärde, källrecord och konsument.
 
 Råtrace, BIOS, System Card, BIN/CUE och savestate ligger kvar utanför GitHub.
 
+## 2026-08-11 — stack/caller witness for the rejected `$B0E5` overlay
+
+The external instrumented Mednafen binary was rebuilt to retain the HuC6280
+stack return word at every traced `$B0E5` entry. The authenticated US Track 02
+save-state/CUE run produced 50 entries, all with A=`$2C` or A=`$85` rather than
+the regular-spawn category domain 0..3. It produced no `$4667`, `$5D64` or
+`$5D6A` entry during the same run. The observed return words were `$0002` and
+`$3F3F`; neither is an authenticated game-code caller for the disassembly
+span.
+
+This strengthens the negative result only. It does not identify an RNG return,
+monster stat, spawn event, AI, combat, loot, generator, T700 or T900 owner.
+The raw trace remains on the external disk and is not committed.
+
 ## 2026-08-10 — corrected cold-start replay proves loader transport only
 
 En korrigerad extern-disk replay skickade en kort Run-puls efter BIOS i stället
