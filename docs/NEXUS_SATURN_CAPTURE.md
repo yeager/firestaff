@@ -113,6 +113,34 @@ Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
    identitet är verifierade. En tekniskt giltig VDP2-snapshot är inte i sig
    bevis för att bytesen är menytext, FONT256 eller HUD.
 
+### Verifierad extern körning 2026-08-11
+
+En autentisk engelskspråkig data-track-körning gjordes på extern disk med den
+hashverifierade japanska Saturn-BIOS:en
+(`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`).
+Original-CUE:n refererade till ljudspår som saknades lokalt. Originalet
+ändrades inte: ISO:n kopierades byte för byte till extern disk och en separat
+data-track-only-CUE skapades där.
+
+ISO-hash:
+`16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`.
+Härledd CUE-hash:
+`f3575af985cadbecc74edda0c51451ffeea775054ec5fcdd7c4f960dcdc0cc17`.
+Körkatalog:
+`/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-english-source-20260811c/`.
+
+Körningen producerade 600 frames. Validatorn fann förändringar i VDP1
+VRAM/framebuffers samt VDP2 register/VRAM/CRAM. En kompletterande SH-2
+source-write-körning gav 500 000 begränsade rader, men ingen komplett
+contiguous ISO-chunk som binder VDP1-konsumenten till `MENU.BPK`, `DGN` eller
+`DM.BIN`.
+
+Resultatet är därför fortfarande uttryckligen
+`semantic_admission=blocked`: capturekedjan är verifierad som observation,
+men den bevisar ännu inte menytext, HUD, viewport, PRS3-palettägare eller
+DGN-faceägare. Den härledda CUE:n får inte presenteras som en komplett
+retail-disc med ljudspår.
+
 Minimal extern körning:
 
 ```sh
