@@ -600,9 +600,10 @@
   Den privata GAME_LOAD-kandidaten behåller nu också den verkliga fasta
   34-posters-prefixkön och den kompletta x/y-ordnade tile-/recordtraverseringen
   från `DM2_LOAD_LOCALLEVEL_DYN`, med källans aktuella kartselector och
-  musiktyp. Nästa steg är de recordspecifika tempytorna/selektorerna och
-  därefter DYN4; den markerar ännu inte DYN4, väder, ljus eller en spelbar
-  lokalnivå som färdig.
+  musiktyp. Kandidaten äger även de source-specifika DB2-scratchytorna och
+  DB3-`0x7e`-spegelselektorerna; nästa steg är `0x27`-aktuatörernas verkliga
+  `mapdat.tmpmap`-cross-map-lista och därefter DYN4. Den markerar ännu inte
+  DYN4, väder, ljus eller en spelbar lokalnivå som färdig.
   Kandidaten äger dessutom `LOAD_LOCALLEVEL_GRAPHICS_TABLE`: vägg-, golv-
   och dörrornamentlistorna kommer från samma File_header-map som dess
   c_map-kvitto. De får inte användas för att rita eller ersätta den saknade

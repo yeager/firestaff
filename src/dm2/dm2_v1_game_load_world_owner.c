@@ -2430,7 +2430,9 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
                     goto fail;
                 }
                 pool = &candidate->record_pools.pools[type];
-                if (pool->record_size < 2 || pool->record_size > UINT8_MAX ||
+                /* GenericRecord::w0/w2 are both read below; a shorter pool
+                 * cannot be a source-valid LOAD_LOCALLEVEL_DYN visit. */
+                if (pool->record_size < 4 || pool->record_size > UINT8_MAX ||
                     !dm2_v1_record_pool_next_link(&candidate->record_pools,
                                                    link, &next)) {
                     goto fail;
@@ -2474,6 +2476,140 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
 fail:
     free(scan.records);
     return 0;
+}
+
+/* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN (538-626).  The original walk
+ * writes exactly three cleared 0xfa-byte temporary arrays while following
+ * marked-square record chains.  Preserve that byte-level result over the
+ * candidate's mutable pools.  This deliberately stops before DB3/0x27's
+ * cross-map tmpmap traversal: its destination byte list is not owned by the
+ * File_header candidate, so manufacturing it would be a synthetic selector.
+ */
+static int dm2_v1_game_load_local_dyn_record_effects_init(
+    DM2_V1_GameLoadLocalDynRecordEffects *out,
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    DM2_V1_GameLoadLocalDynRecordEffects effects;
+    const DM2_V1_GameLoadLocalDynMapScan *scan;
+    uint32_t hash = 0x4c445246u; /* "LDRF" */
+    uint16_t index;
+
+    if (!out || !candidate || !candidate->local_dyn_prelude.valid ||
+        !candidate->local_dyn_map_scan.valid ||
+        candidate->local_dyn_map_scan.map != candidate->current_map ||
+        candidate->local_dyn_prelude.source_map != candidate->current_map ||
+        candidate->local_dyn_prelude.queue.count <= 0 ||
+        candidate->local_dyn_prelude.queue.count >
+            DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    memset(&effects, 0, sizeof(effects));
+    scan = &candidate->local_dyn_map_scan;
+    effects.map = (int16_t)candidate->current_map;
+    effects.selector_queue = candidate->local_dyn_prelude.queue;
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)effects.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, scan->record_count);
+
+    for (index = 0u; index < scan->record_count; ++index) {
+        const DM2_V1_GameLoadLocalDynRecordVisit *visit = &scan->records[index];
+        int raw;
+        uint8_t tile_class;
+
+        if (visit->type >= DM2_V1_RECORD_POOL_COUNT ||
+            visit->x < 0 || visit->x >= (int16_t)scan->width ||
+            visit->y < 0 || visit->y >= (int16_t)scan->height) {
+            return 0;
+        }
+        raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
+                                          candidate->current_map,
+                                          visit->x, visit->y);
+        if (raw < 0 || (raw & 0x10) == 0) return 0;
+        tile_class = (uint8_t)((unsigned int)raw >> 5);
+        hash = dm2_v1_game_load_owner_hash_step(hash, visit->object_id);
+        hash = dm2_v1_game_load_owner_hash_step(hash, visit->word2);
+        hash = dm2_v1_game_load_owner_hash_step(hash, tile_class);
+
+        if (visit->type == 2u && (visit->word2 & 0x0006u) == 0x0002u) {
+            const uint8_t text_class = (uint8_t)((visit->word2 >> 11) & 0x1fu);
+            const uint8_t text_index = (uint8_t)((visit->word2 >> 3) & 0xffu);
+            int temp_mark = 0;
+            int creature_mark = 0;
+
+            ++effects.text_record_count;
+            switch (text_class) {
+            case 0: case 2:
+            case 4: case 5: case 6: case 7: case 8:
+            case 10: case 13:
+            case 15: case 16: case 17:
+                temp_mark = 1;
+                break;
+            case 19: case 21: case 22:
+                creature_mark = 1;
+                break;
+            default:
+                break;
+            }
+            if (temp_mark) {
+                uint8_t *marks = tile_class != 0u ? effects.floor_text_marks :
+                                                   effects.wall_text_marks;
+                if (marks[text_index] == 0u) ++effects.text_temp_mark_count;
+                marks[text_index] = 1u;
+            }
+            if (creature_mark) {
+                if (effects.creature_marks[text_index] == 0u)
+                    ++effects.creature_mark_count;
+                effects.creature_marks[text_index] = 1u;
+            }
+        } else if (visit->type == 3u &&
+                   candidate->local_dyn_prelude.source_v1e13fe[0] == 0u) {
+            const uint8_t subtype = (uint8_t)(visit->word2 & 0x007fu);
+            const uint8_t selector = (uint8_t)((visit->word2 >> 7) & 0xffu);
+
+            if (subtype == 0x27u && tile_class == 5u) {
+                /* Original ORs its other-map tmpmap byte list into RG51p.
+                 * That list is deliberately not inferred here. */
+                ++effects.cross_map_actuator_count;
+            } else if (subtype == 0x2eu && tile_class == 0u) {
+                if (effects.creature_marks[selector] == 0u)
+                    ++effects.creature_mark_count;
+                effects.creature_marks[selector] = 1u;
+            } else if (subtype == 0x7eu) {
+                const int32_t resource_id =
+                    ((int32_t)selector << 16) | (int32_t)0x1600ffffu;
+                if (!dm2_v1_game_load_local_dyn_mark(&effects.selector_queue,
+                                                      resource_id)) {
+                    return 0;
+                }
+                ++effects.mirror_selector_count;
+            }
+        }
+    }
+    /* The source's 0x27 branch is a real dependency.  Do not allow a later
+     * DYN4 consumer to mistake the partial RG51p table for the final table. */
+    if (effects.cross_map_actuator_count != 0u ||
+        effects.selector_queue.count <= 0 ||
+        effects.selector_queue.count > DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) {
+        return 0;
+    }
+    for (index = 0u; index < DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE; ++index) {
+        hash = dm2_v1_game_load_owner_hash_step(hash, effects.creature_marks[index]);
+        hash = dm2_v1_game_load_owner_hash_step(hash, effects.wall_text_marks[index]);
+        hash = dm2_v1_game_load_owner_hash_step(hash, effects.floor_text_marks[index]);
+    }
+    hash = dm2_v1_game_load_owner_hash_step(hash, effects.text_record_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, effects.text_temp_mark_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, effects.creature_mark_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash, effects.mirror_selector_count);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             (uint16_t)effects.selector_queue.count);
+    hash = dm2_v1_game_load_owner_hash_step(
+        hash, dm2_v1_game_load_local_dyn_hash(&effects.selector_queue));
+    if (hash == 0u) return 0;
+    effects.source_effect_hash = hash;
+    effects.valid = 1;
+    *out = effects;
+    return 1;
 }
 
 static int dm2_v1_game_load_local_dyn_prelude_init(
@@ -2700,7 +2836,9 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     if (!dm2_v1_game_load_local_dyn_prelude_init(&candidate.local_dyn_prelude,
                                                   &candidate) ||
         !dm2_v1_game_load_local_dyn_map_scan_init(&candidate.local_dyn_map_scan,
-                                                  &candidate)) goto fail;
+                                                  &candidate) ||
+        !dm2_v1_game_load_local_dyn_record_effects_init(
+            &candidate.local_dyn_record_effects, &candidate)) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash,
         (uint32_t)source->dungeon.raw_size);
