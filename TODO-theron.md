@@ -20,6 +20,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   generatorer, T700 eller T900 från detta; nästa witness måste fånga en
   faktisk dungeon-/spawn- eller objektkonsument.
 
+## 2026-08-10 — VDC/VCE screen-space capture admission
+
+- ✅ Produktionsintaget har nu en stängd allow-list för fem verifierade
+  kompletta VRAM/VCE-hashpar. US-dungeon, US-interaktiv, JP-start och
+  US-cold-start passerar den riktiga BAT/tile/palett-bindningen och M11-
+  presentationen från extern disk.
+- 🔒 Detta är fortfarande en skärmkvittens. Square-to-tile, perspektiv,
+  HUD-/objektkonsument, monster, RNG, T700 och T900 öppnas inte av en
+  screen-space-snapshot.
+
 ## 2026-08-09 — aktuell kalla capture har endast transportbevis
 
 - ✅ Den autentiska US-körningen når `transition=observed` och ger fyra

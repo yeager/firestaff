@@ -25,6 +25,16 @@ int theron_v1_vram_trace_load_verified_files(
     uint32_t expected_vram_fnv1a,
     uint32_t expected_vce_fnv1a);
 
+/* Load one of the operator-authenticated screen-space capture pairs whose
+ * complete file identities are recorded in the Theron source-lock notes.
+ * This is deliberately a closed hash allow-list, not a caller-controlled
+ * "trust any snapshot" switch.  It authorizes only BAT/tile/palette replay;
+ * it does not authorize dungeon-square, perspective or object semantics. */
+int theron_v1_vram_trace_load_known_capture_files(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path);
+
 int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
                                    const char *tqtr_path);
 

@@ -20,6 +20,18 @@
 - 🔒 Ingen host-RNG, creature-AI, strid, loot, generator, T700 eller T900
   öppnades. Råtrace och spelmedia stannar utanför GitHub.
 
+# Theron: verified VDC/VCE snapshot admission (2026-08-10)
+
+- ✅ Produktionsintaget använder nu en stängd allow-list med fem kompletta
+  VRAM/VCE-identiteter. Fyra externa US/JP-snapshotpar kördes igenom den
+  source-bound BAT/tile/palettvägen och presenterades genom boot-fasaden.
+- ✅ Regressionerna verifierade 64 KiB VRAM, 1 KiB VCE, 512 palettposter,
+  1057/268/157/219 laddade BAT-tilepar och icke-tom M11-output för de fyra
+  snapshotparen.
+- 🔒 Snapshotad screen-space är inte samma sak som originalets
+  square-to-tile-, perspektiv-, HUD- eller objektkonsument. De semantiska
+  Theron-gatesen förblir stängda.
+
 # Nexus: sekventiell TM.BIN→VDP2-CRAM source/value-join (2026-08-10)
 
 - ✅ Den nya sekvensverifieraren parar register- och write-trace rad för rad

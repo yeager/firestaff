@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
     vp.fb.h = TQR_FB_H;
     vp.fb.stride = TQR_FB_W;
 
-    if (theron_v1_vram_trace_load_verified_files(
-            &vp, argv[1], argv[2], 0xf11c6b2au, 0xea83f117u) != 0) {
+    if (theron_v1_vram_trace_load_known_capture_files(
+            &vp, argv[1], argv[2]) != 0) {
         free(framebuffer);
         return 1;
     }

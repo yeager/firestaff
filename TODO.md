@@ -13,6 +13,12 @@
   eller objektaktion och binda originalets returvärde till source-record och
   konsument.
 
+- ✅ Produktionsvägen för Therons screen-space capture accepterar nu fem
+  verifierade VRAM/VCE-hashpar från extern disk, inklusive US-dungeon och JP-
+  startup. Alla fyra tillgängliga snapshotpar passerar BAT/tile/palett- och
+  M11-presenteringstestet. Detta öppnar inte square-to-tile, perspektiv, HUD,
+  objekt eller gameplaysemantik; dessa kräver fortsatt originalkonsumentbevis.
+
 - 🔒 Extern capture 3 visar 2 048 byte-exakta ADPCM FIFO→RAM-transfer, men
   capturefilen slutar mitt i en ny CD-läsning och saknar CPU-läsning av
   ADPCM-RAM, kanalstart, ljud-ID och spelhändelseägare. En komplett

@@ -25,6 +25,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   generatorer, T700 och T900 förblir fail-closed tills en verklig
   dungeon-/spawn- eller objektkonsument fångas i samma session.
 
+## 2026-08-10 — verified VDC/VCE snapshot admission
+
+- ✅ En stängd allow-list för fem verifierade VRAM/VCE-hashpar är nu gemensam
+  för produktionsviewporten och capture-BMP-proben. Fyra riktiga externa
+  US/JP-snapshotpar passerade end-to-end BAT/tile/palett- och M11-testet.
+- ✅ Testresultaten är source-space: 1057, 268, 157 och 219 BAT-tilepar
+  laddades och alla fyra frames gav 512 palettposter och icke-tom output.
+- 🔒 Ingen snapshot öppnar square-to-tile, perspektiv, HUD-/objektkonsument,
+  creature, RNG, T700 eller T900.
+
 ## 2026-08-09 — Track 02 teleporter/object-ID correction
 
 - ✅ Den autentiska Track 02-teleporterpostens `ldest` läses nu från rätt

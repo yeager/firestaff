@@ -134,6 +134,37 @@ int theron_v1_vram_trace_load_verified_files(
     return theron_v1_vram_trace_load_files(vp, vram_path, vce_path);
 }
 
+int theron_v1_vram_trace_load_known_capture_files(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path) {
+    /* Complete FNV-1a identities from authenticated external captures.  The
+     * old pair is retained for backwards-compatible capture replay.  The
+     * later pairs are the US dungeon, US interactive, JP startup and US
+     * cold-start screen-space receipts respectively.  Hash admission is the
+     * only new capability here; no VDC frame is interpreted as a dungeon
+     * square or object record. */
+    static const struct {
+        uint32_t vram;
+        uint32_t vce;
+    } known[] = {
+        {0xf11c6b2au, 0xea83f117u},
+        {0x5c830cc2u, 0x6fb303b5u},
+        {0x4f15b98cu, 0x71cc9b11u},
+        {0x8ae1e419u, 0x4e48c361u},
+        {0x1a37c99bu, 0x71cc9b11u}
+    };
+
+    if (!vp || !vram_path || !vce_path) return -1;
+    for (size_t i = 0u; i < sizeof(known) / sizeof(known[0]); ++i) {
+        if (theron_v1_vram_trace_load_verified_files(
+                vp, vram_path, vce_path, known[i].vram, known[i].vce) == 0) {
+            return 0;
+        }
+    }
+    return -1;
+}
+
 int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
                                    const char *tqtr_path) {
     if (!vp || !tqtr_path) return -1;

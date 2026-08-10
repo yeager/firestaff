@@ -600,3 +600,22 @@ T900. Nästa witness måste nå en verklig dungeon-/spawn- eller objektaktion i
 samma autentiserade session och binda returvärde, källrecord och konsument.
 
 Råtrace, BIOS, System Card, BIN/CUE och savestate ligger kvar utanför GitHub.
+
+## 2026-08-10 — source-bound VDC/VCE capture allow-list
+
+Produktionsvägen accepterar nu de kompletta snapshotpar som faktiskt har
+verifierats på extern disk, i stället för att bara acceptera ett äldre par.
+Allow-listan är stängd och jämför hela filernas FNV-1a-identitet:
+
+```text
+US legacy capture       VRAM f11c6b2a  VCE ea83f117
+US dungeon capture      VRAM 5c830cc2  VCE 6fb303b5
+US interactive capture  VRAM 4f15b98c  VCE 71cc9b11
+JP startup capture      VRAM 8ae1e419  VCE 4e48c361
+US cold-start capture   VRAM 1a37c99b  VCE 71cc9b11
+```
+
+Alla par kräver fortfarande exakta 64 KiB VRAM- och 1 KiB VCE-filer. De ger
+endast source-bound BAT/tile/palett-replay och M11-presentering av den fångade
+skärmen. Ingen post i allow-listan bevisar square-to-tile-mappning,
+perspektiv, HUD-/objektägare, monster, RNG eller T700/T900-semantik.
