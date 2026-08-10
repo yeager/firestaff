@@ -4501,6 +4501,11 @@ static void nexus_v1_load_smap_runtime(Nexus_V1_Engine *engine, int level)
             &engine->smap_runtime_receipt.decode)) {
         engine->smap_runtime_receipt.valid = 1;
         engine->smap_runtime_receipt.decoded_pixels_retained = 1;
+        /* DMWeb identifies SMAP as retail automap data, but no authenticated
+         * Saturn VDP2 consumer/placement is present yet.  Retain the decode
+         * as evidence and keep the production route explicitly no-draw. */
+        engine->smap_runtime_receipt.no_draw_only = 1;
+        engine->smap_runtime_receipt.fallback_visuals_permitted = 0;
         engine->smap_rgba = pixels;
         pixels = NULL;
     }
@@ -4636,6 +4641,19 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
      * startup until that evidence chain is complete. */
     if (level == 0 && !engine->game.game_started) {
         fprintf(stderr, "nexus: Saturn start pose is not source-bound\n");
+        /* A blocked entrance must not leave a parsed but unusable level in
+         * the runtime.  This is the same fail-closed boundary as the pose
+         * receipt: dimensions, source bytes, and level ownership all reset. */
+        free(engine->current_level_dgn_data);
+        free(engine->current_level_dgn_identity_data);
+        engine->current_level_dgn_data = NULL;
+        engine->current_level_dgn_identity_data = NULL;
+        engine->current_level_dgn_size = 0;
+        memset(&engine->current_level, 0, sizeof(engine->current_level));
+        memset(&engine->current_level_structure2_source, 0,
+               sizeof(engine->current_level_structure2_source));
+        engine->current_level_source_path[0] = '\0';
+        engine->level_loaded = 0;
         return -1;
     }
 

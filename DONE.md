@@ -1,3 +1,10 @@
+# Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
+- ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
+  no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar
+  inte längre en delvis laddad 64×64-nivå i runtime. Audio-proben speglar nu
+  den källtroga SAL-gränsen: MAP-tabellens bounded decode är tillåten, men
+  SAL-codec/playback är fortfarande stängd utan Saturn-capture.
+
 # Nexus: capture-launcher status integrity (2026-08-10)
 
 - ✅ Saturn-launchern markerar nu en körning som misslyckad när Mednafen
