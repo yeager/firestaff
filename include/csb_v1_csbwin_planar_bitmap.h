@@ -47,4 +47,20 @@ int csb_v1_csbwin_planar_bitmap_blit_wall_projection(
     int mirrored, uint8_t *destination, int destination_width,
     int destination_height, int destination_stride);
 
+/* Indexed equivalent of CSBWin Graphics.cpp::TAG008c98 as reached through
+ * CSBCode.cpp::DrawTeleporter. `recipe` is one unmodified eight-byte
+ * Data.h::teleporterRectangles record and `projection` is the paired native
+ * wallRectangles record.  The field is the recipe's item 73+x1; a non-FF
+ * recipe y2 selects item 69+(y2&0x7f) as its one-plane shape mask.  The
+ * caller supplies the two original GraphicRandom results so this primitive
+ * neither invents a clock phase nor shares a host RNG. */
+int csb_v1_csbwin_planar_bitmap_blit_teleporter(
+    const CSB_V1_CSBWinPlanarBitmap *field,
+    const CSB_V1_CSBWinPlanarBitmap *shape_mask,
+    const uint8_t recipe[8],
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection,
+    uint8_t random_period_bit, uint8_t random_start_row,
+    uint8_t *destination, int destination_width, int destination_height,
+    int destination_stride);
+
 #endif

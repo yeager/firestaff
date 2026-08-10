@@ -598,6 +598,93 @@ next:
     }
 }
 
+/* CSBCode.cpp::DrawTeleporter uses item 73+x1 as a 16-pixel strip and,
+ * when y2 is not FF, item 69+(y2&7f) as its packed plane-0 shape.  Exercise
+ * every native rectangle recipe against the operator-owned Atari data rather
+ * than treating the raw records as a decorative table. */
+static void check_real_teleporter_composition(const char *path)
+{
+    CSB_V1_CSBWinViewportLayout022e layout;
+    unsigned int index;
+
+    if (!path || !path[0] ||
+        !csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(path, &layout) ||
+        !layout.valid) return;
+    for (index = 0u;
+         index < CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_COUNT;
+         ++index) {
+        const uint8_t *recipe = layout.teleporter_rectangles[index];
+        unsigned char *field_pixels = NULL;
+        unsigned char *mask_pixels = NULL;
+        uint8_t *field_packed = NULL;
+        uint8_t *mask_packed = NULL;
+        size_t field_packed_count = 0u;
+        size_t mask_packed_count = 0u;
+        CSB_V1_CSBWinPlanarBitmap field;
+        CSB_V1_CSBWinPlanarBitmap mask;
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+        uint8_t viewport[224 * 136];
+        int field_width = 0;
+        int field_height = 0;
+        int mask_width = 0;
+        int mask_height = 0;
+
+        memset(&receipt, 0, sizeof(receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+            path, 73u + recipe[0], &field_pixels, &field_width,
+            &field_height, &receipt));
+        /* IMAGE1 exposes this 512-byte source as a 32x32 indexed raster,
+         * while TAG008c98 walks the original bytes as 8-byte (16-pixel)
+         * rows.  Reinterpret exactly that same packed storage as 16x64;
+         * this is a memory-layout conversion, never a rescale or a new
+         * field texture. */
+        CHECK(field_pixels && receipt.valid && field_width == 32 &&
+              field_height == 32 && recipe[7] == 64u && recipe[1] < recipe[7]);
+        if (!field_pixels || field_width != 32 || field_height != 32 ||
+            recipe[7] != 64u || recipe[1] >= recipe[7]) goto next;
+        CHECK(csb_v1_csbwin_planar_bitmap_pack_indexed(field_pixels,
+            (uint16_t)field_width, (uint16_t)field_height, &field_packed,
+            &field_packed_count));
+        memset(&field, 0, sizeof(field));
+        field.bytes = field_packed;
+        field.width = 16u;
+        field.height = recipe[7];
+        field.byte_stride = 8u;
+        if (recipe[3] != 0xffu) {
+            memset(&receipt, 0, sizeof(receipt));
+            CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                path, 69u + (recipe[3] & 0x7fu), &mask_pixels, &mask_width,
+                &mask_height, &receipt));
+            CHECK(mask_pixels && receipt.valid && mask_width == recipe[4] * 2 &&
+                  mask_height == recipe[5]);
+            if (!mask_pixels || mask_width != recipe[4] * 2 ||
+                mask_height != recipe[5]) goto next;
+            CHECK(csb_v1_csbwin_planar_bitmap_pack_indexed(mask_pixels,
+                (uint16_t)mask_width, (uint16_t)mask_height, &mask_packed,
+                &mask_packed_count));
+            memset(&mask, 0, sizeof(mask));
+            mask.bytes = mask_packed;
+            mask.width = (uint16_t)mask_width;
+            mask.height = (uint16_t)mask_height;
+            mask.byte_stride = (uint16_t)(((mask_width + 15) / 16) * 8);
+        } else {
+            memset(&mask, 0, sizeof(mask));
+        }
+        memset(viewport, 0xa5, sizeof(viewport));
+        CHECK(field_packed_count == (size_t)field.byte_stride * field.height &&
+              (recipe[3] == 0xffu ||
+               mask_packed_count == (size_t)mask.byte_stride * mask.height) &&
+              csb_v1_csbwin_planar_bitmap_blit_teleporter(
+                  &field, recipe[3] == 0xffu ? NULL : &mask, recipe,
+                  &layout.rectangles[index], 0u, 0u, viewport, 224, 136, 224));
+next:
+        free(mask_packed);
+        free(field_packed);
+        free(mask_pixels);
+        free(field_pixels);
+    }
+}
+
 int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
@@ -852,8 +939,9 @@ int main(void)
         check_real_hud_composition(real_graphics_dat);
         check_real_viewport_wall_catalog(real_graphics_dat);
         check_real_viewport_projection_layout(real_graphics_dat);
-        check_real_viewport_wall_plan(real_graphics_dat);
-        check_real_viewport_planar_roundtrip(real_graphics_dat);
+    check_real_viewport_wall_plan(real_graphics_dat);
+    check_real_viewport_planar_roundtrip(real_graphics_dat);
+    check_real_teleporter_composition(real_graphics_dat);
     }
 
     if (failures) return 1;

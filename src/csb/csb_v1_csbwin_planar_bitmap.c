@@ -170,3 +170,90 @@ int csb_v1_csbwin_planar_bitmap_blit_wall_projection(
     }
     return copied;
 }
+
+static int csb_v1_csbwin_planar_bitmap_plane0_at(
+    const CSB_V1_CSBWinPlanarBitmap *bitmap, int x, int y, int *out_bit)
+{
+    size_t base;
+    uint16_t mask;
+
+    if (out_bit) *out_bit = 0;
+    if (!out_bit || !csb_v1_csbwin_planar_bitmap_valid(bitmap) || x < 0 ||
+        y < 0 || x >= (int)bitmap->width || y >= (int)bitmap->height) {
+        return 0;
+    }
+    base = (size_t)y * bitmap->byte_stride + (size_t)(x / 16) * 8u;
+    mask = (uint16_t)(1u << (15u - ((unsigned int)x & 15u)));
+    *out_bit = (csb_v1_csbwin_read_be16(bitmap->bytes + base) & mask) != 0u;
+    return 1;
+}
+
+int csb_v1_csbwin_planar_bitmap_blit_teleporter(
+    const CSB_V1_CSBWinPlanarBitmap *field,
+    const CSB_V1_CSBWinPlanarBitmap *shape_mask,
+    const uint8_t recipe[8],
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection,
+    uint8_t random_period_bit, uint8_t random_start_row,
+    uint8_t *destination, int destination_width, int destination_height,
+    int destination_stride)
+{
+    const int has_mask = recipe && recipe[3] != 0xffu;
+    const int field_period = recipe ? (int)recipe[1] +
+        (int)(random_period_bit & 1u) : 0;
+    const int transparent = recipe ? (int)(recipe[2] & 0x7fu) : -1;
+    const int width = projection ? (int)projection->x2 - (int)projection->x1 + 1 : 0;
+    const int height = projection ? (int)projection->y2 - (int)projection->y1 + 1 : 0;
+    const int word_count = (width + 15) / 16;
+    int x;
+    int y;
+    int copied = 0;
+
+    /* DrawTeleporter only has two legal forms in the original layout:
+     * y2=FF means no mask; otherwise the copied mask is exactly b4*b5 and
+     * TAG008c98 reads its plane-0 word once per destination word. */
+    if (!csb_v1_csbwin_planar_bitmap_valid(field) || !recipe || !projection ||
+        !csb_v1_csbwin_viewport_projection_rectangle_is_valid(projection) ||
+        !destination || destination_width <= 0 || destination_height <= 0 ||
+        destination_stride < destination_width || width <= 0 || height <= 0 ||
+        field->width != 16u || field_period <= 0 ||
+        field_period > (int)field->height ||
+        random_start_row >= (uint8_t)field_period || transparent < 0 ||
+        transparent > 15 || (has_mask &&
+            (!csb_v1_csbwin_planar_bitmap_valid(shape_mask) ||
+             shape_mask->byte_stride != recipe[4] ||
+             shape_mask->height != recipe[5] ||
+             (int)shape_mask->width != (int)recipe[4] * 2 ||
+             shape_mask->height != (uint16_t)height ||
+             shape_mask->width != (uint16_t)(word_count * 16)))) {
+        return 0;
+    }
+    for (y = 0; y < height; ++y) {
+        const int dst_y = (int)projection->y1 + y;
+        if (dst_y < 0 || dst_y >= destination_height) continue;
+        for (x = 0; x < width; ++x) {
+            const int dst_x = (int)projection->x1 + x;
+            const int word_index = y * word_count + x / 16;
+            const int field_y = ((int)random_start_row + word_index) % field_period;
+            int selected = 1;
+            uint8_t color;
+
+            if (dst_x < 0 || dst_x >= destination_width ||
+                !csb_v1_csbwin_planar_bitmap_pixel_at(
+                    field, (uint16_t)(x & 15), (uint16_t)field_y, &color)) {
+                continue;
+            }
+            if (has_mask && !csb_v1_csbwin_planar_bitmap_plane0_at(
+                    shape_mask, (recipe[3] & 0x80u) != 0u
+                        ? word_count * 16 - 1 - x : x,
+                    y, &selected)) {
+                return 0;
+            }
+            /* TAG008c98 makes unselected mask pixels transparent before
+             * TAG0088b2's per-colour transparency dispatch. */
+            if (!selected || color == (uint8_t)transparent) continue;
+            destination[(size_t)dst_y * destination_stride + dst_x] = color;
+            copied = 1;
+        }
+    }
+    return copied;
+}

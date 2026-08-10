@@ -13,6 +13,60 @@ static void expect_int(const char *name, int actual, int expected)
     }
 }
 
+static void test_teleporter_mask_composition(void)
+{
+    uint8_t field_pixels[16 * 4];
+    uint8_t mask_pixels[16 * 2];
+    uint8_t destination[16 * 2];
+    uint8_t *field_packed = NULL;
+    uint8_t *mask_packed = NULL;
+    size_t field_size = 0u;
+    size_t mask_size = 0u;
+    CSB_V1_CSBWinPlanarBitmap field;
+    CSB_V1_CSBWinPlanarBitmap mask;
+    CSB_V1_CSBWinViewportProjectionRectangle projection =
+        { 0u, 15u, 0u, 1u, 0u, 0u, 0u, 0u };
+    const uint8_t recipe[8] = { 0u, 4u, 10u, 0u, 8u, 2u, 0u, 4u };
+    int x;
+
+    for (x = 0; x < 16 * 4; ++x) field_pixels[x] = (uint8_t)(x / 16);
+    memset(mask_pixels, 0, sizeof(mask_pixels));
+    for (x = 0; x < 8; ++x) {
+        mask_pixels[x] = 1u;
+        mask_pixels[16 + x] = 1u;
+    }
+    expect_int("teleporter.field.pack", csb_v1_csbwin_planar_bitmap_pack_indexed(
+        field_pixels, 16u, 4u, &field_packed, &field_size), 1);
+    expect_int("teleporter.mask.pack", csb_v1_csbwin_planar_bitmap_pack_indexed(
+        mask_pixels, 16u, 2u, &mask_packed, &mask_size), 1);
+    memset(&field, 0, sizeof(field));
+    field.bytes = field_packed; field.width = 16u; field.height = 4u;
+    field.byte_stride = 8u;
+    memset(&mask, 0, sizeof(mask));
+    mask.bytes = mask_packed; mask.width = 16u; mask.height = 2u;
+    mask.byte_stride = 8u;
+    memset(destination, 0xa5, sizeof(destination));
+    expect_int("teleporter.mask.blit", csb_v1_csbwin_planar_bitmap_blit_teleporter(
+        &field, &mask, recipe, &projection, 0u, 0u, destination, 16, 2, 16), 1);
+    expect_int("teleporter.mask.row0.selected", destination[0], 0);
+    expect_int("teleporter.mask.row0.transparent", destination[8], 0xa5);
+    expect_int("teleporter.mask.row1.selected", destination[16], 1);
+    expect_int("teleporter.mask.row1.transparent", destination[24], 0xa5);
+    memset(destination, 0xa5, sizeof(destination));
+    {
+        uint8_t mirrored_recipe[8];
+        memcpy(mirrored_recipe, recipe, sizeof(mirrored_recipe));
+        mirrored_recipe[3] = 0x80u;
+        expect_int("teleporter.mask.mirror", csb_v1_csbwin_planar_bitmap_blit_teleporter(
+            &field, &mask, mirrored_recipe, &projection, 0u, 0u,
+            destination, 16, 2, 16), 1);
+    }
+    expect_int("teleporter.mask.mirror.transparent", destination[0], 0xa5);
+    expect_int("teleporter.mask.mirror.selected", destination[8], 0);
+    free(field_packed);
+    free(mask_packed);
+}
+
 int main(void)
 {
     const uint8_t indexed[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -58,6 +112,7 @@ int main(void)
                    &source, 4, 0, 2, 1, destination, 6, 4, 6,
                    0, 0, -1), 0);
     free(planar);
+    test_teleporter_mask_composition();
     if (failures) return 1;
     puts("csbwin planar bitmap: PASS");
     return 0;
