@@ -443,6 +443,9 @@
   `DM2_PERFORM_MOVE`: stamina, walk-delay, `DM2_MOVE_RECORD_TO(0xffff)`,
   `DM2_moverec_3CE7D`, dörrar, aktuatorkedjor, kollisioner, noise och
   timerdispatch måste fortfarande vara en och samma atomära session.
+  Den privata kandidaten har nu en exakt läsande `c_moverec`-census över
+  sina muterbara recordpooler; använd den som admissionsunderlag, aldrig som
+  en ersättning för den saknade dispatchen.
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och

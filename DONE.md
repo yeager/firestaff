@@ -228,6 +228,13 @@
 
 # DM2: privat rörelseklassificering över GAME_LOAD-kandidaten (2026-08-10)
 
+- ✅ Kandidaten kan nu göra en skrivskyddad `c_moverec`-census över varje
+  källruta och följer då den klonade, muterbara RecordPoolSet-kedjan i stället
+  för att läsa om File_headerns ursprungsbytes. DOS-regressionen bevisar en
+  riktig dynamisk DB4-kedja och byteidentisk kandidatpool efter läsningen.
+  Det är endast den nödvändiga dispatchingången: flytt, timer, dörrar,
+  aktuatorkedjor och kollisioner är fortsatt spärrade tills de delar samma
+  rollback-owner.
 - ✅ GAME_LOAD-kandidaten behåller nu även originalets färska `c_move`-/
   `c_input`-fält: fördröjd rörelse, målruta/riktning/kommando,
   rörelseklocka/event, pending-creature-sentinel och command-flagga. Värdena

@@ -2100,6 +2100,127 @@ int dm2_v1_game_load_runtime_session_candidate_classify_move(
     return 1;
 }
 
+int dm2_v1_game_load_runtime_session_candidate_census_moverec_square(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t x, int16_t y, DM2_V1_GameLoadMoverecSquareReceipt *out_receipt)
+{
+    DM2_V1_GameLoadMoverecSquareReceipt receipt;
+    int16_t link;
+    int max_links = 0;
+    int pool;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.map = -1;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.first_record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.chain_hash = 2166136261u;
+    if (!candidate || !dm2_v1_game_load_runtime_candidate_is_initialized(candidate) ||
+        !candidate->valid || !candidate->map_context.valid ||
+        !candidate->record_pools.valid ||
+        !candidate->record_pools.record_graph_complete ||
+        candidate->current_map < 0 ||
+        candidate->current_map >= candidate->dungeon.level_count) {
+        receipt.blocked_invalid_candidate = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.map = (int16_t)candidate->current_map;
+    if (x < 0 || y < 0 || x >= candidate->map_context.width ||
+        y >= candidate->map_context.height) {
+        receipt.blocked_out_of_bounds = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    {
+        const int tile = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
+                                                      candidate->current_map,
+                                                      x, y);
+        if (tile < 0) {
+            receipt.blocked_out_of_bounds = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        receipt.tile = (uint8_t)tile;
+    }
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon,
+                                                    candidate->current_map,
+                                                    x, y);
+    if (link == DM2_V1_RECORD_HANDLE_NULL) {
+        receipt.blocked_missing_record = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.first_record = link;
+    for (pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        const DM2_V1_RecordPool *source_pool =
+            &candidate->record_pools.pools[pool];
+        if (source_pool->record_count < 0 || source_pool->extension_count < 0 ||
+            max_links > INT_MAX - source_pool->record_count ||
+            max_links + source_pool->record_count > INT_MAX -
+                source_pool->extension_count) {
+            receipt.blocked_invalid_candidate = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        max_links += source_pool->record_count + source_pool->extension_count;
+    }
+    if (max_links <= 0 || max_links > UINT16_MAX) {
+        receipt.blocked_missing_record = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        const DM2_V1_RecordPool *source_pool;
+        int16_t next;
+        int type;
+        int index;
+
+        if (link == DM2_V1_RECORD_HANDLE_NULL ||
+            receipt.record_count >= (uint16_t)max_links) {
+            receipt.blocked_cycle = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        type = dm2_v1_record_handle_pool(link);
+        index = dm2_v1_record_handle_index(link);
+        if (type < 0 || type >= DM2_V1_RECORD_POOL_COUNT || index < 0) {
+            receipt.blocked_missing_record = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        source_pool = &candidate->record_pools.pools[type];
+        record = dm2_v1_record_pool_address(&candidate->record_pools, link);
+        if (!record || source_pool->record_size <= 0) {
+            receipt.blocked_missing_record = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        ++receipt.record_type_count[type];
+        ++receipt.record_count;
+        receipt.chain_hash = dm2_v1_game_load_owner_hash_step(receipt.chain_hash,
+                                                               (uint16_t)link);
+        for (int byte = 0; byte < source_pool->record_size; ++byte) {
+            receipt.chain_hash = dm2_v1_game_load_owner_hash_step(
+                receipt.chain_hash, record[byte]);
+        }
+        if (!dm2_v1_record_pool_next_link(&candidate->record_pools, link,
+                                          &next)) {
+            receipt.blocked_missing_record = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        link = next;
+    }
+    receipt.chain_hash = dm2_v1_game_load_owner_hash_step(
+        receipt.chain_hash, (uint16_t)DM2_V1_RECORD_HANDLE_END);
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO has no party movement side effect.
  * Keep that narrow source operation private over the already-cloned world:
  * mapdat.map/v1e03c0/v1e03f4 become raw offsets in map_context, while

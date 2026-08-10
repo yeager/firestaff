@@ -2510,6 +2510,7 @@ int main(void) {
     int runtime_candidate_display_alternate_before = 0;
     DM2_V1_GameLoadSpatialQueryReceipt runtime_candidate_spatial_query;
     DM2_V1_GameLoadMoveClassificationReceipt runtime_candidate_move_query;
+    DM2_V1_GameLoadMoverecSquareReceipt runtime_candidate_moverec_square;
     int runtime_candidate_spatial_candidate_index = -1;
     int16_t runtime_candidate_spatial_x = -1;
     int16_t runtime_candidate_spatial_y = -1;
@@ -5186,6 +5187,36 @@ int main(void) {
                         !profile->source_game_load_session_ready &&
                         view.world.party.championCount == 0,
                     "DM2 runs c_querydb over the cloned CAII/GDAT owner without mutating source state");
+        runtime_candidate_db4_hash_before = dm2_test_fnv1a(
+            runtime_session_candidate.record_pools.pools[4].bytes,
+            (size_t)(runtime_session_candidate.record_pools.pools[4].record_count *
+                     runtime_session_candidate.record_pools.pools[4].record_size));
+        memset(&runtime_candidate_moverec_square, 0,
+               sizeof(runtime_candidate_moverec_square));
+        expect_true(runtime_candidate_spatial_candidate_index >= 0 &&
+                        dm2_v1_game_load_runtime_session_candidate_census_moverec_square(
+                            &runtime_session_candidate,
+                            profile_new_game_owner->caii_map_candidates[
+                                runtime_candidate_spatial_candidate_index].x,
+                            profile_new_game_owner->caii_map_candidates[
+                                runtime_candidate_spatial_candidate_index].y,
+                            &runtime_candidate_moverec_square) &&
+                        runtime_candidate_moverec_square.valid &&
+                        runtime_candidate_moverec_square.map ==
+                            runtime_session_candidate.current_map &&
+                        runtime_candidate_moverec_square.first_record ==
+                            profile_new_game_owner->caii_map_candidates[
+                                runtime_candidate_spatial_candidate_index].record_handle &&
+                        runtime_candidate_moverec_square.record_count > 0u &&
+                        runtime_candidate_moverec_square.record_type_count[4] > 0u &&
+                        runtime_candidate_moverec_square.chain_hash != 0u &&
+                        runtime_candidate_db4_hash_before == dm2_test_fnv1a(
+                            runtime_session_candidate.record_pools.pools[4].bytes,
+                            (size_t)(runtime_session_candidate.record_pools.pools[4].record_count *
+                                     runtime_session_candidate.record_pools.pools[4].record_size)) &&
+                        !profile->source_game_load_session_ready &&
+                        view.world.party.championCount == 0,
+                    "DM2 c_moverec census reads the cloned dynamic DB4 chain without mutation");
         /* Not every genuine DB4 resides on a walkable target square.  Scan
          * the admitted dynamic map rows for one where the source's complete
          * 12b4 classifier actually reaches its direct-creature branch. */

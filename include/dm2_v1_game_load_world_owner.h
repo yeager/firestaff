@@ -687,6 +687,31 @@ typedef struct {
     DM2_V1_GameLoadSpatialQueryReceipt spatial;
 } DM2_V1_GameLoadMoveClassificationReceipt;
 
+/* Read-only source-chain census for one c_moverec square.  It follows the
+ * cloned RecordPoolSet rather than rereading File_header record bytes, so
+ * post-GAME_LOAD mutations remain visible to the next transaction.  This is
+ * deliberately only the c_moverec input boundary: dispatching DB0..DB15,
+ * cutting/appending records and emitting timers require the same rollback
+ * owner and are not implied by a valid census.
+ *
+ * Source: SKULLWIN/c_moverec.cpp::DM2_moverec_3CE7D (1147-1430),
+ *         c_record.cpp::DM2_GET_NEXT_RECORD_LINK (53-57). */
+typedef struct {
+    int valid;
+    int blocked_invalid_candidate;
+    int blocked_out_of_bounds;
+    int blocked_missing_record;
+    int blocked_cycle;
+    int16_t map;
+    int16_t x;
+    int16_t y;
+    uint8_t tile;
+    int16_t first_record;
+    uint16_t record_count;
+    uint16_t record_type_count[DM2_V1_RECORD_POOL_COUNT];
+    uint32_t chain_hash;
+} DM2_V1_GameLoadMoverecSquareReceipt;
+
 /* Clone every already-owned mutable GAME_LOAD predecessor atomically, but
  * only after the complete CAII transaction has been materialized. An already
  * initialized `out` is replaced only after the new clone succeeds;
@@ -721,6 +746,13 @@ int dm2_v1_game_load_runtime_session_candidate_classify_move(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate, uint8_t move_command,
     int16_t source_x, int16_t source_y, int16_t target_x, int16_t target_y,
     DM2_V1_GameLoadMoveClassificationReceipt *out_receipt);
+
+/* Census the current-map source/destination square before a future
+ * DM2_MOVE_RECORD_TO call.  This function is strictly read-only and never
+ * promotes a successful result to movement or input availability. */
+int dm2_v1_game_load_runtime_session_candidate_census_moverec_square(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t x, int16_t y, DM2_V1_GameLoadMoverecSquareReceipt *out_receipt);
 
 /* Build the source-owned GAME_LOAD predecessor without selecting a champion.
  * It replaces an already initialized owner only after the new owner is
