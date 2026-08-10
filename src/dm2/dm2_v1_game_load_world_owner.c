@@ -949,6 +949,47 @@ static void dm2_v1_game_load_owner_sound_free(
     memset(sound, 0, sizeof(*sound));
 }
 
+uint16_t dm2_v1_game_load_sound_owner_query_entry(
+    const DM2_V1_GameLoadSoundOwner *owner,
+    int8_t cls1, int8_t cls2, int8_t cls3)
+{
+    uint16_t index;
+
+    if (!owner || !owner->valid || !owner->runtime_queue_initialized ||
+        !owner->queue_entries || !owner->sample_bindings ||
+        owner->queue_entry_count == 0u ||
+        owner->queue_entry_count > owner->queue_capacity ||
+        owner->sample_binding_count == 0u ||
+        owner->sample_binding_count > owner->sample_capacity) {
+        return 0u;
+    }
+    /* c_sound.cpp::DM2_QUERY_SND_ENTRY_INDEX is a 1-based linear scan.
+     * Reject an entry whose 482b binding no longer points to the admitted
+     * raw block rather than returning a stale source index. */
+    for (index = 0u; index < owner->queue_entry_count; ++index) {
+        const DM2_V1_SoundSsoundEntry *entry = &owner->queue_entries[index];
+        uint16_t binding;
+
+        if (entry->b_02 != cls1 || entry->b_03 != cls2 ||
+            entry->b_04 != cls3) {
+            continue;
+        }
+        if (entry->w_00 < 0 || entry->w_05 < 0 ||
+            (uint16_t)entry->w_00 >= owner->sample_binding_count) {
+            return 0u;
+        }
+        binding = (uint16_t)entry->w_00;
+        if (owner->sample_bindings[binding].raw_index !=
+                (uint16_t)entry->w_05 ||
+            owner->sample_bindings[binding].raw_length == 0u ||
+            owner->sample_bindings[binding].source_payload_hash == 0u) {
+            return 0u;
+        }
+        return (uint16_t)(index + 1u);
+    }
+    return 0u;
+}
+
 static void dm2_v1_game_load_owner_light_visibility_free(
     DM2_V1_GameLoadLightVisibilityOwner *visibility)
 {

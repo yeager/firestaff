@@ -97,6 +97,17 @@ typedef struct {
     uint32_t spatial_context_hash;
 } DM2_V1_GameLoadSoundOwner;
 
+/* Source-shaped DM2_QUERY_SND_ENTRY_INDEX over the private GAME_LOAD
+ * xsndptr2 owner.  Unlike the legacy fixed queue, this may only return an
+ * already DYN4/482b_0684-materialised entry with a proven raw/sample binding;
+ * it never appends or resolves a new GDAT row.  The returned index is the
+ * original 1-based SOUND9 index, or zero when absent/unadmitted.
+ * Source: SKProject SKULLWIN/c_sound.cpp::DM2_QUERY_SND_ENTRY_INDEX
+ * (650-673), c_gdatfile.cpp::DM2_482b_0684 (932-975). */
+uint16_t dm2_v1_game_load_sound_owner_query_entry(
+    const DM2_V1_GameLoadSoundOwner *owner,
+    int8_t cls1, int8_t cls2, int8_t cls3);
+
 /* Private result of the three writes in DM2_LOAD_NEW_DUNGEON immediately
  * before DM2_READ_DUNGEON_STRUCTURE(1). The selected medium itself remains
  * owned by BootProfile; this is deliberately not a host file-open shim.

@@ -3101,6 +3101,28 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 materializes an isolated File_header, DYN4 sound allocation and DB-pool world from original bytes without publishing a party, timer or playback session");
+    if (new_game_owner_initialized &&
+        new_game_world_owner.sound_owner.queue_entry_count > 0u &&
+        new_game_world_owner.sound_owner.queue_entries != NULL) {
+        DM2_V1_SoundSsoundEntry *entry =
+            &new_game_world_owner.sound_owner.queue_entries[0];
+        int16_t saved_raw_index = entry->w_05;
+
+        expect_true(dm2_v1_game_load_sound_owner_query_entry(
+                        &new_game_world_owner.sound_owner,
+                        entry->b_02, entry->b_03, entry->b_04) == 1u &&
+                        dm2_v1_game_load_sound_owner_query_entry(
+                            &new_game_world_owner.sound_owner,
+                            entry->b_02, entry->b_03,
+                            (int8_t)(entry->b_04 ^ 0x7f)) == 0u,
+                    "DM2 private GAME_LOAD SOUND9 query returns only its admitted source triple");
+        entry->w_05 = -1;
+        expect_true(dm2_v1_game_load_sound_owner_query_entry(
+                        &new_game_world_owner.sound_owner,
+                        entry->b_02, entry->b_03, entry->b_04) == 0u,
+                    "DM2 private GAME_LOAD SOUND9 query rejects a broken 482b binding");
+        entry->w_05 = saved_raw_index;
+    }
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_prepare_new_game(
                         &static_caii_world_owner, profile) &&

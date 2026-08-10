@@ -39,6 +39,10 @@
   identifieras, men `QUEUE_NOISE_GEN1` och timerljud förblir avstängda tills
   GAME_LOAD kan överlämna samma källägda DYN4-, c_tim-, karta- och partydata
   i en atomär session.
+- ✅ Den privata GAME_LOAD-kön har en 1-baserad, källformad SOUND9-uppslagning
+  som bara accepterar redan DYN4- och `482b_0684`-bundna poster. Den kan inte
+  lägga till en GDAT-rad, använda en global kö eller returnera en trasig
+  rå-/samplebindning.
 
 # DM2: direktstart behåller verifierad bootprofil (2026-08-10)
 
