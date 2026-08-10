@@ -42349,7 +42349,10 @@ add_test(
     COMMAND test_nexus_v1_slev_scsp_runtime_join
 )
 set_tests_properties(nexus_v1_slev_scsp_runtime_join PROPERTIES
-    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_SCSP_TRACE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/scsp-writes.trace;FIRESTAFF_NEXUS_MAIN_SCSP_TRACE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/main-scsp-writes.trace"
+    # Keep the data root deterministic, but inherit optional SCSP traces from
+    # the caller so external authenticated captures can be supplied at test
+    # time.  Without traces the executable returns 77 and CI skips it.
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "tier4;nexus;audio;scsp;runtime;join"
     SKIP_RETURN_CODE 77
 )
