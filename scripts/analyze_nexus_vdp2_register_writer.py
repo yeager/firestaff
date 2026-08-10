@@ -16,7 +16,7 @@ import re
 from pathlib import Path
 
 
-REG_LINE = re.compile(r"^addr=0x([0-9a-fA-F]+) pc=0x([0-9a-fA-F]+)(.*)$")
+REG_LINE = re.compile(r"^(?:frame=[0-9]+ )?addr=0x([0-9a-fA-F]+) pc=0x([0-9a-fA-F]+)(.*)$")
 REG_VALUE = re.compile(r" r([0-9]+)=0x([0-9a-fA-F]+)")
 SOURCE_BYTES_R4 = re.compile(
     r" src_r4=0x([0-9a-fA-F]+) src_words=([0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})$")

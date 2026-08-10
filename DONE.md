@@ -12955,3 +12955,16 @@ rendering remain blocked.
 - ✅ En creature- eller containerkedja utan tillräcklig källallokerad
   indexägare avvisas före indexskrivning. Regressionen täcker grinden;
   appbygge, SKSAVE-korpus 259/0 och placeholdergrinden passerar.
+
+# Nexus: VDP2 source/value/post-write-bindning (2026-08-10)
+
+- ✅ Extern Mednafen-capture bygger nu en post-write-snapshot direkt efter
+  faktisk CRAM-skrivning, med frame-id, VDP2-register, VRAM och CRAM. BIOS,
+  disc och råbytes ligger kvar på extern disk.
+- ✅ Den autentiska J-regionerade English Nexus-capturen binder writer-PC
+  `0x06017702`, `r5`, `TM.BIN+0x1a0c0` och CRAM-adresserna i samma sekvens.
+  `64` source/value-writes och `64` post-write-writes verifieras; asset-
+  identiteten är verifierad mot `TM.BIN`/English ISO.
+- ✅ Metoden och råformatet är dokumenterade i `docs/NEXUS_SATURN_CAPTURE.md`.
+  `semantic_admission` förblir medvetet blockerad tills samma snapshot också
+  bevisar den semantiska tilemap-/FONT256-/meny-konsumenten.

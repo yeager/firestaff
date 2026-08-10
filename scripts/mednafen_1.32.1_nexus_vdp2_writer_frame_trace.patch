@@ -1,0 +1,6 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -200,3 +200,3 @@
+  }
+- fprintf(file, "addr=0x%06x pc=0x%08x", (unsigned)address, (unsigned)pc);
++ fprintf(file, "frame=%u addr=0x%06x pc=0x%08x", FirestaffCaptureFrames, (unsigned)address, (unsigned)pc);

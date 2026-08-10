@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 REGISTER = re.compile(
-    r"^addr=0x(?P<addr>[0-9a-fA-F]+) pc=0x(?P<pc>[0-9a-fA-F]+)"
+    r"^(?:frame=[0-9]+ )?addr=0x(?P<addr>[0-9a-fA-F]+) pc=0x(?P<pc>[0-9a-fA-F]+)"
     r"(?P<registers>.*) src_r(?P<src_reg>[0-9]+)=0x(?P<src>[0-9a-fA-F]+)"
     r" src[0-9]+_words=(?P<words>[0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})$")
 WRITE = re.compile(

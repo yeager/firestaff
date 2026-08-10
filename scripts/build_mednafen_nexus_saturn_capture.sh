@@ -83,7 +83,7 @@ elif [[ "$(cat "$sh2_register_trace_marker" 2>/dev/null)" != "$sh2_register_trac
   exit 2
 fi
 vdp2_trace_marker="$source_dir/.firestaff-nexus-vdp2-write-trace-patched"
-vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V6_CODE_REGISTERS_SOURCE_R5_PC_FILTER'
+vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V7_FRAME_POST_SNAPSHOT_SOURCE_R5_PC_FILTER'
 if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_vram_write_trace.patch"
@@ -93,6 +93,8 @@ if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_register_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_source_bytes_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_source_r5_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_frame_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_post_write_snapshot.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_register_pc_filter.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_pc_filter.patch"
   printf '%s\n' "$vdp2_trace_patch_id" > "$vdp2_trace_marker"

@@ -1,0 +1,52 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -189,3 +189,45 @@
+ count++;
+ }
++static void FirestaffTraceVdp2PostWriteSnapshot(const char *area, uint32 address)
++{
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT");
++ static FILE *file;
++ static unsigned count;
++ static bool configured;
++ static uint32 target;
++ static bool target_set;
++ static uint32 requested_pc;
++ const char *target_text;
++ const char *limit_text;
++ const char *pc_text;
++ static unsigned limit = 1;
++ if(!path || !*path || !area) return;
++ if(!configured)
++ {
++  target_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_AT");
++  limit_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT");
++  pc_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_PC");
++  target_set = target_text && *target_text;
++  target = target_set ? strtoul(target_text, NULL, 0) : 0xffffffffU;
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  if(pc_text && *pc_text) requested_pc = strtoul(pc_text, NULL, 0);
++  configured = true;
++ }
++ if((target_set && address != target) || strcmp(area, "cram") != 0 || count >= limit) return;
++ if(requested_pc && requested_pc != CPU[0].GetRegister(SH7095::GSREG_RPC, NULL, 0)) return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_VDP2_POST_SNAPSHOT_V1\n", file);
++ }
++ fprintf(file, "frame=%u area=%s addr=0x%06x\n", FirestaffCaptureFrames,
++  area, (unsigned)address);
++ fwrite(RawRegs, sizeof(RawRegs[0]), sizeof(RawRegs) / sizeof(RawRegs[0]), file);
++ fwrite(VRAM, sizeof(VRAM[0]), sizeof(VRAM) / sizeof(VRAM[0]), file);
++ fwrite(CRAM, sizeof(CRAM[0]), sizeof(CRAM) / sizeof(CRAM[0]), file);
++ fflush(file);
++ count++;
++}
++
+ static void FirestaffTraceVdp2Write(const char *area, uint32 address,
+@@ -940,2 +940,3 @@
+   }
++  FirestaffTraceVdp2PostWriteSnapshot("cram", A);
+   }
