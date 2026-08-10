@@ -28,7 +28,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 
 ## By audience
 
-- **Players:** start with the repository [README](../../README.md),
+- **Players:** start with the repository [README](../README.md),
   [game-data setup](../DATA_SETUP.md) and [project status](../PROJECT_STATUS.md).
 - **Developers:** read [architecture](Architecture-Overview),
   [building and installing](Building-and-Installing), the per-game TODO files

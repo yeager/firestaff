@@ -24,7 +24,7 @@ handoff is not proven.
 
 ## Start here
 
-- [README](../README.md) — user-facing overview, supported platforms and quick start
+- [README](README.md) — user-facing overview, supported platforms and quick start
 - [Project status](PROJECT_STATUS.md) — short cross-game status matrix
 - [Game data setup](DATA_SETUP.md) — legal data intake and scanner behavior
 - [CI guide](CI.md) — GitHub Actions checks and local reproduction
