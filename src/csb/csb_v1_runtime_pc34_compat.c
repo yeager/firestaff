@@ -479,20 +479,6 @@ int csb_v1_runtime_original_atari_save_source_current(
     return current;
 }
 
-static int csb_v1_runtime_is_original_atari_save_file(const char *path)
-{
-    uint8_t *bytes = NULL;
-    size_t size = 0u;
-    CSB_V1_AtariSaveInfo info;
-    int valid = 0;
-
-    if (csb_v1_runtime_read_original_atari_save_file(path, &bytes, &size)) {
-        valid = csb_v1_atari_save_decode_pc34_compat(bytes, size, &info) ==
-            CSB_V1_ATARI_SAVE_OK;
-    }
-    free(bytes);
-    return valid;
-}
 static int csb_v1_runtime_dsa_has_wing_character(void *user,
                                                   uint16_t fingerprint);
 static int csb_v1_runtime_dsa_set_wing_talents(void *user,
