@@ -4751,6 +4751,7 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
         CSB_AMIGA_M646_FIRST_WALL_SET = 86,
         CSB_AMIGA_M647_WALL_SET_GRAPHIC_COUNT = 40,
         CSB_AMIGA_WALL_SURFACE_OFFSET = 7,
+        CSB_AMIGA_M645_FIRST_STAIRS = 108,
         CSB_AMIGA_M633_FIRST_DOOR_SET = 246,
         CSB_AMIGA_M615_FIRST_WALL_ORNAMENT = 259,
         CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT = 385
@@ -4790,6 +4791,17 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
         source_graphic = CSB_AMIGA_M646_FIRST_WALL_SET +
             (unsigned int)wall_set * CSB_AMIGA_M647_WALL_SET_GRAPHIC_COUNT +
             CSB_AMIGA_WALL_SURFACE_OFFSET + (unsigned int)(graphic_index - 93);
+    } else if (graphic_index >= CSB_AMIGA_M645_FIRST_STAIRS &&
+               graphic_index < CSB_AMIGA_M633_FIRST_DOOR_SET) {
+        /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M defines
+         * M645=108, C018=18 and M647=40.  DUNVIEW.C's F0096 load path
+         * installs the eighteen native stair views at
+         * M645 + WallSet * M647 before F0105/F0106 and the F0128 cell
+         * dispatcher select them.  This is the contiguous four-wall-set
+         * source range 108..245, ending exactly at M633's door family.
+         * Do not fall back to a PC34 stair frame when a source record fails
+         * IMG1 admission. */
+        source_graphic = (unsigned int)graphic_index;
     } else if (graphic_index >= CSB_AMIGA_M633_FIRST_DOOR_SET &&
                graphic_index < CSB_AMIGA_M633_FIRST_DOOR_SET + 12) {
         source_graphic = (unsigned int)graphic_index;

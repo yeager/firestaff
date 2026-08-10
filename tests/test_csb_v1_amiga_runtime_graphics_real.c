@@ -142,6 +142,17 @@ int main(void)
         }
     }
     /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M declares
+     * M645=108, C018=18 and M647=40.  DUNVIEW.C F0096 installs each
+     * wall set's eighteen pre-scaled stair pictures at M645+WallSet*M647;
+     * the authenticated CSB dungeon uses the four contiguous blocks
+     * 108..245 before M633=246 starts the door pictures. */
+    for (graphic = 108u; graphic < 246u; ++graphic) {
+        if (!decode_source_viewport_field_surface(path, graphic,
+                                                  "M645 stair family")) {
+            return 1;
+        }
+    }
+    /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M declares
      * M615=259 and M616=385.  DUNVIEW.C F0107 consumes the complete
      * M615..M616-1 wall-ornament family before it reaches F0115's thing
      * pass.  Prove the production Amiga decoder can admit every original
