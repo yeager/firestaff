@@ -213,6 +213,30 @@ static int csb_v1_runtime_try_load_original_atari_save_file(
     return result;
 }
 
+/* ReDMCSB LOADSAVE.C F0435 reads and validates a selected backup before
+ * M570_RenameFile turns it into the canonical slot.  Keep the candidate
+ * separate from the live profile until that filesystem transition succeeds. */
+static int csb_v1_runtime_prepare_original_atari_save_file(
+    const char *path, CSB_V1_AtariSaveHandoffCandidate *out_candidate,
+    uint32_t *out_fnv1a)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int result = CSB_V1_LOAD_ERR_UNREADABLE;
+
+    if (!out_candidate || !out_fnv1a) return CSB_V1_LOAD_ERR_UNREADABLE;
+    *out_fnv1a = 0u;
+    if (csb_v1_runtime_read_original_atari_save_file(path, &bytes, &size)) {
+        if (csb_v1_atari_save_prepare_runtime_handoff_pc34_compat(
+                bytes, size, out_candidate) == CSB_V1_ATARI_RUNTIME_OK) {
+            *out_fnv1a = csb_v1_runtime_fnv1a32(bytes, size);
+            result = CSB_V1_LOAD_OK;
+        }
+    }
+    free(bytes);
+    return result;
+}
+
 /* ReDMCSB FILENAME.C F0745 replaces the multilingual Amiga '~' filename
  * marker with nothing, F or G before LOADSAVE.C F0433/F0435 rotates the
  * selected source slot. CSBGAMEF/G.DAT are therefore original save names,
@@ -2089,6 +2113,8 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
     CSB_V1_RuntimeSaveImageV1 image;
     CSB_V1_SaveHeader header;
     char backup_path[1024];
+    CSB_V1_AtariSaveHandoffCandidate backup_candidate;
+    uint32_t backup_fnv1a;
     int result;
 
     if (!profile || !path) return -1;
@@ -2119,14 +2145,16 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
          * original slot names so Firestaff paths never gain an invented
          * backup convention.  The backup must fully pass the Atari decoder
          * before it replaces the unavailable/corrupt slot. */
+        memset(&backup_candidate, 0, sizeof(backup_candidate));
         if (csb_v1_runtime_original_atari_backup_path(path, backup_path,
                                                        sizeof(backup_path)) &&
-            csb_v1_runtime_is_original_atari_save_file(backup_path)) {
-            /* ReDMCSB LOADSAVE.C F0435:2906-2907 only resumes after its
-             * selected .BAK has become the canonical save filename.  Do the
-             * filesystem transition before mutating the live profile: a
-             * backup that is valid in isolation is not a resumable slot when
-             * the replacement cannot be completed. */
+            csb_v1_runtime_prepare_original_atari_save_file(
+                backup_path, &backup_candidate, &backup_fnv1a) ==
+                CSB_V1_LOAD_OK) {
+            /* ReDMCSB LOADSAVE.C F0435:2901-2907 validates and loads the
+             * selected backup first, then M570_RenameFile restores its slot.
+             * Prepared data owns no live state, so a failed rename leaves
+             * both the running campaign and .BAK untouched. */
             /* ReDMCSB LOADSAVE.C F0435:2906-2907 calls M570_RenameFile
              * directly.  A save slot that is absent is therefore just as
              * recoverable as a corrupt one: the validated backup becomes
@@ -2142,13 +2170,20 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
 #else
             if (rename(backup_path, path) != 0) {
 #endif
+                csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
+                    &backup_candidate);
                 return result;
             }
-            if (csb_v1_runtime_try_load_original_atari_save_file(profile,
-                                                                  path) ==
-                CSB_V1_LOAD_OK) {
+            if (csb_v1_atari_save_commit_runtime_handoff_pc34_compat(
+                    profile, &backup_candidate, NULL) == CSB_V1_ATARI_RUNTIME_OK) {
+                snprintf(profile->original_atari_save_source_path,
+                         sizeof(profile->original_atari_save_source_path),
+                         "%s", path);
+                profile->original_atari_save_source_fnv1a = backup_fnv1a;
                 return CSB_V1_LOAD_OK;
             }
+            csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
+                &backup_candidate);
         }
         return result;
     }

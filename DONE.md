@@ -12439,3 +12439,15 @@ rendering remain blocked.
 - ✅ En saknad `CSBGAMEF.DAT` återställs från den validerade original-
   `CSBGAMEF.BAK` innan runtime muteras. Regressionen använder endast lokal,
   autentisk GAMEBLOCK-media och bekräftar byteidentisk återställning.
+
+## CSB: atomär Atari/Amiga-backupåterställning (2026-08-10)
+
+- ✅ F0435-kandidaten avkodas nu helt – party, dungeon och startpose – innan
+  `CSBGAME*.BAK` får döpas om till sin kanoniska `.DAT`-slot. Misslyckad
+  validering eller filövergång lämnar både den levande sessionen och backupen
+  orörda.
+- ✅ Återskapningen följer ReDMCSB `LOADSAVE.C F0435:2901-2907` och
+  Zelurker CSB:s `SaveGame.cpp`: backupen läses först, därefter sker
+  slotåterställningen, och först sedan flyttas den redan verifierade
+  kandidaten in i runtime. Riktat test mot autentisk Atari ST `MINI.DAT`
+  passerar.

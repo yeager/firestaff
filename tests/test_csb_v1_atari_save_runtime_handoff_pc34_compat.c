@@ -79,6 +79,7 @@ int main(void)
         const char *blocked_dir = "/tmp/CSBGAME3.DAT";
         const char *blocked_backup = "/tmp/CSBGAME3.BAK";
         CSB_V1_AtariSaveInfo written_info;
+        CSB_V1_AtariSaveHandoffCandidate staged_candidate;
         uint8_t *written = NULL;
         uint8_t *backup = NULL;
         size_t written_size = 0u;
@@ -105,6 +106,22 @@ int main(void)
             csb_v1_runtime_cleanup(&runtime);
             return 1;
         }
+        /* F0435 backup validation is deliberately read-only until the
+         * canonical slot can be restored.  Use the authentic corpus rather
+         * than an invented malformed save to lock that ownership boundary. */
+        memset(&staged_candidate, 0, sizeof(staged_candidate));
+        if (csb_v1_atari_save_prepare_runtime_handoff_pc34_compat(
+                bytes, size, &staged_candidate) != CSB_V1_ATARI_RUNTIME_OK ||
+            staged_candidate.dungeon == NULL ||
+            csb_v1_dungeon_get_current() != runtime.dungeon_handle) {
+            csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
+                &staged_candidate);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
+            &staged_candidate);
         /* A byte-identical copy is still not F0435's selected source slot.
          * This verifies that write-back remains bound to the authenticated
          * Amiga/Atari resume path, rather than accepting an arbitrary
