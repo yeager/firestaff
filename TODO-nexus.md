@@ -19,6 +19,11 @@ Koden kan nu göra den exakta Structure2-ägarskapskontrollen och behåller
 capture-only; det är inte ännu ett bevis på DGN-face-val, kamera, culling
 eller full viewport-komposition.
 
+Extern J/English `runtime-vdp12.raw` har verifierats genom direct-colour-
+capture-dekodern för frames 0–9. Samma frames kunde inte bindas till
+`LEV01.DGN` via mode-1-sekvensen; capture-materialet är därför inte ett
+level-face-witness och får inte användas för att hävda retail viewport-paritet.
+
 2026-08-10: Engine-API:t kan nu läsa en vald, hashbunden MENU.BPK-PRS3-yta
 som exakta indexpixlar. Detta är source-pixelåtkomst, inte PALT-färgdekodning,
 VDP1-upload eller menyplacering; Saturn-konsumentgrinden är fortsatt öppen.
