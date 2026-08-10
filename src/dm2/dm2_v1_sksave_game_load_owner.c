@@ -146,6 +146,13 @@ static int dm2_v1_sksave_owner_init_recycler_context(
     owner->recycler_context.party_x = owner->state.party_x;
     owner->recycler_context.party_y = owner->state.party_y;
     owner->recycler_context.party_direction = owner->state.party_direction;
+    /* SKProject dm2data.cpp::init sets v1e0234=0 and v1e027c=0.  The
+     * resume branch has not called DM2_move_2fcf_0b8b yet when it enters
+     * DM2_READ_SKSAVE_DUNGEON, so c_record's recycler receives no protected
+     * alternate map in this phase (c_savegame.cpp::DM2_GAME_LOAD:1476-1528;
+     * c_move.cpp::DM2_move_2fcf_0b8b:961-1016). */
+    owner->recycler_context.protected_map_active = 0;
+    owner->recycler_context.protected_map = -1;
     owner->recycler_context.column_index_count = dungeon->column_index_count;
     owner->recycler_context.ground_stack_count =
         (uint16_t)map_owner->ground_stack_count;

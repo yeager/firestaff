@@ -16,6 +16,15 @@
   tills skyddad karta, statiska varelsers possessions, cursor och full
   c_map-/recordtransaktion kan ägas tillsammans. Resume förblir spärrad.
 
+# DM2: SKSAVE-recyclerns före-teleporterfas bevarad (2026-08-10)
+
+- ✅ Den privata SKSAVE GAME_LOAD-ägaren behåller nu den källbundna fasen
+  före `DM2_move_2fcf_0b8b`: `v1e0234=0` ger recyclern ingen skyddad karta
+  (`-1`) medan `DM2_READ_SKSAVE_DUNGEON` bygger sin c_map-/recordtransaktion.
+  Värdet är inte ett värdantagande och ingen recycler eller allokering öppnas.
+- ✅ Realdatatestet låser fasen mot hela PC-DOS-korpusen. Resume är fortsatt
+  spärrad tills tvåpass-traverseringen och dess mutationer kan ägas atomärt.
+
 # Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
 
 - ✅ `scripts/analyze_nexus_vdp2_register_writer.py` verifierar att samma

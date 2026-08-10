@@ -1039,6 +1039,8 @@ static void test_real_raw_save(const char *path, const char *root,
                    state_receipt.party_y &&
                game_load_owner.recycler_context.party_direction ==
                    state_receipt.party_direction &&
+               !game_load_owner.recycler_context.protected_map_active &&
+               game_load_owner.recycler_context.protected_map == -1 &&
                game_load_owner.recycler_context.column_index_count ==
                    receipt.column_index_count &&
                game_load_owner.recycler_context.ground_stack_count ==

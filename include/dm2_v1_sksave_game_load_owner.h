@@ -65,6 +65,13 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
         uint16_t party_x;
         uint16_t party_y;
         uint16_t party_direction;
+        /* During DM2_GAME_LOAD, READ_SKSAVE_DUNGEON runs before
+         * DM2_move_2fcf_0b8b discovers an alternate teleporter map.
+         * dm2data::init supplies v1e0234=0; the recycler consequently derives
+         * no protected map (-1). Retain that derived source phase explicitly
+         * rather than treating a missing field as a host default. */
+        int protected_map_active;
+        int16_t protected_map;
         uint16_t column_index_count;
         uint16_t ground_stack_count;
         uint16_t map_data_byte_count;

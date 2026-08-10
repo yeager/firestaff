@@ -678,7 +678,8 @@
   karttraversering, skyddad karta, statiska varelsers possessions, cursor,
   c_map och respektive mutation innan en allokering får publiceras.
   Den privata importägaren behåller nu den autentiserade sparade kartan,
-  kartspannen och originalets nollställda 18 recycler-markörer, men själva
+  kartspannen, originalets nollställda 18 recycler-markörer och den explicita
+  före-teleporterfasen utan skyddad karta, men själva
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: DB0,
   DB4 och DB14 kräver källtrogna delete/move-callbacks för creature-,
   missile- och objectkedjor.
