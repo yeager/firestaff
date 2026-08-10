@@ -632,6 +632,14 @@
   Source-join saknas fortfarande (`asset_consumer_identity=unbound`), så
   startup-, meny-, HUD- och viewport-admission förblir fail-closed.
 
+# CI: varje verifierad main-push behålls i kön (2026-08-10)
+
+- ✅ `verify.yml` använder inte längre en branch-delad GitHub Actions-
+  concurrency-grupp. GitHub behåller bara en väntande körning per sådan grupp
+  även när `cancel-in-progress` är `false`, vilket gjorde att en tät följd av
+  verifierade `main`-pushar avbröt alla matriser innan ett enda jobb startade.
+  Varje push får nu en egen fullständig cross-platform-verifiering.
+
 # CI: bounded Windows CMake build (2026-08-09)
 
 - ✅ Windows/MSYS2/Ninja använder nu tre parallella CMake-jobb i `verify.yml`,

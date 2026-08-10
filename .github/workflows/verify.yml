@@ -7,13 +7,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A later commit supersedes a queued matrix for the same branch, but never a
-# matrix that has already started.  A completed cross-platform receipt is
-# required before a release can be cut; canceling active matrices during a
-# burst of verified main integrations made that receipt impossible to obtain.
-concurrency:
-  group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+# Every verified main push needs its own cross-platform receipt. GitHub's
+# concurrency groups retain at most one queued run, even when
+# cancel-in-progress is false, so a burst of integrations could otherwise
+# prevent every pending verification matrix from ever starting.
 
 env:
   SDL3_TAG: release-3.2.14
