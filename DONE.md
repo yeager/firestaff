@@ -1,3 +1,11 @@
+# Nexus: riktad EU startup/menu-witness verifierad (2026-08-10)
+- ✅ Extern EU-capture `run-codex-eu-targeted-menu-20260810` är hashbunden till
+  BIOS/media-paret, innehåller 60 autentiserade frames (`94 656 272` byte,
+  SHA-256 `a8a60e88b7381464bc5bd4ea52fc43c0616b5399f2f345f7227c1ec2b62848b7`)
+  och passerar rålayoutvalidatorn. Sam-sessionen visar enbart `NBG1-only`;
+  bytejämförelsen ger noll MENU/TITLE/FONT256/STABG/DGN-joins. Detta är
+  reproducerbart negativt capture-bevis och öppnar ingen presentation.
+
 # Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
 - ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
   no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar
