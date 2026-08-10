@@ -293,6 +293,42 @@ static int csb_v1_runtime_original_atari_backup_path(const char *path,
     return 0;
 }
 
+/* MINI.DAT is the source-owned campaign image that the Utility flow reads
+ * before it creates a player CSBGAME slot.  It is never an F0433 destination:
+ * CEDT005.C:207-209 and CEDT101.C:7-9 keep CSBGAME.DAT/CSBGAME.BAK separate
+ * from MINI.DAT on both Atari ST and Amiga.  In particular, accepting a
+ * user-supplied quicksave path ending in MINI.DAT would let M11 overwrite the
+ * selected original campaign artifact in place. */
+static int csb_v1_runtime_is_original_campaign_mini_path(const char *path)
+{
+    static const char *const names[] = {
+        "MINI.DAT", "MINIF.DAT", "MINIG.DAT", NULL
+    };
+    const char *slash;
+    const char *backslash;
+    const char *name;
+    size_t index;
+
+    if (!path || !path[0]) return 0;
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    name = slash;
+    if (!name || (backslash && backslash > name)) name = backslash;
+    name = name ? name + 1 : path;
+    for (index = 0u; names[index] != NULL; ++index) {
+        size_t i;
+        for (i = 0u; name[i] != '\0' && names[index][i] != '\0'; ++i) {
+            char actual = name[i];
+            if (actual >= 'a' && actual <= 'z') {
+                actual = (char)(actual - ('a' - 'A'));
+            }
+            if (actual != names[index][i]) break;
+        }
+        if (name[i] == '\0' && names[index][i] == '\0') return 1;
+    }
+    return 0;
+}
+
 int csb_v1_runtime_write_original_atari_save_to_path(
     const CSB_V1_RuntimeProfile *profile,
     const char *source_path,
@@ -321,6 +357,9 @@ int csb_v1_runtime_write_original_atari_save_to_path(
         strcmp(source_path,
                csb_v1_runtime_original_atari_save_source_path(profile)) != 0 ||
         !csb_v1_runtime_original_atari_save_source_current(profile) ||
+        /* F0433 only writes CSBGAME slots.  MINI.DAT/MINIF.DAT/MINIG.DAT
+         * remain read-only campaign input across Atari/Amiga Utility media. */
+        csb_v1_runtime_is_original_campaign_mini_path(destination_path) ||
         !profile->party_state_valid ||
         profile->current_level < 0 || profile->party_x < 0 ||
         profile->party_y < 0 || profile->party_dir < 0 ||

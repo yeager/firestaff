@@ -106,6 +106,24 @@ int main(void)
             csb_v1_runtime_cleanup(&runtime);
             return 1;
         }
+        /* CEDT005.C:207-209 / CEDT101.C:7-9 use MINI.DAT only as the
+         * campaign source; F0433 writes CSBGAME.DAT plus CSBGAME.BAK.  An
+         * explicitly supplied host quicksave path must not turn the real
+         * source image into a writable slot.  Keep the corpus byte-identical
+         * rather than fabricating a substitute MINI.DAT. */
+        if (csb_v1_runtime_write_original_atari_save_to_path(
+                &runtime, corpus_path, corpus_path) == 0 ||
+            !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
+            !read_file(corpus_path, &written, &written_size) ||
+            written_size != size || memcmp(written, bytes, size) != 0) {
+            free(written);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        free(written);
+        written = NULL;
+        written_size = 0u;
         /* F0435 backup validation is deliberately read-only until the
          * canonical slot can be restored.  Use the authentic corpus rather
          * than an invented malformed save to lock that ownership boundary. */
