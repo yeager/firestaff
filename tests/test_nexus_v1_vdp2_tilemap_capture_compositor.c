@@ -64,6 +64,17 @@ int main(void)
         fprintf(stderr, "little-endian tilemap register replay rejected\n");
         return 1;
     }
+    /* Authentic post-render frames can have TVMD=0 while BGON remains
+     * populated.  Register order must then be selected from the VDP2 layer
+     * fields, not from TVMD alone. */
+    memset(regs, 0, sizeof(regs));
+    regs[0x20] = 0x02; regs[0x21] = 0x00;
+    input.original_saturn_capture_verified = 1;
+    if (!nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
+            &viewport, &input, &receipt) || !receipt.valid) {
+        fprintf(stderr, "TVMD-zero little-endian tilemap replay rejected\n");
+        return 1;
+    }
     /* The authenticated VDP2 envelope also has a big-endian legacy witness.
      * TVMD=0x0080 must not make BGON/CHCTLA read as little-endian. */
     memset(regs, 0, sizeof(regs));

@@ -12,6 +12,25 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[1] << 8U) | p[0]);
 }
 
+static int vdp2_register_score(const uint8_t *registers, int little)
+{
+    uint16_t tvmd = little ? read_le16(registers) : read_be16(registers);
+    uint16_t bgon = little ? read_le16(registers + 0x20U) :
+        read_be16(registers + 0x20U);
+    uint16_t chctla = little ? read_le16(registers + 0x28U) :
+        read_be16(registers + 0x28U);
+    int score = 0;
+
+    if ((tvmd & 0x8000U) != 0U) score += 3;
+    if ((bgon & 0x001fU) != 0U) score += 4;
+    if ((bgon & ~0x1f3fU) == 0U) score += 1;
+    if ((bgon & 0x0002U) != 0U) {
+        score += 2;
+        if ((chctla & 0x0200U) != 0U) score += 1;
+    }
+    return score;
+}
+
 static uint16_t read_register16(const uint8_t *registers, size_t offset)
 {
     uint16_t big = read_be16(registers);
@@ -23,11 +42,11 @@ static uint16_t read_register16(const uint8_t *registers, size_t offset)
      * probe below reverses every subsequent VDP2 register. */
     if (big == 0x0080U)
         return read_be16(registers + offset);
-    if ((little & 0x8000U) != 0U && (big & 0x8000U) == 0U)
-        return read_le16(registers + offset);
     if (big != 0x0080U && little == 0x0080U)
         return read_le16(registers + offset);
-    return read_be16(registers + offset);
+    return vdp2_register_score(registers, 1) >=
+        vdp2_register_score(registers, 0)
+        ? read_le16(registers + offset) : read_be16(registers + offset);
 }
 
 static uint8_t expand5(uint16_t value, unsigned shift)
