@@ -58,6 +58,11 @@ useful to emulator developers.
 6. A small host-side reader or test fixture validates header, record sizes,
    and endianness without requiring copyrighted game data.
 
+Firestaff's host-side layout checker is
+`scripts/validate_mednafen_saturn_capture.py`; its `--self-test` exercises the
+header, frame sizes, draw-buffer byte and big-endian register fields using only
+synthetic bytes.
+
 ## Firestaff evidence
 
 The external witness has already produced authenticated Saturn captures with
