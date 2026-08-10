@@ -882,12 +882,22 @@ static void expect_native_live_mirror_and_command_handoff(
                         M11_GAME_INPUT_REDRAW &&
                         !view->inventoryPanelActive,
                     "Amiga C017 right-click dispatch retains G0449 C011 close");
+        /* A31/A35 G0447 has a distinct 24x29 C007 bar at x=43..66;
+         * this is not the PC34 inherited hit box.  Confirm the native
+         * original GRAPHICS.DAT/GAMEBLOCK handoff reaches C017 through the
+         * real Amiga left-click command.  C125 remains fail-closed until
+         * its independent F0070 icon raster owner is present. */
         expect_true(M11_GameView_HandlePointerButton(
-                        view, 10, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
-                        M11_GAME_INPUT_IGNORED &&
-                        !view->inventoryPanelActive &&
-                        view->world.party.activeChampionIndex == 0,
-                    "Amiga C013 leaves unbound champion-HUD clicks inert");
+                        view, 43, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW && view->inventoryPanelActive &&
+                        M11_GameView_HandlePointerButton(
+                            view, 43, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW && !view->inventoryPanelActive,
+                    "Amiga C007 bar opens and closes C017 through native G0447 geometry");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 280, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_IGNORED && !view->inventoryPanelActive,
+                    "Amiga C125 icon grid stays fail-closed without its F0070 raster owner");
     }
     expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) ==
                     M11_GAME_INPUT_REDRAW &&

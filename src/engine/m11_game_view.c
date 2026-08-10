@@ -30369,6 +30369,64 @@ static int m11_csb_atari_st_top_row_pointer(
     return 0;
 }
 
+/* The A31/A35 interface table is not the PC table with an Amiga skin.  In
+ * particular, G0447 installs the four left-click C012..C015 status boxes
+ * before the C007..C010 bar strips (and installs C007..C010 over the whole
+ * status box for a right click).  The old native-page guard discarded every
+ * left click in y=0..28, so a real Amiga C007 bar could not open C017 and a
+ * C012 status click could not select its source champion.
+ *
+ * ReDMCSB COMMAND.C G0447:82-103 (MEDIA413 A31E/A31M/A35E/A35M) gives the
+ * literal inclusive boxes below; F0380:2158-2184 sends C012..C015 to F0367
+ * and C007..C010 to PANEL.C F0355.  Keep C125..C128 fail-closed: their
+ * separate icon raster/pointer owner is F0070 and is not inferred here. */
+static int m11_csb_amiga_top_row_pointer(
+    M11_GameViewState *state, int x, int y, int button_mask,
+    M11_GameInputResult *out_result)
+{
+    static const int status_left[CHAMPION_MAX_PARTY] = { 0, 69, 138, 207 };
+    static const int bar_left[CHAMPION_MAX_PARTY] = { 43, 112, 181, 250 };
+    const CSB_V1_BootProfile *profile;
+    int slot;
+
+    if (out_result) *out_result = M11_GAME_INPUT_IGNORED;
+    if (!state || !out_result || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        y < 0 || y > 28) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_amiga_profile(profile)) return 0;
+
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            if (x >= status_left[slot] && x <= status_left[slot] + 42) {
+                *out_result = m11_set_active_champion(state, slot)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+                return 1;
+            }
+            if (x >= bar_left[slot] && x <= bar_left[slot] + 23) {
+                *out_result = m11_toggle_champion_inventory(state, slot);
+                return 1;
+            }
+        }
+        /* C125..C128 occupy (274..319, 0..28).  Do not allow the generic
+         * PC geometry to reinterpret their still-unbound icon grid. */
+        if (x >= 274 && x <= 319) return 1;
+        return 0;
+    }
+    if ((button_mask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            /* A31/A35's right C007..C010 box spans name, hands and bar. */
+            if (x >= status_left[slot] && x <= status_left[slot] + 66) {
+                *out_result = m11_toggle_champion_inventory(state, slot);
+                return 1;
+            }
+        }
+        if (x >= 274 && x <= 319) return 1;
+    }
+    return 0;
+}
+
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
@@ -30591,6 +30649,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return atari_top_row_result;
         }
     }
+    {
+        M11_GameInputResult amiga_top_row_result;
+        if (m11_csb_amiga_top_row_pointer(state, x, y, buttonMask,
+                                          &amiga_top_row_result)) {
+            return amiga_top_row_result;
+        }
+    }
 
     /* CSB's live mouse route is the same source-owned G0448 command surface
      * that COMMAND.C sends through F0358/F0359 into the C001..C006 queue.
@@ -30605,14 +30670,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
-    /* The native Amiga live page currently binds C013 (movement), C017
-     * (inventory), C026 and C040 from the selected ADF.  It does not yet
-     * bind the separate C012/C187 champion-status and bar records.  Do not
-     * let their inherited PC34 hit rectangles operate invisibly above the
-     * source-owned page: COMMAND.C F0359 can only dispatch a champion HUD
-     * command after its matching G0447 surface is live.  C013's y=124..168
-     * movement surface and every C017 route remain available below this
-     * native top-row boundary. */
+    /* C125..C128 are consumed by m11_csb_amiga_top_row_pointer above until
+     * their native F0070 icon/pointer raster is bound.  C012..C015 and
+     * C007..C010 now use their actual A31/A35 G0447 boxes there. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 && y >= 0 && y <= 28) {
         const CSB_V1_BootProfile *csb_profile =
