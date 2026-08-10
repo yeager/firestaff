@@ -26,12 +26,41 @@
 
 ## CSB
 
+### Changed
+
+- `CSB platform launch`: Keep Amiga as the automatic native route when
+  verified Amiga media is available. Explicit release selection now retains
+  the selected A31 or A35 edition, while loose FM Towns CD installs retain
+  their complete CD runtime root.
+- `CSB native presentation`: Extend the source-backed viewport material on
+  Amiga, Atari ST and FM Towns. The covered paths now use their own verified
+  graphics encodings and platform tables rather than borrowing PC artwork.
+- `CSB native interaction`: Route verified Amiga, Atari ST and FM Towns HUD,
+  action-menu and champion-formation input through their platform-specific
+  game-state owners.
+
 ### Fixed
 
 - `csb_v1_boot_startup_terminal_hud_matches_profile_pc34`: Bind the CSBWin
   handoff to accept `CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34` and
   block the C040 dimension check when the resurrect surface is absent so
   the CSBWin route is no longer blocked by the DM1-only resurrect panel.
+- `CSB Amiga graphics`: Bind native IMG1 door, stair, ornament and dynamic
+  overlay records through the authenticated A31/A35 loader, preventing a
+  fallback to PC graphics when a source record is absent.
+- `CSB Atari ST viewport`: Correct native pits, stairs, doors, switches,
+  hidden false walls and floor-decoration selection from original Atari
+  graphics and dungeon data. Dynamic objects and teleporter animation remain
+  deliberately unavailable until their source runtime ownership is complete.
+- `CSB FM Towns`: Bind the native IMG2 viewport path and route original ANM
+  PCM effects through the FM Towns transport. The remaining native dynamic
+  overlay and mixer-fade paths stay closed until their source tables and
+  mixer ownership are represented.
+- `CSB save media`: Restore native Atari/Amiga backup recovery and bind
+  write-back boundaries to multilingual slot names and campaign
+  `MINI.DAT` media. FM Towns user-save reads remain bound to their admitted
+  source bytes; write-back remains unavailable pending a complete verified
+  F31 serializer.
 
 ## Theron
 
