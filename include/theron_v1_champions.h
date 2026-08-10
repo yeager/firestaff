@@ -200,6 +200,18 @@ typedef enum {
  * dungeon_index = 1..7 (THERON_DUNGEON_1..THERON_DUNGEON_7). */
 void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
 
+/* Refresh the selected party from the authenticated JP Track 02 roster
+ * records.  This binds only the real name/stat/skill bytes that are already
+ * decoded by the JP receipt; portrait pixels/IDs, equipment ownership and
+ * T900 rules remain separate evidence gates.  Returns 1 only when the raw
+ * media is the known JP BIN and every selected champion has a matching
+ * source record. */
+int theron_v1_party_refresh_jp_source_records(
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex);
+
 /* Remove all fixture-only champion state from a verified Track 02 handoff.
  * Names, portraits, classes and numeric records stay unavailable until the
  * original champion records are decoded. */

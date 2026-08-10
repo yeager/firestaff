@@ -5,6 +5,7 @@
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_creature_spawn.h"
+#include "theron_v1_champions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1664,6 +1665,23 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         if (out_result) {
             out_result->result = result;
         }
+        return 0;
+    }
+
+    /* The JP roster receipt is now consumed at the same authenticated
+     * forcefield boundary as the party handoff.  It updates only source
+     * roster bytes; portrait ownership and T900 inventory semantics remain
+     * independently gated. */
+    if (theron_v1_track02_variant_for_md5(request->md5_hex) ==
+            THERON_TRACK02_VARIANT_JP_BIN &&
+        !theron_v1_party_refresh_jp_source_records(
+            &world->party, request->hucard_rom, request->hucard_rom_size,
+            request->md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "JP Track 02 roster admission failed; party left unchanged");
+        }
+        if (out_result) out_result->result = THERON_STARTUP_ERR_NOT_READY;
         return 0;
     }
 

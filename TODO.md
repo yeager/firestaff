@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔒 JP-Track 02:s autentiska rosterrecord når nu startup-party-state:n med
+  namn, vitalvärden, attribut och skills. Porträttens bitmap-/paletteägare och
+  det riktiga text-/UI-consumet är fortfarande inte bevisade; nästa media-
+  capture måste binda en JP portrait-read till VDC/VCE och samma party-slot.
+
 - 🔒 Source-bound inventoryslotbyte är nu atomiskt och flyttar både compact-ID
   och hela råa Track 02-proveniensen, men originalets equip/use/consume/stack-
   konsument är fortfarande inte fångad. Nästa T900-capture måste visa samma

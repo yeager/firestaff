@@ -73,6 +73,57 @@ static void verify_real_jp_roster_receipt(void) {
 
 int main(void) {
     verify_real_jp_roster_receipt();
+
+    /* The authenticated JP receipt must reach the live selected party.  This
+     * is a numeric/source-roster bind only: portrait pixels and T900 rules
+     * remain unavailable by design. */
+    {
+        const char *home = getenv("HOME");
+        const char *override = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+        char fallback[512];
+        const char *path = override;
+        FILE *file;
+        uint8_t *data = NULL;
+        long size = 0;
+        Theron_V1_Party jp_party;
+        if (!path && home && home[0]) {
+            snprintf(fallback, sizeof(fallback),
+                     "%s/.firestaff/data/theron/TQJP02.bin", home);
+            path = fallback;
+        }
+        file = path ? fopen(path, "rb") : NULL;
+        if (file) {
+            assert(fseek(file, 0L, SEEK_END) == 0);
+            size = ftell(file);
+            assert(size > 0);
+            assert(fseek(file, 0L, SEEK_SET) == 0);
+            data = (uint8_t *)malloc((size_t)size);
+            assert(data != NULL);
+            assert(fread(data, 1u, (size_t)size, file) == (size_t)size);
+            fclose(file);
+            theron_v1_party_init(&jp_party, 1);
+            jp_party.champion_count = 1;
+            assert(theron_v1_party_refresh_jp_source_records(
+                       &jp_party, data, (size_t)size,
+                       THERON_TRACK02_MD5_JP_BIN) == 1);
+            assert(strcmp(jp_party.champions[0].name, "THERON") == 0);
+            assert(jp_party.champions[0].health == 175);
+            assert(jp_party.champions[0].stamina == 1500);
+            assert(jp_party.champions[0].portrait_index ==
+                   THERON_PORTRAIT_UNAVAILABLE);
+            {
+                snprintf(jp_party.champions[1].name,
+                         sizeof(jp_party.champions[1].name), "NOT-A-ROSTER");
+                jp_party.champion_count = 2;
+                Theron_V1_Party before = jp_party;
+                assert(theron_v1_party_refresh_jp_source_records(
+                           &jp_party, data, (size_t)size,
+                           THERON_TRACK02_MD5_JP_BIN) == 0);
+                assert(memcmp(&jp_party, &before, sizeof(jp_party)) == 0);
+            }
+            free(data);
+        }
+    }
     {
         Theron_V1_Party party;
         theron_v1_party_init(&party, 1);

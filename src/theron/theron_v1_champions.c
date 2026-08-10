@@ -18,14 +18,70 @@
 
 #include "theron_v1_champions.h"
 #include "theron_v1_track02_champion_roster.h"
+#include "theron_v1_track02_jp_roster_receipt.h"
+#include "theron_v1_track02.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static size_t bounded_text_len(const char *text, size_t capacity) {
     size_t n = 0;
     if (!text) return 0;
     while (n < capacity && text[n] != '\0') ++n;
     return n;
+}
+
+static void apply_jp_record_to_champion(
+    Theron_V1_Champion *champion,
+    const Theron_Track02JpRosterReceipt *record) {
+    uint8_t fighter = 0u;
+    uint8_t ninja = 0u;
+    uint8_t priest = 0u;
+    uint8_t wizard = 0u;
+
+    if (!champion || !record || !record->valid) return;
+
+    if (record->name[0] != '\0') {
+        snprintf(champion->name, sizeof(champion->name), "%s", record->name);
+    }
+    champion->portrait_index = THERON_PORTRAIT_UNAVAILABLE;
+    champion->alive = 1;
+    champion->health = (int16_t)record->hp;
+    champion->max_health = (int16_t)record->hp;
+    champion->stamina = (int16_t)record->stamina;
+    champion->max_stamina = (int16_t)record->stamina;
+    champion->mana = (int16_t)record->mana;
+    champion->max_mana = (int16_t)record->mana;
+    champion->luck = (int16_t)record->attributes[0];
+    champion->strength = (int16_t)record->attributes[1];
+    champion->dexterity = (int16_t)record->attributes[2];
+    champion->wisdom = (int16_t)record->attributes[3];
+    champion->vitality = (int16_t)record->attributes[4];
+    champion->anti_magic = (int16_t)record->attributes[5];
+    champion->anti_fire = (int16_t)record->attributes[6];
+    for (int i = 0; i < 4; ++i) {
+        if (record->skills[i] > fighter) fighter = record->skills[i];
+        if (record->skills[4 + i] > ninja) ninja = record->skills[4 + i];
+        if (record->skills[8 + i] > priest) priest = record->skills[8 + i];
+        if (record->skills[12 + i] > wizard) wizard = record->skills[12 + i];
+    }
+    champion->fighter_level = fighter;
+    champion->ninja_level = ninja;
+    champion->priest_level = priest;
+    champion->wizard_level = wizard;
+    champion->primary_class = THERON_CLASS_FIGHTER;
+    {
+        uint8_t best = fighter;
+        if (ninja > best) {
+            champion->primary_class = THERON_CLASS_NINJA;
+            best = ninja;
+        }
+        if (priest > best) {
+            champion->primary_class = THERON_CLASS_PRIEST;
+            best = priest;
+        }
+        if (wizard > best) champion->primary_class = THERON_CLASS_WIZARD;
+    }
 }
 
 /* ── Block size (must match save format) ─────────────────────────────── */
@@ -149,6 +205,48 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index) {
     party->champion_count = 4;
     party->active_slot    = 0;
     party->gold           = 0;
+}
+
+int theron_v1_party_refresh_jp_source_records(
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex) {
+    Theron_Track02JpRosterReceipt records[THERON_TRACK02_JP_ROSTER_COUNT];
+    int matches[THERON_MAX_CHAMPIONS];
+
+    if (!party || !track02_data || !md5_hex ||
+        strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) != 0 ||
+        !theron_v1_track02_jp_roster_read(
+            track02_data, track02_size, md5_hex, records)) {
+        return 0;
+    }
+    if (party->champion_count < 0 ||
+        party->champion_count > THERON_MAX_CHAMPIONS) {
+        return 0;
+    }
+    for (int slot = 0; slot < party->champion_count; ++slot) {
+        int found = -1;
+        if (party->champions[slot].name[0] != '\0') {
+            for (unsigned int index = 0u;
+                 index < THERON_TRACK02_JP_ROSTER_COUNT; ++index) {
+                if (strcmp(party->champions[slot].name,
+                           records[index].name) == 0) {
+                    found = (int)index;
+                    break;
+                }
+            }
+        } else if (slot < (int)THERON_TRACK02_JP_ROSTER_COUNT) {
+            found = slot;
+        }
+        if (found < 0) return 0;
+        matches[slot] = found;
+    }
+    for (int slot = 0; slot < party->champion_count; ++slot) {
+        apply_jp_record_to_champion(&party->champions[slot],
+                                    &records[(unsigned int)matches[slot]]);
+    }
+    return 1;
 }
 
 #if defined(THERON_CHAMPION_FIXTURE_HELPERS)

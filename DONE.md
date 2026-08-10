@@ -18,6 +18,15 @@
 - ✅ Round-trip-regressionen och den autentiska PC-DOS SKSAVE-korpusen
   passerar. Två filer når fortsatt den riktiga DB2-recyclergränsen och är
   spärrade från Resume; ingen syntetisk recycler eller session publiceras.
+# Theron: JP-roster till startup-party (2026-08-10)
+
+- ✅ Startup kan nu konsumera den autentiserade JP Track 02-rosterreceipten
+  vid forcefield-handoff och uppdatera vald party med riktiga namn,
+  vitalvärden, attribut och skillnivåer. Fel MD5, trasig framing eller saknad
+  vald source-record avvisas utan partiell mutation.
+- ✅ Den riktiga `TQJP02.bin`-filen passerar med verifierade THERON-värden och
+  portrait-fältet förblir uttryckligen `UNAVAILABLE`; inga syntetiska
+  porträtt, utrustningsregler eller T900-semantik har öppnats.
 
 # DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
 
