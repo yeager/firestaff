@@ -1,3 +1,12 @@
+# Nexus: capture-launchern skickar vidare VDP2-witnessar (2026-08-10)
+
+- ✅ Saturn-capture-launchern vidarebefordrar nu `FIRESTAFF_NEXUS_TRACE_VDP2_WRITES`,
+  dess min/max/limit-fönster samt `FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_CODE` i
+  både extern HOME- och direktläget.
+- ✅ Manifestets hashproveniens omfattar de två nya VDP2-tracerna. `bash -n`
+  och diffkontroll passerar; detta öppnar ingen semantisk meny/HUD/viewport-
+  gate utan gör nästa autentiserade source-join reproducerbar.
+
 # Nexus: VDP2 character-mode FONT256 source-joindiagnostik (2026-08-10)
 
 - ✅ `scripts/analyze_nexus_vdp2_char_source_join.py` läser den hashverifierade
