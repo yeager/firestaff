@@ -7,6 +7,16 @@
 - ✅ `test_m11_gamepad_csb_input_bridge`,
   `theron_v1_boot_runtime_input` och huvudbygget passerar.
 
+# Nexus: ren Mednafen-patchkedja för autentisk capture (2026-08-10)
+
+- ✅ VDP2-writer-registerpatchen använder stabil kontext efter writer-code-
+  patchen och post-write-snapshotens CRAM-hunk ligger efter den fullständiga
+  CRAM-skrivningen.
+- ✅ Hela Nexus-capturekedjan appliceras nu från ett orört Mednafen 1.32.1-
+  arkiv utan interaktiv patchprompt. Full extern kompilering pågår med
+  `build_mednafen_nexus_saturn_capture.sh`; rådata och binär stannar på
+  extern disk.
+
 # Nexus: post-render Saturn-capture och reproducerbar dumpdokumentation (2026-08-10)
 
 - ✅ Mednafen-capturehooken flyttas till efter `VDP2REND_EndFrame()`, vilket

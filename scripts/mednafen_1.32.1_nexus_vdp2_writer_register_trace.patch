@@ -1,6 +1,8 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -139,1 +139,33 @@
+@@ -137,4 +137,37 @@
+  fputc('\n', FirestaffVdp2WriterCodeTraceFile);
+  fflush(FirestaffVdp2WriterCodeTraceFile);
  }
 +
 +static void FirestaffTraceVdp2WriterRegisters(uint32 address, uint32 pc)
@@ -36,7 +38,7 @@
 +}
 +
  static void FirestaffTraceVdp2Write(const char *area, uint32 address,
-@@ -145,3 +177,4 @@
+@@ -145,3 +178,4 @@
   uint32 pc0 = CPU[0].GetRegister(SH7095::GSREG_RPC, NULL, 0);
   FirestaffTraceVdp2WriterCode(pc0);
 + FirestaffTraceVdp2WriterRegisters(address, pc0);

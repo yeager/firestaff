@@ -46,7 +46,10 @@
 +}
 +
  static void FirestaffTraceVdp2Write(const char *area, uint32 address,
-@@ -940,2 +940,3 @@
+@@ -969,5 +969,6 @@
+    default:
+	CRAM[((cri >> 1) & 0x3FF) | ((cri & 1) << 10)] = *DB;
+	break;
    }
 +  FirestaffTraceVdp2PostWriteSnapshot("cram", A);
-   }
+  }
