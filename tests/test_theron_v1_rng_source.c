@@ -28,6 +28,15 @@ int main(void) {
     assert(theron_v1_rng_mod(&state, 0x20u) == 0x04u);
     assert(theron_v1_rng_mod(&state, 0x00u) == 0u);
 
+    {
+        uint8_t remainder = 0xffu;
+        assert(theron_v1_source_divide_u16_u8(450u, 10u, &remainder) == 45u);
+        assert(remainder == 0u);
+        assert(theron_v1_source_divide_u16_u8(0xffffu, 0u, &remainder) == 0u);
+        assert(remainder == 0u);
+        assert(theron_v1_source_index_5b8f(5u, 1u) == 21u);
+    }
+
     puts("PASS: theron_v1_rng_source");
     return 0;
 }

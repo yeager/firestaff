@@ -5,6 +5,8 @@
 - ✅ `theron_v1_rng_source.c` mirrors the observed `$4667` carry-sensitive
   update, `$4650` seed setup, and adjacent `$4644`/`$464A` bit consumers.
 - ✅ Golden-vector test and production `firestaff_theron` build pass.
+- ✅ The authenticated `$5A76` 16-bit divide and `$5B8F` table-index helper
+  are now available with a real observed `0x01c2 / 0x0a` regression vector.
 - 🔒 The category-0..3 spawn caller, generator timing, AI, combat, T700 and
   T900 owners still require a same-session level/object consumer witness.
 

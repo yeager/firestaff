@@ -28,6 +28,10 @@
 ; are preserved as disassembly evidence only; their table/state owners are
 ; not promoted until the same execution binds their return values to a real
 ; category-0..3 spawn record.
+; `$5A76` is nevertheless fully bounded as an unsigned 16-by-8 divide in
+; the source-bound helper API: the observed 0x01c2 / 0x0a call returns
+; quotient 0x002d and remainder 0. `$5B8F` is the observed X+4*A table-index
+; helper. Neither helper alone publishes creature statistics.
 ;
 ; Adjacent preconsumer L4644 is locked separately at raw file offset $9c4c4,
 ; 27 bytes, FNV-1a $a3c3f7eb. It prepares the arguments and calls the

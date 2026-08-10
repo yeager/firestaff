@@ -30,4 +30,12 @@ uint8_t theron_v1_rng_bit(Theron_V1_RngState *state);
 uint8_t theron_v1_rng_2bit(Theron_V1_RngState *state);
 uint8_t theron_v1_rng_mod(Theron_V1_RngState *state, uint8_t bound);
 
+/* `$5A76` is the exact unsigned 16-by-8 divide helper used by `$B0E5`
+ * before the category-1/2 multipliers.  It returns the quotient and writes
+ * the source's A-register remainder; divisor zero follows `$5ABC` and
+ * returns zero for both. `$5B8F` computes the source table index X+4*A. */
+uint16_t theron_v1_source_divide_u16_u8(uint16_t value, uint8_t divisor,
+                                        uint8_t *remainder);
+uint8_t theron_v1_source_index_5b8f(uint8_t a, uint8_t x);
+
 #endif /* THERON_V1_RNG_SOURCE_H */

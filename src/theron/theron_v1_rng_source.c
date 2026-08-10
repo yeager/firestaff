@@ -58,3 +58,21 @@ uint8_t theron_v1_rng_mod(Theron_V1_RngState *state, uint8_t bound) {
     } while (value >= bound);
     return value;
 }
+
+uint16_t theron_v1_source_divide_u16_u8(uint16_t value, uint8_t divisor,
+                                        uint8_t *remainder) {
+    uint16_t quotient;
+    uint8_t rem;
+    if (divisor == 0u) {
+        if (remainder) *remainder = 0u;
+        return 0u;
+    }
+    quotient = (uint16_t)(value / divisor);
+    rem = (uint8_t)(value % divisor);
+    if (remainder) *remainder = rem;
+    return quotient;
+}
+
+uint8_t theron_v1_source_index_5b8f(uint8_t a, uint8_t x) {
+    return (uint8_t)(x + (uint8_t)(a << 2u));
+}
