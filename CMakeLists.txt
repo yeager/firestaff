@@ -6689,6 +6689,19 @@ if(TARGET firestaff_nexus)
 endif()
 
 # ── Theron V1 static library ─────────────────────────────────────────
+# Archive-scanner fixtures compile theron_v1_world.c directly. Keep the two
+# Track 02 readers it calls in a small linkable closure shared by those
+# fixtures and the production libraries.
+add_library(firestaff_theron_world_support STATIC
+    src/theron/theron_v1_track02_thing_data.c
+    src/theron/theron_v1_track02_dungeon_map.c
+    src/theron/theron_v1_track02_jp_roster_receipt.c)
+target_include_directories(firestaff_theron_world_support PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_theron_world_support PRIVATE -Wall -Wextra -O2)
+endif()
+
 file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
 # The former compatibility combat implementation contains inferred creature
 # speed/AI/attack data. Keep it out of production until the Track 02 T900
@@ -6708,6 +6721,11 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
+# Linked through firestaff_theron_world_support below so standalone archive
+# fixtures and the production archive share one dependency closure.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_thing_data\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_map\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_jp_roster_receipt\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_source.c
@@ -6729,7 +6747,7 @@ if(THERON_SOURCES)
     # Theron's Track 01 CDDA bridge includes SDL3 directly.  Keep that
     # dependency on the owning target so standalone test targets configured
     # with Ninja receive SDL's headers as well as the final M11 executable.
-    target_link_libraries(firestaff_theron PUBLIC SDL3::SDL3)
+    target_link_libraries(firestaff_theron PUBLIC SDL3::SDL3 firestaff_theron_world_support)
     firestaff_link_zlib(firestaff_theron PUBLIC)
     if(TARGET PkgConfig::VORBISFILE)
         target_compile_definitions(firestaff_theron PRIVATE FIRESTAFF_HAVE_VORBISFILE=1)
@@ -6821,7 +6839,7 @@ file(GLOB_RECURSE V2_SOURCES CONFIGURE_DEPENDS "src/dm1v2/*_pc34.c")
 # Pulling it in directly also future-proofs the public-link contract.
 add_library(firestaff_v2 STATIC ${V2_SOURCES} src/shared/vga_palette_pc34_compat.c src/dm1v2/dm1_v22_shapes.c src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(firestaff_v2 PUBLIC firestaff_m10 m)
+target_link_libraries(firestaff_v2 PUBLIC firestaff_m10 firestaff_theron_world_support m)
 firestaff_link_zlib(firestaff_v2 PUBLIC)
 if(NOT MSVC)
     target_compile_options(firestaff_v2 PRIVATE -Wall -Wextra -O2)
