@@ -129,6 +129,30 @@ int main(void)
             return 1;
         }
     }
+    {
+        static const char session_trace[] =
+            NEXUS_V1_SCSP_WRITE_TRACE_MAGIC "\n"
+            "session=unit-capture\n"
+            "addr=0x100400 size=1 value=0x00000002 pc=0x00003224\n";
+        static const char session_main_trace[] =
+            NEXUS_V1_MAIN_SCSP_WRITE_TRACE_MAGIC "\n"
+            "session=unit-capture\n"
+            "addr=0x00100400 size=1 value=0x00000002 "
+            "pc0=0x06001652 pc1=0x00000000\n";
+        Nexus_V1_MainScspTraceReceipt main_receipt;
+        if (!nexus_v1_scsp_write_trace_parse(
+                (const uint8_t *)session_trace, sizeof(session_trace) - 1U,
+                &receipt) || !receipt.capture_session_present ||
+            strcmp(receipt.capture_session, "unit-capture") != 0 ||
+            !nexus_v1_main_scsp_write_trace_parse(
+                (const uint8_t *)session_main_trace,
+                sizeof(session_main_trace) - 1U, &main_receipt) ||
+            !main_receipt.capture_session_present ||
+            strcmp(main_receipt.capture_session, "unit-capture") != 0) {
+            fprintf(stderr, "FAIL: same-session SCSP trace metadata\n");
+            return 1;
+        }
+    }
     puts("test_nexus_v1_scsp_trace: PASS");
     return 0;
 }
