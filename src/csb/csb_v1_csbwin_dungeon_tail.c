@@ -466,6 +466,36 @@ const CSB_V1_CSBWinDungeonTailDatabaseLayout
     return candidate ? &candidate->databases : NULL;
 }
 
+int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    uint16_t party_level, uint16_t party_x, uint16_t party_y,
+    uint16_t party_facing, const uint16_t *item16_monster_indices,
+    size_t item16_count)
+{
+    const CSB_V1_DungeonData *dungeon;
+    size_t i;
+
+    if (!candidate || (item16_count != 0u && !item16_monster_indices)) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT;
+    }
+    dungeon = &candidate->dungeon;
+    if (!dungeon->raw_data || party_level >= (uint16_t)dungeon->level_count ||
+        party_x >= (uint16_t)dungeon->level_widths[party_level] ||
+        party_y >= (uint16_t)dungeon->level_heights[party_level] ||
+        party_facing > 3u || dungeon->thing_type_counts[4] < 0) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    for (i = 0u; i < item16_count; ++i) {
+        /* CSBWin represents an unused ITEM16::word0 as signed -1. */
+        if (item16_monster_indices[i] == UINT16_MAX) continue;
+        if (item16_monster_indices[i] >=
+            (uint16_t)dungeon->thing_type_counts[4]) {
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+    }
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
 {

@@ -92,6 +92,7 @@ static void check_staged_real_save(void)
     CSB_V1_DungeonData rejected;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
     const CSB_V1_DungeonData *current_before = csb_v1_dungeon_get_current();
+    uint16_t *item16_indices = NULL;
     uint8_t *before = NULL;
     uint16_t computed;
     uint16_t stored;
@@ -166,10 +167,37 @@ static void check_staged_real_save(void)
               csb_v1_csbwin_dungeon_tail_candidate_databases(candidate)->valid &&
               memcmp(before, bytes + body.appended_offset,
                      body.appended_size) == 0);
+        CHECK(body.item16_summary_count == body.item16_summary_total);
+        if (body.item16_summary_total != 0u &&
+            body.item16_summary_count == body.item16_summary_total) {
+            size_t i;
+            item16_indices = (uint16_t *)malloc(
+                (size_t)body.item16_summary_total * sizeof(*item16_indices));
+            CHECK(item16_indices != NULL);
+            if (item16_indices) {
+                for (i = 0u; i < body.item16_summary_total; ++i) {
+                    item16_indices[i] = body.item16[i].monster_index;
+                }
+            }
+        }
+        if (body.item16_summary_count == body.item16_summary_total &&
+            (body.item16_summary_total == 0u || item16_indices != NULL)) {
+            CHECK(csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
+                      candidate, body.party_level, body.party_x, body.party_y,
+                      body.party_facing, item16_indices,
+                      body.item16_summary_total) ==
+                  CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
+            CHECK(csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
+                      candidate, body.party_level, body.party_x, body.party_y,
+                      4u, item16_indices, body.item16_summary_total) ==
+                  CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
+        }
         CHECK(csb_v1_dungeon_get_current() == current_before &&
               csb_v1_dungeon_get_current_mutable() == current_before);
         csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
         candidate = NULL;
+        free(item16_indices);
+        item16_indices = NULL;
         memset(&rejected, 0xa5, sizeof(rejected));
         before[body.appended_size - 1u] ^= 1u;
         CHECK(csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
@@ -179,6 +207,7 @@ static void check_staged_real_save(void)
         free(before);
     }
     csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
+    free(item16_indices);
     free(bytes);
 }
 

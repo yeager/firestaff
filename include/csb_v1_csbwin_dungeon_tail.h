@@ -184,6 +184,24 @@ const CSB_V1_CSBWinDungeonTailPrefix
 const CSB_V1_CSBWinDungeonTailDatabaseLayout
     *csb_v1_csbwin_dungeon_tail_candidate_databases(
         const CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
+
+/* Check the source-owned coordinates that a later atomic CSBWin resume
+ * transaction would bind to this private dungeon.  GAMEBLOCK2's pose must
+ * name a real square.  ITEM16::word0 is a signed DB4 index (not an RN
+ * handle); inactive -1 slots are ignored and every active index must name
+ * an existing DB4 record in the same saved dungeon.
+ *
+ * This remains candidate-only validation: it neither publishes the dungeon
+ * nor consumes the supplied GAMEBLOCK2/ITEM16 bytes.  Callers pass the
+ * already authenticated decoded values from CSBWin's body verifier.
+ *
+ * Source: CSBWin CSB.h ITEM16:2193-2230; CSBCode.cpp
+ * AttachItem16ToMonster():6040-6105; SaveGame.cpp ReadGame():1768-1855. */
+int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    uint16_t party_level, uint16_t party_x, uint16_t party_y,
+    uint16_t party_facing, const uint16_t *item16_monster_indices,
+    size_t item16_count);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
 
