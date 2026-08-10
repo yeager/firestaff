@@ -1,3 +1,19 @@
+# Nexus: samma-session VDP2-write/register-join (2026-08-10)
+
+- ✅ Extern Saturn-capture `run-vdp2-owner-regs-20260810` körde 300 validerade
+  frames med J-BIOS och engelsk Nexus-disc. Launcher-manifestet innehåller
+  SHA-256 för råcapture, VDP2-write-trace, writer-code-trace och register-
+  witness; capture-exit är 0.
+- ✅ Registerwitnessen och write-tracen förenas nu i samma session:
+  writer-PC `0x0601184c`, destination `0x000040`, 64 verifierade VDP2-
+  skrivningar till `0x0000c0` och `r4=0x25e00040`. Detta verifierar den
+  körbara transporten från SH-2-writer till VDP2, men de pekade RAM-bytesen
+  saknas fortfarande.
+- ✅ Nytt Mednafen-patch för registerwitness och launcher-forwarding är
+  reproducerbart. Assetidentitet samt semantisk meny/FONT256/CLUT/HUD/
+  viewport-admission förblir uttryckligen spärrade tills source-bytes och
+  konsumentjoin är verifierade.
+
 # Startmeny: fasta fullnamn på skanningsraden (2026-08-10)
 
 - ✅ Skanningspresentationen använder nu fasta engelska retailnamn och visar

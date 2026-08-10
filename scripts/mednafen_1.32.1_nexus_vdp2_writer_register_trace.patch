@@ -1,0 +1,43 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -139,1 +139,33 @@
+ }
++
++static void FirestaffTraceVdp2WriterRegisters(uint32 address, uint32 pc)
++{
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS");
++ static FILE *file;
++ static unsigned count;
++ static unsigned limit = 200000;
++ static bool configured;
++ const char *limit_text;
++ unsigned i;
++ if(!path || !*path || !pc) return;
++ if(!configured)
++ {
++  limit_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_LIMIT");
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  configured = true;
++ }
++ if(count >= limit) return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_VDP2_WRITER_REGISTER_TRACE_V1\n", file);
++ }
++ fprintf(file, "addr=0x%06x pc=0x%08x", (unsigned)address, (unsigned)pc);
++ for(i = 0; i < 16; i++)
++  fprintf(file, " r%u=0x%08x", i,
++   (unsigned)CPU[0].GetRegister(SH7095::GSREG_R0 + i, NULL, 0));
++ fputc('\n', file);
++ fflush(file);
++ count++;
++}
++
+ static void FirestaffTraceVdp2Write(const char *area, uint32 address,
+@@ -145,3 +177,4 @@
+  uint32 pc0 = CPU[0].GetRegister(SH7095::GSREG_RPC, NULL, 0);
+  FirestaffTraceVdp2WriterCode(pc0);
++ FirestaffTraceVdp2WriterRegisters(address, pc0);
+  if(!FirestaffVdp2WriteTraceConfigured)
