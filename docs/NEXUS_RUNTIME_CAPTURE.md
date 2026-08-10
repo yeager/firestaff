@@ -88,6 +88,14 @@ provenance, not proof of runtime face selection, command ordering, transform,
 culling, or complete scene assembly. The script therefore reports
 `semantic_admission=blocked` and the production renderer remains fail-closed.
 
+The material probe accepts both the newer VDP1+VDP2 frame container and the
+earlier VDP1-only witness. For the retained four-frame V1 capture, reproduce
+the join with:
+`python3 scripts/analyze_nexus_vdp1_dgn_material_join.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-window-20260809/runtime-vdp12.raw \
+  --data-dir /Users/bosse/.firestaff/data/nexus --frame 0 --capture-frames 4 \
+  --command-offset 0xe180`.
+
 The same frame also contains four additional type-2 draws. Their exact
 word-swapped sources and CLUTs bind to `LEV00.DGN` Structure2=60, 64, 68 and
 71, plus Structure2=36 for the fifth draw. The observed VDP1 quadrilaterals

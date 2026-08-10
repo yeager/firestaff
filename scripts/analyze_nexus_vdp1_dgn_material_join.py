@@ -16,7 +16,7 @@ import re
 import struct
 from pathlib import Path
 
-from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_saturn_runtime_capture import frame_regions_vdp1
 from analyze_nexus_vdp1_command_window import command_window
 from analyze_nexus_vdp1_source_join import (
     be16,
@@ -120,7 +120,7 @@ def main() -> int:
     parser.add_argument("--command-offset", type=lambda value: int(value, 0))
     args = parser.parse_args()
     try:
-        frames, states = frame_regions(
+        frames, states = frame_regions_vdp1(
             args.capture.read_bytes(), args.capture_frames or args.frame + 1
         )
         records = command_window(
