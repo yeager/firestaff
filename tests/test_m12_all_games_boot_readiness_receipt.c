@@ -404,6 +404,36 @@ int main(void) {
                     "launch intent should use the auto-selected matched version")) return 1;
     }
 
+    /* AUTO must be resolved again at the final launch boundary.  Simulate a
+     * persisted, still-matched FM Towns row after a PC corpus appeared in a
+     * later scan: the stale row must not defeat the common PC-first policy.
+     * This exercises the same M12 handoff used by DM1/CSB/DM2, without
+     * constructing any game media. */
+    {
+        static const char *const game_ids[] = {"dm1", "csb", "dm2"};
+        static const char *const pc_ids[] = {"pc34-en", "pc34-en", "pc-en"};
+        static const char *const fmtowns_ids[] = {
+            "fmtowns-en", "fmtowns-en", "fmtowns-ja"
+        };
+        size_t game;
+
+        for (game = 0u; game < sizeof(game_ids) / sizeof(game_ids[0]); ++game) {
+            int pc = M12_AssetStatus_FindVersionIndex(game_ids[game], pc_ids[game]);
+            int fmtowns = M12_AssetStatus_FindVersionIndex(game_ids[game],
+                                                            fmtowns_ids[game]);
+            if (!expect(pc >= 0 && fmtowns >= 0,
+                        "PC and FM Towns catalogue rows should exist")) return 1;
+            state.activatedIndex = (int)game;
+            state.gameOptions[game].architectureIndex = M12_ARCH_AUTO;
+            state.gameOptions[game].versionIndex = fmtowns;
+            state.assetStatus.versions[game][pc].matched = 1;
+            state.assetStatus.versions[game][fmtowns].matched = 1;
+            intent = M12_StartupMenu_GetLaunchIntent(&state);
+            if (!expect(intent.valid == 1 && intent.options.versionIndex == pc,
+                        "AUTO launch intent must prefer PC over a stale matched FM Towns row")) return 1;
+        }
+    }
+
     state.settings.rendererBackendIndex = M12_RENDERER_BACKEND_OPENGL;
     if (!expect(M12_StartupMenu_RendererBackendAvailable(
                     state.settings.rendererBackendIndex) == 0,

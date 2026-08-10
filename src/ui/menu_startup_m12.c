@@ -12621,6 +12621,23 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     version = M12_AssetStatus_GetVersion(&state->assetStatus,
                                          intent.gameId,
                                          (size_t)selectedVersionIndex);
+    /* AUTO is a platform policy, not a persisted catalogue row.  A prior
+     * scan/configuration may legitimately leave a matched FM Towns row in
+     * versionIndex; once a PC corpus is also present, allowing that stale
+     * match through here would bypass the PC-first decision made by the
+     * scanner and launch gate.  Resolve AUTO again at the final handoff so
+     * DM1, CSB and DM2 always use the same verified-media priority.
+     * Explicit architecture choices retain their selected matched version. */
+    if (state->gameOptions[gi].architectureIndex == M12_ARCH_AUTO) {
+        int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &state->assetStatus, intent.gameId, M12_ARCH_AUTO);
+        if (autoVersion >= 0) {
+            version = M12_AssetStatus_GetVersion(&state->assetStatus,
+                                                 intent.gameId,
+                                                 (size_t)autoVersion);
+            selectedVersionIndex = autoVersion;
+        }
+    }
     if (!version || !version->matched) {
         int archVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &state->assetStatus, intent.gameId,
