@@ -22,11 +22,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source-file-offset", type=lambda value: int(value, 0), required=True)
     parser.add_argument("--destination-start", type=lambda value: int(value, 0), required=True)
     parser.add_argument("--minimum-writes", type=int, default=8)
+    parser.add_argument("--write-trace", type=Path)
     return parser.parse_args()
 
 
-def cram_byte_offset(address: int) -> int:
+def cram_byte_offset(address: int, cram_mode: int) -> int:
     cri = (address & 0xFFF) >> 1
+    if cram_mode in (0, 1):
+        return cri * 2
     return (((cri >> 1) & 0x3FF) | ((cri & 1) << 10)) * 2
 
 
@@ -36,7 +39,7 @@ def main() -> int:
     if not raw.startswith(MAGIC):
         raise SystemExit("snapshot_magic=invalid")
     pos = len(MAGIC)
-    rows: list[tuple[int, int, int]] = []
+    rows: list[tuple[int, int, int, int]] = []
     while pos < len(raw):
         end = raw.find(b"\n", pos)
         if end < 0:
@@ -51,9 +54,12 @@ def main() -> int:
             raise SystemExit("snapshot_payload=truncated")
         pos += PAYLOAD_SIZE
         if area == "cram":
+            raw_regs = payload[:0x200]
+            ramctl = struct.unpack_from("<H", raw_regs, 0x0E)[0]
+            cram_mode = (ramctl >> 12) & 0x3
             cram = payload[0x200 + 0x80000 :]
-            value = struct.unpack_from("<H", cram, cram_byte_offset(address))[0]
-            rows.append((frame, address, value))
+            value = struct.unpack_from("<H", cram, cram_byte_offset(address, cram_mode))[0]
+            rows.append((frame, address, value, cram_mode))
 
     asset_path = args.data_dir / args.asset
     asset = asset_path.read_bytes()
@@ -63,7 +69,7 @@ def main() -> int:
     ]
     selected.sort(key=lambda row: row[1])
     verified = 0
-    for index, (_, address, value) in enumerate(selected):
+    for index, (_, address, value, _) in enumerate(selected):
         expected_address = args.destination_start + index * 2
         if address != expected_address:
             break
@@ -82,8 +88,26 @@ def main() -> int:
     print(f"source_value_join=verified" if verified >= args.minimum_writes else "source_value_join=blocked")
     print(f"verified_post_write_writes={verified}")
     print(f"minimum_writes={args.minimum_writes}")
+    if args.write_trace:
+        trace_rows: list[tuple[int, int]] = []
+        for line in args.write_trace.read_text().splitlines():
+            match = re.match(r"^area=cram addr=0x([0-9a-f]+) size=2 value=0x([0-9a-f]+)", line)
+            if match:
+                trace_rows.append((int(match.group(1), 16), int(match.group(2), 16)))
+        trace_verified = sum(
+            1
+            for row, trace in zip(rows, trace_rows)
+            if row[1] == trace[0] and row[2] == trace[1]
+        )
+        print(
+            "snapshot_write_trace=verified"
+            if trace_verified >= args.minimum_writes
+            else "snapshot_write_trace=blocked"
+        )
+        print(f"verified_snapshot_write_trace={trace_verified}")
     print("asset_identity=verified")
-    return 0 if verified >= args.minimum_writes else 1
+    trace_ok = not args.write_trace or trace_verified >= args.minimum_writes
+    return 0 if verified >= args.minimum_writes and trace_ok else 1
 
 
 if __name__ == "__main__":
