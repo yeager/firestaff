@@ -6272,6 +6272,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbwin_dungeon_tail.c
     src/csb/csb_v1_csbwin_graphics_signature_gate.c
     src/csb/csb_v1_csbwin_layout_0232.c
+    src/csb/csb_v1_csbwin_objdesc_022f.c
     src/csb/csb_v1_csbwin_viewport_graphics_map.c
     src/csb/csb_v1_csbwin_planar_bitmap.c
     src/csb/csb_v1_magic_rune_cost_pc34_compat.c

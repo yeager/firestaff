@@ -4,8 +4,10 @@
 #include <time.h>
 
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_csbwin_objdesc_022f.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_csbwin_viewport_graphics_map.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_boot.h"
 
 static int failures;
@@ -119,6 +121,52 @@ static void check_real_layout(const char *path)
     CHECK(layout.default_graphic_list[0] != 0u);
     CHECK(layout.default_graphic_list[
         CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT - 1u] != 0u);
+}
+
+/* CSBWin CSB.h::OBJDESC and CSBCode.cpp::ReadTablesFromGraphicsFile prove
+ * item 0x22f's 180 six-byte records. Compare the public read-only decoder
+ * directly to the bytes expanded from the operator-supplied Atari media so
+ * this test cannot accidentally validate a PC fallback or host struct layout. */
+static void check_real_objdesc(const char *path)
+{
+    CSB_V1_CSBWinObjectDescriptionTable022f table;
+    CSB_AtariStLoader loader;
+    uint8_t *bytes = NULL;
+    size_t index;
+
+    if (!path || !path[0]) return;
+    memset(&table, 0, sizeof(table));
+    CHECK(csb_v1_csbwin_objdesc_022f_read_graphics_dat(path, &table));
+    if (!table.valid) return;
+    csb_atari_st_graphics_loader_init(&loader);
+    CHECK(csb_atari_st_graphics_loader_open(&loader, path));
+    if (loader.item_count != 563u ||
+        loader.items[CSB_V1_CSBWIN_OBJDESC_022F_ITEM_INDEX].decompressed_size !=
+            CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE) {
+        csb_atari_st_graphics_loader_close(&loader);
+        return;
+    }
+    bytes = (uint8_t *)malloc(CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE);
+    CHECK(bytes != NULL);
+    if (bytes) {
+        CHECK(csb_atari_st_graphics_loader_read_item(
+            &loader, CSB_V1_CSBWIN_OBJDESC_022F_ITEM_INDEX, bytes,
+            CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE) ==
+            (int)CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE);
+        for (index = 0u; index < CSB_V1_CSBWIN_OBJDESC_022F_COUNT; ++index) {
+            const uint8_t *record = bytes +
+                CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET + index *
+                CSB_V1_CSBWIN_OBJDESC_022F_RECORD_SIZE;
+            CHECK(table.entries[index].object_type ==
+                  (int16_t)(((uint16_t)record[0] << 8) | record[1]));
+            CHECK(table.entries[index].graphic_class == record[2]);
+            CHECK(table.entries[index].attack_class == (int8_t)record[3]);
+            CHECK(table.entries[index].carry_locations ==
+                  (uint16_t)(((uint16_t)record[4] << 8) | record[5]));
+        }
+    }
+    free(bytes);
+    csb_atari_st_graphics_loader_close(&loader);
 }
 
 static void check_real_floor_decorations(const char *graphics_path,
@@ -809,6 +857,7 @@ next:
 int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
+    uint8_t objdesc[CSB_V1_CSBWIN_OBJDESC_022F_DECODED_SIZE];
     CSB_V1_CSBWinLayout0232 layout;
     CSB_V1_CSBWinHudMaterialPlan0232 plan;
     char path[512];
@@ -816,6 +865,30 @@ int main(void)
     const char *real_graphics_dat;
     const char *real_dungeon_dat;
     int index;
+
+    memset(objdesc, 0, sizeof(objdesc));
+    put_be16(objdesc, CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET, 0x1234);
+    objdesc[CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET + 2u] = 0x56u;
+    objdesc[CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET + 3u] = 0xfdu;
+    put_be16(objdesc, CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET + 4u, 0x0401);
+    put_be16(objdesc, CSB_V1_CSBWIN_OBJDESC_022F_TABLE_OFFSET +
+             179u * CSB_V1_CSBWIN_OBJDESC_022F_RECORD_SIZE, 0x007fu);
+    {
+        CSB_V1_CSBWinObjectDescriptionTable022f table;
+        CHECK(csb_v1_csbwin_objdesc_022f_decode(objdesc, sizeof(objdesc),
+                                                 &table));
+        CHECK(table.valid && table.entries[0].object_type == 0x1234 &&
+              table.entries[0].graphic_class == 0x56u &&
+              table.entries[0].attack_class == -3 &&
+              table.entries[0].carry_locations == 0x0401u &&
+              table.entries[179].object_type == 0x007f);
+        CHECK(!csb_v1_csbwin_objdesc_022f_decode(objdesc,
+            sizeof(objdesc) - 1u, &table));
+        CHECK(!csb_v1_csbwin_objdesc_022f_decode(NULL, sizeof(objdesc),
+                                                  &table));
+        CHECK(!csb_v1_csbwin_objdesc_022f_decode(objdesc, sizeof(objdesc),
+                                                  NULL));
+    }
 
     {
         uint16_t panel_graphic = 0u;
@@ -1059,6 +1132,7 @@ int main(void)
                 real_graphics_dat);
     } else {
         check_real_layout(real_graphics_dat);
+        check_real_objdesc(real_graphics_dat);
         check_real_hud_composition(real_graphics_dat);
         check_real_viewport_wall_catalog(real_graphics_dat);
         check_real_viewport_projection_layout(real_graphics_dat);
