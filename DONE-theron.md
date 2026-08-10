@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — authenticated savestate replay remains non-semantic
+
+- ✅ En ny isolerad US Track 02-replay från en autentisk Mednafen-savestate
+  verifierade Track 02-identitet, System Card-identitet och åtta explicita
+  PCE-inputevents. Körningen nådde `$B0E5` två gånger.
+- ✅ Capture-parsern behöll den viktiga skillnaden mellan råa adresspassager
+  och giltiga spawn-samples: `spawn_entry_b0e5_samples=0`,
+  `spawn_consumer_reads=0`, `rng_consumer_samples=0` och inga target reads eller
+  writes.
+- 🔒 Ingen RNG-, creature-AI-, attack-, skada-, loot-, generator-, T700- eller
+  T900-semantik främjades från denna körning. Den uppfyller inte kravet på en
+  spelägd consumer som binder returvärde till ett riktigt source-record.
+
 ## 2026-08-10 — palette verification now follows authenticated variant
 
 - ✅ Fixed `test_theron_v1_startup_media_palette_bind`: the palette-window

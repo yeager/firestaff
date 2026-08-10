@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+# Theron: authenticated savestate replay still has no semantic consumer (2026-08-10)
+
+- ✅ Ny isolerad replay från autentisk US Track 02-savestate nådde `$B0E5` två
+  gånger och levererade åtta explicita PCE-inputevents.
+- 🔒 `spawn_entry_b0e5_samples=0`, `spawn_consumer_reads=0`,
+  `rng_consumer_samples=0` och target reads/writes är noll. Råa adresspassager
+  får inte tolkas som spawn eller RNG.
+- 🔒 Nästa positiva witness måste visa en giltig kategori `0..3`, `$4667`/RNG-
+  retur och en efterföljande spelägd läsning eller skrivning som kan bindas till
+  ett riktigt Track 02 monster-, generator- eller objectrecord i samma session.
+
 # Theron: BAT→VCE relation bound; square mapping remains open (2026-08-10)
 
 - ✅ Authenticated VRAM/VCE replay now verifies BAT palette-group bits against
