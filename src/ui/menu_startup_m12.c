@@ -1718,27 +1718,59 @@ static void m12_clear_message_view(M12_StartupMenuState* state) {
 /* Launcher-visible game names are deliberately separate from the stable
  * internal ids used by the asset scanner.  Never expose ids such as "dm1"
  * while the first-run scan is in progress. */
+static const char* m12_game_display_title_for_locale(int localeIndex,
+                                                      const char* gameId);
+
 static const char* m12_game_display_title(const M12_StartupMenuState* state,
                                           const char* gameId) {
-    if (!gameId) {
-        return m12_tr(state, "GAME");
+    return m12_game_display_title_for_locale(m12_locale_index(state), gameId);
+}
+
+static const char* m12_game_display_title_for_locale(int localeIndex,
+                                                      const char* gameId) {
+    int locale = m12_clamp_index(localeIndex, M12_UI_LANGUAGE_COUNT);
+    if (!gameId) return m12_translate_for_locale(locale, "GAME");
+    if (strcmp(gameId, "dm1") == 0)
+        return m12_translate_for_locale(locale, "Dungeon Master");
+    if (strcmp(gameId, "csb") == 0)
+        return m12_translate_for_locale(locale, "Chaos Strikes Back");
+    if (strcmp(gameId, "dm2") == 0)
+        return m12_translate_for_locale(locale,
+                                        "Dungeon Master II: The Legend of Skullkeep");
+    if (strcmp(gameId, "nexus") == 0)
+        return m12_translate_for_locale(locale, "Dungeon Master Nexus");
+    if (strcmp(gameId, "theron") == 0)
+        return m12_translate_for_locale(locale, "Theron's Quest");
+    return m12_translate_for_locale(locale, "GAME");
+}
+
+static const char* m12_scan_task_for_locale(int localeIndex,
+                                             const char* task) {
+    int locale = m12_clamp_index(localeIndex, M12_UI_LANGUAGE_COUNT);
+    if (!task || !task[0]) {
+        return "";
     }
-    if (strcmp(gameId, "dm1") == 0) {
-        return m12_tr(state, "Dungeon Master");
-    }
-    if (strcmp(gameId, "csb") == 0) {
-        return m12_tr(state, "Chaos Strikes Back");
-    }
-    if (strcmp(gameId, "dm2") == 0) {
-        return m12_tr(state, "Dungeon Master II: The Legend of Skullkeep");
-    }
-    if (strcmp(gameId, "nexus") == 0) {
-        return m12_tr(state, "Dungeon Master Nexus");
-    }
-    if (strcmp(gameId, "theron") == 0) {
-        return m12_tr(state, "Theron's Quest");
-    }
-    return m12_tr(state, "GAME");
+    if (strcmp(task, "starting") == 0)
+        return m12_translate_for_locale(locale, "STARTING");
+    if (strcmp(task, "checking cached resume paths") == 0)
+        return m12_translate_for_locale(locale, "CHECKING CACHED RESUME PATHS");
+    if (strcmp(task, "checking direct launch path") == 0)
+        return m12_translate_for_locale(locale, "CHECKING DIRECT LAUNCH PATH");
+    if (strcmp(task, "checking explicit file request") == 0)
+        return m12_translate_for_locale(locale, "CHECKING EXPLICIT FILE REQUEST");
+    if (strcmp(task, "building search roots") == 0)
+        return m12_translate_for_locale(locale, "BUILDING SEARCH ROOTS");
+    if (strcmp(task, "checking original file candidates") == 0)
+        return m12_translate_for_locale(locale, "CHECKING ORIGINAL FILE CANDIDATES");
+    if (strcmp(task, "matching game versions") == 0)
+        return m12_translate_for_locale(locale, "MATCHING GAME VERSIONS");
+    if (strcmp(task, "matching required files") == 0)
+        return m12_translate_for_locale(locale, "MATCHING REQUIRED FILES");
+    if (strcmp(task, "materializing launch cache") == 0)
+        return m12_translate_for_locale(locale, "MATERIALIZING LAUNCH CACHE");
+    if (strcmp(task, "refreshing media metadata") == 0)
+        return m12_translate_for_locale(locale, "REFRESHING MEDIA METADATA");
+    return task;
 }
 
 static void m12_append_text(char* out, size_t outSize, const char* text) {
@@ -11926,10 +11958,12 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
     return changed;
 }
 
-void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
-                                      unsigned char* framebuffer,
-                                      int framebufferWidth,
-                                      int framebufferHeight) {
+void M12_StartupMenu_DrawScanProgressLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight) {
     size_t pct = 0U;
     int barX, barY, barW, barH, fillW;
     char line1[64];
@@ -11943,12 +11977,21 @@ void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
         pct = (progress->completedSteps * 100U) / progress->totalSteps;
         if (pct > 100U) pct = 100U;
     }
-    snprintf(line1, sizeof(line1), "SCANNING GAME DATA  %zu%%", pct);
+    snprintf(line1, sizeof(line1), "%s  %zu%%",
+             m12_translate_for_locale(
+                 m12_clamp_index(languageIndex, M12_UI_LANGUAGE_COUNT),
+                 "SCANNING GAME DATA"),
+             pct);
     if (progress && progress->currentGameId[0] != '\0') {
         snprintf(line2, sizeof(line2), "%s  %s",
-                 progress->currentGameId, progress->currentTask);
+                 m12_game_display_title_for_locale(languageIndex,
+                                                   progress->currentGameId),
+                 m12_scan_task_for_locale(languageIndex,
+                                          progress->currentTask));
     } else if (progress && progress->currentTask[0] != '\0') {
-        snprintf(line2, sizeof(line2), "%s", progress->currentTask);
+        snprintf(line2, sizeof(line2), "%s",
+                 m12_scan_task_for_locale(languageIndex,
+                                          progress->currentTask));
     } else {
         line2[0] = '\0';
     }
@@ -11980,6 +12023,15 @@ void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
         m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       barX, barY, fillW, barH, 15);
     }
+}
+
+void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight) {
+    M12_StartupMenu_DrawScanProgressLocalized(progress, 0, framebuffer,
+                                              framebufferWidth,
+                                              framebufferHeight);
 }
 
 void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {

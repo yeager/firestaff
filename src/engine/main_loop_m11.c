@@ -319,14 +319,16 @@ typedef struct {
     unsigned char* framebuffer;
     int width;
     int height;
+    int languageIndex;
 } M11_ScanProgressContext;
 
 static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
                                       void* userData) {
     M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
     if (!ctx || !ctx->framebuffer) return 1;
-    M12_StartupMenu_DrawScanProgress(progress, ctx->framebuffer,
-                                     ctx->width, ctx->height);
+    M12_StartupMenu_DrawScanProgressLocalized(progress, ctx->languageIndex,
+                                              ctx->framebuffer,
+                                              ctx->width, ctx->height);
     M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
     if (M11_Render_PumpEvents()) return 0;
     return 1;
@@ -5888,7 +5890,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     {
         M12_StartupMenuInitOptions menuInitOptions;
         M11_ScanProgressContext scanCtx;
+        M12_Config scanConfig;
         m11_ttf_renderer_init();
+        M12_Config_Load(&scanConfig, o->dataDir);
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
         menuInitOptions.looseFilesOnlyAssetScan =
@@ -5899,6 +5903,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         scanCtx.framebuffer = launcherFramebuffer;
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
+        scanCtx.languageIndex = scanConfig.languageIndex;
         menuInitOptions.scanProgressFn = m11_scan_progress_callback;
         menuInitOptions.scanProgressUserData = &scanCtx;
         M12_StartupMenu_InitWithOptions(&menuState,
@@ -6033,6 +6038,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fallbackCtx.framebuffer = launcherFramebuffer;
         fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
         fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
+        fallbackCtx.languageIndex = menuState.settings.languageIndex;
         M12_StartupMenu_RunDeferredScan(&menuState,
                                         m11_scan_progress_callback,
                                         &fallbackCtx);

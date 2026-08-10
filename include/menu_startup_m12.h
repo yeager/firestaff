@@ -752,6 +752,12 @@ void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
                                       unsigned char* framebuffer,
                                       int framebufferWidth,
                                       int framebufferHeight);
+void M12_StartupMenu_DrawScanProgressLocalized(
+    const M12_AssetScanProgress* progress,
+    int languageIndex,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
 
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,

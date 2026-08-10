@@ -14,6 +14,8 @@ SOURCES="src/ui/menu_startup_m12.c src/engine/main_loop_m11.c"
 # 1. Extract translatable strings from source via xgettext.
 xgettext \
     --keyword=_ \
+    --keyword=m12_tr:2 \
+    --keyword=m12_translate_for_locale:2 \
     --language=C \
     --from-code=UTF-8 \
     --sort-by-file \
@@ -23,6 +25,12 @@ xgettext \
     --msgid-bugs-address=daniel@danielnylander.se \
     --output="${POT}" \
     ${SOURCES}
+
+# xgettext leaves the template placeholder in the header.  Firestaff's
+# structural validator and runtime catalog tools require an explicit UTF-8
+# charset, just like the checked-in locale catalogs.
+sed -i.bak 's/charset=CHARSET/charset=UTF-8/' "${POT}"
+rm -f "${POT}.bak"
 
 count=$(grep -c '^msgid ' "${POT}")
 echo "POT updated: ${POT} (${count} entries)"
