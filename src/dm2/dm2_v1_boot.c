@@ -13571,6 +13571,48 @@ void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels)
 
 /* ── Cleanup ─────────────────────────────────────────────────────────── */
 
+static void dm2_v1_boot_free_runtime_session_candidate(
+    DM2_V1_BootProfile *profile)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+
+    if (!profile || !profile->game_load_runtime_session_candidate) return;
+    candidate = (DM2_V1_GameLoadRuntimeSessionCandidate *)
+        profile->game_load_runtime_session_candidate;
+    dm2_v1_game_load_runtime_session_candidate_free(candidate);
+    free(candidate);
+    profile->game_load_runtime_session_candidate = NULL;
+}
+
+/* Retain a distinct RAM clone only after every source-owned mutable
+ * predecessor is materialized.  The source owner remains intact: the later
+ * GAME_LOAD session commit must be able to abandon this candidate without
+ * rewinding the authenticated File_header world.
+ * Source: SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD (1415-1565),
+ * startend.cpp::DM2_RESET_CAII (1033-1070), SK1C9A.cpp::
+ * DM2_FILL_CAII_CUR_MAP (9896-10012). */
+static int dm2_v1_boot_retain_runtime_session_candidate(
+    DM2_V1_BootProfile *profile, const DM2_V1_GameLoadWorldOwner *source)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+
+    if (!profile || !source || profile->source_game_load_session_ready) {
+        return 0;
+    }
+    candidate = calloc(1, sizeof(*candidate));
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_init(
+            candidate, source)) {
+        if (candidate) {
+            dm2_v1_game_load_runtime_session_candidate_free(candidate);
+            free(candidate);
+        }
+        return 0;
+    }
+    dm2_v1_boot_free_runtime_session_candidate(profile);
+    profile->game_load_runtime_session_candidate = candidate;
+    return 1;
+}
+
 int dm2_v1_boot_retain_new_game_world(
     DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selections,
@@ -13683,6 +13725,12 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
     previous = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
     profile->game_load_world_owner = candidate;
     if (!dm2_v1_boot_materialize_startend_first_champion(profile)) {
+        profile->game_load_world_owner = previous;
+        dm2_v1_game_load_world_owner_free(candidate);
+        free(candidate);
+        return 0;
+    }
+    if (!dm2_v1_boot_retain_runtime_session_candidate(profile, candidate)) {
         profile->game_load_world_owner = previous;
         dm2_v1_game_load_world_owner_free(candidate);
         free(candidate);
@@ -14010,6 +14058,28 @@ const void *dm2_v1_boot_new_game_world_readonly(
            owner->champion_selection_materialized ? owner : NULL;
 }
 
+const void *dm2_v1_boot_new_game_runtime_candidate_readonly(
+    const DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_GameLoadWorldOwner *owner;
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+
+    if (!profile || profile->source_game_load_session_ready ||
+        !profile->game_load_world_owner ||
+        !profile->game_load_runtime_session_candidate) {
+        return NULL;
+    }
+    owner = (const DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;
+    candidate = (const DM2_V1_GameLoadRuntimeSessionCandidate *)
+        profile->game_load_runtime_session_candidate;
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) || owner->committed ||
+        !candidate->valid ||
+        candidate->source_transaction_hash != owner->source_transaction_hash) {
+        return NULL;
+    }
+    return candidate;
+}
+
 const void *dm2_v1_boot_prepared_new_game_world_readonly(
     const DM2_V1_BootProfile *profile)
 {
@@ -14060,6 +14130,7 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     /* The sound singleton borrows the loader stored in graphics_dat. */
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
     dm2_v1_sound_bind_runtime_queue(NULL);
+    dm2_v1_boot_free_runtime_session_candidate(profile);
     if (profile->game_load_world_owner) {
         DM2_V1_GameLoadWorldOwner *owner =
             (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner;

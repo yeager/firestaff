@@ -1,3 +1,12 @@
+# DM2: beständig privat GAME_LOAD-kandidat (2026-08-10)
+
+- ✅ Efter `RESET_CAII`/`FILL_CAII`, aktuatortimers och den verkliga första
+  championtransitionen behåller bootprofilen nu en separat RAM-klon av
+  File_header-världen, recordpoolerna, party, c_eventqueue, c_tim, CAII och
+  SOUND9. Klonen verifieras mot den muterade källägaren och frigörs före
+  mediet. Den är inte en runtimepublicering: M11, HUD, tick och input är
+  fortsatt spärrade tills hela originalets GAME_LOAD-handoff finns.
+
 # DM2: privat c_eventqueue i GAME_LOAD-kandidaten (2026-08-10)
 
 - ✅ Efter den verkliga första mirror-/leader-transitionen behåller den

@@ -3241,9 +3241,11 @@
   a separate source-owner task. **GAME_LOAD candidate context:** the private
   candidate retains the complete source teleporter/display context and the
   source-shaped `c_eventqueue::init` state after the first mirror/leader
-  selection (empty ringbuffer and leader index 0). It is still private: live
-  event dispatch, input routing and a publishable session require the full
-  original c_eventqueue/runtime owner.
+  selection (empty ringbuffer and leader index 0). Den fulla, muterbara
+  RAM-klonen behålls nu också av bootprofilen och kan bara läsas genom den
+  privata handoff-seamen. It is still private: live event dispatch, input
+  routing and a publishable session require the full original
+  c_eventqueue/runtime owner.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains

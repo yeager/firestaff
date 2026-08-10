@@ -540,6 +540,10 @@ typedef struct {
      * the admitted File_header world and is destroyed before this profile's
      * media.  It never implies source_game_load_session_ready. */
     void   *game_load_world_owner;
+    /* Opaque, RAM-only clone of the fully materialized New Game predecessor.
+     * It is retained only after the source-owned private GAME_LOAD work is
+     * complete. It is a staging owner, never a live runtime session. */
+    void   *game_load_runtime_session_candidate;
     void   *graphics_dat;      /* graphics data handle */
     /* Only a complete original GAME_LOAD transaction may set this.  A parsed
      * File_header or an observational SKSAVE receipt is deliberately not a
@@ -596,6 +600,11 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
 
 /* Read-only access for a later atomic runtime handoff. */
 const void *dm2_v1_boot_new_game_world_readonly(const DM2_V1_BootProfile *profile);
+
+/* Read-only access to the private clone that a future atomic GAME_LOAD
+ * handoff may consume. It never signals a publishable runtime session. */
+const void *dm2_v1_boot_new_game_runtime_candidate_readonly(
+    const DM2_V1_BootProfile *profile);
 
 /* Read-only access to the post-GAME_LOAD, pre-mirror owner. */
 const void *dm2_v1_boot_prepared_new_game_world_readonly(

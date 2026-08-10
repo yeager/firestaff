@@ -2447,6 +2447,7 @@ int main(void) {
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     DM2_V1_GameLoadRuntimeSessionCandidate runtime_session_candidate;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
+    const DM2_V1_GameLoadRuntimeSessionCandidate *profile_runtime_candidate;
     DM2_V1_GameLoadWorldOwner *profile_preselection_turn_owner;
     DM2_V1_GameLoadActuatorGeneratorReceipt new_game_generators;
     DM2_V1_GameLoadActuateReceipt new_game_actuate;
@@ -4882,19 +4883,34 @@ int main(void) {
     }
     /* startend.cpp::DM2_2f3f_0789 is part of fresh GAME_LOAD and therefore
      * runs while rebuilding the hash-admitted owner, before input. */
-    expect_true(profile && dm2_v1_boot_prepare_new_game_world(profile) &&
-                    (profile_new_game_owner =
-                        (const DM2_V1_GameLoadWorldOwner *)
-                            dm2_v1_boot_prepared_new_game_world_readonly(profile)) != NULL &&
-                    profile_new_game_owner->source_party_x ==
+    expect_true(profile && dm2_v1_boot_prepare_new_game_world(profile),
+                "DM2 rebuilds the source New Game predecessor before retaining its clone");
+    profile_new_game_owner = profile ?
+        (const DM2_V1_GameLoadWorldOwner *)
+            dm2_v1_boot_prepared_new_game_world_readonly(profile) : NULL;
+    profile_runtime_candidate = profile ?
+        (const DM2_V1_GameLoadRuntimeSessionCandidate *)
+            dm2_v1_boot_new_game_runtime_candidate_readonly(profile) : NULL;
+    expect_true(profile_new_game_owner != NULL &&
+                    profile_runtime_candidate != NULL,
+                "DM2 retains a private GAME_LOAD clone after startend");
+    if (profile_new_game_owner && profile_runtime_candidate) {
+        expect_true(profile_new_game_owner->source_party_x ==
                         profile_new_game_owner->preselection_entrance.x &&
                     profile_new_game_owner->source_party_y ==
                         profile_new_game_owner->preselection_entrance.y &&
                     profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 1 &&
                     profile_new_game_owner->source_startend_first_champion_released &&
-                    !profile->source_game_load_session_ready,
-                "DM2 rebuilds a fresh source entrance and privately runs startend before input");
+                    profile_runtime_candidate->valid &&
+                    profile_runtime_candidate->source_transaction_hash ==
+                        profile_new_game_owner->source_transaction_hash &&
+                    profile_runtime_candidate->record_pools.pools[4].bytes !=
+                        profile_new_game_owner->record_pools.pools[4].bytes &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0,
+                "DM2 retains the complete private GAME_LOAD clone without publishing a session");
+    }
     memset(&runtime_session_candidate, 0, sizeof(runtime_session_candidate));
     runtime_candidate_source_hash_before = profile_new_game_owner &&
         profile_new_game_owner->dungeon.raw_data ? dm2_test_fnv1a(
