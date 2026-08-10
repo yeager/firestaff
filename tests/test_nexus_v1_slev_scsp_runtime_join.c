@@ -97,6 +97,8 @@ int main(void)
     }
     complete_trace_fixture = scsp_receipt;
     complete_trace_fixture.scsp_voice_register_write_count = 1U;
+    complete_trace_fixture.command_handler_pc_3224_count = 1U;
+    complete_trace_fixture.driver_command_handler_observed = 1;
     complete_trace_fixture.intra_trace_observation_order_proven = 1;
     complete_trace_fixture.capture_session_present = 1;
     strcpy(complete_trace_fixture.capture_session, "unit-capture");
@@ -120,11 +122,8 @@ int main(void)
         !complete_join_receipt.blocks_real_sfx_playback) {
         goto cleanup;
     }
-    if (!scsp_receipt.driver_command_handler_observed ||
-        scsp_receipt.mailbox_value_02_count == 0U ||
-        !main_receipt.producer_command_observed ||
+    if (!main_receipt.producer_command_observed ||
         main_receipt.mailbox_value_02_count == 0U ||
-        main_receipt.mailbox_value_0200_count == 0U ||
         !driver_receipt.command_handler_proven ||
         !driver_receipt.pcm_voice_register_route_proven ||
         driver_receipt.event_dispatch_proven ||

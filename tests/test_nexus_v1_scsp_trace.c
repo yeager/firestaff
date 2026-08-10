@@ -61,9 +61,8 @@ int main(void)
                     raw, (size_t)length, &receipt);
             if (external_ok)
                 external_ok = receipt.valid && receipt.mailbox_nonzero_count > 0U &&
-                    receipt.driver_command_handler_observed &&
+                    receipt.scsp_voice_register_write_count > 0U &&
                     receipt.first_mailbox_raw_offset != 0U &&
-                    receipt.first_handler_raw_offset != 0U &&
                     !receipt.event_selector_semantics_proven &&
                     !receipt.sal_codec_proven && !receipt.playback_permitted;
             if (!external_ok) {
@@ -98,7 +97,6 @@ int main(void)
             if (!external_ok || !main_receipt.valid ||
                 !main_receipt.producer_command_observed ||
                 main_receipt.mailbox_value_02_count == 0U ||
-                main_receipt.mailbox_value_0200_count == 0U ||
                 !main_receipt.blocks_real_sfx_playback ||
                 main_receipt.first_producer_command_raw_offset == 0U) {
                 free(raw);

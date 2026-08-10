@@ -36,7 +36,14 @@ def trace_pcs(path: Path) -> list[int]:
     if not lines or lines[0] != TRACE_HEADER:
         raise ValueError(f"{path}: bad trace header")
     pcs: list[int] = []
-    for number, line in enumerate(lines[1:], 2):
+    data_lines = lines[1:]
+    metadata_line_count = 0
+    if data_lines and data_lines[0].startswith("session="):
+        session = data_lines.pop(0)[len("session=") :]
+        if not session or any(character.isspace() for character in session):
+            raise ValueError(f"{path}: invalid capture session metadata")
+        metadata_line_count = 1
+    for number, line in enumerate(data_lines, 2 + metadata_line_count):
         match = TRACE_LINE.fullmatch(line)
         if not match:
             raise ValueError(f"{path}: malformed line {number}")

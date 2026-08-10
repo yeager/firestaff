@@ -3,7 +3,7 @@
 @@ -30,0 +31,2 @@
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -50,0 +53,72 @@
+@@ -50,0 +53,84 @@
 +static FILE *FirestaffScspTraceFile;
 +static uint32 FirestaffScspTraceMin = 0x100000;
 +static uint32 FirestaffScspTraceMax = 0x102000;
@@ -88,9 +88,19 @@
 + FirestaffScspTraceCount++;
 + if((FirestaffScspTraceCount & 0x3ffU) == 0) fflush(FirestaffScspTraceFile);
 +}
-@@ -248,0 +323 @@
+@@ -247,4 +333,5 @@
+ void SOUND_Write8(uint32 A, uint8 V)
+ {
+  SCSP.RW<uint8, true>(A, V);
 + FirestaffTraceMainScspWrite(A, 1, V);
-@@ -253,0 +329 @@
+ }
+@@ -252,4 +338,5 @@
+ void SOUND_Write16(uint32 A, uint16 V)
+ {
+  SCSP.RW<uint16, true>(A, V);
 + FirestaffTraceMainScspWrite(A, 2, V);
-@@ -520,0 +597 @@
+ }
+@@ -521,2 +609,3 @@
+  SCSP.RW<T, true>(A & 0x1FFFFF, V);
 + FirestaffTraceScspWrite(A, sizeof(T), (uint32)V);
+  SoundCPU.timestamp += 2;

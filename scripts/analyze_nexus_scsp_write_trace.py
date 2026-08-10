@@ -34,7 +34,14 @@ def read_trace(path: Path, main: bool) -> list[dict[str, int]]:
     if not lines or lines[0] != expected:
         raise ValueError(f"{path}: bad trace header")
     rows = []
-    for number, line in enumerate(lines[1:], 2):
+    data_lines = lines[1:]
+    metadata_line_count = 0
+    if data_lines and data_lines[0].startswith("session="):
+        session = data_lines.pop(0)[len("session=") :]
+        if not session or any(character.isspace() for character in session):
+            raise ValueError(f"{path}: invalid capture session metadata")
+        metadata_line_count = 1
+    for number, line in enumerate(data_lines, 2 + metadata_line_count):
         match = pattern.fullmatch(line)
         if not match:
             raise ValueError(f"{path}: malformed line {number}")

@@ -115,7 +115,7 @@ elif [[ "$(cat "$slev_sal_capture_marker" 2>/dev/null)" != "$slev_sal_capture_pa
   exit 2
 fi
 scsp_trace_marker="$source_dir/.firestaff-nexus-slev-scsp-trace-patched"
-scsp_trace_patch_id='FIRESTAFF_NEXUS_SLEV_SCSP_TRACE_V1_MAIN_AND_SOUND_CPU'
+scsp_trace_patch_id='FIRESTAFF_NEXUS_SLEV_SCSP_TRACE_V2_MAIN_AND_SOUND_CPU_SESSION'
 if [[ ! -f "$scsp_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_slev_scsp_trace.patch"
   printf '%s\n' "$scsp_trace_patch_id" > "$scsp_trace_marker"
@@ -149,5 +149,7 @@ strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_SCSP_WRITES' >/dev/null
 strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITES' >/dev/null
+strings "$capture_bin" | grep -F \
+  'FIRESTAFF_NEXUS_TRACE_SESSION' >/dev/null
 printf 'instrumented_mednafen=%s\n' "$capture_bin"
 printf 'source_patch=%s\n' "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"
