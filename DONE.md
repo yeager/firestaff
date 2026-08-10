@@ -20,6 +20,15 @@
 - ✅ `test_theron_v1_track02_dungeon_loader` passerar för US och JP, inklusive
   reload-isolering, dungeon-scope och source-bound monster admission.
 
+# DM2: source c_moverec state retained privately (2026-08-10)
+
+- ✅ GAME_LOAD-kandidaten behåller nu den källinitierade
+  `v1e0390`/`v1e1020..102e`-gruppen och `v1d3248` som c_maps aktuella
+  kartindex. Den tidigare felbenämnda “last moved record”-platsen är borttagen.
+- ✅ Verifierad mot autentisk PC-DOS-data i
+  `test_dm2_v1_m11_startup_profile_gate`; ingen rörelse, timerdispatch,
+  HUD eller session publiceras av ändringen.
+
 # Theron: held keyboard input follows Theron cadence (2026-08-10)
 
 - ✅ Hållna WASD- och piltangenter använder Therons egen spel-tick i stället

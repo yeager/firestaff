@@ -360,6 +360,28 @@ typedef struct {
     uint32_t source_hash;
 } DM2_V1_GameLoadCaiiLocalContextReceipt;
 
+/* Fresh c_moverec globals retained with the private GAME_LOAD world. These
+ * are source register state, not inferred movement results. DM2_MOVE_RECORD_TO
+ * resets v1e1020 at entry and writes the remaining fields only after its
+ * c_map/record/timer work completes; no consumer may execute it until the
+ * complete transaction owner exists.
+ *
+ * Source: SKULLWIN/dm2data.cpp (1128, 1231-1237), c_moverec.cpp::
+ * DM2_MOVE_RECORD_TO (392-1142), c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO. */
+typedef struct {
+    int valid;
+    uint32_t v1e0390_l00;
+    int32_t v1e1020;
+    int16_t v1e1024;
+    int16_t v1e1026;
+    int16_t v1e1028;
+    int16_t v1e102a;
+    int16_t v1e102c;
+    int16_t v1e102e;
+    int16_t v1d3248;
+    int16_t v1d3248_before_final_change;
+} DM2_V1_GameLoadMoverecState;
+
 typedef struct {
     /* Private host-lifecycle guard. This is not original game state: it only
      * makes replacement of a retained all-RAM owner safe without inspecting
@@ -443,7 +465,7 @@ typedef struct {
     uint8_t source_teleporter_source_direction;
     uint8_t source_teleporter_destination_direction;
     int source_display_pose_valid;
-    int16_t source_last_moved_record;
+    DM2_V1_GameLoadMoverecState source_moverec;
     DM2_V1_GameLoadLocalLevelGraphicsReceipt preselection_local_graphics;
     /* c_light inputs for the real entrance map. This receipt owns the
      * source initialisation inputs only; it is not a fabricated light level
@@ -594,6 +616,7 @@ typedef struct {
     DM2_V1_Party party;
     int16_t leader_hand_record;
     DM2_V1_GameLoadMovementState movement;
+    DM2_V1_GameLoadMoverecState moverec;
     /* c_eventqueue::init followed by the real first mirror/leader selection.
      * This remains private and receives no host input before a complete
      * session owner exists. */
@@ -640,7 +663,6 @@ typedef struct {
     uint8_t source_teleporter_source_direction;
     uint8_t source_teleporter_destination_direction;
     int source_display_pose_valid;
-    int16_t source_last_moved_record;
 } DM2_V1_GameLoadRuntimeSessionCandidate;
 
 /* Private, source-complete c_querydb spatial scan over a cloned GAME_LOAD

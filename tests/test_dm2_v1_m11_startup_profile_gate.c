@@ -3317,7 +3317,17 @@ int main(void) {
                                      6 - new_game_world_owner
                                              .source_teleporter_source_direction +
                                      new_game_world_owner.source_party_direction) & 3))) &&
-                    new_game_world_owner.source_last_moved_record == -1 &&
+                    new_game_world_owner.source_moverec.valid &&
+                    new_game_world_owner.source_moverec.v1e0390_l00 == 0u &&
+                    new_game_world_owner.source_moverec.v1e1020 == 0 &&
+                    new_game_world_owner.source_moverec.v1e1024 == 0 &&
+                    new_game_world_owner.source_moverec.v1e1026 == 0 &&
+                    new_game_world_owner.source_moverec.v1e1028 == 0 &&
+                    new_game_world_owner.source_moverec.v1e102a == 0 &&
+                    new_game_world_owner.source_moverec.v1e102c == 0 &&
+                    new_game_world_owner.source_moverec.v1e102e == 0 &&
+                    new_game_world_owner.source_moverec.v1d3248_before_final_change == -1 &&
+                    new_game_world_owner.source_moverec.v1d3248 == 0 &&
                     (!new_game_world_owner.source_display_pose_valid ||
                      (new_game_world_owner.source_teleporter_map >= 0 &&
                       new_game_world_owner.source_teleporter_map <
@@ -5043,6 +5053,18 @@ int main(void) {
                     profile_runtime_candidate->movement.pending_creature ==
                         DM2_V1_RECORD_HANDLE_END &&
                     !profile_runtime_candidate->movement.command_in_progress &&
+                    profile_runtime_candidate->moverec.valid &&
+                    profile_runtime_candidate->moverec.v1e0390_l00 == 0u &&
+                    profile_runtime_candidate->moverec.v1e1020 == 0 &&
+                    profile_runtime_candidate->moverec.v1e1024 == 0 &&
+                    profile_runtime_candidate->moverec.v1e1026 == 0 &&
+                    profile_runtime_candidate->moverec.v1e1028 == 0 &&
+                    profile_runtime_candidate->moverec.v1e102a == 0 &&
+                    profile_runtime_candidate->moverec.v1e102c == 0 &&
+                    profile_runtime_candidate->moverec.v1e102e == 0 &&
+                    profile_runtime_candidate->moverec.v1d3248_before_final_change == -1 &&
+                    profile_runtime_candidate->moverec.v1d3248 ==
+                        profile_runtime_candidate->current_map &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 retains source-initialized c_move state privately without publishing a session");

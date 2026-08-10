@@ -56,6 +56,20 @@ static void dm2_v1_game_load_runtime_candidate_init_movement_state(
     movement->valid = 1;
 }
 
+/* DM2_INIT establishes the zeroed c_moverec register block. The final
+ * DM2_move_2fcf_0b8b map change supplies v1d3248 later, so retain both the
+ * forced selector and its selected result rather than mislabelling either as
+ * a record handle. */
+static void dm2_v1_game_load_moverec_state_init(
+    DM2_V1_GameLoadMoverecState *moverec, int current_map)
+{
+    if (!moverec || current_map < 0 || current_map > INT16_MAX) return;
+    memset(moverec, 0, sizeof(*moverec));
+    moverec->v1d3248_before_final_change = -1;
+    moverec->v1d3248 = (int16_t)current_map;
+    moverec->valid = 1;
+}
+
 static uint16_t dm2_v1_game_load_owner_read_u16le(const uint8_t *bytes)
 {
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
@@ -1612,9 +1626,10 @@ static int dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(
             break;
         }
     }
-    /* v1d3248 is reset after either source path; this is the private analogue
-     * only, not an M11 held-item or movement record. */
-    owner->source_last_moved_record = -1;
+    /* DM2_move_2fcf_0b8b forces v1d3248=-1, then its final
+     * CHANGE_CURRENT_MAP_TO restores the selected map. This is c_map state,
+     * not a moved-record ObjectID. */
+    dm2_v1_game_load_moverec_state_init(&owner->source_moverec, map);
     return 1;
 }
 
@@ -2260,6 +2275,7 @@ static int dm2_v1_game_load_runtime_candidate_change_current_map(
     if (use_alternate && !candidate->source_display_pose_valid) return 0;
     candidate->map_context = context;
     candidate->current_map = new_map;
+    candidate->moverec.v1d3248 = (int16_t)new_map;
     candidate->source_runtime_display_uses_alternate = use_alternate;
     if (use_alternate) {
         candidate->source_display_map = candidate->source_teleporter_map;
@@ -2332,6 +2348,11 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
         return 0;
     }
+    if (!source->source_moverec.valid ||
+        source->source_moverec.v1d3248_before_final_change != -1 ||
+        source->source_moverec.v1d3248 != source->current_map) {
+        return 0;
+    }
     if (source->source_event_queue.event_heroidx !=
         source->source_event_hero_index ||
         source->source_event_queue.entries != 0 ||
@@ -2375,6 +2396,7 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.party = source->selected_party;
     candidate.leader_hand_record = source->load_new_dungeon_reset.leader_hand_record;
     dm2_v1_game_load_runtime_candidate_init_movement_state(&candidate.movement);
+    candidate.moverec = source->source_moverec;
     candidate.event_queue = source->source_event_queue;
     candidate.source_event_hero_index = source->source_event_hero_index;
     candidate.caii_rng = source->caii_rng;
@@ -2395,7 +2417,6 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.source_teleporter_destination_direction =
         source->source_teleporter_destination_direction;
     candidate.source_display_pose_valid = source->source_display_pose_valid;
-    candidate.source_last_moved_record = source->source_last_moved_record;
     candidate.source_transaction_hash = source->source_transaction_hash;
     /* DM2_move_2fcf_0b8b has explicitly set v1d3248=-1 before its final
      * CHANGE_CURRENT_MAP_TO. Recreate that forced initial selection over the
@@ -3605,8 +3626,8 @@ int dm2_v1_game_load_world_owner_turn_preselection(
         owner->source_teleporter_destination_direction : 0u;
     const uint8_t old_display_pose_valid = owner ?
         owner->source_display_pose_valid : 0u;
-    const int16_t old_last_moved_record = owner ?
-        owner->source_last_moved_record : -1;
+    const DM2_V1_GameLoadMoverecState old_moverec = owner ?
+        owner->source_moverec : (DM2_V1_GameLoadMoverecState){0};
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->source_preselection_ready ||
@@ -3662,7 +3683,7 @@ rollback:
     owner->source_teleporter_source_direction = old_source_direction;
     owner->source_teleporter_destination_direction = old_destination_direction;
     owner->source_display_pose_valid = old_display_pose_valid;
-    owner->source_last_moved_record = old_last_moved_record;
+    owner->source_moverec = old_moverec;
     owner->preselection_view = old_view;
     owner->preselection_viewport = old_viewport;
     return 0;
@@ -3715,8 +3736,8 @@ int dm2_v1_game_load_world_owner_move_preselection(
         owner->source_teleporter_destination_direction : 0u;
     const uint8_t old_display_pose_valid = owner ?
         owner->source_display_pose_valid : 0u;
-    const int16_t old_last_moved_record = owner ?
-        owner->source_last_moved_record : -1;
+    const DM2_V1_GameLoadMoverecState old_moverec = owner ?
+        owner->source_moverec : (DM2_V1_GameLoadMoverecState){0};
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->source_preselection_ready ||
@@ -3788,7 +3809,7 @@ rollback:
     owner->source_teleporter_source_direction = old_source_direction;
     owner->source_teleporter_destination_direction = old_destination_direction;
     owner->source_display_pose_valid = old_display_pose_valid;
-    owner->source_last_moved_record = old_last_moved_record;
+    owner->source_moverec = old_moverec;
     owner->preselection_view = old_view;
     owner->preselection_viewport = old_viewport;
     return 0;

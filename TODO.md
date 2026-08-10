@@ -460,6 +460,9 @@
   `DM2_PERFORM_MOVE`: stamina, walk-delay, `DM2_MOVE_RECORD_TO(0xffff)`,
   `DM2_moverec_3CE7D`, dörrar, aktuatorkedjor, kollisioner, noise och
   timerdispatch måste fortfarande vara en och samma atomära session.
+  Den privata kandidaten behåller nu c_moverecs verkliga färska
+  `v1e0390`/`v1e1020..102e`-registerblock samt `v1d3248` före och efter
+  `DM2_move_2fcf_0b8b`-kartvalet; det är inte en rörelseimplementering.
   Den privata kandidaten har nu en exakt läsande `c_moverec`-census över
   sina muterbara recordpooler; använd den som admissionsunderlag, aldrig som
   en ersättning för den saknade dispatchen.
