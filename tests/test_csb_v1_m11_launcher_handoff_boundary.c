@@ -885,7 +885,21 @@ static void expect_native_live_mirror_and_command_handoff(
         }
     }
     initial_direction = profile->runtime.party_dir;
-    expect_true(M11_GameView_ConfirmMirrorCandidate(view, 0) == 1 &&
+    /* A31/A35 does not merely share the C026 atlas: its native C040 page
+     * reaches COMMAND.C's zone-resolved G0457 route.  Exercise the actual
+     * C160 pointer box after the occupied-hand rejection above.  Calling
+     * the public confirmation helper here used to leave that final native
+     * C026 -> C040 -> C160 handoff untested.  ReDMCSB COMMAND.C:508-511
+     * maps C160 through M664; the A31/A35 literal rectangle is
+     * x=104..158/y=86..142. */
+    expect_true(((profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+                  profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+                  profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+                  profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI)
+                     ? M11_GameView_HandlePointerButton(
+                           view, 130, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                           M11_GAME_INPUT_REDRAW
+                     : M11_GameView_ConfirmMirrorCandidate(view, 0) == 1) &&
                     !view->candidateMirrorPanelActive &&
                     view->world.party.championCount == 1 &&
                     view->world.party.activeChampionIndex == 0 &&
