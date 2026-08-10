@@ -68,6 +68,31 @@ static int decode_source_hud_surface(const char *path, unsigned int graphic,
     return ok;
 }
 
+static int decode_source_viewport_field_surface(const char *path,
+                                                unsigned int graphic,
+                                                const char *label)
+{
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+    unsigned char *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    int ok;
+
+    memset(&receipt, 0, sizeof(receipt));
+    ok = csb_v1_boot_decode_graphics_dat_asset_pc34(
+             path, graphic, &pixels, &width, &height, &receipt) &&
+         pixels != NULL && width > 0 && width <= 640 && height > 0 &&
+         height <= 400 && receipt.valid && receipt.ended_at_record_boundary &&
+         receipt.indexed_colors_are_4bit &&
+         receipt.compressed_record_sha256[0] != '\0';
+    free(pixels);
+    if (!ok) {
+        fprintf(stderr, "FAIL: Amiga viewport %s did not decode from original data\n",
+                label);
+    }
+    return ok;
+}
+
 int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_GRAPHICS_DAT");
@@ -91,9 +116,18 @@ int main(void)
     free(bytes);
 
     if (!decode_source_hud_surface(path, 17u, "C017 inventory") ||
-        !decode_source_hud_surface(path, 40u, "C040 panel")) {
+        !decode_source_hud_surface(path, 40u, "C040 panel") ||
+        !decode_source_viewport_field_surface(path, 41u, "C041 Thieves Eye hole") ||
+        !decode_source_viewport_field_surface(path, 70u, "C070 field mask D3L2") ||
+        !decode_source_viewport_field_surface(path, 71u, "C071 field mask D3L") ||
+        !decode_source_viewport_field_surface(path, 72u, "C072 field mask D2L2") ||
+        !decode_source_viewport_field_surface(path, 73u, "C073 field mask D2L") ||
+        !decode_source_viewport_field_surface(path, 74u, "C074 field mask D1L") ||
+        !decode_source_viewport_field_surface(path, 75u, "C075 field mask D0L") ||
+        !decode_source_viewport_field_surface(path, 76u, "C076 teleporter field") ||
+        !decode_source_viewport_field_surface(path, 77u, "C077 fluxcage field")) {
         return 1;
     }
-    puts("PASS: real CSB Amiga C017/C040 runtime graphics decode");
+    puts("PASS: real CSB Amiga HUD and F0113/F0127 graphics decode");
     return 0;
 }

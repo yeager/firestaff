@@ -3035,11 +3035,14 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         *out_height = (int)door_frame_asset->height;
         return 1;
     } else if (graphic_index == 41 ||
-               (graphic_index >= 70 && graphic_index <= 76)) {
+               (graphic_index >= 70 && graphic_index <= 77)) {
         const M11_AssetSlot *field_asset;
-        /* ReDMCSB DEFS.H C041 and C070--C076: the Thieves Eye hole and
-         * fields are ordinary decoded source graphics. Install them through
-         * the CSB decoder, not the generic DM1 loader. */
+        /* ReDMCSB DEFS.H C041 and C070--C077: the Thieves Eye hole and
+         * field masks/teleporter/fluxcage are ordinary decoded source
+         * graphics. C077 is the version-3 fluxcage graphic; omitting it
+         * made all native MEDIA720 profiles silently lose that F0113
+         * material. Install them through the CSB decoder, not the generic
+         * DM1 loader. */
         if (!m11_csb_install_runtime_source_graphic(state,
                                                     (unsigned int)graphic_index)) {
             return 0;
@@ -4556,6 +4559,14 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
             CSB_AMIGA_WALL_SURFACE_OFFSET + (unsigned int)(graphic_index - 93);
     } else if (graphic_index >= CSB_AMIGA_M633_FIRST_DOOR_SET &&
                graphic_index < CSB_AMIGA_M633_FIRST_DOOR_SET + 12) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index == 41 ||
+               (graphic_index >= 70 && graphic_index <= 77)) {
+        /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M, C041 and
+         * C070--C077: F0113/F0127 consume the hole, field masks,
+         * teleporter and fluxcage from the native GRAPHICS.DAT table.  The
+         * old Amiga provider admitted wall/floor material but rejected this
+         * entire source family, so a real session could not draw them. */
         source_graphic = (unsigned int)graphic_index;
     } else if (graphic_index >= CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT) {
         source_graphic = (unsigned int)graphic_index;
