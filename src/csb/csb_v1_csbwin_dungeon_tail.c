@@ -38,6 +38,15 @@ struct CSB_V1_CSBWinLegacyResumeCommitPlan {
      * commit must fail closed if the live owner has one, rather than silently
      * replacing a second owner allocation it did not snapshot. */
     const uint16_t *expected_current_dsa_offsets;
+    /* The candidate is private, but C callers can still cast its const
+     * evidence view.  Snapshot the decoded result too, so the final
+     * non-publishing preflight can reject any in-place candidate drift before
+     * a future ownership transfer. */
+    const uint8_t *expected_candidate_raw_data;
+    int expected_candidate_raw_size;
+    uint64_t expected_candidate_raw_signature;
+    uint64_t expected_candidate_shape_signature;
+    const uint16_t *expected_candidate_dsa_offsets;
 };
 
 /* FNV-1a is solely a stable, compact diagnostic identity.  Admission always
@@ -1060,6 +1069,26 @@ int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
         plan->expected_current_dsa_offsets =
             plan->expected_current_owner->dsa_offsets;
     }
+    {
+        const CSB_V1_DungeonData *candidate_dungeon =
+            csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+                transaction);
+        if (!candidate_dungeon) {
+            csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
+                transaction);
+            free(plan);
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+        plan->expected_candidate_raw_data = candidate_dungeon->raw_data;
+        plan->expected_candidate_raw_size = candidate_dungeon->raw_size;
+        plan->expected_candidate_raw_signature = source_tail_signature(
+            candidate_dungeon->raw_data,
+            candidate_dungeon->raw_size > 0
+                ? (size_t)candidate_dungeon->raw_size : 0u);
+        plan->expected_candidate_shape_signature =
+            current_owner_shape_signature(candidate_dungeon);
+        plan->expected_candidate_dsa_offsets = candidate_dungeon->dsa_offsets;
+    }
     *out_plan = plan;
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
 }
@@ -1124,6 +1153,35 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
         plan->expected_current_raw_signature;
 }
 
+int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+    const CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
+{
+    const CSB_V1_DungeonData *candidate;
+
+    if (!plan || !plan->transaction ||
+        !csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+            plan) ||
+        !csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_identity(
+            plan->transaction,
+            &(CSB_V1_CSBWinLegacyDungeonCandidateIdentity){0})) {
+        return 0;
+    }
+    candidate = csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+        plan->transaction);
+    if (!candidate || candidate->raw_data != plan->expected_candidate_raw_data ||
+        candidate->raw_size != plan->expected_candidate_raw_size ||
+        candidate->dsa_offsets != plan->expected_candidate_dsa_offsets ||
+        current_owner_shape_signature(candidate) !=
+            plan->expected_candidate_shape_signature ||
+        candidate->dsa_count != 0 || candidate->dsa_offsets != NULL) {
+        return 0;
+    }
+    return source_tail_signature(candidate->raw_data,
+                                 candidate->raw_size > 0
+                                     ? (size_t)candidate->raw_size : 0u) ==
+        plan->expected_candidate_raw_signature;
+}
+
 void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
     CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
 {
@@ -1137,6 +1195,11 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
     plan->expected_current_raw_signature = 0u;
     plan->expected_current_shape_signature = 0u;
     plan->expected_current_dsa_offsets = NULL;
+    plan->expected_candidate_raw_data = NULL;
+    plan->expected_candidate_raw_size = 0;
+    plan->expected_candidate_raw_signature = 0u;
+    plan->expected_candidate_shape_signature = 0u;
+    plan->expected_candidate_dsa_offsets = NULL;
     free(plan);
 }
 

@@ -168,8 +168,23 @@ static void check_staged_real_save(void)
               commit_plan, &identity) && identity.valid &&
           csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
               commit_plan) &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+              commit_plan) &&
           csb_v1_dungeon_get_current() == current_before &&
           csb_v1_dungeon_get_current_mutable() == current_before);
+    /* The evidence API is const, but a hostile C caller can cast it.  A
+     * final non-publishing preflight must catch that private-candidate drift
+     * before any future all-or-nothing owner replacement. */
+    ((CSB_V1_DungeonData *)
+        csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
+            commit_plan))->raw_data[0] ^= 1u;
+    CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+        commit_plan));
+    ((CSB_V1_DungeonData *)
+        csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
+            commit_plan))->raw_data[0] ^= 1u;
+    CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+        commit_plan));
     csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(commit_plan);
     commit_plan = NULL;
     /* This isolated test process has no live owner.  Give the singleton a
@@ -197,12 +212,18 @@ static void check_staged_real_save(void)
                       CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
                       commit_plan != NULL &&
                       csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                          commit_plan) &&
+                      csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
                           commit_plan));
                 csb_v1_dungeon_get_current_mutable()->raw_data[0] ^= 1u;
                 CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
                     commit_plan));
+                CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+                    commit_plan));
                 csb_v1_dungeon_get_current_mutable()->raw_data[0] ^= 1u;
                 CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
+                CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
                     commit_plan));
                 /* These are loader-derived fields rather than raw bytes.
                  * A future atomic replacement must not mistake a changed
@@ -447,6 +468,8 @@ int main(void)
     CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
         NULL, &identity));
     CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+        NULL));
+    CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
         NULL));
 
     memset(tail, 0, sizeof(tail));

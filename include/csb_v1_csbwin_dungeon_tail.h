@@ -405,6 +405,23 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
  * validation. */
 int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
     const CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
+
+/* Non-publishing final preflight for a future legacy handoff.  Besides the
+ * optimistic live-owner test, this proves that the plan's own decoded
+ * candidate has not changed in place since it was prepared.  This matters in
+ * C even though the public view is const: a future M10 adoption must never
+ * transfer a candidate whose decoded source bytes or map layout drifted
+ * between ReadDatabases() and the all-or-nothing RuntimeProfile replacement.
+ *
+ * It has no commit, take, lock or publish side effect.  A true handoff still
+ * needs one serialized operation which adopts GAMEBLOCK2, champions, ITEM16,
+ * timers and this dungeon together.  Returns 1 only when every comparison
+ * precondition holds.
+ *
+ * Source: CSBWin SaveGame.cpp ReadGame():1707-1906,
+ * ReadDatabases():2512-2896. */
+int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+    const CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
     CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
 
