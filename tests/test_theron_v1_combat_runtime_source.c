@@ -19,6 +19,7 @@ static int failures;
 int main(void) {
     Theron_V1_World world;
     Theron_V1_Creature *creature;
+    Theron_V1_Creature *death_creature;
     const uint16_t health[4] = { 10u, 20u, 30u, 40u };
     memset(&world, 0, sizeof(world));
 
@@ -169,6 +170,14 @@ int main(void) {
           "spell behavior stays blocked without the source consumer");
     CHECK(creature != NULL && theron_v1_creature_kill(&world, creature->id) == 0,
           "source-backed live creature can be retired without synthetic loot");
+    CHECK(creature != NULL && (creature->flags & THERON_CF_ACTIVE) == 0u &&
+              creature->hp == 0,
+          "source-backed retire clears live creature state");
+    death_creature = &world.creatures[1];
+    theron_v1_creature_die(&world, death_creature->id);
+    CHECK((death_creature->flags & THERON_CF_ACTIVE) == 0u &&
+              death_creature->hp == 0,
+          "public creature death entry retires source creature");
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
                                    1, 0, 1, 1) == -1 &&
               world.creature_count == 2,

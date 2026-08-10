@@ -316,7 +316,11 @@ void theron_v1_champion_die(Theron_V1_World *world, int champ_slot) {
 }
 
 void theron_v1_creature_die(Theron_V1_World *world, int creature_id) {
-    (void)world; (void)creature_id;
+    /* Death is a lifecycle transition, not a loot assertion.  Reuse the
+     * source-bound retirement path so a real creature cannot remain active
+     * merely because the combat event reached this public death entry point.
+     * T900 drop publication remains separately gated below. */
+    (void)theron_v1_creature_kill(world, creature_id);
 }
 
 int theron_v1_drop_loot(Theron_V1_World *world, int creature_id, int x, int y) {
