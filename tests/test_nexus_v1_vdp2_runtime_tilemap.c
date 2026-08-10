@@ -84,6 +84,23 @@ int main(void)
         free(blob);
         return 1;
     }
+    /* The same frame must also be decodable as a raw capture-only consumer;
+     * this path intentionally does not grant source or host-composition
+     * admission. */
+    le16(vdp2_vram + 2, 4U);
+    le16(vdp2_regs + 0x3c, 0U);
+    le16(vdp2_regs + 0x44, 0U);
+    le16(vdp2_regs + 0x46, 0U);
+    nexus_fb_clear(&framebuffer);
+    if (!nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &framebuffer, blob, blob_size, 0U, 0, 0, 1, 1, 25, 35,
+            NULL, NULL, &receipt) || !receipt.valid || !receipt.capture_only ||
+        receipt.renderer_permitted || framebuffer.color_buffer[
+            35 * NEXUS_FB_W + 25] != 0x11U) {
+        fprintf(stderr, "FAIL: raw Saturn VDP2 tilemap capture decode\n");
+        free(blob);
+        return 1;
+    }
     free(blob);
     puts("test_nexus_v1_vdp2_runtime_tilemap: PASS");
     return 0;

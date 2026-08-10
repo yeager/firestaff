@@ -12,6 +12,12 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[1] << 8U) | p[0]);
 }
 
+static uint16_t read_vram16(const uint8_t *p)
+{
+    /* Raw Mednafen VDP2 payloads retain the host byte order of Saturn words. */
+    return read_le16(p);
+}
+
 static int vdp2_register_score(const uint8_t *registers, int little)
 {
     uint16_t tvmd = little ? read_le16(registers) : read_be16(registers);
@@ -261,4 +267,136 @@ int nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap(
         binding->transparent_index_zero_verified;
     return nexus_v1_vdp2_capture_composite_nbg1_tilemap(
         framebuffer, &input, out_receipt);
+}
+
+int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    int source_x, int source_y, int width, int height,
+    int destination_x, int destination_y,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_register_receipt,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_SaturnVdp2RegisterReceipt registers;
+    Nexus_V1_Vdp2TilemapCaptureReceipt receipt;
+    uint16_t pncn1;
+    uint16_t plsz;
+    uint16_t mpofn;
+    uint16_t map_a;
+    uint16_t map_b;
+    uint16_t map_offset;
+    int bpp;
+    int x;
+    int y;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&registers, 0, sizeof(registers));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_register_receipt) *out_register_receipt = registers;
+    if (out_receipt) *out_receipt = receipt;
+    if (!framebuffer || !capture_bytes ||
+        source_x < 0 || source_y < 0 || width <= 0 || height <= 0 ||
+        source_x + width > 512 || source_y + height > 512 ||
+        destination_x < 0 || destination_y < 0 ||
+        destination_x + width > NEXUS_FB_W ||
+        destination_y + height > NEXUS_FB_H ||
+        !nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
+        !frame.vdp2_registers ||
+        frame.vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        frame.vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        frame.vdp2_register_size < NEXUS_V1_VDP2_TILEMAP_REGISTERS_BYTES ||
+        !nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+            &frame, &registers) || !registers.valid ||
+        !registers.nbg1_enabled || registers.nbg1_bitmap_mode ||
+        registers.nbg1_16x16_character_mode ||
+        registers.nbg1_colour_code > 1) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    pncn1 = read_register16(frame.vdp2_registers, 0x32U);
+    plsz = read_register16(frame.vdp2_registers, 0x3aU);
+    mpofn = read_register16(frame.vdp2_registers, 0x3cU);
+    map_a = read_register16(frame.vdp2_registers, 0x44U) & 0x3fU;
+    map_b = read_register16(frame.vdp2_registers, 0x46U) & 0x3fU;
+    bpp = registers.nbg1_colour_code == 0 ? 4 : 8;
+    /* This is the smallest fully specified Mednafen TileFetcher lane:
+     * PNDSize=0, CharSize=0, PlaneSize=0 and identical A/B maps. */
+    if ((pncn1 & 0x8000U) != 0U || (plsz & 0x000cU) != 0U ||
+        map_a != map_b || map_a >= 0x20U ||
+        (((uint32_t)(map_a) << 13U) + 0x1000U) >
+            frame.vdp2_vram_size) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    map_offset = (mpofn >> 4U) & 7U;
+    receipt.valid = 1;
+    receipt.capture_only = 1;
+    receipt.layer_registers_verified = 1;
+    receipt.nbg1_tilemap_mode = 1;
+    receipt.pnd_size_two_words = 1;
+    receipt.colour_code_4_or_8bpp = 1;
+    receipt.original_saturn_capture_verified = 1;
+    receipt.bits_per_pixel = bpp;
+    receipt.destination_x = destination_x;
+    receipt.destination_y = destination_y;
+    receipt.map_columns = 64;
+    receipt.map_rows = 64;
+    for (x = 0; x < 256; ++x)
+        framebuffer->palette[x] = cram_to_rgba(frame.vdp2_cram + x * 2);
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            int tile_x = source_x + x;
+            int tile_y = source_y + y;
+            int map_index = ((tile_y >> 3) & 0x3f) * 64 +
+                ((tile_x >> 3) & 0x3f);
+            uint32_t map_address = (((uint32_t)map_offset << 6U) + map_a) *
+                0x2000U + (uint32_t)map_index * 4U;
+            uint16_t attr = read_vram16(frame.vdp2_vram + map_address);
+            uint16_t charno = read_vram16(frame.vdp2_vram + map_address + 2U);
+            int palno = attr & 0x7f;
+            int tile_bytes = bpp == 4 ? 32 : 64;
+            uint32_t char_address = (uint32_t)charno * (uint32_t)tile_bytes;
+            int px = tile_x & 7;
+            int py = tile_y & 7;
+            uint8_t index;
+            int palette_index;
+            int destination;
+            if (char_address + (uint32_t)tile_bytes > frame.vdp2_vram_size)
+                continue;
+            if ((attr & 0x4000U) != 0U) px = 7 - px;
+            if ((attr & 0x8000U) != 0U) py = 7 - py;
+            if (bpp == 4) {
+                uint8_t packed = frame.vdp2_vram[char_address +
+                    (uint32_t)py * 4U + (uint32_t)(px / 2)];
+                index = (uint8_t)((px & 1) == 0 ? packed >> 4 : packed & 0xf);
+                palette_index = palno * 16 + index;
+            } else {
+                index = frame.vdp2_vram[char_address + (uint32_t)py * 8U +
+                    (uint32_t)px];
+                palette_index = ((palno * 16) & ~255) + index;
+            }
+            destination = (destination_y + y) * NEXUS_FB_W +
+                destination_x + x;
+            if (index == 0U) {
+                ++receipt.transparent_pixels;
+            } else {
+                framebuffer->color_buffer[destination] = (uint8_t)palette_index;
+                ++receipt.written_pixels;
+            }
+        }
+    }
+    receipt.renderer_permitted = 0;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_register_receipt) *out_register_receipt = registers;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }

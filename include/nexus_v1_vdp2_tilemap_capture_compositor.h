@@ -42,6 +42,7 @@ typedef struct {
 
 typedef struct {
     int valid;
+    int capture_only;
     int layer_registers_verified;
     int nbg1_tilemap_mode;
     int pnd_size_two_words;
@@ -96,6 +97,19 @@ int nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap(
     const uint8_t *capture_bytes, size_t capture_byte_count,
     unsigned int frame_index,
     const Nexus_V1_Vdp2RuntimeTilemapBinding *binding,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt);
+
+/* Decode the bounded NBG1 4bpp/8x8/2-word tilemap lane directly from one
+ * authenticated raw frame. This is a capture consumer only: it does not
+ * bind the bytes to MENU.BPK, FONT256, HUD, viewport, or a host crop. */
+int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+    Nexus_Framebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    int source_x, int source_y, int width, int height,
+    int destination_x, int destination_y,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_register_receipt,
     Nexus_V1_Vdp2TilemapCaptureReceipt *out_receipt);
 
 #endif
