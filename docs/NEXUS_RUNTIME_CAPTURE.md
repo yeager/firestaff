@@ -422,6 +422,13 @@ draw-buffer byte, then VDP2 registers, VRAM and CRAM. This is intentionally a
 transport compatibility boundary only; generic Mednafen output still has no
 Nexus asset owner and therefore cannot pass semantic admission on its own.
 
+On 2026-08-10 a bounded J-BIOS/English-media source-trace attempt reached
+500,000 SH-2 RAM-source rows but timed out before producing a complete frame
+capture. After rejecting zero-filled RAM and unmapped ISO padding, the trace
+has `exact_iso_chunk_matches=0` and `retail_runtime_source_join=missing`.
+It is retained as a negative transport/provenance witness, not as menu
+evidence.
+
 `scripts/analyze_nexus_vdp1_command_window.py` can then inspect the bounded
 record window ending at the captured `COPR`. It reports raw command words and
 requires an observed END record when requested. Its output is still a state

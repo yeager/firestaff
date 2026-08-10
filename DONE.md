@@ -13237,3 +13237,6 @@ and production source-combat tests.
   `test_nexus_v1_vdp2_runtime_tilemap`,
   `test_nexus_v1_vdp1_capture_compositor` och
   `test_nexus_v1_vdp1_dgn_material_resolver` passerar.
+- ✅ Source-traceanalysatorn avvisar nu nollfylld RAM och omappad ISO-padding;
+  500 000-raders menyförsök ger korrekt `retail_runtime_source_join=missing`
+  i stället för ett falskt retail-ägarskap.

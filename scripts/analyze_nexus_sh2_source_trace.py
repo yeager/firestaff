@@ -125,7 +125,10 @@ def main() -> int:
     equal_values = sum(row[1] == row[3] for row in rows)
     for index, chunk in enumerate(chunks(rows)):
         blob = b"".join(row[1].to_bytes(4, "big") for row in chunk)
-        if len(blob) < 32:
+        # Zero-filled RAM and disc padding are not a source-owner witness.
+        # They can produce arbitrarily long byte matches at the end of an ISO
+        # image, so reject them before searching the retail image.
+        if len(blob) < 32 or not any(blob):
             continue
         offset = iso_bytes.find(blob)
         if offset < 0:
@@ -137,6 +140,10 @@ def main() -> int:
                 owner = name
                 relative = offset - start
                 break
+        # System-area/padding matches are not file identity. Keep the trace
+        # observation, but do not count an unmapped offset as provenance.
+        if owner == "UNMAPPED":
+            continue
         if args.require_destination_range is not None:
             required_start, required_end = args.require_destination_range
             chunk_start = chunk[0][0]
@@ -176,6 +183,9 @@ def main() -> int:
     if args.require_destination_range is not None:
         start, end = args.require_destination_range
         print(f"required_destination_source_chunk=verified:0x{start:08x}-0x{end:08x}")
+    if not matched:
+        print("retail_runtime_source_join=missing")
+        return 1
     print("retail_runtime_source_join=verified")
     print("consumer_semantics=blocked")
     return 0

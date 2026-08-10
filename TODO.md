@@ -4908,6 +4908,12 @@ authenticated BPK). The remaining work is a Saturn executable or capture
 - ⏳ Mednafen-reviewkandidaten på extern disk fångar nu VDP1/VDP2-råstate med
   neutrala markörer. Nästa steg är maintainer-granskning av inställnings-
   gränssnittet; Firestaffs asset-/consumer-gates ska förbli separata.
+
+# Nexus: snabbare uppstarts-/meny-source-capture
+
+- ⏳ Den fulla SH-2-source-tracen är för tung vid skip 10500 och måste köras
+  med ett tidigare, verifierat input-/framefönster eller snävare destination.
+  Inget menyägarskap får antas från timeout-spåren.
 # Theron: bound category-4 source group materialization
 
 The static source-monster bridge now uses the authenticated four-health-word
