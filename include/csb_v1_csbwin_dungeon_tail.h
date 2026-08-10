@@ -38,7 +38,8 @@ typedef enum {
     CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_PREFIX = -5,
     CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT = -6,
     CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_CHECKSUM = -7,
-    CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TEXT_SIZE = -8
+    CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TEXT_SIZE = -8,
+    CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_IO = -9
 } CSB_V1_CSBWinDungeonTailResult;
 
 typedef struct {
@@ -301,6 +302,25 @@ int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
     const CSB_V1_CSBWin512BodyReport *body,
     const uint8_t *source_tail, size_t source_tail_size,
     CSB_V1_CSBWinLegacyResumePrepare *out);
+
+/* Read one complete, legacy (no Extended Features preamble) CSBWin save and
+ * prepare its private dungeon plus scalar resume receipt in one read-only
+ * transaction.  This is deliberately not a runtime loader: neither the
+ * global dungeon context nor a RuntimeProfile is inspected or changed.
+ *
+ * `max_size == 0` selects the conservative 4 MiB artifact limit used by the
+ * CSBWin runtime reader.  On failure both outputs are unchanged.  On success
+ * the caller owns `*out_candidate` and must discard it.  The adapter is the
+ * last safe bridge before a future all-or-nothing runtime transaction; that
+ * transaction must still adopt GAMEBLOCK2, champions, ITEM16, timers and
+ * this candidate together.
+ *
+ * Source: CSBWin SaveGame.cpp ReadGame():1707-1906 and
+ * ReadDatabases():2512-2896. */
+int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume_file(
+    const char *path, size_t max_size,
+    CSB_V1_CSBWinLegacyDungeonCandidate **out_candidate,
+    CSB_V1_CSBWinLegacyResumePrepare *out_receipt);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
 

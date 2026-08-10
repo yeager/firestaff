@@ -91,8 +91,10 @@ static void check_staged_real_save(void)
     CSB_V1_DungeonData dungeon;
     CSB_V1_DungeonData rejected;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
+    CSB_V1_CSBWinLegacyDungeonCandidate *file_candidate = NULL;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     CSB_V1_CSBWinLegacyResumePrepare resume;
+    CSB_V1_CSBWinLegacyResumePrepare file_resume;
     const CSB_V1_DungeonData *current_before = csb_v1_dungeon_get_current();
     uint16_t *item16_indices = NULL;
     uint8_t *before = NULL;
@@ -122,6 +124,17 @@ static void check_staged_real_save(void)
     }
     CHECK(fread(bytes, 1u, (size_t)length, file) == (size_t)length);
     fclose(file);
+    memset(&file_resume, 0, sizeof(file_resume));
+    CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_resume_file(
+              path, 0u, &file_candidate, &file_resume) ==
+              CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          file_candidate != NULL && file_resume.valid &&
+          file_resume.candidate_identity.valid &&
+          file_resume.candidate_identity.level_count == 11u &&
+          csb_v1_dungeon_get_current() == current_before &&
+          csb_v1_dungeon_get_current_mutable() == current_before);
+    csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(file_candidate);
+    file_candidate = NULL;
     memset(&body, 0, sizeof(body));
     CHECK(csb_v1_csbwin_512_verify_save_body(bytes, (size_t)length, 10u, &body) ==
           CSB_V1_CSBWIN_512_OK);
@@ -279,14 +292,28 @@ int main(void)
     CSB_V1_CSBWinDungeonTailDatabaseLayout unchanged;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate =
         (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
+    CSB_V1_CSBWinLegacyDungeonCandidate *file_candidate =
+        (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity_before;
+    CSB_V1_CSBWinLegacyResumePrepare file_receipt;
+    CSB_V1_CSBWinLegacyResumePrepare file_receipt_before;
     const size_t levels = 2u;
     const size_t descriptors = CSB_V1_CSBWIN_DUNGEON_INDEX_BYTES +
         levels * CSB_V1_CSBWIN_LEVEL_DESC_BYTES;
     const size_t indirect_text_offset = descriptors + 12u + 10u;
     size_t database_tail_size;
     size_t legacy_database_tail_size;
+
+    memset(&file_receipt, 0xa5, sizeof(file_receipt));
+    file_receipt_before = file_receipt;
+    CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_resume_file(
+              "missing-csbgame2.dat", 0u, &file_candidate,
+              &file_receipt) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_IO &&
+          file_candidate ==
+              (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u &&
+          memcmp(&file_receipt, &file_receipt_before,
+                 sizeof(file_receipt)) == 0);
 
     memset(tail, 0, sizeof(tail));
     put_be16(tail + 0u, 13u);

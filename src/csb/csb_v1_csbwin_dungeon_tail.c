@@ -1,5 +1,6 @@
 #include "csb_v1_csbwin_dungeon_tail.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -742,6 +743,87 @@ int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
     receipt.timer_queue_raw_size = body->timer_queue_raw_size;
     receipt.timer_queue_raw_fnv1a = body->timer_queue_raw_fnv1a;
     *out = receipt;
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
+int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume_file(
+    const char *path, size_t max_size,
+    CSB_V1_CSBWinLegacyDungeonCandidate **out_candidate,
+    CSB_V1_CSBWinLegacyResumePrepare *out_receipt)
+{
+    enum { DEFAULT_MAX_BYTES = 4 * 1024 * 1024 };
+    FILE *file;
+    long file_size_long;
+    size_t file_size;
+    uint8_t *bytes = NULL;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedTailReport extended_tail;
+    CSB_V1_CSBWin512BodyReport body;
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
+    CSB_V1_CSBWinLegacyResumePrepare receipt;
+    int rc;
+
+    if (!path || !path[0] || !out_candidate || !out_receipt) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT;
+    }
+    if (max_size == 0u) max_size = (size_t)DEFAULT_MAX_BYTES;
+    file = fopen(path, "rb");
+    if (!file) return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_IO;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size_long = ftell(file)) < 0 ||
+        (file_size = (size_t)file_size_long) > max_size ||
+        file_size == 0u || fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TRUNCATED;
+    }
+    bytes = (uint8_t *)malloc(file_size);
+    if (!bytes) {
+        fclose(file);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_OVERFLOW;
+    }
+    if (fread(bytes, 1u, file_size, file) != file_size) {
+        fclose(file);
+        free(bytes);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TRUNCATED;
+    }
+    fclose(file);
+
+    memset(&features, 0, sizeof(features));
+    memset(&dsa, 0, sizeof(dsa));
+    memset(&extended_tail, 0, sizeof(extended_tail));
+    /* This adapter is specifically for the old CSBGAME2-style save body.
+     * Any extended header has its own DSA/global ownership and must wait for
+     * a separate complete transaction rather than being treated as legacy. */
+    if (csb_v1_csbwin_512_inspect_extended_tail(
+            bytes, file_size, &extended_tail, &dsa, &features) !=
+        CSB_V1_CSBWIN_EXTENDED_ABSENT) {
+        free(bytes);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    memset(&body, 0, sizeof(body));
+    if (csb_v1_csbwin_512_verify_save_body_legacy_layouts(
+            bytes, file_size, &body) != CSB_V1_CSBWIN_512_OK ||
+        csb_v1_csbwin_512_validate_appended_expool_tail(&body) ||
+        body.appended_size == 0u || body.appended_offset > file_size ||
+        body.appended_size > file_size - body.appended_offset) {
+        free(bytes);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    rc = csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+        bytes + body.appended_offset, body.appended_size, &candidate);
+    if (rc == CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        rc = csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+            candidate, &body, bytes + body.appended_offset,
+            body.appended_size, &receipt);
+    }
+    free(bytes);
+    if (rc != CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
+        return rc;
+    }
+    *out_candidate = candidate;
+    *out_receipt = receipt;
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
 }
 
