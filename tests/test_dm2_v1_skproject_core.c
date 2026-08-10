@@ -6217,6 +6217,7 @@ typedef struct {
     uint8_t record[16];
     DM2_V1_SkprojectCreatureAISpec spec;
     uint16_t pos5x5;
+    uint8_t rotation_param;
     int q098d_fail;
 } Cycle14CreatureDb;
 
@@ -6250,7 +6251,7 @@ static uint16_t cycle14_pos5x5_fn(
     Cycle14CreatureDb *db = (Cycle14CreatureDb *)user;
     (void)record;
     (void)record_size;
-    (void)rotation_param;
+    db->rotation_param = rotation_param;
     return db->pos5x5;
 }
 
@@ -6329,8 +6330,11 @@ static void test_skwin_core_symbol_batch_cycle14(void)
     cdb.creature_y = 20;
     cdb.creature = 0x9004;
     cdb.record[4] = 0x05u; /* creature type */
-    cdb.record[14] = 0x40u; /* word@0xe = 0x40 -> >>6 = 1 */
-    cdb.record[15] = 0x00u;
+    /* `lrshift6e` is the source's 16-bit <<6 >>14, i.e. bits 8..9.
+       0x0400 is a real-form creature word that must select row 0 rather
+       than the erroneous unbounded plain-`>>6` index 16. */
+    cdb.record[14] = 0x00u;
+    cdb.record[15] = 0x04u;
     cdb.spec.word34 = 0x0100u; /* byte@0x23 = 1 -> threshold table62e0[1] */
     cdb.pos5x5 = 13u; /* dy = 13 - 12 -> dist2 = 1 < 4 */
     x = 10;
@@ -6352,8 +6356,8 @@ static void test_skwin_core_symbol_batch_cycle14(void)
               q03cf.valid && q03cf.found && handle32 == 0x9004u &&
               x == 10 && y == 20 && q03cf.range == 12 &&
               q03cf.distance2 == 1 && q03cf.threshold == 4 &&
-              q03cf.ai_spec_byte23 == 1,
-          "DM2_query_1c9a_03cf returns the nearest creature below threshold");
+              q03cf.ai_spec_byte23 == 1 && cdb.rotation_param == 0u,
+          "DM2_query_1c9a_03cf extracts the source creature-facing bitfield");
     x = 10;
     y = 20;
     cdb.creature = -1; /* no creature anywhere */

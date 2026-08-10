@@ -13964,7 +13964,8 @@ int dm2_v1_skproject_query_0cee_2e09(
    through table1d62b0 (row 2*direction + step) or table1d62d0 (row step).
    For each cell DM2_GET_CREATURE_AT supplies the creature; the AI spec byte
    at 0x23 (signed) indexes table1d62e0 for the distance threshold, the
-   record word at 0xe >> 6 indexes table1d62e8, and
+   record word at 0xe is extracted with the source's `<<6 >>14` bitfield
+   operation (bits 8..9) before indexing table1d62e8, and
    DM2_QUERY_CREATURE_5x5_POS plus a second DM2_query_098d_000f yield the
    creature cell.  When the squared distance is below the threshold the
    original writes the current cell back through the x/y pointers and
@@ -14102,8 +14103,12 @@ int dm2_v1_skproject_query_1c9a_03cf(
                 return 0;
             }
             threshold = table1d62e0[ai_byte23];
+            /* SKULLWIN/emu.cpp:88 `lrshift6e`: the original 16-bit
+               `<< 6 >> 14` extracts bits 8..9. It is not a plain >> 6.
+               SKWINDOS/src/util.cpp:289-295 independently preserves the
+               two shifts in `ulrshift(word, 6, 14)`. */
             rot_index = (uint16_t)((uint16_t)(record[14] |
-                                              ((uint16_t)record[15] << 8)) >> 6);
+                                              ((uint16_t)record[15] << 8)) >> 8) & 0x3u;
             if (rot_index >= table1d62e8_size) {
                 receipt.blocked_table_bounds = 1;
                 *out_handle = 0xffffu;
@@ -16832,7 +16837,7 @@ int dm2_v1_skproject_proceed_xact_56(
         return 0;
     }
 
-    facing = (uint16_t)(ctx->creature_word_e >> 6);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
     receipt.facing = facing;
     ok = ctx->go_there_fn(0x80u, ctx->creature_x, ctx->creature_y, -1, -1,
                           facing, ctx->user);
@@ -16866,7 +16871,7 @@ int dm2_v1_skproject_proceed_xact_57(
     }
 
     turn = (dm2_v1_skproject_randbit(ctx->randdat) != 0) ? 1 : -1;
-    facing = (uint16_t)(ctx->creature_word_e >> 6);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
     first = (uint16_t)((turn + (int16_t)facing) & 0x3);
     second = (uint16_t)(((int16_t)facing - turn) & 0x3);
     receipt.turn = turn;
@@ -17112,7 +17117,8 @@ int dm2_v1_skproject_proceed_xact_62(
 
             /* v1e0574 == 2: check the creature ahead. */
             {
-                uint16_t facing = (uint16_t)(ctx->creature_word_e >> 6);
+                uint16_t facing =
+                    (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
                 int32_t creature = ctx->creature_at_fn(
                     (int16_t)(ctx->creature_x +
                               dm2_v1_skproject_step_x[facing & 0x3]),
@@ -17171,7 +17177,7 @@ int dm2_v1_skproject_proceed_xact_63(
     }
 
     slot = (uint8_t)ctx->v1e0574;
-    facing = (uint16_t)(ctx->creature_word_e >> 6);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
     if (slot != 0xffu)
         slot = (uint8_t)((slot + facing + 2u) & 0x3u);
     receipt.slot = slot;
@@ -17247,7 +17253,7 @@ int dm2_v1_skproject_proceed_xact_64(
         return -3;
     }
 
-    facing = (uint16_t)(ctx->creature_word_e >> 6);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
     receipt.facing = facing;
     ctx->cmd2165_fn(0x81u, ctx->creature_x, ctx->creature_y, -1, -1,
                     (int16_t)facing, (int16_t)item_type, ctx->user);
@@ -20103,7 +20109,7 @@ int dm2_v1_skproject_proceed_xact_65(
     /* s350.creatures->w_0c.set(-1) — receipt notes this side effect. */
     receipt.result = -3;
 
-    facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
     ahead_x = (int16_t)(2 * dm2_v1_skproject_step_x[facing] +
                          (int16_t)ctx->creature_x);
     ahead_y = (int16_t)(2 * dm2_v1_skproject_step_y[facing] +
@@ -20172,7 +20178,7 @@ int dm2_v1_skproject_14cd_2662(
         return 0;
     }
 
-    facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
     effective_dir = adjust;
     if (adjust != 0xffu) {
         effective_dir = (uint8_t)((adjust + facing + 2u) & 0x3u);
@@ -20377,7 +20383,7 @@ int dm2_v1_skproject_proceed_xact_67(
     receipt.out_w10 = 0;
     receipt.out_b1a = 29;
 
-    facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+    facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
 
     handler = dm2_v1_skproject_14cd_2662(2, ctx, &r2662);
     receipt.handler_ahead = (handler != 0) ? 1 : 0;
@@ -20578,7 +20584,7 @@ int dm2_v1_skproject_proceed_xact_68(
 
     int8_t result = -3;
     /* skproject c_ai.cpp:757  lrshift6e(s350.v1e054e->w_0e) */
-    int16_t vw_14 = (int16_t)((ctx->creature_word_e >> 6) & 0xf);
+    int16_t vw_14 = (int16_t)((ctx->creature_word_e >> 8) & 0x3u);
     receipt.facing_dir = vw_14;
 
     /* Check handler at facing+2 direction via 14cd_2662 */
@@ -20691,7 +20697,7 @@ int dm2_v1_skproject_proceed_xact_69(
         return 0;
     }
 
-    int16_t rg4 = (int16_t)((ctx->creature_word_e >> 6) & 0xf);
+    int16_t rg4 = (int16_t)((ctx->creature_word_e >> 8) & 0x3u);
     /* Default direction tables if not provided */
     static const int16_t def_27fc[4] = {0, 1, 0, -1};
     static const int16_t def_2804[4] = {-1, 0, 1, 0};
@@ -20744,12 +20750,12 @@ int dm2_v1_skproject_proceed_xact_70(
     uint16_t w18 = w18x | w18y;
 
     /* Direction from creature_word_e */
-    uint16_t dir = (uint16_t)(((ctx->creature_word_e >> 6) & 0xf) + 2) & 3;
+    uint16_t dir = (uint16_t)(((ctx->creature_word_e >> 8) & 0x3u) + 2) & 3;
     receipt.out_b1c = (uint8_t)dir;
     receipt.out_b1e = (uint8_t)vw_00;
 
     /* Offset by facing direction */
-    int16_t face = (int16_t)((ctx->creature_word_e >> 6) & 0xf);
+    int16_t face = (int16_t)((ctx->creature_word_e >> 8) & 0x3u);
     int16_t rg41 = (int16_t)(((w18 & 0x1f) + table1d27fc[face]) & 0x1f);
     w18 = (w18 & ~0x1fu) | (uint16_t)rg41;
     uint16_t rg42 = (uint16_t)(((ctx->creature_word_e << 6) >> 11) & 0x1f);
@@ -21054,7 +21060,7 @@ int dm2_v1_skproject_proceed_xact_74(
             return -2;
         }
         /* Not at target: compute vector direction */
-        int16_t face = (int16_t)((ctx->creature_word_e >> 6) & 0xf);
+        int16_t face = (int16_t)((ctx->creature_word_e >> 8) & 0x3u);
         (void)face;
         if (flag || (randbit_fn && randbit_fn(ctx->user) == 0)) {
             /* Turn toward target via 19f0_0559 */
@@ -21536,7 +21542,7 @@ int dm2_v1_skproject_proceed_xact_80(
 
     /* Compute adjusted direction. */
     {
-        uint16_t facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+        uint16_t facing = (uint16_t)((ctx->creature_word_e >> 8) & 0x3u);
         uint16_t adj = (uint16_t)((facing + (uint16_t)ctx->v1e0572) & 0x3u);
         receipt.adjusted_dir = adj;
     }

@@ -1,3 +1,14 @@
+# DM2: CAII-riktningsbitfält från originalet (2026-08-10)
+
+- ✅ `DM2_query_1c9a_03cf` och de källbundna CAII-rutterna extraherar nu
+  `c_creature::w_0e` med originalets 16-bitars `<<6 >>14`-operation, alltså
+  bit 8–9. Den tidigare direkta `>>6`-tolkningen kunde få ett verkligt
+  `0x0400`-värde att indexera utanför fyrposterstabellen `table1d62e8`.
+- ✅ Källkontroll mot SKProject `SKULLWIN/c_querydb.cpp:3769`,
+  `SKULLWIN/emu.cpp:88` och `SKWINDOS/src/util.cpp:289-295`; regressionen
+  använder just den verkliga `0x0400`-formen. `test_dm2_v1_skproject_core`,
+  realdata-startprofilen och produktionsgrinden passerar.
+
 # DM2: begränsad creature-delete är produktspärrad (2026-08-10)
 
 - ✅ Den äldre `DELETE_CREATURE_RECORD`-studien är nu uttryckligen test- och
