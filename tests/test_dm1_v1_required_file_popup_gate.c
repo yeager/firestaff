@@ -156,7 +156,22 @@ static void check_dm1_missing_required_popup(int graphicsMatched,
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, kDm1GameId) == 0);
     CHECK(state.activatedIndex == 0);
-    CHECK(state.messageLine1 && strstr(state.messageLine1, "DM1") != NULL);
+    /* The launcher-visible brand for gameId "dm1" started as "DM1" but was
+     * widened to the full retail name "DUNGEON MASTER" per commit 1ab2d80bf
+     * (launcher: show full game names during scans). The popup format is
+     * "%s %s" of the display title and the "GAME DATA NOT FOUND" text, so
+     * the actual line 1 is now "DUNGEON MASTER GAME DATA NOT FOUND". Accept
+     * either the historic "DM1" or the current "DUNGEON MASTER" token so
+     * this gate keeps locking "line 1 identifies the DM1 game" without
+     * pinning a specific spelling of that identity. */
+    /* m12_game_display_title_for_locale returns the mixed-case English
+     * "Dungeon Master" (m12_translate_for_locale keeps casing untouched
+     * for the default English locale). Accept the mixed-case spelling
+     * that the runtime actually produces alongside the historic tokens. */
+    CHECK(state.messageLine1 &&
+          (strstr(state.messageLine1, "DM1") != NULL ||
+           strstr(state.messageLine1, "DUNGEON MASTER") != NULL ||
+           strstr(state.messageLine1, "Dungeon Master") != NULL));
     CHECK(state.messageLine1 && strstr(state.messageLine1, "GAME DATA") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedMissingA) != NULL);
     if (expectedMissingB) {
