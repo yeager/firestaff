@@ -7,11 +7,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - The external Mednafen capture patch now applies the deterministic START
   injection at `SMPC_StartFrame`, before Saturn port polling, rather than
   after `IODevice::UpdateInput` or once per mid-frame input update.
+- The injected Saturn pad bit now follows Mednafen's active-high host-port
+  representation: the button mask is set during the press window and cleared
+  at its end. This removes a real polarity defect from the capture harness;
+  it does not manufacture a menu transition.
 - The complete patch applies cleanly to the pinned Mednafen source and the
   external Saturn-only build links with the verified M68K object.
-- A 1,200-frame J-BIOS 1.01 / English retail-disc run passes raw-envelope
-  validation and observes 1,033 non-idle VDP1 states, but its raw witness is
-  still semantically identical to the no-menu run. No MENU.BPK/FONT256 or
+- A 1,800-frame J-BIOS 1.01 / English retail-disc run passes raw-envelope
+  validation and observes VDP1 activity, but frames 300, 900 and 1,500 retain
+  the same `NBG1` bitmap state and one-draw VDP1 chain. The raw witness still
+  has no source-owned startup-to-menu transition, so no MENU.BPK/FONT256 or
   startup-to-menu admission is claimed.
 
 ## 2026-08-10 - Nexus VDP2 tilemap register-order correction

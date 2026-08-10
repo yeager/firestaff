@@ -116,9 +116,9 @@
 + {
 +  const uint64_t end = FirestaffPressStartFrame + FirestaffPressStartLength;
 +  if(FirestaffInputFrame >= FirestaffPressStartFrame && FirestaffInputFrame < end)
-+   VirtualPortsDPtr[0][0] &= (uint8)~FirestaffPressButtonMask;
-+  else if(FirestaffInputFrame == end)
 +   VirtualPortsDPtr[0][0] |= (uint8)FirestaffPressButtonMask;
++  else if(FirestaffInputFrame == end)
++   VirtualPortsDPtr[0][0] &= (uint8)~FirestaffPressButtonMask;
 + }
 + FirestaffInputFrame++;
 +}
