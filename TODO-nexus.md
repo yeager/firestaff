@@ -508,3 +508,13 @@ neither word receives task, target, callback, or dispatch semantics.
     men ingen exakt FONT256 Page/CG/Palette- eller MENU.BPK/PRS3-bindning.
     Menyägare, FONT256-bindning,
     karta och autentiserad startup→meny-identitet återstår.
+## Nexus VDP1 source-consumer follow-up
+
+The authentic source join is now closed for one startup/menu VDP1 lane:
+`TM.BIN+0x17000` fills SH-2 high RAM `0x06027000..0x0602b000`, and the
+VDP1 bulk writer at `0x060135f4` consumes a buffer within that range. The
+remaining production gate is narrower and explicit: identify the exact
+`TM.BIN` routine's VDP1 command/pixel/palette semantics, then prove the
+corresponding MENU.BPK/PRS3 and FONT256 paths where they are actually used.
+Do not promote the host renderer or substitute MENU.BPK merely from this
+source join.

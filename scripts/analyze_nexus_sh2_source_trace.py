@@ -100,6 +100,16 @@ def main() -> int:
     parser.add_argument("iso", type=Path)
     parser.add_argument("trace", type=Path)
     parser.add_argument("--require-member", action="append", default=[])
+    parser.add_argument(
+        "--require-destination-range",
+        type=lambda value: tuple(int(part, 0) for part in value.split(":", 1)),
+        help="require one exact source chunk covering START:END (exclusive)",
+    )
+    parser.add_argument(
+        "--require-pc",
+        type=lambda value: int(value, 0),
+        help="require the source writer PC on the destination-range chunk",
+    )
     args = parser.parse_args()
     try:
         rows = read_rows(args.trace)
@@ -111,6 +121,7 @@ def main() -> int:
 
     matched: collections.Counter[str] = collections.Counter()
     exact_matches = 0
+    required_chunk_verified = args.require_destination_range is None
     equal_values = sum(row[1] == row[3] for row in rows)
     for index, chunk in enumerate(chunks(rows)):
         blob = b"".join(row[1].to_bytes(4, "big") for row in chunk)
@@ -126,6 +137,19 @@ def main() -> int:
                 owner = name
                 relative = offset - start
                 break
+        if args.require_destination_range is not None:
+            required_start, required_end = args.require_destination_range
+            chunk_start = chunk[0][0]
+            chunk_end = chunk[-1][0] + 4
+            pc_matches = args.require_pc is None or all(
+                row[4] == args.require_pc for row in chunk
+            )
+            required_names = {name.upper() for name in args.require_member}
+            owner_matches = (not required_names or
+                             owner.rsplit("/", 1)[-1].upper() in required_names)
+            if (chunk_start <= required_start and chunk_end >= required_end and
+                    pc_matches and owner_matches):
+                required_chunk_verified = True
         matched[owner] += 1
         exact_matches += 1
         print(
@@ -146,6 +170,12 @@ def main() -> int:
     if missing:
         print("required_members_missing=" + ",".join(missing))
         return 1
+    if not required_chunk_verified:
+        print("required_destination_source_chunk=missing")
+        return 1
+    if args.require_destination_range is not None:
+        start, end = args.require_destination_range
+        print(f"required_destination_source_chunk=verified:0x{start:08x}-0x{end:08x}")
     print("retail_runtime_source_join=verified")
     print("consumer_semantics=blocked")
     return 0

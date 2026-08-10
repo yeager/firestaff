@@ -5164,3 +5164,16 @@ layout och frame-envelope passerar; jämförelse mot hashbundna MENU.BPK,
 FONT256.S2D, TITLE och DGN lämnar startup→meny-ägarskapet obundet. Resultatet
 är sparat som negativt proveniensbevis och öppnar ingen placeholder- eller
 fallback-rendering.
+# ✅ 2026-08-10 Nexus VDP1 source-buffer provenance join
+
+En autentiserad J-BIOS 1.01/English-Merged Mednafen-körning kopplar nu en
+sammanhängande 0x4000-byte SH-2 hög-RAM-skrivkedja från PC `0x00205f18` till
+`TM.BIN`: destinationsintervallet `0x06027000..0x0602b000` matchar exakt
+ISO-medlemmen `TM.BIN` vid medlems-offset `0x17000`. VDP1:s senare bulk-rutin
+vid PC `0x060135f4` använder samma buffert; dess `R0=0x06027874` ligger
+`0x874` byte in i den verifierade kedjan och motsvarar därmed `TM.BIN+0x17874`.
+Beviset är byteexakt och hashbundet till den autentiska ISO:n. Det tilldelar
+inte ännu `TM.BIN` till MENU.BPK/PRS3, FONT256, CLUT eller en färdig
+produktionsrenderare. Verifiering: `scripts/analyze_nexus_sh2_source_trace.py`
+med `--require-member TM.BIN --require-destination-range
+0x06027000:0x0602b000 --require-pc 0x00205f18`.
