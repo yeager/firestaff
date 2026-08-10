@@ -306,6 +306,38 @@ evidence only. It must not be converted into RNG, creature AI, attack, loot,
 generator timing or stat semantics, and it is not merged with the `.mc0`
 save-state run above.
 
+## 2026-08-10 — same-session scripted dungeon-state replay
+
+The operator-created Mednafen state was replayed in a fresh instrumented
+process against the authenticated US raw BIN and System Card. The replay used
+one execution and this checked input plan:
+
+```text
+i@60:5,up@120:10,run@240:2,i@360:5,ii@480:5,left@600:10,right@720:10
+```
+
+The resulting receipt is retained outside the repository at
+`/Volumes/Extern-disk/theron-dungeon-capture-20260810/` and binds:
+
+```text
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+autoload_state_md5=f17f377df210b4a3ae904a13fb85a7f0
+scripted_pce_input_events=7
+input_transactions=10764
+spawn_register_samples=2048
+authenticated_cd_ram_receipts=0
+spawn_consumer_reads=0
+rng_consumer_samples=0
+transition=missing
+```
+
+This is a negative same-session result: the replay did not reach a game-owned
+CD-sector consumer or a monster/object consumer. The 2,048 register samples
+are execution-window evidence only and cannot authorize RNG, spawn, creature
+AI, attack, damage, loot, generator, T700 or T900 semantics. The capture is not
+joined with another run and no BIOS, BIN/CUE member or state file is tracked.
+
 ## 2026-08-09 extended `.mc0` RNG window
 
 The external-disk replay was repeated with the same hash-verified US Track 02,

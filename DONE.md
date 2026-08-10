@@ -1,3 +1,12 @@
+# Theron: samma-session dungeon-replay verifierad utan semantisk öppning (2026-08-10)
+- ✅ En autentiserad US-körning från operatorns Mednafen-state replayade sju
+  scripted input-händelser i samma process och bevarade 2 048 disassemblybundna
+  registerfönster. Körningen hade 0 CD→RAM-receipts, 0 spawn-consumerläsningar
+  och 0 RNG-consumerprover; resultatet är därför ett reproducerbart negativt
+  capture-bevis och öppnar inte RNG, creature-AI, attack, loot, generator,
+  T700, T900 eller ljudhändelser. Råartefakterna ligger kvar endast på extern
+  disk och inga speldata eller BIOS-filer har ändrats i repot.
+
 # Theron: produktionsljud hålls explicit fail-closed (2026-08-10)
 - ✅ Produktionskontraktet dokumenterar nu att ett giltigt ljud-ID inte är en
   autentiserad sample- eller händelsebindning. Alla 26 enumvärden verifieras i
