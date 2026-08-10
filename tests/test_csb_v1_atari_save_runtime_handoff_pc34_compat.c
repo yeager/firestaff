@@ -122,6 +122,14 @@ int main(void)
         }
         csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
             &staged_candidate);
+        if (!csb_v1_runtime_can_load_resume_path(corpus_path) ||
+            csb_v1_dungeon_get_current() != runtime.dungeon_handle ||
+            runtime.current_level != info.party_map_index ||
+            runtime.game_time != info.game_time) {
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
         /* A byte-identical copy is still not F0435's selected source slot.
          * This verifies that write-back remains bound to the authenticated
          * Amiga/Atari resume path, rather than accepting an arbitrary

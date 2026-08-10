@@ -237,6 +237,21 @@ static int csb_v1_runtime_prepare_original_atari_save_file(
     return result;
 }
 
+static int csb_v1_runtime_can_prepare_original_atari_save_file(
+    const char *path)
+{
+    CSB_V1_AtariSaveHandoffCandidate candidate;
+    uint32_t fnv1a;
+    int result;
+
+    memset(&candidate, 0, sizeof(candidate));
+    result = csb_v1_runtime_prepare_original_atari_save_file(
+        path, &candidate, &fnv1a);
+    csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
+        &candidate);
+    return result == CSB_V1_LOAD_OK;
+}
+
 /* ReDMCSB FILENAME.C F0745 replaces the multilingual Amiga '~' filename
  * marker with nothing, F or G before LOADSAVE.C F0433/F0435 rotates the
  * selected source slot. CSBGAMEF/G.DAT are therefore original save names,
@@ -2230,14 +2245,17 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
         image.party_dir >= 0 && image.party_dir <= 3) {
         return 1;
     }
-    if (csb_v1_runtime_is_original_atari_save_file(path)) {
+    /* Resume must use the same full F0435 admission as the actual load.
+     * A GAMEBLOCK header alone is not enough: its dungeon and party pose may
+     * still be invalid, in which case advertising Resume would be false. */
+    if (csb_v1_runtime_can_prepare_original_atari_save_file(path)) {
         return 1;
     }
     {
         char backup_path[1024];
         if (csb_v1_runtime_original_atari_backup_path(path, backup_path,
                                                        sizeof(backup_path)) &&
-            csb_v1_runtime_is_original_atari_save_file(backup_path)) {
+            csb_v1_runtime_can_prepare_original_atari_save_file(backup_path)) {
             return 1;
         }
     }
