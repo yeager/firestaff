@@ -401,6 +401,9 @@ int dm2_v1_new_game_apply_source_item_bonuses(
 
     memset(&receipt, 0, sizeof(receipt));
     memset(&context, 0, sizeof(context));
+    receipt.failed_hero_index = -2;
+    receipt.failed_item_slot = -2;
+    receipt.failed_record_word = OBJECT_NULL_WORD;
     receipt.source_hash = 2166136261u;
     if (!party || !pools || !pools->valid || !loader ||
         party->heros_in_party <= 0 || party->heros_in_party > DM2_MAX_HEROES) {
@@ -425,6 +428,9 @@ int dm2_v1_new_game_apply_source_item_bonuses(
             if (item == OBJECT_END_WORD ||
                 !dm2_v1_sksave_item_bonus_classify(&context, item, NULL, NULL)) {
                 receipt.blocked = 1;
+                receipt.failed_hero_index = (int16_t)hero_index;
+                receipt.failed_item_slot = (int16_t)slot;
+                receipt.failed_record_word = item;
                 if (out_receipt) *out_receipt = receipt;
                 return 0;
             }
@@ -443,6 +449,9 @@ int dm2_v1_new_game_apply_source_item_bonuses(
             dm2_v1_PROCESS_ITEM_BONUS(&input, &callbacks, &bonus);
             if (context.invalid || !bonus.valid || bonus.blocked) {
                 receipt.blocked = 1;
+                receipt.failed_hero_index = (int16_t)hero_index;
+                receipt.failed_item_slot = (int16_t)slot;
+                receipt.failed_record_word = item;
                 if (out_receipt) *out_receipt = receipt;
                 return 0;
             }
@@ -461,6 +470,7 @@ int dm2_v1_new_game_apply_source_item_bonuses(
 
 int dm2_v1_sksave_process_source_item_bonus_roots(
     DM2_V1_Hero *heroes, size_t hero_capacity, uint16_t hero_count,
+    int16_t leader_hero_index,
     uint16_t *leader_hand_root, const DM2_V1_RecordPoolSet *pools,
     const DM2_V1_AssetLoader *loader,
     DM2_V1_SksaveItemBonusReceipt *out_receipt)
@@ -472,11 +482,15 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
 
     memset(&receipt, 0, sizeof(receipt));
     memset(&context, 0, sizeof(context));
+    receipt.failed_hero_index = -2;
+    receipt.failed_item_slot = -2;
+    receipt.failed_record_word = OBJECT_NULL_WORD;
     context.pools = pools;
     context.loader = loader;
     receipt.source_hash = 2166136261u;
     if (!heroes || !leader_hand_root || !pools || !pools->valid || !loader ||
-        hero_count > hero_capacity || hero_count > DM2_MAX_HEROES) {
+        hero_count > hero_capacity || hero_count > DM2_MAX_HEROES ||
+        leader_hero_index < 0 || leader_hero_index >= (int16_t)hero_count) {
         receipt.blocked = 1;
         if (out_receipt) *out_receipt = receipt;
         return 0;
@@ -492,6 +506,10 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
                     &context, (uint16_t *)&heroes[hero_index].item[slot],
                     (int16_t)hero_index, (int16_t)slot, &receipt, 0)) {
                 receipt.blocked = 1;
+                receipt.failed_hero_index = (int16_t)hero_index;
+                receipt.failed_item_slot = (int16_t)slot;
+                receipt.failed_record_word =
+                    (uint16_t)heroes[hero_index].item[slot];
                 if (out_receipt) *out_receipt = receipt;
                 return 0;
             }
@@ -500,8 +518,11 @@ int dm2_v1_sksave_process_source_item_bonus_roots(
     receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
         receipt.source_hash, *leader_hand_root);
     if (!dm2_v1_sksave_process_one_item_bonus_root(
-            &context, leader_hand_root, -1, -1, &receipt, 1)) {
+            &context, leader_hand_root, leader_hero_index, -1, &receipt, 1)) {
         receipt.blocked = 1;
+        receipt.failed_hero_index = leader_hero_index;
+        receipt.failed_item_slot = -1;
+        receipt.failed_record_word = *leader_hand_root;
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }

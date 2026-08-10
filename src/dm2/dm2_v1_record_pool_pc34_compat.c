@@ -1610,6 +1610,9 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
     DM2_V1_SksaveItemBonusReceipt item_bonus;
     DM2_V1_SksavePreflightFailureStage failure_stage =
         DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE;
+    int16_t item_bonus_failure_hero_index = -2;
+    int16_t item_bonus_failure_slot = -2;
+    uint16_t item_bonus_failure_record_word = (uint16_t)DM2_V1_RECORD_HANDLE_NULL;
     int ok = 0;
 
     if (out_receipt) {
@@ -1687,7 +1690,11 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
         &map_owner, (int)state_receipt->party_map);
     if (!dm2_v1_sksave_process_source_item_bonus_roots(
             heroes, DM2_MAX_HEROES, state_receipt->champion_count,
+            (int16_t)state_receipt->leader_index,
             &leader_hand_root, &pools, asset_loader, &item_bonus)) {
+        item_bonus_failure_hero_index = item_bonus.failed_hero_index;
+        item_bonus_failure_slot = item_bonus.failed_item_slot;
+        item_bonus_failure_record_word = item_bonus.failed_record_word;
         failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_ITEM_BONUSES;
         goto done;
     }
@@ -1819,6 +1826,10 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
         out_receipt->direct_root_hash = direct_root_hash;
         out_receipt->item_bonus_roots_processed = item_bonus.processed_item_roots;
         out_receipt->item_bonus_roots_empty = item_bonus.empty_item_roots;
+        out_receipt->item_bonus_failure_hero_index = -2;
+        out_receipt->item_bonus_failure_slot = -2;
+        out_receipt->item_bonus_failure_record_word =
+            (uint16_t)DM2_V1_RECORD_HANDLE_NULL;
         out_receipt->item_bonus_hash = item_bonus.source_hash;
         out_receipt->timer_count = state_receipt->timer_count;
         out_receipt->special_chain_count = chains_read;
@@ -1885,6 +1896,11 @@ done:
         const int16_t failed_record_type = out_receipt->map_failure_record_type;
         const int16_t failed_record_reason = out_receipt->map_failure_record_reason;
         const int16_t recycle_required_db = context.recycle_required_db;
+        const int16_t retained_item_bonus_failure_hero_index =
+            item_bonus_failure_hero_index;
+        const int16_t retained_item_bonus_failure_slot = item_bonus_failure_slot;
+        const uint16_t retained_item_bonus_failure_record_word =
+            item_bonus_failure_record_word;
         const uint16_t direct_root_count = roots.root_count;
         const uint16_t leader_hand_root_link = leader_hand_root;
         const uint32_t retained_direct_root_hash = direct_root_hash;
@@ -1897,6 +1913,11 @@ done:
         out_receipt->map_failure_record_type = failed_record_type;
         out_receipt->map_failure_record_reason = failed_record_reason;
         out_receipt->recycle_required_db = recycle_required_db;
+        out_receipt->item_bonus_failure_hero_index =
+            retained_item_bonus_failure_hero_index;
+        out_receipt->item_bonus_failure_slot = retained_item_bonus_failure_slot;
+        out_receipt->item_bonus_failure_record_word =
+            retained_item_bonus_failure_record_word;
         out_receipt->direct_root_count = direct_root_count;
         out_receipt->leader_hand_root_link = leader_hand_root_link;
         out_receipt->direct_root_hash = retained_direct_root_hash;

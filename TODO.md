@@ -701,10 +701,13 @@
 - 🔧 DM2 SKSAVE GAME_LOAD: en privat RAM-ägare behåller nu de källordnade
   fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
   först efter att hela den befintliga återställningskedjan lyckats. Den
-  verkliga DOS-korpusen har ännu ingen fil vars kart-/recycler-kedja når hela
-  vägen, så Resume är fortsatt spärrad för samtliga åtta filer. Nästa steg är
-  en komplett sessionscommit med viktberäkning, 0x0e-hantering och
-  timerdispatch mot samma c_party- och världsägarobjekt. Den privata
+  verkliga DOS-korpusen når nu den första DB2-recyclerbegäran i ett
+  primär-/backuppar, men ingen fil har den kompletta kart-/recycler-kedjan.
+  Resume är fortsatt spärrad för samtliga åtta filer. Nästa steg är
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` med dess fullständiga c_map-,
+  creature-/missile-delete-, record-move-, CAII- och timerägare, följt av
+  sessionscommit med viktberäkning, 0x0e-hantering och timerdispatch mot
+  samma c_party- och världsägarobjekt. Den privata
   postload-fasen utför redan originalets 0x46/0x47/0x48/0x4b-effekter och
   återställer atomärt vid 0x0e, men får inte bli en påhittad save- eller
   resumeväg.

@@ -155,6 +155,15 @@ int dm2_v1_query_source_item_name_receipt(
 typedef struct {
     int valid;
     int blocked;
+    /* Source-root provenance when PROCESS_ITEM_BONUS rejects a decoded
+     * c_hero item or the leader hand.  -2 means that no individual root was
+     * reached (for example, a missing pool owner); a slot of -1 identifies
+     * the leader hand and still retains its authenticated hero owner. These
+     * fields are diagnostic only and never relax the
+     * all-or-nothing SKSAVE transaction. */
+    int16_t failed_hero_index;
+    int16_t failed_item_slot;
+    uint16_t failed_record_word;
     uint16_t processed_item_roots;
     uint16_t empty_item_roots;
     uint16_t processed_leader_hand;
@@ -164,6 +173,7 @@ typedef struct {
 
 int dm2_v1_sksave_process_source_item_bonus_roots(
     DM2_V1_Hero *heroes, size_t hero_capacity, uint16_t hero_count,
+    int16_t leader_hero_index,
     uint16_t *leader_hand_root, const DM2_V1_RecordPoolSet *pools,
     const DM2_V1_AssetLoader *loader,
     DM2_V1_SksaveItemBonusReceipt *out_receipt);

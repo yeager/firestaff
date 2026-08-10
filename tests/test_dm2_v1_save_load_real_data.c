@@ -688,7 +688,8 @@ static int verify_real_pool_direct_roots(
         if (ok && (!graphics || dm2_v1_asset_loader_init(
                 &loader, graphics, graphics_size) != 0 ||
             !dm2_v1_sksave_process_source_item_bonus_roots(
-                heroes, DM2_MAX_HEROES, state->champion_count, &leader_hand,
+                heroes, DM2_MAX_HEROES, state->champion_count,
+                (int16_t)state->leader_index, &leader_hand,
                 &pools, &loader, &item_bonus) || !item_bonus.valid ||
             item_bonus.source_hash != root_hash ||
             item_bonus.processed_item_roots + item_bonus.empty_item_roots !=
@@ -1061,14 +1062,17 @@ static void test_real_raw_save(const char *path, const char *root,
                   raw_body_hash_before,
               "SKSave c_map restore keeps the supplied raw game data immutable");
         if (!special_ok) {
-            printf("  SKSave preflight halted at source phase %d (map %d, %d,%d root %04x record %d reason %d)\n",
+            printf("  SKSave preflight halted at source phase %d (map %d, %d,%d root %04x record %d reason %d; item hero %d slot %d root %04x)\n",
                    (int)special_timers.failure_stage,
                    (int)special_timers.map_failure_map,
                    (int)special_timers.map_failure_x,
                    (int)special_timers.map_failure_y,
                    (unsigned int)special_timers.map_failure_root_link,
                    (int)special_timers.map_failure_record_type,
-                   (int)special_timers.map_failure_record_reason);
+                   (int)special_timers.map_failure_record_reason,
+                   (int)special_timers.item_bonus_failure_hero_index,
+                   (int)special_timers.item_bonus_failure_slot,
+                   (unsigned int)special_timers.item_bonus_failure_record_word);
         }
         CHECK((special_ok && special_timers.valid &&
                special_timers.hero_count == state_receipt.champion_count &&
@@ -1309,15 +1313,15 @@ int main(void)
     CHECK(direct_roots.resurrection_timers == 0u &&
               direct_roots.files_with_resurrection_timers == 0u,
           "the supplied PC-DOS SKSave corpus has no source type-0x0D resurrection timers");
-    /* The former four-owner count stopped after direct record roots.  The
-     * source order continues through PROCESS_ITEM_BONUS for every c_hero
-     * item root and the leader hand (c_savegame.cpp:1206-1224).  With that
-     * complete local prerequisite, this authenticated corpus has no
-     * independently complete c_record-pool owner: all eight must remain
-     * blocked before the missing map/recycler/session transaction. */
-    CHECK(direct_roots.pool_owner_restored == 0u &&
-              direct_roots.pool_owner_blocked == 8u,
-          "the supplied corpus blocks every incomplete local c_record-pool owner after source item bonuses");
+    /* c_savegame.cpp:1206-1224 gives the leader hand its actual active
+     * event-hero, not E_NOHERO.  Two source-identical primary/backup saves
+     * therefore complete their local c_record owner and advance to the
+     * first DB2 recycler request.  They remain non-session owners: every
+     * corpus member must still be blocked before the missing recycler and
+     * complete GAME_LOAD handoff. */
+    CHECK(direct_roots.pool_owner_restored == 2u &&
+              direct_roots.pool_owner_blocked == 6u,
+          "two supplied saves reach the source recycler after leader-hand item bonuses");
     CHECK(direct_roots.game_load_owner_materialized == 0u &&
               direct_roots.game_load_owner_blocked == 8u,
           "no local pool subset is promoted to a private GAME_LOAD session owner");

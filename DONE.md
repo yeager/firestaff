@@ -30,12 +30,13 @@
 
 # DM2: SKSAVE-korpusens lokala poolgräns (2026-08-10)
 
-- ✅ Den verkliga PC-DOS-korpusen har nu verifierats genom hela den lokala
-  direkta c_hero-/leader-hand- och `PROCESS_ITEM_BONUS`-fasen. Därmed är den
-  tidigare fyra-av-åtta-siffran, som endast avsåg den äldre
-  direct-root-kontrollen, inte längre en giltig sessiongräns: samtliga åtta
-  filer blockeras korrekt före den ännu oägda map/recycler-/sessionkedjan.
-  Ingen sparfil publiceras som Resume och inga speldata skrivs eller packas
+- ✅ Den verkliga PC-DOS-korpusen har nu verifierats genom den lokala
+  direkta c_hero-/leader-hand- och `PROCESS_ITEM_BONUS`-fasen. Ledarhanden
+  använder den autentiska `s_savegamebuffer`-leadern, precis som
+  `c_savegame.cpp:1206–1224`, i stället för ett värdskapat `E_NOHERO`.
+  Två identiska primär-/backupfiler når därmed den första riktiga
+  DB2-recyclergränsen. Samtliga åtta är fortsatt spärrade från Resume tills
+  recycler och komplett sessionägare finns. Inga speldata skrivs eller packas
   upp.
 
 # Launcher: vald DM1-utgåva äger sin runtimekatalog (2026-08-10)

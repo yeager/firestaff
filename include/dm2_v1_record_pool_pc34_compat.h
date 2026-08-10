@@ -430,6 +430,9 @@ typedef struct {
     uint16_t direct_root_count;
     uint16_t item_bonus_roots_processed;
     uint16_t item_bonus_roots_empty;
+    int16_t item_bonus_failure_hero_index;
+    int16_t item_bonus_failure_slot;
+    uint16_t item_bonus_failure_record_word;
     uint16_t leader_hand_root_link;
     uint32_t timer_hash;
     uint32_t heroes_hash;
