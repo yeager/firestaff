@@ -3671,7 +3671,8 @@ static int m11_csb_present_atari_st_runtime_viewport(
                     viewport, VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
             continue;
         }
-        if (square_type == 4) {
+        if (square_type == 4 && csb_v1_csbwin_viewport_door_is_facing(
+                (uint8_t)raw_square, profile->runtime.party_dir)) {
             CSB_V1_CSBWinDoorPanelFamily family;
             CSB_V1_CSBWinDoorFramePlan door_plan;
             const CSB_V1_CSBWinViewportProjectionRectangle *panel_first;
@@ -3682,7 +3683,8 @@ static int m11_csb_present_atari_st_runtime_viewport(
             size_t door_draw;
 
             /* CSBWin has no DoorRects family for F3L2/F3R2/F0 lanes; their
-             * local-cell owners are separate and must not borrow a frame. */
+             * local-cell owners are separate and must not borrow a frame.
+             * Likewise Codea59a routes edge-on doors away from DrawDoor. */
             if (!m11_csb_door_panel_family_for_wall(draw->wall, &family)) {
                 continue;
             }

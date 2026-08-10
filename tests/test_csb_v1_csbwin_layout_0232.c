@@ -405,6 +405,16 @@ static void check_viewport_door_plans(
         layout, CSB_V1_CSBWIN_DOOR_PANEL_F3R1, &frame_plan));
     CHECK(frame_plan.count == 1u && frame_plan.draws[0].bitmap_slot == 5u &&
           frame_plan.draws[0].mirrored);
+
+    /* Original ST dungeon cell bit 3 is the N/S-door axis, not a draw-state
+     * bit. Codea59a.cpp:376-386 sends matching axes to roomDOOREDGE, which
+     * must not enter DrawDoor. Cover both axes with source-formatted cells. */
+    CHECK(!csb_v1_csbwin_viewport_door_is_facing(0x80u, 0));
+    CHECK(csb_v1_csbwin_viewport_door_is_facing(0x88u, 0));
+    CHECK(csb_v1_csbwin_viewport_door_is_facing(0x80u, 1));
+    CHECK(!csb_v1_csbwin_viewport_door_is_facing(0x88u, 1));
+    CHECK(!csb_v1_csbwin_viewport_door_is_facing(0x40u, 0));
+    CHECK(!csb_v1_csbwin_viewport_door_is_facing(0x80u, -1));
 }
 
 static void check_wall_projection_blit(

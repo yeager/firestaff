@@ -2336,6 +2336,14 @@ rendering remain blocked.
   SAL/SCSP playback, and CDDA selector ownership still require authentic
   runtime evidence.
 
+# CSB Atari ST edge-door viewport parity (2026-08-10)
+
+- ✅ Atari ST:s native viewport skiljer nu originalets `roomDOOREDGE` från
+  `roomDOORFACING`: en dörr vars N/S-axel matchar partiets riktning går inte
+  längre felaktigt genom `DrawDoor` och får ingen flat dörrpanel. Ändringen
+  följer CSBWin/ReDMCSB `Codea59a.cpp:376-386` och är verifierad mot riktig
+  Atari `GRAPHICS.DAT` samt `MINI.DAT`-runtime.
+
 # Nexus MNS TEXT direct-colour preservation (2026-08-08)
 
 - ✅ MNS `TEXT`-descriptors bevarar nu varje källpixel som exakt BGR555

@@ -195,6 +195,13 @@ int csb_v1_csbwin_door_panel_graphic_index(uint16_t door_set,
                                             uint8_t nearness,
                                             uint16_t *out_graphic_index);
 
+/* CSBWin Codea59a.cpp::GetRoomContents first classifies a roomDOOR using
+ * cell bit 3 (N/S travel) and the party-facing axis.  Only roomDOORFACING
+ * reaches DrawDoor; roomDOOREDGE takes its separate edge script and must not
+ * receive a flat door panel.  `raw_square` is the original dungeon cell. */
+int csb_v1_csbwin_viewport_door_is_facing(uint8_t raw_square,
+                                           int party_direction);
+
 /* Resolves the GRAPHICS.DAT wall slot and whether CSBWin's `MakeMirror`
  * must reflect it before its native viewport projection. */
 int csb_v1_csbwin_viewport_wall_source(uint16_t wall_set,

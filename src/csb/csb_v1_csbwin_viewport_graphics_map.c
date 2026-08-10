@@ -53,6 +53,18 @@ int csb_v1_csbwin_door_panel_graphic_index(uint16_t door_set,
     return 1;
 }
 
+int csb_v1_csbwin_viewport_door_is_facing(uint8_t raw_square,
+                                           int party_direction)
+{
+    /* ReDMCSB Codea59a.cpp / CSBWin Codea59a.cpp:376-386:
+     * a roomDOOR is edge-on when its N/S bit has the same axis as the
+     * party direction; otherwise it is a flat, door-facing room. */
+    if (((raw_square >> 5) & 0x07u) != 4u ||
+        party_direction < 0 || party_direction > 3) return 0;
+    return ((raw_square >> 3) & 0x01u) !=
+        (unsigned int)(party_direction & 1);
+}
+
 int csb_v1_csbwin_viewport_wall_source(
     uint16_t wall_set, CSB_V1_CSBWinViewportWall wall,
     uint16_t *out_graphic_index, int *out_mirrored)
