@@ -13,7 +13,7 @@ REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Pa
 DM1_DATA = pathlib.Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", str(pathlib.Path.home()/".openclaw/data/firestaff-original-games/DM/_canonical/dm1")))
 BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_BUILD_DIR", str(pathlib.Path.home()/".openclaw/data/firestaff-builds/pass373-verify")))
 HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_HOME_DIR", str(pathlib.Path.home()/".openclaw/data/firestaff-homes/pass373-verify")))
-SCRIPT = "enter,down,down,down,down,down,down,enter,right"
+SCRIPT = "enter,down,down,down,down,down,down,down,enter,right"
 EXPECTED_STATUS = "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
 DUNVIEW_LOCKS = [
     {"file":"DUNVIEW.C","lines":"2962-3003","function":"F0098_DUNGEONVIEW_DrawFloorAndCeiling","claim":"viewport floor/ceiling base is drawn into G0296/G0087 before wall passes","markers":["void F0098_DUNGEONVIEW_DrawFloorAndCeiling(","F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);","F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);","G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"]},
@@ -96,7 +96,15 @@ def main()->int:
         r=run(cmd, timeout=240); checks.append({"kind":"prior_wall_occlusion_gate","cmd":cmd,"ok":r["returncode"]==0,"result":r})
     if BUILD_DIR.exists(): shutil.rmtree(BUILD_DIR)
     r=run(["cmake","-S",str(ROOT),"-B",str(BUILD_DIR),"-G","Ninja"], timeout=180); checks.append({"kind":"cmake_configure","ok":r["returncode"]==0,"result":r})
-    r=run(["cmake","--build",str(BUILD_DIR),"--target","firestaff","--parallel","1"], timeout=900); checks.append({"kind":"cmake_build_firestaff","ok":r["returncode"]==0,"result":r})
+    # --parallel 1 with the default 900s timeout races a ~2270-object clean
+    # build; on this machine the serialised build takes ~30 min and hits the
+    # timeout mid-firestaff_theron, so cmake_build_firestaff appears to fail
+    # while the source is fine.  Keep --parallel 1 (concurrent clang on the
+    # external volume produced sporadic "Rename failed / No such file or
+    # directory" races between the .o.tmp write and the atomic rename to .o)
+    # but raise the timeout to 45 minutes so a serial build has room to
+    # finish before the probe tries to launch the binary.
+    r=run(["cmake","--build",str(BUILD_DIR),"--target","firestaff","--parallel","1"], timeout=2700); checks.append({"kind":"cmake_build_firestaff","ok":r["returncode"]==0,"result":r})
     if HOME_DIR.exists(): shutil.rmtree(HOME_DIR)
     HOME_DIR.mkdir(parents=True,exist_ok=True)
     probe_json=OUT_DIR/"launcher_route_viewport_redraw_probe.json"

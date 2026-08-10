@@ -2930,7 +2930,22 @@ static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
     }
     version = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
                                          (size_t)versionIndex);
-    return version && version->versionId &&
+    /* asset_status_m12.c lists DM1 versions in catalogue order
+     * fmtowns-en (0), fmtowns-ja (1), pc34-en (2), so a fresh install
+     * whose gameOptions[0].versionIndex has never been touched defaults
+     * to index 0 = fmtowns-en.  If the user has ONLY DOS data at
+     * --data-dir, that version's asset scan leaves version->matched=0.
+     * Treating that unmatched fmtowns row as "FM Towns selected" flips
+     * dm1RouteReceipt.use_dm1_transaction off and steers the launch
+     * into the FM Towns title path (m11_play_dm1_fmtowns_title_if_available),
+     * which then fails because no FM Towns data exists, calls
+     * M11_GameView_Shutdown, and leaves gameView.active=0 -- exactly
+     * the "launch smoke failed: no launch reached before exit" pass373
+     * launcher_route_runtime_probe observed on a canonical DOS DM1 tree.
+     * Require version->matched=1 so an unmatched fmtowns default falls
+     * through to the DOS transaction path (which then correctly locates
+     * pc34-en data via the launch gate). */
+    return version && version->versionId && version->matched &&
            (strcmp(version->versionId, "fmtowns-en") == 0 ||
             strcmp(version->versionId, "fmtowns-ja") == 0);
 }
