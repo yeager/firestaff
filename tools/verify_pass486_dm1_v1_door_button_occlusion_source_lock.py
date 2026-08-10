@@ -143,7 +143,11 @@ def firestaff_audit() -> dict[str, int]:
         "cell = &cells[depth][1]",
         "!cell->hasDoorThing",
         "!state->world.things->doors[doorIdx].button",
-        "M11_GFX_DOOR_BUTTON_BASE",
+        # M11_GFX_DOOR_BUTTON_BASE was factored into the helper
+        # m11_door_button_graphic_index_for_state(state), which returns
+        # the DM1 PC34 base or the CSB Amiga M634 base. Accept the helper
+        # call at this position in the order.
+        "m11_door_button_graphic_index_for_state",
         "depth == 0 ? DM1_VIEW_DOOR_BUTTON_D1C",
         "M11_VIEWPORT_X + frame->left_x",
         "10",
@@ -157,7 +161,11 @@ def firestaff_audit() -> dict[str, int]:
         "m11_sample_viewport_cell(state, 3, 1, &cell)",
         "m11_viewport_cell_is_open(&cell)",
         "!state->world.things->doors[doorIdx].button",
-        "M11_GFX_DOOR_BUTTON_BASE",
+        # M11_GFX_DOOR_BUTTON_BASE was factored into the helper
+        # m11_door_button_graphic_index_for_state(state), which returns
+        # the DM1 PC34 base or the CSB Amiga M634 base. Accept the helper
+        # call at this position in the order.
+        "m11_door_button_graphic_index_for_state",
         "M11_VIEWPORT_X + frame->left_x",
         "M11_VIEWPORT_Y + frame->top_y",
         "10",

@@ -119,19 +119,25 @@ def main() -> int:
     # the round-14 architecture reconciliation keeps the side-lane-open gate
     # out of wall material (nearer panels supply the source overpaint).
     wall_orn = (ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c").read_text(encoding="utf-8")
+    # The historical spec table opened with two extra "outer column"
+    # rows -- {3, -2, 0, 1} and {3, 2, 1, 1} -- that PC34 does not carry.
+    # ReDMCSB DUNVIEW.C:1061 (G0205) has exactly 13 rows on PC34, and
+    # D3L2/D3R2 go through separate F0676/F0677 square passes that do
+    # not consume the wall-ornament table (see the source comment at
+    # the top of s_wallOrnamentViewSpecs). The gate was locking a
+    # non-PC34 shape. Lock the actual PC34 13-row layout: the D3/D2 half
+    # covered by this gate is the first ten entries.
     spec_block = "\n".join([
-        "    {3, -2,  0, 1},",
-        "    {3,  2,  1, 1},",
-        "    {3, -1,  2, 0},",
-        "    {3,  1,  4, 0},",
-        "    {3, -1,  2, 0},",
-        "    {3,  0,  3, 0},",
-        "    {3,  1,  4, 0},",
-        "    {2, -1,  5, 0},",
-        "    {2,  1,  6, 0},",
-        "    {2, -1,  7, 0},",
-        "    {2,  0,  8, 0},",
-        "    {2,  1,  9, 0},",
+        "    {3, -1,  0, 0}, /* D3L right */",
+        "    {3,  1,  1, 0}, /* D3R left */",
+        "    {3, -1,  2, 0}, /* D3L front */",
+        "    {3,  0,  3, 0}, /* D3C front */",
+        "    {3,  1,  4, 0}, /* D3R front */",
+        "    {2, -1,  5, 0}, /* D2L right */",
+        "    {2,  1,  6, 0}, /* D2R left */",
+        "    {2, -1,  7, 0}, /* D2L front */",
+        "    {2,  0,  8, 0}, /* D2C front */",
+        "    {2,  1,  9, 0}, /* D2R front */",
     ])
     require(wall_orn, spec_block, "Firestaff D3/D2 wall ornament spec order (contract module view-spec table)")
     require_order(wall_fn, [

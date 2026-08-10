@@ -121,10 +121,17 @@ def verify_firestaff_gap_guard() -> list[str]:
     markers = ordered(
         body,
         [
+            # The batch order in m11_draw_viewport was rearranged so
+            # floor_ornaments runs AFTER front_walls -- keeping ornaments
+            # from being overpainted by the wall pass. Same set of
+            # primitives; the sequence is:
+            #   floor_pits -> side_walls -> front_walls -> floor_ornaments
+            #   -> side_doors -> center_doors -> center_door_ornaments
+            #   -> center_door_buttons
             ("floor pits batch", "m11_draw_dm1_floor_pits"),
-            ("floor ornaments batch", "m11_draw_dm1_floor_ornaments"),
             ("side walls batch", "m11_draw_dm1_side_walls"),
             ("front walls batch", "m11_draw_dm1_front_walls"),
+            ("floor ornaments batch", "m11_draw_dm1_floor_ornaments"),
             ("side doors batch", "m11_draw_dm1_side_doors"),
             ("center doors batch", "m11_draw_dm1_center_doors"),
             ("center door ornaments batch", "m11_draw_dm1_center_door_ornaments"),

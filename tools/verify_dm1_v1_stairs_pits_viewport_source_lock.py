@@ -147,7 +147,15 @@ def verify_firestaff() -> list[dict[str, Any]]:
     ], "Stairs up/down rendering uses MASK0x0004_STAIRS_UP (not 0x01)."))
     checks.append(require("m11_game_view.c:pit_open_check", m11, [
         "Only open pits (MASK0x0008_PIT_OPEN) show the hole.",
-        "if (cell->square & 0x08) { /* PIT_OPEN */",
+        # The bare `if (cell->square & 0x08) { /* PIT_OPEN */` was
+        # augmented with a guard that skips the primitive-fallback hole
+        # whenever an authenticated PC34 viewport source is active (that
+        # path draws the real pit bitmap via F0104). The MASK0x0008 check
+        # is now the second predicate:
+        #   if (!m11_dm1_authenticated_viewport_source_active() &&
+        #       (cell->square & 0x08)) { /* PIT_OPEN */
+        # Keep locking the mask + comment; accept the paren form.
+        "(cell->square & 0x08)) { /* PIT_OPEN */",
     ], "Pit rendering checks MASK0x0008_PIT_OPEN before drawing the hole graphic."))
     checks.append(require("m11_game_view.c:teleporter_visible_check", m11, [
         "DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34",
