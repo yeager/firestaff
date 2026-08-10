@@ -19954,6 +19954,30 @@ endif()
         COMMAND test_dm2_v1_m11_launcher_handoff_boundary
     )
 
+    # -- DM2 legacy direct-loop profile gate --------------------------
+    # The compatibility CLI path must retain the DM2 boot profile instead of
+    # feeding authenticated G1/GDAT bytes to the generic DM1 loader.
+    add_executable(test_dm2_legacy_game_loop_profile_gate
+        tests/test_dm2_legacy_game_loop_profile_gate.c
+        src/engine/firestaff_game_loop.c
+    )
+    target_include_directories(test_dm2_legacy_game_loop_profile_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_legacy_game_loop_profile_gate PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_legacy_game_loop_profile_gate PRIVATE
+            -Wall -Wextra -Wno-unused-variable -Wno-unused-but-set-variable -O2)
+    endif()
+    add_test(
+        NAME dm2_legacy_game_loop_profile_gate
+        COMMAND test_dm2_legacy_game_loop_profile_gate
+    )
+
     # -- Nexus V1 M12/M11 Launcher Handoff Boundary ----------------
     # Skip-safe gate: M12 launch intent routes the Nexus catalog entry,
     # and real staged Saturn data must enter M11 through the production

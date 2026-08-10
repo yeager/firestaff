@@ -32,6 +32,13 @@
   kandidaten får samma byte på en egen adress och återställer sedan källan.
   Källdungeonen, M11 och den publika sessionen förblir orörda.
 
+# DM2: direktstart behåller verifierad bootprofil (2026-08-10)
+
+- ✅ Den äldre CLI-spelvägen kan inte längre läsa om DM2:s G1- och
+  GDAT-data genom DM1:s generiska parser eller ersätta dess palettägare.
+  Den godtar endast den redan hashverifierade DM2-bootprofilen och lämnar
+  partyspegeln tom tills en komplett, källägd `GAME_LOAD`-session finns.
+
 # Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
 - ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
   no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar

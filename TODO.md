@@ -3230,7 +3230,11 @@
   Its loader-backed inspection remains available only in the dedicated probe;
   the inferred sequential-pool branch is removed and cannot become an
   alternate GAME_LOAD/M11 object-data owner. Re-admit it only after its full
-  G1 chain is consumed by a live source-owned runtime route.
+  G1 chain is consumed by a live source-owned runtime route. **2026-08-10
+  direct-start boundary:** the legacy CLI loop now retains the verified DM2
+  boot profile and cannot fall through to the generic DM1 graphics/dungeon
+  loader. It remains non-playable until a complete DM2 GAME_LOAD session is
+  source-owned; no generic party mirror is published.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains

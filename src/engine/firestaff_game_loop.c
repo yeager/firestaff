@@ -396,6 +396,29 @@ int fs_game_load_assets(FS_GameState *state) {
         state->party_direction = boot->runtime.party_dir;
         return 0;
     }
+    /* DM2 owns its G1/GDAT admission and parsed world in the boot profile.
+     * Re-running the generic loader below would route its authenticated
+     * DUNGEON.DAT through the DM1 PC34 parser, replace the palette owner, and
+     * leave two incompatible world representations in one direct launch.
+     * SKProject INIT enters the title/menu only after its DM2 media and
+     * READ_DUNGEON_STRUCTURE handoff; it does not perform a second DM1 load.
+     * Keep this legacy seam source-gated and deliberately avoid mirroring a
+     * party here: a complete DM2 GAME_LOAD session is still required before
+     * the generic FS_GameState fields may represent gameplay. */
+    if (state->config.game == FS_GAME_DM2) {
+        const DM2_V1_BootProfile *boot =
+            (const DM2_V1_BootProfile *)state->dm2_boot;
+        if (!boot || !boot->assets_verified || !boot->dm2_state ||
+            !boot->dungeon_data || !boot->graphics_dat) {
+            fs_set_error(&state->last_error, -2,
+                         "DM2 original game load failed",
+                         "No verified DM2 boot profile is available for the direct game loop",
+                         "Return to the launcher and select verified original DM2 data");
+            state->running = 0;
+            return -1;
+        }
+        return 0;
+    }
     /* Load GRAPHICS.DAT and DUNGEON.DAT based on game */
     if (!state->config.skip_menu) {
         printf("Firestaff: loading assets for game %d from %s\n",
