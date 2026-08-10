@@ -1,3 +1,11 @@
+# DM2: laddertesterna använder aldrig produktens fixture-parser (2026-08-10)
+
+- ✅ SKProject-kärnans och `FIND_LADDER_AROUND`-testernas lilla minnesvy
+  byggs nu direkt för den isolerade square-walkern. Den pensionerade
+  word-square-parsern fortsätter därför att vara begränsad till sitt enda
+  historiska testmål, medan realdata-testet fortsatt läser riktig
+  `DUNGEON.DAT`.
+
 # DM2: fixturedata kan inte bli spelbar rörelse (2026-08-10)
 
 - ✅ Produktionsbyggnaden avvisar den äldre syntetiska word-square-dungeonen

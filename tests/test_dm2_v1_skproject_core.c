@@ -5205,6 +5205,29 @@ static size_t build_word_square_fixture(uint8_t *buf, size_t cap,
     return tile_base + 18u;
 }
 
+/* This is a focused in-memory view for FIND_LADDAR_AROUND's square walker,
+ * not a dungeon-loader input. The retired word-square parser remains absent
+ * from every product archive; real-media coverage below owns the loader. */
+static int init_word_square_ladder_view(DM2_V1_DungeonData *out,
+                                        const uint8_t *buf, size_t size)
+{
+    const int tile_base = 44 + 28 * 16;
+
+    if (!out || !buf || size < (size_t)tile_base + 18u) return 0;
+    memset(out, 0, sizeof(*out));
+    out->raw_data = (uint8_t *)malloc(size);
+    if (!out->raw_data) return 0;
+    memcpy(out->raw_data, buf, size);
+    out->raw_size = (int)size;
+    out->level_count = 1;
+    out->square_bytes = 2;
+    out->raw_map_data_base = tile_base;
+    out->level_widths[0] = 3;
+    out->level_heights[0] = 3;
+    out->level_offsets[0] = 0;
+    return 1;
+}
+
 static void test_skwin_core_symbol_batch_cycle10(void)
 {
     DM2_V1_SkprojectGetCreatureAtReceipt creature_receipt;
@@ -5242,9 +5265,9 @@ static void test_skwin_core_symbol_batch_cycle10(void)
         0x0006u /* ladder up */, 0x0005u /* ladder down */,
         DM2_SQUARE_FLOOR);
     CHECK(dungeon_size != 0u &&
-              dm2_v1_dungeon_load(&dungeon, dungeon_buf,
-                                  (int)dungeon_size) == 0,
-          "word-square fixture loads for ladder search");
+              init_word_square_ladder_view(
+                  &dungeon, dungeon_buf, dungeon_size),
+          "isolated ladder view is available without the fixture parser");
     CHECK(dm2_v1_skproject_find_ladder_around(
               &dungeon, 0, 1, 1, &ladder_receipt) &&
               ladder_receipt.valid && ladder_receipt.found &&

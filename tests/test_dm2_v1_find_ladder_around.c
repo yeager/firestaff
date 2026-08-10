@@ -57,6 +57,28 @@ static size_t build_word_square_fixture(uint8_t *buf, size_t cap,
     return tile_base + 18u;
 }
 
+/* Unit-only square view for the ladder walker. It bypasses the retired
+ * word-square loader rather than compiling that loader into this target. */
+static int init_word_square_ladder_view(DM2_V1_DungeonData *out,
+                                        const uint8_t *buf, size_t size)
+{
+    const int tile_base = 44 + 28 * 16;
+
+    if (!out || !buf || size < (size_t)tile_base + 18u) return 0;
+    memset(out, 0, sizeof(*out));
+    out->raw_data = (uint8_t *)malloc(size);
+    if (!out->raw_data) return 0;
+    memcpy(out->raw_data, buf, size);
+    out->raw_size = (int)size;
+    out->level_count = 1;
+    out->square_bytes = 2;
+    out->raw_map_data_base = tile_base;
+    out->level_widths[0] = 3;
+    out->level_heights[0] = 3;
+    out->level_offsets[0] = 0;
+    return 1;
+}
+
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 {
     FILE *f;
@@ -142,9 +164,9 @@ static void test_synthetic_ladder_scan(void)
                                             DM2_SQUARE_STAIRS_DOWN);
 
     memset(&dungeon, 0, sizeof(dungeon));
-    CHECK(size == sizeof(dat), "synthetic ladder fixture is complete");
-    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
-          "synthetic ladder fixture loads through DM2 dungeon loader");
+    CHECK(size == sizeof(dat), "unit ladder view is complete");
+    CHECK(init_word_square_ladder_view(&dungeon, dat, size),
+          "isolated ladder view is available without fixture loading");
     CHECK(dm2_v1_FIND_LADDER_AROUND(&dungeon, 0, 1, 1, &receipt) == 1 &&
               receipt.valid && receipt.found &&
               receipt.ladder_x == 1 && receipt.ladder_y == 0 &&
@@ -167,9 +189,9 @@ static void test_synthetic_not_found_and_bounds(void)
                                             DM2_SQUARE_FLOOR);
 
     memset(&dungeon, 0, sizeof(dungeon));
-    CHECK(size == sizeof(dat), "synthetic no-ladder fixture is complete");
-    CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
-          "synthetic no-ladder fixture loads");
+    CHECK(size == sizeof(dat), "unit no-ladder view is complete");
+    CHECK(init_word_square_ladder_view(&dungeon, dat, size),
+          "isolated no-ladder view is available without fixture loading");
     CHECK(dm2_v1_FIND_LADDER_AROUND(&dungeon, 0, 1, 1, &receipt) == 1 &&
               receipt.valid && !receipt.found &&
               receipt.search_slot == -1 && receipt.search_hash != 0u,
