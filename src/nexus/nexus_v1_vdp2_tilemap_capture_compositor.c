@@ -12,10 +12,14 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[1] << 8U) | p[0]);
 }
 
-static uint16_t read_vram16(const uint8_t *p)
+static uint16_t read_vram16_ordered(
+    const uint8_t *p, Nexus_V1_SaturnVdp2RegisterByteOrder byte_order)
 {
-    /* Raw Mednafen VDP2 payloads retain the host byte order of Saturn words. */
-    return read_le16(p);
+    /* The Mednafen review candidate preserves Saturn bus order explicitly;
+     * older Firestaff fixtures remain readable through the little-endian
+     * compatibility branch selected by the register receipt. */
+    return byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
+        ? read_be16(p) : read_le16(p);
 }
 
 static int vdp2_register_score(const uint8_t *registers, int little)
@@ -64,6 +68,17 @@ static uint8_t expand5(uint16_t value, unsigned shift)
 static uint32_t cram_to_rgba(const uint8_t *entry)
 {
     uint16_t value = read_be16(entry);
+    return UINT32_C(0xff000000) |
+        ((uint32_t)expand5(value, 0U) << 16U) |
+        ((uint32_t)expand5(value, 5U) << 8U) |
+        (uint32_t)expand5(value, 10U);
+}
+
+static uint32_t cram_to_rgba_ordered(
+    const uint8_t *entry, Nexus_V1_SaturnVdp2RegisterByteOrder byte_order)
+{
+    uint16_t value = byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
+        ? read_be16(entry) : read_le16(entry);
     return UINT32_C(0xff000000) |
         ((uint32_t)expand5(value, 0U) << 16U) |
         ((uint32_t)expand5(value, 5U) << 8U) |
@@ -351,7 +366,8 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
     receipt.map_columns = 64;
     receipt.map_rows = 64;
     for (x = 0; x < 256; ++x)
-        framebuffer->palette[x] = cram_to_rgba(frame.vdp2_cram + x * 2);
+        framebuffer->palette[x] = cram_to_rgba_ordered(
+            frame.vdp2_cram + x * 2, registers.byte_order);
     for (y = 0; y < height; ++y) {
         for (x = 0; x < width; ++x) {
             int tile_x = source_x + x;
@@ -360,8 +376,10 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
                 ((tile_x >> 3) & 0x3f);
             uint32_t map_address = (((uint32_t)map_offset << 6U) + map_a) *
                 0x2000U + (uint32_t)map_index * 4U;
-            uint16_t attr = read_vram16(frame.vdp2_vram + map_address);
-            uint16_t charno = read_vram16(frame.vdp2_vram + map_address + 2U);
+            uint16_t attr = read_vram16_ordered(
+                frame.vdp2_vram + map_address, registers.byte_order);
+            uint16_t charno = read_vram16_ordered(
+                frame.vdp2_vram + map_address + 2U, registers.byte_order);
             int palno = attr & 0x7f;
             int tile_bytes = bpp == 4 ? 32 : 64;
             uint32_t char_address = (uint32_t)charno * (uint32_t)tile_bytes;

@@ -61,6 +61,19 @@ static uint32_t cram_to_rgba(const uint8_t *entry)
         (uint32_t)expand5(value, 10U);
 }
 
+static uint32_t cram_to_rgba_ordered(
+    const uint8_t *entry, Nexus_V1_SaturnVdp2RegisterByteOrder byte_order)
+{
+    /* Match the producer's explicit Saturn bus order instead of assuming the
+     * host order used by the earliest local capture fixtures. */
+    uint16_t value = byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
+        ? read_be16(entry) : read_le16(entry);
+    return UINT32_C(0xff000000) |
+        ((uint32_t)expand5(value, 0U) << 16U) |
+        ((uint32_t)expand5(value, 5U) << 8U) |
+        (uint32_t)expand5(value, 10U);
+}
+
 int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
     Nexus_Framebuffer *framebuffer,
     const Nexus_V1_Vdp2CaptureCompositeInput *input,
@@ -228,8 +241,8 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
             framebuffer->rgba_buffer[i] = 0U;
             ++receipt.transparent_pixels;
         } else {
-            framebuffer->rgba_buffer[i] = cram_to_rgba(
-                frame.vdp2_cram + (size_t)index * 2U);
+            framebuffer->rgba_buffer[i] = cram_to_rgba_ordered(
+                frame.vdp2_cram + (size_t)index * 2U, registers.byte_order);
             ++receipt.written_pixels;
         }
     }

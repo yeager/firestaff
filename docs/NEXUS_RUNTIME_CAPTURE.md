@@ -501,6 +501,13 @@ Both checks prove only that the VDP1/VDP2 byte stream is readable. A frame
 with `TVMD=0` or `BGON=0` is a reset/idle observation and must not be counted
 as startup, menu, HUD or viewport evidence.
 
+In the 600-frame Japanese-BIOS/English-media witness, frame 350 is an active
+NBG1 tilemap frame (`TVMD=0x8000`, `BGON=0x0103`, `CHCTLA=0x1010`). The
+capture-only NBG1 tilemap decoder accepts that frame after restoring the
+candidate's explicit big-endian VDP2 word order. This proves raw tilemap
+decoding only; no Nexus source span, menu identity or production compositor
+is admitted by that result.
+
 On 2026-08-10 a bounded J-BIOS/English-media source-trace attempt reached
 500,000 SH-2 RAM-source rows but timed out before producing a complete frame
 capture. After rejecting zero-filled RAM and unmapped ISO padding, the trace
