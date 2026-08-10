@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "nexus_v1_audio_receipt.h"
+
 #define NEXUS_V1_SCSP_WRITE_TRACE_MAGIC \
     "FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1"
 #define NEXUS_V1_MAIN_SCSP_WRITE_TRACE_MAGIC \
@@ -56,6 +58,25 @@ typedef struct {
     int blocks_real_sfx_playback;
 } Nexus_V1_MainScspTraceReceipt;
 
+/* Join receipt for one authenticated producer → SDDRVS → SCSP corridor.
+ * This is the narrowest runtime fact that the current capture proves: a
+ * producer command reaches the authenticated 68k driver and the driver
+ * writes the SCSP voice-register family. It does not identify a gameplay
+ * event, MAP selector, SAL codec, sample rate, or host playback operation. */
+typedef struct {
+    int valid;
+    int source_identities_bound;
+    int producer_command_observed;
+    int sound_cpu_command_observed;
+    int driver_command_handler_observed;
+    int pcm_voice_register_route_observed;
+    int runtime_corridor_proven;
+    int event_selector_semantics_proven;
+    int sal_codec_proven;
+    int playback_permitted;
+    int blocks_real_sfx_playback;
+} Nexus_V1_ScspRuntimeJoinReceipt;
+
 /* Parse one complete sound-CPU trace. All records must use the exact
  * addr/size/value/pc schema emitted by scripts/mednafen_1.32.1_nexus_slev_scsp_trace.patch. */
 int nexus_v1_scsp_write_trace_parse(
@@ -67,5 +88,20 @@ int nexus_v1_main_scsp_write_trace_parse(
     const uint8_t *raw_trace,
     size_t raw_trace_size,
     Nexus_V1_MainScspTraceReceipt *out_receipt);
+
+/* Bind independently authenticated traces and the source-owned SDDRVS
+ * disassembly. The four identity arguments are supplied by the caller's
+ * hash-verified SLEV/SAL/MAP/SDDRVS admission route; a trace alone cannot
+ * establish those identities. Returns non-zero only for a complete,
+ * source-bound runtime corridor. Playback remains explicitly blocked. */
+int nexus_v1_scsp_runtime_join(
+    const Nexus_V1_ScspTraceReceipt *sound_cpu_trace,
+    const Nexus_V1_MainScspTraceReceipt *main_cpu_trace,
+    const Nexus_V1_SddrvsDisassemblyReceipt *driver_receipt,
+    int slev_source_verified,
+    int sal_source_verified,
+    int map_source_verified,
+    int driver_source_verified,
+    Nexus_V1_ScspRuntimeJoinReceipt *out_receipt);
 
 #endif

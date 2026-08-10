@@ -217,3 +217,50 @@ int nexus_v1_main_scsp_write_trace_parse(
     *out_receipt = receipt;
     return receipt.valid;
 }
+
+int nexus_v1_scsp_runtime_join(
+    const Nexus_V1_ScspTraceReceipt *sound_cpu_trace,
+    const Nexus_V1_MainScspTraceReceipt *main_cpu_trace,
+    const Nexus_V1_SddrvsDisassemblyReceipt *driver_receipt,
+    int slev_source_verified,
+    int sal_source_verified,
+    int map_source_verified,
+    int driver_source_verified,
+    Nexus_V1_ScspRuntimeJoinReceipt *out_receipt)
+{
+    Nexus_V1_ScspRuntimeJoinReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.blocks_real_sfx_playback = 1;
+    receipt.event_selector_semantics_proven = 0;
+    receipt.sal_codec_proven = 0;
+    receipt.playback_permitted = 0;
+    if (!out_receipt) return 0;
+
+    receipt.source_identities_bound =
+        slev_source_verified && sal_source_verified &&
+        map_source_verified && driver_source_verified;
+    receipt.producer_command_observed =
+        main_cpu_trace && main_cpu_trace->valid &&
+        main_cpu_trace->producer_command_observed;
+    receipt.sound_cpu_command_observed =
+        sound_cpu_trace && sound_cpu_trace->valid &&
+        sound_cpu_trace->mailbox_command_observed;
+    receipt.driver_command_handler_observed =
+        sound_cpu_trace && sound_cpu_trace->valid &&
+        sound_cpu_trace->driver_command_handler_observed;
+    receipt.pcm_voice_register_route_observed =
+        driver_receipt && driver_receipt->valid &&
+        driver_receipt->pcm_voice_register_route_proven &&
+        sound_cpu_trace && sound_cpu_trace->scsp_voice_register_write_count > 0U;
+    receipt.runtime_corridor_proven =
+        receipt.source_identities_bound &&
+        receipt.producer_command_observed &&
+        receipt.sound_cpu_command_observed &&
+        receipt.driver_command_handler_observed &&
+        receipt.pcm_voice_register_route_observed &&
+        sound_cpu_trace->intra_trace_observation_order_proven;
+    receipt.valid = receipt.runtime_corridor_proven;
+    *out_receipt = receipt;
+    return receipt.valid;
+}

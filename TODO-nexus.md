@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## SLEV/SAL/SDDRVS runtime corridor (2026-08-10)
+
+`nexus_v1_scsp_runtime_join()` binder nu ihop hashbundna SLEV/SAL/MAP/SDDRVS-
+identiteter med separata autentiserade main- och sound-CPU-traces samt den
+source-bundna SDDRVS-disassemblyn. En partiell trace utan SCSP-voice-write i
+samma observation förblir blockerad. Nästa capture behöver därför innehålla
+producentkommando, sound-CPU-handler och voice-register-write i samma trace;
+först därefter kan event-selector och SAL-codec analyseras. Ingen playback är
+öppnad av denna bindning.
+
 2026-08-10: En ny kallstart-witness på extern disk
 `run-codex-j-coldstart-20260810/runtime-vdp12.raw` innehåller 1 200 frames från
 J-BIOS 1.01 och den hashbundna English/Merged-discen. Mednafen rapporterar

@@ -2,6 +2,20 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus SLEV/SAL/SDDRVS runtime-corridor binder
+
+- `nexus_v1_scsp_runtime_join()` binder nu separat verifierad main-SCSP-
+  producenttrace, sound-CPU-trace och retail `SDDRVS.TSK`-disassembly under
+  hashbundna SLEV/SAL/MAP/SDDRVS-identiteter.
+- Bindningen exponerar endast den bevisade command-handler/SCSP-voice-route-
+  korridoren. Event-selector, SAL-codec, sample-rate och host-playback är
+  fortsatt explicit `0`/blockerade.
+- Den autentiska capture som finns monterad saknar voice-register-write i
+  samma trace och avvisas därför av den nya produktionsbindningen; testet
+  verifierar både denna fail-closed väg och en separat bounded contract-fixture.
+- Verifiering: `test_nexus_v1_slev_scsp_runtime_join`,
+  `test_nexus_v1_scsp_trace`, `verify_nexus_production_source_boundary.py`.
+
 ## 2026-08-10 - Nexus VDP1 Structure3 owner receipt
 
 - VDP1:s DGN-materialresolver traverserar nu den hashbundna Structure3-

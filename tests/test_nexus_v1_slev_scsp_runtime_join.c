@@ -51,6 +51,9 @@ int main(void)
     Nexus_V1_ScspTraceReceipt scsp_receipt;
     Nexus_V1_MainScspTraceReceipt main_receipt;
     Nexus_V1_SddrvsDisassemblyReceipt driver_receipt;
+    Nexus_V1_ScspRuntimeJoinReceipt join_receipt;
+    Nexus_V1_ScspTraceReceipt complete_trace_fixture;
+    Nexus_V1_ScspRuntimeJoinReceipt complete_join_receipt;
     Nexus_SoundEngine engine;
     Nexus_SfxRuntimeReceipt sound_receipt;
     int ok = 0;
@@ -74,6 +77,42 @@ int main(void)
             main_trace, main_size, &main_receipt) ||
         !nexus_v1_audio_sddrvs_disassembly_receipt(
             driver, (uint32_t)driver_size, &driver_receipt)) {
+        goto cleanup;
+    }
+    memset(&join_receipt, 0, sizeof(join_receipt));
+    if (nexus_v1_scsp_runtime_join(
+            &scsp_receipt, &main_receipt, &driver_receipt,
+            1, 1, 1, 1, &join_receipt)) {
+        if (!join_receipt.valid || !join_receipt.runtime_corridor_proven ||
+            join_receipt.event_selector_semantics_proven ||
+            join_receipt.sal_codec_proven || join_receipt.playback_permitted) {
+            goto cleanup;
+        }
+    } else if (join_receipt.runtime_corridor_proven ||
+               !join_receipt.blocks_real_sfx_playback ||
+               join_receipt.event_selector_semantics_proven ||
+               join_receipt.sal_codec_proven || join_receipt.playback_permitted) {
+        /* A partial capture must stay blocked, never become a false join. */
+        goto cleanup;
+    }
+    complete_trace_fixture = scsp_receipt;
+    complete_trace_fixture.scsp_voice_register_write_count = 1U;
+    complete_trace_fixture.intra_trace_observation_order_proven = 1;
+    memset(&complete_join_receipt, 0, sizeof(complete_join_receipt));
+    if (!nexus_v1_scsp_runtime_join(
+            &complete_trace_fixture, &main_receipt, &driver_receipt,
+            1, 1, 1, 1, &complete_join_receipt) ||
+        !complete_join_receipt.valid ||
+        !complete_join_receipt.source_identities_bound ||
+        !complete_join_receipt.runtime_corridor_proven ||
+        !complete_join_receipt.producer_command_observed ||
+        !complete_join_receipt.sound_cpu_command_observed ||
+        !complete_join_receipt.driver_command_handler_observed ||
+        !complete_join_receipt.pcm_voice_register_route_observed ||
+        complete_join_receipt.event_selector_semantics_proven ||
+        complete_join_receipt.sal_codec_proven ||
+        complete_join_receipt.playback_permitted ||
+        !complete_join_receipt.blocks_real_sfx_playback) {
         goto cleanup;
     }
     if (!scsp_receipt.driver_command_handler_observed ||
