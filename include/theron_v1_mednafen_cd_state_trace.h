@@ -30,6 +30,8 @@ typedef struct {
     uint32_t cd_irq_count;
     uint32_t register_read_count;
     uint32_t register_write_count;
+    uint32_t adpcm_fifo_read_count;
+    uint32_t adpcm_ram_write_count;
     uint32_t destination_candidate_count;
     uint32_t origin_ram_receipt_count;
     int origin_ram_source_verified;

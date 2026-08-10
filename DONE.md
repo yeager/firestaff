@@ -38,17 +38,23 @@
   Originalets fullständiga HuC6280-textkonsument, titlar och font-/pixelägare
   är fortsatt separat capture-gated.
 
-# DM2: SKSAVE återanvänder originalets DB2-textrecords (2026-08-10)
+# Theron: ADPCM-transportreceipt från extern capture (2026-08-10)
 
-- ✅ `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` har nu sin källbundna DB2/Text-
-  gren i den privata SKSAVE-transaktionen. Den går i originalets kartcursor-
-  ordning, hoppar över skyddade aktuatorkedjor och map-text med extension 4,
-  nollställer sedan det valda recordet som `DM2_ALLOC_NEW_RECORD` före
-  återställning av SUPPRESS-kroppen.
-- ✅ Den riktade recordpoolgrinden och den autentiska PC-DOS-korpusen
-  passerar 243/243. Två filer går förbi sin första DB2-begäran och stannar
-  senare i kartströmmen. Resume förblir spärrad tills DB0/DB4/DB14 och den
-  fullständiga GAME_LOAD-sessionen kan ägas atomärt.
+- ✅ CD-state-parsern räknar och kontrollerar nu ADPCM FIFO-läsningar mot
+  ADPCM-RAM-skrivningar och avvisar FIFO-rader utan `transport=adpcm`.
+- ✅ Den externa capture 3 innehåller 2 048 matchande FIFO/RAM-rader från
+  autentiserad Track 02-proveniens. Den avbrutna sista CD-läsningen gör att
+  hela filen korrekt avvisas som ofullständig; ingen ljudhändelse eller
+  source-owned playback publiceras.
+
+# Theron: ADPCM-transportreceipt från extern capture (2026-08-10)
+
+- ✅ CD-state-parsern räknar och kontrollerar nu ADPCM FIFO-läsningar mot
+  ADPCM-RAM-skrivningar och avvisar FIFO-rader utan `transport=adpcm`.
+- ✅ Den externa capture 3 innehåller 2 048 matchande FIFO/RAM-rader från
+  autentiserad Track 02-proveniens. Den avbrutna sista CD-läsningen gör att
+  hela filen korrekt avvisas som ofullständig; ingen ljudhändelse eller
+  source-owned playback publiceras.
 
 # DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
 

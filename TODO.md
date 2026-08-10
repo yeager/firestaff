@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔒 Extern capture 3 visar 2 048 byte-exakta ADPCM FIFO→RAM-transfer, men
+  capturefilen slutar mitt i en ny CD-läsning och saknar CPU-läsning av
+  ADPCM-RAM, kanalstart, ljud-ID och spelhändelseägare. En komplett
+  start→spel-event-capture krävs innan Therons ljudkonsument kan öppnas.
+
 - 🔒 JP-Track 02:s autentiska rosterrecord når nu startup-party-state:n med
   namn, vitalvärden, attribut och skills. Porträttens bitmap-/paletteägare och
   det riktiga text-/UI-consumet är fortfarande inte bevisade; nästa media-

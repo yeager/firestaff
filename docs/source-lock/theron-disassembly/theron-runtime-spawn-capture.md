@@ -486,3 +486,20 @@ Firestaff intake ceiling is now 16 MiB, which permits this authenticated
 65,536-sample receipt to reach the existing byte/PC code-window verifier. This
 is an intake correction only: `target_2600_bytes_present=0` and
 `semantic_publication_allowed=0` remain mandatory.
+
+## 2026-08-10 — external capture 3 ADPCM transport receipt
+
+The external capture at `~/.firestaff/cache/theron/full-capture-3/theron.cd`
+adds a complete, source-bound ADPCM transport witness for the authenticated
+Mednafen session. It contains 2,048 `pce_cd_fifo_read transport=adpcm` rows
+and 2,048 matching `pce_cd_adpcm_ram_write` rows. Each row carries Track 02
+LBA 4860, source offsets, FIFO sequence numbers, ADPCM addresses and byte
+values; the parser now counts both sides and rejects non-ADPCM FIFO rows in
+this trace family.
+
+This proves CD-sector/ADPCM FIFO to ADPCM-RAM transport. It does not prove a
+CPU read from ADPCM-RAM, a decoded sample, a PSG/ADPCM channel start, a sound
+ID, or the owner that maps a gameplay event to a sample. No event-owned audio
+consumer is therefore published, and `theron_v1_play_sound()` remains
+fail-closed. The real evidence tightens the gate; it does not justify a
+synthetic sound mapping.

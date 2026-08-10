@@ -158,8 +158,16 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
             receipt.register_write_count++;
             continue;
         }
-        if (known_observation_row(line, "pce_cd_fifo_read ") ||
-            known_observation_row(line, "pce_cd_adpcm_ram_write ")) {
+        if (known_observation_row(line, "pce_cd_fifo_read ")) {
+            if (!strstr(line, " transport=adpcm ")) {
+                fclose(file);
+                return reject(&receipt);
+            }
+            receipt.adpcm_fifo_read_count++;
+            continue;
+        }
+        if (known_observation_row(line, "pce_cd_adpcm_ram_write ")) {
+            receipt.adpcm_ram_write_count++;
             continue;
         }
         if (known_observation_row(line, "pce_cd_data_destination_candidate ")) {
