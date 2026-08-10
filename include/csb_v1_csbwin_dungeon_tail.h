@@ -116,6 +116,23 @@ typedef struct CSB_V1_CSBWinLegacyDungeonCandidate
 typedef struct CSB_V1_CSBWinLegacyResumeTransaction
     CSB_V1_CSBWinLegacyResumeTransaction;
 
+/* An opaque, non-publishing description of the final ownership operation a
+ * legacy CSBWin restore will eventually need.  It owns the private prepare
+ * transaction and remembers the *current* dungeon owner observed while the
+ * plan was made.  It deliberately has no take/publish/commit entry point:
+ * a later M10 operation must first move GAMEBLOCK2, champions, ITEM16,
+ * timers and this dungeon in one all-or-nothing replacement.
+ *
+ * Keeping the expected owner private prevents parser callers from treating
+ * a candidate pointer as a live dungeon handle.  The only state question
+ * exposed is whether the current owner is still the one the plan examined.
+ *
+ * Source: CSBWin SaveGame.cpp ReadGame():1707-1906 followed by
+ * ReadDatabases():2512-2896; the source does not expose a partially restored
+ * database set to the running game. */
+typedef struct CSB_V1_CSBWinLegacyResumeCommitPlan
+    CSB_V1_CSBWinLegacyResumeCommitPlan;
+
 /* Identity of the exact read-only tail a private candidate owns.  This is
  * deliberately provenance only: it cannot publish or transfer the decoded
  * dungeon.  `source_tail_signature` is a compact diagnostic fingerprint;
@@ -360,6 +377,34 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_identity(
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
     CSB_V1_CSBWinLegacyResumeTransaction *transaction);
+
+/* Create an opaque plan for a future atomic owner replacement.  Creation is
+ * still entirely private: it reads/validates the artifact and snapshots the
+ * existing global dungeon pointer, but never changes that pointer or any
+ * RuntimeProfile.  On failure `*out_plan` is unchanged. */
+int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+    const char *path, size_t max_size,
+    CSB_V1_CSBWinLegacyResumeCommitPlan **out_plan);
+
+/* Read-only evidence views.  Neither transfers ownership. */
+const CSB_V1_CSBWinLegacyResumePrepare
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_prepare(
+        const CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
+const CSB_V1_DungeonData
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
+        const CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
+int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
+    const CSB_V1_CSBWinLegacyResumeCommitPlan *plan,
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out);
+
+/* Returns 1 only while the global dungeon owner is exactly the private
+ * baseline observed at plan creation.  It does not publish, lock, reserve or
+ * otherwise change that owner.  A future live commit must require this test
+ * together with its complete GAMEBLOCK2/champion/ITEM16/timer validation. */
+int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+    const CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
+void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
+    CSB_V1_CSBWinLegacyResumeCommitPlan *plan);
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void);
 

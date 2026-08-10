@@ -18,6 +18,13 @@ struct CSB_V1_CSBWinLegacyResumeTransaction {
     CSB_V1_CSBWinLegacyResumePrepare prepare;
 };
 
+struct CSB_V1_CSBWinLegacyResumeCommitPlan {
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction;
+    /* This is comparison-only provenance for the future atomic owner swap.
+     * It is never returned, dereferenced or modified by this module. */
+    const CSB_V1_DungeonData *expected_current_owner;
+};
+
 /* FNV-1a is solely a stable, compact diagnostic identity.  Admission always
  * uses the retained source bytes and memcmp(), so this is not used as a
  * security or ownership decision. */
@@ -927,6 +934,91 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
         transaction->candidate);
     memset(&transaction->prepare, 0, sizeof(transaction->prepare));
     free(transaction);
+}
+
+int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+    const char *path, size_t max_size,
+    CSB_V1_CSBWinLegacyResumeCommitPlan **out_plan)
+{
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction = NULL;
+    CSB_V1_CSBWinLegacyResumeCommitPlan *plan;
+    int rc;
+
+    if (!out_plan) return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT;
+    /* Build the complete private owner first.  Do not even sample the global
+     * owner until the artifact has passed all of the parser/receipt checks. */
+    rc = csb_v1_csbwin_dungeon_tail_begin_legacy_resume_transaction_file(
+        path, max_size, &transaction);
+    if (rc != CSB_V1_CSBWIN_DUNGEON_TAIL_OK) return rc;
+    if (!transaction ||
+        !csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+            transaction) ||
+        !csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+            transaction)) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
+            transaction);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    plan = (CSB_V1_CSBWinLegacyResumeCommitPlan *)calloc(1u, sizeof(*plan));
+    if (!plan) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
+            transaction);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_OVERFLOW;
+    }
+    plan->transaction = transaction;
+    plan->expected_current_owner = csb_v1_dungeon_get_current();
+    *out_plan = plan;
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
+const CSB_V1_CSBWinLegacyResumePrepare
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_prepare(
+        const CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
+{
+    return plan
+        ? csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+            plan->transaction)
+        : NULL;
+}
+
+const CSB_V1_DungeonData
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
+        const CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
+{
+    return plan
+        ? csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+            plan->transaction)
+        : NULL;
+}
+
+int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
+    const CSB_V1_CSBWinLegacyResumeCommitPlan *plan,
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out)
+{
+    return plan
+        ? csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_identity(
+            plan->transaction, out)
+        : 0;
+}
+
+int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+    const CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
+{
+    return plan && plan->transaction &&
+           csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+               plan->transaction) &&
+           csb_v1_dungeon_get_current() == plan->expected_current_owner;
+}
+
+void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
+    CSB_V1_CSBWinLegacyResumeCommitPlan *plan)
+{
+    if (!plan) return;
+    csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
+        plan->transaction);
+    plan->transaction = NULL;
+    plan->expected_current_owner = NULL;
+    free(plan);
 }
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void)

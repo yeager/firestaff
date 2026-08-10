@@ -93,6 +93,7 @@ static void check_staged_real_save(void)
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
     CSB_V1_CSBWinLegacyDungeonCandidate *file_candidate = NULL;
     CSB_V1_CSBWinLegacyResumeTransaction *transaction = NULL;
+    CSB_V1_CSBWinLegacyResumeCommitPlan *commit_plan = NULL;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     CSB_V1_CSBWinLegacyResumePrepare resume;
     CSB_V1_CSBWinLegacyResumePrepare file_resume;
@@ -153,6 +154,23 @@ static void check_staged_real_save(void)
           csb_v1_dungeon_get_current_mutable() == current_before);
     csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(transaction);
     transaction = NULL;
+    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+              path, 0u, &commit_plan) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          commit_plan != NULL &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_prepare(
+              commit_plan) != NULL &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
+              commit_plan) != NULL &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
+              commit_plan)->level_count == 11 &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
+              commit_plan, &identity) && identity.valid &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+              commit_plan) &&
+          csb_v1_dungeon_get_current() == current_before &&
+          csb_v1_dungeon_get_current_mutable() == current_before);
+    csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(commit_plan);
+    commit_plan = NULL;
     memset(&body, 0, sizeof(body));
     CHECK(csb_v1_csbwin_512_verify_save_body(bytes, (size_t)length, 10u, &body) ==
           CSB_V1_CSBWIN_512_OK);
@@ -315,6 +333,8 @@ int main(void)
         (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
     CSB_V1_CSBWinLegacyResumeTransaction *transaction =
         (CSB_V1_CSBWinLegacyResumeTransaction *)(uintptr_t)1u;
+    CSB_V1_CSBWinLegacyResumeCommitPlan *commit_plan =
+        (CSB_V1_CSBWinLegacyResumeCommitPlan *)(uintptr_t)1u;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity_before;
     CSB_V1_CSBWinLegacyResumePrepare file_receipt;
@@ -340,6 +360,22 @@ int main(void)
               CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_IO &&
           transaction ==
               (CSB_V1_CSBWinLegacyResumeTransaction *)(uintptr_t)1u);
+    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+              "missing-csbgame2.dat", 0u, &commit_plan) ==
+              CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_IO &&
+          commit_plan ==
+              (CSB_V1_CSBWinLegacyResumeCommitPlan *)(uintptr_t)1u);
+    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+              "missing-csbgame2.dat", 0u, NULL) ==
+              CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT);
+    CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_prepare(NULL) ==
+          NULL);
+    CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(NULL) ==
+          NULL);
+    CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
+        NULL, &identity));
+    CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+        NULL));
 
     memset(tail, 0, sizeof(tail));
     put_be16(tail + 0u, 13u);
