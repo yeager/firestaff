@@ -91,6 +91,7 @@ static void check_staged_real_save(void)
     CSB_V1_DungeonData dungeon;
     CSB_V1_DungeonData rejected;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     const CSB_V1_DungeonData *current_before = csb_v1_dungeon_get_current();
     uint16_t *item16_indices = NULL;
     uint8_t *before = NULL;
@@ -167,6 +168,19 @@ static void check_staged_real_save(void)
               csb_v1_csbwin_dungeon_tail_candidate_databases(candidate)->valid &&
               memcmp(before, bytes + body.appended_offset,
                      body.appended_size) == 0);
+        memset(&identity, 0, sizeof(identity));
+        CHECK(csb_v1_csbwin_dungeon_tail_candidate_identity(candidate,
+                                                              &identity));
+        CHECK(identity.valid && identity.source_tail_size == body.appended_size &&
+              identity.source_tail_checksum == stored &&
+              identity.level_count == prefix.level_count &&
+              identity.database_entry_count > 0u);
+        CHECK(csb_v1_csbwin_dungeon_tail_candidate_matches_source_tail(
+                  candidate, bytes + body.appended_offset, body.appended_size));
+        before[0] ^= 1u;
+        CHECK(!csb_v1_csbwin_dungeon_tail_candidate_matches_source_tail(
+                   candidate, before, body.appended_size));
+        before[0] ^= 1u;
         CHECK(body.item16_summary_count == body.item16_summary_total);
         if (body.item16_summary_total != 0u &&
             body.item16_summary_count == body.item16_summary_total) {
@@ -240,6 +254,8 @@ int main(void)
     CSB_V1_CSBWinDungeonTailDatabaseLayout unchanged;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate =
         (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity_before;
     const size_t levels = 2u;
     const size_t descriptors = CSB_V1_CSBWIN_DUNGEON_INDEX_BYTES +
         levels * CSB_V1_CSBWIN_LEVEL_DESC_BYTES;
@@ -295,6 +311,10 @@ int main(void)
     CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
               NULL, 0u, &candidate) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT &&
           candidate == (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u);
+    memset(&identity, 0xa5, sizeof(identity));
+    identity_before = identity;
+    CHECK(!csb_v1_csbwin_dungeon_tail_candidate_identity(NULL, &identity));
+    CHECK(memcmp(&identity, &identity_before, sizeof(identity)) == 0);
     put_be16(tail + 4u, 0u);
     CHECK(csb_v1_csbwin_dungeon_tail_parse_prefix(tail, sizeof(tail), 0u,
               &report) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LEVEL_COUNT);

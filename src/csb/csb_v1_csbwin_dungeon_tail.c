@@ -7,7 +7,26 @@ struct CSB_V1_CSBWinLegacyDungeonCandidate {
     CSB_V1_DungeonData dungeon;
     CSB_V1_CSBWinDungeonTailPrefix prefix;
     CSB_V1_CSBWinDungeonTailDatabaseLayout databases;
+    uint8_t *source_tail;
+    size_t source_tail_size;
+    uint64_t source_tail_signature;
 };
+
+/* FNV-1a is solely a stable, compact diagnostic identity.  Admission always
+ * uses the retained source bytes and memcmp(), so this is not used as a
+ * security or ownership decision. */
+static uint64_t source_tail_signature(const uint8_t *bytes, size_t size)
+{
+    uint64_t value = UINT64_C(1469598103934665603);
+    size_t i;
+
+    if (!bytes && size != 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        value ^= (uint64_t)bytes[i];
+        value *= UINT64_C(1099511628211);
+    }
+    return value;
+}
 
 static uint16_t read_be16(const uint8_t *p)
 {
@@ -442,8 +461,23 @@ int csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
             tail, tail_size, &candidate->prefix, &candidate->databases,
             &candidate->dungeon);
     }
+    if (result == CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        /* Retain exact source provenance.  The decoded dungeon is normalized
+         * for M10, so a future atomic handoff must never infer its saved-tail
+         * identity from those host-endian bytes. */
+        candidate->source_tail = (uint8_t *)malloc(tail_size);
+        if (!candidate->source_tail) {
+            result = CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TRUNCATED;
+        } else {
+            memcpy(candidate->source_tail, tail, tail_size);
+            candidate->source_tail_size = tail_size;
+            candidate->source_tail_signature =
+                source_tail_signature(tail, tail_size);
+        }
+    }
     if (result != CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
         csb_v1_dungeon_free(&candidate->dungeon);
+        free(candidate->source_tail);
         free(candidate);
         return result;
     }
@@ -469,6 +503,49 @@ const CSB_V1_CSBWinDungeonTailDatabaseLayout
         const CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
 {
     return candidate ? &candidate->databases : NULL;
+}
+
+int csb_v1_csbwin_dungeon_tail_candidate_identity(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out)
+{
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
+    size_t database;
+
+    if (!candidate || !out || !candidate->dungeon.raw_data ||
+        !candidate->prefix.valid || !candidate->databases.valid ||
+        !candidate->source_tail || candidate->source_tail_size == 0u) {
+        return 0;
+    }
+    memset(&identity, 0, sizeof(identity));
+    identity.valid = 1;
+    identity.source_tail_size = candidate->source_tail_size;
+    identity.source_tail_signature = candidate->source_tail_signature;
+    identity.source_tail_checksum = candidate->databases.stored_checksum;
+    identity.level_count = candidate->prefix.level_count;
+    for (database = 0u; database < CSB_V1_CSBWIN_DATABASE_COUNT; ++database) {
+        const uint16_t entries = candidate->prefix.database_entries[database];
+        if ((uint32_t)entries > UINT32_MAX - identity.database_entry_count) {
+            return 0;
+        }
+        identity.database_entry_count =
+            identity.database_entry_count + (uint32_t)entries;
+    }
+    *out = identity;
+    return 1;
+}
+
+int csb_v1_csbwin_dungeon_tail_candidate_matches_source_tail(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    const uint8_t *tail, size_t tail_size)
+{
+    if (!candidate || !tail || !candidate->source_tail ||
+        candidate->source_tail_size != tail_size || tail_size == 0u ||
+        candidate->source_tail_signature !=
+            source_tail_signature(tail, tail_size)) {
+        return 0;
+    }
+    return memcmp(candidate->source_tail, tail, tail_size) == 0;
 }
 
 int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
@@ -583,6 +660,7 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
 {
     if (!candidate) return;
     csb_v1_dungeon_free(&candidate->dungeon);
+    free(candidate->source_tail);
     free(candidate);
 }
 

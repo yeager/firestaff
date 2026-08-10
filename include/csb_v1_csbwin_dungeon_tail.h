@@ -101,6 +101,25 @@ typedef struct {
 typedef struct CSB_V1_CSBWinLegacyDungeonCandidate
     CSB_V1_CSBWinLegacyDungeonCandidate;
 
+/* Identity of the exact read-only tail a private candidate owns.  This is
+ * deliberately provenance only: it cannot publish or transfer the decoded
+ * dungeon.  `source_tail_signature` is a compact diagnostic fingerprint;
+ * candidate_matches_source_tail() performs the authoritative byte-for-byte
+ * comparison before a future atomic resume transaction can bind GAMEBLOCK2
+ * to this candidate.
+ *
+ * Source: CSBWin SaveGame.cpp ReadDatabases()/ReadGame(): saved database
+ * bytes remain the ownership source until the complete restored world is
+ * made live. */
+typedef struct {
+    int valid;
+    size_t source_tail_size;
+    uint64_t source_tail_signature;
+    uint16_t source_tail_checksum;
+    uint8_t level_count;
+    uint32_t database_entry_count;
+} CSB_V1_CSBWinLegacyDungeonCandidateIdentity;
+
 /* Parse the unencrypted tail immediately following the authenticated
  * GAMEBLOCK1/2 streams. `extended_flags` is from Extended Features. */
 int csb_v1_csbwin_dungeon_tail_parse_prefix(
@@ -185,6 +204,20 @@ const CSB_V1_CSBWinDungeonTailPrefix
 const CSB_V1_CSBWinDungeonTailDatabaseLayout
     *csb_v1_csbwin_dungeon_tail_candidate_databases(
         const CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
+
+/* Return immutable source-tail provenance owned by `candidate`.  On an
+ * invalid argument `out` is unchanged. */
+int csb_v1_csbwin_dungeon_tail_candidate_identity(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out);
+
+/* Prove that a later authenticated save body still names exactly the tail
+ * that constructed this private candidate.  This is a byte-for-byte check,
+ * not a checksum or fingerprint comparison.  It remains candidate-only and
+ * never changes global dungeon ownership. */
+int csb_v1_csbwin_dungeon_tail_candidate_matches_source_tail(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    const uint8_t *tail, size_t tail_size);
 
 /* Check the source-owned coordinates that a later atomic CSBWin resume
  * transaction would bind to this private dungeon.  GAMEBLOCK2's pose must
