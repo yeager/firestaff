@@ -258,6 +258,42 @@ VDP2 activity to executing Saturn code, but not yet to a decoded tilemap,
 CLUT bank, menu asset or final layer placement; semantic admission remains
 blocked.
 
+## Session-bound SCSP/SLEV corridor
+
+A separate operator-only J-BIOS/English-media run is retained outside the
+repository at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-scsp-menu-bound-20260810/`.
+The manifest binds the Japanese BIOS SHA-256
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`, the
+English merged-disc SHA-256
+`5ab2fbd572d454e4a9df024e2bb6b3cd30f84018c3e650bd945bd52742edd83d`, and the
+same trace session token `scsp-menu-bound-20260810` into both the sound-CPU
+and main-SH-2 traces. The raw VDP1/VDP2 capture is independently validated;
+its SHA-256 is
+`86bc7cddb23c012edebd1f8ca93fe019737cc8e1fb59a5c68f39fb2a60ffd63a`.
+
+The source-bound corridor analyzer reports all 16 SLEV files, all 16 MAP
+files, all 16 SAL files, and the authenticated `SDDRVS.TSK` identity. It
+observes mailbox value `0x02` at the expected mailbox and binds the producer
+and consumer traces to the same session. It does not observe the verified
+SDDRVS command handler at `PC=0x3224`, an event selector, a MAP row, a SAL
+codec/sample, or a SCSP voice write. The C runtime join test therefore passes
+with `source-bound, playback blocked`; this is a positive provenance receipt,
+not an audio playback admission.
+
+Reproduce the source-bound check with:
+
+```text
+python3 scripts/analyze_nexus_slev_sal_runtime_corridor.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-codex-scsp-menu-bound-20260810/scsp-writes.trace \
+  --main-trace /Volumes/Extern-disk/nexus-saturn-capture/run-codex-scsp-menu-bound-20260810/main-scsp-writes.trace \
+  --data-dir /Users/bosse/.firestaff/data/nexus \
+  --driver /Users/bosse/.firestaff/data/nexus/SDDRVS.TSK
+```
+
+The missing handler and event-to-SAL relation keep SLEV/SAL/SDDRVS playback
+capture-gated.
+
 The producer also records 64 unique VDP2 writer code windows. The primary
 window at `PC=0x06011924` contains the runtime words
 `25fe 0000 25fe 007c ...`, while the initial register setup at
