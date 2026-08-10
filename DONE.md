@@ -13139,3 +13139,8 @@ rendering remain blocked.
 The forcefield startup handoff now keeps authenticated Track 02 champion
 stats/skills when the optional US roster-text consumer is unavailable. It does
 not invent names or unlock T900 equipment semantics.
+# Theron: harden source monster group bounds
+
+Bound category-4 live-creature materialization to the four health words owned
+by the real Track 02 monster record. Verified against the US/JP dungeon loader
+and production source-combat tests.

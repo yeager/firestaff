@@ -514,7 +514,9 @@ struct Theron_V1_World {
     int creature_count;
 
     /* Authentic category-4 thing-list records from the loaded Track 02
-     * dungeon.  These are source data, not yet live creatures. */
+     * dungeon. Static groups may be admitted to the live creature pool with
+     * source identity; random spawn, AI, combat and loot remain separate
+     * source-consumer gates. */
     Theron_V1_SourceMonsterRecord source_monsters[THERON_MAX_SOURCE_MONSTERS];
     unsigned int source_monster_count;
     /* The US raw Track 02 pointer/zone records are copied here only after

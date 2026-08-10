@@ -4821,3 +4821,8 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   generator och kör den med instrumenterad build; en state som redan har
   laddat allt utan CD-event räcker inte för semantic handoff.
 - BIOS och spelmedia ska stanna lokalt/extern disk och får inte läggas i git.
+# Theron: bound category-4 source group materialization
+
+The static source-monster bridge now uses the authenticated four-health-word
+limit consistently, preventing malformed records from escaping the source
+record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.

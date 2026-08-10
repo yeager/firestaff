@@ -1653,3 +1653,8 @@ required before semantic promotion.
 - Completed: optional US roster text no longer blocks the source-owned
   champion stats/skills handoff at forcefield entry.
 - Remaining: authenticate the US text consumer and T900 equipment semantics.
+# 2026-08-10 — source group bounds fixed
+
+- Completed: category-4 live-creature admission now applies the same
+  four-member source bound in its counting and materialization passes.
+- Remaining: authenticate dynamic RNG, AI, T700 and T900 consumers.

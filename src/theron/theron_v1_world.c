@@ -1457,9 +1457,16 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             record->level != lvl) continue;
         if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
         {
+            /* The category-4 record encodes the member count in one byte,
+             * but the source record owns exactly four health words.  Keep
+             * the same bounded Group-count contract in both passes; a
+             * malformed or future variant record must not turn admission
+             * into an out-of-bounds read. */
+            unsigned int members = (unsigned int)record->number + 1u;
+            if (members > 4u) members = 4u;
             unsigned int slot;
             int has_live_member = 0;
-            for (slot = 0; slot <= record->number; ++slot) {
+            for (slot = 0; slot < members; ++slot) {
                 if (record->health[slot] != 0u) {
                     has_live_member = 1;
                     break;

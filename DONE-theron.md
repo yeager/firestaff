@@ -3727,3 +3727,11 @@ metadata and locally staged CD-DA tracks.
 - Source-bound stats and skills remain available; display names remain absent
   until the text consumer is proven. T900 equipment semantics remain gated.
 - Verified with `test_theron_v1_combat_runtime_source`.
+# 2026-08-10 — bound category-4 group count in live admission
+
+- Kept the source monster materializer within the four authenticated health
+  words of a Track 02 category-4 record in both validation passes.
+- Corrupt or future records can no longer make the live-creature bridge read
+  past the source health array; the original RNG/AI path remains gated.
+- Verified against the real US/JP dungeon corpus and the production combat
+  bridge.
