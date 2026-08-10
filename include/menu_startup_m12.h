@@ -758,6 +758,8 @@ void M12_StartupMenu_DrawScanProgressLocalized(
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
+const char* M12_StartupMenu_GameDisplayTitleForLocale(int languageIndex,
+                                                       const char* gameId);
 
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,

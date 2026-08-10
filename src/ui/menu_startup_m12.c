@@ -1744,6 +1744,11 @@ static const char* m12_game_display_title_for_locale(int localeIndex,
     return m12_translate_for_locale(locale, "GAME");
 }
 
+const char* M12_StartupMenu_GameDisplayTitleForLocale(int languageIndex,
+                                                       const char* gameId) {
+    return m12_game_display_title_for_locale(languageIndex, gameId);
+}
+
 static const char* m12_scan_task_for_locale(int localeIndex,
                                              const char* task) {
     int locale = m12_clamp_index(localeIndex, M12_UI_LANGUAGE_COUNT);

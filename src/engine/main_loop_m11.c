@@ -404,7 +404,8 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
         int etaSec = (int)((etaMs + 500) / 1000);
         if (progress->currentGameId[0] != '\0') {
             snprintf(label, sizeof(label), "Scanning %s  %zu%%  ~%ds",
-                     progress->currentGameId, pct, etaSec);
+                     M12_StartupMenu_GameDisplayTitleForLocale(
+                         0, progress->currentGameId), pct, etaSec);
         } else {
             snprintf(label, sizeof(label), "Scanning  %zu%%  ~%ds", pct, etaSec);
         }

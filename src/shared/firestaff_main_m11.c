@@ -12,6 +12,7 @@
 #include "main_loop_m11.h"
 
 #include "asset_status_m12.h"
+#include "menu_startup_m12.h"
 #include "asset_find_by_hash.h"
 #include "firestaff_game_data_fingerprint.h"
 #include "firestaff_version.h"
@@ -271,7 +272,10 @@ static int verbose_scan_progress(const M12_AssetScanProgress* progress,
     (void)userData;
     if (!progress) return 1;
     if (progress->currentGameId[0] != '\0') {
-        printf("  [%s] %s", progress->currentGameId, progress->currentTask);
+        printf("  [%s] %s",
+               M12_StartupMenu_GameDisplayTitleForLocale(
+                   0, progress->currentGameId),
+               progress->currentTask);
         if (progress->currentPath[0] != '\0') {
             printf(": %s", progress->currentPath);
         }
@@ -313,8 +317,10 @@ static int run_data_scan(const char* dataDir, int verbose) {
     printf("Data dir: %s\n", M12_AssetStatus_GetDataDir(&status));
     if (verbose) {
         const char* dirs[] = {"dm1", "csb", "dm2", "nexus", "theron"};
-        const char* names[] = {"Dungeon Master", "Chaos Strikes Back",
-                               "Dungeon Master II", "DM Nexus", "Theron's Quest"};
+        const char* names[] = {
+            "Dungeon Master", "Chaos Strikes Back",
+            "Dungeon Master II: The Legend of Skullkeep",
+            "Dungeon Master Nexus", "Theron's Quest"};
         size_t gi;
         printf("Version: " FIRESTAFF_VERSION_STRING "\n");
         printf("\n");
@@ -325,8 +331,9 @@ static int run_data_scan(const char* dataDir, int verbose) {
         printf("\n");
         print_scan_game(&status, "dm1", "Dungeon Master", 0);
         print_scan_game(&status, "csb", "Chaos Strikes Back", 0);
-        print_scan_game(&status, "dm2", "Dungeon Master II", 0);
-        print_scan_game(&status, "nexus", "DM Nexus", 0);
+        print_scan_game(&status, "dm2",
+                        "Dungeon Master II: The Legend of Skullkeep", 0);
+        print_scan_game(&status, "nexus", "Dungeon Master Nexus", 0);
         print_scan_game(&status, "theron", "Theron's Quest", 0);
     }
     printf("\nNon-essential intro/title files are optional and do not block launch.\n");
