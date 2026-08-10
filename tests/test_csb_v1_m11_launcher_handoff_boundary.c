@@ -861,13 +861,25 @@ static void expect_native_live_mirror_and_command_handoff(
                     view->world.party.championCount == 1 &&
                     view->world.party.activeChampionIndex == 0 &&
                     profile->runtime.party_state.ChampionCount == 1 &&
-                    profile->runtime.party_state.LeaderIndex == 0 &&
-                    M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) ==
-                        M11_GAME_INPUT_REDRAW &&
+                    profile->runtime.party_state.LeaderIndex == 0,
+                label);
+    if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 10, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_IGNORED &&
+                        !view->inventoryPanelActive &&
+                        view->world.party.activeChampionIndex == 0,
+                    "Amiga C013 leaves unbound champion-HUD clicks inert");
+    }
+    expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) ==
+                    M11_GAME_INPUT_REDRAW &&
                     profile->runtime.party_dir ==
                         ((initial_direction + 1) & 3) &&
                     view->csbState.party_dir == profile->runtime.party_dir,
-                label);
+                "native handoff retains source movement after champion confirmation");
     if (found_pose && profile->runtime.dungeon_handle) {
         const CSB_V1_DungeonData *dungeon = profile->runtime.dungeon_handle;
         const int front_x = profile->runtime.party_x +

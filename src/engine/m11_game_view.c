@@ -30579,6 +30579,23 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
+    /* The native Amiga live page currently binds C013 (movement), C017
+     * (inventory), C026 and C040 from the selected ADF.  It does not yet
+     * bind the separate C012/C187 champion-status and bar records.  Do not
+     * let their inherited PC34 hit rectangles operate invisibly above the
+     * source-owned page: COMMAND.C F0359 can only dispatch a champion HUD
+     * command after its matching G0447 surface is live.  C013's y=124..168
+     * movement surface and every C017 route remain available below this
+     * native top-row boundary. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 && y >= 0 && y <= 28) {
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (m11_csb_is_amiga_profile(csb_profile)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+    }
+
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
         state->nexusState.title_active &&
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
