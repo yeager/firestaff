@@ -410,18 +410,20 @@ int main(void) {
      * row.  This exercises the same M12 handoff without constructing media. */
     {
         static const char *const game_ids[] = {"dm1", "csb", "dm2"};
-        static const char *const pc_ids[] = {"pc34-en", "pc34-en", "pc-en"};
+        static const char *const pc_ids[] = {"pc34-en", "", "pc-en"};
         static const char *const fmtowns_ids[] = {
             "fmtowns-en", "fmtowns-en", "fmtowns-ja"
         };
         size_t game;
 
         for (game = 0u; game < sizeof(game_ids) / sizeof(game_ids[0]); ++game) {
-            int pc = M12_AssetStatus_FindVersionIndex(game_ids[game], pc_ids[game]);
+            int pc = pc_ids[game][0] != '\0'
+                ? M12_AssetStatus_FindVersionIndex(game_ids[game], pc_ids[game])
+                : M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
             int fmtowns = M12_AssetStatus_FindVersionIndex(game_ids[game],
                                                             fmtowns_ids[game]);
             if (!expect(pc >= 0 && fmtowns >= 0,
-                        "PC and FM Towns catalogue rows should exist")) return 1;
+                        "the selected original-platform catalogue rows should exist")) return 1;
             state.activatedIndex = (int)game;
             state.gameOptions[game].architectureIndex = M12_ARCH_AUTO;
             state.gameOptions[game].versionIndex = game == 1u ? pc : fmtowns;

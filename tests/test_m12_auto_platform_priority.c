@@ -1,7 +1,7 @@
 /* AUTO platform selection must be a media policy, not catalogue order.
  * DM1/DM2 prefer their original PC routes.  CSB never had a DOS release:
  * it must prefer its original FM Towns route over Amiga, Atari and any
- * internal PC34-compatibility catalogue row. */
+ * accidental compatibility catalogue row. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
@@ -41,17 +41,19 @@ int main(void)
         int fmtowns = M12_AssetStatus_FindVersionIndex("csb", "fmtowns-en");
         int amiga = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int atari = M12_AssetStatus_FindVersionIndex("csb", "st20-21-en");
-        int pc_compat = M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
         int selected;
         memset(&status, 0, sizeof(status));
-        if (fmtowns < 0 || amiga < 0 || atari < 0 || pc_compat < 0) {
+        if (fmtowns < 0 || amiga < 0 || atari < 0) {
             fprintf(stderr, "FAIL: missing CSB platform catalogue identities\n");
+            return 1;
+        }
+        if (M12_AssetStatus_FindVersionIndex("csb", "pc34-en") >= 0) {
+            fprintf(stderr, "FAIL: CSB must not advertise a DOS catalogue row\n");
             return 1;
         }
         status.versions[1][fmtowns].matched = 1;
         status.versions[1][amiga].matched = 1;
         status.versions[1][atari].matched = 1;
-        status.versions[1][pc_compat].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, "csb", M12_ARCH_AUTO);
         if (selected != fmtowns) {

@@ -6,7 +6,8 @@
   Master II.
 - ✅ Chaos Strikes Back hade ingen DOS-utgåva. AUTO väljer därför dess
   originala FM Towns-väg först och därefter Amiga/Atari ST, aldrig den
-  interna PC34-kompatibilitetsraden. Uttryckligt plattformsval ändras inte.
+  interna PC34-kompatibilitetsraden. Den raden är nu även borttagen från
+  användarvänd originalmediekatalog. Uttryckligt plattformsval ändras inte.
 - ✅ Regressionerna provar både den normala AUTO-prioriteten och den sista
   M12-handoffpunkten. Inga speldata skapas, kopieras eller packas upp.
 

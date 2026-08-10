@@ -335,7 +335,6 @@ static const M12_VersionSpec g_csbVersions[] = {
      * Towns extraction provides the corresponding asset inventory. */
     {"csb", "fmtowns-en", "FM Towns English", "FMT EN", g_csbGraphicsNames, "405b757038eea3c263e60f240854d6de", M12_ARCH_FM_TOWNS},
     {"csb", "fmtowns-ja", "FM Towns Japanese", "FMT JP", g_csbGraphicsNames, "761d6fc588b31aeaaa9caf3725e111b9", M12_ARCH_FM_TOWNS},
-    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
     /* ReDMCSB COMPILE.H:199-243: A31E is the original Amiga 3.1 English
      * media family.  Its GRAPHICS.DAT identity is also recorded by the
      * Amiga decoder and data validator; scanner and M11 must admit it. */
