@@ -6,7 +6,8 @@
 
 int main(void)
 {
-    uint8_t *s2d = (uint8_t *)calloc(1U, 0x2000U);
+    uint8_t *s2d = (uint8_t *)calloc(1U, 0x4000U);
+    uint8_t page[4096 * 2];
     uint8_t cg[4 * 64];
     uint8_t palette[256 * 2];
     Nexus_V1_FontS2dDecodeResult decoded;
@@ -21,6 +22,12 @@ int main(void)
     decoded.character_generator_size = 16U + sizeof(cg);
     decoded.palette_offset = 0x500U;
     decoded.palette_size = 16U + sizeof(palette);
+    decoded.page_offset = 0x900U;
+    decoded.page_size = 16U + sizeof(page);
+    for (i = 0; i < (int)sizeof(page); ++i) {
+        page[i] = (uint8_t)(0x40U + (i & 0x3f));
+        s2d[0x900U + 16U + (size_t)i] = page[i];
+    }
     for (i = 0; i < (int)sizeof(cg); ++i) {
         cg[i] = (uint8_t)(i + 1);
         s2d[0x100U + 16U + (size_t)i] = cg[i];
@@ -30,16 +37,19 @@ int main(void)
         s2d[0x500U + 16U + (size_t)i] = palette[i];
     }
     memset(&input, 0, sizeof(input));
+    input.capture_page = page;
+    input.capture_page_size = sizeof(page);
     input.capture_character_generator = cg;
     input.capture_character_generator_size = sizeof(cg);
     input.capture_palette = palette;
     input.capture_palette_size = sizeof(palette);
     input.font256_s2d = s2d;
-    input.font256_s2d_size = 0x2000;
+    input.font256_s2d_size = 0x4000;
     input.decoded = &decoded;
     input.source_hash_verified = 1;
     if (!nexus_v1_font256_vdp2_capture_join(&input, &receipt) ||
-        !receipt.valid || !receipt.character_generator_span_join_verified ||
+        !receipt.valid || !receipt.page_span_join_verified ||
+        !receipt.character_generator_span_join_verified ||
         !receipt.palette_span_join_verified || receipt.text_code_mapping_proven ||
         !receipt.semantic_admission_blocked ||
         receipt.character_generator_tile_count != 4 ||
@@ -48,6 +58,13 @@ int main(void)
         free(s2d);
         return 1;
     }
+    page[17] ^= 1U;
+    if (nexus_v1_font256_vdp2_capture_join(&input, &receipt)) {
+        fprintf(stderr, "FAIL: altered FONT256 Page was admitted\n");
+        free(s2d);
+        return 1;
+    }
+    page[17] ^= 1U;
     palette[0] ^= 1U;
     if (nexus_v1_font256_vdp2_capture_join(&input, &receipt)) {
         fprintf(stderr, "FAIL: altered FONT256 palette was admitted\n");

@@ -7,6 +7,12 @@ Page-, Palette- och Attribute-orden (4096/256/242). Detta är fortfarande en
 source-retention-grind: Saturns glyph-code→tile-mapping, VDP2 page/PND-
 placering och textkonsument kräver fortsatt capture-witness.
 
+Nästa capture-grind: bind en autentiserad Saturn VDP2-captures råa FONT256
+Page-span till exakt samma `FONT256.S2D`-bytefönster. Page-span-joinen finns
+nu tillsammans med CG- och Palette-joinen, men får inte markeras som
+textkonsument förrän PND-fält, teckenkodsmappning, placering och layer-ägare
+är bevisade av capture.
+
 2026-08-10: Engine-API:t kan nu läsa en vald, hashbunden MENU.BPK-PRS3-yta
 som exakta indexpixlar. Detta är source-pixelåtkomst, inte PALT-färgdekodning,
 VDP1-upload eller menyplacering; Saturn-konsumentgrinden är fortsatt öppen.

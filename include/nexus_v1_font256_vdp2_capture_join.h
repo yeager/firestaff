@@ -3,10 +3,12 @@
 
 #include "nexus_v1_font_s2d.h"
 
-/* Exact source-domain join for the VDP2 character-generator and palette
- * spans. This proves source ownership only; page entries and text-code
+/* Exact source-domain join for the VDP2 Page, character-generator and palette
+ * spans. This proves source ownership only; page-entry meaning and text-code
  * mapping remain separate Saturn-runtime facts. */
 typedef struct {
+    const uint8_t *capture_page;
+    int capture_page_size;
     const uint8_t *capture_character_generator;
     int capture_character_generator_size;
     const uint8_t *capture_palette;
@@ -20,6 +22,7 @@ typedef struct {
 typedef struct {
     int valid;
     int source_hash_verified;
+    int page_span_join_verified;
     int character_generator_span_join_verified;
     int palette_span_join_verified;
     int character_generator_tile_count;

@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus FONT256 raw VDP2 Page-span join
+
+- `nexus_v1_font256_vdp2_capture_join` jämför nu den exakta råa Page-regionen
+  med den hashattesterade `FONT256.S2D`, tillsammans med Character Generator
+  och Palette.
+- Ändrad Page avvisas av `test_nexus_v1_font256_vdp2_capture_join`.
+- `text_code_mapping_proven=0` och `semantic_admission_blocked=1` behålls:
+  detta är source/capture-proveniens, inte en gissad FONT256-text- eller
+  meny-renderare. Fokuserad Nexus-build och real-data-tester passerar.
+
 ## 2026-08-10 - Nexus DGN Structure2 source decoder
 
 - Promoted the DMWeb-authenticated Structure2 decoder into the production

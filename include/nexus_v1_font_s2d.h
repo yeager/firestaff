@@ -91,7 +91,8 @@ int nexus_v1_font_s2d_copy_character_generator_tile(
 /* DMWeb page data: 16-byte prefix followed by 4096 big-endian tilemap
  * words. Palette data: 16-byte prefix followed by 256 big-endian BGR555
  * words. These helpers expose source words only; they do not assign glyph
- * or menu meaning. */
+ * or menu meaning. A VDP2 capture may join the raw Page span, but that still
+ * does not prove the Saturn text-code consumer. */
 int nexus_v1_font_s2d_page_tilemap_word(
     const uint8_t *data, int data_size,
     const Nexus_V1_FontS2dDecodeResult *decoded,
