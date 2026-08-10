@@ -238,6 +238,17 @@ eight-frame witness has the same negative result. These are source-byte joins
 only: an exact match would still need the original command order, CLUT and
 placement relation before any DGN material could be admitted.
 
+The longer J-BIOS/English-media startup-input witness
+`run-codex-start-menu-long-20260810/runtime-vdp12.raw` adds 1,800 frames with
+the authenticated Start window at capture frames 300–359. Frame 300 has a
+complete VDP1 chain (`User/System Clip → Local Coordinate → type-2 draw →
+END`) whose draw consumes `0x63e00..0x6bf80` (33,280 bytes, 16bpp). The
+command-sequence, material-resolver and capture-compositor tests accept that
+hardware framing, while the source comparator finds no exact native or
+word-swapped owner among 126 verified retail files, MNS surfaces or DGN
+Structure2 spans. It is therefore stronger startup-input transport evidence,
+not a startup/menu asset identity or production-renderer admission.
+
 The comparator also scans the extracted corpus as whole files, but admits a
 file to this scan only when its SHA-256 matches the selected retail manifest
 or the authenticated European startup-asset identity. Frames 1 and 7 each
