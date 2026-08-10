@@ -67,7 +67,9 @@ int main(void) {
     Theron_V1_Viewport viewport;
     int loaded;
     int preview_cells;
+    int screen_cells;
     unsigned char m11_framebuffer[320u * 200u] = {0};
+    unsigned char expected_screen[TQR_FB_W * TQR_FB_H];
     size_t preview_nonzero;
     size_t presented_nonzero;
     size_t boot_presented_nonzero;
@@ -117,7 +119,24 @@ int main(void) {
     }
     memset(viewport.fb.data, 0,
            (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
+    screen_cells = theron_v1_vram_trace_render_authenticated_screen(&viewport);
+    if (screen_cells != preview_cells || screen_cells <= 0 ||
+        nonzero_bytes(viewport.fb.data,
+                      (size_t)viewport.fb.stride * viewport.fb.h) == 0u) {
+        fprintf(stderr, "FAIL: authenticated native screen produced no pixels\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
+    memcpy(expected_screen, viewport.fb.data, sizeof(expected_screen));
+    memset(viewport.fb.data, 0,
+           (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
     theron_vp_render_dungeon(&viewport, NULL);
+    if (memcmp(expected_screen, viewport.fb.data, sizeof(expected_screen)) != 0) {
+        fprintf(stderr,
+                "FAIL: production dungeon route diverged from authenticated screen route\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
     theron_vp_present(&viewport, &viewport.palette,
                       m11_framebuffer, 320, 200);
     presented_nonzero = nonzero_bytes(m11_framebuffer,

@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — production replay now uses the authenticated native screen consumer
+
+- ✅ När ett hashverifierat VRAM/VCE-par uttryckligen monteras går Therons
+  produktionsviewport nu via den explicita 256×224 native-screen-konsumenten.
+  Det riktade real-capture-testet jämför produktionsframebuffern byte för byte
+  med den autentiserade screen-routen.
+- 🔒 Detta är fortfarande screen-space BAT/tile/VCE-bindning. Ingen cell
+  tilldelas till square-to-tile, perspektiv, HUD, objekt eller creature-
+  semantik utan motsvarande originalkonsument.
+
 ## 2026-08-11 — save-state `$B0E5` hits are not the regular-spawn caller
 
 - ✅ Den ombyggda externa Mednafen-capturen mot den riktiga US-CUE:n loggade

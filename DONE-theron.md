@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — production Theron viewport uses the authenticated native screen route
+
+- ✅ `theron_vp_render_dungeon()` delegerar ett explicit laddat, hashverifierat
+  VRAM/VCE-capture till `theron_v1_vram_trace_render_authenticated_screen()`.
+- ✅ Real-capture-regressionen jämför produktionsframebuffern byte för byte med
+  den direkta native-screen-konsumenten före M11-presentering.
+- 🔒 Routen är fortfarande screen-space-only och påstår inte square-to-tile,
+  perspektiv, HUD, objekt, creature, RNG, T700 eller T900-semantik.
+
 ## 2026-08-10 — launch receipt no longer overclaims level/object readiness
 
 - ✅ Corrected `theron_v1_launch_decision()` so a media-ready launch only

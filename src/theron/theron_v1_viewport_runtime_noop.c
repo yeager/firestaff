@@ -86,11 +86,13 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                               const Theron_V1_World *world) {
     (void)world;
     /* An explicit VDC/VCE capture is already a source-owned screen-space
-     * BAT/tile binding.  Replay that captured frame here without assigning
-     * its cells to the still-unproven dungeon square/object model. */
+     * BAT/tile binding.  Use the dedicated native-screen consumer rather
+     * than reconstructing its 32x28 window at this call site.  This keeps
+     * the production route byte-for-byte tied to the authenticated VDC
+     * screen while assigning no cell to the still-unproven dungeon
+     * square/object model. */
     if (vp && vp->vram_trace_loaded) {
-        (void)theron_v1_vram_trace_render_bat_preview(
-            vp, 0, 32, 28, 0, 0);
+        (void)theron_v1_vram_trace_render_authenticated_screen(vp);
     }
 }
 

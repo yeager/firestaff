@@ -64,8 +64,9 @@ code-window verifier, so a transport-escaped sidecar cannot be accepted by
 the loader stage but rejected later by the consumer stage.
 
 An operator-supplied raw VDC/VCE pair is accepted only by the explicit capture
-tool when its exact FNV receipts are present. That path is a diagnostic
-screen-space BAT preview, not a README promotion: it does not prove
+tool when its exact FNV receipts are present. That path now feeds the
+production native 256×224 screen-space BAT consumer, not a README promotion:
+it does not prove
 square-to-tile perspective, creature ownership or HUD layout.
 
 The strongest current proof is:
