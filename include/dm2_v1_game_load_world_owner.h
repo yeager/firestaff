@@ -519,6 +519,14 @@ typedef struct {
      * because the UI/event queue is not yet a session owner. */
     int16_t source_next_champion_number;
     int16_t source_event_hero_index;
+    /* c_eventqueue::init runs before startend's first mirror selection.
+     * After SELECT_CHAMPION_LEADER(0), its only durable GAME_LOAD input is
+     * the selected leader.  Retain the whole source-shaped empty queue so a
+     * later session handoff does not fabricate queue state around that
+     * scalar. Source: SKULLWIN/c_eventqueue.cpp::init; startend.cpp::
+     * DM2_2f3f_0789. */
+    DM2_V1_EventQueue source_event_queue;
+    int source_event_queue_materialized;
     /* startend.cpp::DM2_2f3f_0789 calls events_2f3f_04ea with 0x92 directly
      * after the scripted first selection.  These source fields retain its
      * private record-bit/hero release transition; they are not UI state. */
@@ -555,8 +563,10 @@ typedef struct {
     DM2_V1_RecordPoolSet record_pools;
     DM2_V1_Party party;
     int16_t leader_hand_record;
-    /* Only this scalar is source-owned before the complete c_eventqueue
-     * handoff. Do not manufacture an empty event queue as session state. */
+    /* c_eventqueue::init followed by the real first mirror/leader selection.
+     * This remains private and receives no host input before a complete
+     * session owner exists. */
+    DM2_V1_EventQueue event_queue;
     int16_t source_event_hero_index;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;

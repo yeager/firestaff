@@ -1,3 +1,11 @@
+# DM2: privat c_eventqueue i GAME_LOAD-kandidaten (2026-08-10)
+
+- ✅ Efter den verkliga första mirror-/leader-transitionen behåller den
+  privata GAME_LOAD-ägaren nu hela källformade `c_eventqueue` från
+  `c_eventqueue::init`: tom ringbuffer, ingen värdinput och leaderindex 0.
+  Runtimekandidaten klonar kön tillsammans med party, recordpooler, CAII,
+  c_tim och SOUND9. Den öppnar inte M11-inmatning eller spelbar session.
+
 # Launcher: vald DM1-utgåva äger sin runtimekatalog (2026-08-10)
 
 - ✅ Vid Auto-val i en datarot med flera Dungeon Master-utgåvor binds nu en

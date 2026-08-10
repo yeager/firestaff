@@ -1673,6 +1673,7 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     if (!dm2_v1_game_load_world_owner_is_prepared(source) ||
         source->committed || !source->source_map_context_materialized ||
         !source->champion_selection_materialized ||
+        !source->source_event_queue_materialized ||
         !source->source_startend_first_champion_released ||
         source->selected_party.heros_in_party <= 0 ||
         source->selected_party.heros_in_party > DM2_MAX_HEROES ||
@@ -1695,6 +1696,16 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         !source->caii_slots.valid || source->caii_slots.capacity <= 0 ||
         !source->caii_slots.slots || !source->caii_rng_initialized ||
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
+        return 0;
+    }
+    if (source->source_event_queue.event_heroidx !=
+        source->source_event_hero_index ||
+        source->source_event_queue.entries != 0 ||
+        source->source_event_queue.idx != 0 ||
+        source->source_event_queue.out_idx != 0 ||
+        source->source_event_queue.fetch_busy ||
+        source->source_event_queue.singleevent_available ||
+        source->source_event_queue.button0x2) {
         return 0;
     }
     if (dm2_v1_dungeon_load(&candidate.dungeon, source->dungeon.raw_data,
@@ -1726,6 +1737,7 @@ int dm2_v1_game_load_runtime_session_candidate_init(
                                                          &source->sound_owner)) goto fail;
     candidate.party = source->selected_party;
     candidate.leader_hand_record = source->load_new_dungeon_reset.leader_hand_record;
+    candidate.event_queue = source->source_event_queue;
     candidate.source_event_hero_index = source->source_event_hero_index;
     candidate.caii_rng = source->caii_rng;
     candidate.caii_rng_initialized = 1;
@@ -1927,10 +1939,12 @@ int dm2_v1_game_load_world_owner_select_champion(
     DM2_V1_Party old_party;
     DM2_V1_SksaveItemBonusReceipt old_bonus;
     DM2_V1_GameLoadChampionSelectionReceipt old_receipt;
+    DM2_V1_EventQueue old_event_queue;
     int16_t old_next_number;
     int16_t old_event_hero;
     uint8_t old_count;
     int old_materialized;
+    int old_event_queue_materialized;
     uint8_t count;
     int i;
 
@@ -1964,9 +1978,11 @@ int dm2_v1_game_load_world_owner_select_champion(
     old_party = owner->selected_party;
     old_bonus = owner->champion_item_bonus;
     old_receipt = owner->champion_selection_receipt;
+    old_event_queue = owner->source_event_queue;
     old_next_number = owner->source_next_champion_number;
     old_event_hero = owner->source_event_hero_index;
     old_materialized = owner->champion_selection_materialized;
+    old_event_queue_materialized = owner->source_event_queue_materialized;
     owner->transaction = transaction;
     memcpy(owner->selected_mirrors, next, sizeof(next));
     owner->selected_mirror_count = (uint8_t)(count + 1u);
@@ -1979,9 +1995,11 @@ int dm2_v1_game_load_world_owner_select_champion(
         owner->selected_party = old_party;
         owner->champion_item_bonus = old_bonus;
         owner->champion_selection_receipt = old_receipt;
+        owner->source_event_queue = old_event_queue;
         owner->source_next_champion_number = old_next_number;
         owner->source_event_hero_index = old_event_hero;
         owner->champion_selection_materialized = old_materialized;
+        owner->source_event_queue_materialized = old_event_queue_materialized;
         return 0;
     }
     return 1;
@@ -1992,6 +2010,7 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
 {
     DM2_V1_Party candidate;
     DM2_V1_GameLoadChampionSelectionReceipt selection_receipt;
+    DM2_V1_EventQueue source_event_queue;
     int hero_index;
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
@@ -2090,9 +2109,21 @@ int dm2_v1_game_load_world_owner_materialize_champion_selection(
      * Preserve that private party-facing result when c_hero materializes;
      * it does not expose an M11 party or a viewport. */
     candidate.absdir = owner->source_party_absdir;
+    /* c_eventqueue::init initializes the full queue before STARTEND drives
+     * the first mirror. SELECT_CHAMPION_LEADER keeps hero 0 selected here;
+     * do not substitute a host queue or enqueue an invented input event.
+     * Source: SKULLWIN/c_eventqueue.cpp::init (10-31), startend.cpp::
+     * DM2_2f3f_0789 (1164-1189). */
+    dm2_v1_eventqueue_init(&source_event_queue);
+    if (source_event_queue.event_heroidx != 0) {
+        return 0;
+    }
+    source_event_queue.event_heroidx = 0;
     owner->selected_party = candidate;
     owner->source_next_champion_number = candidate.heros_in_party;
     owner->source_event_hero_index = 0;
+    owner->source_event_queue = source_event_queue;
+    owner->source_event_queue_materialized = 1;
     owner->champion_selection_receipt = selection_receipt;
     owner->champion_selection_materialized = 1;
     return 1;

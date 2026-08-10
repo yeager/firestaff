@@ -203,16 +203,15 @@
   och skriver en hashad, opak payload. Den bevisar inte SLEV-selector,
   SAL-dekodning eller host-uppspelning; positiv retail-capture återstår.
 
-- ⏳ DM2:s `GameLoadRuntimeSessionCandidate` är nu uttryckligen spärrad tills
-  hela `RESET_CAII`/`FILL_CAII_CUR_MAP`-transaktionen är ägd. Championval,
-  statisk CAII eller reserverade slots får inte blandas med en oägd dynamisk
-  0A48/CCM/noise/timergren och utges för GAME_LOAD. Nästa arbete är en enda
-  rollbackbar c_map/moverec/CAII/0A48-transaktion; först därefter får en
-  RAM-klon av File_header, recordpooler, party, c_tim, RNG och SND skapas.
-  Recordpoolerna ska fortsatt klonas från den muterade ägaren, inte från den
-  ursprungliga filbilden. SOUND9-kärnan kan nu använda den verkliga
-  c_dballoc-dimensionerade `xsndptr2`-spanen; återstående arbete är fortfarande
-  `FIND_WALK_PATH`/occlusion och den samlade 0A48/CCM-/timertransaktionen.
+- ⏳ DM2:s privata `GameLoadRuntimeSessionCandidate` äger nu den kompletta
+  `RESET_CAII`/`FILL_CAII_CUR_MAP`-transaktionen, inklusive den dynamiska
+  0A48/CCM/noise/timergrenen, den muterade recordpoolen och den källformade
+  `c_eventqueue` efter första championvalet. Den är fortfarande inte en
+  spelbar session: nästa samlade arbete är en rollbackbar
+  c_map/moverec/`FIND_WALK_PATH`-/occlusion- och timerdispatch-ägare. Den får
+  inte publicera M11-party, HUD eller input förrän alla dessa grenar ägs av
+  samma transaktion. Recordpoolerna ska fortsatt klonas från den muterade
+  ägaren, inte från den ursprungliga filbilden.
 
 - ⏳ DM2:s DOS-, FM Towns- och Amiga-startmedia väcks nu var 16 ms i M11, med
   källornas egna ackumulatorer för bildtid. Återstår gör den riktiga Amiga

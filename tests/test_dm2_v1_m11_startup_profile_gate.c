@@ -4927,6 +4927,13 @@ int main(void) {
                     runtime_session_candidate.record_pools.pools[4].bytes != NULL &&
                     runtime_session_candidate.timer_entries != NULL &&
                     runtime_session_candidate.sound_owner.queue_entries != NULL &&
+                    runtime_session_candidate.event_queue.entries == 0 &&
+                    runtime_session_candidate.event_queue.idx == 0 &&
+                    runtime_session_candidate.event_queue.out_idx == 0 &&
+                    !runtime_session_candidate.event_queue.fetch_busy &&
+                    !runtime_session_candidate.event_queue.singleevent_available &&
+                    runtime_session_candidate.event_queue.event_heroidx ==
+                        profile_new_game_owner->source_event_hero_index &&
                     runtime_session_candidate.record_pools.pools[4].bytes[4] ==
                         runtime_candidate_db4_byte_mutated &&
                     runtime_session_candidate.record_pools.pools[4].bytes !=
