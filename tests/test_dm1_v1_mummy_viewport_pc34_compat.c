@@ -9,15 +9,17 @@
  *                      Defense=25, BaseHealth=33, Attack=20, ... }
  *   DUNGEON.C:439   Same row for the original (PC 3.4 pre-1.2EN) variant.
  *   DUNVIEW.C:1656  G0219_as_Graphic558_CreatureAspects[10]
- *                    { firstNativeRelativeIndex=29, firstDerivedBitmapIndex=615,
- *                      coordinateSet_transparentColor=0x04,
- *                      replacementColorSetIndices=0x00,
- *                      graphicInfo=0x1480 }
- *   DUNVIEW.C:2392  M618_GRAPHIC_FIRST_CREATURE = 584
+ *                    { firstNativeRelativeIndex=29, firstDerivedBitmapIndex=0 }
+ *                    (STARTUP2.C:865-897 computes firstDerivedBitmapIndex at
+ *                     runtime by starting from M539_DERIVED_BITMAP_FIRST_CREATURE
+ *                     and stacking per-creature 2+2*SIDE+2*BACK+2*ATTACK+3*ADDL
+ *                     entries; under MEDIA721/PC 3.4 that lands at 818 for
+ *                     Mummy.)
+ *   DUNVIEW.C:2392  M618_GRAPHIC_FIRST_CREATURE = 584 (MEDIA720/PC 3.4)
  *   DUNVIEW.C:5244  C0xFF_SINGLE_CENTERED_CREATURE single-creature path
  *   DEFS.H:1631     M052_MAXIMUM_HORIZONTAL_OFFSET(graphicInfo)
  *                   = ((graphicInfo) >> 12) & 3
- *                   → 0x1480 → maxH = 1, maxV = 0
+ *                   → 0x11B8 → maxH = 1, maxV = 0
  *   DEFS.H:1632     M053_MAXIMUM_VERTICAL_OFFSET(graphicInfo)
  *                   = ((graphicInfo) >> 14) & 3
  *   DEFS.H:591-604  M022/M023 offset reads, M024/M025 offset sets
@@ -27,22 +29,26 @@
  *                   offset bits)
  *   GROUP.C:524-560 F0185 single/multi-creature group placement
  *
- * The Mummy's GraphicInfo 0x1480 is the M10 source-locked value:
+ * The Mummy's GraphicInfo 0x11B8 is the source-locked PC 3.4 value from
+ * DUNGEON.C:694 (row 10 in G0243_as_Graphic559_CreatureInfo, MEDIA720):
  *   bits 0-1   (MASK0x0003_ADDITIONAL)        = 0
  *   bit 2      (MASK0x0004_FLIP_NON_ATTACK)   = 0
- *   bit 3      (MASK0x0008_SIDE)              = 0
- *   bit 4      (MASK0x0010_BACK)              = 0
- *   bit 5      (MASK0x0020_ATTACK)            = 0
- *   bit 7      (MASK0x0080_SPECIAL_D2_FRONT)  = 0
- *   bit 8      (MASK0x0100_D2_FRONT_FLIPPED)  = 0
+ *   bit 3      (MASK0x0008_SIDE)              = 1
+ *   bit 4      (MASK0x0010_BACK)              = 1
+ *   bit 5      (MASK0x0020_ATTACK)            = 1
+ *   bit 7      (MASK0x0080_SPECIAL_D2_FRONT)  = 1
+ *   bit 8      (MASK0x0100_D2_FRONT_FLIPPED)  = 1
  *   bit 9      (MASK0x0200_FLIP_ATTACK)       = 0
  *   bit 10     (MASK0x0400_FLIP_DURING_ATTACK)= 0
  *   bits 12-13 (M052_MAXIMUM_HORIZONTAL)      = 1
  *   bits 14-15 (M053_MAXIMUM_VERTICAL)        = 0
  *
- * Therefore the Mummy has no pose variation (front-only sprite), does not
- * flip during attack, but does randomize its 3-bit horizontal sprite
- * offset each aspect update.  This test pins both halves of that contract.
+ * Therefore the Mummy DOES have side/back/attack sprite variations
+ * (four native bitmaps stacked from 613), does not flip during attack,
+ * but does randomize its 3-bit horizontal sprite offset each aspect
+ * update.  The value 0x1480 that some earlier revisions of this test
+ * expected is actually the Attributes field (position 3 in the
+ * CREATURE_INFO struct), not GraphicInfo (position 4).
  */
 
 #include <stdio.h>
@@ -94,13 +100,13 @@ static void test_mummy_aspect_source_lock(void) {
     /* ReDMCSB DUNVIEW.C line 1656 (I34E variant) — aspect #10 */
     ASSERT_EQ(mummy->firstNativeBitmapRelativeIndex, 29,
               "Mummy firstNativeBitmapRelativeIndex");
-    ASSERT_EQ(mummy->firstDerivedBitmapIndex, 615,
+    ASSERT_EQ(mummy->firstDerivedBitmapIndex, 818,
               "Mummy firstDerivedBitmapIndex");
     ASSERT_EQ(mummy->coordinateSet_transparentColor, 0x04,
               "Mummy coordSet_transparentColor");
     ASSERT_EQ(mummy->replacementColorSetIndices, 0x00,
               "Mummy replacementColorSetIndices");
-    ASSERT_EQ(mummy->graphicInfo, 0x1480,
+    ASSERT_EQ(mummy->graphicInfo, 0x11B8,
               "Mummy GraphicInfo");
     ASSERT_STR_EQ(dm1_creature_type_name(DM1_CREATURE_MUMMY), "Mummy",
                   "Mummy name");
@@ -111,19 +117,18 @@ static void test_mummy_aspect_source_lock(void) {
     ASSERT_EQ(dm1_creature_transparent_color(DM1_CREATURE_MUMMY), 4,
               "Mummy transparent color");
 
-    /* Native front bitmap: 584 + 29 = 613 (M618 + firstNative, no SIDE /
-     * BACK / ATTACK / FLIP_ATTACK flags, so the front bitmap is the only
-     * one ReDMCSB resolves). */
+    /* Native front bitmap: 584 + 29 = 613 (M618 + firstNative).  With
+     * SIDE/BACK/ATTACK all set in GraphicInfo 0x11B8, the Mummy stacks
+     * one bitmap per pose in native-index order: FRONT=613, SIDE=614,
+     * BACK=615, ATTACK=616. */
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_MUMMY,
               DM1_CREATURE_POSE_FRONT), 613, "Mummy native front index");
-    /* Side / Back / Attack poses fall back to front because no pose bit
-     * is set in 0x1480.  The render layer still produces a valid index. */
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_MUMMY,
-              DM1_CREATURE_POSE_SIDE), 613, "Mummy side→front fallback");
+              DM1_CREATURE_POSE_SIDE), 614, "Mummy native side index");
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_MUMMY,
-              DM1_CREATURE_POSE_BACK), 613, "Mummy back→front fallback");
+              DM1_CREATURE_POSE_BACK), 615, "Mummy native back index");
     ASSERT_EQ(dm1_creature_native_bitmap_index(DM1_CREATURE_MUMMY,
-              DM1_CREATURE_POSE_ATTACK), 613, "Mummy attack→front fallback");
+              DM1_CREATURE_POSE_ATTACK), 616, "Mummy native attack index");
 }
 
 /* ── Test 2: M052 / M053 horizontal offset range from Mummy GraphicInfo ── */
@@ -183,7 +188,7 @@ static void test_mummy_aspect_frame_cycling(void) {
     ASSERT_TRUE((aspect & DM1_CREATURE_ASPECT_IS_ATTACKING) != 0,
                 "Mummy attack update sets IS_ATTACKING");
     ASSERT_EQ(aspect & DM1_CREATURE_ASPECT_FLIP_BITMAP, 0,
-              "Mummy attack update never flips (GraphicInfo 0x1480)");
+              "Mummy attack update never flips (GraphicInfo 0x11B8 has no FLIP_ATTACK)");
 
     /* Re-run with randomBit=1 → sign bit (0x04) on, magnitude stays 0
      * because maxH = 1 implies M002_RANDOM(1) == 0 always. */
