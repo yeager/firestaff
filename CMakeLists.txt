@@ -21238,6 +21238,7 @@ endif()
     # ── DM2: MOVE_RECORD_TO + movement execution ──
     add_executable(test_dm2_v1_move_record_to_pc34_compat
         tests/test_dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_move_record_to_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
