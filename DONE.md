@@ -5,7 +5,8 @@
   och writer-code-trace. Råfilens SHA-256 är
   `7756900f79ed3b7c4e680918a1f9604943fb96398b068866c77bc91b37d3f0ad`.
 - ✅ Writer-code-analysen ser 64 unika SH-2-PC:n och en exakt retail-match mot
-  `TM.BIN` vid `0x06017702`. `DM.BIN` matchar inte någon hel writer-window.
+  `TM.BIN` vid `0x06017702`, med exakt filoffset `TM.BIN+0x76c2`.
+  `DM.BIN` matchar inte någon hel writer-window.
   Detta är ett positivt exekverbart källägarskap för VDP2-writern, men inte
   ännu ett bevis på meny, FONT256-text, CLUT eller skärmplacering.
 - ✅ Frame 299 ger en reproducerbar FONT256-kontroll: Attributes matchar,

@@ -65,12 +65,20 @@ def main() -> int:
         blob = b"".join(int(word, 16).to_bytes(2, "big") for word in code_words)
         observed.add(pc)
         windows += 1
-        owners = [name for name, data in assets.items() if data.find(blob) >= 0]
+        owner_offsets = {
+            name: data.find(blob)
+            for name, data in assets.items()
+            if data.find(blob) >= 0
+        }
+        owners = list(owner_offsets)
         if owners:
             exact.update(owners)
         print(
             f"pc=0x{pc:08x} code_start=0x{int(match['start'], 16):08x} "
-            f"words={words} exact_owner={','.join(owners) if owners else 'none'}"
+            f"words={words} exact_owner={','.join(owners) if owners else 'none'} "
+            "exact_offsets=" +
+            ("|".join(f"{name}:0x{offset:x}" for name, offset in owner_offsets.items())
+             if owner_offsets else "none")
         )
 
     missing = sorted(set(args.require_pc) - observed)
