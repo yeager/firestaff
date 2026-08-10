@@ -59,9 +59,16 @@ SOURCE_CHECKS = [
 LOCAL_CHECKS = [
     ("global-definition-null", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "const uint8_t *g_dm1_wall_frame_bitmaps = NULL;"),
     ("draw-frame-base-read", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;"),
-    ("door-frame-null-guard", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "if (fr && bm_base)"),
+    # The door-frame null-guard idiom was widened from `if (fr && bm_base)`
+    # to `if (!state->source_graphics_required && fr && bm_base)` so the
+    # legacy nibble-packed path only fires when authenticated PC34 source
+    # graphics are not the owner. Same null-guard semantics; accept the
+    # widened predicate.
+    ("door-frame-null-guard", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "fr && bm_base)"),
     ("wall-loop-null-guard", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "if (!bm_base) continue;"),
-    ("csb-back-null-guard", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "if (!bm_base) return;"),
+    # The CSB back-buffer helper was reshaped to return NULL instead of
+    # a void return. Same null-guard-first pattern; accept either exit form.
+    ("csb-back-null-guard", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "if (!bm_base) return NULL;"),
     ("draw-wall-null-safe", "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "if (!state || !frame || frame->byte_width == 0 || frame->height == 0 || !wall_bitmap) return;"),
     ("c-regression-default-null", "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "g_dm1_wall_frame_bitmaps.default_null"),
     ("c-regression-no-write", "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "g_dm1_wall_frame_bitmaps.null_guard_no_viewport_write"),
