@@ -516,7 +516,12 @@ int dm2_v1_sksave_map_owner_tile_record_link(
  * advances the chain. It must not return the existing text link to
  * DM2_ALLOC_NEW_RECORD.
  *
- * DB0, DB4 and DB14 have source deletion/relocation tails and remain blocked.
+ * DB0 returns a selected record to DM2_ALLOC_NEW_RECORD, which zeroes it only
+ * after the recycler returns. DB4 and DB14 have creature/missile deletion
+ * tails; other DBs may relocate a linked record.  DB0 nevertheless remains
+ * blocked here because source selection has a second map pass and can descend
+ * into static-creature possessions, neither of which this diagnostic walker
+ * owns.
  *
  * Returns zero: the full mutating DB0/DB4/DB14 paths are not owned here.
  * The cursor is written back when the traversal completes, matching

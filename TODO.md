@@ -672,8 +672,11 @@
   DB2/Text-grenen är verifierad som en källägd kedjespärr, inte ett
   recyclerurval: den följer originalets aktuatorkedje- och skyddade
   map-text-spärr och får inte återanvända någon textpost.
-  Återstående DB0-, DB4- och DB14-grenar kräver fortfarande sina kompletta
-  creature-, missile- och recordflyttägare.
+  DB0 returnerar ett källvalt record till `ALLOC_NEW_RECORD`, medan DB4 och
+  DB14 har creature-/missile-svansar och andra DB-vägar kan flytta record.
+  Alla tre kräver fortfarande samma kompletta recyclerägare: tvåpass-
+  karttraversering, skyddad karta, statiska varelsers possessions, cursor,
+  c_map och respektive mutation innan en allokering får publiceras.
   Den privata importägaren behåller nu den autentiserade sparade kartan,
   kartspannen och originalets nollställda 18 recycler-markörer, men själva
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: DB0,

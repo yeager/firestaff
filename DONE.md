@@ -6,6 +6,16 @@
   ändras inte.
 - ✅ Regressionstestet täcker Nexus/Theron över alla 19 startmenyspråk.
 
+# DM2: SKSAVE-recyclerns DB0-gräns dokumenterad källtroget (2026-08-10)
+
+- ✅ SKProject/SKWINDOS `SKW_RECYCLE_A_RECORD_FROM_THE_WORLD` och
+  `SKW_ALLOC_NEW_RECORD` har jämförts med den lokala ägaren. DB0 väljs av
+  recyclerns tvåpass-karttraversering och nollställs först av allokeraren;
+  DB4/DB14 är de vägar som kan köra creature-/missile-svansar.
+- ✅ Gränskontraktet skiljer nu explicit på dessa fall. DB0 förblir spärrad
+  tills skyddad karta, statiska varelsers possessions, cursor och full
+  c_map-/recordtransaktion kan ägas tillsammans. Resume förblir spärrad.
+
 # Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
 
 - ✅ `scripts/analyze_nexus_vdp2_register_writer.py` verifierar att samma

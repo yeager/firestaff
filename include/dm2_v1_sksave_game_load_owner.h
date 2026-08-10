@@ -42,9 +42,13 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     int weight_recompute_blocked;
     /* The narrow, private context that immediately precedes
      * c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  It owns no
-     * recycler operation: the source routine can delete creatures, missiles
-     * and linked world objects, so callers must still reject allocation when
-     * a DB is exhausted.  `map_cursors` is ddat.v1e0426[0..17], which the
+     * recycler operation: DB0 returns a selected source record to
+     * DM2_ALLOC_NEW_RECORD, while DB4 and DB14 can delete creatures or
+     * missiles and other DBs can relocate linked objects.  Even DB0 needs
+     * the complete two-pass map/chain traversal (including static-creature
+     * possessions) before ALLOC_NEW_RECORD may zero the selected record, so
+     * callers must still reject allocation when a DB is exhausted.
+     * `map_cursors` is ddat.v1e0426[0..17], which the
      * original runtime initializes to zero, not a value serialized in the
      * SKSave body.  The remaining values are authenticated from the exact
      * GAME_LOAD c_map and savegame-buffer spans retained by this owner.
