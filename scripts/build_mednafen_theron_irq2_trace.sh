@@ -77,6 +77,9 @@ patch -d "$build_root/source" -p1 --batch --forward \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
+    < <(sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+        "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_write_trace.patch")
+patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch"

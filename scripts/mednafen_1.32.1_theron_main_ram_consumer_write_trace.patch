@@ -1,0 +1,22 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -413,8 +413,19 @@
+	INLINE void WrMem(unsigned int address, uint8 V)
+	{
+	 uint8 wmpr = MPR[address >> 13];
+ FIRESTAFF_PATCH_BLANK_CONTEXT
+	 LastLogicalWriteAddr = address;
+ FIRESTAFF_PATCH_BLANK_CONTEXT
++	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
++	 if(physical_address >= 0x1f0000 && physical_address < 0x1f8000)
++	 {
++	  const uint16 writer_pc = GetRegister(GSREG_PC);
++	  const uint8 writer_mpr = MPR[writer_pc >> 13];
++	  const uint32 writer_physical_pc =
++	   (writer_mpr << 13) | (writer_pc & 0x1FFF);
++	  if(writer_physical_pc >= 0x1f0000 && writer_physical_pc < 0x1f8000)
++	   TheronPCECDTraceMainRAMConsumerWrite(
++	    address, physical_address, V, writer_pc, writer_physical_pc);
++	 }
+ 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
+ 	}
