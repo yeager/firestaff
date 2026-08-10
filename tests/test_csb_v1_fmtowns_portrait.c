@@ -49,6 +49,8 @@ static void test_f31_planar_decode(void) {
     memset(data, 0, sizeof(data));
     data[0] = 0x91u;
     data[1] = 0xa7u;
+    data[6] = 0x00u;
+    data[7] = 0x01u;
     /* First 16-pixel group: plane 0 and 2 set x=0, plane 1 and 3 set x=1.
      * PORTRAIT.C F7251 must therefore produce palette colours 5 and 10. */
     data[44] = 0x80u;
@@ -60,6 +62,24 @@ static void test_f31_planar_decode(void) {
            "F31 portrait planar fixture decodes");
     ASSERT(pixels[0] == 5u && pixels[1] == 10u && pixels[2] == 0u,
            "F31 portrait preserves F7251 plane and pixel-pair order");
+}
+
+static void test_f31_c06_header_gate(void) {
+    uint8_t data[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+
+    memset(data, 0, sizeof(data));
+    data[0] = 0x91u;
+    data[1] = 0xa7u;
+    data[7] = 0x01u;
+    ASSERT(csb_v1_fmtowns_portrait_probe(data, sizeof(data)) == 1,
+           "F31 C06 accepts a native CMP header");
+    data[7] = 0x00u;
+    ASSERT(csb_v1_fmtowns_portrait_probe(data, sizeof(data)) == 0,
+           "F31 C06 rejects CMP without its format marker");
+    data[7] = 0x01u;
+    data[8] = 0x80u;
+    ASSERT(csb_v1_fmtowns_portrait_probe(data, sizeof(data)) == 0,
+           "F31 C06 rejects disabled CMP flag");
 }
 
 static void test_real_portraits(void) {
@@ -142,6 +162,7 @@ static void test_real_portraits(void) {
 int main(void) {
     test_probe_null();
     test_f31_planar_decode();
+    test_f31_c06_header_gate();
     test_real_portraits();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

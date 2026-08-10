@@ -1,6 +1,10 @@
 #include "csb_v1_fmtowns_portrait.h"
 #include <string.h>
 
+static uint16_t be16(const uint8_t *bytes) {
+    return (uint16_t)(((uint16_t)bytes[0] << 8u) | bytes[1]);
+}
+
 static uint32_t fnv1a(const uint8_t *data, size_t len) {
     uint32_t h = 2166136261u;
     size_t i;
@@ -15,8 +19,16 @@ static uint32_t fnv1a(const uint8_t *data, size_t len) {
 int csb_v1_fmtowns_portrait_probe(const uint8_t *data, size_t size) {
     uint16_t id;
     if (!data || size != CSB_FMTOWNS_PORTRAIT_FILE_SIZE) return 0;
-    id = (uint16_t)(data[0] | ((uint16_t)data[1] << 8));
-    return id == CSB_FMTOWNS_PORTRAIT_IDENTIFIER;
+    /* ReDMCSB CEDT001.C F7002_ReadCMP (lines 197-210): F31 first swaps
+     * each header word, then requires Magic == 0x91A7, cmp_ui_6 == 1 and
+     * cmp_ui_8 without bit 0x8000.  The retail bytes are big-endian, so
+     * validate their pre-swap representation directly.  Merely accepting
+     * the magic used to let the C06 file-picker expose portraits the native
+     * Load Champions transaction would subsequently reject. */
+    id = be16(data);
+    return id == 0x91a7u &&
+           be16(data + 6u) == 1u &&
+           (be16(data + 8u) & 0x8000u) == 0u;
 }
 
 int csb_v1_fmtowns_portrait_decode_planar(const uint8_t *img,
@@ -110,7 +122,9 @@ int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
     }
     if (receipt) {
         receipt->valid = 1;
-        receipt->identifier = (uint16_t)(data[0] | ((uint16_t)data[1] << 8));
+        /* Keep the historic receipt's wire-order identifier convention;
+         * C06 admission itself above uses the post-swap 0x91A7 value. */
+        receipt->identifier = (uint16_t)(data[0] | ((uint16_t)data[1] << 8u));
         memcpy(receipt->name, data + 16, CSB_FMTOWNS_PORTRAIT_NAME_LEN);
         receipt->name[CSB_FMTOWNS_PORTRAIT_NAME_LEN] = '\0';
         memcpy(receipt->title, data + 24, CSB_FMTOWNS_PORTRAIT_TITLE_LEN);

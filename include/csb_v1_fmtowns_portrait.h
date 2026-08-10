@@ -14,10 +14,12 @@ extern "C" {
  * Each .CMP file is 508 bytes with a 44-byte header followed by
  * 464 bytes of Atari ST four-plane data (32x29 portrait).
  *
- * Header layout:
- *   0-1:   uint16 identifier (0xA791)
- *   2-3:   uint16 field count or offset (0x000A)
- *   4-9:   3 x uint16 metadata values
+ * Header layout (all words are big-endian on the F31 media):
+ *   0-1:   uint16 identifier (0x91A7 after C06's byte swap)
+ *   2-3:   uint16 dungeon identifier
+ *   4-5:   uint16 platform identifier
+ *   6-7:   uint16 CMP format marker (must be 1)
+ *   8-9:   uint16 CMP flags (bit 15 must be clear)
  *   10-15: 6 reserved/zero bytes
  *   16-23: Champion first name (8 bytes, null-padded ASCII)
  *   24-43: Champion title (20 bytes, null-padded ASCII)
@@ -45,8 +47,9 @@ typedef struct {
     uint32_t pixel_fnv1a;
 } CSB_V1_FmtownsPortraitReceipt;
 
-/* Probe whether a buffer is a valid FM Towns CSB portrait .CMP file.
- * Returns 1 if size is 508 and identifier matches. */
+/* Probe whether a buffer is a C06-admissible FM Towns CSB portrait .CMP
+ * file.  F7002_ReadCMP rejects the record unless its byte-swapped magic is
+ * 0x91A7, its format marker is one, and flag bit 15 is clear. */
 int csb_v1_fmtowns_portrait_probe(const uint8_t *data, size_t size);
 
 /* Decode a .CMP portrait to indexed 4bpp pixels (one byte per pixel) using
