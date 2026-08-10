@@ -57,6 +57,7 @@
  *   ReDMCSB layout-696 C113..C116 champion-icon zone IDs.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_portrait_seed.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
@@ -329,6 +330,14 @@ static void seed_party(M11_GameViewState* game, int championCount) {
     game->world.magic.fireShieldDefense = 0;
     game->world.magic.spellShieldDefense = 0;
     game->world.magic.partyShieldDefense = 0;
+    /* The DM1 top-row receipt short-circuits when an HoC candidate
+     * is active (candidateMirrorOrdinal >= 0). StartDm1 leaves this
+     * at 0, which the runtime interprets as "candidate ordinal 0" --
+     * enough to block the source-owned status-box publish. Reset to
+     * -1 to match the "no candidate" convention. */
+    game->candidateMirrorOrdinal = -1;
+    game->candidateMirrorPanelActive = 0;
+    game->candidateMirrorPartyIndex = -1;
 
     seed_champion(&game->world.party.champions[0],
                   "TIGGY", DIR_NORTH, 100, 100, 80, 60, 0);
@@ -480,6 +489,7 @@ static int run_terminal_pair(M11_GameViewState* game,
 
     /* Case 1: full4 HUD. All four status boxes populated. */
     seed_party(game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, PROBE_CHAMPION_COUNT);
     memset(fb, 0x00, (size_t)(PROBE_FB_W * PROBE_FB_H));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 0; slot < PROBE_CHAMPION_COUNT; ++slot) {
@@ -491,6 +501,7 @@ static int run_terminal_pair(M11_GameViewState* game,
 
     /* Case 2: single1 status panel. Only slot 0 populated. */
     seed_party(game, 1);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, 1);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_alive_slot(game, fb, 0, "single1");
     for (slot = 1; slot < PROBE_CHAMPION_COUNT; ++slot) {
@@ -502,6 +513,7 @@ static int run_terminal_pair(M11_GameViewState* game,
 
     /* Case 3: two-champion intermediate. */
     seed_party(game, 2);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, 2);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_alive_slot(game, fb, 0, "two2");
     ok &= check_alive_slot(game, fb, 1, "two2");
@@ -514,6 +526,7 @@ static int run_terminal_pair(M11_GameViewState* game,
 
     /* Case 4: three-champion intermediate. */
     seed_party(game, 3);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, 3);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 0; slot < 3; ++slot) {
         ok &= check_alive_slot(game, fb, slot, "three3");
@@ -526,8 +539,10 @@ static int run_terminal_pair(M11_GameViewState* game,
     /* Case 5: single1 -> full4 transition. Slot 1/2/3 must be
      * repopulated by the post-draw M11 stack. */
     seed_party(game, 1);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, 1);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     seed_party(game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, PROBE_CHAMPION_COUNT);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 1; slot < PROBE_CHAMPION_COUNT; ++slot) {
         ok &= check_alive_slot(game, fb, slot, "single1->full4");
@@ -539,8 +554,10 @@ static int run_terminal_pair(M11_GameViewState* game,
     /* Case 6: full4 -> single1 transition. Slot 1/2/3 must be
      * cleared by the post-draw M11 stack. */
     seed_party(game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, PROBE_CHAMPION_COUNT);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     seed_party(game, 1);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, 1);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     for (slot = 1; slot < PROBE_CHAMPION_COUNT; ++slot) {
         ok &= check_empty_slot(game, fb, slot, "full4->single1");
@@ -552,12 +569,15 @@ static int run_terminal_pair(M11_GameViewState* game,
     /* Case 7: full4 -> two2 -> full4 transition. Slot 2/3 must
      * be cleared, then repopulated. */
     seed_party(game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, PROBE_CHAMPION_COUNT);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     seed_party(game, 2);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, 2);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_empty_slot(game, fb, 2, "full4->two2");
     ok &= check_empty_slot(game, fb, 3, "full4->two2");
     seed_party(game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(game, PROBE_CHAMPION_COUNT);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_alive_slot(game, fb, 2, "two2->full4");
     ok &= check_alive_slot(game, fb, 3, "two2->full4");
@@ -604,6 +624,7 @@ int main(int argc, char** argv) {
     /* Warm the framebuffer with a known party so the first terminal
      * case has consistent prior content for the empty-slot checks. */
     seed_party(&game, PROBE_CHAMPION_COUNT);
+    (void)firestaff_dm1_probe_seed_original_portraits(&game, PROBE_CHAMPION_COUNT);
     memset(fb, 0x0F, sizeof(fb) / sizeof(fb[0]));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
 
