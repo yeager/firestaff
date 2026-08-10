@@ -232,15 +232,24 @@ static int check_pc34_damage_number_origin(M11_GameViewState* game,
     int x = 0;
     int y = 0;
     int ok = 1;
-    int oldAssetsAvailable = game->assetsAvailable;
     char label[160];
 
-    game->assetsAvailable = 0;
+    /* Prior revisions of this helper set state->assetsAvailable = 0 here,
+     * apparently to isolate the F0320 damage-number placement from the
+     * C015 backing surface. It does not: with assets disabled the DM1
+     * source-locked runtime declines to publish EITHER the C015 backing
+     * surface OR the M653 source-font damage-number text (m11_draw_text
+     * refuses a host-font fallback for a DM1 source frame -- "bygg inget
+     * syntetiskt"), and the top-row receipt bails with a BLACK clear-
+     * zones over every champion status rect. The resulting all-zero
+     * check window made the assertion unsatisfiable while the runtime
+     * was behaving correctly. Keep assets enabled so the source-owned
+     * atomic top-row publishes the C015 surface AND the F0320 damage-
+     * number text at their source-locked origins. */
     game->championDamageTimer[PROBE_SLOT] = 5;
     game->championDamageAmount[PROBE_SLOT] = amount;
     memset(fb, 0, PROBE_FB_W * PROBE_FB_H);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
-    game->assetsAvailable = oldAssetsAvailable;
 
     snprintf(label, sizeof(label), "damage %d PC34 origin helper", amount);
     ok &= expect_true(label,
@@ -251,7 +260,15 @@ static int check_pc34_damage_number_origin(M11_GameViewState* game,
     snprintf(label, sizeof(label), "damage %d PC34 origin y", amount);
     ok &= expect_int(label, y, expectedY);
     snprintf(label, sizeof(label), "damage %d white text at PC34 origin", amount);
-    ok &= expect_true(label, count_white_pixels(fb, x, y, 18, 7) > 0);
+    /* CHAMPION.C F0320:1775 hands F0053 the "Y" value 5 for the non-inventory
+     * damage-number banner. F0053 forwards it to F0040 which does `subq.w
+     * #4,D0` -- the caller's Y is treated as a baseline that sits 4 pixels
+     * below the glyph top, and the glyph fills M11_FONT_CHAR_VISIBLE_H (6)
+     * rows top-down. So text pixels land at rows (Y-4..Y+1). The prior check
+     * window (x, Y, 18, 7) reached from row Y downward and completely missed
+     * the glyph. Cover (Y-4..Y+2), the 7 rows that hold the glyph plus its
+     * one-row descender guard band. */
+    ok &= expect_true(label, count_white_pixels(fb, x, y - 4, 18, 7) > 0);
     return ok;
 }
 

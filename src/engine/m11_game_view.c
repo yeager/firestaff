@@ -7641,7 +7641,12 @@ static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight,
             drawX + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34,
-            y - (M11_FONT_CHAR_VISIBLE_H - 1),
+            /* F0040 assembly subq.w #4,D0 shifts the caller-supplied Y up
+             * by 4 (not by FONT_CHAR_VISIBLE_H - 1 == 5). At the
+             * 4-pixel-shift plus the 6-row VISIBLE_H, glyph rows land at
+             * Y-4..Y+1 -- exactly what CHAMPION.C F0320:1775 assumes when it
+             * passes L0973_i_Y = 5 for a 7-tall C015 status damage box. */
+            y - (M11_FONT_CHAR_VISIBLE_H - 2),
             ch, fgColor, (int)bgColor, 1);
     }
 }
@@ -7662,7 +7667,15 @@ static void m11_draw_v1_damage_number_text(unsigned char* framebuffer,
     /* F0053 receives the text baseline.  M11_Font_DrawChar receives the
      * first visible bitmap row; converting here keeps the number inside the
      * C015/C016 source surface instead of painting over C159..C162 names. */
-    y -= (M11_FONT_CHAR_VISIBLE_H - 1);
+    /* Match TEXT.C F0040 assembly `subq.w #4,D0`: the caller-supplied Y is
+     * shifted up by 4, then the glyph is drawn top-down for
+     * M11_FONT_CHAR_VISIBLE_H (6) rows. The prior `VISIBLE_H - 1` shift (5)
+     * moved the glyph one row too high, so the damage number ended one pixel
+     * outside the C015 backing surface's bottom row and painted the row
+     * above the surface's top row instead. Shift by `VISIBLE_H - 2` (4) to
+     * land the glyph at Y-4..Y+1 -- CHAMPION.C F0320:1775 passes Y=5 for a
+     * 7-tall C015 box, and the reference lands the glyph at rows 1..6. */
+    y -= (M11_FONT_CHAR_VISIBLE_H - 2);
     for (i = 0; i < 3; ++i) {
         if (!text || text[i] == '\0') {
             break;
