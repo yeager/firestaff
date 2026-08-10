@@ -99,6 +99,23 @@ static uint32_t csb_v1_fmtowns_game_file_fnv1a(const char *path,
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
 static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes);
 
+/* F0435 keeps its save handle open through the party, portrait and dungeon
+ * reads (ReDMCSB LOADSAVE.C:2721-2829). A host receipt must have the same
+ * ownership rule: offsets are valid only for the exact image it admitted. */
+static int csb_v1_fmtowns_game_receipt_source_matches(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt)
+{
+    uint32_t current_size = 0u;
+
+    return receipt && receipt->startup_mini_path[0] &&
+        receipt->startup_mini_size != 0u &&
+        receipt->startup_mini_fnv1a != 0u &&
+        csb_v1_fmtowns_game_file_fnv1a(receipt->startup_mini_path,
+                                        &current_size) ==
+            receipt->startup_mini_fnv1a &&
+        current_size == receipt->startup_mini_size;
+}
+
 static int csb_v1_fmtowns_game_resolve_active_group_owners(
     CSB_V1_FmtownsStartupState *state)
 {
@@ -316,7 +333,8 @@ int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
     if (!receipt || !receipt->valid || !receipt->startup_mini_verified ||
         !receipt->startup_mini_dungeon_tail_verified || !out_bytes ||
         receipt->startup_mini_dungeon_tail_size == 0u ||
-        out_size != receipt->startup_mini_dungeon_tail_size) return 0;
+        out_size != receipt->startup_mini_dungeon_tail_size ||
+        !csb_v1_fmtowns_game_receipt_source_matches(receipt)) return 0;
     return csb_v1_fmtowns_game_read_span(
         receipt->startup_mini_path, receipt->startup_mini_dungeon_tail_offset,
         out_bytes, out_size);
@@ -372,6 +390,7 @@ int csb_v1_fmtowns_game_load_startup_party(
         receipt->startup_mini_active_group_capacity == 0u ||
         receipt->startup_mini_active_group_capacity >
             CSB_V1_FMTOWNS_USER_SAVE_ACTIVE_GROUP_CAPACITY ||
+        !csb_v1_fmtowns_game_receipt_source_matches(receipt) ||
         !csb_v1_fmtowns_game_read_span(receipt->startup_mini_path, 0u,
                                         header, sizeof(header)) ||
         !redmcsb_f7061_is_read_save_header_successful_pc34(
@@ -467,6 +486,7 @@ int csb_v1_fmtowns_game_load_startup_portraits(
         !receipt->startup_mini_header_verified ||
         !receipt->startup_mini_save_parts_verified ||
         !receipt->startup_mini_dungeon_tail_verified ||
+        !csb_v1_fmtowns_game_receipt_source_matches(receipt) ||
         receipt->startup_mini_verified_save_body_offset > UINT32_MAX -
             sizeof(out_receipt->source_bytes)) return 0;
     source_offset = receipt->startup_mini_verified_save_body_offset;

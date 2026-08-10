@@ -64,6 +64,26 @@ static int write_damaged_file(const char *path)
     return fclose(file) == 0 && ok;
 }
 
+/* This mutates only a private temporary copy of the supplied original save,
+ * after F0435 has admitted it. It proves receipt binding; it is not game
+ * data manufactured for the test. */
+static int flip_file_byte(const char *path, long offset)
+{
+    FILE *file;
+    int value;
+
+    if (!path || offset < 0) return 0;
+    file = fopen(path, "r+b");
+    if (!file) return 0;
+    if (fseek(file, offset, SEEK_SET) != 0 ||
+        (value = fgetc(file)) == EOF || fseek(file, offset, SEEK_SET) != 0 ||
+        fputc(value ^ 0x01, file) == EOF) {
+        fclose(file);
+        return 0;
+    }
+    return fclose(file) == 0;
+}
+
 static int test_set_env(const char *name, const char *value)
 {
 #ifdef _WIN32
@@ -413,6 +433,38 @@ int main(void)
             csb_v1_fmtowns_game_startup_state_free(&stale_state);
             remove(stale_path);
             rmdir(stale_dir);
+
+            {
+                CSB_V1_FmtownsGameHandoffReceipt stale_handoff;
+                CSB_V1_FmtownsStartupPortraitReceipt stale_portraits;
+                CSB_V1_DungeonData stale_dungeon;
+                CSB_V1_PartyState stale_party;
+
+                memset(&stale_handoff, 0, sizeof(stale_handoff));
+                memset(&stale_portraits, 0, sizeof(stale_portraits));
+                memset(&stale_dungeon, 0, sizeof(stale_dungeon));
+                memset(&stale_party, 0, sizeof(stale_party));
+                CHECK(mkdtemp(stale_dir) != NULL &&
+                          snprintf(stale_path, sizeof(stale_path),
+                                   "%s/CSBGAME.DAT", stale_dir) > 0 &&
+                          copy_file(user_save_path, stale_path) &&
+                          csb_v1_fmtowns_game_user_save_handoff_open(
+                              (const CSB_V1_BootProfile *)view.csbBootProfile,
+                              language, stale_path, &stale_handoff) &&
+                          flip_file_byte(
+                              stale_path,
+                              (long)stale_handoff.startup_mini_verified_save_body_offset) &&
+                          !csb_v1_fmtowns_game_load_startup_party(
+                              &stale_handoff, &stale_party) &&
+                          !csb_v1_fmtowns_game_load_startup_portraits(
+                              &stale_handoff, &stale_portraits) &&
+                          !csb_v1_fmtowns_game_load_startup_dungeon(
+                              &stale_handoff, &stale_dungeon),
+                      "F31 receipt readers reject a real save slot replaced after F0435 admission");
+                csb_v1_dungeon_free(&stale_dungeon);
+                remove(stale_path);
+                rmdir(stale_dir);
+            }
         }
 #endif
         /* Direct CLI resume takes the same M11 start boundary as this spec:
