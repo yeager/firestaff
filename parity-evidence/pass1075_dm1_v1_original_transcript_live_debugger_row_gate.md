@@ -1,6 +1,6 @@
 # Pass1075 - DM1 V1 live debugger transcript row gate
 
-Status: FAIL_PASS1075_DM1_V1_ORIGINAL_TRANSCRIPT_LIVE_DEBUGGER_ROW
+Status: BLOCKED_PASS1075_DM1_V1_ORIGINAL_I34E_LIVE_DEBUGGER_ROW_MISSING
 
 This gate validates the future original PC/I34E transcript row for the pass625/pass626 C002 turn-right target. It does not run DOSBox and does not promote pixel parity without a supplied live-debugger row.
 
@@ -13,8 +13,8 @@ This gate validates the future original PC/I34E transcript row for the pass625/p
 - PASS DRAWVIEW.C:709-858 f0097_pc_i34e_viewport_present
 
 ## Upstream gates
-- FAIL parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json observed=FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT
-- FAIL parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json observed=FAIL_PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE
+- PASS parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json observed=PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED
+- PASS parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json observed=PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED
 
 ## Candidate
 - provided: False
@@ -30,7 +30,3 @@ No live original PC/I34E debugger row is supplied. The rule is locked, but the o
 - no source-filled deterministic row is accepted as live debugger evidence
 - no original-vs-Firestaff pixel parity is promoted
 - no gameplay, renderer, input, or asset-loading behavior is changed
-
-## Problems
-- upstream gate drifted: parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json
-- upstream gate drifted: parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json

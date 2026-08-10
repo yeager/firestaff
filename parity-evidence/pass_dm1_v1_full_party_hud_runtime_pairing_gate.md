@@ -23,13 +23,13 @@ These 64-bit FNV-1a hashes cover the 274x29 party panel region (C151..C154 statu
 
 | Case | Panel-region FNV-1a64 |
 |---|---:|
-| `full4_panel_fnv1a64` | `0x2ec36530b8dabb7b` |
-| `single1_panel_fnv1a64` | `0xc186704df5a3913c` |
-| `two2_panel_fnv1a64` | `0x58e6d8f822e74aed` |
-| `three3_panel_fnv1a64` | `0xae5b820e71d84ec2` |
-| `single1_to_full4_panel_fnv1a64` | `0x2ec36530b8dabb7b` |
-| `full4_to_single1_panel_fnv1a64` | `0xc186704df5a3913c` |
-| `two2_to_full4_panel_fnv1a64` | `0x2ec36530b8dabb7b` |
+| `full4_panel_fnv1a64` | `0xdd51e4447ca3c2bb` |
+| `single1_panel_fnv1a64` | `0x6d54fee738362618` |
+| `two2_panel_fnv1a64` | `0x0732711eaf5a53f1` |
+| `three3_panel_fnv1a64` | `0xcb3d7710c10fa93a` |
+| `single1_to_full4_panel_fnv1a64` | `0xdd51e4447ca3c2bb` |
+| `full4_to_single1_panel_fnv1a64` | `0x6d54fee738362618` |
+| `two2_to_full4_panel_fnv1a64` | `0xdd51e4447ca3c2bb` |
 
 ## Honesty Boundary
 

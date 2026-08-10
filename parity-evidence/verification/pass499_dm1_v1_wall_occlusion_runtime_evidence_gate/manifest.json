@@ -10,28 +10,28 @@
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
-      "line": 1195,
+      "line": 1197,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 2771,
+      "line": 2774,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 2296,
+      "line": 2299,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
-      "line": 969,
+      "line": 971,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
@@ -76,7 +76,7 @@
     "no original-vs-Firestaff pixel parity",
     "no promotion of static repeated screenshots"
   ],
-  "ok": false,
+  "ok": true,
   "priorGates": [
     "pass496_dm1_v1_wall_occlusion_spec_matrix",
     "pass490_dm1_v1_wall_occlusion_merge_readiness",
@@ -91,14 +91,12 @@
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
-    "ok": false,
-    "returncode": 8,
-    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1616: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1616: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.26 sec\n    Start 2337: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2337: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.08 sec\n    Start 2355: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2355: pass490_dm1_v1_wall_occlusion_merge_readiness ......***Failed    0.13 sec\nFAIL pass490_dm1_v1_wall_occlusion_merge_readiness firestaff-side-lane-clear\n\n    Start 2372: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2372: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.07 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.60 sec\n\nThe following tests FAILED:\n\t2355 - pass490_dm1_v1_wall_occlusion_merge_readiness (Failed)\nErrors while running CTest\n"
+    "ok": true,
+    "returncode": 0,
+    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1631: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1631: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.04 sec\n    Start 2356: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2356: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.06 sec\n    Start 2374: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2374: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.10 sec\n    Start 2391: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2391: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.04 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.29 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
-  "problems": [
-    "compiled probe/prior gates failed"
-  ],
+  "problems": [],
   "promotionPredicate": "Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is ok, the compiled Firestaff wall-composition probe passes, and a runtime/capture lane reaches the F0128 to F0097 present boundary for the same viewport. This gate is source/probe coverage only.",
   "schema": "firestaff.parity.pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.v1",
   "sourceLocks": [
@@ -170,6 +168,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE",
-  "timestampUtc": "2026-08-07T15:20:29.738661+00:00"
+  "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
+  "timestampUtc": "2026-08-10T21:22:23.797121+00:00"
 }
