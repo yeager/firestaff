@@ -62,6 +62,13 @@ typedef enum {
 #define CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_DOWN_RECTANGLE_OFFSET 4524u
 #define CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_RECTANGLE_COUNT 11u
 #define CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_UP_RECTANGLE_OFFSET 4612u
+/* CSBWin Data.h teleporterRectangles[12] begins at Byte4010.  The decoded
+ * item-0x22e base is Byte7246 and the native records precede it, so they
+ * begin at decoded offset 3236.  These
+ * are not TAG0088b2 projections: DrawTeleporter uses all eight bytes as a
+ * mask/image recipe (CSBCode.cpp:4257-4293). */
+#define CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_OFFSET 3236u
+#define CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_COUNT 12u
 
 typedef struct {
     uint8_t x1;
@@ -102,6 +109,12 @@ typedef struct {
         CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_RECTANGLE_COUNT];
     CSB_V1_CSBWinViewportProjectionRectangle stair_facing_up_rectangles[
         CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_RECTANGLE_COUNT];
+    /* Data.h teleporterRectangles, ordered F3, F3L1, F3R1, F2, F2L1,
+     * F2R1, F1, F1L1, F1R1, F0, F0L1, F0R1.  Keep raw because x1/x2/y1/y2
+     * have DrawTeleporter-specific meanings and must not be misread as a
+     * wall projection. */
+    uint8_t teleporter_rectangles[
+        CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_COUNT][8];
 } CSB_V1_CSBWinViewportLayout022e;
 
 /* One source-owned TAG0088b2 wall command after Viewport.cpp has selected

@@ -285,6 +285,12 @@ static void check_real_viewport_projection_layout(const char *path)
     if (!path || !path[0]) return;
     CHECK(csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(path, &layout));
     if (!layout.valid) return;
+    /* CSBWin Data.h::teleporterRectangles is a raw DrawTeleporter recipe,
+     * not a projected wall RectPos.  Confirm the original item 0x22e bytes
+     * survive the decoder rather than accepting an absent/zero-filled
+     * synthetic table. */
+    CHECK(memcmp(layout.teleporter_rectangles[0],
+                 layout.teleporter_rectangles[1], 8u) != 0);
     /* Current original Atari-CSBWin 0x22e: the far-centre wall and F0 local
      * cell prove both the packed source coordinates and the no-source case. */
     CHECK(layout.rectangles[0].x1 == 74u && layout.rectangles[0].x2 == 149u &&
@@ -645,11 +651,29 @@ int main(void)
             rect[6] = 4u;
             rect[7] = 2u;
         }
+        for (index = 0;
+             (unsigned int)index <
+                 CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_COUNT;
+             ++index) {
+            uint8_t *rect = viewport_layout +
+                CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_OFFSET +
+                (size_t)index * 8u;
+            rect[0] = (uint8_t)index;
+            rect[1] = (uint8_t)(index + 1);
+            rect[2] = (uint8_t)(index + 2);
+            rect[3] = (uint8_t)(index + 3);
+            rect[4] = (uint8_t)(index + 4);
+            rect[5] = (uint8_t)(index + 5);
+            rect[6] = (uint8_t)(index + 6);
+            rect[7] = (uint8_t)(index + 7);
+        }
         CHECK(csb_v1_csbwin_viewport_layout_022e_decode(
             viewport_layout, sizeof(viewport_layout), &decoded_layout));
         CHECK(decoded_layout.valid && decoded_layout.rectangles[0].x1 == 10u &&
               decoded_layout.rectangles[13].x2 == 33u &&
-              decoded_layout.rectangles[6].source_stride == 24u);
+              decoded_layout.rectangles[6].source_stride == 24u &&
+              decoded_layout.teleporter_rectangles[0][0] == 0u &&
+              decoded_layout.teleporter_rectangles[11][7] == 18u);
         check_viewport_wall_plan(&decoded_layout, 2u);
         memset(&material_plan, 0, sizeof(material_plan));
         CHECK(csb_v1_csbwin_viewport_build_f0128_material_plan(
