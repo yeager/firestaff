@@ -112,10 +112,9 @@ struct DM1SaveHeader {
 
 /*
  * ReDMCSB source ref: LOADSAVE.C F0433
- * Original menu: SAVE GAME / QUIT GAME / FORMAT FLOPPY / CANCEL.
- * Firestaff exposes the same four source choices. Its per-profile save
- * namespace stands in for the physical game-save disk, so FORMAT FLOPPY
- * clears only that local save and never touches installed game data.
+ * The original menu includes FORMAT FLOPPY, but Firestaff never formats
+ * media. Its configured save path is used only for save/load; physical-media
+ * formatting remains an original-game or emulator operation.
  */
 enum DM1SaveMenuState {
     DM1_SAVE_MENU_CLOSED   = 0,
