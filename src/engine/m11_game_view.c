@@ -30669,6 +30669,16 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (!m11_dm1_hoc_c040_input_material_ready(state)) {
             return M11_GAME_INPUT_IGNORED;
         }
+        /* ReDMCSB COMMAND.C F0359:1985-1990 checks G0415 before it even
+         * scans G0457's C160/C161/C162 boxes.  A C040 panel restored while
+         * the transient G4055 leader hand is occupied must therefore remain
+         * modal: its buttons neither finalize nor cancel the candidate.
+         * This matters equally to the native A31/A35 path, where C017/C040
+         * is rendered from the selected ADF rather than a PC34 session. */
+        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) !=
+            THING_NONE) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (m11_point_in_rect(x, y, 104, 86, 55, 57)) {
             int sensorIndex;
             if (!m11_front_mirror_first_sensor_index_pc34(state,

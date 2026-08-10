@@ -823,6 +823,38 @@ static void expect_native_live_mirror_and_command_handoff(
         profile->runtime.party_state.ChampionCount != 1) {
         return;
     }
+    {
+        const int front_x = profile->runtime.party_x +
+            (int[]){ 0, 1, 0, -1 }[profile->runtime.party_dir & 3];
+        const int front_y = profile->runtime.party_y +
+            (int[]){ -1, 0, 1, 0 }[profile->runtime.party_dir & 3];
+        const int source_thing = csb_v1_dungeon_get_first_thing(
+            profile->runtime.dungeon_handle, profile->runtime.current_level,
+            front_x, front_y);
+
+        /* COMMAND.C F0359 checks the actual GAMEBLOCK G4055 leader-hand
+         * sentinel before G0457 can scan C160/C161/C162.  Feed a real thing
+         * handle from this authenticated C127 square into the live runtime,
+         * rather than inventing an object fixture, then prove that an ADF
+         * C040 button cannot mutate the pending candidate. */
+        expect_true(source_thing >= 0,
+                    "native C127 square supplies a real GAMEBLOCK hand sentinel");
+        if (source_thing >= 0) {
+            profile->runtime.party_state.LeaderHandThing =
+                (uint16_t)source_thing;
+            expect_true(M11_GameView_HandlePointerButton(
+                            view, 130, 115, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                            M11_GAME_INPUT_IGNORED &&
+                            view->candidateMirrorPanelActive &&
+                            view->world.party.championCount == 1 &&
+                            profile->runtime.party_state.LeaderHandThing ==
+                                (uint16_t)source_thing,
+                        "native Amiga C040 ignores resurrect while GAMEBLOCK leader hand is occupied");
+            profile->runtime.party_state.LeaderHandThing = THING_NONE;
+            view->leaderHandObjectPresent = 0;
+            view->leaderHandThing = THING_NONE;
+        }
+    }
     initial_direction = profile->runtime.party_dir;
     expect_true(M11_GameView_ConfirmMirrorCandidate(view, 0) == 1 &&
                     !view->candidateMirrorPanelActive &&
