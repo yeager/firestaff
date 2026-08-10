@@ -72,6 +72,14 @@ typedef struct {
     long csbAmigaDataSize;
     int csbAmiga;
 
+    /* FM Towns CSB F31 uses the same 0x8001 table envelope as PC3.4 but
+     * IMG2 byte commands, not the PC IMG3 expansion owner. Keep that source
+     * bank separate so a native F31 session can never be decoded by F0479's
+     * PC path just because the header marker happens to match. */
+    unsigned char *csbFmtownsData;
+    long csbFmtownsDataSize;
+    int csbFmtowns;
+
     /* Cache */
     M11_AssetSlot cache[M11_ASSET_CACHE_SLOTS];
     int cacheUsed;
@@ -113,6 +121,12 @@ int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
 /* Initialize from CSB Amiga DMCSB2 GRAPHICS.DAT (big-endian IMG1 records). */
 int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
                                          const char *graphicsDatPath);
+
+/* Initialize from CSB FM Towns F31 GRAPHICS.DAT (728 little-endian IMG2
+ * records). The file is copied and every drawable record is subsequently
+ * expanded by the F31-specific decoder. */
+int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);

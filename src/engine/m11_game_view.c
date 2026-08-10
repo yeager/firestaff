@@ -10247,6 +10247,15 @@ static int m11_csb_apply_boot_runtime_receipt(
      * treat a native Amiga session as PC material. */
     if (receipt->bind_graphics_to_runtime_asset_loader &&
         receipt->graphics_path[0] != '\0' &&
+        m11_csb_is_fmtowns_profile(receipt->profile) &&
+        M11_AssetLoader_InitCsbFmtownsFromFile(&state->assetLoader,
+                                               receipt->graphics_path)) {
+        /* F31 GRAPHICS.DAT has the PC-style 0x8001 table envelope but IMG2
+         * record streams. ReDMCSB IMAGE2.C F0689 is its decoder; do not let
+         * the shared PC IMG3 loader claim the matching header. */
+        state->assetsAvailable = 1;
+    } else if (receipt->bind_graphics_to_runtime_asset_loader &&
+        receipt->graphics_path[0] != '\0' &&
         !m11_csb_is_amiga_profile(receipt->profile) &&
         M11_AssetLoader_Init(&state->assetLoader, receipt->graphics_path)) {
         state->assetsAvailable = 1;

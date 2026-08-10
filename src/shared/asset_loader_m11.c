@@ -19,6 +19,7 @@
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -245,6 +246,38 @@ int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
     return 1;
 }
 
+int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath) {
+    FILE *file;
+    long size;
+    unsigned char *data;
+    CSB_V1_FmtownsGraphicsReceipt receipt;
+
+    if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
+        !(file = fopen(graphicsDatPath, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
+        free(data); fclose(file); return 0;
+    }
+    fclose(file);
+    memset(&receipt, 0, sizeof(receipt));
+    if (csb_v1_fmtowns_graphics_receipt(data, (size_t)size, &receipt) != 0 ||
+        !receipt.is_fmtowns || receipt.item_count == 0u) {
+        free(data); return 0;
+    }
+    memset(loader, 0, sizeof(*loader));
+    loader->csbFmtownsData = data;
+    loader->csbFmtownsDataSize = size;
+    loader->csbFmtowns = 1;
+    loader->graphicCount = receipt.item_count;
+    loader->initialized = 1;
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath), "%s",
+             graphicsDatPath);
+    return 1;
+}
+
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {
@@ -253,6 +286,7 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     free(loader->legacyData);
     free(loader->atariStData);
     free(loader->csbAmigaData);
+    free(loader->csbFmtownsData);
     for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
         if (loader->cache[i].loaded && loader->cache[i].pixels) {
             free(loader->cache[i].pixels);
@@ -329,6 +363,24 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
         free(amigaPixels);
         if (outWidth) *outWidth = amigaWidth;
         if (outHeight) *outHeight = amigaHeight;
+        return 1;
+    }
+    if (loader->csbFmtowns) {
+        uint8_t *pixels;
+        CSB_V1_FmtownsItemDecodeReceipt receipt;
+
+        if (graphicIndex >= loader->graphicCount) return 0;
+        pixels = (uint8_t *)malloc(640u * 400u);
+        if (!pixels || !csb_v1_fmtowns_graphics_decode_item(
+                loader->csbFmtownsData, (size_t)loader->csbFmtownsDataSize,
+                (uint16_t)graphicIndex, pixels, 640u * 400u, &receipt) ||
+            !receipt.valid || !receipt.is_image) {
+            free(pixels);
+            return 0;
+        }
+        free(pixels);
+        if (outWidth) *outWidth = receipt.width;
+        if (outHeight) *outHeight = receipt.height;
         return 1;
     }
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;
@@ -513,6 +565,27 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             return NULL;
         }
         free(amigaPixels);
+        return m11_find_cached(loader, graphicIndex);
+    }
+
+    if (loader->csbFmtowns) {
+        uint8_t *townsPixels;
+        CSB_V1_FmtownsItemDecodeReceipt townsReceipt;
+
+        if (graphicIndex >= loader->graphicCount) return NULL;
+        townsPixels = (uint8_t *)malloc(640u * 400u);
+        if (!townsPixels || !csb_v1_fmtowns_graphics_decode_item(
+                loader->csbFmtownsData, (size_t)loader->csbFmtownsDataSize,
+                (uint16_t)graphicIndex, townsPixels, 640u * 400u,
+                &townsReceipt) || !townsReceipt.valid ||
+            !townsReceipt.is_image ||
+            !M11_AssetLoader_InstallDecodedPixels(
+                loader, graphicIndex, townsPixels, townsReceipt.width,
+                townsReceipt.height)) {
+            free(townsPixels);
+            return NULL;
+        }
+        free(townsPixels);
         return m11_find_cached(loader, graphicIndex);
     }
 

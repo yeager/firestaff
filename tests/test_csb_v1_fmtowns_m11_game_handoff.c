@@ -54,6 +54,29 @@ done:
     return ok;
 }
 
+static uint8_t *load_file(const char *path, size_t *out_size)
+{
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+
+    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)size;
+    return bytes;
+}
+
 static int write_damaged_file(const char *path)
 {
     static const unsigned char damaged[] = { 'b', 'a', 'd' };
@@ -973,6 +996,40 @@ int main(void)
     }
     CHECK(live_frame_nonblack,
           "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
+    {
+        const CSB_V1_BootProfile *live_profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        const M11_AssetSlot *floor;
+        uint8_t *graphics = NULL;
+        uint8_t *expected = NULL;
+        size_t graphics_size = 0u;
+        CSB_V1_FmtownsItemDecodeReceipt expected_receipt;
+
+        /* F31 has a PC-like 0x8001 header but IMAGE2.C F0689's IMG2 command
+         * stream. Prove the live F0128 material uses that actual decoder,
+         * rather than accepting a PC IMG3 interpretation of the same table. */
+        floor = M11_AssetLoader_Load(&view.assetLoader, 78u);
+        CHECK(live_profile && view.assetLoader.csbFmtowns && floor &&
+                  floor->loaded && floor->pixels,
+              "F31 live viewport binds its native IMG2 graphics owner");
+        if (live_profile && floor) {
+            graphics = load_file(live_profile->graphics_path, &graphics_size);
+            expected = (uint8_t *)malloc(640u * 400u);
+            memset(&expected_receipt, 0, sizeof(expected_receipt));
+            CHECK(graphics && expected &&
+                      csb_v1_fmtowns_graphics_decode_item(
+                          graphics, graphics_size, 78u, expected,
+                          640u * 400u, &expected_receipt) &&
+                      expected_receipt.valid && expected_receipt.is_image &&
+                      floor->width == expected_receipt.width &&
+                      floor->height == expected_receipt.height &&
+                      memcmp(floor->pixels, expected,
+                             expected_receipt.pixel_count) == 0,
+                  "F31 floor material is byte-identical to genuine GRAPHICS.DAT IMG2");
+        }
+        free(expected);
+        free(graphics);
+    }
     {
         const CSB_V1_BootProfile *live_profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
