@@ -1,13 +1,18 @@
 # Chaos Strikes Back (CSB) Technical Reference
 
-> **Status reviewed 2026-08-06.** CSB has broad source-locked engine coverage,
-> but its end-to-end real-data runtime route is still being hardened.
+> **Status reviewed 2026-08-11.** CSB has native Amiga, Atari ST and FM Towns
+> media paths, broad source-locked engine coverage and ongoing end-to-end
+> runtime hardening. It has no original DOS release, so PC-shaped CSB data is
+> a reference/compatibility boundary rather than the default route.
 
 ## Scope
 
 CSB uses ReDMCSB as its main reference and CSBWin for CSB-specific save,
 DSA, champion, and input behavior. Launch needs hash-verified CSB graphics and
-dungeon data; missing title, entrance, door, or HUD art is not replaced.
+dungeon data; missing title, entrance, door, or HUD art is not replaced. See
+the shared [game-data format reference](https://github.com/yeager/firestaff/blob/main/docs/GAME_DATA_FORMATS.md)
+for the platform-specific IMG1, DMCSB1/LZW, IMG2, save and program-media
+boundaries.
 
 ## Status: Q-CSB-01 through Q-CSB-10 covered, runtime hardening active
 
@@ -37,13 +42,15 @@ The M10 F0267 route owns live loaded Thing chains, including cross-level pit
 and teleporter movement. It preserves source-tail ordering and restores the
 prior current-level context after a transfer.
 
-## CSB Graphics Format (IMG1)
+## CSB graphics formats
 
-`CSBGRAPHICS.DAT` is an Amiga v3.1 **IMG1** nibble-RLE format, not PC IMG3.
-Firestaff's `ExpandGraphic` byte-format decoder was replaced with an IMG1
-nibble-RLE decoder; C001 (320x153 title) and C004 (320x200 entrance) now
-decode 100% correctly from that path. Do not treat CSB and DM1/PC graphics
-data as the same container format — CSB requires the IMG1 decoder.
+Amiga CSB graphics use direct **IMG1** nibble-RLE records. Atari ST uses a
+563-record **DMCSB1** catalog whose records are Atari-LZW compressed before
+their big-endian IMG1 decode. FM Towns uses a distinct **IMG2** record stream
+inside its own `0x8001` envelope. These routes are intentionally separate:
+neither an IMG3 decoder nor a different platform's pixels may stand in for a
+missing native record. C001/C004 are examples of authenticated Amiga IMG1
+surfaces, not evidence that every platform shares the same encoding.
 
 ## CSBWin DSA Boundary
 

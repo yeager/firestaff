@@ -10,6 +10,11 @@ your game collection just to make it visible to the launcher. A recognised
 file is a launch-data check, not a claim that every game is already playable.
 See the [project status](PROJECT_STATUS.md) for that boundary.
 
+For the exact container and record families that Firestaff currently knows,
+read the [game-data format reference](GAME_DATA_FORMATS.md). It distinguishes
+decoded data from runtime-bound data and records the formats that deliberately
+remain opaque or closed.
+
 ## Start requirements
 
 These are the source-data roles that must be present before the launcher can

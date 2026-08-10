@@ -4,11 +4,13 @@ Firestaff is a clean-room engine for the Dungeon Master games. It reads the
 original files you own, identifies each edition by its content hash and keeps
 that data separate from the program.
 
-Dungeon Master for PC DOS 3.4 is the current playable route. Chaos Strikes
-Back now starts from its verified native Amiga editions by default; its full
-campaign, save and presentation parity are still under active development.
-Dungeon Master II, DM Nexus and Theron's Quest are also active development
-routes, not finished releases.
+Dungeon Master for PC DOS 3.4 is the current playable route. Its native Atari
+ST graphics container is also recognised and launch-ready when matching media
+is supplied. Chaos Strikes Back starts from verified native Amiga editions by
+default; Atari ST and FM Towns have their own native data paths. CSB campaign,
+save and presentation parity are still under active development. Dungeon Master
+II, DM Nexus and Theron's Quest are also active development routes, not
+finished releases.
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -30,7 +32,7 @@ available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 
 | Game | Current scope |
 |---|---|
-| Dungeon Master | Playable PC DOS 3.4 route; further parity work continues. |
+| Dungeon Master | Playable PC DOS 3.4 route. Atari ST media has its own native graphics decoder and launch path; further parity work continues. |
 | Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. Campaign parity is still being completed. |
 | Dungeon Master II: Skullkeep | Engine and data work in progress. |
 | DM Nexus | Saturn real-data bring-up in progress. |
@@ -42,15 +44,6 @@ Button I and Button II, and mouse motion only moves the pointer. Moving the
 mouse never changes the selected object or jumps between controls. On touch
 screens, a short touch is Button I and a long touch is Button II.
 
-### Theron's Quest: original reference capture
-
-This is a real in-game capture from the original US PC Engine CD release in
-Mednafen. It is included as a visual reference for the Theron bring-up; it is
-not presented as proof that Firestaff has reached full rendering or gameplay
-parity.
-
-![Original Theron's Quest US dungeon reference capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
-
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder
@@ -59,9 +52,9 @@ matching data is present:
 
 | Original family | What Firestaff does with it today |
 |---|---|
-| Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. The native startup and presentation routes are being hardened against the original editions. |
-| Atari ST 2.0 and 2.1 | Native Atari media is recognised and enters a dedicated Atari startup route. |
-| FM Towns English and Japanese | Native CD installations are recognised and use their version-specific Towns packages for the available title, Game and Utility routes. |
+| Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. Native startup, entrance, supported HUD and viewport material use the Amiga data path. |
+| Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
+| FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
 | PC DOS 3.4 | Recognised source-reference edition. It remains useful for format and runtime comparison, but is not selected ahead of verified native Amiga CSB media. |
 
 Recognition is deliberately separate from a playability claim. A recognised
@@ -102,7 +95,8 @@ firestaff --data-dir /path/to/games --scan-data
 ```
 
 See [game-data setup](docs/DATA_SETUP.md) for the accepted media and the role
-of optional files for each game.
+of optional files for each game. The [game-data format reference](docs/GAME_DATA_FORMATS.md)
+explains the verified containers, record families and save boundaries.
 
 Original BIOS/firmware and game media are never bundled with Firestaff or
 stored in this repository. Supply your own legally obtained files through the

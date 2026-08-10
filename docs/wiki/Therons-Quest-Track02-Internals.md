@@ -2,17 +2,10 @@
 
 ## Authenticated startup handoff (2026-08-08)
 
-The external native Mednafen capture used the hash-verified US CUE/Track 02
-ISO and System Card. A real macOS Return event (`SDL scancode 40`) produced
-the PCE Run bit (`raw=0008`), after which the CD trace recorded 56 SCSI reads
-and 175 raw sectors. The tracked title/menu image is
-`verification-screens/theron-quest-us-main-menu.png`; full input/media hashes
-and the fail-closed boundary are in
-[`theron-authentic-track02-handoff-2026-08-08.md`](../source-lock/theron-authentic-track02-handoff-2026-08-08.md).
-
-This proves startup/media transport only. It does not promote the Track 02
-payload to semantic level, object, tile, palette, HUD, creature, T700 or T900
-state, and it does not make Firestaff's runtime screenshot gate pass.
+Firestaff verifies the US CUE/Track 02 and System Card boundaries, then records
+the original media reads required for startup. This proves the startup/media
+transport only; it does not promote the Track 02 payload to semantic level,
+object, tile, palette, HUD, creature, T700 or T900 state.
 
 ## Why the Disc Is Not an ISO Filesystem
 

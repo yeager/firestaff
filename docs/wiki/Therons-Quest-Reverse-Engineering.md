@@ -1,17 +1,14 @@
 # Theron's Quest (PC Engine CD) — Reverse Engineering Wiki
 
-**Startup capture update (2026-08-08):** an authenticated US Track 02 GUI run
-now proves a real Return/Run event reaching Mednafen, followed by 56 SCSI reads
-and 175 raw-sector records. The original title/menu frame is tracked at
-`verification-screens/theron-quest-us-main-menu.png`; the receipt is
-`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`. This is
-original-game media evidence, not proof of Firestaff's semantic runtime.
+**Startup update (2026-08-08):** authenticated US Track 02 media proves the
+bounded original startup transport. It is media evidence, not proof of
+Firestaff's semantic runtime.
 
 Theron's Quest is the PC Engine CD / TurboGrafx-CD "light" spin-off of Dungeon
 Master. Unlike DM1, CSB, and DM2, **there is no reconstructed reference
 source code** for Theron's Quest — all behavior is derived from disc
-provenance: raw Track 02 BIN/ISO bytes, System Card ROM behavior, and
-Mednafen CD/CPU traces. Firestaff's Theron modules are therefore written as
+provenance: raw Track 02 BIN/ISO bytes and System Card ROM behavior.
+Firestaff's Theron modules are therefore written as
 **bounded provenance receipts**: each module proves a narrow, byte-verified
 fact (a record span, a descriptor table, a checksum) and explicitly refuses
 to infer semantics beyond what the evidence supports ("fail-closed").
@@ -55,7 +52,7 @@ include/theron_*.h              — 157 headers (bounded receipts, decoders, tab
 | **Champions / classes / experience** | ~8 | `theron_v1_champions.h`, `theron_v1_track02_champion_roster.h`, `theron_v1_track02_champion_strings.h`, `theron_v1_track02_class_base_stats.h`, `theron_v1_track02_class_skill_params.h`, `theron_v1_track02_experience_table.h`, `theron_v1_mechanics.h` |
 | **Text / strings / fonts** | ~9 | `theron_v1_track02_text_alphabet.h`, `theron_v1_track02_text_decode.h`, `theron_v1_track02_text_strings.h`, `theron_v1_track02_hud_strings.h`, `theron_v1_track02_ui_strings.h`, `theron_v1_track02_save_strings.h`, `theron_v1_track02_font_glyphs.h`, `theron_v1_save_menu_font.h`, `theron_v1_chapter_marker.h` |
 | **Bitmap / palette / VRAM capture** | ~7 | `theron_v1_palette.h`, `theron_v1_palette_runtime_admission.h`, `theron_v1_track02_palette_route.h`, `theron_v1_bitmap_capture_runtime_admission.h`, `theron_v1_track02_descriptor_bitmap_palette_capture_intake.h`, `theron_v1_vram_trace_loader.h`, `theron_v1_track02_dungeon_handoff_capture_plan_admission.h` |
-| **Capture/trace pipeline (Mednafen, sector corpus)** | ~35 | `theron_v1_capture_config.h`, `theron_v1_capture_manifest.h`, `theron_v1_track02_capture_artifact_importer.h`, `theron_v1_track02_capture_campaign.h`, `theron_v1_track02_capture_target_plan.h`, `theron_v1_track02_capture_trace_manifest.h`, `theron_v1_track02_capture_trace_runtime_admission.h`, `theron_v1_track02_campaign_bundle_emitter.h`, `theron_v1_track02_campaign_media_discovery.h`, `theron_v1_track02_mednafen_trace_converter.h`, `theron_v1_track02_huc6280_capture_event_log.h`, `theron_v1_track02_g8_fifo_capture_binding.h`, `theron_v1_track02_g8_fifo_sidecar.h`, `theron_v1_track02_sector_record_admission.h`, `theron_v1_track02_sector_record_corpus_discovery.h`, `theron_v1_track02_trace_bundle_discovery.h`, `theron_v1_track02_loader_intake.h`, `theron_v1_track02_loader_output_record_admission.h`, `theron_v1_track02_loader_trace_replay_consistency.h`, `theron_v1_track02_live_loader_route_admission.h`, `theron_v1_track02_live_handoff_capture_required_admission.h`, `theron_v1_track02_live_dungeon_handoff_replay.h`, `theron_v1_track02_launch_trace_identity.h`, `theron_v1_track02_provenance_runtime_consumer.h`, `theron_v1_track02_handoff_artifact_corpus.h`, `theron_v1_track02_external_capture_launcher.h`, `theron_v1_trace_acceptance.h`, `theron_v1_trace_provenance.h`, `theron_v1_trace_v3_schema.h`, `theron_v1_sector_alloc.h`, and the "later route candidate" family (`theron_v1_track02_later_route_candidate_*.h`, 7 headers) |
+| **Capture/trace pipeline** | ~35 | Source-media capture, trace validation and provenance headers. These are implementation evidence, not a user-facing execution requirement. |
 | **Startup / launch / media gating** | ~13 | `theron_v1_startup_flow.h`, `theron_v1_startup_media.h`, `theron_v1_startup_media_identity.h`, `theron_v1_startup_receipt.h`, `theron_v1_startup_runtime_entry.h`, `theron_v1_startup_save_resume.h`, `theron_v1_launch_decision.h`, `theron_v1_launch_media_gate.h`, `theron_v1_runtime_admission.h`, `theron_v1_profile_launch_status.h`, `theron_v1_profile_media_audio_status.h`, `theron_v1_profile_media_availability.h`, `theron_v1_profile_status_serialization.h`, `theron_v1_profile_status_transition.h` |
 | **Save (SRM) system** | ~9 | `theron_v1_save_load.h`, `theron_v1_srm_runtime.h`, `theron_v1_srm_classifier.h`, `theron_v1_srm_corpus_manifest.h`, `theron_v1_srm_launch_discovery.h`, `theron_v1_srm_opaque_admission.h`, `theron_v1_srm_opaque_runtime.h`, `theron_v1_srm_operator_attestation.h`, `theron_v1_srm_campaign_replay_receipt.h` |
 | **CD-DA / audio** | ~1 | `theron_v1_cd_audio_availability.h` |
@@ -73,7 +70,7 @@ modern presentation layer (equivalent role to `dm1v2` for DM1).
 Theron's Quest's disc has **no ISO-9660 filesystem** on the data track that
 the game itself reads at runtime — the boot chain is a record-based System
 Card access pattern, not a mounted filesystem walk. (Some redumps additionally
-carry an ISO-9660 wrapper used only by emulator front-ends; Firestaff treats
+carry an ISO-9660 wrapper used only by external tooling; Firestaff treats
 that as a separate media variant, `THERON_TRACK02_VARIANT_*_ISO`, distinct
 from the raw BIN.)
 
@@ -95,8 +92,8 @@ from the raw BIN.)
 4. **Stage-two CD_READ** — the stage-two body issues a literal one-sector
    `CD_READ` at CPU address `0x4090` into local RAM **`$3800`**
    (`THERON_TRACK02_IPL_STAGE2_CD_READ_LOCAL_DESTINATION`). The record it
-   reads is **dynamic** in the executable but has been pinned by live
-   Mednafen CPU/CD trace to:
+   reads is **dynamic** in the executable but has been pinned by authenticated
+   CD/CPU evidence to:
    - JP: `THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP = 0x0004df`
    - US: `THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US = 0x0004e0`
 5. **BRK $ff payload dispatch** — the 2048-byte (`0x800`) payload transferred
@@ -151,9 +148,8 @@ from the raw BIN.)
 
 `theron_v1_raw_loader_trace.h` and `theron_v1_stage2_runtime_handoff.h`
 capture the full chain above as structured receipts (`Theron_V1RawLoaderTraceReceipt`,
-stage-two handoff receipt) bound to Mednafen PCE debugger CD/CPU register
-traces against the authenticated original CUEs — never a synthetic or
-generated trace.
+stage-two handoff receipt) bound to authenticated CD/CPU register evidence
+against the original CUEs — never a synthetic or generated trace.
 
 ### Dungeon descriptors (`theron_v1_track02_dungeon_descriptor.h`)
 

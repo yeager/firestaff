@@ -1,5 +1,11 @@
 # Dungeon Master (DM1) Technical Reference
 
+For the platform-specific IMG3, IMG1, DMCSB1/LZW and IMG2 containers, plus
+the paired `DUNGEON.DAT` boundary, see the shared
+[game-data format reference](https://github.com/yeager/firestaff/blob/main/docs/GAME_DATA_FORMATS.md).
+The Atari ST path uses its own DMCSB1/LZW-to-big-endian-IMG1 decode and is not
+a PC graphics fallback.
+
 > **Status reviewed 2026-08-06.** DM1 PC 3.4 V1 is Firestaff's strongest
 > playable target. “Source-locked” describes the decision points covered by
 > ReDMCSB and tests; it does not make every original capture pixel-identical.

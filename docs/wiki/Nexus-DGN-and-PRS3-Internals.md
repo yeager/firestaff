@@ -144,9 +144,9 @@ opcode, end before its observed return, and the VDP1 command must follow that
 return. The capture still binds only to the exact `MENU.BPK` stream plan and
 `DM.BIN` fingerprint; it does not authorize PRS3 decoding or drawing.
 
-TODO: ingest a real Saturn/emulator capture containing those ordered events,
-the output fingerprint, and the VDP1 command/source range. Until then there is
-no accepted capture and no VDP1 texture route.
+TODO: bind an original Saturn execution receipt containing those ordered
+events, the output fingerprint, and the VDP1 command/source range. Until then
+there is no accepted capture and no VDP1 texture route.
 
 ## SLEV Task Receipt
 

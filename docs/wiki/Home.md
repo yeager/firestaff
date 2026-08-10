@@ -1,9 +1,9 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-08-08.** Firestaff has five active game targets.
+> **Status reviewed 2026-08-11.** Firestaff has five active game targets.
 > DM1 V1 is the strongest playable route; CSB, DM2, Nexus and Theron are
 > documented as source-locked or real-data bring-up work where the end-to-end
-> boundary is still open. See [Project status](../PROJECT_STATUS.md) and the
+> boundary is still open. See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md) and the
 > [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.
 
 Firestaff reimplements five classic Dungeon Master game engines with source-level parity to the originals. It is a pure C application targeting macOS, Linux, Windows, iOS (AltStore Classic sideload), and Android, rendering via SDL3.
@@ -12,8 +12,8 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 
 | Game | Platform | Reference Source | Wiki Pages |
 |------|----------|-----------------|------------|
-| [Dungeon Master (DM1)](DM1-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals), [RE Documentation](DM1-Reverse-Engineering) |
-| [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](CSB-Technical-Reference), [FM Towns guide](CSB-FMTowns-Guide), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
+| [Dungeon Master (DM1)](DM1-Technical-Reference) | PC DOS 3.4, Atari ST, Amiga and FM Towns data paths | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals), [FM Towns guide](DM1-FMTowns-Guide), [RE Documentation](DM1-Reverse-Engineering) |
+| [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | Amiga default; Atari ST and FM Towns native paths; PC-shaped reference data | ReDMCSB and CSBWin | [Technical Reference](CSB-Technical-Reference), [FM Towns guide](CSB-FMTowns-Guide), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
 | [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS | skproject | [Technical Reference](DM2-Technical-Reference), [GDAT Internals](DM2-GDAT-Internals), [RE Documentation](DM2-Reverse-Engineering) |
 | [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine CD | PC Engine disassembly and CD analysis | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals), [RE Documentation](Therons-Quest-Reverse-Engineering) |
 | [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals), [RE Documentation](Nexus-Reverse-Engineering) |
@@ -28,7 +28,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 
 ## By audience
 
-- **Players:** start with the repository [README](../README.md),
+- **Players:** start with the repository [README](../../README.md),
   [game-data setup](../DATA_SETUP.md) and [project status](../PROJECT_STATUS.md).
 - **Developers:** read [architecture](Architecture-Overview),
   [building and installing](Building-and-Installing), the per-game TODO files
@@ -55,6 +55,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - [Parity Evidence](Parity-Evidence) — how source-lock documents work
 - [Preservation](Preservation) — provenance, evidence levels, captures and data boundaries
 - [Game Data](Game-Data) — what original data files are needed and where to place them
+- [Game-data Formats](Game-Data-Formats) — verified containers, records and save boundaries
 - [Documentation Index](../DOCUMENTATION_INDEX) — complete cross-game status and page map
 
 ## Quick Links
