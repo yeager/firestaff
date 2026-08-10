@@ -269,8 +269,8 @@ typedef struct {
     int spell_timer_ctx_ready;
     DM2_V1_I18nContext i18n;
     int i18n_ready;
-    /* DM2-008: source-ordered sound queue (c_sfx.cpp, c_sound.cpp).
-     * QUEUE_NOISE_GEN1/GEN2 push entries; DM2_PLAY_SOUND drains them. */
+    /* Reserved only for a future complete GAME_LOAD sound handoff.  It must
+     * not be initialised as a stand-in for the source-sized xsndptr2 table. */
     DM2_V1_SoundQueueState sound_queue;
     DM2_V1_SoundQueueEnv sound_env;
     int sound_queue_ready;
@@ -1959,18 +1959,17 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
             dm2_v1_boot_asset_loader(boot_profile);
         dm2_v1_sound_bind_gdat_loader(snd_loader, snd_loader ? 1 : 0);
     }
-    /* Initialize sound queue for QUEUE_NOISE_GEN1/GEN2 runtime routing. */
-    dm2_v1_sound_queue_state_init(&g_dm2_runtime.sound_queue,
-                                  DM2_V1_SOUND_SSOUND_QUEUE_CAP);
-    /* c_sound.cpp queries the current xsndptr2 queue.  Bind the queue just
-     * initialised for this admitted runtime; a query must not fall back to a
-     * process-global host fixture. */
-    dm2_v1_sound_bind_runtime_queue(&g_dm2_runtime.sound_queue);
+    /* Do not manufacture c_sound's xsndptr2 here.  DM2_GAME_LOAD sizes it
+     * from the admitted GDAT/DYN4 SOUND9 population (c_dballoc then
+     * c_gdatfile.cpp::DM2_482b_0684); its DOS corpus capacity is not the
+     * legacy fixed host queue.  Until the private GAME_LOAD sound owner,
+     * c_tim and c_map/party context commit together, binding a zeroed
+     * DM2_V1_SoundQueueState would let timer or creature code resolve
+     * caller-authored entries against a non-source queue.  Keep the global
+     * query seam explicitly unbound instead. */
+    dm2_v1_sound_bind_runtime_queue(NULL);
     memset(&g_dm2_runtime.sound_env, 0, sizeof(g_dm2_runtime.sound_env));
-    g_dm2_runtime.sound_env.current_map = (int16_t)g_dm2_runtime.dungeon_level;
-    g_dm2_runtime.sound_env.gate_map_a = -1;
-    g_dm2_runtime.sound_env.gate_map_b = -1;
-    g_dm2_runtime.sound_queue_ready = 1;
+    g_dm2_runtime.sound_queue_ready = 0;
     /* A selected FM Towns session must remain bound to its authenticated
      * CD/G1 payload.  The former convenience path reopened a sibling PC
      * GRAPHICS.DAT beneath $HOME and silently overlaid its text.  That mixes

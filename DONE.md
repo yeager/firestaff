@@ -32,6 +32,14 @@
   kandidaten får samma byte på en egen adress och återställer sedan källan.
   Källdungeonen, M11 och den publika sessionen förblir orörda.
 
+# DM2: runtime skapar inte en syntetisk SOUND9-kö (2026-08-10)
+
+- ✅ Den generiska runtimen binder inte längre en fast värdkö som ersättning
+  för originalets dynamiskt dimensionerade `xsndptr2`. GDAT får fortsatt
+  identifieras, men `QUEUE_NOISE_GEN1` och timerljud förblir avstängda tills
+  GAME_LOAD kan överlämna samma källägda DYN4-, c_tim-, karta- och partydata
+  i en atomär session.
+
 # DM2: direktstart behåller verifierad bootprofil (2026-08-10)
 
 - ✅ Den äldre CLI-spelvägen kan inte längre läsa om DM2:s G1- och
