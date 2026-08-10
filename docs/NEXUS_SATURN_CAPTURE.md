@@ -220,6 +220,22 @@ CS2-läsningen och motsvarande destination kan sammanfogas i samma körning.
 Enbart en `0x05890008`-läsning eller en matchande runtime-adress är inte
 tillräckligt för källbindning.
 
+Ett positivt transporttest för den verifierade engelska ISO:n kan exempelvis
+kräva en sammanhängande `DM.BIN`-kopia:
+
+```sh
+python3 scripts/analyze_nexus_sh2_source_trace.py \
+  "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.iso" \
+  "$run/sh2-source-writes.trace" \
+  --require-member DM.BIN \
+  --require-destination-range 0x06090000:0x060a0000 \
+  --require-pc 0x000002b4
+```
+
+Detta är ett transportbevis, inte ett bevis på att `DM.BIN` är FONT256,
+menytext eller VDP2-konsument. Den senare klassningen måste fortfarande göras
+mot VDP2:s aktiva source-register, tilemap och CRAM i samma capture.
+
 En lyckad transportkontroll räcker inte för semantic admission. Om
 `FONT256`-spannen, textkod→glyph-mappningen eller den faktiska menyägaren inte
 är bundna ska verktygen uttryckligen lämna `source_join=unbound` eller
