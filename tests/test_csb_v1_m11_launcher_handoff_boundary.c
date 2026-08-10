@@ -399,6 +399,34 @@ static void expect_amiga_c010_action_menu_source_frame(M11_GameViewState *view,
     view->actingChampionOrdinal = 0u;
 }
 
+/* CASTER.C F0394 owns C009 independently of ACTIDRAW.C's C010/C013
+ * selection.  The A31/A35 runtime must therefore expose the selected ADF's
+ * 87x25 spell background at its native (233,42) position whenever C100 has
+ * opened the spell area; retaining only C013 made the live C101..C107 cells
+ * invisible even though their command routing was active. */
+static void expect_amiga_c009_spell_source_frame(M11_GameViewState *view,
+                                                 const char *label)
+{
+    unsigned char framebuffer[320 * 200];
+    const M11_AssetSlot *c009;
+
+    if (!view) {
+        expect_true(0, label);
+        return;
+    }
+    view->spellPanelOpen = 1;
+    memset(framebuffer, 0xff, sizeof(framebuffer));
+    M11_GameView_Draw(view, framebuffer, 320, 200);
+    c009 = M11_AssetLoader_Load(&view->assetLoader, 9u);
+    expect_true(c009 && c009->loaded && c009->pixels &&
+                    c009->width == 87u && c009->height == 25u &&
+                    frame_region_matches_bitmap(framebuffer, 320, 233, 42,
+                                                c009->pixels, c009->width,
+                                                c009->height),
+                label);
+    view->spellPanelOpen = 0;
+}
+
 /* ENTRANCE.C F0442 expands C005 directly and fades to DATA.C G0019.  The
  * A31/A35 runtime intentionally has no PC34 startup session, so exercise
  * the native C005 owner from an authenticated ADF rather than accepting a
@@ -916,6 +944,40 @@ static void expect_native_live_mirror_and_command_handoff(
                         (profile->runtime.party_state.Champions[0].Attributes &
                          CSB_V1_F0070_ATTRIBUTE_ICON_DIRTY_PC34) != 0,
                     "Amiga C127 releases the picked icon through native F0070");
+        /* G0453 C116 enters the source action menu; G0452 C112 then takes
+         * the F0371 -> F0391(-1) -> F0388 pass route.  Use the real
+         * GAMEBLOCK champion admitted above, rather than a model party. */
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 234, 86, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    M11_GameView_GetActingChampionOrdinal(view) == 1u &&
+                    M11_GameView_HandlePointerButton(
+                        view, 285, 77, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    M11_GameView_GetActingChampionOrdinal(view) == 0u,
+                    "Amiga C116/C112 uses native action entry and pass closure");
+        /* COMMAND.C G0447/G0454 sends C100 to F0370 and then C101/C107 to
+         * CASTER.C F0399/F0400.  The latter two mutate GAMEBLOCK's raw
+         * Incantation/SymbolStep fields, which is the durable native proof
+         * independent of the platform cursor raster. */
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 234, 43, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW && view->spellPanelOpen,
+                    "Amiga C100 opens the native spell command surface");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 235, 51, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    profile->runtime.party_state.Champions[0]
+                        .Incantation[0] == 0x60 &&
+                    profile->runtime.party_state.Champions[0].SymbolStep == 1u,
+                    "Amiga C101 writes F0399 incantation fields into GAMEBLOCK");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 306, 64, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    profile->runtime.party_state.Champions[0]
+                        .Incantation[0] == 0 &&
+                    profile->runtime.party_state.Champions[0].SymbolStep == 0u,
+                    "Amiga C107 deletes F0400 incantation fields in GAMEBLOCK");
     }
     expect_true(M11_GameView_HandleInput(view, M12_MENU_INPUT_TURN_RIGHT) ==
                     M11_GAME_INPUT_REDRAW &&
@@ -2941,6 +3003,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c010_action_menu_source_frame(
         &view, "A35E action menu presents original Amiga C010 without PC34 chrome");
+    expect_amiga_c009_spell_source_frame(
+        &view, "A35E spell panel presents original Amiga C009 without PC34 chrome");
     expect_amiga_c005_credits_source_frame(
         &view, "A35E presents original C005 credits with the Amiga G0019 palette");
     expect_amiga_c017_inventory_source_frame(
@@ -3022,6 +3086,8 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
         &view, "A31E C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c010_action_menu_source_frame(
         &view, "A31E action menu presents original Amiga C010 without PC34 chrome");
+    expect_amiga_c009_spell_source_frame(
+        &view, "A31E spell panel presents original Amiga C009 without PC34 chrome");
     expect_amiga_c017_inventory_source_frame(
         &view, "A31E inventory presents original Amiga C017 without a PC34 panel");
     expect_amiga_candidate_c026_source_frame(

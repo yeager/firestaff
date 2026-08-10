@@ -4861,6 +4861,7 @@ static int m11_csb_present_amiga_runtime_surface(
     DM1_V1_MovementArrowRectPc34 outer_rect;
     DM1_V1_MovementArrowRectPc34 graphic_rect;
     const M11_AssetSlot *surface;
+    const M11_AssetSlot *spell_surface = NULL;
     const M11_AssetSlot *inventory_surface = NULL;
     const M11_AssetSlot *portrait_surface = NULL;
     uint8_t rgb6[256][3];
@@ -4921,6 +4922,24 @@ static int m11_csb_present_amiga_runtime_surface(
         if (!inventory_surface || inventory_surface->width != 224u ||
             inventory_surface->height != 136u) goto done;
     }
+    /* ReDMCSB CASTER.C F0394 clears the G0000 spell box and then places
+     * the native C009 87x25 background at (233,42).  A31/A35 used to
+     * accept C100..C107 while this presenter kept only C013/C010 visible,
+     * leaving the real spell command surface visually absent.  C009 is an
+     * independently authenticated IMG1 record in the selected Amiga
+     * GRAPHICS.DAT, so compose it here rather than borrowing the PC34
+     * spell chrome.  The C011 symbol/cursor owner remains separately
+     * guarded until its native raster transaction is recovered. */
+    if (state->spellPanelOpen && !state->inventoryPanelActive &&
+        !state->candidateMirrorPanelActive &&
+        !state->candidateMirrorRenameActive) {
+        spell_surface = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader, 9u);
+        if (!spell_surface || spell_surface->width != 87u ||
+            spell_surface->height != 25u) {
+            goto done;
+        }
+    }
     portrait_index = state->candidateMirrorOrdinal;
     status_box_index = state->candidateMirrorPartyIndex;
     if ((state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) &&
@@ -4980,6 +4999,13 @@ static int m11_csb_present_amiga_runtime_surface(
             }
         } else {
             memcpy(destination, source, (size_t)expected_width);
+        }
+    }
+    if (spell_surface) {
+        for (row = 0; row < 25; ++row) {
+            memcpy(framebuffer + (size_t)(42 + row) *
+                   (size_t)framebuffer_width + 233u,
+                   spell_surface->pixels + (size_t)row * 87u, 87u);
         }
     }
     if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
@@ -16314,7 +16340,12 @@ static int m11_dm1_spell_select_caster(M11_GameViewState* state, int caster)
             return 0;
         }
         profile = (CSB_V1_BootProfile *)state->csbBootProfile;
-        if (csb_v1_runtime_set_magic_caster(&profile->runtime, caster) <= 0) {
+        /* F0394's M11 mirror can be uninitialised while GAMEBLOCK already
+         * names this exact living champion as its magic caster.  The runtime
+         * setter returns 0 for that idempotent source state, not a rejected
+         * C109/C100 command; only a negative result means the selected
+         * GAMEBLOCK champion is invalid. */
+        if (csb_v1_runtime_set_magic_caster(&profile->runtime, caster) < 0) {
             return 0;
         }
     }
