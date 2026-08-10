@@ -73,12 +73,15 @@ void dm2_v1_sound_queue_state_init(DM2_V1_SoundQueueState *state,
     if (ssound_capacity > DM2_V1_SOUND_SSOUND_QUEUE_CAP)
         ssound_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
     state->ssound_capacity = ssound_capacity;
-    state->ssound_entries = state->ssound;
-    state->ssound_entries_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
+    /* NULL denotes the embedded span.  Do not store `state->ssound` here:
+     * SoundQueueState is copied by value by some owners, and a self-pointer
+     * would then keep addressing the former owner's buffer. */
+    state->ssound_entries = NULL;
+    state->ssound_entries_capacity = 0u;
     state->sound_enabled = 1;   /* c_sound::init v1d14be = true */
     state->master_sfx_volume = 7; /* c_sound::init v1dff88 = 7 */
     for (uint16_t i = 0; i < DM2_V1_SOUND_SSOUND_QUEUE_CAP; ++i)
-        state->ssound_entries[i].w_05 = -1;
+        state->ssound[i].w_05 = -1;
     for (uint16_t i = 0; i < DM2_V1_SOUND_SAMPLE_SLOT_COUNT; ++i)
         state->sample_slots[i] = -1; /* c_sound::init v1dfda4[i] = -1 */
 }
@@ -91,8 +94,8 @@ int dm2_v1_sound_queue_bind_entries(DM2_V1_SoundQueueState *state,
     if (!state) return 0;
     if (!entries) {
         if (entry_count != 0u || entry_capacity != 0u) return 0;
-        state->ssound_entries = state->ssound;
-        state->ssound_entries_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
+        state->ssound_entries = NULL;
+        state->ssound_entries_capacity = 0u;
         state->ssound_count = 0u;
         state->ssound_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
         return 1;
