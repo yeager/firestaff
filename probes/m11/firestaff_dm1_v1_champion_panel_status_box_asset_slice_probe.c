@@ -16,6 +16,7 @@
  *   stride, leaving a two-pixel black gutter between adjacent champions.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_portrait_seed.h"
 #include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
@@ -306,6 +307,11 @@ int main(int argc, char** argv) {
     }
 
     seed_party(&game);
+    if (!firestaff_dm1_probe_seed_original_portraits(&game, PROBE_CHAMPION_COUNT)) {
+        fprintf(stderr, "SKIP could not load DM1 champion portrait atlas from %s\n", dataDir);
+        M11_GameView_Shutdown(&game);
+        return 0;
+    }
     memset(fb, PROBE_STALE_PIXEL, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
 
