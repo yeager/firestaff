@@ -54,6 +54,16 @@ button interval lies between `skip_frames` and
 `skip_frames + frame_limit`; this prevents a pre-input witness from being
 mistaken for a post-input menu capture.
 
+For a multi-step Saturn startup route, the operator launcher also forwards the
+optional environment variable
+`FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE`. Its format is a comma-separated list
+of `frame:length:mask` entries, for example
+`1250:60:0x10,1350:60:0x10,1450:60:0x20`. The sequence is recorded in the
+manifest and is applied to the real SMPC input stream in one emulator session;
+the masks are active-low Saturn pad bits. This is only an input-provenance
+facility. The resulting frame still requires an exact MENU.BPK/FONT256 or
+other source-consumer join before startup or menu presentation can open.
+
 For long operator-only scans, the capture patch also accepts the inherited
 `FIRESTAFF_NEXUS_NO_WAITING=1` environment flag. It requests Mednafen's
 no-wait scheduler path only; it does not alter the Saturn input, VDP or SCSP
