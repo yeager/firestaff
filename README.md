@@ -23,7 +23,8 @@ dungeon view, HUD, controls, combat and save handling use original data.
 The other games are active development routes. Firestaff detects their real
 media and exposes only paths with a verified handoff; it never borrows data
 from another edition to fill a gap. The detailed status is kept in
-[project status](docs/PROJECT_STATUS.md).
+[project status](docs/PROJECT_STATUS.md). The published documentation is
+available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 
 | Game | Current scope |
 |---|---|
@@ -154,7 +155,8 @@ documented original formats as additional references. DM2 uses skproject;
 Nexus and Theron's Quest use their respective platform analysis and original
 media.
 
-The [documentation index](docs/DOCUMENTATION_INDEX.md) links the user guides,
+The [documentation index](https://yeager.github.io/firestaff/DOCUMENTATION_INDEX.md)
+links the user guides,
 data notes and technical references. The [project status](docs/PROJECT_STATUS.md)
 is the place to check the current boundary before relying on a development
 route.
