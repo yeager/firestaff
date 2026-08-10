@@ -207,13 +207,16 @@ int main(int argc, char** argv) {
 
     snapshot(&game, outDir, "01_start_south_1_3", "start", M11_GAME_INPUT_REDRAW, &rows[rowCount++]);
 
-    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_RIGHT);
+    /* v2.8.x layout: arrow-key LEFT/RIGHT strafe, TURN_LEFT/TURN_RIGHT
+     * (Home/End/Q/E) turn. Use the explicit TURN inputs so this route
+     * exercises the turn command regardless of the arrow-key mapping. */
+    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_TURN_RIGHT);
     snapshot(&game, outDir, "02_turn_right_west_1_3", "turn_right", result, &rows[rowCount++]);
 
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
     snapshot(&game, outDir, "03_blocked_west_wall_1_3", "forward_into_west_wall", result, &rows[rowCount++]);
 
-    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_LEFT);
+    result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_TURN_LEFT);
     result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);
     snapshot(&game, outDir, "04_forward_south_1_4", "turn_left_then_forward_south", result, &rows[rowCount++]);
 

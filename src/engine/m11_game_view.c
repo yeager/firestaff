@@ -26208,12 +26208,21 @@ int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state) {
 }
 
 static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
+    /* v2.8.x keyboard layout contract (see menu_input_m12.h): arrow keys
+     * strafe, Home/End (and Q/E) turn.  M12_MENU_INPUT_LEFT/RIGHT are the
+     * arrow-key defensive fallback and therefore map to MOVE_LEFT/RIGHT;
+     * M12_MENU_INPUT_TURN_LEFT/RIGHT come from Home/End/Q/E and map to the
+     * turn commands. */
     switch (input) {
-    case M12_MENU_INPUT_UP:    return DM1_V1_COMMAND_MOVE_FORWARD;
-    case M12_MENU_INPUT_DOWN:  return DM1_V1_COMMAND_MOVE_BACKWARD;
-    case M12_MENU_INPUT_LEFT:  return DM1_V1_COMMAND_TURN_LEFT;
-    case M12_MENU_INPUT_RIGHT: return DM1_V1_COMMAND_TURN_RIGHT;
-    default:                   return DM1_V1_COMMAND_NONE;
+    case M12_MENU_INPUT_UP:            return DM1_V1_COMMAND_MOVE_FORWARD;
+    case M12_MENU_INPUT_DOWN:          return DM1_V1_COMMAND_MOVE_BACKWARD;
+    case M12_MENU_INPUT_LEFT:          return DM1_V1_COMMAND_MOVE_LEFT;
+    case M12_MENU_INPUT_RIGHT:         return DM1_V1_COMMAND_MOVE_RIGHT;
+    case M12_MENU_INPUT_STRAFE_LEFT:   return DM1_V1_COMMAND_MOVE_LEFT;
+    case M12_MENU_INPUT_STRAFE_RIGHT:  return DM1_V1_COMMAND_MOVE_RIGHT;
+    case M12_MENU_INPUT_TURN_LEFT:     return DM1_V1_COMMAND_TURN_LEFT;
+    case M12_MENU_INPUT_TURN_RIGHT:    return DM1_V1_COMMAND_TURN_RIGHT;
+    default:                           return DM1_V1_COMMAND_NONE;
     }
 }
 

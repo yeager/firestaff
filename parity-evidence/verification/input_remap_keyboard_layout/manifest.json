@@ -1,7 +1,7 @@
 {
   "schema": "input_remap_keyboard_layout.v28x.v1",
-  "pass": false,
-  "status": "FAIL_INPUT_REMAP_KEYBOARD_LAYOUT_2_BREAKS",
+  "pass": true,
+  "status": "PASS_INPUT_REMAP_KEYBOARD_LAYOUT_V28X_LOCKED",
   "scope": "v2.8.x keyboard layout contract: arrow keys strafe, Home/End/Q/E turn, WASD mirrors arrows. Validates src/engine/main_loop_m11.c (script-token parser + two SDL keymap switches), src/shared/input_remap_m12.c s_defaults_original[], src/engine/input_remap_m11.c s_defs[], src/engine/m11_game_view.c m11_dm1_v1_pipeline_command_for_input.",
   "sourceReferences": [
     "ReDMCSB COMMAND.C:677-684 keypad scancode -> command table",
@@ -193,13 +193,13 @@
     {
       "id": "gv_left_to_move_left",
       "label": "m11_dm1_v1_pipeline_command_for_input: LEFT -> MOVE_LEFT (strafe)",
-      "ok": false,
+      "ok": true,
       "needle": "LEFT -> DM1_V1_COMMAND_MOVE_LEFT"
     },
     {
       "id": "gv_right_to_move_right",
       "label": "m11_dm1_v1_pipeline_command_for_input: RIGHT -> MOVE_RIGHT (strafe)",
-      "ok": false,
+      "ok": true,
       "needle": "RIGHT -> DM1_V1_COMMAND_MOVE_RIGHT"
     }
   ],
