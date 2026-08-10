@@ -141,11 +141,11 @@ static uint16_t mock_get_wpc_link(void *ctx)
 
 static uint16_t mock_get_sgwords_field(void *ctx, int idx)
 {
-    (void)ctx; (void)idx;
+    (void)ctx;
     ++g_sgwords_field_count;
-    /* DB15 capacity is unrelated to savegamep3's possession list. A value
-     * here must not influence WRITE_POSSESSION_INDICES. */
-    return g_possession_case ? 0xffffu : 0u;
+    /* These source capacities are only for the temporary DB4/DB9 index
+     * arrays. They must not control savegamep3's possession-list length. */
+    return (idx == 0x0a || idx == 0x0f) ? 16u : 0u;
 }
 
 /* Write record callbacks (no-op since all links are END). */
@@ -385,7 +385,7 @@ static void test_possession_list_is_collected_in_source_order(void)
     assert(g_possession_add_count == 1);
     assert(g_possession_added_link == 0x2400u);
     assert(g_possession_resolve_count == 1);
-    assert(g_sgwords_field_count == 0);
+    assert(g_sgwords_field_count == 2);
     assert(result.error == 0);
     g_possession_case = 0;
 

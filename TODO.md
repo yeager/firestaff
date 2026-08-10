@@ -3404,8 +3404,9 @@
   suite passes 259/259 and confirms the source raw prefix, fixed SUPPRESS
   order, timer boundary, DB-pool receipts and fail-closed runtime handoff;
   the focused source-order orchestrator passes 7/7. Its writer transaction
-  now retains the source-ordered `savegamep3` possession list and special
-  timer roots; a live writer owner for the complete graph is still missing.
+  har nu den källordnade `savegamep3`-listan, specialtimer-rötterna och
+  `s_sgwords`-ägda recordindex. En live-ägare för hela skrivargrafen saknas
+  fortfarande.
 
 ## Active DM1/CSB Symbol Queue
 

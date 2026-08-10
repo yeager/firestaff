@@ -19,6 +19,7 @@
 
 #include "dm2_v1_save_orchestrator_pc34_compat.h"
 #include "dm2_v1_save_timers_pc34_compat.h"
+#include <stdlib.h>
 #include <string.h>
 
 /* All-ones mask for globalb/globalw/v1e0104 SUPPRESS sections.
@@ -149,7 +150,7 @@ static int dm2_v1_save_orchestrator_callbacks_valid(
            cb->get_v1e0104 && cb->get_globalw && cb->get_hero_data &&
            cb->get_hero_count && cb->get_save_state && cb->get_timer_array &&
            cb->get_timer_entry_size && cb->get_hero_item_link &&
-           cb->get_wpc_link &&
+           cb->get_wpc_link && cb->get_sgwords_field &&
            cb->write_record_cb.get_record &&
            cb->write_record_cb.get_next_link &&
            cb->write_record_cb.query_creature_ai_spec_flags &&
@@ -365,11 +366,32 @@ int dm2_v1_save_orchestrate(
      * SUPPRESS bit state persist from hero roots through DM2_2066_0b44 and
      * STORE_EXTRA_DUNGEON_DATA. */
     {
-        int creature_indices[256], container_indices[256];
+        const size_t creature_indices_cap = cb->get_sgwords_field(cb->ctx,
+            0x0a); /* c_savegame.cpp:2248 v1e08e4 */
+        const size_t container_indices_cap = cb->get_sgwords_field(cb->ctx,
+            0x0f); /* c_savegame.cpp:2247 v1e08f0 */
+        int *creature_indices = NULL;
+        int *container_indices = NULL;
         DM2_WriteRecordSession wrs;
+
+        if (creature_indices_cap > 0u) {
+            creature_indices = calloc(creature_indices_cap,
+                                      sizeof(*creature_indices));
+            if (!creature_indices) { result->error = 11; return -1; }
+        }
+        if (container_indices_cap > 0u) {
+            container_indices = calloc(container_indices_cap,
+                                       sizeof(*container_indices));
+            if (!container_indices) {
+                free(creature_indices);
+                result->error = 11;
+                return -1;
+            }
+        }
         dm2_v1_write_record_session_init(&wrs,
             out_buf + out_pos, out_cap - out_pos,
-            creature_indices, 256, container_indices, 256,
+            creature_indices, creature_indices_cap,
+            container_indices, container_indices_cap,
             timer_links, timer_count);
 
         /* Copy the writer state from the SUPPRESS section. */
@@ -383,6 +405,8 @@ int dm2_v1_save_orchestrate(
                 uint16_t link = cb->get_hero_item_link(cb->ctx, h, slot);
                 rc = dm2_v1_write_record_checkcode(&wrs, &wcb, link, 0, 0);
                 if (rc != 0 || possession_collector.overflow) {
+                    free(container_indices);
+                    free(creature_indices);
                     result->error = 11; return -1;
                 }
             }
@@ -393,6 +417,8 @@ int dm2_v1_save_orchestrate(
             uint16_t wpc = cb->get_wpc_link(cb->ctx);
             rc = dm2_v1_write_record_checkcode(&wrs, &wcb, wpc, 0, 0);
             if (rc != 0 || possession_collector.overflow) {
+                free(container_indices);
+                free(creature_indices);
                 result->error = 12; return -1;
             }
         }
@@ -404,6 +430,8 @@ int dm2_v1_save_orchestrate(
         rc = dm2_v1_store_extra_dungeon_data(&wrs, &wcb, &dcb,
                                               dcb.get_current_map(dcb.ctx));
         if (rc != 0 || possession_collector.overflow) {
+            free(container_indices);
+            free(creature_indices);
             result->error = 13; return -1;
         }
 
@@ -411,6 +439,8 @@ int dm2_v1_save_orchestrate(
         writer = wrs.writer;
         result->creatures_written = wrs.creature_count;
         result->containers_written = wrs.container_count;
+        free(container_indices);
+        free(creature_indices);
     }
 
     /* Phase 5: WRITE_POSSESSION_INDICES.

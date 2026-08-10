@@ -12935,3 +12935,13 @@ rendering remain blocked.
 - ✅ Sju fokuserade skrivartester, record-/kartskrivartester, hel appbyggnad,
   realdata-SKSAVE-korpusen (259/0) och produktions-placeholdergrinden
   passerar. Ingen sparfil skrivs eller publiceras utan komplett live-ägare.
+
+# DM2: SKSAVE-skrivarens source-stora recordindex (2026-08-10)
+
+- ✅ De tillfälliga indexägare som `WRITE_RECORD_CHECKCODE` delar genom
+  skrivarpassets byggs nu från originalets `warr_00[0x0a]` och
+  `warr_00[0x0f]`, precis som `DM2_GAME_SAVE_MENU` allokerar `v1e08e4` och
+  `v1e08f0`. Den fasta 256-posters ersättningen är borttagen.
+- ✅ En creature- eller containerkedja utan tillräcklig källallokerad
+  indexägare avvisas före indexskrivning. Regressionen täcker grinden;
+  appbygge, SKSAVE-korpus 259/0 och placeholdergrinden passerar.

@@ -160,7 +160,15 @@ int main(void) {
     assert(session.creature_count == 1);
     assert(creature_idx[0] == 0);
 
-    /* Test 6: NULL callbacks should return -1. */
+    /* Test 6: source-owned temporary index capacity is mandatory. The
+     * original allocates these arrays from s_sgwords before this walk; a
+     * missing owner must not silently drop creature/container indices. */
+    dm2_v1_write_record_session_init(&session, buf, sizeof(buf),
+        NULL, 0, container_idx, 16, NULL, 0);
+    rc = dm2_v1_write_record_checkcode(&session, &cb, link_creature, 0, 0);
+    assert(rc == -1);
+
+    /* Test 7: NULL callbacks should return -1. */
     rc = dm2_v1_write_record_checkcode(NULL, &cb, link0, 0, 0);
     assert(rc == -1);
 

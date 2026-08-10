@@ -147,11 +147,12 @@ int dm2_v1_write_record_checkcode(
                     mask = dm2_v1_save_record_mask_creature_ai_spec();
             }
             /* Track creature index. */
-            if (session->creature_indices &&
-                (size_t)session->creature_count < session->creature_indices_cap) {
-                session->creature_indices[session->creature_count] =
-                    (int)(record_link & 0x3FF);
-            }
+            if ((size_t)session->creature_count >=
+                    session->creature_indices_cap ||
+                !session->creature_indices)
+                return -1;
+            session->creature_indices[session->creature_count] =
+                (int)(record_link & 0x3FF);
             session->creature_count++;
         } else if (record_type >= 5 && record_type <= 8) {
             /* Types 5-8: no special handling. */
@@ -168,11 +169,12 @@ int dm2_v1_write_record_checkcode(
                 is_map_or_nested = 1;
             }
             /* Track container index. */
-            if (session->container_indices &&
-                (size_t)session->container_count < session->container_indices_cap) {
-                session->container_indices[session->container_count] =
-                    (int)(record_link & 0x3FF);
-            }
+            if ((size_t)session->container_count >=
+                    session->container_indices_cap ||
+                !session->container_indices)
+                return -1;
+            session->container_indices[session->container_count] =
+                (int)(record_link & 0x3FF);
             session->container_count++;
         } else if (record_type == 0xe) {
             /* Type 0xE: check nested flag. */
