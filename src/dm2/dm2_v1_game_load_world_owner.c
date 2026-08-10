@@ -1389,10 +1389,10 @@ void dm2_v1_game_load_runtime_session_candidate_free(
     memset(candidate, 0, sizeof(*candidate));
 }
 
-/* This is deliberately a clone, not RESET_CAII/FILL_CAII replay.  Those
- * source functions have already established the exact private state in the
- * preceding owner.  Replaying either against the source owner would rewrite
- * DB4 byte@5 and consume its timer/RNG transaction. */
+/* This is deliberately a clone, not RESET_CAII/FILL_CAII replay.  A future
+ * source-complete owner must have established the exact private state before
+ * this point. Replaying either against the source owner would rewrite DB4
+ * byte@5 and consume its timer/RNG transaction. */
 int dm2_v1_game_load_runtime_session_candidate_init(
     DM2_V1_GameLoadRuntimeSessionCandidate *out,
     const DM2_V1_GameLoadWorldOwner *source)
@@ -1417,9 +1417,17 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         source->timer_queue.entries != source->timer_entries ||
         source->timer_queue.indices != source->timer_indices ||
         source->timer_queue.max_timers != (int16_t)source->timer_capacity ||
+        !source->caii_static_animation.valid ||
         !source->caii_slots.valid || source->caii_slots.capacity <= 0 ||
         !source->caii_slots.slots || !source->caii_rng_initialized ||
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
+        return 0;
+    }
+    /* c_1c9a.cpp::DM2_ALLOC_CAII_TO_CREATURE reaches 0a48 for every
+     * authentic dynamic candidate. The current owner intentionally rejects
+     * that branch before mutation; a static-only reset receipt is therefore
+     * not a GAME_LOAD session and cannot be cloned as one. */
+    if (source->caii_map_receipt.dynamic_candidate_count != 0u) {
         return 0;
     }
     if (dm2_v1_dungeon_load(&candidate.dungeon, source->dungeon.raw_data,

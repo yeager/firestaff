@@ -4876,51 +4876,19 @@ int main(void) {
         runtime_candidate_db4_mutated = 1;
     }
     expect_true(profile_new_game_owner && runtime_candidate_source_hash_before != 0u &&
-                    dm2_v1_game_load_runtime_session_candidate_init(
+                    !dm2_v1_game_load_runtime_session_candidate_init(
                         &runtime_session_candidate, profile_new_game_owner) &&
-                    runtime_session_candidate.valid &&
-                    runtime_session_candidate.dungeon.raw_data !=
-                        profile_new_game_owner->dungeon.raw_data &&
-                    runtime_session_candidate.record_pools.pools[4].bytes !=
-                        profile_new_game_owner->record_pools.pools[4].bytes &&
-                    runtime_session_candidate.timer_entries !=
-                        profile_new_game_owner->timer_entries &&
-                    runtime_session_candidate.timer_indices !=
-                        profile_new_game_owner->timer_indices &&
-                    runtime_session_candidate.caii_slots.slots !=
-                        profile_new_game_owner->caii_slots.slots &&
-                    runtime_session_candidate.sound_owner.queue_entries !=
-                        profile_new_game_owner->sound_owner.queue_entries &&
-                    (!runtime_candidate_db4_mutated ||
-                     runtime_session_candidate.record_pools.pools[4].bytes[4] ==
-                         runtime_candidate_db4_byte_mutated) &&
-                    runtime_session_candidate.party.heros_in_party == 1 &&
-                    runtime_session_candidate.source_event_hero_index ==
-                        profile_new_game_owner->source_event_hero_index &&
-                    runtime_session_candidate.source_party_x == 1u &&
-                    runtime_session_candidate.source_party_y == 8u &&
-                    runtime_session_candidate.source_staircase_flag ==
-                        profile_new_game_owner->source_staircase_flag &&
-                    runtime_session_candidate.source_teleporter_map ==
-                        profile_new_game_owner->source_teleporter_map &&
-                    runtime_session_candidate.source_display_x ==
-                        profile_new_game_owner->source_display_x &&
-                    runtime_session_candidate.source_display_y ==
-                        profile_new_game_owner->source_display_y &&
-                    runtime_session_candidate.source_teleporter_probe_direction ==
-                        profile_new_game_owner->source_teleporter_probe_direction &&
-                    runtime_session_candidate.source_teleporter_source_direction ==
-                        profile_new_game_owner->source_teleporter_source_direction &&
-                    runtime_session_candidate.source_teleporter_destination_direction ==
-                        profile_new_game_owner->source_teleporter_destination_direction &&
-                    runtime_session_candidate.source_display_pose_valid ==
-                        profile_new_game_owner->source_display_pose_valid &&
+                    !runtime_session_candidate.valid &&
+                    runtime_session_candidate.dungeon.raw_data == NULL &&
+                    runtime_session_candidate.record_pools.pools[4].bytes == NULL &&
+                    runtime_session_candidate.timer_entries == NULL &&
+                    runtime_session_candidate.sound_owner.queue_entries == NULL &&
                     dm2_test_fnv1a(profile_new_game_owner->dungeon.raw_data,
                         (size_t)profile_new_game_owner->dungeon.raw_size) ==
                         runtime_candidate_source_hash_before &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
-                "DM2 clones the complete source-owned GAME_LOAD RAM candidate without publishing M11 state");
+                "DM2 rejects a post-champion candidate before the source dynamic CAII transaction exists");
     if (runtime_candidate_db4_mutated && profile_new_game_owner) {
         ((DM2_V1_GameLoadWorldOwner *)profile_new_game_owner)->record_pools
             .pools[4].bytes[4] = runtime_candidate_db4_byte_before;

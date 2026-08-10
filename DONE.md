@@ -3126,6 +3126,15 @@ rendering remain blocked.
 - ✅ Policyn är verifierad för alla tre spel med samtidigt matchande PC- och
   FM Towns-profiler.
 
+# DM2 GAME_LOAD: ofullständig CAII-session spärras (2026-08-10)
+
+- ✅ En privat runtime-kandidat kan inte längre byggas efter championvalet
+  enbart för att DB4-pooler, c_tim-heap och CAII-lagring finns i RAM. Den
+  avvisas tills den källordnade dynamiska `RESET_CAII`/`FILL_CAII_CUR_MAP`-
+  transaktionen, inklusive 0A48, CCM, ljud och timerkopplingar, är atomär.
+- ✅ Realdatatestet bekräftar att den ofullständiga kandidaten lämnar både
+  originalets dungeonbytes och M11:s party/session orörda.
+
 # DM2 Amiga-arkivets ägaridentitet (2026-08-08)
 
 - ✅ Bootprofilen behåller nu den exakta, av användaren valda sökvägen till

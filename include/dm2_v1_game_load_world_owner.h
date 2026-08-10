@@ -510,10 +510,16 @@ typedef struct {
     DM2_V1_Party selected_party;
 } DM2_V1_GameLoadWorldOwner;
 
-/* A private, all-RAM candidate for the state which DM2_GAME_LOAD has made
- * mutable by the time the first champion has been selected.  It is a
- * transaction staging area, not a live game: no field is installed in M11,
- * the process-global runtime, audio backend or input dispatcher.
+/* A private, all-RAM candidate for a complete mutable DM2_GAME_LOAD state.
+ * It is a transaction staging area, not a live game: no field is installed
+ * in M11, the process-global runtime, audio backend or input dispatcher.
+ *
+ * A selected champion and allocated CAII storage are insufficient.  The
+ * source first runs RESET_CAII and FILL_CAII_CUR_MAP, including each dynamic
+ * 0a48/CCM/noise/timer transaction, before the state may advance as a game
+ * session.  Until one owner can prove that full transaction, construction is
+ * intentionally rejected rather than cloning a pre-reset DB4 pool beside an
+ * unrelated c_creature/timer snapshot.
  *
  * Source order: sksvgame.cpp::DM2_GAME_LOAD (1415-1565), startend.cpp::
  * DM2_RESET_CAII (1111-1145), SK1C9A.cpp::DM2_FILL_CAII_CUR_MAP
@@ -557,7 +563,8 @@ typedef struct {
     int16_t source_last_moved_record;
 } DM2_V1_GameLoadRuntimeSessionCandidate;
 
-/* Clone every already-owned mutable GAME_LOAD predecessor atomically.  On
+/* Clone every already-owned mutable GAME_LOAD predecessor atomically, but
+ * only after the complete CAII transaction has been materialized.  On
  * failure `out` remains zeroed and the source owner and source media are
  * unchanged.  The candidate is deliberately not publishable. */
 int dm2_v1_game_load_runtime_session_candidate_init(
