@@ -2570,7 +2570,6 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     int face_size = 0;
     Nexus_UI_FaceLayout face_layout;
     int i;
-    int face_count;
     uint8_t *face_data;
     if (!engine) return;
     engine->ui_faces_loaded = 0;
@@ -2581,24 +2580,24 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
 
     /* DMWeb defines the canonical FACE.BIN records as 20 56x56 portraits:
-     * each has a 64-entry BGR555 palette and a PRS3 pixel stream. Retain the
-     * complete source corpus by file ordinal, independently of the still
-     * unproven PLRD champion-to-FACE join. Presentation remains no-draw until
-     * Saturn VDP1 placement and command order are captured. */
-    face_count = face_layout.valid ? face_layout.entry_count : 0;
-    if (face_count > NEXUS_FACE_BIN_PORTRAIT_COUNT) {
-        face_count = NEXUS_FACE_BIN_PORTRAIT_COUNT;
-    }
-    engine->ui_faces_expected = face_count;
-    for (i = 0; i < face_count; ++i) {
-        const int portrait_index = i;
+     * each has a 64-entry BGR555 palette and a PRS3 pixel stream. The loader
+     * retains those source pixels; presentation remains no-draw until VDP1
+     * placement and command order are captured. */
+    for (i = 0; i < engine->champions.champion_count; ++i) {
+        const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;
-        Nexus_UI_FaceCompactRecordDescriptor descriptor;
-        if (!nexus_ui_face_compact_record_descriptor(face_data, face_size,
-                                                     portrait_index,
-                                                     &descriptor)) {
-            load_result = -1;
-        } else {
+        if (portrait_index < 0 ||
+            portrait_index >= NEXUS_FACE_BIN_PORTRAIT_COUNT) continue;
+        if (face_layout.valid && portrait_index >= face_layout.entry_count)
+            continue;
+        engine->ui_faces_expected++;
+        if (face_layout.valid && portrait_index < face_layout.entry_count) {
+            Nexus_UI_FaceCompactRecordDescriptor descriptor;
+            if (!nexus_ui_face_compact_record_descriptor(face_data, face_size,
+                                                         portrait_index,
+                                                         &descriptor)) {
+                load_result = -1;
+            } else {
             load_result = nexus_ui_load_face_record(&engine->ui,
                                                     face_data + descriptor.prefix_offset,
                                                     descriptor.prefix_size +
@@ -2607,6 +2606,9 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
                                                     face_layout.portrait_w,
                                                     face_layout.portrait_h,
                                                     NULL);
+            }
+        } else {
+            load_result = -1;
         }
         if (load_result > 0) {
             engine->ui_faces_loaded++;
@@ -3208,11 +3210,6 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         if (font_data) {
             Nexus_V1_FontS2dDecodeResult font_regions;
             if (nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1) {
-                if (nexus_v1_font_load_sections(font_data, font_size,
-                                                &engine->font_sections) == 0 &&
-                    nexus_v1_font_section_count(&engine->font_sections) > 0) {
-                    engine->font_source_loaded = 1;
-                }
                 if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
                                                  font_size, &font_regions) > 0) {
                     (void)nexus_v1_font_s2d_retain_source_words(
@@ -3227,12 +3224,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                            "(%d tiles); text consumer gated\n",
                            engine->font.char_count);
                 } else {
-                    (void)nexus_v1_font_s2d_retain_source_words(
-                        font_data, font_size, &font_regions,
-                        &engine->font_s2d_source_words);
-                    printf("Nexus font: FONT256.S2D sections admitted (%d); "
-                           "glyph mapping pending\n",
-                           nexus_v1_font_section_count(&engine->font_sections));
+                    printf("Nexus font: FONT256.S2D regions admitted\n");
                     engine->font_loaded = 0;
                 }
             }
@@ -8944,9 +8936,9 @@ int nexus_v1_current_level_sound_route_receipt(
     out_receipt->raw_map_selector = raw_map_selector;
     out_receipt->sal_offset = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    /* An opaque source route has no visual fallback. Keep this false for
-     * both blocked and BOUND_OPAQUE results so the receipt cannot advertise
-     * a host substitute for missing Saturn audio/presentation semantics. */
+    /* This receipt is audio provenance only.  A raw MAP selector and bounded
+     * SAL window never authorize a visual substitute or any other fallback
+     * route; keep the admission fail-closed for every status. */
     out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded || raw_map_selector < 0 ||
         raw_map_selector > 0xff) {
