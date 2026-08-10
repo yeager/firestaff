@@ -71,6 +71,23 @@ def nbg_mode(chctla: int, layer: int) -> tuple[str, int, int, int]:
     return "bitmap", colour_code, (chctla >> (2 + shift)) & 3, palette or 0
 
 
+def nbg_map_registers(registers: bytes, byte_order: str) -> list[tuple[int, int]]:
+    """Decode the eight NBG map registers from the raw VDP2 register image.
+
+    Mednafen's VDP2 renderer consumes 0x40..0x4e as four pairs.  Each pair
+    contains the two six-bit plane numbers for one NBG layer; the hardware
+    register image stores the pair as a 16-bit value.  Keep this as an
+    observation only: the values describe the selected map planes, not the
+    provenance of the bytes currently present in VRAM.
+    """
+    result: list[tuple[int, int]] = []
+    for layer in range(4):
+        first = read_u16(registers, 0x40 + layer * 4, byte_order) & 0x3F
+        second = read_u16(registers, 0x42 + layer * 4, byte_order) & 0x3F
+        result.append((first, second))
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -107,6 +124,7 @@ def main() -> int:
     layers = enabled_layers(bgon)
     nbg1_mode, nbg1_colour, nbg1_size, _ = nbg_mode(values["CHCTLA"], 1)
     nbg1_palette = (values["BMPNA"] >> 8) & 7
+    map_registers = nbg_map_registers(registers, byte_order)
     print(f"frame={args.frame}")
     print(f"register_byte_order={byte_order}")
     print("registers=" + ",".join(f"{name}=0x{value:04x}" for name, value in values.items()))
@@ -118,6 +136,13 @@ def main() -> int:
     print(
         "nbg_map_offsets="
         + ",".join(f"NBG{index}=0x{(values['MPOFN'] >> (index * 4)) & 7:x}" for index in range(4))
+    )
+    print(
+        "nbg_map_registers="
+        + ",".join(
+            f"NBG{index}=0x{first:02x}/0x{second:02x}"
+            for index, (first, second) in enumerate(map_registers)
+        )
     )
     print(
         "nbg_priorities="
