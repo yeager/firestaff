@@ -117,8 +117,26 @@ def main() -> int:
     require("Ambient dungeon sound" not in fire["TODO.md"],
             "FIRESTAFF_TODO_ROW_CLOSED Ambient dungeon sound is not tracked as a DM1 V1 source requirement",
             failures)
-    require("ambient" not in fire["include/audio_sdl_m11.h"].lower()
-            and "ambient" not in fire["src/shared/audio_sdl_m11.c"].lower(),
+    # The intent of this check is "no ambient-specific M11 audio API".
+    # A raw lowercase substring search hit an incidental use of the word
+    # in a comment explaining that we set SDL's playback category BECAUSE
+    # macOS 26 crashes when SDL's default `ambient` AVAudioSession category
+    # routes through CoreAudio head-tracking.  That comment documents an
+    # absence, not the introduction of an ambient DUNGEON audio API, and
+    # the source-lock's concern is symbols/APIs, not English prose.
+    # Strip C/C++ comments and string literals before scanning so an
+    # unrelated word in a comment can never masquerade as an API surface.
+    def strip_c_noise(text: str) -> str:
+        # Block comments, then line comments, then string / char literals --
+        # order matters so a `//` inside a `/* */` block doesn't split it.
+        text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+        text = re.sub(r"//[^\n]*", "", text)
+        text = re.sub(r'"(?:\\.|[^"\\])*"', '""', text)
+        text = re.sub(r"'(?:\\.|[^'\\])*'", "''", text)
+        return text
+    header_code = strip_c_noise(fire["include/audio_sdl_m11.h"]).lower()
+    src_code = strip_c_noise(fire["src/shared/audio_sdl_m11.c"]).lower()
+    require("ambient" not in header_code and "ambient" not in src_code,
             "FIRESTAFF_NO_AMBIENT_AUDIO_API no ambient-specific M11 audio API exists",
             failures)
 
