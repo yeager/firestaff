@@ -6285,12 +6285,14 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     };
     static const int csbAutoPriority[] = {
         /* Chaos Strikes Back was never released for DOS.  Its original
-         * routes in Firestaff's authenticated catalogue are FM Towns,
-         * Amiga and Atari ST.  Never let an internal PC34-compatibility row
+         * routes in Firestaff's authenticated catalogue are Amiga, FM Towns
+         * and Atari ST.  The launcher defaults to Amiga, the established
+         * native Firestaff path, rather than treating FM Towns as a fallback
+         * preference.  Never let an internal PC34-compatibility row
          * or an unsupported architecture become an AUTO launch target.
          * DMWeb's platform matrix and the original media catalogue are the
          * authority here, not the shared GRAPHICS.DAT hash. */
-        M12_ARCH_FM_TOWNS, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST
+        M12_ARCH_AMIGA, M12_ARCH_FM_TOWNS, M12_ARCH_ATARI_ST
     };
     const int *autoPriority = pcFirstAutoPriority;
     size_t autoPriorityCount = sizeof(pcFirstAutoPriority) /

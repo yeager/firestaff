@@ -1067,7 +1067,7 @@
   package identities throughout the native handoff.
   Chaos Strikes Back saknar dessutom en original DOS-utgåva: håll dess
   interna PC34-kompatibilitetskod utanför AUTO och all användarvänd
-  originalmedieinventering. AUTO ska välja FM Towns först, sedan Amiga och
+  originalmedieinventering. AUTO ska välja Amiga först, sedan FM Towns och
   Atari ST.
 
 - **NEXUS-VDP2-WRITER-CANDIDATE-OWNERSHIP:** The authentic 64-window VDP2

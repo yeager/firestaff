@@ -53,7 +53,7 @@
 
 # Launcher: AUTO använder rätt originalplattform (2026-08-10)
 
-- ✅ CSB:s AUTO-lista är begränsad till FM Towns, Amiga och Atari ST.
+- ✅ CSB:s AUTO-lista är begränsad till Amiga, FM Towns och Atari ST.
   X68000 och PC-98 kan inte bli oavsiktliga fallbackar.
 
 # Theron: avvisar falsk `$B0E5`-spawn-admission (2026-08-10)
@@ -81,7 +81,7 @@
   en nyupptäckt, hashverifierad PC-utgåva för Dungeon Master eller Dungeon
   Master II.
 - ✅ Chaos Strikes Back hade ingen DOS-utgåva. AUTO väljer därför dess
-  originala FM Towns-väg först och därefter Amiga/Atari ST, aldrig den
+  Amiga-väg först och därefter FM Towns/Atari ST, aldrig den
   interna PC34-kompatibilitetsraden. Den raden är nu även borttagen från
   användarvänd originalmediekatalog. Uttryckligt plattformsval ändras inte.
 - ✅ Regressionerna provar både den normala AUTO-prioriteten och den sista

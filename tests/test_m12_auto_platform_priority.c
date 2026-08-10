@@ -1,7 +1,7 @@
 /* AUTO platform selection must be a media policy, not catalogue order.
  * DM1/DM2 prefer their original PC routes.  CSB never had a DOS release:
- * it must prefer its original FM Towns route over Amiga, Atari and any
- * accidental compatibility catalogue row. */
+ * it defaults to its verified native Amiga route before FM Towns, Atari and
+ * any accidental compatibility catalogue row. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
@@ -64,12 +64,12 @@ int main(void)
         status.versions[1][atari].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, "csb", M12_ARCH_AUTO);
-        if (selected != fmtowns) {
-            fprintf(stderr, "FAIL: AUTO did not keep CSB on FM Towns\n");
+        if (selected != amiga) {
+            fprintf(stderr, "FAIL: AUTO did not keep CSB on Amiga\n");
             return 1;
         }
     }
-    puts("PASS: AUTO keeps CSB on original FM Towns media");
+    puts("PASS: AUTO keeps CSB on native Amiga media");
     {
         int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
