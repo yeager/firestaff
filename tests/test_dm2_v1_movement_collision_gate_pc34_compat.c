@@ -207,8 +207,11 @@ static int test_runtime_rejects_fixture_dungeon(void)
     int ok;
 
     build_synthetic_runtime(&profile, &game, &dungeon, raw);
+    /* Production excludes the legacy word-square fixture parser entirely.
+     * That loader rejection is the first valid no-synthetic-data outcome.
+     * Fixture-only builds that do admit it still must not expose movement. */
     if (dungeon.raw_data == NULL) {
-        return 0;
+        return 1;
     }
 
     dm2_v1_runtime_init(&profile);
@@ -218,13 +221,15 @@ static int test_runtime_rejects_fixture_dungeon(void)
     dm2_v1_runtime_set_move_callback(on_runtime_move);
     dm2_v1_runtime_set_turn_callback(on_runtime_turn);
 
+    /* A fixture can exercise the decoder, but cannot advertise a live
+     * GAME_LOAD party to public input. */
     ok = dm2_v1_runtime_move(0) == -1
         && dm2_v1_runtime_get_party_x() == 1
         && dm2_v1_runtime_get_party_y() == 1
         && dm2_v1_runtime_get_party_dir() == 1
         && runtime_move_callbacks == 0
         && runtime_turn_callbacks == 0
-        && dm2_v1_runtime_can_move() == 1;
+        && dm2_v1_runtime_can_move() == 0;
 
     ok = ok
         && dm2_v1_runtime_turn(-1) == -1
@@ -250,7 +255,7 @@ static int test_runtime_turn_rejects_fixture_dungeon(void)
 
     build_synthetic_runtime(&profile, &game, &dungeon, raw);
     if (dungeon.raw_data == NULL) {
-        return 0;
+        return 1;
     }
 
     dm2_v1_runtime_init(&profile);
@@ -266,7 +271,7 @@ static int test_runtime_turn_rejects_fixture_dungeon(void)
         && dm2_v1_runtime_get_party_dir() == 1
         && runtime_move_callbacks == 0
         && runtime_turn_callbacks == 0
-        && dm2_v1_runtime_can_move() == 1;
+        && dm2_v1_runtime_can_move() == 0;
 
     ok = ok
         && dm2_v1_runtime_turn(1) == -1
@@ -275,7 +280,7 @@ static int test_runtime_turn_rejects_fixture_dungeon(void)
         && dm2_v1_runtime_get_party_dir() == 1
         && runtime_move_callbacks == 0
         && runtime_turn_callbacks == 0
-        && dm2_v1_runtime_can_move() == 1;
+        && dm2_v1_runtime_can_move() == 0;
 
     dm2_v1_runtime_set_move_callback(NULL);
     dm2_v1_runtime_set_turn_callback(NULL);

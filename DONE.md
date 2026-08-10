@@ -1,3 +1,11 @@
+# DM2: fixturedata kan inte bli spelbar rörelse (2026-08-10)
+
+- ✅ Produktionsbyggnaden avvisar den äldre syntetiska word-square-dungeonen
+  redan vid laddning. Rörelse- och turregressionen tolkar nu den avvisningen
+  korrekt och provar samtidigt att ett uttryckligt fixture-läge aldrig kan
+  annonsera en GAME_LOAD-klar party. Ingen fixture, callback eller värdgrid
+  får därmed öppna DM2-inmatning.
+
 # Launcher: AUTO använder rätt originalplattform (2026-08-10)
 
 # Theron: bytevaliderad source-bound inventory-drop (2026-08-10)
