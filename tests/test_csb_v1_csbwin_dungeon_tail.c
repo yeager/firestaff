@@ -92,6 +92,7 @@ static void check_staged_real_save(void)
     CSB_V1_DungeonData rejected;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
+    CSB_V1_CSBWinLegacyResumePrepare resume;
     const CSB_V1_DungeonData *current_before = csb_v1_dungeon_get_current();
     uint16_t *item16_indices = NULL;
     uint8_t *before = NULL;
@@ -207,6 +208,30 @@ static void check_staged_real_save(void)
                   CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
             CHECK(csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
                       candidate, &body) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
+            memset(&resume, 0, sizeof(resume));
+            CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+                      candidate, &body, bytes + body.appended_offset,
+                      body.appended_size, &resume) ==
+                  CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
+            CHECK(resume.valid && resume.candidate_identity.valid &&
+                  resume.candidate_identity.source_tail_size ==
+                      body.appended_size &&
+                  resume.source_body_appended_fnv1a == body.appended_fnv1a &&
+                  resume.party_level == body.party_level &&
+                  resume.item16_count == body.item16_summary_total &&
+                  resume.num_timer == body.num_timer &&
+                  resume.timer_raw_fnv1a == body.timer_raw_fnv1a &&
+                  resume.timer_queue_raw_fnv1a == body.timer_queue_raw_fnv1a);
+            {
+                CSB_V1_CSBWinLegacyResumePrepare unchanged = resume;
+                before[0] ^= 1u;
+                CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+                          candidate, &body, before, body.appended_size,
+                          &resume) ==
+                      CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
+                CHECK(memcmp(&resume, &unchanged, sizeof(resume)) == 0);
+                before[0] ^= 1u;
+            }
             if (body.num_timer > 1u) {
                 CSB_V1_CSBWin512BodyReport malformed = body;
                 malformed.timer_queue[1] = malformed.timer_queue[0];

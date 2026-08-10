@@ -120,6 +120,41 @@ typedef struct {
     uint32_t database_entry_count;
 } CSB_V1_CSBWinLegacyDungeonCandidateIdentity;
 
+/* A non-owning, non-publishing receipt for the complete set of facts which
+ * a later atomic legacy resume must move together.  It intentionally carries
+ * scalar evidence only: the candidate and the authenticated body remain
+ * owned by their callers until a future transaction can adopt both at once.
+ * No pointer in this receipt can make a private dungeon live.
+ *
+ * Source: CSBWin SaveGame.cpp ReadGame():1768-1906 reads GAMEBLOCK2,
+ * ITEM16, champions and timer storage before ReadDatabases() completes the
+ * restored dungeon; none of those partial reads is a valid public world. */
+typedef struct {
+    int valid;
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity candidate_identity;
+    uint32_t source_body_appended_fnv1a;
+    uint32_t game_time;
+    uint32_t random_seed;
+    uint16_t party_level;
+    uint16_t party_x;
+    uint16_t party_y;
+    uint16_t party_facing;
+    uint16_t object_in_hand;
+    uint16_t hand_char;
+    uint16_t magic_caster;
+    uint16_t num_character;
+    uint16_t item16_count;
+    uint16_t max_timers;
+    uint16_t num_timer;
+    uint16_t first_avail_timer;
+    uint16_t timer_sequence;
+    uint16_t timer_record_size;
+    size_t timer_raw_size;
+    uint32_t timer_raw_fnv1a;
+    size_t timer_queue_raw_size;
+    uint32_t timer_queue_raw_fnv1a;
+} CSB_V1_CSBWinLegacyResumePrepare;
+
 /* Parse the unencrypted tail immediately following the authenticated
  * GAMEBLOCK1/2 streams. `extended_flags` is from Extended Features. */
 int csb_v1_csbwin_dungeon_tail_parse_prefix(
@@ -256,6 +291,16 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
 int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
     const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
     const CSB_V1_CSBWin512BodyReport *body);
+
+/* Assemble a receipt only after the exact retained tail, GAMEBLOCK2 pose,
+ * ITEM16 DB4 owners and raw TIMER/queue streams all validate against the
+ * same private candidate.  This neither publishes nor consumes either
+ * input; on failure `out` is unchanged. */
+int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    const CSB_V1_CSBWin512BodyReport *body,
+    const uint8_t *source_tail, size_t source_tail_size,
+    CSB_V1_CSBWinLegacyResumePrepare *out);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
 

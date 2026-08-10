@@ -28,6 +28,19 @@ static uint64_t source_tail_signature(const uint8_t *bytes, size_t size)
     return value;
 }
 
+static uint32_t source_tail_fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t value = UINT32_C(2166136261);
+    size_t i;
+
+    if (!bytes && size != 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        value ^= (uint32_t)bytes[i];
+        value *= UINT32_C(16777619);
+    }
+    return value;
+}
+
 static uint16_t read_be16(const uint8_t *p)
 {
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
@@ -652,6 +665,83 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
         }
         seen[timer_index] = 1u;
     }
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
+int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    const CSB_V1_CSBWin512BodyReport *body,
+    const uint8_t *source_tail, size_t source_tail_size,
+    CSB_V1_CSBWinLegacyResumePrepare *out)
+{
+    CSB_V1_CSBWinLegacyResumePrepare receipt;
+    uint16_t item16_indices[CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
+    size_t i;
+
+    if (!candidate || !body || !source_tail || !out) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT;
+    }
+    /* The verifier may retain an appended tail only while it fits its fixed
+     * evidence buffer.  Refuse a partial copy rather than matching a prefix
+     * of a dungeon which a later transaction could mistake for whole. */
+    if (!body->header_valid || body->appended_size == 0u ||
+        source_tail_size != body->appended_size ||
+        body->item16_summary_count != body->item16_summary_total ||
+        body->item16_summary_total > CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
+        !csb_v1_csbwin_dungeon_tail_candidate_matches_source_tail(
+            candidate, source_tail, source_tail_size) ||
+        source_tail_fnv1a32(source_tail, source_tail_size) !=
+            body->appended_fnv1a ||
+        (!body->appended_truncated &&
+         (body->appended_preserved_size != source_tail_size ||
+          memcmp(body->appended_preserved, source_tail,
+                 source_tail_size) != 0))) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    for (i = 0u; i < body->item16_summary_total; ++i) {
+        if (!body->item16[i].valid || body->item16[i].truncated) {
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+        item16_indices[i] = body->item16[i].monster_index;
+    }
+    if (csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
+            candidate, body->party_level, body->party_x, body->party_y,
+            body->party_facing, item16_indices,
+            body->item16_summary_total) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
+        csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
+            candidate, body) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    /* Re-read identity after zeroing the local receipt; no partially valid
+     * receipt can leave this function. */
+    if (!csb_v1_csbwin_dungeon_tail_candidate_identity(
+            candidate, &receipt.candidate_identity)) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    receipt.valid = 1;
+    receipt.source_body_appended_fnv1a = body->appended_fnv1a;
+    receipt.game_time = body->game_time;
+    receipt.random_seed = body->random_seed;
+    receipt.party_level = body->party_level;
+    receipt.party_x = body->party_x;
+    receipt.party_y = body->party_y;
+    receipt.party_facing = body->party_facing;
+    receipt.object_in_hand = body->object_in_hand;
+    receipt.hand_char = body->hand_char;
+    receipt.magic_caster = body->magic_caster;
+    receipt.num_character = body->num_character;
+    receipt.item16_count = body->item16_summary_total;
+    receipt.max_timers = body->max_timers;
+    receipt.num_timer = body->num_timer;
+    receipt.first_avail_timer = body->first_avail_timer;
+    receipt.timer_sequence = body->timer_sequence;
+    receipt.timer_record_size = body->timer_record_size;
+    receipt.timer_raw_size = body->timer_raw_size;
+    receipt.timer_raw_fnv1a = body->timer_raw_fnv1a;
+    receipt.timer_queue_raw_size = body->timer_queue_raw_size;
+    receipt.timer_queue_raw_fnv1a = body->timer_queue_raw_fnv1a;
+    *out = receipt;
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
 }
 
