@@ -1,3 +1,14 @@
+# Launcher: vald DM1-utgåva äger sin runtimekatalog (2026-08-10)
+
+- ✅ Vid Auto-val i en datarot med flera Dungeon Master-utgåvor binds nu en
+  verifierad PC-utgåva till katalogen för just dess `GRAPHICS.DAT`, i stället
+  för till skannerns generiska, först materialiserade DM1-katalog. FM
+  Towns behåller sin separata CD-/arkiväg. Detta förhindrar att PC-valet
+  kombineras med syskonfiler från en annan utgåva vid M11-start.
+- ✅ Verifierat med den lokala blandade, hashverifierade mediekatalogen:
+  `--game dm1 --platform auto` når PC34:s `dm1-runtime`-gräns. Fristående
+  PC34-CSB når sin källaägda titel och PC-DM2 når sin startmeny.
+
 # Theron: samma-session dungeon-replay verifierad utan semantisk öppning (2026-08-10)
 - ✅ En autentiserad US-körning från operatorns Mednafen-state replayade sju
   scripted input-händelser i samma process och bevarade 2 048 disassemblybundna

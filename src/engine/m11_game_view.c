@@ -21314,6 +21314,26 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     sizeof(selectedDm2RuntimeDataDir))) {
                 spec.dataDir = selectedDm2RuntimeDataDir;
             }
+            /* A data root may contain both the FM Towns disc files and a
+             * hash-matched PC release.  AUTO deliberately selects PC first,
+             * but the generic DM1 runtime directory is merely the scanner's
+             * first materialised owner.  Bind a selected loose PC release to
+             * the directory of its verified GRAPHICS.DAT just as DM2 does;
+             * otherwise M11 can combine the PC selection with unrelated
+             * siblings from the generic owner.
+             *
+             * The FM Towns route below remains separate because it owns an
+             * archive/CD materialisation rather than loose PC files. */
+            if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
+                version->versionId &&
+                strcmp(version->versionId, "fmtowns-en") != 0 &&
+                strcmp(version->versionId, "fmtowns-ja") != 0 &&
+                M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+                    &menuState->assetStatus, entry->gameId, version->versionId,
+                    selectedDm1RuntimeDataDir,
+                    sizeof(selectedDm1RuntimeDataDir))) {
+                spec.dataDir = selectedDm1RuntimeDataDir;
+            }
             if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
                 version->versionId &&
                 (strcmp(version->versionId, "fmtowns-en") == 0 ||
