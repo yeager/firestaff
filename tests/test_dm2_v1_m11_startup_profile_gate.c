@@ -2477,6 +2477,7 @@ int main(void) {
     DM2_V1_BootNewGameTransactionReceipt source_transaction;
     DM2_V1_GameLoadWorldOwner new_game_world_owner;
     DM2_V1_GameLoadWorldOwner incremental_new_game_world_owner;
+    DM2_V1_GameLoadWorldOwner preselection_move_world_owner;
     DM2_V1_GameLoadWorldOwner static_caii_world_owner;
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
@@ -2989,6 +2990,8 @@ int main(void) {
     memset(&new_game_world_owner, 0, sizeof(new_game_world_owner));
     memset(&incremental_new_game_world_owner, 0,
            sizeof(incremental_new_game_world_owner));
+    memset(&preselection_move_world_owner, 0,
+           sizeof(preselection_move_world_owner));
     memset(&static_caii_world_owner, 0, sizeof(static_caii_world_owner));
     memset(&tampered_new_game_world_owner, 0,
            sizeof(tampered_new_game_world_owner));
@@ -3001,6 +3004,59 @@ int main(void) {
         source_dungeon_hash_before_owner = dm2_test_fnv1a(
             source_dungeon->raw_data, (size_t)source_dungeon->raw_size);
     }
+    expect_true(profile &&
+                    dm2_v1_game_load_world_owner_prepare_new_game(
+                        &preselection_move_world_owner, profile) &&
+                    dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+                        &preselection_move_world_owner, NULL) &&
+                    dm2_v1_game_load_world_owner_materialize_source_map_context(
+                        &preselection_move_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
+                        &preselection_move_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
+                        &preselection_move_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_light(
+                        &preselection_move_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_scene(
+                        &preselection_move_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_view(
+                        &preselection_move_world_owner) &&
+                    dm2_v1_game_load_world_owner_materialize_preselection_viewport(
+                        &preselection_move_world_owner),
+                "DM2 materializes the source-owned private viewport before movement");
+    expect_true(profile &&
+                    (dm2_v1_dungeon_get_tile_raw(
+                         &preselection_move_world_owner.dungeon,
+                         preselection_move_world_owner.source_party_map,
+                         preselection_move_world_owner.source_party_x,
+                         preselection_move_world_owner.source_party_y) < 0 ||
+                     ((dm2_v1_dungeon_get_tile_raw(
+                         &preselection_move_world_owner.dungeon,
+                         preselection_move_world_owner.source_party_map,
+                         preselection_move_world_owner.source_party_x,
+                         preselection_move_world_owner.source_party_y) >> 5) & 7) != 1 ||
+                     (dm2_v1_dungeon_get_tile_raw(
+                         &preselection_move_world_owner.dungeon,
+                         preselection_move_world_owner.source_party_map,
+                         preselection_move_world_owner.source_party_x,
+                         preselection_move_world_owner.source_party_y) & 0x10) != 0 ||
+                     dm2_v1_dungeon_get_first_thing(
+                         &preselection_move_world_owner.dungeon,
+                         preselection_move_world_owner.source_party_map,
+                         preselection_move_world_owner.source_party_x,
+                         preselection_move_world_owner.source_party_y) !=
+                         DM2_V1_RECORD_HANDLE_END),
+                "DM2 identifies the source-owned departure as outside its empty-chain branch");
+    expect_true(!dm2_v1_game_load_world_owner_move_preselection(
+                         &preselection_move_world_owner, 3),
+                "DM2 rejects source movement before a private moverec owner exists");
+    expect_true(profile &&
+                    preselection_move_world_owner.source_party_x == 1u &&
+                    preselection_move_world_owner.source_party_y == 8u &&
+                    preselection_move_world_owner.selected_party.heros_in_party == 0 &&
+                    !preselection_move_world_owner.champion_selection_materialized &&
+                    !profile->source_game_load_session_ready,
+                "DM2 retains private source state after rejected movement");
     expect_true(profile &&
                     dm2_v1_game_load_world_owner_prepare_new_game(
                         &incremental_new_game_world_owner, profile) &&
@@ -3964,6 +4020,7 @@ int main(void) {
     }
     dm2_v1_game_load_world_owner_free(&new_game_world_owner);
     dm2_v1_game_load_world_owner_free(&incremental_new_game_world_owner);
+    dm2_v1_game_load_world_owner_free(&preselection_move_world_owner);
     party_selections[1] = party_selections[0];
     expect_true(profile &&
                     !dm2_v1_boot_new_game_party_receipt(profile,

@@ -3502,9 +3502,15 @@ int dm2_v1_game_load_world_owner_move_preselection(
         x + direction_x[direction];
     const int target_y = direction < 0 || direction > 3 ? -1 :
         y + direction_y[direction];
+    const int source_raw_tile = owner ? dm2_v1_dungeon_get_tile_raw(
+        &owner->dungeon, map, x, y) : -1;
     const int raw_tile = owner ? dm2_v1_dungeon_get_tile_raw(
         &owner->dungeon, map, target_x, target_y) : -1;
+    const int source_tile_class = source_raw_tile < 0 ? -1 :
+        (source_raw_tile >> 5) & 7;
     const int tile_class = raw_tile < 0 ? -1 : (raw_tile >> 5) & 7;
+    const int source_first_thing = source_raw_tile < 0 ? -2 :
+        dm2_v1_dungeon_get_first_thing(&owner->dungeon, map, x, y);
     const int first_thing = raw_tile < 0 ? -2 :
         dm2_v1_dungeon_get_first_thing(&owner->dungeon, map,
                                        target_x, target_y);
@@ -3535,12 +3541,21 @@ int dm2_v1_game_load_world_owner_move_preselection(
         owner->selected_mirror_count != 0u || map < 0 ||
         map >= owner->dungeon.level_count || x < 0 || y < 0 ||
         party_direction < 0 || party_direction > 3 ||
-        (source_event < 3 || source_event > 6) || raw_tile < 0 ||
+        (source_event < 3 || source_event > 6) || source_raw_tile < 0 ||
+        raw_tile < 0 ||
+        /* MOVE_RECORD_TO(OBJECT_NULL) runs c_moverec's departure path before
+         * it examines the destination.  It is only source-no-op when the
+         * departure has the same empty class-1 chain proof; otherwise a
+         * type-14 missile or another linked record can invoke a real timer,
+         * cut/append or actuator path. */
+        source_tile_class != 1 || (source_raw_tile & 0x10) != 0 ||
+        source_first_thing != DM2_V1_RECORD_HANDLE_END ||
         /* c_querydb.cpp::DM2_IS_TILE_BLOCKED accepts the tile type one
          * floor branch.  c_move.cpp::DM2_12b4_0881 may then reach its
          * no-creature result 6.  Retain only that exact no-record path;
          * a set 0x10 flag would require c_moverec/record ownership. */
-        tile_class != 1 || (raw_tile & 0x10) != 0 || first_thing != -1) {
+        tile_class != 1 || (raw_tile & 0x10) != 0 ||
+        first_thing != DM2_V1_RECORD_HANDLE_END) {
         return 0;
     }
 

@@ -538,8 +538,10 @@
   c_party/c_moverec. Musens riktiga dungeonruta och den fullständiga `c_input`-
   konsumenten saknas ännu; en direktteleporter följer originalets
   kartövergångsgren och är därför spärrad tills den ägaren finns. Den första
-  källtrogna framåtrutan kan också materialiseras privat när den är ett
-  verkligt tomt G1-golv utan 0x10-kedja eller teleporter. Dörrar,
+  källtrogna framåtrutan kan också materialiseras privat först när både
+  avresa och mål är verkliga tomma G1-golv utan 0x10-kedja, recordkedja
+  eller teleporter; `DM2_MOVE_RECORD_TO(0xffff)` besöker avresan före målet.
+  Dörrar,
   gropar, varelser, objekt och kartövergångar avvisas före mutation tills
   deras kompletta `DM2_PERFORM_MOVE`-ägare finns; den får inte bli en
   allmän M11-rörelseväg ännu.
