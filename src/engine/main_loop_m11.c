@@ -365,7 +365,8 @@ static int SDLCALL m11_intro_scan_thread(void* data) {
 static void m11_draw_intro_progress_bar(unsigned char* rgba,
                                         int w, int h,
                                         const M12_AssetScanProgress* progress,
-                                        Uint64 elapsedMs) {
+                                        Uint64 elapsedMs,
+                                        int languageIndex) {
     int barW, barH, barX, barY, fillW, textY;
     size_t pct = 0;
     char label[96];
@@ -403,16 +404,25 @@ static void m11_draw_intro_progress_bar(unsigned char* rgba,
         Uint64 etaMs = (elapsedMs * (100 - pct)) / pct;
         int etaSec = (int)((etaMs + 500) / 1000);
         if (progress->currentGameId[0] != '\0') {
-            snprintf(label, sizeof(label), "Scanning %s  %zu%%  ~%ds",
+            snprintf(label, sizeof(label), "%s: %s  %zu%%  ~%ds",
+                     M12_StartupMenu_TranslateForLocale(languageIndex,
+                                                        "SCANNING GAME DATA"),
                      M12_StartupMenu_GameDisplayTitleForLocale(
-                         0, progress->currentGameId), pct, etaSec);
+                         languageIndex, progress->currentGameId), pct, etaSec);
         } else {
-            snprintf(label, sizeof(label), "Scanning  %zu%%  ~%ds", pct, etaSec);
+            snprintf(label, sizeof(label), "%s  %zu%%  ~%ds",
+                     M12_StartupMenu_TranslateForLocale(languageIndex,
+                                                        "SCANNING GAME DATA"),
+                     pct, etaSec);
         }
     } else if (pct > 0) {
-        snprintf(label, sizeof(label), "Scanning  %zu%%", pct);
+        snprintf(label, sizeof(label), "%s  %zu%%",
+                 M12_StartupMenu_TranslateForLocale(languageIndex,
+                                                    "SCANNING GAME DATA"), pct);
     } else {
-        snprintf(label, sizeof(label), "Scanning game data...");
+        snprintf(label, sizeof(label), "%s...",
+                 M12_StartupMenu_TranslateForLocale(languageIndex,
+                                                    "SCANNING GAME DATA"));
     }
     {
         static const unsigned char font5x8[95][8] = {
@@ -604,7 +614,8 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                                         M12_STARTUP_INTRO_WIDTH,
                                         M12_STARTUP_INTRO_HEIGHT,
                                         &snap,
-                                        elapsed);
+                                        elapsed,
+                                        menuState ? menuState->settings.languageIndex : 0);
         }
         (void)M11_Render_PresentRGBA(rgba,
                                      M12_STARTUP_INTRO_WIDTH,
