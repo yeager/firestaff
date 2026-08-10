@@ -30734,6 +30734,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         int zoneId = 0;
         int command;
 
+        /* A31/A35 do retain G0449's right-button C011 close route once
+         * C017 is live, but their G0447/G0448 tables do not publish the
+         * PC34 right-click C007..C010/C083 inventory-open entries.  In
+         * particular, F0359's synthetic SPACE click at (117,114) therefore
+         * remains a dungeon-view click on these builds, not an inventory
+         * toggle.  Do not let the shared PC34 route open an invisible panel
+         * from a native Amiga dungeon page.  ReDMCSB COMMAND.C G0447/G0448
+         * lines 78-121 (the right-button entries are MEDIA351/MEDIA413,
+         * excluding A31E/A31M/A35E/A35M); G0449 line 122 keeps C011. */
+        if (!state->inventoryPanelActive &&
+            state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            const CSB_V1_BootProfile *csb_profile =
+                (const CSB_V1_BootProfile *)state->csbBootProfile;
+            if (m11_csb_is_amiga_profile(csb_profile)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+        }
+
         command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
             DM1_V1_MOUSE_LIST_INTERFACE_PC34,
             x, y,
