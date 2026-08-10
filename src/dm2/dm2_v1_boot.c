@@ -3094,37 +3094,20 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir) {
     char path[512];
+    char save_root[sizeof(profile->save_root)];
     (void)path;
     const char *base = data_dir ? data_dir : ".";
 
     if (!profile) return -1;
-    /* A rescan selects a new user-owned medium.  The old MVE executable must
-     * not survive that ownership change, even if the next scan fails. */
-    dm2_v1_dos_intro_mve_owner_destroy(profile->dos_intro_mve_owner);
-    profile->dos_intro_mve_owner = NULL;
-    profile->graphics_path[0] = '\0';
-    profile->dungeon_path[0] = '\0';
-    profile->songlist_path[0] = '\0';
-    profile->graphics_md5[0] = '\0';
-    profile->dungeon_md5[0] = '\0';
-    profile->songlist_md5[0] = '\0';
-    profile->graphics_size = 0U;
-    profile->dungeon_size = 0U;
-    profile->songlist_size = 0U;
-    memset(profile->songlist_map, 0, sizeof(profile->songlist_map));
-    profile->songlist_verified = 0;
-    profile->music_map_path[0] = '\0';
-    profile->music_map_md5[0] = '\0';
-    profile->music_map_size = 0U;
-    memset(profile->music_map_data, 0, sizeof(profile->music_map_data));
-    profile->music_map_verified = 0;
-    profile->cdda_cd_dat_path[0] = '\0';
-    profile->cdda_cd_dat_md5[0] = '\0';
-    profile->cdda_cd_dat_size = 0U;
-    memset(profile->cdda_cd_dat_data, 0, sizeof(profile->cdda_cd_dat_data));
-    profile->cdda_cd_dat_verified = 0;
-    profile->assets_verified = 0;
-    profile->use_dm2_filenames = 0;
+    /* A rescan selects a new user-owned medium.  No parsed world, mounted
+     * archive payload, animation stream, MVE owner or source singleton may
+     * survive it: otherwise a failed or cross-platform rescan can mix old
+     * RAM bytes with new provenance paths.  Preserve only the configured
+     * save namespace; it is host configuration, not game media. */
+    memcpy(save_root, profile->save_root, sizeof(save_root));
+    dm2_v1_boot_cleanup(profile);
+    dm2_v1_boot_profile_init(profile);
+    memcpy(profile->save_root, save_root, sizeof(profile->save_root));
 
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not

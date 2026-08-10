@@ -363,6 +363,43 @@ static void test_songlist_real_data_routing(void)
     dm2_v1_boot_cleanup(&p);
 }
 
+/* A scan is a media-owner transition, not a field refresh.  Exercise it on
+ * the admitted PC corpus after BOOT has allocated the parsed world. */
+static void test_rescan_releases_entered_real_dos_profile(void)
+{
+    DM2_V1_BootProfile p;
+    char root[512];
+    static const char save_root[] = "/tmp/firestaff-dm2-rescan-save-root";
+
+    if (!resolve_real_dm2_data_root(root, sizeof(root))) {
+        printf("  SKIP: FIRESTAFF_DM2_DATA_DIR not set for real DM2 rescan\n");
+        return;
+    }
+    dm2_v1_boot_profile_init(&p);
+    if (dm2_v1_boot_scan_assets(&p, root) != 0 ||
+        dm2_v1_boot_enter_game(&p) != 0) {
+        CHECK(0, "real PC corpus enters before media-owner rescan");
+        dm2_v1_boot_cleanup(&p);
+        return;
+    }
+    dm2_v1_boot_set_save_root(&p, save_root);
+    CHECK(p.dm2_state != NULL && p.dungeon_data != NULL &&
+              p.graphics_dat != NULL,
+          "entered PC profile owns parsed world before rescan");
+    CHECK(dm2_v1_boot_scan_assets(&p, root) == 0,
+          "rescan admits replacement PC media from the selected original root");
+    CHECK(p.assets_verified && p.platform == DM2_PLATFORM_PC_EN &&
+              p.graphics_path[0] != '\0' && p.dungeon_path[0] != '\0',
+          "rescan keeps only the newly authenticated PC media receipt");
+    CHECK(p.dm2_state == NULL && p.dungeon_data == NULL &&
+              p.graphics_dat == NULL && p.game_load_world_owner == NULL &&
+              p.source_game_load_session_ready == 0,
+          "rescan removes all parsed-world and session owners");
+    CHECK(strcmp(p.save_root, save_root) == 0,
+          "rescan preserves the configured save namespace only");
+    dm2_v1_boot_cleanup(&p);
+}
+
 static void test_save_root_default(void)
 {
     DM2_V1_BootProfile p;
@@ -1073,6 +1110,8 @@ int main(void)
     test_scan_real_assets_by_hash_when_renamed();
     printf("\n--- test_songlist_real_data_routing ---\n");
     test_songlist_real_data_routing();
+    printf("\n--- test_rescan_releases_entered_real_dos_profile ---\n");
+    test_rescan_releases_entered_real_dos_profile();
 /* ── save root --─ */
     printf("\n--- test_save_root_default ---\n");
     test_save_root_default();

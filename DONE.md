@@ -39,6 +39,14 @@
   Den godtar endast den redan hashverifierade DM2-bootprofilen och lämnar
   partyspegeln tom tills en komplett, källägd `GAME_LOAD`-session finns.
 
+# DM2: omskanning byter medieägare atomärt (2026-08-10)
+
+- ✅ En ny datasökning frigör nu den tidigare verifierade medieägaren,
+  inklusive parserad värld, GDAT, MVE, FM Towns-skiva och Amiga-animationer,
+  innan den väljer ersättningsmedia. Endast sparmappens hostinställning
+  bevaras. Regressionsprovet genomför detta mot den riktiga Amiga-installern
+  utan att packa upp speldata på disk.
+
 # Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
 - ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
   no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar

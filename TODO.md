@@ -3234,7 +3234,10 @@
   direct-start boundary:** the legacy CLI loop now retains the verified DM2
   boot profile and cannot fall through to the generic DM1 graphics/dungeon
   loader. It remains non-playable until a complete DM2 GAME_LOAD session is
-  source-owned; no generic party mirror is published.
+  source-owned; no generic party mirror is published. **Rescan ownership:** a
+  rescan now atomically drops the former parsed world and every RAM-backed
+  DOS, FM Towns or Amiga medium before selecting replacement data; the save
+  namespace is the sole preserved host setting.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains
