@@ -25,6 +25,7 @@
 #endif
 
 #include "m11_game_view.h"
+#include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_media.h"
@@ -68,6 +69,31 @@ static void expect_true(int condition, const char* message) {
 static void expect_skip(const char* message) {
     fprintf(stderr, "SKIP: %s\n", message);
     ++g_skipped;
+}
+
+static void run_theron_pointer_and_button_input_contract(void) {
+    M11_GameViewState view;
+
+    memset(&view, 0, sizeof(view));
+    view.active = 1;
+    view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    snprintf(view.sourceId, sizeof(view.sourceId), "%s", "theron");
+    view.pointerPositionKnown = 1;
+    view.pointerX = 17;
+    view.pointerY = 29;
+
+    expect_true(M11_GameView_HandlePointerMove(&view, 211, 143) ==
+                    M11_GAME_INPUT_IGNORED &&
+                    view.pointerPositionKnown && view.pointerX == 211 &&
+                    view.pointerY == 143,
+                "Theron mouse motion keeps the real pointer position without object hopping");
+    expect_true(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
+                    M12_MENU_INPUT_ACCEPT &&
+                    M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
+                    M12_MENU_INPUT_ACTION &&
+                    M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
+                    M12_MENU_INPUT_ACTION,
+                "Theron mouse buttons map Button I/II for ordinary mice");
 }
 
 static void init_menu_without_gallery(M12_StartupMenuState* state,
@@ -632,6 +658,7 @@ int main(void) {
     run_keyboard_arrow_forcefield_focus_regression();
     run_production_forcefield_binds_selected_records_without_names();
     run_real_us_roster_text_forcefield_handoff_if_available();
+    run_theron_pointer_and_button_input_contract();
     run_real_launcher_handoff_if_available();
 
     printf("\nTheron V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
