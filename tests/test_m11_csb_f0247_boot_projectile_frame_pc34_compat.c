@@ -100,16 +100,20 @@ int main(void)
 
     binding.projectile_sprite_drawer = draw;
     binding.projectile_sprite_user = &probe;
+    /* The boot renderer passes the viewport aperture base (frame + 33*320+48
+     * per DUNVIEW.C F0128's (48,33) origin) to the drawer.  The probe writes
+     * pixels[33*stride+112], so the pixel lands at frame[(33+33)*320+(48+112)]
+     * in the full page, not at frame[33*320+112]. */
     if (!csb_v1_boot_render_viewport_frame_pc34(
             &boot, frame, 320, 200, &binding, &counts) ||
-        probe.calls != 1 || frame[33 * 320 + 112] != 0x5a ||
+        probe.calls != 1 || frame[(33 + 33) * 320 + (48 + 112)] != 0x5a ||
         counts.post_teleport_projectile_handoff_drawn_count != 1 ||
         counts.projectile_marker_drawn_count != 0) {
         fprintf(stderr,
                 "live F0219 receipt did not draw real F0115 material "
                 "(calls=%d handoff=%d marker=%d frame=%u)\n",
                 probe.calls, counts.post_teleport_projectile_handoff_drawn_count,
-                counts.projectile_marker_drawn_count, frame[33 * 320 + 112]);
+                counts.projectile_marker_drawn_count, frame[(33 + 33) * 320 + (48 + 112)]);
         return 1;
     }
     puts("ok: live F0219 receipt reaches boot F0128/F0115 without marker");
