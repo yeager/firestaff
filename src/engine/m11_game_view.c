@@ -30379,7 +30379,11 @@ static int m11_csb_atari_st_top_row_pointer(
                 return 1;
             }
         }
-        if (x >= 274 && x <= 319) return 1;
+        /* G0447 owns the entire native top row for a right click.  Its
+         * unlisted two-pixel inter-tile gaps and the icon grid are inert;
+         * they must still be consumed here, otherwise the generic PC HUD
+         * route can incorrectly reinterpret a gap as a host inventory hit. */
+        if (x >= 0 && x <= 319) return 1;
     }
     return 0;
 }
