@@ -96,6 +96,14 @@ the join with:
   --data-dir /Users/bosse/.firestaff/data/nexus --frame 0 --capture-frames 4 \
   --command-offset 0xe180`.
 
+The same legacy witness also passes the C runtime handoff when linked against
+the normal `firestaff_nexus` target: the first resolved mode-1 command reports
+`source_join_verified=1`, `palette_join_verified=1`,
+`structure3_face_owner_join_verified=1`, and `renderer_permitted=1`. This is
+one source-bound capture command only; it does not promote the complete DGN
+scene, camera transform, command-list ownership, menu/HUD identity, or VDP2
+composition.
+
 The same frame also contains four additional type-2 draws. Their exact
 word-swapped sources and CLUTs bind to `LEV00.DGN` Structure2=60, 64, 68 and
 71, plus Structure2=36 for the fifth draw. The observed VDP1 quadrilaterals
