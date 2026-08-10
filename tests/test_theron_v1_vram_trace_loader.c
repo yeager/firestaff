@@ -240,7 +240,7 @@ static void test_verified_real_capture(void) {
     }
     memset(&vp, 0, sizeof(vp));
     assert(theron_v1_vram_trace_load_verified_files(
-        &vp, vram_path, vce_path, 0x55c10e28u, 0xea83f117u) == 0);
+        &vp, vram_path, vce_path, 0xf11c6b2au, 0xea83f117u) == 0);
     assert(vp.vram_trace_loaded == 1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 64, 32) > 0);
     {

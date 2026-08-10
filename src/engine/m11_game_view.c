@@ -57526,7 +57526,7 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
  * unbound Track 02 atlas or the default viewport palette.
  *
  * Source: HuC6260/HuC6270 VCE BGR333 snapshot contract and the captured
- * Mednafen Theron screen route (VRAM 55c10e28, VCE ea83f117). */
+ * Mednafen Theron screen route (VRAM f11c6b2a, VCE ea83f117). */
 static int m11_theron_install_authenticated_vce_palette(
     const Theron_V1_Viewport *viewport) {
     uint8_t rgb6[256][3];

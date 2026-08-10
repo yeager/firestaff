@@ -12197,3 +12197,15 @@ rendering remain blocked.
 - Ingen `$B0E5`-entry, RNG-return eller `spawn_consumer_read` syntes; därför
   förblev RNG, levande spawn, AI, generator, T700, loot och T900 stängda.
 - Savestate-körningen blandades inte in eftersom den saknade CD→RAM-händelse.
+
+## Theron: source-bound VRAM/VCE-hash korrigerad (2026-08-10)
+
+- ✅ Produktionsproben använder nu den autentiserade full-capture-posten med
+  VRAM FNV-1a `f11c6b2a` och VCE FNV-1a `ea83f117`. Den tidigare VRAM-hashen
+  `55c10e28` hörde inte till den capture som samtidigt bevisar CD→RAM.
+- ✅ Riktig 64 KiB VRAM + 1 KiB VCE laddas, verifieras och passerar
+  viewport-/palette-/atlasproben med 1 057 source-bound atlasposter.
+- ⚠️ Den dekodade bilden är fortfarande uttryckligen `source_only`: den visar
+  inte ännu en tillräckligt bevisad dungeon-frame och får därför inte ersätta
+  README-skärmbilden. Square-to-tile-semantik, RNG, AI, T700, T900 och
+  ljudkonsumenter förblir stängda.

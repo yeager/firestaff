@@ -44,9 +44,9 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
     vce_snapshot = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
     if (vram_snapshot && vram_snapshot[0] && vce_snapshot && vce_snapshot[0] &&
         /* Capture receipt: authenticated TQUS Track 02 screen pair,
-         * VRAM FNV-1a 55c10e28 and VCE FNV-1a ea83f117. */
+         * VRAM FNV-1a f11c6b2a and VCE FNV-1a ea83f117. */
         theron_v1_vram_trace_load_verified_files(
-            vp, vram_snapshot, vce_snapshot, 0x55c10e28u, 0xea83f117u) == 0 &&
+            vp, vram_snapshot, vce_snapshot, 0xf11c6b2au, 0xea83f117u) == 0 &&
         theron_v1_vram_trace_populate_tiles(vp, 0, 64, 32) > 0) {
         vp->synthetic_rendering_blocked = 1;
     } else if (vp->vram_trace_loaded) {
