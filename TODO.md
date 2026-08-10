@@ -3239,9 +3239,11 @@
   68k-specific header offsets now admit the original 28-map installer member
   through the normal RAM-only boot path; full Amiga GAME_LOAD/runtime remains
   a separate source-owner task. **GAME_LOAD candidate context:** the private
-  candidate now retains the complete source teleporter/display context, but
-  intentionally carries only `event_heroidx` until the full original
-  c_eventqueue owner exists; it does not invent an empty event queue.
+  candidate retains the complete source teleporter/display context and the
+  source-shaped `c_eventqueue::init` state after the first mirror/leader
+  selection (empty ringbuffer and leader index 0). It is still private: live
+  event dispatch, input routing and a publishable session require the full
+  original c_eventqueue/runtime owner.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains
