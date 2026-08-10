@@ -191,6 +191,15 @@ static void check_staged_real_save(void)
                       candidate, body.party_level, body.party_x, body.party_y,
                       4u, item16_indices, body.item16_summary_total) ==
                   CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
+            CHECK(csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
+                      candidate, &body) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
+            if (body.num_timer > 1u) {
+                CSB_V1_CSBWin512BodyReport malformed = body;
+                malformed.timer_queue[1] = malformed.timer_queue[0];
+                CHECK(csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
+                          candidate, &malformed) ==
+                      CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
+            }
         }
         CHECK(csb_v1_dungeon_get_current() == current_before &&
               csb_v1_dungeon_get_current_mutable() == current_before);

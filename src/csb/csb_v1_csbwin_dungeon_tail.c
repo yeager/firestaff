@@ -496,6 +496,43 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
 }
 
+int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    const CSB_V1_CSBWin512BodyReport *body)
+{
+    uint8_t seen[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES] = { 0 };
+    uint16_t queue_index;
+
+    if (!candidate || !body || !candidate->dungeon.raw_data ||
+        !body->header_valid ||
+        body->timer_summary_count != body->timer_summary_total ||
+        body->timer_queue_summary_count != body->timer_queue_summary_total ||
+        body->max_timers != body->timer_summary_count ||
+        body->timer_summary_count > CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        body->timer_queue_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+        body->num_timer > body->timer_queue_summary_count ||
+        body->num_timer > body->max_timers ||
+        body->first_avail_timer > body->max_timers) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    for (queue_index = 0u; queue_index < body->num_timer; ++queue_index) {
+        const uint16_t timer_index = body->timer_queue[queue_index];
+        const CSB_V1_CSBWin512TimerSummary *timer;
+
+        if (timer_index >= body->timer_summary_count || seen[timer_index]) {
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+        timer = &body->timers[timer_index];
+        if (!timer->valid || timer->truncated ||
+            timer->function == 0u || timer->source_index != timer_index) {
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+        seen[timer_index] = 1u;
+    }
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
 {

@@ -12,6 +12,7 @@
 #include <stdint.h>
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_csbwin_512_xor_pad_classify.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -202,6 +203,24 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
     uint16_t party_level, uint16_t party_x, uint16_t party_y,
     uint16_t party_facing, const uint16_t *item16_monster_indices,
     size_t item16_count);
+
+/* Prove that GAMEBLOCK2's decoded TIMER pool can be carried with this
+ * candidate.  This checks only source-owned timer-slot and active-queue
+ * invariants: all active handles are unique and point at retained, valid
+ * TIMER records.  The saved active queue order is kept as
+ * source evidence; an older CSBWin producer's exact comparator variant is
+ * not inferred from one corpus.  It does not materialize an M10 event,
+ * publish the dungeon, or change a RuntimeProfile.
+ *
+ * `body` must be the already authenticated output of
+ * csb_v1_csbwin_512_verify_save_body().  A later atomic resume transaction
+ * must still transfer its raw timer pool, timer queue, GAMEBLOCK2, champions
+ * and dungeon as one ownership operation.
+ *
+ * Source: CSBWin SaveGame.cpp:1851-1906; Timer.cpp:CheckTimers 1203-1239. */
+int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    const CSB_V1_CSBWin512BodyReport *body);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
 
