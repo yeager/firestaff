@@ -17,8 +17,8 @@
 #define NEXUS_V1_SATURN_VDP1_VRAM_BYTES (0x40000U * 2U)
 #define NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES (0x20000U * 2U)
 #define NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES \
-    (NEXUS_V1_SATURN_VDP1_VRAM_BYTES + \
-     NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES * 2U + 1U)
+     (NEXUS_V1_SATURN_VDP1_VRAM_BYTES + \
+     NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES * 2U)
 #define NEXUS_V1_SATURN_VDP2_CRAM_BYTES (0x800U * 2U)
 #define NEXUS_V1_SATURN_VDP2_VRAM_BYTES (0x40000U * 2U)
 #define NEXUS_V1_SATURN_VDP2_REG_BYTES (0x100U * 2U)
@@ -48,6 +48,8 @@ typedef struct {
     const uint8_t *vdp1_vram;
     const uint8_t *vdp1_framebuffer_0;
     const uint8_t *vdp1_framebuffer_1;
+    /* The V2 producer writes framebuffer selection in the state line; it
+     * does not append a draw-which byte to the raw payload. */
     const uint8_t *vdp1_draw_which;
     const uint8_t *vdp2_cram;
     const uint8_t *vdp2_vram;

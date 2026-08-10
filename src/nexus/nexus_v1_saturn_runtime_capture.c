@@ -205,8 +205,7 @@ int nexus_v1_saturn_runtime_capture_frame(
                 vdp1_payload + NEXUS_V1_SATURN_VDP1_VRAM_BYTES;
             receipt.vdp1_framebuffer_1 = receipt.vdp1_framebuffer_0 +
                 NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES;
-            receipt.vdp1_draw_which = receipt.vdp1_framebuffer_1 +
-                NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES;
+            receipt.vdp1_draw_which = NULL;
             /* Producer order is RawRegs, VRAM, CRAM. Keep these pointers
              * aligned with scripts/mednafen_1.32.1_nexus_saturn_capture.patch
              * and validate them through the external frame witness. */

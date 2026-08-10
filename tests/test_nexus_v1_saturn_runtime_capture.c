@@ -107,7 +107,8 @@ int main(void)
         !receipt.vdp1_system_clip_state_present ||
         receipt.system_clip_x != 0x13fU || receipt.system_clip_y != 0xdfU ||
         !receipt.vdp1_execution_active || receipt.vdp1_vram_size !=
-            NEXUS_V1_SATURN_VDP1_VRAM_BYTES || !receipt.vdp2_registers ||
+            NEXUS_V1_SATURN_VDP1_VRAM_BYTES || receipt.vdp1_draw_which ||
+            !receipt.vdp2_registers ||
         receipt.vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
         receipt.vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
         !receipt.semantic_admission_blocked ||
