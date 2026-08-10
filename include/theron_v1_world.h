@@ -391,7 +391,7 @@ typedef struct {
  * category/index/chain contract; this bank keeps the actual bytes and map
  * occurrence available after the temporary load result dies, including
  * records that also have a source-backed ground-object representation. */
-#define THERON_MAX_SOURCE_OBJECT_RECORDS 2048
+#define THERON_MAX_SOURCE_OBJECT_RECORDS 4096
 
 typedef struct {
     int dungeon_id;

@@ -388,6 +388,28 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 result->source_occurrences_decoded++;
                 if (cat >= THERON_CAT_MONSTER)
                     result->source_records_decoded++;
+
+                /* Keep the same lossless source occurrence in the world
+                 * ledger, not only in the temporary load result.  The
+                 * DMBUILDER6 ground-reference chain contains control records
+                 * (doors, teleporters, text and actuators) as well as carried
+                 * objects.  Dropping those four categories here made the
+                 * post-load world claim to retain every object record while
+                 * actually retaining only the item subset.  This is still
+                 * provenance: no control record is promoted to a gameplay
+                 * consumer by this copy.
+                 *
+                 * Source: DMBUILDER6/src/loaddungeon.c ground-reference
+                 * traversal; layouts: DMBUILDER6/src/dms.h:69-176. */
+                if (theron_v1_world_bind_track02_source_object(
+                        world, dungeon_id, (int)map, ref,
+                        source_record.next_ref, (uint16_t)id,
+                        (uint8_t)cat, (uint8_t)pos, (int)tx, (int)ty,
+                        raw, (uint8_t)theron_item_bytes[cat]) != 0) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
             }
 
             switch (cat) {
@@ -482,15 +504,6 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 const uint8_t *raw =
                     &td->items[cat][id * theron_item_bytes[cat]];
                 if (!source_record_valid) {
-                    free(pos_table);
-                    free(td);
-                    return -1;
-                }
-                if (theron_v1_world_bind_track02_source_object(
-                        world, dungeon_id, (int)map, ref,
-                        source_record.next_ref, (uint16_t)id, (uint8_t)cat,
-                        (uint8_t)pos, (int)tx, (int)ty, raw,
-                        (uint8_t)theron_item_bytes[cat]) != 0) {
                     free(pos_table);
                     free(td);
                     return -1;

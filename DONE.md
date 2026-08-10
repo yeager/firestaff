@@ -1,3 +1,14 @@
+# Theron: retain every decoded Track 02 object occurrence (2026-08-10)
+
+- ✅ `theron_v1_track02_dungeon_loader` binder nu varje autentiskt dekoderat
+  ground-reference-record till world-ledgern, inte bara item-/monster-subsetet.
+  Rå bytes, kategori, kedja, karta och koordinater behåller sin källproveniens;
+  ingen obevisad gameplaysemantik aktiveras.
+- ✅ World-ledgern är utökad till 4 096 records och den riktiga US-kampanjen
+  verifierar 2 266 source-occurrences över alla sju dungeons.
+- ✅ `test_theron_v1_track02_dungeon_loader` passerar för US och JP, inklusive
+  reload-isolering, dungeon-scope och source-bound monster admission.
+
 # Theron: held keyboard input follows Theron cadence (2026-08-10)
 
 - ✅ Hållna WASD- och piltangenter använder Therons egen spel-tick i stället

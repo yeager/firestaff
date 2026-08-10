@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+# Theron: complete Track 02 source-occurrence retention (2026-08-10)
+
+- ✅ Alla 2 266 autentiska Track 02 ground-reference-occurrences i den riktiga
+  US-kampanjen behålls nu lossless i world source-ledgern, inklusive dörrar,
+  teleporters, text/actuators och item-/monsterrecords. Detta är provenance,
+  inte en uppfunnen gameplaykonsument.
+- 🔒 RNG, creature-AI, T700/T900, itemsemantik samt source-bound grafik/ljud
+  kräver fortfarande autentiserad originalconsumer/runtime-capture.
+
 - ✅ Therons held WASD-/piltangentväg är nu kopplad till egen tick-cadence och
   vanlig muspekare hoppar inte mellan objekt. 🔒 RNG, creature-AI, T700/T900,
   objectrecords samt source-bound grafik/ljudsemantik är fortfarande separata

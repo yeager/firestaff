@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — all decoded Track 02 occurrences retained; consumers gated
+
+- ✅ Den riktiga US-kampanjen behåller nu alla 2 266 autentiska ground-reference-
+  occurrences i world source-ledgern, inklusive control records och carried
+  objects. Detta är lossless provenance från Track 02, inte syntetisk data.
+- 🔒 Originalets RNG, spawn-timing, creature-AI, attack/skada/loot, T700/T900,
+  itemsemantik och source-bound presentation/ljud är fortsatt spärrade tills
+  deras riktiga consumers är bundna av disassembly och samma-körnings-capture.
+
 ## 2026-08-10 — inputfix klar; semantikspärrar kvar
 
 - ✅ Held WASD/piltangent-input är nu kopplad till Therons egen tick-cadence.

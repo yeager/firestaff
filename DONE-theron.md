@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — lossless Track 02 world source ledger
+
+- ✅ Loadern binder nu varje autentiskt dekoderat ground-reference-record till
+  world-ledgern. Därmed behålls dörrar, teleporters, text/actuators och carried
+  item-/monsterrecords tillsammans med rå bytes, kedja, karta och koordinater.
+- ✅ World capacity höjdes till 4 096 och US-kampanjtestet verifierar 2 266
+  source-occurrences över alla sju dungeons; JP-regressionen passerar också.
+- 🔒 Detta öppnar inte originalets RNG, AI, T700/T900, itemsemantik eller
+  source-bound media-consumers.
+
 ## 2026-08-10 — held keyboard input uses Theron cadence
 
 - ✅ Hållna WASD- och piltangenter använder nu Therons egen spel-tick i

@@ -387,10 +387,11 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(world->source_monster_count ==
                result.source_category_counts[THERON_CAT_MONSTER]);
         assert(world->source_generator_count == expected_source_generators[d]);
-        /* World object binding currently covers the item/creature consumer
-         * subset; control records remain in the loader occurrence census. */
+        /* Every decoded Track 02 ground-reference occurrence is retained in
+         * the world provenance ledger; gameplay consumers remain separately
+         * gated until their source semantics are authenticated. */
         assert(world->source_object_count ==
-               (unsigned int)result.unbound_item_refs);
+               (unsigned int)result.source_object_count);
         /* Static category-4 group records are now admitted to the live pool
          * for the current level.  This is source materialization, not the
          * still-gated random generator path. */
@@ -677,7 +678,7 @@ static void test_real_source_ledgers_survive_other_dungeon_reload(
     second_source_objects = world->source_object_count - first_source_objects;
     assert(second_monsters == second.source_category_counts[THERON_CAT_MONSTER]);
     assert(second_generators > 0);
-    assert(second_source_objects == (unsigned int)second.unbound_item_refs);
+    assert(second_source_objects == (unsigned int)second.source_object_count);
     for (unsigned int i = 0; i < world->source_monster_count; ++i)
         assert(world->source_monsters[i].dungeon_id == 1 ||
                world->source_monsters[i].dungeon_id == 2);
@@ -738,13 +739,13 @@ static void test_real_campaign_source_capacity(
         assert(world->source_generator_count - previous_generators ==
                expected_generators[dungeon - 1]);
         assert(world->source_object_count - previous_source_objects ==
-               (unsigned int)result.unbound_item_refs);
+               (unsigned int)result.source_object_count);
         assert(count_objects_in_dungeon(world, dungeon) ==
                (unsigned int)result.total_things_placed);
 
         expected_monsters += result.source_category_counts[THERON_CAT_MONSTER];
         expected_generators_total += expected_generators[dungeon - 1];
-        expected_source_objects += (unsigned int)result.unbound_item_refs;
+        expected_source_objects += (unsigned int)result.source_object_count;
         expected_placed_objects += (unsigned int)result.total_things_placed;
     }
 
@@ -757,7 +758,7 @@ static void test_real_campaign_source_capacity(
     /* Category-4 monster records do not carry a linked-list next_ref: their
      * first word is signed `chested`.  Stop each monster chain there; the
      * authentic US campaign then has three fewer false follow-on records. */
-    assert(expected_source_objects == 637u);
+    assert(expected_source_objects == 2266u);
     assert(expected_placed_objects == 2186u);
     assert_object_ids_unique(world);
 
