@@ -61,6 +61,12 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
             states.append("state=legacy-v1-unavailable")
         vdp1 = blob[offset : offset + VDP1_PAYLOAD_BYTES]
         offset += VDP1_PAYLOAD_BYTES
+        # Early V2 captures appended the draw-buffer selector once after the
+        # fixed VDP1 payload. It is metadata already represented in `state=`;
+        # skip it before consuming the VDP2 marker.
+        if not blob.startswith(VDP2_MAGIC, offset) and \
+                blob.startswith(VDP2_MAGIC, offset + 1):
+            offset += 1
         if not blob.startswith(VDP2_MAGIC, offset):
             raise ValueError(f"missing VDP2 marker for frame {frame_index}")
         offset += len(VDP2_MAGIC)

@@ -53,6 +53,11 @@ def validate(blob: bytes, required_frames: int) -> tuple[int, list[int]]:
         else:
             offset += len(VDP1_MAGIC)
         offset += VDP1_PAYLOAD_BYTES
+        # Early V2 captures appended the draw-buffer selector after the fixed
+        # VDP1 payload. It is redundant metadata, not part of the VDP1 image.
+        if not blob.startswith(VDP2_MAGIC, offset) and \
+                blob.startswith(VDP2_MAGIC, offset + 1):
+            offset += 1
         if not blob.startswith(VDP2_MAGIC, offset):
             raise ValueError(f"missing VDP2 marker for frame {len(frames) - 1}")
         offset += len(VDP2_MAGIC) + VDP2_PAYLOAD_BYTES
