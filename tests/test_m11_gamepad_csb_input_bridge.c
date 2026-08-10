@@ -122,12 +122,12 @@ int main(void) {
           M12_MENU_INPUT_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
-    /* Button II is the ordinary mouse's right button.  SDL's physical
-     * middle button is retained as a compatibility alias. */
+    /* Button II is the ordinary mouse's right button.  A physical middle
+     * button is not mouse button 1/2 and must remain inert. */
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
           M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
-          M12_MENU_INPUT_ACTION);
+          M12_MENU_INPUT_NONE);
     CHECK(M11_TheronTouchButtonInput(0) == M12_MENU_INPUT_ACCEPT);
     CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_ACTION);
 

@@ -90,7 +90,7 @@ static void run_theron_pointer_and_button_input_contract(void) {
     expect_true(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
                     M12_MENU_INPUT_ACCEPT &&
                     M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
-                    M12_MENU_INPUT_ACTION &&
+                    M12_MENU_INPUT_NONE &&
                     M11_TheronMouseButtonToInput(SDL_BUTTON_RIGHT) ==
                     M12_MENU_INPUT_ACTION,
                 "Theron mouse buttons map Button I/II for ordinary mice");
