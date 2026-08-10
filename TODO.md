@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+# Theron: File-select replay remains pre-spawn (2026-08-10)
+
+- ✅ Komplett US Track 02-replay med `Run → Button I → rörelse` gav 28
+  autentiserade CD→RAM-originreceipts och 32 `$E009`-dispatchar.
+- 🔒 Ingen giltig `$B0E5`-spawnentry eller target-write fångades; RNG, AI, loot,
+  generator, T700 och T900 hålls fail-closed.
+
 # Theron: save-state `$B0E5` overlay remains rejected (2026-08-10)
 
 - ✅ Rå MODE1/2352-US-CUE + autentisk Mednafen-save-state verifierade Track 02

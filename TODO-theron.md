@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — File-select replay still lacks regular-spawn handoff
+
+- ✅ Kompletta `Run → Button I → rörelse`-replayen mot verklig US Track 02
+  gav 28 autentiserade CD→RAM-originreceipts och 32 `$E009`-dispatchar.
+- 🔒 Samma session gav noll `$B0E5`, RNG-returner, spawn-consumer reads och
+  target writes. Nästa capture måste nå en verifierad dungeon-tick innan
+  RNG/AI/generator/T700/T900 eller loot kan implementeras.
+
 ## 2026-08-10 — save-state replay reaches only a rejected `$B0E5` overlay
 
 - ✅ En autentisk Mednafen-save-state kördes mot den kompletta råa

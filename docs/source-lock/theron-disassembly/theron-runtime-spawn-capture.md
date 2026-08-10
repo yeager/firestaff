@@ -1,5 +1,19 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-10 — complete File-select and dungeon-input replay remains pre-spawn
+
+The external-disk run used the complete raw MODE1/2352 US CUE and the
+original input sequence `Run` → `Button I` → held movement. Track 02 was
+authenticated and the transition receipt recorded 28 byte-exact CD-to-RAM
+origin receipts, 32 `$E009` dispatches and the bounded main-RAM consumer
+window. The session still produced zero `$B0E5` entries, zero
+`spawn_consumer_read` rows, zero `$C96B/$CC4C` RNG returns and zero identified
+target reads/writes. It proves the menu/input and loader route only; no RNG,
+creature AI, combat, loot, generator, T700 or T900 rule may be promoted.
+
+The companion receipts remain outside GitHub on `/Volumes/Extern-disk` and
+contain no game-data payload in the repository.
+
 ## 2026-08-10 — raw CUE/save-state replay reaches rejected `$B0E5` overlay
 
 The external-disk replay used the complete raw MODE1/2352 US CUE together with

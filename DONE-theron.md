@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — authenticated File-select/dungeon replay receipt
+
+- ✅ Extern capture med komplett US CUE, `Run → Button I` och verklig rörelse
+  verifierade 28 CD→RAM-originreceipts och 32 `$E009`-dispatchar.
+- ✅ Receipt-parsern höll noll `$B0E5`/spawn-/RNG-/target-events stängda; ingen
+  semantik främjades från en meny-/loader-session som inte bevisar spawn-tick.
+
 ## 2026-08-10 — save-state replay rejected as non-semantic `$B0E5` overlay
 
 - ✅ Den autentiska råa US-CUE/save-state-körningen verifierade Track 02 och

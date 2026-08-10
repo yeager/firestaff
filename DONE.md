@@ -1,5 +1,12 @@
 # Firestaff: diskformatering lämnas till originalspel och emulator (2026-08-10)
 
+# Theron: authenticated File-select replay receipt (2026-08-10)
+
+- ✅ Komplett US Track 02-CUE med originalets File-val och rörelse gav 28
+  autentiserade CD→RAM-originreceipts och 32 `$E009`-dispatchar.
+- ✅ Den negativa semantikreceipten är dokumenterad; inga härledda gameplayregler
+  aktiverades.
+
 - ✅ M11:s DM1- och CSB-sparrutor erbjuder nu bara sparning, laddning,
   avslut och avbryt. De raderar inte längre en värdfil och kallar det
   diskformatering.
