@@ -12,13 +12,17 @@ static int test_escaped_newline_trace(void) {
 #if defined(_WIN32)
     return 1;
 #else
-    char path[] = "/tmp/firestaff-theron-consumer-XXXXXX";
+    char path[512];
+    const char *tmpdir = getenv("TMPDIR");
     const char *trace =
         "source=mednafen-pce-instrumented-main-ram-consumer\\n"
         "main_ram_consumer_read sequence=0 logical_address=2c54 physical_address=1f2c54 value=ad reader_pc=2c54 reader_physical_pc=1f2c54\\n"
         "main_ram_consumer_read sequence=1 logical_address=2c55 physical_address=1f2c55 value=08 reader_pc=2c54 reader_physical_pc=1f2c54\\n";
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
     static const unsigned char code[] = { 0xad };
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (snprintf(path, sizeof(path), "%s/firestaff-theron-consumer-XXXXXX",
+                 tmpdir) <= 0) return 0;
     int fd = mkstemp(path);
     FILE *file;
     int result;

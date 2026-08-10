@@ -50388,6 +50388,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_main_ram_co
         SKIP_RETURN_CODE 77)
 endif()
 
+# Theron same-session transition receipt. This admits only authenticated
+# transport counts and keeps all gameplay-semantic gates closed.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_transition_receipt.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_mednafen_transition_receipt.c")
+    add_executable(test_theron_v1_mednafen_transition_receipt
+        tests/test_theron_v1_mednafen_transition_receipt.c)
+    target_link_libraries(test_theron_v1_mednafen_transition_receipt PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_mednafen_transition_receipt PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_mednafen_transition_receipt PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_mednafen_transition_receipt
+        COMMAND test_theron_v1_mednafen_transition_receipt)
+    set_tests_properties(theron_v1_mednafen_transition_receipt PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;capture;real_data;opaque")
+endif()
+
 # Theron disassembly-bound spawn-consumer sidecar receipt. It validates only
 # CPU execution provenance and deliberately publishes no spawn semantics.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_spawn_consumer_trace.c"

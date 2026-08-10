@@ -64,9 +64,15 @@ int main(void) {
     puts("SKIP: temporary trace fixture requires POSIX mkstemp");
     return 77;
 #else
-    char path[] = "/tmp/firestaff-theron-spawn-XXXXXX";
-    char path2[] = "/tmp/firestaff-theron-spawn-XXXXXX";
+    char path[512];
+    char path2[512];
+    const char *tmpdir = getenv("TMPDIR");
     Theron_V1SpawnConsumerTraceReceipt receipt;
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    assert(snprintf(path, sizeof(path), "%s/firestaff-theron-spawn-XXXXXX",
+                    tmpdir) > 0);
+    assert(snprintf(path2, sizeof(path2), "%s/firestaff-theron-spawn-XXXXXX",
+                    tmpdir) > 0);
     int fd = mkstemp(path);
     int fd2 = mkstemp(path2);
     assert(fd >= 0);
