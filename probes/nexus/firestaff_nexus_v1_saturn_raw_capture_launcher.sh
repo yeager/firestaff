@@ -33,7 +33,8 @@ append_trace_receipts() {
     FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITES \
     FIRESTAFF_NEXUS_TRACE_VDP2_WRITES \
     FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_CODE \
-    FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS; do
+    FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS \
+    FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT; do
     trace_path="${!trace_var:-}"
     if [[ -n "$trace_path" && -s "$trace_path" ]] &&
        ! grep -q "^${trace_var}_sha256=" "$manifest"; then
