@@ -21,7 +21,6 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
-#include "dm2_v1_delete_creature_full_pc34_compat.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_perform_move.h"
@@ -234,8 +233,6 @@ typedef struct {
      * composition.  The session LCG feeds the bound drop slice; the
      * last composition receipt is kept for the runtime accessor. */
     DM2_V1_DropRng drop_rng;
-    DM2_V1_DeleteCreatureFullReceipt last_delete_full;
-    int last_delete_full_valid;
     /* 2026-07-21 (round 23): session receipt for the floor-mecha CAII
      * activation wiring (0x04 timer, square class 1 ->
      * DM2_ACTUATE_FLOOR_MECHA chain walk -> DB3 record type 0x3a ->
@@ -3636,61 +3633,6 @@ static void dm2_runtime_populate_creature_possession_items(
  * without validated evidence the binding stays unready and 0x21/0x22
  * timers are acknowledged fail-closed by the dispatcher, never simulated.
  */
-/* dm2_runtime_delete_creature_full — production wiring of the 0fcb
- * branch (c_1c9a.cpp:5956-5957) to the COMPLETE
- * DM2_DELETE_CREATURE_RECORD composition.  Mirrors the source call
- * DM2_DELETE_CREATURE_RECORD(x, y, 0, 1): mode 0, noise arg 1.  The
- * dungeon cast matches the hook contract (the composition's
- * ground-stack writes land in the dungeon data exactly like the
- * source's map state; the runtime session owns the boot dungeon
- * mutably).  GDAT drop slots are passed only when the session loaded
- * them for the creature's type; the generated-drops part is otherwise
- * skipped (receipted). */
-static int dm2_runtime_delete_creature_full(
-    DM2_V1_RecordPoolSet *pool_set,
-    DM2_V1_DungeonData *dungeon,
-    DM2_V1_CaiiArray *caii,
-    DM2_V1_SourceTimerQueue *queue,
-    int x, int y,
-    void *context) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
-    uint16_t drop_slots[DM2_DROP_SLOT_COUNT];
-    const uint16_t *drop_slots_arg = 0;
-    int16_t handle;
-    int creature_type;
-
-    handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
-    if (handle != DM2_V1_RECORD_HANDLE_NULL) {
-        const uint8_t *record =
-            dm2_v1_record_pool_address(pool_set, handle);
-        if (record != 0) {
-            creature_type = (int)record[4];
-            if (dm2_v1_creature_drop_slots_loaded(creature_type) == 1) {
-                int i;
-                for (i = 0; i < DM2_DROP_SLOT_COUNT; ++i) {
-                    drop_slots[i] =
-                        dm2_v1_creature_drop_slot_word(creature_type, i);
-                }
-                drop_slots_arg = drop_slots;
-            }
-        }
-    }
-
-    rt->last_delete_full_valid = 0;
-    memset(&rt->last_delete_full, 0, sizeof(rt->last_delete_full));
-    {
-        int result = dm2_v1_delete_creature_record_full(
-            pool_set, dungeon, caii, queue, &rt->drop_rng,
-            0, (unsigned long)rt->tick_count, x, y, 0, 1,
-            dm2_v1_runtime_get_party_x(),
-            dm2_v1_runtime_get_party_y(),
-            dm2_v1_runtime_get_party_dir(),
-            drop_slots_arg, &rt->last_delete_full);
-        rt->last_delete_full_valid = 1;
-        return result;
-    }
-}
-
 /*
  * dm2_runtime_think_body — creature AI body with CCM loop invocation.
  * Source: c_ai.cpp:5649-5999 DM2_THINK_CREATURE.
@@ -3807,12 +3749,11 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
      * c_record.cpp:1387) get the same proven provenance. */
     dm2_v1_caii_set_ai_base_hp_fn(dm2_v1_creature_ai_base_hp);
     dm2_v1_caii_set_gdat_word1_fn(dm2_v1_creature_gdat_word1);
-    /* The 0fcb branch (c_1c9a.cpp:5956-5957) runs the COMPLETE
-     * DM2_DELETE_CREATURE_RECORD composition through the session-owned
-     * hook. */
+    /* Keep the drop RNG source-shaped for the bounded CCM path.  The 0fcb
+     * deletion branch remains unavailable here: it needs one transaction
+     * owner for c_map, 3CE7D, DB allocation cleanup, CAII and the real
+     * timer queue before it may mutate a live record graph. */
     dm2_v1_drops_rng_init(&rt->drop_rng);
-    dm2_v1_caii_set_delete_creature_full_fn(
-        dm2_runtime_delete_creature_full, rt);
     rt->think_binding.think_body = dm2_runtime_think_body;
     rt->think_binding.think_body_context = rt;
     rt->think_binding_ready = 1;
@@ -5160,18 +5101,6 @@ int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value)
      * arbitrary slot and mode solely to manufacture the 0x13 delete branch
      * in a fixture.  A real session must never mutate CAII that way. */
     return 0;
-}
-
-int dm2_v1_runtime_last_delete_full_receipt(
-    DM2_V1_DeleteCreatureFullReceipt *out)
-{
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-
-    if (out == 0 || !rt->last_delete_full_valid) {
-        return 0;
-    }
-    *out = rt->last_delete_full;
-    return 1;
 }
 
 /*

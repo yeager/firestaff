@@ -1,7 +1,6 @@
 /*
- * test_dm2_v1_delete_creature_full_pc34_compat.c — the COMPLETE
- * DM2_DELETE_CREATURE_RECORD composition plus the DM2_INVOKE_MESSAGE
- * bounded slice.
+ * test_dm2_v1_delete_creature_full_pc34_compat.c — bounded
+ * DM2_DELETE_CREATURE_RECORD source study plus the DM2_INVOKE_MESSAGE slice.
  *
  * Source-lock anchors:
  *   skproject/SKULLWIN/c_record.cpp:1357-1425  DM2_DELETE_CREATURE_RECORD:

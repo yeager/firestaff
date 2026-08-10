@@ -1,3 +1,13 @@
+# DM2: begränsad creature-delete är produktspärrad (2026-08-10)
+
+- ✅ Den äldre `DELETE_CREATURE_RECORD`-studien är nu uttryckligen test- och
+  probeexklusiv. Produktionsruntimen kan inte längre koppla dess ofullständiga
+  callback till CAII eller exportera den i DM2-arkivet.
+- ✅ Gränsen verifieras mot CMake och produktkällan. SKSAVE:s DB0/DB4/DB14-
+  recycler väntar fortsatt på samma källägda c_map-, 3CE7D-,
+  DB-allokerings-, CAII- och timertransaktion; ingen förenklad deletion eller
+  syntetisk recordåtervinning aktiveras.
+
 # Theron: source-bound inventoryslotbyte (2026-08-10)
 
 - ✅ Ett inventoryslotbyte flyttar nu compact-ID och hela autentiska Track 02-

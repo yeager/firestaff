@@ -34,7 +34,7 @@
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_caii_alloc_pc34_compat.h"
-#include "dm2_v1_delete_creature_full_pc34_compat.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
@@ -1114,13 +1114,6 @@ int dm2_v1_runtime_caii_alloc_count(void);
  * Source ownership requires the live CCM/record path in c_1c9a.cpp;
  * arbitrary caller input is always rejected and this function returns 0. */
 int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value);
-/* Read-only access to the last full DELETE_CREATURE_RECORD composition
- * receipt produced through the production-wired 0fcb branch hook
- * (c_1c9a.cpp:5956-5957).  Returns 1 and copies the receipt when the
- * branch ran since the last runtime init; 0 otherwise. */
-int dm2_v1_runtime_last_delete_full_receipt(
-    DM2_V1_DeleteCreatureFullReceipt *out);
-
 /* 2026-07-21 (round 23): session receipt for the floor-mecha CAII
  * activation wiring (0x04 timer, square class 1 ->
  * DM2_ACTUATE_FLOOR_MECHA chain walk -> DB3 record type 0x3a ->

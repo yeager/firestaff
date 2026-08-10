@@ -1,5 +1,5 @@
 /*
- * dm2_v1_delete_creature_full_pc34_compat.c — the COMPLETE
+ * dm2_v1_delete_creature_full_pc34_compat.c — bounded test/probe
  * DM2_DELETE_CREATURE_RECORD composition
  * (skproject/SKULLWIN/c_record.cpp:1357-1425).  See the header for the
  * full source-lock documentation.

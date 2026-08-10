@@ -2,14 +2,19 @@
 #define FIRESTAFF_DM2_V1_DELETE_CREATURE_FULL_PC34_COMPAT_H
 
 /*
- * dm2_v1_delete_creature_full_pc34_compat.h — the COMPLETE
- * DM2_DELETE_CREATURE_RECORD composition
+ * dm2_v1_delete_creature_full_pc34_compat.h — a bounded source-study of
+ * DM2_DELETE_CREATURE_RECORD
  * (skproject/SKULLWIN/c_record.cpp:1357-1425) over the DM2-002 record
  * pool, binding the decision head (previously bound standalone as
  * dm2_v1_caii_delete_creature_record_head), the map-swap/DM2_INVOKE_MESSAGE
  * branch, the tile-rooted cut (previously dm2_v1_caii_delete_creature_record_tail),
- * and the bound DM2_DROP_CREATURE_POSSESSION in one source-ordered
- * flow.
+ * and the bound DM2_DROP_CREATURE_POSSESSION in one source-ordered flow.
+ *
+ * This is test/probe-only.  It is not a live GAME_LOAD or SKSAVE deletion
+ * owner: the complete original operation also requires shared multi-map
+ * c_map state, 3CE7D effects, DB-allocation cleanup, CAII ownership and the
+ * source timer transaction.  Production must keep the entire branch closed
+ * until those owners commit atomically.
  *
  * Source order (c_record.cpp:1377-1424):
  *
@@ -124,7 +129,7 @@ typedef struct {
 } DM2_V1_DeleteCreatureFullReceipt;
 
 /*
- * The complete DM2_DELETE_CREATURE_RECORD composition.  `map_current`
+ * The bounded test/probe DM2_DELETE_CREATURE_RECORD composition.  `map_current`
  * stands in for ddat.v1d3248 and `game_tick` for timdat.gametick (both
  * caller-owned); `x`/`y` are the payload coordinates (vql_0c/vql_08),
  * `mode` is vw_04 and `noise_arg` is parw02 (vql_00) exactly like the

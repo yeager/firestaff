@@ -259,9 +259,43 @@ def verify(repo: Path) -> list[str]:
             "dm2_runtime_actuate_teleporter",
             "dm2_runtime_actuate_floor_mecha",
             "dm2_runtime_actuate_trickwall",
+            "dm2_runtime_delete_creature_full",
+            "dm2_v1_caii_set_delete_creature_full_fn",
     ):
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
+
+    # The bounded DELETE_CREATURE_RECORD source study lacks the original
+    # shared c_map/3CE7D/DB-allocation/timer owner.  It may be compiled by its
+    # focused test targets, never by the broad DM2 product archive.
+    delete_full_source = (
+        '"${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/'
+        'dm2_v1_delete_creature_full_pc34_compat.c"')
+    m10_remove_start = cmake.find("list(REMOVE_ITEM M10_SOURCES")
+    dm2_sources_start = cmake.find("# ── DM2 V1 static library")
+    if (m10_remove_start < 0 or dm2_sources_start < 0 or
+            delete_full_source not in cmake[m10_remove_start:dm2_sources_start]):
+        errors.append(
+            "bounded DM2 DELETE_CREATURE_RECORD study is no longer excluded "
+            "from the production M10 archive")
+
+    dm2_remove_start = cmake.find("list(REMOVE_ITEM DM2_SOURCES")
+    dm2_remove_end = cmake.find(")\nif(DM2_SOURCES)", dm2_remove_start)
+    if (dm2_remove_start < 0 or dm2_remove_end < 0 or
+            delete_full_source not in cmake[dm2_remove_start:dm2_remove_end]):
+        errors.append(
+            "bounded DM2 DELETE_CREATURE_RECORD study is no longer excluded "
+            "from the production archive")
+
+    caii_alloc_path = repo / "src/dm2/dm2_v1_caii_alloc_pc34_compat.c"
+    if not caii_alloc_path.exists():
+        errors.append(f"missing {caii_alloc_path}")
+        return errors
+    caii_alloc = caii_alloc_path.read_text(encoding="utf-8")
+    if "dm2_v1_caii_set_delete_creature_full_fn" in caii_alloc:
+        errors.append(
+            "CAII retains a callback seam for partial "
+            "DELETE_CREATURE_RECORD mutation")
 
     # dm2_v1_sound.c still carries a compact SKProject transcription model for
     # its direct regression.  Its state is caller-authored (including made-up

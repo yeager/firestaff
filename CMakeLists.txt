@@ -4346,6 +4346,11 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_export_import_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_import_path_pc34_compat.c"
+    # This bounded DM2 study has its own explicit regression target.  Its
+    # partial record deletion cannot be a generic M10 mutation facility:
+    # original c_map/3CE7D/DB allocation/CAII/timer ownership is still
+    # missing from both GAME_LOAD and SKSAVE.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_delete_creature_full_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_cmp_import_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d2l_d2r_wall_pc34_compat.c"
@@ -6451,6 +6456,10 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # File_header/c_hero/record-pool owner for that transaction, so keep this
 # source-contract exercise out of the production archive until those original
 # owners are bound together.
+# The bounded DELETE_CREATURE_RECORD composition still lacks the original
+# multi-map c_map, 3CE7D, DB-allocation-cleanup and timer transaction.  It is
+# useful as an explicit source-study test, but it must not become a second
+# mutation route while SKSAVE and GAME_LOAD own no complete live session.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -6509,6 +6518,7 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_tim_proc_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_ops_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_delete_creature_full_pc34_compat.c"
     # QUERY_*_BAR_COLOR is also implemented by the source-owned champion-HUD
     # helper below, with a different receipt/signature.  This older predicate
     # study has no DM2 runtime caller; keep its focused executable isolated so
@@ -21849,7 +21859,7 @@ endif()
         COMMAND test_dm2_v1_drop_possession_pc34_compat
     )
 
-    # ── DM2-002: INVOKE_MESSAGE + complete DELETE_CREATURE_RECORD ──
+    # ── DM2-002: INVOKE_MESSAGE + bounded DELETE_CREATURE_RECORD study ──
     add_executable(test_dm2_v1_delete_creature_full_pc34_compat
         tests/test_dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c

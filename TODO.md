@@ -754,6 +754,9 @@
   postload-fasen utför redan originalets 0x46/0x47/0x48/0x4b-effekter och
   återställer atomärt vid 0x0e, men får inte bli en påhittad save- eller
   resumeväg.
+  Den äldre, begränsade `DELETE_CREATURE_RECORD`-studien är nu
+  produktspärrad; den får inte användas som en genväg för DB0/DB4/DB14 innan
+  den gemensamma originalägaren finns.
 
 - 🔧 DM2-ljud: den äldre, anroparskapade SOUND1–9-modellen är nu
   testexklusiv och kan inte längre länkas in i spelbinären. New Games privata
