@@ -408,6 +408,11 @@
   positionsljud eller viewport. c_sfx:s aktuella, hörbara och alternativa
   karta med autentiska MapOffsetX/Y finns nu privat, men saknar fortfarande
   partyposition, riktning, synlighet och timerkonsumtion för QUEUE_NOISE_GEN1.
+  Den privata `DM2_12b4_0881`-klassificeringen är nu bunden mot samma
+  klonade File_header/DB4/CAII/GDAT-ägare, men detta öppnar inte
+  `DM2_PERFORM_MOVE`: stamina, walk-delay, `DM2_MOVE_RECORD_TO(0xffff)`,
+  `DM2_moverec_3CE7D`, dörrar, aktuatorkedjor, kollisioner, noise och
+  timerdispatch måste fortfarande vara en och samma atomära session.
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och

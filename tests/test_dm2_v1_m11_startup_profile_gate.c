@@ -2506,10 +2506,12 @@ int main(void) {
     uint8_t runtime_candidate_display_direction_before = 0u;
     int runtime_candidate_display_alternate_before = 0;
     DM2_V1_GameLoadSpatialQueryReceipt runtime_candidate_spatial_query;
+    DM2_V1_GameLoadMoveClassificationReceipt runtime_candidate_move_query;
     int runtime_candidate_spatial_candidate_index = -1;
     int16_t runtime_candidate_spatial_x = -1;
     int16_t runtime_candidate_spatial_y = -1;
     uint32_t runtime_candidate_spatial_handle = 0xffffu;
+    int runtime_candidate_move_direct_admitted = 0;
     uint8_t runtime_candidate_source_creature_before[16];
     uint8_t runtime_candidate_source_slot_before[DM2_V1_CAII_SLOT_SIZE];
     int runtime_candidate_source_slot_index = -1;
@@ -5105,6 +5107,38 @@ int main(void) {
                         !profile->source_game_load_session_ready &&
                         view.world.party.championCount == 0,
                     "DM2 runs c_querydb over the cloned CAII/GDAT owner without mutating source state");
+        /* Not every genuine DB4 resides on a walkable target square.  Scan
+         * the admitted dynamic map rows for one where the source's complete
+         * 12b4 classifier actually reaches its direct-creature branch. */
+        for (int index = 0;
+             index < profile_new_game_owner->caii_map_receipt.candidate_count;
+             ++index) {
+            const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                &profile_new_game_owner->caii_map_candidates[index];
+            if (probe->static_ai) continue;
+            memset(&runtime_candidate_move_query, 0,
+                   sizeof(runtime_candidate_move_query));
+            if (!dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                    &runtime_session_candidate, probe->map) ||
+                !dm2_v1_game_load_runtime_session_candidate_classify_move(
+                    &runtime_session_candidate, 0u, probe->x, probe->y,
+                    probe->x, probe->y, &runtime_candidate_move_query)) {
+                continue;
+            }
+            if (runtime_candidate_move_query.direct_creature == probe->record_handle &&
+                (runtime_candidate_move_query.classification == 4u ||
+                 runtime_candidate_move_query.classification == 5u ||
+                 runtime_candidate_move_query.classification == 6u)) {
+                runtime_candidate_move_direct_admitted = 1;
+                break;
+            }
+        }
+        expect_true(runtime_candidate_move_direct_admitted &&
+                        runtime_candidate_move_query.valid &&
+                        runtime_candidate_move_query.tile_blocked.valid &&
+                        !profile->source_game_load_session_ready &&
+                        view.world.party.championCount == 0,
+                    "DM2 classifies a real DB4 movement target through cloned c_move/querydb state only");
     }
     if (runtime_session_candidate.valid) {
         runtime_candidate_other_map = runtime_session_candidate.current_map == 0 ?

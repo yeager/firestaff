@@ -1,3 +1,19 @@
+# DM2: privat rörelseklassificering över GAME_LOAD-kandidaten (2026-08-10)
+
+- ✅ `GameLoadRuntimeSessionCandidate` kan nu köra
+  `DM2_12b4_0881` läsande mot den klonade File_header-kartan: originalets
+  stair-back/stair/blockerade mål, direkta DB4-träff, AI-flaggord och
+  `DM2_query_1c9a_03cf`-fallback behåller returvärdena 1–6. DB4- och
+  CAII-kursorn hör fortfarande endast till kandidatens RAM.
+- ✅ Realdatatestet söker en faktisk dynamisk DOS-varelse och bevisar att
+  klassificeringen når den riktiga DB4-vägen utan att publicera party, HUD,
+  input, tick eller session. `DM2_PERFORM_MOVE`, c_moverec och dess timers
+  är fortsatt spärrade tills samma fulla runtime-owner äger dem.
+- ✅ Källkontroll: SKProject `SKULLWIN/c_move.cpp:32-123,390-409`,
+  `c_record.cpp:1341-1349` och `c_querydb.cpp:646,3012-3034,3769-3844`.
+  DMWebs dokumenterade DM2-filstruktur används fortsatt för den
+  hashadmitterade `GRAPHICS.DAT`/`DUNGEON.DAT`-profilen.
+
 # DM2: privat c_querydb över GAME_LOAD-kandidaten (2026-08-10)
 
 - ✅ `GameLoadRuntimeSessionCandidate` klonar nu den autentiserade

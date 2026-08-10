@@ -1874,6 +1874,179 @@ int dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
     return 1;
 }
 
+/* SKULLWIN/c_move.cpp::DM2_12b4_0953.  Keep it next to the private
+ * c_querydb callbacks because both branches must resolve the same cloned DB4
+ * record, CAII cursor and hash-admitted dtRaw7/0xfd row. */
+static int dm2_v1_game_load_runtime_candidate_creature_offset(
+    DM2_V1_GameLoadSpatialQueryContext *context, int16_t handle,
+    uint8_t *out_offset)
+{
+    const DM2_V1_RecordPool *pool;
+    const uint8_t *record;
+    uint16_t orientation;
+    uint8_t relative_direction;
+    uint16_t position;
+
+    if (!context || !context->candidate || !out_offset ||
+        dm2_v1_record_handle_pool(handle) != 4) return 0;
+    pool = &context->candidate->record_pools.pools[4];
+    record = dm2_v1_record_pool_address(&context->candidate->record_pools,
+                                        handle);
+    if (!record || pool->record_size < 16) return 0;
+    orientation = dm2_v1_game_load_owner_read_u16le(record + 14u);
+    relative_direction = (uint8_t)((context->candidate->source_party_direction +
+        ((orientation >> 14) & 3u)) & 3u);
+    if (relative_direction != 1u && relative_direction != 3u) {
+        *out_offset = 0u;
+        return 1;
+    }
+    position = dm2_v1_game_load_spatial_pos5x5(record,
+                                                (uint16_t)pool->record_size,
+                                                relative_direction, context);
+    if (context->owner_failed) return 0;
+    *out_offset = (uint8_t)((position % 5u) != 2u);
+    return 1;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_classify_move(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, uint8_t move_command,
+    int16_t source_x, int16_t source_y, int16_t target_x, int16_t target_y,
+    DM2_V1_GameLoadMoveClassificationReceipt *out_receipt)
+{
+    DM2_V1_GameLoadMoveClassificationReceipt receipt;
+    DM2_V1_GameLoadSpatialQueryContext context;
+    const DM2_AIDefinition *ai;
+    const uint8_t *record;
+    int source_raw;
+    int target_raw;
+    int16_t direct;
+    int16_t scan_x;
+    int16_t scan_y;
+    uint32_t spatial_handle = 0xffffu;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&context, 0, sizeof(context));
+    receipt.direct_creature = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.spatial_creature = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.move_command = move_command;
+    receipt.source_x = source_x;
+    receipt.source_y = source_y;
+    receipt.target_x = target_x;
+    receipt.target_y = target_y;
+    if (!candidate || !candidate->valid || !candidate->map_context.valid) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->asset_loader || !candidate->asset_loader->loaded ||
+        !candidate->record_pools.valid || !candidate->caii_source.valid ||
+        !candidate->caii_slots.valid || candidate->current_map < 0 ||
+        candidate->current_map >= candidate->dungeon.level_count) {
+        receipt.blocked_missing_owner = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (source_x < 0 || source_y < 0 || target_x < 0 || target_y < 0 ||
+        source_x >= candidate->map_context.width ||
+        source_y >= candidate->map_context.height ||
+        target_x >= candidate->map_context.width ||
+        target_y >= candidate->map_context.height) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    source_raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
+                                              candidate->current_map,
+                                              source_x, source_y);
+    target_raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
+                                              candidate->current_map,
+                                              target_x, target_y);
+    if (source_raw < 0 || target_raw < 0) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_tile = (uint8_t)source_raw;
+    receipt.target_tile = (uint8_t)target_raw;
+    /* DM2_12b4_0881: source wall/pit type 3 plus literal move 2 is the
+     * stair-back special case, before the target classification. */
+    if ((receipt.source_tile >> 5) == 3u && move_command == 2u) {
+        receipt.classification = 1u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if ((receipt.target_tile >> 5) == 3u) {
+        receipt.classification = 2u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (dm2_v1_skproject_is_tile_blocked(receipt.target_tile,
+                                         &receipt.tile_blocked)) {
+        receipt.classification = 3u;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    direct = dm2_v1_get_creature_at(&candidate->record_pools,
+                                    &candidate->dungeon,
+                                    candidate->current_map, target_x,
+                                    target_y);
+    receipt.direct_creature = direct;
+    if (direct != DM2_V1_RECORD_HANDLE_NULL) {
+        record = dm2_v1_record_pool_address(&candidate->record_pools, direct);
+        if (!record || dm2_v1_record_handle_pool(direct) != 4 ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&candidate->caii_source,
+                                                   record[4], &ai) || !ai) {
+            receipt.blocked_missing_owner = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if ((ai->w0AIFlags & 0x8000u) == 0u) {
+            context.candidate = candidate;
+            if (!dm2_v1_game_load_runtime_candidate_creature_offset(
+                    &context, direct, &receipt.direct_creature_offset)) {
+                receipt.blocked_missing_owner = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            receipt.classification = receipt.direct_creature_offset ? 5u : 4u;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+    }
+    scan_x = target_x;
+    scan_y = target_y;
+    if (!dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
+            candidate, &scan_x, &scan_y, 0xffu, &spatial_handle,
+            &receipt.spatial)) {
+        receipt.blocked_missing_owner = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.spatial_creature = (int16_t)spatial_handle;
+    if (spatial_handle == 0xffffu) {
+        receipt.classification = 6u;
+    } else {
+        record = dm2_v1_record_pool_address(&candidate->record_pools,
+                                            (int16_t)spatial_handle);
+        if (!record || dm2_v1_record_handle_pool((int16_t)spatial_handle) != 4 ||
+            !dm2_v1_caii_source_owner_ai_spec_def(&candidate->caii_source,
+                                                   record[4], &ai) || !ai) {
+            receipt.blocked_missing_owner = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.classification = (ai->w0AIFlags & 0x8000u) == 0u ? 5u : 6u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO has no party movement side effect.
  * Keep that narrow source operation private over the already-cloned world:
  * mapdat.map/v1e03c0/v1e03f4 become raw offsets in map_context, while
