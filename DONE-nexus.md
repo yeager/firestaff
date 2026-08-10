@@ -5,8 +5,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 ## 2026-08-10 - Nexus Saturn input-hook timing correction
 
 - The external Mednafen capture patch now applies the deterministic START
-  injection at `SMPC_StartFrame`, before Saturn port polling, rather than
-  after `IODevice::UpdateInput` or once per mid-frame input update.
+  frame selection at `SMPC_StartFrame` and applies the pad byte after
+  `IODevice::UpdateInput` has refreshed the host port, so the emulated Saturn
+  actually consumes the injected state.
 - The injected Saturn pad bit now follows Mednafen's active-high host-port
   representation: the button mask is set during the press window and cleared
   at its end. This removes a real polarity defect from the capture harness;
@@ -18,6 +19,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the same `NBG1` bitmap state and one-draw VDP1 chain. The raw witness still
   has no source-owned startup-to-menu transition, so no MENU.BPK/FONT256 or
   startup-to-menu admission is claimed.
+- A 600-frame rerun with the corrected post-poll injection changes the real
+  Saturn witness: VDP2 switches from the initial all-layer character setup to
+  the later `NBG2/NBG3` composition, while VDP1 changes from the initial chain
+  to the direct-colour command chain. MENU.BPK/FONT256 byte ownership is not
+  yet proven for those spans, so renderer admission remains closed.
 
 ## 2026-08-10 - Nexus VDP2 tilemap register-order correction
 

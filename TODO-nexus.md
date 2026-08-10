@@ -2,14 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
-2026-08-10: Mednafen START-injection timing is now source-corrected to run
-once at `SMPC_StartFrame` before Saturn `IODevice::UpdateInput` consumes the
-port bytes, with the host-port active-high polarity corrected as well. The
-resulting 1,800-frame authentic J-BIOS/English-disc witness still has no
-semantic startup-to-menu transition: frames 300, 900 and 1,500 retain the
-same `NBG1` bitmap state and one-draw VDP1 chain. Keep MENU.BPK, FONT256,
-VDP1 owner, and production admission blocked; the next capture must prove a
-different source-owned runtime state rather than infer it from the input hook.
+2026-08-10: Mednafen now selects the capture frame at `SMPC_StartFrame` and
+applies the active-high pad byte after `IODevice::UpdateInput` has refreshed
+the host port. A 600-frame authentic J-BIOS/English-disc rerun changes the
+actual Saturn witness: VDP2 reaches the later `NBG2/NBG3` composition and
+VDP1 reaches a direct-colour command chain after the input window. This proves
+input-to-runtime state change, not MENU.BPK/FONT256 ownership. Keep the asset,
+VDP1 owner, text-consumer and production gates blocked until those spans are
+joined byte-exactly to retail sources.
 
 2026-08-10: VDP2 NBG1 tilemap capture har korrigerad registerordning för
 legacy big-endian `TVMD=0x0080` och native little-endian witness. Detta stänger
