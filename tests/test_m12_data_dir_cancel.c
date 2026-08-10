@@ -745,6 +745,23 @@ static void check_active_scan_renders_progress_bar(void) {
     free(rgba);
 }
 
+static void check_scan_progress_uses_display_names(void) {
+    const char* dm1 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm1");
+    const char* csb = M12_StartupMenu_GameDisplayTitleForLocale(0, "csb");
+    const char* dm2 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm2");
+    const char* scanning = M12_StartupMenu_TranslateForLocale(
+        0, "SCANNING GAME DATA");
+
+    CHECK(dm1 && strcmp(dm1, "Dungeon Master") == 0);
+    CHECK(csb && strcmp(csb, "Chaos Strikes Back") == 0);
+    CHECK(dm2 && strcmp(dm2,
+                        "Dungeon Master II: The Legend of Skullkeep") == 0);
+    CHECK(scanning && strcmp(scanning, "SCANNING GAME DATA") == 0);
+    CHECK(strcmp(dm1, "dm1") != 0);
+    CHECK(strcmp(csb, "csb") != 0);
+    CHECK(strcmp(dm2, "dm2") != 0);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
@@ -760,6 +777,7 @@ int main(void) {
     check_fresh_config_repairs_dot_in_memory();
     check_dot_asset_status_does_not_replace_saved_directory();
     check_active_scan_renders_progress_bar();
+    check_scan_progress_uses_display_names();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
