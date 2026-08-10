@@ -17535,7 +17535,6 @@ static int m11_creature_try_wander(
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
     struct DM1CreatureInfo_Compat sourceInfo;
-    int aiIndex;
     int ticksSinceLastMove = 0;
 
     if (outNewX) *outNewX = groupX;
@@ -17545,8 +17544,6 @@ static int m11_creature_try_wander(
         return 0;
     }
 
-    aiIndex = m11_find_creature_ai_on_square(
-        state, state->world.party.mapIndex, groupX, groupY);
     /* F0209 defers a wander step while (movementTicks >> 1) has not yet
      * elapsed since the group last moved, because the source drives itself
      * from its own scheduled events.  M11 instead gates this whole route on
@@ -24532,12 +24529,12 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
-        /* THQUEST.ASM T080 owns a between-dungeon save boundary.  The
-         * original runtime save writer and the live champion/progression
-         * serialization handoff are not connected here yet.  Do not pass
-         * Theron through the generic DM1 world envelope: that would create a
-         * file that looks like a save but cannot restore a Theron session. */
-        m11_set_status(state, "SAVE", "THERON SAVE HANDOFF NOT READY");
+        /* THQUEST.ASM T080 owns the original save boundary: Theron's Quest
+         * writes progress when a stage is cleared and offers no in-dungeon
+         * save transaction. Do not pass the opaque Theron world through the
+         * generic DM1 serializer; that would create a host file which looks
+         * like a quicksave but cannot restore a source-owned Theron state. */
+        m11_set_status(state, "SAVE", "THERON SAVES AFTER STAGE CLEAR");
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
@@ -24881,10 +24878,10 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
-        /* T080 permits resume only at the original between-dungeon boundary.
-         * Startup slot enumeration exists, but M11 has no authenticated live
-         * Theron save writer/restore transaction yet. */
-        m11_set_status(state, "LOAD", "THERON SAVE HANDOFF NOT READY");
+        /* T080 loads from the between-stage file selector at startup. There
+         * is no in-dungeon F9 route in the original game, so reject the
+         * generic world envelope rather than adopting unrelated DM state. */
+        m11_set_status(state, "LOAD", "THERON LOADS AT START MENU");
         return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
@@ -29078,12 +29075,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
         if (!world) {
             return M11_GAME_INPUT_IGNORED;
-        }
-        if (input == M12_MENU_INPUT_SAVE_GAME) {
-            /* Ctrl+S is deliberately visible to the player, but cannot
-             * invent a mid-dungeon save or route through the DM1 disk menu. */
-            m11_set_status(state, "SAVE", "THERON SAVE HANDOFF NOT READY");
-            return M11_GAME_INPUT_REDRAW;
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
@@ -52358,8 +52349,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                 maxVisibleForward),
                             &visibility);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    /* Primary floor pass: pass the full D3..D1 range (constant 3), not
+     * maxVisibleForward.  ReDMCSB/pass361 architecture reconciliation
+     * establishes that primary floor geometry must not be pre-culled by a
+     * host visibility shortcut -- occluded floor cells are hidden by later
+     * source panels (walls, wall ornaments) rather than by the viewport
+     * lane-visibility receipt.  Side-lane and per-cell passes still use
+     * the receipt-derived maxVisibleForward as their bound. */
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward, cells);
+                                  3, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
