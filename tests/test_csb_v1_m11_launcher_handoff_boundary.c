@@ -2924,10 +2924,13 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
                     profile->runtime.dungeon_handle != NULL &&
                     profile->runtime.state == CSB_STATE_GAME &&
                     !view.csbState.startup_title_active &&
-                    !view.csbState.startup_entrance_active &&
+                    view.csbState.startup_entrance_active &&
+                    !view.csbState.startup_entrance_dismissed &&
                     !view.csbAmigaAppbSelectionActive &&
                     view.csbAmigaTitlBytes == NULL,
-                "A31E reaches C03_GAME without an A31M/A35M/PC34 replacement screen");
+                "A31E reaches C03_GAME and its native F0441 entrance without an A31M/A35M/PC34 replacement screen");
+    expect_amiga_prison_entrance_handoff(
+        &view, "A31E enters native C004 Prison after its direct C03 handoff");
     expect_amiga_c013_source_frame(
         &view, "A31E C03 presents original Amiga C013 without a PC34 runtime page");
     expect_amiga_c010_action_menu_source_frame(

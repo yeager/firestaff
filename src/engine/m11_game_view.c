@@ -4653,8 +4653,10 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
 /* ReDMCSB COMPILE.H:199-213: A31E's APPB.FTL is C03_GAME and BJELoad_R is
  * C02_LAUNCHER.  It must therefore take the same direct program boundary as
  * A35E, but only after its own original bytes have been materialized and
- * verified.  A31M's similarly named files remain a TITL -> C08 -> KAOS
- * route and never enter this branch. */
+ * verified.  C03_GAME still calls ENTRANCE.C F0441 for A31E: MEDIA748 and
+ * MEDIA746 include A31E, loading C004/C005/C002/C003 before the live loop.
+ * A31M's similarly named files remain a TITL -> C08 -> KAOS route and never
+ * enter this branch. */
 static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
 {
     CSB_V1_BootProfile *profile;
@@ -4683,8 +4685,10 @@ static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
     profile->amiga_language_index = 0u;
     profile->runtime.state = CSB_STATE_GAME;
     state->csbState.startup_title_active = 0;
-    state->csbState.startup_entrance_active = 0;
-    state->csbState.startup_entrance_dismissed = 1;
+    state->csbState.startup_entrance_active = 1;
+    state->csbState.startup_entrance_dismissed = 0;
+    state->csbState.startup_entrance_opening_active = 0;
+    state->csbState.startup_entrance_opening_step = 0;
     m11_sync_csb_state_from_boot_profile(state, profile);
     return 1;
 }
