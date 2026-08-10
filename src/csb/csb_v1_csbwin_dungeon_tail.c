@@ -14,6 +14,11 @@ static uint16_t read_be16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
 }
 
+static uint16_t read_le16(const uint8_t *p)
+{
+    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
 static uint32_t read_le32(const uint8_t *p)
 {
     return (uint32_t)p[0] |
@@ -502,6 +507,8 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
 {
     uint8_t seen[CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES] = { 0 };
     uint16_t queue_index;
+    size_t timer_raw_size;
+    size_t queue_raw_size;
 
     if (!candidate || !body || !candidate->dungeon.raw_data ||
         !body->header_valid ||
@@ -516,9 +523,22 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
         body->first_avail_timer > body->max_timers) {
         return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
     }
+    if ((body->timer_record_size != 10u && body->timer_record_size != 12u &&
+         body->timer_record_size != 16u) ||
+        !multiply_size((size_t)body->max_timers,
+                       (size_t)body->timer_record_size, &timer_raw_size) ||
+        !multiply_size((size_t)body->max_timers, 2u, &queue_raw_size) ||
+        body->timer_raw_size != timer_raw_size ||
+        body->timer_queue_raw_size != queue_raw_size ||
+        (body->header.byte_order != CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN &&
+         body->header.byte_order != CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN)) {
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
     for (queue_index = 0u; queue_index < body->num_timer; ++queue_index) {
         const uint16_t timer_index = body->timer_queue[queue_index];
         const CSB_V1_CSBWin512TimerSummary *timer;
+        const uint8_t *timer_raw;
+        uint16_t raw_queue_index;
 
         if (timer_index >= body->timer_summary_count || seen[timer_index]) {
             return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
@@ -526,6 +546,31 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
         timer = &body->timers[timer_index];
         if (!timer->valid || timer->truncated ||
             timer->function == 0u || timer->source_index != timer_index) {
+            return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+        }
+        /* SaveGame.cpp authenticates MaxTimers fixed 10/12/16-byte TIMER
+         * storage and MaxTimers 16-bit queue handles separately before it
+         * calls swapTimerQue()/swapTimers().  Bind the parsed live event
+         * back to those retained raw records here; this is an integrity
+         * check, not an attempt to reconstruct TIMER::operator<. */
+        raw_queue_index = body->header.byte_order ==
+                CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN
+            ? read_be16(body->timer_queue_raw + (size_t)queue_index * 2u)
+            : read_le16(body->timer_queue_raw + (size_t)queue_index * 2u);
+        timer_raw = body->timer_raw +
+            (size_t)timer_index * (size_t)body->timer_record_size;
+        if (raw_queue_index != timer_index ||
+            read_le32(timer_raw) != timer->time ||
+            timer_raw[4] != timer->function ||
+            timer_raw[5] != timer->ubyte5 ||
+            timer_raw[6] != timer->ubyte6 ||
+            timer_raw[7] != timer->ubyte7 ||
+            timer_raw[8] != timer->ubyte8 ||
+            timer_raw[9] != timer->ubyte9 ||
+            (body->timer_record_size >= 12u &&
+             read_le16(timer_raw + 10u) != timer->sequence) ||
+            (body->timer_record_size >= 13u &&
+             timer_raw[12] != timer->level)) {
             return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
         }
         seen[timer_index] = 1u;

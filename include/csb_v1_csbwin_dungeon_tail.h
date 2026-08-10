@@ -207,7 +207,9 @@ int csb_v1_csbwin_dungeon_tail_candidate_validate_resume_shape(
 /* Prove that GAMEBLOCK2's decoded TIMER pool can be carried with this
  * candidate.  This checks only source-owned timer-slot and active-queue
  * invariants: all active handles are unique and point at retained, valid
- * TIMER records.  The saved active queue order is kept as
+ * TIMER records, and every active summary still agrees byte-for-byte with
+ * the authenticated raw TIMER and queue streams.  The saved active queue
+ * order is kept as
  * source evidence; an older CSBWin producer's exact comparator variant is
  * not inferred from one corpus.  It does not materialize an M10 event,
  * publish the dungeon, or change a RuntimeProfile.

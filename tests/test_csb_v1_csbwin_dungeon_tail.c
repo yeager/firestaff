@@ -200,6 +200,15 @@ static void check_staged_real_save(void)
                           candidate, &malformed) ==
                       CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
             }
+            if (body.num_timer > 0u) {
+                CSB_V1_CSBWin512BodyReport malformed = body;
+                const uint16_t timer_index = malformed.timer_queue[0];
+                malformed.timer_raw[(size_t)timer_index *
+                    malformed.timer_record_size + 4u] ^= 1u;
+                CHECK(csb_v1_csbwin_dungeon_tail_candidate_validate_resume_timers(
+                          candidate, &malformed) ==
+                      CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT);
+            }
         }
         CHECK(csb_v1_dungeon_get_current() == current_before &&
               csb_v1_dungeon_get_current_mutable() == current_before);
