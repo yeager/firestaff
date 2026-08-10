@@ -3,6 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct CSB_V1_CSBWinLegacyDungeonCandidate {
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_CSBWinDungeonTailPrefix prefix;
+    CSB_V1_CSBWinDungeonTailDatabaseLayout databases;
+};
+
 static uint16_t read_be16(const uint8_t *p)
 {
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
@@ -404,6 +410,68 @@ int csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
         return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
     }
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
+int csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+    const uint8_t *tail, size_t tail_size,
+    CSB_V1_CSBWinLegacyDungeonCandidate **out_candidate)
+{
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate;
+    int result;
+
+    if (!tail || !out_candidate) return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT;
+    *out_candidate = NULL;
+    candidate = (CSB_V1_CSBWinLegacyDungeonCandidate *)calloc(
+        1u, sizeof(*candidate));
+    if (!candidate) return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TRUNCATED;
+    result = csb_v1_csbwin_dungeon_tail_parse_prefix(
+        tail, tail_size, 0u, &candidate->prefix);
+    if (result == CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        result = csb_v1_csbwin_dungeon_tail_parse_databases(
+            tail, tail_size, &candidate->prefix,
+            CSB_V1_CSBWIN_LEGACY_FEATURE_VERSION, 0u, 0u,
+            &candidate->databases);
+    }
+    if (result == CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        result = csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
+            tail, tail_size, &candidate->prefix, &candidate->databases,
+            &candidate->dungeon);
+    }
+    if (result != CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+        csb_v1_dungeon_free(&candidate->dungeon);
+        free(candidate);
+        return result;
+    }
+    *out_candidate = candidate;
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
+const CSB_V1_DungeonData *csb_v1_csbwin_dungeon_tail_candidate_dungeon(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
+{
+    return candidate ? &candidate->dungeon : NULL;
+}
+
+const CSB_V1_CSBWinDungeonTailPrefix
+    *csb_v1_csbwin_dungeon_tail_candidate_prefix(
+        const CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
+{
+    return candidate ? &candidate->prefix : NULL;
+}
+
+const CSB_V1_CSBWinDungeonTailDatabaseLayout
+    *csb_v1_csbwin_dungeon_tail_candidate_databases(
+        const CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
+{
+    return candidate ? &candidate->databases : NULL;
+}
+
+void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate)
+{
+    if (!candidate) return;
+    csb_v1_dungeon_free(&candidate->dungeon);
+    free(candidate);
 }
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void)

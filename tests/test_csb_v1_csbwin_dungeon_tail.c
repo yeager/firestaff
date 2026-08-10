@@ -90,6 +90,8 @@ static void check_staged_real_save(void)
     CSB_V1_CSBWinDungeonTailDatabaseLayout databases;
     CSB_V1_DungeonData dungeon;
     CSB_V1_DungeonData rejected;
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
+    const CSB_V1_DungeonData *current_before = csb_v1_dungeon_get_current();
     uint8_t *before = NULL;
     uint16_t computed;
     uint16_t stored;
@@ -153,6 +155,21 @@ static void check_staged_real_save(void)
                      bytes + body.appended_offset,
                      body.appended_size) == 0);
         csb_v1_dungeon_free(&dungeon);
+        CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+                  bytes + body.appended_offset, body.appended_size,
+                  &candidate) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK);
+        CHECK(candidate != NULL &&
+              csb_v1_csbwin_dungeon_tail_candidate_dungeon(candidate) != NULL &&
+              csb_v1_csbwin_dungeon_tail_candidate_dungeon(candidate)->level_count ==
+                  prefix.level_count &&
+              csb_v1_csbwin_dungeon_tail_candidate_prefix(candidate)->valid &&
+              csb_v1_csbwin_dungeon_tail_candidate_databases(candidate)->valid &&
+              memcmp(before, bytes + body.appended_offset,
+                     body.appended_size) == 0);
+        CHECK(csb_v1_dungeon_get_current() == current_before &&
+              csb_v1_dungeon_get_current_mutable() == current_before);
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
+        candidate = NULL;
         memset(&rejected, 0xa5, sizeof(rejected));
         before[body.appended_size - 1u] ^= 1u;
         CHECK(csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
@@ -161,6 +178,7 @@ static void check_staged_real_save(void)
         CHECK(rejected.raw_data == NULL && rejected.level_count == 0);
         free(before);
     }
+    csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
     free(bytes);
 }
 
@@ -173,6 +191,8 @@ int main(void)
     CSB_V1_CSBWinDungeonTailPrefix database_prefix;
     CSB_V1_CSBWinDungeonTailDatabaseLayout databases;
     CSB_V1_CSBWinDungeonTailDatabaseLayout unchanged;
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate =
+        (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
     const size_t levels = 2u;
     const size_t descriptors = CSB_V1_CSBWIN_DUNGEON_INDEX_BYTES +
         levels * CSB_V1_CSBWIN_LEVEL_DESC_BYTES;
@@ -225,6 +245,9 @@ int main(void)
     CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(
               checksum_bad, sizeof(checksum_bad), NULL, NULL) == 0);
     CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(NULL, 0u, NULL, NULL) == -1);
+    CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+              NULL, 0u, &candidate) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT &&
+          candidate == (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u);
     put_be16(tail + 4u, 0u);
     CHECK(csb_v1_csbwin_dungeon_tail_parse_prefix(tail, sizeof(tail), 0u,
               &report) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LEVEL_COUNT);

@@ -88,6 +88,18 @@ typedef struct {
     uint16_t stored_checksum;
 } CSB_V1_CSBWinDungeonTailDatabaseLayout;
 
+/* A private, fully decoded legacy CSBWin dungeon candidate.  Preparing one
+ * never publishes it through csb_v1_dungeon_set_current() and never reaches
+ * RuntimeProfile.  This is deliberately an opaque ownership boundary: a
+ * later resume transaction may adopt the candidate only after it has proved
+ * that the associated GAMEBLOCK2, champions, ITEM16 owners and timer heap
+ * can all move together.
+ *
+ * Source: CSBWin SaveGame.cpp ReadDatabases() (2512-2896), which completes
+ * database construction before ReadGame() makes the restored world live. */
+typedef struct CSB_V1_CSBWinLegacyDungeonCandidate
+    CSB_V1_CSBWinLegacyDungeonCandidate;
+
 /* Parse the unencrypted tail immediately following the authenticated
  * GAMEBLOCK1/2 streams. `extended_flags` is from Extended Features. */
 int csb_v1_csbwin_dungeon_tail_parse_prefix(
@@ -148,6 +160,32 @@ int csb_v1_csbwin_dungeon_tail_load_legacy_source_dungeon(
     const CSB_V1_CSBWinDungeonTailPrefix *prefix,
     const CSB_V1_CSBWinDungeonTailDatabaseLayout *databases,
     CSB_V1_DungeonData *out);
+
+/* Validate, normalize and privately own an unextended CSBWin saved-dungeon
+ * tail.  This is a convenience transaction over parse_prefix(),
+ * parse_databases() and load_legacy_source_dungeon(): output is assigned
+ * only after every fallible stage succeeds.  The caller's tail is read-only.
+ *
+ * Extended Features, indirect text and big actuators remain intentionally
+ * rejected because their database representation is not equivalent to the
+ * legacy source-dungeon consumer. */
+int csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+    const uint8_t *tail, size_t tail_size,
+    CSB_V1_CSBWinLegacyDungeonCandidate **out_candidate);
+
+/* Read-only access to a prepared candidate.  It remains valid until discard.
+ * There is intentionally no publish/take API here: ownership transfer is a
+ * future atomic runtime operation, not a parser side effect. */
+const CSB_V1_DungeonData *csb_v1_csbwin_dungeon_tail_candidate_dungeon(
+    const CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
+const CSB_V1_CSBWinDungeonTailPrefix
+    *csb_v1_csbwin_dungeon_tail_candidate_prefix(
+        const CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
+const CSB_V1_CSBWinDungeonTailDatabaseLayout
+    *csb_v1_csbwin_dungeon_tail_candidate_databases(
+        const CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
+void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void);
 
