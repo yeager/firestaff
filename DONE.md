@@ -1,3 +1,17 @@
+# Nexus: sekventiell TM.BIN→VDP2-CRAM source/value-join (2026-08-10)
+
+- ✅ Den nya sekvensverifieraren parar register- och write-trace rad för rad
+  i samma Saturn-session och avvisar adress-/värdemismatch. Med
+  `r5=0x06010000` som runtime-load-bas verifieras 64 CRAM-skrivningar från
+  `TM.BIN+0x1a0c0` till VDP2 från `0x100404`.
+- ✅ Verifierad source-span är `TM.BIN+0x1a0c0..0x1a14e`; varje 16-bitars
+  VDP2-värde matchar källbytesen. Detta är starkare än en ensam pekar-
+  observation, men är fortfarande producerproveniens och inte text-/CLUT-/
+  skärmkomposition.
+- ✅ Rå frame-snapshoten tas separat från den tidpunkt då denna CRAM-körning
+  sker; därför lämnas tilemap-/FONT256-konsumentens semantiska admission
+  fortsatt spärrad i stället för att blanda olika tidsögonblick.
+
 # Nexus: TM.BIN → SH-2 r5 → VDP2 samma-session-join (2026-08-10)
 
 - ✅ Riktad J-BIOS/engelsk-disc-capture med writer-PC `0x06017702` visar
