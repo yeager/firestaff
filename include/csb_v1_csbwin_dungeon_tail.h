@@ -125,7 +125,8 @@ typedef struct CSB_V1_CSBWinLegacyResumeTransaction
  *
  * Keeping the expected owner private prevents parser callers from treating
  * a candidate pointer as a live dungeon handle.  The only state question
- * exposed is whether the current owner is still the one the plan examined.
+ * exposed is whether the current owner and active dungeon level are still
+ * the ones the plan examined.
  *
  * Source: CSBWin SaveGame.cpp ReadGame():1707-1906 followed by
  * ReadDatabases():2512-2896; the source does not expose a partially restored
@@ -399,7 +400,8 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_identity(
 
 /* Returns 1 only while the global dungeon owner is exactly the private
  * baseline observed at plan creation and that owner's raw source bytes plus
- * map-layout shape have not changed in place.  It does not publish, lock,
+ * map-layout shape or active singleton level have not changed in place.  It
+ * does not publish, lock,
  * reserve or otherwise change that owner.  A future live commit must require
  * this test together with its complete GAMEBLOCK2/champion/ITEM16/timer
  * validation. */

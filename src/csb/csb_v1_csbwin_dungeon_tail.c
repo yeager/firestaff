@@ -23,6 +23,10 @@ struct CSB_V1_CSBWinLegacyResumeCommitPlan {
     /* This is comparison-only provenance for the future atomic owner swap.
      * It is never returned, dereferenced or modified by this module. */
     const CSB_V1_DungeonData *expected_current_owner;
+    /* The singleton's current level is separate mutable state.  A pointer
+     * and raw-byte snapshot alone would miss a level transition between
+     * prepare and the eventual all-or-nothing replacement. */
+    int expected_current_level;
     /* A pointer comparison alone misses an in-place level/tile edit between
      * prepare and a future all-or-nothing adoption.  Retain a read-only
      * snapshot of the owner shape and raw source bytes as the optimistic
@@ -1055,6 +1059,7 @@ int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
     }
     plan->transaction = transaction;
     plan->expected_current_owner = csb_v1_dungeon_get_current();
+    plan->expected_current_level = csb_v1_dungeon_get_current_level();
     if (plan->expected_current_owner) {
         plan->expected_current_raw_data =
             plan->expected_current_owner->raw_data;
@@ -1135,6 +1140,9 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
     }
     current = csb_v1_dungeon_get_current();
     if (current != plan->expected_current_owner) return 0;
+    if (csb_v1_dungeon_get_current_level() != plan->expected_current_level) {
+        return 0;
+    }
     if (!current) return 1;
     if (current->raw_data != plan->expected_current_raw_data ||
         current->raw_size != plan->expected_current_raw_size ||
@@ -1190,6 +1198,7 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
         plan->transaction);
     plan->transaction = NULL;
     plan->expected_current_owner = NULL;
+    plan->expected_current_level = 0;
     plan->expected_current_raw_data = NULL;
     plan->expected_current_raw_size = 0;
     plan->expected_current_raw_signature = 0u;

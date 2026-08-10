@@ -225,6 +225,17 @@ static void check_staged_real_save(void)
                     commit_plan));
                 CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
                     commit_plan));
+                /* The singleton level participates in M10 coordinate
+                 * lookup. A replacement plan must reject a transition even
+                 * when the dungeon allocation and raw bytes are unchanged. */
+                csb_v1_dungeon_set_current_level(1);
+                CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
+                CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_preconditions_hold(
+                    commit_plan));
+                csb_v1_dungeon_set_current_level(0);
+                CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
                 /* These are loader-derived fields rather than raw bytes.
                  * A future atomic replacement must not mistake a changed
                  * floor-ornament selection for an unchanged live owner. */
