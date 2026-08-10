@@ -144,7 +144,11 @@ static void check_complete_multilanguage_profile(const char* root,
 
     dm1Entry = M12_StartupMenu_GetEntry(&state, 0);
     english = M12_AssetStatus_GetVersion(&state.assetStatus, "dm1", 0U);
-    multi = M12_AssetStatus_GetVersion(&state.assetStatus, "dm1", 1U);
+    /* pc34-multi index shifted when FM Towns rows were added. Resolve
+     * dynamically via FindVersionIndex so this gate keeps working across
+     * DM1 version-table reorderings. */
+    multi = M12_AssetStatus_GetVersion(&state.assetStatus, "dm1",
+        (unsigned int)M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi"));
     firstMatched = M12_AssetStatus_GetFirstMatchedVersion(&state.assetStatus, "dm1");
     graphics = required_file_by_role(&state.assetStatus, "graphics");
     dungeon = required_file_by_role(&state.assetStatus, "dungeon");
@@ -155,7 +159,7 @@ static void check_complete_multilanguage_profile(const char* root,
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 1);
     CHECK(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "1 GAME READY") == 0);
 
-    CHECK(M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi") == 1);
+    CHECK(M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi") >= 0);
     CHECK(english && english->matched == 0);
     CHECK(multi && multi->matched == 1);
     CHECK(multi && multi->versionId && strcmp(multi->versionId, "pc34-multi") == 0);
@@ -175,8 +179,21 @@ static void check_complete_multilanguage_profile(const char* root,
     CHECK(state.activatedIndex == 0);
 
     state.gameOptSelectedRow = M12_GAME_OPT_ROW_VERSION;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
-    CHECK(state.gameOptions[0].versionIndex == 1);
+    /* One RIGHT press used to land on pc34-multi when it was table index 1.
+     * With FM Towns entries shifting pc34-multi to a later index, cycle
+     * RIGHT until we reach the target so this gate keeps locking "the
+     * version cycle can select the pc34-multi option". Cap the loop at
+     * M12_ASSET_VERSION_MAX to guard against a broken cycle. */
+    {
+        int __pc34_multi_idx =
+            M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi");
+        int __guard;
+        for (__guard = 0; __guard < 64 &&
+             state.gameOptions[0].versionIndex != __pc34_multi_idx; ++__guard) {
+            M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+        }
+        CHECK(state.gameOptions[0].versionIndex == __pc34_multi_idx);
+    }
 
     state.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -184,13 +201,17 @@ static void check_complete_multilanguage_profile(const char* root,
     CHECK(state.quickResumeLaunchRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "READY TO LAUNCH") == 0);
+    /* The ready-to-launch popup's line 2 uses the entry title from
+     * state->entries[].title, which is the uppercase catalog title
+     * "DUNGEON MASTER" (see the g_defaultEntries table). */
     CHECK(state.messageLine2 && strcmp(state.messageLine2, "DUNGEON MASTER") == 0);
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 1);
     CHECK(intent.gameId && strcmp(intent.gameId, "dm1") == 0);
     CHECK(intent.versionId && strcmp(intent.versionId, "pc34-multi") == 0);
-    CHECK(intent.options.versionIndex == 1);
+    CHECK(intent.options.versionIndex ==
+        M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi"));
     CHECK(intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
 }
 
@@ -220,7 +241,11 @@ static void check_graphics_only_missing_copy(const char* root,
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.launchRequested == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(state.messageLine1 && strcmp(state.messageLine1, "DM1 GAME DATA NOT FOUND") == 0);
+    /* Launcher brand widened from "DM1" to the full retail name "Dungeon
+ * Master" per commit 1ab2d80bf; line 1 now formats as
+ * "Dungeon Master GAME DATA NOT FOUND". */
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1, "Dungeon Master GAME DATA NOT FOUND") == 0);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") == NULL);
     CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") == state.messageLine3);

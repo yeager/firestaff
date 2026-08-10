@@ -122,11 +122,15 @@ static void scan_and_check_graphics_only(const char* root,
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, root);
 
-    multi = M12_AssetStatus_GetVersion(&status, "dm1", 1U);
+    /* pc34-multi was at index 1 before FM Towns entries shifted the
+     * DM1 version table. Look up the current index by version id so
+     * this gate keeps working across future table reorderings. */
+    multi = M12_AssetStatus_GetVersion(&status, "dm1",
+        (unsigned int)M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi"));
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
-    CHECK(M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi") == 1);
+    CHECK(M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi") >= 0);
     CHECK(multi != NULL);
     CHECK(multi && multi->matched == 1);
     CHECK(multi && multi->versionId && strcmp(multi->versionId, "pc34-multi") == 0);
@@ -149,7 +153,11 @@ static void scan_and_check_dungeon_only(const char* root,
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, root);
 
-    multi = M12_AssetStatus_GetVersion(&status, "dm1", 1U);
+    /* pc34-multi was at index 1 before FM Towns entries shifted the
+     * DM1 version table. Look up the current index by version id so
+     * this gate keeps working across future table reorderings. */
+    multi = M12_AssetStatus_GetVersion(&status, "dm1",
+        (unsigned int)M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi"));
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
@@ -178,7 +186,11 @@ static void scan_and_check_complete_required(const char* root,
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, root);
 
-    multi = M12_AssetStatus_GetVersion(&status, "dm1", 1U);
+    /* pc34-multi was at index 1 before FM Towns entries shifted the
+     * DM1 version table. Look up the current index by version id so
+     * this gate keeps working across future table reorderings. */
+    multi = M12_AssetStatus_GetVersion(&status, "dm1",
+        (unsigned int)M12_AssetStatus_FindVersionIndex("dm1", "pc34-multi"));
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
