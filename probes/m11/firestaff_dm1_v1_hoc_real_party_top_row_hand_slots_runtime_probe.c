@@ -440,9 +440,16 @@ static int check_inventory_pending_damage_receipt(M11_GameViewState* game,
         snprintf(label, sizeof(label), "damage %d F0320 inventory origin", amounts[amountIndex]);
         ok &= expect_true(label, M11_GameView_GetV1DamageNumberOriginPc34(
                           0, amounts[amountIndex], 1, &originX, &originY));
+        /* TEXT.C F0040 assembly `subq.w #4,D0` shifts the caller's Y up
+         * by 4 -- glyphs land at framebuffer rows (Y-4..Y+1) top-down.
+         * The prior check window (originX, originY, 18, 7) reached
+         * from row originY downward and completely missed the glyph
+         * (see the sibling champion_panel_damage_flash_decay fix).
+         * Cover (originY-4..originY+2), the 7 rows that hold the glyph
+         * plus a descender guard band. */
         snprintf(label, sizeof(label), "damage %d C016/M653 digits", amounts[amountIndex]);
         ok &= expect_true(label,
-                          count_white_pixels(fb, originX, originY, 18, 7) > 0);
+                          count_white_pixels(fb, originX, originY - 4, 18, 7) > 0);
     }
     game->inventoryPanelActive = 0;
     return ok;
