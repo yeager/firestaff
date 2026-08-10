@@ -24,6 +24,13 @@ extern "C" {
 typedef struct DM2_V1_SksaveGameLoadOwner {
     uint32_t lifecycle_tag;
     int valid;
+    /* A source-ordered import can reach DM2_ALLOC_NEW_RECORD's DB0 or DB2
+     * recycler boundary before every map stream is restored. Keep that exact
+     * mutable c_map/c_record snapshot for read-only recycler analysis only.
+     * It is deliberately distinct from `valid`: no caller may use an
+     * inspection owner for Resume, timer dispatch or a game session.
+     * Source: SKProject c_record.cpp:DB88 (DB0/DB2 direct return). */
+    int recycler_boundary_inspection_valid;
     /* Must remain zero until global-effect timers, timer dispatch and the
      * M11 runtime have one source-complete owner. */
     int source_game_load_session_ready;
@@ -73,7 +80,13 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
         int valid;
         uint8_t map_cursors[18];
         uint8_t map_count;
+        /* c_map's active map at the allocator boundary. It is saved and
+         * restored by DM2_RECYCLE_A_RECORD_FROM_THE_WORLD. */
         uint16_t current_map;
+        /* ddat.v1e0266: party map, which the recycler skips during its first
+         * pass. It is not necessarily c_map's active map while a resident
+         * chain is being restored. */
+        uint16_t party_map;
         uint16_t party_x;
         uint16_t party_y;
         uint16_t party_direction;
@@ -99,7 +112,7 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     DM2_V1_SksaveSpecialTimerReceipt receipt;
 } DM2_V1_SksaveGameLoadOwner;
 
-/* Read-only result from the DB0-only selection portion of
+/* Read-only result from the DB0/DB2 direct-return portion of
  * DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  `found` names a record which the
  * original allocator would subsequently clear and return; this receipt does
  * neither.  The cursor is prospective until a complete ALLOC_NEW_RECORD
@@ -109,6 +122,7 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
 typedef struct {
     int valid;
     int found;
+    uint8_t requested_db;
     uint16_t selected_link;
     uint8_t selected_map;
     uint8_t selected_x;
@@ -118,7 +132,9 @@ typedef struct {
     uint16_t maps_scanned;
     uint32_t records_examined;
     uint32_t static_possession_descents;
-} DM2_V1_SksaveDb0RecyclerCandidate;
+} DM2_V1_SksaveRecyclerCandidate;
+
+typedef DM2_V1_SksaveRecyclerCandidate DM2_V1_SksaveDb0RecyclerCandidate;
 
 /* Materialize one fully source-walked private transaction.  `raw_body` is
  * the original SKSAVE payload after its 42-byte header; it is never modified
@@ -126,6 +142,23 @@ typedef struct {
  * transaction succeeds; an unsuccessful replacement leaves that owner
  * unchanged.  Uninitialized output is cleared on failure. */
 int dm2_v1_sksave_game_load_owner_init(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx);
+
+/* Retain an otherwise rejected import only when the real source stream has
+ * reached DB0 or DB2 exhaustion in DM2_READ_SKSAVE_DUNGEON. The retained
+ * state is an inspection transaction through the exact allocator boundary:
+ * it owns source-mutated maps, pools, heroes and c_tim decoded before that
+ * point but remains `valid == 0`, `source_game_load_session_ready == 0`, and
+ * cannot perform allocation, cursor writes or Resume. All other failures
+ * leave the output unchanged (or zeroed when uninitialised).
+ *
+ * Source: SKProject SKULLWIN/c_savegame.cpp:1108-1350,
+ *         c_record.cpp:DB88-DBA5. */
+int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
     const DM2_V1_AssetLoader *asset_loader,
@@ -154,6 +187,13 @@ int dm2_v1_sksave_game_load_owner_creature_ai_flags(
 int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner,
     DM2_V1_SksaveDb0RecyclerCandidate *out_candidate);
+
+/* The source's non-mutating direct-return candidates. Only DB0 and DB2 are
+ * admitted: DB4/DB14 and other pools have deletion, missile or relocation
+ * tails that need a complete runtime transaction. */
+int dm2_v1_sksave_game_load_owner_recycler_candidate(
+    const DM2_V1_SksaveGameLoadOwner *owner, uint8_t requested_db,
+    DM2_V1_SksaveRecyclerCandidate *out_candidate);
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner);
 

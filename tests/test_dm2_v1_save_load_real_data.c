@@ -1020,6 +1020,7 @@ static void test_real_raw_save(const char *path, const char *root,
         DM2_V1_SksaveSpecialTimerReceipt special_timers;
         DM2_V1_AssetLoader preflight_loader;
         DM2_V1_SksaveGameLoadOwner game_load_owner;
+        DM2_V1_SksaveGameLoadOwner recycler_boundary_owner;
         uint8_t *preflight_graphics;
         size_t preflight_graphics_size;
         char preflight_graphics_path[600];
@@ -1034,6 +1035,7 @@ static void test_real_raw_save(const char *path, const char *root,
         memset(&preflight_loader, 0, sizeof(preflight_loader));
         memset(&special_timers, 0, sizeof(special_timers));
         memset(&game_load_owner, 0, sizeof(game_load_owner));
+        memset(&recycler_boundary_owner, 0, sizeof(recycler_boundary_owner));
         const int special_ok =
             preflight_graphics && dm2_v1_asset_loader_init(
                 &preflight_loader, preflight_graphics, preflight_graphics_size) == 0 &&
@@ -1046,6 +1048,11 @@ static void test_real_raw_save(const char *path, const char *root,
             dm2_v1_sksave_game_load_owner_init(&game_load_owner,
                 bytes + 42u, byte_count - 42u, savegamew7,
                 &preflight_loader, inventory_query_creature_ai_flags, NULL);
+        const int recycler_boundary_ok = preflight_graphics &&
+            dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
+                &recycler_boundary_owner, bytes + 42u, byte_count - 42u,
+                savegamew7, &preflight_loader,
+                inventory_query_creature_ai_flags, NULL);
         if (direct_roots) {
             if (owner_ok) ++direct_roots->game_load_owner_materialized;
             else ++direct_roots->game_load_owner_blocked;
@@ -1065,6 +1072,59 @@ static void test_real_raw_save(const char *path, const char *root,
                   game_load_owner.record_pools.valid &&
                   game_load_owner.receipt.valid && retained_ai_count > 0u)),
               "SKSave private GAME_LOAD owner transfers only a complete source transaction");
+        CHECK(recycler_boundary_ok ==
+                  (special_timers.failure_stage ==
+                       DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS &&
+                   (special_timers.recycle_required_db == 0 ||
+                    special_timers.recycle_required_db == 2) &&
+                   special_timers.map_failure_record_reason ==
+                       DM2_READ_RECORD_FAILURE_ALLOC) &&
+                  (!recycler_boundary_ok ||
+                   (recycler_boundary_owner.recycler_boundary_inspection_valid &&
+                    !recycler_boundary_owner.valid &&
+                    !recycler_boundary_owner.source_game_load_session_ready &&
+                    recycler_boundary_owner.map_owner.valid &&
+                    recycler_boundary_owner.record_pools.valid &&
+                    recycler_boundary_owner.receipt.failure_stage ==
+                        DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS &&
+                    (recycler_boundary_owner.receipt.recycle_required_db == 0 ||
+                     recycler_boundary_owner.receipt.recycle_required_db == 2) &&
+                    recycler_boundary_owner.receipt.map_failure_record_reason ==
+                        DM2_READ_RECORD_FAILURE_ALLOC)),
+              "real direct-return recycler exhaustion retains only a non-playable inspection owner");
+        if (recycler_boundary_ok) {
+            DM2_V1_SksaveRecyclerCandidate boundary_candidate;
+            const uint8_t requested_db = (uint8_t)
+                recycler_boundary_owner.receipt.recycle_required_db;
+            const uint32_t boundary_hash_before =
+                sksave_game_load_owner_mutable_hash(&recycler_boundary_owner);
+            const int boundary_map_before =
+                recycler_boundary_owner.map_owner.current_map;
+            uint8_t boundary_cursors_before[18];
+            memset(&boundary_candidate, 0, sizeof(boundary_candidate));
+            memcpy(boundary_cursors_before,
+                   recycler_boundary_owner.recycler_context.map_cursors,
+                   sizeof(boundary_cursors_before));
+            CHECK(dm2_v1_sksave_game_load_owner_recycler_candidate(
+                      &recycler_boundary_owner, requested_db,
+                      &boundary_candidate) &&
+                  boundary_candidate.valid &&
+                  boundary_candidate.requested_db == requested_db &&
+                  (!boundary_candidate.found ||
+                   dm2_v1_record_handle_pool(
+                       (int16_t)boundary_candidate.selected_link) ==
+                       (int)requested_db) &&
+                  !recycler_boundary_owner.valid &&
+                  !recycler_boundary_owner.source_game_load_session_ready &&
+                  recycler_boundary_owner.map_owner.current_map ==
+                      boundary_map_before &&
+                  memcmp(boundary_cursors_before,
+                         recycler_boundary_owner.recycler_context.map_cursors,
+                         sizeof(boundary_cursors_before)) == 0 &&
+                  sksave_game_load_owner_mutable_hash(&recycler_boundary_owner) ==
+                      boundary_hash_before,
+                  "real direct-return recycler inspection walks the retained partial map without mutation");
+        }
         uint16_t retained_ai_flags = 0u;
         CHECK(!owner_ok || (retained_ai_type >= 0 &&
               dm2_v1_sksave_game_load_owner_creature_ai_flags(&game_load_owner,
@@ -1132,6 +1192,7 @@ static void test_real_raw_save(const char *path, const char *root,
                   "SKSave DB0 recycler candidate follows source traversal without mutating the private owner");
         }
         dm2_v1_sksave_game_load_owner_free(&game_load_owner);
+        dm2_v1_sksave_game_load_owner_free(&recycler_boundary_owner);
         dm2_v1_asset_loader_free(&preflight_loader);
         free(preflight_graphics);
         CHECK(hash_bytes(2166136261u, bytes + 42u, byte_count - 42u) ==

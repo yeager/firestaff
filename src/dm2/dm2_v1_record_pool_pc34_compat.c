@@ -1906,10 +1906,19 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
     }
     ok = 1;
 done:
-    /* The preflight deliberately discards the transaction.  The one private
-     * GAME_LOAD owner is allowed to take it over only after every source
-     * phase above has succeeded; no partial map/pool can escape on failure. */
-    if (ok && retain_owner) {
+    /* A full transaction may be retained for the private GAME_LOAD owner.
+     * There are two narrower, source-observable non-success boundaries: DB0
+     * and DB2 exhaustion enter DM2_RECYCLE_A_RECORD_FROM_THE_WORLD before
+     * the allocator clears or appends anything (c_record.cpp:DB88). Preserve
+     * that pre-mutation c_map/c_record snapshot only for the private
+     * read-only recycler inspection constructor. Every other failed phase
+     * still discards all mutable objects. */
+    if ((ok || (retain_owner && failure_stage ==
+            DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS &&
+            (context.recycle_required_db == 0 ||
+             context.recycle_required_db == 2) &&
+            dungeon_receipt.failed_record_reason ==
+                DM2_READ_RECORD_FAILURE_ALLOC)) && retain_owner) {
         retain_owner->map_owner = map_owner;
         retain_owner->record_pools = pools;
         memcpy(retain_owner->heroes, heroes, sizeof(heroes));

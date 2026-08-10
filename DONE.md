@@ -222,6 +222,18 @@
   ändras inte.
 - ✅ Regressionstestet täcker Nexus/Theron över alla 19 startmenyspråk.
 
+# DM2: autentisk SKSAVE-recyclergräns behålls för analys (2026-08-10)
+
+- ✅ När en verklig PC-DOS SKSAVE når `DM2_ALLOC_NEW_RECORD` med full DB2
+  behålls nu exakt den redan källmuterade c_map-/recordpool-/c_hero-/c_tim-
+  transaktionen i RAM för läsande recycleranalys. Alla andra avbrutna faser
+  kastas fortfarande helt.
+- ✅ Inspektionsägaren följer SKProjects direkta DB0/DB2-returgren och är
+  uttryckligt ogiltig som GAME_LOAD-session: den kan inte skriva cursor,
+  nollställa eller append:a record, köra timers eller öppna Resume.
+  Realdatakorpusen verifierar två faktiska DB2-gränser och byteoförändrat
+  tillstånd efter recyclertraversering.
+
 # DM2: SKSAVE-ägare ersätts utan RAM-läckage (2026-08-10)
 
 - ✅ Den privata SKSAVE GAME_LOAD-ägaren har nu ett explicit livscykelmärke.

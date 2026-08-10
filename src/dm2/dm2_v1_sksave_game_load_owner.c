@@ -140,14 +140,14 @@ static int dm2_v1_sksave_owner_init_recycler_context(
     dungeon = &owner->state.dungeon;
     map_owner = &owner->map_owner;
     /* DM2_GAME_LOAD assigns ddat.v1e0266 from s_savegamebuffer.w_10 before
-     * it calls DM2_READ_SKSAVE_DUNGEON.  Its c_map owner must therefore be
-     * back at this saved map after the all-map stream walk, not whichever
-     * temporary map was touched last. */
+     * it calls DM2_READ_SKSAVE_DUNGEON. The current c_map can temporarily
+     * differ while a resident chain asks ALLOC_NEW_RECORD; the recycler saves
+     * and restores it, but skips v1e0266's party map during its first pass. */
     if (!dungeon->valid || dungeon != map_owner->dungeon ||
         owner->state.party_map >= dungeon->map_count ||
         owner->state.party_x >= dungeon->map_widths[owner->state.party_map] ||
         owner->state.party_y >= dungeon->map_heights[owner->state.party_map] ||
-        map_owner->current_map != (int)owner->state.party_map ||
+        map_owner->current_map < 0 || map_owner->current_map >= dungeon->map_count ||
         map_owner->column_index_count != dungeon->column_index_count ||
         map_owner->ground_stack_count < dungeon->ground_stack_count ||
         map_owner->map_tiles_size != dungeon->map_data_byte_count) {
@@ -156,7 +156,8 @@ static int dm2_v1_sksave_owner_init_recycler_context(
     memset(&owner->recycler_context, 0, sizeof(owner->recycler_context));
     owner->recycler_context.valid = 1;
     owner->recycler_context.map_count = dungeon->map_count;
-    owner->recycler_context.current_map = owner->state.party_map;
+    owner->recycler_context.current_map = (uint16_t)map_owner->current_map;
+    owner->recycler_context.party_map = owner->state.party_map;
     owner->recycler_context.party_x = owner->state.party_x;
     owner->recycler_context.party_y = owner->state.party_y;
     owner->recycler_context.party_direction = owner->state.party_direction;
@@ -309,7 +310,8 @@ static int dm2_v1_sksave_owner_decode_fixed(
 
 static int dm2_v1_sksave_owner_retain_creature_ai_flags(
     DM2_V1_SksaveGameLoadOwner *owner,
-    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags, void *ctx)
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags, void *ctx,
+    int strict)
 {
     const DM2_V1_RecordPool *pool;
     if (!owner || !owner->record_pools.valid || !query_creature_ai_flags)
@@ -322,7 +324,15 @@ static int dm2_v1_sksave_owner_retain_creature_ai_flags(
         const uint16_t link = (uint16_t)(0x1000u | (uint16_t)i);
         uint16_t flags = 0;
         if (record[0] == 0xffu && record[1] == 0xffu) continue;
-        if (!query_creature_ai_flags(ctx, link, record[4], &flags)) return 0;
+        if (!query_creature_ai_flags(ctx, link, record[4], &flags)) {
+            /* A failed map restore can leave pool records whose source
+             * liveness has not yet been reconstructed. For the narrow
+             * recycler inspection we retain only admitted AI rows and reject
+             * later if traversal actually needs a missing row. A complete
+             * owner remains strict over every retained DB4 record. */
+            if (strict) return 0;
+            continue;
+        }
         owner->retained_creature_ai_flags[record[4]] = flags;
         owner->retained_creature_ai_valid[record[4]] = 1u;
     }
@@ -357,7 +367,7 @@ int dm2_v1_sksave_game_load_owner_init(
             query_creature_ai_flags, query_creature_ai_flags_ctx,
             &candidate.receipt) ||
         !dm2_v1_sksave_owner_retain_creature_ai_flags(&candidate,
-            query_creature_ai_flags, query_creature_ai_flags_ctx) ||
+            query_creature_ai_flags, query_creature_ai_flags_ctx, 1) ||
         !dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
             &candidate) ||
         !dm2_v1_sksave_owner_rebuild_timer_backlinks(&candidate) ||
@@ -375,12 +385,69 @@ int dm2_v1_sksave_game_load_owner_init(
     return 1;
 }
 
+int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx)
+{
+    DM2_V1_SksaveGameLoadOwner candidate;
+    const int owner_was_initialized =
+        dm2_v1_sksave_game_load_owner_is_initialized(owner);
+
+    if (!owner) return 0;
+    if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.lifecycle_tag = DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
+    candidate.timer_queue_count = -1;
+    candidate.timer_free_head = -1;
+    candidate.leader_hand_root = DM2_V1_RECORD_HANDLE_END;
+    if (!raw_body || !savegamew7 ||
+        !dm2_v1_original_raw_sksave_fixed_state_receipt(raw_body,
+            raw_body_size, &candidate.state) || !candidate.state.valid ||
+        !dm2_v1_sksave_owner_decode_fixed(&candidate, raw_body, raw_body_size)) {
+        dm2_v1_sksave_game_load_owner_free(&candidate);
+        if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
+        return 0;
+    }
+    {
+        const int materialize_rc =
+            dm2_v1_record_pool_materialize_raw_sksave_game_load_owner(
+                &candidate, raw_body, raw_body_size, savegamew7, asset_loader,
+                query_creature_ai_flags, query_creature_ai_flags_ctx,
+                &candidate.receipt);
+        if (materialize_rc || candidate.receipt.failure_stage !=
+                DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS ||
+            (candidate.receipt.recycle_required_db != 0 &&
+             candidate.receipt.recycle_required_db != 2) ||
+            candidate.receipt.map_failure_record_reason !=
+                DM2_READ_RECORD_FAILURE_ALLOC || !candidate.map_owner.valid ||
+            !candidate.record_pools.valid ||
+            !dm2_v1_sksave_owner_retain_creature_ai_flags(&candidate,
+                query_creature_ai_flags, query_creature_ai_flags_ctx, 0) ||
+            !dm2_v1_sksave_owner_init_recycler_context(&candidate)) {
+            dm2_v1_sksave_game_load_owner_free(&candidate);
+            if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
+            return 0;
+        }
+    }
+    candidate.savegamew7 = savegamew7;
+    candidate.valid = 0;
+    candidate.recycler_boundary_inspection_valid = 1;
+    candidate.source_game_load_session_ready = 0;
+    if (owner_was_initialized) dm2_v1_sksave_game_load_owner_free(owner);
+    *owner = candidate;
+    return 1;
+}
+
 int dm2_v1_sksave_game_load_owner_creature_ai_flags(
     const DM2_V1_SksaveGameLoadOwner *owner, uint8_t creature_type,
     uint16_t *out_flags)
 {
     if (out_flags) *out_flags = 0;
-    if (!owner || !out_flags || !owner->valid ||
+    if (!owner || !out_flags ||
+        (!owner->valid && !owner->recycler_boundary_inspection_valid) ||
         !owner->retained_creature_ai_valid[creature_type]) return 0;
     *out_flags = owner->retained_creature_ai_flags[creature_type];
     return 1;
@@ -391,9 +458,9 @@ int dm2_v1_sksave_game_load_owner_creature_ai_flags(
  * to DM2_ALLOC_NEW_RECORD, which performs the actual clear afterwards.
  * Keep this walker here, beside the retained c_map/DB4-AI ownership, rather
  * than teaching the generic map diagnostic to guess at GAME_LOAD state. */
-static int dm2_v1_sksave_db0_scan_tile(
+static int dm2_v1_sksave_recycler_scan_tile(
     const DM2_V1_SksaveGameLoadOwner *owner, int map, int x, int y,
-    DM2_V1_SksaveDb0RecyclerCandidate *candidate)
+    uint8_t requested_db, DM2_V1_SksaveRecyclerCandidate *candidate)
 {
     uint16_t root;
     int16_t current;
@@ -407,7 +474,7 @@ static int dm2_v1_sksave_db0_scan_tile(
         return 0;
     }
     current = (int16_t)root;
-    near_party = map == (int)owner->recycler_context.current_map &&
+    near_party = map == (int)owner->recycler_context.party_map &&
         x >= (int)owner->recycler_context.party_x - 5 &&
         x <= (int)owner->recycler_context.party_x + 5 &&
         y >= (int)owner->recycler_context.party_y - 5 &&
@@ -432,6 +499,17 @@ static int dm2_v1_sksave_db0_scan_tile(
         }
         ++candidate->records_examined;
 
+        /* DB0 reaches c_record.cpp:DB88 directly. DB2 first observes the
+         * protected-text barrier at DAF9-DB2A, then reaches DB88 only when
+         * that record is eligible. The allocator performs the later clear. */
+        if (pool == 0 && requested_db == 0u) {
+            candidate->found = 1;
+            candidate->selected_link = (uint16_t)current & 0x3fffu;
+            candidate->selected_map = (uint8_t)map;
+            candidate->selected_x = (uint8_t)x;
+            candidate->selected_y = (uint8_t)y;
+            return 2;
+        }
         /* c_record.cpp:DA34-DAF1: these records stop this tile's chain. */
         if (pool == 3) {
             const uint8_t subtype = record[2] & 0x7fu;
@@ -444,16 +522,14 @@ static int dm2_v1_sksave_db0_scan_tile(
                 ((word2 >> 11) & 0x001fu) == 4u) {
                 break;
             }
-        } else if (pool == 0) {
-            /* DB0 has no recycler deletion/move tail.  The original returns
-             * this ObjectID to ALLOC_NEW_RECORD, which is intentionally a
-             * later transaction. */
-            candidate->found = 1;
-            candidate->selected_link = (uint16_t)current & 0x3fffu;
-            candidate->selected_map = (uint8_t)map;
-            candidate->selected_x = (uint8_t)x;
-            candidate->selected_y = (uint8_t)y;
-            return 2;
+            if (requested_db == 2u) {
+                candidate->found = 1;
+                candidate->selected_link = (uint16_t)current & 0x3fffu;
+                candidate->selected_map = (uint8_t)map;
+                candidate->selected_x = (uint8_t)x;
+                candidate->selected_y = (uint8_t)y;
+                return 2;
+            }
         } else if (pool == 4 && !near_party &&
                    static_creature == DM2_V1_RECORD_HANDLE_END &&
                    next != DM2_V1_RECORD_HANDLE_END) {
@@ -495,12 +571,12 @@ static int dm2_v1_sksave_db0_advance_map(int *map, int map_count)
     return 1;
 }
 
-int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+int dm2_v1_sksave_game_load_owner_recycler_candidate(
     const DM2_V1_SksaveGameLoadOwner *owner,
-    DM2_V1_SksaveDb0RecyclerCandidate *out_candidate)
+    uint8_t requested_db, DM2_V1_SksaveRecyclerCandidate *out_candidate)
 {
     const DM2_V1_OriginalRawDungeonReceipt *dungeon;
-    DM2_V1_SksaveDb0RecyclerCandidate candidate;
+    DM2_V1_SksaveRecyclerCandidate candidate;
     int map;
     int anchor;
     int protected_map;
@@ -508,7 +584,8 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
     size_t pass_budget;
 
     if (out_candidate) memset(out_candidate, 0, sizeof(*out_candidate));
-    if (!owner || !out_candidate || !owner->valid ||
+    if (!owner || !out_candidate || (requested_db != 0u && requested_db != 2u) ||
+        (!owner->valid && !owner->recycler_boundary_inspection_valid) ||
         !owner->recycler_context.valid || !owner->map_owner.valid ||
         !owner->record_pools.valid || !owner->map_owner.dungeon ||
         owner->source_game_load_session_ready) return 0;
@@ -517,12 +594,14 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
         dungeon->map_count > DM2_RAW_SKSAVE_MAX_MAPS ||
         owner->recycler_context.map_count != dungeon->map_count ||
         owner->recycler_context.current_map >= dungeon->map_count ||
+        owner->recycler_context.party_map >= dungeon->map_count ||
         owner->map_owner.current_map !=
             (int)owner->recycler_context.current_map) return 0;
 
     memset(&candidate, 0, sizeof(candidate));
     candidate.selected_link = (uint16_t)DM2_V1_RECORD_HANDLE_END;
-    candidate.cursor_before = owner->recycler_context.map_cursors[0];
+    candidate.requested_db = requested_db;
+    candidate.cursor_before = owner->recycler_context.map_cursors[requested_db];
     map = (int)candidate.cursor_before;
     if (map < 0 || map >= (int)dungeon->map_count) return 0;
     protected_map = owner->recycler_context.protected_map_active ?
@@ -531,7 +610,7 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
     anchor = map;
 
     /* c_record.cpp:D83F-D929: start outside party/protected maps. */
-    if (map == (int)owner->recycler_context.current_map ||
+    if (map == (int)owner->recycler_context.party_map ||
         map == protected_map) {
         do {
             if (!dm2_v1_sksave_db0_advance_map(&map, dungeon->map_count))
@@ -541,10 +620,10 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
                     map = protected_map;
                     protected_map = -1;
                 } else {
-                    map = (int)owner->recycler_context.current_map;
+                    map = (int)owner->recycler_context.party_map;
                 }
             }
-        } while (map == (int)owner->recycler_context.current_map ||
+        } while (map == (int)owner->recycler_context.party_map ||
                  map == protected_map);
     }
     anchor = map;
@@ -555,8 +634,9 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
         for (x = 0; x < (int)dungeon->map_widths[map]; ++x) {
             int y;
             for (y = 0; y < (int)dungeon->map_heights[map]; ++y) {
-                const int scan = dm2_v1_sksave_db0_scan_tile(owner, map, x, y,
-                                                               &candidate);
+                const int scan = dm2_v1_sksave_recycler_scan_tile(owner, map, x, y,
+                                                                    requested_db,
+                                                                    &candidate);
                 if (scan == 0) return 0;
                 if (scan == 2) {
                     candidate.valid = 1;
@@ -569,7 +649,7 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
         }
         ++candidate.maps_scanned;
 
-        if (map == (int)owner->recycler_context.current_map ||
+        if (map == (int)owner->recycler_context.party_map ||
             dungeon->map_count <= 1u) {
             if (second_pass) {
                 candidate.valid = 1;
@@ -589,10 +669,10 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
                 if (!dm2_v1_sksave_db0_advance_map(&map, dungeon->map_count))
                     return 0;
                 if (map == anchor) {
-                    map = (int)owner->recycler_context.current_map;
+                    map = (int)owner->recycler_context.party_map;
                     break;
                 }
-            } while (map == (int)owner->recycler_context.current_map);
+            } while (map == (int)owner->recycler_context.party_map);
         } else {
             do {
                 if (!dm2_v1_sksave_db0_advance_map(&map, dungeon->map_count))
@@ -602,11 +682,19 @@ int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
                     protected_map = -1;
                 }
             } while (map == protected_map ||
-                     map == (int)owner->recycler_context.current_map);
+                     map == (int)owner->recycler_context.party_map);
         }
     }
     /* A bounded source ring must always reach the party-map second pass. */
     return 0;
+}
+
+int dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
+    const DM2_V1_SksaveGameLoadOwner *owner,
+    DM2_V1_SksaveDb0RecyclerCandidate *out_candidate)
+{
+    return dm2_v1_sksave_game_load_owner_recycler_candidate(owner, 0u,
+        (DM2_V1_SksaveRecyclerCandidate *)out_candidate);
 }
 
 void dm2_v1_sksave_game_load_owner_free(DM2_V1_SksaveGameLoadOwner *owner)

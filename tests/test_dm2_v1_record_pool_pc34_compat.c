@@ -221,6 +221,7 @@ static void test_private_db0_recycler_candidate(void)
     game_owner.recycler_context.valid = 1;
     game_owner.recycler_context.map_count = 4u;
     game_owner.recycler_context.current_map = 1u;
+    game_owner.recycler_context.party_map = 1u;
     game_owner.recycler_context.protected_map = -1;
     game_owner.recycler_context.party_x = 0u;
     game_owner.recycler_context.party_y = 0u;

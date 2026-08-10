@@ -771,10 +771,15 @@
   c_map och respektive mutation innan en allokering får publiceras.
   Den privata importägaren behåller nu den autentiserade sparade kartan,
   kartspannen, originalets nollställda 18 recycler-markörer och den explicita
-  före-teleporterfasen utan skyddad karta, men själva
-  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: DB0,
-  DB4 och DB14 kräver källtrogna delete/move-callbacks för creature-,
-  missile- och objectkedjor.
+  före-teleporterfasen utan skyddad karta. När en verklig DOS-ström når den
+  direkta DB0/DB2-returgrenen behålls dess källmuterade kart-/pool-/hero-/
+  timerögonblick som en separat, icke-spelbar inspektionsägare. Den kan bara
+  göra samma läsande recyclerurval; den är inte giltig import, skriver ingen
+  cursor och kan inte öppna Resume. Själva
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: DB0/DB2
+  behöver fortfarande atomär cursor-, nollställnings-, append- och
+  checkcode-commit; DB4 och DB14 kräver därtill källtrogna delete/move-
+  callbacks för creature-, missile- och objectkedjor.
   Övriga avbrutna faser rapporterar uttryckligen att recycler saknas (`-1`)
   och får inte tolkas som ett DB0-krav.
   Den temporära c_map-ägaren kan nu infoga en verklig dynamisk ground-stack-
