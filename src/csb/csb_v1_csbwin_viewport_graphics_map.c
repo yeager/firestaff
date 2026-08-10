@@ -124,7 +124,9 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
         CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_OFFSET +
             sizeof(out_layout->door_frame_rectangles) > decoded_size ||
         CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET +
-            sizeof(out_layout->rectangles) > decoded_size) return 0;
+            sizeof(out_layout->rectangles) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_OFFSET +
+            sizeof(out_layout->floor_pit_rectangles) > decoded_size) return 0;
     memcpy(out_layout->door_rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_OFFSET,
            sizeof(out_layout->door_rectangles));
@@ -137,6 +139,9 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     memcpy(out_layout->rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET,
            sizeof(out_layout->rectangles));
+    memcpy(out_layout->floor_pit_rectangles,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_OFFSET,
+           sizeof(out_layout->floor_pit_rectangles));
     door_rectangles = &out_layout->door_rectangles[0][0];
     for (index = 0u; index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_FAMILY_COUNT *
             CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT; ++index) {
@@ -165,6 +170,15 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     for (index = 0u; index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++index) {
         if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
                 &out_layout->rectangles[index])) {
+            memset(out_layout, 0, sizeof(*out_layout));
+            return 0;
+        }
+    }
+    for (index = 0u;
+         index < CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_COUNT;
+         ++index) {
+        if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                &out_layout->floor_pit_rectangles[index])) {
             memset(out_layout, 0, sizeof(*out_layout));
             return 0;
         }

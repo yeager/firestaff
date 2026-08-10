@@ -250,6 +250,15 @@ static void check_real_viewport_wall_catalog(const char *path)
             free(pixels);
         }
     }
+    for (graphic_index = 49u; graphic_index <= 62u; ++graphic_index) {
+        pixels = NULL;
+        width = height = 0;
+        memset(&receipt, 0, sizeof(receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+            path, graphic_index, &pixels, &width, &height, &receipt));
+        CHECK(receipt.valid && pixels && width > 0 && height > 0);
+        free(pixels);
+    }
     for (wall_set = 0u; wall_set < 4u; ++wall_set) {
         int ceiling;
         for (ceiling = 0; ceiling <= 1; ++ceiling) {
@@ -315,6 +324,12 @@ static void check_real_viewport_projection_layout(const char *path)
         CHECK(rectangle_index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT);
         CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
             &layout.rectangles[rectangle_index]));
+    }
+    for (wall = 0u;
+         wall < CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_COUNT;
+         ++wall) {
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.floor_pit_rectangles[wall]));
     }
 }
 

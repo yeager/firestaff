@@ -3524,6 +3524,35 @@ done:
     return ok;
 }
 
+/* CSBWin Viewport.cpp StdDrawF3..F0Pit selects these source graphic records
+ * and Data.h FloorPitRect[12] directly.  No PC34 material enters this path. */
+static int m11_csb_atari_st_pit_material(
+    CSB_V1_CSBWinViewportWall wall, int pit_open,
+    uint16_t *out_graphic, int *out_mirrored, uint8_t *out_rect)
+{
+    static const struct {
+        uint8_t rect, closed_graphic, open_graphic, mirrored;
+    } source[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+        { UINT8_MAX, 0, 0, 0 }, { 11, 49, 49, 0 }, { 10, 0, 50, 0 },
+        { 9, 49, 49, 1 }, { UINT8_MAX, 0, 0, 0 }, { 8, 51, 57, 0 },
+        { 7, 52, 58, 0 }, { 6, 51, 57, 1 }, { 5, 53, 59, 0 },
+        { 4, 54, 60, 0 }, { 3, 53, 59, 1 }, { 2, 55, 61, 0 },
+        { 1, 56, 62, 0 }, { 0, 55, 61, 1 }
+    };
+    unsigned int index = (unsigned int)wall;
+    uint8_t graphic;
+
+    if (!out_graphic || !out_mirrored || !out_rect ||
+        index >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT ||
+        source[index].rect == UINT8_MAX) return 0;
+    graphic = pit_open ? source[index].open_graphic : source[index].closed_graphic;
+    if (graphic == 0u) return 0; /* closed far pit is the already-drawn floor */
+    *out_graphic = graphic;
+    *out_mirrored = source[index].mirrored != 0u;
+    *out_rect = source[index].rect;
+    return 1;
+}
+
 /* CSBWin's Viewport.cpp::FloorAndCeilingOnly builds a 224x136 packed page:
  * 29 rows ceiling, 37 rows black and 70 rows floor.  The active decoder
  * yields the same source pixels as indexed bytes, so re-pack them through
@@ -3618,15 +3647,30 @@ static int m11_csb_present_atari_st_runtime_viewport(
         size_t packed_size = 0u;
         CSB_V1_CSBWinPlanarBitmap packed_wall;
         int square_type;
+        int raw_square;
 
         if ((unsigned)draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT ||
             draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F0) {
             return 0;
         }
-        square_type = csb_v1_dungeon_f0153_get_relative_square_type_pc34(
+        raw_square = csb_v1_dungeon_f0152_get_relative_square_pc34(
             dungeon, profile->runtime.current_level, profile->runtime.party_dir,
             wall_locations[draw->wall].forward, wall_locations[draw->wall].right,
             profile->runtime.party_x, profile->runtime.party_y);
+        square_type = raw_square < 0 ? -1 : (raw_square >> 5) & 0x07;
+        if (square_type == 2) { /* roomPIT */
+            uint16_t graphic;
+            uint8_t rect;
+            int mirrored;
+
+            if (m11_csb_atari_st_pit_material(
+                    draw->wall, (raw_square & 0x08) != 0,
+                    &graphic, &mirrored, &rect) &&
+                !m11_csb_blit_atari_st_viewport_graphic(
+                    state, graphic, mirrored, &layout.floor_pit_rectangles[rect],
+                    viewport, VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            continue;
+        }
         if (square_type == 4) {
             CSB_V1_CSBWinDoorPanelFamily family;
             CSB_V1_CSBWinDoorFramePlan door_plan;

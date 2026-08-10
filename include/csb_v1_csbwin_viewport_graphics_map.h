@@ -55,6 +55,8 @@ typedef enum {
 #define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_OFFSET 4108u
 #define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_COUNT 8u
 #define CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET 4172u
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_OFFSET 4364u
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_COUNT 12u
 
 typedef struct {
     uint8_t x1;
@@ -82,6 +84,9 @@ typedef struct {
         CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_COUNT];
     CSB_V1_CSBWinViewportProjectionRectangle rectangles[
         CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT];
+    /* CSBWin Data.h FloorPitRect[12], ordered F0R1 through F3L1. */
+    CSB_V1_CSBWinViewportProjectionRectangle floor_pit_rectangles[
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_PIT_RECTANGLE_COUNT];
 } CSB_V1_CSBWinViewportLayout022e;
 
 /* One source-owned TAG0088b2 wall command after Viewport.cpp has selected
