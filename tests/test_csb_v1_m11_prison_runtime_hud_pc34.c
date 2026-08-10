@@ -423,6 +423,21 @@ int main(void)
                           &view, 44, 14, M11_DM1_MOUSE_MASK_LEFT) ==
                       M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
                   "real Atari MINI.DAT uses the native C007 bar-graph input box");
+            /* Atari ST's G0447 additionally owns the complete C007 tile
+             * with the right button.  That route is distinct from the
+             * narrow left C007 bar and must not fall into M11's PC HUD
+             * compatibility geometry. ReDMCSB COMMAND.C:97-100. */
+            CHECK(M11_GameView_HandlePointerButton(
+                      &view, 0, 14, M11_DM1_MOUSE_MASK_RIGHT) ==
+                      M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
+                      M11_GameView_HandlePointerButton(
+                          &view, 0, 14, M11_DM1_MOUSE_MASK_RIGHT) ==
+                      M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+                  "real Atari MINI.DAT uses the native right-button C007 tile");
+            CHECK(M11_GameView_HandlePointerButton(
+                      &view, 67, 14, M11_DM1_MOUSE_MASK_RIGHT) ==
+                      M11_GAME_INPUT_IGNORED && !view.inventoryPanelActive,
+                  "real Atari MINI.DAT keeps the C007 right-button gap inert");
             CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
                       M11_GAME_INPUT_REDRAW && view.spellPanelOpen &&
                       M11_GameView_HandleInput(

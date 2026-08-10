@@ -30341,7 +30341,7 @@ static int m11_csb_atari_st_top_row_pointer(
 
     if (out_result) *out_result = M11_GAME_INPUT_IGNORED;
     if (!state || !out_result || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 || y < 0 || y > 28) {
+        y < 0 || y > 28) {
         return 0;
     }
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
@@ -30349,22 +30349,37 @@ static int m11_csb_atari_st_top_row_pointer(
                      profile->variant_id != CSB_V1_VARIANT_ST21_EN)) {
         return 0;
     }
-    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        if (x >= status_left[slot] && x <= status_left[slot] + 42) {
-            *out_result = m11_set_active_champion(state, slot)
-                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            if (x >= status_left[slot] && x <= status_left[slot] + 42) {
+                *out_result = m11_set_active_champion(state, slot)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+                return 1;
+            }
+            if (x >= bar_left[slot] && x <= bar_left[slot] + 22) {
+                *out_result = m11_toggle_champion_inventory(state, slot);
+                return 1;
+            }
+        }
+        /* The four one-pixel seams are deliberately inert. */
+        if (x == 43 || x == 112 || x == 181 || x == 250 ||
+            x == 67 || x == 68 || x == 136 || x == 137 ||
+            x == 205 || x == 206 || x == 274) {
             return 1;
         }
-        if (x >= bar_left[slot] && x <= bar_left[slot] + 22) {
-            *out_result = m11_toggle_champion_inventory(state, slot);
-            return 1;
+    } else if ((button_mask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
+        /* ReDMCSB COMMAND.C G0447:97-100 (MEDIA413): Atari ST 2.x
+         * installs a second C007..C010 set for the right button.  Unlike
+         * the left bar-graph strips, each source rectangle spans its whole
+         * 67-pixel champion tile.  This is not the generic PC HUD route:
+         * its boundaries intentionally retain the ST's two-pixel gaps. */
+        for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+            if (x >= status_left[slot] && x <= status_left[slot] + 66) {
+                *out_result = m11_toggle_champion_inventory(state, slot);
+                return 1;
+            }
         }
-    }
-    /* The four one-pixel seams are deliberately inert. */
-    if (x == 43 || x == 112 || x == 181 || x == 250 ||
-        x == 67 || x == 68 || x == 136 || x == 137 ||
-        x == 205 || x == 206 || x == 274) {
-        return 1;
+        if (x >= 274 && x <= 319) return 1;
     }
     return 0;
 }
