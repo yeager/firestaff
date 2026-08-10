@@ -387,6 +387,23 @@ int dm1_v1_front_mirror_render_plan_pc34(
     outPlan->ornament.graphicIndex =
         dm1_v1_graphic_endgame_champion_mirror_pc34();
 
+    /* The generic wall-ornament plan clears the palette map for D1/D0
+     * viewWallIndex on the reasoning that D1/D0 uses the native C10 ornament
+     * pixels without a G0198/G0199 D3/D2 derived-bitmap remap.  That is
+     * correct for real torch-holder ornaments -- forcing a D2 palette there
+     * would black out valid color slots.  The C346 champion-mirror route is
+     * a distinct DUNVIEW.C F0791 consumer: its 48x43 raster is authored
+     * against the D2-derived palette on the source side (the ornament's
+     * "brown" frame is source color 5, "Dark Brown", and only becomes brown
+     * (index 3) after the D2 remap `5->3`; the mirror-glass shine at source
+     * color 15 becomes index 13; and the source color-3 brown highlights
+     * pass through unchanged).  Skipping the remap leaves the top-frame row
+     * as color 5, so the probe sees zero brown pixels along the top and
+     * roughly half the expected brown count in the ring.  Apply the D2
+     * palette specifically for the champion-mirror override. */
+    copy_palette(outPlan->ornament.paletteMap, s_wallOrnamentPaletteD2);
+    outPlan->ornament.paletteMapValid = 1;
+
     /* ReDMCSB DUNGEON.C:2608-2612 stores C127 sensorData as G0289.
      * DUNVIEW.C:3913-3928 sends C346 through F0791: its native 48x43
      * raster goes into G0205's 64x43 D1C zone before C026 at G0109. */
