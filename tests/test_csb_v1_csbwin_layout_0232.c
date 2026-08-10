@@ -157,6 +157,47 @@ static void check_real_floor_decorations(const char *graphics_path,
     csb_v1_dungeon_free(&dungeon);
 }
 
+static void check_real_false_wall_material(const char *dungeon_path)
+{
+    CSB_V1_DungeonData dungeon;
+    int level;
+    int hidden_count = 0;
+
+    if (!dungeon_path || !dungeon_path[0]) return;
+    memset(&dungeon, 0, sizeof(dungeon));
+    CHECK(csb_v1_dungeon_load_from_file(&dungeon, dungeon_path) == 0);
+    if (dungeon.square_bytes != 1) {
+        csb_v1_dungeon_free(&dungeon);
+        return;
+    }
+    for (level = 0; level < dungeon.level_count; ++level) {
+        int x;
+        for (x = 0; x < dungeon.level_widths[level]; ++x) {
+            int y;
+            for (y = 0; y < dungeon.level_heights[level]; ++y) {
+                int raw = csb_v1_dungeon_f0151_get_square_pc34(
+                    &dungeon, level, x, y);
+                if (raw < 0 || ((unsigned int)raw >> 5) != 6u) continue;
+                if ((raw & 0x04) == 0) {
+                    ++hidden_count;
+                    CHECK(csb_v1_csbwin_viewport_square_uses_stone_material(
+                        (uint8_t)raw));
+                } else {
+                    CHECK(!csb_v1_csbwin_viewport_square_uses_stone_material(
+                        (uint8_t)raw));
+                }
+            }
+        }
+    }
+    /* The supplied original ST dungeon contains hidden false walls. Its
+     * initial-state bytes need not contain a revealed one: that state is a
+     * timer/DSA mutation, so pin its documented byte form directly rather
+     * than manufacture a save file. */
+    CHECK(hidden_count > 0);
+    CHECK(!csb_v1_csbwin_viewport_square_uses_stone_material(0xc4u));
+    csb_v1_dungeon_free(&dungeon);
+}
+
 static int resolve_test_hud_source(void *user_data, uint16_t graphic_index,
                                    const uint8_t **out_pixels,
                                    int *out_width, int *out_height)
@@ -1025,6 +1066,7 @@ int main(void)
     check_real_viewport_planar_roundtrip(real_graphics_dat);
     check_real_teleporter_composition(real_graphics_dat);
     check_real_floor_decorations(real_graphics_dat, real_dungeon_dat);
+    check_real_false_wall_material(real_dungeon_dat);
     }
 
     if (failures) return 1;

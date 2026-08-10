@@ -3924,9 +3924,13 @@ static int m11_csb_present_atari_st_runtime_viewport(
             }
             continue;
         }
-        /* Viewport.cpp's DrawCellF* wall branch is entered only for
-         * roomSTONE. Every other room kind owns a different source command. */
-        if (square_type != 0) continue;
+        /* CSBWin Codea59a.cpp::SummarizeRoomInfo routes an unrevealed
+         * roomFALSEWALL through SummarizeStoneRoom, so it uses this same
+         * static pWallBitmaps branch. A revealed false wall is roomOPEN;
+         * do not turn that state into a host wall. Every other room kind
+         * owns a different source command. */
+        if (!csb_v1_csbwin_viewport_square_uses_stone_material(
+                (uint8_t)raw_square)) continue;
         if (!m11_csb_install_runtime_source_graphic(state, draw->graphic_index)) {
             return 0;
         }
@@ -4868,6 +4872,7 @@ static int m11_csb_render_amiga_runtime_viewport(const M11_GameViewState *state,
 {
     CSB_V1_ViewportRuntimeDrawerBinding binding;
     CSB_V1_ViewportRuntimeDrawCounts counts;
+    M11_CSB_RuntimeSpriteContext sprite_context;
     unsigned char *candidate;
     size_t byte_count;
 
@@ -4880,6 +4885,34 @@ static int m11_csb_render_amiga_runtime_viewport(const M11_GameViewState *state,
     if (!(candidate = (unsigned char *)malloc(byte_count))) return 0;
     memcpy(candidate, framebuffer, byte_count);
     memset(&binding, 0, sizeof(binding));
+    /* ReDMCSB DUNVIEW.C F0115 is shared by the A31/A35 MEDIA720 game
+     * route.  The former Amiga transaction supplied only F0098/F0107/F0111
+     * source graphics, which left objects, groups, projectiles and
+     * explosions without their source-bound draw callbacks.  DEFS.H's
+     * MEDIA720 layout keeps the exact v3 families at M613=454, M614=486,
+     * M612=498 and M618=584; the callbacks below therefore decode the
+     * authenticated Amiga DMCSB2 records via this state's loader.  They do
+     * not borrow a PC34 graphic or permit the viewport marker fallback. */
+    sprite_context.state = state;
+    sprite_context.framebuffer_width = framebuffer_width;
+    sprite_context.framebuffer_height = framebuffer_height;
+    binding.projectile_sprite_drawer =
+        m11_csb_viewport_projectile_sprite_drawer;
+    binding.projectile_sprite_user = &sprite_context;
+    binding.projectile_sprite_drawer_source_bound = 1;
+    binding.projectile_object_sprite_drawer =
+        m11_csb_viewport_projectile_object_sprite_drawer;
+    binding.projectile_object_sprite_user = &sprite_context;
+    binding.explosion_sprite_drawer = m11_csb_viewport_explosion_sprite_drawer;
+    binding.explosion_sprite_user = &sprite_context;
+    binding.object_sprite_drawer = m11_csb_viewport_object_sprite_drawer;
+    binding.object_sprite_user = &sprite_context;
+    binding.object_sprite_drawer_source_bound = 1;
+    binding.object_icon_drawer = m11_csb_viewport_object_icon_drawer;
+    binding.object_icon_user = &sprite_context;
+    binding.group_sprite_drawer = m11_csb_viewport_group_sprite_drawer;
+    binding.group_sprite_user = &sprite_context;
+    binding.group_sprite_drawer_source_bound = 1;
     binding.real_graphics_session = 1;
     binding.graphic_provider_callback = m11_csb_amiga_viewport_graphic_provider;
     binding.graphic_provider_user_data = (void *)state;

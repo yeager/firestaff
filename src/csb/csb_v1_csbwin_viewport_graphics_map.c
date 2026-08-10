@@ -65,6 +65,17 @@ int csb_v1_csbwin_viewport_door_is_facing(uint8_t raw_square,
         (unsigned int)(party_direction & 1);
 }
 
+int csb_v1_csbwin_viewport_square_uses_stone_material(uint8_t raw_square)
+{
+    const unsigned int room_type = (raw_square >> 5) & 0x07u;
+
+    /* CSBWin Codea59a.cpp::SummarizeRoomInfo case roomFALSEWALL: when
+     * bit 0x04 is clear it calls SummarizeStoneRoom(..., true), whose
+     * graphicRoomType is gRoomSTONE. When the bit is set it becomes
+     * roomOPEN instead. Do not collapse the latter to a host wall. */
+    return room_type == 0u || (room_type == 6u && (raw_square & 0x04u) == 0u);
+}
+
 int csb_v1_csbwin_viewport_wall_source(
     uint16_t wall_set, CSB_V1_CSBWinViewportWall wall,
     uint16_t *out_graphic_index, int *out_mirrored)

@@ -292,6 +292,14 @@ int csb_v1_csbwin_door_panel_graphic_index(uint16_t door_set,
 int csb_v1_csbwin_viewport_door_is_facing(uint8_t raw_square,
                                            int party_direction);
 
+/* CSBWin Codea59a.cpp::SummarizeRoomInfo maps an un-revealed FALSEWALL
+ * (room type 6, visibility bit 0x04 clear) through SummarizeStoneRoom.
+ * It therefore owns exactly the same static pWallBitmaps material as a
+ * stone cell.  A revealed false wall becomes roomOPEN and must not borrow a
+ * wall bitmap.  This is deliberately only the non-random stone-material
+ * decision; decorations and room contents remain their own source passes. */
+int csb_v1_csbwin_viewport_square_uses_stone_material(uint8_t raw_square);
+
 /* Resolves the GRAPHICS.DAT wall slot and whether CSBWin's `MakeMirror`
  * must reflect it before its native viewport projection. */
 int csb_v1_csbwin_viewport_wall_source(uint16_t wall_set,
