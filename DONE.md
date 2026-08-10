@@ -12101,6 +12101,21 @@ rendering remain blocked.
   konsument och `$2600`-handoff; RNG, creature-AI, loot, T700 och T900 är
   därför fortsatt fail-closed.
 
+# Theron: real Track 02 monster/object loader verification (2026-08-10)
+
+- ✅ `test_theron_v1_track02_dungeon_loader` kördes mot den autentiska US
+  Track 02-binären och passerade för alla sju dungeons. Testet rapporterar
+  165 riktiga kategori-4 monsterrecords och 46 riktiga monster-generator-
+  records över questblocket.
+- ✅ Produktionsbron materialiserar de statiska monstergrupperna som live-
+  creatures med källtyp, gruppantal, cellbyte, HP, source-ref och dungeon/
+  level-identitet. Loader-testet verifierar dessutom att inga records tappas
+  vid dungeonbyte och att JP-layouten inte feltolkas som US.
+- 🔒 Detta öppnar endast den statiska record→live-creature-kedjan. Dynamisk
+  `$B0E5`-RNG, AI/attack/skada, generator-timing, T700 och T900 loot/inventory
+  är fortsatt stängda tills deras autentiserade runtime-konsumenter är
+  fångade i samma spelkörning.
+
 # 2026-08-09 — Nexus J/J startup provenance witness
 
 - Verified an external-disk Saturn J BIOS 1.01 plus J-regionerad English Nexus disc capture.
