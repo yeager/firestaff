@@ -49,6 +49,12 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
 int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
                                          int bat_word);
 
+/* Return non-zero only after an authenticated VCE snapshot has been loaded
+ * and the admitted BAT window has bound its palette-group bits to that
+ * snapshot.  This receipt covers screen-space hardware binding only. */
+int theron_v1_vram_trace_palette_relation_verified(
+    const Theron_V1_Viewport *vp);
+
 /* Draw an explicitly requested raw BAT window using the authenticated atlas
  * entries.  The coordinates are VDC tile-preview coordinates, not dungeon
  * squares; no world or object state is consulted.  Returns the number of

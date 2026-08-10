@@ -136,6 +136,10 @@ static void test_populate_tiles(void) {
 
     int loaded = theron_v1_vram_trace_populate_tiles(&vp, 0, 3, 1);
     assert(loaded == 3);
+    assert(theron_v1_vram_trace_palette_relation_verified(&vp));
+    assert(vp.bat_palette_group_mask == (uint16_t)((1u << 3) |
+                                                   (1u << 4) |
+                                                   (1u << 5)));
     assert(vp.palette.tile_count == 3);
     assert(vp.palette.tiles[0].vram_index == 0);
     assert(vp.palette.tiles[0].pal_group == 3);

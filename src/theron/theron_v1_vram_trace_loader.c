@@ -65,6 +65,8 @@ int theron_v1_vram_trace_load_raw(Theron_V1_Viewport *vp,
 
     for (int i = 0; i < 2048; ++i)
         vp->bat_atlas_indices[i] = -1;
+    vp->vce_palette_relation_verified = 0;
+    vp->bat_palette_group_mask = 0;
 
     tqr_palette_load_group(&vp->palette, vce_data, 0, 512);
 
@@ -152,7 +154,9 @@ int theron_v1_vram_trace_load_known_capture_files(
         {0x5c830cc2u, 0x6fb303b5u},
         {0x4f15b98cu, 0x71cc9b11u},
         {0x8ae1e419u, 0x4e48c361u},
-        {0x1a37c99bu, 0x71cc9b11u}
+        {0x1a37c99bu, 0x71cc9b11u},
+        /* 2026-08-09 authenticated active-dungeon screen capture. */
+        {0x105dcffbu, 0xea83f117u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;
@@ -216,6 +220,8 @@ void theron_v1_vram_trace_unload(Theron_V1_Viewport *vp) {
     vp->vram_trace_data = NULL;
     vp->vce_trace_data = NULL;
     vp->vram_trace_loaded = 0;
+    vp->vce_palette_relation_verified = 0;
+    vp->bat_palette_group_mask = 0;
     for (int i = 0; i < 2048; ++i)
         vp->bat_atlas_indices[i] = -1;
     tqr_palette_free_tiles(&vp->palette);
@@ -258,6 +264,7 @@ static int theron_v1_vram_trace_populate_tiles_with_base(
         vp->bat_atlas_indices[i] = -1;
 
     int loaded = 0;
+    uint16_t palette_group_mask = 0;
     for (int y = 0; y < bat_h; ++y) {
         for (int x = 0; x < bat_w; ++x) {
             int bat_word = bat_start_word + y * 64 + x;
@@ -282,11 +289,34 @@ static int theron_v1_vram_trace_populate_tiles_with_base(
             atlas_index = tqr_tile_load_from_data(
                 &vp->palette, vram + off, 4, pal_group, "vram_trace");
             if (atlas_index < 0) return -1;
+            palette_group_mask |= (uint16_t)(1u << pal_group);
             vp->palette.tiles[atlas_index].vram_index = (uint16_t)tile_index;
             tile_map[tile_index][pal_group] = atlas_index;
             vp->bat_atlas_indices[bat_word] = (int16_t)atlas_index;
             ++loaded;
         }
+    }
+
+    /* The VCE snapshot is the exact source of the 16-entry groups selected
+     * by the BAT words above.  Recheck the native little-endian words before
+     * publishing the relation so a future caller cannot accidentally treat
+     * a decoded tile atlas with an unrelated palette as source-bound. */
+    if (loaded > 0 && vp->vce_trace_data) {
+        int relation_ok = 1;
+        for (int group = 0; group < TQR_PALETTE_GROUPS && relation_ok; ++group) {
+            if ((palette_group_mask & (uint16_t)(1u << group)) == 0) continue;
+            for (int color = 0; color < TQR_PALETTE_GROUP_SIZE; ++color) {
+                int entry = group * TQR_PALETTE_GROUP_SIZE + color;
+                uint16_t native = (uint16_t)vp->vce_trace_data[entry * 2] |
+                                   ((uint16_t)vp->vce_trace_data[entry * 2 + 1] << 8);
+                if (vp->palette.entries[entry].bgr333 != native) {
+                    relation_ok = 0;
+                    break;
+                }
+            }
+        }
+        vp->bat_palette_group_mask = palette_group_mask;
+        vp->vce_palette_relation_verified = relation_ok;
     }
 
     return loaded;
@@ -312,6 +342,13 @@ int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
     if (!vp || !vp->vram_trace_loaded || bat_word < 0 || bat_word >= 2048)
         return -1;
     return vp->bat_atlas_indices[bat_word];
+}
+
+int theron_v1_vram_trace_palette_relation_verified(
+    const Theron_V1_Viewport *vp) {
+    return vp && vp->vram_trace_loaded &&
+           vp->vce_palette_relation_verified &&
+           vp->bat_palette_group_mask != 0;
 }
 
 int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,

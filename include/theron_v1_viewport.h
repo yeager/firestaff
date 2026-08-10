@@ -102,6 +102,11 @@ typedef struct {
      * index, or -1 when that BAT cell was not admitted.  This is a source
      * receipt only; it is not a dungeon-square/material mapping. */
     int16_t               bat_atlas_indices[2048];
+    /* Source-bound relation between admitted BAT palette-group bits and the
+     * authenticated VCE snapshot.  This is a hardware-screen binding only;
+     * it is not a dungeon-square, perspective, HUD, or object mapping. */
+    int                  vce_palette_relation_verified;
+    uint16_t             bat_palette_group_mask;
 } Theron_V1_Viewport;
 
 /* ── Camera / party view state ──────────────────────────────────── */

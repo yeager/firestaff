@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — authenticated BAT→VCE palette relation receipt
+
+- ✅ The real VDC/VCE snapshot loader now publishes an explicit
+  `vce_palette_relation_verified` receipt after decoding source BAT words and
+  4bpp tile bytes. It rechecks every admitted BAT palette group against the
+  native little-endian BGR333 words in the authenticated VCE snapshot.
+- ✅ The receipt records the observed BAT palette-group mask and is covered by
+  `test_theron_v1_vram_trace_loader`.
+- 🔒 This is screen-space hardware binding only. It does not authorize
+  dungeon-square mapping, perspective, HUD/object ownership, RNG, AI, T700 or
+  T900 semantics.
+
 ## 2026-08-10 — authenticated File-select/dungeon replay receipt
 
 - ✅ Extern capture med komplett US CUE, `Run → Button I` och verklig rörelse

@@ -100,7 +100,8 @@ int main(void) {
     vce_nonzero = nonzero_bytes(viewport.vce_trace_data, THERON_VCE_SIZE);
     loaded = theron_v1_vram_trace_populate_tiles(&viewport, 0, 64, 32);
     if (vram_nonzero == 0u || vce_nonzero == 0u || loaded <= 0 ||
-        viewport.palette.tile_count <= 0) {
+        viewport.palette.tile_count <= 0 ||
+        !theron_v1_vram_trace_palette_relation_verified(&viewport)) {
         fprintf(stderr, "FAIL: authentic snapshot contains no usable BAT/tile binding\n");
         theron_vp_free(&viewport);
         return 1;

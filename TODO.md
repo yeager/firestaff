@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+# Theron: BAT→VCE relation bound; square mapping remains open (2026-08-10)
+
+- ✅ Authenticated VRAM/VCE replay now verifies BAT palette-group bits against
+  the exact native VCE snapshot after real tile decoding.
+- 🔒 Screen-space palette binding does not prove dungeon-square, perspective,
+  HUD/object, creature, RNG, T700 or T900 consumers.
+
 # Theron: File-select replay remains pre-spawn (2026-08-10)
 
 - ✅ Komplett US Track 02-replay med `Run → Button I → rörelse` gav 28

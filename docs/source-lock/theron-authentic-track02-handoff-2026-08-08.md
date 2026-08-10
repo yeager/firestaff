@@ -20,6 +20,19 @@ art and not a Firestaff renderer frame.
 
 ## Positive evidence
 
+The authenticated VDC/VCE replay path also has a narrow palette receipt:
+after the real BAT window is decoded into 4bpp tiles, each BAT-selected
+palette group is compared byte-for-byte with the corresponding native
+little-endian BGR333 words in the same authenticated VCE snapshot. This binds
+the screen-space tile pixels to their source palette. It still does not bind
+those cells to dungeon squares, perspective, HUD/object records, or gameplay
+semantics.
+
+The newly admitted active-dungeon screen pair is recorded by complete-file
+FNV-1a identities `VRAM=105dcffb` and `VCE=ea83f117`. The raw pair remains on
+the external disk; only its identity is tracked here. Its admission is still
+screen-space-only and does not authorize square-to-tile or gameplay rules.
+
 The host event path received a real macOS Return key pair (`SDL scancode 40`),
 Mednafen exposed the configured PCE Run bit as `raw=0008`, and the CD trace
 recorded 56 SCSI reads and 175 raw-sector records. The first authenticated

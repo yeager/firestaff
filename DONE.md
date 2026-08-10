@@ -7,6 +7,14 @@
 - ✅ Den negativa semantikreceipten är dokumenterad; inga härledda gameplayregler
   aktiverades.
 
+# Theron: authenticated BAT→VCE palette relation receipt (2026-08-10)
+
+- ✅ The real VDC/VCE loader now records and verifies the BAT palette-group
+  mask against native little-endian BGR333 words from the same authenticated
+  VCE snapshot after 4bpp tile decoding.
+- ✅ `test_theron_v1_vram_trace_loader` covers the relation and its observed
+  group mask; world square/perspective and gameplay semantics remain gated.
+
 - ✅ M11:s DM1- och CSB-sparrutor erbjuder nu bara sparning, laddning,
   avslut och avbryt. De raderar inte längre en värdfil och kallar det
   diskformatering.

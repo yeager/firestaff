@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — BAT→VCE relation is bound; world mapping remains open
+
+- ✅ The authenticated VRAM/VCE loader now verifies BAT palette-group bits
+  against the exact VCE snapshot and exposes the relation receipt.
+- 🔒 The same evidence still does not identify which decoded screen-space BAT
+  cells belong to a dungeon square, depth/perspective slot, HUD element,
+  object, or creature. Those consumers remain source-capture gated.
+
 ## 2026-08-10 — File-select replay still lacks regular-spawn handoff
 
 - ✅ Kompletta `Run → Button I → rörelse`-replayen mot verklig US Track 02
