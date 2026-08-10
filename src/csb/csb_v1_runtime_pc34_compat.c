@@ -21743,6 +21743,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_CSBWinExtendedDSAReport dsa;
     CSB_V1_CSBWinExtendedTailReport tail;
     CSB_V1_CSBWinDungeonTailPrefix dungeon_tail;
+    CSB_V1_CSBWinDungeonTailDatabaseLayout dungeon_databases;
 
     CSB_V1_RuntimeProfile candidate;
     size_t core_offset = 0u;
@@ -21842,9 +21843,24 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         const uint8_t *dungeon_tail_bytes =
             bytes + core_offset + report.appended_offset;
         memset(&dungeon_tail, 0, sizeof(dungeon_tail));
+        memset(&dungeon_databases, 0, sizeof(dungeon_databases));
         if (csb_v1_csbwin_dungeon_tail_parse_prefix(
                 dungeon_tail_bytes, report.appended_size, features.flags,
                 &dungeon_tail) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
+            /* CSBWin SaveGame.cpp ReadDatabases() does not regard the
+             * checksum as sufficient: it reads every DB0..DB15 span and the
+             * cell-flag array before accepting the terminal word.  A legacy
+             * CSBGAME2 stream has no Extended Features block, hence '@'/0/0
+             * select the original DB3/DB7 widths and DUNGEONDATINDEX cell
+             * flag length.  Keep this validation read-only; the DB records
+             * are not yet a source-owned Firestaff world handoff. */
+            csb_v1_csbwin_dungeon_tail_parse_databases(
+                dungeon_tail_bytes, report.appended_size, &dungeon_tail,
+                features.valid ? features.version
+                               : CSB_V1_CSBWIN_LEGACY_FEATURE_VERSION,
+                features.valid ? features.flags : 0u,
+                features.valid ? features.cell_flag_array_size : 0u,
+                &dungeon_databases) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
             csb_v1_csbwin_dungeon_tail_validate_checksum(
                 dungeon_tail_bytes, report.appended_size, NULL, NULL) != 1) {
             free(bytes);
