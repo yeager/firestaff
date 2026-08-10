@@ -530,3 +530,8 @@ Alla konsumerar VDP1-texture `0x10a00`; `analyze_nexus_vdp1_command_source_join.
 är reproducerbar mot raw-capturen. Nästa krav är att fastställa hur
 `TM.BIN` producerar posterna och om `colr`-orden används som direct-colour
 metadata eller bara följer kommandoramen; ingen CLUT/palett får antas.
+2026-08-10: VDP2 PND-writer transport är verifierad: PC `0x0601184c`, källa
+`R3=0x0601121c`, destination `0x10000`, 64 ord byteexakt mot frame 350.
+Nästa textsteg är att binda den lästa källbufferten till FONT256.S2D:s
+verifierade Page/CG/palette-sektioner och till PNCN/CHCTLA-konsumenten; PND
+värden ensamma räcker inte för text- eller menyadmission.

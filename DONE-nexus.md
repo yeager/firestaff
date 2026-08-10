@@ -5197,3 +5197,12 @@ direct-colour-payload på 2048 byte. Det nya verktyget
 samma 400-frame-capture. Detta stänger endast command→texture-framing;
 palette/CLUT-ägare, TM.BIN-transformens semantik och produktionsrendering är
 fortsatt separata gates.
+# ✅ 2026-08-10 Nexus VDP2 PND writer transport
+
+Frame 350:s autentiska VDP2-write trace visar att PC `0x0601184c` skriver
+PND-ord till `0x10000`; registervittnet har samtidigt `R3=0x0601121c` som
+källpekare. De första 64 writer-posterna matchar byteexakt VDP2-VRAM i samma
+frame efter capture-formatets native-little-endian ordning. Verktyget
+`scripts/analyze_nexus_vdp2_pnd_writer.py` verifierar detta mot samma
+400-frame witness. FONT256/text/palette-ägare och hostkomposition är inte
+identifierade av transportbeviset och förblir blockerade.
