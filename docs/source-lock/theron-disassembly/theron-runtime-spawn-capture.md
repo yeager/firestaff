@@ -746,3 +746,13 @@ zero `$C96B/$CC4C` RNG windows, zero spawn-consumer reads and zero target
 writes. The complete CUE therefore strengthens media/runtime transport
 coverage but does not bind a gameplay consumer. RNG, dynamic spawn, creature
 AI, combat, loot, generator timing, T700 and T900 remain fail-closed.
+
+## 2026-08-10 — autoload replay remains pre-gameplay
+
+En autentisk extern-disk-savestate replayades med 15 planerade PCE-händelser.
+Den gav ingen autentiserad CD→RAM-receipt och ingen spelägd spawn-konsument.
+De 50 `$B0E5`-adresshittarna hade alla A=`$2C`/`$85`, alltså inte en giltig
+regular-spawn-kategori `0..3`. `$4644`, `$4667`, giltiga spawn-samples,
+RNG-fönster och target writes var noll. Därför öppnas ingen RNG-, AI-,
+combat-, loot-, generator-, T700- eller T900-semantik. Rådata stannade på
+extern disk och Mednafen stängdes efter den avgränsade körningen.

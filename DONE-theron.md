@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — autoload replay remains pre-gameplay
+
+- Replayed an authentic external-disk US Track 02 savestate with the
+  instrumented Mednafen build. The run delivered 15 scripted PCE input events
+  but no authenticated CD→RAM receipt and no gameplay-owned spawn consumer.
+- The trace contained 50 `$B0E5` address hits, all with A=`$2C`/`$85` rather
+  than a valid regular-spawn category `0..3`; `$4644`, `$4667`, valid spawn
+  samples, RNG windows and target writes were all zero.
+- No RNG, creature AI, combat, loot, generator, T700 or T900 semantics were
+  promoted. The raw trace stayed on the external disk and Mednafen was closed
+  after the bounded run.
+
 ## 2026-08-11 — real seven-dungeon creature/object admission verified
 
 - ✅ `test_theron_v1_track02_dungeon_loader` passerar mot riktiga `TQUS02.bin`
