@@ -631,6 +631,36 @@ samma autentiserade session och binda returvärde, källrecord och konsument.
 
 Råtrace, BIOS, System Card, BIN/CUE och savestate ligger kvar utanför GitHub.
 
+## 2026-08-10 — corrected cold-start replay proves loader transport only
+
+En korrigerad extern-disk replay skickade en kort Run-puls efter BIOS i stället
+för att hålla Run aktiv genom hela uppstarten. Den autentiserade sessionen
+producerade 226 råsektorspann, 254 CD→RAM-originreceipts, 32 `$E009`-
+dispatchar och 11 verifierade frame-bundna PCE-inputevents. Den gav dessutom
+465 registerprover vid `$4644/$4667` i samma session.
+
+Detta är ett positivt loader-/transport-witness men inte ett gameplay-witness:
+`spawn_consumer_reads=0`, `spawn_entry_b0e5=0`,
+`rng_consumer_samples=0`, `target_reads=0`, `target_writes=0` och
+`helper_4667_special_branch_samples=0`. `$4644/$4667` får därför inte
+frikopplas från samma-sessionens saknade `$B0E5`/RNG-retur eller användas för
+att uppfinna monster, AI, attack/skada, loot, generator, T700 eller T900.
+Receipten finns på extern disk under
+`/Volumes/Extern-disk/theron-capture-20260810-replay2-goal.transition`.
+
+## 2026-08-10 — cold-start scripted replay stops before game-owned CD handoff
+
+En ny extern-disk capture kördes mot den autentiserade US-CUE:n med den
+instrumenterade Mednafen-binären och en frame-bunden plan med Run från frame 1,
+Button I/II och rörelse. Inputtrace:n verifierade 11 planerade PCE-händelser
+och 131072 inputtransaktioner. Körningen gav dock ingen autentiserad
+CD→RAM-originreceipt (`authenticated_cd_ram=0`, `raw_sector_spans=0`) och bara
+tre IRQ2-callbacks innan den bounded timeouten. Den är därför ett negativt
+transport-witness: den bevisar inte level/object-consumer, RNG-retur, spawn,
+creature-AI, attack/skada, loot, generator, T700 eller T900. Råtrace och
+snapshots finns endast på extern disk under
+`/Volumes/Extern-disk/theron-capture-20260810-replay-goal`.
+
 ## 2026-08-10 — source-bound VDC/VCE capture allow-list
 
 Produktionsvägen accepterar nu de kompletta snapshotpar som faktiskt har

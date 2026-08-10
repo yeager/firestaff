@@ -1,5 +1,33 @@
 # Firestaff TODO - Open Work
 
+## Theron: corrected cold-start replay proves loader transport, not gameplay ownership (2026-08-10)
+
+- ✅ En separat Run-puls efter BIOS-uppstart nådde en autentiserad Track 02-
+  handoff: 226 råsektorspann, 254 CD→RAM-originreceipts, 32 `$E009`-
+  dispatchar och 11 frame-bundna PCE-inputevents.
+- ✅ Samma session gav 465 registerprover runt `$4644/$4667`, vilket binder
+  den observerade preconsumer/helper-vägen till denna körning.
+- 🔒 Den gav fortfarande `spawn_consumer_reads=0`, `spawn_entry_b0e5=0`,
+  `rng_consumer_samples=0`, inga target reads/writes och ingen specialgren.
+  `$4644/$4667` får därför inte tolkas som RNG-retur, monsterrecord, spawn,
+  AI, loot, generator, T700 eller T900-semantik.
+- 🔒 Nästa witness måste nå `$B0E5` med giltig kategori och sedan visa samma
+  source-records konsumeras av spelkoden.
+
+## Theron: cold-start replay reaches no game-owned loader (2026-08-10)
+
+- ✅ En ny extern-disk replay mot den autentiserade US-CUE:n använde den
+  instrumenterade Mednafen-binären och en frame-bunden Run/Button I/rörelse-
+  plan. Inputtrace:n verifierar alla 11 planerade PCE-händelser och
+  131072 inputtransaktioner.
+- 🔒 Körningen stannade före en autentiserad CD→RAM-originreceipt
+  (`authenticated_cd_ram=0`, `raw_sector_spans=0`, `irq2=3`) och gav ingen
+  valid transition. Därför öppnas ingen RNG-, spawn-, creature-, AI-, loot-,
+  generator-, T700- eller T900-semantik från denna replay.
+- 🔒 Nästa positiva witness måste fortfarande börja i en verklig spelägad
+  dungeon-/objekt-/monsteraktion och binda CD/FIFO→RAM, originalkonsument och
+  source-record i samma session. Replayns råtrace ligger kvar på extern disk.
+
 ## Theron: launch receipt boundary corrected (2026-08-10)
 
 - ✅ A media-ready launch now advertises only the authenticated bitmap/capture
