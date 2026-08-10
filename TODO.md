@@ -763,6 +763,9 @@
   Den gamla callbackbaserade ”lägst importance”-studien är borttagen; den
   ersatte felaktigt originalets karta- och recordkedjetraversering och får
   inte återinföras som allocatorfallback.
+  Samma gäller de äldre fria-lista-studierna för `ALLOC_NEW_RECORD` och
+  `DEALLOC_RECORD`: de hade ingen källägd recycler-, karta- eller
+  recordkedjeägare och är borttagna i stället för att bli Resume-kod.
   Alla tre kräver fortfarande samma kompletta recyclerägare: tvåpass-
   karttraversering, skyddad karta, statiska varelsers possessions, cursor,
   c_map och respektive mutation innan en allokering får publiceras.

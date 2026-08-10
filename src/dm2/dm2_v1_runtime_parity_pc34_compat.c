@@ -437,51 +437,6 @@ void dm2_v1_set_item_importance(
     rec[1] = (uint8_t)(importance & 0xFF);
 }
 
-/* c_record.cpp:1076 — DM2_ALLOC_NEW_RECORD */
-
-int16_t dm2_v1_alloc_new_record(
-    int16_t db_type,
-    const DM2_V1_AllocRecordCallbacks *cb, void *ctx)
-{
-    if (!cb || db_type < 0 || db_type > 15)
-        return -1;
-    if (cb->db_counts[db_type] >= cb->db_max[db_type]) {
-        if (cb->raise_syserr)
-            cb->raise_syserr(ctx, 0x2E);
-        return -1;
-    }
-    int16_t slot = cb->free_list[db_type];
-    if (slot < 0)
-        return -1;
-    uint8_t *rec = cb->get_record_address(ctx, (uint16_t)((db_type << 10) | slot));
-    if (!rec)
-        return -1;
-    /* Next free is stored in word+0 */
-    cb->free_list[db_type] = (int16_t)(rec[0] | (rec[1] << 8));
-    memset(rec, 0, 8); /* clear the record */
-    cb->db_counts[db_type]++;
-    return (int16_t)((db_type << 10) | slot);
-}
-
-/* c_record.cpp:1205 — DM2_DEALLOC_RECORD */
-
-void dm2_v1_dealloc_record(
-    int16_t record_word,
-    const DM2_V1_AllocRecordCallbacks *cb, void *ctx)
-{
-    if (!cb || record_word == -1)
-        return;
-    int16_t db_type = (int16_t)(((uint16_t)record_word & 0x3C00) >> 10);
-    int16_t slot = (int16_t)((uint16_t)record_word & 0x03FF);
-    uint8_t *rec = cb->get_record_address(ctx, (uint16_t)record_word);
-    if (!rec)
-        return;
-    rec[0] = (uint8_t)(cb->free_list[db_type] & 0xFF);
-    rec[1] = (uint8_t)(cb->free_list[db_type] >> 8);
-    cb->free_list[db_type] = slot;
-    cb->db_counts[db_type]--;
-}
-
 /* c_record.cpp:1142 — DM2_ALLOC_NEW_DBITEM
  * Superseded by dm2_v1_dbitem_alloc_pc34_compat.c */
 

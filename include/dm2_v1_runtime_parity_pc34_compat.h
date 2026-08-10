@@ -118,22 +118,6 @@ void dm2_v1_set_item_importance(
     const DM2_V1_SetImportanceCallbacks *cb, void *ctx);
 
 typedef struct {
-    int16_t *db_counts;       /* per-DB-type allocated count */
-    int16_t *db_max;          /* per-DB-type max count */
-    int16_t *free_list;       /* per-DB-type free list head */
-    uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
-    void (*raise_syserr)(void *ctx, int code);
-} DM2_V1_AllocRecordCallbacks;
-
-int16_t dm2_v1_alloc_new_record(
-    int16_t db_type,
-    const DM2_V1_AllocRecordCallbacks *cb, void *ctx);
-
-void dm2_v1_dealloc_record(
-    int16_t record_word,
-    const DM2_V1_AllocRecordCallbacks *cb, void *ctx);
-
-typedef struct {
     int16_t (*alloc_new_record)(void *ctx, int16_t db_type);
     uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
     void (*copy_record)(void *ctx, uint16_t dst, uint16_t src);

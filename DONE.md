@@ -5,6 +5,9 @@
   recordkedjescanner. Enda kvarvarande vägen är den verkliga, läsande
   DB0-kandidaten i den privata SKSAVE-ägaren; den muterar inget och öppnar
   inte Resume.
+- ✅ DM2/SKSAVE: tog även bort callbackstudierna för `ALLOC_NEW_RECORD` och
+  `DEALLOC_RECORD`. Deras fria listor var inte originalets behållna
+  recordpool/recyclertransaktion och kunde därför inte användas för Resume.
 
 # Theron: authenticated File-select replay receipt (2026-08-10)
 
