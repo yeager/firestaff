@@ -1,3 +1,74 @@
+# Firestaff v3.0.309
+
+## DM1
+
+### Fixed
+
+- `DM1 runtime verification`: Fix source-locked HUD, damage-number,
+  collision, input-capture and presentation tests so they assert the current
+  source-owned runtime paths rather than obsolete fixture assumptions.
+
+## CSB
+
+### Changed
+
+- `CSB native platforms`: Continue the verified Amiga, Atari ST and FM Towns
+  routes with source-native viewport material, HUD interaction, action-menu
+  handling, formation controls and audio where the original platform data
+  provides a complete owner.
+- `CSB save safety`: Expand the private validation path for authentic CSBWin
+  legacy saves and retain verified Amiga and FM Towns source receipts. These
+  changes do not claim an unverified CSBWin world handoff or FM Towns save
+  writer.
+
+### Fixed
+
+- `CSB launcher`: Restore explicit Amiga release selection and the complete
+  runtime root for loose FM Towns CD installations.
+- `CSB Amiga`: Fix the native loader to use authenticated IMG1 records for door, stair, ornament,
+  floor-detail and viewport-overlay paths; native save recovery now preserves
+  its source identity and multilingual backup names.
+- `CSB Atari ST`: Correct source-backed static viewport material including
+  pits, stairs, doors, switches, false walls and floor decorations, and route
+  native champion controls through the original formation owner.
+- `CSB FM Towns`: Fix graphics dispatch to use the native IMG2 viewport stream and dispatch the
+  authenticated ANM PCM events. Dynamic overlays and mixer fades remain
+  unavailable until their platform-owned tables and mixer state are present.
+
+## DM2
+
+### Changed
+
+- `DM2 save and movement ownership`: Retain and validate source-owned
+  SKSAVE, movement, timer and query state through private candidate paths;
+  incomplete or synthetic legacy inputs remain rejected.
+
+## Nexus
+
+### Changed
+
+- `Nexus capture provenance`: Extend the verified Saturn capture chain across
+  VDP1, VDP2, SH-2 DMA, SCSP and palette data, including source offsets and
+  same-session ownership checks.
+
+## Theron's Quest
+
+### Changed
+
+- `Theron's Quest capture boundary`: Strengthen authenticated Track 02,
+  roster, input, palette and file-selection evidence while keeping incomplete
+  source routes closed instead of presenting fallback behavior.
+
+## Firestaff
+
+### Changed
+
+- `Save media`: Remove the host-side disk-format action. Original media is
+  formatted only by the original game or its emulator; Firestaff saves to the
+  configured path and never formats user media.
+- `CI`: Align DM2 source-gated probes with their runtime owners and retain
+  verified main-branch runs rather than cancelling them during rapid updates.
+
 # Firestaff v3.0.308
 
 ## DM2
