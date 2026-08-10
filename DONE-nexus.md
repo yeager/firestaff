@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus Saturn input-hook timing correction
+
+- The external Mednafen capture patch now applies the deterministic START
+  injection at `SMPC_StartFrame`, before Saturn port polling, rather than
+  after `IODevice::UpdateInput` or once per mid-frame input update.
+- The complete patch applies cleanly to the pinned Mednafen source and the
+  external Saturn-only build links with the verified M68K object.
+- A 1,200-frame J-BIOS 1.01 / English retail-disc run passes raw-envelope
+  validation and observes 1,033 non-idle VDP1 states, but its raw witness is
+  still semantically identical to the no-menu run. No MENU.BPK/FONT256 or
+  startup-to-menu admission is claimed.
+
 ## 2026-08-10 - Nexus VDP2 tilemap register-order correction
 
 - VDP2 NBG1-tilemap capture now preserves big-endian `TVMD=0x0080` register

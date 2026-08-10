@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-10: Mednafen START-injection timing is now source-corrected to run
+once at `SMPC_StartFrame` before Saturn `IODevice::UpdateInput` consumes the
+port bytes. The resulting 1,200-frame authentic J-BIOS/English-disc witness
+still has no semantic startup-to-menu transition: its raw bytes are
+bit-identical to the prior no-menu witness. Keep MENU.BPK, FONT256, VDP1
+owner, and production admission blocked; the next capture must prove a
+different source-owned runtime state rather than infer it from the input hook.
+
 2026-08-10: VDP2 NBG1 tilemap capture har korrigerad registerordning för
 legacy big-endian `TVMD=0x0080` och native little-endian witness. Detta stänger
 en decoder-lucka, men öppnar inte meny/HUD/viewport-produktion: source-map,
