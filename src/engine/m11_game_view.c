@@ -38990,8 +38990,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable || thingType < 0) return 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         csb_native_graphic =
-            csb_v1_viewport_f0115_first_object_native_graphic_pc34(
-                thingType, subtype);
+            csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
+                thingType, subtype, sourceZone);
         /* F0115 object aspects without an exact PC34 G0237 -> G0209 mapping
          * are not eligible for the shared DM1 item bank. A real CSB session
          * blocks them until their native composition family is source-locked. */

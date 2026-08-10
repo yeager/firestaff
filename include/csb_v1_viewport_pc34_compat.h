@@ -1715,6 +1715,14 @@ int csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit( int view_square, int us
 int csb_v1_viewport_f0115_object_native_graphic_pc34(
     int thingType, int subtype, int alcoveSlot);
 
+/* ReDMCSB DUNVIEW.C F0115:4854-4860 chooses the second native bitmap only
+ * for a C2548 alcove pass whose ObjectAspect GraphicInfo has MASK0x0010.
+ * Keep the source-zone decision beside the native G0209 -> M612 mapping so
+ * an M11 caller cannot accidentally render an alcove chest as its ordinary
+ * floor-object bitmap. */
+int csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
+    int thingType, int subtype, int sourceZone);
+
 int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
     int thingType, int subtype);
 

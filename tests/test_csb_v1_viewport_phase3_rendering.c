@@ -2107,6 +2107,19 @@ static void test_csb_f0115_native_object_graphic_mapping(void)
     check_int("csb.f0115.native.junk.subtype25",
               csb_v1_viewport_f0115_object_native_graphic_pc34(
                   THING_TYPE_JUNK, 25, 0), 575);
+    /* F0115:4802-4808 selects C2548 (not C2500) for the alcove pass, and
+     * F0115:4854-4860 increments a MASK0x0010 chest native bitmap.  This
+     * guards the M11 runtime binding: a real CSB chest in an alcove is G499,
+     * while the same chest on the floor is G498. */
+    check_int("csb.f0115.native.chest.floor_source_zone",
+              csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
+                  THING_TYPE_CONTAINER, 0, 2500), 498);
+    check_int("csb.f0115.native.chest.alcove_source_zone",
+              csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
+                  THING_TYPE_CONTAINER, 0, 2548), 499);
+    check_int("csb.f0115.native.scroll.alcove_source_zone",
+              csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
+                  THING_TYPE_SCROLL, 0, 2548), 500);
 }
 
 static void test_csb_f0115_object_blit_contracts(void)

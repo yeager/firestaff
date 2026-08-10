@@ -71,6 +71,19 @@ int csb_v1_viewport_f0115_object_native_graphic_pc34(
     }
 }
 
+int csb_v1_viewport_f0115_object_native_graphic_for_source_zone_pc34(
+    int thingType, int subtype, int sourceZone)
+{
+    /* ReDMCSB DUNVIEW.C F0115:4802-4808 selects G2029/C2548 for the
+     * alcove pass, then F0115:4854-4860 chooses the adjacent native bitmap
+     * only when the object aspect has MASK0x0010_ALCOVE.  The mapping above
+     * owns that aspect-specific decision (currently the chest family), so
+     * do not infer it from pile order or substitute a shared DM1 sprite. */
+    const int alcovePass = sourceZone >= 2548 && sourceZone < 2569;
+    return csb_v1_viewport_f0115_object_native_graphic_pc34(
+        thingType, subtype, alcovePass);
+}
+
 int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
     int thingType, int subtype)
 {
