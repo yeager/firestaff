@@ -64,9 +64,10 @@
   RNG-retur, spawn, AI, T700 och T900 får därför fortfarande inte publiceras.
 
 - ⏳ Den förlängda registerfångsten visar nu `$B0E5`/`$5D64` i en autentisk
-  save-state-körning och full CD→RAM-transport i en separat cold-start. De får
-  inte slås ihop: nästa witness måste visa source-owned dynamik och RNG-retur
-  i samma körning innan spawn/creature/AI/T700/T900 öppnas.
+  operator-sparad dungeon-state-körning. State-autoloadet har nu ett explicit
+  MD5-fält i transition-receiptet, men samma körning saknar fortfarande
+  source-owned RNG-retur och konsumentkedja; spawn/creature/AI/T700/T900 får
+  därför inte öppnas.
 
 - ⏳ Theron har nu en fail-closed tangentbordsgräns: F5/F9 skapar eller läser
   inte längre Firestaffs generiska DM-save mitt i en bana. Den autentiska

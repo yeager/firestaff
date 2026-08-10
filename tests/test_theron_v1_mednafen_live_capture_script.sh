@@ -355,6 +355,8 @@ if ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-k
 fi
 if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
    ! grep -Fq 'autoload_state_magic=$(dd if="$autoload_state" bs=1 count=4' "$script" ||
+   ! grep -Fq 'autoload_state_md5=$(md5_file "$autoload_state")' "$script" ||
+   ! grep -Fq 'autoload_state_md5=%s' "$script" ||
    ! grep -Fq 'points to HUBM SRAM, not a Mednafen savestate' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' "$script" ||

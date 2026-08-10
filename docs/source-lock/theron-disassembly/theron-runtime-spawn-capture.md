@@ -326,3 +326,37 @@ only as external-disk diagnostic provenance and is not tracked as game data.
 The sidecar limit is now mandatory and bounded to 512..65,536 samples. This
 prevents an unlabelled or unbounded diagnostic file from being mistaken for a
 complete execution witness; it does not relax any semantic gate.
+
+## 2026-08-10 — operator-created dungeon state, same-session spawn entry
+
+A real Mednafen session was advanced through the authentic US startup, level
+selection and dungeon entry using the hash-verified System Card and full US
+CUE. The original dungeon viewport was visibly reached, and Mednafen displayed
+`State 0 saved.` after the state was written. The existing state was backed up
+outside the repository before replacement; no BIOS, BIN/CUE member or savestate
+is tracked in GitHub.
+
+The state was then autoloaded by a fresh instrumented Mednafen process against
+the same full US CUE. Its transition receipt records:
+
+```text
+mednafen_binary_md5=92ee06fdc623703dacfb133d28e8a004
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+autoload_state_md5=f17f377df210b4a3ae904a13fb85a7f0
+host_key_events=22
+cd_irq_callbacks=1
+spawn_entry_b0e5_samples=50
+rng_consumer_samples=0
+rng_code_windows=0
+transition=missing
+```
+
+The `autoload_state_md5` is the MD5 of the operator-created local state used
+for this replay; it is provenance only, not game data committed to the
+repository. The measured fact that matters is the same-session `$B0E5` entry
+observation. The run did not produce a verified
+`$4644`/`$4667` return owner, `$5D64/$5D6A` RNG return, game-owned CD-sector
+consumer, monster record, object consumer or `$2600` consumer. Therefore RNG,
+creature, AI, attack, damage, loot, generator, T700 and T900 publication
+remain fail-closed.

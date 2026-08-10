@@ -12045,6 +12045,21 @@ rendering remain blocked.
   ingen game-owned return-/CD-join observerades; RNG/spawn/T700/T900 öppnas
   därför inte.
 
+# Theron: authentic dungeon-state autoload receipt (2026-08-10)
+
+- ✅ En riktig US-session kördes genom startup, nivåval och dungeon-rendering;
+  Mednafen visade `State 0 saved.` och state-filen säkerhetskopierades utanför
+  repot innan den ersattes.
+- ✅ Fresh state-autoload mot samma hashverifierade US CUE producerade 50
+  autentiska `$B0E5`-entry-observationer i samma körning som inputfokus och
+  originalets dungeon-state.
+- ✅ Capture-scriptet skriver nu `autoload_state_md5` i transition-receiptet,
+  vilket binder state-proveniens utan att lägga savestate, BIOS eller speldata
+  i GitHub.
+- 🔒 Körningen saknar fortfarande verifierad RNG-retur, monster/object-
+  konsument och `$2600`-handoff; RNG, creature-AI, loot, T700 och T900 är
+  därför fortsatt fail-closed.
+
 # 2026-08-09 — Nexus J/J startup provenance witness
 
 - Verified an external-disk Saturn J BIOS 1.01 plus J-regionerad English Nexus disc capture.

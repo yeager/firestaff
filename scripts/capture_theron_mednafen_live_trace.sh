@@ -354,6 +354,13 @@ if [[ -n "$autoload_state" ]]; then
         exit 1
     fi
 fi
+autoload_state_md5=none
+if [[ -n "$autoload_state" ]]; then
+    autoload_state_md5=$(md5_file "$autoload_state") || {
+        printf '%s\n' 'FAIL: could not hash the authentic Mednafen autoload state' >&2
+        exit 1
+    }
+fi
 if [[ -n "$autoload_movie" && ! -f "$autoload_movie" ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_MOVIE must name an existing Mednafen movie file' >&2
     exit 1
@@ -1155,6 +1162,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'track02_mode=%s\n' "$track02_mode"
     printf 'track02_md5=%s\n' "$track02_md5"
     printf 'system_card_md5=%s\n' "$system_card_md5"
+    printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'host_sdl_events=%s\n' "$transition_host_sdl_event_count"
