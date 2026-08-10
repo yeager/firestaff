@@ -62,6 +62,7 @@
  * Run: firestaff_dm1_v1_champion_mirror_ordinal_11_south_return_probe DATA_DIR
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -168,6 +169,7 @@ int main(int argc, char** argv) {
     static M11_GameViewState game; /* BSS, not stack: ~579KB */
     const M11_AssetSlot* portraits = NULL;
     const char* dataDir;
+    char narrowed[1024];
     int mapX = -1, mapY = -1, dir = -1;
     int found = 0;
     /* south_return route: direction the party faces when looking
@@ -192,6 +194,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {

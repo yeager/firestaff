@@ -22,6 +22,7 @@
  *   the visible G0425 slots and skipping empty entries, preserving order.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -214,6 +215,7 @@ static int rect_equal(const unsigned char* a,
 int main(int argc, char** argv)
 {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char reusedFb[PROBE_FB_W * PROBE_FB_H];
@@ -240,6 +242,7 @@ int main(int argc, char** argv)
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     memset(compacted, 0, sizeof(compacted));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);

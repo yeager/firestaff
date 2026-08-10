@@ -20,6 +20,7 @@
  *   x=56..71, y=13..28 to command 70.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -180,6 +181,7 @@ static int seed_records(M11_GameViewState* game,
 int main(int argc, char** argv)
 {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const unsigned short actionChestThing = thing_ref(THING_TYPE_CONTAINER, 0);
@@ -192,6 +194,7 @@ int main(int argc, char** argv)
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     for (i = 0; i < PROBE_CHAIN_COUNT; ++i) {
         actionItems[i] = thing_ref(THING_TYPE_JUNK, i);
     }

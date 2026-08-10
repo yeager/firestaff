@@ -121,6 +121,7 @@
  *     (companion probe for the select->cancel->select axis)
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -385,6 +386,7 @@ int main(int argc, char** argv) {
     M11_GameViewState state;
     const M11_AssetSlot* portraits;
     const char* dataDir;
+    char narrowed[1024];
     int ordinal6Opaque;
     int ordinal6Vs5;
     int ordinal6Vs7;
@@ -412,6 +414,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions portrait-06 / door_nearby_no_float / portrait_rect_position ===\n");
     printf("dataDir=%s\n", dataDir);
 

@@ -93,6 +93,7 @@
  * coordinate (96, 35).  No claim of byte-equal DOSBox capture.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -486,6 +487,7 @@ static int check_ordinal_2_atlas_slot(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
@@ -533,6 +535,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);

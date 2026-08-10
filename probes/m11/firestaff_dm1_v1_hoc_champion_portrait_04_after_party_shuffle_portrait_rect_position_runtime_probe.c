@@ -101,6 +101,7 @@
  *   portrait_rect_position_runtime_probe
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -342,6 +343,7 @@ static int viewport_rect_warm_count(const unsigned char* fb,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
@@ -368,6 +370,7 @@ int main(int argc, char** argv) {
                 "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     printf("=== DM1 V1 HoC portrait 04 after_party_shuffle / "
            "portrait_rect_position ===\n");

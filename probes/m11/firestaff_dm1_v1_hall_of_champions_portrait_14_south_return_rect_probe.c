@@ -91,6 +91,7 @@
  *   src/engine/m11_game_view.c:13972-13975 atlas addressing = (ordinal & 7) * 32, (ordinal >> 3) * 29
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -248,6 +249,7 @@ static void park_south_return_route(M11_GameViewState* view) {
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char fb[FB_W * FB_H];
@@ -263,6 +265,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions: portrait ordinal %d south_return route ===\n",
            SOUTH_RETURN_ORDINAL);
     printf("dataDir=%s\n", dataDir);

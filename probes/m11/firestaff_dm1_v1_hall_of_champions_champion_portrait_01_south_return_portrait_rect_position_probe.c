@@ -71,6 +71,7 @@
  *   firestaff_dm1_v1_hoc_champion_portrait_01_south_return_portrait_rect_position_049_gate
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
@@ -284,6 +285,7 @@ static void set_pose(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
@@ -304,6 +306,7 @@ int main(int argc, char** argv) {
                 "usage: %s DATA_DIR [OUT_PPM_PREFIX]\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     printf("=== DM1 V1 HoC portrait slice: "
            "ordinal_1 south_return portrait_rect_position ===\n");

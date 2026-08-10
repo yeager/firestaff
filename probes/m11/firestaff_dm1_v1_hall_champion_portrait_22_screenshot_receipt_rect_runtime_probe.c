@@ -166,6 +166,7 @@
  */
 #include "fs_portable_compat.h"
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "screenshot_m11.h"
@@ -816,6 +817,7 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
@@ -831,6 +833,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     /* Resolve a probe-controlled BMP output directory under HOME so
      * the probe does not pollute the user-facing

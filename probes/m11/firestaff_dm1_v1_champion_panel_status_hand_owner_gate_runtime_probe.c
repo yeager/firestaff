@@ -23,6 +23,7 @@
  */
 
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "asset_loader_m11.h"
 #include "menu_startup_m12.h"
@@ -255,6 +256,7 @@ static int seed_runtime(M11_GameViewState* game,
 int main(int argc, char** argv)
 {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char fbBefore[PROBE_FB_W * PROBE_FB_H];
@@ -282,6 +284,7 @@ int main(int argc, char** argv)
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);

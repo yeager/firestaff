@@ -187,6 +187,7 @@
  *   _portrait_rect_position_210_gate_probe DATA_DIR
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -812,6 +813,7 @@ static void check_atlas_roundtrip_and_catalog(
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState state;
     const M11_AssetSlot* portraits;
@@ -826,6 +828,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions: portrait ordinal %d (SONJA) "
            "approach_from_right portrait_rect_position (210 gate) ===\n",
            ORDINAL_TARGET);

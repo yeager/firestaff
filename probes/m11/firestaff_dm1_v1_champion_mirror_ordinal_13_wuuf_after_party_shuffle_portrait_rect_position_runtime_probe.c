@@ -213,6 +213,7 @@
  */
 
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -719,6 +720,7 @@ static void check_close_after_party_shuffle(M11_GameViewState* state,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     /* M11_GameViewState (~579KB) is too large for a stack default,
      * so park it in BSS. */
     static M12_StartupMenuState menu;
@@ -736,6 +738,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions: portrait ordinal %d (WUUF) after_party_shuffle portrait_rect_position ===\n",
            ORDINAL_TARGET);
     printf("dataDir=%s\n", dataDir);

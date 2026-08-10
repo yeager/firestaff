@@ -83,6 +83,7 @@
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "render_sdl_m11.h"
@@ -198,6 +199,7 @@ static int read_square_byte(M11_GameViewState* game,
 /* ── main ────────────────────────────────────────────────────── */
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     int foundCell = -1;
@@ -217,6 +219,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions ordinal 14 (LEYLA) unreachable slice ===\n");
     printf("dataDir=%s\n", dataDir);
     printf("Slice: ordinal=14  route=front_north_entry  aspect=portrait_rect_position\n");

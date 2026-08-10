@@ -159,6 +159,7 @@
  * ownership against the runtime framebuffer.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -394,6 +395,7 @@ int main(int argc, char** argv) {
     M11_GameViewState state;
     const M11_AssetSlot* portraits;
     const char* dataDir;
+    char narrowed[1024];
     static unsigned char fbNorth[PROBE_FB_W * PROBE_FB_H];
     static unsigned char fbNorthSecond[PROBE_FB_W * PROBE_FB_H];
     static unsigned char fbEast[PROBE_FB_W * PROBE_FB_H];
@@ -427,6 +429,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall portrait-05 / palette_match_rect / portrait_rect_position (v2.7.27) ===\n");
     printf("dataDir=%s ordinal=%d src=(%d,%d,%d,%d) dst=(%d,%d,%d,%d) "
            "match_thresh(agg=%d%% row=%d%% col=%d%%)\n",

@@ -146,6 +146,7 @@
  * claimed.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -943,6 +944,7 @@ static void check_wall_mirror_frame_contract(M11_GameViewState* game) {
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
@@ -954,6 +956,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {

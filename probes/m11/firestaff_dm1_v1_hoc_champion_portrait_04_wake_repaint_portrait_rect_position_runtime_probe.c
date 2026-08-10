@@ -17,6 +17,7 @@
  */
 #include "asset_loader_m11.h"
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -358,6 +359,7 @@ static int draw_side_negative(M11_GameViewState* game,
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     static M12_StartupMenuState menu;
     static M11_GameViewState game;
     static unsigned char fb[FB_W * FB_H];
@@ -370,6 +372,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
 

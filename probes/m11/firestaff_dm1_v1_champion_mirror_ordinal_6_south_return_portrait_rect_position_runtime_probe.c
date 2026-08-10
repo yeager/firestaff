@@ -62,6 +62,7 @@
  *   - MOVESENS.C:1501-1503 sensorData flows to F0280 candidate
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
@@ -297,6 +298,7 @@ int main(int argc, char** argv) {
     M11_GameViewState game;
     const M11_AssetSlot* portraits;
     const char* dataDir;
+    char narrowed[1024];
     int hitX = -1, hitY = -1, hitDir = -1;
     int ordinalAtHit;
     int pct;
@@ -309,6 +311,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall portrait ordinal 6 south_return portrait_rect_position ===\n");
     printf("dataDir=%s\n", dataDir);
 

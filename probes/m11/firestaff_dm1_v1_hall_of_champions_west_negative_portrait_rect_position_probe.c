@@ -59,6 +59,7 @@
  */
 
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "asset_status_m12.h"
 #include "render_sdl_m11.h"
@@ -365,6 +366,7 @@ static void check_corridor_west_negatives(M11_GameViewState* state) {
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState state;
     int assetsAvailable;
@@ -375,6 +377,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions west_negative portrait_rect_position ===\n");
     printf("dataDir=%s\n", dataDir);
 

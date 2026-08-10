@@ -124,6 +124,7 @@
  *     walkable in the south direction)
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -407,6 +408,7 @@ int main(int argc, char** argv) {
     M11_GameViewState state;
     const M11_AssetSlot* portraits;
     const char* dataDir;
+    char narrowed[1024];
     int ordinal2Opaque;
     int ordinal2Vs1;
     int ordinal2Vs3;
@@ -440,6 +442,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     printf("=== DM1 V1 Hall of Champions portrait-02 / leave_and_reenter / portrait_rect_position ===\n");
     printf("dataDir=%s\n", dataDir);
 

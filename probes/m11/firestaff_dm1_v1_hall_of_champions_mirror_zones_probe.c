@@ -32,6 +32,7 @@
  *   ReDMCSB layout-696 C416..C419 portrait zones parented at +8,+6
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
@@ -205,6 +206,7 @@ static void write_ppm(const char* path, const unsigned char* fb) {
 /* ── main ────────────────────────────────────────────────────── */
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState gameView;
     unsigned char fb[FB_W * FB_H];
@@ -225,6 +227,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR [OUT_PPM]\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     printf("=== DM1 V1 Hall of Champions: 4-mirror zone verification ===\n");
     printf("dataDir=%s\n", dataDir);

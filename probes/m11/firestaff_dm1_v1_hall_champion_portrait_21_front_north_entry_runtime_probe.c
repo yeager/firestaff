@@ -63,6 +63,7 @@
  * parity-evidence/ and are referenced by separate parity gates.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -479,6 +480,7 @@ static int test_front_north_entry_ordinal_21_seed(M11_GameViewState* game) {
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     int ok = 1;
@@ -488,6 +490,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
 
     M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);

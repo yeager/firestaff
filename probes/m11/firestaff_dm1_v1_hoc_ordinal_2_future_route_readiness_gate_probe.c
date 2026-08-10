@@ -102,6 +102,7 @@
  *   narrow role this probe fills.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -498,6 +499,7 @@ int main(int argc, char** argv) {
     M12_StartupMenuState menu;
     M11_GameViewState game;
     const char* dataDir;
+    char narrowed[1024];
     char resolvedCmake[1024];
     char resolvedRoot[1024];
     const char* cmakeListsPath = NULL;
@@ -518,6 +520,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s DATA_DIR [CMAKE_LISTS_PATH]\n", argv[0]);
         return 2;
     }
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     {
         const char* userCmakeArg = (argc > 2) ? argv[2] : NULL;
         if (!resolve_cmakelists_path(argc, argv, userCmakeArg,

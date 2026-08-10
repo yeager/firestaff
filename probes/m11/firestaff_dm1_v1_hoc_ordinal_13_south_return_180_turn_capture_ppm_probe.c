@@ -25,6 +25,7 @@
  * capture and does not promote DOS pixel parity.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -356,6 +357,7 @@ static int write_manifest(const char* outDir, const CaptureStep* steps, int coun
 
 int main(int argc, char** argv) {
     const char* dataDir;
+    char narrowed[1024];
     const char* outDir;
     M12_StartupMenuState menu;
     M11_GameViewState game;
@@ -375,6 +377,7 @@ int main(int argc, char** argv) {
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     outDir = argv[2];
     ensure_output_dir(outDir);
 

@@ -21,6 +21,7 @@
  */
 #include "asset_loader_m11.h"
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -222,6 +223,7 @@ static int count_asset_matches(const M11_AssetSlot* asset,
 int main(int argc, char** argv)
 {
     const char* dataDir;
+    char narrowed[1024];
     M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
@@ -244,6 +246,7 @@ int main(int argc, char** argv)
         return 2;
     }
     dataDir = argv[1];
+    dataDir = firestaff_dm1_probe_narrow_data_dir(dataDir, narrowed, sizeof(narrowed));
     for (i = 0; i < PROBE_CHAIN_COUNT; ++i) {
         actionItems[i] = thing_ref(THING_TYPE_JUNK, i);
     }
