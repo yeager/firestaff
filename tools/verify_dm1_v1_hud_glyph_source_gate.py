@@ -31,7 +31,16 @@ def main() -> int:
     source = M11.read_text(encoding="utf-8")
     text_cells = function_body(source, "static void m11_draw_dm1_ui_text_trailing_spaces")
     action_menu = function_body(source, "static int m11_draw_dm_action_menu")
-    spell_area = function_body(source, "static void m11_draw_v1_spell_area_overlay")
+    # The spell-area overlay signature changed from `static void` to
+    # `static int` when the receipt pipeline started returning success
+    # information to the caller. The body contract this gate locks is
+    # unaffected -- accept either signature.
+    if "static int m11_draw_v1_spell_area_overlay" in source:
+        spell_area = function_body(
+            source, "static int m11_draw_v1_spell_area_overlay")
+    else:
+        spell_area = function_body(
+            source, "static void m11_draw_v1_spell_area_overlay")
 
     assert "m11_dm1_pc34_hud_font_is_source_bound(state)" in text_cells
     assert "m11_draw_dm1_m653_cell_clipped_at_baseline" in text_cells

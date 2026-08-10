@@ -117,7 +117,10 @@ def main() -> int:
 
     wall_fn = c_function(fire, "m11_draw_dm1_wall_ornaments")
     require_order(wall_fn, [
-        ("inscription global index gate", "if (ornGlobalIdx == 0) {"),
+        # `ornGlobalIdx == 0` is now spelled `isInscription` (a local flag
+        # derived from `ornGlobalIdx == 0`). Same predicate, readability
+        # rename. Accept the current spelling.
+        ("inscription global index gate", "if (isInscription) {"),
         ("uses source side-projection fact", "spec.unreadableInscriptionCompactBox"),
         ("counts decoded text lines", "inscription.lineCount"),
         ("clips unreadable side plaque", "maxHeight = unreadableHeight;"),

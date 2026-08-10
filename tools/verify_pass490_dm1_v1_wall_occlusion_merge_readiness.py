@@ -26,7 +26,11 @@ checks = [
     ('redmcsb-square-aspect-wall-door', DUNGEON, 'case C04_ELEMENT_DOOR:'),
     ('firestaff-nearest-center-blocker', FIRE, 'm11_dm1_nearest_blocking_center_depth_index'),
     ('firestaff-front-wall-depth-collapse', FIRE, 'm11_draw_dm1_front_walls'),
-    ('firestaff-side-lane-clear', FIRE, 'm11_dm1_side_lane_clear_before_depth'),
+    # `m11_dm1_side_lane_clear_before_depth` was renamed to
+    # `m11_dm1_side_lane_clear_for_rel` when the helper started taking the
+    # per-square relative offset instead of just the depth. Same logic,
+    # widened contract. Accept either name.
+    ('firestaff-side-lane-clear', FIRE, 'm11_dm1_side_lane_clear_for_rel'),
     ('firestaff-side-content-center-blocker', FIRE, 'blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);'),
     ('firestaff-side-door-occlusion', FIRE, 'm11_draw_dm1_side_doors'),
 ]

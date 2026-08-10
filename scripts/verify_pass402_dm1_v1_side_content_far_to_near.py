@@ -101,11 +101,25 @@ def main() -> int:
         "why": "Side contents are not a free overlay pass; visible squares hand objects/creatures/projectiles to F0115 while that square is replayed.",
     })
 
-    local = local_function((ROOT / "src/engine/m11_game_view.c").read_text(errors="replace"), "m11_draw_dm1_side_contents")
+    # `m11_draw_dm1_side_contents` was split: the outer function now
+    # dispatches into `m11_draw_dm1_side_contents_at_depth`, and the
+    # side-lane guard moved with the per-depth work. Read both bodies as
+    # one text blob so the "far-to-near loop AND side/center lane guards
+    # AND F0115 handoff sprites" contract is satisfied across the split.
+    fire_text = (ROOT / "src/engine/m11_game_view.c").read_text(errors="replace")
+    local = (
+        local_function(fire_text, "m11_draw_dm1_side_contents")
+        + local_function(fire_text, "m11_draw_dm1_side_contents_at_depth")
+    )
     local_needles = [
         "for (depth = 2; depth >= 0; --depth)",
+        # The side-lane predicate was renamed from `_before_depth(cells,
+        # depth, sideIndex)` to `_for_rel(cells, depth + 1, side)`. Same
+        # forward-occlusion semantics under a new per-square-relative
+        # naming convention. The center-line predicate kept its `_before_depth`
+        # spelling. Update only the needle that actually changed.
         "m11_dm1_center_line_clear_before_depth(cells, depth)",
-        "m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)",
+        "m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)",
         "m11_draw_item_sprite",
         "m11_draw_creature_sprite_ex",
         "m11_draw_projectile_sprite",

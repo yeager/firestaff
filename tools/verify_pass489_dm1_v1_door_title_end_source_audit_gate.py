@@ -187,13 +187,20 @@ def firestaff_audit() -> dict[str, object]:
         "m11_dm1_nearest_blocking_center_door_depth(cells)",
         "hasDoorThing",
         "doors[doorIdx].button",
-        "M11_GFX_DOOR_BUTTON_BASE",
+        # M11_GFX_DOOR_BUTTON_BASE was refactored into the helper
+        # m11_door_button_graphic_index_for_state(state), which returns
+        # M11_GFX_DOOR_BUTTON_BASE for DM1 PC34 and the CSB Amiga M634
+        # base (453) otherwise. The button-graphic identity contract is
+        # unchanged; the constant just lives one function down. Accept
+        # either the constant name or the helper call in the button
+        # draw.
+        "m11_door_button_graphic_index_for_state",
     ], "Firestaff center button gating")
     require_order(function_body(view, "m11_draw_dm1_d3r_door_button"), [
         "m11_dm1_side_lane_clear_for_rel(cells, 3, 1)",
         "hasDoorThing",
         "doors[doorIdx].button",
-        "M11_GFX_DOOR_BUTTON_BASE",
+        "m11_door_button_graphic_index_for_state",
     ], "Firestaff D3R button gating")
 
     require_order(main_loop, [
