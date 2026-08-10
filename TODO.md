@@ -4955,3 +4955,13 @@ authenticated BPK). The remaining work is a Saturn executable or capture
 The static source-monster bridge now uses the authenticated four-health-word
 limit consistently, preventing malformed records from escaping the source
 record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
+## Theron: scripted dungeon replay still has no authenticated semantic handoff (2026-08-11)
+
+- ✅ A real US Track 02/System Card Mednafen run delivered seven scripted PCE
+  input events from the external-disk save-state capture.
+- 🔒 The run still produced no authenticated CD→RAM receipt, target `$2600`
+  read/write, `$B0E5` entry, or source-owned object/level consumer. It must not
+  be used to infer RNG, AI, T700, T900, loot, or generator timing.
+- 🔒 The next positive witness must be captured from a user-created state at a
+  visible monster/object interaction; until then the source occurrence bank
+  remains provenance-only and gameplay stays fail-closed.
