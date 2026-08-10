@@ -10,6 +10,10 @@ En separat writer `0x060713F4` skriver till `0x25E56EFF` och använder
 `R3=0x6A/0x6B`, men dess runtimekod/källregion har ingen byteexakt
 TEXT4/TABL/FONT012-identitet. Dessa två observationer stärker
 capture-infrastrukturen men öppnar inte meny-, HUD- eller produktionsrendering.
+Samma-sessionens frame 0 passerar dessutom `analyze_nexus_vdp2_pnd_writer.py`
+med 64 byteexakta writes till `0x50000`; senare frames avvisas korrekt när
+den statiska PND-clear-sekvensen inte längre matchar. Detta är en transport-
+receipt, inte ett text- eller layer-ägarskap.
 
 2026-08-10: En separat EU-BIOS/English-Merged coldstart på extern disk
 (`run-codex-menu-text-capture-20260810/`) passerar rå-envelope-valideringen
