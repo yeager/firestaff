@@ -186,6 +186,17 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
     int sourcePeriod,
     unsigned int sourceHash,
     int sourceVolume);
+/* F0709 takes a Paula SOUND_VOLUME pair (0..64 per channel), rather than
+ * SOUND.C F0064's 1..3 distance domain.  ENTRANCE.C uses the immutable
+ * {64,64} G3077_s_EntranceSoundVolume on A31/A35; preserve that source
+ * value in the receipt while using the same authenticated PCM transport. */
+int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
+    M11_AudioState* state,
+    const unsigned char* source,
+    int sourceBytes,
+    int sourcePeriod,
+    unsigned int sourceHash,
+    int paulaVolume);
 /* HME-242 TWANIM TITLE's SD record owns exactly one signed 8-bit sample.
  * SKWIN 0759:0EF0 calls the native player with that buffer, argument 0xff
  * and 5,500 Hz for every SO record. This transport accepts only the retail

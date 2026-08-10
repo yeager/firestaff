@@ -548,8 +548,13 @@ static void expect_amiga_prison_entrance_handoff(M11_GameViewState *view,
                     view, 250, 50, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW &&
                     view->csbState.startup_entrance_opening_active &&
-                    view->csbState.startup_entrance_opening_step == 1,
-                "Amiga C407 Enter click starts native F0441 Prison animation");
+                    view->csbState.startup_entrance_opening_step == 1 &&
+                    view->audioState.csbAmigaRuntimeSoundAccepted &&
+                    view->audioState.csbAmigaRuntimeSoundByteCount > 0 &&
+                    view->audioState.csbAmigaRuntimeSoundPeriod == 112 &&
+                    view->audioState.csbAmigaRuntimeSoundHash != 0u &&
+                    view->audioState.csbAmigaRuntimeSoundSourceVolume == 64,
+                "Amiga C407 Enter starts F0441 and its authenticated F0709 C01 cue");
     while (view->csbState.startup_entrance_active && ticks++ < 64) {
         (void)M11_GameView_AdvanceIdleTick(view);
     }

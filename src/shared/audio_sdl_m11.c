@@ -1692,6 +1692,31 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
     return 1;
 }
 
+int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
+    M11_AudioState* state, const unsigned char* source, int sourceBytes,
+    int sourcePeriod, unsigned int sourceHash, int paulaVolume)
+{
+    /* ReDMCSB SOUND.C F0709 receives an audio.device volume in the native
+     * 0..64 domain.  This is intentionally not folded into the F0064 1..3
+     * distance-domain entry point above: a receipt with 64 must not claim
+     * that original A31/A35 asked for volume 3.  The known entrance owner is
+     * {64,64}, i.e. the full-scale transport already represented by 3/3. */
+    if (paulaVolume < 0 || paulaVolume > 64) {
+        if (state) {
+            m11_sound_clear(&state->csbAmigaRuntimePcm);
+            state->csbAmigaRuntimeSoundAccepted = 0;
+        }
+        return 0;
+    }
+    if (paulaVolume != 64 ||
+        !M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
+            state, source, sourceBytes, sourcePeriod, sourceHash, 3)) {
+        return 0;
+    }
+    state->csbAmigaRuntimeSoundSourceVolume = paulaVolume;
+    return 1;
+}
+
 int M11_Audio_PlayDm2FmtownsTitlePcm(M11_AudioState* state,
                                      const int8_t* source,
                                      int sourceBytes,

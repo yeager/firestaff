@@ -45,6 +45,14 @@ int main(void)
                  "Amiga variant-specific period is accepted");
     ok &= expect(state.csbAmigaRuntimeSoundSourceVolume == 1,
                  "Amiga transport retains source volume");
+    ok &= expect(M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
+                     &state, source, (int)sizeof(source), 112, hash, 64),
+                 "Amiga F0709 Paula full-scale volume accepts source PCM");
+    ok &= expect(state.csbAmigaRuntimeSoundSourceVolume == 64,
+                 "Amiga F0709 preserves its native 0..64 volume receipt");
+    ok &= expect(!M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
+                     &state, source, (int)sizeof(source), 112, hash, 65),
+                 "Amiga F0709 rejects an out-of-domain Paula volume");
     source[0] ^= 0x80u;
     ok &= expect(!M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
                      &state, source, (int)sizeof(source), 112, hash, 3),

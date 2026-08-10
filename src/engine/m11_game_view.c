@@ -12121,6 +12121,33 @@ static void m11_audio_emit_source_sound(M11_GameViewState* state,
                                             fallbackMarker);
 }
 
+/* ReDMCSB ENTRANCE.C:933 and :340 call Amiga F0709 with the immutable
+ * G3077_s_EntranceSoundVolume {64,64}.  These are direct A31/A35
+ * GRAPHICS.DAT records; a missing item stays silent rather than borrowing
+ * PC34's PIT payload or creating a marker. */
+static void m11_csb_emit_amiga_entrance_sound(M11_GameViewState* state,
+                                              int sound_index)
+{
+    const CSB_V1_BootProfile* profile;
+    CsbV1AmigaSoundPayload payload;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) return;
+    profile = (const CSB_V1_BootProfile*)state->csbBootProfile;
+    if (!m11_csb_is_amiga_profile(profile) || !profile->graphics_path[0]) {
+        return;
+    }
+    memset(&payload, 0, sizeof(payload));
+    if (csb_v1_audio_runtime_load_amiga_sound_payload(profile->graphics_path,
+                                                       (int16_t)sound_index,
+                                                       &payload)) {
+        (void)M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
+            &state->audioState, payload.bytes, (int)payload.byteCount,
+            (int)payload.spec.period,
+            m11_audio_source_fnv1a(payload.bytes, payload.byteCount), 64);
+    }
+    csb_v1_audio_runtime_amiga_sound_payload_free(&payload);
+}
+
 static void m11_audio_emit_creature_attack_sound_ex(M11_GameViewState* state,
                                                     int creatureType,
                                                     int mapX,
@@ -29396,6 +29423,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->csbState.startup_entrance_active) {
             if (!state->csbState.startup_entrance_opening_active &&
                 (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION)) {
+                /* Native keyboard C200 reaches the same F0441 callsite as
+                 * C407, including its C01 F0709 cue. */
+                m11_csb_emit_amiga_entrance_sound(
+                    state, CSB_V1_SOUND_SWITCH);
                 state->csbState.startup_entrance_opening_active = 1;
                 state->csbState.startup_entrance_opening_step = 1;
                 return M11_GAME_INPUT_REDRAW;
@@ -31208,6 +31239,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return M11_GAME_INPUT_REDRAW;
                 }
                 if (entrance_zone.commandId == 200u) {
+                    /* ENTRANCE.C:932-935 (MEDIA746 A31/A35) starts C01
+                     * through F0709 at G3077 {64,64} before its delay. */
+                    m11_csb_emit_amiga_entrance_sound(
+                        state, CSB_V1_SOUND_SWITCH);
                     state->csbState.startup_entrance_opening_active = 1;
                     state->csbState.startup_entrance_opening_step = 1;
                     return M11_GAME_INPUT_REDRAW;
