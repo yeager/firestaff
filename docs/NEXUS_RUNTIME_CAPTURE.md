@@ -489,6 +489,26 @@ register offsets) and VDP2 register space. This narrows code ownership, but a
 literal corridor is not an execution trace and does not join `TM.BIN` to any
 captured command or source span.
 
+The first positive runtime source join is retained outside the repository at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810`.
+The authenticated J-BIOS/English-media capture has 600 raw VDP1/VDP2 frames.
+Its bounded SH-2 source-write trace contains a complete 16,384-byte
+`TM.BIN` chunk loaded to `0x06027000` by runtime PC `0x00205f18`; the strict
+analyzer resolves the chunk to ISO offset `0xd89800`, member offset
+`0x17000`, and reports `retail_runtime_source_join=verified`. Reproduce it
+with:
+
+```sh
+python3 scripts/analyze_nexus_sh2_source_trace.py \
+  "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.iso" \
+  "/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810/sh2-source-writes.trace"
+```
+
+This proves retail `TM.BIN` bytes entered runtime RAM during the capture. The
+same witness still has no exact VDP1 command-to-retail-file owner
+(`source_join=unbound`), so it does not unlock the startup/menu text consumer,
+HUD, viewport or SLEV/SAL/SDDRVS playback.
+
 `scripts/analyze_nexus_slev_sh2_owner.py` provides the corresponding static
 receipt for all 16 hash-authenticated `SLEV##.BIN` tasks. It scans the
 big-endian SH-2 word stream, binds the shared `0x2fe6` entry and reports the
