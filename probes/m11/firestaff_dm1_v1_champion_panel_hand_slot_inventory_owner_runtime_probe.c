@@ -33,6 +33,8 @@
 #include "menu_startup_m12.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "render_sdl_m11.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "asset_loader_m11.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -164,6 +166,51 @@ static void seed_champion(struct ChampionState_Compat* champ,
     }
 }
 
+/* Load the four 4-bit-packed champion portrait bitmaps from GRAPHICS.DAT and
+ * set the corresponding portraitBitmapValid flag. Without this, the DM1 top-
+ * row atomic frame composition path evaluates `live_material_is_original` to
+ * false, sets each lane's redraw policy to CLEAR, then declines to publish
+ * original materials and issues a full BLACK clear over the champion status
+ * boxes (m11_clear_dm1_v1_top_row_receipt_zones). That is why the same probe
+ * that previously loaded a real DUNGEON.DAT still saw 0/68 C033 perimeter
+ * pixels: the source-locked receipt pipeline had refused to draw them at all.
+ *
+ * See ReDMCSB CHAMPION.C: portrait pixels ship with the champion and are the
+ * canonical source material for a live status lane. */
+static int seed_original_portrait_materials(M11_GameViewState* game)
+{
+    const M11_AssetSlot* portraits;
+    int championIndex;
+
+    if (!game) return 0;
+    portraits = M11_AssetLoader_Load(
+        &game->assetLoader,
+        (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 ||
+        portraits->height < CHAMPION_PORTRAIT_BITMAP_HEIGHT) return 0;
+    for (championIndex = 0; championIndex < PROBE_CHAMPION_COUNT;
+         ++championIndex) {
+        struct ChampionState_Compat* champion =
+            &game->world.party.champions[championIndex];
+        const int sourceX = championIndex * CHAMPION_PORTRAIT_BITMAP_WIDTH;
+        int y;
+        for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+            const unsigned char* source = portraits->pixels +
+                y * (int)portraits->width + sourceX;
+            unsigned char* destination = champion->portraitBitmap +
+                y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+            int x;
+            for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+                destination[x / 2] = (unsigned char)(
+                    ((source[x] & 0x0fu) << 4) | (source[x + 1] & 0x0fu));
+            }
+        }
+        champion->portraitBitmapValid = 1;
+    }
+    return 1;
+}
+
 static void seed_party(M11_GameViewState* game)
 {
     int slot;
@@ -177,7 +224,12 @@ static void seed_party(M11_GameViewState* game)
     game->inventorySelectedSlot = -1;
     game->spellPanelOpen = 0;
     game->resting = 0;
-    game->candidateMirrorOrdinal = 0;
+    /* Firestaff stores "no candidate" as -1 (m11_game_view.c:19673); the
+     * source F0302 gate uses an unsigned "0 means none" convention and this
+     * fixture had copied that verbatim. The Firestaff runtime check reads
+     * `candidateMirrorOrdinal >= 0`, so a literal 0 names candidate ordinal 0
+     * and rejects the F0302 status-hand dispatch. */
+    game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPanelActive = 0;
     game->candidateMirrorPartyIndex = -1;
     game->actingChampionOrdinal = 0;
@@ -333,6 +385,12 @@ int main(int argc, char** argv)
     }
 
     seed_party(&game);
+    if (!seed_original_portrait_materials(&game)) {
+        printf("SKIP could not load DM1 champion portrait atlas from %s\n",
+               dataDir);
+        M11_GameView_Shutdown(&game);
+        return 0;
+    }
     memset(baselineFb, 0, sizeof(baselineFb));
     M11_GameView_Draw(&game, baselineFb, PROBE_FB_W, PROBE_FB_H);
     ok &= collect_action_hand_hashes(baselineFb, baselineHashes);
