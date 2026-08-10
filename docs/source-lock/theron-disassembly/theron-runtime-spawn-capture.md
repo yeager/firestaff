@@ -682,6 +682,21 @@ inte RNG, monsterstats, AI, attack/skada, loot, generator, T700 eller T900.
 Mednafen, savestate, System Card och alla råtracefiler ligger kvar på
 extern-disken och är inte committade.
 
+## 2026-08-11 — consumer register witness
+
+The external instrumented Mednafen build now records A/X/Y/SP/P alongside
+each bounded main-RAM consumer read. The authenticated replay produced
+65,536 consumer rows. In the observed `$C96B` window, reads from `$20F8/$20F9`
+returned stable bytes while A/Y changed across iterations; this binds the
+register context to the read, but does not by itself prove whether the bytes
+are RNG state, a pointer table, or a creature record. The corresponding
+`$CC4C` rows likewise remain execution-window evidence until a same-session
+return boundary and source-owned destination are joined.
+
+The register-expanded sidecar and binary remain on the external disk. No
+RNG, monster, AI, loot, generator, T700 or T900 semantics are published from
+this witness.
+
 ## 2026-08-11 — stack/caller witness for the rejected `$B0E5` overlay
 
 The external instrumented Mednafen binary was rebuilt to retain the HuC6280

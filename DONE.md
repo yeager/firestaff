@@ -13328,6 +13328,14 @@ Bound category-4 live-creature materialization to the four health words owned
 by the real Track 02 monster record. Verified against the US/JP dungeon loader
 and production source-combat tests.
 
+# Theron: capture consumer CPU context (2026-08-11)
+
+- ✅ Extended the external Mednafen main-RAM consumer trace with authenticated
+  HuC6280 A/X/Y/SP/P snapshots. The rebuilt binary and bounded replay verify
+  the register context for 65,536 consumer rows; production RNG/AI/T700/T900
+  admission remains fail-closed until the disassembly-bound return contract
+  is joined in the same session.
+
 # Nexus: bind generic Mednafen Saturn capture (2026-08-10)
 
 - ✅ Skapade `/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1` med en

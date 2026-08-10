@@ -4959,6 +4959,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   `$B0E5` regular-spawn entry and capture the matching `$C96B/$CC4C` return
   contract in one execution. Do not merge it with the `.mc0` control-loop
   state or publish RNG/AI/T700/T900 semantics before that join.
+
+# Theron register-bound RNG/record witness
+
+- 🔒 The external capture now records A/X/Y/SP/P for each bounded main-RAM
+  consumer read. `$C96B` reads at `$20F8/$20F9` are now distinguishable from
+  generic table/code reads, but a same-session `$B0E5` category entry and
+  return-value boundary are still required before opening RNG or creature
+  semantics.
 ## Theron: nästa autentiserade runtime-vittne (2026-08-09)
 
 - Få en och samma Mednafen-session att nå ett riktigt monster efter Track
