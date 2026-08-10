@@ -3427,20 +3427,6 @@ done:
 }
 #endif
 
-static int test_original_sksave_corpus_runtime_import(void)
-{
-    printf("  Original SKSave corpus runtime import...\n");
-    printf("    PASS: raw prefix is diagnostic-only until complete GAME_LOAD\n");
-    return 1;
-}
-
-static int test_original_sksave_timer_post_load_rebuild(void)
-{
-    printf("  Original SKSave timer post-load ownership rebuild...\n");
-    printf("    PASS: synthetic raw timer stream is not admitted\n");
-    return 1;
-}
-
 static int test_external_original_sksave_corpus_census(void)
 {
     const char *corpus_root = getenv("FIRESTAFF_DM2_SKSAVE_CORPUS");
@@ -3663,8 +3649,6 @@ int main(void)
      * decoder work, but do not register fabricated save/runtime behaviour as
      * an active production gate. */
     RUN(24, test_sksave_corpus_runtime_import);
-    RUN(25, test_original_sksave_corpus_runtime_import);
-    RUN(26, test_original_sksave_timer_post_load_rebuild);
     RUN(27, test_external_original_sksave_corpus_census);
 #undef RUN
 

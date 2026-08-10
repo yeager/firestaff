@@ -72,6 +72,9 @@
   handskriven dungeon, GDAT eller DB4-record. Canonical File_header-data
   passerar inte heller de gamla direkta G1-skannrarna för creature- eller
   static-object-pixlar.
+- ✅ Två tomma SKSAVE-teststeg som bara skrev ut godkänt resultat är borttagna.
+  Den faktiska `test_dm2_v1_save_load_real_data`-korpusen äger kontrollen av
+  kontinuerlig SUPPRESS-ström, c_hero, c_tim, kartkedjor och Resume-spärr.
 
 - ✅ GAME_LOAD-kandidaten behåller nu den källinitierade
   `v1e0390`/`v1e1020..102e`-gruppen och `v1d3248` som c_maps aktuella
