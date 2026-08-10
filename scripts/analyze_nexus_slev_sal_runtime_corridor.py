@@ -30,19 +30,25 @@ MAIN_LINE = re.compile(
 )
 
 
-def read_trace(path: Path, main: bool) -> list[dict[str, int]]:
+def read_trace(path: Path, main: bool) -> tuple[list[dict[str, int]], str | None]:
     lines = path.read_text(encoding="ascii").splitlines()
     header = MAIN_HEADER if main else SCSP_HEADER
     pattern = MAIN_LINE if main else SCSP_LINE
     if not lines or lines[0] != header:
         raise ValueError(f"{path}: bad trace header")
     rows = []
-    for number, line in enumerate(lines[1:], 2):
+    session = None
+    data_lines = lines[1:]
+    if data_lines and data_lines[0].startswith("session="):
+        session = data_lines.pop(0)[len("session="):]
+        if not session or any(character.isspace() for character in session):
+            raise ValueError(f"{path}: invalid capture session metadata")
+    for number, line in enumerate(data_lines, 2 if session is None else 3):
         match = pattern.fullmatch(line)
         if not match:
             raise ValueError(f"{path}: malformed line {number}")
         rows.append({key: int(value, 16) for key, value in match.groupdict().items()})
-    return rows
+    return rows, session
 
 
 def retail_hash(path: Path, name: str) -> bool:
@@ -87,8 +93,8 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        scsp = read_trace(args.scsp_trace, False)
-        main_trace = read_trace(args.main_trace, True)
+        scsp, scsp_session = read_trace(args.scsp_trace, False)
+        main_trace, main_session = read_trace(args.main_trace, True)
         required = ["SDDRVS.TSK"]
         required += [f"SLEV{level:02d}.BIN" for level in range(16)]
         required += [f"SNDLEV{level:02d}.{suffix}" for level in range(16) for suffix in ("MAP", "SAL")]
@@ -104,6 +110,18 @@ def main() -> int:
             return 1
     except (OSError, UnicodeError, ValueError, KeyError) as error:
         print(f"NEXUS_SLEV_SAL_RUNTIME_INVALID: {error}")
+        return 1
+
+    capture_session_bound = int(
+        scsp_session is not None and
+        main_session is not None and
+        scsp_session == main_session
+    )
+    print(f"scsp_capture_session={scsp_session or 'unbound'}")
+    print(f"main_capture_session={main_session or 'unbound'}")
+    print(f"capture_session_bound={capture_session_bound}")
+    if not capture_session_bound:
+        print("NEXUS_SLEV_SAL_RUNTIME_INVALID: trace sessions are not identically bound")
         return 1
 
     maps = []

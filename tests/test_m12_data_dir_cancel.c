@@ -749,6 +749,8 @@ static void check_scan_progress_uses_display_names(void) {
     const char* dm1 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm1");
     const char* csb = M12_StartupMenu_GameDisplayTitleForLocale(0, "csb");
     const char* dm2 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm2");
+    const char* nexus = M12_StartupMenu_GameDisplayTitleForLocale(0, "nexus");
+    const char* theron = M12_StartupMenu_GameDisplayTitleForLocale(0, "theron");
     const char* scanning = M12_StartupMenu_TranslateForLocale(
         0, "SCANNING GAME DATA");
 
@@ -756,10 +758,14 @@ static void check_scan_progress_uses_display_names(void) {
     CHECK(csb && strcmp(csb, "Chaos Strikes Back") == 0);
     CHECK(dm2 && strcmp(dm2,
                         "Dungeon Master II: The Legend of Skullkeep") == 0);
+    CHECK(nexus && strcmp(nexus, "Dungeon Master Nexus") == 0);
+    CHECK(theron && strcmp(theron, "Theron's Quest") == 0);
     CHECK(scanning && strcmp(scanning, "SCANNING GAME DATA") == 0);
     CHECK(strcmp(dm1, "dm1") != 0);
     CHECK(strcmp(csb, "csb") != 0);
     CHECK(strcmp(dm2, "dm2") != 0);
+    CHECK(strcmp(nexus, "nexus") != 0);
+    CHECK(strcmp(theron, "theron") != 0);
 }
 
 int main(void) {
