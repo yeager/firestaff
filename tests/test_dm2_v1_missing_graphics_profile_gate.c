@@ -6,6 +6,7 @@
 #endif
 
 #include "asset_status_m12.h"
+#include "fs_portable_compat.h"
 #include "menu_startup_m12.h"
 
 #include <stdio.h>
@@ -150,11 +151,15 @@ static int write_pc98_demo_plus_pc_dungeon_fixture(
 }
 
 static void select_dm2_launch_row(M12_StartupMenuState* state) {
+    const int pcEnglishIndex =
+        M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+
+    CHECK(pcEnglishIndex >= 0);
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->settings.rendererBackendIndex = M12_RENDERER_BACKEND_SOFTWARE;
     state->activatedIndex = DM2_GAME_INDEX;
     state->selectedIndex = DM2_GAME_INDEX;
-    state->gameOptions[DM2_GAME_INDEX].versionIndex = 0;
+    state->gameOptions[DM2_GAME_INDEX].versionIndex = pcEnglishIndex;
     state->gameOptions[DM2_GAME_INDEX].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->view = M12_MENU_VIEW_GAME_OPTIONS;
     state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
@@ -175,14 +180,15 @@ static void check_dm2_pc98_demo_classifies_without_satisfying_launch_graphics(
     M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(demoGraphicsMd5);
     M12_AssetStatus_Scan(&status, demoRoot);
 
-    pcEnglish = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    pcEnglish = M12_AssetStatus_GetVersion(
+        &status, "dm2", (size_t)M12_AssetStatus_FindVersionIndex("dm2", "pc-en"));
     pc98Demo = pc98Index >= 0
         ? M12_AssetStatus_GetVersion(&status, "dm2", (size_t)pc98Index)
         : NULL;
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
-    CHECK(pc98Index == 3);
+    CHECK(pc98Index == 4);
     CHECK(M12_AssetStatus_GetVersionCount("dm2") == 7U);
     CHECK(M12_AssetStatus_GameKnownHashCount("dm2") == 7U);
     CHECK(M12_AssetStatus_GameRequiredFileCount("dm2") == 2U);
@@ -221,11 +227,12 @@ static void check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availabilit
     M12_AssetStatus_TestSetDm2SyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, partialRoot);
 
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    version = M12_AssetStatus_GetVersion(
+        &status, "dm2", (size_t)M12_AssetStatus_FindVersionIndex("dm2", "pc-en"));
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
-    CHECK(M12_AssetStatus_FindVersionIndex("dm2", "pc-en") == 0);
+    CHECK(M12_AssetStatus_FindVersionIndex("dm2", "pc-en") == 1);
     CHECK(M12_AssetStatus_GameHasCompleteHashSet("dm2") == 1);
     CHECK(M12_AssetStatus_GameRequiredFileCount("dm2") == 2U);
     CHECK(M12_AssetStatus_GameVerifiedFileCount("dm2") == 2U);
@@ -286,7 +293,7 @@ static void check_dm2_matched_dungeon_unmatched_graphics_launch_is_blocked(
     CHECK(intent.versionId && strcmp(intent.versionId, "pc-en") == 0);
     CHECK(intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
     CHECK(intent.rendererBackendAvailable == 1);
-    CHECK(intent.options.versionIndex == 0);
+    CHECK(intent.options.versionIndex == 1);
 }
 
 static void check_dm2_nested_loose_install_stays_launchable(
@@ -320,7 +327,8 @@ static void check_dm2_nested_loose_install_stays_launchable(
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, nestedRoot);
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    version = M12_AssetStatus_GetVersion(
+        &status, "dm2", (size_t)M12_AssetStatus_FindVersionIndex("dm2", "pc-en"));
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
 
@@ -328,8 +336,16 @@ static void check_dm2_nested_loose_install_stays_launchable(
     CHECK(version && version->matched == 1);
     CHECK(graphics && graphics->matched == 1);
     CHECK(dungeon && dungeon->matched == 1);
-    CHECK(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                 installRoot) == 0);
+    {
+        char actualPhysical[512];
+        char expectedPhysical[512];
+        CHECK(FSP_ResolvePhysicalPath(actualPhysical, sizeof(actualPhysical),
+                                      M12_AssetStatus_GetRuntimeDataDir(&status,
+                                                                        "dm2")) &&
+              FSP_ResolvePhysicalPath(expectedPhysical, sizeof(expectedPhysical),
+                                      installRoot) &&
+              strcmp(actualPhysical, expectedPhysical) == 0);
+    }
 }
 
 int main(void) {

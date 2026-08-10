@@ -48,6 +48,19 @@
 
 # DM2: source c_moverec state retained privately (2026-08-10)
 
+# DM2: CI probes follow source-required rendering gates (2026-08-10)
+
+- ✅ DM2:s CI-prober accepterar inte längre en lokal V2.2-RGBA-cache som
+  renderingsmaterial. Källfria sidodörrar och CHAMPIONS-porträtt lämnas
+  korrekt oritade tills autentisk RAW4/GDAT respektive HeroType finns.
+- ✅ Startprofiltestet hämtar den hashverifierade PC-English-versionen via
+  dess id i stället för en instabil versionstabellsposition, och jämför
+  macOS:s kanoniska sökväg korrekt. IMG3/U4- och sparbevisen följer den
+  verkliga direkta payload-/`s_savegamebuffer`-vägen.
+- ✅ Riktade CTest-prober samt produktionsgrinden verifierade ändringen. De
+  äldre CAII/G1-fixturerna som kräver en påhittad 512-byte-dungeon är fortsatt
+  fail-closed och öppnar ingen produktionsväg.
+
 - ✅ GAME_LOAD-kandidaten behåller nu den källinitierade
   `v1e0390`/`v1e1020..102e`-gruppen och `v1d3248` som c_maps aktuella
   kartindex. Den tidigare felbenämnda “last moved record”-platsen är borttagen.

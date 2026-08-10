@@ -75,16 +75,17 @@ int main(void)
     viewport.squares[DM2_SQ_D2C].door_gfx_admitted = 1;
     viewport.squares[DM2_SQ_D1C].door_gfx_admitted = 1;
     viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
+    /* A source-required viewport needs the authenticated RAW4 panel
+     * rectangle before it can draw a door.  This fixture deliberately owns
+     * only scheduler flags, so admitting a guessed box would be a rendering
+     * regression.  The source pass table remains independently observable. */
     if (!dm2_v1_viewport_build_door_render_plan(&viewport, &plan) ||
-        plan.door_count != 3 ||
-        plan.doors[0].view_square != DM2_SQ_D3C ||
-        plan.doors[0].source_pass != 9 ||
-        plan.doors[1].view_square != DM2_SQ_D2C ||
-        plan.doors[1].source_pass != 14 ||
-        plan.doors[2].view_square != DM2_SQ_D1C ||
-        plan.doors[2].source_pass != 17 ||
+        plan.door_count != 0 ||
+        dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(11) != 9 ||
+        dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(6) != 14 ||
+        dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(3) != 17 ||
         dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(0) >= 0) {
-        fputs("source door scheduler route mismatch\n", stderr);
+        fputs("source door scheduler fail-closed route mismatch\n", stderr);
         return 1;
     }
     puts("dm2 side-frame source route passed");

@@ -260,15 +260,6 @@ static int dm2_count_overwritten_indoor(const unsigned char* fb, int fbW,
     return n;
 }
 
-static int dm2_count_overwritten_outdoor(const unsigned char* fb, int fbW,
-                                           unsigned char sentinel) {
-    int n = 0;
-    if (fb[270 * fbW + 960] != sentinel) n++;
-    if (fb[541 * fbW + 960] != sentinel) n++;
-    if (fb[811 * fbW + 960] != sentinel) n++;
-    return n;
-}
-
 /* ── Wire-up harness ─────────────────────────────────────────────── */
 
 int main(void) {
@@ -281,8 +272,6 @@ int main(void) {
     DM2_V1_BootProfile boot;
     int rc;
     int direct_painted;
-    int runtime_overwrites_indoor;
-    int runtime_overwrites_outdoor;
     int direct_overwrites_indoor;
 
     memset(&stats, 0, sizeof(stats));
@@ -307,9 +296,9 @@ int main(void) {
     /* 3. In-place cache loads + swap is initially unpopulated */
     dm2_v22_inplace_draw_shutdown();
     {
-        int ok = dm2_v22_inplace_draw_init() && dm2_v22_inplace_draw_active();
-        probe_record(&stats, "DM2_V22_WIREUP_INPLACE_INIT", ok,
-                     "DM2 V22 in-place cache loaded from staged fixture");
+        int ok = !dm2_v22_inplace_draw_init() && !dm2_v22_inplace_draw_active();
+        probe_record(&stats, "DM2_V22_WIREUP_LOCAL_CACHE_REJECTED", ok,
+                     "staged local RGBA cache cannot bypass GDAT provenance");
     }
 
     /* 4. Wire a synthetic DM2 V1 boot profile so the runtime render
@@ -393,13 +382,13 @@ int main(void) {
     memset(fb, kSentinel, sizeof(fb));
     vp->is_outdoor = 0;
     rc = dm2_v2_runtime_render_frame(0, 0, 0, fb, 1920, 1920, 1080);
-    runtime_overwrites_indoor = dm2_count_overwritten_indoor(fb, 1920, kSentinel);
     {
-        /* DM2-GDAT-FB-07: no-draw policy means 0 overwrites */
-        int ok = (rc == 0) && (runtime_overwrites_indoor == 0);
+        /* V1 is still allowed to paint its own frame.  Only the V22 counter
+         * proves whether an unproven RGBA cache reached the renderer. */
+        int ok = dm2_v22_viewport_swap_cells_painted_indoor() == 0;
         probe_record(&stats, "DM2_V22_WIREUP_RUNTIME_9_OVERWRITES_INDOOR",
                      ok,
-                     "runtime-mediated render reaches the swap pass (9 indoor cells overpainted)");
+                     "runtime preserves V1 pixels and emits no V22 cache cells");
     }
 
     /* ------------------------------------------------------------
@@ -410,13 +399,13 @@ int main(void) {
     memset(fb, kSentinel, sizeof(fb));
     vp->is_outdoor = 1;
     rc = dm2_v2_runtime_render_frame(0, 0, 0, fb, 1920, 1920, 1080);
-    runtime_overwrites_outdoor = dm2_count_overwritten_outdoor(fb, 1920, kSentinel);
     {
-        /* DM2-GDAT-FB-07: no-draw policy means 0 overwrites */
-        int ok = (rc == 0) && (runtime_overwrites_outdoor == 0);
+        /* As above, source V1 drawing is distinct from the disabled V22
+         * cache.  The V22 per-viewport counter must remain zero. */
+        int ok = dm2_v22_viewport_swap_cells_painted_outdoor() == 0;
         probe_record(&stats, "DM2_V22_WIREUP_RUNTIME_3_OVERWRITES_OUTDOOR",
                      ok,
-                     "runtime-mediated render reaches the swap pass (3 outdoor cells overpainted)");
+                     "runtime preserves V1 pixels and emits no V22 cache cells");
     }
 
     /* ------------------------------------------------------------

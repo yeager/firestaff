@@ -491,8 +491,8 @@ static void test_save_source_evidence_strings(void)
           "dm2_v1_save_phase7_source_evidence returns non-empty");
     CHECK(save_ev && strstr(save_ev, "SKULL.ASM") != NULL,
           "save phase7 evidence cites SKULL.ASM");
-    CHECK(save_ev && strstr(save_ev, "skload_table_60") != NULL,
-          "save phase7 evidence cites skload_table_60 game state block");
+    CHECK(save_ev && strstr(save_ev, "s_savegamebuffer") != NULL,
+          "save phase7 evidence cites the source save-game state block");
 
     CHECK(save_load_ev && save_load_ev[0] != '\0',
           "dm2_v1_save_source_evidence returns non-empty");

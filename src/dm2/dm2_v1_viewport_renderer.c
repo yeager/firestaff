@@ -8412,8 +8412,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                  * not Firestaff's session-tail portrait ordinal. Until the
                  * original save/session parser binds that field, a real-data
                  * profile must not select a CHAMPIONS image by inference. */
-                if (s->source_materials_required &&
-                    !plan.champion_slots[slot].portrait_type_source_bound) {
+                if (!plan.champion_slots[slot].portrait_type_source_bound) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_PORTRAIT);
                 } else if (s->source_materials_required &&

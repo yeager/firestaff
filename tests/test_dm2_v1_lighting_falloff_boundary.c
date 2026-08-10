@@ -1146,13 +1146,16 @@ static void test_sprite_asset_provider(void)
                                            test_dm2_asset_fetch,
                                            NULL);
         dm2_v1_render_ui_chrome(&viewport);
+        CHECK("DM2 UI chrome renders every admitted core surface",
+              s_asset_fetch_calls == 4);
+        CHECK("DM2 UI chrome accounts for every admitted core surface",
+              viewport.asset_hud_core_drawn_count == 4 &&
+                  viewport.fallback_hud_core_drawn_count == 0);
+        CHECK("DM2 UI chrome retains an admitted core-material receipt",
+              viewport.last_hud_core_gdat_hash != 2166136261u &&
+                  viewport.last_hud_core_pixel_count > 0u);
         CHECK("DM2 UI chrome leaves an unproven portrait route unpainted",
-              s_asset_fetch_calls == 9 &&
-                  viewport.asset_hud_core_drawn_count == 9 &&
-                  viewport.fallback_hud_core_drawn_count == 0 &&
-                  viewport.last_hud_core_gdat_hash != 2166136261u &&
-                  viewport.last_hud_core_pixel_count > 0u &&
-                  viewport.asset_hud_portrait_drawn_count == 0 &&
+              viewport.asset_hud_portrait_drawn_count == 0 &&
                   viewport.fallback_hud_portrait_drawn_count == 0);
 
         memset(framebuffer, 0, sizeof(framebuffer));

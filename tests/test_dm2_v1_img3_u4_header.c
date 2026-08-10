@@ -82,12 +82,14 @@ int main(void)
     CHECK(dm2_v1_extract_gdat_image_receipt(
               &loader, 0u, 0, 1, NULL, 0u, &extract) &&
               extract.valid &&
-              extract.decode_img3_underlay &&
+              !extract.decode_img3_underlay &&
+              !extract.decode_img3_overlay &&
+              !extract.decode_img9 &&
               extract.bpp == 4u &&
               extract.width == 2u &&
               extract.height == 2u &&
               extract.decoded_pixel_hash != 0u,
-          "DM2_EXTRACT_GDAT_IMAGE decodes U4 payload without fallback pixels");
+          "DM2_EXTRACT_GDAT_IMAGE uses the direct U4 payload route");
 
     printf("DM2 IMG3/U4 header regression: %d passed, %d failed\n",
            passed, failed);

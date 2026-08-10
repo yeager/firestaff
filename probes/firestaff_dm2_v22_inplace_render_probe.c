@@ -503,9 +503,9 @@ int main(void) {
 
     /* 3. Init/shutdown lifecycle */
     dm2_v22_inplace_draw_shutdown();
-    ok = dm2_v22_inplace_draw_init() && dm2_v22_inplace_draw_active();
-    probe_record(&stats, "DM2_V22_INPLACE_INIT", ok,
-                 "DM2 in-place cache loads from ~/.firestaff/assets/dm2/modern");
+    ok = !dm2_v22_inplace_draw_init() && !dm2_v22_inplace_draw_active();
+    probe_record(&stats, "DM2_V22_INPLACE_REJECTS_LOCAL_CACHE", ok,
+                 "local RGBA cache remains unavailable without GDAT provenance");
 
     /* 4. Unpopulated (no swap update yet) — swap is unpopulated + inactive */
     probe_record(&stats, "DM2_V22_UNPOPULATED_INACTIVE",
@@ -728,10 +728,10 @@ int main(void) {
      * intact. This is the bounded V1-ownership guard for partial packs. */
     dm2_v22_inplace_draw_shutdown();
     ok = write_minimal_dm2_v22_cache_filtered(cache_path, "floor_dm2_pit_01") &&
-         dm2_v22_inplace_draw_init() &&
-         dm2_v22_inplace_draw_active();
-    probe_record(&stats, "DM2_V22_PARTIAL_CACHE_REINIT", ok,
-                 "cache reloads with one synthetic bitmap omitted");
+         !dm2_v22_inplace_draw_init() &&
+         !dm2_v22_inplace_draw_active();
+    probe_record(&stats, "DM2_V22_PARTIAL_CACHE_REJECTED", ok,
+                 "partial local RGBA cache cannot bypass the GDAT gate");
     dm2_v22_viewport_swap_update(0, (const unsigned char (*)[3])raw_cells, 0);
     memset(fb, 0xA5, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);

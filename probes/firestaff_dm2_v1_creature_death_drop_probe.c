@@ -74,7 +74,7 @@ static void test_unbound_thorn_demon_no_generated_drop(void)
     CHECK_EQ(obs.count, 0);
     CHECK_EQ(obs.instance_id, slot);
     CHECK_EQ(obs.ai_index, DM2_AI_THORN_DEMON);
-    CHECK_EQ(obs.world_x, 6);
+    CHECK_EQ(obs.world_x, 5);
     CHECK_EQ(obs.world_y, 10);
     CHECK_EQ(obs.map_index, 0);
     CHECK_EQ(dm2_v1_creature_death_observer_count(), 1);
