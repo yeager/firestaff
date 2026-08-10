@@ -1,3 +1,13 @@
+# Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
+
+- ✅ `scripts/analyze_nexus_vdp2_register_writer.py` verifierar att samma
+  writer-PC och destination förekommer i både VDP2-write-trace och
+  register-witness. Den externa witnessen bekräftar 64 skrivningar från
+  `0x06011924` till `0x050000..0x050080` med `r4=0x25e50000`.
+- ✅ Källpekaren rapporteras uttryckligen som RAM; pekade bytes saknas ännu.
+  Assetidentitet och semantisk meny/HUD/viewport-admission förblir därför
+  spärrade, utan gissad FONT256- eller CLUT-bindning.
+
 # Nexus: riktad VDP2-writer-capture med TM.BIN-ägare (2026-08-10)
 
 - ✅ Extern J-BIOS/engelsk Saturn-capture
