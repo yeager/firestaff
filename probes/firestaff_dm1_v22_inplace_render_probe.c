@@ -345,9 +345,12 @@ static int dm1_reviewed_cell_centers_match(const unsigned char* fb, int fbW) {
     };
     int i;
     for (i = 0; i < 9; ++i) {
-        /* D2-left is stairs: there is no reviewed original-backed V2.2
-         * material yet, so the renderer deliberately leaves V1 pixels alone. */
-        if (i == 3) continue;
+        /* D2-left (i=3) is stairs: no reviewed V2.2 material, V1 pixels
+         * stay. The raw-cell fixture also encodes walls at i=0/4/6; the
+         * runtime removed the direct wall id, so those cells retain V1
+         * pixels too and must not be treated as reviewed-material
+         * centers here. */
+        if (i == 3 || i == 0 || i == 4 || i == 6) continue;
         if (fb[centers[i][1] * fbW + centers[i][0]] == 0x00) return 0;
     }
     return 1;
@@ -372,7 +375,11 @@ static int asset_id_equals(int depth, int lateral, const char* expected) {
 }
 
 static int material_asset_routes_match_expected(void) {
-    return asset_id_equals(1, -1, "wall_d3_carved_hero_01") &&
+    /* Wall route removed intentionally (see the "wall and creature ids
+     * below are deliberately unused" comment in
+     * m11_v22_inplace_draw_pc34.c). Walls now return NULL until per-
+     * variant reviewed material lands. */
+    return m11_v22_inplace_get_cell_asset_id(1, -1) == NULL &&
            asset_id_equals(1, 0, "floor_plain_hero_01") &&
            asset_id_equals(1, 1, "floor_pit_hero_01") &&
            m11_v22_inplace_get_cell_asset_id(2, -1) == NULL &&
@@ -434,16 +441,23 @@ int main(void) {
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
     bitmap = m11_v22_inplace_get_cell_bitmap(1, -1, &w, &h);
+    /* Wall/creature routes were deliberately removed from the in-place
+     * cache (see the "wall and creature ids below are deliberately
+     * unused" comment in m11_v22_inplace_draw_pc34.c). The first-cut
+     * hero pack ships a single wall/creature image per class, so wiring
+     * the single id drew every wall as the same carved stone. Wall
+     * cells now return NULL bitmap/asset until per-variant reviewed
+     * material lands, leaving the source-owned V1 pixels intact. */
     probe_record(&stats, "DM1_V22_CELL_BITMAP",
-                 bitmap != NULL && w == 2 && h == 2,
-                 "D1 center maps to the reviewed wall bitmap");
+                 bitmap == NULL,
+                 "D1 center wall returns no reviewed bitmap (V1 pixels retained)");
 
     probe_record(&stats, "DM1_V22_MATERIAL_ASSET_ROUTES",
-                 asset_id_equals(1, -1, "wall_d3_carved_hero_01") &&
+                 m11_v22_inplace_get_cell_asset_id(1, -1) == NULL &&
                  asset_id_equals(1, 0, "floor_plain_hero_01") &&
                  asset_id_equals(1, 1, "floor_pit_hero_01") &&
                  m11_v22_inplace_get_cell_asset_id(2, -1) == NULL,
-                 "reviewed wall/floor/pit use real pack ids while stairs retain V1");
+                 "reviewed floor/pit use real pack ids; walls and stairs retain V1");
 
     asset_id = m11_v22_inplace_get_cell_asset_id(2, 1);
     probe_record(&stats, "DM1_V22_FIELD_ASSET_ROUTE",
@@ -455,17 +469,21 @@ int main(void) {
     frame_sig = fnv1a_bytes(fb, sizeof(fb));
     changed = count_changed_pixels(fb, sizeof(fb));
     probe_record(&stats, "DM1_V22_RENDER_REVIEWED_CELLS_WITH_FIELD",
-                 painted == 8 && changed > 0 && dm1_reviewed_cell_centers_match(fb, 320) &&
+                 painted == 5 && changed > 0 && dm1_reviewed_cell_centers_match(fb, 320) &&
                  dm1_cell_center_pixel(fb, 320, 2, -1) == 0x00,
                  "render pass paints reviewed material-backed cells and preserves V1 stairs");
+    /* With the wall id removed, D1 walls (depth 1, lateral -1) and D2
+     * wall (depth 2, lateral 0) no longer paint -- their centers stay at
+     * the seeded 0x00. Floor (0x0c), pit (0x03), stairs (0x00), and
+     * field-teleporter (0x33) still ride their reviewed routes. */
     probe_record(&stats, "DM1_V22_RENDER_MATERIAL_COLORS",
-                 dm1_cell_center_pixel(fb, 320, 1, -1) == 0x30 &&
+                 dm1_cell_center_pixel(fb, 320, 1, -1) == 0x00 &&
                  dm1_cell_center_pixel(fb, 320, 1, 0) == 0x0c &&
                  dm1_cell_center_pixel(fb, 320, 1, 1) == 0x03 &&
                  dm1_cell_center_pixel(fb, 320, 2, -1) == 0x00 &&
-                 dm1_cell_center_pixel(fb, 320, 2, 0) == 0x30 &&
+                 dm1_cell_center_pixel(fb, 320, 2, 0) == 0x00 &&
                  dm1_cell_center_pixel(fb, 320, 2, 1) == 0x33,
-                 "cell-center palette proves reviewed wall/floor/pit/field routing");
+                 "cell-center palette proves reviewed floor/pit/field routing (walls/stairs retain V1)");
     probe_record(&stats, "DM1_V22_RENDER_SIGNATURE_STABLE_BASELINE",
                  frame_sig != 0u,
                  "material-pixel framebuffer signature records the reviewed-cell receipt");
@@ -475,7 +493,7 @@ int main(void) {
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
     repeat_frame_sig = fnv1a_bytes(fb, sizeof(fb));
     probe_record(&stats, "DM1_V22_REPEAT_RENDER_DETERMINISTIC",
-                 painted == 8 && repeat_frame_sig == frame_sig &&
+                 painted == 5 && repeat_frame_sig == frame_sig &&
                  material_asset_routes_match_expected(),
                  "repeated cache update preserves reviewed material selection and pixels");
 
@@ -491,7 +509,7 @@ int main(void) {
         }
     }
     probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_REVIEWED_CELLS",
-                 sweep_painted == 32,
+                 sweep_painted == 20,
                  "all 4 directions paint 4x8 reviewed DM1 V22 material-backed cells");
     probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_DETERMINISTIC_SELECTION",
                  sweep_routes_ok && sweep_frame_sig_ok,
@@ -508,10 +526,16 @@ int main(void) {
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
     memset(fb, 0xAA, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
+    /* Wall id removed: the "opaque neighbor paints" pixel at (43, 103)
+     * was the wall route (0x30). Walls no longer paint so that pixel now
+     * also retains the seeded 0xAA. The transparent-cache invariant we
+     * still want to prove is that BOTH neighbours retain V1 -- opaque
+     * or not -- when the wall route is disabled, and that painted only
+     * counts the floor/pit/field routes. */
     probe_record(&stats, "DM1_V22_TRANSPARENT_PIXEL_PRESERVES_V1",
-                 painted == 8 &&
+                 painted == 5 &&
                  fb[(103 * 320) + 8] == 0xAA &&
-                 fb[(103 * 320) + 43] == 0x30,
+                 fb[(103 * 320) + 43] == 0xAA,
                  "zero cache pixel leaves V1 framebuffer intact while opaque neighbor paints");
 
     {
