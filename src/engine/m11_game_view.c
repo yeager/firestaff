@@ -3157,6 +3157,7 @@ static int m11_csb_install_runtime_source_graphic(
 {
     M11_GameViewState *mutable_state = (M11_GameViewState *)state;
     CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+    const M11_AssetSlot *amiga_asset;
     uint32_t package_identity;
     unsigned int word_index;
     uint64_t graphic_mask;
@@ -3193,14 +3194,29 @@ static int m11_csb_install_runtime_source_graphic(
         graphic_mask) {
         return 0;
     }
-    memset(&receipt, 0, sizeof(receipt));
-    if (m11_csb_decode_active_source_graphic(
-            (const CSB_V1_BootProfile *)state->csbBootProfile, graphic_index,
-            &pixels, &width, &height, &receipt) && receipt.valid &&
-        width > 0 && height > 0 && width <= 65535 && height <= 65535) {
-        installed = M11_AssetLoader_InstallDecodedPixels(
-            &mutable_state->assetLoader, graphic_index, pixels,
-            (unsigned short)width, (unsigned short)height);
+    /* ReDMCSB MEMORY.C F0489/F0490 takes the native IMG1 expansion path
+     * for MEDIA720 Amiga.  M11_AssetLoader_Load owns that exact DMCSB2
+     * decoder when csbAmiga is set.  Routing these records through
+     * m11_csb_decode_active_source_graphic would instead invoke the PC34
+     * IMG3 reader and make F0115's M613/M614/M612/M618 callbacks fail even
+     * though their authenticated Amiga source records are present.  Do not
+     * manufacture a converted buffer or borrow a PC surface: accept only
+     * the loader's directly decoded native record. */
+    if (mutable_state->assetLoader.csbAmiga) {
+        amiga_asset = M11_AssetLoader_Load(&mutable_state->assetLoader,
+                                           graphic_index);
+        installed = amiga_asset && amiga_asset->loaded && amiga_asset->pixels &&
+            amiga_asset->width > 0u && amiga_asset->height > 0u;
+    } else {
+        memset(&receipt, 0, sizeof(receipt));
+        if (m11_csb_decode_active_source_graphic(
+                (const CSB_V1_BootProfile *)state->csbBootProfile, graphic_index,
+                &pixels, &width, &height, &receipt) && receipt.valid &&
+            width > 0 && height > 0 && width <= 65535 && height <= 65535) {
+            installed = M11_AssetLoader_InstallDecodedPixels(
+                &mutable_state->assetLoader, graphic_index, pixels,
+                (unsigned short)width, (unsigned short)height);
+        }
     }
     free(pixels);
     if (installed) {
@@ -4043,7 +4059,9 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
                   ->csbgraphics_palette_receipt_hash
             : 0u;
     drawer_binding.real_graphics_session = 1;
-    drawer_binding.graphic_provider_callback = m11_csb_viewport_graphic_provider;
+    drawer_binding.graphic_provider_callback = m11_csb_is_fmtowns_profile(profile)
+        ? m11_csb_fmtowns_viewport_graphic_provider
+        : m11_csb_viewport_graphic_provider;
     drawer_binding.graphic_provider_user_data = state;
 
     if (!csb_v1_boot_render_viewport_frame_pc34(

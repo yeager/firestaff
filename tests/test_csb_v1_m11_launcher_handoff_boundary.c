@@ -427,6 +427,28 @@ static void expect_amiga_c009_spell_source_frame(M11_GameViewState *view,
     view->spellPanelOpen = 0;
 }
 
+/* DUNVIEW.C F0115 reaches these four native MEDIA720 families after the
+ * C03 handoff: M613 projectiles, M614 explosions, M612 objects and M618
+ * creatures.  They must remain direct DMCSB2/IMG1 records from the selected
+ * ADF.  In particular, do not let the PC34 IMG3 decoder silently become a
+ * second owner for this runtime material. */
+static void expect_amiga_f0115_native_overlay_families(
+    M11_GameViewState *view, const char *label)
+{
+    static const unsigned int graphics[] = { 454u, 486u, 498u, 584u };
+    size_t index;
+    int valid = view && view->assetLoader.csbAmiga;
+
+    for (index = 0u; valid && index < sizeof(graphics) / sizeof(graphics[0]);
+         ++index) {
+        const M11_AssetSlot *asset = M11_AssetLoader_Load(
+            &view->assetLoader, graphics[index]);
+        valid = asset && asset->loaded && asset->pixels &&
+            asset->width > 0u && asset->height > 0u;
+    }
+    expect_true(valid, label);
+}
+
 /* ENTRANCE.C F0442 expands C005 directly and fades to DATA.C G0019.  The
  * A31/A35 runtime intentionally has no PC34 startup session, so exercise
  * the native C005 owner from an authenticated ADF rather than accepting a
@@ -2786,6 +2808,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
         &view, "A31M enters native C004 Prison after KAOS.FTL");
     expect_amiga_c013_source_frame(
         &view, "A31M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_f0115_native_overlay_families(
+        &view, "A31M F0115 overlay families decode directly from native IMG1");
     expect_amiga_c010_action_menu_source_frame(
         &view, "A31M action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c005_credits_source_frame(
@@ -2912,6 +2936,8 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
         &view, "A35M enters native C004 Prison after APPB/KAOS.FTL");
     expect_amiga_c013_source_frame(
         &view, "A35M C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_f0115_native_overlay_families(
+        &view, "A35M F0115 overlay families decode directly from native IMG1");
     expect_amiga_c010_action_menu_source_frame(
         &view, "A35M action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c005_credits_source_frame(
@@ -3034,6 +3060,8 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
         &view, "A35E enters native C004 Prison after its direct C03 handoff");
     expect_amiga_c013_source_frame(
         &view, "A35E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_f0115_native_overlay_families(
+        &view, "A35E F0115 overlay families decode directly from native IMG1");
     expect_amiga_c010_action_menu_source_frame(
         &view, "A35E action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c009_spell_source_frame(
@@ -3117,6 +3145,8 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
         &view, "A31E enters native C004 Prison after its direct C03 handoff");
     expect_amiga_c013_source_frame(
         &view, "A31E C03 presents original Amiga C013 without a PC34 runtime page");
+    expect_amiga_f0115_native_overlay_families(
+        &view, "A31E F0115 overlay families decode directly from native IMG1");
     expect_amiga_c010_action_menu_source_frame(
         &view, "A31E action menu presents original Amiga C010 without PC34 chrome");
     expect_amiga_c009_spell_source_frame(
