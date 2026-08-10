@@ -13,7 +13,9 @@ typedef enum {
 
 /* Opaque receipt for an observed Main-RAM loader trace. It proves transfer
  * control/data coordinates only; it never treats the transfer as `$2600`
- * code or as a level/object record. */
+ * code or as a level/object record. The TIA fields expose the authenticated
+ * VCE-register destination witness separately from the generic transfer
+ * count; they do not claim ownership of the bytes copied through it. */
 typedef struct {
     Theron_V1MednafenMainRamTraceStatus status;
     int source_trace_md5_verified;
@@ -29,6 +31,11 @@ typedef struct {
     uint32_t first_source;
     uint32_t first_destination;
     uint32_t first_length;
+    uint32_t vce_tia_transfer_count;
+    uint32_t vce_tia_source;
+    uint32_t vce_tia_destination;
+    uint32_t vce_tia_length;
+    int vce_tia_coordinates_verified;
     char source_trace_path[THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_PATH_CAPACITY];
     char source_trace_md5[33];
 } Theron_V1MednafenMainRamTraceReceipt;

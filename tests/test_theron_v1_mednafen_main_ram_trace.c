@@ -40,7 +40,12 @@ static int test_escaped_newline_normalization(void) {
     }
     result = theron_v1_mednafen_main_ram_trace_parse_file(path, &receipt) &&
              receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_READY &&
-             receipt.first_length == 0x80u;
+             receipt.first_length == 0x80u &&
+             receipt.vce_tia_transfer_count == 1u &&
+             receipt.vce_tia_coordinates_verified &&
+             receipt.vce_tia_source == 0xc800u &&
+             receipt.vce_tia_destination == 0x0404u &&
+             receipt.vce_tia_length == 0x80u;
     unlink(path);
     return result;
 #endif
@@ -112,7 +117,12 @@ int main(void) {
         receipt.status != THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_READY ||
         !receipt.source_trace_md5_verified || !receipt.source_header_verified ||
         !receipt.transfer_coordinates_verified || receipt.target_2600_bytes_present ||
-        receipt.semantic_publication_allowed || receipt.first_length != 0x80u) {
+        receipt.semantic_publication_allowed || receipt.first_length != 0x80u ||
+        receipt.vce_tia_transfer_count < 1u ||
+        !receipt.vce_tia_coordinates_verified ||
+        receipt.vce_tia_source != 0xc800u ||
+        receipt.vce_tia_destination != 0x0404u ||
+        receipt.vce_tia_length != 0x80u) {
         fprintf(stderr, "FAIL: Main-RAM loader trace was not accepted\n");
         return 1;
     }

@@ -199,6 +199,14 @@ int theron_v1_mednafen_main_ram_trace_parse_file(
                 receipt.first_destination = destination;
                 receipt.first_length = length;
             }
+            if (strcmp(operation, "tia") == 0) {
+                receipt.vce_tia_transfer_count++;
+                if (receipt.vce_tia_transfer_count == 1u) {
+                    receipt.vce_tia_source = source;
+                    receipt.vce_tia_destination = destination;
+                    receipt.vce_tia_length = length;
+                }
+            }
             receipt.block_transfer_count++;
             continue;
         }
@@ -305,6 +313,11 @@ int theron_v1_mednafen_main_ram_trace_parse_file(
     receipt.status = THERON_V1_MEDNAFEN_MAIN_RAM_TRACE_READY;
     receipt.source_trace_md5_verified = 1;
     receipt.transfer_coordinates_verified = 1;
+    receipt.vce_tia_coordinates_verified =
+        receipt.vce_tia_transfer_count > 0u &&
+        receipt.vce_tia_source == 0xc800u &&
+        receipt.vce_tia_destination == 0x0404u &&
+        receipt.vce_tia_length == 0x0080u;
     receipt.target_2600_bytes_present = 0;
     receipt.semantic_publication_allowed = 0;
     snprintf(receipt.source_trace_path, sizeof(receipt.source_trace_path), "%s", path);

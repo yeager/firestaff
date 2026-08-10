@@ -1,5 +1,21 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-10 — authenticated VCE-register TIA witness
+
+The real US Mednafen Main-RAM loader sidecar now exposes the first source-owned
+TIA separately from the generic transfer count. In the external capture the
+loader executes HuC6280 `$2286` at physical `$1f0286` and transfers exactly
+`$0080` bytes from `$c800` to VCE register destination `$0404`; the matching
+RTS is at `$228d` / `$1f028d`. The parser records this as
+`vce_tia_coordinates_verified` and the regression test asserts the exact
+coordinates.
+
+This is authentic destination/control evidence for the VCE path. It does not
+prove which source bytes are palette entries, bitmap pixels, tiles or HUD
+elements, and therefore does not unlock palette rendering, tile mapping or
+semantic publication. Those still require a byte-exact source-data join in the
+same execution.
+
 The Mednafen capture path emits a separate `spawn_consumer_read` receipt. It
 is limited to reads of the RAM-loaded helper targets `$5D64/$5D6A` and
 instruction fetches inside the byte-verified `$C96B-$CA69` and
