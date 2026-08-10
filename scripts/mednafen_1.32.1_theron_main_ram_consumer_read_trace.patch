@@ -34,9 +34,8 @@
 +	  const uint16 reader_pc = GetRegister(GSREG_PC);
 +	  const uint8 reader_mpr = MPR[reader_pc >> 13];
 +	  const uint32 reader_physical_pc = (reader_mpr << 13) | (reader_pc & 0x1FFF);
-+	  if(reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000)
-+	   TheronPCECDTraceMainRAMConsumerRead(address, physical_address, ret,
-+	                                       reader_pc, reader_physical_pc);
++	  TheronPCECDTraceMainRAMConsumerRead(address, physical_address, ret,
++	                                      reader_pc, reader_physical_pc);
 +	 }
 
 -	 uint8 wmpr = MPR[address >> 13];
@@ -148,10 +147,8 @@
 +                                          uint32 physical_address, uint8 value,
 +                                          uint16 writer_pc, uint32 writer_physical_pc)
 +{
-+ if(logical_address < 0x2600 || logical_address >= 0x2800 ||
++ if(physical_address < 0x1f0000 || physical_address >= 0x1f8000 ||
 +    TheronPCECDMainRAMTargetTraceCount >= 4096)
-+  return;
-+ if(!(writer_physical_pc >= 0x1f0000 && writer_physical_pc < 0x1f8000))
 +  return;
 + if(!TheronPCECDMainRAMTargetTrace)
 + {

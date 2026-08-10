@@ -246,12 +246,12 @@ fi
 if [[ ! -f "$consumer_read_patch" ]] ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerRead' "$consumer_read_patch" ||
    ! grep -Fq 'physical_address >= 0x1f0000 && physical_address < 0x1f8000' "$consumer_read_patch" ||
-   ! grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDMainRAMConsumerTraceLimit' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerWrite' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_target_write sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
-   ! grep -Fq 'writer_physical_pc >= 0x1f0000 && writer_physical_pc < 0x1f8000' "$consumer_read_patch" ||
+   grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
+   grep -Fq 'writer_physical_pc >= 0x1f0000 && writer_physical_pc < 0x1f8000' "$consumer_read_patch" ||
    grep -Fq '\\\\n' "$consumer_read_patch"; then
     printf 'FAIL: consumer-read patch must retain bounded game-owned RAM provenance with real line-delimited output\n' >&2
     exit 1
