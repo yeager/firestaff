@@ -23,6 +23,7 @@ int main(void)
         int pc = M12_AssetStatus_FindVersionIndex(games[i], pc_versions[i]);
         int fmtowns = M12_AssetStatus_FindVersionIndex(games[i],
                                                         fmtowns_versions[i]);
+        int amiga = -1;
         int selected;
         if (pc < 0 || fmtowns < 0) {
             fprintf(stderr, "FAIL: missing catalogue identities for %s\n", games[i]);
@@ -30,6 +31,14 @@ int main(void)
         }
         status.versions[i][pc].matched = 1;
         status.versions[i][fmtowns].matched = 1;
+        if (strcmp(games[i], "csb") == 0) {
+            amiga = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+            if (amiga < 0) {
+                fprintf(stderr, "FAIL: missing CSB Amiga catalogue identity\n");
+                return 1;
+            }
+            status.versions[i][amiga].matched = 1;
+        }
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, games[i], M12_ARCH_AUTO);
         if (selected != pc) {
@@ -37,7 +46,7 @@ int main(void)
             return 1;
         }
     }
-    puts("PASS: AUTO retains verified PC-first selection for DM1, CSB and DM2");
+    puts("PASS: AUTO retains verified PC-first selection for DM1, CSB and DM2 over FM Towns/Amiga");
     {
         int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
