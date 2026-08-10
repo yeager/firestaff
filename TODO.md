@@ -5,6 +5,14 @@
   en ersättningstabell: nästa steg kräver samma-körningsbevis för RNG-retur,
   generator-timing, AI/attack/skada/loot samt T700/T900-konsumenter.
 
+- 🔒 Den senaste externa cold-start-capturen verifierar 159 råsektorer, 32
+  `$E009`-dispatchar, två byte-exakta CD→RAM-originreceipts samt 17 `$4644`-
+  och 64 `$4667`-observationer i samma session. Den nådde varken `$B0E5`,
+  specialgrenen, RNG-konsumenten eller målskrivningar. Detta öppnar ingen
+  gameplaysemantik; nästa capture måste starta från en verklig dungeon-/spawn-
+  eller objektaktion och binda originalets returvärde till source-record och
+  konsument.
+
 - 🔒 Extern capture 3 visar 2 048 byte-exakta ADPCM FIFO→RAM-transfer, men
   capturefilen slutar mitt i en ny CD-läsning och saknar CPU-läsning av
   ADPCM-RAM, kanalstart, ljud-ID och spelhändelseägare. En komplett

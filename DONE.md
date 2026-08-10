@@ -8,6 +8,18 @@
 - 🔒 RNG, dynamic generator timing, AI, combat, loot, T700 and T900 remain
   fail-closed until an authenticated same-run runtime capture binds them.
 
+# Theron: cold-start transport witness recorded (2026-08-10)
+
+- ✅ En extern cold-start-capture verifierade 159 råsektorer, 53 SCSI-läsningar,
+  32 `$E009`-dispatchar, två byte-exakta CD→RAM-originreceipts, 17 `$4644`-
+  och 64 `$4667`-observationer samt 2 048 ADPCM FIFO→RAM-par i en och samma
+  autentiserade US-session.
+- ✅ Capturen analyserades som ett positivt transportbevis och ett negativt
+  semantikbevis. Den innehöll ingen giltig `$B0E5`-spawnentry, RNG-window,
+  specialgren eller målskrivning.
+- 🔒 Ingen host-RNG, creature-AI, strid, loot, generator, T700 eller T900
+  öppnades. Råtrace och spelmedia stannar utanför GitHub.
+
 # Nexus: sekventiell TM.BIN→VDP2-CRAM source/value-join (2026-08-10)
 
 - ✅ Den nya sekvensverifieraren parar register- och write-trace rad för rad

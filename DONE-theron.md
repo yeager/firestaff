@@ -14,6 +14,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔒 RNG, dynamic generator timing, AI, combat, loot, T700 and T900 remain
   fail-closed until an authenticated same-run runtime capture binds them.
 
+## 2026-08-10 — cold-start transport witness
+
+- ✅ Extern cold-start mot den riktiga US Track 02-sessionen verifierade 159
+  råsektorer, 32 `$E009`-dispatchar, två CD→RAM-originreceipts, 17 `$4644`-
+  och 64 `$4667`-edges samt VDC/VCE-snapshotstorlekarna.
+- ✅ Den negativa kontrollen är uttrycklig: noll `$B0E5`, noll RNG-fönster,
+  noll specialgren, noll spawn-consumer och noll target reads/writes.
+- 🔒 Detta bevisar inte gameplaysemantik. RNG, spawn, AI, strid, loot,
+  generatorer, T700 och T900 förblir fail-closed tills en verklig
+  dungeon-/spawn- eller objektkonsument fångas i samma session.
+
 ## 2026-08-09 — Track 02 teleporter/object-ID correction
 
 - ✅ Den autentiska Track 02-teleporterpostens `ldest` läses nu från rätt

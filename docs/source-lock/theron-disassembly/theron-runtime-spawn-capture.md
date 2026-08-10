@@ -548,3 +548,55 @@ and the session produced zero `spawn_consumer_read`, RNG-consumer and RNG-code
 windows. The address hits are therefore an authenticated bank-overlay
 diagnostic, not an original monster spawn; no creature, AI, loot, generator,
 T700 or T900 semantics are opened.
+
+## 2026-08-10 — cold-start transport and helper boundary
+
+En ny cold-start-capture kördes från extern disk mot samma hashverifierade US
+Track 02, System Card och instrumenterade Mednafen. Den autentiserade
+startupkedjan gav följande kvitto i en och samma session:
+
+```text
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+autoload_state_md5=none
+input_transactions=44539
+cd_irq_callbacks=25
+raw_sector_spans=159
+scsi_read_commands=53
+scsi_read_sector_bindings=159
+adpcm_fifo_reads=2048
+adpcm_ram_writes=2048
+byte_exact_origin_ram_receipts=2
+authenticated_cd_ram_receipts=2
+game_main_ram_e009_dispatches=32
+main_ram_loader_tii_transfers=11
+main_ram_loader_rts=24
+main_ram_loader_post_rts=24
+main_ram_loader_call_entries=5
+main_ram_e009_enters=6
+main_ram_e009_returns=5
+main_ram_consumer_reads=65536
+main_ram_target_reads=0
+main_ram_target_writes=0
+spawn_consumer_reads=0
+spawn_register_samples=88
+spawn_preconsumer_4644_samples=17
+spawn_helper_4667_samples=64
+spawn_helper_4667_special_branch_samples=0
+spawn_entry_b0e5_address_hits=0
+rng_consumer_samples=0
+rng_code_windows=0
+vdc_vram_snapshot_bytes=65536
+vce_palette_snapshot_bytes=1024
+transition=observed
+```
+
+Detta är ett positivt transportbevis för råsektor → autentiserad RAM-
+proveniens och för `$4644`/`$4667`-hjälparkanten. Det är samtidigt ett negativt
+semantikbevis: körningen nådde inte `$B0E5`, den särskilda `$B3 & 7 == 4`-grenen,
+RNG-konsumenten eller någon målskrivning. Värdena får därför inte användas för
+att härleda host-RNG, monsterstats, AI, strid, loot, generatorer, T700 eller
+T900. Nästa witness måste nå en verklig dungeon-/spawn- eller objektaktion i
+samma autentiserade session och binda returvärde, källrecord och konsument.
+
+Råtrace, BIOS, System Card, BIN/CUE och savestate ligger kvar utanför GitHub.

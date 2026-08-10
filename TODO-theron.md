@@ -10,6 +10,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the original RNG return, generator reactivation/timing, AI/attack/damage/loot
   consumers and T700/T900 state writes in one authenticated runtime.
 
+## 2026-08-10 — cold-start transport witness is still semantically negative
+
+- ✅ En extern cold-start mot US Track 02 verifierade 159 råsektorer, 32
+  `$E009`-dispatchar, två CD→RAM-originreceipts, 17 `$4644`- och 64
+  `$4667`-observationer samt VDC/VCE-snapshots i samma autentiserade session.
+- 🔒 Samma körning gav noll `$B0E5`, noll specialgren, noll RNG-fönster och
+  noll målskrivningar. Implementera inte RNG, spawn, AI, strid, loot,
+  generatorer, T700 eller T900 från detta; nästa witness måste fånga en
+  faktisk dungeon-/spawn- eller objektkonsument.
+
 ## 2026-08-09 — aktuell kalla capture har endast transportbevis
 
 - ✅ Den autentiska US-körningen når `transition=observed` och ger fyra
