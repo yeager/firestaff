@@ -1,17 +1,19 @@
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -10,4 +10,10 @@ void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
+@@ -10,4 +10,13 @@ void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
  void TheronPCECDTraceMainRAME009MainRAMStep(uint16 logical_pc,
                                              uint32 physical_pc);
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
-+                                         uint16 reader_pc, uint32 reader_physical_pc);
++                                         uint16 reader_pc, uint32 reader_physical_pc,
++                                         uint8 reader_a, uint8 reader_x, uint8 reader_y,
++                                         uint8 reader_sp, uint8 reader_p);
 +void TheronPCECDTraceMainRAMConsumerWrite(uint16 logical_address,
 +                                          uint32 physical_address, uint8 value,
 +                                          uint16 writer_pc, uint32 writer_physical_pc);
 
  class alignas(128) HuC6280
-@@ -398,11 +400,27 @@
+@@ -398,11 +400,29 @@
  	// Logical
  	INLINE uint8 RdMem(unsigned int address)
  	{
@@ -35,7 +37,10 @@
 +	  const uint8 reader_mpr = MPR[reader_pc >> 13];
 +	  const uint32 reader_physical_pc = (reader_mpr << 13) | (reader_pc & 0x1FFF);
 +	  TheronPCECDTraceMainRAMConsumerRead(address, physical_address, ret,
-+	                                      reader_pc, reader_physical_pc);
++	                                      reader_pc, reader_physical_pc,
++	                                      GetRegister(GSREG_A), GetRegister(GSREG_X),
++	                                      GetRegister(GSREG_Y), GetRegister(GSREG_SP),
++	                                      GetRegister(GSREG_P));
 +	 }
 
 -	 uint8 wmpr = MPR[address >> 13];
@@ -67,10 +72,12 @@
 +}
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
-@@ -140,2 +141,103 @@
+@@ -140,2 +141,104 @@
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
-+                                         uint16 reader_pc, uint32 reader_physical_pc)
++                                         uint16 reader_pc, uint32 reader_physical_pc,
++                                         uint8 reader_a, uint8 reader_x, uint8 reader_y,
++                                         uint8 reader_sp, uint8 reader_p)
 +{
 + bool spawn_consumer_probe =
 +  logical_address == 0x5d64 || logical_address == 0x5d6a ||
@@ -138,9 +145,10 @@
 +        TheronPCECDMainRAMConsumerTrace);
 + }
 + fprintf(TheronPCECDMainRAMConsumerTrace,
-+         "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n",
++         "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
 +         TheronPCECDMainRAMConsumerTraceCount++, logical_address,
-+         physical_address, value, reader_pc, reader_physical_pc);
++         physical_address, value, reader_pc, reader_physical_pc,
++         reader_a, reader_x, reader_y, reader_sp, reader_p);
 + fflush(TheronPCECDMainRAMConsumerTrace);
 +}
 +void TheronPCECDTraceMainRAMConsumerWrite(uint16 logical_address,

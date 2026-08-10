@@ -19,7 +19,7 @@
 +	 }
  	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
  	}
-@@ -424,4 +435,12 @@
+@@ -424,4 +435,13 @@
  	INLINE void WrMemPhysical(uint32 address, uint8 data)
  	{
 +	 if(address >= 0x1f0000 && address < 0x1f8000)

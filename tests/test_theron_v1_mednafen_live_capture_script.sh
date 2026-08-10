@@ -247,7 +247,7 @@ if [[ ! -f "$consumer_read_patch" ]] ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerRead' "$consumer_read_patch" ||
    ! grep -Fq 'physical_address >= 0x1f0000 && physical_address < 0x1f8000' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDMainRAMConsumerTraceLimit' "$consumer_read_patch" ||
-   ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x' "$consumer_read_patch" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMConsumerWrite' "$consumer_read_patch" ||
    ! grep -Fq 'main_ram_target_write sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
    grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
