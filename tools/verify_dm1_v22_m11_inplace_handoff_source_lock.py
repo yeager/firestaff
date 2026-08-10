@@ -115,12 +115,24 @@ def main() -> int:
     require(errors, "m11_v22_render_overlay_with_palette" not in game_view,
             "DM1 V2.2 must not fall back to synthetic overlay art")
 
+    # The v22_wall_asset_id and v22_creature_asset_id constants were
+    # deliberately removed from m11_v22_inplace_draw_pc34.c: the first-
+    # cut hero pack has one image per class, so wiring those two
+    # single-shot ids drew every creature as a demon and every wall as
+    # the same carved stone. The runtime now returns NULL for wall/
+    # creature slots until per-variant reviewed material lands. The
+    # source keeps the ids in a comment as "the names a future
+    # per-variant reviewed pack must supply". Lock the current shape:
+    # floor/teleporter routing constants remain; wall/creature ids do
+    # not, and their intended replacement is documented in-source.
     inplace_required = [
-        "static const char* v22_wall_asset_id  = \"wall_d3_carved_hero_01\";",
+        "wall and creature ids below are deliberately unused",
+        # wall/creature ids still cited in the future-work comment
+        "wall_d3_carved_hero_01",
+        "creature_demon_hero_01",
         "static const char* v22_floor_plain_id = \"floor_plain_hero_01\";",
         "static const char* v22_floor_pit_id = \"floor_pit_hero_01\";",
         "static const char* v22_field_teleporter_id = \"field_teleporter_hero_01\";",
-        "static const char* v22_creature_asset_id = \"creature_demon_hero_01\";",
         "case M11_V22_SHAPE_FLOOR_STAIRS_UP:\n"
         "        case M11_V22_SHAPE_FLOOR_STAIRS_DOWN:\n"
         "            return NULL;",
@@ -147,12 +159,18 @@ def main() -> int:
     for marker in cache_required:
         require(errors, marker in cache, f"m11_v22_shape_cache_pc34.c missing marker: {marker}")
 
+    # The V2.2 overlay implementation was reduced to a strict no-draw
+    # stub: `m11_v22_render_overlay` and `_with_palette` now return 0
+    # without touching the framebuffer, and every previous cache-walk /
+    # cell-rect / placeholder-index path was removed so no synthetic
+    # overlay can leak. Lock the current stub shape instead of the
+    # historical body -- the "no synthetic V2.2 overlay pixels"
+    # contract is the point.
     overlay_required = [
         "int m11_v22_render_overlay(unsigned char* framebuffer, int fbW, int fbH)",
-        "m11_v22_shape_cache_get(depth + 1, lateral);",
-        "if (!r || !r->active) continue;",
-        "m11_v22_cell_rect(depth + 1, lateral);",
-        "M11_V22_OVERLAY_PLACEHOLDER_INDEX",
+        "int m11_v22_render_overlay_with_palette(unsigned char* framebuffer,",
+        "return 0;",
+        "strict no-draw when no authenticated",
     ]
     for marker in overlay_required:
         require(errors, marker in overlay, f"m11_v22_render_overlay_pc34.c missing marker: {marker}")
