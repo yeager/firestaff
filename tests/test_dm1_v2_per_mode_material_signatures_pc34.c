@@ -286,8 +286,15 @@ static void test_v22_inplace_material_signature(uint32_t* out_signature) {
     CHECK(m11_v22_inplace_draw_active() == 0);
 
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
+    /* Wall / creature / door shapes route to NULL now: the first-cut
+     * hero pack has one image per class, so wiring the single
+     * `wall_d3_carved_hero_01` id drew every wall as the same carved
+     * stone. The runtime returns NULL until per-variant reviewed
+     * material lands (see the "wall and creature ids below are
+     * deliberately unused" comment in m11_v22_inplace_draw_pc34.c),
+     * which leaves the source-owned V1 pixels intact for wall cells. */
     asset_id = m11_v22_inplace_get_cell_asset_id(1, -1);
-    CHECK(asset_id != NULL && strcmp(asset_id, "wall_d3_carved_hero_01") == 0);
+    CHECK(asset_id == NULL);
     asset_id = m11_v22_inplace_get_cell_asset_id(1, 0);
     CHECK(asset_id != NULL && strcmp(asset_id, "floor_plain_hero_01") == 0);
     asset_id = m11_v22_inplace_get_cell_asset_id(1, 1);

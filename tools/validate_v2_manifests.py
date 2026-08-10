@@ -30,6 +30,14 @@ ALLOWED_PRODUCTION_CLASSES = {
     "redraw-native",
     "source-evidenced-layout-contract",
     "system-rebuild",
+    # An asset that is the original GRAPHICS.DAT bitmap referenced
+    # directly (byte-identical, with a graphicIndex + iconIndex +
+    # sourceRect + graphicsDatSha256 pin) rather than a redraw. The
+    # items-starter manifest migrated to this class for
+    # C201_ICON_ACTION_ICON_EMPTY_HAND, and the semantics differ from
+    # the other four classes -- there is no "master 4K" for the
+    # source-graphics-dat class because the source IS the master.
+    "source-graphics-dat",
 }
 ALLOWED_STATUSES = {
     "planned",
@@ -39,6 +47,10 @@ ALLOWED_STATUSES = {
     "shipped",
     "blocked",
     "rebuilt",
+    # Matches source-graphics-dat: the asset is bound to a specific
+    # original GRAPHICS.DAT sha + iconIndex + sourceRect and needs no
+    # per-status lifecycle.
+    "source-bound",
 }
 FILE_EXPECTED_STATUSES = {"in-progress", "approved", "shipped", "rebuilt"}
 
@@ -136,13 +148,28 @@ def validate_manifest(path: Path, *, check_files: bool, strict_files: bool) -> t
     for key in ("manifestVersion", "packId"):
         require_string(manifest, key, findings, path, "manifest")
 
-    target_policy = as_object(manifest.get("targetPolicy"), "manifest.targetPolicy", findings, path)
-    for key in ("masterResolution", "layoutSkeleton"):
-        require_string(target_policy, key, findings, path, "manifest.targetPolicy")
-    derived = as_list(target_policy.get("derivedResolutions"), "manifest.targetPolicy.derivedResolutions", findings, path)
-    for idx, value in enumerate(derived):
-        if not isinstance(value, str) or value == "":
-            findings.append(Finding("ERROR", path, f"manifest.targetPolicy.derivedResolutions[{idx}] must be a non-empty string"))
+    # source-graphics-dat manifests are byte-identical bindings to the
+    # original GRAPHICS.DAT bitmap; they have no master4k / derived1080p
+    # ladder, no layout skeleton, and no derived-resolution list. Skip
+    # the master/derived target policy checks when every asset in the
+    # manifest is source-graphics-dat.
+    assets_preview = manifest.get("assets") if isinstance(manifest, dict) else None
+    manifest_is_source_bound = (
+        isinstance(assets_preview, list)
+        and assets_preview
+        and all(
+            isinstance(entry, dict) and entry.get("productionClass") == "source-graphics-dat"
+            for entry in assets_preview
+        )
+    )
+    if not manifest_is_source_bound:
+        target_policy = as_object(manifest.get("targetPolicy"), "manifest.targetPolicy", findings, path)
+        for key in ("masterResolution", "layoutSkeleton"):
+            require_string(target_policy, key, findings, path, "manifest.targetPolicy")
+        derived = as_list(target_policy.get("derivedResolutions"), "manifest.targetPolicy.derivedResolutions", findings, path)
+        for idx, value in enumerate(derived):
+            if not isinstance(value, str) or value == "":
+                findings.append(Finding("ERROR", path, f"manifest.targetPolicy.derivedResolutions[{idx}] must be a non-empty string"))
 
     assets = as_list(manifest.get("assets"), "manifest.assets", findings, path)
     seen_ids: set[str] = set()
@@ -168,6 +195,31 @@ def validate_manifest(path: Path, *, check_files: bool, strict_files: bool) -> t
         status = require_string(asset, "status", findings, path, label)
         if status and status not in ALLOWED_STATUSES:
             findings.append(Finding("ERROR", path, f"{label}.status is not allowed: {status}"))
+
+        # source-graphics-dat assets bind directly to the original
+        # GRAPHICS.DAT bitmap and carry graphicsDatSha256 / graphicIndex /
+        # iconIndex / sourceRect instead of the redraw ladder's
+        # originalSize / master4k / derived1080p / paths fields. Enforce
+        # a matching schema for those assets and skip the redraw-only
+        # checks for the rest of this iteration.
+        if production == "source-graphics-dat":
+            source_ref = as_object(asset.get("sourceReference"), f"{label}.sourceReference", findings, path)
+            require_string(source_ref, "origin", findings, path, f"{label}.sourceReference")
+            require_string(source_ref, "graphicsDatSha256", findings, path, f"{label}.sourceReference")
+            for numeric_key in ("graphicIndex", "iconIndex"):
+                if not isinstance(source_ref.get(numeric_key), int):
+                    findings.append(Finding(
+                        "ERROR", path,
+                        f"{label}.sourceReference.{numeric_key} must be an integer",
+                    ))
+            source_rect = as_object(source_ref.get("sourceRect"), f"{label}.sourceReference.sourceRect", findings, path)
+            for rect_key in ("x", "y", "width", "height"):
+                if not isinstance(source_rect.get(rect_key), int):
+                    findings.append(Finding(
+                        "ERROR", path,
+                        f"{label}.sourceReference.sourceRect.{rect_key} must be an integer",
+                    ))
+            continue
 
         source_ref = as_object(asset.get("sourceReference"), f"{label}.sourceReference", findings, path)
         require_string(source_ref, "origin", findings, path, f"{label}.sourceReference")
