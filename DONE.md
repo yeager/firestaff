@@ -1,3 +1,11 @@
+# Nexus: cold-start-transport före Saturn-handoff (2026-08-10)
+
+- ✅ En extern EU-capture från frame 0 med regionmatchad fransk retail-media
+  validerar 60 råa VDP1/VDP2-ramar och Start-input i samma tidsfönster.
+- ✅ Den visar ändringar i VDP1 framebuffer samt VDP2 register/VRAM/CRAM.
+  Source-join saknas fortfarande (`asset_consumer_identity=unbound`), så
+  startup-, meny-, HUD- och viewport-admission förblir fail-closed.
+
 # CI: bounded Windows CMake build (2026-08-09)
 
 - ✅ Windows/MSYS2/Ninja använder nu tre parallella CMake-jobb i `verify.yml`,

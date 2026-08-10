@@ -55,6 +55,18 @@ write-trace och writer-code-trace till manifestet även om VDP2-capturen avbryts
 Det gör ett negativt frame-resultat granskningsbart utan att uppgradera det till
 ett raw- eller skärmbevis.
 
+## 2026-08-10: EU cold-start före handoff
+
+En extern capture från frame 0 med EU-BIOS och regionmatchad fransk retail-disc
+validerade 60 råa VDP1/VDP2-ramar. Råfilens SHA-256 var
+`39e70710bd1b7edeedfb2ec53a1edc0c27546b10f47cf06a6904591c558c66bf`, och
+Start injicerades i runtime-ram 45–54. Capturen visar ändringar i VDP1-
+framebuffer samt VDP2-register, VRAM och CRAM. Frame 59 identifieras som NBG1
+character mode med tre aktiva lager, men `asset_consumer_identity=unbound` och
+`host_composition_admission=blocked`. Detta är transportbevis och ett
+reproducerbart negativt source-join-resultat; det öppnar inte startup, meny,
+HUD eller viewport.
+
 ## Fristående VDP1-snapshot
 
 När VDP1-writes når en känd källadress kan den instrumenterade binären även

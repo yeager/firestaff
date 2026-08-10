@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- 🔒 Ny EU cold-start-capture från frame 0 validerar 60 autentiserade råa
+  Saturn-ramar och ändrade VDP1/VDP2-regioner, men ingen retail-asset- eller
+  konsumentidentitet. Den får därför inte öppna startup-, meny-, HUD- eller
+  viewport-rutten; nästa positiva steg kräver samma-session source-join.
+
 - ⏳ Den nya Windows CMake-parallellismen är begränsad till tre jobb efter en
   fastnad obegränsad runner-körning. Huvudkörningen för `ec7fb18490` måste
   fortfarande slutföras innan CI-fixen är runtime-verifierad.
