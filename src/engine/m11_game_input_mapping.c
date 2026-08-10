@@ -104,10 +104,21 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
      * the normalized M12 token still enters the same Theron runtime facade.
      */
     switch ((SDL_Keycode)keycode) {
+#if SDL_VERSION_ATLEAST(3, 0, 0)
         case SDLK_W: return M12_MENU_INPUT_UP;
         case SDLK_S: return M12_MENU_INPUT_DOWN;
         case SDLK_A: return M12_MENU_INPUT_LEFT;
         case SDLK_D: return M12_MENU_INPUT_RIGHT;
+#else
+        case SDLK_w: return M12_MENU_INPUT_UP;
+        case SDLK_s: return M12_MENU_INPUT_DOWN;
+        case SDLK_a: return M12_MENU_INPUT_LEFT;
+        case SDLK_d: return M12_MENU_INPUT_RIGHT;
+#endif
+        case SDLK_UP: return M12_MENU_INPUT_UP;
+        case SDLK_DOWN: return M12_MENU_INPUT_DOWN;
+        case SDLK_LEFT: return M12_MENU_INPUT_LEFT;
+        case SDLK_RIGHT: return M12_MENU_INPUT_RIGHT;
         default: return M12_MENU_INPUT_NONE;
     }
 }

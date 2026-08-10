@@ -15,6 +15,12 @@
   noll `$B0E5`, spawn- eller RNG-fönster. Nästa steg är att välja fil och
   bekräfta party-/dungeonrouten med Button I i samma autentiserade session.
 
+- 🔒 Dungeon-walk-capturen når nu den riktiga dungeon-vyn och registrerar 50
+  `$B0E5`-adresspassager, 34 `$4644`- och 99 `$4667`-edges. Alla B0E5-passager
+  har A=`$2c/$85`, inte disassemblyns kategorier `0..3`; specialgrenen,
+  spawn-consumer och RNG-retur är fortfarande noll. Capture-scriptet skiljer
+  nu uttryckligen adresshits från giltiga spawn-samples.
+
 - 🔒 JP-Track 02:s autentiska rosterrecord når nu startup-party-state:n med
   namn, vitalvärden, attribut och skills. Porträttens bitmap-/paletteägare och
   det riktiga text-/UI-consumet är fortfarande inte bevisade; nästa media-

@@ -410,7 +410,8 @@ system_card_md5=ff1a674273fe3540ccef576376407d1d
 autoload_state_md5=f17f377df210b4a3ae904a13fb85a7f0
 host_key_events=22
 cd_irq_callbacks=1
-spawn_entry_b0e5_samples=50
+spawn_entry_b0e5_address_hits=50
+spawn_entry_b0e5_samples=0
 rng_consumer_samples=0
 rng_code_windows=0
 transition=missing
@@ -533,3 +534,17 @@ RNG windows, zero spawn-consumer reads, and zero valid creature-category
 observations. This is positive input/media/startup-to-file-select evidence,
 not dungeon, RNG, creature, AI, T700 or T900 evidence. The raw capture remains
 outside GitHub.
+
+## 2026-08-10 — dungeon walk reaches an invalid `$B0E5` overlay
+
+The authenticated US Track 02 session was driven through the real map and
+dungeon viewport, then closed after the manual input phase. Its final trace
+contains 50 logical `$B0E5` address hits, 34 `$4644` preconsumer samples and
+99 `$4667` helper samples, with 65,536 bounded register observations.
+
+All 50 `$B0E5` hits carried A=`$2c` or A=`$85`, never a source-defined regular
+spawn category `0..3`. The helper samples had no `$B3 & 7 == 4` special branch,
+and the session produced zero `spawn_consumer_read`, RNG-consumer and RNG-code
+windows. The address hits are therefore an authenticated bank-overlay
+diagnostic, not an original monster spawn; no creature, AI, loot, generator,
+T700 or T900 semantics are opened.

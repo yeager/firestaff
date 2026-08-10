@@ -104,6 +104,14 @@ int main(void) {
           M12_MENU_INPUT_LEFT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_D) ==
           M12_MENU_INPUT_RIGHT);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_UP) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_DOWN) ==
+          M12_MENU_INPUT_DOWN);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_LEFT) ==
+          M12_MENU_INPUT_LEFT);
+    CHECK(M11_TheronNavigationInputFromKeycode(SDLK_RIGHT) ==
+          M12_MENU_INPUT_RIGHT);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_LEFT) ==
           M12_MENU_INPUT_ACCEPT);
     /* SDL's physical mouse button 2 is SDL_BUTTON_MIDDLE.  Theron exposes

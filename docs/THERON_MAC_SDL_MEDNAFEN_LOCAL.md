@@ -242,6 +242,26 @@ kommando så att CMOS kan skrivas; tvångsstängning kan lämna den osparad.
 
 ### Kontroller
 
+Firestaffs Theron-runtime använder vanlig SDL-mus och tangentbord, inte en
+joystickpekare som hoppar mellan synliga objekt. Musen rapporterar sin aktuella
+position kontinuerligt i den källmappade 320x200-vyn; ett musflytt-event väljer
+inte något objekt. Musknapp 1 (vänster) är PC Engine Button I och musknapp 2
+(mitten; höger fungerar som kompatibilitetsalias) är Button II.
+
+I dungeon är tangentbordet:
+
+```text
+Upp / W:       framåt
+Ned / S:       bakåt
+Vänster / A:   vrid vänster
+Höger / D:     vrid höger
+```
+
+Hållna tangenter samplas vid Therons inputgräns i stället för att förlita sig
+på macOS/SDL:s autorepeat. Kort touch motsvarar Button I och lång touch Button
+II. Startupens egna knappar går genom samma Button I/II-väg, så kontrollschemat
+behöver inte bytas mellan meny, handoff och dungeon.
+
 Med `-GAMEPORT0 KEY` använder Tsugaru tangentbordsemulering för gamepad 0:
 
 ```text

@@ -1148,7 +1148,12 @@ transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$m
 transition_main_ram_target_write_count=$(trace_count '^main_ram_target_write ' "$main_ram_target_trace")
 transition_spawn_consumer_read_count=$(trace_count '^spawn_consumer_read ' "$spawn_consumer_trace")
 transition_spawn_register_sample_count=$(trace_count '^spawn_consumer_registers ' "$spawn_register_trace")
-transition_spawn_entry_b0e5_count=$(trace_count '^spawn_consumer_registers .*spawn_entry_b0e5=1$' "$spawn_register_trace")
+# THQUEST.ASM LB0E5 is a regular-spawn entry only when A is one of the four
+# source-defined categories. The same logical address occurs in other bank
+# overlays; retain their count as diagnostic address hits but never publish
+# them as spawn samples.
+transition_spawn_entry_b0e5_address_count=$(trace_count '^spawn_consumer_registers .* pc=b0e5 ' "$spawn_register_trace")
+transition_spawn_entry_b0e5_count=$(perl -ne 'if (/^spawn_consumer_registers .* pc=b0e5 .* a=([0-9a-fA-F]+)/ && hex($1) <= 3) { $count++ } END { print $count || 0 }' "$spawn_register_trace" 2>/dev/null || printf '0')
 transition_spawn_preconsumer_4644_count=$(trace_count '^spawn_consumer_registers .*preconsumer_4644=1' "$spawn_register_trace")
 transition_spawn_helper_4667_count=$(trace_count '^spawn_consumer_registers .*helper_4667=1' "$spawn_register_trace")
 transition_spawn_helper_4667_special_count=$(perl -ne 'if (/^spawn_consumer_registers .*helper_4667=1/ && / b3=([0-9a-fA-F]+)/ && ((hex($1) & 7) == 4)) { $count++ } END { print $count || 0 }' "$spawn_register_trace" 2>/dev/null || printf '0')
@@ -1206,6 +1211,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'spawn_preconsumer_4644_samples=%s\n' "$transition_spawn_preconsumer_4644_count"
     printf 'spawn_helper_4667_samples=%s\n' "$transition_spawn_helper_4667_count"
     printf 'spawn_helper_4667_special_branch_samples=%s\n' "$transition_spawn_helper_4667_special_count"
+    printf 'spawn_entry_b0e5_address_hits=%s\n' "$transition_spawn_entry_b0e5_address_count"
     printf 'spawn_entry_b0e5_samples=%s\n' "$transition_spawn_entry_b0e5_count"
     printf 'rng_consumer_samples=%s\n' "$transition_rng_consumer_sample_count"
     printf 'rng_consumer_sample_limit=%s\n' "$rng_consumer_sample_limit"

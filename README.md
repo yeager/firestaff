@@ -48,6 +48,10 @@ See the [Theron capture readiness note](docs/THERON_CAPTURE_READINESS.md) for
 the current boundary between original-media evidence and Firestaff runtime
 promotion.
 
+Theron använder vanlig mus och tangentbord på samma sätt som DM1/CSB: musen
+flyttas fritt i spelvyn, musknapp 1/2 är Button I/II och piltangenter eller
+WASD styr framåt, bakåt och vridning.
+
 ## Chaos Strikes Back editions
 
 Firestaff recognises original CSB editions by hash rather than by their folder

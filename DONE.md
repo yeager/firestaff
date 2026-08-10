@@ -301,6 +301,16 @@
 - ✅ Ingen dungeon-/spawnsemantik publiceras: samma session har noll `$B0E5`,
   RNG-fönster, spawn-consumer eller giltig creature-kategori.
 
+# Theron: dungeon overlay capture boundary (2026-08-10)
+
+- ✅ En autentiserad US Track 02-session når den riktiga dungeon-vyn och
+  registrerar 50 `$B0E5`-adresshits, 34 `$4644`-edges och 99 `$4667`-edges.
+- ✅ Alla adresshits har A=`$2c` eller `$85`; de räknas inte längre som
+  regular-spawn-samples. Capture-receipten rapporterar nu adresshits separat
+  från giltiga kategorier `0..3`, vilket stänger ett falskt positivt bevis.
+- ✅ Mednafen stängdes efter körningen. Ingen spawn-consumer, RNG-retur,
+  creature, AI, loot, generator, T700 eller T900-semantik publicerades.
+
 # Theron: ADPCM-transportreceipt från extern capture (2026-08-10)
 
 - ✅ CD-state-parsern räknar och kontrollerar nu ADPCM FIFO-läsningar mot
