@@ -6,6 +6,16 @@
   Runtimekandidaten klonar kön tillsammans med party, recordpooler, CAII,
   c_tim och SOUND9. Den öppnar inte M11-inmatning eller spelbar session.
 
+# DM2: SKSAVE-korpusens lokala poolgräns (2026-08-10)
+
+- ✅ Den verkliga PC-DOS-korpusen har nu verifierats genom hela den lokala
+  direkta c_hero-/leader-hand- och `PROCESS_ITEM_BONUS`-fasen. Därmed är den
+  tidigare fyra-av-åtta-siffran, som endast avsåg den äldre
+  direct-root-kontrollen, inte längre en giltig sessiongräns: samtliga åtta
+  filer blockeras korrekt före den ännu oägda map/recycler-/sessionkedjan.
+  Ingen sparfil publiceras som Resume och inga speldata skrivs eller packas
+  upp.
+
 # Launcher: vald DM1-utgåva äger sin runtimekatalog (2026-08-10)
 
 - ✅ Vid Auto-val i en datarot med flera Dungeon Master-utgåvor binds nu en

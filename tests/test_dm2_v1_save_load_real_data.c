@@ -1309,9 +1309,15 @@ int main(void)
     CHECK(direct_roots.resurrection_timers == 0u &&
               direct_roots.files_with_resurrection_timers == 0u,
           "the supplied PC-DOS SKSave corpus has no source type-0x0D resurrection timers");
-    CHECK(direct_roots.pool_owner_restored == 4u &&
-              direct_roots.pool_owner_blocked == 4u,
-          "the supplied corpus distinguishes four complete and four blocked c_record-pool owners");
+    /* The former four-owner count stopped after direct record roots.  The
+     * source order continues through PROCESS_ITEM_BONUS for every c_hero
+     * item root and the leader hand (c_savegame.cpp:1206-1224).  With that
+     * complete local prerequisite, this authenticated corpus has no
+     * independently complete c_record-pool owner: all eight must remain
+     * blocked before the missing map/recycler/session transaction. */
+    CHECK(direct_roots.pool_owner_restored == 0u &&
+              direct_roots.pool_owner_blocked == 8u,
+          "the supplied corpus blocks every incomplete local c_record-pool owner after source item bonuses");
     CHECK(direct_roots.game_load_owner_materialized == 0u &&
               direct_roots.game_load_owner_blocked == 8u,
           "no local pool subset is promoted to a private GAME_LOAD session owner");
