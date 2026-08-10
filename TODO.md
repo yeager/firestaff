@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: protagonist roster text binding fixed (2026-08-10)
+
+- ✅ Production forcefield handoff now binds Theron's name from the
+  authenticated Track 02 codon-text catalog, not from the fixture roster.
+- 🔒 Original text control-code consumer, JP portraits, T900 object semantics,
+  RNG/AI/combat, generator timing, T700 stats and source-bound event audio
+  remain separate open requirements.
+
 ## Theron: corrected cold-start VDC/VCE media pair admitted (2026-08-10)
 
 - ✅ Produktionsviewporten känner nu igen det autentiserade externa paret

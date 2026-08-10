@@ -14,6 +14,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   promoted. The raw trace stayed on the external disk and Mednafen was closed
   after the bounded run.
 
+## 2026-08-10 — authenticated US roster text reaches Theron slot
+
+- Fixed the production forcefield handoff so the authenticated Track 02
+  codon-text catalog binds the protagonist name as well as selected
+  companions. Previously `party_init()` cleared Theron's production name and
+  only companion names were re-applied.
+- Added a focused forcefield regression test and verified it against the real
+  US/JP Track 02 roster-media test path. No title/control codes, portraits,
+  T900 equipment rules or gameplay consumers were inferred.
+
 ## 2026-08-11 — real seven-dungeon creature/object admission verified
 
 - ✅ `test_theron_v1_track02_dungeon_loader` passerar mot riktiga `TQUS02.bin`

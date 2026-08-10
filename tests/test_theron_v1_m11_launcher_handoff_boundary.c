@@ -644,6 +644,9 @@ static void run_real_us_roster_text_forcefield_handoff_if_available(void) {
                     strcmp(party.champions[2].name,
                            receipt.startup_roster_names[5]) == 0,
                 "forcefield binds names by authentic mirror-to-roster mapping, not menu labels");
+    expect_true(strcmp(party.champions[0].name,
+                       receipt.startup_roster_names[0]) == 0,
+                "forcefield binds Theron's name from the authenticated roster consumer");
     free(track02);
 }
 

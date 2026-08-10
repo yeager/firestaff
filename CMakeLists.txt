@@ -20078,6 +20078,27 @@ endif()
         COMMAND test_theron_v1_m11_launcher_handoff_boundary
     )
 
+    add_executable(test_theron_v1_roster_text_forcefield
+        tests/test_theron_v1_roster_text_forcefield.c
+    )
+    target_include_directories(test_theron_v1_roster_text_forcefield PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_theron_v1_roster_text_forcefield PRIVATE
+        firestaff_theron
+        firestaff_m12
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_roster_text_forcefield PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME theron_v1_roster_text_forcefield
+        COMMAND test_theron_v1_roster_text_forcefield
+    )
+
     # ── DM2 V1 Weather/Timer Save Round-Trip (weather persistence gate)
     # Source-locked: dm2_v1_save_load.c skload_table_60 +
     # SKULL.ASM skload_table_60 + PROCESS_TIMER_0C.

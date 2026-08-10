@@ -4281,7 +4281,17 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
             THERON_CHAMPION_SLOT_THERON];
 
         theron_v1_party_init(party, (int)flow->selected_dungeon);
-        if (saved_theron.name[0] != '\0') {
+        /* The source roster catalog is the only production owner of the US
+         * display names.  party_init() deliberately leaves them unavailable
+         * under FIRESTAFF_THERON_PRODUCTION, so preserve a previously bound
+         * name when resuming, otherwise bind Theron's slot from roster index
+         * zero just like the selected companions below. */
+        if (roster_names && roster_name_count > 0 &&
+            roster_names[0] && roster_names[0][0] != '\0') {
+            snprintf(party->champions[THERON_CHAMPION_SLOT_THERON].name,
+                     sizeof(party->champions[THERON_CHAMPION_SLOT_THERON].name),
+                     "%s", roster_names[0]);
+        } else if (saved_theron.name[0] != '\0') {
             party->champions[THERON_CHAMPION_SLOT_THERON] = saved_theron;
         }
         for (int clear_slot = THERON_CHAMPION_SLOT_COMPANION_1;
