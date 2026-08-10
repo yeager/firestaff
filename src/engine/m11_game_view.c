@@ -3553,6 +3553,69 @@ static int m11_csb_atari_st_pit_material(
     return 1;
 }
 
+/* CSBWin Codea59a.cpp:356-370 classifies a raw roomSTAIRS cell from its
+ * N/S bit and the party axis.  Code390e.cpp:117-139 then initializes the
+ * eighteen native stair graphics for the active WallSet: up[6..0] =
+ * 90..96, down[6..0] = 97..103 and edge[3..0] = 104..107, offset by
+ * WallSet * 18.  Keep both facts together so the ST path never borrows the
+ * PC34 staircase family.  F0's two-centre-cell composition stays with its
+ * separate source owner; this helper covers the material-plan lanes only. */
+static int m11_csb_atari_st_stair_material(
+    CSB_V1_CSBWinViewportWall wall, uint8_t raw_square, int party_direction,
+    uint16_t wall_set, uint16_t *out_graphic, int *out_mirrored,
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    const CSB_V1_CSBWinViewportProjectionRectangle **out_projection)
+{
+    static const struct {
+        int8_t facing_rect;
+        int8_t facing_slot;
+        int8_t edge_rect;
+        int8_t edge_slot;
+        uint8_t mirrored;
+    } source[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+        { -1, -1, -1, -1, 0 }, { 10, 6, -1, -1, 0 },
+        {  9, 5, -1, -1, 0 }, {  8, 6, -1, -1, 1 },
+        { -1, -1, -1, -1, 0 }, {  7, 4, 7, 3, 0 },
+        {  6, 3, -1, -1, 0 }, {  5, 4, 6, 3, 1 },
+        {  4, 2, 5, 2, 0 }, {  3, 1, -1, -1, 0 },
+        {  2, 2, 4, 2, 1 }, { -1, -1, 1, 0, 0 },
+        { -1, -1, -1, -1, 0 }, { -1, -1, 0, 0, 1 }
+    };
+    const unsigned int index = (unsigned int)wall;
+    int stair_facing;
+    int stair_up;
+    int slot;
+    int rect;
+
+    if (out_graphic) *out_graphic = 0u;
+    if (out_mirrored) *out_mirrored = 0;
+    if (out_projection) *out_projection = NULL;
+    if (!layout || !out_graphic || !out_mirrored || !out_projection ||
+        index >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT || wall_set > 15u ||
+        party_direction < 0 || party_direction > 3) {
+        return 0;
+    }
+    stair_facing = ((raw_square >> 3) & 1u) !=
+        (unsigned int)(party_direction & 1);
+    stair_up = (raw_square & 0x04u) != 0u;
+    slot = stair_facing ? source[index].facing_slot : source[index].edge_slot;
+    rect = stair_facing ? source[index].facing_rect : source[index].edge_rect;
+    if (slot < 0 || rect < 0) return 0;
+    if (stair_facing) {
+        *out_graphic = (uint16_t)(wall_set * 18u +
+            (stair_up ? 96u - (unsigned int)slot :
+                        103u - (unsigned int)slot));
+        *out_projection = stair_up ? &layout->stair_facing_up_rectangles[rect]
+            : &layout->stair_facing_down_rectangles[rect];
+    } else {
+        *out_graphic = (uint16_t)(wall_set * 18u +
+            107u - (unsigned int)slot);
+        *out_projection = &layout->stair_edge_rectangles[rect];
+    }
+    *out_mirrored = source[index].mirrored != 0u;
+    return 1;
+}
+
 /* CSBWin's Viewport.cpp::FloorAndCeilingOnly builds a 224x136 packed page:
  * 29 rows ceiling, 37 rows black and 70 rows floor.  The active decoder
  * yields the same source pixels as indexed bytes, so re-pack them through
@@ -3669,6 +3732,20 @@ static int m11_csb_present_atari_st_runtime_viewport(
                 !m11_csb_blit_atari_st_viewport_graphic(
                     state, graphic, mirrored, &layout.floor_pit_rectangles[rect],
                     viewport, VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            continue;
+        }
+        if (square_type == 3) { /* roomSTAIRS */
+            uint16_t graphic;
+            int mirrored;
+            const CSB_V1_CSBWinViewportProjectionRectangle *projection;
+
+            if (m11_csb_atari_st_stair_material(
+                    draw->wall, (uint8_t)raw_square,
+                    profile->runtime.party_dir, (uint16_t)wall_set, &graphic,
+                    &mirrored, &layout, &projection) &&
+                !m11_csb_blit_atari_st_viewport_graphic(
+                    state, graphic, mirrored, projection, viewport,
+                    VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
             continue;
         }
         if (square_type == 4 && csb_v1_csbwin_viewport_door_is_facing(

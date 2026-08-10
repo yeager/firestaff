@@ -331,6 +331,24 @@ static void check_real_viewport_projection_layout(const char *path)
         CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
             &layout.floor_pit_rectangles[wall]));
     }
+    /* CSBWin Data.h's stair RectPos families follow FloorPitRect in original
+     * item 0x22e. Code390e.cpp::ReadGraphicsForLevel binds their
+     * source graphics from the active wall set, so retain the original
+     * rectangles rather than fitting a host stair shape. */
+    for (wall = 0u;
+         wall < CSB_V1_CSBWIN_LAYOUT_022E_STAIR_EDGE_RECTANGLE_COUNT;
+         ++wall) {
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.stair_edge_rectangles[wall]));
+    }
+    for (wall = 0u;
+         wall < CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_RECTANGLE_COUNT;
+         ++wall) {
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.stair_facing_down_rectangles[wall]));
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.stair_facing_up_rectangles[wall]));
+    }
 }
 
 static void check_viewport_wall_plan(
