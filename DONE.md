@@ -322,6 +322,14 @@
   teleporter-displayfält. Ett ogiltigt kartindex lämnar alla fält orörda;
   inget party, HUD, input eller timerdispatch publiceras.
 
+# DM2: isolerad caller-authored rörelseadapter (2026-08-10)
+
+- ✅ Den gamla `dm2_v1_perform_move_exec_pc34_compat`-adaptern är borttagen
+  från M10- och DM2-produktarkiven. Den tar plan-, varelse- och dörrvärden
+  från anroparen och saknar ännu en sammanhängande GAME_LOAD/moverec-ägare.
+  Den kompileras nu endast med sitt uttryckliga kontrakttest och kan inte
+  skapa en syntetisk produktionsrörelseväg.
+
 # DM2: runtime skapar inte en syntetisk SOUND9-kö (2026-08-10)
 
 - ✅ Den generiska runtimen binder inte längre en fast värdkö som ersättning

@@ -35,6 +35,7 @@ EXPECTED_REMOVALS = {
         "dm2_v1_projectile_pc34_compat.c",
         "dm2_v1_projectile_step_pc34_compat.c",
         "dm2_v1_projectile_creature_collision_pc34_compat.c",
+        "dm2_v1_perform_move_exec_pc34_compat.c",
     },
     "DM2_SOURCES": {
         "dm2_v1_hud_panel_routing.c",
@@ -79,6 +80,7 @@ EXPECTED_REMOVALS = {
         "dm2_v1_tim_proc_pc34_compat.c",
         "dm2_v1_timer_ops_pc34_compat.c",
         "dm2_v1_timer_dispatch_wiring_pc34_compat.c",
+        "dm2_v1_perform_move_exec_pc34_compat.c",
     },
     "DM2_V2_SOURCES": {
         "dm2_v2_hud_widget_bitmap_blit.c",

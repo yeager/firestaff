@@ -4351,6 +4351,12 @@ list(REMOVE_ITEM M10_SOURCES
     # original c_map/3CE7D/DB allocation/CAII/timer ownership is still
     # missing from both GAME_LOAD and SKSAVE.
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_delete_creature_full_pc34_compat.c"
+    # This legacy PERFORM_MOVE executor classifies caller-authored plan,
+    # creature and door inputs.  No GAME_LOAD session owns the c_map,
+    # c_hero, c_tim and moverec transaction it would need in product.
+    # Retain it only in its explicit contract test until that source owner
+    # exists; it must not offer a synthetic movement route from M10.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_perform_move_exec_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_cmp_import_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d2l_d2r_wall_pc34_compat.c"
@@ -6460,6 +6466,10 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # multi-map c_map, 3CE7D, DB-allocation-cleanup and timer transaction.  It is
 # useful as an explicit source-study test, but it must not become a second
 # mutation route while SKSAVE and GAME_LOAD own no complete live session.
+# The PERFORM_MOVE executor beneath it likewise takes caller-authored plans,
+# creature handles and door fields.  It has no product caller and must remain
+# isolated until the private GAME_LOAD transaction owns the full c_map/
+# moverec/c_hero/c_tim path.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -6519,6 +6529,7 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_ops_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_delete_creature_full_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_perform_move_exec_pc34_compat.c"
     # QUERY_*_BAR_COLOR is also implemented by the source-owned champion-HUD
     # helper below, with a different receipt/signature.  This older predicate
     # study has no DM2 runtime caller; keep its focused executable isolated so
@@ -25595,6 +25606,7 @@ endif()
 
     add_executable(test_dm2_v1_perform_move_exec_door_creature
         tests/test_dm2_v1_perform_move_exec_door_creature.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_perform_move_exec_door_creature PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
