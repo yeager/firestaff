@@ -44,6 +44,11 @@ static int build_gref_position_table(
 static uint16_t get_item_next_ref(const Theron_ThingData *td,
                                    unsigned int cat, unsigned int id) {
     if (cat >= 16 || id >= td->object_counts[cat]) return THERON_REF_NONE;
+    /* DMBUILDER6/src/dms.h:145-157: category 4 starts with the signed
+     * `chested` field.  It is source provenance, not a linked-list next
+     * reference.  Keep the raw word in the occurrence/record, but never use
+     * it to walk a ground-reference chain (T900 containment owns it). */
+    if (cat == THERON_CAT_MONSTER) return THERON_REF_NONE;
     size_t item_size = theron_item_bytes[cat];
     if (item_size < 2) return THERON_REF_NONE;
     const uint8_t *rec = &td->items[cat][id * item_size];

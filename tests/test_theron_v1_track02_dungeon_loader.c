@@ -754,8 +754,11 @@ static void test_real_campaign_source_capacity(
     assert(world->object_count == (int)expected_placed_objects);
     assert(expected_monsters == 165u);
     assert(expected_generators_total == 46u);
-    assert(expected_source_objects == 640u);
-    assert(expected_placed_objects == 2189u);
+    /* Category-4 monster records do not carry a linked-list next_ref: their
+     * first word is signed `chested`.  Stop each monster chain there; the
+     * authentic US campaign then has three fewer false follow-on records. */
+    assert(expected_source_objects == 637u);
+    assert(expected_placed_objects == 2186u);
     assert_object_ids_unique(world);
 
     free(world);

@@ -12228,3 +12228,16 @@ rendering remain blocked.
   inte ännu en tillräckligt bevisad dungeon-frame och får därför inte ersätta
   README-skärmbilden. Square-to-tile-semantik, RNG, AI, T700, T900 och
   ljudkonsumenter förblir stängda.
+
+## Theron: monsterrecordets containmentfält får inte följas som objectkedja (2026-08-10)
+
+- ✅ Ground-reference-loadern behandlar nu kategori 4:s första ord som det
+  signerade source-fältet `chested`, enligt `DMBUILDER6/src/dms.h:145-157`,
+  och avslutar monsterrecordets kedja i stället för att skapa ett falskt
+  nästa object.
+- ✅ Autentisk US-census verifierar nu 165 monsterrecords, 46 generatorer,
+  637 source-objectposter och 2 186 placerade poster. De tidigare tre
+  följdobjekten var containmentfältfeltolkningar.
+- ✅ US/JP thing-data, ground-reference, source-property och 116
+  combat/inventory-regressioner passerar. Råordet sparas fortfarande exakt
+  för framtida autentiserad T900-konsumentfångst.

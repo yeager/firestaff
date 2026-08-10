@@ -79,6 +79,9 @@ static uint16_t get_item_next_ref(const Theron_ThingData *td,
                                    unsigned int cat, unsigned int id) {
     const uint8_t *rec = get_item_record(td, cat, id);
     if (!rec) return THERON_REF_NONE;
+    /* Category 4 begins with signed monster `chested`, not a chain link.
+     * Match the production loader and keep the ground-chain census honest. */
+    if (cat == THERON_CAT_MONSTER) return THERON_REF_NONE;
     return (uint16_t)rec[0] | ((uint16_t)rec[1] << 8);
 }
 

@@ -60,6 +60,13 @@ medan den övergripande source-object-occurrence fortfarande behåller de råa
 16 bytesen. Detta förbättrar monster- och lootprovenansen men öppnar inte
 T900:s runtime-konsument.
 
+Ground-reference-walkern använder nu samma gräns: kategori 4 avslutar sin
+kedja efter monsterrecordet i stället för att tolka `chested` som nästa
+objectreferens. Mot den autentiska US-kampanjen går censusen därmed från
+`640/2189` till `637/2186` source-/placerade poster; monsterantalet `165` och
+generatorantalet `46` ändras inte. De tre tidigare posterna var falska
+följdobjekt från ett containmentfält, inte nya T900-objekt.
+
 Fältet följer nu också den source-bundna monsterrecorden till live creature
 och save/load-version 9. Det är en lossless state-bindning av ett verkligt
 källfält, inte en tolkning av vad T900 gör med det.
