@@ -33007,6 +33007,7 @@ endif()
     )
     set_tests_properties(dm1_v1_hall_walkaround_runtime PROPERTIES
         ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data"
+        TIMEOUT 300
     )
 
     if(Python3_Interpreter_FOUND)
@@ -33122,6 +33123,7 @@ endif()
             NAME dm1_v1_viewport_movement_completion_matrix
             COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR} ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_movement_completion_matrix.py
         )
+        set_tests_properties(dm1_v1_viewport_movement_completion_matrix PROPERTIES TIMEOUT 300)
         add_test(
             NAME dm1_v1_viewport_walls_golden_comparison
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
